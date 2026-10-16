@@ -527,6 +527,25 @@ export interface MergedInstalledExtensions {
   profileMeta: InstalledExtensionsMeta;
 }
 
+export interface MergeInstalledExtensionsOptions {
+  /**
+   * Whether the local store was saved while signed out, rather than by this
+   * account. A signed-out store has never seen the account, so its
+   * timestamps say nothing about what the account removed: its IDs are only
+   * ever added to the account, and nothing is inferred deleted from it.
+   */
+  localIsAnonymous?: boolean;
+  /**
+   * IDs each store is known to have uninstalled: in its "autoinstall
+   * handled" set (which every uninstall records) but not currently
+   * installed. Used to settle the cases timestamps can't: an ID with no
+   * recorded install time, and (on the profile side) an ID a signed-out
+   * store auto-installed that the account had already removed.
+   */
+  localDeclinedIds?: ReadonlySet<string>;
+  profileDeclinedIds?: ReadonlySet<string>;
+}
+
 /**
  * Merges the installed-extension IDs saved in local storage with the ones
  * saved in the user's synced profile config.
@@ -542,19 +561,25 @@ export interface MergedInstalledExtensions {
  * treated as an inferred deletion rather than reinstalled.
  *
  * An ID with no recorded install time (e.g. installed before this metadata
- * existed) is treated as installed "just now" for this comparison rather than
- * "long ago" — since `updatedAtMs` is a single scalar per store (bumped by
- * *any* add/remove, not per-extension), treating an unknown install time as
- * old could cause an unrelated, more recent change on the other side to
- * wrongly look like this specific ID was deleted there. This falls back to
- * today's safe adopt-it behavior for such IDs until they're installed or
- * uninstalled again post-fix, which gives them a real timestamp.
+ * existed) can't be compared that way — `updatedAtMs` is a single scalar per
+ * store, bumped by *any* add/remove, so an unrelated recent change on the
+ * other side would look like this ID was deleted there. Such an ID is
+ * dropped only if the other side's declined set says it was uninstalled
+ * there, and adopted otherwise. Either way, every ID that survives the merge
+ * without a recorded install time is stamped with `nowMs` on that side
+ * ("installed at least since now"), so the next uninstall elsewhere is
+ * caught by the timestamp comparison instead of being undone forever.
+ * Stamping leaves `updatedAtMs` alone: it isn't a change to the ID list, and
+ * bumping it would make this store wrongly look newer than the other.
  */
 export function mergeInstalledExtensionIds(
   local: InstalledExtensionsStoreState,
   profile: InstalledExtensionsStoreState,
-  nowMs: number
+  nowMs: number,
+  options: MergeInstalledExtensionsOptions = {}
 ): MergedInstalledExtensions {
+  const localDeclined = options.localDeclinedIds ?? new Set<string>();
+  const profileDeclined = options.profileDeclinedIds ?? new Set<string>();
   const resultIds = new Set<string>();
   const localMeta: InstalledExtensionsMeta = {
     installedAtMs: { ...local.meta.installedAtMs },
@@ -569,45 +594,57 @@ export function mergeInstalledExtensionIds(
   for (const id of allIds) {
     const inLocal = local.ids.has(id);
     const inProfile = profile.ids.has(id);
+    const localInstalledAt = local.meta.installedAtMs[id];
+    const profileInstalledAt = profile.meta.installedAtMs[id];
 
     if (inLocal && inProfile) {
       resultIds.add(id);
+      localMeta.installedAtMs[id] = localInstalledAt ?? nowMs;
+      profileMeta.installedAtMs[id] = profileInstalledAt ?? nowMs;
       continue;
     }
 
     if (inLocal && !inProfile) {
-      const installedAt = local.meta.installedAtMs[id] ?? Infinity;
-      const profileIsNewer =
-        profile.meta.updatedAtMs > 0 && profile.meta.updatedAtMs >= installedAt;
-      if (profileIsNewer) {
-        // The profile was updated (and still doesn't have this ID) after it
-        // was installed locally — infer it was uninstalled elsewhere.
+      let deletedFromProfile: boolean;
+      if (options.localIsAnonymous || localInstalledAt === undefined) {
+        deletedFromProfile = profileDeclined.has(id);
+      } else {
+        deletedFromProfile =
+          profile.meta.updatedAtMs > 0 &&
+          profile.meta.updatedAtMs >= localInstalledAt;
+      }
+      if (deletedFromProfile) {
         delete localMeta.installedAtMs[id];
         localMeta.updatedAtMs = nowMs;
         continue;
       }
       // The profile hasn't caught up yet — adopt the local install into it.
       resultIds.add(id);
-      profileMeta.installedAtMs[id] = Number.isFinite(installedAt)
-        ? installedAt
-        : nowMs;
+      localMeta.installedAtMs[id] = localInstalledAt ?? nowMs;
+      profileMeta.installedAtMs[id] = localInstalledAt ?? nowMs;
       profileMeta.updatedAtMs = nowMs;
       continue;
     }
 
     if (!inLocal && inProfile) {
-      const installedAt = profile.meta.installedAtMs[id] ?? Infinity;
-      const localIsNewer =
-        local.meta.updatedAtMs > 0 && local.meta.updatedAtMs >= installedAt;
-      if (localIsNewer) {
+      let deletedLocally: boolean;
+      if (options.localIsAnonymous) {
+        deletedLocally = false;
+      } else if (profileInstalledAt === undefined) {
+        deletedLocally = localDeclined.has(id);
+      } else {
+        deletedLocally =
+          local.meta.updatedAtMs > 0 &&
+          local.meta.updatedAtMs >= profileInstalledAt;
+      }
+      if (deletedLocally) {
         delete profileMeta.installedAtMs[id];
         profileMeta.updatedAtMs = nowMs;
         continue;
       }
       resultIds.add(id);
-      localMeta.installedAtMs[id] = Number.isFinite(installedAt)
-        ? installedAt
-        : nowMs;
+      profileMeta.installedAtMs[id] = profileInstalledAt ?? nowMs;
+      localMeta.installedAtMs[id] = profileInstalledAt ?? nowMs;
       localMeta.updatedAtMs = nowMs;
       continue;
     }
@@ -618,6 +655,18 @@ export function mergeInstalledExtensionIds(
 
 function setsEqual<T>(a: Set<T>, b: Set<T>): boolean {
   return a.size === b.size && [...a].every((value) => b.has(value));
+}
+
+function metaEqual(
+  a: InstalledExtensionsMeta,
+  b: InstalledExtensionsMeta
+): boolean {
+  const aIds = Object.keys(a.installedAtMs);
+  return (
+    a.updatedAtMs === b.updatedAtMs &&
+    aIds.length === Object.keys(b.installedAtMs).length &&
+    aIds.every((id) => a.installedAtMs[id] === b.installedAtMs[id])
+  );
 }
 
 export function createExtensionManager(
@@ -744,6 +793,48 @@ export function createExtensionManager(
       );
     } catch (err) {
       console.error("Failed to persist installed-extensions metadata:", err);
+    }
+  };
+
+  /**
+   * The localStorage key recording which account the locally saved
+   * installed-extensions list belongs to: a user ID, or `null` for a list
+   * saved while signed out. Absent for lists saved before this was tracked.
+   * Lets a sign-in tell a signed-out visitor's installs (only ever added to
+   * the account) apart from this account's own cached copy (merged both
+   * ways), and lets a list left behind by another account be discarded
+   * instead of merged into whoever signs in next.
+   */
+  const INSTALLED_EXTENSIONS_OWNER_STORAGE_KEY =
+    "sb-installed-extensions-owner";
+
+  const readPersistedExtensionsOwner = (): string | null | undefined => {
+    try {
+      const raw = safeLocalStorage.getItem(
+        INSTALLED_EXTENSIONS_OWNER_STORAGE_KEY
+      );
+      if (raw === null) {
+        return undefined;
+      }
+      const parsed: unknown = JSON.parse(raw);
+      return typeof parsed === "string" ? parsed : null;
+    } catch (err) {
+      console.error(
+        "Failed to read persisted installed-extensions owner:",
+        err
+      );
+      return undefined;
+    }
+  };
+
+  const writePersistedExtensionsOwner = (owner: string | null) => {
+    try {
+      safeLocalStorage.setItem(
+        INSTALLED_EXTENSIONS_OWNER_STORAGE_KEY,
+        JSON.stringify(owner)
+      );
+    } catch (err) {
+      console.error("Failed to persist installed-extensions owner:", err);
     }
   };
 
@@ -977,6 +1068,31 @@ export function createExtensionManager(
       return;
     }
     return pendingLoad.then(mirrorToProfile);
+  };
+
+  /**
+   * Resets this browser's saved extension state (installed list, its sync
+   * metadata, and the "autoinstall handled" set) to that of a first-time
+   * signed-out visitor. Used when the saved state belongs to an account that
+   * is no longer signed in, so it doesn't follow the next visitor around or
+   * get merged into another account.
+   */
+  const resetLocalExtensionState = () => {
+    writePersistedExtensionIds(new Set());
+    writePersistedExtensionsMeta(emptyExtensionsMeta());
+    writePersistedHandledExtensionIds(new Set());
+    writePersistedExtensionsOwner(null);
+  };
+
+  /**
+   * Discards the locally saved extension state if it belongs to an account
+   * other than the one signed in now (or to any account, when signed out).
+   */
+  const discardOtherAccountsLocalState = () => {
+    const owner = readPersistedExtensionsOwner();
+    if (typeof owner === "string" && owner !== login.userId.value) {
+      resetLocalExtensionState();
+    }
   };
 
   const computeExtensions = (): ExtensionListEntry[] => {
@@ -1313,25 +1429,58 @@ export function createExtensionManager(
    */
   const computeSavedExtensionIds = async (): Promise<Set<string>> => {
     await awaitProfileLoaded();
+    discardOtherAccountsLocalState();
+    const userId = login.userId.value;
     const localIds = readPersistedExtensionIds();
     const profileIds = readProfileExtensionIds();
     const localMeta = readPersistedExtensionsMeta();
     const profileMeta = readProfileExtensionsMeta();
+    const localHandledIds = readPersistedHandledExtensionIds();
+    const profileHandledIds = readProfileHandledExtensionIds();
+    // A list saved before ownership was tracked is treated as this
+    // account's own when signed in, as it always was.
+    const localIsAnonymous = !userId || readPersistedExtensionsOwner() === null;
+
+    const localDeclinedIds = new Set(
+      [...localHandledIds].filter((id) => !localIds.has(id))
+    );
+    // For a signed-out store, only IDs it auto-installed itself count as
+    // declined by the account — an extension the visitor deliberately
+    // installed while signed out is still adopted.
+    const profileDeclinedIds = new Set(
+      [...profileHandledIds].filter(
+        (id) =>
+          !profileIds.has(id) && (!localIsAnonymous || localHandledIds.has(id))
+      )
+    );
 
     const merged = mergeInstalledExtensionIds(
       { ids: localIds, meta: localMeta },
       { ids: profileIds, meta: profileMeta },
-      Date.now()
+      Date.now(),
+      { localIsAnonymous, localDeclinedIds, profileDeclinedIds }
     );
     const savedIds = merged.ids;
 
     // Write back to whichever store(s) the merge actually changed.
-    if (!setsEqual(localIds, savedIds)) {
+    if (
+      !setsEqual(localIds, savedIds) ||
+      !metaEqual(localMeta, merged.localMeta)
+    ) {
       writePersistedExtensionIds(savedIds);
       writePersistedExtensionsMeta(merged.localMeta);
     }
-    if (!setsEqual(profileIds, savedIds)) {
+    if (
+      !setsEqual(profileIds, savedIds) ||
+      !metaEqual(profileMeta, merged.profileMeta)
+    ) {
       writeProfileExtensionState(savedIds, merged.profileMeta);
+    }
+    // Only claim the list for the account once the profile it was merged
+    // with has actually loaded; until then it's still the signed-out list.
+    const owner = userId ? (login.profile.value ? userId : undefined) : null;
+    if (owner !== undefined && readPersistedExtensionsOwner() !== owner) {
+      writePersistedExtensionsOwner(owner);
     }
 
     return savedIds;
@@ -1406,6 +1555,7 @@ export function createExtensionManager(
     }
 
     await awaitProfileLoaded();
+    discardOtherAccountsLocalState();
     const localHandledIds = readPersistedHandledExtensionIds();
     const profileHandledIds = readProfileHandledExtensionIds();
     const alreadyHandledIds = new Set([
@@ -1468,6 +1618,16 @@ export function createExtensionManager(
     refreshExtensionsSignal();
   };
 
+  /** The known extensions that are currently installed. */
+  const currentlyInstalledIds = (): Set<string> =>
+    // Bundled extensions count as installed by being registered, without
+    // ever entering `installedExtensionIds`, so check both.
+    new Set(
+      [...installedExtensionIds, ...knownExtensionsById.keys()].filter(
+        isSatisfiedDependency
+      )
+    );
+
   /**
    * Swaps the currently-installed extension set to exactly `targetIds`,
    * installing what's missing and uninstalling what's not wanted — all
@@ -1496,15 +1656,7 @@ export function createExtensionManager(
         target.add(dependencyId);
       }
     }
-    // Bundled extensions count as installed by being registered, without
-    // ever entering `installedExtensionIds`, so check both.
-    const current = new Set(
-      [...installedExtensionIds, ...knownExtensionsById.keys()].filter(
-        isSatisfiedDependency
-      )
-    );
-
-    for (const id of current) {
+    for (const id of currentlyInstalledIds()) {
       if (!target.has(id)) {
         unloadExtension(id, { persist: false });
       }
@@ -1564,15 +1716,47 @@ export function createExtensionManager(
     return setData;
   };
 
+  /**
+   * Returns this browser to a signed-out visitor's extensions after the
+   * account that owned them signs out (or is switched away from): the
+   * account's extensions are uninstalled, the saved state is reset, and the
+   * default `autoinstall` extensions are installed as for a first visit.
+   * Nothing is written to the account — its saved list stays as it was.
+   */
+  const leaveAccount = async () => {
+    resetLocalExtensionState();
+    if (scopedTargetIds !== null) {
+      // The customization keeps controlling what's installed; leaving it
+      // reconciles back to the (now signed-out) defaults.
+      skippedDefaultLoad = true;
+      return;
+    }
+    for (const id of currentlyInstalledIds()) {
+      unloadExtension(id, { persist: false });
+    }
+    if (defaultExtensions) {
+      await loadDefaultExtensions();
+    }
+  };
+
   // Re-sync the user's saved extensions when they log in. The installed-extension
   // IDs live on the user's profile config, which loads asynchronously after
   // login, so we react to `login.profile` (not just `login.userId`) and sync once
-  // per user. Logging out resets the guard so a later login re-syncs; it does not
-  // uninstall anything, since extensions remain locally installed and persisted.
+  // per user. Signing out (or switching to another account) puts the browser
+  // back to a signed-out visitor's extensions, so one account's extensions
+  // don't stay installed for whoever uses the browser next.
   const syncedUserId = signal<string | null>(null);
+  let previousUserId: string | null = login.userId.peek();
   effect(() => {
     const userId = login.userId.value;
     const profile = login.profile.value;
+    if (userId !== previousUserId) {
+      const signedOutUserId = previousUserId;
+      previousUserId = userId;
+      if (signedOutUserId !== null) {
+        void leaveAccount();
+      }
+    }
     if (!userId) {
       syncedUserId.value = null;
       return;

@@ -2463,6 +2463,270 @@ describe("createExtensionManager", () => {
       );
     });
   });
+
+  describe("signing out and switching accounts", () => {
+    const accountExtension = {
+      url: "pkg://account-ext",
+      meta: {
+        id: "ext.account",
+        translations: { en: { title: "Account", description: "Account" } },
+      },
+    };
+    const autoinstallExtension = {
+      url: "pkg://default-ext",
+      meta: {
+        id: "ext.default",
+        autoinstall: true,
+        translations: { en: { title: "Default", description: "Default" } },
+      },
+    };
+    const catalog: ExtensionSet = {
+      id: "set.accounts",
+      extensions: [accountExtension, autoinstallExtension],
+    };
+
+    const isInstalled = (manager: ExtensionManager, id: string) =>
+      manager.getExtensions().find((e) => e.id === id)?.installed ?? false;
+    const savedLocally = (): unknown =>
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]");
+
+    /** Simulates a page load: a fresh manager and login backed by the same local storage. */
+    async function boot(initial?: Parameters<typeof createTestLogin>[0]) {
+      const pageLogin = createTestLogin(initial);
+      const manager = createExtensionManager(pageLogin, {
+        defaultExtensions: catalog,
+      });
+      await manager.loadDefaultExtensions();
+      return { login: pageLogin, manager };
+    }
+
+    async function signIn(
+      pageLogin: LoginManager,
+      userId: string,
+      profile: UserProfile
+    ) {
+      pageLogin.userId.value = userId;
+      pageLogin.profile.value = structuredClone(profile);
+      // Let the login sync (and anything it awaits) settle.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    async function signOut(pageLogin: LoginManager) {
+      pageLogin.userId.value = null;
+      pageLogin.profile.value = null;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    beforeEach(() => {
+      mockExtensionModule(accountExtension.url);
+      mockExtensionModule(autoinstallExtension.url);
+    });
+
+    it("uninstalls the account's extensions on sign-out, and they stay gone after a reload", async () => {
+      let { login: pageLogin, manager } = await boot({
+        userId: "user-1",
+        profile: { name: "One" } as UserProfile,
+      });
+      await manager.loadExtension(accountExtension);
+
+      await signOut(pageLogin);
+
+      expect(isInstalled(manager, "ext.account")).toBe(false);
+      expect(savedLocally()).not.toContain("ext.account");
+
+      ({ manager } = await boot());
+      expect(isInstalled(manager, "ext.account")).toBe(false);
+    });
+
+    it("does not give one account's extensions to the next account that signs in on the same browser", async () => {
+      const { login: pageLogin, manager } = await boot({
+        userId: "user-1",
+        profile: { name: "One" } as UserProfile,
+      });
+      await manager.loadExtension(accountExtension);
+      await signOut(pageLogin);
+
+      await signIn(pageLogin, "user-2", {
+        name: "Two",
+        config: {
+          installedExtensions: [],
+          installedExtensionsMeta: { installedAtMs: {}, updatedAtMs: 1 },
+        },
+      } as UserProfile);
+
+      expect(isInstalled(manager, "ext.account")).toBe(false);
+      expect(getProfileInstalled(pageLogin)).not.toContain("ext.account");
+    });
+
+    it("discards a saved list another account left behind when the page loads signed out", async () => {
+      const { manager: firstPage } = await boot({
+        userId: "user-1",
+        profile: { name: "One" } as UserProfile,
+      });
+      await firstPage.loadExtension(accountExtension);
+
+      // The session ended while no page was open to see it.
+      const { manager } = await boot();
+
+      expect(isInstalled(manager, "ext.account")).toBe(false);
+      expect(savedLocally()).not.toContain("ext.account");
+    });
+
+    it("restores the account's extensions when the same account signs back in", async () => {
+      const { login: pageLogin, manager } = await boot({
+        userId: "user-1",
+        profile: { name: "One" } as UserProfile,
+      });
+      await manager.loadExtension(accountExtension);
+      const accountProfile = structuredClone(pageLogin.profile.value!);
+      await signOut(pageLogin);
+
+      await signIn(pageLogin, "user-1", accountProfile);
+      await waitForCondition(() => isInstalled(manager, "ext.account"));
+
+      expect(savedLocally()).toContain("ext.account");
+    });
+
+    it("installs the default extensions for the signed-out visitor after sign-out, without re-adding one the account removed when it signs back in", async () => {
+      const { login: pageLogin, manager } = await boot({
+        userId: "user-1",
+        profile: { name: "One" } as UserProfile,
+      });
+      expect(isInstalled(manager, "ext.default")).toBe(true);
+      manager.unloadExtension("ext.default");
+      const accountProfile = structuredClone(pageLogin.profile.value!);
+
+      await signOut(pageLogin);
+      await waitForCondition(() => isInstalled(manager, "ext.default"));
+
+      await signIn(pageLogin, "user-1", accountProfile);
+
+      expect(getProfileInstalled(pageLogin)).not.toContain("ext.default");
+      expect(savedLocally()).not.toContain("ext.default");
+    });
+
+    it("adds an extension installed while signed out to the account without removing the account's own extensions", async () => {
+      const otherExtension = {
+        url: "pkg://signed-out-ext",
+        meta: {
+          id: "ext.signed-out",
+          translations: { en: { title: "Other", description: "Other" } },
+        },
+      };
+      mockExtensionModule(otherExtension.url);
+      const { login: pageLogin, manager } = await boot();
+      await manager.loadExtension(otherExtension);
+
+      // The account's extension was installed (on another device) before the
+      // signed-out install above, so a timestamp comparison alone would read
+      // the newer signed-out list as having removed it.
+      await signIn(pageLogin, "user-1", {
+        name: "One",
+        config: {
+          installedExtensions: ["ext.account"],
+          installedExtensionsMeta: {
+            installedAtMs: { "ext.account": 100 },
+            updatedAtMs: 100,
+          },
+        },
+      } as UserProfile);
+
+      expect(getProfileInstalled(pageLogin)).toEqual(
+        expect.arrayContaining(["ext.account", "ext.signed-out"])
+      );
+      await waitForCondition(() => isInstalled(manager, "ext.account"));
+    });
+  });
+
+  describe("extensions saved before install times were recorded", () => {
+    const legacyExtension = {
+      url: "pkg://legacy-ext",
+      meta: {
+        id: "ext.legacy",
+        translations: { en: { title: "Legacy", description: "Legacy" } },
+      },
+    };
+    const catalog: ExtensionSet = {
+      id: "set.legacy",
+      extensions: [legacyExtension],
+    };
+
+    beforeEach(() => {
+      mockExtensionModule(legacyExtension.url);
+    });
+
+    it("lets a later uninstall on another device stick", async () => {
+      // Both stores list the extension, with no install time on either.
+      localStorage.setItem(
+        "sb-installed-extensions",
+        JSON.stringify(["ext.legacy"])
+      );
+      const profile = {
+        name: "One",
+        config: { installedExtensions: ["ext.legacy"] },
+      } as UserProfile;
+      const pageLogin = createTestLogin({ userId: "user-1", profile });
+      await createExtensionManager(pageLogin, {
+        defaultExtensions: catalog,
+      }).loadDefaultExtensions();
+      const deviceBLocal = {
+        ids: localStorage.getItem("sb-installed-extensions"),
+        meta: localStorage.getItem("sb-installed-extensions-meta"),
+      };
+
+      // Device A uninstalls it afterwards.
+      await new Promise((resolve) => setTimeout(resolve, 2));
+      const deviceA = createExtensionManager(pageLogin, {
+        defaultExtensions: catalog,
+      });
+      deviceA.unloadExtension("ext.legacy");
+
+      // Device B, still holding its earlier copy, loads.
+      localStorage.setItem("sb-installed-extensions", deviceBLocal.ids ?? "[]");
+      localStorage.setItem(
+        "sb-installed-extensions-meta",
+        deviceBLocal.meta ?? "{}"
+      );
+      localStorage.removeItem("sb-autoinstall-handled-extensions");
+      const deviceB = createExtensionManager(pageLogin, {
+        defaultExtensions: catalog,
+      });
+      await deviceB.loadSavedExtensions();
+
+      expect(getProfileInstalled(pageLogin)).toEqual([]);
+      expect(
+        deviceB.getExtensions().find((e) => e.id === "ext.legacy")?.installed
+      ).toBeFalsy();
+    });
+
+    it("does not re-add an extension the account has recorded as uninstalled", async () => {
+      localStorage.setItem(
+        "sb-installed-extensions",
+        JSON.stringify(["ext.legacy"])
+      );
+      const pageLogin = createTestLogin({
+        userId: "user-1",
+        profile: {
+          name: "One",
+          config: {
+            installedExtensions: [],
+            installedExtensionsMeta: { installedAtMs: {}, updatedAtMs: 300 },
+            autoinstallHandledExtensions: ["ext.legacy"],
+          },
+        } as UserProfile,
+      });
+      const manager = createExtensionManager(pageLogin, {
+        defaultExtensions: catalog,
+      });
+      await manager.loadDefaultExtensions();
+
+      expect(getProfileInstalled(pageLogin)).toEqual([]);
+      expect(
+        manager.getExtensions().find((e) => e.id === "ext.legacy")?.installed
+      ).toBeFalsy();
+    });
+  });
 });
 
 describe("mergeInstalledExtensionIds()", () => {
@@ -2564,5 +2828,62 @@ describe("mergeInstalledExtensionIds()", () => {
     );
 
     expect([...result.ids]).toEqual(["ext.legacy"]);
+  });
+
+  it("stamps an ID with no recorded install time on whichever side lacks one, without bumping that side's updatedAtMs", () => {
+    const result = mergeInstalledExtensionIds(
+      { ids: new Set(["ext.legacy"]), meta: meta({ updatedAtMs: 50 }) },
+      { ids: new Set(["ext.legacy"]), meta: meta({ updatedAtMs: 60 }) },
+      400
+    );
+
+    expect(result.localMeta).toEqual(
+      meta({ installedAtMs: { "ext.legacy": 400 }, updatedAtMs: 50 })
+    );
+    expect(result.profileMeta).toEqual(
+      meta({ installedAtMs: { "ext.legacy": 400 }, updatedAtMs: 60 })
+    );
+  });
+
+  it("drops an ID with no recorded install time that the other side has declined", () => {
+    const result = mergeInstalledExtensionIds(
+      { ids: new Set(["ext.legacy"]), meta: meta() },
+      { ids: new Set(), meta: meta({ updatedAtMs: 300 }) },
+      400,
+      { profileDeclinedIds: new Set(["ext.legacy"]) }
+    );
+
+    expect([...result.ids]).toEqual([]);
+  });
+
+  it("never infers a deletion from a signed-out local store, however recent", () => {
+    const result = mergeInstalledExtensionIds(
+      {
+        ids: new Set(["ext.new"]),
+        meta: meta({ installedAtMs: { "ext.new": 300 }, updatedAtMs: 300 }),
+      },
+      {
+        ids: new Set(["ext.account"]),
+        meta: meta({ installedAtMs: { "ext.account": 100 }, updatedAtMs: 100 }),
+      },
+      400,
+      { localIsAnonymous: true }
+    );
+
+    expect([...result.ids].sort()).toEqual(["ext.account", "ext.new"]);
+  });
+
+  it("drops an ID from a signed-out local store that the account has declined", () => {
+    const result = mergeInstalledExtensionIds(
+      {
+        ids: new Set(["ext.default"]),
+        meta: meta({ installedAtMs: { "ext.default": 300 }, updatedAtMs: 300 }),
+      },
+      { ids: new Set(), meta: meta({ updatedAtMs: 100 }) },
+      400,
+      { localIsAnonymous: true, profileDeclinedIds: new Set(["ext.default"]) }
+    );
+
+    expect([...result.ids]).toEqual([]);
   });
 });
