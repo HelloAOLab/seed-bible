@@ -105,9 +105,6 @@
 .sb-dcp-filters::-webkit-scrollbar {
   display: none;
 }
-.sb-dcp-filters-wrapper--scrollable .sb-dcp-filters {
-  overflow-x: auto;
-}
 .sb-dcp-filters-arrow {
   width: 1.9rem;
   height: 1.9rem;
@@ -150,33 +147,17 @@
   border-color: color-mix(in srgb, var(--sb-primary-color), transparent 50%);
   color: var(--sb-font-color);
 }
-.sb-dcp-filters-arrow:disabled {
-  opacity: 0.3;
+.sb-dcp-filters-arrow[aria-disabled="true"] {
+  opacity: 0.4;
   cursor: default;
-  pointer-events: none;
 }
 @media (pointer: coarse) {
-  .sb-dcp-filters-wrapper {
-    display: block;
-    width: 100%;
-  }
-
-  .sb-dcp-filters-wrapper--scrollable {
-    display: block;
-  }
-
-  .sb-dcp-filters {
-    width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .sb-dcp-filters::-webkit-scrollbar {
-    display: none;
-  }
-
   .sb-dcp-filters-arrow {
     display: none;
+  }
+
+  .sb-dcp-filters-wrapper--scrollable .sb-dcp-filters {
+    display: flex;
   }
 }
 

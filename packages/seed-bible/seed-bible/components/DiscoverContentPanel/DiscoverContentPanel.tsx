@@ -127,56 +127,44 @@ function DiscoverFilters({
   const filtersRef = useRef<HTMLDivElement>(null);
 
   const hasScrollableFilters = useSignal(false);
-  const canScrollLeft = useSignal(false);
-  const canScrollRight = useSignal(false);
+  const canScrollStart = useSignal(false);
+  const canScrollEnd = useSignal(false);
   const filtersKey = filters
     .map((filter) => `${filter.key}:${filter.label}`)
     .join("|");
 
-  const updateScrollState = useCallback(() => {
+  const updateScrollState = useCallback((isRtl: boolean) => {
     const container = filtersRef.current;
-
-    if (!container) {
+    const wrapper = container?.parentElement;
+    if (!container || !wrapper) {
       hasScrollableFilters.value = false;
-      canScrollLeft.value = false;
-      canScrollRight.value = false;
+      canScrollStart.value = false;
+      canScrollEnd.value = false;
       return;
     }
-
-    const wrapper = container.parentElement;
-
-    if (!wrapper) {
-      hasScrollableFilters.value = false;
-      canScrollLeft.value = false;
-      canScrollRight.value = false;
-      return;
-    }
-
     const hasOverflow = container.scrollWidth > wrapper.clientWidth + 1;
     hasScrollableFilters.value = hasOverflow;
-
     if (!hasOverflow) {
-      canScrollLeft.value = false;
-      canScrollRight.value = false;
+      canScrollStart.value = false;
+      canScrollEnd.value = false;
       return;
     }
-    const isRtl = getComputedStyle(container).direction === "rtl";
     const maxScroll = Math.max(
       0,
       container.scrollWidth - container.clientWidth
     );
-
     const position = isRtl
       ? Math.abs(container.scrollLeft)
       : container.scrollLeft;
 
-    // canScrollLeft represents scrolling toward the start.
-    // canScrollRight represents scrolling toward the end.
-    canScrollLeft.value = position > 1;
-    canScrollRight.value = position < maxScroll - 1;
+    canScrollStart.value = position > 1;
+    canScrollEnd.value = position < maxScroll - 1;
   }, []);
 
   const scrollFilters = useCallback((direction: -1 | 1) => {
+    if (direction === -1 && !canScrollStart.value) return;
+    if (direction === 1 && !canScrollEnd.value) return;
+
     const container = filtersRef.current;
     if (!container) return;
 
@@ -236,15 +224,13 @@ function DiscoverFilters({
   useLayoutEffect(() => {
     const container = filtersRef.current;
     if (!container) return;
-
-    updateScrollState();
-
-    container.addEventListener("scroll", updateScrollState);
-
+    container.scrollLeft = 0;
+    const isRtl = getComputedStyle(container).direction === "rtl";
+    const update = () => updateScrollState(isRtl);
+    update();
+    container.addEventListener("scroll", update);
     const resizeObserver =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(updateScrollState)
-        : null;
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
 
     if (resizeObserver) {
       resizeObserver.observe(container);
@@ -256,13 +242,13 @@ function DiscoverFilters({
         .querySelectorAll<HTMLElement>(".sb-dcp-chip")
         .forEach((chip) => resizeObserver.observe(chip));
     }
-
-    // Recheck after layout and direction changes.
-    window.addEventListener("resize", updateScrollState);
+    // Recheck when the viewport resizes.
+    // ResizeObserver also handles changes to the row and wrapper dimensions.
+    window.addEventListener("resize", update);
 
     return () => {
-      container.removeEventListener("scroll", updateScrollState);
-      window.removeEventListener("resize", updateScrollState);
+      container.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
       resizeObserver?.disconnect();
     };
   }, [filtersKey, updateScrollState]);
@@ -278,7 +264,7 @@ function DiscoverFilters({
           type="button"
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(-1)}
-          disabled={!canScrollLeft.value}
+          aria-disabled={!canScrollStart.value}
           aria-label={t("scroll-filters-left", {
             defaultValue: "Scroll filters toward start",
           })}
@@ -313,7 +299,7 @@ function DiscoverFilters({
           type="button"
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(1)}
-          disabled={!canScrollRight.value}
+          aria-disabled={!canScrollEnd.value}
           aria-label={t("scroll-filters-right", {
             defaultValue: "Scroll filters toward end",
           })}

@@ -11,6 +11,16 @@ import {
   type DiscoverContentTypeDefinition,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { createRealFriendContent } from "../testUtils/realFriendContent";
+import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
+const { t } = useI18n();
+
+const START_LABEL = t("scroll-filters-left", {
+  defaultValue: "Scroll filters toward start",
+});
+
+const END_LABEL = t("scroll-filters-right", {
+  defaultValue: "Scroll filters toward end",
+});
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -610,24 +620,24 @@ describe("DiscoverContentPanel", () => {
       expect(getArrow(END_LABEL)).toBeNull();
     });
 
-    it("disables the arrow at the current scroll boundary", () => {
+    it("marks the arrow as disabled at the current scroll boundary", () => {
       renderPanel();
       const row = getRow();
       configureOverflow(row);
-      // Start boundary.
       setDimension(row, "scrollLeft", 0);
       act(() => {
         row.dispatchEvent(new Event("scroll"));
       });
-      expect(getArrow(START_LABEL)?.disabled).toBe(true);
-      expect(getArrow(END_LABEL)?.disabled).toBe(false);
-      // End boundary.
+      expect(getArrow(START_LABEL)?.getAttribute("aria-disabled")).toBe("true");
+      expect(getArrow(END_LABEL)?.getAttribute("aria-disabled")).toBe("false");
       setDimension(row, "scrollLeft", 140);
       act(() => {
         row.dispatchEvent(new Event("scroll"));
       });
-      expect(getArrow(START_LABEL)?.disabled).toBe(false);
-      expect(getArrow(END_LABEL)?.disabled).toBe(true);
+      expect(getArrow(START_LABEL)?.getAttribute("aria-disabled")).toBe(
+        "false"
+      );
+      expect(getArrow(END_LABEL)?.getAttribute("aria-disabled")).toBe("true");
     });
 
     it("updates arrow visibility when the chapter's filters change but their count stays the same", () => {
@@ -677,12 +687,19 @@ describe("DiscoverContentPanel", () => {
         ],
       });
 
+      // Set the dimensions on the existing row BEFORE rerendering.
+      // Preact should reuse the row because its structure is unchanged.
+      setDimension(row, "scrollWidth", 100);
+      setDimension(row, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
       act(() => {
         render(<DiscoverContentPanel tab={nextTab} state={state} />, container);
       });
 
       const updatedRow = getRow();
-      const updatedWrapper = updatedRow.parentElement!;
+
+      expect(updatedRow).toBe(row);
 
       expect(
         Array.from(updatedRow.querySelectorAll(".sb-dcp-chip")).map(
@@ -690,17 +707,268 @@ describe("DiscoverContentPanel", () => {
         )
       ).toEqual(["All", "Notes", "Content"]);
 
-      // Simulate the new chapter's filters fitting in the available width.
-      setDimension(updatedRow, "scrollWidth", 100);
-      setDimension(updatedRow, "clientWidth", 100);
-      setDimension(updatedWrapper, "clientWidth", 100);
+      // No resize event here: the effect must detect the filter change.
+      expect(getArrow(START_LABEL)).toBeNull();
+      expect(getArrow(END_LABEL)).toBeNull();
+    });
+
+    it("marks the correct arrows as disabled at RTL scroll boundaries", () => {
+      const parent = document.createElement("div");
+      parent.dir = "rtl";
+      container.appendChild(parent);
+
+      const tab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      act(() => {
+        render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+      });
+
+      const row = parent.querySelector<HTMLElement>(".sb-dcp-filters");
+      expect(row).not.toBeNull();
+
+      const rtlRow = row!;
+      rtlRow.style.direction = "rtl";
+
+      const wrapper = rtlRow.parentElement!;
+      setDimension(rtlRow, "scrollWidth", 240);
+      setDimension(rtlRow, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      // RTL start boundary.
+      setDimension(rtlRow, "scrollLeft", 0);
+
+      act(() => {
+        rtlRow.dispatchEvent(new Event("scroll"));
+      });
+
+      expect(
+        parent
+          .querySelector<HTMLButtonElement>(
+            `button[aria-label="${START_LABEL}"]`
+          )
+          ?.getAttribute("aria-disabled")
+      ).toBe("true");
+
+      expect(
+        parent
+          .querySelector<HTMLButtonElement>(`button[aria-label="${END_LABEL}"]`)
+          ?.getAttribute("aria-disabled")
+      ).toBe("false");
+
+      // RTL end boundary: browsers can report a negative scrollLeft.
+      setDimension(rtlRow, "scrollLeft", -140);
+
+      act(() => {
+        rtlRow.dispatchEvent(new Event("scroll"));
+      });
+
+      expect(
+        parent
+          .querySelector<HTMLButtonElement>(
+            `button[aria-label="${START_LABEL}"]`
+          )
+          ?.getAttribute("aria-disabled")
+      ).toBe("false");
+
+      expect(
+        parent
+          .querySelector<HTMLButtonElement>(`button[aria-label="${END_LABEL}"]`)
+          ?.getAttribute("aria-disabled")
+      ).toBe("true");
+    });
+    it("scrolls toward the end when the end arrow is clicked in LTR", () => {
+      renderPanel();
+
+      const row = getRow();
+      configureOverflow(row);
+
+      const pills = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+
+      expect(pills.length).toBeGreaterThan(0);
+
+      setRect(row, 0, 100);
+      pills.forEach((pill, index) => {
+        setRect(pill, 110 + index * 50, 150 + index * 50);
+      });
+
+      const scrollBy = vi.fn();
+      row.scrollBy = scrollBy;
+
+      setDimension(row, "scrollLeft", 0);
+
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+
+      const endArrow = getArrow(END_LABEL);
+      expect(endArrow).not.toBeNull();
+      expect(endArrow!.getAttribute("aria-disabled")).toBe("false");
+
+      act(() => {
+        endArrow!.click();
+      });
+
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+      expect(scrollBy.mock.calls[0]![0].left).toBeGreaterThan(0);
+    });
+
+    it("scrolls toward the start when the start arrow is clicked in LTR", () => {
+      renderPanel();
+
+      const row = getRow();
+      configureOverflow(row);
+
+      const pills = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+
+      setRect(row, 0, 100);
+      pills.forEach((pill, index) => {
+        setRect(pill, -50 + index * 50, -10 + index * 50);
+      });
+
+      const scrollBy = vi.fn();
+      row.scrollBy = scrollBy;
+
+      setDimension(row, "scrollLeft", 100);
+
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+
+      const startArrow = getArrow(START_LABEL);
+      expect(startArrow).not.toBeNull();
+      expect(startArrow!.getAttribute("aria-disabled")).toBe("false");
+
+      act(() => {
+        startArrow!.click();
+      });
+
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+      expect(scrollBy.mock.calls[0]![0].left).toBeLessThan(0);
+    });
+
+    it("scrolls toward the end when the end arrow is clicked in RTL", () => {
+      const parent = document.createElement("div");
+      parent.dir = "rtl";
+      container.appendChild(parent);
+
+      const tab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      act(() => {
+        render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+      });
+
+      const row = parent.querySelector<HTMLElement>(".sb-dcp-filters")!;
+      const wrapper = row.parentElement!;
+      row.style.direction = "rtl";
+
+      setDimension(row, "scrollWidth", 240);
+      setDimension(row, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      const pills = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+
+      setRect(row, 0, 100);
+      pills.forEach((pill, index) => {
+        setRect(pill, -50 - index * 50, 10 - index * 50);
+      });
+
+      const scrollBy = vi.fn();
+      row.scrollBy = scrollBy;
+
+      setDimension(row, "scrollLeft", 0);
 
       act(() => {
         window.dispatchEvent(new Event("resize"));
+        row.dispatchEvent(new Event("scroll"));
       });
 
-      expect(getArrow(START_LABEL)).toBeNull();
-      expect(getArrow(END_LABEL)).toBeNull();
+      const endArrow = parent.querySelector<HTMLButtonElement>(
+        `button[aria-label="${END_LABEL}"]`
+      );
+
+      expect(endArrow).not.toBeNull();
+      expect(endArrow!.getAttribute("aria-disabled")).toBe("false");
+
+      act(() => {
+        endArrow!.click();
+      });
+
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+      expect(scrollBy.mock.calls[0]![0].left).toBeLessThan(0);
+    });
+
+    it("scrolls toward the start when the start arrow is clicked in RTL", () => {
+      const parent = document.createElement("div");
+      parent.dir = "rtl";
+      container.appendChild(parent);
+
+      const tab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      act(() => {
+        render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+      });
+
+      const row = parent.querySelector<HTMLElement>(".sb-dcp-filters")!;
+      const wrapper = row.parentElement!;
+      row.style.direction = "rtl";
+
+      setDimension(row, "scrollWidth", 240);
+      setDimension(row, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      const pills = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+
+      setRect(row, 0, 100);
+      pills.forEach((pill, index) => {
+        setRect(pill, 110 + index * 50, 150 + index * 50);
+      });
+
+      const scrollBy = vi.fn();
+      row.scrollBy = scrollBy;
+
+      setDimension(row, "scrollLeft", -100);
+
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+        row.dispatchEvent(new Event("scroll"));
+      });
+
+      const startArrow = parent.querySelector<HTMLButtonElement>(
+        `button[aria-label="${START_LABEL}"]`
+      );
+
+      expect(startArrow).not.toBeNull();
+      expect(startArrow!.getAttribute("aria-disabled")).toBe("false");
+
+      act(() => {
+        startArrow!.click();
+      });
+
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+      expect(scrollBy.mock.calls[0]![0].left).toBeGreaterThan(0);
     });
 
     it("scrolls in the correct direction in RTL layout", () => {
