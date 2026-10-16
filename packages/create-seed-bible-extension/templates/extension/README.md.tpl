@@ -9,9 +9,12 @@ A Seed Bible extension, scaffolded by `create-seed-bible-extension`.
 - `npm run lint:fix` — lint with ESLint, automatically fixing what it can.
 - `npm run test` — run the test suite with Vitest.
 - `npm run dev` — run a real Seed Bible instance with this extension
-  auto-installed. The first run clones and installs the seed-bible app into a
-  local cache (this can take a few minutes); later runs reuse it. Pass
-  `--repo <path>` to use an existing seed-bible checkout instead.
+  auto-installed. It runs the newest Seed Bible release matching the
+  `seed-bible` version in `package.json`; raise that version to move to a
+  newer one. The first run of each version clones and installs it into a local
+  cache (this can take a few minutes); later runs reuse it. Pass
+  `--seed-bible-version <version|branch>` (e.g. `develop`) to run a different
+  one, or `--repo <path>` to use an existing seed-bible checkout.
 - `npm run build` — validate and package this extension's source, ready to
   drop into a `seed-bible` checkout's `packages/<name>/` (the fully-supported
   distribution path).

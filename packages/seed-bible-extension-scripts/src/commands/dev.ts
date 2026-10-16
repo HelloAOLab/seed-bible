@@ -1,14 +1,26 @@
 import { existsSync } from "node:fs";
-import { mkdir } from "node:fs/promises";
-import { spawn } from "node:child_process";
+import { mkdir, readdir, readFile } from "node:fs/promises";
+import { execFile, spawn } from "node:child_process";
+import { promisify } from "node:util";
 import os from "node:os";
 import path from "node:path";
 import { loadExtensionProjectInfo } from "../lib/project.js";
 import { runCommand } from "../lib/spawn.js";
+import {
+  pickReleaseTag,
+  readSeedBibleDependencySpec,
+  refDirName,
+  resolveSeedBibleTarget,
+  type SeedBibleTarget,
+} from "../lib/seedBibleTarget.js";
+
+const execFileAsync = promisify(execFile);
 
 export interface DevOptions {
   /** Path to an existing seed-bible checkout to use instead of the managed cache. */
   repoPath?: string;
+  /** Release range (e.g. `1.13`) or branch (e.g. `develop`) to run instead of the one package.json implies. */
+  seedBibleVersion?: string;
   /** Port to run the seed-bible dev server on. Defaults to 3002 (its own default). */
   port?: number;
 }
@@ -17,7 +29,7 @@ const REPO_URL = "https://github.com/HelloAOLab/seed-bible.git";
 const DEFAULT_PORT = 3002;
 
 /**
- * OS-appropriate cache root for the managed seed-bible checkout, following
+ * OS-appropriate cache root for the managed seed-bible checkouts, following
  * the same `XDG_CACHE_HOME` / `%LOCALAPPDATA%` / `~/.cache` convention most
  * CLI tools use, so `dev` needs no configuration to "just work" the first
  * time it runs.
@@ -34,62 +46,154 @@ function isSeedBibleCheckout(dir: string): boolean {
   return existsSync(path.join(dir, "pnpm-workspace.yaml"));
 }
 
-/**
- * Resolves a working local seed-bible checkout: `options.repoPath` if given
- * (must already exist), otherwise a cached clone under `defaultCacheDir()`,
- * cloned on first use and best-effort `git pull`ed on later runs. A failed
- * pull only warns (the cached checkout might be offline-usable, or the
- * remote could be temporarily unreachable) — it never blocks `dev` from
- * using whatever's already there.
- */
-async function ensureRepo(repoPath: string | undefined): Promise<string> {
-  if (repoPath) {
-    const resolved = path.resolve(repoPath);
-    if (!isSeedBibleCheckout(resolved)) {
-      throw new Error(
-        `${resolved} doesn't look like a seed-bible checkout (no pnpm-workspace.yaml found).`
-      );
-    }
-    return resolved;
+/** The repo's release tags, or `undefined` if the remote can't be reached. */
+async function listRemoteTags(): Promise<string[] | undefined> {
+  try {
+    const { stdout } = await execFileAsync("git", [
+      "ls-remote",
+      "--tags",
+      "--refs",
+      REPO_URL,
+    ]);
+    return stdout
+      .split("\n")
+      .map((line) => line.split("\t")[1]?.replace("refs/tags/", ""))
+      .filter((tag): tag is string => Boolean(tag));
+  } catch {
+    return undefined;
   }
+}
 
-  const cacheDir = defaultCacheDir();
-  const appDir = path.join(cacheDir, "app");
-
-  if (!isSeedBibleCheckout(appDir)) {
-    console.log(`[dev] Cloning seed-bible into ${appDir} (first run only)…`);
-    await mkdir(cacheDir, { recursive: true });
-    const cloneCode = await runCommand(
-      "git",
-      ["clone", "--depth", "1", REPO_URL, appDir],
-      { cwd: cacheDir }
-    );
-    if (cloneCode !== 0) {
-      throw new Error(
-        `git clone failed (exit ${cloneCode}). Pass --repo <path> to use an existing checkout instead.`
-      );
-    }
-  } else {
-    console.log("[dev] Updating cached seed-bible checkout…");
-    const pullCode = await runCommand("git", ["pull", "--ff-only"], {
-      cwd: appDir,
-    });
-    if (pullCode !== 0) {
-      console.warn(
-        "[dev] git pull failed — continuing with the cached checkout as-is."
-      );
-    }
+/** Release tags already cloned into the cache, for working offline. */
+async function listCachedTags(releasesDir: string): Promise<string[]> {
+  if (!existsSync(releasesDir)) {
+    return [];
   }
+  const entries = await readdir(releasesDir, { withFileTypes: true });
+  return entries
+    .filter(
+      (e) =>
+        e.isDirectory() && isSeedBibleCheckout(path.join(releasesDir, e.name))
+    )
+    .map((e) => e.name);
+}
 
-  console.log("[dev] Installing dependencies (pnpm install)…");
-  const installCode = await runCommand("pnpm", ["install"], { cwd: appDir });
-  if (installCode !== 0) {
+async function cloneRef(ref: string, dir: string): Promise<void> {
+  await mkdir(path.dirname(dir), { recursive: true });
+  console.log(`[dev] Cloning seed-bible ${ref} into ${dir} (first run only)…`);
+  const code = await runCommand(
+    "git",
+    [
+      "clone",
+      "--depth",
+      "1",
+      "--branch",
+      ref,
+      "--single-branch",
+      REPO_URL,
+      dir,
+    ],
+    { cwd: path.dirname(dir) }
+  );
+  if (code !== 0) {
     throw new Error(
-      `pnpm install failed (exit ${installCode}) in the cached seed-bible checkout at ${appDir}.`
+      `git clone of seed-bible ${ref} failed (exit ${code}). Pass --repo <path> to use an existing checkout instead.`
+    );
+  }
+}
+
+async function installDependencies(dir: string): Promise<void> {
+  console.log("[dev] Installing dependencies (pnpm install)…");
+  const code = await runCommand("pnpm", ["install"], { cwd: dir });
+  if (code !== 0) {
+    throw new Error(`pnpm install failed (exit ${code}) in ${dir}.`);
+  }
+}
+
+/** A cached checkout of the newest release tag satisfying `range`. */
+async function ensureRelease(range: string | undefined): Promise<string> {
+  const releasesDir = path.join(defaultCacheDir(), "releases");
+  let tags = await listRemoteTags();
+  if (!tags) {
+    console.warn(
+      "[dev] Couldn't reach GitHub to list seed-bible releases; choosing from the ones already cached."
+    );
+    tags = await listCachedTags(releasesDir);
+  }
+  const tag = pickReleaseTag(tags, range);
+  if (!tag) {
+    throw new Error(
+      range
+        ? `No seed-bible release matches "${range}". Change the "seed-bible" version in package.json, or pass --seed-bible-version <version|branch>.`
+        : "Couldn't find any seed-bible release. Pass --repo <path> or --seed-bible-version <branch>."
     );
   }
 
-  return appDir;
+  const dir = path.join(releasesDir, refDirName(tag));
+  // Tags don't move, so an existing checkout never needs a pull.
+  if (!isSeedBibleCheckout(dir)) {
+    await cloneRef(tag, dir);
+  }
+  return dir;
+}
+
+/** A cached checkout of `branch`, updated to its latest commit on each run. */
+async function ensureBranch(branch: string): Promise<string> {
+  const dir = path.join(defaultCacheDir(), "branches", refDirName(branch));
+  if (!isSeedBibleCheckout(dir)) {
+    await cloneRef(branch, dir);
+  } else {
+    console.log(`[dev] Updating cached seed-bible ${branch}…`);
+    const code = await runCommand("git", ["pull", "--ff-only"], { cwd: dir });
+    if (code !== 0) {
+      console.warn(
+        `[dev] git pull failed — continuing with the cached ${branch} as-is.`
+      );
+    }
+  }
+  return dir;
+}
+
+async function ensureTarget(target: SeedBibleTarget): Promise<string> {
+  switch (target.kind) {
+    case "checkout":
+      if (!isSeedBibleCheckout(target.dir)) {
+        throw new Error(
+          `${target.dir} doesn't look like a seed-bible checkout (no pnpm-workspace.yaml found).`
+        );
+      }
+      return target.dir;
+    case "release":
+      return ensureRelease(target.range);
+    case "branch":
+      return ensureBranch(target.branch);
+  }
+}
+
+/**
+ * Seed Bible versions from before out-of-tree extension support would start
+ * fine but silently leave the extension out, so check for it up front.
+ */
+async function assertSupportsExternalExtensions(appDir: string): Promise<void> {
+  const pluginPath = path.join(
+    appDir,
+    "script",
+    "lib",
+    "vite-plugin-extensions.ts"
+  );
+  const source = existsSync(pluginPath)
+    ? await readFile(pluginPath, "utf-8")
+    : "";
+  if (!source.includes("SEED_BIBLE_EXTRA_EXTENSION_DIRS")) {
+    throw new Error(
+      `The seed-bible version at ${appDir} doesn't support loading extensions from outside its own repo, so this extension wouldn't appear. Use a newer version (raise "seed-bible" in package.json, or pass --seed-bible-version develop), or --repo <path> to a checkout that has it.`
+    );
+  }
+}
+
+async function readDependencySpec(root: string): Promise<string | undefined> {
+  const raw = await readFile(path.join(root, "package.json"), "utf-8");
+  return readSeedBibleDependencySpec(JSON.parse(raw));
 }
 
 async function waitForServer(url: string, timeoutMs = 120_000): Promise<void> {
@@ -146,7 +250,26 @@ export async function runDev(
   root: string = process.cwd()
 ): Promise<number> {
   const info = await loadExtensionProjectInfo(root);
-  const appDir = await ensureRepo(options.repoPath);
+  const target = resolveSeedBibleTarget({
+    repoOption: options.repoPath,
+    versionOption: options.seedBibleVersion,
+    dependencySpec: await readDependencySpec(root),
+    projectRoot: root,
+  });
+  const targetLabel =
+    target.kind === "checkout"
+      ? target.dir
+      : target.kind === "branch"
+        ? `branch ${target.branch}`
+        : `newest release matching ${target.range ?? "any version"}`;
+  console.log(`[dev] Using seed-bible ${targetLabel} (from ${target.reason}).`);
+  const appDir = await ensureTarget(target);
+  // Checked before installing: an unsupported version would otherwise cost a
+  // full `pnpm install` before failing.
+  await assertSupportsExternalExtensions(appDir);
+  if (target.kind !== "checkout") {
+    await installDependencies(appDir);
+  }
   const port = options.port ?? DEFAULT_PORT;
 
   console.log(`[dev] Starting Seed Bible dev server from ${appDir} …`);

@@ -20,11 +20,13 @@
     "@preact/preset-vite": "^2.10.5",
     "commander": "^12.1.0",
     "hash.js": "^1.1.7",
+    "semver": "^7.7.3",
     "vite": "^8.0.13"
   },
   "devDependencies": {
     "@preact/signals": "2.9.1",
     "@types/node": "^24.0.0",
+    "@types/semver": "^7.8.0",
     "preact": "10.29.2",
     "seed-bible": "workspace:*",
     "tsc-silent": "1.2.2",

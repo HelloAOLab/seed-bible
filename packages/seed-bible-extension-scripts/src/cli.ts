@@ -73,13 +73,24 @@ program
     "--repo <path>",
     "path to an existing seed-bible checkout to use instead of the managed cache"
   )
+  .option(
+    "--seed-bible-version <version>",
+    'seed-bible release range (e.g. 1.13) or branch (e.g. develop) to run, instead of the one the "seed-bible" dependency implies'
+  )
   .option("--port <port>", "port to run the seed-bible dev server on")
-  .action(async (opts: { repo?: string; port?: string }) => {
-    process.exitCode = await runDev({
-      repoPath: opts.repo,
-      port: opts.port ? Number(opts.port) : undefined,
-    });
-  });
+  .action(
+    async (opts: {
+      repo?: string;
+      seedBibleVersion?: string;
+      port?: string;
+    }) => {
+      process.exitCode = await runDev({
+        repoPath: opts.repo,
+        seedBibleVersion: opts.seedBibleVersion,
+        port: opts.port ? Number(opts.port) : undefined,
+      });
+    }
+  );
 
 program.parseAsync(process.argv).catch((err: unknown) => {
   console.error(err);
