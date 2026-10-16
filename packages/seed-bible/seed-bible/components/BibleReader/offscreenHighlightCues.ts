@@ -1,16 +1,31 @@
 import type { VerseDecoration } from "../../managers/BibleReadingManager";
 import type { ChapterHighlight } from "../../managers/HighlightsManager";
+import type { ConnectionSessionUserVisual } from "../../managers/SessionsManager";
 import type { ReaderViewport } from "./readerViewport";
+
+/** The person who made a highlight, drawn as an avatar on its bubble. */
+export interface HighlightCueAuthor {
+  /** Stable identity. Runs by different people never share a bubble. */
+  key: string;
+  displayName: string;
+  imageUrl: string | null;
+  visual: ConnectionSessionUserVisual;
+  /** Show a generic account icon instead of the animal when there is no picture. */
+  genericFallback?: boolean;
+}
 
 /**
  * One highlighted verse, ready to be placed against the reader viewport.
- * `styleKey` is what consecutive verses must share to collapse into one bubble.
+ * `styleKey` and the author are what consecutive verses must share to collapse
+ * into one bubble.
  */
 export interface HighlightCueMark {
   verse: number;
   styleKey: string;
   background: string;
   textColor: string;
+  /** Null when nobody in particular made it, such as an extension's highlight. */
+  author: HighlightCueAuthor | null;
 }
 
 /** A verse whose box has been measured in chapter-content coordinates. */
@@ -29,6 +44,7 @@ export interface OffscreenHighlightCue {
   label: string;
   background: string;
   textColor: string;
+  author: HighlightCueAuthor | null;
 }
 
 /** How a highlight is painted on a bubble, matching the ribbon's own colour. */
@@ -101,6 +117,27 @@ export function decorationHighlightsByVerse(
   }
 ): Map<number, ChapterHighlight> {
   const byVerse = new Map<number, ChapterHighlight>();
+  for (const [verse, { highlight }] of decorationsByVerse(
+    decorations,
+    chapter
+  )) {
+    byVerse.set(verse, highlight);
+  }
+  return byVerse;
+}
+
+function decorationsByVerse(
+  decorations: readonly VerseDecoration[],
+  chapter: {
+    translationId: string;
+    bookId: string;
+    chapterNumber: number;
+  }
+): Map<number, { highlight: ChapterHighlight; decorationId: string }> {
+  const byVerse = new Map<
+    number,
+    { highlight: ChapterHighlight; decorationId: string }
+  >();
   for (const decoration of decorations) {
     if (!decoration.highlight || hasContentTargeting(decoration)) continue;
     if (
@@ -114,8 +151,8 @@ export function decorationHighlightsByVerse(
     for (const verseNumber of decoration.verses) {
       if (!Number.isInteger(verseNumber) || verseNumber < 1) continue;
       byVerse.set(verseNumber, {
-        ...decoration.highlight,
-        verse: verseNumber,
+        highlight: { ...decoration.highlight, verse: verseNumber },
+        decorationId: decoration.id,
       });
     }
   }
@@ -131,6 +168,9 @@ export function decorationHighlightsByVerse(
  *
  * Saved highlights are omitted when the reader is hiding them, since jumping
  * to the verse would land on nothing visible. Decoration highlights stay.
+ *
+ * Saved highlights belong to `savedAuthor`. A decoration's author comes from
+ * `decorationAuthor`, which answers null when nobody in particular made it.
  */
 export function collectHighlightCueMarks(options: {
   highlights: readonly ChapterHighlight[];
@@ -139,6 +179,8 @@ export function collectHighlightCueMarks(options: {
   bookId: string;
   chapterNumber: number;
   showSavedHighlights: boolean;
+  savedAuthor?: HighlightCueAuthor | null;
+  decorationAuthor?: (decorationId: string) => HighlightCueAuthor | null;
 }): HighlightCueMark[] {
   const byVerse = new Map<number, HighlightCueMark>();
 
@@ -146,16 +188,24 @@ export function collectHighlightCueMarks(options: {
     for (const highlight of options.highlights) {
       const style = highlightCueStyle(highlight);
       for (const verse of verseNumbersOf(highlight.verse)) {
-        byVerse.set(verse, { verse, ...style });
+        byVerse.set(verse, {
+          verse,
+          ...style,
+          author: options.savedAuthor ?? null,
+        });
       }
     }
   }
 
-  for (const [verse, highlight] of decorationHighlightsByVerse(
+  for (const [verse, { highlight, decorationId }] of decorationsByVerse(
     options.decorations,
     options
   )) {
-    byVerse.set(verse, { verse, ...highlightCueStyle(highlight) });
+    byVerse.set(verse, {
+      verse,
+      ...highlightCueStyle(highlight),
+      author: options.decorationAuthor?.(decorationId) ?? null,
+    });
   }
 
   return [...byVerse.values()].sort((a, b) => a.verse - b.verse);
@@ -186,8 +236,8 @@ function cueLabel(start: number, end: number): string {
 
 /**
  * Bubbles for highlighted verses that sit entirely above or below the visible
- * reader. Consecutive verses of the same colour on the same side collapse into
- * one bubble labelled with their range, so a highlight of verses 1–2 is one
+ * reader. Consecutive verses of the same colour by the same person on the same
+ * side collapse into one bubble labelled with their range, so a highlight of verses 1–2 is one
  * arrow rather than two identical ones.
  */
 export function placeOffscreenHighlightCues(
@@ -207,17 +257,19 @@ export function placeOffscreenHighlightCues(
     end: number;
     background: string;
     textColor: string;
+    author: HighlightCueAuthor | null;
   } | null = null;
 
   const flush = () => {
     if (!run) return;
     const cue: OffscreenHighlightCue = {
-      key: `${run.side}:${run.styleKey}:${run.verse}`,
+      key: `${run.side}:${run.styleKey}:${run.author?.key ?? ""}:${run.verse}`,
       direction: run.side,
       verse: run.verse,
       label: cueLabel(run.verse, run.end),
       background: run.background,
       textColor: run.textColor,
+      author: run.author,
     };
     (run.side === "up" ? up : down).push(cue);
     run = null;
@@ -229,6 +281,7 @@ export function placeOffscreenHighlightCues(
       run &&
       side === run.side &&
       mark.styleKey === run.styleKey &&
+      mark.author?.key === run.author?.key &&
       mark.verse === run.end + 1
     ) {
       run.end = mark.verse;
@@ -243,6 +296,7 @@ export function placeOffscreenHighlightCues(
       end: mark.verse,
       background: mark.background,
       textColor: mark.textColor,
+      author: mark.author,
     };
   }
   flush();
@@ -252,7 +306,7 @@ export function placeOffscreenHighlightCues(
 
 /**
  * A row that fits shows no arrows. Otherwise an arrow appears only on a side
- * that still has circles past the edge: none on the left at the start of the
+ * that still has bubbles past the edge: none on the left at the start of the
  * row, none on the right once the end is in view.
  */
 export function horizontalScrollEdges(

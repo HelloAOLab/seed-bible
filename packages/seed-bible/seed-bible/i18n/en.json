@@ -249,6 +249,8 @@
   "offscreen-highlight-below": "Highlight below, verse {{verses}}. Show it",
   "offscreen-highlight-scroll-left": "More highlights to the left",
   "offscreen-highlight-scroll-right": "More highlights to the right",
+  "highlighted-verse": "Highlighted verse {{verse}}",
+  "highlighted-verses": "Highlighted verses {{verses}}",
   "shared-sessions": "Shared sessions",
   "search-translation": "Search translations...",
   "old-testament_short": "OT",

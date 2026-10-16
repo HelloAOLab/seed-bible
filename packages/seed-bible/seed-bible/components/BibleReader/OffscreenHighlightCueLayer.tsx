@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "preact/compat";
 import type { RefObject } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
+import { Avatar } from "../Avatar/Avatar";
 import {
   horizontalScrollEdges,
   placeOffscreenHighlightCues,
@@ -17,12 +18,10 @@ import { findScrollContainer, measureReaderViewport } from "./readerViewport";
 const DRAG_THRESHOLD_PX = 6;
 
 /**
- * Circles at the top and bottom edges of the reader for highlights that are
- * currently off screen. Each one carries the highlight colour, an arrow toward
- * the verse, and the verse number. With a fine pointer they overlap like cards
- * until hovered, then spread apart. On a coarse pointer they stay spread,
- * because the overlapping rim is too thin to tap. A row wider than the reader
- * scrolls sideways.
+ * Pills at the top and bottom edges of the reader for highlights that are
+ * currently off screen. Each one carries the highlight colour, the avatar of
+ * whoever made it, an arrow toward the verse, and "Highlighted verse N". A
+ * row wider than the reader scrolls sideways.
  */
 export function OffscreenHighlightCueLayer({
   contentRef,
@@ -77,8 +76,8 @@ export function OffscreenHighlightCueLayer({
     const signature = [
       Math.round(viewport.top),
       Math.round(height),
-      placed.up.map((cue) => cue.key + cue.label).join(","),
-      placed.down.map((cue) => cue.key + cue.label).join(","),
+      placed.up.map(cueSignature).join(","),
+      placed.down.map(cueSignature).join(","),
     ].join("|");
     if (signature === signatureRef.current) return;
     signatureRef.current = signature;
@@ -180,6 +179,18 @@ export function OffscreenHighlightCueLayer({
   );
 }
 
+/** Everything a bubble shows, so a profile picture arriving late still repaints. */
+function cueSignature(cue: OffscreenHighlightCue): string {
+  const author = cue.author;
+  return [
+    cue.key,
+    cue.label,
+    author?.displayName ?? "",
+    author?.imageUrl ?? "",
+    author?.genericFallback ? "g" : "",
+  ].join("~");
+}
+
 function verseElementsFor(
   content: HTMLElement,
   marks: readonly HighlightCueMark[],
@@ -214,8 +225,16 @@ function CueArrow({ direction }: { direction: "up" | "down" }) {
       aria-hidden="true"
     >
       <path
-        d={direction === "up" ? "M6 2 L10.5 8 H1.5 Z" : "M6 10 L1.5 4 H10.5 Z"}
-        fill="currentColor"
+        d={
+          direction === "up"
+            ? "M6 10.5 V1.5 M2 5.5 L6 1.5 L10 5.5"
+            : "M6 1.5 V10.5 M2 6.5 L6 10.5 L10 6.5"
+        }
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       />
     </svg>
   );
@@ -367,7 +386,7 @@ function CueStack({
         onPointerCancel={endDrag}
         onClickCapture={onClickCapture}
       >
-        {cues.map((cue, index) => (
+        {cues.map((cue) => (
           <button
             key={cue.key}
             type="button"
@@ -376,15 +395,32 @@ function CueStack({
             style={{
               background: cue.background,
               color: cue.textColor,
-              // Each later circle sits on top of the one before it, so the row
-              // reads as a deck of cards rather than a flat line.
-              zIndex: index + 1,
             }}
             aria-label={labelFor(cue.label)}
             onClick={() => onJump(cue.verse)}
           >
+            {cue.author && (
+              <span className="sb-offscreen-cue-avatar">
+                <Avatar
+                  imageUrl={cue.author.imageUrl}
+                  visual={cue.author.visual}
+                  title={cue.author.displayName}
+                  genericFallback={cue.author.genericFallback}
+                />
+              </span>
+            )}
             <CueArrow direction={direction} />
-            <span className="sb-offscreen-cue-verse">{cue.label}</span>
+            <span className="sb-offscreen-cue-text">
+              {cue.label === String(cue.verse)
+                ? t("highlighted-verse", {
+                    verse: cue.label,
+                    defaultValue: "Highlighted verse {{verse}}",
+                  })
+                : t("highlighted-verses", {
+                    verses: cue.label,
+                    defaultValue: "Highlighted verses {{verses}}",
+                  })}
+            </span>
           </button>
         ))}
       </div>

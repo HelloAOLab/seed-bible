@@ -49,9 +49,10 @@ import {
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import type { FriendsManager } from "../../managers/FriendsManager";
-import type {
-  BibleReadingSession,
-  ConnectionSessionUserVisual,
+import {
+  getConnectedUserVisualKey,
+  type BibleReadingSession,
+  type ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
 import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
@@ -63,6 +64,7 @@ import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import { Spinner } from "../Spinner/Spinner";
 import {
   SaveStarIcon,
+  getSelfAvatar,
   openSaveModalForLocation,
   saveChapterLabel,
 } from "../Tabs/Tabs";
@@ -77,6 +79,7 @@ import {
   collectHighlightCueMarks,
   decorationHighlightsByVerse,
   hasContentTargeting,
+  type HighlightCueAuthor,
 } from "./offscreenHighlightCues";
 import {
   findScrollContainer,
@@ -1773,6 +1776,11 @@ interface ChapterContentProps {
    * when none are. Drives the presence this client publishes.
    */
   onVisibleVersesChange?: (range: VisibleVerseRange | null) => void;
+  /** Who made each highlight, for the avatars on the off-screen bubbles. */
+  highlightAuthors?: {
+    saved: HighlightCueAuthor | null;
+    ofDecoration: (decorationId: string) => HighlightCueAuthor | null;
+  };
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -1794,6 +1802,7 @@ function ChapterContent(props: ChapterContentProps) {
     isMobile = false,
     presence,
     onVisibleVersesChange,
+    highlightAuthors,
   } = props;
 
   const { t } = useI18n();
@@ -2390,6 +2399,8 @@ function ChapterContent(props: ChapterContentProps) {
           bookId: chapterData.value.book.id,
           chapterNumber: chapterData.value.chapter.number,
           showSavedHighlights: scriptureElements.showHighlights,
+          savedAuthor: highlightAuthors?.saved,
+          decorationAuthor: highlightAuthors?.ofDecoration,
         })}
       />
       {renderChapterContent(
@@ -2615,6 +2626,34 @@ export function BibleReader(props: BibleReaderProps) {
   const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
   const { t, language } = useI18n();
+
+  const selfAuthor: HighlightCueAuthor | null = state
+    ? getSelfAvatar(state, t)
+    : null;
+  // Saved highlights are always the reader's own. In a session every
+  // decoration has an owner, and one not yet recorded was just added here.
+  // Outside a session a decoration comes from an extension or a link, which
+  // nobody in particular made.
+  const highlightAuthors = {
+    saved: selfAuthor,
+    ofDecoration: (decorationId: string): HighlightCueAuthor | null => {
+      if (!sharedSession) return null;
+      const owner = sharedSession.decorationOwner(decorationId);
+      const user = owner
+        ? sharedSession.allUsers.value.find(
+            (candidate) => candidate.connectionId === owner
+          )
+        : undefined;
+      if (!user || user.isSelf) return selfAuthor;
+      return {
+        key: getConnectedUserVisualKey(user),
+        displayName: getUserDisplayName(user),
+        imageUrl: user.profile?.pictureUrl ?? null,
+        visual: user.visual,
+      };
+    },
+  };
+
   const scriptureElements: ScriptureElementsBehavior =
     props.scriptureElements ??
       state?.settings?.settings.value.scriptureElements ?? {
@@ -2951,6 +2990,7 @@ export function BibleReader(props: BibleReaderProps) {
               isMobile={isCompactReader}
               presence={sharedSession ? presence : undefined}
               onVisibleVersesChange={reportVisibleVerses}
+              highlightAuthors={highlightAuthors}
             />
           </Suspense>
         ))}

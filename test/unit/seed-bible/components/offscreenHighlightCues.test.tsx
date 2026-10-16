@@ -8,6 +8,7 @@ import {
   highlightCueStyle,
   horizontalScrollEdges,
   placeOffscreenHighlightCues,
+  type HighlightCueAuthor,
   type HighlightCueMark,
   type MeasuredHighlightMark,
 } from "@packages/seed-bible/seed-bible/components/BibleReader/offscreenHighlightCues";
@@ -18,6 +19,18 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
 });
 
 const VIEWPORT = { top: 100, bottom: 500 };
+
+function author(
+  name: string,
+  imageUrl: string | null = null
+): HighlightCueAuthor {
+  return {
+    key: `user-${name}`,
+    displayName: name,
+    imageUrl,
+    visual: { defaultIcon: "forest", color: "#34D399", colorName: "emerald" },
+  };
+}
 
 function mark(
   verse: number,
@@ -30,6 +43,7 @@ function mark(
     top,
     bottom,
     ...highlightCueStyle({ colorId }),
+    author: null,
   };
 }
 
@@ -72,6 +86,23 @@ describe("placeOffscreenHighlightCues", () => {
     expect(placed.up.map((cue) => cue.label)).toEqual(["1–3"]);
     expect(placed.up[0]?.verse).toBe(1);
     expect(placed.down.map((cue) => cue.label)).toEqual(["9–10", "12"]);
+  });
+
+  it("keeps highlights by different people in separate bubbles", () => {
+    const placed = placeOffscreenHighlightCues(
+      [
+        { ...mark(1, 0, 20), author: author("Ana") },
+        { ...mark(2, 20, 40), author: author("Ana") },
+        { ...mark(3, 40, 60), author: author("Ben") },
+      ],
+      VIEWPORT
+    );
+    expect(
+      placed.up.map((cue) => [cue.label, cue.author?.displayName])
+    ).toEqual([
+      ["1–2", "Ana"],
+      ["3", "Ben"],
+    ]);
   });
 
   it("does not merge a run across a verse that is on screen", () => {
@@ -141,6 +172,41 @@ describe("collectHighlightCueMarks", () => {
     expect(marks.map((item) => [item.verse, item.styleKey])).toEqual([
       [1, "preset:green"],
       [2, "preset:yellow"],
+    ]);
+  });
+
+  it("credits saved highlights to the reader and decorations to whoever added them", () => {
+    const marks = collectHighlightCueMarks({
+      ...chapter,
+      highlights: [{ verse: 1, colorId: "green" }],
+      decorations: [
+        {
+          id: "from-ben",
+          translationId: null,
+          bookId: "GEN",
+          chapterNumber: 28,
+          verses: [3],
+          highlight: { colorId: "yellow" },
+        },
+        {
+          id: "from-extension",
+          translationId: null,
+          bookId: "GEN",
+          chapterNumber: 28,
+          verses: [5],
+          highlight: { colorId: "blue" },
+        },
+      ],
+      savedAuthor: author("Me"),
+      decorationAuthor: (id) => (id === "from-ben" ? author("Ben") : null),
+    });
+
+    expect(
+      marks.map((item) => [item.verse, item.author?.displayName ?? null])
+    ).toEqual([
+      [1, "Me"],
+      [3, "Ben"],
+      [5, null],
     ]);
   });
 
@@ -296,27 +362,27 @@ describe("OffscreenHighlightCueLayer", () => {
     });
   }
 
-  it("stacks an up bubble and a down bubble with the verse numbers", () => {
+  it("shows an up bubble and a down bubble with the highlighted verses", () => {
     renderCues([
-      { verse: 1, ...highlightCueStyle({ colorId: "green" }) },
-      { verse: 2, ...highlightCueStyle({ colorId: "green" }) },
-      { verse: 10, ...highlightCueStyle({ colorId: "yellow" }) },
-      { verse: 20, ...highlightCueStyle({ colorId: "blue" }) },
-      { verse: 21, ...highlightCueStyle({ colorId: "blue" }) },
+      { verse: 1, ...highlightCueStyle({ colorId: "green" }), author: null },
+      { verse: 2, ...highlightCueStyle({ colorId: "green" }), author: null },
+      { verse: 10, ...highlightCueStyle({ colorId: "yellow" }), author: null },
+      { verse: 20, ...highlightCueStyle({ colorId: "blue" }), author: null },
+      { verse: 21, ...highlightCueStyle({ colorId: "blue" }), author: null },
     ]);
 
     const up = container.querySelector(".sb-offscreen-cues-up");
     const down = container.querySelector(".sb-offscreen-cues-down");
     expect(
-      [...(up?.querySelectorAll(".sb-offscreen-cue-verse") ?? [])].map(
+      [...(up?.querySelectorAll(".sb-offscreen-cue-text") ?? [])].map(
         (node) => node.textContent
       )
-    ).toEqual(["1–2"]);
+    ).toEqual(["Highlighted verses 1–2"]);
     expect(
-      [...(down?.querySelectorAll(".sb-offscreen-cue-verse") ?? [])].map(
+      [...(down?.querySelectorAll(".sb-offscreen-cue-text") ?? [])].map(
         (node) => node.textContent
       )
-    ).toEqual(["20–21"]);
+    ).toEqual(["Highlighted verses 20–21"]);
     expect(
       up?.querySelector(".sb-offscreen-cue")?.getAttribute("aria-label")
     ).toBe("Highlight above, verse 1–2. Show it");
@@ -325,8 +391,34 @@ describe("OffscreenHighlightCueLayer", () => {
     ).toBe("Highlight below, verse 20–21. Show it");
   });
 
+  it("shows the avatar of whoever made the highlight", () => {
+    renderCues([
+      {
+        verse: 1,
+        ...highlightCueStyle({ colorId: "green" }),
+        author: author("Ana", "https://example.com/ana.png"),
+      },
+      { verse: 20, ...highlightCueStyle({ colorId: "blue" }), author: null },
+    ]);
+
+    const up = container.querySelector(".sb-offscreen-cues-up");
+    const avatar = up?.querySelector<HTMLElement>(
+      ".sb-offscreen-cue-avatar .sb-tab-user-icon"
+    );
+    expect(avatar?.getAttribute("title")).toBe("Ana");
+    expect(avatar?.style.backgroundImage).toContain("ana.png");
+    expect(up?.querySelector(".sb-offscreen-cue-text")?.textContent).toBe(
+      "Highlighted verse 1"
+    );
+
+    const down = container.querySelector(".sb-offscreen-cues-down");
+    expect(down?.querySelector(".sb-offscreen-cue-avatar")).toBeNull();
+  });
+
   it("scrolls to the verse when the bubble is activated", () => {
-    renderCues([{ verse: 1, ...highlightCueStyle({ colorId: "green" }) }]);
+    renderCues([
+      { verse: 1, ...highlightCueStyle({ colorId: "green" }), author: null },
+    ]);
     const verse = container.querySelector<HTMLElement>(
       '.sb-verse[data-verse-number="1"]'
     )!;
@@ -344,8 +436,8 @@ describe("OffscreenHighlightCueLayer", () => {
 
   it("drags through the stack without jumping to the verse", () => {
     renderCues([
-      { verse: 20, ...highlightCueStyle({ colorId: "blue" }) },
-      { verse: 21, ...highlightCueStyle({ colorId: "green" }) },
+      { verse: 20, ...highlightCueStyle({ colorId: "blue" }), author: null },
+      { verse: 21, ...highlightCueStyle({ colorId: "green" }), author: null },
     ]);
     const verse = container.querySelector<HTMLElement>(
       '.sb-verse[data-verse-number="20"]'
@@ -391,7 +483,9 @@ describe("OffscreenHighlightCueLayer", () => {
   });
 
   it("still jumps from the keyboard after a drag that never clicked", async () => {
-    renderCues([{ verse: 20, ...highlightCueStyle({ colorId: "blue" }) }]);
+    renderCues([
+      { verse: 20, ...highlightCueStyle({ colorId: "blue" }), author: null },
+    ]);
     const verse = container.querySelector<HTMLElement>(
       '.sb-verse[data-verse-number="20"]'
     )!;
@@ -447,8 +541,8 @@ describe("OffscreenHighlightCueLayer", () => {
   it("looks up the verse elements once while the same verses stay on screen", () => {
     const query = vi.spyOn(Element.prototype, "querySelectorAll");
     const marks = [
-      { verse: 20, ...highlightCueStyle({ colorId: "blue" }) },
-      { verse: 21, ...highlightCueStyle({ colorId: "green" }) },
+      { verse: 20, ...highlightCueStyle({ colorId: "blue" }), author: null },
+      { verse: 21, ...highlightCueStyle({ colorId: "green" }), author: null },
     ];
     renderCues(marks);
     const verseLookups = () =>
@@ -466,8 +560,8 @@ describe("OffscreenHighlightCueLayer", () => {
 
   it("shows a scroll arrow only on a side that can still move", () => {
     renderCues([
-      { verse: 20, ...highlightCueStyle({ colorId: "blue" }) },
-      { verse: 21, ...highlightCueStyle({ colorId: "green" }) },
+      { verse: 20, ...highlightCueStyle({ colorId: "blue" }), author: null },
+      { verse: 21, ...highlightCueStyle({ colorId: "green" }), author: null },
     ]);
     const row = container.querySelector(".sb-offscreen-cues-down")!;
     const stack = row.querySelector<HTMLElement>(".sb-offscreen-cues-stack")!;
