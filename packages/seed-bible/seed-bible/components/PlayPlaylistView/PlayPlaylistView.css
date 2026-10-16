@@ -68,6 +68,8 @@
   font-weight: 600;
 }
 
+/* A scripture item's note title, after its reference: lighter, so the
+   reference still reads first. */
 .sb-play-controls {
   display: flex;
   align-items: center;

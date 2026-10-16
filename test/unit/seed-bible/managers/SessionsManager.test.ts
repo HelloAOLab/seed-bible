@@ -865,6 +865,49 @@ describe("SessionsManager", () => {
     );
   });
 
+  it("keeps local-only decorations out of the shared decorations map", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
+
+    session.readingState.decorateVerses(
+      "GEN",
+      1,
+      [3],
+      { className: "playlist-emphasis", localOnly: true },
+      "decoration-local-only"
+    );
+    session.readingState.decorateVerses(
+      "GEN",
+      1,
+      [4],
+      { className: "shared-emphasis" },
+      "decoration-shared"
+    );
+
+    await waitFor(() =>
+      mockDecorationsMap.set.mock.calls.some(
+        ([key]) =>
+          key === JSON.stringify(["test-config-bot-id", "decoration-shared"])
+      )
+    );
+
+    expect(mockDecorationsMap.set).not.toHaveBeenCalledWith(
+      JSON.stringify(["test-config-bot-id", "decoration-local-only"]),
+      expect.anything()
+    );
+    expect(session.readingState.decorations.value.map((d) => d.id)).toContain(
+      "decoration-local-only"
+    );
+  });
+
   it("does not sync decoration changes when the current user is not an allowed decorator", async () => {
     mockLoginManager.userId.value = "user-blocked";
 

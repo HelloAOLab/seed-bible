@@ -24,6 +24,7 @@ import {
   playlistPlayHistoryPercent,
   retainPlaylistPlayHistory,
   MAX_PLAYLIST_PLAY_HISTORY,
+  NOTE_CLOSED_HIGHLIGHT_MS,
   type Playlist,
   type PlaylistItemData,
   type PlaylistPlayHistory,
@@ -36,8 +37,9 @@ import { openPlaylistItemPreview } from "@packages/seed-bible/seed-bible/compone
 import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
-import { computed, effect, signal } from "@preact/signals";
+import { computed, effect, signal, type Signal } from "@preact/signals";
 import { h, render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
@@ -1930,6 +1932,45 @@ describe("createPlaylistManager", () => {
       });
     });
 
+    it("keeps a scripture note through the AI tools", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      manager.addEditingPlaylistItem({
+        type: "bible-verse",
+        ref: { bookId: "JHN", chapter: 3, verse: 16 },
+        note: "<p><strong>Love</strong> first</p>",
+        noteTitle: "Love first",
+      });
+
+      const state = JSON.parse(
+        (await getTool("getPlaylistState").function({})) as string
+      );
+      expect(state.items[0].bibleVerse.note).toBe(
+        "<p><strong>Love</strong> first</p>"
+      );
+      expect(state.items[0].bibleVerse.noteTitle).toBe("Love first");
+
+      // The AI edits the reference and hands the note back with it.
+      await getTool("updatePlaylistItem").function({
+        ...state.items[0],
+        index: 0,
+        bibleVerse: {
+          ...state.items[0].bibleVerse,
+          ref: { ...state.items[0].bibleVerse.ref, endVerse: 17 },
+        },
+      });
+
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        {
+          type: "bible-verse",
+          ref: { bookId: "JHN", chapter: 3, verse: 16, endVerse: 17 },
+          note: "<p><strong>Love</strong> first</p>",
+          noteTitle: "Love first",
+        },
+      ]);
+    });
+
     it("getPlaylistState reports an error when nothing is being edited", async () => {
       const manager = makeManager("user-1");
       await flush();
@@ -2180,6 +2221,33 @@ describe("createPlaylistManager", () => {
     manager.stopPlaying();
     expect(manager.playing.value).toBeNull();
     expect(manager.view.value).toBe("discover");
+  });
+
+  it("startPlaying scrolls to the first passage when the reader is already on its chapter", async () => {
+    const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+    tab.readingState.bookId.value = "JHN";
+    tab.readingState.chapterNumber.value = 3;
+    const manager = makeManager("user-1", makeTabs(tab));
+    await flush();
+
+    manager.startPlaying(
+      makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 3, verse: 16 },
+          },
+        ],
+      })
+    );
+    await flush();
+
+    expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+      "BSB",
+      "JHN",
+      3,
+      { scrollToVerse: 16 }
+    );
   });
 
   it("startPlaying builds a playing state and stopPlaying clears it", async () => {
@@ -3199,6 +3267,142 @@ describe("createPlaylistManager", () => {
         playlist.items.slice(1)
       );
       expect(instance.playingState.currentIndex.value).toBe(1);
+    });
+
+    describe("a passage a note links to, in a shared session", () => {
+      const noted: PlaylistItemData = {
+        type: "bible-verse",
+        ref: { bookId: "JHN", chapter: 3, verse: 16 },
+        note: '<p>See <a class="sb-verse-reference-link">Romans 5:8</a></p>',
+      };
+      const romans: VerseRef = { book: "ROM", chapter: 5, verse: 8 };
+
+      const playlistData = (tab: NonNullable<TabArg>) =>
+        tab.readingState.enabledExtensions.value.find(
+          (runtime) => runtime.id === "playlist"
+        )!.data as Signal<PlaylistReadingData>;
+
+      /**
+       * Plays `items` on a tab and returns the playlist runtime's `data`, which
+       * `SessionsManager` mirrors between participants: writing to it is what a
+       * peer's change looks like on arrival.
+       */
+      async function playShared(items: PlaylistItemData[]) {
+        const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+        const manager = makeManager("user-1", makeTabs(tab));
+        await flush();
+        manager.startPlaying(makePlaylist({ items }));
+        await flush();
+        const data = playlistData(tab);
+        selectTranslationAndChapterMock.mockClear();
+        return { tab, manager, data, playing: manager.playing.value! };
+      }
+
+      const lastChapterShown = () =>
+        selectTranslationAndChapterMock.mock.calls.at(-1)?.slice(1, 3);
+
+      it("shares the detour, and its own echo leaves the reader there", async () => {
+        const { data, playing } = await playShared([noted]);
+
+        await playing.visitReference(romans);
+        await flush();
+        expect(data.value.detour).toEqual(romans);
+
+        // The session sends the same state back as a fresh object.
+        data.value = JSON.parse(JSON.stringify(data.value));
+        await flush();
+
+        expect(playing.awayFromStep.value).toBe(true);
+        expect(selectTranslationAndChapterMock).toHaveBeenCalledTimes(1);
+        expect(lastChapterShown()).toEqual(["ROM", 5]);
+      });
+
+      it("follows a peer to the passage, and back when anyone returns", async () => {
+        const { data, playing } = await playShared([noted]);
+
+        data.value = { ...data.value, detour: romans };
+        await flush();
+        expect(lastChapterShown()).toEqual(["ROM", 5]);
+        expect(playing.awayFromStep.value).toBe(true);
+
+        data.value = { ...data.value, detour: null };
+        await flush();
+        expect(lastChapterShown()).toEqual(["JHN", 3]);
+        expect(playing.awayFromStep.value).toBe(false);
+      });
+
+      it("takes someone joining mid-detour to the passage, not the step", async () => {
+        const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+        const manager = makeManager("user-1", makeTabs(tab));
+        await flush();
+        const playlist = makePlaylist({ items: [noted] });
+
+        tab.readingState.enableExtension("playlist", {
+          playlists: [playlist],
+          queue: playlist.items,
+          step: 0,
+          detour: romans,
+        } satisfies PlaylistReadingData);
+        await flush();
+
+        expect(lastChapterShown()).toEqual(["ROM", 5]);
+        expect(manager.playing.value?.awayFromStep.value).toBe(true);
+        expect(playlistData(tab).value.detour).toEqual(romans);
+      });
+
+      it("never shares the next step paired with the old detour", async () => {
+        const { data, playing } = await playShared([
+          noted,
+          { ...noted, ref: { bookId: "JHN", chapter: 4, verse: 1 } },
+        ]);
+        await playing.visitReference(romans);
+        await flush();
+        const shared: PlaylistReadingData[] = [];
+        const stop = effect(() => {
+          shared.push(data.value);
+        });
+
+        await playing.next();
+        await flush();
+        stop();
+
+        // Otherwise peers would be sent to Romans before step 2's passage.
+        expect(
+          shared.filter((state) => state.step === 1 && state.detour)
+        ).toEqual([]);
+        expect(data.value).toMatchObject({ step: 1, detour: null });
+      });
+
+      it("keeps each reader's highlights to themselves", async () => {
+        const { tab, playing } = await playShared([noted]);
+        const decorateVerses = tab.readingState
+          .decorateVerses as unknown as Mock;
+        decorateVerses.mockClear();
+
+        await playing.visitReference(romans);
+        await playing.returnToStep();
+
+        const books = decorateVerses.mock.calls.map(([book]) => book);
+        expect(books[0]).toBe("ROM");
+        expect(new Set(books.slice(1))).toEqual(new Set(["JHN"]));
+        for (const [, , , decoration] of decorateVerses.mock.calls) {
+          expect(decoration).toMatchObject({ localOnly: true });
+        }
+      });
+
+      it("ends the detour when its step is removed from the queue", async () => {
+        const { data, playing } = await playShared([
+          noted,
+          { type: "html", html: "<p>b</p>" },
+        ]);
+        await playing.visitReference(romans);
+
+        playing.removeFromQueue(0);
+        await flush();
+
+        expect(playing.awayFromStep.value).toBe(false);
+        expect(data.value.detour).toBeNull();
+      });
     });
   });
 
@@ -4918,6 +5122,209 @@ describe("createPlayingState", () => {
       );
     });
 
+    describe("highlight of a passage with a note", () => {
+      /**
+       * Swaps the tab's decoration stubs for a live set that, like the real
+       * reading state, drops a decoration once its `removeAfterMs` elapses.
+       */
+      function trackHighlights(tab: NonNullable<TabArg>) {
+        const live = new Set<string>();
+        let next = 0;
+        tab.readingState.decorateVerses = vi.fn(
+          (
+            _book: string,
+            _chapter: number,
+            _verses: number[],
+            decoration: { removeAfterMs?: number }
+          ) => {
+            const id = `decoration-${next++}`;
+            live.add(id);
+            if (decoration.removeAfterMs) {
+              setTimeout(() => live.delete(id), decoration.removeAfterMs);
+            }
+            return id;
+          }
+        ) as never;
+        tab.readingState.removeDecoration = vi.fn((id: string) =>
+          live.delete(id)
+        ) as never;
+        return live;
+      }
+
+      const noted: PlaylistItemData = {
+        type: "bible-verse",
+        ref: { bookId: "JHN", chapter: 3, verse: 16 },
+        note: "<p>Love</p>",
+      };
+
+      beforeEach(() => {
+        vi.useFakeTimers();
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it("stays while the note is open, and fades 1.5s after it closes", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [makePlaylist({ items: [noted] })],
+          tab
+        );
+
+        await state.jumpTo(0);
+        vi.advanceTimersByTime(60_000);
+        expect(live.size).toBe(1);
+
+        state.setNoteExpanded(false);
+        vi.advanceTimersByTime(NOTE_CLOSED_HIGHLIGHT_MS - 1);
+        expect(live.size).toBe(1);
+        vi.advanceTimersByTime(1);
+        expect(live.size).toBe(0);
+      });
+
+      it("comes back when the note is opened again", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [makePlaylist({ items: [noted] })],
+          tab
+        );
+        await state.jumpTo(0);
+
+        state.setNoteExpanded(false);
+        vi.advanceTimersByTime(NOTE_CLOSED_HIGHLIGHT_MS);
+        expect(live.size).toBe(0);
+
+        state.setNoteExpanded(true);
+        vi.advanceTimersByTime(60_000);
+        expect(live.size).toBe(1);
+      });
+
+      it("reopens the note, and keeps the highlight, on the next noted step", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [makePlaylist({ items: [noted, { ...noted, note: "<p>More</p>" }] })],
+          tab
+        );
+        await state.jumpTo(0);
+        state.setNoteExpanded(false);
+
+        await state.next();
+
+        expect(state.noteExpanded.value).toBe(true);
+        vi.advanceTimersByTime(60_000);
+        expect(live.size).toBe(1);
+      });
+
+      it("is cleared when playback moves on to a step that isn't scripture", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [
+            makePlaylist({
+              items: [noted, { type: "html", html: "<p>Hi</p>" }],
+            }),
+          ],
+          tab
+        );
+        await state.jumpTo(0);
+
+        await state.next();
+
+        expect(live.size).toBe(0);
+      });
+
+      /**
+       * A navigation stub whose chapter loads finish only when the test says,
+       * in any order.
+       */
+      function slowChapters() {
+        const loads: (() => void)[] = [];
+        const nav = vi.fn(
+          () => new Promise<void>((resolve) => loads.push(resolve))
+        );
+        return { nav, loads };
+      }
+
+      /** The books of the highlights still showing. */
+      function liveBooks(tab: NonNullable<TabArg>, live: Set<string>) {
+        const calls = (tab.readingState.decorateVerses as unknown as Mock).mock
+          .calls;
+        return [...live].map(
+          (id) => calls[Number(id.replace("decoration-", ""))]![0]
+        );
+      }
+
+      it("isn't put back on a step that was left while its chapter loaded", async () => {
+        const { nav, loads } = slowChapters();
+        const tab = makeTab("tab-1", nav);
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [
+            makePlaylist({
+              items: [noted, { type: "html", html: "<p>Next</p>" }],
+            }),
+          ],
+          tab
+        );
+
+        const first = state.jumpTo(0);
+        await state.next();
+        loads[0]!();
+        await first;
+
+        vi.advanceTimersByTime(60_000);
+        expect(live.size).toBe(0);
+      });
+
+      it("shows only the latest of two note links followed in quick succession", async () => {
+        const { nav, loads } = slowChapters();
+        const tab = makeTab("tab-1", nav);
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [makePlaylist({ items: [noted] })],
+          tab
+        );
+        const step = state.jumpTo(0);
+        loads[0]!();
+        await step;
+
+        const romans = state.visitReference({
+          book: "ROM",
+          chapter: 5,
+          verse: 8,
+        });
+        const genesis = state.visitReference({
+          book: "GEN",
+          chapter: 1,
+          verse: 1,
+        });
+        loads[2]!();
+        await genesis;
+        loads[1]!();
+        await romans;
+
+        expect(liveBooks(tab, live)).toEqual(["GEN"]);
+      });
+
+      it("leaves a passage without a note to fade on its usual timer", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [makePlaylist({ items: [{ ...noted, note: undefined }] })],
+          tab
+        );
+
+        await state.jumpTo(0);
+        vi.advanceTimersByTime(3000);
+
+        expect(live.size).toBe(0);
+      });
+    });
+
     it("highlights a grouped range the same way as an authored range item", async () => {
       const nav = vi.fn().mockResolvedValue(undefined);
       const tab = makeTab("tab-1", nav, "BSB");
@@ -5081,6 +5488,31 @@ describe("createPlayingState", () => {
           translationId: undefined,
           ref: { bookId: "JHN", chapter: 3 },
         },
+      ]);
+    });
+
+    it("keeps a scripture note and its title on the passage's first chapter only", () => {
+      const state = createPlayingState([
+        makePlaylist({
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "JHN", chapter: 1, verse: 14, endChapter: 3 },
+              note: "<p>The Word became flesh</p>",
+              noteTitle: "Incarnation",
+            },
+          ],
+        }),
+      ]);
+
+      expect(
+        state.queue.value.map((item) =>
+          item.type === "bible-verse" ? [item.note, item.noteTitle] : null
+        )
+      ).toEqual([
+        ["<p>The Word became flesh</p>", "Incarnation"],
+        [undefined, undefined],
+        [undefined, undefined],
       ]);
     });
 
