@@ -1424,6 +1424,23 @@ export function createCustomizationsManager(
       marker: CUSTOMIZATION_MARKER,
     });
 
+  /**
+   * Keeps a share-link copy of the owner's own customization in step with a
+   * save. Without this, closing the editor falls back to the copy fetched
+   * when the link loaded, so the owner sees their edits undone until a reload.
+   */
+  const updateLinkedCopy = (
+    userId: string,
+    saved: SeedBibleCustomization
+  ): void => {
+    if (
+      linkedCustomizationLocator.value ===
+      buildCustomizationLocator(userId, saved.id)
+    ) {
+      linkedCustomization.value = saved;
+    }
+  };
+
   // Every draft save and pointer write goes through here, one at a time, so
   // they reach the server in the order they were made: an older copy can't
   // land last and overwrite a newer one, which for a pointer would leave its
@@ -1518,6 +1535,7 @@ export function createCustomizationsManager(
       customizations.value = customizations.value.some((c) => c.id === saved.id)
         ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
         : [...customizations.value, saved];
+      updateLinkedCopy(userId, saved);
     });
     // Only reflect the write onto the draft if it's still the exact one
     // captured above — a newer edit, or the editor closing, may have
@@ -2194,6 +2212,7 @@ export function createCustomizationsManager(
       customizations.value = customizations.value.map((c) =>
         c.id === customizationId ? next : c
       );
+      updateLinkedCopy(userId, next);
       return true;
     });
     if (!written) {

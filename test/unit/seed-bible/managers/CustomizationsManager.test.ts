@@ -2989,6 +2989,43 @@ describe("CustomizationsManager", () => {
     expect(manager.activeCustomization.value?.id).toBe(ownCustomization.id);
   });
 
+  it("an owner's saved edits still apply after closing the editor on their own customization opened from its share link", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    getDataMock.mockResolvedValue({ success: true, data: created });
+    await manager.loadByLocator(`user-1.${created.id}`);
+    expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "available"
+    );
+
+    manager.startEditing(created.id);
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+    manager.stopEditing();
+
+    expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "hidden"
+    );
+  });
+
+  it("saving one customization leaves a different share-link customization as it was", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const other = { ...created, id: "customization_other" };
+    getDataMock.mockResolvedValue({ success: true, data: other });
+    await manager.loadByLocator(`someone-else.${other.id}`);
+
+    manager.startEditing(created.id);
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+    manager.stopEditing();
+
+    expect(manager.linkedCustomization.value?.id).toBe(other.id);
+    expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "available"
+    );
+  });
+
   it("loadByLocator() ignores a malformed locator", async () => {
     const { manager } = createManager();
     getDataMock.mockClear();
