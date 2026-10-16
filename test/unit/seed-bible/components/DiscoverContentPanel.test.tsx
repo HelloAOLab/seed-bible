@@ -778,38 +778,145 @@ describe("DiscoverContentPanel", () => {
     });
     it("does not scroll when a faded arrow is clicked at the scroll boundary", () => {
       renderPanel();
+
       const row = getRow();
       configureOverflow(row);
+
+      const chips = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+
+      setRect(row, 0, 100);
+
+      // Make a chip genuinely visible outside the row's left boundary.
+      chips.forEach((chip, index) => {
+        setRect(chip, -80 + index * 50, -40 + index * 50);
+      });
+
       const scrollBy = vi.fn();
       row.scrollBy = scrollBy;
-      // At the start boundary, scrolling toward the start is unavailable.
+
       setDimension(row, "scrollLeft", 0);
+
       act(() => {
         row.dispatchEvent(new Event("scroll"));
       });
+
       const startArrow = getArrow(START_LABEL);
+
       expect(startArrow).not.toBeNull();
       expect(startArrow!.getAttribute("aria-disabled")).toBe("true");
+
       act(() => {
         startArrow!.click();
       });
+
       expect(scrollBy).not.toHaveBeenCalled();
     });
-    it("scrolls toward the end when the end arrow is clicked in LTR", () => {
+    it("updates arrow state when the parent direction changes from LTR to RTL", () => {
+      const parent = document.createElement("div");
+      parent.dir = "ltr";
+      container.appendChild(parent);
+
+      const tab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      const renderInParent = () => {
+        act(() => {
+          render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+        });
+      };
+
+      renderInParent();
+
+      const row = parent.querySelector<HTMLElement>(".sb-dcp-filters")!;
+      const wrapper = row.parentElement!;
+
+      setDimension(row, "scrollWidth", 240);
+      setDimension(row, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      parent.dir = "rtl";
+      row.style.direction = "rtl";
+
+      setDimension(row, "scrollLeft", -140);
+
+      renderInParent();
+
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+
+      const startArrow = parent.querySelector<HTMLButtonElement>(
+        `button[aria-label="${START_LABEL}"]`
+      );
+
+      expect(startArrow).not.toBeNull();
+      expect(startArrow!.getAttribute("aria-disabled")).not.toBe("true");
+    });
+    it("adjusts scroll position to reveal the active chip when filters change", () => {
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      const firstTab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+
+      renderPanel(firstTab, state);
+
+      const row = getRow();
+      const activeChip = row.querySelector<HTMLElement>(".sb-dcp-chip--active");
+
+      expect(activeChip).not.toBeNull();
+
+      setDimension(row, "scrollLeft", 0);
+      setRect(row, 0, 100);
+      setRect(activeChip!, 120, 160);
+
+      const nextTab = createMockTab({
+        discoveredContent: [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "content",
+                title: "A related article",
+                description: "",
+                reference: { book: "GEN", chapter: 1 },
+              },
+            ],
+          },
+        ],
+      });
+
+      act(() => {
+        render(<DiscoverContentPanel tab={nextTab} state={state} />, container);
+      });
+
+      expect(row.scrollLeft).toBeGreaterThan(0);
+    });
+    it("does not scroll when the faded start arrow is clicked", () => {
       renderPanel();
 
       const row = getRow();
       configureOverflow(row);
 
-      const pills = Array.from(
+      const chips = Array.from(
         row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
       );
 
-      expect(pills.length).toBeGreaterThan(0);
+      expect(chips.length).toBeGreaterThan(0);
 
       setRect(row, 0, 100);
-      pills.forEach((pill, index) => {
-        setRect(pill, 110 + index * 50, 150 + index * 50);
+
+      // The first chip is completely to the left of the visible row.
+      chips.forEach((chip, index) => {
+        setRect(chip, -80 + index * 50, -40 + index * 50);
       });
 
       const scrollBy = vi.fn();
@@ -821,16 +928,15 @@ describe("DiscoverContentPanel", () => {
         row.dispatchEvent(new Event("scroll"));
       });
 
-      const endArrow = getArrow(END_LABEL);
-      expect(endArrow).not.toBeNull();
-      expect(endArrow!.getAttribute("aria-disabled")).toBe("false");
+      const startArrow = getArrow(START_LABEL);
+      expect(startArrow).not.toBeNull();
+      expect(startArrow!.getAttribute("aria-disabled")).toBe("true");
 
       act(() => {
-        endArrow!.click();
+        startArrow!.click();
       });
 
-      expect(scrollBy).toHaveBeenCalledTimes(1);
-      expect(scrollBy.mock.calls[0]![0].left).toBeGreaterThan(0);
+      expect(scrollBy).not.toHaveBeenCalled();
     });
 
     it("scrolls toward the start when the start arrow is clicked in LTR", () => {

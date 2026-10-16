@@ -223,16 +223,26 @@ function DiscoverFilters({
   useLayoutEffect(() => {
     const container = filtersRef.current;
     if (!container) return;
-    container
-      .querySelector<HTMLElement>(".sb-dcp-chip--active")
-      ?.scrollIntoView({
-        inline: "nearest",
-        block: "nearest",
-      });
+
+    const active = container.querySelector<HTMLElement>(".sb-dcp-chip--active");
+
+    if (active) {
+      const row = container.getBoundingClientRect();
+      const chip = active.getBoundingClientRect();
+
+      if (chip.left < row.left) {
+        container.scrollLeft -= row.left - chip.left;
+      } else if (chip.right > row.right) {
+        container.scrollLeft += chip.right - row.right;
+      }
+    }
+
     const update = () =>
       updateScrollState(getComputedStyle(container).direction === "rtl");
+
     update();
     container.addEventListener("scroll", update);
+
     const resizeObserver =
       typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
 
@@ -246,8 +256,9 @@ function DiscoverFilters({
         .querySelectorAll<HTMLElement>(".sb-dcp-chip")
         .forEach((chip) => resizeObserver.observe(chip));
     }
-    // Recheck when the viewport resizes.
-    // ResizeObserver also handles changes to the row and wrapper dimensions.
+
+    // Recheck when the viewport resizes. This also supports test
+    // environments where ResizeObserver is unavailable.
     window.addEventListener("resize", update);
 
     return () => {
