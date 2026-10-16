@@ -40,6 +40,7 @@ import type {
 } from "../../managers/HighlightsManager";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
 import type { TabSlot } from "../../managers/TabsLayoutManager";
+import { getReadableWordsOfJesusColor } from "../../managers/CustomizationsManager";
 import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
@@ -883,11 +884,20 @@ function renderChapterContent(
     // text inherits when it's absent. Requiring both meant a highlight with
     // only a custom colour silently rendered as its preset instead.
     if (highlight.customColor) {
+      const wordsOfJesusColor = getReadableWordsOfJesusColor(
+        highlight.customColor
+      );
+      const style: JSX.CSSProperties = {};
+      if (highlight.customFontColor) {
+        style.color = highlight.customFontColor;
+      }
+      if (wordsOfJesusColor) {
+        style["--sb-highlight-custom-words-of-jesus-font-color"] =
+          wordsOfJesusColor;
+      }
       return {
-        className: "sb-highlight",
-        style: highlight.customFontColor
-          ? ({ color: highlight.customFontColor } as JSX.CSSProperties)
-          : undefined,
+        className: "sb-highlight sb-highlight-custom",
+        style: Object.keys(style).length > 0 ? style : undefined,
         fill: highlight.customColor,
         broadcast,
       };

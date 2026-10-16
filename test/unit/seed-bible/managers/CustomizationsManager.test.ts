@@ -7,6 +7,7 @@ import {
   CUSTOMIZATION_MARKER,
   getContrastRatio,
   getFontPresetsForField,
+  getReadableWordsOfJesusColor,
   lightenColor,
   MIN_READABLE_CONTRAST_RATIO,
   SECONDARY_LIGHTEN_AMOUNT,
@@ -450,6 +451,35 @@ describe("CustomizationsManager", () => {
     expect(getContrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 1);
     expect(getContrastRatio("#ffffff", "#000000")).toBeCloseTo(21, 1);
     expect(getContrastRatio("#808080", "#808080")).toBeCloseTo(1, 5);
+  });
+
+  it("getReadableWordsOfJesusColor() keeps the standard red on a light background", () => {
+    expect(getReadableWordsOfJesusColor("#fff59d")).toBe("#c00");
+  });
+
+  it("getReadableWordsOfJesusColor() returns a readable red on light and dark backgrounds", () => {
+    for (const background of ["#ea80fc", "#ef9a9a", "#6b3434", "#1e3a8a"]) {
+      const red = getReadableWordsOfJesusColor(background);
+      expect(red).toBeDefined();
+      expect(getContrastRatio(red!, background)).toBeGreaterThanOrEqual(
+        MIN_READABLE_CONTRAST_RATIO
+      );
+    }
+  });
+
+  it("getReadableWordsOfJesusColor() falls back to the highest-contrast red on a mid-tone background", () => {
+    // No red reaches the AA minimum on this mid-tone red.
+    const red = getReadableWordsOfJesusColor("#c04040");
+    expect(getContrastRatio(red!, "#c04040")).toBeGreaterThan(
+      getContrastRatio("#c00", "#c04040")
+    );
+    expect(getContrastRatio(red!, "#c04040")).toBeGreaterThanOrEqual(
+      getContrastRatio("#ffc0c0", "#c04040")
+    );
+  });
+
+  it("getReadableWordsOfJesusColor() returns undefined for a non-hex color", () => {
+    expect(getReadableWordsOfJesusColor("rebeccapurple")).toBeUndefined();
   });
 
   it("getContrastRatio() is symmetric regardless of argument order", () => {

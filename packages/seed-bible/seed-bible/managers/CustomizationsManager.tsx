@@ -162,6 +162,46 @@ export function getContrastRatio(hexA: string, hexB: string): number {
  */
 export const MIN_READABLE_CONTRAST_RATIO = 4.5;
 
+// Darkest-last reds for light backgrounds, then lightest-last for dark ones,
+// so the first readable pick is the most saturated red that still reads.
+const WORDS_OF_JESUS_RED_CANDIDATES = [
+  "#c00",
+  "#b00",
+  "#a00",
+  "#900",
+  "#800",
+  "#700",
+  "#ff8080",
+  "#ffa0a0",
+  "#ffc0c0",
+  "#ffe0e0",
+];
+
+/**
+ * A red for words of Jesus that stays readable on `background` (a hex color),
+ * or `undefined` if `background` isn't a hex color. When no red reaches
+ * {@link MIN_READABLE_CONTRAST_RATIO} (a mid-tone background), returns the
+ * highest-contrast one.
+ */
+export function getReadableWordsOfJesusColor(
+  background: string
+): string | undefined {
+  if (!/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(background)) {
+    return undefined;
+  }
+  const readable = WORDS_OF_JESUS_RED_CANDIDATES.find(
+    (red) => getContrastRatio(red, background) >= MIN_READABLE_CONTRAST_RATIO
+  );
+  if (readable) {
+    return readable;
+  }
+  return WORDS_OF_JESUS_RED_CANDIDATES.reduce((best, red) =>
+    getContrastRatio(red, background) > getContrastRatio(best, background)
+      ? red
+      : best
+  );
+}
+
 export interface CustomizationContrastPair {
   /** The text/foreground color field. */
   foreground: ThemeColorKey;

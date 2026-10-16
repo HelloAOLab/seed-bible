@@ -491,13 +491,17 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
   // `textContent` on every theme change. Nested `&` is valid in a stylesheet
   // file, but assigning it through the CSSOM can make the engine throw out
   // the whole tag — every `--sb-*` color on `body` included.
+  //
+  // The words-of-Jesus rule is a descendant selector: the highlight class sits
+  // on the wrapper around a highlighted verse run, and `.sb-words-of-jesus` on
+  // a span inside it, never on the same element.
   return Object.entries(theme.highlightColors)
     .map(([colorId]) => {
       return [
         `.sb-highlight-${colorId} {`,
         `color: var(--sb-highlight-${colorId}-font-color);`,
         `}`,
-        `.sb-highlight-${colorId}.sb-words-of-jesus {`,
+        `.sb-highlight-${colorId} .sb-words-of-jesus {`,
         `color: var(--sb-highlight-${colorId}-words-of-jesus-font-color);`,
         `}`,
       ].join("\n");
@@ -695,62 +699,62 @@ export const LIGHT_THEME: BibleTheme = {
     yellow: {
       color: "#fff59d",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#c00",
     },
     green: {
       color: "#a5d6a7",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#a00",
     },
     cyan: {
       color: "#80deea",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#a00",
     },
     blue: {
       color: "#90caf9",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#900",
     },
     red: {
       color: "#ef9a9a",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#c62828",
+      wordsOfJesusFontColor: "#800",
     },
     magenta: {
       color: "#ea80fc",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#700",
     },
     pink: {
       color: "#f48fb1",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#800",
     },
     purple: {
       color: "#ce93d8",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#700",
     },
     orange: {
       color: "#ffcc80",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#b00",
     },
     cream: {
       color: "#fff8e1",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#c00",
     },
     gray: {
       color: "#cfd8dc",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#b00",
     },
     tan: {
       color: "#e0c9a6",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#a00",
     },
   },
   bookmarkColors: {
