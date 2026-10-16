@@ -11,17 +11,6 @@ import {
   type DiscoverContentTypeDefinition,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { createRealFriendContent } from "../testUtils/realFriendContent";
-import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
-const { t } = useI18n();
-
-const START_LABEL = t("scroll-filters-left", {
-  defaultValue: "Scroll filters toward start",
-});
-
-const END_LABEL = t("scroll-filters-right", {
-  defaultValue: "Scroll filters toward end",
-});
-
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
     typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
