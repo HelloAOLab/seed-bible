@@ -34,6 +34,12 @@ let noteEditor:
     }
   | undefined;
 
+/**
+ * Keeps the stub editor from handing over its instance, as when the real one
+ * hasn't finished loading on a slow connection.
+ */
+let noteEditorLoading = false;
+
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TipTapEditor/TipTapEditor",
   async () => {
@@ -45,6 +51,7 @@ vi.mock(
         onEmptyChange: (isEmpty: boolean) => void;
       }) => {
         useEffect(() => {
+          if (noteEditorLoading) return;
           const editor = {
             html: props.initialContent ?? "",
             get isEmpty() {
@@ -143,6 +150,7 @@ describe("ScriptureItemInput", () => {
     render(null, container);
     container.remove();
     vi.restoreAllMocks();
+    noteEditorLoading = false;
   });
 
   function input(): HTMLInputElement {
@@ -523,6 +531,48 @@ describe("ScriptureItemInput", () => {
         note: "<p>Existing</p>",
       } satisfies PlaylistItemData);
     });
+
+    it.each([
+      [
+        "submitted",
+        (_handle: ScriptureItemInputHandle) => submitButton().click(),
+      ],
+      ["committed", (handle: ScriptureItemInputHandle) => handle.commit()],
+    ])(
+      "keeps an edited item's note when it's %s before the note editor loads",
+      async (_label, save) => {
+        noteEditorLoading = true;
+        const onAdd = vi.fn();
+        const handleRef = createRef<ScriptureItemInputHandle>();
+        act(() => {
+          render(
+            <ScriptureItemInput
+              ref={handleRef}
+              books={BOOKS}
+              onAdd={onAdd}
+              initialValue="Philemon"
+              initialNote="<p>Existing</p>"
+              initialNoteTitle="Title"
+            />,
+            container
+          );
+        });
+        expect(noteEditor).toBeUndefined();
+
+        await act(async () => {
+          input().focus();
+          await save(handleRef.current!);
+          await flushMicrotasks();
+        });
+
+        expect(onAdd).toHaveBeenCalledWith({
+          type: "bible-verse",
+          ref: { bookId: "PHM", chapter: 1 },
+          note: "<p>Existing</p>",
+          noteTitle: "Title",
+        } satisfies PlaylistItemData);
+      }
+    );
 
     it("isn't dirty for an untouched item being edited, but is once its note changes", async () => {
       const handleRef = createRef<ScriptureItemInputHandle>();

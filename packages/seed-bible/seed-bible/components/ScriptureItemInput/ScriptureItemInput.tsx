@@ -193,11 +193,20 @@ export const ScriptureItemInput = forwardRef<
   const addRef = (verseRef: VerseRef): true | Promise<true> => {
     const editor = noteEditorRef.current;
     const title = savedNoteTitle();
-    if (!noteOpen || !editor || editor.isEmpty) {
+    // An editor still loading can't have been typed into yet, so the note is
+    // the one it was going to start with.
+    const html = !noteOpen
+      ? null
+      : editor
+        ? editor.isEmpty
+          ? null
+          : editor.getHTML()
+        : (noteSeed ?? null);
+    if (!html) {
       finishAdd(verseRef, null, title);
       return true;
     }
-    return sanitize(editor.getHTML()).then((note) => {
+    return sanitize(html).then((note) => {
       finishAdd(verseRef, note, title);
       return true as const;
     });
@@ -226,7 +235,7 @@ export const ScriptureItemInput = forwardRef<
         value.trim() !== (initialValue ?? "").trim() || noteChanged(),
       commit: async () => handleSubmit(),
     }),
-    [value, highlightedOption, noteOpen, noteEmpty, noteTitle]
+    [value, highlightedOption, noteOpen, noteEmpty, noteTitle, noteSeed]
   );
 
   return (
