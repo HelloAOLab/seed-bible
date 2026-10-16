@@ -484,7 +484,6 @@
   "reading-plan-no-readings": "Ajoutez au moins une lecture pour créer le plan",
   "reading-plan-needs-name": "Donnez un nom à votre plan pour le sauvegarder.",
   "reading-plan-delete": "Supprimer",
-  "reading-plan-delete-confirm": "Supprimer définitivement ?",
   "reading-plan-load-failed": "Impossible de charger ce forfait. Veuillez réessayer.",
   "loading": "Chargement…",
   "reading-plan-not-started": "Pas encore commencé",

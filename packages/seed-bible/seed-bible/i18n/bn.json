@@ -484,7 +484,6 @@
   "reading-plan-no-readings": "পরিকল্পনাটি তৈরি করতে অন্তত একটি পাঠ্য যোগ করুন।",
   "reading-plan-needs-name": "আপনার প্ল্যানটি সংরক্ষণ করতে এটিকে একটি নাম দিন।",
   "reading-plan-delete": "মুছে ফেলুন",
-  "reading-plan-delete-confirm": "চিরতরে মুছে ফেলব?",
   "reading-plan-load-failed": "এই প্ল্যানটি লোড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
   "loading": "লোড হচ্ছে…",
   "reading-plan-not-started": "শুরু হয়নি",

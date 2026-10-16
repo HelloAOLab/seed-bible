@@ -91,6 +91,7 @@ import type { OfflineTranslationStore } from "../managers/OfflineTranslationStor
 import {
   createBibleToolsManager,
   openReadingPlansPane,
+  READING_PLANS_PANE_ID,
 } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
@@ -664,6 +665,15 @@ export interface SeedBibleState {
   openCodeOfConduct: () => void;
   /** Closes the Code of Conduct modal (clears `conduct` from the URL). */
   closeCodeOfConduct: () => void;
+
+  /**
+   * Releases what this state has registered outside itself (listeners on the
+   * process-wide i18next instance, recurring timers), so it can be garbage
+   * collected. The SSR host creates one state per request and must call this
+   * once the render is done; the client keeps its one state for the page's
+   * lifetime and never needs to.
+   */
+  dispose: () => void;
 }
 
 // Evaluated before the extension bundle below. Bonfire imports
@@ -1733,6 +1743,12 @@ export function createSeedBibleState(
       if (!tabsRestored.value) {
         return;
       }
+      // The share-sheet preview is this same origin, so it shares the
+      // reader's localStorage. Writing here would replace their tabs with
+      // whatever chapter the preview was left on.
+      if (isMinimalEmbed.value) {
+        return;
+      }
 
       const persistedTabs = buildPersistedTabs();
       const persistableIds = new Set(persistedTabs.map((tab) => tab.id));
@@ -2228,7 +2244,12 @@ export function createSeedBibleState(
    * it; this caps what that tick can claim to have watched.
    */
   const READING_MAX_TICK_CREDIT_MS = READING_TICK_MS * 2;
-  effect(() => {
+  const disposeReadingTicker = effect(() => {
+    // Same origin as the page around the share preview, so time the preview
+    // sits open must not become the viewer's reading history.
+    if (isMinimalEmbed.value) {
+      return;
+    }
     if (!selectedTab.value) {
       return;
     }
@@ -2242,6 +2263,12 @@ export function createSeedBibleState(
     // were read in, so the offline manager keeps its own first-seen stamp —
     // that's what the "used for a day" download offer is judged against.
     data.offline.noteTranslationInUse(chapter.translation.id);
+
+    // Nobody is reading a server render, and an interval started here would
+    // keep the whole per-request state alive on the SSR host.
+    if (import.meta.env.SSR) {
+      return;
+    }
 
     // Reading time accrues only while the chapter is actually on screen. Each
     // tick credits just the stretch since the last one rather than stretching
@@ -2287,8 +2314,7 @@ export function createSeedBibleState(
       // on the way somewhere else earn a place in history.
     };
 
-    const canWatchVisibility =
-      typeof document !== "undefined" && !import.meta.env.SSR;
+    const canWatchVisibility = typeof document !== "undefined";
     // A visible tab isn't enough: Today (or any fullscreen pane) can cover the
     // reader, and a chapter sitting under Welcome would otherwise be credited
     // every tick — giving a brand-new account history it never read.
@@ -3373,6 +3399,7 @@ export function createSeedBibleState(
     navigation,
     search,
     bibleData: data,
+    annotations,
     defaultLanguage: i18n.defaultLanguage,
     currentReadingState,
   });
@@ -3446,6 +3473,10 @@ export function createSeedBibleState(
     openCodeOfConduct,
     closeCodeOfConduct,
     features,
+    dispose: () => {
+      i18n.dispose();
+      disposeReadingTicker();
+    },
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,
@@ -3649,8 +3680,10 @@ export function createSeedBibleState(
   /**
    * Opens the plans pane from one of the Profile screens. False when there is
    * no reader to open it beside, in which case nothing has changed on screen.
+   * `reopen` brings back the screen it came from, which this closes, so the
+   * pane's back button can return there instead of dropping to the reader.
    */
-  const openReadingPlansFullscreen = (): boolean => {
+  const openReadingPlansFullscreen = (reopen: () => void): boolean => {
     const readingState = selectedTab.peek()?.readingState;
     if (!readingState) {
       return false;
@@ -3672,11 +3705,15 @@ export function createSeedBibleState(
       gallery,
       placement: "fullscreen",
       toast,
+      onBack: () => {
+        panes.closePane(READING_PLANS_PANE_ID);
+        reopen();
+      },
     });
     return true;
   };
   const openReadingPlansFromProfile = () => {
-    openReadingPlansFullscreen();
+    openReadingPlansFullscreen(openProfile);
   };
   const continuePlaylistFromProfile = (
     entry: PlaylistPlayHistory
@@ -3798,22 +3835,26 @@ export function createSeedBibleState(
   // opens it, and then drill straight into the plan so the user doesn't have
   // to find it in the list a second time.
   const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
-    if (!openReadingPlansFullscreen()) {
+    if (!openReadingPlansFullscreen(openYourContent)) {
       return;
     }
     // A draft has nothing to read yet, so it picks up where the author left
     // off — in the editor — rather than opening an empty detail view.
     if (plan.status === "draft") {
-      void openReadingPlanEditor(readingPlans, plan);
+      void openReadingPlanEditor(readingPlans, plan, {
+        fromAnotherScreen: true,
+      });
     } else {
-      void openReadingPlanDetail(readingPlans, plan);
+      void openReadingPlanDetail(readingPlans, plan, {
+        fromAnotherScreen: true,
+      });
     }
   };
   const editReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
-    if (!openReadingPlansFullscreen()) {
+    if (!openReadingPlansFullscreen(openYourContent)) {
       return;
     }
-    void openReadingPlanEditor(readingPlans, plan);
+    void openReadingPlanEditor(readingPlans, plan, { fromAnotherScreen: true });
   };
   const renderYourContentPane = () => (
     <YourContentPane

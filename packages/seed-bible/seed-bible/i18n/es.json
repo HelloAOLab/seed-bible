@@ -484,7 +484,6 @@
   "reading-plan-no-readings": "Añade al menos una lectura para crear el plan.",
   "reading-plan-needs-name": "Dale un nombre a tu plan para guardarlo.",
   "reading-plan-delete": "Borrar",
-  "reading-plan-delete-confirm": "¿Eliminar definitivamente?",
   "reading-plan-load-failed": "No se pudo cargar este plan. Inténtalo de nuevo.",
   "loading": "Cargando…",
   "reading-plan-not-started": "No ha comenzado",

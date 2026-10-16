@@ -1662,6 +1662,17 @@ describe("createSeedBibleState", () => {
       expect(to - from).toBe(5);
     });
 
+    it("stops saving history once the state is disposed", async () => {
+      const state = await createState();
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingSpan.mockClear();
+
+      state.dispose();
+
+      vi.advanceTimersByTime(15000);
+      expect(mockSaveReadingSpan).not.toHaveBeenCalled();
+    });
+
     it("saves history once for each additional 5 seconds of viewing", async () => {
       const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
@@ -1787,6 +1798,16 @@ describe("createSeedBibleState", () => {
       expect(readingState.chapterData.value!.chapter.number).toBe(1);
       expect(state.today.isOpen.value).toBe(true);
       expect(state.today.readingHistory.value.status).toBe("empty");
+
+      vi.advanceTimersByTime(60000);
+
+      expect(mockSaveReadingSpan).not.toHaveBeenCalled();
+    });
+
+    it("does not credit reading time in a minimal embed", async () => {
+      const state = await createStateWithOptions({ embed: "minimal" });
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingSpan.mockClear();
 
       vi.advanceTimersByTime(60000);
 
@@ -3168,6 +3189,16 @@ describe("createSeedBibleState", () => {
       expect(
         panelsBackOn.app.effectiveSlots.value.map((slot) => slot.tab?.id)
       ).toEqual(readStoredTabs().slotTabIds);
+    });
+
+    it("does not write stored tabs from a minimal embed", async () => {
+      const state = await createStateWithOptions({ embed: "minimal" });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(localStorage.getItem("sb-tabs-state")).toBeNull();
     });
   });
 

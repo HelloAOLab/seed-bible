@@ -484,7 +484,6 @@
   "reading-plan-no-readings": "計画を作成するために、少なくとも1つの読書を追加してください。",
   "reading-plan-needs-name": "プランに名前を付けて保存しましょう",
   "reading-plan-delete": "消去",
-  "reading-plan-delete-confirm": "完全に削除しますか？",
   "reading-plan-load-failed": "このプランを読み込めませんでした。もう一度お試しください。",
   "loading": "読み込み中…",
   "reading-plan-not-started": "開始されていません",
