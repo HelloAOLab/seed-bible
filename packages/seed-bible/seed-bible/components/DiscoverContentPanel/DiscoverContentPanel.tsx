@@ -269,7 +269,7 @@ function DiscoverFilters({
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(-1)}
           aria-disabled={!canScrollStart.value}
-          aria-label={t("scroll-filters-left", {
+          aria-label={t("scroll-filters-start", {
             defaultValue: "Scroll filters toward start",
           })}
         >
@@ -304,7 +304,7 @@ function DiscoverFilters({
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(1)}
           aria-disabled={!canScrollEnd.value}
-          aria-label={t("scroll-filters-right", {
+          aria-label={t("scroll-filters-end", {
             defaultValue: "Scroll filters toward end",
           })}
         >
