@@ -52,19 +52,9 @@ export interface BibleThemeVariables {
   sidebarFontColor?: string | null;
 
   /**
-   * The background color for the book selector dropdown. This should generally match the readerBackground color to create a seamless look, but can be set to a different color if desired.
-   */
-  bookSelectorBackground?: string | null;
-
-  /**
    * The font family for the book selector. This can be customized independently of the main fontFamily, but should generally be a clean, readable sans-serif font for optimal readability.
    */
   bookSelectorFontFamily?: string | null;
-
-  /**
-   * The font color for the book selector. This can be customized independently of the main fontColor, but should generally have good contrast against the bookSelectorBackground color for readability.
-   */
-  bookSelectorFontColor?: string | null;
 
   /**
    * The background of the reader area where the Bible text is displayed. This should generally be a light color for readability, but can be customized as needed.
@@ -605,9 +595,7 @@ export const LIGHT_THEME: BibleTheme = {
     readerFontFamily: "inherit",
     readerFontColor: "#333",
 
-    bookSelectorBackground: "#ffffff",
     bookSelectorFontFamily: "inherit",
-    bookSelectorFontColor: "#333",
 
     fontFamily: "system-ui, sans-serif",
     fontColor: "#333",
@@ -802,9 +790,7 @@ export const DARK_THEME: BibleTheme = {
     readerFontFamily: "inherit",
     readerFontColor: "#e6e6e6",
 
-    bookSelectorBackground: "#181818",
     bookSelectorFontFamily: "inherit",
-    bookSelectorFontColor: "#e6e6e6",
 
     fontFamily: "system-ui, sans-serif",
     fontColor: "#e6e6e6",
@@ -1032,8 +1018,6 @@ export type ThemeColorKey =
   | "fontColor"
   | "sidebarBackground"
   | "sidebarFontColor"
-  | "bookSelectorBackground"
-  | "bookSelectorFontColor"
   | "readerBackground"
   | "readerFontColor"
   | "bookTitleFontColor"
@@ -1081,7 +1065,6 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
       { key: "background", label: "App background" },
       { key: "readerBackground", label: "Reader background" },
       { key: "sidebarBackground", label: "Sidebar background" },
-      { key: "bookSelectorBackground", label: "Book selector background" },
       { key: "readerToolbarBackground", label: "Reader toolbar background" },
       {
         key: "readerToolbarFloatingButtonBackground",
@@ -1097,7 +1080,6 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
       { key: "fontColor", label: "Default text" },
       { key: "readerFontColor", label: "Reader text" },
       { key: "sidebarFontColor", label: "Sidebar text" },
-      { key: "bookSelectorFontColor", label: "Book selector text" },
       { key: "bookTitleFontColor", label: "Book title" },
       { key: "chapterHeadingFontColor", label: "Chapter heading" },
       { key: "verseFontColor", label: "Verse" },
