@@ -65,7 +65,7 @@ describe("CustomizationsManager", () => {
     navigation = createNavigationManager({ initialHref: "http://localhost/" });
     recordDataMock = vi
       .spyOn(os, "recordData")
-      .mockResolvedValue(undefined as never);
+      .mockResolvedValue({ success: true } as never);
     eraseDataMock = vi
       .spyOn(os, "eraseData")
       .mockResolvedValue(undefined as never);
@@ -3094,6 +3094,62 @@ describe("CustomizationsManager", () => {
     expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
       "hidden"
     );
+  });
+
+  it("saveEditingCustomization() rejects when the server refuses the record, leaving the saved list, the share-link copy and the draft's unsaved state as they were", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    getDataMock.mockResolvedValue({ success: true, data: created });
+    await manager.loadByLocator(`user-1.${created.id}`);
+    manager.startEditing(created.id);
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    recordDataMock.mockResolvedValue({
+      success: false,
+      errorCode: "not_authorized",
+      errorMessage: "Not authorized",
+    });
+
+    await expect(manager.saveEditingCustomization()).rejects.toThrow(
+      "not_authorized"
+    );
+
+    expect(manager.hasUnsavedChanges.value).toBe(true);
+    expect(
+      manager.customizations.value[0]?.defaultExtensionAvailability
+    ).toBeUndefined();
+    manager.stopEditing();
+    expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "available"
+    );
+  });
+
+  it("a refused auto-save is logged, not thrown, and leaves the draft unsaved", async () => {
+    vi.useFakeTimers();
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    try {
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "subscription_limit_reached",
+        errorMessage: "Limit reached",
+      });
+
+      manager.setEditingDefaultExtensionAvailability("hidden");
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        "Failed to auto-save customization:",
+        expect.any(Error)
+      );
+      expect(manager.hasUnsavedChanges.value).toBe(true);
+    } finally {
+      errorSpy.mockRestore();
+      vi.useRealTimers();
+    }
   });
 
   it("saving one customization leaves a different share-link customization as it was", async () => {

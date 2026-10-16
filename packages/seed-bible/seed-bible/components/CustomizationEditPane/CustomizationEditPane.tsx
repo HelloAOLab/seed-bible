@@ -40,6 +40,7 @@ import {
 } from "../../managers/translationGrouping";
 import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
+import { i18n } from "../../i18n";
 import { useI18n } from "../../i18n/I18nManager";
 import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
@@ -461,6 +462,27 @@ function openUnsavedChangesConfirm(
 }
 
 /**
+ * Saves the open draft, showing a toast if the server didn't keep it.
+ * Resolves to whether the save went through.
+ */
+async function saveCustomizationOrToast(
+  state: SeedBibleState
+): Promise<boolean> {
+  try {
+    await state.customizations.saveEditingCustomization();
+    return true;
+  } catch (error) {
+    console.error("Failed to save customization:", error);
+    state.app.toast(
+      i18n.t("customization-save-failed", {
+        defaultValue: "Couldn't save your customization. Please try again.",
+      })
+    );
+    return false;
+  }
+}
+
+/**
  * Opens (or, if already open, updates) the customization editor side pane on
  * a specific customization. Called from the customizations list in Settings.
  */
@@ -499,8 +521,10 @@ export function openCustomizationEditPane(
         },
         () => {
           void (async () => {
-            await state.customizations.saveEditingCustomization();
-            state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID, "user");
+            // A failed save leaves the editor open so the changes aren't lost.
+            if (await saveCustomizationOrToast(state)) {
+              state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID, "user");
+            }
           })();
         }
       );
@@ -548,10 +572,11 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
   };
 
   const handleSave = async () => {
-    await customizations.saveEditingCustomization();
-    state.app.toast(
-      t("customization-saved", { defaultValue: "Customization saved" })
-    );
+    if (await saveCustomizationOrToast(state)) {
+      state.app.toast(
+        t("customization-saved", { defaultValue: "Customization saved" })
+      );
+    }
   };
 
   const handleUploadLogo = () => {
@@ -1462,10 +1487,11 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
   );
 
   const handleSave = async () => {
-    await customizations.saveEditingCustomization();
-    state.app.toast(
-      t("customization-saved", { defaultValue: "Customization saved" })
-    );
+    if (await saveCustomizationOrToast(state)) {
+      state.app.toast(
+        t("customization-saved", { defaultValue: "Customization saved" })
+      );
+    }
   };
 
   if (!record || !variant) {

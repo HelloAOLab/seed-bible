@@ -1536,7 +1536,12 @@ export function createCustomizationsManager(
 
     const saved: SeedBibleCustomization = { ...current, updatedAt: Date.now() };
     await queueWrite(async () => {
-      await persist(userId, saved);
+      // Nothing local changes unless the server kept the record, so a failed
+      // save keeps the draft unsaved instead of looking applied.
+      const result = await persist(userId, saved);
+      if (!result.success) {
+        throw new Error(`Failed to save customization: ${result.errorCode}`);
+      }
       customizations.value = customizations.value.some((c) => c.id === saved.id)
         ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
         : [...customizations.value, saved];

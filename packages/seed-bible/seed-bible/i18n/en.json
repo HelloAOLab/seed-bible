@@ -165,6 +165,7 @@
   "delete-customization": "Delete",
   "confirm-delete-customization": "Confirm delete",
   "customization-link-copied": "Customization link copied to clipboard",
+  "customization-save-failed": "Couldn't save your customization. Please try again.",
   "customization-saved": "Customization saved",
   "customization-options": "Customization options",
   "customization-extensions": "Extensions",
