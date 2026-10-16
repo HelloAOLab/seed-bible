@@ -2882,7 +2882,18 @@ describe("CustomizationsManager", () => {
     });
 
     it("with revalidation, keeps the seed when downloading the record again fails", async () => {
-      getDataMock.mockRejectedValue(new Error("network down"));
+      // Only the customization's own download fails; the viewer's other
+      // records (variant and extension picks) still read as not found.
+      getDataMock.mockImplementation(async (_recordName, address) => {
+        if (address === "customization_shared") {
+          throw new Error("network down");
+        }
+        return {
+          success: false,
+          errorCode: "data_not_found",
+          errorMessage: "Data not found",
+        };
+      });
       const errorSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => undefined);
