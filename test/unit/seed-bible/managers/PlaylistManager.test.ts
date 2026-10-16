@@ -32,6 +32,7 @@ import {
   type PlaylistReadingExtensionInstance,
   type SimplePlaylist,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import { openPlaylistItemPreview } from "@packages/seed-bible/seed-bible/components/playlistItemPreview";
 import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -3512,6 +3513,151 @@ describe("createPlaylistManager", () => {
     expect(manager.openingPlayback.value).toBe(false);
   });
 
+  describe("playlist item modal", () => {
+    const itemModal = () =>
+      lastModals.modals.value.find((m) => m.id === "playlist-item-content");
+
+    /** Renders the item modal's footer and returns its nav buttons. */
+    const renderFooter = (container: HTMLElement) => {
+      act(() => {
+        render(
+          h(I18nProvider, {
+            i18n: lastI18n,
+            children: itemModal()!.footer!({
+              t: (key) => key,
+            }) as ComponentChildren,
+          }),
+          container
+        );
+      });
+      return {
+        previous: container.querySelector(
+          ".sb-playlist-item-nav-previous"
+        ) as HTMLButtonElement,
+        next: container.querySelector(
+          ".sb-playlist-item-nav-next"
+        ) as HTMLButtonElement,
+      };
+    };
+
+    it("shows previous and next buttons that move through the queue", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "html", title: "First", html: "a" },
+            { type: "html", title: "Second", html: "b" },
+          ],
+        })
+      );
+      const playing = manager.playing.value!;
+      expect(itemModal()?.title).toBe("First");
+
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      try {
+        let buttons = renderFooter(container);
+        expect(buttons.previous.disabled).toBe(true);
+        expect(buttons.next.disabled).toBe(false);
+
+        await act(async () => buttons.next.click());
+        await playing.whenSettled();
+        expect(playing.currentIndex.value).toBe(1);
+        expect(itemModal()?.title).toBe("Second");
+
+        buttons = renderFooter(container);
+        expect(buttons.previous.disabled).toBe(false);
+
+        await act(async () => buttons.previous.click());
+        await playing.whenSettled();
+        expect(playing.currentIndex.value).toBe(0);
+        expect(itemModal()?.title).toBe("First");
+      } finally {
+        render(null, container);
+        container.remove();
+      }
+    });
+
+    it("moves on to the next item when the modal is closed", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "html", title: "First", html: "a" },
+            { type: "html", title: "Second", html: "b" },
+          ],
+        })
+      );
+      const playing = manager.playing.value!;
+
+      const dismiss = itemModal()!.onDismiss!;
+      lastModals.closeModal("playlist-item-content");
+      dismiss();
+      await playing.whenSettled();
+
+      expect(playing.currentIndex.value).toBe(1);
+      expect(itemModal()?.title).toBe("Second");
+    });
+
+    it("has no nav when an item is previewed outside playback", () => {
+      const modals = createModalManager();
+      openPlaylistItemPreview(
+        modals,
+        { type: "html", title: "Preview", html: "a" },
+        "preview",
+        (key: string) => key
+      );
+
+      const modal = modals.modals.value[0]!;
+      expect(modal.footer).toBeNull();
+      expect(modal.onDismiss).toBeNull();
+    });
+
+    it.each([
+      [
+        "embedded video",
+        { type: "link", url: "https://www.youtube.com/watch?v=abc123" },
+      ],
+      ["video file", { type: "link", url: "https://example.com/clip.mp4" }],
+      ["plain link", { type: "link", url: "https://example.com/article" }],
+      [
+        "embedded page",
+        { type: "link", url: "https://example.com/page", embed: true },
+      ],
+    ] as const)(
+      "shows previous and next buttons on a %s item",
+      async (_, item) => {
+        const manager = makeManager("user-1");
+        await flush();
+        manager.startPlaying(
+          makePlaylist({
+            items: [{ type: "html", title: "Intro", html: "a" }, item],
+          })
+        );
+        const playing = manager.playing.value!;
+        await playing.next();
+        await playing.whenSettled();
+        expect(playing.currentIndex.value).toBe(1);
+
+        const container = document.createElement("div");
+        document.body.appendChild(container);
+        try {
+          const buttons = renderFooter(container);
+          expect(buttons.previous.disabled).toBe(false);
+
+          await act(async () => buttons.previous.click());
+          await playing.whenSettled();
+          expect(playing.currentIndex.value).toBe(0);
+        } finally {
+          render(null, container);
+          container.remove();
+        }
+      }
+    );
+  });
+
   describe("playlist finished modal", () => {
     const finishedModal = () =>
       lastModals.modals.value.find((m) => m.id === "playlist-finished");
@@ -3541,6 +3687,29 @@ describe("createPlaylistManager", () => {
         key: "playlist-finished",
         defaultValue: "Playlist finished",
       });
+    });
+
+    it("closes the last item's modal when it opens", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "html", html: "a" },
+            { type: "html", html: "b" },
+          ],
+        })
+      );
+      const playing = manager.playing.value!;
+      await playing.next();
+      const isItemModalOpen = () =>
+        lastModals.modals.value.some((m) => m.id === "playlist-item-content");
+      expect(isItemModalOpen()).toBe(true);
+
+      await playing.next();
+
+      expect(finishedModal()).toBeDefined();
+      expect(isItemModalOpen()).toBe(false);
     });
 
     /** Plays a two-item saved playlist through to its finished modal. */

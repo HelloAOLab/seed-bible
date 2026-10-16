@@ -376,6 +376,24 @@ describe("initApologistExtension discover provider", () => {
       });
     });
 
+    it("uses the icon in the link, and the default icon when the link's value is blank", () => {
+      const fromLink = install(
+        "?apologistIconUrl=https%3A%2F%2Fexample.com%2Fbot.png"
+      );
+      expect(findChatProvider(fromLink).iconUrl).toBe(
+        "https://example.com/bot.png"
+      );
+      unregisterExtension("ext_Apologist");
+
+      const noLink = install("");
+      const defaultIcon = findChatProvider(noLink).iconUrl;
+      expect(defaultIcon).toBeTruthy();
+      unregisterExtension("ext_Apologist");
+
+      const blank = install("?apologistIconUrl=");
+      expect(findChatProvider(blank).iconUrl).toBe(defaultIcon);
+    });
+
     it("renames the agent in place when the saved name changes, without removing it from chats", () => {
       const saved = signal<Record<string, unknown>>({});
       const context = install("", undefined, saved);

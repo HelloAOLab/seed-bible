@@ -37,6 +37,7 @@ import {
   ExtensionInitalizer,
   mergeInstalledExtensionIds,
   registerExtension,
+  type ExtensionManager,
   type ExtensionSet,
   type InstalledExtensionsMeta,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
@@ -2365,6 +2366,164 @@ describe("createExtensionManager", () => {
     expect(
       JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
     ).toEqual(["ext.reconcile-null-default"]);
+  });
+
+  describe("a customization that's active before the extension catalog loads", () => {
+    const makeSet = (): ExtensionSet => ({
+      id: "set.early-customization",
+      extensions: [
+        {
+          url: "pkg://early-autoinstall",
+          meta: {
+            id: "ext.early-autoinstall",
+            translations: { en: { title: "Auto", description: "Auto" } },
+            autoinstall: true,
+          },
+        },
+        {
+          url: "pkg://early-saved",
+          meta: {
+            id: "ext.early-saved",
+            translations: { en: { title: "Saved", description: "Saved" } },
+          },
+        },
+        {
+          url: "pkg://early-target",
+          meta: {
+            id: "ext.early-target",
+            translations: { en: { title: "Target", description: "Target" } },
+          },
+        },
+      ],
+    });
+    // Only this set's ids: earlier tests leave registrations behind in the
+    // shared `ExtensionInitalizer`.
+    const installedIds = (manager: ExtensionManager) =>
+      manager
+        .getExtensions()
+        .filter((e) => e.installed && e.id.startsWith("ext.early-"))
+        .map((e) => e.id);
+
+    beforeEach(() => {
+      localStorage.setItem(
+        "sb-installed-extensions",
+        JSON.stringify(["ext.early-saved"])
+      );
+      mockExtensionModule("pkg://early-autoinstall");
+      mockExtensionModule("pkg://early-saved");
+      mockExtensionModule("pkg://early-target");
+    });
+
+    it("installs the customization's extensions, and not the viewer's own, once the default set loads", async () => {
+      const manager = createExtensionManager(login, {
+        defaultExtensions: makeSet(),
+      });
+
+      await manager.reconcileInstalledExtensions(["ext.early-target"]);
+      await manager.loadDefaultExtensions();
+
+      expect(installedIds(manager)).toEqual(["ext.early-target"]);
+      // The viewer's own saved set is untouched for when they leave.
+      expect(
+        JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+      ).toEqual(["ext.early-saved"]);
+    });
+
+    it("doesn't add the viewer's saved extensions to an active customization when they're re-synced (e.g. on sign-in)", async () => {
+      const manager = createExtensionManager(login, {
+        defaultExtensions: makeSet(),
+      });
+      await manager.reconcileInstalledExtensions(["ext.early-target"]);
+      await manager.loadDefaultExtensions();
+
+      await manager.loadSavedExtensions();
+
+      expect(installedIds(manager)).toEqual(["ext.early-target"]);
+    });
+
+    it("gives the viewer their own extensions, auto-installs included, when the customization is left", async () => {
+      const manager = createExtensionManager(login, {
+        defaultExtensions: makeSet(),
+      });
+      await manager.reconcileInstalledExtensions(["ext.early-target"]);
+      await manager.loadDefaultExtensions();
+
+      await manager.reconcileInstalledExtensions(null);
+
+      expect(installedIds(manager).sort()).toEqual([
+        "ext.early-autoinstall",
+        "ext.early-saved",
+      ]);
+    });
+  });
+
+  describe("reconcileInstalledExtensions() with bundled (import-based) extensions", () => {
+    const bundled = (id: string, dependencies?: string[]) => ({
+      import: () =>
+        Promise.resolve({
+          default: () => registerExtension({ id, init: () => ({}) }),
+        }),
+      meta: {
+        id,
+        translations: { en: { title: id, description: id } },
+        dependencies,
+      },
+    });
+    const isRegistered = (id: string) =>
+      ExtensionInitalizer.getInstance().isExtensionRegistered(id);
+
+    afterEach(() => {
+      for (const id of ["ext.bundled-a", "ext.bundled-b", "ext.bundled-dep"]) {
+        ExtensionInitalizer.getInstance().unregisterExtension(id);
+      }
+    });
+
+    it("uninstalls a bundled extension that's no longer wanted", async () => {
+      const set: ExtensionSet = {
+        id: "set.bundled",
+        extensions: [bundled("ext.bundled-a"), bundled("ext.bundled-b")],
+      };
+      const manager = createExtensionManager(login, {
+        defaultExtensions: set,
+      });
+      await manager.loadExtensionSet(set, () => false);
+
+      await manager.reconcileInstalledExtensions([
+        "ext.bundled-a",
+        "ext.bundled-b",
+      ]);
+      expect(isRegistered("ext.bundled-a")).toBe(true);
+      expect(isRegistered("ext.bundled-b")).toBe(true);
+
+      await manager.reconcileInstalledExtensions(["ext.bundled-b"]);
+
+      expect(isRegistered("ext.bundled-a")).toBe(false);
+      expect(isRegistered("ext.bundled-b")).toBe(true);
+    });
+
+    it("keeps what a wanted extension depends on", async () => {
+      const set: ExtensionSet = {
+        id: "set.bundled-dep",
+        extensions: [
+          bundled("ext.bundled-a", ["ext.bundled-dep"]),
+          bundled("ext.bundled-dep"),
+        ],
+      };
+      const manager = createExtensionManager(login, {
+        defaultExtensions: set,
+      });
+      await manager.loadExtensionSet(set, () => false);
+
+      await manager.reconcileInstalledExtensions(["ext.bundled-a"]);
+      expect(isRegistered("ext.bundled-dep")).toBe(true);
+
+      // A later swap (e.g. the viewer adding another extension) mustn't
+      // drop the dependency out from under the extension still using it.
+      await manager.reconcileInstalledExtensions(["ext.bundled-a"]);
+
+      expect(isRegistered("ext.bundled-a")).toBe(true);
+      expect(isRegistered("ext.bundled-dep")).toBe(true);
+    });
   });
 
   it("reconcileInstalledExtensions() warns and skips an id with no matching known extension", async () => {

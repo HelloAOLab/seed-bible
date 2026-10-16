@@ -10,6 +10,7 @@ import {
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
@@ -671,6 +672,12 @@ export interface CustomizationsManager {
    * was loaded via the URL.
    */
   activeCustomization: ReadonlySignal<SeedBibleCustomization | null>;
+  /**
+   * `recordName.id` for `activeCustomization`, or null when nothing is
+   * active (or a draft is open before the owner is signed in, so there is
+   * no record name to build a share link from).
+   */
+  activeCustomizationLocator: ReadonlySignal<string | null>;
   /** The variant of the active customization currently in effect (the device's color scheme when `isFollowingSystemScheme`, else the viewer's own pick, else the customization's default, else its first variant). */
   activeVariant: ReadonlySignal<CustomizationThemeVariant | null>;
   /** Whether the active customization has both a Light-based and a Dark-based variant, and so can follow the device the way the app-wide System theme does. False when nothing is active. */
@@ -718,9 +725,10 @@ export interface CustomizationsManager {
   ) => BibleTheme;
   /**
    * The extension ids that should be installed while the active
-   * customization is in effect: its own `auto-installed` extensions,
-   * unioned with any `available` extras the viewer added for it via
-   * `addExtensionToActiveCustomization`. Empty when nothing is active.
+   * customization is in effect: its own `auto-installed` extensions (minus
+   * any the viewer removed), unioned with any `available` extras the viewer
+   * added for it via `addExtensionToActiveCustomization`. Empty when
+   * nothing is active.
    */
   activeExtensionIds: ReadonlySignal<string[]>;
   /**
@@ -909,9 +917,9 @@ export interface CustomizationsManager {
     extensionId: string,
     key: string
   ) => ExtensionSettingValue | undefined;
-  /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active or the extension's availability there isn't "available". */
+  /** Installs an extension for the viewer on the active customization: an "available" one as an extra, an "auto-installed" one the viewer removed by putting it back. No-op if none is active or the extension is hidden there. */
   addExtensionToActiveCustomization: (extensionId: string) => Promise<void>;
-  /** Removes an extra extension id from the viewer's own preferences for the active customization. No-op if none is active or the id isn't one of the viewer's extras. */
+  /** Uninstalls an extension for the viewer on the active customization: drops an extra, or records that they removed an "auto-installed" one. No-op if none is active. */
   removeExtensionFromActiveCustomization: (
     extensionId: string
   ) => Promise<void>;
@@ -1211,10 +1219,14 @@ export function createCustomizationsManager(
     if (!customization) {
       return [];
     }
+    const locator = activeCustomizationLocator.value;
+    const removed = locator
+      ? extensionPreferences.getRemovedExtensionIds(locator)
+      : [];
     const autoInstalled = Object.entries(customization.extensionSettings)
       .filter(([, availability]) => availability === "auto-installed")
-      .map(([id]) => id);
-    const locator = activeCustomizationLocator.value;
+      .map(([id]) => id)
+      .filter((id) => !removed.includes(id));
     const extra = locator
       ? extensionPreferences.getExtraExtensionIds(locator)
       : [];
@@ -1256,6 +1268,11 @@ export function createCustomizationsManager(
       : theme.selectedThemeId.value === SYSTEM_THEME_ID;
   });
 
+  // A boolean, not the URL itself, so the active variant (and the theme built
+  // from it) is recomputed only when embed mode flips, not on every navigation.
+  const isMinimalEmbed = computed(() =>
+    isMinimalEmbedUrl(navigation.currentUrl.value)
+  );
   const activeVariant = computed<CustomizationThemeVariant | null>(() => {
     const customization = activeCustomization.value;
     if (!customization) {
@@ -1263,6 +1280,31 @@ export function createCustomizationsManager(
     }
     const byId = (id: string | null | undefined) =>
       id ? customization.variants.find((v) => v.id === id) : undefined;
+    // The embed link names the theme. A saved variant pick would leave the
+    // preview on one look no matter which theme the link asked for.
+    if (isMinimalEmbed.value) {
+      const themeId = theme.selectedThemeId.value;
+      const baseThemeId =
+        themeId === SYSTEM_THEME_ID
+          ? theme.prefersDarkScheme.value
+            ? DARK_THEME.id
+            : LIGHT_THEME.id
+          : themeId;
+      const linked = customization.variants.find(
+        (variant) => variant.baseTheme === baseThemeId
+      );
+      if (linked) {
+        return linked;
+      }
+      // No variant matches the link's theme (only a light variant, or a
+      // branding theme id). The viewer's saved pick is not what a visitor
+      // to the embed sees — they get the customization's default.
+      return (
+        byId(customization.defaultVariantId) ??
+        customization.variants[0] ??
+        null
+      );
+    }
     const bySystemScheme = isFollowingSystemScheme.value
       ? customization.variants.find(
           (v) =>
@@ -2152,7 +2194,12 @@ export function createCustomizationsManager(
     if (!locator) {
       return;
     }
-    if (getActiveExtensionAvailability(extensionId) === "hidden") {
+    const availability = getActiveExtensionAvailability(extensionId);
+    if (availability === "hidden") {
+      return;
+    }
+    if (availability === "auto-installed") {
+      await extensionPreferences.clearRemovedExtensionId(locator, extensionId);
       return;
     }
     await extensionPreferences.addExtraExtensionId(locator, extensionId);
@@ -2163,6 +2210,10 @@ export function createCustomizationsManager(
   ): Promise<void> => {
     const locator = activeCustomizationLocator.value;
     if (!locator) {
+      return;
+    }
+    if (getActiveExtensionAvailability(extensionId) === "auto-installed") {
+      await extensionPreferences.addRemovedExtensionId(locator, extensionId);
       return;
     }
     await extensionPreferences.removeExtraExtensionId(locator, extensionId);
@@ -2187,6 +2238,7 @@ export function createCustomizationsManager(
     customizations,
     isLoading,
     activeCustomization,
+    activeCustomizationLocator,
     activeVariant,
     canFollowSystemScheme,
     isFollowingSystemScheme,

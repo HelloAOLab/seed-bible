@@ -300,9 +300,20 @@ export function createI18nManager(
   }
 
   const language = signal(i18n.language);
-  i18n.on("languageChanged", (lng) => {
+  const onLanguageChanged = (lng: string) => {
     language.value = lng;
-  });
+  };
+  i18n.on("languageChanged", onLanguageChanged);
+
+  /**
+   * `i18n` is the process-wide i18next instance, so its listener list outlives
+   * this manager. The SSR host builds a manager per request; without this, each
+   * one's listener (and, through `language`, its whole app state) stays alive
+   * for the life of the server process.
+   */
+  const dispose = () => {
+    i18n.off("languageChanged", onLanguageChanged);
+  };
 
   // URL <-> language sync (both directions) is owned by `TabsManager`, not
   // here: the language segment is part of the same coordinated reading path
@@ -525,6 +536,7 @@ export function createI18nManager(
     language,
     isRtl,
     ready,
+    dispose,
   };
 }
 

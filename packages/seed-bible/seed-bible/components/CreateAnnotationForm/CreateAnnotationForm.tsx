@@ -9,6 +9,7 @@ import {
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import { extractContentText } from "../../managers/ChapterText";
+import { annotationBookName } from "../DiscoverPane/AnnotationsSection";
 import type { ChapterVerse } from "../../managers/FreeUseBibleAPI";
 import type { TabsManager } from "../../managers/TabsManager";
 import { sanitize } from "../../managers/Sanitization";
@@ -24,7 +25,12 @@ import { retryChunkImport } from "./retryChunkImport";
 // actually opens the annotation composer. If that fetch fails (e.g. offline
 // and not yet cached), fall back to a plain textarea so the note isn't lost.
 function loadAnnotationEditor(isRetry: boolean) {
-  const load = () => import("../TipTapEditor/TipTapEditor");
+  // The composer is never server-rendered; the SSR guard keeps TipTap (~800 KB)
+  // out of the single-file SSR bundle.
+  const load = () =>
+    import.meta.env.SSR
+      ? Promise.resolve({ default: PlainTextAnnotationEditor })
+      : import("../TipTapEditor/TipTapEditor");
   return lazy<ComponentType<AnnotationEditorProps>>(() =>
     (isRetry ? retryChunkImport(load) : load()).catch((err: unknown) => {
       console.error("Failed to load the rich text editor:", err);
@@ -96,11 +102,9 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
   const verseNumbers = annotationVerseNumbers(editing);
   const chapterData =
     verseNumbers.length > 0 ? findAnnotationChapterData(editing, tabs) : null;
-  const bookName =
-    chapterData?.book.name ?? chapterData?.book.commonName ?? editing.bookId;
   const verseReference =
     verseNumbers.length > 0
-      ? `${bookName} ${editing.chapterNumber}:${formatAnnotationVerseNumbers(verseNumbers)}`
+      ? `${annotationBookName(editing, tabs)} ${editing.chapterNumber}:${formatAnnotationVerseNumbers(verseNumbers)}`
       : null;
   const verseQuoteText = chapterData
     ? chapterData.chapter.content
