@@ -193,6 +193,12 @@ function createMockState(
 
 describe("DiscoverContentPanel", () => {
   let container: HTMLDivElement;
+  const scrollIntoView = vi.fn();
+
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: scrollIntoView,
+  });
 
   beforeEach(() => {
     container = document.createElement("div");
