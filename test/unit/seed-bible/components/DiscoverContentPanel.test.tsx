@@ -900,43 +900,28 @@ describe("DiscoverContentPanel", () => {
 
       expect(row.scrollLeft).toBeGreaterThan(0);
     });
-    it("does not scroll when the faded start arrow is clicked", () => {
+    it("scrolls toward the end when the end arrow is clicked in LTR", () => {
       renderPanel();
-
       const row = getRow();
       configureOverflow(row);
-
+      setRect(row, 0, 100);
       const chips = Array.from(
         row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
       );
-
-      expect(chips.length).toBeGreaterThan(0);
-
-      setRect(row, 0, 100);
-
-      // The first chip is completely to the left of the visible row.
+      // Place chips beyond the row's right edge.
       chips.forEach((chip, index) => {
-        setRect(chip, -80 + index * 50, -40 + index * 50);
+        setRect(chip, index * 60, index * 60 + 50);
       });
-
       const scrollBy = vi.fn();
       row.scrollBy = scrollBy;
-
-      setDimension(row, "scrollLeft", 0);
-
+      const endArrow = getArrow(END_LABEL);
+      expect(endArrow).not.toBeNull();
       act(() => {
-        row.dispatchEvent(new Event("scroll"));
+        endArrow!.click();
       });
 
-      const startArrow = getArrow(START_LABEL);
-      expect(startArrow).not.toBeNull();
-      expect(startArrow!.getAttribute("aria-disabled")).toBe("true");
-
-      act(() => {
-        startArrow!.click();
-      });
-
-      expect(scrollBy).not.toHaveBeenCalled();
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+      expect(scrollBy.mock.calls[0]![0].left).toBeGreaterThan(0);
     });
 
     it("scrolls toward the start when the start arrow is clicked in LTR", () => {

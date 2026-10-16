@@ -219,7 +219,7 @@ function DiscoverFilters({
       left: scrollAmount,
     });
   }, []);
-
+  const showArrows = hasScrollableFilters.value;
   useLayoutEffect(() => {
     const container = filtersRef.current;
     if (!container) return;
@@ -266,7 +266,7 @@ function DiscoverFilters({
       window.removeEventListener("resize", update);
       resizeObserver?.disconnect();
     };
-  }, [filtersKey, updateScrollState]);
+  }, [filtersKey, updateScrollState, showArrows]);
 
   return (
     <div
