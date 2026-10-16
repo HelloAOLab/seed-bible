@@ -5237,6 +5237,79 @@ describe("createPlayingState", () => {
         expect(live.size).toBe(0);
       });
 
+      /**
+       * A navigation stub whose chapter loads finish only when the test says,
+       * in any order.
+       */
+      function slowChapters() {
+        const loads: (() => void)[] = [];
+        const nav = vi.fn(
+          () => new Promise<void>((resolve) => loads.push(resolve))
+        );
+        return { nav, loads };
+      }
+
+      /** The books of the highlights still showing. */
+      function liveBooks(tab: NonNullable<TabArg>, live: Set<string>) {
+        const calls = (tab.readingState.decorateVerses as unknown as Mock).mock
+          .calls;
+        return [...live].map(
+          (id) => calls[Number(id.replace("decoration-", ""))]![0]
+        );
+      }
+
+      it("isn't put back on a step that was left while its chapter loaded", async () => {
+        const { nav, loads } = slowChapters();
+        const tab = makeTab("tab-1", nav);
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [
+            makePlaylist({
+              items: [noted, { type: "html", html: "<p>Next</p>" }],
+            }),
+          ],
+          tab
+        );
+
+        const first = state.jumpTo(0);
+        await state.next();
+        loads[0]!();
+        await first;
+
+        vi.advanceTimersByTime(60_000);
+        expect(live.size).toBe(0);
+      });
+
+      it("shows only the latest of two note links followed in quick succession", async () => {
+        const { nav, loads } = slowChapters();
+        const tab = makeTab("tab-1", nav);
+        const live = trackHighlights(tab);
+        const state = createPlayingState(
+          [makePlaylist({ items: [noted] })],
+          tab
+        );
+        const step = state.jumpTo(0);
+        loads[0]!();
+        await step;
+
+        const romans = state.visitReference({
+          book: "ROM",
+          chapter: 5,
+          verse: 8,
+        });
+        const genesis = state.visitReference({
+          book: "GEN",
+          chapter: 1,
+          verse: 1,
+        });
+        loads[2]!();
+        await genesis;
+        loads[1]!();
+        await romans;
+
+        expect(liveBooks(tab, live)).toEqual(["GEN"]);
+      });
+
       it("leaves a passage without a note to fade on its usual timer", async () => {
         const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
         const live = trackHighlights(tab);

@@ -753,6 +753,12 @@ export function createPlayingState(
    * scroll to and highlight that passage.
    */
   let hasShownStep = false;
+  /**
+   * Counts navigations (to a step, or to a passage a note links to), so one
+   * that finishes loading its chapter after a newer one started leaves the
+   * highlight alone rather than putting back a passage that's been left.
+   */
+  let navigationCount = 0;
 
   /** Pending removal of a noted passage's highlight after its note closed. */
   let noteClosedTimer: ReturnType<typeof setTimeout> | null = null;
@@ -846,6 +852,7 @@ export function createPlayingState(
   };
 
   const navigateToCurrentItem = async () => {
+    const navigation = ++navigationCount;
     const item = currentItem.value;
     detour.value = null;
     // Cleared even when the new step isn't scripture: a noted passage's
@@ -868,7 +875,9 @@ export function createPlayingState(
       ref.chapter,
       ref.verse != null ? { scrollToVerse: ref.verse } : undefined
     );
-
+    if (navigation !== navigationCount) {
+      return;
+    }
     emphasizeItem(item);
   };
 
@@ -894,6 +903,7 @@ export function createPlayingState(
     if (!tab) {
       return;
     }
+    const navigation = ++navigationCount;
     // Only what locates the passage, so it syncs as plain, comparable JSON.
     const target: ReaderVerseRef = {
       book: ref.book,
@@ -912,10 +922,12 @@ export function createPlayingState(
       ref.chapter,
       ref.verse != null ? { scrollToVerse: ref.verse } : undefined
     );
-    // Returned, or moved to another step, while the chapter was loading.
-    if (!awayFromStep.peek()) {
+    // Gone elsewhere while the chapter was loading: to another passage or
+    // step, or back from this one.
+    if (navigation !== navigationCount || !awayFromStep.peek()) {
       return;
     }
+    disposeDecoration();
     decorationId = emphasizeVerses(tab.readingState, target, undefined, {
       localOnly: true,
     });
