@@ -3026,6 +3026,40 @@ describe("CustomizationsManager", () => {
     );
   });
 
+  it("a signed-out viewer opening a share link gets the saved default availability, from a fresh fetch and from the server-rendered seed", async () => {
+    const { manager: owner } = createManager();
+    const created = await owner.create();
+    owner.startEditing(created.id);
+    owner.setEditingDefaultExtensionAvailability("hidden");
+    recordDataMock.mockClear();
+    await owner.saveEditingCustomization();
+    const [, , savedRecord] = recordDataMock.mock.calls.find(
+      ([, address]) => address === created.id
+    )!;
+
+    login.userId.value = null;
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: JSON.parse(JSON.stringify(savedRecord)),
+    });
+    const linkedNavigation = createNavigationManager({
+      initialHref: `http://localhost/?customization=user-1.${created.id}`,
+    });
+    const { manager: server } = createManager(linkedNavigation);
+    await server.initialCustomizationLoadPromise;
+    const seed = JSON.parse(
+      JSON.stringify(server.getInitialCustomizationSeed())
+    ) as InitialCustomizationSeed;
+    const { manager: client } = createManager(linkedNavigation, seed);
+
+    expect(server.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "hidden"
+    );
+    expect(client.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "hidden"
+    );
+  });
+
   it("loadByLocator() ignores a malformed locator", async () => {
     const { manager } = createManager();
     getDataMock.mockClear();
