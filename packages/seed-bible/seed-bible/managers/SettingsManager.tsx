@@ -11,6 +11,7 @@ import type { NavigationManager } from "./NavigationManager";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import { SYSTEM_THEME_ID, type ThemeHighlightColor } from "./ThemeManager";
 import { parseNumber } from "./Utils";
+import { CUSTOMIZATION_FONT_PRESETS } from "./CustomizationsManager";
 
 export type BookOrientation = "traditional" | "tanakh";
 export type UISize = "S" | "M" | "L" | "XL";
@@ -129,6 +130,7 @@ export interface AppSettings {
   scriptureElements: ScriptureElementsBehavior;
   discoveredContent: DiscoveredContentBehavior;
   textConfig: TextConfig;
+  fontOverride?: string | undefined;
   toolbar: ToolbarCustomization;
   keepScreenAwake: boolean;
   /**
@@ -221,6 +223,7 @@ export const AppSettingsSchema = z.object({
       lineHeight: z.number().optional(),
     }),
   }),
+  fontOverride: z.string().optional(),
   toolbar: z.object({
     hidden: z.array(z.string()),
     order: z.array(z.string()),
@@ -262,6 +265,7 @@ const TAG_SELECTION_UI = "app.selectionUI";
 const TAG_SCRIPTURE_ELEMENTS = "app.scriptureElements";
 const TAG_DISCOVERED_CONTENT = "app.discoveredContent";
 const TAG_TEXT_CONFIG = "app.textConfig";
+const TAG_FONT_OVERRIDE = "app.fontOverride";
 const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
 const TAG_ASK_TO_SWITCH_UI_LANGUAGE = "app.askToSwitchUiLanguage";
@@ -281,6 +285,7 @@ const PROFILE_SELECTION_UI = "selectionUI";
 const PROFILE_SCRIPTURE_ELEMENTS = "scriptureElements";
 const PROFILE_DISCOVERED_CONTENT = "discoveredContent";
 const PROFILE_TEXT_CONFIG = "textConfig";
+const PROFILE_FONT_OVERRIDE = "fontOverride";
 const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
 const PROFILE_ASK_TO_SWITCH_UI_LANGUAGE = "askToSwitchUiLanguage";
@@ -399,6 +404,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   scriptureElements: DEFAULT_SCRIPTURE_ELEMENTS,
   discoveredContent: DEFAULT_DISCOVERED_CONTENT,
   textConfig: DEFAULT_TEXT_CONFIG,
+  fontOverride: undefined,
   toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
   askToSwitchUiLanguage: true,
@@ -762,6 +768,22 @@ function applyTextConfigToCSSVars(config: TextConfig) {
   }
 }
 
+// "No override" is persisted as this sentinel rather than `undefined`: the
+// `??` chain in `readSettings` skips `undefined`, so a signed-in user's
+// cleared profile value would fall through to a stale `login.localConfig`
+// font saved while signed out.
+const NO_FONT_OVERRIDE = "default";
+
+function parseFontOverride(
+  value: unknown,
+  fallback: AppSettings["fontOverride"]
+): AppSettings["fontOverride"] {
+  if (value === NO_FONT_OVERRIDE) return undefined;
+  return CUSTOMIZATION_FONT_PRESETS.some((option) => option.value === value)
+    ? (value as string)
+    : fallback;
+}
+
 export interface SettingsManager {
   settings: Signal<AppSettings>;
   setFontSize: (fontSize: TextSize) => void;
@@ -819,6 +841,7 @@ export interface SettingsManager {
    * `discoverContentPanelInline` signal.
    */
   setDiscoverContentPanelInline: (discoverContentPanelInline: boolean) => void;
+  setFontOverride: (value: AppSettings["fontOverride"]) => void;
 }
 
 export function createSettings(
@@ -881,6 +904,10 @@ export function createSettings(
       fontSize: parseFontSize(
         read(PROFILE_FONT_SIZE, TAG_FONT_SIZE),
         presetConfig.fontSize
+      ),
+      fontOverride: parseFontOverride(
+        read(PROFILE_FONT_OVERRIDE, TAG_FONT_OVERRIDE),
+        DEFAULT_SETTINGS.fontOverride
       ),
       disablePanels: parseBoolean(
         read(PROFILE_DISABLE_PANELS, TAG_DISABLE_PANELS),
@@ -1222,6 +1249,13 @@ export function createSettings(
     );
   };
 
+  const setFontOverride: SettingsManager["setFontOverride"] = (override) => {
+    const stored = override ?? NO_FONT_OVERRIDE;
+    settings.value = { ...settings.value, fontOverride: override };
+    sessionOverrides[TAG_FONT_OVERRIDE] = stored;
+    saveProfileConfigValue(login, PROFILE_FONT_OVERRIDE, stored);
+  };
+
   const setAllSettings = (next: AppSettings) => {
     next = AppSettingsSchema.parse(next);
     settings.value = next;
@@ -1260,6 +1294,7 @@ export function createSettings(
     sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
     sessionOverrides[TAG_DISCOVER_CONTENT_PANEL_INLINE] =
       DEFAULT_SETTINGS.discoverContentPanelInline;
+    sessionOverrides[TAG_FONT_OVERRIDE] = NO_FONT_OVERRIDE;
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
       login,
@@ -1317,6 +1352,7 @@ export function createSettings(
       PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
       DEFAULT_SETTINGS.discoverContentPanelInline
     );
+    saveProfileConfigValue(login, PROFILE_FONT_OVERRIDE, NO_FONT_OVERRIDE);
   };
 
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
@@ -1329,6 +1365,17 @@ export function createSettings(
     }
     const scale = UI_SIZE_SCALE_MAP[settings.value.uiSize];
     document.documentElement.style.setProperty("--sb-ui-scale", String(scale));
+  });
+
+  effect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement.style;
+    const override = settings.value.fontOverride;
+    if (override) {
+      root.setProperty("--sb-scripture-font-override", override);
+    } else {
+      root.removeProperty("--sb-scripture-font-override");
+    }
   });
 
   // Publish per-section text config as CSS variables (`--text-<section>-*`)
@@ -1386,5 +1433,6 @@ export function createSettings(
     setCustomTheme,
     setCustomHighlights,
     setDiscoverContentPanelInline,
+    setFontOverride,
   };
 }
