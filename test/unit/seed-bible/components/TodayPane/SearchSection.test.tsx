@@ -3,7 +3,6 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
 import { SearchSection } from "@packages/seed-bible/seed-bible/components/TodayPane/SearchSection";
-import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { VerseSearchResult } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import { todayStub } from "../../testUtils/todayStubs";
 
@@ -44,7 +43,6 @@ describe("SearchSection", () => {
   let searchVerses: Mock;
   let onOpenBookSelector: Mock;
   let onOpenPassage: Mock;
-  let theme: Signal<BibleTheme>;
   let isMobile: Signal<boolean>;
 
   beforeEach(() => {
@@ -54,9 +52,6 @@ describe("SearchSection", () => {
     searchVerses = vi.fn(async () => [] as VerseSearchResult[]);
     onOpenBookSelector = vi.fn();
     onOpenPassage = vi.fn();
-    theme = signal({
-      variables: { secondaryFontColor: "#112233" },
-    } as unknown as BibleTheme);
     isMobile = signal(false);
   });
 
@@ -72,7 +67,6 @@ describe("SearchSection", () => {
       render(
         <SearchSection
           today={todayStub({ searchVerses })}
-          theme={theme}
           isMobile={isMobile}
           onOpenBookSelector={onOpenBookSelector}
           onOpenPassage={onOpenPassage}
@@ -142,25 +136,15 @@ describe("SearchSection", () => {
       expect(onOpenBookSelector).toHaveBeenCalledTimes(1);
     });
 
-    it("colours the seed-bible icon from the theme", () => {
+    // A CSS variable rather than a resolved colour, so customised themes and
+    // theme switches restyle the icon without a re-render.
+    it("colours the seed-bible icon from the theme's CSS variable", () => {
       setup();
-      expect(q<SVGSVGElement>(".sb-today-seed-bible-icon")!.style.fill).toBe(
-        "rgb(17, 34, 51)"
-      );
-    });
-
-    it("recolours the icon when the theme changes", () => {
-      setup();
-
-      act(() => {
-        theme.value = {
-          variables: { secondaryFontColor: "#445566" },
-        } as unknown as BibleTheme;
-      });
-
-      expect(q<SVGSVGElement>(".sb-today-seed-bible-icon")!.style.fill).toBe(
-        "rgb(68, 85, 102)"
-      );
+      expect(
+        q<SVGSVGElement>(".sb-today-seed-bible-icon")!.style.getPropertyValue(
+          "fill"
+        )
+      ).toBe("var(--sb-secondary-font-color)");
     });
 
     it("uses a smaller icon on mobile", () => {

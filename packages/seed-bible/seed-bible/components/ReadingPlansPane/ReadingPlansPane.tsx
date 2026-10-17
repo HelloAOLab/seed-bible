@@ -6,13 +6,14 @@ import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
   formatReadingPlanId,
+  parseReadingPlanId,
   getReadingCalendar,
+  latestReadingPlanProgress,
   summarizeCalendar,
   type CalendarReadingDay,
   type CalendarSummary,
   type ReadingPlan,
   type ReadingPlanMetadata,
-  latestReadingPlanProgress,
   type ReadingPlanProgress,
   type ReadingPlansManager,
 } from "../../managers/ReadingPlansManager";
@@ -22,20 +23,33 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { Friend, FriendsManager } from "../../managers/FriendsManager";
+import { getUserAnimalVisual } from "../../managers/SessionsManager";
+import { Avatar } from "../Avatar/Avatar";
 import type { CasualOSManager } from "../../managers/OsManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { UserGalleryManager } from "../../managers/UserGalleryManager";
+import { displayNameOf } from "../../managers/Utils";
 import { readingLabel } from "./readingLabel";
 import { ReadingPlanEditor } from "./ReadingPlanEditor";
 import { ReadingPlanDetail } from "./ReadingPlanDetail";
+import { ReadingPlanOptionsMenu } from "./ReadingPlanOptionsMenu";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
+import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;
+  /**
+   * Powers the "Reading plans from your friends" section. Without it the
+   * section is omitted entirely.
+   */
+  friends?: FriendsManager;
   /** Books of the active translation, for the scripture typeahead + labels. */
   books: TranslationBook[];
-  /** Modals host, for previewing/opening a text or link reading. */
-  modals?: ModalManager;
+  /** Modals host, for previewing a text or link reading and confirming a delete. */
+  modals: ModalManager;
+  /** Loads chapters for the plan editor's inline scripture previews. */
+  loadChapter?: ScriptureChapterLoader;
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
@@ -76,6 +90,27 @@ type ReadingPlansView = "list" | "edit" | "detail";
 const readingPlansView = signal<ReadingPlansView>("list");
 
 /**
+ * Set when another screen opened the pane straight onto a plan, as tapping a
+ * plan in "Your content" does. Back from that plan then returns to that
+ * screen, not to a plans list the user never saw.
+ */
+const planBackLeavesPane = signal(false);
+
+function showPlansList() {
+  readingPlansView.value = "list";
+  planBackLeavesPane.value = false;
+}
+
+/**
+ * Called whenever the pane is opened, so a plan another screen opened on an
+ * earlier visit doesn't send back there. A screen opening it onto a plan
+ * marks that again afterwards (see `openReadingPlanDetail`).
+ */
+export function forgetReadingPlansPaneOpener() {
+  planBackLeavesPane.value = false;
+}
+
+/**
  * Set when a plan fails to load, so the list can say so. A plan that can't be
  * fetched must leave the user on the list with an explanation — opening the
  * detail view on nothing just produces a blank screen titled "Untitled plan".
@@ -85,24 +120,30 @@ const planLoadError = signal<string | null>(null);
 /** The plan currently being opened, so its card can show it's working. */
 const openingPlanId = signal<string | null>(null);
 
-function copyReadingPlanShareUrl(
-  readingPlans: ReadingPlansManager,
-  plan: ReadingPlan,
-  toast: ((message: string) => void) | undefined,
-  copiedMessage: string
-) {
-  void navigator.clipboard.writeText(readingPlans.getReadingPlanShareUrl(plan));
-  toast?.(copiedMessage);
+/** "Couldn't load this plan", shown in place of opening a dead screen. */
+function PlanLoadError(props: { planId: string }) {
+  const { t } = useI18n();
+  return planLoadError.value === props.planId ? (
+    <p className="sb-rp-card-error" role="alert">
+      {t("reading-plan-load-failed", {
+        defaultValue: "Couldn't load this plan. Please try again.",
+      })}
+    </p>
+  ) : null;
 }
 
 /**
  * Opens a plan's detail view. The view only switches once the plan is actually
  * in hand: a plan whose record is missing or unreadable leaves the user on the
  * list with an error, rather than on an empty screen.
+ *
+ * Exported for the "Your content" screen, which lists the user's plans too and
+ * hands a tapped one here after opening the pane.
  */
-async function openPlanDetail(
+export async function openReadingPlanDetail(
   readingPlans: ReadingPlansManager,
-  plan: ReadingPlanMetadata
+  plan: ReadingPlanMetadata,
+  options: OpenPlanOptions = {}
 ) {
   const planId = formatReadingPlanId(plan.recordName, plan.address);
   planLoadError.value = null;
@@ -120,12 +161,71 @@ async function openPlanDetail(
     planId
   );
   await readingPlans.selectReadingPlanProgress(progress);
-  readingPlansView.value = "detail";
+  showPlan("detail", options);
+}
+
+interface OpenPlanOptions {
+  /** Another screen opened the pane onto this plan; back returns there. */
+  fromAnotherScreen?: boolean;
+}
+
+function showPlan(view: "detail" | "edit", options: OpenPlanOptions) {
+  readingPlansView.value = view;
+  if (options.fromAnotherScreen) {
+    planBackLeavesPane.value = true;
+  }
 }
 
 /** Opens the detail screen for a plan that is already selected. */
 export function showReadingPlanDetailView() {
   readingPlansView.value = "detail";
+}
+
+/**
+ * Opens an existing plan in the editor, loading its contents if needed. A plan
+ * still in draft picks up where it left off; a published one opens in edit
+ * mode, where backing out changes nothing.
+ *
+ * Exported for the same reason as {@link openReadingPlanDetail}.
+ */
+export async function openReadingPlanEditor(
+  readingPlans: ReadingPlansManager,
+  meta: ReadingPlanMetadata,
+  options: OpenPlanOptions = {}
+) {
+  // Already open in the editor — the author stepped out, to go read, say, and
+  // is coming back. Their unsaved changes are kept rather than reloaded over.
+  const current = readingPlans.editingReadingPlan.peek();
+  if (
+    current &&
+    current.plan.recordName === meta.recordName &&
+    current.plan.address === meta.address
+  ) {
+    showPlan("edit", options);
+    return;
+  }
+  const planId = formatReadingPlanId(meta.recordName, meta.address);
+  planLoadError.value = null;
+  openingPlanId.value = planId;
+  let full: ReadingPlan | null = null;
+  try {
+    full = await readingPlans.selectReadingPlan(meta);
+  } catch {
+    planLoadError.value = planId;
+    return;
+  } finally {
+    openingPlanId.value = null;
+  }
+  if (!full) {
+    planLoadError.value = planId;
+    return;
+  }
+  if (full.status === "draft") {
+    readingPlans.resumeEditingReadingPlan(full);
+  } else {
+    readingPlans.editExistingReadingPlan(full);
+  }
+  showPlan("edit", options);
 }
 
 /**
@@ -152,7 +252,7 @@ function backToPlansList(readingPlans: ReadingPlansManager) {
     void readingPlans.selectReadingPlan(null);
     void readingPlans.selectReadingPlanProgress(null);
   }
-  readingPlansView.value = "list";
+  showPlansList();
 }
 
 /**
@@ -196,19 +296,34 @@ export function ReadingPlansPaneTitle(props: {
   return <>{t("reading-plans", { defaultValue: "Reading plans" })}</>;
 }
 
-/** Pane header back button, shown on every screen except the list itself. */
+/**
+ * Pane header back button. Inside a plan or the editor it returns to the
+ * list. On the list, and on a plan another screen opened directly, it calls
+ * `onBack` to return to that screen; without `onBack` the list has no back.
+ */
 export function ReadingPlansPaneLeading(props: {
   readingPlans: ReadingPlansManager;
+  onBack?: () => void;
 }) {
+  const { readingPlans, onBack } = props;
   const { t } = useI18n();
-  if (readingPlansView.value === "list") {
+  const onList = readingPlansView.value === "list";
+  const leavesPane = !!onBack && (onList || planBackLeavesPane.value);
+  if (onList && !leavesPane) {
     return null;
   }
   return (
     <button
       type="button"
       className="sb-rp-icon-button sb-rp-pane-back"
-      onClick={() => backToPlansList(props.readingPlans)}
+      onClick={() => {
+        if (!onList) {
+          backToPlansList(readingPlans);
+        }
+        if (leavesPane) {
+          onBack();
+        }
+      }}
       aria-label={t("back", { defaultValue: "Back" })}
       title={t("back", { defaultValue: "Back" })}
     >
@@ -230,10 +345,12 @@ export function ReadingPlansPaneActions(props: {
       type="button"
       className="sb-reading-plans-create"
       onClick={() => openPlanCreate(props.readingPlans)}
-      aria-label={t("create-reading-plan", { defaultValue: "New plan" })}
-      title={t("create-reading-plan", { defaultValue: "New plan" })}
+      aria-label={t("create-reading-plan", {
+        defaultValue: "Create reading plan",
+      })}
+      title={t("create-reading-plan", { defaultValue: "Create reading plan" })}
     >
-      <MaterialIcon>add</MaterialIcon>
+      + {t("create-menu", { defaultValue: "Create" })}
     </button>
   );
 }
@@ -247,8 +364,10 @@ export function ReadingPlansPaneActions(props: {
 export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   const {
     readingPlans,
+    friends,
     books,
     modals,
+    loadChapter,
     os,
     login,
     gallery,
@@ -261,12 +380,12 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   const view = readingPlansView.value;
 
   const closeEditor = () => {
-    readingPlansView.value = "list";
+    showPlansList();
   };
 
   /**
    * Restarts a finished plan: creates a fresh progress (so the calendar starts
-   * over from today) and opens the detail view on it. `openPlanDetail` picks
+   * over from today) and opens the detail view on it. `openReadingPlanDetail` picks
    * the most recently started progress, which is the one just created.
    */
   const restartPlan = async (plan: ReadingPlanMetadata) => {
@@ -276,36 +395,11 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
       console.error("Failed to restart reading plan:", error);
       return;
     }
-    await openPlanDetail(readingPlans, plan);
+    await openReadingPlanDetail(readingPlans, plan);
   };
 
-  /** Opens an existing plan in the editor, loading its contents if needed. */
-  const editPlan = async (meta: ReadingPlanMetadata) => {
-    const planId = formatReadingPlanId(meta.recordName, meta.address);
-    planLoadError.value = null;
-    openingPlanId.value = planId;
-    let full: ReadingPlan | null = null;
-    try {
-      full = await readingPlans.selectReadingPlan(meta);
-    } catch {
-      planLoadError.value = planId;
-      return;
-    } finally {
-      openingPlanId.value = null;
-    }
-    if (!full) {
-      planLoadError.value = planId;
-      return;
-    }
-    // A plan still in draft picks up where it left off; a published one opens
-    // in edit mode, where backing out changes nothing.
-    if (full.status === "draft") {
-      readingPlans.resumeEditingReadingPlan(full);
-    } else {
-      readingPlans.editExistingReadingPlan(full);
-    }
-    readingPlansView.value = "edit";
-  };
+  const editPlan = (meta: ReadingPlanMetadata) =>
+    openReadingPlanEditor(readingPlans, meta);
 
   if (view === "edit") {
     return (
@@ -313,6 +407,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
         readingPlans={readingPlans}
         books={books}
         modals={modals}
+        loadChapter={loadChapter}
         os={os}
         login={login}
         gallery={gallery}
@@ -338,7 +433,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
           }
         }}
         onDeleted={() => {
-          readingPlansView.value = "list";
+          showPlansList();
         }}
       />
     );
@@ -347,8 +442,10 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   return (
     <ReadingPlansList
       readingPlans={readingPlans}
+      friends={friends}
       books={books}
-      onOpen={(plan) => void openPlanDetail(readingPlans, plan)}
+      modals={modals}
+      onOpen={(plan) => void openReadingPlanDetail(readingPlans, plan)}
       onEdit={(plan) => void editPlan(plan)}
       onRestart={(plan) => void restartPlan(plan)}
       toast={toast}
@@ -367,7 +464,13 @@ interface PlanRow {
 
 interface ReadingPlansListProps {
   readingPlans: ReadingPlansManager;
+  /**
+   * Powers the "Reading plans from your friends" section. Omitted entirely
+   * when not provided.
+   */
+  friends?: FriendsManager;
   books: TranslationBook[];
+  modals: ModalManager;
   onOpen: (plan: ReadingPlanMetadata) => void;
   onEdit: (plan: ReadingPlanMetadata) => void;
   /** Starts a completed plan over on a fresh progress, then opens it. */
@@ -375,8 +478,38 @@ interface ReadingPlansListProps {
   toast?: (message: string) => void;
 }
 
+/** Resolves a book id to its display name, for reading labels/typeaheads. */
+function resolveBookName(books: TranslationBook[], bookId: string): string {
+  const book = books.find((b) => b.id === bookId);
+  return book?.name ?? book?.commonName ?? bookId;
+}
+
+/** A short, comma-joined summary of a reading day's first few readings. */
+function dayReadingsLabel(
+  books: TranslationBook[],
+  day: CalendarReadingDay
+): string {
+  return day.sessions
+    .flatMap((cs) => cs.session.readings)
+    .map((r) =>
+      readingLabel(r.item, (bookId) => resolveBookName(books, bookId), "")
+    )
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(", ");
+}
+
 function ReadingPlansList(props: ReadingPlansListProps) {
-  const { readingPlans, books, onOpen, onEdit, onRestart, toast } = props;
+  const {
+    readingPlans,
+    friends,
+    books,
+    modals,
+    onOpen,
+    onEdit,
+    onRestart,
+    toast,
+  } = props;
   const { t } = useI18n();
   // Deleting a plan erases it for good, so the button asks once first rather
   // than deleting on the tap that was meant to open it.
@@ -386,21 +519,10 @@ function ReadingPlansList(props: ReadingPlansListProps) {
   const metas = readingPlans.userReadingPlans.value;
   const fullPlans = readingPlans.fullReadingPlans.value;
   const progresses = readingPlans.userReadingPlanProgresses.value;
-  const failedPlanId = planLoadError.value;
   const openingId = openingPlanId.value;
 
-  const resolveBookName = (bookId: string): string => {
-    const book = books.find((b) => b.id === bookId);
-    return book?.name ?? book?.commonName ?? bookId;
-  };
-
-  const dayReadingsLabel = (day: CalendarReadingDay): string =>
-    day.sessions
-      .flatMap((cs) => cs.session.readings)
-      .map((r) => readingLabel(r.item, resolveBookName, ""))
-      .filter(Boolean)
-      .slice(0, 3)
-      .join(", ");
+  const dayReadingsLabelForBooks = (day: CalendarReadingDay): string =>
+    dayReadingsLabel(books, day);
 
   const nowMs = Date.now();
   const fullById = new Map(
@@ -445,81 +567,17 @@ function ReadingPlansList(props: ReadingPlansListProps) {
   const planTitle = (meta: ReadingPlanMetadata) =>
     meta.title ?? t("untitled-reading-plan", { defaultValue: "Untitled plan" });
 
-  /**
-   * Edit and delete for a plan the user owns. Delete is offered on every plan
-   * — a plan you can't get rid of is a plan you're stuck with — and asks once
-   * before it erases anything.
-   */
-  const PlanActions = (actionProps: { row: PlanRow }) => {
-    const { row } = actionProps;
-    const confirming = confirmDeleteId === row.planId;
-    const full = row.full;
-    return (
-      <div className="sb-rp-card-actions">
-        {full ? (
-          <button
-            type="button"
-            className="sb-rp-icon-button"
-            onClick={() =>
-              copyReadingPlanShareUrl(
-                readingPlans,
-                full,
-                toast,
-                t("reading-plan-url-copied", {
-                  defaultValue: "Reading plan URL copied to clipboard",
-                })
-              )
-            }
-            aria-label={t("share-reading-plan", {
-              defaultValue: "Share plan",
-            })}
-            title={t("share-reading-plan", { defaultValue: "Share plan" })}
-          >
-            <MaterialIcon>share</MaterialIcon>
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className="sb-rp-icon-button"
-          onClick={() => onEdit(row.meta)}
-          aria-label={t("edit-reading-plan", { defaultValue: "Edit plan" })}
-          title={t("edit-reading-plan", { defaultValue: "Edit plan" })}
-        >
-          <MaterialIcon>edit</MaterialIcon>
-        </button>
-        <button
-          type="button"
-          className={`sb-rp-restart${
-            confirming ? " sb-rp-restart-danger" : ""
-          }`}
-          onClick={() => {
-            if (!confirming) {
-              setConfirmDeleteId(row.planId);
-              return;
-            }
-            setConfirmDeleteId(null);
-            void readingPlans.deleteReadingPlan(row.meta);
-          }}
-        >
-          {confirming
-            ? t("reading-plan-delete-confirm", {
-                defaultValue: "Delete for good?",
-              })
-            : t("reading-plan-delete", { defaultValue: "Delete" })}
-        </button>
-      </div>
-    );
-  };
-
-  /** "Couldn't load this plan", shown in place of opening a dead screen. */
-  const LoadError = (errorProps: { planId: string }) =>
-    failedPlanId === errorProps.planId ? (
-      <p className="sb-rp-card-error" role="alert">
-        {t("reading-plan-load-failed", {
-          defaultValue: "Couldn't load this plan. Please try again.",
-        })}
-      </p>
-    ) : null;
+  /** Share, edit, and delete, in the same menu a playlist row uses. */
+  const optionsMenu = (row: PlanRow) => (
+    <ReadingPlanOptionsMenu
+      readingPlans={readingPlans}
+      plan={row.meta}
+      fullPlan={row.full}
+      onEdit={() => onEdit(row.meta)}
+      modals={modals}
+      toast={toast}
+    />
+  );
 
   const resumeDraft = (meta: ReadingPlanMetadata) => {
     const full = fullById.get(
@@ -534,260 +592,431 @@ function ReadingPlansList(props: ReadingPlansListProps) {
 
   return (
     <div className="sb-reading-plans-pane">
-      {rows.length === 0 && drafts.length === 0 ? (
-        <div className="sb-reading-plans-empty">
-          {t("reading-plans-empty", {
-            defaultValue:
-              "You don't have any reading plans yet. Create one to get started.",
-          })}
-        </div>
-      ) : (
-        <div className="sb-reading-plans-scroll">
-          {hero && hero.summary?.next ? (
-            <button
-              type="button"
-              className="sb-rp-today"
-              onClick={() => onOpen(hero.meta)}
-              disabled={openingId === hero.planId}
-            >
-              {hero.meta.heroImageUrl ? (
-                <HeroImageThumb url={hero.meta.heroImageUrl} />
-              ) : null}
-              <div className="sb-rp-today-text">
-                <span className="sb-rp-today-eyebrow">
-                  {t("reading-plan-today-eyebrow", {
-                    defaultValue: "Today · Day {{day}}",
-                    day: hero.summary.nextDayNumber ?? 1,
-                  })}
-                </span>
-                <span className="sb-rp-today-title" dir="auto">
-                  {planTitle(hero.meta)}
-                </span>
-                {hero.meta.description ? (
-                  <span className="sb-rp-today-readings" dir="auto">
-                    {hero.meta.description}
-                  </span>
+      <div className="sb-reading-plans-scroll">
+        {rows.length === 0 && drafts.length === 0 ? (
+          <div className="sb-reading-plans-empty">
+            {t("reading-plans-empty", {
+              defaultValue:
+                "You don't have any reading plans yet. Create one to get started.",
+            })}
+          </div>
+        ) : (
+          <>
+            {hero && hero.summary?.next ? (
+              <button
+                type="button"
+                className="sb-rp-today"
+                onClick={() => onOpen(hero.meta)}
+                disabled={openingId === hero.planId}
+              >
+                {hero.meta.heroImageUrl ? (
+                  <HeroImageThumb url={hero.meta.heroImageUrl} />
                 ) : null}
-                <span className="sb-rp-today-readings">
-                  {dayReadingsLabel(hero.summary.next)}
-                </span>
-              </div>
-              <span className="sb-rp-today-go" aria-hidden="true">
-                <MaterialIcon>
-                  {openingId === hero.planId
-                    ? "hourglass_top"
-                    : "arrow_forward"}
-                </MaterialIcon>
-              </span>
-            </button>
-          ) : null}
-
-          {drafts.length > 0 ? (
-            <PlanSection
-              label={t("reading-plan-drafts", { defaultValue: "Drafts" })}
-              count={drafts.length}
-            >
-              {drafts.map((meta) => {
-                const planId = formatReadingPlanId(
-                  meta.recordName,
-                  meta.address
-                );
-                const full = fullById.get(planId);
-                const readings =
-                  full?.sessions.reduce(
-                    (sum, session) => sum + session.readings.length,
-                    0
-                  ) ?? 0;
-                const confirming = confirmDeleteId === planId;
-                return (
-                  <div key={planId} className="sb-rp-card sb-rp-card-static">
-                    <button
-                      type="button"
-                      className="sb-rp-card-open"
-                      onClick={() => resumeDraft(meta)}
-                      disabled={!full}
-                    >
-                      {meta.heroImageUrl ? (
-                        <HeroImageThumb url={meta.heroImageUrl} />
-                      ) : null}
-                      <span className="sb-rp-card-body">
-                        <span className="sb-rp-card-title" dir="auto">
-                          {planTitle(meta)}
-                        </span>
-                        {meta.description ? (
-                          <span className="sb-rp-card-sub" dir="auto">
-                            {meta.description}
-                          </span>
-                        ) : null}
-                        <span className="sb-rp-card-sub">
-                          {t("reading-plan-draft-summary", {
-                            defaultValue: "Draft · {{count}} readings",
-                            count: readings,
-                          })}
-                        </span>
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`sb-rp-restart${
-                        confirming ? " sb-rp-restart-danger" : ""
-                      }`}
-                      onClick={() => {
-                        if (!confirming) {
-                          setConfirmDeleteId(planId);
-                          return;
-                        }
-                        setConfirmDeleteId(null);
-                        void readingPlans.deleteReadingPlan(meta);
-                      }}
-                    >
-                      {confirming
-                        ? t("reading-plan-discard-draft-confirm", {
-                            defaultValue: "Delete for good?",
-                          })
-                        : t("reading-plan-discard-draft", {
-                            defaultValue: "Discard",
-                          })}
-                    </button>
-                  </div>
-                );
-              })}
-            </PlanSection>
-          ) : null}
-
-          {active.length > 0 ? (
-            <PlanSection
-              label={t("reading-plan-active", { defaultValue: "Active" })}
-              count={active.length}
-            >
-              {active.map((row) => (
-                <div key={row.planId} className="sb-rp-card-group">
-                  <ActivePlanCard
-                    row={row}
-                    title={planTitle(row.meta)}
-                    dayReadingsLabel={dayReadingsLabel}
-                    opening={openingId === row.planId}
-                    onOpen={() => onOpen(row.meta)}
-                    t={t}
-                  />
-                  <LoadError planId={row.planId} />
-                  <PlanActions row={row} />
-                </div>
-              ))}
-            </PlanSection>
-          ) : null}
-
-          {notStarted.length > 0 ? (
-            <PlanSection
-              label={t("reading-plan-not-started", {
-                defaultValue: "Not started",
-              })}
-              count={notStarted.length}
-            >
-              {notStarted.map((row) => (
-                <div key={row.planId} className="sb-rp-card-group">
-                  <button
-                    type="button"
-                    className="sb-rp-card"
-                    onClick={() => onOpen(row.meta)}
-                    disabled={openingId === row.planId}
-                  >
-                    {row.meta.heroImageUrl ? (
-                      <HeroImageThumb url={row.meta.heroImageUrl} />
-                    ) : null}
-                    <span className="sb-rp-card-body">
-                      <span className="sb-rp-card-title" dir="auto">
-                        {planTitle(row.meta)}
-                      </span>
-                      {row.meta.description ? (
-                        <span className="sb-rp-card-sub" dir="auto">
-                          {row.meta.description}
-                        </span>
-                      ) : null}
-                      <span className="sb-rp-card-sub">
-                        {openingId === row.planId
-                          ? t("loading", { defaultValue: "Loading…" })
-                          : t("reading-plan-not-started", {
-                              defaultValue: "Not started",
-                            })}
-                      </span>
+                <div className="sb-rp-today-text">
+                  <span className="sb-rp-today-eyebrow">
+                    {t("reading-plan-today-eyebrow", {
+                      defaultValue: "Today · Day {{day}}",
+                      day: hero.summary.nextDayNumber ?? 1,
+                    })}
+                  </span>
+                  <span className="sb-rp-today-title" dir="auto">
+                    {planTitle(hero.meta)}
+                  </span>
+                  {hero.meta.description ? (
+                    <span className="sb-rp-today-readings" dir="auto">
+                      {hero.meta.description}
                     </span>
-                    <MaterialIcon className="sb-rp-card-chevron">
-                      chevron_right
-                    </MaterialIcon>
-                  </button>
-                  <LoadError planId={row.planId} />
-                  <PlanActions row={row} />
+                  ) : null}
+                  <span className="sb-rp-today-readings">
+                    {dayReadingsLabelForBooks(hero.summary.next)}
+                  </span>
                 </div>
-              ))}
-            </PlanSection>
-          ) : null}
+                <span className="sb-rp-today-go" aria-hidden="true">
+                  <MaterialIcon>
+                    {openingId === hero.planId
+                      ? "hourglass_top"
+                      : "arrow_forward"}
+                  </MaterialIcon>
+                </span>
+              </button>
+            ) : null}
 
-          {completed.length > 0 ? (
-            <PlanSection
-              label={t("reading-plan-completed", { defaultValue: "Completed" })}
-              count={completed.length}
-            >
-              {completed.map((row) => {
-                const finishedMs =
-                  row.summary?.lastDay?.completedAtMs ??
-                  row.progress?.updatedAtMs ??
-                  null;
-                return (
-                  <div key={row.planId} className="sb-rp-card-group">
-                    <div className="sb-rp-card sb-rp-card-static">
+            {drafts.length > 0 ? (
+              <PlanSection
+                label={t("reading-plan-drafts", { defaultValue: "Drafts" })}
+                count={drafts.length}
+              >
+                {drafts.map((meta) => {
+                  const planId = formatReadingPlanId(
+                    meta.recordName,
+                    meta.address
+                  );
+                  const full = fullById.get(planId);
+                  const readings =
+                    full?.sessions.reduce(
+                      (sum, session) => sum + session.readings.length,
+                      0
+                    ) ?? 0;
+                  const confirming = confirmDeleteId === planId;
+                  return (
+                    <div key={planId} className="sb-rp-card sb-rp-card-static">
                       <button
                         type="button"
                         className="sb-rp-card-open"
-                        onClick={() => onOpen(row.meta)}
-                        disabled={openingId === row.planId}
+                        onClick={() => resumeDraft(meta)}
+                        disabled={!full}
                       >
-                        {row.meta.heroImageUrl ? (
-                          <HeroImageThumb url={row.meta.heroImageUrl} />
+                        {meta.heroImageUrl ? (
+                          <HeroImageThumb url={meta.heroImageUrl} />
                         ) : null}
                         <span className="sb-rp-card-body">
                           <span className="sb-rp-card-title" dir="auto">
-                            {planTitle(row.meta)}
+                            {planTitle(meta)}
                           </span>
-                          {row.meta.description ? (
+                          {meta.description ? (
                             <span className="sb-rp-card-sub" dir="auto">
-                              {row.meta.description}
+                              {meta.description}
                             </span>
                           ) : null}
                           <span className="sb-rp-card-sub">
-                            {finishedMs != null
-                              ? `${t("reading-plan-finished", {
-                                  defaultValue: "Finished {{date}}",
-                                  date: new Date(finishedMs).toLocaleDateString(
-                                    undefined,
-                                    {
-                                      month: "short",
-                                      day: "numeric",
-                                    }
-                                  ),
-                                })} · ${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`
-                              : `${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`}
+                            {t("reading-plan-draft-summary", {
+                              defaultValue: "Draft · {{count}} readings",
+                              count: readings,
+                            })}
                           </span>
                         </span>
                       </button>
                       <button
                         type="button"
-                        className="sb-rp-restart"
-                        onClick={() => onRestart(row.meta)}
+                        className={`sb-rp-restart${
+                          confirming ? " sb-rp-restart-danger" : ""
+                        }`}
+                        onClick={() => {
+                          if (!confirming) {
+                            setConfirmDeleteId(planId);
+                            return;
+                          }
+                          setConfirmDeleteId(null);
+                          void readingPlans.deleteReadingPlan(meta);
+                        }}
                       >
-                        {t("reading-plan-restart", { defaultValue: "Restart" })}
+                        {confirming
+                          ? t("reading-plan-discard-draft-confirm", {
+                              defaultValue: "Delete for good?",
+                            })
+                          : t("reading-plan-discard-draft", {
+                              defaultValue: "Discard",
+                            })}
                       </button>
                     </div>
-                    <LoadError planId={row.planId} />
-                    <PlanActions row={row} />
+                  );
+                })}
+              </PlanSection>
+            ) : null}
+
+            {active.length > 0 ? (
+              <PlanSection
+                label={t("reading-plan-active", { defaultValue: "Active" })}
+                count={active.length}
+              >
+                {active.map((row) => (
+                  <div key={row.planId} className="sb-rp-card-group">
+                    <ActivePlanCard
+                      row={row}
+                      title={planTitle(row.meta)}
+                      dayReadingsLabel={dayReadingsLabelForBooks}
+                      opening={openingId === row.planId}
+                      onOpen={() => onOpen(row.meta)}
+                      menu={optionsMenu(row)}
+                      t={t}
+                    />
+                    <PlanLoadError planId={row.planId} />
                   </div>
-                );
-              })}
-            </PlanSection>
-          ) : null}
-        </div>
-      )}
+                ))}
+              </PlanSection>
+            ) : null}
+
+            {notStarted.length > 0 ? (
+              <PlanSection
+                label={t("reading-plan-not-started", {
+                  defaultValue: "Not started",
+                })}
+                count={notStarted.length}
+              >
+                {notStarted.map((row) => {
+                  const opening = openingId === row.planId;
+                  const open = () => {
+                    if (!opening) {
+                      onOpen(row.meta);
+                    }
+                  };
+                  return (
+                    <div key={row.planId} className="sb-rp-card-group">
+                      <div
+                        className={`sb-rp-card${
+                          opening ? " sb-rp-card--opening" : ""
+                        }`}
+                        onClick={open}
+                      >
+                        <button
+                          type="button"
+                          className="sb-rp-card-open"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            open();
+                          }}
+                          disabled={opening}
+                        >
+                          {row.meta.heroImageUrl ? (
+                            <HeroImageThumb url={row.meta.heroImageUrl} />
+                          ) : null}
+                          <span className="sb-rp-card-body">
+                            <span className="sb-rp-card-title" dir="auto">
+                              {planTitle(row.meta)}
+                            </span>
+                            {row.meta.description ? (
+                              <span className="sb-rp-card-sub" dir="auto">
+                                {row.meta.description}
+                              </span>
+                            ) : null}
+                            <span className="sb-rp-card-sub">
+                              {opening
+                                ? t("loading", { defaultValue: "Loading…" })
+                                : t("reading-plan-not-started", {
+                                    defaultValue: "Not started",
+                                  })}
+                            </span>
+                          </span>
+                        </button>
+                        <MaterialIcon className="sb-rp-card-chevron">
+                          {opening ? "hourglass_top" : "arrow_forward"}
+                        </MaterialIcon>
+                        {optionsMenu(row)}
+                      </div>
+                      <PlanLoadError planId={row.planId} />
+                    </div>
+                  );
+                })}
+              </PlanSection>
+            ) : null}
+
+            {completed.length > 0 ? (
+              <PlanSection
+                label={t("reading-plan-completed", {
+                  defaultValue: "Completed",
+                })}
+                count={completed.length}
+              >
+                {completed.map((row) => {
+                  const finishedMs =
+                    row.summary?.lastDay?.completedAtMs ??
+                    row.progress?.updatedAtMs ??
+                    null;
+                  return (
+                    <div key={row.planId} className="sb-rp-card-group">
+                      <div className="sb-rp-card sb-rp-card-static">
+                        <button
+                          type="button"
+                          className="sb-rp-card-open"
+                          onClick={() => onOpen(row.meta)}
+                          disabled={openingId === row.planId}
+                        >
+                          {row.meta.heroImageUrl ? (
+                            <HeroImageThumb url={row.meta.heroImageUrl} />
+                          ) : null}
+                          <span className="sb-rp-card-body">
+                            <span className="sb-rp-card-title" dir="auto">
+                              {planTitle(row.meta)}
+                            </span>
+                            {row.meta.description ? (
+                              <span className="sb-rp-card-sub" dir="auto">
+                                {row.meta.description}
+                              </span>
+                            ) : null}
+                            <span className="sb-rp-card-sub">
+                              {finishedMs != null
+                                ? `${t("reading-plan-finished", {
+                                    defaultValue: "Finished {{date}}",
+                                    date: new Date(
+                                      finishedMs
+                                    ).toLocaleDateString(undefined, {
+                                      month: "short",
+                                      day: "numeric",
+                                    }),
+                                  })} · ${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`
+                                : `${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`}
+                            </span>
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className="sb-rp-restart"
+                          onClick={() => onRestart(row.meta)}
+                        >
+                          {t("reading-plan-restart", {
+                            defaultValue: "Restart",
+                          })}
+                        </button>
+                        {optionsMenu(row)}
+                      </div>
+                      <PlanLoadError planId={row.planId} />
+                    </div>
+                  );
+                })}
+              </PlanSection>
+            ) : null}
+          </>
+        )}
+        {friends ? (
+          <FriendReadingPlansSection
+            readingPlans={readingPlans}
+            friends={friends}
+            books={books}
+            onOpen={onOpen}
+            openingId={openingId}
+          />
+        ) : null}
+      </div>
     </div>
+  );
+}
+
+/**
+ * Reading plans the signed-in user's friends are currently going through —
+ * one section per friend, showing their own progress. A friend's row always
+ * has a progress record (that's how it was found), so it's always "active"
+ * or "completed", never "not started" — there is nothing to bucket. Renders
+ * nothing when no friend has any resolvable progress, mirroring
+ * `FriendPlaylistsSection`'s reasoning:
+ * there's no create-one call-to-action to fall back on for someone else's
+ * reading.
+ */
+function FriendReadingPlansSection(props: {
+  readingPlans: ReadingPlansManager;
+  friends: FriendsManager;
+  books: TranslationBook[];
+  onOpen: (plan: ReadingPlanMetadata) => void;
+  openingId: string | null;
+}) {
+  const { readingPlans, friends, books, onOpen, openingId } = props;
+  const { t } = useI18n();
+  const nowMs = Date.now();
+
+  // Reading each friend's progress view (and each resolved plan's
+  // `.value`) here — not just `friendIds` — subscribes this render to
+  // their data arriving as it settles.
+  const groups = friends.friends.value
+    .map((friend) => {
+      const progresses = readingPlans.getUserReadingPlanProgresses(
+        friend.userId
+      ).value;
+      const rows: FriendReadingPlanRow[] = [];
+      // Restarting a plan adds a progress and keeps the old one, so only the
+      // latest per plan says where they are now, as in the user's own list.
+      for (const planId of new Set(progresses.map((p) => p.planId))) {
+        const progress = latestReadingPlanProgress(progresses, planId)!;
+        const locator = parseReadingPlanId(planId);
+        if (!locator) {
+          continue; // malformed/legacy planId — skip rather than throw
+        }
+        const full = readingPlans.getReadingPlanByLocator(
+          locator.recordName,
+          locator.address
+        ).value;
+        if (!full) {
+          continue; // not yet loaded (or unresolvable) — re-renders once settled
+        }
+        const summary = summarizeCalendar(
+          getReadingCalendar(full, progress, nowMs),
+          nowMs,
+          progress.timeZone
+        );
+        rows.push({ full, progress, planId: progress.planId, summary });
+      }
+      return { friend, rows };
+    })
+    .filter((group) => group.rows.length > 0);
+
+  if (groups.length === 0) {
+    return null;
+  }
+
+  return (
+    <PlanSection
+      label={t("friends-reading-plans", {
+        defaultValue: "Reading plans from your friends",
+      })}
+      count={groups.reduce((sum, group) => sum + group.rows.length, 0)}
+    >
+      <ul className="sb-rp-friend-groups">
+        {groups.map((group) => (
+          <FriendReadingPlanGroup
+            key={group.friend.userId}
+            friend={group.friend}
+            rows={group.rows}
+            books={books}
+            onOpen={onOpen}
+            openingId={openingId}
+            t={t}
+          />
+        ))}
+      </ul>
+    </PlanSection>
+  );
+}
+
+interface FriendReadingPlanRow {
+  full: ReadingPlan;
+  progress: ReadingPlanProgress;
+  planId: string;
+  summary: CalendarSummary;
+}
+
+/** One friend's in-progress reading plans: an avatar/name header plus its cards. */
+function FriendReadingPlanGroup(props: {
+  friend: Friend;
+  rows: FriendReadingPlanRow[];
+  books: TranslationBook[];
+  onOpen: (plan: ReadingPlanMetadata) => void;
+  openingId: string | null;
+  t: ReturnType<typeof useI18n>["t"];
+}) {
+  const { friend, rows, books, onOpen, openingId, t } = props;
+
+  const displayName = displayNameOf(friend, t);
+
+  return (
+    <li className="sb-rp-friend-group">
+      <div className="sb-rp-friend-group-header">
+        <Avatar
+          imageUrl={friend.pictureUrl}
+          visual={getUserAnimalVisual(friend.userId)}
+          title={displayName}
+        />
+        <span className="sb-rp-friend-group-name">{displayName}</span>
+      </div>
+      <div className="sb-rp-section-cards">
+        {rows.map((row) => (
+          <div key={row.planId} className="sb-rp-card-group">
+            <ActivePlanCard
+              row={{ ...row, meta: row.full }}
+              title={
+                row.full.title ??
+                t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+              }
+              dayReadingsLabel={(day) => dayReadingsLabel(books, day)}
+              opening={openingId === row.planId}
+              onOpen={() => onOpen(row.full)}
+              // The card shows their progress, but opening it shows the plan
+              // with yours, so it says what it opens.
+              openLabel={t("view-plan", { defaultValue: "View plan" })}
+              t={t}
+            />
+            <PlanLoadError planId={row.planId} />
+          </div>
+        ))}
+      </div>
+    </li>
   );
 }
 
@@ -807,14 +1036,24 @@ function PlanSection(props: {
 }
 
 function ActivePlanCard(props: {
-  row: PlanRow;
+  // Only `summary`/`progress` and the plan's image and description are read
+  // below, so this accepts both an owned plan's full `PlanRow` and a friend's
+  // plan's row (see `FriendReadingPlanRow`, which passes its full plan as
+  // `meta`) without either needing the other's fields (`planId`/`full`/`state`).
+  row: Pick<PlanRow, "summary" | "progress"> & {
+    meta: Pick<ReadingPlanMetadata, "heroImageUrl" | "description">;
+  };
   title: string;
   dayReadingsLabel: (day: CalendarReadingDay) => string;
   opening: boolean;
   onOpen: () => void;
+  /** The plan's options menu, when the reader owns the plan. */
+  menu?: ComponentChildren;
+  /** Words beside the arrow, for when opening the card isn't obvious. */
+  openLabel?: string;
   t: ReturnType<typeof useI18n>["t"];
 }) {
-  const { row, title, dayReadingsLabel, opening, onOpen, t } = props;
+  const { row, title, dayReadingsLabel, opening, onOpen, menu, t } = props;
   const summary = row.summary;
   const total = summary?.totalDays ?? 0;
   const done = summary?.doneDays ?? 0;
@@ -825,49 +1064,69 @@ function ActivePlanCard(props: {
   const selfPaced = row.progress?.selfPaced === true;
 
   return (
-    <button
-      type="button"
-      className="sb-rp-card sb-rp-card-lg"
-      onClick={onOpen}
-      disabled={opening}
+    <div
+      className={`sb-rp-card sb-rp-card-lg${
+        opening ? " sb-rp-card--opening" : ""
+      }`}
+      onClick={() => {
+        if (!opening) {
+          onOpen();
+        }
+      }}
     >
       <div className="sb-rp-card-row">
-        {row.meta.heroImageUrl ? (
-          <HeroImageThumb url={row.meta.heroImageUrl} />
-        ) : null}
-        <span className="sb-rp-card-body">
-          <span className="sb-rp-card-title" dir="auto">
-            {title}
-          </span>
-          {row.meta.description ? (
-            <span className="sb-rp-card-sub" dir="auto">
-              {row.meta.description}
-            </span>
+        <button
+          type="button"
+          className="sb-rp-card-open"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!opening) {
+              onOpen();
+            }
+          }}
+          disabled={opening}
+        >
+          {row.meta.heroImageUrl ? (
+            <HeroImageThumb url={row.meta.heroImageUrl} />
           ) : null}
-          <span className="sb-rp-card-sub">
-            {selfPaced
-              ? t("reading-plan-session-count-sessions", {
-                  defaultValue: "{{count}} sessions",
-                  count: total,
-                })
-              : t("reading-plan-duration-days", {
-                  defaultValue: "{{count}} days",
-                  count: total,
-                })}
-            {startedMs != null
-              ? ` · ${t("reading-plan-started-on", {
-                  defaultValue: "started {{date}}",
-                  date: new Date(startedMs).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                  }),
-                })}`
-              : ""}
+          <span className="sb-rp-card-body">
+            <span className="sb-rp-card-title" dir="auto">
+              {title}
+            </span>
+            {row.meta.description ? (
+              <span className="sb-rp-card-sub" dir="auto">
+                {row.meta.description}
+              </span>
+            ) : null}
+            <span className="sb-rp-card-sub">
+              {selfPaced
+                ? t("reading-plan-session-count-sessions", {
+                    defaultValue: "{{count}} sessions",
+                    count: total,
+                  })
+                : t("reading-plan-duration-days", {
+                    defaultValue: "{{count}} days",
+                    count: total,
+                  })}
+              {startedMs != null
+                ? ` · ${t("reading-plan-started-on", {
+                    defaultValue: "started {{date}}",
+                    date: new Date(startedMs).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    }),
+                  })}`
+                : ""}
+            </span>
           </span>
-        </span>
+        </button>
+        {props.openLabel ? (
+          <span className="sb-rp-card-open-label">{props.openLabel}</span>
+        ) : null}
         <MaterialIcon className="sb-rp-card-chevron">
           {opening ? "hourglass_top" : "arrow_forward"}
         </MaterialIcon>
+        {menu}
       </div>
 
       <div className="sb-rp-card-progress">
@@ -918,6 +1177,6 @@ function ActivePlanCard(props: {
           </span>
         ) : null}
       </div>
-    </button>
+    </div>
   );
 }

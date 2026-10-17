@@ -9,15 +9,16 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
+import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 
 /**
  * One playlist in a `sb-discover-list`: title, description, a play button,
  * and a menu offering share, edit and delete. A cover thumbnail is shown
  * only when the playlist has one.
  *
- * Used by the profile screen's "Your content", so the same playlist offers the
- * same actions and reads the same wherever it is listed. It renders an `<li>`,
- * so a caller has to wrap it in that list.
+ * Used by the profile screen's "Your content" and by friends' playlists in
+ * Discover, so a playlist reads the same wherever it is listed. It renders an
+ * `<li>`, so a caller has to wrap it in that list.
  */
 export function PlaylistRow(props: {
   playlist: Playlist;
@@ -34,6 +35,8 @@ export function PlaylistRow(props: {
    */
   onPlay?: (playlist: Playlist) => void;
   onEdit?: (playlist: Playlist) => void;
+  /** Someone else's playlist: Share stays, Edit and Delete don't. */
+  readOnly?: boolean;
 }) {
   const { playlist, playlists, modals, toast } = props;
   const { t } = useI18n();
@@ -41,6 +44,25 @@ export function PlaylistRow(props: {
     props.onPlay ?? ((target: Playlist) => playlists.startPlaying(target));
   const edit =
     props.onEdit ?? ((target: Playlist) => playlists.editPlaylist(target));
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(playlists.getPlaylistUrl(playlist));
+    } catch (error) {
+      // Also covers no clipboard at all (an insecure origin, some webviews).
+      console.error("Failed to copy the playlist link.", error);
+      toast(
+        t("playlist-url-copy-failed", {
+          defaultValue: "Couldn't copy the playlist link",
+        })
+      );
+      return;
+    }
+    toast(
+      t("playlist-url-copied", {
+        defaultValue: "Playlist URL copied to clipboard",
+      })
+    );
+  };
 
   return (
     <li
@@ -95,13 +117,7 @@ export function PlaylistRow(props: {
         <ContextMenuItem
           onClick={(e) => {
             e.stopPropagation();
-            const url = playlists.getPlaylistUrl(playlist);
-            navigator.clipboard.writeText(url);
-            toast(
-              t("playlist-url-copied", {
-                defaultValue: "Playlist URL copied to clipboard",
-              })
-            );
+            void copyLink();
           }}
         >
           <MaterialIcon className="sb-context-menu-item-icon">
@@ -109,83 +125,35 @@ export function PlaylistRow(props: {
           </MaterialIcon>
           {t("share-playlist", { defaultValue: "Share playlist" })}
         </ContextMenuItem>
-        <ContextMenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            edit(playlist);
-          }}
-        >
-          <MaterialIcon className="sb-context-menu-item-icon">
-            edit
-          </MaterialIcon>
-          {t("edit-playlist", { defaultValue: "Edit playlist" })}
-        </ContextMenuItem>
-        <ContextMenuItem
-          className="sb-context-menu-item--danger"
-          onClick={(e) => {
-            e.stopPropagation();
-            openDeletePlaylistConfirm(modals, playlists, playlist, toast);
-          }}
-        >
-          <MaterialIcon className="sb-context-menu-item-icon">
-            delete
-          </MaterialIcon>
-          {t("delete-playlist", { defaultValue: "Delete" })}
-        </ContextMenuItem>
+        {props.readOnly ? null : (
+          <>
+            <ContextMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                edit(playlist);
+              }}
+            >
+              <MaterialIcon className="sb-context-menu-item-icon">
+                edit
+              </MaterialIcon>
+              {t("edit-playlist", { defaultValue: "Edit playlist" })}
+            </ContextMenuItem>
+            <ContextMenuItem
+              className="sb-context-menu-item--danger"
+              onClick={(e) => {
+                e.stopPropagation();
+                openDeletePlaylistConfirm(modals, playlists, playlist, toast);
+              }}
+            >
+              <MaterialIcon className="sb-context-menu-item-icon">
+                delete
+              </MaterialIcon>
+              {t("delete-playlist", { defaultValue: "Delete" })}
+            </ContextMenuItem>
+          </>
+        )}
       </ContextMenuWithButton>
     </li>
-  );
-}
-
-function ConfirmDeletePlaylistModalContent(props: {
-  playlists: PlaylistManager;
-  playlist: Playlist;
-  toast: SeedBibleState["app"]["toast"];
-  onClose: () => void;
-}) {
-  const { playlists, playlist, toast, onClose } = props;
-  const { t } = useI18n();
-
-  const confirm = async () => {
-    try {
-      await playlists.deletePlaylist(playlist);
-    } catch {
-      toast(
-        t("delete-playlist-failed", {
-          defaultValue: "Couldn't delete the playlist.",
-        })
-      );
-    }
-    onClose();
-  };
-
-  return (
-    <div className="sb-confirm-delete">
-      <p className="sb-confirm-delete-message">
-        {t("delete-playlist-confirm-message", {
-          title:
-            playlist.title ??
-            t("untitled-playlist", { defaultValue: "Untitled playlist" }),
-          defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
-        })}
-      </p>
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-        >
-          {t("cancel")}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={confirm}
-        >
-          {t("delete")}
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -196,20 +164,24 @@ function openDeletePlaylistConfirm(
   playlist: Playlist,
   toast: SeedBibleState["app"]["toast"]
 ) {
-  const modalId = `delete-playlist-confirm-${playlist.id}`;
-  modals.openModal({
-    id: modalId,
+  openConfirmDeleteModal(modals, {
+    id: `delete-playlist-confirm-${playlist.id}`,
     title: {
       key: "delete-playlist-confirm-title",
       defaultValue: "Delete playlist?",
     },
-    content: () => (
-      <ConfirmDeletePlaylistModalContent
-        playlists={playlists}
-        playlist={playlist}
-        toast={toast}
-        onClose={() => modals.closeModal(modalId)}
-      />
-    ),
+    message: (t) =>
+      t("delete-playlist-confirm-message", {
+        title:
+          playlist.title ??
+          t("untitled-playlist", { defaultValue: "Untitled playlist" }),
+        defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
+      }),
+    onConfirm: () => playlists.deletePlaylist(playlist),
+    failedMessage: (t) =>
+      t("delete-playlist-failed", {
+        defaultValue: "Couldn't delete the playlist.",
+      }),
+    toast,
   });
 }

@@ -6,13 +6,14 @@ export interface ManagedModal {
   id: string;
   title: TranslatableTitle;
   content: (props: ModalContentProps) => ComponentChildren;
-  useCasualOSApp: boolean;
+  footer: ((props: ModalContentProps) => ComponentChildren) | null;
   /**
    * Runs after the user dismisses this modal. `closeModal` does not run it,
    * so a caller that removes the modal itself (navigation, stop) is not
    * treated as the user backing out of it.
    */
-  onDismiss?: () => void;
+  onDismiss: (() => void) | null;
+  useCasualOSApp: boolean;
 }
 
 export interface ModalContentProps {
@@ -26,17 +27,22 @@ export interface ModalRegistration {
     | ComponentChildren
     | ((props: ModalContentProps) => ComponentChildren);
 
+  /** Rendered below the content, outside its scroll area. */
+  footer?:
+    | ComponentChildren
+    | ((props: ModalContentProps) => ComponentChildren);
+
+  /**
+   * Called after the user closes the modal with its X button or the backdrop.
+   * Not called when code closes it through `closeModal`.
+   */
+  onDismiss?: () => void;
+
   /**
    * Whether to render the modal as a CasualOS app. This can be useful if the modal content needs to render over the grid or map portals.
    * Defaults to true.
    */
   useCasualOSApp?: boolean;
-
-  /**
-   * Called after the user dismisses the modal (close button or backdrop).
-   * Not called when `closeModal` removes it.
-   */
-  onDismiss?: () => void;
 }
 
 export interface ModalManager {
@@ -73,8 +79,10 @@ export function createModalManager(): ModalManager {
         id,
         title: modal.title,
         content: toContentRenderer(modal.content),
+        footer:
+          modal.footer === undefined ? null : toContentRenderer(modal.footer),
+        onDismiss: modal.onDismiss ?? null,
         useCasualOSApp: modal.useCasualOSApp ?? true,
-        onDismiss: modal.onDismiss,
       },
     ];
 

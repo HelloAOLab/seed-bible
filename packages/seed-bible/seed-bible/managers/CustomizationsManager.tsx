@@ -10,10 +10,15 @@ import {
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
 import type { ExtensionSettingValue } from "./ExtensionManager";
+import {
+  sensitiveProxyPointerSchema,
+  type SensitiveProxyPointer,
+} from "./ExtensionSensitiveSettings";
 import {
   applyHighlightOverrides,
   DARK_THEME,
@@ -157,6 +162,46 @@ export function getContrastRatio(hexA: string, hexB: string): number {
  */
 export const MIN_READABLE_CONTRAST_RATIO = 4.5;
 
+// Darkest-last reds for light backgrounds, then lightest-last for dark ones,
+// so the first readable pick is the most saturated red that still reads.
+const WORDS_OF_JESUS_RED_CANDIDATES = [
+  "#c00",
+  "#b00",
+  "#a00",
+  "#900",
+  "#800",
+  "#700",
+  "#ff8080",
+  "#ffa0a0",
+  "#ffc0c0",
+  "#ffe0e0",
+];
+
+/**
+ * A red for words of Jesus that stays readable on `background` (a hex color),
+ * or `undefined` if `background` isn't a hex color. When no red reaches
+ * {@link MIN_READABLE_CONTRAST_RATIO} (a mid-tone background), returns the
+ * highest-contrast one.
+ */
+export function getReadableWordsOfJesusColor(
+  background: string
+): string | undefined {
+  if (!/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(background)) {
+    return undefined;
+  }
+  const readable = WORDS_OF_JESUS_RED_CANDIDATES.find(
+    (red) => getContrastRatio(red, background) >= MIN_READABLE_CONTRAST_RATIO
+  );
+  if (readable) {
+    return readable;
+  }
+  return WORDS_OF_JESUS_RED_CANDIDATES.reduce((best, red) =>
+    getContrastRatio(red, background) > getContrastRatio(best, background)
+      ? red
+      : best
+  );
+}
+
 export interface CustomizationContrastPair {
   /** The text/foreground color field. */
   foreground: ThemeColorKey;
@@ -289,8 +334,9 @@ const customizationVariantSchema = z.object({
  *   themselves, same as outside any customization.
  * - `auto-installed`: force-installed with no prompt while the
  *   customization is active; shown but can't be uninstalled from there.
- * - `hidden`: not shown in Settings → Extensions at all while the
- *   customization is active.
+ * - `hidden`: never offered in Settings → Extensions while the
+ *   customization is active. If it's still installed anyway (e.g. as another
+ *   extension's dependency) it's listed under Installed and can still be uninstalled.
  */
 export const EXTENSION_AVAILABILITY_VALUES = [
   "available",
@@ -343,6 +389,16 @@ const customizationSchema = z
         z.record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
       )
       .default({}),
+    /**
+     * Where this customization's own values for extension sensitive settings
+     * are held, keyed by extension id then `sensitive` entry id. Only the
+     * addresses: the values live in proxy records in the owner's record, and
+     * a viewer's own values (see `ExtensionSensitiveSettings`) win over them.
+     * Only ever written by `setExtensionSensitiveProxy`.
+     */
+    extensionSensitiveProxies: z
+      .record(z.string(), z.record(z.string(), sensitiveProxyPointerSchema))
+      .default({}),
   })
   .refine((r) => r.variants.some((v) => v.id === r.defaultVariantId), {
     message: "defaultVariantId must reference an existing variant",
@@ -394,6 +450,37 @@ export interface SeedBibleCustomization {
     string,
     Record<string, ExtensionSettingValue>
   >;
+  /** Per-extension sensitive proxies this customization provides. An extension/entry with none here provides nothing. */
+  extensionSensitiveProxies: Record<
+    string,
+    Record<string, SensitiveProxyPointer>
+  >;
+}
+
+function withExtensionSensitiveProxy(
+  customization: SeedBibleCustomization,
+  extensionId: string,
+  proxyId: string,
+  pointer: SensitiveProxyPointer | null,
+  updatedAt: number
+): SeedBibleCustomization {
+  const byProxy = { ...customization.extensionSensitiveProxies[extensionId] };
+  if (pointer) {
+    byProxy[proxyId] = pointer;
+  } else {
+    delete byProxy[proxyId];
+  }
+  const next = { ...customization.extensionSensitiveProxies };
+  if (Object.keys(byProxy).length === 0) {
+    delete next[extensionId];
+  } else {
+    next[extensionId] = byProxy;
+  }
+  return {
+    ...customization,
+    extensionSensitiveProxies: next,
+    updatedAt,
+  };
 }
 
 /** Resolves an extension's effective availability for a customization, defaulting to "available" when unset. */
@@ -625,6 +712,12 @@ export interface CustomizationsManager {
    * was loaded via the URL.
    */
   activeCustomization: ReadonlySignal<SeedBibleCustomization | null>;
+  /**
+   * `recordName.id` for `activeCustomization`, or null when nothing is
+   * active (or a draft is open before the owner is signed in, so there is
+   * no record name to build a share link from).
+   */
+  activeCustomizationLocator: ReadonlySignal<string | null>;
   /** The variant of the active customization currently in effect (the device's color scheme when `isFollowingSystemScheme`, else the viewer's own pick, else the customization's default, else its first variant). */
   activeVariant: ReadonlySignal<CustomizationThemeVariant | null>;
   /** Whether the active customization has both a Light-based and a Dark-based variant, and so can follow the device the way the app-wide System theme does. False when nothing is active. */
@@ -672,9 +765,10 @@ export interface CustomizationsManager {
   ) => BibleTheme;
   /**
    * The extension ids that should be installed while the active
-   * customization is in effect: its own `auto-installed` extensions,
-   * unioned with any `available` extras the viewer added for it via
-   * `addExtensionToActiveCustomization`. Empty when nothing is active.
+   * customization is in effect: its own `auto-installed` extensions (minus
+   * any the viewer removed), unioned with any `available` extras the viewer
+   * added for it via `addExtensionToActiveCustomization`. Empty when
+   * nothing is active.
    */
   activeExtensionIds: ReadonlySignal<string[]>;
   /**
@@ -847,13 +941,25 @@ export interface CustomizationsManager {
     key: string
   ) => void;
   /** The active customization's default for an extension setting, or undefined if nothing is active or it sets no default there. */
+  /**
+   * Records where one of the customization's own sensitive proxies is (or,
+   * with null, forgets it) and saves the customization right away, since the
+   * proxy record already exists. Updates the edit draft too when it's the
+   * same customization. Resolves to whether it was saved.
+   */
+  setExtensionSensitiveProxy: (
+    customizationId: string,
+    extensionId: string,
+    proxyId: string,
+    pointer: SensitiveProxyPointer | null
+  ) => Promise<boolean>;
   getActiveExtensionSettingDefault: (
     extensionId: string,
     key: string
   ) => ExtensionSettingValue | undefined;
-  /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active or the extension's availability there isn't "available". */
+  /** Installs an extension for the viewer on the active customization: an "available" one as an extra, an "auto-installed" one the viewer removed by putting it back. No-op if none is active or the extension is hidden there. */
   addExtensionToActiveCustomization: (extensionId: string) => Promise<void>;
-  /** Removes an extra extension id from the viewer's own preferences for the active customization. No-op if none is active or the id isn't one of the viewer's extras. */
+  /** Uninstalls an extension for the viewer on the active customization: drops an extra, or records that they removed an "auto-installed" one. No-op if none is active. */
   removeExtensionFromActiveCustomization: (
     extensionId: string
   ) => Promise<void>;
@@ -1153,10 +1259,14 @@ export function createCustomizationsManager(
     if (!customization) {
       return [];
     }
+    const locator = activeCustomizationLocator.value;
+    const removed = locator
+      ? extensionPreferences.getRemovedExtensionIds(locator)
+      : [];
     const autoInstalled = Object.entries(customization.extensionSettings)
       .filter(([, availability]) => availability === "auto-installed")
-      .map(([id]) => id);
-    const locator = activeCustomizationLocator.value;
+      .map(([id]) => id)
+      .filter((id) => !removed.includes(id));
     const extra = locator
       ? extensionPreferences.getExtraExtensionIds(locator)
       : [];
@@ -1198,6 +1308,11 @@ export function createCustomizationsManager(
       : theme.selectedThemeId.value === SYSTEM_THEME_ID;
   });
 
+  // A boolean, not the URL itself, so the active variant (and the theme built
+  // from it) is recomputed only when embed mode flips, not on every navigation.
+  const isMinimalEmbed = computed(() =>
+    isMinimalEmbedUrl(navigation.currentUrl.value)
+  );
   const activeVariant = computed<CustomizationThemeVariant | null>(() => {
     const customization = activeCustomization.value;
     if (!customization) {
@@ -1205,6 +1320,31 @@ export function createCustomizationsManager(
     }
     const byId = (id: string | null | undefined) =>
       id ? customization.variants.find((v) => v.id === id) : undefined;
+    // The embed link names the theme. A saved variant pick would leave the
+    // preview on one look no matter which theme the link asked for.
+    if (isMinimalEmbed.value) {
+      const themeId = theme.selectedThemeId.value;
+      const baseThemeId =
+        themeId === SYSTEM_THEME_ID
+          ? theme.prefersDarkScheme.value
+            ? DARK_THEME.id
+            : LIGHT_THEME.id
+          : themeId;
+      const linked = customization.variants.find(
+        (variant) => variant.baseTheme === baseThemeId
+      );
+      if (linked) {
+        return linked;
+      }
+      // No variant matches the link's theme (only a light variant, or a
+      // branding theme id). The viewer's saved pick is not what a visitor
+      // to the embed sees — they get the customization's default.
+      return (
+        byId(customization.defaultVariantId) ??
+        customization.variants[0] ??
+        null
+      );
+    }
     const bySystemScheme = isFollowingSystemScheme.value
       ? customization.variants.find(
           (v) =>
@@ -1320,13 +1460,20 @@ export function createCustomizationsManager(
     }
   };
 
-  const persist = async (
-    userId: string,
-    record: SeedBibleCustomization
-  ): Promise<void> => {
-    await os.recordData(userId, record.id, record, {
+  const persist = (userId: string, record: SeedBibleCustomization) =>
+    os.recordData(userId, record.id, record, {
       marker: CUSTOMIZATION_MARKER,
     });
+
+  // Every draft save and pointer write goes through here, one at a time, so
+  // they reach the server in the order they were made: an older copy can't
+  // land last and overwrite a newer one, which for a pointer would leave its
+  // proxy (and the owner's key) running with nothing pointing at it.
+  let writeChain: Promise<unknown> = Promise.resolve();
+  const queueWrite = <T,>(run: () => Promise<T>): Promise<T> => {
+    const next = writeChain.then(run, run);
+    writeChain = next.catch(() => undefined);
+    return next;
   };
 
   const create = async (): Promise<SeedBibleCustomization> => {
@@ -1348,6 +1495,7 @@ export function createCustomizationsManager(
       updatedAt: now,
       extensionSettings: {},
       extensionSettingDefaults: {},
+      extensionSensitiveProxies: {},
     };
 
     await persist(userId, record);
@@ -1406,10 +1554,12 @@ export function createCustomizationsManager(
     }
 
     const saved: SeedBibleCustomization = { ...current, updatedAt: Date.now() };
-    await persist(userId, saved);
-    customizations.value = customizations.value.some((c) => c.id === saved.id)
-      ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
-      : [...customizations.value, saved];
+    await queueWrite(async () => {
+      await persist(userId, saved);
+      customizations.value = customizations.value.some((c) => c.id === saved.id)
+        ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
+        : [...customizations.value, saved];
+    });
     // Only reflect the write onto the draft if it's still the exact one
     // captured above — a newer edit, or the editor closing, may have
     // changed `editingCustomization` while this (possibly auto-triggered)
@@ -1422,9 +1572,6 @@ export function createCustomizationsManager(
   /** How long to wait after the last edit before auto-saving the draft. */
   const AUTO_SAVE_DEBOUNCE_MS = 5000;
   let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
-  // Serializes autosave writes so two saves can't race and land out of
-  // order, and one failure doesn't reject the save queued behind it.
-  let autoSaveChain: Promise<void> = Promise.resolve();
 
   /** Queues a debounced save of the current draft. */
   const scheduleAutoSave = (): void => {
@@ -1444,13 +1591,10 @@ export function createCustomizationsManager(
    * now — callers like `stopEditing()` clear that signal on the very next
    * line, before this promise has a chance to resolve.
    */
-  const flushAutoSave = (): Promise<void> => {
-    const write = saveEditingCustomization().catch((error) => {
+  const flushAutoSave = (): Promise<void> =>
+    saveEditingCustomization().catch((error) => {
       console.error("Failed to auto-save customization:", error);
     });
-    autoSaveChain = autoSaveChain.then(() => write);
-    return autoSaveChain;
-  };
 
   const updateEditingName = (name: string): void => {
     const current = editingCustomization.value;
@@ -1844,6 +1988,21 @@ export function createCustomizationsManager(
       return;
     }
 
+    // The proxies go first: once the record is gone nothing points at them,
+    // and a public one would stay usable by anyone who saw its address.
+    for (const byProxy of Object.values(existing.extensionSensitiveProxies)) {
+      for (const pointer of Object.values(byProxy)) {
+        const erased = await os.eraseProxy(pointer.recordName, pointer.address);
+        if (!erased.success && erased.errorCode !== "data_not_found") {
+          console.error(
+            "Failed to clear a customization's sensitive settings:",
+            erased.errorCode
+          );
+          return;
+        }
+      }
+    }
+
     await os.eraseData(userId, id);
     customizations.value = customizations.value.filter((c) => c.id !== id);
     if (editingCustomization.value?.id === id) {
@@ -1977,6 +2136,97 @@ export function createCustomizationsManager(
   ): ExtensionSettingValue | undefined =>
     getExtensionSettingDefault(activeCustomization.value, extensionId, key);
 
+  const setExtensionSensitiveProxy = async (
+    customizationId: string,
+    extensionId: string,
+    proxyId: string,
+    pointer: SensitiveProxyPointer | null
+  ): Promise<boolean> => {
+    const userId = login.userId.value;
+    if (
+      !userId ||
+      !customizations.value.some((c) => c.id === customizationId)
+    ) {
+      return false;
+    }
+    // The draft gets the pointer now, so any later save of it carries the
+    // pointer instead of dropping it. The write itself starts from the last
+    // saved copy instead of the draft: the draft may hold edits the author
+    // hasn't saved yet, and might still discard.
+    // The draft and the saved copy share one timestamp, so once the write
+    // lands they compare equal and the draft doesn't read as unsaved.
+    const updatedAt = Date.now();
+    const draft = editingCustomization.value;
+    const previous =
+      draft?.id === customizationId
+        ? draft.extensionSensitiveProxies[extensionId]?.[proxyId]
+        : undefined;
+    if (draft?.id === customizationId) {
+      editingCustomization.value = withExtensionSensitiveProxy(
+        draft,
+        extensionId,
+        proxyId,
+        pointer,
+        updatedAt
+      );
+    }
+    // A failed write takes the pointer back off the draft, unless something
+    // newer has replaced it there since.
+    const undoDraft = () => {
+      const current = editingCustomization.value;
+      if (
+        current?.id === customizationId &&
+        (current.extensionSensitiveProxies[extensionId]?.[proxyId] ?? null) ===
+          pointer
+      ) {
+        editingCustomization.value = withExtensionSensitiveProxy(
+          current,
+          extensionId,
+          proxyId,
+          previous ?? null,
+          Date.now()
+        );
+      }
+    };
+    const written = await queueWrite(async () => {
+      const saved = customizations.value.find((c) => c.id === customizationId);
+      if (!saved || login.userId.value !== userId) {
+        return false;
+      }
+      const next = withExtensionSensitiveProxy(
+        saved,
+        extensionId,
+        proxyId,
+        pointer,
+        updatedAt
+      );
+      try {
+        const result = await persist(userId, next);
+        if (!result.success) {
+          console.error(
+            "Failed to save a customization's sensitive settings:",
+            result.errorCode
+          );
+          return false;
+        }
+      } catch (error) {
+        console.error(
+          "Failed to save a customization's sensitive settings:",
+          error
+        );
+        return false;
+      }
+      customizations.value = customizations.value.map((c) =>
+        c.id === customizationId ? next : c
+      );
+      return true;
+    });
+    if (!written) {
+      undoDraft();
+    }
+    return written;
+  };
+
   const addExtensionToActiveCustomization = async (
     extensionId: string
   ): Promise<void> => {
@@ -1984,7 +2234,12 @@ export function createCustomizationsManager(
     if (!locator) {
       return;
     }
-    if (getActiveExtensionAvailability(extensionId) === "hidden") {
+    const availability = getActiveExtensionAvailability(extensionId);
+    if (availability === "hidden") {
+      return;
+    }
+    if (availability === "auto-installed") {
+      await extensionPreferences.clearRemovedExtensionId(locator, extensionId);
       return;
     }
     await extensionPreferences.addExtraExtensionId(locator, extensionId);
@@ -1995,6 +2250,10 @@ export function createCustomizationsManager(
   ): Promise<void> => {
     const locator = activeCustomizationLocator.value;
     if (!locator) {
+      return;
+    }
+    if (getActiveExtensionAvailability(extensionId) === "auto-installed") {
+      await extensionPreferences.addRemovedExtensionId(locator, extensionId);
       return;
     }
     await extensionPreferences.removeExtraExtensionId(locator, extensionId);
@@ -2019,6 +2278,7 @@ export function createCustomizationsManager(
     customizations,
     isLoading,
     activeCustomization,
+    activeCustomizationLocator,
     activeVariant,
     canFollowSystemScheme,
     isFollowingSystemScheme,
@@ -2068,6 +2328,7 @@ export function createCustomizationsManager(
     setEditingExtensionSettingDefault,
     clearEditingExtensionSettingDefault,
     getActiveExtensionSettingDefault,
+    setExtensionSensitiveProxy,
     addExtensionToActiveCustomization,
     removeExtensionFromActiveCustomization,
   };

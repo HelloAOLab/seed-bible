@@ -7,6 +7,7 @@ import {
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
+import type { Friend, FriendsManager } from "./FriendsManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { SearchManager } from "./SearchManager";
 import type { BibleDataManager } from "./BibleDataManager";
@@ -21,11 +22,14 @@ import { hasReadingUrlPosition } from "./ReadingUrlPath";
 import { isNonReadingPagePath } from "./StaticPagePath";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { TranslationBooks } from "./FreeUseBibleAPI";
+import type { Annotation, AnnotationsManager } from "./AnnotationsManager";
+import {
+  buildCommunityFeed,
+  type CommunityFeedItem,
+} from "./TodayCommunityFeed";
 import {
   createReadingHistoryState,
-  getCommunityReading as queryCommunityReading,
   getUserLastReading as queryUserLastReading,
-  type FilteredReading,
   type ReadingHistoryState,
   type Timespan,
 } from "./TodayReadingHistory";
@@ -36,6 +40,13 @@ import {
  * paths drifted apart while Today was an extension.
  */
 export const TODAY_PANE_ID = "today-screen-pane";
+
+/**
+ * How long the community feed reuses a member's notes. Long enough to click
+ * around the timeline on one fetch, short enough that a friend's new note
+ * turns up while Today is left open.
+ */
+const NOTES_CACHE_MS = 5 * 60 * 1000;
 
 /** A single verse match returned by the full-text verse search. */
 export interface VerseSearchResult {
@@ -103,8 +114,22 @@ export interface TodayManager {
    * `ready` renders the resume card.
    */
   readingHistory: ReadonlySignal<ReadingHistoryState>;
-  /** Reading activity for one window, bucketed book -> chapter -> userId[]. */
-  getCommunityReading: (timespan: Timespan) => Promise<FilteredReading>;
+  /**
+   * The readers whose notes and reading the community feed shows: the
+   * signed-in user, then their friends. Empty when signed out.
+   */
+  communityMembers: ReadonlySignal<string[]>;
+  /**
+   * Everything the community members did inside `span`, newest first. With
+   * `crossedPaths` on, chapters that several members read fold into shared
+   * items; the "all" window turns it off.
+   */
+  getCommunityFeed: (
+    span: Timespan,
+    options: { crossedPaths: boolean }
+  ) => Promise<CommunityFeedItem[]>;
+  /** The signed-in user's friends, for naming them in the community feed. */
+  friendReaders: ReadonlySignal<Friend[]>;
   /** Book id -> display name for the translation the reader has loaded. */
   bookNames: ReadonlySignal<Map<string, string>>;
   /**
@@ -153,9 +178,11 @@ export interface TodayManager {
 export function createTodayManager(options: {
   os: CasualOSManager;
   login: LoginManager;
+  friends: Pick<FriendsManager, "friends" | "friendIds">;
   navigation: NavigationManager;
   search: SearchManager;
   bibleData: BibleDataManager;
+  annotations: Pick<AnnotationsManager, "listAllAnnotationsForUser">;
   /** UI language used to pick a default translation when nothing is loaded. */
   defaultLanguage: string;
   /**
@@ -167,8 +194,16 @@ export function createTodayManager(options: {
     translationId: string | null;
   } | null>;
 }): TodayManager {
-  const { os, login, navigation, search, bibleData, currentReadingState } =
-    options;
+  const {
+    os,
+    login,
+    friends,
+    navigation,
+    search,
+    bibleData,
+    annotations,
+    currentReadingState,
+  } = options;
 
   const fetchReadingHistoryEvents = (
     recordName: string,
@@ -184,17 +219,85 @@ export function createTodayManager(options: {
         queryUserLastReading(fetchReadingHistoryEvents, userId, range),
     });
 
-  // The reader list is just the signed-in user: nothing subscribes to anyone
-  // else yet, so a fan-out over "community" members has nothing to fan out to.
-  const getCommunityReading = (
-    timespan: Timespan
-  ): Promise<FilteredReading> => {
+  // Reading history and notes are world-readable, so a friend's activity can be
+  // fetched the same way as the user's own.
+  const communityMembers = computed(() => {
     const userId = login.userId.value;
-    return queryCommunityReading(
-      fetchReadingHistoryEvents,
-      userId ? [userId] : [],
-      timespan
-    );
+    if (!userId) return [];
+    const friendIds = friends.friendIds.value.filter((id) => id !== userId);
+    return [userId, ...friendIds];
+  });
+
+  // Notes have no time-range query, so each fetch pages through the member's
+  // whole record. Kept per member so clicking from day to day on the timeline
+  // filters what was already fetched instead of sweeping every record again.
+  // Cleared when the member list changes and whenever Today opens (see below),
+  // so a note the user just wrote in the reader is there when they come back.
+  const notesCache = new Map<
+    string,
+    { notes: Promise<Annotation[]>; fetchedAtMs: number }
+  >();
+  const getMemberNotes = (memberId: string): Promise<Annotation[]> => {
+    const cached = notesCache.get(memberId);
+    if (cached && Date.now() - cached.fetchedAtMs < NOTES_CACHE_MS) {
+      return cached.notes;
+    }
+    const notes = annotations.listAllAnnotationsForUser(memberId);
+    const entry = { notes, fetchedAtMs: Date.now() };
+    notesCache.set(memberId, entry);
+    // A failure isn't kept, so the next window asks again.
+    notes.catch(() => {
+      if (notesCache.get(memberId) === entry) {
+        notesCache.delete(memberId);
+      }
+    });
+    return notes;
+  };
+
+  const getCommunityFeed = async (
+    span: Timespan,
+    { crossedPaths }: { crossedPaths: boolean }
+  ): Promise<CommunityFeedItem[]> => {
+    const members = communityMembers.peek();
+
+    // One member's unreachable record costs that member's rows, not the feed.
+    const eventsByReader = new Map<string, ReadingEvent[]>();
+    const notesByUser = new Map<string, Annotation[]>();
+    await Promise.all([
+      ...members.map((memberId) =>
+        fetchReadingHistoryEvents(memberId, span.from, span.to)
+          .then((events) => {
+            eventsByReader.set(memberId, Array.from(events));
+          })
+          .catch((error: unknown) => {
+            console.warn(
+              `[TodayManager] Could not read ${memberId}'s reading history for the community feed.`,
+              error
+            );
+            eventsByReader.set(memberId, []);
+          })
+      ),
+      ...members.map((memberId) =>
+        getMemberNotes(memberId)
+          .then((notes) => {
+            notesByUser.set(memberId, notes);
+          })
+          .catch((error: unknown) => {
+            console.warn(
+              `[TodayManager] Could not read ${memberId}'s notes for the community feed.`,
+              error
+            );
+            notesByUser.set(memberId, []);
+          })
+      ),
+    ]);
+
+    return buildCommunityFeed({
+      eventsByReader,
+      notesByUser,
+      span,
+      crossedPaths,
+    });
   };
 
   // Latched so Today's cards keep their book names while the reader is between
@@ -309,6 +412,14 @@ export function createTodayManager(options: {
   // for the same reason.
   const isOpen: Signal<boolean> = signal(false);
 
+  const disposeNotesCache = effect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    communityMembers.value;
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    isOpen.value;
+    notesCache.clear();
+  });
+
   let autoOpenHydrated = false;
   let disposeUrlSync = () => {};
 
@@ -356,7 +467,9 @@ export function createTodayManager(options: {
   return {
     isOpen,
     readingHistory,
-    getCommunityReading,
+    communityMembers,
+    getCommunityFeed,
+    friendReaders: friends.friends,
     bookNames,
     lastTranslationBooks,
     lastTranslationId,
@@ -374,6 +487,7 @@ export function createTodayManager(options: {
       disposeReadingHistory();
       disposeTranslationBooks();
       disposeTranslationId();
+      disposeNotesCache();
       disposeUrlSync();
     },
   };

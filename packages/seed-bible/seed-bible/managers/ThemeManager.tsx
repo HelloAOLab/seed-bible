@@ -6,6 +6,7 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { SettingsManager } from "./SettingsManager";
 
 export interface BibleThemeVariables {
@@ -435,6 +436,12 @@ export interface BibleTheme {
   name: string;
   variables: BibleThemeVariables;
   highlightColors: BibleThemeHighlightColors;
+  /**
+   * Fill for each bookmark color, keyed by `BookmarkColorId`. Optional so a
+   * white-label theme that predates bookmarks still type-checks; any id it
+   * leaves out falls back to the `:root` default in `base.inline.css`.
+   */
+  bookmarkColors?: Partial<Record<BookmarkColorId, string>>;
 }
 
 function toKebabCase(value: string): string {
@@ -463,7 +470,16 @@ export function generateThemeCssVariables(variables: BibleTheme): string {
     ])
     .join("\n");
 
-  return cssVariables + "\n" + highlightColorVariables;
+  const bookmarkColorVariables = Object.entries(variables.bookmarkColors ?? {})
+    .filter(([, value]) => value !== undefined)
+    .map(
+      ([key, value]) =>
+        `--sb-bookmark-${key}-color: ${sanitizeCssValue(String(value))};`
+    )
+    .join("\n");
+
+  const css = cssVariables + "\n" + highlightColorVariables;
+  return bookmarkColorVariables ? css + "\n" + bookmarkColorVariables : css;
 }
 
 export function generateThemeCssClasses(theme: BibleTheme): string {
@@ -475,13 +491,17 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
   // `textContent` on every theme change. Nested `&` is valid in a stylesheet
   // file, but assigning it through the CSSOM can make the engine throw out
   // the whole tag — every `--sb-*` color on `body` included.
+  //
+  // The words-of-Jesus rule is a descendant selector: the highlight class sits
+  // on the wrapper around a highlighted verse run, and `.sb-words-of-jesus` on
+  // a span inside it, never on the same element.
   return Object.entries(theme.highlightColors)
     .map(([colorId]) => {
       return [
         `.sb-highlight-${colorId} {`,
         `color: var(--sb-highlight-${colorId}-font-color);`,
         `}`,
-        `.sb-highlight-${colorId}.sb-words-of-jesus {`,
+        `.sb-highlight-${colorId} .sb-words-of-jesus {`,
         `color: var(--sb-highlight-${colorId}-words-of-jesus-font-color);`,
         `}`,
       ].join("\n");
@@ -679,63 +699,71 @@ export const LIGHT_THEME: BibleTheme = {
     yellow: {
       color: "#fff59d",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#c00",
     },
     green: {
       color: "#a5d6a7",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#a00",
     },
     cyan: {
       color: "#80deea",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#a00",
     },
     blue: {
       color: "#90caf9",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#900",
     },
     red: {
       color: "#ef9a9a",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#c62828",
+      wordsOfJesusFontColor: "#800",
     },
     magenta: {
       color: "#ea80fc",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#700",
     },
     pink: {
       color: "#f48fb1",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#800",
     },
     purple: {
       color: "#ce93d8",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#700",
     },
     orange: {
       color: "#ffcc80",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#b00",
     },
     cream: {
       color: "#fff8e1",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#c00",
     },
     gray: {
       color: "#cfd8dc",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#b00",
     },
     tan: {
       color: "#e0c9a6",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#a00",
     },
+  },
+  bookmarkColors: {
+    orange: "#e07b4c",
+    red: "#d14343",
+    yellow: "#d4a106",
+    green: "#3a9a55",
+    blue: "#3474d4",
+    purple: "#8a56cc",
   },
 };
 
@@ -933,6 +961,14 @@ export const DARK_THEME: BibleTheme = {
       wordsOfJesusFontColor: "#ff9e80",
     },
   },
+  bookmarkColors: {
+    orange: "#f29b72",
+    red: "#f07878",
+    yellow: "#f2cc4d",
+    green: "#6ccb85",
+    blue: "#7aaef2",
+    purple: "#b893ee",
+  },
 };
 
 /**
@@ -1113,6 +1149,35 @@ export const DEFAULT_HIGHLIGHT_IDS = [
 ] as const;
 
 export type HighlightId = (typeof DEFAULT_HIGHLIGHT_IDS)[number];
+
+/**
+ * The fixed palette a bookmark's color is chosen from. Each id resolves through
+ * `--sb-bookmark-<id>-color`, so a bookmark reads correctly in light and dark
+ * rather than carrying a hex value that only suits one of them.
+ */
+export const BOOKMARK_COLOR_IDS = [
+  "orange",
+  "red",
+  "yellow",
+  "green",
+  "blue",
+  "purple",
+] as const;
+
+export type BookmarkColorId = (typeof BOOKMARK_COLOR_IDS)[number];
+
+export const DEFAULT_BOOKMARK_COLOR_ID: BookmarkColorId = "orange";
+
+/**
+ * CSS color for a stored bookmark color id. An id outside the palette (written
+ * by a newer client, say) shows as the default color instead of nothing.
+ */
+export function bookmarkColorValue(colorId: string): string {
+  const id = (BOOKMARK_COLOR_IDS as readonly string[]).includes(colorId)
+    ? colorId
+    : DEFAULT_BOOKMARK_COLOR_ID;
+  return `var(--sb-bookmark-${id}-color)`;
+}
 
 export type ThemeOverrides = Partial<
   Record<ThemeColorKey | ThemeFontFamilyKey, string>
@@ -1358,15 +1423,25 @@ export function createTheme(
       const text = themeStyleText.value;
       if (skipWrite) {
         skipWrite = false;
-        // Keep the already-painted CSS (it may be dark while `currentTheme`
-        // is still the light default — see the skipWrite comment above),
-        // but copy its --sb-background onto the status-bar meta. The
-        // inline script does this too; doing it here covers a cached
+        // An embed document's theme is already known from the link, and the
+        // tag may still be the visitor's saved theme. Write the link's theme
+        // now. Everywhere else, keep the already-painted CSS (it may be dark
+        // while `currentTheme` is still the light default — see the skipWrite
+        // comment above) and only copy its --sb-background onto the status-bar
+        // meta. The inline script does this too; doing it here covers a cached
         // document whose script predates that update.
-        applyBrowserThemeColorFromCss(
-          document.getElementById("sb-theme-styles")?.textContent ?? ""
-        );
-        return;
+        let embedDocument = false;
+        try {
+          embedDocument = isMinimalEmbedUrl(new URL(window.location.href));
+        } catch {
+          embedDocument = false;
+        }
+        if (!embedDocument) {
+          applyBrowserThemeColorFromCss(
+            document.getElementById("sb-theme-styles")?.textContent ?? ""
+          );
+          return;
+        }
       }
       // A broken compose (empty, or a value that closed `body {` early) would
       // replace the live theme tag and strip every `--sb-*` color until

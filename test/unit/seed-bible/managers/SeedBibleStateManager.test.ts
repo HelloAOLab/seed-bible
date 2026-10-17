@@ -5,6 +5,14 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import { PROFILE_PANE_ID } from "@packages/seed-bible/seed-bible/components/ProfilePane/ProfilePane";
+import { PLAYLIST_HISTORY_PANE_ID } from "@packages/seed-bible/seed-bible/components/PlaylistHistoryPane/PlaylistHistoryPane";
+import {
+  PlaylistPlayHistorySchema,
+  PlaylistSchema,
+} from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import { formatV1SessionKey } from "@casual-simulation/aux-common";
+import { h, render } from "preact";
+import { act } from "preact/test-utils";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import type {
   Translation,
@@ -139,6 +147,20 @@ const mockSessionsManager = {
   createSession: vi.fn(),
   joinSession: vi.fn(),
 };
+// `InvitationsManager` opens a real shared-document WebSocket connection when
+// a session is published (`publishSession`, called from
+// `createSharedSession()`) — that's fine in the browser, but there's no
+// network egress to the records server in this test environment, so the real
+// implementation is mocked out here exactly like the other managers below
+// that would otherwise touch real state/network during `createSeedBibleState`.
+const mockInvitationsManager = {
+  availableSessions: signal([]),
+  publishSession: vi.fn().mockResolvedValue(undefined),
+  unpublishSession: vi.fn().mockResolvedValue(undefined),
+  joinAvailableSession: vi.fn().mockResolvedValue(undefined),
+  dismissAvailableSession: vi.fn(),
+  dispose: vi.fn(),
+};
 
 vi.mock(
   "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager",
@@ -164,6 +186,10 @@ vi.mock(
     createSessionsManager: () => mockSessionsManager,
   })
 );
+
+vi.mock("@packages/seed-bible/seed-bible/managers/InvitationsManager", () => ({
+  createInvitationsManager: () => mockInvitationsManager,
+}));
 
 vi.mock(
   "@packages/seed-bible/seed-bible/i18n/I18nManager",
@@ -191,6 +217,11 @@ beforeEach(() => {
   mockHighlightsManager.saveChapterHighlights.mockReset();
   mockSessionsManager.createSession.mockReset();
   mockSessionsManager.joinSession.mockReset();
+  mockInvitationsManager.publishSession.mockClear();
+  mockInvitationsManager.unpublishSession.mockClear();
+  mockInvitationsManager.joinAvailableSession.mockClear();
+  mockInvitationsManager.dismissAvailableSession.mockClear();
+  mockInvitationsManager.dispose.mockClear();
 });
 
 afterEach(() => {
@@ -212,6 +243,28 @@ async function waitFor(
 
 async function createState() {
   return createTestSeedBibleState();
+}
+
+const MIN_TOAST_MS = 1500;
+const FULL_TOAST_MS = 3500;
+const TAPPABLE_TOAST_MS = 6000;
+
+/**
+ * Every toast message that stays on screen for some time, in the order it was
+ * shown. A toast replaced in the same instant it appeared is never painted, so
+ * it is left out. Needs fake timers, so that "same instant" means "no timer
+ * advanced in between".
+ */
+function recordShownToasts(state: SeedBibleState) {
+  const shown: string[] = [];
+  let lastShownAt: number | null = null;
+  state.app.currentToast.subscribe((toast) => {
+    const now = Date.now();
+    if (lastShownAt === now) shown.pop();
+    lastShownAt = toast ? now : null;
+    if (toast) shown.push(toast.message);
+  });
+  return shown;
 }
 
 function createMockSharedSession(id: string) {
@@ -479,6 +532,10 @@ describe("createSeedBibleState", () => {
     const result = await state.app.createSharedSession();
 
     expect(mockSessionsManager.createSession).toHaveBeenCalledTimes(1);
+    // Auto-publishes to the shared-sessions registry so friends can see it
+    // — through the mock, not the real `InvitationsManager`, which would
+    // otherwise open a real WebSocket connection.
+    expect(mockInvitationsManager.publishSession).toHaveBeenCalledWith(session);
     expect(result).toBe(session);
     expect(state.tabs.tabs.value).toHaveLength(previousTabCount + 1);
     expect(state.tabs.tabs.value[previousTabCount]?.readingState).toBe(
@@ -907,13 +964,11 @@ describe("createSeedBibleState", () => {
         hostConnectedUser,
         otherGuestConnectedUser,
       ];
+      const shown = recordShownToasts(state);
 
       // A real drop takes the whole list with it, our own entry included.
       session.isSynced.value = false;
       session.connectedUsers.value = [];
-      expect(state.app.currentToast.value?.message).toBe(
-        "You lost connection to the session"
-      );
 
       session.isSynced.value = true;
       session.connectedUsers.value = [
@@ -921,12 +976,23 @@ describe("createSeedBibleState", () => {
         hostConnectedUser,
         otherGuestConnectedUser,
       ];
+
+      // The drop and the recovery land in the same instant, so the drop toast
+      // must still get its turn on screen before the rejoin one.
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+      vi.advanceTimersByTime(MIN_TOAST_MS);
       expect(state.app.currentToast.value?.message).toBe(
         "You rejoined the session"
       );
 
       vi.advanceTimersByTime(30_000);
 
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+      ]);
       expect(originalDispose).not.toHaveBeenCalled();
       expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
     });
@@ -937,6 +1003,7 @@ describe("createSeedBibleState", () => {
         state,
         "session-sync-drop"
       );
+      const shown = recordShownToasts(state);
 
       session.isSynced.value = false;
       session.connectedUsers.value = [];
@@ -947,9 +1014,12 @@ describe("createSeedBibleState", () => {
 
       session.isSynced.value = true;
       session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
-      expect(state.app.currentToast.value?.message).toBe(
-        "You rejoined the session"
-      );
+      vi.advanceTimersByTime(MIN_TOAST_MS);
+
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+      ]);
     });
 
     it("does not show a you-disconnected toast on a remaining host device when another of the host's devices leaves", async () => {
@@ -990,25 +1060,62 @@ describe("createSeedBibleState", () => {
         state,
         "session-airplane-rejoin"
       );
+      const shown = recordShownToasts(state);
 
       session.isSynced.value = false;
       session.connectedUsers.value = [];
-      expect(state.app.currentToast.value?.message).toBe(
-        "You lost connection to the session"
-      );
 
       // Coming back rebuilds presence from scratch, so we reappear first and
       // the host lands a beat later.
       session.isSynced.value = true;
       session.connectedUsers.value = [selfConnectedUser];
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+
+      vi.advanceTimersByTime(MIN_TOAST_MS + FULL_TOAST_MS);
+
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+      ]);
+      expect(originalDispose).not.toHaveBeenCalled();
+    });
+
+    it("shows lost, rejoined and host-disconnected in turn when the host flickers in and out while presence is rebuilt", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-rejoin-host-flicker"
+      );
+      const shown = recordShownToasts(state);
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+
+      // The rebuilt list briefly includes the host, then drops them, all
+      // before a single timer runs.
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      session.connectedUsers.value = [selfConnectedUser];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+      vi.advanceTimersByTime(MIN_TOAST_MS);
       expect(state.app.currentToast.value?.message).toBe(
         "You rejoined the session"
+      );
+      vi.advanceTimersByTime(MIN_TOAST_MS);
+      expect(state.app.currentToast.value?.message).toBe(
+        "The host disconnected from the session"
       );
 
-      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
-      expect(state.app.currentToast.value?.message).toBe(
-        "You rejoined the session"
-      );
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+        "The host disconnected from the session",
+      ]);
       expect(originalDispose).not.toHaveBeenCalled();
     });
 
@@ -1018,6 +1125,7 @@ describe("createSeedBibleState", () => {
         state,
         "session-resume-rejoin"
       );
+      const shown = recordShownToasts(state);
 
       // We drop while the app is in the foreground, so we are told about it.
       session.isSynced.value = false;
@@ -1034,10 +1142,12 @@ describe("createSeedBibleState", () => {
       // told we dropped, we must be told we are back.
       session.isSynced.value = true;
       session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      vi.advanceTimersByTime(MIN_TOAST_MS);
 
-      expect(state.app.currentToast.value?.message).toBe(
-        "You rejoined the session"
-      );
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+      ]);
     });
 
     it("stays silent on recovery when the drop itself was never announced", async () => {
@@ -1068,21 +1178,115 @@ describe("createSeedBibleState", () => {
         state,
         "session-rejoin-host-still-gone"
       );
+      const shown = recordShownToasts(state);
 
       session.isSynced.value = false;
       session.connectedUsers.value = [];
       session.isSynced.value = true;
       session.connectedUsers.value = [selfConnectedUser];
 
+      vi.advanceTimersByTime(5000);
+
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+        "The host disconnected from the session",
+      ]);
+      expect(originalDispose).not.toHaveBeenCalled();
+    });
+
+    it("shows only the latest connection state after our connection flaps repeatedly", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session } = await joinAsHostedSession(
+        state,
+        "session-self-flapping"
+      );
+      const shown = recordShownToasts(state);
+
+      for (let i = 0; i < 5; i++) {
+        session.isSynced.value = false;
+        session.connectedUsers.value = [];
+        vi.advanceTimersByTime(100);
+        session.isSynced.value = true;
+        session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+        vi.advanceTimersByTime(100);
+      }
+
+      // The first toast keeps its minimum time; the rest of the burst
+      // collapses into the single latest state behind it.
+      vi.advanceTimersByTime(MIN_TOAST_MS - 1000);
       expect(state.app.currentToast.value?.message).toBe(
         "You rejoined the session"
       );
 
-      vi.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual([
+        "You lost connection to the session",
+        "You rejoined the session",
+      ]);
+    });
 
-      expect(state.app.currentToast.value?.message).toBe(
-        "The host disconnected from the session"
+    it("shows a single you-lost-connection toast when the connection drops again while it is still on screen", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session } = await joinAsHostedSession(
+        state,
+        "session-drop-rejoin-drop"
       );
+      const shown = recordShownToasts(state);
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+      vi.advanceTimersByTime(100);
+      session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      vi.advanceTimersByTime(100);
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+
+      vi.advanceTimersByTime(FULL_TOAST_MS - 200 - 1);
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual(["You lost connection to the session"]);
+    });
+
+    it("shows only the latest host state after the host flaps repeatedly", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-host-flapping"
+      );
+      const shown = recordShownToasts(state);
+
+      for (let i = 0; i < 5; i++) {
+        session.connectedUsers.value = [
+          selfConnectedUser,
+          otherGuestConnectedUser,
+        ];
+        vi.advanceTimersByTime(100);
+        session.connectedUsers.value = [
+          selfConnectedUser,
+          hostConnectedUser,
+          otherGuestConnectedUser,
+        ];
+        vi.advanceTimersByTime(100);
+      }
+
+      vi.advanceTimersByTime(MIN_TOAST_MS - 1000);
+      expect(state.app.currentToast.value?.message).toBe(
+        "The host reconnected to the session"
+      );
+
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual([
+        "The host disconnected from the session",
+        "The host reconnected to the session",
+      ]);
       expect(originalDispose).not.toHaveBeenCalled();
     });
   });
@@ -1458,6 +1662,17 @@ describe("createSeedBibleState", () => {
       expect(to - from).toBe(5);
     });
 
+    it("stops saving history once the state is disposed", async () => {
+      const state = await createState();
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingSpan.mockClear();
+
+      state.dispose();
+
+      vi.advanceTimersByTime(15000);
+      expect(mockSaveReadingSpan).not.toHaveBeenCalled();
+    });
+
     it("saves history once for each additional 5 seconds of viewing", async () => {
       const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
@@ -1583,6 +1798,16 @@ describe("createSeedBibleState", () => {
       expect(readingState.chapterData.value!.chapter.number).toBe(1);
       expect(state.today.isOpen.value).toBe(true);
       expect(state.today.readingHistory.value.status).toBe("empty");
+
+      vi.advanceTimersByTime(60000);
+
+      expect(mockSaveReadingSpan).not.toHaveBeenCalled();
+    });
+
+    it("does not credit reading time in a minimal embed", async () => {
+      const state = await createStateWithOptions({ embed: "minimal" });
+      setSelectedTabChapter(state, "genesis", 1);
+      mockSaveReadingSpan.mockClear();
 
       vi.advanceTimersByTime(60000);
 
@@ -1935,13 +2160,273 @@ describe("createSeedBibleState", () => {
       // bare reason string would be `===` the previous value, so the effect would
       // never re-run and the message would be silently swallowed.
       const state = await createState();
+      vi.useFakeTimers();
+      const shown = recordShownToasts(state);
 
       state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
-      const firstToastId = state.app.currentToast.value?.id;
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+      expect(state.app.currentToast.value).toBeNull();
 
+      // Signing out again takes signing back in first, so the second event
+      // never lands while the first toast is still up.
       state.login.sessionEnded.value = { reason: "signed_out", id: 2 };
 
+      expect(shown).toEqual([
+        "You've been signed out. Please sign in again.",
+        "You've been signed out. Please sign in again.",
+      ]);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+  });
+
+  describe("toast queue", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("shows a lone toast for the full duration", async () => {
+      const state = await createState();
+
+      state.app.toast("Solo");
+      vi.advanceTimersByTime(FULL_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("Solo");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("shows toasts fired in the same tick one after another instead of replacing the first", async () => {
+      const state = await createState();
+
+      state.app.toast("A");
+      state.app.toast("B");
+      expect(state.app.currentToast.value?.message).toBe("A");
+
+      vi.advanceTimersByTime(MIN_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("A");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value?.message).toBe("B");
+
+      vi.advanceTimersByTime(FULL_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("B");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("keeps the current toast until its minimum time when the next one arrives early", async () => {
+      const state = await createState();
+
+      state.app.toast("A");
+      vi.advanceTimersByTime(1000);
+      state.app.toast("B");
+
+      vi.advanceTimersByTime(MIN_TOAST_MS - 1000 - 1);
+      expect(state.app.currentToast.value?.message).toBe("A");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value?.message).toBe("B");
+    });
+
+    it("dismisses the current toast as soon as the next one arrives once its minimum time has passed", async () => {
+      const state = await createState();
+
+      state.app.toast("A");
+      vi.advanceTimersByTime(2000);
+      state.app.toast("B");
+      vi.advanceTimersByTime(0);
+
+      expect(state.app.currentToast.value?.message).toBe("B");
+    });
+
+    it("shows a burst in order, each for the minimum time except the last", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      for (let i = 1; i <= 5; i++) state.app.toast(`Toast ${i}`);
+
+      vi.advanceTimersByTime(4 * MIN_TOAST_MS);
+      expect(state.app.currentToast.value?.message).toBe("Toast 5");
+
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual([
+        "Toast 1",
+        "Toast 2",
+        "Toast 3",
+        "Toast 4",
+        "Toast 5",
+      ]);
+    });
+
+    it("shows a repeated message as two separate toasts", async () => {
+      const state = await createState();
+
+      state.app.toast("Igual");
+      state.app.toast("Igual");
+      const firstToastId = state.app.currentToast.value?.id;
+
+      vi.advanceTimersByTime(MIN_TOAST_MS);
+
+      expect(state.app.currentToast.value?.message).toBe("Igual");
       expect(state.app.currentToast.value?.id).not.toBe(firstToastId);
+    });
+
+    it("drops a waiting toast when a newer one with the same key arrives", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      state.app.toast("Other");
+      state.app.toast("Offline", { key: "connection" });
+      state.app.toast("Online", { key: "connection" });
+
+      vi.advanceTimersByTime(MIN_TOAST_MS);
+      expect(state.app.currentToast.value?.message).toBe("Online");
+
+      vi.advanceTimersByTime(FULL_TOAST_MS);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual(["Other", "Online"]);
+    });
+
+    it("never drops the toast on screen, even when a newer one shares its key", async () => {
+      const state = await createState();
+
+      state.app.toast("Offline", { key: "connection" });
+      state.app.toast("Online", { key: "connection" });
+
+      vi.advanceTimersByTime(MIN_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("Offline");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value?.message).toBe("Online");
+    });
+
+    it("moves the superseding toast to the end of the queue", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      state.app.toast("Other");
+      state.app.toast("Offline", { key: "connection" });
+      state.app.toast("Unrelated");
+      state.app.toast("Online", { key: "connection" });
+
+      vi.advanceTimersByTime(2 * MIN_TOAST_MS + FULL_TOAST_MS);
+
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual(["Other", "Unrelated", "Online"]);
+    });
+
+    it("does not queue a keyed toast that repeats the one already on screen", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      state.app.toast("Offline", { key: "connection" });
+      state.app.toast("Online", { key: "connection" });
+      state.app.toast("Offline", { key: "connection" });
+
+      vi.advanceTimersByTime(FULL_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("Offline");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual(["Offline"]);
+    });
+
+    it("still queues a repeat of the toast on screen when its key differs", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      state.app.toast("Igual", { key: "first" });
+      state.app.toast("Igual", { key: "second" });
+
+      vi.advanceTimersByTime(MIN_TOAST_MS + FULL_TOAST_MS);
+
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual(["Igual", "Igual"]);
+    });
+
+    it("keeps every waiting toast without a key or with a different key", async () => {
+      const state = await createState();
+      const shown = recordShownToasts(state);
+
+      state.app.toast("Other");
+      state.app.toast("Igual");
+      state.app.toast("Igual");
+      state.app.toast("Offline", { key: "connection" });
+      state.app.toast("Host left", { key: "host" });
+
+      vi.advanceTimersByTime(4 * MIN_TOAST_MS + FULL_TOAST_MS);
+
+      expect(state.app.currentToast.value).toBeNull();
+      expect(shown).toEqual([
+        "Other",
+        "Igual",
+        "Igual",
+        "Offline",
+        "Host left",
+      ]);
+    });
+
+    it("keeps a tappable toast up for its full time even with others waiting", async () => {
+      const state = await createState();
+
+      state.app.toast("Link copied", { onClick: vi.fn() });
+      state.app.toast("Next");
+
+      vi.advanceTimersByTime(TAPPABLE_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("Link copied");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value?.message).toBe("Next");
+    });
+
+    it("cuts a plain toast short for a tappable one waiting behind it", async () => {
+      const state = await createState();
+
+      state.app.toast("Plain");
+      state.app.toast("Link copied", { onClick: vi.fn() });
+
+      vi.advanceTimersByTime(MIN_TOAST_MS);
+      expect(state.app.currentToast.value?.message).toBe("Link copied");
+
+      vi.advanceTimersByTime(TAPPABLE_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("Link copied");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("tapping a toast runs its action, dismisses it and shows the next one", async () => {
+      const state = await createState();
+      const onClick = vi.fn();
+
+      state.app.toast("Link copied", {
+        hint: "Tap to show a QR code",
+        onClick,
+      });
+      state.app.toast("Next");
+      expect(state.app.currentToast.value?.hint).toBe("Tap to show a QR code");
+
+      vi.advanceTimersByTime(1000);
+      state.app.currentToast.value?.onClick?.();
+      vi.advanceTimersByTime(0);
+
+      expect(onClick).toHaveBeenCalledTimes(1);
+      expect(state.app.currentToast.value?.message).toBe("Next");
+
+      vi.advanceTimersByTime(FULL_TOAST_MS - 1);
+      expect(state.app.currentToast.value?.message).toBe("Next");
+
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value).toBeNull();
     });
   });
 
@@ -2132,6 +2617,7 @@ describe("createSeedBibleState", () => {
         updatedAt: 0,
         extensionSettings: {},
         extensionSettingDefaults: {},
+        extensionSensitiveProxies: {},
       };
 
       expect(state.app.title.value).toBe("Genesis 7 - ESV | Grandma's Bible");
@@ -2172,6 +2658,7 @@ describe("createSeedBibleState", () => {
         updatedAt: 0,
         extensionSettings: {},
         extensionSettingDefaults: {},
+        extensionSensitiveProxies: {},
       };
 
       expect(state.app.siteName.value).toBe("Grandma's Bible");
@@ -2208,6 +2695,7 @@ describe("createSeedBibleState", () => {
         updatedAt: 0,
         extensionSettings: {},
         extensionSettingDefaults: {},
+        extensionSensitiveProxies: {},
       };
 
       expect(state.app.customizationLogoUrl.value).toBeNull();
@@ -2236,6 +2724,7 @@ describe("createSeedBibleState", () => {
         updatedAt: 0,
         extensionSettings: {},
         extensionSettingDefaults: {},
+        extensionSensitiveProxies: {},
       };
 
       expect(state.app.customizationLogoUrl.value).toBe(
@@ -2272,6 +2761,7 @@ describe("createSeedBibleState", () => {
         updatedAt: 0,
         extensionSettings: {},
         extensionSettingDefaults: {},
+        extensionSensitiveProxies: {},
       };
 
       expect(state.theme.themeCssVariables.value).toContain(
@@ -2700,6 +3190,16 @@ describe("createSeedBibleState", () => {
         panelsBackOn.app.effectiveSlots.value.map((slot) => slot.tab?.id)
       ).toEqual(readStoredTabs().slotTabIds);
     });
+
+    it("does not write stored tabs from a minimal embed", async () => {
+      const state = await createStateWithOptions({ embed: "minimal" });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(localStorage.getItem("sb-tabs-state")).toBeNull();
+    });
   });
 
   describe("UI language Bible translation switch", () => {
@@ -3027,5 +3527,359 @@ describe("opening another screen while Today is up", () => {
     expect(state.isProfileOpen.value).toBe(true);
     expect(state.today.isOpen.value).toBe(false);
     expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
+  });
+
+  it("opens playlist history as its own screen", async () => {
+    const state = await createState();
+
+    state.openPlaylistHistory();
+    await Promise.resolve();
+
+    expect(state.isPlaylistHistoryOpen.value).toBe(true);
+    expect(paneIds(state)).toEqual([PLAYLIST_HISTORY_PANE_ID]);
+  });
+
+  it("opens playlist history from a ?playlist-history=open link", async () => {
+    jsdom.reconfigure({
+      url: "https://example.com/?playlist-history=open",
+    });
+    const state = await createState();
+
+    expect(state.isPlaylistHistoryOpen.value).toBe(true);
+    expect(paneIds(state)).toEqual([PLAYLIST_HISTORY_PANE_ID]);
+  });
+
+  it("clears playlist history when its pane is closed", async () => {
+    const state = await createState();
+    state.openPlaylistHistory();
+    await Promise.resolve();
+
+    state.panes.closePane(PLAYLIST_HISTORY_PANE_ID);
+    await Promise.resolve();
+
+    expect(state.isPlaylistHistoryOpen.value).toBe(false);
+    expect(paneIds(state)).not.toContain(PLAYLIST_HISTORY_PANE_ID);
+  });
+
+  it("returns to Profile from the playlist history back button", async () => {
+    const state = await createState();
+    state.openProfile();
+    await Promise.resolve();
+    state.openPlaylistHistory();
+    await Promise.resolve();
+    expect(state.isProfileOpen.value).toBe(false);
+    expect(state.isPlaylistHistoryOpen.value).toBe(true);
+
+    const pane = state.panes.panes.value.find(
+      (item) => item.id === PLAYLIST_HISTORY_PANE_ID
+    );
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    try {
+      const Provider = await realI18nProvider();
+      act(() => {
+        render(
+          h(Provider, {
+            i18n: state.i18n,
+            children: pane?.leading?.() ?? null,
+          }),
+          container
+        );
+      });
+      const back = container.querySelector(
+        ".sb-profile-pane-back"
+      ) as HTMLButtonElement;
+      expect(back).not.toBeNull();
+      act(() => {
+        back.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    } finally {
+      render(null, container);
+      container.remove();
+    }
+
+    expect(state.isPlaylistHistoryOpen.value).toBe(false);
+    expect(state.isProfileOpen.value).toBe(true);
+    expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
+  });
+});
+
+const PLAYLIST_USER_ID = "user-1";
+
+/**
+ * This file stubs `I18nProvider` so it renders children with no context.
+ * Profile and the history back button call `useI18n`, so they need the real
+ * provider from the unmocked module.
+ */
+async function realI18nProvider() {
+  const actual = await vi.importActual<
+    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
+  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
+  return actual.I18nProvider;
+}
+
+function profileHistoryEntry() {
+  return PlaylistPlayHistorySchema.parse({
+    id: "playlist_history_1",
+    recordName: PLAYLIST_USER_ID,
+    userId: PLAYLIST_USER_ID,
+    playlistId: "playlist-1",
+    playlistRecordName: PLAYLIST_USER_ID,
+    playlistTitle: "Morning",
+    playlistDescription: null,
+    previousHistoryId: null,
+    totalSteps: 1,
+    currentStep: 0,
+    lastItem: { type: "html", html: "<p>hi</p>" },
+    startedAtMs: 1,
+    endedAtMs: null,
+    durationMs: 0,
+    createdAtMs: 1,
+    updatedAtMs: 1,
+  });
+}
+
+function htmlPlaylist() {
+  return PlaylistSchema.parse({
+    id: "playlist-1",
+    recordName: PLAYLIST_USER_ID,
+    authorUserId: PLAYLIST_USER_ID,
+    title: "Morning",
+    description: null,
+    items: [{ type: "html", html: "<p>hi</p>" }],
+    createdAtMs: 1,
+    updatedAtMs: 1,
+  });
+}
+
+describe("continuing a playlist from Profile", () => {
+  let container: HTMLDivElement;
+  let active: SeedBibleState | null = null;
+
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    if (active) {
+      active.os.sessionKey.value = null;
+      active = null;
+    }
+    render(null, container);
+    container.remove();
+    localStorage.removeItem("sessionKey");
+    vi.restoreAllMocks();
+  });
+
+  async function signedInProfile(state: SeedBibleState) {
+    vi.spyOn(state.os, "listAllDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "listDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "recordData").mockResolvedValue({
+      success: true,
+    } as never);
+    vi.spyOn(state.os, "eraseData").mockResolvedValue({
+      success: true,
+    } as never);
+    state.os.sessionKey.value = formatV1SessionKey(
+      PLAYLIST_USER_ID,
+      "session-1",
+      "secret-1",
+      Date.now() + 60 * 60 * 1000
+    );
+    await waitFor(() => state.login.userId.value === PLAYLIST_USER_ID);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    state.playlists.userPlaylistHistory.value = [profileHistoryEntry()];
+    state.openProfile();
+    await Promise.resolve();
+    const pane = state.panes.panes.value.find(
+      (item) => item.id === PROFILE_PANE_ID
+    );
+    const Provider = await realI18nProvider();
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: pane?.component() ?? null,
+        }),
+        container
+      );
+    });
+  }
+
+  function continueButton() {
+    return container.querySelector(
+      ".sb-profile-playlist-continue"
+    ) as HTMLButtonElement;
+  }
+
+  it("leaves Profile open and toasts when the playlist cannot be loaded", async () => {
+    const state = await createState();
+    active = state;
+    vi.spyOn(state.os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "not_found",
+      errorMessage: "not found",
+    });
+    await signedInProfile(state);
+
+    await act(async () => {
+      continueButton().dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(
+      () =>
+        state.app.currentToast.value?.message ===
+        "Couldn't open that playlist. It may have been deleted."
+    );
+
+    expect(state.isProfileOpen.value).toBe(true);
+  });
+
+  it("closes Profile only after the playlist has loaded", async () => {
+    const state = await createState();
+    active = state;
+    let finishLoad: (() => void) | null = null;
+    vi.spyOn(state.os, "getData").mockImplementation(
+      async (_recordName: string, address: string) => {
+        if (address !== "playlist-1") {
+          return {
+            success: false,
+            errorCode: "data_not_found" as const,
+            errorMessage: "Data not found",
+          };
+        }
+        return new Promise((resolve) => {
+          finishLoad = () => {
+            resolve({
+              success: true,
+              data: htmlPlaylist(),
+            } as never);
+          };
+        });
+      }
+    );
+    await signedInProfile(state);
+
+    act(() => {
+      continueButton().dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(state.isProfileOpen.value).toBe(true);
+
+    await act(async () => {
+      finishLoad?.();
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(state.isProfileOpen.value).toBe(false);
+  });
+});
+
+describe("translation suggestions", () => {
+  const partialOnly: Translation = {
+    id: "partial_only",
+    name: "Only Partial",
+    englishName: "Only Partial",
+    website: "https://example.com",
+    licenseUrl: "https://example.com/license",
+    shortName: "PART",
+    language: "zzz",
+    textDirection: "ltr",
+    availableFormats: ["json"],
+    listOfBooksApiLink: "/api/partial_only/books.json",
+    numberOfBooks: 1,
+    totalNumberOfChapters: 1,
+    totalNumberOfVerses: 1,
+  };
+
+  function toolNamed(state: SeedBibleState, name: string) {
+    const tool = state.chats.context.value.tools?.find(
+      (entry) => entry.name === name
+    );
+    if (!tool) {
+      throw new Error(`${name} was not registered`);
+    }
+    return tool;
+  }
+
+  it("searches the full catalog when a chapter load has only merged one translation", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+    state.bibleData.catalogLoaded.value = false;
+    state.bibleData.availableTranslations.value = [partialOnly];
+
+    const result = (await toolNamed(state, "searchTranslations").function({
+      query: "AAB",
+    })) as { translations: { id: string }[] };
+
+    expect(result.translations.map((hit) => hit.id)).toContain("AAB");
+    expect(result.translations.map((hit) => hit.id)).not.toContain(
+      "partial_only"
+    );
+  });
+
+  it("reports an error when no chat can show the banner", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+    const other = state.chats.createLocalSession();
+    state.chats.selectChat(other.id);
+
+    await expect(
+      toolNamed(state, "suggestTranslation").function(
+        { id: "AAB" },
+        { chatId: "missing-chat" }
+      )
+    ).resolves.toBe("error: No chat is open.");
+    expect(other.translationSuggestion.value).toBeNull();
+  });
+
+  it("shows the banner on the calling chat even when another chat is selected", async () => {
+    const state = await createStateWithOptions({
+      responses: createLanguageSwitchResponses(),
+    });
+    state.chats.registerProvider({
+      id: "ai-first",
+      name: "First",
+      supportsSharedChats: false,
+      generateResponse: async () => null,
+    });
+    state.chats.registerProvider({
+      id: "ai-second",
+      name: "Second",
+      supportsSharedChats: false,
+      generateResponse: async () => null,
+    });
+    const chatA = state.chats.createLocalSession();
+    const chatB = state.chats.createLocalSession();
+    chatA.addParticipant("ai-first");
+    chatA.addParticipant("ai-second");
+    state.chats.selectChat(chatB.id);
+
+    await toolNamed(state, "suggestTranslation").function(
+      { id: "AAB", unavailable: "NIV" },
+      { chatId: chatA.id, providerId: "ai-second" }
+    );
+
+    expect(chatA.translationSuggestion.value).toMatchObject({
+      id: "AAB",
+      shortName: "AAB",
+      unavailable: "NIV",
+    });
+    expect(chatA.messages.value).toEqual([]);
+    expect(chatB.translationSuggestion.value).toBeNull();
   });
 });

@@ -1,0 +1,51 @@
+/* Sits on its own line under the item's row: rows are flex rows, so the row
+ * wraps and the preview takes the full width. The max height keeps a whole
+ * chapter from pushing the rest of the list off screen. */
+.sb-item-inline-preview {
+  flex-basis: 100%;
+  max-height: 16rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 94%);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  text-align: start;
+}
+
+.sb-item-inline-preview-passage p {
+  margin: 0 0 8px;
+}
+
+.sb-item-inline-preview-passage p:last-child {
+  margin-bottom: 0;
+}
+
+.sb-item-inline-preview-chapter {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.sb-item-inline-preview-verse-number {
+  margin-inline-end: 2px;
+  opacity: 0.7;
+  font-size: 0.7em;
+}
+
+.sb-item-inline-preview-status {
+  margin: 0;
+  opacity: 0.7;
+}
+
+.sb-item-inline-preview-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+
+.sb-item-inline-preview-link-title {
+  font-weight: 600;
+}

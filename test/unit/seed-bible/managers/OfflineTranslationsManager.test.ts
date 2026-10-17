@@ -656,6 +656,20 @@ describe("automatically applying an update to the translation in use", () => {
     expect(manager.offline.downloadPrompt.value).toBeNull();
   });
 
+  it("offers the update in place of a recovery suggestion still on screen", async () => {
+    setConnection(true);
+    const manager = await harnessWithDetectedUpdate();
+    // A corner card the reader is free to ignore — it must not hold the
+    // update back for the rest of the visit.
+    const niv = translations.translations[1]!;
+    expect(manager.offline.offerRecoveryPrompt(niv)).toBe(true);
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(manager.offline.updatePrompt.value?.id).toBe("AAB");
+    expect(manager.offline.recoveryPrompt.value).toBeNull();
+  });
+
   it("does not re-offer the same update once it has already been shown", async () => {
     setConnection(true);
     const manager = await harnessWithDetectedUpdate();

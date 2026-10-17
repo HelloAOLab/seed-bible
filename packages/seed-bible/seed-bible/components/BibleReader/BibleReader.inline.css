@@ -11,6 +11,14 @@
   flex: 1;
 }
 
+.sb-playlist-opening-spinner {
+  position: absolute;
+  z-index: 6;
+  top: 0.65rem;
+  inset-inline-end: 0.75rem;
+  color: var(--sb-primary-color);
+}
+
 .sb-bible-reader-bookmark-button,
 .sb-bible-reader-save-button {
   position: relative;
@@ -161,8 +169,11 @@
   opacity: 0.8;
 }
 
+.sb-inline-footnote {
+  white-space: nowrap;
+}
+
 .sb-inline-footnote-button {
-  margin-inline-start: 0.25rem;
   margin-inline-end: 0.25rem;
   border: none;
   background: transparent;
@@ -832,6 +843,13 @@
   font-style: var(--sb-verse-words-of-jesus-font-style);
 }
 
+.sb-highlight-custom .sb-words-of-jesus {
+  color: var(
+    --sb-highlight-custom-words-of-jesus-font-color,
+    var(--sb-verse-words-of-jesus-color)
+  );
+}
+
 /* Chapter-load failure state: centred in the reader body, in the reader's own
    ink rather than an alarming red. Sized in rem so it tracks the UI scale, not
    the reader glyph knob. */
@@ -922,6 +940,51 @@
   cursor: default;
 }
 
+.sb-reader-error-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 75%);
+  border-radius: 0.625rem;
+  padding: 0.5rem 1.25rem;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-reader-error-action .material-symbols-outlined {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.sb-reader-error-action:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-reader-error-action:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.sb-reader-error-hint {
+  margin: 0.5rem 0 0;
+  max-width: 26rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-reader-error-alternatives {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .sb-reader-error-switch {
   background: transparent;
   color: var(--sb-font-color);
@@ -947,24 +1010,6 @@
   font-size: 0.8125rem;
   font-weight: 600;
   text-align: left;
-}
-
-.sb-reader-error-retry-spinner {
-  font-size: 1.125rem;
-  line-height: 1;
-  animation: sb-reader-error-retry-spin 0.9s linear infinite;
-}
-
-@keyframes sb-reader-error-retry-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sb-reader-error-retry-spinner {
-    animation: none;
-  }
 }
 
 .sb-reader-not-found {
@@ -1128,6 +1173,11 @@
   color: var(--sb-font-color);
   line-height: 1.6;
   overflow: auto;
+}
+
+.sb-footnote-modal-footer {
+  flex-shrink: 0;
+  margin-top: 1rem;
 }
 
 .sb-footnote-modal-content .sb-verse-reference-link {

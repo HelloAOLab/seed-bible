@@ -11,6 +11,14 @@
   cursor: pointer;
 }
 
+/* The native option popup ignores the select's transparent background and
+   renders white, so options need an explicit theme background to keep the
+   inherited font color readable in dark mode. */
+.sb-playlist-add-mode-select option {
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+}
+
 .sb-playlist-add-mode-select:hover {
   border-color: var(--sb-primary-color);
 }

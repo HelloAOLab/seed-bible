@@ -40,36 +40,49 @@ import type {
 } from "../../managers/HighlightsManager";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
 import type { TabSlot } from "../../managers/TabsLayoutManager";
+import { getReadableWordsOfJesusColor } from "../../managers/CustomizationsManager";
 import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   annotationVerseNumbers,
+  visibleChapterAnnotations,
   type Annotation,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
+import type { FriendsManager } from "../../managers/FriendsManager";
 import type {
   BibleReadingSession,
   ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
 import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import { Spinner } from "../Spinner/Spinner";
 import {
   SaveStarIcon,
   openSaveModalForLocation,
   saveChapterLabel,
 } from "../Tabs/Tabs";
+import {
+  BookmarkStackIcon,
+  bookmarkButtonLabel,
+  openBookmarkModal,
+} from "../Bookmarks/Bookmarks";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
 import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
 import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
-import { findScrollContainer, readBottomChromeInset } from "./readerViewport";
+import {
+  findScrollContainer,
+  measureVisibleReaderBounds,
+} from "./readerViewport";
 
 interface ReaderChapterActionProps {
   state: SeedBibleState;
@@ -119,15 +132,6 @@ function ReaderSaveButton(props: ReaderChapterActionProps) {
     </button>
   );
 }
-
-/**
- * Whether the reader header shows a bookmark button at all.
- *
- * Off until #1658 builds the real one. The placeholder below stays in the tree
- * — and keeps its slot in both header clusters — so turning bookmarks back on
- * is this one line rather than a rebuild of the layout around it.
- */
-const SHOW_BOOKMARK_BUTTON = false;
 
 /**
  * Offers downloaded translations the reader can switch to after a chapter
@@ -196,46 +200,38 @@ function OfflineFallbackSwitch(props: {
 }
 
 /**
- * Placeholder for the redesigned bookmarks of #1658. The archival behavior
- * this button used to have moved to Saves (the button beside it), and the
- * replacement — a named, colored marker you move as you read — does not exist
- * yet, so pressing it says so rather than quietly doing nothing.
+ * Opens the bookmark modal for the chapter in the reader. The icon shows what
+ * is already here: an outline for nothing, the bookmark's own color for one,
+ * and a fan of colors for several — only bookmarks in this translation count.
  */
 function ReaderBookmarkButton(props: ReaderChapterActionProps) {
-  const { state } = props;
+  const { state, translationId, bookId, chapterNumber } = props;
   const { t } = useI18n();
-  const label = t("bookmark", { defaultValue: "Bookmark" });
+  const canBookmark = !!(translationId && bookId && chapterNumber);
+  const bookmarksHere = state.bookmarks.getBookmarksForLocation(
+    translationId,
+    bookId,
+    chapterNumber
+  );
+  const label = bookmarkButtonLabel(t, bookmarksHere);
 
   return (
     <button
       type="button"
-      className="sb-bible-reader-bookmark-button"
+      className={`sb-bible-reader-bookmark-button${
+        bookmarksHere.length > 0 ? " sb-bible-reader-bookmark-button-set" : ""
+      }`}
       onClick={() => {
-        state.app.toast(
-          t("bookmark-redesign-coming-soon", {
-            defaultValue: "Bookmark redesign coming soon",
-          })
-        );
+        if (!translationId || !bookId || !chapterNumber) {
+          return;
+        }
+        void openBookmarkModal(state, { translationId, bookId, chapterNumber });
       }}
+      disabled={!canBookmark}
       aria-label={label}
       title={label}
     >
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <path
-          d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
+      <BookmarkStackIcon bookmarks={bookmarksHere} />
     </button>
   );
 }
@@ -261,7 +257,12 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
   const { t } = useI18n();
   const chapterAnnotations =
     bookId && chapterNumber
-      ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+      ? visibleChapterAnnotations(
+          state.annotations,
+          state.friends.friendIds.value,
+          bookId,
+          chapterNumber
+        )
       : [];
   const noteCount = chapterAnnotations.length;
 
@@ -294,6 +295,9 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
         if (firstAnnotatedVerse === null || !bookId || !chapterNumber) {
           state.app.openDiscover();
           return;
+        }
+        if (!state.settings.settings.value.discoveredContent.showContent) {
+          state.discover.view.value = "discover";
         }
         state.discover.scrollToVerse.value = {
           bookId,
@@ -333,8 +337,41 @@ function getPoemIndentLevel(part: ChapterVerse["content"][0]) {
 
   return null;
 }
+// Move a footnote before an immediately preceding line break so the marker
+// stays attached to the text it belongs to instead of starting on the next line.
+function reorderFootnoteBeforeLineBreak(
+  content: ChapterVerse["content"]
+): ChapterVerse["content"] {
+  let reorderedContent: ChapterVerse["content"] | undefined;
 
-function isFootnotePart(part: ChapterVerse["content"][0]) {
+  for (let index = 0; index < content.length - 1; index += 1) {
+    const currentPart = content[index]!;
+    const nextPart = content[index + 1]!;
+
+    if (isLineBreakPart(currentPart) && isFootnotePart(nextPart)) {
+      reorderedContent ??= [...content];
+
+      reorderedContent[index] = nextPart;
+      reorderedContent[index + 1] = currentPart;
+
+      index += 1;
+    }
+  }
+
+  return reorderedContent ?? content;
+}
+function isLineBreakPart(
+  part: ChapterVerse["content"][0] | undefined
+): boolean {
+  return (
+    !!part &&
+    typeof part === "object" &&
+    "lineBreak" in part &&
+    part.lineBreak === true
+  );
+}
+
+function isFootnotePart(part: ChapterVerse["content"][0] | undefined) {
   return (
     !!part &&
     typeof part === "object" &&
@@ -491,11 +528,7 @@ function splitVerseIntoSegments(
   for (const part of content) {
     const isFootnote = isFootnotePart(part);
     const indentLevel = getPoemIndentLevel(part);
-    const isLineBreak =
-      part &&
-      typeof part === "object" &&
-      "lineBreak" in part &&
-      part.lineBreak === true;
+    const isLineBreak = isLineBreakPart(part);
 
     if (isFootnote) {
       if (inPoetry) {
@@ -549,7 +582,8 @@ function renderInlineContent(
   showFootnotes: boolean,
   showRedLettering: boolean,
   contentRanges: ContentDecorationRange[] = [],
-  partStartIndex = 0
+  partStartIndex = 0,
+  isBeforeFootnote = false
 ) {
   const splitTextByDecorations = (text: string) => {
     const partEndIndex = partStartIndex + text.length;
@@ -637,7 +671,8 @@ function renderInlineContent(
   };
 
   if (typeof part === "string") {
-    const segments = splitTextByDecorations(part);
+    const text = isBeforeFootnote ? part.trimEnd() : part;
+    const segments = splitTextByDecorations(text);
     return (
       <span key={index}>
         {segments.map((segment, segmentIndex) => (
@@ -662,8 +697,8 @@ function renderInlineContent(
     if (part.wordsOfJesus && showRedLettering) {
       className += " sb-words-of-jesus";
     }
-
-    const segments = splitTextByDecorations(part.text);
+    const text = isBeforeFootnote ? part.text.trimEnd() : part.text;
+    const segments = splitTextByDecorations(text);
     return (
       <span key={index} className={className.trim()}>
         {segments.map((segment, segmentIndex) => (
@@ -686,27 +721,29 @@ function renderInlineContent(
     return <strong key={index}>{part.heading}</strong>;
   }
 
-  if ("lineBreak" in part && part.lineBreak === true) {
+  if (isLineBreakPart(part)) {
     return <br key={index} />;
   }
 
   if ("noteId" in part && typeof part.noteId === "number") {
     if (!showFootnotes) {
-      return <span> </span>;
+      return <span key={index}> </span>;
     }
     return (
-      <button
-        key={index}
-        className="sb-inline-footnote-button"
-        aria-label={`Open footnote ${part.noteId}`}
-        title={`Open footnote ${part.noteId}`}
-        onClick={(event: MouseEvent) => {
-          event.stopPropagation();
-          onOpenFootnote(part.noteId);
-        }}
-      >
-        <span className="material-symbols-outlined">info</span>
-      </button>
+      <span key={index} className="sb-inline-footnote">
+        {"\u00A0"}
+        <button
+          className="sb-inline-footnote-button"
+          aria-label={`Open footnote ${part.noteId}`}
+          title={`Open footnote ${part.noteId}`}
+          onClick={(event: MouseEvent) => {
+            event.stopPropagation();
+            onOpenFootnote(part.noteId);
+          }}
+        >
+          <span className="material-symbols-outlined">info</span>
+        </button>
+      </span>
     );
   }
 
@@ -742,7 +779,8 @@ function renderChapterContent(
     verse: BibleSelectedVerse,
     verseNumber: number,
     event: MouseEvent
-  ) => void
+  ) => void,
+  hideHighlights = false
 ) {
   if (!chapterData) {
     return null;
@@ -793,6 +831,13 @@ function renderChapterContent(
   // reader's own highlight rather than replacing it, so the outline is what
   // says "this isn't yours, and yours is still underneath".
   const getVerseHighlight = (verseNumber: number): ResolvedHighlight | null => {
+    // Embeds (including the share-sheet preview of one) must not paint
+    // highlights. A signed-in viewer's own highlights would show there, and
+    // a visitor of the embed does not have them.
+    if (hideHighlights) {
+      return null;
+    }
+
     const decorated = decorationHighlights.get(verseNumber);
     if (decorated) {
       return { highlight: decorated, broadcast: true };
@@ -839,11 +884,20 @@ function renderChapterContent(
     // text inherits when it's absent. Requiring both meant a highlight with
     // only a custom colour silently rendered as its preset instead.
     if (highlight.customColor) {
+      const wordsOfJesusColor = getReadableWordsOfJesusColor(
+        highlight.customColor
+      );
+      const style: JSX.CSSProperties = {};
+      if (highlight.customFontColor) {
+        style.color = highlight.customFontColor;
+      }
+      if (wordsOfJesusColor) {
+        style["--sb-highlight-custom-words-of-jesus-font-color"] =
+          wordsOfJesusColor;
+      }
       return {
-        className: "sb-highlight",
-        style: highlight.customFontColor
-          ? ({ color: highlight.customFontColor } as JSX.CSSProperties)
-          : undefined,
+        className: "sb-highlight sb-highlight-custom",
+        style: Object.keys(style).length > 0 ? style : undefined,
         fill: highlight.customColor,
         broadcast,
       };
@@ -971,7 +1025,8 @@ function renderChapterContent(
         v.bookId === chapterData.book.id &&
         v.chapterNumber === chapterData.chapter.number
     );
-    const segments = splitVerseIntoSegments(value.content);
+    const content = reorderFootnoteBeforeLineBreak(value.content);
+    const segments = splitVerseIntoSegments(content);
     const hasPoetry = segments.some((s) => s.type === "poetry");
     const verseDecorations = getVerseDecorations(value.number);
     const decorationPresentation = getDecorationPresentation(verseDecorations);
@@ -1061,7 +1116,8 @@ function renderChapterContent(
                       scriptureElements.showFootnotes,
                       scriptureElements.showRedLettering,
                       contentRanges,
-                      getPartTextStartIndex(part)
+                      getPartTextStartIndex(part),
+                      isFootnotePart(segment.parts[partIndex + 1])
                     )
                   )}
                 </span>
@@ -1094,7 +1150,8 @@ function renderChapterContent(
                       scriptureElements.showFootnotes,
                       scriptureElements.showRedLettering,
                       contentRanges,
-                      getPartTextStartIndex(part)
+                      getPartTextStartIndex(part),
+                      isFootnotePart(line.parts[partIndex + 1])
                     )
                   )}
                 </span>
@@ -1121,7 +1178,7 @@ function renderChapterContent(
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
           {renderVerseNumberOrIcon(value.number, verse)}
-          {value.content.map((part, index) =>
+          {content.map((part, index) =>
             renderInlineContent(
               part,
               index,
@@ -1130,7 +1187,8 @@ function renderChapterContent(
               scriptureElements.showFootnotes,
               scriptureElements.showRedLettering,
               contentRanges,
-              getPartTextStartIndex(part)
+              getPartTextStartIndex(part),
+              isFootnotePart(content[index + 1])
             )
           )}
         </span>
@@ -1208,7 +1266,10 @@ function renderChapterContent(
               (noteId) => onOpenFootnote(noteId, null),
               scriptureElements.showHeadings,
               scriptureElements.showFootnotes,
-              scriptureElements.showRedLettering
+              scriptureElements.showRedLettering,
+              [],
+              0,
+              isFootnotePart(entry.content[index + 1])
             )
           )}
         </p>
@@ -1617,29 +1678,14 @@ function placePresenceArrows(
 
 /**
  * Where the screen is over the chapter content, in the content's own
- * coordinates. Accounts for the mobile header floating over the top of the
- * scroller and the toolbar over its bottom, since verses under either are not
- * really on screen.
+ * coordinates. See `measureVisibleReaderBounds` for what counts as on screen.
  */
 function measurePresenceViewport(
   content: HTMLElement,
   scroller: HTMLElement | null
 ): PresenceViewport {
   const contentRect = content.getBoundingClientRect();
-  let top = 0;
-  let bottom = window.innerHeight;
-  if (scroller) {
-    const rect = scroller.getBoundingClientRect();
-    top = rect.top;
-    bottom = rect.bottom;
-  }
-  const header = content
-    .closest(".sb-bible-reader")
-    ?.querySelector(".sb-bible-reader-mobile-header");
-  if (header) {
-    top = Math.max(top, header.getBoundingClientRect().bottom);
-  }
-  bottom -= readBottomChromeInset();
+  const { top, bottom } = measureVisibleReaderBounds(content, scroller);
   return { top: top - contentRect.top, bottom: bottom - contentRect.top };
 }
 
@@ -1781,6 +1827,8 @@ interface ChapterContentProps {
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
   annotations?: AnnotationsManager;
+  /** Whose notes besides the user's own get verse markers. */
+  friends?: FriendsManager;
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -1817,6 +1865,11 @@ interface ChapterContentProps {
    * when none are. Drives the presence this client publishes.
    */
   onVisibleVersesChange?: (range: VisibleVerseRange | null) => void;
+  /**
+   * Skip every verse highlight, saved and broadcast. Used by the compact
+   * embed so the page does not show highlights the visitor does not have.
+   */
+  hideHighlights?: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -1828,6 +1881,7 @@ function ChapterContent(props: ChapterContentProps) {
     highlights,
     decorations,
     annotations,
+    friends,
     selectVerse,
     selectFootnote,
     selectVersesFromTextSelection,
@@ -1837,16 +1891,19 @@ function ChapterContent(props: ChapterContentProps) {
     isMobile = false,
     presence,
     onVisibleVersesChange,
+    hideHighlights = false,
   } = props;
 
   const { t } = useI18n();
   const currentChapter = chapterData.value;
   const chapterAnnotations =
     currentChapter && annotations
-      ? annotations.getAnnotationsForChapter(
+      ? visibleChapterAnnotations(
+          annotations,
+          friends?.friendIds.value ?? [],
           currentChapter.book.id,
           currentChapter.chapter.number
-        ).value
+        )
       : [];
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -2439,10 +2496,35 @@ function ChapterContent(props: ChapterContentProps) {
         decorations.value,
         chapterAnnotations,
         scriptureElements,
-        onAnnotationVerseClick
+        onAnnotationVerseClick,
+        hideHighlights
       )}
     </div>
   );
+}
+
+/**
+ * A translation's metadata, from the reader's own book list when that's the
+ * one asked for, otherwise from the first catalog that has it. The book list
+ * alone isn't enough: it's missing when a translation never opened fails
+ * offline, and it belongs to the translation on screen, not one a failed
+ * switch was headed for.
+ */
+function resolveTranslation(
+  translationId: string,
+  fromBookList: Translation | null,
+  ...catalogs: Array<readonly Translation[] | null | undefined>
+): Translation | null {
+  if (fromBookList?.id === translationId) {
+    return fromBookList;
+  }
+  for (const catalog of catalogs) {
+    const entry = catalog?.find((candidate) => candidate.id === translationId);
+    if (entry) {
+      return entry;
+    }
+  }
+  return null;
 }
 
 export function BibleReader(props: BibleReaderProps) {
@@ -2468,11 +2550,13 @@ export function BibleReader(props: BibleReaderProps) {
     loading,
     isChapterContentStale,
     error,
+    failedTranslationId,
     selectVerse,
     clearSelectedVerses,
     selectedFootnote,
     selectFootnote,
   } = readingState;
+  const footnoteOverlayDismiss = useOverlayDismiss(() => selectFootnote(null));
 
   if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
@@ -2598,7 +2682,12 @@ export function BibleReader(props: BibleReaderProps) {
       return;
     }
 
-    readingState.discoverContentPanelInline.value = true;
+    if (state.settings.settings.value.discoveredContent.showContent) {
+      readingState.discoverContentPanelInline.value = true;
+    } else {
+      state.discover.view.value = "discover";
+    }
+
     // AnnotationsSection's shared effect reacts to this target either way —
     // scrolling to and highlighting the note's group — whether it's mounted
     // in this tab's compact panel or the toolbar-toggled Discover pane.
@@ -2790,17 +2879,67 @@ export function BibleReader(props: BibleReaderProps) {
   // Keep the failure state on screen while a retry is in flight — `retryLoad()`
   // clears `error` as it starts, so without this the panel would flash back to
   // the (still empty) chapter body before the new request settles.
-  const [retrying, setRetrying] = useState(false);
+  //
+  // Holds the translation being retried rather than a flag: `error` (and with
+  // it `failedTranslationId`) is cleared for the length of the retry, and the
+  // panel still has to say which translation failed.
+  const [retryingTranslationId, setRetryingTranslationId] = useState<
+    string | null
+  >(null);
+  const retrying = retryingTranslationId !== null;
+  const offline = state?.bibleData?.offline;
   const retryChapterLoad = async () => {
     if (retrying) return;
-    setRetrying(true);
+    const attemptedTranslationId =
+      failedTranslationId.peek() ?? translationId.peek();
+    setRetryingTranslationId(attemptedTranslationId);
     try {
       await readingState.retryLoad();
     } finally {
-      setRetrying(false);
+      setRetryingTranslationId(null);
+    }
+    // A recovery only if the reader ended up on the translation that failed:
+    // retrying a failed switch lands there, but a reader who moved somewhere
+    // else mid-retry is looking at a chapter that never failed to load.
+    if (
+      !offline ||
+      error.peek() ||
+      translationId.peek() !== attemptedTranslationId
+    ) {
+      return;
+    }
+    const recoveredTranslation = resolveTranslation(
+      attemptedTranslationId,
+      translation.peek(),
+      availableTranslations.peek()?.translations,
+      state?.bibleData?.availableTranslations?.peek()
+    );
+    if (recoveredTranslation) {
+      offline.offerRecoveryPrompt(recoveredTranslation);
     }
   };
   const showLoadError = (!!error.value && !loading.value) || retrying;
+
+  const failedId =
+    retryingTranslationId ?? failedTranslationId.value ?? translationId.value;
+  // The app-wide catalog too: the reader's own copy is only filled in by some
+  // load paths, and a switch picked from the selector's list may be the first
+  // this reader has heard of that translation.
+  const failedTranslation = resolveTranslation(
+    failedId,
+    translation.value,
+    availableTranslations.value?.translations,
+    state?.bibleData?.availableTranslations?.value
+  );
+  const failedTranslationNotSaved =
+    !!offline?.supported &&
+    !!failedTranslation &&
+    !offline.isDownloaded(failedTranslation.id);
+  const hasOtherSavedTranslation =
+    !!offline?.supported &&
+    [...offline.downloaded.value.keys()].some(
+      (savedId) => savedId !== failedId
+    );
 
   const offlineRecords = state?.bibleData?.offline?.records.value;
   // The signal, not `getCachedTranslationBooks`: that helper reads untracked,
@@ -2935,14 +3074,7 @@ export function BibleReader(props: BibleReaderProps) {
               disabled={retrying}
               aria-busy={retrying}
             >
-              {retrying && (
-                <span
-                  className="material-symbols-outlined sb-reader-error-retry-spinner"
-                  aria-hidden="true"
-                >
-                  progress_activity
-                </span>
-              )}
+              {retrying && <Spinner size="1.125rem" />}
               {t("reload", { defaultValue: "Reload" })}
             </button>
             {offlineFallbackTranslations.length > 0 && (
@@ -2952,6 +3084,45 @@ export function BibleReader(props: BibleReaderProps) {
               />
             )}
           </div>
+
+          {failedTranslationNotSaved && !offline.isOnline.value && (
+            <p className="sb-reader-error-hint">
+              {t("chapter-unavailable-download-offline-hint", {
+                abbreviation: failedTranslation.shortName,
+                defaultValue:
+                  "Once you're back online, download {{abbreviation}} so this doesn't happen again.",
+              })}
+            </p>
+          )}
+
+          {hasOtherSavedTranslation &&
+            offlineFallbackTranslations.length === 0 && (
+              <div className="sb-reader-error-alternatives">
+                <p className="sb-reader-error-hint">
+                  {t("chapter-unavailable-switch-heading", {
+                    defaultValue:
+                      "Or keep reading in a translation saved on this device:",
+                  })}
+                </p>
+                <button
+                  type="button"
+                  className="sb-reader-error-action"
+                  onClick={() =>
+                    void selectorState.openDownloadedTranslations(currentSlot)
+                  }
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    aria-hidden="true"
+                  >
+                    translate
+                  </span>
+                  {t("chapter-unavailable-choose-saved", {
+                    defaultValue: "Choose a saved translation",
+                  })}
+                </button>
+              </div>
+            )}
         </div>
       )}
 
@@ -2980,6 +3151,8 @@ export function BibleReader(props: BibleReaderProps) {
               highlights={highlights}
               decorations={decorations}
               annotations={state?.annotations}
+              hideHighlights={isMinimalEmbed}
+              friends={state?.friends}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
@@ -3028,9 +3201,21 @@ export function BibleReader(props: BibleReaderProps) {
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   // ) : null;
   const extraContent =
-    state && !state.app.isDiscoverOpen.value ? (
+    state &&
+    !isMinimalEmbed &&
+    !state.app.isDiscoverOpen.value &&
+    state.settings.settings.value.discoveredContent.showContent ? (
       <DiscoverContentPanel tab={currentSlot.tab} state={state} />
     ) : null;
+
+  // Playback opens on the selected tab only. Other slots in a split view
+  // must not show this loader.
+  const playlistOpeningHere =
+    !!state &&
+    state.playlists.openingPlayback.value &&
+    state.playlists.view.value !== "play_playlist" &&
+    currentSlot.tab != null &&
+    state.tabs.selectedTabId.value === currentSlot.tab.id;
 
   return (
     <div
@@ -3039,6 +3224,13 @@ export function BibleReader(props: BibleReaderProps) {
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
+      {playlistOpeningHere && !isCompactReader ? (
+        <Spinner
+          className="sb-playlist-opening-spinner"
+          size="1rem"
+          label={t("opening-playlist", { defaultValue: "Opening playlist" })}
+        />
+      ) : null}
       {isCompactReader && state ? (
         <Fragment key="mobile">
           <div
@@ -3072,6 +3264,14 @@ export function BibleReader(props: BibleReaderProps) {
                 </button>
               </h1>
             </div>
+            {playlistOpeningHere ? (
+              <Spinner
+                size="1rem"
+                label={t("opening-playlist", {
+                  defaultValue: "Opening playlist",
+                })}
+              />
+            ) : null}
             {!isMinimalEmbed && (
               <ChapterNotesButton
                 state={state}
@@ -3122,14 +3322,12 @@ export function BibleReader(props: BibleReaderProps) {
                         bookId={bookId.value}
                         chapterNumber={chapterNumber.value}
                       />
-                      {SHOW_BOOKMARK_BUTTON && (
-                        <ReaderBookmarkButton
-                          state={state}
-                          translationId={translationId.value}
-                          bookId={bookId.value}
-                          chapterNumber={chapterNumber.value}
-                        />
-                      )}
+                      <ReaderBookmarkButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
                     </>
                   )}
                   <QuickToolbar
@@ -3138,10 +3336,16 @@ export function BibleReader(props: BibleReaderProps) {
                     playlists={state.playlists}
                     annotations={state.annotations}
                     features={state.features}
+                    settings={state.settings}
                     sharedSession={sharedSession ?? null}
                     toast={state.app.toast}
                     modals={state.modals}
                     app={state.app}
+                    embedThemes={state.theme?.themes}
+                    customizationLocator={
+                      state.customizations?.activeCustomizationLocator
+                    }
+                    readingPlans={state.readingPlans}
                     className="sb-quick-toolbar-mobile-header"
                   />
                   {/*
@@ -3269,14 +3473,12 @@ export function BibleReader(props: BibleReaderProps) {
                       bookId={bookId.value}
                       chapterNumber={chapterNumber.value}
                     />
-                    {SHOW_BOOKMARK_BUTTON && (
-                      <ReaderBookmarkButton
-                        state={state}
-                        translationId={translationId.value}
-                        bookId={bookId.value}
-                        chapterNumber={chapterNumber.value}
-                      />
-                    )}
+                    <ReaderBookmarkButton
+                      state={state}
+                      translationId={translationId.value}
+                      bookId={bookId.value}
+                      chapterNumber={chapterNumber.value}
+                    />
                   </>
                 )}
                 <QuickToolbar
@@ -3285,10 +3487,16 @@ export function BibleReader(props: BibleReaderProps) {
                   playlists={state.playlists}
                   annotations={state.annotations}
                   features={state.features}
+                  settings={state.settings}
                   sharedSession={sharedSession ?? null}
+                  readingPlans={state.readingPlans}
                   toast={state.app.toast}
                   modals={state.modals}
                   app={state.app}
+                  embedThemes={state.theme?.themes}
+                  customizationLocator={
+                    state.customizations?.activeCustomizationLocator
+                  }
                   className="sb-quick-toolbar-reader"
                 />
               </div>
@@ -3310,12 +3518,7 @@ export function BibleReader(props: BibleReaderProps) {
       )}
 
       {scriptureElements.showFootnotes && selectedFootnote.value !== null && (
-        <div
-          className="sb-footnote-modal-overlay"
-          onClick={() => {
-            selectFootnote(null);
-          }}
-        >
+        <div className="sb-footnote-modal-overlay" {...footnoteOverlayDismiss}>
           <div
             className="sb-footnote-modal"
             onClick={(event: MouseEvent) => {

@@ -7,6 +7,7 @@ import {
   CUSTOMIZATION_MARKER,
   getContrastRatio,
   getFontPresetsForField,
+  getReadableWordsOfJesusColor,
   lightenColor,
   MIN_READABLE_CONTRAST_RATIO,
   SECONDARY_LIGHTEN_AMOUNT,
@@ -33,7 +34,7 @@ import {
   createNavigationManager,
   type NavigationManager,
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
-import { signal } from "@preact/signals";
+import { signal, type Signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
 import { stubColorScheme } from "../testUtils/stubColorScheme";
 
@@ -92,6 +93,7 @@ describe("CustomizationsManager", () => {
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),
       getUserProfile: vi.fn().mockResolvedValue(null),
+      getPublicProfile: vi.fn().mockResolvedValue(null),
       uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
       userInfo: signal({ id: "user-1", email: "test@example.com" }),
       cancelLogin: vi.fn().mockResolvedValue(undefined),
@@ -449,6 +451,35 @@ describe("CustomizationsManager", () => {
     expect(getContrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 1);
     expect(getContrastRatio("#ffffff", "#000000")).toBeCloseTo(21, 1);
     expect(getContrastRatio("#808080", "#808080")).toBeCloseTo(1, 5);
+  });
+
+  it("getReadableWordsOfJesusColor() keeps the standard red on a light background", () => {
+    expect(getReadableWordsOfJesusColor("#fff59d")).toBe("#c00");
+  });
+
+  it("getReadableWordsOfJesusColor() returns a readable red on light and dark backgrounds", () => {
+    for (const background of ["#ea80fc", "#ef9a9a", "#6b3434", "#1e3a8a"]) {
+      const red = getReadableWordsOfJesusColor(background);
+      expect(red).toBeDefined();
+      expect(getContrastRatio(red!, background)).toBeGreaterThanOrEqual(
+        MIN_READABLE_CONTRAST_RATIO
+      );
+    }
+  });
+
+  it("getReadableWordsOfJesusColor() falls back to the highest-contrast red on a mid-tone background", () => {
+    // No red reaches the AA minimum on this mid-tone red.
+    const red = getReadableWordsOfJesusColor("#c04040");
+    expect(getContrastRatio(red!, "#c04040")).toBeGreaterThan(
+      getContrastRatio("#c00", "#c04040")
+    );
+    expect(getContrastRatio(red!, "#c04040")).toBeGreaterThanOrEqual(
+      getContrastRatio("#ffc0c0", "#c04040")
+    );
+  });
+
+  it("getReadableWordsOfJesusColor() returns undefined for a non-hex color", () => {
+    expect(getReadableWordsOfJesusColor("rebeccapurple")).toBeUndefined();
   });
 
   it("getContrastRatio() is symmetric regardless of argument order", () => {
@@ -1520,6 +1551,230 @@ describe("CustomizationsManager", () => {
     expect(manager.editingCustomization.value).toBeNull();
   });
 
+  describe("a customization's sensitive proxies", () => {
+    const pointer = {
+      recordName: "user-1",
+      address: "proxy-1",
+      host: "api.example.com",
+      defaultHost: "api.example.com",
+      visibility: "public" as const,
+      requestMapping: { "headers.authorization.bearer": "apiKey" },
+      keys: ["apiKey"],
+    };
+
+    it("records a proxy on the draft and saves it straight away", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+
+      const saved = await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      expect(saved).toBe(true);
+      expect(recordDataMock).toHaveBeenLastCalledWith(
+        "user-1",
+        created.id,
+        expect.objectContaining({
+          extensionSensitiveProxies: { "ext-1": { exampleApi: pointer } },
+        }),
+        { marker: CUSTOMIZATION_MARKER }
+      );
+      expect(
+        manager.editingCustomization.value?.extensionSensitiveProxies
+      ).toEqual({ "ext-1": { exampleApi: pointer } });
+      expect(manager.hasUnsavedChanges.value).toBe(false);
+    });
+
+    it("leaves no unsaved changes when the clock ticks during the save", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      let now = Date.now();
+      const dateNow = vi.spyOn(Date, "now").mockImplementation(() => ++now);
+
+      try {
+        const saved = await manager.setExtensionSensitiveProxy(
+          created.id,
+          "ext-1",
+          "exampleApi",
+          pointer
+        );
+
+        expect(saved).toBe(true);
+        expect(manager.hasUnsavedChanges.value).toBe(false);
+      } finally {
+        dateNow.mockRestore();
+      }
+    });
+
+    it("doesn't publish unsaved draft edits that are later discarded", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      manager.updateEditingName("Unsaved draft name");
+
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+      manager.discardEditingCustomization();
+
+      const written = recordDataMock.mock.calls.at(-1)![2];
+      expect(written.name).toBe(created.name);
+      expect(written.extensionSensitiveProxies).toEqual({
+        "ext-1": { exampleApi: pointer },
+      });
+      expect(
+        manager.customizations.value.find((c) => c.id === created.id)
+      ).toEqual(written);
+    });
+
+    it("keeps the pointer when a draft save already in flight lands after it would have", async () => {
+      // What the server holds: each write lands when its request resolves.
+      const server: Record<string, { extensionSensitiveProxies: unknown }> = {};
+      let releaseDraftSave = () => {};
+      recordDataMock.mockImplementation(
+        async (_record: string, address: string, data: never) => {
+          server[address] = data;
+          return { success: true };
+        }
+      );
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      manager.updateEditingName("Renamed");
+      recordDataMock.mockImplementationOnce(
+        (_record: string, address: string, data: never) =>
+          new Promise((resolve) => {
+            releaseDraftSave = () => {
+              server[address] = data;
+              resolve({ success: true });
+            };
+          })
+      );
+      const draftSave = manager.saveEditingCustomization();
+      // The draft save has captured the draft, without the pointer.
+      await Promise.resolve();
+
+      const pointerWrite = manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+      for (let i = 0; i < 5; i++) {
+        await Promise.resolve();
+      }
+      releaseDraftSave();
+      await draftSave;
+
+      expect(await pointerWrite).toBe(true);
+      expect(server[created.id]).toMatchObject({
+        name: "Renamed",
+        extensionSensitiveProxies: { "ext-1": { exampleApi: pointer } },
+      });
+    });
+
+    it("takes the pointer back off the draft when its write fails", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      recordDataMock.mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+      });
+
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      expect(
+        manager.editingCustomization.value?.extensionSensitiveProxies
+      ).toEqual({});
+    });
+
+    it("reports a failed save", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      const { manager } = createManager();
+      const created = await manager.create();
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+      });
+
+      expect(
+        await manager.setExtensionSensitiveProxy(
+          created.id,
+          "ext-1",
+          "exampleApi",
+          pointer
+        )
+      ).toBe(false);
+    });
+
+    it("remove() erases the customization's proxies before the record", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      const eraseProxyMock = vi
+        .spyOn(os, "eraseProxy")
+        .mockResolvedValue({ success: true });
+      const { manager } = createManager();
+      const created = await manager.create();
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      await manager.remove(created.id);
+
+      expect(eraseProxyMock).toHaveBeenCalledWith("user-1", "proxy-1");
+      expect(eraseProxyMock.mock.invocationCallOrder[0]!).toBeLessThan(
+        eraseDataMock.mock.invocationCallOrder[0]!
+      );
+      expect(manager.customizations.value).toEqual([]);
+    });
+
+    it("remove() keeps the customization when a proxy can't be erased", async () => {
+      recordDataMock.mockResolvedValue({ success: true });
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      vi.spyOn(os, "eraseProxy").mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "",
+      });
+      const { manager } = createManager();
+      const created = await manager.create();
+      await manager.setExtensionSensitiveProxy(
+        created.id,
+        "ext-1",
+        "exampleApi",
+        pointer
+      );
+
+      await manager.remove(created.id);
+
+      expect(eraseDataMock).not.toHaveBeenCalled();
+      expect(manager.customizations.value.map((c) => c.id)).toEqual([
+        created.id,
+      ]);
+    });
+  });
+
   it("create() defaults logoUrl to null", async () => {
     const { manager } = createManager();
 
@@ -1933,7 +2188,10 @@ describe("CustomizationsManager", () => {
     expect(recordDataMock).toHaveBeenCalledWith(
       "user-1",
       EXTENSION_PREFERENCES_ADDRESS,
-      { extraExtensionIds: { [`user-1.${created.id}`]: ["ext.extra"] } },
+      {
+        extraExtensionIds: { [`user-1.${created.id}`]: ["ext.extra"] },
+        removedExtensionIds: {},
+      },
       { marker: "publicRead" }
     );
     expect(recordDataMock).not.toHaveBeenCalledWith(
@@ -1948,7 +2206,10 @@ describe("CustomizationsManager", () => {
     expect(recordDataMock).toHaveBeenCalledWith(
       "user-1",
       EXTENSION_PREFERENCES_ADDRESS,
-      { extraExtensionIds: { [`user-1.${created.id}`]: [] } },
+      {
+        extraExtensionIds: { [`user-1.${created.id}`]: [] },
+        removedExtensionIds: {},
+      },
       { marker: "publicRead" }
     );
   });
@@ -1961,6 +2222,146 @@ describe("CustomizationsManager", () => {
     await manager.removeExtensionFromActiveCustomization("ext.extra");
 
     expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("lets a signed-out visitor to a shared customization install an extra extension", async () => {
+    (login.userId as Signal<string | null>).value = null;
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        id: "customization_shared",
+        name: "Shared",
+        variants: [
+          {
+            id: "variant_shared",
+            name: "Shared variant",
+            themes: {},
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        ],
+        defaultVariantId: "variant_shared",
+        logoUrl: null,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    });
+    const linkedNavigation = createNavigationManager({
+      initialHref:
+        "http://localhost/?customization=other-user.customization_shared",
+    });
+    const { manager } = createManager(linkedNavigation);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(manager.activeCustomization.value?.id).toBe("customization_shared");
+
+    await manager.addExtensionToActiveCustomization("ext.extra");
+
+    expect(manager.activeExtensionIds.value).toEqual(["ext.extra"]);
+  });
+
+  describe("removing extensions from a shared customization", () => {
+    const sharedRecord = {
+      id: "customization_shared",
+      name: "Shared",
+      variants: [
+        {
+          id: "variant_shared",
+          name: "Shared variant",
+          themes: {},
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      defaultVariantId: "variant_shared",
+      logoUrl: null,
+      createdAt: 1,
+      updatedAt: 1,
+      extensionSettings: { "ext.base": "auto-installed" },
+    };
+
+    async function openShared() {
+      getDataMock.mockImplementation(async (_recordName, address) =>
+        address === "customization_shared"
+          ? { success: true, data: sharedRecord }
+          : {
+              success: false,
+              errorCode: "data_not_found",
+              errorMessage: "Data not found",
+            }
+      );
+      const { manager } = createManager(
+        createNavigationManager({
+          initialHref:
+            "http://localhost/?customization=other-user.customization_shared",
+        })
+      );
+      await vi.waitFor(() =>
+        expect(manager.activeCustomization.value?.id).toBe(
+          "customization_shared"
+        )
+      );
+      return manager;
+    }
+
+    for (const signedIn of [true, false]) {
+      describe(signedIn ? "signed in" : "signed out", () => {
+        beforeEach(() => {
+          if (!signedIn) {
+            (login.userId as Signal<string | null>).value = null;
+          }
+        });
+
+        it("removes an auto-installed extension, and can put it back", async () => {
+          const manager = await openShared();
+          expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+
+          await manager.removeExtensionFromActiveCustomization("ext.base");
+          expect(manager.activeExtensionIds.value).toEqual([]);
+
+          await manager.addExtensionToActiveCustomization("ext.base");
+          expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+        });
+
+        it("removes an extension the viewer installed", async () => {
+          const manager = await openShared();
+          await manager.addExtensionToActiveCustomization("ext.extra");
+          expect(manager.activeExtensionIds.value.sort()).toEqual([
+            "ext.base",
+            "ext.extra",
+          ]);
+
+          await manager.removeExtensionFromActiveCustomization("ext.extra");
+          expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+        });
+      });
+    }
+
+    it("saves a removed auto-installed extension to the viewer's own record", async () => {
+      const manager = await openShared();
+      await vi.waitFor(() =>
+        expect(getDataMock).toHaveBeenCalledWith(
+          "user-1",
+          EXTENSION_PREFERENCES_ADDRESS
+        )
+      );
+      await Promise.resolve();
+      recordDataMock.mockClear();
+
+      await manager.removeExtensionFromActiveCustomization("ext.base");
+
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "user-1",
+        EXTENSION_PREFERENCES_ADDRESS,
+        {
+          extraExtensionIds: {},
+          removedExtensionIds: {
+            "other-user.customization_shared": ["ext.base"],
+          },
+        },
+        { marker: "publicRead" }
+      );
+    });
   });
 
   it("auto-loads a customization from the ?customization= query param on construction", async () => {
@@ -2118,6 +2519,7 @@ describe("CustomizationsManager", () => {
             ],
             extensionSettings: {},
             extensionSettingDefaults: {},
+            extensionSensitiveProxies: {},
           },
         }
       );
@@ -2161,6 +2563,18 @@ describe("CustomizationsManager", () => {
 
       expect(manager.activeCustomization.value?.id).toBe(created.id);
       expect(posthogMock.register_for_session).not.toHaveBeenCalled();
+    });
+
+    it("exposes a locator for the customization on screen", async () => {
+      const { manager } = createManager();
+      expect(manager.activeCustomizationLocator.value).toBeNull();
+
+      const created = await manager.create();
+      manager.startEditing(created.id);
+
+      expect(manager.activeCustomizationLocator.value).toBe(
+        `user-1.${created.id}`
+      );
     });
   });
 
@@ -2208,6 +2622,9 @@ describe("CustomizationsManager", () => {
 
     expect(manager.initialCustomizationLoadSettled.value).toBe(true);
     expect(manager.linkedCustomization.value?.id).toBe("customization_shared");
+    expect(manager.activeCustomizationLocator.value).toBe(
+      "other-user.customization_shared"
+    );
   });
 
   it("initialCustomizationLoadPromise settles promptly for a malformed locator", async () => {
@@ -2324,6 +2741,7 @@ describe("CustomizationsManager", () => {
       updatedAt: 1,
       extensionSettings: {},
       extensionSettingDefaults: {},
+      extensionSensitiveProxies: {},
     };
     const LOCATOR = "other-user.customization_shared";
 
@@ -2565,6 +2983,43 @@ describe("CustomizationsManager", () => {
       manager.applyPresetToEditingVariant(dark.id, "dark");
       return { lightVariantId: light.id, darkVariantId: dark.id };
     }
+
+    it("uses the customization default when the embed theme matches no variant", async () => {
+      const { manager } = createManager(
+        createNavigationManager({
+          initialHref: "http://localhost/?embed=minimal&app.themeId=dark",
+        })
+      );
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      const light = created.variants[0]!;
+      manager.applyPresetToEditingVariant(light.id, "light");
+      const saved = manager.addEditingVariant()!;
+      manager.applyPresetToEditingVariant(saved.id, "light");
+      manager.setEditingDefaultVariant(light.id);
+      await manager.selectActiveVariant(saved.id);
+      settings.setThemeId("dark");
+
+      expect(manager.activeVariant.value?.id).toBe(light.id);
+    });
+
+    it("follows the embed link's theme instead of a saved variant", async () => {
+      const { manager } = createManager(
+        createNavigationManager({
+          initialHref: "http://localhost/?embed=minimal&app.themeId=dark",
+        })
+      );
+      const { lightVariantId, darkVariantId } =
+        await createLightAndDarkCustomization(manager);
+      await manager.selectActiveVariant(lightVariantId);
+      settings.setThemeId("dark");
+
+      expect(manager.activeVariant.value?.id).toBe(darkVariantId);
+
+      settings.setThemeId("light");
+
+      expect(manager.activeVariant.value?.id).toBe(lightVariantId);
+    });
 
     it("follows the device between a customization's light and dark variants once the viewer picks System", async () => {
       const emitChange = stubColorScheme(false);

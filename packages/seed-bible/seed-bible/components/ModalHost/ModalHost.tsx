@@ -1,55 +1,62 @@
 import { CasualOSApp } from "../CasualOSApp/CasualOSApp";
-import type { ModalManager } from "../../managers/ModalManager";
+import type { ManagedModal, ModalManager } from "../../managers/ModalManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 
 export function ModalHost(props: { manager: ModalManager }) {
   const { manager } = props;
 
-  const { t } = useI18n();
-
   return (
     <>
-      {manager.modals.value.map((modal) => {
-        const dismiss = () => {
-          manager.dismissModal(modal.id);
-        };
-        const content = (
-          <div className="sb-footnote-modal-overlay" onClick={dismiss}>
-            <div
-              className="sb-footnote-modal"
-              onClick={(event: MouseEvent) => {
-                event.stopPropagation();
-              }}
-            >
-              <div className="sb-footnote-modal-header">
-                <h3 className="sb-footnote-modal-title">
-                  {translateTitle(t, modal.title)}
-                </h3>
-                <button
-                  className="sb-footnote-modal-close"
-                  aria-label={t("close", { defaultValue: "Close" })}
-                  onClick={dismiss}
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-              </div>
-
-              <div className="sb-footnote-modal-content">
-                {modal.content({ t })}
-              </div>
-            </div>
-          </div>
-        );
-
-        return modal.useCasualOSApp ? (
+      {manager.modals.value.map((modal) =>
+        modal.useCasualOSApp ? (
           <CasualOSApp id={`modal-${modal.id}`} key={modal.id}>
-            {content}
+            <HostedModal manager={manager} modal={modal} />
           </CasualOSApp>
         ) : (
-          content
-        );
-      })}
+          <HostedModal key={modal.id} manager={manager} modal={modal} />
+        )
+      )}
     </>
+  );
+}
+
+function HostedModal(props: { manager: ModalManager; modal: ManagedModal }) {
+  const { manager, modal } = props;
+
+  const { t } = useI18n();
+  const dismiss = () => {
+    manager.dismissModal(modal.id);
+  };
+  const overlayDismiss = useOverlayDismiss(dismiss);
+
+  return (
+    <div className="sb-footnote-modal-overlay" {...overlayDismiss}>
+      <div
+        className="sb-footnote-modal"
+        onClick={(event: MouseEvent) => {
+          event.stopPropagation();
+        }}
+      >
+        <div className="sb-footnote-modal-header">
+          <h3 className="sb-footnote-modal-title">
+            {translateTitle(t, modal.title)}
+          </h3>
+          <button
+            className="sb-footnote-modal-close"
+            aria-label={t("close", { defaultValue: "Close" })}
+            onClick={dismiss}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div className="sb-footnote-modal-content">{modal.content({ t })}</div>
+        {modal.footer ? (
+          <div className="sb-footnote-modal-footer">{modal.footer({ t })}</div>
+        ) : null}
+      </div>
+    </div>
   );
 }

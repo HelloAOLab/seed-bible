@@ -9,6 +9,7 @@ import type {
   ReadingPlanMetadata,
   ReadingPlanProgress,
 } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
+import type { PlaylistPlayHistory } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -23,12 +24,16 @@ interface StateOptions {
   location?: string | null;
   description?: string | null;
   plansEnabled?: boolean;
+  friendIds?: string[];
+  /** How many friend requests are waiting for an answer. */
+  incomingRequestCount?: number;
   /** Plan metadata, full plans and progress, as the manager would hold them. */
   plans?: {
     metas: ReadingPlanMetadata[];
     full: ReadingPlan[];
     progresses: ReadingPlanProgress[];
   };
+  playlistHistory?: PlaylistPlayHistory[];
 }
 
 // A fixed "now" so the plan card's day maths doesn't move with the clock.
@@ -81,6 +86,30 @@ function planFixture(
   } as unknown as ReadingPlan;
 
   return { meta, full };
+}
+
+function historyEntry(
+  overrides: Partial<PlaylistPlayHistory> = {}
+): PlaylistPlayHistory {
+  return {
+    id: "hist-1",
+    recordName: "user-1",
+    userId: "user-1",
+    playlistId: "playlist-1",
+    playlistRecordName: "user-1",
+    playlistTitle: "Morning Psalms",
+    playlistDescription: null,
+    previousHistoryId: null,
+    totalSteps: 4,
+    currentStep: 1,
+    lastItem: null,
+    startedAtMs: 1_000,
+    endedAtMs: null,
+    durationMs: 0,
+    createdAtMs: 1_000,
+    updatedAtMs: 1_000,
+    ...overrides,
+  };
 }
 
 /**
@@ -149,7 +178,19 @@ function createState(options: StateOptions = {}) {
       fullReadingPlans: signal(options.plans?.full ?? []),
       userReadingPlanProgresses: signal(options.plans?.progresses ?? []),
     },
+    playlists: {
+      userPlaylistHistory: signal(options.playlistHistory ?? []),
+    },
     os: { connectionId: "conn-1" },
+    friends: {
+      friendIds: signal(options.friendIds ?? []),
+      incomingRequests: signal(
+        Array.from({ length: options.incomingRequestCount ?? 0 }, (_, i) => ({
+          id: `request-${i}`,
+          userId: `requester-${i}`,
+        }))
+      ),
+    },
   } as unknown as SeedBibleState;
 
   return { state, logout, login };
@@ -160,7 +201,12 @@ describe("ProfilePane", () => {
   let onEditProfile: Mock<() => void>;
   let onEditPicture: Mock<() => void>;
   let onOpenReadingPlans: Mock<() => void>;
+  let onOpenPlaylistHistory: Mock<() => void>;
+  let onContinuePlaylist: Mock<
+    (entry: PlaylistPlayHistory) => void | Promise<void>
+  >;
   let onOpenYourContent: Mock<() => void>;
+  let onOpenFriends: Mock<() => void>;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -168,7 +214,10 @@ describe("ProfilePane", () => {
     onEditProfile = vi.fn(() => {});
     onEditPicture = vi.fn(() => {});
     onOpenReadingPlans = vi.fn(() => {});
+    onOpenPlaylistHistory = vi.fn(() => {});
+    onContinuePlaylist = vi.fn(() => {});
     onOpenYourContent = vi.fn(() => {});
+    onOpenFriends = vi.fn(() => {});
   });
 
   afterEach(() => {
@@ -184,7 +233,10 @@ describe("ProfilePane", () => {
           onEditProfile={onEditProfile}
           onEditPicture={onEditPicture}
           onOpenReadingPlans={onOpenReadingPlans}
+          onOpenPlaylistHistory={onOpenPlaylistHistory}
+          onContinuePlaylist={onContinuePlaylist}
           onOpenYourContent={onOpenYourContent}
+          onOpenFriends={onOpenFriends}
         />,
         container
       );
@@ -381,15 +433,197 @@ describe("ProfilePane", () => {
     expect(container.querySelector(".sb-profile-account-button")).toBeNull();
   });
 
+  it("hides playlist history until a playlist has been played", () => {
+    const { state } = createState();
+    renderPane(state);
+
+    expect(container.querySelector(".sb-profile-playlist-history")).toBeNull();
+    expect(container.textContent).not.toContain("View all");
+  });
+
+  it("features the latest playlist on the history card and continues it", () => {
+    const older = historyEntry({
+      id: "older",
+      playlistTitle: "Older study",
+      startedAtMs: 1_000,
+      currentStep: 0,
+    });
+    const latest = historyEntry({
+      id: "latest",
+      playlistTitle: "Morning Psalms",
+      startedAtMs: 5_000,
+      currentStep: 1,
+      totalSteps: 4,
+    });
+    const { state } = createState({ playlistHistory: [older, latest] });
+    renderPane(state);
+
+    const card = container.querySelector(
+      ".sb-profile-playlist-history"
+    ) as HTMLElement;
+    const plans = container.querySelector(".sb-profile-plans");
+    expect(card).not.toBeNull();
+    expect(
+      plans!.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(card.textContent).toContain("My playlist history");
+    expect(card.textContent).toContain("Morning Psalms");
+    expect(card.textContent).not.toContain("Older study");
+    expect(card.textContent).toContain("Continue latest playlist");
+    expect(card.textContent).toContain("View all");
+
+    const fill = card.querySelector(".sb-profile-progress-fill") as HTMLElement;
+    expect(fill.style.width).toBe("50%");
+
+    act(() => {
+      (
+        card.querySelector(".sb-profile-playlist-continue") as HTMLButtonElement
+      ).click();
+    });
+    expect(onContinuePlaylist).toHaveBeenCalledWith(latest);
+    expect(onOpenPlaylistHistory).not.toHaveBeenCalled();
+  });
+
+  it("shows a small spinner while the latest playlist is opening", async () => {
+    let resolvePlay: () => void = () => {};
+    onContinuePlaylist.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolvePlay = resolve;
+        })
+    );
+    const { state } = createState({
+      playlistHistory: [historyEntry({ playlistTitle: "Morning Psalms" })],
+    });
+    renderPane(state);
+
+    const button = container.querySelector(
+      ".sb-profile-playlist-continue"
+    ) as HTMLButtonElement;
+    act(() => {
+      button.click();
+    });
+
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button.querySelector(".sb-spinner")).not.toBeNull();
+    expect(onContinuePlaylist).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      button.click();
+    });
+    expect(onContinuePlaylist).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolvePlay();
+    });
+    expect(button.getAttribute("aria-busy")).toBe("false");
+    expect(button.querySelector(".sb-spinner")).toBeNull();
+  });
+
+  it("clears the spinner when the latest playlist cannot be opened", async () => {
+    onContinuePlaylist.mockRejectedValueOnce(new Error("missing"));
+    const { state } = createState({
+      playlistHistory: [historyEntry({ playlistTitle: "Morning Psalms" })],
+    });
+    renderPane(state);
+
+    const button = container.querySelector(
+      ".sb-profile-playlist-continue"
+    ) as HTMLButtonElement;
+    await act(async () => {
+      button.click();
+    });
+
+    expect(button.querySelector(".sb-spinner")).toBeNull();
+    expect(button.getAttribute("aria-busy")).toBe("false");
+  });
+
+  it("opens the full history from View all without continuing", () => {
+    const { state } = createState({
+      playlistHistory: [historyEntry({ playlistTitle: "Morning Psalms" })],
+    });
+    renderPane(state);
+
+    const viewAll = container.querySelector(
+      ".sb-profile-playlist-history .sb-profile-plans-link"
+    ) as HTMLButtonElement;
+    act(() => {
+      viewAll.click();
+    });
+
+    expect(onOpenPlaylistHistory).toHaveBeenCalledTimes(1);
+    expect(onContinuePlaylist).not.toHaveBeenCalled();
+  });
+
+  it("offers replay when the latest playlist is finished", () => {
+    const { state } = createState({
+      playlistHistory: [
+        historyEntry({ currentStep: 3, totalSteps: 4, playlistTitle: "Done" }),
+      ],
+    });
+    renderPane(state);
+
+    const card = container.querySelector(".sb-profile-playlist-history");
+    expect(card?.textContent).toContain("Replay latest playlist");
+    expect(card?.textContent).toContain("Done");
+  });
+
   it("opens the your content screen from its row", () => {
     const { state } = createState();
     renderPane(state);
 
+    const row = Array.from(container.querySelectorAll(".sb-profile-row")).find(
+      (el) => el.textContent?.includes("Your content")
+    ) as HTMLButtonElement;
+
     act(() => {
-      (container.querySelector(".sb-profile-row") as HTMLButtonElement).click();
+      row.click();
     });
 
     expect(onOpenYourContent).toHaveBeenCalledTimes(1);
+  });
+
+  describe("friends row", () => {
+    const friendsRow = () =>
+      Array.from(container.querySelectorAll(".sb-profile-row")).find(
+        (row) =>
+          row.querySelector(".sb-profile-row-title")?.textContent === "Friends"
+      ) as HTMLButtonElement | undefined;
+    const subtitle = () =>
+      friendsRow()?.querySelector(".sb-profile-row-subtitle")?.textContent;
+
+    it("opens the friends screen", () => {
+      const { state } = createState();
+      renderPane(state);
+
+      act(() => friendsRow()!.click());
+
+      expect(onOpenFriends).toHaveBeenCalledTimes(1);
+    });
+
+    it("invites the user to add friends when they have none", () => {
+      const { state } = createState();
+      renderPane(state);
+
+      expect(subtitle()).toBe("Add friends and see what they're reading");
+    });
+
+    it("counts friends, and requests waiting for an answer", () => {
+      const { state } = createState({
+        friendIds: ["ada", "bob"],
+        incomingRequestCount: 1,
+      });
+      renderPane(state);
+
+      expect(subtitle()).toBe("2 friends · 1 request");
+    });
+
+    it("uses the singular for one friend", () => {
+      const { state } = createState({ friendIds: ["ada"] });
+      renderPane(state);
+
+      expect(subtitle()).toBe("1 friend");
+    });
   });
 
   it("signs the user out from the sign out button", () => {
@@ -419,6 +653,7 @@ describe("ProfilePane", () => {
 
     expect(container.querySelector(".sb-profile-logout")).toBeNull();
     expect(container.querySelector(".sb-profile-card-edit")).toBeNull();
+    expect(container.querySelector(".sb-profile-playlist-history")).toBeNull();
 
     const button = container.querySelector(
       ".sb-profile-signin"
@@ -556,10 +791,16 @@ describe("ProfilePane", () => {
   });
 
   it("hides the plans card when the reading plans feature is off", () => {
-    const { state } = createState({ plansEnabled: false });
+    const { state } = createState({
+      plansEnabled: false,
+      playlistHistory: [historyEntry()],
+    });
     renderPane(state);
 
     expect(container.querySelector(".sb-profile-plans")).toBeNull();
+    expect(
+      container.querySelector(".sb-profile-playlist-history")
+    ).not.toBeNull();
     // The rest of the screen is unaffected.
     expect(container.querySelector(".sb-profile-name")).not.toBeNull();
   });
