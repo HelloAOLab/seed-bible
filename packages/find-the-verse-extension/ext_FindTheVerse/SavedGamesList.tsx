@@ -1,6 +1,6 @@
-/* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import type { SeedBibleState } from "seed-bible";
 import { ContextMenuItem, ContextMenuWithButton } from "seed-bible/components";
+import { useI18n } from "seed-bible/i18n";
 import { bookDisplayName } from "./books";
 import type { GameSignals, SavedGame } from "./types";
 
@@ -8,7 +8,7 @@ interface SavedGamesListProps {
   games: SavedGame[];
   game: GameSignals;
   state: SeedBibleState;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
   onEdit: (saved: SavedGame) => void;
 }
 
@@ -80,24 +80,34 @@ export function SavedGamesList({
   onDelete,
   onEdit,
 }: SavedGamesListProps) {
+  const { t } = useI18n("find-the-verse-extension");
   if (games.length === 0) return null;
 
   function loadGame(saved: SavedGame) {
+    const reading = state.app.selectedTab.value?.readingState;
+    // A verse already selected would be counted as soon as play starts.
+    reading?.clearSelectedVerses();
     game.currentGameId.value = saved.id;
     game.targetVerse.value = saved.targetVerse;
-    game.steps.value = saved.steps;
+    game.steps.value = saved.steps.map((step) => ({ hint: step.hint }));
     game.guessCount.value = 0;
     game.lastResult.value = null;
     game.won.value = false;
     game.revealed.value = false;
     game.partialRevealText.value = "";
+    game.notice.value = null;
     game.phase.value = "playing";
-    void state.app.selectedTab.value?.readingState.selectChapter("GEN", 1);
+    void reading?.selectChapter("GEN", 1);
   }
+
+  const translationBooks =
+    state.app.selectedTab.value?.readingState.translationBooks.value?.books;
 
   return (
     <div style={s.section}>
-      <p style={s.heading}>My saved games</p>
+      <p style={s.heading}>
+        {t("my-saved-games", { defaultValue: "My saved games" })}
+      </p>
       {games.map((saved) => {
         const { bookId, chapterNumber, verseNumber } = saved.targetVerse;
         const chances = saved.steps.length;
@@ -105,11 +115,16 @@ export function SavedGamesList({
           <div key={saved.id} style={s.card}>
             <div style={s.info}>
               <span style={s.ref}>
-                {bookDisplayName(bookId)} {chapterNumber}:{verseNumber}
+                {bookDisplayName(bookId, translationBooks)} {chapterNumber}:
+                {verseNumber}
               </span>
               <span style={s.meta}>
-                {chances} {chances === 1 ? "chance" : "chances"} &middot;{" "}
-                {formatDate(saved.createdAtMs)}
+                {t("chance-count", {
+                  count: chances,
+                  defaultValue:
+                    chances === 1 ? "{{count}} chance" : "{{count}} chances",
+                })}{" "}
+                &middot; {formatDate(saved.createdAtMs)}
               </span>
             </div>
 
@@ -118,7 +133,7 @@ export function SavedGamesList({
               style={s.playBtn}
               onClick={() => loadGame(saved)}
             >
-              Play
+              {t("play", { defaultValue: "Play" })}
             </button>
 
             <ContextMenuWithButton>
@@ -126,7 +141,7 @@ export function SavedGamesList({
                 <span class="material-symbols-outlined sb-context-menu-item-icon">
                   edit
                 </span>
-                Edit
+                {t("edit", { defaultValue: "Edit" })}
               </ContextMenuItem>
               <ContextMenuItem
                 className="sb-context-menu-item--danger"
@@ -135,7 +150,7 @@ export function SavedGamesList({
                 <span class="material-symbols-outlined sb-context-menu-item-icon">
                   delete
                 </span>
-                Delete
+                {t("delete", { defaultValue: "Delete" })}
               </ContextMenuItem>
             </ContextMenuWithButton>
           </div>

@@ -33,8 +33,10 @@ export type GuessResult =
 
 export interface GameSignals {
   phase: Signal<"idle" | "creating" | "playing">;
-  /** ID of the game currently being played (null in idle/creating phases). */
+  /** Set while a saved game is open in the creator or the player. */
   currentGameId: Signal<string | null>;
+  /** Shown in the panel when loading, saving, or deleting fails. */
+  notice: Signal<string | null>;
   /** Games persisted to the user's profile. */
   savedGames: Signal<SavedGame[]>;
   /** The secret verse the creator chose. */

@@ -1,5 +1,7 @@
-/* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { useMemo } from "preact/hooks";
+import type { SeedBibleState } from "seed-bible";
+import { emphasizeVerses, type BookId } from "seed-bible/managers";
+import { useI18n } from "seed-bible/i18n";
 import { bookDisplayName } from "./books";
 import {
   buildPartialReveal,
@@ -7,7 +9,6 @@ import {
   revealThreshold,
 } from "./gameLogic";
 import type { GameSignals } from "./types";
-import type { SeedBibleState } from "seed-bible";
 
 interface GamePlayerProps {
   game: GameSignals;
@@ -105,6 +106,10 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
   const won = game.won.value;
   const revealed = game.revealed.value;
   const partialRevealText = game.partialRevealText.value;
+  const notice = game.notice.value;
+  const { t } = useI18n("find-the-verse-extension");
+  const translationBooks =
+    state.app.selectedTab.value?.readingState.translationBooks.value?.books;
 
   const totalChances = steps.length;
   const chancesLeft = useMemo(
@@ -136,11 +141,11 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
           <p
             style={{ fontWeight: 700, fontSize: "1.1rem", margin: "8px 0 4px" }}
           >
-            You found it!
+            {t("you-found-it", { defaultValue: "You found it!" })}
           </p>
           <p style={{ opacity: 0.7, margin: 0 }}>
-            {bookDisplayName(target.bookId)} {target.chapterNumber}:
-            {target.verseNumber}
+            {bookDisplayName(target.bookId, translationBooks)}{" "}
+            {target.chapterNumber}:{target.verseNumber}
           </p>
           {target.verseText && (
             <p
@@ -156,7 +161,11 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
           )}
           {guessCount > 0 && (
             <p style={{ opacity: 0.6, fontSize: "0.85rem", margin: "4px 0 0" }}>
-              {guessCount} {guessCount === 1 ? "guess" : "guesses"}
+              {t("guess-count", {
+                count: guessCount,
+                defaultValue:
+                  guessCount === 1 ? "{{count}} guess" : "{{count}} guesses",
+              })}
             </p>
           )}
         </div>
@@ -165,7 +174,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
           style={{ ...s.btn(true), width: "100%" }}
           onClick={onReset}
         >
-          Back to main menu
+          {t("back-to-menu", { defaultValue: "Back to main menu" })}
         </button>
       </div>
     );
@@ -173,11 +182,35 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
 
   async function handleRevealVerse() {
     if (!target) return;
-    game.revealed.value = true;
-    await state.app.selectedTab.value?.readingState.selectChapter(
+    const reading = state.app.selectedTab.value?.readingState;
+    if (!reading) return;
+    const translationId = reading.translationId.peek();
+    game.notice.value = null;
+    await reading.selectTranslationAndChapter(
+      translationId,
       target.bookId,
-      target.chapterNumber
+      target.chapterNumber,
+      { scrollToVerse: target.verseNumber }
     );
+    const opened =
+      reading.bookId.peek() === target.bookId &&
+      reading.chapterNumber.peek() === target.chapterNumber;
+    if (!opened || game.phase.peek() !== "playing") {
+      if (game.phase.peek() === "playing") {
+        game.notice.value = t("open-verse-failed", {
+          defaultValue: "Couldn't open that verse.",
+        });
+      }
+      return;
+    }
+    // Scroll alone doesn't highlight. This is the reader's usual treatment:
+    // the verse stays lit and the rest of the chapter dims, then both fade.
+    emphasizeVerses(reading, {
+      book: target.bookId as BookId,
+      chapter: target.chapterNumber,
+      verse: target.verseNumber,
+    });
+    game.revealed.value = true;
   }
 
   return (
@@ -186,11 +219,15 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         {isOutOfChances ? (
           <span style={s.pill("var(--sb-danger-color, #e63946)")}>
-            Out of chances
+            {t("out-of-chances", { defaultValue: "Out of chances" })}
           </span>
         ) : (
           <span style={s.pill("var(--sb-primary-color, #4a6cf7)")}>
-            {chancesLeft} / {totalChances} left
+            {t("chances-left", {
+              left: chancesLeft,
+              total: totalChances,
+              defaultValue: "{{left}} / {{total}} left",
+            })}
           </span>
         )}
         {currentHint && (
@@ -211,7 +248,10 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
       {isOutOfChances && (
         <div style={s.card}>
           <p style={{ margin: 0, fontSize: "0.9rem" }}>
-            You've used all your chances, but you can keep guessing — good luck!
+            {t("keep-guessing", {
+              defaultValue:
+                "You've used all your chances, but you can keep guessing — good luck!",
+            })}
           </p>
         </div>
       )}
@@ -225,7 +265,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
           }}
         >
           <p style={{ margin: 0, fontSize: "0.9rem" }}>
-            {resultMessage(lastResult)}
+            {resultMessage(lastResult, t)}
           </p>
         </div>
       )}
@@ -241,7 +281,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
               marginBottom: "4px",
             }}
           >
-            PARTIAL HINT
+            {t("partial-hint", { defaultValue: "PARTIAL HINT" })}
           </div>
           <p style={{ margin: 0, fontSize: "0.9rem", fontStyle: "italic" }}>
             {partialRevealText}
@@ -265,19 +305,23 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
               marginBottom: "4px",
             }}
           >
-            {bookDisplayName(target.bookId)} {target.chapterNumber}:
-            {target.verseNumber}
+            {bookDisplayName(target.bookId, translationBooks)}{" "}
+            {target.chapterNumber}:{target.verseNumber}
           </div>
           {target.verseText ? (
             <p style={{ margin: 0, fontSize: "0.9rem" }}>{target.verseText}</p>
           ) : (
             <p style={{ margin: 0, opacity: 0.6, fontSize: "0.9rem" }}>
-              Navigate to {bookDisplayName(target.bookId)}{" "}
-              {target.chapterNumber}:{target.verseNumber} to read it.
+              {t("navigate-to-verse", {
+                reference: `${bookDisplayName(target.bookId, translationBooks)} ${target.chapterNumber}:${target.verseNumber}`,
+                defaultValue: "Navigate to {{reference}} to read it.",
+              })}
             </p>
           )}
           <p style={{ margin: "8px 0 0", fontSize: "0.85rem", opacity: 0.65 }}>
-            Better luck next time — keep going!
+            {t("keep-going", {
+              defaultValue: "Better luck next time — keep going!",
+            })}
           </p>
         </div>
       )}
@@ -295,7 +339,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
                 );
               }}
             >
-              Reveal hint
+              {t("reveal-hint", { defaultValue: "Reveal hint" })}
             </button>
           ) : null}
           <button
@@ -303,13 +347,27 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
             style={s.btn(false)}
             onClick={() => void handleRevealVerse()}
           >
-            Reveal verse
+            {t("reveal-verse", { defaultValue: "Reveal verse" })}
           </button>
         </div>
       )}
 
+      {notice && (
+        <p
+          style={{
+            margin: 0,
+            color: "var(--sb-danger-color, #e63946)",
+            fontSize: "0.9rem",
+          }}
+        >
+          {notice}
+        </p>
+      )}
+
       <p style={{ margin: 0, opacity: 0.5, fontSize: "0.8rem" }}>
-        Tap any verse in the reader to guess.
+        {t("tap-to-guess", {
+          defaultValue: "Tap any verse in the reader to guess.",
+        })}
       </p>
 
       <button
@@ -317,7 +375,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
         style={{ ...s.btn(false), alignSelf: "flex-start" }}
         onClick={onReset}
       >
-        End game
+        {t("end-game", { defaultValue: "End game" })}
       </button>
     </div>
   );

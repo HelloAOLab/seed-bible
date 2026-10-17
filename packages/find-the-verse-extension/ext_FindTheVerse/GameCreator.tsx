@@ -1,14 +1,15 @@
-/* eslint-disable seed-bible-i18n/i18n-untranslated-content */
-import { useState } from "preact/hooks";
+import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible";
 import { extractContentText, parseVerseReference } from "seed-bible/managers";
-import { bookDisplayName } from "./books";
+import { useI18n } from "seed-bible/i18n";
+import { bookDisplayName, isKnownBookId } from "./books";
+import { toSavedGame } from "./gamesStore";
 import type { GameSignals, SavedGame } from "./types";
 
 interface GameCreatorProps {
   game: GameSignals;
   state: SeedBibleState;
-  onStart: (saved: SavedGame) => void;
+  onStart: (saved: SavedGame) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -100,27 +101,36 @@ export function GameCreator({
   onStart,
   onCancel,
 }: GameCreatorProps) {
-  const [refInput, setRefInput] = useState("");
-  const [refError, setRefError] = useState("");
+  const refInput = useSignal("");
+  const refError = useSignal("");
+  const saving = useSignal(false);
+  const { t } = useI18n("find-the-verse-extension");
 
   const target = game.targetVerse.value;
   const steps = game.steps.value;
   const selecting = game.selectingViaToolbar.value;
+  const signedIn = !!state.login.userId.value;
+  const editing = game.currentGameId.value !== null;
+  const translationBooks =
+    state.app.selectedTab.value?.readingState.translationBooks.value?.books;
+  const notice = game.notice.value;
 
   async function handleRefGo() {
-    const parsed = parseVerseReference(refInput);
-    if (!parsed || !parsed.verse) {
-      setRefError(
-        "Couldn't recognise that reference. Try \u201cJohn 1:1\u201d."
-      );
+    const unrecognised = t("reference-unrecognised", {
+      defaultValue: "Couldn't recognise that reference. Try “John 1:1”.",
+    });
+    const tab = state.app.selectedTab.value;
+    const books = tab?.readingState.translationBooks.value?.books;
+    const parsed = parseVerseReference(refInput.value, books);
+    // An unknown book name comes back as the raw text. Accepting it stores a
+    // secret no tap can ever match, because that book has no place in order.
+    if (!parsed?.verse || !isKnownBookId(parsed.book)) {
+      refError.value = unrecognised;
       return;
     }
-    setRefError("");
 
-    const tab = state.app.selectedTab.value;
     const translationId = tab?.readingState.translationId.value ?? "BSB";
 
-    let verseText = "";
     try {
       const chapterData = await state.bibleData.getTranslationBookChapter(
         translationId,
@@ -130,21 +140,32 @@ export function GameCreator({
       const verseNode = chapterData.chapter.content.find(
         (c) => c.type === "verse" && c.number === parsed.verse
       );
-      if (verseNode && verseNode.type === "verse") {
-        verseText = extractContentText(verseNode.content);
+      const verseText =
+        verseNode && verseNode.type === "verse"
+          ? extractContentText(verseNode.content).trim()
+          : "";
+      if (!verseText) {
+        refError.value = unrecognised;
+        return;
+      }
+      refError.value = "";
+      game.targetVerse.value = {
+        bookId: parsed.book,
+        chapterNumber: parsed.chapter,
+        verseNumber: parsed.verse,
+        verseText,
+      };
+      if (tab) {
+        void tab.readingState.selectTranslationAndChapter(
+          translationId,
+          parsed.book,
+          parsed.chapter,
+          { scrollToVerse: parsed.verse }
+        );
       }
     } catch {
-      // verse text is a nice-to-have; don't block on failure
+      refError.value = unrecognised;
     }
-
-    game.targetVerse.value = {
-      bookId: parsed.book,
-      chapterNumber: parsed.chapter,
-      verseNumber: parsed.verse,
-      verseText,
-    };
-    // Navigate so the creator can see the verse
-    void tab?.readingState.selectChapter(parsed.book, parsed.chapter);
   }
 
   function handleStepHintChange(index: number, hint: string) {
@@ -166,16 +187,24 @@ export function GameCreator({
 
   return (
     <div style={s.root}>
-      <p style={s.heading}>Create a game</p>
+      <p style={s.heading}>
+        {editing
+          ? t("edit-game", { defaultValue: "Edit game" })
+          : t("create-game", { defaultValue: "Create a game" })}
+      </p>
 
       {/* Target verse */}
       <div>
-        <div style={s.label}>Secret verse</div>
+        <div style={s.label}>
+          {t("secret-verse", { defaultValue: "Secret verse" })}
+        </div>
 
         {selecting ? (
           <div style={s.selectingBanner}>
-            Tap any verse in the reader, then choose{" "}
-            <strong>Set as target</strong> in the toolbar.
+            {t("select-verse-banner", {
+              defaultValue:
+                "Tap any verse in the reader, then choose Set as target in the toolbar.",
+            })}
             <button
               type="button"
               style={{
@@ -188,7 +217,7 @@ export function GameCreator({
                 game.selectingViaToolbar.value = false;
               }}
             >
-              Cancel
+              {t("cancel", { defaultValue: "Cancel" })}
             </button>
           </div>
         ) : (
@@ -196,8 +225,8 @@ export function GameCreator({
             {target && (
               <div style={{ ...s.versePreview, marginBottom: "8px" }}>
                 <strong>
-                  {bookDisplayName(target.bookId)} {target.chapterNumber}:
-                  {target.verseNumber}
+                  {bookDisplayName(target.bookId, translationBooks)}{" "}
+                  {target.chapterNumber}:{target.verseNumber}
                 </strong>
                 {target.verseText && (
                   <p
@@ -217,10 +246,12 @@ export function GameCreator({
               <input
                 style={{ ...s.input, flex: 1 }}
                 type="text"
-                placeholder="e.g. John 1:1"
-                value={refInput}
+                placeholder={t("reference-placeholder", {
+                  defaultValue: "e.g. John 1:1",
+                })}
+                value={refInput.value}
                 onInput={(e) => {
-                  setRefInput((e.target as HTMLInputElement).value);
+                  refInput.value = (e.target as HTMLInputElement).value;
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void handleRefGo();
@@ -231,10 +262,10 @@ export function GameCreator({
                 style={{ ...s.btn, ...s.primaryBtn }}
                 onClick={() => void handleRefGo()}
               >
-                Go
+                {t("go", { defaultValue: "Go" })}
               </button>
             </div>
-            {refError && (
+            {refError.value && (
               <div
                 style={{
                   color: "var(--sb-danger-color, #e63946)",
@@ -242,7 +273,7 @@ export function GameCreator({
                   marginBottom: "6px",
                 }}
               >
-                {refError}
+                {refError.value}
               </div>
             )}
             <button
@@ -252,7 +283,7 @@ export function GameCreator({
                 game.selectingViaToolbar.value = true;
               }}
             >
-              Select from reader…
+              {t("select-from-reader", { defaultValue: "Select from reader…" })}
             </button>
           </>
         )}
@@ -260,7 +291,12 @@ export function GameCreator({
 
       {/* Steps / chances */}
       <div>
-        <div style={s.label}>Chances ({steps.length})</div>
+        <div style={s.label}>
+          {t("chances-label", {
+            total: steps.length,
+            defaultValue: "Chances ({{total}})",
+          })}
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           {steps.map((step, i) => (
             <div key={i} style={s.stepRow}>
@@ -268,7 +304,9 @@ export function GameCreator({
               <input
                 style={{ ...s.input, flex: 1 }}
                 type="text"
-                placeholder="Optional hint…"
+                placeholder={t("hint-placeholder", {
+                  defaultValue: "Optional hint…",
+                })}
                 value={step.hint}
                 onInput={(e) =>
                   handleStepHintChange(i, (e.target as HTMLInputElement).value)
@@ -278,7 +316,9 @@ export function GameCreator({
                 <button
                   type="button"
                   style={s.removeBtn}
-                  title="Remove this chance"
+                  title={t("remove-chance", {
+                    defaultValue: "Remove this chance",
+                  })}
                   onClick={() => removeStep(i)}
                 >
                   ×
@@ -292,9 +332,21 @@ export function GameCreator({
           style={{ ...s.btn, ...s.secondaryBtn, marginTop: "8px" }}
           onClick={addStep}
         >
-          + Add chance
+          {t("add-chance", { defaultValue: "+ Add chance" })}
         </button>
       </div>
+
+      {notice && (
+        <p
+          style={{
+            margin: 0,
+            color: "var(--sb-danger-color, #e63946)",
+            fontSize: "0.9rem",
+          }}
+        >
+          {notice}
+        </p>
+      )}
 
       {/* Actions */}
       <div style={{ display: "flex", gap: "8px" }}>
@@ -304,27 +356,42 @@ export function GameCreator({
             ...s.btn,
             ...s.primaryBtn,
             flex: 1,
-            opacity: canSave ? 1 : 0.45,
+            opacity: canSave && !saving.value ? 1 : 0.45,
           }}
-          disabled={!canSave}
+          disabled={!canSave || saving.value}
           onClick={() => {
-            if (!target) return;
-            onStart({
-              id: crypto.randomUUID(),
-              targetVerse: target,
-              steps: game.steps.peek(),
-              createdAtMs: Date.now(),
+            if (!target || saving.value) return;
+            if (!state.login.userId.peek()) {
+              game.notice.value = t("sign-in-to-save", {
+                defaultValue: "Sign in to save games",
+              });
+              return;
+            }
+            const editingId = game.currentGameId.peek();
+            const existing = game.savedGames
+              .peek()
+              .find((saved) => saved.id === editingId);
+            saving.value = true;
+            void onStart(
+              toSavedGame(
+                { targetVerse: target, steps: game.steps.peek() },
+                existing
+              )
+            ).finally(() => {
+              saving.value = false;
             });
           }}
         >
-          Save game
+          {signedIn
+            ? t("save-game", { defaultValue: "Save game" })
+            : t("sign-in-to-save", { defaultValue: "Sign in to save games" })}
         </button>
         <button
           type="button"
           style={{ ...s.btn, ...s.secondaryBtn }}
           onClick={onCancel}
         >
-          Cancel
+          {t("cancel", { defaultValue: "Cancel" })}
         </button>
       </div>
     </div>

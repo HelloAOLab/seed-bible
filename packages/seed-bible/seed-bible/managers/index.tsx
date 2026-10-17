@@ -1,5 +1,9 @@
 export * from "./SeedBibleStateManager";
-export { parseVerseReference } from "./BibleDataManager";
+export {
+  BOOK_SLUGS,
+  parseVerseReference,
+  type BookId,
+} from "./BibleDataManager";
 export * from "./AnnotationsManager";
 export * from "./AudioPlaybackManager";
 export * from "./BibleReadingManager";

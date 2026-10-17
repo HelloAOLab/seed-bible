@@ -1,16 +1,34 @@
-/* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { extractContentText } from "seed-bible/managers";
 import { MaterialIcon } from "seed-bible/components";
-import { evaluateGuess } from "./gameLogic";
-import { loadGames, persistGames } from "./gamesStore";
+import { useI18n } from "seed-bible/i18n";
+import { evaluateGuess, PlayGuesses } from "./gameLogic";
+import {
+  createSavedGamesController,
+  savedGamesErrorKey,
+  savedGamesErrorMessage,
+} from "./gamesStore";
 import { GameCreator } from "./GameCreator";
 import { GamePlayer } from "./GamePlayer";
 import { SavedGamesList } from "./SavedGamesList";
 import type { GameSignals, SavedGame } from "./types";
 
 const PANE_ID = "find-the-verse-pane";
+const NS = "find-the-verse-extension";
+
+function FindTheVersePaneTitle() {
+  const { t } = useI18n("find-the-verse-extension");
+  return <>{t("find-the-verse", { defaultValue: "Find the Verse" })}</>;
+}
+
+function resetDraft(game: GameSignals) {
+  game.currentGameId.value = null;
+  game.targetVerse.value = null;
+  game.steps.value = [{ hint: "" }];
+  game.selectingViaToolbar.value = false;
+  game.notice.value = null;
+}
 
 function GamePane({
   game,
@@ -27,6 +45,11 @@ function GamePane({
 }) {
   const phase = game.phase.value;
   const savedGames = game.savedGames.value;
+  const { t } = useI18n("find-the-verse-extension");
+  const noticeFor = (error: unknown, action: "save" | "delete") =>
+    t(savedGamesErrorKey(error, action), {
+      defaultValue: savedGamesErrorMessage(error, action),
+    });
 
   if (phase === "idle") {
     return (
@@ -50,7 +73,7 @@ function GamePane({
         >
           <span style={{ fontSize: "2.5rem" }}>🔍</span>
           <p style={{ margin: 0, fontWeight: 600, fontSize: "1.1rem" }}>
-            Find the Verse
+            {t("find-the-verse", { defaultValue: "Find the Verse" })}
           </p>
           <p
             style={{
@@ -60,8 +83,10 @@ function GamePane({
               fontSize: "0.9rem",
             }}
           >
-            A creator picks a secret verse. Players guess where it is using
-            book, chapter, and verse feedback.
+            {t("intro", {
+              defaultValue:
+                "A creator picks a secret verse. Players guess where it is using book, chapter, and verse feedback. Saved games stay on your account.",
+            })}
           </p>
           <button
             type="button"
@@ -76,19 +101,39 @@ function GamePane({
               fontSize: "0.95rem",
             }}
             onClick={() => {
+              // A leftover id from Edit would make the next Save overwrite
+              // that game. Start from a blank draft.
+              resetDraft(game);
               game.phase.value = "creating";
             }}
           >
-            Create a game
+            {t("create-game", { defaultValue: "Create a game" })}
           </button>
         </div>
+
+        {game.notice.value && (
+          <p
+            style={{
+              margin: 0,
+              color: "var(--sb-danger-color, #e63946)",
+              fontSize: "0.9rem",
+            }}
+          >
+            {game.notice.value}
+          </p>
+        )}
 
         {/* Saved games */}
         <SavedGamesList
           games={savedGames}
           game={game}
           state={state}
-          onDelete={(id) => void onDeleteGame(id)}
+          onDelete={(id) => {
+            game.notice.value = null;
+            return onDeleteGame(id).catch((error: unknown) => {
+              game.notice.value = noticeFor(error, "delete");
+            });
+          }}
           onEdit={onEditGame}
         />
       </div>
@@ -101,19 +146,20 @@ function GamePane({
         game={game}
         state={state}
         onStart={(saved) => {
-          void onSaveGame(saved).then(() => {
-            // Return to idle so the user sees the saved game in the list
-            game.phase.value = "idle";
-            game.targetVerse.value = null;
-            game.steps.value = [{ hint: "" }];
-            game.selectingViaToolbar.value = false;
-          });
+          game.notice.value = null;
+          return onSaveGame(saved).then(
+            () => {
+              resetDraft(game);
+              game.phase.value = "idle";
+            },
+            (error: unknown) => {
+              game.notice.value = noticeFor(error, "save");
+            }
+          );
         }}
         onCancel={() => {
+          resetDraft(game);
           game.phase.value = "idle";
-          game.targetVerse.value = null;
-          game.steps.value = [{ hint: "" }];
-          game.selectingViaToolbar.value = false;
         }}
       />
     );
@@ -125,10 +171,8 @@ function GamePane({
       game={game}
       state={state}
       onReset={() => {
+        resetDraft(game);
         game.phase.value = "idle";
-        game.currentGameId.value = null;
-        game.targetVerse.value = null;
-        game.steps.value = [{ hint: "" }];
         game.guessCount.value = 0;
         game.lastResult.value = null;
         game.won.value = false;
@@ -146,6 +190,7 @@ export default function initFindTheVerseExtension() {
       const game: GameSignals = {
         phase: signal("idle"),
         currentGameId: signal(null),
+        notice: signal(null),
         savedGames: signal([]),
         targetVerse: signal(null),
         steps: signal([{ hint: "" }]),
@@ -157,48 +202,41 @@ export default function initFindTheVerseExtension() {
         partialRevealText: signal(""),
       };
 
+      const savedGames = createSavedGamesController(
+        game.savedGames,
+        () => state.login.userId.peek(),
+        state.os
+      );
+
       // Load saved games whenever the user logs in (or on first mount if already logged in).
       const disposeLoadEffect = effect(() => {
         const userId = state.login.userId.value;
-        if (!userId) {
-          game.savedGames.value = [];
-          return;
-        }
-        void loadGames(userId, state.os).then((games) => {
-          // Guard: user may have logged out while the fetch was in flight.
-          if (state.login.userId.peek() === userId) {
-            game.savedGames.value = games;
+        game.notice.value = null;
+        void savedGames.syncUser(userId).then((result) => {
+          if (result === "error" && state.login.userId.peek() === userId) {
+            game.notice.value = state.i18n.t("load-failed", {
+              defaultValue: "Couldn't load your saved games.",
+              ns: NS,
+            });
           }
         });
       });
 
-      // Persist a newly created game to the user's profile.
-      async function saveGame(saved: SavedGame): Promise<void> {
-        const userId = state.login.userId.peek();
-        if (!userId) return;
-        const next = [
-          saved,
-          ...game.savedGames.peek().filter((g) => g.id !== saved.id),
-        ];
-        game.savedGames.value = next;
-        await persistGames(userId, next, state.os);
+      function saveGame(saved: SavedGame): Promise<void> {
+        return savedGames.save(saved);
       }
 
-      // Remove a game from the user's profile.
-      async function deleteGame(id: string): Promise<void> {
-        const userId = state.login.userId.peek();
-        if (!userId) return;
-        const next = game.savedGames.peek().filter((g) => g.id !== id);
-        game.savedGames.value = next;
-        await persistGames(userId, next, state.os);
+      function deleteGame(id: string): Promise<void> {
+        return savedGames.remove(id);
       }
 
       // Load a saved game into the creator for editing.
       function editGame(saved: SavedGame): void {
-        game.targetVerse.value = saved.targetVerse;
-        game.steps.value = saved.steps;
+        game.targetVerse.value = { ...saved.targetVerse };
+        game.steps.value = saved.steps.map((step) => ({ hint: step.hint }));
         game.currentGameId.value = saved.id;
         game.selectingViaToolbar.value = false;
+        game.notice.value = null;
         game.phase.value = "creating";
       }
 
@@ -216,7 +254,7 @@ export default function initFindTheVerseExtension() {
           ctx.panesManager.openPane({
             id: PANE_ID,
             placement: "side",
-            title: "Find the Verse",
+            title: () => <FindTheVersePaneTitle />,
             component: () => (
               <GamePane
                 game={game}
@@ -261,34 +299,46 @@ export default function initFindTheVerseExtension() {
 
       // During play: intercept every verse tap, register it as a guess, and
       // immediately clear the selection so the normal toolbar never appears.
+      const playGuesses = new PlayGuesses();
       const disposeGuessEffect = effect(() => {
-        if (game.phase.value !== "playing" || game.won.value) return;
+        const playing = game.phase.value === "playing" && !game.won.value;
+        if (!playing) {
+          if (game.phase.value !== "playing") playGuesses.stop();
+          return;
+        }
 
         const tab = state.app.selectedTab.value;
         if (!tab) return;
 
         const selected = tab.readingState.selectedVerses.value;
-        const v = selected[0];
-        if (!v) return;
+        const verse = selected[0];
+        const selection = verse
+          ? {
+              bookId: verse.bookId,
+              chapterNumber: verse.chapterNumber,
+              verseNumber: verse.verse.number,
+            }
+          : null;
+
+        const decision = playGuesses.observe(tab.readingState, selection);
+        // The clear is deferred so this effect doesn't re-enter while the
+        // selection signal is still propagating.
+        if (selection) {
+          queueMicrotask(() => tab.readingState.clearSelectedVerses());
+        }
+        if (!decision) return;
 
         const target = game.targetVerse.peek();
         if (!target) return;
 
-        const result = evaluateGuess(target, {
-          bookId: v.bookId,
-          chapterNumber: v.chapterNumber,
-          verseNumber: v.verse.number,
-        });
-
-        game.guessCount.value = game.guessCount.peek() + 1;
+        const result = evaluateGuess(target, decision.guess);
+        if (decision.spendChance) {
+          game.guessCount.value = game.guessCount.peek() + 1;
+        }
         game.lastResult.value = result;
         if (result.kind === "correct") {
           game.won.value = true;
         }
-
-        // Defer the clear one microtask to avoid re-entering this effect
-        // synchronously while signals are still propagating.
-        queueMicrotask(() => tab.readingState.clearSelectedVerses());
       });
 
       yield disposeLoadEffect;
