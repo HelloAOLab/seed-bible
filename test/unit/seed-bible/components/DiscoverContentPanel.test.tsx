@@ -776,6 +776,40 @@ describe("DiscoverContentPanel", () => {
           ?.getAttribute("aria-disabled")
       ).toBe("true");
     });
+    it("keeps the active chip visible when the arrows first appear", () => {
+      renderPanel();
+
+      const row = getRow();
+      const activeChip = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      ).find((chip) => chip.textContent === "Cross Refs");
+
+      expect(activeChip).toBeDefined();
+
+      act(() => {
+        activeChip!.click();
+      });
+
+      expect(getArrow(END_LABEL)).toBeNull();
+
+      setRect(row, 0, 100);
+      setRect(activeChip!, 120, 170);
+      configureOverflow(row);
+
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      expect(getArrow(END_LABEL)).not.toBeNull();
+
+      const updatedActiveChip = getRow().querySelector<HTMLElement>(
+        ".sb-dcp-chip--active"
+      );
+
+      expect(updatedActiveChip).not.toBeNull();
+      expect(updatedActiveChip!.getAttribute("aria-selected")).toBe("true");
+      expect(row.scrollLeft).toBeGreaterThan(0);
+    });
     it("does not scroll when a faded arrow is clicked at the scroll boundary", () => {
       renderPanel();
 
