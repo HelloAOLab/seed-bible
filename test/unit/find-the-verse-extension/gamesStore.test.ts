@@ -93,7 +93,23 @@ describe("loadGames", () => {
     const os = {
       getData: vi.fn().mockResolvedValue({
         success: true,
-        data: { games: [makeGame(), { id: 1 }, null] },
+        data: {
+          games: [
+            makeGame(),
+            { id: 1 },
+            null,
+            { ...makeGame({ id: "empty-steps" }), steps: [] },
+            { ...makeGame({ id: "null-step" }), steps: [null] },
+            {
+              ...makeGame({ id: "no-text" }),
+              targetVerse: {
+                bookId: "JHN",
+                chapterNumber: 1,
+                verseNumber: 1,
+              },
+            },
+          ],
+        },
       }),
     } as unknown as CasualOSManager;
 

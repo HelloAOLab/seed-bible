@@ -2,6 +2,7 @@ import type { SeedBibleState } from "seed-bible";
 import { ContextMenuItem, ContextMenuWithButton } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { bookDisplayName } from "./books";
+import { resetPlay } from "./gameSession";
 import type { GameSignals, SavedGame } from "./types";
 
 interface SavedGamesListProps {
@@ -29,7 +30,7 @@ const s = {
   card: {
     padding: "10px 12px",
     borderRadius: "8px",
-    background: "var(--sb-secondary-background, #f5f5f5)",
+    background: "var(--sb-tertiary-color, #f0f0f0)",
     display: "flex" as const,
     gap: "10px",
     alignItems: "center" as const,
@@ -87,15 +88,10 @@ export function SavedGamesList({
     const reading = state.app.selectedTab.value?.readingState;
     // A verse already selected would be counted as soon as play starts.
     reading?.clearSelectedVerses();
+    resetPlay(game);
     game.currentGameId.value = saved.id;
     game.targetVerse.value = saved.targetVerse;
     game.steps.value = saved.steps.map((step) => ({ hint: step.hint }));
-    game.guessCount.value = 0;
-    game.lastResult.value = null;
-    game.won.value = false;
-    game.revealed.value = false;
-    game.partialRevealText.value = "";
-    game.notice.value = null;
     game.phase.value = "playing";
     void reading?.selectChapter("GEN", 1);
   }

@@ -30,6 +30,11 @@ export class SavedGamesWriteError extends Error {
   }
 }
 
+function isGameStep(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  return typeof (value as { hint?: unknown }).hint === "string";
+}
+
 function isSavedGame(value: unknown): value is SavedGame {
   if (!value || typeof value !== "object") return false;
   const game = value as Record<string, unknown>;
@@ -38,11 +43,14 @@ function isSavedGame(value: unknown): value is SavedGame {
     typeof game.id === "string" &&
     typeof game.createdAtMs === "number" &&
     Array.isArray(game.steps) &&
+    game.steps.length >= 1 &&
+    game.steps.every(isGameStep) &&
     !!target &&
     typeof target === "object" &&
     typeof target.bookId === "string" &&
     typeof target.chapterNumber === "number" &&
-    typeof target.verseNumber === "number"
+    typeof target.verseNumber === "number" &&
+    typeof target.verseText === "string"
   );
 }
 
@@ -91,7 +99,7 @@ export async function persistGames(
 
 /**
  * Keeps the id and original creation date when `existing` is the game being
- * edited. A new id on every save is what left the old game in the list.
+ * edited, so an edit replaces the game instead of adding a copy.
  */
 export function toSavedGame(
   draft: Pick<SavedGame, "targetVerse" | "steps">,

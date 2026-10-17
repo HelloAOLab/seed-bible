@@ -39,8 +39,8 @@ const s = {
     boxSizing: "border-box" as const,
     padding: "8px 10px",
     borderRadius: "6px",
-    border: "1px solid var(--sb-border-color, #ccc)",
-    background: "var(--sb-input-background, #fff)",
+    border: "1px solid var(--sb-divider-color, rgba(0, 0, 0, 0.12))",
+    background: "var(--sb-background, #fff)",
     color: "var(--sb-font-color, #333)",
     fontSize: "0.95rem",
   },
@@ -57,13 +57,13 @@ const s = {
     color: "var(--sb-primary-font-color, #fff)",
   },
   secondaryBtn: {
-    background: "var(--sb-secondary-background, #f0f0f0)",
+    background: "var(--sb-tertiary-color, #f0f0f0)",
     color: "var(--sb-font-color, #333)",
   },
   versePreview: {
     padding: "10px 12px",
     borderRadius: "8px",
-    background: "var(--sb-secondary-background, #f5f5f5)",
+    background: "var(--sb-tertiary-color, #f0f0f0)",
     fontSize: "0.9rem",
   },
   stepRow: {
@@ -81,7 +81,7 @@ const s = {
     background: "none",
     border: "none",
     cursor: "pointer",
-    color: "var(--sb-danger-color, #e63946)",
+    color: "#e63946",
     padding: "4px",
     fontSize: "1rem",
     lineHeight: 1,
@@ -268,7 +268,7 @@ export function GameCreator({
             {refError.value && (
               <div
                 style={{
-                  color: "var(--sb-danger-color, #e63946)",
+                  color: "#e63946",
                   fontSize: "0.85rem",
                   marginBottom: "6px",
                 }}
@@ -340,7 +340,7 @@ export function GameCreator({
         <p
           style={{
             margin: 0,
-            color: "var(--sb-danger-color, #e63946)",
+            color: "#e63946",
             fontSize: "0.9rem",
           }}
         >

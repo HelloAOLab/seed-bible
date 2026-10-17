@@ -3,7 +3,9 @@ import { registerExtension, type SeedBibleState } from "seed-bible";
 import { extractContentText } from "seed-bible/managers";
 import { MaterialIcon } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
+import { isKnownBookId } from "./books";
 import { evaluateGuess, PlayGuesses } from "./gameLogic";
+import { resetDraft, resetPlay } from "./gameSession";
 import {
   createSavedGamesController,
   savedGamesErrorKey,
@@ -20,14 +22,6 @@ const NS = "find-the-verse-extension";
 function FindTheVersePaneTitle() {
   const { t } = useI18n("find-the-verse-extension");
   return <>{t("find-the-verse", { defaultValue: "Find the Verse" })}</>;
-}
-
-function resetDraft(game: GameSignals) {
-  game.currentGameId.value = null;
-  game.targetVerse.value = null;
-  game.steps.value = [{ hint: "" }];
-  game.selectingViaToolbar.value = false;
-  game.notice.value = null;
 }
 
 function GamePane({
@@ -115,7 +109,7 @@ function GamePane({
           <p
             style={{
               margin: 0,
-              color: "var(--sb-danger-color, #e63946)",
+              color: "#e63946",
               fontSize: "0.9rem",
             }}
           >
@@ -167,19 +161,7 @@ function GamePane({
 
   // phase === "playing"
   return (
-    <GamePlayer
-      game={game}
-      state={state}
-      onReset={() => {
-        resetDraft(game);
-        game.phase.value = "idle";
-        game.guessCount.value = 0;
-        game.lastResult.value = null;
-        game.won.value = false;
-        game.revealed.value = false;
-        game.partialRevealText.value = "";
-      }}
-    />
+    <GamePlayer game={game} state={state} onReset={() => resetPlay(game)} />
   );
 }
 
@@ -264,6 +246,15 @@ export default function initFindTheVerseExtension() {
                 onEditGame={editGame}
               />
             ),
+            onClose: () => {
+              // Verse taps stay guesses for as long as phase is "playing",
+              // including after this pane is gone.
+              if (game.phase.peek() === "playing") {
+                resetPlay(game);
+                return;
+              }
+              game.selectingViaToolbar.value = false;
+            },
           });
         },
       });
@@ -287,11 +278,21 @@ export default function initFindTheVerseExtension() {
           const selected = tab?.readingState.selectedVerses.value ?? [];
           const v = selected[0];
           if (!v) return;
+          const verseText = extractContentText(v.verse.content).trim();
+          if (!isKnownBookId(v.bookId) || !verseText) {
+            game.notice.value = state.i18n.t("reference-unrecognised", {
+              defaultValue:
+                "Couldn't recognise that reference. Try “John 1:1”.",
+              ns: NS,
+            });
+            return;
+          }
+          game.notice.value = null;
           game.targetVerse.value = {
             bookId: v.bookId,
             chapterNumber: v.chapterNumber,
             verseNumber: v.verse.number,
-            verseText: extractContentText(v.verse.content),
+            verseText,
           };
           game.selectingViaToolbar.value = false;
         },

@@ -1,4 +1,5 @@
 import { useMemo } from "preact/hooks";
+import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible";
 import { emphasizeVerses, type BookId } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
@@ -80,7 +81,7 @@ const s = {
   card: {
     padding: "12px 14px",
     borderRadius: "8px",
-    background: "var(--sb-secondary-background, #f5f5f5)",
+    background: "var(--sb-tertiary-color, #f0f0f0)",
   },
   btn: (primary = false) => ({
     padding: "9px 16px",
@@ -91,7 +92,7 @@ const s = {
     fontWeight: 500,
     background: primary
       ? "var(--sb-primary-color, #4a6cf7)"
-      : "var(--sb-secondary-background, #e8e8e8)",
+      : "var(--sb-tertiary-color, #f0f0f0)",
     color: primary
       ? "var(--sb-primary-font-color, #fff)"
       : "var(--sb-font-color, #333)",
@@ -107,6 +108,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
   const revealed = game.revealed.value;
   const partialRevealText = game.partialRevealText.value;
   const notice = game.notice.value;
+  const hintOpenFor = useSignal<number | null>(null);
   const { t } = useI18n("find-the-verse-extension");
   const translationBooks =
     state.app.selectedTab.value?.readingState.translationBooks.value?.books;
@@ -124,10 +126,8 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
     () => !won && guessCount >= revealThreshold(steps.length),
     [won, guessCount, steps.length]
   );
-  const currentHint = useMemo(() => {
-    const idx = Math.min(guessCount, steps.length - 1);
-    return steps[idx]?.hint ?? "";
-  }, [guessCount, steps]);
+  const chanceIndex = Math.min(guessCount, Math.max(0, steps.length - 1));
+  const currentHint = steps[chanceIndex]?.hint.trim() ?? "";
 
   if (!target) return null;
 
@@ -218,7 +218,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
       {/* Chance counter */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         {isOutOfChances ? (
-          <span style={s.pill("var(--sb-danger-color, #e63946)")}>
+          <span style={s.pill("#e63946")}>
             {t("out-of-chances", { defaultValue: "Out of chances" })}
           </span>
         ) : (
@@ -230,18 +230,34 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
             })}
           </span>
         )}
-        {currentHint && (
-          <span
-            title={currentHint}
-            style={{
-              cursor: "help",
-              fontSize: "1.1rem",
-              opacity: 0.7,
-            }}
-          >
-            💡 <span style={{ fontSize: "0.85rem" }}>{currentHint}</span>
-          </span>
-        )}
+        {currentHint ? (
+          hintOpenFor.value === chanceIndex ? (
+            <span style={{ fontSize: "0.85rem" }}>{currentHint}</span>
+          ) : (
+            <button
+              type="button"
+              title={t("show-hint", { defaultValue: "Show hint" })}
+              aria-label={t("show-hint", { defaultValue: "Show hint" })}
+              onClick={() => {
+                hintOpenFor.value = chanceIndex;
+              }}
+              style={{
+                width: "1.6rem",
+                height: "1.6rem",
+                borderRadius: "99px",
+                border:
+                  "1px solid var(--sb-divider-color, rgba(0, 0, 0, 0.12))",
+                background: "var(--sb-tertiary-color, #f0f0f0)",
+                color: "var(--sb-font-color, #333)",
+                cursor: "pointer",
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
+            >
+              ?
+            </button>
+          )
+        ) : null}
       </div>
 
       {/* Out-of-chances encouragement */}
@@ -294,7 +310,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
         <div
           style={{
             ...s.card,
-            borderLeft: "3px solid var(--sb-warning-color, #f1a208)",
+            borderLeft: "3px solid #f1a208",
           }}
         >
           <div
@@ -329,7 +345,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
       {/* Reveal controls */}
       {revealReady && !revealed && (
         <div style={{ display: "flex", gap: "8px" }}>
-          {!partialRevealText ? (
+          {!partialRevealText && target.verseText.trim() ? (
             <button
               type="button"
               style={s.btn(false)}
@@ -356,7 +372,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
         <p
           style={{
             margin: 0,
-            color: "var(--sb-danger-color, #e63946)",
+            color: "#e63946",
             fontSize: "0.9rem",
           }}
         >
