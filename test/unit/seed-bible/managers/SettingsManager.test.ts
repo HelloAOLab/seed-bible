@@ -419,6 +419,45 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
       showContent: true,
     });
   });
+
+  it("setVerseSelectionEffects persists to login.localConfig when anonymous", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setVerseSelectionEffects("enabled");
+
+    expect(settings.settings.value.verseSelectionEffects).toBe("enabled");
+    expect(login.localConfig.value.verseSelectionEffects).toBe("enabled");
+  });
+
+  it("resetToDefaults resets verse selection effects to default", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setVerseSelectionEffects("disabled");
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.verseSelectionEffects).toBe("default");
+  });
+
+  it("preserves verse selection effects after a simulated page refresh", () => {
+    const os = CasualOSManager();
+    const nav = navWith();
+
+    const login1 = createLoginManager({ os });
+    login1.hydrateLocalConfig();
+
+    const settings1 = createSettings(os, login1, nav);
+    settings1.setVerseSelectionEffects("enabled");
+
+    // Simulate a fresh page load using the same localStorage.
+    const login2 = createLoginManager({ os });
+    login2.hydrateLocalConfig();
+
+    const settings2 = createSettings(os, login2, nav);
+
+    expect(settings2.settings.value.verseSelectionEffects).toBe("enabled");
+  });
 });
 
 describe("unified anonymous fallback precedence (profile > URL > login.localConfig > default)", () => {

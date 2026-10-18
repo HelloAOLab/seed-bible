@@ -423,9 +423,14 @@ function SessionSettingsModalContent(props: {
                       });
                     }}
                   >
-                    {t(`session-settings-verse-effects-${option.value}`, {
-                      defaultValue: option.label,
-                    })}
+                    {t(
+                      {
+                        "hosts-only":
+                          "session-settings-verse-effects-hosts-only",
+                        everyone: "session-settings-verse-effects-everyone",
+                        none: "session-settings-verse-effects-none",
+                      }[option.value]
+                    )}
                   </button>
                 );
               })}

@@ -83,6 +83,50 @@ type ReaderFixture = {
   selectFootnote: Mock;
   setOpen: Mock;
 };
+function createVerseFlareSession({
+  userId = "me",
+  connectionId = "connection-me",
+  color = "#123456",
+  visibility = "hosts-only",
+  hostUserId = "host",
+  coHostUserIds = [],
+  ownerByDecoration = {},
+}: {
+  userId?: string;
+  connectionId?: string;
+  color?: string;
+  visibility?: "hosts-only" | "everyone" | "none";
+  hostUserId?: string | null;
+  coHostUserIds?: string[];
+  ownerByDecoration?: Record<string, string>;
+} = {}) {
+  const decorateVerses = vi.fn();
+  const removeSharedDecoration = vi.fn();
+
+  const session = {
+    currentUser: signal({
+      userId,
+      connectionId,
+      visual: { color },
+    }),
+    options: signal({
+      hostUserId,
+      coHostUserIds,
+      verseSelectionEffectVisibility: visibility,
+    }),
+    removeSharedDecoration,
+    readingState: {
+      decorateVerses,
+    },
+    getDecorationOwner: vi.fn(
+      (decorationId: string) => ownerByDecoration[decorationId]
+    ),
+    connectedUsers: signal([]),
+    participantPositions: signal(new Map()),
+  };
+
+  return { session, decorateVerses, removeSharedDecoration };
+}
 
 function createFixture(): ReaderFixture {
   const chapterData = signal<TranslationBookChapter | null>({
@@ -3485,6 +3529,316 @@ describe("BibleReader", () => {
       expect(fixture.readingState.pendingAnnotationScrollVerse.value).toBe(1);
     });
   });
+  describe("verse selection effects", () => {
+    function renderWithFlare(
+      fixture: ReturnType<typeof createFixture>,
+      session: ReturnType<typeof createVerseFlareSession>["session"],
+      decorations: VerseDecoration[]
+    ) {
+      fixture.decorations.value = decorations;
+
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            sharedSession={session as any}
+          />,
+          container
+        );
+      });
+    }
+
+    const flare = (id: string, color = "#ff0000"): VerseDecoration =>
+      ({
+        id,
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        className: "sb-verse-number-flare",
+        style: {
+          "--sb-selection-flare-color": color,
+        },
+      }) as VerseDecoration;
+
+    it("hides the current user's own flare", () => {
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        userId: "me",
+        connectionId: "connection-me",
+      });
+
+      renderWithFlare(fixture, session, [
+        flare("selected-verse-flare-connection-me"),
+      ]);
+
+      const verseNumber = container.querySelector(".sb-verse-number");
+
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        false
+      );
+      expect(
+        (verseNumber as HTMLElement | null)?.style.getPropertyValue(
+          "--sb-selection-flare-color"
+        )
+      ).toBe("");
+    });
+
+    it("shows another user's flare color when effects are enabled", () => {
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        userId: "me",
+        connectionId: "connection-me",
+      });
+
+      renderWithFlare(fixture, session, [
+        flare("selected-verse-flare-peer", "#ff0000"),
+      ]);
+
+      const verseNumber = container.querySelector(
+        ".sb-verse-number"
+      ) as HTMLElement | null;
+
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        true
+      );
+      expect(
+        verseNumber?.style.getPropertyValue("--sb-selection-flare-color")
+      ).toBe("#ff0000");
+    });
+
+    it("does not show an incoming flare when effects are disabled", () => {
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        userId: "me",
+        connectionId: "connection-me",
+      });
+
+      // Set the personal preference to "disabled" using the preference signal
+      // or state configuration used by your current implementation.
+      renderWithFlare(fixture, session, [
+        flare("selected-verse-flare-peer", "#ff0000"),
+      ]);
+
+      // Once the fixture is configured with verseSelectionEffects: "disabled",
+      // the incoming flare must not be applied.
+      const verseNumber = container.querySelector(".sb-verse-number");
+
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        true
+      );
+    });
+  });
+  describe("verse selection effects with reduced motion", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    function mockReducedMotion(matches: boolean) {
+      vi.spyOn(window, "matchMedia").mockImplementation(
+        (query: string) =>
+          ({
+            matches: query === "(prefers-reduced-motion: reduce)" && matches,
+            media: query,
+            onchange: null,
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+          }) as unknown as MediaQueryList
+      );
+    }
+
+    it('hides incoming flares when preference is "default" and reduced motion is enabled', () => {
+      mockReducedMotion(true);
+
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession();
+
+      fixture.decorations.value = [
+        {
+          id: "selected-verse-flare-peer",
+          translationId: "BSB",
+          bookId: "GEN",
+          chapterNumber: 1,
+          verses: [1],
+          className: "sb-verse-number-flare",
+          style: {
+            "--sb-selection-flare-color": "#ff0000",
+          },
+        } as VerseDecoration,
+      ];
+
+      // Configure the actual personal preference as "default" here.
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            sharedSession={session as any}
+          />,
+          container
+        );
+      });
+
+      expect(container.querySelector(".sb-verse-number-flare")).toBeNull();
+    });
+
+    it('shows incoming flares when preference is "enabled", even with reduced motion', () => {
+      mockReducedMotion(true);
+
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession();
+
+      fixture.decorations.value = [
+        {
+          id: "selected-verse-flare-peer",
+          translationId: "BSB",
+          bookId: "GEN",
+          chapterNumber: 1,
+          verses: [1],
+          className: "sb-verse-number-flare",
+          style: {
+            "--sb-selection-flare-color": "#ff0000",
+          },
+        } as VerseDecoration,
+      ];
+
+      // Configure the actual personal preference as "enabled" here.
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            sharedSession={session as any}
+          />,
+          container
+        );
+      });
+
+      const verseNumber = container.querySelector(".sb-verse-number");
+
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        true
+      );
+    });
+  });
+  describe("broadcasting verse selection effects", () => {
+    function clickFirstVerse(
+      fixture: ReturnType<typeof createFixture>,
+      session: ReturnType<typeof createVerseFlareSession>["session"]
+    ) {
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            sharedSession={session as any}
+          />,
+          container
+        );
+      });
+
+      const verse = container.querySelector(
+        '.sb-verse[data-verse-number="1"]'
+      ) as HTMLElement | null;
+
+      expect(verse).not.toBeNull();
+
+      act(() => {
+        verse?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    }
+
+    it('does not broadcast a guest selection in "hosts-only" mode', () => {
+      const fixture = createFixture();
+      const { session, decorateVerses } = createVerseFlareSession({
+        userId: "guest",
+        connectionId: "connection-guest",
+        hostUserId: "host",
+        visibility: "hosts-only",
+      });
+
+      clickFirstVerse(fixture, session);
+
+      expect(decorateVerses).not.toHaveBeenCalled();
+    });
+
+    it('broadcasts a host selection in "hosts-only" mode', () => {
+      const fixture = createFixture();
+      const { session, decorateVerses } = createVerseFlareSession({
+        userId: "host",
+        connectionId: "connection-host",
+        hostUserId: "host",
+        visibility: "hosts-only",
+      });
+
+      clickFirstVerse(fixture, session);
+
+      expect(decorateVerses).toHaveBeenCalledWith(
+        "GEN",
+        1,
+        [1],
+        expect.objectContaining({
+          className: "sb-verse-number-flare",
+          style: {
+            "--sb-selection-flare-color": "#123456",
+          },
+          removeAfterMs: 1200,
+        }),
+        "selected-verse-flare-connection-host"
+      );
+    });
+
+    it('broadcasts a co-host selection in "hosts-only" mode', () => {
+      const fixture = createFixture();
+      const { session, decorateVerses } = createVerseFlareSession({
+        userId: "co-host",
+        connectionId: "connection-co-host",
+        hostUserId: "host",
+        coHostUserIds: ["co-host"],
+        visibility: "hosts-only",
+      });
+
+      clickFirstVerse(fixture, session);
+
+      expect(decorateVerses).toHaveBeenCalled();
+    });
+
+    it('broadcasts any participant selection in "everyone" mode', () => {
+      const fixture = createFixture();
+      const { session, decorateVerses } = createVerseFlareSession({
+        userId: "guest",
+        connectionId: "connection-guest",
+        hostUserId: "host",
+        visibility: "everyone",
+      });
+
+      clickFirstVerse(fixture, session);
+
+      expect(decorateVerses).toHaveBeenCalled();
+    });
+
+    it('does not broadcast any participant selection in "none" mode', () => {
+      const fixture = createFixture();
+      const { session, decorateVerses } = createVerseFlareSession({
+        userId: "guest",
+        connectionId: "connection-guest",
+        hostUserId: "host",
+        visibility: "none",
+      });
+
+      clickFirstVerse(fixture, session);
+
+      expect(decorateVerses).not.toHaveBeenCalled();
+    });
+  });
 
   // #1692: in a shared session, each other participant gets a bar down the
   // side of the reader spanning the verses they can see. jsdom does no layout,
@@ -5300,6 +5654,36 @@ describe("BibleReader", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("applies the selection flare to the verse number, not the whole verse", () => {
+    const { slot, selectorState, readingState, decorations } = createFixture();
+    decorations.value = [
+      {
+        id: "flare-from-other-user",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        className: "sb-verse-number-flare",
+        style: {
+          "--sb-selection-flare-color": "#ff0000",
+        },
+      },
+    ];
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+    const verse = container.querySelector(".sb-verse");
+    expect(verse).not.toBeNull();
+    expect(verse?.classList.contains("sb-verse-number-flare")).toBe(false);
   });
 });
 

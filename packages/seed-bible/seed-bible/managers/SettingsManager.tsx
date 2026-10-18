@@ -118,7 +118,7 @@ export interface ToolbarCustomization {
   /** Tool IDs in preferred display order. IDs not listed keep their default priority after the ordered ones. */
   order: string[];
 }
-type VerseSelectionEffects = "default" | "enabled" | "disabled";
+export type VerseSelectionEffects = "default" | "enabled" | "disabled";
 
 export interface AppSettings {
   fontSize: TextSize;

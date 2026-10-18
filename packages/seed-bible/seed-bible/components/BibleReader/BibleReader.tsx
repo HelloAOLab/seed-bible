@@ -19,7 +19,12 @@ import {
   useLayoutEffect,
   useState,
 } from "preact/compat";
-import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
+import {
+  computed,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import {
   adjacentInlineRect,
   buildRibbonPath,
@@ -49,9 +54,10 @@ import {
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import type { FriendsManager } from "../../managers/FriendsManager";
-import type {
-  BibleReadingSession,
-  ConnectionSessionUserVisual,
+import {
+  isSessionHost,
+  type BibleReadingSession,
+  type ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
 import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
@@ -418,16 +424,18 @@ function broadcastSelectedVerse(
   if (visibility === "none") return;
   if (
     visibility === "hosts-only" &&
-    user.userId !== options.hostUserId &&
-    user.connectionId !== options.hostUserId
+    !(
+      isSessionHost(options, user.userId) ||
+      isSessionHost(options, user.connectionId)
+    )
   ) {
     return;
   }
   const connectionId = user.connectionId ?? user.userId ?? "anonymous";
-  const decorationId = `selected-verse-flare-${connectionId}`;
 
-  session.removeSharedDecoration(decorationId);
-
+  // Generate a unique ID for each selection so repeated clicks
+  // are recognized as new decorations and restart the flare animation.
+  const decorationId = `selected-verse-flare-${connectionId}-${Date.now()}`;
   session.readingState.decorateVerses(
     bookId,
     chapterNumber,
@@ -817,7 +825,8 @@ function renderChapterContent(
     event: MouseEvent
   ) => void,
   sharedSession?: BibleReadingSession | null,
-  verseSelectionEffects: VerseSelectionEffects = "default"
+  verseSelectionEffects: VerseSelectionEffects = "default",
+  prefersReducedMotionValue?: boolean
 ) {
   if (!chapterData) {
     return null;
@@ -834,19 +843,32 @@ function renderChapterContent(
     );
   };
   const getVerseFlareColor = (verseNumber: number): string | undefined => {
-    if (!shouldShowVerseSelectionEffects(verseSelectionEffects)) {
+    if (
+      !shouldShowVerseSelectionEffects(
+        verseSelectionEffects,
+        prefersReducedMotionValue
+      )
+    ) {
       return undefined;
     }
 
     const session = sharedSession;
     const currentUser = session?.currentUser?.value;
 
-    if (!currentUser) return undefined;
+    if (!session || !currentUser) {
+      return undefined;
+    }
 
     const currentConnectionId =
       currentUser.connectionId ?? currentUser.userId ?? "anonymous";
 
     const ownDecorationId = `selected-verse-flare-${currentConnectionId}`;
+    const visibility =
+      session.options.value.verseSelectionEffectVisibility ?? "hosts-only";
+
+    if (visibility === "none") {
+      return undefined;
+    }
 
     const flare = getVerseDecorations(verseNumber).find((decoration) => {
       if (!decoration.className?.includes("sb-verse-number-flare")) {
@@ -858,8 +880,30 @@ function renderChapterContent(
         return false;
       }
 
-      // Ignore a decoration whose recorded owner is this user.
-      return session.getDecorationOwner(decoration.id) !== currentConnectionId;
+      const owner = session.getDecorationOwner(decoration.id);
+
+      if (!owner) {
+        return false;
+      }
+
+      // Hosts-only: accept flares from the primary host or a co-host.
+      if (visibility === "hosts-only") {
+        const ownerUser = session.connectedUsers.value.find(
+          (user) => user.connectionId === owner
+        );
+
+        if (
+          !ownerUser ||
+          !(
+            isSessionHost(session.options.value, ownerUser.userId) ||
+            isSessionHost(session.options.value, ownerUser.connectionId)
+          )
+        ) {
+          return false;
+        }
+      }
+
+      return owner !== currentConnectionId;
     });
 
     const color = flare?.style?.["--sb-selection-flare-color"];
@@ -972,42 +1016,18 @@ function renderChapterContent(
   };
 
   const getDecorationPresentation = (verseDecorations: VerseDecoration[]) => {
-    const session = sharedSession;
-    const currentUser = session?.currentUser?.value;
-
-    const currentConnectionId =
-      currentUser?.connectionId ?? currentUser?.userId;
-
-    const ownDecorationId = currentConnectionId
-      ? `selected-verse-flare-${currentConnectionId}`
-      : undefined;
-
     const matchingDecorations = verseDecorations.filter((decoration) => {
       if (hasContentTargeting(decoration)) {
         return false;
       }
 
-      // Preserve all non-flare decorations.
-      if (!decoration.className?.includes("sb-verse-number-flare")) {
-        return true;
-      }
-
-      // Do not apply the current user's flare to the wrapper.
-      if (ownDecorationId && decoration.id === ownDecorationId) {
-        return false;
-      }
-      // Hide incoming verse-selection flares when disabled.
-      if (!shouldShowVerseSelectionEffects(verseSelectionEffects)) {
+      // Verse-selection flares are handled by the verse number,
+      // not by the wrapper around the entire verse.
+      if (decoration.className?.includes("sb-verse-number-flare")) {
         return false;
       }
 
-      const owner = session?.getDecorationOwner(decoration.id);
-
-      if (currentConnectionId && owner === currentConnectionId) {
-        return false;
-      }
-
-      // Keep other users' flares visible.
+      // Preserve all other decorations.
       return true;
     });
 
@@ -1981,6 +2001,7 @@ interface ChapterContentProps {
   sharedSession?: BibleReadingSession | null;
   onHostVerseClick: (verse: BibleSelectedVerse) => void;
   verseSelectionEffects: VerseSelectionEffects;
+  prefersReducedMotionValue?: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -2005,6 +2026,7 @@ function ChapterContent(props: ChapterContentProps) {
     sharedSession,
     onHostVerseClick,
     verseSelectionEffects,
+    prefersReducedMotionValue,
   } = props;
 
   const { t } = useI18n();
@@ -2612,7 +2634,8 @@ function ChapterContent(props: ChapterContentProps) {
         scriptureElements,
         onAnnotationVerseClick,
         sharedSession,
-        verseSelectionEffects
+        verseSelectionEffects,
+        prefersReducedMotionValue
       )}
     </div>
   );
@@ -2643,19 +2666,30 @@ function resolveTranslation(
 }
 type VerseSelectionEffects = "default" | "enabled" | "disabled";
 
+// Respect the user's explicit preference; otherwise, follow the OS setting.
 function shouldShowVerseSelectionEffects(
-  preference: VerseSelectionEffects
+  preference: VerseSelectionEffects,
+  prefersReducedMotionValue: boolean | undefined
 ): boolean {
   if (preference === "enabled") return true;
   if (preference === "disabled") return false;
 
-  // SSR-safe: if matchMedia is unavailable, allow the effect.
-  if (typeof window === "undefined" || !window.matchMedia) {
-    return true;
-  }
-
-  return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return !prefersReducedMotionValue;
 }
+// Cache the OS reduced-motion preference instead of querying matchMedia
+// repeatedly for every verse and decoration.
+const reducedMotionQuery =
+  typeof window !== "undefined"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)")
+    : null;
+
+// Keep the preference reactive so changes to the OS setting can update the UI.
+const prefersReducedMotion = signal(reducedMotionQuery?.matches ?? false);
+
+// Update the signal whenever the OS reduced-motion preference changes.
+reducedMotionQuery?.addEventListener("change", (event) => {
+  prefersReducedMotion.value = event.matches;
+});
 
 export function BibleReader(props: BibleReaderProps) {
   const {
@@ -2728,6 +2762,7 @@ export function BibleReader(props: BibleReaderProps) {
   const translationWebsite = computed(
     () => translation.value?.website.trim() ?? ""
   );
+  const prefersReducedMotionValue = prefersReducedMotion.value || undefined;
 
   const isMinimalEmbed = state?.app.isMinimalEmbed?.value ?? false;
   const isCompactReader =
@@ -3308,6 +3343,7 @@ export function BibleReader(props: BibleReaderProps) {
                 state?.settings.settings.value.verseSelectionEffects ??
                 "default"
               }
+              prefersReducedMotionValue={prefersReducedMotionValue}
             />
           </Suspense>
         ))}

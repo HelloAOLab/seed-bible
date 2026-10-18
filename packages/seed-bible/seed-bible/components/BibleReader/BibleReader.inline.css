@@ -46,15 +46,10 @@
 
 @keyframes sb-verse-number-flare {
   0% {
-    color: var(--sb-selection-flare-color);
-    background-color: var(--sb-selection-flare-color);
-    box-shadow: 0 0 0 4px
-      color-mix(in srgb, var(--sb-selection-flare-color) 35%, transparent);
+    box-shadow: 0 0 0 3px var(--sb-selection-flare-color);
   }
 
   100% {
-    color: inherit;
-    background-color: transparent;
     box-shadow: 0 0 0 0 transparent;
   }
 }
