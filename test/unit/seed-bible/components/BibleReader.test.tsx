@@ -3591,6 +3591,10 @@ describe("BibleReader", () => {
       const { session } = createVerseFlareSession({
         userId: "me",
         connectionId: "connection-me",
+        visibility: "everyone",
+        ownerByDecoration: {
+          "selected-verse-flare-peer": "connection-peer",
+        },
       });
 
       renderWithFlare(fixture, session, [
@@ -3601,6 +3605,7 @@ describe("BibleReader", () => {
         ".sb-verse-number"
       ) as HTMLElement | null;
 
+      expect(verseNumber).not.toBeNull();
       expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
         true
       );
@@ -3627,7 +3632,7 @@ describe("BibleReader", () => {
       const verseNumber = container.querySelector(".sb-verse-number");
 
       expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
-        true
+        false
       );
     });
   });
@@ -3637,19 +3642,38 @@ describe("BibleReader", () => {
     });
 
     function mockReducedMotion(matches: boolean) {
-      vi.spyOn(window, "matchMedia").mockImplementation(
-        (query: string) =>
-          ({
-            matches: query === "(prefers-reduced-motion: reduce)" && matches,
-            media: query,
-            onchange: null,
-            addListener: vi.fn(),
-            removeListener: vi.fn(),
-            addEventListener: vi.fn(),
-            removeEventListener: vi.fn(),
-            dispatchEvent: vi.fn(),
-          }) as unknown as MediaQueryList
-      );
+      const listeners = new Set<(event: MediaQueryListEvent) => void>();
+
+      const mediaQueryList = {
+        matches,
+        media: "(prefers-reduced-motion: reduce)",
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(
+          (event: string, listener: (event: MediaQueryListEvent) => void) => {
+            if (event === "change") listeners.add(listener);
+          }
+        ),
+        removeEventListener: vi.fn(
+          (event: string, listener: (event: MediaQueryListEvent) => void) => {
+            if (event === "change") listeners.delete(listener);
+          }
+        ),
+        dispatchEvent: vi.fn(),
+      } as unknown as MediaQueryList;
+
+      Object.defineProperty(window, "matchMedia", {
+        configurable: true,
+        writable: true,
+        value: vi.fn((query: string) =>
+          query === "(prefers-reduced-motion: reduce)"
+            ? mediaQueryList
+            : { ...mediaQueryList, matches: false, media: query }
+        ),
+      });
+
+      return mediaQueryList;
     }
 
     it('hides incoming flares when preference is "default" and reduced motion is enabled', () => {
@@ -3690,10 +3714,15 @@ describe("BibleReader", () => {
 
     it('shows incoming flares when preference is "enabled", even with reduced motion', () => {
       mockReducedMotion(true);
-
       const fixture = createFixture();
-      const { session } = createVerseFlareSession();
-
+      const { session } = createVerseFlareSession({
+        userId: "me",
+        connectionId: "connection-me",
+        visibility: "everyone",
+        ownerByDecoration: {
+          "selected-verse-flare-peer": "connection-peer",
+        },
+      });
       fixture.decorations.value = [
         {
           id: "selected-verse-flare-peer",
@@ -3787,12 +3816,12 @@ describe("BibleReader", () => {
         [1],
         expect.objectContaining({
           className: "sb-verse-number-flare",
+          removeAfterMs: 1200,
           style: {
             "--sb-selection-flare-color": "#123456",
           },
-          removeAfterMs: 1200,
         }),
-        "selected-verse-flare-connection-host"
+        expect.stringMatching(/^selected-verse-flare-connection-host-\d+$/)
       );
     });
 

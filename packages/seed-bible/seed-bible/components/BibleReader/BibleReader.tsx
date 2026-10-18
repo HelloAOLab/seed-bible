@@ -2679,7 +2679,7 @@ function shouldShowVerseSelectionEffects(
 // Cache the OS reduced-motion preference instead of querying matchMedia
 // repeatedly for every verse and decoration.
 const reducedMotionQuery =
-  typeof window !== "undefined"
+  typeof window !== "undefined" && typeof window.matchMedia === "function"
     ? window.matchMedia("(prefers-reduced-motion: reduce)")
     : null;
 
