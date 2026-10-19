@@ -110,7 +110,7 @@ import type {
 import { createLoginManager } from "../managers/LoginManager";
 import type { LoginManager } from "../managers/LoginManager";
 import { createSidebar } from "../managers/SidebarManager";
-import { createTabs } from "../managers/TabsManager";
+import { createTabs, readInitialReadingParams } from "../managers/TabsManager";
 import type { ReaderTab, TabsManager } from "../managers/TabsManager";
 import {
   writeStoredTabsState,
@@ -2972,9 +2972,12 @@ export function createSeedBibleState(
     return session;
   };
 
-  const handleJoinSharedSession = async (id: string) => {
+  const handleJoinSharedSession = async (
+    id: string,
+    startPosition?: SessionStartPosition
+  ) => {
     closeSidebarAndSettings();
-    const session = await sessions.joinSession(id);
+    const session = await sessions.joinSession(id, startPosition);
     captureEvent("join_session", {
       sessionId: session.id,
     });
@@ -3049,7 +3052,37 @@ export function createSeedBibleState(
       return;
     }
 
-    await handleJoinSharedSession(initialSessionId);
+    const linkedPosition = readInitialReadingParams(
+      navigation.initialUrl,
+      navigation.basePath
+    ).specified;
+    const bootTab = tabs.tabs.peek()[0] ?? null;
+    const startPosition =
+      linkedPosition && bootTab
+        ? getSessionStartPosition(bootTab.readingState)
+        : undefined;
+
+    await handleJoinSharedSession(initialSessionId, startPosition);
+
+    if (!startPosition || !bootTab) {
+      return;
+    }
+
+    const dropBootTab = () => {
+      if (tabs.tabs.peek().includes(bootTab)) {
+        tabs.removeTab(bootTab.id);
+      }
+    };
+    if (tabsRestored.peek()) {
+      dropBootTab();
+      return;
+    }
+    const stopWaiting = tabsRestored.subscribe((restored) => {
+      if (restored) {
+        stopWaiting();
+        dropBootTab();
+      }
+    });
   };
 
   // Tell the user when we signed them out for them. `login.sessionEnded` only fires
