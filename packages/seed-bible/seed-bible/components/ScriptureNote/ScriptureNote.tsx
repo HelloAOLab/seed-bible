@@ -3,9 +3,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { createPortal } from "preact/compat";
 import type { RefObject } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
-import type {
-  PlayingState,
-  PlaylistItemData,
+import {
+  hasScriptureNote,
+  type PlayingState,
+  type PlaylistItemData,
 } from "../../managers/PlaylistManager";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
 import { playlistItemLabel } from "../playlistItemLabel";
@@ -25,14 +26,8 @@ type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 export function currentScriptureNoteItem(
   playing: PlayingState | null
 ): ScriptureItem | null {
-  const item = playing?.currentItem.value;
-  if (
-    item?.type !== "bible-verse" ||
-    (!item.note?.trim() && !item.noteTitle?.trim())
-  ) {
-    return null;
-  }
-  return item;
+  const item = playing?.currentItem.value ?? null;
+  return hasScriptureNote(item) ? item : null;
 }
 
 /**

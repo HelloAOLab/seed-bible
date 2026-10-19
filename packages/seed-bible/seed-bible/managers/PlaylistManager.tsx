@@ -662,7 +662,9 @@ export function expandCrossChapterItem(
 export const NOTE_CLOSED_HIGHLIGHT_MS = 1500;
 
 /** Whether a queue item is scripture carrying a note (a body, a title, or both). */
-export function hasScriptureNote(item: PlaylistItemData | null): boolean {
+export function hasScriptureNote(
+  item: PlaylistItemData | null
+): item is Extract<PlaylistItemData, { type: "bible-verse" }> {
   return (
     item?.type === "bible-verse" &&
     !!(item.note?.trim() || item.noteTitle?.trim())

@@ -4,6 +4,7 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { TranslationBookChapter } from "../../managers/FreeUseBibleAPI";
 import {
   expandCrossChapterItem,
+  hasScriptureNote,
   type PlaylistItemData,
 } from "../../managers/PlaylistManager";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
@@ -50,13 +51,15 @@ export function PlaylistItemInlinePreview(props: {
       {item.type === "bible-verse" ? (
         <>
           <ScripturePreview item={item} loadChapter={loadChapter} />
-          {item.note || item.noteTitle ? (
+          {hasScriptureNote(item) ? (
             <div className="sb-item-inline-preview-note">
               <span className="sb-item-inline-preview-note-label" dir="auto">
                 {item.noteTitle?.trim() ||
                   t("playlist-scripture-note-label", { defaultValue: "Note" })}
               </span>
-              {item.note ? <PlaylistHtmlContent html={item.note} /> : null}
+              {item.note?.trim() ? (
+                <PlaylistHtmlContent html={item.note} />
+              ) : null}
             </div>
           ) : null}
         </>

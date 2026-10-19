@@ -17,7 +17,7 @@ export function PlaylistItemNoteTag(props: {
 }) {
   const { item, showUntitled } = props;
   const { t } = useI18n();
-  if (item.type !== "bible-verse" || !hasScriptureNote(item)) {
+  if (!hasScriptureNote(item)) {
     return null;
   }
   const title =
