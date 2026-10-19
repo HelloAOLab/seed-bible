@@ -24,7 +24,6 @@ import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
 import {
   isSessionHost,
   type BibleReadingSession,
-  type ConnectionSessionUserVisual,
   getConnectedUserVisualKey,
   getUserAnimalVisual,
   getSessionUrl,
@@ -2520,42 +2519,27 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
  * identity.
  */
 export function SelfAvatarVisual(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { login } = state;
   const { t } = useI18n();
-  const avatar = getSelfAvatar(props.state, t);
-  return (
-    <Avatar
-      imageUrl={avatar.imageUrl}
-      visual={avatar.visual}
-      title={avatar.displayName}
-      genericFallback={avatar.genericFallback}
-    />
-  );
-}
-
-/** What `SelfAvatarVisual` draws, for surfaces that render the avatar themselves. */
-export function getSelfAvatar(
-  state: SeedBibleState,
-  t: (key: string, options?: Record<string, unknown>) => string
-): {
-  key: string;
-  displayName: string;
-  imageUrl: string | null;
-  visual: ConnectionSessionUserVisual;
-  genericFallback: boolean;
-} {
+  const profile = login.profile.value;
   // Share identity with connected-user rendering so the avatar shows the
   // same icon/color as the user's row inside a shared session.
-  const key = getConnectedUserVisualKey({
+  const visualKey = getConnectedUserVisualKey({
     userId: state.login.userId.value,
     connectionId: state.os.connectionId,
   });
-  return {
-    key,
-    displayName: getSelfDisplayName(state, t),
-    imageUrl: state.login.profile.value?.pictureUrl ?? null,
-    visual: getUserAnimalVisual(key),
-    genericFallback: !isInMultiUserIdentityContext(state),
-  };
+  const visual = getUserAnimalVisual(visualKey);
+  const imageUrl = profile?.pictureUrl ?? null;
+
+  return (
+    <Avatar
+      imageUrl={imageUrl}
+      visual={visual}
+      title={getSelfDisplayName(state, t)}
+      genericFallback={!isInMultiUserIdentityContext(state)}
+    />
+  );
 }
 
 /**

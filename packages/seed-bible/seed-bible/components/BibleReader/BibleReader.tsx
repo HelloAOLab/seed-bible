@@ -64,7 +64,6 @@ import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import { Spinner } from "../Spinner/Spinner";
 import {
   SaveStarIcon,
-  getSelfAvatar,
   openSaveModalForLocation,
   saveChapterLabel,
 } from "../Tabs/Tabs";
@@ -1776,10 +1775,13 @@ interface ChapterContentProps {
    * when none are. Drives the presence this client publishes.
    */
   onVisibleVersesChange?: (range: VisibleVerseRange | null) => void;
-  /** Who made each highlight, for the avatars on the off-screen bubbles. */
+  /**
+   * Who made each highlight, so the off-screen bubbles can show their avatar
+   * and leave out the reader's own.
+   */
   highlightAuthors?: {
-    saved: HighlightCueAuthor | null;
-    ofDecoration: (decorationId: string) => HighlightCueAuthor | null;
+    isOwn: (decorationId: string) => boolean;
+    of: (decorationId: string) => HighlightCueAuthor | null;
   };
 }
 
@@ -2393,14 +2395,12 @@ function ChapterContent(props: ChapterContentProps) {
       <OffscreenHighlightCueLayer
         contentRef={contentRef}
         marks={collectHighlightCueMarks({
-          highlights: highlights.value.highlights,
           decorations: decorations.value,
           translationId: chapterData.value.translation.id,
           bookId: chapterData.value.book.id,
           chapterNumber: chapterData.value.chapter.number,
-          showSavedHighlights: scriptureElements.showHighlights,
-          savedAuthor: highlightAuthors?.saved,
-          decorationAuthor: highlightAuthors?.ofDecoration,
+          isOwnDecoration: highlightAuthors?.isOwn,
+          decorationAuthor: highlightAuthors?.of,
         })}
       />
       {renderChapterContent(
@@ -2627,24 +2627,31 @@ export function BibleReader(props: BibleReaderProps) {
 
   const { t, language } = useI18n();
 
-  const selfAuthor: HighlightCueAuthor | null = state
-    ? getSelfAvatar(state, t)
-    : null;
-  // Saved highlights are always the reader's own. In a session every
-  // decoration has an owner, and one not yet recorded was just added here.
   // Outside a session a decoration comes from an extension or a link, which
-  // nobody in particular made.
+  // nobody in particular made. In a session every decoration has an owner,
+  // and one not yet recorded was just added on this device.
+  const decorationAuthorUser = (decorationId: string) => {
+    const owner = sharedSession?.decorationOwner(decorationId) ?? null;
+    if (!owner) return null;
+    return (
+      sharedSession?.allUsers.value.find(
+        (user) => user.connectionId === owner
+      ) ?? null
+    );
+  };
   const highlightAuthors = {
-    saved: selfAuthor,
-    ofDecoration: (decorationId: string): HighlightCueAuthor | null => {
-      if (!sharedSession) return null;
+    isOwn: (decorationId: string): boolean => {
+      if (!sharedSession) return false;
       const owner = sharedSession.decorationOwner(decorationId);
-      const user = owner
-        ? sharedSession.allUsers.value.find(
-            (candidate) => candidate.connectionId === owner
-          )
-        : undefined;
-      if (!user || user.isSelf) return selfAuthor;
+      return (
+        owner === null ||
+        owner === state?.os.connectionId ||
+        decorationAuthorUser(decorationId)?.isSelf === true
+      );
+    },
+    of: (decorationId: string): HighlightCueAuthor | null => {
+      const user = decorationAuthorUser(decorationId);
+      if (!user) return null;
       return {
         key: getConnectedUserVisualKey(user),
         displayName: getUserDisplayName(user),

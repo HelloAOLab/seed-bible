@@ -86,13 +86,6 @@ function contrastText(color: string): string {
   return yiq >= 160 ? "#333333" : "#ffffff";
 }
 
-function verseNumbersOf(verse: ChapterHighlight["verse"]): number[] {
-  if (typeof verse === "number") return [verse];
-  const numbers: number[] = [];
-  for (let n = verse[0]; n <= verse[1]; n++) numbers.push(n);
-  return numbers;
-}
-
 /**
  * True when a decoration paints a slice of the verse text rather than the
  * whole verse. The ribbon and the off-screen bubbles both skip these: they
@@ -165,45 +158,34 @@ function decorationsByVerse(
 }
 
 /**
- * Every highlighted verse in this chapter, one mark per verse. A decoration
- * highlight (a session peer, or an extension) covers a saved highlight on the
- * same verse, matching how the ribbon layer paints them. Content-targeted
+ * Every verse in this chapter highlighted by someone else, one mark per verse:
+ * a session peer, or an extension or link that nobody in particular made.
+ * The reader's own highlights never notify them of anything, so their saved
+ * highlights aren't considered at all, and decorations `isOwnDecoration`
+ * claims are dropped before picking which decoration a verse shows, so a
+ * peer's highlight on the same verse still counts. Content-targeted
  * decorations are skipped: the ribbon can't paint a text fragment, so a bubble
  * for one would point at a verse that isn't actually highlighted.
  *
- * Saved highlights are omitted when the reader is hiding them, since jumping
- * to the verse would land on nothing visible. Decoration highlights stay.
- *
- * Saved highlights belong to `savedAuthor`. A decoration's author comes from
- * `decorationAuthor`, which answers null when nobody in particular made it.
+ * A decoration's author comes from `decorationAuthor`, which answers null when
+ * nobody in particular made it.
  */
 export function collectHighlightCueMarks(options: {
-  highlights: readonly ChapterHighlight[];
   decorations: readonly VerseDecoration[];
   translationId: string;
   bookId: string;
   chapterNumber: number;
-  showSavedHighlights: boolean;
-  savedAuthor?: HighlightCueAuthor | null;
+  isOwnDecoration?: (decorationId: string) => boolean;
   decorationAuthor?: (decorationId: string) => HighlightCueAuthor | null;
 }): HighlightCueMark[] {
   const byVerse = new Map<number, HighlightCueMark>();
-
-  if (options.showSavedHighlights) {
-    for (const highlight of options.highlights) {
-      const style = highlightCueStyle(highlight);
-      for (const verse of verseNumbersOf(highlight.verse)) {
-        byVerse.set(verse, {
-          verse,
-          ...style,
-          author: options.savedAuthor ?? null,
-        });
-      }
-    }
-  }
+  const isOwn = options.isOwnDecoration;
+  const others = isOwn
+    ? options.decorations.filter((decoration) => !isOwn(decoration.id))
+    : options.decorations;
 
   for (const [verse, { highlight, decorationId }] of decorationsByVerse(
-    options.decorations,
+    others,
     options
   )) {
     byVerse.set(verse, {

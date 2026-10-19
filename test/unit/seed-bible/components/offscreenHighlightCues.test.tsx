@@ -154,22 +154,57 @@ describe("collectHighlightCueMarks", () => {
     translationId: "BSB",
     bookId: "GEN",
     chapterNumber: 28,
-    showSavedHighlights: true,
   };
 
-  it("expands a saved range and lets a decoration highlight replace it", () => {
-    const decoration: VerseDecoration = {
-      id: "shared-highlight:GEN:28:2",
+  function decoration(
+    id: string,
+    verses: number[],
+    colorId: string
+  ): VerseDecoration {
+    return {
+      id,
       translationId: null,
       bookId: "GEN",
       chapterNumber: 28,
-      verses: [2],
-      highlight: { colorId: "yellow" },
+      verses,
+      highlight: { colorId },
     };
+  }
+
+  it("credits each highlight to whoever added it and leaves out the reader's own", () => {
     const marks = collectHighlightCueMarks({
       ...chapter,
-      highlights: [{ verse: [1, 2], colorId: "green" }],
-      decorations: [decoration],
+      decorations: [
+        decoration("from-ben", [3], "yellow"),
+        decoration("from-extension", [5], "blue"),
+        decoration("mine", [7], "green"),
+        // Painted over Ben's verse later, but it's the reader's own, so Ben's
+        // highlight is still the one that notifies.
+        decoration("mine-too", [3], "pink"),
+      ],
+      isOwnDecoration: (id) => id.startsWith("mine"),
+      decorationAuthor: (id) => (id === "from-ben" ? author("Ben") : null),
+    });
+
+    expect(
+      marks.map((item) => [
+        item.verse,
+        item.styleKey,
+        item.author?.displayName ?? null,
+      ])
+    ).toEqual([
+      [3, "preset:yellow", "Ben"],
+      [5, "preset:blue", null],
+    ]);
+  });
+
+  it("lets a later highlight on the same verse replace an earlier one", () => {
+    const marks = collectHighlightCueMarks({
+      ...chapter,
+      decorations: [
+        decoration("first", [1, 2], "green"),
+        decoration("second", [2], "yellow"),
+      ],
     });
 
     expect(marks.map((item) => [item.verse, item.styleKey])).toEqual([
@@ -178,53 +213,13 @@ describe("collectHighlightCueMarks", () => {
     ]);
   });
 
-  it("credits saved highlights to the reader and decorations to whoever added them", () => {
+  it("paints a custom-coloured highlight in its own colours", () => {
     const marks = collectHighlightCueMarks({
       ...chapter,
-      highlights: [{ verse: 1, colorId: "green" }],
       decorations: [
         {
-          id: "from-ben",
-          translationId: null,
-          bookId: "GEN",
-          chapterNumber: 28,
-          verses: [3],
-          highlight: { colorId: "yellow" },
-        },
-        {
-          id: "from-extension",
-          translationId: null,
-          bookId: "GEN",
-          chapterNumber: 28,
-          verses: [5],
-          highlight: { colorId: "blue" },
-        },
-      ],
-      savedAuthor: author("Me"),
-      decorationAuthor: (id) => (id === "from-ben" ? author("Ben") : null),
-    });
-
-    expect(
-      marks.map((item) => [item.verse, item.author?.displayName ?? null])
-    ).toEqual([
-      [1, "Me"],
-      [3, "Ben"],
-      [5, null],
-    ]);
-  });
-
-  it("keeps a peer highlight when saved highlights are hidden", () => {
-    const marks = collectHighlightCueMarks({
-      ...chapter,
-      showSavedHighlights: false,
-      highlights: [{ verse: 1, colorId: "green" }],
-      decorations: [
-        {
-          id: "shared",
+          ...decoration("shared", [4], "green"),
           translationId: "BSB",
-          bookId: "GEN",
-          chapterNumber: 28,
-          verses: [4],
           highlight: { colorId: "green", customColor: "#a5d6a7" },
         },
       ],
@@ -239,7 +234,6 @@ describe("collectHighlightCueMarks", () => {
   it("skips highlights that are not in this chapter or only cover a text fragment", () => {
     const marks = collectHighlightCueMarks({
       ...chapter,
-      highlights: [],
       decorations: [
         {
           id: "other-chapter",
@@ -266,7 +260,6 @@ describe("collectHighlightCueMarks", () => {
   it("skips a decoration verse that is not a whole verse number", () => {
     const marks = collectHighlightCueMarks({
       ...chapter,
-      highlights: [],
       decorations: [
         {
           id: "bad-verses",
