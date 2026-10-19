@@ -61,11 +61,11 @@ Before Seed Bible had this system, adding a feature meant editing the core app. 
 ### Two ways an extension reaches the app
 
 1. **Bundled** — the extension package lives in this repo under `packages/`, and gets automatically discovered at build time (any folder containing an `extension.json` is picked up — see `script/lib/vite-plugin-extensions.ts`). This is how every extension in this repo today works (`seed-bible-refresh-example-extension`, `locations-extension`, `audio-reader-extension`, `apologist-extension`, `bonfire-extension`, `transcript-extension`, `twitchPub-extension`, `twitchSub-extension`), and it's the fully-supported way to ship one: no build step, just source, swept into the app's own bundle alongside everything else.
-2. **Loaded from a URL at runtime** — `ExtensionManager.loadExtension({ meta, url })` can dynamically `import()` a module from any URL and install it the same way, provided that module's default export follows the same contract. In practice this only works for a bundle built with the specific tooling described in [§8](#8-building-an-extension-outside-this-repo) (a plain, hand-written bundle can't resolve a bare `import ... from "seed-bible"` — there's no import map for it): treat this as an **experimental, best-effort distribution path**, not the default choice. A URL-loaded extension currently runs with the same full access as a bundled one; [`extension-security.md`](./extension-security.md) proposes sandboxing these behind user-approved permissions.
+2. **Loaded from a URL at runtime** — `ExtensionManager.loadExtension({ meta, url })` (or `discoverExtensionSet(url)`, which lists a published set's extensions for the user to install). This is how a third party ships an extension without a pull request, and because nobody has reviewed that code, it **runs sandboxed**: in its own iframe, with no access to the page, the user's account or their data, and only the permissions the user approves when installing it. It's written against a smaller API, `seed-bible/sandbox`, instead of `registerExtension` — see [§7](#7-third-party-sandboxed-extensions).
 
 If you don't work inside this monorepo at all — a genuinely third-party developer building your own extension in your own project — see [§8](#8-building-an-extension-outside-this-repo) for the supported way to do that: a scaffolding CLI, plus a toolkit that can type-check, test, build, and (the part that actually matters) run a real Seed Bible dev server with your in-development extension auto-installed.
 
-Either way, the extension itself is written the same way and follows the same lifecycle below.
+Sections 4–5 below describe bundled extensions, which get the full app state. A URL-loaded extension follows the same install/uninstall flow, but sees only what [§7](#7-third-party-sandboxed-extensions) describes.
 
 ---
 
@@ -292,6 +292,82 @@ You'll also encounter `context.readingExtensions` (backed by `BibleReadingExtens
 
 ---
 
+## 7. Third-party (sandboxed) extensions
+
+Every extension loaded from a URL runs sandboxed. The design, including what it protects against and what it doesn't, is in [`extension-security.md`](./extension-security.md). This section covers what you need to write one.
+
+**Where it runs.** Your code runs in a hidden iframe with its own, unique origin. It can't read the app's DOM, storage or cookies, so the user's session key and data are out of reach. It talks to Seed Bible only through the `sb` object the SDK gives you, and each call is checked against what the user granted. When you open a pane, the host draws the pane (its border, title and close button, plus a badge with your extension's name) and renders your view in a second iframe inside it.
+
+**What it looks like.** The module's default export is the result of `defineExtension`:
+
+```tsx
+import { defineExtension } from "seed-bible/sandbox";
+
+export default defineExtension({
+  // Runs once in the background frame when the extension starts.
+  main: async (sb) => {
+    await sb.tools.registerVerseToolbarTool({
+      id: "share-art",
+      title: { key: "share-art", defaultValue: "Make art" },
+      icon: { material: "palette" },
+      onSelect: ({ selection }) =>
+        void sb.panes.open({
+          view: "art",
+          placement: "side",
+          title: "Verse art",
+          props: { verses: selection.map((v) => v.verse) },
+        }),
+    });
+  },
+  // One entry per kind of pane; each renders in its own frame.
+  views: {
+    art: ({ sb, props }) => (
+      <p>
+        {sb.i18n.t("art-intro")} {JSON.stringify(props)}
+      </p>
+    ),
+  },
+});
+```
+
+**What `sb` offers.**
+
+- `sb.tools.registerToolbarTool` / `registerVerseToolbarTool` / `registerQuickTool` / `registerBelowReaderTool`. Same idea as §5, but declarative: `icon` is `{ material: "<Material Symbols name>" }` or `{ svg: "<svg…>" }`; `isVisible`/`isDisabled` are booleans or signals; a submenu is a list of `items`, each with its own `onSelect`. Each returns a handle with `update()` and `unregister()`. Priorities are kept between 200 and 999, after the app's own tools. Only `main` can register tools, not views.
+- `sb.panes.open({ view, placement, title, props })` and `sb.panes.close(id)`. `props` must be JSON.
+- `sb.app.toast(message)` (shown with your extension's name) and `sb.app.isMobile`.
+- `sb.storage.get/set/remove/keys`: your own JSON key/value store, up to 256 KB. The frame has no `localStorage`. It is cleared when the user uninstalls your extension.
+- `sb.settings.get(key)`: your own non-sensitive settings from `extension.json`.
+- `sb.i18n.t(key, defaultValue, values)`, `sb.i18n.language` and `sb.i18n.direction`: strings come from your `extension.json` translations. The frame's theme colors, language and text direction are set for you, so `var(--sb-font-color)` and friends work in your CSS.
+- `sb.reading.position`, `sb.reading.selection` and `sb.reading.open(ref)`, if granted (below).
+
+A call that isn't allowed rejects with a `SandboxError` whose `code` says why: `permission_denied`, `invalid_request`, `not_found` or `limit_exceeded`.
+
+**Permissions and network hosts.** Declare them in `extension.json`; the user sees them, in plain language, before anything of yours runs:
+
+```json
+{
+  "id": "verse-art",
+  "version": "1.0.0",
+  "permissions": ["reading:selection"],
+  "network": ["api.verse-art.example"],
+  "translations": { "en": { "title": "Verse Art", "description": "…" } }
+}
+```
+
+| Permission          | What it gives you                                                                 |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `reading:position`  | `sb.reading.position`: the current translation, book and chapter, kept up to date |
+| `reading:selection` | `sb.reading.selection`, and the selected verses in a tool's `onSelect`            |
+| `reading:navigate`  | `sb.reading.open({ bookId, chapter, verse })`                                     |
+
+`network` lists every host your frames may contact (`fetch`, images, media, fonts); anything else is blocked. Requests arrive with `Origin: null`, so the server must allow that in its CORS headers (`Access-Control-Allow-Origin: *` does). A manifest that names a permission this version of Seed Bible doesn't know won't install, rather than install without it.
+
+**Updates.** A new version that asks for nothing new loads without asking. One that asks for more shows the user only what's new, and doesn't load until they agree. Uninstalling forgets the grant, so reinstalling asks again.
+
+**Limits for now.** A sandboxed extension can't declare `dependencies`, and its `autoinstall` is ignored: it never installs without the user being asked. Discover and chat providers, and access to user data such as highlights and notes, aren't available to sandboxed extensions yet (see the rollout plan in `extension-security.md`). Styles must come from the bundle itself, as inline styles or CSS imported with `?inline`, since the frame can't load a separate stylesheet.
+
+---
+
 ## 8. Building an extension outside this repo
 
 Everything in §§3–6 assumes your extension's source lives inside this monorepo, under `packages/`. If you're a genuinely third-party developer — your own project, your own repo, no local clone of `seed-bible` — two companion packages give you the same experience anyway:
@@ -307,9 +383,9 @@ Everything in §§3–6 assumes your extension's source lives inside this monore
 
 `dev` stops with an error if the chosen version is older than the out-of-tree extension support it relies on, instead of starting without your extension. This is still necessary even with a real `seed-bible` npm package: that package is the library of managers/components, not the bootable reader app UI, so seeing your extension actually run means running the real app.
 
-`build` produces two things: the primary, fully-supported output is your extension's source, validated and copied to `dist/monorepo-package/` — ready to drop straight into a `seed-bible` checkout's `packages/<name>/` (§3's "bundled" path, no compilation needed there). `build --standalone` additionally produces `dist/standalone/index.js`, a genuinely self-contained ES module for the URL-loading path mentioned above — it's the thing that makes that path actually work, by aliasing `preact`/`@preact/signals`/`seed-bible`/etc. to small shims that read off a runtime object (`window.__seedBibleExtensionRuntime`) the real app exposes, rather than bundling second, disconnected copies. This isn't about `seed-bible` lacking a published package — it's because a `--standalone` bundle loads via a dynamic `import(url)` outside the host app's own module graph, so any module-level singleton it statically imports (Preact's hook state, `@preact/signals`' internals, `registerExtension`'s own extension registry) would otherwise be a second, disconnected copy the host page never sees. Still label it experimental in your own head: it only works loaded into a real, running Seed Bible page, and (today) `seed-bible/components` needs `await loadSeedBibleComponents()` instead of a normal static import, since the host only exposes components as a lazy loader.
+`build` produces two things: the primary, fully-supported output is your extension's source, validated and copied to `dist/monorepo-package/` — ready to drop straight into a `seed-bible` checkout's `packages/<name>/` (§3's "bundled" path, no compilation needed there). `build --standalone` additionally produces `dist/standalone/index.js`: a single ES module, with Preact and everything else it imports bundled in, for the URL-loading path. Seed Bible runs that file in a sandbox ([§7](#7-third-party-sandboxed-extensions)), so its default export must be `defineExtension(...)` from `seed-bible/sandbox`.
 
-`publish` is a third distribution path, and the only one that doesn't need a PR or your own hosting: it runs `build --standalone`, uploads the resulting bundle as a public file record, wraps its metadata (id, translations, dependencies) into a one-extension `ExtensionSet` manifest, uploads _that_ as a second public file record, and prints its URL. Anyone can then call `context.extensions.discoverExtensionSet(url)` (or a future extension of their own can) to make your extension show up in the Settings extensions list — listed, not yet installed, exactly like this app's own bundled extensions do before a reader clicks Install. The first `publish` prompts you to log in once (an email address, then the code it emails you) and mints a long-lived key it prints and asks you to save as `SEED_BIBLE_RECORD_KEY` — every later `publish` (including in CI) reads that instead and never needs to log in again. Pass `--dry-run` to see the manifest that would be uploaded without actually uploading anything.
+`publish` is a third distribution path, and the only one that doesn't need a PR or your own hosting: it runs `build --standalone`, uploads the resulting bundle as a public file record, wraps its metadata (id, translations, `version`, `permissions`, `network`, and the bundle's `integrity` hash) into a one-extension `ExtensionSet` manifest, uploads _that_ as a second public file record, and prints its URL. Anyone can then call `context.extensions.discoverExtensionSet(url)` (or a future extension of their own can) to make your extension show up in the Settings extensions list — listed, not yet installed, exactly like this app's own bundled extensions do before a reader clicks Install. The first `publish` prompts you to log in once (an email address, then the code it emails you) and mints a long-lived key it prints and asks you to save as `SEED_BIBLE_RECORD_KEY` — every later `publish` (including in CI) reads that instead and never needs to log in again. Pass `--dry-run` to see the manifest that would be uploaded without actually uploading anything.
 
 ---
 

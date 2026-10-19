@@ -1,22 +1,26 @@
 import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import type { ComponentChildren } from "preact";
-import * as PreactSignalsNamespace from "@preact/signals";
-import * as PreactNamespace from "preact";
-import * as PreactHooksNamespace from "preact/hooks";
-import * as PreactJsxRuntimeNamespace from "preact/jsx-runtime";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { LoginManager } from "../managers/LoginManager";
 import { addTranslations, i18n } from "../i18n/I18nManager";
-// The whole `../i18n` barrel is already reachable via a static import chain
-// from several other files (e.g. `SeedBibleStateManager.tsx`), so it's always
-// part of the main bundle regardless — importing it eagerly here (unlike
-// `../components`, see `loadComponents` below) doesn't add real weight, and a
-// dynamic import of an already-statically-reachable module just produces a
-// harmless "ineffective dynamic import" build warning instead of an actual
-// lazy chunk.
-import * as SeedBibleI18nNamespace from "../i18n";
 import { safeLocalStorage } from "../app/ssrEnv";
+import {
+  activeGrant,
+  extensionSource,
+  mergeExtensionGrants,
+  missingFromGrant,
+  parseExtensionGrants,
+  parseSandboxManifest,
+  type ExtensionGrants,
+  type SandboxConsentHandler,
+} from "./ExtensionPermissions";
+import {
+  clearSandboxStorage,
+  fetchSandboxBundle,
+  startSandboxSession,
+  type SandboxFrameConnector,
+} from "./ExtensionSandboxManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
@@ -121,6 +125,31 @@ export interface ExtensionMeta {
    * both reach `api.example.com` on the same request.
    */
   sensitive?: Record<string, ExtensionSensitiveProxyDefinition>;
+
+  /**
+   * Sandboxed (URL-loaded) extensions only: this version's number, recorded
+   * with the user's grant.
+   */
+  version?: string;
+
+  /**
+   * Sandboxed extensions only: the permissions it needs (see
+   * `SANDBOX_PERMISSIONS`). The user approves all of them at install.
+   */
+  permissions?: string[];
+
+  /**
+   * Sandboxed extensions only: every host its frames may contact, like
+   * `api.example.com`. Enforced by the frames' Content Security Policy.
+   */
+  network?: string[];
+
+  /**
+   * Sandboxed extensions only, and required for them: the bundle's hash
+   * (`sha384-…`, as in HTML's `integrity` attribute), so the code that runs
+   * is the code the user agreed to.
+   */
+  integrity?: string;
 }
 
 /**
@@ -136,9 +165,15 @@ export type ExtensionSettingsPanelRenderer = () => ComponentChildren;
 
 export type Extension = UploadedExtension | ImportExtension;
 
+/**
+ * A third-party extension, loaded from a URL. It always runs sandboxed (see
+ * `ExtensionSandboxManager.tsx`), behind the permissions the user grants:
+ * where an extension comes from decides how much it's trusted, never
+ * anything it says about itself.
+ */
 export interface UploadedExtension {
   /**
-   * The URL of the extension to load.
+   * The URL of the extension's bundle, built with `seed-bible/sandbox`.
    */
   url: string;
 
@@ -157,6 +192,11 @@ export interface UploadedExtension {
   loadFullTranslations?: () => Promise<ExtensionMeta["translations"]>;
 }
 
+/**
+ * An extension compiled into the app from this repository (see
+ * `vite-plugin-extensions.ts`). It runs in the page with the full
+ * `SeedBibleState`; reviewing it in a pull request is what makes that safe.
+ */
 export interface ImportExtension {
   /**
    * The function to dynamically import the extension module. The resolved
@@ -187,7 +227,7 @@ export interface ImportExtension {
  * this function triggers the extension's registration (typically via a
  * `registerExtension(...)` call). It must be safe to call more than once per
  * page load: native ES module evaluation is cached per specifier, so after
- * `unloadExtension()` a later `loadExtension()`/`loadExtensionFromUrl()` call
+ * `unloadExtension()` a later `loadExtension()` call
  * re-invokes this cached function reference rather than re-running the
  * module's top-level code.
  */
@@ -452,57 +492,6 @@ export function unregisterExtension(id: string): boolean {
   return ExtensionInitalizer.getInstance().unregisterExtension(id);
 }
 
-/**
- * A small, stable surface exposed on `window` for extension bundles that
- * genuinely can't be part of this app's own Vite module graph — i.e. a
- * standalone bundle built by `seed-bible-extension-scripts build --standalone`
- * and loaded via `extensions.loadExtension({ meta, url })`. Such a bundle
- * can't have a bare `import ... from "seed-bible"` (there's no import map, and
- * a raw browser `import(url)` can't resolve one), and it must not bring its
- * own copy of Preact/signals — this codebase has already hit the "two Preact
- * instances" bug once (see `vite.config.ts`'s `resolve.dedupe` comment). By
- * reading `registerExtension`/`preact`/`@preact/signals` off this global
- * instead, such a bundle shares the exact instances already running on the
- * page rather than a second, disconnected copy.
- *
- * `components` is exposed as a lazy loader (not an eager namespace import) so
- * referencing this runtime object doesn't force the entire
- * `seed-bible/components` barrel — effectively the whole app's UI surface —
- * into this module's own eager import graph, which loads very early in boot.
- * `i18n` is exposed eagerly since it's already reachable from several other
- * eager import chains (see the import above), so there's no lazy-loading
- * benefit to gain by deferring it.
- */
-export interface SeedBibleExtensionRuntime {
-  registerExtension: typeof registerExtension;
-  unregisterExtension: typeof unregisterExtension;
-  preact: typeof PreactNamespace;
-  preactHooks: typeof PreactHooksNamespace;
-  preactJsxRuntime: typeof PreactJsxRuntimeNamespace;
-  preactSignals: typeof PreactSignalsNamespace;
-  i18n: typeof SeedBibleI18nNamespace;
-  loadComponents: () => Promise<typeof import("../components")>;
-}
-
-declare global {
-  interface Window {
-    __seedBibleExtensionRuntime?: SeedBibleExtensionRuntime;
-  }
-}
-
-if (typeof window !== "undefined") {
-  window.__seedBibleExtensionRuntime = {
-    registerExtension,
-    unregisterExtension,
-    preact: PreactNamespace,
-    preactHooks: PreactHooksNamespace,
-    preactJsxRuntime: PreactJsxRuntimeNamespace,
-    preactSignals: PreactSignalsNamespace,
-    i18n: SeedBibleI18nNamespace,
-    loadComponents: () => import("../components"),
-  };
-}
-
 export function setupExtensionContext(context: SeedBibleState) {
   ExtensionInitalizer.getInstance().setupExtensionContext(context);
 }
@@ -515,6 +504,29 @@ export interface ExtensionManagerOptions {
    * Defaults to no extensions.
    */
   defaultExtensions?: ExtensionSet | null;
+
+  /**
+   * Asks the user whether to grant a sandboxed extension what it needs.
+   * Without one, sandboxed extensions can only load with a grant the user
+   * already gave.
+   */
+  requestSandboxConsent?: SandboxConsentHandler;
+
+  /** Replaces the iframes sandboxed extensions run in; for tests. */
+  sandboxFrameConnector?: SandboxFrameConnector;
+}
+
+/** The namespace the app's own strings live in (see `I18nManager.tsx`). */
+const APP_TRANSLATION_NAMESPACE = "seed-bible";
+
+/**
+ * Whether an extension runs sandboxed: every URL-loaded one does. Only
+ * extensions compiled into the app from this repository run in the page.
+ */
+export function isSandboxedExtension(
+  extension: Extension
+): extension is UploadedExtension {
+  return "url" in extension && typeof extension.url === "string";
 }
 
 /**
@@ -1203,8 +1215,34 @@ export function createExtensionManager(
     });
   }
 
+  /**
+   * Whether a sandboxed extension tries to take an id it mustn't have: a
+   * first-party extension's, which would replace that extension in the
+   * catalog and in the saved installs that load it, or the app's own
+   * translation namespace, which its strings would mix into.
+   */
+  const claimsReservedId = (extension: Extension): boolean => {
+    if (!isSandboxedExtension(extension)) {
+      return false;
+    }
+    const id = extension.meta.id;
+    const known = knownExtensionsById.get(id);
+    const reserved =
+      id === APP_TRANSLATION_NAMESPACE ||
+      (known !== undefined && !isSandboxedExtension(known));
+    if (reserved) {
+      console.warn(
+        `Ignoring sandboxed extension '${id}' from '${extension.url}': that id belongs to Seed Bible.`
+      );
+    }
+    return reserved;
+  };
+
   const trackExtensionSet = (set: ExtensionSet) => {
     for (const extension of set.extensions) {
+      if (claimsReservedId(extension)) {
+        continue;
+      }
       knownExtensionsById.set(extension.meta.id, extension);
     }
     if (fetchesListTranslations && set.loadListTranslations) {
@@ -1257,35 +1295,163 @@ export function createExtensionManager(
   // };
 
   /**
-   * Loads the given extension package by installing it from the provided record name and address. If the installation is successful, the extension ID will be added to the set of installed extensions and an "onExtensionInstalled" event will be shouted with the extension ID as a parameter.
-   * @param id The ID of the extension to install.
-   * @param url The URL of the extension package to install.
+   * The localStorage key and profile config key under which the user's
+   * grants to sandboxed extensions are kept, so an installed extension
+   * reloads without asking again, on this device and on others.
    */
-  const loadExtensionFromUrl = async (id: string, url: string) => {
-    if (isSatisfiedDependency(id)) {
-      return true;
-    }
+  const EXTENSION_GRANTS_STORAGE_KEY = "sb-extension-grants";
+  const EXTENSION_GRANTS_CONFIG_KEY = "extensionGrants";
 
+  const readExtensionGrants = async (): Promise<ExtensionGrants> => {
+    await awaitProfileLoaded();
+    let local: ExtensionGrants = {};
     try {
-      const mod: unknown = await import(/** @vite-ignore */ url);
-      if (!isExtensionModule(mod)) {
-        refreshExtensionsSignal();
-        console.error(
-          `Failed to install extension '${id}': the module at '${url}' does not \`export default\` a function. Extensions must export a default function that triggers registration when called.`
-        );
-        return false;
-      }
-      await mod.default();
-      installedExtensionIds.add(id);
-      refreshExtensionsSignal();
-      // shout("onExtensionInstalled", id);
-      console.log(`Successfully installed extension: ${id}`);
-      return true;
+      local = parseExtensionGrants(
+        JSON.parse(
+          safeLocalStorage.getItem(EXTENSION_GRANTS_STORAGE_KEY) ?? "{}"
+        )
+      );
     } catch (err) {
+      console.error("Failed to read extension grants:", err);
+    }
+    const profile = parseExtensionGrants(
+      getProfileConfigValue(login.profile.value, EXTENSION_GRANTS_CONFIG_KEY)
+    );
+    return mergeExtensionGrants(local, profile);
+  };
+
+  const saveExtensionGrant = async (
+    id: string,
+    entry: ExtensionGrants[string]
+  ) => {
+    const grants = { ...(await readExtensionGrants()), [id]: entry };
+    try {
+      safeLocalStorage.setItem(
+        EXTENSION_GRANTS_STORAGE_KEY,
+        JSON.stringify(grants)
+      );
+    } catch (err) {
+      console.error("Failed to persist extension grants:", err);
+    }
+    await saveProfileConfigValue(login, EXTENSION_GRANTS_CONFIG_KEY, grants);
+  };
+
+  // One consent dialog at a time, in the order they were asked for.
+  let consentQueue: Promise<unknown> = Promise.resolve();
+  const askSandboxConsent: SandboxConsentHandler = (request) => {
+    const handler = options.requestSandboxConsent;
+    if (!handler) {
+      console.error(
+        `Can't install extension '${request.extensionId}': there's no way to ask for its permissions here.`
+      );
+      return Promise.resolve(false);
+    }
+    const answer = consentQueue.then(() => handler(request));
+    consentQueue = answer.catch(() => {});
+    return answer.catch((err) => {
+      console.error("The extension consent dialog failed:", err);
+      return false;
+    });
+  };
+
+  /**
+   * Installs a URL-loaded extension into its sandbox: checks its manifest,
+   * downloads and verifies its bundle, asks the user for whatever an earlier
+   * grant doesn't cover, and registers it so the usual install/uninstall
+   * bookkeeping applies. Its `init` starts the sandbox session; uninstalling
+   * runs the session's cleanup, which removes everything it registered.
+   */
+  const installSandboxedExtension = async (
+    uploaded: UploadedExtension,
+    translations: ExtensionMeta["translations"]
+  ): Promise<boolean> => {
+    const extensionId = uploaded.meta.id;
+    const fail = (reason: unknown) => {
+      console.error(`Failed to install extension '${extensionId}':`, reason);
       refreshExtensionsSignal();
-      console.error("Failed to install extension:", id, err);
+      return false;
+    };
+    if (typeof document === "undefined") {
       return false;
     }
+    const parsed = parseSandboxManifest(uploaded.meta);
+    if (!parsed.ok) {
+      return fail(parsed.error);
+    }
+    const { manifest } = parsed;
+
+    let source: string;
+    let sourceHost: string;
+    try {
+      source = extensionSource(uploaded.url);
+      sourceHost = new URL(uploaded.url).host;
+    } catch {
+      return fail(`'${uploaded.url}' is not a valid URL.`);
+    }
+
+    let code: string;
+    try {
+      code = await fetchSandboxBundle(uploaded.url, manifest.integrity);
+    } catch (err) {
+      return fail(err);
+    }
+
+    const translation = translations[i18n.language] ?? translations.en;
+    const previous = activeGrant((await readExtensionGrants())[extensionId]);
+    const missing = missingFromGrant(previous, manifest, source);
+    if (
+      !previous ||
+      previous.source !== source ||
+      missing.permissions.length > 0 ||
+      missing.network.length > 0
+    ) {
+      const agreed = await askSandboxConsent({
+        extensionId,
+        title: translation.title,
+        description: translation.description,
+        sourceHost,
+        version: manifest.version,
+        permissions: manifest.permissions,
+        network: manifest.network,
+        isUpdate: previous?.source === source,
+        newPermissions: missing.permissions,
+        newNetwork: missing.network,
+      });
+      if (!agreed) {
+        console.info(`Installing extension '${extensionId}' was declined.`);
+        refreshExtensionsSignal();
+        return false;
+      }
+      await saveExtensionGrant(extensionId, {
+        permissions: manifest.permissions,
+        network: manifest.network,
+        version: manifest.version,
+        source,
+        grantedAtMs: Date.now(),
+      });
+    }
+
+    registerExtension({
+      id: extensionId,
+      init: function* (context: SeedBibleState) {
+        const session = startSandboxSession({
+          extensionId,
+          title: translation.title,
+          translations,
+          granted: manifest.permissions,
+          network: manifest.network,
+          code,
+          context,
+          connector: options.sandboxFrameConnector,
+        });
+        yield () => session.destroy();
+        return {};
+      },
+    });
+    installedExtensionIds.add(extensionId);
+    refreshExtensionsSignal();
+    console.log(`Successfully installed sandboxed extension: ${extensionId}`);
+    return true;
   };
 
   /**
@@ -1299,6 +1465,9 @@ export function createExtensionManager(
     options?: { persist?: boolean }
   ) => {
     const extensionId = uploaded.meta.id;
+    if (claimsReservedId(uploaded)) {
+      return false;
+    }
     knownExtensionsById.set(extensionId, uploaded);
     refreshExtensionsSignal();
 
@@ -1319,6 +1488,19 @@ export function createExtensionManager(
       }
 
       installStack.add(extensionId);
+
+      if (isSandboxedExtension(uploaded)) {
+        const translations = uploaded.loadFullTranslations
+          ? await uploaded.loadFullTranslations()
+          : uploaded.meta.translations;
+        addTranslations(extensionId, translations);
+        const installed = await installSandboxedExtension(
+          uploaded,
+          translations
+        );
+        installStack.delete(extensionId);
+        return installed;
+      }
 
       const dependencies = uploaded.meta.dependencies ?? [];
       for (const dependencyId of dependencies) {
@@ -1357,11 +1539,7 @@ export function createExtensionManager(
         : uploaded.meta.translations;
       addTranslations(uploaded.meta.id, translations);
 
-      if ("url" in uploaded && uploaded.url) {
-        const installed = await loadExtensionFromUrl(extensionId, uploaded.url);
-        installStack.delete(extensionId);
-        return installed;
-      } else if ("import" in uploaded && uploaded.import) {
+      if ("import" in uploaded && uploaded.import) {
         try {
           const mod: unknown = await uploaded.import();
           if (!isExtensionModule(mod)) {
@@ -1418,6 +1596,13 @@ export function createExtensionManager(
 
     const idsAndPromises: [string, Promise<boolean>][] = [];
     for (const ext of set.extensions) {
+      // `trackExtensionSet` above already left these out of the catalog.
+      if (
+        isSandboxedExtension(ext) &&
+        knownExtensionsById.get(ext.meta.id) !== ext
+      ) {
+        continue;
+      }
       knownExtensionsById.set(ext.meta.id, ext);
       knownExtensionsSetsByExtensionId.set(ext.meta.id, set);
       addTranslations(ext.meta.id, ext.meta.translations);
@@ -1602,8 +1787,13 @@ export function createExtensionManager(
     const url = new URL(window.location.href);
     const isUrlOverride = (ext: Extension) =>
       url.searchParams.get(`autoinstall-${ext.meta.id}`) === "true";
+    // A sandboxed extension's `autoinstall` is ignored: it must never install
+    // without the user being asked. A URL override still reaches the consent
+    // dialog through `loadExtension`.
     const isEligibleForAutoinstall = (ext: Extension) =>
-      Boolean(ext.meta.autoinstall) && !alreadyHandledIds.has(ext.meta.id);
+      !isSandboxedExtension(ext) &&
+      Boolean(ext.meta.autoinstall) &&
+      !alreadyHandledIds.has(ext.meta.id);
 
     const results = await loadExtensionSet(
       defaultExtensions,
@@ -1643,6 +1833,12 @@ export function createExtensionManager(
       // This is what records their uninstall, so they aren't dragged back
       // in the next time their dependent gets (re)installed.
       void persistHandledExtensionId(id);
+      // Reinstalling a sandboxed extension asks again, and starts it fresh.
+      const known = knownExtensionsById.get(id);
+      if (known && isSandboxedExtension(known)) {
+        clearSandboxStorage(id);
+        void saveExtensionGrant(id, { revokedAtMs: Date.now() });
+      }
     }
     refreshExtensionsSignal();
   };

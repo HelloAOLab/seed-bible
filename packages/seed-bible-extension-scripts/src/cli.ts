@@ -41,11 +41,11 @@ program
 program
   .command("build")
   .description(
-    "Build the extension: a monorepo-ready package, and (with --standalone) an experimental self-contained bundle."
+    "Build the extension: a monorepo-ready package, and (with --standalone) a single-file bundle that Seed Bible runs sandboxed."
   )
   .option(
     "--standalone",
-    "also produce a self-contained ES module for hosting outside the seed-bible monorepo (experimental — see the generated README)"
+    "also produce a single-file ES module, built with seed-bible/sandbox, for hosting outside the seed-bible monorepo (see the generated README)"
   )
   .action(async (opts: { standalone?: boolean }) => {
     process.exitCode = await runBuild({ standalone: Boolean(opts.standalone) });

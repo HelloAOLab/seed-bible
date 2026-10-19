@@ -36,7 +36,10 @@
       "seed-bible/components": [
         "./packages/seed-bible/seed-bible/components/index.tsx"
       ],
-      "seed-bible/i18n": ["./packages/seed-bible/seed-bible/i18n/index.tsx"]
+      "seed-bible/i18n": ["./packages/seed-bible/seed-bible/i18n/index.tsx"],
+      "seed-bible/sandbox": [
+        "./packages/seed-bible/seed-bible/sandbox/index.tsx"
+      ]
     },
     "noImplicitAny": true,
     "noImplicitThis": true,

@@ -1,6 +1,6 @@
-# Third-Party Extension Security Model (Design Proposal)
+# Third-Party Extension Security Model
 
-**Status:** Proposal. Nothing here is implemented yet.
+**Status:** Phase 1 (§9) is implemented; the later phases are still proposals. Where phase 1 ended up differing from the original plan, the text below says so, and §9 lists what it does and doesn't include. For how to write a sandboxed extension, see §7 of [`developer-guide.md`](./developer-guide.md).
 
 **Short version:** Third-party extensions should stop running as ordinary scripts inside the Seed Bible page. Instead, each one runs in its own sandboxed iframe that can't see the page, the user's login, or any user data. The extension declares the permissions it needs in `extension.json`. The user approves them when installing. From then on, the extension can only reach the app by sending messages to a "broker" in the host page, and the broker checks every message against what the user approved. Extensions built inside this repo (first-party) keep working exactly as they do today.
 
@@ -112,7 +112,10 @@ The opaque-origin iframe needs no new infrastructure: the host builds the frame'
 
 1. The host fetches the extension's bundle from the URL in its manifest.
 2. It checks the bundle against an `integrity` hash pinned in the manifest (`sha384-…`, the same format as HTML's subresource integrity). If it doesn't match, the extension doesn't load. This stops someone from swapping the code at that URL after the user approved it.
-3. It writes the frame's HTML with the bundle inlined as a module script, plus a `<meta http-equiv="Content-Security-Policy">` tag. A CSP (Content Security Policy) is a list of rules the browser enforces on a page — what it may load and which servers it may contact. Here the policy only lets that exact script run (by its hash) and only lets `fetch` reach the hosts the user approved (§5).
+3. It writes the frame's HTML: a tiny fixed bootstrap script, plus a `<meta http-equiv="Content-Security-Policy">` tag. A CSP (Content Security Policy) is a list of rules the browser enforces on a page — what it may load and which servers it may contact. Here the policy only lets the frame reach the hosts the user approved (§5): requests, images, media and fonts from anywhere else are refused. The bootstrap receives the verified bundle over the channel in step 4 and loads it from a `blob:` URL.
+
+   _As built:_ the policy allows inline and `blob:` scripts rather than pinning one script by its hash, as first planned. Pinning would add nothing: the extension's own code already runs in the frame, so it could always run more. What the policy has to limit is where data can go, and that part is strict.
+
 4. It hands the frame one end of a `MessageChannel` (a private two-way pipe). All further communication goes over that pipe, never over `window.postMessage` broadcast, so the broker never has to guess which frame a message came from. (Opaque-origin frames all report their origin as `"null"`, so origin checks alone can't tell them apart.)
 
 The extension bundles its own copy of Preact and `@preact/signals`. This is fine now, unlike today's `--standalone` bundles: the "two Preact instances" problem only exists when two copies share one component tree, and a sandboxed extension's tree lives entirely inside its own frame.
@@ -122,33 +125,41 @@ The extension bundles its own copy of Preact and `@preact/signals`. This is fine
 A new SDK entry point, `seed-bible/sandbox`, replaces direct access to `SeedBibleState`. It looks like today's API, but every call that reaches user data is `async` (it's a message to the broker and a reply), and app state arrives as read-only signals that the broker keeps up to date.
 
 ```tsx
-import { defineExtension, defineView } from "seed-bible/sandbox";
+import { defineExtension } from "seed-bible/sandbox";
 import { effect } from "@preact/signals";
 
-export default defineExtension(async (sb) => {
-  // UI contribution: the host draws the button; the click comes back as an event.
-  await sb.tools.registerToolbarTool({
-    id: "my-tool",
-    title: { key: "tool-title", defaultValue: "My Tool" },
-    icon: { svg: "<svg viewBox='0 0 24 24'>…</svg>" },
-    onSelect: () => sb.panes.open({ view: "main", placement: "side" }),
-  });
+export default defineExtension({
+  // Runs once, in the extension's hidden background frame.
+  main: async (sb) => {
+    // UI contribution: the host draws the button; the click comes back as an event.
+    await sb.tools.registerToolbarTool({
+      id: "my-tool",
+      title: { key: "tool-title", defaultValue: "My Tool" },
+      icon: { svg: "<svg viewBox='0 0 24 24'>…</svg>" },
+      onSelect: () =>
+        void sb.panes.open({
+          view: "main",
+          placement: "side",
+          title: "My Tool",
+        }),
+    });
 
-  // Needs the `reading:position` permission; otherwise `current` stays null
-  // and the call below rejects with a PermissionDeniedError.
-  effect(() => {
-    const pos = sb.reading.current.value;
-    if (pos) console.log("now reading", pos.bookId, pos.chapterNumber);
-  });
+    // Needs the `reading:position` permission; otherwise it stays null.
+    effect(() => {
+      const pos = sb.reading.position.value;
+      if (pos) console.log("now reading", pos.bookId, pos.chapterNumber);
+    });
 
-  // Needs `highlights:read`.
-  const highlights = await sb.highlights.list({ bookId: "JHN", chapter: 3 });
+    // Needs `reading:navigate`; without it this rejects with a
+    // SandboxError whose code is "permission_denied".
+    await sb.reading.open({ bookId: "JHN", chapter: 3 });
+  },
+
+  // Each view is rendered in its own frame, inside the pane the host opened.
+  views: {
+    main: ({ sb }) => <div>Hello from a sandboxed pane</div>,
+  },
 });
-
-// A view: rendered in its own frame inside the pane the host opened.
-export const views = {
-  main: defineView(({ sb }) => <div>Hello from a sandboxed pane</div>),
-};
 ```
 
 Functions passed to the host (like `onSelect`) never leave the frame. The SDK keeps them in a table, sends the host an ID, and the host sends an "invoke this ID" event back when the user clicks.
@@ -182,6 +193,8 @@ These are safe enough to give every extension, so the install prompt stays short
 - **A pseudonymous user ID:** `sb.identity.id`, a hash of the real user ID and the extension ID. It lets an extension keep per-user data on its own server without learning who the user is, and it's different for every extension, so two extensions can't combine what they know about the same person.
 - Theme, language, and whether the device is mobile.
 - Reading Bible text through the app's Bible API (public data).
+
+_As built in phase 1:_ the pseudonymous ID, Discover providers, brokered sensitive settings and the Bible API are not available yet. Until the Bible API is, an extension can declare the API's host under `network` and fetch from it directly.
 
 ---
 
@@ -328,7 +341,25 @@ Two existing features install extensions without that click, and both have to st
 
 Each phase is shippable on its own.
 
-1. **Sandbox runtime and the basics.** `ExtensionSandboxManager` (frames, `MessageChannel`, broker with schema validation of every message — `zod` is already used for this in `ExtensionSensitiveSettings.ts`), the `seed-bible/sandbox` SDK, UI contributions, panes/views, storage, theme/language pushing, the `reading:*` permissions, network hosts, `integrity` pinning, and the install consent dialog. From this phase on, **every `UploadedExtension` runs sandboxed** and the in-page `loadExtensionFromUrl` path is only reachable for first-party code. The `?autoinstall-` and Customization rules in §6.5 land here too.
+1. **Sandbox runtime and the basics — done.** What shipped:
+   - `ExtensionSandboxManager.tsx`: the frames, the `MessageChannel` per frame, and the broker, which validates every message against a `zod` schema and checks it against the grant.
+   - `seed-bible/sandbox`: the SDK (`defineExtension`, `sb.*`).
+   - Toolbar, verse, quick and below-reader tools; panes and their view frames; toasts; per-extension storage; the extension's own non-sensitive settings; theme, language and direction pushed into every frame.
+   - The `reading:position`, `reading:selection` and `reading:navigate` permissions, and `network` hosts enforced by the frames' CSP.
+   - `integrity` pinning, and the install consent dialog. Grants are stored and synced like installed extension IDs, are tied to where the bundle is hosted, and are revoked on uninstall.
+   - Every `UploadedExtension` now runs sandboxed. The in-page `import(url)` path and the `window.__seedBibleExtensionRuntime` global it needed are gone.
+   - `autoinstall` is ignored for sandboxed extensions, and an `?autoinstall-` link or a Customization only opens the consent dialog (§6.5).
+   - Moved forward from phase 3, because without them no one could build a sandboxed extension: `build --standalone` produces a single-file sandbox bundle, and `publish` adds `integrity` (plus `version`, `permissions` and `network`) to the manifest.
+
+   Not in phase 1, and moved to phase 2:
+   - Discover providers, chat providers, extension-drawn modals and custom settings panels.
+   - Brokered sensitive fetch.
+   - The frame heartbeat (§8).
+   - Loading Google Fonts inside frames: they get the theme's colors, but its fonts fall back to the system font.
+   - Syncing `sb.storage` across devices: it is kept on the device for now.
+
+   A sandboxed extension that declares `dependencies` is refused for now.
+
 2. **User data permissions.** Highlights, notes, saves, reading history, profile, chat providers, brokered sensitive fetch, update re-consent, and the per-extension Permissions section in Settings.
 3. **Tooling.** Scaffolding template, sandboxed `dev`, permission checks in `check`, docs. Port one in-repo extension (for example `seed-bible-refresh-example-extension` or `locations-extension`) to the sandbox SDK as a working reference and to prove the API is enough for a real extension.
 4. **Stronger isolation (optional).** Move frames to a dedicated cross-site origin, one subdomain per extension: separate process, real per-extension storage, and an `Origin` header third-party APIs recognize (an opaque-origin frame sends `Origin: null`, which some APIs' CORS settings reject). Also: optional permissions at runtime, and extension-to-extension calls brokered by the host (today's `dependencies` share live objects, which can't cross a frame boundary; for sandboxed extensions they'd become declared, message-based exports).

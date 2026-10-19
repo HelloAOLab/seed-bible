@@ -428,6 +428,10 @@ export default defineConfig(({ isSsrBuild }) => ({
         __dirname,
         "packages/seed-bible/seed-bible/i18n/index.tsx"
       ),
+      "seed-bible/sandbox": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/sandbox/index.tsx"
+      ),
       "seed-bible": path.resolve(
         __dirname,
         "packages/seed-bible/seed-bible/app/api.tsx"

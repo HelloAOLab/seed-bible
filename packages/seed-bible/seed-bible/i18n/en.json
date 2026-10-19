@@ -1139,5 +1139,17 @@
   "feed-all-read": "{{names}} all read {{reference}}",
   "feed-empty": "No activity in this time frame yet.",
   "feed-empty-notes": "No notes in this time frame yet.",
-  "feed-empty-reading": "No reading in this time frame yet."
+  "feed-empty-reading": "No reading in this time frame yet.",
+  "extension-consent-title": "Install {{name}}?",
+  "extension-consent-update-title": "{{name}} wants new permissions",
+  "extension-consent-source": "From {{host}} · not reviewed by Seed Bible",
+  "extension-consent-intro": "It will be able to:",
+  "extension-consent-update-intro": "Its new version also wants to:",
+  "extension-consent-nothing": "It won't have access to any of your information.",
+  "extension-consent-sandbox-note": "It runs separately from Seed Bible, so it can't see your account or anything not listed here.",
+  "extension-consent-allow": "Allow",
+  "extension-permission-reading-position": "See which passage you're reading",
+  "extension-permission-reading-selection": "See which verses you select",
+  "extension-permission-reading-navigate": "Open passages",
+  "extension-permission-network": "Connect to {{host}}"
 }

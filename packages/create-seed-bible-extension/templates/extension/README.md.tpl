@@ -18,10 +18,12 @@ A Seed Bible extension, scaffolded by `create-seed-bible-extension`.
 - `npm run build` — validate and package this extension's source, ready to
   drop into a `seed-bible` checkout's `packages/<name>/` (the fully-supported
   distribution path).
-- `npm run build:standalone` — additionally produce a self-contained ES
-  module for hosting outside the seed-bible monorepo. **Experimental** — see
-  the README generated alongside it (`dist/standalone/README.md`) for what
-  that means in practice.
+- `npm run build:standalone` — additionally produce a single-file ES module
+  for hosting outside the seed-bible monorepo. Seed Bible runs an extension
+  loaded this way in a sandbox, behind permissions the user approves, so it
+  must be written with `defineExtension()` from `seed-bible/sandbox` rather
+  than `registerExtension()` — see the README generated alongside it
+  (`dist/standalone/README.md`).
 - `npm run publish` — build standalone, upload the bundle, and upload a small
   manifest (an `ExtensionSet`) describing it, then print that manifest's URL.
   Anyone can make this extension discoverable — listed, not yet installed —

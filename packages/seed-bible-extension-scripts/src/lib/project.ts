@@ -13,6 +13,12 @@ export interface ExtensionProjectMeta {
   translations: Record<string, ExtensionTranslation>;
   dependencies?: string[];
   autoinstall?: boolean;
+  /** Sandboxed extensions: this version, recorded with the user's grant. */
+  version?: string;
+  /** Sandboxed extensions: the permissions the user is asked to grant. */
+  permissions?: string[];
+  /** Sandboxed extensions: every host its frames may contact. */
+  network?: string[];
 }
 
 export interface ExtensionProjectInfo {
@@ -61,6 +67,11 @@ export async function loadExtensionProjectInfo(
   const autoinstall = (meta as { autoinstall?: unknown }).autoinstall as
     | boolean
     | undefined;
+  const { version, permissions, network } = meta as {
+    version?: string;
+    permissions?: string[];
+    network?: string[];
+  };
 
   return {
     root,
@@ -70,6 +81,9 @@ export async function loadExtensionProjectInfo(
       translations: translations as Record<string, ExtensionTranslation>,
       dependencies,
       autoinstall,
+      version,
+      permissions,
+      network,
     },
   };
 }

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { loadExtensionProjectInfo } from "../lib/project.js";
@@ -28,6 +29,11 @@ interface ExtensionSetManifest {
       translations: Record<string, { title: string; description: string }>;
       dependencies?: string[];
       autoinstall?: boolean;
+      version?: string;
+      permissions?: string[];
+      network?: string[];
+      /** The bundle's hash, so Seed Bible runs exactly the uploaded code. */
+      integrity?: string;
     };
   }>;
 }
@@ -44,6 +50,10 @@ export async function runPublish(
 
   const info = await loadExtensionProjectInfo(root);
 
+  const bundlePath = path.join(root, "dist", "standalone", "index.js");
+  const bundle = await readFile(bundlePath);
+  const integrity = `sha384-${createHash("sha384").update(bundle).digest("base64")}`;
+
   const manifest: ExtensionSetManifest = {
     id: info.extensionId,
     extensions: [
@@ -51,7 +61,7 @@ export async function runPublish(
         // Filled in with the real, uploaded bundle URL below once it's known
         // — placeholder here so the manifest shape is visible in --dry-run.
         url: "",
-        meta: info.meta,
+        meta: { ...info.meta, integrity },
       },
     ],
   };
@@ -66,9 +76,6 @@ export async function runPublish(
 
   const client = createClient();
   const recordKey = await resolveRecordKey(client);
-
-  const bundlePath = path.join(root, "dist", "standalone", "index.js");
-  const bundle = await readFile(bundlePath);
 
   console.log("[publish] Uploading standalone bundle...");
   const { fileUrl: bundleUrl } = await uploadFile(

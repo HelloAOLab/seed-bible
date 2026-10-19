@@ -5,7 +5,6 @@ import preact from "@preact/preset-vite";
 import { loadExtensionProjectInfo } from "../lib/project.js";
 import { runCheck } from "./check.js";
 import { runTest } from "./test.js";
-import { STANDALONE_BUILD_ALIASES } from "../build-shims/aliasMap.js";
 
 export interface BuildOptions {
   standalone: boolean;
@@ -59,32 +58,34 @@ To use it:
 
 const STANDALONE_README = (
   extensionId: string
-) => `# ${extensionId} — standalone build (experimental)
+) => `# ${extensionId} — sandboxed build
 
-This is a self-contained ES module (\`index.js\`) for hosting outside the
-seed-bible monorepo and installing into a *running* Seed Bible instance via:
+This is a single, self-contained ES module (\`index.js\`) for distributing
+${extensionId} outside the seed-bible monorepo. Seed Bible runs every
+extension it loads from a URL in a sandboxed iframe: the extension can't see
+the page, the user's account, or anything the user hasn't granted it.
 
-\`\`\`ts
-seedBibleState.extensions.loadExtension({
-  meta: { id: "${extensionId}", translations: { en: { title: "...", description: "..." } } },
-  url: "https://wherever-you-host-this/index.js",
+For that, the module's default export must come from
+\`defineExtension()\` in \`seed-bible/sandbox\`, not \`registerExtension()\`:
+
+\`\`\`tsx
+import { defineExtension } from "seed-bible/sandbox";
+
+export default defineExtension({
+  main: async (sb) => { /* register tools with sb.tools */ },
+  views: { /* the UI of each pane it opens */ },
 });
 \`\`\`
 
-**This path is experimental / best-effort**, unlike the monorepo-bundled
-distribution (see \`build\`'s other output, \`dist/monorepo-package/\`), which
-is the primary, fully-supported way to ship an extension. Two things to know:
+Everything it imports, Preact included, is bundled in, since it runs in its
+own frame. Styles must come from the bundle itself (inline styles, or CSS
+imported with \`?inline\` and added to the document): the frame can't load a
+separate stylesheet.
 
-- It only works when loaded into a real, running Seed Bible page — one that
-  exposes \`window.__seedBibleExtensionRuntime\` (every current build of the
-  app does). Loading it anywhere else throws a clear error immediately rather
-  than failing silently.
-- \`seed-bible/components\` doesn't work as a normal static import here (the
-  host only exposes it as an async loader, to avoid forcing its whole UI
-  surface into eager load). Instead of
-  \`import { MaterialIcon } from "seed-bible/components"\`, call
-  \`const { MaterialIcon } = await loadSeedBibleComponents();\` (also
-  importable from \`"seed-bible/components"\` in this build).
+Declare in \`extension.json\` the \`permissions\` it needs and every host it
+contacts under \`network\`; the user approves them when installing.
+\`seed-bible-extension-scripts publish\` uploads this file and pins its hash
+as the manifest's \`integrity\`.
 `;
 
 async function buildMonorepoReadyOutput(
@@ -109,14 +110,14 @@ async function buildStandaloneBundle(
   const entry = path.join(root, "index.ts");
   const outDir = path.join(root, "dist", "standalone");
 
+  // Everything is bundled into one file: the sandbox loads exactly one
+  // module, from a `blob:` URL, so a second chunk could never be fetched.
   await viteBuild({
     root,
     configFile: false,
     logLevel: "info",
     plugins: [preact()],
-    resolve: {
-      alias: STANDALONE_BUILD_ALIASES,
-    },
+    define: { "process.env.NODE_ENV": JSON.stringify("production") },
     build: {
       outDir,
       emptyOutDir: true,
@@ -124,6 +125,9 @@ async function buildStandaloneBundle(
         entry,
         formats: ["es"],
         fileName: () => "index.js",
+      },
+      rollupOptions: {
+        output: { codeSplitting: false },
       },
     },
   });
@@ -133,7 +137,7 @@ async function buildStandaloneBundle(
     STANDALONE_README(extensionId),
     "utf-8"
   );
-  console.log(`[build] Wrote experimental standalone bundle to ${outDir}`);
+  console.log(`[build] Wrote sandboxed bundle to ${outDir}`);
 }
 
 export async function runBuild(

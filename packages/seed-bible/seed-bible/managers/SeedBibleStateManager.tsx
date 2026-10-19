@@ -22,6 +22,7 @@ import {
 } from "../managers/TodayManager";
 import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
+import { openExtensionConsentModal } from "../components/ExtensionConsentModal/ExtensionConsentModal";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
 import {
   SharedPageLoadFailedModalContent,
@@ -956,6 +957,8 @@ export function createSeedBibleState(
   );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
+    requestSandboxConsent: (request) =>
+      openExtensionConsentModal(modals, request),
   });
   const extensionSettings = createExtensionSettingsManager(
     os,
