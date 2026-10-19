@@ -2154,11 +2154,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     // it invalidates style for every element in the chapter. Most measures
     // produce the value we already wrote (a re-point, a child mutation, an
     // observer's initial callback), so only write on a real change.
+    // `--sb-reader-bottom-chrome` is the same without the gap, for things that
+    // sit right against the toolbar (the off-screen highlight notices).
     const write = (chromePx: number) => {
       const next = `${chromePx + BOTTOM_CHROME_GAP_PX}px`;
       if (next === lastValue) return;
       lastValue = next;
       root.style.setProperty("--sb-reader-bottom-inset", next);
+      root.style.setProperty("--sb-reader-bottom-chrome", `${chromePx}px`);
     };
 
     // A playing passage's note sheet rides on top of the floating nav, outside
@@ -2249,6 +2252,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       mutationObserver?.disconnect();
       // Drop the runtime override so the CSS fallback in base.css takes over.
       root.style.removeProperty("--sb-reader-bottom-inset");
+      root.style.removeProperty("--sb-reader-bottom-chrome");
     };
   }, []);
 

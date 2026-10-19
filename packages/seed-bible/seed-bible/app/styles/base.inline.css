@@ -191,6 +191,10 @@
    * for the tallest case (mobile toolbar + floating nav). */
   --sb-reader-bottom-inset: 10.375rem;
 
+  /* The same without the 3rem gap: just what the bottom chrome covers, for
+   * things that sit right against it (the off-screen highlight notices). */
+  --sb-reader-bottom-chrome: 7.375rem;
+
   /* Full-width floating chapter-nav bar. Composed from theme-injected vars so
    * the bar, arrow circles, and peach play button adapt across themes. */
   --sb-reader-floating-nav-background: color-mix(

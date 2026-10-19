@@ -630,6 +630,12 @@ export interface BibleReadingSession {
    * undone locally.
    */
   removeSharedDecoration: (decorationId: string) => void;
+
+  /**
+   * The connectionId of the participant who added a decoration, or null when
+   * the decoration isn't part of this session.
+   */
+  decorationOwner: (decorationId: string) => string | null;
   dispose: () => void;
 
   localSessionId: ReadonlySignal<string>;
@@ -1812,6 +1818,8 @@ async function createBibleReadingSession(
     participantPositions,
     isSynced,
     removeSharedDecoration,
+    decorationOwner: (decorationId) =>
+      decorationOwners.get(decorationId) ?? null,
     dispose,
     isHost,
     localSessionId,
