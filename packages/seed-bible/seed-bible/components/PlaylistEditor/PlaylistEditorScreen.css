@@ -1,0 +1,246 @@
+/* The fullscreen playlist editor: a header, then three columns that fill the
+   pane. Each column scrolls on its own so a long step list and a long note
+   never fight over the page. Under 900px the columns stack and the page
+   scrolls as one. */
+.sb-playlist-editor {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+}
+
+.sb-playlist-editor-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--sb-divider-color);
+}
+
+.sb-playlist-editor-back {
+  padding: 0.5rem;
+}
+
+.sb-playlist-editor-heading {
+  flex: 1;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sb-playlist-editor-title {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 2px 0;
+}
+
+.sb-playlist-editor-title:focus {
+  outline: none;
+  border-bottom-color: var(--sb-primary-color);
+}
+
+.sb-playlist-editor-summary {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-playlist-editor-columns {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr) minmax(
+      14rem,
+      18rem
+    );
+  gap: 8px;
+  padding: 8px;
+}
+
+.sb-playlist-editor-steps,
+.sb-playlist-editor-main,
+.sb-playlist-editor-settings {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
+}
+
+.sb-playlist-editor-main {
+  padding: 20px 24px;
+}
+
+.sb-playlist-editor-step,
+.sb-playlist-editor-details {
+  max-width: 40rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* The step editor's own section chrome is for the side pane; here the column
+   is the chrome. */
+.sb-playlist-editor-step .sb-playlist-item-input {
+  border: none;
+  padding: 0;
+}
+
+.sb-playlist-editor-step .sb-playlist-item-editor {
+  padding-top: 0;
+}
+
+.sb-playlist-editor-column-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-playlist-editor-column-count {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sb-playlist-editor-details-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-playlist-editor-details-row:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-playlist-editor-details-row--selected {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+  color: var(--sb-primary-color);
+}
+
+.sb-playlist-editor-steps .sb-playlist-step-list {
+  margin-bottom: 12px;
+}
+
+.sb-playlist-editor-eyebrow {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sb-primary-color);
+}
+
+.sb-playlist-editor-details-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.sb-playlist-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-playlist-editor-field-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.sb-playlist-editor-facts {
+  margin: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sb-playlist-editor-facts dt {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-playlist-editor-facts dd {
+  margin: 2px 0 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-playlist-editor-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-error-color, #d64545);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-playlist-editor-delete:hover {
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 90%
+  );
+}
+
+.sb-playlist-editor-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+@media (max-width: 900px) {
+  .sb-playlist-editor {
+    height: auto;
+    min-height: 100%;
+  }
+
+  .sb-playlist-editor-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sb-playlist-editor-steps,
+  .sb-playlist-editor-main,
+  .sb-playlist-editor-settings {
+    overflow: visible;
+  }
+}

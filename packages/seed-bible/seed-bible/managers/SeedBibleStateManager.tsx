@@ -35,6 +35,11 @@ import {
   type SharedPageKind,
 } from "../managers/SharedPagePath";
 import type { PlaylistPageSeed } from "../managers/PlaylistManager";
+import { requestCancelPlaylistEditor } from "../components/CreatePlaylistForm/CreatePlaylistForm";
+import {
+  PlaylistEditorScreen,
+  PlaylistEditorScreenTitle,
+} from "../components/PlaylistEditor/PlaylistEditorScreen";
 import {
   averageSessionMinutes,
   type ReadingPlanPageSeed,
@@ -3592,6 +3597,45 @@ export function createSeedBibleState(
     );
     if (!paneOpen && playlists.view.peek()) {
       playlists.view.value = null;
+    }
+  });
+
+  // The fullscreen playlist editor, mirrored from the playlist manager's
+  // editing state: open while a playlist is being edited with the fullscreen
+  // placement, closed when the edit ends. Same reconciling pair as Discover
+  // above. A screen that takes its place mid-edit (Today, say) moves the
+  // draft into the Discover pane rather than dropping it.
+  const PLAYLIST_EDITOR_PANE_ID = "playlist-editor-pane";
+  effect(() => {
+    if (
+      playlists.editingPlaylist.value &&
+      playlists.editorPlacement.value === "fullscreen"
+    ) {
+      panes.openPane({
+        id: PLAYLIST_EDITOR_PANE_ID,
+        placement: "fullscreen",
+        showHeader: false,
+        title: () => <PlaylistEditorScreenTitle playlists={playlists} />,
+        onClose: (reason) => {
+          if (reason === "displaced") {
+            playlists.moveEditorToPane();
+          } else if (reason === "user") {
+            requestCancelPlaylistEditor(playlists, modals);
+          }
+        },
+        component: () => (
+          <PlaylistEditorScreen
+            state={state}
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+            chats={chats}
+            openChatPanel={sidebar.openChatPanel}
+          />
+        ),
+      });
+    } else {
+      panes.closePane(PLAYLIST_EDITOR_PANE_ID); // no-op when already closed
     }
   });
 

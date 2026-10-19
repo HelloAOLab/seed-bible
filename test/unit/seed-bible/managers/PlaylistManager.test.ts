@@ -432,6 +432,7 @@ describe("createPlaylistManager", () => {
   >;
   /** The fake `ChatsManager`'s `addContext`/`removeContext` spies from the most recent `makeManager()` call. */
   /** The `ModalManager` from the most recent `makeManager()` call. */
+  let lastIsMobile: Signal<boolean>;
   let lastModals: ReturnType<typeof createModalManager>;
   let lastI18n: ReturnType<typeof createI18nManager>;
   let lastChatsAddContext: Mock;
@@ -472,6 +473,7 @@ describe("createPlaylistManager", () => {
       initialHref ? { initialHref } : undefined
     );
     const isMobile = signal(false);
+    lastIsMobile = isMobile;
     const modals = createModalManager();
     lastModals = modals;
     const i18n = createI18nManager(navigation, ["en"]);
@@ -1103,9 +1105,41 @@ describe("createPlaylistManager", () => {
     expect(editing.description).toBeNull();
     expect(editing.items).toEqual([]);
     expect(editing.heroImageUrl).toBeNull();
-    expect(manager.view.value).toBe("create_playlist");
+    // A wide screen gets the fullscreen editor, so Discover's view is left alone.
+    expect(manager.editorPlacement.value).toBe("fullscreen");
+    expect(manager.view.value).not.toBe("create_playlist");
     // Creating a draft does not persist anything yet.
     expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("createNewPlaylist opens the editor inside the Discover pane on a phone", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    lastIsMobile.value = true;
+
+    await manager.createNewPlaylist();
+
+    expect(manager.editorPlacement.value).toBe("pane");
+    expect(manager.view.value).toBe("create_playlist");
+  });
+
+  it("moveEditorToPane keeps the draft and carries it into the Discover pane", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+    expect(manager.editorPlacement.value).toBe("fullscreen");
+    const draft = manager.editingPlaylist.value;
+
+    manager.moveEditorToPane();
+
+    expect(manager.editorPlacement.value).toBe("pane");
+    expect(manager.view.value).toBe("create_playlist");
+    expect(manager.editingPlaylist.value).toBe(draft);
+
+    // Nothing to move when no playlist is being edited.
+    manager.cancelEditingPlaylist();
+    manager.moveEditorToPane();
+    expect(manager.editingPlaylist.value).toBeNull();
   });
 
   it("createNewPlaylist prompts a signed-out user to log in and uses the returned id", async () => {
@@ -1118,7 +1152,7 @@ describe("createPlaylistManager", () => {
     expect(loginMock).toHaveBeenCalled();
     expect(manager.editingPlaylist.value!.recordName).toBe("user-2");
     expect(manager.editingPlaylist.value!.authorUserId).toBe("user-2");
-    expect(manager.view.value).toBe("create_playlist");
+    expect(manager.editorPlacement.value).toBe("fullscreen");
   });
 
   it("createNewPlaylist is a no-op when login is cancelled", async () => {

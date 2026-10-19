@@ -1091,6 +1091,19 @@ export function createPlaylistManager(
 
   /** The playlist currently being edited/created in the pane, or null. */
   const editingPlaylist = signal<Playlist | null>(null);
+  /**
+   * Where the editor shows: inside the Discover side pane, or as its own
+   * fullscreen screen with the steps, the open step and its settings side by
+   * side. Decided when editing starts: the screen needs the width, so phones
+   * get the pane.
+   */
+  const editorPlacement = signal<"pane" | "fullscreen">("pane");
+  const openEditor = () => {
+    editorPlacement.value = isMobile.peek() ? "pane" : "fullscreen";
+    if (editorPlacement.value === "pane") {
+      view.value = "create_playlist";
+    }
+  };
   /** Copy of the draft when the editor opened, for unsaved-change detection. */
   const editingPlaylistBaseline = signal<Playlist | null>(null);
 
@@ -1878,7 +1891,7 @@ export function createPlaylistManager(
     linkPreviews.cancel();
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(draft);
-    view.value = "create_playlist";
+    openEditor();
     draft.items.forEach(requestEditingItemPreview);
 
     return editingPlaylist;
@@ -1894,10 +1907,22 @@ export function createPlaylistManager(
     const draft = clonePlaylist(playlist);
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(playlist);
-    view.value = "create_playlist";
+    openEditor();
     // Links saved before previews existed, or whose preview missed the save
     // cutoff, get one now so the next save stores it.
     draft.items.forEach(requestEditingItemPreview);
+  };
+
+  /**
+   * Moves a fullscreen editor into the Discover side pane, keeping the draft:
+   * for when another fullscreen screen takes the editor's place mid-edit.
+   */
+  const moveEditorToPane = (): void => {
+    if (!editingPlaylist.peek() || editorPlacement.peek() === "pane") {
+      return;
+    }
+    editorPlacement.value = "pane";
+    view.value = "create_playlist";
   };
 
   /**
@@ -3090,7 +3115,9 @@ export function createPlaylistManager(
   // as soon as the user leaves the editor (save or cancel), so the tools
   // aren't offered outside of an actual editing session.
   effect(() => {
-    if (!editingPlaylist.value || !isDiscoverOpen.value) {
+    const editorOpen =
+      editorPlacement.value === "fullscreen" || isDiscoverOpen.value;
+    if (!editingPlaylist.value || !editorOpen) {
       chats.removeContext(PLAYLIST_EDITOR_CHAT_CONTEXT_ID);
       return;
     }
@@ -3144,6 +3171,8 @@ export function createPlaylistManager(
     playFromHistory,
     questionResponses,
     saveQuestionResponse,
+    editorPlacement,
+    moveEditorToPane,
     removePlayHistory,
     getPlaylistUrl,
     playlistPage,
