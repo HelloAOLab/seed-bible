@@ -350,6 +350,33 @@ describe("ScriptureItemInput", () => {
       expect(handleRef.current?.isDirty()).toBe(true);
     });
 
+    it("isDirty is false while the reference matches initialValue, and true once it differs", () => {
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            ref={handleRef}
+            books={BOOKS}
+            onAdd={vi.fn()}
+            initialValue="Genesis 1"
+          />,
+          container
+        );
+      });
+
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => {
+        setValue(input(), "Genesis 2");
+      });
+      expect(handleRef.current?.isDirty()).toBe(true);
+
+      act(() => {
+        setValue(input(), " Genesis 1 ");
+      });
+      expect(handleRef.current?.isDirty()).toBe(false);
+    });
+
     it("commit() adds the highlighted reference and returns true", () => {
       const onAdd = vi.fn();
       const handleRef = createRef<ScriptureItemInputHandle>();

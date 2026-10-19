@@ -25,8 +25,10 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
 });
 
 interface StubPlaylistItemInputProps {
+  id?: string;
   editItem?: PlaylistItemData;
   editScriptureText?: string;
+  loadChapter?: unknown;
   onAdd: (item: PlaylistItemData) => void;
   onUpdate?: (item: PlaylistItemData) => void;
   onCancelEdit?: () => void;
@@ -63,7 +65,16 @@ vi.mock(
         commit: () => stubItemInputControl.commitResult,
       }));
       return (
-        <div className="stub-playlist-item-input">
+        <div
+          id={props.id}
+          className={
+            props.editItem
+              ? "stub-playlist-item-input stub-playlist-item-input--edit"
+              : "stub-playlist-item-input stub-playlist-item-input--add"
+          }
+          data-edit-type={props.editItem?.type}
+          data-has-load-chapter={props.loadChapter ? "true" : "false"}
+        >
           <span className="stub-edit-scripture-text">
             {props.editScriptureText ?? ""}
           </span>
@@ -750,83 +761,229 @@ describe("CreatePlaylistForm", () => {
     ).toBe("Genesis 2");
   });
 
-  describe("inline item preview", () => {
+  describe("editing an item in place", () => {
     function renderWithItems(items: PlaylistItemData[]) {
-      const { playlists } = createMockPlaylists(createPlaylist({ items }));
+      const result = createMockPlaylists(createPlaylist({ items }));
       const tab = createMockTab([book("GEN", "Genesis")]);
       (
         tab.readingState as unknown as { translationId: unknown }
       ).translationId = signal("BSB");
+      const modals = createModalManager();
       const getTranslationBookChapter = vi.fn(
-        async (
-          _translationId: string,
-          _bookId: string,
-          chapter: string | number
-        ) =>
-          ({
-            chapter: {
-              number: chapter,
-              footnotes: [],
-              content: [
-                { type: "verse", number: 1, content: [`Verse of ${chapter}`] },
-              ],
-            },
-          }) as unknown as TranslationBookChapter
+        async () => ({}) as unknown as TranslationBookChapter
       );
       act(() => {
         render(
           <CreatePlaylistForm
-            playlists={playlists}
+            playlists={result.playlists}
             tabs={createMockTabs(tab)}
-            modals={createModalManager()}
+            modals={modals}
             bibleData={{ getTranslationBookChapter }}
           />,
           container
         );
       });
-      return { getTranslationBookChapter };
+      return { ...result, modals };
     }
 
-    const click = (el: Element | undefined) =>
+    const click = (el: Element | undefined | null) =>
       act(() => {
         el?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
-    const previews = () =>
-      container.querySelectorAll(".sb-item-inline-preview");
+    const rows = () => container.querySelectorAll(".sb-discover-item--row");
+    const rowButtons = () =>
+      container.querySelectorAll(".sb-discover-item-button");
+    const editors = () =>
+      container.querySelectorAll(".stub-playlist-item-input--edit");
+    const editorIn = (row: Element | undefined) =>
+      row?.querySelector(".stub-playlist-item-input--edit") ?? null;
+    const caret = (row: Element | undefined) =>
+      row?.querySelector(".sb-discover-item-caret")?.textContent;
 
-    it("shows the scripture beneath a tapped item in the reader's translation", async () => {
-      const { getTranslationBookChapter } = renderWithItems([
-        verseItem("GEN", 1),
-      ]);
-      click(container.querySelectorAll(".sb-discover-item-button")[0]);
-
-      const row = container.querySelectorAll(".sb-discover-item--row")[0];
-      await vi.waitFor(() =>
-        expect(
-          row?.querySelector(".sb-item-inline-preview")?.textContent
-        ).toContain("Verse of 1")
-      );
-      expect(getTranslationBookChapter).toHaveBeenCalledWith("BSB", "GEN", 1);
-    });
-
-    it("collapses on a second tap and keeps only one item open", () => {
+    it("opens the editor inside the tapped row, with the passage loader for scripture", () => {
       renderWithItems([
         verseItem("GEN", 1),
         { type: "link", title: "Notes", url: "https://example.com" },
       ]);
-      const buttons = container.querySelectorAll(".sb-discover-item-button");
 
-      click(buttons[0]);
-      expect(previews()).toHaveLength(1);
-      expect(buttons[0]?.getAttribute("aria-expanded")).toBe("true");
+      // Closed rows show a down caret and no editor.
+      expect(editors()).toHaveLength(0);
+      expect(caret(rows()[0])).toBe("expand_more");
 
-      click(buttons[1]);
-      expect(previews()).toHaveLength(1);
-      expect(previews()[0]?.textContent).toContain("https://example.com");
-      expect(buttons[0]?.getAttribute("aria-expanded")).toBe("false");
+      click(rowButtons()[0]);
 
-      click(buttons[1]);
-      expect(previews()).toHaveLength(0);
+      const editor = editorIn(rows()[0]);
+      expect(editor).not.toBeNull();
+      expect(editor?.getAttribute("data-edit-type")).toBe("bible-verse");
+      expect(editor?.getAttribute("data-has-load-chapter")).toBe("true");
+      expect(caret(rows()[0])).toBe("expand_less");
+      expect(rowButtons()[0]?.getAttribute("aria-expanded")).toBe("true");
+      expect(rowButtons()[0]?.getAttribute("aria-controls")).toBe(editor?.id);
+      // The "Add item" box at the bottom stays where it is.
+      expect(
+        container.querySelector(".stub-playlist-item-input--add")
+      ).not.toBeNull();
+    });
+
+    it("keeps one item open at a time and closes on a second tap", () => {
+      renderWithItems([
+        verseItem("GEN", 1),
+        { type: "link", title: "Notes", url: "https://example.com" },
+      ]);
+
+      click(rowButtons()[0]);
+      click(rowButtons()[1]);
+
+      expect(editors()).toHaveLength(1);
+      expect(editorIn(rows()[1])).not.toBeNull();
+      expect(editors()[0]?.getAttribute("data-edit-type")).toBe("link");
+      expect(rowButtons()[0]?.getAttribute("aria-expanded")).toBe("false");
+      expect(caret(rows()[0])).toBe("expand_more");
+
+      click(rowButtons()[1]);
+      expect(editors()).toHaveLength(0);
+      expect(caret(rows()[1])).toBe("expand_more");
+    });
+
+    /** Renders the open unsaved-edit prompt into a side container. */
+    function renderUnsavedEditPrompt(
+      modals: ReturnType<typeof createModalManager>
+    ): HTMLDivElement {
+      const modal = modals.modals.value.find(
+        (m) => m.id === "playlist-unsaved-item-confirm"
+      );
+      expect(modal).toBeDefined();
+      const modalContainer = document.createElement("div");
+      document.body.appendChild(modalContainer);
+      act(() => {
+        render(
+          modal!.content({
+            t: (key, options) => (options?.defaultValue as string) ?? key,
+          }),
+          modalContainer
+        );
+      });
+      return modalContainer;
+    }
+
+    const promptButton = (modalContainer: HTMLDivElement, label: string) =>
+      Array.from(modalContainer.querySelectorAll("button")).find(
+        (b) => b.textContent === label
+      );
+
+    it("switches items without asking when the open item has no unsaved edits", () => {
+      const { modals } = renderWithItems([
+        verseItem("GEN", 1),
+        verseItem("GEN", 2),
+      ]);
+      stubItemInputControl.isDirty = false;
+
+      click(rowButtons()[0]);
+      click(rowButtons()[1]);
+
+      expect(modals.modals.value).toHaveLength(0);
+      expect(editorIn(rows()[1])).not.toBeNull();
+    });
+
+    it("asks before switching away from an item with unsaved edits; 'Discard changes' switches", () => {
+      const { modals, updateEditingPlaylistItem } = renderWithItems([
+        verseItem("GEN", 1),
+        verseItem("GEN", 2),
+      ]);
+      click(rowButtons()[0]);
+      stubItemInputControl.isDirty = true;
+
+      click(rowButtons()[1]);
+
+      // Still on the first item until the prompt is answered.
+      expect(editorIn(rows()[0])).not.toBeNull();
+      const prompt = renderUnsavedEditPrompt(modals);
+      expect(prompt.textContent).toContain("haven't saved those changes");
+
+      click(promptButton(prompt, "Discard changes"));
+
+      expect(updateEditingPlaylistItem).not.toHaveBeenCalled();
+      expect(modals.modals.value).toHaveLength(0);
+      expect(editorIn(rows()[1])).not.toBeNull();
+      prompt.remove();
+    });
+
+    it("'Back' on the prompt keeps the item open and its edits in place", () => {
+      const { modals } = renderWithItems([
+        verseItem("GEN", 1),
+        verseItem("GEN", 2),
+      ]);
+      click(rowButtons()[0]);
+      stubItemInputControl.isDirty = true;
+      click(rowButtons()[1]);
+      const prompt = renderUnsavedEditPrompt(modals);
+
+      click(promptButton(prompt, "Back"));
+
+      expect(modals.modals.value).toHaveLength(0);
+      expect(editorIn(rows()[0])).not.toBeNull();
+      expect(editors()).toHaveLength(1);
+      prompt.remove();
+    });
+
+    it("'Save changes' on the prompt saves the edit, then switches", async () => {
+      const { modals } = renderWithItems([
+        verseItem("GEN", 1),
+        verseItem("GEN", 2),
+      ]);
+      click(rowButtons()[0]);
+      stubItemInputControl.isDirty = true;
+      stubItemInputControl.commitResult = true;
+      click(rowButtons()[1]);
+      const prompt = renderUnsavedEditPrompt(modals);
+
+      await act(async () => {
+        promptButton(prompt, "Save changes")?.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+        await Promise.resolve();
+      });
+
+      expect(editorIn(rows()[1])).not.toBeNull();
+      expect(editors()).toHaveLength(1);
+      prompt.remove();
+    });
+
+    it("'Save changes' leaves the item open when the edit doesn't commit", async () => {
+      const { modals } = renderWithItems([
+        verseItem("GEN", 1),
+        verseItem("GEN", 2),
+      ]);
+      click(rowButtons()[0]);
+      stubItemInputControl.isDirty = true;
+      stubItemInputControl.commitResult = false;
+      click(rowButtons()[1]);
+      const prompt = renderUnsavedEditPrompt(modals);
+
+      await act(async () => {
+        promptButton(prompt, "Save changes")?.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+        await Promise.resolve();
+      });
+
+      expect(editorIn(rows()[0])).not.toBeNull();
+      expect(editorIn(rows()[1])).toBeNull();
+      prompt.remove();
+    });
+
+    it("asks before closing an item with unsaved edits by tapping its row again", () => {
+      const { modals } = renderWithItems([verseItem("GEN", 1)]);
+      click(rowButtons()[0]);
+      stubItemInputControl.isDirty = true;
+
+      click(rowButtons()[0]);
+
+      expect(editors()).toHaveLength(1);
+      const prompt = renderUnsavedEditPrompt(modals);
+      click(promptButton(prompt, "Discard changes"));
+      expect(editors()).toHaveLength(0);
+      prompt.remove();
     });
   });
 
@@ -1349,13 +1506,12 @@ describe("CreatePlaylistForm", () => {
       expect(modal).not.toBeUndefined();
     });
 
-    it("does not warn about a dirty draft while mid-edit of an existing item", () => {
+    it("asks before saving when an open item has unsaved edits, worded for edits", () => {
       const { playlists, saveEditingPlaylist } = createMockPlaylists(
         createPlaylist({ items: [verseItem("GEN", 1)] })
       );
       const tabs = createMockTabs();
       const modals = createModalManager();
-      stubItemInputControl.isDirty = true;
 
       act(() => {
         render(
@@ -1373,6 +1529,7 @@ describe("CreatePlaylistForm", () => {
           .querySelector(".sb-discover-item-button")
           ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
+      stubItemInputControl.isDirty = true;
 
       const saveButton = container.querySelector(
         ".sb-settings-save-button"
@@ -1381,8 +1538,33 @@ describe("CreatePlaylistForm", () => {
         saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
 
-      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
-      expect(modals.modals.value).toHaveLength(0);
+      expect(saveEditingPlaylist).not.toHaveBeenCalled();
+      const modal = modals.modals.value.find(
+        (m) => m.id === "playlist-unsaved-item-confirm"
+      );
+      expect(modal?.title).toEqual({
+        key: "unsaved-item-edit-confirm-title",
+        defaultValue: "Unsaved item changes",
+      });
+      const modalContainer = document.createElement("div");
+      document.body.appendChild(modalContainer);
+      act(() => {
+        render(
+          modal!.content({
+            t: (key, options) => (options?.defaultValue as string) ?? key,
+          }),
+          modalContainer
+        );
+      });
+      expect(modalContainer.textContent).toContain(
+        "haven't saved those changes"
+      );
+      expect(
+        Array.from(modalContainer.querySelectorAll("button")).map(
+          (b) => b.textContent
+        )
+      ).toEqual(["Back", "Discard and save", "Keep changes and save"]);
+      modalContainer.remove();
     });
 
     /** Opens the confirm dialog and renders its content into a side container. */

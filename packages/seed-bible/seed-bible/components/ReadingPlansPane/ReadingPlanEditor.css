@@ -381,8 +381,13 @@
   border-radius: 10px;
 }
 
+.sb-rp-reading-item-open {
+  border-color: var(--rp-accent);
+}
+
 /* The item body: a leading type icon, the label with its summary, and a
-   chevron. Tapping it expands the reading's preview beneath the row. */
+   chevron. Tapping it opens the reading's editor (which for scripture also
+   shows the passage) beneath the row. */
 .sb-rp-reading-open {
   display: flex;
   align-items: center;

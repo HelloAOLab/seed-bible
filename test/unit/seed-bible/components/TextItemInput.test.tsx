@@ -106,6 +106,33 @@ describe("TextItemInput", () => {
       expect(handleRef.current?.isDirty()).toBe(true);
     });
 
+    it("isDirty is false while an edited item is unchanged, and true once its title changes", async () => {
+      const handleRef = createRef<TextItemInputHandle>();
+      await act(async () => {
+        render(
+          <TextItemInput
+            ref={handleRef}
+            onAdd={vi.fn()}
+            initialItem={{ html: "<p>hello</p>", title: "Intro" }}
+          />,
+          container
+        );
+        await flushLazyLoad();
+      });
+      fakeEditor!.isEmpty = false;
+
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      const title = container.querySelector<HTMLInputElement>(
+        ".sb-playlist-add-title-input"
+      )!;
+      act(() => {
+        title.value = "Introduction";
+        title.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+
     it("commit() sanitizes and adds the editor's content, then returns true", async () => {
       const onAdd = vi.fn();
       const handleRef = createRef<TextItemInputHandle>();

@@ -1,5 +1,6 @@
 import "./ReadingPlanEditor.css";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
+import type { RefObject } from "preact";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -20,14 +21,16 @@ import {
   uploadPhotoToGallery,
   type UserGalleryManager,
 } from "../../managers/UserGalleryManager";
-import { PlaylistItemInput } from "../PlaylistItemInput/PlaylistItemInput";
-import { HeroImageField } from "../HeroImageField/HeroImageField";
 import {
-  PlaylistItemInlinePreview,
-  type ScriptureChapterLoader,
-} from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+  PlaylistItemInput,
+  type PlaylistItemInputHandle,
+} from "../PlaylistItemInput/PlaylistItemInput";
+import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
+import { HeroImageField } from "../HeroImageField/HeroImageField";
+import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { cadenceOptionLabel } from "./cadenceLabels";
 import { readingLabel } from "./readingLabel";
+import { playlistItemLabel } from "../playlistItemLabel";
 import { readingItemIcon, readingPreviewText } from "./readingPreview";
 
 interface ReadingPlanEditorProps {
@@ -92,6 +95,10 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
   const [submitError, setSubmitError] = useState(false);
   // Discarding a new plan erases it for good, so the button asks once first.
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+  // The reading open for editing inside its own row, across all sessions, or
+  // null when none is. Only one is open at a time.
+  const [openReadingId, setOpenReadingId] = useState<string | null>(null);
+  const editInputRef = useRef<PlaylistItemInputHandle>(null);
 
   // Reading `.value` during render subscribes the component to edits, including
   // ones made from the reader's verse toolbar.
@@ -119,10 +126,7 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
   const hasTitle = (draft.plan.title ?? "").trim().length > 0;
   const canSave = hasTitle && totalReadings > 0;
 
-  const handleSave = async () => {
-    if (saving || !canSave) {
-      return;
-    }
+  const save = async () => {
     setSaving(true);
     setSubmitError(false);
     try {
@@ -133,6 +137,32 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
       setSubmitError(true);
       setSaving(false);
     }
+  };
+
+  const handleSave = () => {
+    if (saving || !canSave) {
+      return;
+    }
+    // A reading open for editing with changes not yet saved would otherwise
+    // be silently dropped by saving the plan.
+    if (modals && openReadingId && editInputRef.current?.isDirty()) {
+      openUnsavedItemConfirm(modals, {
+        kind: "edit",
+        then: "save",
+        onDiscard: () => void save(),
+        onKeep: () => {
+          void (async () => {
+            if (await editInputRef.current?.commit()) {
+              await save();
+            }
+            // If the edit didn't commit (e.g. an unknown reference), the
+            // reading stays open with its inline error.
+          })();
+        },
+      });
+      return;
+    }
+    void save();
   };
 
   const handleDiscard = async () => {
@@ -275,6 +305,17 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
             onRemoveReading={(sessionIndex, readingId) =>
               readingPlans.removeReadingFromEditingPlan(sessionIndex, readingId)
             }
+            onUpdateReading={(sessionIndex, readingId, item) =>
+              readingPlans.updateReadingInEditingPlan(
+                sessionIndex,
+                readingId,
+                item
+              )
+            }
+            openReadingId={openReadingId}
+            onOpenReadingChange={setOpenReadingId}
+            editInputRef={editInputRef}
+            modals={modals}
           />
         </section>
 
@@ -346,7 +387,7 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
           <button
             type="button"
             className="sb-rp-button sb-rp-button-primary"
-            onClick={() => void handleSave()}
+            onClick={handleSave}
             disabled={!canSave || saving}
           >
             {draft.isNew
@@ -443,13 +484,27 @@ interface SessionsSectionProps {
   onRemoveSession: (index: number) => void;
   onAddReading: (item: PlaylistItemData) => void;
   onRemoveReading: (sessionIndex: number, readingId: string) => void;
+  onUpdateReading: (
+    sessionIndex: number,
+    readingId: string,
+    item: PlaylistItemData
+  ) => void;
+  /** The reading open for editing in its row, or null when none is. */
+  openReadingId: string | null;
+  onOpenReadingChange: (readingId: string | null) => void;
+  /** Handle on the open reading's editor, for unsaved-edit checks. */
+  editInputRef: RefObject<PlaylistItemInputHandle>;
+  /** Host for the unsaved-edit prompt. Without it, switching readings
+   * drops unsaved edits without asking. */
+  modals?: ModalManager;
 }
 
 /**
  * The plan's content: a vertical list of reading sessions, each holding one
  * sitting's worth of reading. Selecting a session opens the same add-item
  * control the playlist editor uses (scripture, text, or link) inside it, and is
- * also where the reader's "Add to plan" verse action puts a passage.
+ * also where the reader's "Add to plan" verse action puts a passage. Selecting
+ * a reading opens that same control, in edit mode, inside the reading's row.
  */
 function SessionsSection(props: SessionsSectionProps) {
   const {
@@ -461,12 +516,41 @@ function SessionsSection(props: SessionsSectionProps) {
     onRemoveSession,
     onAddReading,
     onRemoveReading,
+    onUpdateReading,
+    openReadingId,
+    onOpenReadingChange: setOpenReadingId,
+    editInputRef,
+    modals,
   } = props;
   const { t } = useI18n();
-  // Only one reading is expanded at a time, across all sessions.
-  const [expandedReadingId, setExpandedReadingId] = useState<string | null>(
-    null
-  );
+
+  /**
+   * Closes the open reading, or opens `readingId` instead of it, asking first
+   * when the open reading has edits that haven't been saved. Saving an
+   * invalid edit (say, an unknown reference) leaves the reading open with its
+   * error showing.
+   */
+  const requestOpen = (readingId: string | null) => {
+    if (readingId === openReadingId) {
+      return;
+    }
+    if (modals && openReadingId && editInputRef.current?.isDirty()) {
+      openUnsavedItemConfirm(modals, {
+        kind: "edit",
+        then: "close",
+        onDiscard: () => setOpenReadingId(readingId),
+        onKeep: () => {
+          void (async () => {
+            if (await editInputRef.current?.commit()) {
+              setOpenReadingId(readingId);
+            }
+          })();
+        },
+      });
+      return;
+    }
+    setOpenReadingId(readingId);
+  };
 
   // Resolve a book's display name from the active translation's book list.
   const resolveBookName = (bookId: string): string => {
@@ -539,21 +623,26 @@ function SessionsSection(props: SessionsSectionProps) {
                       untitledReading
                     );
                     const preview = readingPreviewText(reading.item, t);
-                    const expanded = expandedReadingId === reading.id;
-                    const previewId = `sb-rp-reading-preview-${reading.id}`;
+                    const isOpen = openReadingId === reading.id;
+                    const editorId = `sb-rp-reading-editor-${reading.id}`;
 
                     return (
-                      <li key={reading.id} className="sb-rp-reading-item">
+                      <li
+                        key={reading.id}
+                        className={`sb-rp-reading-item${
+                          isOpen ? " sb-rp-reading-item-open" : ""
+                        }`}
+                      >
                         <button
                           type="button"
                           className="sb-rp-reading-open"
-                          aria-expanded={expanded}
-                          aria-controls={expanded ? previewId : undefined}
+                          aria-expanded={isOpen}
+                          aria-controls={isOpen ? editorId : undefined}
                           onClick={() =>
-                            setExpandedReadingId(expanded ? null : reading.id)
+                            requestOpen(isOpen ? null : reading.id)
                           }
-                          aria-label={t("reading-plan-preview-reading", {
-                            defaultValue: "Preview {{reading}}",
+                          aria-label={t("reading-plan-edit-reading", {
+                            defaultValue: "Edit {{reading}}",
                             reading: label,
                           })}
                         >
@@ -579,24 +668,49 @@ function SessionsSection(props: SessionsSectionProps) {
                             ) : null}
                           </span>
                           <MaterialIcon className="sb-rp-reading-chevron">
-                            {expanded ? "expand_less" : "expand_more"}
+                            {isOpen ? "expand_less" : "expand_more"}
                           </MaterialIcon>
                         </button>
                         <button
                           type="button"
                           className="sb-rp-icon-button sb-rp-reading-remove"
-                          onClick={() => onRemoveReading(index, reading.id)}
+                          onClick={() => {
+                            onRemoveReading(index, reading.id);
+                            if (isOpen) {
+                              setOpenReadingId(null);
+                            }
+                          }}
                           aria-label={t("reading-plan-scripture-remove", {
                             defaultValue: "Remove reading",
                           })}
                         >
                           <MaterialIcon>close</MaterialIcon>
                         </button>
-                        {expanded ? (
-                          <PlaylistItemInlinePreview
-                            id={previewId}
-                            item={reading.item}
+                        {isOpen ? (
+                          <PlaylistItemInput
+                            ref={editInputRef}
+                            // Remount when the open reading changes so the
+                            // inputs seed from it.
+                            key={`edit-${reading.id}`}
+                            id={editorId}
+                            books={books}
+                            onAdd={onAddReading}
+                            editItem={reading.item}
+                            editScriptureText={
+                              reading.item.type === "bible-verse"
+                                ? playlistItemLabel(
+                                    reading.item,
+                                    t,
+                                    resolveBookName
+                                  )
+                                : undefined
+                            }
                             loadChapter={loadChapter}
+                            onUpdate={(item) => {
+                              onUpdateReading(index, reading.id, item);
+                              setOpenReadingId(null);
+                            }}
+                            onCancelEdit={() => setOpenReadingId(null)}
                           />
                         ) : null}
                       </li>

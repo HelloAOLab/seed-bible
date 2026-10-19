@@ -2840,6 +2840,32 @@ export function createReadingPlansManager(
     requestReadingPreview(reading);
   };
 
+  /**
+   * Replaces a reading's content in a session of the draft. The reading keeps
+   * its id, so progress already recorded against it still applies.
+   */
+  const updateReadingInEditingPlan = (
+    sessionIndex: number,
+    readingId: string,
+    item: PlaylistItemData
+  ) => {
+    const reading: PlanReading = { id: readingId, item };
+    mutateDraft((plan) => ({
+      ...plan,
+      sessions: plan.sessions.map((session, i) =>
+        i === sessionIndex
+          ? {
+              ...session,
+              readings: session.readings.map((r) =>
+                r.id === readingId ? reading : r
+              ),
+            }
+          : session
+      ),
+    }));
+    requestReadingPreview(reading);
+  };
+
   /** Removes a reading from a session of the draft. */
   const removeReadingFromEditingPlan = (
     sessionIndex: number,
@@ -3101,6 +3127,7 @@ export function createReadingPlansManager(
     addSessionToEditingPlan,
     removeSessionFromEditingPlan,
     addReadingToEditingPlan,
+    updateReadingInEditingPlan,
     removeReadingFromEditingPlan,
     finishEditingReadingPlan,
     loadByLocator,

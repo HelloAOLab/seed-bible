@@ -20,7 +20,10 @@ interface ScriptureItemInputProps {
 
 /** Imperative handle so a parent can check for / commit an in-progress draft. */
 export interface ScriptureItemInputHandle {
-  /** Whether the user has typed a reference that hasn't been added yet. */
+  /**
+   * Whether the reference differs from what the field started with: an
+   * un-added draft when adding, an unsaved change when editing.
+   */
   isDirty: () => boolean;
   /** Submits the current input, same as clicking "Add". Returns whether it
    * actually added an item (false if empty or the reference didn't resolve). */
@@ -133,10 +136,10 @@ export const ScriptureItemInput = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
-      isDirty: () => value.trim() !== "",
+      isDirty: () => value.trim() !== (initialValue ?? "").trim(),
       commit: handleSubmit,
     }),
-    [value, highlightedOption]
+    [value, highlightedOption, initialValue]
   );
 
   return (
