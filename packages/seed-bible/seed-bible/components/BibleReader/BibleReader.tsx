@@ -1,5 +1,6 @@
 import "./BibleReader.inline.css";
 import "./BibleReader.css";
+import { PlaylistPassageEnd } from "../PlaylistPassageEnd/PlaylistPassageEnd";
 import {
   type Translation,
   type TranslationBookChapter,
@@ -766,6 +767,16 @@ export function resetLastVersePointerTypeForTests() {
   lastVersePointerType = "";
 }
 
+/**
+ * Where a playing playlist's passage ends in this chapter, and what to draw
+ * there: after the verse numbered `afterVerse`, or after the whole chapter
+ * when null (a whole-chapter step, or one that runs to the chapter's end).
+ */
+interface PassageEndMarker {
+  afterVerse: number | null;
+  node: JSX.Element;
+}
+
 function renderChapterContent(
   chapterData: TranslationBookChapter | null,
   onVerseClick: (verse: BibleSelectedVerse, event: MouseEvent) => void,
@@ -780,7 +791,8 @@ function renderChapterContent(
     verseNumber: number,
     event: MouseEvent
   ) => void,
-  hideHighlights = false
+  hideHighlights = false,
+  passageEnd?: PassageEndMarker
 ) {
   if (!chapterData) {
     return null;
@@ -1221,6 +1233,24 @@ function renderChapterContent(
   // nothing to the DOM — what renders is the bare text node either way.
   const verseSeparator = (key: string) => <Fragment key={key}> </Fragment>;
 
+  // The passage-end marker goes right after the verse the passage ends on. It
+  // is a block among inline verses, so the next verse starts a fresh line
+  // under it, which is what makes the end of the passage visible.
+  let passageEndPlaced = false;
+  const pushPassageEndAfter = (verseNumbers: number[]) => {
+    if (
+      !passageEnd ||
+      passageEndPlaced ||
+      passageEnd.afterVerse === null ||
+      !verseNumbers.includes(passageEnd.afterVerse)
+    ) {
+      return;
+    }
+    nodes.push(<Fragment key="passage-end">{passageEnd.node}</Fragment>);
+    passageEndPlaced = true;
+    previousWasVerse = false;
+  };
+
   for (let i = 0; i < entries.length; ) {
     const entry = entries[i];
 
@@ -1290,6 +1320,7 @@ function renderChapterContent(
 
       if (colorKey === null) {
         nodes.push(renderVerseNode(entry, i));
+        pushPassageEndAfter([entry.number]);
         i += 1;
         continue;
       }
@@ -1355,12 +1386,21 @@ function renderChapterContent(
           })}
         </span>
       );
+      pushPassageEndAfter(
+        runIndices.map((idx) => (entries[idx] as ChapterVerse).number)
+      );
       i = j;
       continue;
     }
 
     nodes.push(null);
     i += 1;
+  }
+
+  // A whole-chapter step, a step running to the chapter's end, or an end
+  // verse the chapter turned out not to have: the passage ends with the text.
+  if (passageEnd && !passageEndPlaced) {
+    nodes.push(<Fragment key="passage-end">{passageEnd.node}</Fragment>);
   }
 
   return nodes;
@@ -1870,6 +1910,8 @@ interface ChapterContentProps {
    * embed so the page does not show highlights the visitor does not have.
    */
   hideHighlights?: boolean;
+  /** Marks where a playing playlist's passage ends in this chapter, if it's here. */
+  passageEnd?: PassageEndMarker;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -1892,6 +1934,7 @@ function ChapterContent(props: ChapterContentProps) {
     presence,
     onVisibleVersesChange,
     hideHighlights = false,
+    passageEnd,
   } = props;
 
   const { t } = useI18n();
@@ -2497,7 +2540,8 @@ function ChapterContent(props: ChapterContentProps) {
         chapterAnnotations,
         scriptureElements,
         onAnnotationVerseClick,
-        hideHighlights
+        hideHighlights,
+        passageEnd
       )}
     </div>
   );
@@ -2557,6 +2601,41 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
   const footnoteOverlayDismiss = useOverlayDismiss(() => selectFootnote(null));
+
+  // A playlist playing on this tab marks where its current passage ends in the
+  // text, with the way on to the next step. Only this tab's playback counts:
+  // another tab's playlist has nothing to do with the chapter shown here.
+  const playing = state?.playlists.playing.value ?? null;
+  const playingHere =
+    playing && playing.tab?.readingState === readingState ? playing : null;
+  const playingItem = playingHere?.currentItem.value ?? null;
+  const chapterOnScreen = chapterData.value;
+  let passageEnd: PassageEndMarker | undefined;
+  if (
+    playingHere &&
+    playingItem?.type === "bible-verse" &&
+    chapterOnScreen &&
+    playingItem.ref.bookId === chapterOnScreen.book.id &&
+    playingItem.ref.chapter === chapterOnScreen.chapter.number
+  ) {
+    const ref = playingItem.ref;
+    const playingBooks = translationBooks.value?.books ?? [];
+    passageEnd = {
+      afterVerse:
+        ref.verse == null || ref.toEndOfChapter
+          ? null
+          : (ref.endVerse ?? ref.verse),
+      node: (
+        <PlaylistPassageEnd
+          playing={playingHere}
+          resolveBookName={(id) => {
+            const book = playingBooks.find((b) => b.id === id);
+            return book?.name ?? book?.commonName ?? id;
+          }}
+        />
+      ),
+    };
+  }
 
   if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
@@ -3160,6 +3239,7 @@ export function BibleReader(props: BibleReaderProps) {
               isMobile={isCompactReader}
               presence={sharedSession ? presence : undefined}
               onVisibleVersesChange={reportVisibleVerses}
+              passageEnd={passageEnd}
             />
           </Suspense>
         ))}

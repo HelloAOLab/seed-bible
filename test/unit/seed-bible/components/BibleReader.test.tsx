@@ -25,6 +25,7 @@ import type { DownloadedTranslation } from "@packages/seed-bible/seed-bible/mana
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import {
   createPlayingState,
+  type PlaylistItemData,
   type SimplePlaylist,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { vi, type Mock } from "vitest";
@@ -5857,5 +5858,141 @@ describe("BibleReader — ways out of a failed chapter load", () => {
     await clickReload();
 
     expect(offline.recoveryPrompt.value).toBeNull();
+  });
+});
+
+describe("playlist passage end marker", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function renderPlaying(
+    items: PlaylistItemData[],
+    options: { step?: number; onThisTab?: boolean } = {}
+  ) {
+    const fixture = createFixture();
+    const state = createMobileState(fixture.selectorState);
+    const tab = {
+      id: "tab-1",
+      title: "Tab 1",
+      readingState: fixture.readingState,
+      sharedSession: null,
+      sharedChat: null,
+    };
+    const playing = createPlayingState(
+      [{ id: "p1", title: "Study", description: null, items }],
+      (options.onThisTab === false
+        ? { ...tab, readingState: {} as BibleReadingState }
+        : tab) as unknown as Parameters<typeof createPlayingState>[1]
+    );
+    if (options.step) {
+      playing.currentIndex.value = options.step;
+    }
+    (state.playlists.playing as Signal<typeof playing | null>).value = playing;
+    // The quick toolbar's current-playlist tool reads this once something plays.
+    (state.playlists as unknown as { isMobile: Signal<boolean> }).isMobile =
+      signal(false);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={{ ...fixture.slot, tab } as unknown as TabSlot}
+          selectorState={fixture.selectorState}
+          readingState={fixture.readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+    return { playing, fixture };
+  }
+
+  const marker = () => container.querySelector(".sb-playlist-passage-end");
+  const verse = (n: number) =>
+    container.querySelector(`.sb-verse[data-verse-number="${n}"]`)!;
+  const isBefore = (a: Element, b: Element) =>
+    !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+  it("marks the end of the passage right after its last verse and offers the next step", async () => {
+    const { playing } = renderPlaying([
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 1, verse: 1 } },
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 2 } },
+    ]);
+
+    const end = marker()!;
+    expect(end).not.toBeNull();
+    expect(isBefore(verse(1), end)).toBe(true);
+    expect(isBefore(end, verse(2))).toBe(true);
+    expect(end.textContent).toContain("End of passage");
+    const next = end.querySelector<HTMLButtonElement>(
+      ".sb-playlist-passage-end-next"
+    )!;
+    expect(next.textContent).toContain("Next · Genesis 2");
+
+    await act(async () => {
+      next.click();
+      await Promise.resolve();
+    });
+    expect(playing.currentIndex.value).toBe(1);
+  });
+
+  it("marks the end of a verse range after the range's last verse", () => {
+    renderPlaying([
+      {
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 1, verse: 1, endVerse: 2 },
+      },
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 2 } },
+    ]);
+
+    const end = marker()!;
+    expect(isBefore(verse(2), end)).toBe(true);
+  });
+
+  it("marks the end of the chapter for a whole-chapter step", () => {
+    renderPlaying([
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } },
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 2 } },
+    ]);
+
+    const end = marker()!;
+    expect(isBefore(verse(2), end)).toBe(true);
+    // Nothing of the chapter follows it.
+    const versesAfter = Array.from(
+      container.querySelectorAll(".sb-verse[data-verse-number]")
+    ).filter((el) => isBefore(end, el));
+    expect(versesAfter).toEqual([]);
+  });
+
+  it("shows only the label when there is nothing to move on to", () => {
+    renderPlaying([
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 1, verse: 2 } },
+    ]);
+
+    const end = marker()!;
+    expect(end.textContent).toContain("End of passage");
+    expect(end.querySelector(".sb-playlist-passage-end-next")).toBeNull();
+  });
+
+  it("shows nothing for a step in another chapter, or a playlist on another tab", () => {
+    renderPlaying([
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 3, verse: 1 } },
+    ]);
+    expect(marker()).toBeNull();
+
+    render(null, container);
+    renderPlaying(
+      [{ type: "bible-verse", ref: { bookId: "GEN", chapter: 1, verse: 1 } }],
+      { onThisTab: false }
+    );
+    expect(marker()).toBeNull();
   });
 });
