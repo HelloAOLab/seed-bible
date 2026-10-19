@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "المزيد من التفاصيل على اليسار",
   "offscreen-highlight-scroll-right": "المزيد من التفاصيل على اليمين",
   "highlighted-verse": "الآية المميزة {{verse}}",
-  "highlighted-verses": "الآيات المميزة {{verses}}"
+  "highlighted-verses": "الآيات المميزة {{verses}}",
+  "session-join-failed": "تعذر الانضمام إلى الجلسة المشتركة"
 }

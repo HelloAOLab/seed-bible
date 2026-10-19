@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "سول تەرەپتىكى تېخىمۇ كۆپ مۇھىم نۇقتىلار",
   "offscreen-highlight-scroll-right": "ئوڭ تەرەپتىكى تېخىمۇ كۆپ مۇھىم نۇقتىلار",
   "highlighted-verse": "بەلگىلەنگەن ئايەت {{verse}}",
-  "highlighted-verses": "بەلگىلەنگەن ئايەتلەر {{verses}}"
+  "highlighted-verses": "بەلگىلەنگەن ئايەتلەر {{verses}}",
+  "session-join-failed": "ئورتاقلاشقان سۆھبەتكە قوشۇلالمىدى"
 }

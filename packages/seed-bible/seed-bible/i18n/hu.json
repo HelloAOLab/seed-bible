@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "További kiemelések balra",
   "offscreen-highlight-scroll-right": "További kiemelések jobbra",
   "highlighted-verse": "Kiemelt vers {{verse}}",
-  "highlighted-verses": "Kiemelt versek {{verses}}"
+  "highlighted-verses": "Kiemelt versek {{verses}}",
+  "session-join-failed": "Nem sikerült csatlakozni a megosztott munkamenethez"
 }

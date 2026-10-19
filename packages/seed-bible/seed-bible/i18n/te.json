@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "ఎడమవైపు మరిన్ని ముఖ్యాంశాలు",
   "offscreen-highlight-scroll-right": "కుడివైపున మరిన్ని ముఖ్యాంశాలు",
   "highlighted-verse": "హైలైట్ చేయబడిన పద్యం {{verse}}",
-  "highlighted-verses": "హైలైట్ చేయబడిన పద్యాలు {{verses}}"
+  "highlighted-verses": "హైలైట్ చేయబడిన పద్యాలు {{verses}}",
+  "session-join-failed": "భాగస్వామ్య సెషన్‌లో చేరలేకపోయాను"
 }

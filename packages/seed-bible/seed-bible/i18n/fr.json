@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Plus de points forts à gauche",
   "offscreen-highlight-scroll-right": "Plus de points forts à droite",
   "highlighted-verse": "Verset mis en évidence {{verse}}",
-  "highlighted-verses": "Versets mis en évidence {{verses}}"
+  "highlighted-verses": "Versets mis en évidence {{verses}}",
+  "session-join-failed": "Impossible de rejoindre la session partagée"
 }

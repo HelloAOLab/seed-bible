@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Fler höjdpunkter till vänster",
   "offscreen-highlight-scroll-right": "Fler höjdpunkter till höger",
   "highlighted-verse": "Markerad vers {{verse}}",
-  "highlighted-verses": "Markerade verser {{verses}}"
+  "highlighted-verses": "Markerade verser {{verses}}",
+  "session-join-failed": "Kunde inte delta i den delade sessionen"
 }

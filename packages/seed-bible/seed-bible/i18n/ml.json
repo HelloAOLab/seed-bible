@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "ഇടതുവശത്ത് കൂടുതൽ ഹൈലൈറ്റുകൾ",
   "offscreen-highlight-scroll-right": "വലതുവശത്ത് കൂടുതൽ ഹൈലൈറ്റുകൾ",
   "highlighted-verse": "ഹൈലൈറ്റ് ചെയ്ത വാക്യം {{verse}}",
-  "highlighted-verses": "ഹൈലൈറ്റ് ചെയ്ത വാക്യങ്ങൾ {{verses}}"
+  "highlighted-verses": "ഹൈലൈറ്റ് ചെയ്ത വാക്യങ്ങൾ {{verses}}",
+  "session-join-failed": "പങ്കിട്ട സെഷനിൽ ചേരാൻ കഴിഞ്ഞില്ല."
 }

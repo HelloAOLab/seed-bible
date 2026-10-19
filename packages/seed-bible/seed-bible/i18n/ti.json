@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "ተወሳኺ ድምቀት ንጸጋም",
   "offscreen-highlight-scroll-right": "ተወሳኺ ድምቀት ንየማን",
   "highlighted-verse": "ድምቀት ዘለዎ ጥቕሲ {{verse}}",
-  "highlighted-verses": "ዝተጎልበቡ ጥቕስታት {{verses}}"
+  "highlighted-verses": "ዝተጎልበቡ ጥቕስታት {{verses}}",
+  "session-join-failed": "ኣብቲ ናይ ሓባር ክፍለ ግዜ ክጽንበር ኣይከኣለን"
 }

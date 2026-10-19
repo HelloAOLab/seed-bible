@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Chap tomonda ko'proq diqqatga sazovor joylar",
   "offscreen-highlight-scroll-right": "O'ng tomonda ko'proq diqqatga sazovor joylar",
   "highlighted-verse": "Belgilangan oyat {{verse}}",
-  "highlighted-verses": "Belgilangan oyatlar {{verses}}"
+  "highlighted-verses": "Belgilangan oyatlar {{verses}}",
+  "session-join-failed": "Umumiy sessiyaga qo'shilib bo'lmadi"
 }

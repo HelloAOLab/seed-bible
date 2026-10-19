@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Зүүн талд илүү олон онцлох үйл явдлууд",
   "offscreen-highlight-scroll-right": "Баруун талд байгаа бусад онцлох үйл явдлууд",
   "highlighted-verse": "Тодруулсан шүлэг {{verse}}",
-  "highlighted-verses": "Тодруулсан шүлгүүд {{verses}}"
+  "highlighted-verses": "Тодруулсан шүлгүүд {{verses}}",
+  "session-join-failed": "Хуваалцсан хуралдаанд нэгдэж чадсангүй"
 }

@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Больш яскравых момантаў злева",
   "offscreen-highlight-scroll-right": "Больш яскравых момантаў справа",
   "highlighted-verse": "Выдзелены верш {{verse}}",
-  "highlighted-verses": "Вылучаныя вершы {{verses}}"
+  "highlighted-verses": "Вылучаныя вершы {{verses}}",
+  "session-join-failed": "Не ўдалося далучыцца да агульнага сеансу"
 }

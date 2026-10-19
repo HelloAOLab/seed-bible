@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Solda daha fazla öne çıkan nokta",
   "offscreen-highlight-scroll-right": "Sağda daha fazla öne çıkan nokta",
   "highlighted-verse": "Vurgulanan ayet {{verse}}",
-  "highlighted-verses": "Vurgulanan ayetler {{verses}}"
+  "highlighted-verses": "Vurgulanan ayetler {{verses}}",
+  "session-join-failed": "Paylaşılan oturuma katılamadım."
 }

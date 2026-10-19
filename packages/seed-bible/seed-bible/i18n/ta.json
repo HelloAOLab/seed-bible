@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "இடதுபுறத்தில் கூடுதல் சிறப்பம்சங்கள்",
   "offscreen-highlight-scroll-right": "வலதுபுறத்தில் கூடுதல் சிறப்பம்சங்கள்",
   "highlighted-verse": "சிறப்பித்துக் காட்டப்பட்ட வசனம் {{verse}}",
-  "highlighted-verses": "{{verses}} காட்டப்பட்ட வசனங்கள்"
+  "highlighted-verses": "{{verses}} காட்டப்பட்ட வசனங்கள்",
+  "session-join-failed": "பகிரப்பட்ட அமர்வில் இணைய முடியவில்லை"
 }

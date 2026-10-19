@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Więcej atrakcji po lewej stronie",
   "offscreen-highlight-scroll-right": "Więcej atrakcji po prawej stronie",
   "highlighted-verse": "Podświetlony werset {{verse}}",
-  "highlighted-verses": "Podświetlone wersety {{verses}}"
+  "highlighted-verses": "Podświetlone wersety {{verses}}",
+  "session-join-failed": "Nie udało się dołączyć do sesji współdzielonej"
 }

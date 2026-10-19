@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Weitere Highlights links",
   "offscreen-highlight-scroll-right": "Weitere Highlights auf der rechten Seite",
   "highlighted-verse": "Hervorgehobener Vers {{verse}}",
-  "highlighted-verses": "Hervorgehobene Verse {{verses}}"
+  "highlighted-verses": "Hervorgehobene Verse {{verses}}",
+  "session-join-failed": "Ich konnte der gemeinsamen Sitzung nicht beitreten."
 }

@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Mais destaques à esquerda.",
   "offscreen-highlight-scroll-right": "Mais destaques à direita.",
   "highlighted-verse": "Versículo destacado {{verse}}",
-  "highlighted-verses": "Versículos destacados {{verses}}"
+  "highlighted-verses": "Versículos destacados {{verses}}",
+  "session-join-failed": "Não foi possível entrar na sessão compartilhada."
 }

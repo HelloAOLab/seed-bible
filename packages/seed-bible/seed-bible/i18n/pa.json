@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "ਖੱਬੇ ਪਾਸੇ ਹੋਰ ਹਾਈਲਾਈਟਸ",
   "offscreen-highlight-scroll-right": "ਸੱਜੇ ਪਾਸੇ ਹੋਰ ਹਾਈਲਾਈਟਸ",
   "highlighted-verse": "ਉਜਾਗਰ ਕੀਤੀ ਗਈ ਆਇਤ {{verse}}",
-  "highlighted-verses": "ਉਜਾਗਰ ਕੀਤੀਆਂ ਆਇਤਾਂ {{verses}}"
+  "highlighted-verses": "ਉਜਾਗਰ ਕੀਤੀਆਂ ਆਇਤਾਂ {{verses}}",
+  "session-join-failed": "ਸਾਂਝੇ ਸੈਸ਼ਨ ਵਿੱਚ ਸ਼ਾਮਲ ਨਹੀਂ ਹੋ ਸਕਿਆ।"
 }

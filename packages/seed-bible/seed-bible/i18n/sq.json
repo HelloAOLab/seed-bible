@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Më shumë pika kryesore në të majtë",
   "offscreen-highlight-scroll-right": "Më shumë pika kryesore në të djathtë",
   "highlighted-verse": "Vargu i theksuar {{verse}}",
-  "highlighted-verses": "Vargjet e theksuara {{verses}}"
+  "highlighted-verses": "Vargjet e theksuara {{verses}}",
+  "session-join-failed": "Nuk mund të bashkohesha në sesionin e ndarë"
 }

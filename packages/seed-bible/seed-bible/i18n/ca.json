@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Més aspectes destacats a l'esquerra",
   "offscreen-highlight-scroll-right": "Més aspectes destacats a la dreta",
   "highlighted-verse": "Vers destacat {{verse}}",
-  "highlighted-verses": "Versos destacats {{verses}}"
+  "highlighted-verses": "Versos destacats {{verses}}",
+  "session-join-failed": "No s'ha pogut unir a la sessió compartida"
 }

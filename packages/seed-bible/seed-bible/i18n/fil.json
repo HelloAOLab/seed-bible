@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Mas maraming highlight sa kaliwa",
   "offscreen-highlight-scroll-right": "Mas maraming highlight sa kanan",
   "highlighted-verse": "Naka-highlight na bersikulo {{verse}}",
-  "highlighted-verses": "Mga naka-highlight na bersikulo {{verses}}"
+  "highlighted-verses": "Mga naka-highlight na bersikulo {{verses}}",
+  "session-join-failed": "Hindi makasali sa nakabahaging sesyon"
 }

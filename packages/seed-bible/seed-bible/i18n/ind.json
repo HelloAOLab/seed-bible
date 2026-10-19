@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Sorotan lainnya di sebelah kiri.",
   "offscreen-highlight-scroll-right": "Sorotan lainnya di sebelah kanan.",
   "highlighted-verse": "Ayat yang disorot {{verse}}",
-  "highlighted-verses": "Ayat-ayat yang disorot {{verses}}"
+  "highlighted-verses": "Ayat-ayat yang disorot {{verses}}",
+  "session-join-failed": "Tidak dapat bergabung dengan sesi bersama."
 }

@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "ဘယ်ဘက်တွင် နောက်ထပ်ထူးခြားချက်များ",
   "offscreen-highlight-scroll-right": "ညာဘက်တွင် နောက်ထပ် အဓိကအချက်များ",
   "highlighted-verse": "မီးမောင်းထိုးပြထားသော ကျမ်းပိုဒ် {{verse}}",
-  "highlighted-verses": "မီးမောင်းထိုးပြထားသော အခန်းငယ်များ {{verses}}"
+  "highlighted-verses": "မီးမောင်းထိုးပြထားသော အခန်းငယ်များ {{verses}}",
+  "session-join-failed": "မျှဝေထားသော အစည်းအဝေးတွင် ပါဝင်၍မရပါ"
 }

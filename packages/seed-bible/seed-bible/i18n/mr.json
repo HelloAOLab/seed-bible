@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "डावीकडे आणखी ठळक वैशिष्ट्ये",
   "offscreen-highlight-scroll-right": "उजवीकडे अधिक ठळक वैशिष्ट्ये",
   "highlighted-verse": "ठळक केलेला श्लोक {{verse}}",
-  "highlighted-verses": "ठळक केलेले श्लोक {{verses}}"
+  "highlighted-verses": "ठळक केलेले श्लोक {{verses}}",
+  "session-join-failed": "सामायिक सत्रात सामील होऊ शकलो नाही."
 }

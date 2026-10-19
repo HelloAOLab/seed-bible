@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "ไฮไลท์เพิ่มเติมทางด้านซ้าย",
   "offscreen-highlight-scroll-right": "ไฮไลท์เพิ่มเติมทางด้านขวา",
   "highlighted-verse": "ข้อความที่เน้น {{verse}}",
-  "highlighted-verses": "ข้อความที่เน้น {{verses}}"
+  "highlighted-verses": "ข้อความที่เน้น {{verses}}",
+  "session-join-failed": "ไม่สามารถเข้าร่วมเซสชันที่แชร์ได้"
 }

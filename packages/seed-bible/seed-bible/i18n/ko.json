@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "왼쪽에 더 많은 하이라이트가 있습니다.",
   "offscreen-highlight-scroll-right": "오른쪽에 더 많은 하이라이트가 있습니다.",
   "highlighted-verse": "강조 표시된 구절 {{verse}}",
-  "highlighted-verses": "강조 표시된 구절 {{verses}}"
+  "highlighted-verses": "강조 표시된 구절 {{verses}}",
+  "session-join-failed": "공유 세션에 참여할 수 없습니다."
 }

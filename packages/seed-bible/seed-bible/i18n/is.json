@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Fleiri áherslur til vinstri",
   "offscreen-highlight-scroll-right": "Fleiri hápunktar til hægri",
   "highlighted-verse": "Merkt vers {{verse}}",
-  "highlighted-verses": "Merkt vers {{verses}}"
+  "highlighted-verses": "Merkt vers {{verses}}",
+  "session-join-failed": "Gat ekki tengst sameiginlegu lotunni"
 }

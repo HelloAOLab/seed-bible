@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Meer hoogtepunten aan de linkerkant",
   "offscreen-highlight-scroll-right": "Meer hoogtepunten aan de rechterkant",
   "highlighted-verse": "Gemarkeerd vers {{verse}}",
-  "highlighted-verses": "Gemarkeerde verzen {{verses}}"
+  "highlighted-verses": "Gemarkeerde verzen {{verses}}",
+  "session-join-failed": "Kon niet deelnemen aan de gedeelde sessie"
 }

@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Сол жактагы көбүрөөк кызыктуу жерлер",
   "offscreen-highlight-scroll-right": "Оң жактагы көбүрөөк кызыктуу жерлер",
   "highlighted-verse": "Белгиленген аят {{verse}}",
-  "highlighted-verses": "Белгиленген аяттар {{verses}}"
+  "highlighted-verses": "Белгиленген аяттар {{verses}}",
+  "session-join-failed": "Бөлүшүлгөн сессияга кошула алган жок"
 }

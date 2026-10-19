@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Več poudarkov na levi",
   "offscreen-highlight-scroll-right": "Več poudarkov na desni",
   "highlighted-verse": "Označena vrstica {{verse}}",
-  "highlighted-verses": "Označeni verzi {{verses}}"
+  "highlighted-verses": "Označeni verzi {{verses}}",
+  "session-join-failed": "Deljeni seji se ni bilo mogoče pridružiti"
 }

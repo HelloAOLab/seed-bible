@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Više istaknutih dijelova s ​​lijeve strane",
   "offscreen-highlight-scroll-right": "Više istaknutih dijelova s ​​desne strane",
   "highlighted-verse": "Istaknuti stih {{verse}}",
-  "highlighted-verses": "Istaknuti stihovi {{verses}}"
+  "highlighted-verses": "Istaknuti stihovi {{verses}}",
+  "session-join-failed": "Nije moguće pridružiti se dijeljenoj sesiji"
 }

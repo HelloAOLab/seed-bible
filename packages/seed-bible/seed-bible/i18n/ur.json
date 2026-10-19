@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "بائیں طرف مزید جھلکیاں",
   "offscreen-highlight-scroll-right": "دائیں جانب مزید جھلکیاں",
   "highlighted-verse": "نمایاں کردہ آیت {{verse}}",
-  "highlighted-verses": "نمایاں کردہ آیات {{verses}}"
+  "highlighted-verses": "نمایاں کردہ آیات {{verses}}",
+  "session-join-failed": "مشترکہ سیشن میں شامل نہیں ہو سکا"
 }

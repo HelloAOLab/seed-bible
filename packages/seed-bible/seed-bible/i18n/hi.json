@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "बाईं ओर और भी मुख्य बातें हैं",
   "offscreen-highlight-scroll-right": "दाईं ओर और भी मुख्य बातें हैं",
   "highlighted-verse": "हाइलाइट किया गया श्लोक {{verse}}",
-  "highlighted-verses": "हाइलाइट किए गए श्लोक {{verses}}"
+  "highlighted-verses": "हाइलाइट किए गए श्लोक {{verses}}",
+  "session-join-failed": "साझा सत्र में शामिल नहीं हो सका"
 }

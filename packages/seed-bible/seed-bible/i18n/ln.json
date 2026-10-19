@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Makambo mosusu ya ntina mingi na lobɔkɔ ya mwasi",
   "offscreen-highlight-scroll-right": "Makambo mosusu ya ntina mingi na lobɔkɔ ya mobali",
   "highlighted-verse": "Vɛrsɛ oyo emonisami polele {{verse}}",
-  "highlighted-verses": "Bavɛrsɛ oyo emonisami polele {{verses}}"
+  "highlighted-verses": "Bavɛrsɛ oyo emonisami polele {{verses}}",
+  "session-join-failed": "Ekokaki te kosangana na session ya kokabola"
 }

@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "ಎಡಕ್ಕೆ ಇನ್ನಷ್ಟು ಮುಖ್ಯಾಂಶಗಳು",
   "offscreen-highlight-scroll-right": "ಬಲಭಾಗದಲ್ಲಿ ಇನ್ನಷ್ಟು ಮುಖ್ಯಾಂಶಗಳು",
   "highlighted-verse": "ಹೈಲೈಟ್ ಮಾಡಿದ ಪದ್ಯ {{verse}}",
-  "highlighted-verses": "ಹೈಲೈಟ್ ಮಾಡಿದ ಪದ್ಯಗಳು {{verses}}"
+  "highlighted-verses": "ಹೈಲೈಟ್ ಮಾಡಿದ ಪದ್ಯಗಳು {{verses}}",
+  "session-join-failed": "ಹಂಚಿಕೊಂಡ ಸೆಷನ್‌ಗೆ ಸೇರಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ."
 }

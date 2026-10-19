@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "ຈຸດເດັ່ນເພີ່ມເຕີມຢູ່ເບື້ອງຊ້າຍ",
   "offscreen-highlight-scroll-right": "ໄຮໄລ້ເພີ່ມເຕີມຢູ່ເບື້ອງຂວາ",
   "highlighted-verse": "ຂໍ້ທີທີ່ເນັ້ນ {{verse}}",
-  "highlighted-verses": "ຂໍ້ພຣະຄຳພີທີ່ເນັ້ນ {{verses}}"
+  "highlighted-verses": "ຂໍ້ພຣະຄຳພີທີ່ເນັ້ນ {{verses}}",
+  "session-join-failed": "ບໍ່ສາມາດເຂົ້າຮ່ວມເຊດຊັນທີ່ແບ່ງປັນໄດ້"
 }

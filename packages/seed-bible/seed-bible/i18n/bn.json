@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "বাম দিকে আরও হাইলাইটস",
   "offscreen-highlight-scroll-right": "ডানদিকে আরও আকর্ষণীয় বিষয় রয়েছে",
   "highlighted-verse": "বিশেষভাবে চিহ্নিত শ্লোক {{verse}}",
-  "highlighted-verses": "বিশেষভাবে চিহ্নিত শ্লোকসমূহ {{verses}}"
+  "highlighted-verses": "বিশেষভাবে চিহ্নিত শ্লোকসমূহ {{verses}}",
+  "session-join-failed": "শেয়ার করা সেশনে যোগ দিতে পারিনি।"
 }

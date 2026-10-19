@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Vairāk svarīgāko elementu kreisajā pusē",
   "offscreen-highlight-scroll-right": "Vairāk svarīgāko elementu labajā pusē",
   "highlighted-verse": "Iezīmētais pants {{verse}}",
-  "highlighted-verses": "Izceltie panti {{verses}}"
+  "highlighted-verses": "Izceltie panti {{verses}}",
+  "session-join-failed": "Nevarēja pievienoties koplietotajai sesijai"
 }

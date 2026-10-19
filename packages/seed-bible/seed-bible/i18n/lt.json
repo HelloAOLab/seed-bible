@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Daugiau svarbiausių dalykų kairėje",
   "offscreen-highlight-scroll-right": "Daugiau svarbiausių elementų dešinėje",
   "highlighted-verse": "Paryškinta eilutė {{verse}}",
-  "highlighted-verses": "Paryškintos eilutės {{verses}}"
+  "highlighted-verses": "Paryškintos eilutės {{verses}}",
+  "session-join-failed": "Nepavyko prisijungti prie bendros sesijos"
 }

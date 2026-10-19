@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Những điểm nổi bật khác ở bên trái",
   "offscreen-highlight-scroll-right": "Những điểm nổi bật khác ở bên phải",
   "highlighted-verse": "Câu thơ được tô sáng {{verse}}",
-  "highlighted-verses": "Các câu thơ được tô sáng {{verses}}"
+  "highlighted-verses": "Các câu thơ được tô sáng {{verses}}",
+  "session-join-failed": "Không thể tham gia phiên họp chung."
 }

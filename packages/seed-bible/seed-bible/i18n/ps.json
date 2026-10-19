@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "کیڼ اړخ ته نور مهم ټکي",
   "offscreen-highlight-scroll-right": "ښي خوا ته نور مهم ټکي",
   "highlighted-verse": "روښانه شوی آیت {{verse}}",
-  "highlighted-verses": "روښانه شوي آیتونه {{verses}}"
+  "highlighted-verses": "روښانه شوي آیتونه {{verses}}",
+  "session-join-failed": "په شریکه غونډه کې ګډون نشو کولی"
 }

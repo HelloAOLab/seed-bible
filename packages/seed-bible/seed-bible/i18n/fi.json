@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Lisää kohokohtia vasemmalla",
   "offscreen-highlight-scroll-right": "Lisää kohokohtia oikealla",
   "highlighted-verse": "Korostettu jae {{verse}}",
-  "highlighted-verses": "Korostetut jakeet {{verses}}"
+  "highlighted-verses": "Korostetut jakeet {{verses}}",
+  "session-join-failed": "Jaettuun istuntoon liittyminen ei onnistunut"
 }

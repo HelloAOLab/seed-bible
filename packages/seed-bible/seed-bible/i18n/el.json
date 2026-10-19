@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Περισσότερα στιγμιότυπα στα αριστερά",
   "offscreen-highlight-scroll-right": "Περισσότερα στιγμιότυπα στα δεξιά",
   "highlighted-verse": "Επισημασμένο στίχο {{verse}}",
-  "highlighted-verses": "Επισημασμένοι στίχοι {{verses}}"
+  "highlighted-verses": "Επισημασμένοι στίχοι {{verses}}",
+  "session-join-failed": "Δεν ήταν δυνατή η συμμετοχή στην κοινόχρηστη συνεδρία"
 }

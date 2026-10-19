@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "ડાબી બાજુએ વધુ હાઇલાઇટ્સ",
   "offscreen-highlight-scroll-right": "જમણી બાજુએ વધુ હાઇલાઇટ્સ",
   "highlighted-verse": "પ્રકાશિત શ્લોક {{verse}}",
-  "highlighted-verses": "પ્રકાશિત શ્લોકો {{verses}}"
+  "highlighted-verses": "પ્રકાશિત શ્લોકો {{verses}}",
+  "session-join-failed": "શેર કરેલ સત્રમાં જોડાઈ શક્યા નથી."
 }

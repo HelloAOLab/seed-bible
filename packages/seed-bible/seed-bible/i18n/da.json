@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Flere højdepunkter til venstre",
   "offscreen-highlight-scroll-right": "Flere højdepunkter til højre",
   "highlighted-verse": "Fremhævet vers {{verse}}",
-  "highlighted-verses": "Fremhævede vers {{verses}}"
+  "highlighted-verses": "Fremhævede vers {{verses}}",
+  "session-join-failed": "Kunne ikke deltage i den delte session"
 }

@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "በግራ በኩል ተጨማሪ ድምቀቶች",
   "offscreen-highlight-scroll-right": "በቀኝ በኩል ተጨማሪ ድምቀቶች",
   "highlighted-verse": "የደመቀ ቁጥር {{verse}}",
-  "highlighted-verses": "የተደመቁ ጥቅሶች {{verses}}"
+  "highlighted-verses": "የተደመቁ ጥቅሶች {{verses}}",
+  "session-join-failed": "የተጋራውን ክፍለ ጊዜ መቀላቀል አልተቻለም"
 }

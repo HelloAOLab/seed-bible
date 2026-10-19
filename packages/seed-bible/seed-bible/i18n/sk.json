@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Ďalšie zaujímavosti vľavo",
   "offscreen-highlight-scroll-right": "Ďalšie zaujímavosti vpravo",
   "highlighted-verse": "Zvýraznený verš {{verse}}",
-  "highlighted-verses": "Zvýraznené verše {{verses}}"
+  "highlighted-verses": "Zvýraznené verše {{verses}}",
+  "session-join-failed": "Nepodarilo sa pripojiť k zdieľanej relácii"
 }

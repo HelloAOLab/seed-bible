@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Solda daha çox məqam",
   "offscreen-highlight-scroll-right": "Sağdakı daha çox məqam",
   "highlighted-verse": "Vurğulanmış ayə {{verse}}",
-  "highlighted-verses": "Vurğulanmış ayələr {{verses}}"
+  "highlighted-verses": "Vurğulanmış ayələr {{verses}}",
+  "session-join-failed": "Paylaşılan sessiyaya qoşulmaq mümkün olmadı"
 }

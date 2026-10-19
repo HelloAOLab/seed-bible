@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Altri punti salienti a sinistra",
   "offscreen-highlight-scroll-right": "Altri dettagli a destra",
   "highlighted-verse": "Verso evidenziato {{verse}}",
-  "highlighted-verses": "Versetti evidenziati {{verses}}"
+  "highlighted-verses": "Versetti evidenziati {{verses}}",
+  "session-join-failed": "Impossibile partecipare alla sessione condivisa"
 }

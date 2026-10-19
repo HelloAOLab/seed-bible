@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Flere høydepunkter til venstre",
   "offscreen-highlight-scroll-right": "Flere høydepunkter til høyre",
   "highlighted-verse": "Uthevet vers {{verse}}",
-  "highlighted-verses": "Uthevede vers {{verses}}"
+  "highlighted-verses": "Uthevede vers {{verses}}",
+  "session-join-failed": "Kunne ikke bli med i den delte økten"
 }

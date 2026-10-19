@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Rohkem esiletõstetud kohti vasakul",
   "offscreen-highlight-scroll-right": "Rohkem esiletõstetud pilte paremal",
   "highlighted-verse": "Esiletõstetud salm {{verse}}",
-  "highlighted-verses": "Esiletõstetud salmid {{verses}}"
+  "highlighted-verses": "Esiletõstetud salmid {{verses}}",
+  "session-join-failed": "Jagatud seansiga ei saanud liituda"
 }

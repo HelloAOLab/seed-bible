@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Mwy o uchafbwyntiau i'r chwith",
   "offscreen-highlight-scroll-right": "Mwy o uchafbwyntiau i'r dde",
   "highlighted-verse": "Pennill wedi'i amlygu {{verse}}",
-  "highlighted-verses": "Penillion wedi'u hamlygu {{verses}}"
+  "highlighted-verses": "Penillion wedi'u hamlygu {{verses}}",
+  "session-join-failed": "Methwyd ymuno â'r sesiwn a rennir"
 }

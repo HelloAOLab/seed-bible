@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "ចំណុចសំខាន់ៗបន្ថែមទៀតនៅខាងឆ្វេង",
   "offscreen-highlight-scroll-right": "ចំណុចសំខាន់ៗបន្ថែមទៀតនៅខាងស្តាំ",
   "highlighted-verse": "ខគម្ពីរដែលបានបន្លិច {{verse}}",
-  "highlighted-verses": "ខគម្ពីរដែលបានបន្លិច {{verses}}"
+  "highlighted-verses": "ខគម្ពីរដែលបានបន្លិច {{verses}}",
+  "session-join-failed": "មិនអាចចូលរួមវគ្គដែលបានចែករំលែកបានទេ"
 }

@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Mear hichtepunten oan de linkerkant",
   "offscreen-highlight-scroll-right": "Mear hichtepunten oan 'e rjochterkant",
   "highlighted-verse": "Markearre fers {{verse}}",
-  "highlighted-verses": "Markearre fersen {{verses}}"
+  "highlighted-verses": "Markearre fersen {{verses}}",
+  "session-join-failed": "Koe net meidwaan oan de dielde sesje"
 }

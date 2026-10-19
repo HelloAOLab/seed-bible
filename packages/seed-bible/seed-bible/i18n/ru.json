@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "Дополнительные элементы слева.",
   "offscreen-highlight-scroll-right": "Дополнительные сведения справа.",
   "highlighted-verse": "Выделенный стих {{verse}}",
-  "highlighted-verses": "Выделенные стихи {{verses}}"
+  "highlighted-verses": "Выделенные стихи {{verses}}",
+  "session-join-failed": "Не удалось присоединиться к общей сессии."
 }

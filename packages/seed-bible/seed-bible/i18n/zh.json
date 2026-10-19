@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "左侧还有更多精彩内容。",
   "offscreen-highlight-scroll-right": "右侧还有更多精彩内容。",
   "highlighted-verse": "高亮显示的诗句{{verse}}",
-  "highlighted-verses": "高亮显示的诗句{{verses}}"
+  "highlighted-verses": "高亮显示的诗句{{verses}}",
+  "session-join-failed": "无法加入共享会话"
 }

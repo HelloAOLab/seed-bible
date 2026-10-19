@@ -1203,5 +1203,6 @@
   "offscreen-highlight-scroll-left": "نکات برجسته بیشتر در سمت چپ",
   "offscreen-highlight-scroll-right": "نکات برجسته بیشتر در سمت راست",
   "highlighted-verse": "آیه برجسته شده {{verse}}",
-  "highlighted-verses": "آیات برجسته {{verses}}"
+  "highlighted-verses": "آیات برجسته {{verses}}",
+  "session-join-failed": "نتوانستم به جلسه مشترک بپیوندم"
 }
