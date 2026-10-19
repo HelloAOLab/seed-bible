@@ -3,13 +3,12 @@ import type { SeedBibleState } from "seed-bible";
 import { extractContentText, parseVerseReference } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
 import { bookDisplayName, isKnownBookId } from "./books";
-import { toSavedGame } from "./gamesStore";
 import type { GameSignals, SavedGame } from "./types";
 
 interface GameCreatorProps {
   game: GameSignals;
   state: SeedBibleState;
-  onStart: (saved: SavedGame) => Promise<void>;
+  onStart: (draft: Pick<SavedGame, "targetVerse" | "steps">) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -119,6 +118,7 @@ export function GameCreator({
     const unrecognised = t("reference-unrecognised", {
       defaultValue: "Couldn't recognise that reference. Try “John 1:1”.",
     });
+    const token = ++game.verseLookup.value;
     const tab = state.app.selectedTab.value;
     const books = tab?.readingState.translationBooks.value?.books;
     const parsed = parseVerseReference(refInput.value, books);
@@ -130,6 +130,8 @@ export function GameCreator({
     }
 
     const translationId = tab?.readingState.translationId.value ?? "BSB";
+    const stillCurrent = () =>
+      token === game.verseLookup.peek() && game.phase.peek() === "creating";
 
     try {
       const chapterData = await state.bibleData.getTranslationBookChapter(
@@ -137,6 +139,7 @@ export function GameCreator({
         parsed.book,
         parsed.chapter
       );
+      if (!stillCurrent()) return;
       const verseNode = chapterData.chapter.content.find(
         (c) => c.type === "verse" && c.number === parsed.verse
       );
@@ -144,6 +147,7 @@ export function GameCreator({
         verseNode && verseNode.type === "verse"
           ? extractContentText(verseNode.content).trim()
           : "";
+      if (!stillCurrent()) return;
       if (!verseText) {
         refError.value = unrecognised;
         return;
@@ -164,6 +168,7 @@ export function GameCreator({
         );
       }
     } catch {
+      if (!stillCurrent()) return;
       refError.value = unrecognised;
     }
   }
@@ -367,17 +372,11 @@ export function GameCreator({
               });
               return;
             }
-            const editingId = game.currentGameId.peek();
-            const existing = game.savedGames
-              .peek()
-              .find((saved) => saved.id === editingId);
             saving.value = true;
-            void onStart(
-              toSavedGame(
-                { targetVerse: target, steps: game.steps.peek() },
-                existing
-              )
-            ).finally(() => {
+            void onStart({
+              targetVerse: target,
+              steps: game.steps.peek(),
+            }).finally(() => {
               saving.value = false;
             });
           }}

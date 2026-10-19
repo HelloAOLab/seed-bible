@@ -6,6 +6,7 @@ export function resetDraft(game: GameSignals) {
   game.steps.value = [{ hint: "" }];
   game.selectingViaToolbar.value = false;
   game.notice.value = null;
+  game.verseLookup.value += 1;
 }
 
 /**

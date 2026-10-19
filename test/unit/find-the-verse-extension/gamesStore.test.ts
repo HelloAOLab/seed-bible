@@ -35,6 +35,10 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+function draftOf(game: SavedGame) {
+  return { targetVerse: game.targetVerse, steps: game.steps };
+}
+
 function setup(userId: string | null = "user-1") {
   const savedGames = signal<SavedGame[]>([]);
   const currentUser = signal(userId);
@@ -63,12 +67,14 @@ describe("loadGames", () => {
     await expect(loadGames("user-1", os)).resolves.toEqual({
       status: "ok",
       games: [],
+      preserved: [],
     });
 
     os.getData.mockResolvedValueOnce({ success: true, data: null });
     await expect(loadGames("user-1", os)).resolves.toEqual({
       status: "ok",
       games: [],
+      preserved: [],
     });
 
     os.getData.mockResolvedValueOnce({
@@ -89,33 +95,32 @@ describe("loadGames", () => {
     await expect(loadGames("user-1", os)).resolves.toEqual({ status: "error" });
   });
 
-  it("drops entries that are not saved games", async () => {
+  it("drops entries that are not saved games and keeps them to write back", async () => {
+    const broken = [
+      { id: 1 },
+      null,
+      { ...makeGame({ id: "empty-steps" }), steps: [] },
+      { ...makeGame({ id: "null-step" }), steps: [null] },
+      {
+        ...makeGame({ id: "no-text" }),
+        targetVerse: {
+          bookId: "JHN",
+          chapterNumber: 1,
+          verseNumber: 1,
+        },
+      },
+    ];
     const os = {
       getData: vi.fn().mockResolvedValue({
         success: true,
-        data: {
-          games: [
-            makeGame(),
-            { id: 1 },
-            null,
-            { ...makeGame({ id: "empty-steps" }), steps: [] },
-            { ...makeGame({ id: "null-step" }), steps: [null] },
-            {
-              ...makeGame({ id: "no-text" }),
-              targetVerse: {
-                bookId: "JHN",
-                chapterNumber: 1,
-                verseNumber: 1,
-              },
-            },
-          ],
-        },
+        data: { games: [makeGame(), ...broken] },
       }),
     } as unknown as CasualOSManager;
 
     await expect(loadGames("user-1", os)).resolves.toEqual({
       status: "ok",
       games: [makeGame()],
+      preserved: broken,
     });
   });
 });
@@ -165,7 +170,7 @@ describe("saved games controller", () => {
 
     await expect(controller.syncUser("user-1")).resolves.toBe("error");
     await expect(
-      controller.save(makeGame({ id: "new" }))
+      controller.save(draftOf(makeGame({ id: "new" })), null)
     ).rejects.toMatchObject({ code: "not_loaded" });
 
     expect(os.recordData).not.toHaveBeenCalled();
@@ -184,7 +189,7 @@ describe("saved games controller", () => {
     os.getData.mockReturnValue(pending.promise);
 
     const syncing = controller.syncUser("user-1");
-    const saving = controller.save(makeGame({ id: "new" }));
+    const saving = controller.save(draftOf(makeGame({ id: "new" })), null);
     pending.resolve({
       success: true,
       data: { games: [makeGame({ id: "old" })] },
@@ -192,17 +197,19 @@ describe("saved games controller", () => {
 
     await Promise.all([syncing, saving]);
 
-    expect(savedGames.value.map((game) => game.id)).toEqual(["new", "old"]);
+    expect(savedGames.value).toHaveLength(2);
+    expect(savedGames.value[1]?.id).toBe("old");
+    expect(savedGames.value[0]?.id).not.toBe("old");
     expect(os.recordData).toHaveBeenCalledTimes(1);
+    const written = os.recordData.mock.calls[0]?.[2] as {
+      games: SavedGame[];
+    };
+    expect(written.games[1]).toMatchObject({ id: "old" });
+    expect(written.games[0]?.id).not.toBe("old");
     expect(os.recordData).toHaveBeenCalledWith(
       "user-1",
       GAMES_ADDRESS,
-      {
-        games: [
-          expect.objectContaining({ id: "new" }),
-          expect.objectContaining({ id: "old" }),
-        ],
-      },
+      { games: written.games },
       { marker: GAMES_MARKER }
     );
     expect(GAMES_MARKER).toBe("private");
@@ -220,10 +227,13 @@ describe("saved games controller", () => {
     });
     await controller.syncUser("user-1");
 
-    await controller.save({
-      ...original,
-      steps: [{ hint: "" }, { hint: "" }, { hint: "x" }],
-    });
+    await controller.save(
+      {
+        targetVerse: original.targetVerse,
+        steps: [{ hint: "" }, { hint: "" }, { hint: "x" }],
+      },
+      "g1"
+    );
 
     expect(savedGames.value).toHaveLength(1);
     expect(savedGames.value[0]?.id).toBe("g1");
@@ -249,7 +259,7 @@ describe("saved games controller", () => {
     });
 
     await expect(
-      controller.save(makeGame({ id: "new" }))
+      controller.save(draftOf(makeGame({ id: "new" })), null)
     ).rejects.toBeInstanceOf(SavedGamesWriteError);
 
     expect(savedGames.value.map((game) => game.id)).toEqual(["old"]);
@@ -285,7 +295,9 @@ describe("saved games controller", () => {
 
   it("does not write when nobody is signed in", async () => {
     const { controller, os } = setup(null);
-    await expect(controller.save(makeGame())).rejects.toMatchObject({
+    await expect(
+      controller.save(draftOf(makeGame()), null)
+    ).rejects.toMatchObject({
       code: "signed_out",
     });
     expect(os.recordData).not.toHaveBeenCalled();
@@ -310,8 +322,8 @@ describe("saved games controller", () => {
         })
     );
 
-    const first = controller.save(makeGame({ id: "a" }));
-    const second = controller.save(makeGame({ id: "b" }));
+    const first = controller.save(draftOf(makeGame({ id: "a" })), null);
+    const second = controller.save(draftOf(makeGame({ id: "b" })), null);
     await vi.waitFor(() => {
       expect(resolvers).toHaveLength(1);
     });
@@ -322,6 +334,60 @@ describe("saved games controller", () => {
     resolvers[1]!({ success: true });
     await Promise.all([first, second]);
 
-    expect(savedGames.value.map((game) => game.id)).toEqual(["b", "a", "old"]);
+    expect(savedGames.value).toHaveLength(3);
+    expect(savedGames.value[2]?.id).toBe("old");
+    expect(savedGames.value[0]?.id).not.toBe(savedGames.value[1]?.id);
+    expect(savedGames.value[0]?.id).not.toBe("old");
+    expect(savedGames.value[1]?.id).not.toBe("old");
+  });
+
+  it("replaces the edited game after the list loads, even if it was empty at click time", async () => {
+    const { controller, os, savedGames } = setup();
+    const pending = deferred<{
+      success: boolean;
+      data: { games: SavedGame[] };
+    }>();
+    os.getData.mockReturnValue(pending.promise);
+    const original = makeGame({ id: "keep", createdAtMs: 50 });
+
+    const saving = controller.save(
+      {
+        targetVerse: { ...original.targetVerse, verseNumber: 16 },
+        steps: [{ hint: "later" }],
+      },
+      "keep"
+    );
+    pending.resolve({ success: true, data: { games: [original] } });
+    await saving;
+
+    expect(savedGames.value).toHaveLength(1);
+    expect(savedGames.value[0]?.id).toBe("keep");
+    expect(savedGames.value[0]?.createdAtMs).toBe(50);
+    expect(savedGames.value[0]?.targetVerse.verseNumber).toBe(16);
+    const written = os.recordData.mock.calls[0]?.[2] as {
+      games: SavedGame[];
+    };
+    expect(written.games).toHaveLength(1);
+    expect(written.games[0]?.id).toBe("keep");
+  });
+
+  it("writes unreadable entries back unchanged", async () => {
+    const { controller, os, savedGames } = setup();
+    const broken = { id: "legacy", steps: [] };
+    const original = makeGame({ id: "old" });
+    os.getData.mockResolvedValue({
+      success: true,
+      data: { games: [original, broken] },
+    });
+    await controller.syncUser("user-1");
+
+    await controller.save(draftOf(makeGame()), null);
+
+    expect(savedGames.value.map((game) => game.id)).not.toContain("legacy");
+    const written = os.recordData.mock.calls[0]?.[2] as { games: unknown[] };
+    expect(written.games.at(-1)).toEqual(broken);
+    expect(written.games.some((game) => (game as SavedGame).id === "old")).toBe(
+      true
+    );
   });
 });

@@ -17,6 +17,7 @@ function playingGame(): GameSignals {
     }),
     steps: signal([{ hint: "a" }, { hint: "b" }]),
     selectingViaToolbar: signal(true),
+    verseLookup: signal(0),
     guessCount: signal(2),
     lastResult: signal({ kind: "wrong_book", direction: "after" }),
     won: signal(false),

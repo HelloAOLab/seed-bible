@@ -45,6 +45,12 @@ export interface GameSignals {
   steps: Signal<GameStep[]>;
   /** True while waiting for the creator to tap a verse in the reader. */
   selectingViaToolbar: Signal<boolean>;
+  /**
+   * Bumped whenever a new reference lookup starts, or the draft target is
+   * replaced. A chapter download that finishes late compares against this
+   * and does nothing when it is no longer the latest lookup.
+   */
+  verseLookup: Signal<number>;
   /** Number of guesses used (never decrements). */
   guessCount: Signal<number>;
   /** Feedback from the most recent guess. */

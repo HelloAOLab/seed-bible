@@ -1,4 +1,5 @@
 import { effect, signal } from "@preact/signals";
+import { render } from "preact";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { extractContentText } from "seed-bible/managers";
 import { MaterialIcon } from "seed-bible/components";
@@ -13,6 +14,7 @@ import {
 } from "./gamesStore";
 import { GameCreator } from "./GameCreator";
 import { GamePlayer } from "./GamePlayer";
+import { FindTheVerseReaderBanner } from "./PlayBanner";
 import { SavedGamesList } from "./SavedGamesList";
 import type { GameSignals, SavedGame } from "./types";
 
@@ -33,7 +35,9 @@ function GamePane({
 }: {
   game: GameSignals;
   state: SeedBibleState;
-  onSaveGame: (saved: SavedGame) => Promise<void>;
+  onSaveGame: (
+    draft: Pick<SavedGame, "targetVerse" | "steps">
+  ) => Promise<void>;
   onDeleteGame: (id: string) => Promise<void>;
   onEditGame: (saved: SavedGame) => void;
 }) {
@@ -177,6 +181,7 @@ export default function initFindTheVerseExtension() {
         targetVerse: signal(null),
         steps: signal([{ hint: "" }]),
         selectingViaToolbar: signal(false),
+        verseLookup: signal(0),
         guessCount: signal(0),
         lastResult: signal(null),
         won: signal(false),
@@ -204,8 +209,10 @@ export default function initFindTheVerseExtension() {
         });
       });
 
-      function saveGame(saved: SavedGame): Promise<void> {
-        return savedGames.save(saved);
+      function saveGame(
+        draft: Pick<SavedGame, "targetVerse" | "steps">
+      ): Promise<void> {
+        return savedGames.save(draft, game.currentGameId.peek());
       }
 
       function deleteGame(id: string): Promise<void> {
@@ -214,6 +221,7 @@ export default function initFindTheVerseExtension() {
 
       // Load a saved game into the creator for editing.
       function editGame(saved: SavedGame): void {
+        game.verseLookup.value += 1;
         game.targetVerse.value = { ...saved.targetVerse };
         game.steps.value = saved.steps.map((step) => ({ hint: step.hint }));
         game.currentGameId.value = saved.id;
@@ -222,7 +230,27 @@ export default function initFindTheVerseExtension() {
         game.phase.value = "creating";
       }
 
-      // Open / re-open the pane when the toolbar button is clicked
+      function openGamePane() {
+        state.panes.openPane({
+          id: PANE_ID,
+          placement: "side",
+          title: () => <FindTheVersePaneTitle />,
+          component: () => (
+            <GamePane
+              game={game}
+              state={state}
+              onSaveGame={saveGame}
+              onDeleteGame={deleteGame}
+              onEditGame={editGame}
+            />
+          ),
+        });
+      }
+
+      // Open / re-open the pane when the toolbar button is clicked.
+      // Closing it does not end a round: on a phone the pane covers the
+      // reader, so the player has to leave it to guess. The reader banner
+      // stays up while the round is running.
       yield state.tools.registerToolbarTool({
         id: "find-the-verse",
         priority: 320,
@@ -232,30 +260,8 @@ export default function initFindTheVerseExtension() {
           ns: "find-the-verse-extension",
         },
         icon: () => <MaterialIcon>gps_fixed</MaterialIcon>,
-        onSelect: (ctx) => {
-          ctx.panesManager.openPane({
-            id: PANE_ID,
-            placement: "side",
-            title: () => <FindTheVersePaneTitle />,
-            component: () => (
-              <GamePane
-                game={game}
-                state={state}
-                onSaveGame={saveGame}
-                onDeleteGame={deleteGame}
-                onEditGame={editGame}
-              />
-            ),
-            onClose: () => {
-              // Verse taps stay guesses for as long as phase is "playing",
-              // including after this pane is gone.
-              if (game.phase.peek() === "playing") {
-                resetPlay(game);
-                return;
-              }
-              game.selectingViaToolbar.value = false;
-            },
-          });
+        onSelect: () => {
+          openGamePane();
         },
       });
 
@@ -287,6 +293,7 @@ export default function initFindTheVerseExtension() {
             });
             return;
           }
+          game.verseLookup.value += 1;
           game.notice.value = null;
           game.targetVerse.value = {
             bookId: v.bookId,
@@ -295,6 +302,7 @@ export default function initFindTheVerseExtension() {
             verseText,
           };
           game.selectingViaToolbar.value = false;
+          openGamePane();
         },
       });
 
@@ -344,6 +352,27 @@ export default function initFindTheVerseExtension() {
 
       yield disposeLoadEffect;
       yield disposeGuessEffect;
+      if (typeof document !== "undefined") {
+        const bannerRoot = document.createElement("div");
+        document.body.appendChild(bannerRoot);
+        render(
+          <FindTheVerseReaderBanner
+            game={game}
+            state={state}
+            paneId={PANE_ID}
+            onEnd={() => resetPlay(game)}
+            onCancelSelect={() => {
+              game.selectingViaToolbar.value = false;
+              openGamePane();
+            }}
+          />,
+          bannerRoot
+        );
+        yield () => {
+          render(null, bannerRoot);
+          bannerRoot.remove();
+        };
+      }
     },
   });
 }

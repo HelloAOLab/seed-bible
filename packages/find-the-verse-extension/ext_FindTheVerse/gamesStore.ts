@@ -12,7 +12,7 @@ export const GAMES_ADDRESS = "find-the-verse-games";
 export const GAMES_MARKER = "private";
 
 export type LoadGamesResult =
-  | { status: "ok"; games: SavedGame[] }
+  | { status: "ok"; games: SavedGame[]; preserved: unknown[] }
   | { status: "error" };
 
 export type SavedGamesWriteCode =
@@ -67,13 +67,19 @@ export async function loadGames(
     const result = await os.getData(userId, GAMES_ADDRESS);
     if (!result || result.success === false) {
       return result && result.errorCode === "data_not_found"
-        ? { status: "ok", games: [] }
+        ? { status: "ok", games: [], preserved: [] }
         : { status: "error" };
     }
-    if (result.data == null) return { status: "ok", games: [] };
+    if (result.data == null) return { status: "ok", games: [], preserved: [] };
     const data = result.data as { games?: unknown };
     if (!Array.isArray(data.games)) return { status: "error" };
-    return { status: "ok", games: data.games.filter(isSavedGame) };
+    const games: SavedGame[] = [];
+    const preserved: unknown[] = [];
+    for (const entry of data.games) {
+      if (isSavedGame(entry)) games.push(entry);
+      else preserved.push(entry);
+    }
+    return { status: "ok", games, preserved };
   } catch {
     return { status: "error" };
   }
@@ -81,7 +87,7 @@ export async function loadGames(
 
 export async function persistGames(
   userId: string,
-  games: SavedGame[],
+  games: readonly unknown[],
   os: CasualOSManager
 ): Promise<void> {
   const result = await os.recordData(
@@ -145,7 +151,15 @@ export function savedGamesErrorMessage(
 
 export interface SavedGamesController {
   syncUser(userId: string | null): Promise<SyncUserResult>;
-  save(saved: SavedGame): Promise<void>;
+  /**
+   * `editingId` is the game being edited. The match happens inside the write,
+   * after the saved list has loaded, so a list that was empty at click time
+   * still replaces that game instead of inserting a second copy.
+   */
+  save(
+    draft: Pick<SavedGame, "targetVerse" | "steps">,
+    editingId: string | null
+  ): Promise<void>;
   remove(id: string): Promise<void>;
 }
 
@@ -166,6 +180,7 @@ export function createSavedGamesController(
   let loadToken = 0;
   let writeEpoch = 0;
   let writeQueue: Promise<void> = Promise.resolve();
+  let preserved: unknown[] = [];
   let inflight: {
     userId: string;
     promise: Promise<LoadGamesResult>;
@@ -196,15 +211,15 @@ export function createSavedGamesController(
     if (!userId) throw new SavedGamesWriteError("signed_out");
 
     if (loadedForUser !== userId) {
-      const writesAtStart = writeEpoch;
       const result = await requestLoad(userId);
       if (getUserId() !== userId) throw new SavedGamesWriteError("signed_out");
       if (result.status !== "ok") throw new SavedGamesWriteError("not_loaded");
-      if (writesAtStart === writeEpoch && loadedForUser !== userId) {
+      // Another load for this user may have published the list while this
+      // one was in flight. Writes themselves cannot: they run one at a time.
+      if (loadedForUser !== userId) {
         savedGames.value = result.games;
+        preserved = result.preserved;
         loadedForUser = userId;
-      } else if (loadedForUser !== userId) {
-        throw new SavedGamesWriteError("not_loaded");
       }
     }
 
@@ -216,7 +231,7 @@ export function createSavedGamesController(
     writeEpoch += 1;
     savedGames.value = next;
     try {
-      await persistGames(userId, next, os);
+      await persistGames(userId, [...next, ...preserved], os);
     } catch (error) {
       if (getUserId() === userId) savedGames.value = previous;
       if (error instanceof SavedGamesWriteError) throw error;
@@ -229,6 +244,7 @@ export function createSavedGamesController(
       const token = ++loadToken;
       const writesAtStart = writeEpoch;
       loadedForUser = null;
+      preserved = [];
       savedGames.value = [];
       if (!userId) return Promise.resolve("signed_out");
 
@@ -237,17 +253,23 @@ export function createSavedGamesController(
         if (writesAtStart !== writeEpoch) return "stale";
         if (result.status !== "ok") return "error";
         savedGames.value = result.games;
+        preserved = result.preserved;
         loadedForUser = userId;
         return "ok";
       });
     },
 
-    save(saved) {
+    save(draft, editingId) {
       return enqueue(() =>
-        write((current) => [
-          saved,
-          ...current.filter((game) => game.id !== saved.id),
-        ])
+        write((current) => {
+          const saved = toSavedGame(
+            draft,
+            editingId
+              ? current.find((game) => game.id === editingId)
+              : undefined
+          );
+          return [saved, ...current.filter((game) => game.id !== saved.id)];
+        })
       );
     },
 
