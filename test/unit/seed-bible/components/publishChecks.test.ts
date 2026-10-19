@@ -114,4 +114,38 @@ describe("publishChecks", () => {
       "The scene “Trailing” has no steps in it.",
     ]);
   });
+
+  // This file's `t` substitutes without pluralizing; the app's own picks
+  // "1 note" from the `_one` keys.
+  it("names the translation, counts linked phrases and attached questions, and asks for a video's transcript", () => {
+    expect(
+      publishChecks(
+        [
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13 },
+            note: '<p><a class="sb-verse-link" href="#verse-13">sees</a> and <a class="sb-verse-link" href="#verse-7">finds</a></p>',
+            highlights: [
+              { bookId: "GEN", chapter: 16, verse: 13, text: "a God who sees" },
+            ],
+            question: { prompt: "Who sees?" },
+          },
+          { type: "link", url: "https://www.youtube.com/watch?v=abc" },
+          {
+            type: "link",
+            url: "https://www.youtube.com/watch?v=def",
+            transcript: "The angel speaks.",
+          },
+        ],
+        books,
+        t,
+        resolveBookName,
+        { translationName: "AAB" }
+      ).map((check) => [check.ok, check.message, check.action ?? null])
+    ).toEqual([
+      [true, "All passages found in AAB", null],
+      [true, "3 linked phrases, 1 notes, 1 questions", null],
+      [false, "Video in step 2 has no transcript.", "Add one"],
+    ]);
+  });
 });

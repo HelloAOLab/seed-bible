@@ -1422,9 +1422,12 @@ export function createPlaylistManager(
     };
   };
 
+  // A private playlist is a draft only its author reads; the others are
+  // readable by anyone with the link, and public ones also listed.
   const savePlaylist = async (playlist: Playlist) => {
     await os.recordData(playlist.recordName, playlist.id, playlist, {
-      marker: "publicRead:playlists",
+      marker:
+        playlist.visibility === "private" ? "private" : "publicRead:playlists",
     });
   };
 
@@ -1839,14 +1842,27 @@ export function createPlaylistManager(
     }
   };
 
-  const listPlaylists = async (recordName: string, onPage?: () => void) => {
-    // Every page: the server's paging stores return ten records at a time.
-    const records = await listAllByAddress(
-      (lastAddress) =>
-        os.listDataByMarker(recordName, "publicRead:playlists", lastAddress),
-      onPage
-    );
-    return records.items.map((record) => PlaylistSchema.parse(record.data));
+  const listPlaylists = async (
+    recordName: string,
+    onPage?: () => void,
+    markers: string[] = ["publicRead:playlists"]
+  ) => {
+    // Keyed by id: a playlist moving between markers mustn't show up twice.
+    const playlists = new Map<string, Playlist>();
+    for (const marker of markers) {
+      // Every page: the server's paging stores return ten records at a time.
+      const records = await listAllByAddress(
+        (lastAddress) => os.listDataByMarker(recordName, marker, lastAddress),
+        onPage
+      );
+      for (const record of records.items) {
+        const playlist = PlaylistSchema.parse(record.data);
+        if (!playlists.has(playlist.id)) {
+          playlists.set(playlist.id, playlist);
+        }
+      }
+    }
+    return Array.from(playlists.values());
   };
 
   // Cached playlists for an explicitly-named account, keyed by userId. Only
@@ -2588,7 +2604,11 @@ export function createPlaylistManager(
     }
 
     try {
-      const playlists = await listPlaylists(login.userId.value);
+      // The author's own list holds their private drafts as well.
+      const playlists = await listPlaylists(login.userId.value, undefined, [
+        "publicRead:playlists",
+        "private",
+      ]);
       userPlaylists.value = playlists;
     } catch (error) {
       console.error("Failed to sync playlists:", error);

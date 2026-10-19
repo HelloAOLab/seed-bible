@@ -883,6 +883,44 @@ describe("createPlaylistManager", () => {
       stop();
     });
 
+    it("keeps a private playlist under the private marker and lists it with the author's own", async () => {
+      listDataByMarkerMock.mockImplementation(
+        async (recordName: unknown, marker: unknown) => ({
+          success: true,
+          items:
+            recordName === "user-1" && marker === "private"
+              ? [
+                  {
+                    data: {
+                      ...makePlaylist({ id: "p-draft" }),
+                      visibility: "private",
+                    },
+                  },
+                ]
+              : recordName === "user-1"
+                ? [{ data: makePlaylist({ id: "p-public" }) }]
+                : [],
+        })
+      );
+      const manager = makeManager("user-1");
+      await flush();
+      expect(manager.userPlaylists.value.map((p) => p.id).sort()).toEqual([
+        "p-draft",
+        "p-public",
+      ]);
+
+      manager.editPlaylist(
+        manager.userPlaylists.value.find((p) => p.id === "p-draft")!
+      );
+      await manager.saveEditingPlaylist();
+      expect(recordDataMock).toHaveBeenLastCalledWith(
+        "user-1",
+        "p-draft",
+        expect.objectContaining({ visibility: "private" }),
+        { marker: "private" }
+      );
+    });
+
     it("counts a change of who can open it as an unsaved change", async () => {
       const manager = makeManager("user-1");
       await flush();

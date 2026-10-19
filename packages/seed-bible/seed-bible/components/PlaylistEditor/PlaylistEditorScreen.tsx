@@ -90,7 +90,6 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
     openIndex,
     openItem,
     setOpenIndex,
-    addOpen,
     setAddOpen,
     addItem,
     updateOpenItemSettings,
@@ -253,6 +252,30 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
   };
 
   const issues = openIndex !== null ? (stepIssues.get(openIndex) ?? []) : [];
+
+  if (reviewOpen) {
+    return (
+      <PlaylistReviewPanel
+        playlists={playlists}
+        modals={modals}
+        books={books}
+        resolveBookName={resolveBookName}
+        authorName={state.login?.profile?.value?.name ?? null}
+        translationName={translationName}
+        os={state.os}
+        login={state.login}
+        gallery={state.gallery}
+        onOpenItem={(index) => {
+          setReviewOpen(false);
+          requestOpen(index);
+        }}
+        onBack={() => setReviewOpen(false)}
+        onTestWithGroup={() => void testWithGroup()}
+        onPublish={handleSave}
+        publishing={saving}
+      />
+    );
+  }
   const sameAs =
     openIndex !== null && openItem?.type === "bible-verse"
       ? previousSamePassage(items, openIndex)
@@ -412,24 +435,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
               : t("playlist-editor-steps", { defaultValue: "Steps" })
           }
         >
-          {reviewOpen && openItem === null && !addOpen ? (
-            <PlaylistReviewPanel
-              playlists={playlists}
-              modals={modals}
-              books={books}
-              resolveBookName={resolveBookName}
-              authorName={state.login?.profile?.value?.name ?? null}
-              os={state.os}
-              login={state.login}
-              gallery={state.gallery}
-              onOpenItem={(index) => {
-                setReviewOpen(false);
-                requestOpen(index);
-              }}
-              onPublish={handleSave}
-              publishing={saving}
-            />
-          ) : mode === "preview" ? (
+          {mode === "preview" ? (
             openItem && openIndex !== null ? (
               <PlaylistStepPreview
                 item={openItem}

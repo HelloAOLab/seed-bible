@@ -548,7 +548,7 @@ describe("PlaylistEditorScreen", () => {
         (b) => b.textContent === "Review & publish"
       )!;
 
-    it("shows the last look in the middle column, with who can open it and what to check", () => {
+    it("fills the editor with the last look: the details, who can open it, how it appears and what to check", () => {
       const { playlists } = renderScreen([
         { type: "scene", title: "Intro" },
         verseItem("GEN", 16),
@@ -557,33 +557,50 @@ describe("PlaylistEditorScreen", () => {
 
       act(() => reviewButton().click());
 
-      const review = main().querySelector(".sb-playlist-review")!;
+      const review = container.querySelector(".sb-playlist-review")!;
       expect(review).not.toBeNull();
+      expect(container.querySelector(".sb-playlist-editor-header")).toBeNull();
+      expect(
+        review.querySelector(".sb-playlist-review-title")?.textContent
+      ).toBe("Review & publish");
       expect(
         review.querySelector(".sb-playlist-review-card-title")?.textContent
       ).toBe("Angel of the LORD");
       expect(
         review.querySelector(".sb-playlist-review-card-meta")?.textContent
-      ).toBe("2 steps · 1 scenes");
+      ).toBe("2 steps · ~8 min · 1 scenes");
       const checks = Array.from(
         review.querySelectorAll(".sb-playlist-review-check")
       ).map((el) => el.textContent);
+      expect(checks[0]).toContain("All passages found in AAB");
       expect(checks.join(" ")).toContain(
         "Steps 1 and 2 show the same passage."
       );
 
-      act(() => {
-        Array.from(
-          review.querySelectorAll<HTMLButtonElement>(
-            ".sb-playlist-visibility-choice"
-          )
+      const choices = Array.from(
+        review.querySelectorAll<HTMLButtonElement>(
+          ".sb-playlist-visibility-choice"
         )
-          .find((b) => b.textContent?.includes("Anyone with the link"))
-          ?.click();
-      });
+      );
+      expect(
+        choices.map(
+          (b) => b.querySelector(".sb-playlist-visibility-title")?.textContent
+        )
+      ).toEqual(["Only me", "Anyone with the link", "Public in Discover"]);
+      act(() => choices[0]!.click());
       expect(playlists.updateEditingPlaylistMetadata).toHaveBeenCalledWith({
-        visibility: "unlisted",
+        visibility: "private",
       });
+
+      act(() => {
+        review
+          .querySelector<HTMLButtonElement>(".sb-playlist-editor-back")!
+          .click();
+      });
+      expect(container.querySelector(".sb-playlist-review")).toBeNull();
+      expect(
+        container.querySelector(".sb-playlist-editor-header")
+      ).not.toBeNull();
     });
 
     it("'Fix' opens the step a check points at, and Publish saves", async () => {
@@ -594,11 +611,11 @@ describe("PlaylistEditorScreen", () => {
       act(() => reviewButton().click());
 
       act(() => {
-        main()
+        container
           .querySelector<HTMLButtonElement>(".sb-playlist-review-check-fix")!
           .click();
       });
-      expect(main().querySelector(".sb-playlist-review")).toBeNull();
+      expect(container.querySelector(".sb-playlist-review")).toBeNull();
       expect(
         main().querySelector(".stub-playlist-item-input--edit")
       ).not.toBeNull();
@@ -606,7 +623,7 @@ describe("PlaylistEditorScreen", () => {
 
       act(() => reviewButton().click());
       await act(async () => {
-        main()
+        container
           .querySelector<HTMLButtonElement>(".sb-playlist-review-publish")!
           .click();
         await Promise.resolve();
