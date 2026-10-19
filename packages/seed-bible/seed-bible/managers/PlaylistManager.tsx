@@ -5,6 +5,7 @@ import {
   computed,
   effect,
   signal,
+  untracked,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
@@ -736,11 +737,20 @@ export function createPlayingState(
   const detour = signal<ReaderVerseRef | null>(null);
   const awayFromStep = computed(() => detour.value !== null);
   let lastIndex = currentIndex.peek();
+  let lastItem = currentItem.peek();
   const disposeRearm = effect(() => {
     const index = currentIndex.value;
+    const item = currentItem.value;
     if (index !== lastIndex) {
       lastIndex = index;
       finishPromptShown.value = false;
+    }
+    // By the item, not its index: a queue edit can shift the step's index
+    // without changing the step, or put a different item at the same index.
+    // Compared by content, since a shared session delivers the same queue as
+    // new objects.
+    if (!jsonEqual(item, lastItem)) {
+      lastItem = item;
       noteExpanded.value = true;
     }
   });
@@ -890,6 +900,8 @@ export function createPlayingState(
     batch(() => {
       currentIndex.value = index;
       detour.value = null;
+      // Even onto an identical item, which the rearm effect can't tell apart.
+      noteExpanded.value = true;
     });
   };
 
@@ -989,17 +1001,19 @@ export function createPlayingState(
       detour.value = null;
     }
     const nextQueue = queue.value.filter((_, i) => i !== index);
-    queue.value = nextQueue;
-    if (nextQueue.length === 0) {
-      currentIndex.value = -1;
-      return;
-    }
     let nextIndex = currentIndex.value;
     if (index < nextIndex) {
       // A step before the current one was removed; shift to compensate.
       nextIndex -= 1;
     }
-    currentIndex.value = Math.max(0, Math.min(nextIndex, nextQueue.length - 1));
+    // Together, so the step never briefly points at the wrong item.
+    batch(() => {
+      queue.value = nextQueue;
+      currentIndex.value =
+        nextQueue.length === 0
+          ? -1
+          : Math.max(0, Math.min(nextIndex, nextQueue.length - 1));
+    });
   };
 
   /**
@@ -1018,16 +1032,21 @@ export function createPlayingState(
       return;
     }
     nextQueue.splice(to, 0, moved);
-    queue.value = nextQueue;
 
     const current = currentIndex.value;
+    let nextIndex = current;
     if (current === from) {
-      currentIndex.value = to;
+      nextIndex = to;
     } else if (from < current && to >= current) {
-      currentIndex.value = current - 1;
+      nextIndex = current - 1;
     } else if (from > current && to <= current) {
-      currentIndex.value = current + 1;
+      nextIndex = current + 1;
     }
+    // Together, so the step never briefly points at the wrong item.
+    batch(() => {
+      queue.value = nextQueue;
+      currentIndex.value = nextIndex;
+    });
   };
 
   /** Restarts playback from the first item. */
@@ -2497,7 +2516,10 @@ export function createPlaylistManager(
       const disposeIn = effect(() => {
         const next = data.value;
         if (next) {
-          playingState.setState(next);
+          // Untracked: applying the state reads the playing state's own
+          // signals, and depending on them would re-apply this (by then
+          // stale) data whenever playback moved, undoing the move.
+          untracked(() => void playingState.setState(next));
         }
       });
 

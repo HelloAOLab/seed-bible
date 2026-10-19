@@ -5219,6 +5219,40 @@ describe("createPlayingState", () => {
         expect(live.size).toBe(1);
       });
 
+      it("stays closed when a queue edit only shifts the step's position", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const live = trackHighlights(tab);
+        const text: PlaylistItemData = { type: "html", html: "<p>Hi</p>" };
+        const state = createPlayingState(
+          [makePlaylist({ items: [text, noted, text] })],
+          tab
+        );
+        await state.jumpTo(1);
+        state.setNoteExpanded(false);
+        vi.advanceTimersByTime(NOTE_CLOSED_HIGHLIGHT_MS);
+
+        state.reorderQueue(0, 2);
+
+        expect(state.currentIndex.value).toBe(0);
+        expect(state.noteExpanded.value).toBe(false);
+        expect(live.size).toBe(0);
+      });
+
+      it("opens for a different item that takes the closed step's place", async () => {
+        const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
+        const state = createPlayingState(
+          [makePlaylist({ items: [noted, { ...noted, note: "<p>More</p>" }] })],
+          tab
+        );
+        await state.jumpTo(0);
+        state.setNoteExpanded(false);
+
+        state.removeFromQueue(0);
+
+        expect(state.currentIndex.value).toBe(0);
+        expect(state.noteExpanded.value).toBe(true);
+      });
+
       it("is cleared when playback moves on to a step that isn't scripture", async () => {
         const tab = makeTab("tab-1", vi.fn().mockResolvedValue(undefined));
         const live = trackHighlights(tab);
