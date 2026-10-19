@@ -5,6 +5,7 @@ import preact from "@preact/preset-vite";
 import { loadExtensionProjectInfo } from "../lib/project.js";
 import { runCheck } from "./check.js";
 import { runTest } from "./test.js";
+import { checkManifestPermissions } from "../lib/manifestPolicy.js";
 
 export interface BuildOptions {
   standalone: boolean;
@@ -161,6 +162,14 @@ export async function runBuild(
   await buildMonorepoReadyOutput(root, info.extensionId);
 
   if (options.standalone) {
+    // Caught here rather than when a user tries to install it.
+    const problems = checkManifestPermissions(info.meta);
+    if (problems.length > 0) {
+      for (const problem of problems) {
+        console.error(`[build] extension.json: ${problem}`);
+      }
+      return 1;
+    }
     await buildStandaloneBundle(root, info.extensionId);
   }
 

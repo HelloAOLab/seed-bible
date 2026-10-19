@@ -1,6 +1,7 @@
 import * as z from "zod/v4";
 import {
   isSandboxPermission,
+  SANDBOX_PERMISSION_INFO,
   type SandboxPermission,
 } from "../extensions/protocol";
 import {
@@ -85,6 +86,15 @@ export function parseSandboxManifest(meta: {
     }
   }
   const required = [...new Set(permissions as SandboxPermission[])];
+  const optionalOnly = required.filter(
+    (p) => !SANDBOX_PERMISSION_INFO[p].requirable
+  );
+  if (optionalOnly.length > 0) {
+    return {
+      ok: false,
+      error: `These permissions can only be asked for when they're needed, so list them under "optionalPermissions" instead of "permissions": ${optionalOnly.join(", ")}.`,
+    };
+  }
 
   const network = meta.network ?? [];
   if (!Array.isArray(network)) {

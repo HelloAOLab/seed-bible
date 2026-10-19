@@ -355,11 +355,27 @@ A call that isn't allowed rejects with a `SandboxError` whose `code` says why: `
 }
 ```
 
-| Permission          | What it gives you                                                                 |
-| ------------------- | --------------------------------------------------------------------------------- |
-| `reading:position`  | `sb.reading.position`: the current translation, book and chapter, kept up to date |
-| `reading:selection` | `sb.reading.selection`, and the selected verses in a tool's `onSelect`            |
-| `reading:navigate`  | `sb.reading.open({ bookId, chapter, verse })`                                     |
+| Permission          | What it gives you                                                                                     | Can be required |
+| ------------------- | ----------------------------------------------------------------------------------------------------- | --------------- |
+| `reading:position`  | `sb.reading.position`: the current translation, book and chapter, kept up to date; Discover providers | Yes             |
+| `reading:selection` | `sb.reading.selection`, and the selected verses in a tool's `onSelect`                                | Yes             |
+| `reading:navigate`  | `sb.reading.open({ bookId, chapter, verse })`                                                         | Yes             |
+| `reading:history`   | `sb.history.list({ from, to })`                                                                       | Yes             |
+| `highlights:read`   | `sb.highlights.list(...)`                                                                             | Yes             |
+| `highlights:write`  | `sb.highlights.add(...)` / `remove(...)` (and reading)                                                | No              |
+| `notes:read`        | `sb.notes.list(...)`, as plain text                                                                   | No              |
+| `notes:write`       | `sb.notes.create(...)`, and `update`/`delete` for the notes it added (and reading)                    | No              |
+| `saves:read`        | `sb.saves.list()`                                                                                     | Yes             |
+| `saves:write`       | `sb.saves.add(...)` / `remove(id)` (and reading)                                                      | No              |
+| `profile:read`      | `sb.profile.get()`: name, picture and real account id                                                 | No              |
+| `chat:respond`      | `sb.chats.registerProvider(...)`, for chats the user adds it to                                       | Yes             |
+| `chat:shared`       | `shared: true` on a chat provider, for chats with other people (and `chat:respond`)                   | No              |
+
+**"Can be required: No"** means the permission can only go under `optionalPermissions`, and you ask for it with `sb.permissions.request` when the feature that needs it is used. A manifest that lists one under `permissions` won't install, and `seed-bible-extension-scripts build --standalone` (which `publish` runs) stops with a message saying which to move. The rule: anything that changes the user's data, identifies them, reads their private notes, or involves other people is always optional. Users can also turn optional permissions on and off themselves, from the shield button in Settings → Extensions; that restarts your extension with the new set, so read `sb.permissions.has()` rather than assuming.
+
+**Needs no permission:** `sb.identity` (an id for the user that's the same every time for your extension, different for every extension, not their real id, and null when signed out), `sb.bible.chapter({ translationId, bookId, chapter })` for public Bible text, `sb.sensitive.fetch(...)` for requests that carry the user's sensitive settings (see the `sensitive` section of `extension.json`), `sb.modals.alert`/`open` (only right after the user interacts with your extension), and `sb.settings.registerPanel(view)` for a settings view under Configure.
+
+**Writing user data needs an account.** `notes.create`, `saves.add` and similar reject with `unavailable` when the user is signed out, rather than prompting them to sign in.
 
 **Optional permissions.** Anything your extension can work without goes under `optionalPermissions` instead. The install dialog only asks for `permissions`; it mentions the optional ones as things you may ask for later. Ask for one when the feature that needs it is used:
 
@@ -386,7 +402,7 @@ await sb.tools.registerToolbarTool({
 
 **Updates.** A new version that asks for nothing new loads without asking. One that asks for more shows the user only what's new, and doesn't load until they agree. Uninstalling forgets the grant, so reinstalling asks again.
 
-**Limits for now.** A sandboxed extension can't declare `dependencies`, and its `autoinstall` is ignored: it never installs without the user being asked. Discover and chat providers, and access to user data such as highlights and notes, aren't available to sandboxed extensions yet (see the rollout plan in `extension-security.md`). Styles must come from the bundle itself, as inline styles or CSS imported with `?inline`, since the frame can't load a separate stylesheet.
+**Limits for now.** A sandboxed extension can't declare `dependencies`, and its `autoinstall` is ignored: it never installs without the user being asked. `sb.storage` is kept on the device, not synced. A chat provider replies with one text message (no streaming), and a Discover provider answers with data (`content`, `cross-reference` or `study-note` results), not custom markup. An extension whose main frame stops answering is stopped until the page reloads. Styles must come from the bundle itself, as inline styles or CSS imported with `?inline`, since the frame can't load a separate stylesheet.
 
 ---
 

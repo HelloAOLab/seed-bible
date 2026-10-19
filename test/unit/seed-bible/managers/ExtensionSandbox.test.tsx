@@ -101,6 +101,7 @@ describe("sandboxed extensions", () => {
     expect(h.frames[1]!.init.mode).toEqual({
       kind: "view",
       view: "main",
+      surface: "pane",
       paneId: pane.id,
       props: { greeting: "hi" },
     });
@@ -182,7 +183,7 @@ describe("sandboxed extensions", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     const extension = await publish(defineExtension({}), {
       id: "ext.future",
-      permissions: ["highlights:read"],
+      permissions: ["account:everything"],
     });
 
     expect(await createManager().loadExtension(extension)).toBe(false);

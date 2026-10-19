@@ -20,6 +20,16 @@ export const SANDBOX_PERMISSIONS = [
   "reading:position",
   "reading:selection",
   "reading:navigate",
+  "reading:history",
+  "highlights:read",
+  "highlights:write",
+  "notes:read",
+  "notes:write",
+  "saves:read",
+  "saves:write",
+  "profile:read",
+  "chat:respond",
+  "chat:shared",
 ] as const;
 
 export type SandboxPermission = (typeof SANDBOX_PERMISSIONS)[number];
@@ -31,6 +41,70 @@ export function isSandboxPermission(
     typeof value === "string" &&
     (SANDBOX_PERMISSIONS as readonly string[]).includes(value)
   );
+}
+
+export interface SandboxPermissionInfo {
+  /** How much harm misuse could do; the consent dialog warns about `high`. */
+  risk: "low" | "medium" | "high";
+  /**
+   * Whether a manifest may list it under `permissions`, making the user
+   * grant it to install the extension at all. High-risk permissions can't
+   * be: they're only ever `optionalPermissions`, asked for when the feature
+   * that needs one is used, so the user can say yes to the extension and no
+   * to that one thing.
+   */
+  requirable: boolean;
+  /** Granting this also grants these (writing something includes reading it). */
+  implies?: readonly SandboxPermission[];
+}
+
+/**
+ * The policy for each permission. Reading what the extension is working
+ * with — the passage, the selection, and the user's own reading history,
+ * highlights and saves — can be required. Anything that changes the user's
+ * data, identifies them, reads their private writing, or involves other
+ * people is always optional.
+ */
+export const SANDBOX_PERMISSION_INFO: Record<
+  SandboxPermission,
+  SandboxPermissionInfo
+> = {
+  "reading:position": { risk: "low", requirable: true },
+  "reading:selection": { risk: "low", requirable: true },
+  "reading:navigate": { risk: "low", requirable: true },
+  "reading:history": { risk: "medium", requirable: true },
+  "highlights:read": { risk: "medium", requirable: true },
+  "highlights:write": {
+    risk: "high",
+    requirable: false,
+    implies: ["highlights:read"],
+  },
+  "notes:read": { risk: "high", requirable: false },
+  "notes:write": { risk: "high", requirable: false, implies: ["notes:read"] },
+  "saves:read": { risk: "medium", requirable: true },
+  "saves:write": { risk: "high", requirable: false, implies: ["saves:read"] },
+  "profile:read": { risk: "high", requirable: false },
+  // It only ever sees the chats the user adds it to, which is a choice made
+  // in the moment, so a chat extension may require it.
+  "chat:respond": { risk: "medium", requirable: true },
+  "chat:shared": {
+    risk: "high",
+    requirable: false,
+    implies: ["chat:respond"],
+  },
+};
+
+/** `granted` plus everything it implies. */
+export function expandSandboxPermissions(
+  granted: readonly SandboxPermission[]
+): SandboxPermission[] {
+  const all = new Set<SandboxPermission>(granted);
+  for (const permission of granted) {
+    for (const implied of SANDBOX_PERMISSION_INFO[permission].implies ?? []) {
+      all.add(implied);
+    }
+  }
+  return [...all];
 }
 
 export type SandboxTitle = string | { key: string; defaultValue: string };
@@ -124,6 +198,15 @@ export interface SandboxState {
   position: SandboxReadingPosition | null;
   /** Empty unless `reading:selection` is granted. */
   selection: SandboxSelectedVerse[];
+  /**
+   * An id for the signed-in user that's the same every time for this
+   * extension, but different for every extension and not the user's real
+   * id, so an extension can keep per-user data without learning who the
+   * user is. Null when signed out.
+   */
+  identity: string | null;
+  /** Font stylesheets to load, so text matches the app. */
+  fontStylesheets: string[];
 }
 
 export type SandboxFrameMode =
@@ -131,9 +214,120 @@ export type SandboxFrameMode =
   | {
       kind: "view";
       view: string;
+      /** Where the view is shown. */
+      surface: "pane" | "modal" | "settings";
+      /** The pane's id for `surface: "pane"`; an id for the modal or panel otherwise. */
       paneId: string;
       props: SandboxJsonValue;
     };
+
+/** A highlight on one verse or an inclusive `[start, end]` range. */
+export interface SandboxHighlight {
+  verse: number | [number, number];
+  colorId: string;
+}
+
+export interface SandboxNote {
+  id: string;
+  /** The verses it's attached to; null for the whole chapter. */
+  verses: number[] | null;
+  /** The note as plain text. */
+  text: string;
+  createdAt: number | null;
+  updatedAt: number | null;
+  /** Only notes the extension added can be changed or deleted by it. */
+  addedByThisExtension: boolean;
+}
+
+export interface SandboxSave {
+  id: string;
+  translationId: string;
+  bookId: string;
+  chapter: number;
+  verse: number | [number, number] | null;
+  categories: string[];
+  createdAt: number;
+}
+
+/** One sitting with a chapter; times in milliseconds since the epoch. */
+export interface SandboxReadingEvent {
+  bookId: string;
+  chapter: number;
+  start: number;
+  end: number;
+}
+
+export interface SandboxProfile {
+  /** The user's real account id. */
+  userId: string;
+  name: string;
+  pictureUrl: string | null;
+}
+
+export interface SandboxReference {
+  bookId: string;
+  chapter: number;
+  verse?: number;
+  endChapter?: number;
+  endVerse?: number;
+}
+
+/** What a Discover provider can show, as data the host renders. */
+export type SandboxDiscoverResult =
+  | {
+      type: "content";
+      /** Passed back to `onSelect` when the user picks it. */
+      id: string;
+      title: string;
+      description: string;
+      reference: SandboxReference;
+      verses?: number[];
+      author?: string;
+      /** An `https:` image on one of the manifest's `network` hosts. */
+      image?: string;
+    }
+  | {
+      type: "cross-reference";
+      reference: SandboxReference;
+      crossReference: SandboxReference;
+    }
+  | { type: "study-note"; reference: SandboxReference; text: string };
+
+export interface SandboxDiscoverRequest {
+  providerId: string;
+  translationId: string;
+  bookId: string;
+  chapter: number;
+  language: string;
+}
+
+export interface SandboxChatMessage {
+  /** The author's display name, if they have one. */
+  author: string | null;
+  /** True for messages this extension's provider sent. */
+  fromThisProvider: boolean;
+  text: string;
+  timeMs: number;
+}
+
+export interface SandboxChatRequest {
+  providerId: string;
+  chatId: string;
+  /** Whether other people are in the chat (needs `chat:shared`). */
+  shared: boolean;
+  messages: SandboxChatMessage[];
+}
+
+/** What the host asks an extension's background frame for, by kind. */
+export interface SandboxHostRequests {
+  discover: {
+    payload: SandboxDiscoverRequest;
+    result: SandboxDiscoverResult[];
+  };
+  chat: { payload: SandboxChatRequest; result: string | null };
+}
+
+export type SandboxHostRequestKind = keyof SandboxHostRequests;
 
 /** Sent with the port that connects a frame to the host. */
 export interface SandboxInit {
@@ -176,6 +370,117 @@ export interface SandboxMethods {
    * Asks the user for optional permissions. `granted` is true only if all of
    * them are granted afterwards.
    */
+  "highlights.colors": { params: Record<string, never>; result: string[] };
+  "highlights.list": {
+    params: { translationId: string; bookId: string; chapter: number };
+    result: SandboxHighlight[];
+  };
+  "highlights.add": {
+    params: {
+      translationId: string;
+      bookId: string;
+      chapter: number;
+      verses: number[];
+      colorId: string;
+    };
+    result: null;
+  };
+  "highlights.remove": {
+    params: {
+      translationId: string;
+      bookId: string;
+      chapter: number;
+      verses: number[];
+    };
+    result: null;
+  };
+  "notes.list": {
+    params: { bookId: string; chapter: number };
+    result: SandboxNote[];
+  };
+  "notes.create": {
+    params: {
+      bookId: string;
+      chapter: number;
+      verses?: number[];
+      text: string;
+    };
+    result: { id: string };
+  };
+  "notes.update": {
+    params: { id: string; bookId: string; chapter: number; text: string };
+    result: null;
+  };
+  "notes.delete": {
+    params: { id: string; bookId: string; chapter: number };
+    result: null;
+  };
+  "saves.list": { params: Record<string, never>; result: SandboxSave[] };
+  "saves.add": {
+    params: {
+      translationId: string;
+      bookId: string;
+      chapter: number;
+      verse?: number | [number, number];
+      categories?: string[];
+    };
+    result: null;
+  };
+  "saves.remove": { params: { id: string }; result: null };
+  "history.list": {
+    params: { from: number; to: number };
+    result: SandboxReadingEvent[];
+  };
+  "profile.get": {
+    params: Record<string, never>;
+    result: SandboxProfile | null;
+  };
+  "bible.chapter": {
+    params: { translationId: string; bookId: string; chapter: number };
+    result: { verses: { number: number; text: string }[] };
+  };
+  "discover.register": {
+    params: { id: string; title: string; description: string };
+    result: null;
+  };
+  "discover.unregister": { params: { id: string }; result: null };
+  "chats.register": {
+    params: { id: string; name: string; shared?: boolean };
+    result: null;
+  };
+  "chats.unregister": { params: { id: string }; result: null };
+  /** The background frame's answer to a host request. */
+  respond: {
+    params: { requestId: number; value?: unknown; error?: string };
+    result: null;
+  };
+  /** Resolves once the modal is closed. */
+  "modals.open": {
+    params: {
+      title: string;
+      message?: string;
+      view?: string;
+      props?: SandboxJsonValue;
+    };
+    result: null;
+  };
+  "settings.registerPanel": { params: { view: string }; result: null };
+  "sensitive.fetch": {
+    params: {
+      url: string;
+      method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD";
+      body?: unknown;
+      proxy?: string;
+    };
+    result: {
+      status: number;
+      ok: boolean;
+      contentType: string | null;
+      body: string;
+    };
+  };
+  /** The background frame's answer to a heartbeat. */
+  pong: { params: Record<string, never>; result: null };
   "permissions.request": {
     params: { permissions: SandboxPermission[] };
     result: { granted: boolean };
@@ -198,6 +503,8 @@ export type SandboxErrorCode =
   | "invalid_request"
   | "not_found"
   | "limit_exceeded"
+  /** Not possible right now, e.g. signed out, or the service failed. */
+  | "unavailable"
   | "internal";
 
 export type SandboxResponse =
@@ -219,6 +526,21 @@ export type SandboxHostEvent =
       selection: SandboxSelectedVerse[];
     }
   | { type: "event"; name: "pane.closed"; paneId: string }
+  | {
+      type: "event";
+      name: "request";
+      requestId: number;
+      kind: SandboxHostRequestKind;
+      payload: SandboxHostRequests[SandboxHostRequestKind]["payload"];
+    }
+  | {
+      type: "event";
+      name: "discover.select";
+      providerId: string;
+      resultId: string;
+    }
+  /** Checks the background frame is still answering; it replies with `pong`. */
+  | { type: "ping" }
   | { type: "state"; state: Partial<SandboxState> }
   /** The permissions granted now, after the user granted an optional one. */
   | { type: "permissions"; granted: SandboxPermission[] };

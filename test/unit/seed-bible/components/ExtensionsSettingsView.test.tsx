@@ -63,6 +63,9 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       getAllExtensionsAsSet: vi.fn().mockReturnValue(null),
       registerSettingsPanel: vi.fn().mockReturnValue(vi.fn()),
       settingsPanels: signal<Record<string, () => ComponentChildren>>({}),
+      // None of these extensions are sandboxed.
+      sandboxPermissions: signal({}),
+      setOptionalPermission: vi.fn(),
     },
     // No customization is active in these tests — the list renders exactly
     // as it would outside the Customization Center.

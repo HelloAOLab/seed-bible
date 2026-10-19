@@ -45,6 +45,10 @@ import { TutorialSkipPrompt } from "../components/TutorialSkipPrompt/TutorialSki
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
 import { OfflineRecoveryToast } from "../components/OfflineDownloadPrompt/OfflineRecoveryToast";
+import {
+  customFontStylesheet,
+  STATIC_FONT_STYLESHEETS,
+} from "./fontStylesheets";
 
 /**
  * Font `<link>`s, plus the CSS for the active Customization layered on top
@@ -87,24 +91,16 @@ export function ExternalResourceDependencies({
 
   return (
     <>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Roboto&family=Open+Sans&family=Playfair+Display&family=Cormorant+Garamond&display=swap"
-        rel="stylesheet"
-      />
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
-      />
+      {STATIC_FONT_STYLESHEETS.map((href) => (
+        <link key={href} rel="stylesheet" href={href} />
+      ))}
       {googleFontFamilies.value.length > 0 && (
         // A customization variant can name any Google Font by typing its
         // exact name — this loads whatever isn't already covered by the
-        // static presets above. See CustomizationsManager.buildCustomFontValue
-        // for why the name is already restricted to safe characters.
+        // static presets above.
         <link
           rel="stylesheet"
-          href={`https://fonts.googleapis.com/css2?${googleFontFamilies.value
-            .map((name) => `family=${name.replace(/ /g, "+")}`)
-            .join("&")}&display=swap`}
+          href={customFontStylesheet(googleFontFamilies.value)!}
         />
       )}
       <style

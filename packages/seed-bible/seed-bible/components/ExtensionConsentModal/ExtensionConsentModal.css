@@ -65,3 +65,36 @@
 .sb-extension-consent-allow:hover {
   background: color-mix(in srgb, var(--sb-primary-color), #000000 12%);
 }
+
+.sb-extension-consent-high-risk {
+  font-weight: 600;
+}
+
+.sb-extension-consent-warning {
+  font-size: 1rem;
+  vertical-align: text-bottom;
+  margin-inline-end: 0.25rem;
+  color: #b45309;
+}
+
+.sb-extension-permissions-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.sb-extension-permissions-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.sb-extension-permissions-label {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

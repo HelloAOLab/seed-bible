@@ -15,7 +15,10 @@ import {
   type ExtensionGrants,
   type SandboxConsentHandler,
 } from "./ExtensionPermissions";
-import type { SandboxPermission } from "../extensions/protocol";
+import {
+  SANDBOX_PERMISSION_INFO,
+  type SandboxPermission,
+} from "../extensions/protocol";
 import {
   clearSandboxStorage,
   fetchSandboxBundle,
@@ -522,6 +525,19 @@ export interface ExtensionManagerOptions {
 
   /** Replaces the iframes sandboxed extensions run in; for tests. */
   sandboxFrameConnector?: SandboxFrameConnector;
+
+  /** How often sandboxed extensions are checked on; for tests. */
+  sandboxHeartbeatIntervalMs?: number;
+}
+
+/** What a running sandboxed extension may do, as Settings shows it. */
+export interface SandboxPermissionSummary {
+  required: SandboxPermission[];
+  optional: SandboxPermission[];
+  /** What the user has granted (required ones included). */
+  granted: SandboxPermission[];
+  network: string[];
+  sourceHost: string;
 }
 
 /** The namespace the app's own strings live in (see `I18nManager.tsx`). */
@@ -1344,6 +1360,58 @@ export function createExtensionManager(
     await saveProfileConfigValue(login, EXTENSION_GRANTS_CONFIG_KEY, grants);
   };
 
+  /** What each running sandboxed extension may do, for Settings. */
+  const sandboxPermissionsSignal = signal<
+    Record<string, SandboxPermissionSummary>
+  >({});
+  const sandboxedExtensions = new Map<
+    string,
+    { setGranted: (granted: SandboxPermission[]) => Promise<void> }
+  >();
+
+  /** Stops a sandboxed extension without uninstalling it. */
+  const stopSandboxedExtension = (id: string) => {
+    sandboxedExtensions.delete(id);
+    const { [id]: _removed, ...rest } = sandboxPermissionsSignal.peek();
+    sandboxPermissionsSignal.value = rest;
+    unregisterExtension(id);
+  };
+
+  /**
+   * Grants or takes back one of a running sandboxed extension's optional
+   * permissions, as the user chose in Settings, and restarts it so it runs
+   * with exactly that set. Required permissions can't be taken back short
+   * of uninstalling. Taking one back also takes back anything that includes
+   * it (taking back reading highlights takes back writing them too).
+   * Resolves false if there's nothing to change.
+   */
+  const setOptionalPermission = async (
+    id: string,
+    permission: SandboxPermission,
+    enabled: boolean
+  ): Promise<boolean> => {
+    const summary = sandboxPermissionsSignal.peek()[id];
+    const running = sandboxedExtensions.get(id);
+    if (!summary || !running || !summary.optional.includes(permission)) {
+      return false;
+    }
+    const next = enabled
+      ? [...new Set([...summary.granted, permission])]
+      : summary.granted.filter(
+          (p) =>
+            p !== permission &&
+            !(SANDBOX_PERMISSION_INFO[p].implies ?? []).includes(permission)
+        );
+    if (
+      next.length === summary.granted.length &&
+      next.every((p) => summary.granted.includes(p))
+    ) {
+      return false;
+    }
+    await running.setGranted(next);
+    return true;
+  };
+
   // One consent dialog at a time, in the order they were asked for.
   let consentQueue: Promise<unknown> = Promise.resolve();
   const askSandboxConsent: SandboxConsentHandler = (request) => {
@@ -1422,7 +1490,10 @@ export function createExtensionManager(
             previous.permissions.includes(p)
           )
         : [];
-    const granted = [...manifest.permissions, ...keptOptional];
+    let granted: SandboxPermission[] = [
+      ...manifest.permissions,
+      ...keptOptional,
+    ];
     if (
       !previous ||
       previous.source !== source ||
@@ -1474,38 +1545,79 @@ export function createExtensionManager(
       if (!agreed || !installedExtensionIds.has(extensionId)) {
         return false;
       }
+      granted = [...new Set([...granted, ...permissions])];
+      await saveGranted();
+      return true;
+    };
+
+    const saveGranted = async () => {
       const current = activeGrant((await readExtensionGrants())[extensionId]);
       await saveExtensionGrant(extensionId, {
-        permissions: [
-          ...new Set([...(current?.permissions ?? granted), ...permissions]),
-        ],
+        permissions: granted,
         network: current?.network ?? manifest.network,
         version: current?.version ?? manifest.version,
         source: current?.source ?? source,
         grantedAtMs: Date.now(),
       });
-      return true;
+      publishPermissions();
     };
 
-    registerExtension({
-      id: extensionId,
-      init: function* (context: SeedBibleState) {
-        const session = startSandboxSession({
-          extensionId,
-          title: translation.title,
-          translations,
-          granted,
+    const publishPermissions = () => {
+      sandboxPermissionsSignal.value = {
+        ...sandboxPermissionsSignal.peek(),
+        [extensionId]: {
+          required: manifest.permissions,
           optional: manifest.optionalPermissions,
-          requestPermissions,
+          granted,
           network: manifest.network,
-          code,
-          context,
-          connector: options.sandboxFrameConnector,
-        });
-        yield () => session.destroy();
-        return {};
+          sourceHost,
+        },
+      };
+    };
+
+    const start = () =>
+      registerExtension({
+        id: extensionId,
+        init: function* (context: SeedBibleState) {
+          const session = startSandboxSession({
+            extensionId,
+            title: translation.title,
+            translations,
+            granted,
+            optional: manifest.optionalPermissions,
+            requestPermissions,
+            network: manifest.network,
+            code,
+            context,
+            connector: options.sandboxFrameConnector,
+            heartbeatIntervalMs: options.sandboxHeartbeatIntervalMs,
+            // Stopped for the rest of the visit, but still installed: the
+            // next page load starts it again.
+            onUnresponsive: () => {
+              context.app.toast(
+                context.i18n.t("extension-stopped-responding", {
+                  name: translation.title,
+                })
+              );
+              stopSandboxedExtension(extensionId);
+            },
+          });
+          yield () => session.destroy();
+          return {};
+        },
+      });
+
+    sandboxedExtensions.set(extensionId, {
+      setGranted: async (next) => {
+        granted = next;
+        await saveGranted();
+        // Restarted, so every frame starts over with exactly the new set.
+        unregisterExtension(extensionId);
+        start();
       },
     });
+    publishPermissions();
+    start();
     installedExtensionIds.add(extensionId);
     refreshExtensionsSignal();
     console.log(`Successfully installed sandboxed extension: ${extensionId}`);
@@ -1881,6 +1993,9 @@ export function createExtensionManager(
    * @param id The ID of the extension to unload.
    */
   const unloadExtension = (id: string, options?: { persist?: boolean }) => {
+    if (sandboxedExtensions.has(id)) {
+      stopSandboxedExtension(id);
+    }
     unregisterExtension(id);
     installedExtensionIds.delete(id);
     if (options?.persist !== false) {
@@ -2034,6 +2149,10 @@ export function createExtensionManager(
     getAllExtensionsAsSet,
 
     registerSettingsPanel,
+    sandboxPermissions: sandboxPermissionsSignal as ReadonlySignal<
+      Record<string, SandboxPermissionSummary>
+    >,
+    setOptionalPermission,
     settingsPanels: settingsPanelsSignal as ReadonlySignal<
       Record<string, ExtensionSettingsPanelRenderer>
     >,

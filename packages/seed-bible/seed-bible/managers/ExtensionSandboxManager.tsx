@@ -1,9 +1,23 @@
 import * as z from "zod/v4";
-import { effect, signal, type ReadonlySignal } from "@preact/signals";
-import { useEffect, useRef } from "preact/hooks";
+import { effect, signal } from "@preact/signals";
 import { v4 as uuid } from "uuid";
 import { MaterialIcon } from "../components/icons";
+import hash from "hash.js";
 import { safeLocalStorage } from "../app/ssrEnv";
+import {
+  customFontStylesheet,
+  FONT_FILE_HOST,
+  FONT_STYLESHEET_HOST,
+  STATIC_FONT_STYLESHEETS,
+} from "../app/fontStylesheets";
+import {
+  createSandboxServices,
+  SANDBOX_SERVICE_SPECS,
+  SandboxBrokerError,
+  SandboxViewFrame,
+  type SandboxServicesContext,
+  type SandboxSessionApi,
+} from "./ExtensionSandboxServices";
 import { translateTitle } from "../app/utils";
 import { useI18n } from "../i18n";
 import type { AppState } from "./SeedBibleStateManager";
@@ -17,15 +31,16 @@ import type {
   ToolsManager,
 } from "./BibleToolsManager";
 import type { PanesManager } from "./PanesManager";
-import type { ExtensionSettingsManager } from "./ExtensionSettingsManager";
 import type { I18nManager } from "../i18n/I18nManager";
 import type { BookId } from "./BibleDataManager";
 import {
+  expandSandboxPermissions,
   SANDBOX_PERMISSIONS,
   SANDBOX_PROTOCOL_VERSION,
-  type SandboxErrorCode,
   type SandboxFrameMode,
   type SandboxHostEvent,
+  type SandboxHostRequestKind,
+  type SandboxHostRequests,
   type SandboxIcon,
   type SandboxInit,
   type SandboxJsonValue,
@@ -45,7 +60,7 @@ import {
  * spelling it out keeps the broker's reach visible in one place: nothing
  * outside this list is reachable from a sandboxed extension.
  */
-export interface SandboxHostContext {
+export interface SandboxHostContext extends SandboxServicesContext {
   tools: Pick<
     ToolsManager,
     | "registerToolbarTool"
@@ -62,9 +77,7 @@ export interface SandboxHostContext {
     AppState,
     "toast" | "currentReadingState" | "isMobile" | "openVerseReference"
   >;
-  theme: { themeCssVariables: ReadonlySignal<string> };
   i18n: Pick<I18nManager, "language" | "isRtl">;
-  extensionSettings: Pick<ExtensionSettingsManager, "getValue">;
 }
 
 export interface SandboxFrameRequest {
@@ -110,10 +123,11 @@ export function buildSandboxCsp(network: string[]): string {
   return [
     "default-src 'none'",
     "script-src 'unsafe-inline' blob:",
-    "style-src 'unsafe-inline'",
+    // The app's own fonts (see `fontStylesheets.ts`), so text matches it.
+    `style-src 'unsafe-inline' https://${FONT_STYLESHEET_HOST}`,
     `img-src data: blob:${remote}`,
     `media-src data: blob:${remote}`,
-    `font-src data:${remote}`,
+    `font-src data: https://${FONT_FILE_HOST}${remote}`,
     `connect-src ${hosts || "'none'"}`,
     "frame-src 'none'",
     "worker-src blob:",
@@ -298,7 +312,7 @@ const jsonSizeSchema = (maxBytes: number) =>
     }
   }, `must be JSON no larger than ${maxBytes} bytes`);
 
-const paramSchemas: { [M in SandboxMethod]: z.ZodType } = {
+const paramSchemas: Partial<Record<SandboxMethod, z.ZodType>> = {
   "tools.register": toolFieldsSchema.extend({
     id: idSchema,
     surface: z.enum(["toolbar", "verse", "quick", "belowReader"]),
@@ -338,10 +352,17 @@ const paramSchemas: { [M in SandboxMethod]: z.ZodType } = {
   ready: z.object({ error: z.string().max(2000).optional() }),
 };
 
+const methodSchema = (method: SandboxMethod): z.ZodType | undefined =>
+  paramSchemas[method as keyof typeof paramSchemas] ??
+  SANDBOX_SERVICE_SPECS[method]?.schema;
+
 const requestSchema = z.object({
   type: z.literal("call"),
   id: z.number().int(),
-  method: z.enum(Object.keys(paramSchemas) as [SandboxMethod]),
+  method: z.enum([
+    ...Object.keys(paramSchemas),
+    ...Object.keys(SANDBOX_SERVICE_SPECS),
+  ] as [SandboxMethod]),
   params: z.unknown(),
 });
 
@@ -357,14 +378,7 @@ const REQUIRED_PERMISSION: Partial<Record<SandboxMethod, SandboxPermission>> = {
   "reading.open": "reading:navigate",
 };
 
-class BrokerError extends Error {
-  constructor(
-    readonly code: SandboxErrorCode,
-    message: string
-  ) {
-    super(message);
-  }
-}
+const BrokerError = SandboxBrokerError;
 
 const sandboxStorageKey = (extensionId: string) =>
   `sb-sandbox-storage:${extensionId}`;
@@ -421,6 +435,25 @@ export interface SandboxSessionOptions {
   code: string;
   context: SandboxHostContext;
   connector?: SandboxFrameConnector;
+  /** How often the background frame is checked on. Defaults to 15 s. */
+  heartbeatIntervalMs?: number;
+  /**
+   * Called once if the background frame misses two checks in a row: it has
+   * crashed, hung, or navigated away. The caller decides what to do (the
+   * extension manager stops the extension and tells the user).
+   */
+  onUnresponsive?: () => void;
+}
+
+const DEFAULT_HEARTBEAT_INTERVAL_MS = 15_000;
+
+/** An id for the user that's stable per extension but reveals neither. */
+function pseudonymousIdentity(extensionId: string, userId: string): string {
+  return hash
+    .sha256()
+    .update(`seed-bible-extension-identity:${extensionId}:${userId}`)
+    .digest("hex")
+    .slice(0, 32);
 }
 
 /** How long after selecting one of its tools an extension may ask for permissions. */
@@ -462,7 +495,11 @@ export function startSandboxSession(
   const connector = options.connector ?? iframeFrameConnector;
   const optional = options.optional ?? [];
   // A signal, so the state pushed to the frames follows an optional grant.
-  const grantedPermissions = signal<readonly SandboxPermission[]>(granted);
+  // Holds the implied permissions too (writing highlights includes reading
+  // them), so every check and every frame sees the same set.
+  const grantedPermissions = signal<readonly SandboxPermission[]>(
+    expandSandboxPermissions(granted)
+  );
   const has = (permission: SandboxPermission) =>
     grantedPermissions.value.includes(permission);
   // Optional permissions the user said no to since the page loaded, so an
@@ -476,6 +513,21 @@ export function startSandboxSession(
   const tools = new Map<string, SandboxToolDefinition>();
   const openPanes = new Set<string>();
   let destroyed = false;
+
+  // Questions the host has asked the background frame (Discover results, a
+  // chat reply), waiting for its `respond`.
+  const pendingHostRequests = new Map<
+    number,
+    {
+      resolve: (value: unknown) => void;
+      reject: (error: Error) => void;
+      timer: ReturnType<typeof setTimeout>;
+    }
+  >();
+  let nextHostRequestId = 1;
+  let awaitingPong = false;
+  let missedHeartbeats = 0;
+  const destroyCallbacks: (() => void)[] = [];
 
   let resolveReady!: () => void;
   let rejectReady!: (error: Error) => void;
@@ -526,6 +578,15 @@ export function startSandboxSession(
       // they change either.
       position: has("reading:position") ? currentPosition() : null,
       selection: has("reading:selection") ? currentSelection() : [],
+      identity: context.login.userId.value
+        ? pseudonymousIdentity(extensionId, context.login.userId.value)
+        : null,
+      fontStylesheets: [
+        ...STATIC_FONT_STYLESHEETS,
+        ...[
+          customFontStylesheet(context.theme.googleFontFamiliesToLoad.value),
+        ].filter((href): href is string => href !== null),
+      ],
     };
   };
 
@@ -676,7 +737,13 @@ export function startSandboxSession(
           key={openKey}
           connect={(container) =>
             connectFrame(
-              { kind: "view", view: params.view, paneId, props },
+              {
+                kind: "view",
+                view: params.view,
+                surface: "pane",
+                paneId,
+                props,
+              },
               container,
               `${extensionTitle}: ${typeof paneTitle === "string" ? paneTitle : paneTitle.defaultValue}`
             )
@@ -707,6 +774,55 @@ export function startSandboxSession(
     hasTransientUserActivation() &&
     (Date.now() - lastToolSelectAt < TOOL_INTERACTION_WINDOW_MS ||
       [...connections].some((connection) => connection.hasFocus?.()));
+
+  const requestFromBackground = <K extends SandboxHostRequestKind>(
+    kind: K,
+    payload: SandboxHostRequests[K]["payload"],
+    timeoutMs: number
+  ): Promise<unknown> => {
+    if (!background || destroyed) {
+      return Promise.reject(new Error("The extension isn't running."));
+    }
+    const requestId = nextHostRequestId++;
+    const target = background;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        pendingHostRequests.delete(requestId);
+        reject(new Error(`No answer to '${kind}' within ${timeoutMs} ms.`));
+      }, timeoutMs);
+      pendingHostRequests.set(requestId, { resolve, reject, timer });
+      post(target, {
+        type: "event",
+        name: "request",
+        requestId,
+        kind,
+        payload,
+      });
+    });
+  };
+
+  const sessionApi: SandboxSessionApi = {
+    extensionId,
+    extensionTitle,
+    network,
+    context,
+    has,
+    requestFromBackground,
+    sendToBackground: (event) => {
+      if (background) {
+        post(background, event);
+      }
+    },
+    connectView: (view, surface, id, props, container, title) =>
+      connectFrame(
+        { kind: "view", view, surface, paneId: id, props },
+        container,
+        title
+      ),
+    userIsInteracting: () => userIsInteractingWithExtension(),
+    onDestroy: (cleanup) => destroyCallbacks.push(cleanup),
+  };
+  const services = createSandboxServices(sessionApi);
 
   const requestOptionalPermissions = async (
     params: SandboxMethods["permissions.request"]["params"]
@@ -744,7 +860,10 @@ export function startSandboxSession(
         return { granted: false };
       }
       if (agreed) {
-        grantedPermissions.value = [...grantedPermissions.value, ...missing];
+        grantedPermissions.value = expandSandboxPermissions([
+          ...grantedPermissions.value,
+          ...missing,
+        ]);
       } else {
         for (const permission of missing) {
           declined.add(permission);
@@ -761,18 +880,26 @@ export function startSandboxSession(
     params: unknown,
     isBackground: boolean
   ): unknown => {
-    if (BACKGROUND_ONLY_METHODS.has(method) && !isBackground) {
+    const spec = SANDBOX_SERVICE_SPECS[method];
+    if (
+      (BACKGROUND_ONLY_METHODS.has(method) || spec?.backgroundOnly) &&
+      !isBackground
+    ) {
       throw new BrokerError(
         "invalid_request",
         `'${method}' can only be called from the extension's main code.`
       );
     }
-    const required = REQUIRED_PERMISSION[method];
+    const required = REQUIRED_PERMISSION[method] ?? spec?.permission;
     if (required && !has(required)) {
       throw new BrokerError(
         "permission_denied",
         `'${method}' needs the '${required}' permission, which this extension wasn't granted.`
       );
+    }
+    const service = services[method];
+    if (service) {
+      return service(params, { isBackground });
     }
     switch (method) {
       case "tools.register": {
@@ -868,6 +995,25 @@ export function startSandboxSession(
         const { key } = params as SandboxMethods["settings.get"]["params"];
         return context.extensionSettings.getValue(extensionId, key) ?? null;
       }
+      case "respond": {
+        const { requestId, value, error } =
+          params as SandboxMethods["respond"]["params"];
+        const pending = pendingHostRequests.get(requestId);
+        if (pending) {
+          pendingHostRequests.delete(requestId);
+          clearTimeout(pending.timer);
+          if (error !== undefined) {
+            pending.reject(new Error(error));
+          } else {
+            pending.resolve(value);
+          }
+        }
+        return null;
+      }
+      case "pong":
+        missedHeartbeats = 0;
+        awaitingPong = false;
+        return null;
       case "permissions.request":
         return requestOptionalPermissions(
           params as SandboxMethods["permissions.request"]["params"]
@@ -885,6 +1031,8 @@ export function startSandboxSession(
         }
         return null;
       }
+      default:
+        throw new BrokerError("invalid_request", `Unknown method '${method}'.`);
     }
   };
 
@@ -906,7 +1054,7 @@ export function startSandboxSession(
         post(connection, response);
       }
     };
-    const params = paramSchemas[method].safeParse(request.data.params);
+    const params = methodSchema(method)!.safeParse(request.data.params);
     if (!params.success) {
       reply({
         type: "result",
@@ -935,7 +1083,7 @@ export function startSandboxSession(
     };
     try {
       const value = dispatch(method, params.data, connection === background);
-      // Only `permissions.request` answers later, once the user has.
+      // Calls that wait on the user or the app answer later.
       if (value instanceof Promise) {
         value.then(
           (result) => reply({ type: "result", id, ok: true, value: result }),
@@ -984,6 +1132,25 @@ export function startSandboxSession(
   connectFrame({ kind: "background" }, null, extensionTitle);
   background = [...connections][0] ?? null;
 
+  const heartbeatInterval =
+    options.heartbeatIntervalMs ?? DEFAULT_HEARTBEAT_INTERVAL_MS;
+  const heartbeat = setInterval(() => {
+    if (!background || destroyed) {
+      return;
+    }
+    if (awaitingPong) {
+      missedHeartbeats += 1;
+      if (missedHeartbeats >= 2) {
+        clearInterval(heartbeat);
+        console.error(`Extension '${extensionId}' stopped responding.`);
+        options.onUnresponsive?.();
+        return;
+      }
+    }
+    awaitingPong = true;
+    post(background, { type: "ping" });
+  }, heartbeatInterval);
+
   const stopStateEffect = effect(() => {
     const state = computeState();
     broadcast({ type: "state", state });
@@ -999,8 +1166,21 @@ export function startSandboxSession(
       return;
     }
     destroyed = true;
+    clearInterval(heartbeat);
     stopStateEffect();
     stopPermissionsEffect();
+    for (const cleanup of destroyCallbacks) {
+      try {
+        cleanup();
+      } catch (err) {
+        console.error(`Error cleaning up extension '${extensionId}':`, err);
+      }
+    }
+    for (const pending of pendingHostRequests.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(new Error("The extension was stopped."));
+    }
+    pendingHostRequests.clear();
     for (const definition of tools.values()) {
       unregisterHostTool(definition);
     }
@@ -1021,21 +1201,6 @@ export function startSandboxSession(
   };
 
   return { ready, destroy };
-}
-
-function SandboxViewFrame({
-  connect,
-}: {
-  connect: (container: HTMLElement) => () => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!ref.current) {
-      return;
-    }
-    return connect(ref.current);
-  }, []);
-  return <div ref={ref} style={{ width: "100%", height: "100%" }} />;
 }
 
 function SandboxPaneTitle({ title }: { title: TranslatableTitle }) {

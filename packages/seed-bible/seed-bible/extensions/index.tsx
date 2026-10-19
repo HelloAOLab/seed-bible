@@ -11,7 +11,16 @@ import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import { render, type ComponentChild } from "preact";
 import {
   SANDBOX_START_KEY,
+  type SandboxChatRequest,
+  type SandboxDiscoverRequest,
+  type SandboxDiscoverResult,
   type SandboxErrorCode,
+  type SandboxHighlight,
+  type SandboxHostRequestKind,
+  type SandboxNote,
+  type SandboxProfile,
+  type SandboxReadingEvent,
+  type SandboxSave,
   type SandboxHostMessage,
   type SandboxIcon,
   type SandboxInit,
@@ -32,6 +41,18 @@ import {
 } from "./protocol";
 
 export type {
+  SandboxChatMessage,
+  SandboxChatRequest,
+  SandboxDiscoverRequest,
+  SandboxDiscoverResult,
+  SandboxHighlight,
+  SandboxNote,
+  SandboxProfile,
+  SandboxReadingEvent,
+  SandboxReference,
+  SandboxSave,
+} from "./protocol";
+export type {
   SandboxIcon,
   SandboxJsonValue,
   SandboxPaneOptions,
@@ -41,7 +62,7 @@ export type {
   SandboxTitle,
   SandboxVerseRef,
 };
-export { SANDBOX_PERMISSIONS } from "./protocol";
+export { SANDBOX_PERMISSIONS, SANDBOX_PERMISSION_INFO } from "./protocol";
 
 /** Why a call to the host failed; `code` says which way. */
 export class SandboxError extends Error {
@@ -178,14 +199,158 @@ export interface SandboxContext {
   /** This extension's own (non-sensitive) settings from `extension.json`. */
   settings: {
     get: (key: string) => Promise<string | number | boolean | null>;
+    /**
+     * Shows one of your `views` as this extension's settings, under its
+     * Configure button in Settings → Extensions. Main code only.
+     */
+    registerPanel: (view: string) => Promise<void>;
   };
+  /**
+   * An id for the signed-in user that's the same every time for this
+   * extension but different for every extension, and isn't their real id.
+   * Null when signed out. Needs no permission.
+   */
+  identity: ReadonlySignal<string | null>;
+  /** Public Bible text. Needs no permission. */
+  bible: {
+    chapter: (ref: {
+      translationId: string;
+      bookId: string;
+      chapter: number;
+    }) => Promise<{ verses: { number: number; text: string }[] }>;
+  };
+  /** Reading needs `highlights:read`; adding and removing, `highlights:write`. */
+  highlights: {
+    /** The highlight color ids the current theme has. */
+    colors: () => Promise<string[]>;
+    list: (ref: ChapterRef) => Promise<SandboxHighlight[]>;
+    add: (
+      ref: ChapterRef & { verses: number[]; colorId: string }
+    ) => Promise<void>;
+    remove: (ref: ChapterRef & { verses: number[] }) => Promise<void>;
+  };
+  /**
+   * Reading needs `notes:read`; writing, `notes:write`. Notes are plain text
+   * here. An extension can only change or delete the notes it added.
+   * Writing needs the user to be signed in (`unavailable` otherwise).
+   */
+  notes: {
+    list: (ref: { bookId: string; chapter: number }) => Promise<SandboxNote[]>;
+    create: (note: {
+      bookId: string;
+      chapter: number;
+      verses?: number[];
+      text: string;
+    }) => Promise<{ id: string }>;
+    update: (note: {
+      id: string;
+      bookId: string;
+      chapter: number;
+      text: string;
+    }) => Promise<void>;
+    delete: (note: {
+      id: string;
+      bookId: string;
+      chapter: number;
+    }) => Promise<void>;
+  };
+  /** Reading needs `saves:read`; writing, `saves:write` and a signed-in user. */
+  saves: {
+    list: () => Promise<SandboxSave[]>;
+    add: (
+      save: ChapterRef & {
+        verse?: number | [number, number];
+        categories?: string[];
+      }
+    ) => Promise<void>;
+    remove: (id: string) => Promise<void>;
+  };
+  /** Needs `reading:history`. Times in ms since the epoch, at most a year apart. */
+  history: {
+    list: (range: {
+      from: number;
+      to: number;
+    }) => Promise<SandboxReadingEvent[]>;
+  };
+  /** Needs `profile:read`. Null when signed out. */
+  profile: { get: () => Promise<SandboxProfile | null> };
+  /**
+   * Content for the Discover panel. Registering needs `reading:position`,
+   * since a provider is told which chapter is open. Main code only.
+   */
+  discover: {
+    registerProvider: (provider: {
+      id: string;
+      title: string;
+      description: string;
+      discover: (
+        request: SandboxDiscoverRequest
+      ) => SandboxDiscoverResult[] | Promise<SandboxDiscoverResult[]>;
+      /** Called with a `content` result's `id` when the user picks it. */
+      onSelect?: (resultId: string) => void;
+    }) => Promise<{ unregister: () => Promise<void> }>;
+  };
+  /**
+   * A chat participant. Needs `chat:respond`; `shared: true` also needs
+   * `chat:shared`. Main code only.
+   */
+  chats: {
+    registerProvider: (provider: {
+      id: string;
+      name: string;
+      shared?: boolean;
+      /** Returns the reply, or null to stay quiet. */
+      respond: (
+        request: SandboxChatRequest
+      ) => string | null | Promise<string | null>;
+    }) => Promise<{ unregister: () => Promise<void> }>;
+  };
+  /**
+   * Dialogs, titled with the extension's name. Only right after the user
+   * interacts with this extension, one at a time. Each resolves when it's
+   * closed.
+   */
+  modals: {
+    alert: (dialog: { title: string; message: string }) => Promise<void>;
+    open: (dialog: {
+      title: string;
+      view: string;
+      props?: SandboxJsonValue;
+    }) => Promise<void>;
+  };
+  /**
+   * Requests that carry the user's sensitive settings, through the hosts
+   * the manifest's `sensitive` section declares. The values never reach
+   * the extension.
+   */
+  sensitive: {
+    fetch: (request: {
+      url: string;
+      method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD";
+      body?: unknown;
+      proxy?: string;
+    }) => Promise<{
+      status: number;
+      ok: boolean;
+      contentType: string | null;
+      body: string;
+    }>;
+  };
+}
+
+interface ChapterRef {
+  translationId: string;
+  bookId: string;
+  chapter: number;
 }
 
 export interface SandboxViewProps {
   sb: SandboxContext;
-  /** Whatever was passed as `props` to `sb.panes.open`. */
+  /** Whatever was passed as `props` when it was opened. */
   props: SandboxJsonValue;
-  /** The pane this view is rendered in. */
+  /** Where the view is shown. */
+  surface: "pane" | "modal" | "settings";
+  /** The pane this view is rendered in (an id for a modal or panel). */
   paneId: string;
 }
 
@@ -232,6 +397,21 @@ function applyDocumentState(state: SandboxState) {
     document.head.appendChild(style);
   }
   style.textContent = `:root {\n${state.themeCss}\n}\nhtml, body { margin: 0; background: var(--sb-background); color: var(--sb-font-color); font-family: var(--sb-font-family, system-ui, sans-serif); }`;
+  const wanted = new Set(state.fontStylesheets);
+  for (const link of document.head.querySelectorAll<HTMLLinkElement>(
+    "link[data-sb-font]"
+  )) {
+    if (!wanted.delete(link.href)) {
+      link.remove();
+    }
+  }
+  for (const href of wanted) {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    link.dataset.sbFont = "";
+    document.head.appendChild(link);
+  }
   document.documentElement.lang = state.language;
   document.documentElement.dir = state.direction;
 }
@@ -248,6 +428,34 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     { resolve: (value: unknown) => void; reject: (error: unknown) => void }
   >();
   const toolHandlers = new Map<string, ToolHandlers>();
+  const discoverProviders = new Map<
+    string,
+    Parameters<SandboxContext["discover"]["registerProvider"]>[0]
+  >();
+  const chatProviders = new Map<
+    string,
+    Parameters<SandboxContext["chats"]["registerProvider"]>[0]
+  >();
+  const hostRequestHandlers: {
+    [K in SandboxHostRequestKind]?: (payload: unknown) => unknown;
+  } = {
+    discover: (payload) => {
+      const request = payload as SandboxDiscoverRequest;
+      const provider = discoverProviders.get(request.providerId);
+      if (!provider) {
+        throw new Error(`No Discover provider '${request.providerId}'.`);
+      }
+      return provider.discover(request);
+    },
+    chat: (payload) => {
+      const request = payload as SandboxChatRequest;
+      const provider = chatProviders.get(request.providerId);
+      if (!provider) {
+        throw new Error(`No chat provider '${request.providerId}'.`);
+      }
+      return provider.respond(request);
+    },
+  };
   const paneCloseListeners = new Map<string, (() => void)[]>();
   let nextId = 1;
 
@@ -291,6 +499,8 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
           new SandboxError(message.error.code, message.error.message)
         );
       }
+    } else if (message.type === "ping") {
+      void call("pong", {}).catch(() => {});
     } else if (message.type === "permissions") {
       granted.value = message.granted;
     } else if (message.type === "state") {
@@ -304,6 +514,26 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
           : handlers?.items.get(message.itemId),
         message.selection
       );
+    } else if (message.name === "request") {
+      const handler = hostRequestHandlers[message.kind];
+      Promise.resolve()
+        .then(() => {
+          if (!handler) {
+            throw new Error(`Nothing handles '${message.kind}'.`);
+          }
+          return handler(message.payload);
+        })
+        .then(
+          (value) => call("respond", { requestId: message.requestId, value }),
+          (err: unknown) =>
+            call("respond", {
+              requestId: message.requestId,
+              error: String(err),
+            })
+        )
+        .catch((err) => console.error("Couldn't answer the host:", err));
+    } else if (message.name === "discover.select") {
+      discoverProviders.get(message.providerId)?.onSelect?.(message.resultId);
     } else if (message.name === "pane.closed") {
       const listeners = paneCloseListeners.get(message.paneId) ?? [];
       paneCloseListeners.delete(message.paneId);
@@ -318,12 +548,14 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
   const position = signal(init.state.position);
   const selection = signal(init.state.selection);
   const isMobile = signal(init.state.isMobile);
+  const identity = signal(init.state.identity);
   const language = signal(init.state.language);
   const direction = signal(init.state.direction);
   effect(() => {
     position.value = state.value.position;
     selection.value = state.value.selection;
     isMobile.value = state.value.isMobile;
+    identity.value = state.value.identity;
     language.value = state.value.language;
     direction.value = state.value.direction;
   });
@@ -482,6 +714,80 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     },
     settings: {
       get: (key) => call("settings.get", { key }),
+      registerPanel: (view) =>
+        call("settings.registerPanel", { view }).then(() => {}),
+    },
+    identity,
+    bible: {
+      chapter: (ref) => call("bible.chapter", ref),
+    },
+    highlights: {
+      colors: () => call("highlights.colors", {}),
+      list: (ref) => call("highlights.list", ref),
+      add: (highlight) => call("highlights.add", highlight).then(() => {}),
+      remove: (ref) => call("highlights.remove", ref).then(() => {}),
+    },
+    notes: {
+      list: (ref) => call("notes.list", ref),
+      create: (note) => call("notes.create", note),
+      update: (note) => call("notes.update", note).then(() => {}),
+      delete: (note) => call("notes.delete", note).then(() => {}),
+    },
+    saves: {
+      list: () => call("saves.list", {}),
+      add: (save) => call("saves.add", save).then(() => {}),
+      remove: (id) => call("saves.remove", { id }).then(() => {}),
+    },
+    history: {
+      list: (range) => call("history.list", range),
+    },
+    profile: {
+      get: () => call("profile.get", {}),
+    },
+    discover: {
+      registerProvider: async (provider) => {
+        discoverProviders.set(provider.id, provider);
+        await call("discover.register", {
+          id: provider.id,
+          title: provider.title,
+          description: provider.description,
+        }).catch((err: unknown) => {
+          discoverProviders.delete(provider.id);
+          throw err;
+        });
+        return {
+          unregister: async () => {
+            discoverProviders.delete(provider.id);
+            await call("discover.unregister", { id: provider.id });
+          },
+        };
+      },
+    },
+    chats: {
+      registerProvider: async (provider) => {
+        chatProviders.set(provider.id, provider);
+        await call("chats.register", {
+          id: provider.id,
+          name: provider.name,
+          shared: provider.shared,
+        }).catch((err: unknown) => {
+          chatProviders.delete(provider.id);
+          throw err;
+        });
+        return {
+          unregister: async () => {
+            chatProviders.delete(provider.id);
+            await call("chats.unregister", { id: provider.id });
+          },
+        };
+      },
+    },
+    modals: {
+      alert: (dialog) => call("modals.open", dialog).then(() => {}),
+      open: (dialog) => call("modals.open", dialog).then(() => {}),
+    },
+    sensitive: {
+      fetch: (request) => call("sensitive.fetch", request),
     },
   };
 
@@ -513,7 +819,7 @@ export function defineExtension(
   const start = async (port: MessagePort, init: SandboxInit) => {
     const { sb, call } = createSandboxClient(port, init);
     if (init.mode.kind === "view") {
-      const { view, paneId, props } = init.mode;
+      const { view, surface, paneId, props } = init.mode;
       const View = definition.views?.[view];
       const root =
         document.getElementById("root") ??
@@ -522,7 +828,10 @@ export function defineExtension(
         root.textContent = `Unknown view "${view}".`;
         return;
       }
-      render(<View sb={sb} props={props} paneId={paneId} />, root);
+      render(
+        <View sb={sb} props={props} surface={surface} paneId={paneId} />,
+        root
+      );
       return;
     }
     try {

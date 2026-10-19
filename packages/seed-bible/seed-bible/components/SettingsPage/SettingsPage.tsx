@@ -100,6 +100,7 @@ const TEXT_COLOR_PALETTE = [
 
 import { LANG_META } from "../../i18n/languageMeta";
 import { useAppConfig } from "../../app/appConfig";
+import { openExtensionPermissionsModal } from "../ExtensionConsentModal/ExtensionPermissionsModal";
 
 function FlagImg({ cc }: { cc: string }) {
   return (
@@ -1592,6 +1593,26 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                   })}
                 >
                   <span className="material-symbols-outlined">tune</span>
+                </button>
+              )}
+            {installState === "installed" &&
+              extensions.sandboxPermissions.value[id] && (
+                <button
+                  type="button"
+                  className="sb-extension-row-action-button"
+                  onClick={() =>
+                    openExtensionPermissionsModal(
+                      state.modals,
+                      extensions,
+                      id,
+                      // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+                      t("title", { ns: id, defaultValue: id })
+                    )
+                  }
+                  aria-label={t("extension-permissions-button")}
+                  title={t("extension-permissions-button")}
+                >
+                  <span className="material-symbols-outlined">shield</span>
                 </button>
               )}
             {installState === "none" && (

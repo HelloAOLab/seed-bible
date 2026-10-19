@@ -5,7 +5,10 @@ import type {
   ModalManager,
 } from "../../managers/ModalManager";
 import type { SandboxConsentRequest } from "../../managers/ExtensionPermissions";
-import type { SandboxPermission } from "../../extensions/protocol";
+import {
+  SANDBOX_PERMISSION_INFO,
+  type SandboxPermission,
+} from "../../extensions/protocol";
 
 type Translate = ModalContentProps["t"];
 
@@ -17,7 +20,51 @@ function permissionLabel(t: Translate, permission: SandboxPermission): string {
       return t("extension-permission-reading-selection");
     case "reading:navigate":
       return t("extension-permission-reading-navigate");
+    case "reading:history":
+      return t("extension-permission-reading-history");
+    case "highlights:read":
+      return t("extension-permission-highlights-read");
+    case "highlights:write":
+      return t("extension-permission-highlights-write");
+    case "notes:read":
+      return t("extension-permission-notes-read");
+    case "notes:write":
+      return t("extension-permission-notes-write");
+    case "saves:read":
+      return t("extension-permission-saves-read");
+    case "saves:write":
+      return t("extension-permission-saves-write");
+    case "profile:read":
+      return t("extension-permission-profile-read");
+    case "chat:respond":
+      return t("extension-permission-chat-respond");
+    case "chat:shared":
+      return t("extension-permission-chat-shared");
   }
+}
+
+/** One permission's line, marked when it's high risk. */
+export function PermissionLine({
+  permission,
+}: {
+  permission: SandboxPermission;
+}) {
+  const { t } = useI18n();
+  const highRisk = SANDBOX_PERMISSION_INFO[permission].risk === "high";
+  return (
+    <li className={highRisk ? "sb-extension-consent-high-risk" : undefined}>
+      {highRisk && (
+        <span
+          className="material-symbols-outlined sb-extension-consent-warning"
+          role="img"
+          aria-label={t("extension-consent-high-risk")}
+        >
+          warning
+        </span>
+      )}
+      {permissionLabel(t, permission)}
+    </li>
+  );
 }
 
 function introText(t: Translate, reason: SandboxConsentRequest["reason"]) {
@@ -76,7 +123,7 @@ function ExtensionConsentContent({
           </p>
           <ul className="sb-extension-consent-list">
             {permissions.map((permission) => (
-              <li key={permission}>{permissionLabel(t, permission)}</li>
+              <PermissionLine key={permission} permission={permission} />
             ))}
             {network.map((host) => (
               <li key={host}>{t("extension-permission-network", { host })}</li>
@@ -91,7 +138,7 @@ function ExtensionConsentContent({
           </p>
           <ul className="sb-extension-consent-list">
             {request.optionalPermissions.map((permission) => (
-              <li key={permission}>{permissionLabel(t, permission)}</li>
+              <PermissionLine key={permission} permission={permission} />
             ))}
           </ul>
         </>

@@ -20,6 +20,8 @@ import {
   type SandboxSelectedVerse,
 } from "@packages/seed-bible/seed-bible/extensions";
 import {
+  expandSandboxPermissions,
+  SANDBOX_PERMISSION_INFO,
   SANDBOX_PERMISSIONS,
   type SandboxHostMessage,
   type SandboxPermission,
@@ -59,6 +61,26 @@ describe("permission gates", () => {
   beforeEach(() => {
     probes.clear();
     manager = h.createManager();
+    // Signed in, so features that need an account aren't refused for that.
+    h.host.userId.value = "user-1";
+    h.host.profile.value = { name: "Ruth", pictureUrl: null };
+    h.host.readingEvents.push({
+      bookId: "RUT",
+      chapter: 1,
+      userId: "user-1",
+      start: 100,
+      end: 200,
+    });
+    h.host.saves.value = [
+      {
+        id: "save-existing",
+        translationId: "BSB",
+        bookId: "RUT",
+        chapterNumber: 1,
+        createdAt: 1,
+        categories: ["Saved"],
+      },
+    ];
   });
 
   /**
@@ -248,16 +270,259 @@ describe("permission gates", () => {
         return `inconsistent: ${JSON.stringify(position)}`;
       },
     },
+    {
+      name: "a Discover provider is asked for the open chapter",
+      permission: "reading:position",
+      probe: async ({ sb }) => {
+        const outcome = await sb!.discover
+          .registerProvider({
+            id: "probe-discover",
+            title: "Probe",
+            description: "",
+            discover: (request) => [
+              {
+                type: "study-note",
+                reference: { bookId: request.bookId, chapter: request.chapter },
+                text: "probe",
+              },
+            ],
+          })
+          .then((handle) => handle, deniedCode);
+        const asked = await discoveredBy("sandbox:ext.probe:probe-discover");
+        if (typeof outcome !== "string") {
+          await outcome.unregister();
+        }
+        if (typeof outcome !== "string" && asked === 1) return "enabled";
+        if (outcome === "permission_denied" && asked === 0) return "disabled";
+        return `inconsistent: ${String(outcome)}, ${asked} results`;
+      },
+    },
+    {
+      name: "sb.history.list reads the reading history",
+      permission: "reading:history",
+      probe: ({ sb }) =>
+        readProbe(
+          sb!.history.list({ from: 0, to: 1_000_000 }),
+          (events) => events.length === 1 && events[0]!.bookId === "RUT"
+        ),
+    },
+    {
+      name: "sb.highlights.list reads highlights",
+      permission: "highlights:read",
+      probe: async ({ sb }) => {
+        h.host.highlights.set("BSB/JHN/3", [{ verse: 16, colorId: "yellow" }]);
+        return readProbe(
+          sb!.highlights.list({
+            translationId: "BSB",
+            bookId: "JHN",
+            chapter: 3,
+          }),
+          (highlights) => highlights.length === 1
+        );
+      },
+    },
+    {
+      name: "sb.highlights.add adds a highlight",
+      permission: "highlights:write",
+      probe: ({ sb }) =>
+        writeProbe(
+          sb!.highlights.add({
+            translationId: "BSB",
+            bookId: "GEN",
+            chapter: 1,
+            verses: [1],
+            colorId: "blue",
+          }),
+          () => h.host.highlights.get("BSB/GEN/1")?.length ?? 0
+        ),
+    },
+    {
+      name: "sb.notes.list reads notes",
+      permission: "notes:read",
+      probe: async ({ sb }) => {
+        h.host.notes.set("JHN/3", [
+          {
+            id: "note-user",
+            bookId: "JHN",
+            chapterNumber: 3,
+            data: { type: "comment", html: "<p>Mine</p>" },
+          },
+        ]);
+        return readProbe(
+          sb!.notes.list({ bookId: "JHN", chapter: 3 }),
+          (notes) => notes.length === 1 && notes[0]!.text === "Mine"
+        );
+      },
+    },
+    {
+      name: "sb.notes.create adds a note",
+      permission: "notes:write",
+      probe: ({ sb }) =>
+        writeProbe(
+          sb!.notes.create({ bookId: "GEN", chapter: 1, text: "Probe" }),
+          () => h.host.notes.get("GEN/1")?.length ?? 0
+        ),
+    },
+    {
+      name: "sb.saves.list reads saves",
+      permission: "saves:read",
+      probe: ({ sb }) =>
+        readProbe(sb!.saves.list(), (saves) => saves.length >= 1),
+    },
+    {
+      name: "sb.saves.add adds a save",
+      permission: "saves:write",
+      probe: ({ sb }) =>
+        writeProbe(
+          sb!.saves.add({ translationId: "BSB", bookId: "GEN", chapter: 1 }),
+          () => h.host.saves.value.length
+        ),
+    },
+    {
+      name: "sb.profile.get reads the profile",
+      permission: "profile:read",
+      probe: ({ sb }) =>
+        readProbe(
+          sb!.profile.get(),
+          (profile) => profile?.name === "Ruth" && profile.userId === "user-1"
+        ),
+    },
+    {
+      name: "a chat provider answers a chat it's added to",
+      permission: "chat:respond",
+      probe: ({ sb }) => chatProbe(sb!, false),
+    },
+    {
+      name: "a chat provider answers in a shared chat",
+      permission: "chat:shared",
+      probe: ({ sb }) => chatProbe(sb!, true),
+    },
   ];
+
+  const deniedCode = (err: { code: string }) => err.code;
+
+  /** Enabled when the read succeeds as `check` expects; disabled when refused. */
+  async function readProbe<T>(
+    read: Promise<T>,
+    check: (value: T) => boolean
+  ): Promise<Observed> {
+    const outcome = await read.then(
+      (value) => ({ value }),
+      (err: { code: string }) => err.code
+    );
+    if (typeof outcome === "string") {
+      return outcome === "permission_denied"
+        ? "disabled"
+        : `inconsistent: ${outcome}`;
+    }
+    return check(outcome.value)
+      ? "enabled"
+      : `inconsistent: ${JSON.stringify(outcome.value)}`;
+  }
+
+  /** Enabled when the write succeeds and changes `count`; disabled when refused and it doesn't. */
+  async function writeProbe(
+    write: Promise<unknown>,
+    count: () => number
+  ): Promise<Observed> {
+    const before = count();
+    const outcome = await write.then(() => "ok", deniedCode);
+    const changed = count() !== before;
+    if (outcome === "ok" && changed) return "enabled";
+    if (outcome === "permission_denied" && !changed) return "disabled";
+    return `inconsistent: ${outcome}, changed: ${changed}`;
+  }
+
+  /** How many results the app's Discover got from `providerId` for John 3. */
+  async function discoveredBy(providerId: string): Promise<number> {
+    let count = 0;
+    for await (const answer of h.host.discover.discover({
+      translationId: "BSB",
+      book: "JHN",
+      chapter: 3,
+      language: "en",
+    })) {
+      if (answer.providerId === providerId) {
+        count += answer.results.length;
+      }
+    }
+    return count;
+  }
+
+  async function chatProbe(
+    sb: SandboxContext,
+    shared: boolean
+  ): Promise<Observed> {
+    const providerId = shared ? "probe-shared-chat" : "probe-chat";
+    const chatId = shared ? "chat-shared" : "chat-local";
+    h.host.chats.chats.value = [{ id: chatId, isShared: shared }];
+    const outcome = await sb.chats
+      .registerProvider({
+        id: providerId,
+        name: "Probe",
+        shared,
+        respond: (request) => `heard ${request.messages.at(-1)?.text}`,
+      })
+      .then((handle) => handle, deniedCode);
+    const provider = h.host.chatProviders.get(
+      `sandbox:ext.probe:${providerId}`
+    );
+    const reply = provider
+      ? await provider.generateResponse({
+          chatId,
+          participant: { id: "bot" } as never,
+          participants: [],
+          messages: [
+            {
+              type: "text",
+              id: "m1",
+              authors: ["user-1"],
+              timeMs: 1,
+              targets: true,
+              text: "hi",
+            },
+          ],
+        })
+      : null;
+    if (typeof outcome !== "string") {
+      await outcome.unregister();
+    }
+    const answered =
+      reply !== null && typeof reply === "object" && "text" in reply
+        ? reply.text
+        : null;
+    if (typeof outcome !== "string" && answered === "heard hi") {
+      return "enabled";
+    }
+    if (outcome === "permission_denied" && !provider) return "disabled";
+    return `inconsistent: ${String(outcome)}, ${String(answered)}`;
+  }
+
+  /**
+   * Gives an extension `permission` the most direct way its policy allows:
+   * required at install when it can be, otherwise optional and allowed
+   * when asked.
+   */
+  async function grantDirectly(id: string, permission: SandboxPermission) {
+    if (SANDBOX_PERMISSION_INFO[permission].requirable) {
+      await installProbe(id, permission, { permissions: [permission] });
+    } else {
+      await installProbe(id, permission, { optionalPermissions: [permission] });
+      await ask(id, true);
+    }
+  }
 
   const PATHWAYS: {
     name: string;
     granted: boolean;
+    /** Only for permissions a manifest may require. */
+    requiredOnly?: boolean;
     setUp: (id: string, permission: SandboxPermission) => Promise<void>;
   }[] = [
     {
       name: "required by the manifest",
       granted: true,
+      requiredOnly: true,
       setUp: (id, p) => installProbe(id, p, { permissions: [p] }),
     },
     {
@@ -303,27 +568,28 @@ describe("permission gates", () => {
       name: "granted only to another installed extension",
       granted: false,
       setUp: async (id, p) => {
-        await installProbe("ext.other", p, { permissions: [p] });
+        await grantDirectly("ext.other", p);
         await installProbe(id, p, {});
       },
     },
     {
-      name: "required by an earlier version, but not this one",
+      name: "granted to an earlier version that listed it, but not this one",
       granted: false,
       setUp: async (id, p) => {
-        await installProbe(id, p, { permissions: [p] });
+        await grantDirectly(id, p);
         reloadPage(id);
         await installProbe(id, p, {});
       },
     },
     {
-      name: "allowed when asked, then no longer listed by an update",
+      name: "allowed when asked, then taken back in Settings",
       granted: false,
       setUp: async (id, p) => {
         await installProbe(id, p, { optionalPermissions: [p] });
         await ask(id, true);
-        reloadPage(id);
-        await installProbe(id, p, {});
+        probes.delete(id);
+        expect(await manager.setOptionalPermission(id, p, false)).toBe(true);
+        await vi.waitFor(() => expect(probes.get(id)?.ready).toBe(true));
       },
     },
     {
@@ -341,12 +607,27 @@ describe("permission gates", () => {
         await installProbe(id, p, { optionalPermissions: [p] });
       },
     },
+    {
+      name: "optional, never asked for, then turned on in Settings",
+      granted: true,
+      setUp: async (id, p) => {
+        await installProbe(id, p, { optionalPermissions: [p] });
+        probes.delete(id);
+        expect(await manager.setOptionalPermission(id, p, true)).toBe(true);
+        await vi.waitFor(() => expect(probes.get(id)?.ready).toBe(true));
+      },
+    },
   ];
 
   describe.each(SANDBOX_PERMISSIONS.map((permission) => ({ permission })))(
     "$permission",
     ({ permission }) => {
-      it.each(PATHWAYS)("$name", async (pathway) => {
+      const pathways = PATHWAYS.filter(
+        (pathway) =>
+          !pathway.requiredOnly ||
+          SANDBOX_PERMISSION_INFO[permission].requirable
+      );
+      it.each(pathways)("$name", async (pathway) => {
         const id = "ext.probe";
         await pathway.setUp(id, permission);
         const record = probes.get(id)!;
@@ -356,19 +637,42 @@ describe("permission gates", () => {
           observed[feature.name] = await feature.probe(record);
         }
 
+        // Granting a permission also grants what it includes (writing
+        // highlights includes reading them), and nothing else.
+        const enabled = expandSandboxPermissions(
+          pathway.granted ? [permission] : []
+        );
         expect(observed).toEqual(
           Object.fromEntries(
             FEATURES.map((feature) => [
               feature.name,
-              pathway.granted && feature.permission === permission
-                ? "enabled"
-                : "disabled",
+              enabled.includes(feature.permission) ? "enabled" : "disabled",
             ])
           )
         );
       });
+
+      if (!SANDBOX_PERMISSION_INFO[permission].requirable) {
+        it("can't be required: an extension listing it under permissions doesn't install", async () => {
+          vi.spyOn(console, "error").mockImplementation(() => undefined);
+          const installed = await manager.loadExtension(
+            await h.publish(probeExtension("ext.probe", permission), {
+              id: "ext.probe",
+              permissions: [permission],
+            })
+          );
+          expect(installed).toBe(false);
+          expect(h.consent).not.toHaveBeenCalled();
+          expect(h.frames).toEqual([]);
+        });
+      }
     }
   );
+
+  it("covers every permission with at least one feature", () => {
+    const covered = new Set(FEATURES.map((feature) => feature.permission));
+    expect(SANDBOX_PERMISSIONS.filter((p) => !covered.has(p))).toEqual([]);
+  });
 
   it("gives a pane that was already open a permission granted after it opened", async () => {
     const id = "ext.probe";
@@ -440,7 +744,9 @@ describe("permission gates", () => {
       await manager.loadExtension(
         await h.publish(withEverything, {
           id: "ext.raw-everything",
-          permissions: [...SANDBOX_PERMISSIONS],
+          permissions: SANDBOX_PERMISSIONS.filter(
+            (p) => SANDBOX_PERMISSION_INFO[p].requirable
+          ),
         })
       );
 

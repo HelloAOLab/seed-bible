@@ -194,7 +194,7 @@ These are safe enough to give every extension, so the install prompt stays short
 - Theme, language, and whether the device is mobile.
 - Reading Bible text through the app's Bible API (public data).
 
-_As built in phase 1:_ the pseudonymous ID, Discover providers, brokered sensitive settings and the Bible API are not available yet. Until the Bible API is, an extension can declare the API's host under `network` and fetch from it directly.
+_As built:_ all of these are available. The pseudonymous id is `sb.identity` (null when signed out); Bible text is `sb.bible.chapter()`; brokered sensitive requests are `sb.sensitive.fetch()`. Discover providers do need `reading:position`, since each request a provider gets says which chapter is open (§5.2).
 
 ---
 
@@ -229,37 +229,39 @@ The manifest that counts is the one in the hosted `ExtensionSet`, which the host
 
 ### 5.2 The permission list
 
-Risk levels decide how the install prompt presents each permission. "Low" ones are grouped into one line; "High" ones are listed individually with a warning.
+_As built (phases 1 and 2):_ thirteen permissions, listed in `SANDBOX_PERMISSION_INFO` (`extensions/protocol.ts`). Each has a risk level and a policy saying whether a manifest may **require** it (list it under `permissions`, so the extension doesn't install without it) or whether it's **always optional** (only ever under `optionalPermissions`, asked for when the feature that needs it is used).
 
-| Permission                           | What it allows                                                                         | How the prompt describes it (en)                  | Risk       |
-| ------------------------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------- | ---------- |
-| `reading:position`                   | Read the current translation/book/chapter, and get updates when it changes             | "See which passage you're reading"                | Low        |
-| `reading:selection`                  | Read which verses are selected                                                         | "See which verses you select"                     | Low        |
-| `reading:navigate`                   | Open a passage, add or switch tabs                                                     | "Open passages and tabs"                          | Low        |
-| `audio:playback`                     | Use the app's audio player and text-to-speech                                          | "Play audio"                                      | Low        |
-| `reading:history`                    | Read reading history and reading-plan progress                                         | "See your reading history and reading plans"      | Med        |
-| `highlights:read`                    | Read the user's highlights                                                             | "See your highlights"                             | Med        |
-| `highlights:write`                   | Create, change and delete highlights                                                   | "Add, change and remove your highlights"          | High       |
-| `notes:read`                         | Read the user's notes and annotations                                                  | "Read your notes"                                 | High       |
-| `notes:write`                        | Create, change and delete notes                                                        | "Add, change and remove your notes"               | High       |
-| `saves:read` / `saves:write`         | Saves and bookmarks                                                                    | "See / change your saves and bookmarks"           | Med / High |
-| `profile:read`                       | The user's display name and real user ID                                               | "See your name and account ID"                    | Med        |
-| `friends:read`                       | The user's friends list                                                                | "See who your friends are"                        | High       |
-| `chat:respond`                       | Act as a chat participant; receives the messages of chats it's added to                | "Read and reply to chats you add it to"           | High       |
-| `chat:shared`                        | Also take part in shared chats (other people's messages)                               | "Read messages from other people in shared chats" | High       |
-| `session:read`                       | See the state of a shared reading session the user is in                               | "See shared reading sessions you join"            | Med        |
-| `device:microphone`, `device:camera` | Adds `allow="microphone"` / `allow="camera"` to its frames; the browser still asks too | "Use your microphone / camera"                    | High       |
-| `clipboard:write`                    | Copy text to the clipboard                                                             | "Copy text to your clipboard"                     | Low        |
-| `embed:casualos`                     | Embed `ao.bot` patterns in its views                                                   | "Show CasualOS maps and grids"                    | Low        |
-| _(network hosts)_                    | `fetch` to the listed hosts                                                            | "Connect to api.verse-art.example"                | Med        |
+**The rule: an extension may require what it reads about the user's reading — the passage, the selection, their reading history, highlights and saves. Anything that changes the user's data, identifies them, reads their private writing, or involves other people is always optional.** High-risk permissions are exactly the always-optional ones, and the consent dialog marks them with a warning.
 
-Notes on a few choices:
+| Permission          | What it allows                                                                         | How the dialog describes it (en)                             | Risk   | Can be required |
+| ------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------ | --------------- |
+| `reading:position`  | The current translation/book/chapter, kept up to date; registering Discover providers  | "See which passage you're reading"                           | Low    | Yes             |
+| `reading:selection` | The selected verses, and the selection in a tool's `onSelect`                          | "See which verses you select"                                | Low    | Yes             |
+| `reading:navigate`  | Open a passage                                                                         | "Open passages"                                              | Low    | Yes             |
+| `reading:history`   | Reading history, up to a year at a time                                                | "See your reading history"                                   | Medium | Yes             |
+| `highlights:read`   | The user's highlights, a chapter at a time                                             | "See your highlights"                                        | Medium | Yes             |
+| `highlights:write`  | Add and remove highlights, in the theme's colors (includes `highlights:read`)          | "Add and remove your highlights"                             | High   | No              |
+| `notes:read`        | The user's notes, as plain text                                                        | "Read your notes"                                            | High   | No              |
+| `notes:write`       | Add notes; change or delete only the ones it added (includes `notes:read`)             | "Add notes, and change or delete the ones it added"          | High   | No              |
+| `saves:read`        | The user's saves                                                                       | "See your saves"                                             | Medium | Yes             |
+| `saves:write`       | Add and remove saves (includes `saves:read`)                                           | "Add and remove your saves"                                  | High   | No              |
+| `profile:read`      | The user's name, picture and real account id                                           | "See your name and profile picture"                          | High   | No              |
+| `chat:respond`      | Be a chat participant; sees the messages of chats the user adds it to                  | "Read and reply to chats you add it to"                      | Medium | Yes             |
+| `chat:shared`       | Also take part in shared chats, with other people's messages (includes `chat:respond`) | "Read other people's messages in shared chats you add it to" | High   | No              |
+| _(network hosts)_   | Requests and images from the listed hosts                                              | "Connect to api.verse-art.example"                           | —      | Required only   |
 
-- **Reading position is asked for, even though it's "Low."** What someone reads, and when, says a lot about them. It's grouped into the summary line, but the extension doesn't get it silently.
+Why these defaults:
+
+- **Required means "the extension is pointless without it."** A verse-art extension really can't work without the selection, and a chat bot can't work without seeing the chat. Asking at install, once, is the honest version of that.
+- **`chat:respond` can be required** even though it reads messages, because it only ever sees chats the user adds it to: that choice is made in the moment, chat by chat.
+- **Reading notes is always optional**, unlike reading highlights or saves: notes are the user's own writing, often private reflection.
+- **`profile:read` is always optional.** Most extensions that want "per-user" data only need `sb.identity` (§4.6), which needs no permission and isn't the user's real id.
+- **Write permissions include read.** Granting `highlights:write` also grants `highlights:read`; taking back `highlights:read` in Settings also takes back `highlights:write`.
+- **Reading position gates Discover providers,** because every request a provider gets says which chapter is open.
 - **Highlights are `publicRead` in CasualOS today, but still need a permission.** Inside the app, the extension would learn which public highlights belong to _this_ user. That link is the private part.
-- **`chat:respond` and `chat:shared` are separate** because shared chats contain messages from people who never installed the extension.
-- **Write permissions imply read.** `highlights:write` includes `highlights:read`; the prompt shows only the write line.
-- **Writes are marked.** Anything a sandboxed extension creates (a highlight, a note) is tagged with its extension ID, so the app can show "added by Verse Art" and the user can undo everything one extension did.
+- **Only notes are marked with the extension that wrote them** (a `extension:<id>` tag), which is what lets an extension change or delete its own notes and no one else's. Highlights and saves have no field to carry a mark, so `highlights:write` and `saves:write` cover all of them; that is part of why they're always optional.
+
+Not built: `audio:playback`, `friends:read`, `session:read`, `device:microphone`/`device:camera`, `clipboard:write` and `embed:casualos` from the original list.
 
 ### 5.3 Never available to sandboxed extensions
 
@@ -304,7 +306,7 @@ When a new version's manifest asks for nothing new, it updates silently. When it
 
 Settings → Extensions gets a "Permissions" section per sandboxed extension, with a toggle per permission (required ones can't be turned off without uninstalling). Revoking tears down the extension's frames, removes everything it registered, and restarts it with the smaller set.
 
-_Not built yet (phase 2):_ until it is, an optional permission the user granted can only be taken back by uninstalling the extension.
+_As built:_ the shield button on an installed sandboxed extension in Settings → Extensions opens its permissions: what it needs to work at all (locked), each optional permission as a switch, and the hosts it can contact. Turning one on or off saves the change with the grant and restarts the extension with exactly the new set.
 
 ### 6.5 Installs that don't come from the user clicking Install
 
@@ -367,7 +369,19 @@ Each phase is shippable on its own.
 
    Added since, ahead of the original plan: `optionalPermissions` and `sb.permissions.request` (§5.1).
 
-2. **User data permissions.** Highlights, notes, saves, reading history, profile, chat providers, brokered sensitive fetch, update re-consent, and the per-extension Permissions section in Settings.
+2. **User data permissions — done.** What shipped:
+   - Ten more permissions, with the "can be required" policy in §5.2: high-risk ones are always optional, and a manifest that lists one under `permissions` is refused with a message saying to move it.
+   - `sb.highlights`, `sb.notes`, `sb.saves`, `sb.history` and `sb.profile`. Writes that need an account fail with `unavailable` when signed out, rather than prompting the user to sign in. Notes are read and written as plain text; anything an extension writes is escaped, never inserted as HTML. Highlight colors are limited to the theme's.
+   - Discover providers (`sb.discover`, needing `reading:position`), with results as data the host renders. A result's image only loads from one of the manifest's `network` hosts, since it loads in the app's page.
+   - Chat providers (`sb.chats`), needing `chat:respond`, plus `chat:shared` for shared chats; checked again on every message. A reply is a single text message, and an extension that doesn't answer within 60 s stays quiet.
+   - Dialogs (`sb.modals`, a message or a view, titled with the extension's name, only right after the user interacts with it, one at a time) and a settings panel under Configure (`sb.settings.registerPanel`).
+   - Brokered sensitive fetch (`sb.sensitive.fetch`), the pseudonymous `sb.identity`, and public Bible text (`sb.bible.chapter`).
+   - The heartbeat (§8): an extension whose background frame misses two checks in a row is stopped for the rest of the visit, and the user is told.
+   - The app's fonts inside frames (their CSP allows Google Fonts' two hosts and nothing else new).
+   - The Permissions view in Settings (§6.4).
+
+   Not built in phase 2: syncing `sb.storage` across devices (it's still kept on the device), marking highlights and saves with the extension that made them (only notes have a field for it), and the permissions in §5.2's "not built" line.
+
 3. **Tooling.** Scaffolding template, sandboxed `dev`, permission checks in `check`, docs. Port one in-repo extension (for example `seed-bible-refresh-example-extension` or `locations-extension`) to the sandbox SDK as a working reference and to prove the API is enough for a real extension.
 4. **Stronger isolation (optional).** Move frames to a dedicated cross-site origin, one subdomain per extension: separate process, real per-extension storage, and an `Origin` header third-party APIs recognize (an opaque-origin frame sends `Origin: null`, which some APIs' CORS settings reject). Also: extension-to-extension calls brokered by the host (today's `dependencies` share live objects, which can't cross a frame boundary; for sandboxed extensions they'd become declared, message-based exports).
 
