@@ -6,7 +6,7 @@ This roadmap shows what we're working on and what comes next. Each item explains
 
 Want to help any of this happen sooner? [Here's how to get involved](#want-to-help).
 
-_Last updated 2026-10-12_
+_Last updated 2026-10-19_
 
 ## At a glance
 
@@ -16,7 +16,7 @@ _Last updated 2026-10-12_
 | --- | ------------------------------------------------------------------------------- | --------------------- | ----------------------- |
 | 1   | [Content from churches and ministries](#1-content-from-churches-and-ministries) | Churches & ministries | 🚧 In progress          |
 | 2   | [Reading with friends](#2-reading-with-friends)                                 | Community             | ✅ Done — more to come  |
-| 3   | [A friends feed on the Today screen](#3-a-friends-feed-on-the-today-screen)     | Community             | 💭 Planned              |
+| 3   | [A friends feed on the Today screen](#3-a-friends-feed-on-the-today-screen)     | Community             | ✅ Done — more to come  |
 | 4   | [Private by default](#4-private-by-default)                                     | Privacy               | 💭 Planned              |
 | 5   | [A better customization editor](#5-a-better-customization-editor)               | Churches & ministries | 🚧 In progress          |
 | 6   | [Simpler bookmarks](#6-simpler-bookmarks)                                       | Reading               | ✅ Done                 |
@@ -30,13 +30,13 @@ _Last updated 2026-10-12_
 | 14  | [Circles of friends](#14-circles-of-friends)                                    | Community             | 💭 Planned              |
 | 15  | [Switching between accounts](#15-switching-between-accounts)                    | Accounts              | 💭 Planned              |
 | 16  | [Connecting with other AI tools](#16-connecting-with-other-ai-tools)            | AI                    | 🚧 In progress          |
-| 17  | [Better shared reading sessions](#17-better-shared-reading-sessions)            | Community             | 💭 Planned              |
+| 17  | [Better shared reading sessions](#17-better-shared-reading-sessions)            | Community             | 🚧 In progress          |
 
 ### How the pieces fit together
 
 Several items are steps along the same path:
 
-- **Reading together (2 → 3 → 4 → 14).** Friends came first. Next, the Today screen shows what your friends are reading (3). As people share more, they need to choose _what_ they share (4). Circles (14) then let them share with some friends rather than all of them.
+- **Reading together (2 → 3 → 4 → 14).** Friends came first, and the Today screen now shows what your friends are reading and writing (3). As people share more, they need to choose _what_ they share (4). Circles (14) then let them share with some friends rather than all of them.
 - **Privacy needs groundwork (13 → 4).** Making something truly private means changing how it's stored, not just hiding it on screen. Reading history is the hardest piece to change, so it has its own item (13).
 - **Churches and ministries (1 → 5).** First, organizations need to be able to bring their own content (1). Then the tool they use to set up their own version of Seed Bible should get easier to use (5).
 - **AI (12 → 16).** First, Bonfire catches up with Seed Bible's other AI chat and learns to take actions for you (12). Then Seed Bible connects with other AI tools people already use (16).
@@ -57,20 +57,22 @@ Organizations do this through a **customization**: their own version of Seed Bib
 - Organizations can already create a customization.
 - Ministries that use Apologist can now have their own articles, videos and episodes appear for each chapter. They set it up once in their customization, and everyone using it sees that content. This is the first working example of an organization bringing its own content.
 - A ministry can also share a link that turns its Apologist content on for whoever opens it, and readers can switch that content on or off in the add-on's settings.
+- Readers who'd rather not see the panel at all can switch it off in Settings.
 
 **What's next**
 
 - A simple way for _any_ organization to add its content, not just Apologist users.
-- A settings page where readers turn each source on or off, or hide outside content altogether. This is designed but not yet built.
-- One home for this content. We're retiring an older full-screen view in favor of the panel under the chapter, which no longer links to it.
-- Polish before launch: the "All" filter misses some content, the panel occasionally doesn't appear, its filters get cut off on wide screens, and there's no way yet to hide it entirely. Marking off reading-plan days from the panel also turned out to be more distracting than helpful, so that's coming out.
+- A settings page where readers turn each source on or off. This is designed but not yet built.
+- One look for this content. The full-screen view will match the panel under the chapter. (We had planned to retire the full-screen view, but it's staying.)
+- On phones, show content for the verses you've selected right in the menu that opens when you select them, instead of only at the bottom of the chapter.
+- Polish before launch: the "All" filter misses some content, the panel occasionally doesn't appear, and its filters get cut off on wide screens. Reminders to mark off reading-plan days, in the panel and as pop-up notices, also turned out to be more distracting than helpful, so they're coming out.
 
 **Still deciding**
 
 - What's the easiest way for an organization to supply content: a list in their customization, a link to a feed they already publish, or a small add-on? Add-ons work today, but building one asks a lot of someone who isn't a developer.
 - If a reader turns off a source their organization turned on, whose choice wins? We lean toward the reader's.
 
-_On GitHub:_ [#1719](https://github.com/HelloAOLab/seed-bible/issues/1719), [#1864](https://github.com/HelloAOLab/seed-bible/issues/1864), [#1915](https://github.com/HelloAOLab/seed-bible/issues/1915), [#1917](https://github.com/HelloAOLab/seed-bible/issues/1917), [#1908](https://github.com/HelloAOLab/seed-bible/issues/1908), [#1868](https://github.com/HelloAOLab/seed-bible/issues/1868), [#1994](https://github.com/HelloAOLab/seed-bible/issues/1994), [#1830](https://github.com/HelloAOLab/seed-bible/issues/1830), [#1831](https://github.com/HelloAOLab/seed-bible/issues/1831)
+_On GitHub:_ [#1719](https://github.com/HelloAOLab/seed-bible/issues/1719), [#2000](https://github.com/HelloAOLab/seed-bible/issues/2000), [#1998](https://github.com/HelloAOLab/seed-bible/issues/1998), [#1915](https://github.com/HelloAOLab/seed-bible/issues/1915), [#1917](https://github.com/HelloAOLab/seed-bible/issues/1917), [#1908](https://github.com/HelloAOLab/seed-bible/issues/1908), [#1994](https://github.com/HelloAOLab/seed-bible/issues/1994), [#1995](https://github.com/HelloAOLab/seed-bible/issues/1995), [#1830](https://github.com/HelloAOLab/seed-bible/issues/1830), [#1831](https://github.com/HelloAOLab/seed-bible/issues/1831), [#1868](https://github.com/HelloAOLab/seed-bible/issues/1868)
 
 ---
 
@@ -91,28 +93,35 @@ Send someone a friend request. Once they accept, you can see each other's readin
 
 - **Real privacy for what friends share** (item 4). Today the app decides whose content to show you, but the content itself isn't yet locked to friends only.
 - Manage a friendship from someone's profile, and open a profile by tapping a name in chat.
+- A full profile page for each friend, with their notes, playlists and reading plans in one place.
 - Add friends by email. This is built, and waiting on a change to CasualOS, the platform Seed Bible is built on.
-- Notifications for new friend requests, and a way to invite friends straight into a reading session.
+- Notifications on your phone or computer for new friend requests, and a way to invite friends straight into a reading session.
 - Reply to a friend's note, so you can talk about it together.
 - See a friend's new note as soon as they write it, instead of the next time you open the app.
 - Better previews when you share a friend link, showing who it's from.
 
-_On GitHub:_ [#1939](https://github.com/HelloAOLab/seed-bible/pull/1939), [#1846](https://github.com/HelloAOLab/seed-bible/issues/1846), [#1964](https://github.com/HelloAOLab/seed-bible/issues/1964), [#1965](https://github.com/HelloAOLab/seed-bible/issues/1965), [#1991](https://github.com/HelloAOLab/seed-bible/issues/1991)
+_On GitHub:_ [#1939](https://github.com/HelloAOLab/seed-bible/pull/1939), [#2003](https://github.com/HelloAOLab/seed-bible/issues/2003), [#2004](https://github.com/HelloAOLab/seed-bible/issues/2004), [#2005](https://github.com/HelloAOLab/seed-bible/issues/2005), [#2006](https://github.com/HelloAOLab/seed-bible/issues/2006), [#2002](https://github.com/HelloAOLab/seed-bible/issues/2002), [#1846](https://github.com/HelloAOLab/seed-bible/issues/1846), [#1964](https://github.com/HelloAOLab/seed-bible/issues/1964), [#1965](https://github.com/HelloAOLab/seed-bible/issues/1965), [#1991](https://github.com/HelloAOLab/seed-bible/issues/1991)
 
 ---
 
 ## 3. A friends feed on the Today screen
 
-💭 **Planned.** Builds on item 2.
+✅ **Done**, with more to come. Builds on item 2.
 
-The Today screen's community section becomes a feed of what your friends have been reading and writing. The design is finished.
+The Today screen's community section is a feed of what you and your friends have been reading and writing.
 
-- **Filters** for all activity, notes only, or reading only, over the last 48 hours, week, month, or all time.
-- **Crossed paths.** When you and your friends read the same chapter, you see one line for all of you. It's a natural nudge to talk about it.
+**What's done**
+
+- **Filters** for all activity, notes only, or reading only.
+- **Recent activity first**, from about the last two days, with "See more" to go further back. A History button shows past activity by year and by day.
+- **Crossed paths.** When you and your friends read the same chapter around the same time, you see one line for all of you, like "Ana and Ben both read John 2". It's a natural nudge to talk about it.
 - **Each day's highlights.** For each person, only the chapters they spent the most time in. If someone spent half an hour in John 2–5 and a few minutes in Romans 3, you see "read John 2–5".
+
+**What's next**
+
 - **Friend requests** with Accept and Decline right on the Today screen, so nobody has to go looking for them.
 
-_On GitHub:_ [#1848](https://github.com/HelloAOLab/seed-bible/issues/1848), [#1886](https://github.com/HelloAOLab/seed-bible/issues/1886)
+_On GitHub:_ [#1946](https://github.com/HelloAOLab/seed-bible/pull/1946), [#1848](https://github.com/HelloAOLab/seed-bible/issues/1848)
 
 ---
 
@@ -132,6 +141,10 @@ Notes become private unless you choose to share them. When writing a note, you p
 
 Today, most of what people create in Seed Bible is stored so that anyone who knew where to look could read it; the app simply doesn't display it. Real privacy means our servers refuse to hand a private note to anyone else. So each note has to be stored differently depending on who may read it, and changing a note's privacy means moving it, not just flipping a switch.
 
+**Where it stands**
+
+Nothing is built yet, but the work is split into two steps. Things only you ever look at, like your saves and bookmarks, can be locked to you first. Limiting shared content to your friends needs a change to CasualOS, which its team is working on.
+
 **What's planned**
 
 - A privacy choice when writing a note, set to private by default.
@@ -142,6 +155,8 @@ Today, most of what people create in Seed Bible is stored so that anyone who kne
 **Still deciding**
 
 - Which kinds of content get a choice on each item (like notes and playlists), and which get one setting for your whole account (like reading history)?
+
+_On GitHub:_ [#2007](https://github.com/HelloAOLab/seed-bible/issues/2007), [#2008](https://github.com/HelloAOLab/seed-bible/issues/2008)
 
 ---
 
@@ -154,6 +169,8 @@ The tool organizations use to set up their own version of Seed Bible should be a
 **Where it stands**
 
 - The editor has had its first redesign to look and work like the rest of Seed Bible. Each customization shows a preview of its look, and while you edit a look you see a sample Bible passage change as you go, with a warning when text would be hard to read.
+- On a computer, that sample passage now stays in view beside the editor as you scroll, and shows the highlight color you're changing.
+- An organization can hide every add-on by default and pick just the ones its readers should see. Add-ons that arrive in Seed Bible later stay hidden too, until the organization chooses otherwise.
 
 **What's next**
 
@@ -269,10 +286,10 @@ Settings have grown one option at a time. We want them easy to scan and hard to 
 
 - **Remove the "All settings" section** under Display & Theme. It lets people end up with odd combinations without knowing how to undo them, and customizations now cover what it was for. A single Scripture font choice stays.
 - **One text size setting** instead of separate ones for the app and for Scripture.
-- **A home for new settings** from other items: choosing content sources (item 1), privacy defaults (item 4), and hiding the related-content panel.
+- **A home for new settings** from other items: choosing content sources (item 1) and privacy defaults (item 4). The switch to hide the related-content panel is already in Display & Theme.
 - **Account settings opens your profile**, where you can edit it directly.
 
-_On GitHub:_ [#1872](https://github.com/HelloAOLab/seed-bible/issues/1872), [#1579](https://github.com/HelloAOLab/seed-bible/issues/1579), [#1868](https://github.com/HelloAOLab/seed-bible/issues/1868), [#1799](https://github.com/HelloAOLab/seed-bible/issues/1799)
+_On GitHub:_ [#1872](https://github.com/HelloAOLab/seed-bible/issues/1872), [#1579](https://github.com/HelloAOLab/seed-bible/issues/1579), [#1799](https://github.com/HelloAOLab/seed-bible/issues/1799)
 
 ---
 
@@ -373,7 +390,7 @@ _On GitHub:_ [#1670](https://github.com/HelloAOLab/seed-bible/pull/1670)
 
 ## 17. Better shared reading sessions
 
-💭 **Planned.**
+🚧 **In progress.**
 
 In a shared reading session, a group reads the same chapter together in real time, whether they're in one room or spread across the world. Sessions already work. These improvements make it easier for everyone to stay together, especially in larger groups.
 
@@ -382,6 +399,7 @@ In a shared reading session, a group reads the same chapter together in real tim
 - Anyone can join a session from its link or by scanning its QR code.
 - The host decides whether only they can change the passage or highlight for everyone, and can appoint co-hosts.
 - You can see where others are reading, but only while their part of the chapter overlaps with yours.
+- When someone highlights a verse you can't see, a small notice at the top or bottom of the page shows who it was and which verse. Tap it to go there.
 
 **What's next**
 
@@ -391,8 +409,9 @@ In a shared reading session, a group reads the same chapter together in real tim
 - **See which verse someone picks.** When the host selects a verse, its number briefly flashes in their color for everyone. Hosts can let everyone's picks show or turn this off, and anyone can turn it off for themselves.
 - **Invite friends straight into a session** (see item 2).
 - **Notice when someone's connection drops.** Today, someone who suddenly loses signal can stay listed in the session for a long time, and if it's the host, nobody is told.
+- **A clear "Joining session…" message** while a session link loads. Today the page first shows something else, then switches to the session on its own.
 
-_On GitHub:_ [#1986](https://github.com/HelloAOLab/seed-bible/issues/1986), [#1961](https://github.com/HelloAOLab/seed-bible/issues/1961), [#1962](https://github.com/HelloAOLab/seed-bible/issues/1962), [#1987](https://github.com/HelloAOLab/seed-bible/issues/1987), [#1965](https://github.com/HelloAOLab/seed-bible/issues/1965), [#1819](https://github.com/HelloAOLab/seed-bible/issues/1819)
+_On GitHub:_ [#1986](https://github.com/HelloAOLab/seed-bible/issues/1986), [#1961](https://github.com/HelloAOLab/seed-bible/issues/1961), [#1962](https://github.com/HelloAOLab/seed-bible/issues/1962), [#1987](https://github.com/HelloAOLab/seed-bible/issues/1987), [#1965](https://github.com/HelloAOLab/seed-bible/issues/1965), [#1819](https://github.com/HelloAOLab/seed-bible/issues/1819), [#2024](https://github.com/HelloAOLab/seed-bible/issues/2024), [#1974](https://github.com/HelloAOLab/seed-bible/pull/1974)
 
 ---
 

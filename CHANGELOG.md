@@ -42,7 +42,6 @@
   - The customization's auto-installed extensions now install on your first visit.
   - Removing an extension now uninstalls it, including ones the customization installed for you.
 - Show a "Couldn't save" message when a customization fails to save, instead of acting as if it saved. ([#2019](https://github.com/HelloAOLab/seed-bible/pull/2019))
-- Fix the Friends screen showing no friends or friend requests. ([#2016](https://github.com/HelloAOLab/seed-bible/pull/2016))
 - Return the Discover panel to what it showed before you wrote a note, such as a playing playlist, instead of always to its main view on desktop. ([#1990](https://github.com/HelloAOLab/seed-bible/pull/1990))
 - Fix starting a playlist not scrolling to its first passage when you're already reading that chapter. ([#1988](https://github.com/HelloAOLab/seed-bible/pull/1988))
 - Ask before saving a playlist while an item has unsaved changes, instead of silently dropping them. ([#1988](https://github.com/HelloAOLab/seed-bible/pull/1988))
