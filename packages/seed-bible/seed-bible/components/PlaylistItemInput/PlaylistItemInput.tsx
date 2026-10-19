@@ -133,7 +133,7 @@ export const ADD_MODES: ModeOption[] = [
     labelKey: "playlist-add-mode-video",
     defaultLabel: "Video",
     descriptionKey: "playlist-add-mode-video-description",
-    defaultDescription: "Link a video to watch",
+    defaultDescription: "Link a video, with transcript",
     icon: "play_circle",
   },
   {

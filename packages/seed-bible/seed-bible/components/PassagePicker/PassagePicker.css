@@ -1,0 +1,125 @@
+.sb-passage-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.sb-passage-picker-row {
+  display: flex;
+  gap: 8px;
+}
+
+.sb-passage-picker-search {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+}
+
+.sb-passage-picker-search .material-symbols-outlined {
+  font-size: 1.125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-passage-picker-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.sb-passage-picker-input:focus {
+  outline: none;
+}
+
+.sb-passage-picker-select {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-passage-picker-select option {
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+}
+
+.sb-passage-picker-select--chapter {
+  min-width: 4.5rem;
+}
+
+.sb-passage-picker-hint,
+.sb-passage-picker-empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+/* The chapter's verses, one row each, selected ones carrying the accent. */
+.sb-passage-picker-verses {
+  flex: 1;
+  min-height: 12rem;
+  max-height: 24rem;
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+  user-select: none;
+}
+
+.sb-passage-picker-verse {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 8px 12px 8px 10px;
+  border: none;
+  border-inline-start: 3px solid transparent;
+  border-radius: 0 6px 6px 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-passage-picker-verse:hover {
+  color: var(--sb-font-color);
+}
+
+.sb-passage-picker-verse--selected {
+  border-inline-start-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-passage-picker-verse-number {
+  flex-shrink: 0;
+  min-width: 1.5rem;
+  padding-top: 0.2em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-passage-picker-verse--selected .sb-passage-picker-verse-number {
+  color: var(--sb-primary-color);
+}

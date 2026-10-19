@@ -1,0 +1,155 @@
+/* The modal grows to fit two columns; every other modal keeps its width. */
+.sb-footnote-modal:has(.sb-add-step) {
+  width: min(94vw, 68rem);
+  max-height: min(92dvh, 56rem);
+}
+
+.sb-add-step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.sb-add-step-position {
+  margin: -8px 0 0;
+  font-size: 0.9375rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-add-step-columns {
+  display: grid;
+  grid-template-columns: minmax(13rem, 17rem) minmax(0, 1fr);
+  gap: 24px;
+  min-height: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+.sb-add-step-column-head {
+  margin: 8px 0 12px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-add-step-types {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-inline-end: 20px;
+  border-inline-end: 1px solid var(--sb-divider-color);
+}
+
+.sb-add-step-type {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-add-step-type:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-add-step-type--on {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
+}
+
+.sb-add-step-type-label {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.sb-add-step-type--on .sb-add-step-type-label {
+  color: var(--sb-primary-color);
+}
+
+.sb-add-step-type-description {
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-add-step-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.sb-add-step-title {
+  font-family: var(--sb-book-title-font-family);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* The kind's own fields add their step through the foot's button. */
+.sb-add-step-fields .sb-settings-save-button:not(.sb-editor-embed-submit) {
+  display: none;
+}
+
+.sb-add-step-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+.sb-add-step-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 999px;
+  font-size: 0.9375rem;
+}
+
+.sb-add-step-summary-kind {
+  font-weight: 600;
+  color: var(--sb-primary-color);
+}
+
+.sb-add-step-actions {
+  display: flex;
+  gap: 10px;
+  margin-inline-start: auto;
+}
+
+.sb-add-step-actions .sb-settings-save-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 18px;
+}
+
+@media (max-width: 760px) {
+  .sb-add-step-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sb-add-step-types {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding-inline-end: 0;
+    border-inline-end: none;
+  }
+}

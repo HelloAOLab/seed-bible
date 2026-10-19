@@ -30,6 +30,7 @@ import { usePlaylistEditor } from "./usePlaylistEditor";
 import { PlaylistEditorStepList } from "./PlaylistEditorStepList";
 import { PlaylistReviewPanel } from "./PlaylistReviewPanel";
 import { PlaylistStepPreview } from "./PlaylistStepPreview";
+import { openAddStepModal } from "./AddStepModal";
 
 /** Pane title; the screen draws its own header, so this only names the pane. */
 export function PlaylistEditorScreenTitle(props: {
@@ -91,20 +92,14 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
     setOpenIndex,
     addOpen,
     setAddOpen,
-    addMode,
-    insertAfter,
-    replaceIndex,
     addItem,
-    startAdding,
     updateOpenItemSettings,
     stepIssues,
-    addInputRef,
     editInputRef,
     books,
     resolveBookName,
     loadChapter,
     requestOpen,
-    requestCloseAdd,
     removeItem,
     stepNumbers,
     stepCount,
@@ -171,6 +166,90 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
     }
     await state.app.createSharedSession();
     playlists.startPlaying(draft, 0, { history: false });
+  };
+
+  // "Add a step" and a change of kind both go through the modal; the step
+  // lands after the open one (or at the end), or in the changed step's place.
+  const openAddStep = (options: { replace?: number; mode?: AddMode }) => {
+    const proceed = () => {
+      const after = options.replace === undefined ? openIndex : null;
+      const sceneOf = (index: number | null) => {
+        if (index === null) return null;
+        for (let i = index; i >= 0; i -= 1) {
+          const item = items[i];
+          if (item?.type === "scene") {
+            let number = 0;
+            for (let j = 0; j <= i; j += 1) {
+              if (items[j]?.type === "scene") number += 1;
+            }
+            return t("playlist-editor-scene-group", {
+              defaultValue: "Scene {{number}} · {{title}}",
+              number,
+              title: item.title,
+            });
+          }
+        }
+        return null;
+      };
+      const afterStep = after !== null ? stepNumbers.get(after) : undefined;
+      const position = [
+        afterStep
+          ? t("playlist-editor-add-after", {
+              defaultValue: "After step {{step}}",
+              step: afterStep,
+            })
+          : null,
+        sceneOf(after),
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      openAddStepModal(modals, t, {
+        books,
+        loadChapter,
+        steps: stepLinkTargets,
+        initialMode: options.mode,
+        position: position || undefined,
+        title:
+          options.replace !== undefined
+            ? t("playlist-editor-change-type", {
+                defaultValue: "Change the step's type",
+              })
+            : undefined,
+        onAdd: (item) => {
+          if (options.replace !== undefined) {
+            const old = items[options.replace];
+            const settings =
+              old && old.type !== "scene"
+                ? {
+                    ...(old.minutes ? { minutes: old.minutes } : {}),
+                    ...(old.pause ? { pause: true } : {}),
+                    ...(old.leaderOnly ? { leaderOnly: true } : {}),
+                  }
+                : {};
+            playlists.updateEditingPlaylistItem(
+              options.replace,
+              item.type === "scene" ? item : { ...settings, ...item }
+            );
+            setOpenIndex(options.replace);
+            return;
+          }
+          if (after !== null && after < items.length - 1) {
+            playlists.insertEditingPlaylistItem(after + 1, item);
+            setOpenIndex(after + 1);
+            return;
+          }
+          playlists.addEditingPlaylistItem(item);
+          setOpenIndex(items.length);
+        },
+      });
+    };
+    if (openIndex !== null && editInputRef.current?.isDirty()) {
+      void saveOpenItem().then((saved) => {
+        if (saved) proceed();
+      });
+      return;
+    }
+    proceed();
   };
 
   const issues = openIndex !== null ? (stepIssues.get(openIndex) ?? []) : [];
@@ -301,7 +380,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
               onClick={() => {
                 setReviewOpen(false);
                 setMode("edit");
-                startAdding({ after: openIndex });
+                openAddStep({});
               }}
             >
               <MaterialIcon>add</MaterialIcon>
@@ -420,41 +499,6 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
                 onCancelEdit={() => setOpenIndex(null)}
               />
             </div>
-          ) : addOpen ? (
-            <div className="sb-playlist-editor-step">
-              <p className="sb-playlist-editor-eyebrow">
-                {replaceIndex !== null
-                  ? t("playlist-editor-type", { defaultValue: "Type" })
-                  : insertAfter !== null && stepNumbers.get(insertAfter)
-                    ? t("playlist-editor-add-after", {
-                        defaultValue: "After step {{step}}",
-                        step: stepNumbers.get(insertAfter),
-                      })
-                    : t("playlist-add-step", { defaultValue: "Add step" })}
-              </p>
-              <PlaylistItemInput
-                ref={addInputRef}
-                key={`add-${addMode ?? ""}-${replaceIndex ?? ""}`}
-                books={books}
-                steps={stepLinkTargets}
-                initialMode={addMode}
-                loadChapter={loadChapter}
-                layout="screen"
-                translationName={translationName}
-                onAdd={(item) => {
-                  const index = addItem(item);
-                  setAddOpen(false);
-                  setOpenIndex(index);
-                }}
-              />
-              <button
-                type="button"
-                className="sb-reading-plans-back sb-playlist-add-done"
-                onClick={requestCloseAdd}
-              >
-                {t("cancel", { defaultValue: "Cancel" })}
-              </button>
-            </div>
           ) : (
             <p className="sb-playlist-editor-empty sb-playlist-editor-placeholder">
               {t("playlist-editor-pick-step", {
@@ -506,7 +550,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
                           if (selected) return;
                           setReviewOpen(false);
                           setMode("edit");
-                          startAdding({ replace: openIndex, mode: candidate });
+                          openAddStep({ replace: openIndex, mode: candidate });
                         }}
                       >
                         {t(option.labelKey, {

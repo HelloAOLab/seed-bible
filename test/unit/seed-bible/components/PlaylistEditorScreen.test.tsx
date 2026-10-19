@@ -118,9 +118,36 @@ function createMocks(items: PlaylistItemData[]) {
     isEditingPlaylistDirty: vi.fn(() => false),
     uploadHeroImage: vi.fn(),
   } as unknown as PlaylistManager;
+  // A tab reading a translation with a couple of books, so references read
+  // and the passage card can name the translation.
+  const tab = {
+    id: "tab-1",
+    readingState: {
+      translationId: signal("AAB"),
+      translation: signal({ shortName: "AAB" }),
+      translationBooks: signal({
+        books: [
+          {
+            id: "GEN",
+            name: "Genesis",
+            commonName: "Genesis",
+            numberOfChapters: 50,
+            firstChapterNumber: 1,
+          },
+          {
+            id: "EXO",
+            name: "Exodus",
+            commonName: "Exodus",
+            numberOfChapters: 40,
+            firstChapterNumber: 1,
+          },
+        ],
+      }),
+    },
+  };
   const tabs = {
-    tabs: signal([]),
-    selectedTabId: signal(null),
+    tabs: signal([tab]),
+    selectedTabId: signal("tab-1"),
   } as unknown as TabsManager;
   const chats = {
     providers: signal([]),
@@ -160,20 +187,21 @@ describe("PlaylistEditorScreen", () => {
 
   function renderScreen(items: PlaylistItemData[]) {
     const mocks = createMocks(items);
+    const modals = createModalManager();
     act(() => {
       render(
         <PlaylistEditorScreen
           state={mocks.state}
           playlists={mocks.playlists}
           tabs={mocks.tabs}
-          modals={createModalManager()}
+          modals={modals}
           chats={mocks.chats}
           openChatPanel={vi.fn()}
         />,
         container
       );
     });
-    return mocks;
+    return { ...mocks, modals };
   }
 
   const rowButtons = () =>
@@ -329,8 +357,11 @@ describe("PlaylistEditorScreen", () => {
     });
   });
 
-  it("picking another type opens the add box in the step's place", () => {
-    renderScreen([verseItem("GEN", 16), { type: "html", html: "<p>Hi</p>" }]);
+  it("picking another type opens the Add-a-step modal, whose step takes the open step's place with its settings", () => {
+    const { updateEditingPlaylistItem, modals } = renderScreen([
+      verseItem("GEN", 16),
+      { type: "html", html: "<p>Hi</p>", pause: true, minutes: 3 },
+    ]);
     act(() => rowButtons()[1]!.click());
 
     act(() => {
@@ -342,12 +373,41 @@ describe("PlaylistEditorScreen", () => {
         .find((b) => b.textContent === "Question")!
         .click();
     });
-    expect(
-      main().querySelector(".stub-playlist-item-input--add")
-    ).not.toBeNull();
-    expect(
-      main().querySelector(".sb-playlist-editor-eyebrow")?.textContent
-    ).toBe("Type");
+    const modal = modals.modals.value.find(
+      (m) => m.id === "playlist-add-step"
+    )!;
+    expect(modal.title).toBe("Change the step's type");
+
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    act(() => {
+      render(<>{modal.content({ t: (key: string) => key })}</>, host);
+    });
+    const field = host.querySelector<HTMLTextAreaElement>(
+      ".sb-add-step-fields textarea"
+    )!;
+    act(() => {
+      field.value = "Why?";
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    act(() => {
+      Array.from(host.querySelectorAll("button"))
+        .find((b) => b.textContent?.startsWith("Add step"))!
+        .click();
+    });
+    render(null, host);
+    host.remove();
+
+    expect(updateEditingPlaylistItem).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        type: "question",
+        prompt: "Why?",
+        pause: true,
+        minutes: 3,
+      })
+    );
+    expect(modals.modals.value).toHaveLength(0);
   });
 
   it("warns when a step repeats the passage before it, and can drop the earlier one", () => {
@@ -387,8 +447,12 @@ describe("PlaylistEditorScreen", () => {
     expect(main().textContent).toContain("Pick a step on the left");
   });
 
-  it("'Add step' brings the add box into the middle column; Cancel folds it away", () => {
-    renderScreen([verseItem("GEN", 16)]);
+  it("'Add step' opens the Add-a-step modal, placing what it adds after the open step", async () => {
+    const { modals, playlists } = renderScreen([
+      { type: "scene", title: "Hagar" },
+      verseItem("GEN", 16),
+      verseItem("GEN", 22),
+    ]);
     act(() => rowButtons()[0]!.click());
 
     act(() => {
@@ -396,20 +460,39 @@ describe("PlaylistEditorScreen", () => {
         .querySelector<HTMLButtonElement>(".sb-playlist-add-toggle")!
         .click();
     });
-    expect(
-      main().querySelector(".stub-playlist-item-input--add")
-    ).not.toBeNull();
-    expect(main().querySelector(".stub-playlist-item-input--edit")).toBeNull();
-    expect(
-      main().querySelector(".sb-playlist-editor-eyebrow")?.textContent
-    ).toBe("After step 1");
+    const modal = modals.modals.value.find(
+      (m) => m.id === "playlist-add-step"
+    )!;
+    expect(modal.title).toBe("Add a step");
 
+    const host = document.createElement("div");
+    document.body.appendChild(host);
     act(() => {
-      container
-        .querySelector<HTMLButtonElement>(".sb-playlist-add-done")!
-        .click();
+      render(<>{modal.content({ t: (key: string) => key })}</>, host);
     });
-    expect(main().textContent).toContain("Pick a step on the left");
+    expect(host.querySelector(".sb-add-step-position")?.textContent).toBe(
+      "After step 1 · Scene 1 · Hagar"
+    );
+    const input = host.querySelector<HTMLInputElement>(
+      ".sb-passage-picker-input"
+    )!;
+    act(() => {
+      input.value = "Exodus 3";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      Array.from(host.querySelectorAll("button"))
+        .find((b) => b.textContent?.startsWith("Add step"))!
+        .click();
+      await Promise.resolve();
+    });
+    render(null, host);
+    host.remove();
+
+    expect(playlists.insertEditingPlaylistItem).toHaveBeenCalledWith(2, {
+      type: "bible-verse",
+      ref: { bookId: "EXO", chapter: 3 },
+    });
   });
 
   it("Preview shows the open step as the reader sees it", () => {
