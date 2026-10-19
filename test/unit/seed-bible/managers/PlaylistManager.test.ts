@@ -31,6 +31,7 @@ import {
   type PlaylistReadingData,
   type PlaylistReadingExtensionInstance,
   type SimplePlaylist,
+  queueIndexOfStep,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { openPlaylistItemPreview } from "@packages/seed-bible/seed-bible/components/playlistItemPreview";
 import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
@@ -5334,5 +5335,30 @@ describe("createPlayingState", () => {
         { type: "bible-verse", ref: { bookId: "GEN", chapter: 2 } },
       ]);
     });
+  });
+});
+
+describe("queueIndexOfStep", () => {
+  const items: PlaylistItemData[] = [
+    { type: "scene", title: "Intro" },
+    { type: "html", html: "<p>Welcome</p>" },
+    {
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 16, endChapter: 17 },
+    },
+    { type: "scene", title: "Scene 2" },
+    { type: "question", prompt: "Why?" },
+  ];
+
+  it("maps an editor step number to the queue position its stops start at", () => {
+    expect(queueIndexOfStep(items, 1)).toBe(0);
+    // Step 2 spans two chapters, so step 3 starts after both.
+    expect(queueIndexOfStep(items, 2)).toBe(1);
+    expect(queueIndexOfStep(items, 3)).toBe(3);
+  });
+
+  it("is null for a step that doesn't exist", () => {
+    expect(queueIndexOfStep(items, 0)).toBeNull();
+    expect(queueIndexOfStep(items, 4)).toBeNull();
   });
 });

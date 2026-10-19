@@ -5,6 +5,8 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import { sanitize } from "../../managers/Sanitization";
 import type { Editor } from "@tiptap/core";
+import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
+import type { StepLinkTarget } from "../TipTapEditor/TipTapEditor";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the text editor; Suspense shows a placeholder meanwhile.
@@ -18,6 +20,10 @@ const TipTapEditor = lazy(() =>
 
 interface TextItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
+  /** The reader's books, so a passage can be embedded by reference. */
+  books?: TranslationBook[];
+  /** The playlist's steps, so the text can link to one. */
+  steps?: StepLinkTarget[];
   /** HTML and title the fields start with, e.g. when editing an item. */
   initialItem?: { html: string; title?: string };
   /** Overrides the submit button label (defaults to "Add item"). */
@@ -44,7 +50,7 @@ export const TextItemInput = forwardRef<
   TextItemInputHandle,
   TextItemInputProps
 >(function TextItemInput(props, ref) {
-  const { onAdd, initialItem, submitLabel } = props;
+  const { onAdd, initialItem, submitLabel, books, steps } = props;
   const { t } = useI18n();
   const editorRef = useRef<Editor | null>(null);
   // Seeded content counts as non-empty so the submit button starts enabled.
@@ -120,6 +126,8 @@ export const TextItemInput = forwardRef<
           <TipTapEditor
             className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor"
             initialContent={initialItem?.html}
+            books={books}
+            steps={steps}
             onEditor={(editor) => {
               editorRef.current = editor;
               if (editor && initialHtmlRef.current === null) {

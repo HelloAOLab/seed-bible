@@ -31,6 +31,7 @@ import {
   type ScriptureChapterLoader,
 } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { MaterialIcon } from "../icons";
+import type { StepLinkTarget } from "../TipTapEditor/TipTapEditor";
 
 interface PlaylistItemInputProps {
   books: TranslationBook[];
@@ -58,6 +59,8 @@ interface PlaylistItemInputProps {
   id?: string;
   /** The kind of step the add box starts on. Defaults to scripture. */
   initialMode?: AddMode;
+  /** The playlist's steps, so text and notes can link to one. */
+  steps?: StepLinkTarget[];
 }
 
 /**
@@ -208,6 +211,7 @@ export const PlaylistItemInput = forwardRef<
     onCancelEdit,
     id,
     initialMode,
+    steps,
   } = props;
   const { t } = useI18n();
   const isEditing = !!editItem;
@@ -248,6 +252,7 @@ export const PlaylistItemInput = forwardRef<
         initialExtraRefs={scripture?.refs}
         withNote={mode === "note-scripture"}
         submitLabel={submitLabel}
+        steps={steps}
       />
     ) : mode === "text" ? (
       <TextItemInput
@@ -255,6 +260,8 @@ export const PlaylistItemInput = forwardRef<
         onAdd={submit}
         initialItem={editItem?.type === "html" ? editItem : undefined}
         submitLabel={submitLabel}
+        books={books}
+        steps={steps}
       />
     ) : mode === "link" || mode === "video" ? (
       <LinkItemInput

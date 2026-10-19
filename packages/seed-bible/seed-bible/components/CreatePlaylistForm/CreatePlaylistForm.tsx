@@ -215,6 +215,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     setOpenIndex,
     requestCloseAdd,
     stepCount,
+    stepLinkTargets,
     addScene,
     handleSave,
     hasUnsavedItemInput,
@@ -265,6 +266,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                     : undefined
                 }
                 loadChapter={loadChapter}
+                steps={stepLinkTargets}
                 onUpdate={(updated) => {
                   playlists.updateEditingPlaylistItem(index, updated);
                   setOpenIndex(null);
@@ -281,6 +283,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
           <PlaylistItemInput
             ref={addInputRef}
             books={books}
+            steps={stepLinkTargets}
             onAdd={(item) => playlists.addEditingPlaylistItem(item)}
           />
           <button

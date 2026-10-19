@@ -685,6 +685,30 @@ export function expandCrossChapterItem(
 
 type ScriptureStep = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
+/**
+ * Where editor step `stepNumber` (1-based, counting every item but scenes)
+ * starts in the queue built from `items`: the first of the stops it expands
+ * into. Null when there is no such step.
+ */
+export function queueIndexOfStep(
+  items: PlaylistItemData[],
+  stepNumber: number
+): number | null {
+  let step = 0;
+  let cursor = 0;
+  for (const item of items) {
+    const count = expandCrossChapterItem(item).length;
+    if (item.type !== "scene") {
+      step += 1;
+      if (step === stepNumber) {
+        return count > 0 ? cursor : null;
+      }
+    }
+    cursor += count;
+  }
+  return null;
+}
+
 /** One passage split into one stop per chapter it spans. */
 function expandChapterRange(item: ScriptureStep): ScriptureStep[] {
   const { ref, translationId } = item;

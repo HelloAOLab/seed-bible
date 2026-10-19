@@ -15,6 +15,7 @@ import {
 import { sanitize } from "../../managers/Sanitization";
 import { MaterialIcon } from "../icons";
 import { verseRefLabel } from "../playlistItemLabel";
+import type { StepLinkTarget } from "../TipTapEditor/TipTapEditor";
 
 // Loaded only when a note is opened, like the text item's editor; the SSR
 // guard keeps TipTap out of the single-file SSR bundle.
@@ -42,6 +43,8 @@ interface ScriptureItemInputProps {
   withNote?: boolean;
   /** Overrides the submit button label (defaults to "Add item"). */
   submitLabel?: string;
+  /** The playlist's steps, so the note can link to one. */
+  steps?: StepLinkTarget[];
 }
 
 /** Imperative handle so a parent can check for / commit an in-progress draft. */
@@ -94,6 +97,7 @@ export const ScriptureItemInput = forwardRef<
     initialExtraRefs,
     withNote,
     submitLabel,
+    steps,
   } = props;
   const { t } = useI18n();
   const [value, setValue] = useState(initialValue ?? "");
@@ -565,6 +569,8 @@ export const ScriptureItemInput = forwardRef<
             <TipTapEditor
               className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor"
               initialContent={initialNote}
+              books={books}
+              steps={steps}
               onEditor={(editor) => {
                 noteEditorRef.current = editor;
                 if (editor && initialNote && noteBaselineRef.current === null) {

@@ -181,3 +181,11 @@ describe("Sanitization", () => {
     });
   });
 });
+
+describe("sanitize keeps what step links and embedded passages are made of", () => {
+  it("keeps a fragment href and the embed's blockquote and class", async () => {
+    const html =
+      '<p>See <a class="sb-step-link" href="#step-3">Step 3</a></p><blockquote class="sb-scripture-embed"><p class="sb-scripture-embed-ref">Genesis 16:7-13</p></blockquote>';
+    expect(await sanitize(html)).toBe(html);
+  });
+});

@@ -48,3 +48,50 @@
   text-decoration: underline;
   text-underline-offset: 0.15em;
 }
+
+.sb-editor-toolbar-inserts {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sb-editor-toolbar-select {
+  max-width: 14rem;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-editor-toolbar-select option {
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+}
+
+.sb-editor-embed-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.sb-editor-embed-input {
+  flex: 1;
+  min-width: 10rem;
+}
+
+.sb-editor-embed-submit {
+  padding: 0.375rem 0.875rem;
+}
+
+.sb-editor-content a.sb-step-link {
+  color: var(--sb-primary-color);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}

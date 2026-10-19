@@ -3,3 +3,41 @@
   line-height: 1.5;
   word-break: break-word;
 }
+
+.sb-play-playlist-content-html a.sb-step-link {
+  color: var(--sb-primary-color);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+/* An embedded passage: its reference as a heading, the verses beneath once
+   they've loaded. */
+.sb-play-playlist-content-html .sb-scripture-embed,
+.sb-editor-content .sb-scripture-embed {
+  margin: 0.75em 0;
+  padding: 0.5em 0.875em;
+  border-inline-start: 3px solid var(--sb-primary-color);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 94%);
+}
+
+.sb-play-playlist-content-html .sb-scripture-embed-ref,
+.sb-editor-content .sb-scripture-embed-ref {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sb-primary-color);
+}
+
+.sb-play-playlist-content-html .sb-scripture-embed-text {
+  margin: 0.375em 0 0;
+}
+
+.sb-play-playlist-content-html .sb-scripture-embed-verse-number {
+  margin-inline-end: 2px;
+  opacity: 0.7;
+  font-size: 0.7em;
+}

@@ -3,9 +3,11 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager } from "../../managers/TabsManager";
 import {
   expandCrossChapterItem,
+  queueIndexOfStep,
   type PlaylistItemData,
   type PlaylistManager,
 } from "../../managers/PlaylistManager";
+import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import type { ModalManager } from "../../managers/ModalManager";
 import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
 import { playlistItemLabel } from "../playlistItemLabel";
@@ -97,6 +99,29 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   const sceneHeadings = queueSceneHeadings(playlist?.items ?? [], queue.length);
   // A playlist playing in a shared session is a group reading it together.
   const session = playing.tab?.sharedSession ?? null;
+
+  // Embedded passages in a note load in the playing tab's translation.
+  const bibleData = state.bibleData;
+  const loadChapter: ScriptureChapterLoader | undefined = bibleData
+    ? async (translationId, bookId, chapter) => {
+        const translation =
+          translationId ?? playing.tab?.readingState.translationId.peek();
+        if (!translation) {
+          throw new Error("No translation to load the passage in.");
+        }
+        return bibleData.getTranslationBookChapter(
+          translation,
+          bookId,
+          chapter
+        );
+      }
+    : undefined;
+  const jumpToStep = (step: number) => {
+    const index = queueIndexOfStep(playlist?.items ?? [], step);
+    if (index !== null) {
+      void playing.jumpTo(index);
+    }
+  };
 
   // Resolve verse book IDs to full book names using the selected tab's loaded
   // translation, when available. Falls back to the raw book ID otherwise.
@@ -216,7 +241,11 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
             )}
             {currentNote?.html ? (
               <div className="sb-play-current-note">
-                <PlaylistHtmlContent html={currentNote.html} />
+                <PlaylistHtmlContent
+                  html={currentNote.html}
+                  onStepLink={jumpToStep}
+                  loadChapter={loadChapter}
+                />
               </div>
             ) : null}
             {currentItem.type !== "bible-verse" ? (

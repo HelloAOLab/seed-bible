@@ -1,9 +1,10 @@
 import type { useI18n } from "../i18n/I18nManager";
 import type { ModalManager } from "../managers/ModalManager";
-import type {
-  PlayingState,
-  PlaylistItemData,
-  VerseRef,
+import {
+  queueIndexOfStep,
+  type PlayingState,
+  type PlaylistItemData,
+  type VerseRef,
 } from "../managers/PlaylistManager";
 import { PlaylistHtmlContent } from "./PlaylistHtmlContent/PlaylistHtmlContent";
 import { PlaylistLinkContent } from "./PlaylistLinkContent/PlaylistLinkContent";
@@ -91,7 +92,23 @@ export function openPlaylistItemPreview(
     title,
     content: () =>
       item.type === "html" ? (
-        <PlaylistHtmlContent html={item.html} />
+        <PlaylistHtmlContent
+          html={item.html}
+          loadChapter={options.loadChapter}
+          onStepLink={
+            playing
+              ? (step) => {
+                  const index = queueIndexOfStep(
+                    playing.playlists.peek()[0]?.items ?? [],
+                    step
+                  );
+                  if (index !== null) {
+                    void playing.jumpTo(index);
+                  }
+                }
+              : undefined
+          }
+        />
       ) : item.type === "link" ? (
         <PlaylistLinkContent
           url={item.url}

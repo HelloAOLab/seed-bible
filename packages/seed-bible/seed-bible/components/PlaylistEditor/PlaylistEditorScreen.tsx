@@ -81,6 +81,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
     removeItem,
     stepNumbers,
     stepCount,
+    stepLinkTargets,
     addScene,
     handleSave,
     hasUnsavedItemInput,
@@ -319,6 +320,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
                     : undefined
                 }
                 loadChapter={loadChapter}
+                steps={stepLinkTargets}
                 onUpdate={(updated) => {
                   playlists.updateEditingPlaylistItem(openIndex, updated);
                   setOpenIndex(null);
@@ -331,6 +333,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
               <PlaylistItemInput
                 ref={addInputRef}
                 books={books}
+                steps={stepLinkTargets}
                 onAdd={(item) => playlists.addEditingPlaylistItem(item)}
               />
               <button

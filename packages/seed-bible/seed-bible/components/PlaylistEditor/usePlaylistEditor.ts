@@ -11,6 +11,8 @@ import type { PlaylistItemInputHandle } from "../PlaylistItemInput/PlaylistItemI
 import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
 import { useDragReorder } from "../useDragReorder";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+import type { StepLinkTarget } from "../TipTapEditor/TipTapEditor";
+import { playlistItemLabel } from "../playlistItemLabel";
 
 export interface UsePlaylistEditorOptions {
   playlists: PlaylistManager;
@@ -167,6 +169,13 @@ export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
       stepNumbers.set(index, stepCount);
     }
   });
+  // What a text item or note can link to: every step, by its number.
+  const stepLinkTargets: StepLinkTarget[] = items.flatMap((item, index) => {
+    const number = stepNumbers.get(index);
+    return number
+      ? [{ number, label: playlistItemLabel(item, t, resolveBookName) }]
+      : [];
+  });
 
   /** Adds a scene heading at the end of the list and opens it for naming. */
   const addScene = () => {
@@ -249,6 +258,7 @@ export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
     removeItem,
     stepNumbers,
     stepCount,
+    stepLinkTargets,
     addScene,
     handleSave,
     hasUnsavedItemInput,

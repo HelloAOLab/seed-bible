@@ -3,6 +3,11 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "./TextAlign";
 import VerseReferenceMark from "./VerseReferenceMark";
+import StepLinkMark from "./StepLinkMark";
+import ScriptureEmbedNode from "./ScriptureEmbedNode";
+import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
+import { resolveTypedReference } from "../ScriptureItemInput/scriptureSuggestions";
+import { verseRefLabel } from "../playlistItemLabel";
 import "./TipTapEditor.css";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
@@ -28,6 +33,23 @@ export interface TipTapEditorProps {
    * focus.
    */
   autofocus?: FocusPosition;
+  /**
+   * The books of the reader's translation, for the "Embed passage" control:
+   * a typed reference is read the way the scripture field reads one. Without
+   * them the control isn't offered.
+   */
+  books?: TranslationBook[];
+  /**
+   * The playlist's other steps, for the "Link to step" control. Without them
+   * the control isn't offered.
+   */
+  steps?: StepLinkTarget[];
+}
+
+/** A step a text item or note can link to, as the editor numbers them. */
+export interface StepLinkTarget {
+  number: number;
+  label: string;
 }
 
 /**
@@ -45,6 +67,8 @@ export default function TipTapEditor(props: TipTapEditorProps) {
     onEmptyChange,
     onModEnter,
     autofocus = false,
+    books,
+    steps,
   } = props;
   const elementRef = useRef<HTMLDivElement>(null);
   // Captured once so the mount-only effect starts the editor with this content
@@ -78,6 +102,8 @@ export default function TipTapEditor(props: TipTapEditorProps) {
         Underline,
         TextAlign.configure({ types: ["heading", "paragraph"] }),
         VerseReferenceMark,
+        StepLinkMark,
+        ScriptureEmbedNode,
         Extension.create({
           name: "modEnter",
           addKeyboardShortcuts() {
@@ -112,7 +138,7 @@ export default function TipTapEditor(props: TipTapEditorProps) {
 
   return (
     <div className={className}>
-      <EditorMenuBar editor={editor} />
+      <EditorMenuBar editor={editor} books={books} steps={steps} />
       <div ref={elementRef} className="sb-editor-content" />
     </div>
   );
@@ -122,10 +148,21 @@ export default function TipTapEditor(props: TipTapEditorProps) {
  * Formatting toolbar for the editor. Re-renders on every editor transaction so
  * each button reflects the current selection's active marks and alignment.
  */
-function EditorMenuBar({ editor }: { editor: Editor | null }) {
+function EditorMenuBar({
+  editor,
+  books,
+  steps,
+}: {
+  editor: Editor | null;
+  books?: TranslationBook[];
+  steps?: StepLinkTarget[];
+}) {
   const { t } = useI18n();
   // Bump on each transaction to re-read `isActive` for the current selection.
   const [, setVersion] = useState(0);
+  const [embedOpen, setEmbedOpen] = useState(false);
+  const [embedText, setEmbedText] = useState("");
+  const [embedError, setEmbedError] = useState(false);
 
   useEffect(() => {
     if (!editor) {
@@ -190,6 +227,127 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
           onClick={() => editor.chain().focus().setTextAlign("justify").run()}
         />
       </div>
+      {steps?.length || books ? (
+        <div className="sb-editor-toolbar-group sb-editor-toolbar-inserts">
+          {steps?.length ? (
+            <select
+              className="sb-editor-toolbar-select"
+              aria-label={t("editor-link-to-step", {
+                defaultValue: "Link to step",
+              })}
+              value=""
+              // Keep focus in the editor so the link lands on the selection.
+              onMouseDown={(event) => event.stopPropagation()}
+              onChange={(event: Event) => {
+                const select = event.currentTarget as HTMLSelectElement;
+                const step = Number(select.value);
+                select.value = "";
+                const target = steps.find((s) => s.number === step);
+                if (!target) {
+                  return;
+                }
+                editor
+                  .chain()
+                  .focus()
+                  .setStepLink(
+                    target.number,
+                    t("editor-step-link-text", {
+                      defaultValue: "Step {{number}} · {{label}}",
+                      number: target.number,
+                      label: target.label,
+                    })
+                  )
+                  .run();
+              }}
+            >
+              <option value="">
+                {t("editor-link-to-step", { defaultValue: "Link to step" })}
+              </option>
+              {steps.map((step) => (
+                <option key={step.number} value={step.number}>
+                  {step.number} · {step.label}
+                </option>
+              ))}
+            </select>
+          ) : null}
+          {editor.isActive("stepLink") ? (
+            <MenuButton
+              icon="link_off"
+              label={t("editor-unlink-step", {
+                defaultValue: "Remove step link",
+              })}
+              active={false}
+              onClick={() => editor.chain().focus().unsetStepLink().run()}
+            />
+          ) : null}
+          {books ? (
+            <MenuButton
+              icon="menu_book"
+              label={t("editor-embed-passage", {
+                defaultValue: "Embed passage",
+              })}
+              active={embedOpen}
+              onClick={() => {
+                setEmbedOpen((open) => !open);
+                setEmbedError(false);
+              }}
+            />
+          ) : null}
+          {embedOpen && books ? (
+            <form
+              className="sb-editor-embed-form"
+              onSubmit={(event: Event) => {
+                event.preventDefault();
+                const ref = resolveTypedReference(embedText, books);
+                if (!ref) {
+                  setEmbedError(true);
+                  return;
+                }
+                const label = verseRefLabel(ref, (bookId) => {
+                  const book = books.find((b) => b.id === bookId);
+                  return book?.name ?? book?.commonName ?? bookId;
+                });
+                editor.chain().focus().insertScriptureEmbed(label).run();
+                setEmbedText("");
+                setEmbedError(false);
+                setEmbedOpen(false);
+              }}
+            >
+              <input
+                className="sb-settings-text-input sb-editor-embed-input"
+                type="text"
+                value={embedText}
+                dir="auto"
+                placeholder={t("playlist-add-scripture-placeholder", {
+                  defaultValue: "e.g. John 3 or John 3:16",
+                })}
+                aria-label={t("editor-embed-passage", {
+                  defaultValue: "Embed passage",
+                })}
+                aria-invalid={embedError}
+                onInput={(event: Event) => {
+                  setEmbedText((event.currentTarget as HTMLInputElement).value);
+                  setEmbedError(false);
+                }}
+              />
+              <button
+                type="submit"
+                className="sb-settings-save-button sb-editor-embed-submit"
+                disabled={!embedText.trim()}
+              >
+                {t("editor-embed", { defaultValue: "Embed" })}
+              </button>
+              {embedError ? (
+                <span className="sb-playlist-add-error" role="alert">
+                  {t("playlist-add-scripture-error", {
+                    defaultValue: "Couldn't find that reference",
+                  })}
+                </span>
+              ) : null}
+            </form>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
