@@ -239,6 +239,12 @@
   margin-inline-start: auto;
 }
 
+.sb-step-screen-footer .sb-party {
+  flex: 1 1 20rem;
+  max-width: 30rem;
+  margin-inline-start: auto;
+}
+
 .sb-step-screen-previous,
 .sb-step-screen-next {
   display: inline-flex;

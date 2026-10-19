@@ -61,6 +61,11 @@ interface PlaylistItemInputProps {
   initialMode?: AddMode;
   /** The playlist's steps, so text and notes can link to one. */
   steps?: StepLinkTarget[];
+  /**
+   * "screen" is the fullscreen editor, which keeps a step's edits as the
+   * author leaves it and so shows no Save / Cancel of its own.
+   */
+  layout?: "pane" | "screen";
 }
 
 /**
@@ -92,7 +97,7 @@ export const ADD_MODES: ModeOption[] = [
   {
     mode: "text",
     labelKey: "playlist-add-mode-text",
-    defaultLabel: "Text",
+    defaultLabel: "Note",
     descriptionKey: "playlist-add-mode-text-description",
     defaultDescription: "Your own writing, no passage",
     icon: "notes",
@@ -212,6 +217,7 @@ export const PlaylistItemInput = forwardRef<
     id,
     initialMode,
     steps,
+    layout = "pane",
   } = props;
   const { t } = useI18n();
   const isEditing = !!editItem;
@@ -304,7 +310,10 @@ export const PlaylistItemInput = forwardRef<
 
   if (editItem) {
     return (
-      <div id={id} className="sb-playlist-item-editor">
+      <div
+        id={id}
+        className={`sb-playlist-item-editor sb-playlist-item-editor--${layout}`}
+      >
         {input}
         {editItem.type === "compare" ? (
           <PlaylistItemInlinePreview
@@ -312,20 +321,22 @@ export const PlaylistItemInput = forwardRef<
             loadChapter={loadChapter}
           />
         ) : null}
-        <button
-          type="button"
-          className="sb-reading-plans-back sb-playlist-cancel-edit"
-          onClick={() => onCancelEdit?.()}
-        >
-          {t("cancel", { defaultValue: "Cancel" })}
-        </button>
+        {layout === "pane" ? (
+          <button
+            type="button"
+            className="sb-reading-plans-back sb-playlist-cancel-edit"
+            onClick={() => onCancelEdit?.()}
+          >
+            {t("cancel", { defaultValue: "Cancel" })}
+          </button>
+        ) : null}
       </div>
     );
   }
 
   return (
     <DiscoverSection
-      className="sb-playlist-item-input"
+      className={`sb-playlist-item-input sb-playlist-item-input--${layout}`}
       title={t("playlist-add-item", { defaultValue: "Add item" })}
     >
       <div

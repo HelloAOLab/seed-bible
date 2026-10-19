@@ -13,7 +13,6 @@ import {
   playlistItemIcon,
   playlistItemKind,
   playlistItemMinutes,
-  playlistItemSubtitle,
 } from "../playlistItemSubtitle";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
 import { PlaylistItemNav } from "../PlaylistItemNav/PlaylistItemNav";
@@ -51,7 +50,7 @@ export function PlaylistMobileSheet(props: {
   const playlist = playing.playlists.value[0];
   const session = playing.tab?.sharedSession ?? null;
   const note =
-    item.type === "bible-verse" && (item.note || item.noteTitle)
+    item.note || item.noteTitle
       ? { title: item.noteTitle?.trim() || null, html: item.note }
       : null;
   const title = note?.title ?? playlistItemLabel(item, t, resolveBookName);
@@ -138,10 +137,6 @@ export function PlaylistMobileSheet(props: {
                 }}
               />
             </div>
-          ) : item.type !== "bible-verse" ? (
-            <p className="sb-playlist-sheet-detail">
-              {playlistItemSubtitle(item, t, resolveBookName)}
-            </p>
           ) : null}
           {nextItem ? (
             <p className="sb-playlist-sheet-up-next">

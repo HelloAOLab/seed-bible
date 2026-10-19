@@ -42,9 +42,14 @@ export function playlistItemLabel(
 ): string {
   switch (item.type) {
     case "bible-verse":
-      return [item.ref, ...(item.refs ?? [])]
-        .map((ref) => verseRefLabel(ref, resolveBookName))
-        .join(" · ");
+      // A passage with a titled note goes by that title, as the author named
+      // the step; the reference is its subtitle then.
+      return (
+        item.noteTitle?.trim() ||
+        [item.ref, ...(item.refs ?? [])]
+          .map((ref) => verseRefLabel(ref, resolveBookName))
+          .join(" · ")
+      );
     case "link":
       return item.title?.trim() || item.preview?.title || item.url;
     case "html":

@@ -24,6 +24,8 @@ import {
   CompareStepContent,
   QuestionStepContent,
 } from "../PlaylistStepContent/PlaylistStepContent";
+import { PlaylistPartyPanel } from "../PlaylistPartyPanel/PlaylistPartyPanel";
+import { isLocalSessionHost } from "../Tabs/Tabs";
 
 /** A scene of the playlist and the queue steps (1-based) it spans. */
 export interface PlaylistSceneSummary {
@@ -132,6 +134,9 @@ function PlaylistStepScreenBody(props: {
   const scenes =
     index === 0 && item.type === "html" ? playlistScenes(items, t) : [];
   const nextItem = queue[index + 1] ?? null;
+  // In a shared session the leader moves the group on and everyone else says
+  // they're ready, as on scripture steps, instead of each stepping alone.
+  const session = playing.tab?.sharedSession ?? null;
   const title =
     item.type === "question"
       ? item.title?.trim() || item.prompt
@@ -208,7 +213,7 @@ function PlaylistStepScreenBody(props: {
             />
           ))}
         </div>
-        {!playing.tab?.sharedSession ? (
+        {!session ? (
           <button
             type="button"
             className="sb-step-screen-read-with"
@@ -361,30 +366,43 @@ function PlaylistStepScreenBody(props: {
             </span>
           </div>
         )}
-        <div className="sb-step-screen-nav">
-          {playing.hasPrevious.value ? (
+        {session ? (
+          <PlaylistPartyPanel
+            session={session}
+            playing={playing}
+            isLeader={isLocalSessionHost(state, session)}
+            resolveBookName={resolveBookName}
+            compact
+            onOpenChat={() => state.sidebar?.openChatPanel()}
+          />
+        ) : (
+          <div className="sb-step-screen-nav">
+            {playing.hasPrevious.value ? (
+              <button
+                type="button"
+                className="sb-step-screen-previous"
+                onClick={() => void playing.previous()}
+              >
+                {t("previous", { defaultValue: "Previous" })}
+              </button>
+            ) : null}
             <button
               type="button"
-              className="sb-step-screen-previous"
-              onClick={() => void playing.previous()}
+              className="sb-step-screen-next"
+              disabled={!playing.canPressNext.value}
+              onClick={() => void playing.next()}
             >
-              {t("previous", { defaultValue: "Previous" })}
+              {index === 0 && nextItem
+                ? t("playlist-begin", { defaultValue: "Begin" })
+                : nextItem
+                  ? t("playlist-next-step-button", {
+                      defaultValue: "Next step",
+                    })
+                  : t("finish", { defaultValue: "Finish" })}
+              <MaterialIcon>arrow_forward</MaterialIcon>
             </button>
-          ) : null}
-          <button
-            type="button"
-            className="sb-step-screen-next"
-            disabled={!playing.canPressNext.value}
-            onClick={() => void playing.next()}
-          >
-            {index === 0 && nextItem
-              ? t("playlist-begin", { defaultValue: "Begin" })
-              : nextItem
-                ? t("playlist-next-step-button", { defaultValue: "Next step" })
-                : t("finish", { defaultValue: "Finish" })}
-            <MaterialIcon>arrow_forward</MaterialIcon>
-          </button>
-        </div>
+          </div>
+        )}
       </footer>
     </div>
   );

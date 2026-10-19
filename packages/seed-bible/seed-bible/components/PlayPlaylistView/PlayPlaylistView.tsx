@@ -257,16 +257,20 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                   {heading !== undefined ? (
                     <h4 className="sb-play-playlist-scene">{heading}</h4>
                   ) : null}
-                  <button
-                    type="button"
-                    className="sb-discover-item-drag-handle"
-                    aria-label={t("drag-to-reorder-playlist-item", {
-                      defaultValue: "Drag to reorder",
-                    })}
-                    {...getHandleProps(index)}
-                  >
-                    <MaterialIcon>drag_indicator</MaterialIcon>
-                  </button>
+                  {/* In a shared session the leader sets the order for
+                      everyone, so no one reorders their own copy. */}
+                  {!session ? (
+                    <button
+                      type="button"
+                      className="sb-discover-item-drag-handle"
+                      aria-label={t("drag-to-reorder-playlist-item", {
+                        defaultValue: "Drag to reorder",
+                      })}
+                      {...getHandleProps(index)}
+                    >
+                      <MaterialIcon>drag_indicator</MaterialIcon>
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className="sb-play-playlist-item-button"

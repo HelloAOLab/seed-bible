@@ -147,3 +147,96 @@
 .sb-playlist-add-scene:hover {
   color: var(--sb-primary-color);
 }
+
+/* ------------------------------------------------ grouped under scenes */
+
+.sb-playlist-step-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-playlist-step-group-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 32px;
+  margin: 6px 0 2px;
+}
+
+.sb-playlist-step-group-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  cursor: pointer;
+}
+
+.sb-playlist-step-group-toggle .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-playlist-step-group-title {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: start;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button.sb-playlist-step-group-title {
+  cursor: pointer;
+}
+
+button.sb-playlist-step-group-title:hover,
+.sb-playlist-step-group--open .sb-playlist-step-group-title {
+  color: var(--sb-primary-color);
+}
+
+.sb-playlist-step-groups .sb-playlist-step-list {
+  margin: 0;
+}
+
+.sb-playlist-step-groups .sb-playlist-editor-item {
+  border-color: transparent;
+  padding: 6px 8px 6px 4px;
+}
+
+.sb-playlist-step-groups .sb-playlist-editor-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 95%);
+}
+
+.sb-playlist-step-groups .sb-discover-item--editing {
+  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 50%);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
+}
+
+.sb-playlist-step-groups .sb-discover-item--editing .sb-discover-item-title {
+  color: var(--sb-font-color);
+}
+
+.sb-playlist-step-groups .sb-discover-item-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.sb-playlist-editor-item-warning {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  font-size: 1.125rem;
+  color: var(--sb-warning-color, #e5b84a);
+}

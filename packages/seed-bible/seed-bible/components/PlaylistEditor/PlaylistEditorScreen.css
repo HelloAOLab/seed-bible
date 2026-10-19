@@ -16,8 +16,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 12px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--sb-divider-color);
 }
 
@@ -30,7 +30,7 @@
   min-width: 12rem;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
 }
 
 .sb-playlist-editor-title {
@@ -41,8 +41,10 @@
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-family: var(--sb-book-title-font-family);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.15;
   padding: 2px 0;
 }
 
@@ -52,8 +54,55 @@
 }
 
 .sb-playlist-editor-summary {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+/* Edit | Preview, as one control with two halves. */
+.sb-playlist-editor-modes {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 10px;
+}
+
+.sb-playlist-editor-mode {
+  min-height: 34px;
+  padding: 4px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-playlist-editor-mode--on {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+  color: var(--sb-primary-color);
+}
+
+.sb-playlist-editor-secondary {
+  min-height: 40px;
+  padding: 6px 16px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-playlist-editor-secondary:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+.sb-playlist-editor-primary {
+  min-height: 40px;
 }
 
 .sb-playlist-editor-columns {
@@ -61,8 +110,8 @@
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr) minmax(
-      14rem,
-      18rem
+      15rem,
+      19rem
     );
   gap: 8px;
   padding: 8px;
@@ -73,18 +122,27 @@
 .sb-playlist-editor-settings {
   min-height: 0;
   overflow-y: auto;
-  padding: 12px;
+  padding: 14px;
   border: 1px solid var(--sb-divider-color);
   border-radius: 12px;
 }
 
-.sb-playlist-editor-main {
-  padding: 20px 24px;
+.sb-playlist-editor-steps {
+  display: flex;
+  flex-direction: column;
 }
 
-.sb-playlist-editor-step,
-.sb-playlist-editor-details {
-  max-width: 40rem;
+.sb-playlist-editor-steps-foot {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.sb-playlist-editor-main {
+  padding: 24px 28px;
+}
+
+.sb-playlist-editor-step {
+  max-width: 44rem;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -98,8 +156,17 @@
   padding: 0;
 }
 
+.sb-playlist-editor-step .sb-playlist-item-input > .sb-discover-section-title {
+  display: none;
+}
+
 .sb-playlist-editor-step .sb-playlist-item-editor {
   padding-top: 0;
+}
+
+.sb-playlist-editor-placeholder {
+  text-align: center;
+  padding: 48px 0;
 }
 
 .sb-playlist-editor-column-head {
@@ -107,7 +174,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -121,39 +188,6 @@
   text-transform: none;
 }
 
-.sb-playlist-editor-details-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 40px;
-  margin-bottom: 8px;
-  padding: 6px 10px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--sb-font-color);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-align: start;
-  cursor: pointer;
-}
-
-.sb-playlist-editor-details-row:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-}
-
-.sb-playlist-editor-details-row--selected {
-  border-color: var(--sb-primary-color);
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
-  color: var(--sb-primary-color);
-}
-
-.sb-playlist-editor-steps .sb-playlist-step-list {
-  margin-bottom: 12px;
-}
-
 .sb-playlist-editor-eyebrow {
   margin: 0;
   font-size: 0.6875rem;
@@ -163,39 +197,153 @@
   color: var(--sb-primary-color);
 }
 
-.sb-playlist-editor-details-title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
+/* ---------------------------------------------------- step settings */
 
-.sb-playlist-editor-field {
+.sb-playlist-editor-setting {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.sb-playlist-editor-setting-label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.sb-playlist-editor-types {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
 
-.sb-playlist-editor-field-label {
-  font-size: 0.8125rem;
+.sb-playlist-editor-type {
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.sb-playlist-editor-type:hover {
+  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 40%);
+}
+
+.sb-playlist-editor-type--on {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+  color: var(--sb-primary-color);
   font-weight: 600;
 }
 
-.sb-playlist-editor-facts {
-  margin: 0 0 12px;
+.sb-playlist-editor-time {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 10px;
 }
 
-.sb-playlist-editor-facts dt {
-  font-size: 0.75rem;
+.sb-playlist-editor-time-value {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.sb-playlist-editor-time-actions,
+.sb-playlist-editor-time-auto {
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
-.sb-playlist-editor-facts dd {
-  margin: 2px 0 0;
+.sb-playlist-editor-time-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sb-playlist-editor-time-link:hover {
+  color: var(--sb-primary-color);
+}
+
+.sb-playlist-editor-time-input {
+  width: 5rem;
+}
+
+.sb-playlist-editor-time-unit {
+  font-size: 0.8125rem;
+}
+
+.sb-playlist-editor-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.sb-playlist-editor-check input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--sb-primary-color);
+}
+
+/* Something the publish checks point at on this step. */
+.sb-playlist-editor-issue {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid
+    color-mix(in srgb, var(--sb-warning-color, #e5b84a), transparent 40%);
+  border-radius: 12px;
+  background: color-mix(
+    in srgb,
+    var(--sb-warning-color, #e5b84a),
+    transparent 92%
+  );
+}
+
+.sb-playlist-editor-issue-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--sb-warning-color, #e5b84a);
+}
+
+.sb-playlist-editor-issue-title .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-playlist-editor-issue-body {
+  margin: 6px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.sb-playlist-editor-issue-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.sb-playlist-editor-issue-keep {
   font-size: 0.875rem;
   font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
 .sb-playlist-editor-delete {
@@ -203,23 +351,24 @@
   align-items: center;
   gap: 6px;
   min-height: 40px;
-  padding: 6px 10px;
+  margin-top: auto;
+  padding: 6px 0;
   border: none;
-  border-radius: 8px;
   background: transparent;
-  color: var(--sb-error-color, #d64545);
+  color: var(--sb-primary-color);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .sb-playlist-editor-delete:hover {
-  background: color-mix(
-    in srgb,
-    var(--sb-error-color, #d64545),
-    transparent 90%
-  );
+  text-decoration: underline;
+}
+
+.sb-playlist-editor-settings {
+  display: flex;
+  flex-direction: column;
 }
 
 .sb-playlist-editor-empty {

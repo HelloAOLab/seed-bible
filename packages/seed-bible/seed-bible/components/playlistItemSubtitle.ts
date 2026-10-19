@@ -96,8 +96,18 @@ export function playlistItemIcon(item: Playlist["items"][number]): string {
   }
 }
 
-/** Roughly how long a reader spends on a step, in whole minutes (at least 1). */
+/** How long a step takes: what the author said, or the estimate. */
 export function playlistItemMinutes(item: Playlist["items"][number]): number {
+  if (item.type !== "scene" && item.minutes) {
+    return item.minutes;
+  }
+  return playlistItemAutoMinutes(item);
+}
+
+/** Roughly how long a reader spends on a step, in whole minutes (at least 1). */
+export function playlistItemAutoMinutes(
+  item: Playlist["items"][number]
+): number {
   switch (item.type) {
     case "bible-verse": {
       const refs = [item.ref, ...(item.refs ?? [])];
@@ -111,13 +121,9 @@ export function playlistItemMinutes(item: Playlist["items"][number]): number {
       return Math.max(1, Math.round(verses / 4 + noteWords / 180));
     }
     case "html":
-      return (
-        item.minutes ?? Math.max(1, Math.round(wordCount(item.html) / 180))
-      );
+      return Math.max(1, Math.round(wordCount(item.html) / 180));
     case "link":
-      return (
-        item.minutes ?? (resolveLinkMedia(item.url).kind === "link" ? 2 : 5)
-      );
+      return resolveLinkMedia(item.url).kind === "link" ? 2 : 5;
     case "question":
       return 2;
     case "compare":

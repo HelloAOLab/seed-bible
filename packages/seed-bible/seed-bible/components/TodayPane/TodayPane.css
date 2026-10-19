@@ -1031,7 +1031,9 @@
 
 .sb-today-container .sb-today-continue-title {
   margin: 0;
+  font-family: var(--sb-book-title-font-family);
   font-size: 1.5rem;
+  font-weight: 600;
   line-height: 1.2;
 }
 

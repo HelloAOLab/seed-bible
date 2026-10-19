@@ -91,7 +91,19 @@ export type PhraseHighlight = z.infer<typeof PhraseHighlightSchema>;
 /** The class the reader gives a highlighted phrase of a playing step. */
 export const PHRASE_HIGHLIGHT_CLASS = "sb-verse-decoration-phrase";
 
-export const BibleVersePlaylistItem = z.object({
+/**
+ * What an author can set on any step besides its content: how long to
+ * allow for it (estimated otherwise), whether a group pauses on it to talk,
+ * and whether only a session's leader sees it.
+ */
+export const StepSettingsSchema = z.object({
+  minutes: z.number().int().positive().optional(),
+  pause: z.boolean().optional(),
+  leaderOnly: z.boolean().optional(),
+});
+export type StepSettings = z.infer<typeof StepSettingsSchema>;
+
+export const BibleVersePlaylistItem = StepSettingsSchema.extend({
   type: z.literal("bible-verse"),
   ref: VerseRefSchema,
   translationId: z.string().optional(),
@@ -110,10 +122,14 @@ export const BibleVersePlaylistItem = z.object({
    * reader; the note belongs to the step as a whole.
    */
   refs: z.array(VerseRefSchema).optional(),
+  /** A question readers answer after the passage, shown with the note. */
+  question: z
+    .object({ prompt: z.string(), shareable: z.boolean().optional() })
+    .optional(),
 });
 
 /** A question put to readers, who answer it as the step plays. */
-export const QuestionPlaylistItem = z.object({
+export const QuestionPlaylistItem = StepSettingsSchema.extend({
   type: z.literal("question"),
   title: z.string().optional(),
   /** What readers are asked, as plain text. */
@@ -123,7 +139,7 @@ export const QuestionPlaylistItem = z.object({
 });
 
 /** Two or more passages shown side by side, with an optional framing line. */
-export const ComparePlaylistItem = z.object({
+export const ComparePlaylistItem = StepSettingsSchema.extend({
   type: z.literal("compare"),
   title: z.string().optional(),
   refs: z
@@ -161,19 +177,17 @@ export const PlaylistItem = z.discriminatedUnion("type", [
   QuestionPlaylistItem,
   ComparePlaylistItem,
   ScenePlaylistItem,
-  z.object({
+  StepSettingsSchema.extend({
     type: z.literal("html"),
     title: z.string().optional(),
     html: z.string(),
-    /** How long to allow for it, when the author says; estimated otherwise. */
-    minutes: z.number().int().positive().optional(),
   }),
-  z.object({
+  StepSettingsSchema.extend({
     type: z.literal("link"),
     title: z.string().optional(),
     url: z.url(),
-    /** The video's or page's length in minutes, when the author says. */
-    minutes: z.number().int().positive().optional(),
+    /** What is said in a video, for readers who can't hear it or search it. */
+    transcript: z.string().optional(),
     /**
      * When true, the play view embeds the URL in an iframe instead of showing
      * an "Open" link. Video URL detection still takes precedence (see
@@ -201,7 +215,7 @@ export const PlaylistSchema = z.object({
    * unlisted one opens only for people with the link. Absent means public,
    * as every playlist was before this existed.
    */
-  visibility: z.enum(["public", "unlisted"]).optional(),
+  visibility: z.enum(["public", "unlisted", "private"]).optional(),
   items: z.array(PlaylistItem),
   createdAtMs: z.number().positive(),
   updatedAtMs: z.number().positive(),
@@ -2333,8 +2347,12 @@ export function createPlaylistManager(
     // untouched, so playback is isolated per reading state.
     const targetTab = activeTab.value;
 
+    // Steps the author kept for a session's leader are left out of a solo
+    // read.
     const queue = playlists.flatMap((p) =>
-      p.items.flatMap(expandCrossChapterItem)
+      p.items
+        .filter((item) => !item.leaderOnly || !!targetTab?.sharedSession)
+        .flatMap(expandCrossChapterItem)
     );
     const step =
       queue.length > 0

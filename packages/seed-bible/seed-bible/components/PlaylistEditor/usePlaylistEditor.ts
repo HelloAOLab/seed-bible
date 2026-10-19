@@ -13,6 +13,8 @@ import { useDragReorder } from "../useDragReorder";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import type { StepLinkTarget } from "../TipTapEditor/TipTapEditor";
 import { playlistItemLabel } from "../playlistItemLabel";
+import { publishChecks, type PublishCheck } from "./publishChecks";
+import type { AddMode } from "../PlaylistItemInput/PlaylistItemInput";
 
 export interface UsePlaylistEditorOptions {
   playlists: PlaylistManager;
@@ -20,6 +22,12 @@ export interface UsePlaylistEditorOptions {
   modals: ModalManager;
   /** Loads chapter text for the inline scripture previews. */
   bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
+  /**
+   * Saves an open step's edits when another step is opened, instead of
+   * asking. The fullscreen editor edits in place with no save button, so
+   * leaving a step is what keeps it.
+   */
+  autoCommit?: boolean;
 }
 
 /**
@@ -31,7 +39,7 @@ export interface UsePlaylistEditorOptions {
  * manager (`editingPlaylist`); this owns only the editor's own state.
  */
 export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
-  const { playlists, tabs, modals, bibleData } = options;
+  const { playlists, tabs, modals, bibleData, autoCommit } = options;
   const { t } = useI18n();
   const [saving, setSaving] = useState(false);
   // Index of the item open for editing, or null when none is. Only one item
@@ -40,6 +48,13 @@ export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
   // Whether the "Add item" box is out. It's folded away until asked for, so a
   // long list isn't followed by a form nobody asked for.
   const [addOpen, setAddOpen] = useState(false);
+  // Where the next added step goes: after this item, or at the end when null.
+  const [insertAfter, setInsertAfter] = useState<number | null>(null);
+  // The item the next added step replaces, when the author changed a step's
+  // kind: the new step takes its place and its settings.
+  const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
+  // The kind the add box opens on, when the author picked one up front.
+  const [addMode, setAddMode] = useState<AddMode | undefined>(undefined);
   const addInputRef = useRef<PlaylistItemInputHandle>(null);
   // The editor of the open item.
   const editInputRef = useRef<PlaylistItemInputHandle>(null);
@@ -107,6 +122,14 @@ export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
     if (index === openIndex) {
       return;
     }
+    if (openIndex !== null && editInputRef.current?.isDirty() && autoCommit) {
+      void saveOpenItem().then((saved) => {
+        if (saved) {
+          setOpenIndex(index);
+        }
+      });
+      return;
+    }
     if (openIndex !== null && editInputRef.current?.isDirty()) {
       openUnsavedItemConfirm(modals, {
         kind: "edit",
@@ -148,6 +171,118 @@ export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
       },
     });
   };
+
+  /**
+   * Adds the step the add box assembled: in place of the step whose kind was
+   * changed (keeping that step's settings), after the open step, or at the
+   * end. Returns where it landed.
+   */
+  const addItem = (item: PlaylistItemData): number => {
+    if (replaceIndex !== null && items[replaceIndex]) {
+      const old = items[replaceIndex]!;
+      const settings =
+        old.type !== "scene"
+          ? {
+              ...(old.minutes ? { minutes: old.minutes } : {}),
+              ...(old.pause ? { pause: old.pause } : {}),
+              ...(old.leaderOnly ? { leaderOnly: old.leaderOnly } : {}),
+            }
+          : {};
+      playlists.updateEditingPlaylistItem(
+        replaceIndex,
+        item.type === "scene" ? item : { ...settings, ...item }
+      );
+      setReplaceIndex(null);
+      return replaceIndex;
+    }
+    if (insertAfter !== null && insertAfter < items.length - 1) {
+      playlists.insertEditingPlaylistItem(insertAfter + 1, item);
+      setInsertAfter(insertAfter + 1);
+      return insertAfter + 1;
+    }
+    playlists.addEditingPlaylistItem(item);
+    return items.length;
+  };
+
+  /**
+   * Opens the add box for a step after `after` (the open step by default),
+   * on `mode` when given, or, with `replace`, for a step that takes that
+   * item's place.
+   */
+  const startAdding = (
+    options: { after?: number | null; mode?: AddMode; replace?: number } = {}
+  ) => {
+    const proceed = () => {
+      setReplaceIndex(options.replace ?? null);
+      setInsertAfter(
+        options.replace !== undefined
+          ? null
+          : options.after !== undefined
+            ? options.after
+            : openIndex
+      );
+      setAddMode(options.mode);
+      setAddOpen(true);
+    };
+    if (openIndex !== null) {
+      if (editInputRef.current?.isDirty() && autoCommit) {
+        void saveOpenItem().then((saved) => {
+          if (saved) {
+            setOpenIndex(null);
+            proceed();
+          }
+        });
+        return;
+      }
+      requestOpen(null);
+    }
+    proceed();
+  };
+
+  /** Patches the open step's settings (its length, pause, leader-only). */
+  const updateOpenItemSettings = (patch: {
+    minutes?: number | null;
+    pause?: boolean;
+    leaderOnly?: boolean;
+  }) => {
+    if (openIndex === null || !openItem || openItem.type === "scene") {
+      return;
+    }
+    const next = { ...openItem } as typeof openItem & {
+      minutes?: number;
+      pause?: boolean;
+      leaderOnly?: boolean;
+    };
+    if (patch.minutes !== undefined) {
+      if (patch.minutes === null) {
+        delete next.minutes;
+      } else {
+        next.minutes = patch.minutes;
+      }
+    }
+    if (patch.pause !== undefined) {
+      if (patch.pause) next.pause = true;
+      else delete next.pause;
+    }
+    if (patch.leaderOnly !== undefined) {
+      if (patch.leaderOnly) next.leaderOnly = true;
+      else delete next.leaderOnly;
+    }
+    playlists.updateEditingPlaylistItem(openIndex, next);
+  };
+
+  // What to look at on each step, from the publish checks, so the list can
+  // flag a step and its settings can explain.
+  const stepIssues = new Map<number, PublishCheck[]>();
+  for (const check of publishChecks(items, books, t, resolveBookName)) {
+    if (check.ok || check.itemIndex === undefined) {
+      continue;
+    }
+    stepIssues.set(check.itemIndex, [
+      ...(stepIssues.get(check.itemIndex) ?? []),
+      check,
+    ]);
+  }
 
   /** Removes the item at `index`, keeping the open item pointed at the same item. */
   const removeItem = (index: number) => {
@@ -246,6 +381,14 @@ export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
     openItem,
     addOpen,
     setAddOpen,
+    addMode,
+    insertAfter,
+    replaceIndex,
+    addItem,
+    startAdding,
+    updateOpenItemSettings,
+    stepIssues,
+    saveOpenItem,
     addInputRef,
     editInputRef,
     books,
