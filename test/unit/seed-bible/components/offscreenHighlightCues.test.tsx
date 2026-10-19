@@ -316,6 +316,7 @@ describe("OffscreenHighlightCueLayer", () => {
     1: { top: -80, bottom: -40 },
     2: { top: -40, bottom: -4 },
     10: { top: 200, bottom: 260 },
+    15: { top: 660, bottom: 690 },
     20: { top: 900, bottom: 960 },
     21: { top: 960, bottom: 1020 },
     22: { top: 1020, bottom: 1080 },
@@ -384,6 +385,29 @@ describe("OffscreenHighlightCueLayer", () => {
       el.dispatchEvent(new PointerEvent(type, { pointerType: "mouse" }));
     });
   }
+
+  it("reaches right down to the toolbar, past the gap kept above it", () => {
+    const root = document.documentElement.style;
+    // The toolbar covers 100px; the inset adds the 48px gap kept above it.
+    root.setProperty("--sb-reader-bottom-inset", "148px");
+    root.setProperty("--sb-reader-bottom-chrome", "100px");
+    try {
+      renderCues([cue(15, "green"), cue(20, "blue")]);
+
+      expect(
+        container.querySelector<HTMLElement>(".sb-offscreen-cues")?.style.height
+      ).toBe("700px");
+      // Verse 15 sits in that gap, which is on screen.
+      expect(
+        [...container.querySelectorAll(".sb-offscreen-cue")].map((pill) =>
+          pill.getAttribute("data-verse")
+        )
+      ).toEqual(["20"]);
+    } finally {
+      root.removeProperty("--sb-reader-bottom-inset");
+      root.removeProperty("--sb-reader-bottom-chrome");
+    }
+  });
 
   describe("collapsing into the corner indicator", () => {
     beforeEach(() => {

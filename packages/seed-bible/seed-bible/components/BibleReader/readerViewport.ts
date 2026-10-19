@@ -14,13 +14,23 @@ export function findScrollContainer(element: HTMLElement): HTMLElement | null {
 }
 
 /**
- * How much of the bottom of the reader the fixed bottom chrome covers, read
- * from the variable BibleReaderToolbar keeps up to date. Written in px at
- * runtime; the stylesheet fallback is in rem.
+ * How much room to leave at the bottom of the reader for the fixed bottom
+ * chrome, read from the variable BibleReaderToolbar keeps up to date: the
+ * chrome itself plus a gap so the last content doesn't end flush against it.
+ * Written in px at runtime; the stylesheet fallback is in rem.
  */
 export function readBottomChromeInset(): number {
+  return readRootLength("--sb-reader-bottom-inset");
+}
+
+/** Just the part of the reader the bottom chrome covers, without that gap. */
+export function readBottomChromeCover(): number {
+  return readRootLength("--sb-reader-bottom-chrome");
+}
+
+function readRootLength(name: string): number {
   const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue("--sb-reader-bottom-inset")
+    .getPropertyValue(name)
     .trim();
   const value = parseFloat(raw);
   if (!Number.isFinite(value)) return 0;
@@ -43,10 +53,15 @@ export interface ReaderViewport {
  * coordinates. Accounts for the mobile header floating over the top of the
  * scroller and the toolbar over its bottom, since verses under either are not
  * really on screen.
+ *
+ * By default the bottom edge also leaves the gap kept above the toolbar. With
+ * `toToolbar` it ends at the toolbar itself, for things that should sit right
+ * against it.
  */
 export function measureReaderViewport(
   content: HTMLElement,
-  scroller: HTMLElement | null
+  scroller: HTMLElement | null,
+  { toToolbar = false }: { toToolbar?: boolean } = {}
 ): ReaderViewport {
   const contentRect = content.getBoundingClientRect();
   let top = 0;
@@ -62,6 +77,6 @@ export function measureReaderViewport(
   if (header) {
     top = Math.max(top, header.getBoundingClientRect().bottom);
   }
-  bottom -= readBottomChromeInset();
+  bottom -= toToolbar ? readBottomChromeCover() : readBottomChromeInset();
   return { top: top - contentRect.top, bottom: bottom - contentRect.top };
 }

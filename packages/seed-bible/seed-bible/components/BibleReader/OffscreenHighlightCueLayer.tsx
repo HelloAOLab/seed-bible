@@ -104,7 +104,9 @@ export function OffscreenHighlightCueLayer({
       });
     }
 
-    const viewport = measureReaderViewport(content, scrollerRef.current);
+    const viewport = measureReaderViewport(content, scrollerRef.current, {
+      toToolbar: true,
+    });
     let landedOffscreen = false;
     for (const mark of measured) {
       // Not laid out yet: keep it pending until it has a box to judge.
