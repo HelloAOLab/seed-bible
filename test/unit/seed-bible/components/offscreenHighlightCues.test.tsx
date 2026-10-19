@@ -2,7 +2,10 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { useRef } from "preact/hooks";
 import type { VerseDecoration } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
-import { OffscreenHighlightCueLayer } from "@packages/seed-bible/seed-bible/components/BibleReader/OffscreenHighlightCueLayer";
+import {
+  CUE_NOTIFY_MS,
+  OffscreenHighlightCueLayer,
+} from "@packages/seed-bible/seed-bible/components/BibleReader/OffscreenHighlightCueLayer";
 import {
   collectHighlightCueMarks,
   highlightCueStyle,
@@ -322,14 +325,20 @@ describe("OffscreenHighlightCueLayer", () => {
     10: { top: 200, bottom: 260 },
     20: { top: 900, bottom: 960 },
     21: { top: 960, bottom: 1020 },
+    22: { top: 1020, bottom: 1080 },
+    23: { top: 1080, bottom: 1140 },
   };
+  // Frames run when flushed, as a browser runs them after the current task,
+  // rather than inside the call that requested them.
+  let frames: FrameRequestCallback[] = [];
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+    frames = [];
     vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
-      callback(0);
-      return 1;
+      frames.push(callback);
+      return frames.length;
     });
     Object.defineProperty(window, "innerHeight", {
       value: 800,
@@ -356,11 +365,161 @@ describe("OffscreenHighlightCueLayer", () => {
     vi.mocked(window.requestAnimationFrame).mockRestore();
   });
 
+  function flushFrames() {
+    while (frames.length > 0) {
+      const due = frames;
+      frames = [];
+      act(() => {
+        for (const frame of due) frame(0);
+      });
+    }
+  }
+
   function renderCues(marks: HighlightCueMark[]) {
     act(() => {
       render(<CueHarness marks={marks} boxes={boxes} />, container);
     });
+    flushFrames();
   }
+
+  function cue(verse: number, colorId: string): HighlightCueMark {
+    return { verse, ...highlightCueStyle({ colorId }), author: null };
+  }
+
+  function hover(el: Element, type: "pointerenter" | "pointerleave") {
+    act(() => {
+      el.dispatchEvent(new PointerEvent(type, { pointerType: "mouse" }));
+    });
+  }
+
+  describe("collapsing into the corner indicator", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const collapse = () =>
+      act(() => {
+        vi.advanceTimersByTime(CUE_NOTIFY_MS);
+      });
+
+    it("shows the pills for a new highlight, then collapses them into an indicator", () => {
+      renderCues([
+        cue(1, "green"),
+        cue(2, "yellow"),
+        cue(20, "blue"),
+        cue(21, "yellow"),
+        cue(22, "green"),
+        cue(23, "pink"),
+      ]);
+      expect(container.querySelectorAll(".sb-offscreen-cue")).toHaveLength(6);
+      expect(container.querySelector(".sb-offscreen-cue-indicator")).toBeNull();
+
+      act(() => {
+        vi.advanceTimersByTime(CUE_NOTIFY_MS - 1);
+      });
+      expect(container.querySelectorAll(".sb-offscreen-cue")).toHaveLength(6);
+
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+      expect(container.querySelector(".sb-offscreen-cue")).toBeNull();
+
+      const iconVerses = (selector: string) =>
+        [
+          ...container.querySelectorAll(
+            `${selector} .sb-offscreen-cue-indicator-icon`
+          ),
+        ].map((icon) => icon.getAttribute("data-verse"));
+      // Nearest first, and no more than three.
+      expect(iconVerses(".sb-offscreen-cue-indicator-up")).toEqual(["2", "1"]);
+      expect(iconVerses(".sb-offscreen-cue-indicator-down")).toEqual([
+        "20",
+        "21",
+        "22",
+      ]);
+      expect(
+        container
+          .querySelector(".sb-offscreen-cue-indicator-up")
+          ?.getAttribute("aria-label")
+      ).toBe("Highlight above, verse 2. Show it");
+    });
+
+    it("opens the pills while the indicator is hovered", () => {
+      renderCues([cue(20, "blue"), cue(21, "yellow")]);
+      collapse();
+      const indicator = container.querySelector(".sb-offscreen-cue-indicator")!;
+
+      hover(indicator, "pointerenter");
+      expect(
+        [
+          ...container.querySelectorAll(
+            ".sb-offscreen-cues-down .sb-offscreen-cue-text"
+          ),
+        ].map((node) => node.textContent)
+      ).toEqual(["Highlighted verse 20", "Highlighted verse 21"]);
+
+      // Crossing from the indicator onto the pills keeps them open.
+      hover(indicator, "pointerleave");
+      hover(
+        container.querySelector(".sb-offscreen-cues-down")!,
+        "pointerenter"
+      );
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(container.querySelector(".sb-offscreen-cue")).not.toBeNull();
+
+      hover(
+        container.querySelector(".sb-offscreen-cues-down")!,
+        "pointerleave"
+      );
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(container.querySelector(".sb-offscreen-cue")).toBeNull();
+      expect(
+        container.querySelector(".sb-offscreen-cue-indicator")
+      ).not.toBeNull();
+    });
+
+    it("scrolls to the nearest highlight when the indicator is clicked", () => {
+      renderCues([cue(1, "green"), cue(2, "yellow"), cue(20, "blue")]);
+      collapse();
+      const verseOne = container.querySelector<HTMLElement>(
+        '.sb-verse[data-verse-number="1"]'
+      )!;
+      const verseTwo = container.querySelector<HTMLElement>(
+        '.sb-verse[data-verse-number="2"]'
+      )!;
+      verseOne.scrollIntoView = vi.fn();
+      verseTwo.scrollIntoView = vi.fn();
+
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-offscreen-cue-indicator-up")!
+          .click();
+      });
+      expect(verseTwo.scrollIntoView).toHaveBeenCalledTimes(1);
+      expect(verseOne.scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it("opens the pills again only for a new highlight that lands off screen", () => {
+      renderCues([cue(20, "blue")]);
+      collapse();
+
+      // Painted on the verse being read: no notice.
+      renderCues([cue(10, "green"), cue(20, "blue")]);
+      expect(container.querySelector(".sb-offscreen-cue")).toBeNull();
+
+      renderCues([cue(10, "green"), cue(20, "blue"), cue(22, "pink")]);
+      expect(container.querySelectorAll(".sb-offscreen-cue")).toHaveLength(2);
+      expect(container.querySelector(".sb-offscreen-cue-indicator")).toBeNull();
+    });
+  });
 
   it("shows an up bubble and a down bubble with the highlighted verses", () => {
     renderCues([
@@ -551,9 +710,7 @@ describe("OffscreenHighlightCueLayer", () => {
       ).length;
     expect(verseLookups()).toBe(1);
 
-    act(() => {
-      render(<CueHarness marks={[...marks]} boxes={boxes} />, container);
-    });
+    renderCues([...marks]);
     expect(verseLookups()).toBe(1);
     query.mockRestore();
   });

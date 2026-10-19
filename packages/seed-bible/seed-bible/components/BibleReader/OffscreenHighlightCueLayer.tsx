@@ -1,9 +1,11 @@
-import { useLayoutEffect, useRef, useState } from "preact/compat";
+import { useEffect, useLayoutEffect, useRef, useState } from "preact/compat";
 import type { RefObject } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
 import { Avatar } from "../Avatar/Avatar";
 import {
+  highlightCueMarkId,
   horizontalScrollEdges,
+  offscreenSide,
   placeOffscreenHighlightCues,
   type HighlightCueMark,
   type MeasuredHighlightMark,
@@ -17,11 +19,25 @@ import { findScrollContainer, measureReaderViewport } from "./readerViewport";
  */
 const DRAG_THRESHOLD_PX = 6;
 
+/** How long the pills stay open after a new highlight lands off screen. */
+export const CUE_NOTIFY_MS = 3000;
+
 /**
- * Pills at the top and bottom edges of the reader for highlights that are
- * currently off screen. Each one carries the highlight colour, the avatar of
- * whoever made it, an arrow toward the verse, and "Highlighted verse N". A
- * row wider than the reader scrolls sideways.
+ * Grace period after the pointer leaves the indicator or the pills before they
+ * close, so it can cross the gap between the two.
+ */
+const HOVER_CLOSE_DELAY_MS = 250;
+
+/** Highlight icons the collapsed indicator shows. Any further ones are left out. */
+const MAX_INDICATOR_ICONS = 3;
+
+/**
+ * Off-screen highlights at the top and bottom edges of the reader. When a new
+ * highlight lands off screen, pills open for a few seconds: each carries the
+ * highlight colour, the avatar of whoever made it, an arrow toward the verse,
+ * and "Highlighted verse N". They then collapse into a small indicator in the
+ * end corner, which opens the pills again while hovered and jumps to the
+ * nearest highlight when clicked.
  */
 export function OffscreenHighlightCueLayer({
   contentRef,
@@ -44,6 +60,24 @@ export function OffscreenHighlightCueLayer({
     key: string;
     elements: Map<number, HTMLElement>;
   } | null>(null);
+  const [notifying, setNotifying] = useState(false);
+  const notifyTimerRef = useRef<number | null>(null);
+  // Highlights already accounted for, and the new ones still waiting to be
+  // measured. A new highlight only opens the pills if it lands off screen;
+  // one painted on the verse being read needs no notice.
+  const knownMarksRef = useRef<Set<string>>(new Set());
+  const pendingMarksRef = useRef<Set<string>>(new Set());
+
+  const notify = () => {
+    setNotifying(true);
+    if (notifyTimerRef.current !== null) {
+      window.clearTimeout(notifyTimerRef.current);
+    }
+    notifyTimerRef.current = window.setTimeout(() => {
+      notifyTimerRef.current = null;
+      setNotifying(false);
+    }, CUE_NOTIFY_MS);
+  };
 
   const measure = () => {
     const content = contentRef.current;
@@ -71,6 +105,15 @@ export function OffscreenHighlightCueLayer({
     }
 
     const viewport = measureReaderViewport(content, scrollerRef.current);
+    let landedOffscreen = false;
+    for (const mark of measured) {
+      // Not laid out yet: keep it pending until it has a box to judge.
+      if (mark.bottom <= mark.top) continue;
+      if (!pendingMarksRef.current.delete(highlightCueMarkId(mark))) continue;
+      if (offscreenSide(mark, viewport)) landedOffscreen = true;
+    }
+    if (landedOffscreen) notify();
+
     const placed = placeOffscreenHighlightCues(measured, viewport);
     const height = Math.max(0, viewport.bottom - viewport.top);
     const signature = [
@@ -123,9 +166,34 @@ export function OffscreenHighlightCueLayer({
     };
   }, [contentRef]);
 
+  const markIds = marks.map(highlightCueMarkId);
+  const markIdsKey = markIds.join(",");
+  // Declared before the measuring effect below so a measure taken in this
+  // same commit already sees which highlights are new.
+  useLayoutEffect(() => {
+    const known = new Set(markIds);
+    const pending = new Set<string>();
+    for (const id of known) {
+      if (!knownMarksRef.current.has(id) || pendingMarksRef.current.has(id)) {
+        pending.add(id);
+      }
+    }
+    knownMarksRef.current = known;
+    pendingMarksRef.current = pending;
+  }, [markIdsKey]);
+
   useLayoutEffect(() => {
     scheduleRef.current();
   });
+
+  useEffect(
+    () => () => {
+      if (notifyTimerRef.current !== null) {
+        window.clearTimeout(notifyTimerRef.current);
+      }
+    },
+    []
+  );
 
   if (!cues) return null;
 
@@ -150,9 +218,10 @@ export function OffscreenHighlightCueLayer({
       style={{ top: `${cues.top}px`, height: `${cues.height}px` }}
     >
       {cues.up.length > 0 && (
-        <CueStack
+        <CueEdge
           direction="up"
           cues={cues.up}
+          notifying={notifying}
           labelFor={(label) =>
             t("offscreen-highlight-above", {
               verses: label,
@@ -163,9 +232,10 @@ export function OffscreenHighlightCueLayer({
         />
       )}
       {cues.down.length > 0 && (
-        <CueStack
+        <CueEdge
           direction="down"
           cues={cues.down}
+          notifying={notifying}
           labelFor={(label) =>
             t("offscreen-highlight-below", {
               verses: label,
@@ -240,16 +310,125 @@ function CueArrow({ direction }: { direction: "up" | "down" }) {
   );
 }
 
-function CueStack({
+/**
+ * One edge of the reader: the pills while a notice is showing or the pointer
+ * is over them, and otherwise the collapsed indicator.
+ */
+function CueEdge({
   direction,
   cues,
+  notifying,
   labelFor,
   onJump,
 }: {
   direction: "up" | "down";
   cues: OffscreenHighlightCue[];
+  notifying: boolean;
   labelFor: (label: string) => string;
   onJump: (verse: number) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
+
+  const cancelClose = () => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+  const open = () => {
+    cancelClose();
+    setHovered(true);
+  };
+  const close = () => {
+    cancelClose();
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      setHovered(false);
+    }, HOVER_CLOSE_DELAY_MS);
+  };
+  useEffect(() => cancelClose, []);
+
+  // A tap fires pointerenter too, and would leave the pills open behind the
+  // jump it also makes. Only a mouse hovers.
+  const hoverHandlers = {
+    onPointerEnter: (event: PointerEvent) => {
+      if (event.pointerType === "mouse") open();
+    },
+    onPointerLeave: (event: PointerEvent) => {
+      if (event.pointerType === "mouse") close();
+    },
+    onFocusIn: open,
+    onFocusOut: close,
+  };
+
+  // Cues run in verse order, so the nearest one above is the last.
+  const nearestFirst = direction === "up" ? [...cues].reverse() : cues;
+  const nearest = nearestFirst[0]!;
+  const icons = nearestFirst.slice(0, MAX_INDICATOR_ICONS);
+
+  return (
+    <>
+      {(notifying || hovered) && (
+        <CueStack
+          direction={direction}
+          cues={cues}
+          labelFor={labelFor}
+          onJump={onJump}
+          hoverHandlers={hoverHandlers}
+        />
+      )}
+      {!notifying && (
+        <button
+          type="button"
+          className={`sb-offscreen-cue-indicator sb-offscreen-cue-indicator-${direction}`}
+          aria-label={labelFor(nearest.label)}
+          onClick={() => onJump(nearest.verse)}
+          {...hoverHandlers}
+        >
+          <CueArrow direction={direction} />
+          <span className="sb-offscreen-cue-indicator-icons">
+            {icons.map((cue, index) => (
+              <span
+                key={cue.key}
+                className="sb-offscreen-cue-indicator-icon"
+                data-verse={cue.verse}
+                style={{
+                  background: cue.background,
+                  color: cue.textColor,
+                  // The nearest highlight sits in front.
+                  zIndex: icons.length - index,
+                }}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  format_ink_highlighter
+                </span>
+              </span>
+            ))}
+          </span>
+        </button>
+      )}
+    </>
+  );
+}
+
+function CueStack({
+  direction,
+  cues,
+  labelFor,
+  onJump,
+  hoverHandlers,
+}: {
+  direction: "up" | "down";
+  cues: OffscreenHighlightCue[];
+  labelFor: (label: string) => string;
+  onJump: (verse: number) => void;
+  hoverHandlers: {
+    onPointerEnter: (event: PointerEvent) => void;
+    onPointerLeave: (event: PointerEvent) => void;
+    onFocusIn: () => void;
+    onFocusOut: () => void;
+  };
 }) {
   const { t } = useI18n();
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -364,7 +543,10 @@ function CueStack({
   };
 
   return (
-    <div className={`sb-offscreen-cues-row sb-offscreen-cues-${direction}`}>
+    <div
+      className={`sb-offscreen-cues-row sb-offscreen-cues-${direction}`}
+      {...hoverHandlers}
+    >
       {edges.left && (
         <button
           type="button"

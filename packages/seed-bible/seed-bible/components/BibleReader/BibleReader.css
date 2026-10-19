@@ -179,6 +179,11 @@
  * pill in the highlight's colour, with the avatar of whoever made it, an
  * arrow, and "Highlighted verse N". Several sit side by side in a row; a row
  * wider than the reader scrolls sideways on a transparent background.
+ *
+ * The pills show for a few seconds when a new highlight lands off screen, then
+ * collapse into an indicator in the end corner (right, or left in a
+ * right-to-left reader): an arrow and up to three highlight icons overlapping
+ * like an avatar stack. Hovering it opens the pills again.
  */
 .sb-offscreen-cues {
   position: absolute;
@@ -346,14 +351,82 @@
   line-height: normal;
 }
 
+.sb-offscreen-cue-indicator {
+  position: absolute;
+  inset-inline-end: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 1.875rem;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: 0.4375rem 0.25rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--sb-reader-background, #fff);
+  color: var(--sb-font-color);
+  box-shadow: 0 1px 3px #0000002e;
+  cursor: pointer;
+  opacity: 1;
+  pointer-events: auto;
+  transition:
+    opacity 0.25s ease,
+    box-shadow 0.2s ease;
+}
+
+.sb-offscreen-cue-indicator-up {
+  top: 0.375rem;
+}
+
+.sb-offscreen-cue-indicator-down {
+  bottom: 0.375rem;
+}
+
+.sb-offscreen-cue-indicator:hover {
+  box-shadow: 0 1px 4px #00000047;
+}
+
+.sb-offscreen-cue-indicator:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+.sb-offscreen-cue-indicator-icons {
+  display: inline-flex;
+  align-items: center;
+}
+
+.sb-offscreen-cue-indicator-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 50%;
+  /* The page-coloured ring keeps each icon legible against the one it covers. */
+  box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
+}
+
+.sb-offscreen-cue-indicator-icon + .sb-offscreen-cue-indicator-icon {
+  margin-inline-start: -0.5rem;
+}
+
+.sb-offscreen-cue-indicator-icon .material-symbols-outlined {
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
 @starting-style {
-  .sb-offscreen-cue {
+  .sb-offscreen-cue,
+  .sb-offscreen-cue-indicator {
     opacity: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .sb-offscreen-cue,
+  .sb-offscreen-cue-indicator,
   .sb-offscreen-cues-stack {
     transition: none;
   }

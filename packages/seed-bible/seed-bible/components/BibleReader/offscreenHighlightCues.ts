@@ -28,6 +28,11 @@ export interface HighlightCueMark {
   author: HighlightCueAuthor | null;
 }
 
+/** One highlighted verse as one particular person painted it. */
+export function highlightCueMarkId(mark: HighlightCueMark): string {
+  return `${mark.verse}|${mark.styleKey}|${mark.author?.key ?? ""}`;
+}
+
 /** A verse whose box has been measured in chapter-content coordinates. */
 export interface MeasuredHighlightMark extends HighlightCueMark {
   top: number;
@@ -219,7 +224,8 @@ const VIEWPORT_SLACK_PX = 2;
 
 type Side = "up" | "down";
 
-function sideOf(
+/** Which way a measured highlight lies off screen, or null when it doesn't. */
+export function offscreenSide(
   mark: MeasuredHighlightMark,
   viewport: ReaderViewport
 ): Side | null {
@@ -276,7 +282,7 @@ export function placeOffscreenHighlightCues(
   };
 
   for (const mark of sorted) {
-    const side = sideOf(mark, viewport);
+    const side = offscreenSide(mark, viewport);
     if (
       run &&
       side === run.side &&
