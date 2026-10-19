@@ -217,7 +217,10 @@ Permissions go in `extension.json`, next to the existing `settings` and `sensiti
 ```
 
 - **`permissions`** are required. The user approves all of them at install, or the extension isn't installed.
-- **`optionalPermissions`** can be requested later, at the moment they're needed, with `await sb.permissions.request("highlights:write")`. This keeps the install prompt short and lets the user say yes to the extension but no to one feature of it. (The request has to come from a click inside the extension's UI, so an extension can't pop up prompts on its own.)
+- **`optionalPermissions`** can be requested later, at the moment they're needed, with `await sb.permissions.request("highlights:write")`. This keeps the install prompt short and lets the user say yes to the extension but no to one feature of it. The install dialog lists them under "Later, it may ask to", so a later request isn't a surprise.
+
+  _As built:_ the request resolves `true` only if everything asked for is granted. It shows a prompt only when the host can see the user is interacting with that extension: the browser reports a click or key press in the last few seconds (`navigator.userActivation`), and it was on one of the extension's own tools, or the user is inside one of its frames (the frame has focus). Clicks elsewhere in the app don't count, and neither does anything the frame claims about itself. Otherwise the request rejects. Only one request can be open at a time. Once the user declines a permission, later requests for it resolve `false` without asking, until the page reloads. A granted optional permission is saved with the grant, kept through updates that still list it, and forgotten on uninstall. A permission listed as both required and optional counts as required. `network` hosts can't be optional, because a frame's CSP is fixed when it's created.
+
 - **`network`** lists every host the extension may contact with `fetch`. It goes into the frame's CSP. Hosts already named in the `sensitive` section don't need repeating.
 - **`integrity`** pins the bundle (§4.3). `publish` fills it in.
 - **`version`** is also new (today's `ExtensionMeta` has none). Grants are recorded against it, so the host can tell an update apart from the version the user approved (§6.3).
@@ -301,6 +304,8 @@ When a new version's manifest asks for nothing new, it updates silently. When it
 
 Settings → Extensions gets a "Permissions" section per sandboxed extension, with a toggle per permission (required ones can't be turned off without uninstalling). Revoking tears down the extension's frames, removes everything it registered, and restarts it with the smaller set.
 
+_Not built yet (phase 2):_ until it is, an optional permission the user granted can only be taken back by uninstalling the extension.
+
 ### 6.5 Installs that don't come from the user clicking Install
 
 Two existing features install extensions without that click, and both have to stop at the consent dialog for sandboxed extensions:
@@ -360,9 +365,11 @@ Each phase is shippable on its own.
 
    A sandboxed extension that declares `dependencies` is refused for now.
 
+   Added since, ahead of the original plan: `optionalPermissions` and `sb.permissions.request` (§5.1).
+
 2. **User data permissions.** Highlights, notes, saves, reading history, profile, chat providers, brokered sensitive fetch, update re-consent, and the per-extension Permissions section in Settings.
 3. **Tooling.** Scaffolding template, sandboxed `dev`, permission checks in `check`, docs. Port one in-repo extension (for example `seed-bible-refresh-example-extension` or `locations-extension`) to the sandbox SDK as a working reference and to prove the API is enough for a real extension.
-4. **Stronger isolation (optional).** Move frames to a dedicated cross-site origin, one subdomain per extension: separate process, real per-extension storage, and an `Origin` header third-party APIs recognize (an opaque-origin frame sends `Origin: null`, which some APIs' CORS settings reject). Also: optional permissions at runtime, and extension-to-extension calls brokered by the host (today's `dependencies` share live objects, which can't cross a frame boundary; for sandboxed extensions they'd become declared, message-based exports).
+4. **Stronger isolation (optional).** Move frames to a dedicated cross-site origin, one subdomain per extension: separate process, real per-extension storage, and an `Origin` header third-party APIs recognize (an opaque-origin frame sends `Origin: null`, which some APIs' CORS settings reject). Also: extension-to-extension calls brokered by the host (today's `dependencies` share live objects, which can't cross a frame boundary; for sandboxed extensions they'd become declared, message-based exports).
 
 ---
 

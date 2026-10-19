@@ -349,6 +349,7 @@ A call that isn't allowed rejects with a `SandboxError` whose `code` says why: `
   "id": "verse-art",
   "version": "1.0.0",
   "permissions": ["reading:selection"],
+  "optionalPermissions": ["reading:position"],
   "network": ["api.verse-art.example"],
   "translations": { "en": { "title": "Verse Art", "description": "…" } }
 }
@@ -359,6 +360,27 @@ A call that isn't allowed rejects with a `SandboxError` whose `code` says why: `
 | `reading:position`  | `sb.reading.position`: the current translation, book and chapter, kept up to date |
 | `reading:selection` | `sb.reading.selection`, and the selected verses in a tool's `onSelect`            |
 | `reading:navigate`  | `sb.reading.open({ bookId, chapter, verse })`                                     |
+
+**Optional permissions.** Anything your extension can work without goes under `optionalPermissions` instead. The install dialog only asks for `permissions`; it mentions the optional ones as things you may ask for later. Ask for one when the feature that needs it is used:
+
+```tsx
+await sb.tools.registerToolbarTool({
+  id: "follow-along",
+  title: "Follow along",
+  icon: { material: "sync" },
+  onSelect: async () => {
+    if (await sb.permissions.request("reading:position")) {
+      startFollowing(sb.reading.position);
+    } else {
+      void sb.app.toast(
+        "Following along needs to see which passage you're reading."
+      );
+    }
+  },
+});
+```
+
+`sb.permissions.request(permission | permission[])` resolves `true` once everything asked for is granted. It resolves straight away, without a prompt, when that's already the case. The user is only asked right after they interact with your extension: in a tool's `onSelect`, or a click inside one of your panes. A request at any other time rejects with an `invalid_request` `SandboxError`. If the user says no, later requests for that permission resolve `false` without asking again until the page reloads, so design the feature to carry on without it. `sb.permissions.granted` (a signal), `sb.permissions.has()` and `sb.permissions.optional` tell you where things stand. What the user grants is remembered, including through updates that still list it. Network hosts can't be optional.
 
 `network` lists every host your frames may contact (`fetch`, images, media, fonts); anything else is blocked. Requests arrive with `Origin: null`, so the server must allow that in its CORS headers (`Access-Control-Allow-Origin: *` does). A manifest that names a permission this version of Seed Bible doesn't know won't install, rather than install without it.
 

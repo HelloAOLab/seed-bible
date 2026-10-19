@@ -20,6 +20,25 @@ function permissionLabel(t: Translate, permission: SandboxPermission): string {
   }
 }
 
+function introText(t: Translate, reason: SandboxConsentRequest["reason"]) {
+  switch (reason) {
+    case "install":
+      return t("extension-consent-intro");
+    case "update":
+      return t("extension-consent-update-intro");
+    case "request":
+      return t("extension-consent-request-intro");
+  }
+}
+
+function allowText(t: Translate, reason: SandboxConsentRequest["reason"]) {
+  return reason === "install" ? t("install") : t("extension-consent-allow");
+}
+
+function cancelText(t: Translate, reason: SandboxConsentRequest["reason"]) {
+  return reason === "request" ? t("extension-consent-not-now") : t("cancel");
+}
+
 function ExtensionConsentContent({
   request,
   onAnswer,
@@ -29,10 +48,9 @@ function ExtensionConsentContent({
 }) {
   const { t } = useI18n();
   // An update lists only what's new: the rest was already agreed to.
-  const permissions = request.isUpdate
-    ? request.newPermissions
-    : request.permissions;
-  const network = request.isUpdate ? request.newNetwork : request.network;
+  const isUpdate = request.reason === "update";
+  const permissions = isUpdate ? request.newPermissions : request.permissions;
+  const network = isUpdate ? request.newNetwork : request.network;
   const nothingRequested = permissions.length === 0 && network.length === 0;
 
   return (
@@ -40,21 +58,21 @@ function ExtensionConsentContent({
       <p className="sb-extension-consent-source">
         {t("extension-consent-source", { host: request.sourceHost })}
       </p>
-      {request.description && (
+      {request.reason !== "request" && request.description && (
         <p className="sb-extension-consent-description">
           {request.description}
         </p>
       )}
       {nothingRequested ? (
         <p className="sb-extension-consent-text">
-          {t("extension-consent-nothing")}
+          {request.optionalPermissions.length > 0
+            ? t("extension-consent-nothing-yet")
+            : t("extension-consent-nothing")}
         </p>
       ) : (
         <>
           <p className="sb-extension-consent-text">
-            {request.isUpdate
-              ? t("extension-consent-update-intro")
-              : t("extension-consent-intro")}
+            {introText(t, request.reason)}
           </p>
           <ul className="sb-extension-consent-list">
             {permissions.map((permission) => (
@@ -62,6 +80,18 @@ function ExtensionConsentContent({
             ))}
             {network.map((host) => (
               <li key={host}>{t("extension-permission-network", { host })}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {request.optionalPermissions.length > 0 && (
+        <>
+          <p className="sb-extension-consent-text">
+            {t("extension-consent-optional-intro")}
+          </p>
+          <ul className="sb-extension-consent-list">
+            {request.optionalPermissions.map((permission) => (
+              <li key={permission}>{permissionLabel(t, permission)}</li>
             ))}
           </ul>
         </>
@@ -75,24 +105,49 @@ function ExtensionConsentContent({
           className="sb-extension-consent-cancel"
           onClick={() => onAnswer(false)}
         >
-          {t("cancel")}
+          {cancelText(t, request.reason)}
         </button>
         <button
           type="button"
           className="sb-extension-consent-allow"
           onClick={() => onAnswer(true)}
         >
-          {request.isUpdate ? t("extension-consent-allow") : t("install")}
+          {allowText(t, request.reason)}
         </button>
       </div>
     </div>
   );
 }
 
+function modalTitle(request: SandboxConsentRequest) {
+  const options = { name: request.title };
+  switch (request.reason) {
+    case "install":
+      return {
+        key: "extension-consent-title",
+        defaultValue: "Install {{name}}?",
+        options,
+      };
+    case "update":
+      return {
+        key: "extension-consent-update-title",
+        defaultValue: "{{name}} wants new permissions",
+        options,
+      };
+    case "request":
+      return {
+        key: "extension-consent-request-title",
+        defaultValue: "Allow {{name}} more access?",
+        options,
+      };
+  }
+}
+
 /**
- * Asks the user whether a sandboxed extension may have what its manifest
- * asks for. Resolves true only when they choose Install (or Allow, for an
- * update); closing the dialog any other way declines.
+ * Asks the user whether a sandboxed extension may have what it asks for:
+ * what its manifest requires (at install, or for an update), or optional
+ * permissions it asked for while running. Resolves true only when they
+ * choose Install or Allow; closing the dialog any other way declines.
  */
 export function openExtensionConsentModal(
   modals: ModalManager,
@@ -111,17 +166,7 @@ export function openExtensionConsentModal(
     };
     modals.openModal({
       id,
-      title: request.isUpdate
-        ? {
-            key: "extension-consent-update-title",
-            defaultValue: "{{name}} wants new permissions",
-            options: { name: request.title },
-          }
-        : {
-            key: "extension-consent-title",
-            defaultValue: "Install {{name}}?",
-            options: { name: request.title },
-          },
+      title: modalTitle(request),
       content: () => (
         <ExtensionConsentContent request={request} onAnswer={answer} />
       ),

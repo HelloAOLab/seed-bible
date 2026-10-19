@@ -15,6 +15,7 @@ import {
   type ExtensionGrants,
   type SandboxConsentHandler,
 } from "./ExtensionPermissions";
+import type { SandboxPermission } from "../extensions/protocol";
 import {
   clearSandboxStorage,
   fetchSandboxBundle,
@@ -137,6 +138,13 @@ export interface ExtensionMeta {
    * `SANDBOX_PERMISSIONS`). The user approves all of them at install.
    */
   permissions?: string[];
+
+  /**
+   * Sandboxed extensions only: permissions it may ask for later, when the
+   * feature that needs one is used (`sb.permissions.request`). The install
+   * dialog mentions them without granting them.
+   */
+  optionalPermissions?: string[];
 
   /**
    * Sandboxed extensions only: every host its frames may contact, like
@@ -1397,8 +1405,24 @@ export function createExtensionManager(
     }
 
     const translation = translations[i18n.language] ?? translations.en;
+    const consentBase = {
+      extensionId,
+      title: translation.title,
+      description: translation.description,
+      sourceHost,
+      version: manifest.version,
+    };
     const previous = activeGrant((await readExtensionGrants())[extensionId]);
     const missing = missingFromGrant(previous, manifest, source);
+    // Optional permissions the user granted before, that this version still
+    // lists. An update keeps them; one from another source has none.
+    const keptOptional =
+      previous?.source === source
+        ? manifest.optionalPermissions.filter((p) =>
+            previous.permissions.includes(p)
+          )
+        : [];
+    const granted = [...manifest.permissions, ...keptOptional];
     if (
       !previous ||
       previous.source !== source ||
@@ -1406,16 +1430,15 @@ export function createExtensionManager(
       missing.network.length > 0
     ) {
       const agreed = await askSandboxConsent({
-        extensionId,
-        title: translation.title,
-        description: translation.description,
-        sourceHost,
-        version: manifest.version,
+        ...consentBase,
+        reason: previous?.source === source ? "update" : "install",
         permissions: manifest.permissions,
         network: manifest.network,
-        isUpdate: previous?.source === source,
         newPermissions: missing.permissions,
         newNetwork: missing.network,
+        optionalPermissions: manifest.optionalPermissions.filter(
+          (p) => !keptOptional.includes(p)
+        ),
       });
       if (!agreed) {
         console.info(`Installing extension '${extensionId}' was declined.`);
@@ -1423,13 +1446,46 @@ export function createExtensionManager(
         return false;
       }
       await saveExtensionGrant(extensionId, {
-        permissions: manifest.permissions,
+        permissions: granted,
         network: manifest.network,
         version: manifest.version,
         source,
         grantedAtMs: Date.now(),
       });
     }
+
+    /**
+     * Asks the user for optional permissions the running extension wants,
+     * and adds them to its saved grant if they agree.
+     */
+    const requestPermissions = async (
+      permissions: SandboxPermission[]
+    ): Promise<boolean> => {
+      const agreed = await askSandboxConsent({
+        ...consentBase,
+        reason: "request",
+        permissions,
+        network: [],
+        newPermissions: permissions,
+        newNetwork: [],
+        optionalPermissions: [],
+      });
+      // Uninstalled while the dialog was open: nothing left to grant to.
+      if (!agreed || !installedExtensionIds.has(extensionId)) {
+        return false;
+      }
+      const current = activeGrant((await readExtensionGrants())[extensionId]);
+      await saveExtensionGrant(extensionId, {
+        permissions: [
+          ...new Set([...(current?.permissions ?? granted), ...permissions]),
+        ],
+        network: current?.network ?? manifest.network,
+        version: current?.version ?? manifest.version,
+        source: current?.source ?? source,
+        grantedAtMs: Date.now(),
+      });
+      return true;
+    };
 
     registerExtension({
       id: extensionId,
@@ -1438,7 +1494,9 @@ export function createExtensionManager(
           extensionId,
           title: translation.title,
           translations,
-          granted: manifest.permissions,
+          granted,
+          optional: manifest.optionalPermissions,
+          requestPermissions,
           network: manifest.network,
           code,
           context,

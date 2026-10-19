@@ -1151,5 +1151,10 @@
   "extension-permission-reading-position": "See which passage you're reading",
   "extension-permission-reading-selection": "See which verses you select",
   "extension-permission-reading-navigate": "Open passages",
-  "extension-permission-network": "Connect to {{host}}"
+  "extension-permission-network": "Connect to {{host}}",
+  "extension-consent-request-title": "Allow {{name}} more access?",
+  "extension-consent-request-intro": "It's asking to:",
+  "extension-consent-optional-intro": "Later, it may ask to:",
+  "extension-consent-not-now": "Not now",
+  "extension-consent-nothing-yet": "For now, it won't have access to any of your information."
 }

@@ -17,6 +17,8 @@ export interface ExtensionProjectMeta {
   version?: string;
   /** Sandboxed extensions: the permissions the user is asked to grant. */
   permissions?: string[];
+  /** Sandboxed extensions: permissions it may ask for while running. */
+  optionalPermissions?: string[];
   /** Sandboxed extensions: every host its frames may contact. */
   network?: string[];
 }
@@ -67,9 +69,10 @@ export async function loadExtensionProjectInfo(
   const autoinstall = (meta as { autoinstall?: unknown }).autoinstall as
     | boolean
     | undefined;
-  const { version, permissions, network } = meta as {
+  const { version, permissions, optionalPermissions, network } = meta as {
     version?: string;
     permissions?: string[];
+    optionalPermissions?: string[];
     network?: string[];
   };
 
@@ -83,6 +86,7 @@ export async function loadExtensionProjectInfo(
       autoinstall,
       version,
       permissions,
+      optionalPermissions,
       network,
     },
   };

@@ -141,6 +141,8 @@ export interface SandboxInit {
   extensionId: string;
   mode: SandboxFrameMode;
   granted: SandboxPermission[];
+  /** What the manifest lets the extension ask for later. */
+  optional: SandboxPermission[];
   state: SandboxState;
 }
 
@@ -169,6 +171,14 @@ export interface SandboxMethods {
   "settings.get": {
     params: { key: string };
     result: string | number | boolean | null;
+  };
+  /**
+   * Asks the user for optional permissions. `granted` is true only if all of
+   * them are granted afterwards.
+   */
+  "permissions.request": {
+    params: { permissions: SandboxPermission[] };
+    result: { granted: boolean };
   };
   /** Sent once by the background frame when `main` has finished (or failed). */
   ready: { params: { error?: string }; result: null };
@@ -209,7 +219,9 @@ export type SandboxHostEvent =
       selection: SandboxSelectedVerse[];
     }
   | { type: "event"; name: "pane.closed"; paneId: string }
-  | { type: "state"; state: Partial<SandboxState> };
+  | { type: "state"; state: Partial<SandboxState> }
+  /** The permissions granted now, after the user granted an optional one. */
+  | { type: "permissions"; granted: SandboxPermission[] };
 
 export type SandboxHostMessage = SandboxResponse | SandboxHostEvent;
 

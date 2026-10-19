@@ -14,7 +14,13 @@ import {
  */
 export interface SandboxManifest {
   version: string | null;
+  /** Approved at install; the extension doesn't install without them. */
   permissions: SandboxPermission[];
+  /**
+   * Asked for later with `sb.permissions.request`, when the feature that
+   * needs one is used. Never overlaps `permissions`.
+   */
+  optionalPermissions: SandboxPermission[];
   /** Normalized hosts (`api.example.com`, `example.com:8443`). */
   network: string[];
   integrity: string;
@@ -36,6 +42,7 @@ const INTEGRITY_PATTERN = /^(sha256|sha384|sha512)-[A-Za-z0-9+/]+={0,2}$/;
 export function parseSandboxManifest(meta: {
   version?: unknown;
   permissions?: unknown;
+  optionalPermissions?: unknown;
   network?: unknown;
   integrity?: unknown;
   dependencies?: unknown;
@@ -61,16 +68,23 @@ export function parseSandboxManifest(meta: {
   }
 
   const permissions = meta.permissions ?? [];
-  if (!Array.isArray(permissions)) {
-    return { ok: false, error: '"permissions" must be an array.' };
+  const optionalPermissions = meta.optionalPermissions ?? [];
+  for (const [field, list] of [
+    ["permissions", permissions],
+    ["optionalPermissions", optionalPermissions],
+  ] as const) {
+    if (!Array.isArray(list)) {
+      return { ok: false, error: `"${field}" must be an array.` };
+    }
+    const unknown = list.filter((p) => !isSandboxPermission(p));
+    if (unknown.length > 0) {
+      return {
+        ok: false,
+        error: `This version of Seed Bible doesn't support the permission(s): ${unknown.map(String).join(", ")}.`,
+      };
+    }
   }
-  const unknown = permissions.filter((p) => !isSandboxPermission(p));
-  if (unknown.length > 0) {
-    return {
-      ok: false,
-      error: `This version of Seed Bible doesn't support the permission(s): ${unknown.map(String).join(", ")}.`,
-    };
-  }
+  const required = [...new Set(permissions as SandboxPermission[])];
 
   const network = meta.network ?? [];
   if (!Array.isArray(network)) {
@@ -90,7 +104,11 @@ export function parseSandboxManifest(meta: {
     ok: true,
     manifest: {
       version: meta.version ?? null,
-      permissions: [...new Set(permissions as SandboxPermission[])],
+      permissions: required,
+      // One listed in both is required: the stricter reading.
+      optionalPermissions: [
+        ...new Set(optionalPermissions as SandboxPermission[]),
+      ].filter((p) => !required.includes(p)),
       network: [
         ...new Set((network as string[]).map((h) => normalizeSensitiveHost(h))),
       ],
@@ -215,13 +233,20 @@ export interface SandboxConsentRequest {
   /** The host the bundle is served from. */
   sourceHost: string;
   version: string | null;
+  /**
+   * Why the user is being asked: to install the extension, to let an update
+   * have more than they approved before, or because the extension, while
+   * running, asked for some of its optional permissions.
+   */
+  reason: "install" | "update" | "request";
+  /** What it needs: everything required at install, or what it's asking for now. */
   permissions: SandboxPermission[];
   network: string[];
-  /** True when an earlier grant exists and this asks for more. */
-  isUpdate: boolean;
-  /** What the earlier grant didn't cover; everything when there was none. */
+  /** What an earlier grant didn't cover; the same as the above for "install" and "request". */
   newPermissions: SandboxPermission[];
   newNetwork: string[];
+  /** What it may ask for later, shown at install so it isn't a surprise. */
+  optionalPermissions: SandboxPermission[];
 }
 
 /** Asks the user; resolves true only if they agreed. */

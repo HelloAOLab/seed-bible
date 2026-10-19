@@ -1,5 +1,5 @@
 import * as z from "zod/v4";
-import { effect, type ReadonlySignal } from "@preact/signals";
+import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
 import { v4 as uuid } from "uuid";
 import { MaterialIcon } from "../components/icons";
@@ -21,6 +21,7 @@ import type { ExtensionSettingsManager } from "./ExtensionSettingsManager";
 import type { I18nManager } from "../i18n/I18nManager";
 import type { BookId } from "./BibleDataManager";
 import {
+  SANDBOX_PERMISSIONS,
   SANDBOX_PROTOCOL_VERSION,
   type SandboxErrorCode,
   type SandboxFrameMode,
@@ -83,6 +84,8 @@ export interface SandboxFrameConnection {
   /** The host's end of the frame's channel. */
   port: MessagePort;
   destroy: () => void;
+  /** Whether the user is in this frame right now (it has focus). */
+  hasFocus?: () => boolean;
 }
 
 /**
@@ -200,6 +203,9 @@ export const iframeFrameConnector: SandboxFrameConnector = (request) => {
       channel.port1.close();
       iframe.remove();
     },
+    // A click inside a frame focuses its <iframe> in the host document, which
+    // the frame itself can't fake.
+    hasFocus: () => document.activeElement === iframe,
   };
 };
 
@@ -326,6 +332,9 @@ const paramSchemas: { [M in SandboxMethod]: z.ZodType } = {
   "storage.remove": z.object({ key: z.string().min(1).max(200) }),
   "storage.keys": z.object({}),
   "settings.get": z.object({ key: z.string().min(1).max(200) }),
+  "permissions.request": z.object({
+    permissions: z.array(z.enum(SANDBOX_PERMISSIONS)).min(1).max(20),
+  }),
   ready: z.object({ error: z.string().max(2000).optional() }),
 };
 
@@ -401,11 +410,29 @@ export interface SandboxSessionOptions {
   title: string;
   translations: Record<string, Record<string, string>>;
   granted: SandboxPermission[];
+  /** What the extension may ask for later with `sb.permissions.request`. */
+  optional?: SandboxPermission[];
+  /**
+   * Asks the user for more of `optional`, and saves their answer. Resolves
+   * true only if they agreed. Without it, every request is declined.
+   */
+  requestPermissions?: (permissions: SandboxPermission[]) => Promise<boolean>;
   network: string[];
   code: string;
   context: SandboxHostContext;
   connector?: SandboxFrameConnector;
 }
+
+/** How long after selecting one of its tools an extension may ask for permissions. */
+const TOOL_INTERACTION_WINDOW_MS = 5000;
+
+/** The browser's own record of whether the user just clicked or typed in the page. */
+const hasTransientUserActivation = () =>
+  typeof navigator !== "undefined" &&
+  Boolean(
+    (navigator as { userActivation?: { isActive: boolean } }).userActivation
+      ?.isActive
+  );
 
 export interface SandboxSession {
   /** Settles when the extension's `main` has finished, or rejects with its error. */
@@ -433,8 +460,16 @@ export function startSandboxSession(
     context,
   } = options;
   const connector = options.connector ?? iframeFrameConnector;
-  const grantedSet = new Set(granted);
-  const has = (permission: SandboxPermission) => grantedSet.has(permission);
+  const optional = options.optional ?? [];
+  // A signal, so the state pushed to the frames follows an optional grant.
+  const grantedPermissions = signal<readonly SandboxPermission[]>(granted);
+  const has = (permission: SandboxPermission) =>
+    grantedPermissions.value.includes(permission);
+  // Optional permissions the user said no to since the page loaded, so an
+  // extension can't keep asking.
+  const declined = new Set<SandboxPermission>();
+  let permissionRequestOpen = false;
+  let lastToolSelectAt = -Infinity;
 
   const connections = new Set<SandboxFrameConnection>();
   let background: SandboxFrameConnection | null = null;
@@ -515,6 +550,7 @@ export function startSandboxSession(
     if (!background) {
       return;
     }
+    lastToolSelectAt = Date.now();
     post(background, {
       type: "event",
       name: "tool.select",
@@ -661,6 +697,65 @@ export function startSandboxSession(
     return { paneId };
   };
 
+  /**
+   * Whether the user is interacting with this extension right now, judged
+   * only from what the host can see: the browser reports a recent click or
+   * key press, and it was on one of this extension's tools or is inside one
+   * of its frames. The frame's own claims don't count.
+   */
+  const userIsInteractingWithExtension = () =>
+    hasTransientUserActivation() &&
+    (Date.now() - lastToolSelectAt < TOOL_INTERACTION_WINDOW_MS ||
+      [...connections].some((connection) => connection.hasFocus?.()));
+
+  const requestOptionalPermissions = async (
+    params: SandboxMethods["permissions.request"]["params"]
+  ): Promise<SandboxMethods["permissions.request"]["result"]> => {
+    const missing = [...new Set(params.permissions)].filter((p) => !has(p));
+    const undeclared = missing.filter((p) => !optional.includes(p));
+    if (undeclared.length > 0) {
+      throw new BrokerError(
+        "invalid_request",
+        `Only permissions listed under "optionalPermissions" in extension.json can be requested; not: ${undeclared.join(", ")}.`
+      );
+    }
+    if (missing.length === 0) {
+      return { granted: true };
+    }
+    if (missing.some((p) => declined.has(p)) || !options.requestPermissions) {
+      return { granted: false };
+    }
+    if (permissionRequestOpen) {
+      throw new BrokerError(
+        "limit_exceeded",
+        "This extension is already asking for a permission."
+      );
+    }
+    if (!userIsInteractingWithExtension()) {
+      throw new BrokerError(
+        "invalid_request",
+        "Permissions can only be requested right after the user interacts with this extension, e.g. from a tool's onSelect or a click in its pane."
+      );
+    }
+    permissionRequestOpen = true;
+    try {
+      const agreed = await options.requestPermissions(missing);
+      if (destroyed) {
+        return { granted: false };
+      }
+      if (agreed) {
+        grantedPermissions.value = [...grantedPermissions.value, ...missing];
+      } else {
+        for (const permission of missing) {
+          declined.add(permission);
+        }
+      }
+      return { granted: agreed };
+    } finally {
+      permissionRequestOpen = false;
+    }
+  };
+
   const dispatch = (
     method: SandboxMethod,
     params: unknown,
@@ -773,6 +868,10 @@ export function startSandboxSession(
         const { key } = params as SandboxMethods["settings.get"]["params"];
         return context.extensionSettings.getValue(extensionId, key) ?? null;
       }
+      case "permissions.request":
+        return requestOptionalPermissions(
+          params as SandboxMethods["permissions.request"]["params"]
+        );
       case "ready": {
         const { error } = params as SandboxMethods["ready"]["params"];
         if (!readySettled) {
@@ -820,10 +919,7 @@ export function startSandboxSession(
       });
       return;
     }
-    try {
-      const value = dispatch(method, params.data, connection === background);
-      reply({ type: "result", id, ok: true, value });
-    } catch (err) {
+    const fail = (err: unknown) => {
       reply({
         type: "result",
         id,
@@ -836,6 +932,20 @@ export function startSandboxSession(
       if (!(err instanceof BrokerError)) {
         console.error(`Extension '${extensionId}' call '${method}':`, err);
       }
+    };
+    try {
+      const value = dispatch(method, params.data, connection === background);
+      // Only `permissions.request` answers later, once the user has.
+      if (value instanceof Promise) {
+        value.then(
+          (result) => reply({ type: "result", id, ok: true, value: result }),
+          fail
+        );
+      } else {
+        reply({ type: "result", id, ok: true, value });
+      }
+    } catch (err) {
+      fail(err);
     }
   };
 
@@ -857,7 +967,8 @@ export function startSandboxSession(
         protocol: SANDBOX_PROTOCOL_VERSION,
         extensionId,
         mode,
-        granted: [...granted],
+        granted: [...grantedPermissions.peek()],
+        optional: [...optional],
         state: computeState(),
       },
     });
@@ -877,6 +988,11 @@ export function startSandboxSession(
     const state = computeState();
     broadcast({ type: "state", state });
   });
+  // Runs before `permissions.request` replies, so the extension sees the
+  // grant as soon as its request resolves.
+  const stopPermissionsEffect = effect(() => {
+    broadcast({ type: "permissions", granted: [...grantedPermissions.value] });
+  });
 
   const destroy = () => {
     if (destroyed) {
@@ -884,6 +1000,7 @@ export function startSandboxSession(
     }
     destroyed = true;
     stopStateEffect();
+    stopPermissionsEffect();
     for (const definition of tools.values()) {
       unregisterHostTool(definition);
     }

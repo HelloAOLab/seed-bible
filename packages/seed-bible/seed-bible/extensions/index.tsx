@@ -99,9 +99,27 @@ export interface SandboxPaneHandle {
 
 export interface SandboxContext {
   extensionId: string;
-  /** What the user granted. */
-  permissions: ReadonlySignal<readonly SandboxPermission[]>;
-  hasPermission: (permission: SandboxPermission) => boolean;
+  permissions: {
+    /** What the user has granted so far. */
+    granted: ReadonlySignal<readonly SandboxPermission[]>;
+    /** What `extension.json` lists under `optionalPermissions`. */
+    optional: readonly SandboxPermission[];
+    has: (permission: SandboxPermission) => boolean;
+    /**
+     * Asks the user for one or more of the extension's `optionalPermissions`,
+     * and resolves true if all of them are granted. Resolves true without
+     * asking when they already are, and false without asking if the user
+     * already declined one of them since the page loaded.
+     *
+     * The user is only asked right after they interact with this extension
+     * (by selecting one of its tools, or inside one of its panes), so call it
+     * from the click handler of the feature that needs it. Otherwise it
+     * rejects with an `invalid_request` `SandboxError`.
+     */
+    request: (
+      permissions: SandboxPermission | SandboxPermission[]
+    ) => Promise<boolean>;
+  };
   i18n: {
     language: ReadonlySignal<string>;
     direction: ReadonlySignal<"ltr" | "rtl">;
@@ -273,6 +291,8 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
           new SandboxError(message.error.code, message.error.message)
         );
       }
+    } else if (message.type === "permissions") {
+      granted.value = message.granted;
     } else if (message.type === "state") {
       state.value = { ...state.value, ...message.state };
       applyDocumentState(state.value);
@@ -406,8 +426,17 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
 
   const sb: SandboxContext = {
     extensionId: init.extensionId,
-    permissions: granted,
-    hasPermission: (permission) => granted.value.includes(permission),
+    permissions: {
+      granted,
+      optional: init.optional,
+      has: (permission) => granted.value.includes(permission),
+      request: async (permissions) => {
+        const { granted: allGranted } = await call("permissions.request", {
+          permissions: Array.isArray(permissions) ? permissions : [permissions],
+        });
+        return allGranted;
+      },
+    },
     i18n: {
       language,
       direction,

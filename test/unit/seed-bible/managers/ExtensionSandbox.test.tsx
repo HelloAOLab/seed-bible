@@ -135,8 +135,20 @@ describe("sandboxed extensions", () => {
         channel.port1.close();
         channel.port2.close();
       },
+      hasFocus: () => focusedFrame === request,
     };
   };
+
+  /** Which frame the user is "in", as the host would see from focus. */
+  let focusedFrame: SandboxFrameRequest | null = null;
+
+  /** Stands in for the browser's record of a click or key press just now. */
+  function setUserActivation(isActive: boolean) {
+    Object.defineProperty(navigator, "userActivation", {
+      value: { isActive, hasBeenActive: isActive },
+      configurable: true,
+    });
+  }
 
   function createHost() {
     const { tools, surfaces } = createRecordingTools();
@@ -235,6 +247,8 @@ describe("sandboxed extensions", () => {
     for (const port of openPorts) {
       port.close();
     }
+    focusedFrame = null;
+    setUserActivation(false);
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -263,7 +277,7 @@ describe("sandboxed extensions", () => {
         sourceHost: "files.example.com",
         permissions: ["reading:position"],
         network: ["api.example.com"],
-        isUpdate: false,
+        reason: "install",
       })
     );
     expect(frames).toEqual([]);
@@ -351,7 +365,7 @@ describe("sandboxed extensions", () => {
 
     expect(consent).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        isUpdate: true,
+        reason: "update",
         newPermissions: ["reading:selection"],
         newNetwork: ["api.example.com"],
       })
@@ -375,7 +389,7 @@ describe("sandboxed extensions", () => {
 
     expect(consent).toHaveBeenCalledTimes(2);
     expect(consent).toHaveBeenLastCalledWith(
-      expect.objectContaining({ isUpdate: false })
+      expect.objectContaining({ reason: "install" })
     );
   });
 
@@ -705,6 +719,239 @@ describe("sandboxed extensions", () => {
     expect(consent).not.toHaveBeenCalled();
   });
 
+  describe("optional permissions", () => {
+    /**
+     * An extension whose toolbar tool asks for `reading:position` when
+     * selected, recording what came back.
+     */
+    function askingOnSelect(results: unknown[], sbs: SandboxContext[] = []) {
+      return defineExtension({
+        main: async (sb) => {
+          sbs.push(sb);
+          await sb.tools.registerToolbarTool({
+            id: "ask",
+            title: "Ask",
+            icon: { material: "lock_open" },
+            onSelect: async () => {
+              results.push(
+                await sb.permissions
+                  .request("reading:position")
+                  .catch((err: SandboxError) => err.code)
+              );
+            },
+          });
+        },
+      });
+    }
+
+    const clickTool = async (id: string) => {
+      await vi.waitFor(() =>
+        expect(host.surfaces.toolbar.has(`sandbox:${id}:ask`)).toBe(true)
+      );
+      host.surfaces.toolbar.get(`sandbox:${id}:ask`)!.onSelect!();
+    };
+
+    it("asks only for the required ones at install, and mentions the rest", async () => {
+      const sbs: SandboxContext[] = [];
+      await createManager().loadExtension(
+        await publish(askingOnSelect([], sbs), {
+          id: "ext.optional",
+          permissions: ["reading:selection"],
+          optionalPermissions: ["reading:position", "reading:selection"],
+        })
+      );
+
+      expect(consent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reason: "install",
+          permissions: ["reading:selection"],
+          // Also listed as required, so it isn't optional.
+          optionalPermissions: ["reading:position"],
+        })
+      );
+      await vi.waitFor(() => expect(sbs).toHaveLength(1));
+      expect(sbs[0]!.permissions.granted.value).toEqual(["reading:selection"]);
+      expect(sbs[0]!.permissions.optional).toEqual(["reading:position"]);
+      expect(sbs[0]!.reading.position.value).toBeNull();
+    });
+
+    it("grants one when the user agrees, right after using the extension, and keeps it on reload", async () => {
+      const results: unknown[] = [];
+      const sbs: SandboxContext[] = [];
+      const extension = await publish(askingOnSelect(results, sbs), {
+        id: "ext.asks",
+        optionalPermissions: ["reading:position"],
+      });
+      await createManager().loadExtension(extension);
+
+      setUserActivation(true);
+      await clickTool("ext.asks");
+
+      await vi.waitFor(() => expect(results).toEqual([true]));
+      expect(consent).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          reason: "request",
+          extensionId: "ext.asks",
+          permissions: ["reading:position"],
+        })
+      );
+      // Visible to the extension as soon as its request resolves.
+      expect(sbs[0]!.permissions.has("reading:position")).toBe(true);
+      await vi.waitFor(() =>
+        expect(sbs[0]!.reading.position.value).toEqual({
+          translationId: "BSB",
+          bookId: "JHN",
+          chapterNumber: 3,
+        })
+      );
+
+      reload("ext.asks");
+      await createManager().loadExtension(extension);
+      await vi.waitFor(() => expect(sbs).toHaveLength(2));
+      expect(sbs[1]!.permissions.has("reading:position")).toBe(true);
+      expect(consent).toHaveBeenCalledTimes(2);
+    });
+
+    it("doesn't ask without the user interacting with the extension", async () => {
+      let sb: SandboxContext | null = null;
+      await createManager().loadExtension(
+        await publish(
+          defineExtension({
+            main: (context) => {
+              sb = context;
+            },
+          }),
+          { id: "ext.pushy-asker", optionalPermissions: ["reading:position"] }
+        )
+      );
+      await vi.waitFor(() => expect(sb).toBeTruthy());
+      consent.mockClear();
+
+      // A click somewhere in the app, but not on this extension.
+      setUserActivation(true);
+      const error = await sb!.permissions
+        .request("reading:position")
+        .catch((err: unknown) => err);
+
+      expect((error as SandboxError).code).toBe("invalid_request");
+      expect(consent).not.toHaveBeenCalled();
+    });
+
+    it("asks when the user is inside one of the extension's panes", async () => {
+      const results: unknown[] = [];
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      await createManager().loadExtension(
+        await publish(
+          defineExtension({
+            main: (sb) =>
+              void sb.panes.open({
+                view: "main",
+                placement: "side",
+                title: "V",
+              }),
+            views: {
+              main: ({ sb }) => (
+                <button
+                  id="enable"
+                  onClick={async () =>
+                    results.push(
+                      await sb.permissions.request("reading:position")
+                    )
+                  }
+                />
+              ),
+            },
+          }),
+          { id: "ext.pane-asker", optionalPermissions: ["reading:position"] }
+        )
+      );
+      await vi.waitFor(() => expect(host.panes.panes.value).toHaveLength(1));
+      render(host.panes.panes.value[0]!.component(), container);
+      await vi.waitFor(() => expect(frames).toHaveLength(2));
+
+      focusedFrame = frames[1]!;
+      setUserActivation(true);
+      (document.getElementById("enable") as HTMLButtonElement).click();
+
+      await vi.waitFor(() => expect(results).toEqual([true]));
+      render(null, container);
+      container.remove();
+    });
+
+    it("stops asking after the user says no", async () => {
+      consent.mockImplementation(
+        async (request) => request.reason !== "request"
+      );
+      const results: unknown[] = [];
+      await createManager().loadExtension(
+        await publish(askingOnSelect(results), {
+          id: "ext.declined-optional",
+          optionalPermissions: ["reading:position"],
+        })
+      );
+      setUserActivation(true);
+
+      await clickTool("ext.declined-optional");
+      await vi.waitFor(() => expect(results).toEqual([false]));
+      await clickTool("ext.declined-optional");
+      await vi.waitFor(() => expect(results).toEqual([false, false]));
+
+      expect(
+        consent.mock.calls.filter(([request]) => request.reason === "request")
+      ).toHaveLength(1);
+    });
+
+    it("refuses a request for a permission the manifest doesn't list as optional", async () => {
+      const results: unknown[] = [];
+      await createManager().loadExtension(
+        await publish(askingOnSelect(results), { id: "ext.undeclared" })
+      );
+      setUserActivation(true);
+
+      await clickTool("ext.undeclared");
+
+      await vi.waitFor(() => expect(results).toEqual(["invalid_request"]));
+      expect(consent).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps a granted optional permission through an update that asks for more", async () => {
+      const results: unknown[] = [];
+      const sbs: SandboxContext[] = [];
+      await createManager().loadExtension(
+        await publish(askingOnSelect(results, sbs), {
+          id: "ext.updated",
+          optionalPermissions: ["reading:position"],
+        })
+      );
+      setUserActivation(true);
+      await clickTool("ext.updated");
+      await vi.waitFor(() => expect(results).toEqual([true]));
+      reload("ext.updated");
+
+      await createManager().loadExtension(
+        await publish(askingOnSelect(results, sbs), {
+          id: "ext.updated",
+          permissions: ["reading:navigate"],
+          optionalPermissions: ["reading:position", "reading:selection"],
+        })
+      );
+
+      expect(consent).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          reason: "update",
+          newPermissions: ["reading:navigate"],
+          optionalPermissions: ["reading:selection"],
+        })
+      );
+      await vi.waitFor(() => expect(sbs).toHaveLength(2));
+      expect([...sbs[1]!.permissions.granted.value].sort()).toEqual([
+        "reading:navigate",
+        "reading:position",
+      ]);
+    });
+  });
+
   it("never auto-installs a sandboxed extension, even when it asks to be", async () => {
     const extension = await publish(defineExtension({}), {
       id: "ext.pushy",
@@ -763,13 +1010,27 @@ describe("parseSandboxManifest()", () => {
       manifest: {
         version: "1.0.0",
         permissions: ["reading:position"],
+        optionalPermissions: [],
         network: ["api.example.com"],
         integrity,
       },
     });
   });
 
+  it("treats a permission listed as both required and optional as required", () => {
+    const result = parseSandboxManifest({
+      integrity,
+      permissions: ["reading:position"],
+      optionalPermissions: ["reading:position", "reading:navigate"],
+    });
+    expect(result.ok && result.manifest).toMatchObject({
+      permissions: ["reading:position"],
+      optionalPermissions: ["reading:navigate"],
+    });
+  });
+
   it.each([
+    [{ integrity, optionalPermissions: ["everything"] }, "everything"],
     [{}, "integrity"],
     [{ integrity: "md5-abc" }, "integrity"],
     [{ integrity, permissions: ["everything"] }, "everything"],
@@ -805,6 +1066,7 @@ describe("extension grants", () => {
     const manifest = {
       version: "1",
       permissions: ["reading:position" as const],
+      optionalPermissions: [],
       network: [],
       integrity: "sha384-AAAA",
     };

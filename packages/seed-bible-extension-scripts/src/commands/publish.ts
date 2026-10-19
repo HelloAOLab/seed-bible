@@ -31,6 +31,7 @@ interface ExtensionSetManifest {
       autoinstall?: boolean;
       version?: string;
       permissions?: string[];
+      optionalPermissions?: string[];
       network?: string[];
       /** The bundle's hash, so Seed Bible runs exactly the uploaded code. */
       integrity?: string;
