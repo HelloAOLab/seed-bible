@@ -9,7 +9,11 @@ import {
   readInjectedReadingPlanPageSeed,
 } from "../app/sharedPageSeeds";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
-import { decideHydration, type HydrationDecision } from "../app/hydrationGate";
+import {
+  decideHydration,
+  isRenderedByThisBuild,
+  type HydrationDecision,
+} from "../app/hydrationGate";
 import { hydrateWithFallback } from "../app/hydrateWithFallback";
 import { waitForInitialChapterLoads } from "../app/initialChapterLoadWait";
 
@@ -28,6 +32,13 @@ const apiResponseSnapshot = readInjectedApiResponseSnapshot();
 // seeding the client's own CustomizationsManager with it means the manager
 // creation below doesn't re-fetch a record the page already reflects.
 const initialCustomizationSeed = readInjectedCustomizationSeed();
+// A server running a different build parsed that record with its own code,
+// which drops any field it doesn't know, so the seed only stands in for the
+// first paint and the client downloads the record again.
+const revalidateInitialCustomizationSeed = !isRenderedByThisBuild(
+  config,
+  __GIT_COMMIT__
+);
 
 // Same, for the playlist or reading plan a shared link opens on.
 const initialPlaylistPageSeed = readInjectedPlaylistPageSeed();
@@ -46,6 +57,7 @@ const state = createSeedBibleState({
   config,
   apiResponseSnapshot,
   initialCustomizationSeed,
+  revalidateInitialCustomizationSeed,
   initialPlaylistPageSeed,
   initialReadingPlanPageSeed,
 });
