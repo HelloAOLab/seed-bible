@@ -2,6 +2,10 @@ import type { ReadonlySignal } from "@preact/signals";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { BibleTheme } from "../../managers/ThemeManager";
 import type {
+  PlaylistManager,
+  PlaylistPlayHistory,
+} from "../../managers/PlaylistManager";
+import type {
   TodayManager,
   TodayPassageTarget,
 } from "../../managers/TodayManager";
@@ -9,6 +13,7 @@ import { TimeProvider } from "./TimeContext";
 import { Welcome } from "./Welcome";
 import { Header } from "./Header";
 import { ResumeReadingSection } from "./ResumeReadingSection";
+import { ContinuePlaylistSection } from "./ContinuePlaylistSection";
 import { BookmarksSection, type BookmarkStripItem } from "./BookmarksSection";
 import { SearchSection } from "./SearchSection";
 import { SocialSection } from "./SocialSection";
@@ -31,6 +36,10 @@ export interface TodayScreenProps {
   isMobile: ReadonlySignal<boolean>;
   /** The user's bookmarks, most recently moved first. */
   bookmarks: ReadonlySignal<BookmarkStripItem[]>;
+  /** Play history, for the "Continue your playlist" card. Without it, no card. */
+  playlists?: Pick<PlaylistManager, "userPlaylistHistory">;
+  /** Picks an unfinished playlist back up where it was left, and leaves Today. */
+  onResumePlaylist?: (entry: PlaylistPlayHistory) => void;
   /** Opens a passage in the reader and leaves Today. */
   onOpenPassage: (target: TodayPassageTarget) => void;
   /** Opens the book selector over the reader. */
@@ -95,6 +104,13 @@ function TodayContent(props: TodayScreenProps) {
         today={props.today}
         onOpenPassage={props.onOpenPassage}
       />
+      {props.playlists && props.onResumePlaylist ? (
+        <ContinuePlaylistSection
+          playlists={props.playlists}
+          bookNames={props.today.bookNames}
+          onResume={props.onResumePlaylist}
+        />
+      ) : null}
       {props.bookmarks.value.length > 0 && (
         <BookmarksSection
           today={props.today}

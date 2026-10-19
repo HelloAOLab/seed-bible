@@ -8,6 +8,7 @@ import { todayScreenPropsStub, todayStub } from "../../testUtils/todayStubs";
 import { Welcome } from "@packages/seed-bible/seed-bible/components/TodayPane/Welcome";
 import { Header } from "@packages/seed-bible/seed-bible/components/TodayPane/Header";
 import { ResumeReadingSection } from "@packages/seed-bible/seed-bible/components/TodayPane/ResumeReadingSection";
+import { ContinuePlaylistSection } from "@packages/seed-bible/seed-bible/components/TodayPane/ContinuePlaylistSection";
 import {
   BookmarksSection,
   type BookmarkStripItem,
@@ -39,6 +40,15 @@ vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/ResumeReadingSection",
   () => ({
     ResumeReadingSection: vi.fn(() => <div data-testid="section-resume" />),
+  })
+);
+
+vi.mock(
+  "@packages/seed-bible/seed-bible/components/TodayPane/ContinuePlaylistSection",
+  () => ({
+    ContinuePlaylistSection: vi.fn(() => (
+      <div data-testid="section-continue-playlist" />
+    )),
   })
 );
 
@@ -162,6 +172,37 @@ describe("TodayPane", () => {
       act(() => render(null, container));
       setup({ status: "ready" });
       expect(q("[data-testid='section-resume']")).not.toBeNull();
+    });
+
+    it("renders the continue-playlist card only when given play history, right under resume", () => {
+      setup();
+      expect(q("[data-testid='section-continue-playlist']")).toBeNull();
+
+      act(() => render(null, container));
+      const props = todayScreenPropsStub({
+        today: todayStub({
+          readingHistory: signal<ReadingHistoryState>({
+            status: "ready",
+            lastReading: { bookId: "JHN", chapter: 3 },
+          }),
+          bookNames: signal(new Map()),
+        }),
+        playlists: { userPlaylistHistory: signal([]) },
+        onResumePlaylist: vi.fn(),
+      });
+      act(() => render(<TodayPane {...props} />, container));
+
+      const order = Array.from(
+        container.querySelectorAll("[data-testid^='section-']")
+      ).map((el) => el.getAttribute("data-testid"));
+      expect(order.slice(0, 2)).toEqual([
+        "section-resume",
+        "section-continue-playlist",
+      ]);
+      const continueProps = (ContinuePlaylistSection as unknown as Mock).mock
+        .calls[0]![0] as Record<string, unknown>;
+      expect(continueProps.playlists).toBe(props.playlists);
+      expect(continueProps.onResume).toBe(props.onResumePlaylist);
     });
 
     it("renders the bookmarks strip when there is at least one bookmark", () => {

@@ -3609,6 +3609,16 @@ export function createSeedBibleState(
       selector.setOpen(true, slot);
     }
   };
+  // Stays on Today until the playlist has loaded, like the profile's history
+  // does: closing first drops the user on the reader with nothing to show for
+  // it, and a failed load would only toast after they had already left.
+  const continuePlaylistFromToday = (entry: PlaylistPlayHistory): void => {
+    const { t } = i18n;
+    void playlists.playFromHistory(entry).then(
+      () => today.close(),
+      () => toast(playlistHistoryOpenFailedMessage(t))
+    );
+  };
   const renderTodayPane = () => (
     <TodayPane
       today={today}
@@ -3616,6 +3626,8 @@ export function createSeedBibleState(
       theme={themeManager.currentTheme}
       isMobile={isMobile}
       bookmarks={bookmarks.bookmarks}
+      playlists={playlists}
+      onResumePlaylist={continuePlaylistFromToday}
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
       onTakeTour={() => tutorial.acceptPrompt()}
