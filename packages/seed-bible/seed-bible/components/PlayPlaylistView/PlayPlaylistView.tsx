@@ -5,12 +5,16 @@ import type { PlaylistManager } from "../../managers/PlaylistManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
 import { playlistItemLabel } from "../playlistItemLabel";
-import { playlistItemIcon } from "../playlistItemIcon";
+import {
+  playlistItemSubtitle,
+  playlistItemKind,
+} from "../playlistItemSubtitle";
 import { useDragReorder } from "../useDragReorder";
 import { MaterialIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { HeroImageBanner } from "../HeroImageField/HeroImageField";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
+import { PlaylistItemNav } from "../PlaylistItemNav/PlaylistItemNav";
 
 interface PlayPlaylistViewProps {
   playlists: PlaylistManager;
@@ -20,10 +24,11 @@ interface PlayPlaylistViewProps {
 }
 
 /**
- * Playback screen shown inside the discover pane while a playlist is playing.
- * Displays the playlist title, the queue of items, and a bottom-anchored bar
- * with the current item and previous/next controls. Video, link, and text
- * (html) items open in the app's generic modal rather than rendering inline.
+ * Playback screen shown inside the discover pane while a playlist is playing:
+ * the cover and author, a segmented progress bar, a card for the current step
+ * with Previous / Next and what's up next, and the numbered queue beneath it
+ * with the steps already read ticked off. Video, link, and text (html) items
+ * open in the app's generic modal rather than rendering inline.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   const { playlists, tabs } = props;
@@ -45,6 +50,8 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   }
 
   const currentIndex = playing.currentIndex.value;
+  const currentItem = playing.currentItem.value;
+  const nextItem = queue[currentIndex + 1] ?? null;
   const playlist = playing.playlists.value[0];
   const heroImageUrl = playlist?.heroImageUrl ?? null;
   const authorName = playlists.playingAuthorName.value;
@@ -93,47 +100,128 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
             ) : null}
           </div>
         ) : null}
-        <DiscoverSection title={t("queue", { defaultValue: "Queue" })}>
-          <ul className="sb-discover-list">
-            {queue.map((item, index) => (
-              <li
+
+        {queue.length > 0 ? (
+          <div
+            className="sb-play-progress"
+            role="progressbar"
+            aria-label={t("playlist-progress", {
+              defaultValue: "Playlist progress",
+            })}
+            aria-valuemin={0}
+            aria-valuemax={queue.length}
+            aria-valuenow={Math.max(0, currentIndex + 1)}
+            aria-valuetext={t("playlist-step-of", {
+              defaultValue: "Step {{step}} of {{total}}",
+              step: Math.max(0, currentIndex + 1),
+              total: queue.length,
+            })}
+          >
+            {queue.map((_, index) => (
+              <span
                 key={index}
                 className={
-                  "sb-discover-item sb-discover-item--row sb-play-playlist-item" +
-                  (index === currentIndex
-                    ? " sb-play-playlist-item--current"
-                    : "") +
-                  getRowClassName(index)
+                  "sb-play-progress-segment" +
+                  (index <= currentIndex
+                    ? " sb-play-progress-segment--reached"
+                    : "")
                 }
-                dir="auto"
-              >
-                <button
-                  type="button"
-                  className="sb-discover-item-drag-handle"
-                  aria-label={t("drag-to-reorder-playlist-item", {
-                    defaultValue: "Drag to reorder",
-                  })}
-                  {...getHandleProps(index)}
-                >
-                  <MaterialIcon>drag_indicator</MaterialIcon>
-                </button>
-                <button
-                  type="button"
-                  className="sb-play-playlist-item-button"
-                  aria-current={index === currentIndex}
-                  onClick={() => {
-                    playing.jumpTo(index);
-                  }}
-                >
-                  <MaterialIcon className="sb-discover-item-icon">
-                    {playlistItemIcon(item)}
-                  </MaterialIcon>
-                  <span className="sb-discover-item-title">
-                    {playlistItemLabel(item, t, resolveBookName)}
-                  </span>
-                </button>
-              </li>
+              />
             ))}
+          </div>
+        ) : null}
+
+        {currentItem ? (
+          <section
+            className="sb-play-current"
+            aria-label={t("current-step", { defaultValue: "Current step" })}
+            dir="auto"
+          >
+            <p className="sb-play-current-eyebrow">
+              {playlistItemKind(currentItem, t)}
+              {" · "}
+              {t("playlist-step-of", {
+                defaultValue: "Step {{step}} of {{total}}",
+                step: currentIndex + 1,
+                total: queue.length,
+              })}
+            </p>
+            <h3 className="sb-play-current-title">
+              {playlistItemLabel(currentItem, t, resolveBookName)}
+            </h3>
+            {currentItem.type !== "bible-verse" ? (
+              <p className="sb-play-current-detail">
+                {playlistItemSubtitle(currentItem, t)}
+              </p>
+            ) : null}
+            {nextItem ? (
+              <p className="sb-play-current-up-next">
+                {t("playlist-up-next", {
+                  defaultValue: "Up next · {{kind}} · {{title}}",
+                  kind: playlistItemKind(nextItem, t),
+                  title: playlistItemLabel(nextItem, t, resolveBookName),
+                })}
+              </p>
+            ) : null}
+            <PlaylistItemNav playing={playing} />
+          </section>
+        ) : null}
+
+        <DiscoverSection
+          title={t("queue", { defaultValue: "Queue" })}
+          count={queue.length || undefined}
+        >
+          <ul className="sb-discover-list">
+            {queue.map((item, index) => {
+              const isCurrent = index === currentIndex;
+              const isDone = index < currentIndex;
+              return (
+                <li
+                  key={index}
+                  className={
+                    "sb-discover-item sb-discover-item--row sb-play-playlist-item" +
+                    (isCurrent ? " sb-play-playlist-item--current" : "") +
+                    (isDone ? " sb-play-playlist-item--done" : "") +
+                    getRowClassName(index)
+                  }
+                  dir="auto"
+                >
+                  <button
+                    type="button"
+                    className="sb-discover-item-drag-handle"
+                    aria-label={t("drag-to-reorder-playlist-item", {
+                      defaultValue: "Drag to reorder",
+                    })}
+                    {...getHandleProps(index)}
+                  >
+                    <MaterialIcon>drag_indicator</MaterialIcon>
+                  </button>
+                  <button
+                    type="button"
+                    className="sb-play-playlist-item-button"
+                    aria-current={isCurrent}
+                    onClick={() => {
+                      playing.jumpTo(index);
+                    }}
+                  >
+                    <span
+                      className="sb-play-playlist-item-number"
+                      aria-hidden="true"
+                    >
+                      {isDone ? <MaterialIcon>check</MaterialIcon> : index + 1}
+                    </span>
+                    <span className="sb-play-playlist-item-text">
+                      <span className="sb-discover-item-title">
+                        {playlistItemLabel(item, t, resolveBookName)}
+                      </span>
+                      <span className="sb-play-playlist-item-subtitle">
+                        {playlistItemSubtitle(item, t)}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </DiscoverSection>
       </div>

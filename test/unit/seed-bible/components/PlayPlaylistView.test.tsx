@@ -325,7 +325,7 @@ describe("PlayPlaylistView", () => {
     expect(playing.currentIndex.value).toBe(2);
   });
 
-  it("shows a leading icon per item type", () => {
+  it("numbers the queue and says what each step is beneath its title", () => {
     const playlist = createPlaylist({
       items: [
         verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
@@ -349,10 +349,125 @@ describe("PlayPlaylistView", () => {
       );
     });
 
-    const icons = Array.from(
-      container.querySelectorAll(".sb-discover-item-icon")
+    const numbers = Array.from(
+      container.querySelectorAll(".sb-play-playlist-item-number")
     ).map((el) => el.textContent);
-    expect(icons).toEqual(["menu_book", "link", "notes"]);
+    expect(numbers).toEqual(["1", "2", "3"]);
+    const subtitles = Array.from(
+      container.querySelectorAll(".sb-play-playlist-item-subtitle")
+    ).map((el) => el.textContent);
+    expect(subtitles).toEqual(["Scripture", "Link · example.com", "Text · hi"]);
+  });
+
+  describe("progress and the current step", () => {
+    function renderPlaying(items: PlaylistItemData[], step = 0) {
+      const playing = createPlayingState([createPlaylist({ items })]);
+      void playing.jumpTo(step);
+      const { playlists } = createMockPlaylists(playing);
+      const tab = createMockTab([book("GEN", "Genesis")]);
+      act(() => {
+        render(
+          <PlayPlaylistView
+            playlists={playlists}
+            tabs={createMockTabs(tab)}
+            modals={modals}
+            state={state}
+          />,
+          container
+        );
+      });
+      return playing;
+    }
+    const segments = () =>
+      Array.from(container.querySelectorAll(".sb-play-progress-segment")).map(
+        (el) => el.classList.contains("sb-play-progress-segment--reached")
+      );
+
+    it("fills one progress segment per step reached and says which step this is", () => {
+      renderPlaying(
+        [
+          verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+          { type: "html", html: "<p>Read slowly</p>", title: "A note" },
+          { type: "link", url: "https://example.com" },
+        ],
+        1
+      );
+
+      expect(segments()).toEqual([true, true, false]);
+      expect(
+        container
+          .querySelector(".sb-play-progress")
+          ?.getAttribute("aria-valuetext")
+      ).toBe("Step 2 of 3");
+      expect(
+        container.querySelector(".sb-play-current-eyebrow")?.textContent
+      ).toBe("Text · Step 2 of 3");
+      expect(
+        container.querySelector(".sb-play-current-title")?.textContent
+      ).toBe("A note");
+      expect(
+        container.querySelector(".sb-play-current-detail")?.textContent
+      ).toBe("Text · Read slowly");
+      expect(
+        container.querySelector(".sb-play-current-up-next")?.textContent
+      ).toBe("Up next · Link · https://example.com");
+    });
+
+    it("ticks off the steps already behind the current one", () => {
+      renderPlaying(
+        [
+          verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+          verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+          verseItem({ ref: { bookId: "GEN", chapter: 3 } }),
+        ],
+        1
+      );
+
+      const rows = Array.from(
+        container.querySelectorAll(".sb-play-playlist-item")
+      );
+      expect(
+        rows.map((row) => row.classList.contains("sb-play-playlist-item--done"))
+      ).toEqual([true, false, false]);
+      expect(
+        rows[0]?.querySelector(".sb-play-playlist-item-number")?.textContent
+      ).toBe("check");
+      expect(
+        rows[1]?.querySelector(".sb-play-playlist-item-number")?.textContent
+      ).toBe("2");
+    });
+
+    it("scripture steps show the reference as the title with no detail line, and the last step has no up next", () => {
+      renderPlaying([verseItem({ ref: { bookId: "GEN", chapter: 1 } })]);
+
+      expect(
+        container.querySelector(".sb-play-current-eyebrow")?.textContent
+      ).toBe("Scripture · Step 1 of 1");
+      expect(
+        container.querySelector(".sb-play-current-title")?.textContent
+      ).toBe("Genesis 1");
+      expect(container.querySelector(".sb-play-current-detail")).toBeNull();
+      expect(container.querySelector(".sb-play-current-up-next")).toBeNull();
+    });
+
+    it("Next step in the card moves playback on", async () => {
+      const playing = renderPlaying([
+        verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+        verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+      ]);
+
+      await act(async () => {
+        container
+          .querySelector<HTMLButtonElement>(
+            ".sb-play-current .sb-playlist-item-nav-next"
+          )
+          ?.click();
+        await Promise.resolve();
+      });
+
+      expect(playing.currentIndex.value).toBe(1);
+      expect(segments()).toEqual([true, true]);
+    });
   });
 
   describe("drag to reorder", () => {
