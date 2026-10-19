@@ -8,9 +8,13 @@ import type {
   VerseRef,
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import { computeSuggestions } from "./scriptureSuggestions";
+import {
+  computeSuggestions,
+  resolveTypedReference,
+} from "./scriptureSuggestions";
 import { sanitize } from "../../managers/Sanitization";
 import { MaterialIcon } from "../icons";
+import { verseRefLabel } from "../playlistItemLabel";
 
 // Loaded only when a note is opened, like the text item's editor; the SSR
 // guard keeps TipTap out of the single-file SSR bundle.
@@ -29,6 +33,8 @@ interface ScriptureItemInputProps {
   initialNote?: string;
   /** Note title the note's title field starts with. */
   initialNoteTitle?: string;
+  /** Further passages the step starts with, after the main one. */
+  initialExtraRefs?: VerseRef[];
   /**
    * Starts with the note open and empty, for a "Note + Scripture" step the
    * author chose up front. A note that starts filled in is open regardless.
@@ -41,13 +47,13 @@ interface ScriptureItemInputProps {
 /** Imperative handle so a parent can check for / commit an in-progress draft. */
 export interface ScriptureItemInputHandle {
   /**
-   * Whether the reference or the note (body or title) differs from what the
-   * fields started with: an un-added draft when adding, unsaved changes when
-   * editing.
+   * Whether the reference, the further passages, or the note (body or title)
+   * differ from what the fields started with: an un-added draft when adding,
+   * unsaved changes when editing.
    */
   isDirty: () => boolean;
   /** Submits the current input, same as clicking "Add". Returns whether it
-   * actually added an item (false if empty or the reference didn't resolve). */
+   * actually added an item (false if empty or a reference didn't resolve). */
   commit: () => boolean | Promise<boolean>;
 }
 
@@ -68,9 +74,12 @@ function clamp(value: number, min: number, max: number): number {
  * move between chapters within a book, clicking adds an option, and Enter adds
  * the highlighted one.
  *
- * An optional note — a formatted body, a plain-text title, or both — can be
- * attached, making the step a "Note + Scripture" step: the note shows beside
- * the passage while it plays. The body is serialized only on submit.
+ * A step can read more than one passage: "Add another passage" adds a plain
+ * reference field for each further one, read the way the typeahead reads the
+ * main field on Enter. An optional note — a formatted body, a plain-text
+ * title, or both — can be attached, making the step a "Note + Scripture"
+ * step: the note shows beside the passage while it plays. The body is
+ * serialized only on submit.
  */
 export const ScriptureItemInput = forwardRef<
   ScriptureItemInputHandle,
@@ -82,6 +91,7 @@ export const ScriptureItemInput = forwardRef<
     initialValue,
     initialNote,
     initialNoteTitle,
+    initialExtraRefs,
     withNote,
     submitLabel,
   } = props;
@@ -95,6 +105,15 @@ export const ScriptureItemInput = forwardRef<
   // handoff consistent with how the caret actually moves.
   const [inputDir, setInputDir] = useState<"ltr" | "rtl">("ltr");
   const listRef = useRef<HTMLUListElement | null>(null);
+
+  const resolveBookName = (bookId: string) => {
+    const book = books.find((b) => b.id === bookId);
+    return book?.name ?? book?.commonName ?? bookId;
+  };
+  const initialExtraTexts = (initialExtraRefs ?? []).map((extra) =>
+    verseRefLabel(extra, resolveBookName)
+  );
+  const [extraTexts, setExtraTexts] = useState<string[]>(initialExtraTexts);
 
   const noteEditorRef = useRef<Editor | null>(null);
   const [noteOpen, setNoteOpen] = useState(
@@ -181,15 +200,49 @@ export const ScriptureItemInput = forwardRef<
     return current !== initial;
   };
 
-  const finishAdd = (verseRef: VerseRef, note: string | null) => {
+  /** Whether the further passages differ from the ones the step started with. */
+  const extrasChanged = (): boolean => {
+    const typed = extraTexts.map((text) => text.trim()).filter(Boolean);
+    return (
+      typed.length !== initialExtraTexts.length ||
+      typed.some((text, index) => text !== initialExtraTexts[index])
+    );
+  };
+
+  /**
+   * The further passages as references, in order. Null when one of the
+   * fields holds text that names no passage; blank fields are skipped.
+   */
+  const resolveExtraRefs = (): VerseRef[] | null => {
+    const refs: VerseRef[] = [];
+    for (const text of extraTexts) {
+      if (!text.trim()) {
+        continue;
+      }
+      const resolved = resolveTypedReference(text, books);
+      if (!resolved) {
+        return null;
+      }
+      refs.push(resolved);
+    }
+    return refs;
+  };
+
+  const finishAdd = (
+    verseRef: VerseRef,
+    extraRefs: VerseRef[],
+    note: string | null
+  ) => {
     const title = noteOpen ? noteTitle.trim() : "";
     onAdd({
       type: "bible-verse",
       ref: verseRef,
+      ...(extraRefs.length ? { refs: extraRefs } : {}),
       ...(note ? { note } : {}),
       ...(title ? { noteTitle: title } : {}),
     });
     setValue("");
+    setExtraTexts([]);
     setError(null);
     setHighlight({ book: 0, option: 0 });
     noteEditorRef.current?.commands.clearContent();
@@ -201,21 +254,30 @@ export const ScriptureItemInput = forwardRef<
    * Adds the item, with the note when one was written. Without a note body the
    * item is added synchronously; with one it waits for the body to be
    * sanitized. Returns whether it added the item: not while an earlier add is
-   * still waiting.
+   * still waiting, and not when a further passage can't be read.
    */
   const addRef = (verseRef: VerseRef): boolean | Promise<boolean> => {
     if (addingRef.current) {
       return false;
     }
+    const extraRefs = resolveExtraRefs();
+    if (!extraRefs) {
+      setError(
+        t("playlist-add-scripture-error", {
+          defaultValue: "Couldn't find that reference",
+        })
+      );
+      return false;
+    }
     const html = noteHtml();
     if (!html) {
-      finishAdd(verseRef, null);
+      finishAdd(verseRef, extraRefs, null);
       return true;
     }
     addingRef.current = true;
     return sanitize(html)
       .then((note) => {
-        finishAdd(verseRef, note);
+        finishAdd(verseRef, extraRefs, note);
         return true;
       })
       .finally(() => {
@@ -243,10 +305,20 @@ export const ScriptureItemInput = forwardRef<
     ref,
     () => ({
       isDirty: () =>
-        value.trim() !== (initialValue ?? "").trim() || noteChanged(),
+        value.trim() !== (initialValue ?? "").trim() ||
+        extrasChanged() ||
+        noteChanged(),
       commit: handleSubmit,
     }),
-    [value, highlightedOption, initialValue, noteOpen, noteTitle, initialNote]
+    [
+      value,
+      highlightedOption,
+      initialValue,
+      extraTexts,
+      noteOpen,
+      noteTitle,
+      initialNote,
+    ]
   );
 
   return (
@@ -379,6 +451,74 @@ export const ScriptureItemInput = forwardRef<
         ) : null}
       </div>
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}
+
+      {extraTexts.length > 0 ? (
+        <div className="sb-scripture-extra-passages">
+          {extraTexts.map((text, index) => (
+            <div key={index} className="sb-scripture-extra-passage">
+              <input
+                className="sb-settings-text-input sb-playlist-input"
+                type="text"
+                value={text}
+                dir="auto"
+                placeholder={t("playlist-add-scripture-placeholder", {
+                  defaultValue: "e.g. John 3 or John 3:16",
+                })}
+                aria-label={t("playlist-scripture-passage-label", {
+                  defaultValue: "Passage {{number}}",
+                  number: index + 2,
+                })}
+                onInput={(event: Event) => {
+                  const next = (event.currentTarget as HTMLInputElement).value;
+                  setExtraTexts((current) =>
+                    current.map((existing, i) =>
+                      i === index ? next : existing
+                    )
+                  );
+                  setError(null);
+                }}
+              />
+              <button
+                type="button"
+                className="sb-scripture-extra-remove"
+                aria-label={t("playlist-scripture-remove-passage", {
+                  defaultValue: "Remove passage",
+                })}
+                onClick={() =>
+                  setExtraTexts((current) =>
+                    current.filter((_, i) => i !== index)
+                  )
+                }
+              >
+                <MaterialIcon>close</MaterialIcon>
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <div className="sb-scripture-extras-actions">
+        <button
+          type="button"
+          className="sb-scripture-note-toggle"
+          onClick={() => setExtraTexts((current) => [...current, ""])}
+        >
+          <MaterialIcon>add</MaterialIcon>
+          {t("playlist-scripture-add-passage", {
+            defaultValue: "Add another passage",
+          })}
+        </button>
+        {!noteOpen ? (
+          <button
+            type="button"
+            className="sb-scripture-note-toggle sb-scripture-note-add"
+            onClick={() => setNoteOpen(true)}
+          >
+            <MaterialIcon>add_notes</MaterialIcon>
+            {t("playlist-scripture-note-add", { defaultValue: "Add a note" })}
+          </button>
+        ) : null}
+      </div>
+
       {noteOpen ? (
         <div className="sb-scripture-note-field">
           <div className="sb-scripture-note-header">
@@ -435,16 +575,7 @@ export const ScriptureItemInput = forwardRef<
             />
           </Suspense>
         </div>
-      ) : (
-        <button
-          type="button"
-          className="sb-scripture-note-toggle sb-scripture-note-add"
-          onClick={() => setNoteOpen(true)}
-        >
-          <MaterialIcon>add_notes</MaterialIcon>
-          {t("playlist-scripture-note-add", { defaultValue: "Add a note" })}
-        </button>
-      )}
+      ) : null}
     </>
   );
 });

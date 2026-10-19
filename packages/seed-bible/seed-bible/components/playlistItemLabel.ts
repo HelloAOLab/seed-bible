@@ -42,7 +42,9 @@ export function playlistItemLabel(
 ): string {
   switch (item.type) {
     case "bible-verse":
-      return verseRefLabel(item.ref, resolveBookName);
+      return [item.ref, ...(item.refs ?? [])]
+        .map((ref) => verseRefLabel(ref, resolveBookName))
+        .join(" · ");
     case "link":
       return item.title?.trim() || item.preview?.title || item.url;
     case "html":

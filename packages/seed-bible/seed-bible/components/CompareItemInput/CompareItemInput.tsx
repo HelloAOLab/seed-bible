@@ -7,7 +7,7 @@ import type {
   VerseRef,
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import { computeSuggestions } from "../ScriptureItemInput/scriptureSuggestions";
+import { resolveTypedReference } from "../ScriptureItemInput/scriptureSuggestions";
 import { verseRefLabel } from "../playlistItemLabel";
 
 interface CompareItemInputProps {
@@ -31,17 +31,7 @@ export interface CompareItemInputHandle {
   commit: () => boolean;
 }
 
-/**
- * Reads a typed reference the way the scripture field's typeahead would pick
- * it on Enter: the first option of the best-matching book. Null when the text
- * names no passage.
- */
-export function resolveTypedReference(
-  text: string,
-  books: TranslationBook[]
-): VerseRef | null {
-  return computeSuggestions(text, books)[0]?.options[0]?.ref ?? null;
-}
+export { resolveTypedReference };
 
 /**
  * Adds a compare step: two passages shown side by side, with a title and a

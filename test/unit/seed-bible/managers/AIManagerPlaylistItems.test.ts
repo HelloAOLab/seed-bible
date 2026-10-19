@@ -28,6 +28,14 @@ describe("AI playlist item conversions", () => {
       description: "Who does each person think they met?",
     },
     { type: "scene", title: "Scene 1 · Hagar" },
+    {
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 16 },
+      refs: [
+        { bookId: "GEN", chapter: 21, verse: 17, endVerse: 19 },
+        { bookId: "EXO", chapter: 3 },
+      ],
+    },
   ];
 
   it.each(items)("survives a round trip through the AI shape: %o", (item) => {

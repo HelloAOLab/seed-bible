@@ -245,6 +245,7 @@ export const PlaylistItemInput = forwardRef<
         initialValue={editScriptureText}
         initialNote={scripture?.note}
         initialNoteTitle={scripture?.noteTitle}
+        initialExtraRefs={scripture?.refs}
         withNote={mode === "note-scripture"}
         submitLabel={submitLabel}
       />

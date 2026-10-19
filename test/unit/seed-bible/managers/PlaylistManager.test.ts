@@ -5274,4 +5274,65 @@ describe("createPlayingState", () => {
       );
     });
   });
+
+  describe("steps with several passages", () => {
+    it("plays each passage in turn, with the note on the first stop only", () => {
+      const playing = createPlayingState([
+        {
+          id: "p1",
+          title: null,
+          description: null,
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13 },
+              refs: [
+                { bookId: "GEN", chapter: 21, endChapter: 22 },
+                { bookId: "EXO", chapter: 3 },
+              ],
+              note: "<p>Who speaks?</p>",
+              noteTitle: "Hagar",
+            },
+          ],
+        },
+      ]);
+
+      expect(playing.queue.value).toEqual([
+        {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13 },
+          note: "<p>Who speaks?</p>",
+          noteTitle: "Hagar",
+        },
+        { type: "bible-verse", ref: { bookId: "GEN", chapter: 21 } },
+        { type: "bible-verse", ref: { bookId: "GEN", chapter: 22 } },
+        { type: "bible-verse", ref: { bookId: "EXO", chapter: 3 } },
+      ]);
+    });
+
+    it("keeps a note on a cross-chapter passage's first chapter", () => {
+      const playing = createPlayingState([
+        {
+          id: "p1",
+          title: null,
+          description: null,
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 1, endChapter: 2 },
+              note: "<p>Begin.</p>",
+            },
+          ],
+        },
+      ]);
+      expect(playing.queue.value).toEqual([
+        {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 1 },
+          note: "<p>Begin.</p>",
+        },
+        { type: "bible-verse", ref: { bookId: "GEN", chapter: 2 } },
+      ]);
+    });
+  });
 });

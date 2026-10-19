@@ -127,6 +127,18 @@ function optionsForBook(
  * then offers chapters or verses per {@link optionsForBook}; books with no
  * matching chapter/verse are dropped.
  */
+/**
+ * Reads a typed reference the way the scripture field's typeahead would pick
+ * it on Enter: the first option of the best-matching book. Null when the text
+ * names no passage.
+ */
+export function resolveTypedReference(
+  text: string,
+  books: TranslationBook[]
+): VerseRef | null {
+  return computeSuggestions(text, books)[0]?.options[0]?.ref ?? null;
+}
+
 export function computeSuggestions(
   input: string,
   books: TranslationBook[]

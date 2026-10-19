@@ -85,6 +85,12 @@ export const BibleVersePlaylistItem = z.object({
   note: z.string().optional(),
   /** A heading for the note; the passage reference stands in without one. */
   noteTitle: z.string().optional(),
+  /**
+   * Further passages read after `ref`, in order, as part of the same step:
+   * "Genesis 16:7-13, then 21:17-19". Each plays as its own stop in the
+   * reader; the note belongs to the step as a whole.
+   */
+  refs: z.array(VerseRefSchema).optional(),
 });
 
 /** A question put to readers, who answer it as the step plays. */
@@ -660,6 +666,27 @@ export function expandCrossChapterItem(
     return [item];
   }
 
+  // Each passage of the step, main one first, split per chapter. The note
+  // rides on the first stop only: it belongs to the step, not to each chapter.
+  const { refs: extraRefs, note, noteTitle, ...single } = item;
+  const stops = [item.ref, ...(extraRefs ?? [])].flatMap((ref) =>
+    expandChapterRange({ ...single, ref })
+  );
+  return stops.map((stop, index) =>
+    index === 0
+      ? {
+          ...stop,
+          ...(note ? { note } : {}),
+          ...(noteTitle ? { noteTitle } : {}),
+        }
+      : stop
+  );
+}
+
+type ScriptureStep = Extract<PlaylistItemData, { type: "bible-verse" }>;
+
+/** One passage split into one stop per chapter it spans. */
+function expandChapterRange(item: ScriptureStep): ScriptureStep[] {
   const { ref, translationId } = item;
   const endChapter = ref.endChapter;
   if (
@@ -670,7 +697,7 @@ export function expandCrossChapterItem(
     return [item];
   }
 
-  const items: PlaylistItemData[] = [];
+  const items: ScriptureStep[] = [];
 
   for (let chapter = ref.chapter; chapter <= endChapter; chapter++) {
     if (chapter === ref.chapter) {

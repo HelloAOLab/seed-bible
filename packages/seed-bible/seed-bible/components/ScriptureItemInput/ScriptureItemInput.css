@@ -106,9 +106,46 @@
   cursor: pointer;
 }
 
+/* Further passages of the same step, one plain reference field each. */
+.sb-scripture-extra-passages {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.sb-scripture-extra-passage {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sb-scripture-extra-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  cursor: pointer;
+}
+
+.sb-scripture-extra-remove:hover {
+  background: var(--sb-divider-color);
+}
+
+.sb-scripture-extras-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
 .sb-scripture-note-add {
   align-self: flex-start;
-  margin-top: 6px;
 }
 
 .sb-scripture-note-add .material-symbols-outlined {

@@ -1,8 +1,11 @@
 import { playlistItemSubtitle } from "@packages/seed-bible/seed-bible/components/playlistItemSubtitle";
 import type { useI18n } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
-const t = ((_key: string, options?: { defaultValue?: string }) =>
-  options?.defaultValue ?? _key) as ReturnType<typeof useI18n>["t"];
+const t = ((key: string, options?: Record<string, unknown>) =>
+  String(options?.defaultValue ?? key).replace(
+    /\{\{(\w+)\}\}/g,
+    (_match, name: string) => String(options?.[name] ?? "")
+  )) as ReturnType<typeof useI18n>["t"];
 
 describe("playlistItemSubtitle", () => {
   it("names scripture by its kind alone, since the title is the reference", () => {
@@ -96,5 +99,23 @@ describe("playlistItemSubtitle for the newer step kinds", () => {
     expect(playlistItemSubtitle({ type: "scene", title: "Intro" }, t)).toBe(
       "Scene"
     );
+  });
+});
+
+describe("playlistItemSubtitle for a step with several passages", () => {
+  it("counts the passages when the step has no note title", () => {
+    expect(
+      playlistItemSubtitle(
+        {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 16 },
+          refs: [
+            { bookId: "GEN", chapter: 21 },
+            { bookId: "EXO", chapter: 3 },
+          ],
+        },
+        t
+      )
+    ).toBe("Scripture · 3 passages");
   });
 });

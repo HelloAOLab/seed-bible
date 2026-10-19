@@ -421,4 +421,98 @@ describe("ScriptureItemInput", () => {
       expect(onAdd).not.toHaveBeenCalled();
     });
   });
+
+  describe("further passages", () => {
+    const extraInputs = () =>
+      Array.from(
+        container.querySelectorAll<HTMLInputElement>(
+          ".sb-scripture-extra-passage input"
+        )
+      );
+    const addPassage = () =>
+      act(() => {
+        Array.from(container.querySelectorAll("button"))
+          .find((b) => b.textContent?.includes("Add another passage"))
+          ?.click();
+      });
+
+    it("adds a step that reads several passages in order", () => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(<ScriptureItemInput books={BOOKS} onAdd={onAdd} />, container);
+        input().focus();
+        setValue(input(), "Genesis 16");
+      });
+      addPassage();
+      addPassage();
+      act(() => {
+        setValue(extraInputs()[0]!, "Genesis 21");
+        setValue(extraInputs()[1]!, "John 1:1");
+      });
+
+      act(() => submitButton().click());
+
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 16 },
+        refs: [
+          { bookId: "GEN", chapter: 21 },
+          { bookId: "JHN", chapter: 1, verse: 1 },
+        ],
+      } satisfies PlaylistItemData);
+      expect(extraInputs()).toHaveLength(0);
+    });
+
+    it("refuses a further passage it can't read, and skips blank fields", () => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(<ScriptureItemInput books={BOOKS} onAdd={onAdd} />, container);
+        input().focus();
+        setValue(input(), "Genesis 16");
+      });
+      addPassage();
+      addPassage();
+      act(() => setValue(extraInputs()[0]!, "Hobbits 3"));
+
+      act(() => submitButton().click());
+      expect(onAdd).not.toHaveBeenCalled();
+      expect(container.textContent).toContain("Couldn't find that reference");
+
+      act(() => setValue(extraInputs()[0]!, ""));
+      act(() => submitButton().click());
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 16 },
+      } satisfies PlaylistItemData);
+    });
+
+    it("seeds the further passages when editing, removes one, and is dirty only once they change", () => {
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            ref={handleRef}
+            books={BOOKS}
+            onAdd={vi.fn()}
+            initialValue="Genesis 16"
+            initialExtraRefs={[
+              { bookId: "GEN", chapter: 21, verse: 17, endVerse: 19 },
+            ]}
+          />,
+          container
+        );
+      });
+
+      expect(extraInputs().map((el) => el.value)).toEqual(["Genesis 21:17-19"]);
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-scripture-extra-remove")
+          ?.click();
+      });
+      expect(extraInputs()).toHaveLength(0);
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+  });
 });

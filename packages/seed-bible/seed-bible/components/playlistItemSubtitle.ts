@@ -52,7 +52,15 @@ export function playlistItemSubtitle(
     detail?.trim() ? `${kind} · ${detail.trim()}` : kind;
   switch (item.type) {
     case "bible-verse":
-      return withDetail(item.noteTitle);
+      return withDetail(
+        item.noteTitle ||
+          (item.refs?.length
+            ? t("playlist-passage-count", {
+                defaultValue: "{{count}} passages",
+                count: item.refs.length + 1,
+              })
+            : undefined)
+      );
     case "html":
       return withDetail(htmlExcerpt(item.html));
     case "link":

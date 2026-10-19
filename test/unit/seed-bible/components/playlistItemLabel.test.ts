@@ -155,3 +155,19 @@ describe("playlistItemLabel for the newer step kinds", () => {
     ).toBe("Scene");
   });
 });
+
+describe("playlistItemLabel for a step with several passages", () => {
+  it("lists every passage, main one first", () => {
+    expect(
+      playlistItemLabel(
+        {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13 },
+          refs: [{ bookId: "GEN", chapter: 21, verse: 17, endVerse: 19 }],
+        },
+        t,
+        resolveBookName
+      )
+    ).toBe("GEN 16:7-13 · GEN 21:17-19");
+  });
+});
