@@ -9,7 +9,10 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { MaterialIcon } from "../icons";
 import { playlistItemLabel } from "../playlistItemLabel";
 import {
+  minutesLabel,
+  playlistItemIcon,
   playlistItemKind,
+  playlistItemMinutes,
   playlistItemSubtitle,
 } from "../playlistItemSubtitle";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
@@ -21,9 +24,9 @@ import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/Playli
 /**
  * The playing step on a phone: a sheet docked above the chapter navigation,
  * so the passage stays readable above it. Its handle folds it to one line
- * (the step's kind, position and title) or opens it to show the note, what's
- * up next, Previous / Next step, the Listen toggle, and the group's state in
- * a shared session.
+ * (the step's kind, the playlist and the step's title) or opens it to show
+ * the note, what's up next, Previous / Next step, the Listen toggle, and the
+ * group's state in a shared session.
  */
 export function PlaylistMobileSheet(props: {
   playing: PlayingState;
@@ -69,39 +72,57 @@ export function PlaylistMobileSheet(props: {
       aria-label={t("current-step", { defaultValue: "Current step" })}
       dir="auto"
     >
-      <button
-        type="button"
-        className="sb-playlist-sheet-handle"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <span className="sb-playlist-sheet-grip" aria-hidden="true" />
-        <span className="sb-playlist-sheet-eyebrow">
-          {playlistItemKind(item, t)}
-          {" · "}
-          {t("playlist-step-of", {
-            defaultValue: "Step {{step}} of {{total}}",
-            step: index + 1,
-            total: queue.length,
-          })}
-        </span>
-        {!open ? (
-          <span className="sb-playlist-sheet-collapsed-title">{title}</span>
+      <div className="sb-playlist-sheet-head">
+        <button
+          type="button"
+          className="sb-playlist-sheet-handle"
+          aria-expanded={open}
+          aria-label={
+            open
+              ? t("playlist-sheet-fold", { defaultValue: "Fold the step away" })
+              : t("playlist-sheet-open", { defaultValue: "Show the step" })
+          }
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span className="sb-playlist-sheet-grip" aria-hidden="true" />
+          {open ? (
+            <span className="sb-playlist-sheet-progress" aria-hidden="true">
+              {segments}
+            </span>
+          ) : null}
+          <span className="sb-playlist-sheet-eyebrow">
+            <MaterialIcon>{playlistItemIcon(item)}</MaterialIcon>
+            <span className="sb-playlist-sheet-eyebrow-text">
+              {playlistItemKind(item, t)}
+              {" · "}
+              {playlist?.title ??
+                t("untitled-playlist", { defaultValue: "Untitled playlist" })}
+            </span>
+          </span>
+          {!open ? (
+            <span className="sb-playlist-sheet-collapsed-title">{title}</span>
+          ) : null}
+        </button>
+        {canListen ? (
+          <button
+            type="button"
+            className={`sb-playlist-sheet-listen${
+              listening ? " sb-playlist-sheet-listen--on" : ""
+            }`}
+            aria-pressed={listening}
+            aria-label={
+              listening
+                ? t("playlist-listening", { defaultValue: "Listening" })
+                : t("playlist-listen", { defaultValue: "Listen" })
+            }
+            onClick={() => playing.setListenAlong(!listening)}
+          >
+            <MaterialIcon>headphones</MaterialIcon>
+          </button>
         ) : null}
-        <MaterialIcon className="sb-playlist-sheet-caret">
-          {open ? "expand_more" : "expand_less"}
-        </MaterialIcon>
-      </button>
+      </div>
       {open ? (
         <div className="sb-playlist-sheet-body">
-          <div className="sb-playlist-sheet-progress" aria-hidden="true">
-            {segments}
-          </div>
-          {note?.title ? (
-            <p className="sb-playlist-sheet-reference">
-              {playlistItemLabel(item, t, resolveBookName)}
-            </p>
-          ) : null}
           <h3 className="sb-playlist-sheet-title">{title}</h3>
           {note?.html ? (
             <div className="sb-playlist-sheet-note">
@@ -123,33 +144,15 @@ export function PlaylistMobileSheet(props: {
           ) : null}
           {nextItem ? (
             <p className="sb-playlist-sheet-up-next">
-              {t("playlist-up-next", {
-                defaultValue: "Up next · {{kind}} · {{title}}",
+              {t("playlist-up-next-minutes", {
+                defaultValue: "Up next · {{kind}} · {{title}} · {{minutes}}",
                 kind: playlistItemKind(nextItem, t),
                 title: playlistItemLabel(nextItem, t, resolveBookName),
+                minutes: minutesLabel(playlistItemMinutes(nextItem), t),
               })}
             </p>
           ) : null}
-          <div className="sb-playlist-sheet-actions">
-            {canListen ? (
-              <button
-                type="button"
-                className={`sb-playlist-sheet-listen${
-                  listening ? " sb-playlist-sheet-listen--on" : ""
-                }`}
-                aria-pressed={listening}
-                onClick={() => playing.setListenAlong(!listening)}
-              >
-                <MaterialIcon>
-                  {listening ? "headphones" : "headphones"}
-                </MaterialIcon>
-                {listening
-                  ? t("playlist-listening", { defaultValue: "Listening" })
-                  : t("playlist-listen", { defaultValue: "Listen" })}
-              </button>
-            ) : null}
-            <PlaylistItemNav playing={playing} />
-          </div>
+          <PlaylistItemNav playing={playing} />
           {session ? (
             <PlaylistPartyPanel
               session={session}

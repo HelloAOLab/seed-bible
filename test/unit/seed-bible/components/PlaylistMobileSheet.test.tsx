@@ -46,7 +46,7 @@ describe("PlaylistMobileSheet", () => {
     return playing;
   }
 
-  it("opens on the step with its kind, position, note and what's next", async () => {
+  it("opens on the step with its kind, the playlist, its note and what's next", async () => {
     renderSheet([
       {
         type: "bible-verse",
@@ -58,11 +58,8 @@ describe("PlaylistMobileSheet", () => {
     ]);
 
     expect(
-      container.querySelector(".sb-playlist-sheet-eyebrow")?.textContent
-    ).toBe("Note + Scripture · Step 1 of 2");
-    expect(
-      container.querySelector(".sb-playlist-sheet-reference")?.textContent
-    ).toBe("Genesis 16:7-13");
+      container.querySelector(".sb-playlist-sheet-eyebrow-text")?.textContent
+    ).toBe("Note + Scripture · Angel of the LORD");
     expect(
       container.querySelector(".sb-playlist-sheet-title")?.textContent
     ).toBe("Hagar and the Angel");
@@ -73,7 +70,7 @@ describe("PlaylistMobileSheet", () => {
     );
     expect(
       container.querySelector(".sb-playlist-sheet-up-next")?.textContent
-    ).toBe("Up next · Scripture · Genesis 22");
+    ).toBe("Up next · Scripture · Genesis 22 · 4 min");
     expect(
       container.querySelectorAll(".sb-playlist-sheet-segment--reached")
     ).toHaveLength(1);
@@ -103,13 +100,15 @@ describe("PlaylistMobileSheet", () => {
     const listen = container.querySelector<HTMLButtonElement>(
       ".sb-playlist-sheet-listen"
     )!;
-    expect(listen.textContent).toContain("Listen");
+    expect(listen.getAttribute("aria-label")).toBe("Listen");
 
     act(() => listen.click());
     expect(playing.listenAlong.value).toBe(true);
     expect(
-      container.querySelector(".sb-playlist-sheet-listen")?.textContent
-    ).toContain("Listening");
+      container
+        .querySelector(".sb-playlist-sheet-listen")
+        ?.getAttribute("aria-label")
+    ).toBe("Listening");
 
     render(null, container);
     renderSheet(

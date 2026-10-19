@@ -60,13 +60,12 @@ import type { AnnotationsManager } from "./AnnotationsManager";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
 import type { UserGalleryManager } from "./UserGalleryManager";
-import { i18n, useI18n } from "../i18n";
+import { i18n } from "../i18n";
 import {
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
 } from "./FeaturesManager";
 import type { FriendsManager } from "./FriendsManager";
-import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
 import type { SettingsManager } from "./SettingsManager";
 import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
@@ -862,34 +861,18 @@ function getDefaultBelowReaderToolbarTools(): ManagedBibleBelowReaderToolbarTool
   ];
 }
 
-function NowPlayingIcon({
-  playlists,
-  readingState,
-}: {
-  playlists: PlaylistManager;
-  readingState: BibleReadingState;
-}) {
-  const { t } = useI18n();
+/** "3/8": where the playing playlist is, as a pill that opens its player. */
+function NowPlayingIcon({ playlists }: { playlists: PlaylistManager }) {
   const currentlyPlaying = playlists.playing.value;
   if (!currentlyPlaying) return null;
-  const currentPlaylist = currentlyPlaying.playlists.value[0];
-  const currentItem = currentlyPlaying.currentItem.value;
-
-  const books = readingState.translationBooks.value;
-  const resolveBookName = (bookId: string): string => {
-    const book = books?.books.find((b) => b.id === bookId);
-    return book?.name ?? book?.commonName ?? bookId;
-  };
-
-  const title =
-    currentPlaylist?.title ??
-    t("untitled-playlist", { defaultValue: "Untitled playlist" });
+  const step = currentlyPlaying.currentIndex.value + 1;
+  const total = currentlyPlaying.queue.value.length;
   return (
     <span className="sb-now-playing-icon">
-      <h4 className="sb-now-playing-icon-title">{title}</h4>
-      {currentItem && (
-        <span>{playlistItemLabel(currentItem, t, resolveBookName)}</span>
-      )}
+      <MaterialIcon>playlist_play</MaterialIcon>
+      <span className="sb-now-playing-icon-count">
+        {step}/{total}
+      </span>
     </span>
   );
 }
@@ -906,9 +889,7 @@ function getDefaultQuickToolbarTools(
         defaultValue: "Current Playlist",
       },
       className: "sb-quick-toolbar-current-playlist",
-      icon: (c) => (
-        <NowPlayingIcon playlists={c.playlists} readingState={c.readingState} />
-      ),
+      icon: (c) => <NowPlayingIcon playlists={c.playlists} />,
       isVisible: (c) =>
         !!c.playlists.playing.value?.playlists.value.length &&
         c.playlists.isMobile.value,

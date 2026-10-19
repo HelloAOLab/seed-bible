@@ -16,14 +16,22 @@
   z-index: 1;
 }
 
+.sb-playlist-sheet-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding-inline-end: 8px;
+}
+
 .sb-playlist-sheet-handle {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 8px;
-  width: 100%;
+  gap: 8px;
   min-height: 44px;
-  padding: 10px 16px 6px;
+  padding: 16px 0 6px 16px;
   border: none;
   background: transparent;
   color: inherit;
@@ -44,11 +52,27 @@
 }
 
 .sb-playlist-sheet-eyebrow {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--sb-primary-color);
+}
+
+.sb-playlist-sheet-eyebrow .material-symbols-outlined {
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.sb-playlist-sheet-eyebrow-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sb-playlist-sheet-collapsed-title {
@@ -61,11 +85,6 @@
   white-space: nowrap;
 }
 
-.sb-playlist-sheet-caret {
-  margin-inline-start: auto;
-  opacity: 0.6;
-}
-
 .sb-playlist-sheet-body {
   display: flex;
   flex-direction: column;
@@ -76,6 +95,7 @@
 }
 
 .sb-playlist-sheet-progress {
+  flex-basis: 100%;
   display: flex;
   gap: 4px;
 }
@@ -91,17 +111,12 @@
   background: var(--sb-primary-color);
 }
 
-.sb-playlist-sheet-reference {
-  margin: 0;
-  font-size: 0.8125rem;
-  opacity: 0.7;
-}
-
 .sb-playlist-sheet-title {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  line-height: 1.25;
+  font-family: var(--sb-book-title-font-family);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .sb-playlist-sheet-note {
@@ -124,33 +139,29 @@
   white-space: nowrap;
 }
 
-.sb-playlist-sheet-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.sb-playlist-sheet-actions .sb-playlist-item-nav {
-  flex: 1;
+.sb-playlist-sheet-body .sb-playlist-item-nav {
+  margin-top: 4px;
 }
 
 .sb-playlist-sheet-listen {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 2.25rem;
-  padding: 0.375rem 0.75rem;
-  border: 1px solid var(--sb-primary-color);
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-top: 14px;
+  padding: 0;
+  border: none;
   border-radius: 0.5rem;
   background: transparent;
-  color: var(--sb-primary-color);
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  color: var(--sb-font-color);
+  opacity: 0.7;
   cursor: pointer;
 }
 
 .sb-playlist-sheet-listen--on {
+  color: var(--sb-primary-color);
+  opacity: 1;
   background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
 }
