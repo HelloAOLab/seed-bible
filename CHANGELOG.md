@@ -4,9 +4,49 @@
 
 ### ✨ Added
 
+- Add notes to scripture items in playlists and reading plans, shown beside the passage while it plays. ([#1988](https://github.com/HelloAOLab/seed-bible/pull/1988))
+  - A note can have an optional title, which also shows in the playlist queue.
+  - The passage stays highlighted while its note is open.
+  - A scripture reference in a note opens without leaving the playlist, and "Back to playlist" returns to the step, for everyone in a shared session.
+- Edit a reading that's already in a reading plan, instead of only adding or removing readings. ([#1988](https://github.com/HelloAOLab/seed-bible/pull/1988))
+- Show a notice at the top or bottom of the reader when someone else highlights a verse you can't see; tap it to scroll there. ([#1974](https://github.com/HelloAOLab/seed-bible/pull/1974))
+  - The notice shows who highlighted which verse, then shrinks to a small indicator in the corner.
+- Add an Embed option to the Share window, with a theme choice, a preview and code to copy into your own website. ([#1948](https://github.com/HelloAOLab/seed-bible/pull/1948))
+- Add a "Show discovered content" switch under Settings → Display & Theme to hide the compact Discover panel and its toolbar button. ([#1935](https://github.com/HelloAOLab/seed-bible/pull/1935))
+  - With it off, a verse's note button opens the Discover side panel instead.
+- Add Previous and Next buttons to a playlist item's window while the playlist plays, so you can move through it without closing the window. ([#1985](https://github.com/HelloAOLab/seed-bible/pull/1985))
+  - Closing the window now moves on to the next item, the same as Next.
+- Add a back button to reading plans opened from Profile or "Your content", instead of only an X that drops you on the reader. ([#1949](https://github.com/HelloAOLab/seed-bible/pull/1949))
+- Add a Create button to the "Your content" screen for starting a new playlist. ([#1938](https://github.com/HelloAOLab/seed-bible/pull/1938))
+- Let a customization choose whether extensions it doesn't list are available or hidden, including ones added later. ([#2019](https://github.com/HelloAOLab/seed-bible/pull/2019))
+- Keep the theme editor's live preview in view on desktop by floating it beside the pane once you scroll past it. ([#2012](https://github.com/HelloAOLab/seed-bible/pull/2012))
+  - The preview shows the highlight color you're editing.
+- Let extensions open fullscreen and side panes without a header bar. ([#1927](https://github.com/HelloAOLab/seed-bible/pull/1927))
+
 ### 🔧 Changed
 
+- Turn Today's Community section into a feed of notes, replies and reading, with All, Notes and Reading filters. ([#1946](https://github.com/HelloAOLab/seed-bible/pull/1946))
+  - People who read the same chapter around the same time are grouped, such as "Ana and Ben both read John 2".
+  - It opens on recent activity with "See more" for older entries, and a History button opens the activity grid, instead of a time-frame menu.
+- Manage reading plans from a ⋮ menu with Share, Edit and Delete, and confirm deletes in a window instead of an in-place "Delete for good?" button. ([#1949](https://github.com/HelloAOLab/seed-bible/pull/1949))
+- Color the book selector and verse toolbar with the theme's reader toolbar colors, instead of colors of their own. ([#2018](https://github.com/HelloAOLab/seed-bible/pull/2018))
+- Show the Apologist agent's own icon in chats, including to others in a shared chat, instead of an animal placeholder. ([#2010](https://github.com/HelloAOLab/seed-bible/pull/2010))
+
 ### 🐛 Fixed
+
+- Open a session link's chapter inside the session, instead of in a separate tab beside it. ([#2022](https://github.com/HelloAOLab/seed-bible/pull/2022))
+  - If the session can't be joined, a message says so and the chapter opens in a normal tab.
+- Show messages that pop up close together one after another, instead of the newer one replacing the older. ([#1944](https://github.com/HelloAOLab/seed-bible/pull/1944))
+- Fix several problems with extensions while viewing a shared customization. ([#2014](https://github.com/HelloAOLab/seed-bible/pull/2014))
+  - Signed-out visitors can install extensions, and their picks are kept when they sign in.
+  - The customization's auto-installed extensions now install on your first visit.
+  - Removing an extension now uninstalls it, including ones the customization installed for you.
+- Show a "Couldn't save" message when a customization fails to save, instead of acting as if it saved. ([#2019](https://github.com/HelloAOLab/seed-bible/pull/2019))
+- Fix the Friends screen showing no friends or friend requests. ([#2016](https://github.com/HelloAOLab/seed-bible/pull/2016))
+- Return the Discover panel to what it showed before you wrote a note, such as a playing playlist, instead of always to its main view on desktop. ([#1990](https://github.com/HelloAOLab/seed-bible/pull/1990))
+- Fix starting a playlist not scrolling to its first passage when you're already reading that chapter. ([#1988](https://github.com/HelloAOLab/seed-bible/pull/1988))
+- Ask before saving a playlist while an item has unsaved changes, instead of silently dropping them. ([#1988](https://github.com/HelloAOLab/seed-bible/pull/1988))
+- Fix words of Jesus inside a highlight ignoring the red-letter color the theme sets for that highlight. ([#2011](https://github.com/HelloAOLab/seed-bible/pull/2011))
 
 ### 🗑️ Removed
 
