@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} všechny přečetly {{reference}}",
   "feed-empty": "V tomto časovém rámci zatím žádná aktivita.",
   "feed-empty-notes": "V tomto časovém rámci zatím žádné poznámky.",
-  "feed-empty-reading": "V tomto časovém rámci zatím žádné čtení."
+  "feed-empty-reading": "V tomto časovém rámci zatím žádné čtení.",
+  "playlist-scripture-note-label": "Poznámka",
+  "playlist-scripture-note-title-label": "Název poznámky",
+  "playlist-scripture-note-title-placeholder": "Titul (volitelné)",
+  "playlist-scripture-note-add": "Přidat poznámku",
+  "playlist-scripture-note-remove": "Odebrat poznámku",
+  "playlist-scripture-note-show": "Zobrazit poznámku",
+  "playlist-scripture-note-hide": "Skrýt poznámku",
+  "playlist-scripture-note-return": "Zpět na playlist",
+  "playlist-scripture-note-aria": "Poznámka k {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} z {{total}}",
+  "unsaved-item-edit-confirm-title": "Neuložené změny položek",
+  "unsaved-item-edit-confirm-message": "Změnili jste položku, ale tyto změny jste ještě neuložili. Co chcete udělat?",
+  "keep-changes-and-save": "Zachovat změny a uložit",
+  "reading-plan-edit-reading": "Upravit čtení"
 }

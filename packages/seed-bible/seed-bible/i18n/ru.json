@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} все читаются {{reference}}",
   "feed-empty": "В этот период времени активности пока нет.",
   "feed-empty-notes": "Заметок за этот период пока нет.",
-  "feed-empty-reading": "В этот период времени пока ничего не читалось."
+  "feed-empty-reading": "В этот период времени пока ничего не читалось.",
+  "playlist-scripture-note-label": "Примечание",
+  "playlist-scripture-note-title-label": "Примечание к заголовку",
+  "playlist-scripture-note-title-placeholder": "Заголовок (необязательно)",
+  "playlist-scripture-note-add": "Добавить примечание",
+  "playlist-scripture-note-remove": "Удалить примечание",
+  "playlist-scripture-note-show": "Показать примечание",
+  "playlist-scripture-note-hide": "Скрыть заметку",
+  "playlist-scripture-note-return": "Вернуться к плейлисту",
+  "playlist-scripture-note-aria": "Примечание к {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} из {{total}}",
+  "unsaved-item-edit-confirm-title": "Несохраненные изменения элементов",
+  "unsaved-item-edit-confirm-message": "Вы изменили элемент, но еще не сохранили эти изменения. Что вы хотите сделать?",
+  "keep-changes-and-save": "Сохраняйте изменения и сохраняйте.",
+  "reading-plan-edit-reading": "Редактировать чтение"
 }

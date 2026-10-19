@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} ሁሉም ተነቧል {{reference}}",
   "feed-empty": "በዚህ የጊዜ ገደብ ውስጥ እስካሁን ምንም እንቅስቃሴ የለም።",
   "feed-empty-notes": "በዚህ የጊዜ ገደብ ውስጥ እስካሁን ምንም ማስታወሻዎች የሉም።",
-  "feed-empty-reading": "በዚህ የጊዜ ገደብ ውስጥ እስካሁን ምንም ንባብ የለም።"
+  "feed-empty-reading": "በዚህ የጊዜ ገደብ ውስጥ እስካሁን ምንም ንባብ የለም።",
+  "playlist-scripture-note-label": "ማስታወሻ",
+  "playlist-scripture-note-title-label": "የማስታወሻ ርዕስ",
+  "playlist-scripture-note-title-placeholder": "ርዕስ (አማራጭ)",
+  "playlist-scripture-note-add": "ማስታወሻ ያክሉ",
+  "playlist-scripture-note-remove": "ማስታወሻ አስወግድ",
+  "playlist-scripture-note-show": "ማስታወሻ አሳይ",
+  "playlist-scripture-note-hide": "ማስታወሻ ደብቅ",
+  "playlist-scripture-note-return": "ወደ አጫዋች ዝርዝር ተመለስ",
+  "playlist-scripture-note-aria": "በ {{passage}} ላይ ማስታወሻ",
+  "playlist-scripture-note-progress": "{{current}} የ {{total}}",
+  "unsaved-item-edit-confirm-title": "ያልተቀመጡ የንጥል ለውጦች",
+  "unsaved-item-edit-confirm-message": "አንድ ንጥል ቀይረሃል ነገር ግን እነዚያን ለውጦች እስካሁን አላስቀመጥክም። ምን ማድረግ ትፈልጋለህ?",
+  "keep-changes-and-save": "ለውጦችን ያስቀምጡ እና ያስቀምጡ",
+  "reading-plan-edit-reading": "ንባብን ያርትዑ"
 }

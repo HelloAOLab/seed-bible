@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} het almal {{reference}} gelees",
   "feed-empty": "Geen aktiwiteit in hierdie tydperk nog nie.",
   "feed-empty-notes": "Geen notas in hierdie tydsbestek nog nie.",
-  "feed-empty-reading": "Geen lesing in hierdie tydperk nog nie."
+  "feed-empty-reading": "Geen lesing in hierdie tydperk nog nie.",
+  "playlist-scripture-note-label": "Nota",
+  "playlist-scripture-note-title-label": "Notatitel",
+  "playlist-scripture-note-title-placeholder": "Titel (opsioneel)",
+  "playlist-scripture-note-add": "Voeg 'n nota by",
+  "playlist-scripture-note-remove": "Verwyder nota",
+  "playlist-scripture-note-show": "Wys nota",
+  "playlist-scripture-note-hide": "Versteek nota",
+  "playlist-scripture-note-return": "Terug na snitlys",
+  "playlist-scripture-note-aria": "Nota oor {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} van {{total}}",
+  "unsaved-item-edit-confirm-title": "Ongestoorde itemveranderinge",
+  "unsaved-item-edit-confirm-message": "Jy het 'n item verander, maar het nog nie daardie veranderinge gestoor nie. Wat wil jy doen?",
+  "keep-changes-and-save": "Behou veranderinge en stoor",
+  "reading-plan-edit-reading": "Wysig leeswerk"
 }

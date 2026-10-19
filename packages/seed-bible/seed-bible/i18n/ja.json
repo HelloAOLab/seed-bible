@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}}すべて{{reference}}を読みました",
   "feed-empty": "この期間内にはまだ活動は確認されていません。",
   "feed-empty-notes": "この期間に関するメモはまだありません。",
-  "feed-empty-reading": "この期間内にはまだ読書記録はありません。"
+  "feed-empty-reading": "この期間内にはまだ読書記録はありません。",
+  "playlist-scripture-note-label": "注記",
+  "playlist-scripture-note-title-label": "ノートのタイトル",
+  "playlist-scripture-note-title-placeholder": "タイトル（任意）",
+  "playlist-scripture-note-add": "メモを追加",
+  "playlist-scripture-note-remove": "メモを削除",
+  "playlist-scripture-note-show": "ショーノート",
+  "playlist-scripture-note-hide": "メモを非表示にする",
+  "playlist-scripture-note-return": "プレイリストに戻る",
+  "playlist-scripture-note-aria": "{{passage}}に関する注記",
+  "playlist-scripture-note-progress": "{{current}} / {{total}}",
+  "unsaved-item-edit-confirm-title": "保存されていないアイテムの変更",
+  "unsaved-item-edit-confirm-message": "項目を変更しましたが、まだ変更を保存していません。どうしますか？",
+  "keep-changes-and-save": "変更を保存して保存する",
+  "reading-plan-edit-reading": "編集して読む"
 }

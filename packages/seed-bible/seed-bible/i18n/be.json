@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} усе прачыталі {{reference}}",
   "feed-empty": "За гэты прамежак часу актыўнасці пакуль няма.",
   "feed-empty-notes": "Пакуль няма заўваг за гэты прамежак часу.",
-  "feed-empty-reading": "Пакуль што чытання няма ў гэты перыяд."
+  "feed-empty-reading": "Пакуль што чытання няма ў гэты перыяд.",
+  "playlist-scripture-note-label": "Заўвага",
+  "playlist-scripture-note-title-label": "Назва нататкі",
+  "playlist-scripture-note-title-placeholder": "Назва (неабавязкова)",
+  "playlist-scripture-note-add": "Дадаць нататку",
+  "playlist-scripture-note-remove": "Выдаліць нататку",
+  "playlist-scripture-note-show": "Паказаць нататку",
+  "playlist-scripture-note-hide": "Схаваць нататку",
+  "playlist-scripture-note-return": "Назад да плэйліста",
+  "playlist-scripture-note-aria": "Заўвага да {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} з {{total}}",
+  "unsaved-item-edit-confirm-title": "Незахаваныя змены элемента",
+  "unsaved-item-edit-confirm-message": "Вы змянілі элемент, але яшчэ не захавалі гэтыя змены. Што вы хочаце зрабіць?",
+  "keep-changes-and-save": "Захаваць змены і захаваць",
+  "reading-plan-edit-reading": "Рэдагаваць чытанне"
 }

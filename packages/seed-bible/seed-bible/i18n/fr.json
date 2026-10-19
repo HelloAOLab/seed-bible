@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} tous lisent {{reference}}",
   "feed-empty": "Aucune activité n'a été enregistrée durant cette période.",
   "feed-empty-notes": "Aucune note pour l'instant.",
-  "feed-empty-reading": "Aucune lecture n'a encore été effectuée dans ce laps de temps."
+  "feed-empty-reading": "Aucune lecture n'a encore été effectuée dans ce laps de temps.",
+  "playlist-scripture-note-label": "Note",
+  "playlist-scripture-note-title-label": "Note titre",
+  "playlist-scripture-note-title-placeholder": "Titre (facultatif)",
+  "playlist-scripture-note-add": "Ajouter une note",
+  "playlist-scripture-note-remove": "Supprimer la note",
+  "playlist-scripture-note-show": "Afficher la note",
+  "playlist-scripture-note-hide": "Masquer la note",
+  "playlist-scripture-note-return": "Retour à la playlist",
+  "playlist-scripture-note-aria": "Note sur {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} de {{total}}",
+  "unsaved-item-edit-confirm-title": "Modifications non enregistrées",
+  "unsaved-item-edit-confirm-message": "Vous avez modifié un élément mais vous n'avez pas encore enregistré ces modifications. Que souhaitez-vous faire ?",
+  "keep-changes-and-save": "Conservez les modifications et enregistrez-les.",
+  "reading-plan-edit-reading": "Lecture de révision"
 }

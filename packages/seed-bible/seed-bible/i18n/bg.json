@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} всички прочетени {{reference}}",
   "feed-empty": "Все още няма активност в този период от време.",
   "feed-empty-notes": "Все още няма бележки за този период от време.",
-  "feed-empty-reading": "Все още няма четене в този период от време."
+  "feed-empty-reading": "Все още няма четене в този период от време.",
+  "playlist-scripture-note-label": "Забележка",
+  "playlist-scripture-note-title-label": "Заглавие на бележката",
+  "playlist-scripture-note-title-placeholder": "Заглавие (по избор)",
+  "playlist-scripture-note-add": "Добавяне на бележка",
+  "playlist-scripture-note-remove": "Премахване на бележката",
+  "playlist-scripture-note-show": "Покажи бележката",
+  "playlist-scripture-note-hide": "Скриване на бележката",
+  "playlist-scripture-note-return": "Обратно към плейлиста",
+  "playlist-scripture-note-aria": "Бележка върху {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} от {{total}}",
+  "unsaved-item-edit-confirm-title": "Незапазени промени в елементите",
+  "unsaved-item-edit-confirm-message": "Променили сте елемент, но все още не сте запазили тези промени. Какво искате да направите?",
+  "keep-changes-and-save": "Запази промените и ги запази",
+  "reading-plan-edit-reading": "Редактиране на четенето"
 }

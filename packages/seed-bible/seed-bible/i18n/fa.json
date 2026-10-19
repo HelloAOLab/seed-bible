@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} همه خوانده شده {{reference}}",
   "feed-empty": "هنوز هیچ فعالیتی در این بازه زمانی انجام نشده است.",
   "feed-empty-notes": "هنوز یادداشتی در این بازه زمانی ثبت نشده است.",
-  "feed-empty-reading": "هنوز در این بازه زمانی مطالعه‌ای انجام نشده است."
+  "feed-empty-reading": "هنوز در این بازه زمانی مطالعه‌ای انجام نشده است.",
+  "playlist-scripture-note-label": "توجه داشته باشید",
+  "playlist-scripture-note-title-label": "عنوان یادداشت",
+  "playlist-scripture-note-title-placeholder": "عنوان (اختیاری)",
+  "playlist-scripture-note-add": "اضافه کردن یادداشت",
+  "playlist-scripture-note-remove": "حذف یادداشت",
+  "playlist-scripture-note-show": "نمایش یادداشت",
+  "playlist-scripture-note-hide": "پنهان کردن یادداشت",
+  "playlist-scripture-note-return": "بازگشت به لیست پخش",
+  "playlist-scripture-note-aria": "یادداشتی بر {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} از {{total}}",
+  "unsaved-item-edit-confirm-title": "تغییرات آیتم ذخیره نشده",
+  "unsaved-item-edit-confirm-message": "شما یک مورد را تغییر داده‌اید اما هنوز آن تغییرات را ذخیره نکرده‌اید. چه کاری می‌خواهید انجام دهید؟",
+  "keep-changes-and-save": "تغییرات را نگه دارید و ذخیره کنید",
+  "reading-plan-edit-reading": "ویرایش خواندن"
 }

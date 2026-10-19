@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} ყველა წაკითხული {{reference}}",
   "feed-empty": "ამ დროის მონაკვეთში აქტივობა ჯერ არ არის.",
   "feed-empty-notes": "ამ დროის მონაკვეთში შენიშვნები ჯერ არ არის.",
-  "feed-empty-reading": "ამ პერიოდში ჯერ არ არის წაკითხული."
+  "feed-empty-reading": "ამ პერიოდში ჯერ არ არის წაკითხული.",
+  "playlist-scripture-note-label": "შენიშვნა",
+  "playlist-scripture-note-title-label": "შენიშვნის სათაური",
+  "playlist-scripture-note-title-placeholder": "სათაური (არასავალდებულო)",
+  "playlist-scripture-note-add": "შენიშვნის დამატება",
+  "playlist-scripture-note-remove": "ჩანაწერის წაშლა",
+  "playlist-scripture-note-show": "ჩანაწერის ჩვენება",
+  "playlist-scripture-note-hide": "შენიშვნის დამალვა",
+  "playlist-scripture-note-return": "დასაკრავ სიაში დაბრუნება",
+  "playlist-scripture-note-aria": "შენიშვნა {{passage}} ზე",
+  "playlist-scripture-note-progress": "{{current}} {{total}} დან",
+  "unsaved-item-edit-confirm-title": "შეუნახავი ერთეულის ცვლილებები",
+  "unsaved-item-edit-confirm-message": "თქვენ შეცვალეთ ელემენტი, მაგრამ ეს ცვლილებები ჯერ არ შეგინახავთ. რა გსურთ გააკეთოთ?",
+  "keep-changes-and-save": "ცვლილებების შენახვა და შენახვა",
+  "reading-plan-edit-reading": "წაკითხულის რედაქტირება"
 }

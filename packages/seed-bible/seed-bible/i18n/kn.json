@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} ಎಲ್ಲರೂ {{reference}} ಓದಿದ್ದಾರೆ",
   "feed-empty": "ಈ ಸಮಯದಲ್ಲಿ ಇನ್ನೂ ಯಾವುದೇ ಚಟುವಟಿಕೆ ಇಲ್ಲ.",
   "feed-empty-notes": "ಈ ಸಮಯದಲ್ಲಿ ಇನ್ನೂ ಯಾವುದೇ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ.",
-  "feed-empty-reading": "ಈ ಸಮಯದಲ್ಲಿ ಇನ್ನೂ ಯಾವುದೇ ಓದುವಿಕೆ ಇಲ್ಲ."
+  "feed-empty-reading": "ಈ ಸಮಯದಲ್ಲಿ ಇನ್ನೂ ಯಾವುದೇ ಓದುವಿಕೆ ಇಲ್ಲ.",
+  "playlist-scripture-note-label": "ಸೂಚನೆ",
+  "playlist-scripture-note-title-label": "ಟಿಪ್ಪಣಿ ಶೀರ್ಷಿಕೆ",
+  "playlist-scripture-note-title-placeholder": "ಶೀರ್ಷಿಕೆ (ಐಚ್ಛಿಕ)",
+  "playlist-scripture-note-add": "ಟಿಪ್ಪಣಿ ಸೇರಿಸಿ",
+  "playlist-scripture-note-remove": "ಟಿಪ್ಪಣಿ ತೆಗೆದುಹಾಕಿ",
+  "playlist-scripture-note-show": "ಟಿಪ್ಪಣಿ ತೋರಿಸಿ",
+  "playlist-scripture-note-hide": "ಟಿಪ್ಪಣಿ ಮರೆಮಾಡಿ",
+  "playlist-scripture-note-return": "ಪ್ಲೇಪಟ್ಟಿಗೆ ಹಿಂತಿರುಗಿ",
+  "playlist-scripture-note-aria": "{{passage}} ಕುರಿತು ಟಿಪ್ಪಣಿ",
+  "playlist-scripture-note-progress": "{{current}} / {{total}}",
+  "unsaved-item-edit-confirm-title": "ಉಳಿಸದ ಐಟಂ ಬದಲಾವಣೆಗಳು",
+  "unsaved-item-edit-confirm-message": "ನೀವು ಒಂದು ಐಟಂ ಅನ್ನು ಬದಲಾಯಿಸಿದ್ದೀರಿ ಆದರೆ ಆ ಬದಲಾವಣೆಗಳನ್ನು ಇನ್ನೂ ಉಳಿಸಿಲ್ಲ. ನೀವು ಏನು ಮಾಡಲು ಬಯಸುತ್ತೀರಿ?",
+  "keep-changes-and-save": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ ಮತ್ತು ಉಳಿಸಿ",
+  "reading-plan-edit-reading": "ಓದುವಿಕೆಯನ್ನು ಸಂಪಾದಿಸಿ"
 }

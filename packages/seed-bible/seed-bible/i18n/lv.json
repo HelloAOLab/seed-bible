@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} visi izlasīja {{reference}}",
   "feed-empty": "Šajā laika posmā vēl nav aktivitāšu.",
   "feed-empty-notes": "Šajā laika posmā vēl nav piezīmju.",
-  "feed-empty-reading": "Šajā laika posmā vēl nav lasījumu."
+  "feed-empty-reading": "Šajā laika posmā vēl nav lasījumu.",
+  "playlist-scripture-note-label": "Piezīme",
+  "playlist-scripture-note-title-label": "Piezīmes nosaukums",
+  "playlist-scripture-note-title-placeholder": "Nosaukums (pēc izvēles)",
+  "playlist-scripture-note-add": "Pievienot piezīmi",
+  "playlist-scripture-note-remove": "Noņemt piezīmi",
+  "playlist-scripture-note-show": "Rādīt piezīmi",
+  "playlist-scripture-note-hide": "Slēpt piezīmi",
+  "playlist-scripture-note-return": "Atpakaļ uz atskaņošanas sarakstu",
+  "playlist-scripture-note-aria": "Piezīme par {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} no {{total}}",
+  "unsaved-item-edit-confirm-title": "Nesaglabātās vienuma izmaiņas",
+  "unsaved-item-edit-confirm-message": "Jūs esat mainījis vienumu, bet vēl neesat saglabājis šīs izmaiņas. Ko vēlaties darīt?",
+  "keep-changes-and-save": "Saglabāt izmaiņas un saglabāt",
+  "reading-plan-edit-reading": "Rediģēt lasīšanu"
 }

@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} leste alle {{reference}}",
   "feed-empty": "Ingen aktivitet i denne tidsrammen ennå.",
   "feed-empty-notes": "Ingen notater i denne tidsrammen ennå.",
-  "feed-empty-reading": "Ingen lesing i denne tidsrammen ennå."
+  "feed-empty-reading": "Ingen lesing i denne tidsrammen ennå.",
+  "playlist-scripture-note-label": "Note",
+  "playlist-scripture-note-title-label": "Merknadstittel",
+  "playlist-scripture-note-title-placeholder": "Tittel (valgfritt)",
+  "playlist-scripture-note-add": "Legg til et notat",
+  "playlist-scripture-note-remove": "Fjern notat",
+  "playlist-scripture-note-show": "Vis notat",
+  "playlist-scripture-note-hide": "Skjul notat",
+  "playlist-scripture-note-return": "Tilbake til spillelisten",
+  "playlist-scripture-note-aria": "Merknad om {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} av {{total}}",
+  "unsaved-item-edit-confirm-title": "Endringer i ulagrede elementer",
+  "unsaved-item-edit-confirm-message": "Du har endret et element, men har ikke lagret endringene ennå. Hva vil du gjøre?",
+  "keep-changes-and-save": "Behold endringene og lagre",
+  "reading-plan-edit-reading": "Rediger lesing"
 }

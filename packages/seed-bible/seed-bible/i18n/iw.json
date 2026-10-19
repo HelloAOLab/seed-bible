@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} כולם קראו את {{reference}}",
   "feed-empty": "אין עדיין פעילות במסגרת זמן זו.",
   "feed-empty-notes": "אין עדיין הערות במסגרת זמן זו.",
-  "feed-empty-reading": "עדיין לא בוצעה קריאה במסגרת זמן זו."
+  "feed-empty-reading": "עדיין לא בוצעה קריאה במסגרת זמן זו.",
+  "playlist-scripture-note-label": "פֶּתֶק",
+  "playlist-scripture-note-title-label": "כותרת הערה",
+  "playlist-scripture-note-title-placeholder": "כותרת (אופציונלי)",
+  "playlist-scripture-note-add": "הוסף הערה",
+  "playlist-scripture-note-remove": "הסר הערה",
+  "playlist-scripture-note-show": "הצג הערה",
+  "playlist-scripture-note-hide": "הסתר הערה",
+  "playlist-scripture-note-return": "חזרה לרשימת ההשמעה",
+  "playlist-scripture-note-aria": "הערה על {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} מתוך {{total}}",
+  "unsaved-item-edit-confirm-title": "שינויים בפריט שלא נשמרו",
+  "unsaved-item-edit-confirm-message": "שינית פריט אך עדיין לא שמרת את השינויים. מה תרצה לעשות?",
+  "keep-changes-and-save": "שמור שינויים ושמור",
+  "reading-plan-edit-reading": "עריכת קריאה"
 }

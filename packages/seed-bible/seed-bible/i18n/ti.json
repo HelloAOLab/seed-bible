@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} ኩሎም ይንበቡ {{reference}}",
   "feed-empty": "ኣብዚ ናይ ግዜ ገደብ ክሳብ ሕጂ ዝኾነ ንጥፈት የለን።",
   "feed-empty-notes": "ኣብዚ ናይ ግዜ ገደብ ክሳብ ሕጂ ዝኾነ መዘኻኸሪ የለን።",
-  "feed-empty-reading": "ኣብዚ ናይ ግዜ ገደብ ክሳብ ሕጂ ንባብ የለን።"
+  "feed-empty-reading": "ኣብዚ ናይ ግዜ ገደብ ክሳብ ሕጂ ንባብ የለን።",
+  "playlist-scripture-note-label": "መዝገብ",
+  "playlist-scripture-note-title-label": "ኣርእስቲ ኣስተውዕል",
+  "playlist-scripture-note-title-placeholder": "ኣርእስቲ (ኣማራጺ)",
+  "playlist-scripture-note-add": "ሓደ መዘኻኸሪ ወስኸሉ።",
+  "playlist-scripture-note-remove": "መዘኻኸሪ ኣውጽእዎ።",
+  "playlist-scripture-note-show": "መተሓሳሰቢ ኣርእዩ",
+  "playlist-scripture-note-hide": "መዘኻኸሪ ሕባእ",
+  "playlist-scripture-note-return": "ናብ ዝርዝር ደርፍታት ንመለስ",
+  "playlist-scripture-note-aria": "መተሓሳሰቢ ኣብ {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} ናይ {{total}}",
+  "unsaved-item-edit-confirm-title": "ዘይተዓቀበ ኣቕሓ ይቕየር",
+  "unsaved-item-edit-confirm-message": "ሓደ ኣቕሓ ቀይርካ ኣለኻ ግን ነቶም ለውጥታት ክሳብ ሕጂ ኣይዓቀብካዮምን። እንታይ ክትገብር ምደለኻ፧",
+  "keep-changes-and-save": "ለውጢ ኣቐምጦን ዕቅቦን።",
+  "reading-plan-edit-reading": "ንባብ ኣርትዕ"
 }

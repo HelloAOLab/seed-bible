@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} kõik lugesid {{reference}}",
   "feed-empty": "Sellel ajavahemikul pole veel tegevust.",
   "feed-empty-notes": "Selle aja jooksul pole veel märkmeid.",
-  "feed-empty-reading": "Selle aja jooksul pole veel lugemist olnud."
+  "feed-empty-reading": "Selle aja jooksul pole veel lugemist olnud.",
+  "playlist-scripture-note-label": "Märkus",
+  "playlist-scripture-note-title-label": "Märkme pealkiri",
+  "playlist-scripture-note-title-placeholder": "Pealkiri (valikuline)",
+  "playlist-scripture-note-add": "Lisa märkus",
+  "playlist-scripture-note-remove": "Eemalda märkus",
+  "playlist-scripture-note-show": "Näita märkust",
+  "playlist-scripture-note-hide": "Peida märkus",
+  "playlist-scripture-note-return": "Tagasi esitusloendisse",
+  "playlist-scripture-note-aria": "Märkus {{passage}} kohta",
+  "playlist-scripture-note-progress": "{{current}} kokku {{total}}",
+  "unsaved-item-edit-confirm-title": "Salvestamata üksuse muudatused",
+  "unsaved-item-edit-confirm-message": "Oled muutnud ühte elementi, aga pole neid muudatusi veel salvestanud. Mida sa teha soovid?",
+  "keep-changes-and-save": "Säilita muudatused ja salvesta",
+  "reading-plan-edit-reading": "Redigeeri lugemist"
 }

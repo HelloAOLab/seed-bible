@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} semua baca {{reference}}",
   "feed-empty": "Tiada aktiviti dalam tempoh masa ini lagi.",
   "feed-empty-notes": "Tiada nota dalam jangka masa ini lagi.",
-  "feed-empty-reading": "Tiada bacaan dalam tempoh masa ini lagi."
+  "feed-empty-reading": "Tiada bacaan dalam tempoh masa ini lagi.",
+  "playlist-scripture-note-label": "Nota",
+  "playlist-scripture-note-title-label": "Tajuk nota",
+  "playlist-scripture-note-title-placeholder": "Tajuk (pilihan)",
+  "playlist-scripture-note-add": "Tambah nota",
+  "playlist-scripture-note-remove": "Alih keluar nota",
+  "playlist-scripture-note-show": "Tunjukkan nota",
+  "playlist-scripture-note-hide": "Sembunyikan nota",
+  "playlist-scripture-note-return": "Kembali ke senarai main",
+  "playlist-scripture-note-aria": "Nota tentang {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} daripada {{total}}",
+  "unsaved-item-edit-confirm-title": "Perubahan item yang tidak disimpan",
+  "unsaved-item-edit-confirm-message": "Anda telah menukar item tetapi belum menyimpan perubahan tersebut lagi. Apakah yang ingin anda lakukan?",
+  "keep-changes-and-save": "Simpan perubahan dan simpan",
+  "reading-plan-edit-reading": "Edit bacaan"
 }

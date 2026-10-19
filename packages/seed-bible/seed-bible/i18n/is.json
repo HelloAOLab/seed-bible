@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} öll lesið {{reference}}",
   "feed-empty": "Engin virkni á þessu tímabili ennþá.",
   "feed-empty-notes": "Engar athugasemdir innan þessa tímaramma ennþá.",
-  "feed-empty-reading": "Engin lesning á þessu tímabili ennþá."
+  "feed-empty-reading": "Engin lesning á þessu tímabili ennþá.",
+  "playlist-scripture-note-label": "Athugið",
+  "playlist-scripture-note-title-label": "Titill athugasemdar",
+  "playlist-scripture-note-title-placeholder": "Titill (valfrjálst)",
+  "playlist-scripture-note-add": "Bæta við athugasemd",
+  "playlist-scripture-note-remove": "Fjarlægja athugasemd",
+  "playlist-scripture-note-show": "Sýna athugasemd",
+  "playlist-scripture-note-hide": "Fela athugasemd",
+  "playlist-scripture-note-return": "Til baka á spilunarlista",
+  "playlist-scripture-note-aria": "Athugasemd um {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} af {{total}}",
+  "unsaved-item-edit-confirm-title": "Óvistaðar breytingar á atriði",
+  "unsaved-item-edit-confirm-message": "Þú hefur breytt atriði en hefur ekki vistað breytingarnar ennþá. Hvað viltu gera?",
+  "keep-changes-and-save": "Geyma breytingar og vista",
+  "reading-plan-edit-reading": "Breyta lestri"
 }

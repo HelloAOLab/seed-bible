@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} tất cả đều đọc {{reference}}",
   "feed-empty": "Hiện chưa có hoạt động nào trong khung thời gian này.",
   "feed-empty-notes": "Hiện chưa có ghi chú nào trong khung thời gian này.",
-  "feed-empty-reading": "Hiện chưa có bài đọc nào trong khung thời gian này."
+  "feed-empty-reading": "Hiện chưa có bài đọc nào trong khung thời gian này.",
+  "playlist-scripture-note-label": "Ghi chú",
+  "playlist-scripture-note-title-label": "Tiêu đề ghi chú",
+  "playlist-scripture-note-title-placeholder": "Tiêu đề (tùy chọn)",
+  "playlist-scripture-note-add": "Thêm ghi chú",
+  "playlist-scripture-note-remove": "Xóa ghi chú",
+  "playlist-scripture-note-show": "Hiển thị ghi chú",
+  "playlist-scripture-note-hide": "Ẩn ghi chú",
+  "playlist-scripture-note-return": "Quay lại danh sách phát",
+  "playlist-scripture-note-aria": "Ghi chú về {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} của {{total}}",
+  "unsaved-item-edit-confirm-title": "Thay đổi mục chưa lưu",
+  "unsaved-item-edit-confirm-message": "Bạn đã thay đổi một mục nhưng chưa lưu lại những thay đổi đó. Bạn muốn làm gì?",
+  "keep-changes-and-save": "Lưu các thay đổi và lưu lại.",
+  "reading-plan-edit-reading": "Chỉnh sửa bài đọc"
 }

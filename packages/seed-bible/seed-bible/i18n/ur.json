@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} سب نے {{reference}} پڑھا",
   "feed-empty": "اس ٹائم فریم میں ابھی تک کوئی سرگرمی نہیں ہے۔",
   "feed-empty-notes": "اس ٹائم فریم میں ابھی تک کوئی نوٹ نہیں ہے۔",
-  "feed-empty-reading": "اس ٹائم فریم میں ابھی تک کوئی پڑھنا نہیں ہے۔"
+  "feed-empty-reading": "اس ٹائم فریم میں ابھی تک کوئی پڑھنا نہیں ہے۔",
+  "playlist-scripture-note-label": "نوٹ",
+  "playlist-scripture-note-title-label": "نوٹ کا عنوان",
+  "playlist-scripture-note-title-placeholder": "عنوان (اختیاری)",
+  "playlist-scripture-note-add": "ایک نوٹ شامل کریں۔",
+  "playlist-scripture-note-remove": "نوٹ ہٹا دیں۔",
+  "playlist-scripture-note-show": "نوٹ دکھائیں۔",
+  "playlist-scripture-note-hide": "نوٹ چھپائیں۔",
+  "playlist-scripture-note-return": "پلے لسٹ پر واپس جائیں۔",
+  "playlist-scripture-note-aria": "{{passage}} پر نوٹ",
+  "playlist-scripture-note-progress": "{ {{total}} میں سے {{ {{current}} }}",
+  "unsaved-item-edit-confirm-title": "غیر محفوظ شدہ آئٹم کی تبدیلیاں",
+  "unsaved-item-edit-confirm-message": "آپ نے ایک آئٹم کو تبدیل کیا ہے لیکن ابھی تک ان تبدیلیوں کو محفوظ نہیں کیا ہے۔ آپ کیا کرنا چاہیں گے؟",
+  "keep-changes-and-save": "تبدیلیاں رکھیں اور محفوظ کریں۔",
+  "reading-plan-edit-reading": "پڑھنے میں ترمیم کریں۔"
 }

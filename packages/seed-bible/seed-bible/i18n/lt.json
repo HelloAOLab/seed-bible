@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} visi perskaitė {{reference}}",
   "feed-empty": "Šiuo laikotarpiu dar nėra jokios veiklos.",
   "feed-empty-notes": "Šiuo laikotarpiu dar nėra jokių pastabų.",
-  "feed-empty-reading": "Šiuo laikotarpiu dar nėra skaitymų."
+  "feed-empty-reading": "Šiuo laikotarpiu dar nėra skaitymų.",
+  "playlist-scripture-note-label": "Pastaba",
+  "playlist-scripture-note-title-label": "Užrašo pavadinimas",
+  "playlist-scripture-note-title-placeholder": "Pavadinimas (nebūtina)",
+  "playlist-scripture-note-add": "Pridėti pastabą",
+  "playlist-scripture-note-remove": "Pašalinti užrašą",
+  "playlist-scripture-note-show": "Rodyti pastabą",
+  "playlist-scripture-note-hide": "Slėpti užrašą",
+  "playlist-scripture-note-return": "Atgal į grojaraštį",
+  "playlist-scripture-note-aria": "Pastaba apie {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} iš {{total}}",
+  "unsaved-item-edit-confirm-title": "Neišsaugoti elemento pakeitimai",
+  "unsaved-item-edit-confirm-message": "Pakeitėte elementą, bet dar neišsaugojote šių pakeitimų. Ką norėtumėte daryti?",
+  "keep-changes-and-save": "Išsaugoti pakeitimus ir išsaugoti",
+  "reading-plan-edit-reading": "Redaguoti skaitymą"
 }

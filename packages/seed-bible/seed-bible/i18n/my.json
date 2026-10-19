@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} အားလုံးဖတ်ပြီးပါပြီ {{reference}}",
   "feed-empty": "ဤကာလအတွင်း မည်သည့်လှုပ်ရှားမှုမျှ မရှိသေးပါ။",
   "feed-empty-notes": "ဤအချိန်ဘောင်အတွင်း မှတ်စုများ မရှိသေးပါ။",
-  "feed-empty-reading": "ဒီကာလအတွင်းမှာ စာမဖတ်ရသေးဘူး။"
+  "feed-empty-reading": "ဒီကာလအတွင်းမှာ စာမဖတ်ရသေးဘူး။",
+  "playlist-scripture-note-label": "မှတ်ချက်",
+  "playlist-scripture-note-title-label": "မှတ်စုခေါင်းစဉ်",
+  "playlist-scripture-note-title-placeholder": "ခေါင်းစဉ် (ရွေးချယ်နိုင်သည်)",
+  "playlist-scripture-note-add": "မှတ်စုတစ်ခုထည့်ပါ",
+  "playlist-scripture-note-remove": "မှတ်စုကို ဖယ်ရှားပါ",
+  "playlist-scripture-note-show": "မှတ်စုပြပါ",
+  "playlist-scripture-note-hide": "မှတ်စုကို ဝှက်ပါ",
+  "playlist-scripture-note-return": "သီချင်းစာရင်းသို့ ပြန်သွားရန်",
+  "playlist-scripture-note-aria": "{{passage}} အကြောင်း မှတ်ချက်",
+  "playlist-scripture-note-progress": "{{current}} မှ {{total}}",
+  "unsaved-item-edit-confirm-title": "မသိမ်းဆည်းရသေးသော အရာပြောင်းလဲမှုများ",
+  "unsaved-item-edit-confirm-message": "သင်သည် အရာတစ်ခုကို ပြောင်းလဲခဲ့သော်လည်း ထိုပြောင်းလဲမှုများကို မသိမ်းဆည်းရသေးပါ။ သင်ဘာလုပ်ချင်ပါသလဲ။",
+  "keep-changes-and-save": "ပြောင်းလဲမှုများကို သိမ်းဆည်းပြီး သိမ်းဆည်းပါ",
+  "reading-plan-edit-reading": "စာဖတ်ခြင်းကို တည်းဖြတ်ပါ"
 }

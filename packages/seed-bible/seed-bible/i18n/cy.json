@@ -1183,5 +1183,19 @@
   "feed-all-read": "Mae {{names}} i gyd wedi darllen {{reference}}",
   "feed-empty": "Dim gweithgaredd yn yr amserlen hon eto.",
   "feed-empty-notes": "Dim nodiadau yn yr amserlen hon eto.",
-  "feed-empty-reading": "Dim darlleniad yn yr amserlen hon eto."
+  "feed-empty-reading": "Dim darlleniad yn yr amserlen hon eto.",
+  "playlist-scripture-note-label": "Nodyn",
+  "playlist-scripture-note-title-label": "Teitl y nodyn",
+  "playlist-scripture-note-title-placeholder": "Teitl (dewisol)",
+  "playlist-scripture-note-add": "Ychwanegu nodyn",
+  "playlist-scripture-note-remove": "Dileu nodyn",
+  "playlist-scripture-note-show": "Dangos nodyn",
+  "playlist-scripture-note-hide": "Cuddio nodyn",
+  "playlist-scripture-note-return": "Yn ôl i'r rhestr chwarae",
+  "playlist-scripture-note-aria": "Nodyn ar {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} o {{total}}",
+  "unsaved-item-edit-confirm-title": "Newidiadau eitem heb eu cadw",
+  "unsaved-item-edit-confirm-message": "Rydych chi wedi newid eitem ond dydych chi ddim wedi cadw'r newidiadau hynny eto. Beth hoffech chi ei wneud?",
+  "keep-changes-and-save": "Cadw newidiadau a chadw",
+  "reading-plan-edit-reading": "Golygu darlleniad"
 }

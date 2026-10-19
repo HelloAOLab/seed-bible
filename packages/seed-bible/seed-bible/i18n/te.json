@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} అన్నీ {{reference}} చదువుతాయి",
   "feed-empty": "ఈ కాల వ్యవధిలో ఇంకా ఎలాంటి కార్యకలాపం జరగలేదు.",
   "feed-empty-notes": "ఈ కాల వ్యవధిలో ఇంకా ఎలాంటి గమనికలు లేవు.",
-  "feed-empty-reading": "ఈ కాల వ్యవధిలో ఇంకా ఏమీ చదవలేదు."
+  "feed-empty-reading": "ఈ కాల వ్యవధిలో ఇంకా ఏమీ చదవలేదు.",
+  "playlist-scripture-note-label": "గమనిక",
+  "playlist-scripture-note-title-label": "గమనిక శీర్షిక",
+  "playlist-scripture-note-title-placeholder": "శీర్షిక (ఐచ్ఛికం)",
+  "playlist-scripture-note-add": "గమనికను జోడించండి",
+  "playlist-scripture-note-remove": "గమనికను తొలగించండి",
+  "playlist-scripture-note-show": "గమనికను చూపించు",
+  "playlist-scripture-note-hide": "గమనికను దాచండి",
+  "playlist-scripture-note-return": "ప్లేలిస్ట్‌కు తిరిగి వెళ్లండి",
+  "playlist-scripture-note-aria": "{{passage}} పై గమనిక",
+  "playlist-scripture-note-progress": "{{current}} of {{total}}",
+  "unsaved-item-edit-confirm-title": "సేవ్ చేయని అంశం మార్పులు",
+  "unsaved-item-edit-confirm-message": "మీరు ఒక అంశాన్ని మార్చారు కానీ ఆ మార్పులను ఇంకా సేవ్ చేయలేదు. మీరు ఏమి చేయాలనుకుంటున్నారు?",
+  "keep-changes-and-save": "మార్పులను ఉంచి, భద్రపరచండి",
+  "reading-plan-edit-reading": "సవరణ పఠనం"
 }

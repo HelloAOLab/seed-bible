@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} wszyscy czytają {{reference}}",
   "feed-empty": "W tym czasie nie zaobserwowano jeszcze żadnej aktywności.",
   "feed-empty-notes": "W tym okresie nie ma jeszcze żadnych notatek.",
-  "feed-empty-reading": "W tym czasie nie odnotowaliśmy jeszcze żadnego odczytu."
+  "feed-empty-reading": "W tym czasie nie odnotowaliśmy jeszcze żadnego odczytu.",
+  "playlist-scripture-note-label": "Notatka",
+  "playlist-scripture-note-title-label": "Tytuł notatki",
+  "playlist-scripture-note-title-placeholder": "Tytuł (opcjonalnie)",
+  "playlist-scripture-note-add": "Dodaj notatkę",
+  "playlist-scripture-note-remove": "Usuń notatkę",
+  "playlist-scripture-note-show": "Pokaż notatkę",
+  "playlist-scripture-note-hide": "Ukryj notatkę",
+  "playlist-scripture-note-return": "Powrót do listy odtwarzania",
+  "playlist-scripture-note-aria": "Notatka na temat {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} z {{total}}",
+  "unsaved-item-edit-confirm-title": "Niezapisane zmiany elementów",
+  "unsaved-item-edit-confirm-message": "Zmieniłeś element, ale jeszcze nie zapisałeś zmian. Co chcesz zrobić?",
+  "keep-changes-and-save": "Zachowaj zmiany i zapisz",
+  "reading-plan-edit-reading": "Edytuj czytanie"
 }

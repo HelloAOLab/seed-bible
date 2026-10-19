@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} au citit toate {{reference}}",
   "feed-empty": "Nicio activitate în acest interval de timp încă.",
   "feed-empty-notes": "Nicio notă în acest interval de timp încă.",
-  "feed-empty-reading": "Nicio lectură în acest interval de timp încă."
+  "feed-empty-reading": "Nicio lectură în acest interval de timp încă.",
+  "playlist-scripture-note-label": "Nota",
+  "playlist-scripture-note-title-label": "Titlul notei",
+  "playlist-scripture-note-title-placeholder": "Titlu (opțional)",
+  "playlist-scripture-note-add": "Adăugați o notă",
+  "playlist-scripture-note-remove": "Eliminați nota",
+  "playlist-scripture-note-show": "Afișează nota",
+  "playlist-scripture-note-hide": "Ascunde nota",
+  "playlist-scripture-note-return": "Înapoi la playlist",
+  "playlist-scripture-note-aria": "Notă despre {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} din {{total}}",
+  "unsaved-item-edit-confirm-title": "Modificări ale elementelor nesalvate",
+  "unsaved-item-edit-confirm-message": "Ai modificat un element, dar nu ai salvat încă modificările respective. Ce dorești să faci?",
+  "keep-changes-and-save": "Păstrează modificările și salvează",
+  "reading-plan-edit-reading": "Editare lectură"
 }

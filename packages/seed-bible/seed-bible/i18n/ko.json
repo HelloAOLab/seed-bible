@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} 모두 {{reference}} 를 읽었습니다.",
   "feed-empty": "이 시간대에는 아직 활동이 없습니다.",
   "feed-empty-notes": "이 기간에 대한 메모는 아직 없습니다.",
-  "feed-empty-reading": "이 기간에는 아직 읽은 내용이 없습니다."
+  "feed-empty-reading": "이 기간에는 아직 읽은 내용이 없습니다.",
+  "playlist-scripture-note-label": "메모",
+  "playlist-scripture-note-title-label": "메모 제목",
+  "playlist-scripture-note-title-placeholder": "제목 (선택 사항)",
+  "playlist-scripture-note-add": "메모를 추가하세요",
+  "playlist-scripture-note-remove": "메모를 삭제하세요",
+  "playlist-scripture-note-show": "참고 표시",
+  "playlist-scripture-note-hide": "메모 숨기기",
+  "playlist-scripture-note-return": "재생 목록으로 돌아가기",
+  "playlist-scripture-note-aria": "{{passage}} 에 대한 참고 사항",
+  "playlist-scripture-note-progress": "{{current}} 의 {{total}}",
+  "unsaved-item-edit-confirm-title": "저장되지 않은 항목 변경 사항",
+  "unsaved-item-edit-confirm-message": "항목을 변경했지만 아직 변경 사항을 저장하지 않았습니다. 어떻게 하시겠습니까?",
+  "keep-changes-and-save": "변경 사항을 저장하고 저장하세요.",
+  "reading-plan-edit-reading": "읽기 편집"
 }

@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} ਸਾਰੇ ਪੜ੍ਹੇ ਗਏ {{reference}}",
   "feed-empty": "ਇਸ ਸਮਾਂ ਸੀਮਾ ਵਿੱਚ ਅਜੇ ਕੋਈ ਗਤੀਵਿਧੀ ਨਹੀਂ ਹੈ।",
   "feed-empty-notes": "ਇਸ ਸਮਾਂ ਸੀਮਾ ਵਿੱਚ ਅਜੇ ਕੋਈ ਨੋਟਸ ਨਹੀਂ ਹਨ।",
-  "feed-empty-reading": "ਇਸ ਸਮੇਂ ਵਿੱਚ ਅਜੇ ਕੋਈ ਪੜ੍ਹਨਾ ਨਹੀਂ ਹੈ।"
+  "feed-empty-reading": "ਇਸ ਸਮੇਂ ਵਿੱਚ ਅਜੇ ਕੋਈ ਪੜ੍ਹਨਾ ਨਹੀਂ ਹੈ।",
+  "playlist-scripture-note-label": "ਨੋਟ",
+  "playlist-scripture-note-title-label": "ਨੋਟ ਦਾ ਸਿਰਲੇਖ",
+  "playlist-scripture-note-title-placeholder": "ਸਿਰਲੇਖ (ਵਿਕਲਪਿਕ)",
+  "playlist-scripture-note-add": "ਇੱਕ ਨੋਟ ਸ਼ਾਮਲ ਕਰੋ",
+  "playlist-scripture-note-remove": "ਨੋਟ ਹਟਾਓ",
+  "playlist-scripture-note-show": "ਨੋਟ ਦਿਖਾਓ",
+  "playlist-scripture-note-hide": "ਨੋਟ ਲੁਕਾਓ",
+  "playlist-scripture-note-return": "ਪਲੇਲਿਸਟ ਤੇ ਵਾਪਸ ਜਾਓ",
+  "playlist-scripture-note-aria": "{{passage}} ਤੇ ਨੋਟ",
+  "playlist-scripture-note-progress": "{{current}} {{total}}",
+  "unsaved-item-edit-confirm-title": "ਅਣਰੱਖਿਅਤ ਆਈਟਮ ਬਦਲਾਅ",
+  "unsaved-item-edit-confirm-message": "ਤੁਸੀਂ ਇੱਕ ਆਈਟਮ ਬਦਲੀ ਹੈ ਪਰ ਅਜੇ ਤੱਕ ਉਹਨਾਂ ਬਦਲਾਵਾਂ ਨੂੰ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤਾ ਹੈ। ਤੁਸੀਂ ਕੀ ਕਰਨਾ ਚਾਹੋਗੇ?",
+  "keep-changes-and-save": "ਬਦਲਾਵਾਂ ਨੂੰ ਰੱਖੋ ਅਤੇ ਸੇਵ ਕਰੋ",
+  "reading-plan-edit-reading": "ਪੜ੍ਹਨ ਦਾ ਸੰਪਾਦਨ ਕਰੋ"
 }

@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} баары {{reference}} окулган",
   "feed-empty": "Бул убакыт аралыгында азырынча эч кандай аракет жок.",
   "feed-empty-notes": "Бул убакыт аралыгында азырынча эч кандай жазуулар жок.",
-  "feed-empty-reading": "Бул убакыт аралыгында азырынча окуу жок."
+  "feed-empty-reading": "Бул убакыт аралыгында азырынча окуу жок.",
+  "playlist-scripture-note-label": "Эскертүү",
+  "playlist-scripture-note-title-label": "Эскертүүнүн аталышы",
+  "playlist-scripture-note-title-placeholder": "Аталышы (милдеттүү эмес)",
+  "playlist-scripture-note-add": "Эскертүү кошуу",
+  "playlist-scripture-note-remove": "Эскертүүнү алып салуу",
+  "playlist-scripture-note-show": "Эскертмени көрсөтүү",
+  "playlist-scripture-note-hide": "Эскертүүнү жашыруу",
+  "playlist-scripture-note-return": "Ойнотмо тизмеге кайтуу",
+  "playlist-scripture-note-aria": "{{passage}} боюнча эскертүү",
+  "playlist-scripture-note-progress": "{{current}} {{total}}",
+  "unsaved-item-edit-confirm-title": "Сакталбаган элементтердин өзгөртүүлөрү",
+  "unsaved-item-edit-confirm-message": "Сиз бир нерсени өзгөрттүңүз, бирок ал өзгөртүүлөрдү сактай элексиз. Эмне кылгыңыз келет?",
+  "keep-changes-and-save": "Өзгөртүүлөрдү сактоо жана сактоо",
+  "reading-plan-edit-reading": "Окууну түзөтүү"
 }

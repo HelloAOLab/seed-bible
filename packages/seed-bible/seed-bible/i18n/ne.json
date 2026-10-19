@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} सबै पढिएका {{reference}}",
   "feed-empty": "यस समय सीमामा अहिलेसम्म कुनै गतिविधि छैन।",
   "feed-empty-notes": "यस समय सीमामा अहिलेसम्म कुनै पनि नोटहरू छैनन्।",
-  "feed-empty-reading": "यस समयसीमामा अहिलेसम्म कुनै पठन छैन।"
+  "feed-empty-reading": "यस समयसीमामा अहिलेसम्म कुनै पठन छैन।",
+  "playlist-scripture-note-label": "नोट",
+  "playlist-scripture-note-title-label": "नोट शीर्षक",
+  "playlist-scripture-note-title-placeholder": "शीर्षक (वैकल्पिक)",
+  "playlist-scripture-note-add": "एउटा नोट थप्नुहोस्",
+  "playlist-scripture-note-remove": "नोट हटाउनुहोस्",
+  "playlist-scripture-note-show": "नोट देखाउनुहोस्",
+  "playlist-scripture-note-hide": "नोट लुकाउनुहोस्",
+  "playlist-scripture-note-return": "प्लेलिस्टमा फर्कनुहोस्",
+  "playlist-scripture-note-aria": "{{passage}} मा नोट",
+  "playlist-scripture-note-progress": "{{ {{total}} {{current}} }}",
+  "unsaved-item-edit-confirm-title": "सुरक्षित नगरिएका वस्तु परिवर्तनहरू",
+  "unsaved-item-edit-confirm-message": "तपाईंले एउटा वस्तु परिवर्तन गर्नुभएको छ तर ती परिवर्तनहरू अहिलेसम्म सुरक्षित गर्नुभएको छैन। तपाईं के गर्न चाहनुहुन्छ?",
+  "keep-changes-and-save": "परिवर्तनहरू राख्नुहोस् र बचत गर्नुहोस्",
+  "reading-plan-edit-reading": "पढाइ सम्पादन गर्नुहोस्"
 }

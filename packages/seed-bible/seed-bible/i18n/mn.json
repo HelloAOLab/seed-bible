@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} бүгдийг нь {{reference}} уншсан",
   "feed-empty": "Энэ хугацаанд одоогоор ямар ч үйл ажиллагаа алга байна.",
   "feed-empty-notes": "Энэ хугацаанд одоогоор тэмдэглэл алга байна.",
-  "feed-empty-reading": "Энэ хугацаанд хараахан уншлага хийгээгүй байна."
+  "feed-empty-reading": "Энэ хугацаанд хараахан уншлага хийгээгүй байна.",
+  "playlist-scripture-note-label": "Тэмдэглэл",
+  "playlist-scripture-note-title-label": "Тэмдэглэлийн гарчиг",
+  "playlist-scripture-note-title-placeholder": "Гарчиг (заавал биш)",
+  "playlist-scripture-note-add": "Тэмдэглэл нэмэх",
+  "playlist-scripture-note-remove": "Тэмдэглэлийг устгах",
+  "playlist-scripture-note-show": "Тэмдэглэлийг харуулах",
+  "playlist-scripture-note-hide": "Тэмдэглэлийг нуух",
+  "playlist-scripture-note-return": "Тоглуулах жагсаалтад буцах",
+  "playlist-scripture-note-aria": "{{passage}} дээрх тэмдэглэл",
+  "playlist-scripture-note-progress": "{{current}} -с {{total}}",
+  "unsaved-item-edit-confirm-title": "Хадгалаагүй зүйлийн өөрчлөлтүүд",
+  "unsaved-item-edit-confirm-message": "Та нэг зүйлийг өөрчилсөн боловч тэдгээр өөрчлөлтийг хараахан хадгалаагүй байна. Та юу хийхийг хүсэж байна вэ?",
+  "keep-changes-and-save": "Өөрчлөлтийг хадгалж, хадгалах",
+  "reading-plan-edit-reading": "Уншихыг засах"
 }

@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} mind elolvasta {{reference}}",
   "feed-empty": "Ebben az időszakban még nincs aktivitás.",
   "feed-empty-notes": "Ebben az időszakban még nincsenek jegyzetek.",
-  "feed-empty-reading": "Ebben az időszakban még nem volt olvasás."
+  "feed-empty-reading": "Ebben az időszakban még nem volt olvasás.",
+  "playlist-scripture-note-label": "Jegyzet",
+  "playlist-scripture-note-title-label": "Jegyzet címe",
+  "playlist-scripture-note-title-placeholder": "Cím (opcionális)",
+  "playlist-scripture-note-add": "Megjegyzés hozzáadása",
+  "playlist-scripture-note-remove": "Jegyzet eltávolítása",
+  "playlist-scripture-note-show": "Jegyzet megjelenítése",
+  "playlist-scripture-note-hide": "Jegyzet elrejtése",
+  "playlist-scripture-note-return": "Vissza a lejátszási listához",
+  "playlist-scripture-note-aria": "Megjegyzés a következőhöz: {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} / {{total}}",
+  "unsaved-item-edit-confirm-title": "Nem mentett elemmódosítások",
+  "unsaved-item-edit-confirm-message": "Módosított egy elemet, de még nem mentette a módosításokat. Mit szeretne tenni?",
+  "keep-changes-and-save": "Változtatások megőrzése és mentés",
+  "reading-plan-edit-reading": "Olvasás szerkesztése"
 }

@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} opavave omoñe'ẽ {{reference}}",
   "feed-empty": "Ndaipóri gueteri actividad ko plazo-pe.",
   "feed-empty-notes": "Ndaipóri gueteri nota ko tiempo-pe.",
-  "feed-empty-reading": "Ndaipóri gueteri lectura ko plazo-pe."
+  "feed-empty-reading": "Ndaipóri gueteri lectura ko plazo-pe.",
+  "playlist-scripture-note-label": "Haipy",
+  "playlist-scripture-note-title-label": "Nota título rehegua",
+  "playlist-scripture-note-title-placeholder": "Título (ojeporavóva) .",
+  "playlist-scripture-note-add": "Emoĩ peteĩ nóta",
+  "playlist-scripture-note-remove": "Oipe’a nota",
+  "playlist-scripture-note-show": "Ehechauka nota",
+  "playlist-scripture-note-hide": "Oñomi nota",
+  "playlist-scripture-note-return": "Ojevy lista de reproducción-pe",
+  "playlist-scripture-note-aria": "Ñe’ẽñemi {{passage}} rehegua.",
+  "playlist-scripture-note-progress": "{{current}} {{total}} rehegua.",
+  "unsaved-item-edit-confirm-title": "Umi mba’e noñongatúiva oñemoambue",
+  "unsaved-item-edit-confirm-message": "Remoambue peteĩ mba’e ha katu nereñongatúi gueteri umi ñemoambue. Mbaʼépa rejapose?",
+  "keep-changes-and-save": "Eñongatu umi ñemoambue ha eñongatu",
+  "reading-plan-edit-reading": "Emohenda moñe’ẽrã"
 }

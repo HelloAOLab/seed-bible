@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} ټول لوستل شوي {{reference}}",
   "feed-empty": "په دې وخت چوکاټ کې لا تر اوسه کوم فعالیت نشته.",
   "feed-empty-notes": "په دې وخت چوکاټ کې لا تر اوسه هیڅ یادښت نشته.",
-  "feed-empty-reading": "په دې وخت چوکاټ کې لا تر اوسه لوستل نشته."
+  "feed-empty-reading": "په دې وخت چوکاټ کې لا تر اوسه لوستل نشته.",
+  "playlist-scripture-note-label": "یادښت",
+  "playlist-scripture-note-title-label": "د یادښت سرلیک",
+  "playlist-scripture-note-title-placeholder": "سرلیک (اختیاري)",
+  "playlist-scripture-note-add": "یو یادښت اضافه کړئ",
+  "playlist-scripture-note-remove": "یادښت لرې کړئ",
+  "playlist-scripture-note-show": "یادښت ښکاره کړئ",
+  "playlist-scripture-note-hide": "یادښت پټ کړئ",
+  "playlist-scripture-note-return": "بیرته پلې لیست ته",
+  "playlist-scripture-note-aria": "{{passage}} په اړه یادښت",
+  "playlist-scripture-note-progress": "{{current}} د {{total}} څخه",
+  "unsaved-item-edit-confirm-title": "د نه خوندي شوي توکي بدلونونه",
+  "unsaved-item-edit-confirm-message": "تاسو یو شی بدل کړی دی مګر تر اوسه یې هغه بدلونونه نه دي خوندي کړي. تاسو څه کول غواړئ؟",
+  "keep-changes-and-save": "بدلونونه وساتئ او خوندي کړئ",
+  "reading-plan-edit-reading": "لوستل سم کړئ"
 }

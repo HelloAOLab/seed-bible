@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} બધા વાંચેલા {{reference}}",
   "feed-empty": "આ સમયમર્યાદામાં હજુ સુધી કોઈ પ્રવૃત્તિ નથી.",
   "feed-empty-notes": "આ સમયમર્યાદામાં હજુ સુધી કોઈ નોંધ નથી.",
-  "feed-empty-reading": "આ સમયમર્યાદામાં હજુ સુધી કોઈ વાંચન થયું નથી."
+  "feed-empty-reading": "આ સમયમર્યાદામાં હજુ સુધી કોઈ વાંચન થયું નથી.",
+  "playlist-scripture-note-label": "નોંધ",
+  "playlist-scripture-note-title-label": "નોંધનું શીર્ષક",
+  "playlist-scripture-note-title-placeholder": "શીર્ષક (વૈકલ્પિક)",
+  "playlist-scripture-note-add": "નોંધ ઉમેરો",
+  "playlist-scripture-note-remove": "નોંધ દૂર કરો",
+  "playlist-scripture-note-show": "નોંધ બતાવો",
+  "playlist-scripture-note-hide": "નોંધ છુપાવો",
+  "playlist-scripture-note-return": "પ્લેલિસ્ટ પર પાછા જાઓ",
+  "playlist-scripture-note-aria": "{{passage}} પર નોંધ",
+  "playlist-scripture-note-progress": "{{current}} {{total}}",
+  "unsaved-item-edit-confirm-title": "વણસાચવેલી આઇટમમાં થયેલા ફેરફારો",
+  "unsaved-item-edit-confirm-message": "તમે એક આઇટમ બદલી છે પણ હજુ સુધી તે ફેરફારો સાચવ્યા નથી. તમે શું કરવા માંગો છો?",
+  "keep-changes-and-save": "ફેરફારો રાખો અને સાચવો",
+  "reading-plan-edit-reading": "વાંચન સંપાદિત કરો"
 }

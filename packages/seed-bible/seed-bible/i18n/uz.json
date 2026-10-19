@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} barchasi {{reference}} ni o'qishdi",
   "feed-empty": "Bu vaqt oralig'ida hali hech qanday faollik yo'q.",
   "feed-empty-notes": "Bu vaqt oralig'ida hali hech qanday eslatma yo'q.",
-  "feed-empty-reading": "Bu vaqt oralig'ida hali o'qish yo'q."
+  "feed-empty-reading": "Bu vaqt oralig'ida hali o'qish yo'q.",
+  "playlist-scripture-note-label": "Eslatma",
+  "playlist-scripture-note-title-label": "Eslatma sarlavhasi",
+  "playlist-scripture-note-title-placeholder": "Sarlavha (ixtiyoriy)",
+  "playlist-scripture-note-add": "Qayd qo'shish",
+  "playlist-scripture-note-remove": "Qaydni olib tashlash",
+  "playlist-scripture-note-show": "Qaydni ko'rsatish",
+  "playlist-scripture-note-hide": "Qaydni yashirish",
+  "playlist-scripture-note-return": "Pleylistga qaytish",
+  "playlist-scripture-note-aria": "{{passage}} haqida eslatma",
+  "playlist-scripture-note-progress": "{{current}} {{total}}",
+  "unsaved-item-edit-confirm-title": "Saqlanmagan element o'zgarishlari",
+  "unsaved-item-edit-confirm-message": "Siz elementni o'zgartirdingiz, lekin hali o'zgarishlarni saqlamadingiz. Nima qilishni xohlaysiz?",
+  "keep-changes-and-save": "O'zgarishlarni saqlang va saqlang",
+  "reading-plan-edit-reading": "O'qishni tahrirlash"
 }

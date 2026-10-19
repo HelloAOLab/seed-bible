@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} सभी {{reference}} पढ़ते हैं",
   "feed-empty": "इस अवधि में अभी तक कोई गतिविधि नहीं हुई है।",
   "feed-empty-notes": "इस समयावधि में अभी तक कोई नोट्स नहीं हैं।",
-  "feed-empty-reading": "इस अवधि में अभी तक कोई पठन-पाठन नहीं किया गया है।"
+  "feed-empty-reading": "इस अवधि में अभी तक कोई पठन-पाठन नहीं किया गया है।",
+  "playlist-scripture-note-label": "टिप्पणी",
+  "playlist-scripture-note-title-label": "नोट शीर्षक",
+  "playlist-scripture-note-title-placeholder": "शीर्षक (वैकल्पिक)",
+  "playlist-scripture-note-add": "एक नोट जोड़े",
+  "playlist-scripture-note-remove": "नोट हटाएँ",
+  "playlist-scripture-note-show": "नोट दिखाएँ",
+  "playlist-scripture-note-hide": "नोट छुपाएँ",
+  "playlist-scripture-note-return": "प्लेलिस्ट पर वापस जाएँ",
+  "playlist-scripture-note-aria": "{{passage}} पर टिप्पणी",
+  "playlist-scripture-note-progress": "{{total}} का {{current}}",
+  "unsaved-item-edit-confirm-title": "सहेजे न गए आइटम परिवर्तन",
+  "unsaved-item-edit-confirm-message": "आपने किसी आइटम में बदलाव किया है, लेकिन अभी तक उन बदलावों को सेव नहीं किया है। आप क्या करना चाहेंगे?",
+  "keep-changes-and-save": "बदलावों को सहेज कर रखें।",
+  "reading-plan-edit-reading": "पठन संपादित करें"
 }

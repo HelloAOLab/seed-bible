@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} എല്ലാം വായിച്ചു {{reference}}",
   "feed-empty": "ഈ സമയപരിധിക്കുള്ളിൽ ഇതുവരെ ഒരു പ്രവർത്തനവുമില്ല.",
   "feed-empty-notes": "ഈ സമയപരിധിക്കുള്ളിൽ ഇതുവരെ കുറിപ്പുകളൊന്നുമില്ല.",
-  "feed-empty-reading": "ഈ സമയപരിധിക്കുള്ളിൽ ഇതുവരെ വായനയൊന്നുമില്ല."
+  "feed-empty-reading": "ഈ സമയപരിധിക്കുള്ളിൽ ഇതുവരെ വായനയൊന്നുമില്ല.",
+  "playlist-scripture-note-label": "കുറിപ്പ്",
+  "playlist-scripture-note-title-label": "കുറിപ്പിന്റെ പേര്",
+  "playlist-scripture-note-title-placeholder": "പേര് (ഓപ്ഷണൽ)",
+  "playlist-scripture-note-add": "ഒരു കുറിപ്പ് ചേർക്കുക",
+  "playlist-scripture-note-remove": "കുറിപ്പ് നീക്കം ചെയ്യുക",
+  "playlist-scripture-note-show": "കുറിപ്പ് കാണിക്കുക",
+  "playlist-scripture-note-hide": "കുറിപ്പ് മറയ്ക്കുക",
+  "playlist-scripture-note-return": "പ്ലേലിസ്റ്റിലേക്ക് മടങ്ങുക",
+  "playlist-scripture-note-aria": "{{passage}} എന്നതിനെക്കുറിച്ചുള്ള കുറിപ്പ്",
+  "playlist-scripture-note-progress": "{{ {{total}} {{current}} }}",
+  "unsaved-item-edit-confirm-title": "സംരക്ഷിക്കാത്ത ഇന മാറ്റങ്ങൾ",
+  "unsaved-item-edit-confirm-message": "നിങ്ങൾ ഒരു ഇനം മാറ്റി, പക്ഷേ ആ മാറ്റങ്ങൾ ഇതുവരെ സംരക്ഷിച്ചിട്ടില്ല. നിങ്ങൾക്ക് എന്തുചെയ്യാൻ താൽപ്പര്യമുണ്ട്?",
+  "keep-changes-and-save": "മാറ്റങ്ങൾ സൂക്ഷിച്ച് സംരക്ഷിക്കുക",
+  "reading-plan-edit-reading": "വായന എഡിറ്റ് ചെയ്യുക"
 }

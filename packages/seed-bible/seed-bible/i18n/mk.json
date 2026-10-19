@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} сите прочитани {{reference}}",
   "feed-empty": "Сè уште нема активност во овој временски период.",
   "feed-empty-notes": "Сè уште нема белешки во овој временски период.",
-  "feed-empty-reading": "Сè уште нема читање во овој временски период."
+  "feed-empty-reading": "Сè уште нема читање во овој временски период.",
+  "playlist-scripture-note-label": "Забелешка",
+  "playlist-scripture-note-title-label": "Наслов на белешката",
+  "playlist-scripture-note-title-placeholder": "Наслов (опционално)",
+  "playlist-scripture-note-add": "Додај белешка",
+  "playlist-scripture-note-remove": "Отстрани белешка",
+  "playlist-scripture-note-show": "Прикажи белешка",
+  "playlist-scripture-note-hide": "Сокриј белешка",
+  "playlist-scripture-note-return": "Назад кон плејлистата ...",
+  "playlist-scripture-note-aria": "Забелешка за {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} од {{total}}",
+  "unsaved-item-edit-confirm-title": "Промени на незачувани ставки",
+  "unsaved-item-edit-confirm-message": "Променивте ставка, но сè уште не сте ги зачувале тие промени. Што сакате да направите?",
+  "keep-changes-and-save": "Зачувај ги промените и зачувај",
+  "reading-plan-edit-reading": "Уреди го читањето"
 }

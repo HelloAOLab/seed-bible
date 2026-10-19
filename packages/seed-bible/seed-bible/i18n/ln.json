@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} nionso etanga {{reference}}",
   "feed-empty": "Activité moko te na cadre ya temps oyo nanu.",
   "feed-empty-notes": "Notes te na cadre ya temps oyo nanu.",
-  "feed-empty-reading": "Botangi moko te na tango oyo nanu."
+  "feed-empty-reading": "Botangi moko te na tango oyo nanu.",
+  "playlist-scripture-note-label": "Likebisi",
+  "playlist-scripture-note-title-label": "Note ya motó ya likambo",
+  "playlist-scripture-note-title-placeholder": "Titre (na bolingi) .",
+  "playlist-scripture-note-add": "Bakisa mwa mokanda",
+  "playlist-scripture-note-remove": "Longola note",
+  "playlist-scripture-note-show": "Lakisa note",
+  "playlist-scripture-note-hide": "Bomba note",
+  "playlist-scripture-note-return": "Zongela na liste ya ba playlist",
+  "playlist-scripture-note-aria": "Liyebisi na ntina ya {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} ya {{total}}",
+  "unsaved-item-edit-confirm-title": "Eloko oyo ebombami te ebongwanaka",
+  "unsaved-item-edit-confirm-message": "Obongoli eloko moko kasi obombi naino mbongwana wana te. Okolinga kosala nini?",
+  "keep-changes-and-save": "Bomba mbongwana mpe bomba",
+  "reading-plan-edit-reading": "Bobongisi botangi"
 }

@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} allegear lêzen {{reference}}",
   "feed-empty": "Noch gjin aktiviteit yn dizze perioade.",
   "feed-empty-notes": "Noch gjin notysjes yn dizze tiidsperioade.",
-  "feed-empty-reading": "Noch gjin lêzing yn dizze tiidsperioade."
+  "feed-empty-reading": "Noch gjin lêzing yn dizze tiidsperioade.",
+  "playlist-scripture-note-label": "Noat",
+  "playlist-scripture-note-title-label": "Titel fan 'e notysje",
+  "playlist-scripture-note-title-placeholder": "Titel (opsjoneel)",
+  "playlist-scripture-note-add": "In notysje tafoegje",
+  "playlist-scripture-note-remove": "Notysje fuortsmite",
+  "playlist-scripture-note-show": "Notysje sjen litte",
+  "playlist-scripture-note-hide": "Notysje ferbergje",
+  "playlist-scripture-note-return": "Werom nei de ôfspiellist",
+  "playlist-scripture-note-aria": "Opmerking oer {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} fan {{total}}",
+  "unsaved-item-edit-confirm-title": "Net-opsleine itemswizigingen",
+  "unsaved-item-edit-confirm-message": "Jo hawwe in item feroare, mar hawwe dy wizigingen noch net bewarre. Wat wolle jo dwaan?",
+  "keep-changes-and-save": "Bewarje de wizigingen en bewarje se",
+  "reading-plan-edit-reading": "Lês bewurkje"
 }

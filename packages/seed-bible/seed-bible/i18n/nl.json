@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} lezen allemaal {{reference}}",
   "feed-empty": "Nog geen activiteit in dit tijdsbestek.",
   "feed-empty-notes": "Er zijn in deze periode nog geen notities.",
-  "feed-empty-reading": "Er zijn in dit tijdsbestek nog geen metingen verricht."
+  "feed-empty-reading": "Er zijn in dit tijdsbestek nog geen metingen verricht.",
+  "playlist-scripture-note-label": "Opmerking",
+  "playlist-scripture-note-title-label": "Notitietitel",
+  "playlist-scripture-note-title-placeholder": "Titel (optioneel)",
+  "playlist-scripture-note-add": "Voeg een notitie toe",
+  "playlist-scripture-note-remove": "Verwijder notitie",
+  "playlist-scripture-note-show": "Toon notitie",
+  "playlist-scripture-note-hide": "Verberg notitie",
+  "playlist-scripture-note-return": "Terug naar afspeellijst",
+  "playlist-scripture-note-aria": "Opmerking over {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} van {{total}}",
+  "unsaved-item-edit-confirm-title": "Niet-opgeslagen itemwijzigingen",
+  "unsaved-item-edit-confirm-message": "Je hebt een item gewijzigd, maar de wijzigingen nog niet opgeslagen. Wat wil je doen?",
+  "keep-changes-and-save": "Wijzigingen behouden en opslaan",
+  "reading-plan-edit-reading": "Lezen bewerken"
 }

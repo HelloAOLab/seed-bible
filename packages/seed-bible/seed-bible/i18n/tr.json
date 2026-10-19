@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} hepsi {{reference}} ı okudu",
   "feed-empty": "Bu zaman diliminde henüz herhangi bir etkinlik yok.",
   "feed-empty-notes": "Bu zaman diliminde henüz herhangi bir not alınmadı.",
-  "feed-empty-reading": "Bu zaman diliminde henüz bir okuma yapılmadı."
+  "feed-empty-reading": "Bu zaman diliminde henüz bir okuma yapılmadı.",
+  "playlist-scripture-note-label": "Not",
+  "playlist-scripture-note-title-label": "Not başlığı",
+  "playlist-scripture-note-title-placeholder": "Başlık (isteğe bağlı)",
+  "playlist-scripture-note-add": "Not ekle",
+  "playlist-scripture-note-remove": "Notu kaldır",
+  "playlist-scripture-note-show": "Notu göster",
+  "playlist-scripture-note-hide": "Notu gizle",
+  "playlist-scripture-note-return": "Oynatma listesine geri dön",
+  "playlist-scripture-note-aria": "{{passage}} ile ilgili not",
+  "playlist-scripture-note-progress": "{{current}} / {{total}}",
+  "unsaved-item-edit-confirm-title": "Kaydedilmemiş öğe değişiklikleri",
+  "unsaved-item-edit-confirm-message": "Bir öğeyi değiştirdiniz ancak bu değişiklikleri henüz kaydetmediniz. Ne yapmak istersiniz?",
+  "keep-changes-and-save": "Değişiklikleri kaydedin ve saklayın.",
+  "reading-plan-edit-reading": "Okumayı düzenle"
 }

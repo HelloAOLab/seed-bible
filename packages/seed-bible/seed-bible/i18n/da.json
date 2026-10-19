@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} har alle læst {{reference}}",
   "feed-empty": "Ingen aktivitet i denne tidsramme endnu.",
   "feed-empty-notes": "Ingen noter i denne tidsramme endnu.",
-  "feed-empty-reading": "Ingen læsning i denne tidsramme endnu."
+  "feed-empty-reading": "Ingen læsning i denne tidsramme endnu.",
+  "playlist-scripture-note-label": "Note",
+  "playlist-scripture-note-title-label": "Notetitel",
+  "playlist-scripture-note-title-placeholder": "Titel (valgfrit)",
+  "playlist-scripture-note-add": "Tilføj en note",
+  "playlist-scripture-note-remove": "Fjern note",
+  "playlist-scripture-note-show": "Vis note",
+  "playlist-scripture-note-hide": "Skjul note",
+  "playlist-scripture-note-return": "Tilbage til afspilningslisten",
+  "playlist-scripture-note-aria": "Bemærkning om {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} af {{total}}",
+  "unsaved-item-edit-confirm-title": "Ændringer af ikke-gemte elementer",
+  "unsaved-item-edit-confirm-message": "Du har ændret et element, men har ikke gemt ændringerne endnu. Hvad vil du gerne gøre?",
+  "keep-changes-and-save": "Behold ændringer og gem",
+  "reading-plan-edit-reading": "Rediger læsning"
 }

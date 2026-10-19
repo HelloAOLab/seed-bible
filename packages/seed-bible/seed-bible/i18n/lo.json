@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} ອ່ານແລ້ວທັງໝົດ {{reference}}",
   "feed-empty": "ຍັງບໍ່ມີກິດຈະກຳໃດໆໃນໄລຍະເວລານີ້ເທື່ອ.",
   "feed-empty-notes": "ຍັງບໍ່ມີບັນທຶກໃນຊ່ວງເວລານີ້ເທື່ອ.",
-  "feed-empty-reading": "ຍັງບໍ່ມີການອ່ານໃນຊ່ວງເວລານີ້ເທື່ອ."
+  "feed-empty-reading": "ຍັງບໍ່ມີການອ່ານໃນຊ່ວງເວລານີ້ເທື່ອ.",
+  "playlist-scripture-note-label": "ໝາຍເຫດ",
+  "playlist-scripture-note-title-label": "ຫົວຂໍ້ບັນທຶກ",
+  "playlist-scripture-note-title-placeholder": "ຫົວຂໍ້ (ບໍ່ຈຳເປັນ)",
+  "playlist-scripture-note-add": "ເພີ່ມບັນທຶກ",
+  "playlist-scripture-note-remove": "ລຶບບັນທຶກ",
+  "playlist-scripture-note-show": "ສະແດງບັນທຶກ",
+  "playlist-scripture-note-hide": "ເຊື່ອງບັນທຶກ",
+  "playlist-scripture-note-return": "ກັບໄປທີ່ລາຍການຫຼິ້ນ",
+  "playlist-scripture-note-aria": "ໝາຍເຫດກ່ຽວກັບ {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} ຈາກທັງໝົດ {{total}}",
+  "unsaved-item-edit-confirm-title": "ການປ່ຽນແປງລາຍການທີ່ບໍ່ໄດ້ບັນທຶກໄວ້",
+  "unsaved-item-edit-confirm-message": "ທ່ານໄດ້ປ່ຽນແປງລາຍການໜຶ່ງແລ້ວ ແຕ່ຍັງບໍ່ທັນໄດ້ບັນທຶກການປ່ຽນແປງເຫຼົ່ານັ້ນເທື່ອ. ທ່ານຕ້ອງການເຮັດຫຍັງ?",
+  "keep-changes-and-save": "ເກັບຮັກສາການປ່ຽນແປງ ແລະ ບັນທຶກໄວ້",
+  "reading-plan-edit-reading": "ແກ້ໄຂການອ່ານ"
 }

@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} সবগুলি {{reference}} পড়া হয়েছে",
   "feed-empty": "এই সময়সীমার মধ্যে এখনও কোনো কার্যকলাপ হয়নি।",
   "feed-empty-notes": "এই সময়সীমার মধ্যে এখনও কোনো নোট নেই।",
-  "feed-empty-reading": "এই সময়সীমার মধ্যে এখনও কোনো পাঠ নেই।"
+  "feed-empty-reading": "এই সময়সীমার মধ্যে এখনও কোনো পাঠ নেই।",
+  "playlist-scripture-note-label": "দ্রষ্টব্য",
+  "playlist-scripture-note-title-label": "নোটের শিরোনাম",
+  "playlist-scripture-note-title-placeholder": "শিরোনাম (ঐচ্ছিক)",
+  "playlist-scripture-note-add": "একটি নোট যোগ করুন",
+  "playlist-scripture-note-remove": "নোটটি সরান",
+  "playlist-scripture-note-show": "নোট দেখান",
+  "playlist-scripture-note-hide": "নোট লুকান",
+  "playlist-scripture-note-return": "প্লেলিস্টে ফিরে যান",
+  "playlist-scripture-note-aria": "{{passage}} এর উপর টীকা",
+  "playlist-scripture-note-progress": "{{current}} {{total}} এর",
+  "unsaved-item-edit-confirm-title": "সংরক্ষিত নয় এমন আইটেমের পরিবর্তন",
+  "unsaved-item-edit-confirm-message": "আপনি একটি আইটেম পরিবর্তন করেছেন কিন্তু এখনও সেই পরিবর্তনগুলো সংরক্ষণ করেননি। আপনি কী করতে চান?",
+  "keep-changes-and-save": "পরিবর্তনগুলি রাখুন এবং সংরক্ষণ করুন",
+  "reading-plan-edit-reading": "সম্পাদনা পাঠ"
 }

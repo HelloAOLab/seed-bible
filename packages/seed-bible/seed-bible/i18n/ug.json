@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} ھەممىسى {{reference}} نى ئوقۇدى",
   "feed-empty": "بۇ ۋاقىت ئىچىدە ھېچقانداق پائالىيەت يوق.",
   "feed-empty-notes": "بۇ ۋاقىت دائىرىسىدە ھازىرغىچە ھېچقانداق خاتىرە يوق.",
-  "feed-empty-reading": "بۇ ۋاقىت ئىچىدە ھازىرغىچە ئوقۇش يوق."
+  "feed-empty-reading": "بۇ ۋاقىت ئىچىدە ھازىرغىچە ئوقۇش يوق.",
+  "playlist-scripture-note-label": "ئەسكەرتىش",
+  "playlist-scripture-note-title-label": "ئەسكەرتىش ماۋزۇسى",
+  "playlist-scripture-note-title-placeholder": "ماۋزۇ (تاللاشچان)",
+  "playlist-scripture-note-add": "ئەسكەرتىش قوشۇش",
+  "playlist-scripture-note-remove": "ئەسكەرتىشنى ئۆچۈرۈڭ",
+  "playlist-scripture-note-show": "ئەسكەرتىشنى كۆرسىتىش",
+  "playlist-scripture-note-hide": "خاتىرىنى يوشۇرۇش",
+  "playlist-scripture-note-return": "قويۇش تىزىملىكىگە قايتىش",
+  "playlist-scripture-note-aria": "{{passage}} ھەققىدىكى ئەسكەرتىش",
+  "playlist-scripture-note-progress": "{{current}} نىڭ {{total}}",
+  "unsaved-item-edit-confirm-title": "ساقلانمىغان تۈر ئۆزگىرىشلىرى",
+  "unsaved-item-edit-confirm-message": "سىز بىر تۈرنى ئۆزگەرتتىڭىز، ئەمما بۇ ئۆزگەرتىشلەرنى ساقلىمىدىڭىز. نېمە قىلماقچىسىز؟",
+  "keep-changes-and-save": "ئۆزگەرتىشلەرنى ساقلاپ قويۇڭ",
+  "reading-plan-edit-reading": "ئوقۇشنى تەھرىرلەش"
 }

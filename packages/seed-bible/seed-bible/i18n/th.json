@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} ทั้งหมดอ่าน {{reference}}",
   "feed-empty": "ยังไม่มีความเคลื่อนไหวใดๆ ในช่วงเวลาดังกล่าว",
   "feed-empty-notes": "ยังไม่มีบันทึกใดๆ ในช่วงเวลานี้",
-  "feed-empty-reading": "ยังไม่มีการอ่านข้อมูลใดๆ ในช่วงเวลานี้"
+  "feed-empty-reading": "ยังไม่มีการอ่านข้อมูลใดๆ ในช่วงเวลานี้",
+  "playlist-scripture-note-label": "บันทึก",
+  "playlist-scripture-note-title-label": "หมายเหตุชื่อเรื่อง",
+  "playlist-scripture-note-title-placeholder": "ชื่อเรื่อง (ไม่บังคับ)",
+  "playlist-scripture-note-add": "เพิ่มบันทึก",
+  "playlist-scripture-note-remove": "ลบข้อความ",
+  "playlist-scripture-note-show": "แสดงหมายเหตุ",
+  "playlist-scripture-note-hide": "ซ่อนหมายเหตุ",
+  "playlist-scripture-note-return": "กลับสู่เพลย์ลิสต์",
+  "playlist-scripture-note-aria": "หมายเหตุเกี่ยวกับ {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} ของ {{total}}",
+  "unsaved-item-edit-confirm-title": "การเปลี่ยนแปลงรายการที่ยังไม่ได้บันทึก",
+  "unsaved-item-edit-confirm-message": "คุณได้แก้ไขรายการหนึ่งแล้ว แต่ยังไม่ได้บันทึกการเปลี่ยนแปลงเหล่านั้น คุณต้องการทำอะไรต่อไป?",
+  "keep-changes-and-save": "บันทึกการเปลี่ยนแปลง",
+  "reading-plan-edit-reading": "แก้ไขการอ่าน"
 }

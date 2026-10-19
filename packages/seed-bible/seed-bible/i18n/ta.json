@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} அனைத்தும் {{reference}} ஐப் படிக்கின்றன",
   "feed-empty": "இந்தக் காலக்கட்டத்தில் இன்னும் எந்த நடவடிக்கையும் இல்லை.",
   "feed-empty-notes": "இந்தக் காலக்கட்டத்தில் இன்னும் குறிப்புகள் எதுவும் இல்லை.",
-  "feed-empty-reading": "இந்தக் காலக்கட்டத்தில் இன்னும் வாசிப்பு எதுவும் இல்லை."
+  "feed-empty-reading": "இந்தக் காலக்கட்டத்தில் இன்னும் வாசிப்பு எதுவும் இல்லை.",
+  "playlist-scripture-note-label": "குறிப்பு",
+  "playlist-scripture-note-title-label": "குறிப்பு தலைப்பு",
+  "playlist-scripture-note-title-placeholder": "தலைப்பு (விருப்பத்திற்குரியது)",
+  "playlist-scripture-note-add": "ஒரு குறிப்பைச் சேர்க்கவும்",
+  "playlist-scripture-note-remove": "குறிப்பை அகற்று",
+  "playlist-scripture-note-show": "குறிப்பு",
+  "playlist-scripture-note-hide": "குறிப்பை மறைக்கவும்",
+  "playlist-scripture-note-return": "பிளேலிஸ்ட்டுக்குத் திரும்பு",
+  "playlist-scripture-note-aria": "{{passage}} பற்றிய குறிப்பு",
+  "playlist-scripture-note-progress": "{{current}} {{total}}",
+  "unsaved-item-edit-confirm-title": "சேமிக்கப்படாத உருப்படி மாற்றங்கள்",
+  "unsaved-item-edit-confirm-message": "நீங்கள் ஒரு உருப்படியை மாற்றியுள்ளீர்கள், ஆனால் அந்த மாற்றங்களை இன்னும் சேமிக்கவில்லை. நீங்கள் என்ன செய்ய விரும்புகிறீர்கள்?",
+  "keep-changes-and-save": "மாற்றங்களைச் சேமித்து வைக்கவும்",
+  "reading-plan-edit-reading": "திருத்து"
 }

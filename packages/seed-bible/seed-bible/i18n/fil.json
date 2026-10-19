@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} lahat ay nabasa {{reference}}",
   "feed-empty": "Wala pang aktibidad sa panahong ito.",
   "feed-empty-notes": "Wala pang mga tala sa panahong ito.",
-  "feed-empty-reading": "Wala pang babasahin sa panahong ito."
+  "feed-empty-reading": "Wala pang babasahin sa panahong ito.",
+  "playlist-scripture-note-label": "Tala",
+  "playlist-scripture-note-title-label": "Pamagat ng tala",
+  "playlist-scripture-note-title-placeholder": "Pamagat (opsyonal)",
+  "playlist-scripture-note-add": "Magdagdag ng tala",
+  "playlist-scripture-note-remove": "Alisin ang tala",
+  "playlist-scripture-note-show": "Ipakita ang tala",
+  "playlist-scripture-note-hide": "Itago ang tala",
+  "playlist-scripture-note-return": "Balik sa playlist",
+  "playlist-scripture-note-aria": "Tala sa {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} ng {{total}}",
+  "unsaved-item-edit-confirm-title": "Mga pagbabago sa hindi na-save na item",
+  "unsaved-item-edit-confirm-message": "Binago mo ang isang item ngunit hindi mo pa nase-save ang mga pagbabagong iyon. Ano ang gusto mong gawin?",
+  "keep-changes-and-save": "Panatilihin ang mga pagbabago at i-save",
+  "reading-plan-edit-reading": "I-edit ang pagbabasa"
 }

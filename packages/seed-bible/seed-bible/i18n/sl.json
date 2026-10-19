@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} vsi preberejo {{reference}}",
   "feed-empty": "V tem časovnem okviru še ni aktivnosti.",
   "feed-empty-notes": "V tem časovnem okviru še ni zapiskov.",
-  "feed-empty-reading": "V tem časovnem okviru še ni branja."
+  "feed-empty-reading": "V tem časovnem okviru še ni branja.",
+  "playlist-scripture-note-label": "Opomba",
+  "playlist-scripture-note-title-label": "Naslov opombe",
+  "playlist-scripture-note-title-placeholder": "Naslov (neobvezno)",
+  "playlist-scripture-note-add": "Dodaj opombo",
+  "playlist-scripture-note-remove": "Odstrani opombo",
+  "playlist-scripture-note-show": "Prikaži opombo",
+  "playlist-scripture-note-hide": "Skrij opombo",
+  "playlist-scripture-note-return": "Nazaj na seznam predvajanja",
+  "playlist-scripture-note-aria": "Opomba o {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} od {{total}}",
+  "unsaved-item-edit-confirm-title": "Neshranjene spremembe elementov",
+  "unsaved-item-edit-confirm-message": "Spremenili ste element, vendar sprememb še niste shranili. Kaj želite storiti?",
+  "keep-changes-and-save": "Ohrani spremembe in shrani",
+  "reading-plan-edit-reading": "Uredi branje"
 }

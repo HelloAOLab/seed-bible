@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} të gjitha të lexuara {{reference}}",
   "feed-empty": "Ende nuk ka aktivitet në këtë periudhë kohore.",
   "feed-empty-notes": "Nuk ka ende shënime në këtë periudhë kohore.",
-  "feed-empty-reading": "Ende nuk ka lexim në këtë periudhë kohore."
+  "feed-empty-reading": "Ende nuk ka lexim në këtë periudhë kohore.",
+  "playlist-scripture-note-label": "Shënim",
+  "playlist-scripture-note-title-label": "Titulli i shënimit",
+  "playlist-scripture-note-title-placeholder": "Titulli (opsional)",
+  "playlist-scripture-note-add": "Shto një shënim",
+  "playlist-scripture-note-remove": "Hiq shënimin",
+  "playlist-scripture-note-show": "Shfaq shënimin",
+  "playlist-scripture-note-hide": "Fshih shënimin",
+  "playlist-scripture-note-return": "Kthehu te lista e luajtjes. ...",
+  "playlist-scripture-note-aria": "Shënim mbi {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} nga {{total}}",
+  "unsaved-item-edit-confirm-title": "Ndryshime të artikullit të paruajtur",
+  "unsaved-item-edit-confirm-message": "Ke ndryshuar një artikull, por nuk i ke ruajtur ende ato ndryshime. Çfarë dëshiron të bësh?",
+  "keep-changes-and-save": "Ruaj ndryshimet dhe ruaj",
+  "reading-plan-edit-reading": "Redakto leximin"
 }

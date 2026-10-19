@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}}全部读取{{reference}}",
   "feed-empty": "该时间段内暂无任何活动。",
   "feed-empty-notes": "目前暂无相关记录。",
-  "feed-empty-reading": "目前暂无阅读材料。"
+  "feed-empty-reading": "目前暂无阅读材料。",
+  "playlist-scripture-note-label": "笔记",
+  "playlist-scripture-note-title-label": "笔记标题",
+  "playlist-scripture-note-title-placeholder": "标题（可选）",
+  "playlist-scripture-note-add": "添加备注",
+  "playlist-scripture-note-remove": "移除备注",
+  "playlist-scripture-note-show": "显示注释",
+  "playlist-scripture-note-hide": "隐藏笔记",
+  "playlist-scripture-note-return": "返回播放列表",
+  "playlist-scripture-note-aria": "关于{{passage}}注释",
+  "playlist-scripture-note-progress": "{{current}}共{{total}}",
+  "unsaved-item-edit-confirm-title": "未保存的项目更改",
+  "unsaved-item-edit-confirm-message": "您已更改某个项目，但尚未保存更改。您想怎么做？",
+  "keep-changes-and-save": "保留更改并保存",
+  "reading-plan-edit-reading": "编辑阅读"
 }

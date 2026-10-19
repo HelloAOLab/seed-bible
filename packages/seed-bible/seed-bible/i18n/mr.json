@@ -1183,5 +1183,19 @@
   "feed-all-read": "सर्व {{names}} {{reference}} वाचतात",
   "feed-empty": "या कालावधीत अद्याप कोणतीही हालचाल झालेली नाही.",
   "feed-empty-notes": "या कालावधीत अद्याप कोणतीही नोंद नाही.",
-  "feed-empty-reading": "या कालावधीत अद्याप वाचन झालेले नाही."
+  "feed-empty-reading": "या कालावधीत अद्याप वाचन झालेले नाही.",
+  "playlist-scripture-note-label": "टीप",
+  "playlist-scripture-note-title-label": "टीप शीर्षक",
+  "playlist-scripture-note-title-placeholder": "शीर्षक (ऐच्छिक)",
+  "playlist-scripture-note-add": "एक टीप जोडा",
+  "playlist-scripture-note-remove": "टीप काढून टाका",
+  "playlist-scripture-note-show": "टीप दाखवा",
+  "playlist-scripture-note-hide": "टीप लपवा",
+  "playlist-scripture-note-return": "प्लेलिस्टवर परत जा",
+  "playlist-scripture-note-aria": "{{passage}} वरील टीप",
+  "playlist-scripture-note-progress": "{{total}} पैकी {{current}}",
+  "unsaved-item-edit-confirm-title": "न जतन केलेल्या आयटममधील बदल",
+  "unsaved-item-edit-confirm-message": "तुम्ही एका आयटममध्ये बदल केला आहे, पण ते बदल अजून सेव्ह केलेले नाहीत. तुम्हाला काय करायचे आहे?",
+  "keep-changes-and-save": "बदल जतन करा",
+  "reading-plan-edit-reading": "संपादन वाचन"
 }

@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} todos leem {{reference}}",
   "feed-empty": "Ainda não há atividade neste período.",
   "feed-empty-notes": "Ainda não há anotações neste período.",
-  "feed-empty-reading": "Ainda não há leituras dentro desse período."
+  "feed-empty-reading": "Ainda não há leituras dentro desse período.",
+  "playlist-scripture-note-label": "Observação",
+  "playlist-scripture-note-title-label": "Título da nota",
+  "playlist-scripture-note-title-placeholder": "Título (opcional)",
+  "playlist-scripture-note-add": "Adicionar uma nota",
+  "playlist-scripture-note-remove": "Remover nota",
+  "playlist-scripture-note-show": "Mostrar nota",
+  "playlist-scripture-note-hide": "Ocultar nota",
+  "playlist-scripture-note-return": "Voltar à lista de reprodução",
+  "playlist-scripture-note-aria": "Nota sobre {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} de {{total}}",
+  "unsaved-item-edit-confirm-title": "Alterações de itens não salvas",
+  "unsaved-item-edit-confirm-message": "Você alterou um item, mas ainda não salvou as alterações. O que você gostaria de fazer?",
+  "keep-changes-and-save": "Salvar e manter alterações",
+  "reading-plan-edit-reading": "Editar leitura"
 }

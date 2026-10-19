@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} جميعها تقرأ {{reference}}",
   "feed-empty": "لم يتم تسجيل أي نشاط خلال هذه الفترة الزمنية حتى الآن.",
   "feed-empty-notes": "لا توجد ملاحظات في هذا الإطار الزمني حتى الآن.",
-  "feed-empty-reading": "لا توجد قراءة في هذه الفترة الزمنية حتى الآن."
+  "feed-empty-reading": "لا توجد قراءة في هذه الفترة الزمنية حتى الآن.",
+  "playlist-scripture-note-label": "ملحوظة",
+  "playlist-scripture-note-title-label": "عنوان الملاحظة",
+  "playlist-scripture-note-title-placeholder": "العنوان (اختياري)",
+  "playlist-scripture-note-add": "أضف ملاحظة",
+  "playlist-scripture-note-remove": "قم بإزالة الملاحظة",
+  "playlist-scripture-note-show": "ملاحظة العرض",
+  "playlist-scripture-note-hide": "إخفاء الملاحظة",
+  "playlist-scripture-note-return": "العودة إلى قائمة التشغيل",
+  "playlist-scripture-note-aria": "ملاحظة حول {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} من {{total}}",
+  "unsaved-item-edit-confirm-title": "تغييرات العناصر غير المحفوظة",
+  "unsaved-item-edit-confirm-message": "لقد قمت بتغيير عنصر ما ولكنك لم تحفظ هذه التغييرات بعد. ماذا تريد أن تفعل؟",
+  "keep-changes-and-save": "احتفظ بالتغييرات واحفظها",
+  "reading-plan-edit-reading": "قراءة التحرير"
 }

@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} tots llegeixen {{reference}}",
   "feed-empty": "Encara no hi ha activitat en aquest període de temps.",
   "feed-empty-notes": "Encara no hi ha cap nota en aquest període de temps.",
-  "feed-empty-reading": "Encara no s'ha fet cap lectura en aquest període de temps."
+  "feed-empty-reading": "Encara no s'ha fet cap lectura en aquest període de temps.",
+  "playlist-scripture-note-label": "Nota",
+  "playlist-scripture-note-title-label": "Títol de la nota",
+  "playlist-scripture-note-title-placeholder": "Títol (opcional)",
+  "playlist-scripture-note-add": "Afegeix una nota",
+  "playlist-scripture-note-remove": "Elimina la nota",
+  "playlist-scripture-note-show": "Mostra la nota",
+  "playlist-scripture-note-hide": "Amaga la nota",
+  "playlist-scripture-note-return": "Torna a la llista de reproducció",
+  "playlist-scripture-note-aria": "Nota sobre {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} de {{total}}",
+  "unsaved-item-edit-confirm-title": "Canvis d'elements no desats",
+  "unsaved-item-edit-confirm-message": "Has canviat un element però encara no has desat els canvis. Què vols fer?",
+  "keep-changes-and-save": "Conserva els canvis i desa",
+  "reading-plan-edit-reading": "Edita la lectura"
 }

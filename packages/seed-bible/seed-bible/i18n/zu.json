@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} konke kufundiwe {{reference}}",
   "feed-empty": "Akukho msebenzi okwamanje kulesi sikhathi.",
   "feed-empty-notes": "Awekho amanothi kulesi sikhathi okwamanje.",
-  "feed-empty-reading": "Akukho ukufunda kulesi sikhathi okwamanje."
+  "feed-empty-reading": "Akukho ukufunda kulesi sikhathi okwamanje.",
+  "playlist-scripture-note-label": "Inothi",
+  "playlist-scripture-note-title-label": "Isihloko senothi",
+  "playlist-scripture-note-title-placeholder": "Isihloko (ongakukhetha)",
+  "playlist-scripture-note-add": "Engeza inothi",
+  "playlist-scripture-note-remove": "Susa inothi",
+  "playlist-scripture-note-show": "Bonisa inothi",
+  "playlist-scripture-note-hide": "Fihla inothi",
+  "playlist-scripture-note-return": "Buyela ohlwini lokudlalayo",
+  "playlist-scripture-note-aria": "Inothi ku- {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} kwangu- {{total}}",
+  "unsaved-item-edit-confirm-title": "Izinguquko zezinto ezingalondoloziwe",
+  "unsaved-item-edit-confirm-message": "Ushintshe into kodwa awukazilondolozi lezo zinguquko. Ungathanda ukwenzani?",
+  "keep-changes-and-save": "Gcina izinguquko bese wonga",
+  "reading-plan-edit-reading": "Hlela ukufunda"
 }

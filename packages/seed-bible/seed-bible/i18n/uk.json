@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} усі прочитали {{reference}}",
   "feed-empty": "За цей період поки що активності немає.",
   "feed-empty-notes": "Поки що немає нотаток за цей період.",
-  "feed-empty-reading": "Поки що немає читання за цей період."
+  "feed-empty-reading": "Поки що немає читання за цей період.",
+  "playlist-scripture-note-label": "Примітка",
+  "playlist-scripture-note-title-label": "Назва нотатки",
+  "playlist-scripture-note-title-placeholder": "Назва (необов'язково)",
+  "playlist-scripture-note-add": "Додати нотатку",
+  "playlist-scripture-note-remove": "Видалити нотатку",
+  "playlist-scripture-note-show": "Показати нотатку",
+  "playlist-scripture-note-hide": "Приховати нотатку",
+  "playlist-scripture-note-return": "Назад до списку відтворення",
+  "playlist-scripture-note-aria": "Примітка щодо {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} з {{total}}",
+  "unsaved-item-edit-confirm-title": "Незбережені зміни елемента",
+  "unsaved-item-edit-confirm-message": "Ви змінили елемент, але ще не зберегли ці зміни. Що ви хочете зробити?",
+  "keep-changes-and-save": "Зберегти зміни та зберегти",
+  "reading-plan-edit-reading": "Редагувати текст"
 }

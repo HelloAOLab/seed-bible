@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} läste alla {{reference}}",
   "feed-empty": "Ingen aktivitet inom denna tidsram ännu.",
   "feed-empty-notes": "Inga anteckningar inom denna tidsram ännu.",
-  "feed-empty-reading": "Ingen läsning inom denna tidsram ännu."
+  "feed-empty-reading": "Ingen läsning inom denna tidsram ännu.",
+  "playlist-scripture-note-label": "Notera",
+  "playlist-scripture-note-title-label": "Anteckningstitel",
+  "playlist-scripture-note-title-placeholder": "Titel (valfritt)",
+  "playlist-scripture-note-add": "Lägg till en anteckning",
+  "playlist-scripture-note-remove": "Ta bort anteckning",
+  "playlist-scripture-note-show": "Visa anteckning",
+  "playlist-scripture-note-hide": "Dölj anteckning",
+  "playlist-scripture-note-return": "Tillbaka till spellistan",
+  "playlist-scripture-note-aria": "Anmärkning om {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} av {{total}}",
+  "unsaved-item-edit-confirm-title": "Ändringar av osparade objekt",
+  "unsaved-item-edit-confirm-message": "Du har ändrat ett objekt men har inte sparat ändringarna än. Vad vill du göra?",
+  "keep-changes-and-save": "Behåll ändringarna och spara",
+  "reading-plan-edit-reading": "Redigera läsning"
 }

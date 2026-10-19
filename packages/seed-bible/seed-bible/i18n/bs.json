@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} svi čitaju {{reference}}",
   "feed-empty": "Još uvijek nema aktivnosti u ovom vremenskom okviru.",
   "feed-empty-notes": "Još nema bilješki u ovom vremenskom okviru.",
-  "feed-empty-reading": "Još nema čitanja u ovom vremenskom okviru."
+  "feed-empty-reading": "Još nema čitanja u ovom vremenskom okviru.",
+  "playlist-scripture-note-label": "Napomena",
+  "playlist-scripture-note-title-label": "Naslov bilješke",
+  "playlist-scripture-note-title-placeholder": "Naslov (opciono)",
+  "playlist-scripture-note-add": "Dodaj napomenu",
+  "playlist-scripture-note-remove": "Ukloni bilješku",
+  "playlist-scripture-note-show": "Prikaži bilješku",
+  "playlist-scripture-note-hide": "Sakrij bilješku",
+  "playlist-scripture-note-return": "Nazad na listu za reprodukciju",
+  "playlist-scripture-note-aria": "Napomena o {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} od {{total}}",
+  "unsaved-item-edit-confirm-title": "Nesačuvane promjene stavki",
+  "unsaved-item-edit-confirm-message": "Promijenili ste stavku, ali još niste sačuvali te promjene. Šta želite učiniti?",
+  "keep-changes-and-save": "Sačuvaj promjene i sačuvaj",
+  "reading-plan-edit-reading": "Uredi čitanje"
 }

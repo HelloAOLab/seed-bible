@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} hamısı {{reference}} oxundu",
   "feed-empty": "Bu müddət ərzində hələlik heç bir fəaliyyət yoxdur.",
   "feed-empty-notes": "Bu müddət ərzində hələlik heç bir qeyd yoxdur.",
-  "feed-empty-reading": "Bu müddət ərzində hələlik oxunuş yoxdur."
+  "feed-empty-reading": "Bu müddət ərzində hələlik oxunuş yoxdur.",
+  "playlist-scripture-note-label": "Qeyd",
+  "playlist-scripture-note-title-label": "Qeyd başlığı",
+  "playlist-scripture-note-title-placeholder": "Başlıq (isteğe bağlı)",
+  "playlist-scripture-note-add": "Qeyd əlavə edin",
+  "playlist-scripture-note-remove": "Qeydi silin",
+  "playlist-scripture-note-show": "Qeydi göstər",
+  "playlist-scripture-note-hide": "Qeydi gizlət",
+  "playlist-scripture-note-return": "Pleylistə qayıt",
+  "playlist-scripture-note-aria": "{{passage}} haqqında qeyd",
+  "playlist-scripture-note-progress": "{{current}} {{total}}",
+  "unsaved-item-edit-confirm-title": "Yadda saxlanılmamış element dəyişiklikləri",
+  "unsaved-item-edit-confirm-message": "Bir elementi dəyişdirdiniz, amma hələ dəyişiklikləri yadda saxlamamısınız. Nə etmək istərdiniz?",
+  "keep-changes-and-save": "Dəyişiklikləri saxlayın və yadda saxlayın",
+  "reading-plan-edit-reading": "Oxumanı redaktə edin"
 }

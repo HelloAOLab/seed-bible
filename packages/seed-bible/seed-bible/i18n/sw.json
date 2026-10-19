@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} yote yamesomwa {{reference}}",
   "feed-empty": "Hakuna shughuli katika kipindi hiki bado.",
   "feed-empty-notes": "Hakuna maelezo katika kipindi hiki bado.",
-  "feed-empty-reading": "Hakuna kusoma katika kipindi hiki bado."
+  "feed-empty-reading": "Hakuna kusoma katika kipindi hiki bado.",
+  "playlist-scripture-note-label": "Dokezo",
+  "playlist-scripture-note-title-label": "Kichwa cha dokezo",
+  "playlist-scripture-note-title-placeholder": "Kichwa (si lazima)",
+  "playlist-scripture-note-add": "Ongeza dokezo",
+  "playlist-scripture-note-remove": "Ondoa dokezo",
+  "playlist-scripture-note-show": "Onyesha dokezo",
+  "playlist-scripture-note-hide": "Ficha dokezo",
+  "playlist-scripture-note-return": "Rudi kwenye orodha ya kucheza",
+  "playlist-scripture-note-aria": "Dokezo kwenye {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} kati ya {{total}}",
+  "unsaved-item-edit-confirm-title": "Mabadiliko ya kipengee ambayo hayajahifadhiwa",
+  "unsaved-item-edit-confirm-message": "Umebadilisha kipengee lakini bado hujahifadhi mabadiliko hayo. Ungependa kufanya nini?",
+  "keep-changes-and-save": "Weka mabadiliko na uhifadhi",
+  "reading-plan-edit-reading": "Hariri usomaji"
 }

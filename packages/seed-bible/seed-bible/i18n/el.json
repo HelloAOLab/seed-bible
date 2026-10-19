@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} όλα αναγνώστηκαν {{reference}}",
   "feed-empty": "Δεν υπάρχει ακόμη δραστηριότητα σε αυτό το χρονικό πλαίσιο.",
   "feed-empty-notes": "Δεν υπάρχουν ακόμη σημειώσεις σε αυτό το χρονικό πλαίσιο.",
-  "feed-empty-reading": "Δεν υπάρχει ακόμη ανάγνωση σε αυτό το χρονικό πλαίσιο."
+  "feed-empty-reading": "Δεν υπάρχει ακόμη ανάγνωση σε αυτό το χρονικό πλαίσιο.",
+  "playlist-scripture-note-label": "Σημείωμα",
+  "playlist-scripture-note-title-label": "Τίτλος σημείωσης",
+  "playlist-scripture-note-title-placeholder": "Τίτλος (προαιρετικό)",
+  "playlist-scripture-note-add": "Προσθήκη σημείωσης",
+  "playlist-scripture-note-remove": "Κατάργηση σημείωσης",
+  "playlist-scripture-note-show": "Εμφάνιση σημείωσης",
+  "playlist-scripture-note-hide": "Απόκρυψη σημείωσης",
+  "playlist-scripture-note-return": "Επιστροφή στη λίστα αναπαραγωγής",
+  "playlist-scripture-note-aria": "Σημείωση για το {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} από {{total}}",
+  "unsaved-item-edit-confirm-title": "Αλλαγές σε μη αποθηκευμένα στοιχεία",
+  "unsaved-item-edit-confirm-message": "Έχετε αλλάξει ένα στοιχείο αλλά δεν έχετε αποθηκεύσει ακόμη αυτές τις αλλαγές. Τι θα θέλατε να κάνετε;",
+  "keep-changes-and-save": "Διατήρηση αλλαγών και αποθήκευση",
+  "reading-plan-edit-reading": "Επεξεργασία ανάγνωσης"
 }

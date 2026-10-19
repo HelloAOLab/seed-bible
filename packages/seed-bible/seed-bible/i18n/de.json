@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} lesen alle {{reference}}",
   "feed-empty": "Bisher keine Aktivität in diesem Zeitraum.",
   "feed-empty-notes": "Bisher liegen in diesem Zeitraum noch keine Einträge vor.",
-  "feed-empty-reading": "In diesem Zeitraum sind noch keine Messwerte verfügbar."
+  "feed-empty-reading": "In diesem Zeitraum sind noch keine Messwerte verfügbar.",
+  "playlist-scripture-note-label": "Notiz",
+  "playlist-scripture-note-title-label": "Titel der Notiz",
+  "playlist-scripture-note-title-placeholder": "Titel (optional)",
+  "playlist-scripture-note-add": "Füge eine Notiz hinzu",
+  "playlist-scripture-note-remove": "Notiz entfernen",
+  "playlist-scripture-note-show": "Hinweis anzeigen",
+  "playlist-scripture-note-hide": "Notiz ausblenden",
+  "playlist-scripture-note-return": "Zurück zur Playlist",
+  "playlist-scripture-note-aria": "Anmerkung zu {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} von {{total}}",
+  "unsaved-item-edit-confirm-title": "Nicht gespeicherte Elementänderungen",
+  "unsaved-item-edit-confirm-message": "Sie haben einen Eintrag geändert, die Änderungen aber noch nicht gespeichert. Was möchten Sie tun?",
+  "keep-changes-and-save": "Änderungen beibehalten und speichern",
+  "reading-plan-edit-reading": "Lesen bearbeiten"
 }

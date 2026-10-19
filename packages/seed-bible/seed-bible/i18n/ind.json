@@ -1183,5 +1183,19 @@
   "feed-all-read": "{{names}} semua membaca {{reference}}",
   "feed-empty": "Belum ada aktivitas dalam rentang waktu ini.",
   "feed-empty-notes": "Belum ada catatan dalam rentang waktu ini.",
-  "feed-empty-reading": "Belum ada pembacaan dalam jangka waktu ini."
+  "feed-empty-reading": "Belum ada pembacaan dalam jangka waktu ini.",
+  "playlist-scripture-note-label": "Catatan",
+  "playlist-scripture-note-title-label": "Judul catatan",
+  "playlist-scripture-note-title-placeholder": "Judul (opsional)",
+  "playlist-scripture-note-add": "Tambahkan catatan",
+  "playlist-scripture-note-remove": "Hapus catatan",
+  "playlist-scripture-note-show": "Tampilkan catatan",
+  "playlist-scripture-note-hide": "Sembunyikan catatan",
+  "playlist-scripture-note-return": "Kembali ke daftar putar",
+  "playlist-scripture-note-aria": "Catatan pada {{passage}}",
+  "playlist-scripture-note-progress": "{{current}} dari {{total}}",
+  "unsaved-item-edit-confirm-title": "Perubahan item yang belum disimpan",
+  "unsaved-item-edit-confirm-message": "Anda telah mengubah suatu item tetapi belum menyimpan perubahan tersebut. Apa yang ingin Anda lakukan?",
+  "keep-changes-and-save": "Simpan perubahan dan terapkan.",
+  "reading-plan-edit-reading": "Mengedit bacaan"
 }
