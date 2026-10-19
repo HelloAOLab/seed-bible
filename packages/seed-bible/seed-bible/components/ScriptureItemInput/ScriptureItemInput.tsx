@@ -23,6 +23,11 @@ interface ScriptureItemInputProps {
   initialNote?: string;
   /** Note title the note's title field starts with. */
   initialNoteTitle?: string;
+  /**
+   * The fixed translation of the item being edited, which playback honours;
+   * kept on save, since the input has no control for it.
+   */
+  translationId?: string;
   /** Overrides the submit button label (defaults to "Add item"). */
   submitLabel?: string;
 }
@@ -71,6 +76,7 @@ export const ScriptureItemInput = forwardRef<
     initialValue,
     initialNote,
     initialNoteTitle,
+    translationId,
     submitLabel,
   } = props;
   const { t } = useI18n();
@@ -175,6 +181,7 @@ export const ScriptureItemInput = forwardRef<
     onAdd({
       type: "bible-verse",
       ref: verseRef,
+      ...(translationId ? { translationId } : {}),
       ...(note ? { note } : {}),
       ...(title ? { noteTitle: title } : {}),
     });
