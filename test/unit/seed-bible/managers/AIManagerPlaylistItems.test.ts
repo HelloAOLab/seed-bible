@@ -35,6 +35,9 @@ describe("AI playlist item conversions", () => {
         { bookId: "GEN", chapter: 21, verse: 17, endVerse: 19 },
         { bookId: "EXO", chapter: 3 },
       ],
+      highlights: [
+        { bookId: "GEN", chapter: 16, verse: 13, text: "a God who sees" },
+      ],
     },
   ];
 

@@ -515,4 +515,130 @@ describe("ScriptureItemInput", () => {
       expect(handleRef.current?.isDirty()).toBe(true);
     });
   });
+
+  describe("highlighted phrases", () => {
+    const chapterWith = (verses: Record<number, string>) =>
+      ({
+        chapter: {
+          number: 16,
+          footnotes: [],
+          content: Object.entries(verses).map(([number, text]) => ({
+            type: "verse",
+            number: Number(number),
+            content: [text],
+          })),
+        },
+      }) as unknown as import("@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI").TranslationBookChapter;
+    const loadChapter = vi.fn(async () =>
+      chapterWith({ 13: "You are a God who sees.", 14: "Beer Lahai Roi." })
+    );
+
+    /** Selects `phrase` inside the preview's verse `verse`, as a reader dragging over it would. */
+    function selectPhrase(verse: number, phrase: string) {
+      const verseEl = container.querySelector<HTMLElement>(
+        `[data-verse-number="${verse}"]`
+      )!;
+      const textNode = Array.from(verseEl.childNodes).find(
+        (node) =>
+          node.nodeType === Node.TEXT_NODE && node.textContent?.includes(phrase)
+      ) as Text;
+      const start = textNode.textContent!.indexOf(phrase);
+      const range = document.createRange();
+      range.setStart(textNode, start);
+      range.setEnd(textNode, start + phrase.length);
+      const selection = document.getSelection()!;
+      selection.removeAllRanges();
+      selection.addRange(range);
+      act(() => {
+        container
+          .querySelector(".sb-scripture-passage .sb-item-inline-preview")!
+          .dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+      });
+    }
+
+    it("shows the passage once the reference reads, and adds a selected phrase as a highlight", async () => {
+      const onAdd = vi.fn();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            books={BOOKS}
+            onAdd={onAdd}
+            loadChapter={loadChapter}
+          />,
+          container
+        );
+      });
+      expect(container.querySelector(".sb-scripture-passage")).toBeNull();
+
+      act(() => {
+        input().focus();
+        setValue(input(), "Genesis 16:13-14");
+      });
+      await vi.waitFor(() =>
+        expect(
+          container.querySelector(".sb-scripture-passage")?.textContent
+        ).toContain("You are a God who sees.")
+      );
+      expect(container.textContent).toContain("Select words in the passage");
+
+      selectPhrase(13, "a God who sees");
+      const add = Array.from(container.querySelectorAll("button")).find((b) =>
+        b.textContent?.includes("Highlight “a God who sees”")
+      )!;
+      expect(add).toBeDefined();
+      act(() => add.click());
+
+      expect(
+        Array.from(container.querySelectorAll(".sb-scripture-highlight")).map(
+          (el) => el.textContent
+        )
+      ).toEqual(["Genesis 16:13“a God who sees”close"]);
+      expect(
+        container.querySelector(".sb-item-inline-preview-phrase")?.textContent
+      ).toBe("a God who sees");
+
+      act(() => submitButton().click());
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 16, verse: 13, endVerse: 14 },
+        highlights: [
+          { bookId: "GEN", chapter: 16, verse: 13, text: "a God who sees" },
+        ],
+      } satisfies PlaylistItemData);
+    });
+
+    it("seeds existing highlights, removes one, and is dirty only once they change", async () => {
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            ref={handleRef}
+            books={BOOKS}
+            onAdd={vi.fn()}
+            initialValue="Genesis 16:13"
+            initialHighlights={[
+              { bookId: "GEN", chapter: 16, verse: 13, text: "God who sees" },
+            ]}
+            loadChapter={loadChapter}
+          />,
+          container
+        );
+      });
+
+      expect(
+        container.querySelectorAll(".sb-scripture-highlight")
+      ).toHaveLength(1);
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-scripture-highlight-remove")!
+          .click();
+      });
+      expect(
+        container.querySelectorAll(".sb-scripture-highlight")
+      ).toHaveLength(0);
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+  });
 });

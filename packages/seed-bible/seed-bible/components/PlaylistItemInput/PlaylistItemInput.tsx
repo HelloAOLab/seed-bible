@@ -250,6 +250,8 @@ export const PlaylistItemInput = forwardRef<
         initialNote={scripture?.note}
         initialNoteTitle={scripture?.noteTitle}
         initialExtraRefs={scripture?.refs}
+        initialHighlights={scripture?.highlights}
+        loadChapter={loadChapter}
         withNote={mode === "note-scripture"}
         submitLabel={submitLabel}
         steps={steps}
@@ -304,7 +306,7 @@ export const PlaylistItemInput = forwardRef<
     return (
       <div id={id} className="sb-playlist-item-editor">
         {input}
-        {editItem.type === "bible-verse" || editItem.type === "compare" ? (
+        {editItem.type === "compare" ? (
           <PlaylistItemInlinePreview
             item={editItem}
             loadChapter={loadChapter}

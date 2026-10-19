@@ -74,10 +74,29 @@ export const VerseRefSchema = z.object({
   toEndOfChapter: z.boolean().optional(),
 });
 
+/**
+ * A phrase of a passage the author wants to stand out while the step plays:
+ * "God so loved" in John 3:16. Matched by text within the verse, so it holds
+ * across translations that share the wording and simply doesn't show in one
+ * that doesn't.
+ */
+export const PhraseHighlightSchema = z.object({
+  bookId: z.string(),
+  chapter: z.number().positive(),
+  verse: z.number().positive(),
+  text: z.string().min(1),
+});
+export type PhraseHighlight = z.infer<typeof PhraseHighlightSchema>;
+
+/** The class the reader gives a highlighted phrase of a playing step. */
+export const PHRASE_HIGHLIGHT_CLASS = "sb-verse-decoration-phrase";
+
 export const BibleVersePlaylistItem = z.object({
   type: z.literal("bible-verse"),
   ref: VerseRefSchema,
   translationId: z.string().optional(),
+  /** Phrases of the passage to pick out while the step plays. */
+  highlights: z.array(PhraseHighlightSchema).optional(),
   /**
    * The author's note on the passage, as sanitized HTML, shown beside it while
    * the step plays. A step with a note is a "Note + Scripture" step.
@@ -668,19 +687,24 @@ export function expandCrossChapterItem(
 
   // Each passage of the step, main one first, split per chapter. The note
   // rides on the first stop only: it belongs to the step, not to each chapter.
-  const { refs: extraRefs, note, noteTitle, ...single } = item;
+  // Highlights go with the chapter they're in.
+  const { refs: extraRefs, note, noteTitle, highlights, ...single } = item;
   const stops = [item.ref, ...(extraRefs ?? [])].flatMap((ref) =>
     expandChapterRange({ ...single, ref })
   );
-  return stops.map((stop, index) =>
-    index === 0
-      ? {
-          ...stop,
-          ...(note ? { note } : {}),
-          ...(noteTitle ? { noteTitle } : {}),
-        }
-      : stop
-  );
+  return stops.map((stop, index) => {
+    const own = highlights?.filter(
+      (highlight) =>
+        highlight.bookId === stop.ref.bookId &&
+        highlight.chapter === stop.ref.chapter
+    );
+    return {
+      ...stop,
+      ...(index === 0 && note ? { note } : {}),
+      ...(index === 0 && noteTitle ? { noteTitle } : {}),
+      ...(own?.length ? { highlights: own } : {}),
+    };
+  });
 }
 
 type ScriptureStep = Extract<PlaylistItemData, { type: "bible-verse" }>;
@@ -823,12 +847,20 @@ export function createPlayingState(
   });
 
   let decorationId: string | null = null;
+  // The step's highlighted phrases, kept for as long as the step plays.
+  let phraseDecorationIds: string[] = [];
 
   const disposeDecoration = () => {
     if (tab && decorationId) {
       tab.readingState.removeDecoration(decorationId);
       decorationId = null;
     }
+    if (tab) {
+      for (const id of phraseDecorationIds) {
+        tab.readingState.removeDecoration(id);
+      }
+    }
+    phraseDecorationIds = [];
   };
 
   const navigateToCurrentItem = async () => {
@@ -849,6 +881,23 @@ export function createPlayingState(
       ref.bookId,
       ref.chapter,
       ref.verse != null ? { scrollToVerse: ref.verse } : undefined
+    );
+
+    // Stale after the await: the step may have moved on while the chapter
+    // loaded, and its own navigation will have drawn its highlights.
+    if (currentItem.peek() !== item) {
+      return;
+    }
+    phraseDecorationIds = (item.highlights ?? []).map((highlight) =>
+      tab.readingState.decorateVerses(
+        highlight.bookId,
+        highlight.chapter,
+        [highlight.verse],
+        {
+          targetContent: highlight.text,
+          className: PHRASE_HIGHLIGHT_CLASS,
+        }
+      )
     );
 
     if (ref.verse == null) {

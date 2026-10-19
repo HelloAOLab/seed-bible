@@ -4,9 +4,14 @@ import { forwardRef, lazy, Suspense } from "preact/compat";
 import type { Editor } from "@tiptap/core";
 import { useI18n } from "../../i18n/I18nManager";
 import type {
+  PhraseHighlight,
   PlaylistItemData,
   VerseRef,
 } from "../../managers/PlaylistManager";
+import {
+  ScripturePreview,
+  type ScriptureChapterLoader,
+} from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import {
   computeSuggestions,
@@ -36,6 +41,13 @@ interface ScriptureItemInputProps {
   initialNoteTitle?: string;
   /** Further passages the step starts with, after the main one. */
   initialExtraRefs?: VerseRef[];
+  /** Phrases the step starts with picked out. */
+  initialHighlights?: PhraseHighlight[];
+  /**
+   * Loads chapters for the passage shown beneath the fields, which is where
+   * phrases get picked out. Without it no passage shows.
+   */
+  loadChapter?: ScriptureChapterLoader;
   /**
    * Starts with the note open and empty, for a "Note + Scripture" step the
    * author chose up front. A note that starts filled in is open regardless.
@@ -98,6 +110,8 @@ export const ScriptureItemInput = forwardRef<
     withNote,
     submitLabel,
     steps,
+    initialHighlights,
+    loadChapter,
   } = props;
   const { t } = useI18n();
   const [value, setValue] = useState(initialValue ?? "");
@@ -118,6 +132,13 @@ export const ScriptureItemInput = forwardRef<
     verseRefLabel(extra, resolveBookName)
   );
   const [extraTexts, setExtraTexts] = useState<string[]>(initialExtraTexts);
+  const [highlights, setHighlights] = useState<PhraseHighlight[]>(
+    initialHighlights ?? []
+  );
+  // Words selected in the passage, offered as the next highlight.
+  const [pendingPhrase, setPendingPhrase] = useState<PhraseHighlight | null>(
+    null
+  );
 
   const noteEditorRef = useRef<Editor | null>(null);
   const [noteOpen, setNoteOpen] = useState(
@@ -213,6 +234,59 @@ export const ScriptureItemInput = forwardRef<
     );
   };
 
+  /** Whether the picked-out phrases differ from the ones the step started with. */
+  const highlightsChanged = (): boolean =>
+    JSON.stringify(highlights) !== JSON.stringify(initialHighlights ?? []);
+
+  /**
+   * The selection the reader just made in the passage, when it sits within
+   * one verse: offered as a phrase to highlight. Cleared otherwise.
+   */
+  const capturePhrase = () => {
+    const selection = document.getSelection();
+    const text = selection?.toString().trim() ?? "";
+    if (!selection || selection.isCollapsed || !text) {
+      setPendingPhrase(null);
+      return;
+    }
+    const verseOf = (node: Node | null) =>
+      (node instanceof Element
+        ? node
+        : node?.parentElement
+      )?.closest<HTMLElement>("[data-verse-number]") ?? null;
+    const start = verseOf(selection.anchorNode);
+    const end = verseOf(selection.focusNode);
+    if (!start || start !== end) {
+      setPendingPhrase(null);
+      return;
+    }
+    setPendingPhrase({
+      bookId: start.dataset.bookId ?? "",
+      chapter: Number(start.dataset.chapter),
+      verse: Number(start.dataset.verseNumber),
+      text,
+    });
+  };
+
+  const addPendingPhrase = () => {
+    if (!pendingPhrase) {
+      return;
+    }
+    setHighlights((current) =>
+      current.some(
+        (highlight) =>
+          highlight.bookId === pendingPhrase.bookId &&
+          highlight.chapter === pendingPhrase.chapter &&
+          highlight.verse === pendingPhrase.verse &&
+          highlight.text === pendingPhrase.text
+      )
+        ? current
+        : [...current, pendingPhrase]
+    );
+    setPendingPhrase(null);
+    document.getSelection()?.removeAllRanges();
+  };
+
   /**
    * The further passages as references, in order. Null when one of the
    * fields holds text that names no passage; blank fields are skipped.
@@ -242,11 +316,14 @@ export const ScriptureItemInput = forwardRef<
       type: "bible-verse",
       ref: verseRef,
       ...(extraRefs.length ? { refs: extraRefs } : {}),
+      ...(highlights.length ? { highlights } : {}),
       ...(note ? { note } : {}),
       ...(title ? { noteTitle: title } : {}),
     });
     setValue("");
     setExtraTexts([]);
+    setHighlights([]);
+    setPendingPhrase(null);
     setError(null);
     setHighlight({ book: 0, option: 0 });
     noteEditorRef.current?.commands.clearContent();
@@ -311,6 +388,7 @@ export const ScriptureItemInput = forwardRef<
       isDirty: () =>
         value.trim() !== (initialValue ?? "").trim() ||
         extrasChanged() ||
+        highlightsChanged() ||
         noteChanged(),
       commit: handleSubmit,
     }),
@@ -319,11 +397,17 @@ export const ScriptureItemInput = forwardRef<
       highlightedOption,
       initialValue,
       extraTexts,
+      highlights,
       noteOpen,
       noteTitle,
       initialNote,
     ]
   );
+
+  // The passage as it will play: the main reference as typed (read the way
+  // Enter would read it) plus the further ones that can be read.
+  const mainRef = resolveTypedReference(value, books);
+  const previewRefs = mainRef ? [mainRef, ...(resolveExtraRefs() ?? [])] : [];
 
   return (
     <>
@@ -455,6 +539,81 @@ export const ScriptureItemInput = forwardRef<
         ) : null}
       </div>
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}
+
+      {loadChapter && previewRefs.length > 0 ? (
+        <div className="sb-scripture-passage">
+          <div
+            className="sb-item-inline-preview"
+            dir="auto"
+            onMouseUp={capturePhrase}
+            onKeyUp={capturePhrase}
+          >
+            {previewRefs.map((previewRef, index) => (
+              <ScripturePreview
+                key={`${index}-${JSON.stringify(previewRef)}`}
+                item={{ type: "bible-verse", ref: previewRef }}
+                loadChapter={loadChapter}
+                highlights={highlights}
+              />
+            ))}
+          </div>
+          {pendingPhrase ? (
+            <button
+              type="button"
+              className="sb-scripture-note-toggle sb-scripture-highlight-add"
+              onMouseDown={(event: MouseEvent) => event.preventDefault()}
+              onClick={addPendingPhrase}
+            >
+              <MaterialIcon>ink_highlighter</MaterialIcon>
+              {t("playlist-highlight-selection", {
+                defaultValue: "Highlight “{{text}}”",
+                text: pendingPhrase.text,
+              })}
+            </button>
+          ) : (
+            <p className="sb-scripture-passage-hint">
+              {t("playlist-highlight-hint", {
+                defaultValue:
+                  "Select words in the passage to pick them out while the step plays.",
+              })}
+            </p>
+          )}
+          {highlights.length > 0 ? (
+            <ul
+              className="sb-scripture-highlights"
+              aria-label={t("playlist-highlights-label", {
+                defaultValue: "Highlighted phrases",
+              })}
+            >
+              {highlights.map((highlight, index) => (
+                <li key={index} className="sb-scripture-highlight">
+                  <span className="sb-scripture-highlight-verse">
+                    {resolveBookName(highlight.bookId)} {highlight.chapter}:
+                    {highlight.verse}
+                  </span>
+                  <span className="sb-scripture-highlight-text" dir="auto">
+                    “{highlight.text}”
+                  </span>
+                  <button
+                    type="button"
+                    className="sb-scripture-highlight-remove"
+                    aria-label={t("playlist-highlight-remove", {
+                      defaultValue: "Remove highlight",
+                    })}
+                    onClick={() =>
+                      setHighlights((current) =>
+                        current.filter((_, i) => i !== index)
+                      )
+                    }
+                  >
+                    <MaterialIcon>close</MaterialIcon>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
 
       {extraTexts.length > 0 ? (
         <div className="sb-scripture-extra-passages">

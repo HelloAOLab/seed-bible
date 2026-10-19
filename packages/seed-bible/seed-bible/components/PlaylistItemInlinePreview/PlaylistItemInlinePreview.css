@@ -78,3 +78,10 @@
   margin: 0;
   opacity: 0.8;
 }
+
+.sb-item-inline-preview-phrase {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 75%);
+  box-shadow: 0 2px 0 var(--sb-primary-color);
+  border-radius: 2px;
+  color: inherit;
+}

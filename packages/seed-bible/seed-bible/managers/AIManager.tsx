@@ -76,6 +76,18 @@ export const AIPlaylistItemSchema = z.object({
     noteTitle: z.string().nullable().default(null),
     /** Further passages read after `ref` as part of the same step. */
     refs: z.array(AIBibleVerseRefSchema.shape.ref).nullable().default(null),
+    /** Phrases of the passage to pick out while the step plays. */
+    highlights: z
+      .array(
+        z.object({
+          bookId: z.string(),
+          chapter: z.number(),
+          verse: z.number(),
+          text: z.string(),
+        })
+      )
+      .nullable()
+      .default(null),
   })
     .nullable()
     .default(null),
@@ -155,6 +167,9 @@ export function convertToPlaylistItem(
               verse: ref.verse ?? undefined,
               endVerse: ref.endVerse ?? undefined,
             }))
+          : undefined,
+        highlights: item.bibleVerse.highlights?.length
+          ? item.bibleVerse.highlights
           : undefined,
       };
     case "question":
@@ -238,6 +253,7 @@ export function convertToAiPlaylistItem(
                 endVerse: ref.endVerse ?? null,
               }))
             : null,
+          highlights: item.highlights?.length ? item.highlights : null,
         },
       };
     case "link":

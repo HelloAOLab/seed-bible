@@ -4,6 +4,7 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { TranslationBookChapter } from "../../managers/FreeUseBibleAPI";
 import {
   expandCrossChapterItem,
+  type PhraseHighlight,
   type PlaylistItemData,
   type VerseRef,
 } from "../../managers/PlaylistManager";
@@ -114,8 +115,10 @@ export function PlaylistItemInlinePreview(props: {
 export function ScripturePreview(props: {
   item: ScriptureItem;
   loadChapter?: ScriptureChapterLoader;
+  /** Phrases to mark within the verses, as the step will show them. */
+  highlights?: PhraseHighlight[];
 }) {
-  const { item, loadChapter } = props;
+  const { item, loadChapter, highlights } = props;
   const { t } = useI18n();
   const [state, setState] = useState<PassageState>({ status: "loading" });
 
@@ -191,17 +194,65 @@ export function ScripturePreview(props: {
             </span>
           ) : null}
           {section.verses.map((verse) => (
-            <span key={verse.number}>
+            <span
+              key={verse.number}
+              className="sb-item-inline-preview-verse"
+              data-book-id={item.ref.bookId}
+              data-chapter={section.chapter}
+              data-verse-number={verse.number}
+            >
               <sup className="sb-item-inline-preview-verse-number">
                 {verse.number}
               </sup>
-              {verse.text}{" "}
+              {markPhrases(
+                verse.text,
+                (highlights ?? [])
+                  .filter(
+                    (highlight) =>
+                      highlight.bookId === item.ref.bookId &&
+                      highlight.chapter === section.chapter &&
+                      highlight.verse === verse.number
+                  )
+                  .map((highlight) => highlight.text)
+              )}{" "}
             </span>
           ))}
         </p>
       ))}
     </div>
   );
+}
+
+/** The verse's text with each highlighted phrase wrapped in a `<mark>`. */
+export function markPhrases(text: string, phrases: string[]) {
+  const cuts = new Set<number>([0, text.length]);
+  const marked: Array<[number, number]> = [];
+  for (const phrase of phrases) {
+    if (!phrase) continue;
+    let from = text.indexOf(phrase);
+    while (from !== -1) {
+      marked.push([from, from + phrase.length]);
+      cuts.add(from);
+      cuts.add(from + phrase.length);
+      from = text.indexOf(phrase, from + phrase.length);
+    }
+  }
+  if (marked.length === 0) {
+    return text;
+  }
+  const bounds = Array.from(cuts).sort((a, b) => a - b);
+  return bounds.slice(0, -1).map((start, index) => {
+    const end = bounds[index + 1]!;
+    const piece = text.slice(start, end);
+    const inside = marked.some(([from, to]) => start >= from && end <= to);
+    return inside ? (
+      <mark key={start} className="sb-item-inline-preview-phrase">
+        {piece}
+      </mark>
+    ) : (
+      piece
+    );
+  });
 }
 
 /** A scripture item for one of a comparison's passages, for previews. */

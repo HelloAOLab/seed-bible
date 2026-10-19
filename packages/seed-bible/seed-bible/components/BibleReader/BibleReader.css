@@ -171,3 +171,15 @@
   line-height: 1;
   box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
 }
+
+/* -------------------------------------------------- playlist phrase highlight */
+
+/* A phrase the author of a playing playlist picked out of the passage (see
+   `PhraseHighlight`): a text-targeted decoration, so only those words carry
+   it, underlined in the accent so it reads apart from the reader's own
+   highlights and from the passage's dimming. */
+.sb-verse-decoration-phrase {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 75%);
+  box-shadow: 0 2px 0 var(--sb-primary-color);
+  border-radius: 2px;
+}

@@ -5361,4 +5361,104 @@ describe("queueIndexOfStep", () => {
     expect(queueIndexOfStep(items, 0)).toBeNull();
     expect(queueIndexOfStep(items, 4)).toBeNull();
   });
+
+  describe("highlighted phrases", () => {
+    it("keeps each highlight with the chapter it belongs to when a step is expanded", () => {
+      const playing = createPlayingState([
+        {
+          id: "p1",
+          title: null,
+          description: null,
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 16 },
+              refs: [{ bookId: "EXO", chapter: 3 }],
+              highlights: [
+                {
+                  bookId: "EXO",
+                  chapter: 3,
+                  verse: 6,
+                  text: "the God of your father",
+                },
+                {
+                  bookId: "GEN",
+                  chapter: 16,
+                  verse: 13,
+                  text: "a God who sees",
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      expect(playing.queue.value).toEqual([
+        {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 16 },
+          highlights: [
+            { bookId: "GEN", chapter: 16, verse: 13, text: "a God who sees" },
+          ],
+        },
+        {
+          type: "bible-verse",
+          ref: { bookId: "EXO", chapter: 3 },
+          highlights: [
+            {
+              bookId: "EXO",
+              chapter: 3,
+              verse: 6,
+              text: "the God of your father",
+            },
+          ],
+        },
+      ]);
+    });
+
+    it("draws each highlight on the reader as the step plays, and takes them down when it moves on", async () => {
+      const selectTranslationAndChapter = vi.fn(async () => undefined);
+      const tab = makeTab("tab-1", selectTranslationAndChapter);
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      decorateVerses.mockImplementation(
+        () => `phrase-${decorateVerses.mock.calls.length}`
+      );
+      const removeDecoration = tab.readingState
+        .removeDecoration as unknown as Mock;
+      const playing = createPlayingState(
+        [
+          {
+            id: "p1",
+            title: null,
+            description: null,
+            items: [
+              {
+                type: "bible-verse",
+                ref: { bookId: "GEN", chapter: 16 },
+                highlights: [
+                  {
+                    bookId: "GEN",
+                    chapter: 16,
+                    verse: 13,
+                    text: "a God who sees",
+                  },
+                ],
+              },
+              { type: "bible-verse", ref: { bookId: "EXO", chapter: 3 } },
+            ],
+          },
+        ],
+        tab
+      );
+
+      await playing.jumpTo(0);
+      expect(decorateVerses).toHaveBeenCalledWith("GEN", 16, [13], {
+        targetContent: "a God who sees",
+        className: "sb-verse-decoration-phrase",
+      });
+
+      await playing.next();
+      expect(removeDecoration).toHaveBeenCalledWith("phrase-1");
+    });
+  });
 });

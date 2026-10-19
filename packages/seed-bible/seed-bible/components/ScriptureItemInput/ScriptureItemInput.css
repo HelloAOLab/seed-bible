@@ -155,3 +155,73 @@
 .sb-scripture-note-title-input {
   font-weight: 600;
 }
+
+/* The passage as it will play, with a way to pick phrases out of it. */
+.sb-scripture-passage {
+  margin-top: 8px;
+}
+
+.sb-scripture-passage .sb-item-inline-preview {
+  max-height: 20rem;
+}
+
+.sb-scripture-passage-hint {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-scripture-highlight-add {
+  margin-top: 6px;
+}
+
+.sb-scripture-highlights {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sb-scripture-highlight {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 50%);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+  font-size: 0.8125rem;
+}
+
+.sb-scripture-highlight-verse {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--sb-primary-color);
+}
+
+.sb-scripture-highlight-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-scripture-highlight-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-scripture-highlight-remove .material-symbols-outlined {
+  font-size: 1rem;
+}
