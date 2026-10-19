@@ -98,7 +98,7 @@ describe("PlaylistFinishedModalContent", () => {
     expect(rows).toEqual([
       ["Psalms 120", "Scripture"],
       ["Psalms 121:1", "Scripture"],
-      ["A pause", "Text"],
+      ["A pause", "Note"],
       ["https://example.com/song", "Link"],
     ]);
   });
