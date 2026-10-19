@@ -2018,9 +2018,18 @@ export function createPlaylistManager(
   };
 
   const openPlaylistFinishedModal = (
-    playlist: Pick<Playlist, "id" | "recordName" | "title">
+    playlist: Pick<Playlist, "id" | "recordName" | "title">,
+    items: PlaylistItemData[] = [],
+    tab: ReaderTab | null = null
   ): void => {
     modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
+    // Book names come from the translation the tab was reading in, as the
+    // player's own labels do; the raw id stands in when none is loaded.
+    const resolveBookName = (bookId: string): string => {
+      const books = tab?.readingState.translationBooks.peek()?.books;
+      const book = books?.find((b) => b.id === bookId);
+      return book?.name ?? book?.commonName ?? bookId;
+    };
     modals.openModal({
       id: PLAYLIST_FINISHED_MODAL_ID,
       title: { key: "playlist-finished", defaultValue: "Playlist finished" },
@@ -2031,6 +2040,8 @@ export function createPlaylistManager(
             i18n.t("untitled-playlist", { defaultValue: "Untitled playlist" })
           }
           shareUrl={getPlaylistUrl(playlist)}
+          items={items}
+          resolveBookName={resolveBookName}
           onClose={() => {
             stopPlaying();
             modals.closeModal(PLAYLIST_FINISHED_MODAL_ID);
@@ -2249,7 +2260,7 @@ export function createPlaylistManager(
       const playingState = createPlayingState(initial.playlists, tab, () => {
         const playlist = playingState.playlists.peek()[0];
         if (playlist && isRecordedPlaylist(playlist)) {
-          openPlaylistFinishedModal(playlist);
+          openPlaylistFinishedModal(playlist, playingState.queue.peek(), tab);
         }
       });
       // Apply the synced queue + position (a peer's queue may differ from the

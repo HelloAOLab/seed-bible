@@ -3728,7 +3728,7 @@ describe("createPlaylistManager", () => {
       return manager;
     };
 
-    it("stops playback when its Close button is pressed", async () => {
+    it("stops playback when its Done button is pressed", async () => {
       const manager = await finishPlaylist();
       const container = document.createElement("div");
       document.body.appendChild(container);
@@ -3745,7 +3745,7 @@ describe("createPlaylistManager", () => {
           );
         });
         const close = Array.from(container.querySelectorAll("button")).find(
-          (b) => b.textContent === "Close"
+          (b) => b.textContent === "Done"
         )!;
 
         act(() => close.click());

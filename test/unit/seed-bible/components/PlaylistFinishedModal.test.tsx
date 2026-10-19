@@ -7,6 +7,7 @@ import {
   createI18nManager,
 } from "@packages/seed-bible/seed-bible/i18n";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers";
+import type { PlaylistItemData } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 
 const SHARE_URL = "https://example.com/en/playlist/user-1.p1/psalms";
 
@@ -35,7 +36,7 @@ describe("PlaylistFinishedModalContent", () => {
     container.remove();
   });
 
-  const renderModal = () =>
+  const renderModal = (items?: PlaylistItemData[]) =>
     act(() => {
       render(
         <I18nProvider
@@ -44,6 +45,8 @@ describe("PlaylistFinishedModalContent", () => {
           <PlaylistFinishedModalContent
             playlistTitle="Psalms of Ascent"
             shareUrl={SHARE_URL}
+            items={items}
+            resolveBookName={(bookId) => (bookId === "PSA" ? "Psalms" : bookId)}
             onClose={onClose}
           />
         </I18nProvider>,
@@ -63,16 +66,55 @@ describe("PlaylistFinishedModalContent", () => {
       (b) => b.textContent === label
     )!;
 
-  it("says the playlist is finished, by name", () => {
+  it("says the playlist is complete, by name", () => {
     renderModal();
-    expect(container.textContent).toContain(
-      "You've reached the end of Psalms of Ascent."
-    );
+    expect(container.textContent).toContain("Playlist complete");
+    expect(
+      container.querySelector(".sb-playlist-finished-title")?.textContent
+    ).toBe("Psalms of Ascent");
+    // Nothing to summarize without the steps.
+    expect(container.querySelector(".sb-playlist-finished-stats")).toBeNull();
   });
 
-  it("closes from the Close button", () => {
+  it("counts the steps and passages read, and lists every step by name", () => {
+    renderModal([
+      { type: "bible-verse", ref: { bookId: "PSA", chapter: 120 } },
+      { type: "bible-verse", ref: { bookId: "PSA", chapter: 121, verse: 1 } },
+      { type: "html", html: "<p>Rest here.</p>", title: "A pause" },
+      { type: "link", url: "https://example.com/song" },
+    ]);
+
+    const stats = Array.from(
+      container.querySelectorAll(".sb-playlist-finished-stat")
+    ).map((stat) => stat.textContent);
+    expect(stats).toEqual(["4steps", "2passages"]);
+
+    const rows = Array.from(
+      container.querySelectorAll(".sb-playlist-finished-read-item")
+    ).map((row) => [
+      row.querySelector(".sb-playlist-finished-read-label")?.textContent,
+      row.querySelector(".sb-playlist-finished-read-kind")?.textContent,
+    ]);
+    expect(rows).toEqual([
+      ["Psalms 120", "Scripture"],
+      ["Psalms 121:1", "Scripture"],
+      ["A pause", "Text"],
+      ["https://example.com/song", "Link"],
+    ]);
+  });
+
+  it("uses the singular for one step and one passage", () => {
+    renderModal([{ type: "bible-verse", ref: { bookId: "PSA", chapter: 1 } }]);
+
+    const stats = Array.from(
+      container.querySelectorAll(".sb-playlist-finished-stat")
+    ).map((stat) => stat.textContent);
+    expect(stats).toEqual(["1step", "1passage"]);
+  });
+
+  it("closes from the Done button", () => {
     renderModal();
-    act(() => button("Close").click());
+    act(() => button("Done").click());
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
