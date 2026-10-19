@@ -90,7 +90,7 @@ export default defineConfig({
         managers: path.resolve(__dirname, "seed-bible/managers/index.tsx"),
         components: path.resolve(__dirname, "seed-bible/components/index.tsx"),
         i18n: path.resolve(__dirname, "seed-bible/i18n/index.tsx"),
-        sandbox: path.resolve(__dirname, "seed-bible/sandbox/index.tsx"),
+        extensions: path.resolve(__dirname, "seed-bible/extensions/index.tsx"),
         styles: path.resolve(__dirname, "seed-bible/styles.ts"),
       },
       formats: ["es"],

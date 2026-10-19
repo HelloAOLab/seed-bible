@@ -2,7 +2,7 @@ import * as z from "zod/v4";
 import {
   isSandboxPermission,
   type SandboxPermission,
-} from "../sandbox/protocol";
+} from "../extensions/protocol";
 import {
   isValidSensitiveHost,
   normalizeSensitiveHost,

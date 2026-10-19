@@ -46,8 +46,8 @@ import {
   SandboxError,
   type SandboxContext,
   type SandboxExtension,
-} from "@packages/seed-bible/seed-bible/sandbox";
-import { SANDBOX_START_KEY } from "@packages/seed-bible/seed-bible/sandbox/protocol";
+} from "@packages/seed-bible/seed-bible/extensions";
+import { SANDBOX_START_KEY } from "@packages/seed-bible/seed-bible/extensions/protocol";
 
 type RegisteredTool = BibleTool<unknown> & {
   onSelect?: () => void;

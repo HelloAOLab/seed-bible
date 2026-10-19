@@ -1,5 +1,5 @@
 /**
- * `seed-bible/sandbox`: the SDK a third-party extension is written against.
+ * `seed-bible/extensions`: the SDK a third-party extension is written against.
  *
  * It runs inside the extension's own sandboxed iframe, never in the Seed
  * Bible page, and reaches the app only by messages to the host's broker

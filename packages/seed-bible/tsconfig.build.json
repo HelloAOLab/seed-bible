@@ -15,7 +15,7 @@
     "seed-bible/managers/index.tsx",
     "seed-bible/components/index.tsx",
     "seed-bible/i18n/index.tsx",
-    "seed-bible/sandbox/index.tsx",
+    "seed-bible/extensions/index.tsx",
     "seed-bible/styles.ts",
     "seed-bible/ambient.d.ts"
   ]

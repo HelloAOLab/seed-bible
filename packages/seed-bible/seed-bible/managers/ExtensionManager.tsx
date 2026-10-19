@@ -173,7 +173,7 @@ export type Extension = UploadedExtension | ImportExtension;
  */
 export interface UploadedExtension {
   /**
-   * The URL of the extension's bundle, built with `seed-bible/sandbox`.
+   * The URL of the extension's bundle, built with `seed-bible/extensions`.
    */
   url: string;
 

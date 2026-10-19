@@ -23,9 +23,9 @@
       "types": "./dist/i18n/index.d.ts",
       "import": "./dist/i18n.js"
     },
-    "./sandbox": {
-      "types": "./dist/sandbox/index.d.ts",
-      "import": "./dist/sandbox.js"
+    "./extensions": {
+      "types": "./dist/extensions/index.d.ts",
+      "import": "./dist/extensions.js"
     },
     "./style.css": "./dist/style.css",
     "./package.json": "./package.json"

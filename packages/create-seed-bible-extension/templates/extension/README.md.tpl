@@ -21,7 +21,7 @@ A Seed Bible extension, scaffolded by `create-seed-bible-extension`.
 - `npm run build:standalone` — additionally produce a single-file ES module
   for hosting outside the seed-bible monorepo. Seed Bible runs an extension
   loaded this way in a sandbox, behind permissions the user approves, so it
-  must be written with `defineExtension()` from `seed-bible/sandbox` rather
+  must be written with `defineExtension()` from `seed-bible/extensions` rather
   than `registerExtension()` — see the README generated alongside it
   (`dist/standalone/README.md`).
 - `npm run publish` — build standalone, upload the bundle, and upload a small

@@ -66,10 +66,10 @@ extension it loads from a URL in a sandboxed iframe: the extension can't see
 the page, the user's account, or anything the user hasn't granted it.
 
 For that, the module's default export must come from
-\`defineExtension()\` in \`seed-bible/sandbox\`, not \`registerExtension()\`:
+\`defineExtension()\` in \`seed-bible/extensions\`, not \`registerExtension()\`:
 
 \`\`\`tsx
-import { defineExtension } from "seed-bible/sandbox";
+import { defineExtension } from "seed-bible/extensions";
 
 export default defineExtension({
   main: async (sb) => { /* register tools with sb.tools */ },

@@ -37,7 +37,7 @@ import {
   type SandboxState,
   type SandboxTitle,
   type SandboxToolDefinition,
-} from "../sandbox/protocol";
+} from "../extensions/protocol";
 
 /**
  * What a sandbox session needs from the app. `SeedBibleState` satisfies it;
@@ -135,7 +135,7 @@ const SANDBOX_BOOTSTRAP = `(() => {
       const mod = await import(url);
       const start = mod.default && mod.default.__seedBibleSandboxStart;
       if (typeof start !== "function") {
-        throw new Error("The extension's default export is not the result of defineExtension() from seed-bible/sandbox.");
+        throw new Error("The extension's default export is not the result of defineExtension() from seed-bible/extensions.");
       }
       await start(port, event.data.init);
     } catch (err) {

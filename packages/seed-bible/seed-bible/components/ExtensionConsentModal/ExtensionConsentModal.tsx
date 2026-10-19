@@ -5,7 +5,7 @@ import type {
   ModalManager,
 } from "../../managers/ModalManager";
 import type { SandboxConsentRequest } from "../../managers/ExtensionPermissions";
-import type { SandboxPermission } from "../../sandbox/protocol";
+import type { SandboxPermission } from "../../extensions/protocol";
 
 type Translate = ModalContentProps["t"];
 

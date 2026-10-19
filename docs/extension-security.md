@@ -122,10 +122,10 @@ The extension bundles its own copy of Preact and `@preact/signals`. This is fine
 
 ### 4.4 What the extension code looks like
 
-A new SDK entry point, `seed-bible/sandbox`, replaces direct access to `SeedBibleState`. It looks like today's API, but every call that reaches user data is `async` (it's a message to the broker and a reply), and app state arrives as read-only signals that the broker keeps up to date.
+A new SDK entry point, `seed-bible/extensions`, replaces direct access to `SeedBibleState`. It looks like today's API, but every call that reaches user data is `async` (it's a message to the broker and a reply), and app state arrives as read-only signals that the broker keeps up to date.
 
 ```tsx
-import { defineExtension } from "seed-bible/sandbox";
+import { defineExtension } from "seed-bible/extensions";
 import { effect } from "@preact/signals";
 
 export default defineExtension({
@@ -314,7 +314,7 @@ Two existing features install extensions without that click, and both have to st
 
 ## 7. Developer experience
 
-- **`create-seed-bible-extension`** generates the sandboxed shape by default: `defineExtension` from `seed-bible/sandbox`, a `permissions` array in `extension.json`, and a test that mocks the SDK's broker rather than `SeedBibleState`.
+- **`create-seed-bible-extension`** generates the sandboxed shape by default: `defineExtension` from `seed-bible/extensions`, a `permissions` array in `extension.json`, and a test that mocks the SDK's broker rather than `SeedBibleState`.
 - **`seed-bible-extension-scripts dev`** runs out-of-tree extensions in the sandbox by default, so a developer runs into a missing permission on their own machine, not in a user's bug report. A `--trusted` flag keeps today's in-page behavior for someone preparing a contribution to `packages/`. The dev server shows the consent dialog once and remembers it for that project.
 - **`check`** warns when code calls an SDK method whose permission isn't declared (it's a fixed list of method → permission, so this can be a simple type-level check: SDK namespaces for undeclared permissions are typed as `never`).
 - **`build --standalone`** produces the sandbox bundle. The `window.__seedBibleExtensionRuntime` shims are no longer needed for sandboxed extensions and can be retired once nothing uses them.
@@ -343,7 +343,7 @@ Each phase is shippable on its own.
 
 1. **Sandbox runtime and the basics — done.** What shipped:
    - `ExtensionSandboxManager.tsx`: the frames, the `MessageChannel` per frame, and the broker, which validates every message against a `zod` schema and checks it against the grant.
-   - `seed-bible/sandbox`: the SDK (`defineExtension`, `sb.*`).
+   - `seed-bible/extensions`: the SDK (`defineExtension`, `sb.*`).
    - Toolbar, verse, quick and below-reader tools; panes and their view frames; toasts; per-extension storage; the extension's own non-sensitive settings; theme, language and direction pushed into every frame.
    - The `reading:position`, `reading:selection` and `reading:navigate` permissions, and `network` hosts enforced by the frames' CSP.
    - `integrity` pinning, and the install consent dialog. Grants are stored and synced like installed extension IDs, are tied to where the bundle is hosted, and are revoked on uninstall.

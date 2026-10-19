@@ -45,7 +45,7 @@ program
   )
   .option(
     "--standalone",
-    "also produce a single-file ES module, built with seed-bible/sandbox, for hosting outside the seed-bible monorepo (see the generated README)"
+    "also produce a single-file ES module, built with seed-bible/extensions, for hosting outside the seed-bible monorepo (see the generated README)"
   )
   .action(async (opts: { standalone?: boolean }) => {
     process.exitCode = await runBuild({ standalone: Boolean(opts.standalone) });
