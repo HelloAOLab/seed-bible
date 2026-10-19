@@ -621,3 +621,62 @@ img.sb-chat-view-message-avatar {
   color: inherit;
   cursor: pointer;
 }
+
+/* ------------------------------------------------- party mode in the chat */
+
+.sb-chat-view-notice .sb-chat-view-event-text {
+  color: var(--sb-primary-color);
+  font-weight: 600;
+}
+
+.sb-chat-view-message-caption {
+  margin: 0 0 2px;
+  font-size: 0.6875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-chat-view-message-quote {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 6px;
+  padding: 6px 10px;
+  border-inline-start: 3px solid var(--sb-primary-color);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-chat-view-message-quote-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-chat-view-message-quote-ref {
+  font-size: 0.6875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-chat-view-message-asked {
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-chat-view-message .sb-chat-view-message-anchor {
+  margin: 6px 0 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.sb-chat-view-readiness {
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  text-align: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}

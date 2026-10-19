@@ -3657,6 +3657,34 @@ describe("createPlaylistManager", () => {
       });
     });
 
+    it("a shared answer reaches the session and its chat", async () => {
+      const shareQuestionAnswer = vi.fn();
+      const sendMessage = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", vi.fn());
+      (tab as unknown as { sharedSession: unknown }).sharedSession = {
+        shareQuestionAnswer,
+      };
+      (tab as unknown as { sharedChat: unknown }).sharedChat = { sendMessage };
+      const manager = makeManager("user-1", makeTabs(tab));
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [{ type: "question", prompt: "Why?", shareable: true }],
+        })
+      );
+      const options = manager.playingStepOptions(manager.playing.value!);
+      expect(options.inSession).toBe(true);
+
+      await options.onSaveQuestionResponse!("Because.", "session");
+
+      expect(shareQuestionAnswer).toHaveBeenCalledWith("Why?", "Because.");
+      expect(sendMessage).toHaveBeenCalledWith({
+        type: "text",
+        text: "Because.",
+        event: { kind: "answer", prompt: "Why?" },
+      });
+    });
+
     it("has nothing to open and nothing to save for a text step", async () => {
       const manager = makeManager("user-1");
       await flush();

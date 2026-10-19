@@ -66,10 +66,22 @@ export const chatMessageAnchorSchema = z.object({
 });
 export type ChatMessageAnchor = z.infer<typeof chatMessageAnchorSchema>;
 
+/**
+ * What a text message reports, beyond what someone said: the leader moving
+ * the group on to a playlist step (shown as a notice, not a bubble), or a
+ * reader sharing their answer to a question step.
+ */
+export const chatMessageEventSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("moved") }),
+  z.object({ kind: z.literal("answer"), prompt: z.string() }),
+]);
+export type ChatMessageEvent = z.infer<typeof chatMessageEventSchema>;
+
 export const textChatMessageSchema = chatMessageBaseSchema.extend({
   type: z.literal("text"),
   text: z.string(),
   anchor: chatMessageAnchorSchema.optional(),
+  event: chatMessageEventSchema.optional(),
 });
 
 export const toolCallChatMessageSchema = chatMessageBaseSchema.extend({
@@ -140,6 +152,8 @@ export interface ParsedChatTextMessage extends ChatMessageBase {
   text: string;
   /** The passage the message is a comment on, when it was written from one. */
   anchor?: ChatMessageAnchor;
+  /** What the message reports, when it is more than something said. */
+  event?: ChatMessageEvent;
 
   /**
    * The parts of the text.
@@ -1055,6 +1069,7 @@ function parseTextMessage(
     text,
     parts: parts.length > 0 ? parts : [text],
     ...(message.anchor ? { anchor: message.anchor } : {}),
+    ...(message.event ? { event: message.event } : {}),
   };
 }
 

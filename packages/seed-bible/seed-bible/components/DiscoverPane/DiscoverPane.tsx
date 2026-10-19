@@ -1,4 +1,5 @@
 import "./DiscoverPane.css";
+import { useState } from "preact/hooks";
 import "./DiscoverShared.css";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager } from "../../managers/TabsManager";
@@ -9,7 +10,12 @@ import { translateTitle } from "../../app/utils";
 import { v4 as uuid } from "uuid";
 import type { AnnotationsManager } from "../../managers/AnnotationsManager";
 import type { Friend, FriendsManager } from "../../managers/FriendsManager";
-import { getUserAnimalVisual } from "../../managers/SessionsManager";
+import {
+  getSessionUrl,
+  getUserAnimalVisual,
+  type BibleReadingSession,
+} from "../../managers/SessionsManager";
+import { getUserDisplayName, getUserSessionRole } from "../Avatar/Avatar";
 import { MaterialIcon } from "../icons";
 import { Spinner } from "../Spinner/Spinner";
 import {
@@ -54,9 +60,34 @@ interface DiscoverPaneProps {
  * sub-views. Reads the `actualView` signal, so it stays reactive and resets
  * alongside the pane body when the active tab stops playing.
  */
+/** Copies the link that joins the session, and says so for a moment. */
+function InviteButton(props: { session: BibleReadingSession }) {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className="sb-play-header-invite"
+      onClick={() => {
+        void navigator.clipboard
+          ?.writeText(getSessionUrl(props.session).href)
+          .then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          });
+      }}
+    >
+      {copied
+        ? t("copied", { defaultValue: "Copied" })
+        : t("party-invite", { defaultValue: "Invite" })}
+    </button>
+  );
+}
+
 /**
  * What the pane header offers while a playlist plays: Listen (narration
- * follows the steps) and the way back to the Discover list.
+ * follows the steps), Invite in a shared session, and the way back to the
+ * Discover list.
  */
 function PlayPlaylistHeaderActions(props: { playlists: PlaylistManager }) {
   const { playlists } = props;
@@ -66,8 +97,10 @@ function PlayPlaylistHeaderActions(props: { playlists: PlaylistManager }) {
     return null;
   }
   const listening = playing.listenAlong.value;
+  const session = playing.tab?.sharedSession ?? null;
   return (
     <>
+      {session ? <InviteButton session={session} /> : null}
       <button
         type="button"
         className={`sb-play-header-action${
@@ -191,15 +224,35 @@ export function DiscoverPaneTitle(props: {
       playing?.playlists.value[0]?.title ??
       t("untitled-playlist", { defaultValue: "Untitled playlist" });
     const author = playlists.playingAuthorName.value;
+    const session = playing?.tab?.sharedSession ?? null;
+    const host = session?.connectedUsers.value.find(
+      (user) => getUserSessionRole(session.options.value, user) === "host"
+    );
+    const live = session
+      ? host?.isSelf
+        ? t("party-live-leading", { defaultValue: "Live · You're leading" })
+        : host
+          ? t("party-live-following", {
+              defaultValue: "Live · Following {{host}}",
+              host: getUserDisplayName(host),
+            })
+          : t("party-live", { defaultValue: "Live" })
+      : null;
     return (
       <div className="sb-play-header" dir="auto">
-        <p className="sb-play-header-eyebrow">
-          {author
-            ? t("playlist-by-author-eyebrow", {
-                defaultValue: "Playlist · By {{author}}",
-                author,
-              })
-            : t("playlist-eyebrow", { defaultValue: "Playlist" })}
+        <p
+          className={`sb-play-header-eyebrow${
+            live ? " sb-play-header-eyebrow--live" : ""
+          }`}
+        >
+          {live ? <span className="sb-play-header-live-dot" /> : null}
+          {live ??
+            (author
+              ? t("playlist-by-author-eyebrow", {
+                  defaultValue: "Playlist · By {{author}}",
+                  author,
+                })
+              : t("playlist-eyebrow", { defaultValue: "Playlist" }))}
           {playlists.openingPlayback.value ? <Spinner size="0.75rem" /> : null}
         </p>
         <h2 className="sb-play-header-title">{title}</h2>

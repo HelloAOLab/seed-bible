@@ -18,7 +18,7 @@ import {
   getUserAnimalVisual,
   type ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
-import { Avatar } from "../Avatar/Avatar";
+import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { AskIcon } from "../icons";
 import { VerseReferenceLink } from "../../app/verseReferenceLink";
@@ -40,6 +40,14 @@ interface ChatMessageGroup {
   key: string;
   /** The messages in the group, in chronological order. */
   messages: ParsedChatTextMessage[];
+}
+
+/** A notice about the group, such as the leader moving everyone on. */
+interface ChatNoticeGroup {
+  type: "notice";
+  key: string;
+  message: ParsedChatTextMessage;
+  timeMs: number;
 }
 
 /** A run of consecutive participant join events collapsed into one notification. */
@@ -70,7 +78,11 @@ interface ChatToolCallGroup {
   timeMs: number;
 }
 
-type ChatTimelineGroup = ChatMessageGroup | ChatJoinGroup | ChatToolCallGroup;
+type ChatTimelineGroup =
+  | ChatMessageGroup
+  | ChatJoinGroup
+  | ChatNoticeGroup
+  | ChatToolCallGroup;
 
 interface JoinEvent {
   participant: ChatParticipant;
@@ -206,7 +218,14 @@ function buildTimeline(
   const groups: ChatTimelineGroup[] = [];
   for (const entry of entries) {
     const lastGroup = groups[groups.length - 1];
-    if (entry.kind === "message") {
+    if (entry.kind === "message" && entry.message.event?.kind === "moved") {
+      groups.push({
+        type: "notice",
+        key: `notice-${entry.message.id}`,
+        message: entry.message,
+        timeMs: entry.timeMs,
+      });
+    } else if (entry.kind === "message") {
       const key = entry.message.authors.join(" ");
       if (lastGroup?.type === "messages" && lastGroup.key === key) {
         lastGroup.messages.push(entry.message);
@@ -1186,6 +1205,20 @@ export function ChatView(props: ChatViewProps) {
               );
             }
 
+            if (group.type === "notice") {
+              return (
+                <div
+                  className="sb-chat-view-event sb-chat-view-notice"
+                  key={group.key}
+                >
+                  <span className="sb-chat-view-event-text">
+                    {group.message.text}
+                  </span>
+                  <RelativeDateTime timeMs={group.timeMs} />
+                </div>
+              );
+            }
+
             if (group.type === "tool") {
               const avatar = getMessageAvatar(chat, group.message, t);
               return (
@@ -1250,6 +1283,8 @@ export function ChatView(props: ChatViewProps) {
           })
         )}
       </div>
+
+      <PartyReadiness chat={chat} state={state} />
 
       <div className="sb-chat-view-compose-shell">
         {typingParticipants.length > 0 && (
@@ -1479,6 +1514,7 @@ function ChatMessage({
   message: ParsedChatTextMessage;
   state: SeedBibleState;
 }): import("preact").JSX.Element {
+  const { t } = useI18n();
   const [showTimestamp, setShowTimestamp] = useState(false);
 
   return (
@@ -1488,6 +1524,51 @@ function ChatMessage({
       data-message-id={message.id}
       onClick={() => setShowTimestamp(!showTimestamp)}
     >
+      {message.anchor ? (
+        <p className="sb-chat-view-message-caption">
+          {message.anchor.phrase
+            ? t("chat-highlighted-phrase", {
+                defaultValue: "highlighted a phrase",
+              })
+            : t("chat-highlighted-verse", {
+                defaultValue: "highlighted a verse",
+              })}
+        </p>
+      ) : message.event?.kind === "answer" ? (
+        <p className="sb-chat-view-message-caption">
+          {t("chat-shared-answer", { defaultValue: "shared an answer" })}
+        </p>
+      ) : null}
+      {message.anchor ? (
+        <blockquote className="sb-chat-view-message-quote" dir="auto">
+          {message.anchor.phrase ? (
+            <span className="sb-chat-view-message-quote-text">
+              “{message.anchor.phrase}”
+            </span>
+          ) : null}
+          <span className="sb-chat-view-message-quote-ref">
+            {anchorLabel({ ...message.anchor, phrase: undefined }, state, t)}
+          </span>
+        </blockquote>
+      ) : message.event?.kind === "answer" ? (
+        <p className="sb-chat-view-message-asked" dir="auto">
+          {t("chat-answer-to", {
+            defaultValue: "Asked: {{prompt}}",
+            prompt: message.event.prompt,
+          })}
+        </p>
+      ) : null}
+      <p className="sb-chat-view-message-body">
+        <MessageBody
+          message={message}
+          onVerseReferenceClick={(ref) => {
+            if (state.app.isMobile.value) {
+              state.sidebar.closeChatPanel();
+            }
+            void state.app.openVerseReference(ref);
+          }}
+        />
+      </p>
       {message.anchor ? (
         <button
           type="button"
@@ -1507,26 +1588,63 @@ function ChatMessage({
             });
           }}
         >
-          <MaterialIcon>comment</MaterialIcon>
-          {anchorLabel(message.anchor, state, useI18n().t)}
+          {t("chat-jump-to-verse", { defaultValue: "Jump to verse" })}
         </button>
       ) : null}
-      <p className="sb-chat-view-message-body">
-        <MessageBody
-          message={message}
-          onVerseReferenceClick={(ref) => {
-            if (state.app.isMobile.value) {
-              state.sidebar.closeChatPanel();
-            }
-            void state.app.openVerseReference(ref);
-          }}
-        />
-      </p>
       {showTimestamp && (
         <span className="sb-chat-view-message-timestamp">
           <RelativeDateTime timeMs={message.timeMs} />
         </span>
       )}
     </article>
+  );
+}
+
+/**
+ * While a playlist plays in this chat's session: who has said they're ready
+ * to move on from the step, and who the group is still waiting on.
+ */
+function PartyReadiness({
+  chat,
+  state,
+}: {
+  chat: ChatSession;
+  state: SeedBibleState;
+}) {
+  const { t } = useI18n();
+  const tab = state.tabs?.tabs?.value.find(
+    (candidate) => candidate.sharedChat === chat
+  );
+  const session = tab?.sharedSession ?? null;
+  const playing = state.playlists?.playing?.value ?? null;
+  if (!session || !playing || playing.tab !== tab) {
+    return null;
+  }
+  const step = playing.currentIndex.value;
+  const readiness = session.playlistReadiness.value;
+  const users = session.connectedUsers.value;
+  const ready = users.filter(
+    (user) => readiness.get(user.connectionId)?.step === step
+  );
+  const waiting = users.filter(
+    (user) => readiness.get(user.connectionId)?.step !== step
+  );
+  if (ready.length === 0 || users.length < 2) {
+    return null;
+  }
+  const names = (list: typeof users) =>
+    list.map((user) => getUserDisplayName(user)).join(", ");
+  return (
+    <p className="sb-chat-view-readiness" role="status" dir="auto">
+      {waiting.length === 0
+        ? t("chat-everyone-ready", {
+            defaultValue: "Everyone is ready to move on",
+          })
+        : t("chat-ready-waiting", {
+            defaultValue: "{{ready}} ready · waiting on {{waiting}}",
+            ready: names(ready),
+            waiting: names(waiting),
+          })}
+    </p>
   );
 }

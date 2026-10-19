@@ -2488,6 +2488,72 @@ describe("DiscoverPaneTitle", () => {
     ).toBe("Playlist · By Ruth");
   });
 
+  it("marks the play view live in a shared session and offers an invite link", async () => {
+    const session = {
+      id: "session-9",
+      connectedUsers: signal([
+        {
+          connectionId: "c1",
+          userId: "u1",
+          isSelf: true,
+          profile: { name: "Mazen" },
+        },
+      ]),
+      options: signal({ hostUserId: "u1", coHostUserIds: [] }),
+    };
+    const tab = { id: "tab-1", sharedSession: session, sharedChat: null };
+    const playing = createPlayingState(
+      [
+        createPlaylist({
+          title: "Angel of the LORD",
+          items: [{ type: "bible-verse", ref: { bookId: "GEN", chapter: 16 } }],
+        }),
+      ],
+      tab as unknown as Parameters<typeof createPlayingState>[1]
+    );
+    const { playlists } = createMockPlaylists({
+      view: "play_playlist",
+      playing,
+    });
+    const { annotations } = createMockAnnotations();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+
+    act(() => {
+      render(
+        <>
+          <DiscoverPaneTitle
+            playlists={playlists}
+            annotations={annotations}
+            tabs={createMockTabs()}
+            chats={chatsFixture.chats}
+            openChatPanel={openChatPanel}
+          />
+          <DiscoverPaneHeader playlists={playlists} annotations={annotations} />
+        </>,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-play-header-eyebrow")?.textContent
+    ).toBe("Live · You're leading");
+    const invite = container.querySelector<HTMLButtonElement>(
+      ".sb-play-header-invite"
+    )!;
+    expect(invite.textContent).toBe("Invite");
+    await act(async () => {
+      invite.click();
+      await Promise.resolve();
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining("sessionId=session-9")
+    );
+  });
+
   it("offers Listen and the way back to Discover in the play view's header actions", () => {
     const playing = createPlayingState([
       createPlaylist({

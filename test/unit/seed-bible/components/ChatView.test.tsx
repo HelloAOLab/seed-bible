@@ -2452,17 +2452,165 @@ describe("ChatView", () => {
         render(<ChatView chat={chat} state={state} />, container);
       });
 
-      const chip = container.querySelector<HTMLButtonElement>(
+      expect(
+        container.querySelector(".sb-chat-view-message-caption")?.textContent
+      ).toBe("highlighted a verse");
+      expect(
+        container.querySelector(".sb-chat-view-message-quote-ref")?.textContent
+      ).toBe("GEN 16:13-14");
+      const jump = container.querySelector<HTMLButtonElement>(
         ".sb-chat-view-message-anchor"
       )!;
-      expect(chip.textContent).toContain("GEN 16:13-14");
-      act(() => chip.click());
+      expect(jump.textContent).toBe("Jump to verse");
+      act(() => jump.click());
       expect(openVerseReference).toHaveBeenCalledWith({
         book: "GEN",
         chapter: 16,
         verse: 13,
         endVerse: 14,
       });
+    });
+
+    it("quotes the phrase a comment is about", () => {
+      const chat = createMockChatSession({
+        parsedMessages: signal([
+          {
+            type: "text",
+            id: "m1",
+            authors: ["user-2"],
+            targets: true,
+            timeMs: 1,
+            text: "She's the one who gives God a name here.",
+            parts: ["She's the one who gives God a name here."],
+            anchor,
+          },
+        ]),
+      });
+      act(() => {
+        render(<ChatView chat={chat} state={createMockState()} />, container);
+      });
+      expect(
+        container.querySelector(".sb-chat-view-message-caption")?.textContent
+      ).toBe("highlighted a phrase");
+      expect(
+        container.querySelector(".sb-chat-view-message-quote-text")?.textContent
+      ).toBe("“a God who sees”");
+      expect(
+        container.querySelector(".sb-chat-view-message-quote-ref")?.textContent
+      ).toBe("GEN 16:13");
+    });
+  });
+
+  describe("a playlist read together", () => {
+    const message = (
+      id: string,
+      text: string,
+      extra: Record<string, unknown> = {}
+    ) => ({
+      type: "text" as const,
+      id,
+      authors: ["user-2"],
+      targets: true as const,
+      timeMs: Number(id.replace(/\D/g, "")) || 1,
+      text,
+      parts: [text],
+      ...extra,
+    });
+
+    it("shows the leader moving everyone on as a notice, not a bubble", () => {
+      const chat = createMockChatSession({
+        parsedMessages: signal([
+          message(
+            "m1",
+            "Mazen moved everyone to step 3 · Hagar and the Angel",
+            {
+              event: { kind: "moved" },
+            }
+          ),
+          message("m2", "Good one."),
+        ]),
+      });
+      act(() => {
+        render(<ChatView chat={chat} state={createMockState()} />, container);
+      });
+      expect(
+        container.querySelector(".sb-chat-view-notice .sb-chat-view-event-text")
+          ?.textContent
+      ).toBe("Mazen moved everyone to step 3 · Hagar and the Angel");
+      expect(
+        Array.from(
+          container.querySelectorAll(".sb-chat-view-message-body")
+        ).map((el) => el.textContent)
+      ).toEqual(["Good one."]);
+    });
+
+    it("shows a shared answer with the question it answers", () => {
+      const chat = createMockChatSession({
+        parsedMessages: signal([
+          message("m1", "The angel says I will multiply.", {
+            event: { kind: "answer", prompt: "God himself, or a messenger?" },
+          }),
+        ]),
+      });
+      act(() => {
+        render(<ChatView chat={chat} state={createMockState()} />, container);
+      });
+      expect(
+        container.querySelector(".sb-chat-view-message-caption")?.textContent
+      ).toBe("shared an answer");
+      expect(
+        container.querySelector(".sb-chat-view-message-asked")?.textContent
+      ).toBe("Asked: God himself, or a messenger?");
+      expect(
+        container.querySelector(".sb-chat-view-message-body")?.textContent
+      ).toBe("The angel says I will multiply.");
+    });
+
+    it("says who is ready for the next step and who the group waits on", () => {
+      const chat = createMockChatSession();
+      const users = [
+        {
+          connectionId: "c1",
+          userId: "u1",
+          isSelf: true,
+          profile: { name: "Sara" },
+        },
+        {
+          connectionId: "c2",
+          userId: "u2",
+          isSelf: false,
+          profile: { name: "Yousef" },
+        },
+        {
+          connectionId: "c3",
+          userId: "u3",
+          isSelf: false,
+          profile: { name: "Daniel" },
+        },
+      ];
+      const session = {
+        connectedUsers: signal(users),
+        playlistReadiness: signal(
+          new Map([
+            ["c1", { step: 2, readyAtMs: 1 }],
+            ["c2", { step: 2, readyAtMs: 1 }],
+            ["c3", { step: 1, readyAtMs: 1 }],
+          ])
+        ),
+      };
+      const tab = { id: "tab-1", sharedChat: chat, sharedSession: session };
+      const playing = { tab, currentIndex: signal(2) };
+      const state = {
+        ...createMockState(),
+        tabs: { tabs: signal([tab]) },
+        playlists: { playing: signal(playing) },
+      } as unknown as SeedBibleState;
+      act(() => {
+        render(<ChatView chat={chat} state={state} />, container);
+      });
+      expect(
+        container.querySelector(".sb-chat-view-readiness")?.textContent
+      ).toBe("Sara, Yousef ready · waiting on Daniel");
     });
   });
 });

@@ -180,15 +180,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
           </div>
         ) : null}
 
-        {session && queue.length > 0 ? (
-          <PlaylistPartyPanel
-            session={session}
-            playing={playing}
-            isLeader={isLocalSessionHost(state, session)}
-            resolveBookName={resolveBookName}
-          />
-        ) : null}
-
         {currentItem ? (
           <section
             className="sb-play-current"
@@ -223,8 +214,17 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                 {playlistItemSubtitle(currentItem, t, resolveBookName)}
               </p>
             ) : null}
-            <PlaylistItemNav playing={playing} />
+            {!session ? <PlaylistItemNav playing={playing} /> : null}
           </section>
+        ) : null}
+
+        {session && queue.length > 0 ? (
+          <PlaylistPartyPanel
+            session={session}
+            playing={playing}
+            isLeader={isLocalSessionHost(state, session)}
+            resolveBookName={resolveBookName}
+          />
         ) : null}
 
         <section

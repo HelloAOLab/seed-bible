@@ -153,15 +153,18 @@ export function PlaylistMobileSheet(props: {
               })}
             </p>
           ) : null}
-          <PlaylistItemNav playing={playing} />
           {session ? (
             <PlaylistPartyPanel
               session={session}
               playing={playing}
               isLeader={isLocalSessionHost(state, session)}
               resolveBookName={resolveBookName}
+              compact
+              onOpenChat={() => state.sidebar?.openChatPanel()}
             />
-          ) : null}
+          ) : (
+            <PlaylistItemNav playing={playing} />
+          )}
         </div>
       ) : null}
     </section>

@@ -87,11 +87,37 @@ describe("PlaylistPartyPanel", () => {
 
   function renderPanel(
     sessionOptions: Parameters<typeof createSession>[0],
-    options: { isLeader?: boolean; step?: number } = {}
+    options: {
+      isLeader?: boolean;
+      step?: number;
+      compact?: boolean;
+      onOpenChat?: () => void;
+      sendMessage?: ReturnType<typeof vi.fn>;
+    } = {}
   ) {
-    const playing = createPlayingState([
-      { id: "p1", title: "Angel of the LORD", description: null, items: steps },
-    ]);
+    const tab = options.sendMessage
+      ? ({
+          sharedChat: { sendMessage: options.sendMessage },
+          readingState: {
+            translationId: signal("BSB"),
+            selectTranslationAndChapter: vi.fn().mockResolvedValue(undefined),
+            decorateVerses: vi.fn(() => "d"),
+            removeDecoration: vi.fn(),
+            chapterData: signal(null),
+          },
+        } as unknown as Parameters<typeof createPlayingState>[1])
+      : undefined;
+    const playing = createPlayingState(
+      [
+        {
+          id: "p1",
+          title: "Angel of the LORD",
+          description: null,
+          items: steps,
+        },
+      ],
+      tab
+    );
     if (options.step) {
       playing.currentIndex.value = options.step;
     }
@@ -105,6 +131,8 @@ describe("PlaylistPartyPanel", () => {
           resolveBookName={(id) =>
             ({ GEN: "Genesis", EXO: "Exodus" })[id] ?? id
           }
+          compact={options.compact}
+          onOpenChat={options.onOpenChat}
         />,
         container
       );
@@ -142,8 +170,8 @@ describe("PlaylistPartyPanel", () => {
       { isLeader: true }
     );
 
-    expect(container.querySelector(".sb-party-live")?.textContent).toContain(
-      "Live · You're leading"
+    expect(container.querySelector(".sb-party-foot")?.textContent).toBe(
+      "Everyone in the session follows your steps"
     );
     expect(container.querySelector(".sb-party-ready-count")?.textContent).toBe(
       "1 of 3"
@@ -170,8 +198,8 @@ describe("PlaylistPartyPanel", () => {
       hostUserId: "user-c-mazen",
     });
 
-    expect(container.querySelector(".sb-party-live")?.textContent).toContain(
-      "Following Mazen"
+    expect(container.querySelector(".sb-party-foot")?.textContent).toBe(
+      "Following Mazen · step 1 of 3"
     );
     expect(container.querySelector(".sb-party-move")).toBeNull();
     const toggle = container.querySelector<HTMLButtonElement>(
@@ -253,5 +281,62 @@ describe("PlaylistPartyPanel", () => {
     const move = container.querySelector<HTMLButtonElement>(".sb-party-move")!;
     expect(move.textContent).toContain("Finish the playlist");
     expect(move.disabled).toBe(true);
+  });
+
+  it("tells the chat when the leader moves everyone on, and can move them back", async () => {
+    const sendMessage = vi.fn().mockResolvedValue(undefined);
+    const mazen = user("c-mazen", "Mazen", true);
+    const { playing } = renderPanel(
+      { users: [mazen, user("c-sara", "Sara")], hostUserId: "user-c-mazen" },
+      { isLeader: true, sendMessage }
+    );
+    expect(
+      container.querySelector<HTMLButtonElement>(".sb-party-back")!.disabled
+    ).toBe(true);
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>(".sb-party-move")!.click();
+      await Promise.resolve();
+    });
+    expect(playing.currentIndex.value).toBe(1);
+    expect(sendMessage).toHaveBeenCalledWith({
+      type: "text",
+      text: "Mazen moved everyone to step 2 · God himself, or a messenger?",
+      event: { kind: "moved" },
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>(".sb-party-back")!.click();
+      await Promise.resolve();
+    });
+    expect(playing.currentIndex.value).toBe(0);
+  });
+
+  it("folds to one line with Chat and I'm ready on a phone", () => {
+    const onOpenChat = vi.fn();
+    const sara = user("c-sara", "Sara", true);
+    const { setPlaylistReady } = renderPanel(
+      {
+        users: [user("c-mazen", "Mazen"), sara, user("c-daniel", "Daniel")],
+        hostUserId: "user-c-mazen",
+        readiness: { "c-mazen": { step: 0, readyAtMs: 1 } },
+      },
+      { compact: true, onOpenChat }
+    );
+
+    expect(container.querySelector(".sb-party-compact-line")?.textContent).toBe(
+      "Mazen moves the group on when everyone's ready1 of 3 ready"
+    );
+    expect(container.querySelector(".sb-party-people")).toBeNull();
+    act(() => {
+      container.querySelector<HTMLButtonElement>(".sb-party-chat")!.click();
+    });
+    expect(onOpenChat).toHaveBeenCalledTimes(1);
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-party-ready-toggle")!
+        .click();
+    });
+    expect(setPlaylistReady).toHaveBeenCalledWith(0);
   });
 });

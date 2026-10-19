@@ -458,3 +458,29 @@
   color: var(--sb-primary-color);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
 }
+
+.sb-play-header-eyebrow--live {
+  color: var(--sb-primary-color);
+}
+
+.sb-play-header-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sb-primary-color);
+}
+
+.sb-play-header-invite {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}

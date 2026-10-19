@@ -1397,6 +1397,11 @@ export function createPlaylistManager(
               );
               if (visibility === "session") {
                 tab?.sharedSession?.shareQuestionAnswer(item.prompt, text);
+                void tab?.sharedChat?.sendMessage({
+                  type: "text",
+                  text,
+                  event: { kind: "answer", prompt: item.prompt },
+                });
               }
             }
           : undefined,
