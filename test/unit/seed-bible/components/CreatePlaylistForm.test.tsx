@@ -1391,7 +1391,7 @@ describe("CreatePlaylistForm", () => {
     const subtitles = Array.from(
       container.querySelectorAll(".sb-playlist-editor-item-subtitle")
     ).map((el) => el.textContent);
-    expect(subtitles).toEqual(["Scripture", "Link · example.com", "Text · hi"]);
+    expect(subtitles).toEqual(["Scripture", "Link · example.com", "Note · hi"]);
     expect(
       Array.from(container.querySelectorAll(".sb-discover-section-title")).map(
         (el) => el.textContent

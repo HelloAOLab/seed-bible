@@ -196,10 +196,15 @@ describe("PlayPlaylistView", () => {
     expect(container.querySelector(".sb-hero-banner--empty")).toBeNull();
   });
 
-  it("shows the playlist's author and description above the queue", () => {
+  it("leaves the author and description to the pane header, and sums the queue's length", () => {
     const playlist = createPlaylist({
       description: "Verses about the love of Jesus.",
-      items: [verseItem()],
+      items: [
+        verseItem({
+          ref: { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13 },
+        }),
+        { type: "html", html: "<p>Think.</p>" },
+      ],
     });
     const { playlists } = createMockPlaylists(
       createPlayingState([playlist]),
@@ -218,31 +223,11 @@ describe("PlayPlaylistView", () => {
       );
     });
 
-    expect(
-      container.querySelector(".sb-play-playlist-author")?.textContent
-    ).toBe("By Ruth");
-    expect(
-      container.querySelector(".sb-play-playlist-description")?.textContent
-    ).toContain("Verses about the love of Jesus.");
-  });
-
-  it("leaves out the author and description when there are none", () => {
-    const playlist = createPlaylist({ items: [verseItem()] });
-    const { playlists } = createMockPlaylists(createPlayingState([playlist]));
-
-    act(() => {
-      render(
-        <PlayPlaylistView
-          playlists={playlists}
-          tabs={createMockTabs()}
-          modals={modals}
-          state={state}
-        />,
-        container
-      );
-    });
-
-    expect(container.querySelector(".sb-play-playlist-about")).toBeNull();
+    expect(container.textContent).not.toContain("Ruth");
+    expect(container.textContent).not.toContain("Verses about the love");
+    expect(container.querySelector(".sb-play-queue-title")?.textContent).toBe(
+      "Queue · 2 steps · ~3 min"
+    );
   });
 
   it("hides the cover when the playlist has no image", () => {
@@ -359,7 +344,11 @@ describe("PlayPlaylistView", () => {
     const subtitles = Array.from(
       container.querySelectorAll(".sb-play-playlist-item-subtitle")
     ).map((el) => el.textContent);
-    expect(subtitles).toEqual(["Scripture", "Link · example.com", "Text · hi"]);
+    expect(subtitles).toEqual([
+      "Scripture · 4 min",
+      "Link · 2 min",
+      "Note · 1 min",
+    ]);
   });
 
   describe("progress and the current step", () => {
@@ -404,16 +393,13 @@ describe("PlayPlaylistView", () => {
       ).toBe("Step 2 of 3");
       expect(
         container.querySelector(".sb-play-current-eyebrow")?.textContent
-      ).toBe("Text · Step 2 of 3");
+      ).toContain("Note · 2 of 3");
       expect(
         container.querySelector(".sb-play-current-title")?.textContent
       ).toBe("A note");
       expect(
         container.querySelector(".sb-play-current-detail")?.textContent
-      ).toBe("Text · Read slowly");
-      expect(
-        container.querySelector(".sb-play-current-up-next")?.textContent
-      ).toBe("Up next · Link · https://example.com");
+      ).toBe("Note · Read slowly");
     });
 
     it("ticks off the steps already behind the current one", () => {
@@ -440,17 +426,19 @@ describe("PlayPlaylistView", () => {
       ).toBe("2");
     });
 
-    it("scripture steps show the reference as the title with no detail line, and the last step has no up next", () => {
+    it("scripture steps show the reference as the title with no detail line, and the last step offers Finish", () => {
       renderPlaying([verseItem({ ref: { bookId: "GEN", chapter: 1 } })]);
 
       expect(
         container.querySelector(".sb-play-current-eyebrow")?.textContent
-      ).toBe("Scripture · Step 1 of 1");
+      ).toContain("Scripture · 1 of 1");
       expect(
         container.querySelector(".sb-play-current-title")?.textContent
       ).toBe("Genesis 1");
       expect(container.querySelector(".sb-play-current-detail")).toBeNull();
-      expect(container.querySelector(".sb-play-current-up-next")).toBeNull();
+      expect(
+        container.querySelector(".sb-playlist-item-nav-next")?.textContent
+      ).toContain("Finish");
     });
 
     it("Next step in the card moves playback on", async () => {
@@ -713,10 +701,7 @@ describe("scenes and notes in the player", () => {
 
     expect(
       container.querySelector(".sb-play-current-eyebrow")?.textContent
-    ).toBe("Note + Scripture · Step 1 of 1");
-    expect(
-      container.querySelector(".sb-play-current-reference")?.textContent
-    ).toBe("Genesis 16:7-13");
+    ).toContain("Note + Scripture · 1 of 1");
     expect(container.querySelector(".sb-play-current-title")?.textContent).toBe(
       "Hagar and the Angel"
     );

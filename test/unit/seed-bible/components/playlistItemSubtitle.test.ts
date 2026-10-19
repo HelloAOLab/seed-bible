@@ -1,4 +1,9 @@
-import { playlistItemSubtitle } from "@packages/seed-bible/seed-bible/components/playlistItemSubtitle";
+import {
+  playlistItemMinutes,
+  playlistItemQueueLine,
+  playlistItemSubtitle,
+  playlistMinutes,
+} from "@packages/seed-bible/seed-bible/components/playlistItemSubtitle";
 import type { useI18n } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
 const t = ((key: string, options?: Record<string, unknown>) =>
@@ -23,12 +28,12 @@ describe("playlistItemSubtitle", () => {
         { type: "html", html: "<p>Read <b>slowly</b></p><p>Then pray.</p>" },
         t
       )
-    ).toBe("Text · Read slowly Then pray.");
+    ).toBe("Note · Read slowly Then pray.");
   });
 
   it("gives an empty text item its kind alone", () => {
     expect(playlistItemSubtitle({ type: "html", html: "<p></p>" }, t)).toBe(
-      "Text"
+      "Note"
     );
   });
 
@@ -117,5 +122,50 @@ describe("playlistItemSubtitle for a step with several passages", () => {
         t
       )
     ).toBe("Scripture · 3 passages");
+  });
+
+  describe("playlistItemMinutes", () => {
+    it("allows about a minute per four verses, and reads a note at 180 words a minute", () => {
+      expect(
+        playlistItemMinutes({
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13 },
+        })
+      ).toBe(2);
+      expect(
+        playlistItemMinutes({
+          type: "html",
+          html: "<p>" + "word ".repeat(360) + "</p>",
+        })
+      ).toBe(2);
+    });
+
+    it("takes the author's word for a video's length, and guesses five minutes without it", () => {
+      expect(
+        playlistItemMinutes({
+          type: "link",
+          url: "https://www.youtube.com/watch?v=abc",
+          minutes: 6,
+        })
+      ).toBe(6);
+      expect(
+        playlistItemMinutes({
+          type: "link",
+          url: "https://www.youtube.com/watch?v=abc",
+        })
+      ).toBe(5);
+    });
+
+    it("gives a whole chapter a few minutes, a scene none, and adds the steps up", () => {
+      const items = [
+        { type: "scene", title: "Hagar" },
+        { type: "bible-verse", ref: { bookId: "GEN", chapter: 16 } },
+        { type: "question", prompt: "Why?" },
+      ] as const;
+      expect(playlistItemMinutes(items[0])).toBe(0);
+      expect(playlistItemMinutes(items[1])).toBe(4);
+      expect(playlistMinutes([...items])).toBe(6);
+      expect(playlistItemQueueLine(items[1], t)).toBe("Scripture · 4 min");
+    });
   });
 });

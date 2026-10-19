@@ -208,8 +208,8 @@ describe("PlaylistEditorScreen", () => {
     expect(editorEl?.getAttribute("data-edit-type")).toBe("html");
     expect(
       main().querySelector(".sb-playlist-editor-eyebrow")?.textContent
-    ).toBe("Step 2 · Text");
-    expect(settings().textContent).toContain("Text");
+    ).toBe("Step 2 · Note");
+    expect(settings().textContent).toContain("Note");
     expect(settings().textContent).toContain("Step 2 of 2");
     // Rows mark the open step but carry no caret: the editor isn't in the row.
     expect(rowButtons()[1]!.getAttribute("aria-current")).toBe("true");

@@ -126,10 +126,23 @@ export const QuestionPlaylistItem = z.object({
 export const ComparePlaylistItem = z.object({
   type: z.literal("compare"),
   title: z.string().optional(),
-  refs: z.array(VerseRefSchema).min(2),
+  refs: z
+    .array(
+      VerseRefSchema.extend({
+        /** Who or what the passage is about, shown as a chip by its heading. */
+        label: z.string().optional(),
+        /** Phrases of this passage the author underlines. */
+        phrases: z.array(z.string()).optional(),
+      })
+    )
+    .min(2),
   translationId: z.string().optional(),
   /** Plain text shown above the passages, saying what to look for. */
   description: z.string().optional(),
+  /** Words marked wherever they occur in every passage, each with what to notice. */
+  terms: z.array(z.object({ text: z.string(), label: z.string() })).optional(),
+  /** What the underlined phrases have in common, for the legend. */
+  phraseLabel: z.string().optional(),
 });
 
 /**
@@ -139,6 +152,8 @@ export const ComparePlaylistItem = z.object({
 export const ScenePlaylistItem = z.object({
   type: z.literal("scene"),
   title: z.string(),
+  /** Where the scene takes place, under its title: "Genesis 16 · the road to Shur". */
+  subtitle: z.string().optional(),
 });
 
 export const PlaylistItem = z.discriminatedUnion("type", [
@@ -150,11 +165,15 @@ export const PlaylistItem = z.discriminatedUnion("type", [
     type: z.literal("html"),
     title: z.string().optional(),
     html: z.string(),
+    /** How long to allow for it, when the author says; estimated otherwise. */
+    minutes: z.number().int().positive().optional(),
   }),
   z.object({
     type: z.literal("link"),
     title: z.string().optional(),
     url: z.url(),
+    /** The video's or page's length in minutes, when the author says. */
+    minutes: z.number().int().positive().optional(),
     /**
      * When true, the play view embeds the URL in an iframe instead of showing
      * an "Open" link. Video URL detection still takes precedence (see

@@ -9,17 +9,19 @@ import {
 } from "../../managers/PlaylistManager";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import type { ModalManager } from "../../managers/ModalManager";
-import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
 import { playlistItemLabel } from "../playlistItemLabel";
 import {
-  playlistItemSubtitle,
+  minutesLabel,
+  playlistItemIcon,
   playlistItemKind,
+  playlistItemQueueLine,
+  playlistItemSubtitle,
+  playlistMinutes,
 } from "../playlistItemSubtitle";
 import { useDragReorder } from "../useDragReorder";
 import { MaterialIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { HeroImageBanner } from "../HeroImageField/HeroImageField";
-import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { PlaylistItemNav } from "../PlaylistItemNav/PlaylistItemNav";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
 import { PlaylistPartyPanel } from "../PlaylistPartyPanel/PlaylistPartyPanel";
@@ -63,12 +65,11 @@ export function queueSceneHeadings(
 
 /**
  * Playback screen shown inside the discover pane while a playlist is playing:
- * the cover and author, a segmented progress bar, a card for the current step
- * with Previous / Next and what's up next (and the author's note, for a
- * passage that has one), and the numbered queue beneath it, grouped under
- * its scenes, with the steps already read ticked off. Video, link, text,
- * question and compare steps open in the app's generic modal rather than
- * rendering inline.
+ * the cover, a segmented progress bar, a card for the current step with
+ * Previous / Next step (and the author's note, for a passage that has one),
+ * and the numbered queue beneath it with each step's kind and length,
+ * grouped under its scenes, with the steps already read ticked off. The
+ * playlist's own title and author sit in the pane header.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   const { playlists, tabs, state } = props;
@@ -91,11 +92,8 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
 
   const currentIndex = playing.currentIndex.value;
   const currentItem = playing.currentItem.value;
-  const nextItem = queue[currentIndex + 1] ?? null;
   const playlist = playing.playlists.value[0];
   const heroImageUrl = playlist?.heroImageUrl ?? null;
-  const authorName = playlists.playingAuthorName.value;
-  const description = playlist?.description?.trim() || null;
   const sceneHeadings = queueSceneHeadings(playlist?.items ?? [], queue.length);
   // A playlist playing in a shared session is a group reading it together.
   const session = playing.tab?.sharedSession ?? null;
@@ -151,27 +149,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
             }
           />
         ) : null}
-        {authorName || description ? (
-          <div className="sb-play-playlist-about" dir="auto">
-            {authorName ? (
-              <p className="sb-play-playlist-author">
-                {t("shared-page-by-author", {
-                  author: authorName,
-                  defaultValue: "By {{author}}",
-                })}
-              </p>
-            ) : null}
-            {description ? (
-              <ExpandableText
-                className="sb-play-playlist-description"
-                readMoreLabel={t("read-more", { defaultValue: "Read more" })}
-                readLessLabel={t("read-less", { defaultValue: "Read less" })}
-              >
-                {description}
-              </ExpandableText>
-            ) : null}
-          </div>
-        ) : null}
 
         {queue.length > 0 ? (
           <div
@@ -219,26 +196,19 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
             dir="auto"
           >
             <p className="sb-play-current-eyebrow">
+              <MaterialIcon>{playlistItemIcon(currentItem)}</MaterialIcon>
               {playlistItemKind(currentItem, t)}
               {" · "}
-              {t("playlist-step-of", {
-                defaultValue: "Step {{step}} of {{total}}",
+              {t("playlist-position-of", {
+                defaultValue: "{{step}} of {{total}}",
                 step: currentIndex + 1,
                 total: queue.length,
               })}
             </p>
-            {currentNote?.title ? (
-              <>
-                <p className="sb-play-current-reference">
-                  {playlistItemLabel(currentItem, t, resolveBookName)}
-                </p>
-                <h3 className="sb-play-current-title">{currentNote.title}</h3>
-              </>
-            ) : (
-              <h3 className="sb-play-current-title">
-                {playlistItemLabel(currentItem, t, resolveBookName)}
-              </h3>
-            )}
+            <h3 className="sb-play-current-title">
+              {currentNote?.title ??
+                playlistItemLabel(currentItem, t, resolveBookName)}
+            </h3>
             {currentNote?.html ? (
               <div className="sb-play-current-note">
                 <PlaylistHtmlContent
@@ -253,40 +223,21 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                 {playlistItemSubtitle(currentItem, t, resolveBookName)}
               </p>
             ) : null}
-            {nextItem ? (
-              <p className="sb-play-current-up-next">
-                {t("playlist-up-next", {
-                  defaultValue: "Up next · {{kind}} · {{title}}",
-                  kind: playlistItemKind(nextItem, t),
-                  title: playlistItemLabel(nextItem, t, resolveBookName),
-                })}
-              </p>
-            ) : null}
-            <div className="sb-play-current-actions">
-              <button
-                type="button"
-                className={`sb-play-listen${
-                  playing.listenAlong.value ? " sb-play-listen--on" : ""
-                }`}
-                aria-pressed={playing.listenAlong.value}
-                onClick={() =>
-                  playing.setListenAlong(!playing.listenAlong.value)
-                }
-              >
-                <MaterialIcon>headphones</MaterialIcon>
-                {playing.listenAlong.value
-                  ? t("playlist-listening", { defaultValue: "Listening" })
-                  : t("playlist-listen", { defaultValue: "Listen" })}
-              </button>
-              <PlaylistItemNav playing={playing} />
-            </div>
+            <PlaylistItemNav playing={playing} />
           </section>
         ) : null}
 
-        <DiscoverSection
-          title={t("queue", { defaultValue: "Queue" })}
-          count={queue.length || undefined}
+        <section
+          className="sb-play-queue"
+          aria-label={t("queue", { defaultValue: "Queue" })}
         >
+          <h3 className="sb-play-queue-title">
+            {t("playlist-queue-summary", {
+              defaultValue: "Queue · {{count}} steps · ~{{minutes}}",
+              count: queue.length,
+              minutes: minutesLabel(playlistMinutes(queue), t),
+            })}
+          </h3>
           <ul className="sb-discover-list">
             {queue.map((item, index) => {
               const isCurrent = index === currentIndex;
@@ -335,7 +286,7 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                         {playlistItemLabel(item, t, resolveBookName)}
                       </span>
                       <span className="sb-play-playlist-item-subtitle">
-                        {playlistItemSubtitle(item, t, resolveBookName)}
+                        {playlistItemQueueLine(item, t)}
                       </span>
                     </span>
                   </button>
@@ -343,7 +294,7 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
               );
             })}
           </ul>
-        </DiscoverSection>
+        </section>
       </div>
     </div>
   );

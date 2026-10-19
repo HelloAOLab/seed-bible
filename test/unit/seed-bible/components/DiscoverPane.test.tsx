@@ -1,6 +1,6 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { computed, signal } from "@preact/signals";
+import { computed, signal, type Signal } from "@preact/signals";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
@@ -2456,13 +2456,14 @@ describe("DiscoverPaneTitle", () => {
     expect(container.querySelector(".sb-reading-plans-back")).toBeNull();
   });
 
-  it("shows a back button and the playlist title in the play view", () => {
-    const { playlists, goBackFromPlayingView } = createMockPlaylists({
+  it("heads the play view with the playlist's title under a 'Playlist · By author' eyebrow", () => {
+    const { playlists } = createMockPlaylists({
       view: "play_playlist",
       playing: createPlayingState([
         createPlaylist({ title: "Evening Reading" }),
       ]),
     });
+    (playlists.playingAuthorName as Signal<string | null>).value = "Ruth";
     const { annotations } = createMockAnnotations();
 
     act(() => {
@@ -2479,16 +2480,44 @@ describe("DiscoverPaneTitle", () => {
       );
     });
 
-    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+    expect(container.querySelector(".sb-play-header-title")?.textContent).toBe(
       "Evening Reading"
     );
+    expect(
+      container.querySelector(".sb-play-header-eyebrow")?.textContent
+    ).toBe("Playlist · By Ruth");
+  });
 
-    const backButton = container.querySelector(
-      ".sb-reading-plans-back"
-    ) as HTMLButtonElement;
-    act(() => {
-      backButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  it("offers Listen and the way back to Discover in the play view's header actions", () => {
+    const playing = createPlayingState([
+      createPlaylist({
+        title: "Evening Reading",
+        items: [{ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } }],
+      }),
+    ]);
+    const { playlists, goBackFromPlayingView } = createMockPlaylists({
+      view: "play_playlist",
+      playing,
     });
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPaneHeader playlists={playlists} annotations={annotations} />,
+        container
+      );
+    });
+
+    const buttons = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-play-header-action")
+    );
+    expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Listen",
+      "Back to Discover",
+    ]);
+    act(() => buttons[0]!.click());
+    expect(playing.listenAlong.value).toBe(true);
+    act(() => buttons[1]!.click());
     expect(goBackFromPlayingView).toHaveBeenCalledTimes(1);
   });
 
@@ -2513,7 +2542,7 @@ describe("DiscoverPaneTitle", () => {
       );
     });
 
-    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+    expect(container.querySelector(".sb-play-header-title")?.textContent).toBe(
       "Untitled playlist"
     );
   });
@@ -2541,6 +2570,7 @@ describe("DiscoverPaneTitle", () => {
       view,
       actualView,
       playing,
+      playingAuthorName: signal(null),
       openingPlayback: signal(false),
       editingPlaylist: signal(null),
       goBackFromPlayingView: vi.fn(),
@@ -2560,7 +2590,7 @@ describe("DiscoverPaneTitle", () => {
         container
       );
     });
-    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+    expect(container.querySelector(".sb-play-header-title")?.textContent).toBe(
       "Evening Reading"
     );
 
@@ -2571,7 +2601,7 @@ describe("DiscoverPaneTitle", () => {
     });
 
     expect(container.textContent).toBe("Discover");
-    expect(container.querySelector(".sb-reading-plans-back")).toBeNull();
+    expect(container.querySelector(".sb-play-header")).toBeNull();
   });
 
   it("shows a back button and an editable title input in the create view", () => {

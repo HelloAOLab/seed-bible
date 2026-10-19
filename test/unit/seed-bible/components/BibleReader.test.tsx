@@ -5944,6 +5944,35 @@ describe("playlist passage end marker", () => {
     expect(playing.currentIndex.value).toBe(1);
   });
 
+  it("gathers the passage's verses in a block headed by the step's label", () => {
+    renderPlaying([
+      {
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 1, verse: 1, endVerse: 2 },
+      },
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 2 } },
+    ]);
+
+    const block = container.querySelector(".sb-playlist-passage")!;
+    expect(block).not.toBeNull();
+    expect(block.querySelector(".sb-playlist-passage-label")?.textContent).toBe(
+      "Step 1 · Genesis 1:1-2"
+    );
+    expect(block.contains(verse(1))).toBe(true);
+    expect(block.contains(verse(2))).toBe(true);
+    expect(block.contains(verse(3))).toBe(false);
+    expect(isBefore(block, marker()!)).toBe(true);
+  });
+
+  it("draws no block for a whole-chapter step, only the end marker", () => {
+    renderPlaying([
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } },
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 2 } },
+    ]);
+    expect(container.querySelector(".sb-playlist-passage")).toBeNull();
+    expect(marker()).not.toBeNull();
+  });
+
   it("marks the end of a verse range after the range's last verse", () => {
     renderPlaying([
       {

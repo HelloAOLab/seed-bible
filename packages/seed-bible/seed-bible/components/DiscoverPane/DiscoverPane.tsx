@@ -54,6 +54,57 @@ interface DiscoverPaneProps {
  * sub-views. Reads the `actualView` signal, so it stays reactive and resets
  * alongside the pane body when the active tab stops playing.
  */
+/**
+ * What the pane header offers while a playlist plays: Listen (narration
+ * follows the steps) and the way back to the Discover list.
+ */
+function PlayPlaylistHeaderActions(props: { playlists: PlaylistManager }) {
+  const { playlists } = props;
+  const { t } = useI18n();
+  const playing = playlists.playing.value;
+  if (!playing) {
+    return null;
+  }
+  const listening = playing.listenAlong.value;
+  return (
+    <>
+      <button
+        type="button"
+        className={`sb-play-header-action${
+          listening ? " sb-play-header-action--on" : ""
+        }`}
+        aria-pressed={listening}
+        aria-label={
+          listening
+            ? t("playlist-listening", { defaultValue: "Listening" })
+            : t("playlist-listen", { defaultValue: "Listen" })
+        }
+        title={
+          listening
+            ? t("playlist-listening", { defaultValue: "Listening" })
+            : t("playlist-listen", { defaultValue: "Listen" })
+        }
+        onClick={() => playing.setListenAlong(!listening)}
+      >
+        <MaterialIcon>headphones</MaterialIcon>
+      </button>
+      <button
+        type="button"
+        className="sb-play-header-action"
+        aria-label={t("playlist-back-to-discover", {
+          defaultValue: "Back to Discover",
+        })}
+        title={t("playlist-back-to-discover", {
+          defaultValue: "Back to Discover",
+        })}
+        onClick={() => playlists.goBackFromPlayingView()}
+      >
+        <MaterialIcon>explore</MaterialIcon>
+      </button>
+    </>
+  );
+}
+
 export function DiscoverPaneHeader(props: {
   playlists: PlaylistManager;
   annotations: AnnotationsManager;
@@ -61,6 +112,9 @@ export function DiscoverPaneHeader(props: {
   const { playlists, annotations } = props;
   const { t } = useI18n();
 
+  if (playlists.actualView.value === "play_playlist") {
+    return <PlayPlaylistHeaderActions playlists={playlists} />;
+  }
   if (playlists.actualView.value !== "discover") {
     return null;
   }
@@ -136,20 +190,19 @@ export function DiscoverPaneTitle(props: {
     const title =
       playing?.playlists.value[0]?.title ??
       t("untitled-playlist", { defaultValue: "Untitled playlist" });
+    const author = playlists.playingAuthorName.value;
     return (
-      <div className="sb-discover-title-row">
-        <button
-          type="button"
-          className="sb-reading-plans-back"
-          aria-label={t("back", { defaultValue: "Back" })}
-          onClick={() => playlists.goBackFromPlayingView()}
-        >
-          <MaterialIcon>arrow_back</MaterialIcon>
-        </button>
-        <span className="sb-discover-title" dir="auto">
-          {title}
-        </span>
-        {playlists.openingPlayback.value ? <Spinner size="1rem" /> : null}
+      <div className="sb-play-header" dir="auto">
+        <p className="sb-play-header-eyebrow">
+          {author
+            ? t("playlist-by-author-eyebrow", {
+                defaultValue: "Playlist · By {{author}}",
+                author,
+              })
+            : t("playlist-eyebrow", { defaultValue: "Playlist" })}
+          {playlists.openingPlayback.value ? <Spinner size="0.75rem" /> : null}
+        </p>
+        <h2 className="sb-play-header-title">{title}</h2>
       </div>
     );
   }

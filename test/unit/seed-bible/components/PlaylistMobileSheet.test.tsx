@@ -138,6 +138,6 @@ describe("PlaylistMobileSheet", () => {
     ).toBe("A pause");
     expect(
       container.querySelector(".sb-playlist-sheet-detail")?.textContent
-    ).toBe("Text · Think.");
+    ).toBe("Note · Think.");
   });
 });

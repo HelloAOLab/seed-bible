@@ -4,13 +4,16 @@ import type { PlayingState } from "../../managers/PlaylistManager";
 import { MaterialIcon } from "../icons";
 
 /**
- * Previous / Next buttons shown under a playlist item's content while the
- * playlist is playing, so the listener can move through the queue without
- * leaving the modal.
+ * Previous / Next step for a playing playlist. Next becomes Finish on the
+ * last step; `nextLabel` replaces it (as "Begin" does on an overview step).
  */
-export function PlaylistItemNav(props: { playing: PlayingState }) {
-  const { playing } = props;
+export function PlaylistItemNav(props: {
+  playing: PlayingState;
+  nextLabel?: string;
+}) {
+  const { playing, nextLabel } = props;
   const { t } = useI18n();
+  const hasNext = playing.hasNext.value;
 
   return (
     <div className="sb-playlist-item-nav">
@@ -20,7 +23,6 @@ export function PlaylistItemNav(props: { playing: PlayingState }) {
         disabled={!playing.hasPrevious.value}
         onClick={() => void playing.previous()}
       >
-        <MaterialIcon>skip_previous</MaterialIcon>
         {t("previous", { defaultValue: "Previous" })}
       </button>
       <button
@@ -29,8 +31,11 @@ export function PlaylistItemNav(props: { playing: PlayingState }) {
         disabled={!playing.canPressNext.value}
         onClick={() => void playing.next()}
       >
-        {t("next", { defaultValue: "Next" })}
-        <MaterialIcon>skip_next</MaterialIcon>
+        {nextLabel ??
+          (hasNext
+            ? t("playlist-next-step-button", { defaultValue: "Next step" })
+            : t("finish", { defaultValue: "Finish" }))}
+        <MaterialIcon>arrow_forward</MaterialIcon>
       </button>
     </div>
   );

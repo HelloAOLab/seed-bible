@@ -392,3 +392,69 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* ------------------------------------------------- playing: pane header */
+
+/* While a playlist plays the header carries its eyebrow and title on two
+   lines, so it grows past the fixed 42px every other pane uses. */
+.sb-pane-header:has(.sb-play-header) {
+  height: auto;
+  flex-basis: auto;
+  align-items: flex-start;
+  padding: 14px 12px 12px;
+}
+
+.sb-pane-header:has(.sb-play-header) .sb-pane-header-title-text {
+  white-space: normal;
+}
+
+.sb-play-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sb-play-header-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-play-header-title {
+  margin: 0;
+  font-family: var(--sb-book-title-font-family);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+.sb-play-header-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+.sb-play-header-action:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-play-header-action--on {
+  color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+}
