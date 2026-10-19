@@ -20,6 +20,8 @@ import { HeroImageBanner } from "../HeroImageField/HeroImageField";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { PlaylistItemNav } from "../PlaylistItemNav/PlaylistItemNav";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
+import { PlaylistPartyPanel } from "../PlaylistPartyPanel/PlaylistPartyPanel";
+import { isLocalSessionHost } from "../Tabs/Tabs";
 
 interface PlayPlaylistViewProps {
   playlists: PlaylistManager;
@@ -67,7 +69,7 @@ export function queueSceneHeadings(
  * rendering inline.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
-  const { playlists, tabs } = props;
+  const { playlists, tabs, state } = props;
   const { t } = useI18n();
 
   // Reading `.value` during render subscribes the component to updates.
@@ -93,6 +95,8 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   const authorName = playlists.playingAuthorName.value;
   const description = playlist?.description?.trim() || null;
   const sceneHeadings = queueSceneHeadings(playlist?.items ?? [], queue.length);
+  // A playlist playing in a shared session is a group reading it together.
+  const session = playing.tab?.sharedSession ?? null;
 
   // Resolve verse book IDs to full book names using the selected tab's loaded
   // translation, when available. Falls back to the raw book ID otherwise.
@@ -172,6 +176,15 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
               />
             ))}
           </div>
+        ) : null}
+
+        {session && queue.length > 0 ? (
+          <PlaylistPartyPanel
+            session={session}
+            playing={playing}
+            isLeader={isLocalSessionHost(state, session)}
+            resolveBookName={resolveBookName}
+          />
         ) : null}
 
         {currentItem ? (

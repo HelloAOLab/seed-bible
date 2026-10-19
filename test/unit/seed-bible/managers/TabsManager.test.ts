@@ -233,7 +233,7 @@ function createMockSharedSession(
     currentUser: signal(null),
     isHost: vi.fn().mockReturnValue(false),
     isSynced: signal(true),
-  } as BibleReadingSession;
+  } as unknown as BibleReadingSession;
 }
 
 describe("createTabs", () => {

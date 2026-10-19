@@ -354,6 +354,8 @@ describe("SessionsManager", () => {
   };
   let mockUserProfilesMap: ReturnType<typeof createMockSharedMap>;
   let mockReadingPositionsMap: ReturnType<typeof createMockSharedMap>;
+  let mockPlaylistReadinessMap: ReturnType<typeof createMockSharedMap>;
+  let mockQuestionAnswersMap: ReturnType<typeof createMockSharedMap>;
   let mockExtensionsMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
     getChapterHighlights: Mock;
@@ -392,6 +394,8 @@ describe("SessionsManager", () => {
     mockDecorationsMap = createMockSharedMap();
     mockUserProfilesMap = createMockSharedMap();
     mockReadingPositionsMap = createMockSharedMap();
+    mockPlaylistReadinessMap = createMockSharedMap();
+    mockQuestionAnswersMap = createMockSharedMap();
     mockExtensionsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockStatusUpdated = createMockStatusUpdatedObservable();
@@ -415,6 +419,14 @@ describe("SessionsManager", () => {
 
         if (name === "reading_extensions") {
           return mockExtensionsMap;
+        }
+
+        if (name === "playlist_readiness") {
+          return mockPlaylistReadinessMap;
+        }
+
+        if (name === "question_answers") {
+          return mockQuestionAnswersMap;
         }
 
         return mockMap;
@@ -2401,6 +2413,133 @@ describe("SessionsManager", () => {
 
       expect(session.readingState.disableExtension).toHaveBeenCalledWith("x");
       expect(session.readingState.isExtensionEnabled("x")).toBe(false);
+    });
+  });
+
+  describe("playlist readiness and shared answers", () => {
+    function connectPeer(connectionId: string, userId: string) {
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: false,
+        client: { connectionId, userId },
+      });
+    }
+
+    it("reports which connected peers are ready, and for which step", async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      const session = await manager.joinSession("group-abc");
+      connectPeer("conn-1", "user-1");
+      await waitFor(() => session.connectedUsers.value.length === 1);
+
+      mockPlaylistReadinessMap.set("conn-1", { step: 2, readyAtMs: 5 });
+      // A peer that vanished without disposing leaves an entry behind.
+      mockPlaylistReadinessMap.set("conn-gone", { step: 2, readyAtMs: 5 });
+      // Malformed entries are ignored.
+      mockPlaylistReadinessMap.set("conn-bad", { step: "two" });
+      mockPlaylistReadinessMap.emitChange();
+
+      await waitFor(() => session.playlistReadiness.value.has("conn-1"));
+      expect(Array.from(session.playlistReadiness.value.entries())).toEqual([
+        ["conn-1", { step: 2, readyAtMs: 5 }],
+      ]);
+    });
+
+    it("writes this client's readiness under its own connection and takes it back", async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      const session = await manager.joinSession("group-abc");
+
+      session.setPlaylistReady(3);
+      expect(mockPlaylistReadinessMap.set).toHaveBeenCalledWith(
+        os.connectionId,
+        expect.objectContaining({ step: 3 })
+      );
+
+      session.setPlaylistReady(null);
+      expect(mockPlaylistReadinessMap.delete).toHaveBeenCalledWith(
+        os.connectionId
+      );
+
+      // Leaving drops the entry too, so peers don't count a departed reader.
+      mockPlaylistReadinessMap.delete.mockClear();
+      session.dispose();
+      expect(mockPlaylistReadinessMap.delete).toHaveBeenCalledWith(
+        os.connectionId
+      );
+    });
+
+    it("drops readiness for a peer that disconnects", async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      const session = await manager.joinSession("group-abc");
+      connectPeer("conn-1", "user-1");
+      await waitFor(() => session.connectedUsers.value.length === 1);
+      mockPlaylistReadinessMap.set("conn-1", { step: 0, readyAtMs: 1 });
+      mockPlaylistReadinessMap.emitChange();
+      await waitFor(() => session.playlistReadiness.value.has("conn-1"));
+
+      mockRemoteClients.emit({
+        type: "client_disconnected",
+        isSelf: false,
+        client: { connectionId: "conn-1", userId: "user-1" },
+      });
+
+      await waitFor(() => !session.playlistReadiness.value.has("conn-1"));
+    });
+
+    it("shares an answer with the group, keyed by the question, and keeps answers from readers who left", async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      const session = await manager.joinSession("group-abc");
+
+      session.shareQuestionAnswer("Why?", "Because.");
+      expect(mockQuestionAnswersMap.set).toHaveBeenCalledWith(
+        `${os.connectionId}|Why?`,
+        expect.objectContaining({
+          prompt: "Why?",
+          text: "Because.",
+          connectionId: os.connectionId,
+        })
+      );
+
+      mockQuestionAnswersMap.set("conn-gone|Why?", {
+        prompt: "Why?",
+        text: "Earlier thought",
+        connectionId: "conn-gone",
+        userId: null,
+        name: "Daniel",
+        atMs: 1,
+      });
+      mockQuestionAnswersMap.set("conn-bad|x", { text: "no prompt" });
+      mockQuestionAnswersMap.emitChange();
+
+      await waitFor(() => session.questionAnswers.value.length >= 2);
+      // Oldest first; this client's own answer is in the list like anyone's.
+      expect(session.questionAnswers.value.map((a) => a.text)).toEqual([
+        "Earlier thought",
+        "Because.",
+      ]);
     });
   });
 });

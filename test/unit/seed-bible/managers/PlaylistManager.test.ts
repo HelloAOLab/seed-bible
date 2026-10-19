@@ -37,7 +37,7 @@ import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
-import { computed, effect, signal } from "@preact/signals";
+import { computed, effect, signal, type Signal } from "@preact/signals";
 import { h, render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import { stubPageVisibility } from "../testUtils/pageVisibility";

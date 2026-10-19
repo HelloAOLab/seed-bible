@@ -1269,6 +1269,9 @@ export function createPlaylistManager(
                   text,
                   visibility
                 );
+                if (visibility === "session") {
+                  tab?.sharedSession?.shareQuestionAnswer(item.prompt, text);
+                }
               }
             : undefined,
       }

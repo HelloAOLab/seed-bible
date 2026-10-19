@@ -241,6 +241,68 @@ export interface ParticipantReadingPosition {
   lastVerse?: number;
 }
 
+/**
+ * A participant saying they're ready to move on from a playlist step. Written
+ * only by its own client, keyed by connectionId; `step` is the queue index it
+ * was said for, so a readiness given for an earlier step never counts for the
+ * one the group is on now.
+ */
+export interface PlaylistReadiness {
+  step: number;
+  readyAtMs: number;
+}
+
+function parsePlaylistReadiness(value: unknown): PlaylistReadiness | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const step = record.step;
+  const readyAtMs = record.readyAtMs;
+  if (
+    typeof step !== "number" ||
+    !Number.isInteger(step) ||
+    step < 0 ||
+    typeof readyAtMs !== "number"
+  ) {
+    return null;
+  }
+  return { step, readyAtMs };
+}
+
+/**
+ * An answer to a question step a participant chose to share with the group.
+ * Kept for the life of the session, so someone who answered and then left is
+ * still heard. One per participant per question: answering again replaces it.
+ */
+export interface SharedQuestionAnswer {
+  /** The question answered, by its prompt, which is what identifies a question step. */
+  prompt: string;
+  text: string;
+  connectionId: string;
+  userId: string | null;
+  /** The participant's name when they answered, for after they've left. */
+  name: string | null;
+  atMs: number;
+}
+
+function parseSharedQuestionAnswer(
+  value: unknown
+): SharedQuestionAnswer | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const prompt = toStringOrNull(record.prompt);
+  const text = toStringOrNull(record.text);
+  const connectionId = toStringOrNull(record.connectionId);
+  if (!prompt || !text || !connectionId) return null;
+  return {
+    prompt,
+    text,
+    connectionId,
+    userId: toStringOrNull(record.userId),
+    name: toStringOrNull(record.name),
+    atMs: typeof record.atMs === "number" ? record.atMs : 0,
+  };
+}
+
 function parseParticipantReadingPosition(
   value: unknown
 ): ParticipantReadingPosition | null {
@@ -608,6 +670,22 @@ export interface BibleReadingSession {
   >;
 
   /**
+   * Which still-connected participants have said they're ready to move on
+   * from a playlist step, keyed by connectionId. Compare each entry's `step`
+   * with the step the group is on: a readiness for another step is stale.
+   */
+  playlistReadiness: ReadonlySignal<ReadonlyMap<string, PlaylistReadiness>>;
+  /**
+   * Says whether this client is ready to move on from playlist step `step`,
+   * or takes the readiness back with null.
+   */
+  setPlaylistReady: (step: number | null) => void;
+  /** Answers to question steps that participants chose to share with the group. */
+  questionAnswers: ReadonlySignal<readonly SharedQuestionAnswer[]>;
+  /** Shares (or replaces) this client's answer to the question `prompt` asks. */
+  shareQuestionAnswer: (prompt: string, text: string) => void;
+
+  /**
    * Whether this client's own connection to the shared document is
    * currently synced. False while resyncing (e.g. right after a mobile
    * device resumes from the background) — during that window, this
@@ -726,12 +804,25 @@ async function createBibleReadingSession(
   // in for this.
   const readingPositionsMap =
     document.getMap<ParticipantReadingPosition>("reading_positions");
+  // Per-connection "ready to move on" for the playlist step, written only by
+  // its own client. Gated by connectivity like positions are.
+  const playlistReadinessMap =
+    document.getMap<PlaylistReadiness>("playlist_readiness");
+  // Answers to question steps shared with the group, keyed by
+  // connectionId and prompt. Never pruned: an answer outlives its author's
+  // connection.
+  const questionAnswersMap =
+    document.getMap<SharedQuestionAnswer>("question_answers");
   const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
   const allUsers = signal<ConnectedSessionUser[]>([]);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
   const participantPositions = signal<
     ReadonlyMap<string, ParticipantReadingPosition>
   >(new Map());
+  const playlistReadiness = signal<ReadonlyMap<string, PlaylistReadiness>>(
+    new Map()
+  );
+  const questionAnswers = signal<readonly SharedQuestionAnswer[]>([]);
   const connectedClients = new Map<string, SessionConnectionInfo>();
   const profileCache = new Map<string, UserProfile>();
   const localConnectionId = os.connectionId;
@@ -928,6 +1019,73 @@ async function createBibleReadingSession(
     participantPositions.value = next;
   };
 
+  const syncPlaylistReadiness = () => {
+    const next = new Map<string, PlaylistReadiness>();
+    playlistReadinessMap.forEach((value, connectionId) => {
+      if (typeof connectionId !== "string") {
+        return;
+      }
+      // As with positions: a vanished client's entry lingers, so only the
+      // connected count as ready.
+      if (!connectedClients.has(connectionId)) {
+        return;
+      }
+      const readiness = parsePlaylistReadiness(value);
+      if (readiness) {
+        next.set(connectionId, readiness);
+      }
+    });
+    playlistReadiness.value = next;
+  };
+
+  const syncQuestionAnswers = () => {
+    const next: SharedQuestionAnswer[] = [];
+    questionAnswersMap.forEach((value) => {
+      const answer = parseSharedQuestionAnswer(value);
+      if (answer) {
+        next.push(answer);
+      }
+    });
+    next.sort((a, b) => a.atMs - b.atMs);
+    questionAnswers.value = next;
+  };
+
+  const setPlaylistReady = (step: number | null) => {
+    try {
+      document.transact(() => {
+        if (step === null) {
+          playlistReadinessMap.delete(localConnectionId);
+        } else {
+          playlistReadinessMap.set(localConnectionId, {
+            step,
+            readyAtMs: Date.now(),
+          });
+        }
+      });
+    } catch {
+      // Best-effort — the group just doesn't hear about it.
+    }
+  };
+
+  const shareQuestionAnswer = (prompt: string, text: string) => {
+    const self = currentUser.peek();
+    const answer: SharedQuestionAnswer = {
+      prompt,
+      text,
+      connectionId: localConnectionId,
+      userId: self?.userId ?? loginManager.userId.peek() ?? null,
+      name: self?.profile?.name ?? loginManager.profile.peek()?.name ?? null,
+      atMs: Date.now(),
+    };
+    try {
+      document.transact(() => {
+        questionAnswersMap.set(`${localConnectionId}|${prompt}`, answer);
+      });
+    } catch {
+      // Best-effort — the answer stays with its author.
+    }
+  };
+
   const syncConnectedUsers = async (version: number) => {
     const clients = Array.from(connectedClients.values());
     const nextUsers = await Promise.all(
@@ -1028,6 +1186,7 @@ async function createBibleReadingSession(
     // Connectivity gates which position entries count, so the positions have
     // to be rebuilt whenever the connected set changes.
     syncParticipantPositions();
+    syncPlaylistReadiness();
   };
 
   // When the translation isn't shared, keep the local reader on their own
@@ -1290,6 +1449,17 @@ async function createBibleReadingSession(
       syncParticipantPositions();
     }
   );
+  const playlistReadinessSubscription = playlistReadinessMap.changes.subscribe(
+    () => {
+      syncPlaylistReadiness();
+    }
+  );
+  const questionAnswersSubscription = questionAnswersMap.changes.subscribe(
+    () => {
+      syncQuestionAnswers();
+    }
+  );
+  syncQuestionAnswers();
 
   const subscribeToRemoteClients = () =>
     document.remoteClients.subscribe((event) => {
@@ -1760,6 +1930,8 @@ async function createBibleReadingSession(
     extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     readingPositionsSubscription.unsubscribe();
+    playlistReadinessSubscription.unsubscribe();
+    questionAnswersSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
     statusUpdatedSubscription.unsubscribe();
     stopSync();
@@ -1780,6 +1952,7 @@ async function createBibleReadingSession(
       document.transact(() => {
         userProfilesMap.delete(localConnectionId);
         readingPositionsMap.delete(localConnectionId);
+        playlistReadinessMap.delete(localConnectionId);
       });
     } catch {
       // Best-effort — the entry will simply linger in the CRDT.
@@ -1806,6 +1979,10 @@ async function createBibleReadingSession(
     connectedUsers,
     currentUser,
     participantPositions,
+    playlistReadiness,
+    setPlaylistReady,
+    questionAnswers,
+    shareQuestionAnswer,
     isSynced,
     removeSharedDecoration,
     dispose,
