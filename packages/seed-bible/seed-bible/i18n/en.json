@@ -1153,5 +1153,9 @@
   "feed-all-read": "{{names}} all read {{reference}}",
   "feed-empty": "No activity in this time frame yet.",
   "feed-empty-notes": "No notes in this time frame yet.",
-  "feed-empty-reading": "No reading in this time frame yet."
+  "feed-empty-reading": "No reading in this time frame yet.",
+  "customization-save-failed": "Couldn't save your customization. Please try again.",
+  "extension-availability-default": "Default ({{availability}})",
+  "customization-extensions-default": "Default for other extensions",
+  "customization-extensions-default-hint": "Applies to every extension you haven't set below, including new ones added later"
 }
