@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Niet-opgeslagen itemwijzigingen",
   "unsaved-item-edit-confirm-message": "Je hebt een item gewijzigd, maar de wijzigingen nog niet opgeslagen. Wat wil je doen?",
   "keep-changes-and-save": "Wijzigingen behouden en opslaan",
-  "reading-plan-edit-reading": "Lezen bewerken"
+  "reading-plan-edit-reading": "Lezen bewerken",
+  "offscreen-highlight-above": "Markeer hierboven vers {{verses}} . Toon het",
+  "offscreen-highlight-below": "Markeer hieronder vers {{verses}} . Toon het",
+  "offscreen-highlight-scroll-left": "Meer hoogtepunten aan de linkerkant",
+  "offscreen-highlight-scroll-right": "Meer hoogtepunten aan de rechterkant",
+  "highlighted-verse": "Gemarkeerd vers {{verse}}",
+  "highlighted-verses": "Gemarkeerde verzen {{verses}}"
 }

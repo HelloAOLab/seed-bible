@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "შეუნახავი ერთეულის ცვლილებები",
   "unsaved-item-edit-confirm-message": "თქვენ შეცვალეთ ელემენტი, მაგრამ ეს ცვლილებები ჯერ არ შეგინახავთ. რა გსურთ გააკეთოთ?",
   "keep-changes-and-save": "ცვლილებების შენახვა და შენახვა",
-  "reading-plan-edit-reading": "წაკითხულის რედაქტირება"
+  "reading-plan-edit-reading": "წაკითხულის რედაქტირება",
+  "offscreen-highlight-above": "მონიშნეთ ზემოთ, მუხლი {{verses}} . აჩვენეთ იგი",
+  "offscreen-highlight-below": "მონიშნეთ ქვემოთ, მუხლი {{verses}} . აჩვენეთ",
+  "offscreen-highlight-scroll-left": "მეტი მნიშვნელოვანი დეტალი მარცხნივ",
+  "offscreen-highlight-scroll-right": "მეტი მნიშვნელოვანი დეტალი მარჯვნივ",
+  "highlighted-verse": "ხაზგასმული ლექსი {{verse}}",
+  "highlighted-verses": "ხაზგასმული ლექსები {{verses}}"
 }

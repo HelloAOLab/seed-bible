@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "غیر محفوظ شدہ آئٹم کی تبدیلیاں",
   "unsaved-item-edit-confirm-message": "آپ نے ایک آئٹم کو تبدیل کیا ہے لیکن ابھی تک ان تبدیلیوں کو محفوظ نہیں کیا ہے۔ آپ کیا کرنا چاہیں گے؟",
   "keep-changes-and-save": "تبدیلیاں رکھیں اور محفوظ کریں۔",
-  "reading-plan-edit-reading": "پڑھنے میں ترمیم کریں۔"
+  "reading-plan-edit-reading": "پڑھنے میں ترمیم کریں۔",
+  "offscreen-highlight-above": "اوپر نمایاں کریں، آیت {{verses}} ۔ دکھاؤ",
+  "offscreen-highlight-below": "ذیل میں نمایاں کریں، آیت {{verses}} ۔ دکھاؤ",
+  "offscreen-highlight-scroll-left": "بائیں طرف مزید جھلکیاں",
+  "offscreen-highlight-scroll-right": "دائیں جانب مزید جھلکیاں",
+  "highlighted-verse": "نمایاں کردہ آیت {{verse}}",
+  "highlighted-verses": "نمایاں کردہ آیات {{verses}}"
 }

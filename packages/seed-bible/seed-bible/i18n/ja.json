@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "保存されていないアイテムの変更",
   "unsaved-item-edit-confirm-message": "項目を変更しましたが、まだ変更を保存していません。どうしますか？",
   "keep-changes-and-save": "変更を保存して保存する",
-  "reading-plan-edit-reading": "編集して読む"
+  "reading-plan-edit-reading": "編集して読む",
+  "offscreen-highlight-above": "上記で強調表示、節{{verses}}を表示",
+  "offscreen-highlight-below": "以下の聖句{{verses}}ハイライト表示してください。",
+  "offscreen-highlight-scroll-left": "左側にもっとハイライトがあります",
+  "offscreen-highlight-scroll-right": "右側にさらにハイライトがあります",
+  "highlighted-verse": "ハイライトされた聖句{{verse}}",
+  "highlighted-verses": "強調表示された聖句{{verses}}"
 }

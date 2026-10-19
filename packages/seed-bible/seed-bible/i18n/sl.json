@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Neshranjene spremembe elementov",
   "unsaved-item-edit-confirm-message": "Spremenili ste element, vendar sprememb še niste shranili. Kaj želite storiti?",
   "keep-changes-and-save": "Ohrani spremembe in shrani",
-  "reading-plan-edit-reading": "Uredi branje"
+  "reading-plan-edit-reading": "Uredi branje",
+  "offscreen-highlight-above": "Označi zgoraj, verz {{verses}} . Pokaži.",
+  "offscreen-highlight-below": "Označi spodaj, verz {{verses}} . Pokaži ga.",
+  "offscreen-highlight-scroll-left": "Več poudarkov na levi",
+  "offscreen-highlight-scroll-right": "Več poudarkov na desni",
+  "highlighted-verse": "Označena vrstica {{verse}}",
+  "highlighted-verses": "Označeni verzi {{verses}}"
 }

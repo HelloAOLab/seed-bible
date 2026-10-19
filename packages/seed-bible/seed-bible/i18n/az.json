@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Yadda saxlanılmamış element dəyişiklikləri",
   "unsaved-item-edit-confirm-message": "Bir elementi dəyişdirdiniz, amma hələ dəyişiklikləri yadda saxlamamısınız. Nə etmək istərdiniz?",
   "keep-changes-and-save": "Dəyişiklikləri saxlayın və yadda saxlayın",
-  "reading-plan-edit-reading": "Oxumanı redaktə edin"
+  "reading-plan-edit-reading": "Oxumanı redaktə edin",
+  "offscreen-highlight-above": "Yuxarıda {{verses}} ayəsini vurğulayın. Göstərin",
+  "offscreen-highlight-below": "Aşağıda {{verses}} ayəsini vurğulayın. Göstərin",
+  "offscreen-highlight-scroll-left": "Solda daha çox məqam",
+  "offscreen-highlight-scroll-right": "Sağdakı daha çox məqam",
+  "highlighted-verse": "Vurğulanmış ayə {{verse}}",
+  "highlighted-verses": "Vurğulanmış ayələr {{verses}}"
 }

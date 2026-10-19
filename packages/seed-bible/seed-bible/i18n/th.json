@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "การเปลี่ยนแปลงรายการที่ยังไม่ได้บันทึก",
   "unsaved-item-edit-confirm-message": "คุณได้แก้ไขรายการหนึ่งแล้ว แต่ยังไม่ได้บันทึกการเปลี่ยนแปลงเหล่านั้น คุณต้องการทำอะไรต่อไป?",
   "keep-changes-and-save": "บันทึกการเปลี่ยนแปลง",
-  "reading-plan-edit-reading": "แก้ไขการอ่าน"
+  "reading-plan-edit-reading": "แก้ไขการอ่าน",
+  "offscreen-highlight-above": "ไฮไลต์ด้านบน ข้อ {{verses}} แสดงให้เห็น",
+  "offscreen-highlight-below": "ไฮไลต์ข้อความด้านล่าง {{verses}} แสดงให้เห็น",
+  "offscreen-highlight-scroll-left": "ไฮไลท์เพิ่มเติมทางด้านซ้าย",
+  "offscreen-highlight-scroll-right": "ไฮไลท์เพิ่มเติมทางด้านขวา",
+  "highlighted-verse": "ข้อความที่เน้น {{verse}}",
+  "highlighted-verses": "ข้อความที่เน้น {{verses}}"
 }

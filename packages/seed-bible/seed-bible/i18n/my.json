@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "မသိမ်းဆည်းရသေးသော အရာပြောင်းလဲမှုများ",
   "unsaved-item-edit-confirm-message": "သင်သည် အရာတစ်ခုကို ပြောင်းလဲခဲ့သော်လည်း ထိုပြောင်းလဲမှုများကို မသိမ်းဆည်းရသေးပါ။ သင်ဘာလုပ်ချင်ပါသလဲ။",
   "keep-changes-and-save": "ပြောင်းလဲမှုများကို သိမ်းဆည်းပြီး သိမ်းဆည်းပါ",
-  "reading-plan-edit-reading": "စာဖတ်ခြင်းကို တည်းဖြတ်ပါ"
+  "reading-plan-edit-reading": "စာဖတ်ခြင်းကို တည်းဖြတ်ပါ",
+  "offscreen-highlight-above": "အထက်တွင် မီးမောင်းထိုးပြပါ၊ verse {{verses}} ။ ပြပါ။",
+  "offscreen-highlight-below": "အောက်တွင် မီးမောင်းထိုးပြပါ၊ verse {{verses}} ။ ပြပါ။",
+  "offscreen-highlight-scroll-left": "ဘယ်ဘက်တွင် နောက်ထပ်ထူးခြားချက်များ",
+  "offscreen-highlight-scroll-right": "ညာဘက်တွင် နောက်ထပ် အဓိကအချက်များ",
+  "highlighted-verse": "မီးမောင်းထိုးပြထားသော ကျမ်းပိုဒ် {{verse}}",
+  "highlighted-verses": "မီးမောင်းထိုးပြထားသော အခန်းငယ်များ {{verses}}"
 }

@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Endringer i ulagrede elementer",
   "unsaved-item-edit-confirm-message": "Du har endret et element, men har ikke lagret endringene ennå. Hva vil du gjøre?",
   "keep-changes-and-save": "Behold endringene og lagre",
-  "reading-plan-edit-reading": "Rediger lesing"
+  "reading-plan-edit-reading": "Rediger lesing",
+  "offscreen-highlight-above": "Marker ovenfor, vers {{verses}} . Vis det",
+  "offscreen-highlight-below": "Marker nedenfor, vers {{verses}} . Vis det.",
+  "offscreen-highlight-scroll-left": "Flere høydepunkter til venstre",
+  "offscreen-highlight-scroll-right": "Flere høydepunkter til høyre",
+  "highlighted-verse": "Uthevet vers {{verse}}",
+  "highlighted-verses": "Uthevede vers {{verses}}"
 }

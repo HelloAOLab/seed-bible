@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "சேமிக்கப்படாத உருப்படி மாற்றங்கள்",
   "unsaved-item-edit-confirm-message": "நீங்கள் ஒரு உருப்படியை மாற்றியுள்ளீர்கள், ஆனால் அந்த மாற்றங்களை இன்னும் சேமிக்கவில்லை. நீங்கள் என்ன செய்ய விரும்புகிறீர்கள்?",
   "keep-changes-and-save": "மாற்றங்களைச் சேமித்து வைக்கவும்",
-  "reading-plan-edit-reading": "திருத்து"
+  "reading-plan-edit-reading": "திருத்து",
+  "offscreen-highlight-above": "மேலே உள்ள வசனம் {{verses}} ஐ ஹைலைட் செய்து காண்பிக்கவும்.",
+  "offscreen-highlight-below": "கீழே உள்ள வசனம் {{verses}} ஐ ஹைலைட் செய்து காண்பிக்கவும்.",
+  "offscreen-highlight-scroll-left": "இடதுபுறத்தில் கூடுதல் சிறப்பம்சங்கள்",
+  "offscreen-highlight-scroll-right": "வலதுபுறத்தில் கூடுதல் சிறப்பம்சங்கள்",
+  "highlighted-verse": "சிறப்பித்துக் காட்டப்பட்ட வசனம் {{verse}}",
+  "highlighted-verses": "{{verses}} காட்டப்பட்ட வசனங்கள்"
 }

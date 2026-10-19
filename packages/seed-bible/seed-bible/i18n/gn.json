@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Umi mba’e noñongatúiva oñemoambue",
   "unsaved-item-edit-confirm-message": "Remoambue peteĩ mba’e ha katu nereñongatúi gueteri umi ñemoambue. Mbaʼépa rejapose?",
   "keep-changes-and-save": "Eñongatu umi ñemoambue ha eñongatu",
-  "reading-plan-edit-reading": "Emohenda moñe’ẽrã"
+  "reading-plan-edit-reading": "Emohenda moñe’ẽrã",
+  "offscreen-highlight-above": "Resalta yvate, versíkulo {{verses}} . Ehechauka upéva",
+  "offscreen-highlight-below": "Emomba’eguasu iguýpe, versíkulo {{verses}} . Ehechauka upéva",
+  "offscreen-highlight-scroll-left": "Hetave mba’e ojehecharamovéva ijasu gotyo",
+  "offscreen-highlight-scroll-right": "Hetave mbaʼe destacado oĩva derecha gotyo",
+  "highlighted-verse": "Versíkulo ojerresaltáva {{verse}}",
+  "highlighted-verses": "Versíkulo ojerresaltáva {{verses}}"
 }

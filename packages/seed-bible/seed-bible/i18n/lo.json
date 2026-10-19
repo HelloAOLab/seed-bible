@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "ການປ່ຽນແປງລາຍການທີ່ບໍ່ໄດ້ບັນທຶກໄວ້",
   "unsaved-item-edit-confirm-message": "ທ່ານໄດ້ປ່ຽນແປງລາຍການໜຶ່ງແລ້ວ ແຕ່ຍັງບໍ່ທັນໄດ້ບັນທຶກການປ່ຽນແປງເຫຼົ່ານັ້ນເທື່ອ. ທ່ານຕ້ອງການເຮັດຫຍັງ?",
   "keep-changes-and-save": "ເກັບຮັກສາການປ່ຽນແປງ ແລະ ບັນທຶກໄວ້",
-  "reading-plan-edit-reading": "ແກ້ໄຂການອ່ານ"
+  "reading-plan-edit-reading": "ແກ້ໄຂການອ່ານ",
+  "offscreen-highlight-above": "ໝາຍໃສ່ຂ້າງເທິງ, ຂໍ້ທີ {{verses}} . ສະແດງມັນອອກມາ",
+  "offscreen-highlight-below": "ໝາຍໃສ່ຂ້າງລຸ່ມນີ້, ຂໍ້ທີ {{verses}} . ສະແດງມັນອອກມາ",
+  "offscreen-highlight-scroll-left": "ຈຸດເດັ່ນເພີ່ມເຕີມຢູ່ເບື້ອງຊ້າຍ",
+  "offscreen-highlight-scroll-right": "ໄຮໄລ້ເພີ່ມເຕີມຢູ່ເບື້ອງຂວາ",
+  "highlighted-verse": "ຂໍ້ທີທີ່ເນັ້ນ {{verse}}",
+  "highlighted-verses": "ຂໍ້ພຣະຄຳພີທີ່ເນັ້ນ {{verses}}"
 }

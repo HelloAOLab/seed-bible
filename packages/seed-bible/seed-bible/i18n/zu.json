@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Izinguquko zezinto ezingalondoloziwe",
   "unsaved-item-edit-confirm-message": "Ushintshe into kodwa awukazilondolozi lezo zinguquko. Ungathanda ukwenzani?",
   "keep-changes-and-save": "Gcina izinguquko bese wonga",
-  "reading-plan-edit-reading": "Hlela ukufunda"
+  "reading-plan-edit-reading": "Hlela ukufunda",
+  "offscreen-highlight-above": "Gqamisa ngenhla, ivesi {{verses}} . Libonise",
+  "offscreen-highlight-below": "Gqamisa ngezansi, ivesi {{verses}} . Libonise",
+  "offscreen-highlight-scroll-left": "Ezinye izinto ezivelele ngakwesobunxele",
+  "offscreen-highlight-scroll-right": "Ezinye izinto ezivelele ngakwesokudla",
+  "highlighted-verse": "Ivesi eligqanyisiwe {{verse}}",
+  "highlighted-verses": "Amavesi agqanyisiwe {{verses}}"
 }

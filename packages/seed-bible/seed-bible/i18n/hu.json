@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Nem mentett elemmódosítások",
   "unsaved-item-edit-confirm-message": "Módosított egy elemet, de még nem mentette a módosításokat. Mit szeretne tenni?",
   "keep-changes-and-save": "Változtatások megőrzése és mentés",
-  "reading-plan-edit-reading": "Olvasás szerkesztése"
+  "reading-plan-edit-reading": "Olvasás szerkesztése",
+  "offscreen-highlight-above": "Emeld ki a fenti {{verses}} verset. Mutasd meg",
+  "offscreen-highlight-below": "Jelöld ki az alábbi {{verses}} verset. Mutasd meg",
+  "offscreen-highlight-scroll-left": "További kiemelések balra",
+  "offscreen-highlight-scroll-right": "További kiemelések jobbra",
+  "highlighted-verse": "Kiemelt vers {{verse}}",
+  "highlighted-verses": "Kiemelt versek {{verses}}"
 }

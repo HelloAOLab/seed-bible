@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "ការផ្លាស់ប្ដូរធាតុដែលមិនទាន់បានរក្សាទុក",
   "unsaved-item-edit-confirm-message": "អ្នកបានផ្លាស់ប្តូរធាតុមួយ ប៉ុន្តែមិនទាន់បានរក្សាទុកការផ្លាស់ប្តូរទាំងនោះនៅឡើយទេ។ តើអ្នកចង់ធ្វើអ្វី?",
   "keep-changes-and-save": "រក្សាទុកការផ្លាស់ប្តូរ និងរក្សាទុក",
-  "reading-plan-edit-reading": "កែសម្រួលការអាន"
+  "reading-plan-edit-reading": "កែសម្រួលការអាន",
+  "offscreen-highlight-above": "បន្លិចខាងលើ ខគម្ពីរ {{verses}} ។ បង្ហាញវា",
+  "offscreen-highlight-below": "បន្លិចខាងក្រោម ខគម្ពីរ {{verses}} ។ បង្ហាញវា",
+  "offscreen-highlight-scroll-left": "ចំណុចសំខាន់ៗបន្ថែមទៀតនៅខាងឆ្វេង",
+  "offscreen-highlight-scroll-right": "ចំណុចសំខាន់ៗបន្ថែមទៀតនៅខាងស្តាំ",
+  "highlighted-verse": "ខគម្ពីរដែលបានបន្លិច {{verse}}",
+  "highlighted-verses": "ខគម្ពីរដែលបានបន្លិច {{verses}}"
 }

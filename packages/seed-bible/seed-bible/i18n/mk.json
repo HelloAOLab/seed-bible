@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Промени на незачувани ставки",
   "unsaved-item-edit-confirm-message": "Променивте ставка, но сè уште не сте ги зачувале тие промени. Што сакате да направите?",
   "keep-changes-and-save": "Зачувај ги промените и зачувај",
-  "reading-plan-edit-reading": "Уреди го читањето"
+  "reading-plan-edit-reading": "Уреди го читањето",
+  "offscreen-highlight-above": "Означи погоре, стих {{verses}} . Покажи го",
+  "offscreen-highlight-below": "Означи подолу, стих {{verses}} . Покажи го",
+  "offscreen-highlight-scroll-left": "Повеќе акценти лево",
+  "offscreen-highlight-scroll-right": "Повеќе акценти од десно",
+  "highlighted-verse": "Означен стих {{verse}}",
+  "highlighted-verses": "Означени стихови {{verses}}"
 }

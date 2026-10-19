@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Ändringar av osparade objekt",
   "unsaved-item-edit-confirm-message": "Du har ändrat ett objekt men har inte sparat ändringarna än. Vad vill du göra?",
   "keep-changes-and-save": "Behåll ändringarna och spara",
-  "reading-plan-edit-reading": "Redigera läsning"
+  "reading-plan-edit-reading": "Redigera läsning",
+  "offscreen-highlight-above": "Markera ovan, vers {{verses}} . Visa det.",
+  "offscreen-highlight-below": "Markera nedan, vers {{verses}} . Visa det.",
+  "offscreen-highlight-scroll-left": "Fler höjdpunkter till vänster",
+  "offscreen-highlight-scroll-right": "Fler höjdpunkter till höger",
+  "highlighted-verse": "Markerad vers {{verse}}",
+  "highlighted-verses": "Markerade verser {{verses}}"
 }

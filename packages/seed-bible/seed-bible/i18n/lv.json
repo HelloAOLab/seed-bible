@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Nesaglabātās vienuma izmaiņas",
   "unsaved-item-edit-confirm-message": "Jūs esat mainījis vienumu, bet vēl neesat saglabājis šīs izmaiņas. Ko vēlaties darīt?",
   "keep-changes-and-save": "Saglabāt izmaiņas un saglabāt",
-  "reading-plan-edit-reading": "Rediģēt lasīšanu"
+  "reading-plan-edit-reading": "Rediģēt lasīšanu",
+  "offscreen-highlight-above": "Iezīmējiet augstāk pantu {{verses}} . Parādiet to",
+  "offscreen-highlight-below": "Iezīmējiet zemāk pantu {{verses}} . Parādiet to",
+  "offscreen-highlight-scroll-left": "Vairāk svarīgāko elementu kreisajā pusē",
+  "offscreen-highlight-scroll-right": "Vairāk svarīgāko elementu labajā pusē",
+  "highlighted-verse": "Iezīmētais pants {{verse}}",
+  "highlighted-verses": "Izceltie panti {{verses}}"
 }

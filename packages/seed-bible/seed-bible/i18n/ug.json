@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "ساقلانمىغان تۈر ئۆزگىرىشلىرى",
   "unsaved-item-edit-confirm-message": "سىز بىر تۈرنى ئۆزگەرتتىڭىز، ئەمما بۇ ئۆزگەرتىشلەرنى ساقلىمىدىڭىز. نېمە قىلماقچىسىز؟",
   "keep-changes-and-save": "ئۆزگەرتىشلەرنى ساقلاپ قويۇڭ",
-  "reading-plan-edit-reading": "ئوقۇشنى تەھرىرلەش"
+  "reading-plan-edit-reading": "ئوقۇشنى تەھرىرلەش",
+  "offscreen-highlight-above": "ئۈستىدىكى {{verses}} ئايەتنى بەلگىلەڭ. كۆرسىتىڭ.",
+  "offscreen-highlight-below": "ئاستىدىكى {{verses}} ئايەتنى بەلگىلەڭ. كۆرسىتىڭ.",
+  "offscreen-highlight-scroll-left": "سول تەرەپتىكى تېخىمۇ كۆپ مۇھىم نۇقتىلار",
+  "offscreen-highlight-scroll-right": "ئوڭ تەرەپتىكى تېخىمۇ كۆپ مۇھىم نۇقتىلار",
+  "highlighted-verse": "بەلگىلەنگەن ئايەت {{verse}}",
+  "highlighted-verses": "بەلگىلەنگەن ئايەتلەر {{verses}}"
 }

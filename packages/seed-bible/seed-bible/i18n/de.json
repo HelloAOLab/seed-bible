@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Nicht gespeicherte Elementänderungen",
   "unsaved-item-edit-confirm-message": "Sie haben einen Eintrag geändert, die Änderungen aber noch nicht gespeichert. Was möchten Sie tun?",
   "keep-changes-and-save": "Änderungen beibehalten und speichern",
-  "reading-plan-edit-reading": "Lesen bearbeiten"
+  "reading-plan-edit-reading": "Lesen bearbeiten",
+  "offscreen-highlight-above": "Markieren Sie oben den Vers {{verses}} . Zeigen Sie ihn an.",
+  "offscreen-highlight-below": "Markiere unten den Vers {{verses}} . Zeige ihn an.",
+  "offscreen-highlight-scroll-left": "Weitere Highlights links",
+  "offscreen-highlight-scroll-right": "Weitere Highlights auf der rechten Seite",
+  "highlighted-verse": "Hervorgehobener Vers {{verse}}",
+  "highlighted-verses": "Hervorgehobene Verse {{verses}}"
 }

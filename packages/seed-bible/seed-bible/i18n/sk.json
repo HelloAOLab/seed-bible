@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Neuložené zmeny položiek",
   "unsaved-item-edit-confirm-message": "Zmenili ste položku, ale ešte ste tieto zmeny neuložili. Čo chcete urobiť?",
   "keep-changes-and-save": "Zachovať zmeny a uložiť",
-  "reading-plan-edit-reading": "Upraviť čítanie"
+  "reading-plan-edit-reading": "Upraviť čítanie",
+  "offscreen-highlight-above": "Zvýraznite vyššie uvedený verš {{verses}} . Ukážte to.",
+  "offscreen-highlight-below": "Zvýraznite nižšie verš {{verses}} . Ukážte ho.",
+  "offscreen-highlight-scroll-left": "Ďalšie zaujímavosti vľavo",
+  "offscreen-highlight-scroll-right": "Ďalšie zaujímavosti vpravo",
+  "highlighted-verse": "Zvýraznený verš {{verse}}",
+  "highlighted-verses": "Zvýraznené verše {{verses}}"
 }

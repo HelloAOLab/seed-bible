@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Незапазени промени в елементите",
   "unsaved-item-edit-confirm-message": "Променили сте елемент, но все още не сте запазили тези промени. Какво искате да направите?",
   "keep-changes-and-save": "Запази промените и ги запази",
-  "reading-plan-edit-reading": "Редактиране на четенето"
+  "reading-plan-edit-reading": "Редактиране на четенето",
+  "offscreen-highlight-above": "Маркирайте по-горе стих {{verses}} . Покажете го.",
+  "offscreen-highlight-below": "Маркирайте по-долу стих {{verses}} . Покажете го.",
+  "offscreen-highlight-scroll-left": "Още акценти вляво",
+  "offscreen-highlight-scroll-right": "Още акценти вдясно",
+  "highlighted-verse": "Подчертан стих {{verse}}",
+  "highlighted-verses": "Подчертани стихове {{verses}}"
 }

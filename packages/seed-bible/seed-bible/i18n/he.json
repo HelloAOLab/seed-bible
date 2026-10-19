@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "שינויים בפריט שלא נשמרו",
   "unsaved-item-edit-confirm-message": "שינית פריט אך עדיין לא שמרת את השינויים. מה תרצה לעשות?",
   "keep-changes-and-save": "שמור שינויים ושמור",
-  "reading-plan-edit-reading": "עריכת קריאה"
+  "reading-plan-edit-reading": "עריכת קריאה",
+  "offscreen-highlight-above": "סמן למעלה, פסוק {{verses}} . הצג זאת",
+  "offscreen-highlight-below": "סמן למטה, פסוק {{verses}} . הצג זאת",
+  "offscreen-highlight-scroll-left": "עוד נקודות עיקריות משמאל",
+  "offscreen-highlight-scroll-right": "עוד נקודות עיקריות מימין",
+  "highlighted-verse": "פסוק מודגש {{verse}}",
+  "highlighted-verses": "פסוקים מודגשים {{verses}}"
 }

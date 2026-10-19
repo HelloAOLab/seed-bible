@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Kaydedilmemiş öğe değişiklikleri",
   "unsaved-item-edit-confirm-message": "Bir öğeyi değiştirdiniz ancak bu değişiklikleri henüz kaydetmediniz. Ne yapmak istersiniz?",
   "keep-changes-and-save": "Değişiklikleri kaydedin ve saklayın.",
-  "reading-plan-edit-reading": "Okumayı düzenle"
+  "reading-plan-edit-reading": "Okumayı düzenle",
+  "offscreen-highlight-above": "Yukarıda, {{verses}} ayetini vurgulayın. Gösterin.",
+  "offscreen-highlight-below": "Aşağıdaki ayeti vurgulayın: {{verses}} . Gösterin.",
+  "offscreen-highlight-scroll-left": "Solda daha fazla öne çıkan nokta",
+  "offscreen-highlight-scroll-right": "Sağda daha fazla öne çıkan nokta",
+  "highlighted-verse": "Vurgulanan ayet {{verse}}",
+  "highlighted-verses": "Vurgulanan ayetler {{verses}}"
 }

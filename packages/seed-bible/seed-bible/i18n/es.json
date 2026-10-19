@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Cambios en los elementos no guardados",
   "unsaved-item-edit-confirm-message": "Has modificado un elemento, pero aún no has guardado los cambios. ¿Qué deseas hacer?",
   "keep-changes-and-save": "Conservar cambios y guardar",
-  "reading-plan-edit-reading": "Editar lectura"
+  "reading-plan-edit-reading": "Editar lectura",
+  "offscreen-highlight-above": "Resaltar arriba, versículo {{verses}} . Mostrarlo",
+  "offscreen-highlight-below": "Resaltar a continuación, versículo {{verses}} . Mostrarlo",
+  "offscreen-highlight-scroll-left": "Más detalles a la izquierda",
+  "offscreen-highlight-scroll-right": "Más información a la derecha.",
+  "highlighted-verse": "Verso resaltado {{verse}}",
+  "highlighted-verses": "Versículos resaltados {{verses}}"
 }

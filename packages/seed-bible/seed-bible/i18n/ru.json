@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Несохраненные изменения элементов",
   "unsaved-item-edit-confirm-message": "Вы изменили элемент, но еще не сохранили эти изменения. Что вы хотите сделать?",
   "keep-changes-and-save": "Сохраняйте изменения и сохраняйте.",
-  "reading-plan-edit-reading": "Редактировать чтение"
+  "reading-plan-edit-reading": "Редактировать чтение",
+  "offscreen-highlight-above": "Выделите выше стих {{verses}} . Покажите его.",
+  "offscreen-highlight-below": "Выделите ниже стих {{verses}} . Показать его.",
+  "offscreen-highlight-scroll-left": "Дополнительные элементы слева.",
+  "offscreen-highlight-scroll-right": "Дополнительные сведения справа.",
+  "highlighted-verse": "Выделенный стих {{verse}}",
+  "highlighted-verses": "Выделенные стихи {{verses}}"
 }

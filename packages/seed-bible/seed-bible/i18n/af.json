@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Ongestoorde itemveranderinge",
   "unsaved-item-edit-confirm-message": "Jy het 'n item verander, maar het nog nie daardie veranderinge gestoor nie. Wat wil jy doen?",
   "keep-changes-and-save": "Behou veranderinge en stoor",
-  "reading-plan-edit-reading": "Wysig leeswerk"
+  "reading-plan-edit-reading": "Wysig leeswerk",
+  "offscreen-highlight-above": "Merk hierbo, vers {{verses}} . Wys dit",
+  "offscreen-highlight-below": "Merk hieronder, vers {{verses}} . Wys dit",
+  "offscreen-highlight-scroll-left": "Meer hoogtepunte aan die linkerkant",
+  "offscreen-highlight-scroll-right": "Meer hoogtepunte aan die regterkant",
+  "highlighted-verse": "Uitgeligte vers {{verse}}",
+  "highlighted-verses": "Uitgeligte verse {{verses}}"
 }

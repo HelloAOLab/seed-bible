@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Perubahan item yang belum disimpan",
   "unsaved-item-edit-confirm-message": "Anda telah mengubah suatu item tetapi belum menyimpan perubahan tersebut. Apa yang ingin Anda lakukan?",
   "keep-changes-and-save": "Simpan perubahan dan terapkan.",
-  "reading-plan-edit-reading": "Mengedit bacaan"
+  "reading-plan-edit-reading": "Mengedit bacaan",
+  "offscreen-highlight-above": "Sorot di atas, ayat {{verses}} . Tampilkan",
+  "offscreen-highlight-below": "Sorot ayat {{verses}} di bawah ini. Tampilkan",
+  "offscreen-highlight-scroll-left": "Sorotan lainnya di sebelah kiri.",
+  "offscreen-highlight-scroll-right": "Sorotan lainnya di sebelah kanan.",
+  "highlighted-verse": "Ayat yang disorot {{verse}}",
+  "highlighted-verses": "Ayat-ayat yang disorot {{verses}}"
 }

@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Tallentamattomat kohteen muutokset",
   "unsaved-item-edit-confirm-message": "Olet muuttanut kohdetta, mutta et ole vielä tallentanut muutoksia. Mitä haluat tehdä?",
   "keep-changes-and-save": "Säilytä muutokset ja tallenna",
-  "reading-plan-edit-reading": "Muokkaa lukemista"
+  "reading-plan-edit-reading": "Muokkaa lukemista",
+  "offscreen-highlight-above": "Korosta yllä oleva jae {{verses}} . Näytä se",
+  "offscreen-highlight-below": "Korosta alla oleva jae {{verses}} . Näytä se",
+  "offscreen-highlight-scroll-left": "Lisää kohokohtia vasemmalla",
+  "offscreen-highlight-scroll-right": "Lisää kohokohtia oikealla",
+  "highlighted-verse": "Korostettu jae {{verse}}",
+  "highlighted-verses": "Korostetut jakeet {{verses}}"
 }

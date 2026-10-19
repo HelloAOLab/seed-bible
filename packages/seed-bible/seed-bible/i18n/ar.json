@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "تغييرات العناصر غير المحفوظة",
   "unsaved-item-edit-confirm-message": "لقد قمت بتغيير عنصر ما ولكنك لم تحفظ هذه التغييرات بعد. ماذا تريد أن تفعل؟",
   "keep-changes-and-save": "احتفظ بالتغييرات واحفظها",
-  "reading-plan-edit-reading": "قراءة التحرير"
+  "reading-plan-edit-reading": "قراءة التحرير",
+  "offscreen-highlight-above": "قم بتظليل الآية {{verses}} أعلاه. ثم قم بعرضها.",
+  "offscreen-highlight-below": "قم بتظليل الآية {{verses}} أدناه. ثم اعرضها.",
+  "offscreen-highlight-scroll-left": "المزيد من التفاصيل على اليسار",
+  "offscreen-highlight-scroll-right": "المزيد من التفاصيل على اليمين",
+  "highlighted-verse": "الآية المميزة {{verse}}",
+  "highlighted-verses": "الآيات المميزة {{verses}}"
 }

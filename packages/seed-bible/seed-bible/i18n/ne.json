@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "सुरक्षित नगरिएका वस्तु परिवर्तनहरू",
   "unsaved-item-edit-confirm-message": "तपाईंले एउटा वस्तु परिवर्तन गर्नुभएको छ तर ती परिवर्तनहरू अहिलेसम्म सुरक्षित गर्नुभएको छैन। तपाईं के गर्न चाहनुहुन्छ?",
   "keep-changes-and-save": "परिवर्तनहरू राख्नुहोस् र बचत गर्नुहोस्",
-  "reading-plan-edit-reading": "पढाइ सम्पादन गर्नुहोस्"
+  "reading-plan-edit-reading": "पढाइ सम्पादन गर्नुहोस्",
+  "offscreen-highlight-above": "माथि हाइलाइट गर्नुहोस्, पद {{verses}} । देखाउनुहोस्",
+  "offscreen-highlight-below": "तल हाइलाइट गर्नुहोस्, पद {{verses}} । देखाउनुहोस्",
+  "offscreen-highlight-scroll-left": "बायाँतिरका थप हाइलाइटहरू",
+  "offscreen-highlight-scroll-right": "दायाँतिरका थप हाइलाइटहरू",
+  "highlighted-verse": "हाइलाइट गरिएको पद {{verse}}",
+  "highlighted-verses": "हाइलाइट गरिएका पदहरू {{verses}}"
 }

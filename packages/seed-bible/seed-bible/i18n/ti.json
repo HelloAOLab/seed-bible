@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "ዘይተዓቀበ ኣቕሓ ይቕየር",
   "unsaved-item-edit-confirm-message": "ሓደ ኣቕሓ ቀይርካ ኣለኻ ግን ነቶም ለውጥታት ክሳብ ሕጂ ኣይዓቀብካዮምን። እንታይ ክትገብር ምደለኻ፧",
   "keep-changes-and-save": "ለውጢ ኣቐምጦን ዕቅቦን።",
-  "reading-plan-edit-reading": "ንባብ ኣርትዕ"
+  "reading-plan-edit-reading": "ንባብ ኣርትዕ",
+  "offscreen-highlight-above": "ኣብ ላዕሊ ኣጉልሕ፡ ጥቕሲ {{verses}} ። ኣርእይዎ።",
+  "offscreen-highlight-below": "ኣብ ታሕቲ ኣጉልሕ፣ ጥቕሲ {{verses}} ። ኣርእይዎ።",
+  "offscreen-highlight-scroll-left": "ተወሳኺ ድምቀት ንጸጋም",
+  "offscreen-highlight-scroll-right": "ተወሳኺ ድምቀት ንየማን",
+  "highlighted-verse": "ድምቀት ዘለዎ ጥቕሲ {{verse}}",
+  "highlighted-verses": "ዝተጎልበቡ ጥቕስታት {{verses}}"
 }

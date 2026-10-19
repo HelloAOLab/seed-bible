@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "未保存的项目更改",
   "unsaved-item-edit-confirm-message": "您已更改某个项目，但尚未保存更改。您想怎么做？",
   "keep-changes-and-save": "保留更改并保存",
-  "reading-plan-edit-reading": "编辑阅读"
+  "reading-plan-edit-reading": "编辑阅读",
+  "offscreen-highlight-above": "高亮显示上方诗句{{verses}} 。显示它",
+  "offscreen-highlight-below": "选中下方诗句{{verses}} 。显示出来",
+  "offscreen-highlight-scroll-left": "左侧还有更多精彩内容。",
+  "offscreen-highlight-scroll-right": "右侧还有更多精彩内容。",
+  "highlighted-verse": "高亮显示的诗句{{verse}}",
+  "highlighted-verses": "高亮显示的诗句{{verses}}"
 }

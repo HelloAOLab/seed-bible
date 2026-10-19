@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Modifiche agli elementi non salvati",
   "unsaved-item-edit-confirm-message": "Hai modificato un elemento ma non hai ancora salvato le modifiche. Cosa desideri fare?",
   "keep-changes-and-save": "Mantieni le modifiche e salva",
-  "reading-plan-edit-reading": "Modifica lettura"
+  "reading-plan-edit-reading": "Modifica lettura",
+  "offscreen-highlight-above": "Evidenzia sopra, il versetto {{verses}} . Mostralo",
+  "offscreen-highlight-below": "Evidenzia qui sotto il versetto {{verses}} . Mostralo",
+  "offscreen-highlight-scroll-left": "Altri punti salienti a sinistra",
+  "offscreen-highlight-scroll-right": "Altri dettagli a destra",
+  "highlighted-verse": "Verso evidenziato {{verse}}",
+  "highlighted-verses": "Versetti evidenziati {{verses}}"
 }

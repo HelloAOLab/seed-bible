@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Perubahan item yang tidak disimpan",
   "unsaved-item-edit-confirm-message": "Anda telah menukar item tetapi belum menyimpan perubahan tersebut lagi. Apakah yang ingin anda lakukan?",
   "keep-changes-and-save": "Simpan perubahan dan simpan",
-  "reading-plan-edit-reading": "Edit bacaan"
+  "reading-plan-edit-reading": "Edit bacaan",
+  "offscreen-highlight-above": "Serlahkan di atas, ayat {{verses}} . Tunjukkannya",
+  "offscreen-highlight-below": "Serlahkan di bawah, ayat {{verses}} . Tunjukkannya",
+  "offscreen-highlight-scroll-left": "Lebih banyak sorotan di sebelah kiri",
+  "offscreen-highlight-scroll-right": "Lebih banyak sorotan di sebelah kanan",
+  "highlighted-verse": "Ayat yang diserlahkan {{verse}}",
+  "highlighted-verses": "Ayat-ayat yang diserlahkan {{verses}}"
 }

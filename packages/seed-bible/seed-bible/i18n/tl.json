@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Mga pagbabago sa hindi na-save na item",
   "unsaved-item-edit-confirm-message": "Binago mo ang isang item ngunit hindi mo pa nase-save ang mga pagbabagong iyon. Ano ang gusto mong gawin?",
   "keep-changes-and-save": "Panatilihin ang mga pagbabago at i-save",
-  "reading-plan-edit-reading": "I-edit ang pagbabasa"
+  "reading-plan-edit-reading": "I-edit ang pagbabasa",
+  "offscreen-highlight-above": "I-highlight sa itaas, talata {{verses}} . Ipakita ito",
+  "offscreen-highlight-below": "I-highlight sa ibaba, talata {{verses}} . Ipakita ito",
+  "offscreen-highlight-scroll-left": "Mas maraming highlight sa kaliwa",
+  "offscreen-highlight-scroll-right": "Mas maraming highlight sa kanan",
+  "highlighted-verse": "Naka-highlight na bersikulo {{verse}}",
+  "highlighted-verses": "Mga naka-highlight na bersikulo {{verses}}"
 }

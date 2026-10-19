@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "സംരക്ഷിക്കാത്ത ഇന മാറ്റങ്ങൾ",
   "unsaved-item-edit-confirm-message": "നിങ്ങൾ ഒരു ഇനം മാറ്റി, പക്ഷേ ആ മാറ്റങ്ങൾ ഇതുവരെ സംരക്ഷിച്ചിട്ടില്ല. നിങ്ങൾക്ക് എന്തുചെയ്യാൻ താൽപ്പര്യമുണ്ട്?",
   "keep-changes-and-save": "മാറ്റങ്ങൾ സൂക്ഷിച്ച് സംരക്ഷിക്കുക",
-  "reading-plan-edit-reading": "വായന എഡിറ്റ് ചെയ്യുക"
+  "reading-plan-edit-reading": "വായന എഡിറ്റ് ചെയ്യുക",
+  "offscreen-highlight-above": "മുകളിൽ ഹൈലൈറ്റ് ചെയ്യുക, വാക്യം {{verses}} . അത് കാണിക്കുക.",
+  "offscreen-highlight-below": "താഴെ ഹൈലൈറ്റ് ചെയ്യുക, വാക്യം {{verses}} . അത് കാണിക്കുക.",
+  "offscreen-highlight-scroll-left": "ഇടതുവശത്ത് കൂടുതൽ ഹൈലൈറ്റുകൾ",
+  "offscreen-highlight-scroll-right": "വലതുവശത്ത് കൂടുതൽ ഹൈലൈറ്റുകൾ",
+  "highlighted-verse": "ഹൈലൈറ്റ് ചെയ്ത വാക്യം {{verse}}",
+  "highlighted-verses": "ഹൈലൈറ്റ് ചെയ്ത വാക്യങ്ങൾ {{verses}}"
 }

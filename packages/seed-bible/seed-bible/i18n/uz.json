@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Saqlanmagan element o'zgarishlari",
   "unsaved-item-edit-confirm-message": "Siz elementni o'zgartirdingiz, lekin hali o'zgarishlarni saqlamadingiz. Nima qilishni xohlaysiz?",
   "keep-changes-and-save": "O'zgarishlarni saqlang va saqlang",
-  "reading-plan-edit-reading": "O'qishni tahrirlash"
+  "reading-plan-edit-reading": "O'qishni tahrirlash",
+  "offscreen-highlight-above": "Yuqoridagi {{verses}} oyatni ajratib ko'rsating. Uni ko'rsating",
+  "offscreen-highlight-below": "Quyida {{verses}} oyatini ajratib ko'rsating. Uni ko'rsating",
+  "offscreen-highlight-scroll-left": "Chap tomonda ko'proq diqqatga sazovor joylar",
+  "offscreen-highlight-scroll-right": "O'ng tomonda ko'proq diqqatga sazovor joylar",
+  "highlighted-verse": "Belgilangan oyat {{verse}}",
+  "highlighted-verses": "Belgilangan oyatlar {{verses}}"
 }

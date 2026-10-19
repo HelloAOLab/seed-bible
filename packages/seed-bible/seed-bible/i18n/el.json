@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Αλλαγές σε μη αποθηκευμένα στοιχεία",
   "unsaved-item-edit-confirm-message": "Έχετε αλλάξει ένα στοιχείο αλλά δεν έχετε αποθηκεύσει ακόμη αυτές τις αλλαγές. Τι θα θέλατε να κάνετε;",
   "keep-changes-and-save": "Διατήρηση αλλαγών και αποθήκευση",
-  "reading-plan-edit-reading": "Επεξεργασία ανάγνωσης"
+  "reading-plan-edit-reading": "Επεξεργασία ανάγνωσης",
+  "offscreen-highlight-above": "Επισημάνετε παραπάνω, εδάφιο {{verses}} . Δείξτε το",
+  "offscreen-highlight-below": "Επισημάνετε παρακάτω, τον στίχο {{verses}} . Δείξτε το",
+  "offscreen-highlight-scroll-left": "Περισσότερα στιγμιότυπα στα αριστερά",
+  "offscreen-highlight-scroll-right": "Περισσότερα στιγμιότυπα στα δεξιά",
+  "highlighted-verse": "Επισημασμένο στίχο {{verse}}",
+  "highlighted-verses": "Επισημασμένοι στίχοι {{verses}}"
 }

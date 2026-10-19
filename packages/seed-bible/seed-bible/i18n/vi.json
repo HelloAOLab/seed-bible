@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Thay đổi mục chưa lưu",
   "unsaved-item-edit-confirm-message": "Bạn đã thay đổi một mục nhưng chưa lưu lại những thay đổi đó. Bạn muốn làm gì?",
   "keep-changes-and-save": "Lưu các thay đổi và lưu lại.",
-  "reading-plan-edit-reading": "Chỉnh sửa bài đọc"
+  "reading-plan-edit-reading": "Chỉnh sửa bài đọc",
+  "offscreen-highlight-above": "Hãy tô sáng đoạn văn trên, câu {{verses}} . Hiển thị nó",
+  "offscreen-highlight-below": "Hãy tô sáng đoạn thơ {{verses}} bên dưới. Hiển thị nó.",
+  "offscreen-highlight-scroll-left": "Những điểm nổi bật khác ở bên trái",
+  "offscreen-highlight-scroll-right": "Những điểm nổi bật khác ở bên phải",
+  "highlighted-verse": "Câu thơ được tô sáng {{verse}}",
+  "highlighted-verses": "Các câu thơ được tô sáng {{verses}}"
 }

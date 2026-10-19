@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Modificări ale elementelor nesalvate",
   "unsaved-item-edit-confirm-message": "Ai modificat un element, dar nu ai salvat încă modificările respective. Ce dorești să faci?",
   "keep-changes-and-save": "Păstrează modificările și salvează",
-  "reading-plan-edit-reading": "Editare lectură"
+  "reading-plan-edit-reading": "Editare lectură",
+  "offscreen-highlight-above": "Evidențiați mai sus, versetul {{verses}} . Arată-l.",
+  "offscreen-highlight-below": "Evidențiați mai jos, versetul {{verses}} . Arătați-l.",
+  "offscreen-highlight-scroll-left": "Mai multe puncte importante în stânga",
+  "offscreen-highlight-scroll-right": "Mai multe puncte importante în dreapta",
+  "highlighted-verse": "Verset evidențiat {{verse}}",
+  "highlighted-verses": "Versuri evidențiate {{verses}}"
 }

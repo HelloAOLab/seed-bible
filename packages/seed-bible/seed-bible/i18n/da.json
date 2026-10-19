@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Ændringer af ikke-gemte elementer",
   "unsaved-item-edit-confirm-message": "Du har ændret et element, men har ikke gemt ændringerne endnu. Hvad vil du gerne gøre?",
   "keep-changes-and-save": "Behold ændringer og gem",
-  "reading-plan-edit-reading": "Rediger læsning"
+  "reading-plan-edit-reading": "Rediger læsning",
+  "offscreen-highlight-above": "Fremhæv ovenfor, vers {{verses}} . Vis det",
+  "offscreen-highlight-below": "Fremhæv nedenfor, vers {{verses}} . Vis det.",
+  "offscreen-highlight-scroll-left": "Flere højdepunkter til venstre",
+  "offscreen-highlight-scroll-right": "Flere højdepunkter til højre",
+  "highlighted-verse": "Fremhævet vers {{verse}}",
+  "highlighted-verses": "Fremhævede vers {{verses}}"
 }

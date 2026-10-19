@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "ಉಳಿಸದ ಐಟಂ ಬದಲಾವಣೆಗಳು",
   "unsaved-item-edit-confirm-message": "ನೀವು ಒಂದು ಐಟಂ ಅನ್ನು ಬದಲಾಯಿಸಿದ್ದೀರಿ ಆದರೆ ಆ ಬದಲಾವಣೆಗಳನ್ನು ಇನ್ನೂ ಉಳಿಸಿಲ್ಲ. ನೀವು ಏನು ಮಾಡಲು ಬಯಸುತ್ತೀರಿ?",
   "keep-changes-and-save": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ ಮತ್ತು ಉಳಿಸಿ",
-  "reading-plan-edit-reading": "ಓದುವಿಕೆಯನ್ನು ಸಂಪಾದಿಸಿ"
+  "reading-plan-edit-reading": "ಓದುವಿಕೆಯನ್ನು ಸಂಪಾದಿಸಿ",
+  "offscreen-highlight-above": "ಮೇಲಿನ ಪದ್ಯವನ್ನು ಹೈಲೈಟ್ ಮಾಡಿ, {{verses}} . ಅದನ್ನು ತೋರಿಸಿ",
+  "offscreen-highlight-below": "ಕೆಳಗೆ ಹೈಲೈಟ್ ಮಾಡಿ, ಪದ್ಯ {{verses}} . ಅದನ್ನು ತೋರಿಸಿ",
+  "offscreen-highlight-scroll-left": "ಎಡಕ್ಕೆ ಇನ್ನಷ್ಟು ಮುಖ್ಯಾಂಶಗಳು",
+  "offscreen-highlight-scroll-right": "ಬಲಭಾಗದಲ್ಲಿ ಇನ್ನಷ್ಟು ಮುಖ್ಯಾಂಶಗಳು",
+  "highlighted-verse": "ಹೈಲೈಟ್ ಮಾಡಿದ ಪದ್ಯ {{verse}}",
+  "highlighted-verses": "ಹೈಲೈಟ್ ಮಾಡಿದ ಪದ್ಯಗಳು {{verses}}"
 }

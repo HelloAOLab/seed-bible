@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Хадгалаагүй зүйлийн өөрчлөлтүүд",
   "unsaved-item-edit-confirm-message": "Та нэг зүйлийг өөрчилсөн боловч тэдгээр өөрчлөлтийг хараахан хадгалаагүй байна. Та юу хийхийг хүсэж байна вэ?",
   "keep-changes-and-save": "Өөрчлөлтийг хадгалж, хадгалах",
-  "reading-plan-edit-reading": "Уншихыг засах"
+  "reading-plan-edit-reading": "Уншихыг засах",
+  "offscreen-highlight-above": "Дээрх {{verses}} шүлгийг тодруулна уу. Үүнийг харуул.",
+  "offscreen-highlight-below": "Доорх {{verses}} шүлгийг тодруулна уу. Үүнийг харуул.",
+  "offscreen-highlight-scroll-left": "Зүүн талд илүү олон онцлох үйл явдлууд",
+  "offscreen-highlight-scroll-right": "Баруун талд байгаа бусад онцлох үйл явдлууд",
+  "highlighted-verse": "Тодруулсан шүлэг {{verse}}",
+  "highlighted-verses": "Тодруулсан шүлгүүд {{verses}}"
 }

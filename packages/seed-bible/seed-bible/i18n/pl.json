@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Niezapisane zmiany elementów",
   "unsaved-item-edit-confirm-message": "Zmieniłeś element, ale jeszcze nie zapisałeś zmian. Co chcesz zrobić?",
   "keep-changes-and-save": "Zachowaj zmiany i zapisz",
-  "reading-plan-edit-reading": "Edytuj czytanie"
+  "reading-plan-edit-reading": "Edytuj czytanie",
+  "offscreen-highlight-above": "Zaznacz powyżej werset {{verses}} . Pokaż go",
+  "offscreen-highlight-below": "Zaznacz poniżej werset {{verses}} . Pokaż go",
+  "offscreen-highlight-scroll-left": "Więcej atrakcji po lewej stronie",
+  "offscreen-highlight-scroll-right": "Więcej atrakcji po prawej stronie",
+  "highlighted-verse": "Podświetlony werset {{verse}}",
+  "highlighted-verses": "Podświetlone wersety {{verses}}"
 }

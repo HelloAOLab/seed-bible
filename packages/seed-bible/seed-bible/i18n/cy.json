@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Newidiadau eitem heb eu cadw",
   "unsaved-item-edit-confirm-message": "Rydych chi wedi newid eitem ond dydych chi ddim wedi cadw'r newidiadau hynny eto. Beth hoffech chi ei wneud?",
   "keep-changes-and-save": "Cadw newidiadau a chadw",
-  "reading-plan-edit-reading": "Golygu darlleniad"
+  "reading-plan-edit-reading": "Golygu darlleniad",
+  "offscreen-highlight-above": "Amlygwch uchod, pennill {{verses}} . Dangoswch ef",
+  "offscreen-highlight-below": "Amlygwch isod, pennill {{verses}} . Dangoswch ef",
+  "offscreen-highlight-scroll-left": "Mwy o uchafbwyntiau i'r chwith",
+  "offscreen-highlight-scroll-right": "Mwy o uchafbwyntiau i'r dde",
+  "highlighted-verse": "Pennill wedi'i amlygu {{verse}}",
+  "highlighted-verses": "Penillion wedi'u hamlygu {{verses}}"
 }

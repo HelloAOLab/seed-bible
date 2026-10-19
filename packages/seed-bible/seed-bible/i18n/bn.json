@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "সংরক্ষিত নয় এমন আইটেমের পরিবর্তন",
   "unsaved-item-edit-confirm-message": "আপনি একটি আইটেম পরিবর্তন করেছেন কিন্তু এখনও সেই পরিবর্তনগুলো সংরক্ষণ করেননি। আপনি কী করতে চান?",
   "keep-changes-and-save": "পরিবর্তনগুলি রাখুন এবং সংরক্ষণ করুন",
-  "reading-plan-edit-reading": "সম্পাদনা পাঠ"
+  "reading-plan-edit-reading": "সম্পাদনা পাঠ",
+  "offscreen-highlight-above": "উপরের শ্লোক {{verses}} হাইলাইট করুন। এটি দেখান।",
+  "offscreen-highlight-below": "নিচের {{verses}} শ্লোকটি হাইলাইট করুন। এটি দেখান।",
+  "offscreen-highlight-scroll-left": "বাম দিকে আরও হাইলাইটস",
+  "offscreen-highlight-scroll-right": "ডানদিকে আরও আকর্ষণীয় বিষয় রয়েছে",
+  "highlighted-verse": "বিশেষভাবে চিহ্নিত শ্লোক {{verse}}",
+  "highlighted-verses": "বিশেষভাবে চিহ্নিত শ্লোকসমূহ {{verses}}"
 }

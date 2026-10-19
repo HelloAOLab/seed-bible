@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Eloko oyo ebombami te ebongwanaka",
   "unsaved-item-edit-confirm-message": "Obongoli eloko moko kasi obombi naino mbongwana wana te. Okolinga kosala nini?",
   "keep-changes-and-save": "Bomba mbongwana mpe bomba",
-  "reading-plan-edit-reading": "Bobongisi botangi"
+  "reading-plan-edit-reading": "Bobongisi botangi",
+  "offscreen-highlight-above": "Tyá elembo na likoló, vɛrsɛ {{verses}} . Lakisa yango",
+  "offscreen-highlight-below": "Tyá elembo na nse, vɛrsɛ {{verses}} . Lakisa yango",
+  "offscreen-highlight-scroll-left": "Makambo mosusu ya ntina mingi na lobɔkɔ ya mwasi",
+  "offscreen-highlight-scroll-right": "Makambo mosusu ya ntina mingi na lobɔkɔ ya mobali",
+  "highlighted-verse": "Vɛrsɛ oyo emonisami polele {{verse}}",
+  "highlighted-verses": "Bavɛrsɛ oyo emonisami polele {{verses}}"
 }

@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "సేవ్ చేయని అంశం మార్పులు",
   "unsaved-item-edit-confirm-message": "మీరు ఒక అంశాన్ని మార్చారు కానీ ఆ మార్పులను ఇంకా సేవ్ చేయలేదు. మీరు ఏమి చేయాలనుకుంటున్నారు?",
   "keep-changes-and-save": "మార్పులను ఉంచి, భద్రపరచండి",
-  "reading-plan-edit-reading": "సవరణ పఠనం"
+  "reading-plan-edit-reading": "సవరణ పఠనం",
+  "offscreen-highlight-above": "పైన హైలైట్ చేయండి, పద్యం {{verses}} . దానిని చూపించండి",
+  "offscreen-highlight-below": "క్రింద హైలైట్ చేయండి, పద్యం {{verses}} . చూపించండి",
+  "offscreen-highlight-scroll-left": "ఎడమవైపు మరిన్ని ముఖ్యాంశాలు",
+  "offscreen-highlight-scroll-right": "కుడివైపున మరిన్ని ముఖ్యాంశాలు",
+  "highlighted-verse": "హైలైట్ చేయబడిన పద్యం {{verse}}",
+  "highlighted-verses": "హైలైట్ చేయబడిన పద్యాలు {{verses}}"
 }

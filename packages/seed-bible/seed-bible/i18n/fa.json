@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "تغییرات آیتم ذخیره نشده",
   "unsaved-item-edit-confirm-message": "شما یک مورد را تغییر داده‌اید اما هنوز آن تغییرات را ذخیره نکرده‌اید. چه کاری می‌خواهید انجام دهید؟",
   "keep-changes-and-save": "تغییرات را نگه دارید و ذخیره کنید",
-  "reading-plan-edit-reading": "ویرایش خواندن"
+  "reading-plan-edit-reading": "ویرایش خواندن",
+  "offscreen-highlight-above": "آیه {{verses}} بالا را هایلایت کنید. آن را نشان دهید",
+  "offscreen-highlight-below": "آیه {{verses}} را در زیر هایلایت کنید. آن را نشان دهید.",
+  "offscreen-highlight-scroll-left": "نکات برجسته بیشتر در سمت چپ",
+  "offscreen-highlight-scroll-right": "نکات برجسته بیشتر در سمت راست",
+  "highlighted-verse": "آیه برجسته شده {{verse}}",
+  "highlighted-verses": "آیات برجسته {{verses}}"
 }

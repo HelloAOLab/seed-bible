@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "सहेजे न गए आइटम परिवर्तन",
   "unsaved-item-edit-confirm-message": "आपने किसी आइटम में बदलाव किया है, लेकिन अभी तक उन बदलावों को सेव नहीं किया है। आप क्या करना चाहेंगे?",
   "keep-changes-and-save": "बदलावों को सहेज कर रखें।",
-  "reading-plan-edit-reading": "पठन संपादित करें"
+  "reading-plan-edit-reading": "पठन संपादित करें",
+  "offscreen-highlight-above": "ऊपर दिए गए श्लोक {{verses}} को हाइलाइट करें। इसे दिखाएँ।",
+  "offscreen-highlight-below": "नीचे दिए गए श्लोक {{verses}} को हाइलाइट करें। इसे दिखाएँ।",
+  "offscreen-highlight-scroll-left": "बाईं ओर और भी मुख्य बातें हैं",
+  "offscreen-highlight-scroll-right": "दाईं ओर और भी मुख्य बातें हैं",
+  "highlighted-verse": "हाइलाइट किया गया श्लोक {{verse}}",
+  "highlighted-verses": "हाइलाइट किए गए श्लोक {{verses}}"
 }

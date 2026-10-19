@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Canvis d'elements no desats",
   "unsaved-item-edit-confirm-message": "Has canviat un element però encara no has desat els canvis. Què vols fer?",
   "keep-changes-and-save": "Conserva els canvis i desa",
-  "reading-plan-edit-reading": "Edita la lectura"
+  "reading-plan-edit-reading": "Edita la lectura",
+  "offscreen-highlight-above": "Ressalteu a dalt, vers {{verses}} . Mostreu-ho.",
+  "offscreen-highlight-below": "Ressalteu a continuació, el vers {{verses}} . Mostreu-ho.",
+  "offscreen-highlight-scroll-left": "Més aspectes destacats a l'esquerra",
+  "offscreen-highlight-scroll-right": "Més aspectes destacats a la dreta",
+  "highlighted-verse": "Vers destacat {{verse}}",
+  "highlighted-verses": "Versos destacats {{verses}}"
 }

@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "ያልተቀመጡ የንጥል ለውጦች",
   "unsaved-item-edit-confirm-message": "አንድ ንጥል ቀይረሃል ነገር ግን እነዚያን ለውጦች እስካሁን አላስቀመጥክም። ምን ማድረግ ትፈልጋለህ?",
   "keep-changes-and-save": "ለውጦችን ያስቀምጡ እና ያስቀምጡ",
-  "reading-plan-edit-reading": "ንባብን ያርትዑ"
+  "reading-plan-edit-reading": "ንባብን ያርትዑ",
+  "offscreen-highlight-above": "ከላይ ያለውን አጉልተው ያሳዩ፣ ቁጥር {{verses}} ። አሳይ",
+  "offscreen-highlight-below": "ከታች ያለውን ቁጥር {{verses}} ያድምቁ። አሳይ",
+  "offscreen-highlight-scroll-left": "በግራ በኩል ተጨማሪ ድምቀቶች",
+  "offscreen-highlight-scroll-right": "በቀኝ በኩል ተጨማሪ ድምቀቶች",
+  "highlighted-verse": "የደመቀ ቁጥር {{verse}}",
+  "highlighted-verses": "የተደመቁ ጥቅሶች {{verses}}"
 }

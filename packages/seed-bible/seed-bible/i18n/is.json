@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Óvistaðar breytingar á atriði",
   "unsaved-item-edit-confirm-message": "Þú hefur breytt atriði en hefur ekki vistað breytingarnar ennþá. Hvað viltu gera?",
   "keep-changes-and-save": "Geyma breytingar og vista",
-  "reading-plan-edit-reading": "Breyta lestri"
+  "reading-plan-edit-reading": "Breyta lestri",
+  "offscreen-highlight-above": "Merktu við hér að ofan, vers {{verses}} . Sýndu það",
+  "offscreen-highlight-below": "Merktu við hér að neðan, vers {{verses}} . Sýndu það",
+  "offscreen-highlight-scroll-left": "Fleiri áherslur til vinstri",
+  "offscreen-highlight-scroll-right": "Fleiri hápunktar til hægri",
+  "highlighted-verse": "Merkt vers {{verse}}",
+  "highlighted-verses": "Merkt vers {{verses}}"
 }

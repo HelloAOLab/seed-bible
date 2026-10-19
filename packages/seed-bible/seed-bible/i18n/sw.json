@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Mabadiliko ya kipengee ambayo hayajahifadhiwa",
   "unsaved-item-edit-confirm-message": "Umebadilisha kipengee lakini bado hujahifadhi mabadiliko hayo. Ungependa kufanya nini?",
   "keep-changes-and-save": "Weka mabadiliko na uhifadhi",
-  "reading-plan-edit-reading": "Hariri usomaji"
+  "reading-plan-edit-reading": "Hariri usomaji",
+  "offscreen-highlight-above": "Angazia hapo juu, mstari {{verses}} . Uonyeshe",
+  "offscreen-highlight-below": "Angazia hapa chini, mstari {{verses}} . Uonyeshe",
+  "offscreen-highlight-scroll-left": "Vivutio zaidi upande wa kushoto",
+  "offscreen-highlight-scroll-right": "Vivutio zaidi upande wa kulia",
+  "highlighted-verse": "Mstari ulioangaziwa {{verse}}",
+  "highlighted-verses": "Mistari iliyoangaziwa {{verses}}"
 }

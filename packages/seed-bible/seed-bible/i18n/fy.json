@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Net-opsleine itemswizigingen",
   "unsaved-item-edit-confirm-message": "Jo hawwe in item feroare, mar hawwe dy wizigingen noch net bewarre. Wat wolle jo dwaan?",
   "keep-changes-and-save": "Bewarje de wizigingen en bewarje se",
-  "reading-plan-edit-reading": "Lês bewurkje"
+  "reading-plan-edit-reading": "Lês bewurkje",
+  "offscreen-highlight-above": "Markearje hjirboppe, fers {{verses}} . Lit it sjen",
+  "offscreen-highlight-below": "Markearje hjirûnder, fers {{verses}} . Lit it sjen",
+  "offscreen-highlight-scroll-left": "Mear hichtepunten oan de linkerkant",
+  "offscreen-highlight-scroll-right": "Mear hichtepunten oan 'e rjochterkant",
+  "highlighted-verse": "Markearre fers {{verse}}",
+  "highlighted-verses": "Markearre fersen {{verses}}"
 }

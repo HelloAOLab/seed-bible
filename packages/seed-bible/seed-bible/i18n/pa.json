@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "ਅਣਰੱਖਿਅਤ ਆਈਟਮ ਬਦਲਾਅ",
   "unsaved-item-edit-confirm-message": "ਤੁਸੀਂ ਇੱਕ ਆਈਟਮ ਬਦਲੀ ਹੈ ਪਰ ਅਜੇ ਤੱਕ ਉਹਨਾਂ ਬਦਲਾਵਾਂ ਨੂੰ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤਾ ਹੈ। ਤੁਸੀਂ ਕੀ ਕਰਨਾ ਚਾਹੋਗੇ?",
   "keep-changes-and-save": "ਬਦਲਾਵਾਂ ਨੂੰ ਰੱਖੋ ਅਤੇ ਸੇਵ ਕਰੋ",
-  "reading-plan-edit-reading": "ਪੜ੍ਹਨ ਦਾ ਸੰਪਾਦਨ ਕਰੋ"
+  "reading-plan-edit-reading": "ਪੜ੍ਹਨ ਦਾ ਸੰਪਾਦਨ ਕਰੋ",
+  "offscreen-highlight-above": "ਉੱਪਰ ਹਾਈਲਾਈਟ ਕਰੋ, ਆਇਤ {{verses}} । ਇਸਨੂੰ ਦਿਖਾਓ",
+  "offscreen-highlight-below": "ਹੇਠਾਂ ਹਾਈਲਾਈਟ ਕਰੋ, ਆਇਤ {{verses}} । ਇਸਨੂੰ ਦਿਖਾਓ",
+  "offscreen-highlight-scroll-left": "ਖੱਬੇ ਪਾਸੇ ਹੋਰ ਹਾਈਲਾਈਟਸ",
+  "offscreen-highlight-scroll-right": "ਸੱਜੇ ਪਾਸੇ ਹੋਰ ਹਾਈਲਾਈਟਸ",
+  "highlighted-verse": "ਉਜਾਗਰ ਕੀਤੀ ਗਈ ਆਇਤ {{verse}}",
+  "highlighted-verses": "ਉਜਾਗਰ ਕੀਤੀਆਂ ਆਇਤਾਂ {{verses}}"
 }

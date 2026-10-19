@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Ndryshime të artikullit të paruajtur",
   "unsaved-item-edit-confirm-message": "Ke ndryshuar një artikull, por nuk i ke ruajtur ende ato ndryshime. Çfarë dëshiron të bësh?",
   "keep-changes-and-save": "Ruaj ndryshimet dhe ruaj",
-  "reading-plan-edit-reading": "Redakto leximin"
+  "reading-plan-edit-reading": "Redakto leximin",
+  "offscreen-highlight-above": "Thekso më sipër, vargun {{verses}} . Tregoje atë",
+  "offscreen-highlight-below": "Thekso më poshtë, vargun {{verses}} . Tregoje atë.",
+  "offscreen-highlight-scroll-left": "Më shumë pika kryesore në të majtë",
+  "offscreen-highlight-scroll-right": "Më shumë pika kryesore në të djathtë",
+  "highlighted-verse": "Vargu i theksuar {{verse}}",
+  "highlighted-verses": "Vargjet e theksuara {{verses}}"
 }

@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Сакталбаган элементтердин өзгөртүүлөрү",
   "unsaved-item-edit-confirm-message": "Сиз бир нерсени өзгөрттүңүз, бирок ал өзгөртүүлөрдү сактай элексиз. Эмне кылгыңыз келет?",
   "keep-changes-and-save": "Өзгөртүүлөрдү сактоо жана сактоо",
-  "reading-plan-edit-reading": "Окууну түзөтүү"
+  "reading-plan-edit-reading": "Окууну түзөтүү",
+  "offscreen-highlight-above": "Жогорудагы {{verses}} аятын белгилеңиз. Аны көрсөтүңүз",
+  "offscreen-highlight-below": "Төмөндө {{verses}} деген аятты белгилеңиз. Аны көрсөтүңүз",
+  "offscreen-highlight-scroll-left": "Сол жактагы көбүрөөк кызыктуу жерлер",
+  "offscreen-highlight-scroll-right": "Оң жактагы көбүрөөк кызыктуу жерлер",
+  "highlighted-verse": "Белгиленген аят {{verse}}",
+  "highlighted-verses": "Белгиленген аяттар {{verses}}"
 }

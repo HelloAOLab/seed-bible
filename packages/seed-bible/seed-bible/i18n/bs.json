@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "Nesačuvane promjene stavki",
   "unsaved-item-edit-confirm-message": "Promijenili ste stavku, ali još niste sačuvali te promjene. Šta želite učiniti?",
   "keep-changes-and-save": "Sačuvaj promjene i sačuvaj",
-  "reading-plan-edit-reading": "Uredi čitanje"
+  "reading-plan-edit-reading": "Uredi čitanje",
+  "offscreen-highlight-above": "Označi gore, stih {{verses}} . Prikaži to",
+  "offscreen-highlight-below": "Označi ispod, stih {{verses}} . Prikaži to",
+  "offscreen-highlight-scroll-left": "Više istaknutih dijelova s ​​lijeve strane",
+  "offscreen-highlight-scroll-right": "Više istaknutih dijelova s ​​desne strane",
+  "highlighted-verse": "Istaknuti stih {{verse}}",
+  "highlighted-verses": "Istaknuti stihovi {{verses}}"
 }

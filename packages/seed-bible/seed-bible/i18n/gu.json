@@ -1197,5 +1197,11 @@
   "unsaved-item-edit-confirm-title": "વણસાચવેલી આઇટમમાં થયેલા ફેરફારો",
   "unsaved-item-edit-confirm-message": "તમે એક આઇટમ બદલી છે પણ હજુ સુધી તે ફેરફારો સાચવ્યા નથી. તમે શું કરવા માંગો છો?",
   "keep-changes-and-save": "ફેરફારો રાખો અને સાચવો",
-  "reading-plan-edit-reading": "વાંચન સંપાદિત કરો"
+  "reading-plan-edit-reading": "વાંચન સંપાદિત કરો",
+  "offscreen-highlight-above": "ઉપર હાઇલાઇટ કરો, શ્લોક {{verses}} . તે બતાવો",
+  "offscreen-highlight-below": "નીચે હાઇલાઇટ કરો, શ્લોક {{verses}} . તે બતાવો",
+  "offscreen-highlight-scroll-left": "ડાબી બાજુએ વધુ હાઇલાઇટ્સ",
+  "offscreen-highlight-scroll-right": "જમણી બાજુએ વધુ હાઇલાઇટ્સ",
+  "highlighted-verse": "પ્રકાશિત શ્લોક {{verse}}",
+  "highlighted-verses": "પ્રકાશિત શ્લોકો {{verses}}"
 }
