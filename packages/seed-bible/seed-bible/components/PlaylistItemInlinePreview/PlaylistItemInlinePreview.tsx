@@ -117,8 +117,12 @@ export function ScripturePreview(props: {
   loadChapter?: ScriptureChapterLoader;
   /** Phrases to mark within the verses, as the step will show them. */
   highlights?: PhraseHighlight[];
+  /** Phrases underlined wherever they occur in the passage. */
+  phrases?: string[];
+  /** Words highlighted wherever they occur in the passage. */
+  terms?: string[];
 }) {
-  const { item, loadChapter, highlights } = props;
+  const { item, loadChapter, highlights, phrases, terms } = props;
   const { t } = useI18n();
   const [state, setState] = useState<PassageState>({ status: "loading" });
 
@@ -206,14 +210,18 @@ export function ScripturePreview(props: {
               </sup>
               {markPhrases(
                 verse.text,
-                (highlights ?? [])
-                  .filter(
-                    (highlight) =>
-                      highlight.bookId === item.ref.bookId &&
-                      highlight.chapter === section.chapter &&
-                      highlight.verse === verse.number
-                  )
-                  .map((highlight) => highlight.text)
+                [
+                  ...(highlights ?? [])
+                    .filter(
+                      (highlight) =>
+                        highlight.bookId === item.ref.bookId &&
+                        highlight.chapter === section.chapter &&
+                        highlight.verse === verse.number
+                    )
+                    .map((highlight) => highlight.text),
+                  ...(phrases ?? []),
+                ],
+                terms
               )}{" "}
             </span>
           ))}
@@ -223,18 +231,40 @@ export function ScripturePreview(props: {
   );
 }
 
-/** The verse's text with each highlighted phrase wrapped in a `<mark>`. */
-export function markPhrases(text: string, phrases: string[]) {
+/**
+ * The verse's text with each phrase wrapped in a `<mark>`, and each term (a
+ * word to notice wherever it occurs, matched whole and ignoring case) in a
+ * `<mark>` of its own style. Where a term falls inside a phrase, the phrase
+ * wins.
+ */
+export function markPhrases(
+  text: string,
+  phrases: string[],
+  terms: string[] = []
+) {
   const cuts = new Set<number>([0, text.length]);
-  const marked: Array<[number, number]> = [];
+  const marked: Array<[number, number, "phrase" | "term"]> = [];
   for (const phrase of phrases) {
     if (!phrase) continue;
     let from = text.indexOf(phrase);
     while (from !== -1) {
-      marked.push([from, from + phrase.length]);
+      marked.push([from, from + phrase.length, "phrase"]);
       cuts.add(from);
       cuts.add(from + phrase.length);
       from = text.indexOf(phrase, from + phrase.length);
+    }
+  }
+  for (const term of terms) {
+    const word = term.trim();
+    if (!word) continue;
+    const pattern = new RegExp(
+      `(?<![\\p{L}\\p{N}])${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}])`,
+      "giu"
+    );
+    for (const match of text.matchAll(pattern)) {
+      marked.push([match.index, match.index + match[0].length, "term"]);
+      cuts.add(match.index);
+      cuts.add(match.index + match[0].length);
     }
   }
   if (marked.length === 0) {
@@ -244,9 +274,20 @@ export function markPhrases(text: string, phrases: string[]) {
   return bounds.slice(0, -1).map((start, index) => {
     const end = bounds[index + 1]!;
     const piece = text.slice(start, end);
-    const inside = marked.some(([from, to]) => start >= from && end <= to);
-    return inside ? (
+    const inPhrase = marked.some(
+      ([from, to, kind]) => kind === "phrase" && start >= from && end <= to
+    );
+    const inTerm =
+      !inPhrase &&
+      marked.some(
+        ([from, to, kind]) => kind === "term" && start >= from && end <= to
+      );
+    return inPhrase ? (
       <mark key={start} className="sb-item-inline-preview-phrase">
+        {piece}
+      </mark>
+    ) : inTerm ? (
+      <mark key={start} className="sb-item-inline-preview-term">
         {piece}
       </mark>
     ) : (

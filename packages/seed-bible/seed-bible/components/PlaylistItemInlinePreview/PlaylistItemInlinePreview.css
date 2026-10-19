@@ -80,8 +80,17 @@
 }
 
 .sb-item-inline-preview-phrase {
+  background: transparent;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--sb-primary-color);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.sb-item-inline-preview-term {
   background: color-mix(in srgb, var(--sb-primary-color), transparent 75%);
-  box-shadow: 0 2px 0 var(--sb-primary-color);
   border-radius: 2px;
   color: inherit;
 }

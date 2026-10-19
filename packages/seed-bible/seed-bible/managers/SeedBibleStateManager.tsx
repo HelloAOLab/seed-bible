@@ -713,6 +713,10 @@ import {
 } from "./AudioPlaybackManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
+  PlaylistStepScreen,
+  PlaylistStepScreenTitle,
+} from "../components/PlaylistStepScreen/PlaylistStepScreen";
+import {
   DiscoverPane,
   DiscoverPaneHeader,
   DiscoverPaneTitle,
@@ -3637,6 +3641,49 @@ export function createSeedBibleState(
     } else {
       panes.closePane(PLAYLIST_EDITOR_PANE_ID); // no-op when already closed
     }
+  });
+
+  // A text, link, question or compare step of a playing playlist fills the
+  // reader area while it is the current step; scripture steps show in the
+  // reader with the playlist beside it. Opening the step pane displaces the
+  // Discover side pane (one fullscreen pane closes the rest), so the player
+  // view it held is put back once a scripture step follows. On a phone every
+  // pane is fullscreen, so the step yields to the player (the queue) while
+  // that is open and comes back when it closes.
+  const PLAYLIST_STEP_PANE_ID = "playlist-step-pane";
+  let playerViewToRestore = false;
+  effect(() => {
+    const playing = playlists.playing.value;
+    const item = playing?.currentItem.value ?? null;
+    const onScreen =
+      !!item && item.type !== "bible-verse" && item.type !== "scene";
+    const yieldsToPlayer =
+      isMobile.value && playlists.view.value === "play_playlist";
+    if (playing && onScreen && !yieldsToPlayer) {
+      if (playlists.view.peek() === "play_playlist") {
+        playerViewToRestore = true;
+      }
+      panes.openPane({
+        id: PLAYLIST_STEP_PANE_ID,
+        placement: "fullscreen",
+        showHeader: false,
+        title: () => <PlaylistStepScreenTitle playlists={playlists} />,
+        onClose: (reason) => {
+          if (reason === "user") {
+            playlists.stopPlaying();
+          }
+        },
+        component: () => (
+          <PlaylistStepScreen playlists={playlists} state={state} />
+        ),
+      });
+      return;
+    }
+    const wasOpen = panes.closePane(PLAYLIST_STEP_PANE_ID);
+    if (wasOpen && playing && playerViewToRestore) {
+      playlists.view.value = "play_playlist";
+    }
+    playerViewToRestore = false;
   });
 
   // Today is the app's fullscreen "home" pane, mirrored from `today.isOpen`

@@ -15,7 +15,7 @@ import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
 import type { ChatsManager } from "./ChatsManager";
-import { openPlaylistItemPreview } from "../components/playlistItemPreview";
+import type { PlaylistItemPreviewOptions } from "../components/playlistItemPreview";
 import { PlaylistFinishedModalContent } from "../components/PlaylistFinishedModal/PlaylistFinishedModal";
 import type { I18nManager } from "../i18n";
 import type {
@@ -1163,7 +1163,6 @@ export function playbackRequestFromUrl(
 const PLAYLIST_FINISHED_MODAL_ID = "playlist-finished";
 
 /** Stable id so navigating between non-verse items updates the same modal instead of closing/reopening it. */
-const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
 
 /**
  * Id of the reading extension that lets a reading state's own next/previous-
@@ -1331,16 +1330,17 @@ export function createPlaylistManager(
     return userPlaylists;
   });
 
-  // Opens the content modal for a non-verse item (video/link/text), or closes it
-  // for verse items which are shown in the reader instead. Called both when the
-  // current item changes and when the user taps a queue item directly.
-  const showItemInModal = (playingState: PlayingState) => {
+  /**
+   * What the step screen needs from the app to show the text, link, question
+   * or compare step `playingState` is on: a chapter loader and book names in
+   * the playing tab's translation, a way to open a compared passage in a new
+   * tab, who wrote the playlist, and the reader's saved answer to a question
+   * with the means to save (and, in a session, share) a new one.
+   */
+  const playingStepOptions = (
+    playingState: PlayingState
+  ): PlaylistItemPreviewOptions => {
     const item = playingState.currentItem.value;
-    if (!item || item.type === "bible-verse") {
-      modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
-      return;
-    }
-
     const tab = playingState.tab;
     const playlist = playingState.playlists.peek()[0];
     const books = tab?.readingState.translationBooks?.peek()?.books ?? [];
@@ -1354,65 +1354,53 @@ export function createPlaylistManager(
     const loadChapter = options.loadChapter;
     const recorded = playlist && isRecordedPlaylist(playlist) ? playlist : null;
     const response =
-      recorded && item.type === "question"
+      recorded && item?.type === "question"
         ? questionResponses.value.get(
             questionResponseKey(recorded, item.prompt)
           )
         : undefined;
-    openPlaylistItemPreview(
-      modals,
-      item,
-      PLAYLIST_ITEM_MODAL_ID,
-      i18n.t,
-      playingState,
-      {
-        loadChapter: loadChapter
-          ? async (translationId, bookId, chapter) => {
-              const translation = translationFor(translationId);
-              if (!translation) {
-                throw new Error("No translation to load the passage in.");
-              }
-              return loadChapter(translation, bookId, chapter);
+    return {
+      loadChapter: loadChapter
+        ? async (translationId, bookId, chapter) => {
+            const translation = translationFor(translationId);
+            if (!translation) {
+              throw new Error("No translation to load the passage in.");
+            }
+            return loadChapter(translation, bookId, chapter);
+          }
+        : undefined,
+      resolveBookName,
+      onOpenPassage:
+        item?.type === "compare"
+          ? (ref) => {
+              tabs.addTab(undefined, {
+                initialTranslationId: translationFor(item.translationId),
+                initialBookId: ref.bookId,
+                initialChapterNumber: ref.chapter,
+                scrollToVerse: ref.verse,
+              });
             }
           : undefined,
-        resolveBookName,
-        onOpenPassage:
-          tab && item.type === "compare"
-            ? (ref) => {
-                const translation = translationFor(item.translationId);
-                if (!translation) {
-                  return;
-                }
-                modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
-                void tab.readingState.selectTranslationAndChapter(
-                  translation,
-                  ref.bookId,
-                  ref.chapter,
-                  ref.verse != null ? { scrollToVerse: ref.verse } : undefined
-                );
+      authorName: playingAuthorName.peek(),
+      inSession: !!tab?.sharedSession,
+      questionResponse: response
+        ? { text: response.text, visibility: response.visibility }
+        : undefined,
+      onSaveQuestionResponse:
+        recorded && item?.type === "question"
+          ? async (text, visibility) => {
+              await saveQuestionResponse(
+                recorded,
+                item.prompt,
+                text,
+                visibility
+              );
+              if (visibility === "session") {
+                tab?.sharedSession?.shareQuestionAnswer(item.prompt, text);
               }
-            : undefined,
-        authorName: playingAuthorName.peek(),
-        inSession: !!tab?.sharedSession,
-        questionResponse: response
-          ? { text: response.text, visibility: response.visibility }
+            }
           : undefined,
-        onSaveQuestionResponse:
-          recorded && item.type === "question"
-            ? async (text, visibility) => {
-                await saveQuestionResponse(
-                  recorded,
-                  item.prompt,
-                  text,
-                  visibility
-                );
-                if (visibility === "session") {
-                  tab?.sharedSession?.shareQuestionAnswer(item.prompt, text);
-                }
-              }
-            : undefined,
-      }
-    );
+    };
   };
 
   const savePlaylist = async (playlist: Playlist) => {
@@ -2422,7 +2410,6 @@ export function createPlaylistManager(
     items: PlaylistItemData[] = [],
     tab: ReaderTab | null = null
   ): void => {
-    modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     // Book names come from the translation the tab was reading in, as the
     // player's own labels do; the raw id stands in when none is loaded.
     const resolveBookName = (bookId: string): string => {
@@ -2503,7 +2490,6 @@ export function createPlaylistManager(
     ) {
       tabs.leaveStaticPage();
     }
-    modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     if (view.peek()) {
       view.value = "discover";
     }
@@ -2606,14 +2592,6 @@ export function createPlaylistManager(
 
   effect(() => {
     void syncQuestionResponses();
-  });
-
-  effect(() => {
-    if (!playing.value) {
-      return;
-    }
-
-    showItemInModal(playing.value);
   });
 
   // Mirror queue position into the active history row whenever it changes.
@@ -3330,6 +3308,7 @@ export function createPlaylistManager(
     initialPlaybackPromise,
     resumePlaybackFromUrl,
     playingAuthorName,
+    playingStepOptions,
     playlistPageNotFound: playlistPageLoader.notFound,
     playlistPageLoadFailed: playlistPageLoader.loadFailed,
     playlistPageRetrying: playlistPageLoader.retrying,

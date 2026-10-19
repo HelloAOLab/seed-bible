@@ -94,7 +94,23 @@
 
 .sb-step-compare-description {
   margin: 0;
-  line-height: 1.5;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+.sb-step-compare-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-step-compare-legend-item mark {
+  color: var(--sb-font-color);
 }
 
 .sb-step-compare-columns {
@@ -106,30 +122,47 @@
 .sb-step-compare-column {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem;
+  gap: 0.75rem;
+  padding: 1rem 1.125rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
 }
 
 .sb-step-compare-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   margin: 0;
-  font-size: 1.0625rem;
-  font-weight: 700;
+  font-family: var(--sb-book-title-font-family);
+  font-size: 1.375rem;
+  font-weight: 600;
+}
+
+.sb-step-compare-chip {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  font-family: var(--sb-font-family);
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .sb-step-compare-passage {
   flex: 1;
-  max-height: 20rem;
+  max-height: 24rem;
   overflow-y: auto;
   line-height: 1.6;
 }
 
+.sb-step-compare-passage .sb-item-inline-preview-verse {
+  display: block;
+  margin-bottom: 0.5em;
+}
+
 .sb-step-compare-open {
   align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
+  margin-top: auto;
   padding: 0.25rem 0;
   border: none;
   background: transparent;
@@ -137,9 +170,7 @@
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
   cursor: pointer;
-}
-
-.sb-step-compare-open .material-symbols-outlined {
-  font-size: 1rem;
 }

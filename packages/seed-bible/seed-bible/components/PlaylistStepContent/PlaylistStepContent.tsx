@@ -11,7 +11,6 @@ import {
   type ScriptureChapterLoader,
 } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { verseRefLabel } from "../playlistItemLabel";
-import { MaterialIcon } from "../icons";
 
 type QuestionItem = Extract<PlaylistItemData, { type: "question" }>;
 type CompareItem = Extract<PlaylistItemData, { type: "compare" }>;
@@ -164,8 +163,9 @@ export function QuestionStepContent(props: {
 }
 
 /**
- * A compare step as it plays: the author's framing line, then each passage in
- * its own column, with a way to open the passage in the reader.
+ * A compare step as it plays: the author's framing line, a legend for the
+ * words and phrases marked in the passages, then each passage in its own
+ * column with who it is about, and a way to open it in a tab of its own.
  */
 export function CompareStepContent(props: {
   item: CompareItem;
@@ -178,10 +178,31 @@ export function CompareStepContent(props: {
   const { item, loadChapter, resolveBookName, onOpenPassage } = props;
   const { t } = useI18n();
 
+  const terms = (item.terms ?? []).filter((term) => term.text.trim());
+  const hasPhrases = item.refs.some((ref) => ref.phrases?.length);
+
   return (
     <div className="sb-step-compare" dir="auto">
       {item.description ? (
         <p className="sb-step-compare-description">{item.description}</p>
+      ) : null}
+      {terms.length > 0 || (hasPhrases && item.phraseLabel) ? (
+        <ul className="sb-step-compare-legend">
+          {terms.map((term) => (
+            <li key={term.text} className="sb-step-compare-legend-item">
+              <mark className="sb-item-inline-preview-term">{term.text}</mark>{" "}
+              {term.label}
+            </li>
+          ))}
+          {hasPhrases && item.phraseLabel ? (
+            <li className="sb-step-compare-legend-item">
+              <mark className="sb-item-inline-preview-phrase">
+                {item.phraseLabel.split(" ")[0]}
+              </mark>{" "}
+              {item.phraseLabel.split(" ").slice(1).join(" ")}
+            </li>
+          ) : null}
+        </ul>
       ) : null}
       <div className="sb-step-compare-columns">
         {item.refs.map((ref, index) => (
@@ -191,12 +212,20 @@ export function CompareStepContent(props: {
             aria-label={verseRefLabel(ref, resolveBookName)}
           >
             <h3 className="sb-step-compare-heading">
-              {verseRefLabel(ref, resolveBookName)}
+              {verseRefLabel(
+                { ...ref, verse: undefined, endVerse: undefined },
+                resolveBookName
+              )}
+              {ref.label?.trim() ? (
+                <span className="sb-step-compare-chip">{ref.label.trim()}</span>
+              ) : null}
             </h3>
             <div className="sb-step-compare-passage">
               <ScripturePreview
                 item={compareRefItem(ref, item.translationId)}
                 loadChapter={loadChapter}
+                phrases={ref.phrases}
+                terms={terms.map((term) => term.text)}
               />
             </div>
             {onOpenPassage ? (
@@ -205,11 +234,13 @@ export function CompareStepContent(props: {
                 className="sb-step-compare-open"
                 onClick={() => onOpenPassage(ref)}
               >
-                {t("playlist-compare-open", {
-                  defaultValue: "Open {{passage}} in the reader",
-                  passage: verseRefLabel(ref, resolveBookName),
+                {t("playlist-compare-open-tab", {
+                  defaultValue: "Open {{passage}} in a tab",
+                  passage: verseRefLabel(
+                    { ...ref, verse: undefined, endVerse: undefined },
+                    resolveBookName
+                  ),
                 })}
-                <MaterialIcon>open_in_new</MaterialIcon>
               </button>
             ) : null}
           </section>

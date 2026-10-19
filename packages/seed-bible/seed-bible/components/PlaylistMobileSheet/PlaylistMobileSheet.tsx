@@ -22,8 +22,8 @@ import { isLocalSessionHost } from "../Tabs/Tabs";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 
 /**
- * The playing step on a phone: a sheet docked above the chapter navigation,
- * so the passage stays readable above it. Its handle folds it to one line
+ * A playing scripture step on a phone: a sheet docked above the chapter
+ * navigation, so the passage stays readable above it. Its handle folds it to one line
  * (the step's kind, the playlist and the step's title) or opens it to show
  * the note, what's up next, Previous / Next step, the Listen toggle, and the
  * group's state in a shared session.
@@ -43,7 +43,8 @@ export function PlaylistMobileSheet(props: {
   const queue = playing.queue.value;
   const index = playing.currentIndex.value;
   const item = playing.currentItem.value;
-  if (!item) {
+  // Other kinds of step fill the screen with their own Previous / Next.
+  if (!item || item.type !== "bible-verse") {
     return null;
   }
   const nextItem = queue[index + 1] ?? null;

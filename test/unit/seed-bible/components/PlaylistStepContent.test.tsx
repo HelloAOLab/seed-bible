@@ -217,12 +217,80 @@ describe("CompareStepContent", () => {
       expect(passages[1]).toContain("Moses' verse");
     });
 
-    act(() => {
-      container
-        .querySelectorAll<HTMLButtonElement>(".sb-step-compare-open")[1]
-        ?.click();
-    });
+    const open = container.querySelectorAll<HTMLButtonElement>(
+      ".sb-step-compare-open"
+    )[1]!;
+    expect(open.textContent).toBe("Open Exodus 3 in a tab");
+    act(() => open.click());
     expect(onOpenPassage).toHaveBeenCalledWith({ bookId: "EXO", chapter: 3 });
+  });
+
+  it("marks the author's terms and phrases in each passage and explains them in a legend", async () => {
+    const loadChapter = vi.fn(async (_t: unknown, bookId: string) =>
+      chapterWith(
+        bookId === "GEN"
+          ? "The angel said, I will multiply you. An angelic word."
+          : "The angel appeared and God called to him."
+      )
+    );
+    act(() => {
+      render(
+        <CompareStepContent
+          item={{
+            type: "compare",
+            refs: [
+              {
+                bookId: "GEN",
+                chapter: 16,
+                label: "Hagar",
+                phrases: ["I will multiply you"],
+              },
+              {
+                bookId: "EXO",
+                chapter: 3,
+                label: "Moses",
+                phrases: ["God called to him"],
+              },
+            ],
+            terms: [{ text: "angel", label: "introduced as messenger" }],
+            phraseLabel: "God recognised as God",
+          }}
+          loadChapter={loadChapter}
+          resolveBookName={resolveBookName}
+        />,
+        container
+      );
+    });
+
+    expect(
+      Array.from(
+        container.querySelectorAll(".sb-step-compare-legend-item")
+      ).map((el) => el.textContent)
+    ).toEqual(["angel introduced as messenger", "God recognised as God"]);
+    expect(
+      Array.from(container.querySelectorAll(".sb-step-compare-heading")).map(
+        (el) => el.textContent
+      )
+    ).toEqual(["Genesis 16Hagar", "Exodus 3Moses"]);
+
+    await vi.waitFor(() => {
+      const columns = Array.from(
+        container.querySelectorAll(".sb-step-compare-passage")
+      );
+      expect(
+        Array.from(
+          columns[0]!.querySelectorAll(".sb-item-inline-preview-term")
+        ).map((el) => el.textContent)
+      ).toEqual(["angel"]);
+      expect(
+        Array.from(
+          columns[0]!.querySelectorAll(".sb-item-inline-preview-phrase")
+        ).map((el) => el.textContent)
+      ).toEqual(["I will multiply you"]);
+      expect(
+        columns[1]!.querySelector(".sb-item-inline-preview-phrase")?.textContent
+      ).toBe("God called to him");
+    });
   });
 
   it("has no open buttons without a reader to open passages in", () => {

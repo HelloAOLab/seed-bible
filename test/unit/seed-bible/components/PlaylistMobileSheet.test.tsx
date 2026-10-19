@@ -121,7 +121,7 @@ describe("PlaylistMobileSheet", () => {
   it("Next step moves the playlist on", async () => {
     const playing = renderSheet([
       { type: "bible-verse", ref: { bookId: "GEN", chapter: 16 } },
-      { type: "html", html: "<p>Think.</p>", title: "A pause" },
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 22 } },
     ]);
 
     await act(async () => {
@@ -134,9 +134,11 @@ describe("PlaylistMobileSheet", () => {
     expect(playing.currentIndex.value).toBe(1);
     expect(
       container.querySelector(".sb-playlist-sheet-title")?.textContent
-    ).toBe("A pause");
-    expect(
-      container.querySelector(".sb-playlist-sheet-detail")?.textContent
-    ).toBe("Note · Think.");
+    ).toBe("Genesis 22");
+  });
+
+  it("leaves text, link, question and compare steps to the step screen", () => {
+    renderSheet([{ type: "html", html: "<p>Think.</p>", title: "A pause" }]);
+    expect(container.querySelector(".sb-playlist-sheet")).toBeNull();
   });
 });
