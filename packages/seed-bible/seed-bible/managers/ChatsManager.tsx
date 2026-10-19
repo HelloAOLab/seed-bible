@@ -6,6 +6,7 @@ import {
   type ReadonlySignal,
 } from "@preact/signals";
 import { z } from "zod";
+import { range } from "es-toolkit";
 import type { LoginManager, UserProfile } from "./LoginManager";
 import {
   getUserAnimalVisual,
@@ -47,9 +48,28 @@ export const chatMessageBaseSchema = z.object({
   targets: z.union([z.array(z.string()), z.literal(true)]),
 });
 
+/**
+ * The verses (and, within them, the words) a message is about, when it was
+ * written from the reader: a comment on a passage rather than a message that
+ * merely mentions one.
+ */
+/** The class the reader gives verses the session's chat has comments on. */
+export const COMMENT_DECORATION_CLASS = "sb-verse-decoration-comment";
+
+export const chatMessageAnchorSchema = z.object({
+  bookId: z.string(),
+  chapter: z.number().int().positive(),
+  verse: z.number().int().positive(),
+  endVerse: z.number().int().positive().optional(),
+  /** The words picked out within the verse, if the comment is about a phrase. */
+  phrase: z.string().optional(),
+});
+export type ChatMessageAnchor = z.infer<typeof chatMessageAnchorSchema>;
+
 export const textChatMessageSchema = chatMessageBaseSchema.extend({
   type: z.literal("text"),
   text: z.string(),
+  anchor: chatMessageAnchorSchema.optional(),
 });
 
 export const toolCallChatMessageSchema = chatMessageBaseSchema.extend({
@@ -118,6 +138,8 @@ export interface ParsedChatTextMessage extends ChatMessageBase {
   type: "text";
   /** The original text of the message. */
   text: string;
+  /** The passage the message is a comment on, when it was written from one. */
+  anchor?: ChatMessageAnchor;
 
   /**
    * The parts of the text.
@@ -470,6 +492,12 @@ export interface ChatSession {
    * and a later Ask AI can append a quote instead of replacing what was typed.
    */
   unsentDraft: Signal<string>;
+  /**
+   * The passage the next message will be a comment on, set from the reader's
+   * "Comment in session" action and shown in the composer until sent or
+   * dropped.
+   */
+  unsentAnchor: Signal<ChatMessageAnchor | null>;
 }
 
 export interface SharedChatSession extends ChatSession {
@@ -1026,6 +1054,7 @@ function parseTextMessage(
     timeMs: message.timeMs,
     text,
     parts: parts.length > 0 ? parts : [text],
+    ...(message.anchor ? { anchor: message.anchor } : {}),
   };
 }
 
@@ -1779,6 +1808,35 @@ function createSharedChatSession(
 
   const chatId = session.id;
 
+  // Marks the verses the group has commented on in the session's reader, so
+  // a reader can see where the conversation is without opening the chat.
+  // Every anchored message of the session counts, whichever chapter it's in;
+  // the reader only draws the ones for the chapter on screen.
+  let commentDecorationIds: string[] = [];
+  effect(() => {
+    const readingState = session.readingState;
+    if (typeof readingState?.decorateVerses !== "function") {
+      return;
+    }
+    const anchors = parsedMessages.value.flatMap((message) =>
+      message.anchor ? [message.anchor] : []
+    );
+    for (const id of commentDecorationIds) {
+      readingState.removeDecoration(id);
+    }
+    commentDecorationIds = anchors.map((anchor) =>
+      readingState.decorateVerses(
+        anchor.bookId,
+        anchor.chapter,
+        range(anchor.verse, (anchor.endVerse ?? anchor.verse) + 1),
+        {
+          className: COMMENT_DECORATION_CLASS,
+          preserveOnChapterChange: true,
+        }
+      )
+    );
+  });
+
   return {
     id: chatId,
     messages,
@@ -1843,6 +1901,7 @@ function createSharedChatSession(
       ),
     context: chatContext,
     unsentDraft: signal(""),
+    unsentAnchor: signal<ChatMessageAnchor | null>(null),
     isShared: true,
     session,
   };
@@ -2311,6 +2370,7 @@ function createLocalChatSession(
     getMessageAuthors,
     context: chatContext,
     unsentDraft: signal(""),
+    unsentAnchor: signal<ChatMessageAnchor | null>(null),
   };
 }
 

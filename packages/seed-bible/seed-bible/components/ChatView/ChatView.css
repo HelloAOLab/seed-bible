@@ -570,3 +570,54 @@ img.sb-chat-view-message-avatar {
   opacity: 0.55;
   cursor: default;
 }
+
+/* The passage a message is a comment on: a chip above the text in the
+   message, and above the composer while one is attached to the next message. */
+.sb-chat-view-message-anchor,
+.sb-chat-view-anchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  margin: 0 0 4px;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 50%);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-chat-view-message-anchor .material-symbols-outlined,
+.sb-chat-view-anchor .material-symbols-outlined {
+  font-size: 0.9375rem;
+}
+
+.sb-chat-view-anchor {
+  cursor: default;
+  margin-bottom: 6px;
+}
+
+.sb-chat-view-anchor-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-chat-view-anchor-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-inline-start: 2px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}

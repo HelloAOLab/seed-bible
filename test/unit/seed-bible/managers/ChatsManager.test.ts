@@ -4752,3 +4752,31 @@ describe("createChatsManager", () => {
     expect(chats.wasMentioned.value).toBe(false);
   });
 });
+
+describe("comments on a passage", () => {
+  it("keeps a message's passage through parsing", () => {
+    const { loginManager, userId } = createLoginManagerMock();
+    userId.value = "user-1";
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    session.appendMessage({
+      type: "text",
+      text: "She names him.",
+      anchor: {
+        bookId: "GEN",
+        chapter: 16,
+        verse: 13,
+        phrase: "a God who sees",
+      },
+    });
+
+    expect(session.parsedMessages.value[0]?.anchor).toEqual({
+      bookId: "GEN",
+      chapter: 16,
+      verse: 13,
+      phrase: "a God who sees",
+    });
+    expect(session.unsentAnchor.value).toBeNull();
+  });
+});

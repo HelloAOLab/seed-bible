@@ -34,7 +34,7 @@ import {
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
-import type { ChatsManager } from "./ChatsManager";
+import type { ChatSession, ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
 import type { EmbedThemeChoice } from "./EmbedMode";
 import type { AppState } from "./SeedBibleStateManager";
@@ -1339,8 +1339,56 @@ function getDefaultToolbarTools(
   );
 }
 
+/** The session chat of the tab `context` is for, when the tab has one. */
+function sessionChatOf(context: BibleToolContext): ChatSession | null {
+  if (!context.sharedSession) {
+    return null;
+  }
+  const tab = context.tabs.tabs.value.find(
+    (candidate) => candidate.readingState === context.readingState
+  );
+  return tab?.sharedChat ?? null;
+}
+
 function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
   return [
+    {
+      id: "comment-in-session",
+      priority: 90,
+      title: { key: "comment-in-session", defaultValue: "Comment in session" },
+      icon: () => <MaterialIcon>comment</MaterialIcon>,
+      isVisible: (context) => !!sessionChatOf(context),
+      onSelect: (context) => {
+        const chat = sessionChatOf(context);
+        const selected = [...context.readingState.selectedVerses.value].sort(
+          (a, b) => a.verse.number - b.verse.number
+        );
+        const first = selected[0];
+        if (!chat || !first) {
+          return;
+        }
+        const last = selected[selected.length - 1]!;
+        // The words the reader has selected within the verse, if any, make
+        // the comment about that phrase rather than the whole verse.
+        const selection =
+          typeof document !== "undefined" ? document.getSelection() : null;
+        const phrase =
+          selection && !selection.isCollapsed && selected.length === 1
+            ? selection.toString().trim()
+            : "";
+        chat.unsentAnchor.value = {
+          bookId: first.bookId,
+          chapter: first.chapterNumber,
+          verse: first.verse.number,
+          ...(last.verse.number !== first.verse.number
+            ? { endVerse: last.verse.number }
+            : {}),
+          ...(phrase ? { phrase } : {}),
+        };
+        context.chats.selectChat(chat.id);
+        context.openChat?.();
+      },
+    },
     {
       id: "add-to-playlist",
       priority: 100,

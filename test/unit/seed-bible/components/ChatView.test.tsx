@@ -92,6 +92,7 @@ function createMockChatSession(
     getMessageAuthors: vi.fn().mockReturnValue([]),
     context: signal({}),
     unsentDraft: signal(""),
+    unsentAnchor: signal(null),
     ...overrides,
   };
 }
@@ -2364,5 +2365,104 @@ describe("ChatView", () => {
     expect(
       container.querySelector(".sb-chat-view-translation-banner")
     ).toBeNull();
+  });
+
+  describe("comments on a passage", () => {
+    const anchor = {
+      bookId: "GEN",
+      chapter: 16,
+      verse: 13,
+      phrase: "a God who sees",
+    };
+
+    it("shows the passage the next message is about, sends it with the message, and drops it after", async () => {
+      const sendMessage = vi.fn().mockResolvedValue(undefined);
+      const unsentAnchor = signal<typeof anchor | null>(anchor);
+      const chat = createMockChatSession({ sendMessage, unsentAnchor });
+      const state = createMockState();
+
+      act(() => {
+        render(<ChatView chat={chat} state={state} />, container);
+      });
+
+      expect(
+        container.querySelector(".sb-chat-view-anchor-label")?.textContent
+      ).toBe("GEN 16:13 · “a God who sees”");
+
+      const input = container.querySelector<HTMLTextAreaElement>(
+        ".sb-chat-view-input"
+      )!;
+      typeIntoInput(input, "She names him.");
+      await act(async () => {
+        submitForm(container);
+        await Promise.resolve();
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith({
+        type: "text",
+        text: "She names him.",
+        anchor,
+      });
+      expect(unsentAnchor.value).toBeNull();
+      expect(container.querySelector(".sb-chat-view-anchor")).toBeNull();
+    });
+
+    it("lets the writer drop the passage before sending", () => {
+      const unsentAnchor = signal<typeof anchor | null>(anchor);
+      const chat = createMockChatSession({ unsentAnchor });
+      act(() => {
+        render(<ChatView chat={chat} state={createMockState()} />, container);
+      });
+
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-chat-view-anchor-remove")!
+          .click();
+      });
+
+      expect(unsentAnchor.value).toBeNull();
+      expect(container.querySelector(".sb-chat-view-anchor")).toBeNull();
+    });
+
+    it("shows a comment's passage above it and opens the passage when pressed", () => {
+      const openVerseReference = vi.fn().mockResolvedValue(undefined);
+      const state = {
+        ...createMockState(),
+        app: {
+          openVerseReference,
+          isMobile: signal(false),
+        },
+      } as unknown as SeedBibleState;
+      const chat = createMockChatSession({
+        parsedMessages: signal([
+          {
+            type: "text",
+            id: "m1",
+            authors: ["user-2"],
+            targets: true,
+            timeMs: 1,
+            text: "She names him.",
+            parts: ["She names him."],
+            anchor: { bookId: "GEN", chapter: 16, verse: 13, endVerse: 14 },
+          },
+        ]),
+      });
+
+      act(() => {
+        render(<ChatView chat={chat} state={state} />, container);
+      });
+
+      const chip = container.querySelector<HTMLButtonElement>(
+        ".sb-chat-view-message-anchor"
+      )!;
+      expect(chip.textContent).toContain("GEN 16:13-14");
+      act(() => chip.click());
+      expect(openVerseReference).toHaveBeenCalledWith({
+        book: "GEN",
+        chapter: 16,
+        verse: 13,
+        endVerse: 14,
+      });
+    });
   });
 });

@@ -1,6 +1,7 @@
 import "./ChatView.css";
 import { effect, useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
+import { MaterialIcon } from "../icons";
 import {
   chatHasOtherPeople,
   type ChatParticipant,
@@ -21,6 +22,8 @@ import { Avatar } from "../Avatar/Avatar";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { AskIcon } from "../icons";
 import { VerseReferenceLink } from "../../app/verseReferenceLink";
+import type { ChatMessageAnchor } from "../../managers/ChatsManager";
+import type { BookId } from "../../managers/BibleDataManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
 import { useEffect, useRef, useState } from "preact/hooks";
@@ -270,6 +273,35 @@ function getJoinLabel(
     name: names[0],
     count: names.length - 1,
   });
+}
+
+/**
+ * "Genesis 16:13 · “a God who sees”": where a comment points, with the book
+ * named the way the reader's translation names it when that's known.
+ */
+function anchorLabel(
+  anchor: ChatMessageAnchor,
+  state: SeedBibleState,
+  t: ReturnType<typeof useI18n>["t"]
+): string {
+  const tabs = state.tabs?.tabs?.value ?? [];
+  const books = tabs
+    .map((tab) => tab.readingState.translationBooks?.value?.books)
+    .find((list) => list?.some((book) => book.id === anchor.bookId));
+  const book = books?.find((b) => b.id === anchor.bookId);
+  const name = book?.name ?? book?.commonName ?? anchor.bookId;
+  const verses =
+    anchor.endVerse && anchor.endVerse !== anchor.verse
+      ? `${anchor.verse}-${anchor.endVerse}`
+      : `${anchor.verse}`;
+  const reference = `${name} ${anchor.chapter}:${verses}`;
+  return anchor.phrase
+    ? t("chat-anchor-with-phrase", {
+        defaultValue: "{{reference}} · “{{phrase}}”",
+        reference,
+        phrase: anchor.phrase,
+      })
+    : reference;
 }
 
 function MessageBody({
@@ -894,11 +926,16 @@ export function ChatView(props: ChatViewProps) {
     chat.setTypingStatus(false);
 
     try {
+      const anchor = chat.unsentAnchor?.peek() ?? null;
       await chat.sendMessage({
         type: "text",
         text,
+        ...(anchor ? { anchor } : {}),
       });
       draft.value = "";
+      if (chat.unsentAnchor) {
+        chat.unsentAnchor.value = null;
+      }
       chat.setTypingStatus(false);
       // Defer until Preact has cleared the textarea DOM value, otherwise
       // resizeComposeInput measures the still-tall content and leaves the
@@ -1342,6 +1379,26 @@ export function ChatView(props: ChatViewProps) {
         )}
 
         <form className="sb-chat-view-compose" onSubmit={handleSubmit}>
+          {chat.unsentAnchor?.value ? (
+            <div className="sb-chat-view-anchor" dir="auto">
+              <MaterialIcon>comment</MaterialIcon>
+              <span className="sb-chat-view-anchor-label">
+                {anchorLabel(chat.unsentAnchor.value, state, t)}
+              </span>
+              <button
+                type="button"
+                className="sb-chat-view-anchor-remove"
+                aria-label={t("chat-anchor-remove", {
+                  defaultValue: "Don't attach to the passage",
+                })}
+                onClick={() => {
+                  chat.unsentAnchor!.value = null;
+                }}
+              >
+                <MaterialIcon>close</MaterialIcon>
+              </button>
+            </div>
+          ) : null}
           <div
             className={
               showMobileInputHint
@@ -1431,6 +1488,29 @@ function ChatMessage({
       data-message-id={message.id}
       onClick={() => setShowTimestamp(!showTimestamp)}
     >
+      {message.anchor ? (
+        <button
+          type="button"
+          className="sb-chat-view-message-anchor"
+          dir="auto"
+          onClick={(event) => {
+            event.stopPropagation();
+            if (state.app.isMobile.value) {
+              state.sidebar.closeChatPanel();
+            }
+            const anchor = message.anchor!;
+            void state.app.openVerseReference({
+              book: anchor.bookId as BookId,
+              chapter: anchor.chapter,
+              verse: anchor.verse,
+              endVerse: anchor.endVerse,
+            });
+          }}
+        >
+          <MaterialIcon>comment</MaterialIcon>
+          {anchorLabel(message.anchor, state, useI18n().t)}
+        </button>
+      ) : null}
       <p className="sb-chat-view-message-body">
         <MessageBody
           message={message}

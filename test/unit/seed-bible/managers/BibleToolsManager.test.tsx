@@ -2295,4 +2295,69 @@ describe("showInEmbedded", () => {
 
     expect(poweredBy?.visible.value).toBe(true);
   });
+
+  describe("comment-in-session", () => {
+    function selectedVerse(bookId: string, chapter: number, number: number) {
+      return {
+        bookId,
+        chapterNumber: chapter,
+        translationId: "BSB",
+        verse: { type: "verse" as const, number, content: [`verse ${number}`] },
+      };
+    }
+
+    function createSessionContext(verses: ReturnType<typeof selectedVerse>[]) {
+      const base = createContext();
+      const readingState = {
+        ...base.readingState,
+        selectedVerses: signal(verses),
+      };
+      const unsentAnchor = signal(null);
+      const sharedChat = { id: "session-chat", unsentAnchor };
+      const selectChat = vi.fn();
+      const context = {
+        ...base,
+        readingState,
+        sharedSession: {} as any,
+        tabs: {
+          tabs: signal([{ id: "tab-1", readingState, sharedChat }]),
+          selectedTabId: signal("tab-1"),
+        } as any,
+        chats: { ...base.chats, selectChat } as any,
+      } as BibleToolContext;
+      return { context, unsentAnchor, selectChat };
+    }
+
+    const commentTool = (context: BibleToolContext) =>
+      createBibleToolsManager(testBranding)
+        .getVerseToolbarTools(context)
+        .find((entry) => entry.id === "comment-in-session");
+
+    it("is offered only when the tab is in a session with a chat", () => {
+      expect(commentTool(createContext())?.visible.value).toBe(false);
+      expect(
+        commentTool(
+          createSessionContext([selectedVerse("GEN", 16, 13)]).context
+        )?.visible.value
+      ).toBe(true);
+    });
+
+    it("hands the selected verses to the session chat as the next message's passage and opens the chat", async () => {
+      const { context, unsentAnchor, selectChat } = createSessionContext([
+        selectedVerse("GEN", 16, 14),
+        selectedVerse("GEN", 16, 13),
+      ]);
+
+      await commentTool(context)!.onSelect?.();
+
+      expect(unsentAnchor.value).toEqual({
+        bookId: "GEN",
+        chapter: 16,
+        verse: 13,
+        endVerse: 14,
+      });
+      expect(selectChat).toHaveBeenCalledWith("session-chat");
+      expect(context.openChat).toHaveBeenCalledTimes(1);
+    });
+  });
 });

@@ -183,3 +183,15 @@
   box-shadow: 0 2px 0 var(--sb-primary-color);
   border-radius: 2px;
 }
+
+/* ------------------------------------------------ session comment markers */
+
+/* A verse the session's chat has a comment on (see `ChatMessageAnchor`): a
+   dotted underline in the accent, quiet enough to sit under the reader's own
+   highlights and the playlist's. */
+.sb-verse-decoration-comment {
+  text-decoration: underline dotted
+    color-mix(in srgb, var(--sb-primary-color), transparent 20%);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
