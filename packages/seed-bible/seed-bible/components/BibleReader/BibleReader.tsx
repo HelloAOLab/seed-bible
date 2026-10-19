@@ -40,6 +40,7 @@ import type {
 } from "../../managers/HighlightsManager";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
 import type { TabSlot } from "../../managers/TabsLayoutManager";
+import { getReadableWordsOfJesusColor } from "../../managers/CustomizationsManager";
 import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
@@ -49,9 +50,10 @@ import {
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import type { FriendsManager } from "../../managers/FriendsManager";
-import type {
-  BibleReadingSession,
-  ConnectionSessionUserVisual,
+import {
+  getConnectedUserVisualKey,
+  type BibleReadingSession,
+  type ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
 import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
@@ -75,12 +77,21 @@ import {
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
+import { ScriptureNotePopover } from "../ScriptureNote/ScriptureNote";
 import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
 import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
+import { OffscreenHighlightCueLayer } from "./OffscreenHighlightCueLayer";
+import {
+  collectHighlightCueMarks,
+  decorationHighlightsByVerse,
+  hasContentTargeting,
+  type HighlightCueAuthor,
+} from "./offscreenHighlightCues";
 import {
   findScrollContainer,
-  measureVisibleReaderBounds,
+  measureReaderViewport,
+  type ReaderViewport,
 } from "./readerViewport";
 
 interface ReaderChapterActionProps {
@@ -295,6 +306,9 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
           state.app.openDiscover();
           return;
         }
+        if (!state.settings.settings.value.discoveredContent.showContent) {
+          state.discover.view.value = "discover";
+        }
         state.discover.scrollToVerse.value = {
           bookId,
           chapterNumber,
@@ -411,17 +425,6 @@ function getVersePlainText(content: ChapterVerse["content"]): string {
 interface ResolvedHighlight {
   highlight: ChapterHighlight;
   broadcast: boolean;
-}
-
-function hasContentTargeting(decoration: VerseDecoration): boolean {
-  const hasTargetContent =
-    typeof decoration.targetContent === "string" &&
-    decoration.targetContent.trim().length > 0;
-  const hasIndexRange =
-    typeof decoration.startIndex === "number" ||
-    typeof decoration.endIndex === "number";
-
-  return hasTargetContent || hasIndexRange;
 }
 
 function toContentDecorationRanges(
@@ -775,7 +778,8 @@ function renderChapterContent(
     verse: BibleSelectedVerse,
     verseNumber: number,
     event: MouseEvent
-  ) => void
+  ) => void,
+  hideHighlights = false
 ) {
   if (!chapterData) {
     return null;
@@ -792,30 +796,11 @@ function renderChapterContent(
     );
   };
 
-  // Decorations asking to be drawn as highlights (`decoration.highlight`),
-  // flattened to one entry per verse. Content-targeted decorations are skipped:
-  // the ribbon layer works per verse-run and can't paint a text fragment.
-  // Later decorations win, matching how their CSS is layered below.
-  const decorationHighlights = new Map<number, ChapterHighlight>();
-  for (const decoration of decorations) {
-    if (!decoration.highlight || hasContentTargeting(decoration)) {
-      continue;
-    }
-    if (
-      (decoration.translationId &&
-        decoration.translationId !== chapterData.translation.id) ||
-      decoration.bookId !== chapterData.book.id ||
-      decoration.chapterNumber !== chapterData.chapter.number
-    ) {
-      continue;
-    }
-    for (const verseNumber of decoration.verses) {
-      decorationHighlights.set(verseNumber, {
-        ...decoration.highlight,
-        verse: verseNumber,
-      });
-    }
-  }
+  const decorationHighlights = decorationHighlightsByVerse(decorations, {
+    translationId: chapterData.translation.id,
+    bookId: chapterData.book.id,
+    chapterNumber: chapterData.chapter.number,
+  });
 
   // `showHighlights` hides the reader's *saved* highlights. Decoration
   // highlights are a live signal from a session peer or an extension, so they
@@ -826,6 +811,13 @@ function renderChapterContent(
   // reader's own highlight rather than replacing it, so the outline is what
   // says "this isn't yours, and yours is still underneath".
   const getVerseHighlight = (verseNumber: number): ResolvedHighlight | null => {
+    // Embeds (including the share-sheet preview of one) must not paint
+    // highlights. A signed-in viewer's own highlights would show there, and
+    // a visitor of the embed does not have them.
+    if (hideHighlights) {
+      return null;
+    }
+
     const decorated = decorationHighlights.get(verseNumber);
     if (decorated) {
       return { highlight: decorated, broadcast: true };
@@ -872,11 +864,20 @@ function renderChapterContent(
     // text inherits when it's absent. Requiring both meant a highlight with
     // only a custom colour silently rendered as its preset instead.
     if (highlight.customColor) {
+      const wordsOfJesusColor = getReadableWordsOfJesusColor(
+        highlight.customColor
+      );
+      const style: JSX.CSSProperties = {};
+      if (highlight.customFontColor) {
+        style.color = highlight.customFontColor;
+      }
+      if (wordsOfJesusColor) {
+        style["--sb-highlight-custom-words-of-jesus-font-color"] =
+          wordsOfJesusColor;
+      }
       return {
-        className: "sb-highlight",
-        style: highlight.customFontColor
-          ? ({ color: highlight.customFontColor } as JSX.CSSProperties)
-          : undefined,
+        className: "sb-highlight sb-highlight-custom",
+        style: Object.keys(style).length > 0 ? style : undefined,
         fill: highlight.customColor,
         broadcast,
       };
@@ -1523,12 +1524,6 @@ const PRESENCE_PIN_INSET_PX = 14;
 const PRESENCE_ARROW_PX = 6;
 const PRESENCE_EDGE_INSET_PX = 4;
 
-/** The part of the chapter content box that is on screen, in content px. */
-interface PresenceViewport {
-  top: number;
-  bottom: number;
-}
-
 /**
  * One or more avatars drawn together at a point in the gutter. Avatars that
  * would land on top of one another (their owners' verses start on the same
@@ -1564,7 +1559,7 @@ interface PresenceArrow {
  */
 function stackPresenceAvatars(
   markers: PresenceMarker[],
-  viewport: PresenceViewport | null
+  viewport: ReaderViewport | null
 ): PresenceAvatarStack[] {
   const anchored = markers.map((marker) => {
     const lowest = marker.top + marker.height - PRESENCE_AVATAR_PX;
@@ -1626,7 +1621,7 @@ function stackPresenceAvatars(
  */
 function placePresenceArrows(
   markers: PresenceMarker[],
-  viewport: PresenceViewport | null
+  viewport: ReaderViewport | null
 ): PresenceArrow[] {
   if (!viewport) return [];
   const arrows: PresenceArrow[] = [];
@@ -1656,19 +1651,6 @@ function placePresenceArrows(
 }
 
 /**
- * Where the screen is over the chapter content, in the content's own
- * coordinates. See `measureVisibleReaderBounds` for what counts as on screen.
- */
-function measurePresenceViewport(
-  content: HTMLElement,
-  scroller: HTMLElement | null
-): PresenceViewport {
-  const contentRect = content.getBoundingClientRect();
-  const { top, bottom } = measureVisibleReaderBounds(content, scroller);
-  return { top: top - contentRect.top, bottom: bottom - contentRect.top };
-}
-
-/**
  * The gutter down the start edge of the chapter showing where the other
  * participants are (#1692): a bar per person spanning the verses they can
  * see, their avatar at the top of it (held on screen as the reader scrolls
@@ -1687,13 +1669,13 @@ function PresenceGutter({
   chapterKey: string;
   contentRef: RefObject<HTMLDivElement>;
 }) {
-  const [viewport, setViewport] = useState<PresenceViewport | null>(null);
+  const [viewport, setViewport] = useState<ReaderViewport | null>(null);
   const scrollerRef = useRef<HTMLElement | null>(null);
 
   const measure = () => {
     const content = contentRef.current;
     if (!content) return;
-    const next = measurePresenceViewport(content, scrollerRef.current);
+    const next = measureReaderViewport(content, scrollerRef.current);
     setViewport((prev) =>
       prev && prev.top === next.top && prev.bottom === next.bottom ? prev : next
     );
@@ -1844,6 +1826,19 @@ interface ChapterContentProps {
    * when none are. Drives the presence this client publishes.
    */
   onVisibleVersesChange?: (range: VisibleVerseRange | null) => void;
+  /**
+   * Who made each highlight, so the off-screen bubbles can show their avatar
+   * and leave out the reader's own.
+   */
+  highlightAuthors?: {
+    isOwn: (decorationId: string) => boolean;
+    of: (decorationId: string) => HighlightCueAuthor | null;
+  };
+  /**
+   * Skip every verse highlight, saved and broadcast. Used by the compact
+   * embed so the page does not show highlights the visitor does not have.
+   */
+  hideHighlights?: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -1865,6 +1860,8 @@ function ChapterContent(props: ChapterContentProps) {
     isMobile = false,
     presence,
     onVisibleVersesChange,
+    highlightAuthors,
+    hideHighlights = false,
   } = props;
 
   const { t } = useI18n();
@@ -2452,6 +2449,19 @@ function ChapterContent(props: ChapterContentProps) {
           contentRef={contentRef}
         />
       )}
+      {!hideHighlights && (
+        <OffscreenHighlightCueLayer
+          contentRef={contentRef}
+          marks={collectHighlightCueMarks({
+            decorations: decorations.value,
+            translationId: chapterData.value.translation.id,
+            bookId: chapterData.value.book.id,
+            chapterNumber: chapterData.value.chapter.number,
+            isOwnDecoration: highlightAuthors?.isOwn,
+            decorationAuthor: highlightAuthors?.of,
+          })}
+        />
+      )}
       {renderChapterContent(
         chapterData.value,
         (verse, event) => {
@@ -2469,7 +2479,8 @@ function ChapterContent(props: ChapterContentProps) {
         decorations.value,
         chapterAnnotations,
         scriptureElements,
-        onAnnotationVerseClick
+        onAnnotationVerseClick,
+        hideHighlights
       )}
     </div>
   );
@@ -2529,6 +2540,7 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
   const footnoteOverlayDismiss = useOverlayDismiss(() => selectFootnote(null));
+  const readerRootRef = useRef<HTMLDivElement>(null);
 
   if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
@@ -2654,7 +2666,12 @@ export function BibleReader(props: BibleReaderProps) {
       return;
     }
 
-    readingState.discoverContentPanelInline.value = true;
+    if (state.settings.settings.value.discoveredContent.showContent) {
+      readingState.discoverContentPanelInline.value = true;
+    } else {
+      state.discover.view.value = "discover";
+    }
+
     // AnnotationsSection's shared effect reacts to this target either way —
     // scrolling to and highlighting the note's group — whether it's mounted
     // in this tab's compact panel or the toolbar-toggled Discover pane.
@@ -2701,6 +2718,41 @@ export function BibleReader(props: BibleReaderProps) {
   const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
   const { t, language } = useI18n();
+
+  // Outside a session a decoration comes from an extension or a link, which
+  // nobody in particular made. In a session every decoration has an owner,
+  // and one not yet recorded was just added on this device.
+  const decorationAuthorUser = (decorationId: string) => {
+    const owner = sharedSession?.decorationOwner(decorationId) ?? null;
+    if (!owner) return null;
+    return (
+      sharedSession?.allUsers.value.find(
+        (user) => user.connectionId === owner
+      ) ?? null
+    );
+  };
+  const highlightAuthors = {
+    isOwn: (decorationId: string): boolean => {
+      if (!sharedSession) return false;
+      const owner = sharedSession.decorationOwner(decorationId);
+      return (
+        owner === null ||
+        owner === state?.os.connectionId ||
+        decorationAuthorUser(decorationId)?.isSelf === true
+      );
+    },
+    of: (decorationId: string): HighlightCueAuthor | null => {
+      const user = decorationAuthorUser(decorationId);
+      if (!user) return null;
+      return {
+        key: getConnectedUserVisualKey(user),
+        displayName: getUserDisplayName(user),
+        imageUrl: user.profile?.pictureUrl ?? null,
+        visual: user.visual,
+      };
+    },
+  };
+
   const scriptureElements: ScriptureElementsBehavior =
     props.scriptureElements ??
       state?.settings?.settings.value.scriptureElements ?? {
@@ -3118,6 +3170,7 @@ export function BibleReader(props: BibleReaderProps) {
               highlights={highlights}
               decorations={decorations}
               annotations={state?.annotations}
+              hideHighlights={isMinimalEmbed}
               friends={state?.friends}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
@@ -3126,6 +3179,7 @@ export function BibleReader(props: BibleReaderProps) {
               isMobile={isCompactReader}
               presence={sharedSession ? presence : undefined}
               onVisibleVersesChange={reportVisibleVerses}
+              highlightAuthors={highlightAuthors}
             />
           </Suspense>
         ))}
@@ -3167,7 +3221,10 @@ export function BibleReader(props: BibleReaderProps) {
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   // ) : null;
   const extraContent =
-    state && !state.app.isDiscoverOpen.value ? (
+    state &&
+    !isMinimalEmbed &&
+    !state.app.isDiscoverOpen.value &&
+    state.settings.settings.value.discoveredContent.showContent ? (
       <DiscoverContentPanel tab={currentSlot.tab} state={state} />
     ) : null;
 
@@ -3180,13 +3237,35 @@ export function BibleReader(props: BibleReaderProps) {
     currentSlot.tab != null &&
     state.tabs.selectedTabId.value === currentSlot.tab.id;
 
+  // Desktop shows a playing passage's note beside it, in the reader playback is
+  // bound to; mobile shows it in a sheet above the floating nav instead.
+  const playingHere =
+    state && !isCompactReader ? state.playlists.playing.value : null;
+  const scriptureNotePlaying =
+    playingHere &&
+    currentSlot.tab != null &&
+    playingHere.tab?.id === currentSlot.tab.id
+      ? playingHere
+      : null;
+
   return (
     <div
+      ref={readerRootRef}
       className={`sb-bible-reader ${readerFontSizeClass}${
         isCompactReader ? " sb-bible-reader-mobile" : ""
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
+      {scriptureNotePlaying ? (
+        <ScriptureNotePopover
+          playing={scriptureNotePlaying}
+          readerRef={readerRootRef}
+          resolveBookName={(id) => {
+            const book = translationBooks.value?.books.find((b) => b.id === id);
+            return book?.name ?? book?.commonName ?? id;
+          }}
+        />
+      ) : null}
       {playlistOpeningHere && !isCompactReader ? (
         <Spinner
           className="sb-playlist-opening-spinner"
@@ -3299,10 +3378,15 @@ export function BibleReader(props: BibleReaderProps) {
                     playlists={state.playlists}
                     annotations={state.annotations}
                     features={state.features}
+                    settings={state.settings}
                     sharedSession={sharedSession ?? null}
                     toast={state.app.toast}
                     modals={state.modals}
                     app={state.app}
+                    embedThemes={state.theme?.themes}
+                    customizationLocator={
+                      state.customizations?.activeCustomizationLocator
+                    }
                     readingPlans={state.readingPlans}
                     className="sb-quick-toolbar-mobile-header"
                   />
@@ -3445,11 +3529,16 @@ export function BibleReader(props: BibleReaderProps) {
                   playlists={state.playlists}
                   annotations={state.annotations}
                   features={state.features}
+                  settings={state.settings}
                   sharedSession={sharedSession ?? null}
                   readingPlans={state.readingPlans}
                   toast={state.app.toast}
                   modals={state.modals}
                   app={state.app}
+                  embedThemes={state.theme?.themes}
+                  customizationLocator={
+                    state.customizations?.activeCustomizationLocator
+                  }
                   className="sb-quick-toolbar-reader"
                 />
               </div>

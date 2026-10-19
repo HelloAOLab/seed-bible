@@ -13,18 +13,22 @@ import {
   CUSTOMIZATION_COLOR_GROUPS,
   CUSTOMIZATION_CONTRAST_PAIRS,
   CUSTOMIZATION_FONT_FIELDS,
+  EXTENSION_AVAILABILITY_VALUES,
   MIN_READABLE_CONTRAST_RATIO,
   buildCustomFontValue,
   getContrastRatio,
+  getDefaultExtensionAvailability,
   getExtensionAvailability,
   getExtensionSettingDefault,
   getFontPresetsForField,
   type CustomizationsManager,
+  type DefaultExtensionAvailability,
   type ExtensionAvailability,
 } from "../../managers/CustomizationsManager";
 import {
   DEFAULT_HIGHLIGHT_IDS,
   type BibleTheme,
+  type HighlightId,
   type ThemeColorKey,
   type ThemeFontFamilyKey,
 } from "../../managers/ThemeManager";
@@ -36,6 +40,7 @@ import {
 } from "../../managers/translationGrouping";
 import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
+import { i18n } from "../../i18n";
 import { useI18n } from "../../i18n/I18nManager";
 import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
@@ -59,7 +64,7 @@ import { localizedThemeName } from "../SettingsPage/localizedThemeName";
 import {
   getDefaultTranslationLabel,
   isPaintableColor,
-  ThemeLivePreview,
+  DockableThemeLivePreview,
   ThemeThumbnail,
 } from "./CustomizationPreviews";
 
@@ -457,6 +462,27 @@ function openUnsavedChangesConfirm(
 }
 
 /**
+ * Saves the open draft, showing a toast if the server didn't keep it.
+ * Resolves to whether the save went through.
+ */
+async function saveCustomizationOrToast(
+  state: SeedBibleState
+): Promise<boolean> {
+  try {
+    await state.customizations.saveEditingCustomization();
+    return true;
+  } catch (error) {
+    console.error("Failed to save customization:", error);
+    state.app.toast(
+      i18n.t("customization-save-failed", {
+        defaultValue: "Couldn't save your customization. Please try again.",
+      })
+    );
+    return false;
+  }
+}
+
+/**
  * Opens (or, if already open, updates) the customization editor side pane on
  * a specific customization. Called from the customizations list in Settings.
  */
@@ -495,8 +521,10 @@ export function openCustomizationEditPane(
         },
         () => {
           void (async () => {
-            await state.customizations.saveEditingCustomization();
-            state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID, "user");
+            // A failed save leaves the editor open so the changes aren't lost.
+            if (await saveCustomizationOrToast(state)) {
+              state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID, "user");
+            }
           })();
         }
       );
@@ -544,10 +572,11 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
   };
 
   const handleSave = async () => {
-    await customizations.saveEditingCustomization();
-    state.app.toast(
-      t("customization-saved", { defaultValue: "Customization saved" })
-    );
+    if (await saveCustomizationOrToast(state)) {
+      state.app.toast(
+        t("customization-saved", { defaultValue: "Customization saved" })
+      );
+    }
   };
 
   const handleUploadLogo = () => {
@@ -927,6 +956,16 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
   const installableExtensions = extensions.extensions.value.filter(
     (entry) => entry.extension !== null
   );
+  const defaultAvailability = getDefaultExtensionAvailability(record);
+  const availabilityLabels: Record<ExtensionAvailability, string> = {
+    available: t("extension-availability-available", {
+      defaultValue: "Available",
+    }),
+    "auto-installed": t("extension-availability-auto-installed", {
+      defaultValue: "Auto-installed",
+    }),
+    hidden: t("extension-availability-hidden", { defaultValue: "Hidden" }),
+  };
 
   const handleConfigureDefaults = (entry: ExtensionListEntry) => {
     const allSettings = entry.extension?.meta.settings ?? {};
@@ -1040,6 +1079,43 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
               "Choose how each extension behaves for anyone using this customization.",
           })}
         </p>
+        <ul className="sb-cz-list">
+          <li className="sb-cz-list-row">
+            <span className="sb-cz-row-text">
+              <label
+                className="sb-cz-row-label"
+                htmlFor="sb-customization-extension-default"
+              >
+                {t("customization-extensions-default", {
+                  defaultValue: "Default for other extensions",
+                })}
+              </label>
+              <span className="sb-cz-row-hint">
+                {t("customization-extensions-default-hint", {
+                  defaultValue:
+                    "Applies to every extension you haven't set below, including new ones added later",
+                })}
+              </span>
+            </span>
+            <ExtensionAvailabilitySelect
+              id="sb-customization-extension-default"
+              availability={defaultAvailability}
+              value={defaultAvailability}
+              options={[
+                {
+                  value: "available",
+                  label: availabilityLabels.available,
+                },
+                { value: "hidden", label: availabilityLabels.hidden },
+              ]}
+              onChange={(value) =>
+                customizations.setEditingDefaultExtensionAvailability(
+                  value as DefaultExtensionAvailability
+                )
+              }
+            />
+          </li>
+        </ul>
         {installableExtensions.length === 0 ? (
           <div className="sb-settings-empty-state">
             <p>
@@ -1052,6 +1128,7 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
           <ul className="sb-cz-list">
             {installableExtensions.map((entry) => {
               const availability = getExtensionAvailability(record, entry.id);
+              const isOverridden = entry.id in record.extensionSettings;
               const selectId = `sb-customization-extension-${entry.id}`;
               return (
                 <li className="sb-cz-list-row" key={entry.id}>
@@ -1082,49 +1159,32 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
                       <span className="material-symbols-outlined">tune</span>
                     </button>
                   )}
-                  <span
-                    className={`sb-cz-pill-select sb-cz-pill-select-${availability}`}
-                  >
-                    <span
-                      className="material-symbols-outlined sb-cz-pill-select-icon"
-                      aria-hidden="true"
-                    >
-                      {EXTENSION_AVAILABILITY_ICONS[availability]}
-                    </span>
-                    <select
-                      id={selectId}
-                      value={availability}
-                      onChange={(event: Event) => {
-                        const target = event.currentTarget as HTMLSelectElement;
-                        customizations.setEditingExtensionAvailability(
-                          entry.id,
-                          target.value as ExtensionAvailability
-                        );
-                      }}
-                    >
-                      <option value="available">
-                        {t("extension-availability-available", {
-                          defaultValue: "Available",
-                        })}
-                      </option>
-                      <option value="auto-installed">
-                        {t("extension-availability-auto-installed", {
-                          defaultValue: "Auto-installed",
-                        })}
-                      </option>
-                      <option value="hidden">
-                        {t("extension-availability-hidden", {
-                          defaultValue: "Hidden",
-                        })}
-                      </option>
-                    </select>
-                    <span
-                      className="material-symbols-outlined sb-cz-pill-select-caret"
-                      aria-hidden="true"
-                    >
-                      expand_more
-                    </span>
-                  </span>
+                  <ExtensionAvailabilitySelect
+                    id={selectId}
+                    availability={availability}
+                    value={isOverridden ? availability : USE_DEFAULT_VALUE}
+                    options={[
+                      {
+                        value: USE_DEFAULT_VALUE,
+                        label: t("extension-availability-default", {
+                          availability: availabilityLabels[defaultAvailability],
+                          defaultValue: "Default ({{availability}})",
+                        }),
+                      },
+                      ...EXTENSION_AVAILABILITY_VALUES.map((value) => ({
+                        value,
+                        label: availabilityLabels[value],
+                      })),
+                    ]}
+                    onChange={(value) =>
+                      customizations.setEditingExtensionAvailability(
+                        entry.id,
+                        value === USE_DEFAULT_VALUE
+                          ? null
+                          : (value as ExtensionAvailability)
+                      )
+                    }
+                  />
                 </li>
               );
             })}
@@ -1132,6 +1192,50 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
         )}
       </section>
     </div>
+  );
+}
+
+/** The per-extension select value meaning "no explicit entry: follow the customization's default". */
+const USE_DEFAULT_VALUE = "default";
+
+/** A pill-styled select whose icon and color show `availability`, the effective one even when `value` is "use the default". */
+function ExtensionAvailabilitySelect(props: {
+  id: string;
+  availability: ExtensionAvailability;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <span
+      className={`sb-cz-pill-select sb-cz-pill-select-${props.availability}`}
+    >
+      <span
+        className="material-symbols-outlined sb-cz-pill-select-icon"
+        aria-hidden="true"
+      >
+        {EXTENSION_AVAILABILITY_ICONS[props.availability]}
+      </span>
+      <select
+        id={props.id}
+        value={props.value}
+        onChange={(event: Event) =>
+          props.onChange((event.currentTarget as HTMLSelectElement).value)
+        }
+      >
+        {props.options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <span
+        className="material-symbols-outlined sb-cz-pill-select-caret"
+        aria-hidden="true"
+      >
+        expand_more
+      </span>
+    </span>
   );
 }
 
@@ -1375,6 +1479,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
   const { customizations, theme } = state;
   const { t } = useI18n();
   const confirmingDelete = useSignal(false);
+  const previewHighlightId = useSignal<HighlightId>("yellow");
 
   const record = customizations.editingCustomization.value;
   const variant = record?.variants.find(
@@ -1382,10 +1487,11 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
   );
 
   const handleSave = async () => {
-    await customizations.saveEditingCustomization();
-    state.app.toast(
-      t("customization-saved", { defaultValue: "Customization saved" })
-    );
+    if (await saveCustomizationOrToast(state)) {
+      state.app.toast(
+        t("customization-saved", { defaultValue: "Customization saved" })
+      );
+    }
   };
 
   if (!record || !variant) {
@@ -1405,7 +1511,11 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
   return (
     <div className="sb-settings-page sb-cz-page">
       <section className="sb-settings-section sb-cz-body">
-        <ThemeLivePreview theme={resolvedTheme} />
+        <DockableThemeLivePreview
+          theme={resolvedTheme}
+          highlightId={previewHighlightId.value}
+          canFloat={!state.app.isMobile.value}
+        />
 
         <div
           className="sb-settings-field-row"
@@ -1584,6 +1694,9 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                         value={normalizeHex(bg)}
                         className="sb-cz-highlight-picker"
                         ariaLabel={t("id_highlight-background-color", { id })}
+                        onOpenChange={(open) => {
+                          if (open) previewHighlightId.value = id;
+                        }}
                         onChange={(color) => {
                           customizations.setEditingVariantHighlightColor(
                             variant.id,
@@ -1610,6 +1723,9 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                         value={normalizeHex(fg)}
                         className="sb-cz-highlight-picker"
                         ariaLabel={t("id_highlight-text-color", { id })}
+                        onOpenChange={(open) => {
+                          if (open) previewHighlightId.value = id;
+                        }}
                         onChange={(color) => {
                           customizations.setEditingVariantHighlightColor(
                             variant.id,
@@ -1645,12 +1761,13 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                     {isOverridden && (
                       <ResetButton
                         label={label}
-                        onReset={() =>
+                        onReset={() => {
+                          previewHighlightId.value = id;
                           customizations.resetEditingVariantHighlightColor(
                             variant.id,
                             id
-                          )
-                        }
+                          );
+                        }}
                       />
                     )}
                   </span>

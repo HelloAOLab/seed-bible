@@ -4,6 +4,7 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { TranslationBookChapter } from "../../managers/FreeUseBibleAPI";
 import {
   expandCrossChapterItem,
+  hasScriptureNote,
   type PlaylistItemData,
 } from "../../managers/PlaylistManager";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
@@ -34,8 +35,8 @@ type PassageState =
 /**
  * The collapsible preview shown beneath an item in the playlist and reading
  * plan editors, so an author can read what they added without leaving the
- * editor: the referenced verses for scripture, the text for a text item, and
- * the title and URL for a link.
+ * editor: the referenced verses (and the author's note) for scripture, the text
+ * for a text item, and the title and URL for a link.
  */
 export function PlaylistItemInlinePreview(props: {
   item: PlaylistItemData;
@@ -48,7 +49,20 @@ export function PlaylistItemInlinePreview(props: {
   return (
     <div id={id} className="sb-item-inline-preview" dir="auto">
       {item.type === "bible-verse" ? (
-        <ScripturePreview item={item} loadChapter={loadChapter} />
+        <>
+          <ScripturePreview item={item} loadChapter={loadChapter} />
+          {hasScriptureNote(item) ? (
+            <div className="sb-item-inline-preview-note">
+              <span className="sb-item-inline-preview-note-label" dir="auto">
+                {item.noteTitle?.trim() ||
+                  t("playlist-scripture-note-label", { defaultValue: "Note" })}
+              </span>
+              {item.note?.trim() ? (
+                <PlaylistHtmlContent html={item.note} />
+              ) : null}
+            </div>
+          ) : null}
+        </>
       ) : item.type === "html" ? (
         <PlaylistHtmlContent html={item.html} />
       ) : (

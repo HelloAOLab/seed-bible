@@ -6,6 +6,7 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { SettingsManager } from "./SettingsManager";
 
 export interface BibleThemeVariables {
@@ -51,19 +52,9 @@ export interface BibleThemeVariables {
   sidebarFontColor?: string | null;
 
   /**
-   * The background color for the book selector dropdown. This should generally match the readerBackground color to create a seamless look, but can be set to a different color if desired.
-   */
-  bookSelectorBackground?: string | null;
-
-  /**
    * The font family for the book selector. This can be customized independently of the main fontFamily, but should generally be a clean, readable sans-serif font for optimal readability.
    */
   bookSelectorFontFamily?: string | null;
-
-  /**
-   * The font color for the book selector. This can be customized independently of the main fontColor, but should generally have good contrast against the bookSelectorBackground color for readability.
-   */
-  bookSelectorFontColor?: string | null;
 
   /**
    * The background of the reader area where the Bible text is displayed. This should generally be a light color for readability, but can be customized as needed.
@@ -490,13 +481,17 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
   // `textContent` on every theme change. Nested `&` is valid in a stylesheet
   // file, but assigning it through the CSSOM can make the engine throw out
   // the whole tag — every `--sb-*` color on `body` included.
+  //
+  // The words-of-Jesus rule is a descendant selector: the highlight class sits
+  // on the wrapper around a highlighted verse run, and `.sb-words-of-jesus` on
+  // a span inside it, never on the same element.
   return Object.entries(theme.highlightColors)
     .map(([colorId]) => {
       return [
         `.sb-highlight-${colorId} {`,
         `color: var(--sb-highlight-${colorId}-font-color);`,
         `}`,
-        `.sb-highlight-${colorId}.sb-words-of-jesus {`,
+        `.sb-highlight-${colorId} .sb-words-of-jesus {`,
         `color: var(--sb-highlight-${colorId}-words-of-jesus-font-color);`,
         `}`,
       ].join("\n");
@@ -604,9 +599,7 @@ export const LIGHT_THEME: BibleTheme = {
     readerFontFamily: "inherit",
     readerFontColor: "#333",
 
-    bookSelectorBackground: "#ffffff",
     bookSelectorFontFamily: "inherit",
-    bookSelectorFontColor: "#333",
 
     fontFamily: "system-ui, sans-serif",
     fontColor: "#333",
@@ -694,62 +687,62 @@ export const LIGHT_THEME: BibleTheme = {
     yellow: {
       color: "#fff59d",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#c00",
     },
     green: {
       color: "#a5d6a7",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#a00",
     },
     cyan: {
       color: "#80deea",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#a00",
     },
     blue: {
       color: "#90caf9",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#900",
     },
     red: {
       color: "#ef9a9a",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#c62828",
+      wordsOfJesusFontColor: "#800",
     },
     magenta: {
       color: "#ea80fc",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#700",
     },
     pink: {
       color: "#f48fb1",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#800",
     },
     purple: {
       color: "#ce93d8",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#700",
     },
     orange: {
       color: "#ffcc80",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#b00",
     },
     cream: {
       color: "#fff8e1",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#c00",
     },
     gray: {
       color: "#cfd8dc",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#b00",
     },
     tan: {
       color: "#e0c9a6",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#e07b4c",
+      wordsOfJesusFontColor: "#a00",
     },
   },
   bookmarkColors: {
@@ -801,9 +794,7 @@ export const DARK_THEME: BibleTheme = {
     readerFontFamily: "inherit",
     readerFontColor: "#e6e6e6",
 
-    bookSelectorBackground: "#181818",
     bookSelectorFontFamily: "inherit",
-    bookSelectorFontColor: "#e6e6e6",
 
     fontFamily: "system-ui, sans-serif",
     fontColor: "#e6e6e6",
@@ -1031,8 +1022,6 @@ export type ThemeColorKey =
   | "fontColor"
   | "sidebarBackground"
   | "sidebarFontColor"
-  | "bookSelectorBackground"
-  | "bookSelectorFontColor"
   | "readerBackground"
   | "readerFontColor"
   | "bookTitleFontColor"
@@ -1080,7 +1069,6 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
       { key: "background", label: "App background" },
       { key: "readerBackground", label: "Reader background" },
       { key: "sidebarBackground", label: "Sidebar background" },
-      { key: "bookSelectorBackground", label: "Book selector background" },
       { key: "readerToolbarBackground", label: "Reader toolbar background" },
       {
         key: "readerToolbarFloatingButtonBackground",
@@ -1096,7 +1084,6 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
       { key: "fontColor", label: "Default text" },
       { key: "readerFontColor", label: "Reader text" },
       { key: "sidebarFontColor", label: "Sidebar text" },
-      { key: "bookSelectorFontColor", label: "Book selector text" },
       { key: "bookTitleFontColor", label: "Book title" },
       { key: "chapterHeadingFontColor", label: "Chapter heading" },
       { key: "verseFontColor", label: "Verse" },
@@ -1418,15 +1405,25 @@ export function createTheme(
       const text = themeStyleText.value;
       if (skipWrite) {
         skipWrite = false;
-        // Keep the already-painted CSS (it may be dark while `currentTheme`
-        // is still the light default — see the skipWrite comment above),
-        // but copy its --sb-background onto the status-bar meta. The
-        // inline script does this too; doing it here covers a cached
+        // An embed document's theme is already known from the link, and the
+        // tag may still be the visitor's saved theme. Write the link's theme
+        // now. Everywhere else, keep the already-painted CSS (it may be dark
+        // while `currentTheme` is still the light default — see the skipWrite
+        // comment above) and only copy its --sb-background onto the status-bar
+        // meta. The inline script does this too; doing it here covers a cached
         // document whose script predates that update.
-        applyBrowserThemeColorFromCss(
-          document.getElementById("sb-theme-styles")?.textContent ?? ""
-        );
-        return;
+        let embedDocument = false;
+        try {
+          embedDocument = isMinimalEmbedUrl(new URL(window.location.href));
+        } catch {
+          embedDocument = false;
+        }
+        if (!embedDocument) {
+          applyBrowserThemeColorFromCss(
+            document.getElementById("sb-theme-styles")?.textContent ?? ""
+          );
+          return;
+        }
       }
       // A broken compose (empty, or a value that closed `body {` early) would
       // replace the live theme tag and strip every `--sb-*` color until

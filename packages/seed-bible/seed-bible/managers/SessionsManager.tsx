@@ -630,6 +630,12 @@ export interface BibleReadingSession {
    * undone locally.
    */
   removeSharedDecoration: (decorationId: string) => void;
+
+  /**
+   * The connectionId of the participant who added a decoration, or null when
+   * the decoration isn't part of this session.
+   */
+  decorationOwner: (decorationId: string) => string | null;
   dispose: () => void;
 
   localSessionId: ReadonlySignal<string>;
@@ -692,20 +698,24 @@ async function createBibleReadingSession(
   startPosition?: SessionStartPosition,
   getAnnotationsManager?: () => AnnotationsManager | undefined
 ): Promise<BibleReadingSession> {
+  const document = await os.getSharedDocument(null, id, "session_data");
+  const stateMap =
+    document.getMap<SessionData[keyof SessionData]>("reading_state");
+
+  const effectiveStartPosition = toStringOrNull(stateMap.get("bookId"))
+    ? undefined
+    : startPosition;
   const readingState = createBibleReadingState(
     dataManager,
     highlightsManager,
     i18nManager,
     // `isShared` last: a caller's start position must not be able to turn a
     // session's reading state back into an unshared one.
-    { ...startPosition, isShared: true },
+    { ...effectiveStartPosition, isShared: true },
     undefined,
     readingExtensionManager,
     getAnnotationsManager
   );
-  const document = await os.getSharedDocument(null, id, "session_data");
-  const stateMap =
-    document.getMap<SessionData[keyof SessionData]>("reading_state");
   const optionsMap = document.getMap<SessionOptionValue>("options");
   const decorationsMap = document.getMap<SessionDecorationValue>("decorations");
   // Enabled reading extensions and their custom data, keyed by extension id.
@@ -1132,11 +1142,20 @@ async function createBibleReadingSession(
   // Written after the initial sync above on purpose. Seeded any earlier, that
   // sync would read our own position back out of the map and re-navigate the
   // reader to the chapter it is already on, pushing a history entry for it.
-  if (startPosition?.initialBookId && !toStringOrNull(stateMap.get("bookId"))) {
+  if (
+    effectiveStartPosition?.initialBookId &&
+    !toStringOrNull(stateMap.get("bookId"))
+  ) {
     document.transact(() => {
-      stateMap.set("translationId", startPosition.initialTranslationId ?? null);
-      stateMap.set("bookId", startPosition.initialBookId ?? null);
-      stateMap.set("chapterNumber", startPosition.initialChapterNumber ?? null);
+      stateMap.set(
+        "translationId",
+        effectiveStartPosition.initialTranslationId ?? null
+      );
+      stateMap.set("bookId", effectiveStartPosition.initialBookId ?? null);
+      stateMap.set(
+        "chapterNumber",
+        effectiveStartPosition.initialChapterNumber ?? null
+      );
     });
   }
 
@@ -1473,6 +1492,10 @@ async function createBibleReadingSession(
     }
 
     const localDecorations = currentDecorations.filter((decoration) => {
+      // Never published, so peers neither see nor own it.
+      if (decoration.localOnly) {
+        return false;
+      }
       const owner = decorationOwners.get(decoration.id);
       if (!owner) {
         decorationOwners.set(decoration.id, localConnectionId);
@@ -1808,6 +1831,8 @@ async function createBibleReadingSession(
     participantPositions,
     isSynced,
     removeSharedDecoration,
+    decorationOwner: (decorationId) =>
+      decorationOwners.get(decorationId) ?? null,
     dispose,
     isHost,
     localSessionId,
@@ -1827,7 +1852,17 @@ export interface SessionsManager {
   createSession: (
     startPosition?: SessionStartPosition
   ) => Promise<BibleReadingSession>;
-  joinSession: (id: string) => Promise<BibleReadingSession>;
+  /**
+   * Joins an existing session.
+   *
+   * @param startPosition Where the session should open if nobody has
+   * published a position into it yet. Ignored once the session has one, so a
+   * late joiner follows the group rather than pulling it back.
+   */
+  joinSession: (
+    id: string,
+    startPosition?: SessionStartPosition
+  ) => Promise<BibleReadingSession>;
 }
 
 export function createSessionsManager(
@@ -1858,7 +1893,10 @@ export function createSessionsManager(
     );
   };
 
-  const joinSession = async (id: string) => {
+  const joinSession = async (
+    id: string,
+    startPosition?: SessionStartPosition
+  ) => {
     return await createBibleReadingSession(
       os,
       dataManager,
@@ -1868,7 +1906,7 @@ export function createSessionsManager(
       readingExtensionManager,
       id,
       undefined,
-      undefined,
+      startPosition,
       getAnnotationsManager
     );
   };

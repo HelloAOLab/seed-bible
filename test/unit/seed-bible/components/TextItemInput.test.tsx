@@ -90,6 +90,27 @@ describe("TextItemInput", () => {
   });
 
   describe("imperative handle", () => {
+    it("isDirty is false for an untouched item being edited, true once it changes", async () => {
+      const handleRef = createRef<TextItemInputHandle>();
+      await act(async () => {
+        render(
+          <TextItemInput
+            ref={handleRef}
+            onAdd={vi.fn()}
+            initialItem={{ html: "<p>hello</p>", title: "Greeting" }}
+          />,
+          container
+        );
+        await flushLazyLoad();
+      });
+
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      fakeEditor!.getHTML = () => "<p>hello there</p>";
+
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+
     it("isDirty is false when empty and true once the editor has content", async () => {
       const handleRef = createRef<TextItemInputHandle>();
       await act(async () => {

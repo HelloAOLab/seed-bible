@@ -24,6 +24,17 @@
 .sb-reader-toolbar-wrap {
   position: static;
   transition: transform 0.3s ease;
+  /* Both mobile rows (chapter nav + tabs) derive their text, icons and tints
+     from --sb-font-color, so re-pointing it here makes them follow the reader
+     toolbar's text color instead of the page's. The pill border is re-declared
+     because a var() inside a :root custom property resolves at :root, against
+     the page's --sb-font-color, not this override. */
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
+  --sb-reader-floating-nav-group-border: color-mix(
+    in srgb,
+    var(--sb-reader-toolbar-font-color) 30%,
+    transparent
+  );
 }
 
 .sb-reader-toolbar-item {
@@ -493,7 +504,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--sb-book-title-font-color);
+  color: var(--sb-font-color);
   font-family: var(--text-bookTitle-font);
   font-size: min(1.2rem, 22px);
   font-weight: 700;
@@ -547,14 +558,17 @@
 @media (max-width: 480px) {
   .sb-reader-toolbar-wrap {
     position: fixed;
-    left: 50%;
+    /* Pinned to both edges rather than centered with translateX(-50%): at
+     * fractional device-pixel widths (e.g. 125% display scaling) the
+     * translated bar snaps half a pixel off and the page shows through as a
+     * hairline along one edge. */
+    left: 0;
+    right: 0;
     bottom: 0;
-    transform: translateX(-50%);
     /* Sit above the mobile sidebar/settings overlay (z-index: 100) so the
      * bottom bar of options stays visible while the account panel is open.
      * The overlay already reserves `padding-bottom: 68px` for it. */
     z-index: 101;
-    width: 100vw;
   }
 
   .sb-action-btns {
@@ -818,7 +832,7 @@
    * flush at the bottom and stays visible, taking the toolbar's place.
    * Scrolling back up removes the body class and both slide back. */
   body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
-    transform: translateX(-50%) translateY(100%);
+    transform: translateY(100%);
   }
 }
 
@@ -845,7 +859,12 @@
   position: fixed;
   transform: translate(-50%, -100%);
   display: flex;
-  background: var(--sb-verse-toolbar-background);
+  background: var(--sb-reader-toolbar-background);
+  color: var(--sb-reader-toolbar-font-color);
+  /* The toolbar's buttons, labels and tints are all derived from
+     --sb-font-color, so re-pointing it here makes the whole subtree follow the
+     reader toolbar's text color instead of the page's. */
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
   gap: var(--sb-verse-toolbar-gap);
   padding: var(--sb-verse-toolbar-padding);
   border-radius: var(--sb-verse-toolbar-border-radius);
@@ -855,7 +874,6 @@
   min-height: var(--sb-verse-toolbar-min-height);
   flex-direction: column;
   align-items: stretch;
-  background-color: var(--sb-reader-background);
 }
 
 .sb-verse-toolbar-draggable {
@@ -1287,7 +1305,7 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   width: 100%;
-  background: var(--sb-reader-background);
+  background: var(--sb-reader-toolbar-background);
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
   margin-bottom: -0.5rem;
