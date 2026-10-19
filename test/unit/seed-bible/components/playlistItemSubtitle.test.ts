@@ -44,3 +44,57 @@ describe("playlistItemSubtitle", () => {
     ).toBe("Video · youtube.com");
   });
 });
+
+describe("playlistItemSubtitle for the newer step kinds", () => {
+  it("calls a passage with a note 'Note + Scripture' and shows the note's title", () => {
+    expect(
+      playlistItemSubtitle(
+        {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 16 },
+          note: "<p>Look</p>",
+          noteTitle: "Hagar and the Angel",
+        },
+        t
+      )
+    ).toBe("Note + Scripture · Hagar and the Angel");
+    expect(
+      playlistItemSubtitle(
+        {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 16 },
+          note: "<p>Look</p>",
+        },
+        t
+      )
+    ).toBe("Note + Scripture");
+  });
+
+  it("shows a titled question's prompt, a comparison's passages, and a scene's kind", () => {
+    expect(
+      playlistItemSubtitle(
+        { type: "question", title: "Think", prompt: "Why?" },
+        t
+      )
+    ).toBe("Question · Why?");
+    expect(playlistItemSubtitle({ type: "question", prompt: "Why?" }, t)).toBe(
+      "Question"
+    );
+    expect(
+      playlistItemSubtitle(
+        {
+          type: "compare",
+          refs: [
+            { bookId: "GEN", chapter: 16 },
+            { bookId: "EXO", chapter: 3 },
+          ],
+        },
+        t,
+        (id) => ({ GEN: "Genesis", EXO: "Exodus" })[id] ?? id
+      )
+    ).toBe("Compare · Genesis 16 · Exodus 3");
+    expect(playlistItemSubtitle({ type: "scene", title: "Intro" }, t)).toBe(
+      "Scene"
+    );
+  });
+});

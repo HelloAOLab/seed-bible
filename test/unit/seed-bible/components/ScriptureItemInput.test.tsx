@@ -389,7 +389,7 @@ describe("ScriptureItemInput", () => {
         setValue(input(), "Philemon");
       });
 
-      let result: boolean | undefined;
+      let result: boolean | Promise<boolean> | undefined;
       act(() => {
         result = handleRef.current?.commit();
       });
@@ -412,7 +412,7 @@ describe("ScriptureItemInput", () => {
         );
       });
 
-      let result: boolean | undefined;
+      let result: boolean | Promise<boolean> | undefined;
       act(() => {
         result = handleRef.current?.commit();
       });

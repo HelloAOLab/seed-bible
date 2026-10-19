@@ -103,3 +103,55 @@ describe("playlistItemLabel", () => {
     );
   });
 });
+
+describe("playlistItemLabel for the newer step kinds", () => {
+  it("labels a question by its title, else a short form of its prompt", () => {
+    expect(
+      playlistItemLabel(
+        { type: "question", title: "Think", prompt: "Why?" },
+        t,
+        resolveBookName
+      )
+    ).toBe("Think");
+    expect(
+      playlistItemLabel(
+        { type: "question", prompt: "Why?" },
+        t,
+        resolveBookName
+      )
+    ).toBe("Why?");
+    const long = "x".repeat(100);
+    expect(
+      playlistItemLabel({ type: "question", prompt: long }, t, resolveBookName)
+    ).toBe(`${"x".repeat(80)}…`);
+    expect(
+      playlistItemLabel({ type: "question", prompt: "  " }, t, resolveBookName)
+    ).toBe("Question");
+  });
+
+  it("labels a comparison by its title, else its passages", () => {
+    const refs: VerseRef[] = [
+      { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13 },
+      { bookId: "EXO", chapter: 3 },
+    ];
+    expect(
+      playlistItemLabel({ type: "compare", refs }, t, resolveBookName)
+    ).toBe("GEN 16:7-13 · EXO 3");
+    expect(
+      playlistItemLabel(
+        { type: "compare", refs, title: "The angel who speaks as God" },
+        t,
+        resolveBookName
+      )
+    ).toBe("The angel who speaks as God");
+  });
+
+  it("labels a scene by its title", () => {
+    expect(
+      playlistItemLabel({ type: "scene", title: "Intro" }, t, resolveBookName)
+    ).toBe("Intro");
+    expect(
+      playlistItemLabel({ type: "scene", title: " " }, t, resolveBookName)
+    ).toBe("Scene");
+  });
+});

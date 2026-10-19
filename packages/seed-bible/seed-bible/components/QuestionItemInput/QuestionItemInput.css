@@ -1,0 +1,9 @@
+.sb-question-prompt-input {
+  min-height: 4.5rem;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.sb-question-shareable {
+  align-self: flex-start;
+}

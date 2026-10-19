@@ -128,7 +128,10 @@
 
 /* Queue rows: a step number (a tick once the step is behind), then the title
    with a "kind · detail" line under it. */
+/* Rows wrap so a scene heading can take a full line of its own before the
+   first step of its scene. */
 .sb-play-playlist-item {
+  flex-wrap: wrap;
   border-radius: 12px;
 }
 
@@ -234,4 +237,34 @@
 .sb-play-controls-button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* The passage a note belongs to, above the note's own title. */
+.sb-play-current-reference {
+  margin: 0;
+  font-size: 0.8125rem;
+  opacity: 0.7;
+}
+
+.sb-play-current-note {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.sb-play-current-note > :first-child {
+  margin-top: 0;
+}
+
+.sb-play-current-note > :last-child {
+  margin-bottom: 0;
+}
+
+.sb-play-playlist-scene {
+  flex-basis: 100%;
+  margin: 4px 0 2px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }

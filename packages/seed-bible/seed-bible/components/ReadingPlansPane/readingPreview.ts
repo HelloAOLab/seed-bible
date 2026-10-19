@@ -86,6 +86,12 @@ export function readingPreviewText(
   if (item.type === "html") {
     return htmlExcerpt(item.html) || null;
   }
+  if (item.type === "question") {
+    return item.title ? htmlExcerpt(item.prompt) || null : null;
+  }
+  if (item.type === "compare") {
+    return item.description ? htmlExcerpt(item.description) || null : null;
+  }
   if (item.type === "link") {
     const host = linkHost(item.url);
     const media = resolveLinkMedia(item.url);

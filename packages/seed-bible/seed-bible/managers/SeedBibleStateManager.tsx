@@ -1294,7 +1294,11 @@ export function createSeedBibleState(
     discover,
     chats,
     options.initialPlaylistPageSeed,
-    { friendReads }
+    {
+      friendReads,
+      loadChapter: (translationId, bookId, chapter) =>
+        data.getTranslationBookChapter(translationId, bookId, chapter),
+    }
   );
   // True only while `hydrateFromStorage` below is applying the saved tab state.
   // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits

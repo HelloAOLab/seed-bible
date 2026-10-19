@@ -70,9 +70,7 @@ describe("PlaylistItemInput", () => {
     });
 
     expect(container.querySelector(".sb-playlist-item-input")).not.toBeNull();
-    expect(
-      container.querySelector(".sb-playlist-add-mode-select")
-    ).not.toBeNull();
+    expect(container.querySelector(".sb-playlist-type-picker")).not.toBeNull();
     expect(container.querySelector(".sb-playlist-item-editor")).toBeNull();
     expect(buttonLabelled("Add item")).toBeDefined();
   });
@@ -102,9 +100,7 @@ describe("PlaylistItemInput", () => {
       const editor = container.querySelector(".sb-playlist-item-editor");
       expect(editor?.id).toBe("editor-1");
       expect(container.querySelector(".sb-playlist-item-input")).toBeNull();
-      expect(
-        container.querySelector(".sb-playlist-add-mode-select")
-      ).toBeNull();
+      expect(container.querySelector(".sb-playlist-type-picker")).toBeNull();
       expect(
         container.querySelector<HTMLInputElement>(".sb-scripture-input input")
           ?.value

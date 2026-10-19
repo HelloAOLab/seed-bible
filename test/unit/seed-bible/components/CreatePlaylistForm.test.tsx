@@ -1847,3 +1847,92 @@ describe("CreatePlaylistForm", () => {
     });
   });
 });
+
+describe("CreatePlaylistForm scenes", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    stubItemInputControl.isDirty = false;
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function renderWith(items: PlaylistItemData[]) {
+    const result = createMockPlaylists(createPlaylist({ items }));
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={result.playlists}
+          tabs={createMockTabs()}
+          modals={createModalManager()}
+        />,
+        container
+      );
+    });
+    return result;
+  }
+
+  it("shows scenes as headings and numbers only the steps between them", () => {
+    renderWith([
+      { type: "scene", title: "Intro" },
+      verseItem("GEN", 1),
+      { type: "scene", title: "Scene 1 · Hagar" },
+      verseItem("GEN", 16),
+      { type: "html", html: "<p>Hi</p>" },
+    ]);
+
+    const rows = Array.from(
+      container.querySelectorAll(".sb-playlist-editor-item")
+    );
+    expect(
+      rows.map((row) => row.classList.contains("sb-playlist-editor-scene"))
+    ).toEqual([true, false, true, false, false]);
+    expect(
+      rows.map(
+        (row) =>
+          row.querySelector(".sb-playlist-editor-item-number")?.textContent
+      )
+    ).toEqual(["segment", "1", "segment", "2", "3"]);
+    expect(
+      Array.from(container.querySelectorAll(".sb-discover-section-title")).map(
+        (el) => el.textContent
+      )
+    ).toContain("Items (3)");
+  });
+
+  it("'Add scene' adds a numbered scene at the end and opens it for naming", () => {
+    const { addEditingPlaylistItem, playlists } = renderWith([
+      { type: "scene", title: "Intro" },
+      verseItem("GEN", 1),
+    ]);
+    addEditingPlaylistItem.mockImplementation((item: PlaylistItemData) => {
+      const current = playlists.editingPlaylist.value!;
+      playlists.editingPlaylist.value = {
+        ...current,
+        items: [...current.items, item],
+      };
+      return "";
+    });
+
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-playlist-add-scene")
+        ?.click();
+    });
+
+    expect(addEditingPlaylistItem).toHaveBeenCalledWith({
+      type: "scene",
+      title: "Scene 2",
+    });
+    const rows = container.querySelectorAll(".sb-playlist-editor-item");
+    expect(rows).toHaveLength(3);
+    expect(
+      rows[2]?.querySelector(".stub-playlist-item-input--edit")
+    ).not.toBeNull();
+  });
+});

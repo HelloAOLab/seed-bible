@@ -250,6 +250,31 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     });
   };
 
+  // Scenes are headings, not steps: steps are numbered past them.
+  const stepNumbers = new Map<number, number>();
+  let stepCount = 0;
+  editing?.items.forEach((item, index) => {
+    if (item.type !== "scene") {
+      stepCount += 1;
+      stepNumbers.set(index, stepCount);
+    }
+  });
+
+  /** Adds a scene heading at the end of the list and opens it for naming. */
+  const addScene = () => {
+    const sceneCount =
+      editing?.items.filter((item) => item.type === "scene").length ?? 0;
+    const index = editing?.items.length ?? 0;
+    playlists.addEditingPlaylistItem({
+      type: "scene",
+      title: t("playlist-scene-default", {
+        defaultValue: "Scene {{number}}",
+        number: sceneCount + 1,
+      }),
+    });
+    requestOpen(index);
+  };
+
   const doSave = async () => {
     setSaving(true);
     try {
@@ -341,7 +366,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
 
       <DiscoverSection
         title={t("items", { defaultValue: "Items" })}
-        count={editing?.items.length || undefined}
+        count={stepCount || undefined}
       >
         {!editing?.items.length ? (
           <DiscoverEmpty
@@ -357,6 +382,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                   key={index}
                   className={
                     "sb-discover-item sb-discover-item--row sb-playlist-editor-item" +
+                    (item.type === "scene" ? " sb-playlist-editor-scene" : "") +
                     (isOpen ? " sb-discover-item--editing" : "") +
                     getRowClassName(index)
                   }
@@ -386,7 +412,11 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                       className="sb-playlist-editor-item-number"
                       aria-hidden="true"
                     >
-                      {index + 1}
+                      {item.type === "scene" ? (
+                        <MaterialIcon>segment</MaterialIcon>
+                      ) : (
+                        stepNumbers.get(index)
+                      )}
                     </span>
                     <span className="sb-playlist-editor-item-text">
                       <span className="sb-discover-item-title" dir="auto">
@@ -396,7 +426,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                         className="sb-playlist-editor-item-subtitle"
                         dir="auto"
                       >
-                        {playlistItemSubtitle(item, t)}
+                        {playlistItemSubtitle(item, t, resolveBookName)}
                       </span>
                     </span>
                     <MaterialIcon className="sb-discover-item-caret">
@@ -477,6 +507,14 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
           {t("playlist-add-item", { defaultValue: "Add item" })}
         </button>
       )}
+      <button
+        type="button"
+        className="sb-playlist-add-scene"
+        onClick={addScene}
+      >
+        <MaterialIcon>add</MaterialIcon>
+        {t("playlist-add-scene", { defaultValue: "Add scene" })}
+      </button>
 
       <div className="sb-discover-actions">
         <button

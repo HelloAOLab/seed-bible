@@ -5,6 +5,7 @@ import type { TranslationBookChapter } from "../../managers/FreeUseBibleAPI";
 import {
   expandCrossChapterItem,
   type PlaylistItemData,
+  type VerseRef,
 } from "../../managers/PlaylistManager";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
 import { passageVerses, type PassageVerse } from "../scripturePassage";
@@ -34,8 +35,9 @@ type PassageState =
 /**
  * The collapsible preview shown beneath an item in the playlist and reading
  * plan editors, so an author can read what they added without leaving the
- * editor: the referenced verses for scripture, the text for a text item, and
- * the title and URL for a link.
+ * editor: the referenced verses (and the author's note) for scripture, the
+ * text for a text item, the title and URL for a link, the prompt for a
+ * question, and each passage for a comparison.
  */
 export function PlaylistItemInlinePreview(props: {
   item: PlaylistItemData;
@@ -48,9 +50,48 @@ export function PlaylistItemInlinePreview(props: {
   return (
     <div id={id} className="sb-item-inline-preview" dir="auto">
       {item.type === "bible-verse" ? (
-        <ScripturePreview item={item} loadChapter={loadChapter} />
+        <>
+          <ScripturePreview item={item} loadChapter={loadChapter} />
+          {item.note || item.noteTitle ? (
+            <div className="sb-item-inline-preview-note">
+              <span className="sb-item-inline-preview-note-label" dir="auto">
+                {item.noteTitle?.trim() ||
+                  t("playlist-scripture-note-label", { defaultValue: "Note" })}
+              </span>
+              {item.note ? <PlaylistHtmlContent html={item.note} /> : null}
+            </div>
+          ) : null}
+        </>
       ) : item.type === "html" ? (
         <PlaylistHtmlContent html={item.html} />
+      ) : item.type === "question" ? (
+        <p className="sb-item-inline-preview-question">{item.prompt}</p>
+      ) : item.type === "compare" ? (
+        <div className="sb-item-inline-preview-compare">
+          {item.description ? (
+            <p className="sb-item-inline-preview-compare-description">
+              {item.description}
+            </p>
+          ) : null}
+          {item.refs.map((ref, index) => (
+            <ScripturePreview
+              key={index}
+              item={{
+                type: "bible-verse",
+                ref,
+                translationId: item.translationId,
+              }}
+              loadChapter={loadChapter}
+            />
+          ))}
+        </div>
+      ) : item.type === "scene" ? (
+        <p className="sb-item-inline-preview-status">
+          {t("playlist-scene-preview", {
+            defaultValue:
+              "A heading over the steps that follow it, up to the next scene.",
+          })}
+        </p>
       ) : (
         <div className="sb-item-inline-preview-link">
           <span className="sb-item-inline-preview-link-title">
@@ -66,7 +107,11 @@ export function PlaylistItemInlinePreview(props: {
   );
 }
 
-function ScripturePreview(props: {
+/**
+ * The verses of one passage, loaded chapter by chapter. Shared with the
+ * comparison step, which shows one of these per passage.
+ */
+export function ScripturePreview(props: {
   item: ScriptureItem;
   loadChapter?: ScriptureChapterLoader;
 }) {
@@ -157,4 +202,12 @@ function ScripturePreview(props: {
       ))}
     </div>
   );
+}
+
+/** A scripture item for one of a comparison's passages, for previews. */
+export function compareRefItem(
+  ref: VerseRef,
+  translationId: string | undefined
+): ScriptureItem {
+  return { type: "bible-verse", ref, translationId };
 }

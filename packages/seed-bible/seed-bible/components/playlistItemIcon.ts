@@ -4,6 +4,9 @@ const ICON_BY_TYPE: Record<Playlist["items"][number]["type"], string> = {
   "bible-verse": "menu_book",
   link: "link",
   html: "notes",
+  question: "quiz",
+  compare: "compare_arrows",
+  scene: "segment",
 };
 
 /** Material Symbols ligature name for a playlist item's type. */

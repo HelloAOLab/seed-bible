@@ -134,3 +134,48 @@
   display: block;
   margin: -8px 0 16px auto;
 }
+
+/* A scene row is a heading over the steps after it: small caps, no number. */
+.sb-playlist-editor-scene {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 95%);
+  border-style: dashed;
+}
+
+.sb-playlist-editor-scene .sb-discover-item-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sb-playlist-editor-scene .sb-playlist-editor-item-subtitle {
+  display: none;
+}
+
+.sb-playlist-editor-scene
+  .sb-playlist-editor-item-number
+  .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.sb-playlist-add-scene {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 36px;
+  margin: -8px 0 16px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-playlist-add-scene:hover {
+  color: var(--sb-primary-color);
+}

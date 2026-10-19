@@ -69,8 +69,36 @@ export const AIBibleVerseRefSchema = z.object({
  * {@link PlaylistItemData}.
  */
 export const AIPlaylistItemSchema = z.object({
-  type: z.enum(["bible-verse", "link", "html"]),
-  bibleVerse: AIBibleVerseRefSchema.nullable().default(null),
+  type: z.enum(["bible-verse", "link", "html", "question", "compare", "scene"]),
+  bibleVerse: AIBibleVerseRefSchema.extend({
+    /** The author's note on the passage, as HTML, and its optional title. */
+    note: z.string().nullable().default(null),
+    noteTitle: z.string().nullable().default(null),
+  })
+    .nullable()
+    .default(null),
+  question: z
+    .object({
+      title: z.string().nullable(),
+      /** What readers are asked. */
+      prompt: z.string(),
+      /** Whether readers in a group session may share their answers. */
+      shareable: z.boolean().nullable().default(null),
+    })
+    .nullable()
+    .default(null),
+  compare: z
+    .object({
+      title: z.string().nullable(),
+      /** Two or more passages to show side by side. */
+      refs: z.array(AIBibleVerseRefSchema.shape.ref).min(2),
+      /** A line above the passages saying what to look for. */
+      description: z.string().nullable(),
+    })
+    .nullable()
+    .default(null),
+  /** A heading over the steps that follow it, up to the next scene. */
+  scene: z.object({ title: z.string() }).nullable().default(null),
   link: z
     .object({
       title: z.string().nullable(),
@@ -115,7 +143,42 @@ export function convertToPlaylistItem(
           verse: item.bibleVerse.ref.verse ?? undefined,
           endVerse: item.bibleVerse.ref.endVerse ?? undefined,
         },
+        note: item.bibleVerse.note ?? undefined,
+        noteTitle: item.bibleVerse.noteTitle ?? undefined,
       };
+    case "question":
+      if (!item.question) {
+        throw new Error(
+          'Item has type "question" but no question was provided.'
+        );
+      }
+      return {
+        type: item.type,
+        title: item.question.title ?? undefined,
+        prompt: item.question.prompt,
+        shareable: item.question.shareable ?? undefined,
+      };
+    case "compare":
+      if (!item.compare) {
+        throw new Error('Item has type "compare" but no compare was provided.');
+      }
+      return {
+        type: item.type,
+        title: item.compare.title ?? undefined,
+        refs: item.compare.refs.map((ref) => ({
+          bookId: ref.bookId,
+          chapter: ref.chapter,
+          endChapter: ref.endChapter ?? undefined,
+          verse: ref.verse ?? undefined,
+          endVerse: ref.endVerse ?? undefined,
+        })),
+        description: item.compare.description ?? undefined,
+      };
+    case "scene":
+      if (!item.scene) {
+        throw new Error('Item has type "scene" but no scene was provided.');
+      }
+      return { type: item.type, title: item.scene.title };
     case "link":
       if (!item.link) {
         throw new Error('Item has type "link" but no link was provided.');
@@ -143,6 +206,7 @@ export function convertToAiPlaylistItem(
   switch (item.type) {
     case "bible-verse":
       return {
+        ...EMPTY_AI_ITEM,
         type: item.type,
         bibleVerse: {
           ref: {
@@ -152,32 +216,72 @@ export function convertToAiPlaylistItem(
             verse: item.ref.verse ?? null,
             endVerse: item.ref.endVerse ?? null,
           },
+          note: item.note ?? null,
+          noteTitle: item.noteTitle ?? null,
         },
-        link: null,
-        html: null,
       };
     case "link":
       return {
+        ...EMPTY_AI_ITEM,
         type: item.type,
-        bibleVerse: null,
         link: {
           title: item.title ?? null,
           url: item.url,
         },
-        html: null,
       };
     case "html":
       return {
+        ...EMPTY_AI_ITEM,
         type: item.type,
-        bibleVerse: null,
-        link: null,
         html: {
           title: item.title ?? null,
           html: item.html,
         },
       };
+    case "question":
+      return {
+        ...EMPTY_AI_ITEM,
+        type: item.type,
+        question: {
+          title: item.title ?? null,
+          prompt: item.prompt,
+          shareable: item.shareable ?? null,
+        },
+      };
+    case "compare":
+      return {
+        ...EMPTY_AI_ITEM,
+        type: item.type,
+        compare: {
+          title: item.title ?? null,
+          refs: item.refs.map((ref) => ({
+            bookId: ref.bookId as BookId,
+            chapter: ref.chapter,
+            endChapter: ref.endChapter ?? null,
+            verse: ref.verse ?? null,
+            endVerse: ref.endVerse ?? null,
+          })),
+          description: item.description ?? null,
+        },
+      };
+    case "scene":
+      return {
+        ...EMPTY_AI_ITEM,
+        type: item.type,
+        scene: { title: item.title },
+      };
   }
 }
+
+/** Every per-type payload absent; a conversion fills in the one it needs. */
+const EMPTY_AI_ITEM = {
+  bibleVerse: null,
+  link: null,
+  html: null,
+  question: null,
+  compare: null,
+  scene: null,
+} as const;
 
 export function generateFunctionTool<T>(options: {
   name: string;

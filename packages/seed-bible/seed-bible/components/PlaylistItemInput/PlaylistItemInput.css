@@ -1,26 +1,56 @@
-.sb-playlist-add-mode-select {
-  display: block;
-  width: 100%;
-  padding: 6px 10px;
+/* The kinds of step on offer, each a card with a one-line description, as the
+   design's "Add a step" lists them. Two columns when there's room. */
+.sb-playlist-type-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 6px;
   margin-bottom: 10px;
+}
+
+.sb-playlist-type-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 10px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 0.8125rem;
+  font: inherit;
+  text-align: start;
   cursor: pointer;
 }
 
-/* The native option popup ignores the select's transparent background and
-   renders white, so options need an explicit theme background to keep the
-   inherited font color readable in dark mode. */
-.sb-playlist-add-mode-select option {
-  background: var(--sb-background);
-  color: var(--sb-font-color);
+.sb-playlist-type-option:hover {
+  border-color: var(--sb-primary-color);
 }
 
-.sb-playlist-add-mode-select:hover {
+.sb-playlist-type-option--selected {
   border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
+  color: var(--sb-primary-color);
+}
+
+.sb-playlist-type-option-icon {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+}
+
+.sb-playlist-type-option-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sb-playlist-type-option-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.sb-playlist-type-option-description {
+  font-size: 0.6875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
 .sb-playlist-item-input {

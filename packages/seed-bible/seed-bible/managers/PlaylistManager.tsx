@@ -10,6 +10,7 @@ import {
 import { listAllByAddress, type CasualOSManager } from "./OsManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import { v4 as uuid } from "uuid";
+import type { TranslationBookChapter } from "./FreeUseBibleAPI";
 import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
@@ -77,10 +78,49 @@ export const BibleVersePlaylistItem = z.object({
   type: z.literal("bible-verse"),
   ref: VerseRefSchema,
   translationId: z.string().optional(),
+  /**
+   * The author's note on the passage, as sanitized HTML, shown beside it while
+   * the step plays. A step with a note is a "Note + Scripture" step.
+   */
+  note: z.string().optional(),
+  /** A heading for the note; the passage reference stands in without one. */
+  noteTitle: z.string().optional(),
+});
+
+/** A question put to readers, who answer it as the step plays. */
+export const QuestionPlaylistItem = z.object({
+  type: z.literal("question"),
+  title: z.string().optional(),
+  /** What readers are asked, as plain text. */
+  prompt: z.string(),
+  /** Whether readers in a shared session may share their answers with the group. */
+  shareable: z.boolean().optional(),
+});
+
+/** Two or more passages shown side by side, with an optional framing line. */
+export const ComparePlaylistItem = z.object({
+  type: z.literal("compare"),
+  title: z.string().optional(),
+  refs: z.array(VerseRefSchema).min(2),
+  translationId: z.string().optional(),
+  /** Plain text shown above the passages, saying what to look for. */
+  description: z.string().optional(),
+});
+
+/**
+ * A heading in the playlist: the steps after it, up to the next scene, are
+ * grouped under it in the editor and the queue. Never played as a step.
+ */
+export const ScenePlaylistItem = z.object({
+  type: z.literal("scene"),
+  title: z.string(),
 });
 
 export const PlaylistItem = z.discriminatedUnion("type", [
   BibleVersePlaylistItem,
+  QuestionPlaylistItem,
+  ComparePlaylistItem,
+  ScenePlaylistItem,
   z.object({
     type: z.literal("html"),
     title: z.string().optional(),
@@ -370,6 +410,40 @@ export const PlaylistPlayHistorySchema = z.object({
 export type PlaylistPlayHistory = z.infer<typeof PlaylistPlayHistorySchema>;
 
 /**
+ * A reader's answer to a question step, stored under their own record so it
+ * is theirs to keep. One row per question: answering again overwrites it.
+ * Keyed by the question's prompt rather than its position, so reordering the
+ * playlist doesn't orphan an answer.
+ */
+export const PlaylistQuestionResponseSchema = z.object({
+  id: z.string(),
+  recordName: z.string(),
+  userId: z.string(),
+  playlistId: z.string(),
+  playlistRecordName: z.string(),
+  prompt: z.string(),
+  text: z.string(),
+  /** Who may see it: the reader alone, or a group session they answered in. */
+  visibility: z.enum(["private", "session"]),
+  createdAtMs: z.number().positive(),
+  updatedAtMs: z.number().positive(),
+});
+export type PlaylistQuestionResponse = z.infer<
+  typeof PlaylistQuestionResponseSchema
+>;
+
+/** Answers are the reader's own, so they live on a private record. */
+const PLAYLIST_QUESTION_RESPONSE_MARKER = "private";
+
+/** The row that holds a reader's answer to one question of one playlist. */
+export function questionResponseKey(
+  playlist: { recordName: string; id: string },
+  prompt: string
+): string {
+  return `${playlist.recordName}.${playlist.id}|${prompt}`;
+}
+
+/**
  * Options for {@link createPlaylistManager}'s `startPlaying`. Pass
  * `history: false` to skip tracking (e.g. reading plans that reuse the
  * playlist player).
@@ -578,6 +652,10 @@ const MAX_CHAPTER_NUMBER = 150;
 export function expandCrossChapterItem(
   item: PlaylistItemData
 ): PlaylistItemData[] {
+  // A scene is a heading over the steps that follow it, not a step itself.
+  if (item.type === "scene") {
+    return [];
+  }
   if (item.type !== "bible-verse") {
     return [item];
   }
@@ -979,6 +1057,15 @@ export function createPlaylistManager(
      * Omitted means a limit of this manager's own.
      */
     friendReads?: FriendReadLimiter;
+    /**
+     * Loads a chapter's text, for a compare step's passages. Without it the
+     * passages say they couldn't load.
+     */
+    loadChapter?: (
+      translationId: string,
+      bookId: string,
+      chapter: number
+    ) => Promise<TranslationBookChapter>;
   } = {}
 ) {
   const initialPlaybackRequest = playbackRequestFromUrl(
@@ -1104,12 +1191,74 @@ export function createPlaylistManager(
       return;
     }
 
+    const tab = playingState.tab;
+    const playlist = playingState.playlists.peek()[0];
+    const books = tab?.readingState.translationBooks?.peek()?.books ?? [];
+    const resolveBookName = (bookId: string): string => {
+      const book = books.find((b) => b.id === bookId);
+      return book?.name ?? book?.commonName ?? bookId;
+    };
+    // A step's own translation wins; otherwise the tab's. The loader needs one.
+    const translationFor = (own: string | undefined) =>
+      own ?? tab?.readingState.translationId?.peek() ?? null;
+    const loadChapter = options.loadChapter;
+    const recorded = playlist && isRecordedPlaylist(playlist) ? playlist : null;
+    const response =
+      recorded && item.type === "question"
+        ? questionResponses.value.get(
+            questionResponseKey(recorded, item.prompt)
+          )
+        : undefined;
     openPlaylistItemPreview(
       modals,
       item,
       PLAYLIST_ITEM_MODAL_ID,
       i18n.t,
-      playingState
+      playingState,
+      {
+        loadChapter: loadChapter
+          ? async (translationId, bookId, chapter) => {
+              const translation = translationFor(translationId);
+              if (!translation) {
+                throw new Error("No translation to load the passage in.");
+              }
+              return loadChapter(translation, bookId, chapter);
+            }
+          : undefined,
+        resolveBookName,
+        onOpenPassage:
+          tab && item.type === "compare"
+            ? (ref) => {
+                const translation = translationFor(item.translationId);
+                if (!translation) {
+                  return;
+                }
+                modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
+                void tab.readingState.selectTranslationAndChapter(
+                  translation,
+                  ref.bookId,
+                  ref.chapter,
+                  ref.verse != null ? { scrollToVerse: ref.verse } : undefined
+                );
+              }
+            : undefined,
+        authorName: playingAuthorName.peek(),
+        inSession: !!tab?.sharedSession,
+        questionResponse: response
+          ? { text: response.text, visibility: response.visibility }
+          : undefined,
+        onSaveQuestionResponse:
+          recorded && item.type === "question"
+            ? async (text, visibility) => {
+                await saveQuestionResponse(
+                  recorded,
+                  item.prompt,
+                  text,
+                  visibility
+                );
+              }
+            : undefined,
+      }
     );
   };
 
@@ -1117,6 +1266,86 @@ export function createPlaylistManager(
     await os.recordData(playlist.recordName, playlist.id, playlist, {
       marker: "publicRead:playlists",
     });
+  };
+
+  /** The reader's answers to question steps, by `questionResponseKey`. */
+  const questionResponses = signal<Map<string, PlaylistQuestionResponse>>(
+    new Map()
+  );
+
+  const syncQuestionResponses = async () => {
+    const userId = login.userId.value;
+    if (!userId) {
+      questionResponses.value = new Map();
+      return;
+    }
+    try {
+      const records = await os.listAllDataByMarker(
+        userId,
+        PLAYLIST_QUESTION_RESPONSE_MARKER
+      );
+      if (records.success === false) {
+        throw new Error("Failed to list playlist question responses");
+      }
+      const next = new Map<string, PlaylistQuestionResponse>();
+      for (const record of records.items) {
+        const parsed = PlaylistQuestionResponseSchema.safeParse(record.data);
+        if (parsed.success) {
+          next.set(
+            questionResponseKey(
+              {
+                recordName: parsed.data.playlistRecordName,
+                id: parsed.data.playlistId,
+              },
+              parsed.data.prompt
+            ),
+            parsed.data
+          );
+        }
+      }
+      questionResponses.value = next;
+    } catch (error) {
+      console.error("Failed to sync playlist question responses:", error);
+    }
+  };
+
+  /**
+   * Saves (or replaces) the signed-in reader's answer to a question step of
+   * `playlist`. Rejects when nobody is signed in: there is no record to keep
+   * it under.
+   */
+  const saveQuestionResponse = async (
+    playlist: { recordName: string; id: string },
+    prompt: string,
+    text: string,
+    visibility: PlaylistQuestionResponse["visibility"]
+  ): Promise<PlaylistQuestionResponse> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      throw new Error("Sign in to save a response.");
+    }
+    const key = questionResponseKey(playlist, prompt);
+    const existing = questionResponses.peek().get(key);
+    const now = Date.now();
+    const entry = PlaylistQuestionResponseSchema.parse({
+      id: existing?.id ?? uuid(),
+      recordName: userId,
+      userId,
+      playlistId: playlist.id,
+      playlistRecordName: playlist.recordName,
+      prompt,
+      text,
+      visibility,
+      createdAtMs: existing?.createdAtMs ?? now,
+      updatedAtMs: now,
+    } satisfies PlaylistQuestionResponse);
+    await os.recordData(entry.recordName, entry.id, entry, {
+      marker: PLAYLIST_QUESTION_RESPONSE_MARKER,
+    });
+    const next = new Map(questionResponses.peek());
+    next.set(key, entry);
+    questionResponses.value = next;
+    return entry;
   };
 
   const savePlayHistory = async (entry: PlaylistPlayHistory) => {
@@ -2205,6 +2434,10 @@ export function createPlaylistManager(
   });
 
   effect(() => {
+    void syncQuestionResponses();
+  });
+
+  effect(() => {
     if (!playing.value) {
       return;
     }
@@ -2909,6 +3142,8 @@ export function createPlaylistManager(
     continueFromHistory,
     replayFromHistory,
     playFromHistory,
+    questionResponses,
+    saveQuestionResponse,
     removePlayHistory,
     getPlaylistUrl,
     playlistPage,

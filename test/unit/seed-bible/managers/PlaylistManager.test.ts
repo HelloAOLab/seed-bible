@@ -1925,6 +1925,9 @@ describe("createPlaylistManager", () => {
             bibleVerse: null,
             link: { title: null, url: "https://example.com" },
             html: null,
+            question: null,
+            compare: null,
+            scene: null,
           },
         ],
       });

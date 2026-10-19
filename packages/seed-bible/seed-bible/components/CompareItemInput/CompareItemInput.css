@@ -1,0 +1,13 @@
+/* The two passages side by side, as they will play; stacked when narrow. */
+.sb-compare-refs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sb-compare-description-input {
+  min-height: 3.25rem;
+  resize: vertical;
+  line-height: 1.4;
+}

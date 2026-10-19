@@ -1,6 +1,7 @@
 import "./ScriptureItemInput.css";
 import { useEffect, useImperativeHandle, useRef, useState } from "preact/hooks";
-import { forwardRef } from "preact/compat";
+import { forwardRef, lazy, Suspense } from "preact/compat";
+import type { Editor } from "@tiptap/core";
 import { useI18n } from "../../i18n/I18nManager";
 import type {
   PlaylistItemData,
@@ -8,12 +9,31 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import { computeSuggestions } from "./scriptureSuggestions";
+import { sanitize } from "../../managers/Sanitization";
+import { MaterialIcon } from "../icons";
+
+// Loaded only when a note is opened, like the text item's editor; the SSR
+// guard keeps TipTap out of the single-file SSR bundle.
+const TipTapEditor = lazy(() =>
+  import.meta.env.SSR
+    ? Promise.reject(new Error("TipTap is not available in the SSR bundle"))
+    : import("../TipTapEditor/TipTapEditor")
+);
 
 interface ScriptureItemInputProps {
   books: TranslationBook[];
   onAdd: (item: PlaylistItemData) => void;
   /** Reference text the field starts with, e.g. when editing an item. */
   initialValue?: string;
+  /** Note HTML the note editor starts with, e.g. when editing an item. */
+  initialNote?: string;
+  /** Note title the note's title field starts with. */
+  initialNoteTitle?: string;
+  /**
+   * Starts with the note open and empty, for a "Note + Scripture" step the
+   * author chose up front. A note that starts filled in is open regardless.
+   */
+  withNote?: boolean;
   /** Overrides the submit button label (defaults to "Add item"). */
   submitLabel?: string;
 }
@@ -21,13 +41,14 @@ interface ScriptureItemInputProps {
 /** Imperative handle so a parent can check for / commit an in-progress draft. */
 export interface ScriptureItemInputHandle {
   /**
-   * Whether the reference differs from what the field started with: an
-   * un-added draft when adding, an unsaved change when editing.
+   * Whether the reference or the note (body or title) differs from what the
+   * fields started with: an un-added draft when adding, unsaved changes when
+   * editing.
    */
   isDirty: () => boolean;
   /** Submits the current input, same as clicking "Add". Returns whether it
    * actually added an item (false if empty or the reference didn't resolve). */
-  commit: () => boolean;
+  commit: () => boolean | Promise<boolean>;
 }
 
 /** Position of the highlighted option within the suggestions list. */
@@ -46,12 +67,24 @@ function clamp(value: number, min: number, max: number): number {
  * chapters/verses as buttons. Up/Down arrows move between books, Left/Right
  * move between chapters within a book, clicking adds an option, and Enter adds
  * the highlighted one.
+ *
+ * An optional note — a formatted body, a plain-text title, or both — can be
+ * attached, making the step a "Note + Scripture" step: the note shows beside
+ * the passage while it plays. The body is serialized only on submit.
  */
 export const ScriptureItemInput = forwardRef<
   ScriptureItemInputHandle,
   ScriptureItemInputProps
 >(function ScriptureItemInput(props, ref) {
-  const { books, onAdd, initialValue, submitLabel } = props;
+  const {
+    books,
+    onAdd,
+    initialValue,
+    initialNote,
+    initialNoteTitle,
+    withNote,
+    submitLabel,
+  } = props;
   const { t } = useI18n();
   const [value, setValue] = useState(initialValue ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +95,18 @@ export const ScriptureItemInput = forwardRef<
   // handoff consistent with how the caret actually moves.
   const [inputDir, setInputDir] = useState<"ltr" | "rtl">("ltr");
   const listRef = useRef<HTMLUListElement | null>(null);
+
+  const noteEditorRef = useRef<Editor | null>(null);
+  const [noteOpen, setNoteOpen] = useState(
+    !!withNote || !!initialNote || !!initialNoteTitle
+  );
+  const [noteTitle, setNoteTitle] = useState(initialNoteTitle ?? "");
+  // The note body as the editor serializes it when seeded, so an untouched
+  // note compares equal even where the editor normalizes the stored HTML.
+  const noteBaselineRef = useRef<string | null>(null);
+  // Set while a note is being sanitized before its item is added, so a second
+  // submit in that moment (a double-click, Enter twice) doesn't add it again.
+  const addingRef = useRef(false);
 
   const syncInputDir = (input: HTMLInputElement) => {
     setInputDir(getComputedStyle(input).direction === "rtl" ? "rtl" : "ltr");
@@ -109,15 +154,77 @@ export const ScriptureItemInput = forwardRef<
     });
   };
 
-  const addRef = (verseRef: VerseRef) => {
-    onAdd({ type: "bible-verse", ref: verseRef });
+  /** The note body to save: the editor's HTML, or null when there is none. */
+  const noteHtml = (): string | null => {
+    if (!noteOpen) {
+      return null;
+    }
+    const editor = noteEditorRef.current;
+    // An editor still loading can't have been typed into yet, so the note is
+    // the one it was going to start with.
+    if (!editor) {
+      return initialNote ?? null;
+    }
+    return editor.isEmpty ? null : editor.getHTML();
+  };
+
+  /** Whether the note that would be saved differs from the starting one. */
+  const noteChanged = (): boolean => {
+    const title = noteOpen ? noteTitle.trim() : "";
+    if (title !== (initialNoteTitle ?? "").trim()) {
+      return true;
+    }
+    const current = noteHtml();
+    const initial = initialNote
+      ? (noteBaselineRef.current ?? initialNote)
+      : null;
+    return current !== initial;
+  };
+
+  const finishAdd = (verseRef: VerseRef, note: string | null) => {
+    const title = noteOpen ? noteTitle.trim() : "";
+    onAdd({
+      type: "bible-verse",
+      ref: verseRef,
+      ...(note ? { note } : {}),
+      ...(title ? { noteTitle: title } : {}),
+    });
     setValue("");
     setError(null);
     setHighlight({ book: 0, option: 0 });
+    noteEditorRef.current?.commands.clearContent();
+    setNoteTitle("");
+    setNoteOpen(!!withNote);
+  };
+
+  /**
+   * Adds the item, with the note when one was written. Without a note body the
+   * item is added synchronously; with one it waits for the body to be
+   * sanitized. Returns whether it added the item: not while an earlier add is
+   * still waiting.
+   */
+  const addRef = (verseRef: VerseRef): boolean | Promise<boolean> => {
+    if (addingRef.current) {
+      return false;
+    }
+    const html = noteHtml();
+    if (!html) {
+      finishAdd(verseRef, null);
+      return true;
+    }
+    addingRef.current = true;
+    return sanitize(html)
+      .then((note) => {
+        finishAdd(verseRef, note);
+        return true;
+      })
+      .finally(() => {
+        addingRef.current = false;
+      });
   };
 
   /** Submits the current input. Returns whether it actually added an item. */
-  const handleSubmit = (): boolean => {
+  const handleSubmit = (): boolean | Promise<boolean> => {
     if (!value.trim()) {
       return false;
     }
@@ -129,17 +236,17 @@ export const ScriptureItemInput = forwardRef<
       );
       return false;
     }
-    addRef(highlightedOption.ref);
-    return true;
+    return addRef(highlightedOption.ref);
   };
 
   useImperativeHandle(
     ref,
     () => ({
-      isDirty: () => value.trim() !== (initialValue ?? "").trim(),
+      isDirty: () =>
+        value.trim() !== (initialValue ?? "").trim() || noteChanged(),
       commit: handleSubmit,
     }),
-    [value, highlightedOption, initialValue]
+    [value, highlightedOption, initialValue, noteOpen, noteTitle, initialNote]
   );
 
   return (
@@ -169,7 +276,7 @@ export const ScriptureItemInput = forwardRef<
             onKeyDown={(event: KeyboardEvent) => {
               if (event.key === "Enter") {
                 event.preventDefault();
-                handleSubmit();
+                void handleSubmit();
                 return;
               }
               if (event.key === "Escape") {
@@ -220,7 +327,7 @@ export const ScriptureItemInput = forwardRef<
           <button
             type="button"
             className="sb-settings-save-button"
-            onClick={handleSubmit}
+            onClick={() => void handleSubmit()}
             disabled={!value.trim()}
           >
             {submitLabel ??
@@ -258,7 +365,7 @@ export const ScriptureItemInput = forwardRef<
                         // input's blur can hide the list out from under the tap.
                         onMouseDown={(event: MouseEvent) => {
                           event.preventDefault();
-                          addRef(option.ref);
+                          void addRef(option.ref);
                         }}
                       >
                         {option.label}
@@ -272,6 +379,72 @@ export const ScriptureItemInput = forwardRef<
         ) : null}
       </div>
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}
+      {noteOpen ? (
+        <div className="sb-scripture-note-field">
+          <div className="sb-scripture-note-header">
+            <span className="sb-scripture-note-label">
+              {t("playlist-scripture-note-label", { defaultValue: "Note" })}
+            </span>
+            <button
+              type="button"
+              className="sb-scripture-note-toggle"
+              onClick={() => {
+                setNoteOpen(false);
+                setNoteTitle("");
+                noteEditorRef.current = null;
+              }}
+            >
+              {t("playlist-scripture-note-remove", {
+                defaultValue: "Remove note",
+              })}
+            </button>
+          </div>
+          <input
+            className="sb-settings-text-input sb-playlist-input sb-scripture-note-title-input"
+            type="text"
+            value={noteTitle}
+            dir="auto"
+            placeholder={t("playlist-scripture-note-title-placeholder", {
+              defaultValue: "Note title (optional)",
+            })}
+            aria-label={t("playlist-scripture-note-title-label", {
+              defaultValue: "Note title",
+            })}
+            onInput={(event: Event) => {
+              setNoteTitle((event.currentTarget as HTMLInputElement).value);
+            }}
+          />
+          <Suspense
+            fallback={
+              <div
+                className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor sb-playlist-add-editor--loading"
+                aria-busy="true"
+              />
+            }
+          >
+            <TipTapEditor
+              className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor"
+              initialContent={initialNote}
+              onEditor={(editor) => {
+                noteEditorRef.current = editor;
+                if (editor && initialNote && noteBaselineRef.current === null) {
+                  noteBaselineRef.current = editor.getHTML();
+                }
+              }}
+              onEmptyChange={() => {}}
+            />
+          </Suspense>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="sb-scripture-note-toggle sb-scripture-note-add"
+          onClick={() => setNoteOpen(true)}
+        >
+          <MaterialIcon>add_notes</MaterialIcon>
+          {t("playlist-scripture-note-add", { defaultValue: "Add a note" })}
+        </button>
+      )}
     </>
   );
 });
