@@ -593,6 +593,84 @@ describe("SessionsManager", () => {
     expect(session.id).toBe("group-abc");
   });
 
+  it("joinSession(id, startPosition) starts a session nobody has navigated yet at that position", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    await manager.joinSession("group-abc", {
+      initialTranslationId: "BSB",
+      initialBookId: "EXO",
+      initialChapterNumber: 10,
+    });
+
+    expect(createBibleReadingState).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      {
+        initialTranslationId: "BSB",
+        initialBookId: "EXO",
+        initialChapterNumber: 10,
+        isShared: true,
+      },
+      undefined,
+      undefined,
+      undefined
+    );
+    // Published straight away, so the next joiner opens Exodus 10 too.
+    expect(mockMap.set).toHaveBeenCalledWith("translationId", "BSB");
+    expect(mockMap.set).toHaveBeenCalledWith("bookId", "EXO");
+    expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 10);
+  });
+
+  it("joinSession(id, startPosition) follows a session that already has a position", async () => {
+    mockMap = createMockSharedMap({
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 3,
+      shareTranslation: true,
+    });
+    mockDocument.getMap.mockReturnValue(mockMap);
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    const session = await manager.joinSession("group-abc", {
+      initialTranslationId: "BSB",
+      initialBookId: "EXO",
+      initialChapterNumber: 10,
+    });
+
+    // The reader is not opened at the link's chapter first...
+    expect(createBibleReadingState).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      { isShared: true },
+      undefined,
+      undefined,
+      undefined
+    );
+    // ...but at the session's, and the group is not pulled to the link's.
+    expect(
+      session.readingState.selectTranslationAndChapter
+    ).toHaveBeenCalledWith("BSB", "GEN", 3, undefined);
+    expect(mockMap.set).not.toHaveBeenCalledWith("bookId", expect.anything());
+    expect(mockMap.set).not.toHaveBeenCalledWith(
+      "chapterNumber",
+      expect.anything()
+    );
+  });
+
   it("joinSession(id) does not set default options in the options map", async () => {
     const manager = createSessionsManager(
       os,

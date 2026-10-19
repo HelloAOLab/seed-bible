@@ -719,6 +719,7 @@
   "annotation-sync-failed": "Couldn't save a note to your account. It's still on this device.",
   "session-disconnected": "You lost connection to the session",
   "session-reconnected": "You rejoined the session",
+  "session-join-failed": "Couldn't join the shared session",
   "session-host-disconnected": "The host disconnected from the session",
   "session-host-reconnected": "The host reconnected to the session",
   "session-host-left": "The host left — you were removed from the session",
