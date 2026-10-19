@@ -1,4 +1,5 @@
 import { render, createRef } from "preact";
+import { mockI18nState, resetMockI18n } from "../testUtils/mockI18n";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
@@ -14,8 +15,13 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const { mockI18nManager } = await import("../testUtils/mockI18n");
-  return mockI18nManager();
+  const { mockI18nManager, mockI18nState } =
+    await import("../testUtils/mockI18n");
+  return mockI18nManager({
+    get isRtl() {
+      return mockI18nState.language === "ar";
+    },
+  });
 });
 
 const BOOK_NAMES: Record<string, string> = { JHN: "John", GEN: "Genesis" };
@@ -660,5 +666,78 @@ describe("a scripture reference inside a note", () => {
     await act(() => playing.next());
 
     expect(playing.awayFromStep.value).toBe(false);
+  });
+});
+
+describe("a note in a right-to-left UI language", () => {
+  let container: HTMLDivElement;
+  let reader: HTMLDivElement;
+  const readerRef = createRef<HTMLDivElement>();
+
+  beforeEach(() => {
+    mockI18nState.language = "ar";
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    reader = document.createElement("div");
+    reader.getBoundingClientRect = () => rect(0, 0, 1024, 768);
+    document.body.appendChild(reader);
+    (readerRef as { current: HTMLDivElement | null }).current = reader;
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    reader.remove();
+    resetMockI18n();
+  });
+
+  it("lays out the desktop note right to left, with Next pointing left", async () => {
+    const playing = createPlayingState([playlist([noted, noted])]);
+    act(() => {
+      render(
+        <ScriptureNotePopover
+          playing={playing}
+          readerRef={readerRef}
+          resolveBookName={resolveBookName}
+        />,
+        container
+      );
+    });
+    await waitFor(() => !!document.querySelector(".sb-scripture-note-popover"));
+
+    // Rendered into <body>, outside the app root's own `dir`.
+    expect(
+      document.querySelector(".sb-scripture-note-layer")!.getAttribute("dir")
+    ).toBe("rtl");
+    expect(
+      document.querySelector(".sb-scripture-note-popover .sb-tour-next-arrow")!
+        .textContent
+    ).toBe("←");
+  });
+
+  it("lays out the mobile sheet and the Show note tab right to left", () => {
+    const playing = createPlayingState([playlist([noted])]);
+    act(() => {
+      render(
+        <>
+          <ScriptureNoteSheet
+            playing={playing}
+            resolveBookName={resolveBookName}
+          />
+          <ScriptureNoteShowTab playing={playing} />
+        </>,
+        container
+      );
+    });
+    act(() => playing.setNoteExpanded(false));
+
+    expect(
+      container.querySelector(".sb-scripture-note-sheet")!.getAttribute("dir")
+    ).toBe("rtl");
+    expect(
+      container
+        .querySelector(".sb-scripture-note-show-tab")!
+        .getAttribute("dir")
+    ).toBe("rtl");
   });
 });

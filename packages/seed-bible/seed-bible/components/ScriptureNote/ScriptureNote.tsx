@@ -324,7 +324,7 @@ function ScriptureNotePopoverBody(props: {
   resolveBookName: (bookId: string) => string;
 }) {
   const { item, playing, readerRef, resolveBookName } = props;
-  const { t } = useI18n();
+  const { t, isRtl } = useI18n();
   const hidden = !playing.noteExpanded.value;
   const away = playing.awayFromStep.value;
   /**
@@ -442,7 +442,13 @@ function ScriptureNotePopoverBody(props: {
   const total = playing.queue.value.length;
 
   return createPortal(
-    <div className="sb-scripture-note-layer" style={layerStyle}>
+    // Rendered outside the app root, so it doesn't inherit the UI language's
+    // direction from it.
+    <div
+      className="sb-scripture-note-layer"
+      style={layerStyle}
+      dir={isRtl ? "rtl" : "ltr"}
+    >
       <div
         ref={popoverRef}
         className={`sb-scripture-note-popover${
@@ -495,7 +501,7 @@ function ScriptureNotePopoverBody(props: {
             </button>
           ) : null}
           {total > 1 ? (
-            <span className="sb-scripture-note-progress">
+            <span className="sb-scripture-note-progress" dir="auto">
               {t("playlist-scripture-note-progress", {
                 defaultValue: "{{current}} of {{total}}",
                 current: playing.currentIndex.value + 1,
@@ -511,7 +517,7 @@ function ScriptureNotePopoverBody(props: {
           >
             {t("next", { defaultValue: "Next" })}
             <span className="sb-tour-next-arrow" dir="ltr" aria-hidden="true">
-              →
+              {isRtl ? "←" : "→"}
             </span>
           </button>
         </div>
@@ -529,7 +535,7 @@ function ScriptureNotePopoverBody(props: {
  */
 export function ScriptureNoteShowTab(props: { playing: PlayingState }) {
   const { playing } = props;
-  const { t } = useI18n();
+  const { t, isRtl } = useI18n();
   if (!currentScriptureNoteItem(playing) || playing.noteExpanded.value) {
     return null;
   }
@@ -537,6 +543,9 @@ export function ScriptureNoteShowTab(props: { playing: PlayingState }) {
     <button
       type="button"
       className="sb-scripture-note-show-tab"
+      // The toolbar it sits on follows the Bible translation's direction;
+      // this is part of the UI.
+      dir={isRtl ? "rtl" : "ltr"}
       onClick={() => playing.setNoteExpanded(true)}
     >
       {t("playlist-scripture-note-show", { defaultValue: "Show note" })}
@@ -575,7 +584,7 @@ function ScriptureNoteSheetBody(props: {
   resolveBookName: (bookId: string) => string;
 }) {
   const { item, playing, resolveBookName } = props;
-  const { t } = useI18n();
+  const { t, isRtl } = useI18n();
   const collapsed = !playing.noteExpanded.value;
   const label = playlistItemLabel(item, t, resolveBookName);
   const hasBody = !!item.note?.trim();
@@ -587,6 +596,9 @@ function ScriptureNoteSheetBody(props: {
 
   return (
     <section
+      // The nav it rides on follows the Bible translation's direction; the
+      // note's frame is part of the UI.
+      dir={isRtl ? "rtl" : "ltr"}
       className={`sb-scripture-note-sheet${
         collapsed ? " sb-scripture-note-sheet--collapsed" : ""
       }`}

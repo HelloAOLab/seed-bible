@@ -160,6 +160,12 @@
   opacity: 0.6;
 }
 
+/* Unlike the tutorial's, a note's Next follows right-to-left convention: on
+   the left, with its arrow after the label, pointing left. */
+[dir="rtl"] .sb-scripture-note-actions .sb-tour-btn-next {
+  flex-direction: row;
+}
+
 .sb-scripture-note-actions .sb-tour-btn-next:disabled {
   opacity: 0.4;
   cursor: default;
