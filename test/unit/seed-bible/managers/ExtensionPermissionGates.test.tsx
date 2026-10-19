@@ -1,0 +1,585 @@
+// Real i18next isn't initialized in unit tests; the manager only needs to
+// register translations and read the language.
+vi.mock(
+  "@packages/seed-bible/seed-bible/i18n/I18nManager",
+  async (original) => ({
+    ...(await original<object>()),
+    addTranslations: vi.fn(),
+    i18n: { language: "en", on: () => {} },
+  })
+);
+import { render } from "preact";
+import type { ExtensionManager } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import type { ExtensionMeta } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import { buildSandboxCsp } from "@packages/seed-bible/seed-bible/managers/ExtensionSandboxManager";
+import type { BibleSelectedVerse } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import {
+  defineExtension,
+  type SandboxContext,
+  type SandboxReadingPosition,
+  type SandboxSelectedVerse,
+} from "@packages/seed-bible/seed-bible/extensions";
+import {
+  SANDBOX_PERMISSIONS,
+  type SandboxHostMessage,
+  type SandboxPermission,
+} from "@packages/seed-bible/seed-bible/extensions/protocol";
+import { createRawFrame, useSandboxHarness } from "./sandboxHarness";
+
+/*
+ * Every feature a permission unlocks, checked under every way a sandboxed
+ * extension can end up with — or without — that permission. Each case
+ * checks all the gated features, not just the one under test, so granting
+ * one permission is also shown not to unlock anything else.
+ */
+
+const JOHN_3_16: BibleSelectedVerse = {
+  bookId: "JHN",
+  chapterNumber: 3,
+  translationId: "BSB",
+  verse: { number: 16 } as BibleSelectedVerse["verse"],
+};
+
+/** What the probe extension saw, for one run of its `main`. */
+interface ProbeRecord {
+  sb: SandboxContext | null;
+  ready: boolean;
+  askResults: unknown[];
+  toolSelections: SandboxSelectedVerse[][];
+  viewPositions: (SandboxReadingPosition | null)[];
+}
+
+type Observed = "enabled" | "disabled" | `inconsistent: ${string}`;
+
+describe("permission gates", () => {
+  const h = useSandboxHarness();
+  const probes = new Map<string, ProbeRecord>();
+  let manager: ExtensionManager;
+
+  beforeEach(() => {
+    probes.clear();
+    manager = h.createManager();
+  });
+
+  /**
+   * An extension that exposes every gated feature for the test to poke: a
+   * verse tool that records the selection it's given, a toolbar tool that
+   * asks for `ask`, and a view that records the reading position it sees.
+   */
+  function probeExtension(id: string, ask: SandboxPermission) {
+    return defineExtension({
+      main: async (sb) => {
+        const record: ProbeRecord = {
+          sb,
+          ready: false,
+          askResults: [],
+          toolSelections: [],
+          viewPositions: [],
+        };
+        probes.set(id, record);
+        await sb.tools.registerVerseToolbarTool({
+          id: "probe-verse",
+          title: "Probe",
+          icon: { material: "science" },
+          onSelect: ({ selection }) =>
+            void record.toolSelections.push(selection),
+        });
+        await sb.tools.registerToolbarTool({
+          id: "ask",
+          title: "Ask",
+          icon: { material: "lock_open" },
+          onSelect: async () => {
+            record.askResults.push(
+              await sb.permissions
+                .request(ask)
+                .catch((err: { code: string }) => err.code)
+            );
+          },
+        });
+        record.ready = true;
+      },
+      views: {
+        probe: ({ sb }) => {
+          probes.get(id)!.viewPositions.push(sb.reading.position.value);
+          return null;
+        },
+      },
+    });
+  }
+
+  async function installProbe(
+    id: string,
+    ask: SandboxPermission,
+    meta: Partial<ExtensionMeta>
+  ) {
+    probes.delete(id);
+    const installed = await manager.loadExtension(
+      await h.publish(probeExtension(id, ask), { id, ...meta })
+    );
+    expect(installed).toBe(true);
+    await vi.waitFor(() => expect(probes.get(id)?.ready).toBe(true));
+  }
+
+  /** The user selects the probe's "Ask" tool and answers the request. */
+  async function ask(id: string, answer: boolean | "invalid_request") {
+    h.consent.mockImplementation(async (request) =>
+      request.reason === "request" ? answer === true : true
+    );
+    h.setUserActivation(true);
+    const record = probes.get(id)!;
+    const before = record.askResults.length;
+    h.host.surfaces.toolbar.get(`sandbox:${id}:ask`)!.onSelect!();
+    await vi.waitFor(() => expect(record.askResults).toHaveLength(before + 1));
+    expect(record.askResults.at(-1)).toBe(answer);
+    h.setUserActivation(false);
+    h.consent.mockImplementation(async () => true);
+  }
+
+  /** A page reload: the extension stops, and a fresh manager starts it again. */
+  function reloadPage(id: string) {
+    h.reload(id);
+    manager = h.createManager();
+  }
+
+  /** Waits until every message the host has already sent this frame is in. */
+  const flush = (sb: SandboxContext) => sb.storage.keys();
+
+  const FEATURES: {
+    name: string;
+    permission: SandboxPermission;
+    probe: (record: ProbeRecord) => Promise<Observed>;
+  }[] = [
+    {
+      name: "sb.reading.position follows the reader",
+      permission: "reading:position",
+      probe: async ({ sb }) => {
+        const chapter = h.host.reading.value.chapterNumber! + 1;
+        h.host.reading.value = {
+          ...h.host.reading.value,
+          chapterNumber: chapter,
+        };
+        await flush(sb!);
+        const position = sb!.reading.position.value;
+        if (position?.chapterNumber === chapter) return "enabled";
+        if (position === null) return "disabled";
+        return `inconsistent: ${JSON.stringify(position)}`;
+      },
+    },
+    {
+      name: "sb.reading.selection follows the reader",
+      permission: "reading:selection",
+      probe: async ({ sb }) => {
+        h.host.selectedVerses.value = [JOHN_3_16];
+        await flush(sb!);
+        const selection = sb!.reading.selection.value;
+        h.host.selectedVerses.value = [];
+        if (selection.length === 1 && selection[0]!.verse === 16) {
+          return "enabled";
+        }
+        if (selection.length === 0) return "disabled";
+        return `inconsistent: ${JSON.stringify(selection)}`;
+      },
+    },
+    {
+      name: "a tool's onSelect gets the selected verses",
+      permission: "reading:selection",
+      probe: async (record) => {
+        h.host.selectedVerses.value = [JOHN_3_16];
+        const before = record.toolSelections.length;
+        h.host.surfaces.verse.get(
+          `sandbox:${record.sb!.extensionId}:probe-verse`
+        )!.onSelect!();
+        await vi.waitFor(() =>
+          expect(record.toolSelections).toHaveLength(before + 1)
+        );
+        h.host.selectedVerses.value = [];
+        const selection = record.toolSelections.at(-1)!;
+        if (selection.length === 1 && selection[0]!.verse === 16) {
+          return "enabled";
+        }
+        if (selection.length === 0) return "disabled";
+        return `inconsistent: ${JSON.stringify(selection)}`;
+      },
+    },
+    {
+      name: "sb.reading.open opens a passage",
+      permission: "reading:navigate",
+      probe: async ({ sb }) => {
+        const before = h.host.openedReferences.length;
+        const outcome = await sb!.reading
+          .open({ bookId: "GEN", chapter: 1 })
+          .then(
+            () => "ok",
+            (err: { code: string }) => err.code
+          );
+        const opened = h.host.openedReferences.length - before;
+        if (outcome === "ok" && opened === 1) return "enabled";
+        if (outcome === "permission_denied" && opened === 0) return "disabled";
+        return `inconsistent: ${outcome}, opened ${opened}`;
+      },
+    },
+    {
+      name: "a pane's view sees the reading position",
+      permission: "reading:position",
+      probe: async (record) => {
+        const pane = await record.sb!.panes.open({
+          view: "probe",
+          placement: "floating",
+          title: "Probe",
+        });
+        const container = document.createElement("div");
+        document.body.appendChild(container);
+        const before = record.viewPositions.length;
+        render(
+          h.host.panes.panes.value
+            .find((p) => p.id === pane.paneId)!
+            .component(),
+          container
+        );
+        await vi.waitFor(() =>
+          expect(record.viewPositions).toHaveLength(before + 1)
+        );
+        render(null, container);
+        container.remove();
+        await pane.close();
+        const position = record.viewPositions.at(-1);
+        if (position?.bookId === "JHN") return "enabled";
+        if (position === null) return "disabled";
+        return `inconsistent: ${JSON.stringify(position)}`;
+      },
+    },
+  ];
+
+  const PATHWAYS: {
+    name: string;
+    granted: boolean;
+    setUp: (id: string, permission: SandboxPermission) => Promise<void>;
+  }[] = [
+    {
+      name: "required by the manifest",
+      granted: true,
+      setUp: (id, p) => installProbe(id, p, { permissions: [p] }),
+    },
+    {
+      name: "optional, and allowed when the extension asked",
+      granted: true,
+      setUp: async (id, p) => {
+        await installProbe(id, p, { optionalPermissions: [p] });
+        await ask(id, true);
+      },
+    },
+    {
+      name: "optional, allowed when asked, and still granted after a reload",
+      granted: true,
+      setUp: async (id, p) => {
+        await installProbe(id, p, { optionalPermissions: [p] });
+        await ask(id, true);
+        reloadPage(id);
+        await installProbe(id, p, { optionalPermissions: [p] });
+      },
+    },
+    {
+      name: "optional, and never asked for",
+      granted: false,
+      setUp: (id, p) => installProbe(id, p, { optionalPermissions: [p] }),
+    },
+    {
+      name: "optional, and declined when the extension asked",
+      granted: false,
+      setUp: async (id, p) => {
+        await installProbe(id, p, { optionalPermissions: [p] });
+        await ask(id, false);
+      },
+    },
+    {
+      name: "not in the manifest, even though the extension asked",
+      granted: false,
+      setUp: async (id, p) => {
+        await installProbe(id, p, {});
+        await ask(id, "invalid_request");
+      },
+    },
+    {
+      name: "granted only to another installed extension",
+      granted: false,
+      setUp: async (id, p) => {
+        await installProbe("ext.other", p, { permissions: [p] });
+        await installProbe(id, p, {});
+      },
+    },
+    {
+      name: "required by an earlier version, but not this one",
+      granted: false,
+      setUp: async (id, p) => {
+        await installProbe(id, p, { permissions: [p] });
+        reloadPage(id);
+        await installProbe(id, p, {});
+      },
+    },
+    {
+      name: "allowed when asked, then no longer listed by an update",
+      granted: false,
+      setUp: async (id, p) => {
+        await installProbe(id, p, { optionalPermissions: [p] });
+        await ask(id, true);
+        reloadPage(id);
+        await installProbe(id, p, {});
+      },
+    },
+    {
+      name: "allowed when asked, then the extension was uninstalled and reinstalled",
+      granted: false,
+      setUp: async (id, p) => {
+        await installProbe(id, p, { optionalPermissions: [p] });
+        await ask(id, true);
+        manager.unloadExtension(id);
+        await vi.waitFor(() =>
+          expect(
+            JSON.parse(localStorage.getItem("sb-extension-grants")!)[id]
+          ).toHaveProperty("revokedAtMs")
+        );
+        await installProbe(id, p, { optionalPermissions: [p] });
+      },
+    },
+  ];
+
+  describe.each(SANDBOX_PERMISSIONS.map((permission) => ({ permission })))(
+    "$permission",
+    ({ permission }) => {
+      it.each(PATHWAYS)("$name", async (pathway) => {
+        const id = "ext.probe";
+        await pathway.setUp(id, permission);
+        const record = probes.get(id)!;
+
+        const observed: Record<string, Observed> = {};
+        for (const feature of FEATURES) {
+          observed[feature.name] = await feature.probe(record);
+        }
+
+        expect(observed).toEqual(
+          Object.fromEntries(
+            FEATURES.map((feature) => [
+              feature.name,
+              pathway.granted && feature.permission === permission
+                ? "enabled"
+                : "disabled",
+            ])
+          )
+        );
+      });
+    }
+  );
+
+  it("gives a pane that was already open a permission granted after it opened", async () => {
+    const id = "ext.probe";
+    await installProbe(id, "reading:position", {
+      optionalPermissions: ["reading:position"],
+    });
+    const record = probes.get(id)!;
+    let viewSb: SandboxContext | null = null;
+    // A second extension whose view keeps its `sb`, to read it later.
+    await manager.loadExtension(
+      await h.publish(
+        defineExtension({
+          main: (sb) =>
+            void sb.panes.open({ view: "keep", placement: "side", title: "K" }),
+          views: {
+            keep: ({ sb }) => {
+              viewSb = sb;
+              return null;
+            },
+          },
+        }),
+        { id: "ext.view-first", optionalPermissions: ["reading:position"] }
+      )
+    );
+    await vi.waitFor(() =>
+      expect(
+        h.host.panes.panes.value.some((p) =>
+          p.id.startsWith("sandbox:ext.view-first:")
+        )
+      ).toBe(true)
+    );
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    render(
+      h.host.panes.panes.value
+        .find((p) => p.id.startsWith("sandbox:ext.view-first:"))!
+        .component(),
+      container
+    );
+    await vi.waitFor(() => expect(viewSb).toBeTruthy());
+    expect(viewSb!.reading.position.value).toBeNull();
+
+    // The user, inside that pane, allows the request it makes.
+    h.focusedFrame = h.frames.at(-1)!;
+    h.setUserActivation(true);
+    expect(await viewSb!.permissions.request("reading:position")).toBe(true);
+
+    expect(viewSb!.permissions.has("reading:position")).toBe(true);
+    await vi.waitFor(() =>
+      expect(viewSb!.reading.position.value?.bookId).toBe("JHN")
+    );
+    // The other extension, which never asked, still has nothing.
+    expect(record.sb!.reading.position.value).toBeNull();
+    render(null, container);
+    container.remove();
+  });
+
+  describe("at the protocol level, without the SDK", () => {
+    const stateMessages = (messages: SandboxHostMessage[]) =>
+      messages.filter((m) => m.type === "state");
+
+    it("sends a frame nothing gated in its first message unless it's granted", async () => {
+      h.host.selectedVerses.value = [JOHN_3_16];
+      const withNothing = createRawFrame();
+      const withEverything = createRawFrame();
+      await manager.loadExtension(
+        await h.publish(withNothing, { id: "ext.raw-nothing" })
+      );
+      await manager.loadExtension(
+        await h.publish(withEverything, {
+          id: "ext.raw-everything",
+          permissions: [...SANDBOX_PERMISSIONS],
+        })
+      );
+
+      expect(withNothing.init!.granted).toEqual([]);
+      expect(withNothing.init!.state.position).toBeNull();
+      expect(withNothing.init!.state.selection).toEqual([]);
+      expect(withEverything.init!.state.position).toMatchObject({
+        bookId: "JHN",
+        chapterNumber: 3,
+      });
+      expect(withEverything.init!.state.selection).toEqual([
+        { bookId: "JHN", chapterNumber: 3, translationId: "BSB", verse: 16 },
+      ]);
+    });
+
+    it("doesn't even tell a frame without the permission that the passage or selection changed", async () => {
+      const withoutPermission = createRawFrame();
+      const withPermission = createRawFrame();
+      await manager.loadExtension(
+        await h.publish(withoutPermission, { id: "ext.raw-without" })
+      );
+      await manager.loadExtension(
+        await h.publish(withPermission, {
+          id: "ext.raw-with",
+          permissions: ["reading:position", "reading:selection"],
+        })
+      );
+      // Messages already in flight from the install have arrived.
+      await withoutPermission.call("storage.keys", {});
+      await withPermission.call("storage.keys", {});
+      const before = stateMessages(withoutPermission.messages).length;
+      const beforeGranted = stateMessages(withPermission.messages).length;
+
+      h.host.reading.value = { ...h.host.reading.value, chapterNumber: 9 };
+      h.host.selectedVerses.value = [JOHN_3_16];
+      await withoutPermission.call("storage.keys", {});
+      await withPermission.call("storage.keys", {});
+
+      expect(stateMessages(withoutPermission.messages)).toHaveLength(before);
+      expect(stateMessages(withPermission.messages).length).toBeGreaterThan(
+        beforeGranted
+      );
+      const latest = stateMessages(withPermission.messages).at(-1)!;
+      expect(latest.type === "state" && latest.state).toMatchObject({
+        position: { chapterNumber: 9 },
+        selection: [{ verse: 16 }],
+      });
+    });
+
+    it("ignores a frame that tells the host it has permissions", async () => {
+      const raw = createRawFrame();
+      await manager.loadExtension(await h.publish(raw, { id: "ext.raw-liar" }));
+      await vi.waitFor(() => expect(raw.started).toBe(true));
+
+      raw.send({ type: "permissions", granted: [...SANDBOX_PERMISSIONS] });
+      raw.send({
+        type: "state",
+        state: {
+          position: { translationId: "BSB", bookId: "GEN", chapterNumber: 1 },
+        },
+      });
+      raw.send({ type: "result", id: 1, ok: true, value: { granted: true } });
+      const response = await raw.call("reading.open", {
+        bookId: "GEN",
+        chapter: 1,
+      });
+
+      expect(response).toMatchObject({
+        ok: false,
+        error: { code: "permission_denied" },
+      });
+      expect(h.host.openedReferences).toEqual([]);
+    });
+
+    it("rejects requests for permissions that don't exist", async () => {
+      const raw = createRawFrame();
+      await manager.loadExtension(
+        await h.publish(raw, {
+          id: "ext.raw-bogus",
+          optionalPermissions: ["reading:position"],
+        })
+      );
+      await vi.waitFor(() => expect(raw.started).toBe(true));
+      h.setUserActivation(true);
+      h.focusedFrame = h.frames[0]!;
+
+      const response = await raw.call("permissions.request", {
+        permissions: ["account:everything"],
+      });
+
+      expect(response).toMatchObject({
+        ok: false,
+        error: { code: "invalid_request" },
+      });
+      expect(h.consent).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("network hosts", () => {
+    it("lets each frame reach only the hosts its manifest lists", async () => {
+      await installProbe("ext.probe", "reading:position", {
+        network: ["api.example.com"],
+        optionalPermissions: ["reading:position"],
+      });
+      await ask("ext.probe", true);
+      await probes.get("ext.probe")!.sb!.panes.open({
+        view: "probe",
+        placement: "side",
+        title: "P",
+      });
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      render(h.host.panes.panes.value[0]!.component(), container);
+      await vi.waitFor(() => expect(h.frames).toHaveLength(2));
+
+      // Granting a permission doesn't widen what any frame can reach.
+      for (const frame of h.frames) {
+        expect(frame.network).toEqual(["api.example.com"]);
+        const csp = buildSandboxCsp(frame.network);
+        expect(csp).toContain("connect-src https://api.example.com;");
+        expect(csp).toContain("img-src data: blob: https://api.example.com;");
+      }
+      render(null, container);
+      container.remove();
+    });
+
+    it("lets a frame reach nothing when the manifest lists no hosts, including after an update drops one", async () => {
+      await installProbe("ext.probe", "reading:position", {
+        network: ["api.example.com"],
+      });
+      reloadPage("ext.probe");
+
+      await installProbe("ext.probe", "reading:position", {});
+
+      expect(h.frames).toHaveLength(1);
+      expect(h.frames[0]!.network).toEqual([]);
+      expect(buildSandboxCsp(h.frames[0]!.network)).toContain(
+        "connect-src 'none'"
+      );
+    });
+  });
+});

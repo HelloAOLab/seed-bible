@@ -1,5 +1,3 @@
-import { signal } from "@preact/signals";
-
 // Real i18next isn't initialized in unit tests; the manager only needs to
 // register translations and read the language.
 vi.mock(
@@ -13,253 +11,28 @@ vi.mock(
 import { render } from "preact";
 import { useEffect } from "preact/hooks";
 import {
-  createExtensionManager,
-  ExtensionInitalizer,
-  setupExtensionContext,
-  type ExtensionManagerOptions,
-  type ExtensionMeta,
-  type UploadedExtension,
-} from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
-import {
   buildSandboxCsp,
   buildSandboxDocument,
-  type SandboxFrameConnector,
-  type SandboxFrameRequest,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionSandboxManager";
 import {
   extensionSource,
   mergeExtensionGrants,
   missingFromGrant,
   parseSandboxManifest,
-  type SandboxConsentRequest,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionPermissions";
-import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
-import type {
-  BibleTool,
-  ToolsManager,
-} from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
-import type { BibleSelectedVerse } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
-import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import {
   defineExtension,
   SandboxError,
   type SandboxContext,
-  type SandboxExtension,
 } from "@packages/seed-bible/seed-bible/extensions";
-import { SANDBOX_START_KEY } from "@packages/seed-bible/seed-bible/extensions/protocol";
-
-type RegisteredTool = BibleTool<unknown> & {
-  onSelect?: () => void;
-  getItems?: () => { id: string; onSelect?: () => void }[];
-};
-
-/**
- * Stands in for the app's toolbars: records what's registered by id, with the
- * same replace-by-id rule as the real `ToolsManager`, so a test can see and
- * click what a toolbar would render.
- */
-function createRecordingTools() {
-  const surfaces = {
-    toolbar: new Map<string, RegisteredTool>(),
-    verse: new Map<string, RegisteredTool>(),
-    quick: new Map<string, RegisteredTool>(),
-    belowReader: new Map<string, RegisteredTool>(),
-  };
-  const register =
-    (surface: keyof typeof surfaces) => (tool: RegisteredTool) => {
-      surfaces[surface].set(tool.id, tool);
-      return () => surfaces[surface].delete(tool.id);
-    };
-  const unregister = (surface: keyof typeof surfaces) => (id: string) => {
-    surfaces[surface].delete(id);
-  };
-  const tools = {
-    registerToolbarTool: register("toolbar"),
-    unregisterToolbarTool: unregister("toolbar"),
-    registerVerseToolbarTool: register("verse"),
-    unregisterVerseToolbarTool: unregister("verse"),
-    registerQuickTool: register("quick"),
-    unregisterQuickTool: unregister("quick"),
-    registerBelowReaderTool: register("belowReader"),
-    unregisterBelowReaderTool: unregister("belowReader"),
-  } as unknown as ToolsManager;
-  return { tools, surfaces };
-}
-
-function createLogin(): LoginManager {
-  return {
-    userId: signal<string | null>(null),
-    profile: signal(null),
-    localConfig: signal<Record<string, unknown>>({}),
-    profilePromise: null,
-  } as unknown as LoginManager;
-}
-
-async function sha384(text: string): Promise<string> {
-  const digest = new Uint8Array(
-    await crypto.subtle.digest("SHA-384", new TextEncoder().encode(text))
-  );
-  return `sha384-${btoa(String.fromCharCode(...digest))}`;
-}
+import { sha384, useSandboxHarness } from "./sandboxHarness";
 
 describe("sandboxed extensions", () => {
-  // A "bundle" here is a token that names an extension definition; the
-  // in-process connector below starts that definition the way the frame's
-  // bootstrap would start the real module.
-  const definitions = new Map<string, SandboxExtension>();
-  const bundles = new Map<string, string>();
-  let frames: SandboxFrameRequest[];
-  let openPorts: MessagePort[];
-  let nextBundle: number;
-  let consent: ReturnType<
-    typeof vi.fn<(r: SandboxConsentRequest) => Promise<boolean>>
-  >;
-  let host: ReturnType<typeof createHost>;
-
-  const connector: SandboxFrameConnector = (request) => {
-    frames.push(request);
-    const channel = new MessageChannel();
-    openPorts.push(channel.port1, channel.port2);
-    const definition = definitions.get(request.code);
-    if (definition) {
-      void definition[SANDBOX_START_KEY](
-        channel.port2,
-        structuredClone(request.init)
-      );
-    }
-    return {
-      port: channel.port1,
-      destroy: () => {
-        frames = frames.filter((frame) => frame !== request);
-        channel.port1.close();
-        channel.port2.close();
-      },
-      hasFocus: () => focusedFrame === request,
-    };
-  };
-
-  /** Which frame the user is "in", as the host would see from focus. */
-  let focusedFrame: SandboxFrameRequest | null = null;
-
-  /** Stands in for the browser's record of a click or key press just now. */
-  function setUserActivation(isActive: boolean) {
-    Object.defineProperty(navigator, "userActivation", {
-      value: { isActive, hasBeenActive: isActive },
-      configurable: true,
-    });
-  }
-
-  function createHost() {
-    const { tools, surfaces } = createRecordingTools();
-    const panes = createPanes();
-    const selectedVerses = signal<BibleSelectedVerse[]>([]);
-    const reading = signal({
-      tab: { readingState: { selectedVerses } },
-      translationId: "BSB" as string | null,
-      bookId: "JHN" as string | null,
-      chapterNumber: 3 as number | null,
-    });
-    const toasts: string[] = [];
-    const openedReferences: unknown[] = [];
-    const context = {
-      tools,
-      panes,
-      app: {
-        toast: (message: string) => toasts.push(message),
-        currentReadingState: reading,
-        isMobile: signal(false),
-        openVerseReference: async (ref: unknown) => {
-          openedReferences.push(ref);
-        },
-      },
-      theme: { themeCssVariables: signal("--sb-font-color: #111;") },
-      i18n: { language: signal("en"), isRtl: signal(false) },
-      extensionSettings: { getValue: () => undefined },
-    };
-    setupExtensionContext(context as unknown as SeedBibleState);
-    return {
-      surfaces,
-      panes,
-      reading,
-      selectedVerses,
-      toasts,
-      openedReferences,
-    };
-  }
-
-  function createManager(options: ExtensionManagerOptions = {}) {
-    return createExtensionManager(createLogin(), {
-      requestSandboxConsent: consent,
-      sandboxFrameConnector: connector,
-      ...options,
-    });
-  }
-
-  async function publish(
-    definition: SandboxExtension,
-    meta: Partial<ExtensionMeta> & { id: string },
-    url = `https://files.example.com/publisher-a/${meta.id}-${nextBundle}.js`
-  ): Promise<UploadedExtension> {
-    const code = `bundle:${nextBundle++}`;
-    definitions.set(code, definition);
-    bundles.set(url, code);
-    return {
-      url,
-      meta: {
-        translations: {
-          en: { title: `Title of ${meta.id}`, description: "Does things." },
-        },
-        integrity: await sha384(code),
-        ...meta,
-      },
-    };
-  }
-
-  beforeEach(() => {
-    localStorage.clear();
-    frames = [];
-    openPorts = [];
-    nextBundle = 0;
-    definitions.clear();
-    bundles.clear();
-    consent = vi.fn(async () => true);
-    host = createHost();
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (url: string) => {
-        const code = bundles.get(url);
-        return code === undefined
-          ? { ok: false, status: 404, statusText: "Not Found" }
-          : {
-              ok: true,
-              arrayBuffer: async () => new TextEncoder().encode(code).buffer,
-            };
-      })
-    );
-  });
-
-  afterEach(() => {
-    const initializer = ExtensionInitalizer.getInstance();
-    for (const registration of initializer.listRegisteredExtensions()) {
-      initializer.unregisterExtension(registration.id);
-    }
-    for (const port of openPorts) {
-      port.close();
-    }
-    focusedFrame = null;
-    setUserActivation(false);
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-  });
-
-  /** Simulates a page reload: the extension stops, but stays installed and granted. */
-  function reload(id: string) {
-    ExtensionInitalizer.getInstance().unregisterExtension(id);
-  }
+  const h = useSandboxHarness();
+  const { createManager, publish, reload, setUserActivation } = h;
 
   it("asks before installing, and runs nothing when the user declines", async () => {
-    consent.mockResolvedValue(false);
+    h.consent.mockResolvedValue(false);
     const main = vi.fn();
     const extension = await publish(defineExtension({ main }), {
       id: "ext.declined",
@@ -270,7 +43,7 @@ describe("sandboxed extensions", () => {
     const installed = await createManager().loadExtension(extension);
 
     expect(installed).toBe(false);
-    expect(consent).toHaveBeenCalledWith(
+    expect(h.consent).toHaveBeenCalledWith(
       expect.objectContaining({
         extensionId: "ext.declined",
         title: "Title of ext.declined",
@@ -280,7 +53,7 @@ describe("sandboxed extensions", () => {
         reason: "install",
       })
     );
-    expect(frames).toEqual([]);
+    expect(h.frames).toEqual([]);
     expect(main).not.toHaveBeenCalled();
   });
 
@@ -308,24 +81,24 @@ describe("sandboxed extensions", () => {
 
     expect(await createManager().loadExtension(extension)).toBe(true);
     await vi.waitFor(() =>
-      expect([...host.surfaces.toolbar.keys()]).toEqual([
+      expect([...h.host.surfaces.toolbar.keys()]).toEqual([
         "sandbox:ext.demo:share",
       ])
     );
-    expect(frames).toHaveLength(1);
-    expect(frames[0]!.init.mode).toEqual({ kind: "background" });
+    expect(h.frames).toHaveLength(1);
+    expect(h.frames[0]!.init.mode).toEqual({ kind: "background" });
 
-    host.surfaces.toolbar.get("sandbox:ext.demo:share")!.onSelect!();
-    await vi.waitFor(() => expect(host.panes.panes.value).toHaveLength(1));
-    const pane = host.panes.panes.value[0]!;
+    h.host.surfaces.toolbar.get("sandbox:ext.demo:share")!.onSelect!();
+    await vi.waitFor(() => expect(h.host.panes.panes.value).toHaveLength(1));
+    const pane = h.host.panes.panes.value[0]!;
     expect(pane.id).toMatch(/^sandbox:ext\.demo:/);
 
     // Rendering the pane is what connects its view frame.
     const container = document.createElement("div");
     document.body.appendChild(container);
     render(pane.component(), container);
-    await vi.waitFor(() => expect(frames).toHaveLength(2));
-    expect(frames[1]!.init.mode).toEqual({
+    await vi.waitFor(() => expect(h.frames).toHaveLength(2));
+    expect(h.frames[1]!.init.mode).toEqual({
       kind: "view",
       view: "main",
       paneId: pane.id,
@@ -345,7 +118,7 @@ describe("sandboxed extensions", () => {
 
     expect(await createManager().loadExtension(extension)).toBe(true);
 
-    expect(consent).toHaveBeenCalledTimes(1);
+    expect(h.consent).toHaveBeenCalledTimes(1);
   });
 
   it("asks again, listing only what's new, when an update wants more", async () => {
@@ -363,7 +136,7 @@ describe("sandboxed extensions", () => {
     });
     await createManager().loadExtension(update);
 
-    expect(consent).toHaveBeenLastCalledWith(
+    expect(h.consent).toHaveBeenLastCalledWith(
       expect.objectContaining({
         reason: "update",
         newPermissions: ["reading:selection"],
@@ -387,8 +160,8 @@ describe("sandboxed extensions", () => {
     );
     await createManager().loadExtension(impostor);
 
-    expect(consent).toHaveBeenCalledTimes(2);
-    expect(consent).toHaveBeenLastCalledWith(
+    expect(h.consent).toHaveBeenCalledTimes(2);
+    expect(h.consent).toHaveBeenLastCalledWith(
       expect.objectContaining({ reason: "install" })
     );
   });
@@ -401,8 +174,8 @@ describe("sandboxed extensions", () => {
     });
 
     expect(await createManager().loadExtension(extension)).toBe(false);
-    expect(consent).not.toHaveBeenCalled();
-    expect(frames).toEqual([]);
+    expect(h.consent).not.toHaveBeenCalled();
+    expect(h.frames).toEqual([]);
   });
 
   it("refuses a manifest asking for a permission this version doesn't know", async () => {
@@ -413,126 +186,17 @@ describe("sandboxed extensions", () => {
     });
 
     expect(await createManager().loadExtension(extension)).toBe(false);
-    expect(consent).not.toHaveBeenCalled();
+    expect(h.consent).not.toHaveBeenCalled();
   });
 
   it("can't install without a way to ask the user", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     const extension = await publish(defineExtension({}), { id: "ext.no-ui" });
 
-    const manager = createExtensionManager(createLogin(), {
-      sandboxFrameConnector: connector,
-    });
+    const manager = createManager({ requestSandboxConsent: undefined });
 
     expect(await manager.loadExtension(extension)).toBe(false);
-    expect(frames).toEqual([]);
-  });
-
-  it("shares the reading position, and keeps it current, only when granted", async () => {
-    let granted: SandboxContext | null = null;
-    let withheld: SandboxContext | null = null;
-    const manager = createManager();
-    await manager.loadExtension(
-      await publish(
-        defineExtension({
-          main: (sb) => {
-            granted = sb;
-          },
-        }),
-        { id: "ext.with-position", permissions: ["reading:position"] }
-      )
-    );
-    await manager.loadExtension(
-      await publish(
-        defineExtension({
-          main: (sb) => {
-            withheld = sb;
-          },
-        }),
-        { id: "ext.without-position" }
-      )
-    );
-    await vi.waitFor(() => expect(granted && withheld).toBeTruthy());
-
-    expect(granted!.reading.position.value).toEqual({
-      translationId: "BSB",
-      bookId: "JHN",
-      chapterNumber: 3,
-    });
-    expect(withheld!.reading.position.value).toBeNull();
-
-    host.reading.value = { ...host.reading.value, chapterNumber: 4 };
-    await vi.waitFor(() =>
-      expect(granted!.reading.position.value?.chapterNumber).toBe(4)
-    );
-    expect(withheld!.reading.position.value).toBeNull();
-  });
-
-  it("only opens passages with reading:navigate", async () => {
-    let sb: SandboxContext | null = null;
-    await createManager().loadExtension(
-      await publish(
-        defineExtension({
-          main: (context) => {
-            sb = context;
-          },
-        }),
-        { id: "ext.no-navigate" }
-      )
-    );
-    await vi.waitFor(() => expect(sb).toBeTruthy());
-
-    const error = await sb!.reading
-      .open({ bookId: "GEN", chapter: 1 })
-      .catch((err: unknown) => err);
-
-    expect(error).toBeInstanceOf(SandboxError);
-    expect((error as SandboxError).code).toBe("permission_denied");
-    expect(host.openedReferences).toEqual([]);
-  });
-
-  it("passes the selected verses to a verse tool only with reading:selection", async () => {
-    const seen: unknown[] = [];
-    const manager = createManager();
-    for (const [id, permissions] of [
-      ["ext.sees-selection", ["reading:selection"]],
-      ["ext.blind", []],
-    ] as const) {
-      await manager.loadExtension(
-        await publish(
-          defineExtension({
-            main: async (sb) => {
-              await sb.tools.registerVerseToolbarTool({
-                id: "verse",
-                title: "Verse",
-                icon: { material: "star" },
-                onSelect: ({ selection }) => void seen.push([id, selection]),
-              });
-            },
-          }),
-          { id, permissions: [...permissions] }
-        )
-      );
-    }
-    await vi.waitFor(() => expect(host.surfaces.verse.size).toBe(2));
-    host.selectedVerses.value = [
-      {
-        bookId: "JHN",
-        chapterNumber: 3,
-        translationId: "BSB",
-        verse: { number: 16 } as BibleSelectedVerse["verse"],
-      },
-    ];
-
-    host.surfaces.verse.get("sandbox:ext.sees-selection:verse")!.onSelect!();
-    host.surfaces.verse.get("sandbox:ext.blind:verse")!.onSelect!();
-
-    await vi.waitFor(() => expect(seen).toHaveLength(2));
-    expect(seen).toContainEqual([
-      "ext.sees-selection",
-      [{ bookId: "JHN", chapterNumber: 3, translationId: "BSB", verse: 16 }],
-    ]);
-    expect(seen).toContainEqual(["ext.blind", []]);
+    expect(h.frames).toEqual([]);
   });
 
   it("labels its toasts with the extension's name", async () => {
@@ -546,7 +210,7 @@ describe("sandboxed extensions", () => {
     );
 
     await vi.waitFor(() =>
-      expect(host.toasts).toEqual(["Title of ext.toaster: Saved!"])
+      expect(h.host.toasts).toEqual(["Title of ext.toaster: Saved!"])
     );
   });
 
@@ -571,7 +235,7 @@ describe("sandboxed extensions", () => {
 
     await vi.waitFor(() => expect(error).toBeInstanceOf(SandboxError));
     expect((error as SandboxError).code).toBe("invalid_request");
-    expect(host.surfaces.toolbar.size).toBe(0);
+    expect(h.host.surfaces.toolbar.size).toBe(0);
   });
 
   it("only lets the extension's main code register tools, not its views", async () => {
@@ -602,12 +266,12 @@ describe("sandboxed extensions", () => {
         { id: "ext.view-tools" }
       )
     );
-    await vi.waitFor(() => expect(host.panes.panes.value).toHaveLength(1));
-    render(host.panes.panes.value[0]!.component(), container);
+    await vi.waitFor(() => expect(h.host.panes.panes.value).toHaveLength(1));
+    render(h.host.panes.panes.value[0]!.component(), container);
 
     await vi.waitFor(() => expect(viewError).toBeInstanceOf(SandboxError));
     expect((viewError as SandboxError).code).toBe("invalid_request");
-    expect(host.surfaces.toolbar.size).toBe(0);
+    expect(h.host.surfaces.toolbar.size).toBe(0);
     render(null, container);
     container.remove();
   });
@@ -659,14 +323,14 @@ describe("sandboxed extensions", () => {
     );
     const manager = createManager();
     await manager.loadExtension(extension);
-    await vi.waitFor(() => expect(host.panes.panes.value).toHaveLength(1));
-    expect(host.surfaces.quick.size).toBe(1);
+    await vi.waitFor(() => expect(h.host.panes.panes.value).toHaveLength(1));
+    expect(h.host.surfaces.quick.size).toBe(1);
 
     manager.unloadExtension("ext.uninstalled");
 
-    expect(host.surfaces.quick.size).toBe(0);
-    expect(host.panes.panes.value).toEqual([]);
-    expect(frames).toEqual([]);
+    expect(h.host.surfaces.quick.size).toBe(0);
+    expect(h.host.panes.panes.value).toEqual([]);
+    expect(h.frames).toEqual([]);
     expect(
       localStorage.getItem("sb-sandbox-storage:ext.uninstalled")
     ).toBeNull();
@@ -679,7 +343,7 @@ describe("sandboxed extensions", () => {
       ).toHaveProperty("revokedAtMs")
     );
     await manager.loadExtension(extension);
-    expect(consent).toHaveBeenCalledTimes(2);
+    expect(h.consent).toHaveBeenCalledTimes(2);
   });
 
   it("doesn't let a published extension take a first-party extension's id, or the app's", async () => {
@@ -716,7 +380,7 @@ describe("sandboxed extensions", () => {
     ).toBe(firstParty);
     expect(await manager.loadExtension(impostor)).toBe(false);
     expect(await manager.loadExtension(appNamespace)).toBe(false);
-    expect(consent).not.toHaveBeenCalled();
+    expect(h.consent).not.toHaveBeenCalled();
   });
 
   describe("optional permissions", () => {
@@ -746,9 +410,9 @@ describe("sandboxed extensions", () => {
 
     const clickTool = async (id: string) => {
       await vi.waitFor(() =>
-        expect(host.surfaces.toolbar.has(`sandbox:${id}:ask`)).toBe(true)
+        expect(h.host.surfaces.toolbar.has(`sandbox:${id}:ask`)).toBe(true)
       );
-      host.surfaces.toolbar.get(`sandbox:${id}:ask`)!.onSelect!();
+      h.host.surfaces.toolbar.get(`sandbox:${id}:ask`)!.onSelect!();
     };
 
     it("asks only for the required ones at install, and mentions the rest", async () => {
@@ -761,7 +425,7 @@ describe("sandboxed extensions", () => {
         })
       );
 
-      expect(consent).toHaveBeenCalledWith(
+      expect(h.consent).toHaveBeenCalledWith(
         expect.objectContaining({
           reason: "install",
           permissions: ["reading:selection"],
@@ -788,7 +452,7 @@ describe("sandboxed extensions", () => {
       await clickTool("ext.asks");
 
       await vi.waitFor(() => expect(results).toEqual([true]));
-      expect(consent).toHaveBeenLastCalledWith(
+      expect(h.consent).toHaveBeenLastCalledWith(
         expect.objectContaining({
           reason: "request",
           extensionId: "ext.asks",
@@ -809,7 +473,7 @@ describe("sandboxed extensions", () => {
       await createManager().loadExtension(extension);
       await vi.waitFor(() => expect(sbs).toHaveLength(2));
       expect(sbs[1]!.permissions.has("reading:position")).toBe(true);
-      expect(consent).toHaveBeenCalledTimes(2);
+      expect(h.consent).toHaveBeenCalledTimes(2);
     });
 
     it("doesn't ask without the user interacting with the extension", async () => {
@@ -825,7 +489,7 @@ describe("sandboxed extensions", () => {
         )
       );
       await vi.waitFor(() => expect(sb).toBeTruthy());
-      consent.mockClear();
+      h.consent.mockClear();
 
       // A click somewhere in the app, but not on this extension.
       setUserActivation(true);
@@ -834,7 +498,7 @@ describe("sandboxed extensions", () => {
         .catch((err: unknown) => err);
 
       expect((error as SandboxError).code).toBe("invalid_request");
-      expect(consent).not.toHaveBeenCalled();
+      expect(h.consent).not.toHaveBeenCalled();
     });
 
     it("asks when the user is inside one of the extension's panes", async () => {
@@ -866,11 +530,11 @@ describe("sandboxed extensions", () => {
           { id: "ext.pane-asker", optionalPermissions: ["reading:position"] }
         )
       );
-      await vi.waitFor(() => expect(host.panes.panes.value).toHaveLength(1));
-      render(host.panes.panes.value[0]!.component(), container);
-      await vi.waitFor(() => expect(frames).toHaveLength(2));
+      await vi.waitFor(() => expect(h.host.panes.panes.value).toHaveLength(1));
+      render(h.host.panes.panes.value[0]!.component(), container);
+      await vi.waitFor(() => expect(h.frames).toHaveLength(2));
 
-      focusedFrame = frames[1]!;
+      h.focusedFrame = h.frames[1]!;
       setUserActivation(true);
       (document.getElementById("enable") as HTMLButtonElement).click();
 
@@ -880,7 +544,7 @@ describe("sandboxed extensions", () => {
     });
 
     it("stops asking after the user says no", async () => {
-      consent.mockImplementation(
+      h.consent.mockImplementation(
         async (request) => request.reason !== "request"
       );
       const results: unknown[] = [];
@@ -898,7 +562,7 @@ describe("sandboxed extensions", () => {
       await vi.waitFor(() => expect(results).toEqual([false, false]));
 
       expect(
-        consent.mock.calls.filter(([request]) => request.reason === "request")
+        h.consent.mock.calls.filter(([request]) => request.reason === "request")
       ).toHaveLength(1);
     });
 
@@ -912,7 +576,7 @@ describe("sandboxed extensions", () => {
       await clickTool("ext.undeclared");
 
       await vi.waitFor(() => expect(results).toEqual(["invalid_request"]));
-      expect(consent).toHaveBeenCalledTimes(1);
+      expect(h.consent).toHaveBeenCalledTimes(1);
     });
 
     it("keeps a granted optional permission through an update that asks for more", async () => {
@@ -937,7 +601,7 @@ describe("sandboxed extensions", () => {
         })
       );
 
-      expect(consent).toHaveBeenLastCalledWith(
+      expect(h.consent).toHaveBeenLastCalledWith(
         expect.objectContaining({
           reason: "update",
           newPermissions: ["reading:navigate"],
@@ -963,7 +627,7 @@ describe("sandboxed extensions", () => {
 
     await manager.loadDefaultExtensions();
 
-    expect(consent).not.toHaveBeenCalled();
+    expect(h.consent).not.toHaveBeenCalled();
     expect(
       manager.getExtensions().find((entry) => entry.id === "ext.pushy")
         ?.installed
@@ -971,7 +635,7 @@ describe("sandboxed extensions", () => {
   });
 
   it("only offers a sandboxed extension named in an autoinstall link", async () => {
-    consent.mockResolvedValue(false);
+    h.consent.mockResolvedValue(false);
     const extension = await publish(defineExtension({}), { id: "ext.linked" });
     window.history.replaceState(null, "", "/?autoinstall-ext.linked=true");
     try {
@@ -981,7 +645,7 @@ describe("sandboxed extensions", () => {
 
       await manager.loadDefaultExtensions();
 
-      expect(consent).toHaveBeenCalledWith(
+      expect(h.consent).toHaveBeenCalledWith(
         expect.objectContaining({ extensionId: "ext.linked" })
       );
       expect(
