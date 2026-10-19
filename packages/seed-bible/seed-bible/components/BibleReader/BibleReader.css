@@ -309,11 +309,15 @@
   opacity: 1;
   transition:
     opacity 0.25s ease,
-    transform 0.2s ease;
+    filter 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
+/* Kept to effects that don't change the pill's size: growing it would
+   overflow the sideways-scrolling row and flash a scrollbar. */
 .sb-offscreen-cue:hover {
-  transform: scale(1.06);
+  filter: brightness(1.06);
+  box-shadow: 0 1px 3px #00000038;
 }
 
 .sb-offscreen-cue:focus-visible {
@@ -352,9 +356,5 @@
   .sb-offscreen-cue,
   .sb-offscreen-cues-stack {
     transition: none;
-  }
-
-  .sb-offscreen-cue:hover {
-    transform: none;
   }
 }
