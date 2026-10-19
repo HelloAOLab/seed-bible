@@ -3242,16 +3242,20 @@ export function createPlaylistManager(
   // as soon as the user leaves the editor (save or cancel), so the tools
   // aren't offered outside of an actual editing session.
   effect(() => {
+    // The fullscreen editor is open whether or not Discover is; otherwise the
+    // draft is only being edited while Discover shows it.
+    const draft = editingPlaylist.value;
     const editorOpen =
-      editorPlacement.value === "fullscreen" || isDiscoverOpen.value;
-    if (!editingPlaylist.value || !editorOpen) {
+      !!draft &&
+      (editorPlacement.value === "fullscreen" || isDiscoverOpen.value);
+    if (!draft || !editorOpen) {
       chats.removeContext(PLAYLIST_EDITOR_CHAT_CONTEXT_ID);
       return;
     }
 
-    const generatedPlaylist = buildGeneratedPlaylist(editingPlaylist.value);
-    const playlistLabel = editingPlaylist.value.title
-      ? `"${editingPlaylist.value.title}"`
+    const generatedPlaylist = buildGeneratedPlaylist(draft);
+    const playlistLabel = draft.title
+      ? `"${draft.title}"`
       : "this untitled playlist";
     chats.addContext({
       id: PLAYLIST_EDITOR_CHAT_CONTEXT_ID,
