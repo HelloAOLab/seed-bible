@@ -225,6 +225,15 @@ function createMockTab(books: TranslationBook[] = []): ReaderTab {
 describe("CreatePlaylistForm", () => {
   let container: HTMLDivElement;
 
+  /** Presses the dashed "Add item" button so the add box is on screen. */
+  function openAddBox() {
+    act(() => {
+      container
+        .querySelector(".sb-playlist-add-toggle")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  }
+
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -819,10 +828,8 @@ describe("CreatePlaylistForm", () => {
       expect(caret(rows()[0])).toBe("expand_less");
       expect(rowButtons()[0]?.getAttribute("aria-expanded")).toBe("true");
       expect(rowButtons()[0]?.getAttribute("aria-controls")).toBe(editor?.id);
-      // The "Add item" box at the bottom stays where it is.
-      expect(
-        container.querySelector(".stub-playlist-item-input--add")
-      ).not.toBeNull();
+      // "Add item" at the bottom stays where it is.
+      expect(container.querySelector(".sb-playlist-add-toggle")).not.toBeNull();
     });
 
     it("keeps one item open at a time and closes on a second tap", () => {
@@ -1004,12 +1011,95 @@ describe("CreatePlaylistForm", () => {
       );
     });
 
+    // The add box is folded away behind "Add item" until it's wanted.
+    expect(
+      container.querySelector(".stub-playlist-item-input--add")
+    ).toBeNull();
+    openAddBox();
+
     const addButton = container.querySelector(".stub-add") as HTMLButtonElement;
     act(() => {
       addButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
     expect(addEditingPlaylistItem).toHaveBeenCalledWith(STUB_ADDED_ITEM);
+    // It stays open for the next item.
+    expect(
+      container.querySelector(".stub-playlist-item-input--add")
+    ).not.toBeNull();
+  });
+
+  describe("the Add item box", () => {
+    function renderForm() {
+      const result = createMockPlaylists(createPlaylist());
+      const modals = createModalManager();
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={result.playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+          />,
+          container
+        );
+      });
+      return { ...result, modals };
+    }
+    const doneButton = () =>
+      container.querySelector<HTMLButtonElement>(".sb-playlist-add-done");
+    const addBox = () =>
+      container.querySelector(".stub-playlist-item-input--add");
+
+    it("Done folds the box away again when nothing is typed", () => {
+      renderForm();
+      openAddBox();
+      expect(addBox()).not.toBeNull();
+      expect(container.querySelector(".sb-playlist-add-toggle")).toBeNull();
+
+      act(() => doneButton()?.click());
+
+      expect(addBox()).toBeNull();
+      expect(container.querySelector(".sb-playlist-add-toggle")).not.toBeNull();
+    });
+
+    it("Done asks first when a draft hasn't been added; 'Add item' adds it then closes", async () => {
+      const { modals } = renderForm();
+      openAddBox();
+      stubItemInputControl.isDirty = true;
+
+      act(() => doneButton()?.click());
+
+      expect(addBox()).not.toBeNull();
+      const modal = modals.modals.value.find(
+        (m) => m.id === "playlist-unsaved-item-confirm"
+      );
+      expect(modal).toBeDefined();
+      const modalContainer = document.createElement("div");
+      document.body.appendChild(modalContainer);
+      act(() => {
+        render(
+          modal!.content({
+            t: (key, options) => (options?.defaultValue as string) ?? key,
+          }),
+          modalContainer
+        );
+      });
+      expect(
+        Array.from(modalContainer.querySelectorAll("button")).map(
+          (b) => b.textContent
+        )
+      ).toEqual(["Back", "Discard changes", "Add item"]);
+
+      await act(async () => {
+        Array.from(modalContainer.querySelectorAll("button"))
+          .find((b) => b.textContent === "Add item")
+          ?.click();
+        await Promise.resolve();
+      });
+
+      expect(addBox()).toBeNull();
+      modalContainer.remove();
+    });
   });
 
   it("saving an edit calls updateEditingPlaylistItem with the edited index and exits edit mode", () => {
@@ -1270,7 +1360,7 @@ describe("CreatePlaylistForm", () => {
     resolveSave?.();
   });
 
-  it("shows a leading icon per item type", () => {
+  it("numbers the rows and says what each item is beneath its title", () => {
     const { playlists } = createMockPlaylists(
       createPlaylist({
         items: [
@@ -1294,10 +1384,19 @@ describe("CreatePlaylistForm", () => {
       );
     });
 
-    const icons = Array.from(
-      container.querySelectorAll(".sb-discover-item-icon")
+    const numbers = Array.from(
+      container.querySelectorAll(".sb-playlist-editor-item-number")
     ).map((el) => el.textContent);
-    expect(icons).toEqual(["menu_book", "link", "notes"]);
+    expect(numbers).toEqual(["1", "2", "3"]);
+    const subtitles = Array.from(
+      container.querySelectorAll(".sb-playlist-editor-item-subtitle")
+    ).map((el) => el.textContent);
+    expect(subtitles).toEqual(["Scripture", "Link · example.com", "Text · hi"]);
+    expect(
+      Array.from(container.querySelectorAll(".sb-discover-section-title")).map(
+        (el) => el.textContent
+      )
+    ).toContain("Items (3)");
   });
 
   describe("drag to reorder", () => {
@@ -1491,6 +1590,7 @@ describe("CreatePlaylistForm", () => {
           container
         );
       });
+      openAddBox();
 
       const saveButton = container.querySelector(
         ".sb-settings-save-button"
@@ -1567,11 +1667,12 @@ describe("CreatePlaylistForm", () => {
       modalContainer.remove();
     });
 
-    /** Opens the confirm dialog and renders its content into a side container. */
+    /** Opens the add box and the confirm dialog, rendering the dialog's content into a side container. */
     function openConfirmDialog(
       container: HTMLDivElement,
       modals: ReturnType<typeof createModalManager>
     ): HTMLDivElement {
+      openAddBox();
       const saveButton = container.querySelector(
         ".sb-settings-save-button"
       ) as HTMLButtonElement;

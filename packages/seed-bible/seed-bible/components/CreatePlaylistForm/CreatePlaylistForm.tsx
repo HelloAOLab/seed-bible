@@ -22,7 +22,7 @@ import {
 } from "../PlaylistItemInput/PlaylistItemInput";
 import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
 import { playlistItemLabel } from "../playlistItemLabel";
-import { playlistItemIcon } from "../playlistItemIcon";
+import { playlistItemSubtitle } from "../playlistItemSubtitle";
 import { useDragReorder } from "../useDragReorder";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
@@ -127,7 +127,9 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
   // Index of the item open for editing inside its own row, or null when none
   // is. Only one item is open at a time; opening another closes it.
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  // The "Add item" box at the bottom of the list.
+  // The "Add item" box at the bottom of the list, shown once "Add item" is
+  // pressed so a long list isn't followed by a form nobody asked for.
+  const [addOpen, setAddOpen] = useState(false);
   const addInputRef = useRef<PlaylistItemInputHandle>(null);
   // The editor inside the open item's row.
   const editInputRef = useRef<PlaylistItemInputHandle>(null);
@@ -224,6 +226,30 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     setOpenIndex(index);
   };
 
+  /**
+   * Folds the "Add item" box away, asking first when it holds a draft that
+   * hasn't been added. Adding an invalid draft leaves the box open with its
+   * error showing.
+   */
+  const requestCloseAdd = () => {
+    if (!addInputRef.current?.isDirty()) {
+      setAddOpen(false);
+      return;
+    }
+    openUnsavedItemConfirm(modals, {
+      kind: "add",
+      then: "close",
+      onDiscard: () => setAddOpen(false),
+      onKeep: () => {
+        void (async () => {
+          if (await addInputRef.current?.commit()) {
+            setAddOpen(false);
+          }
+        })();
+      },
+    });
+  };
+
   const doSave = async () => {
     setSaving(true);
     try {
@@ -313,7 +339,10 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
         />
       </DiscoverSection>
 
-      <DiscoverSection title={t("items", { defaultValue: "Items" })}>
+      <DiscoverSection
+        title={t("items", { defaultValue: "Items" })}
+        count={editing?.items.length || undefined}
+      >
         {!editing?.items.length ? (
           <DiscoverEmpty
             text={t("playlist-items-empty", { defaultValue: "No items yet." })}
@@ -353,11 +382,22 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                     aria-controls={isOpen ? editorId : undefined}
                     onClick={() => requestOpen(isOpen ? null : index)}
                   >
-                    <MaterialIcon className="sb-discover-item-icon">
-                      {playlistItemIcon(item)}
-                    </MaterialIcon>
-                    <span className="sb-discover-item-title" dir="auto">
-                      {playlistItemLabel(item, t, resolveBookName)}
+                    <span
+                      className="sb-playlist-editor-item-number"
+                      aria-hidden="true"
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="sb-playlist-editor-item-text">
+                      <span className="sb-discover-item-title" dir="auto">
+                        {playlistItemLabel(item, t, resolveBookName)}
+                      </span>
+                      <span
+                        className="sb-playlist-editor-item-subtitle"
+                        dir="auto"
+                      >
+                        {playlistItemSubtitle(item, t)}
+                      </span>
                     </span>
                     <MaterialIcon className="sb-discover-item-caret">
                       {isOpen ? "expand_less" : "expand_more"}
@@ -412,11 +452,31 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
         )}
       </DiscoverSection>
 
-      <PlaylistItemInput
-        ref={addInputRef}
-        books={books}
-        onAdd={(item) => playlists.addEditingPlaylistItem(item)}
-      />
+      {addOpen ? (
+        <>
+          <PlaylistItemInput
+            ref={addInputRef}
+            books={books}
+            onAdd={(item) => playlists.addEditingPlaylistItem(item)}
+          />
+          <button
+            type="button"
+            className="sb-reading-plans-back sb-playlist-add-done"
+            onClick={requestCloseAdd}
+          >
+            {t("done", { defaultValue: "Done" })}
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          className="sb-playlist-add-toggle"
+          onClick={() => setAddOpen(true)}
+        >
+          <MaterialIcon>add</MaterialIcon>
+          {t("playlist-add-item", { defaultValue: "Add item" })}
+        </button>
+      )}
 
       <div className="sb-discover-actions">
         <button

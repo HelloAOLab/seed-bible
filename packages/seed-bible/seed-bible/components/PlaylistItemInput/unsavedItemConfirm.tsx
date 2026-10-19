@@ -48,7 +48,9 @@ function UnsavedItemConfirmModalContent(props: {
 
   const keepLabel =
     then === "close"
-      ? t("playlist-save-item", { defaultValue: "Save changes" })
+      ? kind === "add"
+        ? t("playlist-add-button", { defaultValue: "Add item" })
+        : t("playlist-save-item", { defaultValue: "Save changes" })
       : kind === "add"
         ? t("add-and-save", { defaultValue: "Add and save" })
         : t("keep-changes-and-save", {

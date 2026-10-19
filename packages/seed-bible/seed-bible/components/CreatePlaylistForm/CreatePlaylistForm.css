@@ -1,6 +1,10 @@
-/* Lets an open item's editor wrap onto its own line under the row. */
+/* Editor rows read as numbered steps: the step number, then the title with a
+   "kind · detail" line under it, as in the playlist editor design. Wrapping
+   lets an open item's editor take its own line under the row. */
 .sb-playlist-editor-item {
   flex-wrap: wrap;
+  border-radius: 12px;
+  padding: 8px 8px 8px 10px;
 }
 
 /* Open/closed caret at the end of the row, as reading plan rows have. */
@@ -68,4 +72,65 @@
     var(--sb-secondary-color),
     var(--sb-primary-color) 16%
   );
+}
+
+.sb-playlist-editor-item-number {
+  flex-shrink: 0;
+  min-width: 1.25rem;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-playlist-editor-item-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sb-playlist-editor-item .sb-discover-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-playlist-editor-item-subtitle {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "Add item" sits at the bottom as a dashed button until it's pressed; the
+   add box then takes its place. */
+.sb-playlist-add-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  border: 1px dashed var(--sb-primary-color);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-playlist-add-toggle:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+}
+
+.sb-playlist-add-done {
+  display: block;
+  margin: -8px 0 16px auto;
 }
