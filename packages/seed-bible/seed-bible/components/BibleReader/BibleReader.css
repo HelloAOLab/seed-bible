@@ -301,7 +301,9 @@
   height: 2rem;
   margin: 0;
   padding: 0 0.75rem;
-  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  /* The toolbar's own outline, which each theme sets so it shows against
+     that theme's page (a light line in the dark theme). */
+  border: var(--sb-reader-toolbar-border);
   border-radius: 999px;
   box-shadow: 0 1px 2px #0000001f;
   font-family: var(--sb-font-family);
@@ -361,7 +363,7 @@
   margin: 0;
   padding-block: 0;
   padding-inline: 0.4375rem 0.25rem;
-  border: none;
+  border: var(--sb-reader-toolbar-border);
   border-radius: 999px;
   background: var(--sb-reader-background, #fff);
   color: var(--sb-font-color);
