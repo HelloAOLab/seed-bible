@@ -790,6 +790,95 @@ describe("createSeedBibleState", () => {
     }
   });
 
+  it("opens a session link's chapter in a normal tab when a returning visitor can't join the session", async () => {
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "single",
+        slotTabIds: ["tab-1"],
+        selectedSlotIndex: 0,
+      })
+    );
+    mockSessionsManager.joinSession.mockRejectedValue(
+      new Error("sync timed out")
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    window.history.replaceState(
+      null,
+      "",
+      "?sessionId=url-session-down&book=EXO&chapter=2&useFreeBibleAPI=true"
+    );
+    try {
+      const state = await createStateWithOptions({});
+
+      await waitFor(
+        () =>
+          state.app.currentToast.value?.message ===
+          "Couldn't join the shared session"
+      );
+
+      const selected = state.tabs.tabs.value.find(
+        (tab) => tab.id === state.tabs.selectedTabId.value
+      );
+      expect(selected?.sharedSession).toBeNull();
+      expect(selected?.readingState.bookId.value).toBe("EXO");
+      expect(selected?.readingState.chapterNumber.value).toBe(2);
+      expect(
+        state.tabs.tabs.value.map((tab) => [
+          tab.readingState.bookId.value,
+          tab.readingState.chapterNumber.value,
+        ])
+      ).toEqual([
+        ["MAT", 1],
+        ["EXO", 2],
+      ]);
+    } finally {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  });
+
+  it("keeps a first-time visitor on a session link's chapter, in one tab, when the join fails", async () => {
+    mockSessionsManager.joinSession.mockRejectedValue(
+      new Error("sync timed out")
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    window.history.replaceState(
+      null,
+      "",
+      "?sessionId=url-session-down&book=EXO&chapter=2&useFreeBibleAPI=true"
+    );
+    try {
+      const state = await createStateWithOptions({});
+
+      await waitFor(
+        () =>
+          state.app.currentToast.value?.message ===
+          "Couldn't join the shared session"
+      );
+
+      expect(state.tabs.tabs.value).toHaveLength(1);
+      const [tab] = state.tabs.tabs.value;
+      expect(tab?.sharedSession).toBeNull();
+      expect(tab?.readingState.bookId.value).toBe("EXO");
+      expect(tab?.readingState.chapterNumber.value).toBe(2);
+      expect(state.tabs.selectedTabId.value).toBe(tab?.id);
+    } finally {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  });
+
   describe("host-disconnect grace timer", () => {
     beforeEach(() => {
       vi.useFakeTimers();

@@ -3062,27 +3062,63 @@ export function createSeedBibleState(
         ? getSessionStartPosition(bootTab.readingState)
         : undefined;
 
-    await handleJoinSharedSession(initialSessionId, startPosition);
+    const whenTabsRestored = (run: () => void) => {
+      if (tabsRestored.peek()) {
+        run();
+        return;
+      }
+      const stopWaiting = tabsRestored.subscribe((restored) => {
+        if (restored) {
+          stopWaiting();
+          run();
+        }
+      });
+    };
+
+    try {
+      await handleJoinSharedSession(initialSessionId, startPosition);
+    } catch (error) {
+      console.error("Failed to join the session from the URL:", error);
+      // Destructured for the translation lint rules, which only recognise a
+      // bare `t` — see the sign-out toast below.
+      const { t } = i18n;
+      toast(
+        t("session-join-failed", {
+          defaultValue: "Couldn't join the shared session",
+        })
+      );
+      // Restoring saved tabs skipped the link's chapter, leaving it for the
+      // session to show. With no session, show it in a normal tab instead.
+      if (startPosition) {
+        whenTabsRestored(() => showLinkedChapter(startPosition));
+      }
+      return;
+    }
 
     if (!startPosition || !bootTab) {
       return;
     }
 
-    const dropBootTab = () => {
+    whenTabsRestored(() => {
       if (tabs.tabs.peek().includes(bootTab)) {
         tabs.removeTab(bootTab.id);
       }
-    };
-    if (tabsRestored.peek()) {
-      dropBootTab();
-      return;
-    }
-    const stopWaiting = tabsRestored.subscribe((restored) => {
-      if (restored) {
-        stopWaiting();
-        dropBootTab();
-      }
     });
+  };
+
+  const showLinkedChapter = (position: SessionStartPosition) => {
+    const tab =
+      tabs.tabs
+        .peek()
+        .find(
+          (candidate) =>
+            !candidate.sharedSession &&
+            candidate.readingState.bookId.peek() === position.initialBookId &&
+            candidate.readingState.chapterNumber.peek() ===
+              position.initialChapterNumber
+        ) ?? tabs.addTab(undefined, position);
+    tabs.selectTab(tab.id);
+    tabsLayout.setSelectedSlotTab(tab.id);
   };
 
   // Tell the user when we signed them out for them. `login.sessionEnded` only fires
