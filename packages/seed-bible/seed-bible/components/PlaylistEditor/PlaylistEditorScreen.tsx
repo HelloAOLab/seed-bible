@@ -22,6 +22,8 @@ import {
 } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { usePlaylistEditor } from "./usePlaylistEditor";
 import { PlaylistEditorStepList } from "./PlaylistEditorStepList";
+import { PlaylistReviewPanel } from "./PlaylistReviewPanel";
+import { useState } from "preact/hooks";
 
 /** Pane title; the screen draws its own header, so this only names the pane. */
 export function PlaylistEditorScreenTitle(props: {
@@ -133,6 +135,15 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
   };
 
   const openStepNumber = openIndex !== null ? stepNumbers.get(openIndex) : null;
+  // The last look before publishing takes the middle column's place.
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const openReview = () => {
+    if (openIndex !== null) {
+      requestOpen(null);
+    }
+    setAddOpen(false);
+    setReviewOpen(true);
+  };
 
   return (
     <div className="sb-playlist-editor">
@@ -219,6 +230,14 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
         </button>
         <button
           type="button"
+          className="sb-reading-plans-back"
+          aria-pressed={reviewOpen}
+          onClick={openReview}
+        >
+          {t("playlist-review-publish", { defaultValue: "Review & publish" })}
+        </button>
+        <button
+          type="button"
           className="sb-settings-save-button"
           onClick={handleSave}
           disabled={saving}
@@ -247,6 +266,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
             }`}
             onClick={() => {
               setAddOpen(false);
+              setReviewOpen(false);
               requestOpen(null);
             }}
           >
@@ -293,7 +313,24 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
                 })
           }
         >
-          {openItem && openIndex !== null ? (
+          {reviewOpen && openItem === null && !addOpen ? (
+            <PlaylistReviewPanel
+              playlists={playlists}
+              modals={modals}
+              books={books}
+              resolveBookName={resolveBookName}
+              authorName={state.login?.profile?.value?.name ?? null}
+              os={state.os}
+              login={state.login}
+              gallery={state.gallery}
+              onOpenItem={(index) => {
+                setReviewOpen(false);
+                requestOpen(index);
+              }}
+              onPublish={handleSave}
+              publishing={saving}
+            />
+          ) : openItem && openIndex !== null ? (
             <div className="sb-playlist-editor-step">
               <p className="sb-playlist-editor-eyebrow">
                 {openItem.type === "scene"

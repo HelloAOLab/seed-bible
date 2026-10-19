@@ -22,6 +22,7 @@ import { HeroImageField } from "../HeroImageField/HeroImageField";
 import type { BibleDataManager } from "../../managers/BibleDataManager";
 import { usePlaylistEditor } from "../PlaylistEditor/usePlaylistEditor";
 import { PlaylistEditorStepList } from "../PlaylistEditor/PlaylistEditorStepList";
+import { PlaylistVisibilityField } from "../PlaylistEditor/PlaylistReviewPanel";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
@@ -237,6 +238,14 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
         title={t("description", { defaultValue: "Description" })}
       >
         <PlaylistDescriptionField playlists={playlists} />
+      </DiscoverSection>
+
+      <DiscoverSection
+        title={t("playlist-visibility-label", {
+          defaultValue: "Who can open it",
+        })}
+      >
+        <PlaylistVisibilityField playlists={playlists} />
       </DiscoverSection>
 
       <DiscoverSection

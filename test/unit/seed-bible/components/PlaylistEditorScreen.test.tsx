@@ -294,4 +294,77 @@ describe("PlaylistEditorScreen", () => {
     });
     expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
   });
+
+  describe("review and publish", () => {
+    const reviewButton = () =>
+      Array.from(container.querySelectorAll("button")).find(
+        (b) => b.textContent === "Review & publish"
+      )!;
+
+    it("shows the last look in the middle column, with who can open it and what to check", () => {
+      const { playlists } = renderScreen([
+        { type: "scene", title: "Intro" },
+        verseItem("GEN", 16),
+        verseItem("GEN", 16),
+      ]);
+
+      act(() => reviewButton().click());
+
+      const review = main().querySelector(".sb-playlist-review")!;
+      expect(review).not.toBeNull();
+      expect(
+        review.querySelector(".sb-playlist-review-card-title")?.textContent
+      ).toBe("Angel of the LORD");
+      expect(
+        review.querySelector(".sb-playlist-review-card-meta")?.textContent
+      ).toBe("2 steps · 1 scenes");
+      const checks = Array.from(
+        review.querySelectorAll(".sb-playlist-review-check")
+      ).map((el) => el.textContent);
+      expect(checks.join(" ")).toContain(
+        "Steps 1 and 2 show the same passage."
+      );
+
+      act(() => {
+        Array.from(
+          review.querySelectorAll<HTMLButtonElement>(
+            ".sb-playlist-visibility-choice"
+          )
+        )
+          .find((b) => b.textContent?.includes("Anyone with the link"))
+          ?.click();
+      });
+      expect(playlists.updateEditingPlaylistMetadata).toHaveBeenCalledWith({
+        visibility: "unlisted",
+      });
+    });
+
+    it("'Fix' opens the step a check points at, and Publish saves", async () => {
+      const { saveEditingPlaylist } = renderScreen([
+        verseItem("GEN", 16),
+        verseItem("GEN", 16),
+      ]);
+      act(() => reviewButton().click());
+
+      act(() => {
+        main()
+          .querySelector<HTMLButtonElement>(".sb-playlist-review-check-fix")!
+          .click();
+      });
+      expect(main().querySelector(".sb-playlist-review")).toBeNull();
+      expect(
+        main().querySelector(".stub-playlist-item-input--edit")
+      ).not.toBeNull();
+      expect(rowButtons()[1]!.getAttribute("aria-current")).toBe("true");
+
+      act(() => reviewButton().click());
+      await act(async () => {
+        main()
+          .querySelector<HTMLButtonElement>(".sb-playlist-review-publish")!
+          .click();
+        await Promise.resolve();
+      });
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+    });
+  });
 });

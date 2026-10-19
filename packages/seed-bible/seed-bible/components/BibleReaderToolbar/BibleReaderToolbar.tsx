@@ -1,5 +1,11 @@
 import "./BibleReaderToolbar.inline.css";
-import { effect, signal, useComputed, useSignal } from "@preact/signals";
+import {
+  effect,
+  signal,
+  useComputed,
+  useSignal,
+  useSignalEffect,
+} from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
@@ -35,6 +41,8 @@ import {
 } from "../Tabs/Tabs";
 import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
 import { playlistItemLabel } from "../playlistItemLabel";
+import { PlaylistMobileSheet } from "../PlaylistMobileSheet/PlaylistMobileSheet";
+import { narrationStartFor, passageNarrated } from "./listenAlong";
 import {
   AudioProgressRing,
   AudioScrubber,
@@ -1444,6 +1452,57 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     playingPlaylist.value ? null : audioPlayback.value
   );
 
+  // Listening mode: while a playlist asks to be read aloud, each scripture
+  // step starts the chapter's narration (from the passage's first verse, when
+  // the recording can say where that is) and moves on once the passage has
+  // been read. Non-scripture steps are left for the reader to take in.
+  const narrationStepRef = useRef<string | null>(null);
+  const narrationSeekRef = useRef<string | null>(null);
+  useSignalEffect(() => {
+    const playing = playingPlaylist.value;
+    if (!playing || !playing.listenAlong.value) {
+      narrationStepRef.current = null;
+      narrationSeekRef.current = null;
+      return;
+    }
+    const item = playing.currentItem.value;
+    if (item?.type !== "bible-verse") {
+      return;
+    }
+    const stepKey = `${playing.currentIndex.value}:${JSON.stringify(item.ref)}`;
+    const controller = audioPlayback.value;
+    const tool = audioPlayTool.value;
+    if (narrationStepRef.current !== stepKey) {
+      narrationStepRef.current = stepKey;
+      narrationSeekRef.current = null;
+      if (tool && tool.visible.value && !tool.disabled.value) {
+        if (!controller || !controller.isPlaying.value) {
+          tool.onSelect();
+        }
+      }
+      return;
+    }
+    if (!controller) {
+      return;
+    }
+    if (narrationSeekRef.current !== stepKey) {
+      narrationSeekRef.current = stepKey;
+      const start = narrationStartFor(controller, item.ref);
+      if (start !== null) {
+        controller.seek(start);
+      }
+      return;
+    }
+    const position = controller.currentTime.value;
+    if (passageNarrated(controller, item.ref, position)) {
+      if (playing.hasNext.value) {
+        void playing.next();
+      } else {
+        playing.setListenAlong(false);
+      }
+    }
+  });
+
   const floatingAnchor = useComputed(() =>
     readingState.value!.selectedVerses.value.reduce<{
       x: number;
@@ -2602,140 +2661,161 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               const isScrubbing = !!playback?.isPlaying.value;
 
               return (
-                <div
-                  className={`sb-reader-floating-nav${
-                    isScrubbing ? " sb-reader-floating-nav-scrubbing" : ""
-                  }`}
-                  role="group"
-                  aria-label={t("chapter-navigation", {
-                    defaultValue: "Chapter navigation",
-                  })}
-                >
-                  {!playing && audio && AudioIcon && (
-                    <div className="sb-reader-floating-nav-play-wrap">
-                      <button
-                        type="button"
-                        disabled={audio.disabled.value}
-                        onClick={() => audio.onSelect()}
-                        className="sb-reader-floating-nav-play"
-                        aria-label={translateTitle(t, audio.title)}
-                      >
-                        <AudioIcon />
-                      </button>
-                      {playback && !isScrubbing && (
-                        <AudioProgressRing playback={playback} />
-                      )}
-                    </div>
-                  )}
-                  {playing && (
-                    <button
-                      type="button"
-                      onClick={() => props.state.playlists.stopPlaying()}
-                      className="sb-reader-floating-nav-play"
-                      aria-label={t("stop", { defaultValue: "Stop" })}
-                    >
-                      <StopIcon />
-                    </button>
-                  )}
-
-                  {(prev || next || selector || playing) && (
-                    <div className="sb-reader-floating-nav-group-wrap">
-                      {playback && isScrubbing && (
-                        <AudioScrubber
-                          playback={playback}
-                          showTimeRemaining
-                          className="sb-reader-floating-nav-scrubber"
-                        />
-                      )}
-                      <div className="sb-reader-floating-nav-group">
-                        {playing ? (
-                          <button
-                            type="button"
-                            disabled={!playing.hasPrevious.value}
-                            onClick={() => playing.previous()}
-                            onPointerDown={spawnRipple}
-                            className="sb-reader-floating-nav-arrow"
-                            aria-label={t("previous", {
-                              defaultValue: "Previous",
-                            })}
-                          >
-                            <MaterialIcon>skip_previous</MaterialIcon>
-                          </button>
-                        ) : (
-                          prev &&
-                          PrevIcon && (
-                            <ToolActionElement
-                              href={prev.href.value}
-                              disabled={prev.disabled.value}
-                              onActivate={prev.onSelect}
-                              onPointerDown={spawnRipple}
-                              className="sb-reader-floating-nav-arrow"
-                              ariaLabel={translateTitle(t, prev.title)}
-                              dataToolId={prev.id}
-                            >
-                              <PrevIcon />
-                            </ToolActionElement>
-                          )
-                        )}
-
-                        {playing ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              (props.state.playlists.view.value =
-                                "play_playlist")
-                            }
-                            onPointerDown={spawnRipple}
-                            className="sb-reader-floating-nav-label"
-                          >
-                            {getPlayingNavLabel(playing)}
-                          </button>
-                        ) : (
-                          selector && (
-                            <button
-                              type="button"
-                              {...flingSafeTapHandlers(
-                                selector.onSelect,
-                                spawnRipple
-                              )}
-                              className="sb-reader-floating-nav-label"
-                            >
-                              {getReaderNavLabel()}
-                            </button>
-                          )
-                        )}
-
-                        {playing ? (
-                          <button
-                            type="button"
-                            disabled={!playing.canPressNext.value}
-                            onClick={() => playing.next()}
-                            onPointerDown={spawnRipple}
-                            className="sb-reader-floating-nav-arrow"
-                            aria-label={t("next", { defaultValue: "Next" })}
-                          >
-                            <MaterialIcon>skip_next</MaterialIcon>
-                          </button>
-                        ) : (
-                          next &&
-                          NextIcon && (
-                            <ToolActionElement
-                              href={next.href.value}
-                              disabled={next.disabled.value}
-                              onActivate={next.onSelect}
-                              onPointerDown={spawnRipple}
-                              className="sb-reader-floating-nav-arrow"
-                              ariaLabel={translateTitle(t, next.title)}
-                              dataToolId={next.id}
-                            >
-                              <NextIcon />
-                            </ToolActionElement>
-                          )
+                <>
+                  {playing ? (
+                    <PlaylistMobileSheet
+                      playing={playing}
+                      state={props.state}
+                      resolveBookName={resolveBookName}
+                      loadChapter={
+                        readingState.value
+                          ? async (translationId, bookId, chapter) =>
+                              props.state.bibleData.getTranslationBookChapter(
+                                translationId ??
+                                  readingState.value!.translationId.peek(),
+                                bookId,
+                                chapter
+                              )
+                          : undefined
+                      }
+                      canListen={!!audio}
+                    />
+                  ) : null}
+                  <div
+                    className={`sb-reader-floating-nav${
+                      isScrubbing ? " sb-reader-floating-nav-scrubbing" : ""
+                    }`}
+                    role="group"
+                    aria-label={t("chapter-navigation", {
+                      defaultValue: "Chapter navigation",
+                    })}
+                  >
+                    {!playing && audio && AudioIcon && (
+                      <div className="sb-reader-floating-nav-play-wrap">
+                        <button
+                          type="button"
+                          disabled={audio.disabled.value}
+                          onClick={() => audio.onSelect()}
+                          className="sb-reader-floating-nav-play"
+                          aria-label={translateTitle(t, audio.title)}
+                        >
+                          <AudioIcon />
+                        </button>
+                        {playback && !isScrubbing && (
+                          <AudioProgressRing playback={playback} />
                         )}
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                    {playing && (
+                      <button
+                        type="button"
+                        onClick={() => props.state.playlists.stopPlaying()}
+                        className="sb-reader-floating-nav-play"
+                        aria-label={t("stop", { defaultValue: "Stop" })}
+                      >
+                        <StopIcon />
+                      </button>
+                    )}
+
+                    {(prev || next || selector || playing) && (
+                      <div className="sb-reader-floating-nav-group-wrap">
+                        {playback && isScrubbing && (
+                          <AudioScrubber
+                            playback={playback}
+                            showTimeRemaining
+                            className="sb-reader-floating-nav-scrubber"
+                          />
+                        )}
+                        <div className="sb-reader-floating-nav-group">
+                          {playing ? (
+                            <button
+                              type="button"
+                              disabled={!playing.hasPrevious.value}
+                              onClick={() => playing.previous()}
+                              onPointerDown={spawnRipple}
+                              className="sb-reader-floating-nav-arrow"
+                              aria-label={t("previous", {
+                                defaultValue: "Previous",
+                              })}
+                            >
+                              <MaterialIcon>skip_previous</MaterialIcon>
+                            </button>
+                          ) : (
+                            prev &&
+                            PrevIcon && (
+                              <ToolActionElement
+                                href={prev.href.value}
+                                disabled={prev.disabled.value}
+                                onActivate={prev.onSelect}
+                                onPointerDown={spawnRipple}
+                                className="sb-reader-floating-nav-arrow"
+                                ariaLabel={translateTitle(t, prev.title)}
+                                dataToolId={prev.id}
+                              >
+                                <PrevIcon />
+                              </ToolActionElement>
+                            )
+                          )}
+
+                          {playing ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                (props.state.playlists.view.value =
+                                  "play_playlist")
+                              }
+                              onPointerDown={spawnRipple}
+                              className="sb-reader-floating-nav-label"
+                            >
+                              {getPlayingNavLabel(playing)}
+                            </button>
+                          ) : (
+                            selector && (
+                              <button
+                                type="button"
+                                {...flingSafeTapHandlers(
+                                  selector.onSelect,
+                                  spawnRipple
+                                )}
+                                className="sb-reader-floating-nav-label"
+                              >
+                                {getReaderNavLabel()}
+                              </button>
+                            )
+                          )}
+
+                          {playing ? (
+                            <button
+                              type="button"
+                              disabled={!playing.canPressNext.value}
+                              onClick={() => playing.next()}
+                              onPointerDown={spawnRipple}
+                              className="sb-reader-floating-nav-arrow"
+                              aria-label={t("next", { defaultValue: "Next" })}
+                            >
+                              <MaterialIcon>skip_next</MaterialIcon>
+                            </button>
+                          ) : (
+                            next &&
+                            NextIcon && (
+                              <ToolActionElement
+                                href={next.href.value}
+                                disabled={next.disabled.value}
+                                onActivate={next.onSelect}
+                                onPointerDown={spawnRipple}
+                                className="sb-reader-floating-nav-arrow"
+                                ariaLabel={translateTitle(t, next.title)}
+                                dataToolId={next.id}
+                              >
+                                <NextIcon />
+                              </ToolActionElement>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
               );
             })()}
 

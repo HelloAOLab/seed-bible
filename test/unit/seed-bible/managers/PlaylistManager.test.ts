@@ -844,6 +844,72 @@ describe("createPlaylistManager", () => {
     );
   });
 
+  describe("visibility and listening", () => {
+    it("leaves another account's unlisted playlists out of what Discover shows of them", async () => {
+      listDataByMarkerMock.mockImplementation(async (recordName: unknown) =>
+        recordName === "friend-user"
+          ? {
+              success: true,
+              items: [
+                {
+                  data: makePlaylist({
+                    id: "p-public",
+                    recordName: "friend-user",
+                    authorUserId: "friend-user",
+                  }),
+                },
+                {
+                  data: {
+                    ...makePlaylist({
+                      id: "p-unlisted",
+                      recordName: "friend-user",
+                      authorUserId: "friend-user",
+                    }),
+                    visibility: "unlisted",
+                  },
+                },
+              ],
+            }
+          : { success: true, items: [] }
+      );
+      const manager = makeManager("user-1");
+      await flush();
+
+      const view = manager.getUserPlaylists("friend-user");
+      const stop = effect(() => void view.value);
+      await flush();
+
+      expect(view.value.map((playlist) => playlist.id)).toEqual(["p-public"]);
+      stop();
+    });
+
+    it("counts a change of who can open it as an unsaved change", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      expect(manager.isEditingPlaylistDirty()).toBe(false);
+
+      manager.updateEditingPlaylistMetadata({ visibility: "unlisted" });
+
+      expect(manager.isEditingPlaylistDirty()).toBe(true);
+      expect(manager.editingPlaylist.value?.visibility).toBe("unlisted");
+    });
+
+    it("remembers whether the playlist is to be read aloud", () => {
+      const playing = createPlayingState([
+        {
+          id: "p1",
+          title: null,
+          description: null,
+          items: [{ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } }],
+        },
+      ]);
+      expect(playing.listenAlong.value).toBe(false);
+      playing.setListenAlong(true);
+      expect(playing.listenAlong.value).toBe(true);
+    });
+  });
+
   describe("getUserPlaylists", () => {
     const mockPerUserPlaylists = () => {
       listDataByMarkerMock.mockImplementation(async (recordName: unknown) => {

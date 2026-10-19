@@ -177,6 +177,12 @@ export const PlaylistSchema = z.object({
    * field existed still parse.
    */
   heroImageUrl: z.url().max(2048).nullable().optional(),
+  /**
+   * Who can open it: a public playlist shows in Discover for friends; an
+   * unlisted one opens only for people with the link. Absent means public,
+   * as every playlist was before this existed.
+   */
+  visibility: z.enum(["public", "unlisted"]).optional(),
   items: z.array(PlaylistItem),
   createdAtMs: z.number().positive(),
   updatedAtMs: z.number().positive(),
@@ -196,6 +202,7 @@ function playlistEditorState(playlist: Playlist): string {
     title: playlist.title ?? null,
     description: playlist.description ?? null,
     heroImageUrl: playlist.heroImageUrl ?? null,
+    visibility: playlist.visibility ?? "public",
     items: playlist.items.map((item) =>
       item.type === "link" ? { ...item, preview: undefined } : item
     ),
@@ -837,6 +844,15 @@ export function createPlayingState(
    * other item re-arms it.
    */
   const finishPromptShown = signal(false);
+  /**
+   * Whether the reader wants each scripture step read aloud and the playlist
+   * moved on once the passage has been read. The reader toolbar, which owns
+   * narration, acts on it.
+   */
+  const listenAlong = signal(false);
+  const setListenAlong = (value: boolean) => {
+    listenAlong.value = value;
+  };
   let lastIndex = currentIndex.peek();
   const disposeRearm = effect(() => {
     const index = currentIndex.value;
@@ -1081,6 +1097,8 @@ export function createPlayingState(
     canPressNext,
     finishPromptShown: finishPromptShown as ReadonlySignal<boolean>,
     tab,
+    listenAlong,
+    setListenAlong,
     next,
     previous,
     jumpTo,
@@ -1860,7 +1878,11 @@ export function createPlaylistManager(
       if (entry.settled) {
         return;
       }
-      entry.data.value = loaded;
+      // Someone else's unlisted playlists open by link only, so they stay
+      // out of what Discover shows of them.
+      entry.data.value = loaded.filter(
+        (playlist) => playlist.visibility !== "unlisted"
+      );
       entry.loadedAtMs = Date.now();
       entry.loadFailed = false;
       entry.settled = true;
@@ -2062,7 +2084,9 @@ export function createPlaylistManager(
    * later via `saveEditingPlaylist`.
    */
   const updateEditingPlaylistMetadata = (
-    updates: Partial<Pick<Playlist, "title" | "description" | "heroImageUrl">>
+    updates: Partial<
+      Pick<Playlist, "title" | "description" | "heroImageUrl" | "visibility">
+    >
   ): string => {
     const current = editingPlaylist.value;
     if (!current) {

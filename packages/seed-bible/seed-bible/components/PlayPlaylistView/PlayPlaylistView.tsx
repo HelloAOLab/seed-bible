@@ -262,7 +262,24 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                 })}
               </p>
             ) : null}
-            <PlaylistItemNav playing={playing} />
+            <div className="sb-play-current-actions">
+              <button
+                type="button"
+                className={`sb-play-listen${
+                  playing.listenAlong.value ? " sb-play-listen--on" : ""
+                }`}
+                aria-pressed={playing.listenAlong.value}
+                onClick={() =>
+                  playing.setListenAlong(!playing.listenAlong.value)
+                }
+              >
+                <MaterialIcon>headphones</MaterialIcon>
+                {playing.listenAlong.value
+                  ? t("playlist-listening", { defaultValue: "Listening" })
+                  : t("playlist-listen", { defaultValue: "Listen" })}
+              </button>
+              <PlaylistItemNav playing={playing} />
+            </div>
           </section>
         ) : null}
 

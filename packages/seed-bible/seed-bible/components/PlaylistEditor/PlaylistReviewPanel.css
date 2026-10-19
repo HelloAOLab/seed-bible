@@ -1,0 +1,165 @@
+.sb-playlist-review {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 20rem);
+  gap: 24px;
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.sb-playlist-review-form,
+.sb-playlist-review-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.sb-playlist-visibility {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-playlist-visibility-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-playlist-visibility-choice--selected {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-playlist-visibility-radio {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  border-radius: 50%;
+}
+
+.sb-playlist-visibility-choice--selected .sb-playlist-visibility-radio {
+  border-color: var(--sb-primary-color);
+  background: radial-gradient(
+    circle,
+    var(--sb-primary-color) 45%,
+    transparent 50%
+  );
+}
+
+.sb-playlist-visibility-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sb-playlist-visibility-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-playlist-visibility-description {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-playlist-review-card {
+  overflow: hidden;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
+}
+
+.sb-playlist-review-card-cover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.sb-playlist-review-card-cover--text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 80%);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.sb-playlist-review-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+}
+
+.sb-playlist-review-card-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.sb-playlist-review-card-meta {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-playlist-review-checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-playlist-review-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.sb-playlist-review-check .material-symbols-outlined {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  color: var(--sb-primary-color);
+}
+
+.sb-playlist-review-check--warn .material-symbols-outlined {
+  color: #d9a441;
+}
+
+.sb-playlist-review-check-fix {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.sb-playlist-review-publish {
+  align-self: stretch;
+}
+
+@media (max-width: 900px) {
+  .sb-playlist-review {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
