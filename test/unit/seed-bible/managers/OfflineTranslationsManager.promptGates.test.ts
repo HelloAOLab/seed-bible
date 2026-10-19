@@ -177,6 +177,128 @@ describe("offering the offline download", () => {
   });
 });
 
+describe("suggesting a download after a failed chapter load recovers", () => {
+  it("suggests a translation the user only just started reading", async () => {
+    const manager = await startSession();
+    await manager.offline.downloadTranslation("BSB");
+    manager.offline.noteTranslationInUse("AAB");
+
+    // The regular prompt would wait a day here; the failure is reason enough.
+    expect(manager.offline.offerDownloadPrompt(aabBooks.translation)).toBe(
+      false
+    );
+    expect(manager.offline.offerRecoveryPrompt(aabBooks.translation)).toBe(
+      true
+    );
+    expect(manager.offline.recoveryPrompt.value?.id).toBe("AAB");
+  });
+
+  it("suggests a translation that was offered and declined on an earlier visit", async () => {
+    const first = await startSession();
+    first.offline.offerDownloadPrompt(aabBooks.translation);
+    first.offline.dismissDownloadPrompt();
+
+    const second = await startSession();
+    expect(second.offline.offerRecoveryPrompt(aabBooks.translation)).toBe(true);
+  });
+
+  it("suggests each translation at most once per session", async () => {
+    const manager = await startSession();
+    expect(manager.offline.offerRecoveryPrompt(aabBooks.translation)).toBe(
+      true
+    );
+    manager.offline.dismissRecoveryPrompt();
+
+    expect(manager.offline.offerRecoveryPrompt(aabBooks.translation)).toBe(
+      false
+    );
+    expect(manager.offline.offerRecoveryPrompt(BSB)).toBe(true);
+    // The regular prompt still keeps to its own one-per-session budget.
+    manager.offline.dismissRecoveryPrompt();
+    expect(manager.offline.offerDownloadPrompt(BSB)).toBe(false);
+  });
+
+  it("is still shown after the regular download prompt was used this session", async () => {
+    // The regular prompt is offered on the first page load. Saving AAB from
+    // it, then switching translation and recovering from a failed chapter,
+    // must still earn a suggestion for the new translation.
+    const manager = await startSession();
+    expect(manager.offline.offerDownloadPrompt(aabBooks.translation)).toBe(
+      true
+    );
+    manager.offline.dismissDownloadPrompt();
+    await manager.offline.downloadTranslation("AAB");
+
+    expect(manager.offline.offerRecoveryPrompt(BSB)).toBe(true);
+    expect(manager.offline.recoveryPrompt.value?.id).toBe("BSB");
+  });
+
+  it("closes once its translation is saved some other way", async () => {
+    const manager = await startSession();
+    expect(manager.offline.offerRecoveryPrompt(aabBooks.translation)).toBe(
+      true
+    );
+
+    // Downloaded from the translation list rather than from the card.
+    await manager.offline.downloadTranslation("AAB");
+
+    expect(manager.offline.recoveryPrompt.value).toBeNull();
+  });
+
+  it("is not stacked on top of a download prompt still on screen", async () => {
+    const manager = await startSession();
+    expect(manager.offline.offerDownloadPrompt(aabBooks.translation)).toBe(
+      true
+    );
+
+    expect(manager.offline.offerRecoveryPrompt(BSB)).toBe(false);
+    expect(manager.offline.recoveryPrompt.value).toBeNull();
+  });
+
+  it("keeps the regular prompt from offering the same translation on a later visit", async () => {
+    const first = await startSession();
+    first.offline.offerRecoveryPrompt(aabBooks.translation);
+    first.offline.dismissRecoveryPrompt();
+
+    const second = await startSession();
+    expect(second.offline.offerDownloadPrompt(aabBooks.translation)).toBe(
+      false
+    );
+  });
+
+  it("does not suggest a translation that is already downloaded", async () => {
+    const manager = await startSession();
+    await manager.offline.downloadTranslation("AAB");
+
+    expect(manager.offline.offerRecoveryPrompt(aabBooks.translation)).toBe(
+      false
+    );
+    expect(manager.offline.recoveryPrompt.value).toBeNull();
+  });
+
+  it("does not suggest a download while the device is offline", async () => {
+    const manager = await startSession();
+
+    window.dispatchEvent(new Event("offline"));
+    expect(manager.offline.offerRecoveryPrompt(aabBooks.translation)).toBe(
+      false
+    );
+    window.dispatchEvent(new Event("online"));
+  });
+
+  it("does nothing on a device that can't store downloads", async () => {
+    const manager = createBibleDataManager(
+      new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+      { offlineStore: null }
+    );
+    managers.push(manager);
+
+    expect(manager.offline.offerRecoveryPrompt(aabBooks.translation)).toBe(
+      false
+    );
+  });
+});
+
 describe("the 24-hour rule, once an offer has already been made", () => {
   it("does not offer a translation the user switched to today, even with nothing downloaded", async () => {
     vi.useFakeTimers();

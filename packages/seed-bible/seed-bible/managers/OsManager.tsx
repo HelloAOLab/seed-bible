@@ -657,21 +657,22 @@ export function CasualOSManager(
     },
 
     /**
-     * Asks another user to share `permission` both ways: once they accept, each
-     * of them holds it in the other's record.
+     * Asks another user to share `permissions` both ways: once they accept,
+     * each of them holds them in the other's record. The set is granted,
+     * rejected and revoked together.
      *
      * A target is required. An untargeted request can be accepted by whoever
      * reaches it first, so it would hand the grant to anyone holding its ID.
      */
     requestSharedPermission: (
       recordName: string,
-      permission: SharedMarkerPermission,
+      permissions: SharedMarkerPermission[],
       target: { userId: string } | { email: string },
       options?: { expireTimeMs?: number }
     ) =>
       client.requestSharedPermission({
         recordName,
-        permission,
+        permissions,
         targetUserId: "userId" in target ? target.userId : undefined,
         targetUserEmail: "email" in target ? target.email : undefined,
         expireTimeMs: options?.expireTimeMs,

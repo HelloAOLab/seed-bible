@@ -582,7 +582,9 @@ describe("OffscreenHighlightCueLayer", () => {
       ".sb-offscreen-cue-avatar .sb-tab-user-icon"
     );
     expect(avatar?.getAttribute("title")).toBe("Ana");
-    expect(avatar?.style.backgroundImage).toContain("ana.png");
+    expect(avatar?.querySelector("img")?.getAttribute("src")).toBe(
+      "https://example.com/ana.png"
+    );
     expect(up?.querySelector(".sb-offscreen-cue-text")?.textContent).toBe(
       "Highlighted verse 1"
     );

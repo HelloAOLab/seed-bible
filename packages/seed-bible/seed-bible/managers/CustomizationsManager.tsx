@@ -10,6 +10,7 @@ import {
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
@@ -161,6 +162,46 @@ export function getContrastRatio(hexA: string, hexB: string): number {
  */
 export const MIN_READABLE_CONTRAST_RATIO = 4.5;
 
+// Darkest-last reds for light backgrounds, then lightest-last for dark ones,
+// so the first readable pick is the most saturated red that still reads.
+const WORDS_OF_JESUS_RED_CANDIDATES = [
+  "#c00",
+  "#b00",
+  "#a00",
+  "#900",
+  "#800",
+  "#700",
+  "#ff8080",
+  "#ffa0a0",
+  "#ffc0c0",
+  "#ffe0e0",
+];
+
+/**
+ * A red for words of Jesus that stays readable on `background` (a hex color),
+ * or `undefined` if `background` isn't a hex color. When no red reaches
+ * {@link MIN_READABLE_CONTRAST_RATIO} (a mid-tone background), returns the
+ * highest-contrast one.
+ */
+export function getReadableWordsOfJesusColor(
+  background: string
+): string | undefined {
+  if (!/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(background)) {
+    return undefined;
+  }
+  const readable = WORDS_OF_JESUS_RED_CANDIDATES.find(
+    (red) => getContrastRatio(red, background) >= MIN_READABLE_CONTRAST_RATIO
+  );
+  if (readable) {
+    return readable;
+  }
+  return WORDS_OF_JESUS_RED_CANDIDATES.reduce((best, red) =>
+    getContrastRatio(red, background) > getContrastRatio(best, background)
+      ? red
+      : best
+  );
+}
+
 export interface CustomizationContrastPair {
   /** The text/foreground color field. */
   foreground: ThemeColorKey;
@@ -288,13 +329,13 @@ const customizationVariantSchema = z.object({
 /**
  * How a customization treats one extension from the app's known catalog
  * while it's active:
- * - `available` (the default for any extension with no explicit entry):
- *   shown in Settings → Extensions; the viewer may install/uninstall it
+ * - `available`: shown in Settings → Extensions; the viewer may install/uninstall it
  *   themselves, same as outside any customization.
  * - `auto-installed`: force-installed with no prompt while the
  *   customization is active; shown but can't be uninstalled from there.
- * - `hidden`: not shown in Settings → Extensions at all while the
- *   customization is active.
+ * - `hidden`: never offered in Settings → Extensions while the
+ *   customization is active. If it's still installed anyway (e.g. as another
+ *   extension's dependency) it's listed under Installed and can still be uninstalled.
  */
 export const EXTENSION_AVAILABILITY_VALUES = [
   "available",
@@ -304,6 +345,19 @@ export const EXTENSION_AVAILABILITY_VALUES = [
 export type ExtensionAvailability =
   (typeof EXTENSION_AVAILABILITY_VALUES)[number];
 const extensionAvailabilitySchema = z.enum(EXTENSION_AVAILABILITY_VALUES);
+
+/**
+ * The availabilities a customization may apply to every extension it has no
+ * explicit entry for. `auto-installed` is deliberately excluded: it installs
+ * with no prompt, so it must only ever follow an author's review of that one
+ * extension, never reach one added to the catalog after they last looked.
+ */
+export const DEFAULT_EXTENSION_AVAILABILITY_VALUES = [
+  "available",
+  "hidden",
+] as const;
+export type DefaultExtensionAvailability =
+  (typeof DEFAULT_EXTENSION_AVAILABILITY_VALUES)[number];
 
 const customizationSchema = z
   .object({
@@ -327,12 +381,20 @@ const customizationSchema = z
      * keyed by extension id. Every id must reference the app's own known
      * extension catalog — never a URL or other free-form identity, since
      * `auto-installed` installs with no confirmation step. An id with no
-     * entry here defaults to `available`. Only ever written from the
-     * select in CustomizationEditExtensionsSettingsView.
+     * entry here follows `defaultExtensionAvailability`. Only ever written
+     * from the select in CustomizationEditExtensionsView.
      */
     extensionSettings: z
       .record(z.string(), extensionAvailabilitySchema)
       .default({}),
+    /**
+     * The availability of every extension with no entry in
+     * `extensionSettings`, including ones added to the catalog later. Absent
+     * (records saved before this existed) means `available`.
+     */
+    defaultExtensionAvailability: z
+      .enum(DEFAULT_EXTENSION_AVAILABILITY_VALUES)
+      .optional(),
     /**
      * Default values this customization sets for extension settings
      * (`ExtensionMeta.settings`), keyed by extension id then setting name.
@@ -401,8 +463,10 @@ export interface SeedBibleCustomization {
   defaultTranslationId?: string;
   createdAt: number;
   updatedAt: number;
-  /** Per-extension availability while this customization is active. An id with no entry defaults to "available". */
+  /** Per-extension availability while this customization is active. An id with no entry follows `defaultExtensionAvailability`. */
   extensionSettings: Record<string, ExtensionAvailability>;
+  /** Availability of every extension with no entry in `extensionSettings`. Absent means "available". */
+  defaultExtensionAvailability?: DefaultExtensionAvailability;
   /** Per-extension setting defaults while this customization is active. An extension/key with no entry has no default here. */
   extensionSettingDefaults: Record<
     string,
@@ -419,7 +483,8 @@ function withExtensionSensitiveProxy(
   customization: SeedBibleCustomization,
   extensionId: string,
   proxyId: string,
-  pointer: SensitiveProxyPointer | null
+  pointer: SensitiveProxyPointer | null,
+  updatedAt: number
 ): SeedBibleCustomization {
   const byProxy = { ...customization.extensionSensitiveProxies[extensionId] };
   if (pointer) {
@@ -436,16 +501,26 @@ function withExtensionSensitiveProxy(
   return {
     ...customization,
     extensionSensitiveProxies: next,
-    updatedAt: Date.now(),
+    updatedAt,
   };
 }
 
-/** Resolves an extension's effective availability for a customization, defaulting to "available" when unset. */
+/** The availability a customization gives extensions it has no explicit entry for. "available" when none is given. */
+export function getDefaultExtensionAvailability(
+  customization: SeedBibleCustomization | null
+): DefaultExtensionAvailability {
+  return customization?.defaultExtensionAvailability ?? "available";
+}
+
+/** Resolves an extension's effective availability for a customization, falling back to its default when the id has no explicit entry. */
 export function getExtensionAvailability(
   customization: SeedBibleCustomization | null,
   extensionId: string
 ): ExtensionAvailability {
-  return customization?.extensionSettings[extensionId] ?? "available";
+  return (
+    customization?.extensionSettings[extensionId] ??
+    getDefaultExtensionAvailability(customization)
+  );
 }
 
 /** Resolves a customization's default for one extension setting, or undefined if it doesn't set one. */
@@ -669,6 +744,12 @@ export interface CustomizationsManager {
    * was loaded via the URL.
    */
   activeCustomization: ReadonlySignal<SeedBibleCustomization | null>;
+  /**
+   * `recordName.id` for `activeCustomization`, or null when nothing is
+   * active (or a draft is open before the owner is signed in, so there is
+   * no record name to build a share link from).
+   */
+  activeCustomizationLocator: ReadonlySignal<string | null>;
   /** The variant of the active customization currently in effect (the device's color scheme when `isFollowingSystemScheme`, else the viewer's own pick, else the customization's default, else its first variant). */
   activeVariant: ReadonlySignal<CustomizationThemeVariant | null>;
   /** Whether the active customization has both a Light-based and a Dark-based variant, and so can follow the device the way the app-wide System theme does. False when nothing is active. */
@@ -716,9 +797,10 @@ export interface CustomizationsManager {
   ) => BibleTheme;
   /**
    * The extension ids that should be installed while the active
-   * customization is in effect: its own `auto-installed` extensions,
-   * unioned with any `available` extras the viewer added for it via
-   * `addExtensionToActiveCustomization`. Empty when nothing is active.
+   * customization is in effect: its own `auto-installed` extensions (minus
+   * any the viewer removed), unioned with any `available` extras the viewer
+   * added for it via `addExtensionToActiveCustomization`. Empty when
+   * nothing is active.
    */
   activeExtensionIds: ReadonlySignal<string[]>;
   /**
@@ -870,12 +952,16 @@ export interface CustomizationsManager {
   removeEditingVariant: (variantId: string) => void;
   /** Persists the viewer's variant choice for the currently active customization. Pass `SYSTEM_THEME_ID` to follow the device's color scheme instead of pinning one variant. No-op if none is active. */
   selectActiveVariant: (variantId: string) => Promise<void>;
-  /** Sets an extension's availability on the draft. No-op with no open draft. */
+  /** Sets an extension's availability on the draft, or with null, removes its entry so it follows the draft's default. No-op with no open draft. */
   setEditingExtensionAvailability: (
     extensionId: string,
-    availability: ExtensionAvailability
+    availability: ExtensionAvailability | null
   ) => void;
-  /** The active customization's effective availability for an extension id. "available" when nothing is active or the id has no explicit entry. */
+  /** Sets the availability the draft gives every extension with no explicit entry. No-op with no open draft. */
+  setEditingDefaultExtensionAvailability: (
+    availability: DefaultExtensionAvailability
+  ) => void;
+  /** The active customization's effective availability for an extension id. "available" when nothing is active; its default when the id has no explicit entry. */
   getActiveExtensionAvailability: (
     extensionId: string
   ) => ExtensionAvailability;
@@ -907,9 +993,9 @@ export interface CustomizationsManager {
     extensionId: string,
     key: string
   ) => ExtensionSettingValue | undefined;
-  /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active or the extension's availability there isn't "available". */
+  /** Installs an extension for the viewer on the active customization: an "available" one as an extra, an "auto-installed" one the viewer removed by putting it back. No-op if none is active or the extension is hidden there. */
   addExtensionToActiveCustomization: (extensionId: string) => Promise<void>;
-  /** Removes an extra extension id from the viewer's own preferences for the active customization. No-op if none is active or the id isn't one of the viewer's extras. */
+  /** Uninstalls an extension for the viewer on the active customization: drops an extra, or records that they removed an "auto-installed" one. No-op if none is active. */
   removeExtensionFromActiveCustomization: (
     extensionId: string
   ) => Promise<void>;
@@ -955,7 +1041,9 @@ export function createCustomizationsManager(
   navigation: NavigationManager,
   variantSelections: CustomizationVariantSelectionsManager,
   extensionPreferences: CustomizationExtensionPreferencesManager,
-  initialCustomizationSeed?: InitialCustomizationSeed
+  initialCustomizationSeed?: InitialCustomizationSeed,
+  /** Apply the seed for the first paint, then download the record again anyway. */
+  revalidateInitialCustomizationSeed = false
 ): CustomizationsManager {
   const customizations = signal<SeedBibleCustomization[]>([]);
   const isLoading = signal(false);
@@ -1100,6 +1188,9 @@ export function createCustomizationsManager(
       }
       initialCustomizationLoadCompleted = true;
       settleInitialCustomizationLoad();
+      if (revalidateInitialCustomizationSeed) {
+        void loadByLocator(initialLocator);
+      }
     } else {
       if (seedForLocator) {
         console.warn(
@@ -1209,10 +1300,14 @@ export function createCustomizationsManager(
     if (!customization) {
       return [];
     }
+    const locator = activeCustomizationLocator.value;
+    const removed = locator
+      ? extensionPreferences.getRemovedExtensionIds(locator)
+      : [];
     const autoInstalled = Object.entries(customization.extensionSettings)
       .filter(([, availability]) => availability === "auto-installed")
-      .map(([id]) => id);
-    const locator = activeCustomizationLocator.value;
+      .map(([id]) => id)
+      .filter((id) => !removed.includes(id));
     const extra = locator
       ? extensionPreferences.getExtraExtensionIds(locator)
       : [];
@@ -1254,6 +1349,11 @@ export function createCustomizationsManager(
       : theme.selectedThemeId.value === SYSTEM_THEME_ID;
   });
 
+  // A boolean, not the URL itself, so the active variant (and the theme built
+  // from it) is recomputed only when embed mode flips, not on every navigation.
+  const isMinimalEmbed = computed(() =>
+    isMinimalEmbedUrl(navigation.currentUrl.value)
+  );
   const activeVariant = computed<CustomizationThemeVariant | null>(() => {
     const customization = activeCustomization.value;
     if (!customization) {
@@ -1261,6 +1361,31 @@ export function createCustomizationsManager(
     }
     const byId = (id: string | null | undefined) =>
       id ? customization.variants.find((v) => v.id === id) : undefined;
+    // The embed link names the theme. A saved variant pick would leave the
+    // preview on one look no matter which theme the link asked for.
+    if (isMinimalEmbed.value) {
+      const themeId = theme.selectedThemeId.value;
+      const baseThemeId =
+        themeId === SYSTEM_THEME_ID
+          ? theme.prefersDarkScheme.value
+            ? DARK_THEME.id
+            : LIGHT_THEME.id
+          : themeId;
+      const linked = customization.variants.find(
+        (variant) => variant.baseTheme === baseThemeId
+      );
+      if (linked) {
+        return linked;
+      }
+      // No variant matches the link's theme (only a light variant, or a
+      // branding theme id). The viewer's saved pick is not what a visitor
+      // to the embed sees — they get the customization's default.
+      return (
+        byId(customization.defaultVariantId) ??
+        customization.variants[0] ??
+        null
+      );
+    }
     const bySystemScheme = isFollowingSystemScheme.value
       ? customization.variants.find(
           (v) =>
@@ -1381,6 +1506,23 @@ export function createCustomizationsManager(
       marker: CUSTOMIZATION_MARKER,
     });
 
+  /**
+   * Keeps a share-link copy of the owner's own customization in step with a
+   * save. Without this, closing the editor falls back to the copy fetched
+   * when the link loaded, so the owner sees their edits undone until a reload.
+   */
+  const updateLinkedCopy = (
+    userId: string,
+    saved: SeedBibleCustomization
+  ): void => {
+    if (
+      linkedCustomizationLocator.value ===
+      buildCustomizationLocator(userId, saved.id)
+    ) {
+      linkedCustomization.value = saved;
+    }
+  };
+
   // Every draft save and pointer write goes through here, one at a time, so
   // they reach the server in the order they were made: an older copy can't
   // land last and overwrite a newer one, which for a pointer would leave its
@@ -1471,10 +1613,16 @@ export function createCustomizationsManager(
 
     const saved: SeedBibleCustomization = { ...current, updatedAt: Date.now() };
     await queueWrite(async () => {
-      await persist(userId, saved);
+      // Nothing local changes unless the server kept the record, so a failed
+      // save keeps the draft unsaved instead of looking applied.
+      const result = await persist(userId, saved);
+      if (!result.success) {
+        throw new Error(`Failed to save customization: ${result.errorCode}`);
+      }
       customizations.value = customizations.value.some((c) => c.id === saved.id)
         ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
         : [...customizations.value, saved];
+      updateLinkedCopy(userId, saved);
     });
     // Only reflect the write onto the draft if it's still the exact one
     // captured above — a newer edit, or the editor closing, may have
@@ -1973,16 +2121,17 @@ export function createCustomizationsManager(
 
   const setEditingExtensionAvailability = (
     extensionId: string,
-    availability: ExtensionAvailability
+    availability: ExtensionAvailability | null
   ): void => {
     const current = editingCustomization.value;
     if (!current) {
       return;
     }
-    // "available" is the default for any id with no entry, so setting it
-    // explicitly just removes the entry rather than storing a redundant one.
+    // An explicit entry is kept even when it matches the current default, so
+    // that the author's choice for this extension survives a later change
+    // of the default.
     const nextSettings = { ...current.extensionSettings };
-    if (availability === "available") {
+    if (availability === null) {
       delete nextSettings[extensionId];
     } else {
       nextSettings[extensionId] = availability;
@@ -1990,6 +2139,21 @@ export function createCustomizationsManager(
     editingCustomization.value = {
       ...current,
       extensionSettings: nextSettings,
+      updatedAt: Date.now(),
+    };
+    scheduleAutoSave();
+  };
+
+  const setEditingDefaultExtensionAvailability = (
+    availability: DefaultExtensionAvailability
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      defaultExtensionAvailability: availability,
       updatedAt: Date.now(),
     };
     scheduleAutoSave();
@@ -2069,6 +2233,9 @@ export function createCustomizationsManager(
     // pointer instead of dropping it. The write itself starts from the last
     // saved copy instead of the draft: the draft may hold edits the author
     // hasn't saved yet, and might still discard.
+    // The draft and the saved copy share one timestamp, so once the write
+    // lands they compare equal and the draft doesn't read as unsaved.
+    const updatedAt = Date.now();
     const draft = editingCustomization.value;
     const previous =
       draft?.id === customizationId
@@ -2079,7 +2246,8 @@ export function createCustomizationsManager(
         draft,
         extensionId,
         proxyId,
-        pointer
+        pointer,
+        updatedAt
       );
     }
     // A failed write takes the pointer back off the draft, unless something
@@ -2095,7 +2263,8 @@ export function createCustomizationsManager(
           current,
           extensionId,
           proxyId,
-          previous ?? null
+          previous ?? null,
+          Date.now()
         );
       }
     };
@@ -2108,7 +2277,8 @@ export function createCustomizationsManager(
         saved,
         extensionId,
         proxyId,
-        pointer
+        pointer,
+        updatedAt
       );
       try {
         const result = await persist(userId, next);
@@ -2129,6 +2299,7 @@ export function createCustomizationsManager(
       customizations.value = customizations.value.map((c) =>
         c.id === customizationId ? next : c
       );
+      updateLinkedCopy(userId, next);
       return true;
     });
     if (!written) {
@@ -2144,7 +2315,12 @@ export function createCustomizationsManager(
     if (!locator) {
       return;
     }
-    if (getActiveExtensionAvailability(extensionId) === "hidden") {
+    const availability = getActiveExtensionAvailability(extensionId);
+    if (availability === "hidden") {
+      return;
+    }
+    if (availability === "auto-installed") {
+      await extensionPreferences.clearRemovedExtensionId(locator, extensionId);
       return;
     }
     await extensionPreferences.addExtraExtensionId(locator, extensionId);
@@ -2155,6 +2331,10 @@ export function createCustomizationsManager(
   ): Promise<void> => {
     const locator = activeCustomizationLocator.value;
     if (!locator) {
+      return;
+    }
+    if (getActiveExtensionAvailability(extensionId) === "auto-installed") {
+      await extensionPreferences.addRemovedExtensionId(locator, extensionId);
       return;
     }
     await extensionPreferences.removeExtraExtensionId(locator, extensionId);
@@ -2179,6 +2359,7 @@ export function createCustomizationsManager(
     customizations,
     isLoading,
     activeCustomization,
+    activeCustomizationLocator,
     activeVariant,
     canFollowSystemScheme,
     isFollowingSystemScheme,
@@ -2224,6 +2405,7 @@ export function createCustomizationsManager(
     removeEditingVariant,
     selectActiveVariant,
     setEditingExtensionAvailability,
+    setEditingDefaultExtensionAvailability,
     getActiveExtensionAvailability,
     setEditingExtensionSettingDefault,
     clearEditingExtensionSettingDefault,

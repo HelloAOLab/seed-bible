@@ -2,6 +2,7 @@ import { useEffect } from "preact/hooks";
 import { signal } from "@preact/signals";
 import type { i18n as I18nInstance } from "i18next";
 import { useI18n } from "../../i18n/I18nManager";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 
 /**
  * Tracks which languages have had their Privacy Policy bundle loaded into i18n.
@@ -82,6 +83,8 @@ export function PrivacyPolicyModal({
     }
   }, [isOpen, language]);
 
+  const overlayDismiss = useOverlayDismiss(onClose);
+
   if (!isOpen) {
     return null;
   }
@@ -91,7 +94,7 @@ export function PrivacyPolicyModal({
   return (
     <div
       className="sb-footnote-modal-overlay"
-      onClick={onClose}
+      {...overlayDismiss}
       onKeyDown={(event: KeyboardEvent) => {
         if (event.key === "Escape") {
           event.preventDefault();
