@@ -30,7 +30,7 @@ import { HeroImageField } from "../HeroImageField/HeroImageField";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { cadenceOptionLabel } from "./cadenceLabels";
 import { readingLabel } from "./readingLabel";
-import { playlistItemLabel } from "../playlistItemLabel";
+import { scriptureRefsLabel } from "../playlistItemLabel";
 import { readingItemIcon, readingPreviewText } from "./readingPreview";
 
 interface ReadingPlanEditorProps {
@@ -698,9 +698,8 @@ function SessionsSection(props: SessionsSectionProps) {
                             editItem={reading.item}
                             editScriptureText={
                               reading.item.type === "bible-verse"
-                                ? playlistItemLabel(
+                                ? scriptureRefsLabel(
                                     reading.item,
-                                    t,
                                     resolveBookName
                                   )
                                 : undefined

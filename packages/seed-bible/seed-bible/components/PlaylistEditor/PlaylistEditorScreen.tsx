@@ -17,7 +17,7 @@ import {
   modeForItem,
   type AddMode,
 } from "../PlaylistItemInput/PlaylistItemInput";
-import { playlistItemLabel, verseRefLabel } from "../playlistItemLabel";
+import { scriptureRefsLabel, verseRefLabel } from "../playlistItemLabel";
 import {
   minutesLabel,
   playlistItemAutoMinutes,
@@ -116,6 +116,9 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
   } = editor;
 
   const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const translationName =
+    tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value)
+      ?.readingState.translation?.value?.shortName ?? undefined;
   // The last look before publishing takes the middle column's place.
   const [reviewOpen, setReviewOpen] = useState(false);
   const openReview = () => {
@@ -386,12 +389,13 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
                 editItem={openItem}
                 editScriptureText={
                   openItem.type === "bible-verse"
-                    ? playlistItemLabel(openItem, t, resolveBookName)
+                    ? scriptureRefsLabel(openItem, resolveBookName)
                     : undefined
                 }
                 loadChapter={loadChapter}
                 steps={stepLinkTargets}
                 layout="screen"
+                translationName={translationName}
                 onUpdate={(updated) => {
                   // The editor only knows the step's content; its settings
                   // stay as the settings column set them.
@@ -436,6 +440,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
                 initialMode={addMode}
                 loadChapter={loadChapter}
                 layout="screen"
+                translationName={translationName}
                 onAdd={(item) => {
                   const index = addItem(item);
                   setAddOpen(false);

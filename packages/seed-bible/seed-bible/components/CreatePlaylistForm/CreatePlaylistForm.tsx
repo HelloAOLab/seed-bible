@@ -17,7 +17,7 @@ import {
   DiscoverEmpty,
 } from "../DiscoverPane/DiscoverSection";
 import { PlaylistItemInput } from "../PlaylistItemInput/PlaylistItemInput";
-import { playlistItemLabel } from "../playlistItemLabel";
+import { scriptureRefsLabel } from "../playlistItemLabel";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
 import type { BibleDataManager } from "../../managers/BibleDataManager";
 import { usePlaylistEditor } from "../PlaylistEditor/usePlaylistEditor";
@@ -271,7 +271,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                 editItem={item}
                 editScriptureText={
                   item.type === "bible-verse"
-                    ? playlistItemLabel(item, t, resolveBookName)
+                    ? scriptureRefsLabel(item, resolveBookName)
                     : undefined
                 }
                 loadChapter={loadChapter}

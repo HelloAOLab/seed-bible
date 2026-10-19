@@ -25,6 +25,10 @@ import { HeroImageBanner } from "../HeroImageField/HeroImageField";
 import { PlaylistItemNav } from "../PlaylistItemNav/PlaylistItemNav";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
 import { PlaylistPartyPanel } from "../PlaylistPartyPanel/PlaylistPartyPanel";
+import {
+  StepQuestion,
+  openStepQuestion,
+} from "../PlaylistStepContent/StepQuestion";
 import { isLocalSessionHost } from "../Tabs/Tabs";
 
 interface PlayPlaylistViewProps {
@@ -72,7 +76,7 @@ export function queueSceneHeadings(
  * playlist's own title and author sit in the pane header.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
-  const { playlists, tabs, state } = props;
+  const { playlists, tabs, modals, state } = props;
   const { t } = useI18n();
 
   // Reading `.value` during render subscribes the component to updates.
@@ -205,6 +209,12 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                 <PlaylistHtmlContent
                   html={currentNote.html}
                   onStepLink={jumpToStep}
+                  onVerseLink={(verse) => {
+                    const readingState = playing.tab?.readingState;
+                    if (readingState) {
+                      readingState.scrollToVerse.value = verse;
+                    }
+                  }}
                   loadChapter={loadChapter}
                 />
               </div>
@@ -213,6 +223,19 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
               <p className="sb-play-current-detail">
                 {playlistItemSubtitle(currentItem, t, resolveBookName)}
               </p>
+            ) : null}
+            {currentItem.type === "bible-verse" && currentItem.question ? (
+              <StepQuestion
+                prompt={currentItem.question.prompt}
+                onAnswer={() =>
+                  openStepQuestion(
+                    modals,
+                    currentItem.question!,
+                    playlists.playingStepOptions(playing),
+                    t
+                  )
+                }
+              />
             ) : null}
             {!session ? <PlaylistItemNav playing={playing} /> : null}
           </section>

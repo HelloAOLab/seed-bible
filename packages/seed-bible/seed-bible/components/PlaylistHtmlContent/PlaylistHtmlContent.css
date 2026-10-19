@@ -4,6 +4,12 @@
   word-break: break-word;
 }
 
+.sb-play-playlist-content-html a.sb-verse-link {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .sb-play-playlist-content-html a.sb-step-link {
   color: var(--sb-primary-color);
   font-weight: 600;

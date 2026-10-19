@@ -345,6 +345,14 @@ export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
     // otherwise be silently lost by saving the playlist.
     const editDirty = openItem !== null && !!editInputRef.current?.isDirty();
     const addDirty = !!addInputRef.current?.isDirty();
+    if (editDirty && !addDirty && autoCommit) {
+      void saveOpenItem().then((saved) => {
+        if (saved) {
+          void doSave();
+        }
+      });
+      return;
+    }
     if (editDirty || addDirty) {
       const input = editDirty ? editInputRef : addInputRef;
       openUnsavedItemConfirm(modals, {

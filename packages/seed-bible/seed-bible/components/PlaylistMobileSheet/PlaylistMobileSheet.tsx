@@ -129,6 +129,12 @@ export function PlaylistMobileSheet(props: {
               <PlaylistHtmlContent
                 html={note.html}
                 loadChapter={loadChapter}
+                onVerseLink={(verse) => {
+                  const readingState = playing.tab?.readingState;
+                  if (readingState) {
+                    readingState.scrollToVerse.value = verse;
+                  }
+                }}
                 onStepLink={(step) => {
                   const target = queueIndexOfStep(playlist?.items ?? [], step);
                   if (target !== null) {

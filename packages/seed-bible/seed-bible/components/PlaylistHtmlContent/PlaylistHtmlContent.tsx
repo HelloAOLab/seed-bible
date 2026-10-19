@@ -5,15 +5,17 @@ import { parseVerseReference } from "../../managers/BibleDataManager";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { passageVerses } from "../scripturePassage";
 import { parseStepLinkHref } from "../TipTapEditor/StepLinkMark";
+import { parseVerseLinkHref } from "../TipTapEditor/VerseLinkMark";
 
 /**
  * Renders a playlist HTML snippet. The stored value was sanitized when the item
  * was created, but playlists are publicly readable and may come from untrusted
  * authors, so the HTML is sanitized again on render via {@link setSafeHtml}.
  *
- * Two kinds of markup the editor writes get brought to life here: a link to
+ * Three kinds of markup the editor writes get brought to life here: a link to
  * another step (`a.sb-step-link`, see `StepLinkMark`) is handed to
- * `onStepLink` instead of followed, and an embedded passage
+ * `onStepLink` instead of followed, a link to a verse of the step's passage
+ * (`a.sb-verse-link`, see `VerseLinkMark`) to `onVerseLink`, and an embedded passage
  * (`blockquote.sb-scripture-embed`, see `ScriptureEmbedNode`) gets its verses
  * loaded and written in under its reference when `loadChapter` is given.
  */
@@ -21,13 +23,17 @@ export function PlaylistHtmlContent(props: {
   html: string;
   /** Called with the 1-based step number a step link points at. */
   onStepLink?: (step: number) => void;
+  /** Called with the verse number a verse link points at. */
+  onVerseLink?: (verse: number) => void;
   /** Loads chapters so embedded passages can show their verses. */
   loadChapter?: ScriptureChapterLoader;
 }) {
-  const { html, onStepLink, loadChapter } = props;
+  const { html, onStepLink, onVerseLink, loadChapter } = props;
   const ref = useRef<HTMLDivElement>(null);
   const onStepLinkRef = useRef(onStepLink);
   onStepLinkRef.current = onStepLink;
+  const onVerseLinkRef = useRef(onVerseLink);
+  onVerseLinkRef.current = onVerseLink;
 
   useEffect(() => {
     const el = ref.current;
@@ -100,9 +106,17 @@ export function PlaylistHtmlContent(props: {
       className="sb-play-playlist-content-html"
       dir="auto"
       onClick={(event: MouseEvent) => {
-        const anchor = (event.target as HTMLElement).closest?.(
-          "a.sb-step-link"
-        );
+        const target = event.target as HTMLElement;
+        const verseAnchor = target.closest?.("a.sb-verse-link");
+        if (verseAnchor) {
+          const verse = parseVerseLinkHref(verseAnchor.getAttribute("href"));
+          if (verse !== null) {
+            event.preventDefault();
+            onVerseLinkRef.current?.(verse);
+          }
+          return;
+        }
+        const anchor = target.closest?.("a.sb-step-link");
         if (!anchor) {
           return;
         }

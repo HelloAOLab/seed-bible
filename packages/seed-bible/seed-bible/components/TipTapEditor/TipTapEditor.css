@@ -95,3 +95,112 @@
   text-decoration: underline;
   text-underline-offset: 0.15em;
 }
+
+.sb-editor-content a.sb-verse-link {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+/* ---------------------------------------------- the step note's toolbar */
+
+.sb-editor-toolbar--step {
+  gap: 4px 10px;
+  margin: 0;
+  padding: 6px 8px;
+  border: none;
+  border-bottom: 1px solid var(--sb-divider-color);
+}
+
+.sb-editor-toolbar--step .sb-editor-toolbar-button {
+  width: 32px;
+  height: 32px;
+}
+
+.sb-editor-toolbar-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-editor-toolbar-action .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-editor-toolbar-action:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+.sb-editor-toolbar-action--active {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+  color: var(--sb-primary-color);
+}
+
+/* "Link “…” to": verse chips, the chosen verse's words, then Cancel / Link. */
+.sb-editor-verse-picker {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
+  background: var(--sb-menu-background, var(--sb-background));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.sb-editor-verse-picker-title {
+  margin: 0;
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-editor-verse-picker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sb-editor-verse-chip {
+  min-width: 2.75rem;
+  min-height: 2.25rem;
+  padding: 4px 8px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.sb-editor-verse-chip--on {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+  color: var(--sb-primary-color);
+  font-weight: 600;
+}
+
+.sb-editor-verse-picker-text {
+  margin: 0;
+  font-family: var(--sb-book-title-font-family);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.sb-editor-verse-picker-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

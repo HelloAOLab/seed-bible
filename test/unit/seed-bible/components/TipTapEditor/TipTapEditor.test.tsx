@@ -216,6 +216,100 @@ describe("TipTapEditor step links and passage embeds", () => {
     expect(editor.getAttributes("stepLink")).toEqual({ step: 7 });
   });
 
+  it("links the selection to a verse of the passage as a fragment href, and reads it back", async () => {
+    const editor = await mount("<p>She names him</p>");
+    editor.commands.setTextSelection({ from: 5, to: 10 });
+
+    editor.commands.setVerseLink(13);
+
+    expect(editor.getHTML()).toBe(
+      '<p>She <a href="#verse-13" class="sb-verse-link">names</a> him</p>'
+    );
+    editor.commands.setTextSelection({ from: 7, to: 7 });
+    expect(editor.getAttributes("verseLink")).toEqual({ verse: 13 });
+    editor.commands.unsetVerseLink();
+    expect(editor.getHTML()).toBe("<p>She names him</p>");
+
+    editor.commands.setTextSelection(14);
+    editor.commands.setVerseLink(7, "v7");
+    expect(editor.getHTML()).toBe(
+      '<p>She names him<a href="#verse-7" class="sb-verse-link">v7</a></p>'
+    );
+  });
+
+  it("the step toolbar offers Link to verse with a picker of the passage's verses, + Question and + Cross-reference", async () => {
+    const onAddQuestion = vi.fn();
+    let instance: Editor | null = null;
+    await act(async () => {
+      render(
+        <TipTapEditor
+          initialContent="<p>She names him</p>"
+          books={books}
+          variant="step"
+          verses={[
+            { number: 13, text: "You are a God who sees." },
+            { number: 14, text: "Beer Lahai Roi." },
+          ]}
+          onAddQuestion={onAddQuestion}
+          onEditor={(editor) => {
+            instance = editor;
+          }}
+          onEmptyChange={() => {}}
+        />,
+        container
+      );
+    });
+    const editor = instance!;
+    const actions = () =>
+      Array.from(
+        container.querySelectorAll<HTMLButtonElement>(
+          ".sb-editor-toolbar-action"
+        )
+      );
+    expect(actions().map((b) => b.textContent)).toEqual([
+      "linkLink to verse",
+      "+ Question",
+      "+ Cross-reference",
+    ]);
+    // Only bold and italic remain of the formatting buttons.
+    expect(
+      Array.from(container.querySelectorAll(".sb-editor-toolbar-button")).map(
+        (b) => b.getAttribute("aria-label")
+      )
+    ).toEqual(["Bold", "Italic"]);
+
+    act(() => actions()[1]!.click());
+    expect(onAddQuestion).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      editor.commands.setTextSelection({ from: 5, to: 10 });
+    });
+    act(() => actions()[0]!.click());
+    const picker = container.querySelector(".sb-editor-verse-picker")!;
+    expect(
+      picker.querySelector(".sb-editor-verse-picker-title")?.textContent
+    ).toBe("Link “names” to");
+    act(() => {
+      Array.from(
+        picker.querySelectorAll<HTMLButtonElement>(".sb-editor-verse-chip")
+      )
+        .find((chip) => chip.textContent === "13")!
+        .click();
+    });
+    expect(
+      container.querySelector(".sb-editor-verse-picker-text")?.textContent
+    ).toBe("You are a God who sees.");
+    act(() => {
+      Array.from(container.querySelectorAll("button"))
+        .find((b) => b.textContent === "Link v13")!
+        .click();
+    });
+    expect(editor.getHTML()).toBe(
+      '<p>She <a href="#verse-13" class="sb-verse-link">names</a> him</p>'
+    );
+    expect(container.querySelector(".sb-editor-verse-picker")).toBeNull();
+  });
+
   it("inserts 'Step N' as the link when nothing is selected", async () => {
     const editor = await mount("<p>Go to</p>");
     editor.commands.setTextSelection(6);

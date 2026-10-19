@@ -80,3 +80,24 @@
   margin-top: 0;
   align-self: flex-start;
 }
+
+/* A video's transcript, under its URL. */
+.sb-playlist-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.sb-playlist-transcript-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.sb-playlist-transcript-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 5rem;
+  resize: vertical;
+  line-height: 1.4;
+}

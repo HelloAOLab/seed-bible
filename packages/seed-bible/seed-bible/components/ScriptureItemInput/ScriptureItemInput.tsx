@@ -20,7 +20,11 @@ import {
 import { sanitize } from "../../managers/Sanitization";
 import { MaterialIcon } from "../icons";
 import { verseRefLabel } from "../playlistItemLabel";
-import type { StepLinkTarget } from "../TipTapEditor/TipTapEditor";
+import type {
+  StepLinkTarget,
+  VerseLinkTarget,
+} from "../TipTapEditor/TipTapEditor";
+import { passageVerses } from "../scripturePassage";
 
 // Loaded only when a note is opened, like the text item's editor; the SSR
 // guard keeps TipTap out of the single-file SSR bundle.
@@ -57,6 +61,16 @@ interface ScriptureItemInputProps {
   submitLabel?: string;
   /** The playlist's steps, so the note can link to one. */
   steps?: StepLinkTarget[];
+  /** A question readers answer after the passage, the step starts with. */
+  initialQuestion?: { prompt: string; shareable?: boolean };
+  /**
+   * "screen" is the fullscreen editor's look: the passage as a card with a
+   * Change button, the note's own toolbar with Link to verse, + Question and
+   * + Cross-reference, and the question as a card of its own.
+   */
+  layout?: "pane" | "screen";
+  /** The translation the passage will be read in, for the passage card. */
+  translationName?: string;
 }
 
 /** Imperative handle so a parent can check for / commit an in-progress draft. */
@@ -112,6 +126,9 @@ export const ScriptureItemInput = forwardRef<
     steps,
     initialHighlights,
     loadChapter,
+    initialQuestion,
+    layout = "pane",
+    translationName,
   } = props;
   const { t } = useI18n();
   const [value, setValue] = useState(initialValue ?? "");
@@ -139,6 +156,23 @@ export const ScriptureItemInput = forwardRef<
   const [pendingPhrase, setPendingPhrase] = useState<PhraseHighlight | null>(
     null
   );
+
+  const [question, setQuestion] = useState<{
+    prompt: string;
+    shareable: boolean;
+  } | null>(
+    initialQuestion
+      ? {
+          prompt: initialQuestion.prompt,
+          shareable: initialQuestion.shareable ?? true,
+        }
+      : null
+  );
+  // Whether the passage card has been opened to change the reference. A new
+  // step starts open, since it has no passage yet.
+  const [changing, setChanging] = useState(!initialValue);
+  // The passage's verses, for the note's "Link to verse".
+  const [verseTargets, setVerseTargets] = useState<VerseLinkTarget[]>([]);
 
   const noteEditorRef = useRef<Editor | null>(null);
   const [noteOpen, setNoteOpen] = useState(
@@ -238,6 +272,24 @@ export const ScriptureItemInput = forwardRef<
   const highlightsChanged = (): boolean =>
     JSON.stringify(highlights) !== JSON.stringify(initialHighlights ?? []);
 
+  /** The question as it would be saved: trimmed, and absent when blank. */
+  const questionToSave = () =>
+    question && question.prompt.trim()
+      ? { prompt: question.prompt.trim(), shareable: question.shareable }
+      : null;
+
+  /** Whether the question differs from the one the step started with. */
+  const questionChanged = (): boolean =>
+    JSON.stringify(questionToSave()) !==
+    JSON.stringify(
+      initialQuestion
+        ? {
+            prompt: initialQuestion.prompt,
+            shareable: initialQuestion.shareable ?? true,
+          }
+        : null
+    );
+
   /**
    * The selection the reader just made in the passage, when it sits within
    * one verse: offered as a phrase to highlight. Cleared otherwise.
@@ -312,6 +364,7 @@ export const ScriptureItemInput = forwardRef<
     note: string | null
   ) => {
     const title = noteOpen ? noteTitle.trim() : "";
+    const savedQuestion = questionToSave();
     onAdd({
       type: "bible-verse",
       ref: verseRef,
@@ -319,7 +372,13 @@ export const ScriptureItemInput = forwardRef<
       ...(highlights.length ? { highlights } : {}),
       ...(note ? { note } : {}),
       ...(title ? { noteTitle: title } : {}),
+      ...(savedQuestion ? { question: savedQuestion } : {}),
     });
+    if (layout === "screen" && initialValue) {
+      // Editing in place: the step keeps what was just saved on screen.
+      setChanging(false);
+      return;
+    }
     setValue("");
     setExtraTexts([]);
     setHighlights([]);
@@ -329,6 +388,8 @@ export const ScriptureItemInput = forwardRef<
     noteEditorRef.current?.commands.clearContent();
     setNoteTitle("");
     setNoteOpen(!!withNote);
+    setQuestion(null);
+    setChanging(true);
   };
 
   /**
@@ -389,7 +450,8 @@ export const ScriptureItemInput = forwardRef<
         value.trim() !== (initialValue ?? "").trim() ||
         extrasChanged() ||
         highlightsChanged() ||
-        noteChanged(),
+        noteChanged() ||
+        questionChanged(),
       commit: handleSubmit,
     }),
     [
@@ -401,6 +463,8 @@ export const ScriptureItemInput = forwardRef<
       noteOpen,
       noteTitle,
       initialNote,
+      question,
+      initialQuestion,
     ]
   );
 
@@ -408,213 +472,241 @@ export const ScriptureItemInput = forwardRef<
   // Enter would read it) plus the further ones that can be read.
   const mainRef = resolveTypedReference(value, books);
   const previewRefs = mainRef ? [mainRef, ...(resolveExtraRefs() ?? [])] : [];
+  const mainRefKey = mainRef ? JSON.stringify(mainRef) : "";
 
-  return (
-    <>
-      <div className="sb-scripture-input">
-        <div className="sb-playlist-add-row">
-          <input
-            className="sb-settings-text-input sb-playlist-input"
-            type="text"
-            value={value}
-            dir="auto"
-            placeholder={t("playlist-add-scripture-placeholder", {
-              defaultValue: "e.g. John 3 or John 3:16",
-            })}
-            onInput={(event: Event) => {
-              const input = event.currentTarget as HTMLInputElement;
-              setValue(input.value);
-              setError(null);
-              setHighlight({ book: 0, option: 0 });
-              syncInputDir(input);
-            }}
-            onFocus={(event: FocusEvent) => {
-              setIsFocused(true);
-              syncInputDir(event.currentTarget as HTMLInputElement);
-            }}
-            onBlur={() => setIsFocused(false)}
-            onKeyDown={(event: KeyboardEvent) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                void handleSubmit();
-                return;
-              }
-              if (event.key === "Escape") {
-                setIsFocused(false);
-                return;
-              }
-              if (!showSuggestions) {
-                return;
-              }
-              // While the dropdown is open, arrows drive the highlight. Up/Down
-              // always change book. The horizontal arrows hand off between the
-              // text cursor and the chapter selection: the text sits "before"
-              // the chapters, so the forward arrow advances the cursor until it
-              // reaches the end of the text and only then steps through
-              // chapters, while the backward arrow steps back through chapters
-              // and only returns to the cursor once it's on the first one.
-              //
-              // Which physical key is "forward" depends on the resolved writing
-              // direction — the caret moves visually, so in RTL text the roles
-              // of ArrowLeft/ArrowRight swap.
-              const input = event.currentTarget as HTMLInputElement;
-              const rtl = getComputedStyle(input).direction === "rtl";
-              const forwardKey = rtl ? "ArrowLeft" : "ArrowRight";
-              const backwardKey = rtl ? "ArrowRight" : "ArrowLeft";
+  // The passage's verses, so the note can link to one of them.
+  useEffect(() => {
+    if (!mainRef || !loadChapter || layout !== "screen") {
+      setVerseTargets([]);
+      return;
+    }
+    let cancelled = false;
+    loadChapter(undefined, mainRef.bookId, mainRef.chapter).then(
+      (chapter) => {
+        if (!cancelled) {
+          setVerseTargets(passageVerses(chapter, mainRef));
+        }
+      },
+      () => {
+        if (!cancelled) setVerseTargets([]);
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [mainRefKey, loadChapter, layout]);
 
-              if (event.key === "ArrowDown") {
-                event.preventDefault();
-                moveBook(1);
-              } else if (event.key === "ArrowUp") {
-                event.preventDefault();
-                moveBook(-1);
-              } else if (event.key === forwardKey) {
-                const cursorAtEnd =
-                  input.selectionStart === input.value.length &&
-                  input.selectionEnd === input.value.length;
-                if (cursorAtEnd) {
-                  event.preventDefault();
-                  moveOption(1);
-                }
-              } else if (event.key === backwardKey) {
-                if (highlightOption > 0) {
-                  event.preventDefault();
-                  moveOption(-1);
-                }
-              }
-            }}
-          />
-          <button
-            type="button"
-            className="sb-settings-save-button"
-            onClick={() => void handleSubmit()}
-            disabled={!value.trim()}
-          >
-            {submitLabel ??
-              t("playlist-add-button", { defaultValue: "Add item" })}
-          </button>
-        </div>
+  const referenceRow = (
+    <div className="sb-scripture-input">
+      <div className="sb-playlist-add-row">
+        <input
+          className="sb-settings-text-input sb-playlist-input"
+          type="text"
+          value={value}
+          dir="auto"
+          placeholder={t("playlist-add-scripture-placeholder", {
+            defaultValue: "e.g. John 3 or John 3:16",
+          })}
+          onInput={(event: Event) => {
+            const input = event.currentTarget as HTMLInputElement;
+            setValue(input.value);
+            setError(null);
+            setHighlight({ book: 0, option: 0 });
+            syncInputDir(input);
+          }}
+          onFocus={(event: FocusEvent) => {
+            setIsFocused(true);
+            syncInputDir(event.currentTarget as HTMLInputElement);
+          }}
+          onBlur={() => setIsFocused(false)}
+          onKeyDown={(event: KeyboardEvent) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              void handleSubmit();
+              return;
+            }
+            if (event.key === "Escape") {
+              setIsFocused(false);
+              return;
+            }
+            if (!showSuggestions) {
+              return;
+            }
+            // While the dropdown is open, arrows drive the highlight. Up/Down
+            // always change book. The horizontal arrows hand off between the
+            // text cursor and the chapter selection: the text sits "before"
+            // the chapters, so the forward arrow advances the cursor until it
+            // reaches the end of the text and only then steps through
+            // chapters, while the backward arrow steps back through chapters
+            // and only returns to the cursor once it's on the first one.
+            //
+            // Which physical key is "forward" depends on the resolved writing
+            // direction — the caret moves visually, so in RTL text the roles
+            // of ArrowLeft/ArrowRight swap.
+            const input = event.currentTarget as HTMLInputElement;
+            const rtl = getComputedStyle(input).direction === "rtl";
+            const forwardKey = rtl ? "ArrowLeft" : "ArrowRight";
+            const backwardKey = rtl ? "ArrowRight" : "ArrowLeft";
 
-        {showSuggestions ? (
-          <ul className="sb-scripture-suggestions" role="listbox" ref={listRef}>
-            {suggestions.map((suggestion, bookIndex) => (
-              <li key={suggestion.book.id} className="sb-scripture-suggestion">
-                <span className="sb-scripture-suggestion-book" dir="auto">
-                  {suggestion.book.commonName || suggestion.book.name}
-                </span>
-                <div className="sb-scripture-chapter-list" dir={inputDir}>
-                  {suggestion.options.map((option, optionIndex) => {
-                    const isHighlighted =
-                      bookIndex === highlightBook &&
-                      optionIndex === highlightOption;
-                    return (
-                      <button
-                        key={option.label}
-                        type="button"
-                        role="option"
-                        aria-selected={isHighlighted}
-                        className={`sb-scripture-chapter-button${
-                          isHighlighted
-                            ? " sb-scripture-chapter-button--highlighted"
-                            : ""
-                        }`}
-                        onMouseEnter={() =>
-                          setHighlight({ book: bookIndex, option: optionIndex })
-                        }
-                        // mousedown (not click) so the option is added before the
-                        // input's blur can hide the list out from under the tap.
-                        onMouseDown={(event: MouseEvent) => {
-                          event.preventDefault();
-                          void addRef(option.ref);
-                        }}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : null}
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+              moveBook(1);
+            } else if (event.key === "ArrowUp") {
+              event.preventDefault();
+              moveBook(-1);
+            } else if (event.key === forwardKey) {
+              const cursorAtEnd =
+                input.selectionStart === input.value.length &&
+                input.selectionEnd === input.value.length;
+              if (cursorAtEnd) {
+                event.preventDefault();
+                moveOption(1);
+              }
+            } else if (event.key === backwardKey) {
+              if (highlightOption > 0) {
+                event.preventDefault();
+                moveOption(-1);
+              }
+            }
+          }}
+        />
+        <button
+          type="button"
+          className="sb-settings-save-button"
+          onClick={() => void handleSubmit()}
+          disabled={!value.trim()}
+        >
+          {submitLabel ??
+            t("playlist-add-button", { defaultValue: "Add item" })}
+        </button>
       </div>
-      {error ? <div className="sb-playlist-add-error">{error}</div> : null}
 
-      {loadChapter && previewRefs.length > 0 ? (
-        <div className="sb-scripture-passage">
-          <div
-            className="sb-item-inline-preview"
-            dir="auto"
-            onMouseUp={capturePhrase}
-            onKeyUp={capturePhrase}
-          >
-            {previewRefs.map((previewRef, index) => (
-              <ScripturePreview
-                key={`${index}-${JSON.stringify(previewRef)}`}
-                item={{ type: "bible-verse", ref: previewRef }}
-                loadChapter={loadChapter}
-                highlights={highlights}
-              />
-            ))}
-          </div>
-          {pendingPhrase ? (
+      {showSuggestions ? (
+        <ul className="sb-scripture-suggestions" role="listbox" ref={listRef}>
+          {suggestions.map((suggestion, bookIndex) => (
+            <li key={suggestion.book.id} className="sb-scripture-suggestion">
+              <span className="sb-scripture-suggestion-book" dir="auto">
+                {suggestion.book.commonName || suggestion.book.name}
+              </span>
+              <div className="sb-scripture-chapter-list" dir={inputDir}>
+                {suggestion.options.map((option, optionIndex) => {
+                  const isHighlighted =
+                    bookIndex === highlightBook &&
+                    optionIndex === highlightOption;
+                  return (
+                    <button
+                      key={option.label}
+                      type="button"
+                      role="option"
+                      aria-selected={isHighlighted}
+                      className={`sb-scripture-chapter-button${
+                        isHighlighted
+                          ? " sb-scripture-chapter-button--highlighted"
+                          : ""
+                      }`}
+                      onMouseEnter={() =>
+                        setHighlight({ book: bookIndex, option: optionIndex })
+                      }
+                      // mousedown (not click) so the option is added before the
+                      // input's blur can hide the list out from under the tap.
+                      onMouseDown={(event: MouseEvent) => {
+                        event.preventDefault();
+                        void addRef(option.ref);
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+
+  const highlightChips =
+    highlights.length > 0 ? (
+      <ul
+        className="sb-scripture-highlights"
+        aria-label={t("playlist-highlights-label", {
+          defaultValue: "Highlighted phrases",
+        })}
+      >
+        {highlights.map((highlight, index) => (
+          <li key={index} className="sb-scripture-highlight">
+            <span className="sb-scripture-highlight-verse">
+              {resolveBookName(highlight.bookId)} {highlight.chapter}:
+              {highlight.verse}
+            </span>
+            <span className="sb-scripture-highlight-text" dir="auto">
+              “{highlight.text}”
+            </span>
             <button
               type="button"
-              className="sb-scripture-note-toggle sb-scripture-highlight-add"
-              onMouseDown={(event: MouseEvent) => event.preventDefault()}
-              onClick={addPendingPhrase}
-            >
-              <MaterialIcon>ink_highlighter</MaterialIcon>
-              {t("playlist-highlight-selection", {
-                defaultValue: "Highlight “{{text}}”",
-                text: pendingPhrase.text,
+              className="sb-scripture-highlight-remove"
+              aria-label={t("playlist-highlight-remove", {
+                defaultValue: "Remove highlight",
               })}
+              onClick={() =>
+                setHighlights((current) =>
+                  current.filter((_, i) => i !== index)
+                )
+              }
+            >
+              <MaterialIcon>close</MaterialIcon>
             </button>
-          ) : (
-            <p className="sb-scripture-passage-hint">
-              {t("playlist-highlight-hint", {
-                defaultValue:
-                  "Select words in the passage to pick them out while the step plays.",
-              })}
-            </p>
-          )}
-          {highlights.length > 0 ? (
-            <ul
-              className="sb-scripture-highlights"
-              aria-label={t("playlist-highlights-label", {
-                defaultValue: "Highlighted phrases",
-              })}
-            >
-              {highlights.map((highlight, index) => (
-                <li key={index} className="sb-scripture-highlight">
-                  <span className="sb-scripture-highlight-verse">
-                    {resolveBookName(highlight.bookId)} {highlight.chapter}:
-                    {highlight.verse}
-                  </span>
-                  <span className="sb-scripture-highlight-text" dir="auto">
-                    “{highlight.text}”
-                  </span>
-                  <button
-                    type="button"
-                    className="sb-scripture-highlight-remove"
-                    aria-label={t("playlist-highlight-remove", {
-                      defaultValue: "Remove highlight",
-                    })}
-                    onClick={() =>
-                      setHighlights((current) =>
-                        current.filter((_, i) => i !== index)
-                      )
-                    }
-                  >
-                    <MaterialIcon>close</MaterialIcon>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      ) : null}
+          </li>
+        ))}
+      </ul>
+    ) : null;
 
+  const passageBlock =
+    loadChapter && previewRefs.length > 0 ? (
+      <div className="sb-scripture-passage">
+        <div
+          className="sb-item-inline-preview"
+          dir="auto"
+          onMouseUp={capturePhrase}
+          onKeyUp={capturePhrase}
+        >
+          {previewRefs.map((previewRef, index) => (
+            <ScripturePreview
+              key={`${index}-${JSON.stringify(previewRef)}`}
+              item={{ type: "bible-verse", ref: previewRef }}
+              loadChapter={loadChapter}
+              highlights={highlights}
+            />
+          ))}
+        </div>
+        {pendingPhrase ? (
+          <button
+            type="button"
+            className="sb-scripture-note-toggle sb-scripture-highlight-add"
+            onMouseDown={(event: MouseEvent) => event.preventDefault()}
+            onClick={addPendingPhrase}
+          >
+            <MaterialIcon>ink_highlighter</MaterialIcon>
+            {t("playlist-highlight-selection", {
+              defaultValue: "Highlight “{{text}}”",
+              text: pendingPhrase.text,
+            })}
+          </button>
+        ) : (
+          <p className="sb-scripture-passage-hint">
+            {t("playlist-highlight-hint", {
+              defaultValue:
+                "Select words in the passage to pick them out while the step plays.",
+            })}
+          </p>
+        )}
+        {highlightChips}
+      </div>
+    ) : null;
+
+  const extrasBlock = (
+    <>
       {extraTexts.length > 0 ? (
         <div className="sb-scripture-extra-passages">
           {extraTexts.map((text, index) => (
@@ -681,7 +773,231 @@ export const ScriptureItemInput = forwardRef<
           </button>
         ) : null}
       </div>
+    </>
+  );
 
+  const noteEditor = (
+    <Suspense
+      fallback={
+        <div
+          className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor sb-playlist-add-editor--loading"
+          aria-busy="true"
+        />
+      }
+    >
+      <TipTapEditor
+        className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor"
+        initialContent={initialNote}
+        books={books}
+        steps={steps}
+        variant={layout === "screen" ? "step" : "full"}
+        verses={layout === "screen" ? verseTargets : undefined}
+        onAddQuestion={
+          layout === "screen"
+            ? () =>
+                setQuestion(
+                  (current) => current ?? { prompt: "", shareable: true }
+                )
+            : undefined
+        }
+        onEditor={(editor) => {
+          noteEditorRef.current = editor;
+          if (editor && initialNote && noteBaselineRef.current === null) {
+            noteBaselineRef.current = editor.getHTML();
+          }
+        }}
+        onEmptyChange={() => {}}
+      />
+    </Suspense>
+  );
+
+  const questionCard = question ? (
+    <div className="sb-step-editor-question">
+      <div className="sb-step-editor-question-head">
+        <span className="sb-step-editor-question-eyebrow">
+          {t("playlist-question-for-readers", {
+            defaultValue: "Question for readers",
+          })}
+        </span>
+        <button
+          type="button"
+          className="sb-step-editor-question-remove"
+          aria-label={t("playlist-question-remove", {
+            defaultValue: "Remove question",
+          })}
+          onClick={() => setQuestion(null)}
+        >
+          <MaterialIcon>close</MaterialIcon>
+        </button>
+      </div>
+      <textarea
+        className="sb-step-editor-question-prompt"
+        rows={2}
+        value={question.prompt}
+        dir="auto"
+        placeholder={t("playlist-question-prompt-placeholder", {
+          defaultValue: "What do you want readers to think about?",
+        })}
+        aria-label={t("playlist-question-for-readers", {
+          defaultValue: "Question for readers",
+        })}
+        onInput={(event: Event) => {
+          const prompt = (event.currentTarget as HTMLTextAreaElement).value;
+          setQuestion((current) =>
+            current ? { ...current, prompt } : { prompt, shareable: true }
+          );
+        }}
+      />
+      <label className="sb-playlist-editor-check">
+        <input
+          type="checkbox"
+          checked={question.shareable}
+          onChange={(event: Event) => {
+            const shareable = (event.currentTarget as HTMLInputElement).checked;
+            setQuestion((current) =>
+              current ? { ...current, shareable } : current
+            );
+          }}
+        />
+        {t("playlist-question-shareable", {
+          defaultValue: "Readers can share answers in group sessions",
+        })}
+      </label>
+    </div>
+  ) : null;
+
+  if (layout === "screen") {
+    const verseCount = mainRef
+      ? mainRef.verse != null && !mainRef.toEndOfChapter
+        ? (mainRef.endVerse ?? mainRef.verse) - mainRef.verse + 1
+        : verseTargets.length || null
+      : null;
+    const meta = [
+      verseCount
+        ? t("playlist-verse-count", {
+            defaultValue: "{{count}} verses",
+            count: verseCount,
+          })
+        : null,
+      translationName ?? null,
+      t("playlist-passage-shown-highlighted", {
+        defaultValue: "shown highlighted in the reader",
+      }),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    return (
+      <div className="sb-step-editor">
+        {noteOpen ? (
+          <input
+            className="sb-step-editor-title"
+            type="text"
+            value={noteTitle}
+            dir="auto"
+            placeholder={t("playlist-step-title-placeholder", {
+              defaultValue: "Step title",
+            })}
+            aria-label={t("playlist-scripture-note-title-label", {
+              defaultValue: "Note title",
+            })}
+            onInput={(event: Event) => {
+              setNoteTitle((event.currentTarget as HTMLInputElement).value);
+            }}
+          />
+        ) : null}
+        <div className="sb-step-editor-passage">
+          <MaterialIcon className="sb-step-editor-passage-icon">
+            menu_book
+          </MaterialIcon>
+          <div className="sb-step-editor-passage-text">
+            <span className="sb-step-editor-passage-ref" dir="auto">
+              {mainRef
+                ? [mainRef, ...(resolveExtraRefs() ?? [])]
+                    .map((ref) => verseRefLabel(ref, resolveBookName))
+                    .join(" · ")
+                : t("playlist-passage-none", {
+                    defaultValue: "No passage yet",
+                  })}
+            </span>
+            <span className="sb-step-editor-passage-meta">
+              {mainRef
+                ? meta
+                : t("playlist-passage-pick-hint", {
+                    defaultValue: "Type a reference below",
+                  })}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="sb-step-editor-change"
+            aria-expanded={changing}
+            onClick={() => setChanging((open) => !open)}
+          >
+            {changing
+              ? t("done", { defaultValue: "Done" })
+              : t("playlist-passage-change", { defaultValue: "Change" })}
+          </button>
+        </div>
+        {changing ? (
+          <div className="sb-step-editor-passage-picker">
+            {referenceRow}
+            {error ? (
+              <div className="sb-playlist-add-error">{error}</div>
+            ) : null}
+            {passageBlock}
+            {extrasBlock}
+          </div>
+        ) : (
+          <>
+            {error ? (
+              <div className="sb-playlist-add-error">{error}</div>
+            ) : null}
+            {highlightChips}
+            {!noteOpen ? (
+              <div className="sb-scripture-extras-actions">
+                <button
+                  type="button"
+                  className="sb-scripture-note-toggle sb-scripture-note-add"
+                  onClick={() => setNoteOpen(true)}
+                >
+                  <MaterialIcon>add_notes</MaterialIcon>
+                  {t("playlist-scripture-note-add", {
+                    defaultValue: "Add a note",
+                  })}
+                </button>
+              </div>
+            ) : null}
+          </>
+        )}
+        {noteOpen ? (
+          <div className="sb-step-editor-note">
+            {noteEditor}
+            <button
+              type="button"
+              className="sb-scripture-note-toggle sb-step-editor-note-remove"
+              onClick={() => {
+                setNoteOpen(false);
+                setNoteTitle("");
+                noteEditorRef.current = null;
+              }}
+            >
+              {t("playlist-scripture-note-remove", {
+                defaultValue: "Remove note",
+              })}
+            </button>
+          </div>
+        ) : null}
+        {questionCard}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {referenceRow}
+      {error ? <div className="sb-playlist-add-error">{error}</div> : null}
+      {passageBlock}
+      {extrasBlock}
       {noteOpen ? (
         <div className="sb-scripture-note-field">
           <div className="sb-scripture-note-header">
@@ -717,30 +1033,10 @@ export const ScriptureItemInput = forwardRef<
               setNoteTitle((event.currentTarget as HTMLInputElement).value);
             }}
           />
-          <Suspense
-            fallback={
-              <div
-                className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor sb-playlist-add-editor--loading"
-                aria-busy="true"
-              />
-            }
-          >
-            <TipTapEditor
-              className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor"
-              initialContent={initialNote}
-              books={books}
-              steps={steps}
-              onEditor={(editor) => {
-                noteEditorRef.current = editor;
-                if (editor && initialNote && noteBaselineRef.current === null) {
-                  noteBaselineRef.current = editor.getHTML();
-                }
-              }}
-              onEmptyChange={() => {}}
-            />
-          </Suspense>
+          {noteEditor}
         </div>
       ) : null}
+      {questionCard}
     </>
   );
 });

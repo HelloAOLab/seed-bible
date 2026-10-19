@@ -66,6 +66,8 @@ interface PlaylistItemInputProps {
    * author leaves it and so shows no Save / Cancel of its own.
    */
   layout?: "pane" | "screen";
+  /** The translation the passage will be read in, for the passage card. */
+  translationName?: string;
 }
 
 /**
@@ -218,6 +220,7 @@ export const PlaylistItemInput = forwardRef<
     initialMode,
     steps,
     layout = "pane",
+    translationName,
   } = props;
   const { t } = useI18n();
   const isEditing = !!editItem;
@@ -257,10 +260,13 @@ export const PlaylistItemInput = forwardRef<
         initialNoteTitle={scripture?.noteTitle}
         initialExtraRefs={scripture?.refs}
         initialHighlights={scripture?.highlights}
+        initialQuestion={scripture?.question}
         loadChapter={loadChapter}
         withNote={mode === "note-scripture"}
         submitLabel={submitLabel}
         steps={steps}
+        layout={layout}
+        translationName={translationName}
       />
     ) : mode === "text" ? (
       <TextItemInput

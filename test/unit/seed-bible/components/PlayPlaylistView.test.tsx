@@ -88,7 +88,10 @@ function createMockTab(books: TranslationBook[] = []): ReaderTab {
   } as unknown as ReaderTab;
 }
 
-const modals = {} as ModalManager;
+const modals = {
+  openModal: vi.fn(),
+  closeModal: vi.fn(),
+} as unknown as ModalManager;
 const state = {} as SeedBibleState;
 
 describe("PlayPlaylistView", () => {
@@ -710,6 +713,46 @@ describe("scenes and notes in the player", () => {
       expect(
         container.querySelector(".sb-play-current-note")?.textContent
       ).toContain("Observe who speaks.")
+    );
+  });
+
+  it("offers to answer the question attached to a passage", () => {
+    const playing = createPlayingState([
+      createPlaylist({
+        items: [
+          verseItem({
+            ref: { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13 },
+            question: { prompt: "God himself, or a messenger?" },
+          }),
+        ],
+      }),
+    ]);
+    const { playlists } = createMockPlaylists(playing);
+    (
+      playlists as unknown as { playingStepOptions: unknown }
+    ).playingStepOptions = () => ({ authorName: "Craig" });
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={createMockTabs(createMockTab([book("GEN", "Genesis")]))}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-step-question-card-prompt")?.textContent
+    ).toBe("God himself, or a messenger?");
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-step-question-card-answer")!
+        .click();
+    });
+    expect(modals.openModal).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "playlist-step-question" })
     );
   });
 });

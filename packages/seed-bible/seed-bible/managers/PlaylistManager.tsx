@@ -1367,11 +1367,16 @@ export function createPlaylistManager(
       own ?? tab?.readingState.translationId?.peek() ?? null;
     const loadChapter = options.loadChapter;
     const recorded = playlist && isRecordedPlaylist(playlist) ? playlist : null;
+    // A question step's own prompt, or the question attached to a passage.
+    const prompt =
+      item?.type === "question"
+        ? item.prompt
+        : item?.type === "bible-verse"
+          ? item.question?.prompt
+          : undefined;
     const response =
-      recorded && item?.type === "question"
-        ? questionResponses.value.get(
-            questionResponseKey(recorded, item.prompt)
-          )
+      recorded && prompt
+        ? questionResponses.value.get(questionResponseKey(recorded, prompt))
         : undefined;
     return {
       loadChapter: loadChapter
@@ -1401,20 +1406,15 @@ export function createPlaylistManager(
         ? { text: response.text, visibility: response.visibility }
         : undefined,
       onSaveQuestionResponse:
-        recorded && item?.type === "question"
+        recorded && prompt
           ? async (text, visibility) => {
-              await saveQuestionResponse(
-                recorded,
-                item.prompt,
-                text,
-                visibility
-              );
+              await saveQuestionResponse(recorded, prompt, text, visibility);
               if (visibility === "session") {
-                tab?.sharedSession?.shareQuestionAnswer(item.prompt, text);
+                tab?.sharedSession?.shareQuestionAnswer(prompt, text);
                 void tab?.sharedChat?.sendMessage({
                   type: "text",
                   text,
-                  event: { kind: "answer", prompt: item.prompt },
+                  event: { kind: "answer", prompt },
                 });
               }
             }
@@ -2351,7 +2351,12 @@ export function createPlaylistManager(
     // read.
     const queue = playlists.flatMap((p) =>
       p.items
-        .filter((item) => !item.leaderOnly || !!targetTab?.sharedSession)
+        .filter(
+          (item) =>
+            item.type === "scene" ||
+            !item.leaderOnly ||
+            !!targetTab?.sharedSession
+        )
         .flatMap(expandCrossChapterItem)
     );
     const step =

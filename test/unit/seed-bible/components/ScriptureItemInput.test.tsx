@@ -641,4 +641,120 @@ describe("ScriptureItemInput", () => {
       expect(handleRef.current?.isDirty()).toBe(true);
     });
   });
+
+  describe("the fullscreen editor's layout", () => {
+    const chapter = {
+      chapter: {
+        number: 16,
+        footnotes: [],
+        content: [
+          { type: "verse", number: 13, content: ["You are a God who sees."] },
+          { type: "verse", number: 14, content: ["Beer Lahai Roi."] },
+        ],
+      },
+    } as unknown as import("@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI").TranslationBookChapter;
+    const loadChapter = vi.fn(async () => chapter);
+
+    it("shows the passage as a card that opens for a change, and keeps the step's question", async () => {
+      const onAdd = vi.fn();
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            ref={handleRef}
+            books={BOOKS}
+            onAdd={onAdd}
+            initialValue="Genesis 16:13-14"
+            initialQuestion={{ prompt: "Who sees?", shareable: false }}
+            loadChapter={loadChapter}
+            layout="screen"
+            translationName="AAB"
+          />,
+          container
+        );
+      });
+
+      expect(
+        container.querySelector(".sb-step-editor-passage-ref")?.textContent
+      ).toBe("Genesis 16:13-14");
+      expect(
+        container.querySelector(".sb-step-editor-passage-meta")?.textContent
+      ).toBe("2 verses · AAB · shown highlighted in the reader");
+      // Editing an existing step: the reference field waits behind Change.
+      expect(container.querySelector(".sb-scripture-input")).toBeNull();
+      expect(
+        container.querySelector<HTMLTextAreaElement>(
+          ".sb-step-editor-question-prompt"
+        )?.value
+      ).toBe("Who sees?");
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-step-editor-change")!
+          .click();
+      });
+      expect(container.querySelector(".sb-scripture-input")).not.toBeNull();
+
+      const prompt = container.querySelector<HTMLTextAreaElement>(
+        ".sb-step-editor-question-prompt"
+      )!;
+      act(() => {
+        prompt.value = "Who sees whom?";
+        prompt.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      expect(handleRef.current?.isDirty()).toBe(true);
+
+      await act(async () => {
+        await handleRef.current?.commit();
+      });
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 16, verse: 13, endVerse: 14 },
+        question: { prompt: "Who sees whom?", shareable: false },
+      });
+      // Saved in place: the card closes again over the same passage.
+      expect(container.querySelector(".sb-scripture-input")).toBeNull();
+      expect(
+        container.querySelector(".sb-step-editor-passage-ref")?.textContent
+      ).toBe("Genesis 16:13-14");
+    });
+
+    it("drops the question when it is removed, and starts a new step open on the reference", () => {
+      const onAdd = vi.fn();
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput
+            ref={handleRef}
+            books={BOOKS}
+            onAdd={onAdd}
+            initialValue="Genesis 16:13"
+            initialQuestion={{ prompt: "Who sees?" }}
+            layout="screen"
+          />,
+          container
+        );
+      });
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-step-editor-question-remove")!
+          .click();
+      });
+      expect(container.querySelector(".sb-step-editor-question")).toBeNull();
+      expect(handleRef.current?.isDirty()).toBe(true);
+
+      render(null, container);
+      act(() => {
+        render(
+          <ScriptureItemInput books={BOOKS} onAdd={onAdd} layout="screen" />,
+          container
+        );
+      });
+      expect(container.querySelector(".sb-scripture-input")).not.toBeNull();
+      expect(
+        container.querySelector(".sb-step-editor-passage-ref")?.textContent
+      ).toBe("No passage yet");
+    });
+  });
 });

@@ -6,7 +6,12 @@ import type { PlaylistItemData } from "../managers/PlaylistManager";
 interface LinkItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
   /** URL, title, and embed flag the fields start with, e.g. when editing an item. */
-  initialItem?: { url: string; title?: string; embed?: boolean };
+  initialItem?: {
+    url: string;
+    title?: string;
+    embed?: boolean;
+    transcript?: string;
+  };
   /** Overrides the submit button label (defaults to "Add item"). */
   submitLabel?: string;
 }
@@ -36,6 +41,7 @@ export const LinkItemInput = forwardRef<
   const [value, setValue] = useState(initialItem?.url ?? "");
   const [title, setTitle] = useState(initialItem?.title ?? "");
   const [embed, setEmbed] = useState(initialItem?.embed ?? false);
+  const [transcript, setTranscript] = useState(initialItem?.transcript ?? "");
   const [error, setError] = useState<string | null>(null);
 
   /** Submits the current input. Returns whether it actually added an item. */
@@ -54,15 +60,18 @@ export const LinkItemInput = forwardRef<
       return false;
     }
     const trimmedTitle = title.trim();
+    const trimmedTranscript = transcript.trim();
     onAdd({
       type: "link",
       url,
       title: trimmedTitle || undefined,
       embed: embed || undefined,
+      ...(embed && trimmedTranscript ? { transcript: trimmedTranscript } : {}),
     });
     setValue("");
     setTitle("");
     setEmbed(false);
+    setTranscript("");
     setError(null);
     return true;
   };
@@ -73,10 +82,11 @@ export const LinkItemInput = forwardRef<
       isDirty: () =>
         value.trim() !== (initialItem?.url ?? "").trim() ||
         title.trim() !== (initialItem?.title ?? "").trim() ||
-        embed !== (initialItem?.embed ?? false),
+        embed !== (initialItem?.embed ?? false) ||
+        transcript.trim() !== (initialItem?.transcript ?? "").trim(),
       commit: handleAdd,
     }),
-    [value, title, embed, initialItem]
+    [value, title, embed, transcript, initialItem]
   );
 
   return (
@@ -120,6 +130,26 @@ export const LinkItemInput = forwardRef<
           }}
         />
       </div>
+      {embed ? (
+        <label className="sb-playlist-transcript">
+          <span className="sb-playlist-transcript-label">
+            {t("playlist-video-transcript", { defaultValue: "Transcript" })}
+          </span>
+          <textarea
+            className="sb-settings-text-input sb-playlist-input sb-playlist-transcript-input"
+            rows={4}
+            value={transcript}
+            dir="auto"
+            placeholder={t("playlist-video-transcript-placeholder", {
+              defaultValue:
+                "What is said in the video, for readers who can't hear it",
+            })}
+            onInput={(event: Event) => {
+              setTranscript((event.currentTarget as HTMLTextAreaElement).value);
+            }}
+          />
+        </label>
+      ) : null}
       <div className="sb-playlist-add-row sb-playlist-add-link-controls">
         <label className="sb-playlist-embed-toggle">
           <input

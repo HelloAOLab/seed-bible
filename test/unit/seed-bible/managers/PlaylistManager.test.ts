@@ -3685,6 +3685,33 @@ describe("createPlaylistManager", () => {
       });
     });
 
+    it("saves an answer to the question attached to a passage under that question", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 16 },
+              question: { prompt: "Who sees?" },
+            },
+          ],
+        })
+      );
+      const options = manager.playingStepOptions(manager.playing.value!);
+      expect(options.onSaveQuestionResponse).toBeDefined();
+
+      await options.onSaveQuestionResponse!("Hagar.", "private");
+
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "user-1",
+        expect.any(String),
+        expect.objectContaining({ prompt: "Who sees?", text: "Hagar." }),
+        expect.anything()
+      );
+    });
+
     it("has nothing to open and nothing to save for a text step", async () => {
       const manager = makeManager("user-1");
       await flush();

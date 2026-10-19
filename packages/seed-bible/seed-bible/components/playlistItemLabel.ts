@@ -35,6 +35,16 @@ const PROMPT_LABEL_MAX_LENGTH = 80;
  * Renders a single playlist item as a plain-text label. Shared by the playlist
  * editor and the play view so both label items identically.
  */
+/** A scripture step's passages as one reference, however the step is titled. */
+export function scriptureRefsLabel(
+  item: Extract<Playlist["items"][number], { type: "bible-verse" }>,
+  resolveBookName: (bookId: string) => string
+): string {
+  return [item.ref, ...(item.refs ?? [])]
+    .map((ref) => verseRefLabel(ref, resolveBookName))
+    .join(" · ");
+}
+
 export function playlistItemLabel(
   item: Playlist["items"][number],
   t: ReturnType<typeof useI18n>["t"],
@@ -45,10 +55,7 @@ export function playlistItemLabel(
       // A passage with a titled note goes by that title, as the author named
       // the step; the reference is its subtitle then.
       return (
-        item.noteTitle?.trim() ||
-        [item.ref, ...(item.refs ?? [])]
-          .map((ref) => verseRefLabel(ref, resolveBookName))
-          .join(" · ")
+        item.noteTitle?.trim() || scriptureRefsLabel(item, resolveBookName)
       );
     case "link":
       return item.title?.trim() || item.preview?.title || item.url;

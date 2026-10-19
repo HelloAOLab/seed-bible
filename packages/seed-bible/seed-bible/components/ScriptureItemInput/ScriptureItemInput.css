@@ -225,3 +225,170 @@
 .sb-scripture-highlight-remove .material-symbols-outlined {
   font-size: 1rem;
 }
+
+/* ------------------------------------------ the fullscreen step editor */
+
+.sb-step-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* The step's title, as the heading it will be. */
+.sb-step-editor-title {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 0 10px;
+  border: none;
+  border-bottom: 1px solid var(--sb-divider-color);
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: var(--sb-book-title-font-family);
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.sb-step-editor-title:focus {
+  outline: none;
+  border-bottom-color: var(--sb-primary-color);
+}
+
+/* The passage as a card: what it is, how it shows, and a way to change it. */
+.sb-step-editor-passage {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
+}
+
+.sb-step-editor-passage-icon {
+  flex-shrink: 0;
+  color: var(--sb-primary-color);
+}
+
+.sb-step-editor-passage-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sb-step-editor-passage-ref {
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.sb-step-editor-passage-meta {
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-step-editor-change {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-step-editor-passage-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px dashed var(--sb-divider-color);
+  border-radius: 12px;
+}
+
+/* The fullscreen editor keeps the step as the author leaves it, so the
+   reference row's own button isn't offered while editing. */
+.sb-playlist-item-editor--screen
+  .sb-playlist-add-row
+  > .sb-settings-save-button {
+  display: none;
+}
+
+.sb-step-editor-note {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-step-editor-note .sb-playlist-add-editor {
+  padding: 0;
+  overflow: hidden;
+}
+
+.sb-step-editor-note .sb-editor-content {
+  padding: 14px 16px;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+.sb-step-editor-note-remove {
+  align-self: flex-end;
+}
+
+/* The question readers answer after the passage. */
+.sb-step-editor-question {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px 12px;
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 60%);
+  border-radius: 12px;
+}
+
+.sb-step-editor-question-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sb-step-editor-question-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sb-primary-color);
+}
+
+.sb-step-editor-question-remove {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  cursor: pointer;
+}
+
+.sb-step-editor-question-prompt {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: var(--sb-book-title-font-family);
+  font-size: 1.375rem;
+  line-height: 1.35;
+  resize: vertical;
+}
+
+.sb-step-editor-question-prompt:focus {
+  outline: none;
+}

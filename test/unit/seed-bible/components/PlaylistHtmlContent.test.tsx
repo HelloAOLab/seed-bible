@@ -101,4 +101,25 @@ describe("PlaylistHtmlContent", () => {
     );
     expect(content().querySelector(".sb-scripture-embed-text")).toBeNull();
   });
+
+  it("hands a verse link to onVerseLink instead of following it", async () => {
+    const onVerseLink = vi.fn();
+    act(() => {
+      render(
+        <PlaylistHtmlContent
+          html='<p>She <a class="sb-verse-link" href="#verse-13">names</a> him.</p>'
+          onVerseLink={onVerseLink}
+        />,
+        container
+      );
+    });
+    await vi.waitFor(() =>
+      expect(content().querySelector("a.sb-verse-link")).not.toBeNull()
+    );
+
+    const event = new MouseEvent("click", { bubbles: true, cancelable: true });
+    content().querySelector("a.sb-verse-link")!.dispatchEvent(event);
+    expect(onVerseLink).toHaveBeenCalledWith(13);
+    expect(event.defaultPrevented).toBe(true);
+  });
 });

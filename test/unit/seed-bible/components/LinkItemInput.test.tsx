@@ -142,4 +142,49 @@ describe("LinkItemInput", () => {
       expect(onAdd).not.toHaveBeenCalled();
     });
   });
+
+  it("keeps a transcript with an embedded video, and only then", () => {
+    const onAdd = vi.fn();
+    const handleRef = createRef<LinkItemInputHandle>();
+    act(() => {
+      render(
+        <LinkItemInput
+          ref={handleRef}
+          onAdd={onAdd}
+          initialItem={{ url: "https://youtu.be/abc", embed: true }}
+        />,
+        container
+      );
+    });
+    const transcript = container.querySelector<HTMLTextAreaElement>(
+      ".sb-playlist-transcript-input"
+    )!;
+    expect(transcript).not.toBeNull();
+    expect(handleRef.current?.isDirty()).toBe(false);
+
+    act(() => {
+      transcript.value = "The angel speaks.";
+      transcript.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(handleRef.current?.isDirty()).toBe(true);
+    act(() => {
+      handleRef.current?.commit();
+    });
+    expect(onAdd).toHaveBeenCalledWith({
+      type: "link",
+      url: "https://youtu.be/abc",
+      title: undefined,
+      embed: true,
+      transcript: "The angel speaks.",
+    });
+
+    render(null, container);
+    act(() => {
+      render(
+        <LinkItemInput onAdd={vi.fn()} initialItem={{ url: "https://x.y" }} />,
+        container
+      );
+    });
+    expect(container.querySelector(".sb-playlist-transcript-input")).toBeNull();
+  });
 });

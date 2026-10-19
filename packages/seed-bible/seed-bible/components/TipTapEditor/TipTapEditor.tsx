@@ -4,6 +4,7 @@ import Underline from "@tiptap/extension-underline";
 import TextAlign from "./TextAlign";
 import VerseReferenceMark from "./VerseReferenceMark";
 import StepLinkMark from "./StepLinkMark";
+import VerseLinkMark from "./VerseLinkMark";
 import ScriptureEmbedNode from "./ScriptureEmbedNode";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import { resolveTypedReference } from "../ScriptureItemInput/scriptureSuggestions";
@@ -44,6 +45,25 @@ export interface TipTapEditorProps {
    * the control isn't offered.
    */
   steps?: StepLinkTarget[];
+  /**
+   * "step" is the note editor of the playlist's fullscreen step editor: bold
+   * and italic, then Link to verse, + Question and + Cross-reference, as the
+   * design draws it. "full" (the default) is the whole toolbar.
+   */
+  variant?: "full" | "step";
+  /**
+   * The verses of the passage a note sits beside, for the "Link to verse"
+   * control. Without them the control isn't offered.
+   */
+  verses?: VerseLinkTarget[];
+  /** Offers "+ Question" and is called when it's pressed. */
+  onAddQuestion?: () => void;
+}
+
+/** A verse a note can link to, with its text for the picker. */
+export interface VerseLinkTarget {
+  number: number;
+  text: string;
 }
 
 /** A step a text item or note can link to, as the editor numbers them. */
@@ -69,6 +89,9 @@ export default function TipTapEditor(props: TipTapEditorProps) {
     autofocus = false,
     books,
     steps,
+    variant = "full",
+    verses,
+    onAddQuestion,
   } = props;
   const elementRef = useRef<HTMLDivElement>(null);
   // Captured once so the mount-only effect starts the editor with this content
@@ -103,6 +126,7 @@ export default function TipTapEditor(props: TipTapEditorProps) {
         TextAlign.configure({ types: ["heading", "paragraph"] }),
         VerseReferenceMark,
         StepLinkMark,
+        VerseLinkMark,
         ScriptureEmbedNode,
         Extension.create({
           name: "modEnter",
@@ -138,7 +162,14 @@ export default function TipTapEditor(props: TipTapEditorProps) {
 
   return (
     <div className={className}>
-      <EditorMenuBar editor={editor} books={books} steps={steps} />
+      <EditorMenuBar
+        editor={editor}
+        books={books}
+        steps={steps}
+        variant={variant}
+        verses={verses}
+        onAddQuestion={onAddQuestion}
+      />
       <div ref={elementRef} className="sb-editor-content" />
     </div>
   );
@@ -152,10 +183,16 @@ function EditorMenuBar({
   editor,
   books,
   steps,
+  variant = "full",
+  verses,
+  onAddQuestion,
 }: {
   editor: Editor | null;
   books?: TranslationBook[];
   steps?: StepLinkTarget[];
+  variant?: "full" | "step";
+  verses?: VerseLinkTarget[];
+  onAddQuestion?: () => void;
 }) {
   const { t } = useI18n();
   // Bump on each transaction to re-read `isActive` for the current selection.
@@ -163,6 +200,9 @@ function EditorMenuBar({
   const [embedOpen, setEmbedOpen] = useState(false);
   const [embedText, setEmbedText] = useState("");
   const [embedError, setEmbedError] = useState(false);
+  // The verse picker: the words it will link, and the verse chosen so far.
+  const [verseLinkText, setVerseLinkText] = useState<string | null>(null);
+  const [verseLinkChoice, setVerseLinkChoice] = useState<number | null>(null);
 
   useEffect(() => {
     if (!editor) {
@@ -177,6 +217,217 @@ function EditorMenuBar({
 
   if (!editor) {
     return null;
+  }
+
+  const embedForm =
+    embedOpen && books ? (
+      <form
+        className="sb-editor-embed-form"
+        onSubmit={(event: Event) => {
+          event.preventDefault();
+          const ref = resolveTypedReference(embedText, books);
+          if (!ref) {
+            setEmbedError(true);
+            return;
+          }
+          const label = verseRefLabel(ref, (bookId) => {
+            const book = books.find((b) => b.id === bookId);
+            return book?.name ?? book?.commonName ?? bookId;
+          });
+          editor.chain().focus().insertScriptureEmbed(label).run();
+          setEmbedText("");
+          setEmbedError(false);
+          setEmbedOpen(false);
+        }}
+      >
+        <input
+          className="sb-settings-text-input sb-editor-embed-input"
+          type="text"
+          value={embedText}
+          dir="auto"
+          placeholder={t("playlist-add-scripture-placeholder", {
+            defaultValue: "e.g. John 3 or John 3:16",
+          })}
+          aria-label={t("editor-embed-passage", {
+            defaultValue: "Embed passage",
+          })}
+          aria-invalid={embedError}
+          onInput={(event: Event) => {
+            setEmbedText((event.currentTarget as HTMLInputElement).value);
+            setEmbedError(false);
+          }}
+        />
+        <button
+          type="submit"
+          className="sb-settings-save-button sb-editor-embed-submit"
+          disabled={!embedText.trim()}
+        >
+          {t("editor-embed", { defaultValue: "Embed" })}
+        </button>
+        {embedError ? (
+          <span className="sb-playlist-add-error" role="alert">
+            {t("playlist-add-scripture-error", {
+              defaultValue: "Couldn't find that reference",
+            })}
+          </span>
+        ) : null}
+      </form>
+    ) : null;
+
+  if (variant === "step") {
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, " ").trim();
+    const chosen = verses?.find((verse) => verse.number === verseLinkChoice);
+    return (
+      <div className="sb-editor-toolbar sb-editor-toolbar--step" role="toolbar">
+        <div className="sb-editor-toolbar-group">
+          <MenuButton
+            icon="format_bold"
+            label={t("editor-format-bold", { defaultValue: "Bold" })}
+            active={editor.isActive("bold")}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+          />
+          <MenuButton
+            icon="format_italic"
+            label={t("editor-format-italic", { defaultValue: "Italic" })}
+            active={editor.isActive("italic")}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+          />
+        </div>
+        <div className="sb-editor-toolbar-group sb-editor-toolbar-inserts">
+          {verses?.length ? (
+            <button
+              type="button"
+              className={`sb-editor-toolbar-action${
+                verseLinkText !== null || editor.isActive("verseLink")
+                  ? " sb-editor-toolbar-action--active"
+                  : ""
+              }`}
+              // Keep focus in the editor so the link lands on the selection.
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                if (editor.isActive("verseLink")) {
+                  editor.chain().focus().unsetVerseLink().run();
+                  return;
+                }
+                setVerseLinkChoice(null);
+                setVerseLinkText(verseLinkText === null ? selectedText : null);
+              }}
+              aria-pressed={verseLinkText !== null}
+            >
+              <MaterialIcon>link</MaterialIcon>
+              {editor.isActive("verseLink")
+                ? t("editor-unlink-verse", { defaultValue: "Unlink verse" })
+                : t("editor-link-to-verse", { defaultValue: "Link to verse" })}
+            </button>
+          ) : null}
+          {onAddQuestion ? (
+            <button
+              type="button"
+              className="sb-editor-toolbar-action"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={onAddQuestion}
+            >
+              {t("editor-add-question", { defaultValue: "+ Question" })}
+            </button>
+          ) : null}
+          {books ? (
+            <button
+              type="button"
+              className={`sb-editor-toolbar-action${
+                embedOpen ? " sb-editor-toolbar-action--active" : ""
+              }`}
+              aria-pressed={embedOpen}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                setEmbedOpen((open) => !open);
+                setEmbedError(false);
+              }}
+            >
+              {t("editor-add-cross-reference", {
+                defaultValue: "+ Cross-reference",
+              })}
+            </button>
+          ) : null}
+        </div>
+        {embedForm}
+        {verseLinkText !== null && verses?.length ? (
+          <div
+            className="sb-editor-verse-picker"
+            role="dialog"
+            aria-label={t("editor-link-to-verse", {
+              defaultValue: "Link to verse",
+            })}
+          >
+            <p className="sb-editor-verse-picker-title" dir="auto">
+              {verseLinkText
+                ? t("editor-link-words-to", {
+                    defaultValue: "Link “{{text}}” to",
+                    text: verseLinkText,
+                  })
+                : t("editor-link-verse-insert", {
+                    defaultValue: "Insert a link to",
+                  })}
+            </p>
+            <div className="sb-editor-verse-picker-chips">
+              {verses.map((verse) => (
+                <button
+                  key={verse.number}
+                  type="button"
+                  className={`sb-editor-verse-chip${
+                    verseLinkChoice === verse.number
+                      ? " sb-editor-verse-chip--on"
+                      : ""
+                  }`}
+                  aria-pressed={verseLinkChoice === verse.number}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setVerseLinkChoice(verse.number)}
+                >
+                  {verse.number}
+                </button>
+              ))}
+            </div>
+            {chosen ? (
+              <p className="sb-editor-verse-picker-text" dir="auto">
+                {chosen.text}
+              </p>
+            ) : null}
+            <div className="sb-editor-verse-picker-actions">
+              <button
+                type="button"
+                className="sb-reading-plans-back"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setVerseLinkText(null)}
+              >
+                {t("cancel", { defaultValue: "Cancel" })}
+              </button>
+              <button
+                type="button"
+                className="sb-settings-save-button"
+                disabled={verseLinkChoice === null}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  if (verseLinkChoice === null) {
+                    return;
+                  }
+                  editor
+                    .chain()
+                    .focus()
+                    .setVerseLink(verseLinkChoice, `v${verseLinkChoice}`)
+                    .run();
+                  setVerseLinkText(null);
+                }}
+              >
+                {t("editor-link-verse-n", {
+                  defaultValue: "Link v{{verse}}",
+                  verse: verseLinkChoice ?? "",
+                })}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
   }
 
   return (
@@ -293,59 +544,7 @@ function EditorMenuBar({
               }}
             />
           ) : null}
-          {embedOpen && books ? (
-            <form
-              className="sb-editor-embed-form"
-              onSubmit={(event: Event) => {
-                event.preventDefault();
-                const ref = resolveTypedReference(embedText, books);
-                if (!ref) {
-                  setEmbedError(true);
-                  return;
-                }
-                const label = verseRefLabel(ref, (bookId) => {
-                  const book = books.find((b) => b.id === bookId);
-                  return book?.name ?? book?.commonName ?? bookId;
-                });
-                editor.chain().focus().insertScriptureEmbed(label).run();
-                setEmbedText("");
-                setEmbedError(false);
-                setEmbedOpen(false);
-              }}
-            >
-              <input
-                className="sb-settings-text-input sb-editor-embed-input"
-                type="text"
-                value={embedText}
-                dir="auto"
-                placeholder={t("playlist-add-scripture-placeholder", {
-                  defaultValue: "e.g. John 3 or John 3:16",
-                })}
-                aria-label={t("editor-embed-passage", {
-                  defaultValue: "Embed passage",
-                })}
-                aria-invalid={embedError}
-                onInput={(event: Event) => {
-                  setEmbedText((event.currentTarget as HTMLInputElement).value);
-                  setEmbedError(false);
-                }}
-              />
-              <button
-                type="submit"
-                className="sb-settings-save-button sb-editor-embed-submit"
-                disabled={!embedText.trim()}
-              >
-                {t("editor-embed", { defaultValue: "Embed" })}
-              </button>
-              {embedError ? (
-                <span className="sb-playlist-add-error" role="alert">
-                  {t("playlist-add-scripture-error", {
-                    defaultValue: "Couldn't find that reference",
-                  })}
-                </span>
-              ) : null}
-            </form>
-          ) : null}
+          {embedForm}
         </div>
       ) : null}
     </div>
