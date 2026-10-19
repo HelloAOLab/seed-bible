@@ -273,6 +273,44 @@ describe("ScriptureNotePopover", () => {
     await waitFor(() => !!popover()!.querySelector("strong"));
   });
 
+  it("follows the passage when the chapter's content changes", async () => {
+    layOutReader({ 16: 140, 17: 180 });
+    renderPopover(createPlayingState([playlist([noted])]));
+    await waitFor(() => !!popover());
+    const before = parseFloat(popover()!.style.top);
+
+    // The verses move down 300px, as when the chapter above them loads.
+    layOutReader({ 16: 440, 17: 480 });
+
+    await waitFor(() => parseFloat(popover()!.style.top) === before + 300);
+  });
+
+  it("does no measuring while nothing on screen moves", async () => {
+    vi.useFakeTimers();
+    try {
+      layOutReader({ 16: 140, 17: 180 });
+      renderPopover(createPlayingState([playlist([noted])]));
+      await act(async () => {
+        vi.advanceTimersByTime(50);
+      });
+      expect(popover()).not.toBeNull();
+      let reads = 0;
+      const measureReader = reader.getBoundingClientRect;
+      reader.getBoundingClientRect = () => {
+        reads++;
+        return measureReader();
+      };
+
+      await act(async () => {
+        vi.advanceTimersByTime(10_000);
+      });
+
+      expect(reads).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("sits in the left gutter for right-to-left text", async () => {
     reader.style.direction = "rtl";
     layOutReader({ 16: 140, 17: 180 }, { column: { left: 524, width: 400 } });

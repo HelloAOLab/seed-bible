@@ -382,14 +382,32 @@ function ScriptureNotePopoverBody(props: {
       if (!frameRequest) frameRequest = requestAnimationFrame(measure);
     };
     measure();
-    // The chapter loads and the verse scrolls into view after the step
-    // changes, and fonts or images can shift the text, so keep re-measuring
-    // on a slow tick as well as on scroll and resize.
-    const interval = window.setInterval(schedule, 250);
+    // The passage moves when the reader scrolls or is resized (a pane divider
+    // too), when the chapter loads after the step changes, and when fonts or
+    // images reflow the text: a resize of the reader or its content covers
+    // the last ones, and a mutation catches a chapter swapped for another of
+    // the same size.
+    const root = readerRef.current;
+    const resizes =
+      root && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(schedule)
+        : null;
+    if (root && resizes) {
+      resizes.observe(root);
+      for (const child of Array.from(root.children)) {
+        resizes.observe(child);
+      }
+    }
+    const mutations =
+      root && typeof MutationObserver !== "undefined"
+        ? new MutationObserver(schedule)
+        : null;
+    mutations?.observe(root!, { childList: true, subtree: true });
     window.addEventListener("resize", schedule);
     window.addEventListener("scroll", schedule, true);
     return () => {
-      window.clearInterval(interval);
+      resizes?.disconnect();
+      mutations?.disconnect();
       window.removeEventListener("resize", schedule);
       window.removeEventListener("scroll", schedule, true);
       if (frameRequest) cancelAnimationFrame(frameRequest);
