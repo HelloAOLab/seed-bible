@@ -297,13 +297,18 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
             books={books}
             loadChapter={loadChapter}
             draft={draft}
-            onSelectSession={(index) =>
-              readingPlans.selectEditingPlanSession(index)
-            }
+            onSelectSession={(index) => {
+              // The reading input only edits within the selected session.
+              if (index !== draft.selectedSessionIndex) {
+                setEditingReadingId(null);
+              }
+              readingPlans.selectEditingPlanSession(index);
+            }}
             onAddSession={() => readingPlans.addSessionToEditingPlan()}
-            onRemoveSession={(index) =>
-              readingPlans.removeSessionFromEditingPlan(index)
-            }
+            onRemoveSession={(index) => {
+              setEditingReadingId(null);
+              readingPlans.removeSessionFromEditingPlan(index);
+            }}
             onAddReading={(item) => readingPlans.addReadingToEditingPlan(item)}
             onRemoveReading={(sessionIndex, readingId) =>
               readingPlans.removeReadingFromEditingPlan(sessionIndex, readingId)
