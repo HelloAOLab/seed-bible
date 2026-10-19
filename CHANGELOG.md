@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.14.0 — 2026-10-19
+
+### ✨ Added
+
 - Add notes to scripture items in playlists and reading plans, shown beside the passage while it plays. ([#1988](https://github.com/HelloAOLab/seed-bible/pull/1988))
   - A note can have an optional title, which also shows in the playlist queue.
   - The passage stays highlighted while its note is open.
@@ -46,8 +56,6 @@
 - Fix starting a playlist not scrolling to its first passage when you're already reading that chapter. ([#1988](https://github.com/HelloAOLab/seed-bible/pull/1988))
 - Ask before saving a playlist while an item has unsaved changes, instead of silently dropping them. ([#1988](https://github.com/HelloAOLab/seed-bible/pull/1988))
 - Fix words of Jesus inside a highlight ignoring the red-letter color the theme sets for that highlight. ([#2011](https://github.com/HelloAOLab/seed-bible/pull/2011))
-
-### 🗑️ Removed
 
 ## v1.13.0 — 2026-10-12
 
