@@ -1,7 +1,8 @@
 import { batch, computed, effect, signal, type Signal } from "@preact/signals";
 import * as z from "zod/v4";
 import type { CasualOSManager, UserInfo } from "./OsManager";
-import type { FatalSessionErrorCode } from "./SessionGuard";
+import type { SessionInvalidatedEvent } from "./SessionGuard";
+import { captureEvent } from "./Utils";
 import type {
   CompleteLoginResult,
   LoginRequestResult,
@@ -31,6 +32,28 @@ export interface SessionEndedEvent {
    */
   id: number;
 }
+
+/** What made a forced sign-out happen, as reported to analytics. */
+type ForcedSignOutCause =
+  | {
+      kind: "session_rejected";
+      invalidation: SessionInvalidatedEvent;
+    }
+  | { kind: "unparseable_session_key" };
+
+/** A session refresh that failed without ending the session. */
+interface RefreshFailure {
+  errorCode: string;
+  errorMessage: string | null;
+  atMs: number;
+}
+
+/**
+ * Refresh failures kept for the next forced sign-out's analytics event. Refreshes
+ * are only attempted at startup and once a week before expiry, so this only fills
+ * up if the app is left open for a very long time.
+ */
+const MAX_REFRESH_FAILURES = 5;
 
 export interface LoginManager {
   /**
@@ -343,6 +366,10 @@ export function createLoginManager({
   // pressed "Sign out".
   let isSigningOut = false;
 
+  // Refreshes of the current session that failed but left it in place. When the
+  // session later dies, these are usually the story of why.
+  let refreshFailures: RefreshFailure[] = [];
+
   /**
    * Drops every trace of the current session from memory. That is the whole teardown:
    * the persistence effect below mirrors the nulled signals into `localStorage`,
@@ -356,6 +383,7 @@ export function createLoginManager({
     // outlive the session with the user's name, location, description and
     // picture URL still readable on the device.
     clearCachedProfiles();
+    refreshFailures = [];
     batch(() => {
       sessionKey.value = null;
       connectionKey.value = null;
@@ -381,7 +409,10 @@ export function createLoginManager({
    * later, and an effect reads its dependencies eagerly on its first run. Don't
    * "tidy" this into a reset-after-read.
    */
-  const forceSignOut = (reason: SessionEndedReason) => {
+  const forceSignOut = (
+    reason: SessionEndedReason,
+    cause: ForcedSignOutCause
+  ) => {
     if (isSigningOut) {
       // A sign-out the user asked for is already tearing the session down.
       return;
@@ -392,6 +423,31 @@ export function createLoginManager({
       // a screenful of simultaneously-failing reads from stacking up.
       return;
     }
+
+    // Read before `clearSession` drops the key the session id comes from.
+    const parsed = parsedSessionKey.peek();
+    captureEvent("session_auto_signed_out", {
+      reason,
+      cause: cause.kind,
+      session_id: parsed?.sessionId ?? null,
+      session_expire_time:
+        parsed && Number.isFinite(parsed.expireTimeMs)
+          ? new Date(parsed.expireTimeMs).toISOString()
+          : null,
+      error_code:
+        cause.kind === "session_rejected" ? cause.invalidation.errorCode : null,
+      error_message:
+        cause.kind === "session_rejected"
+          ? cause.invalidation.errorMessage
+          : null,
+      failed_request:
+        cause.kind === "session_rejected" ? cause.invalidation.method : null,
+      refresh_errors: refreshFailures.map((failure) => ({
+        error_code: failure.errorCode,
+        error_message: failure.errorMessage,
+        time: new Date(failure.atMs).toISOString(),
+      })),
+    });
 
     clearSession();
     sessionEnded.value = {
@@ -405,12 +461,15 @@ export function createLoginManager({
   };
 
   /** Signs the user out because the server reported the session key dead. */
-  const forceLogout = (errorCode: FatalSessionErrorCode) => {
+  const forceLogout = (invalidation: SessionInvalidatedEvent) => {
     console.warn(
-      `[LoginManager] Signing out: the server reported '${errorCode}'.`
+      `[LoginManager] Signing out: the server reported '${invalidation.errorCode}'.`
     );
     forceSignOut(
-      errorCode === "user_is_banned" ? "account_suspended" : "signed_out"
+      invalidation.errorCode === "user_is_banned"
+        ? "account_suspended"
+        : "signed_out",
+      { kind: "session_rejected", invalidation }
     );
   };
 
@@ -419,7 +478,7 @@ export function createLoginManager({
     if (!event) {
       return;
     }
-    forceLogout(event.errorCode);
+    forceLogout(event);
   });
 
   // Known hydration-mismatch risk: unlike `localConfig` below, this reads
@@ -458,7 +517,7 @@ export function createLoginManager({
         console.warn(
           "[LoginManager] Discarding an unparseable stored session key."
         );
-        forceSignOut("signed_out");
+        forceSignOut("signed_out", { kind: "unparseable_session_key" });
       } else {
         const timeUntilExpire = parsed.expireTimeMs - Date.now();
         // Refresh the session 1 week before it expires
@@ -653,6 +712,16 @@ export function createLoginManager({
     });
   };
 
+  function recordRefreshFailure(
+    errorCode: string,
+    errorMessage: string | null
+  ) {
+    refreshFailures = [
+      ...refreshFailures,
+      { errorCode, errorMessage, atMs: Date.now() },
+    ].slice(-MAX_REFRESH_FAILURES);
+  }
+
   async function refreshSession() {
     const sessionKeyAtRequest = sessionKey.peek();
     if (!sessionKeyAtRequest) {
@@ -660,7 +729,20 @@ export function createLoginManager({
     }
 
     console.log("[LoginManager] Refreshing session with existing session key");
-    const result = await client.replaceSession();
+    let result: Awaited<ReturnType<typeof client.replaceSession>>;
+    try {
+      result = await client.replaceSession();
+    } catch (err) {
+      // Offline, DNS, CORS and the like. The key may well still be good.
+      console.warn("[LoginManager] Failed to refresh session:", err);
+      if (sessionKey.peek() === sessionKeyAtRequest) {
+        recordRefreshFailure(
+          "request_failed",
+          err instanceof Error ? err.message : String(err)
+        );
+      }
+      return;
+    }
 
     if (sessionKey.peek() !== sessionKeyAtRequest) {
       // The session ended while the refresh was in flight — the user signed out, or
@@ -671,6 +753,7 @@ export function createLoginManager({
 
     if (result.success) {
       console.log("[LoginManager] Session refreshed successfully");
+      refreshFailures = [];
       sessionKey.value = result.sessionKey;
       connectionKey.value = result.connectionKey;
       client.sessionKey = result.sessionKey;
@@ -686,6 +769,7 @@ export function createLoginManager({
         result.errorCode,
         result.errorMessage
       );
+      recordRefreshFailure(result.errorCode, result.errorMessage ?? null);
     }
   }
 

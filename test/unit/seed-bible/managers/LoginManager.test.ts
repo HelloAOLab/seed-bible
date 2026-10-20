@@ -667,6 +667,216 @@ describe("createLoginManager", () => {
     });
   });
 
+  describe("analytics for automatic sign-outs", () => {
+    let captureMock: Mock;
+
+    beforeEach(() => {
+      captureMock = vi.fn();
+      (globalThis as any).posthog = {
+        capture: captureMock,
+        identify: vi.fn(),
+        setPersonProperties: vi.fn(),
+      };
+    });
+
+    afterEach(() => {
+      delete (globalThis as any).posthog;
+    });
+
+    function signOutEvents() {
+      return captureMock.mock.calls.filter(
+        ([name]) => name === "session_auto_signed_out"
+      );
+    }
+
+    /** A promise the test settles by hand, to order concurrent requests. */
+    function deferred<T>() {
+      let resolve!: (value: T) => void;
+      const promise = new Promise<T>((r) => (resolve = r));
+      return { promise, resolve };
+    }
+
+    it("reports the original session id and the server's error", async () => {
+      getUserInfoMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "The session has expired.",
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.sessionEnded.value !== null);
+
+      expect(signOutEvents()).toEqual([
+        [
+          "session_auto_signed_out",
+          expect.objectContaining({
+            reason: "signed_out",
+            cause: "session_rejected",
+            session_id: "session-1",
+            error_code: "session_expired",
+            error_message: "The session has expired.",
+            failed_request: "getUserInfo",
+            refresh_errors: [],
+          }),
+        ],
+      ]);
+    });
+
+    it("reports a suspended account", async () => {
+      getUserInfoMock.mockResolvedValue({
+        success: false,
+        errorCode: "user_is_banned",
+        errorMessage: "banned",
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.sessionEnded.value !== null);
+
+      expect(signOutEvents()[0][1]).toMatchObject({
+        reason: "account_suspended",
+        error_code: "user_is_banned",
+      });
+    });
+
+    it("includes earlier refresh failures that left the session in place", async () => {
+      // A key inside its last week is refreshed at startup. The refresh fails
+      // transiently, then a later request finds the session dead.
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(1000 * 60 * 60));
+      replaceSessionMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "A server error occurred.",
+      });
+      const userInfo = deferred<unknown>();
+      getUserInfoMock.mockReturnValue(userInfo.promise);
+
+      const manager = createLoginManager({ os });
+      await flush();
+      userInfo.resolve({
+        success: false,
+        errorCode: "invalid_key",
+        errorMessage: "The session key is invalid.",
+      });
+      await waitFor(() => manager.sessionEnded.value !== null);
+
+      expect(signOutEvents()).toHaveLength(1);
+      expect(signOutEvents()[0][1]).toMatchObject({
+        session_id: "session-1",
+        error_code: "invalid_key",
+        failed_request: "getUserInfo",
+        refresh_errors: [
+          {
+            error_code: "server_error",
+            error_message: "A server error occurred.",
+            time: expect.any(String),
+          },
+        ],
+      });
+    });
+
+    it("includes a refresh request that failed outright", async () => {
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(1000 * 60 * 60));
+      replaceSessionMock.mockRejectedValue(new Error("Failed to fetch"));
+      const userInfo = deferred<unknown>();
+      getUserInfoMock.mockReturnValue(userInfo.promise);
+
+      const manager = createLoginManager({ os });
+      await flush();
+      userInfo.resolve({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+      await waitFor(() => manager.sessionEnded.value !== null);
+
+      expect(signOutEvents()[0][1].refresh_errors).toEqual([
+        {
+          error_code: "request_failed",
+          error_message: "Failed to fetch",
+          time: expect.any(String),
+        },
+      ]);
+    });
+
+    it("reports the refresh itself when it is the request that found the session dead", async () => {
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(1000 * 60 * 60));
+      replaceSessionMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+      getUserInfoMock.mockReturnValue(new Promise(() => undefined));
+
+      const manager = createLoginManager({ os });
+      await waitFor(() => manager.sessionEnded.value !== null);
+
+      expect(signOutEvents()[0][1]).toMatchObject({
+        failed_request: "replaceSession",
+        error_code: "session_expired",
+      });
+    });
+
+    it("sends one event when several requests fail at once", async () => {
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(1000 * 60 * 60));
+      replaceSessionMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+      getUserInfoMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+
+      const manager = createLoginManager({ os });
+      await waitFor(() => manager.sessionEnded.value !== null);
+      await flush();
+
+      expect(signOutEvents()).toHaveLength(1);
+    });
+
+    it("reports a discarded unparseable stored key without a session id", () => {
+      localStorage.setItem("sessionKey", "total-garbage");
+
+      createLoginManager({ os });
+
+      expect(signOutEvents()).toEqual([
+        [
+          "session_auto_signed_out",
+          expect.objectContaining({
+            cause: "unparseable_session_key",
+            session_id: null,
+            error_code: null,
+          }),
+        ],
+      ]);
+    });
+
+    it("sends nothing when the user signs out on purpose", async () => {
+      revokeSessionMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userInfo.value !== null);
+      await manager.logout();
+      await flush();
+
+      expect(signOutEvents()).toEqual([]);
+    });
+
+    it("sends nothing while the session is healthy", async () => {
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userInfo.value !== null);
+      await flush();
+
+      expect(signOutEvents()).toEqual([]);
+    });
+  });
+
   describe("an unparseable stored session key", () => {
     // Anything not shaped `vSK1.<base64>...` fails to parse. Reading the expiry off
     // that null parse used to throw during construction, and nothing catches it, so a

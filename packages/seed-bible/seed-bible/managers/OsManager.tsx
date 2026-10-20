@@ -306,10 +306,12 @@ export function CasualOSManager(
 
   const client = guardRecordsClient(rawClient, {
     getSessionKey: () => sessionKey.peek(),
-    onSessionInvalidated: (errorCode) => {
+    onSessionInvalidated: (errorCode, { method, errorMessage }) => {
       console.warn(`[OsManager] The session is no longer valid: ${errorCode}`);
       sessionInvalidated.value = {
         errorCode,
+        method,
+        errorMessage,
         id: ++sessionInvalidatedCount,
       };
     },
