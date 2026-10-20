@@ -869,6 +869,13 @@
   font-style: var(--sb-verse-words-of-jesus-font-style);
 }
 
+.sb-highlight-custom .sb-words-of-jesus {
+  color: var(
+    --sb-highlight-custom-words-of-jesus-font-color,
+    var(--sb-verse-words-of-jesus-color)
+  );
+}
+
 /* Chapter-load failure state: centred in the reader body, in the reader's own
    ink rather than an alarming red. Sized in rem so it tracks the UI scale, not
    the reader glyph knob. */

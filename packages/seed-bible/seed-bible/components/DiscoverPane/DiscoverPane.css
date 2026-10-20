@@ -45,7 +45,7 @@
   height: auto;
   padding: 6px 12px;
   border: 1px solid var(--sb-primary-color);
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--sb-primary-color);
   color: var(--sb-background);
   font-size: 0.8125rem;

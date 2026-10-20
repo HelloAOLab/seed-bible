@@ -36,12 +36,14 @@ import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
+import type { EmbedThemeChoice } from "./EmbedMode";
 import type { AppState } from "./SeedBibleStateManager";
 import type {
   ReadingPlan,
   ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
 import {
+  forgetReadingPlansPaneOpener,
   ReadingPlansPane,
   ReadingPlansPaneActions,
   ReadingPlansPaneIcon,
@@ -229,6 +231,13 @@ export interface BibleToolContext {
    * shared-session actions (create/share the live session) should guard on it.
    */
   app?: AppState;
+
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 
   /**
    * Navigation manager, for tools that build their own links. Only
@@ -462,6 +471,13 @@ export interface QuickToolContext {
    * toolbar tool.
    */
   app?: AppState;
+
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
@@ -993,7 +1009,7 @@ export interface OpenReadingPlansPaneOptions {
   readingPlans: ReadingPlansManager;
   readingState: BibleReadingState;
   panesManager: PanesManager;
-  modals?: ModalManager;
+  modals: ModalManager;
   playlists?: PlaylistManager;
   /** Loads chapter text for the plan editor's inline scripture previews. */
   bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
@@ -1015,7 +1031,15 @@ export interface OpenReadingPlansPaneOptions {
    */
   placement?: PanePlacement;
   toast?: (message: string) => void;
+  /**
+   * Returns to the screen that opened the pane, from the plans list or from a
+   * plan that screen opened directly. Without it the list has no back button,
+   * which is right for the toolbar: the reader is still there beside it.
+   */
+  onBack?: () => void;
 }
+
+export const READING_PLANS_PANE_ID = "reading-plans-pane";
 
 /**
  * Opens the reading plans pane. Shared by the reader toolbar's Plans tool and
@@ -1047,16 +1071,22 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
         )
     : undefined;
 
+  forgetReadingPlansPaneOpener();
   panesManager.openPane({
-    id: "reading-plans-pane",
+    id: READING_PLANS_PANE_ID,
     placement: options.placement ?? "side",
 
     // The pane's own header carries the plans chrome: a back button when
-    // the user has drilled into a plan or the create wizard, the plan's
-    // name as the title, and the new-plan button.
+    // the user has drilled into a plan or the create wizard (or came from
+    // another screen), the plan's name as the title, and the new-plan button.
     title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
     icon: () => <ReadingPlansPaneIcon />,
-    leading: () => <ReadingPlansPaneLeading readingPlans={readingPlans} />,
+    leading: () => (
+      <ReadingPlansPaneLeading
+        readingPlans={readingPlans}
+        onBack={options.onBack}
+      />
+    ),
     header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
     component: () => (
       <ReadingPlansPane
@@ -1223,9 +1253,10 @@ function getDefaultToolbarTools(
       icon: () => <MaterialIcon>menu_book</MaterialIcon>,
       isVisible: (context) =>
         !!context.readingPlans &&
+        !!context.modals &&
         context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
       onSelect: (context) => {
-        if (!context.readingPlans) {
+        if (!context.readingPlans || !context.modals) {
           return;
         }
         openReadingPlansPane({
@@ -1633,6 +1664,12 @@ type ShareSheetContext = {
   app?: AppState;
   toast?: (message: string) => void;
   sharedSession?: BibleReadingSession | null;
+  /** Theme presets the Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 };
 
 /**
@@ -1661,6 +1698,9 @@ export function openShareModal(
         app={app}
         modals={modals}
         session={context.sharedSession ?? null}
+        shareUrl={shareUrl}
+        themes={context.embedThemes}
+        customizationLocator={context.customizationLocator}
         onClose={() => modals.closeModal(modalId)}
         onShareLink={() => {
           navigator.clipboard.writeText(shareUrl.toString());

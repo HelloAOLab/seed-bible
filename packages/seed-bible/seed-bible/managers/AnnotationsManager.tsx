@@ -69,6 +69,14 @@ export interface AnnotationsManager {
   listAllAnnotations: () => Promise<Annotation[]>;
 
   /**
+   * Every annotation in one user's record, across the whole Bible. Notes are
+   * written `publicRead`, so this reads another user's notes as well as the
+   * signed-in user's own; the Today community feed uses it for each reader it
+   * follows. Unsorted.
+   */
+  listAllAnnotationsForUser: (userId: string) => Promise<Annotation[]>;
+
+  /**
    * Reactive view of one chapter's annotations, sorted the same way
    * `listAnnotationsForChapter` sorts: from the record override when one was
    * passed to `createAnnotationsManager`, otherwise from the signed-in
@@ -130,19 +138,18 @@ export interface AnnotationsManager {
 
   /**
    * Persists `editingAnnotation` (upsert), updates the chapter cache, and
-   * clears the draft. On a wide screen it returns to the discover view. On
-   * mobile it returns to the view that was open before the editor: the
-   * reader when the note was started there, or the notes list when it was
-   * opened from Discover. No-op when nothing is being edited. Rethrows on
-   * save failure, leaving `editingAnnotation` intact so the caller doesn't
-   * lose the draft.
+   * clears the draft. Returns Discover to the view that was open before the
+   * editor: closed when the note was started from the reader, the notes list
+   * when it was opened from there, or the playlist player if one was
+   * playing. Leaves Discover alone if it has already moved away from the
+   * editor. No-op when nothing is being edited. Rethrows on save failure,
+   * leaving `editingAnnotation` intact so the caller doesn't lose the draft.
    */
   saveEditingAnnotation: () => Promise<void>;
 
   /**
-   * Discards the current edit. On a wide screen it returns to the discover
-   * view. On mobile it returns to the same place `saveEditingAnnotation`
-   * would: the reader, or the notes list if the editor was opened from it.
+   * Discards the current edit and returns Discover to the same view
+   * `saveEditingAnnotation` would.
    */
   cancelEditingAnnotation: () => void;
 
@@ -575,13 +582,6 @@ export interface CreateAnnotationsManagerOptions {
   /** See {@link CreateRecordSyncManagerOptions.confirmAdoption}. */
   confirmAdoption?: CreateRecordSyncManagerOptions<Annotation>["confirmAdoption"];
   /**
-   * Whether the app is in the mobile layout. After a note is saved or
-   * cancelled, mobile returns to the discover view that was open before the
-   * editor. Omitted means the wide-screen behavior: return to the discover
-   * view.
-   */
-  isMobile?: ReadonlySignal<boolean>;
-  /**
    * The signed-in user's friends, whose notes
    * `visibleAnnotationsForChapter` includes. Omitted means only the user's
    * own.
@@ -611,8 +611,6 @@ export function createAnnotationsManager(
     options.store === undefined
       ? createIndexedDbRecordStore<Annotation>(annotationSyncDomain.dbName)
       : options.store;
-  const isMobile = options.isMobile;
-
   /**
    * The record a query targets, or null when only the local store can answer.
    *
@@ -854,8 +852,13 @@ export function createAnnotationsManager(
     if (!recordName) {
       return [];
     }
+    return listAllAnnotationsForUser(recordName);
+  };
 
-    const result = await os.listAllData(recordName);
+  const listAllAnnotationsForUser = async (
+    userId: string
+  ): Promise<Annotation[]> => {
+    const result = await os.listAllData(userId);
     const annotations: Annotation[] = [];
     for (const item of result.items) {
       const parsed = annotationSchema.safeParse(item.data);
@@ -1360,10 +1363,10 @@ export function createAnnotationsManager(
   // is a docked panel, not a modal).
   const draftTabId = signal<string | null>(null);
 
-  // The discover view underneath the editor, captured when it opens. On
-  // mobile, save and cancel put this back so a note started from the reader
-  // returns to the chapter, and a note opened from the notes list returns to
-  // that list. `null` means Discover was closed.
+  // The discover view underneath the editor, captured when it opens. Save and
+  // cancel put this back so a note started from the reader returns to the
+  // chapter, and a note opened from the notes list returns to that list.
+  // `null` means Discover was closed.
   let viewBeforeEditing: DiscoverView | null = null;
 
   const rememberViewBeforeEditing = () => {
@@ -1379,7 +1382,9 @@ export function createAnnotationsManager(
     isDraftingNewAnnotation.value = false;
     draftTabId.value = null;
     editingAnnotation.value = null;
-    discover.view.value = isMobile?.value ? viewBeforeEditing : "discover";
+    if (discover.view.peek() === "create_annotation") {
+      discover.view.value = viewBeforeEditing;
+    }
     viewBeforeEditing = null;
   };
 
@@ -1548,6 +1553,7 @@ export function createAnnotationsManager(
     deleteAnnotation,
     listAnnotationsForChapter,
     listAllAnnotations,
+    listAllAnnotationsForUser,
     getAnnotationsForChapter,
     getUserAnnotationsForChapter,
     visibleAnnotationsForChapter: (bookId, chapterNumber) =>

@@ -9,6 +9,7 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
+import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 
 /**
  * One playlist in a `sb-discover-list`: title, description, a play button,
@@ -156,58 +157,6 @@ export function PlaylistRow(props: {
   );
 }
 
-function ConfirmDeletePlaylistModalContent(props: {
-  playlists: PlaylistManager;
-  playlist: Playlist;
-  toast: SeedBibleState["app"]["toast"];
-  onClose: () => void;
-}) {
-  const { playlists, playlist, toast, onClose } = props;
-  const { t } = useI18n();
-
-  const confirm = async () => {
-    try {
-      await playlists.deletePlaylist(playlist);
-    } catch {
-      toast(
-        t("delete-playlist-failed", {
-          defaultValue: "Couldn't delete the playlist.",
-        })
-      );
-    }
-    onClose();
-  };
-
-  return (
-    <div className="sb-confirm-delete">
-      <p className="sb-confirm-delete-message">
-        {t("delete-playlist-confirm-message", {
-          title:
-            playlist.title ??
-            t("untitled-playlist", { defaultValue: "Untitled playlist" }),
-          defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
-        })}
-      </p>
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-        >
-          {t("cancel")}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={confirm}
-        >
-          {t("delete")}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 /** Opens the delete-playlist confirmation modal. */
 function openDeletePlaylistConfirm(
   modals: ModalManager,
@@ -215,20 +164,24 @@ function openDeletePlaylistConfirm(
   playlist: Playlist,
   toast: SeedBibleState["app"]["toast"]
 ) {
-  const modalId = `delete-playlist-confirm-${playlist.id}`;
-  modals.openModal({
-    id: modalId,
+  openConfirmDeleteModal(modals, {
+    id: `delete-playlist-confirm-${playlist.id}`,
     title: {
       key: "delete-playlist-confirm-title",
       defaultValue: "Delete playlist?",
     },
-    content: () => (
-      <ConfirmDeletePlaylistModalContent
-        playlists={playlists}
-        playlist={playlist}
-        toast={toast}
-        onClose={() => modals.closeModal(modalId)}
-      />
-    ),
+    message: (t) =>
+      t("delete-playlist-confirm-message", {
+        title:
+          playlist.title ??
+          t("untitled-playlist", { defaultValue: "Untitled playlist" }),
+        defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
+      }),
+    onConfirm: () => playlists.deletePlaylist(playlist),
+    failedMessage: (t) =>
+      t("delete-playlist-failed", {
+        defaultValue: "Couldn't delete the playlist.",
+      }),
+    toast,
   });
 }

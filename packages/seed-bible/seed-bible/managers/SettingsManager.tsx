@@ -1,4 +1,4 @@
-import { effect, signal, type Signal } from "@preact/signals";
+import { computed, effect, signal, type Signal } from "@preact/signals";
 import i18n from "i18next";
 import type { LoginManager } from "../managers/LoginManager";
 import {
@@ -8,6 +8,7 @@ import {
 import * as z from "zod/v4";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import { SYSTEM_THEME_ID, type ThemeHighlightColor } from "./ThemeManager";
 import { parseNumber } from "./Utils";
 
@@ -857,6 +858,11 @@ export function createSettings(
   const sessionOverrides: Record<string, unknown> = Object.fromEntries(
     navigation.currentUrl.value.searchParams
   );
+  // A boolean, not the URL itself, so `readSettings()` (and every reader of
+  // `settings`) reruns only when embed mode flips, not on every navigation.
+  const isMinimalEmbed = computed(() =>
+    isMinimalEmbedUrl(navigation.currentUrl.value)
+  );
 
   // Read each setting with the precedence: user profile > this session's
   // URL/override cache > `login.localConfig` (the anonymous, device-only
@@ -876,6 +882,17 @@ export function createSettings(
       getProfileConfigValue(profile, profileKey) ??
       sessionOverrides[urlKey] ??
       local[profileKey];
+
+    // The embed link's theme is the look the site owner chose. The viewer's
+    // saved theme and color edits would otherwise paint over it, so the
+    // preview (and every signed-in visitor) would ignore the link.
+    const embedTheme = sessionOverrides[TAG_THEME_ID];
+    const pinnedEmbedTheme =
+      isMinimalEmbed.value &&
+      typeof embedTheme === "string" &&
+      embedTheme.trim().length > 0
+        ? embedTheme.trim()
+        : undefined;
 
     return {
       fontSize: parseFontSize(
@@ -934,15 +951,17 @@ export function createSettings(
         DEFAULT_SETTINGS.scriptureWidth
       ),
       themeId: parseThemeId(
-        read(PROFILE_THEME_ID, TAG_THEME_ID),
+        pinnedEmbedTheme ?? read(PROFILE_THEME_ID, TAG_THEME_ID),
         DEFAULT_SETTINGS.themeId
       ),
-      customTheme: parseStringRecord(
-        read(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)
-      ),
-      customHighlights: parseHighlightOverrides(
-        read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
-      ),
+      customTheme: pinnedEmbedTheme
+        ? {}
+        : parseStringRecord(read(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)),
+      customHighlights: pinnedEmbedTheme
+        ? {}
+        : parseHighlightOverrides(
+            read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
+          ),
       discoverContentPanelInline: parseBoolean(
         read(
           PROFILE_DISCOVER_CONTENT_PANEL_INLINE,

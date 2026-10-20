@@ -1548,8 +1548,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
     const { id, installed, pendingInstallation } = extensionEntry;
-    const isBaseExtension =
-      customizations.getActiveExtensionAvailability(id) === "auto-installed";
     const isRegistered =
       ExtensionInitalizer.getInstance().isExtensionRegistered(id);
     const installState = getExtensionInstallState(
@@ -1640,20 +1638,20 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 <span className="material-symbols-outlined">download</span>
               </button>
             )}
-            {(installState === "installed" || installState === "downloaded") &&
-              !isBaseExtension && (
-                <button
-                  type="button"
-                  className="sb-extension-row-action-button"
-                  onClick={() => handleUninstall(id)}
-                  aria-label={t("uninstall", {
-                    defaultValue: "Uninstall",
-                  })}
-                  title={t("uninstall", { defaultValue: "Uninstall" })}
-                >
-                  <span className="material-symbols-outlined">delete</span>
-                </button>
-              )}
+            {(installState === "installed" ||
+              installState === "downloaded") && (
+              <button
+                type="button"
+                className="sb-extension-row-action-button"
+                onClick={() => handleUninstall(id)}
+                aria-label={t("uninstall", {
+                  defaultValue: "Uninstall",
+                })}
+                title={t("uninstall", { defaultValue: "Uninstall" })}
+              >
+                <span className="material-symbols-outlined">delete</span>
+              </button>
+            )}
           </div>
         </div>
       </li>
@@ -1685,9 +1683,9 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       <section className="sb-settings-section">
         {activeCustomization && (
           <p className="sb-settings-field-description">
-            {t("extensions-for-active-customization", {
+            {t("extensions-for-active-customization-scoped", {
               defaultValue:
-                "Showing extensions for {{name}}. Extensions this customization includes can't be removed here.",
+                "Showing extensions for {{name}}. Changes you make here only apply while you're using it.",
               name: activeCustomization.name,
             })}
           </p>

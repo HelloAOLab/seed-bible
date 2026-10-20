@@ -629,6 +629,17 @@ export function createExtensionManager(
   const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
   const installedExtensionIds = new Set<string>();
   const pendingInstallations = new Map<string, Promise<boolean>>();
+  // The extension ids an active customization wants installed (see
+  // `reconcileInstalledExtensions`), or null when none is active. While set,
+  // the viewer's own defaults and saved extensions are left alone.
+  let scopedTargetIds: string[] | null = null;
+  // False until some extension set has been loaded. A customization can be
+  // active from the very first render (the server resolved it), before the
+  // app has loaded the catalog its ids refer to.
+  let hasLoadedExtensionSet = false;
+  // Whether `loadDefaultExtensions` ran while a customization was active and
+  // so skipped the viewer's own defaults, which leaving it still owes them.
+  let skippedDefaultLoad = false;
 
   // Custom "Configure" panels extensions register for themselves, keyed by
   // extension id. Kept here (rather than on `ExtensionSettingsManager`) since
@@ -1263,6 +1274,7 @@ export function createExtensionManager(
     filter: (ext: Extension) => boolean = () => true
   ): Promise<Map<string, boolean>> => {
     trackExtensionSet(set);
+    hasLoadedExtensionSet = true;
 
     const idsAndPromises: [string, Promise<boolean>][] = [];
     for (const ext of set.extensions) {
@@ -1332,6 +1344,10 @@ export function createExtensionManager(
    * in storage (a later build may reintroduce them) but skipped for now.
    */
   const loadSavedExtensions = async () => {
+    if (scopedTargetIds !== null) {
+      await reconcileInstalledExtensions(scopedTargetIds);
+      return;
+    }
     const savedIds = await computeSavedExtensionIds();
 
     const promises: Promise<boolean>[] = [];
@@ -1352,6 +1368,11 @@ export function createExtensionManager(
     }
 
     await Promise.all(promises);
+    // A customization that went active while these were installing gets the
+    // final say over what stays installed.
+    if (scopedTargetIds !== null) {
+      await reconcileInstalledExtensions(scopedTargetIds);
+    }
   };
 
   /**
@@ -1375,6 +1396,14 @@ export function createExtensionManager(
       return;
     }
     console.log("Loading default extension set:", defaultExtensions);
+
+    if (scopedTargetIds !== null) {
+      // Only make the catalog known; the customization decides what installs.
+      await loadExtensionSet(defaultExtensions, () => false);
+      skippedDefaultLoad = true;
+      await reconcileInstalledExtensions(scopedTargetIds);
+      return;
+    }
 
     await awaitProfileLoaded();
     const localHandledIds = readPersistedHandledExtensionIds();
@@ -1450,11 +1479,30 @@ export function createExtensionManager(
   const reconcileInstalledExtensions = async (
     targetIds: string[] | null
   ): Promise<void> => {
+    scopedTargetIds = targetIds;
+    if (targetIds !== null && !hasLoadedExtensionSet && defaultExtensions) {
+      // Applied by `loadDefaultExtensions` once the catalog is known.
+      return;
+    }
     const target =
       targetIds === null
         ? await computeSavedExtensionIds()
         : new Set(targetIds);
-    const current = new Set(installedExtensionIds);
+    // Whatever a wanted extension depends on stays too, or unloading it
+    // would break the extension that needs it.
+    for (const id of target) {
+      for (const dependencyId of knownExtensionsById.get(id)?.meta
+        .dependencies ?? []) {
+        target.add(dependencyId);
+      }
+    }
+    // Bundled extensions count as installed by being registered, without
+    // ever entering `installedExtensionIds`, so check both.
+    const current = new Set(
+      [...installedExtensionIds, ...knownExtensionsById.keys()].filter(
+        isSatisfiedDependency
+      )
+    );
 
     for (const id of current) {
       if (!target.has(id)) {
@@ -1462,7 +1510,7 @@ export function createExtensionManager(
       }
     }
     for (const id of target) {
-      if (installedExtensionIds.has(id)) {
+      if (isSatisfiedDependency(id)) {
         continue;
       }
       const extension = knownExtensionsById.get(id);
@@ -1473,6 +1521,10 @@ export function createExtensionManager(
         continue;
       }
       await loadExtension(extension, undefined, { persist: false });
+    }
+    if (targetIds === null && skippedDefaultLoad) {
+      skippedDefaultLoad = false;
+      await loadDefaultExtensions();
     }
   };
 

@@ -36,6 +36,10 @@ import {
 import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
 import { playlistItemLabel } from "../playlistItemLabel";
 import {
+  ScriptureNoteSheet,
+  ScriptureNoteShowTab,
+} from "../ScriptureNote/ScriptureNote";
+import {
   AudioProgressRing,
   AudioScrubber,
 } from "../AudioScrubber/AudioScrubber";
@@ -995,6 +999,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       toast: props.state.app.toast,
       modals: props.state.modals,
       app: props.state.app,
+      embedThemes: props.state.theme.themes,
+      customizationLocator:
+        props.state.customizations.activeCustomizationLocator,
       annotations: props.state.annotations,
       navigation: props.state.navigation,
       data: props.state.bibleData,
@@ -1074,6 +1081,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       toast: props.state.app.toast,
       modals: props.state.modals,
       app: props.state.app,
+      embedThemes: props.state.theme.themes,
+      customizationLocator:
+        props.state.customizations.activeCustomizationLocator,
       annotations: props.state.annotations,
       navigation: props.state.navigation,
       data: props.state.bibleData,
@@ -2144,11 +2154,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     // it invalidates style for every element in the chapter. Most measures
     // produce the value we already wrote (a re-point, a child mutation, an
     // observer's initial callback), so only write on a real change.
+    // `--sb-reader-bottom-chrome` is the same without the gap, for things that
+    // sit right against the toolbar (the off-screen highlight notices).
     const write = (chromePx: number) => {
       const next = `${chromePx + BOTTOM_CHROME_GAP_PX}px`;
       if (next === lastValue) return;
       lastValue = next;
       root.style.setProperty("--sb-reader-bottom-inset", next);
+      root.style.setProperty("--sb-reader-bottom-chrome", `${chromePx}px`);
+    };
+
+    // A playing passage's note sheet rides on top of the floating nav, outside
+    // its box, so it's added on: a long note would otherwise cover the end of
+    // the chapter and the discovered content after it.
+    const navHeight = (nav: HTMLElement) => {
+      const noteSheet = nav.querySelector(".sb-scripture-note-sheet");
+      return (
+        nav.offsetHeight +
+        (noteSheet instanceof HTMLElement ? noteSheet.offsetHeight : 0)
+      );
     };
 
     const measure = () => {
@@ -2162,14 +2186,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       const toolbar = wrap?.querySelector(".sb-reader-toolbar");
       const nav = wrap?.querySelector(".sb-reader-floating-nav");
       if (nav instanceof HTMLElement && !(toolbar instanceof HTMLElement)) {
-        write(nav.offsetHeight);
+        write(navHeight(nav));
         return;
       }
       if (!(toolbar instanceof HTMLElement)) return;
 
       let insetPx = toolbar.offsetHeight;
       if (nav instanceof HTMLElement) {
-        insetPx += nav.offsetHeight;
+        insetPx += navHeight(nav);
       } else {
         // Desktop: toolbar floats above the viewport bottom.
         const bottom = parseFloat(getComputedStyle(toolbar).bottom);
@@ -2204,7 +2228,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         const toolbar = wrap.querySelector(".sb-reader-toolbar");
         const nav = wrap.querySelector(".sb-reader-floating-nav");
         if (toolbar instanceof HTMLElement) observer.observe(toolbar);
-        if (nav instanceof HTMLElement) observer.observe(nav);
+        if (nav instanceof HTMLElement) {
+          observer.observe(nav);
+          // The note sheet comes and goes with the playing step, and resizes
+          // as it collapses or its note loads.
+          const noteSheet = nav.querySelector(".sb-scripture-note-sheet");
+          if (noteSheet instanceof HTMLElement) observer.observe(noteSheet);
+          mutationObserver?.observe(nav, { childList: true });
+        }
         mutationObserver?.observe(wrap, { childList: true });
       }
 
@@ -2221,6 +2252,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       mutationObserver?.disconnect();
       // Drop the runtime override so the CSS fallback in base.css takes over.
       root.style.removeProperty("--sb-reader-bottom-inset");
+      root.style.removeProperty("--sb-reader-bottom-chrome");
     };
   }, []);
 
@@ -2605,6 +2637,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     defaultValue: "Chapter navigation",
                   })}
                 >
+                  {playing && (
+                    <ScriptureNoteSheet
+                      playing={playing}
+                      resolveBookName={resolveBookName}
+                    />
+                  )}
                   {!playing && audio && AudioIcon && (
                     <div className="sb-reader-floating-nav-play-wrap">
                       <button
@@ -2943,6 +2981,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 </>
               ) : (
                 <>
+                  {playingPlaylist.value && (
+                    <ScriptureNoteShowTab playing={playingPlaylist.value} />
+                  )}
                   {desktopPlayback.value &&
                     renderDesktopAudioControls(desktopPlayback.value)}
                   {tools.value.flatMap((tool) => {

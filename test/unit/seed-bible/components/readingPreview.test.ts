@@ -88,6 +88,28 @@ describe("readingPreviewText", () => {
     ).toBe("Grace and peace.");
   });
 
+  it("summarizes a noted scripture reading with its note's title and excerpt", () => {
+    const ref = { bookId: "JHN", chapter: 3, verse: 16 };
+    expect(
+      readingPreviewText(
+        {
+          type: "bible-verse",
+          ref,
+          noteTitle: "God's love",
+          note: "<p>For <strong>all</strong>.</p>",
+        },
+        t
+      )
+    ).toBe("God's love · For all .");
+    expect(
+      readingPreviewText(
+        { type: "bible-verse", ref, noteTitle: "God's love" },
+        t
+      )
+    ).toBe("God's love");
+    expect(readingPreviewText({ type: "bible-verse", ref }, t)).toBeNull();
+  });
+
   it("summarizes a plain link with its host", () => {
     expect(
       readingPreviewText(

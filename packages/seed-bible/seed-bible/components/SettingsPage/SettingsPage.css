@@ -1,9 +1,5 @@
 .sb-language-english-name {
-  color: color-mix(
-    in srgb,
-    var(--sb-book-selector-font-color),
-    transparent 50%
-  );
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
 .sb-settings-page {
