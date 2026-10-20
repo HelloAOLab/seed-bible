@@ -401,13 +401,6 @@ export interface AppState {
    * is always spelled out and why it follows the translation.
    */
   canonicalUrl: ReadonlySignal<string>;
-  /**
-   * The page's `og:url`: `canonicalUrl`, except on a friend link with a named
-   * profile, whose preview describes the link itself rather than the chapter
-   * its bare root shows.
-   */
-  socialUrl: ReadonlySignal<string>;
-
   /** The title of the page. */
   title: ReadonlySignal<string>;
 
@@ -477,6 +470,8 @@ export interface AppState {
 
   /** Closes the Discover panel. */
   closeDiscover: () => void;
+
+  noIndex: ReadonlySignal<boolean>;
 }
 
 /**
@@ -2188,6 +2183,14 @@ export function createSeedBibleState(
    * would point every canonical at a URL that redirects.
    */
   const canonicalUrl = computed(() => {
+    const friendLinkUserId = friendLinkPreview.result.value?.userId;
+    if (friendLinkPerson.value && friendLinkUserId) {
+      const query = new URLSearchParams({
+        [ADD_FRIEND_PARAM]: friendLinkUserId,
+      });
+      return `${navigation.basePath || "/"}?${query}`;
+    }
+
     if (isAboutPage.value) {
       // Uses the *resolved* i18n language, not the raw URL segment, so a
       // garbage/unsupported language in the URL still canonicalizes to a
@@ -2236,14 +2239,6 @@ export function createSeedBibleState(
     });
 
     return `${navigation.basePath}${readingPath}`;
-  });
-  const socialUrl = computed(() => {
-    const userId = friendLinkPreview.result.value?.userId;
-    if (friendLinkPerson.value && userId) {
-      const query = new URLSearchParams({ [ADD_FRIEND_PARAM]: userId });
-      return `${navigation.basePath || "/"}?${query}`;
-    }
-    return canonicalUrl.value;
   });
 
   /** How often time spent on the chapter in view is written to history. */
@@ -3351,6 +3346,8 @@ export function createSeedBibleState(
     currentReadingState,
   });
 
+  const noIndex = computed(() => !!friendLinkPerson.value);
+
   const state: SeedBibleState = {
     os,
     bibleData: data,
@@ -3451,7 +3448,6 @@ export function createSeedBibleState(
       customizationLogoUrl,
       socialImage,
       canonicalUrl,
-      socialUrl,
       socialTitle,
       isAboutPage,
       startSharedPage,
@@ -3461,6 +3457,7 @@ export function createSeedBibleState(
       isDiscoverOpen: playlists.isDiscoverOpen,
       openDiscover: handleOpenDiscover,
       closeDiscover: handleCloseDiscover,
+      noIndex,
     },
   };
 
