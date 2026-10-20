@@ -818,8 +818,8 @@ export function startSandboxSession(
    * couldn't run `ao.bot`.
    */
   const openPortal = (params: SandboxMethods["portals.open"]["params"]) => {
-    const openKey = uuid();
-    const inst = params.inst ?? `sandbox-${extensionId}-${openKey}`;
+    const openKey = uuid().slice(0, 8); // only take the first 8 chars because inst names can't be too long for DNS
+    const inst = params.inst ?? `sb-${extensionId.slice(0, 24)}-${openKey}`;
     return openHostPane(params, (paneId) => (
       <PortalComponent
         key={openKey}
