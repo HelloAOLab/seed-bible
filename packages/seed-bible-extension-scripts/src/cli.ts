@@ -69,7 +69,7 @@ program
 program
   .command("dev")
   .description(
-    "Run a real Seed Bible dev server with this extension auto-installed."
+    "Run a real Seed Bible dev server that offers to install this extension. A sandboxed extension is rebuilt as you save; reload to run it."
   )
   .option(
     "--repo <path>",
@@ -80,16 +80,24 @@ program
     'seed-bible release range (e.g. 1.13) or branch (e.g. develop) to run, instead of the one the "seed-bible" dependency implies'
   )
   .option("--port <port>", "port to run the seed-bible dev server on")
+  .option(
+    "--extension-port <port>",
+    "port to serve a sandboxed extension's bundle on (default 5174)"
+  )
   .action(
     async (opts: {
       repo?: string;
       seedBibleVersion?: string;
       port?: string;
+      extensionPort?: string;
     }) => {
       process.exitCode = await runDev({
         repoPath: opts.repo,
         seedBibleVersion: opts.seedBibleVersion,
         port: opts.port ? Number(opts.port) : undefined,
+        extensionPort: opts.extensionPort
+          ? Number(opts.extensionPort)
+          : undefined,
       });
     }
   );

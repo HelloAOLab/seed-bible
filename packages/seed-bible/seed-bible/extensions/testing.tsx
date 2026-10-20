@@ -101,7 +101,11 @@ export interface TestHost {
   clipboard: string[];
   /** Every call that got past the permission check, in order. */
   calls: TestCall[];
-  /** Permission requests the extension made, and whether they were granted. */
+  /**
+   * The permission prompts the user would have seen, and their answers. A
+   * request for what's already granted is answered without one, as in the
+   * app.
+   */
   requests: { permissions: SandboxPermission[]; granted: boolean }[];
   /** Registered Discover and chat providers, by id. */
   discoverProviders: Set<string>;
@@ -422,6 +426,9 @@ export async function createTestHost(
             "invalid_request",
             `Only permissions listed under "optionalPermissions" can be requested; not: ${undeclared.join(", ")}.`
           );
+        }
+        if (asked.every((permission) => granted.includes(permission))) {
+          return { granted: true };
         }
         const agreed = options.allowRequests ?? true;
         if (agreed) {

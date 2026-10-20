@@ -283,7 +283,8 @@ export interface SandboxCapture {
 export type SandboxCasualOSPattern = { name: string } | { aux: string };
 
 export interface SandboxPortalOptions {
-  pattern: SandboxCasualOSPattern;
+  /** The pattern to load. Without one, the portal opens empty. */
+  pattern?: SandboxCasualOSPattern;
   portalType: "grid" | "map";
   /** The portal's name. Defaults to `"home"`. */
   portal?: string;

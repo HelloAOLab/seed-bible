@@ -1,8 +1,8 @@
 import { cp, mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { build as viteBuild } from "vite";
-import preact from "@preact/preset-vite";
 import { loadExtensionProjectInfo } from "../lib/project.js";
+import { standaloneBundleConfig } from "../lib/standaloneBundle.js";
 import { runCheck } from "./check.js";
 import { runTest } from "./test.js";
 import {
@@ -116,30 +116,8 @@ async function buildStandaloneBundle(
   root: string,
   extensionId: string
 ): Promise<void> {
-  const entry = path.join(root, "index.ts");
   const outDir = path.join(root, "dist", "standalone");
-
-  // Everything is bundled into one file: the sandbox loads exactly one
-  // module, from a `blob:` URL, so a second chunk could never be fetched.
-  await viteBuild({
-    root,
-    configFile: false,
-    logLevel: "info",
-    plugins: [preact()],
-    define: { "process.env.NODE_ENV": JSON.stringify("production") },
-    build: {
-      outDir,
-      emptyOutDir: true,
-      lib: {
-        entry,
-        formats: ["es"],
-        fileName: () => "index.js",
-      },
-      rollupOptions: {
-        output: { codeSplitting: false },
-      },
-    },
-  });
+  await viteBuild(standaloneBundleConfig(root, outDir));
 
   await writeFile(
     path.join(outDir, "README.md"),

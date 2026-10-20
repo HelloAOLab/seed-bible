@@ -8,5 +8,8 @@ export async function runTest(
 ): Promise<number> {
   const vitestPath = await resolveLocalBin(root, "vitest");
   console.log("[test] Running vitest run …");
-  return runNodeScript(vitestPath, ["run", ...extraArgs], { cwd: root });
+  // A project without tests yet can still be built.
+  return runNodeScript(vitestPath, ["run", "--passWithNoTests", ...extraArgs], {
+    cwd: root,
+  });
 }

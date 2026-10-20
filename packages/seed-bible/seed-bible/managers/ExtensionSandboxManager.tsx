@@ -353,12 +353,14 @@ const paramSchemas: Partial<Record<SandboxMethod, z.ZodType>> = {
   }),
   "panes.close": z.object({ paneId: z.string().max(200) }),
   "portals.open": z.object({
-    pattern: z.union([
-      z.object({ name: casualOSNameSchema }),
-      z.object({
-        aux: z.url({ protocol: /^https$/ }).max(2000),
-      }),
-    ]),
+    pattern: z
+      .union([
+        z.object({ name: casualOSNameSchema }),
+        z.object({
+          aux: z.url({ protocol: /^https$/ }).max(2000),
+        }),
+      ])
+      .optional(),
     portalType: z.enum(["grid", "map"]),
     portal: casualOSNameSchema.optional(),
     inst: casualOSNameSchema.optional(),
@@ -829,7 +831,7 @@ export function startSandboxSession(
         portal={params.portal ?? "home"}
         portalType={params.portalType}
         inst={inst}
-        pattern={params.pattern}
+        pattern={params.pattern ?? null}
         query={params.query ?? null}
         onMessage={(message) =>
           broadcast({ type: "event", name: "portal.message", paneId, message })
@@ -955,6 +957,15 @@ export function startSandboxSession(
     params: unknown,
     isBackground: boolean
   ): unknown => {
+    // A view whose code failed to load or render reports it this way;
+    // without this, the pane would just stay blank.
+    if (method === "ready" && !isBackground) {
+      const { error } = params as SandboxMethods["ready"]["params"];
+      if (error) {
+        console.error(`Extension '${extensionId}' view failed:`, error);
+      }
+      return null;
+    }
     const spec = SANDBOX_SERVICE_SPECS[method];
     if (
       (BACKGROUND_ONLY_METHODS.has(method) || spec?.backgroundOnly) &&

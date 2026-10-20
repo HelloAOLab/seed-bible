@@ -147,14 +147,20 @@ function extensionImportBase(entry: ExtensionEntry): string {
 // warning rather than failing discovery outright.
 async function discoverExtensionEntries(): Promise<ExtensionEntry[]> {
   const dirEntries = await readdir(packagesDir, { withFileTypes: true });
-  const bundled: ExtensionEntry[] = dirEntries
-    .filter(
-      (e) =>
-        e.isDirectory() &&
-        existsSync(path.resolve(packagesDir, e.name, "extension.json"))
-    )
-    .map((e) => ({ kind: "bundled" as const, folder: e.name }))
-    .sort((a, b) => a.folder.localeCompare(b.folder));
+  const bundled: BundledExtensionEntry[] = [];
+  for (const e of dirEntries) {
+    const dir = path.resolve(packagesDir, e.name);
+    if (
+      e.isDirectory() &&
+      existsSync(path.resolve(dir, "extension.json")) &&
+      // A sandboxed extension only ever runs loaded from a URL, in its own
+      // frame; bundling it into the app would run it with full access.
+      !(await isSandboxedExtensionDir(dir))
+    ) {
+      bundled.push({ kind: "bundled", folder: e.name });
+    }
+  }
+  bundled.sort((a, b) => a.folder.localeCompare(b.folder));
 
   const external: ExtensionEntry[] = [];
   for (const dir of parseExtraExtensionDirs()) {
@@ -175,6 +181,33 @@ async function discoverExtensionEntries(): Promise<ExtensionEntry[]> {
   }
 
   return [...bundled, ...external];
+}
+
+const SANDBOX_SDK_IMPORT = /from\s+["']seed-bible\/extensions["']/;
+
+/**
+ * Whether the extension in `dir` is written against `seed-bible/extensions`
+ * (a sandboxed extension), judged from its own source files.
+ */
+export async function isSandboxedExtensionDir(dir: string): Promise<boolean> {
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      if (
+        !["node_modules", "dist"].includes(entry.name) &&
+        (await isSandboxedExtensionDir(path.join(dir, entry.name)))
+      ) {
+        return true;
+      }
+    } else if (
+      /\.[cm]?[jt]sx?$/.test(entry.name) &&
+      SANDBOX_SDK_IMPORT.test(
+        await readFile(path.join(dir, entry.name), "utf-8")
+      )
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 async function readExtensionMeta(metaPath: string): Promise<ExtensionMetaFile> {

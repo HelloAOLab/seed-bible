@@ -4,7 +4,17 @@ import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import os from "node:os";
 import path from "node:path";
+import { build as viteBuild, type Rollup } from "vite";
 import { loadExtensionProjectInfo } from "../lib/project.js";
+import {
+  isSandboxedProject,
+  readProjectSources,
+} from "../lib/sandboxedProject.js";
+import { standaloneBundleConfig } from "../lib/standaloneBundle.js";
+import {
+  startDevExtensionServer,
+  type DevExtensionServer,
+} from "../lib/devExtensionServer.js";
 import { runCommand } from "../lib/spawn.js";
 import {
   pickReleaseTag,
@@ -23,10 +33,13 @@ export interface DevOptions {
   seedBibleVersion?: string;
   /** Port to run the seed-bible dev server on. Defaults to 3002 (its own default). */
   port?: number;
+  /** Port to serve a sandboxed extension's bundle on. Defaults to 5174. */
+  extensionPort?: number;
 }
 
 const REPO_URL = "https://github.com/HelloAOLab/seed-bible.git";
 const DEFAULT_PORT = 3002;
+const DEFAULT_EXTENSION_PORT = 5174;
 
 /**
  * OS-appropriate cache root for the managed seed-bible checkouts, following
@@ -191,6 +204,72 @@ async function assertSupportsExternalExtensions(appDir: string): Promise<void> {
   }
 }
 
+/**
+ * A sandboxed extension is offered to the app through `?extensionSet=`,
+ * which older versions ignore, leaving nothing to install.
+ */
+async function assertSupportsExtensionSetLinks(appDir: string): Promise<void> {
+  const managerPath = path.join(
+    appDir,
+    "packages",
+    "seed-bible",
+    "seed-bible",
+    "managers",
+    "ExtensionManager.tsx"
+  );
+  const source = existsSync(managerPath)
+    ? await readFile(managerPath, "utf-8")
+    : "";
+  if (!source.includes('searchParams.get("extensionSet")')) {
+    throw new Error(
+      `The seed-bible version at ${appDir} can't install a sandboxed extension from a link, so this extension wouldn't appear. Use a newer version (raise "seed-bible" in package.json, or pass --seed-bible-version develop), or --repo <path> to a checkout that has it.`
+    );
+  }
+}
+
+/**
+ * Builds the sandboxed bundle and keeps rebuilding it as files change,
+ * serving it with an always-current `ExtensionSet`.
+ */
+async function startSandboxedExtension(
+  root: string,
+  port: number
+): Promise<{ server: DevExtensionServer; stop: () => Promise<void> }> {
+  const outDir = path.join(root, "dist", "dev");
+  const config = standaloneBundleConfig(root, outDir, "development");
+  const watcher = (await viteBuild({
+    ...config,
+    build: { ...config.build, watch: {} },
+  })) as Rollup.RollupWatcher;
+  await new Promise<void>((resolve, reject) => {
+    watcher.on("event", (event) => {
+      if (event.code === "END") {
+        console.log(
+          "[dev] Extension built. Reload Seed Bible to run the latest version."
+        );
+        resolve();
+      } else if (event.code === "ERROR") {
+        console.error("[dev] Extension build failed:", event.error.message);
+        // Only the first build stops `dev`; later ones wait for a fix.
+        reject(event.error);
+      }
+    });
+  });
+  const server = await startDevExtensionServer({
+    root,
+    bundlePath: path.join(outDir, "index.js"),
+    port,
+  });
+  console.log(`[dev] Serving the extension at ${server.setUrl}`);
+  return {
+    server,
+    stop: async () => {
+      await watcher.close();
+      await server.close();
+    },
+  };
+}
+
 async function readDependencySpec(root: string): Promise<string | undefined> {
   const raw = await readFile(path.join(root, "package.json"), "utf-8");
   return readSeedBibleDependencySpec(JSON.parse(raw));
@@ -222,14 +301,22 @@ function openBrowser(url: string): void {
       : platform === "win32"
         ? "start"
         : "xdg-open";
+  const warn = (err: unknown) =>
+    console.warn(
+      `[dev] Couldn't open a browser (${String(err)}). Open ${url} yourself.`
+    );
   try {
-    spawn(command, [url], {
+    // A missing opener (no xdg-open, say) is reported as an event, which
+    // would otherwise crash `dev`.
+    const opener = spawn(command, [url], {
       shell: platform === "win32",
       stdio: "ignore",
       detached: true,
-    }).unref();
+    });
+    opener.on("error", warn);
+    opener.unref();
   } catch (err) {
-    console.warn(`[dev] Could not auto-open a browser (${String(err)}).`);
+    warn(err);
   }
 }
 
@@ -249,7 +336,11 @@ export async function runDev(
   options: DevOptions,
   root: string = process.cwd()
 ): Promise<number> {
+  // Vite's build sets NODE_ENV in this process; Seed Bible's server must
+  // get the environment as it was, or it starts in production mode.
+  const env = { ...process.env };
   const info = await loadExtensionProjectInfo(root);
+  const sandboxed = isSandboxedProject(await readProjectSources(root));
   const target = resolveSeedBibleTarget({
     repoOption: options.repoPath,
     versionOption: options.seedBibleVersion,
@@ -266,11 +357,23 @@ export async function runDev(
   const appDir = await ensureTarget(target);
   // Checked before installing: an unsupported version would otherwise cost a
   // full `pnpm install` before failing.
-  await assertSupportsExternalExtensions(appDir);
+  if (sandboxed) {
+    await assertSupportsExtensionSetLinks(appDir);
+  } else {
+    await assertSupportsExternalExtensions(appDir);
+  }
   if (target.kind !== "checkout") {
     await installDependencies(appDir);
   }
   const port = options.port ?? DEFAULT_PORT;
+  // A sandboxed extension runs as it will for users: loaded from a URL into
+  // its own frame, not bundled into the app.
+  const sandbox = sandboxed
+    ? await startSandboxedExtension(
+        root,
+        options.extensionPort ?? DEFAULT_EXTENSION_PORT
+      )
+    : null;
 
   console.log(`[dev] Starting Seed Bible dev server from ${appDir} …`);
   // Windows needs the shell to run `pnpm` (a `.cmd` shim): Node refuses to
@@ -278,16 +381,19 @@ export async function runDev(
   const devProcess = spawn("pnpm", ["dev"], {
     cwd: appDir,
     env: {
-      ...process.env,
+      ...env,
       PORT: String(port),
-      SEED_BIBLE_EXTRA_EXTENSION_DIRS: root,
+      ...(sandbox ? {} : { SEED_BIBLE_EXTRA_EXTENSION_DIRS: root }),
     },
     stdio: "inherit",
     shell: process.platform === "win32",
   });
 
   const baseUrl = `http://localhost:${port}/`;
-  const installUrl = `${baseUrl}?autoinstall-${encodeURIComponent(info.extensionId)}=true`;
+  const autoinstall = `autoinstall-${encodeURIComponent(info.extensionId)}=true`;
+  const installUrl = sandbox
+    ? `${baseUrl}?extensionSet=${encodeURIComponent(sandbox.server.setUrl)}&${autoinstall}`
+    : `${baseUrl}?${autoinstall}`;
 
   waitForServer(baseUrl)
     .then(() => {
@@ -300,11 +406,13 @@ export async function runDev(
       );
     });
 
-  return new Promise((resolve) => {
-    devProcess.on("exit", (code) => resolve(code ?? 0));
+  const code = await new Promise<number>((resolve) => {
+    devProcess.on("exit", (exitCode) => resolve(exitCode ?? 0));
     devProcess.on("error", (err) => {
       console.error("[dev] Failed to start the seed-bible dev server:", err);
       resolve(1);
     });
   });
+  await sandbox?.stop();
+  return code;
 }

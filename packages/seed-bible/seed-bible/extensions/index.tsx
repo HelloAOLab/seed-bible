@@ -964,10 +964,15 @@ export function defineExtension(
         root.textContent = `Unknown view "${view}".`;
         return;
       }
-      render(
-        <View sb={sb} props={props} surface={surface} paneId={paneId} />,
-        root
-      );
+      try {
+        render(
+          <View sb={sb} props={props} surface={surface} paneId={paneId} />,
+          root
+        );
+      } catch (err) {
+        console.error(`Extension '${init.extensionId}' view "${view}":`, err);
+        await call("ready", { error: String(err) });
+      }
       return;
     }
     try {

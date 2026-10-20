@@ -277,6 +277,38 @@ describe("sandboxed extensions", () => {
     container.remove();
   });
 
+  it("tells the developer when a view fails, instead of leaving its pane blank", async () => {
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    await createManager().loadExtension(
+      await publish(
+        defineExtension({
+          main: (sb) =>
+            void sb.panes.open({ view: "main", placement: "side", title: "V" }),
+          views: {
+            main: () => {
+              throw new Error("Broken view");
+            },
+          },
+        }),
+        { id: "ext.broken-view" }
+      )
+    );
+    await vi.waitFor(() => expect(h.host.panes.panes.value).toHaveLength(1));
+
+    render(h.host.panes.panes.value[0]!.component(), container);
+
+    await vi.waitFor(() =>
+      expect(errors).toHaveBeenCalledWith(
+        "Extension 'ext.broken-view' view failed:",
+        "Error: Broken view"
+      )
+    );
+    render(null, container);
+    container.remove();
+  });
+
   it("keeps storage per extension, within a size limit", async () => {
     const results: Record<string, unknown> = {};
     const manager = createManager();
