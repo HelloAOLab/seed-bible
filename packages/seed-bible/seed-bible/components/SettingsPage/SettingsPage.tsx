@@ -1259,6 +1259,71 @@ function getExtensionInstallState(
 
 type ExtensionsTab = "installed" | "available";
 
+/**
+ * Adds the extensions from a hosted `ExtensionSet` (the link
+ * `seed-bible-extension-scripts publish` prints) to Available. Installing
+ * one is still a separate step, with its own consent dialog.
+ */
+export function AddExtensionFromLink(props: {
+  /** Resolves with how many extensions were found, or null if none could be. */
+  onAdd: (url: string) => Promise<number | null>;
+}) {
+  const { t } = useI18n();
+  const url = useSignal("");
+  const status = useSignal<
+    { kind: "idle" | "adding" | "failed" } | { kind: "added"; count: number }
+  >({ kind: "idle" });
+
+  const submit = async (event: Event) => {
+    event.preventDefault();
+    const value = url.value.trim();
+    if (!value || status.value.kind === "adding") {
+      return;
+    }
+    status.value = { kind: "adding" };
+    const count = await props.onAdd(value);
+    if (count === null) {
+      status.value = { kind: "failed" };
+    } else {
+      status.value = { kind: "added", count };
+      url.value = "";
+    }
+  };
+
+  return (
+    <form className="sb-extension-add-link" onSubmit={(e) => void submit(e)}>
+      <label htmlFor="sb-extension-add-link-url">
+        {t("extension-add-link-label")}
+      </label>
+      <div className="sb-extension-add-link-row">
+        <input
+          id="sb-extension-add-link-url"
+          className="sb-settings-text-input"
+          type="url"
+          inputMode="url"
+          placeholder="https://"
+          value={url.value}
+          onInput={(e) => (url.value = e.currentTarget.value)}
+        />
+        <button
+          type="submit"
+          className="sb-settings-action-button"
+          disabled={status.value.kind === "adding" || !url.value.trim()}
+        >
+          {t("extension-add-link-button")}
+        </button>
+      </div>
+      <p className="sb-extension-add-link-status" role="status">
+        {status.value.kind === "failed"
+          ? t("extension-add-link-failed")
+          : status.value.kind === "added"
+            ? t("extension-add-link-added", { count: status.value.count })
+            : t("extension-add-link-hint")}
+      </p>
+    </form>
+  );
+}
+
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { extensions, customizations, extensionSettings, login } = state;
@@ -1759,6 +1824,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             extensionSettings.clearSensitiveValues(extensionId, proxyId)
           }
           t={t}
+        />
+
+        <AddExtensionFromLink
+          onAdd={async (url) => {
+            const set = await extensions.discoverExtensionSet(url);
+            if (set) {
+              activeTab.value = "available";
+            }
+            return set?.extensions.length ?? null;
+          }}
         />
 
         <div className="sb-extension-footer-actions">

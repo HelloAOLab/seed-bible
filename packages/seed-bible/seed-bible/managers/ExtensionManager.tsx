@@ -648,6 +648,23 @@ function isUploadedExtension(value: unknown): value is UploadedExtension {
  * function-valued and can never appear in real JSON, so a fetched set simply
  * never has it.
  */
+/**
+ * Where an `ExtensionSet` may be fetched from: anywhere over HTTPS, or a
+ * local development server (see `seed-bible-extension-scripts dev`).
+ */
+export function isExtensionSetUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" ||
+      (url.protocol === "http:" &&
+        ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname))
+    );
+  } catch {
+    return false;
+  }
+}
+
 function isExtensionSet(value: unknown): value is ExtensionSet {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -1066,9 +1083,84 @@ export function createExtensionManager(
     saveProfileConfigValue(login, AUTOINSTALL_HANDLED_CONFIG_KEY, [...ids]);
   };
 
+  /**
+   * Where each installed third-party extension came from: the URL of the
+   * `ExtensionSet` it was discovered in, by extension id. The app's own set
+   * is always loaded, but a discovered one is forgotten on reload, so
+   * without this an installed extension would be skipped as unknown the
+   * next time the page loads. Kept on the device and in the profile config,
+   * like the installed ids themselves.
+   */
+  const EXTENSION_SOURCES_STORAGE_KEY = "sb-extension-sources";
+  const EXTENSION_SOURCES_CONFIG_KEY = "extensionSources";
+
+  /** The set each discovered extension was found in, this visit. */
+  const discoveredSetUrlById = new Map<string, string>();
+
+  const parseExtensionSources = (value: unknown): Record<string, string> => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return {};
+    }
+    return Object.fromEntries(
+      Object.entries(value).filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string"
+      )
+    );
+  };
+
+  const readExtensionSources = (): Record<string, string> => {
+    let local: Record<string, string> = {};
+    try {
+      const raw = safeLocalStorage.getItem(EXTENSION_SOURCES_STORAGE_KEY);
+      local = raw ? parseExtensionSources(JSON.parse(raw)) : {};
+    } catch (err) {
+      console.error("Failed to read extension sources:", err);
+    }
+    return {
+      ...local,
+      ...parseExtensionSources(
+        getProfileConfigValue(login.profile.value, EXTENSION_SOURCES_CONFIG_KEY)
+      ),
+    };
+  };
+
+  const writeExtensionSources = (sources: Record<string, string>) => {
+    try {
+      safeLocalStorage.setItem(
+        EXTENSION_SOURCES_STORAGE_KEY,
+        JSON.stringify(sources)
+      );
+    } catch (err) {
+      console.error("Failed to persist extension sources:", err);
+    }
+    if (login.userId.peek()) {
+      saveProfileConfigValue(login, EXTENSION_SOURCES_CONFIG_KEY, sources);
+    }
+  };
+
+  /** Remembers, or forgets, where an extension came from. */
+  const updateExtensionSource = (id: string, url: string | null) => {
+    const sources = readExtensionSources();
+    if ((sources[id] ?? null) === url) {
+      return;
+    }
+    if (url) {
+      sources[id] = url;
+    } else {
+      delete sources[id];
+    }
+    writeExtensionSources(sources);
+  };
+
   /** Records that the extension with the given ID has been installed. */
   const persistInstalledExtensionId = (id: string): void | Promise<void> => {
     const now = Date.now();
+    const discoveredAt = discoveredSetUrlById.get(id);
+    if (discoveredAt) {
+      void Promise.resolve(awaitProfileLoaded()).then(() =>
+        updateExtensionSource(id, discoveredAt)
+      );
+    }
     const ids = readPersistedExtensionIds();
     if (!ids.has(id)) {
       ids.add(id);
@@ -1109,6 +1201,9 @@ export function createExtensionManager(
   /** Removes the extension with the given ID from the persisted set. */
   const forgetInstalledExtensionId = (id: string): void | Promise<void> => {
     const now = Date.now();
+    void Promise.resolve(awaitProfileLoaded()).then(() =>
+      updateExtensionSource(id, null)
+    );
     const ids = readPersistedExtensionIds();
     if (ids.delete(id)) {
       writePersistedExtensionIds(ids);
@@ -1845,8 +1940,14 @@ export function createExtensionManager(
   const discoverExtensionSet = async (
     url: string
   ): Promise<ExtensionSet | null> => {
+    if (!isExtensionSetUrl(url)) {
+      console.error(
+        `Failed to discover extension set at '${url}': only https: URLs (or http://localhost while developing) can be added.`
+      );
+      return null;
+    }
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { credentials: "omit" });
       if (!response.ok) {
         console.error(
           `Failed to discover extension set at '${url}': ${response.status} ${response.statusText}`
@@ -1862,6 +1963,9 @@ export function createExtensionManager(
         return null;
       }
 
+      for (const extension of data.extensions) {
+        discoveredSetUrlById.set(extension.meta.id, url);
+      }
       await loadExtensionSet(data, () => false);
       return data;
     } catch (err) {
@@ -1915,12 +2019,50 @@ export function createExtensionManager(
    * skipped, and IDs that are not part of any known extension set are left
    * in storage (a later build may reintroduce them) but skipped for now.
    */
+  /**
+   * Fetches the sets that installed third-party extensions came from, so
+   * they're known again before they're loaded.
+   */
+  const rediscoverSavedSources = async (savedIds: Set<string>) => {
+    const sources = readExtensionSources();
+    const urls = new Set(
+      [...savedIds]
+        .filter((id) => !knownExtensionsById.has(id) && sources[id])
+        .map((id) => sources[id]!)
+    );
+    await Promise.all([...urls].map((url) => discoverExtensionSet(url)));
+  };
+
+  /**
+   * `?extensionSet=<url>` lists a hosted set's extensions for this visit,
+   * the way adding its URL in Settings does. Combined with
+   * `autoinstall-<id>=true`, it offers to install that extension: for a
+   * sandboxed one, that opens the consent dialog, never more.
+   */
+  const loadLinkedExtensionSet = async () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const url = new URL(window.location.href);
+    const setUrl = url.searchParams.get("extensionSet");
+    if (!setUrl) {
+      return;
+    }
+    const set = await discoverExtensionSet(setUrl);
+    for (const extension of set?.extensions ?? []) {
+      if (url.searchParams.get(`autoinstall-${extension.meta.id}`) === "true") {
+        await loadExtension(extension);
+      }
+    }
+  };
+
   const loadSavedExtensions = async () => {
     if (scopedTargetIds !== null) {
       await reconcileInstalledExtensions(scopedTargetIds);
       return;
     }
     const savedIds = await computeSavedExtensionIds();
+    await rediscoverSavedSources(savedIds);
 
     const promises: Promise<boolean>[] = [];
     for (const id of savedIds) {
@@ -1963,6 +2105,7 @@ export function createExtensionManager(
    * default-extension reconciliation this set governs.
    */
   const loadDefaultExtensions = async () => {
+    void loadLinkedExtensionSet();
     if (!defaultExtensions) {
       console.warn("No available extensions found in bot tags.");
       return;

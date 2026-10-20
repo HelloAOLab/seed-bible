@@ -628,6 +628,8 @@ export interface SandboxHarness {
   ) => Promise<UploadedExtension>;
   /** Simulates a page reload: the extension stops, but stays installed and granted. */
   reload: (id: string) => void;
+  /** Hosts `extensions` as an `ExtensionSet` at `url`, as `publish` would. */
+  hostSet: (url: string, extensions: UploadedExtension[]) => void;
 }
 
 /**
@@ -641,6 +643,7 @@ export function useSandboxHarness(): SandboxHarness {
   // would start the real module.
   const definitions = new Map<string, SandboxExtension | RawFrame>();
   const bundles = new Map<string, string>();
+  const sets = new Map<string, unknown>();
   let openPorts: MessagePort[] = [];
   let nextBundle = 0;
 
@@ -713,6 +716,10 @@ export function useSandboxHarness(): SandboxHarness {
     reload(id) {
       ExtensionInitalizer.getInstance().unregisterExtension(id);
     },
+
+    hostSet(url, extensions) {
+      sets.set(url, { id: `set-${url}`, extensions });
+    },
   };
 
   beforeEach(() => {
@@ -723,6 +730,7 @@ export function useSandboxHarness(): SandboxHarness {
     nextBundle = 0;
     definitions.clear();
     bundles.clear();
+    sets.clear();
     harness.consent = vi.fn(async () => true);
     harness.host = createHost();
     harness.records = createRecords();
@@ -739,6 +747,9 @@ export function useSandboxHarness(): SandboxHarness {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {
+        if (sets.has(url)) {
+          return { ok: true, json: async () => structuredClone(sets.get(url)) };
+        }
         const code = bundles.get(url);
         return code === undefined
           ? { ok: false, status: 404, statusText: "Not Found" }

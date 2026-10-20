@@ -700,7 +700,8 @@ describe("createExtensionManager", () => {
       );
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://files.example.com/discovered-set.json"
+        "https://files.example.com/discovered-set.json",
+        { credentials: "omit" }
       );
       expect(result).toEqual(published);
       // Tracked (listed), not installed — no module was ever imported.
