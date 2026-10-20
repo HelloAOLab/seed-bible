@@ -1,5 +1,5 @@
 import * as z from "zod/v4";
-import { signal, type ReadonlySignal } from "@preact/signals";
+import type { ReadonlySignal } from "@preact/signals";
 import hash from "hash.js";
 import { useEffect, useRef } from "preact/hooks";
 import { v4 as uuid } from "uuid";
@@ -22,8 +22,12 @@ import { SensitiveSettingsError } from "./ExtensionSensitiveSettings";
 import { extractContentText } from "./ChapterText";
 import type { ChapterVerse } from "./FreeUseBibleAPI";
 import type { FriendsManager } from "./FriendsManager";
-import type { TextToSpeechManager } from "./TextToSpeechManager";
-import { bibleLanguageToUiLocale } from "./BibleReadingManager";
+import type { AppState } from "./SeedBibleStateManager";
+import {
+  createSandboxAudio,
+  SandboxAudioError,
+  type SandboxAudioContext,
+} from "./ExtensionSandboxAudio";
 import {
   browserMediaCapture,
   SandboxCaptureDialog,
@@ -86,7 +90,10 @@ export interface SandboxServicesContext {
   saves: Pick<SavesManager, "saves" | "addSave" | "removeSave">;
   readingHistory: Pick<ReadingHistoryManager, "getReadingEvents">;
   login: Pick<LoginManager, "userId" | "profile">;
-  bibleData: Pick<BibleDataManager, "getTranslationBookChapter">;
+  bibleData: Pick<
+    BibleDataManager,
+    "getTranslationBookChapter" | "getAudioTimings"
+  >;
   discover: Pick<DiscoverManager, "registerDiscoverProvider">;
   chats: Pick<ChatsManager, "registerProvider" | "chats">;
   modals: Pick<ModalManager, "openModal" | "closeModal">;
@@ -106,10 +113,10 @@ export interface SandboxServicesContext {
     googleFontFamiliesToLoad: ReadonlySignal<string[]>;
   };
   friends: Pick<FriendsManager, "friends">;
-  textToSpeech: Pick<
-    TextToSpeechManager,
-    "isSupported" | "isSpeaking" | "speak" | "stop"
-  >;
+  textToSpeech: SandboxAudioContext["textToSpeech"];
+  audioPlayback: SandboxAudioContext["audioPlayback"];
+  tabs: SandboxAudioContext["tabs"];
+  app: Pick<AppState, "currentReadingState">;
   /** Defaults to the browser's microphone and camera. */
   mediaCapture?: SandboxMediaCapture;
 }
@@ -360,6 +367,23 @@ export const SANDBOX_SERVICE_SPECS: Partial<
       ),
     permission: "audio:playback",
   },
+  "audio.play": {
+    schema: z.object({ url: z.url({ protocol: /^https$/ }).max(4000) }),
+    permission: "audio:playback",
+  },
+  "audio.playNarration": {
+    schema: chapterRefSchema.extend({
+      reader: z.string().min(1).max(64).optional(),
+    }),
+    permission: "audio:playback",
+  },
+  "audio.narrators": { schema: chapterRefSchema, permission: "audio:playback" },
+  "audio.pause": { schema: z.object({}), permission: "audio:playback" },
+  "audio.resume": { schema: z.object({}), permission: "audio:playback" },
+  "audio.seek": {
+    schema: z.object({ position: z.number().finite().min(0) }),
+    permission: "audio:playback",
+  },
   "audio.stop": { schema: z.object({}), permission: "audio:playback" },
   "clipboard.writeText": {
     schema: z.object({ text: z.string().max(MAX_CLIPBOARD_LENGTH) }),
@@ -490,7 +514,7 @@ export type SandboxServiceHandler = (
 export interface SandboxServices {
   handlers: Partial<Record<SandboxMethod, SandboxServiceHandler>>;
   /** The part of the frames' state these services keep. Reads signals. */
-  state: () => Pick<SandboxState, "speaking">;
+  state: () => Pick<SandboxState, "playback">;
 }
 
 /**
@@ -532,15 +556,29 @@ export function createSandboxServices(
   let openCaptureId: string | null = null;
   let removeSettingsPanel: (() => void) | null = null;
 
-  // The app has one speech engine. This is the run this extension started,
-  // if it's still the one speaking.
-  let speech: { end: (finished: boolean) => void } | null = null;
-  const speaking = signal(false);
-  const endSpeech = (finished: boolean) => {
-    const run = speech;
-    speech = null;
-    speaking.value = false;
-    run?.end(finished);
+  const audio = createSandboxAudio(context);
+  /** The tab whose player shows the extension's audio: the one in view. */
+  const playerTab = () => {
+    const readingState =
+      context.app.currentReadingState.peek()?.tab.readingState;
+    if (!readingState) {
+      throw new SandboxBrokerError(
+        "unavailable",
+        "There's no reader open to play in."
+      );
+    }
+    return readingState;
+  };
+  /** Passes on why the player refused. */
+  const playing = async <T,>(start: () => Promise<T>): Promise<T> => {
+    try {
+      return await start();
+    } catch (err) {
+      if (err instanceof SandboxAudioError) {
+        throw new SandboxBrokerError(err.code, err.message);
+      }
+      throw err;
+    }
   };
 
   session.onDestroy(() => {
@@ -559,9 +597,7 @@ export function createSandboxServices(
     if (openCaptureId) {
       context.modals.closeModal(openCaptureId);
     }
-    if (speech) {
-      context.textToSpeech.stop();
-    }
+    audio.dispose();
   });
 
   const capture = (kind: SandboxCaptureKind, maxSeconds: number) => {
@@ -1119,70 +1155,55 @@ export function createSandboxServices(
           }))
         : [],
 
-    "audio.readAloud": async (params) => {
-      const { translationId, bookId, chapter, fromVerse, toVerse } =
-        params as Params<"audio.readAloud">;
+    "audio.play": (params) => {
+      const { url } = params as Params<"audio.play">;
+      requireInteraction("Playing audio");
+      // It plays in the app's page, so only from hosts the user approved.
+      if (!session.network.includes(new URL(url).host)) {
+        throw new SandboxBrokerError(
+          "invalid_request",
+          `Audio can only be played from the manifest's network hosts, not ${new URL(url).host}.`
+        );
+      }
+      return audio.playFile(url, playerTab());
+    },
+
+    "audio.playNarration": (params) => {
+      const ref = params as Params<"audio.playNarration">;
+      requireInteraction("Playing narration");
+      const readingState = playerTab();
+      return playing(() => audio.playNarration(ref, readingState));
+    },
+
+    "audio.narrators": (params) =>
+      playing(() => audio.narrators(params as Params<"audio.narrators">)),
+
+    "audio.readAloud": (params) => {
+      const ref = params as Params<"audio.readAloud">;
       requireInteraction("Reading aloud");
-      if (!context.textToSpeech.isSupported.peek()) {
-        throw new SandboxBrokerError(
-          "unavailable",
-          "This browser can't read aloud."
-        );
-      }
-      let data;
-      try {
-        data = await context.bibleData.getTranslationBookChapter(
-          translationId,
-          bookId,
-          chapter
-        );
-      } catch {
-        throw new SandboxBrokerError(
-          "unavailable",
-          `Couldn't load ${translationId} ${bookId} ${chapter}.`
-        );
-      }
-      const verses = data.chapter.content
-        .filter((item): item is ChapterVerse => item.type === "verse")
-        .filter(
-          (verse) =>
-            verse.number >= (fromVerse ?? 1) && verse.number <= (toVerse ?? 200)
-        )
-        .map((verse) => ({
-          number: verse.number,
-          text: extractContentText(verse.content),
-        }));
-      return new Promise<{ finished: boolean }>((resolve) => {
-        const run = { end: (finished: boolean) => resolve({ finished }) };
-        context.textToSpeech.speak(verses, {
-          lang: bibleLanguageToUiLocale(data.translation?.language),
-          onFinished: () => {
-            if (speech === run) {
-              endSpeech(true);
-            }
-          },
-          // Also when the user stops it, or something else speaks.
-          onStopped: () => {
-            if (speech === run) {
-              endSpeech(false);
-            }
-          },
-        });
-        if (!context.textToSpeech.isSpeaking.peek()) {
-          // Nothing to read.
-          resolve({ finished: true });
-          return;
-        }
-        speech = run;
-        speaking.value = true;
-      });
+      const readingState = playerTab();
+      return playing(() => audio.readAloud(ref, readingState));
+    },
+
+    // These only ever reach what this extension is playing.
+    "audio.pause": () => {
+      audio.pause();
+      return null;
+    },
+
+    "audio.resume": () => {
+      requireInteraction("Resuming playback");
+      audio.resume();
+      return null;
+    },
+
+    "audio.seek": (params) => {
+      audio.seek((params as Params<"audio.seek">).position);
+      return null;
     },
 
     "audio.stop": () => {
-      // Only its own speech: not what the user is listening to otherwise.
-      if (speech) {
-        context.textToSpeech.stop();
-      }
+      audio.stop();
       return null;
     },
 
@@ -1208,5 +1229,5 @@ export function createSandboxServices(
     "devices.takePhoto": () => capture("photo", 0),
   };
 
-  return { handlers, state: () => ({ speaking: speaking.value }) };
+  return { handlers, state: () => ({ playback: audio.playback() }) };
 }

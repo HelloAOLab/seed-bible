@@ -228,8 +228,23 @@ export interface SandboxState {
    * isn't one, and always null unless `session:read` is granted.
    */
   session: SandboxSharedSession | null;
-  /** Whether speech this extension started is playing (`audio:playback`). */
-  speaking: boolean;
+  /**
+   * What this extension is playing through the app's player. Null when
+   * nothing is, and always null without `audio:playback`.
+   */
+  playback: SandboxPlayback | null;
+}
+
+export interface SandboxPlayback {
+  /** An audio file, the app's recorded narration, or text-to-speech. */
+  kind: "file" | "narration" | "speech";
+  /** Seconds, or for speech, verses (the index of the one being read). */
+  unit: "seconds" | "verses";
+  /** False while paused. */
+  isPlaying: boolean;
+  position: number;
+  /** Null until the audio has reported its length. */
+  duration: number | null;
 }
 
 export interface SandboxSessionParticipant {
@@ -551,7 +566,20 @@ export interface SandboxMethods {
     };
   };
   "friends.list": { params: Record<string, never>; result: SandboxFriend[] };
-  /** Resolves once speech ends: `finished` is false if it was stopped. */
+  /**
+   * Each of these plays through the app's player, and resolves once it ends:
+   * `finished` is false if it was stopped rather than played to the end.
+   */
+  "audio.play": { params: { url: string }; result: { finished: boolean } };
+  "audio.playNarration": {
+    params: {
+      translationId: string;
+      bookId: string;
+      chapter: number;
+      reader?: string;
+    };
+    result: { finished: boolean };
+  };
   "audio.readAloud": {
     params: {
       translationId: string;
@@ -562,6 +590,13 @@ export interface SandboxMethods {
     };
     result: { finished: boolean };
   };
+  "audio.narrators": {
+    params: { translationId: string; bookId: string; chapter: number };
+    result: string[];
+  };
+  "audio.pause": { params: Record<string, never>; result: null };
+  "audio.resume": { params: Record<string, never>; result: null };
+  "audio.seek": { params: { position: number }; result: null };
   "audio.stop": { params: Record<string, never>; result: null };
   "clipboard.writeText": { params: { text: string }; result: null };
   "portals.open": {

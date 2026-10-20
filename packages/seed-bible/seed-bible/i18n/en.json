@@ -1169,7 +1169,7 @@
   "extension-permission-chat-shared": "Read other people's messages in shared chats you add it to",
   "extension-permission-friends-read": "See who your friends are",
   "extension-permission-session-read": "See who's in the shared reading sessions you join",
-  "extension-permission-audio-playback": "Read passages aloud",
+  "extension-permission-audio-playback": "Play audio and read passages aloud",
   "extension-permission-clipboard-write": "Copy text to your clipboard",
   "extension-permission-embed-casualos": "Show CasualOS maps and grids",
   "extension-permission-device-microphone": "Record audio with your microphone, when you press Record",

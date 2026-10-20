@@ -232,90 +232,271 @@ describe("sandboxed extensions: people and devices", () => {
     });
   });
 
-  describe("reading aloud", () => {
-    it("reads the chosen verses in the translation's language, only when the user asked", async () => {
-      const sb = await install("ext.reader", ["audio:playback"]);
-      const ref = {
-        translationId: "BSB",
-        bookId: "JHN",
-        chapter: 1,
-        fromVerse: 2,
+  describe("the app's audio player", () => {
+    const JOHN_1 = { translationId: "BSB", bookId: "JHN", chapter: 1 };
+    /** The reader's playback controls for the tab in view. */
+    const player = () =>
+      h.host.audioPlayback.controllerFor(
+        h.host.reading.value.tab.readingState as never
+      );
+
+    /** Something else the app is playing, in another tab. */
+    function otherPlayback() {
+      const readingState = {} as never;
+      h.host.tabs.value = [...h.host.tabs.value, { readingState }];
+      const isPlaying = signal(true);
+      const controller = {
+        unit: "seconds" as const,
+        isPlaying,
+        currentTime: signal(0),
+        duration: signal(10),
+        play: () => {},
+        pause: () => {
+          isPlaying.value = false;
+        },
+        seek: () => {},
+        stop: () => {},
       };
+      h.host.audioPlayback.show(readingState, controller);
+      return controller;
+    }
 
-      expect(await codeOf(sb.audio.readAloud(ref))).toBe("invalid_request");
-      expect(h.host.speech.runs).toEqual([]);
+    describe("reading aloud", () => {
+      it("reads the chosen verses in the translation's language, only when the user asked", async () => {
+        const sb = await install("ext.reader", ["audio:playback"]);
+        const ref = { ...JOHN_1, fromVerse: 2 };
 
-      userIsInExtension("ext.reader");
-      const done = sb.audio.readAloud(ref);
-      await vi.waitFor(() => expect(sb.audio.speaking.value).toBe(true));
+        expect(await codeOf(sb.audio.readAloud(ref))).toBe("invalid_request");
+        expect(h.host.speech.runs).toEqual([]);
 
-      expect(h.host.speech.runs).toEqual([
-        { verses: [{ number: 2, text: "was the Word." }], lang: "en" },
-      ]);
-      h.host.speech.finish();
-      expect(await done).toEqual({ finished: true });
-      await flush(sb);
-      expect(sb.audio.speaking.value).toBe(false);
+        userIsInExtension("ext.reader");
+        const done = sb.audio.readAloud(ref);
+        await vi.waitFor(() => expect(sb.audio.playback.value).not.toBeNull());
+
+        expect(h.host.speech.runs).toEqual([
+          { verses: [{ number: 2, text: "was the Word." }], lang: "en" },
+        ]);
+        expect(sb.audio.playback.value).toEqual({
+          kind: "speech",
+          unit: "verses",
+          isPlaying: true,
+          position: 0,
+          duration: 1,
+        });
+        expect(player()?.unit).toBe("verses");
+
+        h.host.speech.finish();
+        expect(await done).toEqual({ finished: true });
+        expect(player()).toBeNull();
+        await flush(sb);
+        expect(sb.audio.playback.value).toBeNull();
+      });
+
+      it("can be paused, scrubbed and resumed from the reader's controls", async () => {
+        const sb = await install("ext.paused", ["audio:playback"]);
+        userIsInExtension("ext.paused");
+        void sb.audio.readAloud(JOHN_1);
+        await vi.waitFor(() => expect(player()).not.toBeNull());
+
+        player()!.pause();
+        expect(h.host.speech.isSpeaking.value).toBe(false);
+        player()!.seek(1);
+        await flush(sb);
+        expect(sb.audio.playback.value).toMatchObject({
+          isPlaying: false,
+          position: 1,
+        });
+
+        player()!.play();
+        expect(h.host.speech.runs.at(-1)!.verses).toEqual([
+          { number: 2, text: "was the Word." },
+        ]);
+        expect(player()!.isPlaying.value).toBe(true);
+      });
+
+      it("reports it stopped when something else starts speaking", async () => {
+        const sb = await install("ext.interrupted", ["audio:playback"]);
+        userIsInExtension("ext.interrupted");
+        const done = sb.audio.readAloud(JOHN_1);
+        await vi.waitFor(() =>
+          expect(h.host.speech.isSpeaking.value).toBe(true)
+        );
+
+        h.host.speech.textToSpeech.speak([{ number: 1, text: "Psalm" }], {
+          lang: "en",
+        });
+
+        expect(await done).toEqual({ finished: false });
+        expect(player()).toBeNull();
+      });
+
+      it("can't stop speech it didn't start", async () => {
+        const sb = await install("ext.meddler", ["audio:playback"]);
+        h.host.speech.textToSpeech.speak([{ number: 1, text: "Psalm" }], {
+          lang: "en",
+        });
+
+        await sb.audio.stop();
+        await sb.audio.pause();
+
+        expect(h.host.speech.isSpeaking.value).toBe(true);
+      });
     });
 
-    it("reports it stopped when the extension stops it", async () => {
-      const sb = await install("ext.stopper", ["audio:playback"]);
-      userIsInExtension("ext.stopper");
-      const done = sb.audio.readAloud({
-        translationId: "BSB",
-        bookId: "JHN",
-        chapter: 1,
+    describe("audio files", () => {
+      const URL_OK = "https://media.example.com/hymn.mp3";
+
+      it("plays only from the manifest's network hosts, only when the user asked", async () => {
+        const sb = await install("ext.hymns", ["audio:playback"], {
+          network: ["media.example.com"],
+        });
+
+        expect(await codeOf(sb.audio.play(URL_OK))).toBe("invalid_request");
+        userIsInExtension("ext.hymns");
+        expect(
+          await codeOf(sb.audio.play("https://elsewhere.example/a.mp3"))
+        ).toBe("invalid_request");
+        expect(
+          await codeOf(sb.audio.play("http://media.example.com/a.mp3"))
+        ).toBe("invalid_request");
+        expect(h.host.media.played).toEqual([]);
+
+        const done = sb.audio.play(URL_OK);
+        await vi.waitFor(() => expect(h.host.media.played).toEqual([URL_OK]));
+        h.host.media.advance(30, 120);
+        await flush(sb);
+
+        expect(sb.audio.playback.value).toEqual({
+          kind: "file",
+          unit: "seconds",
+          isPlaying: true,
+          position: 30,
+          duration: 120,
+        });
+        expect(player()).toMatchObject({ unit: "seconds" });
+        expect(player()!.currentTime.value).toBe(30);
+
+        h.host.media.end();
+        expect(await done).toEqual({ finished: true });
+        expect(player()).toBeNull();
       });
-      await vi.waitFor(() => expect(h.host.speech.isSpeaking.value).toBe(true));
 
-      await sb.audio.stop();
+      it("is controlled by the extension, which needs the user to resume it", async () => {
+        const sb = await install("ext.controls", ["audio:playback"], {
+          network: ["media.example.com"],
+        });
+        userIsInExtension("ext.controls");
+        const done = sb.audio.play(URL_OK);
+        await vi.waitFor(() => expect(h.host.media.isPlaying).toBe(true));
+        h.host.media.advance(5);
+        h.setUserActivation(false);
 
-      expect(await done).toEqual({ finished: false });
-      expect(h.host.speech.isSpeaking.value).toBe(false);
+        await sb.audio.pause();
+        await sb.audio.seek(60);
+        expect(h.host.media.isPlaying).toBe(false);
+        expect(player()!.currentTime.value).toBe(60);
+        expect(await codeOf(sb.audio.resume())).toBe("invalid_request");
+
+        userIsInExtension("ext.controls");
+        await sb.audio.resume();
+        expect(h.host.media.isPlaying).toBe(true);
+
+        await sb.audio.stop();
+        expect(await done).toEqual({ finished: false });
+        expect(h.host.media.isPlaying).toBe(false);
+        expect(player()).toBeNull();
+      });
+
+      it("pauses whatever else the app was playing", async () => {
+        const other = otherPlayback();
+        const sb = await install("ext.loud", ["audio:playback"], {
+          network: ["media.example.com"],
+        });
+        userIsInExtension("ext.loud");
+
+        void sb.audio.play(URL_OK);
+        await vi.waitFor(() => expect(h.host.media.isPlaying).toBe(true));
+
+        expect(other.isPlaying.value).toBe(false);
+      });
+
+      it("ends when something else takes over its tab's player, or the tab closes", async () => {
+        const sb = await install("ext.replaced", ["audio:playback"], {
+          network: ["media.example.com"],
+        });
+        userIsInExtension("ext.replaced");
+        const first = sb.audio.play(URL_OK);
+        await vi.waitFor(() => expect(h.host.media.isPlaying).toBe(true));
+
+        // The user presses the app's own Listen button.
+        h.host.audioPlayback.show(
+          h.host.reading.value.tab.readingState as never,
+          { ...player()!, play: () => {} }
+        );
+        expect(await first).toEqual({ finished: false });
+        expect(h.host.media.isPlaying).toBe(false);
+
+        userIsInExtension("ext.replaced");
+        const second = sb.audio.play(URL_OK);
+        await vi.waitFor(() => expect(h.host.media.isPlaying).toBe(true));
+        h.host.tabs.value = [];
+        expect(await second).toEqual({ finished: false });
+        expect(h.host.media.isPlaying).toBe(false);
+      });
+
+      it("stops when the extension is uninstalled", async () => {
+        const sb = await install("ext.gone-quiet", ["audio:playback"], {
+          network: ["media.example.com"],
+        });
+        userIsInExtension("ext.gone-quiet");
+        void sb.audio.play(URL_OK);
+        await vi.waitFor(() => expect(h.host.media.isPlaying).toBe(true));
+
+        manager.unloadExtension("ext.gone-quiet");
+
+        expect(h.host.media.isPlaying).toBe(false);
+        expect(player()).toBeNull();
+      });
     });
 
-    it("reports it stopped when something else starts speaking", async () => {
-      const sb = await install("ext.interrupted", ["audio:playback"]);
-      userIsInExtension("ext.interrupted");
-      const done = sb.audio.readAloud({
-        translationId: "BSB",
-        bookId: "JHN",
-        chapter: 1,
+    describe("recorded narration", () => {
+      it("lists who narrated a chapter, and plays their recording with verse marks", async () => {
+        const sb = await install("ext.narrated", ["audio:playback"]);
+
+        expect(await sb.audio.narrators(JOHN_1)).toEqual(["gilbert"]);
+        userIsInExtension("ext.narrated");
+        void sb.audio.playNarration({ ...JOHN_1, reader: "gilbert" });
+
+        await vi.waitFor(() =>
+          expect(h.host.media.played).toEqual([
+            "https://audio.example/gilbert/JHN-1.mp3",
+          ])
+        );
+        await vi.waitFor(() =>
+          expect(player()!.verseMarks!()).toEqual([
+            { position: 0, startsSection: false },
+            { position: 30, startsSection: false },
+          ])
+        );
+        expect(player()!.verseAt!(45)).toEqual({ number: 2, heading: null });
+        await flush(sb);
+        expect(sb.audio.playback.value?.kind).toBe("narration");
       });
-      await vi.waitFor(() => expect(h.host.speech.isSpeaking.value).toBe(true));
 
-      // The user presses the app's own listen button.
-      h.host.speech.textToSpeech.speak([{ number: 1, text: "Psalm" }], {
-        lang: "en",
+      it("says when there's no such narration", async () => {
+        const sb = await install("ext.unnarrated", ["audio:playback"]);
+        userIsInExtension("ext.unnarrated");
+
+        expect(
+          await codeOf(sb.audio.playNarration({ ...JOHN_1, reader: "hays" }))
+        ).toBe("not_found");
+        for (const reader of Object.keys(h.host.narration)) {
+          delete h.host.narration[reader];
+        }
+        expect(await sb.audio.narrators(JOHN_1)).toEqual([]);
+        expect(await codeOf(sb.audio.playNarration(JOHN_1))).toBe("not_found");
+        expect(h.host.media.played).toEqual([]);
       });
-
-      expect(await done).toEqual({ finished: false });
-    });
-
-    it("can't stop speech it didn't start", async () => {
-      const sb = await install("ext.meddler", ["audio:playback"]);
-      h.host.speech.textToSpeech.speak([{ number: 1, text: "Psalm" }], {
-        lang: "en",
-      });
-
-      await sb.audio.stop();
-
-      expect(h.host.speech.isSpeaking.value).toBe(true);
-    });
-
-    it("stops its speech when the extension is uninstalled", async () => {
-      const sb = await install("ext.gone-quiet", ["audio:playback"]);
-      userIsInExtension("ext.gone-quiet");
-      void sb.audio.readAloud({
-        translationId: "BSB",
-        bookId: "JHN",
-        chapter: 1,
-      });
-      await vi.waitFor(() => expect(h.host.speech.isSpeaking.value).toBe(true));
-
-      manager.unloadExtension("ext.gone-quiet");
-
-      expect(h.host.speech.isSpeaking.value).toBe(false);
     });
   });
 

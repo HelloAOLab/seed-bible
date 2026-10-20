@@ -467,6 +467,34 @@ describe("permission gates", () => {
       },
     },
     {
+      name: "sb.audio.playNarration plays through the app's player",
+      permission: "audio:playback",
+      probe: async ({ sb }) => {
+        const before = h.host.media.played.length;
+        let settled = false;
+        const outcome = interacting(sb!, () =>
+          sb!.audio.playNarration({
+            translationId: "BSB",
+            bookId: "JHN",
+            chapter: 1,
+          })
+        )
+          .then(() => "ok", deniedCode)
+          .finally(() => {
+            settled = true;
+          });
+        await vi.waitFor(() =>
+          expect(settled || h.host.media.played.length > before).toBe(true)
+        );
+        const played = h.host.media.played.length > before;
+        if (played) h.host.media.end();
+        const result = await outcome;
+        if (result === "ok" && played) return "enabled";
+        if (result === "permission_denied" && !played) return "disabled";
+        return `inconsistent: ${result}, played: ${played}`;
+      },
+    },
+    {
       name: "sb.clipboard.writeText copies text",
       permission: "clipboard:write",
       probe: ({ sb }) =>

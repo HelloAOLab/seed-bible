@@ -31,6 +31,7 @@ import {
   type SandboxMethods,
   type SandboxPaneOptions,
   type SandboxPermission,
+  type SandboxPlayback,
   type SandboxPortalOptions,
   type SandboxReadingPosition,
   type SandboxSelectedVerse,
@@ -64,6 +65,7 @@ export type {
   SandboxJsonValue,
   SandboxPaneOptions,
   SandboxPermission,
+  SandboxPlayback,
   SandboxPortalOptions,
   SandboxSharedSession,
   SandboxReadingPosition,
@@ -300,21 +302,41 @@ export interface SandboxContext {
    * Null when there isn't one, and always null without `session:read`.
    */
   session: { current: ReadonlySignal<SandboxSharedSession | null> };
-  /** The app's text-to-speech. Needs `audio:playback`. */
+  /**
+   * The app's audio player: what's played here shows in the reader's
+   * playback controls for the tab in view, where the user can pause, scrub
+   * and stop it, and it pauses whatever else the app was playing. One thing
+   * at a time; playing another replaces it. Needs `audio:playback`.
+   *
+   * Starting or resuming playback only works right after the user interacts
+   * with this extension. Each `play…` resolves when playback ends:
+   * `finished` is false if it was stopped (by `stop()`, the user, something
+   * else playing there, or the tab closing) rather than played to the end.
+   */
   audio: {
+    /** An audio file from one of the manifest's `network` hosts (`https:`). */
+    play: (url: string) => Promise<{ finished: boolean }>;
     /**
-     * Reads a chapter (or some of its verses) aloud, replacing whatever the
-     * app is reading. Only right after the user interacts with this
-     * extension. Resolves when it ends: `finished` is false if it was
-     * stopped, by `stop()`, the user, or something else speaking.
+     * The app's recorded narration of a chapter, by `reader` (see
+     * `narrators`), or the first there is. Rejects with `not_found` when
+     * the chapter has none.
      */
+    playNarration: (
+      ref: ChapterRef & { reader?: string }
+    ) => Promise<{ finished: boolean }>;
+    /** Who has recorded narration for a chapter; empty when no one has. */
+    narrators: (ref: ChapterRef) => Promise<string[]>;
+    /** Reads a chapter, or some of its verses, with the app's text-to-speech. */
     readAloud: (
       ref: ChapterRef & { fromVerse?: number; toVerse?: number }
     ) => Promise<{ finished: boolean }>;
-    /** Stops speech this extension started; anything else keeps playing. */
+    pause: () => Promise<void>;
+    resume: () => Promise<void>;
+    /** Seconds, or for `readAloud`, a verse index. */
+    seek: (position: number) => Promise<void>;
     stop: () => Promise<void>;
-    /** Whether speech this extension started is playing. */
-    speaking: ReadonlySignal<boolean>;
+    /** What this extension is playing; null when nothing is. */
+    playback: ReadonlySignal<SandboxPlayback | null>;
   };
   /** Needs `clipboard:write`. Only right after the user interacts with this extension. */
   clipboard: { writeText: (text: string) => Promise<void> };
@@ -624,10 +646,10 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
   const language = signal(init.state.language);
   const direction = signal(init.state.direction);
   const session = signal(init.state.session);
-  const speaking = signal(init.state.speaking);
+  const playback = signal(init.state.playback);
   effect(() => {
     session.value = state.value.session;
-    speaking.value = state.value.speaking;
+    playback.value = state.value.playback;
     position.value = state.value.position;
     selection.value = state.value.selection;
     isMobile.value = state.value.isMobile;
@@ -870,9 +892,15 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     },
     session: { current: session },
     audio: {
+      play: (url) => call("audio.play", { url }),
+      playNarration: (ref) => call("audio.playNarration", ref),
+      narrators: (ref) => call("audio.narrators", ref),
       readAloud: (ref) => call("audio.readAloud", ref),
+      pause: () => call("audio.pause", {}).then(() => {}),
+      resume: () => call("audio.resume", {}).then(() => {}),
+      seek: (position) => call("audio.seek", { position }).then(() => {}),
       stop: () => call("audio.stop", {}).then(() => {}),
-      speaking,
+      playback,
     },
     clipboard: {
       writeText: (text) => call("clipboard.writeText", { text }).then(() => {}),

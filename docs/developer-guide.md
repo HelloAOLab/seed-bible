@@ -372,7 +372,7 @@ A call that isn't allowed rejects with a `SandboxError` whose `code` says why: `
 | `chat:shared`       | `shared: true` on a chat provider, for chats with other people (and `chat:respond`)                   | No              |
 | `friends:read`      | `sb.friends.list()`: names and pictures, with pseudonymous ids                                        | No              |
 | `session:read`      | `sb.session.current`: who's in the shared reading session open in the current tab                     | No              |
-| `audio:playback`    | `sb.audio.readAloud(...)` / `stop()`: the app's text-to-speech                                        | Yes             |
+| `audio:playback`    | `sb.audio`: the app's audio player, for your audio files, recorded narration and text-to-speech       | Yes             |
 | `clipboard:write`   | `sb.clipboard.writeText(text)`                                                                        | Yes             |
 | `embed:casualos`    | `sb.portals.open(...)`: a CasualOS grid or map portal (an `ao.bot` pattern) in a pane                 | Yes             |
 | `device:microphone` | `sb.devices.recordAudio()`: a recording, through a dialog the app shows                               | No              |
@@ -384,9 +384,16 @@ A call that isn't allowed rejects with a `SandboxError` whose `code` says why: `
 
 **People, without their real ids.** A friend's or session participant's `id` is pseudonymous the same way `sb.identity` is: stable for your extension, different for every extension, never the real account id. It's also the same as that person's own `sb.identity` in your extension, so you can match people up on your own server. Guests in a session (not signed in) get an id for their connection instead, which changes when they reconnect. `sb.session.current` is null when there's no shared session in the current tab.
 
-**Only right after the user interacts with your extension:** `sb.audio.readAloud`, `sb.clipboard.writeText`, `sb.devices.recordAudio` and `sb.devices.takePhoto`, like `sb.modals` and `sb.permissions.request`. Otherwise they reject with `invalid_request`. Call them from a tool's `onSelect` or a click in one of your panes.
+**Only right after the user interacts with your extension:** starting or resuming audio (`sb.audio.play`, `playNarration`, `readAloud`, `resume`), `sb.clipboard.writeText`, `sb.devices.recordAudio` and `sb.devices.takePhoto`, like `sb.modals` and `sb.permissions.request`. Otherwise they reject with `invalid_request`. Call them from a tool's `onSelect` or a click in one of your panes.
 
-**Reading aloud** uses the app's own text-to-speech, so it replaces whatever the app is reading. `readAloud({ translationId, bookId, chapter, fromVerse?, toVerse? })` resolves when it ends, with `finished: false` if it was stopped, by you, by the user, or by something else speaking. `sb.audio.speaking` says whether your speech is playing, and `stop()` only ever stops your own. To play your own audio files instead, use an `<audio>` element with a URL on one of your `network` hosts; that needs no permission.
+**The app's audio player.** `sb.audio` plays through the same player as the app's own narration: it shows in the reader's playback controls for the tab in view, where the user can pause, scrub and stop it, it keeps playing when your pane closes, and starting it pauses whatever else the app was playing. Your extension plays one thing at a time; starting another replaces it.
+
+- `play(url)`: an audio file, `https:` on one of your `network` hosts (it plays in the app's page, so only from hosts the user approved).
+- `narrators({ translationId, bookId, chapter })` and `playNarration({ ..., reader? })`: the app's recorded narration of a chapter, by a named reader or the first there is. It rejects with `not_found` when there's none, so fall back to `readAloud`.
+- `readAloud({ translationId, bookId, chapter, fromVerse?, toVerse? })`: the app's text-to-speech. Its position counts verses, not seconds.
+- `pause()`, `resume()`, `seek(position)` and `stop()` only ever reach what your extension is playing. `sb.audio.playback` is a signal with what that is (`kind`, `isPlaying`, `position`, `duration`, `unit`), or null.
+
+Each `play…` resolves when playback ends, with `finished: false` if it was stopped rather than played to the end: by you, by the user, by something else taking over that tab's player, or by the tab closing. Unlike the app's own narration, yours doesn't highlight verses as they're read or count toward reading history. A frame can still play audio by itself with an `<audio>` element from a `network` host, without any permission, but it stops when the frame closes and has no controls in the app.
 
 **The microphone and camera.** Your frames can't use `getUserMedia` (browsers only allow it in pages with a real origin, and your frame's origin is opaque). Instead, `recordAudio({ maxSeconds })` and `takePhoto()` ask the app to show its own dialog, titled with your extension's name. The device is only on while that dialog is open, nothing is recorded until the user presses Record (or Take photo), and you get back just the result, as a `Blob`, or `null` if they cancelled. There's no live stream, so real-time uses (speech recognition as they talk, video calls) aren't possible. Recordings are at most `maxSeconds` long (60 by default, up to 300). The browser also asks the user for the device the first time, on Seed Bible's behalf.
 

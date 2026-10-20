@@ -18,6 +18,7 @@ import type { SandboxStorageRecords } from "@packages/seed-bible/seed-bible/mana
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import { createAudioPlaybackManager } from "@packages/seed-bible/seed-bible/managers/AudioPlaybackManager";
 import type { ChapterHighlight } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { Save } from "@packages/seed-bible/seed-bible/managers/SavesManager";
@@ -121,6 +122,7 @@ function createLogin(host: SandboxTestHost): LoginManager {
  */
 function createSpeech() {
   const isSpeaking = signal(false);
+  const currentVerse = signal<number | null>(null);
   const runs: { verses: SpeechVerse[]; lang: string | null }[] = [];
   let current: { onFinished?: () => void; onStopped?: () => void } | null =
     null;
@@ -128,14 +130,17 @@ function createSpeech() {
     const stopped = current;
     current = null;
     isSpeaking.value = false;
+    currentVerse.value = null;
     stopped?.onStopped?.();
   };
   return {
     runs,
     isSpeaking,
+    currentVerse,
     textToSpeech: {
       isSupported: signal(true),
       isSpeaking,
+      currentVerse,
       speak: (
         verses: readonly SpeechVerse[],
         options: {
@@ -159,9 +164,60 @@ function createSpeech() {
       const finished = current;
       current = null;
       isSpeaking.value = false;
+      currentVerse.value = null;
       finished?.onFinished?.();
     },
   };
+}
+
+/**
+ * Stands in for the browser playing an `<audio>` element, which jsdom
+ * can't: `play()` and `pause()` report the events a browser would, and a
+ * test can make the audio advance or end.
+ */
+function createMedia() {
+  const media = {
+    /** The URL of each `play()`. */
+    played: [] as string[],
+    element: null as HTMLMediaElement | null,
+    isPlaying: false,
+    /** The audio reaches `seconds` of a recording `duration` long. */
+    advance(seconds: number, duration = 120) {
+      const el = media.element!;
+      Object.defineProperty(el, "duration", {
+        value: duration,
+        configurable: true,
+      });
+      el.dispatchEvent(new Event("durationchange"));
+      el.currentTime = seconds;
+      el.dispatchEvent(new Event("timeupdate"));
+    },
+    end() {
+      media.isPlaying = false;
+      media.element!.dispatchEvent(new Event("ended"));
+    },
+  };
+  return media;
+}
+
+function stubMediaPlayback(media: ReturnType<typeof createMedia>) {
+  vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(function (
+    this: HTMLMediaElement
+  ) {
+    media.element = this;
+    media.played.push(this.getAttribute("src") ?? "");
+    media.isPlaying = true;
+    this.dispatchEvent(new Event("play"));
+    return Promise.resolve();
+  });
+  vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(function (
+    this: HTMLMediaElement
+  ) {
+    if (media.element === this && media.isPlaying) {
+      media.isPlaying = false;
+      this.dispatchEvent(new Event("pause"));
+    }
+  });
 }
 
 /**
@@ -303,6 +359,13 @@ function createHost() {
   const speech = createSpeech();
   const capture = createMediaCapture();
   const friends = signal<Friend[]>([]);
+  const media = createMedia();
+  const audioPlayback = createAudioPlaybackManager();
+  const tabs = signal<{ readingState: object }[]>([reading.peek().tab]);
+  /** The narration the Bible API lists for each chapter, by reader. */
+  const narration: Record<string, string> = {
+    gilbert: "https://audio.example/gilbert/JHN-1.mp3",
+  };
   const clipboard: string[] = [];
 
   const context = {
@@ -433,12 +496,15 @@ function createHost() {
         readingEvents.filter((e) => e.end >= start && e.start <= end),
     },
     bibleData: {
+      getAudioTimings: async () => ({ verses: [0, 30] }),
       getTranslationBookChapter: async (
         _t: string,
         _b: string,
         chapter: number
       ) => ({
         translation: { language: "eng" },
+        thisChapterAudioLinks: narration,
+        thisChapterAudioTimings: { gilbert: "https://audio.example/t.json" },
         chapter: {
           number: chapter,
           content: [
@@ -458,6 +524,8 @@ function createHost() {
     },
     friends: { friends },
     textToSpeech: speech.textToSpeech,
+    audioPlayback,
+    tabs: { tabs },
     mediaCapture: capture.mediaCapture,
   };
   setupExtensionContext(context as unknown as SeedBibleState);
@@ -485,6 +553,10 @@ function createHost() {
     capture,
     friends,
     clipboard,
+    media,
+    audioPlayback,
+    tabs,
+    narration,
   };
 }
 
@@ -654,6 +726,7 @@ export function useSandboxHarness(): SandboxHarness {
     harness.consent = vi.fn(async () => true);
     harness.host = createHost();
     harness.records = createRecords();
+    stubMediaPlayback(harness.host.media);
     const clipboard = harness.host.clipboard;
     Object.defineProperty(navigator, "clipboard", {
       value: {
