@@ -21,6 +21,13 @@ export const KNOWN_PERMISSIONS = [
   "profile:read",
   "chat:respond",
   "chat:shared",
+  "friends:read",
+  "session:read",
+  "audio:playback",
+  "clipboard:write",
+  "embed:casualos",
+  "device:microphone",
+  "device:camera",
 ] as const;
 
 export const OPTIONAL_ONLY_PERMISSIONS: readonly string[] = [
@@ -30,6 +37,10 @@ export const OPTIONAL_ONLY_PERMISSIONS: readonly string[] = [
   "saves:write",
   "profile:read",
   "chat:shared",
+  "friends:read",
+  "session:read",
+  "device:microphone",
+  "device:camera",
 ];
 
 /**

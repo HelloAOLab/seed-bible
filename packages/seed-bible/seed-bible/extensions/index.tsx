@@ -11,6 +11,8 @@ import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import { render, type ComponentChild } from "preact";
 import {
   SANDBOX_START_KEY,
+  type SandboxCapture,
+  type SandboxFriend,
   type SandboxChatRequest,
   type SandboxDiscoverRequest,
   type SandboxDiscoverResult,
@@ -29,8 +31,10 @@ import {
   type SandboxMethods,
   type SandboxPaneOptions,
   type SandboxPermission,
+  type SandboxPortalOptions,
   type SandboxReadingPosition,
   type SandboxSelectedVerse,
+  type SandboxSharedSession,
   type SandboxState,
   type SandboxTitle,
   type SandboxToolDefinition,
@@ -45,18 +49,23 @@ export type {
   SandboxChatRequest,
   SandboxDiscoverRequest,
   SandboxDiscoverResult,
+  SandboxCasualOSPattern,
+  SandboxFriend,
   SandboxHighlight,
   SandboxNote,
   SandboxProfile,
   SandboxReadingEvent,
   SandboxReference,
   SandboxSave,
+  SandboxSessionParticipant,
 } from "./protocol";
 export type {
   SandboxIcon,
   SandboxJsonValue,
   SandboxPaneOptions,
   SandboxPermission,
+  SandboxPortalOptions,
+  SandboxSharedSession,
   SandboxReadingPosition,
   SandboxSelectedVerse,
   SandboxTitle,
@@ -109,6 +118,13 @@ export interface SandboxToolHandle {
     patch: Partial<Omit<SandboxToolOptions, "id" | "onSelect">>
   ) => Promise<void>;
   unregister: () => Promise<void>;
+}
+
+export interface SandboxPortalHandle extends SandboxPaneHandle {
+  /** Sends a message into the portal's CasualOS instance. */
+  send: (message: SandboxJsonValue) => Promise<void>;
+  /** Called with each message the portal's CasualOS instance sends. */
+  onMessage: (listener: (message: unknown) => void) => void;
 }
 
 export interface SandboxPaneHandle {
@@ -275,6 +291,53 @@ export interface SandboxContext {
   /** Needs `profile:read`. Null when signed out. */
   profile: { get: () => Promise<SandboxProfile | null> };
   /**
+   * Needs `friends:read`. Empty when signed out. Ids are pseudonymous like
+   * `identity`: a friend's id here is their own `identity` in this extension.
+   */
+  friends: { list: () => Promise<SandboxFriend[]> };
+  /**
+   * The shared reading session open in the current tab, kept up to date.
+   * Null when there isn't one, and always null without `session:read`.
+   */
+  session: { current: ReadonlySignal<SandboxSharedSession | null> };
+  /** The app's text-to-speech. Needs `audio:playback`. */
+  audio: {
+    /**
+     * Reads a chapter (or some of its verses) aloud, replacing whatever the
+     * app is reading. Only right after the user interacts with this
+     * extension. Resolves when it ends: `finished` is false if it was
+     * stopped, by `stop()`, the user, or something else speaking.
+     */
+    readAloud: (
+      ref: ChapterRef & { fromVerse?: number; toVerse?: number }
+    ) => Promise<{ finished: boolean }>;
+    /** Stops speech this extension started; anything else keeps playing. */
+    stop: () => Promise<void>;
+    /** Whether speech this extension started is playing. */
+    speaking: ReadonlySignal<boolean>;
+  };
+  /** Needs `clipboard:write`. Only right after the user interacts with this extension. */
+  clipboard: { writeText: (text: string) => Promise<void> };
+  /**
+   * CasualOS grid and map portals (`ao.bot` patterns), each in a pane the
+   * host draws. Needs `embed:casualos`.
+   */
+  portals: {
+    open: (options: SandboxPortalOptions) => Promise<SandboxPortalHandle>;
+  };
+  /**
+   * The microphone and camera, through a dialog the host shows: the user
+   * sees which extension is asking, presses the button themselves, and the
+   * extension gets only the result. Only right after the user interacts
+   * with this extension. Each resolves null if the user cancels.
+   */
+  devices: {
+    /** Needs `device:microphone`. At most `maxSeconds` (default 60, up to 300). */
+    recordAudio: (options?: { maxSeconds?: number }) => Promise<Blob | null>;
+    /** Needs `device:camera`. A JPEG. */
+    takePhoto: () => Promise<Blob | null>;
+  };
+  /**
    * Content for the Discover panel. Registering needs `reading:position`,
    * since a provider is told which chapter is open. Main code only.
    */
@@ -374,6 +437,9 @@ interface ToolHandlers {
   stopEffects: (() => void)[];
 }
 
+const toBlob = (capture: SandboxCapture | null) =>
+  capture ? new Blob([capture.bytes], { type: capture.type }) : null;
+
 function interpolate(
   text: string,
   values: Record<string, string | number> | undefined
@@ -457,6 +523,7 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     },
   };
   const paneCloseListeners = new Map<string, (() => void)[]>();
+  const portalListeners = new Map<string, ((message: unknown) => void)[]>();
   let nextId = 1;
 
   const call = <M extends SandboxMethod>(
@@ -534,7 +601,12 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
         .catch((err) => console.error("Couldn't answer the host:", err));
     } else if (message.name === "discover.select") {
       discoverProviders.get(message.providerId)?.onSelect?.(message.resultId);
+    } else if (message.name === "portal.message") {
+      for (const listener of portalListeners.get(message.paneId) ?? []) {
+        listener(message.message);
+      }
     } else if (message.name === "pane.closed") {
+      portalListeners.delete(message.paneId);
       const listeners = paneCloseListeners.get(message.paneId) ?? [];
       paneCloseListeners.delete(message.paneId);
       for (const listener of listeners) {
@@ -551,7 +623,11 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
   const identity = signal(init.state.identity);
   const language = signal(init.state.language);
   const direction = signal(init.state.direction);
+  const session = signal(init.state.session);
+  const speaking = signal(init.state.speaking);
   effect(() => {
+    session.value = state.value.session;
+    speaking.value = state.value.speaking;
     position.value = state.value.position;
     selection.value = state.value.selection;
     isMobile.value = state.value.isMobile;
@@ -656,6 +732,16 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
       };
     };
 
+  const paneHandle = (paneId: string): SandboxPaneHandle => ({
+    paneId,
+    close: () => call("panes.close", { paneId }).then(() => {}),
+    onClose: (listener) => {
+      const listeners = paneCloseListeners.get(paneId) ?? [];
+      listeners.push(listener);
+      paneCloseListeners.set(paneId, listeners);
+    },
+  });
+
   const sb: SandboxContext = {
     extensionId: init.extensionId,
     permissions: {
@@ -691,18 +777,8 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
       registerBelowReaderTool: registerTool("belowReader"),
     },
     panes: {
-      open: async (options) => {
-        const { paneId } = await call("panes.open", options);
-        return {
-          paneId,
-          close: () => call("panes.close", { paneId }).then(() => {}),
-          onClose: (listener) => {
-            const listeners = paneCloseListeners.get(paneId) ?? [];
-            listeners.push(listener);
-            paneCloseListeners.set(paneId, listeners);
-          },
-        };
-      },
+      open: async (options) =>
+        paneHandle((await call("panes.open", options)).paneId),
       close: (paneId) => call("panes.close", { paneId }).then(() => {}),
     },
     storage: {
@@ -788,6 +864,38 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     },
     sensitive: {
       fetch: (request) => call("sensitive.fetch", request),
+    },
+    friends: {
+      list: () => call("friends.list", {}),
+    },
+    session: { current: session },
+    audio: {
+      readAloud: (ref) => call("audio.readAloud", ref),
+      stop: () => call("audio.stop", {}).then(() => {}),
+      speaking,
+    },
+    clipboard: {
+      writeText: (text) => call("clipboard.writeText", { text }).then(() => {}),
+    },
+    portals: {
+      open: async (options) => {
+        const { paneId } = await call("portals.open", options);
+        return {
+          ...paneHandle(paneId),
+          send: (message) =>
+            call("portals.send", { paneId, message }).then(() => {}),
+          onMessage: (listener) => {
+            const listeners = portalListeners.get(paneId) ?? [];
+            listeners.push(listener);
+            portalListeners.set(paneId, listeners);
+          },
+        };
+      },
+    },
+    devices: {
+      recordAudio: (options) =>
+        call("devices.recordAudio", options ?? {}).then(toBlob),
+      takePhoto: () => call("devices.takePhoto", {}).then(toBlob),
     },
   };
 

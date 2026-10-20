@@ -96,18 +96,22 @@ describe("sandboxed extension services", () => {
       }
     });
 
-    it("makes writing, private notes, identity and other people's messages optional-only", () => {
+    it("makes writing, private notes, identity, other people and the microphone and camera optional-only", () => {
       const optionalOnly = SANDBOX_PERMISSIONS.filter(
         (p) => !SANDBOX_PERMISSION_INFO[p].requirable
       );
       expect(optionalOnly.sort()).toEqual(
         [
           "chat:shared",
+          "device:camera",
+          "device:microphone",
+          "friends:read",
           "highlights:write",
           "notes:read",
           "notes:write",
           "profile:read",
           "saves:write",
+          "session:read",
         ].sort()
       );
     });

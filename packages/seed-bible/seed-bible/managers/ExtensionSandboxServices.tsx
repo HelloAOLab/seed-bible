@@ -1,5 +1,6 @@
 import * as z from "zod/v4";
-import type { ReadonlySignal } from "@preact/signals";
+import { signal, type ReadonlySignal } from "@preact/signals";
+import hash from "hash.js";
 import { useEffect, useRef } from "preact/hooks";
 import { v4 as uuid } from "uuid";
 import { useI18n } from "../i18n";
@@ -20,6 +21,16 @@ import type { ExtensionSettingsManager } from "./ExtensionSettingsManager";
 import { SensitiveSettingsError } from "./ExtensionSensitiveSettings";
 import { extractContentText } from "./ChapterText";
 import type { ChapterVerse } from "./FreeUseBibleAPI";
+import type { FriendsManager } from "./FriendsManager";
+import type { TextToSpeechManager } from "./TextToSpeechManager";
+import { bibleLanguageToUiLocale } from "./BibleReadingManager";
+import {
+  browserMediaCapture,
+  SandboxCaptureDialog,
+  type SandboxCaptureKind,
+  type SandboxCaptureOutcome,
+  type SandboxMediaCapture,
+} from "./ExtensionSandboxCapture";
 import type {
   SandboxDiscoverResult,
   SandboxErrorCode,
@@ -31,6 +42,7 @@ import type {
   SandboxMethods,
   SandboxPermission,
   SandboxReference,
+  SandboxState,
 } from "../extensions/protocol";
 
 /** A refusal the broker sends back to the frame as-is. */
@@ -41,6 +53,22 @@ export class SandboxBrokerError extends Error {
   ) {
     super(message);
   }
+}
+
+/**
+ * An id for a person that's stable per extension but reveals neither: the
+ * same for a user's own `sb.identity` and for them as someone else's friend
+ * or session participant, and different for every extension.
+ */
+export function pseudonymousIdentity(
+  extensionId: string,
+  userId: string
+): string {
+  return hash
+    .sha256()
+    .update(`seed-bible-extension-identity:${extensionId}:${userId}`)
+    .digest("hex")
+    .slice(0, 32);
 }
 
 /** The app managers the phase 2 services reach. */
@@ -77,6 +105,13 @@ export interface SandboxServicesContext {
     currentTheme: ReadonlySignal<{ highlightColors: object }>;
     googleFontFamiliesToLoad: ReadonlySignal<string[]>;
   };
+  friends: Pick<FriendsManager, "friends">;
+  textToSpeech: Pick<
+    TextToSpeechManager,
+    "isSupported" | "isSpeaking" | "speak" | "stop"
+  >;
+  /** Defaults to the browser's microphone and camera. */
+  mediaCapture?: SandboxMediaCapture;
 }
 
 /** What the services need from the session running them. */
@@ -122,6 +157,9 @@ const MAX_HISTORY_RANGE_MS = 366 * 24 * 60 * 60 * 1000;
 const MAX_NOTE_LENGTH = 10_000;
 const MAX_RESPONSE_BYTES = 1024 * 1024;
 const MAX_CHAT_MESSAGES = 100;
+const MAX_CLIPBOARD_LENGTH = 100_000;
+const DEFAULT_RECORDING_SECONDS = 60;
+const MAX_RECORDING_SECONDS = 300;
 
 const bookIdSchema = z.string().regex(/^[A-Z0-9]{3}$/);
 const translationIdSchema = z.string().regex(/^[A-Za-z0-9_.-]{1,64}$/);
@@ -309,6 +347,31 @@ export const SANDBOX_SERVICE_SPECS: Partial<
     }),
   },
   pong: { schema: z.object({}), backgroundOnly: true },
+  "friends.list": { schema: z.object({}), permission: "friends:read" },
+  "audio.readAloud": {
+    schema: chapterRefSchema
+      .extend({
+        fromVerse: verseSchema.optional(),
+        toVerse: verseSchema.optional(),
+      })
+      .refine(
+        ({ fromVerse, toVerse }) => (fromVerse ?? 1) <= (toVerse ?? 200),
+        { message: "`toVerse` can't be before `fromVerse`." }
+      ),
+    permission: "audio:playback",
+  },
+  "audio.stop": { schema: z.object({}), permission: "audio:playback" },
+  "clipboard.writeText": {
+    schema: z.object({ text: z.string().max(MAX_CLIPBOARD_LENGTH) }),
+    permission: "clipboard:write",
+  },
+  "devices.recordAudio": {
+    schema: z.object({
+      maxSeconds: z.number().int().min(1).max(MAX_RECORDING_SECONDS).optional(),
+    }),
+    permission: "device:microphone",
+  },
+  "devices.takePhoto": { schema: z.object({}), permission: "device:camera" },
 };
 
 const NOTE_TAG_PREFIX = "extension:";
@@ -424,6 +487,12 @@ export type SandboxServiceHandler = (
   call: { isBackground: boolean }
 ) => unknown;
 
+export interface SandboxServices {
+  handlers: Partial<Record<SandboxMethod, SandboxServiceHandler>>;
+  /** The part of the frames' state these services keep. Reads signals. */
+  state: () => Pick<SandboxState, "speaking">;
+}
+
 /**
  * The phase 2 features of one session: reading and writing the user's
  * data, Discover and chat providers, modals, settings panels, sensitive
@@ -432,7 +501,7 @@ export type SandboxServiceHandler = (
  */
 export function createSandboxServices(
   session: SandboxSessionApi
-): Partial<Record<SandboxMethod, SandboxServiceHandler>> {
+): SandboxServices {
   const { extensionId, extensionTitle, context, has } = session;
   const noteTag = `${NOTE_TAG_PREFIX}${extensionId}`;
   const scopedId = (id: string) => `sandbox:${extensionId}:${id}`;
@@ -447,11 +516,32 @@ export function createSandboxServices(
   };
   const highlightColors = () =>
     Object.keys(context.theme.currentTheme.peek().highlightColors);
+  /** Nothing out of nowhere: only in answer to the user. */
+  const requireInteraction = (what: string) => {
+    if (!session.userIsInteracting()) {
+      throw new SandboxBrokerError(
+        "invalid_request",
+        `${what} only works right after the user interacts with this extension.`
+      );
+    }
+  };
 
   const discoverProviders = new Map<string, () => void>();
   const chatProviders = new Map<string, () => void>();
   let openModalId: string | null = null;
+  let openCaptureId: string | null = null;
   let removeSettingsPanel: (() => void) | null = null;
+
+  // The app has one speech engine. This is the run this extension started,
+  // if it's still the one speaking.
+  let speech: { end: (finished: boolean) => void } | null = null;
+  const speaking = signal(false);
+  const endSpeech = (finished: boolean) => {
+    const run = speech;
+    speech = null;
+    speaking.value = false;
+    run?.end(finished);
+  };
 
   session.onDestroy(() => {
     for (const unregister of [
@@ -466,7 +556,66 @@ export function createSandboxServices(
     if (openModalId) {
       context.modals.closeModal(openModalId);
     }
+    if (openCaptureId) {
+      context.modals.closeModal(openCaptureId);
+    }
+    if (speech) {
+      context.textToSpeech.stop();
+    }
   });
+
+  const capture = (kind: SandboxCaptureKind, maxSeconds: number) => {
+    if (openCaptureId) {
+      throw new SandboxBrokerError(
+        "limit_exceeded",
+        "This extension is already recording or taking a photo."
+      );
+    }
+    requireInteraction(kind === "audio" ? "Recording audio" : "Taking a photo");
+    const id = scopedId(`capture-${uuid()}`);
+    openCaptureId = id;
+    return new Promise<SandboxMethods["devices.takePhoto"]["result"]>(
+      (resolve, reject) => {
+        const done = (outcome: SandboxCaptureOutcome) => {
+          if (openCaptureId !== id) {
+            return;
+          }
+          openCaptureId = null;
+          context.modals.closeModal(id);
+          if ("blob" in outcome) {
+            const { blob } = outcome;
+            blob
+              .arrayBuffer()
+              .then((bytes) => resolve({ type: blob.type, bytes }), reject);
+          } else if ("error" in outcome) {
+            reject(
+              new SandboxBrokerError(
+                "unavailable",
+                `The ${kind === "audio" ? "microphone" : "camera"} couldn't be used: ${outcome.error}`
+              )
+            );
+          } else {
+            resolve(null);
+          }
+        };
+        context.modals.openModal({
+          id,
+          title: extensionTitle,
+          content: () => (
+            <SandboxCaptureDialog
+              kind={kind}
+              extensionTitle={extensionTitle}
+              maxSeconds={maxSeconds}
+              capture={context.mediaCapture ?? browserMediaCapture}
+              onDone={done}
+            />
+          ),
+          onDismiss: () => done({ cancelled: true }),
+          useCasualOSApp: false,
+        });
+      }
+    );
+  };
 
   const findOwnNote = async (id: string, bookId: string, chapter: number) => {
     const note = (
@@ -541,7 +690,7 @@ export function createSandboxServices(
 
   type Params<M extends SandboxMethod> = SandboxMethods[M]["params"];
 
-  return {
+  const handlers: SandboxServices["handlers"] = {
     "highlights.colors": () => highlightColors(),
 
     "highlights.list": async (params) => {
@@ -867,13 +1016,7 @@ export function createSandboxServices(
           "This extension already has a dialog open."
         );
       }
-      // No dialogs out of nowhere: only in answer to the user.
-      if (!session.userIsInteracting()) {
-        throw new SandboxBrokerError(
-          "invalid_request",
-          "A dialog can only be opened right after the user interacts with this extension."
-        );
-      }
+      requireInteraction("Opening a dialog");
       const id = scopedId(`modal-${uuid()}`);
       openModalId = id;
       return new Promise<null>((resolve) => {
@@ -966,5 +1109,104 @@ export function createSandboxServices(
         throw err;
       }
     },
+
+    "friends.list": () =>
+      signedIn()
+        ? context.friends.friends.peek().map((friend) => ({
+            id: pseudonymousIdentity(extensionId, friend.userId),
+            name: friend.name,
+            pictureUrl: friend.pictureUrl,
+          }))
+        : [],
+
+    "audio.readAloud": async (params) => {
+      const { translationId, bookId, chapter, fromVerse, toVerse } =
+        params as Params<"audio.readAloud">;
+      requireInteraction("Reading aloud");
+      if (!context.textToSpeech.isSupported.peek()) {
+        throw new SandboxBrokerError(
+          "unavailable",
+          "This browser can't read aloud."
+        );
+      }
+      let data;
+      try {
+        data = await context.bibleData.getTranslationBookChapter(
+          translationId,
+          bookId,
+          chapter
+        );
+      } catch {
+        throw new SandboxBrokerError(
+          "unavailable",
+          `Couldn't load ${translationId} ${bookId} ${chapter}.`
+        );
+      }
+      const verses = data.chapter.content
+        .filter((item): item is ChapterVerse => item.type === "verse")
+        .filter(
+          (verse) =>
+            verse.number >= (fromVerse ?? 1) && verse.number <= (toVerse ?? 200)
+        )
+        .map((verse) => ({
+          number: verse.number,
+          text: extractContentText(verse.content),
+        }));
+      return new Promise<{ finished: boolean }>((resolve) => {
+        const run = { end: (finished: boolean) => resolve({ finished }) };
+        context.textToSpeech.speak(verses, {
+          lang: bibleLanguageToUiLocale(data.translation?.language),
+          onFinished: () => {
+            if (speech === run) {
+              endSpeech(true);
+            }
+          },
+          // Also when the user stops it, or something else speaks.
+          onStopped: () => {
+            if (speech === run) {
+              endSpeech(false);
+            }
+          },
+        });
+        if (!context.textToSpeech.isSpeaking.peek()) {
+          // Nothing to read.
+          resolve({ finished: true });
+          return;
+        }
+        speech = run;
+        speaking.value = true;
+      });
+    },
+
+    "audio.stop": () => {
+      // Only its own speech: not what the user is listening to otherwise.
+      if (speech) {
+        context.textToSpeech.stop();
+      }
+      return null;
+    },
+
+    "clipboard.writeText": async (params) => {
+      const { text } = params as Params<"clipboard.writeText">;
+      requireInteraction("Copying");
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (err) {
+        throw new SandboxBrokerError(
+          "unavailable",
+          `The browser didn't allow copying: ${String(err)}`
+        );
+      }
+      return null;
+    },
+
+    "devices.recordAudio": (params) => {
+      const { maxSeconds } = params as Params<"devices.recordAudio">;
+      return capture("audio", maxSeconds ?? DEFAULT_RECORDING_SECONDS);
+    },
+
+    "devices.takePhoto": () => capture("photo", 0),
   };
+
+  return { handlers, state: () => ({ speaking: speaking.value }) };
 }

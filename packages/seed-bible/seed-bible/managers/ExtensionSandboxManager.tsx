@@ -2,7 +2,10 @@ import * as z from "zod/v4";
 import { effect, signal } from "@preact/signals";
 import { v4 as uuid } from "uuid";
 import { MaterialIcon } from "../components/icons";
-import hash from "hash.js";
+import {
+  PortalComponent,
+  type PortalComponentHandle,
+} from "../components/PortalComponent/PortalComponent";
 import {
   customFontStylesheet,
   FONT_FILE_HOST,
@@ -16,6 +19,7 @@ import {
 } from "./ExtensionSandboxStorage";
 import {
   createSandboxServices,
+  pseudonymousIdentity,
   SANDBOX_SERVICE_SPECS,
   SandboxBrokerError,
   SandboxViewFrame,
@@ -54,6 +58,7 @@ import {
   type SandboxReadingPosition,
   type SandboxResponse,
   type SandboxSelectedVerse,
+  type SandboxSharedSession,
   type SandboxState,
   type SandboxTitle,
   type SandboxToolDefinition,
@@ -270,11 +275,22 @@ export async function fetchSandboxBundle(
 
 const MAX_TOOLS = 20;
 const MAX_OPEN_PANES = 5;
+const MAX_SESSION_PARTICIPANTS = 100;
 const MAX_PROPS_BYTES = 64 * 1024;
 const TOOL_PRIORITY_MIN = 200;
 const TOOL_PRIORITY_MAX = 999;
 
 const idSchema = z.string().regex(/^[A-Za-z0-9_.-]{1,64}$/);
+const casualOSNameSchema = z.string().regex(/^[A-Za-z0-9_.-]{1,100}$/);
+/** The parameters `PortalComponent` sets itself, which `query` can't override. */
+const PORTAL_RESERVED_QUERY = new Set([
+  "inst",
+  "staticInst",
+  "gridPortal",
+  "mapPortal",
+  "pattern",
+  "patternAux",
+]);
 const titleSchema = z.union([
   z.string().min(1).max(120),
   z.object({
@@ -335,6 +351,38 @@ const paramSchemas: Partial<Record<SandboxMethod, z.ZodType>> = {
     height: z.number().min(80).max(4000).optional(),
   }),
   "panes.close": z.object({ paneId: z.string().max(200) }),
+  "portals.open": z.object({
+    pattern: z.union([
+      z.object({ name: casualOSNameSchema }),
+      z.object({
+        aux: z.url({ protocol: /^https$/ }).max(2000),
+      }),
+    ]),
+    portalType: z.enum(["grid", "map"]),
+    portal: casualOSNameSchema.optional(),
+    inst: casualOSNameSchema.optional(),
+    query: z
+      .record(
+        z
+          .string()
+          .regex(/^[A-Za-z0-9_-]{1,64}$/)
+          .refine((key) => !PORTAL_RESERVED_QUERY.has(key), {
+            message: "is set by the host",
+          }),
+        z.string().max(2000)
+      )
+      .refine((query) => Object.keys(query).length <= 20)
+      .optional(),
+    placement: z.enum(["side", "floating", "fullscreen"]),
+    title: titleSchema,
+    id: idSchema.optional(),
+    width: z.number().min(120).max(4000).optional(),
+    height: z.number().min(80).max(4000).optional(),
+  }),
+  "portals.send": z.object({
+    paneId: z.string().max(200),
+    message: jsonSizeSchema(MAX_PROPS_BYTES),
+  }),
   "app.toast": z.object({ message: z.string().min(1).max(300) }),
   "reading.open": z.object({
     bookId: z.string().regex(/^[A-Z0-9]{3}$/),
@@ -379,6 +427,8 @@ const BACKGROUND_ONLY_METHODS = new Set<SandboxMethod>([
 
 const REQUIRED_PERMISSION: Partial<Record<SandboxMethod, SandboxPermission>> = {
   "reading.open": "reading:navigate",
+  "portals.open": "embed:casualos",
+  "portals.send": "embed:casualos",
 };
 
 const BrokerError = SandboxBrokerError;
@@ -432,15 +482,6 @@ export interface SandboxSessionOptions {
 }
 
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 15_000;
-
-/** An id for the user that's stable per extension but reveals neither. */
-function pseudonymousIdentity(extensionId: string, userId: string): string {
-  return hash
-    .sha256()
-    .update(`seed-bible-extension-identity:${extensionId}:${userId}`)
-    .digest("hex")
-    .slice(0, 32);
-}
 
 /** How long after selecting one of its tools an extension may ask for permissions. */
 const TOOL_INTERACTION_WINDOW_MS = 5000;
@@ -501,6 +542,7 @@ export function startSandboxSession(
   let background: SandboxFrameConnection | null = null;
   const tools = new Map<string, SandboxToolDefinition>();
   const openPanes = new Set<string>();
+  const portals = new Map<string, PortalComponentHandle>();
   let destroyed = false;
 
   // Questions the host has asked the background frame (Discover results, a
@@ -555,6 +597,28 @@ export function startSandboxSession(
       verse: selected.verse.number,
     }));
 
+  const currentSession = (): SandboxSharedSession | null => {
+    const shared = context.app.currentReadingState.value?.tab.sharedSession;
+    if (!shared) {
+      return null;
+    }
+    return {
+      participants: shared.allUsers.value
+        .slice(0, MAX_SESSION_PARTICIPANTS)
+        .map((user) => ({
+          // Guests have no account, so their connection stands in for one.
+          id: pseudonymousIdentity(
+            extensionId,
+            user.userId ?? `connection:${user.connectionId}`
+          ),
+          name: user.profile?.name || null,
+          isHost: shared.isHost(user),
+          isActive: user.isActive,
+          isYou: user.isSelf,
+        })),
+    };
+  };
+
   const computeState = (): SandboxState => {
     const language = context.i18n.language.value;
     return {
@@ -576,6 +640,8 @@ export function startSandboxSession(
           customFontStylesheet(context.theme.googleFontFamiliesToLoad.value),
         ].filter((href): href is string => href !== null),
       ],
+      session: has("session:read") ? currentSession() : null,
+      ...services.state(),
     };
   };
 
@@ -686,9 +752,17 @@ export function startSandboxSession(
     }
   };
 
-  const openPane = (
-    params: SandboxMethods["panes.open"]["params"]
-  ): SandboxMethods["panes.open"]["result"] => {
+  /**
+   * Opens (or replaces) one of this extension's panes, drawn and labelled
+   * by the host, with `render` inside it.
+   */
+  const openHostPane = (
+    params: Pick<
+      SandboxMethods["panes.open"]["params"],
+      "id" | "placement" | "title" | "width" | "height"
+    >,
+    render: (paneId: string, frameTitle: string) => preact.ComponentChildren
+  ): { paneId: string } => {
     const paneId = scopedId(params.id ?? uuid());
     if (!openPanes.has(paneId) && openPanes.size >= MAX_OPEN_PANES) {
       throw new BrokerError(
@@ -696,9 +770,8 @@ export function startSandboxSession(
         `An extension can have at most ${MAX_OPEN_PANES} panes open.`
       );
     }
-    const props = (params.props ?? null) as SandboxJsonValue;
-    const openKey = uuid();
     const paneTitle = toTitle(params.title);
+    const frameTitle = `${extensionTitle}: ${typeof paneTitle === "string" ? paneTitle : paneTitle.defaultValue}`;
     openPanes.add(paneId);
     context.panes.openPane({
       id: paneId,
@@ -708,37 +781,66 @@ export function startSandboxSession(
           ? paneTitle
           : () => <SandboxPaneTitle title={paneTitle} />,
       header: () => <SandboxPaneBadge name={extensionTitle} />,
-      component: () => (
-        <SandboxViewFrame
-          // A fresh frame per open, so reopening by id shows the new props.
-          key={openKey}
-          connect={(container) =>
-            connectFrame(
-              {
-                kind: "view",
-                view: params.view,
-                surface: "pane",
-                paneId,
-                props,
-              },
-              container,
-              `${extensionTitle}: ${typeof paneTitle === "string" ? paneTitle : paneTitle.defaultValue}`
-            )
-          }
-        />
-      ),
+      component: () => render(paneId, frameTitle),
       size:
         params.width !== undefined || params.height !== undefined
           ? { width: params.width ?? 480, height: params.height ?? 320 }
           : undefined,
       onClose: () => {
         openPanes.delete(paneId);
+        portals.delete(paneId);
         if (!destroyed) {
           broadcast({ type: "event", name: "pane.closed", paneId });
         }
       },
     });
     return { paneId };
+  };
+
+  const openPane = (params: SandboxMethods["panes.open"]["params"]) => {
+    const props = (params.props ?? null) as SandboxJsonValue;
+    // A fresh frame per open, so reopening by id shows the new props.
+    const openKey = uuid();
+    return openHostPane(params, (paneId, frameTitle) => (
+      <SandboxViewFrame
+        key={openKey}
+        connect={(container) =>
+          connectFrame(
+            { kind: "view", view: params.view, surface: "pane", paneId, props },
+            container,
+            frameTitle
+          )
+        }
+      />
+    ));
+  };
+
+  /**
+   * A CasualOS portal, in a pane the host draws. Not inside one of the
+   * extension's frames: a frame nested there would inherit the sandbox and
+   * couldn't run `ao.bot`.
+   */
+  const openPortal = (params: SandboxMethods["portals.open"]["params"]) => {
+    const openKey = uuid();
+    const inst = params.inst ?? `sandbox-${extensionId}-${openKey}`;
+    return openHostPane(params, (paneId) => (
+      <PortalComponent
+        key={openKey}
+        ref={(handle: PortalComponentHandle | null) => {
+          if (handle) {
+            portals.set(paneId, handle);
+          }
+        }}
+        portal={params.portal ?? "home"}
+        portalType={params.portalType}
+        inst={inst}
+        pattern={params.pattern}
+        query={params.query ?? null}
+        onMessage={(message) =>
+          broadcast({ type: "event", name: "portal.message", paneId, message })
+        }
+      />
+    ));
   };
 
   /**
@@ -800,6 +902,7 @@ export function startSandboxSession(
     onDestroy: (cleanup) => destroyCallbacks.push(cleanup),
   };
   const services = createSandboxServices(sessionApi);
+  const serviceHandlers = services.handlers;
 
   const requestOptionalPermissions = async (
     params: SandboxMethods["permissions.request"]["params"]
@@ -874,7 +977,7 @@ export function startSandboxSession(
         `'${method}' needs the '${required}' permission, which this extension wasn't granted.`
       );
     }
-    const service = services[method];
+    const service = serviceHandlers[method];
     if (service) {
       return service(params, { isBackground });
     }
@@ -924,6 +1027,27 @@ export function startSandboxSession(
       }
       case "panes.open":
         return openPane(params as SandboxMethods["panes.open"]["params"]);
+      case "portals.open":
+        return openPortal(params as SandboxMethods["portals.open"]["params"]);
+      case "portals.send": {
+        const { paneId, message } =
+          params as SandboxMethods["portals.send"]["params"];
+        if (!openPanes.has(paneId)) {
+          throw new BrokerError(
+            "not_found",
+            `This extension has no open portal '${paneId}'.`
+          );
+        }
+        const portal = portals.get(paneId);
+        if (!portal) {
+          throw new BrokerError(
+            "unavailable",
+            "That portal isn't showing yet, or isn't a portal."
+          );
+        }
+        portal.sendMessage(message);
+        return null;
+      }
       case "panes.close": {
         const { paneId } = params as SandboxMethods["panes.close"]["params"];
         if (!openPanes.has(paneId)) {
@@ -1167,6 +1291,7 @@ export function startSandboxSession(
       context.panes.closePane(paneId, "programmatic");
     }
     openPanes.clear();
+    portals.clear();
     for (const connection of connections) {
       connection.destroy();
     }

@@ -31,6 +31,12 @@ import type {
 import type { BibleSelectedVerse } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import type { Friend } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
+import type { SpeechVerse } from "@packages/seed-bible/seed-bible/managers/TextToSpeechManager";
+import type {
+  SandboxCaptureKind,
+  SandboxMediaCapture,
+} from "@packages/seed-bible/seed-bible/managers/ExtensionSandboxCapture";
 import type { SandboxExtension } from "@packages/seed-bible/seed-bible/extensions";
 import {
   SANDBOX_START_KEY,
@@ -110,6 +116,122 @@ function createLogin(host: SandboxTestHost): LoginManager {
 }
 
 /**
+ * Stands in for the app's text-to-speech engine, with the same callbacks:
+ * a run either finishes on its own or is told it was stopped.
+ */
+function createSpeech() {
+  const isSpeaking = signal(false);
+  const runs: { verses: SpeechVerse[]; lang: string | null }[] = [];
+  let current: { onFinished?: () => void; onStopped?: () => void } | null =
+    null;
+  const stop = () => {
+    const stopped = current;
+    current = null;
+    isSpeaking.value = false;
+    stopped?.onStopped?.();
+  };
+  return {
+    runs,
+    isSpeaking,
+    textToSpeech: {
+      isSupported: signal(true),
+      isSpeaking,
+      speak: (
+        verses: readonly SpeechVerse[],
+        options: {
+          lang: string | null;
+          onFinished?: () => void;
+          onStopped?: () => void;
+        }
+      ) => {
+        stop();
+        if (verses.length === 0) {
+          return;
+        }
+        runs.push({ verses: [...verses], lang: options.lang });
+        current = options;
+        isSpeaking.value = true;
+      },
+      stop,
+    },
+    /** The engine reaches the end of what it was given. */
+    finish: () => {
+      const finished = current;
+      current = null;
+      isSpeaking.value = false;
+      finished?.onFinished?.();
+    },
+  };
+}
+
+/**
+ * Stands in for the browser's microphone and camera: records what was
+ * opened and whether it's still on.
+ */
+function createMediaCapture() {
+  const opened: SandboxCaptureKind[] = [];
+  const state = { on: 0, recording: false, fail: null as string | null };
+  const mediaCapture: SandboxMediaCapture = {
+    open: async (kind) => {
+      if (state.fail) {
+        throw new Error(state.fail);
+      }
+      opened.push(kind);
+      state.on += 1;
+      let closed = false;
+      const close = () => {
+        if (!closed) {
+          closed = true;
+          state.on -= 1;
+          state.recording = false;
+        }
+      };
+      return {
+        stream: null,
+        start: () => {
+          state.recording = true;
+        },
+        finish: async () => {
+          close();
+          return new Blob([kind === "audio" ? "audio-bytes" : "photo-bytes"], {
+            type: kind === "audio" ? "audio/webm" : "image/jpeg",
+          });
+        },
+        close,
+      };
+    },
+  };
+  return { mediaCapture, opened, state };
+}
+
+/** A shared reading session, as `ReaderTab.sharedSession` holds one. */
+export function createSharedSession(
+  users: {
+    userId: string | null;
+    connectionId: string;
+    name?: string;
+    isSelf?: boolean;
+    isHost?: boolean;
+    isActive?: boolean;
+  }[]
+) {
+  const allUsers = signal(
+    users.map((user) => ({
+      userId: user.userId,
+      connectionId: user.connectionId,
+      isSelf: user.isSelf ?? false,
+      isActive: user.isActive ?? true,
+      profile: user.name ? { name: user.name } : null,
+      host: user.isHost ?? false,
+    }))
+  );
+  return {
+    allUsers,
+    isHost: (user: { host: boolean } | null) => user?.host ?? false,
+  };
+}
+
+/**
  * Stands in for the CasualOS records server, for `sb.storage` sync: the
  * signed-in user's records, by record name and address.
  */
@@ -148,7 +270,10 @@ function createHost() {
   const discover = createDiscoverManager();
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const reading = signal({
-    tab: { readingState: { selectedVerses } },
+    tab: {
+      readingState: { selectedVerses },
+      sharedSession: null as ReturnType<typeof createSharedSession> | null,
+    },
     translationId: "BSB" as string | null,
     bookId: "JHN" as string | null,
     chapterNumber: 3 as number | null,
@@ -175,6 +300,10 @@ function createHost() {
       }),
   };
   const chapterKey = (t: string, b: string, c: number) => `${t}/${b}/${c}`;
+  const speech = createSpeech();
+  const capture = createMediaCapture();
+  const friends = signal<Friend[]>([]);
+  const clipboard: string[] = [];
 
   const context = {
     tools,
@@ -309,6 +438,7 @@ function createHost() {
         _b: string,
         chapter: number
       ) => ({
+        translation: { language: "eng" },
         chapter: {
           number: chapter,
           content: [
@@ -326,6 +456,9 @@ function createHost() {
         return () => chatProviders.delete(provider.id);
       },
     },
+    friends: { friends },
+    textToSpeech: speech.textToSpeech,
+    mediaCapture: capture.mediaCapture,
   };
   setupExtensionContext(context as unknown as SeedBibleState);
   return {
@@ -348,6 +481,10 @@ function createHost() {
     settingsPanels,
     sensitiveFetches,
     sensitive,
+    speech,
+    capture,
+    friends,
+    clipboard,
   };
 }
 
@@ -517,6 +654,15 @@ export function useSandboxHarness(): SandboxHarness {
     harness.consent = vi.fn(async () => true);
     harness.host = createHost();
     harness.records = createRecords();
+    const clipboard = harness.host.clipboard;
+    Object.defineProperty(navigator, "clipboard", {
+      value: {
+        writeText: async (text: string) => {
+          clipboard.push(text);
+        },
+      },
+      configurable: true,
+    });
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {

@@ -40,6 +40,20 @@ function permissionLabel(t: Translate, permission: SandboxPermission): string {
       return t("extension-permission-chat-respond");
     case "chat:shared":
       return t("extension-permission-chat-shared");
+    case "friends:read":
+      return t("extension-permission-friends-read");
+    case "session:read":
+      return t("extension-permission-session-read");
+    case "audio:playback":
+      return t("extension-permission-audio-playback");
+    case "clipboard:write":
+      return t("extension-permission-clipboard-write");
+    case "embed:casualos":
+      return t("extension-permission-embed-casualos");
+    case "device:microphone":
+      return t("extension-permission-device-microphone");
+    case "device:camera":
+      return t("extension-permission-device-camera");
   }
 }
 

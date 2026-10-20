@@ -30,6 +30,13 @@ export const SANDBOX_PERMISSIONS = [
   "profile:read",
   "chat:respond",
   "chat:shared",
+  "friends:read",
+  "session:read",
+  "audio:playback",
+  "clipboard:write",
+  "embed:casualos",
+  "device:microphone",
+  "device:camera",
 ] as const;
 
 export type SandboxPermission = (typeof SANDBOX_PERMISSIONS)[number];
@@ -61,9 +68,11 @@ export interface SandboxPermissionInfo {
 /**
  * The policy for each permission. Reading what the extension is working
  * with — the passage, the selection, and the user's own reading history,
- * highlights and saves — can be required. Anything that changes the user's
- * data, identifies them, reads their private writing, or involves other
- * people is always optional.
+ * highlights and saves — can be required, and so can the low-risk actions
+ * the user starts themselves (reading aloud, copying, showing a CasualOS
+ * view). Anything that changes the user's data, identifies them, reads
+ * their private writing, involves other people, or uses their microphone or
+ * camera is always optional.
  */
 export const SANDBOX_PERMISSION_INFO: Record<
   SandboxPermission,
@@ -92,6 +101,13 @@ export const SANDBOX_PERMISSION_INFO: Record<
     requirable: false,
     implies: ["chat:respond"],
   },
+  "friends:read": { risk: "high", requirable: false },
+  "session:read": { risk: "high", requirable: false },
+  "audio:playback": { risk: "low", requirable: true },
+  "clipboard:write": { risk: "low", requirable: true },
+  "embed:casualos": { risk: "low", requirable: true },
+  "device:microphone": { risk: "high", requirable: false },
+  "device:camera": { risk: "high", requirable: false },
 };
 
 /** `granted` plus everything it implies. */
@@ -207,6 +223,65 @@ export interface SandboxState {
   identity: string | null;
   /** Font stylesheets to load, so text matches the app. */
   fontStylesheets: string[];
+  /**
+   * The shared reading session open in the current tab. Null when there
+   * isn't one, and always null unless `session:read` is granted.
+   */
+  session: SandboxSharedSession | null;
+  /** Whether speech this extension started is playing (`audio:playback`). */
+  speaking: boolean;
+}
+
+export interface SandboxSessionParticipant {
+  /**
+   * Stable for this person and this extension, like `SandboxState.identity`:
+   * a signed-in participant's id here is the same as the `identity` this
+   * extension sees on their device.
+   */
+  id: string;
+  /** Null when they haven't set a name, or aren't signed in. */
+  name: string | null;
+  isHost: boolean;
+  /** Connected right now. */
+  isActive: boolean;
+  /** The user this extension is running for. */
+  isYou: boolean;
+}
+
+export interface SandboxSharedSession {
+  participants: SandboxSessionParticipant[];
+}
+
+export interface SandboxFriend {
+  /** Pseudonymous, like `SandboxSessionParticipant.id`. */
+  id: string;
+  name: string | null;
+  pictureUrl: string | null;
+}
+
+/** A recording or photo, as bytes plus its media type. */
+export interface SandboxCapture {
+  type: string;
+  bytes: ArrayBuffer;
+}
+
+export type SandboxCasualOSPattern = { name: string } | { aux: string };
+
+export interface SandboxPortalOptions {
+  pattern: SandboxCasualOSPattern;
+  portalType: "grid" | "map";
+  /** The portal's name. Defaults to `"home"`. */
+  portal?: string;
+  /** The CasualOS instance. Defaults to a fresh one for each open. */
+  inst?: string;
+  /** Extra query parameters for the pattern. */
+  query?: Record<string, string>;
+  placement: SandboxPanePlacement;
+  title: SandboxTitle;
+  /** Reuses this extension's pane with the same id, as for `panes.open`. */
+  id?: string;
+  width?: number;
+  height?: number;
 }
 
 export type SandboxFrameMode =
@@ -366,10 +441,6 @@ export interface SandboxMethods {
     params: { key: string };
     result: string | number | boolean | null;
   };
-  /**
-   * Asks the user for optional permissions. `granted` is true only if all of
-   * them are granted afterwards.
-   */
   "highlights.colors": { params: Record<string, never>; result: string[] };
   "highlights.list": {
     params: { translationId: string; bookId: string; chapter: number };
@@ -479,8 +550,44 @@ export interface SandboxMethods {
       body: string;
     };
   };
+  "friends.list": { params: Record<string, never>; result: SandboxFriend[] };
+  /** Resolves once speech ends: `finished` is false if it was stopped. */
+  "audio.readAloud": {
+    params: {
+      translationId: string;
+      bookId: string;
+      chapter: number;
+      fromVerse?: number;
+      toVerse?: number;
+    };
+    result: { finished: boolean };
+  };
+  "audio.stop": { params: Record<string, never>; result: null };
+  "clipboard.writeText": { params: { text: string }; result: null };
+  "portals.open": {
+    params: SandboxPortalOptions;
+    result: { paneId: string };
+  };
+  "portals.send": {
+    params: { paneId: string; message: SandboxJsonValue };
+    result: null;
+  };
+  /** Null if the user cancelled. */
+  "devices.recordAudio": {
+    params: { maxSeconds?: number };
+    result: SandboxCapture | null;
+  };
+  /** Null if the user cancelled. */
+  "devices.takePhoto": {
+    params: Record<string, never>;
+    result: SandboxCapture | null;
+  };
   /** The background frame's answer to a heartbeat. */
   pong: { params: Record<string, never>; result: null };
+  /**
+   * Asks the user for optional permissions. `granted` is true only if all of
+   * them are granted afterwards.
+   */
   "permissions.request": {
     params: { permissions: SandboxPermission[] };
     result: { granted: boolean };
@@ -526,6 +633,13 @@ export type SandboxHostEvent =
       selection: SandboxSelectedVerse[];
     }
   | { type: "event"; name: "pane.closed"; paneId: string }
+  /** A message from one of this extension's CasualOS portals. */
+  | {
+      type: "event";
+      name: "portal.message";
+      paneId: string;
+      message: unknown;
+    }
   | {
       type: "event";
       name: "request";

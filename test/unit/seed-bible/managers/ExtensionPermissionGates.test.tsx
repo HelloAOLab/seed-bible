@@ -26,7 +26,11 @@ import {
   type SandboxHostMessage,
   type SandboxPermission,
 } from "@packages/seed-bible/seed-bible/extensions/protocol";
-import { createRawFrame, useSandboxHarness } from "./sandboxHarness";
+import {
+  createRawFrame,
+  createSharedSession,
+  useSandboxHarness,
+} from "./sandboxHarness";
 
 /*
  * Every feature a permission unlocks, checked under every way a sandboxed
@@ -397,7 +401,161 @@ describe("permission gates", () => {
       permission: "chat:shared",
       probe: ({ sb }) => chatProbe(sb!, true),
     },
+    {
+      name: "sb.friends.list reads the friends list",
+      permission: "friends:read",
+      probe: ({ sb }) => {
+        h.host.friends.value = [
+          { userId: "user-2", name: "Naomi", pictureUrl: null },
+        ];
+        return readProbe(
+          sb!.friends.list(),
+          (friends) => friends.length === 1 && friends[0]!.name === "Naomi"
+        );
+      },
+    },
+    {
+      name: "sb.session.current follows the shared session",
+      permission: "session:read",
+      probe: async ({ sb }) => {
+        const tab = h.host.reading.value.tab;
+        h.host.reading.value = {
+          ...h.host.reading.value,
+          tab: {
+            ...tab,
+            sharedSession: createSharedSession([
+              { userId: "user-1", connectionId: "c1", isSelf: true },
+              { userId: "user-2", connectionId: "c2", name: "Naomi" },
+            ]),
+          },
+        };
+        await flush(sb!);
+        const session = sb!.session.current.value;
+        h.host.reading.value = { ...h.host.reading.value, tab };
+        if (session?.participants.length === 2) return "enabled";
+        if (session === null) return "disabled";
+        return `inconsistent: ${JSON.stringify(session)}`;
+      },
+    },
+    {
+      name: "sb.audio.readAloud reads a chapter aloud",
+      permission: "audio:playback",
+      probe: async ({ sb }) => {
+        const runs = h.host.speech.runs;
+        const before = runs.length;
+        let settled = false;
+        const outcome = interacting(sb!, () =>
+          sb!.audio.readAloud({
+            translationId: "BSB",
+            bookId: "JHN",
+            chapter: 1,
+          })
+        )
+          .then(() => "ok", deniedCode)
+          .finally(() => {
+            settled = true;
+          });
+        await vi.waitFor(() =>
+          expect(settled || runs.length > before).toBe(true)
+        );
+        const spoke = runs.length > before;
+        h.host.speech.finish();
+        const result = await outcome;
+        if (result === "ok" && spoke) return "enabled";
+        if (result === "permission_denied" && !spoke) return "disabled";
+        return `inconsistent: ${result}, spoke: ${spoke}`;
+      },
+    },
+    {
+      name: "sb.clipboard.writeText copies text",
+      permission: "clipboard:write",
+      probe: ({ sb }) =>
+        writeProbe(
+          interacting(sb!, () => sb!.clipboard.writeText("probe")),
+          () => h.host.clipboard.length
+        ),
+    },
+    {
+      name: "sb.portals.open shows a CasualOS portal",
+      permission: "embed:casualos",
+      probe: async ({ sb }) => {
+        const before = h.host.panes.panes.value.length;
+        const outcome = await sb!.portals
+          .open({
+            pattern: { name: "probe-pattern" },
+            portalType: "grid",
+            placement: "floating",
+            title: "Portal",
+          })
+          .then((portal) => portal, deniedCode);
+        const opened = h.host.panes.panes.value.length - before;
+        if (typeof outcome !== "string") {
+          await outcome.close();
+          if (opened === 1) return "enabled";
+        }
+        if (outcome === "permission_denied" && opened === 0) return "disabled";
+        return `inconsistent: ${String(outcome)}, opened ${opened}`;
+      },
+    },
+    {
+      name: "sb.devices.recordAudio shows the recording dialog",
+      permission: "device:microphone",
+      probe: ({ sb }) =>
+        captureProbe(sb!, () => sb!.devices.recordAudio({ maxSeconds: 5 })),
+    },
+    {
+      name: "sb.devices.takePhoto shows the camera dialog",
+      permission: "device:camera",
+      probe: ({ sb }) => captureProbe(sb!, () => sb!.devices.takePhoto()),
+    },
   ];
+
+  /**
+   * Runs `action` while the user is clicking inside the extension's frame,
+   * for features that only work right after the user interacts with it.
+   */
+  async function interacting<T>(
+    sb: SandboxContext,
+    action: () => Promise<T>
+  ): Promise<T> {
+    h.setUserActivation(true);
+    h.focusedFrame = h.frames.find(
+      (frame) => frame.extensionId === sb.extensionId && !frame.container
+    )!;
+    const result = action();
+    // Handled by the caller; this only keeps it from counting as unhandled
+    // while the call is in flight.
+    result.catch(() => {});
+    // The host checks as soon as the call arrives.
+    await sb.storage.keys();
+    h.setUserActivation(false);
+    h.focusedFrame = null;
+    return result;
+  }
+
+  /** Enabled when the host's capture dialog opens (the user then cancels it). */
+  async function captureProbe(
+    sb: SandboxContext,
+    capture: () => Promise<Blob | null>
+  ): Promise<Observed> {
+    let settled = false;
+    const outcome = interacting(sb, capture)
+      .then((blob) => ({ blob }), deniedCode)
+      .finally(() => {
+        settled = true;
+      });
+    await vi.waitFor(() =>
+      expect(settled || h.host.modals.modals.value.length > 0).toBe(true)
+    );
+    const dialog = h.host.modals.modals.value[0];
+    dialog?.onDismiss?.();
+    const result = await outcome;
+    if (dialog && typeof result !== "string" && result.blob === null) {
+      return "enabled";
+    }
+    if (result === "permission_denied" && !dialog) return "disabled";
+    return `inconsistent: ${JSON.stringify(result)}, dialog: ${Boolean(dialog)}`;
+  }
 
   const deniedCode = (err: { code: string }) => err.code;
 
