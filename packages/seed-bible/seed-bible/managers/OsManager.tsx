@@ -304,8 +304,29 @@ export function CasualOSManager(
   const sessionInvalidated = signal<SessionInvalidatedEvent | null>(null);
   let sessionInvalidatedCount = 0;
 
+  /** The most recent session refresh: the key it retires and the key it yields. */
+  let sessionReplacement: {
+    oldKey: string;
+    newKey: Promise<string | null>;
+  } | null = null;
+
+  /**
+   * Records that `oldKey` is being swapped for a new one, so requests that fail
+   * because the server already retired `oldKey` can be retried with the new key
+   * instead of signing the user out. `newKey` must resolve only after the new key
+   * has been installed in `sessionKey`.
+   */
+  const trackSessionReplacement = (
+    oldKey: string,
+    newKey: Promise<string | null>
+  ) => {
+    sessionReplacement = { oldKey, newKey };
+  };
+
   const client = guardRecordsClient(rawClient, {
     getSessionKey: () => sessionKey.peek(),
+    getSessionReplacement: (key) =>
+      sessionReplacement?.oldKey === key ? sessionReplacement.newKey : null,
     onSessionInvalidated: (errorCode) => {
       console.warn(`[OsManager] The session is no longer valid: ${errorCode}`);
       sessionInvalidated.value = {
@@ -504,6 +525,7 @@ export function CasualOSManager(
     connectionKey,
     clearBranchDeviceCache,
     sessionInvalidated,
+    trackSessionReplacement,
 
     getData: async (recordName: string, address: string) => {
       const result = await client.getData({

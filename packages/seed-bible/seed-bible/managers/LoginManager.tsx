@@ -660,13 +660,29 @@ export function createLoginManager({
     }
 
     console.log("[LoginManager] Refreshing session with existing session key");
+    const replacement = replaceSessionKey(sessionKeyAtRequest);
+    // Registered before any response can arrive. The server retires the old key as
+    // soon as it issues the new one, so other requests still carrying the old key
+    // start failing with `invalid_key` from that moment on; this is what lets them
+    // be retried with the new key rather than signing the user out.
+    os.trackSessionReplacement(sessionKeyAtRequest, replacement);
+
+    if (await replacement) {
+      await loadUserInfo();
+    }
+  }
+
+  /** Swaps the session key for a fresh one, resolving with the new key once it's installed. */
+  async function replaceSessionKey(
+    sessionKeyAtRequest: string
+  ): Promise<string | null> {
     const result = await client.replaceSession();
 
     if (sessionKey.peek() !== sessionKeyAtRequest) {
       // The session ended while the refresh was in flight — the user signed out, or
       // this very call reported the key dead and the session guard already signed
       // them out. Assigning a key now would resurrect a session we just dropped.
-      return;
+      return null;
     }
 
     if (result.success) {
@@ -674,19 +690,20 @@ export function createLoginManager({
       sessionKey.value = result.sessionKey;
       connectionKey.value = result.connectionKey;
       client.sessionKey = result.sessionKey;
-      await loadUserInfo();
-    } else {
-      // Nothing is cleared here, on purpose. A refresh fails for transient reasons
-      // far more often than real ones (a mobile dead spot, a 500, a rate limit), and
-      // the key is usually still good for another week. The three codes that really
-      // do mean the session is gone are handled centrally by the session guard,
-      // which has already signed the user out by the time we reach this branch.
-      console.warn(
-        "[LoginManager] Failed to refresh session; keeping the existing session key:",
-        result.errorCode,
-        result.errorMessage
-      );
+      return result.sessionKey;
     }
+
+    // Nothing is cleared here, on purpose. A refresh fails for transient reasons
+    // far more often than real ones (a mobile dead spot, a 500, a rate limit), and
+    // the key is usually still good for another week. The three codes that really
+    // do mean the session is gone are handled centrally by the session guard,
+    // which has already signed the user out by the time we reach this branch.
+    console.warn(
+      "[LoginManager] Failed to refresh session; keeping the existing session key:",
+      result.errorCode,
+      result.errorMessage
+    );
+    return null;
   }
 
   async function cancelLogin() {

@@ -667,6 +667,55 @@ describe("createLoginManager", () => {
     });
   });
 
+  describe("requests that race a session refresh", () => {
+    // The server retires the old key the instant it issues the new one, so any
+    // request that reaches it with the old key after that point is refused with
+    // `invalid_key` — even though the user's session is alive under the new key.
+    it("stays signed in and retries with the new key", async () => {
+      const oldKey = sessionKeyExpiringIn(1000 * 60 * 60);
+      localStorage.setItem("sessionKey", oldKey);
+
+      let finishRefresh: () => void = () => undefined;
+      replaceSessionMock.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finishRefresh = () =>
+              resolve({
+                success: true,
+                sessionKey: REFRESHED_SESSION_KEY,
+                connectionKey: "connection-key-2",
+                expireTimeMs: Date.now() + 1000 * 60 * 60,
+                metadata: {},
+              });
+          })
+      );
+      getUserInfoMock.mockImplementation(function (this: {
+        sessionKey: string;
+      }) {
+        return Promise.resolve(
+          this.sessionKey === oldKey
+            ? {
+                success: false,
+                errorCode: "invalid_key",
+                errorMessage: "The session key is invalid.",
+              }
+            : { success: true, email: EMAIL }
+        );
+      });
+
+      const manager = createLoginManager({ os });
+      await waitFor(() => getUserInfoMock.mock.calls.length > 0);
+      await flush();
+      finishRefresh();
+
+      await waitFor(() => manager.userInfo.value !== null);
+      expect(manager.sessionEnded.value).toBe(null);
+      expect(os.sessionKey.value).toBe(REFRESHED_SESSION_KEY);
+      expect(localStorage.getItem("sessionKey")).toBe(REFRESHED_SESSION_KEY);
+      expect(manager.userInfo.value?.email).toBe(EMAIL);
+    });
+  });
+
   describe("an unparseable stored session key", () => {
     // Anything not shaped `vSK1.<base64>...` fails to parse. Reading the expiry off
     // that null parse used to throw during construction, and nothing catches it, so a
