@@ -331,6 +331,8 @@ Two existing features install extensions without that click, and both have to st
 
 `autoinstall: true` in a manifest is ignored for sandboxed extensions.
 
+_As built:_ both stop at the consent dialog. A third kind of link, `?extensionSet=<url>`, lists a hosted set's extensions for that visit, as adding the link in Settings does; with `autoinstall-<id>=true` it opens that extension's consent dialog, never more. Sets load only over `https:` (or from `localhost`, for development) and without cookies. Once the user installs an extension from a set, the set's URL is remembered (on the device and in the profile config) so the extension loads again on later visits and other devices; uninstalling forgets it.
+
 ---
 
 ## 7. Developer experience
@@ -340,6 +342,14 @@ Two existing features install extensions without that click, and both have to st
 - **`check`** warns when code calls an SDK method whose permission isn't declared (it's a fixed list of method → permission, so this can be a simple type-level check: SDK namespaces for undeclared permissions are typed as `never`).
 - **`build --standalone`** produces the sandbox bundle. The `window.__seedBibleExtensionRuntime` shims are no longer needed for sandboxed extensions and can be retired once nothing uses them.
 - **Errors are clear.** A call without permission rejects with `PermissionDeniedError("highlights:read is not granted")`, not a silent `undefined`.
+
+_As built (phase 3):_
+
+- The scaffold is sandboxed, and its test uses `createTestHost` from `seed-bible/extensions/testing`, which runs the extension through the real SDK against a stand-in for the app, checking every call against the permissions the test grants. The permission each call needs is one table in the protocol (`SANDBOX_METHOD_PERMISSIONS`), read by the host, the test host and the tooling, so they can't disagree.
+- `dev` serves the extension from `localhost`, as a URL extension, with an always-current `ExtensionSet`, and opens the app with an `?extensionSet=` link; the consent dialog is shown once, and the grant is remembered like any other. There's no `--trusted` flag: a project written with `registerExtension` is still put into the app's build as before, and one that imports `seed-bible/extensions` always runs sandboxed.
+- `check` reads the code for `sb.*` calls and reports a call whose permission isn't declared as an error, and a declared permission nothing uses as a warning. It reads text rather than types: typing undeclared namespaces as `never` would need the SDK's types generated per project.
+- `build` produces the sandbox bundle for a sandboxed project without `--standalone`, deduplicating Preact so a project on a different version than Seed Bible's still works.
+- A view that fails to load or render is reported in the console with the extension's id, rather than leaving a blank pane.
 
 ---
 
@@ -400,7 +410,14 @@ Each phase is shippable on its own.
 
    Not built in phase 2: marking highlights and saves with the extension that made them (only notes have a field for it), and live microphone or camera streams.
 
-3. **Tooling.** Scaffolding template, sandboxed `dev`, permission checks in `check`, docs. Port one in-repo extension (for example `seed-bible-refresh-example-extension` or `locations-extension`) to the sandbox SDK as a working reference and to prove the API is enough for a real extension.
+3. **Tooling — done.** What shipped (details in §7):
+   - Users can add a published extension from its link in Settings → Extensions, or through a `?extensionSet=` link, and the app remembers where an installed one came from. Before, nothing in the UI could add one, and an installed one was skipped on the next page load.
+   - `seed-bible/extensions/testing` (`createTestHost`), the sandboxed scaffold, permission checks in `check`, and a sandboxed `dev`.
+   - `packages/sandboxed-example-extension`: the example extension ported to the SDK, with tests. Everything ported except its export to other extensions, which needs phase 4's message-based exports. The app's build skips sandboxed packages rather than bundling them with full access.
+   - Fixes found by running `dev` end to end in a browser (see §7), and `publish` now keeps `settings` and `sensitive` in the manifest it uploads.
+
+   Not built: a type-level permission check, and porting a second, larger extension.
+
 4. **Stronger isolation (optional).** Move frames to a dedicated cross-site origin, one subdomain per extension: separate process, real per-extension storage, and an `Origin` header third-party APIs recognize (an opaque-origin frame sends `Origin: null`, which some APIs' CORS settings reject). Also: extension-to-extension calls brokered by the host (today's `dependencies` share live objects, which can't cross a frame boundary; for sandboxed extensions they'd become declared, message-based exports).
 
 ---
