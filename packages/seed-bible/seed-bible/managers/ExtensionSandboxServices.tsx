@@ -152,8 +152,6 @@ export interface SandboxSessionApi {
 
 export interface SandboxServiceSpec {
   schema: z.ZodType;
-  /** Checked before the handler runs; implied permissions count. */
-  permission?: SandboxPermission;
   /** Only the extension's main code (its background frame) may call it. */
   backgroundOnly?: boolean;
 }
@@ -223,22 +221,18 @@ export const SANDBOX_SERVICE_SPECS: Partial<
   "highlights.colors": { schema: z.object({}) },
   "highlights.list": {
     schema: chapterRefSchema,
-    permission: "highlights:read",
   },
   "highlights.add": {
     schema: chapterRefSchema.extend({
       verses: versesSchema,
       colorId: z.string().regex(/^[A-Za-z0-9_-]{1,32}$/),
     }),
-    permission: "highlights:write",
   },
   "highlights.remove": {
     schema: chapterRefSchema.extend({ verses: versesSchema }),
-    permission: "highlights:write",
   },
   "notes.list": {
     schema: z.object({ bookId: bookIdSchema, chapter: chapterSchema }),
-    permission: "notes:read",
   },
   "notes.create": {
     schema: z.object({
@@ -247,7 +241,6 @@ export const SANDBOX_SERVICE_SPECS: Partial<
       verses: versesSchema.optional(),
       text: z.string().min(1).max(MAX_NOTE_LENGTH),
     }),
-    permission: "notes:write",
   },
   "notes.update": {
     schema: z.object({
@@ -256,7 +249,6 @@ export const SANDBOX_SERVICE_SPECS: Partial<
       chapter: chapterSchema,
       text: z.string().min(1).max(MAX_NOTE_LENGTH),
     }),
-    permission: "notes:write",
   },
   "notes.delete": {
     schema: z.object({
@@ -264,19 +256,16 @@ export const SANDBOX_SERVICE_SPECS: Partial<
       bookId: bookIdSchema,
       chapter: chapterSchema,
     }),
-    permission: "notes:write",
   },
-  "saves.list": { schema: z.object({}), permission: "saves:read" },
+  "saves.list": { schema: z.object({}) },
   "saves.add": {
     schema: chapterRefSchema.extend({
       verse: verseOrRangeSchema.optional(),
       categories: z.array(z.string().min(1).max(64)).min(1).max(10).optional(),
     }),
-    permission: "saves:write",
   },
   "saves.remove": {
     schema: z.object({ id: z.string().min(1).max(200) }),
-    permission: "saves:write",
   },
   "history.list": {
     schema: z
@@ -287,18 +276,15 @@ export const SANDBOX_SERVICE_SPECS: Partial<
           message: "`to` must be after `from`, and at most a year after it.",
         }
       ),
-    permission: "reading:history",
   },
-  "profile.get": { schema: z.object({}), permission: "profile:read" },
+  "profile.get": { schema: z.object({}) },
   "bible.chapter": { schema: chapterRefSchema },
-  // A provider is told which chapter is open every time it's asked.
   "discover.register": {
     schema: z.object({
       id: idSchema,
       title: z.string().min(1).max(100),
       description: z.string().max(300),
     }),
-    permission: "reading:position",
     backgroundOnly: true,
   },
   "discover.unregister": {
@@ -311,7 +297,6 @@ export const SANDBOX_SERVICE_SPECS: Partial<
       name: z.string().min(1).max(100),
       shared: z.boolean().optional(),
     }),
-    permission: "chat:respond",
     backgroundOnly: true,
   },
   "chats.unregister": {
@@ -354,7 +339,7 @@ export const SANDBOX_SERVICE_SPECS: Partial<
     }),
   },
   pong: { schema: z.object({}), backgroundOnly: true },
-  "friends.list": { schema: z.object({}), permission: "friends:read" },
+  "friends.list": { schema: z.object({}) },
   "audio.readAloud": {
     schema: chapterRefSchema
       .extend({
@@ -365,37 +350,31 @@ export const SANDBOX_SERVICE_SPECS: Partial<
         ({ fromVerse, toVerse }) => (fromVerse ?? 1) <= (toVerse ?? 200),
         { message: "`toVerse` can't be before `fromVerse`." }
       ),
-    permission: "audio:playback",
   },
   "audio.play": {
     schema: z.object({ url: z.url({ protocol: /^https$/ }).max(4000) }),
-    permission: "audio:playback",
   },
   "audio.playNarration": {
     schema: chapterRefSchema.extend({
       reader: z.string().min(1).max(64).optional(),
     }),
-    permission: "audio:playback",
   },
-  "audio.narrators": { schema: chapterRefSchema, permission: "audio:playback" },
-  "audio.pause": { schema: z.object({}), permission: "audio:playback" },
-  "audio.resume": { schema: z.object({}), permission: "audio:playback" },
+  "audio.narrators": { schema: chapterRefSchema },
+  "audio.pause": { schema: z.object({}) },
+  "audio.resume": { schema: z.object({}) },
   "audio.seek": {
     schema: z.object({ position: z.number().finite().min(0) }),
-    permission: "audio:playback",
   },
-  "audio.stop": { schema: z.object({}), permission: "audio:playback" },
+  "audio.stop": { schema: z.object({}) },
   "clipboard.writeText": {
     schema: z.object({ text: z.string().max(MAX_CLIPBOARD_LENGTH) }),
-    permission: "clipboard:write",
   },
   "devices.recordAudio": {
     schema: z.object({
       maxSeconds: z.number().int().min(1).max(MAX_RECORDING_SECONDS).optional(),
     }),
-    permission: "device:microphone",
   },
-  "devices.takePhoto": { schema: z.object({}), permission: "device:camera" },
+  "devices.takePhoto": { schema: z.object({}) },
 };
 
 const NOTE_TAG_PREFIX = "extension:";
@@ -521,7 +500,8 @@ export interface SandboxServices {
  * The phase 2 features of one session: reading and writing the user's
  * data, Discover and chat providers, modals, settings panels, sensitive
  * fetch and Bible text. The session has already validated `params` against
- * `SANDBOX_SERVICE_SPECS` and checked the permission listed there.
+ * `SANDBOX_SERVICE_SPECS` and checked the permission
+ * `SANDBOX_METHOD_PERMISSIONS` lists for it.
  */
 export function createSandboxServices(
   session: SandboxSessionApi

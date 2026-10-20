@@ -5,9 +5,17 @@ import preact from "@preact/preset-vite";
 import { loadExtensionProjectInfo } from "../lib/project.js";
 import { runCheck } from "./check.js";
 import { runTest } from "./test.js";
-import { checkManifestPermissions } from "../lib/manifestPolicy.js";
+import {
+  isSandboxedProject,
+  readProjectSources,
+} from "../lib/sandboxedProject.js";
 
 export interface BuildOptions {
+  /**
+   * Also build the single-file bundle. A sandboxed extension always gets
+   * one; for any other it's an error, since only a sandboxed extension can
+   * be loaded from a URL.
+   */
   standalone: boolean;
 }
 
@@ -159,19 +167,18 @@ export async function runBuild(
     return testCode;
   }
 
-  await buildMonorepoReadyOutput(root, info.extensionId);
-
-  if (options.standalone) {
-    // Caught here rather than when a user tries to install it.
-    const problems = checkManifestPermissions(info.meta);
-    if (problems.length > 0) {
-      for (const problem of problems) {
-        console.error(`[build] extension.json: ${problem}`);
-      }
-      return 1;
-    }
+  // The check above has already refused a manifest Seed Bible wouldn't
+  // install.
+  if (isSandboxedProject(await readProjectSources(root))) {
     await buildStandaloneBundle(root, info.extensionId);
+    return 0;
   }
-
+  if (options.standalone) {
+    console.error(
+      '[build] Only a sandboxed extension can be loaded from a URL, and this one registers itself with registerExtension(). Write it with defineExtension() from "seed-bible/extensions" instead (see dist/standalone/README.md in a scaffolded project, or docs/developer-guide.md §7).'
+    );
+    return 1;
+  }
+  await buildMonorepoReadyOutput(root, info.extensionId);
   return 0;
 }

@@ -1,60 +1,53 @@
-import { effect } from "@preact/signals";
-import { registerExtension, type SeedBibleState } from "seed-bible";
-import { useI18n } from "seed-bible/i18n";
+import { defineExtension } from "seed-bible/extensions";
 
-// This is a starting point demonstrating a few common extension points.
-// For the full API (panes, Discover providers, chat providers, and more),
-// see the Seed Bible developer guide: docs/developer-guide.md in the
-// seed-bible repository, and packages/seed-bible-refresh-example-extension/
-// for a more complete reference.
-export default function init{{extensionPascalName}}() {
-  registerExtension({
-    id: "{{extensionId}}",
-    init: function* (context: SeedBibleState) {
-      console.log("{{extensionId}} initialized with context:", context);
+// A starting point that shows how a sandboxed extension fits together. It
+// runs in its own iframe, isolated from Seed Bible, and reaches the app only
+// through `sb`, which checks every call against the permissions the user
+// granted. For the whole API, see §7 of docs/developer-guide.md in the
+// seed-bible repository.
+export default defineExtension({
+  // Runs once, in a hidden frame, when the extension starts.
+  main: async (sb) => {
+    await sb.tools.registerToolbarTool({
+      id: "open",
+      title: { key: "tool-title", defaultValue: "{{extensionId}}" },
+      icon: { material: "star" },
+      onSelect: async () => {
+        // Seeing the passage is optional (see extension.json), so ask for it
+        // here, while the user is clicking. If they say no, the pane still
+        // opens; it just can't show where they are.
+        await sb.permissions.request("reading:position");
+        const opened = Number((await sb.storage.get("opened")) ?? 0) + 1;
+        await sb.storage.set("opened", opened);
+        await sb.panes.open({
+          view: "main",
+          placement: "side",
+          title: { key: "tool-title", defaultValue: "{{extensionId}}" },
+          props: { opened },
+        });
+      },
+    });
+  },
 
-      // Adds a button to the reader's toolbar. `onSelect` opens a custom
-      // pane; `yield`ing the return value registers its cleanup so the
-      // button is removed automatically when this extension is uninstalled.
-      yield context.tools.registerToolbarTool({
-        id: "{{extensionId}}-tool",
-        title: {
-          key: "tool-title",
-          defaultValue: "{{extensionId}}",
-          ns: "{{extensionId}}",
-        },
-        icon: () => <span>★</span>,
-        onSelect: () => {
-          context.panes.openPane({
-            placement: "side",
-            title: "{{extensionId}}",
-            component: () => {
-              const { t } = useI18n("{{extensionId}}");
-              return <div style={{ padding: 20 }}>{t("tool-title")}</div>;
-            },
-          });
-        },
-        priority: 200,
-      });
-
-      // React to app state changes — this logs the current reading
-      // position whenever the reader navigates.
-      yield effect(() => {
-        if (context.app.currentReadingState.value) {
-          console.log(
-            "Current reading state:",
-            context.app.currentReadingState.value.translationId,
-            context.app.currentReadingState.value.bookId,
-            context.app.currentReadingState.value.chapterNumber
-          );
-        }
-      });
-
-      // Anything returned here (or, in a generator like this one, anything
-      // `return`ed rather than `yield`ed) becomes this extension's public
-      // export — callable by other extensions that declare it as a
-      // dependency.
-      return {};
+  // One entry per kind of pane. Each renders in a frame of its own, inside
+  // a pane Seed Bible draws, and gets its own `sb`.
+  views: {
+    main: ({ sb, props }) => {
+      const { opened } = props as { opened: number };
+      const position = sb.reading.position.value;
+      return (
+        <div style={{ padding: "1rem" }}>
+          <p>{sb.i18n.t("opened", undefined, { count: opened })}</p>
+          <p>
+            {position
+              ? sb.i18n.t("reading", undefined, {
+                  book: position.bookId ?? "",
+                  chapter: position.chapterNumber ?? "",
+                })
+              : sb.i18n.t("not-reading")}
+          </p>
+        </div>
+      );
     },
-  });
-}
+  },
+});

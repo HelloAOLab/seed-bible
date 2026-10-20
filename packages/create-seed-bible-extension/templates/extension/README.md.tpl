@@ -2,45 +2,56 @@
 
 A Seed Bible extension, scaffolded by `create-seed-bible-extension`.
 
+It's a **sandboxed** extension: Seed Bible runs it in its own iframe,
+isolated from the app, and it reaches the app only through the `sb` object
+in `src/init.tsx`. Every call is checked against the permissions in
+`extension.json`, which the user approves when they install it.
+
 ## Commands
 
-- `npm run check` — type-check with TypeScript.
-- `npm run lint` — lint with ESLint.
-- `npm run lint:fix` — lint with ESLint, automatically fixing what it can.
-- `npm run test` — run the test suite with Vitest.
-- `npm run dev` — run a real Seed Bible instance with this extension
-  auto-installed. It runs the newest Seed Bible release matching the
-  `seed-bible` version in `package.json`; raise that version to move to a
-  newer one. The first run of each version clones and installs it into a local
-  cache (this can take a few minutes); later runs reuse it. Pass
-  `--seed-bible-version <version|branch>` (e.g. `develop`) to run a different
-  one, or `--repo <path>` to use an existing seed-bible checkout.
-- `npm run build` — validate and package this extension's source, ready to
-  drop into a `seed-bible` checkout's `packages/<name>/` (the fully-supported
-  distribution path).
-- `npm run build:standalone` — additionally produce a single-file ES module
-  for hosting outside the seed-bible monorepo. Seed Bible runs an extension
-  loaded this way in a sandbox, behind permissions the user approves, so it
-  must be written with `defineExtension()` from `seed-bible/extensions` rather
-  than `registerExtension()` — see the README generated alongside it
-  (`dist/standalone/README.md`).
-- `npm run publish` — build standalone, upload the bundle, and upload a small
-  manifest (an `ExtensionSet`) describing it, then print that manifest's URL.
-  Anyone can make this extension discoverable — listed, not yet installed —
-  by calling `context.extensions.discoverExtensionSet(url)` with it. The
-  first run prompts you to log in once (an email + the code it sends you) and
-  prints a `SEED_BIBLE_RECORD_KEY` to save for non-interactive publishes
-  after that (e.g. in CI) — treat it like a password. Pass `--dry-run` to see
-  the manifest without uploading anything.
+- `npm run dev`: builds the extension, serves it locally, and runs a real
+  Seed Bible that offers to install it. Changes are rebuilt as you save;
+  reload the page to pick them up. It runs the newest Seed Bible release
+  matching the `seed-bible` version in `package.json`. The first run of each
+  version clones and installs it into a local cache (this can take a few
+  minutes); later runs reuse it. Pass `--seed-bible-version <version|branch>`
+  (e.g. `develop`) to run a different one, or `--repo <path>` to use an
+  existing seed-bible checkout.
+- `npm run check`: type-checks the code, and checks `extension.json`: that
+  Seed Bible would install it, that it declares every permission the code
+  uses, and (as warnings) that it doesn't ask for any it doesn't use.
+- `npm run lint` / `npm run lint:fix`: lint with ESLint.
+- `npm run test`: runs the tests with Vitest. `src/init.test.tsx` shows how
+  to use `createTestHost` from `seed-bible/extensions/testing`, which runs
+  the extension against a stand-in for Seed Bible.
+- `npm run build`: checks, tests, and builds the single-file bundle Seed
+  Bible loads, in `dist/standalone/`.
+- `npm run publish`: builds, uploads the bundle and a small manifest
+  describing it (an `ExtensionSet`), and prints that manifest's link. Anyone
+  can paste the link into Seed Bible's Settings > Extensions > "Add
+  extensions from a link" to install it. The first run prompts you to log in
+  once (an email and the code it sends you) and prints a
+  `SEED_BIBLE_RECORD_KEY` to save for non-interactive publishes after that
+  (e.g. in CI); treat it like a password. Pass `--dry-run` to see the
+  manifest without uploading anything.
 
-Replace `npm run` above with `pnpm run`/`yarn run` if you're using a
-different package manager — every command here works the same way with any
-of them.
+Replace `npm run` with `pnpm run` or `yarn run` if you use a different
+package manager; every command works the same way with any of them.
+
+## Permissions
+
+List what the extension can't work without under `permissions`, and what
+only some features need under `optionalPermissions`, then ask for those with
+`sb.permissions.request(...)` when the feature is used. Some permissions,
+such as writing the user's highlights, can only ever be optional. `npm run
+check` tells you if one is in the wrong list. List every host the extension
+contacts under `network`.
+
+Bump `version` in `extension.json` when you publish a new release. Users
+are asked again only if a new version needs more than they already allowed.
 
 ## Learn more
 
-See `docs/developer-guide.md` in the
+See §7 of `docs/developer-guide.md` in the
 [seed-bible repository](https://github.com/HelloAOLab/seed-bible) for the
-full extension-authoring API: toolbar tools, verse tools, custom panes,
-Discover providers, chat providers, and more. `src/init.tsx` in this project
-demonstrates a few of them as a starting point.
+whole `sb` API, and `docs/extension-security.md` for how the sandbox works.

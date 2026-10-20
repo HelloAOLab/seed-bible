@@ -428,6 +428,11 @@ export default defineConfig(({ isSsrBuild }) => ({
         __dirname,
         "packages/seed-bible/seed-bible/i18n/index.tsx"
       ),
+      // Before `seed-bible/extensions`, which would otherwise match it as a prefix.
+      "seed-bible/extensions/testing": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/extensions/testing.tsx"
+      ),
       "seed-bible/extensions": path.resolve(
         __dirname,
         "packages/seed-bible/seed-bible/extensions/index.tsx"

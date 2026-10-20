@@ -1,62 +1,54 @@
-import { describe, expect, it, vi } from "vitest";
-import { signal } from "@preact/signals";
+import { afterEach, describe, expect, it } from "vitest";
+import { createTestHost, type TestHost } from "seed-bible/extensions/testing";
+import extension from "./init";
 
-// Mock "seed-bible" rather than calling the real `registerExtension` (which
-// talks to a real, running app's extension registry) and build just the
-// slice of `SeedBibleState` this extension actually reads, using real
-// `@preact/signals` signals. This mirrors how extensions inside the
-// seed-bible monorepo itself test against a mocked app state (see e.g.
-// test/unit/twitchSub-extension/).
-const registerExtension = vi.fn();
-vi.mock("seed-bible", () => ({ registerExtension }));
-vi.mock("seed-bible/i18n", () => ({
-  useI18n: () => ({ t: (key: string) => key }),
-}));
-
-const init = (await import("./init")).default;
-
-function createFakeContext() {
-  return {
-    tools: {
-      registerToolbarTool: vi.fn(() => () => {}),
-    },
-    panes: {
-      openPane: vi.fn(),
-    },
-    app: {
-      currentReadingState: signal(null),
-    },
-  };
-}
-
+// `createTestHost` runs the extension exactly as Seed Bible would, against a
+// stand-in for the app: every call is checked against the permissions you
+// grant here, and what the extension does (tools, panes, storage, toasts…)
+// is recorded for the test to look at.
 describe("{{extensionId}}", () => {
-  it("registers itself with the expected id", () => {
-    init();
+  let host: TestHost;
+  afterEach(() => host.dispose());
 
-    expect(registerExtension).toHaveBeenCalledTimes(1);
-    expect(registerExtension.mock.calls[0]![0]).toMatchObject({
-      id: "{{extensionId}}",
+  it("adds a toolbar button that opens its pane", async () => {
+    host = await createTestHost(extension, {
+      optional: ["reading:position"],
     });
+    await host.ready;
+
+    expect(host.tools.get("open")).toMatchObject({ surface: "toolbar" });
+    await host.selectTool("open");
+
+    expect([...host.panes.values()]).toEqual([
+      expect.objectContaining({ view: "main" }),
+    ]);
+    expect(host.storage.get("opened")).toBe(1);
   });
 
-  it("registers a toolbar tool when initialized", () => {
-    init();
-    const registration = registerExtension.mock.calls.at(-1)![0];
-    const context = createFakeContext();
+  it("shows where the user is reading, once they allow it", async () => {
+    host = await createTestHost(extension, {
+      granted: ["reading:position"],
+      state: {
+        position: { translationId: "BSB", bookId: "JHN", chapterNumber: 3 },
+        strings: { reading: "Reading {{book}} {{chapter}}" },
+      },
+    });
 
-    // `init` can be a generator (yielding cleanup functions, then returning
-    // its public export) or a plain function returning that export directly
-    // — drive it either way.
-    const result = registration.init(context, {});
-    if (typeof result?.next === "function") {
-      let step = result.next();
-      while (!step.done) {
-        step = result.next();
-      }
-    }
+    const pane = await host.renderView("main", { props: { opened: 1 } });
 
-    expect(context.tools.registerToolbarTool).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "{{extensionId}}-tool" })
-    );
+    expect(pane.textContent).toContain("Reading JHN 3");
+  });
+
+  it("still opens its pane when the user says no", async () => {
+    host = await createTestHost(extension, {
+      optional: ["reading:position"],
+      allowRequests: false,
+    });
+    await host.ready;
+
+    await host.selectTool("open");
+
+    expect(host.panes.size).toBe(1);
+    expect(host.granted()).toEqual([]);
   });
 });

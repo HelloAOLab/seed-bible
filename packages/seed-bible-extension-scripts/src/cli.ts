@@ -17,7 +17,9 @@ program
 
 program
   .command("check")
-  .description("Type-check the extension with its own tsconfig.json.")
+  .description(
+    "Type-check the extension with its own tsconfig.json, and check extension.json's permissions against what the code uses."
+  )
   .action(async () => {
     process.exitCode = await runCheck();
   });
@@ -41,11 +43,11 @@ program
 program
   .command("build")
   .description(
-    "Build the extension: a monorepo-ready package, and (with --standalone) a single-file bundle that Seed Bible runs sandboxed."
+    "Build the extension: for a sandboxed extension, the single-file bundle Seed Bible loads from a URL; otherwise a monorepo-ready package."
   )
   .option(
     "--standalone",
-    "also produce a single-file ES module, built with seed-bible/extensions, for hosting outside the seed-bible monorepo (see the generated README)"
+    "require the single-file bundle (an error unless the extension is written with seed-bible/extensions)"
   )
   .action(async (opts: { standalone?: boolean }) => {
     process.exitCode = await runBuild({ standalone: Boolean(opts.standalone) });

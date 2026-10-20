@@ -37,6 +37,9 @@
         "./packages/seed-bible/seed-bible/components/index.tsx"
       ],
       "seed-bible/i18n": ["./packages/seed-bible/seed-bible/i18n/index.tsx"],
+      "seed-bible/extensions/testing": [
+        "./packages/seed-bible/seed-bible/extensions/testing.tsx"
+      ],
       "seed-bible/extensions": [
         "./packages/seed-bible/seed-bible/extensions/index.tsx"
       ]

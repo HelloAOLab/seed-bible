@@ -633,6 +633,47 @@ export interface SandboxMethods {
 
 export type SandboxMethod = keyof SandboxMethods;
 
+/**
+ * The permission each call needs; calls not listed need none. Granted
+ * permissions count with what they imply (`expandSandboxPermissions`). The
+ * host checks this before anything else, and the SDK's test host and the
+ * build tooling's checks read it too.
+ */
+export const SANDBOX_METHOD_PERMISSIONS: Partial<
+  Record<SandboxMethod, SandboxPermission>
+> = {
+  "reading.open": "reading:navigate",
+  "highlights.list": "highlights:read",
+  "highlights.add": "highlights:write",
+  "highlights.remove": "highlights:write",
+  "notes.list": "notes:read",
+  "notes.create": "notes:write",
+  "notes.update": "notes:write",
+  "notes.delete": "notes:write",
+  "saves.list": "saves:read",
+  "saves.add": "saves:write",
+  "saves.remove": "saves:write",
+  "history.list": "reading:history",
+  "profile.get": "profile:read",
+  // A provider is told which chapter is open every time it's asked.
+  "discover.register": "reading:position",
+  "chats.register": "chat:respond",
+  "friends.list": "friends:read",
+  "audio.readAloud": "audio:playback",
+  "audio.play": "audio:playback",
+  "audio.playNarration": "audio:playback",
+  "audio.narrators": "audio:playback",
+  "audio.pause": "audio:playback",
+  "audio.resume": "audio:playback",
+  "audio.seek": "audio:playback",
+  "audio.stop": "audio:playback",
+  "clipboard.writeText": "clipboard:write",
+  "devices.recordAudio": "device:microphone",
+  "devices.takePhoto": "device:camera",
+  "portals.open": "embed:casualos",
+  "portals.send": "embed:casualos",
+};
+
 export interface SandboxRequest<M extends SandboxMethod = SandboxMethod> {
   type: "call";
   id: number;

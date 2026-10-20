@@ -43,6 +43,7 @@ import type { I18nManager } from "../i18n/I18nManager";
 import type { BookId } from "./BibleDataManager";
 import {
   expandSandboxPermissions,
+  SANDBOX_METHOD_PERMISSIONS,
   SANDBOX_PERMISSIONS,
   SANDBOX_PROTOCOL_VERSION,
   type SandboxFrameMode,
@@ -424,12 +425,6 @@ const BACKGROUND_ONLY_METHODS = new Set<SandboxMethod>([
   "tools.unregister",
   "ready",
 ]);
-
-const REQUIRED_PERMISSION: Partial<Record<SandboxMethod, SandboxPermission>> = {
-  "reading.open": "reading:navigate",
-  "portals.open": "embed:casualos",
-  "portals.send": "embed:casualos",
-};
 
 const BrokerError = SandboxBrokerError;
 
@@ -970,7 +965,7 @@ export function startSandboxSession(
         `'${method}' can only be called from the extension's main code.`
       );
     }
-    const required = REQUIRED_PERMISSION[method] ?? spec?.permission;
+    const required = SANDBOX_METHOD_PERMISSIONS[method];
     if (required && !has(required)) {
       throw new BrokerError(
         "permission_denied",

@@ -21,6 +21,8 @@ export interface ExtensionProjectMeta {
   optionalPermissions?: string[];
   /** Sandboxed extensions: every host its frames may contact. */
   network?: string[];
+  /** Anything else in the file, such as `settings` and `sensitive`. */
+  [field: string]: unknown;
 }
 
 export interface ExtensionProjectInfo {
@@ -80,6 +82,8 @@ export async function loadExtensionProjectInfo(
     root,
     extensionId: id,
     meta: {
+      // Everything else (settings, sensitive, …) goes to Seed Bible as is.
+      ...(meta as Record<string, unknown>),
       id,
       translations: translations as Record<string, ExtensionTranslation>,
       dependencies,

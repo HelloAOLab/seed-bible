@@ -25,6 +25,7 @@ interface ExtensionSetManifest {
   extensions: Array<{
     url: string;
     meta: {
+      [field: string]: unknown;
       id: string;
       translations: Record<string, { title: string; description: string }>;
       dependencies?: string[];
@@ -99,9 +100,10 @@ export async function runPublish(
 
   ${setUrl}
 
-Anyone can now make this extension discoverable by calling:
+To install it, paste that link into Seed Bible's Settings > Extensions >
+"Add extensions from a link", or share a link that offers to install it:
 
-  context.extensions.discoverExtensionSet("${setUrl}")
+  https://seedbible.org/?extensionSet=${encodeURIComponent(setUrl)}&autoinstall-${info.extensionId}=true
 `);
 
   return 0;

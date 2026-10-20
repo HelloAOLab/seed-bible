@@ -91,6 +91,10 @@ export default defineConfig({
         components: path.resolve(__dirname, "seed-bible/components/index.tsx"),
         i18n: path.resolve(__dirname, "seed-bible/i18n/index.tsx"),
         extensions: path.resolve(__dirname, "seed-bible/extensions/index.tsx"),
+        "extensions-testing": path.resolve(
+          __dirname,
+          "seed-bible/extensions/testing.tsx"
+        ),
         styles: path.resolve(__dirname, "seed-bible/styles.ts"),
       },
       formats: ["es"],

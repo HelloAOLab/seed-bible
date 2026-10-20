@@ -27,6 +27,10 @@
       "types": "./dist/extensions/index.d.ts",
       "import": "./dist/extensions.js"
     },
+    "./extensions/testing": {
+      "types": "./dist/extensions/testing.d.ts",
+      "import": "./dist/extensions-testing.js"
+    },
     "./style.css": "./dist/style.css",
     "./package.json": "./package.json"
   },

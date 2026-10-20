@@ -9,7 +9,6 @@
     "lint:fix": "seed-bible-extension-scripts lint --fix",
     "test": "seed-bible-extension-scripts test",
     "build": "seed-bible-extension-scripts build",
-    "build:standalone": "seed-bible-extension-scripts build --standalone",
     "publish": "seed-bible-extension-scripts publish",
     "dev": "seed-bible-extension-scripts dev"
   },

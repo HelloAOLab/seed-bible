@@ -16,6 +16,7 @@
     "seed-bible/components/index.tsx",
     "seed-bible/i18n/index.tsx",
     "seed-bible/extensions/index.tsx",
+    "seed-bible/extensions/testing.tsx",
     "seed-bible/styles.ts",
     "seed-bible/ambient.d.ts"
   ]
