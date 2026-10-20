@@ -3357,21 +3357,19 @@ describe("createPlaylistManager", () => {
       }
     });
 
-    it("does not advance when a playlist started in the app closes the item it opened on", async () => {
+    it("advances when a playlist started in the app closes its first text or link item", async () => {
       const manager = makeManager("user-1");
       await flush();
       manager.startPlaying(makePlaylist({ items: openingItems() }));
 
       const modal = renderItemModal();
       try {
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(modal.container.textContent).toContain("Intro");
         modal.close();
 
-        expect(manager.playing.value?.currentIndex.value).toBe(0);
-        expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
-
-        await manager.playing.value!.next();
-
         expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
       } finally {
         modal.unmount();
       }
@@ -3594,7 +3592,7 @@ describe("createPlaylistManager", () => {
       }
     });
 
-    it("does not advance after playback has already left and returned to the first item", async () => {
+    it("advances when playback has left and returned to the first item", async () => {
       const manager = startSharedPlaylist(openingItems());
       await manager.playing.value!.next();
       await manager.playing.value!.previous();
@@ -3604,7 +3602,8 @@ describe("createPlaylistManager", () => {
         expect(manager.playing.value?.currentIndex.value).toBe(0);
         expect(modal.container.textContent).toContain("Intro");
         modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
       } finally {
         modal.unmount();
       }
@@ -3749,22 +3748,23 @@ describe("createPlaylistManager", () => {
     it("reopens the current item after it was closed, and closing it again stays put", async () => {
       const manager = makeManager("user-1");
       await flush();
-      manager.startPlaying(makePlaylist({ items: openingItems() }));
+      manager.startPlaying(makePlaylist({ items: openingItems() }), 1);
 
       const modal = renderItemModal();
       try {
-        expect(modal.container.textContent).toContain("Intro");
+        expect(modal.container.textContent).toContain("Note");
         modal.close();
         expect(
           lastModals.modals.value.some((m) => m.id === "playlist-item-content")
         ).toBe(false);
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
 
         manager.showCurrentItem();
         modal.refresh();
 
-        expect(modal.container.textContent).toContain("Intro");
+        expect(modal.container.textContent).toContain("Note");
         modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
       } finally {
         modal.unmount();
       }
@@ -4188,7 +4188,7 @@ describe("createPlaylistManager", () => {
       }
     });
 
-    it("stays on the item playback opened on when the modal is closed", async () => {
+    it("moves on from the first item when its modal is closed", async () => {
       const manager = makeManager("user-1");
       await flush();
       manager.startPlaying(
@@ -4206,8 +4206,8 @@ describe("createPlaylistManager", () => {
       dismiss();
       await playing.whenSettled();
 
-      expect(playing.currentIndex.value).toBe(0);
-      expect(itemModal()).toBeUndefined();
+      expect(playing.currentIndex.value).toBe(1);
+      expect(itemModal()?.title).toBe("Second");
     });
 
     it("has no nav when an item is previewed outside playback", () => {

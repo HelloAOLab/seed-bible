@@ -637,7 +637,8 @@ export function expandCrossChapterItem(
 /**
  * How playback arrived at the current step. Closing a text or link modal
  * continues in that direction. A direct landing — pressing play, jumping to
- * an item, or opening a link to that step — stays on the item.
+ * an item, or opening a link to that step — stays on the item, except the
+ * first item, which always steps forward.
  */
 export type PlaylistStepArrival = "forward" | "backward" | "direct";
 
@@ -1158,7 +1159,14 @@ export function createPlaylistManager(
         // previous step at the ends, and closing must not finish the
         // playlist — that only happens when they press next themselves.
         const arrival = playingState.getStepArrival();
-        if (arrival === "forward" && playingState.hasNext.peek()) {
+        const onFirstItem = playingState.currentIndex.peek() === 0;
+        // The first item has nowhere to go back to, so closing it steps
+        // forward. That includes pressing Play on your own playlist, which
+        // opens the intro directly rather than by Next.
+        if (
+          playingState.hasNext.peek() &&
+          (arrival === "forward" || onFirstItem)
+        ) {
           moveAfterClose(playingState.next());
         } else if (arrival === "backward" && playingState.hasPrevious.peek()) {
           moveAfterClose(playingState.previous());
@@ -2012,9 +2020,9 @@ export function createPlaylistManager(
         : -1;
 
     const openingItem = queue[0];
-    // A shared opening on text or a link treats that first close as forward,
-    // so the visitor steps through the intro into the first passage. In-app
-    // play, and a shared opening on any later step, is a direct landing.
+    // A shared opening on text or a link records that first close as forward.
+    // In-app play records a direct landing; closing the first item still
+    // steps forward. A shared opening on any later step is a direct landing.
     //
     // Reloads, restored tabs, and URL sync all come through
     // `startPlayingLocator`, which passes `sharedOpening`. The address bar

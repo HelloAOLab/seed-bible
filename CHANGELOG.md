@@ -8,8 +8,8 @@
 
 - Closing a text or link item during a playlist keeps going the way you were moving, instead of always moving on. ([#1953](https://github.com/HelloAOLab/seed-bible/pull/1953))
   - Forward after Next, and back after Previous.
-  - It stays put if you opened that item directly, and it no longer ends the playlist.
-  - A shared playlist that starts with text moves on to the first passage when you close the intro.
+  - Closing the first item moves on, including when you pressed Play on your own playlist.
+  - It stays put if you opened a later item directly, and it no longer ends the playlist.
   - Tap the item you're already on in the queue to open it again.
 
 ### 🐛 Fixed
