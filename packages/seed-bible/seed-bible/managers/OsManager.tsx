@@ -18,7 +18,10 @@ import type { SharedMarkerPermission } from "@casual-simulation/aux-common";
 import { sha256 } from "hash.js";
 import { first, firstValueFrom, timeout } from "rxjs";
 import { guardRecordsClient } from "./SessionGuard";
-import type { SessionInvalidatedEvent } from "./SessionGuard";
+import type {
+  SessionInvalidatedEvent,
+  SessionReplacementResolver,
+} from "./SessionGuard";
 import { toLinkPreview, type LinkPreview } from "./linkPreview";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
@@ -304,29 +307,23 @@ export function CasualOSManager(
   const sessionInvalidated = signal<SessionInvalidatedEvent | null>(null);
   let sessionInvalidatedCount = 0;
 
-  /** The most recent session refresh: the key it retires and the key it yields. */
-  let sessionReplacement: {
-    oldKey: string;
-    newKey: Promise<string | null>;
-  } | null = null;
+  let resolveSessionReplacement: SessionReplacementResolver | null = null;
 
   /**
-   * Records that `oldKey` is being swapped for a new one, so requests that fail
-   * because the server already retired `oldKey` can be retried with the new key
-   * instead of signing the user out. `newKey` must resolve only after the new key
-   * has been installed in `sessionKey`.
+   * Lets `LoginManager` say whether a key has been swapped for a newer one — by a
+   * refresh in this tab or in another tab. Requests refused because the server
+   * already retired their key are then retried with the new key instead of signing
+   * the user out.
    */
-  const trackSessionReplacement = (
-    oldKey: string,
-    newKey: Promise<string | null>
+  const setSessionReplacementResolver = (
+    resolver: SessionReplacementResolver | null
   ) => {
-    sessionReplacement = { oldKey, newKey };
+    resolveSessionReplacement = resolver;
   };
 
   const client = guardRecordsClient(rawClient, {
     getSessionKey: () => sessionKey.peek(),
-    getSessionReplacement: (key) =>
-      sessionReplacement?.oldKey === key ? sessionReplacement.newKey : null,
+    getSessionReplacement: (key) => resolveSessionReplacement?.(key) ?? null,
     onSessionInvalidated: (errorCode) => {
       console.warn(`[OsManager] The session is no longer valid: ${errorCode}`);
       sessionInvalidated.value = {
@@ -525,7 +522,7 @@ export function CasualOSManager(
     connectionKey,
     clearBranchDeviceCache,
     sessionInvalidated,
-    trackSessionReplacement,
+    setSessionReplacementResolver,
 
     getData: async (recordName: string, address: string) => {
       const result = await client.getData({

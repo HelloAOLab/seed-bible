@@ -78,6 +78,15 @@ const REPLACING_METHODS: ReadonlySet<string> = new Set(["replaceSession"]);
  */
 const DATA_PROPERTIES: ReadonlySet<string> = new Set(["sessionKey"]);
 
+/**
+ * If `sessionKey` is being (or has been) swapped for a newer key, resolves once the
+ * swap has settled, with the new key — or null if it failed. Returns null when the
+ * key was never replaced.
+ */
+export type SessionReplacementResolver = (
+  sessionKey: string
+) => Promise<string | null> | null;
+
 export interface SessionGuardOptions {
   /** Reads the session key currently attached to outgoing requests. */
   getSessionKey: () => string | null;
@@ -86,16 +95,15 @@ export interface SessionGuardOptions {
   onSessionInvalidated: (errorCode: FatalSessionErrorCode) => void;
 
   /**
-   * If `sessionKey` is being (or has been) swapped for a new key, resolves once the
-   * swap has settled, with the new key, or null if the swap failed. Returns null
-   * when the key was never replaced.
+   * Looks up the key that replaced a refused one.
    *
    * The server revokes the old key the moment it issues the new one, so any request
    * that reaches it with the old key after that point fails with `invalid_key` —
-   * including requests that went out before the refresh did. Those failures say
-   * nothing about the user's session, which is very much alive under its new key.
+   * including requests that went out before the refresh did, and requests from
+   * another tab that hasn't caught up yet. Those failures say nothing about the
+   * user's session, which is very much alive under its new key.
    */
-  getSessionReplacement?: (sessionKey: string) => Promise<string | null> | null;
+  getSessionReplacement?: SessionReplacementResolver;
 }
 
 /**
