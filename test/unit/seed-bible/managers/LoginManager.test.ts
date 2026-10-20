@@ -689,6 +689,15 @@ describe("createLoginManager", () => {
       );
     }
 
+    /** The properties of the first sign-out event, failing if none was sent. */
+    function firstSignOutProperties(): Record<string, unknown> {
+      const call = signOutEvents()[0];
+      if (!call) {
+        throw new Error("expected a session_auto_signed_out event");
+      }
+      return call[1];
+    }
+
     /** A promise the test settles by hand, to order concurrent requests. */
     function deferred<T>() {
       let resolve!: (value: T) => void;
@@ -732,7 +741,7 @@ describe("createLoginManager", () => {
       const manager = createAuthenticatedManager();
       await waitFor(() => manager.sessionEnded.value !== null);
 
-      expect(signOutEvents()[0][1]).toMatchObject({
+      expect(firstSignOutProperties()).toMatchObject({
         reason: "account_suspended",
         error_code: "user_is_banned",
       });
@@ -760,7 +769,7 @@ describe("createLoginManager", () => {
       await waitFor(() => manager.sessionEnded.value !== null);
 
       expect(signOutEvents()).toHaveLength(1);
-      expect(signOutEvents()[0][1]).toMatchObject({
+      expect(firstSignOutProperties()).toMatchObject({
         session_id: "session-1",
         error_code: "invalid_key",
         failed_request: "getUserInfo",
@@ -789,7 +798,7 @@ describe("createLoginManager", () => {
       });
       await waitFor(() => manager.sessionEnded.value !== null);
 
-      expect(signOutEvents()[0][1].refresh_errors).toEqual([
+      expect(firstSignOutProperties().refresh_errors).toEqual([
         {
           error_code: "request_failed",
           error_message: "Failed to fetch",
@@ -810,7 +819,7 @@ describe("createLoginManager", () => {
       const manager = createLoginManager({ os });
       await waitFor(() => manager.sessionEnded.value !== null);
 
-      expect(signOutEvents()[0][1]).toMatchObject({
+      expect(firstSignOutProperties()).toMatchObject({
         failed_request: "replaceSession",
         error_code: "session_expired",
       });
