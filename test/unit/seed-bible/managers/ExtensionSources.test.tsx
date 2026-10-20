@@ -73,6 +73,22 @@ describe("extension sources", () => {
     expect(h.consent).toHaveBeenCalledTimes(1);
   });
 
+  it("finds a bundle linked relative to its set, wherever the set is hosted", async () => {
+    const extension = await hostVerseArt();
+    // As `package` writes it: the bundle next to the set, by file name.
+    h.hostSet(SET_URL, [{ ...extension, url: "bundle.js" }]);
+    const manager = await loadPage();
+
+    const set = await manager.discoverExtensionSet(SET_URL);
+    expect(set!.extensions[0]).toMatchObject({
+      url: "https://ext.example.com/verse-art/bundle.js",
+    });
+    expect(
+      await manager.loadExtension(listed(manager, "ext.verse-art")!.extension!)
+    ).toBe(true);
+    await vi.waitFor(() => expect(starts).toHaveLength(1));
+  });
+
   it("forgets where an extension came from when it's uninstalled", async () => {
     await hostVerseArt();
     const first = await loadPage();

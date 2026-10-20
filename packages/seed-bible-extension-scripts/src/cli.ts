@@ -6,6 +6,7 @@ import { runBuild } from "./commands/build.js";
 import { runDev } from "./commands/dev.js";
 import { runLint } from "./commands/lint.js";
 import { runPublish } from "./commands/publish.js";
+import { runPackage } from "./commands/package.js";
 
 const program = new Command();
 
@@ -51,6 +52,19 @@ program
   )
   .action(async (opts: { standalone?: boolean }) => {
     process.exitCode = await runBuild({ standalone: Boolean(opts.standalone) });
+  });
+
+program
+  .command("package")
+  .description(
+    "Build the extension into dist/site/: static files to upload to GitHub Pages, Cloudflare Pages or Workers, or any static host, with an install page."
+  )
+  .option(
+    "--app-url <url>",
+    "the Seed Bible the install page links to (default https://seedbible.org/)"
+  )
+  .action(async (opts: { appUrl?: string }) => {
+    process.exitCode = await runPackage({ appUrl: opts.appUrl });
   });
 
 program

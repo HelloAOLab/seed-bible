@@ -9,6 +9,9 @@
     "lint:fix": "seed-bible-extension-scripts lint --fix",
     "test": "seed-bible-extension-scripts test",
     "build": "seed-bible-extension-scripts build",
+    "package": "seed-bible-extension-scripts package",
+    "deploy:cloudflare-pages": "seed-bible-extension-scripts package && npx wrangler pages deploy dist/site --project-name {{extensionId}}",
+    "deploy:cloudflare-workers": "seed-bible-extension-scripts package && npx wrangler deploy",
     "publish": "seed-bible-extension-scripts publish",
     "dev": "seed-bible-extension-scripts dev"
   },

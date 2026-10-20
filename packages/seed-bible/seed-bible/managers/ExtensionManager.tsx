@@ -1963,11 +1963,21 @@ export function createExtensionManager(
         return null;
       }
 
-      for (const extension of data.extensions) {
+      // A bundle's URL may be relative to the set, so a folder from
+      // `seed-bible-extension-scripts package` works wherever it's hosted.
+      const set: ExtensionSet = {
+        ...data,
+        extensions: data.extensions.map((extension) =>
+          "url" in extension
+            ? { ...extension, url: new URL(extension.url, url).href }
+            : extension
+        ),
+      };
+      for (const extension of set.extensions) {
         discoveredSetUrlById.set(extension.meta.id, url);
       }
-      await loadExtensionSet(data, () => false);
-      return data;
+      await loadExtensionSet(set, () => false);
+      return set;
     } catch (err) {
       console.error("Failed to discover extension set:", url, err);
       return null;

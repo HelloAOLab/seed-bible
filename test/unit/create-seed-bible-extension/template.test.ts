@@ -32,10 +32,25 @@ describe("a scaffolded extension", () => {
     expect(checkPermissionUses(info.meta, findPermissionUses(sources))).toEqual(
       { errors: [], warnings: [] }
     );
+    const { scripts } = JSON.parse(
+      await readFile(path.join(target, "package.json"), "utf-8")
+    );
+    expect(scripts.build).toBe("seed-bible-extension-scripts build");
+    expect(scripts.package).toBe("seed-bible-extension-scripts package");
+  });
+
+  it("is ready to host on GitHub Pages or Cloudflare", async () => {
+    const workflow = await readFile(
+      path.join(target, ".github/workflows/deploy-pages.yml"),
+      "utf-8"
+    );
+    expect(workflow).toContain("run: npm run package");
+    expect(workflow).toContain("path: dist/site");
+    // GitHub's own expressions survive scaffolding.
+    expect(workflow).toContain("${{ steps.deployment.outputs.page_url }}");
     expect(
-      JSON.parse(await readFile(path.join(target, "package.json"), "utf-8"))
-        .scripts.build
-    ).toBe("seed-bible-extension-scripts build");
+      await readFile(path.join(target, "wrangler.jsonc"), "utf-8")
+    ).toContain('"name": "my-ext"');
   });
 });
 

@@ -26,6 +26,8 @@ in `src/init.tsx`. Every call is checked against the permissions in
   the extension against a stand-in for Seed Bible.
 - `npm run build`: checks, tests, and builds the single-file bundle Seed
   Bible loads, in `dist/standalone/`.
+- `npm run package`: checks, tests, builds, and writes `dist/site/`: the
+  files to host yourself (see "Hosting it" below).
 - `npm run publish`: builds, uploads the bundle and a small manifest
   describing it (an `ExtensionSet`), and prints that manifest's link. Anyone
   can paste the link into Seed Bible's Settings > Extensions > "Add
@@ -37,6 +39,37 @@ in `src/init.tsx`. Every call is checked against the permissions in
 
 Replace `npm run` with `pnpm run` or `yarn run` if you use a different
 package manager; every command works the same way with any of them.
+
+## Hosting it
+
+`npm run package` writes `dist/site/`, a folder of static files that works
+from any static host, at any address:
+
+- the bundle, named by its hash, so browsers can cache it for good;
+- `extension-set.json`, the link Seed Bible installs from;
+- `index.html`, a page with an "Install in Seed Bible" button;
+- `_headers` and `.nojekyll`, so each host serves the files the way Seed
+  Bible needs.
+
+Then pick a host:
+
+- **GitHub Pages**: push this project to GitHub, and in the repository's
+  Settings > Pages set "Source" to "GitHub Actions". The workflow in
+  `.github/workflows/deploy-pages.yml` packages and publishes the extension
+  on every push to `main`, at `https://<user>.github.io/<repository>/`.
+- **Cloudflare Pages**: `npm run deploy:cloudflare-pages`. The first run asks
+  you to log in to Cloudflare and creates a project named after the
+  extension.
+- **Cloudflare Workers**: `npm run deploy:cloudflare-workers`, which uses
+  `wrangler.jsonc`.
+- **Anywhere else**: upload `dist/site/` as it is. The host has to let other
+  sites fetch the files (send `Access-Control-Allow-Origin: *`); `_headers`
+  takes care of that on Cloudflare and Netlify, and GitHub Pages does it
+  already.
+
+Share the hosted page, or its `extension-set.json` link. People who
+installed the extension get each new upload the next time they open Seed
+Bible.
 
 ## Permissions
 
