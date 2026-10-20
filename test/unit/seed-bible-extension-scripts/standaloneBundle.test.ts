@@ -16,10 +16,21 @@ describe("the sandboxed bundle", () => {
     const outDir = await mkdtemp(path.join(os.tmpdir(), "sb-bundle-"));
     try {
       const config = standaloneBundleConfig(root, outDir);
+      // The SDK's source rather than the `seed-bible` package's build, which
+      // tests run before. It still gets Preact from `seed-bible`'s own
+      // dependencies, so the two versions meet as they do in a real project.
+      const sdk = path.resolve(
+        "packages/seed-bible/seed-bible/extensions/index.tsx"
+      );
       // The extension tooling has its own copy of Vite's types.
-      await build({ ...config, logLevel: "silent" } as Parameters<
-        typeof build
-      >[0]);
+      await build({
+        ...config,
+        logLevel: "silent",
+        resolve: {
+          ...config.resolve,
+          alias: { "seed-bible/extensions": sdk },
+        },
+      } as Parameters<typeof build>[0]);
       const bundle = await readFile(path.join(outDir, "index.js"), "utf-8");
 
       const copies = bundle.match(
