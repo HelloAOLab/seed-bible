@@ -2,7 +2,6 @@ import { signal, type Signal } from "@preact/signals";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import type { ComponentChild } from "preact";
-import type { BibleToolContext } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   setupExtensionContext,
@@ -119,7 +118,9 @@ describe("Find the Verse", () => {
   let panes: Signal<{ id: string }[]>;
   let paneView: (() => ComponentChild) | null;
   let toolbar: { onSelect?: () => void } | null;
-  let verseTool: { onSelect?: (context: BibleToolContext) => void } | null;
+  let verseTool: {
+    onSelect?: (context: { readingState: Reading }) => void;
+  } | null;
   let reading: Reading;
   let selectedTab: Signal<{ readingState: Reading } | null>;
 
@@ -156,7 +157,7 @@ describe("Find the Verse", () => {
         },
         registerVerseToolbarTool: (tool: {
           id: string;
-          onSelect?: (context: BibleToolContext) => void;
+          onSelect?: (context: { readingState: Reading }) => void;
         }) => {
           if (tool.id === "find-the-verse-set-target") verseTool = tool;
           return () => undefined;
@@ -222,7 +223,7 @@ describe("Find the Verse", () => {
       selectedVerse("NOPE", 1, 1, "not a book the game knows"),
     ];
     await act(async () => {
-      verseTool?.onSelect?.({ readingState: reading } as BibleToolContext);
+      verseTool?.onSelect?.({ readingState: reading });
     });
 
     expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(true);
@@ -249,7 +250,7 @@ describe("Find the Verse", () => {
       selectedVerse("JHN", 1, 1, "Right reader text"),
     ];
     await act(async () => {
-      verseTool?.onSelect?.({ readingState: other } as BibleToolContext);
+      verseTool?.onSelect?.({ readingState: other });
     });
     await showPane();
 
