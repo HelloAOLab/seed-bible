@@ -399,9 +399,9 @@ function SessionSettingsModalContent(props: {
             >
               {(
                 [
-                  { value: "hosts-only", label: "Hosts" },
-                  { value: "everyone", label: "Everyone" },
-                  { value: "none", label: "Off" },
+                  { value: "hosts-only" },
+                  { value: "everyone" },
+                  { value: "none" },
                 ] as const
               ).map((option) => {
                 const selected =
@@ -447,7 +447,7 @@ function SessionSettingsModalContent(props: {
                     })
                   : t("session-settings-verse-effects-desc-none", {
                       defaultValue:
-                        "Verse selection effects are disabled for everyone.",
+                        "Verse selection effects are turned off for everyone.",
                     })}
             </p>
           </div>

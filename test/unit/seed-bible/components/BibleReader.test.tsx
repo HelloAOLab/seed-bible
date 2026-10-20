@@ -33,6 +33,7 @@ import { createRealFriendContent } from "../testUtils/realFriendContent";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import {
   createDiscoverManager,
+  type BibleReadingSession,
   type ReadingExtensionRuntime,
 } from "@packages/seed-bible/seed-bible/managers";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
@@ -498,6 +499,51 @@ function renderMobileReader(
     );
   });
 }
+const { setReducedMotion } = vi.hoisted(() => {
+  let matches = false;
+  const listeners = new Set<(event: { matches: boolean }) => void>();
+
+  const queryList = {
+    get matches() {
+      return matches;
+    },
+    media: "(prefers-reduced-motion: reduce)",
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: (
+      event: string,
+      listener: (event: { matches: boolean }) => void
+    ) => {
+      if (event === "change") listeners.add(listener);
+    },
+    removeEventListener: (
+      event: string,
+      listener: (event: { matches: boolean }) => void
+    ) => {
+      if (event === "change") listeners.delete(listener);
+    },
+    dispatchEvent: () => true,
+  };
+
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    writable: true,
+    value: vi.fn((query: string) =>
+      query === "(prefers-reduced-motion: reduce)"
+        ? queryList
+        : { ...queryList, media: query, matches: false }
+    ),
+  });
+
+  return {
+    reducedMotionQuery: queryList,
+    setReducedMotion: (value: boolean) => {
+      matches = value;
+      listeners.forEach((listener) => listener({ matches: value }));
+    },
+  };
+});
 
 beforeEach(() => {
   setupRerender();
@@ -511,6 +557,45 @@ afterEach(() => {
 
 describe("BibleReader", () => {
   let container: HTMLDivElement;
+  function renderWithFlare(
+    fixture: ReturnType<typeof createFixture>,
+    session: ReturnType<typeof createVerseFlareSession>["session"],
+    decorations: VerseDecoration[],
+    preference: "default" | "enabled" | "disabled" = "default"
+  ) {
+    fixture.decorations.value = decorations;
+
+    const state = createMobileState(fixture.selectorState);
+    state.settings.settings.value = {
+      ...state.settings.settings.value,
+      verseSelectionEffects: preference,
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={fixture.slot}
+          selectorState={fixture.selectorState}
+          readingState={fixture.readingState}
+          state={state}
+          sharedSession={session as any}
+        />,
+        container
+      );
+    });
+  }
+  const flare = (id: string, color = "#ff0000"): VerseDecoration =>
+    ({
+      id,
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verses: [1],
+      className: "sb-verse-number-flare",
+      style: {
+        "--sb-selection-flare-color": color,
+      },
+    }) as VerseDecoration;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -3530,39 +3615,6 @@ describe("BibleReader", () => {
     });
   });
   describe("verse selection effects", () => {
-    function renderWithFlare(
-      fixture: ReturnType<typeof createFixture>,
-      session: ReturnType<typeof createVerseFlareSession>["session"],
-      decorations: VerseDecoration[]
-    ) {
-      fixture.decorations.value = decorations;
-
-      act(() => {
-        render(
-          <BibleReader
-            currentSlot={fixture.slot}
-            selectorState={fixture.selectorState}
-            readingState={fixture.readingState}
-            sharedSession={session as any}
-          />,
-          container
-        );
-      });
-    }
-
-    const flare = (id: string, color = "#ff0000"): VerseDecoration =>
-      ({
-        id,
-        translationId: "BSB",
-        bookId: "GEN",
-        chapterNumber: 1,
-        verses: [1],
-        className: "sb-verse-number-flare",
-        style: {
-          "--sb-selection-flare-color": color,
-        },
-      }) as VerseDecoration;
-
     it("hides the current user's own flare", () => {
       const fixture = createFixture();
       const { session } = createVerseFlareSession({
@@ -3613,150 +3665,95 @@ describe("BibleReader", () => {
         verseNumber?.style.getPropertyValue("--sb-selection-flare-color")
       ).toBe("#ff0000");
     });
-
     it("does not show an incoming flare when effects are disabled", () => {
       const fixture = createFixture();
       const { session } = createVerseFlareSession({
-        userId: "me",
-        connectionId: "connection-me",
-      });
-
-      // Set the personal preference to "disabled" using the preference signal
-      // or state configuration used by your current implementation.
-      renderWithFlare(fixture, session, [
-        flare("selected-verse-flare-peer", "#ff0000"),
-      ]);
-
-      // Once the fixture is configured with verseSelectionEffects: "disabled",
-      // the incoming flare must not be applied.
-      const verseNumber = container.querySelector(".sb-verse-number");
-
-      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
-        false
-      );
-    });
-  });
-  describe("verse selection effects with reduced motion", () => {
-    afterEach(() => {
-      vi.restoreAllMocks();
-    });
-
-    function mockReducedMotion(matches: boolean) {
-      const listeners = new Set<(event: MediaQueryListEvent) => void>();
-
-      const mediaQueryList = {
-        matches,
-        media: "(prefers-reduced-motion: reduce)",
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(
-          (event: string, listener: (event: MediaQueryListEvent) => void) => {
-            if (event === "change") listeners.add(listener);
-          }
-        ),
-        removeEventListener: vi.fn(
-          (event: string, listener: (event: MediaQueryListEvent) => void) => {
-            if (event === "change") listeners.delete(listener);
-          }
-        ),
-        dispatchEvent: vi.fn(),
-      } as unknown as MediaQueryList;
-
-      Object.defineProperty(window, "matchMedia", {
-        configurable: true,
-        writable: true,
-        value: vi.fn((query: string) =>
-          query === "(prefers-reduced-motion: reduce)"
-            ? mediaQueryList
-            : { ...mediaQueryList, matches: false, media: query }
-        ),
-      });
-
-      return mediaQueryList;
-    }
-
-    it('hides incoming flares when preference is "default" and reduced motion is enabled', () => {
-      mockReducedMotion(true);
-
-      const fixture = createFixture();
-      const { session } = createVerseFlareSession();
-
-      fixture.decorations.value = [
-        {
-          id: "selected-verse-flare-peer",
-          translationId: "BSB",
-          bookId: "GEN",
-          chapterNumber: 1,
-          verses: [1],
-          className: "sb-verse-number-flare",
-          style: {
-            "--sb-selection-flare-color": "#ff0000",
-          },
-        } as VerseDecoration,
-      ];
-
-      // Configure the actual personal preference as "default" here.
-      act(() => {
-        render(
-          <BibleReader
-            currentSlot={fixture.slot}
-            selectorState={fixture.selectorState}
-            readingState={fixture.readingState}
-            sharedSession={session as any}
-          />,
-          container
-        );
-      });
-
-      expect(container.querySelector(".sb-verse-number-flare")).toBeNull();
-    });
-
-    it('shows incoming flares when preference is "enabled", even with reduced motion', () => {
-      mockReducedMotion(true);
-      const fixture = createFixture();
-      const { session } = createVerseFlareSession({
-        userId: "me",
-        connectionId: "connection-me",
         visibility: "everyone",
         ownerByDecoration: {
           "selected-verse-flare-peer": "connection-peer",
         },
       });
-      fixture.decorations.value = [
-        {
-          id: "selected-verse-flare-peer",
-          translationId: "BSB",
-          bookId: "GEN",
-          chapterNumber: 1,
-          verses: [1],
-          className: "sb-verse-number-flare",
-          style: {
-            "--sb-selection-flare-color": "#ff0000",
-          },
-        } as VerseDecoration,
-      ];
 
-      // Configure the actual personal preference as "enabled" here.
-      act(() => {
-        render(
-          <BibleReader
-            currentSlot={fixture.slot}
-            selectorState={fixture.selectorState}
-            readingState={fixture.readingState}
-            sharedSession={session as any}
-          />,
-          container
-        );
-      });
+      renderWithFlare(
+        fixture,
+        session,
+        [flare("selected-verse-flare-peer", "#ff0000")],
+        "disabled"
+      );
 
       const verseNumber = container.querySelector(".sb-verse-number");
 
+      expect(verseNumber).not.toBeNull();
       expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
-        true
+        false
       );
     });
   });
+
+  describe("verse selection effects with reduced motion", () => {
+    afterEach(() => {
+      setReducedMotion(false);
+      vi.restoreAllMocks();
+    });
+
+    it('hides incoming flares when preference is "default" and reduced motion is enabled', () => {
+      setReducedMotion(true);
+
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        visibility: "everyone",
+        ownerByDecoration: {
+          "selected-verse-flare-peer": "connection-peer",
+        },
+      });
+
+      renderWithFlare(
+        fixture,
+        session,
+        [flare("selected-verse-flare-peer", "#ff0000")],
+        "default"
+      );
+
+      const verseNumber = container.querySelector(".sb-verse-number");
+
+      expect(verseNumber).not.toBeNull();
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        false
+      );
+    });
+
+    it('shows incoming flares when preference is "enabled", even with reduced motion', () => {
+      setReducedMotion(true);
+
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        visibility: "everyone",
+        ownerByDecoration: {
+          "selected-verse-flare-peer": "connection-peer",
+        },
+      });
+
+      renderWithFlare(
+        fixture,
+        session,
+        [flare("selected-verse-flare-peer", "#ff0000")],
+        "enabled"
+      );
+
+      const verseNumber = container.querySelector(".sb-verse-number");
+
+      expect(verseNumber).not.toBeNull();
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        true
+      );
+      expect(
+        (verseNumber as HTMLElement).style.getPropertyValue(
+          "--sb-selection-flare-color"
+        )
+      ).toBe("#ff0000");
+    });
+  });
+
   describe("broadcasting verse selection effects", () => {
     function clickFirstVerse(
       fixture: ReturnType<typeof createFixture>,
@@ -5687,6 +5684,14 @@ describe("BibleReader", () => {
 
   it("applies the selection flare to the verse number, not the whole verse", () => {
     const { slot, selectorState, readingState, decorations } = createFixture();
+
+    const { session } = createVerseFlareSession({
+      visibility: "everyone",
+      ownerByDecoration: {
+        "flare-from-other-user": "connection-peer",
+      },
+    });
+
     decorations.value = [
       {
         id: "flare-from-other-user",
@@ -5700,18 +5705,25 @@ describe("BibleReader", () => {
         },
       },
     ];
+
     act(() => {
       render(
         <BibleReader
           currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
+          sharedSession={session as unknown as BibleReadingSession}
         />,
         container
       );
     });
+
     const verse = container.querySelector(".sb-verse");
+    const verseNumber = verse?.querySelector(".sb-verse-number");
+
     expect(verse).not.toBeNull();
+    expect(verseNumber).not.toBeNull();
+    expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(true);
     expect(verse?.classList.contains("sb-verse-number-flare")).toBe(false);
   });
 });

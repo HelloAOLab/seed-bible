@@ -1482,25 +1482,50 @@ async function createBibleReadingSession(
     if (applyingRemoteDecorations) {
       return;
     }
+    const canDecorate = userCanDecorate(localSessionId.value);
 
-    if (!userCanDecorate(localSessionId.value)) {
-      return;
+    const isVerseSelectionFlare = (decoration: VerseDecoration) =>
+      decoration.className?.split(/\s+/).includes("sb-verse-number-flare") ??
+      false;
+
+    const sharedDecorationEntries = getSharedDecorationEntries();
+    // Temporary verse-selection flares are allowed even when the participant
+    // cannot create highlights. Other decorations remain permission-restricted.
+    if (!canDecorate) {
+      const hasLocalFlare = currentDecorations.some(isVerseSelectionFlare);
+
+      const hasSharedLocalFlare = Array.from(
+        sharedDecorationEntries.values()
+      ).some(
+        (entry) =>
+          entry.connectionId === localConnectionId &&
+          isVerseSelectionFlare(entry.decoration)
+      );
+
+      if (!hasLocalFlare && !hasSharedLocalFlare) {
+        return;
+      }
     }
 
     const localDecorations = currentDecorations.filter((decoration) => {
+      if (!canDecorate && !isVerseSelectionFlare(decoration)) {
+        return false;
+      }
       const owner = decorationOwners.get(decoration.id);
       if (!owner) {
         decorationOwners.set(decoration.id, localConnectionId);
         return true;
       }
-
       return owner === localConnectionId;
     });
 
-    const sharedDecorationEntries = getSharedDecorationEntries();
     const localSharedDecorations = Array.from(
       sharedDecorationEntries.values()
-    ).filter((entry) => entry.connectionId === localConnectionId);
+    ).filter(
+      (entry) =>
+        entry.connectionId === localConnectionId &&
+        (canDecorate || isVerseSelectionFlare(entry.decoration))
+    );
     const localDecorationIds = new Set(
       localDecorations.map((decoration) => decoration.id)
     );

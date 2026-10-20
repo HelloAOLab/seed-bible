@@ -45,7 +45,10 @@ import type {
 } from "../../managers/HighlightsManager";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
 import type { TabSlot } from "../../managers/TabsLayoutManager";
-import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
+import type {
+  ScriptureElementsBehavior,
+  VerseSelectionEffects,
+} from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   annotationVerseNumbers,
@@ -862,7 +865,6 @@ function renderChapterContent(
     const currentConnectionId =
       currentUser.connectionId ?? currentUser.userId ?? "anonymous";
 
-    const ownDecorationId = `selected-verse-flare-${currentConnectionId}`;
     const visibility =
       session.options.value.verseSelectionEffectVisibility ?? "hosts-only";
 
@@ -874,12 +876,6 @@ function renderChapterContent(
       if (!decoration.className?.includes("sb-verse-number-flare")) {
         return false;
       }
-
-      // Never render this user's own flare.
-      if (decoration.id === ownDecorationId) {
-        return false;
-      }
-
       const owner = session.getDecorationOwner(decoration.id);
 
       if (!owner) {
@@ -1026,8 +1022,6 @@ function renderChapterContent(
       if (decoration.className?.includes("sb-verse-number-flare")) {
         return false;
       }
-
-      // Preserve all other decorations.
       return true;
     });
 
@@ -2623,8 +2617,18 @@ function ChapterContent(props: ChapterContentProps) {
             justConvertedSelectionRef.current = false;
             return;
           }
+          const wasSelected = selectedVerses.value.some(
+            (selectedVerse) =>
+              selectedVerse.bookId === verse.bookId &&
+              selectedVerse.chapterNumber === verse.chapterNumber &&
+              selectedVerse.verse === verse.verse
+          );
           selectVerse(verse, event.clientX, event.clientY);
-          onHostVerseClick(verse);
+          // only trigger the flare when the verse is newly selected,
+          // not when clicking an already selected verse to unselect it.
+          if (!wasSelected) {
+            onHostVerseClick(verse);
+          }
         },
         selectedVerses.value,
         (noteId) => selectFootnote(noteId),
@@ -2664,7 +2668,6 @@ function resolveTranslation(
   }
   return null;
 }
-type VerseSelectionEffects = "default" | "enabled" | "disabled";
 
 // Respect the user's explicit preference; otherwise, follow the OS setting.
 function shouldShowVerseSelectionEffects(
@@ -2682,11 +2685,8 @@ const reducedMotionQuery =
   typeof window !== "undefined" && typeof window.matchMedia === "function"
     ? window.matchMedia("(prefers-reduced-motion: reduce)")
     : null;
-
 // Keep the preference reactive so changes to the OS setting can update the UI.
 const prefersReducedMotion = signal(reducedMotionQuery?.matches ?? false);
-
-// Update the signal whenever the OS reduced-motion preference changes.
 reducedMotionQuery?.addEventListener("change", (event) => {
   prefersReducedMotion.value = event.matches;
 });
@@ -2843,6 +2843,7 @@ export function BibleReader(props: BibleReaderProps) {
 
     if (isCompactReader) {
       selectVerse(verse, event.clientX, event.clientY);
+      handleHostVerseClick(verse);
       readingState.pendingAnnotationScrollVerse.value = verseNumber;
       return;
     }
@@ -2982,20 +2983,25 @@ export function BibleReader(props: BibleReaderProps) {
     justConvertedSelectionRef.current = true;
 
     // Mirror clicking each covered verse: deselect everything, then reselect.
+    // Mirror clicking each covered verse: deselect everything, then reselect.
     clearSelectedVerses();
+
+    let firstSelectedVerse: BibleSelectedVerse | null = null;
     for (const el of verseEls) {
       const verseValue = verseByNumber.get(Number(el.dataset.verseNumber));
       if (!verseValue) continue;
-      selectVerse(
-        {
-          bookId: data.book.id,
-          chapterNumber: data.chapter.number,
-          verse: verseValue,
-          translationId: data.translation.id,
-        },
-        anchorX,
-        anchorY
-      );
+      const verse: BibleSelectedVerse = {
+        bookId: data.book.id,
+        chapterNumber: data.chapter.number,
+        verse: verseValue,
+        translationId: data.translation.id,
+      };
+      firstSelectedVerse ??= verse;
+      selectVerse(verse, anchorX, anchorY);
+    }
+    // Broadcast only the first verse in the drag selection.
+    if (firstSelectedVerse) {
+      handleHostVerseClick(firstSelectedVerse);
     }
   };
   const handleHostVerseClick = useCallback(
