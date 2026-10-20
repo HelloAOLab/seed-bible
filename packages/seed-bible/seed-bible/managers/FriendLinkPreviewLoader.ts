@@ -51,7 +51,10 @@ export function createFriendLinkPreviewLoader(options: {
       login
         .getPublicProfile(userId)
         .then((profile) => {
-          result.value = { userId, profile };
+          result.value = {
+            userId,
+            profile: profile && { ...profile, config: null },
+          };
         })
         .catch((error) => {
           console.warn("Could not load the profile for a friend link:", error);

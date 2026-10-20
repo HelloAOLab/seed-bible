@@ -679,7 +679,7 @@ export async function render(
       />
       <meta property="og:title" content={state.app.socialTitle.value} />
       <meta property="og:description" content={state.app.description.value} />
-      <meta property="og:url" content={state.app.canonicalUrl.value} />
+      <meta property="og:url" content={state.app.socialUrl.value} />
       <meta property="og:site_name" content={state.app.siteName.value} />
       {/* Only emitted for a shared playlist with a cover image, or when a
           customization with an uploaded logo is active (see

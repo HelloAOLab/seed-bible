@@ -401,6 +401,12 @@ export interface AppState {
    * is always spelled out and why it follows the translation.
    */
   canonicalUrl: ReadonlySignal<string>;
+  /**
+   * The page's `og:url`: `canonicalUrl`, except on a friend link with a named
+   * profile, whose preview describes the link itself rather than the chapter
+   * its bare root shows.
+   */
+  socialUrl: ReadonlySignal<string>;
 
   /** The title of the page. */
   title: ReadonlySignal<string>;
@@ -691,6 +697,7 @@ import {
   type FriendLinkPreviewLoader,
   type FriendLinkSeed,
 } from "./FriendLinkPreviewLoader";
+import { ADD_FRIEND_PARAM } from "../components/FriendsPane/friendLinks";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -2230,6 +2237,14 @@ export function createSeedBibleState(
 
     return `${navigation.basePath}${readingPath}`;
   });
+  const socialUrl = computed(() => {
+    const userId = friendLinkPreview.result.value?.userId;
+    if (friendLinkPerson.value && userId) {
+      const query = new URLSearchParams({ [ADD_FRIEND_PARAM]: userId });
+      return `${navigation.basePath || "/"}?${query}`;
+    }
+    return canonicalUrl.value;
+  });
 
   /** How often time spent on the chapter in view is written to history. */
   const READING_TICK_MS = 5000;
@@ -3436,6 +3451,7 @@ export function createSeedBibleState(
       customizationLogoUrl,
       socialImage,
       canonicalUrl,
+      socialUrl,
       socialTitle,
       isAboutPage,
       startSharedPage,
