@@ -49,3 +49,16 @@
 .sb-item-inline-preview-link-title {
   font-weight: 600;
 }
+
+.sb-item-inline-preview-note {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+.sb-item-inline-preview-note-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}

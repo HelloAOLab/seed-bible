@@ -4,13 +4,13 @@ exports[`ThemeManager CSS helpers > generateThemeCssClasses > generates a highli
 ".sb-highlight-yellow {
 color: var(--sb-highlight-yellow-font-color);
 }
-.sb-highlight-yellow.sb-words-of-jesus {
+.sb-highlight-yellow .sb-words-of-jesus {
 color: var(--sb-highlight-yellow-words-of-jesus-font-color);
 }
 .sb-highlight-mint {
 color: var(--sb-highlight-mint-font-color);
 }
-.sb-highlight-mint.sb-words-of-jesus {
+.sb-highlight-mint .sb-words-of-jesus {
 color: var(--sb-highlight-mint-words-of-jesus-font-color);
 }"
 `;

@@ -59,8 +59,8 @@ import {
  * hydration-mismatch risk the way an in-tree `<style>` would; this one still
  * needs to be in-tree so a shared `?customization=` link's colors are part of
  * the SSR'd HTML. `dangerouslySetInnerHTML` (rather than a plain text child)
- * is what keeps it safe: raw CSS can contain `&` (e.g. the highlight classes'
- * `&.sb-words-of-jesus`), which a plain JSX text child would HTML-escape on
+ * is what keeps it safe: raw CSS can contain characters like `&` or quotes
+ * (e.g. in font-family values), which a plain JSX text child would HTML-escape on
  * the server but not on the client, causing a hydration mismatch; Preact also
  * never diffs `dangerouslySetInnerHTML` during hydration, so this stays
  * inert even if the two sides' CSS text does legitimately differ.
