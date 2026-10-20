@@ -21,4 +21,6 @@ export function resetPlay(game: GameSignals) {
   game.won.value = false;
   game.revealed.value = false;
   game.partialRevealText.value = "";
+  game.hintOpenFor.value = null;
+  game.playRound.value += 1;
 }

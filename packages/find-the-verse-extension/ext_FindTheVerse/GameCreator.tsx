@@ -147,7 +147,6 @@ export function GameCreator({
         verseNode && verseNode.type === "verse"
           ? extractContentText(verseNode.content).trim()
           : "";
-      if (!stillCurrent()) return;
       if (!verseText) {
         refError.value = unrecognised;
         return;

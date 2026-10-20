@@ -1,5 +1,4 @@
 import { useMemo } from "preact/hooks";
-import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible";
 import { emphasizeVerses, type BookId } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
@@ -108,7 +107,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
   const revealed = game.revealed.value;
   const partialRevealText = game.partialRevealText.value;
   const notice = game.notice.value;
-  const hintOpenFor = useSignal<number | null>(null);
+  const hintOpenFor = game.hintOpenFor.value;
   const { t } = useI18n("find-the-verse-extension");
   const translationBooks =
     state.app.selectedTab.value?.readingState.translationBooks.value?.books;
@@ -185,6 +184,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
     const reading = state.app.selectedTab.value?.readingState;
     if (!reading) return;
     const translationId = reading.translationId.peek();
+    const round = game.playRound.peek();
     game.notice.value = null;
     await reading.selectTranslationAndChapter(
       translationId,
@@ -192,6 +192,9 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
       target.chapterNumber,
       { scrollToVerse: target.verseNumber }
     );
+    // End game and Play both bump the round. A chapter that arrives after
+    // that belongs to the round that asked for it.
+    if (round !== game.playRound.peek()) return;
     const opened =
       reading.bookId.peek() === target.bookId &&
       reading.chapterNumber.peek() === target.chapterNumber;
@@ -231,7 +234,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
           </span>
         )}
         {currentHint ? (
-          hintOpenFor.value === chanceIndex ? (
+          hintOpenFor === chanceIndex ? (
             <span style={{ fontSize: "0.85rem" }}>{currentHint}</span>
           ) : (
             <button
@@ -239,7 +242,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
               title={t("show-hint", { defaultValue: "Show hint" })}
               aria-label={t("show-hint", { defaultValue: "Show hint" })}
               onClick={() => {
-                hintOpenFor.value = chanceIndex;
+                game.hintOpenFor.value = chanceIndex;
               }}
               style={{
                 width: "1.6rem",
@@ -380,11 +383,13 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
         </p>
       )}
 
-      <p style={{ margin: 0, opacity: 0.5, fontSize: "0.8rem" }}>
-        {t("tap-to-guess", {
-          defaultValue: "Tap any verse in the reader to guess.",
-        })}
-      </p>
+      {!revealed && (
+        <p style={{ margin: 0, opacity: 0.5, fontSize: "0.8rem" }}>
+          {t("tap-to-guess", {
+            defaultValue: "Tap any verse in the reader to guess.",
+          })}
+        </p>
+      )}
 
       <button
         type="button"

@@ -1,4 +1,3 @@
-import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "seed-bible";
 import { resultMessage } from "./gameLogic";
 import type { GameSignals } from "./types";
@@ -59,7 +58,7 @@ export function FindTheVerseReaderBanner({
   onEnd,
   onCancelSelect,
 }: PlayBannerProps) {
-  const hintOpenFor = useSignal<number | null>(null);
+  const hintOpenFor = game.hintOpenFor.value;
   const phase = game.phase.value;
   const selecting = game.selectingViaToolbar.value;
   const paneOpen = state.panes.panes.value.some((pane) => pane.id === paneId);
@@ -89,6 +88,7 @@ export function FindTheVerseReaderBanner({
   const steps = game.steps.value;
   const guessCount = game.guessCount.value;
   const won = game.won.value;
+  const revealed = game.revealed.value;
   const lastResult = game.lastResult.value;
   const chancesLeft = Math.max(0, steps.length - guessCount);
   const chanceIndex = Math.min(guessCount, Math.max(0, steps.length - 1));
@@ -120,7 +120,7 @@ export function FindTheVerseReaderBanner({
               })}
         </span>
         {currentHint ? (
-          hintOpenFor.value === chanceIndex ? (
+          hintOpenFor === chanceIndex ? (
             <span style={{ fontSize: "0.85rem" }}>{currentHint}</span>
           ) : (
             <button
@@ -128,7 +128,7 @@ export function FindTheVerseReaderBanner({
               title={translate("show-hint", { defaultValue: "Show hint" })}
               aria-label={translate("show-hint", { defaultValue: "Show hint" })}
               onClick={() => {
-                hintOpenFor.value = chanceIndex;
+                game.hintOpenFor.value = chanceIndex;
               }}
               style={{
                 width: "1.6rem",
@@ -154,10 +154,18 @@ export function FindTheVerseReaderBanner({
           {translate("end-game", { defaultValue: "End game" })}
         </button>
       </div>
-      {lastResult && (
+      {revealed ? (
         <p style={{ margin: 0, fontSize: "0.85rem" }}>
-          {resultMessage(lastResult, translate)}
+          {translate("keep-going", {
+            defaultValue: "Better luck next time — keep going!",
+          })}
         </p>
+      ) : (
+        lastResult && (
+          <p style={{ margin: 0, fontSize: "0.85rem" }}>
+            {resultMessage(lastResult, translate)}
+          </p>
+        )
       )}
     </div>
   );

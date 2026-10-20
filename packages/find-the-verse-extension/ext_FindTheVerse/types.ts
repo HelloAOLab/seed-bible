@@ -60,4 +60,14 @@ export interface GameSignals {
   revealed: Signal<boolean>;
   /** Partial word reveal text, set when the player clicks Reveal. */
   partialRevealText: Signal<string>;
+  /**
+   * Which chance's hint is showing, shared by the panel and the reader bar.
+   * Cleared when the round ends so the next game starts on the ? button.
+   */
+  hintOpenFor: Signal<number | null>;
+  /**
+   * Bumped when a round ends. A reveal still waiting on the chapter compares
+   * against this and does nothing if a later round has started.
+   */
+  playRound: Signal<number>;
 }

@@ -187,6 +187,8 @@ export default function initFindTheVerseExtension() {
         won: signal(false),
         revealed: signal(false),
         partialRevealText: signal(""),
+        hintOpenFor: signal(null),
+        playRound: signal(0),
       };
 
       const savedGames = createSavedGamesController(
@@ -279,10 +281,8 @@ export default function initFindTheVerseExtension() {
         icon: () => <MaterialIcon>location_on</MaterialIcon>,
         isVisible: () =>
           game.selectingViaToolbar.value && game.phase.value === "creating",
-        onSelect: () => {
-          const tab = state.app.selectedTab.value;
-          const selected = tab?.readingState.selectedVerses.value ?? [];
-          const v = selected[0];
+        onSelect: (toolContext) => {
+          const v = toolContext.readingState.selectedVerses.value[0];
           if (!v) return;
           const verseText = extractContentText(v.verse.content).trim();
           if (!isKnownBookId(v.bookId) || !verseText) {
@@ -291,6 +291,9 @@ export default function initFindTheVerseExtension() {
                 "Couldn't recognise that reference. Try “John 1:1”.",
               ns: NS,
             });
+            // The notice only renders inside the panel. On a phone the panel
+            // is closed for this pick, so reopen it or the tap looks ignored.
+            openGamePane();
             return;
           }
           game.verseLookup.value += 1;
@@ -329,12 +332,17 @@ export default function initFindTheVerseExtension() {
             }
           : null;
 
-        const decision = playGuesses.observe(tab.readingState, selection);
         // The clear is deferred so this effect doesn't re-enter while the
         // selection signal is still propagating.
         if (selection) {
           queueMicrotask(() => tab.readingState.clearSelectedVerses());
         }
+        // Reveal already gave the answer away. Keep the verse toolbar out of
+        // a round that is still on, but don't score the tap, including a tap
+        // on the verse the game just highlighted.
+        if (game.revealed.value) return;
+
+        const decision = playGuesses.observe(tab.readingState, selection);
         if (!decision) return;
 
         const target = game.targetVerse.peek();
@@ -352,6 +360,9 @@ export default function initFindTheVerseExtension() {
 
       yield disposeLoadEffect;
       yield disposeGuessEffect;
+      yield () => {
+        state.panes.closePane(PANE_ID);
+      };
       if (typeof document !== "undefined") {
         const bannerRoot = document.createElement("div");
         document.body.appendChild(bannerRoot);

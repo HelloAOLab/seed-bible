@@ -23,6 +23,8 @@ function playingGame(): GameSignals {
     won: signal(false),
     revealed: signal(true),
     partialRevealText: signal("In ___"),
+    hintOpenFor: signal(0),
+    playRound: signal(3),
   };
 }
 
@@ -38,6 +40,8 @@ describe("resetPlay", () => {
     expect(game.won.value).toBe(false);
     expect(game.revealed.value).toBe(false);
     expect(game.partialRevealText.value).toBe("");
+    expect(game.hintOpenFor.value).toBeNull();
+    expect(game.playRound.value).toBe(4);
     expect(game.currentGameId.value).toBeNull();
     expect(game.targetVerse.value).toBeNull();
     expect(game.selectingViaToolbar.value).toBe(false);
