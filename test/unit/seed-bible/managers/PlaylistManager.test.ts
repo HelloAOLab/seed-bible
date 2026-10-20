@@ -3304,6 +3304,7 @@ describe("createPlaylistManager", () => {
           pressAndRelease(target!, target!);
           draw();
         },
+        refresh: draw,
         unmount: () => {
           render(null, container);
           container.remove();
@@ -3630,6 +3631,235 @@ describe("createPlaylistManager", () => {
         expect(
           lastModals.modals.value.some((m) => m.id === "playlist-item-content")
         ).toBe(false);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("stays when a second playlist starts on the same step the first one reached by going forward", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const verse = {
+        type: "bible-verse" as const,
+        ref: { bookId: "PSA", chapter: 23 },
+      };
+      manager.startPlaying(
+        makePlaylist({ id: "a", items: [verse, verse, verse] })
+      );
+      await manager.playing.value!.next();
+      await manager.playing.value!.next();
+
+      manager.startPlaying(
+        makePlaylist({
+          id: "b",
+          items: [
+            verse,
+            verse,
+            { type: "html", title: "Note", html: "<p>Note</p>" },
+            verse,
+          ],
+        }),
+        2
+      );
+
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+        expect(modal.container.textContent).toContain("Note");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("stays when a synced queue replaces the item at the current step", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const verse = {
+        type: "bible-verse" as const,
+        ref: { bookId: "PSA", chapter: 23 },
+      };
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            verse,
+            { type: "html", title: "Note", html: "<p>Note</p>" },
+            verse,
+          ],
+        })
+      );
+      await manager.playing.value!.next();
+
+      const playing = manager.playing.value!;
+      await playing.setState({
+        playlists: playing.playlists.peek(),
+        queue: [
+          verse,
+          { type: "html", title: "Replaced", html: "<p>Replaced</p>" },
+          verse,
+        ],
+        step: playing.currentIndex.peek(),
+      });
+
+      const modal = renderItemModal();
+      try {
+        expect(playing.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Replaced");
+        modal.close();
+        expect(playing.currentIndex.value).toBe(1);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("still moves forward after an item is added to the queue", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const verse = {
+        type: "bible-verse" as const,
+        ref: { bookId: "PSA", chapter: 23 },
+      };
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            verse,
+            { type: "html", title: "Note", html: "<p>Note</p>" },
+            verse,
+          ],
+        })
+      );
+      await manager.playing.value!.next();
+      manager.playing.value!.addToQueue({
+        type: "html",
+        title: "Extra",
+        html: "<p>Extra</p>",
+      });
+
+      const modal = renderItemModal();
+      try {
+        expect(modal.container.textContent).toContain("Note");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("reopens the current item after it was closed, and closing it again stays put", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(makePlaylist({ items: openingItems() }));
+
+      const modal = renderItemModal();
+      try {
+        expect(modal.container.textContent).toContain("Intro");
+        modal.close();
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
+        ).toBe(false);
+
+        manager.showCurrentItem();
+        modal.refresh();
+
+        expect(modal.container.textContent).toContain("Intro");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("still moves forward when an item reached by Next is reopened and closed", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(makePlaylist({ items: itemsBetweenVerses() }));
+      await manager.playing.value!.next();
+
+      const modal = renderItemModal();
+      try {
+        manager.showCurrentItem();
+        modal.refresh();
+        expect(modal.container.textContent).toContain("Note");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+        expect(modal.container.textContent).toContain("After");
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("closes the open item without moving on when playback stops", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
+            { type: "html", title: "Note", html: "<p>Note</p>" },
+            {
+              type: "bible-verse",
+              ref: { bookId: "JHN", chapter: 3, verse: 16 },
+            },
+          ],
+        })
+      );
+      await manager.playing.value!.next();
+      selectTranslationAndChapterMock.mockClear();
+
+      const modal = renderItemModal();
+      try {
+        expect(modal.container.textContent).toContain("Note");
+        manager.stopPlaying();
+        modal.refresh();
+
+        expect(manager.playing.value).toBeNull();
+        expect(modal.container.textContent ?? "").not.toContain("Note");
+        expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-finished")
+        ).toBe(false);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("logs a failure to move on after closing an item", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
+            { type: "html", title: "Note", html: "<p>Note</p>" },
+            {
+              type: "bible-verse",
+              ref: { bookId: "JHN", chapter: 3, verse: 16 },
+            },
+          ],
+        })
+      );
+      const playing = manager.playing.value!;
+      await playing.next();
+      // The reader is already showing the next passage, so applying the
+      // playback snapshot doesn't try to open it a second time. Closing
+      // the pop-up is the load that fails.
+      playing.tab!.readingState.bookId.value = "JHN";
+      playing.tab!.readingState.chapterNumber.value = 3;
+      selectTranslationAndChapterMock.mockRejectedValueOnce(
+        new Error("offline")
+      );
+      errorSpy.mockClear();
+
+      const modal = renderItemModal();
+      try {
+        modal.close();
+        await flush();
+
+        expect(errorSpy).toHaveBeenCalledWith(
+          "Failed to move playlist after closing an item:",
+          expect.any(Error)
+        );
       } finally {
         modal.unmount();
       }
