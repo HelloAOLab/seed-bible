@@ -14,6 +14,7 @@ import type {
   SandboxFrameRequest,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionSandboxManager";
 import type { SandboxConsentRequest } from "@packages/seed-bible/seed-bible/managers/ExtensionPermissions";
+import type { SandboxStorageRecords } from "@packages/seed-bible/seed-bible/managers/ExtensionSandboxStorage";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
@@ -88,13 +89,49 @@ function createRecordingTools() {
   return { tools, surfaces };
 }
 
-function createLogin(): LoginManager {
+/**
+ * The extension manager's view of the account: the same `userId` and
+ * `profile` signals the host context has, as in the app, where both are the
+ * one `LoginManager`.
+ */
+function createLogin(host: SandboxTestHost): LoginManager {
   return {
-    userId: signal<string | null>(null),
-    profile: signal(null),
+    userId: host.userId,
+    profile: host.profile,
     localConfig: signal<Record<string, unknown>>({}),
     profilePromise: null,
+    updateProfile: (data: Partial<UserProfile>) => {
+      host.profile.value = {
+        ...(host.profile.peek() ?? { name: "" }),
+        ...data,
+      } as UserProfile;
+    },
   } as unknown as LoginManager;
+}
+
+/**
+ * Stands in for the CasualOS records server, for `sb.storage` sync: the
+ * signed-in user's records, by record name and address.
+ */
+function createRecords() {
+  const data = new Map<string, unknown>();
+  const records: SandboxStorageRecords = {
+    getData: (async (recordName: string, address: string) => {
+      const key = `${recordName}/${address}`;
+      return data.has(key)
+        ? { success: true, data: structuredClone(data.get(key)) }
+        : { success: false, errorCode: "data_not_found" };
+    }) as unknown as SandboxStorageRecords["getData"],
+    recordData: (async (
+      recordName: string,
+      address: string,
+      value: unknown
+    ) => {
+      data.set(`${recordName}/${address}`, structuredClone(value));
+      return { success: true };
+    }) as unknown as SandboxStorageRecords["recordData"],
+  };
+  return { records, data };
 }
 
 export async function sha384(text: string): Promise<string> {
@@ -369,6 +406,8 @@ export interface SandboxHarness {
   focusedFrame: SandboxFrameRequest | null;
   consent: Mock<(request: SandboxConsentRequest) => Promise<boolean>>;
   host: SandboxTestHost;
+  /** The account's records, where `sb.storage` syncs for a signed-in user. */
+  records: ReturnType<typeof createRecords>;
   connector: SandboxFrameConnector;
   /** Stands in for the browser's record of a click or key press just now. */
   setUserActivation: (isActive: boolean) => void;
@@ -401,6 +440,7 @@ export function useSandboxHarness(): SandboxHarness {
     focusedFrame: null,
     consent: vi.fn(),
     host: null as unknown as SandboxTestHost,
+    records: createRecords(),
 
     connector: (request) => {
       harness.frames.push(request);
@@ -432,7 +472,9 @@ export function useSandboxHarness(): SandboxHarness {
     },
 
     createManager(options = {}) {
-      return createExtensionManager(createLogin(), {
+      return createExtensionManager(createLogin(harness.host), {
+        records: harness.records.records,
+        sandboxStoragePushDelayMs: 0,
         requestSandboxConsent: harness.consent,
         sandboxFrameConnector: harness.connector,
         ...options,
@@ -474,6 +516,7 @@ export function useSandboxHarness(): SandboxHarness {
     bundles.clear();
     harness.consent = vi.fn(async () => true);
     harness.host = createHost();
+    harness.records = createRecords();
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {

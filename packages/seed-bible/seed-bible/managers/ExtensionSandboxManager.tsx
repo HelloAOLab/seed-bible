@@ -3,13 +3,17 @@ import { effect, signal } from "@preact/signals";
 import { v4 as uuid } from "uuid";
 import { MaterialIcon } from "../components/icons";
 import hash from "hash.js";
-import { safeLocalStorage } from "../app/ssrEnv";
 import {
   customFontStylesheet,
   FONT_FILE_HOST,
   FONT_STYLESHEET_HOST,
   STATIC_FONT_STYLESHEETS,
 } from "../app/fontStylesheets";
+import {
+  createSandboxStorage,
+  MAX_SANDBOX_STORAGE_BYTES,
+  type SandboxStorage,
+} from "./ExtensionSandboxStorage";
 import {
   createSandboxServices,
   SANDBOX_SERVICE_SPECS,
@@ -266,7 +270,6 @@ export async function fetchSandboxBundle(
 
 const MAX_TOOLS = 20;
 const MAX_OPEN_PANES = 5;
-const MAX_STORAGE_BYTES = 256 * 1024;
 const MAX_PROPS_BYTES = 64 * 1024;
 const TOOL_PRIORITY_MIN = 200;
 const TOOL_PRIORITY_MAX = 999;
@@ -341,7 +344,7 @@ const paramSchemas: Partial<Record<SandboxMethod, z.ZodType>> = {
   "storage.get": z.object({ key: z.string().min(1).max(200) }),
   "storage.set": z.object({
     key: z.string().min(1).max(200),
-    value: jsonSizeSchema(MAX_STORAGE_BYTES),
+    value: jsonSizeSchema(MAX_SANDBOX_STORAGE_BYTES),
   }),
   "storage.remove": z.object({ key: z.string().min(1).max(200) }),
   "storage.keys": z.object({}),
@@ -380,28 +383,6 @@ const REQUIRED_PERMISSION: Partial<Record<SandboxMethod, SandboxPermission>> = {
 
 const BrokerError = SandboxBrokerError;
 
-const sandboxStorageKey = (extensionId: string) =>
-  `sb-sandbox-storage:${extensionId}`;
-
-function readSandboxStorage(
-  extensionId: string
-): Record<string, SandboxJsonValue> {
-  try {
-    const raw = safeLocalStorage.getItem(sandboxStorageKey(extensionId));
-    const parsed: unknown = raw ? JSON.parse(raw) : {};
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Record<string, SandboxJsonValue>)
-      : {};
-  } catch {
-    return {};
-  }
-}
-
-/** Forgets everything a sandboxed extension kept with `sb.storage`. */
-export function clearSandboxStorage(extensionId: string) {
-  safeLocalStorage.removeItem(sandboxStorageKey(extensionId));
-}
-
 function SandboxToolIcon({ icon }: { icon: SandboxIcon }) {
   if ("material" in icon) {
     return <MaterialIcon>{icon.material}</MaterialIcon>;
@@ -435,6 +416,11 @@ export interface SandboxSessionOptions {
   code: string;
   context: SandboxHostContext;
   connector?: SandboxFrameConnector;
+  /**
+   * The extension's `sb.storage`. The extension manager passes one that
+   * syncs with the user's account; without it, storage stays on the device.
+   */
+  storage?: SandboxStorage;
   /** How often the background frame is checked on. Defaults to 15 s. */
   heartbeatIntervalMs?: number;
   /**
@@ -493,6 +479,9 @@ export function startSandboxSession(
     context,
   } = options;
   const connector = options.connector ?? iframeFrameConnector;
+  const storage =
+    options.storage ??
+    createSandboxStorage({ extensionId, login: context.login });
   const optional = options.optional ?? [];
   // A signal, so the state pushed to the frames follows an optional grant.
   // Holds the implied permissions too (writing highlights includes reading
@@ -695,18 +684,6 @@ export function startSandboxSession(
         );
         break;
     }
-  };
-
-  const storageGetAll = () => readSandboxStorage(extensionId);
-  const storageWrite = (data: Record<string, SandboxJsonValue>) => {
-    const json = JSON.stringify(data);
-    if (json.length > MAX_STORAGE_BYTES) {
-      throw new BrokerError(
-        "limit_exceeded",
-        `Storage is limited to ${MAX_STORAGE_BYTES} bytes per extension.`
-      );
-    }
-    safeLocalStorage.setItem(sandboxStorageKey(extensionId), json);
   };
 
   const openPane = (
@@ -974,23 +951,21 @@ export function startSandboxSession(
       }
       case "storage.get": {
         const { key } = params as SandboxMethods["storage.get"]["params"];
-        return storageGetAll()[key] ?? null;
+        return storage.get(key);
       }
       case "storage.set": {
         const { key, value } =
           params as SandboxMethods["storage.set"]["params"];
-        storageWrite({ ...storageGetAll(), [key]: value });
+        storage.set(key, value as SandboxJsonValue);
         return null;
       }
       case "storage.remove": {
         const { key } = params as SandboxMethods["storage.remove"]["params"];
-        const data = storageGetAll();
-        delete data[key];
-        storageWrite(data);
+        storage.remove(key);
         return null;
       }
       case "storage.keys":
-        return Object.keys(storageGetAll());
+        return storage.keys();
       case "settings.get": {
         const { key } = params as SandboxMethods["settings.get"]["params"];
         return context.extensionSettings.getValue(extensionId, key) ?? null;
@@ -1167,6 +1142,9 @@ export function startSandboxSession(
     }
     destroyed = true;
     clearInterval(heartbeat);
+    if (!options.storage) {
+      void storage.dispose();
+    }
     stopStateEffect();
     stopPermissionsEffect();
     for (const cleanup of destroyCallbacks) {

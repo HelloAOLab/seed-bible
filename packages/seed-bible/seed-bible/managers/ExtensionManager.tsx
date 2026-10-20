@@ -6,6 +6,11 @@ import type { LoginManager } from "../managers/LoginManager";
 import { addTranslations, i18n } from "../i18n/I18nManager";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
+  createSandboxStorage,
+  type SandboxStorage,
+  type SandboxStorageRecords,
+} from "./ExtensionSandboxStorage";
+import {
   activeGrant,
   extensionSource,
   mergeExtensionGrants,
@@ -20,7 +25,6 @@ import {
   type SandboxPermission,
 } from "../extensions/protocol";
 import {
-  clearSandboxStorage,
   fetchSandboxBundle,
   startSandboxSession,
   type SandboxFrameConnector,
@@ -528,6 +532,16 @@ export interface ExtensionManagerOptions {
 
   /** How often sandboxed extensions are checked on; for tests. */
   sandboxHeartbeatIntervalMs?: number;
+
+  /**
+   * Where sandboxed extensions' `sb.storage` is synced, for a signed-in
+   * user (the app passes its `CasualOSManager`). Without it, storage stays
+   * on the device.
+   */
+  records?: SandboxStorageRecords;
+
+  /** How long storage writes are batched before they're synced; for tests. */
+  sandboxStoragePushDelayMs?: number;
 }
 
 /** What a running sandboxed extension may do, as Settings shows it. */
@@ -1368,9 +1382,32 @@ export function createExtensionManager(
     string,
     { setGranted: (granted: SandboxPermission[]) => Promise<void> }
   >();
+  // Each extension's `sb.storage`, kept across restarts (a Settings change)
+  // so writes waiting to sync aren't dropped.
+  const sandboxStorages = new Map<string, SandboxStorage>();
 
-  /** Stops a sandboxed extension without uninstalling it. */
+  const storageFor = (id: string) => {
+    let storage = sandboxStorages.get(id);
+    if (!storage) {
+      storage = createSandboxStorage({
+        extensionId: id,
+        login,
+        records: options.records,
+        pushDelayMs: options.sandboxStoragePushDelayMs,
+      });
+      sandboxStorages.set(id, storage);
+    }
+    return storage;
+  };
+
+  /**
+   * Stops a sandboxed extension without uninstalling it. Its storage stops
+   * syncing once anything waiting has been sent.
+   */
   const stopSandboxedExtension = (id: string) => {
+    const storage = sandboxStorages.get(id);
+    sandboxStorages.delete(id);
+    void storage?.dispose();
     sandboxedExtensions.delete(id);
     const { [id]: _removed, ...rest } = sandboxPermissionsSignal.peek();
     sandboxPermissionsSignal.value = rest;
@@ -1590,6 +1627,7 @@ export function createExtensionManager(
             code,
             context,
             connector: options.sandboxFrameConnector,
+            storage: storageFor(extensionId),
             heartbeatIntervalMs: options.sandboxHeartbeatIntervalMs,
             // Stopped for the rest of the visit, but still installed: the
             // next page load starts it again.
@@ -1993,6 +2031,17 @@ export function createExtensionManager(
    * @param id The ID of the extension to unload.
    */
   const unloadExtension = (id: string, options?: { persist?: boolean }) => {
+    const known = knownExtensionsById.get(id);
+    const uninstallingSandboxed =
+      options?.persist !== false &&
+      known !== undefined &&
+      isSandboxedExtension(known);
+    // Taken out before stopping, so its pending writes and the clear below
+    // go out in order: a late write must not undo the clear.
+    const storageToClear = uninstallingSandboxed ? storageFor(id) : null;
+    if (storageToClear) {
+      sandboxStorages.delete(id);
+    }
     if (sandboxedExtensions.has(id)) {
       stopSandboxedExtension(id);
     }
@@ -2007,9 +2056,8 @@ export function createExtensionManager(
       // in the next time their dependent gets (re)installed.
       void persistHandledExtensionId(id);
       // Reinstalling a sandboxed extension asks again, and starts it fresh.
-      const known = knownExtensionsById.get(id);
-      if (known && isSandboxedExtension(known)) {
-        clearSandboxStorage(id);
+      if (storageToClear) {
+        void storageToClear.clear().then(() => storageToClear.dispose());
         void saveExtensionGrant(id, { revokedAtMs: Date.now() });
       }
     }

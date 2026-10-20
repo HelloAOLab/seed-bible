@@ -335,7 +335,7 @@ export default defineExtension({
 - `sb.tools.registerToolbarTool` / `registerVerseToolbarTool` / `registerQuickTool` / `registerBelowReaderTool`. Same idea as §5, but declarative: `icon` is `{ material: "<Material Symbols name>" }` or `{ svg: "<svg…>" }`; `isVisible`/`isDisabled` are booleans or signals; a submenu is a list of `items`, each with its own `onSelect`. Each returns a handle with `update()` and `unregister()`. Priorities are kept between 200 and 999, after the app's own tools. Only `main` can register tools, not views.
 - `sb.panes.open({ view, placement, title, props })` and `sb.panes.close(id)`. `props` must be JSON.
 - `sb.app.toast(message)` (shown with your extension's name) and `sb.app.isMobile`.
-- `sb.storage.get/set/remove/keys`: your own JSON key/value store, up to 256 KB. The frame has no `localStorage`. It is cleared when the user uninstalls your extension.
+- `sb.storage.get/set/remove/keys`: your own JSON key/value store, up to 256 KB. The frame has no `localStorage`. While the user is signed in it syncs to a private record in their account, so it follows them to their other devices (the newer write to a key wins). Signed out, it stays on the device. It's cleared everywhere when the user uninstalls your extension.
 - `sb.settings.get(key)`: your own non-sensitive settings from `extension.json`.
 - `sb.i18n.t(key, defaultValue, values)`, `sb.i18n.language` and `sb.i18n.direction`: strings come from your `extension.json` translations. The frame's theme colors, language and text direction are set for you, so `var(--sb-font-color)` and friends work in your CSS.
 - `sb.reading.position`, `sb.reading.selection` and `sb.reading.open(ref)`, if granted (below).
@@ -402,7 +402,7 @@ await sb.tools.registerToolbarTool({
 
 **Updates.** A new version that asks for nothing new loads without asking. One that asks for more shows the user only what's new, and doesn't load until they agree. Uninstalling forgets the grant, so reinstalling asks again.
 
-**Limits for now.** A sandboxed extension can't declare `dependencies`, and its `autoinstall` is ignored: it never installs without the user being asked. `sb.storage` is kept on the device, not synced. A chat provider replies with one text message (no streaming), and a Discover provider answers with data (`content`, `cross-reference` or `study-note` results), not custom markup. An extension whose main frame stops answering is stopped until the page reloads. Styles must come from the bundle itself, as inline styles or CSS imported with `?inline`, since the frame can't load a separate stylesheet.
+**Limits for now.** A sandboxed extension can't declare `dependencies`, and its `autoinstall` is ignored: it never installs without the user being asked. A chat provider replies with one text message (no streaming), and a Discover provider answers with data (`content`, `cross-reference` or `study-note` results), not custom markup. An extension whose main frame stops answering is stopped until the page reloads. Styles must come from the bundle itself, as inline styles or CSS imported with `?inline`, since the frame can't load a separate stylesheet.
 
 ---
 

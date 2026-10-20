@@ -959,6 +959,7 @@ export function createSeedBibleState(
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
     requestSandboxConsent: (request) =>
       openExtensionConsentModal(modals, request),
+    records: os,
   });
   const extensionSettings = createExtensionSettingsManager(
     os,

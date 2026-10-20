@@ -307,6 +307,45 @@ describe("sandboxed extensions", () => {
     expect(results["ext.store-a:limit"]).toBe("limit_exceeded");
   });
 
+  it("syncs sb.storage to the signed-in user's account, and clears it there on uninstall", async () => {
+    h.host.userId.value = "user-1";
+    h.host.profile.value = { name: "Ruth", pictureUrl: null };
+    const manager = createManager();
+    let sb: SandboxContext | null = null;
+    await manager.loadExtension(
+      await publish(
+        defineExtension({
+          main: (context) => {
+            sb = context;
+          },
+        }),
+        { id: "ext.synced" }
+      )
+    );
+    await vi.waitFor(() => expect(sb).toBeTruthy());
+    const record = () =>
+      h.records.data.get("user-1/extensionStorage/ext.synced") as
+        | { entries: Record<string, unknown>; clearedAtMs?: number }
+        | undefined;
+
+    await sb!.storage.set("progress", { chapter: 3 });
+
+    await vi.waitFor(() =>
+      expect(record()?.entries.progress).toMatchObject({
+        value: { chapter: 3 },
+      })
+    );
+
+    manager.unloadExtension("ext.synced");
+
+    await vi.waitFor(() =>
+      expect(record()).toEqual({
+        entries: {},
+        clearedAtMs: expect.any(Number),
+      })
+    );
+  });
+
   it("removes everything on uninstall, and asks again on the next install", async () => {
     const extension = await publish(
       defineExtension({

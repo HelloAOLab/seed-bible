@@ -190,6 +190,9 @@ These are safe enough to give every extension, so the install prompt stays short
 - Registering UI contributions (buttons, panes, Discover providers). The user sees all of these, and they're labelled.
 - Its own settings (non-sensitive) and brokered use of its sensitive settings.
 - **Its own storage:** `sb.storage.get/set`, a small key/value store kept for it by the host (namespaced by extension ID, with a size limit). This replaces `localStorage`, which an opaque-origin frame can't use.
+
+  _As built:_ the store is kept on the device and, while the user is signed in, synced to a private record in their account (`extensionStorage/<extension id>`, readable only by them), so it follows them to other devices. Devices are merged key by key, and the newer write wins. Deleted keys are remembered for 90 days so an older copy can't bring them back. Each write re-reads the account's copy before saving, so two devices changing different keys don't undo each other. Signed-out use stays on the device, and each account's copy is kept apart, so one person's extension data never ends up in another's account on a shared device. Uninstalling clears the account's copy by recording when it was cleared, so other devices drop their stale copies when they next sync.
+
 - **A pseudonymous user ID:** `sb.identity.id`, a hash of the real user ID and the extension ID. It lets an extension keep per-user data on its own server without learning who the user is, and it's different for every extension, so two extensions can't combine what they know about the same person.
 - Theme, language, and whether the device is mobile.
 - Reading Bible text through the app's Bible API (public data).
@@ -380,7 +383,9 @@ Each phase is shippable on its own.
    - The app's fonts inside frames (their CSP allows Google Fonts' two hosts and nothing else new).
    - The Permissions view in Settings (§6.4).
 
-   Not built in phase 2: syncing `sb.storage` across devices (it's still kept on the device), marking highlights and saves with the extension that made them (only notes have a field for it), and the permissions in §5.2's "not built" line.
+   - Syncing `sb.storage` across devices (§4.6).
+
+   Not built in phase 2: marking highlights and saves with the extension that made them (only notes have a field for it), and the permissions in §5.2's "not built" line.
 
 3. **Tooling.** Scaffolding template, sandboxed `dev`, permission checks in `check`, docs. Port one in-repo extension (for example `seed-bible-refresh-example-extension` or `locations-extension`) to the sandbox SDK as a working reference and to prove the API is enough for a real extension.
 4. **Stronger isolation (optional).** Move frames to a dedicated cross-site origin, one subdomain per extension: separate process, real per-extension storage, and an `Origin` header third-party APIs recognize (an opaque-origin frame sends `Origin: null`, which some APIs' CORS settings reject). Also: extension-to-extension calls brokered by the host (today's `dependencies` share live objects, which can't cross a frame boundary; for sandboxed extensions they'd become declared, message-based exports).
