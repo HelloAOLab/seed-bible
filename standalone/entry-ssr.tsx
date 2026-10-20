@@ -649,6 +649,7 @@ export async function render(
     // during the render, for the reason above.
     state.playlists.initialPlaylistPageLoadPromise,
     state.readingPlans.initialReadingPlanPageLoadPromise,
+    state.friendLinkPreview.initialLoadPromise,
   ]);
   // A reload mid-playlist names only its step, not the chapter; the reader
   // moves there once the playlist has loaded, so wait for that too before
@@ -776,6 +777,9 @@ export async function render(
   const readingPlanPageSeedJson = escapeForScript(
     JSON.stringify(state.readingPlans.getReadingPlanPageSeed())
   );
+  const friendLinkSeedJson = escapeForScript(
+    JSON.stringify(state.friendLinkPreview.getSeed())
+  );
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
@@ -790,6 +794,7 @@ export async function render(
     ["<!-- CUSTOMIZATION_JSON -->", customizationSeedJson],
     ["<!-- PLAYLIST_PAGE_JSON -->", playlistPageSeedJson],
     ["<!-- READING_PLAN_PAGE_JSON -->", readingPlanPageSeedJson],
+    ["<!-- FRIEND_LINK_JSON -->", friendLinkSeedJson],
     ["<!-- APP_HTML -->", appHtml],
   ];
 

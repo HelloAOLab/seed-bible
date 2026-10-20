@@ -525,6 +525,8 @@ export interface SeedBibleState {
    * highlights, notes, playlists, reading plans and reading history are shown.
    */
   friends: FriendsManager;
+  /** The profile behind the `?addFriend=` link the app was opened with, for its link preview. */
+  friendLinkPreview: FriendLinkPreviewLoader;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
   /** Chat session manager for in-app chat state. */
@@ -684,6 +686,11 @@ import {
 import { z } from "zod";
 import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 import { captureEvent } from "./Utils";
+import {
+  createFriendLinkPreviewLoader,
+  type FriendLinkPreviewLoader,
+  type FriendLinkSeed,
+} from "./FriendLinkPreviewLoader";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -735,6 +742,9 @@ export interface CreateSeedBibleStateOptions {
 
   /** Same as `initialPlaylistPageSeed`, for a shared reading plan page. */
   initialReadingPlanPageSeed?: ReadingPlanPageSeed;
+
+  /** Same as `initialPlaylistPageSeed`, for an `?addFriend=` link's profile. */
+  initialFriendLinkSeed?: FriendLinkSeed;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -789,6 +799,11 @@ export function createSeedBibleState(
   });
   const saves = createSavesManager(os, login);
   const friends = createFriendsManager(os, login);
+  const friendLinkPreview = createFriendLinkPreviewLoader({
+    login,
+    navigation,
+    initialSeed: options.initialFriendLinkSeed,
+  });
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
@@ -1909,6 +1924,18 @@ export function createSeedBibleState(
       : name;
   });
 
+  /** The person an `?addFriend=` link names, when their profile has a name. */
+  const friendLinkPerson = computed<{
+    name: string;
+    pictureUrl: string | null;
+  } | null>(() => {
+    const profile = friendLinkPreview.result.value?.profile;
+    const name = profile?.name.trim();
+    return profile && name
+      ? { name, pictureUrl: profile.pictureUrl ?? null }
+      : null;
+  });
+
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
     void i18n.language.value;
@@ -1977,6 +2004,18 @@ export function createSeedBibleState(
             : t("reading-plan-page-meta-description", {
                 defaultValue: "A Bible reading plan on Seed Bible.",
               })),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
+
+    const person = friendLinkPerson.value;
+    if (person) {
+      return truncateForMeta(
+        t("friend-link-meta-description", {
+          name: person.name,
+          defaultValue:
+            "{{name}} invited you to be friends on Seed Bible. Open the link to send a friend request.",
+        }),
         META_DESCRIPTION_MAX_GRAPHEMES
       );
     }
@@ -2057,6 +2096,10 @@ export function createSeedBibleState(
     if (heroImageUrl) {
       return { url: heroImageUrl, alt: sharedPageTitle.value ?? "" };
     }
+    const person = friendLinkPerson.value;
+    if (person?.pictureUrl) {
+      return { url: person.pictureUrl, alt: person.name };
+    }
     const logoUrl = customizationLogoUrl.value;
     return logoUrl ? { url: logoUrl, alt: siteName.value } : null;
   });
@@ -2087,6 +2130,14 @@ export function createSeedBibleState(
 
     if (sharedPageTitle.value) {
       return sharedPageTitle.value;
+    }
+
+    const person = friendLinkPerson.value;
+    if (person) {
+      return t("friend-link-social-title", {
+        name: person.name,
+        defaultValue: "Add {{name}} as a friend",
+      });
     }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
@@ -3306,6 +3357,7 @@ export function createSeedBibleState(
     highlights,
     saves,
     friends,
+    friendLinkPreview,
     annotations,
     chats,
     sessions,

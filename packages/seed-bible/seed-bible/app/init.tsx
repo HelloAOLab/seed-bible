@@ -8,6 +8,7 @@ import {
   readInjectedPlaylistPageSeed,
   readInjectedReadingPlanPageSeed,
 } from "../app/sharedPageSeeds";
+import { readInjectedFriendLinkSeed } from "../app/friendLinkSeed";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { decideHydration, type HydrationDecision } from "../app/hydrationGate";
 import { hydrateWithFallback } from "../app/hydrateWithFallback";
@@ -33,6 +34,9 @@ const initialCustomizationSeed = readInjectedCustomizationSeed();
 const initialPlaylistPageSeed = readInjectedPlaylistPageSeed();
 const initialReadingPlanPageSeed = readInjectedReadingPlanPageSeed();
 
+// Same, for the profile an `?addFriend=` link opens on.
+const initialFriendLinkSeed = readInjectedFriendLinkSeed();
+
 const container = document.getElementById("app") ?? document.body;
 
 console.log("Starting APP");
@@ -48,6 +52,7 @@ const state = createSeedBibleState({
   initialCustomizationSeed,
   initialPlaylistPageSeed,
   initialReadingPlanPageSeed,
+  initialFriendLinkSeed,
 });
 
 /**

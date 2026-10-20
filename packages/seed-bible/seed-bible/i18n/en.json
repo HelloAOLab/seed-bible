@@ -1061,5 +1061,7 @@
   "remove-friend-user": "Remove {{name}} as a friend",
   "friend-request-sent-toast": "Friend request sent.",
   "friend-request-declined": "Declined {{name}}'s friend request.",
-  "friend-request-canceled": "Canceled your friend request to {{name}}."
+  "friend-request-canceled": "Canceled your friend request to {{name}}.",
+  "friend-link-social-title": "Add {{name}} as a friend",
+  "friend-link-meta-description": "{{name}} invited you to be friends on Seed Bible. Open the link to send a friend request."
 }
