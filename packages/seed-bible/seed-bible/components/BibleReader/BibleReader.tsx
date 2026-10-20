@@ -19,7 +19,12 @@ import {
   useLayoutEffect,
   useState,
 } from "preact/compat";
-import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
+import {
+  computed,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import {
   adjacentInlineRect,
   buildRibbonPath,
@@ -40,6 +45,7 @@ import type {
 } from "../../managers/HighlightsManager";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
 import type { TabSlot } from "../../managers/TabsLayoutManager";
+import type { VerseSelectionEffects } from "../../managers/SettingsManager";
 import { getReadableWordsOfJesusColor } from "../../managers/CustomizationsManager";
 import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -51,6 +57,7 @@ import {
 } from "../../managers/AnnotationsManager";
 import type { FriendsManager } from "../../managers/FriendsManager";
 import {
+  isSessionHost,
   getConnectedUserVisualKey,
   type BibleReadingSession,
   type ConnectionSessionUserVisual,
@@ -416,6 +423,45 @@ function getInlineText(part: ChapterVerse["content"][0]): string {
 function getVersePlainText(content: ChapterVerse["content"]): string {
   return content.map((part) => getInlineText(part)).join("");
 }
+function broadcastSelectedVerse(
+  session: BibleReadingSession,
+  bookId: string,
+  chapterNumber: number,
+  verseNumber: number
+) {
+  const user = session.currentUser.value;
+  if (!user) return;
+  const options = session.options.value;
+  const visibility = options.verseSelectionEffectVisibility ?? "hosts-only";
+  if (visibility === "none") return;
+  if (
+    visibility === "hosts-only" &&
+    !(
+      isSessionHost(options, user.userId) ||
+      isSessionHost(options, user.connectionId)
+    )
+  ) {
+    return;
+  }
+  const connectionId = user.connectionId ?? user.userId ?? "anonymous";
+
+  // Generate a unique ID for each selection so repeated clicks
+  // are recognized as new decorations and restart the flare animation.
+  const decorationId = `selected-verse-flare-${connectionId}-${Date.now()}`;
+  session.readingState.decorateVerses(
+    bookId,
+    chapterNumber,
+    [verseNumber],
+    {
+      className: "sb-verse-number-flare",
+      style: {
+        "--sb-selection-flare-color": user.visual.color,
+      } as JSX.CSSProperties,
+      removeAfterMs: 1200,
+    },
+    decorationId
+  );
+}
 
 /**
  * A highlight resolved for one verse, plus where it came from. `broadcast` is
@@ -779,6 +825,9 @@ function renderChapterContent(
     verseNumber: number,
     event: MouseEvent
   ) => void,
+  sharedSession?: BibleReadingSession | null,
+  verseSelectionEffects: VerseSelectionEffects = "default",
+  prefersReducedMotionValue?: boolean,
   hideHighlights = false
 ) {
   if (!chapterData) {
@@ -794,6 +843,67 @@ function renderChapterContent(
         decoration.chapterNumber === chapterData.chapter.number &&
         decoration.verses.includes(verseNumber)
     );
+  };
+  const getVerseFlareColor = (verseNumber: number): string | undefined => {
+    if (
+      !shouldShowVerseSelectionEffects(
+        verseSelectionEffects,
+        prefersReducedMotionValue
+      )
+    ) {
+      return undefined;
+    }
+
+    const session = sharedSession;
+    const currentUser = session?.currentUser?.value;
+
+    if (!session || !currentUser) {
+      return undefined;
+    }
+
+    const currentConnectionId =
+      currentUser.connectionId ?? currentUser.userId ?? "anonymous";
+
+    const visibility =
+      session.options.value.verseSelectionEffectVisibility ?? "hosts-only";
+
+    if (visibility === "none") {
+      return undefined;
+    }
+
+    const flare = getVerseDecorations(verseNumber).find((decoration) => {
+      if (!decoration.className?.includes("sb-verse-number-flare")) {
+        return false;
+      }
+      const owner = session.getDecorationOwner(decoration.id);
+
+      if (!owner) {
+        return false;
+      }
+
+      // Hosts-only: accept flares from the primary host or a co-host.
+      if (visibility === "hosts-only") {
+        const ownerUser = session.connectedUsers.value.find(
+          (user) => user.connectionId === owner
+        );
+
+        if (
+          !ownerUser ||
+          !(
+            isSessionHost(session.options.value, ownerUser.userId) ||
+            isSessionHost(session.options.value, ownerUser.connectionId)
+          )
+        ) {
+          return false;
+        }
+      }
+
+      return owner !== currentConnectionId;
+    });
+
+    const color = flare?.style?.["--sb-selection-flare-color"];
+
+    return typeof color === "string" ? color : undefined;
   };
 
   const decorationHighlights = decorationHighlightsByVerse(decorations, {
@@ -899,7 +1009,16 @@ function renderChapterContent(
 
   const getDecorationPresentation = (verseDecorations: VerseDecoration[]) => {
     const matchingDecorations = verseDecorations.filter((decoration) => {
-      return !hasContentTargeting(decoration);
+      if (hasContentTargeting(decoration)) {
+        return false;
+      }
+
+      // Verse-selection flares are handled by the verse number,
+      // not by the wrapper around the entire verse.
+      if (decoration.className?.includes("sb-verse-number-flare")) {
+        return false;
+      }
+      return true;
     });
 
     return matchingDecorations.reduce(
@@ -952,20 +1071,30 @@ function renderChapterContent(
   // An annotated number/icon is clickable, jumping straight to its note.
   const renderVerseNumberOrIcon = (
     verseNumber: number,
-    verse: BibleSelectedVerse
+    verse: BibleSelectedVerse,
+    flareColor?: string
   ) => {
     const hasAnnotation = getVerseAnnotations(verseNumber).length > 0;
+
+    const flareClass = flareColor ? "sb-verse-number-flare" : "";
+    const flareStyle = flareColor
+      ? ({ "--sb-selection-flare-color": flareColor } as JSX.CSSProperties)
+      : undefined;
+
     const handleAnnotationClick = (event: MouseEvent) =>
       onAnnotationVerseClick(verse, verseNumber, event);
 
     if (scriptureElements.showVerseNumbers) {
       return (
         <sup
-          className={
-            hasAnnotation
-              ? "sb-verse-number sb-verse-number-annotated"
-              : "sb-verse-number"
-          }
+          className={[
+            "sb-verse-number",
+            hasAnnotation ? "sb-verse-number-annotated" : "",
+            flareClass,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={flareStyle}
           onClick={hasAnnotation ? handleAnnotationClick : undefined}
           role={hasAnnotation ? "button" : undefined}
           tabIndex={hasAnnotation ? 0 : undefined}
@@ -974,12 +1103,17 @@ function renderChapterContent(
         </sup>
       );
     }
+
     if (!hasAnnotation) {
       return null;
     }
+
     return (
       <sup
-        className="sb-verse-number sb-verse-annotation-icon"
+        className={["sb-verse-number", "sb-verse-annotation-icon", flareClass]
+          .filter(Boolean)
+          .join(" ")}
+        style={flareStyle}
         onClick={handleAnnotationClick}
         role="button"
         tabIndex={0}
@@ -999,6 +1133,7 @@ function renderChapterContent(
       verse: value,
       translationId: chapterData.translation.id,
     };
+    const verseFlareColor = getVerseFlareColor(value.number);
     const isSelected = selectedVerses.some(
       (v) =>
         v.verse.number === value.number &&
@@ -1086,7 +1221,11 @@ function renderChapterContent(
                   style={verseDecoratorStyle}
                 >
                   {segIndex === 0 &&
-                    renderVerseNumberOrIcon(value.number, verse)}
+                    renderVerseNumberOrIcon(
+                      value.number,
+                      verse,
+                      verseFlareColor
+                    )}
                   {segment.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -1120,7 +1259,11 @@ function renderChapterContent(
                 >
                   {segIndex === 0 &&
                     lineIndex === 0 &&
-                    renderVerseNumberOrIcon(value.number, verse)}
+                    renderVerseNumberOrIcon(
+                      value.number,
+                      verse,
+                      verseFlareColor
+                    )}
                   {line.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -1157,7 +1300,7 @@ function renderChapterContent(
         tabIndex={0}
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-          {renderVerseNumberOrIcon(value.number, verse)}
+          {renderVerseNumberOrIcon(value.number, verse, verseFlareColor)}
           {content.map((part, index) =>
             renderInlineContent(
               part,
@@ -1826,6 +1969,10 @@ interface ChapterContentProps {
    * when none are. Drives the presence this client publishes.
    */
   onVisibleVersesChange?: (range: VisibleVerseRange | null) => void;
+  sharedSession?: BibleReadingSession | null;
+  onHostVerseClick: (verse: BibleSelectedVerse) => void;
+  verseSelectionEffects: VerseSelectionEffects;
+  prefersReducedMotionValue?: boolean;
   /**
    * Who made each highlight, so the off-screen bubbles can show their avatar
    * and leave out the reader's own.
@@ -1860,6 +2007,10 @@ function ChapterContent(props: ChapterContentProps) {
     isMobile = false,
     presence,
     onVisibleVersesChange,
+    sharedSession,
+    onHostVerseClick,
+    verseSelectionEffects,
+    prefersReducedMotionValue,
     highlightAuthors,
     hideHighlights = false,
   } = props;
@@ -2471,7 +2622,18 @@ function ChapterContent(props: ChapterContentProps) {
             justConvertedSelectionRef.current = false;
             return;
           }
+          const wasSelected = selectedVerses.value.some(
+            (selectedVerse) =>
+              selectedVerse.bookId === verse.bookId &&
+              selectedVerse.chapterNumber === verse.chapterNumber &&
+              selectedVerse.verse === verse.verse
+          );
           selectVerse(verse, event.clientX, event.clientY);
+          // only trigger the flare when the verse is newly selected,
+          // not when clicking an already selected verse to unselect it.
+          if (!wasSelected) {
+            onHostVerseClick(verse);
+          }
         },
         selectedVerses.value,
         (noteId) => selectFootnote(noteId),
@@ -2480,6 +2642,9 @@ function ChapterContent(props: ChapterContentProps) {
         chapterAnnotations,
         scriptureElements,
         onAnnotationVerseClick,
+        sharedSession,
+        verseSelectionEffects,
+        prefersReducedMotionValue,
         hideHighlights
       )}
     </div>
@@ -2509,6 +2674,28 @@ function resolveTranslation(
   }
   return null;
 }
+
+// Respect the user's explicit preference; otherwise, follow the OS setting.
+function shouldShowVerseSelectionEffects(
+  preference: VerseSelectionEffects,
+  prefersReducedMotionValue: boolean | undefined
+): boolean {
+  if (preference === "enabled") return true;
+  if (preference === "disabled") return false;
+
+  return !prefersReducedMotionValue;
+}
+// Cache the OS reduced-motion preference instead of querying matchMedia
+// repeatedly for every verse and decoration.
+const reducedMotionQuery =
+  typeof window !== "undefined" && typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)")
+    : null;
+// Keep the preference reactive so changes to the OS setting can update the UI.
+const prefersReducedMotion = signal(reducedMotionQuery?.matches ?? false);
+reducedMotionQuery?.addEventListener("change", (event) => {
+  prefersReducedMotion.value = event.matches;
+});
 
 export function BibleReader(props: BibleReaderProps) {
   const {
@@ -2582,6 +2769,7 @@ export function BibleReader(props: BibleReaderProps) {
   const translationWebsite = computed(
     () => translation.value?.website.trim() ?? ""
   );
+  const prefersReducedMotionValue = prefersReducedMotion.value || undefined;
 
   const isMinimalEmbed = state?.app.isMinimalEmbed?.value ?? false;
   const isCompactReader =
@@ -2662,6 +2850,7 @@ export function BibleReader(props: BibleReaderProps) {
 
     if (isCompactReader) {
       selectVerse(verse, event.clientX, event.clientY);
+      handleHostVerseClick(verse);
       readingState.pendingAnnotationScrollVerse.value = verseNumber;
       return;
     }
@@ -2836,22 +3025,40 @@ export function BibleReader(props: BibleReaderProps) {
     justConvertedSelectionRef.current = true;
 
     // Mirror clicking each covered verse: deselect everything, then reselect.
+    // Mirror clicking each covered verse: deselect everything, then reselect.
     clearSelectedVerses();
+
+    let firstSelectedVerse: BibleSelectedVerse | null = null;
     for (const el of verseEls) {
       const verseValue = verseByNumber.get(Number(el.dataset.verseNumber));
       if (!verseValue) continue;
-      selectVerse(
-        {
-          bookId: data.book.id,
-          chapterNumber: data.chapter.number,
-          verse: verseValue,
-          translationId: data.translation.id,
-        },
-        anchorX,
-        anchorY
-      );
+      const verse: BibleSelectedVerse = {
+        bookId: data.book.id,
+        chapterNumber: data.chapter.number,
+        verse: verseValue,
+        translationId: data.translation.id,
+      };
+      firstSelectedVerse ??= verse;
+      selectVerse(verse, anchorX, anchorY);
+    }
+    // Broadcast only the first verse in the drag selection.
+    if (firstSelectedVerse) {
+      handleHostVerseClick(firstSelectedVerse);
     }
   };
+  const handleHostVerseClick = useCallback(
+    (verse: BibleSelectedVerse) => {
+      if (!sharedSession) return;
+
+      broadcastSelectedVerse(
+        sharedSession,
+        verse.bookId,
+        verse.chapterNumber,
+        verse.verse.number
+      );
+    },
+    [sharedSession]
+  );
 
   // Only the current panel's title opens the selector; the side panels are
   // non-interactive previews for the swipe transition.
@@ -3179,6 +3386,13 @@ export function BibleReader(props: BibleReaderProps) {
               isMobile={isCompactReader}
               presence={sharedSession ? presence : undefined}
               onVisibleVersesChange={reportVisibleVerses}
+              sharedSession={sharedSession}
+              onHostVerseClick={handleHostVerseClick}
+              verseSelectionEffects={
+                state?.settings.settings.value.verseSelectionEffects ??
+                "default"
+              }
+              prefersReducedMotionValue={prefersReducedMotionValue}
               highlightAuthors={highlightAuthors}
             />
           </Suspense>
