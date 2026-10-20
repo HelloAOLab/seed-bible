@@ -574,7 +574,7 @@ describe("sandboxed extensions: people and devices", () => {
       expect(src.searchParams.get("pattern")).toBe("verse-map");
       expect(src.searchParams.get("mapPortal")).toBe("home");
       expect(src.searchParams.get("mapData")).toBe("jhn");
-      expect(src.searchParams.get("inst")).toMatch(/^sandbox-ext\.portal-/);
+      expect(src.searchParams.get("inst")).toMatch(/^sb-ext\.portal-/);
       // It's the app's own portal iframe, not one of the extension's frames.
       expect(shown.iframe.getAttribute("sandbox")).toBeNull();
       expect(h.frames).toHaveLength(1);
