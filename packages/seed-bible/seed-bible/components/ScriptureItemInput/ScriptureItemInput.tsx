@@ -254,7 +254,15 @@ export const ScriptureItemInput = forwardRef<
         value.trim() !== (initialValue ?? "").trim() || noteChanged(),
       commit: async () => handleSubmit(),
     }),
-    [value, highlightedOption, noteOpen, noteEmpty, noteTitle, noteSeed]
+    [
+      value,
+      highlightedOption,
+      initialValue,
+      noteOpen,
+      noteEmpty,
+      noteTitle,
+      noteSeed,
+    ]
   );
 
   return (

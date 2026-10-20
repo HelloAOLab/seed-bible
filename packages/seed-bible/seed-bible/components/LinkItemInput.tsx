@@ -13,7 +13,10 @@ interface LinkItemInputProps {
 
 /** Imperative handle so a parent can check for / commit an in-progress draft. */
 export interface LinkItemInputHandle {
-  /** Whether the user has typed a URL or title that hasn't been added yet. */
+  /**
+   * Whether the URL, title or embed flag differs from what the fields started
+   * with: an un-added draft when adding, unsaved changes when editing.
+   */
   isDirty: () => boolean;
   /** Submits the current input, same as clicking "Add". Returns whether it
    * actually added an item (false if empty or the URL didn't validate). */
@@ -73,7 +76,7 @@ export const LinkItemInput = forwardRef<
         (!!initialItem && embed !== (initialItem.embed ?? false)),
       commit: handleAdd,
     }),
-    [value, title, embed]
+    [value, title, embed, initialItem]
   );
 
   return (

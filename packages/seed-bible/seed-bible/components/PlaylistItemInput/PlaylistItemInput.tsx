@@ -14,6 +14,10 @@ import {
   type TextItemInputHandle,
 } from "../TextItemInput/TextItemInput";
 import { LinkItemInput, type LinkItemInputHandle } from "../LinkItemInput";
+import {
+  PlaylistItemInlinePreview,
+  type ScriptureChapterLoader,
+} from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 
 interface PlaylistItemInputProps {
   books: TranslationBook[];
@@ -21,16 +25,24 @@ interface PlaylistItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
   /**
    * When set, the section edits this existing item instead of adding a new one:
-   * the mode is locked to the item's type, its fields are pre-filled, and the
-   * submit button saves the change via `onUpdate`.
+   * it renders inline (no section chrome or type picker, since the type is the
+   * item's), its fields are pre-filled, and the submit button saves the change
+   * via `onUpdate`.
    */
   editItem?: PlaylistItemData;
   /** Reference text to seed the scripture field when editing a verse item. */
   editScriptureText?: string;
+  /**
+   * Loads chapters for the passage shown beneath the reference field while
+   * editing a scripture item. Without it the passage says it couldn't load.
+   */
+  loadChapter?: ScriptureChapterLoader;
   /** Called with the edited item when the user saves an in-progress edit. */
   onUpdate?: (item: PlaylistItemData) => void;
   /** Called when the user cancels an in-progress edit. */
   onCancelEdit?: () => void;
+  /** Id for the inline editor's root, so a row can point at it with `aria-controls`. */
+  id?: string;
 }
 
 type AddMode = "scripture" | "text" | "link";
@@ -58,8 +70,8 @@ export interface PlaylistItemInputHandle {
    * when adding, or changes to the item when editing one.
    */
   isDirty: () => boolean;
-  /** Submits the currently-mounted mode's input, same as clicking "Add".
-   * Returns whether it actually added an item. */
+  /** Submits the currently-mounted mode's input, same as clicking "Add" or
+   * "Save changes". Returns whether it actually added or saved an item. */
   commit: () => boolean | Promise<boolean>;
 }
 
@@ -69,19 +81,32 @@ type LeafHandle =
   | LinkItemInputHandle;
 
 /**
- * Input section for adding an item to the currently-edited playlist, or editing
- * an existing one when `editItem` is set. Owns only the selected mode; each mode
- * is a self-contained component that tracks its own input state (see
- * `ScriptureItemInput`, `TextItemInput`, `LinkItemInput`). Switching modes
- * unmounts the previous one, so its state resets naturally. When editing, the
- * parent should remount this via `key` so the sub-input seeds fresh values.
+ * Input section for adding an item to the currently-edited playlist or plan,
+ * or editing an existing one when `editItem` is set. Owns only the selected
+ * mode; each mode is a self-contained component that tracks its own input
+ * state (see `ScriptureItemInput`, `TextItemInput`, `LinkItemInput`).
+ * Switching modes unmounts the previous one, so its state resets naturally.
+ *
+ * Adding renders as its own "Add item" section with a type picker. Editing
+ * renders inline, meant to sit inside the item's own row: the fields plus, for
+ * scripture, the passage itself, so the editor doubles as the item's preview.
+ * When editing, the parent should remount this via `key` so the sub-input
+ * seeds fresh values.
  */
 export const PlaylistItemInput = forwardRef<
   PlaylistItemInputHandle,
   PlaylistItemInputProps
 >(function PlaylistItemInput(props, ref) {
-  const { books, onAdd, editItem, editScriptureText, onUpdate, onCancelEdit } =
-    props;
+  const {
+    books,
+    onAdd,
+    editItem,
+    editScriptureText,
+    loadChapter,
+    onUpdate,
+    onCancelEdit,
+    id,
+  } = props;
   const { t } = useI18n();
   const isEditing = !!editItem;
   // When editing, the mode is fixed to the item's type; otherwise the user
@@ -108,14 +133,65 @@ export const PlaylistItemInput = forwardRef<
     ? t("playlist-save-item", { defaultValue: "Save changes" })
     : undefined;
 
+  const input =
+    mode === "scripture" ? (
+      <ScriptureItemInput
+        ref={assignLeafRef}
+        books={books}
+        onAdd={submit}
+        initialValue={editScriptureText}
+        initialNote={
+          editItem?.type === "bible-verse" ? editItem.note : undefined
+        }
+        initialNoteTitle={
+          editItem?.type === "bible-verse" ? editItem.noteTitle : undefined
+        }
+        translationId={
+          editItem?.type === "bible-verse" ? editItem.translationId : undefined
+        }
+        submitLabel={submitLabel}
+      />
+    ) : mode === "text" ? (
+      <TextItemInput
+        ref={assignLeafRef}
+        onAdd={submit}
+        initialItem={editItem?.type === "html" ? editItem : undefined}
+        submitLabel={submitLabel}
+      />
+    ) : (
+      <LinkItemInput
+        ref={assignLeafRef}
+        onAdd={submit}
+        initialItem={editItem?.type === "link" ? editItem : undefined}
+        submitLabel={submitLabel}
+      />
+    );
+
+  if (editItem) {
+    return (
+      <div id={id} className="sb-playlist-item-editor">
+        {input}
+        {editItem.type === "bible-verse" ? (
+          <PlaylistItemInlinePreview
+            item={editItem}
+            loadChapter={loadChapter}
+          />
+        ) : null}
+        <button
+          type="button"
+          className="sb-reading-plans-back sb-playlist-cancel-edit"
+          onClick={() => onCancelEdit?.()}
+        >
+          {t("cancel", { defaultValue: "Cancel" })}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <DiscoverSection
       className="sb-playlist-item-input"
-      title={
-        isEditing
-          ? t("playlist-edit-item", { defaultValue: "Edit item" })
-          : t("playlist-add-item", { defaultValue: "Add item" })
-      }
+      title={t("playlist-add-item", { defaultValue: "Add item" })}
     >
       <select
         className="sb-playlist-add-mode-select"
@@ -132,51 +208,7 @@ export const PlaylistItemInput = forwardRef<
           </option>
         ))}
       </select>
-
-      {mode === "scripture" ? (
-        <ScriptureItemInput
-          ref={assignLeafRef}
-          books={books}
-          onAdd={submit}
-          initialValue={editScriptureText}
-          initialNote={
-            editItem?.type === "bible-verse" ? editItem.note : undefined
-          }
-          initialNoteTitle={
-            editItem?.type === "bible-verse" ? editItem.noteTitle : undefined
-          }
-          translationId={
-            editItem?.type === "bible-verse"
-              ? editItem.translationId
-              : undefined
-          }
-          submitLabel={submitLabel}
-        />
-      ) : mode === "text" ? (
-        <TextItemInput
-          ref={assignLeafRef}
-          onAdd={submit}
-          initialItem={editItem?.type === "html" ? editItem : undefined}
-          submitLabel={submitLabel}
-        />
-      ) : (
-        <LinkItemInput
-          ref={assignLeafRef}
-          onAdd={submit}
-          initialItem={editItem?.type === "link" ? editItem : undefined}
-          submitLabel={submitLabel}
-        />
-      )}
-
-      {isEditing ? (
-        <button
-          type="button"
-          className="sb-reading-plans-back sb-playlist-cancel-edit"
-          onClick={() => onCancelEdit?.()}
-        >
-          {t("cancel", { defaultValue: "Cancel" })}
-        </button>
-      ) : null}
+      {input}
     </DiscoverSection>
   );
 });

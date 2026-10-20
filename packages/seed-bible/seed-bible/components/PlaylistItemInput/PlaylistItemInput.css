@@ -33,3 +33,20 @@
 .sb-playlist-cancel-edit {
   margin-top: 8px;
 }
+
+/* Editing an existing item happens inside the item's own row (both editors'
+   rows are wrapping flex rows), so the editor takes a full line under the
+   row's label and pushes the rest of the list down. */
+.sb-playlist-item-editor {
+  flex-basis: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.sb-playlist-item-editor .sb-playlist-cancel-edit {
+  margin-top: 0;
+  align-self: flex-start;
+}

@@ -91,7 +91,7 @@ export const TextItemInput = forwardRef<
       },
       commit: handleAdd,
     }),
-    [editorEmpty, title]
+    [editorEmpty, title, initialItem]
   );
 
   return (

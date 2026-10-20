@@ -50,14 +50,14 @@ describe("LinkItemInput", () => {
       expect(handleRef.current?.isDirty()).toBe(true);
     });
 
-    it("isDirty is false for an untouched item being edited, true once it changes", () => {
+    it("isDirty is false while the fields match initialItem, and true once one differs", () => {
       const handleRef = createRef<LinkItemInputHandle>();
       act(() => {
         render(
           <LinkItemInput
             ref={handleRef}
             onAdd={vi.fn()}
-            initialItem={{ url: "https://example.com", title: "Example" }}
+            initialItem={{ url: "https://example.com", title: "Notes" }}
           />,
           container
         );
@@ -65,10 +65,24 @@ describe("LinkItemInput", () => {
 
       expect(handleRef.current?.isDirty()).toBe(false);
 
+      const checkbox = container.querySelector<HTMLInputElement>(
+        'input[type="checkbox"]'
+      )!;
+      act(() => {
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      expect(handleRef.current?.isDirty()).toBe(true);
+
+      act(() => {
+        checkbox.checked = false;
+        checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      expect(handleRef.current?.isDirty()).toBe(false);
+
       act(() => {
         setValue(urlInput(), "https://example.org");
       });
-
       expect(handleRef.current?.isDirty()).toBe(true);
     });
 

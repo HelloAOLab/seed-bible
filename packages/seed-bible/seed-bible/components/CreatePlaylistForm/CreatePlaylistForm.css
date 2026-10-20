@@ -1,6 +1,13 @@
-/* Lets an expanded item's preview wrap onto its own line under the row. */
+/* Lets an open item's editor wrap onto its own line under the row. */
 .sb-playlist-editor-item {
   flex-wrap: wrap;
+}
+
+/* Open/closed caret at the end of the row, as reading plan rows have. */
+.sb-discover-item-caret {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  opacity: 0.6;
 }
 
 /* Clickable item label that opens the item for editing. */

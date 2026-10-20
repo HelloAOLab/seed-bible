@@ -27,10 +27,7 @@ import {
 } from "../PlaylistItemInput/PlaylistItemInput";
 import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
-import {
-  PlaylistItemInlinePreview,
-  type ScriptureChapterLoader,
-} from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { cadenceOptionLabel } from "./cadenceLabels";
 import { readingLabel } from "./readingLabel";
 import { playlistItemLabel } from "../playlistItemLabel";
@@ -98,10 +95,10 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
   const [submitError, setSubmitError] = useState(false);
   // Discarding a new plan erases it for good, so the button asks once first.
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
-  // The reading open in the selected session's item input, or null when that
-  // input is adding a new reading.
-  const [editingReadingId, setEditingReadingId] = useState<string | null>(null);
-  const itemInputRef = useRef<PlaylistItemInputHandle>(null);
+  // The reading open for editing inside its own row, across all sessions, or
+  // null when none is. Only one is open at a time.
+  const [openReadingId, setOpenReadingId] = useState<string | null>(null);
+  const editInputRef = useRef<PlaylistItemInputHandle>(null);
 
   // Reading `.value` during render subscribes the component to edits, including
   // ones made from the reader's verse toolbar.
@@ -146,23 +143,23 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
     if (saving || !canSave) {
       return;
     }
-    // A reading opened for editing with changes not yet saved would otherwise
+    // A reading open for editing with changes not yet saved would otherwise
     // be silently dropped by saving the plan.
-    if (modals && editingReadingId && itemInputRef.current?.isDirty()) {
-      openUnsavedItemConfirm(
-        modals,
-        true,
-        () => void save(),
-        () => {
+    if (modals && openReadingId && editInputRef.current?.isDirty()) {
+      openUnsavedItemConfirm(modals, {
+        kind: "edit",
+        then: "save",
+        onDiscard: () => void save(),
+        onKeep: () => {
           void (async () => {
-            if (await itemInputRef.current?.commit()) {
+            if (await editInputRef.current?.commit()) {
               await save();
             }
             // If the edit didn't commit (e.g. an unknown reference), the
-            // input stays open with its inline error.
+            // reading stays open with its inline error.
           })();
-        }
-      );
+        },
+      });
       return;
     }
     void save();
@@ -297,25 +294,17 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
             books={books}
             loadChapter={loadChapter}
             draft={draft}
-            onSelectSession={(index) => {
-              // The reading input only edits within the selected session.
-              if (index !== draft.selectedSessionIndex) {
-                setEditingReadingId(null);
-              }
-              readingPlans.selectEditingPlanSession(index);
-            }}
+            onSelectSession={(index) =>
+              readingPlans.selectEditingPlanSession(index)
+            }
             onAddSession={() => readingPlans.addSessionToEditingPlan()}
-            onRemoveSession={(index) => {
-              setEditingReadingId(null);
-              readingPlans.removeSessionFromEditingPlan(index);
-            }}
+            onRemoveSession={(index) =>
+              readingPlans.removeSessionFromEditingPlan(index)
+            }
             onAddReading={(item) => readingPlans.addReadingToEditingPlan(item)}
             onRemoveReading={(sessionIndex, readingId) =>
               readingPlans.removeReadingFromEditingPlan(sessionIndex, readingId)
             }
-            editingReadingId={editingReadingId}
-            onEditingReadingChange={setEditingReadingId}
-            itemInputRef={itemInputRef}
             onUpdateReading={(sessionIndex, readingId, item) =>
               readingPlans.updateReadingInEditingPlan(
                 sessionIndex,
@@ -323,6 +312,10 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
                 item
               )
             }
+            openReadingId={openReadingId}
+            onOpenReadingChange={setOpenReadingId}
+            editInputRef={editInputRef}
+            modals={modals}
           />
         </section>
 
@@ -496,19 +489,22 @@ interface SessionsSectionProps {
     readingId: string,
     item: PlaylistItemData
   ) => void;
-  /** The reading open in the item input, or null when it's adding one. */
-  editingReadingId: string | null;
-  onEditingReadingChange: (readingId: string | null) => void;
-  /** Handle on the selected session's item input, for unsaved-edit checks. */
-  itemInputRef: RefObject<PlaylistItemInputHandle>;
+  /** The reading open for editing in its row, or null when none is. */
+  openReadingId: string | null;
+  onOpenReadingChange: (readingId: string | null) => void;
+  /** Handle on the open reading's editor, for unsaved-edit checks. */
+  editInputRef: RefObject<PlaylistItemInputHandle>;
+  /** Host for the unsaved-edit prompt. Without it, switching readings
+   * drops unsaved edits without asking. */
+  modals?: ModalManager;
 }
 
 /**
  * The plan's content: a vertical list of reading sessions, each holding one
  * sitting's worth of reading. Selecting a session opens the same add-item
  * control the playlist editor uses (scripture, text, or link) inside it, and is
- * also where the reader's "Add to plan" verse action puts a passage. Editing a
- * reading selects its session and opens that same control on the reading.
+ * also where the reader's "Add to plan" verse action puts a passage. Selecting
+ * a reading opens that same control, in edit mode, inside the reading's row.
  */
 function SessionsSection(props: SessionsSectionProps) {
   const {
@@ -521,15 +517,40 @@ function SessionsSection(props: SessionsSectionProps) {
     onAddReading,
     onRemoveReading,
     onUpdateReading,
-    editingReadingId,
-    onEditingReadingChange: setEditingReadingId,
-    itemInputRef,
+    openReadingId,
+    onOpenReadingChange: setOpenReadingId,
+    editInputRef,
+    modals,
   } = props;
   const { t } = useI18n();
-  // Only one reading is expanded at a time, across all sessions.
-  const [expandedReadingId, setExpandedReadingId] = useState<string | null>(
-    null
-  );
+
+  /**
+   * Closes the open reading, or opens `readingId` instead of it, asking first
+   * when the open reading has edits that haven't been saved. Saving an
+   * invalid edit (say, an unknown reference) leaves the reading open with its
+   * error showing.
+   */
+  const requestOpen = (readingId: string | null) => {
+    if (readingId === openReadingId) {
+      return;
+    }
+    if (modals && openReadingId && editInputRef.current?.isDirty()) {
+      openUnsavedItemConfirm(modals, {
+        kind: "edit",
+        then: "close",
+        onDiscard: () => setOpenReadingId(readingId),
+        onKeep: () => {
+          void (async () => {
+            if (await editInputRef.current?.commit()) {
+              setOpenReadingId(readingId);
+            }
+          })();
+        },
+      });
+      return;
+    }
+    setOpenReadingId(readingId);
+  };
 
   // Resolve a book's display name from the active translation's book list.
   const resolveBookName = (bookId: string): string => {
@@ -602,21 +623,26 @@ function SessionsSection(props: SessionsSectionProps) {
                       untitledReading
                     );
                     const preview = readingPreviewText(reading.item, t);
-                    const expanded = expandedReadingId === reading.id;
-                    const previewId = `sb-rp-reading-preview-${reading.id}`;
+                    const isOpen = openReadingId === reading.id;
+                    const editorId = `sb-rp-reading-editor-${reading.id}`;
 
                     return (
-                      <li key={reading.id} className="sb-rp-reading-item">
+                      <li
+                        key={reading.id}
+                        className={`sb-rp-reading-item${
+                          isOpen ? " sb-rp-reading-item-open" : ""
+                        }`}
+                      >
                         <button
                           type="button"
                           className="sb-rp-reading-open"
-                          aria-expanded={expanded}
-                          aria-controls={expanded ? previewId : undefined}
+                          aria-expanded={isOpen}
+                          aria-controls={isOpen ? editorId : undefined}
                           onClick={() =>
-                            setExpandedReadingId(expanded ? null : reading.id)
+                            requestOpen(isOpen ? null : reading.id)
                           }
-                          aria-label={t("reading-plan-preview-reading", {
-                            defaultValue: "Preview {{reading}}",
+                          aria-label={t("reading-plan-edit-reading", {
+                            defaultValue: "Edit {{reading}}",
                             reading: label,
                           })}
                         >
@@ -642,30 +668,16 @@ function SessionsSection(props: SessionsSectionProps) {
                             ) : null}
                           </span>
                           <MaterialIcon className="sb-rp-reading-chevron">
-                            {expanded ? "expand_less" : "expand_more"}
+                            {isOpen ? "expand_less" : "expand_more"}
                           </MaterialIcon>
-                        </button>
-                        <button
-                          type="button"
-                          className="sb-rp-icon-button sb-rp-reading-edit"
-                          aria-pressed={editingReadingId === reading.id}
-                          onClick={() => {
-                            onSelectSession(index);
-                            setEditingReadingId(reading.id);
-                          }}
-                          aria-label={t("reading-plan-edit-reading", {
-                            defaultValue: "Edit reading",
-                          })}
-                        >
-                          <MaterialIcon>edit</MaterialIcon>
                         </button>
                         <button
                           type="button"
                           className="sb-rp-icon-button sb-rp-reading-remove"
                           onClick={() => {
                             onRemoveReading(index, reading.id);
-                            if (editingReadingId === reading.id) {
-                              setEditingReadingId(null);
+                            if (isOpen) {
+                              setOpenReadingId(null);
                             }
                           }}
                           aria-label={t("reading-plan-scripture-remove", {
@@ -674,11 +686,31 @@ function SessionsSection(props: SessionsSectionProps) {
                         >
                           <MaterialIcon>close</MaterialIcon>
                         </button>
-                        {expanded ? (
-                          <PlaylistItemInlinePreview
-                            id={previewId}
-                            item={reading.item}
+                        {isOpen ? (
+                          <PlaylistItemInput
+                            ref={editInputRef}
+                            // Remount when the open reading changes so the
+                            // inputs seed from it.
+                            key={`edit-${reading.id}`}
+                            id={editorId}
+                            books={books}
+                            onAdd={onAddReading}
+                            editItem={reading.item}
+                            editScriptureText={
+                              reading.item.type === "bible-verse"
+                                ? playlistItemLabel(
+                                    reading.item,
+                                    t,
+                                    resolveBookName
+                                  )
+                                : undefined
+                            }
                             loadChapter={loadChapter}
+                            onUpdate={(item) => {
+                              onUpdateReading(index, reading.id, item);
+                              setOpenReadingId(null);
+                            }}
+                            onCancelEdit={() => setOpenReadingId(null)}
                           />
                         ) : null}
                       </li>
@@ -696,39 +728,9 @@ function SessionsSection(props: SessionsSectionProps) {
               {/* Only the selected session takes new readings — including the
                   ones sent over from the reader's "Add to plan" action, which
                   has no way to name a session. */}
-              {isSelected
-                ? (() => {
-                    const editingReading =
-                      session.readings.find((r) => r.id === editingReadingId) ??
-                      null;
-                    const editItem = editingReading?.item;
-                    return (
-                      <PlaylistItemInput
-                        ref={itemInputRef}
-                        // Remount when the edit target changes so the inputs
-                        // seed from the newly chosen reading (or reset).
-                        key={
-                          editingReading ? `edit-${editingReading.id}` : "add"
-                        }
-                        books={books}
-                        onAdd={onAddReading}
-                        editItem={editItem}
-                        editScriptureText={
-                          editItem?.type === "bible-verse"
-                            ? playlistItemLabel(editItem, t, resolveBookName)
-                            : undefined
-                        }
-                        onUpdate={(item) => {
-                          if (editingReading) {
-                            onUpdateReading(index, editingReading.id, item);
-                          }
-                          setEditingReadingId(null);
-                        }}
-                        onCancelEdit={() => setEditingReadingId(null)}
-                      />
-                    );
-                  })()
-                : null}
+              {isSelected ? (
+                <PlaylistItemInput books={books} onAdd={onAddReading} />
+              ) : null}
             </li>
           );
         })}
