@@ -2841,14 +2841,21 @@ export function createReadingPlansManager(
   };
 
   /**
-   * Replaces a reading's content in a session of the draft. The reading keeps
-   * its id, so progress already recorded against it still applies.
+   * Replaces a reading's item in place, keeping its id (and so its place in the
+   * session and any progress recorded against it).
    */
   const updateReadingInEditingPlan = (
     sessionIndex: number,
     readingId: string,
     item: PlaylistItemData
   ) => {
+    const draft = editingReadingPlan.peek();
+    const exists = draft?.plan.sessions[sessionIndex]?.readings.some(
+      (r) => r.id === readingId
+    );
+    if (!exists) {
+      return;
+    }
     const reading: PlanReading = { id: readingId, item };
     mutateDraft((plan) => ({
       ...plan,

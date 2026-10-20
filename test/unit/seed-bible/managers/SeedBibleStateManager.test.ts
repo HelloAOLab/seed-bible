@@ -618,7 +618,10 @@ describe("createSeedBibleState", () => {
 
     const result = await state.app.joinSharedSession("group-abc");
 
-    expect(mockSessionsManager.joinSession).toHaveBeenCalledWith("group-abc");
+    expect(mockSessionsManager.joinSession).toHaveBeenCalledWith(
+      "group-abc",
+      undefined
+    );
     expect(result).toBe(session);
     expect(state.tabs.tabs.value).toHaveLength(previousTabCount + 1);
     expect(state.tabs.tabs.value[previousTabCount]?.readingState).toBe(
@@ -677,12 +680,200 @@ describe("createSeedBibleState", () => {
         () => mockSessionsManager.joinSession.mock.calls.length === 1
       );
 
+      // A link that names no chapter leaves the session wherever it is.
       expect(mockSessionsManager.joinSession).toHaveBeenCalledWith(
-        "url-session-123"
+        "url-session-123",
+        undefined
       );
       expect(state.tabs.tabs.value).toHaveLength(2);
       expect(state.tabs.tabs.value[1]?.sharedSession).toBe(session);
       expect(state.tabs.selectedTabId.value).toBe("tab-2");
+    } finally {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  });
+
+  // Regression (#2020): a link carrying both a session and a chapter used to
+  // open the chapter in a plain tab and the session, at its own position, in a
+  // second one.
+  it("opens a session link's chapter in the session tab alone", async () => {
+    const session = createMockSharedSession("url-session-456");
+    // Held open until the app has loaded, as the real join (a network sync) is.
+    let finishJoin!: (joined: typeof session) => void;
+    mockSessionsManager.joinSession.mockReturnValue(
+      new Promise((resolve) => {
+        finishJoin = resolve;
+      })
+    );
+
+    window.history.replaceState(
+      null,
+      "",
+      "?sessionId=url-session-456&book=EXO&chapter=2&useFreeBibleAPI=true"
+    );
+    try {
+      const state = await createStateWithOptions({});
+      finishJoin(session);
+
+      await waitFor(() =>
+        state.tabs.tabs.value.some((tab) => tab.sharedSession === session)
+      );
+
+      expect(state.tabs.tabs.value).toHaveLength(1);
+      expect(mockSessionsManager.joinSession).toHaveBeenCalledWith(
+        "url-session-456",
+        expect.objectContaining({
+          initialBookId: "EXO",
+          initialChapterNumber: 2,
+        })
+      );
+      expect(state.tabs.tabs.value[0]?.sharedSession).toBe(session);
+      expect(state.tabs.selectedTabId.value).toBe(state.tabs.tabs.value[0]?.id);
+
+      // A tab opened afterwards must not reuse the session tab's id.
+      const nextTab = state.tabs.addTab();
+      expect(nextTab.id).not.toBe(state.tabs.tabs.value[0]?.id);
+    } finally {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  });
+
+  it("leaves a returning visitor's saved tabs where they were when a session link names a chapter", async () => {
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "single",
+        slotTabIds: ["tab-1"],
+        selectedSlotIndex: 0,
+      })
+    );
+    const session = createMockSharedSession("url-session-789");
+    mockSessionsManager.joinSession.mockResolvedValue(session);
+
+    window.history.replaceState(
+      null,
+      "",
+      "?sessionId=url-session-789&book=EXO&chapter=2&useFreeBibleAPI=true"
+    );
+    try {
+      const state = await createStateWithOptions({});
+
+      await waitFor(() =>
+        state.tabs.tabs.value.some((tab) => tab.sharedSession === session)
+      );
+
+      const savedTabs = state.tabs.tabs.value.filter(
+        (tab) => !tab.sharedSession
+      );
+      expect(
+        savedTabs.map((tab) => [
+          tab.readingState.translationId.value,
+          tab.readingState.bookId.value,
+          tab.readingState.chapterNumber.value,
+        ])
+      ).toEqual([["NIV", "MAT", 1]]);
+      expect(state.tabs.selectedTabId.value).toBe(
+        state.tabs.tabs.value.find((tab) => tab.sharedSession === session)?.id
+      );
+    } finally {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  });
+
+  it("opens a session link's chapter in a normal tab when a returning visitor can't join the session", async () => {
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "single",
+        slotTabIds: ["tab-1"],
+        selectedSlotIndex: 0,
+      })
+    );
+    mockSessionsManager.joinSession.mockRejectedValue(
+      new Error("sync timed out")
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    window.history.replaceState(
+      null,
+      "",
+      "?sessionId=url-session-down&book=EXO&chapter=2&useFreeBibleAPI=true"
+    );
+    try {
+      const state = await createStateWithOptions({});
+
+      await waitFor(
+        () =>
+          state.app.currentToast.value?.message ===
+          "Couldn't join the shared session"
+      );
+
+      const selected = state.tabs.tabs.value.find(
+        (tab) => tab.id === state.tabs.selectedTabId.value
+      );
+      expect(selected?.sharedSession).toBeNull();
+      expect(selected?.readingState.bookId.value).toBe("EXO");
+      expect(selected?.readingState.chapterNumber.value).toBe(2);
+      expect(
+        state.tabs.tabs.value.map((tab) => [
+          tab.readingState.bookId.value,
+          tab.readingState.chapterNumber.value,
+        ])
+      ).toEqual([
+        ["MAT", 1],
+        ["EXO", 2],
+      ]);
+    } finally {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  });
+
+  it("keeps a first-time visitor on a session link's chapter, in one tab, when the join fails", async () => {
+    mockSessionsManager.joinSession.mockRejectedValue(
+      new Error("sync timed out")
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    window.history.replaceState(
+      null,
+      "",
+      "?sessionId=url-session-down&book=EXO&chapter=2&useFreeBibleAPI=true"
+    );
+    try {
+      const state = await createStateWithOptions({});
+
+      await waitFor(
+        () =>
+          state.app.currentToast.value?.message ===
+          "Couldn't join the shared session"
+      );
+
+      expect(state.tabs.tabs.value).toHaveLength(1);
+      const [tab] = state.tabs.tabs.value;
+      expect(tab?.sharedSession).toBeNull();
+      expect(tab?.readingState.bookId.value).toBe("EXO");
+      expect(tab?.readingState.chapterNumber.value).toBe(2);
+      expect(state.tabs.selectedTabId.value).toBe(tab?.id);
     } finally {
       window.history.replaceState(null, "", window.location.pathname);
     }

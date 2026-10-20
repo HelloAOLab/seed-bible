@@ -73,7 +73,7 @@ export const LinkItemInput = forwardRef<
       isDirty: () =>
         value.trim() !== (initialItem?.url ?? "").trim() ||
         title.trim() !== (initialItem?.title ?? "").trim() ||
-        embed !== (initialItem?.embed ?? false),
+        (!!initialItem && embed !== (initialItem.embed ?? false)),
       commit: handleAdd,
     }),
     [value, title, embed, initialItem]

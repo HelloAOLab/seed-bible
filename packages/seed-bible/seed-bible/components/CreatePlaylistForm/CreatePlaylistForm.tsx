@@ -22,6 +22,7 @@ import {
 } from "../PlaylistItemInput/PlaylistItemInput";
 import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
 import { playlistItemLabel } from "../playlistItemLabel";
+import { PlaylistItemNoteTag } from "../PlaylistItemNoteTag/PlaylistItemNoteTag";
 import { playlistItemIcon } from "../playlistItemIcon";
 import { useDragReorder } from "../useDragReorder";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
@@ -358,6 +359,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                     </MaterialIcon>
                     <span className="sb-discover-item-title" dir="auto">
                       {playlistItemLabel(item, t, resolveBookName)}
+                      <PlaylistItemNoteTag item={item} showUntitled />
                     </span>
                     <MaterialIcon className="sb-discover-item-caret">
                       {isOpen ? "expand_less" : "expand_more"}

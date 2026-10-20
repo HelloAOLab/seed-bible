@@ -223,6 +223,7 @@ function createMockSharedSession(
     }),
     updateOptions: vi.fn(),
     removeSharedDecoration: vi.fn(),
+    decorationOwner: vi.fn().mockReturnValue(null),
     dispose: vi.fn(),
     allUsers: signal([]),
     connectedUsers: signal([]),

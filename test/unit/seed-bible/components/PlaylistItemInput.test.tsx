@@ -226,5 +226,36 @@ describe("PlaylistItemInput", () => {
 
       expect(handleRef.current?.isDirty()).toBe(true);
     });
+
+    it("keeps a scripture item's fixed translation when it's edited", async () => {
+      const onUpdate = vi.fn();
+      const handle = createRef<PlaylistItemInputHandle>();
+      act(() => {
+        render(
+          <PlaylistItemInput
+            ref={handle}
+            books={BOOKS}
+            onAdd={vi.fn()}
+            onUpdate={onUpdate}
+            editItem={{ ...scripture, translationId: "KJV" }}
+            editScriptureText="Genesis 2"
+          />,
+          container
+        );
+      });
+
+      await act(async () => {
+        container
+          .querySelector<HTMLInputElement>(".sb-scripture-input input")!
+          .focus();
+        await handle.current!.commit();
+      });
+
+      expect(onUpdate).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 2 },
+        translationId: "KJV",
+      } satisfies PlaylistItemData);
+    });
   });
 });
