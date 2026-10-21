@@ -665,6 +665,7 @@ export function expandCrossChapterItem(
  * first item, which always steps forward.
  */
 export type PlaylistStepArrival = "forward" | "backward" | "direct";
+/**
  * How long a passage stays highlighted after its note is closed, before the
  * highlight fades.
  */
@@ -968,7 +969,6 @@ export function createPlayingState(
   const next = async (): Promise<void> => {
     if (hasNext.value) {
       stepArrival = "forward";
-      currentIndex.value = currentIndex.value + 1;
       moveToStep(currentIndex.value + 1);
       await navigateToCurrentItem();
     } else if (canFinish.value) {
@@ -981,7 +981,6 @@ export function createPlayingState(
   const previous = async (): Promise<void> => {
     if (hasPrevious.value) {
       stepArrival = "backward";
-      currentIndex.value = currentIndex.value - 1;
       moveToStep(currentIndex.value - 1);
       await navigateToCurrentItem();
     }
@@ -996,7 +995,6 @@ export function createPlayingState(
       if (currentIndex.peek() !== index) {
         stepArrival = "direct";
       }
-      currentIndex.value = index;
       moveToStep(index);
       await navigateToCurrentItem();
     }
@@ -1076,7 +1074,6 @@ export function createPlayingState(
   /** Restarts playback from the first item. */
   const reset = async (): Promise<void> => {
     stepArrival = "direct";
-    currentIndex.value = queue.value.length > 0 ? 0 : -1;
     moveToStep(queue.value.length > 0 ? 0 : -1);
     await navigateToCurrentItem();
   };
@@ -1105,7 +1102,9 @@ export function createPlayingState(
       state.queue.length > 0
         ? Math.min(Math.max(Math.floor(state.step), 0), state.queue.length - 1)
         : -1;
+    const nextDetour = state.detour ?? null;
     const stepChanged = currentIndex.peek() !== clampedStep;
+    const detourChanged = !jsonEqual(detour.peek(), nextDetour);
     // A snapshot (a peer, a URL, or a new playlist handed to the extension
     // already running) placed us on this step. The step number staying the
     // same is not enough to keep the old direction: the item here may be a
@@ -1115,11 +1114,6 @@ export function createPlayingState(
     if (stepChanged || queueChanged) {
       stepArrival = "direct";
     }
-    let navigation: Promise<void> | null = null;
-    if (stepChanged) {
-    const nextDetour = state.detour ?? null;
-    const stepChanged = currentIndex.peek() !== clampedStep;
-    const detourChanged = !jsonEqual(detour.peek(), nextDetour);
     // Together, so the outbound sync never sees the new step without its
     // detour and publishes the detour as cleared.
     batch(() => {
