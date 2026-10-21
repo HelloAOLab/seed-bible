@@ -6,6 +6,7 @@ import type {
 } from "../../managers/ModalManager";
 import type { SandboxConsentRequest } from "../../managers/ExtensionPermissions";
 import {
+  expandSandboxPermissions,
   SANDBOX_PERMISSION_INFO,
   type SandboxPermission,
 } from "../../extensions/protocol";
@@ -210,14 +211,9 @@ function PermissionCards({
 }
 
 function sectionTitle(t: Translate, reason: SandboxConsentRequest["reason"]) {
-  switch (reason) {
-    case "install":
-      return t("extension-consent-now");
-    case "update":
-      return t("extension-consent-update-now");
-    case "request":
-      return t("extension-consent-request-now");
-  }
+  return reason === "update"
+    ? t("extension-consent-update-now")
+    : t("extension-consent-now");
 }
 
 function allowText(t: Translate, reason: SandboxConsentRequest["reason"]) {
@@ -247,6 +243,283 @@ function tileHue(extensionId: string): number {
   return hash % TILE_HUES;
 }
 
+function ExtensionTile({ request }: { request: SandboxConsentRequest }) {
+  return (
+    <span
+      className={`sb-extension-consent-tile sb-extension-consent-tile-${tileHue(request.extensionId)}`}
+      aria-hidden="true"
+    >
+      {initials(request.title)}
+    </span>
+  );
+}
+
+const PERMISSION_ICONS: Record<SandboxPermission, string> = {
+  "reading:position": "menu_book",
+  "reading:selection": "text_select_start",
+  "reading:navigate": "open_in_new",
+  "reading:history": "history",
+  "highlights:read": "ink_highlighter",
+  "highlights:write": "ink_highlighter",
+  "notes:read": "sticky_note_2",
+  "notes:write": "sticky_note_2",
+  "saves:read": "bookmark",
+  "saves:write": "bookmark",
+  "profile:read": "account_circle",
+  "chat:respond": "chat",
+  "chat:shared": "forum",
+  "friends:read": "group",
+  "session:read": "groups",
+  "audio:playback": "volume_up",
+  "embed:casualos": "map",
+  "clipboard:write": "content_paste",
+  "device:microphone": "mic",
+  "device:camera": "photo_camera",
+};
+
+/** What a permission reaches, as a noun phrase: "Verse Art wants access to …". */
+function permissionNoun(t: Translate, permission: SandboxPermission): string {
+  switch (permission) {
+    case "reading:position":
+      return t("extension-permission-noun-reading-position");
+    case "reading:selection":
+      return t("extension-permission-noun-reading-selection");
+    case "reading:navigate":
+      return t("extension-permission-noun-reading-navigate");
+    case "reading:history":
+      return t("extension-permission-noun-reading-history");
+    case "highlights:read":
+    case "highlights:write":
+      return t("extension-permission-noun-highlights");
+    case "notes:read":
+    case "notes:write":
+      return t("extension-permission-noun-notes");
+    case "saves:read":
+    case "saves:write":
+      return t("extension-permission-noun-saves");
+    case "profile:read":
+      return t("extension-permission-noun-profile");
+    case "chat:respond":
+      return t("extension-permission-noun-chat");
+    case "chat:shared":
+      return t("extension-permission-noun-chat-shared");
+    case "friends:read":
+      return t("extension-permission-noun-friends");
+    case "session:read":
+      return t("extension-permission-noun-session");
+    case "audio:playback":
+      return t("extension-permission-noun-audio");
+    case "embed:casualos":
+      return t("extension-permission-noun-casualos");
+    case "clipboard:write":
+      return t("extension-permission-noun-clipboard");
+    case "device:microphone":
+      return t("extension-permission-noun-microphone");
+    case "device:camera":
+      return t("extension-permission-noun-camera");
+  }
+}
+
+/** "your highlights, your notes and your camera", in the language's own idiom. */
+function formatList(items: string[], language: string): string {
+  try {
+    return new Intl.ListFormat(language, {
+      style: "long",
+      type: "conjunction",
+    }).format(items);
+  } catch {
+    return items.join(", ");
+  }
+}
+
+/** The high-risk permissions most worth saying an extension still lacks, in order. */
+const STILL_LACKS_ORDER: SandboxPermission[] = [
+  "notes:read",
+  "profile:read",
+  "friends:read",
+  "device:microphone",
+  "device:camera",
+  "chat:shared",
+  "session:read",
+  "notes:write",
+  "saves:write",
+  "highlights:write",
+];
+
+const STILL_LACKS_SHOWN = 3;
+const STACKED_ICONS_SHOWN = 3;
+
+/**
+ * An extension asking, while it runs, for more than it has: what each
+ * permission would let it do, and the sensitive things it still couldn't.
+ */
+function ExtensionRequestContent({
+  request,
+}: {
+  request: SandboxConsentRequest;
+}) {
+  const { t, language } = useI18n();
+  const requested = request.permissions;
+  const alreadyAllowed = request.alreadyAllowed ?? {
+    permissions: [],
+    network: [],
+  };
+  const single = requested.length === 1;
+  const isHighRisk = (permission: SandboxPermission) =>
+    SANDBOX_PERMISSION_INFO[permission].risk === "high";
+  const sensitive = requested.filter(isHighRisk).length;
+
+  const nouns = [...new Set(requested.map((p) => permissionNoun(t, p)))];
+  const icons = [...new Set(requested.map((p) => PERMISSION_ICONS[p]))].map(
+    (icon) => ({
+      icon,
+      group:
+        PERMISSION_GROUPS[requested.find((p) => PERMISSION_ICONS[p] === icon)!],
+    })
+  );
+  const extraIcons = icons.length - STACKED_ICONS_SHOWN;
+
+  // Related ones first: asking for highlights makes "not your notes" the
+  // most useful thing to say.
+  const held = new Set(
+    expandSandboxPermissions([...alreadyAllowed.permissions, ...requested])
+  );
+  const requestedGroups = new Set(requested.map((p) => PERMISSION_GROUPS[p]));
+  const stillLacks = STILL_LACKS_ORDER.filter((p) => !held.has(p))
+    .sort(
+      (a, b) =>
+        Number(requestedGroups.has(PERMISSION_GROUPS[b])) -
+        Number(requestedGroups.has(PERMISSION_GROUPS[a]))
+    )
+    .slice(0, STILL_LACKS_SHOWN);
+
+  const alreadyLines = [
+    ...alreadyAllowed.permissions.map((p) => permissionLabel(t, p)),
+    ...alreadyAllowed.network.map((host) =>
+      t("extension-permission-network", { host })
+    ),
+  ];
+
+  return (
+    <div className="sb-extension-consent sb-extension-request">
+      <div className="sb-extension-request-art" aria-hidden="true">
+        <ExtensionTile request={request} />
+        <span className="material-symbols-outlined sb-extension-request-arrow">
+          arrow_forward
+        </span>
+        <span className="sb-extension-request-icons">
+          {icons.slice(0, STACKED_ICONS_SHOWN).map(({ icon, group }) => (
+            <span
+              key={icon}
+              className={`sb-extension-request-icon sb-extension-consent-card-${group}`}
+            >
+              <span className="material-symbols-outlined">{icon}</span>
+            </span>
+          ))}
+          {extraIcons > 0 && (
+            <span className="sb-extension-request-icon sb-extension-request-icon-more">
+              +{extraIcons}
+            </span>
+          )}
+        </span>
+      </div>
+      <h4 className="sb-extension-request-title">
+        {t("extension-request-title", {
+          name: request.title,
+          things: formatList(nouns, language),
+        })}
+      </h4>
+      {single ? (
+        sensitive > 0 && (
+          <span className="sb-extension-consent-sensitive sb-extension-request-badge">
+            {t("extension-consent-high-risk")}
+          </span>
+        )
+      ) : (
+        <p className="sb-extension-request-count">
+          {sensitive > 0
+            ? t("extension-request-count-sensitive", {
+                count: requested.length,
+                sensitive,
+              })
+            : t("extension-request-count", { count: requested.length })}
+        </p>
+      )}
+      <div className="sb-extension-request-box">
+        <section className="sb-extension-request-will">
+          <h5 className="sb-extension-request-box-title">
+            {t("extension-request-will")}
+          </h5>
+          <ul className="sb-extension-request-lines">
+            {requested.map((permission) => (
+              <li key={permission}>
+                <span
+                  className="material-symbols-outlined sb-extension-request-check"
+                  aria-hidden="true"
+                >
+                  check
+                </span>
+                <span>
+                  {permissionLabel(t, permission)}
+                  {isHighRisk(permission) && (
+                    <span className="sb-extension-consent-sensitive">
+                      {t("extension-consent-high-risk")}
+                    </span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+        {stillLacks.length > 0 && (
+          <details className="sb-extension-request-wont" open>
+            <summary className="sb-extension-request-box-title">
+              {t("extension-request-wont")}
+              <span
+                className="material-symbols-outlined sb-extension-request-chevron"
+                aria-hidden="true"
+              >
+                expand_more
+              </span>
+            </summary>
+            <ul className="sb-extension-request-lines">
+              {stillLacks.map((permission) => (
+                <li key={permission}>
+                  <span
+                    className="material-symbols-outlined sb-extension-request-cross"
+                    aria-hidden="true"
+                  >
+                    close
+                  </span>
+                  <span>{permissionLabel(t, permission)}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+      </div>
+      {single && alreadyLines.length > 0 && (
+        <details className="sb-extension-request-already">
+          <summary>
+            <span>{t("extension-request-already")}</span>
+            <span className="sb-extension-request-already-count">
+              {alreadyLines.length}
+            </span>
+          </summary>
+          <ul className="sb-extension-request-already-lines">
+            {alreadyLines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+      <p className="sb-extension-consent-note sb-extension-request-note">
+        {t("extension-request-no-remove", { name: request.title })}
+      </p>
+    </div>
+  );
+}
+
 function ExtensionConsentContent({
   request,
 }: {
@@ -262,12 +535,7 @@ function ExtensionConsentContent({
   return (
     <div className="sb-extension-consent">
       <div className="sb-extension-consent-identity">
-        <span
-          className={`sb-extension-consent-tile sb-extension-consent-tile-${tileHue(request.extensionId)}`}
-          aria-hidden="true"
-        >
-          {initials(request.title)}
-        </span>
+        <ExtensionTile request={request} />
         <div className="sb-extension-consent-identity-text">
           <p className="sb-extension-consent-source">
             {request.version
@@ -401,7 +669,12 @@ export function openExtensionConsentModal(
     modals.openModal({
       id,
       title: modalTitle(request),
-      content: () => <ExtensionConsentContent request={request} />,
+      content: () =>
+        request.reason === "request" ? (
+          <ExtensionRequestContent request={request} />
+        ) : (
+          <ExtensionConsentContent request={request} />
+        ),
       footer: () => (
         <ExtensionConsentActions reason={request.reason} onAnswer={answer} />
       ),

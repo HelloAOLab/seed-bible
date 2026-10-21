@@ -257,6 +257,8 @@ export interface SandboxConsentRequest {
   newNetwork: string[];
   /** What it may ask for later, shown at install so it isn't a surprise. */
   optionalPermissions: SandboxPermission[];
+  /** For a "request": what it already has, so the dialog can say what it still can't do. */
+  alreadyAllowed?: { permissions: SandboxPermission[]; network: string[] };
 }
 
 /** Asks the user; resolves true only if they agreed. */

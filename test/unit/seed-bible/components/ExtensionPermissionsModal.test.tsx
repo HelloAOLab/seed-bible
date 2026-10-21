@@ -265,21 +265,115 @@ describe("extension permission dialogs", () => {
       expect(button("Allow")).toBeDefined();
     });
 
-    it("asks for more with Allow and Not now", () => {
-      void ask({
-        reason: "request",
-        permissions: ["highlights:write"],
-        network: [],
-        newPermissions: ["highlights:write"],
-        newNetwork: [],
-        optionalPermissions: [],
+    describe("when a running extension asks for more", () => {
+      function askForMore(
+        permissions: SandboxPermission[],
+        alreadyAllowed = {
+          permissions: ["reading:position"] as SandboxPermission[],
+          network: ["api.verseart.app"],
+        }
+      ) {
+        return ask({
+          reason: "request",
+          permissions,
+          network: [],
+          newPermissions: permissions,
+          newNetwork: [],
+          optionalPermissions: [],
+          alreadyAllowed,
+        });
+      }
+
+      const text = (selector: string) =>
+        [...container.querySelectorAll(selector)].map(
+          (element) => element.textContent
+        );
+
+      it("says what one permission would let it do, and what it still couldn't", () => {
+        void askForMore(["highlights:write"]);
+
+        expect(text(".sb-extension-request-title")).toEqual([
+          "Verse Art wants access to your highlights",
+        ]);
+        expect(text(".sb-extension-request-badge")).toEqual(["Sensitive"]);
+        expect(text(".sb-extension-request-will li")).toEqual([
+          "checkAdd and remove your highlightsSensitive",
+        ]);
+        // Notes and saves first: they're beside highlights.
+        expect(text(".sb-extension-request-wont li")).toEqual([
+          "closeRead your notes",
+          "closeAdd notes, and change or delete the ones it added",
+          "closeAdd and remove your saves",
+        ]);
+        expect(text(".sb-extension-request-already li")).toEqual([
+          "See which passage you're reading",
+          "Connect to api.verseart.app",
+        ]);
+        expect(button("Allow")).toBeDefined();
+        expect(button("Not now")).toBeDefined();
       });
 
-      expect(sections().map((section) => section.title)).toEqual([
-        "It's asking for",
-      ]);
-      expect(button("Allow")).toBeDefined();
-      expect(button("Not now")).toBeDefined();
+      it("never says it lacks something it has, or that what it's asking for includes", () => {
+        void askForMore(["notes:write"], {
+          permissions: ["profile:read"],
+          network: [],
+        });
+
+        const wont = text(".sb-extension-request-wont li");
+        expect(wont).not.toContain("closeRead your notes");
+        expect(wont).not.toContain("closeSee your name and profile picture");
+      });
+
+      it("sums up several at once", () => {
+        void askForMore(["highlights:write", "notes:read", "device:camera"]);
+
+        expect(text(".sb-extension-request-title")).toEqual([
+          "Verse Art wants access to your highlights, your notes, and your camera",
+        ]);
+        expect(text(".sb-extension-request-count")).toEqual([
+          "3 permissions, 3 of them sensitive",
+        ]);
+        expect(text(".sb-extension-request-will li")).toHaveLength(3);
+        expect(
+          container.querySelectorAll(".sb-extension-request-icon")
+        ).toHaveLength(3);
+        expect(
+          container.querySelector(".sb-extension-request-already")
+        ).toBeNull();
+      });
+
+      it("stacks a few icons and counts the rest", () => {
+        void askForMore([
+          "highlights:write",
+          "notes:read",
+          "device:camera",
+          "device:microphone",
+          "embed:casualos",
+        ]);
+
+        expect(text(".sb-extension-request-icon")).toEqual([
+          "ink_highlighter",
+          "sticky_note_2",
+          "photo_camera",
+          "+2",
+        ]);
+      });
+
+      it("only mentions sensitivity when something is", () => {
+        void askForMore(["audio:playback", "clipboard:write"]);
+
+        expect(text(".sb-extension-request-count")).toEqual(["2 permissions"]);
+      });
+
+      it("grants all of it on Allow, and none on Not now", async () => {
+        const allowed = askForMore(["highlights:write", "notes:read"]);
+        act(() => button("Allow").click());
+        await expect(allowed).resolves.toBe(true);
+
+        const declined = askForMore(["highlights:write", "notes:read"]);
+        act(() => button("Not now").click());
+        await expect(declined).resolves.toBe(false);
+      });
     });
 
     it("says so when it gets nothing", () => {

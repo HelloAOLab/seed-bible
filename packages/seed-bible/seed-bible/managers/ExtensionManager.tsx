@@ -1689,6 +1689,7 @@ export function createExtensionManager(
         newPermissions: permissions,
         newNetwork: [],
         optionalPermissions: [],
+        alreadyAllowed: { permissions: granted, network: manifest.network },
       });
       // Uninstalled while the dialog was open: nothing left to grant to.
       if (!agreed || !installedExtensionIds.has(extensionId)) {

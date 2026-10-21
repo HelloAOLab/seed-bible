@@ -511,6 +511,31 @@ describe("sandboxed extensions", () => {
       expect(sbs[0]!.reading.position.value).toBeNull();
     });
 
+    it("tells the user what the extension already has when it asks for more", async () => {
+      const results: unknown[] = [];
+      const extension = await publish(askingOnSelect(results, []), {
+        id: "ext.asks",
+        permissions: ["reading:selection"],
+        optionalPermissions: ["reading:position"],
+        network: ["api.example.com"],
+      });
+      await createManager().loadExtension(extension);
+
+      setUserActivation(true);
+      await clickTool("ext.asks");
+
+      await vi.waitFor(() => expect(results).toEqual([true]));
+      expect(h.consent).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          reason: "request",
+          alreadyAllowed: {
+            permissions: ["reading:selection"],
+            network: ["api.example.com"],
+          },
+        })
+      );
+    });
+
     it("grants one when the user agrees, right after using the extension, and keeps it on reload", async () => {
       const results: unknown[] = [];
       const sbs: SandboxContext[] = [];
