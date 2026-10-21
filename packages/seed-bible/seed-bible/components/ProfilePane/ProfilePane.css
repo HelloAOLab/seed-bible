@@ -429,12 +429,14 @@ button.sb-profile-plans-link {
   overflow-wrap: anywhere;
 }
 
+.sb-profile-email,
 .sb-profile-location {
   display: inline-flex;
   align-items: center;
   gap: 2px;
 }
 
+.sb-profile-email .material-symbols-outlined,
 .sb-profile-location .material-symbols-outlined {
   font-size: 16px;
 }

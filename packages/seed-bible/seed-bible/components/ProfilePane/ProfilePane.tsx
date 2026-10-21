@@ -193,7 +193,12 @@ export function ProfileContactLine(props: { state: SeedBibleState }) {
 
   return (
     <p className="sb-profile-contact">
-      {email ? <span className="sb-profile-email">{email}</span> : null}
+      {email ? (
+        <span className="sb-profile-email">
+          <MaterialIcon aria-hidden="true">mail</MaterialIcon>
+          {email}
+        </span>
+      ) : null}
       {location ? (
         <span className="sb-profile-location">
           <MaterialIcon aria-hidden="true">location_on</MaterialIcon>

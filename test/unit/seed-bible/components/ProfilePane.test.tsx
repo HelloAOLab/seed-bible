@@ -256,7 +256,7 @@ describe("ProfilePane", () => {
     const { state } = createState({ email: "craig@example.org" });
     renderPane(state);
 
-    expect(container.querySelector(".sb-profile-email")?.textContent).toBe(
+    expect(container.querySelector(".sb-profile-email")?.textContent).toContain(
       "craig@example.org"
     );
   });
