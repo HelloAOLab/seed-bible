@@ -185,14 +185,22 @@ describe("extension sources", () => {
     }
 
     it("names the person who uploaded it to Seed Bible", async () => {
-      h.host.publicProfiles.set("user-1", { name: "Kallyn" });
+      h.host.publicProfiles.set("user-1", {
+        name: "Kallyn",
+        pictureUrl: "https://files.example.com/user-1/kallyn.png",
+      });
 
       const manager = await install(`${STORAGE}/user-1/verse-art.js`);
 
-      expect(h.consent.mock.calls[0]![0].uploader).toEqual({ name: "Kallyn" });
+      const kallyn = {
+        userId: "user-1",
+        name: "Kallyn",
+        pictureUrl: "https://files.example.com/user-1/kallyn.png",
+      };
+      expect(h.consent.mock.calls[0]![0].uploader).toEqual(kallyn);
       await vi.waitFor(() =>
         expect(manager.sandboxPermissions.value["ext.verse-art"]).toMatchObject(
-          { uploader: { name: "Kallyn" } }
+          { uploader: kallyn }
         )
       );
     });
@@ -200,7 +208,11 @@ describe("extension sources", () => {
     it("says it's from someone without saying who, when they have no name", async () => {
       await install(`${STORAGE}/user-2/verse-art.js`);
 
-      expect(h.consent.mock.calls[0]![0].uploader).toEqual({ name: null });
+      expect(h.consent.mock.calls[0]![0].uploader).toEqual({
+        userId: "user-2",
+        name: null,
+        pictureUrl: null,
+      });
     });
 
     it("names the domain of one hosted anywhere else", async () => {

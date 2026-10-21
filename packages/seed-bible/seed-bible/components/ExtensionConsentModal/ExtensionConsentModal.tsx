@@ -1,4 +1,6 @@
 import "./ExtensionConsentModal.css";
+import { useSignal, type ReadonlySignal } from "@preact/signals";
+import type { ComponentChildren } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
 import type {
   ModalContentProps,
@@ -8,6 +10,7 @@ import type {
   SandboxConsentRequest,
   SandboxUploader,
 } from "../../managers/ExtensionPermissions";
+import type { FriendsManager } from "../../managers/FriendsManager";
 import {
   expandSandboxPermissions,
   SANDBOX_PERMISSION_INFO,
@@ -62,17 +65,111 @@ function permissionLabel(t: Translate, permission: SandboxPermission): string {
 }
 
 /**
+ * Who the viewer is and who they're friends with, to say how an uploader
+ * relates to them. Without it, no badge is shown.
+ */
+export interface ConsentPeople {
+  userId: ReadonlySignal<string | null>;
+  friends: Pick<FriendsManager, "friendIds" | "isLoading">;
+}
+
+type Source = { sourceHost: string; uploader?: SandboxUploader };
+
+/** Whether an uploader is the viewer, a friend of theirs, or neither; null until known. */
+function relationKey(
+  uploader: SandboxUploader,
+  people: ConsentPeople | undefined
+) {
+  if (!people) {
+    return null;
+  }
+  if (people.userId.value === uploader.userId) {
+    return "extension-consent-uploader-you";
+  }
+  if (people.friends.friendIds.value.includes(uploader.userId)) {
+    return "extension-consent-uploader-friend";
+  }
+  return people.friends.isLoading.value
+    ? null
+    : "extension-consent-uploader-not-friend";
+}
+
+/**
  * Where an extension comes from: who uploaded it, for one in Seed Bible's
  * own storage (whose host says nothing to a user), else the host serving it.
  */
-export function sourceLabel(
-  t: Translate,
-  source: { sourceHost: string; uploader?: SandboxUploader }
-): string {
-  if (!source.uploader) {
-    return source.sourceHost;
+export function SourceLabel({
+  source,
+  people,
+}: {
+  source: Source;
+  people?: ConsentPeople;
+}) {
+  const { t } = useI18n();
+  // Keyed by URL so a new picture gets a fresh attempt after an old one failed.
+  const failedPicture = useSignal<string | null>(null);
+  const { uploader } = source;
+  if (!uploader) {
+    return <>{source.sourceHost}</>;
   }
-  return source.uploader.name ?? t("extension-consent-uploader-unnamed");
+  const relation = relationKey(uploader, people);
+  return (
+    <span className="sb-extension-consent-uploader">
+      {uploader.pictureUrl && failedPicture.value !== uploader.pictureUrl && (
+        <img
+          className="sb-extension-consent-uploader-picture"
+          src={uploader.pictureUrl}
+          alt=""
+          onError={() => {
+            failedPicture.value = uploader.pictureUrl;
+          }}
+        />
+      )}
+      <span className="sb-extension-consent-uploader-name">
+        {uploader.name ?? t("extension-consent-uploader-unnamed")}
+      </span>
+      {relation && (
+        <span
+          className={`sb-extension-consent-relation sb-extension-consent-relation-${relation === "extension-consent-uploader-not-friend" ? "other" : "known"}`}
+        >
+          {relationText(t, relation)}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function relationText(
+  t: Translate,
+  relation: NonNullable<ReturnType<typeof relationKey>>
+) {
+  switch (relation) {
+    case "extension-consent-uploader-you":
+      return t("extension-consent-uploader-you");
+    case "extension-consent-uploader-friend":
+      return t("extension-consent-uploader-friend");
+    case "extension-consent-uploader-not-friend":
+      return t("extension-consent-uploader-not-friend");
+  }
+}
+
+// Stands in for the source in a translated sentence, so the label (an
+// element) can go wherever the language puts it.
+const SOURCE_SLOT = "\u0000";
+
+/** `text`, translated with `{{host}}` as the slot the source label fills. */
+export function withSource(
+  text: (host: string) => string,
+  label: ComponentChildren
+) {
+  const [before, after = ""] = text(SOURCE_SLOT).split(SOURCE_SLOT);
+  return (
+    <>
+      {before}
+      {label}
+      {after}
+    </>
+  );
 }
 
 /** One permission's line, marked when it's high risk. */
@@ -539,8 +636,10 @@ function ExtensionRequestContent({
 
 function ExtensionConsentContent({
   request,
+  people,
 }: {
   request: SandboxConsentRequest;
+  people?: ConsentPeople;
 }) {
   const { t } = useI18n();
   // An update lists only what's new: the rest was already agreed to.
@@ -555,12 +654,16 @@ function ExtensionConsentContent({
         <ExtensionTile request={request} />
         <div className="sb-extension-consent-identity-text">
           <p className="sb-extension-consent-source">
-            {request.version
-              ? t("extension-consent-source-version", {
-                  version: request.version,
-                  host: sourceLabel(t, request),
-                })
-              : t("extension-consent-from", { host: sourceLabel(t, request) })}
+            {withSource(
+              (host) =>
+                request.version
+                  ? t("extension-consent-source-version", {
+                      version: request.version,
+                      host,
+                    })
+                  : t("extension-consent-from", { host }),
+              <SourceLabel source={request} people={people} />
+            )}
           </p>
           {request.reason !== "request" && request.description && (
             <p className="sb-extension-consent-description">
@@ -670,7 +773,8 @@ function modalTitle(request: SandboxConsentRequest) {
  */
 export function openExtensionConsentModal(
   modals: ModalManager,
-  request: SandboxConsentRequest
+  request: SandboxConsentRequest,
+  people?: ConsentPeople
 ): Promise<boolean> {
   const id = `extension-consent-${request.extensionId}`;
   return new Promise((resolve) => {
@@ -690,7 +794,7 @@ export function openExtensionConsentModal(
         request.reason === "request" ? (
           <ExtensionRequestContent request={request} />
         ) : (
-          <ExtensionConsentContent request={request} />
+          <ExtensionConsentContent request={request} people={people} />
         ),
       footer: () => (
         <ExtensionConsentActions reason={request.reason} onAnswer={answer} />

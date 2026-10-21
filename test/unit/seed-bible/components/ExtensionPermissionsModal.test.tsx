@@ -6,7 +6,10 @@ import {
   type ModalManager,
 } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { openExtensionPermissionsModal } from "@packages/seed-bible/seed-bible/components/ExtensionConsentModal/ExtensionPermissionsModal";
-import { openExtensionConsentModal } from "@packages/seed-bible/seed-bible/components/ExtensionConsentModal/ExtensionConsentModal";
+import {
+  openExtensionConsentModal,
+  type ConsentPeople,
+} from "@packages/seed-bible/seed-bible/components/ExtensionConsentModal/ExtensionConsentModal";
 import type { SandboxPermissionSummary } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { SandboxConsentRequest } from "@packages/seed-bible/seed-bible/managers/ExtensionPermissions";
 import type { SandboxPermission } from "@packages/seed-bible/seed-bible/extensions/protocol";
@@ -145,21 +148,28 @@ describe("extension permission dialogs", () => {
       });
     }
 
-    function ask(request: Partial<SandboxConsentRequest> = {}) {
-      const answer = openExtensionConsentModal(modals, {
-        extensionId: "ext.verse-art",
-        title: "Verse Art",
-        description: "Turns verses into art.",
-        sourceHost: "ext.example.com",
-        version: "1.2.0",
-        reason: "install",
-        permissions: ["reading:position"],
-        network: ["api.verseart.app"],
-        newPermissions: ["reading:position"],
-        newNetwork: ["api.verseart.app"],
-        optionalPermissions: ["highlights:write", "notes:read"],
-        ...request,
-      });
+    function ask(
+      request: Partial<SandboxConsentRequest> = {},
+      people?: ConsentPeople
+    ) {
+      const answer = openExtensionConsentModal(
+        modals,
+        {
+          extensionId: "ext.verse-art",
+          title: "Verse Art",
+          description: "Turns verses into art.",
+          sourceHost: "ext.example.com",
+          version: "1.2.0",
+          reason: "install",
+          permissions: ["reading:position"],
+          network: ["api.verseart.app"],
+          newPermissions: ["reading:position"],
+          newNetwork: ["api.verseart.app"],
+          optionalPermissions: ["highlights:write", "notes:read"],
+          ...request,
+        },
+        people
+      );
       renderConsent();
       return answer;
     }
@@ -226,14 +236,103 @@ describe("extension permission dialogs", () => {
       );
     });
 
-    it("says who uploaded it to Seed Bible, or that someone did, instead of the storage's domain", () => {
-      void ask({ uploader: { name: "Kallyn" } });
-      expect(container.textContent).toContain("Version 1.2.0 · from Kallyn");
+    describe("who uploaded it to Seed Bible", () => {
+      const KALLYN = {
+        userId: "user-1",
+        name: "Kallyn",
+        pictureUrl: "https://files.example.com/user-1/kallyn.png",
+      };
 
-      void ask({ extensionId: "ext.other", uploader: { name: null } });
-      expect(container.textContent).toContain(
-        "Version 1.2.0 · from a Seed Bible User"
-      );
+      function people(
+        options: {
+          me?: string | null;
+          friends?: string[];
+          loading?: boolean;
+        } = {}
+      ): ConsentPeople {
+        return {
+          userId: signal(options.me ?? "me"),
+          friends: {
+            friendIds: signal(options.friends ?? []),
+            isLoading: signal(options.loading ?? false),
+          },
+        };
+      }
+
+      const source = () =>
+        container.querySelector(".sb-extension-consent-source")!;
+      const badge = () =>
+        container.querySelector(".sb-extension-consent-relation")
+          ?.textContent ?? null;
+
+      it("shows their picture and name, and that they're a friend", () => {
+        void ask({ uploader: KALLYN }, people({ friends: ["user-1"] }));
+
+        expect(source().textContent).toBe("Version 1.2.0 · from KallynFriend");
+        expect(source().querySelector("img")!.getAttribute("src")).toBe(
+          KALLYN.pictureUrl
+        );
+      });
+
+      it("says when they aren't a friend", () => {
+        void ask({ uploader: KALLYN }, people({ friends: ["user-9"] }));
+
+        expect(badge()).toBe("Not a friend");
+      });
+
+      it("says when it's the viewer's own", () => {
+        void ask({ uploader: KALLYN }, people({ me: "user-1" }));
+
+        expect(badge()).toBe("You");
+      });
+
+      it("doesn't call them a stranger before the friends list has loaded", () => {
+        const friendIds = signal<string[]>([]);
+        const isLoading = signal(true);
+        void ask(
+          { uploader: KALLYN },
+          { userId: signal("me"), friends: { friendIds, isLoading } }
+        );
+        expect(badge()).toBeNull();
+
+        act(() => {
+          friendIds.value = ["user-1"];
+          isLoading.value = false;
+        });
+        expect(badge()).toBe("Friend");
+      });
+
+      it("stands in for a missing name or picture", () => {
+        void ask(
+          { uploader: { userId: "user-2", name: null, pictureUrl: null } },
+          people()
+        );
+
+        expect(source().textContent).toBe(
+          "Version 1.2.0 · from a Seed Bible UserNot a friend"
+        );
+        expect(source().querySelector("img")).toBeNull();
+      });
+
+      it("drops a picture that fails to load", () => {
+        void ask({ uploader: KALLYN }, people());
+
+        act(() => {
+          source().querySelector("img")!.dispatchEvent(new Event("error"));
+        });
+
+        expect(source().querySelector("img")).toBeNull();
+        expect(source().textContent).toContain("Kallyn");
+      });
+
+      it("still names the domain of one hosted anywhere else", () => {
+        void ask({}, people());
+
+        expect(source().textContent).toBe(
+          "Version 1.2.0 · from ext.example.com"
+        );
+        expect(badge()).toBeNull();
+      });
     });
 
     it("installs only when Install is chosen", async () => {

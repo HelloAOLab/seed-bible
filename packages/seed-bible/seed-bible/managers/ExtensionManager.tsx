@@ -1594,7 +1594,11 @@ export function createExtensionManager(
         console.warn(`Could not load the profile for ${recordName}:`, err);
         return null;
       });
-      return { name: profile?.name?.trim() || null };
+      return {
+        userId: recordName,
+        name: profile?.name?.trim() || null,
+        pictureUrl: profile?.pictureUrl || null,
+      };
     } catch (err) {
       console.warn(`Could not tell who uploaded '${url}':`, err);
       return undefined;

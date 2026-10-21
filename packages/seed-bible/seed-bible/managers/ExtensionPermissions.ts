@@ -265,8 +265,10 @@ export interface SandboxConsentRequest {
 
 /** Who uploaded an extension to Seed Bible's storage. */
 export interface SandboxUploader {
+  userId: string;
   /** Their profile name; null when they haven't set one. */
   name: string | null;
+  pictureUrl: string | null;
 }
 
 /** Asks the user; resolves true only if they agreed. */

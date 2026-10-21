@@ -966,7 +966,10 @@ export function createSeedBibleState(
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
     requestSandboxConsent: (request) =>
-      openExtensionConsentModal(modals, request),
+      openExtensionConsentModal(modals, request, {
+        userId: login.userId,
+        friends,
+      }),
     records: os,
     fileRecords: os,
   });

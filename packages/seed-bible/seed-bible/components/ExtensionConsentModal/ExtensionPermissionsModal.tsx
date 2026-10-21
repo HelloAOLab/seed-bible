@@ -4,17 +4,24 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { ExtensionManager } from "../../managers/ExtensionManager";
 import type { SandboxPermission } from "../../extensions/protocol";
-import { PermissionLine, sourceLabel } from "./ExtensionConsentModal";
+import {
+  PermissionLine,
+  SourceLabel,
+  withSource,
+  type ConsentPeople,
+} from "./ExtensionConsentModal";
 
 function ExtensionPermissionsContent({
   extensions,
   extensionId,
+  people,
 }: {
   extensions: Pick<
     ExtensionManager,
     "sandboxPermissions" | "setOptionalPermission"
   >;
   extensionId: string;
+  people?: ConsentPeople;
 }) {
   const { t } = useI18n();
   const saving = useSignal(false);
@@ -39,7 +46,10 @@ function ExtensionPermissionsContent({
   return (
     <div className="sb-extension-consent">
       <p className="sb-extension-consent-source">
-        {t("extension-consent-source", { host: sourceLabel(t, summary) })}
+        {withSource(
+          (host) => t("extension-consent-source", { host }),
+          <SourceLabel source={summary} people={people} />
+        )}
       </p>
       {summary.required.length > 0 && (
         <>
@@ -117,7 +127,8 @@ export function openExtensionPermissionsModal(
     "sandboxPermissions" | "setOptionalPermission"
   >,
   extensionId: string,
-  name: string
+  name: string,
+  people?: ConsentPeople
 ) {
   modals.openModal({
     id: `extension-permissions-${extensionId}`,
@@ -130,6 +141,7 @@ export function openExtensionPermissionsModal(
       <ExtensionPermissionsContent
         extensions={extensions}
         extensionId={extensionId}
+        people={people}
       />
     ),
   });
