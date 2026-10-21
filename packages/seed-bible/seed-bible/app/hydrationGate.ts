@@ -37,6 +37,24 @@ export type HydrationDecision =
     };
 
 /**
+ * Whether the server-rendered page came from this same client bundle's commit
+ * (see AppConfig.renderedByCommit). It doesn't when, e.g., the host server
+ * rendered a request for an unlisted branch through `DEFAULT_SSR_BRANCH`
+ * instead, so anything that render produced (its DOM, or data it embedded
+ * after parsing with its own, possibly older, code) may not match what this
+ * client would have produced. An absent `renderedByCommit` (a server old
+ * enough to predate this field) also counts as a different build rather than
+ * being given the benefit of the doubt: an unidentified build is exactly the
+ * case this check exists to catch.
+ */
+export function isRenderedByThisBuild(
+  config: AppConfig,
+  clientCommit: string
+): boolean {
+  return config.renderedByCommit === clientCommit;
+}
+
+/**
  * Decides whether the client should `hydrate()` onto the existing SSR DOM or
  * fall back to a clean `render()`. Preact's `hydrate()` does not diff
  * attributes on existing DOM, so a mismatch here would silently stay wrong
@@ -60,16 +78,10 @@ export function decideHydration(ctx: HydrationGateContext): HydrationDecision {
     return { hydrate: false, reason: "no-ssr-content" };
   }
 
-  // The DOM was built by a different commit's SSR bundle than the one this
-  // client is about to hydrate with (see AppConfig.renderedByCommit) — e.g.
-  // a request for an unlisted branch that the host server rendered through
-  // `DEFAULT_SSR_BRANCH` instead. Preact's hydrate() only diffs the tree
-  // shape, not component code identity, so it would happily patch onto
-  // markup a different version of the app produced. An absent
-  // `renderedByCommit` (a server old enough to predate this field) is also
-  // treated as a mismatch rather than given the benefit of the doubt — an
-  // unidentified build is exactly the case this check exists to catch.
-  if (config.renderedByCommit !== clientCommit) {
+  // Preact's hydrate() only diffs the tree shape, not component code
+  // identity, so it would happily patch onto markup a different version of
+  // the app produced.
+  if (!isRenderedByThisBuild(config, clientCommit)) {
     return { hydrate: false, reason: "build-mismatch" };
   }
 

@@ -18,12 +18,24 @@
   }
 }
 
+/* The selector takes the reader toolbar's colors. Its rules are written
+   against --sb-font-color / --sb-background, so the panel re-points those, and
+   the chapter buttons switch back to the page colors captured here on the
+   overlay, before the panel overrides them. */
+.sb-selector-overlay {
+  --sb-selector-page-font-color: var(--sb-font-color);
+  --sb-selector-page-background: var(--sb-background);
+}
+
 .sb-selector-panel {
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
+  --sb-background: var(--sb-reader-toolbar-background);
+
   position: absolute;
   overflow: auto;
   padding: 1.125rem 1.25rem 1.25rem;
-  background: var(--sb-book-selector-background);
-  color: var(--sb-book-selector-font-color);
+  background: var(--sb-reader-toolbar-background);
+  color: var(--sb-reader-toolbar-font-color);
   border-radius: 1rem;
   border: 1px solid var(--sb-divider-color);
 
@@ -44,6 +56,10 @@
 .sb-selector-overlay.open .sb-selector-panel {
   opacity: 1;
   transform: translateY(0);
+}
+
+.sb-selector-panel .sb-bible-reader-mobile-header-title {
+  color: var(--sb-reader-toolbar-font-color);
 }
 
 /* Keep these overrides in this file, directly after the rules above, for the
@@ -118,7 +134,7 @@
 
 .sb-selector-pane-picker-label {
   font-size: 0.8125rem;
-  color: var(--sb-book-selector-font-color);
+  color: var(--sb-reader-toolbar-font-color);
   opacity: 0.85;
 }
 
@@ -225,7 +241,7 @@
   font-weight: 400;
   cursor: pointer;
 
-  color: var(--sb-book-selector-font-color);
+  color: var(--sb-reader-toolbar-font-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -270,7 +286,7 @@
   gap: 0.8125rem 0.625rem;
   padding: 0.125rem 0.25rem 0.5rem 0.25rem;
 
-  background-color: var(--sb-book-selector-background);
+  background-color: var(--sb-reader-toolbar-background);
 }
 
 .sb-selector-chapter-grid-inline {
@@ -442,7 +458,7 @@
 }
 
 .dropdown-option {
-  background: var(--sb-book-selector-background);
+  background: var(--sb-reader-toolbar-background);
   color: var(--sb-font-color);
   padding: 0.5rem 0.75rem;
   cursor: pointer;
@@ -656,11 +672,10 @@
   cursor: pointer;
   width: 2.5rem;
   aspect-ratio: 1 / 1;
-  background-color: color-mix(
-    in srgb,
-    var(--sb-secondary-color) 50%,
-    transparent
-  );
+  /* Full strength and opaque: the section behind it is a shade of the reader
+     toolbar color, which a half-strength or see-through tint blends into (or,
+     on phones where the section is see-through, gets tinted by). */
+  background-color: var(--sb-secondary-color);
   border-radius: 0.3125rem;
   color: var(--sb-font-color);
   transition: all 0.3s;
@@ -688,6 +703,9 @@
 }
 
 .show-sidebar-chapter {
+  --sb-font-color: var(--sb-selector-page-font-color);
+  --sb-background: var(--sb-selector-page-background);
+
   display: grid;
   grid-template-columns: repeat(auto-fit, 2.5rem);
   justify-content: space-between;
@@ -696,7 +714,13 @@
   gap: 0.625rem;
   row-gap: 0.8125rem;
   flex-wrap: wrap;
-  background-color: var(--sb-background);
+  /* A light shade of the panel itself, so the section sits well on any
+     reader toolbar color. */
+  background-color: color-mix(
+    in srgb,
+    var(--sb-reader-toolbar-font-color) 5%,
+    var(--sb-reader-toolbar-background)
+  );
   padding: 0.5rem;
   border-radius: 0.3125rem;
 }
@@ -857,7 +881,7 @@
 
 .modal {
   width: 23.4375rem;
-  background: var(--sb-book-selector-background);
+  background: var(--sb-reader-toolbar-background);
   border-radius: 0.5rem;
   box-shadow: 0 10px 20px var(--sb-detached-pane-toolbar-background);
   padding: 0.625rem 0.625rem 2.8125rem 0.625rem;
@@ -900,7 +924,12 @@
   z-index: 999;
   background: rgba(0, 0, 0, 0.4);
 }
+/* Rendered beside .sb-selector-panel, not inside it, so it needs the same
+   switch to the reader toolbar colors. */
 .sb-apocrypha-info-overlay {
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
+  --sb-background: var(--sb-reader-toolbar-background);
+
   position: fixed;
   top: 50%;
   left: 50%;
@@ -910,8 +939,8 @@
   width: min(85vw, 35rem);
   max-height: 80vh;
   box-sizing: border-box;
-  background: var(--sb-book-selector-background);
-  color: var(--sb-font-color);
+  background: var(--sb-reader-toolbar-background);
+  color: var(--sb-reader-toolbar-font-color);
   border-radius: 0.525rem;
   overflow-y: auto;
 }
@@ -1027,7 +1056,7 @@
   /* Ring thickness. Kept thin so three digits ("100") still fit inside. */
   inset: 0.125rem;
   border-radius: 50%;
-  background: var(--sb-book-selector-background);
+  background: var(--sb-reader-toolbar-background);
 }
 
 /*
@@ -1152,7 +1181,7 @@
   left: 0;
   bottom: 0;
   height: fit-content;
-  background-color: var(--sb-book-selector-background);
+  background-color: var(--sb-reader-toolbar-background);
   border-bottom-right-radius: 0.625rem;
   border-bottom-left-radius: 0.625rem;
 }

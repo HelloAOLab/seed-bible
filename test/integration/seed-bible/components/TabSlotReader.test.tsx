@@ -320,6 +320,9 @@ function createDesktopState(): SeedBibleState {
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
       getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
     },
+    os: {
+      connectionId: "test-connection",
+    },
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
     bookmarks: createBookmarksStub(),
