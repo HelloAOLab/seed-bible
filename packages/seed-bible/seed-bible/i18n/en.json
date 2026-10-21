@@ -856,6 +856,8 @@
   "discover-content-panel": "Discover content",
   "discover-book-title": "Discover {{book}}",
   "session-url": "Session URL",
+  "scroll-filters-start": "Scroll filters toward start",
+  "scroll-filters-end": "Scroll filters toward end",
   "color-hue": "Hue",
   "color-saturation": "Saturation and brightness",
   "hex-color": "Hex color",
