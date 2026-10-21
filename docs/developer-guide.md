@@ -461,7 +461,9 @@ it("toasts from its verse tool", async () => {
 Everything in §§3–6 assumes your extension's source lives inside this monorepo, under `packages/`. If you're a genuinely third-party developer — your own project, your own repo, no local clone of `seed-bible` — two companion packages give you the same experience anyway:
 
 - **`create-seed-bible-extension`** scaffolds a new, self-contained extension project anywhere on disk: `npx create-seed-bible-extension@latest my-extension` (or the `npm create`/`pnpm create` equivalents). The project is a sandboxed extension ([§7](#7-third-party-sandboxed-extensions)): `src/init.tsx` uses `defineExtension` from `seed-bible/extensions`, adds a toolbar button that opens a pane, asks for an optional permission when it's clicked, and keeps a count in `sb.storage`. `src/init.test.tsx` tests it with `createTestHost`. `extension.json` has `version`, `permissions`, `optionalPermissions` and `network`. Its `package.json` has a real `"seed-bible"` dependency, pinned to a published version, and the SDK's types come from that package, so they can't drift from what it ships.
-- **`seed-bible-extension-scripts`** is the toolkit that project's `package.json` scripts call: `check`, `lint`, `test`, `build`, `publish` and `dev`.
+- **`seed-bible-extension-scripts`** is the toolkit that project's `package.json` scripts call: `check`, `lint`, `test`, `build`, `package`, `publish` and `dev`.
+
+Each package's README is the full reference: [`create-seed-bible-extension`](../packages/create-seed-bible-extension/README.md) for what a new project contains, and [`seed-bible-extension-scripts`](../packages/seed-bible-extension-scripts/README.md) for every command, step-by-step hosting on GitHub Pages and Cloudflare, and troubleshooting.
 
 Whether a project is sandboxed is decided by its code: one that imports `seed-bible/extensions` is. The commands below describe that case; a project written with `registerExtension` (a contribution meant for `packages/`) still works the way it did, as noted.
 
