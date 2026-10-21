@@ -252,18 +252,27 @@ describe("ProfilePane", () => {
     );
   });
 
-  it("shows the user's email above their name", () => {
-    const { state } = createState({ email: "craig@example.org" });
+  it("shows the user's email below their name and description", () => {
+    const { state } = createState({
+      email: "craig@example.org",
+      description: "Reading through Psalms.",
+    });
     renderPane(state);
 
     expect(container.querySelector(".sb-profile-email")?.textContent).toBe(
       "craig@example.org"
     );
-    // Order matters: the email is small print introducing the name below it.
-    const contact = container.querySelector(".sb-profile-contact")!;
+    // The card reads name, then bio, then the contact small print.
     const name = container.querySelector(".sb-profile-name")!;
+    const description = container.querySelector(".sb-profile-description")!;
+    const contact = container.querySelector(".sb-profile-contact")!;
     expect(
-      contact.compareDocumentPosition(name) & Node.DOCUMENT_POSITION_FOLLOWING
+      name.compareDocumentPosition(description) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      description.compareDocumentPosition(contact) &
+        Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
   });
 
