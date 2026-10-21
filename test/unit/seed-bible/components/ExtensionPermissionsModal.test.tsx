@@ -8,6 +8,7 @@ import {
 import { openExtensionPermissionsModal } from "@packages/seed-bible/seed-bible/components/ExtensionConsentModal/ExtensionPermissionsModal";
 import { openExtensionConsentModal } from "@packages/seed-bible/seed-bible/components/ExtensionConsentModal/ExtensionConsentModal";
 import type { SandboxPermissionSummary } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import type { SandboxConsentRequest } from "@packages/seed-bible/seed-bible/managers/ExtensionPermissions";
 import type { SandboxPermission } from "@packages/seed-bible/seed-bible/extensions/protocol";
 import {
   I18nProvider,
@@ -129,29 +130,173 @@ describe("extension permission dialogs", () => {
   });
 
   describe("the consent dialog", () => {
-    it("warns about high-risk permissions only", () => {
-      void openExtensionConsentModal(modals, {
-        extensionId: "ext.demo",
-        title: "Demo",
-        description: "",
-        sourceHost: "files.example.com",
-        version: null,
-        reason: "request",
-        permissions: ["highlights:write", "reading:position"],
-        network: [],
-        newPermissions: ["highlights:write", "reading:position"],
+    function renderConsent() {
+      const modal = modals.modals.value.at(-1)!;
+      act(() => {
+        render(
+          <I18nProvider
+            i18n={createI18nManager(createNavigationManager(), ["en"])}
+          >
+            {modal.content({ t: (key) => key })}
+            {modal.footer?.({ t: (key) => key })}
+          </I18nProvider>,
+          container
+        );
+      });
+    }
+
+    function ask(request: Partial<SandboxConsentRequest> = {}) {
+      const answer = openExtensionConsentModal(modals, {
+        extensionId: "ext.verse-art",
+        title: "Verse Art",
+        description: "Turns verses into art.",
+        sourceHost: "ext.example.com",
+        version: "1.2.0",
+        reason: "install",
+        permissions: ["reading:position"],
+        network: ["api.verseart.app"],
+        newPermissions: ["reading:position"],
+        newNetwork: ["api.verseart.app"],
+        optionalPermissions: ["highlights:write", "notes:read"],
+        ...request,
+      });
+      renderConsent();
+      return answer;
+    }
+
+    /** Each section's heading and its cards: each card's title and lines. */
+    function sections() {
+      return [
+        ...container.querySelectorAll(".sb-extension-consent-section"),
+      ].map((section) => ({
+        title: section.querySelector("h4")!.textContent,
+        cards: [...section.querySelectorAll(".sb-extension-consent-card")].map(
+          (card) => ({
+            title: card.querySelector(".sb-extension-consent-card-title")!
+              .textContent,
+            lines: [
+              ...card.querySelectorAll(".sb-extension-consent-lines li"),
+            ].map((line) => line.textContent),
+          })
+        ),
+      }));
+    }
+
+    const button = (label: string) =>
+      [...container.querySelectorAll("button")].find(
+        (b) => b.textContent === label
+      )!;
+
+    it("groups what it gets now and what it may ask for later, by what each touches", () => {
+      void ask();
+
+      expect(sections()).toEqual([
+        {
+          title: "Right away",
+          cards: [
+            {
+              title: "Your reading",
+              lines: ["See which passage you're reading"],
+            },
+            {
+              title: "The internet",
+              lines: ["Connect to api.verseart.app"],
+            },
+          ],
+        },
+        {
+          title: "Only if you agree later",
+          cards: [
+            {
+              title: "Your highlights, notes and saves",
+              lines: [
+                "Add and remove your highlightsSensitive",
+                "Read your notesSensitive",
+              ],
+            },
+          ],
+        },
+      ]);
+      expect(container.textContent).toContain(
+        "Version 1.2.0 · from ext.example.com"
+      );
+      expect(container.textContent).toContain("Turns verses into art.");
+      expect(container.textContent).toContain(
+        "Seed Bible hasn't reviewed this extension."
+      );
+    });
+
+    it("installs only when Install is chosen", async () => {
+      const answer = ask();
+
+      act(() => button("Install").click());
+
+      await expect(answer).resolves.toBe(true);
+      expect(modals.modals.value).toEqual([]);
+    });
+
+    it("declines on Cancel, or when the dialog is closed", async () => {
+      const cancelled = ask();
+      act(() => button("Cancel").click());
+      await expect(cancelled).resolves.toBe(false);
+
+      const dismissed = ask({ extensionId: "ext.other" });
+      act(() => modals.modals.value.at(-1)!.onDismiss!());
+      await expect(dismissed).resolves.toBe(false);
+    });
+
+    it("lists only what an update adds", () => {
+      void ask({
+        reason: "update",
+        permissions: ["reading:position", "reading:history"],
+        newPermissions: ["reading:history"],
         newNetwork: [],
         optionalPermissions: [],
       });
-      renderLatestModal();
 
-      const warned = [
-        ...container.querySelectorAll(".sb-extension-consent-high-risk"),
-      ];
-      expect(warned).toHaveLength(1);
-      expect(
-        container.querySelectorAll(".sb-extension-consent-list li")
-      ).toHaveLength(2);
+      expect(sections()).toEqual([
+        {
+          title: "New in this version",
+          cards: [
+            { title: "Your reading", lines: ["See your reading history"] },
+          ],
+        },
+      ]);
+      expect(button("Allow")).toBeDefined();
+    });
+
+    it("asks for more with Allow and Not now", () => {
+      void ask({
+        reason: "request",
+        permissions: ["highlights:write"],
+        network: [],
+        newPermissions: ["highlights:write"],
+        newNetwork: [],
+        optionalPermissions: [],
+      });
+
+      expect(sections().map((section) => section.title)).toEqual([
+        "It's asking for",
+      ]);
+      expect(button("Allow")).toBeDefined();
+      expect(button("Not now")).toBeDefined();
+    });
+
+    it("says so when it gets nothing", () => {
+      void ask({
+        permissions: [],
+        network: [],
+        newPermissions: [],
+        newNetwork: [],
+        optionalPermissions: [],
+        version: null,
+      });
+
+      expect(sections()).toEqual([]);
+      expect(container.textContent).toContain(
+        "It won't have access to any of your information."
+      );
+      expect(container.textContent).toContain("From ext.example.com");
     });
   });
 });

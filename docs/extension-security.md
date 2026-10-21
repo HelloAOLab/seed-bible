@@ -234,7 +234,7 @@ The manifest that counts is the one in the hosted `ExtensionSet`, which the host
 
 _As built:_ twenty permissions, listed in `SANDBOX_PERMISSION_INFO` (`extensions/protocol.ts`). Each has a risk level and a policy saying whether a manifest may **require** it (list it under `permissions`, so the extension doesn't install without it) or whether it's **always optional** (only ever under `optionalPermissions`, asked for when the feature that needs it is used).
 
-**The rule: an extension may require what it reads about the user's reading — the passage, the selection, their reading history, highlights and saves — and the low-risk actions the user starts themselves: reading aloud, copying, showing a CasualOS view. Anything that changes the user's data, identifies them, reads their private writing, involves other people, or uses the microphone or camera is always optional.** High-risk permissions are exactly the always-optional ones, and the consent dialog marks them with a warning.
+**The rule: an extension may require what it reads about the user's reading — the passage, the selection, their reading history, highlights and saves — and the low-risk actions the user starts themselves: reading aloud, copying, showing a CasualOS view. Anything that changes the user's data, identifies them, reads their private writing, involves other people, or uses the microphone or camera is always optional.** High-risk permissions are exactly the always-optional ones, and the consent dialog tags them **Sensitive**.
 
 | Permission          | What it allows                                                                         | How the dialog describes it (en)                             | Risk   | Can be required |
 | ------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------ | --------------- |
@@ -296,17 +296,22 @@ No permission grants these, and the broker has no message type for them:
 The install button in Settings → Extensions opens a dialog _before_ any of the extension's code runs:
 
 > **Install "Verse Art"?**
-> From **verse-art.example** · not reviewed by Seed Bible
+> Version 1.2.0 · from **verse-art.example**
 >
-> It will be able to:
+> _Seed Bible hasn't reviewed this extension. It runs separately and only gets what's listed here._
 >
-> - See which passage you're reading and which verses you select
-> - See your highlights
-> - Connect to **api.verse-art.example**
+> **Right away**
 >
-> [Cancel] [Install]
+> - **Your reading:** See which passage you're reading · See which verses you select
+> - **The internet:** Connect to **api.verse-art.example**
+>
+> **Only if you agree later**
+>
+> - **Your highlights, notes and saves:** Add and remove your highlights `Sensitive`
+>
+> Cancel (on the left) · **Install** (on the right)
 
-High-risk permissions get a warning icon and their own line. The source line comes from the manifest's URL host, so a user can see that "Official Bible Tools" is actually served from somewhere unexpected.
+Permissions are grouped into cards by what they reach (your reading; your highlights, notes and saves; you and other people; audio and maps; your device; the internet), so the list reads as a few areas rather than a long list of lines. High-risk permissions carry a **Sensitive** tag. The source line comes from the manifest's URL host, so a user can see that "Official Bible Tools" is actually served from somewhere unexpected. An update lists only what's new, under "New in this version", and a request while running lists what it's asking for, with **Not now** and **Allow**.
 
 ### 6.2 Where the approval is stored
 

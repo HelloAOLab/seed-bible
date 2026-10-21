@@ -29,41 +29,216 @@
   gap: 0.25rem;
 }
 
+.sb-extension-consent-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.sb-extension-consent-identity-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.sb-extension-consent-tile {
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  background: #2f6f73;
+}
+
+.sb-extension-consent-tile-1 {
+  background: #4b5bb5;
+}
+
+.sb-extension-consent-tile-2 {
+  background: #7a4fa0;
+}
+
+.sb-extension-consent-tile-3 {
+  background: #3f7d3a;
+}
+
+.sb-extension-consent-tile-4 {
+  background: #a5492a;
+}
+
+.sb-extension-consent-tile-5 {
+  background: #5b6470;
+}
+
+.sb-extension-consent-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.875rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  font-size: 0.8125rem;
+}
+
+.sb-extension-consent-notice-icon {
+  font-size: 1.125rem;
+}
+
+.sb-extension-consent-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-extension-consent-section-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+}
+
+.sb-extension-consent-cards {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.sb-extension-consent-card {
+  --sb-extension-consent-group: var(--sb-primary-color);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+}
+
+.sb-extension-consent-card + .sb-extension-consent-card {
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 85%);
+}
+
+.sb-extension-consent-card-study {
+  --sb-extension-consent-group: #7a4fa0;
+}
+
+.sb-extension-consent-card-people {
+  --sb-extension-consent-group: #2f6f73;
+}
+
+.sb-extension-consent-card-media,
+.sb-extension-consent-card-device {
+  --sb-extension-consent-group: #4b5bb5;
+}
+
+.sb-extension-consent-card-network {
+  --sb-extension-consent-group: #3f7d3a;
+}
+
+.sb-extension-consent-card-icon {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sb-extension-consent-group);
+  background: color-mix(
+    in srgb,
+    var(--sb-extension-consent-group),
+    transparent 86%
+  );
+}
+
+.sb-extension-consent-card-icon .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.sb-extension-consent-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sb-extension-consent-card-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.sb-extension-consent-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+}
+
+.sb-extension-consent-sensitive {
+  display: inline-block;
+  margin-inline-start: 0.5rem;
+  padding: 0.0625rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #8a3a12;
+  background: #fdf0e6;
+}
+
 .sb-extension-consent-actions {
   display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 90%);
 }
 
 .sb-extension-consent-cancel,
 .sb-extension-consent-allow {
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  min-height: 2.75rem;
+  padding: 0 1.25rem;
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
 }
 
 .sb-extension-consent-cancel {
   background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  /* Toward the text color: darker in light themes, lighter in dark ones. */
+  color: color-mix(in srgb, var(--sb-primary-color), var(--sb-font-color) 40%);
 }
 
 .sb-extension-consent-cancel:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
 }
 
+/* Darkened so white text on the brand orange stays readable (4.5:1). */
 .sb-extension-consent-allow {
-  background: var(--sb-primary-color);
+  padding: 0 1.5rem;
+  background: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
   color: #ffffff;
 }
 
 .sb-extension-consent-allow:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), #000000 12%);
+  background: color-mix(in srgb, var(--sb-primary-color), #000000 35%);
 }
 
 .sb-extension-consent-high-risk {
