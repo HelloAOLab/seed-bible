@@ -3267,7 +3267,14 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
-  void setupFriendLinks({ navigation, login, friends, modals, toast });
+  void setupFriendLinks({
+    navigation,
+    login,
+    friends,
+    modals,
+    toast,
+    friendLinkPreview,
+  });
 
   // A shared `?readingPlan=` link loads the plan, then opens the pane once a
   // reading tab is actually there. The tab is usually ready after the network
