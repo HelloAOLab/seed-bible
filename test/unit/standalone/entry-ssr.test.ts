@@ -597,6 +597,8 @@ describe("render() server-rendered meta tags", () => {
     '<script type="application/json" id="app-customization-seed"><!-- CUSTOMIZATION_JSON --></script>',
     '<script type="application/json" id="app-playlist-page-seed"><!-- PLAYLIST_PAGE_JSON --></script>',
     '<script type="application/json" id="app-reading-plan-page-seed"><!-- READING_PLAN_PAGE_JSON --></script>',
+    '<script type="application/json" id="app-friend-link-seed"><!-- FRIEND_LINK_JSON --></script>',
+    '<script type="application/json" id="app-friend-link-seed"><!-- FRIEND_LINK_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -1814,6 +1816,183 @@ describe("render() server-rendered meta tags", () => {
 
       expect(notFound).toBeUndefined();
       expect(html).toContain("<title>2024 | Seed Bible</title>");
+    });
+  });
+
+  describe("friend link", () => {
+    const CALL_PROCEDURE_URL =
+      "https://auth.seedbible.org/api/v3/callProcedure";
+    const USER_ID = "35160ebe-fcea-4883-8b6c-7e8ae6035aff";
+    const LINK_PATH = `/?addFriend=${USER_ID}&useFreeBibleAPI=true`;
+    const PICTURE_URL = "https://files.example/ana.png";
+
+    /**
+     * Answers `getData` for `{userId}/profile` from `profiles`. An ID in
+     * `missingAccounts` answers `record_not_found` (no such account); any
+     * other key answers `data_not_found` (an account that never saved one).
+     */
+    function mockProfiles(
+      profiles: Record<string, unknown>,
+      missingAccounts: string[] = []
+    ) {
+      const responses = createDefaultManagerResponseMap();
+      globalThis.fetch = (async (url: string, init?: RequestInit) => {
+        if (url === CALL_PROCEDURE_URL) {
+          const body = JSON.parse(String(init?.body));
+          const recordName = body.input?.recordName;
+          const key = `${recordName}/${body.input?.address}`;
+          if (body.procedure === "getData" && key in profiles) {
+            return createResponse({ success: true, data: profiles[key] });
+          }
+          if (missingAccounts.includes(recordName)) {
+            return createResponse({
+              success: false,
+              errorCode: "record_not_found",
+              errorMessage: "Record not found",
+            });
+          }
+          return createResponse({
+            success: false,
+            errorCode: "data_not_found",
+            errorMessage: "Data not found",
+          });
+        }
+        const response = responses[url];
+        if (!response) {
+          throw new Error(`No mocked response for ${url}`);
+        }
+        return response;
+      }) as typeof globalThis.fetch;
+    }
+
+    function readEmbeddedFriendLinkSeed(html: string): unknown {
+      const match = /id="app-friend-link-seed">([\s\S]*?)<\/script>/.exec(html);
+      if (!match) {
+        throw new Error("app-friend-link-seed script tag not found");
+      }
+      return JSON.parse(match[1]!);
+    }
+
+    it("titles, describes and illustrates the preview after the linked person", async () => {
+      mockProfiles({
+        [`${USER_ID}/profile`]: { name: "Ana", pictureUrl: PICTURE_URL },
+      });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain(
+        '<meta name="twitter:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain(
+        '<meta property="og:description" content="Ana invited you to be friends on Seed Bible. Open the link to send a friend request."'
+      );
+      expect(html).toContain(
+        `<meta property="og:image" content="${PICTURE_URL}"`
+      );
+      expect(html).toContain('<meta property="og:image:alt" content="Ana"');
+      expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+    });
+
+    it("points og:url and the canonical link at the friend link itself, and keeps it out of search results", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        `<meta property="og:url" content="/?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain(
+        `<link rel="canonical" href="/?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain('<meta name="robots" content="noindex"');
+    });
+
+    it("keeps the tab title on the chapter the page shows", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toMatch(/<title>Genesis 1 - [^<]*\| Seed Bible<\/title>/);
+    });
+
+    it("keeps the default image when the person has no picture", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+    });
+
+    it("embeds the loaded profile as a seed, without its private config", async () => {
+      mockProfiles({
+        [`${USER_ID}/profile`]: {
+          name: "Ana",
+          pictureUrl: PICTURE_URL,
+          config: { themeId: "dark", tutorialSeen: true },
+        },
+      });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(readEmbeddedFriendLinkSeed(html)).toEqual({
+        userId: USER_ID,
+        profile: { name: "Ana", pictureUrl: PICTURE_URL, config: null },
+      });
+      expect(html).not.toContain("tutorialSeen");
+    });
+
+    it("can't be broken out of by a name that closes the script tag", async () => {
+      const name = "</script><script>alert(1)</script>";
+      mockProfiles({ [`${USER_ID}/profile`]: { name } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).not.toContain("<script>alert(1)");
+      expect(readEmbeddedFriendLinkSeed(html)).toEqual({
+        userId: USER_ID,
+        profile: { name, config: null },
+      });
+    });
+
+    it("falls back to the chapter preview for an account that never saved a profile", async () => {
+      mockProfiles({});
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Read Genesis 1"'
+      );
+      expect(html).toContain('<link rel="canonical" href="/en/AAB/genesis/1"');
+      expect(html).not.toContain('name="robots"');
+    });
+
+    it("falls back to the chapter preview and seeds a missing account when no one has that ID", async () => {
+      mockProfiles({}, [USER_ID]);
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Read Genesis 1"'
+      );
+      expect(html).toContain('<link rel="canonical" href="/en/AAB/genesis/1"');
+      expect(html).not.toContain('name="robots"');
+      expect(readEmbeddedFriendLinkSeed(html)).toEqual({
+        userId: USER_ID,
+        profile: null,
+      });
+    });
+
+    it("leaves a page without a friend link indexable and unseeded", async () => {
+      const html = await renderHtml("/?useFreeBibleAPI=true");
+
+      expect(html).not.toContain('name="robots"');
+      expect(readEmbeddedFriendLinkSeed(html)).toBeNull();
     });
   });
 
