@@ -51,6 +51,15 @@
   font-family: var(--sb-font-family);
 }
 
+/* The reader toolbar floats over the bottom of the pane, so leave room to
+   scroll "Log out" clear of it. On phones the pane already stops above it
+   (see PaneLayout.css). */
+@media (min-width: 481px) {
+  .sb-profile-screen {
+    padding-bottom: var(--sb-reader-bottom-inset, 6rem);
+  }
+}
+
 /* Wide viewports: the design is a phone layout, so cap it and centre. */
 .sb-profile-content {
   display: flex;
