@@ -240,11 +240,11 @@ already allowed.
 
 ## Environment variables
 
-| Variable                | Used by   | What it does                                                         |
-| ----------------------- | --------- | -------------------------------------------------------------------- |
-| `SEED_BIBLE_RECORD_KEY` | `publish` | Publishes without logging in. Printed by the first `publish`.        |
-| `SEED_BIBLE_ENDPOINT`   | `publish` | Publishes to another Seed Bible records server, for testing.         |
-| `XDG_CACHE_HOME`        | `dev`     | Where Seed Bible checkouts are cached (`%LOCALAPPDATA%` on Windows). |
+| Variable                | Used by   | What it does                                                                                                                               |
+| ----------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `SEED_BIBLE_RECORD_KEY` | `publish` | Publishes without logging in. Printed by the first `publish`.                                                                              |
+| `SEED_BIBLE_ENDPOINT`   | `publish` | Publishes to another Seed Bible records server, for testing. Requests still come from `https://auth.ao.bot`, so that server must allow it. |
+| `XDG_CACHE_HOME`        | `dev`     | Where Seed Bible checkouts are cached (`%LOCALAPPDATA%` on Windows).                                                                       |
 
 ## Working on this package
 

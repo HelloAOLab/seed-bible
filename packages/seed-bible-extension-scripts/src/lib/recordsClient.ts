@@ -22,10 +22,19 @@ export type RecordsClient = ReturnType<typeof createRecordsClient>;
 /** Matches `OsManager.tsx`'s own default — override via `SEED_BIBLE_ENDPOINT` for testing against a different instance. */
 const DEFAULT_ENDPOINT = "https://auth.seedbible.org";
 
+/**
+ * The records server checks each request's `Origin` against the sites
+ * allowed to use it, and rejects login requests from anywhere else. A Node
+ * CLI has no origin of its own, so it uses this one.
+ */
+export const RECORDS_ORIGIN = "https://auth.ao.bot";
+
 export function createClient(
   endpoint: string = process.env.SEED_BIBLE_ENDPOINT || DEFAULT_ENDPOINT
 ): RecordsClient {
-  return createRecordsClient(endpoint);
+  const client = createRecordsClient(endpoint);
+  client.headers.origin = RECORDS_ORIGIN;
+  return client;
 }
 
 // Headers `fetch` refuses to set itself — mirrors `OsManager.tsx`'s

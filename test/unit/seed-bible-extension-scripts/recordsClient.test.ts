@@ -1,8 +1,52 @@
 // @vitest-environment node
 import {
+  createClient,
   writePublicData,
   type RecordsClient,
 } from "@packages/seed-bible-extension-scripts/src/lib/recordsClient";
+
+describe("createClient", () => {
+  beforeEach(() => {
+    vi.stubEnv("SEED_BIBLE_ENDPOINT", "");
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  // The records server rejects login requests from origins it doesn't allow.
+  it("sends every request from https://auth.ao.bot, whichever server it talks to", async () => {
+    const requests: { url: string; headers: Record<string, string> }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init: { headers: Record<string, string> }) => {
+        requests.push({ url, headers: init.headers });
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      })
+    );
+
+    await createClient().requestLogin({
+      address: "author@example.com",
+      addressType: "email",
+    });
+    await createClient("http://localhost:2999").recordData({
+      recordKey: "key",
+      address: "extension-sets/x",
+      data: {},
+    });
+
+    expect(requests.map((request) => request.url)).toEqual([
+      "https://auth.seedbible.org/api/v3/callProcedure",
+      "http://localhost:2999/api/v3/callProcedure",
+    ]);
+    for (const request of requests) {
+      expect(request.headers.origin).toBe("https://auth.ao.bot");
+    }
+  });
+});
 
 /*
  * `publish` keeps an extension's manifest in a data record, so the link
