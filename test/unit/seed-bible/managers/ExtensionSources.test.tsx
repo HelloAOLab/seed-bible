@@ -89,6 +89,73 @@ describe("extension sources", () => {
     await vi.waitFor(() => expect(starts).toHaveLength(1));
   });
 
+  describe("a set published to Seed Bible's records", () => {
+    // Where `seed-bible-extension-scripts publish` puts it.
+    const RECORD_URL =
+      "https://auth.seedbible.org/api/v2/records/data?recordName=user-1&address=extension-sets%2Fext.verse-art";
+    let runs: string[];
+
+    beforeEach(() => {
+      runs = [];
+    });
+
+    /** Publishes a version, overwriting the record as `publish` does. */
+    async function publishVersion(version: string) {
+      const extension = await h.publish(
+        defineExtension({ main: () => void runs.push(version) }),
+        { id: "ext.verse-art", version },
+        `https://auth.seedbible.org/files/verse-art-${version}.js`
+      );
+      h.hostJson(RECORD_URL, {
+        success: true,
+        recordName: "user-1",
+        data: { id: "ext.verse-art", extensions: [extension] },
+        markers: ["publicRead"],
+      });
+    }
+
+    it("installs from the record's link", async () => {
+      await publishVersion("1.0.0");
+      const manager = await loadPage();
+
+      expect(await manager.discoverExtensionSet(RECORD_URL)).not.toBeNull();
+      expect(
+        await manager.loadExtension(
+          listed(manager, "ext.verse-art")!.extension!
+        )
+      ).toBe(true);
+      await vi.waitFor(() => expect(runs).toEqual(["1.0.0"]));
+    });
+
+    it("runs the newest version after it's republished, without installing again", async () => {
+      await publishVersion("1.0.0");
+      const first = await loadPage();
+      await first.discoverExtensionSet(RECORD_URL);
+      await first.loadExtension(listed(first, "ext.verse-art")!.extension!);
+      await vi.waitFor(() => expect(runs).toHaveLength(1));
+
+      await publishVersion("1.1.0");
+      h.reload("ext.verse-art");
+      await loadPage();
+
+      await vi.waitFor(() => expect(runs).toEqual(["1.0.0", "1.1.0"]));
+      expect(h.consent).toHaveBeenCalledTimes(1);
+    });
+
+    it("isn't installable when the record can't be read", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      h.hostJson(RECORD_URL, {
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "You are not authorized to perform this action.",
+      });
+      const manager = await loadPage();
+
+      expect(await manager.discoverExtensionSet(RECORD_URL)).toBeNull();
+      expect(listed(manager, "ext.verse-art")).toBeUndefined();
+    });
+  });
+
   it("forgets where an extension came from when it's uninstalled", async () => {
     await hostVerseArt();
     const first = await loadPage();

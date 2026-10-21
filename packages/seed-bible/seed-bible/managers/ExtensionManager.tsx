@@ -665,6 +665,23 @@ export function isExtensionSetUrl(value: string): boolean {
   }
 }
 
+/**
+ * `seed-bible-extension-scripts publish` keeps a set in a CasualOS data
+ * record, so republishing updates it at the same link. Reading a record
+ * over HTTP answers with the record wrapped in a result object.
+ */
+function unwrapRecordData(url: string, body: unknown): unknown {
+  if (
+    new URL(url).pathname === "/api/v2/records/data" &&
+    typeof body === "object" &&
+    body !== null &&
+    (body as { success?: unknown }).success === true
+  ) {
+    return (body as { data?: unknown }).data;
+  }
+  return body;
+}
+
 function isExtensionSet(value: unknown): value is ExtensionSet {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -1955,7 +1972,7 @@ export function createExtensionManager(
         return null;
       }
 
-      const data: unknown = await response.json();
+      const data = unwrapRecordData(url, await response.json());
       if (!isExtensionSet(data)) {
         console.error(
           `Failed to discover extension set at '${url}': the fetched JSON is not a valid ExtensionSet.`

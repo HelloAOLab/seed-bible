@@ -116,6 +116,45 @@ export async function uploadFile(
 }
 
 /**
+ * Writes `data` to a publicly readable data record at `address`, replacing
+ * what was there, and returns the URL anyone can read it from. Unlike a
+ * file, whose URL changes with its contents, the URL stays the same.
+ */
+export async function writePublicData(
+  client: RecordsClient,
+  recordKey: string,
+  address: string,
+  data: unknown
+): Promise<{ dataUrl: string }> {
+  const result = await client.recordData({
+    recordKey,
+    address,
+    data,
+    markers: ["publicRead"],
+  });
+  if (result.success === false) {
+    throw new Error(
+      `Failed to record data: ${result.errorCode} ${result.errorMessage}`
+    );
+  }
+  return {
+    dataUrl: recordDataUrl(client.endpoint, result.recordName, result.address),
+  };
+}
+
+/** The plain GET address the records server reads a data record from. */
+export function recordDataUrl(
+  endpoint: string,
+  recordName: string,
+  address: string
+): string {
+  const url = new URL("/api/v2/records/data", endpoint);
+  url.searchParams.set("recordName", recordName);
+  url.searchParams.set("address", address);
+  return url.href;
+}
+
+/**
  * One-time interactive login + record-key mint: prompts for an email address,
  * requests a login code, prompts for the code the user received by email,
  * completes the login, then mints a `subjectless` record key — a

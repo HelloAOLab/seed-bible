@@ -7,6 +7,7 @@ import {
   bootstrapRecordKey,
   createClient,
   uploadFile,
+  writePublicData,
 } from "../lib/recordsClient.js";
 
 export interface PublishOptions {
@@ -90,15 +91,24 @@ export async function runPublish(
 
   manifest.extensions[0]!.url = bundleUrl;
 
-  console.log("[publish] Uploading extension set manifest...");
-  const { fileUrl: setUrl } = await uploadFile(client, recordKey, manifest, [
-    "publicRead",
-  ]);
+  // A file's URL changes with its contents, so the manifest goes in a data
+  // record instead: republishing overwrites it, and everyone who installed
+  // from its link gets the new version.
+  console.log("[publish] Updating extension set manifest...");
+  const { dataUrl: setUrl } = await writePublicData(
+    client,
+    recordKey,
+    extensionSetAddress(info.extensionId),
+    manifest
+  );
 
   console.log(`
-[publish] Published '${info.extensionId}'.
+[publish] Published '${info.extensionId}'${info.meta.version ? ` ${info.meta.version}` : ""}.
 
   ${setUrl}
+
+This link stays the same each time you publish, so people who installed from
+it get each new version the next time they open Seed Bible.
 
 To install it, paste that link into Seed Bible's Settings > Extensions >
 "Add extensions from a link", or share a link that offers to install it:
@@ -108,6 +118,9 @@ To install it, paste that link into Seed Bible's Settings > Extensions >
 
   return 0;
 }
+
+export const extensionSetAddress = (extensionId: string) =>
+  `extension-sets/${extensionId}`;
 
 async function resolveRecordKey(
   client: ReturnType<typeof createClient>

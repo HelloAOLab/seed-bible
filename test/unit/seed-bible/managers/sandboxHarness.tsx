@@ -628,8 +628,10 @@ export interface SandboxHarness {
   ) => Promise<UploadedExtension>;
   /** Simulates a page reload: the extension stops, but stays installed and granted. */
   reload: (id: string) => void;
-  /** Hosts `extensions` as an `ExtensionSet` at `url`, as `publish` would. */
+  /** Hosts `extensions` as an `ExtensionSet` at `url`, as a static host would. */
   hostSet: (url: string, extensions: UploadedExtension[]) => void;
+  /** Serves `body` as the JSON response at `url`. */
+  hostJson: (url: string, body: unknown) => void;
 }
 
 /**
@@ -719,6 +721,9 @@ export function useSandboxHarness(): SandboxHarness {
 
     hostSet(url, extensions) {
       sets.set(url, { id: `set-${url}`, extensions });
+    },
+    hostJson(url, body) {
+      sets.set(url, body);
     },
   };
 

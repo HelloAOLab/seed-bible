@@ -97,9 +97,16 @@ default is `https://seedbible.org/`).
 
 ### `publish`
 
-Builds the extension and uploads it to Seed Bible's own file storage, so
-you don't need a host at all. It prints the extension's link and a
-ready-made install link.
+Builds the extension and uploads it to Seed Bible's own storage, so you
+don't need a host at all. It prints the extension's link and a ready-made
+install link.
+
+The link stays the same every time you publish: the bundle is uploaded as a
+new file, and the manifest the link points to is overwritten to name it. So
+to release an update, bump `version` in `extension.json` and run `publish`
+again. People who installed it get the new version the next time they open
+Seed Bible. Each extension has its own link, so publishing one never
+replaces another.
 
 The first run asks for your Seed Bible account's email and the code it
 sends you, then prints a `SEED_BIBLE_RECORD_KEY`. Save it as an
@@ -236,7 +243,7 @@ already allowed.
 | Variable                | Used by   | What it does                                                         |
 | ----------------------- | --------- | -------------------------------------------------------------------- |
 | `SEED_BIBLE_RECORD_KEY` | `publish` | Publishes without logging in. Printed by the first `publish`.        |
-| `SEED_BIBLE_ENDPOINT`   | `publish` | Uploads to another Seed Bible records server, for testing.           |
+| `SEED_BIBLE_ENDPOINT`   | `publish` | Publishes to another Seed Bible records server, for testing.         |
 | `XDG_CACHE_HOME`        | `dev`     | Where Seed Bible checkouts are cached (`%LOCALAPPDATA%` on Windows). |
 
 ## Working on this package

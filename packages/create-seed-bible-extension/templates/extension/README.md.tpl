@@ -31,7 +31,9 @@ in `src/init.tsx`. Every call is checked against the permissions in
 - `npm run publish`: builds, uploads the bundle and a small manifest
   describing it (an `ExtensionSet`), and prints that manifest's link. Anyone
   can paste the link into Seed Bible's Settings > Extensions > "Add
-  extensions from a link" to install it. The first run prompts you to log in
+  extensions from a link" to install it. The link stays the same each time
+  you publish, so people who installed it get new versions automatically.
+  The first run prompts you to log in
   once (an email and the code it sends you) and prints a
   `SEED_BIBLE_RECORD_KEY` to save for non-interactive publishes after that
   (e.g. in CI); treat it like a password. Pass `--dry-run` to see the
