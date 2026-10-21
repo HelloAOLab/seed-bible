@@ -1,6 +1,6 @@
 import "./DiscoverContentPanel.css";
-import { useSignal } from "@preact/signals";
-import { useCallback, useRef } from "preact/hooks";
+import { Signal, useSignal } from "@preact/signals";
+import { useCallback, useLayoutEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { getDiscoverPanelContent } from "../../managers/BibleReadingManager";
@@ -77,7 +77,6 @@ function useSidePanelMaxHeight() {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(measure);
     };
-
     const resizeObserver = new ResizeObserver(scheduleMeasure);
     if (scroller) resizeObserver.observe(scroller);
     // BibleReaderToolbar rewrites `--sb-reader-bottom-inset` inline on the
@@ -101,12 +100,233 @@ function useSidePanelMaxHeight() {
     };
   }, []);
 }
+interface DiscoverFiltersProps {
+  filters: { key: FilterKey; label: string }[];
+  activeFilter: Signal<FilterKey>;
+  displayFilter: FilterKey;
+}
 
 interface DiscoverContentPanelProps {
   tab: ReaderTab | null;
   state: SeedBibleState;
 }
+/**
+ * Renders the filters for discover content and provides horizontal
+ * scrolling controls when the filters do not fit within the available width.
+ *
+ * On smaller/coarse-pointer devices, the filters can be scrolled normally.
+ * The active filter is controlled through the provided signal.
+ */
+function DiscoverFilters({
+  filters,
+  activeFilter,
+  displayFilter,
+}: DiscoverFiltersProps) {
+  const { t } = useI18n();
+  const filtersRef = useRef<HTMLDivElement>(null);
 
+  const hasScrollableFilters = useSignal(false);
+  const canScrollStart = useSignal(false);
+  const canScrollEnd = useSignal(false);
+  const filtersKey = filters
+    .map((filter) => `${filter.key}:${filter.label}`)
+    .join("|");
+
+  const updateScrollState = useCallback((isRtl: boolean) => {
+    const container = filtersRef.current;
+    const wrapper = container?.parentElement;
+    if (!container || !wrapper) {
+      hasScrollableFilters.value = false;
+      canScrollStart.value = false;
+      canScrollEnd.value = false;
+      return;
+    }
+    const hasOverflow = container.scrollWidth > wrapper.clientWidth + 1;
+    hasScrollableFilters.value = hasOverflow;
+    if (!hasOverflow) {
+      canScrollStart.value = false;
+      canScrollEnd.value = false;
+      return;
+    }
+    const maxScroll = Math.max(
+      0,
+      container.scrollWidth - container.clientWidth
+    );
+    const position = isRtl
+      ? Math.abs(container.scrollLeft)
+      : container.scrollLeft;
+
+    canScrollStart.value = position > 1;
+    canScrollEnd.value = position < maxScroll - 1;
+  }, []);
+
+  const scrollFilters = useCallback((direction: -1 | 1) => {
+    if (direction === -1 && !canScrollStart.value) return;
+    if (direction === 1 && !canScrollEnd.value) return;
+
+    const container = filtersRef.current;
+    if (!container) return;
+
+    const pills = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+    );
+
+    if (pills.length === 0) return;
+
+    const isRtl = getComputedStyle(container).direction === "rtl";
+    const containerRect = container.getBoundingClientRect();
+
+    let targetPill: HTMLButtonElement | undefined;
+
+    if (direction === 1) {
+      // Toward the end: right in LTR, left in RTL.
+      targetPill = isRtl
+        ? pills.find((pill) => {
+            const rect = pill.getBoundingClientRect();
+            return rect.left < containerRect.left - 1;
+          })
+        : pills.find((pill) => {
+            const rect = pill.getBoundingClientRect();
+            return rect.right > containerRect.right + 1;
+          });
+    } else {
+      // Toward the start: left in LTR, right in RTL.
+      targetPill = isRtl
+        ? [...pills].reverse().find((pill) => {
+            const rect = pill.getBoundingClientRect();
+            return rect.right > containerRect.right + 1;
+          })
+        : [...pills].reverse().find((pill) => {
+            const rect = pill.getBoundingClientRect();
+            return rect.left < containerRect.left - 1;
+          });
+    }
+
+    if (!targetPill) return;
+
+    const targetRect = targetPill.getBoundingClientRect();
+
+    const scrollAmount =
+      direction === 1
+        ? isRtl
+          ? targetRect.left - containerRect.left
+          : targetRect.right - containerRect.right
+        : isRtl
+          ? targetRect.right - containerRect.right
+          : targetRect.left - containerRect.left;
+
+    container.scrollBy({
+      left: scrollAmount,
+    });
+  }, []);
+  const showArrows = hasScrollableFilters.value;
+  useLayoutEffect(() => {
+    const container = filtersRef.current;
+    if (!container) return;
+
+    const active = container.querySelector<HTMLElement>(".sb-dcp-chip--active");
+
+    if (active) {
+      const row = container.getBoundingClientRect();
+      const chip = active.getBoundingClientRect();
+
+      if (chip.left < row.left) {
+        container.scrollLeft -= row.left - chip.left;
+      } else if (chip.right > row.right) {
+        container.scrollLeft += chip.right - row.right;
+      }
+    }
+
+    const update = () =>
+      updateScrollState(getComputedStyle(container).direction === "rtl");
+
+    update();
+    container.addEventListener("scroll", update);
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
+
+    if (resizeObserver) {
+      resizeObserver.observe(container);
+
+      const wrapper = container.parentElement;
+      if (wrapper) resizeObserver.observe(wrapper);
+
+      container
+        .querySelectorAll<HTMLElement>(".sb-dcp-chip")
+        .forEach((chip) => resizeObserver.observe(chip));
+    }
+
+    // Recheck when the viewport resizes. This also supports test
+    // environments where ResizeObserver is unavailable.
+    window.addEventListener("resize", update);
+
+    return () => {
+      container.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      resizeObserver?.disconnect();
+    };
+  }, [filtersKey, updateScrollState, showArrows]);
+
+  return (
+    <div
+      className={`sb-dcp-filters-wrapper${
+        hasScrollableFilters.value ? " sb-dcp-filters-wrapper--scrollable" : ""
+      }`}
+    >
+      {hasScrollableFilters.value && (
+        <button
+          type="button"
+          className="sb-dcp-filters-arrow"
+          onClick={() => scrollFilters(-1)}
+          aria-disabled={!canScrollStart.value}
+          aria-label={t("scroll-filters-start", {
+            defaultValue: "Scroll filters toward start",
+          })}
+        >
+          <MaterialIcon className="rtl-mirror" aria-hidden="true">
+            chevron_left
+          </MaterialIcon>
+        </button>
+      )}
+
+      <div className="sb-dcp-filters" role="tablist" ref={filtersRef}>
+        {filters.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={displayFilter === key}
+            className={`sb-dcp-chip${
+              displayFilter === key ? " sb-dcp-chip--active" : ""
+            }`}
+            onClick={() => {
+              activeFilter.value = key;
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {hasScrollableFilters.value && (
+        <button
+          type="button"
+          className="sb-dcp-filters-arrow"
+          onClick={() => scrollFilters(1)}
+          aria-disabled={!canScrollEnd.value}
+          aria-label={t("scroll-filters-end", {
+            defaultValue: "Scroll filters toward end",
+          })}
+        >
+          <MaterialIcon className="rtl-mirror" aria-hidden="true">
+            chevron_right
+          </MaterialIcon>
+        </button>
+      )}
+    </div>
+  );
+}
 /**
  * Automatically-visible discover content — the reader's and their friends'
  * notes (annotations) plus discovered cross references/study notes/content — for
@@ -119,8 +339,11 @@ interface DiscoverContentPanelProps {
  */
 export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const { tab, state } = props;
+
   const { t } = useI18n();
+
   const activeFilter = useSignal<FilterKey>("all");
+
   const panelRef = useSidePanelMaxHeight();
 
   if (!tab) {
@@ -150,11 +373,14 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     tab.readingState.discoveredCrossReferences.value.flatMap(
       (group) => group.results
     ).length > 0;
+
   const hasStudyNotes =
     tab.readingState.discoveredStudyNotes.value.flatMap(
       (group) => group.results
     ).length > 0;
+
   const contentTypes = state.discover.contentTypes.value;
+
   const hasContent =
     tab.readingState.discoveredContent.value
       .flatMap((group) => group.results)
@@ -173,40 +399,61 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     plans.length > 0 ||
     typesWithResults.some((definition) => !definition.hiddenByDefault);
 
-  const filters: { key: FilterKey; label: string }[] = [
-    { key: "all", label: t("all", { defaultValue: "All" }) },
+  const filters: {
+    key: FilterKey;
+    label: string;
+  }[] = [
+    {
+      key: "all",
+      label: t("all", {
+        defaultValue: "All",
+      }),
+    },
+
     ...(showAnnotations
       ? [
           {
             key: "annotations" as const,
-            label: t("notes", { defaultValue: "Notes" }),
+            label: t("notes", {
+              defaultValue: "Notes",
+            }),
           },
         ]
       : []),
+
     ...(hasCrossReferences
       ? [
           {
             key: "cross-references" as const,
-            label: t("cross-references", { defaultValue: "Cross Refs" }),
+            label: t("cross-references", {
+              defaultValue: "Cross Refs",
+            }),
           },
         ]
       : []),
+
     ...(hasStudyNotes
       ? [
           {
             key: "study-notes" as const,
-            label: t("study-notes", { defaultValue: "Study Notes" }),
+            label: t("study-notes", {
+              defaultValue: "Study Notes",
+            }),
           },
         ]
       : []),
+
     ...(hasContent
       ? [
           {
             key: "content" as const,
-            label: t("content", { defaultValue: "Content" }),
+            label: t("content", {
+              defaultValue: "Content",
+            }),
           },
         ]
       : []),
+
     ...typesWithResults.map((definition) => ({
       key: `type:${definition.id}` as const,
       label: translateTitle(t, definition.title),
@@ -216,7 +463,6 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const showFilters =
     filters.length > 2 ||
     typesWithResults.some((definition) => definition.hiddenByDefault);
-
   // Falls back to "all" when the previously-active filter's content type is
   // no longer available (e.g. the user filtered to "Cross Refs" then
   // navigated to a chapter with none), so the chip row and content area don't
@@ -237,6 +483,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         <div className="sb-dcp-header">
           <div className="sb-dcp-header-title">
             <MaterialIcon className="sb-dcp-header-icon">explore</MaterialIcon>
+
             <span>
               {t("discover-book-title", {
                 defaultValue: "Discover {{book}}",
@@ -244,34 +491,26 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
               })}
             </span>
           </div>
+
           <button
             type="button"
             className="sb-dcp-create-btn"
             onClick={() => void state.annotations.createNewAnnotation()}
           >
-            + {t("create-playlist", { defaultValue: "Create" })}
+            +{" "}
+            {t("create-playlist", {
+              defaultValue: "Create",
+            })}
           </button>
         </div>
 
         {showFilters && (
-          <div style={{ display: "contents" }}>
-            <div className="sb-dcp-filters" role="tablist">
-              {filters.map(({ key, label }) => (
-                <button
-                  key={key}
-                  type="button"
-                  role="tab"
-                  aria-selected={f === key}
-                  className={`sb-dcp-chip${f === key ? " sb-dcp-chip--active" : ""}`}
-                  onClick={() => (activeFilter.value = key)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <DiscoverFilters
+            filters={filters}
+            activeFilter={activeFilter}
+            displayFilter={f}
+          />
         )}
-
         <div className="sb-discover-content-panel-scroll">
           {(f === "all" || f === "annotations") && showAnnotations && (
             <AnnotationsSection
@@ -287,15 +526,19 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
               onReferenceClick={state.app.openVerseReference}
             />
           )}
+
           {(f === "all" || f === "cross-references") && (
             <CrossReferencesSection tab={tab} />
           )}
+
           {(f === "all" || f === "study-notes") && (
             <StudyNotesSection tab={tab} />
           )}
+
           {(f === "all" || f === "content") && (
             <ContentSection tab={tab} contentTypes={contentTypes} />
           )}
+
           {typesWithResults.map((definition) =>
             f === `type:${definition.id}` ||
             (f === "all" && !definition.hiddenByDefault) ? (
@@ -306,6 +549,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
               />
             ) : null
           )}
+
           {f === "all" && plans.length > 0 && (
             <ReadingPlansSection
               readingState={tab.readingState}
@@ -313,6 +557,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
               plans={plans}
             />
           )}
+
           {f === "all" && !hasVisibleUnderAll && (
             <DiscoverEmpty
               text={t("discover-choose-filter-hint", {
@@ -322,14 +567,6 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             />
           )}
         </div>
-
-        <button
-          type="button"
-          className="sb-dcp-show-all"
-          onClick={() => state.app.openDiscover()}
-        >
-          {t("show-all", { defaultValue: "Show All" })}
-        </button>
       </div>
     </div>
   );

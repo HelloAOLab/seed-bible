@@ -220,9 +220,11 @@ function createMockSharedSession(
       endedAt: null,
       shareTranslation: false,
       coHostUserIds: [],
+      verseSelectionEffectVisibility: "hosts-only",
     }),
     updateOptions: vi.fn(),
     removeSharedDecoration: vi.fn(),
+    decorationOwner: vi.fn().mockReturnValue(null),
     dispose: vi.fn(),
     allUsers: signal([]),
     connectedUsers: signal([]),
@@ -233,6 +235,7 @@ function createMockSharedSession(
     currentUser: signal(null),
     isHost: vi.fn().mockReturnValue(false),
     isSynced: signal(true),
+    getDecorationOwner: () => undefined,
   } as BibleReadingSession;
 }
 

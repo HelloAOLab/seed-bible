@@ -62,6 +62,7 @@ export async function createRealFriendContent(options: {
 
   const login = {
     userId: signal<string | null>(ME),
+    profile: signal(null),
     login: vi.fn().mockResolvedValue(null),
     getPublicProfile: vi.fn(async (id: string) => ({
       name: names[id] ?? "",
@@ -86,11 +87,12 @@ export async function createRealFriendContent(options: {
     tabs: signal([]),
     selectedTabId: signal(null),
   } as unknown as TabsManager;
+  const discover = options.discover ?? createDiscoverManager();
   const annotations = createAnnotationsManager(
     os,
     login,
     tabs,
-    options.discover ?? createDiscoverManager(),
+    discover,
     undefined,
     { store: null, friendIds: friends.friendIds }
   );

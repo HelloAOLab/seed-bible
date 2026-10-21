@@ -148,6 +148,8 @@ export interface VerseDecoration {
    * Whether to preserve the decoration when the chapter changes.
    */
   preserveOnChapterChange?: boolean;
+  /** Keeps the decoration off a shared session. See `VerseDecorationInput`. */
+  localOnly?: boolean;
 }
 
 export interface VerseDecorationInput {
@@ -187,6 +189,14 @@ export interface VerseDecorationInput {
    * Setting this to true will keep the decoration until it is explicitly removed.
    */
   preserveOnChapterChange?: boolean;
+
+  /**
+   * Keeps the decoration on this device: a shared session doesn't publish it
+   * to the other participants. For decorations every participant already
+   * makes for themselves, such as a playing playlist's highlight, where each
+   * person's should follow only their own view.
+   */
+  localOnly?: boolean;
 
   /**
    * The ID of the translation that this decoration should be limited to.
@@ -336,6 +346,17 @@ export interface BibleReadingState {
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
   scrollToVerse: Signal<number | null>;
+  /**
+   * The verse being read aloud, for the reader to keep on screen so a listener
+   * can follow along without scrolling. Unlike `scrollToVerse` it only moves
+   * the reader when the verse isn't already fully in view, and then glides it
+   * to the top rather than jumping.
+   *
+   * A fresh object per request, so asking for the same verse again (after the
+   * listener scrolled away from it) still reaches the reader. Null when
+   * nothing is being read.
+   */
+  readAlongVerse: Signal<{ verse: number } | null>;
   /**
    * Set when an annotated verse number is clicked; consumed once by whichever
    * surface renders that verse's annotation (the mobile verse toolbar) to
@@ -1292,7 +1313,10 @@ export function previousPosition(
 }
 
 /**
- * Highlights `ref`'s verse range in `tab`, diminishing after 3s.
+ * Highlights `ref`'s verse range in `tab`, diminishing after 3s by default.
+ * `options.removeAfterMs` changes how long it lasts; null keeps it until the
+ * caller removes it with `removeDecoration`. `options.localOnly` keeps it off
+ * a shared session (see `VerseDecorationInput.localOnly`).
  *
  * `toEndOfChapter` fragments (from `expandCrossChapterItem`) don't know the
  * chapter's actual verse count until it's loaded; resolve it here, guarding
@@ -1307,7 +1331,8 @@ export function previousPosition(
 export function emphasizeVerses(
   readingState: BibleReadingState,
   ref: VerseRef,
-  verseNumbers?: number[]
+  verseNumbers?: number[],
+  options: { removeAfterMs?: number | null; localOnly?: boolean } = {}
 ): string | null {
   if (!ref.verse) {
     return null;
@@ -1320,7 +1345,10 @@ export function emphasizeVerses(
   return readingState.decorateVerses(ref.book, ref.chapter, verses, {
     className: "sb-verse-decoration-diminish",
     containerClassName: "sb-chapter-decoration-diminish",
-    removeAfterMs: 3000,
+    ...(options.removeAfterMs !== null
+      ? { removeAfterMs: options.removeAfterMs ?? 3000 }
+      : {}),
+    ...(options.localOnly ? { localOnly: true } : {}),
   });
 }
 
@@ -1540,6 +1568,7 @@ export function createBibleReadingState(
   };
   const scrollPosition = signal<number>(0);
   const scrollToVerse = signal<number | null>(null);
+  const readAlongVerse = signal<{ verse: number } | null>(null);
   const pendingAnnotationScrollVerse = signal<number | null>(null);
   const visibleVerseRange = signal<VisibleVerseRange | null>(null);
 
@@ -3628,6 +3657,7 @@ export function createBibleReadingState(
     retryLoad,
     scrollPosition,
     scrollToVerse,
+    readAlongVerse,
     selectVerse,
     selectFootnote,
     highlightSelectedVerses,

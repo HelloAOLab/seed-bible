@@ -1,4 +1,4 @@
-import { effect, signal, type Signal } from "@preact/signals";
+import { computed, effect, signal, type Signal } from "@preact/signals";
 import i18n from "i18next";
 import type { LoginManager } from "../managers/LoginManager";
 import {
@@ -8,6 +8,7 @@ import {
 import * as z from "zod/v4";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
+import { isMinimalEmbedUrl } from "./EmbedMode";
 import { SYSTEM_THEME_ID, type ThemeHighlightColor } from "./ThemeManager";
 import { parseNumber } from "./Utils";
 
@@ -89,6 +90,10 @@ export interface ScriptureElementsBehavior {
   showRedLettering: boolean;
 }
 
+export interface DiscoveredContentBehavior {
+  showContent: boolean;
+}
+
 export interface TextSectionConfig {
   font: string;
   weight: string;
@@ -114,6 +119,7 @@ export interface ToolbarCustomization {
   /** Tool IDs in preferred display order. IDs not listed keep their default priority after the ordered ones. */
   order: string[];
 }
+export type VerseSelectionEffects = "default" | "enabled" | "disabled";
 
 export interface AppSettings {
   fontSize: TextSize;
@@ -122,6 +128,7 @@ export interface AppSettings {
   uiSize: UISize;
   selectionUI: SelectionUIBehavior;
   scriptureElements: ScriptureElementsBehavior;
+  discoveredContent: DiscoveredContentBehavior;
   textConfig: TextConfig;
   toolbar: ToolbarCustomization;
   keepScreenAwake: boolean;
@@ -149,6 +156,7 @@ export interface AppSettings {
    * per-tab `discoverContentPanelInline` signal.
    */
   discoverContentPanelInline: boolean;
+  verseSelectionEffects?: VerseSelectionEffects;
 }
 
 export const DEFAULT_SCRIPTURE_WIDTH = 68; // ch
@@ -172,6 +180,14 @@ export const AppSettingsSchema = z.object({
     showHighlights: z.boolean(),
     showRedLettering: z.boolean(),
   }),
+  discoveredContent: z
+    .object({
+      showContent: z.boolean(),
+    })
+    .default({ showContent: true }),
+  verseSelectionEffects: z
+    .enum(["default", "enabled", "disabled"])
+    .default("default"),
   textConfig: z.object({
     bookTitle: z.object({
       font: z.string(),
@@ -249,6 +265,7 @@ const TAG_BOOK_ORIENTATION = "app.bookOrientation";
 const TAG_UI_SIZE = "app.uiSize";
 const TAG_SELECTION_UI = "app.selectionUI";
 const TAG_SCRIPTURE_ELEMENTS = "app.scriptureElements";
+const TAG_DISCOVERED_CONTENT = "app.discoveredContent";
 const TAG_TEXT_CONFIG = "app.textConfig";
 const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
@@ -259,6 +276,7 @@ const TAG_THEME_ID = "app.themeId";
 const TAG_CUSTOM_THEME = "app.customTheme";
 const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
 const TAG_DISCOVER_CONTENT_PANEL_INLINE = "app.discoverContentPanelInline";
+const TAG_VERSE_SELECTION_EFFECTS = "app.verseSelectionEffects";
 
 // Profile.config keys are stored unprefixed.
 const PROFILE_FONT_SIZE = "fontSize";
@@ -267,6 +285,7 @@ const PROFILE_BOOK_ORIENTATION = "bookOrientation";
 const PROFILE_UI_SIZE = "uiSize";
 const PROFILE_SELECTION_UI = "selectionUI";
 const PROFILE_SCRIPTURE_ELEMENTS = "scriptureElements";
+const PROFILE_DISCOVERED_CONTENT = "discoveredContent";
 const PROFILE_TEXT_CONFIG = "textConfig";
 const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
@@ -277,6 +296,7 @@ const PROFILE_THEME_ID = "themeId";
 const PROFILE_CUSTOM_THEME = "customTheme";
 const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
 const PROFILE_DISCOVER_CONTENT_PANEL_INLINE = "discoverContentPanelInline";
+const PROFILE_VERSE_SELECTION_EFFECTS = "verseSelectionEffects";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -311,6 +331,10 @@ const DEFAULT_SCRIPTURE_ELEMENTS: ScriptureElementsBehavior = {
   showFootnotes: true,
   showHighlights: true,
   showRedLettering: true,
+};
+
+const DEFAULT_DISCOVERED_CONTENT: DiscoveredContentBehavior = {
+  showContent: true,
 };
 
 /**
@@ -380,6 +404,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   uiSize: "M",
   selectionUI: DEFAULT_SELECTION_UI,
   scriptureElements: DEFAULT_SCRIPTURE_ELEMENTS,
+  discoveredContent: DEFAULT_DISCOVERED_CONTENT,
   textConfig: DEFAULT_TEXT_CONFIG,
   toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
@@ -390,6 +415,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   customTheme: {},
   customHighlights: {},
   discoverContentPanelInline: true,
+  verseSelectionEffects: "default",
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -472,6 +498,14 @@ function parseBoolean(value: unknown, fallback: boolean): boolean {
     if (normalized === "false") return false;
   }
   return fallback;
+}
+function parseVerseSelectionEffects(
+  value: unknown,
+  fallback: VerseSelectionEffects
+): VerseSelectionEffects {
+  return value === "default" || value === "enabled" || value === "disabled"
+    ? value
+    : fallback;
 }
 
 /**
@@ -600,6 +634,30 @@ function parseScriptureElements(
       typeof obj.showRedLettering === "boolean"
         ? obj.showRedLettering
         : fallback.showRedLettering,
+  };
+}
+
+function parseDiscoveredContent(
+  value: unknown,
+  fallback: DiscoveredContentBehavior
+): DiscoveredContentBehavior {
+  let parsed: unknown = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return fallback;
+    }
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return fallback;
+  }
+  const obj = parsed as Record<string, unknown>;
+  return {
+    showContent:
+      typeof obj.showContent === "boolean"
+        ? obj.showContent
+        : fallback.showContent,
   };
 }
 
@@ -743,6 +801,7 @@ export interface SettingsManager {
   setUISize: (size: UISize) => void;
   setSelectionUI: (patch: Partial<SelectionUIBehavior>) => void;
   setScriptureElements: (patch: Partial<ScriptureElementsBehavior>) => void;
+  setDiscoveredContent: (patch: Partial<DiscoveredContentBehavior>) => void;
   updateTextSection: (
     section: TextSectionId,
     patch: Partial<TextSectionConfig>
@@ -776,6 +835,7 @@ export interface SettingsManager {
    * `discoverContentPanelInline` signal.
    */
   setDiscoverContentPanelInline: (discoverContentPanelInline: boolean) => void;
+  setVerseSelectionEffects: (value: VerseSelectionEffects) => void;
 }
 
 export function createSettings(
@@ -798,6 +858,11 @@ export function createSettings(
   const sessionOverrides: Record<string, unknown> = Object.fromEntries(
     navigation.currentUrl.value.searchParams
   );
+  // A boolean, not the URL itself, so `readSettings()` (and every reader of
+  // `settings`) reruns only when embed mode flips, not on every navigation.
+  const isMinimalEmbed = computed(() =>
+    isMinimalEmbedUrl(navigation.currentUrl.value)
+  );
 
   // Read each setting with the precedence: user profile > this session's
   // URL/override cache > `login.localConfig` (the anonymous, device-only
@@ -817,6 +882,17 @@ export function createSettings(
       getProfileConfigValue(profile, profileKey) ??
       sessionOverrides[urlKey] ??
       local[profileKey];
+
+    // The embed link's theme is the look the site owner chose. The viewer's
+    // saved theme and color edits would otherwise paint over it, so the
+    // preview (and every signed-in visitor) would ignore the link.
+    const embedTheme = sessionOverrides[TAG_THEME_ID];
+    const pinnedEmbedTheme =
+      isMinimalEmbed.value &&
+      typeof embedTheme === "string" &&
+      embedTheme.trim().length > 0
+        ? embedTheme.trim()
+        : undefined;
 
     return {
       fontSize: parseFontSize(
@@ -843,9 +919,17 @@ export function createSettings(
         read(PROFILE_SCRIPTURE_ELEMENTS, TAG_SCRIPTURE_ELEMENTS),
         DEFAULT_SETTINGS.scriptureElements
       ),
+      discoveredContent: parseDiscoveredContent(
+        read(PROFILE_DISCOVERED_CONTENT, TAG_DISCOVERED_CONTENT),
+        DEFAULT_SETTINGS.discoveredContent
+      ),
       textConfig: parseTextConfig(
         read(PROFILE_TEXT_CONFIG, TAG_TEXT_CONFIG),
         DEFAULT_SETTINGS.textConfig
+      ),
+      verseSelectionEffects: parseVerseSelectionEffects(
+        read(PROFILE_VERSE_SELECTION_EFFECTS, TAG_VERSE_SELECTION_EFFECTS),
+        DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
       ),
       toolbar: parseToolbarConfig(
         read(PROFILE_TOOLBAR, TAG_TOOLBAR),
@@ -867,15 +951,17 @@ export function createSettings(
         DEFAULT_SETTINGS.scriptureWidth
       ),
       themeId: parseThemeId(
-        read(PROFILE_THEME_ID, TAG_THEME_ID),
+        pinnedEmbedTheme ?? read(PROFILE_THEME_ID, TAG_THEME_ID),
         DEFAULT_SETTINGS.themeId
       ),
-      customTheme: parseStringRecord(
-        read(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)
-      ),
-      customHighlights: parseHighlightOverrides(
-        read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
-      ),
+      customTheme: pinnedEmbedTheme
+        ? {}
+        : parseStringRecord(read(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)),
+      customHighlights: pinnedEmbedTheme
+        ? {}
+        : parseHighlightOverrides(
+            read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
+          ),
       discoverContentPanelInline: parseBoolean(
         read(
           PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
@@ -976,6 +1062,13 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_ELEMENTS, next);
   };
 
+  const setDiscoveredContent = (patch: Partial<DiscoveredContentBehavior>) => {
+    const next = { ...settings.value.discoveredContent, ...patch };
+    settings.value = { ...settings.value, discoveredContent: next };
+    sessionOverrides[TAG_DISCOVERED_CONTENT] = next;
+    saveProfileConfigValue(login, PROFILE_DISCOVERED_CONTENT, next);
+  };
+
   const writeTextConfig = (next: TextConfig) => {
     settings.value = { ...settings.value, textConfig: next };
     sessionOverrides[TAG_TEXT_CONFIG] = next;
@@ -1003,6 +1096,16 @@ export function createSettings(
     settings.value = { ...settings.value, scriptureWidth: clamped };
     sessionOverrides[TAG_SCRIPTURE_WIDTH] = clamped;
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_WIDTH, clamped);
+  };
+  const setVerseSelectionEffects = (value: VerseSelectionEffects) => {
+    settings.value = {
+      ...settings.value,
+      verseSelectionEffects: value,
+    };
+
+    sessionOverrides[TAG_VERSE_SELECTION_EFFECTS] = value;
+
+    saveProfileConfigValue(login, PROFILE_VERSE_SELECTION_EFFECTS, value);
   };
 
   const setVerseLineHeight = (lineHeight: number) => {
@@ -1174,6 +1277,8 @@ export function createSettings(
     sessionOverrides[TAG_SELECTION_UI] = DEFAULT_SETTINGS.selectionUI;
     sessionOverrides[TAG_SCRIPTURE_ELEMENTS] =
       DEFAULT_SETTINGS.scriptureElements;
+    sessionOverrides[TAG_DISCOVERED_CONTENT] =
+      DEFAULT_SETTINGS.discoveredContent;
     sessionOverrides[TAG_TEXT_CONFIG] = DEFAULT_SETTINGS.textConfig;
     sessionOverrides[TAG_TOOLBAR] = DEFAULT_SETTINGS.toolbar;
     sessionOverrides[TAG_KEEP_AWAKE] = DEFAULT_SETTINGS.keepScreenAwake;
@@ -1186,6 +1291,9 @@ export function createSettings(
     sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
     sessionOverrides[TAG_DISCOVER_CONTENT_PANEL_INLINE] =
       DEFAULT_SETTINGS.discoverContentPanelInline;
+    sessionOverrides[TAG_VERSE_SELECTION_EFFECTS] =
+      DEFAULT_SETTINGS.verseSelectionEffects ?? "default";
+
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
       login,
@@ -1207,6 +1315,16 @@ export function createSettings(
       login,
       PROFILE_SCRIPTURE_ELEMENTS,
       DEFAULT_SETTINGS.scriptureElements
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_DISCOVERED_CONTENT,
+      DEFAULT_SETTINGS.discoveredContent
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_VERSE_SELECTION_EFFECTS,
+      DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
     );
     saveProfileConfigValue(
       login,
@@ -1289,6 +1407,7 @@ export function createSettings(
     setUISize: setUISize,
     setSelectionUI,
     setScriptureElements,
+    setDiscoveredContent,
     updateTextSection,
     setScriptureWidth,
     setVerseLineHeight,
@@ -1306,5 +1425,6 @@ export function createSettings(
     setCustomTheme,
     setCustomHighlights,
     setDiscoverContentPanelInline,
+    setVerseSelectionEffects,
   };
 }

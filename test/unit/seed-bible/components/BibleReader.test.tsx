@@ -28,10 +28,22 @@ import {
   type SimplePlaylist,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { vi, type Mock } from "vitest";
+import {
+  LIGHT_THEME,
+  generateThemeCssClasses,
+} from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import {
+  getContrastRatio,
+  MIN_READABLE_CONTRAST_RATIO,
+} from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
 import { mockI18nState, resetMockI18n } from "../testUtils/mockI18n";
 import { createRealFriendContent } from "../testUtils/realFriendContent";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
-import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
+import {
+  createDiscoverManager,
+  type BibleReadingSession,
+  type ReadingExtensionRuntime,
+} from "@packages/seed-bible/seed-bible/managers";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import {
   createBibleDataManager,
@@ -80,6 +92,54 @@ type ReaderFixture = {
   selectFootnote: Mock;
   setOpen: Mock;
 };
+function createVerseFlareSession({
+  userId = "me",
+  connectionId = "connection-me",
+  color = "#123456",
+  visibility = "hosts-only",
+  hostUserId = "host",
+  coHostUserIds = [],
+  ownerByDecoration = {},
+}: {
+  userId?: string;
+  connectionId?: string;
+  color?: string;
+  visibility?: "hosts-only" | "everyone" | "none";
+  hostUserId?: string | null;
+  coHostUserIds?: string[];
+  ownerByDecoration?: Record<string, string>;
+} = {}) {
+  const decorateVerses = vi.fn();
+  const removeSharedDecoration = vi.fn();
+
+  const session = {
+    currentUser: signal({
+      userId,
+      connectionId,
+      visual: { color },
+    }),
+    options: signal({
+      hostUserId,
+      coHostUserIds,
+      verseSelectionEffectVisibility: visibility,
+    }),
+    removeSharedDecoration,
+    readingState: {
+      decorateVerses,
+    },
+    getDecorationOwner: vi.fn(
+      (decorationId: string) => ownerByDecoration[decorationId]
+    ),
+    decorationOwner: vi.fn(
+      (decorationId: string) => ownerByDecoration[decorationId] ?? null
+    ),
+    allUsers: signal([]),
+    connectedUsers: signal([]),
+    participantPositions: signal(new Map()),
+  };
+
+  return { session, decorateVerses, removeSharedDecoration };
+}
 
 function createFixture(): ReaderFixture {
   const chapterData = signal<TranslationBookChapter | null>({
@@ -191,6 +251,7 @@ function createFixture(): ReaderFixture {
     loading: signal(false),
     scrollPosition: signal(0),
     scrollToVerse: signal<number | null>(null),
+    readAlongVerse: signal<{ verse: number } | null>(null),
     error: signal<string | null>(null),
     failedTranslationId: signal<string | null>(null),
     retryLoad: vi.fn(async () => undefined),
@@ -373,6 +434,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       getSaveForLocation: vi.fn(() => undefined),
       addSave: vi.fn(async () => {}),
     },
+    bookmarks: {
+      getBookmarksForLocation: vi.fn(() => []),
+    },
     login: {
       userId: signal<string | null>(null),
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
@@ -385,7 +449,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     tabs: { selectedTabId: signal("") },
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover: { scrollToVerse: signal(null), view: signal(null) },
     playlists: {
       playing: signal(null),
       openingPlayback: signal(false),
@@ -393,6 +457,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
+    },
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
     },
     friends: { friendIds: signal([]) },
     annotations: {
@@ -444,6 +511,51 @@ function renderMobileReader(
     );
   });
 }
+const { setReducedMotion } = vi.hoisted(() => {
+  let matches = false;
+  const listeners = new Set<(event: { matches: boolean }) => void>();
+
+  const queryList = {
+    get matches() {
+      return matches;
+    },
+    media: "(prefers-reduced-motion: reduce)",
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: (
+      event: string,
+      listener: (event: { matches: boolean }) => void
+    ) => {
+      if (event === "change") listeners.add(listener);
+    },
+    removeEventListener: (
+      event: string,
+      listener: (event: { matches: boolean }) => void
+    ) => {
+      if (event === "change") listeners.delete(listener);
+    },
+    dispatchEvent: () => true,
+  };
+
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    writable: true,
+    value: vi.fn((query: string) =>
+      query === "(prefers-reduced-motion: reduce)"
+        ? queryList
+        : { ...queryList, media: query, matches: false }
+    ),
+  });
+
+  return {
+    reducedMotionQuery: queryList,
+    setReducedMotion: (value: boolean) => {
+      matches = value;
+      listeners.forEach((listener) => listener({ matches: value }));
+    },
+  };
+});
 
 beforeEach(() => {
   setupRerender();
@@ -457,6 +569,45 @@ afterEach(() => {
 
 describe("BibleReader", () => {
   let container: HTMLDivElement;
+  function renderWithFlare(
+    fixture: ReturnType<typeof createFixture>,
+    session: ReturnType<typeof createVerseFlareSession>["session"],
+    decorations: VerseDecoration[],
+    preference: "default" | "enabled" | "disabled" = "default"
+  ) {
+    fixture.decorations.value = decorations;
+
+    const state = createMobileState(fixture.selectorState);
+    state.settings.settings.value = {
+      ...state.settings.settings.value,
+      verseSelectionEffects: preference,
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={fixture.slot}
+          selectorState={fixture.selectorState}
+          readingState={fixture.readingState}
+          state={state}
+          sharedSession={session as any}
+        />,
+        container
+      );
+    });
+  }
+  const flare = (id: string, color = "#ff0000"): VerseDecoration =>
+    ({
+      id,
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verses: [1],
+      className: "sb-verse-number-flare",
+      style: {
+        "--sb-selection-flare-color": color,
+      },
+    }) as VerseDecoration;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -1392,6 +1543,94 @@ describe("BibleReader", () => {
     expect(selectVerse).not.toHaveBeenCalled();
   });
 
+  it("keeps an inline footnote attached to the preceding word", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: ["the last words ", { noteId: 7 }, " more"],
+          },
+        ],
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const verse = container.querySelector<HTMLElement>(".sb-verse");
+    expect(verse).not.toBeNull();
+
+    const footnoteButton = verse!.querySelector<HTMLButtonElement>(
+      ".sb-inline-footnote-button"
+    );
+    expect(footnoteButton).not.toBeNull();
+
+    const text = verse!.textContent ?? "";
+    const marker = footnoteButton!.textContent ?? "";
+    const markerIndex = text.indexOf(marker);
+
+    expect(markerIndex).toBeGreaterThan(1);
+    expect(text[markerIndex - 1]).toBe("\u00A0");
+    expect(text[markerIndex - 2]).not.toBe(" ");
+  });
+
+  it("keeps a footnote after a poetry line break in the preceding poetry line", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          {
+            type: "verse",
+            number: 1,
+            content: [
+              { text: "line one", poem: 1 },
+              { lineBreak: true },
+              { noteId: 7 },
+              { text: "line two", poem: 1 },
+            ],
+          },
+        ],
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+    const poetryLines = container.querySelectorAll(".sb-verse-line");
+    expect(poetryLines).toHaveLength(2);
+    expect(poetryLines[0]?.textContent).toContain("line one");
+    expect(poetryLines[1]?.textContent).toContain("line two");
+    const footnoteButton = container.querySelector<HTMLButtonElement>(
+      '.sb-inline-footnote-button[aria-label="Open footnote 7"]'
+    );
+    expect(footnoteButton).not.toBeNull();
+    expect(poetryLines[0]?.contains(footnoteButton)).toBe(true);
+    expect(poetryLines[1]?.contains(footnoteButton)).toBe(false);
+  });
+
   it("marks selected and poetry verses with their CSS classes", () => {
     const { slot, selectorState, readingState, selectedVerses } =
       createFixture();
@@ -1423,6 +1662,42 @@ describe("BibleReader", () => {
     const poetryVerse = container.querySelector(".sb-verse-poetry");
     expect(poetryVerse).not.toBeNull();
     expect(poetryVerse?.classList.contains("sb-verse-selected")).toBe(true);
+  });
+
+  it("gives words of Jesus inside a highlight the highlight's words-of-Jesus color rule", () => {
+    const { slot, selectorState, readingState, highlights } = createFixture();
+
+    highlights.value = {
+      highlights: [
+        {
+          verse: 1,
+          colorId: "yellow",
+        },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const rule = generateThemeCssClasses(LIGHT_THEME)
+      .split("}")
+      .find((block) =>
+        block.includes("--sb-highlight-yellow-words-of-jesus-font-color")
+      );
+    const selector = rule?.split("{")[0]?.trim();
+    expect(selector).toBeTruthy();
+
+    const wordsOfJesus = container.querySelector(".sb-words-of-jesus");
+    expect(wordsOfJesus?.textContent).toContain("I am the light");
+    expect(wordsOfJesus?.matches(selector!)).toBe(true);
   });
 
   it("marks a color-id highlight on a wrapper with data-highlight-fill", () => {
@@ -1601,6 +1876,49 @@ describe("BibleReader", () => {
       ".sb-verse-decorator"
     ) as HTMLElement | null;
     expect(firstDecorator?.style.backgroundColor).toBe("");
+  });
+
+  it("gives words of Jesus inside a dark custom highlight a readable red", () => {
+    const { slot, selectorState, readingState, highlights } = createFixture();
+
+    highlights.value = {
+      highlights: [
+        {
+          verse: 1,
+          colorId: "yellow",
+          customColor: "#6b3434",
+          customFontColor: "#ffffff",
+        },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const wrapper = container.querySelector(
+      '[data-highlight-fill="#6b3434"]'
+    ) as HTMLElement | null;
+    const wordsOfJesus = wrapper?.querySelector(".sb-words-of-jesus");
+    expect(wordsOfJesus?.textContent).toContain("I am the light");
+    expect(
+      wordsOfJesus?.matches(".sb-highlight-custom .sb-words-of-jesus")
+    ).toBe(true);
+
+    const red = wrapper?.style.getPropertyValue(
+      "--sb-highlight-custom-words-of-jesus-font-color"
+    );
+    expect(red).toBeTruthy();
+    expect(getContrastRatio(red!, "#6b3434")).toBeGreaterThanOrEqual(
+      MIN_READABLE_CONTRAST_RATIO
+    );
   });
 
   it("reacts to highlight signal changes for the current chapter", () => {
@@ -2665,6 +2983,48 @@ describe("BibleReader", () => {
       chapterNumber: 1,
       verseNumber: 1,
     });
+    expect(state.discover.view.value).toBeNull();
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("clicking an annotated verse number on desktop opens the full Discover pane on its note when the compact discover panel is turned off", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    readingState.discoverContentPanelInline.value = false;
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
+    state.settings.settings.value = {
+      ...state.settings.settings.value,
+      discoveredContent: { showContent: false },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const annotatedVerseNumber = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-number-annotated'
+    ) as HTMLElement;
+
+    act(() => {
+      annotatedVerseNumber.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    expect(state.discover.view.value).toBe("discover");
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+    });
+    expect(readingState.discoverContentPanelInline.value).toBe(false);
     expect(selectVerse).not.toHaveBeenCalled();
   });
 
@@ -2731,6 +3091,96 @@ describe("BibleReader", () => {
     ).toBe(true);
   });
 
+  /**
+   * Renders a desktop reader whose tab has a discovered cross reference — the
+   * minimum the compact discover panel needs to render — with the Discover
+   * pane state and the settings exposed so tests can flip them.
+   */
+  function renderReaderWithDiscoveredContent() {
+    const { selectorState, readingState } = createFixture();
+    (readingState as any).discoveredCrossReferences = signal([
+      {
+        providerId: "p1",
+        results: [
+          {
+            type: "cross-reference",
+            reference: { chapter: 1, bookData: { name: "Genesis" } },
+            crossReference: {
+              chapter: 5,
+              verse: 3,
+              bookData: { commonName: "Exodus", name: "Exodus" },
+            },
+          },
+        ],
+      },
+    ]);
+    const slot: TabSlot = {
+      id: "slot-1",
+      tab: { id: "tab-1", readingState } as any,
+    };
+    const isDiscoverOpen = signal(false);
+    const settings = signal({ discoveredContent: { showContent: true } });
+    const base = createMobileState();
+    const state = {
+      ...base,
+      app: {
+        ...base.app,
+        isMobile: signal(false),
+        isCompactReader: signal(false),
+        isDiscoverOpen,
+      },
+      discover: { ...base.discover, contentTypes: signal([]) },
+      settings: { settings },
+    } as any as SeedBibleState;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const panel = () =>
+      container.querySelector(".sb-bible-reader-discover-panel");
+
+    return { panel, isDiscoverOpen, settings };
+  }
+
+  it("shows the compact discover panel when the chapter has discovered content", () => {
+    const { panel } = renderReaderWithDiscoveredContent();
+
+    expect(panel()).not.toBeNull();
+  });
+
+  it("hides the compact discover panel while the Discover pane is open and brings it back when it closes", () => {
+    const { panel, isDiscoverOpen } = renderReaderWithDiscoveredContent();
+
+    act(() => {
+      isDiscoverOpen.value = true;
+    });
+    expect(panel()).toBeNull();
+
+    act(() => {
+      isDiscoverOpen.value = false;
+    });
+    expect(panel()).not.toBeNull();
+  });
+
+  it("hides the compact discover panel when the showContent setting is disabled", () => {
+    const { panel, settings } = renderReaderWithDiscoveredContent();
+
+    act(() => {
+      settings.value = { discoveredContent: { showContent: false } };
+    });
+
+    expect(panel()).toBeNull();
+  });
+
   it("clicking the mobile header notes button targets the earliest annotated verse in the compact discover panel", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
@@ -2761,12 +3211,52 @@ describe("BibleReader", () => {
       chapterNumber: 1,
       verseNumber: 3,
     });
+    expect(state.discover.view.value).toBeNull();
     expect(state.app.openDiscover).not.toHaveBeenCalled();
+  });
+
+  it("clicking the mobile header notes button opens the full Discover pane on the earliest annotated verse when the compact discover panel is turned off", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    state.settings.settings.value = {
+      ...state.settings.settings.value,
+      discoveredContent: { showContent: false },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const notesButton = container.querySelector(
+      ".sb-bible-reader-mobile-header-notes"
+    ) as HTMLElement;
+    expect(notesButton).not.toBeNull();
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.view.value).toBe("discover");
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+    });
   });
 
   it("offers the mobile header notes button for a friend's note when the user has none, and jumps to it", async () => {
     const { slot, selectorState, readingState } = createFixture();
     const mockState = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    const discover = createDiscoverManager();
+
     // The real managers, so the friend's note is loaded from the server the
     // way the app loads it.
     const { login, friends, annotations } = await createRealFriendContent({
@@ -2778,14 +3268,20 @@ describe("BibleReader", () => {
             bookId: "GEN",
             chapterNumber: 1,
             verseNumber: 3,
-            data: { type: "comment", html: "<p>Note</p>", userId: "friend-1" },
+            data: {
+              type: "comment",
+              html: "<p>Note</p>",
+              userId: "friend-1",
+            },
           } as Annotation,
         ],
       },
-      discover: mockState.discover,
+      discover,
     });
+
     const state = {
       ...mockState,
+      discover,
       login,
       friends,
       annotations,
@@ -2818,7 +3314,7 @@ describe("BibleReader", () => {
       notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    expect(state.discover.scrollToVerse.value).toEqual({
+    expect(discover.scrollToVerse.value).toEqual({
       bookId: "GEN",
       chapterNumber: 1,
       verseNumber: 3,
@@ -3025,7 +3521,13 @@ describe("BibleReader", () => {
     it("marks a verse that only a friend has a note on", async () => {
       stubLineBoxes({ 1: [40] });
       const fixture = createFixture();
-      const mockState = annotatedState([]);
+
+      const discover = createDiscoverManager();
+      const mockState = {
+        ...annotatedState([]),
+        discover,
+      };
+
       const { login, friends, annotations } = await createRealFriendContent({
         friendIds: ["friend-1"],
         notes: {
@@ -3040,8 +3542,9 @@ describe("BibleReader", () => {
             }) as Annotation,
           ],
         },
-        discover: mockState.discover,
+        discover,
       });
+
       renderReader(
         {
           ...mockState,
@@ -3058,6 +3561,7 @@ describe("BibleReader", () => {
           container.querySelectorAll(".sb-note-gutter-marker")
         ).toHaveLength(1);
       });
+
       const markers = container.querySelectorAll(".sb-note-gutter-marker");
       expect((markers[0] as HTMLElement).style.top).toBe("40px");
     });
@@ -3199,6 +3703,257 @@ describe("BibleReader", () => {
         chapterNumber: 1,
       });
       expect(fixture.readingState.pendingAnnotationScrollVerse.value).toBe(1);
+    });
+  });
+  describe("verse selection effects", () => {
+    it("hides the current user's own flare", () => {
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        userId: "me",
+        connectionId: "connection-me",
+      });
+
+      renderWithFlare(fixture, session, [
+        flare("selected-verse-flare-connection-me"),
+      ]);
+
+      const verseNumber = container.querySelector(".sb-verse-number");
+
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        false
+      );
+      expect(
+        (verseNumber as HTMLElement | null)?.style.getPropertyValue(
+          "--sb-selection-flare-color"
+        )
+      ).toBe("");
+    });
+
+    it("shows another user's flare color when effects are enabled", () => {
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        userId: "me",
+        connectionId: "connection-me",
+        visibility: "everyone",
+        ownerByDecoration: {
+          "selected-verse-flare-peer": "connection-peer",
+        },
+      });
+
+      renderWithFlare(fixture, session, [
+        flare("selected-verse-flare-peer", "#ff0000"),
+      ]);
+
+      const verseNumber = container.querySelector(
+        ".sb-verse-number"
+      ) as HTMLElement | null;
+
+      expect(verseNumber).not.toBeNull();
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        true
+      );
+      expect(
+        verseNumber?.style.getPropertyValue("--sb-selection-flare-color")
+      ).toBe("#ff0000");
+    });
+    it("does not show an incoming flare when effects are disabled", () => {
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        visibility: "everyone",
+        ownerByDecoration: {
+          "selected-verse-flare-peer": "connection-peer",
+        },
+      });
+
+      renderWithFlare(
+        fixture,
+        session,
+        [flare("selected-verse-flare-peer", "#ff0000")],
+        "disabled"
+      );
+
+      const verseNumber = container.querySelector(".sb-verse-number");
+
+      expect(verseNumber).not.toBeNull();
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        false
+      );
+    });
+  });
+
+  describe("verse selection effects with reduced motion", () => {
+    afterEach(() => {
+      setReducedMotion(false);
+      vi.restoreAllMocks();
+    });
+
+    it('hides incoming flares when preference is "default" and reduced motion is enabled', () => {
+      setReducedMotion(true);
+
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        visibility: "everyone",
+        ownerByDecoration: {
+          "selected-verse-flare-peer": "connection-peer",
+        },
+      });
+
+      renderWithFlare(
+        fixture,
+        session,
+        [flare("selected-verse-flare-peer", "#ff0000")],
+        "default"
+      );
+
+      const verseNumber = container.querySelector(".sb-verse-number");
+
+      expect(verseNumber).not.toBeNull();
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        false
+      );
+    });
+
+    it('shows incoming flares when preference is "enabled", even with reduced motion', () => {
+      setReducedMotion(true);
+
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        visibility: "everyone",
+        ownerByDecoration: {
+          "selected-verse-flare-peer": "connection-peer",
+        },
+      });
+
+      renderWithFlare(
+        fixture,
+        session,
+        [flare("selected-verse-flare-peer", "#ff0000")],
+        "enabled"
+      );
+
+      const verseNumber = container.querySelector(".sb-verse-number");
+
+      expect(verseNumber).not.toBeNull();
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        true
+      );
+      expect(
+        (verseNumber as HTMLElement).style.getPropertyValue(
+          "--sb-selection-flare-color"
+        )
+      ).toBe("#ff0000");
+    });
+  });
+
+  describe("broadcasting verse selection effects", () => {
+    function clickFirstVerse(
+      fixture: ReturnType<typeof createFixture>,
+      session: ReturnType<typeof createVerseFlareSession>["session"]
+    ) {
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            sharedSession={session as any}
+          />,
+          container
+        );
+      });
+
+      const verse = container.querySelector(
+        '.sb-verse[data-verse-number="1"]'
+      ) as HTMLElement | null;
+
+      expect(verse).not.toBeNull();
+
+      act(() => {
+        verse?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    }
+
+    it('does not broadcast a guest selection in "hosts-only" mode', () => {
+      const fixture = createFixture();
+      const { session, decorateVerses } = createVerseFlareSession({
+        userId: "guest",
+        connectionId: "connection-guest",
+        hostUserId: "host",
+        visibility: "hosts-only",
+      });
+
+      clickFirstVerse(fixture, session);
+
+      expect(decorateVerses).not.toHaveBeenCalled();
+    });
+
+    it('broadcasts a host selection in "hosts-only" mode', () => {
+      const fixture = createFixture();
+      const { session, decorateVerses } = createVerseFlareSession({
+        userId: "host",
+        connectionId: "connection-host",
+        hostUserId: "host",
+        visibility: "hosts-only",
+      });
+
+      clickFirstVerse(fixture, session);
+
+      expect(decorateVerses).toHaveBeenCalledWith(
+        "GEN",
+        1,
+        [1],
+        expect.objectContaining({
+          className: "sb-verse-number-flare",
+          removeAfterMs: 1200,
+          style: {
+            "--sb-selection-flare-color": "#123456",
+          },
+        }),
+        expect.stringMatching(/^selected-verse-flare-connection-host-\d+$/)
+      );
+    });
+
+    it('broadcasts a co-host selection in "hosts-only" mode', () => {
+      const fixture = createFixture();
+      const { session, decorateVerses } = createVerseFlareSession({
+        userId: "co-host",
+        connectionId: "connection-co-host",
+        hostUserId: "host",
+        coHostUserIds: ["co-host"],
+        visibility: "hosts-only",
+      });
+
+      clickFirstVerse(fixture, session);
+
+      expect(decorateVerses).toHaveBeenCalled();
+    });
+
+    it('broadcasts any participant selection in "everyone" mode', () => {
+      const fixture = createFixture();
+      const { session, decorateVerses } = createVerseFlareSession({
+        userId: "guest",
+        connectionId: "connection-guest",
+        hostUserId: "host",
+        visibility: "everyone",
+      });
+
+      clickFirstVerse(fixture, session);
+
+      expect(decorateVerses).toHaveBeenCalled();
+    });
+
+    it('does not broadcast any participant selection in "none" mode', () => {
+      const fixture = createFixture();
+      const { session, decorateVerses } = createVerseFlareSession({
+        userId: "guest",
+        connectionId: "connection-guest",
+        hostUserId: "host",
+        visibility: "none",
+      });
+
+      clickFirstVerse(fixture, session);
+
+      expect(decorateVerses).not.toHaveBeenCalled();
     });
   });
 
@@ -3918,6 +4673,179 @@ describe("BibleReader", () => {
     });
   });
 
+  describe("off-screen highlight notices", () => {
+    const restores: Array<() => void> = [];
+    let frames: FrameRequestCallback[] = [];
+
+    afterEach(() => {
+      while (restores.length > 0) restores.pop()!();
+    });
+
+    /** Both verses scrolled out of view above the reader. */
+    function scrollVersesAboveView() {
+      const rects = vi
+        .spyOn(Element.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: Element) {
+          const el = this as HTMLElement;
+          const verse = Number(el.dataset.verseNumber ?? NaN);
+          const [top, bottom] =
+            verse === 1
+              ? [-200, -150]
+              : verse === 2
+                ? [-150, -100]
+                : el.classList.contains("sb-chapter-content")
+                  ? [-300, 3700]
+                  : [0, 0];
+          return {
+            top,
+            bottom,
+            left: 0,
+            right: 320,
+            width: 320,
+            height: bottom - top,
+            x: 0,
+            y: top,
+            toJSON() {},
+          } as DOMRect;
+        });
+      restores.push(() => rects.mockRestore());
+      frames = [];
+      const raf = vi
+        .spyOn(window, "requestAnimationFrame")
+        .mockImplementation((callback) => {
+          frames.push(callback);
+          return frames.length;
+        });
+      restores.push(() => raf.mockRestore());
+    }
+
+    function flushFrames() {
+      while (frames.length > 0) {
+        const due = frames;
+        frames = [];
+        act(() => {
+          for (const frame of due) frame(0);
+        });
+      }
+    }
+
+    function sessionWith(owners: Record<string, string | null>) {
+      const user = (connectionId: string, name: string, isSelf: boolean) => ({
+        connectionId,
+        userId: connectionId,
+        isSelf,
+        isActive: true,
+        joinedAtMs: 0,
+        profile: { name, pictureUrl: null },
+        visual: { defaultIcon: "pets", color: "#60A5FA", colorName: "blue" },
+      });
+      const users = [
+        // createMobileState's own connection.
+        user("test-connection", "Me", true),
+        user("peer", "Mary", false),
+      ];
+      return {
+        allUsers: signal(users),
+        connectedUsers: signal(users),
+        participantPositions: signal(new Map()),
+        options: signal({ hostUserId: null, allowedNavigators: [] }),
+        decorationOwner: (id: string) => owners[id] ?? null,
+      } as any;
+    }
+
+    function decoration(id: string, verse: number): VerseDecoration {
+      return {
+        id,
+        translationId: null,
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [verse],
+        highlight: { colorId: "yellow" },
+      };
+    }
+
+    it("shows no notices in the compact embed, which hides every highlight", () => {
+      scrollVersesAboveView();
+      const fixture = createFixture();
+      fixture.decorations.value = [decoration("from-a-link", 2)];
+      const renderWith = (state: SeedBibleState) => {
+        act(() => {
+          render(
+            <BibleReader
+              currentSlot={fixture.slot}
+              selectorState={fixture.selectorState}
+              readingState={fixture.readingState}
+              state={state}
+            />,
+            container
+          );
+        });
+        flushFrames();
+      };
+
+      renderWith(createMobileState());
+      expect(container.querySelectorAll(".sb-offscreen-cue")).toHaveLength(1);
+
+      act(() => render(null, container));
+      const base = createMobileState();
+      renderWith({
+        ...base,
+        app: {
+          ...base.app,
+          isMinimalEmbed: signal(true),
+          isCompactReader: signal(true),
+        },
+        navigation: {
+          currentUrl: signal(
+            new URL("http://localhost:3000/en/BSB/genesis/1?embed=true")
+          ),
+        },
+      } as any as SeedBibleState);
+      expect(container.querySelector(".sb-offscreen-cues")).toBeNull();
+    });
+
+    it("notifies about a peer's highlight but never the reader's own", () => {
+      scrollVersesAboveView();
+      const fixture = createFixture();
+      fixture.highlights.value = {
+        highlights: [{ verse: 1, colorId: "green" }],
+      };
+      fixture.decorations.value = [
+        decoration("mine", 1),
+        // Not credited to anyone yet: it was just added on this device.
+        decoration("mine-unrecorded", 1),
+        decoration("marys", 2),
+      ];
+
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={fixture.slot}
+            selectorState={fixture.selectorState}
+            readingState={fixture.readingState}
+            state={createMobileState()}
+            sharedSession={sessionWith({
+              mine: "test-connection",
+              marys: "peer",
+            })}
+          />,
+          container
+        );
+      });
+      flushFrames();
+
+      const pills = container.querySelectorAll(".sb-offscreen-cue");
+      expect(
+        [...pills].map(
+          (pill) => pill.querySelector(".sb-offscreen-cue-text")?.textContent
+        )
+      ).toEqual(["Highlighted verse 2"]);
+      expect(
+        pills[0]?.querySelector(".sb-tab-user-icon")?.getAttribute("title")
+      ).toBe("Mary");
+    });
+  });
+
   it("separates adjacent verses with a space when verse numbers are hidden", () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
 
@@ -4250,8 +5178,14 @@ describe("BibleReader", () => {
       features: {
         isFeatureEnabled: vi.fn(() => true),
       },
+      settings: {
+        settings: signal({ discoveredContent: { showContent: true } }),
+      },
       saves: {
         isLocationSaved: vi.fn(() => false),
+      },
+      bookmarks: {
+        getBookmarksForLocation: vi.fn(() => []),
       },
       friends: { friendIds: signal([]) },
       annotations: {
@@ -4260,6 +5194,8 @@ describe("BibleReader", () => {
         visibleAnnotationsForChapter: vi.fn(() => []),
       },
       readingPlans: { getReadingPlansForChapter: vi.fn(() => []) },
+      login: { userId: signal(null), profile: signal(null) },
+      os: { connectionId: "test-connection" },
     } as any as SeedBibleState;
 
     selectedFootnote.value = {
@@ -4388,14 +5324,14 @@ describe("BibleReader", () => {
       );
     });
 
-    // Hidden behind SHOW_BOOKMARK_BUTTON until #1658. The placeholder and its
-    // "coming soon" toast are still in the file, just not rendered — flipping
-    // the flag is what brings them back.
-    it("shows no bookmark button beside it while bookmarks are off", () => {
+    it("shows the bookmark button beside it", () => {
       renderHeader(createMobileState());
 
       expect(saveButton()).not.toBeNull();
-      expect(bookmarkButton()).toBeNull();
+      expect(bookmarkButton()).not.toBeNull();
+      expect(bookmarkButton()!.getAttribute("aria-label")).toBe(
+        "Bookmark this chapter"
+      );
     });
 
     // The two header clusters are built separately, and they had drifted:
@@ -5011,6 +5947,51 @@ describe("BibleReader", () => {
       vi.useRealTimers();
     }
   });
+
+  it("applies the selection flare to the verse number, not the whole verse", () => {
+    const { slot, selectorState, readingState, decorations } = createFixture();
+
+    const { session } = createVerseFlareSession({
+      visibility: "everyone",
+      ownerByDecoration: {
+        "flare-from-other-user": "connection-peer",
+      },
+    });
+
+    decorations.value = [
+      {
+        id: "flare-from-other-user",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        className: "sb-verse-number-flare",
+        style: {
+          "--sb-selection-flare-color": "#ff0000",
+        },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          sharedSession={session as unknown as BibleReadingSession}
+        />,
+        container
+      );
+    });
+
+    const verse = container.querySelector(".sb-verse");
+    const verseNumber = verse?.querySelector(".sb-verse-number");
+
+    expect(verse).not.toBeNull();
+    expect(verseNumber).not.toBeNull();
+    expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(true);
+    expect(verse?.classList.contains("sb-verse-number-flare")).toBe(false);
+  });
 });
 
 describe("BibleReader — compact embed header", () => {
@@ -5086,6 +6067,151 @@ describe("BibleReader — compact embed header", () => {
     expect(
       container.querySelector(".sb-quick-toolbar-mobile-header")
     ).toBeNull();
+    expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+  });
+
+  it("does not paint saved or broadcast verse highlights", () => {
+    const { slot, selectorState, readingState, highlights, decorations } =
+      createFixture();
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "yellow" }],
+    };
+    decorations.value = [
+      {
+        id: "shared-highlight:GEN:1:2",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [2],
+        highlight: { colorId: "green" },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={createEmbedState()}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: true,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector("[data-highlight-fill]")).toBeNull();
+    expect(container.querySelector(".sb-highlight")).toBeNull();
+  });
+
+  it("hides Discover in an embed and still shows it outside one", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    (
+      readingState.discoveredCrossReferences as Signal<
+        BibleReadingState["discoveredCrossReferences"]["value"]
+      >
+    ).value = [
+      {
+        providerId: "p1",
+        results: [
+          {
+            type: "cross-reference",
+            reference: { chapter: 1, bookData: { name: "Genesis" } },
+            crossReference: {
+              chapter: 5,
+              verse: 3,
+              bookData: { commonName: "Exodus", name: "Exodus" },
+            },
+          },
+        ],
+      },
+    ] as BibleReadingState["discoveredCrossReferences"]["value"];
+    slot.tab = {
+      id: "tab-1",
+      title: "Genesis 1",
+      readingState,
+      sharedSession: null,
+      sharedChat: null,
+    };
+
+    const withDiscover = (embedded: boolean) => {
+      const base = createMobileState();
+      return {
+        ...base,
+        app: {
+          ...base.app,
+          isMinimalEmbed: signal(embedded),
+          isCompactReader: signal(true),
+        },
+        discover: {
+          scrollToVerse: signal(null),
+          contentTypes: signal([]),
+        },
+      } as any as SeedBibleState;
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={withDiscover(false)}
+        />,
+        container
+      );
+    });
+    expect(
+      container.querySelector(".sb-discover-content-panel")
+    ).not.toBeNull();
+    expect(container.textContent).toContain("Discover");
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={withDiscover(true)}
+        />,
+        container
+      );
+    });
+    expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+  });
+
+  it("still paints highlights outside an embed", () => {
+    const { slot, selectorState, readingState, highlights } = createFixture();
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "yellow" }],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={createMobileState()}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: true,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector("[data-highlight-fill]")).not.toBeNull();
   });
 
   it("opens the current chapter in a new tab without the embed param", () => {

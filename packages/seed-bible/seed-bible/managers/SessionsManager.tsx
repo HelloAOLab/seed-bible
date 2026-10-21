@@ -93,6 +93,7 @@ export type SessionStartPosition = Pick<
   InitialBibleReadingOptions,
   "initialTranslationId" | "initialBookId" | "initialChapterNumber"
 >;
+export type VerseSelectionEffectVisibility = "hosts-only" | "everyone" | "none";
 
 export interface SessionOptions {
   allowedNavigators: string[] | null;
@@ -130,6 +131,7 @@ export interface SessionOptions {
    * so a leaving host can hand the session off instead of ending it.
    */
   coHostUserIds: string[];
+  verseSelectionEffectVisibility: VerseSelectionEffectVisibility;
 }
 
 /**
@@ -291,6 +293,7 @@ const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   endedAt: null,
   shareTranslation: false,
   coHostUserIds: [],
+  verseSelectionEffectVisibility: "hosts-only",
 };
 
 function getSessionDataSnapshot(
@@ -331,6 +334,9 @@ function getSessionOptionsFromMap(
   optionsMap: SharedMap<SessionOptionValue>
 ): SessionOptions {
   const rawDuration = optionsMap.get("highlightDurationSeconds");
+  const rawVerseSelectionEffectVisibility = optionsMap.get(
+    "verseSelectionEffectVisibility"
+  );
   const rawEndedAt = optionsMap.get("endedAt");
   const rawShareTranslation = optionsMap.get("shareTranslation");
   return {
@@ -345,6 +351,12 @@ function getSessionOptionsFromMap(
         : rawDuration === null
           ? null
           : DEFAULT_SESSION_OPTIONS.highlightDurationSeconds,
+    verseSelectionEffectVisibility:
+      rawVerseSelectionEffectVisibility === "hosts-only" ||
+      rawVerseSelectionEffectVisibility === "everyone" ||
+      rawVerseSelectionEffectVisibility === "none"
+        ? rawVerseSelectionEffectVisibility
+        : DEFAULT_SESSION_OPTIONS.verseSelectionEffectVisibility,
     endedAt:
       typeof rawEndedAt === "number" && Number.isFinite(rawEndedAt)
         ? rawEndedAt
@@ -381,6 +393,8 @@ function sessionOptionsMatch(
     stringArraysMatch(left.allowedDecorators, right.allowedDecorators) &&
     left.hostUserId === right.hostUserId &&
     left.highlightDurationSeconds === right.highlightDurationSeconds &&
+    left.verseSelectionEffectVisibility ===
+      right.verseSelectionEffectVisibility &&
     left.endedAt === right.endedAt &&
     left.shareTranslation === right.shareTranslation &&
     stringArraysMatch(left.coHostUserIds, right.coHostUserIds)
@@ -596,6 +610,7 @@ export interface BibleReadingSession {
   allUsers: ReadonlySignal<ConnectedSessionUser[]>;
   connectedUsers: ReadonlySignal<ConnectedSessionUser[]>;
   currentUser: ReadonlySignal<ConnectedSessionUser | null>;
+  getDecorationOwner: (decorationId: string) => string | undefined;
 
   /**
    * Each still-connected participant's own reading position, keyed by
@@ -630,6 +645,12 @@ export interface BibleReadingSession {
    * undone locally.
    */
   removeSharedDecoration: (decorationId: string) => void;
+
+  /**
+   * The connectionId of the participant who added a decoration, or null when
+   * the decoration isn't part of this session.
+   */
+  decorationOwner: (decorationId: string) => string | null;
   dispose: () => void;
 
   localSessionId: ReadonlySignal<string>;
@@ -692,20 +713,24 @@ async function createBibleReadingSession(
   startPosition?: SessionStartPosition,
   getAnnotationsManager?: () => AnnotationsManager | undefined
 ): Promise<BibleReadingSession> {
+  const document = await os.getSharedDocument(null, id, "session_data");
+  const stateMap =
+    document.getMap<SessionData[keyof SessionData]>("reading_state");
+
+  const effectiveStartPosition = toStringOrNull(stateMap.get("bookId"))
+    ? undefined
+    : startPosition;
   const readingState = createBibleReadingState(
     dataManager,
     highlightsManager,
     i18nManager,
     // `isShared` last: a caller's start position must not be able to turn a
     // session's reading state back into an unshared one.
-    { ...startPosition, isShared: true },
+    { ...effectiveStartPosition, isShared: true },
     undefined,
     readingExtensionManager,
     getAnnotationsManager
   );
-  const document = await os.getSharedDocument(null, id, "session_data");
-  const stateMap =
-    document.getMap<SessionData[keyof SessionData]>("reading_state");
   const optionsMap = document.getMap<SessionOptionValue>("options");
   const decorationsMap = document.getMap<SessionDecorationValue>("decorations");
   // Enabled reading extensions and their custom data, keyed by extension id.
@@ -1132,11 +1157,20 @@ async function createBibleReadingSession(
   // Written after the initial sync above on purpose. Seeded any earlier, that
   // sync would read our own position back out of the map and re-navigate the
   // reader to the chapter it is already on, pushing a history entry for it.
-  if (startPosition?.initialBookId && !toStringOrNull(stateMap.get("bookId"))) {
+  if (
+    effectiveStartPosition?.initialBookId &&
+    !toStringOrNull(stateMap.get("bookId"))
+  ) {
     document.transact(() => {
-      stateMap.set("translationId", startPosition.initialTranslationId ?? null);
-      stateMap.set("bookId", startPosition.initialBookId ?? null);
-      stateMap.set("chapterNumber", startPosition.initialChapterNumber ?? null);
+      stateMap.set(
+        "translationId",
+        effectiveStartPosition.initialTranslationId ?? null
+      );
+      stateMap.set("bookId", effectiveStartPosition.initialBookId ?? null);
+      stateMap.set(
+        "chapterNumber",
+        effectiveStartPosition.initialChapterNumber ?? null
+      );
     });
   }
 
@@ -1467,25 +1501,54 @@ async function createBibleReadingSession(
     if (applyingRemoteDecorations) {
       return;
     }
+    const canDecorate = userCanDecorate(localSessionId.value);
 
-    if (!userCanDecorate(localSessionId.value)) {
-      return;
+    const isVerseSelectionFlare = (decoration: VerseDecoration) =>
+      decoration.className?.split(/\s+/).includes("sb-verse-number-flare") ??
+      false;
+
+    const sharedDecorationEntries = getSharedDecorationEntries();
+    // Temporary verse-selection flares are allowed even when the participant
+    // cannot create highlights. Other decorations remain permission-restricted.
+    if (!canDecorate) {
+      const hasLocalFlare = currentDecorations.some(isVerseSelectionFlare);
+
+      const hasSharedLocalFlare = Array.from(
+        sharedDecorationEntries.values()
+      ).some(
+        (entry) =>
+          entry.connectionId === localConnectionId &&
+          isVerseSelectionFlare(entry.decoration)
+      );
+
+      if (!hasLocalFlare && !hasSharedLocalFlare) {
+        return;
+      }
     }
 
     const localDecorations = currentDecorations.filter((decoration) => {
+      if (!canDecorate && !isVerseSelectionFlare(decoration)) {
+        return false;
+      }
+      // Never published, so peers neither see nor own it.
+      if (decoration.localOnly) {
+        return false;
+      }
       const owner = decorationOwners.get(decoration.id);
       if (!owner) {
         decorationOwners.set(decoration.id, localConnectionId);
         return true;
       }
-
       return owner === localConnectionId;
     });
 
-    const sharedDecorationEntries = getSharedDecorationEntries();
     const localSharedDecorations = Array.from(
       sharedDecorationEntries.values()
-    ).filter((entry) => entry.connectionId === localConnectionId);
+    ).filter(
+      (entry) =>
+        entry.connectionId === localConnectionId &&
+        (canDecorate || isVerseSelectionFlare(entry.decoration))
+    );
     const localDecorationIds = new Set(
       localDecorations.map((decoration) => decoration.id)
     );
@@ -1648,6 +1711,10 @@ async function createBibleReadingSession(
         typeof newOptions.highlightDurationSeconds === "undefined"
           ? currentOptions.highlightDurationSeconds
           : newOptions.highlightDurationSeconds,
+      verseSelectionEffectVisibility:
+        typeof newOptions.verseSelectionEffectVisibility === "undefined"
+          ? currentOptions.verseSelectionEffectVisibility
+          : newOptions.verseSelectionEffectVisibility,
       endedAt:
         typeof newOptions.endedAt === "undefined"
           ? currentOptions.endedAt
@@ -1696,6 +1763,15 @@ async function createBibleReadingSession(
         optionsMap.set(
           "highlightDurationSeconds",
           nextOptions.highlightDurationSeconds
+        );
+      }
+      if (
+        currentOptions.verseSelectionEffectVisibility !==
+        nextOptions.verseSelectionEffectVisibility
+      ) {
+        optionsMap.set(
+          "verseSelectionEffectVisibility",
+          nextOptions.verseSelectionEffectVisibility
         );
       }
 
@@ -1808,11 +1884,15 @@ async function createBibleReadingSession(
     participantPositions,
     isSynced,
     removeSharedDecoration,
+    decorationOwner: (decorationId) =>
+      decorationOwners.get(decorationId) ?? null,
     dispose,
     isHost,
     localSessionId,
     userCanNavigate,
     userCanDecorate,
+    getDecorationOwner: (decorationId: string) =>
+      decorationOwners.get(decorationId),
   };
 }
 
@@ -1827,7 +1907,17 @@ export interface SessionsManager {
   createSession: (
     startPosition?: SessionStartPosition
   ) => Promise<BibleReadingSession>;
-  joinSession: (id: string) => Promise<BibleReadingSession>;
+  /**
+   * Joins an existing session.
+   *
+   * @param startPosition Where the session should open if nobody has
+   * published a position into it yet. Ignored once the session has one, so a
+   * late joiner follows the group rather than pulling it back.
+   */
+  joinSession: (
+    id: string,
+    startPosition?: SessionStartPosition
+  ) => Promise<BibleReadingSession>;
 }
 
 export function createSessionsManager(
@@ -1858,7 +1948,10 @@ export function createSessionsManager(
     );
   };
 
-  const joinSession = async (id: string) => {
+  const joinSession = async (
+    id: string,
+    startPosition?: SessionStartPosition
+  ) => {
     return await createBibleReadingSession(
       os,
       dataManager,
@@ -1868,7 +1961,7 @@ export function createSessionsManager(
       readingExtensionManager,
       id,
       undefined,
-      undefined,
+      startPosition,
       getAnnotationsManager
     );
   };

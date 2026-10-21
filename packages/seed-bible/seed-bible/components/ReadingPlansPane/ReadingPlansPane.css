@@ -19,17 +19,17 @@
 
 /* The new-plan button and the back button both live in the pane's header (see
    ReadingPlansPaneActions / ReadingPlansPaneLeading), so they're sized to sit
-   in that 42px-tall row rather than in the pane body. */
+   in that 42px-tall row rather than in the pane body. The new-plan button
+   matches the "+ Create" button in the Discover pane's header. */
 .sb-reading-plans-create {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 9px;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 999px;
   background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color, #fff);
+  color: var(--sb-background);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -72,7 +72,17 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 1.75rem;
+}
+
+/* The reader toolbar floats over the bottom of the pane, fullscreen or side
+   (it's centred across the whole window, see ReadingPlanEditor.css), so leave
+   room to scroll the last plan clear of it. On phones the pane already stops
+   above it (see PaneLayout.css). */
+@media (min-width: 481px) {
+  .sb-reading-plans-scroll {
+    padding-bottom: var(--sb-reader-bottom-inset, 6rem);
+  }
 }
 
 /* Today hero */
@@ -180,19 +190,15 @@
   white-space: nowrap;
 }
 
-/* A card plus the things that hang off it: its edit/delete row, and the load
-   error shown in place of opening a dead screen. */
+/* A card plus the load error shown in place of opening a dead screen. */
 .sb-rp-card-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.sb-rp-card-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
+.sb-rp-card-menu {
+  flex: none;
 }
 
 .sb-rp-card-error {
@@ -203,10 +209,17 @@
 }
 
 .sb-rp-card:disabled,
+.sb-rp-card--opening,
 .sb-rp-card-open:disabled,
 .sb-rp-today:disabled {
   cursor: progress;
   opacity: 0.7;
+}
+
+/* The opening card is already faded; fading its open button as well would
+   multiply the two and leave the card at about half strength. */
+.sb-rp-card--opening .sb-rp-card-open:disabled {
+  opacity: 1;
 }
 
 /* Cards */

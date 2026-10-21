@@ -37,6 +37,32 @@
     background-color 0.15s ease;
   z-index: 1;
 }
+.sb-verse-number-flare {
+  position: relative;
+  z-index: 1;
+  animation: sb-verse-number-flare 1.2s ease-out;
+  border-radius: 3px;
+}
+
+@keyframes sb-verse-number-flare {
+  0% {
+    box-shadow: 0 0 0 3px var(--sb-selection-flare-color);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-verse-number-flare {
+    animation: none;
+    color: var(--sb-selection-flare-color);
+    background-color: transparent;
+    box-shadow: 0 0 0 2px
+      color-mix(in srgb, var(--sb-selection-flare-color) 35%, transparent);
+  }
+}
 
 .sb-bible-reader-bookmark-button:hover,
 .sb-bible-reader-save-button:hover {
@@ -169,8 +195,11 @@
   opacity: 0.8;
 }
 
+.sb-inline-footnote {
+  white-space: nowrap;
+}
+
 .sb-inline-footnote-button {
-  margin-inline-start: 0.25rem;
   margin-inline-end: 0.25rem;
   border: none;
   background: transparent;
@@ -840,6 +869,13 @@
   font-style: var(--sb-verse-words-of-jesus-font-style);
 }
 
+.sb-highlight-custom .sb-words-of-jesus {
+  color: var(
+    --sb-highlight-custom-words-of-jesus-font-color,
+    var(--sb-verse-words-of-jesus-color)
+  );
+}
+
 /* Chapter-load failure state: centred in the reader body, in the reader's own
    ink rather than an alarming red. Sized in rem so it tracks the UI scale, not
    the reader glyph knob. */
@@ -1163,6 +1199,11 @@
   color: var(--sb-font-color);
   line-height: 1.6;
   overflow: auto;
+}
+
+.sb-footnote-modal-footer {
+  flex-shrink: 0;
+  margin-top: 1rem;
 }
 
 .sb-footnote-modal-content .sb-verse-reference-link {

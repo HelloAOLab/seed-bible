@@ -15,6 +15,7 @@ import {
 } from "../seed-bible/managers/testUtils/mockBibleApiData";
 import { buildChapterUrl } from "../../../script/lib/sitemap";
 import { resetSsrTranslationsCacheForTests } from "../../../standalone/ssrTranslationsCache";
+import i18n from "i18next";
 
 describe("sharedPageQueryRedirect", () => {
   it("sends an old playlist share link to the playlist's own page", () => {
@@ -670,6 +671,68 @@ describe("render() server-rendered meta tags", () => {
     }
     return result.html;
   };
+
+  // The SSR host calls render() for every request in one long-lived process,
+  // so anything a render leaves registered keeps that request's whole app
+  // state in memory until the process exits.
+  describe("leaves nothing behind once it returns", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("leaves no interval running after rendering a chapter", async () => {
+      const active = new Set<unknown>();
+      const realSetInterval = globalThis.setInterval;
+      const realClearInterval = globalThis.clearInterval;
+      vi.spyOn(globalThis, "setInterval").mockImplementation(((
+        ...args: Parameters<typeof setInterval>
+      ) => {
+        const id = realSetInterval(...args);
+        active.add(id);
+        return id;
+      }) as typeof setInterval);
+      vi.spyOn(globalThis, "clearInterval").mockImplementation(((
+        id: Parameters<typeof clearInterval>[0]
+      ) => {
+        active.delete(id);
+        realClearInterval(id);
+      }) as typeof clearInterval);
+
+      const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+      // A failed chapter load would skip the reading-time effect entirely
+      // and make this pass vacuously.
+      expect(html).toContain("Verse 1");
+      const leftRunning = [...active];
+      leftRunning.forEach((id) => realClearInterval(id as number));
+      expect(leftRunning).toEqual([]);
+    });
+
+    it("removes every languageChanged listener it adds to the shared i18next instance", async () => {
+      const added = new Set<unknown>();
+      const realOn = i18n.on.bind(i18n);
+      const realOff = i18n.off.bind(i18n);
+      vi.spyOn(i18n, "on").mockImplementation(((
+        event: string,
+        listener: (...args: unknown[]) => void
+      ) => {
+        if (event === "languageChanged") added.add(listener);
+        realOn(event, listener);
+      }) as typeof i18n.on);
+      vi.spyOn(i18n, "off").mockImplementation(((
+        event: string,
+        listener?: (...args: unknown[]) => void
+      ) => {
+        if (event === "languageChanged") added.delete(listener);
+        realOff(event, listener);
+      }) as typeof i18n.off);
+
+      await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+      await renderHtml("/en/AAB/john/3?useFreeBibleAPI=true");
+
+      expect(added.size).toBe(0);
+    });
+  });
 
   it("emits the reading position as the canonical URL and og:url", async () => {
     const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");

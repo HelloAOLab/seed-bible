@@ -26,14 +26,14 @@ NODE_ENV=production bun run server/dist/index.js
 
 ## Routes (production)
 
-| Route                                             | Behaviour                                          |
-| ------------------------------------------------- | -------------------------------------------------- |
-| `GET /`                                           | The root branch (`ROOT_BRANCH`).                   |
-| `GET /?pattern=<branch>`                          | That branch's live deployment.                     |
-| `GET /?pattern=<branch>&patternVersion=<buildId>` | A pinned build (skips the pointer lookup).         |
-| `GET /healthz`                                    | Liveness probe (returns `ok`).                     |
-| `POST /__invalidate?branch=<branch>`              | Drops the cached pointer + modules for one branch. |
-| `POST /__invalidate`                              | Drops every cached pointer.                        |
+| Route                                             | Behaviour                                         |
+| ------------------------------------------------- | ------------------------------------------------- |
+| `GET /`                                           | The root branch (`ROOT_BRANCH`).                  |
+| `GET /?pattern=<branch>`                          | That branch's live deployment.                    |
+| `GET /?pattern=<branch>&patternVersion=<buildId>` | A pinned build (skips the pointer lookup).        |
+| `GET /healthz`                                    | Liveness probe (returns `ok`).                    |
+| `POST /__invalidate?branch=<branch>`              | Drops the cached pointer + builds for one branch. |
+| `POST /__invalidate`                              | Drops every cached pointer.                       |
 
 Hashed assets are **not** served here. Each deployment's chunks are namespaced
 per branch/build (`branches/<name>/<buildId>/assets/...`) and referenced at the
@@ -49,16 +49,43 @@ All configuration is via environment variables. Defaults are applied at startup.
 
 ### Server
 
-| Variable              | Default   | Description                                                                                                                           |
-| --------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`            | _(unset)_ | `production` selects the multi-branch host; anything else runs the Vite dev server.                                                   |
-| `PORT`                | `3002`    | Port the server listens on.                                                                                                           |
-| `ROOT_BRANCH`         | `main`    | Branch served for `GET /` (no `pattern`). Also the default value of `ALLOWED_SSR_BRANCHES`.                                           |
-| `ASSET_HOST`          | `""`      | Absolute host prepended to hashed asset URLs in rendered HTML (e.g. `https://cdn.example.com`).                                       |
-| `POINTER_TTL_MS`      | `10000`   | How long (ms) a branch → buildId pointer is cached before re-reading from the store.                                                  |
-| `MODULE_CACHE_MAX`    | `20`      | Max entries in each LRU cache (loaded SSR modules, and pre-rendered HTML for non-SSR branches).                                       |
-| `INVALIDATION_SECRET` | `""`      | Shared secret required in the `x-invalidation-secret` header on `POST /__invalidate`. **When empty the endpoint is unauthenticated.** |
-| `SHUTDOWN_GRACE_MS`   | `5000`    | How long to wait for in-flight requests on `SIGTERM`/`SIGINT` before flushing telemetry and exiting.                                  |
+| Variable                  | Default   | Description                                                                                                                                                      |
+| ------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                | _(unset)_ | `production` selects the multi-branch host; anything else runs the Vite dev server.                                                                              |
+| `PORT`                    | `3002`    | Port the server listens on.                                                                                                                                      |
+| `ROOT_BRANCH`             | `main`    | Branch served for `GET /` (no `pattern`). Also the default value of `ALLOWED_SSR_BRANCHES`.                                                                      |
+| `ASSET_HOST`              | `""`      | Absolute host prepended to hashed asset URLs in rendered HTML (e.g. `https://cdn.example.com`).                                                                  |
+| `POINTER_TTL_MS`          | `10000`   | How long (ms) a branch → buildId pointer is cached before re-reading from the store.                                                                             |
+| `MODULE_CACHE_MAX`        | `20`      | Max entries in the LRU cache of pre-rendered HTML for non-SSR branches.                                                                                          |
+| `SSR_WORKERS_MAX`         | `4`       | Max builds with a live SSR worker at once (see [SSR workers](#ssr-workers)). Each costs roughly 70 MB.                                                           |
+| `SSR_RENDER_TIMEOUT_MS`   | `15000`   | Limit on loading an SSR bundle and on each render. A render that runs over falls back to the unrendered HTML.                                                    |
+| `SSR_LOAD_FAILURE_TTL_MS` | `30000`   | How long a build that failed to load is remembered. Until then, requests for it fail fast instead of each starting a new worker. `POST /__invalidate` clears it. |
+| `INVALIDATION_SECRET`     | `""`      | Shared secret required in the `x-invalidation-secret` header on `POST /__invalidate`. **When empty the endpoint is unauthenticated.**                            |
+| `SHUTDOWN_GRACE_MS`       | `5000`    | How long to wait for in-flight requests on `SIGTERM`/`SIGINT` before flushing telemetry and exiting.                                                             |
+
+### SSR workers
+
+Each SSR build runs in its own worker thread ([buildWorker.ts](buildWorker.ts),
+[ssrWorker.ts](ssrWorker.ts)), not on the main thread. An imported ES module can
+never be unloaded, so a bundle imported on the main thread would stay in memory
+for the life of the process, and every deploy would add another ~30 MB copy.
+When a build leaves the cache (over `SSR_WORKERS_MAX`, or on
+`POST /__invalidate`), its worker is terminated once no request is using it
+(a request holds its build from the moment it gets it until its page is
+rendered), which releases the whole bundle. A request that never finishes is
+cut off after twice `SSR_RENDER_TIMEOUT_MS`. A worker that crashes is dropped
+from the cache, and the next request for that build starts a fresh one. So is
+a worker stuck in a loop: after a render times out, the worker is pinged, and
+if it doesn't answer within 2 seconds it's stopped. A render that is merely slow
+(waiting on the network) leaves its worker answering, so that worker is kept.
+
+If a whitelisted branch's latest build fails to load (a bad deploy), its own
+URLs answer 500 as before, but pinned links to its older builds
+(`/b/<branch>/<old buildId>`) still work: they get that build's pre-rendered
+HTML as-is, without SSR.
+
+`ssrWorker.ts` is a second `bun build` entry point, emitted next to `index.js`
+in `server/dist/`.
 
 ### SSR whitelisting
 
@@ -73,8 +100,13 @@ imported.
 
 How a request for branch `B` is handled:
 
-1. **`B` is in `ALLOWED_SSR_BRANCHES`** → load `B`'s SSR bundle and render its
-   own pre-rendered HTML.
+1. **`B` is in `ALLOWED_SSR_BRANCHES`** → load `B`'s **latest** SSR bundle and
+   render the requested build's pre-rendered HTML with it. A pinned older build
+   (`/b/<B>/<buildId>` where `buildId` isn't the live one) only contributes its
+   HTML; its own bundle is never imported, so old build IDs can't each claim a
+   worker. The client's hydration gate notices the build mismatch and renders
+   fresh instead of hydrating. If `B` has no live pointer, its pinned HTML is
+   handled as in 2–3 below.
 2. **`B` is not whitelisted, and `DEFAULT_SSR_BRANCH` is set** → fetch only
    `B`'s pre-rendered HTML, then render it through `DEFAULT_SSR_BRANCH`'s
    bundle. `B`'s own bundle is never imported, so none of its code runs. (If

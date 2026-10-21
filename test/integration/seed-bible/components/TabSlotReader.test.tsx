@@ -139,6 +139,7 @@ function createFixture(): ReaderFixture {
     loading: signal(false),
     scrollPosition: signal(0),
     scrollToVerse: signal<number | null>(null),
+    readAlongVerse: signal<{ verse: number } | null>(null),
     error: signal<string | null>(null),
     failedTranslationId: signal<string | null>(null),
     retryLoad: vi.fn(async () => undefined),
@@ -224,6 +225,12 @@ function createSavesStub() {
   };
 }
 
+function createBookmarksStub() {
+  return {
+    getBookmarksForLocation: vi.fn(() => []),
+  };
+}
+
 function createMobileState(): SeedBibleState {
   const discover = createDiscoverManager();
   return {
@@ -256,6 +263,7 @@ function createMobileState(): SeedBibleState {
     },
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
+    bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
@@ -267,6 +275,9 @@ function createMobileState(): SeedBibleState {
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
+    },
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
     },
     friends: { friends: signal([]), friendIds: signal([]) },
     annotations: {
@@ -309,8 +320,12 @@ function createDesktopState(): SeedBibleState {
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
       getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
     },
+    os: {
+      connectionId: "test-connection",
+    },
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
+    bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
@@ -322,6 +337,9 @@ function createDesktopState(): SeedBibleState {
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
+    },
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
     },
     friends: { friends: signal([]), friendIds: signal([]) },
     annotations: {

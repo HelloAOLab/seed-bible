@@ -78,7 +78,16 @@
       (function () {
         try {
           var raw = localStorage.getItem("sb-profile-config-local");
-          var themeId = (raw && JSON.parse(raw).themeId) || "system";
+          var params = new URLSearchParams(window.location.search);
+          var embed = (params.get("embed") || "").toLowerCase();
+          var linkTheme =
+            embed === "minimal" || embed === "true"
+              ? params.get("app.themeId")
+              : null;
+          var themeId =
+            (linkTheme && linkTheme.trim()) ||
+            (raw && JSON.parse(raw).themeId) ||
+            "system";
           if (themeId === "system") {
             themeId = window.matchMedia("(prefers-color-scheme: dark)").matches
               ? "dark"
