@@ -365,6 +365,14 @@ describe("extension permission dialogs", () => {
         expect(text(".sb-extension-request-count")).toEqual(["2 permissions"]);
       });
 
+      it("calls a CasualOS view what the user sees, not CasualOS", () => {
+        void askForMore(["embed:casualos"]);
+
+        expect(text(".sb-extension-request-title")).toEqual([
+          "Verse Art wants access to maps and 3D experiences",
+        ]);
+      });
+
       it("grants all of it on Allow, and none on Not now", async () => {
         const allowed = askForMore(["highlights:write", "notes:read"]);
         act(() => button("Allow").click());
