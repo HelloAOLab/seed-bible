@@ -4,7 +4,7 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { ExtensionManager } from "../../managers/ExtensionManager";
 import type { SandboxPermission } from "../../extensions/protocol";
-import { PermissionLine } from "./ExtensionConsentModal";
+import { PermissionLine, sourceLabel } from "./ExtensionConsentModal";
 
 function ExtensionPermissionsContent({
   extensions,
@@ -39,7 +39,7 @@ function ExtensionPermissionsContent({
   return (
     <div className="sb-extension-consent">
       <p className="sb-extension-consent-source">
-        {t("extension-consent-source", { host: summary.sourceHost })}
+        {t("extension-consent-source", { host: sourceLabel(t, summary) })}
       </p>
       {summary.required.length > 0 && (
         <>

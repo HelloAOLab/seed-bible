@@ -19,7 +19,10 @@ import {
   parseSandboxManifest,
   type ExtensionGrants,
   type SandboxConsentHandler,
+  type SandboxConsentRequest,
+  type SandboxUploader,
 } from "./ExtensionPermissions";
+import type { CasualOSManager } from "./OsManager";
 import {
   SANDBOX_PERMISSION_INFO,
   type SandboxPermission,
@@ -542,6 +545,13 @@ export interface ExtensionManagerOptions {
 
   /** How long storage writes are batched before they're synced; for tests. */
   sandboxStoragePushDelayMs?: number;
+
+  /**
+   * Tells which bundles were uploaded to Seed Bible's own storage, so their
+   * uploader can be named instead of the storage's host (the app passes its
+   * `CasualOSManager`).
+   */
+  fileRecords?: Pick<CasualOSManager, "getFileRecordName">;
 }
 
 /** What a running sandboxed extension may do, as Settings shows it. */
@@ -552,6 +562,7 @@ export interface SandboxPermissionSummary {
   granted: SandboxPermission[];
   network: string[];
   sourceHost: string;
+  uploader?: SandboxUploader;
 }
 
 /** The namespace the app's own strings live in (see `I18nManager.tsx`). */
@@ -1563,6 +1574,33 @@ export function createExtensionManager(
 
   // One consent dialog at a time, in the order they were asked for.
   let consentQueue: Promise<unknown> = Promise.resolve();
+  /**
+   * Who uploaded a bundle in Seed Bible's own storage, which names the
+   * account it's stored under. Undefined for one hosted anywhere else, or
+   * when that can't be told; the host is shown instead.
+   */
+  const describeUploader = async (
+    url: string
+  ): Promise<SandboxUploader | undefined> => {
+    if (!options.fileRecords) {
+      return undefined;
+    }
+    try {
+      const recordName = await options.fileRecords.getFileRecordName(url);
+      if (!recordName) {
+        return undefined;
+      }
+      const profile = await login.getPublicProfile(recordName).catch((err) => {
+        console.warn(`Could not load the profile for ${recordName}:`, err);
+        return null;
+      });
+      return { name: profile?.name?.trim() || null };
+    } catch (err) {
+      console.warn(`Could not tell who uploaded '${url}':`, err);
+      return undefined;
+    }
+  };
+
   const askSandboxConsent: SandboxConsentHandler = (request) => {
     const handler = options.requestSandboxConsent;
     if (!handler) {
@@ -1614,6 +1652,10 @@ export function createExtensionManager(
       return fail(`'${uploaded.url}' is not a valid URL.`);
     }
 
+    // Looked up alongside the bundle, and only waited for to ask the user.
+    const uploaderPromise = describeUploader(uploaded.url);
+    let uploader: SandboxUploader | undefined;
+
     let code: string;
     try {
       code = await fetchSandboxBundle(uploaded.url, manifest.integrity);
@@ -1629,6 +1671,14 @@ export function createExtensionManager(
       sourceHost,
       version: manifest.version,
     };
+    const askConsent = async (
+      request: Omit<SandboxConsentRequest, keyof typeof consentBase>
+    ) =>
+      askSandboxConsent({
+        ...consentBase,
+        uploader: await uploaderPromise,
+        ...request,
+      });
     const previous = activeGrant((await readExtensionGrants())[extensionId]);
     const missing = missingFromGrant(previous, manifest, source);
     // Optional permissions the user granted before, that this version still
@@ -1649,8 +1699,7 @@ export function createExtensionManager(
       missing.permissions.length > 0 ||
       missing.network.length > 0
     ) {
-      const agreed = await askSandboxConsent({
-        ...consentBase,
+      const agreed = await askConsent({
         reason: previous?.source === source ? "update" : "install",
         permissions: manifest.permissions,
         network: manifest.network,
@@ -1681,8 +1730,7 @@ export function createExtensionManager(
     const requestPermissions = async (
       permissions: SandboxPermission[]
     ): Promise<boolean> => {
-      const agreed = await askSandboxConsent({
-        ...consentBase,
+      const agreed = await askConsent({
         reason: "request",
         permissions,
         network: [],
@@ -1721,9 +1769,18 @@ export function createExtensionManager(
           granted,
           network: manifest.network,
           sourceHost,
+          uploader,
         },
       };
     };
+
+    // Settings shows the host until the uploader is known.
+    void uploaderPromise.then((found) => {
+      uploader = found;
+      if (found && sandboxPermissionsSignal.peek()[extensionId]) {
+        publishPermissions();
+      }
+    });
 
     const start = () =>
       registerExtension({

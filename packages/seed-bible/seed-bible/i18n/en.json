@@ -1145,6 +1145,7 @@
   "extension-consent-source": "From {{host}} · not reviewed by Seed Bible",
   "extension-consent-from": "From {{host}}",
   "extension-consent-source-version": "Version {{version}} · from {{host}}",
+  "extension-consent-uploader-unnamed": "a Seed Bible User",
   "extension-consent-unreviewed": "Seed Bible hasn't reviewed this extension. It runs separately and only gets what's listed here.",
   "extension-consent-now": "Right away",
   "extension-consent-update-now": "New in this version",

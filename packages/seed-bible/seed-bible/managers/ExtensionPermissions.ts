@@ -242,6 +242,8 @@ export interface SandboxConsentRequest {
   description: string;
   /** The host the bundle is served from. */
   sourceHost: string;
+  /** Set when the bundle is in Seed Bible's own storage, which says who uploaded it. */
+  uploader?: SandboxUploader;
   version: string | null;
   /**
    * Why the user is being asked: to install the extension, to let an update
@@ -259,6 +261,12 @@ export interface SandboxConsentRequest {
   optionalPermissions: SandboxPermission[];
   /** For a "request": what it already has, so the dialog can say what it still can't do. */
   alreadyAllowed?: { permissions: SandboxPermission[]; network: string[] };
+}
+
+/** Who uploaded an extension to Seed Bible's storage. */
+export interface SandboxUploader {
+  /** Their profile name; null when they haven't set one. */
+  name: string | null;
 }
 
 /** Asks the user; resolves true only if they agreed. */

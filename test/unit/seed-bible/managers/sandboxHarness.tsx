@@ -107,6 +107,9 @@ function createLogin(host: SandboxTestHost): LoginManager {
     profile: host.profile,
     localConfig: signal<Record<string, unknown>>({}),
     profilePromise: null,
+    // Like the real one: a record with no profile yet reads as a blank one.
+    getPublicProfile: async (userId: string) =>
+      host.publicProfiles.get(userId) ?? { name: "" },
     updateProfile: (data: Partial<UserProfile>) => {
       host.profile.value = {
         ...(host.profile.peek() ?? { name: "" }),
@@ -338,6 +341,8 @@ function createHost() {
   const openedReferences: unknown[] = [];
   const userId = signal<string | null>(null);
   const profile = signal<UserProfile | null>(null);
+  /** Other people's public profiles, by user id. */
+  const publicProfiles = new Map<string, UserProfile>();
 
   // The user's data, as the stand-in managers below keep it.
   const highlights = new Map<string, ChapterHighlight[]>();
@@ -540,6 +545,7 @@ function createHost() {
     openedReferences,
     userId,
     profile,
+    publicProfiles,
     highlights,
     notes,
     saves,

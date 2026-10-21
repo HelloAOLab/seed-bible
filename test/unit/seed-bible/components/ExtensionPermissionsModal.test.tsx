@@ -226,6 +226,16 @@ describe("extension permission dialogs", () => {
       );
     });
 
+    it("says who uploaded it to Seed Bible, or that someone did, instead of the storage's domain", () => {
+      void ask({ uploader: { name: "Kallyn" } });
+      expect(container.textContent).toContain("Version 1.2.0 · from Kallyn");
+
+      void ask({ extensionId: "ext.other", uploader: { name: null } });
+      expect(container.textContent).toContain(
+        "Version 1.2.0 · from a Seed Bible User"
+      );
+    });
+
     it("installs only when Install is chosen", async () => {
       const answer = ask();
 

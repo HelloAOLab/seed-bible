@@ -4,7 +4,10 @@ import type {
   ModalContentProps,
   ModalManager,
 } from "../../managers/ModalManager";
-import type { SandboxConsentRequest } from "../../managers/ExtensionPermissions";
+import type {
+  SandboxConsentRequest,
+  SandboxUploader,
+} from "../../managers/ExtensionPermissions";
 import {
   expandSandboxPermissions,
   SANDBOX_PERMISSION_INFO,
@@ -56,6 +59,20 @@ function permissionLabel(t: Translate, permission: SandboxPermission): string {
     case "device:camera":
       return t("extension-permission-device-camera");
   }
+}
+
+/**
+ * Where an extension comes from: who uploaded it, for one in Seed Bible's
+ * own storage (whose host says nothing to a user), else the host serving it.
+ */
+export function sourceLabel(
+  t: Translate,
+  source: { sourceHost: string; uploader?: SandboxUploader }
+): string {
+  if (!source.uploader) {
+    return source.sourceHost;
+  }
+  return source.uploader.name ?? t("extension-consent-uploader-unnamed");
 }
 
 /** One permission's line, marked when it's high risk. */
@@ -541,9 +558,9 @@ function ExtensionConsentContent({
             {request.version
               ? t("extension-consent-source-version", {
                   version: request.version,
-                  host: request.sourceHost,
+                  host: sourceLabel(t, request),
                 })
-              : t("extension-consent-from", { host: request.sourceHost })}
+              : t("extension-consent-from", { host: sourceLabel(t, request) })}
           </p>
           {request.reason !== "request" && request.description && (
             <p className="sb-extension-consent-description">

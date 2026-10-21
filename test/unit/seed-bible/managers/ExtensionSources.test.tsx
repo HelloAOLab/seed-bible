@@ -156,6 +156,73 @@ describe("extension sources", () => {
     });
   });
 
+  describe("who an extension is from", () => {
+    const STORAGE = "https://filesbucket.s3.amazonaws.com";
+
+    /** Seed Bible's records server, which knows which URLs are its own files. */
+    const fileRecords = {
+      getFileRecordName: vi.fn(async (url: string) =>
+        url.startsWith(`${STORAGE}/`)
+          ? new URL(url).pathname.split("/")[1]!
+          : null
+      ),
+    };
+
+    async function install(bundleUrl: string) {
+      const extension = await h.publish(
+        defineExtension({}),
+        { id: "ext.verse-art" },
+        bundleUrl
+      );
+      h.hostSet(SET_URL, [extension]);
+      const manager = h.createManager({
+        defaultExtensions: APP_SET,
+        fileRecords,
+      });
+      await manager.discoverExtensionSet(SET_URL);
+      await manager.loadExtension(listed(manager, "ext.verse-art")!.extension!);
+      return manager;
+    }
+
+    it("names the person who uploaded it to Seed Bible", async () => {
+      h.host.publicProfiles.set("user-1", { name: "Kallyn" });
+
+      const manager = await install(`${STORAGE}/user-1/verse-art.js`);
+
+      expect(h.consent.mock.calls[0]![0].uploader).toEqual({ name: "Kallyn" });
+      await vi.waitFor(() =>
+        expect(manager.sandboxPermissions.value["ext.verse-art"]).toMatchObject(
+          { uploader: { name: "Kallyn" } }
+        )
+      );
+    });
+
+    it("says it's from someone without saying who, when they have no name", async () => {
+      await install(`${STORAGE}/user-2/verse-art.js`);
+
+      expect(h.consent.mock.calls[0]![0].uploader).toEqual({ name: null });
+    });
+
+    it("names the domain of one hosted anywhere else", async () => {
+      await install("https://ext.example.com/verse-art/bundle.js");
+
+      const request = h.consent.mock.calls[0]![0];
+      expect(request.uploader).toBeUndefined();
+      expect(request.sourceHost).toBe("ext.example.com");
+    });
+
+    it("falls back to the domain when Seed Bible can't be asked", async () => {
+      vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      fileRecords.getFileRecordName.mockRejectedValueOnce(new Error("offline"));
+
+      await install(`${STORAGE}/user-1/verse-art.js`);
+
+      const request = h.consent.mock.calls[0]![0];
+      expect(request.uploader).toBeUndefined();
+      expect(request.sourceHost).toBe("filesbucket.s3.amazonaws.com");
+    });
+  });
+
   it("forgets where an extension came from when it's uninstalled", async () => {
     await hostVerseArt();
     const first = await loadPage();
