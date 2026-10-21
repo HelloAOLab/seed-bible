@@ -1,6 +1,5 @@
 import { useMemo } from "preact/hooks";
 import type { SeedBibleState } from "seed-bible";
-import { emphasizeVerses, type BookId } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
 import { bookDisplayName } from "./books";
 import {
@@ -206,13 +205,6 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
       }
       return;
     }
-    // Scroll alone doesn't highlight. This is the reader's usual treatment:
-    // the verse stays lit and the rest of the chapter dims, then both fade.
-    emphasizeVerses(reading, {
-      book: target.bookId as BookId,
-      chapter: target.chapterNumber,
-      verse: target.verseNumber,
-    });
     game.revealed.value = true;
   }
 

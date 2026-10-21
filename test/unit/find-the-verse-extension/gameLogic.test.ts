@@ -5,10 +5,17 @@ import {
   isKnownBookId,
 } from "@packages/find-the-verse-extension/ext_FindTheVerse/books";
 import {
+  bookOutOfRange,
   buildPartialReveal,
+  chapterOutOfRange,
+  emptyHintGap,
   evaluateGuess,
+  openSearchWindow,
   PlayGuesses,
   revealThreshold,
+  rangeHighlightCss,
+  tightenWindow,
+  versesOutOfRange,
 } from "@packages/find-the-verse-extension/ext_FindTheVerse/gameLogic";
 import type { VersePosition } from "@packages/find-the-verse-extension/ext_FindTheVerse/types";
 
@@ -172,5 +179,97 @@ describe("PlayGuesses", () => {
     play.stop();
     expect(play.observe(reader, verse)).toBeNull();
     expect(play.observe(reader, verse)?.spendChance).toBe(true);
+  });
+});
+
+describe("search window", () => {
+  const target: VersePosition = {
+    bookId: "GEN",
+    chapterNumber: 5,
+    verseNumber: 16,
+  };
+  const genesis = bookOrderIndex("GEN");
+  const exodus = bookOrderIndex("EXO");
+
+  it("keeps Genesis 3:11 through the end of the Bible after a too-early guess", () => {
+    const guess: VersePosition = {
+      bookId: "GEN",
+      chapterNumber: 3,
+      verseNumber: 10,
+    };
+    const window = tightenWindow(
+      openSearchWindow(),
+      guess,
+      evaluateGuess(target, guess)
+    );
+
+    expect(window.before).toBeNull();
+    expect(window.after).toEqual({
+      bookIndex: genesis,
+      chapterNumber: 3,
+      verseNumber: 10,
+    });
+    expect(versesOutOfRange(window, "GEN", 3, [1, 10, 11, 12])).toEqual([
+      1, 10,
+    ]);
+    expect(chapterOutOfRange(window, genesis, 2)).toBe(true);
+    expect(chapterOutOfRange(window, genesis, 3)).toBe(false);
+    expect(chapterOutOfRange(window, genesis, 5)).toBe(false);
+    expect(bookOutOfRange(window, genesis, 50)).toBe(false);
+    expect(bookOutOfRange(window, exodus, 40)).toBe(false);
+  });
+
+  it("cuts the far end when a later guess is too far ahead, and does not widen", () => {
+    const early: VersePosition = {
+      bookId: "GEN",
+      chapterNumber: 3,
+      verseNumber: 10,
+    };
+    const late: VersePosition = {
+      bookId: "EXO",
+      chapterNumber: 1,
+      verseNumber: 1,
+    };
+    const narrowed = tightenWindow(
+      tightenWindow(openSearchWindow(), early, evaluateGuess(target, early)),
+      late,
+      evaluateGuess(target, late)
+    );
+    const behind: VersePosition = {
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+    };
+
+    expect(narrowed.before).toEqual({
+      bookIndex: exodus,
+      chapterNumber: 1,
+      verseNumber: 1,
+    });
+    expect(bookOutOfRange(narrowed, exodus, 40)).toBe(true);
+    expect(versesOutOfRange(narrowed, "GEN", 3, [11])).toEqual([]);
+    expect(
+      tightenWindow(narrowed, behind, evaluateGuess(target, behind)).after
+    ).toEqual(narrowed.after);
+  });
+});
+
+describe("rangeHighlightCss", () => {
+  it("hides reader highlights and the tap underline while a round is on", () => {
+    const css = rangeHighlightCss([], []);
+    expect(css).toContain(".sb-highlight-layer");
+    expect(css).toContain(".sb-verse-selected");
+  });
+});
+
+describe("emptyHintGap", () => {
+  it("allows empty hints after the filled ones", () => {
+    expect(
+      emptyHintGap([{ hint: "a" }, { hint: "" }, { hint: "  " }])
+    ).toBeNull();
+  });
+
+  it("finds an empty hint left between filled ones", () => {
+    expect(emptyHintGap([{ hint: "a" }, { hint: "" }, { hint: "c" }])).toBe(1);
   });
 });

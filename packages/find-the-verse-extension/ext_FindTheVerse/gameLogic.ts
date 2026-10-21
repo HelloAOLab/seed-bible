@@ -1,5 +1,10 @@
 import { bookOrderIndex } from "./books";
-import type { GuessResult, VersePosition } from "./types";
+import type {
+  BibleSpot,
+  GuessResult,
+  SearchWindow,
+  VersePosition,
+} from "./types";
 
 export function guessKey(guess: VersePosition): string {
   return `${guess.bookId}:${guess.chapterNumber}:${guess.verseNumber}`;
@@ -66,6 +71,173 @@ export function evaluateGuess(
     };
   }
   return { kind: "correct" };
+}
+
+export function openSearchWindow(): SearchWindow {
+  return { after: null, before: null };
+}
+
+function compareSpots(a: BibleSpot, b: BibleSpot): number {
+  if (a.bookIndex !== b.bookIndex) return a.bookIndex - b.bookIndex;
+  if (a.chapterNumber !== b.chapterNumber) {
+    return a.chapterNumber - b.chapterNumber;
+  }
+  return a.verseNumber - b.verseNumber;
+}
+
+/**
+ * Pulls the window in around a wrong guess. A guess that is too early drops
+ * everything up through that verse. A guess that is too late drops that verse
+ * and everything after it. A later guess only moves a bound inward.
+ */
+export function tightenWindow(
+  window: SearchWindow,
+  guess: VersePosition,
+  result: GuessResult
+): SearchWindow {
+  if (result.kind === "correct") return window;
+  const bookIndex = bookOrderIndex(guess.bookId);
+  if (bookIndex < 0) return window;
+  const spot: BibleSpot = {
+    bookIndex,
+    chapterNumber: guess.chapterNumber,
+    verseNumber: guess.verseNumber,
+  };
+  if (result.direction === "after") {
+    const after =
+      window.after && compareSpots(window.after, spot) > 0
+        ? window.after
+        : spot;
+    return { ...window, after };
+  }
+  const before =
+    window.before && compareSpots(window.before, spot) < 0
+      ? window.before
+      : spot;
+  return { ...window, before };
+}
+
+/** True when this exact verse can still be the answer. */
+export function verseInWindow(
+  window: SearchWindow,
+  bookId: string,
+  chapterNumber: number,
+  verseNumber: number
+): boolean {
+  const bookIndex = bookOrderIndex(bookId);
+  if (bookIndex < 0) return true;
+  const spot: BibleSpot = { bookIndex, chapterNumber, verseNumber };
+  if (window.after && compareSpots(spot, window.after) <= 0) return false;
+  if (window.before && compareSpots(spot, window.before) >= 0) return false;
+  return true;
+}
+
+const OPEN_ENDED_VERSE = Number.POSITIVE_INFINITY;
+
+function spanMissesWindow(
+  window: SearchWindow,
+  first: BibleSpot,
+  last: BibleSpot
+): boolean {
+  if (window.before && compareSpots(first, window.before) >= 0) return true;
+  if (window.after && compareSpots(last, window.after) <= 0) return true;
+  return false;
+}
+
+/** The whole book is outside the window, so the selector can grey its row. */
+export function bookOutOfRange(
+  window: SearchWindow,
+  bookIndex: number,
+  chapterCount: number
+): boolean {
+  if (bookIndex < 0 || chapterCount < 1) return false;
+  return spanMissesWindow(
+    window,
+    { bookIndex, chapterNumber: 1, verseNumber: 1 },
+    {
+      bookIndex,
+      chapterNumber: chapterCount,
+      verseNumber: OPEN_ENDED_VERSE,
+    }
+  );
+}
+
+/** Every verse of this chapter is outside the window. */
+export function chapterOutOfRange(
+  window: SearchWindow,
+  bookIndex: number,
+  chapterNumber: number
+): boolean {
+  if (bookIndex < 0 || chapterNumber < 1) return false;
+  return spanMissesWindow(
+    window,
+    { bookIndex, chapterNumber, verseNumber: 1 },
+    { bookIndex, chapterNumber, verseNumber: OPEN_ENDED_VERSE }
+  );
+}
+
+export function versesOutOfRange(
+  window: SearchWindow,
+  bookId: string,
+  chapterNumber: number,
+  verseNumbers: readonly number[]
+): number[] {
+  return verseNumbers.filter(
+    (verseNumber) => !verseInWindow(window, bookId, chapterNumber, verseNumber)
+  );
+}
+
+/**
+ * Index of an empty hint that sits before a filled one, or null when the
+ * hints are packed from the top. Trailing empty hints are still real chances.
+ */
+export function emptyHintGap(
+  steps: readonly { hint: string }[]
+): number | null {
+  for (let index = 0; index < steps.length; index++) {
+    if (steps[index]?.hint.trim()) continue;
+    const laterFilled = steps
+      .slice(index + 1)
+      .some((step) => step.hint.trim().length > 0);
+    if (laterFilled) return index;
+  }
+  return null;
+}
+
+const GREY =
+  "color-mix(in srgb, var(--sb-font-color) 42%, var(--sb-book-selector-background, var(--sb-background, transparent)))";
+
+/**
+ * Theme-mixed grey for books and chapters the current window has ruled out.
+ * Also hides the reader's highlights and the tap underline for the whole
+ * round. The sheet is removed when the round ends, so both come back.
+ */
+export function rangeHighlightCss(
+  bookIds: readonly string[],
+  chapters: readonly number[]
+): string {
+  const rules = [
+    ".sb-verse:has(.ftv-out-of-range) { opacity: 0.35; }",
+    ".sb-bible-reader .sb-highlight-layer { display: none !important; }",
+    ".sb-bible-reader .sb-highlight { color: inherit !important; }",
+    ".sb-bible-reader .sb-verse-selected .sb-verse-decorator { border-bottom: none !important; text-decoration: none !important; }",
+  ];
+  for (const id of bookIds) {
+    if (!/^[A-Za-z0-9]+$/.test(id)) continue;
+    const row = `#booktab-${id}`;
+    rules.push(
+      `${row}.sidebar-itm, ${row}.sidebar-itm:hover, ${row}.sidebar-selected-itm, ${row}.sidebar-selected-itm:hover { color: ${GREY}; }`,
+      `${row} .material-symbols-outlined { color: color-mix(in srgb, var(--sb-font-color) 35%, transparent); }`
+    );
+  }
+  for (const chapter of chapters) {
+    if (!Number.isInteger(chapter) || chapter < 1) continue;
+    const button = `#chapter-btn-${chapter}`;
+    rules.push(
+      `${button}.chapter-btn, ${button}.chapter-btn:hover, ${button}.chapter-btn-current { color: ${GREY}; background-color: color-mix(in srgb, var(--sb-secondary-color) 16%, transparent); }`
+    );
+  }
+  return rules.join("\n");
 }
 
 /**

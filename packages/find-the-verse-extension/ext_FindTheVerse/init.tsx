@@ -5,8 +5,14 @@ import { extractContentText } from "seed-bible/managers";
 import { MaterialIcon } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { isKnownBookId } from "./books";
-import { evaluateGuess, PlayGuesses } from "./gameLogic";
-import { resetDraft, resetPlay } from "./gameSession";
+import {
+  evaluateGuess,
+  openSearchWindow,
+  PlayGuesses,
+  tightenWindow,
+} from "./gameLogic";
+import { blankSteps, resetDraft, resetPlay } from "./gameSession";
+import { watchSearchRange } from "./searchRange";
 import {
   createSavedGamesController,
   savedGamesErrorKey,
@@ -179,11 +185,12 @@ export default function initFindTheVerseExtension() {
         notice: signal(null),
         savedGames: signal([]),
         targetVerse: signal(null),
-        steps: signal([{ hint: "" }]),
+        steps: signal(blankSteps()),
         selectingViaToolbar: signal(false),
         verseLookup: signal(0),
         guessCount: signal(0),
         lastResult: signal(null),
+        searchWindow: signal(openSearchWindow()),
         won: signal(false),
         revealed: signal(false),
         partialRevealText: signal(""),
@@ -338,8 +345,7 @@ export default function initFindTheVerseExtension() {
           queueMicrotask(() => tab.readingState.clearSelectedVerses());
         }
         // Reveal already gave the answer away. Keep the verse toolbar out of
-        // a round that is still on, but don't score the tap, including a tap
-        // on the verse the game just highlighted.
+        // a round that is still on, but don't score the tap.
         if (game.revealed.value) return;
 
         const decision = playGuesses.observe(tab.readingState, selection);
@@ -355,11 +361,18 @@ export default function initFindTheVerseExtension() {
         game.lastResult.value = result;
         if (result.kind === "correct") {
           game.won.value = true;
+        } else {
+          game.searchWindow.value = tightenWindow(
+            game.searchWindow.peek(),
+            decision.guess,
+            result
+          );
         }
       });
 
       yield disposeLoadEffect;
       yield disposeGuessEffect;
+      yield watchSearchRange(state, game);
       yield () => {
         state.panes.closePane(PANE_ID);
       };

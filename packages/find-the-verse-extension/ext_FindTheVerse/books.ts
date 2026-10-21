@@ -20,6 +20,11 @@ export function bookOrderIndex(bookId: string): number {
   return BOOK_ORDER.get(bookId) ?? -1;
 }
 
+/** Book ids in the same order `bookOrderIndex` uses. */
+export function orderedBookIds(): string[] {
+  return [...BOOK_ORDER.keys()];
+}
+
 export function isKnownBookId(bookId: string): boolean {
   return bookOrderIndex(bookId) >= 0;
 }

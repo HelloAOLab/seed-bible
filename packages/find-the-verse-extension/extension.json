@@ -28,6 +28,8 @@
       "reference-unrecognised": "Couldn't recognise that reference. Try “John 1:1”.",
       "select-from-reader": "Select from reader…",
       "chances-label": "Chances ({{total}})",
+      "chances-start": "Start with 7. Add or remove any. Hints are optional, but fill them from the top so an empty one is never left between filled ones.",
+      "hint-gap": "Chance {{number}} is empty, but a later chance has a hint. Fill it in or delete it before saving.",
       "hint-placeholder": "Optional hint…",
       "remove-chance": "Remove this chance",
       "add-chance": "+ Add chance",

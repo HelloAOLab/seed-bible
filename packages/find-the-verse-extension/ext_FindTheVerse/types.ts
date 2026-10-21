@@ -31,6 +31,24 @@ export type GuessResult =
   | { kind: "wrong_verse"; direction: "before" | "after" }
   | { kind: "correct" };
 
+/**
+ * One spot in Bible order. Book index is canonical order, then chapter, then verse.
+ */
+export interface BibleSpot {
+  bookIndex: number;
+  chapterNumber: number;
+  verseNumber: number;
+}
+
+/**
+ * The stretch still in play. The answer is strictly after `after` and strictly
+ * before `before`. Either end stays null until a guess sets it.
+ */
+export interface SearchWindow {
+  after: BibleSpot | null;
+  before: BibleSpot | null;
+}
+
 export interface GameSignals {
   phase: Signal<"idle" | "creating" | "playing">;
   /** Set while a saved game is open in the creator or the player. */
@@ -55,6 +73,11 @@ export interface GameSignals {
   guessCount: Signal<number>;
   /** Feedback from the most recent guess. */
   lastResult: Signal<GuessResult | null>;
+  /**
+   * What a guess has ruled out. Reset when the round ends so the next game
+   * does not keep the previous grey books and verses.
+   */
+  searchWindow: Signal<SearchWindow>;
   won: Signal<boolean>;
   /** True once the full verse has been revealed. */
   revealed: Signal<boolean>;

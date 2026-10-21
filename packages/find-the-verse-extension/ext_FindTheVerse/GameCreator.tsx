@@ -3,6 +3,7 @@ import type { SeedBibleState } from "seed-bible";
 import { extractContentText, parseVerseReference } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
 import { bookDisplayName, isKnownBookId } from "./books";
+import { emptyHintGap } from "./gameLogic";
 import type { GameSignals, SavedGame } from "./types";
 
 interface GameCreatorProps {
@@ -187,7 +188,8 @@ export function GameCreator({
     game.steps.value = updated;
   }
 
-  const canSave = target !== null && steps.length >= 1;
+  const hintGap = emptyHintGap(steps);
+  const canSave = target !== null && steps.length >= 1 && hintGap === null;
 
   return (
     <div style={s.root}>
@@ -301,6 +303,12 @@ export function GameCreator({
             defaultValue: "Chances ({{total}})",
           })}
         </div>
+        <p style={{ margin: "0 0 8px", opacity: 0.6, fontSize: "0.85rem" }}>
+          {t("chances-start", {
+            defaultValue:
+              "Start with 7. Add or remove any. Hints are optional, but fill them from the top so an empty one is never left between filled ones.",
+          })}
+        </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           {steps.map((step, i) => (
             <div key={i} style={s.stepRow}>
@@ -338,6 +346,21 @@ export function GameCreator({
         >
           {t("add-chance", { defaultValue: "+ Add chance" })}
         </button>
+        {hintGap !== null && (
+          <p
+            style={{
+              margin: "8px 0 0",
+              color: "#e63946",
+              fontSize: "0.85rem",
+            }}
+          >
+            {t("hint-gap", {
+              number: hintGap + 1,
+              defaultValue:
+                "Chance {{number}} is empty, but a later chance has a hint. Fill it in or delete it before saving.",
+            })}
+          </p>
+        )}
       </div>
 
       {notice && (
@@ -364,7 +387,13 @@ export function GameCreator({
           }}
           disabled={!canSave || saving.value}
           onClick={() => {
-            if (!target || saving.value) return;
+            if (
+              !target ||
+              saving.value ||
+              emptyHintGap(game.steps.peek()) !== null
+            ) {
+              return;
+            }
             if (!state.login.userId.peek()) {
               game.notice.value = t("sign-in-to-save", {
                 defaultValue: "Sign in to save games",

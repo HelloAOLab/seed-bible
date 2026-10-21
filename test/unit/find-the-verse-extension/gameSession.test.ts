@@ -1,6 +1,10 @@
 import { signal } from "@preact/signals";
 import { describe, expect, it } from "vitest";
-import { resetPlay } from "@packages/find-the-verse-extension/ext_FindTheVerse/gameSession";
+import { openSearchWindow } from "@packages/find-the-verse-extension/ext_FindTheVerse/gameLogic";
+import {
+  blankSteps,
+  resetPlay,
+} from "@packages/find-the-verse-extension/ext_FindTheVerse/gameSession";
 import type { GameSignals } from "@packages/find-the-verse-extension/ext_FindTheVerse/types";
 
 function playingGame(): GameSignals {
@@ -20,6 +24,10 @@ function playingGame(): GameSignals {
     verseLookup: signal(0),
     guessCount: signal(2),
     lastResult: signal({ kind: "wrong_book", direction: "after" }),
+    searchWindow: signal({
+      after: { bookIndex: 0, chapterNumber: 3, verseNumber: 10 },
+      before: null,
+    }),
     won: signal(false),
     revealed: signal(true),
     partialRevealText: signal("In ___"),
@@ -37,6 +45,7 @@ describe("resetPlay", () => {
     expect(game.phase.value).toBe("idle");
     expect(game.guessCount.value).toBe(0);
     expect(game.lastResult.value).toBeNull();
+    expect(game.searchWindow.value).toEqual(openSearchWindow());
     expect(game.won.value).toBe(false);
     expect(game.revealed.value).toBe(false);
     expect(game.partialRevealText.value).toBe("");
@@ -46,7 +55,8 @@ describe("resetPlay", () => {
     expect(game.targetVerse.value).toBeNull();
     expect(game.selectingViaToolbar.value).toBe(false);
     expect(game.notice.value).toBeNull();
-    expect(game.steps.value).toEqual([{ hint: "" }]);
+    expect(game.steps.value).toEqual(blankSteps());
+    expect(game.steps.value).toHaveLength(7);
     expect(game.savedGames.value).toEqual([]);
   });
 });
