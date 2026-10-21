@@ -1223,5 +1223,16 @@
   "customization-save-failed": "Couldn't save your customization. Please try again.",
   "extension-availability-default": "Default ({{availability}})",
   "customization-extensions-default": "Default for other extensions",
-  "customization-extensions-default-hint": "Applies to every extension you haven't set below, including new ones added later"
+  "customization-extensions-default-hint": "Applies to every extension you haven't set below, including new ones added later",
+  "session": "Session",
+  "verse-selection-effects": "Verse Selection Effects",
+  "enabled": "Enabled",
+  "disabled": "Disabled",
+  "session-settings-verse-effects": "Verse Selection Effects",
+  "session-settings-verse-effects-desc-hosts": "Show effects when a host selects a verse.",
+  "session-settings-verse-effects-desc-everyone": "Show effects when anyone selects a verse.",
+  "session-settings-verse-effects-desc-none": "Verse selection effects are turned off for everyone.",
+  "session-settings-verse-effects-hosts-only": "Hosts only",
+  "session-settings-verse-effects-everyone": "Everyone",
+  "session-settings-verse-effects-none": "Off"
 }

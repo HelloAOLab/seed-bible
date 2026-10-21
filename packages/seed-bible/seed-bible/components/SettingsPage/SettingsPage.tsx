@@ -16,6 +16,7 @@ import {
   type TextSectionId,
   type TextSize,
   type UISize,
+  type VerseSelectionEffects,
 } from "../../managers/SettingsManager";
 import {
   DARK_THEME,
@@ -776,7 +777,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
     const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLineHeight);
     return idx === -1 ? 0 : idx;
   })();
-
   const fontSizeIndex = FONT_SIZE_OPTIONS.indexOf(selectedFontSize);
 
   const onBack = () => {
@@ -1066,7 +1066,42 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             }}
           />
         </div>
+        <h3 className="sb-settings-subheading">
+          {t("session", { defaultValue: "Session" })}
+        </h3>
+        <div className="sb-settings-field-row">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-verse-selection-effects"
+          >
+            {t("verse-selection-effects", {
+              defaultValue: "Verse Selection Effects",
+            })}
+          </label>
 
+          <select
+            id="sb-verse-selection-effects"
+            className="sb-settings-language-select"
+            value={current.verseSelectionEffects ?? "default"}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+
+              settings.setVerseSelectionEffects(
+                target.value as VerseSelectionEffects
+              );
+            }}
+          >
+            <option value="default">
+              {t("default", { defaultValue: "Default" })}
+            </option>
+            <option value="enabled">
+              {t("enabled", { defaultValue: "Enabled" })}
+            </option>
+            <option value="disabled">
+              {t("disabled", { defaultValue: "Disabled" })}
+            </option>
+          </select>
+        </div>
         <h3 className="sb-settings-subheading">
           {t("display", { defaultValue: "Display" })}
         </h3>
@@ -1119,7 +1154,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             </option>
           </select>
         </div>
-
         <div className="sb-settings-toggle-row">
           <label
             className="sb-settings-toggle-label"
