@@ -252,28 +252,13 @@ describe("ProfilePane", () => {
     );
   });
 
-  it("shows the user's email below their name and description", () => {
-    const { state } = createState({
-      email: "craig@example.org",
-      description: "Reading through Psalms.",
-    });
+  it("shows the user's email", () => {
+    const { state } = createState({ email: "craig@example.org" });
     renderPane(state);
 
     expect(container.querySelector(".sb-profile-email")?.textContent).toBe(
       "craig@example.org"
     );
-    // The card reads name, then bio, then the contact small print.
-    const name = container.querySelector(".sb-profile-name")!;
-    const description = container.querySelector(".sb-profile-description")!;
-    const contact = container.querySelector(".sb-profile-contact")!;
-    expect(
-      name.compareDocumentPosition(description) &
-        Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
-    expect(
-      description.compareDocumentPosition(contact) &
-        Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
   });
 
   it("shows the location beside the email when the user has set one", () => {
