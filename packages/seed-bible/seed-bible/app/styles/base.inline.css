@@ -46,7 +46,8 @@
   --sb-ui-scale: 1;
   --sb-scripture-margin: 27%;
 
-  /* Text config variables — overridden at runtime by SettingsManager. */
+  /* Scripture text defaults. Only --text-verse-line-height is overridden at
+     runtime (by SettingsManager). */
   --text-bookTitle-font: "Newsreader", serif;
   --text-bookTitle-weight: 700;
   --text-bookTitle-color: #333;

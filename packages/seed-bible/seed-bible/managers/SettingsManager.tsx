@@ -14,8 +14,6 @@ import { CUSTOMIZATION_FONT_PRESETS } from "./CustomizationsManager";
 
 export type BookOrientation = "traditional" | "tanakh";
 export type UISize = "S" | "M" | "L" | "XL";
-export type TextAlignment = "unset" | "left" | "center" | "right";
-export type TextSectionId = "bookTitle" | "heading" | "verse";
 
 export type TextSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
 
@@ -90,24 +88,8 @@ export interface ScriptureElementsBehavior {
   showRedLettering: boolean;
 }
 
-export interface TextSectionConfig {
-  font: string;
-  weight: string;
-  color: string;
-  marginVertical: number;
-  marginHorizontal: number;
-  bold: boolean;
-  italic: boolean;
-  underline: boolean;
-  alignment: TextAlignment;
-  /** Line height for the verse section. Other sections ignore this. */
-  lineHeight?: number;
-}
-
 export const VERSE_LINE_HEIGHT_OPTIONS: number[] = [1.5, 1.7, 2, 2.5];
 export const DEFAULT_VERSE_LINE_HEIGHT = 1.7;
-
-export type TextConfig = Record<TextSectionId, TextSectionConfig>;
 
 export interface ToolbarCustomization {
   /** Tool IDs that should be hidden from the toolbar. */
@@ -123,7 +105,8 @@ export interface AppSettings {
   uiSize: UISize;
   selectionUI: SelectionUIBehavior;
   scriptureElements: ScriptureElementsBehavior;
-  textConfig: TextConfig;
+  /** Verse line-height (Scripture line-spacing control). */
+  verseLineHeight: number;
   fontOverride?: string | undefined;
   toolbar: ToolbarCustomization;
   keepScreenAwake: boolean;
@@ -174,44 +157,9 @@ export const AppSettingsSchema = z.object({
     showHighlights: z.boolean(),
     showRedLettering: z.boolean(),
   }),
-  textConfig: z.object({
-    bookTitle: z.object({
-      font: z.string(),
-      weight: z.string(),
-      color: z.string(),
-      marginVertical: z.number(),
-      marginHorizontal: z.number(),
-      bold: z.boolean(),
-      italic: z.boolean(),
-      underline: z.boolean(),
-      alignment: z.enum(["unset", "left", "center", "right"]),
-      lineHeight: z.number().optional(),
-    }),
-    heading: z.object({
-      font: z.string(),
-      weight: z.string(),
-      color: z.string(),
-      marginVertical: z.number(),
-      marginHorizontal: z.number(),
-      bold: z.boolean(),
-      italic: z.boolean(),
-      underline: z.boolean(),
-      alignment: z.enum(["unset", "left", "center", "right"]),
-      lineHeight: z.number().optional(),
-    }),
-    verse: z.object({
-      font: z.string(),
-      weight: z.string(),
-      color: z.string(),
-      marginVertical: z.number(),
-      marginHorizontal: z.number(),
-      bold: z.boolean(),
-      italic: z.boolean(),
-      underline: z.boolean(),
-      alignment: z.enum(["unset", "left", "center", "right"]),
-      lineHeight: z.number().optional(),
-    }),
-  }),
+  // Defaulted rather than required so settings exported before this option
+  // existed still import.
+  verseLineHeight: z.number().default(DEFAULT_VERSE_LINE_HEIGHT),
   fontOverride: z.string().optional(),
   toolbar: z.object({
     hidden: z.array(z.string()),
@@ -253,6 +201,7 @@ const TAG_UI_SIZE = "app.uiSize";
 const TAG_SELECTION_UI = "app.selectionUI";
 const TAG_SCRIPTURE_ELEMENTS = "app.scriptureElements";
 const TAG_TEXT_CONFIG = "app.textConfig";
+const TAG_VERSE_LINE_HEIGHT = "app.verseLineHeight";
 const TAG_FONT_OVERRIDE = "app.fontOverride";
 const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
@@ -272,6 +221,7 @@ const PROFILE_UI_SIZE = "uiSize";
 const PROFILE_SELECTION_UI = "selectionUI";
 const PROFILE_SCRIPTURE_ELEMENTS = "scriptureElements";
 const PROFILE_TEXT_CONFIG = "textConfig";
+const PROFILE_VERSE_LINE_HEIGHT = "verseLineHeight";
 const PROFILE_FONT_OVERRIDE = "fontOverride";
 const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
@@ -282,27 +232,6 @@ const PROFILE_THEME_ID = "themeId";
 const PROFILE_CUSTOM_THEME = "customTheme";
 const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
 const PROFILE_DISCOVER_CONTENT_PANEL_INLINE = "discoverContentPanelInline";
-
-export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
-  { value: "'Newsreader', serif", label: "Newsreader" },
-  { value: "'Plus Jakarta Sans', sans-serif", label: "Plus Jakarta Sans" },
-  { value: "system-ui, sans-serif", label: "System UI" },
-  { value: "'Helvetica Neue', sans-serif", label: "Helvetica Neue" },
-  { value: "'Roboto', sans-serif", label: "Roboto" },
-  { value: "'Inter', sans-serif", label: "Inter" },
-];
-
-export const TEXT_WEIGHT_OPTIONS: { value: string; label: string }[] = [
-  { value: "700", label: "bold" },
-  { value: "400", label: "regular" },
-  { value: "300", label: "light" },
-];
-
-// export const TEXT_SECTION_LABELS: Record<TextSectionId, string> = {
-//   bookTitle: "Book title",
-//   heading: "Heading",
-//   verse: "Verse",
-// };
 
 const DEFAULT_SELECTION_UI: SelectionUIBehavior = {
   showSelectedItems: true,
@@ -318,61 +247,6 @@ const DEFAULT_SCRIPTURE_ELEMENTS: ScriptureElementsBehavior = {
   showRedLettering: true,
 };
 
-/**
- * Empty `color` means "follow the active theme". The reader CSS reads
- * `--sb-{section}-font-color` directly; the text editor's color setting
- * writes to that same variable as a body inline override (so it beats the
- * theme's body-scoped CSS rule). Switching theme presets clears the
- * override — see `resetTextColors`.
- */
-const DEFAULT_TEXT_CONFIG: TextConfig = {
-  bookTitle: {
-    font: "'Newsreader', serif",
-    weight: "700",
-    color: "",
-    marginVertical: 12,
-    marginHorizontal: 0,
-    bold: true,
-    italic: false,
-    underline: false,
-    alignment: "unset",
-  },
-  heading: {
-    font: "'Plus Jakarta Sans', sans-serif",
-    weight: "700",
-    color: "",
-    marginVertical: 18,
-    marginHorizontal: 0,
-    bold: true,
-    italic: false,
-    underline: false,
-    alignment: "unset",
-  },
-  verse: {
-    font: "'Plus Jakarta Sans', sans-serif",
-    weight: "500",
-    color: "",
-    marginVertical: 0,
-    marginHorizontal: 0,
-    bold: false,
-    italic: false,
-    underline: false,
-    alignment: "unset",
-    lineHeight: DEFAULT_VERSE_LINE_HEIGHT,
-  },
-};
-
-/**
- * Maps each text section to the theme color variable it should override.
- * Exported so the settings UI can render the resolved theme color in the
- * "follow theme" swatch.
- */
-export const TEXT_SECTION_THEME_COLOR_VAR: Record<TextSectionId, string> = {
-  bookTitle: "--sb-book-title-font-color",
-  heading: "--sb-chapter-heading-font-color",
-  verse: "--sb-verse-font-color",
-};
-
 const DEFAULT_TOOLBAR_CONFIG: ToolbarCustomization = {
   hidden: [],
   order: [],
@@ -385,7 +259,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   uiSize: "M",
   selectionUI: DEFAULT_SELECTION_UI,
   scriptureElements: DEFAULT_SCRIPTURE_ELEMENTS,
-  textConfig: DEFAULT_TEXT_CONFIG,
+  verseLineHeight: DEFAULT_VERSE_LINE_HEIGHT,
   fontOverride: undefined,
   toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
@@ -609,44 +483,6 @@ function parseScriptureElements(
   };
 }
 
-function parseAlignment(
-  value: unknown,
-  fallback: TextAlignment
-): TextAlignment {
-  return value === "unset" ||
-    value === "left" ||
-    value === "center" ||
-    value === "right"
-    ? value
-    : fallback;
-}
-
-function parseTextSection(
-  value: unknown,
-  fallback: TextSectionConfig
-): TextSectionConfig {
-  if (!value || typeof value !== "object") return fallback;
-  const obj = value as Record<string, unknown>;
-  return {
-    font: typeof obj.font === "string" ? obj.font : fallback.font,
-    weight: typeof obj.weight === "string" ? obj.weight : fallback.weight,
-    color: typeof obj.color === "string" ? obj.color : fallback.color,
-    marginVertical: parseNumber(obj.marginVertical, fallback.marginVertical),
-    marginHorizontal: parseNumber(
-      obj.marginHorizontal,
-      fallback.marginHorizontal
-    ),
-    bold: typeof obj.bold === "boolean" ? obj.bold : fallback.bold,
-    italic: typeof obj.italic === "boolean" ? obj.italic : fallback.italic,
-    underline:
-      typeof obj.underline === "boolean" ? obj.underline : fallback.underline,
-    alignment: parseAlignment(obj.alignment, fallback.alignment),
-    ...(fallback.lineHeight !== undefined || obj.lineHeight !== undefined
-      ? { lineHeight: parseNumber(obj.lineHeight, fallback.lineHeight ?? 1.5) }
-      : {}),
-  };
-}
-
 function parseStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((v): v is string => typeof v === "string");
@@ -672,58 +508,16 @@ function parseToolbarConfig(
   };
 }
 
-function parseTextConfig(value: unknown, fallback: TextConfig): TextConfig {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return fallback;
-    }
-  }
-  if (!parsed || typeof parsed !== "object") return fallback;
-  const obj = parsed as Record<string, unknown>;
-  return {
-    bookTitle: parseTextSection(obj.bookTitle, fallback.bookTitle),
-    heading: parseTextSection(obj.heading, fallback.heading),
-    verse: parseTextSection(obj.verse, fallback.verse),
-  };
-}
-
-function applyTextConfigToCSSVars(config: TextConfig) {
-  if (typeof document === "undefined") return;
-  const root = document.documentElement.style;
-  // The theme writes `--sb-*-font-color` to `body { ... }`. Inline styles on
-  // body win over CSS rules on body, so we override there. Writing to :root
-  // would lose to body's own custom property.
-  const body = document.body?.style ?? null;
-  for (const [section, cfg] of Object.entries(config)) {
-    const prefix = `--text-${section}`;
-    root.setProperty(`${prefix}-font`, cfg.font);
-    root.setProperty(`${prefix}-weight`, cfg.bold ? "700" : cfg.weight);
-    root.setProperty(`${prefix}-font-style`, cfg.italic ? "italic" : "normal");
-    root.setProperty(
-      `${prefix}-text-decoration`,
-      cfg.underline ? "underline" : "none"
-    );
-    root.setProperty(`${prefix}-alignment`, cfg.alignment);
-    root.setProperty(`${prefix}-margin-top`, `${cfg.marginVertical}px`);
-    root.setProperty(`${prefix}-margin-bottom`, `${cfg.marginVertical}px`);
-    root.setProperty(`${prefix}-margin-left`, `${cfg.marginHorizontal}px`);
-    root.setProperty(`${prefix}-margin-right`, `${cfg.marginHorizontal}px`);
-    if (cfg.lineHeight !== undefined) {
-      root.setProperty(`${prefix}-line-height`, String(cfg.lineHeight));
-    }
-
-    if (body) {
-      const themeVar = TEXT_SECTION_THEME_COLOR_VAR[section as TextSectionId];
-      if (cfg.color) {
-        body.setProperty(themeVar, cfg.color);
-      } else {
-        body.removeProperty(themeVar);
-      }
-    }
-  }
+// The verse line-height used to live inside the per-section `textConfig`
+// (the removed "All settings" text editor). Every other field of that blob is
+// deliberately ignored so old customizations stop applying, but the line
+// height is still set from Display & Theme, so a value saved there before it
+// got its own key is still honored.
+function readLegacyVerseLineHeight(textConfig: unknown): unknown {
+  if (!textConfig || typeof textConfig !== "object") return undefined;
+  const verse = (textConfig as Record<string, unknown>).verse;
+  if (!verse || typeof verse !== "object") return undefined;
+  return (verse as Record<string, unknown>).lineHeight;
 }
 
 // "No override" is persisted as this sentinel rather than `undefined`: the
@@ -765,17 +559,10 @@ export interface SettingsManager {
   setUISize: (size: UISize) => void;
   setSelectionUI: (patch: Partial<SelectionUIBehavior>) => void;
   setScriptureElements: (patch: Partial<ScriptureElementsBehavior>) => void;
-  updateTextSection: (
-    section: TextSectionId,
-    patch: Partial<TextSectionConfig>
-  ) => void;
   /** Set the max width of the chapter content (Scripture Width control). */
   setScriptureWidth: (width: number) => void;
   /** Set the verse line-height (Scripture line-spacing control). */
   setVerseLineHeight: (lineHeight: number) => void;
-  /** Clear per-section color overrides so the active theme drives text colors. */
-  resetTextColors: () => void;
-  resetTextConfig: () => void;
   setToolbarHidden: (toolId: string, hidden: boolean) => void;
   setToolbarOrder: (order: string[]) => void;
   resetToolbarConfig: () => void;
@@ -870,9 +657,10 @@ export function createSettings(
         read(PROFILE_SCRIPTURE_ELEMENTS, TAG_SCRIPTURE_ELEMENTS),
         DEFAULT_SETTINGS.scriptureElements
       ),
-      textConfig: parseTextConfig(
-        read(PROFILE_TEXT_CONFIG, TAG_TEXT_CONFIG),
-        DEFAULT_SETTINGS.textConfig
+      verseLineHeight: parseNumber(
+        read(PROFILE_VERSE_LINE_HEIGHT, TAG_VERSE_LINE_HEIGHT) ??
+          readLegacyVerseLineHeight(read(PROFILE_TEXT_CONFIG, TAG_TEXT_CONFIG)),
+        DEFAULT_SETTINGS.verseLineHeight
       ),
       toolbar: parseToolbarConfig(
         read(PROFILE_TOOLBAR, TAG_TOOLBAR),
@@ -1003,24 +791,6 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_ELEMENTS, next);
   };
 
-  const writeTextConfig = (next: TextConfig) => {
-    settings.value = { ...settings.value, textConfig: next };
-    sessionOverrides[TAG_TEXT_CONFIG] = next;
-    saveProfileConfigValue(login, PROFILE_TEXT_CONFIG, next);
-  };
-
-  const updateTextSection = (
-    section: TextSectionId,
-    patch: Partial<TextSectionConfig>
-  ) => {
-    const nextSection = { ...settings.value.textConfig[section], ...patch };
-    const nextTextConfig = {
-      ...settings.value.textConfig,
-      [section]: nextSection,
-    };
-    writeTextConfig(nextTextConfig);
-  };
-
   const setScriptureWidth = (width: number) => {
     if (!Number.isFinite(width)) return;
     const clamped = Math.max(
@@ -1034,35 +804,9 @@ export function createSettings(
 
   const setVerseLineHeight = (lineHeight: number) => {
     if (!Number.isFinite(lineHeight)) return;
-    const current = settings.value.textConfig;
-    const nextTextConfig: TextConfig = {
-      ...current,
-      verse: { ...current.verse, lineHeight },
-    };
-    writeTextConfig(nextTextConfig);
-  };
-
-  const resetTextConfig = () => {
-    settings.value = { ...settings.value, textConfig: DEFAULT_TEXT_CONFIG };
-    sessionOverrides[TAG_TEXT_CONFIG] = DEFAULT_TEXT_CONFIG;
-    saveProfileConfigValue(login, PROFILE_TEXT_CONFIG, DEFAULT_TEXT_CONFIG);
-  };
-
-  const resetTextColors = () => {
-    const current = settings.value.textConfig;
-    let changed = false;
-    const next = {} as TextConfig;
-    for (const section of Object.keys(current) as TextSectionId[]) {
-      const cfg = current[section];
-      if (cfg.color !== "") {
-        changed = true;
-        next[section] = { ...cfg, color: "" };
-      } else {
-        next[section] = cfg;
-      }
-    }
-    if (!changed) return;
-    writeTextConfig(next);
+    settings.value = { ...settings.value, verseLineHeight: lineHeight };
+    sessionOverrides[TAG_VERSE_LINE_HEIGHT] = lineHeight;
+    saveProfileConfigValue(login, PROFILE_VERSE_LINE_HEIGHT, lineHeight);
   };
 
   const writeToolbarConfig = (next: ToolbarCustomization) => {
@@ -1208,7 +952,7 @@ export function createSettings(
     sessionOverrides[TAG_SELECTION_UI] = DEFAULT_SETTINGS.selectionUI;
     sessionOverrides[TAG_SCRIPTURE_ELEMENTS] =
       DEFAULT_SETTINGS.scriptureElements;
-    sessionOverrides[TAG_TEXT_CONFIG] = DEFAULT_SETTINGS.textConfig;
+    sessionOverrides[TAG_VERSE_LINE_HEIGHT] = DEFAULT_SETTINGS.verseLineHeight;
     sessionOverrides[TAG_TOOLBAR] = DEFAULT_SETTINGS.toolbar;
     sessionOverrides[TAG_KEEP_AWAKE] = DEFAULT_SETTINGS.keepScreenAwake;
     sessionOverrides[TAG_ASK_TO_SWITCH_UI_LANGUAGE] =
@@ -1245,8 +989,8 @@ export function createSettings(
     );
     saveProfileConfigValue(
       login,
-      PROFILE_TEXT_CONFIG,
-      DEFAULT_SETTINGS.textConfig
+      PROFILE_VERSE_LINE_HEIGHT,
+      DEFAULT_SETTINGS.verseLineHeight
     );
     saveProfileConfigValue(login, PROFILE_TOOLBAR, DEFAULT_SETTINGS.toolbar);
     saveProfileConfigValue(
@@ -1299,10 +1043,12 @@ export function createSettings(
     }
   });
 
-  // Publish per-section text config as CSS variables (`--text-<section>-*`)
-  // so reader styles can consume typography preferences.
   effect(() => {
-    applyTextConfigToCSSVars(settings.value.textConfig);
+    if (typeof document === "undefined") return;
+    document.documentElement.style.setProperty(
+      "--text-verse-line-height",
+      String(settings.value.verseLineHeight)
+    );
   });
 
   // Publish the scripture margin (%) as a CSS variable consumed by
@@ -1336,11 +1082,8 @@ export function createSettings(
     setUISize: setUISize,
     setSelectionUI,
     setScriptureElements,
-    updateTextSection,
     setScriptureWidth,
     setVerseLineHeight,
-    resetTextColors,
-    resetTextConfig,
     setToolbarHidden,
     setToolbarOrder,
     resetToolbarConfig,

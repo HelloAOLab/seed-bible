@@ -129,7 +129,6 @@ describe("CustomizationsManager", () => {
           settingsValue.value = { ...settingsValue.value, customHighlights };
         }
       ),
-      resetTextColors: vi.fn(),
     } as unknown as Mocked<SettingsManager>;
   });
 

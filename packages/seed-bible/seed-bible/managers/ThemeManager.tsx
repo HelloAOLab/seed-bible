@@ -1395,12 +1395,6 @@ export function createTheme(
     ) {
       return;
     }
-    // Picking a theme drops per-section text colors. Tied to this call, not
-    // the resolved preset, so a device flip under System never wipes a saved
-    // color (`resetTextColors` writes through to the profile).
-    if (themeId !== selectedThemeId.value) {
-      settings.resetTextColors();
-    }
     settings.setThemeId(themeId);
   };
 

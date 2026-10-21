@@ -1,6 +1,9 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
-import { createSettings } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
+import {
+  createSettings,
+  DEFAULT_VERSE_LINE_HEIGHT,
+} from "@packages/seed-bible/seed-bible/managers/SettingsManager";
 import {
   createLoginManager,
   type LoginManager,
@@ -727,5 +730,140 @@ describe("scripture font override", () => {
 
     afterChoice.setFontOverride(undefined);
     expect(refresh().settings.value.fontOverride).toBeUndefined();
+  });
+});
+
+describe("removed per-section text settings", () => {
+  const TEXT_STYLE_VARS = [
+    "--text-bookTitle-font",
+    "--text-heading-margin-top",
+    "--text-verse-font-style",
+    "--text-verse-text-decoration",
+    "--text-verse-alignment",
+    "--text-verse-line-height",
+  ];
+  const VERSE_COLOR_VAR = "--sb-verse-font-color";
+
+  const appliedRootVar = (name: string) =>
+    document.documentElement.style.getPropertyValue(name);
+
+  const customizedTextConfig = {
+    bookTitle: { font: "'Inter', sans-serif" },
+    heading: { marginVertical: 40 },
+    verse: {
+      italic: true,
+      underline: true,
+      alignment: "center",
+      color: "#aa0000",
+      lineHeight: 2,
+    },
+  };
+
+  const loggedInLogin = (config: Record<string, unknown> = {}) =>
+    makeFakeLogin({ name: "Test", config } as unknown as UserProfile);
+
+  const profileConfig = (login: LoginManager) =>
+    (login.profile.value as { config?: Record<string, unknown> } | null)
+      ?.config ?? {};
+
+  afterEach(() => {
+    for (const name of TEXT_STYLE_VARS) {
+      document.documentElement.style.removeProperty(name);
+    }
+    document.body.style.removeProperty(VERSE_COLOR_VAR);
+    localStorage.clear();
+  });
+
+  it("no longer applies text styles a signed-in user saved in All settings", () => {
+    createSettings(
+      CasualOSManager(),
+      loggedInLogin({ textConfig: customizedTextConfig }),
+      navWith()
+    );
+
+    expect(appliedRootVar("--text-verse-font-style")).toBe("");
+    expect(appliedRootVar("--text-verse-text-decoration")).toBe("");
+    expect(appliedRootVar("--text-verse-alignment")).toBe("");
+    expect(appliedRootVar("--text-heading-margin-top")).toBe("");
+    expect(appliedRootVar("--text-bookTitle-font")).toBe("");
+    expect(document.body.style.getPropertyValue(VERSE_COLOR_VAR)).toBe("");
+  });
+
+  it("no longer applies text styles an anonymous visitor saved on the device", () => {
+    const login = makeFakeLogin(null);
+    login.localConfig.value = { textConfig: customizedTextConfig };
+
+    createSettings(CasualOSManager(), login, navWith());
+
+    expect(appliedRootVar("--text-verse-font-style")).toBe("");
+    expect(appliedRootVar("--text-verse-text-decoration")).toBe("");
+    expect(document.body.style.getPropertyValue(VERSE_COLOR_VAR)).toBe("");
+  });
+
+  it("keeps the verse line spacing saved alongside those old text styles", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      loggedInLogin({ textConfig: customizedTextConfig }),
+      navWith()
+    );
+
+    expect(settings.settings.value.verseLineHeight).toBe(2);
+    expect(appliedRootVar("--text-verse-line-height")).toBe("2");
+  });
+
+  it("defaults the verse line spacing when nothing was saved", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    expect(settings.settings.value.verseLineHeight).toBe(
+      DEFAULT_VERSE_LINE_HEIGHT
+    );
+    expect(appliedRootVar("--text-verse-line-height")).toBe(
+      String(DEFAULT_VERSE_LINE_HEIGHT)
+    );
+  });
+
+  it("a new line spacing choice replaces the old saved one in later sessions", () => {
+    const login = loggedInLogin({ textConfig: customizedTextConfig });
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setVerseLineHeight(2.5);
+
+    expect(profileConfig(login).verseLineHeight).toBe(2.5);
+    expect(appliedRootVar("--text-verse-line-height")).toBe("2.5");
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.verseLineHeight).toBe(2.5);
+  });
+
+  it("resetToDefaults resets the line spacing even when an old one is saved", () => {
+    const login = loggedInLogin({ textConfig: customizedTextConfig });
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.verseLineHeight).toBe(
+      DEFAULT_VERSE_LINE_HEIGHT
+    );
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.verseLineHeight).toBe(
+      DEFAULT_VERSE_LINE_HEIGHT
+    );
+  });
+
+  it("an anonymous line spacing choice survives a page refresh", () => {
+    const os = CasualOSManager();
+    const nav = navWith();
+    const refresh = () => {
+      const login = createLoginManager({ os });
+      login.hydrateLocalConfig();
+      return createSettings(os, login, nav);
+    };
+
+    createSettings(os, createLoginManager({ os }), nav).setVerseLineHeight(2);
+
+    expect(refresh().settings.value.verseLineHeight).toBe(2);
   });
 });

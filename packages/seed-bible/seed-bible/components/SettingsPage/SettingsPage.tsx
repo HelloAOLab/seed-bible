@@ -3,16 +3,9 @@ import { useComputed, useSignal } from "@preact/signals";
 import { ScriptureLineHeightIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
-  TEXT_FONT_OPTIONS,
-  TEXT_SECTION_THEME_COLOR_VAR,
-  TEXT_WEIGHT_OPTIONS,
   UI_SIZE_OPTIONS,
   VERSE_LINE_HEIGHT_OPTIONS,
-  DEFAULT_VERSE_LINE_HEIGHT,
   type BookOrientation,
-  type TextAlignment,
-  type TextSectionConfig,
-  type TextSectionId,
   type TextSize,
   type UISize,
 } from "../../managers/SettingsManager";
@@ -66,32 +59,6 @@ import {
   ContextMenuItem,
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
-
-const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
-
-const ALIGNMENT_CYCLE: Record<TextAlignment, TextAlignment> = {
-  unset: "left",
-  left: "center",
-  center: "right",
-  right: "left",
-};
-
-const TEXT_COLOR_PALETTE = [
-  "#000000",
-  "#4B5563",
-  "#9CA3AF",
-  "#D1D5DB",
-  "#FFFFFF",
-  "#DC2626",
-  "#F97316",
-  "#FACC15",
-  "#16A34A",
-  "#0EA5E9",
-  "#6366F1",
-  "#8B5CF6",
-  "#EC4899",
-  "#F43F5E",
-];
 
 import { LANG_META } from "../../i18n/languageMeta";
 import { useAppConfig } from "../../app/appConfig";
@@ -781,9 +748,8 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const selectedFontSize = current.fontSize;
   const isMobile = state.app.isMobile.value;
 
-  const verseConfig = settings.settings.value.textConfig.verse;
   const currentScriptureWidth = settings.settings.value.scriptureWidth;
-  const currentLineHeight = verseConfig.lineHeight ?? DEFAULT_VERSE_LINE_HEIGHT;
+  const currentLineHeight = settings.settings.value.verseLineHeight;
   const lineHeightIndex = (() => {
     const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLineHeight);
     return idx === -1 ? 0 : idx;
@@ -810,10 +776,9 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleCycleLineHeight = () => {
-    const currentLh =
-      settings.settings.value.textConfig.verse.lineHeight ??
-      DEFAULT_VERSE_LINE_HEIGHT;
-    const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLh);
+    const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(
+      settings.settings.value.verseLineHeight
+    );
     const currentIdx = idx === -1 ? 0 : idx;
     const nextIndex = (currentIdx + 1) % VERSE_LINE_HEIGHT_OPTIONS.length;
     const next = VERSE_LINE_HEIGHT_OPTIONS[nextIndex];
@@ -1772,285 +1737,6 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
   );
 }
 
-function TextFormattingToolbar(props: {
-  sectionId: TextSectionId;
-  section: TextSectionConfig;
-  onChange: (patch: Partial<TextSectionConfig>) => void;
-}) {
-  const { sectionId, section, onChange } = props;
-  const paletteOpen = useSignal(false);
-  const themeFallback = `var(${TEXT_SECTION_THEME_COLOR_VAR[sectionId]})`;
-  const swatchBackground = section.color || themeFallback;
-  const { t, isRtl } = useI18n();
-
-  const toggle = (key: "bold" | "italic" | "underline") => {
-    onChange({ [key]: !section[key] } as Partial<TextSectionConfig>);
-  };
-
-  const cycleAlignment = () => {
-    onChange({ alignment: ALIGNMENT_CYCLE[section.alignment] });
-  };
-
-  const alignmentIcons: Record<TextAlignment, string> = {
-    unset: isRtl ? "format_align_right" : "format_align_left",
-    left: "format_align_left",
-    center: "format_align_center",
-    right: "format_align_right",
-  };
-
-  return (
-    <div className="sb-text-format-toolbar">
-      <button
-        type="button"
-        className={`sb-text-format-btn${section.bold ? " sb-text-format-btn-active" : ""}`}
-        onClick={() => toggle("bold")}
-        aria-label={t("bold", { defaultValue: "Bold" })}
-        title={t("bold")}
-        aria-pressed={section.bold}
-      >
-        <span className="material-symbols-outlined">format_bold</span>
-      </button>
-      <button
-        type="button"
-        className={`sb-text-format-btn${section.italic ? " sb-text-format-btn-active" : ""}`}
-        onClick={() => toggle("italic")}
-        aria-label={t("italic", { defaultValue: "Italic" })}
-        title={t("italic")}
-        aria-pressed={section.italic}
-      >
-        <span className="material-symbols-outlined">format_italic</span>
-      </button>
-      <button
-        type="button"
-        className={`sb-text-format-btn${section.underline ? " sb-text-format-btn-active" : ""}`}
-        onClick={() => toggle("underline")}
-        aria-label={t("underline", { defaultValue: "Underline" })}
-        title={t("underline")}
-        aria-pressed={section.underline}
-      >
-        <span className="material-symbols-outlined">format_underlined</span>
-      </button>
-
-      <div className="sb-text-format-divider" aria-hidden="true" />
-
-      <button
-        type="button"
-        className="sb-text-format-btn"
-        onClick={cycleAlignment}
-        aria-label={t("alignment_x", {
-          defaultValue: `Alignment: ${section.alignment}`,
-        })}
-        title={t("change_alignment", { defaultValue: "Change alignment" })}
-      >
-        <span className="material-symbols-outlined">
-          {alignmentIcons[section.alignment]}
-        </span>
-      </button>
-
-      <div className="sb-text-format-divider" aria-hidden="true" />
-
-      <div className="sb-text-format-color-wrap">
-        <button
-          type="button"
-          className="sb-text-format-color-button"
-          onClick={() => {
-            paletteOpen.value = !paletteOpen.value;
-          }}
-          aria-label={t("pick_text_color", { defaultValue: "Pick text color" })}
-          title={t("text_color", { defaultValue: "Text color" })}
-        >
-          <span
-            className="sb-text-format-color-swatch"
-            style={{ background: swatchBackground }}
-          />
-        </button>
-        {paletteOpen.value && (
-          <div
-            className="sb-text-format-palette"
-            role="menu"
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                paletteOpen.value = false;
-                return;
-              }
-              handleGridKeyNav(event, event.currentTarget);
-            }}
-          >
-            <button
-              type="button"
-              className={`sb-text-format-palette-swatch${
-                section.color === ""
-                  ? " sb-text-format-palette-swatch-selected"
-                  : ""
-              }`}
-              style={{ background: themeFallback }}
-              aria-label={t("follow_theme", { defaultValue: "Follow theme" })}
-              title={t("follow_theme", { defaultValue: "Follow theme" })}
-              onClick={() => {
-                onChange({ color: "" });
-                paletteOpen.value = false;
-              }}
-            />
-            {TEXT_COLOR_PALETTE.map((color) => (
-              <button
-                key={color}
-                type="button"
-                className={`sb-text-format-palette-swatch${
-                  color.toLowerCase() === section.color.toLowerCase()
-                    ? " sb-text-format-palette-swatch-selected"
-                    : ""
-                }`}
-                style={{ background: color }}
-                aria-label={color}
-                onClick={() => {
-                  onChange({ color });
-                  paletteOpen.value = false;
-                }}
-              />
-            ))}
-            <div className="sb-text-format-palette-custom">
-              <span>{t("custom", { defaultValue: "Custom" })}</span>
-              <LazyColorPicker
-                value={normalizeHex(section.color)}
-                className="sb-text-format-palette-custom-swatch"
-                ariaLabel={t("custom", { defaultValue: "Custom" })}
-                onChange={(color) => {
-                  onChange({ color });
-                  paletteOpen.value = false;
-                }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TextSettingsContent(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { settings } = state;
-  const textConfig = settings.settings.value.textConfig;
-  const { t } = useI18n();
-
-  return (
-    <section className="sb-settings-section">
-      {TEXT_SECTION_ORDER.map((section) => {
-        const config = textConfig[section];
-        const handleChange = (patch: Partial<TextSectionConfig>) =>
-          settings.updateTextSection(section, patch);
-
-        return (
-          <div key={section} className="sb-text-section">
-            <h3 className="sb-text-section-title">
-              {t(`text-section-${section}`, { defaultValue: section })}
-            </h3>
-
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">
-                {t("font", { defaultValue: "Font" })}
-              </label>
-              <select
-                className="sb-settings-language-select"
-                value={config.font}
-                onChange={(event: Event) => {
-                  const target = event.currentTarget as HTMLSelectElement;
-                  handleChange({ font: target.value });
-                }}
-              >
-                {TEXT_FONT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(option.label, { defaultValue: option.label })}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">
-                {t("weight", { defaultValue: "Weight" })}
-              </label>
-              <select
-                className="sb-settings-language-select"
-                value={config.weight}
-                onChange={(event: Event) => {
-                  const target = event.currentTarget as HTMLSelectElement;
-                  handleChange({ weight: target.value });
-                }}
-              >
-                {TEXT_WEIGHT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(option.label, { defaultValue: option.label })}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">
-                {t("margin-vertical", {
-                  defaultValue: "Margin (vertical, px)",
-                })}
-              </label>
-              <input
-                type="number"
-                className="sb-settings-text-input"
-                value={config.marginVertical}
-                onInput={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  const parsed = Number(target.value);
-                  if (Number.isFinite(parsed)) {
-                    handleChange({ marginVertical: parsed });
-                  }
-                }}
-                placeholder="10"
-              />
-            </div>
-
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">
-                {t("margin-horizontal", {
-                  defaultValue: "Margin (horizontal, px)",
-                })}
-              </label>
-              <input
-                type="number"
-                className="sb-settings-text-input"
-                value={config.marginHorizontal}
-                onInput={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  const parsed = Number(target.value);
-                  if (Number.isFinite(parsed)) {
-                    handleChange({ marginHorizontal: parsed });
-                  }
-                }}
-                placeholder="10"
-              />
-            </div>
-
-            <TextFormattingToolbar
-              sectionId={section}
-              section={config}
-              onChange={handleChange}
-            />
-          </div>
-        );
-      })}
-
-      <div className="sb-settings-actions">
-        <button
-          type="button"
-          className="sb-settings-action-button"
-          onClick={() => settings.resetTextConfig()}
-        >
-          {t("reset-text-settings", { defaultValue: "Reset text settings" })}
-        </button>
-      </div>
-    </section>
-  );
-}
-
 function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
   const { state } = props;
   const { theme } = state;
@@ -2311,7 +1997,6 @@ function AllSettingsView(props: { state: SeedBibleState }) {
             "Fine-tune every text section and customize each theme color.",
         })}
       />
-      <TextSettingsContent state={state} />
       {state.customizations.activeCustomization.value ? (
         <section className="sb-settings-section">
           <div className="sb-settings-empty-state">
