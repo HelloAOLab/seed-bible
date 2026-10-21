@@ -1887,7 +1887,10 @@ describe("render() server-rendered meta tags", () => {
         '<meta name="twitter:title" content="Add Ana as a friend"'
       );
       expect(html).toContain(
-        '<meta property="og:description" content="Ana invited you to be friends on Seed Bible. Open the link to send a friend request."'
+        '<meta name="description" content="Ana wants to be your friend on the Seed Bible"'
+      );
+      expect(html).toContain(
+        '<meta property="og:description" content="Ana wants to be your friend on the Seed Bible"'
       );
       expect(html).toContain(
         `<meta property="og:image" content="${PICTURE_URL}"`
@@ -1910,12 +1913,14 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain('<meta name="robots" content="noindex"');
     });
 
-    it("keeps the tab title on the chapter the page shows", async () => {
+    it("titles the page after the linked person", async () => {
       mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
 
       const html = await renderHtml(LINK_PATH);
 
-      expect(html).toMatch(/<title>Genesis 1 - [^<]*\| Seed Bible<\/title>/);
+      expect(html).toContain(
+        "<title>Add Ana as a friend on Seed Bible</title>"
+      );
     });
 
     it("keeps the default image when the person has no picture", async () => {
@@ -1927,6 +1932,85 @@ describe("render() server-rendered meta tags", () => {
         '<meta property="og:title" content="Add Ana as a friend"'
       );
       expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+    });
+
+    describe("on a white-label deployment", () => {
+      const BRANDING = {
+        appName: "Acme Reader",
+        shortName: "Acme",
+        logo: "https://brand.example/acme-logo.png",
+        icon: "https://brand.example/acme-icon.png",
+        websiteUrl: "https://brand.example",
+      };
+
+      it("names the brand in the title and description", async () => {
+        mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+        const html = await renderHtml(LINK_PATH, { branding: BRANDING });
+
+        expect(html).toContain(
+          "<title>Add Ana as a friend on Acme Reader</title>"
+        );
+        expect(html).toContain(
+          '<meta property="og:description" content="Ana wants to be your friend on the Acme Reader"'
+        );
+        expect(html).toContain(
+          '<meta property="og:title" content="Add Ana as a friend"'
+        );
+      });
+
+      it("illustrates the preview with the brand's logo when the person has no picture", async () => {
+        mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+        const html = await renderHtml(LINK_PATH, { branding: BRANDING });
+
+        expect(html).toContain(
+          `<meta property="og:image" content="${BRANDING.logo}"`
+        );
+        expect(html).toContain(
+          '<meta property="og:image:alt" content="Acme Reader"'
+        );
+        expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      });
+
+      it("prefers the person's picture over the brand's logo", async () => {
+        mockProfiles({
+          [`${USER_ID}/profile`]: { name: "Ana", pictureUrl: PICTURE_URL },
+        });
+
+        const html = await renderHtml(LINK_PATH, { branding: BRANDING });
+
+        expect(html).toContain(
+          `<meta property="og:image" content="${PICTURE_URL}"`
+        );
+        expect(html).not.toContain(
+          `<meta property="og:image" content="${BRANDING.logo}"`
+        );
+      });
+
+      it("keeps the default image when the brand's logo isn't an absolute URL", async () => {
+        mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+        const html = await renderHtml(LINK_PATH, {
+          branding: { ...BRANDING, logo: "/img/acme-logo.png" },
+        });
+
+        expect(html).not.toContain(
+          '<meta property="og:image" content="/img/acme-logo.png"'
+        );
+        expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      });
+
+      it("doesn't use the brand's logo outside a friend link", async () => {
+        const html = await renderHtml("/?useFreeBibleAPI=true", {
+          branding: BRANDING,
+        });
+
+        expect(html).not.toContain(
+          `<meta property="og:image" content="${BRANDING.logo}"`
+        );
+        expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      });
     });
 
     it("embeds the loaded profile as a seed, without its private config", async () => {

@@ -1971,6 +1971,17 @@ export function createSeedBibleState(
         return `${sharedPageLoadFailedTitle.value} | ${seedBibleTitle}`;
       }
 
+      // Server only: in the browser the friend link prompt is a one-off over
+      // the reader, so the tab follows the chapter from the start.
+      const person = friendLinkPerson.value;
+      if (import.meta.env.SSR && person) {
+        return t("friend-link-title", {
+          name: person.name,
+          brand: seedBibleTitle,
+          defaultValue: "Add {{name}} as a friend on {{brand}}",
+        });
+      }
+
       if (!selectedTab.value) {
         return seedBibleTitle;
       }
@@ -2015,8 +2026,8 @@ export function createSeedBibleState(
       return truncateForMeta(
         t("friend-link-meta-description", {
           name: person.name,
-          defaultValue:
-            "{{name}} invited you to be friends on Seed Bible. Open the link to send a friend request.",
+          brand: siteName.value,
+          defaultValue: "{{name}} wants to be your friend on the {{brand}}",
         }),
         META_DESCRIPTION_MAX_GRAPHEMES
       );
@@ -2103,7 +2114,16 @@ export function createSeedBibleState(
       return { url: person.pictureUrl, alt: person.name };
     }
     const logoUrl = customizationLogoUrl.value;
-    return logoUrl ? { url: logoUrl, alt: siteName.value } : null;
+    if (logoUrl) {
+      return { url: logoUrl, alt: siteName.value };
+    }
+    // Only a friend link falls back to the white-label logo so far, and only
+    // when it's absolute: crawlers don't resolve a relative og:image.
+    const brandingLogo = branding?.logo;
+    if (person && brandingLogo && /^https?:\/\//i.test(brandingLogo)) {
+      return { url: brandingLogo, alt: siteName.value };
+    }
+    return null;
   });
 
   /**
