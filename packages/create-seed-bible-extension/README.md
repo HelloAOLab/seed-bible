@@ -34,7 +34,10 @@ create-seed-bible-extension <name> [directory]
 - `[directory]` is where to create it. It defaults to `<name>`, and must
   not exist yet.
 
-You need Node.js 22 or newer.
+You need Node.js 22 or newer, with npm 11 or newer (npm 10, which comes with
+Node.js 22, crashes while installing the new project's tools; pnpm works
+too). `npm run dev` also needs git, [pnpm](https://pnpm.io) and
+[Bun](https://bun.sh), since it downloads Seed Bible and runs it locally.
 
 ## What you get
 
@@ -91,8 +94,8 @@ elsewhere, and what to do when an install fails.
 - [`docs/extension-api.md`](https://github.com/HelloAOLab/seed-bible/blob/develop/docs/extension-api.md): the
   reference for every `sb` call, `extension.json` field, error, limit and
   testing helper.
-- §7 of [`docs/developer-guide.md`](https://github.com/HelloAOLab/seed-bible/blob/develop/docs/developer-guide.md): a
-  tour of the same API by example.
+- [`docs/developer-guide.md`](https://github.com/HelloAOLab/seed-bible/blob/develop/docs/developer-guide.md): a
+  quick start, how extensions work, and a tour of the API by example.
 - [`docs/extension-security.md`](https://github.com/HelloAOLab/seed-bible/blob/develop/docs/extension-security.md): how the
   sandbox keeps users safe.
 - [`packages/sandboxed-example-extension`](https://github.com/HelloAOLab/seed-bible/tree/develop/packages/sandboxed-example-extension/):

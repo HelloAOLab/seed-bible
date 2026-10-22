@@ -2,9 +2,9 @@
 
 This is the reference for everything a third-party (sandboxed) extension can call. It lists every part of the `sb` object, what each call takes and returns, which permission it needs, and how it can fail. It also covers `extension.json` and the test helper.
 
-If you haven't built an extension before, start with §7 of the [developer guide](./developer-guide.md#7-third-party-sandboxed-extensions), which walks through the same API by example. For _why_ things work the way they do (why your code runs in an iframe, why some permissions can't be required), see [`extension-security.md`](./extension-security.md).
+If you haven't built an extension before, start with the [quick start](./developer-guide.md#1-quick-start) in the developer guide, then §4 of the guide, which walks through the same API by example. For _why_ things work the way they do (why your code runs in an iframe, why some permissions can't be required), see [`extension-security.md`](./extension-security.md).
 
-This document covers extensions written with `defineExtension` from `seed-bible/extensions`. That's every extension installed from a link. Extensions that live inside this repo under `packages/` and use `registerExtension` are trusted and get the app's full internal state instead; that's covered in §§4–5 of the developer guide, not here.
+This document covers extensions written with `defineExtension` from `seed-bible/extensions`. That's every extension installed from a link. Extensions that live inside this repo under `packages/` and use `registerExtension` are trusted and get the app's full internal state instead; that's covered in §8 of the developer guide, not here.
 
 ---
 
@@ -142,7 +142,7 @@ The id Seed Bible knows your extension by: the folder its bundle is hosted in, t
 
 ### `sb.permissions`
 
-Where your extension stands on permissions, and a way to ask for optional ones. See §7 of the developer guide for when to use optional permissions.
+Where your extension stands on permissions, and a way to ask for optional ones. See [§4 of the developer guide](./developer-guide.md#asking-for-optional-permissions) for when to use optional permissions.
 
 ```ts
 permissions: {
