@@ -1292,7 +1292,13 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           className="sb-extensions-item"
           onClick={() => (openExtensionId.value = id)}
         >
-          <ExtensionTile request={{ extensionId: id, title: name }} />
+          <ExtensionTile
+            request={{
+              extensionId: id,
+              title: name,
+              icon: extensionEntry.extension?.meta.icon,
+            }}
+          />
           <span className="sb-extensions-item-content">
             <span className="sb-extensions-item-title">
               <span className="sb-extensions-item-name">{name}</span>

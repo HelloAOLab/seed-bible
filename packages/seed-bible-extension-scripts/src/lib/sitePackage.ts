@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { ExtensionProjectMeta } from "./project.js";
+import type { IconFile } from "./icon.js";
 
 export const SET_FILE = "extension-set.json";
 export const DEFAULT_APP_URL = "https://seedbible.org/";
@@ -12,6 +13,8 @@ export interface SitePackageOptions {
   /** The built sandboxed bundle. */
   bundle: Uint8Array;
   meta: ExtensionProjectMeta;
+  /** The icon `meta.icon` names, when it's a file in the project. */
+  icon?: IconFile | null;
   /** The Seed Bible the install page sends people to. */
   appUrl?: string;
 }
@@ -22,6 +25,7 @@ export interface SitePackageOptions {
  *
  * - the bundle, named by its hash, so a cached manifest can never point
  *   at a newer or older bundle than the one its `integrity` describes;
+ * - the icon, if it has one, named by its hash for the same reason;
  * - `extension-set.json`, linking the bundle relative to itself, so the
  *   folder works at whatever address it's served from;
  * - `index.html`, a page with an install button for Seed Bible;
@@ -35,12 +39,20 @@ export async function writeSitePackage(
   const { outDir, bundle, meta } = options;
   const digest = createHash("sha384").update(bundle).digest();
   const bundleFile = `${meta.id}-${digest.toString("hex").slice(0, 12)}.js`;
+  const { icon } = options;
+  const iconFile = icon
+    ? `icon-${createHash("sha256").update(icon.bytes).digest("hex").slice(0, 12)}${icon.extension}`
+    : null;
   const set = {
     id: meta.id,
     extensions: [
       {
         url: `./${bundleFile}`,
-        meta: { ...meta, integrity: `sha384-${digest.toString("base64")}` },
+        meta: {
+          ...meta,
+          ...(iconFile && { icon: `./${iconFile}` }),
+          integrity: `sha384-${digest.toString("base64")}`,
+        },
       },
     ],
   };
@@ -49,8 +61,13 @@ export async function writeSitePackage(
   await mkdir(outDir, { recursive: true });
   const files: Record<string, string | Uint8Array> = {
     [bundleFile]: bundle,
+    ...(icon && iconFile && { [iconFile]: icon.bytes }),
     [SET_FILE]: `${JSON.stringify(set, null, 2)}\n`,
-    "index.html": installPage(meta, options.appUrl ?? DEFAULT_APP_URL),
+    "index.html": installPage(
+      meta,
+      options.appUrl ?? DEFAULT_APP_URL,
+      iconFile ? `./${iconFile}` : null
+    ),
     _headers: HEADERS,
     ".nojekyll": "",
   };
@@ -62,14 +79,17 @@ export async function writeSitePackage(
 
 // Seed Bible fetches the manifest and bundle from its own page, so they
 // need CORS. The manifest must not be cached long, or an update would take
-// that long to reach anyone; the bundle's name changes with every build, so
-// it can be cached for good.
+// that long to reach anyone; the bundle's and icon's names change with
+// their contents, so they can be cached for good.
 const HEADERS = `/${SET_FILE}
   Access-Control-Allow-Origin: *
   Cache-Control: no-cache
 
 /*.js
   Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=31536000, immutable
+
+/icon-*
   Cache-Control: public, max-age=31536000, immutable
 `;
 
@@ -85,7 +105,11 @@ const escapeHtml = (text: string) =>
  * worked out in the browser, from the page's own address, because the
  * package doesn't know where it will be hosted.
  */
-function installPage(meta: ExtensionProjectMeta, appUrl: string): string {
+function installPage(
+  meta: ExtensionProjectMeta,
+  appUrl: string,
+  iconUrl: string | null
+): string {
   const en = meta.translations.en ?? Object.values(meta.translations)[0];
   const title = escapeHtml(en?.title ?? meta.id);
   const description = escapeHtml(en?.description ?? "");
@@ -104,10 +128,11 @@ function installPage(meta: ExtensionProjectMeta, appUrl: string): string {
   a.install { display: inline-block; padding: 0.75rem 1.25rem; border-radius: 0.5rem; background: #e07b4c; color: #fff; text-decoration: none; font-weight: 600; }
   code { word-break: break-all; }
   .note { opacity: 0.75; font-size: 0.9rem; }
+  .icon { width: 4rem; height: 4rem; border-radius: 1rem; object-fit: cover; }
 </style>
 </head>
 <body>
-<h1>${title}</h1>
+${iconUrl ? `<img class="icon" src="${escapeHtml(iconUrl)}" alt="">\n` : ""}<h1>${title}</h1>
 <p>${description}</p>
 <p><a class="install" id="install" href="#">Install in Seed Bible</a></p>
 <p class="note">Seed Bible shows what it will be able to do and asks before installing anything. You can also paste this link into Settings &gt; Extensions &gt; "Add extensions from a link":</p>

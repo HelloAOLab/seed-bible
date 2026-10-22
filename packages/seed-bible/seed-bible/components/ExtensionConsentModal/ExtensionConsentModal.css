@@ -48,6 +48,17 @@
   background: #2f6f73;
 }
 
+.sb-extension-consent-tile-image {
+  overflow: hidden;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-extension-consent-tile-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .sb-extension-consent-tile-1 {
   background: #4b5bb5;
 }

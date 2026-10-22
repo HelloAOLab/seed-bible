@@ -274,7 +274,13 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
   const identity = (
     <>
       <span className="sb-extension-info-tile">
-        <ExtensionTile request={{ extensionId: entry.id, title: name }} />
+        <ExtensionTile
+          request={{
+            extensionId: entry.id,
+            title: name,
+            icon: extension?.meta.icon,
+          }}
+        />
       </span>
       <div className="sb-extension-info-identity">
         <div className="sb-extension-info-title-row">

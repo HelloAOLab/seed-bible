@@ -89,6 +89,39 @@ describe("extension sources", () => {
     await vi.waitFor(() => expect(starts).toHaveLength(1));
   });
 
+  it("shows an icon linked relative to its set, and names it when asking to install", async () => {
+    const extension = await hostVerseArt();
+    h.hostSet(SET_URL, [
+      { ...extension, meta: { ...extension.meta, icon: "icon-1a2b.svg" } },
+    ]);
+    const manager = await loadPage();
+
+    await manager.discoverExtensionSet(SET_URL);
+    const listedExtension = listed(manager, "ext.verse-art")!.extension!;
+    await manager.loadExtension(listedExtension);
+
+    const icon = "https://ext.example.com/verse-art/icon-1a2b.svg";
+    expect(listedExtension.meta.icon).toBe(icon);
+    expect(h.consent.mock.calls[0]![0].icon).toBe(icon);
+  });
+
+  it("leaves out an icon that isn't an https: link", async () => {
+    const extension = await hostVerseArt();
+    h.hostSet(SET_URL, [
+      {
+        ...extension,
+        meta: { ...extension.meta, icon: "http://tracker.example.com/i.png" },
+      },
+    ]);
+    const manager = await loadPage();
+
+    await manager.discoverExtensionSet(SET_URL);
+
+    expect(
+      listed(manager, "ext.verse-art")!.extension!.meta
+    ).not.toHaveProperty("icon");
+  });
+
   describe("a set published to Seed Bible's records", () => {
     // Where `seed-bible-extension-scripts publish` puts it.
     const RECORD_URL =

@@ -57,6 +57,31 @@ describe("the hostable package", () => {
     expect(bundles(second)).not.toEqual(bundles(first));
   });
 
+  it("includes the icon, named after its contents and linked relative to the set", async () => {
+    const icon = {
+      bytes: new TextEncoder().encode("<svg/>"),
+      mimeType: "image/svg+xml",
+      extension: ".svg",
+    };
+    await writeSitePackage({
+      outDir,
+      bundle,
+      meta: { ...meta, icon: "assets/icon.svg" },
+      icon,
+    });
+
+    const set = JSON.parse(await read("extension-set.json"));
+    const iconUrl = set.extensions[0].meta.icon;
+    expect(iconUrl).toMatch(/^\.\/icon-[0-9a-f]{12}\.svg$/);
+    expect(await read(iconUrl)).toBe("<svg/>");
+    // The install page shows it too.
+    const dom = new JSDOM(await read("index.html"));
+    expect(dom.window.document.querySelector("img")?.getAttribute("src")).toBe(
+      iconUrl
+    );
+    dom.window.close();
+  });
+
   it("lets Seed Bible fetch the files from Cloudflare and GitHub Pages", async () => {
     const headers = await read("_headers");
 

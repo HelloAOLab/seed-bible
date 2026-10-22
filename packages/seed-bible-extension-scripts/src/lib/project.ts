@@ -21,6 +21,11 @@ export interface ExtensionProjectMeta {
   optionalPermissions?: string[];
   /** Sandboxed extensions: every host its frames may contact. */
   network?: string[];
+  /**
+   * A square image standing for the extension: a path in the project, which
+   * `publish` uploads, or an https: link.
+   */
+  icon?: string;
   /** Anything else in the file, such as `settings` and `sensitive`. */
   [field: string]: unknown;
 }

@@ -1,6 +1,7 @@
 {
   "id": "sandboxed-example-extension",
   "version": "1.0.0",
+  "icon": "icon.svg",
   "permissions": ["reading:position"],
   "optionalPermissions": ["embed:casualos"],
   "network": [],
