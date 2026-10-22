@@ -813,6 +813,59 @@ describe("sandboxed extensions", () => {
     }
   });
 
+  it("keeps a linked set from taking a built-in extension's id, even when it loads before the built-in set", async () => {
+    const SET_URL = "https://elsewhere.example.org/set.json";
+    const outside = await publish(
+      defineExtension({}),
+      { id: "compare-extension" },
+      "https://elsewhere.example.org/compare.js"
+    );
+    h.hostSet(SET_URL, [outside]);
+    const builtIn = {
+      import: async () => ({ default: () => {} }),
+      meta: {
+        id: "compare-extension",
+        translations: { en: { title: "Compare", description: "" } },
+      },
+    };
+    const manager = createManager();
+
+    // The linked set arrives first, before the built-in ids are known.
+    const set = await manager.discoverExtensionSet(SET_URL);
+    await manager.loadExtensionSet(
+      { id: "bundled", extensions: [builtIn] },
+      () => false
+    );
+    await manager.loadExtension(builtIn);
+
+    const outsideId = sourced(
+      "compare-extension",
+      "https://elsewhere.example.org/"
+    );
+    expect(set!.extensions[0]!.meta.id).toBe(outsideId);
+    expect(
+      manager.getExtensions().find((entry) => entry.id === "compare-extension")
+        ?.extension
+    ).toBe(builtIn);
+    expect(await manager.loadExtension(set!.extensions[0]!)).toBe(true);
+    expect(h.consent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extensionId: outsideId,
+        sourceHost: "elsewhere.example.org",
+      })
+    );
+    expect(
+      manager.getExtensions().find((entry) => entry.id === "compare-extension")
+        ?.extension
+    ).toBe(builtIn);
+    // Only the outside one is remembered as coming from the outside set.
+    await vi.waitFor(() =>
+      expect(
+        JSON.parse(localStorage.getItem("sb-extension-sources") ?? "{}")
+      ).toEqual({ [outsideId]: SET_URL })
+    );
+  });
+
   it("doesn't offer a sandboxed extension to a link that names its id without where it's from", async () => {
     const extension = await publish(defineExtension({}), { id: "ext.bare" });
     window.history.replaceState(null, "", "/?autoinstall-ext.bare=true");
