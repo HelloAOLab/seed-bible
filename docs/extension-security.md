@@ -228,6 +228,7 @@ Permissions go in `extension.json`, next to the existing `settings` and `sensiti
 
 - **`network`** lists every host the extension may contact with `fetch`. It goes into the frame's CSP. Hosts already named in the `sensitive` section don't need repeating.
 - **`integrity`** pins the bundle (§4.3). `publish` fills it in.
+- **`icon`** is a link to a square image shown in place of the extension's initials. It may be relative to the set, and is kept only if it resolves to an `https:` link (or `http://localhost` while developing); anything else is dropped. It's shown with an `<img>`, so it can't run code, and fetching it tells the extension's host no more than fetching the set and bundle already does. `publish` uploads it to its own link in Seed Bible's storage.
 - **`version`** is also new (today's `ExtensionMeta` has none). Grants are recorded against it, so the host can tell an update apart from the version the user approved (§6.3).
 
 The manifest that counts is the one in the hosted `ExtensionSet`, which the host reads _before_ running any code. The bundle can't ask for anything that isn't in it.

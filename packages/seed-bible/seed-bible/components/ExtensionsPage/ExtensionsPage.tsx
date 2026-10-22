@@ -74,7 +74,13 @@ function ExtensionCard(props: {
         onClick={() => state.openExtensions(entry.id)}
       >
         <span className="sb-extensions-card-identity">
-          <ExtensionTile request={{ extensionId: entry.id, title: name }} />
+          <ExtensionTile
+            request={{
+              extensionId: entry.id,
+              title: name,
+              icon: extension?.meta.icon,
+            }}
+          />
           <span className="sb-extensions-card-titles">
             <span className="sb-extensions-card-name">{name}</span>
             <span className="sb-extensions-card-source">

@@ -86,6 +86,27 @@ describe("the dev extension server", () => {
     });
   });
 
+  it("serves the icon extension.json names, and links it from the set", async () => {
+    await writeFile(path.join(root, "icon.svg"), "<svg/>");
+    await writeFile(
+      path.join(root, "extension.json"),
+      JSON.stringify({
+        id: "my-ext",
+        icon: "icon.svg",
+        translations: { en: { title: "Mine", description: "" } },
+      })
+    );
+
+    const set = await (await fetch(server.setUrl)).json();
+    const icon = await fetch(set.extensions[0].meta.icon);
+
+    expect(set.extensions[0].meta.icon).toMatch(
+      /^http:\/\/localhost:\d+\/icon\.svg$/
+    );
+    expect(icon.headers.get("content-type")).toBe("image/svg+xml");
+    expect(await icon.text()).toBe("<svg/>");
+  });
+
   it("says it isn't ready while there's no bundle yet", async () => {
     await rm(bundlePath());
 
