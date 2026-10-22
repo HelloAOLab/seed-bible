@@ -40,8 +40,10 @@ import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/man
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, effect, signal, type Signal } from "@preact/signals";
+import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
 import { h, render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
+import { pressAndRelease } from "../testUtils/pressAndRelease";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
 import type { Mock } from "vitest";
 
@@ -3461,6 +3463,613 @@ describe("createPlaylistManager", () => {
     expect(manager.playing.value).toBeNull();
   });
 
+  describe("playlist item modal", () => {
+    const SHARED_PAGE_HREF =
+      "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist";
+
+    const openingItems = (): Playlist["items"] => [
+      { type: "link", url: "https://example.com/intro", title: "Intro" },
+      { type: "html", title: "Note", html: "<p>A note</p>" },
+      {
+        type: "bible-verse",
+        ref: { bookId: "JHN", chapter: 3, verse: 16 },
+      },
+    ];
+
+    const renderItemModal = () => {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      const draw = () => {
+        act(() => {
+          render(
+            h(I18nProvider, {
+              i18n: lastI18n,
+              children: h(ModalHost, { manager: lastModals }),
+            }),
+            container
+          );
+        });
+      };
+      draw();
+      const click = (selector: string) => {
+        const target = container.querySelector(selector) as HTMLElement | null;
+        expect(target).not.toBeNull();
+        act(() => target!.click());
+        draw();
+      };
+      return {
+        container,
+        close: () => click(".sb-footnote-modal-close"),
+        dismissBackdrop: () => {
+          const target = container.querySelector(
+            ".sb-footnote-modal-overlay"
+          ) as HTMLElement | null;
+          expect(target).not.toBeNull();
+          pressAndRelease(target!, target!);
+          draw();
+        },
+        refresh: draw,
+        unmount: () => {
+          render(null, container);
+          container.remove();
+        },
+      };
+    };
+
+    const startSharedPlaylist = (items: Playlist["items"]) => {
+      const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
+      const manager = makeManager(null, tabs, SHARED_PAGE_HREF, {
+        locator: "user-1.playlist-1",
+        item: makePlaylist({ items }),
+        authorName: null,
+      });
+      manager.startPlaylistPage();
+      return manager;
+    };
+
+    it("keeps advancing through opening text and link items until a verse", async () => {
+      const manager = startSharedPlaylist(openingItems());
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(modal.container.textContent).toContain("Intro");
+
+        modal.dismissBackdrop();
+
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
+        expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+
+        modal.close();
+        await flush();
+
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+        expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+          "BSB",
+          "JHN",
+          3,
+          { scrollToVerse: 16 }
+        );
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
+        ).toBe(false);
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-finished")
+        ).toBe(false);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("advances when a playlist started in the app closes its first text or link item", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(makePlaylist({ items: openingItems() }));
+
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(modal.container.textContent).toContain("Intro");
+        modal.close();
+
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    const itemsBetweenVerses = (): Playlist["items"] => [
+      { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
+      { type: "html", title: "Note", html: "<p>A note</p>" },
+      { type: "html", title: "After", html: "<p>After</p>" },
+    ];
+
+    const closeMovesForward = async (
+      manager: ReturnType<typeof makeManager>
+    ) => {
+      await manager.playing.value!.next();
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+        expect(modal.container.textContent).toContain("After");
+      } finally {
+        modal.unmount();
+      }
+    };
+
+    it("advances when a shared playlist's text item was reached by going forward", async () => {
+      await closeMovesForward(startSharedPlaylist(itemsBetweenVerses()));
+    });
+
+    it("advances when an in-app playlist's text item was reached by going forward", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(makePlaylist({ items: itemsBetweenVerses() }));
+      await closeMovesForward(manager);
+    });
+
+    const itemsAroundALink = (): Playlist["items"] => [
+      { type: "html", title: "Before", html: "<p>Before</p>" },
+      { type: "link", url: "https://example.com/mid", title: "Middle" },
+      { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
+    ];
+
+    const closeMovesBackward = async (
+      manager: ReturnType<typeof makeManager>
+    ) => {
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Middle");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(modal.container.textContent).toContain("Before");
+      } finally {
+        modal.unmount();
+      }
+    };
+
+    it("goes back when a shared playlist's text item was reached by going backward", async () => {
+      const manager = startSharedPlaylist(itemsAroundALink());
+      await manager.playing.value!.jumpTo(2);
+      await manager.playing.value!.previous();
+      await closeMovesBackward(manager);
+    });
+
+    it("goes back when an in-app playlist's text item was reached by going backward", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(makePlaylist({ items: itemsAroundALink() }), 2);
+      await manager.playing.value!.previous();
+      await closeMovesBackward(manager);
+    });
+
+    const closeStaysOnNote = async (
+      manager: ReturnType<typeof makeManager>
+    ) => {
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
+        ).toBe(false);
+      } finally {
+        modal.unmount();
+      }
+    };
+
+    it("stays when a shared playlist's text item was opened by jumping to it", async () => {
+      const manager = startSharedPlaylist(openingItems());
+      await manager.playing.value!.jumpTo(1);
+      await closeStaysOnNote(manager);
+    });
+
+    it("stays when an in-app playlist is started on a text item", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(makePlaylist({ items: openingItems() }), 1);
+      await closeStaysOnNote(manager);
+    });
+
+    it("keeps stepping through modal items in the direction already underway", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
+            { type: "html", title: "One", html: "<p>One</p>" },
+            { type: "html", title: "Two", html: "<p>Two</p>" },
+            {
+              type: "bible-verse",
+              ref: { bookId: "JHN", chapter: 3, verse: 16 },
+            },
+          ],
+        })
+      );
+      await manager.playing.value!.next();
+
+      const modal = renderItemModal();
+      try {
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+        expect(modal.container.textContent).toContain("Two");
+
+        modal.close();
+        await flush();
+        expect(manager.playing.value?.currentIndex.value).toBe(3);
+        expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+          "BSB",
+          "JHN",
+          3,
+          { scrollToVerse: 16 }
+        );
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
+        ).toBe(false);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("does not finish the playlist when the last item, reached by going forward, is closed", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
+            { type: "html", title: "End", html: "<p>End</p>" },
+          ],
+        })
+      );
+      await manager.playing.value!.next();
+
+      const modal = renderItemModal();
+      try {
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(manager.playing.value).not.toBeNull();
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-finished")
+        ).toBe(false);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("advances when a shared link opens on a text or link first item", async () => {
+      const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
+      const manager = makeManager(
+        null,
+        tabs,
+        "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist/1",
+        {
+          locator: "user-1.playlist-1",
+          item: makePlaylist({ items: openingItems() }),
+          authorName: null,
+        }
+      );
+      await manager.initialPlaybackPromise;
+
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(modal.container.textContent).toContain("Intro");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("does not advance when a shared link opens past the first item", async () => {
+      const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
+      const manager = makeManager(
+        null,
+        tabs,
+        "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist/2",
+        {
+          locator: "user-1.playlist-1",
+          item: makePlaylist({ items: openingItems() }),
+          authorName: null,
+        }
+      );
+      await manager.initialPlaybackPromise;
+
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
+        modal.dismissBackdrop();
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("advances when playback has left and returned to the first item", async () => {
+      const manager = startSharedPlaylist(openingItems());
+      await manager.playing.value!.next();
+      await manager.playing.value!.previous();
+
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(0);
+        expect(modal.container.textContent).toContain("Intro");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Note");
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("does not finish a shared playlist when closing the last text or link item", () => {
+      const manager = startSharedPlaylist([
+        { type: "html", title: "Intro", html: "<p>Intro</p>" },
+        { type: "link", url: "https://example.com/end", title: "End" },
+      ]);
+      const modal = renderItemModal();
+      try {
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("End");
+
+        modal.close();
+
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+        expect(manager.playing.value).not.toBeNull();
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-finished")
+        ).toBe(false);
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
+        ).toBe(false);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("stays when a second playlist starts on the same step the first one reached by going forward", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const verse = {
+        type: "bible-verse" as const,
+        ref: { bookId: "PSA", chapter: 23 },
+      };
+      manager.startPlaying(
+        makePlaylist({ id: "a", items: [verse, verse, verse] })
+      );
+      await manager.playing.value!.next();
+      await manager.playing.value!.next();
+
+      manager.startPlaying(
+        makePlaylist({
+          id: "b",
+          items: [
+            verse,
+            verse,
+            { type: "html", title: "Note", html: "<p>Note</p>" },
+            verse,
+          ],
+        }),
+        2
+      );
+
+      const modal = renderItemModal();
+      try {
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+        expect(modal.container.textContent).toContain("Note");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("stays when a synced queue replaces the item at the current step", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const verse = {
+        type: "bible-verse" as const,
+        ref: { bookId: "PSA", chapter: 23 },
+      };
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            verse,
+            { type: "html", title: "Note", html: "<p>Note</p>" },
+            verse,
+          ],
+        })
+      );
+      await manager.playing.value!.next();
+
+      const playing = manager.playing.value!;
+      await playing.setState({
+        playlists: playing.playlists.peek(),
+        queue: [
+          verse,
+          { type: "html", title: "Replaced", html: "<p>Replaced</p>" },
+          verse,
+        ],
+        step: playing.currentIndex.peek(),
+      });
+
+      const modal = renderItemModal();
+      try {
+        expect(playing.currentIndex.value).toBe(1);
+        expect(modal.container.textContent).toContain("Replaced");
+        modal.close();
+        expect(playing.currentIndex.value).toBe(1);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("still moves forward after an item is added to the queue", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const verse = {
+        type: "bible-verse" as const,
+        ref: { bookId: "PSA", chapter: 23 },
+      };
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            verse,
+            { type: "html", title: "Note", html: "<p>Note</p>" },
+            verse,
+          ],
+        })
+      );
+      await manager.playing.value!.next();
+      manager.playing.value!.addToQueue({
+        type: "html",
+        title: "Extra",
+        html: "<p>Extra</p>",
+      });
+
+      const modal = renderItemModal();
+      try {
+        expect(modal.container.textContent).toContain("Note");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("reopens the current item after it was closed, and closing it again stays put", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(makePlaylist({ items: openingItems() }), 1);
+
+      const modal = renderItemModal();
+      try {
+        expect(modal.container.textContent).toContain("Note");
+        modal.close();
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
+        ).toBe(false);
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+
+        manager.showCurrentItem();
+        modal.refresh();
+
+        expect(modal.container.textContent).toContain("Note");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(1);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("still moves forward when an item reached by Next is reopened and closed", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(makePlaylist({ items: itemsBetweenVerses() }));
+      await manager.playing.value!.next();
+
+      const modal = renderItemModal();
+      try {
+        manager.showCurrentItem();
+        modal.refresh();
+        expect(modal.container.textContent).toContain("Note");
+        modal.close();
+        expect(manager.playing.value?.currentIndex.value).toBe(2);
+        expect(modal.container.textContent).toContain("After");
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("closes the open item without moving on when playback stops", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
+            { type: "html", title: "Note", html: "<p>Note</p>" },
+            {
+              type: "bible-verse",
+              ref: { bookId: "JHN", chapter: 3, verse: 16 },
+            },
+          ],
+        })
+      );
+      await manager.playing.value!.next();
+      selectTranslationAndChapterMock.mockClear();
+
+      const modal = renderItemModal();
+      try {
+        expect(modal.container.textContent).toContain("Note");
+        manager.stopPlaying();
+        modal.refresh();
+
+        expect(manager.playing.value).toBeNull();
+        expect(modal.container.textContent ?? "").not.toContain("Note");
+        expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+        expect(
+          lastModals.modals.value.some((m) => m.id === "playlist-finished")
+        ).toBe(false);
+      } finally {
+        modal.unmount();
+      }
+    });
+
+    it("logs a failure to move on after closing an item", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
+            { type: "html", title: "Note", html: "<p>Note</p>" },
+            {
+              type: "bible-verse",
+              ref: { bookId: "JHN", chapter: 3, verse: 16 },
+            },
+          ],
+        })
+      );
+      const playing = manager.playing.value!;
+      await playing.next();
+      // The reader is already showing the next passage, so applying the
+      // playback snapshot doesn't try to open it a second time. Closing
+      // the pop-up is the load that fails.
+      playing.tab!.readingState.bookId.value = "JHN";
+      playing.tab!.readingState.chapterNumber.value = 3;
+      selectTranslationAndChapterMock.mockRejectedValueOnce(
+        new Error("offline")
+      );
+      errorSpy.mockClear();
+
+      const modal = renderItemModal();
+      try {
+        modal.close();
+        await flush();
+
+        expect(errorSpy).toHaveBeenCalledWith(
+          "Failed to move playlist after closing an item:",
+          expect.any(Error)
+        );
+      } finally {
+        modal.unmount();
+      }
+    });
+  });
+
   it("does not stop playback when a URL change never had a playlist param", async () => {
     const manager = makeManager("user-1");
     await flush();
@@ -3783,7 +4392,7 @@ describe("createPlaylistManager", () => {
       }
     });
 
-    it("moves on to the next item when the modal is closed", async () => {
+    it("moves on from the first item when its modal is closed", async () => {
       const manager = makeManager("user-1");
       await flush();
       manager.startPlaying(

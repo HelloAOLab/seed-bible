@@ -26,11 +26,10 @@ function HostedModal(props: { manager: ModalManager; modal: ManagedModal }) {
   const { manager, modal } = props;
 
   const { t } = useI18n();
-  const close = () => {
-    manager.closeModal(modal.id);
-    modal.onDismiss?.();
+  const dismiss = () => {
+    manager.dismissModal(modal.id);
   };
-  const overlayDismiss = useOverlayDismiss(close);
+  const overlayDismiss = useOverlayDismiss(dismiss);
 
   return (
     <div className="sb-footnote-modal-overlay" {...overlayDismiss}>
@@ -47,7 +46,7 @@ function HostedModal(props: { manager: ModalManager; modal: ManagedModal }) {
           <button
             className="sb-footnote-modal-close"
             aria-label={t("close", { defaultValue: "Close" })}
-            onClick={close}
+            onClick={dismiss}
           >
             <span className="material-symbols-outlined">close</span>
           </button>
