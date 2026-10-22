@@ -121,7 +121,7 @@ describe("extension permission dialogs", () => {
         ["Add notes, and change or delete the ones it added", "true"],
       ]);
       expect(container.textContent).toContain(
-        "To take away something marked Needed, uninstall Demo from the About tab."
+        "To take away something marked Needed, uninstall Demo."
       );
     });
 
