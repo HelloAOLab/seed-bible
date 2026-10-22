@@ -39,13 +39,52 @@ export interface ExtensionInfoPageProps {
   installState: ExtensionInstallState;
   extensions: PermissionsApi & Pick<ExtensionManager, "describeUploader">;
   people?: ConsentPeople;
+  /**
+   * "narrow" stacks everything for the sidebar; "wide" lays it out across a
+   * full-screen page, with the tabs down the side.
+   */
+  layout?: "narrow" | "wide";
   /** The page's breadcrumbs, which lead back to the list. */
-  breadcrumbs: ComponentChildren;
+  breadcrumbs?: ComponentChildren;
   onInstall: () => void;
   onUninstall: () => void;
   /** The extension's settings form, or null when it has nothing to set. */
   settings: ComponentChildren | null;
 }
+
+/** Who uploaded the extension at `url`, once that's known. */
+export function useExtensionUploader(
+  extensions: Pick<ExtensionManager, "describeUploader" | "sandboxPermissions">,
+  extensionId: string,
+  url: string | null
+): SandboxUploader | undefined {
+  const fetched = useSignal<SandboxUploader | undefined>(undefined);
+  const summary = extensions.sandboxPermissions.value[extensionId];
+  // A running extension's summary already names its uploader; one that
+  // isn't running is looked up here.
+  useEffect(() => {
+    fetched.value = undefined;
+    if (!url || summary) {
+      return;
+    }
+    let current = true;
+    void extensions.describeUploader(url).then((found) => {
+      if (current) {
+        fetched.value = found;
+      }
+    });
+    return () => {
+      current = false;
+    };
+  }, [url, Boolean(summary)]);
+  return summary?.uploader ?? fetched.value;
+}
+
+const TAB_ICONS: Record<InfoTab, string> = {
+  about: "info",
+  permissions: "shield",
+  settings: "settings",
+};
 
 /**
  * Everything about one extension in one place: what it is and can do, and,
@@ -53,6 +92,7 @@ export interface ExtensionInfoPageProps {
  */
 export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
   const { entry, name, installState, extensions } = props;
+  const wide = props.layout === "wide";
   const { t } = useI18n();
   const tab = useSignal<InfoTab>("about");
   const pageRef = useRef<HTMLDivElement>(null);
@@ -60,31 +100,13 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
   useEffect(() => {
     pageRef.current?.scrollIntoView?.({ block: "start" });
   }, [entry.id]);
-  const fetchedUploader = useSignal<SandboxUploader | undefined>(undefined);
 
   const extension = entry.extension;
   const url = extension && "url" in extension ? extension.url : null;
   const summary = extensions.sandboxPermissions.value[entry.id];
+  const uploader = useExtensionUploader(extensions, entry.id, url);
   const installed =
     installState === "installed" || installState === "downloaded";
-
-  // A running extension's summary already names its uploader; one that
-  // isn't running is looked up here.
-  useEffect(() => {
-    fetchedUploader.value = undefined;
-    if (!url || summary) {
-      return;
-    }
-    let current = true;
-    void extensions.describeUploader(url).then((found) => {
-      if (current) {
-        fetchedUploader.value = found;
-      }
-    });
-    return () => {
-      current = false;
-    };
-  }, [url, Boolean(summary)]);
 
   let sourceHost: string | null = null;
   try {
@@ -122,7 +144,9 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
           : null;
 
   const details = (
-    <section className="sb-extension-info-section">
+    <section
+      className={`sb-extension-info-section${wide ? " sb-extension-info-card" : ""}`}
+    >
       <h2 className="sb-extension-info-heading">
         {t("extension-info-details")}
       </h2>
@@ -145,6 +169,10 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
     </section>
   );
 
+  const description = props.description && (
+    <p className="sb-extension-info-description">{props.description}</p>
+  );
+
   const unreviewed = url && (
     <p className="sb-extension-consent-notice">
       <span
@@ -157,168 +185,231 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
     </p>
   );
 
-  const about = (
-    <div className="sb-extension-info-panel">
-      {props.description && (
-        <p className="sb-extension-info-description">{props.description}</p>
+  const installButton = !installed && (
+    <button
+      type="button"
+      className="sb-extension-info-install"
+      disabled={installState === "pending"}
+      onClick={props.onInstall}
+    >
+      {installState === "pending"
+        ? t("extension-state-pending", { defaultValue: "Installing…" })
+        : t("install", { defaultValue: "Install" })}
+    </button>
+  );
+
+  const uninstallButton = installed && (
+    <button
+      type="button"
+      className="sb-extension-info-uninstall"
+      onClick={props.onUninstall}
+    >
+      {wide
+        ? t("uninstall", { defaultValue: "Uninstall" })
+        : t("extension-info-uninstall", { name })}
+    </button>
+  );
+
+  const whatItCanDo = !installed && manifest?.ok && (
+    <section className="sb-extension-info-section">
+      <h2 className="sb-extension-info-heading">
+        {t("extension-info-what-it-can-do")}
+      </h2>
+      <div className="sb-extension-info-abilities">
+        {manifest.manifest.permissions.length +
+          manifest.manifest.network.length >
+          0 && (
+          <div className="sb-extension-info-ability-group">
+            <h3 className="sb-extension-consent-section-title">
+              {t("extension-consent-now")}
+            </h3>
+            <PermissionCards
+              permissions={manifest.manifest.permissions}
+              network={manifest.manifest.network}
+            />
+          </div>
+        )}
+        {manifest.manifest.optionalPermissions.length > 0 && (
+          <div className="sb-extension-info-ability-group">
+            <h3 className="sb-extension-consent-section-title">
+              {t("extension-consent-later")}
+            </h3>
+            <PermissionCards
+              permissions={manifest.manifest.optionalPermissions}
+              network={[]}
+            />
+          </div>
+        )}
+      </div>
+      {manifest.manifest.permissions.length +
+        manifest.manifest.network.length +
+        manifest.manifest.optionalPermissions.length ===
+        0 && (
+        <p className="sb-extension-consent-text">
+          {t("extension-consent-nothing")}
+        </p>
       )}
-      {!installed && (
-        <button
-          type="button"
-          className="sb-extension-info-install"
-          disabled={installState === "pending"}
-          onClick={props.onInstall}
-        >
-          {installState === "pending"
-            ? t("extension-state-pending", { defaultValue: "Installing…" })
-            : t("install", { defaultValue: "Install" })}
-        </button>
-      )}
-      {unreviewed}
-      {!installed && manifest?.ok && (
-        <section className="sb-extension-info-section">
-          <h2 className="sb-extension-info-heading">
-            {t("extension-info-what-it-can-do")}
-          </h2>
-          {manifest.manifest.permissions.length +
-            manifest.manifest.network.length >
-            0 && (
-            <>
-              <h3 className="sb-extension-consent-section-title">
-                {t("extension-consent-now")}
-              </h3>
-              <PermissionCards
-                permissions={manifest.manifest.permissions}
-                network={manifest.manifest.network}
-              />
-            </>
-          )}
-          {manifest.manifest.optionalPermissions.length > 0 && (
-            <>
-              <h3 className="sb-extension-consent-section-title">
-                {t("extension-consent-later")}
-              </h3>
-              <PermissionCards
-                permissions={manifest.manifest.optionalPermissions}
-                network={[]}
-              />
-            </>
-          )}
-          {manifest.manifest.permissions.length +
-            manifest.manifest.network.length +
-            manifest.manifest.optionalPermissions.length ===
-            0 && (
-            <p className="sb-extension-consent-text">
-              {t("extension-consent-nothing")}
-            </p>
-          )}
-        </section>
-      )}
+    </section>
+  );
+
+  const about = wide ? (
+    <div className="sb-extension-info-about">
+      <div className="sb-extension-info-about-main">
+        {description}
+        {unreviewed}
+      </div>
       {details}
-      {installed && (
+    </div>
+  ) : (
+    <div className="sb-extension-info-panel">
+      {description}
+      {installButton}
+      {unreviewed}
+      {whatItCanDo}
+      {details}
+      {uninstallButton}
+    </div>
+  );
+
+  const identity = (
+    <>
+      <span className="sb-extension-info-tile">
+        <ExtensionTile request={{ extensionId: entry.id, title: name }} />
+      </span>
+      <div className="sb-extension-info-identity">
+        <div className="sb-extension-info-title-row">
+          <h1 className="sb-extension-info-title">{name}</h1>
+          {statusLabel && (
+            <span
+              className={`sb-extension-info-status sb-extension-info-status-${installState}`}
+            >
+              {installState === "installed" && (
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  check
+                </span>
+              )}
+              {statusLabel}
+            </span>
+          )}
+        </div>
+        <p className="sb-extension-consent-source">
+          {sourceHost
+            ? withSource(
+                (host) =>
+                  version
+                    ? t("extension-consent-source-version", {
+                        version,
+                        host,
+                      })
+                    : t("extension-consent-from", { host }),
+                <SourceLabel
+                  source={{ sourceHost, uploader }}
+                  people={props.people}
+                />
+              )
+            : t("extension-info-built-in")}
+        </p>
+        {wide && !installed && description}
+      </div>
+    </>
+  );
+
+  const tabList = tabs.length > 1 && (
+    <div
+      className="sb-extension-info-tabs"
+      role="tablist"
+      aria-label={name}
+      aria-orientation={wide ? "vertical" : undefined}
+      style={{ "--sb-extension-info-tab-count": tabs.length }}
+    >
+      {tabs.map((key) => (
         <button
+          key={key}
           type="button"
-          className="sb-extension-info-uninstall"
-          onClick={props.onUninstall}
+          role="tab"
+          id={`sb-extension-info-tab-${key}`}
+          aria-selected={shownTab === key}
+          aria-controls="sb-extension-info-tabpanel"
+          className="sb-extension-info-tab"
+          onClick={() => (tab.value = key)}
         >
-          {t("extension-info-uninstall", { name })}
+          {wide && (
+            <span className="material-symbols-outlined" aria-hidden="true">
+              {TAB_ICONS[key]}
+            </span>
+          )}
+          {tabLabel(key)}
         </button>
+      ))}
+    </div>
+  );
+
+  const tabPanel = (
+    <div
+      id="sb-extension-info-tabpanel"
+      className="sb-extension-info-tabpanel"
+      role={tabs.length > 1 ? "tabpanel" : undefined}
+      aria-labelledby={
+        tabs.length > 1 ? `sb-extension-info-tab-${shownTab}` : undefined
+      }
+    >
+      {shownTab === "about" && about}
+      {shownTab === "permissions" && (
+        <ExtensionPermissionsPanel
+          extensions={extensions}
+          extensionId={entry.id}
+          name={name}
+        />
+      )}
+      {shownTab === "settings" && (
+        <div className="sb-extension-info-panel sb-extension-info-settings">
+          {props.settings}
+        </div>
       )}
     </div>
   );
 
+  if (wide) {
+    return (
+      <div className="sb-extension-info sb-extension-info-wide" ref={pageRef}>
+        {props.breadcrumbs}
+        <section
+          className={`sb-extension-info-hero${installed ? "" : " sb-extension-info-hero-card"}`}
+        >
+          {identity}
+          {installed ? (
+            uninstallButton
+          ) : (
+            <div className="sb-extension-info-hero-actions">
+              {unreviewed}
+              {installButton}
+              <span className="sb-extension-info-install-note">
+                {t("extension-info-install-note")}
+              </span>
+            </div>
+          )}
+        </section>
+        {installed ? (
+          <div className="sb-extension-info-body">
+            {tabList}
+            {tabPanel}
+          </div>
+        ) : (
+          <div className="sb-extension-info-body">
+            <div className="sb-extension-info-body-main">{whatItCanDo}</div>
+            <aside className="sb-extension-info-aside">{details}</aside>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="sb-settings-page sb-extension-info" ref={pageRef}>
       {props.breadcrumbs}
-      <header className="sb-extension-info-header">
-        <span className="sb-extension-info-tile">
-          <ExtensionTile request={{ extensionId: entry.id, title: name }} />
-        </span>
-        <div className="sb-extension-info-identity">
-          <div className="sb-extension-info-title-row">
-            <h1 className="sb-extension-info-title">{name}</h1>
-            {statusLabel && (
-              <span
-                className={`sb-extension-info-status sb-extension-info-status-${installState}`}
-              >
-                {installState === "installed" && (
-                  <span
-                    className="material-symbols-outlined"
-                    aria-hidden="true"
-                  >
-                    check
-                  </span>
-                )}
-                {statusLabel}
-              </span>
-            )}
-          </div>
-          <p className="sb-extension-consent-source">
-            {sourceHost
-              ? withSource(
-                  (host) =>
-                    version
-                      ? t("extension-consent-source-version", {
-                          version,
-                          host,
-                        })
-                      : t("extension-consent-from", { host }),
-                  <SourceLabel
-                    source={{
-                      sourceHost,
-                      uploader: summary?.uploader ?? fetchedUploader.value,
-                    }}
-                    people={props.people}
-                  />
-                )
-              : t("extension-info-built-in")}
-          </p>
-        </div>
-      </header>
-
-      {tabs.length > 1 && (
-        <div
-          className="sb-extension-info-tabs"
-          role="tablist"
-          aria-label={name}
-          style={{ "--sb-extension-info-tab-count": tabs.length }}
-        >
-          {tabs.map((key) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              id={`sb-extension-info-tab-${key}`}
-              aria-selected={shownTab === key}
-              aria-controls="sb-extension-info-tabpanel"
-              className="sb-extension-info-tab"
-              onClick={() => (tab.value = key)}
-            >
-              {tabLabel(key)}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div
-        id="sb-extension-info-tabpanel"
-        role={tabs.length > 1 ? "tabpanel" : undefined}
-        aria-labelledby={
-          tabs.length > 1 ? `sb-extension-info-tab-${shownTab}` : undefined
-        }
-      >
-        {shownTab === "about" && about}
-        {shownTab === "permissions" && (
-          <ExtensionPermissionsPanel
-            extensions={extensions}
-            extensionId={entry.id}
-            name={name}
-          />
-        )}
-        {shownTab === "settings" && (
-          <div className="sb-extension-info-panel">{props.settings}</div>
-        )}
-      </div>
+      <header className="sb-extension-info-header">{identity}</header>
+      {tabList}
+      {tabPanel}
     </div>
   );
 }
