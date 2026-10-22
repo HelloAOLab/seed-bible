@@ -1,14 +1,20 @@
-/* SeedBibleIcon `animated`: seed → trunk grows → branches unfold (~1s). */
+/*
+ * SeedBibleIcon `animated`: seed → trunk grows → branches unfold (~1s).
+ * `--sb-seed-icon-elapsed` resumes an intro already in progress when the icon
+ * remounts mid-animation, by shifting every delay back by that much.
+ */
 .sb-seed-icon-seed {
   transform-box: fill-box;
   transform-origin: center;
   animation: sb-seed-icon-seed 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(0s - var(--sb-seed-icon-elapsed, 0s));
 }
 
 .sb-seed-icon-trunk-reveal {
   transform-box: fill-box;
   transform-origin: bottom;
-  animation: sb-seed-icon-trunk 0.45s cubic-bezier(0.4, 0, 0.6, 1) 0.15s both;
+  animation: sb-seed-icon-trunk 0.45s cubic-bezier(0.4, 0, 0.6, 1) both;
+  animation-delay: calc(0.15s - var(--sb-seed-icon-elapsed, 0s));
 }
 
 .sb-seed-icon-page,
@@ -33,6 +39,7 @@
 
 .sb-seed-icon-whole {
   animation: sb-seed-icon-whole 1s step-end both;
+  animation-delay: calc(0s - var(--sb-seed-icon-elapsed, 0s));
 }
 
 @keyframes sb-seed-icon-seed {

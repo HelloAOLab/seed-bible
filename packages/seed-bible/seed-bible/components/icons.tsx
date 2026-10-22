@@ -1,4 +1,4 @@
-import { useId } from "preact/hooks";
+import { useId, useState } from "preact/hooks";
 import { useAppConfig } from "../app/appConfig";
 import "./icons.css";
 
@@ -117,7 +117,7 @@ const SEED_BIBLE_ICON_PAGE_SIDES = {
 } as const;
 
 /**
- * Plays once on mount: a seed appears at the base, the trunk grows up from
+ * Plays once per page load: a seed appears at the base, the trunk grows up from
  * it, then each branch unfolds outward from the trunk like a book's pages.
  */
 function AnimatedSeedBiblePaths() {
@@ -169,7 +169,7 @@ function AnimatedSeedBiblePaths() {
             class="sb-seed-icon-page"
             style={{
               transformOrigin: `${page.hinge}px ${branch.hingeY}px`,
-              animationDelay: `${branch.delay}s`,
+              animationDelay: `calc(${branch.delay}s - var(--sb-seed-icon-elapsed, 0s))`,
             }}
           >
             {piece("inner")}
@@ -177,7 +177,7 @@ function AnimatedSeedBiblePaths() {
               class={`sb-seed-icon-page-edge sb-seed-icon-page-edge-${branch.side}`}
               style={{
                 transformOrigin: `${page.fold}px ${branch.hingeY}px`,
-                animationDelay: `${branch.delay}s`,
+                animationDelay: `calc(${branch.delay}s - var(--sb-seed-icon-elapsed, 0s))`,
               }}
             >
               {piece("outer")}
@@ -194,12 +194,44 @@ function AnimatedSeedBiblePaths() {
   );
 }
 
+const SEED_BIBLE_ICON_INTRO_MS = 1000;
+
+// When the first animated icon mounted (page lifetime). Toolbars remount their
+// icons whenever their tool list changes, e.g. when an extension adds a tool,
+// so without this the intro would replay each time.
+let seedBibleIconIntroStartedAt: number | null = null;
+
+/**
+ * How far into the intro a newly mounted animated icon should start, or null
+ * if the intro has already finished and the icon should render static.
+ */
+function useSeedBibleIconIntroElapsed(animated: boolean): number | null {
+  const [elapsed] = useState(() => {
+    if (!animated) {
+      return null;
+    }
+    // The server has no "first time" to track; it always renders the intro
+    // so the markup matches the client's first render.
+    if (typeof window === "undefined") {
+      return 0;
+    }
+    const now = Date.now();
+    if (seedBibleIconIntroStartedAt === null) {
+      seedBibleIconIntroStartedAt = now;
+    }
+    const elapsed = now - seedBibleIconIntroStartedAt;
+    return elapsed < SEED_BIBLE_ICON_INTRO_MS ? elapsed : null;
+  });
+  return elapsed;
+}
+
 export function SeedBibleIcon({
   size = 32,
   animated = false,
   ...props
 }: { size?: number; animated?: boolean; [key: string]: any } = {}) {
   const { branding } = useAppConfig();
+  const introElapsed = useSeedBibleIconIntroElapsed(animated);
 
   if (branding?.icon) {
     return (
@@ -225,13 +257,15 @@ export function SeedBibleIcon({
       style={{ fill: "currentColor" }}
       {...props}
     >
-      <g>
-        {animated ? (
-          <AnimatedSeedBiblePaths />
-        ) : (
+      {introElapsed === null ? (
+        <g>
           <path d={SEED_BIBLE_ICON_PATH} />
-        )}
-      </g>
+        </g>
+      ) : (
+        <g style={`--sb-seed-icon-elapsed: ${introElapsed}ms`}>
+          <AnimatedSeedBiblePaths />
+        </g>
+      )}
     </svg>
   );
 }
