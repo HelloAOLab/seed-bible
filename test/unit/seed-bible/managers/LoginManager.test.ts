@@ -477,8 +477,24 @@ describe("createLoginManager", () => {
       vi.useRealTimers();
     });
 
+    const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+    beforeEach(() => {
+      // Like the server, every refresh hands out a key good for two more weeks.
+      let refreshes = 0;
+      replaceSessionMock.mockImplementation(async () => ({
+        success: true,
+        sessionKey: sessionKeyExpiringIn(
+          2 * ONE_WEEK,
+          `refreshed-${++refreshes}`
+        ),
+        connectionKey: "connection-key-2",
+        expireTimeMs: Date.now() + 2 * ONE_WEEK,
+        metadata: {},
+      }));
+    });
+
     it("schedules the refresh for a week before expiry instead of firing immediately", async () => {
-      const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
       // Expires in 14 days, so the refresh should be scheduled ~7 days out.
       localStorage.setItem("sessionKey", sessionKeyExpiringIn(2 * ONE_WEEK));
 
@@ -489,6 +505,52 @@ describe("createLoginManager", () => {
 
       // Advancing to the scheduled time triggers the refresh.
       await vi.advanceTimersByTimeAsync(ONE_WEEK);
+      expect(replaceSessionMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("schedules the next refresh for the refreshed key", async () => {
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(2 * ONE_WEEK));
+      createLoginManager({ os });
+
+      await vi.advanceTimersByTimeAsync(ONE_WEEK);
+      expect(replaceSessionMock).toHaveBeenCalledTimes(1);
+
+      // The refreshed key also expires in two weeks, so its turn comes a week later.
+      await vi.advanceTimersByTimeAsync(ONE_WEEK - 1000);
+      expect(replaceSessionMock).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(replaceSessionMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("schedules a refresh after signing in", async () => {
+      completeLoginMock.mockResolvedValue({
+        success: true,
+        userId: USER_ID,
+        sessionKey: sessionKeyExpiringIn(2 * ONE_WEEK),
+        connectionKey: "connection-key-1",
+        expireTimeMs: Date.now() + 2 * ONE_WEEK,
+        metadata: {},
+      });
+      const manager = createLoginManager({ os });
+      const request = await manager.requestLoginByEmail(EMAIL);
+      if (!request.success) {
+        throw new Error("login request failed");
+      }
+      await manager.submitLoginCode("123456", request);
+
+      await vi.advanceTimersByTimeAsync(ONE_WEEK);
+      expect(replaceSessionMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("waits out delays too long for a single timer", async () => {
+      // About 24.8 days is the most `setTimeout` can wait; longer delays used to
+      // fire at once.
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(6 * ONE_WEEK));
+      createLoginManager({ os });
+
+      await vi.advanceTimersByTimeAsync(5 * ONE_WEEK - 1000);
+      expect(replaceSessionMock).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1000);
       expect(replaceSessionMock).toHaveBeenCalledTimes(1);
     });
   });
@@ -664,6 +726,302 @@ describe("createLoginManager", () => {
 
       expect(os.sessionKey.value).toBe(null);
       expect(manager.userInfo.value).toBe(null);
+    });
+  });
+
+  describe("requests that race a session refresh", () => {
+    // The server retires the old key the instant it issues the new one, so any
+    // request that reaches it with the old key after that point is refused with
+    // `invalid_key` — even though the user's session is alive under the new key.
+    it("stays signed in and retries with the new key", async () => {
+      const oldKey = sessionKeyExpiringIn(1000 * 60 * 60);
+      localStorage.setItem("sessionKey", oldKey);
+
+      let finishRefresh: () => void = () => undefined;
+      replaceSessionMock.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finishRefresh = () =>
+              resolve({
+                success: true,
+                sessionKey: REFRESHED_SESSION_KEY,
+                connectionKey: "connection-key-2",
+                expireTimeMs: Date.now() + 1000 * 60 * 60,
+                metadata: {},
+              });
+          })
+      );
+      getUserInfoMock.mockImplementation(function (this: {
+        sessionKey: string;
+      }) {
+        return Promise.resolve(
+          this.sessionKey === oldKey
+            ? {
+                success: false,
+                errorCode: "invalid_key",
+                errorMessage: "The session key is invalid.",
+              }
+            : { success: true, email: EMAIL }
+        );
+      });
+
+      const manager = createLoginManager({ os });
+      await waitFor(() => getUserInfoMock.mock.calls.length > 0);
+      await flush();
+      finishRefresh();
+
+      await waitFor(() => manager.userInfo.value !== null);
+      expect(manager.sessionEnded.value).toBe(null);
+      expect(os.sessionKey.value).toBe(REFRESHED_SESSION_KEY);
+      expect(localStorage.getItem("sessionKey")).toBe(REFRESHED_SESSION_KEY);
+      expect(manager.userInfo.value?.email).toBe(EMAIL);
+    });
+  });
+
+  describe("several tabs on the same device", () => {
+    const TWO_WEEKS = 1000 * 60 * 60 * 24 * 14;
+    const INVALID_KEY = {
+      success: false,
+      errorCode: "invalid_key",
+      errorMessage: "The session key is invalid.",
+    };
+
+    // Keys the fake server has retired. Like the real one, it retires a key the
+    // moment a refresh replaces it.
+    let revoked: Set<string>;
+    let restoreStorage: () => void;
+
+    beforeEach(() => {
+      revoked = new Set();
+      let issued = 0;
+      replaceSessionMock.mockImplementation(function (this: {
+        sessionKey: string;
+      }) {
+        if (revoked.has(this.sessionKey)) {
+          return Promise.resolve(INVALID_KEY);
+        }
+        revoked.add(this.sessionKey);
+        issued++;
+        return Promise.resolve({
+          success: true,
+          sessionKey: sessionKeyExpiringIn(TWO_WEEKS, `refreshed-${issued}`),
+          connectionKey: `connection-key-refreshed-${issued}`,
+          expireTimeMs: Date.now() + TWO_WEEKS,
+          metadata: {},
+        });
+      });
+      getUserInfoMock.mockImplementation(function (this: {
+        sessionKey: string;
+      }) {
+        return Promise.resolve(
+          revoked.has(this.sessionKey)
+            ? INVALID_KEY
+            : { success: true, email: EMAIL }
+        );
+      });
+      revokeSessionMock.mockImplementation(
+        ({ sessionKey }: { sessionKey: string }) => {
+          revoked.add(sessionKey);
+          return Promise.resolve({ success: true });
+        }
+      );
+
+      // Browsers tell every *other* tab about a storage write, a moment later.
+      // Here every tab shares one window, so the writing tab hears it too — which
+      // it ignores, since storage then already matches what it holds.
+      const setItem = Storage.prototype.setItem;
+      const removeItem = Storage.prototype.removeItem;
+      const announce = (key: string) =>
+        setTimeout(() =>
+          window.dispatchEvent(
+            new StorageEvent("storage", { key, storageArea: localStorage })
+          )
+        );
+      const setSpy = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation(function (this: Storage, key, value) {
+          const changed = this.getItem(key) !== value;
+          setItem.call(this, key, value);
+          if (changed) {
+            announce(key);
+          }
+        });
+      const removeSpy = vi
+        .spyOn(Storage.prototype, "removeItem")
+        .mockImplementation(function (this: Storage, key) {
+          const changed = this.getItem(key) !== null;
+          removeItem.call(this, key);
+          if (changed) {
+            announce(key);
+          }
+        });
+      restoreStorage = () => {
+        setSpy.mockRestore();
+        removeSpy.mockRestore();
+      };
+    });
+
+    afterEach(() => {
+      restoreStorage();
+      delete (navigator as { locks?: unknown }).locks;
+    });
+
+    /** A minimal Web Locks API: callers asking for the same name take turns. */
+    function installWebLocks() {
+      const queues = new Map<string, Promise<unknown>>();
+      Object.defineProperty(navigator, "locks", {
+        configurable: true,
+        value: {
+          request: (name: string, task: () => Promise<unknown>) => {
+            const run = (queues.get(name) ?? Promise.resolve()).then(task);
+            queues.set(
+              name,
+              run.catch(() => undefined)
+            );
+            return run;
+          },
+        },
+      });
+    }
+
+    /** Opens a tab: a manager with its own CasualOS client, sharing storage. */
+    function openTab() {
+      const tabOs = CasualOSManager();
+      vi.spyOn(tabOs, "getData").mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+      vi.spyOn(tabOs, "recordData").mockResolvedValue(undefined as never);
+      return { os: tabOs, manager: createLoginManager({ os: tabOs }) };
+    }
+
+    it.each([
+      ["with Web Locks", true],
+      ["without Web Locks", false],
+    ])(
+      "keeps both tabs signed in when they refresh at the same time (%s)",
+      async (_label, withLocks) => {
+        if (withLocks) {
+          installWebLocks();
+        }
+        localStorage.setItem(
+          "sessionKey",
+          sessionKeyExpiringIn(1000 * 60 * 60)
+        );
+
+        const a = openTab();
+        const b = openTab();
+
+        await waitFor(
+          () =>
+            a.manager.userInfo.value !== null &&
+            b.manager.userInfo.value !== null &&
+            a.os.sessionKey.value === b.os.sessionKey.value
+        );
+        await flush();
+
+        const shared = a.os.sessionKey.value;
+        expect(shared).not.toBe(null);
+        expect(revoked.has(shared as string)).toBe(false);
+        expect(localStorage.getItem("sessionKey")).toBe(shared);
+        expect(a.manager.sessionEnded.value).toBe(null);
+        if (withLocks) {
+          // The second tab waits its turn and takes the first tab's new key.
+          expect(replaceSessionMock).toHaveBeenCalledTimes(1);
+          expect(b.manager.sessionEnded.value).toBe(null);
+        }
+        // Without locks the second tab can't see the first one's refresh in
+        // flight, so it may briefly sign out before the storage event brings it
+        // the new key. What matters is that neither tab is left signed out and
+        // the saved key survives.
+      }
+    );
+
+    it("lets a tab that missed another tab's refresh carry on with the new key", async () => {
+      localStorage.setItem("sessionKey", SESSION_KEY);
+      const stale = openTab();
+      await waitFor(() => stale.manager.userInfo.value !== null);
+
+      // Another tab refreshed, and its storage event hasn't arrived here yet.
+      revoked.add(SESSION_KEY);
+      const refreshed = sessionKeyExpiringIn(TWO_WEEKS, "session-2");
+      restoreStorage();
+      localStorage.setItem("sessionKey", refreshed);
+
+      const result = await stale.os.client.getUserInfo({ userId: USER_ID });
+
+      expect(result.success).toBe(true);
+      expect(stale.os.sessionKey.value).toBe(refreshed);
+      expect(stale.manager.sessionEnded.value).toBe(null);
+    });
+
+    it("picks up another tab's refreshed key as soon as it is saved", async () => {
+      localStorage.setItem("sessionKey", SESSION_KEY);
+      const stale = openTab();
+      await waitFor(() => stale.manager.userInfo.value !== null);
+
+      const refreshed = sessionKeyExpiringIn(TWO_WEEKS, "session-2");
+      localStorage.setItem("connectionKey", "connection-key-2");
+      localStorage.setItem("sessionKey", refreshed);
+
+      await waitFor(() => stale.os.sessionKey.value === refreshed);
+      expect(stale.os.connectionKey.value).toBe("connection-key-2");
+      expect(stale.manager.userInfo.value?.email).toBe(EMAIL);
+    });
+
+    it("signs other tabs in when one tab signs in", async () => {
+      const a = openTab();
+      const b = openTab();
+
+      const request = await a.manager.requestLoginByEmail(EMAIL);
+      if (!request.success) {
+        throw new Error("login request failed");
+      }
+      await a.manager.submitLoginCode("123456", request);
+
+      await waitFor(() => b.manager.userInfo.value !== null);
+      expect(b.os.sessionKey.value).toBe(SESSION_KEY);
+      expect(b.manager.userId.value).toBe(USER_ID);
+    });
+
+    it("signs other tabs out quietly when one tab signs out", async () => {
+      localStorage.setItem("sessionKey", SESSION_KEY);
+      const a = openTab();
+      const b = openTab();
+      await waitFor(() => b.manager.userInfo.value !== null);
+
+      await a.manager.logout();
+
+      await waitFor(() => b.os.sessionKey.value === null);
+      expect(b.manager.userInfo.value).toBe(null);
+      // The tab where it happened already knows; no second notice here.
+      expect(b.manager.sessionEnded.value).toBe(null);
+      expect(b.manager.isLoginOpen.value).toBe(false);
+    });
+
+    it("does not delete another tab's key when it is signed out", async () => {
+      localStorage.setItem("sessionKey", SESSION_KEY);
+      const stale = openTab();
+      await waitFor(() => stale.manager.userInfo.value !== null);
+
+      // Another tab signed in to a different account, and its storage event
+      // hasn't arrived here yet. That key is no use to this tab's account.
+      const otherAccount = formatV1SessionKey(
+        "user-2",
+        "session-9",
+        "secret-9",
+        Date.now() + TWO_WEEKS
+      );
+      restoreStorage();
+      localStorage.setItem("sessionKey", otherAccount);
+      revoked.add(SESSION_KEY);
+
+      await stale.os.client.getUserInfo({ userId: USER_ID });
+
+      await waitFor(() => stale.manager.sessionEnded.value !== null);
+      expect(stale.os.sessionKey.value).toBe(null);
+      expect(localStorage.getItem("sessionKey")).toBe(otherAccount);
     });
   });
 

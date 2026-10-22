@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import {
   FATAL_SESSION_ERROR_CODES,
   guardRecordsClient,
@@ -5,6 +6,10 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/SessionGuard";
 
 const SESSION_KEY = "session-key-1";
+
+function flushMicrotasks(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
 
 /**
  * Builds a guard over a fake client, along with handles for driving it: the current
@@ -265,6 +270,158 @@ describe("guardRecordsClient", () => {
       ).revokeSession();
 
       expect(invalidated).toEqual([]);
+    });
+  });
+
+  describe("requests racing a session refresh", () => {
+    const NEW_KEY = "session-key-2";
+
+    type Client = {
+      sessionKey: string;
+      getData: () => Promise<unknown>;
+      replaceSession: () => Promise<unknown>;
+    };
+
+    /**
+     * A fake server that, like the real one, refuses the old key once it has been
+     * replaced. `replace()` performs the swap the way LoginManager does: the server
+     * retires the old key, then the client installs the new one.
+     */
+    function createRefreshingClient() {
+      let retired = false;
+      const invalidated: FatalSessionErrorCode[] = [];
+      let replacement: Promise<string | null> | null = null;
+
+      const target: Client = {
+        sessionKey: SESSION_KEY,
+        getData: vi.fn(function (this: Client) {
+          return Promise.resolve(
+            retired && this.sessionKey === SESSION_KEY
+              ? failure("invalid_key")
+              : { success: true, key: this.sessionKey }
+          );
+        }),
+        replaceSession: vi.fn(),
+      };
+
+      const wrapped = guardRecordsClient(target, {
+        getSessionKey: () => target.sessionKey,
+        onSessionInvalidated: (errorCode) => invalidated.push(errorCode),
+        getSessionReplacement: (key) =>
+          key === SESSION_KEY ? replacement : null,
+      });
+
+      let finishReplacement: (key: string | null) => void = () => undefined;
+      const startReplacement = () => {
+        replacement = new Promise<string | null>((resolve) => {
+          finishReplacement = (key) => {
+            if (key) {
+              target.sessionKey = key;
+            }
+            resolve(key);
+          };
+        });
+      };
+
+      return {
+        target,
+        wrapped,
+        invalidated,
+        startReplacement,
+        retireOldKey: () => {
+          retired = true;
+        },
+        finishReplacement: (key: string | null) => finishReplacement(key),
+      };
+    }
+
+    it("retries a request refused mid-refresh with the new key instead of signing out", async () => {
+      const guard = createRefreshingClient();
+      guard.startReplacement();
+      guard.retireOldKey();
+
+      const pending = guard.wrapped.getData();
+      await flushMicrotasks();
+      guard.finishReplacement(NEW_KEY);
+
+      await expect(pending).resolves.toEqual({ success: true, key: NEW_KEY });
+      expect(guard.invalidated).toEqual([]);
+    });
+
+    it("retries a refusal that only arrives after the refresh has finished", async () => {
+      const guard = createRefreshingClient();
+      guard.startReplacement();
+      guard.retireOldKey();
+      // Sent with the old key, answered after the new key is already in place.
+      const getData = guard.target.getData as Mock;
+      getData.mockImplementationOnce(async () => {
+        guard.finishReplacement(NEW_KEY);
+        return failure("invalid_key");
+      });
+
+      await expect(guard.wrapped.getData()).resolves.toEqual({
+        success: true,
+        key: NEW_KEY,
+      });
+      expect(guard.invalidated).toEqual([]);
+    });
+
+    it("signs out when the refresh did not produce a new key", async () => {
+      const guard = createRefreshingClient();
+      guard.startReplacement();
+      guard.retireOldKey();
+
+      const pending = guard.wrapped.getData();
+      await flushMicrotasks();
+      guard.finishReplacement(null);
+
+      await expect(pending).resolves.toEqual(failure("invalid_key"));
+      expect(guard.invalidated).toEqual(["invalid_key"]);
+    });
+
+    it("signs out when the refresh threw", async () => {
+      const guard = createRefreshingClient();
+      const getData = guard.target.getData as Mock;
+      getData.mockResolvedValue(failure("invalid_key"));
+      const wrapped = guardRecordsClient(guard.target, {
+        getSessionKey: () => guard.target.sessionKey,
+        onSessionInvalidated: (errorCode) => guard.invalidated.push(errorCode),
+        getSessionReplacement: () => Promise.reject(new Error("offline")),
+      });
+
+      await expect(wrapped.getData()).resolves.toEqual(failure("invalid_key"));
+      expect(guard.invalidated).toEqual(["invalid_key"]);
+    });
+
+    it("retries only once", async () => {
+      const guard = createRefreshingClient();
+      const getData = guard.target.getData as Mock;
+      getData.mockResolvedValue(failure("invalid_key"));
+      guard.startReplacement();
+
+      const pending = guard.wrapped.getData();
+      await flushMicrotasks();
+      guard.finishReplacement(NEW_KEY);
+
+      await expect(pending).resolves.toEqual(failure("invalid_key"));
+      expect(getData).toHaveBeenCalledTimes(2);
+      // The new key was refused too, so that session really is over.
+      expect(guard.invalidated).toEqual(["invalid_key"]);
+    });
+
+    it("does not make the refresh call wait on its own result", async () => {
+      // replaceSession's response is what settles the replacement, so holding its
+      // failure until the replacement settles would never finish.
+      const guard = createRefreshingClient();
+      (guard.target.replaceSession as Mock).mockResolvedValue(
+        failure("invalid_key")
+      );
+      guard.startReplacement();
+
+      await expect(guard.wrapped.replaceSession()).resolves.toEqual(
+        failure("invalid_key")
+      );
+      expect(guard.invalidated).toEqual(["invalid_key"]);
     });
   });
 });

@@ -70,12 +70,28 @@ export interface SessionInvalidatedEvent {
 const IGNORED_METHODS: ReadonlySet<string> = new Set(["revokeSession"]);
 
 /**
+ * The call that swaps our key for a new one. Its own failure is never held back to
+ * wait for a replacement (see `getSessionReplacement`), because the replacement it
+ * would be waiting for is this very call — it would wait forever.
+ */
+const REPLACING_METHODS: ReadonlySet<string> = new Set(["replaceSession"]);
+
+/**
  * Properties that are read and written as plain data rather than called. The records
  * client is itself a Proxy that synthesizes a function for any property name it
  * doesn't recognise, so we short-circuit the ones we know are data to be certain
  * `client.sessionKey` never comes back as a synthesized function.
  */
 const DATA_PROPERTIES: ReadonlySet<string> = new Set(["sessionKey"]);
+
+/**
+ * If `sessionKey` is being (or has been) swapped for a newer key, resolves once the
+ * swap has settled, with the new key — or null if it failed. Returns null when the
+ * key was never replaced.
+ */
+export type SessionReplacementResolver = (
+  sessionKey: string
+) => Promise<string | null> | null;
 
 export interface SessionGuardOptions {
   /** Reads the session key currently attached to outgoing requests. */
@@ -86,6 +102,17 @@ export interface SessionGuardOptions {
     errorCode: FatalSessionErrorCode,
     details: { method: string; errorMessage: string | null }
   ) => void;
+
+  /**
+   * Looks up the key that replaced a refused one.
+   *
+   * The server revokes the old key the moment it issues the new one, so any request
+   * that reaches it with the old key after that point fails with `invalid_key` —
+   * including requests that went out before the refresh did, and requests from
+   * another tab that hasn't caught up yet. Those failures say nothing about the
+   * user's session, which is very much alive under its new key.
+   */
+  getSessionReplacement?: SessionReplacementResolver;
 }
 
 /**
@@ -144,7 +171,11 @@ function isThenable(value: unknown): value is Promise<unknown> {
  */
 export function guardRecordsClient<T extends object>(
   client: T,
-  { getSessionKey, onSessionInvalidated }: SessionGuardOptions
+  {
+    getSessionKey,
+    onSessionInvalidated,
+    getSessionReplacement,
+  }: SessionGuardOptions
 ): T {
   return new Proxy(client, {
     get(target, property) {
@@ -163,8 +194,9 @@ export function guardRecordsClient<T extends object>(
 
       const method = value as (...args: unknown[]) => unknown;
       const shouldCheck = !IGNORED_METHODS.has(property);
+      const canWaitForReplacement = !REPLACING_METHODS.has(property);
 
-      return (...args: unknown[]): unknown => {
+      const call = (args: unknown[], isRetry: boolean): unknown => {
         // The key as it was when the request went out. Null means the request was
         // anonymous, so a failure tells us nothing about a session — this is what
         // stops an already signed-out user from being "signed out" again.
@@ -181,9 +213,28 @@ export function guardRecordsClient<T extends object>(
         // `.then` only, never `.catch`: a rejection (offline, DNS, CORS, a 500
         // with no body) must pass through unobserved and must never sign anyone
         // out.
-        return result.then((resolved) => {
+        return result.then(async (resolved) => {
           const fatal = findFatalSessionError(resolved);
-          if (fatal && getSessionKey() === sessionKeyAtRequest) {
+          if (!fatal) {
+            return resolved;
+          }
+
+          const replacement =
+            canWaitForReplacement && !isRetry
+              ? getSessionReplacement?.(sessionKeyAtRequest)
+              : null;
+          if (replacement) {
+            // A refresh that threw (offline, say) replaced nothing.
+            const newKey = await replacement.catch(() => null);
+            if (newKey && getSessionKey() === newKey) {
+              // The key was only refused because it had just been replaced. The
+              // server checks the key before doing anything else, so nothing was
+              // read or written and sending the same call again is safe.
+              return call(args, true);
+            }
+          }
+
+          if (getSessionKey() === sessionKeyAtRequest) {
             // Still the same session. If the key has already changed — a sibling
             // request beat us to it, or the user signed out and back in — this
             // failure is stale news. That check is what collapses a burst of
@@ -196,6 +247,8 @@ export function guardRecordsClient<T extends object>(
           return resolved;
         });
       };
+
+      return (...args: unknown[]): unknown => call(args, false);
     },
 
     set(target, property, value) {

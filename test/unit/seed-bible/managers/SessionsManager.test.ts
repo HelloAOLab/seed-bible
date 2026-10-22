@@ -502,6 +502,7 @@ describe("SessionsManager", () => {
       endedAt: null,
       shareTranslation: false,
       coHostUserIds: [],
+      verseSelectionEffectVisibility: "hosts-only",
     });
   });
 
@@ -699,6 +700,7 @@ describe("SessionsManager", () => {
       endedAt: null,
       shareTranslation: false,
       coHostUserIds: [],
+      verseSelectionEffectVisibility: "hosts-only",
     });
   });
 
@@ -732,6 +734,7 @@ describe("SessionsManager", () => {
       endedAt: null,
       shareTranslation: false,
       coHostUserIds: [],
+      verseSelectionEffectVisibility: "hosts-only",
     });
     expect(mockOptionsMap.set).not.toHaveBeenCalled();
   });
@@ -751,9 +754,12 @@ describe("SessionsManager", () => {
         return ["user-1", "conn-2"];
       }
 
+      if (key === "verseSelectionEffectVisibility") {
+        return "everyone";
+      }
+
       return null;
     });
-
     mockOptionsMap.emitChange();
 
     await waitFor(
@@ -768,7 +774,133 @@ describe("SessionsManager", () => {
       endedAt: null,
       shareTranslation: false,
       coHostUserIds: [],
+      verseSelectionEffectVisibility: "everyone",
     });
+  });
+  it("updateOptions(newOptions) updates verse selection effect visibility", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
+
+    session.updateOptions({
+      verseSelectionEffectVisibility: "everyone",
+    });
+
+    expect(mockOptionsMap.set).toHaveBeenCalledWith(
+      "verseSelectionEffectVisibility",
+      "everyone"
+    );
+
+    expect(session.options.value.verseSelectionEffectVisibility).toBe(
+      "everyone"
+    );
+  });
+
+  it.each(["hosts-only", "everyone", "none"] as const)(
+    "preserves verse selection effect visibility when updating options to %s",
+    async (visibility) => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+
+      const session = await manager.joinSession("group-abc");
+
+      mockOptionsMap.setEmitOnSet(true);
+
+      // Change away from the default first, so the hosts-only case
+      // also exercises an actual update.
+      session.updateOptions({
+        verseSelectionEffectVisibility:
+          visibility === "hosts-only" ? "everyone" : "hosts-only",
+      });
+
+      mockOptionsMap.set.mockClear();
+
+      session.updateOptions({
+        verseSelectionEffectVisibility: visibility,
+      });
+
+      expect(session.options.value.verseSelectionEffectVisibility).toBe(
+        visibility
+      );
+
+      expect(mockOptionsMap.set).toHaveBeenCalledWith(
+        "verseSelectionEffectVisibility",
+        visibility
+      );
+    }
+  );
+  it.each(["hosts-only", "everyone", "none"] as const)(
+    "loads verse selection effect visibility %s from shared options",
+    async (visibility) => {
+      mockOptionsMap = createMockSharedMap({
+        verseSelectionEffectVisibility: visibility,
+      });
+
+      mockDocument.getMap.mockImplementation((name: string) => {
+        if (name === "options") return mockOptionsMap;
+        if (name === "decorations") return mockDecorationsMap;
+        if (name === "user_profiles") return mockUserProfilesMap;
+        if (name === "reading_positions") return mockReadingPositionsMap;
+        if (name === "reading_extensions") return mockExtensionsMap;
+        return mockMap;
+      });
+
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+
+      const session = await manager.joinSession("group-abc");
+
+      expect(session.options.value.verseSelectionEffectVisibility).toBe(
+        visibility
+      );
+    }
+  );
+  it("updates verse selection effect visibility when the shared options map changes", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.get.mockImplementation((key: string) => {
+      if (key === "verseSelectionEffectVisibility") {
+        return "everyone";
+      }
+
+      return null;
+    });
+
+    mockOptionsMap.emitChange();
+
+    await waitFor(
+      () => session.options.value.verseSelectionEffectVisibility === "everyone"
+    );
+
+    expect(session.options.value.verseSelectionEffectVisibility).toBe(
+      "everyone"
+    );
   });
 
   it("updateOptions(newOptions) writes options to the shared options map", async () => {
@@ -799,6 +931,7 @@ describe("SessionsManager", () => {
       endedAt: null,
       shareTranslation: false,
       coHostUserIds: [],
+      verseSelectionEffectVisibility: "hosts-only",
     });
   });
 
