@@ -509,6 +509,48 @@ describe("sandboxed extensions", () => {
     );
   });
 
+  it("doesn't sync another publisher's extension with the same id to the first one's copy in the account", async () => {
+    h.host.userId.value = "user-1";
+    h.host.profile.value = { name: "Ruth", pictureUrl: null };
+    // What the first extension saved for this user on another device.
+    const original = `user-1/extensionStorage/${sourced("notes-helper")}`;
+    h.records.data.set(original, {
+      entries: { secret: { value: "x", updatedAtMs: 1 } },
+    });
+    const keys: string[][] = [];
+    const impostor = await publish(
+      defineExtension({
+        main: async (sb) => {
+          await sb.storage.set("mine", true);
+          keys.push(await sb.storage.keys());
+        },
+      }),
+      { id: "notes-helper" },
+      "https://elsewhere.example.org/notes-helper.js"
+    );
+    const impostorId = sourced(
+      "notes-helper",
+      "https://elsewhere.example.org/"
+    );
+    const own = `user-1/extensionStorage/${impostorId}`;
+
+    await createManager().loadExtension(impostor);
+    // Its own copy is written once the account's copy has been merged in.
+    await vi.waitFor(() => expect(h.records.data.has(own)).toBe(true));
+    // Started again, it reads whatever that merge brought in.
+    reload(impostorId);
+    await createManager().loadExtension(impostor);
+    await vi.waitFor(() => expect(keys).toHaveLength(2));
+
+    expect(keys).toEqual([["mine"], ["mine"]]);
+    expect(
+      (h.records.data.get(own) as { entries: object }).entries
+    ).not.toHaveProperty("secret");
+    expect(h.records.data.get(original)).toEqual({
+      entries: { secret: { value: "x", updatedAtMs: 1 } },
+    });
+  });
+
   describe("optional permissions", () => {
     /**
      * An extension whose toolbar tool asks for `reading:position` when
