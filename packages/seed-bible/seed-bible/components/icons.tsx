@@ -63,42 +63,42 @@ const SEED_BIBLE_ICON_BRANCHES = [
     side: "left",
     points: "0,205.29 253,205.29 253,258.23 0,258.23",
     hingeY: 231,
-    delay: 0.5,
+    delay: 0.36,
   },
   {
     id: "ground-r",
     side: "right",
     points: "302.14,205.29 555.14,205.29 555.14,258.23 302.14,258.23",
     hingeY: 231,
-    delay: 0.5,
+    delay: 0.36,
   },
   {
     id: "middle-l",
     side: "left",
     points: "0,80 200,80 253,106 253,205.29 0,205.29",
     hingeY: 155,
-    delay: 0.55,
+    delay: 0.41,
   },
   {
     id: "middle-r",
     side: "right",
     points: "555.14,80 355.14,80 302.14,106 302.14,205.29 555.14,205.29",
     hingeY: 155,
-    delay: 0.55,
+    delay: 0.41,
   },
   {
     id: "top-l",
     side: "left",
     points: "0,0 253,0 253,106 200,80 0,80",
     hingeY: 60,
-    delay: 0.6,
+    delay: 0.46,
   },
   {
     id: "top-r",
     side: "right",
     points: "555.14,0 302.14,0 302.14,106 355.14,80 555.14,80",
     hingeY: 60,
-    delay: 0.6,
+    delay: 0.46,
   },
 ] as const;
 
@@ -194,7 +194,7 @@ function AnimatedSeedBiblePaths() {
   );
 }
 
-const SEED_BIBLE_ICON_INTRO_MS = 1050;
+const SEED_BIBLE_ICON_INTRO_MS = 900;
 
 // When the first animated icon mounted (page lifetime). Toolbars remount their
 // icons whenever their tool list changes, e.g. when an extension adds a tool,

@@ -1,6 +1,6 @@
 /*
  * SeedBibleIcon `animated`, in two stages (~1s): the seed sprouts into the
- * trunk (done by 0.42s), then after a beat the branches unfold as pages.
+ * trunk (visually full height by ~0.3s), then the branches unfold as pages.
  * `--sb-seed-icon-elapsed` resumes an intro already in progress when the icon
  * remounts mid-animation, by shifting every delay back by that much.
  */
@@ -39,7 +39,7 @@
 }
 
 .sb-seed-icon-whole {
-  animation: sb-seed-icon-whole 1.05s step-end both;
+  animation: sb-seed-icon-whole 0.9s step-end both;
   animation-delay: calc(0s - var(--sb-seed-icon-elapsed, 0s));
 }
 
