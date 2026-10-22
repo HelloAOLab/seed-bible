@@ -88,8 +88,11 @@ elsewhere, and what to do when an install fails.
 
 ## Learn more
 
-- §7 of [`docs/developer-guide.md`](https://github.com/HelloAOLab/seed-bible/blob/develop/docs/developer-guide.md): the
-  whole `sb` API, permissions, testing and limits.
+- [`docs/extension-api.md`](https://github.com/HelloAOLab/seed-bible/blob/develop/docs/extension-api.md): the
+  reference for every `sb` call, `extension.json` field, error, limit and
+  testing helper.
+- §7 of [`docs/developer-guide.md`](https://github.com/HelloAOLab/seed-bible/blob/develop/docs/developer-guide.md): a
+  tour of the same API by example.
 - [`docs/extension-security.md`](https://github.com/HelloAOLab/seed-bible/blob/develop/docs/extension-security.md): how the
   sandbox keeps users safe.
 - [`packages/sandboxed-example-extension`](https://github.com/HelloAOLab/seed-bible/tree/develop/packages/sandboxed-example-extension/):

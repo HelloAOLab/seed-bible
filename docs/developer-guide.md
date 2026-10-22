@@ -294,7 +294,7 @@ You'll also encounter `context.readingExtensions` (backed by `BibleReadingExtens
 
 ## 7. Third-party (sandboxed) extensions
 
-Every extension loaded from a URL runs sandboxed. The design, including what it protects against and what it doesn't, is in [`extension-security.md`](./extension-security.md). This section covers what you need to write one.
+Every extension loaded from a URL runs sandboxed. The design, including what it protects against and what it doesn't, is in [`extension-security.md`](./extension-security.md). This section covers what you need to write one. For the exact signature, permission, errors and limits of every call, see the [extension API reference](./extension-api.md).
 
 **Where it runs.** Your code runs in a hidden iframe with its own, unique origin. It can't read the app's DOM, storage or cookies, so the user's session key and data are out of reach. It talks to Seed Bible only through the `sb` object the SDK gives you, and each call is checked against what the user granted. When you open a pane, the host draws the pane (its border, title and close button, plus a badge with your extension's name) and renders your view in a second iframe inside it.
 
@@ -487,6 +487,7 @@ Whether a project is sandboxed is decided by its code: one that imports `seed-bi
 
 ## 9. Where to go from here
 
+- For a third-party extension, keep the [extension API reference](./extension-api.md) open: it lists every `sb` call, `extension.json` field, error and limit.
 - Copy `packages/seed-bible-refresh-example-extension/` as a starting point — it demonstrates every extension point covered in §5 in one file. (If you're not working inside this repo at all, use `create-seed-bible-extension` instead — see §8 — and look at `packages/sandboxed-example-extension/`, the same extension written for the sandbox.)
 - Run `pnpm dev` and use the in-app Settings extensions list to install/uninstall your extension while iterating; bundled extensions are auto-discovered, so adding a new `packages/<name>/extension.json` is picked up by the dev server automatically.
 - Look at `packages/locations-extension`, `packages/audio-reader-extension`, and `packages/apologist-extension` for complete, real-world extensions covering three very different use cases: content analysis + map integration, media playback tied to reading state, and third-party chat integration.

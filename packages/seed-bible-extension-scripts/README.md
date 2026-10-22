@@ -32,7 +32,9 @@ work out from its code:
 
 The rest of this README is about sandboxed extensions unless it says
 otherwise. For writing one, see §7 of
-[`docs/developer-guide.md`](https://github.com/HelloAOLab/seed-bible/blob/develop/docs/developer-guide.md).
+[`docs/developer-guide.md`](https://github.com/HelloAOLab/seed-bible/blob/develop/docs/developer-guide.md),
+and [`docs/extension-api.md`](https://github.com/HelloAOLab/seed-bible/blob/develop/docs/extension-api.md)
+for every `sb` call.
 
 ## Commands
 
