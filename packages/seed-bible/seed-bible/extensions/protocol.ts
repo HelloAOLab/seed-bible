@@ -39,6 +39,13 @@ export const SANDBOX_PERMISSIONS = [
   "device:camera",
 ] as const;
 
+/**
+ * A permission an extension declares in `extension.json`, under
+ * `permissions` (granted at install) or `optionalPermissions` (asked for
+ * later with `sb.permissions.request`). See `SANDBOX_PERMISSION_INFO` for
+ * which can be required, and `SANDBOX_METHOD_PERMISSIONS` for what each
+ * unlocks.
+ */
 export type SandboxPermission = (typeof SANDBOX_PERMISSIONS)[number];
 
 export function isSandboxPermission(
@@ -123,13 +130,26 @@ export function expandSandboxPermissions(
   return [...all];
 }
 
+/**
+ * Text the app shows for the extension, up to 120 characters: a plain
+ * string, or a key in the extension's `extension.json` translations, so it
+ * follows the user's language, with the text to show if it's missing.
+ */
 export type SandboxTitle = string | { key: string; defaultValue: string };
 
 /**
  * An SVG document (rendered by the host inside an `<img>`, where it can't run
  * scripts or load anything), or the name of a Material Symbols glyph.
  */
-export type SandboxIcon = { svg: string } | { material: string };
+export type SandboxIcon =
+  | {
+      /** A whole `<svg>` element, at most 16 KB. */
+      svg: string;
+    }
+  | {
+      /** A Material Symbols name, like `"palette"` (lowercase and `_`). */
+      material: string;
+    };
 
 export type SandboxToolSurface = "toolbar" | "verse" | "quick" | "belowReader";
 
@@ -156,21 +176,37 @@ export type SandboxToolPatch = Partial<
   Omit<SandboxToolDefinition, "id" | "surface">
 >;
 
+/**
+ * The passage in the reader in view. Note `chapterNumber` here, where the
+ * methods that take a chapter call it `chapter`.
+ */
 export interface SandboxReadingPosition {
+  /** Like `"BSB"`; null before a translation is open. */
   translationId: string | null;
+  /** A three-letter USFM book code, like `"JHN"`; null before a book is open. */
   bookId: string | null;
   chapterNumber: number | null;
 }
 
+/** One verse the user has selected in the reader. */
 export interface SandboxSelectedVerse {
   translationId: string | null;
+  /** A three-letter USFM book code, like `"JHN"`. */
   bookId: string;
   chapterNumber: number;
   verse: number;
 }
 
+/**
+ * Where a pane opens: docked beside the reader, as a window over it, or
+ * covering the whole app.
+ */
 export type SandboxPanePlacement = "side" | "floating" | "fullscreen";
 
+/**
+ * Anything `JSON.stringify` round-trips: no functions, `Date`s, `Map`s or
+ * class instances. This is what crosses between the extension and the app.
+ */
 export type SandboxJsonValue =
   | string
   | number
@@ -179,25 +215,31 @@ export type SandboxJsonValue =
   | SandboxJsonValue[]
   | { [key: string]: SandboxJsonValue };
 
+/** What `sb.panes.open` takes. */
 export interface SandboxPaneOptions {
   /** The name of an entry in the extension's `views`. */
   view: string;
   placement: SandboxPanePlacement;
   title: SandboxTitle;
-  /** Handed to the view as `props`. */
+  /** Handed to the view as `props`. At most 64 KB as JSON. */
   props?: SandboxJsonValue;
   /**
    * Reuses this extension's pane with the same id instead of opening another.
    * Scoped to the extension, so it can never address another pane.
    */
   id?: string;
+  /** In pixels, 120–4000. Defaults to 480 when only `height` is given. */
   width?: number;
+  /** In pixels, 80–4000. Defaults to 320 when only `width` is given. */
   height?: number;
 }
 
+/** Where `sb.reading.open` takes the reader. */
 export interface SandboxVerseRef {
+  /** A three-letter USFM book code, like `"JHN"`. */
   bookId: string;
   chapter: number;
+  /** Scrolls to this verse. */
   verse?: number;
 }
 
@@ -263,10 +305,13 @@ export interface SandboxSessionParticipant {
   isYou: boolean;
 }
 
+/** The shared reading session open in the current tab (`sb.session.current`). */
 export interface SandboxSharedSession {
+  /** Everyone in it, the user included; at most 100. */
   participants: SandboxSessionParticipant[];
 }
 
+/** One of the user's friends (`sb.friends.list`). */
 export interface SandboxFriend {
   /** Pseudonymous, like `SandboxSessionParticipant.id`. */
   id: string;
@@ -280,8 +325,10 @@ export interface SandboxCapture {
   bytes: ArrayBuffer;
 }
 
+/** A CasualOS pattern: published, by name, or an `.aux` file by `https:` URL. */
 export type SandboxCasualOSPattern = { name: string } | { aux: string };
 
+/** What `sb.portals.open` takes. */
 export interface SandboxPortalOptions {
   /** The pattern to load. Without one, the portal opens empty. */
   pattern?: SandboxCasualOSPattern;
@@ -290,13 +337,18 @@ export interface SandboxPortalOptions {
   portal?: string;
   /** The CasualOS instance. Defaults to a fresh one for each open. */
   inst?: string;
-  /** Extra query parameters for the pattern. */
+  /**
+   * Up to 20 extra query parameters for the pattern. Can't set `inst`,
+   * `staticInst`, `gridPortal`, `mapPortal`, `pattern` or `patternAux`.
+   */
   query?: Record<string, string>;
   placement: SandboxPanePlacement;
   title: SandboxTitle;
   /** Reuses this extension's pane with the same id, as for `panes.open`. */
   id?: string;
+  /** In pixels, as for `panes.open`. */
   width?: number;
+  /** In pixels, as for `panes.open`. */
   height?: number;
 }
 
@@ -315,28 +367,36 @@ export type SandboxFrameMode =
 /** A highlight on one verse or an inclusive `[start, end]` range. */
 export interface SandboxHighlight {
   verse: number | [number, number];
+  /** One of `sb.highlights.colors()`. */
   colorId: string;
 }
 
+/** A note on a chapter (`sb.notes.list`). */
 export interface SandboxNote {
   id: string;
   /** The verses it's attached to; null for the whole chapter. */
   verses: number[] | null;
   /** The note as plain text. */
   text: string;
+  /** Milliseconds since the epoch; null if unknown. */
   createdAt: number | null;
+  /** Milliseconds since the epoch; null if unknown. */
   updatedAt: number | null;
   /** Only notes the extension added can be changed or deleted by it. */
   addedByThisExtension: boolean;
 }
 
+/** A saved chapter, verse or range: a bookmark (`sb.saves.list`). */
 export interface SandboxSave {
+  /** For `sb.saves.remove`. */
   id: string;
   translationId: string;
   bookId: string;
   chapter: number;
+  /** A verse, an inclusive `[start, end]` range, or null for the whole chapter. */
   verse: number | [number, number] | null;
   categories: string[];
+  /** Milliseconds since the epoch. */
   createdAt: number;
 }
 
@@ -348,14 +408,21 @@ export interface SandboxReadingEvent {
   end: number;
 }
 
+/** The signed-in user (`sb.profile.get`). */
 export interface SandboxProfile {
   /** The user's real account id. */
   userId: string;
+  /** Their display name. */
   name: string;
   pictureUrl: string | null;
 }
 
+/**
+ * A passage for the Discover panel: a chapter, a verse, or a range up to
+ * `endChapter`/`endVerse`.
+ */
 export interface SandboxReference {
+  /** A three-letter USFM book code, like `"JHN"`. */
   bookId: string;
   chapter: number;
   verse?: number;
@@ -369,10 +436,15 @@ export type SandboxDiscoverResult =
       type: "content";
       /** Passed back to `onSelect` when the user picks it. */
       id: string;
+      /** Up to 200 characters. */
       title: string;
+      /** Up to 2,000 characters. */
       description: string;
+      /** The passage it's about. */
       reference: SandboxReference;
+      /** The verses it's about, if not the whole reference. */
       verses?: number[];
+      /** Defaults to the extension's name. */
       author?: string;
       /** An `https:` image on one of the manifest's `network` hosts. */
       image?: string;
@@ -382,30 +454,44 @@ export type SandboxDiscoverResult =
       reference: SandboxReference;
       crossReference: SandboxReference;
     }
-  | { type: "study-note"; reference: SandboxReference; text: string };
+  | {
+      type: "study-note";
+      reference: SandboxReference;
+      /** Plain text, up to 5,000 characters. */
+      text: string;
+    };
 
+/** What a Discover provider's `discover` is asked about: the open chapter. */
 export interface SandboxDiscoverRequest {
+  /** The `id` the provider was registered with. */
   providerId: string;
   translationId: string;
   bookId: string;
   chapter: number;
+  /** The app's language code, so results can match it. */
   language: string;
 }
 
+/** One message in a chat, as a chat provider sees it. */
 export interface SandboxChatMessage {
   /** The author's display name, if they have one. */
   author: string | null;
   /** True for messages this extension's provider sent. */
   fromThisProvider: boolean;
   text: string;
+  /** When it was sent, in milliseconds since the epoch. */
   timeMs: number;
 }
 
+/** What a chat provider's `respond` is called with. */
 export interface SandboxChatRequest {
+  /** The `id` the provider was registered with. */
   providerId: string;
+  /** Which chat; stable for that chat. */
   chatId: string;
   /** Whether other people are in the chat (needs `chat:shared`). */
   shared: boolean;
+  /** The last 100 text messages, oldest first. */
   messages: SandboxChatMessage[];
 }
 
