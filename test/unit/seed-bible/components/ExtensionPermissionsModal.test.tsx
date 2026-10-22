@@ -34,20 +34,6 @@ describe("extension permission dialogs", () => {
     container.remove();
   });
 
-  function renderLatestModal() {
-    const modal = modals.modals.value.at(-1)!;
-    act(() => {
-      render(
-        <I18nProvider
-          i18n={createI18nManager(createNavigationManager(), ["en"])}
-        >
-          {modal.content({ t: (key) => key })}
-        </I18nProvider>,
-        container
-      );
-    });
-  }
-
   describe("the Settings permissions view", () => {
     /**
      * Stands in for `ExtensionManager`'s permission API, applying a toggle the
@@ -76,48 +62,84 @@ describe("extension permission dialogs", () => {
       return { sandboxPermissions, setOptionalPermission };
     }
 
-    it("locks the required permissions and offers a switch for each optional one", () => {
+    function open(
+      summary: Partial<SandboxPermissionSummary>,
+      onUninstall?: () => void
+    ) {
       const extensions = createExtensions({
         required: ["reading:selection"],
         optional: ["notes:write", "reading:history"],
         granted: ["reading:selection", "notes:write"],
         network: ["api.example.com"],
+        version: "1.2.0",
         sourceHost: "files.example.com",
+        ...summary,
       });
-      openExtensionPermissionsModal(modals, extensions, "ext.demo", "Demo");
-      renderLatestModal();
+      openExtensionPermissionsModal(modals, extensions, "ext.demo", "Demo", {
+        onUninstall,
+      });
+      const modal = modals.modals.value.at(-1)!;
+      act(() => {
+        render(
+          <I18nProvider
+            i18n={createI18nManager(createNavigationManager(), ["en"])}
+          >
+            {modal.content({ t: (key) => key })}
+            {modal.footer?.({ t: (key) => key })}
+          </I18nProvider>,
+          container
+        );
+      });
+      return extensions;
+    }
 
-      const switches = [
-        ...container.querySelectorAll<HTMLInputElement>(
-          'input[type="checkbox"]'
-        ),
-      ];
-      expect(switches.map((s) => s.checked)).toEqual([true, false]);
-      // One switch per optional permission, none for the required one.
-      expect(switches).toHaveLength(2);
-      expect(container.textContent).toContain("api.example.com");
-      // Only the high-risk one (notes:write) carries a warning.
+    const switches = () => [
+      ...container.querySelectorAll<HTMLButtonElement>('[role="switch"]'),
+    ];
+    const button = (label: string) =>
+      [...container.querySelectorAll("button")].find(
+        (b) => b.textContent === label
+      )!;
+    const status = () =>
+      container.querySelector('[role="status"]')!.textContent;
+
+    it("locks what it needs and offers a switch for each optional permission", () => {
+      open({});
+
+      // Per card: each line, and what ends it.
       expect(
-        container.querySelectorAll(".sb-extension-consent-warning")
-      ).toHaveLength(1);
+        [...container.querySelectorAll(".sb-extension-consent-card")].map(
+          (card) =>
+            [...card.querySelectorAll(".sb-extension-consent-lines li")].map(
+              (line) => line.textContent
+            )
+        )
+      ).toEqual([
+        ["See which verses you selectlockNeeded", "See your reading history"],
+        ["Add notes, and change or delete the ones it addedSensitive"],
+        ["Connect to api.example.comlockNeeded"],
+      ]);
+      expect(
+        switches().map((s) => [
+          s.getAttribute("aria-label"),
+          s.getAttribute("aria-checked"),
+        ])
+      ).toEqual([
+        ["See your reading history", "false"],
+        ["Add notes, and change or delete the ones it added", "true"],
+      ]);
+      expect(container.textContent).toContain("Demo 1.2.0");
+      expect(container.textContent).toContain(
+        "To take away something marked Needed, uninstall Demo."
+      );
     });
 
-    it("turns an optional permission on and off through the extension manager", async () => {
-      const extensions = createExtensions({
-        required: [],
-        optional: ["reading:history"],
-        granted: [],
-        network: [],
-        sourceHost: "files.example.com",
-      });
-      openExtensionPermissionsModal(modals, extensions, "ext.demo", "Demo");
-      renderLatestModal();
-      const toggle = container.querySelector<HTMLInputElement>(
-        'input[type="checkbox"]'
-      )!;
+    it("turns an optional permission on through the extension manager, and says it saved", async () => {
+      const extensions = open({});
+      expect(status()).toContain("Changes take effect straight away.");
 
       await act(async () => {
-        toggle.click();
+        switches()[0]!.click();
       });
 
       expect(extensions.setOptionalPermission).toHaveBeenCalledWith(
@@ -125,10 +147,45 @@ describe("extension permission dialogs", () => {
         "reading:history",
         true
       );
+      expect(switches()[0]!.getAttribute("aria-checked")).toBe("true");
+      expect(status()).toContain(
+        "Saved. Demo restarted with the new permissions."
+      );
+    });
+
+    it("says so when a change doesn't save", async () => {
+      const extensions = open({});
+      extensions.setOptionalPermission.mockResolvedValueOnce(false);
+
+      await act(async () => {
+        switches()[1]!.click();
+      });
+
+      expect(status()).toContain("That didn't save. Try again.");
+      expect(switches()[1]!.getAttribute("aria-checked")).toBe("true");
+    });
+
+    it("uninstalls from the dialog, and closes it", () => {
+      const onUninstall = vi.fn();
+      open({}, onUninstall);
+
+      act(() => button("Uninstall").click());
+
+      expect(onUninstall).toHaveBeenCalledTimes(1);
+      expect(modals.modals.value).toEqual([]);
+    });
+
+    it("closes on Done, and only offers Uninstall when it can", () => {
+      open({});
       expect(
-        container.querySelector<HTMLInputElement>('input[type="checkbox"]')!
-          .checked
-      ).toBe(true);
+        [...container.querySelectorAll("button")].some(
+          (b) => b.textContent === "Uninstall"
+        )
+      ).toBe(false);
+
+      act(() => button("Done").click());
+
+      expect(modals.modals.value).toEqual([]);
     });
   });
 

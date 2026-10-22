@@ -325,7 +325,7 @@ When a new version's manifest asks for nothing new, it updates silently. When it
 
 Settings → Extensions gets a "Permissions" section per sandboxed extension, with a toggle per permission (required ones can't be turned off without uninstalling). Revoking tears down the extension's frames, removes everything it registered, and restarts it with the smaller set.
 
-_As built:_ the shield button on an installed sandboxed extension in Settings → Extensions opens its permissions: what it needs to work at all (locked), each optional permission as a switch, and the hosts it can contact. Turning one on or off saves the change with the grant and restarts the extension with exactly the new set.
+_As built:_ the shield button on an installed sandboxed extension in Settings → Extensions opens its permissions, in the same cards as the install dialog: what it needs to work at all, and the hosts it can contact, are marked **Needed** with a lock, and each optional permission has a switch. Turning one on or off saves the change with the grant and restarts the extension with exactly the new set, and a banner above the cards confirms it (or says it didn't save). The dialog's footer has **Uninstall**, the only way to take away something Needed, and **Done**.
 
 ### 6.5 Installs that don't come from the user clicking Install
 

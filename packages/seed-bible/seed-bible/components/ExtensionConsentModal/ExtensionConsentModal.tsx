@@ -172,30 +172,6 @@ export function withSource(
   );
 }
 
-/** One permission's line, marked when it's high risk. */
-export function PermissionLine({
-  permission,
-}: {
-  permission: SandboxPermission;
-}) {
-  const { t } = useI18n();
-  const highRisk = SANDBOX_PERMISSION_INFO[permission].risk === "high";
-  return (
-    <li className={highRisk ? "sb-extension-consent-high-risk" : undefined}>
-      {highRisk && (
-        <span
-          className="material-symbols-outlined sb-extension-consent-warning"
-          role="img"
-          aria-label={t("extension-consent-high-risk")}
-        >
-          warning
-        </span>
-      )}
-      {permissionLabel(t, permission)}
-    </li>
-  );
-}
-
 type PermissionGroup =
   | "reading"
   | "study"
@@ -254,19 +230,24 @@ function groupTitle(t: Translate, group: PermissionGroup): string {
   }
 }
 
-interface ConsentLine {
+export interface ConsentLine {
   key: string;
   label: string;
   highRisk: boolean;
+  /** Null for a network host. */
+  permission: SandboxPermission | null;
 }
 
 /** One card per area the extension would reach into, each listing what it may do there. */
-function PermissionCards({
+export function PermissionCards({
   permissions,
   network,
+  control,
 }: {
   permissions: SandboxPermission[];
   network: string[];
+  /** Drawn at the end of each line, e.g. a switch to turn it off. */
+  control?: (line: ConsentLine) => ComponentChildren;
 }) {
   const { t } = useI18n();
   const lines = new Map<PermissionGroup, ConsentLine[]>();
@@ -277,6 +258,7 @@ function PermissionCards({
       key: permission,
       label: permissionLabel(t, permission),
       highRisk: SANDBOX_PERMISSION_INFO[permission].risk === "high",
+      permission,
     });
   }
   for (const host of network) {
@@ -284,6 +266,7 @@ function PermissionCards({
       key: host,
       label: t("extension-permission-network", { host }),
       highRisk: false,
+      permission: null,
     });
   }
 
@@ -307,13 +290,23 @@ function PermissionCards({
               </h4>
               <ul className="sb-extension-consent-lines">
                 {lines.get(group)!.map((line) => (
-                  <li key={line.key}>
-                    {line.label}
-                    {line.highRisk && (
-                      <span className="sb-extension-consent-sensitive">
-                        {t("extension-consent-high-risk")}
-                      </span>
-                    )}
+                  <li
+                    key={line.key}
+                    className={
+                      control
+                        ? "sb-extension-consent-line-with-control"
+                        : undefined
+                    }
+                  >
+                    <span>
+                      {line.label}
+                      {line.highRisk && (
+                        <span className="sb-extension-consent-sensitive">
+                          {t("extension-consent-high-risk")}
+                        </span>
+                      )}
+                    </span>
+                    {control?.(line)}
                   </li>
                 ))}
               </ul>
@@ -357,7 +350,11 @@ function tileHue(extensionId: string): number {
   return hash % TILE_HUES;
 }
 
-function ExtensionTile({ request }: { request: SandboxConsentRequest }) {
+export function ExtensionTile({
+  request,
+}: {
+  request: { extensionId: string; title: string };
+}) {
   return (
     <span
       className={`sb-extension-consent-tile sb-extension-consent-tile-${tileHue(request.extensionId)}`}

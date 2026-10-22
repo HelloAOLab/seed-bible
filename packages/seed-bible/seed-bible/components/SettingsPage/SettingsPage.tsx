@@ -1706,7 +1706,13 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                       id,
                       // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
                       t("title", { ns: id, defaultValue: id }),
-                      { userId: state.login.userId, friends: state.friends }
+                      {
+                        people: {
+                          userId: state.login.userId,
+                          friends: state.friends,
+                        },
+                        onUninstall: () => handleUninstall(id),
+                      }
                     )
                   }
                   aria-label={t("extension-permissions-button")}

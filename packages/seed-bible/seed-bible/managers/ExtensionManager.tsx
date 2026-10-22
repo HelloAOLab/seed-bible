@@ -561,6 +561,7 @@ export interface SandboxPermissionSummary {
   /** What the user has granted (required ones included). */
   granted: SandboxPermission[];
   network: string[];
+  version: string | null;
   sourceHost: string;
   uploader?: SandboxUploader;
 }
@@ -1772,6 +1773,7 @@ export function createExtensionManager(
           optional: manifest.optionalPermissions,
           granted,
           network: manifest.network,
+          version: manifest.version,
           sourceHost,
           uploader,
         },
