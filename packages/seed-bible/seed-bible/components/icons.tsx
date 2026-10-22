@@ -1,4 +1,4 @@
-import { useId, useState } from "preact/hooks";
+import { useEffect, useId, useState } from "preact/hooks";
 import { useAppConfig } from "../app/appConfig";
 import "./icons.css";
 
@@ -198,7 +198,9 @@ const SEED_BIBLE_ICON_INTRO_MS = 900;
 
 // When the first animated icon mounted (page lifetime). Toolbars remount their
 // icons whenever their tool list changes, e.g. when an extension adds a tool,
-// so without this the intro would replay each time.
+// so without this the intro would replay each time. It's set on mount, not
+// render, so server rendering never counts as the first time and the client's
+// hydration render always matches the server's markup.
 let seedBibleIconIntroStartedAt: number | null = null;
 
 /**
@@ -210,18 +212,17 @@ function useSeedBibleIconIntroElapsed(animated: boolean): number | null {
     if (!animated) {
       return null;
     }
-    // The server has no "first time" to track; it always renders the intro
-    // so the markup matches the client's first render.
-    if (typeof window === "undefined") {
+    if (seedBibleIconIntroStartedAt === null) {
       return 0;
     }
-    const now = Date.now();
-    if (seedBibleIconIntroStartedAt === null) {
-      seedBibleIconIntroStartedAt = now;
-    }
-    const elapsed = now - seedBibleIconIntroStartedAt;
+    const elapsed = Date.now() - seedBibleIconIntroStartedAt;
     return elapsed < SEED_BIBLE_ICON_INTRO_MS ? elapsed : null;
   });
+  useEffect(() => {
+    if (elapsed !== null && seedBibleIconIntroStartedAt === null) {
+      seedBibleIconIntroStartedAt = Date.now();
+    }
+  }, [elapsed]);
   return elapsed;
 }
 

@@ -1,5 +1,6 @@
-import { render } from "preact";
+import { hydrate, render } from "preact";
 import { act } from "preact/test-utils";
+import { renderToString } from "preact-render-to-string";
 
 // The "has the intro played yet" record lives in module state for the page's
 // lifetime, so each test loads a fresh copy of the module.
@@ -82,5 +83,17 @@ describe("SeedBibleIcon intro animation", () => {
 
     expect(isAnimating()).toBe(true);
     expect(elapsedVar()).toBe("0ms");
+  });
+
+  it("doesn't count server rendering as having played the intro, so hydration matches the server's markup however long it takes", async () => {
+    const SeedBibleIcon = await loadSeedBibleIcon();
+    const serverHtml = renderToString(<SeedBibleIcon animated />);
+
+    vi.advanceTimersByTime(5000);
+    container.innerHTML = serverHtml;
+    act(() => hydrate(<SeedBibleIcon animated />, container));
+
+    expect(container.innerHTML).toBe(serverHtml);
+    expect(isAnimating()).toBe(true);
   });
 });
