@@ -385,10 +385,13 @@ export type PlaylistPlayHistory = z.infer<typeof PlaylistPlayHistorySchema>;
 /**
  * Options for {@link createPlaylistManager}'s `startPlaying`. Pass
  * `history: false` to skip tracking (e.g. reading plans that reuse the
- * playlist player).
+ * playlist player). Pass `sharedOpening: true` when the play came from a
+ * shared link, a reload of a playing URL, or the playlist page's Start
+ * button; closing the opening text or link then walks into the playlist.
  */
 export type StartPlayingOptions = {
   history?: false;
+  sharedOpening?: true;
 };
 
 export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
@@ -656,6 +659,13 @@ export function expandCrossChapterItem(
 }
 
 /**
+ * How playback arrived at the current step. Closing a text or link modal
+ * continues in that direction. A direct landing — pressing play, jumping to
+ * an item, or opening a link to that step — stays on the item, except the
+ * first item, which always steps forward.
+ */
+export type PlaylistStepArrival = "forward" | "backward" | "direct";
+/**
  * How long a passage stays highlighted after its note is closed, before the
  * highlight fades.
  */
@@ -758,6 +768,8 @@ export function createPlayingState(
   });
 
   let decorationId: string | null = null;
+  /** See {@link PlaylistStepArrival}. Starts direct: playback opens on a step the user chose, it doesn't step there. */
+  let stepArrival: PlaylistStepArrival = "direct";
   /**
    * Whether any step has been shown in the reader yet. Until one has, the
    * current step is shown even when the reader already sits on its chapter —
@@ -956,6 +968,7 @@ export function createPlayingState(
    */
   const next = async (): Promise<void> => {
     if (hasNext.value) {
+      stepArrival = "forward";
       moveToStep(currentIndex.value + 1);
       await navigateToCurrentItem();
     } else if (canFinish.value) {
@@ -967,6 +980,7 @@ export function createPlayingState(
   /** Goes back to the previous step. No-op at the start of the queue. */
   const previous = async (): Promise<void> => {
     if (hasPrevious.value) {
+      stepArrival = "backward";
       moveToStep(currentIndex.value - 1);
       await navigateToCurrentItem();
     }
@@ -975,6 +989,12 @@ export function createPlayingState(
   /** Jumps to the given index. No-op when the index is out of range. */
   const jumpTo = async (index: number): Promise<void> => {
     if (index >= 0 && index < queue.value.length) {
+      // Landing on the step already showing isn't a new arrival. Callers
+      // re-jump the current step to make the reader catch up (a shared link
+      // does this), and that must not forget a forward opening.
+      if (currentIndex.peek() !== index) {
+        stepArrival = "direct";
+      }
       moveToStep(index);
       await navigateToCurrentItem();
     }
@@ -1053,6 +1073,7 @@ export function createPlayingState(
 
   /** Restarts playback from the first item. */
   const reset = async (): Promise<void> => {
+    stepArrival = "direct";
     moveToStep(queue.value.length > 0 ? 0 : -1);
     await navigateToCurrentItem();
   };
@@ -1073,7 +1094,8 @@ export function createPlayingState(
     if (!jsonEqual(playlists.peek(), state.playlists)) {
       playlists.value = state.playlists;
     }
-    if (!jsonEqual(queue.peek(), state.queue)) {
+    const queueChanged = !jsonEqual(queue.peek(), state.queue);
+    if (queueChanged) {
       queue.value = state.queue;
     }
     const clampedStep =
@@ -1083,6 +1105,15 @@ export function createPlayingState(
     const nextDetour = state.detour ?? null;
     const stepChanged = currentIndex.peek() !== clampedStep;
     const detourChanged = !jsonEqual(detour.peek(), nextDetour);
+    // A snapshot (a peer, a URL, or a new playlist handed to the extension
+    // already running) placed us on this step. The step number staying the
+    // same is not enough to keep the old direction: the item here may be a
+    // different one. Closing it stays put. An echo of this client's own queue
+    // edit never lands here, because that edit updates `queue` before the
+    // snapshot is written back.
+    if (stepChanged || queueChanged) {
+      stepArrival = "direct";
+    }
     // Together, so the outbound sync never sees the new step without its
     // detour and publishes the detour as cleared.
     batch(() => {
@@ -1152,6 +1183,10 @@ export function createPlayingState(
     reorderQueue,
     reset,
     setState,
+    getStepArrival: () => stepArrival,
+    setStepArrival: (arrival: PlaylistStepArrival) => {
+      stepArrival = arrival;
+    },
     whenSettled,
     dispose,
   };
@@ -1335,9 +1370,10 @@ export function createPlaylistManager(
     return userPlaylists;
   });
 
-  // Opens the content modal for a non-verse item (video/link/text), or closes it
-  // for verse items which are shown in the reader instead. Called both when the
-  // current item changes and when the user taps a queue item directly.
+  // Opens the content modal for a non-verse item (video/link/text), or closes
+  // it for verse items, which are shown in the reader. The effect below calls
+  // this when the current item changes. Tapping the queue item you're already
+  // on doesn't change the index, so that tap calls `showCurrentItem` instead.
   const showItemInModal = (playingState: PlayingState) => {
     const item = playingState.currentItem.value;
     if (!item || item.type === "bible-verse") {
@@ -1345,13 +1381,46 @@ export function createPlaylistManager(
       return;
     }
 
+    const moveAfterClose = (move: Promise<void>) => {
+      move.catch((err) =>
+        console.error("Failed to move playlist after closing an item:", err)
+      );
+    };
+
     openPlaylistItemPreview(
       modals,
       item,
       PLAYLIST_ITEM_MODAL_ID,
       i18n.t,
+      () => {
+        // Tied to the playback that opened this pop-up. Closing continues
+        // the direction they were already moving. There is no next or
+        // previous step at the ends, and closing must not finish the
+        // playlist — that only happens when they press next themselves.
+        const arrival = playingState.getStepArrival();
+        const onFirstItem = playingState.currentIndex.peek() === 0;
+        // The first item has nowhere to go back to, so closing it steps
+        // forward. That includes pressing Play on your own playlist, which
+        // opens the intro directly rather than by Next.
+        if (
+          playingState.hasNext.peek() &&
+          (arrival === "forward" || onFirstItem)
+        ) {
+          moveAfterClose(playingState.next());
+        } else if (arrival === "backward" && playingState.hasPrevious.peek()) {
+          moveAfterClose(playingState.previous());
+        }
+      },
       playingState
     );
+  };
+
+  /** Reopens the pop-up for the item playback is already on. */
+  const showCurrentItem = (): void => {
+    const state = playing.peek();
+    if (state) {
+      showItemInModal(state);
+    }
   };
 
   const savePlaylist = async (playlist: Playlist) => {
@@ -2189,6 +2258,22 @@ export function createPlaylistManager(
         ? Math.min(Math.max(Math.floor(initialStep), 0), queue.length - 1)
         : -1;
 
+    const openingItem = queue[0];
+    // A shared opening on text or a link records that first close as forward.
+    // In-app play records a direct landing; closing the first item still
+    // steps forward. A shared opening on any later step is a direct landing.
+    //
+    // Reloads, restored tabs, and URL sync all come through
+    // `startPlayingLocator`, which passes `sharedOpening`. The address bar
+    // can't tell a link someone shared from a reload of your own playlist, so
+    // a step-1 URL always walks the intro. Closing the first text item after
+    // that reload moves on.
+    const walkOpeningText =
+      options?.sharedOpening === true &&
+      step === 0 &&
+      !!openingItem &&
+      openingItem.type !== "bible-verse";
+
     // Ending an existing tracked session before opening the next one keeps
     // duration/endedAt accurate when the user starts another playlist without
     // an explicit stop.
@@ -2202,6 +2287,11 @@ export function createPlaylistManager(
       queue,
       step,
     } satisfies PlaylistReadingData);
+    // Enabling an extension that is already running hands it this data via
+    // `setState`, which only resets the direction when the step or the queue
+    // changes. Always set it here so a second playlist that starts on the
+    // same step doesn't keep the first playlist's direction.
+    playing.peek()?.setStepArrival(walkOpeningText ? "forward" : "direct");
     const generation = beginOpeningPlayback();
     const opened = playing.peek();
     void (opened?.whenSettled() ?? Promise.resolve()).finally(() => {
@@ -2249,7 +2339,9 @@ export function createPlaylistManager(
         loaded?.locator === locator
           ? loaded.item
           : await loadPlaylist(recordName, id);
-      const state = startPlaying(playlist, stepIndex ?? 0);
+      const state = startPlaying(playlist, stepIndex ?? 0, {
+        sharedOpening: true,
+      });
       if (state) {
         await state.jumpTo(state.currentIndex.peek());
       }
@@ -2826,7 +2918,7 @@ export function createPlaylistManager(
     // the page's own entry into the first step's path (enabling playback
     // replaces the current URL), leaving nothing to go back to.
     tabs.leaveStaticPage({ push: true });
-    startPlaying(page.item, 0);
+    startPlaying(page.item, 0, { sharedOpening: true });
   };
 
   /**
@@ -3138,6 +3230,7 @@ export function createPlaylistManager(
     editingPlaylist,
     playing,
     openingPlayback,
+    showCurrentItem,
     startPlaying,
     stopPlaying,
     continueFromHistory,

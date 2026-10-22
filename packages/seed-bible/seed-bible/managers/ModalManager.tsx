@@ -7,6 +7,11 @@ export interface ManagedModal {
   title: TranslatableTitle;
   content: (props: ModalContentProps) => ComponentChildren;
   footer: ((props: ModalContentProps) => ComponentChildren) | null;
+  /**
+   * Runs after the user dismisses this modal. `closeModal` does not run it,
+   * so a caller that removes the modal itself (navigation, stop) is not
+   * treated as the user backing out of it.
+   */
   onDismiss: (() => void) | null;
   useCasualOSApp: boolean;
 }
@@ -44,6 +49,8 @@ export interface ModalManager {
   modals: ReadonlySignal<ManagedModal[]>;
   openModal: (modal: ModalRegistration) => string;
   closeModal: (id: string) => void;
+  /** Closes the modal and runs its `onDismiss`, if it had one. */
+  dismissModal: (id: string) => void;
   closeAllModals: () => void;
 }
 
@@ -86,6 +93,12 @@ export function createModalManager(): ModalManager {
     modals.value = modals.peek().filter((m) => m.id !== id);
   };
 
+  const dismissModal = (id: string) => {
+    const modal = modals.peek().find((m) => m.id === id);
+    closeModal(id);
+    modal?.onDismiss?.();
+  };
+
   const closeAllModals = () => {
     modals.value = [];
   };
@@ -94,6 +107,7 @@ export function createModalManager(): ModalManager {
     modals,
     openModal,
     closeModal,
+    dismissModal,
     closeAllModals,
   };
 }

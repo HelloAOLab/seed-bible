@@ -180,7 +180,7 @@ export function ProfileAvatarButton(props: {
 
 /**
  * Email address and, when the user has set one, their location — the line of
- * small print between the avatar and the name.
+ * small print at the bottom of the profile card.
  */
 export function ProfileContactLine(props: { state: SeedBibleState }) {
   const { login } = props.state;
@@ -193,7 +193,12 @@ export function ProfileContactLine(props: { state: SeedBibleState }) {
 
   return (
     <p className="sb-profile-contact">
-      {email ? <span className="sb-profile-email">{email}</span> : null}
+      {email ? (
+        <span className="sb-profile-email">
+          <MaterialIcon aria-hidden="true">mail</MaterialIcon>
+          {email}
+        </span>
+      ) : null}
       {location ? (
         <span className="sb-profile-location">
           <MaterialIcon aria-hidden="true">location_on</MaterialIcon>
@@ -492,8 +497,6 @@ export function ProfilePane(props: ProfileScreenProps) {
 
           <ProfileAvatarButton state={state} onEdit={onEditPicture} />
 
-          <ProfileContactLine state={state} />
-
           {/* The name is the second way in to the edit screen. */}
           <button
             type="button"
@@ -512,6 +515,8 @@ export function ProfilePane(props: ProfileScreenProps) {
               {description}
             </ExpandableText>
           ) : null}
+
+          <ProfileContactLine state={state} />
         </div>
 
         {plansEnabled ? (

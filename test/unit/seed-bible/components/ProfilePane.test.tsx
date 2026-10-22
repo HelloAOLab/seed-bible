@@ -252,19 +252,13 @@ describe("ProfilePane", () => {
     );
   });
 
-  it("shows the user's email above their name", () => {
+  it("shows the user's email", () => {
     const { state } = createState({ email: "craig@example.org" });
     renderPane(state);
 
-    expect(container.querySelector(".sb-profile-email")?.textContent).toBe(
+    expect(container.querySelector(".sb-profile-email")?.textContent).toContain(
       "craig@example.org"
     );
-    // Order matters: the email is small print introducing the name below it.
-    const contact = container.querySelector(".sb-profile-contact")!;
-    const name = container.querySelector(".sb-profile-name")!;
-    expect(
-      contact.compareDocumentPosition(name) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
   });
 
   it("shows the location beside the email when the user has set one", () => {
