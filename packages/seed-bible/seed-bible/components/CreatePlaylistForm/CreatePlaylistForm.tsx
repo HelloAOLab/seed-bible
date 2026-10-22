@@ -20,97 +20,30 @@ import {
   PlaylistItemInput,
   type PlaylistItemInputHandle,
 } from "../PlaylistItemInput/PlaylistItemInput";
+import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
 import { playlistItemLabel } from "../playlistItemLabel";
+import { PlaylistItemNoteTag } from "../PlaylistItemNoteTag/PlaylistItemNoteTag";
 import { playlistItemIcon } from "../playlistItemIcon";
 import { useDragReorder } from "../useDragReorder";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
+import {
+  PlaylistItemInlinePreview,
+  type ScriptureChapterLoader,
+} from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+import type { BibleDataManager } from "../../managers/BibleDataManager";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
   tabs: TabsManager;
   modals: ModalManager;
+  /** Loads chapter text for the inline scripture previews. */
+  bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
 }
 
-const UNSAVED_ITEM_CONFIRM_MODAL_ID = "playlist-unsaved-item-confirm";
 const UNSAVED_CHANGES_CONFIRM_MODAL_ID = "playlist-unsaved-changes-confirm";
-
-/**
- * Confirmation body shown when Save is clicked while the "Add item" section
- * has in-progress, un-added content, so it isn't silently discarded.
- */
-function UnsavedItemConfirmModalContent(props: {
-  onGoBack: () => void;
-  onDiscardAndSave: () => void;
-  onAddAndSave: () => void;
-}) {
-  const { onGoBack, onDiscardAndSave, onAddAndSave } = props;
-  const { t } = useI18n();
-
-  return (
-    <div className="sb-confirm-delete">
-      <p className="sb-confirm-delete-message">
-        {t("unsaved-item-confirm-message", {
-          defaultValue:
-            "You've started adding an item that hasn't been added to the playlist yet. What would you like to do?",
-        })}
-      </p>
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onGoBack}
-        >
-          {t("back", { defaultValue: "Back" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onDiscardAndSave}
-        >
-          {t("discard-and-save", { defaultValue: "Discard and save" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={onAddAndSave}
-        >
-          {t("add-and-save", { defaultValue: "Add and save" })}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/** Opens the unsaved-item confirmation modal. */
-function openUnsavedItemConfirm(
-  modals: ModalManager,
-  onDiscardAndSave: () => void,
-  onAddAndSave: () => void
-) {
-  modals.openModal({
-    id: UNSAVED_ITEM_CONFIRM_MODAL_ID,
-    title: {
-      key: "unsaved-item-confirm-title",
-      defaultValue: "Unsaved item",
-    },
-    content: () => (
-      <UnsavedItemConfirmModalContent
-        onGoBack={() => modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID)}
-        onDiscardAndSave={() => {
-          modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID);
-          onDiscardAndSave();
-        }}
-        onAddAndSave={() => {
-          modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID);
-          onAddAndSave();
-        }}
-      />
-    ),
-  });
-}
 
 function UnsavedChangesConfirmModalContent(props: {
   onConfirm: () => void;
@@ -191,13 +124,16 @@ export function requestCancelPlaylistEditor(
 
 /** Create-playlist screen shown inside the discover pane. */
 export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
-  const { playlists, tabs, modals, os, login, gallery } = props;
+  const { playlists, tabs, modals, bibleData, os, login, gallery } = props;
   const { t } = useI18n();
   const [saving, setSaving] = useState(false);
   // Index of the item currently open for editing in the input section below, or
   // null when the section is adding a new item.
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const inputRef = useRef<PlaylistItemInputHandle>(null);
+  // Index of the item whose preview is expanded beneath it, if any. Only one
+  // is open at a time.
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   // The playlist being edited is owned by the manager; edits update the signal.
   const editing = playlists.editingPlaylist.value;
@@ -228,10 +164,27 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     return book?.name ?? book?.commonName ?? bookId;
   };
 
+  // Scripture without a pinned translation previews in the one being read.
+  const loadChapter: ScriptureChapterLoader | undefined = bibleData
+    ? async (translationId, bookId, chapter) => {
+        const translation =
+          translationId ?? selectedTab?.readingState.translationId.peek();
+        if (!translation) {
+          throw new Error("No translation to preview scripture in.");
+        }
+        return bibleData.getTranslationBookChapter(
+          translation,
+          bookId,
+          chapter
+        );
+      }
+    : undefined;
+
   const { getRowClassName, getHandleProps } = useDragReorder({
     itemCount: editing?.items.length ?? 0,
     onReorder: (from, to) => {
       playlists.reorderEditingPlaylistItem(from, to);
+      setExpandedIndex(null);
       // Keep the edit target pointed at the same logical item, mirroring the
       // arithmetic `reorderQueue` already applies to `currentIndex`.
       setEditingIndex((current) => {
@@ -258,11 +211,12 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     if (saving) {
       return;
     }
-    // Only guards the "add new item" flow, not being mid-edit of an existing
-    // item — the Add Item section is what silently loses content today.
-    if (editingIndex === null && inputRef.current?.isDirty()) {
+    // Covers both a new item not yet added and changes to an item opened for
+    // editing but not yet saved — either would otherwise be silently lost.
+    if (inputRef.current?.isDirty()) {
       openUnsavedItemConfirm(
         modals,
+        editingIndex !== null,
         () => void doSave(),
         () => {
           void (async () => {
@@ -340,7 +294,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
               <li
                 key={index}
                 className={
-                  "sb-discover-item sb-discover-item--row" +
+                  "sb-discover-item sb-discover-item--row sb-playlist-editor-item" +
                   (index === editingIndex ? " sb-discover-item--editing" : "") +
                   getRowClassName(index)
                 }
@@ -362,13 +316,20 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                     defaultValue: "Edit item",
                   })}
                   aria-current={index === editingIndex}
-                  onClick={() => setEditingIndex(index)}
+                  aria-expanded={index === expandedIndex}
+                  onClick={() => {
+                    setEditingIndex(index);
+                    setExpandedIndex((current) =>
+                      current === index ? null : index
+                    );
+                  }}
                 >
                   <MaterialIcon className="sb-discover-item-icon">
                     {playlistItemIcon(item)}
                   </MaterialIcon>
                   <span className="sb-discover-item-title" dir="auto">
                     {playlistItemLabel(item, t, resolveBookName)}
+                    <PlaylistItemNoteTag item={item} showUntitled />
                   </span>
                 </button>
                 <button
@@ -379,6 +340,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                   })}
                   onClick={() => {
                     playlists.removeEditingPlaylistItem(index);
+                    setExpandedIndex(null);
                     // Keep the edit target pointed at the same item, or drop out
                     // of editing when the edited item itself was removed.
                     setEditingIndex((current) => {
@@ -390,6 +352,12 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                 >
                   <MaterialIcon>delete</MaterialIcon>
                 </button>
+                {index === expandedIndex ? (
+                  <PlaylistItemInlinePreview
+                    item={item}
+                    loadChapter={loadChapter}
+                  />
+                ) : null}
               </li>
             ))}
           </ul>

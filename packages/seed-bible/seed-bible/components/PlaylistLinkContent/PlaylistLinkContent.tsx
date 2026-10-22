@@ -1,6 +1,7 @@
 import "./PlaylistLinkContent.css";
 import { useI18n } from "../../i18n";
 import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
+import { safeImageUrl, type LinkPreview } from "../../managers/linkPreview";
 
 /**
  * Renders a playlist link item based on what its URL points at (see
@@ -12,11 +13,15 @@ import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
  * known video site is shown in an `<iframe>` instead of an "Open" link. Video
  * detection still takes precedence, so ticking embed never changes how a
  * recognized video renders.
+ *
+ * A plain link with a stored `preview` shows the page's image, title, and
+ * description above the "Open" button, so the reader can see where it goes.
  */
 export function PlaylistLinkContent(props: {
   url: string;
   title?: string;
   embed?: boolean;
+  preview?: LinkPreview;
 }) {
   const { t } = useI18n();
   const media = resolveLinkMedia(props.url);
@@ -49,8 +54,39 @@ export function PlaylistLinkContent(props: {
     );
   }
 
+  const preview = props.preview;
+  const imageUrl = safeImageUrl(preview?.imageUrl);
+
   return (
     <div className="sb-play-playlist-content-link-wrapper">
+      {preview ? (
+        <div className="sb-play-playlist-link-preview">
+          {imageUrl ? (
+            <img
+              className="sb-play-playlist-link-preview-image"
+              src={imageUrl}
+              alt={preview.imageAlt ?? ""}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+            />
+          ) : null}
+          {preview.siteName ? (
+            <div className="sb-play-playlist-link-preview-site" dir="auto">
+              {preview.siteName}
+            </div>
+          ) : null}
+          {preview.title ? (
+            <div className="sb-play-playlist-link-preview-title" dir="auto">
+              {preview.title}
+            </div>
+          ) : null}
+          {preview.description ? (
+            <p className="sb-play-playlist-link-preview-description" dir="auto">
+              {preview.description}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       <a
         className="sb-play-playlist-content-link"
         href={props.url}

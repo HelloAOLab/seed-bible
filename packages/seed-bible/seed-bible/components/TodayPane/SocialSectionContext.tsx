@@ -1,7 +1,4 @@
-import type {
-  FilteredReading,
-  Timespan,
-} from "../../managers/TodayReadingHistory";
+import type { Timespan } from "../../managers/TodayReadingHistory";
 
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";
@@ -14,22 +11,18 @@ export interface SocialSectionUserProfile {
 }
 
 export interface SocialSectionContextType {
-  /** Map of subscribed user id → whether their reading is currently shown. */
+  /** Map of community member id → whether their reading is currently shown. */
   userFilters: Map<string, boolean>;
-  /** Map of subscribed user id → their visual profile. */
+  /** Map of community member id → their visual profile. */
   userProfileMap: Map<string, SocialSectionUserProfile>;
-  /** Year of the currently selected time filter (for the timeline). */
+  /** Year the timeline shows while the "all" window is selected. */
   year: number;
-  /** Currently selected time window; `undefined` means "all" (no window). */
+  /** The day picked in the timeline; `undefined` means no day is picked. */
   timespan: Timespan | undefined;
-  /** Community reading for the selected `timespan` (empty when "all"). */
-  communityReading: FilteredReading;
   /** Selects a timeline year: sets `year` and clears `timespan`. */
   selectYear: (year: number) => void;
   /** Selects a timeline day: sets `timespan` to that day's range. */
   selectDay: (timespan: Timespan | undefined) => void;
-  /** Toggles whether the given subscribed user's reading is shown. */
-  toggleUserFilter: (id: string) => void;
 }
 
 interface SocialSectionProviderProps {

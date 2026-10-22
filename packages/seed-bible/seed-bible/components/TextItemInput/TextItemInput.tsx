@@ -8,7 +8,13 @@ import type { Editor } from "@tiptap/core";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the text editor; Suspense shows a placeholder meanwhile.
-const TipTapEditor = lazy(() => import("../TipTapEditor/TipTapEditor"));
+// The editor is never server-rendered; the SSR guard keeps TipTap (~800 KB) out
+// of the single-file SSR bundle.
+const TipTapEditor = lazy(() =>
+  import.meta.env.SSR
+    ? Promise.reject(new Error("TipTap is not available in the SSR bundle"))
+    : import("../TipTapEditor/TipTapEditor")
+);
 
 interface TextItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
@@ -20,7 +26,10 @@ interface TextItemInputProps {
 
 /** Imperative handle so a parent can check for / commit an in-progress draft. */
 export interface TextItemInputHandle {
-  /** Whether the user has typed text/a title that hasn't been added yet. */
+  /**
+   * Whether the text or title differs from what the fields started with: an
+   * un-added draft when adding, unsaved changes when editing.
+   */
   isDirty: () => boolean;
   /** Submits the current input, same as clicking "Add". Returns whether it
    * actually added an item (false if the editor is empty). */
@@ -41,6 +50,9 @@ export const TextItemInput = forwardRef<
   // Seeded content counts as non-empty so the submit button starts enabled.
   const [editorEmpty, setEditorEmpty] = useState(!initialItem?.html);
   const [title, setTitle] = useState(initialItem?.title ?? "");
+  // The seeded text as the editor serializes it, so an unchanged item compares
+  // equal even where the editor normalizes the stored HTML.
+  const initialHtmlRef = useRef<string | null>(null);
 
   /** Submits the current input. Returns whether it actually added an item. */
   const handleAdd = async (): Promise<boolean> => {
@@ -67,7 +79,16 @@ export const TextItemInput = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
-      isDirty: () => !editorEmpty || title.trim() !== "",
+      isDirty: () => {
+        if (title.trim() !== (initialItem?.title ?? "").trim()) {
+          return true;
+        }
+        if (!initialItem?.html) {
+          return !editorEmpty;
+        }
+        const editor = editorRef.current;
+        return !!editor && editor.getHTML() !== initialHtmlRef.current;
+      },
       commit: handleAdd,
     }),
     [editorEmpty, title]
@@ -101,6 +122,9 @@ export const TextItemInput = forwardRef<
             initialContent={initialItem?.html}
             onEditor={(editor) => {
               editorRef.current = editor;
+              if (editor && initialHtmlRef.current === null) {
+                initialHtmlRef.current = editor.getHTML();
+              }
             }}
             onEmptyChange={setEditorEmpty}
           />

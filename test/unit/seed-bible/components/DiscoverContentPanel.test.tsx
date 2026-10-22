@@ -5,11 +5,12 @@ import { DiscoverContentPanel } from "@packages/seed-bible/seed-bible/components
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
+import type { PlanMatch } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 import {
   createDiscoverManager,
   type DiscoverContentTypeDefinition,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
-
+import { createRealFriendContent } from "../testUtils/realFriendContent";
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
     typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
@@ -55,6 +56,17 @@ function createAnnotation(overrides: Partial<Annotation> = {}): Annotation {
     data: { type: "comment", html: "<p>A helpful note.</p>" },
     ...overrides,
   } as Annotation;
+}
+
+function createPlanMatch(overrides: Partial<PlanMatch> = {}): PlanMatch {
+  return {
+    planKey: "plan-1",
+    planTitle: "Through the Bible in a Year",
+    progress: { id: "progress-1" },
+    sessions: [],
+    allComplete: false,
+    ...overrides,
+  } as PlanMatch;
 }
 
 /** One Theographic result as the provider builds it. */
@@ -125,8 +137,10 @@ function createMockState(
     annotationsForChapter?: Annotation[];
     pendingCountForChapter?: number;
     contentTypes?: DiscoverContentTypeDefinition[];
+    readingPlansForChapter?: PlanMatch[];
   } = {}
 ): SeedBibleState {
+  const readingPlansForChapter = overrides.readingPlansForChapter ?? [];
   const discover = createDiscoverManager();
   for (const definition of overrides.contentTypes ?? []) {
     discover.registerContentType(definition);
@@ -145,9 +159,17 @@ function createMockState(
     panes: { closeFullscreenPanes: vi.fn() },
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
+    friends: {
+      friends: signal([]),
+      friendIds: signal([]),
+    },
     annotations: {
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])
+      ),
+      getUserAnnotationsForChapter: vi.fn(() => signal([])),
+      visibleAnnotationsForChapter: vi.fn(
+        () => overrides.annotationsForChapter ?? []
       ),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
       hasRecordOverride: false,
@@ -158,12 +180,25 @@ function createMockState(
         pendingCount: signal(0),
       },
     },
-    features: { isFeatureEnabled: vi.fn().mockReturnValue(false) },
+    // The real manager only returns plans while the reading-plans feature is
+    // on, so the flag follows whether any plans were given.
+    features: {
+      isFeatureEnabled: vi.fn(() => signal(readingPlansForChapter.length > 0)),
+    },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => readingPlansForChapter),
+    },
   } as unknown as SeedBibleState;
 }
 
 describe("DiscoverContentPanel", () => {
   let container: HTMLDivElement;
+  const scrollIntoView = vi.fn();
+
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: scrollIntoView,
+  });
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -266,6 +301,47 @@ describe("DiscoverContentPanel", () => {
     expect(container.textContent).toContain("A helpful note.");
   });
 
+  it("shows a friend's notes on a chapter where the user has none of their own", async () => {
+    const tab = createMockTab();
+    const mockState = createMockState();
+    // The real managers, so the friend's note is loaded from the server
+    // the way the app loads it.
+    const { login, friends, annotations } = await createRealFriendContent({
+      friendIds: ["friend-1"],
+      notes: {
+        "friend-1": [
+          createAnnotation({
+            id: "friend-note",
+            data: {
+              type: "comment",
+              html: "<p>A friend's note.</p>",
+              userId: "friend-1",
+            },
+          } as Partial<Annotation>),
+        ],
+      },
+      discover: mockState.discover,
+    });
+    const state = {
+      ...mockState,
+      login,
+      friends,
+      annotations,
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    await vi.waitFor(() =>
+      expect(container.textContent).toContain("A friend's note.")
+    );
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toContain("Notes");
+  });
+
   it("renders nothing when there are discovered results absent but also no annotations", () => {
     const tab = createMockTab();
     const state = createMockState({ annotationsForChapter: [] });
@@ -275,6 +351,28 @@ describe("DiscoverContentPanel", () => {
     });
 
     expect(container.innerHTML).toBe("");
+  });
+
+  it("renders the reading-plans section when a followed plan covers the chapter and nothing else exists", () => {
+    const tab = createMockTab();
+    const state = createMockState({
+      annotationsForChapter: [],
+      readingPlansForChapter: [createPlanMatch()],
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-discover-content-panel")
+    ).not.toBeNull();
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toEqual(["Reading Plans"]);
+    expect(container.textContent).toContain("Through the Bible in a Year");
+    expect(container.textContent).not.toContain("Pick a filter above");
   });
 
   it("only shows filter chips for content that is actually available", () => {
@@ -390,6 +488,9 @@ describe("DiscoverContentPanel", () => {
     state.annotations.getAnnotationsForChapter = vi.fn(
       () => annotationsForChapter
     );
+    state.annotations.visibleAnnotationsForChapter = vi.fn(
+      () => annotationsForChapter.value
+    );
 
     act(() => {
       render(<DiscoverContentPanel tab={tab} state={state} />, container);
@@ -419,6 +520,650 @@ describe("DiscoverContentPanel", () => {
     expect(getChip("Notes")).toBeUndefined();
     expect(container.textContent).toContain("Exodus 5:3");
     expect(container.textContent).toContain("A related article");
+  });
+
+  describe("filter scrolling arrows", () => {
+    const START_LABEL = "Scroll filters toward start";
+    const END_LABEL = "Scroll filters toward end";
+
+    function getRow() {
+      const row = container.querySelector<HTMLElement>(".sb-dcp-filters");
+      expect(row).not.toBeNull();
+      return row!;
+    }
+
+    function getArrow(label: string) {
+      return container.querySelector<HTMLButtonElement>(
+        `button[aria-label="${label}"]`
+      );
+    }
+
+    function setDimension(
+      element: HTMLElement,
+      property: "scrollWidth" | "clientWidth" | "scrollLeft",
+      value: number
+    ) {
+      Object.defineProperty(element, property, {
+        configurable: true,
+        writable: true,
+        value,
+      });
+    }
+
+    function setRect(element: HTMLElement, left: number, right: number) {
+      vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
+        x: left,
+        y: 0,
+        left,
+        right,
+        top: 0,
+        bottom: 32,
+        width: right - left,
+        height: 32,
+        toJSON: () => ({}),
+      } as DOMRect);
+    }
+
+    function configureOverflow(row: HTMLElement) {
+      const wrapper = row.parentElement!;
+      setDimension(row, "scrollWidth", 240);
+      setDimension(row, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+    }
+
+    function renderPanel(
+      tab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      }),
+      state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      })
+    ) {
+      act(() => {
+        render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      });
+    }
+
+    it("shows arrows when filters overflow and hides them when they fit", () => {
+      renderPanel();
+
+      const row = getRow();
+      const wrapper = row.parentElement!;
+
+      setDimension(row, "scrollWidth", 240);
+      setDimension(row, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      expect(getArrow(START_LABEL)).not.toBeNull();
+      expect(getArrow(END_LABEL)).not.toBeNull();
+
+      setDimension(row, "scrollWidth", 100);
+
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      expect(getArrow(START_LABEL)).toBeNull();
+      expect(getArrow(END_LABEL)).toBeNull();
+    });
+
+    it("marks the arrow as disabled at the current scroll boundary", () => {
+      renderPanel();
+      const row = getRow();
+      configureOverflow(row);
+      setDimension(row, "scrollLeft", 0);
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+      expect(getArrow(START_LABEL)?.getAttribute("aria-disabled")).toBe("true");
+      expect(getArrow(END_LABEL)?.getAttribute("aria-disabled")).toBe("false");
+      setDimension(row, "scrollLeft", 140);
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+      expect(getArrow(START_LABEL)?.getAttribute("aria-disabled")).toBe(
+        "false"
+      );
+      expect(getArrow(END_LABEL)?.getAttribute("aria-disabled")).toBe("true");
+    });
+
+    it("updates arrow visibility when the chapter's filters change but their count stays the same", () => {
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      const firstTab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+
+      renderPanel(firstTab, state);
+
+      const row = getRow();
+      const wrapper = row.parentElement!;
+
+      expect(
+        Array.from(row.querySelectorAll(".sb-dcp-chip")).map(
+          (chip) => chip.textContent
+        )
+      ).toEqual(["All", "Notes", "Cross Refs"]);
+
+      setDimension(row, "scrollWidth", 240);
+      setDimension(row, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      expect(getArrow(END_LABEL)).not.toBeNull();
+
+      // Replace Cross Refs with Content. The filter count remains three.
+      const nextTab = createMockTab({
+        discoveredContent: [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "content",
+                title: "A related article",
+                description: "",
+                reference: { book: "GEN", chapter: 1 },
+              },
+            ],
+          },
+        ],
+      });
+
+      // Set the dimensions on the existing row BEFORE rerendering.
+      // Preact should reuse the row because its structure is unchanged.
+      setDimension(row, "scrollWidth", 100);
+      setDimension(row, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      act(() => {
+        render(<DiscoverContentPanel tab={nextTab} state={state} />, container);
+      });
+
+      const updatedRow = getRow();
+
+      expect(updatedRow).toBe(row);
+
+      expect(
+        Array.from(updatedRow.querySelectorAll(".sb-dcp-chip")).map(
+          (chip) => chip.textContent
+        )
+      ).toEqual(["All", "Notes", "Content"]);
+
+      // No resize event here: the effect must detect the filter change.
+      expect(getArrow(START_LABEL)).toBeNull();
+      expect(getArrow(END_LABEL)).toBeNull();
+    });
+
+    it("marks the correct arrows as disabled at RTL scroll boundaries", () => {
+      const parent = document.createElement("div");
+      parent.dir = "rtl";
+      container.appendChild(parent);
+
+      const tab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      act(() => {
+        render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+      });
+
+      const row = parent.querySelector<HTMLElement>(".sb-dcp-filters");
+      expect(row).not.toBeNull();
+
+      const rtlRow = row!;
+      rtlRow.style.direction = "rtl";
+
+      const wrapper = rtlRow.parentElement!;
+      setDimension(rtlRow, "scrollWidth", 240);
+      setDimension(rtlRow, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      // RTL start boundary.
+      setDimension(rtlRow, "scrollLeft", 0);
+
+      act(() => {
+        rtlRow.dispatchEvent(new Event("scroll"));
+      });
+
+      expect(
+        parent
+          .querySelector<HTMLButtonElement>(
+            `button[aria-label="${START_LABEL}"]`
+          )
+          ?.getAttribute("aria-disabled")
+      ).toBe("true");
+
+      expect(
+        parent
+          .querySelector<HTMLButtonElement>(`button[aria-label="${END_LABEL}"]`)
+          ?.getAttribute("aria-disabled")
+      ).toBe("false");
+
+      // RTL end boundary: browsers can report a negative scrollLeft.
+      setDimension(rtlRow, "scrollLeft", -140);
+
+      act(() => {
+        rtlRow.dispatchEvent(new Event("scroll"));
+      });
+
+      expect(
+        parent
+          .querySelector<HTMLButtonElement>(
+            `button[aria-label="${START_LABEL}"]`
+          )
+          ?.getAttribute("aria-disabled")
+      ).toBe("false");
+
+      expect(
+        parent
+          .querySelector<HTMLButtonElement>(`button[aria-label="${END_LABEL}"]`)
+          ?.getAttribute("aria-disabled")
+      ).toBe("true");
+    });
+    it("keeps the active chip visible when the arrows first appear", () => {
+      renderPanel();
+
+      const row = getRow();
+      const activeChip = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      ).find((chip) => chip.textContent === "Cross Refs");
+
+      expect(activeChip).toBeDefined();
+
+      act(() => {
+        activeChip!.click();
+      });
+
+      expect(getArrow(END_LABEL)).toBeNull();
+
+      setRect(row, 0, 100);
+      setRect(activeChip!, 120, 170);
+      configureOverflow(row);
+
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      expect(getArrow(END_LABEL)).not.toBeNull();
+
+      const updatedActiveChip = getRow().querySelector<HTMLElement>(
+        ".sb-dcp-chip--active"
+      );
+
+      expect(updatedActiveChip).not.toBeNull();
+      expect(updatedActiveChip!.getAttribute("aria-selected")).toBe("true");
+      expect(row.scrollLeft).toBeGreaterThan(0);
+    });
+    it("does not scroll when a faded arrow is clicked at the scroll boundary", () => {
+      renderPanel();
+
+      const row = getRow();
+      configureOverflow(row);
+
+      const chips = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+
+      setRect(row, 0, 100);
+
+      // Make a chip genuinely visible outside the row's left boundary.
+      chips.forEach((chip, index) => {
+        setRect(chip, -80 + index * 50, -40 + index * 50);
+      });
+
+      const scrollBy = vi.fn();
+      row.scrollBy = scrollBy;
+
+      setDimension(row, "scrollLeft", 0);
+
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+
+      const startArrow = getArrow(START_LABEL);
+
+      expect(startArrow).not.toBeNull();
+      expect(startArrow!.getAttribute("aria-disabled")).toBe("true");
+
+      act(() => {
+        startArrow!.click();
+      });
+
+      expect(scrollBy).not.toHaveBeenCalled();
+    });
+    it("updates arrow state when the parent direction changes from LTR to RTL", () => {
+      const parent = document.createElement("div");
+      parent.dir = "ltr";
+      container.appendChild(parent);
+
+      const tab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      const renderInParent = () => {
+        act(() => {
+          render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+        });
+      };
+
+      renderInParent();
+
+      const row = parent.querySelector<HTMLElement>(".sb-dcp-filters")!;
+      const wrapper = row.parentElement!;
+
+      setDimension(row, "scrollWidth", 240);
+      setDimension(row, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      parent.dir = "rtl";
+      row.style.direction = "rtl";
+
+      setDimension(row, "scrollLeft", -140);
+
+      renderInParent();
+
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+
+      const startArrow = parent.querySelector<HTMLButtonElement>(
+        `button[aria-label="${START_LABEL}"]`
+      );
+
+      expect(startArrow).not.toBeNull();
+      expect(startArrow!.getAttribute("aria-disabled")).not.toBe("true");
+    });
+    it("adjusts scroll position to reveal the active chip when filters change", () => {
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      const firstTab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+
+      renderPanel(firstTab, state);
+
+      const row = getRow();
+      const activeChip = row.querySelector<HTMLElement>(".sb-dcp-chip--active");
+
+      expect(activeChip).not.toBeNull();
+
+      setDimension(row, "scrollLeft", 0);
+      setRect(row, 0, 100);
+      setRect(activeChip!, 120, 160);
+
+      const nextTab = createMockTab({
+        discoveredContent: [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "content",
+                title: "A related article",
+                description: "",
+                reference: { book: "GEN", chapter: 1 },
+              },
+            ],
+          },
+        ],
+      });
+
+      act(() => {
+        render(<DiscoverContentPanel tab={nextTab} state={state} />, container);
+      });
+
+      expect(row.scrollLeft).toBeGreaterThan(0);
+    });
+    it("scrolls toward the end when the end arrow is clicked in LTR", () => {
+      renderPanel();
+      const row = getRow();
+      configureOverflow(row);
+      setRect(row, 0, 100);
+      const chips = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+      // Place chips beyond the row's right edge.
+      chips.forEach((chip, index) => {
+        setRect(chip, index * 60, index * 60 + 50);
+      });
+      const scrollBy = vi.fn();
+      row.scrollBy = scrollBy;
+      const endArrow = getArrow(END_LABEL);
+      expect(endArrow).not.toBeNull();
+      act(() => {
+        endArrow!.click();
+      });
+
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+      expect(scrollBy.mock.calls[0]![0].left).toBeGreaterThan(0);
+    });
+
+    it("scrolls toward the start when the start arrow is clicked in LTR", () => {
+      renderPanel();
+
+      const row = getRow();
+      configureOverflow(row);
+
+      const pills = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+
+      setRect(row, 0, 100);
+      pills.forEach((pill, index) => {
+        setRect(pill, -50 + index * 50, -10 + index * 50);
+      });
+
+      const scrollBy = vi.fn();
+      row.scrollBy = scrollBy;
+
+      setDimension(row, "scrollLeft", 100);
+
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+
+      const startArrow = getArrow(START_LABEL);
+      expect(startArrow).not.toBeNull();
+      expect(startArrow!.getAttribute("aria-disabled")).toBe("false");
+
+      act(() => {
+        startArrow!.click();
+      });
+
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+      expect(scrollBy.mock.calls[0]![0].left).toBeLessThan(0);
+    });
+
+    it("scrolls toward the end when the end arrow is clicked in RTL", () => {
+      const parent = document.createElement("div");
+      parent.dir = "rtl";
+      container.appendChild(parent);
+
+      const tab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      act(() => {
+        render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+      });
+
+      const row = parent.querySelector<HTMLElement>(".sb-dcp-filters")!;
+      const wrapper = row.parentElement!;
+      row.style.direction = "rtl";
+
+      setDimension(row, "scrollWidth", 240);
+      setDimension(row, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      const pills = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+
+      setRect(row, 0, 100);
+      pills.forEach((pill, index) => {
+        setRect(pill, -50 - index * 50, 10 - index * 50);
+      });
+
+      const scrollBy = vi.fn();
+      row.scrollBy = scrollBy;
+
+      setDimension(row, "scrollLeft", 0);
+
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+        row.dispatchEvent(new Event("scroll"));
+      });
+
+      const endArrow = parent.querySelector<HTMLButtonElement>(
+        `button[aria-label="${END_LABEL}"]`
+      );
+
+      expect(endArrow).not.toBeNull();
+      expect(endArrow!.getAttribute("aria-disabled")).toBe("false");
+
+      act(() => {
+        endArrow!.click();
+      });
+
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+      expect(scrollBy.mock.calls[0]![0].left).toBeLessThan(0);
+    });
+
+    it("scrolls toward the start when the start arrow is clicked in RTL", () => {
+      const parent = document.createElement("div");
+      parent.dir = "rtl";
+      container.appendChild(parent);
+
+      const tab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      act(() => {
+        render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+      });
+
+      const row = parent.querySelector<HTMLElement>(".sb-dcp-filters")!;
+      const wrapper = row.parentElement!;
+      row.style.direction = "rtl";
+
+      setDimension(row, "scrollWidth", 240);
+      setDimension(row, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      const pills = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+
+      setRect(row, 0, 100);
+      pills.forEach((pill, index) => {
+        setRect(pill, 110 + index * 50, 150 + index * 50);
+      });
+
+      const scrollBy = vi.fn();
+      row.scrollBy = scrollBy;
+
+      setDimension(row, "scrollLeft", -100);
+
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+        row.dispatchEvent(new Event("scroll"));
+      });
+
+      const startArrow = parent.querySelector<HTMLButtonElement>(
+        `button[aria-label="${START_LABEL}"]`
+      );
+
+      expect(startArrow).not.toBeNull();
+      expect(startArrow!.getAttribute("aria-disabled")).toBe("false");
+
+      act(() => {
+        startArrow!.click();
+      });
+
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+      expect(scrollBy.mock.calls[0]![0].left).toBeGreaterThan(0);
+    });
+
+    it("scrolls in the correct direction in RTL layout", () => {
+      const parent = document.createElement("div");
+      parent.dir = "rtl";
+      container.appendChild(parent);
+
+      const tab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const state = createMockState({
+        annotationsForChapter: [createAnnotation()],
+      });
+
+      act(() => {
+        render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+      });
+
+      const row = parent.querySelector<HTMLElement>(".sb-dcp-filters");
+      expect(row).not.toBeNull();
+
+      const rtlRow = row!;
+      rtlRow.style.direction = "rtl";
+
+      const wrapper = rtlRow.parentElement!;
+      setDimension(rtlRow, "scrollWidth", 240);
+      setDimension(rtlRow, "clientWidth", 100);
+      setDimension(wrapper, "clientWidth", 100);
+
+      const chips = Array.from(
+        rtlRow.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+
+      expect(chips.length).toBeGreaterThan(0);
+
+      // In RTL, the next chip toward the end is clipped on the left.
+      setRect(rtlRow, 0, 100);
+      setRect(chips[0]!, -40, 0);
+
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      const scrollBy = vi.fn();
+      rtlRow.scrollBy = scrollBy;
+
+      act(() => {
+        parent
+          .querySelector<HTMLButtonElement>(
+            `button[aria-label="${END_LABEL}"]`
+          )!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(scrollBy).toHaveBeenCalledWith({ left: -40 });
+    });
   });
 
   describe("registered content types", () => {
@@ -647,28 +1392,6 @@ describe("DiscoverContentPanel", () => {
     });
 
     expect(state.annotations.createNewAnnotation).toHaveBeenCalledTimes(1);
-  });
-
-  it("clicking 'Show All' calls openDiscover", () => {
-    const tab = createMockTab();
-    const state = createMockState({
-      annotationsForChapter: [createAnnotation()],
-    });
-
-    act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
-    });
-
-    const showAllButton = container.querySelector(
-      ".sb-dcp-show-all"
-    ) as HTMLButtonElement;
-    expect(showAllButton).toBeTruthy();
-
-    act(() => {
-      showAllButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
   });
 
   describe("side panel max height", () => {

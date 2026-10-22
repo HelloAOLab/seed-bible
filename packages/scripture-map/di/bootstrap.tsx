@@ -167,7 +167,7 @@ export const bootstrapExtension = () => {
                     initialShowingAllChapters: true,
                     initialShowTestamentLabels: true,
                     initialShowSectionLabels: false,
-                    initialScaleFactor: 0.6,
+                    initialScaleFactor: 0.75,
                     initialIsReadingHistoryEnabled: true,
                     extensionId,
                     translate: (

@@ -1,4 +1,5 @@
-import { effect, signal } from "@preact/signals";
+import { effect, signal, type ReadonlySignal } from "@preact/signals";
+import type { ComponentChildren } from "preact";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { LoginManager } from "../managers/LoginManager";
@@ -11,7 +12,10 @@ import {
 } from "./ProfileConfigSync";
 import hash from "hash.js";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
-import type { ExtensionSettingDefinition } from "./extensionSettingConstraints";
+import type {
+  ExtensionSensitiveProxyDefinition,
+  ExtensionSettingDefinition,
+} from "./extensionSettingConstraints";
 
 const { sha256 } = hash;
 
@@ -51,6 +55,8 @@ export type ExtensionSettingType = "string" | "boolean" | "number";
 export type {
   ExtensionBooleanSettingDefinition,
   ExtensionNumberSettingDefinition,
+  ExtensionSensitiveProxyDefinition,
+  ExtensionSensitiveProxyVisibility,
   ExtensionSettingDefinition,
   ExtensionSettingValue,
   ExtensionStringSettingDefinition,
@@ -58,6 +64,8 @@ export type {
 export {
   firstAcceptableSettingValue,
   isMultipleOf,
+  isSensitiveSetting,
+  nonSensitiveSettings,
   numberFieldLimits,
   settingValueSatisfiesDefinition,
 } from "./extensionSettingConstraints";
@@ -93,7 +101,26 @@ export interface ExtensionMeta {
    * `t("setting-<key>-description", { ns: id })`), not from this object.
    */
   settings?: Record<string, ExtensionSettingDefinition>;
+
+  /**
+   * The destinations this extension's sensitive settings may be sent to, keyed
+   * by an id that each sensitive setting names in its own `sensitive` field.
+   * Several settings can share one entry, so a "Client ID" and an "API key"
+   * both reach `api.example.com` on the same request.
+   */
+  sensitive?: Record<string, ExtensionSensitiveProxyDefinition>;
 }
+
+/**
+ * Renders an extension's own custom content for its "Configure" button in
+ * Settings → Extensions, in place of the generic scalar `ExtensionSettingsForm`
+ * built from `ExtensionMeta.settings`. For settings that can't be expressed as
+ * flat string/boolean/number values (e.g. a repeating list, or a field that
+ * shouldn't round-trip through the shared settings record), an extension
+ * registers one of these via `ExtensionManager.registerSettingsPanel` instead
+ * of declaring `meta.settings`.
+ */
+export type ExtensionSettingsPanelRenderer = () => ComponentChildren;
 
 export type Extension = UploadedExtension | ImportExtension;
 
@@ -602,6 +629,45 @@ export function createExtensionManager(
   const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
   const installedExtensionIds = new Set<string>();
   const pendingInstallations = new Map<string, Promise<boolean>>();
+  // The extension ids an active customization wants installed (see
+  // `reconcileInstalledExtensions`), or null when none is active. While set,
+  // the viewer's own defaults and saved extensions are left alone.
+  let scopedTargetIds: string[] | null = null;
+  // False until some extension set has been loaded. A customization can be
+  // active from the very first render (the server resolved it), before the
+  // app has loaded the catalog its ids refer to.
+  let hasLoadedExtensionSet = false;
+  // Whether `loadDefaultExtensions` ran while a customization was active and
+  // so skipped the viewer's own defaults, which leaving it still owes them.
+  let skippedDefaultLoad = false;
+
+  // Custom "Configure" panels extensions register for themselves, keyed by
+  // extension id. Kept here (rather than on `ExtensionSettingsManager`) since
+  // it's a property of the extension itself, like `meta.settings` — not of
+  // any one viewer's saved values.
+  const settingsPanelsSignal = signal<
+    Record<string, ExtensionSettingsPanelRenderer>
+  >({});
+
+  const registerSettingsPanel = (
+    extensionId: string,
+    render: ExtensionSettingsPanelRenderer
+  ): CleanupFunction => {
+    settingsPanelsSignal.value = {
+      ...settingsPanelsSignal.value,
+      [extensionId]: render,
+    };
+    return () => {
+      // A later registration for the same id (e.g. a reinstall) already
+      // replaced this entry — only remove it if it's still the one we added.
+      if (settingsPanelsSignal.value[extensionId] !== render) {
+        return;
+      }
+      const next = { ...settingsPanelsSignal.value };
+      delete next[extensionId];
+      settingsPanelsSignal.value = next;
+    };
+  };
 
   /**
    * The localStorage key under which the IDs of the extensions that the user has
@@ -1208,6 +1274,7 @@ export function createExtensionManager(
     filter: (ext: Extension) => boolean = () => true
   ): Promise<Map<string, boolean>> => {
     trackExtensionSet(set);
+    hasLoadedExtensionSet = true;
 
     const idsAndPromises: [string, Promise<boolean>][] = [];
     for (const ext of set.extensions) {
@@ -1277,6 +1344,10 @@ export function createExtensionManager(
    * in storage (a later build may reintroduce them) but skipped for now.
    */
   const loadSavedExtensions = async () => {
+    if (scopedTargetIds !== null) {
+      await reconcileInstalledExtensions(scopedTargetIds);
+      return;
+    }
     const savedIds = await computeSavedExtensionIds();
 
     const promises: Promise<boolean>[] = [];
@@ -1297,6 +1368,11 @@ export function createExtensionManager(
     }
 
     await Promise.all(promises);
+    // A customization that went active while these were installing gets the
+    // final say over what stays installed.
+    if (scopedTargetIds !== null) {
+      await reconcileInstalledExtensions(scopedTargetIds);
+    }
   };
 
   /**
@@ -1320,6 +1396,14 @@ export function createExtensionManager(
       return;
     }
     console.log("Loading default extension set:", defaultExtensions);
+
+    if (scopedTargetIds !== null) {
+      // Only make the catalog known; the customization decides what installs.
+      await loadExtensionSet(defaultExtensions, () => false);
+      skippedDefaultLoad = true;
+      await reconcileInstalledExtensions(scopedTargetIds);
+      return;
+    }
 
     await awaitProfileLoaded();
     const localHandledIds = readPersistedHandledExtensionIds();
@@ -1395,11 +1479,30 @@ export function createExtensionManager(
   const reconcileInstalledExtensions = async (
     targetIds: string[] | null
   ): Promise<void> => {
+    scopedTargetIds = targetIds;
+    if (targetIds !== null && !hasLoadedExtensionSet && defaultExtensions) {
+      // Applied by `loadDefaultExtensions` once the catalog is known.
+      return;
+    }
     const target =
       targetIds === null
         ? await computeSavedExtensionIds()
         : new Set(targetIds);
-    const current = new Set(installedExtensionIds);
+    // Whatever a wanted extension depends on stays too, or unloading it
+    // would break the extension that needs it.
+    for (const id of target) {
+      for (const dependencyId of knownExtensionsById.get(id)?.meta
+        .dependencies ?? []) {
+        target.add(dependencyId);
+      }
+    }
+    // Bundled extensions count as installed by being registered, without
+    // ever entering `installedExtensionIds`, so check both.
+    const current = new Set(
+      [...installedExtensionIds, ...knownExtensionsById.keys()].filter(
+        isSatisfiedDependency
+      )
+    );
 
     for (const id of current) {
       if (!target.has(id)) {
@@ -1407,7 +1510,7 @@ export function createExtensionManager(
       }
     }
     for (const id of target) {
-      if (installedExtensionIds.has(id)) {
+      if (isSatisfiedDependency(id)) {
         continue;
       }
       const extension = knownExtensionsById.get(id);
@@ -1418,6 +1521,10 @@ export function createExtensionManager(
         continue;
       }
       await loadExtension(extension, undefined, { persist: false });
+    }
+    if (targetIds === null && skippedDefaultLoad) {
+      skippedDefaultLoad = false;
+      await loadDefaultExtensions();
     }
   };
 
@@ -1491,5 +1598,10 @@ export function createExtensionManager(
     getExtensions,
 
     getAllExtensionsAsSet,
+
+    registerSettingsPanel,
+    settingsPanels: settingsPanelsSignal as ReadonlySignal<
+      Record<string, ExtensionSettingsPanelRenderer>
+    >,
   };
 }

@@ -1,5 +1,6 @@
 import "./ReadingPlanEditor.css";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
+import type { RefObject } from "preact";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -20,27 +21,30 @@ import {
   uploadPhotoToGallery,
   type UserGalleryManager,
 } from "../../managers/UserGalleryManager";
-import { PlaylistItemInput } from "../PlaylistItemInput/PlaylistItemInput";
+import {
+  PlaylistItemInput,
+  type PlaylistItemInputHandle,
+} from "../PlaylistItemInput/PlaylistItemInput";
+import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
 import {
-  canPreviewPlaylistItem,
-  openPlaylistItemPreview,
-} from "../playlistItemPreview";
+  PlaylistItemInlinePreview,
+  type ScriptureChapterLoader,
+} from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { cadenceOptionLabel } from "./cadenceLabels";
 import { readingLabel } from "./readingLabel";
-import {
-  PLAN_READING_PREVIEW_MODAL_ID,
-  readingItemIcon,
-  readingPreviewText,
-} from "./readingPreview";
+import { playlistItemLabel } from "../playlistItemLabel";
+import { readingItemIcon, readingPreviewText } from "./readingPreview";
 
 interface ReadingPlanEditorProps {
   readingPlans: ReadingPlansManager;
   /** Books of the active translation, for the scripture typeahead + labels. */
   books: TranslationBook[];
-  /** Modals host for previewing a text/link reading. Optional — without it the
-   * preview action is simply not offered. */
+  /** Modals host for the cover image picker. */
   modals?: ModalManager;
+  /** Loads chapters for previewing scripture readings inline. Without it a
+   * scripture preview says it couldn't load the passage. */
+  loadChapter?: ScriptureChapterLoader;
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
@@ -77,14 +81,27 @@ interface ReadingPlanEditorProps {
  * mobile fullscreen pane without any breakpoint of its own.
  */
 export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
-  const { readingPlans, books, modals, os, login, gallery, onCancel, onSaved } =
-    props;
+  const {
+    readingPlans,
+    books,
+    modals,
+    loadChapter,
+    os,
+    login,
+    gallery,
+    onCancel,
+    onSaved,
+  } = props;
   const { t } = useI18n();
 
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   // Discarding a new plan erases it for good, so the button asks once first.
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+  // The reading open in the selected session's item input, or null when that
+  // input is adding a new reading.
+  const [editingReadingId, setEditingReadingId] = useState<string | null>(null);
+  const itemInputRef = useRef<PlaylistItemInputHandle>(null);
 
   // Reading `.value` during render subscribes the component to edits, including
   // ones made from the reader's verse toolbar.
@@ -112,10 +129,7 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
   const hasTitle = (draft.plan.title ?? "").trim().length > 0;
   const canSave = hasTitle && totalReadings > 0;
 
-  const handleSave = async () => {
-    if (saving || !canSave) {
-      return;
-    }
+  const save = async () => {
     setSaving(true);
     setSubmitError(false);
     try {
@@ -126,6 +140,32 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
       setSubmitError(true);
       setSaving(false);
     }
+  };
+
+  const handleSave = () => {
+    if (saving || !canSave) {
+      return;
+    }
+    // A reading opened for editing with changes not yet saved would otherwise
+    // be silently dropped by saving the plan.
+    if (modals && editingReadingId && itemInputRef.current?.isDirty()) {
+      openUnsavedItemConfirm(
+        modals,
+        true,
+        () => void save(),
+        () => {
+          void (async () => {
+            if (await itemInputRef.current?.commit()) {
+              await save();
+            }
+            // If the edit didn't commit (e.g. an unknown reference), the
+            // input stays open with its inline error.
+          })();
+        }
+      );
+      return;
+    }
+    void save();
   };
 
   const handleDiscard = async () => {
@@ -255,18 +295,33 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
           </h3>
           <SessionsSection
             books={books}
-            modals={modals}
+            loadChapter={loadChapter}
             draft={draft}
-            onSelectSession={(index) =>
-              readingPlans.selectEditingPlanSession(index)
-            }
+            onSelectSession={(index) => {
+              // The reading input only edits within the selected session.
+              if (index !== draft.selectedSessionIndex) {
+                setEditingReadingId(null);
+              }
+              readingPlans.selectEditingPlanSession(index);
+            }}
             onAddSession={() => readingPlans.addSessionToEditingPlan()}
-            onRemoveSession={(index) =>
-              readingPlans.removeSessionFromEditingPlan(index)
-            }
+            onRemoveSession={(index) => {
+              setEditingReadingId(null);
+              readingPlans.removeSessionFromEditingPlan(index);
+            }}
             onAddReading={(item) => readingPlans.addReadingToEditingPlan(item)}
             onRemoveReading={(sessionIndex, readingId) =>
               readingPlans.removeReadingFromEditingPlan(sessionIndex, readingId)
+            }
+            editingReadingId={editingReadingId}
+            onEditingReadingChange={setEditingReadingId}
+            itemInputRef={itemInputRef}
+            onUpdateReading={(sessionIndex, readingId, item) =>
+              readingPlans.updateReadingInEditingPlan(
+                sessionIndex,
+                readingId,
+                item
+              )
             }
           />
         </section>
@@ -339,7 +394,7 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
           <button
             type="button"
             className="sb-rp-button sb-rp-button-primary"
-            onClick={() => void handleSave()}
+            onClick={handleSave}
             disabled={!canSave || saving}
           >
             {draft.isNew
@@ -429,33 +484,52 @@ function CadencesSection(props: CadencesSectionProps) {
 
 interface SessionsSectionProps {
   books: TranslationBook[];
-  modals?: ModalManager;
+  loadChapter?: ScriptureChapterLoader;
   draft: ReadingPlanDraft;
   onSelectSession: (index: number) => void;
   onAddSession: () => void;
   onRemoveSession: (index: number) => void;
   onAddReading: (item: PlaylistItemData) => void;
   onRemoveReading: (sessionIndex: number, readingId: string) => void;
+  onUpdateReading: (
+    sessionIndex: number,
+    readingId: string,
+    item: PlaylistItemData
+  ) => void;
+  /** The reading open in the item input, or null when it's adding one. */
+  editingReadingId: string | null;
+  onEditingReadingChange: (readingId: string | null) => void;
+  /** Handle on the selected session's item input, for unsaved-edit checks. */
+  itemInputRef: RefObject<PlaylistItemInputHandle>;
 }
 
 /**
  * The plan's content: a vertical list of reading sessions, each holding one
  * sitting's worth of reading. Selecting a session opens the same add-item
  * control the playlist editor uses (scripture, text, or link) inside it, and is
- * also where the reader's "Add to plan" verse action puts a passage.
+ * also where the reader's "Add to plan" verse action puts a passage. Editing a
+ * reading selects its session and opens that same control on the reading.
  */
 function SessionsSection(props: SessionsSectionProps) {
   const {
     books,
-    modals,
+    loadChapter,
     draft,
     onSelectSession,
     onAddSession,
     onRemoveSession,
     onAddReading,
     onRemoveReading,
+    onUpdateReading,
+    editingReadingId,
+    onEditingReadingChange: setEditingReadingId,
+    itemInputRef,
   } = props;
   const { t } = useI18n();
+  // Only one reading is expanded at a time, across all sessions.
+  const [expandedReadingId, setExpandedReadingId] = useState<string | null>(
+    null
+  );
 
   // Resolve a book's display name from the active translation's book list.
   const resolveBookName = (bookId: string): string => {
@@ -528,67 +602,85 @@ function SessionsSection(props: SessionsSectionProps) {
                       untitledReading
                     );
                     const preview = readingPreviewText(reading.item, t);
-                    // A text or link reading is the button — tapping it opens
-                    // the same preview the reader will see. Scripture has
-                    // nothing to preview, so it stays plain text.
-                    const canPreview =
-                      modals && canPreviewPlaylistItem(reading.item);
-
-                    // Leading type icon, then the label with its one-line summary.
-                    const body = (
-                      <>
-                        <span className="sb-rp-reading-icon" aria-hidden="true">
-                          <MaterialIcon>
-                            {readingItemIcon(reading.item)}
-                          </MaterialIcon>
-                        </span>
-                        <span className="sb-rp-reading-text">
-                          <span className="sb-rp-reading-label" dir="auto">
-                            {label}
-                          </span>
-                          {preview ? (
-                            <span className="sb-rp-reading-preview" dir="auto">
-                              {preview}
-                            </span>
-                          ) : null}
-                        </span>
-                      </>
-                    );
+                    const expanded = expandedReadingId === reading.id;
+                    const previewId = `sb-rp-reading-preview-${reading.id}`;
 
                     return (
                       <li key={reading.id} className="sb-rp-reading-item">
-                        {canPreview ? (
-                          <button
-                            type="button"
-                            className="sb-rp-reading-open"
-                            onClick={() =>
-                              openPlaylistItemPreview(
-                                modals,
-                                reading.item,
-                                PLAN_READING_PREVIEW_MODAL_ID,
-                                t
-                              )
-                            }
-                            aria-label={t("reading-plan-preview-reading", {
-                              defaultValue: "Preview {{reading}}",
-                              reading: label,
-                            })}
+                        <button
+                          type="button"
+                          className="sb-rp-reading-open"
+                          aria-expanded={expanded}
+                          aria-controls={expanded ? previewId : undefined}
+                          onClick={() =>
+                            setExpandedReadingId(expanded ? null : reading.id)
+                          }
+                          aria-label={t("reading-plan-preview-reading", {
+                            defaultValue: "Preview {{reading}}",
+                            reading: label,
+                          })}
+                        >
+                          <span
+                            className="sb-rp-reading-icon"
+                            aria-hidden="true"
                           >
-                            {body}
-                          </button>
-                        ) : (
-                          <span className="sb-rp-reading-body">{body}</span>
-                        )}
+                            <MaterialIcon>
+                              {readingItemIcon(reading.item)}
+                            </MaterialIcon>
+                          </span>
+                          <span className="sb-rp-reading-text">
+                            <span className="sb-rp-reading-label" dir="auto">
+                              {label}
+                            </span>
+                            {preview ? (
+                              <span
+                                className="sb-rp-reading-preview"
+                                dir="auto"
+                              >
+                                {preview}
+                              </span>
+                            ) : null}
+                          </span>
+                          <MaterialIcon className="sb-rp-reading-chevron">
+                            {expanded ? "expand_less" : "expand_more"}
+                          </MaterialIcon>
+                        </button>
+                        <button
+                          type="button"
+                          className="sb-rp-icon-button sb-rp-reading-edit"
+                          aria-pressed={editingReadingId === reading.id}
+                          onClick={() => {
+                            onSelectSession(index);
+                            setEditingReadingId(reading.id);
+                          }}
+                          aria-label={t("reading-plan-edit-reading", {
+                            defaultValue: "Edit reading",
+                          })}
+                        >
+                          <MaterialIcon>edit</MaterialIcon>
+                        </button>
                         <button
                           type="button"
                           className="sb-rp-icon-button sb-rp-reading-remove"
-                          onClick={() => onRemoveReading(index, reading.id)}
+                          onClick={() => {
+                            onRemoveReading(index, reading.id);
+                            if (editingReadingId === reading.id) {
+                              setEditingReadingId(null);
+                            }
+                          }}
                           aria-label={t("reading-plan-scripture-remove", {
                             defaultValue: "Remove reading",
                           })}
                         >
                           <MaterialIcon>close</MaterialIcon>
                         </button>
+                        {expanded ? (
+                          <PlaylistItemInlinePreview
+                            id={previewId}
+                            item={reading.item}
+                            loadChapter={loadChapter}
+                          />
+                        ) : null}
                       </li>
                     );
                   })}
@@ -604,9 +696,39 @@ function SessionsSection(props: SessionsSectionProps) {
               {/* Only the selected session takes new readings — including the
                   ones sent over from the reader's "Add to plan" action, which
                   has no way to name a session. */}
-              {isSelected ? (
-                <PlaylistItemInput books={books} onAdd={onAddReading} />
-              ) : null}
+              {isSelected
+                ? (() => {
+                    const editingReading =
+                      session.readings.find((r) => r.id === editingReadingId) ??
+                      null;
+                    const editItem = editingReading?.item;
+                    return (
+                      <PlaylistItemInput
+                        ref={itemInputRef}
+                        // Remount when the edit target changes so the inputs
+                        // seed from the newly chosen reading (or reset).
+                        key={
+                          editingReading ? `edit-${editingReading.id}` : "add"
+                        }
+                        books={books}
+                        onAdd={onAddReading}
+                        editItem={editItem}
+                        editScriptureText={
+                          editItem?.type === "bible-verse"
+                            ? playlistItemLabel(editItem, t, resolveBookName)
+                            : undefined
+                        }
+                        onUpdate={(item) => {
+                          if (editingReading) {
+                            onUpdateReading(index, editingReading.id, item);
+                          }
+                          setEditingReadingId(null);
+                        }}
+                        onCancelEdit={() => setEditingReadingId(null)}
+                      />
+                    );
+                  })()
+                : null}
             </li>
           );
         })}

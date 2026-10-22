@@ -502,6 +502,7 @@ describe("SessionsManager", () => {
       endedAt: null,
       shareTranslation: false,
       coHostUserIds: [],
+      verseSelectionEffectVisibility: "hosts-only",
     });
   });
 
@@ -593,6 +594,84 @@ describe("SessionsManager", () => {
     expect(session.id).toBe("group-abc");
   });
 
+  it("joinSession(id, startPosition) starts a session nobody has navigated yet at that position", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    await manager.joinSession("group-abc", {
+      initialTranslationId: "BSB",
+      initialBookId: "EXO",
+      initialChapterNumber: 10,
+    });
+
+    expect(createBibleReadingState).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      {
+        initialTranslationId: "BSB",
+        initialBookId: "EXO",
+        initialChapterNumber: 10,
+        isShared: true,
+      },
+      undefined,
+      undefined,
+      undefined
+    );
+    // Published straight away, so the next joiner opens Exodus 10 too.
+    expect(mockMap.set).toHaveBeenCalledWith("translationId", "BSB");
+    expect(mockMap.set).toHaveBeenCalledWith("bookId", "EXO");
+    expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 10);
+  });
+
+  it("joinSession(id, startPosition) follows a session that already has a position", async () => {
+    mockMap = createMockSharedMap({
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 3,
+      shareTranslation: true,
+    });
+    mockDocument.getMap.mockReturnValue(mockMap);
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    const session = await manager.joinSession("group-abc", {
+      initialTranslationId: "BSB",
+      initialBookId: "EXO",
+      initialChapterNumber: 10,
+    });
+
+    // The reader is not opened at the link's chapter first...
+    expect(createBibleReadingState).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      { isShared: true },
+      undefined,
+      undefined,
+      undefined
+    );
+    // ...but at the session's, and the group is not pulled to the link's.
+    expect(
+      session.readingState.selectTranslationAndChapter
+    ).toHaveBeenCalledWith("BSB", "GEN", 3, undefined);
+    expect(mockMap.set).not.toHaveBeenCalledWith("bookId", expect.anything());
+    expect(mockMap.set).not.toHaveBeenCalledWith(
+      "chapterNumber",
+      expect.anything()
+    );
+  });
+
   it("joinSession(id) does not set default options in the options map", async () => {
     const manager = createSessionsManager(
       os,
@@ -621,6 +700,7 @@ describe("SessionsManager", () => {
       endedAt: null,
       shareTranslation: false,
       coHostUserIds: [],
+      verseSelectionEffectVisibility: "hosts-only",
     });
   });
 
@@ -654,6 +734,7 @@ describe("SessionsManager", () => {
       endedAt: null,
       shareTranslation: false,
       coHostUserIds: [],
+      verseSelectionEffectVisibility: "hosts-only",
     });
     expect(mockOptionsMap.set).not.toHaveBeenCalled();
   });
@@ -673,9 +754,12 @@ describe("SessionsManager", () => {
         return ["user-1", "conn-2"];
       }
 
+      if (key === "verseSelectionEffectVisibility") {
+        return "everyone";
+      }
+
       return null;
     });
-
     mockOptionsMap.emitChange();
 
     await waitFor(
@@ -690,7 +774,133 @@ describe("SessionsManager", () => {
       endedAt: null,
       shareTranslation: false,
       coHostUserIds: [],
+      verseSelectionEffectVisibility: "everyone",
     });
+  });
+  it("updateOptions(newOptions) updates verse selection effect visibility", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
+
+    session.updateOptions({
+      verseSelectionEffectVisibility: "everyone",
+    });
+
+    expect(mockOptionsMap.set).toHaveBeenCalledWith(
+      "verseSelectionEffectVisibility",
+      "everyone"
+    );
+
+    expect(session.options.value.verseSelectionEffectVisibility).toBe(
+      "everyone"
+    );
+  });
+
+  it.each(["hosts-only", "everyone", "none"] as const)(
+    "preserves verse selection effect visibility when updating options to %s",
+    async (visibility) => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+
+      const session = await manager.joinSession("group-abc");
+
+      mockOptionsMap.setEmitOnSet(true);
+
+      // Change away from the default first, so the hosts-only case
+      // also exercises an actual update.
+      session.updateOptions({
+        verseSelectionEffectVisibility:
+          visibility === "hosts-only" ? "everyone" : "hosts-only",
+      });
+
+      mockOptionsMap.set.mockClear();
+
+      session.updateOptions({
+        verseSelectionEffectVisibility: visibility,
+      });
+
+      expect(session.options.value.verseSelectionEffectVisibility).toBe(
+        visibility
+      );
+
+      expect(mockOptionsMap.set).toHaveBeenCalledWith(
+        "verseSelectionEffectVisibility",
+        visibility
+      );
+    }
+  );
+  it.each(["hosts-only", "everyone", "none"] as const)(
+    "loads verse selection effect visibility %s from shared options",
+    async (visibility) => {
+      mockOptionsMap = createMockSharedMap({
+        verseSelectionEffectVisibility: visibility,
+      });
+
+      mockDocument.getMap.mockImplementation((name: string) => {
+        if (name === "options") return mockOptionsMap;
+        if (name === "decorations") return mockDecorationsMap;
+        if (name === "user_profiles") return mockUserProfilesMap;
+        if (name === "reading_positions") return mockReadingPositionsMap;
+        if (name === "reading_extensions") return mockExtensionsMap;
+        return mockMap;
+      });
+
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+
+      const session = await manager.joinSession("group-abc");
+
+      expect(session.options.value.verseSelectionEffectVisibility).toBe(
+        visibility
+      );
+    }
+  );
+  it("updates verse selection effect visibility when the shared options map changes", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.get.mockImplementation((key: string) => {
+      if (key === "verseSelectionEffectVisibility") {
+        return "everyone";
+      }
+
+      return null;
+    });
+
+    mockOptionsMap.emitChange();
+
+    await waitFor(
+      () => session.options.value.verseSelectionEffectVisibility === "everyone"
+    );
+
+    expect(session.options.value.verseSelectionEffectVisibility).toBe(
+      "everyone"
+    );
   });
 
   it("updateOptions(newOptions) writes options to the shared options map", async () => {
@@ -721,6 +931,7 @@ describe("SessionsManager", () => {
       endedAt: null,
       shareTranslation: false,
       coHostUserIds: [],
+      verseSelectionEffectVisibility: "hosts-only",
     });
   });
 
@@ -862,6 +1073,49 @@ describe("SessionsManager", () => {
         id: "decoration-local-timeout",
         removeAfterMs: 1500,
       })
+    );
+  });
+
+  it("keeps local-only decorations out of the shared decorations map", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockOptionsMap.setEmitOnSet(true);
+
+    session.readingState.decorateVerses(
+      "GEN",
+      1,
+      [3],
+      { className: "playlist-emphasis", localOnly: true },
+      "decoration-local-only"
+    );
+    session.readingState.decorateVerses(
+      "GEN",
+      1,
+      [4],
+      { className: "shared-emphasis" },
+      "decoration-shared"
+    );
+
+    await waitFor(() =>
+      mockDecorationsMap.set.mock.calls.some(
+        ([key]) =>
+          key === JSON.stringify(["test-config-bot-id", "decoration-shared"])
+      )
+    );
+
+    expect(mockDecorationsMap.set).not.toHaveBeenCalledWith(
+      JSON.stringify(["test-config-bot-id", "decoration-local-only"]),
+      expect.anything()
+    );
+    expect(session.readingState.decorations.value.map((d) => d.id)).toContain(
+      "decoration-local-only"
     );
   });
 

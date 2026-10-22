@@ -90,6 +90,9 @@
 }
 
 .sb-session-participants-list-name {
+  /* Takes the row's spare width so Add friend sits at the far end. */
+  flex: 1;
+  min-width: 0;
   font-size: 0.9375rem;
   color: var(--sb-font-color);
   white-space: nowrap;

@@ -1405,6 +1405,7 @@ describe("createChatsManager", () => {
       userId: "u1",
       connectionId: "conn-u1",
       name: "Remote AI",
+      iconUrl: null,
       isSelf: false,
       isAI: true,
       isRemote: true,
@@ -1433,6 +1434,7 @@ describe("createChatsManager", () => {
       userId: "u1",
       connectionId: "conn-u1",
       name: "Remote AI",
+      iconUrl: null,
       isSelf: false,
       isAI: true,
       isRemote: true,
@@ -1451,6 +1453,82 @@ describe("createChatsManager", () => {
         type: "text",
       } as any)
     ).rejects.toThrow();
+  });
+
+  it("appendMessage() records a suggestion outcome without asking the AI to reply", () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+    const generateResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "should not run",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse,
+    });
+    session.addParticipant("provider-1");
+
+    session.appendMessage(
+      {
+        type: "text",
+        text: "User switched to LSG",
+      },
+      [session.participants.value.find((participant) => participant.isSelf)!.id]
+    );
+
+    expect(session.messages.value).toHaveLength(1);
+    expect(session.messages.value[0]).toMatchObject({
+      timeMs: 1_717_000_000_000,
+      targets: [],
+      type: "text",
+      text: "User switched to LSG",
+    });
+    expect(generateResponse).not.toHaveBeenCalled();
+  });
+
+  it("shared chats drop message types they do not know", () => {
+    const { session: sharedSession } = createSharedSessionMock({
+      initialChats: [
+        {
+          id: "text-1",
+          authors: ["user-1"],
+          timeMs: 1,
+          targets: [],
+          type: "text",
+          text: "User switched to LSG",
+        },
+        {
+          id: "choices-1",
+          authors: ["provider-1"],
+          timeMs: 2,
+          targets: [],
+          type: "choices",
+          choiceType: "translation",
+          choices: [{ id: "fra_lsg", label: "LSG" }],
+        },
+        {
+          id: "unknown-1",
+          authors: [],
+          timeMs: 3,
+          targets: [],
+          type: "passage_card",
+          text: "older clients never render this",
+        },
+      ],
+    });
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const chat = chats.createSharedSession(sharedSession);
+
+    expect(chat.messages.value.map((message) => message.id)).toEqual([
+      "text-1",
+    ]);
   });
 
   it("registerProvider() adds AI provider participants to availableParticipants", () => {
@@ -1962,6 +2040,49 @@ describe("createChatsManager", () => {
     ]);
   });
 
+  it("createSharedSession() shares a provider's icon so other people see it too", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      iconUrl: "data:image/svg+xml,%3csvg%3e%3c/svg%3e",
+      supportsSharedChats: true,
+      generateResponse: vi.fn(),
+    });
+
+    const { session, sharedChatProviders } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+
+    chat.addParticipant("conn-user-a_provider-1");
+    await Promise.resolve();
+
+    expect(sharedChatProviders.get("user-a")).toEqual([
+      {
+        id: "conn-user-a_provider-1",
+        providerId: "provider-1",
+        name: "Helper AI",
+        isAI: true,
+        iconUrl: "data:image/svg+xml,%3csvg%3e%3c/svg%3e",
+      },
+    ]);
+  });
+
   it("createSharedSession() merges shared provider participants from chat_providers map", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager, mockI18nManager);
@@ -1998,11 +2119,82 @@ describe("createChatsManager", () => {
       userId: "u1",
       connectionId: "conn-u1",
       name: "Remote AI",
+      iconUrl: null,
       isSelf: false,
       isAI: true,
       isRemote: true,
       isActive: true,
       joinTimeMs: 1_717_000_000_000,
+    });
+  });
+
+  describe("icons of AI participants that someone else added", () => {
+    function setup(sharedIconUrl: string | undefined) {
+      const { loginManager } = createLoginManagerMock();
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      chats.registerProvider({
+        id: "provider-x",
+        name: "Local AI",
+        iconUrl: "data:image/svg+xml,local",
+        supportsSharedChats: true,
+        generateResponse: vi.fn(),
+      });
+      const { session, sharedChatProviders } = createSharedSessionMock({
+        currentUserId: "me",
+        connectedUsers: [
+          {
+            id: "me",
+            userId: "me",
+            connectionId: null,
+            name: "Me",
+            isSelf: true,
+            isAI: false,
+            isRemote: false,
+            isActive: true,
+            visual: getUserAnimalVisual("me"),
+          },
+          {
+            id: "u1",
+            userId: "u1",
+            connectionId: null,
+            name: "Alpha",
+            isSelf: false,
+            isAI: false,
+            isRemote: true,
+            isActive: true,
+            visual: getUserAnimalVisual("u1"),
+          },
+        ],
+      });
+      sharedChatProviders.set("u1", [
+        {
+          id: "u1_provider-x",
+          providerId: "provider-x",
+          name: "Remote AI",
+          isAI: true,
+          ...(sharedIconUrl ? { iconUrl: sharedIconUrl } : {}),
+        },
+      ]);
+      const chat = chats.createSharedSession(session);
+      return chat.participants.value.find((p) => p.id === "u1_provider-x");
+    }
+
+    it("shows the icon the other person shared when it is a full address", () => {
+      expect(setup("https://example.com/bot.png")).toMatchObject({
+        iconUrl: "https://example.com/bot.png",
+      });
+    });
+
+    it("uses your own copy of the provider's icon when theirs is a path on their own server", () => {
+      expect(
+        setup("/packages/apologist-extension/icon-square.svg")
+      ).toMatchObject({ iconUrl: "data:image/svg+xml,local" });
+    });
+
+    it("uses your own copy of the provider's icon when they shared none", () => {
+      expect(setup(undefined)).toMatchObject({
+        iconUrl: "data:image/svg+xml,local",
+      });
     });
   });
 

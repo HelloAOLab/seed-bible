@@ -35,7 +35,7 @@ export function playlistItemLabel(
         : `${book} ${chapter}:${verse}`;
     }
     case "link":
-      return item.title?.trim() || item.url;
+      return item.title?.trim() || item.preview?.title || item.url;
     case "html":
       return (
         item.title?.trim() ||

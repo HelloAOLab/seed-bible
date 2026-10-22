@@ -3,6 +3,7 @@ import { createNavigationManager } from "@packages/seed-bible/seed-bible/manager
 import {
   createSettings,
   DEFAULT_VERSE_LINE_HEIGHT,
+  type AppSettings,
 } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
 import {
   createLoginManager,
@@ -337,6 +338,7 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     settings.setCustomTheme({ primaryColor: "#000000" });
     settings.setCustomHighlights({ yellow: { color: "#ffff00" } });
     settings.setDiscoverContentPanelInline(false);
+    settings.setDiscoveredContent({ showContent: false });
 
     settings.resetToDefaults();
 
@@ -347,6 +349,7 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.customTheme).toEqual({});
     expect(settings.settings.value.customHighlights).toEqual({});
     expect(settings.settings.value.discoverContentPanelInline).toBe(true);
+    expect(settings.settings.value.discoveredContent.showContent).toBe(true);
   });
 
   it("setDiscoverContentPanelInline persists to login.localConfig when anonymous and defaults to true", () => {
@@ -374,6 +377,87 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(
       (login.profile.value as any)?.config?.discoverContentPanelInline
     ).toBe(false);
+  });
+
+  it("setDiscoveredContent persists to login.localConfig when anonymous and defaults to showing the content", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    expect(settings.settings.value.discoveredContent.showContent).toBe(true);
+
+    settings.setDiscoveredContent({ showContent: false });
+
+    expect(settings.settings.value.discoveredContent.showContent).toBe(false);
+    expect(login.localConfig.value.discoveredContent).toEqual({
+      showContent: false,
+    });
+  });
+
+  it("setDiscoveredContent persists to the user's profile when logged in", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: {},
+    } as unknown as UserProfile);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setDiscoveredContent({ showContent: false });
+
+    expect(settings.settings.value.discoveredContent.showContent).toBe(false);
+    expect((login.profile.value as any)?.config?.discoveredContent).toEqual({
+      showContent: false,
+    });
+  });
+
+  it("setAllSettings accepts settings saved before discoveredContent existed and shows the content", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+    const { discoveredContent: _omitted, ...legacySettings } =
+      settings.settings.value;
+
+    settings.setAllSettings(legacySettings as AppSettings);
+
+    expect(settings.settings.value.discoveredContent).toEqual({
+      showContent: true,
+    });
+  });
+
+  it("setVerseSelectionEffects persists to login.localConfig when anonymous", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setVerseSelectionEffects("enabled");
+
+    expect(settings.settings.value.verseSelectionEffects).toBe("enabled");
+    expect(login.localConfig.value.verseSelectionEffects).toBe("enabled");
+  });
+
+  it("resetToDefaults resets verse selection effects to default", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setVerseSelectionEffects("disabled");
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.verseSelectionEffects).toBe("default");
+  });
+
+  it("preserves verse selection effects after a simulated page refresh", () => {
+    const os = CasualOSManager();
+    const nav = navWith();
+
+    const login1 = createLoginManager({ os });
+    login1.hydrateLocalConfig();
+
+    const settings1 = createSettings(os, login1, nav);
+    settings1.setVerseSelectionEffects("enabled");
+
+    // Simulate a fresh page load using the same localStorage.
+    const login2 = createLoginManager({ os });
+    login2.hydrateLocalConfig();
+
+    const settings2 = createSettings(os, login2, nav);
+
+    expect(settings2.settings.value.verseSelectionEffects).toBe("enabled");
   });
 });
 
@@ -489,6 +573,26 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
 
     const localWins = createSettings(os, anon, navWith());
     expect(localWins.settings.value.themeId).toBe("dark");
+  });
+
+  it("lets an embed link's theme outrank a signed-in viewer's saved theme and colors", () => {
+    const loggedIn = makeFakeLogin({
+      name: "Test",
+      config: {
+        themeId: "dark",
+        customTheme: { background: "#123456" },
+        customHighlights: { yellow: { color: "#ffff00" } },
+      },
+    } as unknown as UserProfile);
+    const settings = createSettings(
+      os,
+      loggedIn,
+      navWith("?embed=minimal&app.themeId=light")
+    );
+
+    expect(settings.settings.value.themeId).toBe("light");
+    expect(settings.settings.value.customTheme).toEqual({});
+    expect(settings.settings.value.customHighlights).toEqual({});
   });
 });
 

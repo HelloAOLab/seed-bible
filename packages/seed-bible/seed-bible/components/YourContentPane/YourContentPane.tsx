@@ -8,6 +8,15 @@ import type { Save } from "../../managers/SavesManager";
 import type { Playlist } from "../../managers/PlaylistManager";
 import type { TodayPassageTarget } from "../../managers/TodayManager";
 import {
+  formatReadingPlanId,
+  getReadingCalendar,
+  latestReadingPlanProgress,
+  summarizeCalendar,
+  type ReadingPlanMetadata,
+  type ReadingPlansManager,
+} from "../../managers/ReadingPlansManager";
+import { FEATURE_KEY_READING_PLANS } from "../../managers/FeaturesManager";
+import {
   CONTENT_FILTERS,
   annotationPlainText,
   highlightKey,
@@ -15,13 +24,17 @@ import {
 } from "../../managers/YourContentManager";
 import { AnnotationPreview } from "../DiscoverPane/AnnotationsSection";
 import { PlaylistRow } from "../DiscoverPane/PlaylistRow";
+import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import { openSaveModalForLocation } from "../Tabs/Tabs";
 import {
   ContextMenuItem,
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
+import { Spinner } from "../Spinner/Spinner";
+import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
 import { useI18n } from "../../i18n";
+import { UserImagesGrid } from "./UserImages";
 import "./YourContentPane.css";
 
 export const YOUR_CONTENT_PANE_ID = "your-content-pane";
@@ -39,6 +52,16 @@ export interface YourContentScreenProps {
   onEditPlaylist: (playlist: Playlist) => void;
   /** Opens an annotation in the editor and leaves this screen. */
   onEditAnnotation: (annotation: Annotation) => void;
+  /** Opens a new, empty playlist in the editor and leaves this screen. */
+  onCreatePlaylist: () => void;
+  /**
+   * Opens a reading plan in the plans pane and leaves this screen. A draft
+   * has nothing to read yet, so the caller is expected to open it where the
+   * author left off — the editor — rather than the detail view.
+   */
+  onOpenReadingPlan: (plan: ReadingPlanMetadata) => void;
+  /** Opens a reading plan in the plan editor and leaves this screen. */
+  onEditReadingPlan: (plan: ReadingPlanMetadata) => void;
 }
 
 /** Pane header title. A component so it can call `useI18n`. */
@@ -392,20 +415,130 @@ function SavePill(props: {
   );
 }
 
+function ReadingPlanRow(props: {
+  state: SeedBibleState;
+  plan: ReadingPlanMetadata;
+  onOpen: () => void;
+  onEdit: () => void;
+}) {
+  const { state, plan } = props;
+  const { t } = useI18n();
+  const status = readingPlanStatusLabel(state.readingPlans, plan, t);
+  const title =
+    plan.title ?? t("untitled-reading-plan", { defaultValue: "Untitled plan" });
+  const full =
+    state.readingPlans.fullReadingPlans.value.find(
+      (p) => p.recordName === plan.recordName && p.address === plan.address
+    ) ?? null;
+
+  return (
+    // Laid out as a Discover row, like the playlists beside it, so a plan
+    // reads the same way a playlist does on this screen.
+    <li
+      className="sb-discover-item sb-discover-item--row sb-content-plan"
+      dir="auto"
+      onClick={props.onOpen}
+    >
+      <HeroImageThumb url={plan.heroImageUrl} />
+      <div className="sb-discover-item-main">
+        <span className="sb-discover-item-title">{title}</span>
+        {status ? (
+          <span className="sb-content-plan-status">{status}</span>
+        ) : null}
+      </div>
+      <ReadingPlanOptionsMenu
+        readingPlans={state.readingPlans}
+        plan={plan}
+        // A draft isn't finished, so there's nothing to share yet.
+        fullPlan={plan.status === "draft" ? null : full}
+        onEdit={props.onEdit}
+        modals={state.modals}
+        toast={state.app.toast}
+        buttonClassName="sb-discover-item-menu"
+      />
+    </li>
+  );
+}
+
+/**
+ * Where the user is with a plan, in a few words: "Draft" for one still being
+ * written, "Not started" for one never begun, "Day 3 of 10" (or "2/5
+ * sessions" for a self-paced read) while it is under way, and "Completed"
+ * once every day is done.
+ *
+ * Progress is worked out from the full plan, which loads a moment after the
+ * list. Until it has, a started plan has no status rather than a wrong one.
+ */
+function readingPlanStatusLabel(
+  readingPlans: ReadingPlansManager,
+  plan: ReadingPlanMetadata,
+  t: ReturnType<typeof useI18n>["t"]
+): string | null {
+  if (plan.status === "draft") {
+    return t("reading-plan-draft", { defaultValue: "Draft" });
+  }
+  const planId = formatReadingPlanId(plan.recordName, plan.address);
+  const progress = latestReadingPlanProgress(
+    readingPlans.userReadingPlanProgresses.value,
+    planId
+  );
+  if (!progress) {
+    return t("reading-plan-not-started", { defaultValue: "Not started" });
+  }
+  const full = readingPlans.fullReadingPlans.value.find(
+    (p) => p.recordName === plan.recordName && p.address === plan.address
+  );
+  if (!full) {
+    return null;
+  }
+  const nowMs = Date.now();
+  const summary = summarizeCalendar(
+    getReadingCalendar(full, progress, nowMs),
+    nowMs,
+    progress.timeZone
+  );
+  if (summary.totalDays > 0 && summary.doneDays === summary.totalDays) {
+    return t("reading-plan-completed", { defaultValue: "Completed" });
+  }
+  if (progress.selfPaced) {
+    return t("reading-plan-progress-sessions", {
+      defaultValue: "{{done}}/{{total}} sessions",
+      done: summary.doneDays,
+      total: summary.totalDays,
+    });
+  }
+  return t("plan-day-of", {
+    defaultValue: "Day {{day}} of {{total}}",
+    day: summary.nextDayNumber ?? summary.doneDays + 1,
+    total: summary.totalDays,
+  });
+}
+
 /* ------------------------------------------------------------------ screen */
 
 /**
  * The "Your content" screen (issue #1553): everything the reader has made —
- * annotations, highlights, saves and playlists — in one place, filtered
- * by a search box and a row of chips.
+ * annotations, highlights, saves, playlists, reading plans and uploaded
+ * images — in one place, filtered by a search box and a row of chips.
  *
  * "All" shows the first few of each section with a "See all" that switches
  * the chips to that one section in full.
  */
 export function YourContentPane(props: YourContentScreenProps) {
   const { state, onOpenPassage } = props;
-  const { yourContent, saves, playlists, annotations } = state;
+  const { yourContent, saves, playlists, annotations, readingPlans, gallery } =
+    state;
   const { t } = useI18n();
+  const userId = state.login.userId.value;
+
+  // Reading plans are still behind a feature flag. With it off the user can't
+  // make one, so the chip and the section go too rather than sitting empty.
+  const plansEnabled = state.features.isFeatureEnabled(
+    FEATURE_KEY_READING_PLANS
+  ).value;
+  const contentFilters = plansEnabled
+    ? CONTENT_FILTERS
+    : CONTENT_FILTERS.filter((value) => value !== "reading-plans");
 
   // Every open refreshes, so a verse highlighted or annotated in the reader
   // since the last visit shows up. It's quiet when content is already
@@ -413,6 +546,13 @@ export function YourContentPane(props: YourContentScreenProps) {
   useEffect(() => {
     void yourContent.load({ force: true });
   }, []);
+
+  // Uploaded images live in the account's gallery, not in what `load` reads.
+  useEffect(() => {
+    if (userId) {
+      void gallery.syncPhotos();
+    }
+  }, [userId]);
 
   // Highlights carry no words of their own, so searching them means reading
   // their chapters back. Kicked off on the first search rather than on open:
@@ -485,6 +625,16 @@ export function YourContentPane(props: YourContentScreenProps) {
   const visiblePlaylists = playlists.userPlaylists.value.filter((p) =>
     matches(p.title, p.description)
   );
+  // Newest first, like annotations. The list arrives in record order, which
+  // is no order a reader would recognise.
+  const visibleReadingPlans = plansEnabled
+    ? readingPlans.userReadingPlans.value
+        .filter((p) => matches(p.title, p.description))
+        .sort((a, b) => b.createdAtMs - a.createdAtMs)
+    : [];
+  // An image has no words to search, so any search hides them all.
+  const visibleImages =
+    userId && needle.length === 0 ? gallery.photos.value : [];
 
   const showing = (section: ContentFilter) =>
     filter === "all" || filter === section;
@@ -510,6 +660,10 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("saves", { defaultValue: "Saves" });
       case "playlists":
         return t("playlists", { defaultValue: "Playlists" });
+      case "reading-plans":
+        return t("reading-plans", { defaultValue: "Reading plans" });
+      case "images":
+        return t("images", { defaultValue: "Images" });
     }
   };
 
@@ -518,6 +672,8 @@ export function YourContentPane(props: YourContentScreenProps) {
     highlights: visibleHighlights.length,
     saves: visibleSaves.length,
     playlists: visiblePlaylists.length,
+    "reading-plans": visibleReadingPlans.length,
+    images: visibleImages.length,
   };
 
   /**
@@ -558,10 +714,19 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("your-content-empty-playlists", {
           defaultValue: "Playlists you create will show up here.",
         });
+      case "reading-plans":
+        return t("your-content-empty-reading-plans", {
+          defaultValue: "Reading plans you create will show up here.",
+        });
+      case "images":
+        return t("your-images-empty", {
+          defaultValue:
+            "Images you upload as covers for playlists and reading plans will show up here.",
+        });
       case "all":
         return t("your-content-empty", {
           defaultValue:
-            "Notes, highlights, saves and playlists you make will show up here.",
+            "Notes, highlights, saves, playlists and reading plans you make will show up here.",
         });
     }
   };
@@ -586,27 +751,44 @@ export function YourContentPane(props: YourContentScreenProps) {
           />
         </div>
 
-        <div className="sb-content-chips" role="tablist">
-          {CONTENT_FILTERS.map((value) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={filter === value}
-              className={`sb-content-chip${
-                filter === value ? " sb-content-chip-active" : ""
-              }`}
-              onClick={() => {
-                yourContent.filter.value = value;
-              }}
-            >
-              {chipLabel(value)}
-            </button>
-          ))}
+        <div className="sb-content-toolbar">
+          {/* Outside the chip strip so it stays put while the chips scroll. */}
+          <ContextMenuWithButton
+            buttonClassName="sb-content-create"
+            aria-label={t("create-menu", { defaultValue: "Create" })}
+            icon={<>+ {t("create-playlist", { defaultValue: "Create" })}</>}
+          >
+            <ContextMenuItem onClick={props.onCreatePlaylist}>
+              <MaterialIcon className="sb-context-menu-item-icon">
+                queue_music
+              </MaterialIcon>
+              {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
+            </ContextMenuItem>
+          </ContextMenuWithButton>
+
+          <div className="sb-content-chips" role="tablist">
+            {contentFilters.map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={filter === value}
+                className={`sb-content-chip${
+                  filter === value ? " sb-content-chip-active" : ""
+                }`}
+                onClick={() => {
+                  yourContent.filter.value = value;
+                }}
+              >
+                {chipLabel(value)}
+              </button>
+            ))}
+          </div>
         </div>
 
         {status === "loading" || stillSearching ? (
-          <p className="sb-content-status">
+          <p className="sb-content-status sb-content-status--loading">
+            <Spinner />
             {t("loading-your-content", {
               defaultValue: "Gathering your content…",
             })}
@@ -746,6 +928,41 @@ export function YourContentPane(props: YourContentScreenProps) {
                 />
               ))}
             </ul>
+          </section>
+        ) : null}
+
+        {showing("reading-plans") && visibleReadingPlans.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("reading-plans", { defaultValue: "Reading plans" })}
+              onSeeAll={seeAll("reading-plans", visibleReadingPlans)}
+            />
+            <ul className="sb-discover-list">
+              {visibleReadingPlans
+                .slice(0, limit(visibleReadingPlans))
+                .map((plan) => (
+                  <ReadingPlanRow
+                    key={formatReadingPlanId(plan.recordName, plan.address)}
+                    state={state}
+                    plan={plan}
+                    onOpen={() => props.onOpenReadingPlan(plan)}
+                    onEdit={() => props.onEditReadingPlan(plan)}
+                  />
+                ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {showing("images") && visibleImages.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("images", { defaultValue: "Images" })}
+              onSeeAll={seeAll("images", visibleImages)}
+            />
+            <UserImagesGrid
+              state={state}
+              photos={visibleImages.slice(0, limit(visibleImages))}
+            />
           </section>
         ) : null}
       </div>

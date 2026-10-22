@@ -1,4 +1,5 @@
 import "./SettingsPage.css";
+import { localizedThemeName } from "./localizedThemeName";
 import { useComputed, useSignal } from "@preact/signals";
 import { ScriptureLineHeightIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -8,6 +9,7 @@ import {
   type BookOrientation,
   type TextSize,
   type UISize,
+  type VerseSelectionEffects,
 } from "../../managers/SettingsManager";
 import {
   DARK_THEME,
@@ -25,22 +27,29 @@ import {
   buildCustomizationTutorialSteps,
   openCustomizationEditPane,
 } from "../CustomizationEditPane/CustomizationEditPane";
+import {
+  CustomizationCardPreview,
+  getDefaultTranslationLabel,
+} from "../CustomizationEditPane/CustomizationPreviews";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
+import {
+  SensitiveSettingsForm,
+  UnusedSensitiveSettingsList,
+} from "../ExtensionSettingsForm/SensitiveSettingsForm";
+import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { download, translateTitle } from "../../app/utils";
 import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
 import {
   Skeleton,
   SkeletonContainer,
 } from "../../components/Skeleton/Skeleton";
+import { Spinner } from "../Spinner/Spinner";
 import {
   ExtensionInitalizer,
+  nonSensitiveSettings,
   type ExtensionListEntry,
 } from "../../managers/ExtensionManager";
-import {
-  getBrandedAppText,
-  useI18n,
-  type I18nHook,
-} from "../../i18n/I18nManager";
+import { getBrandedAppText, useI18n } from "../../i18n/I18nManager";
 import {
   ExtensionsIcon,
   InstallAppsIcon,
@@ -62,7 +71,6 @@ import {
 
 import { LANG_META } from "../../i18n/languageMeta";
 import { useAppConfig } from "../../app/appConfig";
-
 function FlagImg({ cc }: { cc: string }) {
   return (
     <img
@@ -433,12 +441,7 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
                   })
                 ) : isSaving.value ? (
                   <span className="sb-account-save-saving">
-                    <span
-                      className="material-symbols-outlined sb-account-save-spinner"
-                      aria-hidden="true"
-                    >
-                      progress_activity
-                    </span>
+                    <Spinner size="1.125rem" />
                     {t("saving", { defaultValue: "Saving…" })}
                   </span>
                 ) : (
@@ -475,30 +478,6 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
       </section>
     </div>
   );
-}
-
-/**
- * Built-in theme names are authored in English on the theme object, so they'd
- * otherwise render untranslated. Spelled out as separate `t()` calls (rather
- * than a computed `theme-${id}` key) so the i18n lint rules can see them.
- * User-supplied themes keep whatever name they were given.
- *
- * Exported for tests.
- */
-export function localizedThemeName(
-  t: I18nHook["t"],
-  theme: { id: string; name: string }
-): string {
-  if (theme.id === LIGHT_THEME.id) {
-    return t("theme-light", { defaultValue: theme.name });
-  }
-  if (theme.id === DARK_THEME.id) {
-    return t("theme-dark", { defaultValue: theme.name });
-  }
-  if (theme.id === SYSTEM_THEME_ID) {
-    return t("theme-system", { defaultValue: theme.name });
-  }
-  return theme.name;
 }
 
 /**
@@ -650,6 +629,10 @@ export function CustomizationVariantGallery(props: {
           const isSelected =
             !customizations.isFollowingSystemScheme.value &&
             variant.id === customizations.activeVariant.value?.id;
+          // `variant.themes` holds only the fields this theme overrides;
+          // everything else comes from the preset it's based on.
+          const colors =
+            customizations.resolveEditingVariantTheme(variant).variables;
           return (
             <button
               key={variant.id}
@@ -663,19 +646,19 @@ export function CustomizationVariantGallery(props: {
             >
               <div
                 className="sb-theme-ready-preview"
-                style={{ background: variant.themes.tertiaryColor }}
+                style={{ background: colors.tertiaryColor }}
               >
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
-                  style={{ background: variant.themes.primaryColor }}
+                  style={{ background: colors.primaryColor }}
                 />
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
-                  style={{ background: variant.themes.secondaryColor }}
+                  style={{ background: colors.secondaryColor }}
                 />
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
-                  style={{ background: variant.themes.fontColor }}
+                  style={{ background: colors.fontColor }}
                 />
               </div>
               <ThemeCardLabel name={variant.name} isSelected={isSelected} />
@@ -705,10 +688,17 @@ function CustomizationSystemCard(props: {
   const { customizations } = props.state;
   const { t } = useI18n();
   const isSelected = customizations.isFollowingSystemScheme.value;
-  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => ({
-    presetId,
-    variant: props.customization.variants.find((v) => v.baseTheme === presetId),
-  }));
+  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => {
+    const variant = props.customization.variants.find(
+      (v) => v.baseTheme === presetId
+    );
+    return {
+      presetId,
+      colors: variant
+        ? customizations.resolveEditingVariantTheme(variant).variables
+        : undefined,
+    };
+  });
 
   return (
     <button
@@ -719,15 +709,15 @@ function CustomizationSystemCard(props: {
       onClick={() => void customizations.selectActiveVariant(SYSTEM_THEME_ID)}
     >
       <div className="sb-theme-ready-preview sb-theme-ready-preview-system">
-        {halves.map(({ presetId, variant }) => (
+        {halves.map(({ presetId, colors }) => (
           <div
             key={presetId}
             className="sb-theme-ready-system-half"
-            style={{ background: variant?.themes.tertiaryColor }}
+            style={{ background: colors?.tertiaryColor }}
           >
             <div
               className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
-              style={{ background: variant?.themes.primaryColor }}
+              style={{ background: colors?.primaryColor }}
             />
           </div>
         ))}
@@ -754,7 +744,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
     const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLineHeight);
     return idx === -1 ? 0 : idx;
   })();
-
   const fontSizeIndex = FONT_SIZE_OPTIONS.indexOf(selectedFontSize);
 
   const onBack = () => {
@@ -1046,6 +1035,66 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         </div>
 
         <h3 className="sb-settings-subheading">
+          {t("discovered-content", { defaultValue: "Discovered Content" })}
+        </h3>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-discovered-content"
+          >
+            {t("show-discovered-content", {
+              defaultValue: "Show discovered content",
+            })}
+          </label>
+          <input
+            id="sb-show-discovered-content"
+            type="checkbox"
+            checked={current.discoveredContent.showContent}
+            onChange={(event: Event) => {
+              settings.setDiscoveredContent({
+                showContent: (event.currentTarget as HTMLInputElement).checked,
+              });
+            }}
+          />
+        </div>
+        <h3 className="sb-settings-subheading">
+          {t("session", { defaultValue: "Session" })}
+        </h3>
+        <div className="sb-settings-field-row">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-verse-selection-effects"
+          >
+            {t("verse-selection-effects", {
+              defaultValue: "Verse Selection Effects",
+            })}
+          </label>
+
+          <select
+            id="sb-verse-selection-effects"
+            className="sb-settings-language-select"
+            value={current.verseSelectionEffects ?? "default"}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+
+              settings.setVerseSelectionEffects(
+                target.value as VerseSelectionEffects
+              );
+            }}
+          >
+            <option value="default">
+              {t("default", { defaultValue: "Default" })}
+            </option>
+            <option value="enabled">
+              {t("enabled", { defaultValue: "Enabled" })}
+            </option>
+            <option value="disabled">
+              {t("disabled", { defaultValue: "Disabled" })}
+            </option>
+          </select>
+        </div>
+        <h3 className="sb-settings-subheading">
           {t("display", { defaultValue: "Display" })}
         </h3>
 
@@ -1097,7 +1146,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             </option>
           </select>
         </div>
-
         <div className="sb-settings-toggle-row">
           <label
             className="sb-settings-toggle-label"
@@ -1234,10 +1282,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
   const activeCustomization = customizations.activeCustomization.value;
-  // Extensions the active customization has marked "hidden" don't appear in
-  // this list at all — not installable, not shown as installed, nothing.
+  // An extension the active customization marks "hidden" is never offered
+  // for install, but one that's still installed (e.g. pulled in as another
+  // extension's dependency) is listed so it can be seen and removed.
   const visibleExtensionsList = extensionsList.filter(
     (entry) =>
+      entry.installed ||
       customizations.getActiveExtensionAvailability(entry.id) !== "hidden"
   );
   const activeTab = useSignal<ExtensionsTab>("installed");
@@ -1270,6 +1320,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const handleUninstall = (extensionId: string) => {
     if (activeCustomization) {
+      // A hidden extension is never one of the viewer's picks for the
+      // customization, so dropping the pick wouldn't remove it. Unload it for
+      // this session instead, the same way the customization's own swap does,
+      // so the viewer's default profile keeps it.
+      if (
+        customizations.getActiveExtensionAvailability(extensionId) === "hidden"
+      ) {
+        extensions.unloadExtension(extensionId, { persist: false });
+        return;
+      }
       void customizations.removeExtensionFromActiveCustomization(extensionId);
       return;
     }
@@ -1277,7 +1337,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleConfigureExtension = (extensionEntry: ExtensionListEntry) => {
-    const settings = extensionEntry.extension?.meta.settings ?? {};
+    const allSettings = extensionEntry.extension?.meta.settings ?? {};
+    const settings = nonSensitiveSettings(allSettings);
+    const sensitive = extensionEntry.extension?.meta.sensitive ?? {};
+    const hasSensitive =
+      Object.keys(settings).length < Object.keys(allSettings).length;
+    const customPanel = extensions.settingsPanels.value[extensionEntry.id];
     state.modals.openModal({
       title: {
         key: "extension-settings-title",
@@ -1313,25 +1378,82 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </div>
         ) : (
           <>
-            <ExtensionSettingsForm
-              extensionId={extensionEntry.id}
-              settings={settings}
-              getValue={(key) =>
-                extensionSettings.getValue(extensionEntry.id, key)
-              }
-              onChange={(key, value) =>
-                void extensionSettings.setValue(extensionEntry.id, key, value)
-              }
-              resetting={{
-                hasOwnValue: (key) =>
-                  extensionSettings.valuesByExtensionId.value[
-                    extensionEntry.id
-                  ]?.[key] !== undefined,
-                onReset: (key) =>
-                  void extensionSettings.clearValue(extensionEntry.id, key),
-              }}
-              t={t}
-            />
+            {/* A custom panel stands in for the generic form only: sensitive
+                values can't go through an extension's own UI, so they keep
+                their own section either way. */}
+            {customPanel
+              ? customPanel()
+              : (!hasSensitive || Object.keys(settings).length > 0) && (
+                  <ExtensionSettingsForm
+                    extensionId={extensionEntry.id}
+                    settings={settings}
+                    getValue={(key) =>
+                      extensionSettings.getValue(extensionEntry.id, key)
+                    }
+                    onChange={(key, value) =>
+                      void extensionSettings.setValue(
+                        extensionEntry.id,
+                        key,
+                        value
+                      )
+                    }
+                    resetting={{
+                      hasOwnValue: (key) =>
+                        extensionSettings.valuesByExtensionId.value[
+                          extensionEntry.id
+                        ]?.[key] !== undefined,
+                      onReset: (key) =>
+                        void extensionSettings.clearValue(
+                          extensionEntry.id,
+                          key
+                        ),
+                    }}
+                    t={t}
+                  />
+                )}
+            {hasSensitive && (
+              <SensitiveSettingsForm
+                extensionId={extensionEntry.id}
+                settings={allSettings}
+                sensitive={sensitive}
+                isSet={(key) =>
+                  extensionSettings.isSensitiveValueSet(extensionEntry.id, key)
+                }
+                isProvided={(key) =>
+                  extensionSettings.getSensitiveValueSource(
+                    extensionEntry.id,
+                    key
+                  ) === "customization"
+                }
+                hasStored={(proxyId) =>
+                  extensionSettings.hasStoredSensitiveValues(
+                    extensionEntry.id,
+                    proxyId
+                  )
+                }
+                getDestination={(proxyId) =>
+                  extensionSettings.getSensitiveDestination(
+                    extensionEntry.id,
+                    proxyId
+                  )
+                }
+                onSave={(proxyId, values, options) =>
+                  extensionSettings.setSensitiveValues(
+                    extensionEntry.id,
+                    proxyId,
+                    values,
+                    options
+                  )
+                }
+                onClear={(proxyId) =>
+                  extensionSettings.clearSensitiveValues(
+                    extensionEntry.id,
+                    proxyId
+                  )
+                }
+                t={t}
+              />
+            )}
             {extensionSettings.hasSaveError(extensionEntry.id) && (
               <p className="sb-settings-save-error" role="alert">
                 {t("extension-settings-save-failed", {
@@ -1409,8 +1531,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
     const { id, installed, pendingInstallation } = extensionEntry;
-    const isBaseExtension =
-      customizations.getActiveExtensionAvailability(id) === "auto-installed";
     const isRegistered =
       ExtensionInitalizer.getInstance().isExtensionRegistered(id);
     const installState = getExtensionInstallState(
@@ -1456,20 +1576,26 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 customizations.activeCustomization.value?.name
               )}
             </span>
-            <span className="sb-extension-description">
+            <ExpandableText
+              className="sb-extension-description"
+              lines={2}
+              readMoreLabel={t("read-more", { defaultValue: "Read more" })}
+              readLessLabel={t("read-less", { defaultValue: "Read less" })}
+            >
               {getBrandedAppText(
                 t("description", { ns: id, defaultValue: "" }),
                 t,
                 branding,
                 customizations.activeCustomization.value?.name
               )}
-            </span>
+            </ExpandableText>
           </div>
           <div className="sb-extension-row-actions">
             {installState === "installed" &&
-              extensionEntry.extension?.meta.settings &&
-              Object.keys(extensionEntry.extension.meta.settings).length >
-                0 && (
+              ((extensionEntry.extension?.meta.settings &&
+                Object.keys(extensionEntry.extension.meta.settings).length >
+                  0) ||
+                extensions.settingsPanels.value[id]) && (
                 <button
                   type="button"
                   className="sb-extension-row-action-button"
@@ -1495,20 +1621,20 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 <span className="material-symbols-outlined">download</span>
               </button>
             )}
-            {(installState === "installed" || installState === "downloaded") &&
-              !isBaseExtension && (
-                <button
-                  type="button"
-                  className="sb-extension-row-action-button"
-                  onClick={() => handleUninstall(id)}
-                  aria-label={t("uninstall", {
-                    defaultValue: "Uninstall",
-                  })}
-                  title={t("uninstall", { defaultValue: "Uninstall" })}
-                >
-                  <span className="material-symbols-outlined">delete</span>
-                </button>
-              )}
+            {(installState === "installed" ||
+              installState === "downloaded") && (
+              <button
+                type="button"
+                className="sb-extension-row-action-button"
+                onClick={() => handleUninstall(id)}
+                aria-label={t("uninstall", {
+                  defaultValue: "Uninstall",
+                })}
+                title={t("uninstall", { defaultValue: "Uninstall" })}
+              >
+                <span className="material-symbols-outlined">delete</span>
+              </button>
+            )}
           </div>
         </div>
       </li>
@@ -1540,9 +1666,9 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       <section className="sb-settings-section">
         {activeCustomization && (
           <p className="sb-settings-field-description">
-            {t("extensions-for-active-customization", {
+            {t("extensions-for-active-customization-scoped", {
               defaultValue:
-                "Showing extensions for {{name}}. Extensions this customization includes can't be removed here.",
+                "Showing extensions for {{name}}. Changes you make here only apply while you're using it.",
               name: activeCustomization.name,
             })}
           </p>
@@ -1617,6 +1743,18 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             </div>
           </>
         )}
+
+        <UnusedSensitiveSettingsList
+          unused={extensionSettings.getUnusedSensitiveProxies()}
+          getExtensionTitle={(extensionId) =>
+            // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+            t("title", { ns: extensionId, defaultValue: extensionId })
+          }
+          onClear={(extensionId, proxyId) =>
+            extensionSettings.clearSensitiveValues(extensionId, proxyId)
+          }
+          t={t}
+        />
 
         <div className="sb-extension-footer-actions">
           <button
@@ -2139,66 +2277,72 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
         ]}
       />
       <section className="sb-settings-section">
+        <p className="sb-cz-intro">
+          {t("customizations-description", {
+            defaultValue:
+              "A customization bundles a logo, themes and extension rules. Share one with a church or group so everyone reads with the same setup.",
+          })}
+        </p>
         {isEmpty ? (
-          <div className="sb-settings-empty-state">
-            <p>
-              {customizations.isLoading.value
-                ? t("loading", { defaultValue: "Loading…" })
-                : t("no-customizations", {
-                    defaultValue:
-                      "You don't have any customizations yet. Create one to get started.",
-                  })}
-            </p>
-          </div>
+          customizations.isLoading.value ? (
+            <div className="sb-settings-empty-state">
+              <p>{t("loading", { defaultValue: "Loading…" })}</p>
+            </div>
+          ) : null
         ) : (
-          <ul className="sb-settings-list">
+          <ul className="sb-cz-card-list">
             {list.map((customization) => {
               const previewVariant =
                 customization.variants.find(
                   (v) => v.id === customization.defaultVariantId
                 ) ?? customization.variants[0];
               return (
-                <li
-                  key={customization.id}
-                  className="sb-settings-nav-item sb-customization-row"
-                  onClick={() => openCustomization(customization.id)}
-                >
-                  <span
-                    className="sb-customization-swatches"
-                    aria-hidden="true"
+                <li key={customization.id} className="sb-cz-card">
+                  <button
+                    type="button"
+                    className="sb-cz-card-open"
+                    onClick={() => openCustomization(customization.id)}
                   >
-                    <span
-                      className="sb-customization-swatch"
-                      style={{
-                        background: previewVariant?.themes.primaryColor,
-                      }}
-                    />
-                    <span
-                      className="sb-customization-swatch"
-                      style={{
-                        background: previewVariant?.themes.secondaryColor,
-                      }}
-                    />
-                    <span
-                      className="sb-customization-swatch"
-                      style={{
-                        background: previewVariant?.themes.tertiaryColor,
-                      }}
-                    />
-                  </span>
-                  <span className="sb-settings-nav-label">
-                    {customization.name}
-                  </span>
+                    {previewVariant && (
+                      <CustomizationCardPreview
+                        theme={customizations.resolveEditingVariantTheme(
+                          previewVariant
+                        )}
+                        logoUrl={customization.logoUrl}
+                        heading={t("customization-preview-chapter", {
+                          defaultValue: "John 1",
+                        })}
+                      />
+                    )}
+                    <span className="sb-cz-card-text">
+                      <span className="sb-cz-card-title" dir="auto">
+                        {customization.name}
+                      </span>
+                      <span className="sb-cz-card-subtitle">
+                        {t("customization-card-summary", {
+                          themes: t("customization-theme-count", {
+                            count: customization.variants.length,
+                            defaultValue: "{{count}} themes",
+                          }),
+                          translation: getDefaultTranslationLabel(
+                            t,
+                            customization,
+                            state.bibleData.availableTranslations.value
+                          ),
+                          defaultValue: "{{themes}} · {{translation}}",
+                        })}
+                      </span>
+                    </span>
+                  </button>
                   <ContextMenuWithButton
-                    buttonClassName="sb-extension-row-action-button"
+                    anchorClassName="sb-cz-card-menu"
+                    buttonClassName="sb-cz-icon-button"
                     aria-label={t("customization-options", {
                       defaultValue: "Customization options",
                     })}
-                    onClick={(e) => e.stopPropagation()}
                   >
                     <ContextMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={() => {
                         navigator.clipboard.writeText(
                           customizations.getShareLink(customization)
                         );
@@ -2216,26 +2360,20 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
                       <span>{t("share", { defaultValue: "Share" })}</span>
                     </ContextMenuItem>
                   </ContextMenuWithButton>
-                  <span className="material-symbols-outlined rtl-mirror">
-                    chevron_right
-                  </span>
                 </li>
               );
             })}
           </ul>
         )}
 
-        <div className="sb-settings-actions">
-          <button
-            type="button"
-            className="sb-settings-save-button"
-            onClick={() => void handleCreate()}
-          >
-            {t("create-customization", {
-              defaultValue: "Create Customization",
-            })}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="sb-cz-new-button"
+          onClick={() => void handleCreate()}
+        >
+          <span className="material-symbols-outlined">add</span>
+          {t("new-customization", { defaultValue: "New customization" })}
+        </button>
       </section>
     </div>
   );

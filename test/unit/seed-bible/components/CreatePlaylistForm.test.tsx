@@ -14,7 +14,10 @@ import type {
   TabsManager,
   ReaderTab,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
-import type { TranslationBook } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type {
+  TranslationBook,
+  TranslationBookChapter,
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -57,7 +60,19 @@ vi.mock(
     ) {
       useImperativeHandle(ref, () => ({
         isDirty: () => stubItemInputControl.isDirty,
-        commit: () => stubItemInputControl.commitResult,
+        // Like the real input: a successful commit hands the item to the
+        // parent, as a save of the item open for editing or as a new one.
+        commit: async () => {
+          const committed = await stubItemInputControl.commitResult;
+          if (committed) {
+            if (props.editItem) {
+              props.onUpdate?.(STUB_UPDATED_ITEM);
+            } else {
+              props.onAdd(STUB_ADDED_ITEM);
+            }
+          }
+          return committed;
+        },
       }));
       return (
         <div className="stub-playlist-item-input">
@@ -684,6 +699,45 @@ describe("CreatePlaylistForm", () => {
     ).toBe("GEN 1");
   });
 
+  it("follows a noted passage's label with its note title, or Note when it has none", () => {
+    const { playlists } = createMockPlaylists(
+      createPlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 1 },
+            note: "<p>Body</p>",
+            noteTitle: "In the beginning",
+          },
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 2 },
+            note: "<p>Body only</p>",
+          },
+          verseItem("GEN", 3),
+        ],
+      })
+    );
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={createMockTabs()}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    expect(
+      Array.from(container.querySelectorAll(".sb-discover-item-title")).map(
+        (title) => title.textContent
+      )
+    ).toEqual(["GEN 1 · In the beginning", "GEN 2 · Note", "GEN 3"]);
+  });
+
   it("resolves book names from the selected tab's translation", () => {
     const { playlists } = createMockPlaylists(
       createPlaylist({ items: [verseItem("GEN", 1)] })
@@ -745,6 +799,86 @@ describe("CreatePlaylistForm", () => {
     expect(
       container.querySelector(".stub-edit-scripture-text")?.textContent
     ).toBe("Genesis 2");
+  });
+
+  describe("inline item preview", () => {
+    function renderWithItems(items: PlaylistItemData[]) {
+      const { playlists } = createMockPlaylists(createPlaylist({ items }));
+      const tab = createMockTab([book("GEN", "Genesis")]);
+      (
+        tab.readingState as unknown as { translationId: unknown }
+      ).translationId = signal("BSB");
+      const getTranslationBookChapter = vi.fn(
+        async (
+          _translationId: string,
+          _bookId: string,
+          chapter: string | number
+        ) =>
+          ({
+            chapter: {
+              number: chapter,
+              footnotes: [],
+              content: [
+                { type: "verse", number: 1, content: [`Verse of ${chapter}`] },
+              ],
+            },
+          }) as unknown as TranslationBookChapter
+      );
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={createMockTabs(tab)}
+            modals={createModalManager()}
+            bibleData={{ getTranslationBookChapter }}
+          />,
+          container
+        );
+      });
+      return { getTranslationBookChapter };
+    }
+
+    const click = (el: Element | undefined) =>
+      act(() => {
+        el?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    const previews = () =>
+      container.querySelectorAll(".sb-item-inline-preview");
+
+    it("shows the scripture beneath a tapped item in the reader's translation", async () => {
+      const { getTranslationBookChapter } = renderWithItems([
+        verseItem("GEN", 1),
+      ]);
+      click(container.querySelectorAll(".sb-discover-item-button")[0]);
+
+      const row = container.querySelectorAll(".sb-discover-item--row")[0];
+      await vi.waitFor(() =>
+        expect(
+          row?.querySelector(".sb-item-inline-preview")?.textContent
+        ).toContain("Verse of 1")
+      );
+      expect(getTranslationBookChapter).toHaveBeenCalledWith("BSB", "GEN", 1);
+    });
+
+    it("collapses on a second tap and keeps only one item open", () => {
+      renderWithItems([
+        verseItem("GEN", 1),
+        { type: "link", title: "Notes", url: "https://example.com" },
+      ]);
+      const buttons = container.querySelectorAll(".sb-discover-item-button");
+
+      click(buttons[0]);
+      expect(previews()).toHaveLength(1);
+      expect(buttons[0]?.getAttribute("aria-expanded")).toBe("true");
+
+      click(buttons[1]);
+      expect(previews()).toHaveLength(1);
+      expect(previews()[0]?.textContent).toContain("https://example.com");
+      expect(buttons[0]?.getAttribute("aria-expanded")).toBe("false");
+
+      click(buttons[1]);
+      expect(previews()).toHaveLength(0);
+    });
   });
 
   it("adding an item via the input calls addEditingPlaylistItem", () => {
@@ -1266,41 +1400,117 @@ describe("CreatePlaylistForm", () => {
       expect(modal).not.toBeUndefined();
     });
 
-    it("does not warn about a dirty draft while mid-edit of an existing item", () => {
+    it("asks before saving when an item opened for editing has unsaved changes", () => {
       const { playlists, saveEditingPlaylist } = createMockPlaylists(
         createPlaylist({ items: [verseItem("GEN", 1)] })
       );
-      const tabs = createMockTabs();
       const modals = createModalManager();
       stubItemInputControl.isDirty = true;
-
       act(() => {
         render(
           <CreatePlaylistForm
             playlists={playlists}
-            tabs={tabs}
+            tabs={createMockTabs()}
             modals={modals}
           />,
           container
         );
       });
+      openFirstItemForEditing();
 
       act(() => {
-        container
-          .querySelector(".sb-discover-item-button")
-          ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        (
+          container.querySelector(".sb-settings-save-button") as HTMLElement
+        ).click();
       });
 
-      const saveButton = container.querySelector(
-        ".sb-settings-save-button"
-      ) as HTMLButtonElement;
-      act(() => {
-        saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      expect(saveEditingPlaylist).not.toHaveBeenCalled();
+      const modal = modals.modals.value.find(
+        (m) => m.id === "playlist-unsaved-item-confirm"
+      );
+      expect(modal?.title).toEqual({
+        key: "unsaved-item-edit-confirm-title",
+        defaultValue: "Unsaved item changes",
       });
-
-      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
-      expect(modals.modals.value).toHaveLength(0);
     });
+
+    it("'Keep changes and save' saves the edited item, then the playlist", async () => {
+      const { playlists, saveEditingPlaylist, updateEditingPlaylistItem } =
+        createMockPlaylists(createPlaylist({ items: [verseItem("GEN", 1)] }));
+      const modals = createModalManager();
+      stubItemInputControl.isDirty = true;
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+          />,
+          container
+        );
+      });
+      openFirstItemForEditing();
+
+      const modalContainer = openConfirmDialog(container, modals);
+      const keepButton = Array.from(
+        modalContainer.querySelectorAll("button")
+      ).find((el) => el.textContent === "Keep changes and save")!;
+      await act(async () => {
+        keepButton.click();
+        await Promise.resolve();
+      });
+
+      expect(updateEditingPlaylistItem).toHaveBeenCalledWith(
+        0,
+        STUB_UPDATED_ITEM
+      );
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+      expect(
+        updateEditingPlaylistItem.mock.invocationCallOrder[0]!
+      ).toBeLessThan(saveEditingPlaylist.mock.invocationCallOrder[0]!);
+
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
+
+    it("'Discard and save' saves the playlist with the edited item as it was", () => {
+      const { playlists, saveEditingPlaylist, updateEditingPlaylistItem } =
+        createMockPlaylists(createPlaylist({ items: [verseItem("GEN", 1)] }));
+      const modals = createModalManager();
+      stubItemInputControl.isDirty = true;
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+          />,
+          container
+        );
+      });
+      openFirstItemForEditing();
+
+      const modalContainer = openConfirmDialog(container, modals);
+      const discardButton = Array.from(
+        modalContainer.querySelectorAll("button")
+      ).find((el) => el.textContent === "Discard and save")!;
+      act(() => discardButton.click());
+
+      expect(updateEditingPlaylistItem).not.toHaveBeenCalled();
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
+
+    /** Opens the first item in the list in the item input for editing. */
+    function openFirstItemForEditing() {
+      act(() => {
+        (
+          container.querySelector(".sb-discover-item-button") as HTMLElement
+        ).click();
+      });
+    }
 
     /** Opens the confirm dialog and renders its content into a side container. */
     function openConfirmDialog(

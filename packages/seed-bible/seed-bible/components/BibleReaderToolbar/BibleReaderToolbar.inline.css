@@ -24,6 +24,17 @@
 .sb-reader-toolbar-wrap {
   position: static;
   transition: transform 0.3s ease;
+  /* Both mobile rows (chapter nav + tabs) derive their text, icons and tints
+     from --sb-font-color, so re-pointing it here makes them follow the reader
+     toolbar's text color instead of the page's. The pill border is re-declared
+     because a var() inside a :root custom property resolves at :root, against
+     the page's --sb-font-color, not this override. */
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
+  --sb-reader-floating-nav-group-border: color-mix(
+    in srgb,
+    var(--sb-reader-toolbar-font-color) 30%,
+    transparent
+  );
 }
 
 .sb-reader-toolbar-item {
@@ -239,6 +250,22 @@
   top: calc(100% + 0.5rem);
 }
 
+/* Submenu opened from a card inside the drag-to-reveal row. That row clips
+   with overflow: hidden, so the menu is portaled to the document and pinned
+   to the trigger in viewport coordinates. Hidden until that placement runs,
+   and stacked above the verse sheet (--sb-verse-toolbar-z-index: 100). */
+.sb-tool-context-menu-floating {
+  position: fixed;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  inset-inline-start: auto;
+  inset-inline-end: auto;
+  z-index: 110;
+  visibility: hidden;
+}
+
 .sb-tool-context-menu-scroll {
   max-height: min(24rem, calc(100vh - 6rem));
   overflow-y: auto;
@@ -315,6 +342,34 @@
   color: var(--sb-font-color);
   height: 3.125rem;
   transition: transform 0.3s ease;
+}
+
+/* Room above the chapter pill for the narration scrubber. Grows upwards, since
+ * the bar is anchored by its bottom edge. */
+.sb-reader-floating-nav-scrubbing {
+  height: 4.375rem;
+  padding-top: 2rem;
+}
+
+.sb-reader-floating-nav-group-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  min-width: 0;
+}
+
+.sb-reader-floating-nav-scrubber {
+  position: absolute;
+  bottom: calc(100% + 0.25rem);
+  left: 1rem;
+  right: 1rem;
+}
+
+/* Anchors the progress ring shown around the play button while paused. */
+.sb-reader-floating-nav-play-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
 }
 
 /* Play button — peach circle with a dark glyph. The audio extension draws
@@ -449,8 +504,8 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--sb-book-title-font-color);
   font-family: var(--sb-scripture-font-override, var(--text-bookTitle-font));
+  color: var(--sb-font-color);
   font-size: min(1.2rem, 22px);
   font-weight: 700;
   display: flex;
@@ -503,14 +558,17 @@
 @media (max-width: 480px) {
   .sb-reader-toolbar-wrap {
     position: fixed;
-    left: 50%;
+    /* Pinned to both edges rather than centered with translateX(-50%): at
+     * fractional device-pixel widths (e.g. 125% display scaling) the
+     * translated bar snaps half a pixel off and the page shows through as a
+     * hairline along one edge. */
+    left: 0;
+    right: 0;
     bottom: 0;
-    transform: translateX(-50%);
     /* Sit above the mobile sidebar/settings overlay (z-index: 100) so the
      * bottom bar of options stays visible while the account panel is open.
      * The overlay already reserves `padding-bottom: 68px` for it. */
     z-index: 101;
-    width: 100vw;
   }
 
   .sb-action-btns {
@@ -774,7 +832,7 @@
    * flush at the bottom and stays visible, taking the toolbar's place.
    * Scrolling back up removes the body class and both slide back. */
   body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
-    transform: translateX(-50%) translateY(100%);
+    transform: translateY(100%);
   }
 }
 
@@ -801,7 +859,12 @@
   position: fixed;
   transform: translate(-50%, -100%);
   display: flex;
-  background: var(--sb-verse-toolbar-background);
+  background: var(--sb-reader-toolbar-background);
+  color: var(--sb-reader-toolbar-font-color);
+  /* The toolbar's buttons, labels and tints are all derived from
+     --sb-font-color, so re-pointing it here makes the whole subtree follow the
+     reader toolbar's text color instead of the page's. */
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
   gap: var(--sb-verse-toolbar-gap);
   padding: var(--sb-verse-toolbar-padding);
   border-radius: var(--sb-verse-toolbar-border-radius);
@@ -811,7 +874,6 @@
   min-height: var(--sb-verse-toolbar-min-height);
   flex-direction: column;
   align-items: stretch;
-  background-color: var(--sb-reader-background);
 }
 
 .sb-verse-toolbar-draggable {
@@ -1176,6 +1238,10 @@
   visibility: hidden;
 }
 
+.sb-verse-toolbar-cards .sb-verse-toolbar-overflow-unclipped {
+  overflow: visible;
+}
+
 /* A note taller than the viewport scrolls here. The grab handle, reference,
    and action row stay outside this element, so they remain on screen. */
 .sb-verse-toolbar-cards
@@ -1203,7 +1269,7 @@
   touch-action: none;
 }
 
-/* A swipe that starts on Copy, Compare, Share, or another drawer action
+/* A swipe that starts on Share, Compare, or another drawer action
    moves the note. `none` on these would freeze the drawer when the buttons
    fill the open sheet. */
 .sb-verse-toolbar-mobile.sb-verse-sheet-scrollable
@@ -1225,10 +1291,10 @@
   padding-top: 0;
 }
 
-/* Copy, Compare, and Share. Hidden with the rest of the drawer while it is
-   collapsed; once open, they stay under the handle while the note scrolls.
-   The top padding is inside the sticky box so the buttons don't jump when
-   the note starts moving. */
+/* The drawer's actions: Share, Compare, then the rest. Hidden with the rest
+   of the drawer while it is collapsed; once open, they stay under the
+   handle while the note scrolls. The top padding is inside the sticky box so
+   the buttons don't jump when the note starts moving. */
 .sb-verse-toolbar-overflow-pinned {
   position: sticky;
   top: 0;
@@ -1239,7 +1305,7 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   width: 100%;
-  background: var(--sb-reader-background);
+  background: var(--sb-reader-toolbar-background);
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
   margin-bottom: -0.5rem;
@@ -1254,8 +1320,7 @@
 /* A jump to a note lands below the pinned actions instead of underneath them.
    The scroll itself is applied in the toolbar; this covers any native scroll
    of the same groups. */
-.sb-verse-toolbar-overflow .sb-annotation-group,
-.sb-verse-toolbar-overflow-row > .sb-verse-toolbar-action-item {
+.sb-verse-toolbar-overflow .sb-annotation-group {
   scroll-margin-top: var(--sb-verse-sheet-pinned-offset, 0px);
 }
 
@@ -1602,4 +1667,34 @@
     var(--sb-highlight-tan-color),
     var(--sb-highlight-yellow-color)
   );
+}
+
+/* Desktop narration controls. The progress row takes a line of its own along
+ * the top of the toolbar; `contain: inline-size` keeps its width out of the
+ * toolbar's sizing, so it spans the buttons below it instead of widening the
+ * toolbar to fit itself.
+ *
+ * Wrapping is what puts the progress row on its own line, but it would also
+ * let the buttons wrap: a toolbar pinned at `left: 50%` may only be half the
+ * screen wide, which narrow desktop windows run out of. Sizing it to its
+ * content keeps the buttons on one line, as they are without audio. */
+.sb-reader-toolbar-has-audio {
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 0;
+  width: max-content;
+}
+
+.sb-reader-toolbar-audio {
+  flex: 1 0 100%;
+  contain: inline-size;
+  padding: 0.375rem 0.625rem 0;
+}
+
+.sb-reader-toolbar-audio-stop > svg circle {
+  fill: var(--sb-font-color);
+}
+
+.sb-reader-toolbar-audio-stop > svg rect {
+  fill: var(--sb-reader-toolbar-background);
 }
