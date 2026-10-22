@@ -91,11 +91,11 @@ describe("SettingsMainView", () => {
 
     expect(navLabels()).toContain("Customize");
   });
-  it("opens the full-screen Profile screen from Account settings", () => {
+  it("opens the full-screen Profile screen from Account", () => {
     const state = renderMain("user-1");
     const accountButton = Array.from(
       container.querySelectorAll<HTMLButtonElement>(".sb-settings-nav-item")
-    ).find((button) => button.textContent?.includes("Account settings"))!;
+    ).find((button) => button.textContent?.includes("Account"))!;
 
     act(() => {
       accountButton.click();

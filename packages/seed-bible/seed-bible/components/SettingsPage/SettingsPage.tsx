@@ -2365,7 +2365,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
                 <MaterialIcon>person</MaterialIcon>
               </span>
               <span className="sb-settings-nav-label">
-                {t("account-settings", { defaultValue: "Account settings" })}
+                {t("account", { defaultValue: "Account" })}
               </span>
               <span className="material-symbols-outlined rtl-mirror">
                 chevron_right
