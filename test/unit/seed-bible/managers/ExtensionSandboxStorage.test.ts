@@ -300,6 +300,41 @@ describe("sandboxed extension storage sync", () => {
     });
   });
 
+  it("treats names built into JavaScript objects as keys that were never set", async () => {
+    const { storage } = device();
+    await storage.sync();
+
+    expect(storage.get("toString")).toBeNull();
+    expect(storage.get("constructor")).toBeNull();
+    expect(storage.get("__proto__")).toBeNull();
+    expect(storage.keys()).toEqual([]);
+
+    storage.remove("constructor");
+    await synced(storage);
+
+    expect(storage.keys()).toEqual([]);
+    expect(account.stored("user-1", "ext.demo")).toBeUndefined();
+  });
+
+  it("stores a key named __proto__ like any other, on this device and the next", async () => {
+    const first = device();
+    first.storage.set("__proto__", { polluted: true });
+    first.storage.set("toString", "a value");
+    await synced(first.storage);
+
+    expect(first.storage.get("__proto__")).toEqual({ polluted: true });
+    expect(first.storage.get("toString")).toBe("a value");
+    expect(first.storage.keys().sort()).toEqual(["__proto__", "toString"]);
+
+    const { storage } = await newDevice();
+
+    expect(storage.get("__proto__")).toEqual({ polluted: true });
+    expect(storage.get("toString")).toBe("a value");
+    storage.remove("__proto__");
+    expect(storage.get("__proto__")).toBeNull();
+    expect(storage.keys()).toEqual(["toString"]);
+  });
+
   it("still holds an extension to the size limit", async () => {
     const { storage } = device();
     storage.set("a", "x".repeat(200 * 1024));

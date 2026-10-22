@@ -32,7 +32,9 @@ const entrySchema = z.union([
 ]);
 
 const storeSchema = z.object({
-  entries: z.record(z.string(), entrySchema),
+  // Checked entry by entry in `parseStore`: a zod record drops a
+  // `__proto__` key.
+  entries: z.record(z.string(), z.unknown()),
   /** Everything at or before this was cleared (the extension was uninstalled). */
   clearedAtMs: z.number().optional(),
 });
@@ -45,6 +47,18 @@ export interface SandboxStore {
   entries: Record<string, Entry>;
   clearedAtMs?: number;
 }
+
+/**
+ * A record with no prototype, so an extension's keys are only ever its own:
+ * `toString` isn't already there, and `__proto__` is stored like any other
+ * key instead of changing the object. Read it with `own`.
+ */
+function emptyRecord<T>(): Record<string, T> {
+  return Object.create(null) as Record<string, T>;
+}
+
+const own = <T>(record: Record<string, T>, key: string): T | undefined =>
+  Object.hasOwn(record, key) ? record[key] : undefined;
 
 const entryTime = (entry: Entry) =>
   "deletedAtMs" in entry ? entry.deletedAtMs : entry.updatedAtMs;
@@ -60,13 +74,13 @@ export function mergeSandboxStores(
   nowMs: number
 ): SandboxStore {
   const clearedAtMs = Math.max(a.clearedAtMs ?? 0, b.clearedAtMs ?? 0);
-  const entries: Record<string, Entry> = {};
+  const entries = emptyRecord<Entry>();
   for (const key of new Set([
     ...Object.keys(a.entries),
     ...Object.keys(b.entries),
   ])) {
-    const left = a.entries[key];
-    const right = b.entries[key];
+    const left = own(a.entries, key);
+    const right = own(b.entries, key);
     const winner =
       left && right
         ? entryTime(left) > entryTime(right)
@@ -89,7 +103,26 @@ export function mergeSandboxStores(
 
 function parseStore(value: unknown): SandboxStore | null {
   const parsed = storeSchema.safeParse(value);
-  return parsed.success ? (parsed.data as SandboxStore) : null;
+  if (
+    !parsed.success ||
+    typeof value !== "object" ||
+    value === null ||
+    !("entries" in value)
+  ) {
+    return null;
+  }
+  // From the unparsed value, which still has every key.
+  const entries = emptyRecord<Entry>();
+  for (const [key, raw] of Object.entries(value.entries as object)) {
+    const entry = entrySchema.safeParse(raw);
+    if (!entry.success) {
+      return null;
+    }
+    entries[key] = entry.data as Entry;
+  }
+  return parsed.data.clearedAtMs === undefined
+    ? { entries }
+    : { entries, clearedAtMs: parsed.data.clearedAtMs };
 }
 
 const sameStore = (a: SandboxStore, b: SandboxStore) =>
@@ -97,7 +130,7 @@ const sameStore = (a: SandboxStore, b: SandboxStore) =>
 
 /** The live values, as an extension sees them. */
 function liveValues(store: SandboxStore): Record<string, SandboxJsonValue> {
-  const values: Record<string, SandboxJsonValue> = {};
+  const values = emptyRecord<SandboxJsonValue>();
   for (const [key, entry] of Object.entries(store.entries)) {
     if (!("deletedAtMs" in entry)) {
       values[key] = entry.value;
@@ -143,7 +176,7 @@ function readLocal(extensionId: string, owner: string | null): LocalCopy {
     }
     // Before syncing, the device copy was the values themselves.
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      const entries: Record<string, Entry> = {};
+      const entries = emptyRecord<Entry>();
       for (const [key, value] of Object.entries(parsed)) {
         entries[key] = { value: value as SandboxJsonValue, updatedAtMs: 1 };
       }
@@ -301,10 +334,9 @@ export function createSandboxStorage(
   };
 
   const write = (key: string, entry: Entry) => {
-    const store: SandboxStore = {
-      ...copy.store,
-      entries: { ...copy.store.entries, [key]: entry },
-    };
+    const entries = Object.assign(emptyRecord<Entry>(), copy.store.entries);
+    entries[key] = entry;
+    const store: SandboxStore = { ...copy.store, entries };
     if (JSON.stringify(liveValues(store)).length > MAX_SANDBOX_STORAGE_BYTES) {
       throw new SandboxBrokerError(
         "limit_exceeded",
@@ -332,10 +364,10 @@ export function createSandboxStorage(
   });
 
   return {
-    get: (key) => liveValues(copy.store)[key] ?? null,
+    get: (key) => own(liveValues(copy.store), key) ?? null,
     set: (key, value) => write(key, { value, updatedAtMs: now() }),
     remove: (key) => {
-      if (key in liveValues(copy.store)) {
+      if (Object.hasOwn(liveValues(copy.store), key)) {
         write(key, { deletedAtMs: now() });
       }
     },
