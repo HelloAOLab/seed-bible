@@ -315,6 +315,13 @@ function createRecords() {
   return { records, data };
 }
 
+/** Where `publish` hosts a bundle unless it's given a URL. */
+export const PUBLISHER_A = "https://files.example.com/publisher-a/";
+
+/** The id the app knows a published extension by (see `sourcedExtensionId`). */
+export const sourced = (declaredId: string, source = PUBLISHER_A) =>
+  `${source}#${declaredId}`;
+
 export async function sha384(text: string): Promise<string> {
   const digest = new Uint8Array(
     await crypto.subtle.digest("SHA-384", new TextEncoder().encode(text))
@@ -704,7 +711,7 @@ export function useSandboxHarness(): SandboxHarness {
     async publish(
       definition,
       meta,
-      url = `https://files.example.com/publisher-a/${meta.id}-${nextBundle}.js`
+      url = `${PUBLISHER_A}${meta.id}-${nextBundle}.js`
     ) {
       const code = `bundle:${nextBundle++}`;
       definitions.set(code, definition);

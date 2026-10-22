@@ -140,6 +140,47 @@ export function extensionSource(url: string): string {
   return `${parsed.origin}${path}`;
 }
 
+/**
+ * The id a third-party extension is known by: its source (see
+ * `extensionSource`), `#`, and the id its manifest declares. Everything kept
+ * per extension (its storage, its identity, its notes, its grant) is kept
+ * under this id, so an extension from somewhere else can never claim another's
+ * by declaring the same id. A source never contains `#`, so the first `#`
+ * always splits the two. Already-sourced ids are returned as they are.
+ */
+export function sourcedExtensionId(
+  bundleUrl: string,
+  declaredId: string
+): string {
+  const source = extensionSource(bundleUrl);
+  return declaredId.startsWith(`${source}#`)
+    ? declaredId
+    : `${source}#${declaredId}`;
+}
+
+/**
+ * Splits an id from `sourcedExtensionId` into its source and the id the
+ * extension declared. Null for an extension built into the app, which has no
+ * source.
+ */
+export function splitSourcedExtensionId(
+  id: string
+): { source: string; declaredId: string } | null {
+  const separator = id.indexOf("#");
+  if (separator < 0) {
+    return null;
+  }
+  const source = id.slice(0, separator);
+  try {
+    if (extensionSource(source) !== source) {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+  return { source, declaredId: id.slice(separator + 1) };
+}
+
 /** What the user agreed to for one sandboxed extension. */
 export interface ExtensionGrant {
   permissions: SandboxPermission[];

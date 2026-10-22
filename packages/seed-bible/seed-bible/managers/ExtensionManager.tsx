@@ -17,6 +17,8 @@ import {
   missingFromGrant,
   parseExtensionGrants,
   parseSandboxManifest,
+  sourcedExtensionId,
+  splitSourcedExtensionId,
   type ExtensionGrants,
   type SandboxConsentHandler,
   type SandboxConsentRequest,
@@ -573,9 +575,6 @@ export interface SandboxPermissionSummary {
   uploader?: SandboxUploader;
 }
 
-/** The namespace the app's own strings live in (see `I18nManager.tsx`). */
-const APP_TRANSLATION_NAMESPACE = "seed-bible";
-
 /**
  * Whether an extension runs sandboxed: every URL-loaded one does. Only
  * extensions compiled into the app from this repository run in the page.
@@ -584,6 +583,40 @@ export function isSandboxedExtension(
   extension: Extension
 ): extension is UploadedExtension {
   return "url" in extension && typeof extension.url === "string";
+}
+
+/**
+ * The extension with a third-party one's id prefixed by its source (see
+ * `sourcedExtensionId`), so it can't share an id with an extension built
+ * into the app or published from anywhere else. Null, with a warning, for one
+ * whose URL isn't valid. Returns the same object when nothing changes.
+ */
+function withSourcedId<T extends Extension>(extension: T): T | null {
+  if (!isSandboxedExtension(extension)) {
+    return extension;
+  }
+  let id: string;
+  try {
+    id = sourcedExtensionId(extension.url, extension.meta.id);
+  } catch {
+    console.warn(
+      `Ignoring extension '${extension.meta.id}': '${extension.url}' is not a valid URL.`
+    );
+    return null;
+  }
+  return id === extension.meta.id
+    ? extension
+    : { ...extension, meta: { ...extension.meta, id } };
+}
+
+/** `withSourcedId` for each of a set's extensions. */
+function withSourcedIds(set: ExtensionSet): ExtensionSet {
+  const extensions = set.extensions
+    .map(withSourcedId)
+    .filter((extension): extension is Extension => extension !== null);
+  return extensions.every((extension, i) => extension === set.extensions[i])
+    ? set
+    : { ...set, extensions };
 }
 
 /**
@@ -1401,34 +1434,8 @@ export function createExtensionManager(
     });
   }
 
-  /**
-   * Whether a sandboxed extension tries to take an id it mustn't have: a
-   * first-party extension's, which would replace that extension in the
-   * catalog and in the saved installs that load it, or the app's own
-   * translation namespace, which its strings would mix into.
-   */
-  const claimsReservedId = (extension: Extension): boolean => {
-    if (!isSandboxedExtension(extension)) {
-      return false;
-    }
-    const id = extension.meta.id;
-    const known = knownExtensionsById.get(id);
-    const reserved =
-      id === APP_TRANSLATION_NAMESPACE ||
-      (known !== undefined && !isSandboxedExtension(known));
-    if (reserved) {
-      console.warn(
-        `Ignoring sandboxed extension '${id}' from '${extension.url}': that id belongs to Seed Bible.`
-      );
-    }
-    return reserved;
-  };
-
   const trackExtensionSet = (set: ExtensionSet) => {
     for (const extension of set.extensions) {
-      if (claimsReservedId(extension)) {
-        continue;
-      }
       knownExtensionsById.set(extension.meta.id, extension);
     }
     if (fetchesListTranslations && set.loadListTranslations) {
@@ -1873,10 +1880,12 @@ export function createExtensionManager(
     installStack: Set<string> = new Set(),
     options?: { persist?: boolean }
   ) => {
-    const extensionId = uploaded.meta.id;
-    if (claimsReservedId(uploaded)) {
+    const sourced = withSourcedId(uploaded);
+    if (!sourced) {
       return false;
     }
+    uploaded = sourced;
+    const extensionId = uploaded.meta.id;
     knownExtensionsById.set(extensionId, uploaded);
     refreshExtensionsSignal();
 
@@ -2000,18 +2009,12 @@ export function createExtensionManager(
     set: ExtensionSet,
     filter: (ext: Extension) => boolean = () => true
   ): Promise<Map<string, boolean>> => {
+    set = withSourcedIds(set);
     trackExtensionSet(set);
     hasLoadedExtensionSet = true;
 
     const idsAndPromises: [string, Promise<boolean>][] = [];
     for (const ext of set.extensions) {
-      // `trackExtensionSet` above already left these out of the catalog.
-      if (
-        isSandboxedExtension(ext) &&
-        knownExtensionsById.get(ext.meta.id) !== ext
-      ) {
-        continue;
-      }
       knownExtensionsById.set(ext.meta.id, ext);
       knownExtensionsSetsByExtensionId.set(ext.meta.id, set);
       addTranslations(ext.meta.id, ext.meta.translations);
@@ -2072,7 +2075,7 @@ export function createExtensionManager(
       // A bundle's (and an icon's) URL may be relative to the set, so a
       // folder from `seed-bible-extension-scripts package` works wherever
       // it's hosted.
-      const set: ExtensionSet = {
+      const set = withSourcedIds({
         ...data,
         extensions: data.extensions.map((extension) =>
           "url" in extension
@@ -2083,7 +2086,7 @@ export function createExtensionManager(
               }
             : extension
         ),
-      };
+      });
       for (const extension of set.extensions) {
         discoveredSetUrlById.set(extension.meta.id, url);
       }
@@ -2158,7 +2161,9 @@ export function createExtensionManager(
    * `?extensionSet=<url>` lists a hosted set's extensions for this visit,
    * the way adding its URL in Settings does. Combined with
    * `autoinstall-<id>=true`, it offers to install that extension: for a
-   * sandboxed one, that opens the consent dialog, never more.
+   * sandboxed one, that opens the consent dialog, never more. The link names
+   * the set, so `<id>` may be the id an extension in it declares; elsewhere
+   * only its full sourced id installs a third-party extension.
    */
   const loadLinkedExtensionSet = async () => {
     if (typeof window === "undefined") {
@@ -2171,7 +2176,13 @@ export function createExtensionManager(
     }
     const set = await discoverExtensionSet(setUrl);
     for (const extension of set?.extensions ?? []) {
-      if (url.searchParams.get(`autoinstall-${extension.meta.id}`) === "true") {
+      const ids = [
+        extension.meta.id,
+        splitSourcedExtensionId(extension.meta.id)?.declaredId,
+      ];
+      if (
+        ids.some((id) => url.searchParams.get(`autoinstall-${id}`) === "true")
+      ) {
         await loadExtension(extension);
       }
     }

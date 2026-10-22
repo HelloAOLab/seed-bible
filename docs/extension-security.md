@@ -120,6 +120,8 @@ The opaque-origin iframe needs no new infrastructure: the host builds the frame'
 
 The extension bundles its own copy of Preact and `@preact/signals`. This is fine now, unlike today's `--standalone` bundles: the "two Preact instances" problem only exists when two copies share one component tree, and a sandboxed extension's tree lives entirely inside its own frame.
 
+_As built:_ a sandboxed extension is known by where it's hosted and the id its manifest declares, joined by `#`, like `https://example.com/extensions/#verse-art`. Where it's hosted is the bundle URL's folder, the same thing a grant is tied to. Everything kept per extension (its `sb.storage`, its `sb.identity`, the notes it added, its grant, the set it came from, its tools' ids) is kept under that id. So an extension hosted somewhere else that declares the same id is a different extension: installing it asks again, and it starts with none of the first one's data. Settings shows the declared id next to the folder it's hosted in.
+
 ### 4.4 What the extension code looks like
 
 A new SDK entry point, `seed-bible/extensions`, replaces direct access to `SeedBibleState`. It looks like today's API, but every call that reaches user data is `async` (it's a message to the broker and a reply), and app state arrives as read-only signals that the broker keeps up to date.
@@ -339,7 +341,7 @@ Two existing features install extensions without that click, and both have to st
 
 `autoinstall: true` in a manifest is ignored for sandboxed extensions.
 
-_As built:_ both stop at the consent dialog. A third kind of link, `?extensionSet=<url>`, lists a hosted set's extensions for that visit, as adding the link in Settings does; with `autoinstall-<id>=true` it opens that extension's consent dialog, never more. Sets load only over `https:` (or from `localhost`, for development) and without cookies. Once the user installs an extension from a set, the set's URL is remembered (on the device and in the profile config) so the extension loads again on later visits and other devices; uninstalling forgets it.
+_As built:_ both stop at the consent dialog. A third kind of link, `?extensionSet=<url>`, lists a hosted set's extensions for that visit, as adding the link in Settings does; with `autoinstall-<id>=true` it opens that extension's consent dialog, never more. Since the link names the set, `<id>` there can be the id an extension in that set declares; without `?extensionSet=`, a sandboxed extension is only offered for its full id, which includes where it's hosted (§4.3). Sets load only over `https:` (or from `localhost`, for development) and without cookies. Once the user installs an extension from a set, the set's URL is remembered (on the device and in the profile config) so the extension loads again on later visits and other devices; uninstalling forgets it.
 
 ---
 

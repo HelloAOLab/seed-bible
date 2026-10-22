@@ -9,6 +9,7 @@ import type {
 } from "../../managers/ExtensionManager";
 import {
   parseSandboxManifest,
+  splitSourcedExtensionId,
   type SandboxUploader,
 } from "../../managers/ExtensionPermissions";
 import {
@@ -114,6 +115,9 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
   } catch {
     sourceHost = null;
   }
+  // A third-party extension's id starts with where it's hosted, which is
+  // shown on its own row; the id it declares is shown beside it.
+  const sourced = splitSourcedExtensionId(entry.id);
   const version = summary?.version ?? extension?.meta.version ?? null;
   const manifest =
     url && extension ? parseSandboxManifest(extension.meta) : null;
@@ -157,14 +161,16 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
             <dd>{version}</dd>
           </>
         )}
-        {sourceHost && (
+        {(sourced || sourceHost) && (
           <>
             <dt>{t("extension-info-hosted-at")}</dt>
-            <dd>{sourceHost}</dd>
+            <dd>{sourced?.source ?? sourceHost}</dd>
           </>
         )}
         <dt>{t("extension-info-id")}</dt>
-        <dd className="sb-extension-info-id">{entry.id}</dd>
+        <dd className="sb-extension-info-id">
+          {sourced?.declaredId ?? entry.id}
+        </dd>
       </dl>
     </section>
   );

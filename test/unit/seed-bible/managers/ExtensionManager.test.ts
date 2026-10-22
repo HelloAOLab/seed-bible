@@ -703,14 +703,24 @@ describe("createExtensionManager", () => {
         "https://files.example.com/discovered-set.json",
         { credentials: "omit" }
       );
-      expect(result).toEqual(published);
+      // Known by its declared id prefixed with where it's hosted.
+      const id = "https://files.example.com/#ext.discovered";
+      expect(result).toEqual({
+        ...published,
+        extensions: [
+          {
+            ...published.extensions[0],
+            meta: { ...published.extensions[0]!.meta, id },
+          },
+        ],
+      });
       // Tracked (listed), not installed — no module was ever imported.
       expect(loadedModules).toEqual([]);
       expect(
-        manager.getExtensions().find((entry) => entry.id === "ext.discovered")
-      ).toMatchObject({ id: "ext.discovered", installed: false });
+        manager.getExtensions().find((entry) => entry.id === id)
+      ).toMatchObject({ id, installed: false });
       expect(addTranslationsMock).toHaveBeenCalledWith(
-        "ext.discovered",
+        id,
         published.extensions[0]!.meta.translations
       );
     });

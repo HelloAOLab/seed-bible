@@ -23,7 +23,7 @@ import {
   SANDBOX_PERMISSIONS,
   type SandboxPermission,
 } from "@packages/seed-bible/seed-bible/extensions/protocol";
-import { createRawFrame, useSandboxHarness } from "./sandboxHarness";
+import { createRawFrame, sourced, useSandboxHarness } from "./sandboxHarness";
 
 describe("sandboxed extension services", () => {
   const h = useSandboxHarness();
@@ -139,7 +139,11 @@ describe("sandboxed extension services", () => {
         id: "ext.notes",
         optionalPermissions: ["notes:write"],
       });
-      const sb = await allowInSettings(extension, "ext.notes", "notes:write");
+      const sb = await allowInSettings(
+        extension,
+        sourced("ext.notes"),
+        "notes:write"
+      );
 
       const { id } = await sb.notes.create({
         bookId: "JHN",
@@ -152,7 +156,7 @@ describe("sandboxed extension services", () => {
       expect(stored.data.html).toBe(
         "<p>&lt;img src=x onerror=alert(1)&gt;</p><p>Second</p>"
       );
-      expect(stored.data.tags).toEqual(["extension:ext.notes"]);
+      expect(stored.data.tags).toEqual([`extension:${sourced("ext.notes")}`]);
       expect(stored.verseNumbers).toEqual([16]);
       expect(stored.data.userId).toBe("user-1");
     });
@@ -164,7 +168,7 @@ describe("sandboxed extension services", () => {
       });
       const sb = await allowInSettings(
         extension,
-        "ext.notes-edit",
+        sourced("ext.notes-edit"),
         "notes:write"
       );
       const { id } = await sb.notes.create({
@@ -195,7 +199,7 @@ describe("sandboxed extension services", () => {
       });
       const sb = await allowInSettings(
         extension,
-        "ext.notes-own",
+        sourced("ext.notes-own"),
         "notes:write"
       );
 
@@ -239,7 +243,7 @@ describe("sandboxed extension services", () => {
           data: {
             type: "comment",
             html: "<p>Ext</p>",
-            tags: ["extension:ext.reader"],
+            tags: [`extension:${sourced("ext.reader")}`],
           },
         },
       ]);
@@ -247,7 +251,11 @@ describe("sandboxed extension services", () => {
         id: "ext.reader",
         optionalPermissions: ["notes:read"],
       });
-      const sb = await allowInSettings(extension, "ext.reader", "notes:read");
+      const sb = await allowInSettings(
+        extension,
+        sourced("ext.reader"),
+        "notes:read"
+      );
 
       expect(await sb.notes.list({ bookId: "JHN", chapter: 3 })).toEqual([
         expect.objectContaining({
@@ -268,7 +276,7 @@ describe("sandboxed extension services", () => {
       });
       const sb = await allowInSettings(
         extension,
-        "ext.signed-out",
+        sourced("ext.signed-out"),
         "notes:write"
       );
 
@@ -288,7 +296,7 @@ describe("sandboxed extension services", () => {
       });
       const sb = await allowInSettings(
         extension,
-        "ext.colors",
+        sourced("ext.colors"),
         "highlights:write"
       );
 
@@ -324,7 +332,11 @@ describe("sandboxed extension services", () => {
         id: "ext.saver",
         optionalPermissions: ["saves:write"],
       });
-      const sb = await allowInSettings(extension, "ext.saver", "saves:write");
+      const sb = await allowInSettings(
+        extension,
+        sourced("ext.saver"),
+        "saves:write"
+      );
 
       expect(
         await codeOf(
@@ -379,7 +391,7 @@ describe("sandboxed extension services", () => {
       expect(idA).not.toContain("user-1");
       expect(b.identity.value).not.toBe(idA);
 
-      h.reload("ext.id-a");
+      h.reload(sourced("ext.id-a"));
       manager = h.createManager();
       const { sb: again } = await install({ id: "ext.id-a" });
       expect(again.identity.value).toBe(idA);
@@ -487,7 +499,7 @@ describe("sandboxed extension services", () => {
       });
       expect(h.host.discover.providers.value).toHaveLength(1);
 
-      manager.unloadExtension("ext.discover-gone");
+      manager.unloadExtension(sourced("ext.discover-gone"));
 
       expect(h.host.discover.providers.value).toEqual([]);
     });
@@ -501,7 +513,9 @@ describe("sandboxed extension services", () => {
         permissions: ["chat:respond"],
       });
       await sb.chats.registerProvider({ id: "c", name: "Bot", respond });
-      const provider = h.host.chatProviders.get("sandbox:ext.chat:c")!;
+      const provider = h.host.chatProviders.get(
+        `sandbox:${sourced("ext.chat")}:c`
+      )!;
       h.host.chats.chats.value = [{ id: "shared-1", isShared: true }];
 
       const reply = await provider.generateResponse({
@@ -532,7 +546,7 @@ describe("sandboxed extension services", () => {
       });
 
       await h.host.chatProviders
-        .get("sandbox:ext.chat-names:c")!
+        .get(`sandbox:${sourced("ext.chat-names")}:c`)!
         .generateResponse({
           chatId: "local",
           participant: { id: "bot" } as never,
@@ -594,7 +608,7 @@ describe("sandboxed extension services", () => {
         });
 
         const reply = h.host.chatProviders
-          .get("sandbox:ext.chat-slow:c")!
+          .get(`sandbox:${sourced("ext.chat-slow")}:c`)!
           .generateResponse({
             chatId: "local",
             participant: { id: "bot" } as never,
@@ -677,11 +691,17 @@ describe("sandboxed extension services", () => {
 
       await sb.settings.registerPanel("settings");
 
-      expect(h.host.settingsPanels.has("ext.panel")).toBe(true);
+      expect(h.host.settingsPanels.has(sourced("ext.panel"))).toBe(true);
       const container = document.createElement("div");
       document.body.appendChild(container);
       render(
-        <>{h.host.settingsPanels.get("ext.panel")!() as ComponentChildren}</>,
+        <>
+          {
+            h.host.settingsPanels.get(
+              sourced("ext.panel")
+            )!() as ComponentChildren
+          }
+        </>,
         container
       );
       await vi.waitFor(() => expect(h.frames).toHaveLength(2));
@@ -689,8 +709,8 @@ describe("sandboxed extension services", () => {
       render(null, container);
       container.remove();
 
-      manager.unloadExtension("ext.panel");
-      expect(h.host.settingsPanels.has("ext.panel")).toBe(false);
+      manager.unloadExtension(sourced("ext.panel"));
+      expect(h.host.settingsPanels.has(sourced("ext.panel"))).toBe(false);
     });
   });
 
@@ -712,7 +732,7 @@ describe("sandboxed extension services", () => {
       });
       expect(h.host.sensitiveFetches).toEqual([
         {
-          extensionId: "ext.sensitive",
+          extensionId: sourced("ext.sensitive"),
           request: {
             url: "https://api.example.com/v1",
             method: "POST",
@@ -764,7 +784,8 @@ describe("sandboxed extension services", () => {
       expect(h.frames).toEqual([]);
       // Stopped, not uninstalled: it starts again on the next page load.
       expect(
-        manager.getExtensions().find((e) => e.id === "ext.hung")?.installed
+        manager.getExtensions().find((e) => e.id === sourced("ext.hung"))
+          ?.installed
       ).toBe(true);
     });
 
@@ -807,14 +828,14 @@ describe("sandboxed extension services", () => {
 
       expect(
         await manager.setOptionalPermission(
-          "ext.req",
+          sourced("ext.req"),
           "reading:position",
           false
         )
       ).toBe(false);
-      expect(manager.sandboxPermissions.value["ext.req"]!.granted).toEqual([
-        "reading:position",
-      ]);
+      expect(
+        manager.sandboxPermissions.value[sourced("ext.req")]!.granted
+      ).toEqual(["reading:position"]);
     });
 
     it("takes back what includes a permission along with it", async () => {
@@ -822,14 +843,20 @@ describe("sandboxed extension services", () => {
         id: "ext.hl",
         optionalPermissions: ["highlights:read", "highlights:write"],
       });
-      await allowInSettings(extension, "ext.hl", "highlights:write");
-      await allowInSettings(extension, "ext.hl", "highlights:read");
+      await allowInSettings(extension, sourced("ext.hl"), "highlights:write");
+      await allowInSettings(extension, sourced("ext.hl"), "highlights:read");
 
       const before = extension.runs.length;
-      await manager.setOptionalPermission("ext.hl", "highlights:read", false);
+      await manager.setOptionalPermission(
+        sourced("ext.hl"),
+        "highlights:read",
+        false
+      );
       await vi.waitFor(() => expect(extension.runs).toHaveLength(before + 1));
 
-      expect(manager.sandboxPermissions.value["ext.hl"]!.granted).toEqual([]);
+      expect(
+        manager.sandboxPermissions.value[sourced("ext.hl")]!.granted
+      ).toEqual([]);
       const sb = extension.latest();
       expect(
         await codeOf(
@@ -848,9 +875,13 @@ describe("sandboxed extension services", () => {
         optionalPermissions: ["reading:position" as const],
       };
       const extension = await install(meta);
-      await allowInSettings(extension, "ext.persist", "reading:position");
+      await allowInSettings(
+        extension,
+        sourced("ext.persist"),
+        "reading:position"
+      );
 
-      h.reload("ext.persist");
+      h.reload(sourced("ext.persist"));
       manager = h.createManager();
       const { sb } = await install(meta);
 

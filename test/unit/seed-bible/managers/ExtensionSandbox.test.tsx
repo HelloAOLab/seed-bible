@@ -19,13 +19,15 @@ import {
   mergeExtensionGrants,
   missingFromGrant,
   parseSandboxManifest,
+  sourcedExtensionId,
+  splitSourcedExtensionId,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionPermissions";
 import {
   defineExtension,
   SandboxError,
   type SandboxContext,
 } from "@packages/seed-bible/seed-bible/extensions";
-import { sha384, useSandboxHarness } from "./sandboxHarness";
+import { sha384, sourced, useSandboxHarness } from "./sandboxHarness";
 
 describe("sandboxed extensions", () => {
   const h = useSandboxHarness();
@@ -45,7 +47,7 @@ describe("sandboxed extensions", () => {
     expect(installed).toBe(false);
     expect(h.consent).toHaveBeenCalledWith(
       expect.objectContaining({
-        extensionId: "ext.declined",
+        extensionId: sourced("ext.declined"),
         title: "Title of ext.declined",
         sourceHost: "files.example.com",
         permissions: ["reading:position"],
@@ -82,16 +84,17 @@ describe("sandboxed extensions", () => {
     expect(await createManager().loadExtension(extension)).toBe(true);
     await vi.waitFor(() =>
       expect([...h.host.surfaces.toolbar.keys()]).toEqual([
-        "sandbox:ext.demo:share",
+        `sandbox:${sourced("ext.demo")}:share`,
       ])
     );
     expect(h.frames).toHaveLength(1);
     expect(h.frames[0]!.init.mode).toEqual({ kind: "background" });
 
-    h.host.surfaces.toolbar.get("sandbox:ext.demo:share")!.onSelect!();
+    h.host.surfaces.toolbar.get(`sandbox:${sourced("ext.demo")}:share`)!
+      .onSelect!();
     await vi.waitFor(() => expect(h.host.panes.panes.value).toHaveLength(1));
     const pane = h.host.panes.panes.value[0]!;
-    expect(pane.id).toMatch(/^sandbox:ext\.demo:/);
+    expect(pane.id.startsWith(`sandbox:${sourced("ext.demo")}:`)).toBe(true);
 
     // Rendering the pane is what connects its view frame.
     const container = document.createElement("div");
@@ -115,7 +118,7 @@ describe("sandboxed extensions", () => {
       permissions: ["reading:position"],
     });
     await createManager().loadExtension(extension);
-    reload("ext.remembered");
+    reload(sourced("ext.remembered"));
 
     expect(await createManager().loadExtension(extension)).toBe(true);
 
@@ -128,7 +131,7 @@ describe("sandboxed extensions", () => {
       permissions: ["reading:position"],
     });
     await createManager().loadExtension(first);
-    reload("ext.growing");
+    reload(sourced("ext.growing"));
 
     const update = await publish(defineExtension({}), {
       id: "ext.growing",
@@ -152,7 +155,7 @@ describe("sandboxed extensions", () => {
       permissions: ["reading:position"],
     });
     await createManager().loadExtension(original);
-    reload("ext.same-id");
+    reload(sourced("ext.same-id"));
 
     const impostor = await publish(
       defineExtension({}),
@@ -301,7 +304,7 @@ describe("sandboxed extensions", () => {
 
     await vi.waitFor(() =>
       expect(errors).toHaveBeenCalledWith(
-        "Extension 'ext.broken-view' view failed:",
+        `Extension '${sourced("ext.broken-view")}' view failed:`,
         "Error: Broken view"
       )
     );
@@ -356,7 +359,7 @@ describe("sandboxed extensions", () => {
     );
     await vi.waitFor(() => expect(sb).toBeTruthy());
     const record = () =>
-      h.records.data.get("user-1/extensionStorage/ext.synced") as
+      h.records.data.get(`user-1/extensionStorage/${sourced("ext.synced")}`) as
         | { entries: Record<string, unknown>; clearedAtMs?: number }
         | undefined;
 
@@ -368,7 +371,7 @@ describe("sandboxed extensions", () => {
       })
     );
 
-    manager.unloadExtension("ext.synced");
+    manager.unloadExtension(sourced("ext.synced"));
 
     await vi.waitFor(() =>
       expect(record()).toEqual({
@@ -398,19 +401,19 @@ describe("sandboxed extensions", () => {
     await vi.waitFor(() => expect(h.host.panes.panes.value).toHaveLength(1));
     expect(h.host.surfaces.quick.size).toBe(1);
 
-    manager.unloadExtension("ext.uninstalled");
+    manager.unloadExtension(sourced("ext.uninstalled"));
 
     expect(h.host.surfaces.quick.size).toBe(0);
     expect(h.host.panes.panes.value).toEqual([]);
     expect(h.frames).toEqual([]);
     expect(
-      localStorage.getItem("sb-sandbox-storage:ext.uninstalled")
+      localStorage.getItem(`sb-sandbox-storage:${sourced("ext.uninstalled")}`)
     ).toBeNull();
 
     await vi.waitFor(() =>
       expect(
         JSON.parse(localStorage.getItem("sb-extension-grants")!)[
-          "ext.uninstalled"
+          sourced("ext.uninstalled")
         ]
       ).toHaveProperty("revokedAtMs")
     );
@@ -418,8 +421,7 @@ describe("sandboxed extensions", () => {
     expect(h.consent).toHaveBeenCalledTimes(2);
   });
 
-  it("doesn't let a published extension take a first-party extension's id, or the app's", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  it("keeps a published extension apart from a first-party one that declares the same id, and from the app's strings", async () => {
     const manager = createManager();
     const firstParty = {
       import: async () => ({ default: () => {} }),
@@ -445,14 +447,66 @@ describe("sandboxed extensions", () => {
     );
 
     const ids = manager.getExtensions().map((entry) => entry.id);
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        "ext.first-party",
+        sourced("ext.first-party"),
+        sourced("seed-bible"),
+      ])
+    );
     expect(ids).not.toContain("seed-bible");
     expect(
       manager.getExtensions().find((entry) => entry.id === "ext.first-party")
         ?.extension
     ).toBe(firstParty);
-    expect(await manager.loadExtension(impostor)).toBe(false);
-    expect(await manager.loadExtension(appNamespace)).toBe(false);
-    expect(h.consent).not.toHaveBeenCalled();
+  });
+
+  it("keeps another publisher's extension with the same id away from the first one's storage and identity", async () => {
+    h.host.userId.value = "user-1";
+    h.host.profile.value = { name: "Ruth", pictureUrl: null };
+    const seen: Record<string, { secret: unknown; identity: string | null }> =
+      {};
+    const definition = (publisher: string) =>
+      defineExtension({
+        main: async (sb) => {
+          if (publisher === "a") {
+            await sb.storage.set("secret", "x");
+          }
+          seen[publisher] = {
+            secret: await sb.storage.get("secret"),
+            identity: sb.identity.value,
+          };
+        },
+      });
+    const manager = createManager();
+    const original = await publish(definition("a"), { id: "notes-helper" });
+    await manager.loadExtension(original);
+    await vi.waitFor(() => expect(seen.a).toBeDefined());
+
+    const impostor = await publish(
+      definition("b"),
+      { id: "notes-helper" },
+      "https://elsewhere.example.org/notes-helper.js"
+    );
+    expect(await manager.loadExtension(impostor)).toBe(true);
+    await vi.waitFor(() => expect(seen.b).toBeDefined());
+
+    expect(seen.a!.secret).toBe("x");
+    expect(seen.b!.secret).toBeNull();
+    expect(seen.b!.identity).not.toBe(seen.a!.identity);
+    expect(manager.getExtensions().map((entry) => entry.id)).toEqual(
+      expect.arrayContaining([
+        sourced("notes-helper"),
+        sourced("notes-helper", "https://elsewhere.example.org/"),
+      ])
+    );
+    expect(h.consent).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        extensionId: sourced("notes-helper", "https://elsewhere.example.org/"),
+        sourceHost: "elsewhere.example.org",
+        reason: "install",
+      })
+    );
   });
 
   describe("optional permissions", () => {
@@ -522,7 +576,7 @@ describe("sandboxed extensions", () => {
       await createManager().loadExtension(extension);
 
       setUserActivation(true);
-      await clickTool("ext.asks");
+      await clickTool(sourced("ext.asks"));
 
       await vi.waitFor(() => expect(results).toEqual([true]));
       expect(h.consent).toHaveBeenLastCalledWith(
@@ -546,13 +600,13 @@ describe("sandboxed extensions", () => {
       await createManager().loadExtension(extension);
 
       setUserActivation(true);
-      await clickTool("ext.asks");
+      await clickTool(sourced("ext.asks"));
 
       await vi.waitFor(() => expect(results).toEqual([true]));
       expect(h.consent).toHaveBeenLastCalledWith(
         expect.objectContaining({
           reason: "request",
-          extensionId: "ext.asks",
+          extensionId: sourced("ext.asks"),
           permissions: ["reading:position"],
         })
       );
@@ -566,7 +620,7 @@ describe("sandboxed extensions", () => {
         })
       );
 
-      reload("ext.asks");
+      reload(sourced("ext.asks"));
       await createManager().loadExtension(extension);
       await vi.waitFor(() => expect(sbs).toHaveLength(2));
       expect(sbs[1]!.permissions.has("reading:position")).toBe(true);
@@ -653,9 +707,9 @@ describe("sandboxed extensions", () => {
       );
       setUserActivation(true);
 
-      await clickTool("ext.declined-optional");
+      await clickTool(sourced("ext.declined-optional"));
       await vi.waitFor(() => expect(results).toEqual([false]));
-      await clickTool("ext.declined-optional");
+      await clickTool(sourced("ext.declined-optional"));
       await vi.waitFor(() => expect(results).toEqual([false, false]));
 
       expect(
@@ -670,7 +724,7 @@ describe("sandboxed extensions", () => {
       );
       setUserActivation(true);
 
-      await clickTool("ext.undeclared");
+      await clickTool(sourced("ext.undeclared"));
 
       await vi.waitFor(() => expect(results).toEqual(["invalid_request"]));
       expect(h.consent).toHaveBeenCalledTimes(1);
@@ -686,9 +740,9 @@ describe("sandboxed extensions", () => {
         })
       );
       setUserActivation(true);
-      await clickTool("ext.updated");
+      await clickTool(sourced("ext.updated"));
       await vi.waitFor(() => expect(results).toEqual([true]));
-      reload("ext.updated");
+      reload(sourced("ext.updated"));
 
       await createManager().loadExtension(
         await publish(askingOnSelect(results, sbs), {
@@ -726,7 +780,7 @@ describe("sandboxed extensions", () => {
 
     expect(h.consent).not.toHaveBeenCalled();
     expect(
-      manager.getExtensions().find((entry) => entry.id === "ext.pushy")
+      manager.getExtensions().find((entry) => entry.id === sourced("ext.pushy"))
         ?.installed
     ).toBe(false);
   });
@@ -734,7 +788,11 @@ describe("sandboxed extensions", () => {
   it("only offers a sandboxed extension named in an autoinstall link", async () => {
     h.consent.mockResolvedValue(false);
     const extension = await publish(defineExtension({}), { id: "ext.linked" });
-    window.history.replaceState(null, "", "/?autoinstall-ext.linked=true");
+    window.history.replaceState(
+      null,
+      "",
+      `/?autoinstall-${encodeURIComponent(sourced("ext.linked"))}=true`
+    );
     try {
       const manager = createManager({
         defaultExtensions: { id: "defaults", extensions: [extension] },
@@ -743,12 +801,30 @@ describe("sandboxed extensions", () => {
       await manager.loadDefaultExtensions();
 
       expect(h.consent).toHaveBeenCalledWith(
-        expect.objectContaining({ extensionId: "ext.linked" })
+        expect.objectContaining({ extensionId: sourced("ext.linked") })
       );
       expect(
-        manager.getExtensions().find((entry) => entry.id === "ext.linked")
-          ?.installed
+        manager
+          .getExtensions()
+          .find((entry) => entry.id === sourced("ext.linked"))?.installed
       ).toBe(false);
+    } finally {
+      window.history.replaceState(null, "", "/");
+    }
+  });
+
+  it("doesn't offer a sandboxed extension to a link that names its id without where it's from", async () => {
+    const extension = await publish(defineExtension({}), { id: "ext.bare" });
+    window.history.replaceState(null, "", "/?autoinstall-ext.bare=true");
+    try {
+      const manager = createManager({
+        defaultExtensions: { id: "defaults", extensions: [extension] },
+      });
+
+      await manager.loadDefaultExtensions();
+
+      expect(h.consent).not.toHaveBeenCalled();
+      expect(h.frames).toEqual([]);
     } finally {
       window.history.replaceState(null, "", "/");
     }
@@ -842,6 +918,36 @@ describe("extension grants", () => {
   it("identifies a source by the bundle's directory", () => {
     expect(extensionSource("https://files.example.com/a/b/c.js?v=1")).toBe(
       "https://files.example.com/a/b/"
+    );
+  });
+
+  it("puts the source before an extension's declared id, and splits them apart again", () => {
+    const id = sourcedExtensionId(
+      "https://files.example.com/a/b/c.js",
+      "verse-art"
+    );
+
+    expect(id).toBe("https://files.example.com/a/b/#verse-art");
+    expect(splitSourcedExtensionId(id)).toEqual({
+      source: "https://files.example.com/a/b/",
+      declaredId: "verse-art",
+    });
+    expect(sourcedExtensionId("https://files.example.com/a/b/d.js", id)).toBe(
+      id
+    );
+    expect(splitSourcedExtensionId("ext.built-in")).toBeNull();
+  });
+
+  it("never lets a declared id make one source's id look like another's", () => {
+    // Declaring the deeper folder's id from the folder above it.
+    const id = sourcedExtensionId(
+      "https://files.example.com/a/bundle.js",
+      "b/#verse-art"
+    );
+
+    expect(id).not.toBe("https://files.example.com/a/b/#verse-art");
+    expect(splitSourcedExtensionId(id)?.source).toBe(
+      "https://files.example.com/a/"
     );
   });
 });

@@ -26,6 +26,7 @@ import {
   type SandboxServicesContext,
   type SandboxSessionApi,
 } from "./ExtensionSandboxServices";
+import { splitSourcedExtensionId } from "./ExtensionPermissions";
 import { translateTitle } from "../app/utils";
 import { useI18n } from "../i18n";
 import type { AppState } from "./SeedBibleStateManager";
@@ -819,7 +820,9 @@ export function startSandboxSession(
    */
   const openPortal = (params: SandboxMethods["portals.open"]["params"]) => {
     const openKey = uuid().slice(0, 8); // only take the first 8 chars because inst names can't be too long for DNS
-    const inst = params.inst ?? `sb-${extensionId.slice(0, 24)}-${openKey}`;
+    const name =
+      splitSourcedExtensionId(extensionId)?.declaredId ?? extensionId;
+    const inst = params.inst ?? `sb-${name.slice(0, 24)}-${openKey}`;
     return openHostPane(params, (paneId) => (
       <PortalComponent
         key={openKey}

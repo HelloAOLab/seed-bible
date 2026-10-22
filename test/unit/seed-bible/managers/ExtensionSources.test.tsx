@@ -13,7 +13,7 @@ import {
   defineExtension,
   type SandboxContext,
 } from "@packages/seed-bible/seed-bible/extensions";
-import { useSandboxHarness } from "./sandboxHarness";
+import { sourced, useSandboxHarness } from "./sandboxHarness";
 
 /*
  * Third-party extensions come from hosted `ExtensionSet`s, which the app
@@ -23,6 +23,10 @@ import { useSandboxHarness } from "./sandboxHarness";
 describe("extension sources", () => {
   const h = useSandboxHarness();
   const SET_URL = "https://ext.example.com/verse-art/extension-set.json";
+  const VERSE_ART = sourced(
+    "ext.verse-art",
+    "https://ext.example.com/verse-art/"
+  );
   const APP_SET = { id: "seed-bible", extensions: [] };
   let starts: SandboxContext[];
 
@@ -60,15 +64,15 @@ describe("extension sources", () => {
     const first = await loadPage();
     await first.discoverExtensionSet(SET_URL);
     expect(
-      await first.loadExtension(listed(first, "ext.verse-art")!.extension!)
+      await first.loadExtension(listed(first, VERSE_ART)!.extension!)
     ).toBe(true);
     await vi.waitFor(() => expect(starts).toHaveLength(1));
 
-    h.reload("ext.verse-art");
+    h.reload(VERSE_ART);
     const second = await loadPage();
 
     await vi.waitFor(() => expect(starts).toHaveLength(2));
-    expect(listed(second, "ext.verse-art")?.installed).toBe(true);
+    expect(listed(second, VERSE_ART)?.installed).toBe(true);
     // Already granted, so it isn't asked about again.
     expect(h.consent).toHaveBeenCalledTimes(1);
   });
@@ -84,7 +88,7 @@ describe("extension sources", () => {
       url: "https://ext.example.com/verse-art/bundle.js",
     });
     expect(
-      await manager.loadExtension(listed(manager, "ext.verse-art")!.extension!)
+      await manager.loadExtension(listed(manager, VERSE_ART)!.extension!)
     ).toBe(true);
     await vi.waitFor(() => expect(starts).toHaveLength(1));
   });
@@ -97,7 +101,7 @@ describe("extension sources", () => {
     const manager = await loadPage();
 
     await manager.discoverExtensionSet(SET_URL);
-    const listedExtension = listed(manager, "ext.verse-art")!.extension!;
+    const listedExtension = listed(manager, VERSE_ART)!.extension!;
     await manager.loadExtension(listedExtension);
 
     const icon = "https://ext.example.com/verse-art/icon-1a2b.svg";
@@ -117,15 +121,19 @@ describe("extension sources", () => {
 
     await manager.discoverExtensionSet(SET_URL);
 
-    expect(
-      listed(manager, "ext.verse-art")!.extension!.meta
-    ).not.toHaveProperty("icon");
+    expect(listed(manager, VERSE_ART)!.extension!.meta).not.toHaveProperty(
+      "icon"
+    );
   });
 
   describe("a set published to Seed Bible's records", () => {
     // Where `seed-bible-extension-scripts publish` puts it.
     const RECORD_URL =
       "https://auth.seedbible.org/api/v2/records/data?recordName=user-1&address=extension-sets%2Fext.verse-art";
+    const RECORD_VERSE_ART = sourced(
+      "ext.verse-art",
+      "https://auth.seedbible.org/files/"
+    );
     let runs: string[];
 
     beforeEach(() => {
@@ -154,7 +162,7 @@ describe("extension sources", () => {
       expect(await manager.discoverExtensionSet(RECORD_URL)).not.toBeNull();
       expect(
         await manager.loadExtension(
-          listed(manager, "ext.verse-art")!.extension!
+          listed(manager, RECORD_VERSE_ART)!.extension!
         )
       ).toBe(true);
       await vi.waitFor(() => expect(runs).toEqual(["1.0.0"]));
@@ -164,11 +172,11 @@ describe("extension sources", () => {
       await publishVersion("1.0.0");
       const first = await loadPage();
       await first.discoverExtensionSet(RECORD_URL);
-      await first.loadExtension(listed(first, "ext.verse-art")!.extension!);
+      await first.loadExtension(listed(first, RECORD_VERSE_ART)!.extension!);
       await vi.waitFor(() => expect(runs).toHaveLength(1));
 
       await publishVersion("1.1.0");
-      h.reload("ext.verse-art");
+      h.reload(RECORD_VERSE_ART);
       await loadPage();
 
       await vi.waitFor(() => expect(runs).toEqual(["1.0.0", "1.1.0"]));
@@ -185,7 +193,7 @@ describe("extension sources", () => {
       const manager = await loadPage();
 
       expect(await manager.discoverExtensionSet(RECORD_URL)).toBeNull();
-      expect(listed(manager, "ext.verse-art")).toBeUndefined();
+      expect(listed(manager, RECORD_VERSE_ART)).toBeUndefined();
     });
   });
 
@@ -212,8 +220,8 @@ describe("extension sources", () => {
         defaultExtensions: APP_SET,
         fileRecords,
       });
-      await manager.discoverExtensionSet(SET_URL);
-      await manager.loadExtension(listed(manager, "ext.verse-art")!.extension!);
+      const set = await manager.discoverExtensionSet(SET_URL);
+      await manager.loadExtension(set!.extensions[0]!);
       return manager;
     }
 
@@ -232,9 +240,11 @@ describe("extension sources", () => {
       };
       expect(h.consent.mock.calls[0]![0].uploader).toEqual(kallyn);
       await vi.waitFor(() =>
-        expect(manager.sandboxPermissions.value["ext.verse-art"]).toMatchObject(
-          { uploader: kallyn }
-        )
+        expect(
+          manager.sandboxPermissions.value[
+            sourced("ext.verse-art", `${STORAGE}/user-1/`)
+          ]
+        ).toMatchObject({ uploader: kallyn })
       );
     });
 
@@ -272,14 +282,14 @@ describe("extension sources", () => {
     await hostVerseArt();
     const first = await loadPage();
     await first.discoverExtensionSet(SET_URL);
-    await first.loadExtension(listed(first, "ext.verse-art")!.extension!);
+    await first.loadExtension(listed(first, VERSE_ART)!.extension!);
     await vi.waitFor(() =>
       expect(JSON.parse(localStorage.getItem("sb-extension-sources")!)).toEqual(
-        { "ext.verse-art": SET_URL }
+        { [VERSE_ART]: SET_URL }
       )
     );
 
-    first.unloadExtension("ext.verse-art");
+    first.unloadExtension(VERSE_ART);
 
     await vi.waitFor(() =>
       expect(JSON.parse(localStorage.getItem("sb-extension-sources")!)).toEqual(
@@ -287,7 +297,7 @@ describe("extension sources", () => {
       )
     );
     const second = await loadPage();
-    expect(listed(second, "ext.verse-art")).toBeUndefined();
+    expect(listed(second, VERSE_ART)).toBeUndefined();
   });
 
   it("only lists a set that was added, without installing anything", async () => {
@@ -296,7 +306,7 @@ describe("extension sources", () => {
 
     expect(await manager.discoverExtensionSet(SET_URL)).not.toBeNull();
 
-    expect(listed(manager, "ext.verse-art")?.installed).toBe(false);
+    expect(listed(manager, VERSE_ART)?.installed).toBe(false);
     expect(h.consent).not.toHaveBeenCalled();
     expect(localStorage.getItem("sb-extension-sources")).toBeNull();
   });
@@ -335,12 +345,12 @@ describe("extension sources", () => {
 
       await vi.waitFor(() => expect(h.consent).toHaveBeenCalledTimes(1));
       expect(h.consent.mock.calls[0]![0]).toMatchObject({
-        extensionId: "ext.verse-art",
+        extensionId: VERSE_ART,
         sourceHost: "ext.example.com",
         reason: "install",
       });
       await vi.waitFor(() =>
-        expect(listed(manager, "ext.verse-art")?.installed).toBe(false)
+        expect(listed(manager, VERSE_ART)?.installed).toBe(false)
       );
       expect(starts).toEqual([]);
     });
@@ -365,8 +375,10 @@ describe("extension sources", () => {
       const manager = await loadPage();
 
       await vi.waitFor(() => expect(h.consent).toHaveBeenCalledTimes(1));
-      expect(h.consent.mock.calls[0]![0].extensionId).toBe("ext.named");
-      expect(listed(manager, "ext.verse-art")?.installed).toBe(false);
+      expect(h.consent.mock.calls[0]![0].extensionId).toBe(
+        sourced("ext.named", "https://ext.example.com/verse-art/")
+      );
+      expect(listed(manager, VERSE_ART)?.installed).toBe(false);
       expect(starts).toEqual([]);
     });
   });
