@@ -51,6 +51,12 @@ export interface SessionInvalidatedEvent {
    * notify anyone.
    */
   id: number;
+
+  /** The records client method whose response reported the session dead. */
+  method: string;
+
+  /** The server's accompanying message, if it sent one. */
+  errorMessage: string | null;
 }
 
 /**
@@ -92,7 +98,10 @@ export interface SessionGuardOptions {
   getSessionKey: () => string | null;
 
   /** Called when a request fails in a way that means the session is over. */
-  onSessionInvalidated: (errorCode: FatalSessionErrorCode) => void;
+  onSessionInvalidated: (
+    errorCode: FatalSessionErrorCode,
+    details: { method: string; errorMessage: string | null }
+  ) => void;
 
   /**
    * Looks up the key that replaced a refused one.
@@ -107,27 +116,37 @@ export interface SessionGuardOptions {
 }
 
 /**
- * Picks out the "this session is dead" code from an API result, or null if the
+ * Picks out the "this session is dead" code (and its message) from an API result, or null if the
  * result is a success, a different failure, or not a result object at all
  * (streaming procedures resolve to an async generator, for instance).
  */
-function findFatalSessionErrorCode(
+function findFatalSessionError(
   value: unknown
-): FatalSessionErrorCode | null {
+): { errorCode: FatalSessionErrorCode; errorMessage: string | null } | null {
   if (typeof value !== "object" || value === null) {
     return null;
   }
 
-  const result = value as { success?: unknown; errorCode?: unknown };
+  const result = value as {
+    success?: unknown;
+    errorCode?: unknown;
+    errorMessage?: unknown;
+  };
   if (result.success !== false || typeof result.errorCode !== "string") {
     return null;
   }
 
-  return (FATAL_SESSION_ERROR_CODES as readonly string[]).includes(
-    result.errorCode
-  )
-    ? (result.errorCode as FatalSessionErrorCode)
-    : null;
+  if (
+    !(FATAL_SESSION_ERROR_CODES as readonly string[]).includes(result.errorCode)
+  ) {
+    return null;
+  }
+
+  return {
+    errorCode: result.errorCode as FatalSessionErrorCode,
+    errorMessage:
+      typeof result.errorMessage === "string" ? result.errorMessage : null,
+  };
 }
 
 function isThenable(value: unknown): value is Promise<unknown> {
@@ -195,8 +214,8 @@ export function guardRecordsClient<T extends object>(
         // with no body) must pass through unobserved and must never sign anyone
         // out.
         return result.then(async (resolved) => {
-          const errorCode = findFatalSessionErrorCode(resolved);
-          if (!errorCode) {
+          const fatal = findFatalSessionError(resolved);
+          if (!fatal) {
             return resolved;
           }
 
@@ -220,7 +239,10 @@ export function guardRecordsClient<T extends object>(
             // request beat us to it, or the user signed out and back in — this
             // failure is stale news. That check is what collapses a burst of
             // simultaneous failures into a single sign-out.
-            onSessionInvalidated(errorCode);
+            onSessionInvalidated(fatal.errorCode, {
+              method: property,
+              errorMessage: fatal.errorMessage,
+            });
           }
           return resolved;
         });
