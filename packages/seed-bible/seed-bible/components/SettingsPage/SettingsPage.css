@@ -64,48 +64,6 @@
   opacity: 0.5;
 }
 
-.sb-extensions-tabs {
-  display: flex;
-  gap: 0.375rem;
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 85%);
-}
-
-.sb-extensions-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.25rem;
-  margin-bottom: -1px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extensions-tab-active {
-  border-bottom-color: var(--sb-primary-color);
-  color: var(--sb-selected-tab-font-color);
-}
-
-.sb-extensions-tab-count {
-  min-width: 1.25rem;
-  padding: 0.0625rem 0.3125rem;
-  border-radius: 62.4375rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-  color: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.sb-extensions-tab-active .sb-extensions-tab-count {
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
-}
-
 .sb-extension-row {
   display: flex;
   align-items: stretch;
@@ -114,11 +72,7 @@
 }
 
 .sb-extension-row-body {
-  width: 100%;
-  min-height: 4rem;
-  font-family: inherit;
-  cursor: pointer;
-  text-align: start;
+  text-align: left;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
   border-radius: 0.5rem;
   padding: 0.625rem 0.75rem;
@@ -132,7 +86,6 @@
   min-width: 0;
 }
 
-/* Also used by extensions' own settings lists (e.g. the MCP extension). */
 .sb-extension-row-actions {
   display: inline-flex;
   align-items: center;
@@ -185,45 +138,6 @@
   font-size: 0.75rem;
   opacity: 0.78;
   line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sb-extension-row-body:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 55%);
-}
-
-.sb-extension-row-body:focus-visible {
-  outline: 2px solid var(--sb-primary-color);
-  outline-offset: 2px;
-}
-
-.sb-extension-row-body .sb-extension-consent-tile {
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 0.75rem;
-  font-size: 1rem;
-}
-
-.sb-extension-row-title {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-}
-
-.sb-extension-row-tag {
-  padding: 0.0625rem 0.4375rem;
-  border-radius: 999px;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-}
-
-.sb-extension-row-chevron {
-  flex: none;
-  opacity: 0.55;
 }
 
 .sb-pill-toggle {
@@ -1725,4 +1639,133 @@
  */
 .sb-customization-translation-picker .searchbar {
   width: 100%;
+}
+
+.sb-extensions-search {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  padding: 0 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
+  border-radius: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-extensions-search:focus-within {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-extensions-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.9375rem;
+}
+
+.sb-extensions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-extensions-section-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-extensions-group {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.sb-extensions-group > li + li {
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-extensions-item {
+  width: 100%;
+  min-height: 4.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 0.875rem;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-extensions-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 95%);
+}
+
+.sb-extensions-item:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: -2px;
+}
+
+.sb-extensions-item .sb-extension-consent-tile {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+}
+
+.sb-extensions-item-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sb-extensions-item-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.sb-extensions-item-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.sb-extensions-item-description {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-extensions-item-tag {
+  padding: 0.0625rem 0.4375rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-extensions-item-chevron {
+  flex: none;
+  opacity: 0.5;
 }

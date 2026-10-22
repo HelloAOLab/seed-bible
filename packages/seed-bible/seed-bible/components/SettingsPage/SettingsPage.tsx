@@ -1292,8 +1292,6 @@ function getExtensionInstallState(
   return "none";
 }
 
-type ExtensionsTab = "installed" | "available";
-
 /**
  * Adds the extensions from a hosted `ExtensionSet` (the link
  * `seed-bible-extension-scripts publish` prints) to Available. Installing
@@ -1375,7 +1373,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       entry.installed ||
       customizations.getActiveExtensionAvailability(entry.id) !== "hidden"
   );
-  const activeTab = useSignal<ExtensionsTab>("installed");
+  const searchQuery = useSignal("");
   // The extension whose page is open, in place of the list.
   const openExtensionId = useSignal<string | null>(null);
 
@@ -1629,23 +1627,23 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
     const description = brandedText(descriptionOf(id));
     const builtIn = extension !== null && !("url" in extension);
     return (
-      <li key={id} className="sb-extension-row">
+      <li key={id}>
         <button
           type="button"
-          className="sb-extension-row-body"
+          className="sb-extensions-item"
           onClick={() => (openExtensionId.value = id)}
         >
           <ExtensionTile request={{ extensionId: id, title: name }} />
-          <span className="sb-extension-row-content">
-            <span className="sb-extension-row-title">
-              <span className="sb-extension-name">{name}</span>
+          <span className="sb-extensions-item-content">
+            <span className="sb-extensions-item-title">
+              <span className="sb-extensions-item-name">{name}</span>
               {builtIn && (
-                <span className="sb-extension-row-tag">
+                <span className="sb-extensions-item-tag">
                   {t("extension-info-built-in-tag")}
                 </span>
               )}
               {installStateOf(extensionEntry) === "pending" && (
-                <span className="sb-extension-row-tag">
+                <span className="sb-extensions-item-tag">
                   {t("extension-state-pending", {
                     defaultValue: "Installing…",
                   })}
@@ -1653,11 +1651,13 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
               )}
             </span>
             {description && (
-              <span className="sb-extension-description">{description}</span>
+              <span className="sb-extensions-item-description">
+                {description}
+              </span>
             )}
           </span>
           <span
-            className="material-symbols-outlined sb-extension-row-chevron rtl-mirror"
+            className="material-symbols-outlined sb-extensions-item-chevron rtl-mirror"
             aria-hidden="true"
           >
             chevron_right
@@ -1667,18 +1667,48 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
     );
   };
 
-  const installedExtensions = visibleExtensionsList.filter((e) => e.installed);
-  const availableExtensions = visibleExtensionsList.filter((e) => !e.installed);
-  const activeExtensions =
-    activeTab.value === "installed" ? installedExtensions : availableExtensions;
-  const activeEmptyMessage =
-    activeTab.value === "installed"
-      ? t("no-installed-extensions", {
-          defaultValue: "You haven't installed any extensions yet.",
-        })
-      : t("no-available-extensions", {
-          defaultValue: "There are no more extensions available to install.",
-        });
+  const query = searchQuery.value.trim().toLocaleLowerCase();
+  const matchesQuery = (entry: ExtensionListEntry) =>
+    !query ||
+    brandedText(titleOf(entry.id)).toLocaleLowerCase().includes(query) ||
+    brandedText(descriptionOf(entry.id)).toLocaleLowerCase().includes(query);
+  const shownExtensions = visibleExtensionsList.filter(matchesQuery);
+  const installedExtensions = shownExtensions.filter((e) => e.installed);
+  const availableExtensions = shownExtensions.filter((e) => !e.installed);
+
+  const renderSection = (
+    key: "installed" | "available",
+    title: string,
+    entries: ExtensionListEntry[],
+    emptyMessage: string
+  ) => {
+    // While searching, a section with no matches is left out.
+    if (query && entries.length === 0) {
+      return null;
+    }
+    return (
+      <section
+        className="sb-extensions-section"
+        aria-labelledby={`sb-extensions-${key}-title`}
+      >
+        <h2
+          id={`sb-extensions-${key}-title`}
+          className="sb-extensions-section-title"
+        >
+          {title}
+        </h2>
+        {entries.length === 0 ? (
+          <div className="sb-settings-empty-state">
+            <p>{emptyMessage}</p>
+          </div>
+        ) : (
+          <ul className="sb-extensions-group">
+            {entries.map(renderExtensionRow)}
+          </ul>
+        )}
+      </section>
+    );
+  };
 
   const openEntry = visibleExtensionsList.find(
     (entry) => entry.id === openExtensionId.value
@@ -1739,64 +1769,49 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </div>
         ) : (
           <>
-            <div
-              className="sb-extensions-tabs"
-              role="tablist"
-              aria-label={t("extensions", { defaultValue: "Extensions" })}
-            >
-              <button
-                type="button"
-                role="tab"
-                id="sb-extensions-tab-installed"
-                aria-selected={activeTab.value === "installed"}
-                aria-controls="sb-extensions-tabpanel"
-                className={`sb-extensions-tab${
-                  activeTab.value === "installed"
-                    ? " sb-extensions-tab-active"
-                    : ""
-                }`}
-                onClick={() => (activeTab.value = "installed")}
-              >
-                {t("installed-extensions", { defaultValue: "Installed" })}
-                <span className="sb-extensions-tab-count">
-                  {installedExtensions.length}
-                </span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id="sb-extensions-tab-available"
-                aria-selected={activeTab.value === "available"}
-                aria-controls="sb-extensions-tabpanel"
-                className={`sb-extensions-tab${
-                  activeTab.value === "available"
-                    ? " sb-extensions-tab-active"
-                    : ""
-                }`}
-                onClick={() => (activeTab.value = "available")}
-              >
-                {t("available-extensions", { defaultValue: "Available" })}
-                <span className="sb-extensions-tab-count">
-                  {availableExtensions.length}
-                </span>
-              </button>
-            </div>
-
-            <div
-              id="sb-extensions-tabpanel"
-              role="tabpanel"
-              aria-labelledby={`sb-extensions-tab-${activeTab.value}`}
-            >
-              {activeExtensions.length === 0 ? (
-                <div className="sb-settings-empty-state">
-                  <p>{activeEmptyMessage}</p>
-                </div>
-              ) : (
-                <ul className="sb-extensions-list">
-                  {activeExtensions.map(renderExtensionRow)}
-                </ul>
-              )}
-            </div>
+            <label className="sb-extensions-search">
+              <span className="material-symbols-outlined" aria-hidden="true">
+                search
+              </span>
+              <input
+                type="search"
+                value={searchQuery.value}
+                onInput={(event) =>
+                  (searchQuery.value = event.currentTarget.value)
+                }
+                placeholder={t("extensions-search")}
+                aria-label={t("extensions-search")}
+              />
+            </label>
+            {query && shownExtensions.length === 0 ? (
+              <div className="sb-settings-empty-state" role="status">
+                <p>
+                  {t("extensions-search-no-matches", {
+                    query: searchQuery.value.trim(),
+                  })}
+                </p>
+              </div>
+            ) : (
+              <>
+                {renderSection(
+                  "installed",
+                  t("installed-extensions", { defaultValue: "Installed" }),
+                  installedExtensions,
+                  t("no-installed-extensions", {
+                    defaultValue: "You haven't installed any extensions yet.",
+                  })
+                )}
+                {renderSection(
+                  "available",
+                  t("available-extensions", { defaultValue: "Available" }),
+                  availableExtensions,
+                  t("no-available-extensions", {
+                    defaultValue:
+                      "There are no more extensions available to install.",
+                  })
+                )}
+              </>
+            )}
           </>
         )}
 
@@ -1815,9 +1830,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
         <AddExtensionFromLink
           onAdd={async (url) => {
             const set = await extensions.discoverExtensionSet(url);
-            if (set) {
-              activeTab.value = "available";
-            }
             return set?.extensions.length ?? null;
           }}
         />

@@ -129,21 +129,39 @@ describe("ExtensionsSettingsView", () => {
     return state;
   }
 
-  const installedTab = () =>
-    container.querySelector<HTMLButtonElement>("#sb-extensions-tab-installed")!;
-  const availableTab = () =>
-    container.querySelector<HTMLButtonElement>("#sb-extensions-tab-available")!;
   const rowNames = () =>
-    Array.from(container.querySelectorAll(".sb-extension-name")).map(
+    Array.from(container.querySelectorAll(".sb-extensions-item-name")).map(
       (el) => el.textContent
     );
+  /** The names listed under each section's heading. */
+  const sections = () =>
+    Array.from(container.querySelectorAll(".sb-extensions-section")).map(
+      (section) => ({
+        title: section.querySelector("h2")?.textContent,
+        names: Array.from(
+          section.querySelectorAll(".sb-extensions-item-name")
+        ).map((el) => el.textContent),
+        empty:
+          section.querySelector(".sb-settings-empty-state")?.textContent ??
+          null,
+      })
+    );
+  const search = (text: string) => {
+    const input = container.querySelector<HTMLInputElement>(
+      'input[type="search"]'
+    )!;
+    act(() => {
+      input.value = text;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  };
   /** Opens an extension's page by clicking its row in the list. */
   const openExtension = (name: string) => {
     const row = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-extension-row-body")
+      container.querySelectorAll<HTMLButtonElement>(".sb-extensions-item")
     ).find(
       (button) =>
-        button.querySelector(".sb-extension-name")?.textContent === name
+        button.querySelector(".sb-extensions-item-name")?.textContent === name
     );
     expect(row).toBeTruthy();
     act(() => row!.click());
@@ -151,70 +169,86 @@ describe("ExtensionsSettingsView", () => {
   const pageTitle = () =>
     container.querySelector(".sb-extension-info-title")?.textContent ?? null;
 
-  it("shows the Installed tab by default with only installed extensions listed", () => {
+  it("lists installed and available extensions in their own sections", () => {
     renderExtensions([
       makeEntry("installed-one", true),
       makeEntry("available-one", false),
       makeEntry("installed-two", true),
     ]);
 
-    expect(installedTab().getAttribute("aria-selected")).toBe("true");
-    expect(availableTab().getAttribute("aria-selected")).toBe("false");
-    expect(rowNames()).toEqual(["installed-one", "installed-two"]);
-  });
-
-  it("switches to the Available tab and shows only uninstalled extensions", () => {
-    renderExtensions([
-      makeEntry("installed-one", true),
-      makeEntry("available-one", false),
-      makeEntry("installed-two", true),
+    expect(sections()).toEqual([
+      {
+        title: "Installed",
+        names: ["installed-one", "installed-two"],
+        empty: null,
+      },
+      { title: "Available", names: ["available-one"], empty: null },
     ]);
-
-    act(() => {
-      availableTab().dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(availableTab().getAttribute("aria-selected")).toBe("true");
-    expect(installedTab().getAttribute("aria-selected")).toBe("false");
-    expect(rowNames()).toEqual(["available-one"]);
+    expect(container.querySelector('[role="tab"]')).toBeNull();
   });
 
-  it("labels each tab with the count of extensions it holds", () => {
-    renderExtensions([
-      makeEntry("installed-one", true),
-      makeEntry("available-one", false),
-      makeEntry("available-two", false),
-    ]);
-
-    expect(
-      installedTab().querySelector(".sb-extensions-tab-count")?.textContent
-    ).toBe("1");
-    expect(
-      availableTab().querySelector(".sb-extensions-tab-count")?.textContent
-    ).toBe("2");
-  });
-
-  it("shows the no-available-extensions message on the Available tab when everything is installed", () => {
+  it("says when a section has nothing in it", () => {
     renderExtensions([makeEntry("installed-one", true)]);
-
-    act(() => {
-      availableTab().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(sections()[1]).toEqual({
+      title: "Available",
+      names: [],
+      empty: "There are no more extensions available to install.",
     });
 
-    expect(container.querySelector(".sb-extensions-list")).toBeNull();
-    expect(container.textContent).toContain(
-      "There are no more extensions available to install."
-    );
+    render(null, container);
+    renderExtensions([makeEntry("available-one", false)]);
+    expect(sections()[0]).toEqual({
+      title: "Installed",
+      names: [],
+      empty: "You haven't installed any extensions yet.",
+    });
   });
 
-  it("shows the no-installed-extensions message on the Installed tab when nothing is installed", () => {
-    renderExtensions([makeEntry("available-one", false)]);
+  describe("searching", () => {
+    beforeEach(() => {
+      extensionStrings.set("verse-art:title", "Verse Art");
+      extensionStrings.set(
+        "verse-art:description",
+        "Turns the passage into shareable art."
+      );
+      extensionStrings.set("word-study:title", "Word Study");
+      extensionStrings.set(
+        "word-study:description",
+        "Greek and Hebrew behind a verse."
+      );
+      extensionStrings.set("maps:title", "Scripture Map");
+    });
 
-    expect(installedTab().getAttribute("aria-selected")).toBe("true");
-    expect(container.querySelector(".sb-extensions-list")).toBeNull();
-    expect(container.textContent).toContain(
-      "You haven't installed any extensions yet."
-    );
+    const entries = () => [
+      makeEntry("verse-art", true),
+      makeEntry("word-study", false),
+      makeEntry("maps", false),
+    ];
+
+    it("matches names and descriptions, in any case, and leaves out sections with no matches", () => {
+      renderExtensions(entries());
+
+      search("HEBREW");
+      expect(sections()).toEqual([
+        { title: "Available", names: ["Word Study"], empty: null },
+      ]);
+
+      search("art");
+      expect(sections()).toEqual([
+        { title: "Installed", names: ["Verse Art"], empty: null },
+      ]);
+    });
+
+    it("says when nothing matches, and shows everything again once cleared", () => {
+      renderExtensions(entries());
+
+      search("zzz");
+      expect(sections()).toEqual([]);
+      expect(container.textContent).toContain("extensions-search-no-matches");
+
+      search("");
+      expect(rowNames()).toEqual(["Verse Art", "Word Study", "Scripture Map"]);
+    });
   });
 
   describe("extensions the active customization hides", () => {
@@ -252,10 +286,7 @@ describe("ExtensionsSettingsView", () => {
         ["hidden-installed"]
       );
 
-      expect(rowNames()).toEqual(["hidden-installed", "shown-one"]);
-      expect(
-        installedTab().querySelector(".sb-extensions-tab-count")?.textContent
-      ).toBe("2");
+      expect(sections()[0]!.names).toEqual(["hidden-installed", "shown-one"]);
     });
 
     it("uninstalls a hidden extension that's installed, for this session only", () => {
@@ -277,22 +308,13 @@ describe("ExtensionsSettingsView", () => {
       );
     });
 
-    it("never offers a hidden extension on the Available tab", () => {
+    it("never offers a hidden extension under Available", () => {
       renderWithHidden(
         [makeEntry("hidden-available", false), makeEntry("shown-one", false)],
         ["hidden-available"]
       );
 
-      act(() => {
-        availableTab().dispatchEvent(
-          new MouseEvent("click", { bubbles: true })
-        );
-      });
-
-      expect(rowNames()).toEqual(["shown-one"]);
-      expect(
-        availableTab().querySelector(".sb-extensions-tab-count")?.textContent
-      ).toBe("1");
+      expect(sections()[1]!.names).toEqual(["shown-one"]);
     });
   });
 
@@ -359,10 +381,10 @@ describe("ExtensionsSettingsView", () => {
     });
   });
 
-  it("shows the outer empty state (no tabs) when there are no extensions at all", () => {
+  it("shows the outer empty state (no sections) when there are no extensions at all", () => {
     renderExtensions([]);
 
-    expect(container.querySelector(".sb-extensions-tabs")).toBeNull();
+    expect(container.querySelector(".sb-extensions-section")).toBeNull();
     expect(container.textContent).toContain("No extensions available.");
   });
 
@@ -374,8 +396,7 @@ describe("ExtensionsSettingsView", () => {
     renderExtensions([makeEntry("long-one", true)]);
 
     expect(
-      container.querySelector(".sb-extension-row .sb-extension-description")
-        ?.textContent
+      container.querySelector(".sb-extensions-item-description")?.textContent
     ).toContain("Interactive 3D visualization");
 
     openExtension("long-one");
@@ -390,10 +411,10 @@ describe("ExtensionsSettingsView", () => {
   it("renders no description for an extension without one", () => {
     renderExtensions([makeEntry("plain-one", true)]);
 
-    expect(container.querySelector(".sb-extension-name")?.textContent).toBe(
-      "plain-one"
-    );
-    expect(container.querySelector(".sb-extension-description")).toBeNull();
+    expect(rowNames()).toEqual(["plain-one"]);
+    expect(
+      container.querySelector(".sb-extensions-item-description")
+    ).toBeNull();
     openExtension("plain-one");
     expect(
       container.querySelector(".sb-extension-info-description")
@@ -430,7 +451,7 @@ describe("ExtensionsSettingsView", () => {
       openExtension("two");
 
       expect(pageTitle()).toBe("two");
-      expect(container.querySelector(".sb-extensions-list")).toBeNull();
+      expect(container.querySelector(".sb-extensions-group")).toBeNull();
 
       act(() => {
         container
@@ -442,21 +463,19 @@ describe("ExtensionsSettingsView", () => {
       expect(rowNames()).toEqual(["one", "two"]);
     });
 
-    it("has no buttons on the rows themselves", () => {
-      renderExtensions([makeEntry("one", true)]);
+    it("lists each extension as one button in a shared group, with no other buttons", () => {
+      renderExtensions([makeEntry("one", true), makeEntry("two", true)]);
 
+      const group = container.querySelector(".sb-extensions-group")!;
       expect(
-        container.querySelectorAll(".sb-extension-row button")
-      ).toHaveLength(1);
-      expect(
-        container.querySelector(".sb-extension-row .sb-extension-row-body")
-          ?.tagName
-      ).toBe("BUTTON");
+        Array.from(group.querySelectorAll("li")).map(
+          (item) => item.querySelectorAll("button").length
+        )
+      ).toEqual([1, 1]);
     });
 
     it("installs from the page, and says what it can do before then", () => {
       const state = renderExtensions([linkedEntry(false)]);
-      act(() => availableTab().click());
       openExtension("linked");
 
       expect(container.querySelector(".sb-extension-info-tabs")).toBeNull();
@@ -488,7 +507,6 @@ describe("ExtensionsSettingsView", () => {
 
     it("says where it's hosted and asks who uploaded it", () => {
       const state = renderExtensions([linkedEntry(false)]);
-      act(() => availableTab().click());
       openExtension("linked");
 
       expect(state.extensions.describeUploader).toHaveBeenCalledWith(
@@ -549,7 +567,7 @@ describe("ExtensionsSettingsView", () => {
       ]);
 
       expect(
-        container.querySelector(".sb-extension-row-tag")?.textContent
+        container.querySelector(".sb-extensions-item-tag")?.textContent
       ).toBe("extension-info-built-in-tag");
 
       openExtension("built-in");

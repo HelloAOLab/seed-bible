@@ -1232,6 +1232,8 @@
   "extension-permissions-not-running": "This extension isn't running right now.",
   "extension-info-built-in": "Built into Seed Bible",
   "extension-info-built-in-tag": "Built in",
+  "extensions-search": "Search extensions",
+  "extensions-search-no-matches": "No extensions match “{{query}}”.",
   "extension-info-tab-about": "About",
   "extension-info-tab-permissions": "Permissions",
   "extension-info-tab-settings": "Settings",
