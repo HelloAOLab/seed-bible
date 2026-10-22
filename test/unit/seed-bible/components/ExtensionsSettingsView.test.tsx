@@ -628,6 +628,28 @@ describe("ExtensionsSettingsView", () => {
       ).toContain("ext.example.com");
     });
 
+    it("shows a third-party extension's own id beside the folder it's hosted in", () => {
+      const source = "https://ext.example.com/linked/";
+      const entry = linkedEntry(false);
+      extensionStrings.set(`${source}#linked:title`, "Linked");
+      renderExtensions([
+        {
+          ...entry,
+          id: `${source}#linked`,
+          extension: {
+            ...entry.extension!,
+            meta: { ...entry.extension!.meta, id: `${source}#linked` },
+          },
+        },
+      ]);
+      openExtension("Linked");
+
+      const details = Array.from(
+        container.querySelectorAll(".sb-extension-info-details dd")
+      ).map((dd) => dd.textContent);
+      expect(details).toEqual(["1.2.0", source, "linked"]);
+    });
+
     it("shows a running extension's permissions on their own tab", () => {
       const state = renderExtensions([linkedEntry(true)]);
       act(() => {

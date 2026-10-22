@@ -24,6 +24,7 @@ import type { SandboxPermission } from "@packages/seed-bible/seed-bible/extensio
 import {
   createRawFrame,
   createSharedSession,
+  sourced,
   useSandboxHarness,
 } from "./sandboxHarness";
 
@@ -75,9 +76,9 @@ describe("sandboxed extensions: people and devices", () => {
     await vi.waitFor(() => expect(runs).toHaveLength(1));
     for (const permission of optional) {
       const before = runs.length;
-      expect(await manager.setOptionalPermission(id, permission, true)).toBe(
-        true
-      );
+      expect(
+        await manager.setOptionalPermission(sourced(id), permission, true)
+      ).toBe(true);
       await vi.waitFor(() => expect(runs).toHaveLength(before + 1));
     }
     return runs.at(-1)!;
@@ -92,7 +93,9 @@ describe("sandboxed extensions: people and devices", () => {
   /** The user is clicking inside the extension's (only) frame. */
   function userIsInExtension(id: string) {
     h.setUserActivation(true);
-    h.focusedFrame = h.frames.find((frame) => frame.extensionId === id)!;
+    h.focusedFrame = h.frames.find(
+      (frame) => frame.extensionId === sourced(id)
+    )!;
   }
 
   /** Waits until every message the host has already sent this frame is in. */
@@ -452,7 +455,7 @@ describe("sandboxed extensions: people and devices", () => {
         void sb.audio.play(URL_OK);
         await vi.waitFor(() => expect(h.host.media.isPlaying).toBe(true));
 
-        manager.unloadExtension("ext.gone-quiet");
+        manager.unloadExtension(sourced("ext.gone-quiet"));
 
         expect(h.host.media.isPlaying).toBe(false);
         expect(player()).toBeNull();
@@ -569,7 +572,9 @@ describe("sandboxed extensions: people and devices", () => {
       const shown = showPane(portal.paneId);
       const src = new URL(shown.iframe.src);
 
-      expect(portal.paneId).toMatch(/^sandbox:ext\.portal:/);
+      expect(
+        portal.paneId.startsWith(`sandbox:${sourced("ext.portal")}:`)
+      ).toBe(true);
       expect(src.origin).toBe("https://ao.bot");
       expect(src.searchParams.get("pattern")).toBe("verse-map");
       expect(src.searchParams.get("mapPortal")).toBe("home");
@@ -824,7 +829,7 @@ describe("sandboxed extensions: people and devices", () => {
       const dialog = await showDialog();
       await vi.waitFor(() => expect(h.host.capture.state.on).toBe(1));
 
-      manager.unloadExtension("ext.removed");
+      manager.unloadExtension(sourced("ext.removed"));
       expect(h.host.modals.modals.value).toEqual([]);
       // The app stops rendering a closed modal, which unmounts the dialog.
       dialog.remove();

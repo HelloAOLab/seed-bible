@@ -137,6 +137,11 @@ export interface SandboxPaneHandle {
 }
 
 export interface SandboxContext {
+  /**
+   * The id Seed Bible knows this extension by: the folder its bundle is
+   * hosted in, `#`, and the `id` from `extension.json`, like
+   * `https://example.com/extensions/#verse-art`.
+   */
   extensionId: string;
   permissions: {
     /** What the user has granted so far. */

@@ -29,6 +29,7 @@ import {
 import {
   createRawFrame,
   createSharedSession,
+  sourced,
   useSandboxHarness,
 } from "./sandboxHarness";
 
@@ -154,7 +155,7 @@ describe("permission gates", () => {
     h.setUserActivation(true);
     const record = probes.get(id)!;
     const before = record.askResults.length;
-    h.host.surfaces.toolbar.get(`sandbox:${id}:ask`)!.onSelect!();
+    h.host.surfaces.toolbar.get(`sandbox:${sourced(id)}:ask`)!.onSelect!();
     await vi.waitFor(() => expect(record.askResults).toHaveLength(before + 1));
     expect(record.askResults.at(-1)).toBe(answer);
     h.setUserActivation(false);
@@ -163,7 +164,7 @@ describe("permission gates", () => {
 
   /** A page reload: the extension stops, and a fresh manager starts it again. */
   function reloadPage(id: string) {
-    h.reload(id);
+    h.reload(sourced(id));
     manager = h.createManager();
   }
 
@@ -292,7 +293,9 @@ describe("permission gates", () => {
             ],
           })
           .then((handle) => handle, deniedCode);
-        const asked = await discoveredBy("sandbox:ext.probe:probe-discover");
+        const asked = await discoveredBy(
+          `sandbox:${sourced("ext.probe")}:probe-discover`
+        );
         if (typeof outcome !== "string") {
           await outcome.unregister();
         }
@@ -651,7 +654,7 @@ describe("permission gates", () => {
       })
       .then((handle) => handle, deniedCode);
     const provider = h.host.chatProviders.get(
-      `sandbox:ext.probe:${providerId}`
+      `sandbox:${sourced("ext.probe")}:${providerId}`
     );
     const reply = provider
       ? await provider.generateResponse({
@@ -774,7 +777,9 @@ describe("permission gates", () => {
         await installProbe(id, p, { optionalPermissions: [p] });
         await ask(id, true);
         probes.delete(id);
-        expect(await manager.setOptionalPermission(id, p, false)).toBe(true);
+        expect(await manager.setOptionalPermission(sourced(id), p, false)).toBe(
+          true
+        );
         await vi.waitFor(() => expect(probes.get(id)?.ready).toBe(true));
       },
     },
@@ -784,10 +789,12 @@ describe("permission gates", () => {
       setUp: async (id, p) => {
         await installProbe(id, p, { optionalPermissions: [p] });
         await ask(id, true);
-        manager.unloadExtension(id);
+        manager.unloadExtension(sourced(id));
         await vi.waitFor(() =>
           expect(
-            JSON.parse(localStorage.getItem("sb-extension-grants")!)[id]
+            JSON.parse(localStorage.getItem("sb-extension-grants")!)[
+              sourced(id)
+            ]
           ).toHaveProperty("revokedAtMs")
         );
         await installProbe(id, p, { optionalPermissions: [p] });
@@ -799,7 +806,9 @@ describe("permission gates", () => {
       setUp: async (id, p) => {
         await installProbe(id, p, { optionalPermissions: [p] });
         probes.delete(id);
-        expect(await manager.setOptionalPermission(id, p, true)).toBe(true);
+        expect(await manager.setOptionalPermission(sourced(id), p, true)).toBe(
+          true
+        );
         await vi.waitFor(() => expect(probes.get(id)?.ready).toBe(true));
       },
     },
@@ -886,7 +895,7 @@ describe("permission gates", () => {
     await vi.waitFor(() =>
       expect(
         h.host.panes.panes.value.some((p) =>
-          p.id.startsWith("sandbox:ext.view-first:")
+          p.id.startsWith(`sandbox:${sourced("ext.view-first")}:`)
         )
       ).toBe(true)
     );
@@ -894,7 +903,7 @@ describe("permission gates", () => {
     document.body.appendChild(container);
     render(
       h.host.panes.panes.value
-        .find((p) => p.id.startsWith("sandbox:ext.view-first:"))!
+        .find((p) => p.id.startsWith(`sandbox:${sourced("ext.view-first")}:`))!
         .component(),
       container
     );
