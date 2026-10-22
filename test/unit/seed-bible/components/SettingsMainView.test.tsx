@@ -50,6 +50,7 @@ function createMockState(userId: string | null): SeedBibleState {
       start: vi.fn(),
     },
     app: {},
+    openProfile: vi.fn(),
   } as unknown as SeedBibleState;
 }
 
@@ -90,6 +91,20 @@ describe("SettingsMainView", () => {
 
     expect(navLabels()).toContain("Customize");
   });
+  it("opens the full-screen Profile screen from Account settings", () => {
+    const state = renderMain("user-1");
+    const accountButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-settings-nav-item")
+    ).find((button) => button.textContent?.includes("Account settings"))!;
+
+    act(() => {
+      accountButton.click();
+    });
+
+    expect(state.openProfile).toHaveBeenCalled();
+    expect(state.sidebar.closeSettings).toHaveBeenCalled();
+  });
+
   it("hides the About nav item when disabledSettings includes about-seed-bible", () => {
     const state = createMockState("user-1");
 
