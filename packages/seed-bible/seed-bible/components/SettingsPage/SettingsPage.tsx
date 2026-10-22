@@ -2357,8 +2357,11 @@ function SettingsMainView(props: { state: SeedBibleState }) {
             <button
               className="sb-settings-nav-item"
               onClick={() => {
-                state.sidebar.closeSettings();
-                state.openProfile();
+                // One history entry, so Back from Profile returns to Settings.
+                state.navigation.batchWrites(() => {
+                  state.sidebar.closeSettings();
+                  state.openProfile();
+                });
               }}
             >
               <span className="sb-settings-nav-icon">
