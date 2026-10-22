@@ -171,7 +171,7 @@ export interface ExtensionMeta {
 }
 
 /**
- * Renders an extension's own custom content for its "Configure" button in
+ * Renders an extension's own custom content for its Settings tab in
  * Settings → Extensions, in place of the generic scalar `ExtensionSettingsForm`
  * built from `ExtensionMeta.settings`. For settings that can't be expressed as
  * flat string/boolean/number values (e.g. a repeating list, or a field that
@@ -877,7 +877,7 @@ export function createExtensionManager(
   // so skipped the viewer's own defaults, which leaving it still owes them.
   let skippedDefaultLoad = false;
 
-  // Custom "Configure" panels extensions register for themselves, keyed by
+  // Custom settings panels extensions register for themselves, keyed by
   // extension id. Kept here (rather than on `ExtensionSettingsManager`) since
   // it's a property of the extension itself, like `meta.settings` — not of
   // any one viewer's saved values.
@@ -2435,6 +2435,7 @@ export function createExtensionManager(
       Record<string, SandboxPermissionSummary>
     >,
     setOptionalPermission,
+    describeUploader,
     settingsPanels: settingsPanelsSignal as ReadonlySignal<
       Record<string, ExtensionSettingsPanelRenderer>
     >,

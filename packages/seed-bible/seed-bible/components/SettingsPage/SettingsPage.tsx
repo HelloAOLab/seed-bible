@@ -40,7 +40,6 @@ import {
   SensitiveSettingsForm,
   UnusedSensitiveSettingsList,
 } from "../ExtensionSettingsForm/SensitiveSettingsForm";
-import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { download, translateTitle } from "../../app/utils";
 import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
 import {
@@ -101,7 +100,11 @@ const TEXT_COLOR_PALETTE = [
 
 import { LANG_META } from "../../i18n/languageMeta";
 import { useAppConfig } from "../../app/appConfig";
-import { openExtensionPermissionsModal } from "../ExtensionConsentModal/ExtensionPermissionsModal";
+import {
+  ExtensionInfoPage,
+  type ExtensionInstallState,
+} from "./ExtensionInfoPage";
+import { ExtensionTile } from "../ExtensionConsentModal/ExtensionConsentModal";
 
 function FlagImg({ cc }: { cc: string }) {
   return (
@@ -118,8 +121,6 @@ function FlagImg({ cc }: { cc: string }) {
     />
   );
 }
-
-type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
 
 const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -1375,6 +1376,8 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       customizations.getActiveExtensionAvailability(entry.id) !== "hidden"
   );
   const activeTab = useSignal<ExtensionsTab>("installed");
+  // The extension whose page is open, in place of the list.
+  const openExtensionId = useSignal<string | null>(null);
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "main";
@@ -1420,134 +1423,122 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
     extensions.unloadExtension(extensionId);
   };
 
-  const handleConfigureExtension = (extensionEntry: ExtensionListEntry) => {
+  /** An installed extension's settings, or null when it has none. */
+  const renderExtensionSettings = (extensionEntry: ExtensionListEntry) => {
     const allSettings = extensionEntry.extension?.meta.settings ?? {};
     const settings = nonSensitiveSettings(allSettings);
     const sensitive = extensionEntry.extension?.meta.sensitive ?? {};
     const hasSensitive =
       Object.keys(settings).length < Object.keys(allSettings).length;
     const customPanel = extensions.settingsPanels.value[extensionEntry.id];
-    state.modals.openModal({
-      title: {
-        key: "extension-settings-title",
-        defaultValue: "{{name}} settings",
-        options: {
-          name:
-            // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
-            t("title", {
-              ns: extensionEntry.id,
-              defaultValue: extensionEntry.id,
-            }),
-        },
-      },
+    if (Object.keys(allSettings).length === 0 && !customPanel) {
+      return null;
+    }
+    return (
       // Values are saved to the viewer's account, so a signed-out viewer is
       // asked to log in first. The body re-renders on sign-in, swapping this
-      // prompt for the form without reopening the modal.
+      // prompt for the form in place.
       // TODO: Support offline / signed-out extension settings so this prompt isn't needed.
-      content: () =>
-        login.userId.value === null ? (
-          <div className="sb-settings-login-prompt">
-            <p>
-              {t("extension-settings-login-required", {
-                defaultValue: "Please log in to configure this extension.",
-              })}
-            </p>
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={() => void login.login()}
-            >
-              {t("log-in", { defaultValue: "Log in" })}
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* A custom panel stands in for the generic form only: sensitive
+      login.userId.value === null ? (
+        <div className="sb-settings-login-prompt">
+          <p>
+            {t("extension-settings-login-required", {
+              defaultValue: "Please log in to configure this extension.",
+            })}
+          </p>
+          <button
+            type="button"
+            className="sb-settings-action-button"
+            onClick={() => void login.login()}
+          >
+            {t("log-in", { defaultValue: "Log in" })}
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* A custom panel stands in for the generic form only: sensitive
                 values can't go through an extension's own UI, so they keep
                 their own section either way. */}
-            {customPanel
-              ? customPanel()
-              : (!hasSensitive || Object.keys(settings).length > 0) && (
-                  <ExtensionSettingsForm
-                    extensionId={extensionEntry.id}
-                    settings={settings}
-                    getValue={(key) =>
-                      extensionSettings.getValue(extensionEntry.id, key)
-                    }
-                    onChange={(key, value) =>
-                      void extensionSettings.setValue(
-                        extensionEntry.id,
-                        key,
-                        value
-                      )
-                    }
-                    resetting={{
-                      hasOwnValue: (key) =>
-                        extensionSettings.valuesByExtensionId.value[
-                          extensionEntry.id
-                        ]?.[key] !== undefined,
-                      onReset: (key) =>
-                        void extensionSettings.clearValue(
-                          extensionEntry.id,
-                          key
-                        ),
-                    }}
-                    t={t}
-                  />
-                )}
-            {hasSensitive && (
-              <SensitiveSettingsForm
-                extensionId={extensionEntry.id}
-                settings={allSettings}
-                sensitive={sensitive}
-                isSet={(key) =>
-                  extensionSettings.isSensitiveValueSet(extensionEntry.id, key)
-                }
-                isProvided={(key) =>
-                  extensionSettings.getSensitiveValueSource(
-                    extensionEntry.id,
-                    key
-                  ) === "customization"
-                }
-                hasStored={(proxyId) =>
-                  extensionSettings.hasStoredSensitiveValues(
-                    extensionEntry.id,
-                    proxyId
-                  )
-                }
-                getDestination={(proxyId) =>
-                  extensionSettings.getSensitiveDestination(
-                    extensionEntry.id,
-                    proxyId
-                  )
-                }
-                onSave={(proxyId, values, options) =>
-                  extensionSettings.setSensitiveValues(
-                    extensionEntry.id,
-                    proxyId,
-                    values,
-                    options
-                  )
-                }
-                onClear={(proxyId) =>
-                  extensionSettings.clearSensitiveValues(
-                    extensionEntry.id,
-                    proxyId
-                  )
-                }
-                t={t}
-              />
-            )}
-            {extensionSettings.hasSaveError(extensionEntry.id) && (
-              <p className="sb-settings-save-error" role="alert">
-                {t("extension-settings-save-failed", {
-                  defaultValue: "Couldn't save your settings.",
-                })}
-              </p>
-            )}
-          </>
-        ),
-    });
+          {customPanel
+            ? customPanel()
+            : (!hasSensitive || Object.keys(settings).length > 0) && (
+                <ExtensionSettingsForm
+                  extensionId={extensionEntry.id}
+                  settings={settings}
+                  getValue={(key) =>
+                    extensionSettings.getValue(extensionEntry.id, key)
+                  }
+                  onChange={(key, value) =>
+                    void extensionSettings.setValue(
+                      extensionEntry.id,
+                      key,
+                      value
+                    )
+                  }
+                  resetting={{
+                    hasOwnValue: (key) =>
+                      extensionSettings.valuesByExtensionId.value[
+                        extensionEntry.id
+                      ]?.[key] !== undefined,
+                    onReset: (key) =>
+                      void extensionSettings.clearValue(extensionEntry.id, key),
+                  }}
+                  t={t}
+                />
+              )}
+          {hasSensitive && (
+            <SensitiveSettingsForm
+              extensionId={extensionEntry.id}
+              settings={allSettings}
+              sensitive={sensitive}
+              isSet={(key) =>
+                extensionSettings.isSensitiveValueSet(extensionEntry.id, key)
+              }
+              isProvided={(key) =>
+                extensionSettings.getSensitiveValueSource(
+                  extensionEntry.id,
+                  key
+                ) === "customization"
+              }
+              hasStored={(proxyId) =>
+                extensionSettings.hasStoredSensitiveValues(
+                  extensionEntry.id,
+                  proxyId
+                )
+              }
+              getDestination={(proxyId) =>
+                extensionSettings.getSensitiveDestination(
+                  extensionEntry.id,
+                  proxyId
+                )
+              }
+              onSave={(proxyId, values, options) =>
+                extensionSettings.setSensitiveValues(
+                  extensionEntry.id,
+                  proxyId,
+                  values,
+                  options
+                )
+              }
+              onClear={(proxyId) =>
+                extensionSettings.clearSensitiveValues(
+                  extensionEntry.id,
+                  proxyId
+                )
+              }
+              t={t}
+            />
+          )}
+          {extensionSettings.hasSaveError(extensionEntry.id) && (
+            <p className="sb-settings-save-error" role="alert">
+              {t("extension-settings-save-failed", {
+                defaultValue: "Couldn't save your settings.",
+              })}
+            </p>
+          )}
+        </>
+      )
+    );
   };
 
   const handleDownloadExtensions = async () => {
@@ -1613,141 +1604,65 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { t } = useI18n();
   const { branding } = useAppConfig();
 
-  const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
-    const { id, installed, pendingInstallation } = extensionEntry;
-    const isRegistered =
-      ExtensionInitalizer.getInstance().isExtensionRegistered(id);
-    const installState = getExtensionInstallState(
-      installed,
-      pendingInstallation,
-      isRegistered
+  const installStateOf = (extensionEntry: ExtensionListEntry) =>
+    getExtensionInstallState(
+      extensionEntry.installed,
+      extensionEntry.pendingInstallation,
+      ExtensionInitalizer.getInstance().isExtensionRegistered(extensionEntry.id)
     );
 
-    const stateIcon =
-      installState === "installed"
-        ? "check_circle"
-        : installState === "downloaded"
-          ? "download_done"
-          : installState === "pending"
-            ? "downloading"
-            : "extension";
+  const brandedText = (text: string) =>
+    getBrandedAppText(
+      text,
+      t,
+      branding,
+      customizations.activeCustomization.value?.name
+    );
+  // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+  const titleOf = (id: string) => t("title", { ns: id, defaultValue: id });
+  const descriptionOf = (id: string) =>
+    t("description", { ns: id, defaultValue: "" });
 
-    const stateLabel =
-      installState === "installed"
-        ? t("extension-state-installed", { defaultValue: "Installed" })
-        : installState === "downloaded"
-          ? t("extension-state-downloaded", { defaultValue: "Downloaded" })
-          : installState === "pending"
-            ? t("extension-state-pending", { defaultValue: "Installing…" })
-            : t("extension-state-none", { defaultValue: "Not installed" });
-
+  const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
+    const { id, extension } = extensionEntry;
+    const name = brandedText(titleOf(id));
+    const description = brandedText(descriptionOf(id));
+    const builtIn = extension !== null && !("url" in extension);
     return (
       <li key={id} className="sb-extension-row">
-        <div className="sb-extension-row-body">
-          <span
-            className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
-            title={stateLabel}
-          >
-            {stateIcon}
-          </span>
-          <div className="sb-extension-row-content">
-            <span className="sb-extension-name">
-              {getBrandedAppText(
-                // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
-                t("title", { ns: id, defaultValue: id }),
-                t,
-                branding,
-                customizations.activeCustomization.value?.name
+        <button
+          type="button"
+          className="sb-extension-row-body"
+          onClick={() => (openExtensionId.value = id)}
+        >
+          <ExtensionTile request={{ extensionId: id, title: name }} />
+          <span className="sb-extension-row-content">
+            <span className="sb-extension-row-title">
+              <span className="sb-extension-name">{name}</span>
+              {builtIn && (
+                <span className="sb-extension-row-tag">
+                  {t("extension-info-built-in-tag")}
+                </span>
+              )}
+              {installStateOf(extensionEntry) === "pending" && (
+                <span className="sb-extension-row-tag">
+                  {t("extension-state-pending", {
+                    defaultValue: "Installing…",
+                  })}
+                </span>
               )}
             </span>
-            <ExpandableText
-              className="sb-extension-description"
-              lines={2}
-              readMoreLabel={t("read-more", { defaultValue: "Read more" })}
-              readLessLabel={t("read-less", { defaultValue: "Read less" })}
-            >
-              {getBrandedAppText(
-                t("description", { ns: id, defaultValue: "" }),
-                t,
-                branding,
-                customizations.activeCustomization.value?.name
-              )}
-            </ExpandableText>
-          </div>
-          <div className="sb-extension-row-actions">
-            {installState === "installed" &&
-              ((extensionEntry.extension?.meta.settings &&
-                Object.keys(extensionEntry.extension.meta.settings).length >
-                  0) ||
-                extensions.settingsPanels.value[id]) && (
-                <button
-                  type="button"
-                  className="sb-extension-row-action-button"
-                  onClick={() => handleConfigureExtension(extensionEntry)}
-                  aria-label={t("configure-extension", {
-                    defaultValue: "Configure",
-                  })}
-                  title={t("configure-extension", {
-                    defaultValue: "Configure",
-                  })}
-                >
-                  <span className="material-symbols-outlined">tune</span>
-                </button>
-              )}
-            {installState === "installed" &&
-              extensions.sandboxPermissions.value[id] && (
-                <button
-                  type="button"
-                  className="sb-extension-row-action-button"
-                  onClick={() =>
-                    openExtensionPermissionsModal(
-                      state.modals,
-                      extensions,
-                      id,
-                      // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
-                      t("title", { ns: id, defaultValue: id }),
-                      {
-                        people: {
-                          userId: state.login.userId,
-                          friends: state.friends,
-                        },
-                        onUninstall: () => handleUninstall(id),
-                      }
-                    )
-                  }
-                  aria-label={t("extension-permissions-button")}
-                  title={t("extension-permissions-button")}
-                >
-                  <span className="material-symbols-outlined">shield</span>
-                </button>
-              )}
-            {installState === "none" && (
-              <button
-                type="button"
-                className="sb-extension-row-action-button"
-                onClick={() => void handleInstall(id)}
-                aria-label={t("install", { defaultValue: "Install" })}
-                title={t("install", { defaultValue: "Install" })}
-              >
-                <span className="material-symbols-outlined">download</span>
-              </button>
+            {description && (
+              <span className="sb-extension-description">{description}</span>
             )}
-            {(installState === "installed" ||
-              installState === "downloaded") && (
-              <button
-                type="button"
-                className="sb-extension-row-action-button"
-                onClick={() => handleUninstall(id)}
-                aria-label={t("uninstall", {
-                  defaultValue: "Uninstall",
-                })}
-                title={t("uninstall", { defaultValue: "Uninstall" })}
-              >
-                <span className="material-symbols-outlined">delete</span>
-              </button>
-            )}
-          </div>
-        </div>
+          </span>
+          <span
+            className="material-symbols-outlined sb-extension-row-chevron rtl-mirror"
+            aria-hidden="true"
+          >
+            chevron_right
+          </span>
+        </button>
       </li>
     );
   };
@@ -1764,6 +1679,36 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       : t("no-available-extensions", {
           defaultValue: "There are no more extensions available to install.",
         });
+
+  const openEntry = visibleExtensionsList.find(
+    (entry) => entry.id === openExtensionId.value
+  );
+  if (openEntry) {
+    const name = brandedText(titleOf(openEntry.id));
+    return (
+      <ExtensionInfoPage
+        entry={openEntry}
+        name={name}
+        description={brandedText(descriptionOf(openEntry.id))}
+        installState={installStateOf(openEntry)}
+        extensions={extensions}
+        people={{ userId: login.userId, friends: state.friends }}
+        breadcrumbs={
+          <SettingsBreadcrumbs
+            onBack={() => (openExtensionId.value = null)}
+            trail={[
+              t("page-settings", { defaultValue: "Page settings" }),
+              t("extensions", { defaultValue: "Extensions" }),
+              name,
+            ]}
+          />
+        }
+        onInstall={() => void handleInstall(openEntry.id)}
+        onUninstall={() => handleUninstall(openEntry.id)}
+        settings={renderExtensionSettings(openEntry)}
+      />
+    );
+  }
 
   return (
     <div className="sb-settings-page">

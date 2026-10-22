@@ -5,7 +5,7 @@ import {
   createModalManager,
   type ModalManager,
 } from "@packages/seed-bible/seed-bible/managers/ModalManager";
-import { openExtensionPermissionsModal } from "@packages/seed-bible/seed-bible/components/ExtensionConsentModal/ExtensionPermissionsModal";
+import { ExtensionPermissionsPanel } from "@packages/seed-bible/seed-bible/components/ExtensionConsentModal/ExtensionPermissionsPanel";
 import {
   openExtensionConsentModal,
   type ConsentPeople,
@@ -34,7 +34,7 @@ describe("extension permission dialogs", () => {
     container.remove();
   });
 
-  describe("the Settings permissions view", () => {
+  describe("an installed extension's permissions panel", () => {
     /**
      * Stands in for `ExtensionManager`'s permission API, applying a toggle the
      * way the real one does (restart aside).
@@ -62,10 +62,7 @@ describe("extension permission dialogs", () => {
       return { sandboxPermissions, setOptionalPermission };
     }
 
-    function open(
-      summary: Partial<SandboxPermissionSummary>,
-      onUninstall?: () => void
-    ) {
+    function open(summary: Partial<SandboxPermissionSummary>) {
       const extensions = createExtensions({
         required: ["reading:selection"],
         optional: ["notes:write", "reading:history"],
@@ -75,17 +72,16 @@ describe("extension permission dialogs", () => {
         sourceHost: "files.example.com",
         ...summary,
       });
-      openExtensionPermissionsModal(modals, extensions, "ext.demo", "Demo", {
-        onUninstall,
-      });
-      const modal = modals.modals.value.at(-1)!;
       act(() => {
         render(
           <I18nProvider
             i18n={createI18nManager(createNavigationManager(), ["en"])}
           >
-            {modal.content({ t: (key) => key })}
-            {modal.footer?.({ t: (key) => key })}
+            <ExtensionPermissionsPanel
+              extensions={extensions}
+              extensionId="ext.demo"
+              name="Demo"
+            />
           </I18nProvider>,
           container
         );
@@ -96,10 +92,6 @@ describe("extension permission dialogs", () => {
     const switches = () => [
       ...container.querySelectorAll<HTMLButtonElement>('[role="switch"]'),
     ];
-    const button = (label: string) =>
-      [...container.querySelectorAll("button")].find(
-        (b) => b.textContent === label
-      )!;
     const status = () =>
       container.querySelector('[role="status"]')!.textContent;
 
@@ -128,9 +120,8 @@ describe("extension permission dialogs", () => {
         ["See your reading history", "false"],
         ["Add notes, and change or delete the ones it added", "true"],
       ]);
-      expect(container.textContent).toContain("Demo 1.2.0");
       expect(container.textContent).toContain(
-        "To take away something marked Needed, uninstall Demo."
+        "To take away something marked Needed, uninstall Demo from the About tab."
       );
     });
 
@@ -163,29 +154,6 @@ describe("extension permission dialogs", () => {
 
       expect(status()).toContain("That didn't save. Try again.");
       expect(switches()[1]!.getAttribute("aria-checked")).toBe("true");
-    });
-
-    it("uninstalls from the dialog, and closes it", () => {
-      const onUninstall = vi.fn();
-      open({}, onUninstall);
-
-      act(() => button("Uninstall").click());
-
-      expect(onUninstall).toHaveBeenCalledTimes(1);
-      expect(modals.modals.value).toEqual([]);
-    });
-
-    it("closes on Done, and only offers Uninstall when it can", () => {
-      open({});
-      expect(
-        [...container.querySelectorAll("button")].some(
-          (b) => b.textContent === "Uninstall"
-        )
-      ).toBe(false);
-
-      act(() => button("Done").click());
-
-      expect(modals.modals.value).toEqual([]);
     });
   });
 

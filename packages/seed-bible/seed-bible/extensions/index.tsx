@@ -218,8 +218,8 @@ export interface SandboxContext {
   settings: {
     get: (key: string) => Promise<string | number | boolean | null>;
     /**
-     * Shows one of your `views` as this extension's settings, under its
-     * Configure button in Settings → Extensions. Main code only.
+     * Shows one of your `views` as this extension's settings, on its
+     * Settings tab in Settings → Extensions. Main code only.
      */
     registerPanel: (view: string) => Promise<void>;
   };
