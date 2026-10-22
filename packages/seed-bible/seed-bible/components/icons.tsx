@@ -60,45 +60,65 @@ const SEED_BIBLE_ICON_PATH =
 const SEED_BIBLE_ICON_BRANCHES = [
   {
     id: "ground-l",
+    side: "left",
     points: "0,205.29 253,205.29 253,258.23 0,258.23",
-    origin: "251.1px 231px",
+    hingeY: 231,
     delay: 0.3,
   },
   {
     id: "ground-r",
+    side: "right",
     points: "302.14,205.29 555.14,205.29 555.14,258.23 302.14,258.23",
-    origin: "304.04px 231px",
+    hingeY: 231,
     delay: 0.3,
   },
   {
     id: "middle-l",
+    side: "left",
     points: "0,80 200,80 253,106 253,205.29 0,205.29",
-    origin: "251.1px 155px",
+    hingeY: 155,
     delay: 0.42,
   },
   {
     id: "middle-r",
+    side: "right",
     points: "555.14,80 355.14,80 302.14,106 302.14,205.29 555.14,205.29",
-    origin: "304.04px 155px",
+    hingeY: 155,
     delay: 0.42,
   },
   {
     id: "top-l",
+    side: "left",
     points: "0,0 253,0 253,106 200,80 0,80",
-    origin: "251.1px 60px",
+    hingeY: 60,
     delay: 0.54,
   },
   {
     id: "top-r",
+    side: "right",
     points: "555.14,0 302.14,0 302.14,106 355.14,80 555.14,80",
-    origin: "304.04px 60px",
+    hingeY: 60,
     delay: 0.54,
   },
-];
+] as const;
+
+// SVG flattens 3D transforms, so a page turning on the trunk's spine is faked
+// in 2D: the page widens out from its hinge on the trunk while its outer half
+// (folded at `fold`) trails behind with a lifted edge, like a bending page.
+// The halves overlap by a few units so no gap opens at the fold.
+const SEED_BIBLE_ICON_PAGE_SIDES = {
+  left: { hinge: 251.1, fold: 125, inner: [122, 260], outer: [0, 128] },
+  right: {
+    hinge: 304.04,
+    fold: 430.14,
+    inner: [295, 433.14],
+    outer: [427.14, 555.14],
+  },
+} as const;
 
 /**
  * Plays once on mount: a seed appears at the base, the trunk grows up from
- * it, then each branch unfolds outward from the trunk into the finished icon.
+ * it, then each branch unfolds outward from the trunk like a book's pages.
  */
 function AnimatedSeedBiblePaths() {
   const prefix = `sb-seed-icon-${useId().replace(/[^\w-]/g, "")}`;
@@ -120,25 +140,55 @@ function AnimatedSeedBiblePaths() {
             <polygon points={branch.points} />
           </clipPath>
         ))}
+        {Object.entries(SEED_BIBLE_ICON_PAGE_SIDES).flatMap(([side, page]) =>
+          (["inner", "outer"] as const).map((half) => (
+            <clipPath key={`${side}-${half}`} id={`${prefix}-${side}-${half}`}>
+              <rect
+                x={page[half][0]}
+                y="0"
+                width={page[half][1] - page[half][0]}
+                height="298"
+              />
+            </clipPath>
+          ))
+        )}
       </defs>
       <ellipse class="sb-seed-icon-seed" cx="277.57" cy="280" rx="22" ry="15" />
+      {SEED_BIBLE_ICON_BRANCHES.map((branch) => {
+        const page = SEED_BIBLE_ICON_PAGE_SIDES[branch.side];
+        const piece = (half: "inner" | "outer") => (
+          <g clip-path={`url(#${prefix}-${branch.side}-${half})`}>
+            <g clip-path={`url(#${prefix}-${branch.id})`}>
+              <path d={SEED_BIBLE_ICON_PATH} />
+            </g>
+          </g>
+        );
+        return (
+          <g
+            key={branch.id}
+            class="sb-seed-icon-page"
+            style={{
+              transformOrigin: `${page.hinge}px ${branch.hingeY}px`,
+              animationDelay: `${branch.delay}s`,
+            }}
+          >
+            {piece("inner")}
+            <g
+              class={`sb-seed-icon-page-edge sb-seed-icon-page-edge-${branch.side}`}
+              style={{
+                transformOrigin: `${page.fold}px ${branch.hingeY}px`,
+                animationDelay: `${branch.delay}s`,
+              }}
+            >
+              {piece("outer")}
+            </g>
+          </g>
+        );
+      })}
+      {/* Above the pages, so their hinge ends tuck behind the trunk. */}
       <g clip-path={`url(#${prefix}-trunk)`}>
         <path d={SEED_BIBLE_ICON_PATH} />
       </g>
-      {SEED_BIBLE_ICON_BRANCHES.map((branch) => (
-        <g
-          key={branch.id}
-          class="sb-seed-icon-branch"
-          style={{
-            transformOrigin: branch.origin,
-            animationDelay: `${branch.delay}s`,
-          }}
-        >
-          <g clip-path={`url(#${prefix}-${branch.id})`}>
-            <path d={SEED_BIBLE_ICON_PATH} />
-          </g>
-        </g>
-      ))}
       <path class="sb-seed-icon-whole" d={SEED_BIBLE_ICON_PATH} />
     </>
   );
