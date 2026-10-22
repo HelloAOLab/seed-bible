@@ -60,7 +60,7 @@ Before Seed Bible had this system, adding a feature meant editing the core app. 
 
 ### Two ways an extension reaches the app
 
-1. **Bundled** — the extension package lives in this repo under `packages/`, and gets automatically discovered at build time (any folder containing an `extension.json` is picked up — see `script/lib/vite-plugin-extensions.ts`). This is how every extension in this repo today works (`seed-bible-refresh-example-extension`, `locations-extension`, `audio-reader-extension`, `apologist-extension`, `bonfire-extension`, `transcript-extension`, `twitchPub-extension`, `twitchSub-extension`), and it's the fully-supported way to ship one: no build step, just source, swept into the app's own bundle alongside everything else.
+1. **Bundled** — the extension package lives in this repo under `packages/`, and gets automatically discovered at build time (any folder containing an `extension.json` is picked up — see `script/lib/vite-plugin-extensions.ts`). This is how every extension in this repo today works (`seed-bible-refresh-example-extension`, `locations-extension`, `audio-reader-extension`, `apologist-extension`, `bonfire-extension`, `transcript-ui-extension`, `twitchPub-extension`, `twitchSub-extension`), and it's the fully-supported way to ship one: no build step, just source, swept into the app's own bundle alongside everything else.
 2. **Loaded from a URL at runtime** — a published `ExtensionSet`, which a user adds by pasting its link into Settings → Extensions → "Add extensions from a link" (or opening a `?extensionSet=<url>` link), then installs from the Available list. In code, that's `discoverExtensionSet(url)` and `loadExtension({ meta, url })`. This is how a third party ships an extension without a pull request, and because nobody has reviewed that code, it **runs sandboxed**: in its own iframe, with no access to the page, the user's account or their data, and only the permissions the user approves when installing it. It's written against a smaller API, `seed-bible/extensions`, instead of `registerExtension` — see [§7](#7-third-party-sandboxed-extensions).
 
 If you don't work inside this monorepo at all — a genuinely third-party developer building your own extension in your own project — see [§8](#8-building-an-extension-outside-this-repo) for the supported way to do that: a scaffolding CLI, plus a toolkit that can type-check, test, build, and (the part that actually matters) run a real Seed Bible dev server with your in-development extension auto-installed.
@@ -196,6 +196,20 @@ registerExtension({
 ```
 
 Circular dependencies are detected and rejected (with a console error) rather than causing an infinite loop.
+
+**The extensions in this repo don't depend on each other.** A dependency installs the other extension too, with everything it adds to the app, which is rarely what someone turning on the first one wanted: turning on Theographic used to turn on the Locations verse tool as well. When two built-in extensions need the same code, it goes in a _shared package_ instead: a folder under `packages/` with a `package.json` but no `extension.json`, so the app never lists or installs it. Each extension imports it like any other module:
+
+| Shared package                 | What it holds                                              | Used by                            |
+| ------------------------------ | ---------------------------------------------------------- | ---------------------------------- |
+| `@seed-bible/bible-locations`  | The known Bible places and where their map outlines live   | Locations, Theographic             |
+| `@seed-bible/transcription`    | Transcribing sermon audio and finding the references in it | AI Transcript UI, Twitch publisher |
+| `@seed-bible/seed-bible-utils` | Book arrangements, reading history and presence services   | Bible Stack, Scripture Map         |
+
+Nothing has to load these by hand. Every extension's code is already loaded on demand, through an `import()` per extension, and the bundler puts a module that two of those imports share into its own chunk. That chunk downloads the first time any extension that needs it is installed, and the browser reuses it for the next one.
+
+A shared package is plain modules, so anything it keeps lives once per page, not once per extension. When it needs per-app state that should be shared and then cleaned up, hand it out the way `acquireSeedBibleUtils(context)` does: the first extension to ask builds it, each one `yield`s the `release` it gets back, and it's torn down when the last one is uninstalled. A shared package that shows text brings its own translations in a `translations.json` (see `packages/transcription/donation.tsx`; the lint checks its keys under the folder name), since nothing installs it to load them.
+
+`test/unit/script/extensionBoundaries.test.ts` fails if a package under `packages/` with an `extension.json` imports from another one, or declares `dependencies`.
 
 ---
 

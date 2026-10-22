@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useManager } from "./context";
 import { type SeedBibleState } from "seed-bible";
-import {
-  fmtRef,
-  highlightVerse,
-} from "@seed-bible/ai-transcript-extension/highlight";
+import { fmtRef, highlightVerse } from "@seed-bible/transcription/highlight";
 import type {
   OutputSegment,
   TranscriptionResult,
   QueuedFile,
-} from "@seed-bible/ai-transcript-extension/types";
+} from "@seed-bible/transcription/types";
 import { useI18n } from "seed-bible/i18n";
 
 function fmtTime(sec: number | null): string {

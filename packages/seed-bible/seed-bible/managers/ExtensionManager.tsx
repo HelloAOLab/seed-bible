@@ -1298,7 +1298,7 @@ export function createExtensionManager(
    * with the given ID, so `loadDefaultExtensions` won't force-reinstall it
    * again on a later load. Used directly (rather than via the batch write in
    * `loadDefaultExtensions`) by `unloadExtension`, since extensions that are
-   * only ever force-installed as a dependency (e.g. `seed-bible-utils`) never
+   * only ever force-installed as a dependency never
    * carry `autoinstall: true` themselves and so never pass through that
    * batch write at all — this is the only place their uninstall gets
    * recorded into the handled set.
@@ -2294,8 +2294,8 @@ export function createExtensionManager(
     installedExtensionIds.delete(id);
     if (options?.persist !== false) {
       void forgetInstalledExtensionId(id);
-      // Extensions that are only ever force-installed as a dependency (e.g.
-      // `seed-bible-utils`) never carry `autoinstall: true` themselves, so
+      // Extensions that are only ever force-installed as a dependency never
+      // carry `autoinstall: true` themselves, so
       // `loadDefaultExtensions` never records them in the "handled" set.
       // This is what records their uninstall, so they aren't dragged back
       // in the next time their dependent gets (re)installed.
