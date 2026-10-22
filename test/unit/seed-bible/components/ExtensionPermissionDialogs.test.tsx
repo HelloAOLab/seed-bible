@@ -121,7 +121,7 @@ describe("extension permission dialogs", () => {
         ["Add notes, and change or delete the ones it added", "true"],
       ]);
       expect(container.textContent).toContain(
-        "To take away something marked Needed, uninstall Demo from the About tab."
+        "To take away something marked Needed, uninstall Demo."
       );
     });
 
@@ -357,6 +357,31 @@ describe("extension permission dialogs", () => {
           "Version 1.2.0 · from ext.example.com"
         );
         expect(badge()).toBeNull();
+      });
+    });
+
+    describe("the extension's tile", () => {
+      const tile = () =>
+        container.querySelector<HTMLElement>(".sb-extension-consent-tile")!;
+
+      it("shows the extension's own icon", () => {
+        void ask({ icon: "https://ext.example.com/icon.svg" });
+
+        expect(tile().querySelector("img")?.getAttribute("src")).toBe(
+          "https://ext.example.com/icon.svg"
+        );
+        expect(tile().textContent).toBe("");
+      });
+
+      it("shows its initials when it has no icon, or the icon fails to load", () => {
+        void ask({ icon: "https://ext.example.com/icon.svg" });
+
+        act(() => {
+          tile().querySelector("img")!.dispatchEvent(new Event("error"));
+        });
+
+        expect(tile().querySelector("img")).toBeNull();
+        expect(tile().textContent).toBe("VA");
       });
     });
 

@@ -342,6 +342,22 @@ describe("sandboxed extensions", () => {
     expect(results["ext.store-a:limit"]).toBe("limit_exceeded");
   });
 
+  it("answers sb.storage.get for a name built into JavaScript objects, instead of never answering", async () => {
+    let result: unknown = "unanswered";
+    await createManager().loadExtension(
+      await publish(
+        defineExtension({
+          main: async (sb) => {
+            result = await sb.storage.get("toString");
+          },
+        }),
+        { id: "ext.builtin-key" }
+      )
+    );
+
+    await vi.waitFor(() => expect(result).toBeNull());
+  });
+
   it("syncs sb.storage to the signed-in user's account, and clears it there on uninstall", async () => {
     h.host.userId.value = "user-1";
     h.host.profile.value = { name: "Ruth", pictureUrl: null };

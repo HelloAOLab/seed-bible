@@ -48,6 +48,8 @@ Type-checks the project with its own `tsconfig.json`, then checks
   error, because Seed Bible would refuse it every time.
 - As a warning, every declared permission is used somewhere. Unused ones
   only make the install prompt longer.
+- The `icon`, if there is one, is a `.png`, `.svg`, `.webp` or `.jpg` in
+  the project under 256 KB, or an `https:` link.
 
 It reads the code as text, so it can't see a call made some roundabout way.
 Exits non-zero on an error.
@@ -87,6 +89,7 @@ extension, as plain files for any static host. See
 | File                 | What it's for                                                                                            |
 | -------------------- | -------------------------------------------------------------------------------------------------------- |
 | `<id>-<hash>.js`     | The bundle, named after its contents, so it can be cached forever.                                       |
+| `icon-<hash>.<ext>`  | The `icon` from `extension.json`, if it has one, also named after its contents.                          |
 | `extension-set.json` | The link Seed Bible installs from. It points at the bundle by file name and pins its hash (`integrity`). |
 | `index.html`         | An install page with an **Install in Seed Bible** button. It works out the link from its own address.    |
 | `_headers`           | Lets Seed Bible fetch the files from Cloudflare (Pages and Workers) and Netlify.                         |
@@ -102,7 +105,9 @@ don't need a host at all. It prints the extension's link and a ready-made
 install link.
 
 The link stays the same every time you publish: the bundle is uploaded as a
-new file, and the manifest the link points to is overwritten to name it. So
+new file, and the manifest the link points to is overwritten to name it.
+The `icon` from `extension.json`, if it has one, is uploaded too, to a link
+of its own that the manifest names. So
 to release an update, bump `version` in `extension.json` and run `publish`
 again. People who installed it get the new version the next time they open
 Seed Bible. Each extension has its own link, so publishing one never

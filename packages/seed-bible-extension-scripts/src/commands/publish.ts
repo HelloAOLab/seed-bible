@@ -2,12 +2,14 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { loadExtensionProjectInfo } from "../lib/project.js";
+import { readIcon, type IconFile } from "../lib/icon.js";
 import { runBuild } from "./build.js";
 import {
   bootstrapRecordKey,
   createClient,
   uploadFile,
   writePublicData,
+  type RecordsClient,
 } from "../lib/recordsClient.js";
 
 export interface PublishOptions {
@@ -21,7 +23,7 @@ export interface PublishOptions {
  * JSON-serializable data, not a type this package needs a real dependency on
  * `seed-bible` just to describe.
  */
-interface ExtensionSetManifest {
+export interface ExtensionSetManifest {
   id: string;
   extensions: Array<{
     url: string;
@@ -37,6 +39,8 @@ interface ExtensionSetManifest {
       network?: string[];
       /** The bundle's hash, so Seed Bible runs exactly the uploaded code. */
       integrity?: string;
+      /** A link to the extension's icon. */
+      icon?: string;
     };
   }>;
 }
@@ -69,9 +73,11 @@ export async function runPublish(
     ],
   };
 
+  const icon = await readIcon(root, info.meta);
+
   if (options.dryRun) {
     console.log(
-      "[publish] --dry-run: not uploading. Would publish this ExtensionSet (once the bundle URL below is filled in):"
+      `[publish] --dry-run: not uploading. Would publish this ExtensionSet (once the bundle URL${icon ? " and the uploaded icon's link" : ""} below are filled in):`
     );
     console.log(JSON.stringify(manifest, null, 2));
     return 0;
@@ -79,27 +85,12 @@ export async function runPublish(
 
   const client = createClient();
   const recordKey = await resolveRecordKey(client);
-
-  console.log("[publish] Uploading standalone bundle...");
-  const { fileUrl: bundleUrl } = await uploadFile(
+  const { setUrl } = await uploadExtensionSet(
     client,
     recordKey,
+    manifest,
     new Uint8Array(bundle),
-    ["publicRead"],
-    "text/javascript"
-  );
-
-  manifest.extensions[0]!.url = bundleUrl;
-
-  // A file's URL changes with its contents, so the manifest goes in a data
-  // record instead: republishing overwrites it, and everyone who installed
-  // from its link gets the new version.
-  console.log("[publish] Updating extension set manifest...");
-  const { dataUrl: setUrl } = await writePublicData(
-    client,
-    recordKey,
-    extensionSetAddress(info.extensionId),
-    manifest
+    icon
   );
 
   console.log(`
@@ -117,6 +108,54 @@ To install it, paste that link into Seed Bible's Settings > Extensions >
 `);
 
   return 0;
+}
+
+/**
+ * Uploads the bundle and icon, each to its own link, fills those links into
+ * `manifest`, and writes it where the extension's set lives.
+ */
+export async function uploadExtensionSet(
+  client: RecordsClient,
+  recordKey: string,
+  manifest: ExtensionSetManifest,
+  bundle: Uint8Array<ArrayBuffer>,
+  icon: IconFile | null
+): Promise<{ setUrl: string; manifest: ExtensionSetManifest }> {
+  const extension = manifest.extensions[0]!;
+
+  console.log("[publish] Uploading standalone bundle...");
+  const { fileUrl: bundleUrl } = await uploadFile(
+    client,
+    recordKey,
+    bundle,
+    ["publicRead"],
+    "text/javascript"
+  );
+  extension.url = bundleUrl;
+
+  if (icon) {
+    console.log("[publish] Uploading icon...");
+    const { fileUrl: iconUrl } = await uploadFile(
+      client,
+      recordKey,
+      icon.bytes,
+      ["publicRead"],
+      icon.mimeType
+    );
+    extension.meta.icon = iconUrl;
+  }
+
+  // A file's URL changes with its contents, so the manifest goes in a data
+  // record instead: republishing overwrites it, and everyone who installed
+  // from its link gets the new version.
+  console.log("[publish] Updating extension set manifest...");
+  const { dataUrl: setUrl } = await writePublicData(
+    client,
+    recordKey,
+    extensionSetAddress(extension.meta.id),
+    manifest
+  );
+  return { setUrl, manifest };
 }
 
 export const extensionSetAddress = (extensionId: string) =>

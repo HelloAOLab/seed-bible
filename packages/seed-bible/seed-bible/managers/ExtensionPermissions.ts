@@ -286,6 +286,8 @@ export interface SandboxConsentRequest {
   /** Set when the bundle is in Seed Bible's own storage, which says who uploaded it. */
   uploader?: SandboxUploader;
   version: string | null;
+  /** A link to the extension's icon, when it has one. */
+  icon?: string;
   /**
    * Why the user is being asked: to install the extension, to let an update
    * have more than they approved before, or because the extension, while

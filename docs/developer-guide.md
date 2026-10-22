@@ -362,6 +362,7 @@ A call that isn't allowed rejects with a `SandboxError` whose `code` says why: `
 {
   "id": "verse-art",
   "version": "1.0.0",
+  "icon": "icon.png",
   "permissions": ["reading:selection"],
   "optionalPermissions": ["reading:position"],
   "network": ["api.verse-art.example"],
@@ -437,6 +438,8 @@ await sb.tools.registerToolbarTool({
 `sb.permissions.request(permission | permission[])` resolves `true` once everything asked for is granted. It resolves straight away, without a prompt, when that's already the case. The user is only asked right after they interact with your extension: in a tool's `onSelect`, or a click inside one of your panes. A request at any other time rejects with an `invalid_request` `SandboxError`. If the user says no, later requests for that permission resolve `false` without asking again until the page reloads, so design the feature to carry on without it. `sb.permissions.granted` (a signal), `sb.permissions.has()` and `sb.permissions.optional` tell you where things stand. What the user grants is remembered, including through updates that still list it. Network hosts can't be optional.
 
 `network` lists every host your frames may contact (`fetch`, images, media, fonts); anything else is blocked. Requests arrive with `Origin: null`, so the server must allow that in its CORS headers (`Access-Control-Allow-Origin: *` does). A manifest that names a permission this version of Seed Bible doesn't know won't install, rather than install without it.
+
+**Icon.** `icon` is a square image in your project (`.png`, `.svg`, `.webp` or `.jpg`, under 256 KB; 256 pixels across is plenty). Seed Bible shows it wherever your extension is listed, on its page and in the install dialog, in place of the colored initials it shows otherwise. `publish` uploads it to its own link and puts that link in the manifest; `package` copies it next to the bundle and `dev` serves it. You can also give a full `https:` link to an image hosted elsewhere. `check` refuses an icon Seed Bible couldn't show.
 
 **Updates.** A new version that asks for nothing new loads without asking. One that asks for more shows the user only what's new, and doesn't load until they agree. Uninstalling forgets the grant, so reinstalling asks again.
 
