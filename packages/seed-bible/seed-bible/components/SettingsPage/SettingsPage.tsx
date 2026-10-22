@@ -65,7 +65,7 @@ import { handleGridKeyNav } from "../../app/keyboardNav";
 import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
 import { normalizeHex } from "../ColorPicker/color";
 import { buildStaticPagePath } from "../../managers/StaticPagePath";
-import { useEffect } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
 import {
   ContextMenuItem,
@@ -1303,6 +1303,11 @@ export function AddExtensionFromLink(props: {
 }) {
   const { t } = useI18n();
   const url = useSignal("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  // It opens in a dialog for this one field, so the field starts focused.
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
   const status = useSignal<
     { kind: "idle" | "adding" | "failed" } | { kind: "added"; count: number }
   >({ kind: "idle" });
@@ -1326,7 +1331,7 @@ export function AddExtensionFromLink(props: {
   return (
     <form className="sb-extension-add-link" onSubmit={(e) => void submit(e)}>
       <label htmlFor="sb-extension-add-link-url">
-        {t("extension-add-link-label")}
+        {t("extension-add-link-url-label")}
       </label>
       <div className="sb-extension-add-link-row">
         <input
@@ -1335,6 +1340,7 @@ export function AddExtensionFromLink(props: {
           type="url"
           inputMode="url"
           placeholder="https://"
+          ref={inputRef}
           value={url.value}
           onInput={(e) => (url.value = e.currentTarget.value)}
         />
@@ -1362,8 +1368,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { extensions, customizations, extensionSettings, login } = state;
   const extensionsList = extensions.extensions.value;
   const installingIds = useSignal<Set<string>>(new Set());
-  const isDownloadingSet = useSignal(false);
-  const isUploadingSet = useSignal(false);
   const activeCustomization = customizations.activeCustomization.value;
   // An extension the active customization marks "hidden" is never offered
   // for install, but one that's still installed (e.g. pulled in as another
@@ -1539,66 +1543,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
     );
   };
 
-  const handleDownloadExtensions = async () => {
-    if (isDownloadingSet.value) {
-      return;
-    }
-
-    isDownloadingSet.value = true;
-    try {
-      const set = extensions.getAllExtensionsAsSet();
-      if (!set) {
-        return;
-      }
-
-      const json = JSON.stringify(set, null, 2);
-      download(
-        new Blob([json], { type: "application/json" }),
-        `${set.id}.json`
-      );
-    } finally {
-      isDownloadingSet.value = false;
-    }
-  };
-
-  const handleUploadExtensions = async () => {
-    if (isUploadingSet.value) {
-      return;
-    }
-
-    isUploadingSet.value = true;
-    try {
-      // TODO: Fix this
-      // const files = await os.showUploadFiles();
-      // const firstFile = files?.[0];
-      // if (!firstFile) {
-      //   return;
-      // }
-      // const text =
-      //   typeof firstFile.data === "string"
-      //     ? firstFile.data
-      //     : new TextDecoder().decode(firstFile.data);
-      // const parsed = JSON.parse(text) as Partial<{
-      //   id: unknown;
-      //   recordName: unknown;
-      //   extensions: unknown;
-      // }>;
-      // if (
-      //   typeof parsed.id !== "string" ||
-      //   typeof parsed.recordName !== "string" ||
-      //   !Array.isArray(parsed.extensions)
-      // ) {
-      //   console.error("Uploaded file is not a valid extension set.");
-      //   return;
-      // }
-      // await extensions.loadExtensionSet(parsed as ExtensionSet, () => false);
-    } catch (error) {
-      console.error("Failed to upload extension set.", error);
-    } finally {
-      isUploadingSet.value = false;
-    }
-  };
-
   const { t } = useI18n();
   const { branding } = useAppConfig();
 
@@ -1708,6 +1652,32 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
         )}
       </section>
     );
+  };
+
+  const openAddFromLink = () => {
+    const id = "extension-add-link";
+    state.modals.openModal({
+      id,
+      title: {
+        key: "extension-add-link-label",
+        defaultValue: "Add extensions from a link",
+      },
+      content: () => (
+        <AddExtensionFromLink
+          onAdd={async (url) => {
+            const set = await extensions.discoverExtensionSet(url);
+            // A link to one extension goes straight to its page, where it's
+            // installed; a link to several lists them under Available.
+            if (set?.extensions.length === 1) {
+              state.modals.closeModal(id);
+              searchQuery.value = "";
+              openExtensionId.value = set.extensions[0]!.meta.id;
+            }
+            return set?.extensions.length ?? null;
+          }}
+        />
+      ),
+    });
   };
 
   const openEntry = visibleExtensionsList.find(
@@ -1827,33 +1797,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           t={t}
         />
 
-        <AddExtensionFromLink
-          onAdd={async (url) => {
-            const set = await extensions.discoverExtensionSet(url);
-            return set?.extensions.length ?? null;
-          }}
-        />
-
-        <div className="sb-extension-footer-actions">
-          <button
-            className="sb-settings-action-button"
-            onClick={() => void handleDownloadExtensions()}
-            disabled={isDownloadingSet.value}
-          >
-            {isDownloadingSet.value
-              ? "Downloading Extensions..."
-              : "Download Extensions"}
-          </button>
-          <button
-            className="sb-settings-action-button"
-            onClick={() => void handleUploadExtensions()}
-            disabled={isUploadingSet.value}
-          >
-            {isUploadingSet.value
-              ? "Uploading Extensions..."
-              : "Upload Extensions"}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="sb-extensions-add-link-button"
+          onClick={openAddFromLink}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            link
+          </span>
+          {t("extension-add-link-label")}
+        </button>
       </section>
     </div>
   );

@@ -65,6 +65,7 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
       sandboxPermissions: signal({}),
       setOptionalPermission: vi.fn(),
       describeUploader: vi.fn().mockResolvedValue(undefined),
+      discoverExtensionSet: vi.fn().mockResolvedValue(null),
     },
     friends: {
       friendIds: signal<string[]>([]),
@@ -86,6 +87,7 @@ function createMockState(entries: ExtensionListEntry[]): SeedBibleState {
     },
     modals: {
       openModal: vi.fn(),
+      closeModal: vi.fn(),
     },
     extensionSettings: {
       valuesByExtensionId: signal({}),
@@ -378,6 +380,115 @@ describe("ExtensionsSettingsView", () => {
         state.customizations.removeExtensionFromActiveCustomization
       ).toHaveBeenCalledWith("added-one");
       expect(state.extensions.unloadExtension).not.toHaveBeenCalled();
+    });
+  });
+
+  it("has no buttons to download or upload extension sets", () => {
+    renderExtensions([makeEntry("one", true)]);
+
+    const labels = Array.from(container.querySelectorAll("button")).map(
+      (button) => button.textContent
+    );
+    expect(labels.some((label) => /download|upload/i.test(label ?? ""))).toBe(
+      false
+    );
+  });
+
+  describe("adding extensions from a link", () => {
+    let dialog: HTMLDivElement;
+
+    beforeEach(() => {
+      dialog = document.createElement("div");
+      document.body.appendChild(dialog);
+    });
+
+    afterEach(() => {
+      render(null, dialog);
+      dialog.remove();
+    });
+
+    /** Opens the dialog and renders it the way ModalHost does. */
+    function openDialog(state: SeedBibleState) {
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-extensions-add-link-button")!
+          .click();
+      });
+      const registration = vi.mocked(state.modals.openModal).mock.calls[0]![0];
+      const content = registration.content as (props: {
+        t: (key: string) => string;
+      }) => ComponentChildren;
+      act(() => {
+        render(<>{content({ t: (key) => key })}</>, dialog);
+      });
+      return registration;
+    }
+
+    async function submitLink(url: string) {
+      const input = dialog.querySelector<HTMLInputElement>("input")!;
+      act(() => {
+        input.value = url;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      await act(async () => {
+        dialog
+          .querySelector("form")!
+          .dispatchEvent(new Event("submit", { bubbles: true }));
+      });
+    }
+
+    const set = (...ids: string[]) => ({
+      id: "set",
+      extensions: ids.map((id) => ({
+        url: `https://ext.example.com/${id}.js`,
+        meta: { id, translations: { en: { title: id, description: "" } } },
+      })),
+    });
+
+    it("opens a dialog for the link from a button below the list", () => {
+      const state = renderExtensions([makeEntry("one", true)]);
+
+      const registration = openDialog(state);
+
+      expect(registration.title).toMatchObject({
+        key: "extension-add-link-label",
+      });
+      expect(dialog.querySelector('input[type="url"]')).not.toBeNull();
+    });
+
+    it("goes straight to the page of the one extension a link adds", async () => {
+      const state = renderExtensions([
+        makeEntry("one", true),
+        makeEntry("linked", false),
+      ]);
+      vi.mocked(state.extensions.discoverExtensionSet).mockResolvedValue(
+        set("linked")
+      );
+      const registration = openDialog(state);
+
+      await submitLink("https://ext.example.com/set.json");
+
+      expect(state.extensions.discoverExtensionSet).toHaveBeenCalledWith(
+        "https://ext.example.com/set.json"
+      );
+      expect(state.modals.closeModal).toHaveBeenCalledWith(registration.id);
+      expect(pageTitle()).toBe("linked");
+    });
+
+    it("stays open to say how many it added when a link has several", async () => {
+      const state = renderExtensions([makeEntry("one", true)]);
+      vi.mocked(state.extensions.discoverExtensionSet).mockResolvedValue(
+        set("a", "b")
+      );
+      openDialog(state);
+
+      await submitLink("https://ext.example.com/set.json");
+
+      expect(state.modals.closeModal).not.toHaveBeenCalled();
+      expect(
+        dialog.querySelector(".sb-extension-add-link-status")?.textContent
+      ).toBe("extension-add-link-added");
+      expect(pageTitle()).toBeNull();
     });
   });
 
