@@ -43,6 +43,12 @@ export async function writeSitePackage(
   const iconFile = icon
     ? `icon-${createHash("sha256").update(icon.bytes).digest("hex").slice(0, 12)}${icon.extension}`
     : null;
+  // An icon given as a link stays where it is, in the set and on the page.
+  const iconUrl = iconFile
+    ? `./${iconFile}`
+    : typeof meta.icon === "string" && /^https:\/\//i.test(meta.icon)
+      ? meta.icon
+      : null;
   const set = {
     id: meta.id,
     extensions: [
@@ -63,11 +69,7 @@ export async function writeSitePackage(
     [bundleFile]: bundle,
     ...(icon && iconFile && { [iconFile]: icon.bytes }),
     [SET_FILE]: `${JSON.stringify(set, null, 2)}\n`,
-    "index.html": installPage(
-      meta,
-      options.appUrl ?? DEFAULT_APP_URL,
-      iconFile ? `./${iconFile}` : null
-    ),
+    "index.html": installPage(meta, options.appUrl ?? DEFAULT_APP_URL, iconUrl),
     _headers: HEADERS,
     ".nojekyll": "",
   };
