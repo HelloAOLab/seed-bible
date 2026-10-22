@@ -6,7 +6,7 @@ This roadmap shows what we're working on and what comes next. Each item explains
 
 Want to help any of this happen sooner? [Here's how to get involved](#want-to-help).
 
-_Last updated 2026-10-19_
+_Last updated 2026-10-22_
 
 ## At a glance
 
@@ -31,6 +31,8 @@ _Last updated 2026-10-19_
 | 15  | [Switching between accounts](#15-switching-between-accounts)                    | Accounts              | 💭 Planned              |
 | 16  | [Connecting with other AI tools](#16-connecting-with-other-ai-tools)            | AI                    | 🚧 In progress          |
 | 17  | [Better shared reading sessions](#17-better-shared-reading-sessions)            | Community             | 🚧 In progress          |
+| 18  | [Playlists, rebuilt](#18-playlists-rebuilt)                                     | Study                 | 🚧 In progress          |
+| 19  | [Content matched to the right verses](#19-content-matched-to-the-right-verses)  | Churches & ministries | 💭 Planned              |
 
 ### How the pieces fit together
 
@@ -40,6 +42,8 @@ Several items are steps along the same path:
 - **Privacy needs groundwork (13 → 4).** Making something truly private means changing how it's stored, not just hiding it on screen. Reading history is the hardest piece to change, so it has its own item (13).
 - **Churches and ministries (1 → 5).** First, organizations need to be able to bring their own content (1). Then the tool they use to set up their own version of Seed Bible should get easier to use (5).
 - **AI (12 → 16).** First, Bonfire catches up with Seed Bible's other AI chat and learns to take actions for you (12). Then Seed Bible connects with other AI tools people already use (16).
+- **Playlists and AI (18, 12, 16).** Playlists are where much of the AI work pays off. AI chat can already build them (12), partners' AI will offer one at the end of a conversation (18), and outside AI tools will be able to make and share them (16).
+- **Getting content to the right chapter (19 → 1).** Working out which verses a video or article is about (19) is what lets any organization's content appear beside the right chapter (1).
 
 ---
 
@@ -219,12 +223,15 @@ It's better, but still more than we'd like.
 - List every prompt a first-time visitor can see, and decide which to drop, combine or delay.
 - At most one prompt per visit, with the rest asked at the moment they become useful. For example, ask people to sign in when they first try to save something.
 - No flash of the wrong screen while the app loads.
+- **A tour offer that waits its turn.** The offer of a guided tour should appear only once you're actually reading, after a moment, and ease in. Today it can pop up the instant the Today screen closes, even over the sign-in screen.
+- **Back to where you were after signing in.** Signing in from your profile should return you to what you were doing, not leave you on your profile.
+- **Better tutorials throughout the app**, explaining each feature at the moment you first use it, not all at once on the first visit.
 
 **Still deciding**
 
 - Which prompts must stay on the first visit? Choosing a language is likely one, since everything else depends on being able to read it.
 
-_On GitHub:_ [#1813](https://github.com/HelloAOLab/seed-bible/issues/1813), [#1942](https://github.com/HelloAOLab/seed-bible/issues/1942), [#1886](https://github.com/HelloAOLab/seed-bible/issues/1886)
+_On GitHub:_ [#1813](https://github.com/HelloAOLab/seed-bible/issues/1813), [#1942](https://github.com/HelloAOLab/seed-bible/issues/1942), [#1886](https://github.com/HelloAOLab/seed-bible/issues/1886), [#2044](https://github.com/HelloAOLab/seed-bible/issues/2044), [#2045](https://github.com/HelloAOLab/seed-bible/issues/2045)
 
 ---
 
@@ -379,6 +386,7 @@ Connect Seed Bible with other AI tools using the **Model Context Protocol (MCP)*
 
 - **Bring outside tools into Seed Bible's AI chat. ✅ Done.** An optional add-on in Settings lets you connect an online service, such as a commentary library or a church's sermon archive, so the AI chat can draw on it. It works with AI chats that can take actions, so not with Bonfire until item 12 is done.
 - **Let your own AI assistant work with your Seed Bible. 💭 Next.** Connect an assistant like Claude or ChatGPT to your account and ask it to "find my notes on grace", "add Romans 8 to my morning playlist", or "what did I read last week?".
+  - **Making and sharing playlists** is the most important part. Someone studying with an AI assistant they already use should be able to say "make me a playlist on forgiveness and share it with my small group", and get a real Seed Bible playlist (item 18). This reaches people where they already are, which may matter even more than Seed Bible's own AI chat.
 
 **Still deciding**
 
@@ -410,8 +418,50 @@ In a shared reading session, a group reads the same chapter together in real tim
 - **Invite friends straight into a session** (see item 2).
 - **Notice when someone's connection drops.** Today, someone who suddenly loses signal can stay listed in the session for a long time, and if it's the host, nobody is told.
 - **A clear "Joining session…" message** while a session link loads. Today the page first shows something else, then switches to the session on its own.
+- **Voice and video calls in a session**, later on, so a group spread across different places can talk while they read, without needing a separate service for the call.
 
 _On GitHub:_ [#1986](https://github.com/HelloAOLab/seed-bible/issues/1986), [#1961](https://github.com/HelloAOLab/seed-bible/issues/1961), [#1962](https://github.com/HelloAOLab/seed-bible/issues/1962), [#1987](https://github.com/HelloAOLab/seed-bible/issues/1987), [#1965](https://github.com/HelloAOLab/seed-bible/issues/1965), [#1819](https://github.com/HelloAOLab/seed-bible/issues/1819), [#2024](https://github.com/HelloAOLab/seed-bible/issues/2024), [#1974](https://github.com/HelloAOLab/seed-bible/pull/1974)
+
+---
+
+## 18. Playlists, rebuilt
+
+🚧 **In progress.**
+
+A playlist is a path through the Bible: passages, notes and videos in an order you choose, to follow yourself or share with others. Playlists are one of the main ways people teach and learn with Seed Bible. We want building one to be as easy as following one, and we want playlists to grow into full lessons and courses.
+
+**Where it stands**
+
+- Anyone can make and share a playlist, and friends' playlists appear throughout the app.
+- Seed Bible's AI chat can already build and edit playlists when you chat with Apologist's AI (see item 12).
+- A redesign of the playlist editor is underway. It opens full screen, and you edit each step right where it sits in the list, instead of in a form at the bottom.
+
+**What's next**
+
+- Finish the new editor, including better notes inside a playlist.
+- Make it clear when you're following a playlist, with separate controls for leaving the playlist and for playing audio.
+- **Playlists from AI conversations.** At the end of a conversation with a partner's AI, be offered a playlist that carries the study on in Seed Bible. This starts with Apologist's AI, and comes to Bonfire once it can take actions (item 12).
+- **Lessons and courses, later.** Steps an AI guides you through, quizzes, and steps that combine a passage, a video and questions, so a whole lesson or course can be a playlist.
+
+_On GitHub:_ [#2027](https://github.com/HelloAOLab/seed-bible/pull/2027), [#2013](https://github.com/HelloAOLab/seed-bible/issues/2013), [#1992](https://github.com/HelloAOLab/seed-bible/issues/1992)
+
+---
+
+## 19. Content matched to the right verses
+
+💭 **Planned.** Makes item 1 possible for any organization.
+
+For a video, article or study to appear beside the right chapter, something has to work out which books, chapters and verses it's about. Today that depends on the partner. Apologist content, for example, is found by searching the partner's library for the chapter being read, which is only approximate. We want a service of our own that does this well for any content an organization brings in.
+
+**What's planned**
+
+- A service that reads a piece of content and records which passages it relates to. Simple rules handle clear references like "John 3:16", and AI helps with everything else, like a sermon that discusses a passage without quoting it.
+- It works across languages. Book names and the way references are written differ from language to language, which is part of what makes this hard.
+- Every content source in item 1 uses it, so any organization's content can find its way to the right chapter.
+
+**Still deciding**
+
+- Build it entirely ourselves, or work with partners who already do part of this? We're planning as if it's ours to build.
 
 ---
 
