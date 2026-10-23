@@ -504,7 +504,7 @@ describe("YourContentPane", () => {
 
       expect(
         container.querySelector(".sb-content-status")?.textContent
-      ).toContain("Custom branding you create");
+      ).toContain("Custom Branding you create");
     });
   });
 

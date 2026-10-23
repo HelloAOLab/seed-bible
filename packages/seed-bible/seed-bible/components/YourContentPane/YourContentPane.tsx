@@ -740,7 +740,7 @@ export function YourContentPane(props: YourContentScreenProps) {
         });
       case "branding":
         return t("your-content-empty-branding", {
-          defaultValue: "Custom branding you create will show up here.",
+          defaultValue: "Custom Branding you create will show up here.",
         });
       case "images":
         return t("your-images-empty", {

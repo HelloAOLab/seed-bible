@@ -1795,7 +1795,7 @@ function AllSettingsView(props: { state: SeedBibleState }) {
             <p>
               {t("colors-controlled-by-customization", {
                 defaultValue:
-                  "Colors are controlled by the active Customization. Change which theme you're using from Display & Theme.",
+                  "Colors are controlled by the active Custom Branding. Change which theme you're using from Display & Theme.",
               })}
             </p>
             <button

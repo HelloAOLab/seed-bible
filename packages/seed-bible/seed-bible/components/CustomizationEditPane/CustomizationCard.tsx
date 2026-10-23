@@ -65,7 +65,7 @@ export function CustomizationCard(props: {
         anchorClassName="sb-cz-card-menu"
         buttonClassName="sb-cz-icon-button"
         aria-label={t("customization-options", {
-          defaultValue: "Customization options",
+          defaultValue: "Custom Branding options",
         })}
       >
         <ContextMenuItem
@@ -75,7 +75,7 @@ export function CustomizationCard(props: {
             );
             state.app.toast(
               t("customization-link-copied", {
-                defaultValue: "Customization link copied to clipboard",
+                defaultValue: "Custom Branding link copied to clipboard",
               })
             );
           }}

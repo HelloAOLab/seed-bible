@@ -328,7 +328,7 @@ export function buildCustomizationTutorialSteps(
   ];
 }
 
-/** Pane header icon. Same glyph as the "Customize" entry in Settings. */
+/** Pane header icon. Same glyph as "Custom Branding" in the Create menu. */
 export function CustomizationEditPaneIcon() {
   return <MaterialIcon>palette</MaterialIcon>;
 }
@@ -342,7 +342,7 @@ export function CustomizationEditPaneTitle(props: {
   const view = customizationEditView.value;
 
   if (!record) {
-    return <>{t("customize", { defaultValue: "Customize" })}</>;
+    return <>{t("custom-branding", { defaultValue: "Custom Branding" })}</>;
   }
   if (view === "edit-extensions") {
     return <>{t("customization-extensions", { defaultValue: "Extensions" })}</>;
@@ -401,7 +401,7 @@ function UnsavedChangesConfirmModalContent(props: {
       <p className="sb-confirm-delete-message">
         {t("unsaved-changes-confirm-message", {
           defaultValue:
-            "You have unsaved changes to this customization. What would you like to do?",
+            "You have unsaved changes to this Custom Branding. What would you like to do?",
         })}
       </p>
       <div className="sb-confirm-delete-actions">
@@ -475,7 +475,7 @@ async function saveCustomizationOrToast(
     console.error("Failed to save customization:", error);
     state.app.toast(
       i18n.t("customization-save-failed", {
-        defaultValue: "Couldn't save your customization. Please try again.",
+        defaultValue: "Couldn't save your Custom Branding. Please try again.",
       })
     );
     return false;
@@ -574,7 +574,7 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
   const handleSave = async () => {
     if (await saveCustomizationOrToast(state)) {
       state.app.toast(
-        t("customization-saved", { defaultValue: "Customization saved" })
+        t("customization-saved", { defaultValue: "Custom Branding saved" })
       );
     }
   };
@@ -889,7 +889,7 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
             navigator.clipboard.writeText(customizations.getShareLink(record));
             state.app.toast(
               t("customization-link-copied", {
-                defaultValue: "Customization link copied to clipboard",
+                defaultValue: "Custom Branding link copied to clipboard",
               })
             );
           }}
@@ -933,7 +933,7 @@ function CustomizationNotFound(props: { message?: string }) {
           <p>
             {props.message ??
               t("customization-not-found", {
-                defaultValue: "This customization could not be found.",
+                defaultValue: "This Custom Branding could not be found.",
               })}
           </p>
         </div>
@@ -1076,7 +1076,7 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
         <p className="sb-cz-intro">
           {t("customization-extensions-description", {
             defaultValue:
-              "Choose how each extension behaves for anyone using this customization.",
+              "Choose how each extension behaves for anyone using this Custom Branding.",
           })}
         </p>
         <ul className="sb-cz-list">
@@ -1349,7 +1349,7 @@ function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
       <div className="sb-settings-empty-state">
         <p>
           {t("customization-not-found", {
-            defaultValue: "This customization could not be found.",
+            defaultValue: "This Custom Branding could not be found.",
           })}
         </p>
       </div>
@@ -1489,7 +1489,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
   const handleSave = async () => {
     if (await saveCustomizationOrToast(state)) {
       state.app.toast(
-        t("customization-saved", { defaultValue: "Customization saved" })
+        t("customization-saved", { defaultValue: "Custom Branding saved" })
       );
     }
   };

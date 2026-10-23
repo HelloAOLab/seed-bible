@@ -4014,7 +4014,8 @@ export function createSeedBibleState(
       const { t } = i18n;
       toast(
         t("customization-create-failed", {
-          defaultValue: "Couldn't create your branding. Please try again.",
+          defaultValue:
+            "Couldn't create your Custom Branding. Please try again.",
         })
       );
       return;
