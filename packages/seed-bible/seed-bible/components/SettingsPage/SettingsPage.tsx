@@ -27,14 +27,6 @@ import {
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
 import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
-import {
-  buildCustomizationTutorialSteps,
-  openCustomizationEditPane,
-} from "../CustomizationEditPane/CustomizationEditPane";
-import {
-  CustomizationCardPreview,
-  getDefaultTranslationLabel,
-} from "../CustomizationEditPane/CustomizationPreviews";
 import { UnusedSensitiveSettingsList } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import { download, translateTitle } from "../../app/utils";
 import type { ExtensionListEntry } from "../../managers/ExtensionManager";
@@ -51,12 +43,7 @@ import { handleGridKeyNav } from "../../app/keyboardNav";
 import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
 import { normalizeHex } from "../ColorPicker/color";
 import { buildStaticPagePath } from "../../managers/StaticPagePath";
-import { useEffect } from "preact/hooks";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
-import {
-  ContextMenuItem,
-  ContextMenuWithButton,
-} from "../ContextMenu/ContextMenu";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -1808,7 +1795,7 @@ function AllSettingsView(props: { state: SeedBibleState }) {
             <p>
               {t("colors-controlled-by-customization", {
                 defaultValue:
-                  "Colors are controlled by the active Customization. Change which theme you're using from Display & Theme.",
+                  "Colors are controlled by the active Custom Branding. Change which theme you're using from Display & Theme.",
               })}
             </p>
             <button
@@ -1903,154 +1890,10 @@ function SettingsVersionFooter() {
   );
 }
 
-function CustomizationsSettingsView(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { customizations } = state;
-  const { t } = useI18n();
-
-  useEffect(() => {
-    void customizations.load();
-  }, []);
-
-  const onBack = () => {
-    state.sidebar.requestedSettingsView.value = "main";
-  };
-
-  const openCustomization = (id: string) => {
-    openCustomizationEditPane(state, id);
-  };
-
-  const handleCreate = async () => {
-    const created = await customizations.create();
-    openCustomizationEditPane(state, created.id);
-    // First-time-only overview: the customization name and logo, then a
-    // deep-linked tour of the new theme's editor sections.
-    state.tutorial.startContextual(
-      "customization-created",
-      buildCustomizationTutorialSteps(state, created.defaultVariantId)
-    );
-  };
-
-  const list = customizations.customizations.value;
-  const isEmpty = list.length === 0;
-
-  return (
-    <div className="sb-settings-page">
-      <SettingsBreadcrumbs
-        onBack={onBack}
-        trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
-          t("customize", { defaultValue: "Customize" }),
-        ]}
-      />
-      <section className="sb-settings-section">
-        <p className="sb-cz-intro">
-          {t("customizations-description", {
-            defaultValue:
-              "A customization bundles a logo, themes and extension rules. Share one with a church or group so everyone reads with the same setup.",
-          })}
-        </p>
-        {isEmpty ? (
-          customizations.isLoading.value ? (
-            <div className="sb-settings-empty-state">
-              <p>{t("loading", { defaultValue: "Loading…" })}</p>
-            </div>
-          ) : null
-        ) : (
-          <ul className="sb-cz-card-list">
-            {list.map((customization) => {
-              const previewVariant =
-                customization.variants.find(
-                  (v) => v.id === customization.defaultVariantId
-                ) ?? customization.variants[0];
-              return (
-                <li key={customization.id} className="sb-cz-card">
-                  <button
-                    type="button"
-                    className="sb-cz-card-open"
-                    onClick={() => openCustomization(customization.id)}
-                  >
-                    {previewVariant && (
-                      <CustomizationCardPreview
-                        theme={customizations.resolveEditingVariantTheme(
-                          previewVariant
-                        )}
-                        logoUrl={customization.logoUrl}
-                        heading={t("customization-preview-chapter", {
-                          defaultValue: "John 1",
-                        })}
-                      />
-                    )}
-                    <span className="sb-cz-card-text">
-                      <span className="sb-cz-card-title" dir="auto">
-                        {customization.name}
-                      </span>
-                      <span className="sb-cz-card-subtitle">
-                        {t("customization-card-summary", {
-                          themes: t("customization-theme-count", {
-                            count: customization.variants.length,
-                            defaultValue: "{{count}} themes",
-                          }),
-                          translation: getDefaultTranslationLabel(
-                            t,
-                            customization,
-                            state.bibleData.availableTranslations.value
-                          ),
-                          defaultValue: "{{themes}} · {{translation}}",
-                        })}
-                      </span>
-                    </span>
-                  </button>
-                  <ContextMenuWithButton
-                    anchorClassName="sb-cz-card-menu"
-                    buttonClassName="sb-cz-icon-button"
-                    aria-label={t("customization-options", {
-                      defaultValue: "Customization options",
-                    })}
-                  >
-                    <ContextMenuItem
-                      onClick={() => {
-                        navigator.clipboard.writeText(
-                          customizations.getShareLink(customization)
-                        );
-                        state.app.toast(
-                          t("customization-link-copied", {
-                            defaultValue:
-                              "Customization link copied to clipboard",
-                          })
-                        );
-                      }}
-                    >
-                      <MaterialIcon className="sb-context-menu-item-icon">
-                        share
-                      </MaterialIcon>
-                      <span>{t("share", { defaultValue: "Share" })}</span>
-                    </ContextMenuItem>
-                  </ContextMenuWithButton>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        <button
-          type="button"
-          className="sb-cz-new-button"
-          onClick={() => void handleCreate()}
-        >
-          <span className="material-symbols-outlined">add</span>
-          {t("new-customization", { defaultValue: "New customization" })}
-        </button>
-      </section>
-    </div>
-  );
-}
-
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { branding } = useAppConfig();
   const { t, language, availableLanguages, setLanguage } = useI18n();
-  const isLoggedIn = useComputed(() => state.login.userId.value !== null);
 
   const onNavigate = (view: RequestedSettingsView) => {
     state.sidebar.requestedSettingsView.value = view;
@@ -2181,24 +2024,6 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </span>
             </button>
           </li>
-          {isLoggedIn.value && (
-            <li>
-              <button
-                className="sb-settings-nav-item"
-                onClick={() => onNavigate("customizations")}
-              >
-                <span className="sb-settings-nav-icon">
-                  <MaterialIcon>palette</MaterialIcon>
-                </span>
-                <span className="sb-settings-nav-label">
-                  {t("customize", { defaultValue: "Customize" })}
-                </span>
-                <span className="material-symbols-outlined rtl-mirror">
-                  chevron_right
-                </span>
-              </button>
-            </li>
-          )}
           {!isSettingDisabled("about-seed-bible") && (
             <li>
               <button
@@ -2298,10 +2123,6 @@ export function SettingsPage(props: { state: SeedBibleState }) {
 
   if (currentView.value === "extensions") {
     return <ExtensionsSettingsView state={state} />;
-  }
-
-  if (currentView.value === "customizations") {
-    return <CustomizationsSettingsView state={state} />;
   }
 
   return <SettingsMainView state={state} />;
