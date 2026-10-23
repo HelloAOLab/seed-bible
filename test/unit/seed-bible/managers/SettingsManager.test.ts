@@ -905,6 +905,30 @@ describe("removed per-section text settings", () => {
     expect(appliedRootVar("--text-verse-line-height")).toBe("2");
   });
 
+  it("keeps a signed-in user's old line spacing over a newer one saved on the device while signed out", () => {
+    const login = loggedInLogin({ textConfig: customizedTextConfig });
+    login.localConfig.value = { verseLineHeight: 2.5 };
+
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    expect(settings.settings.value.verseLineHeight).toBe(2);
+    expect(appliedRootVar("--text-verse-line-height")).toBe("2");
+  });
+
+  it("reads the old line spacing from a link that passes the text styles as JSON", () => {
+    const textConfigParam = encodeURIComponent(
+      JSON.stringify({ verse: { lineHeight: 2 } })
+    );
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith(`?app.textConfig=${textConfigParam}`)
+    );
+
+    expect(settings.settings.value.verseLineHeight).toBe(2);
+    expect(appliedRootVar("--text-verse-line-height")).toBe("2");
+  });
+
   it("defaults the verse line spacing when nothing was saved", () => {
     const settings = createSettings(
       CasualOSManager(),

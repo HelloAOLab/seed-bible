@@ -522,8 +522,16 @@ function parseToolbarConfig(
 // height is still set from Display & Theme, so a value saved there before it
 // got its own key is still honored.
 function readLegacyVerseLineHeight(textConfig: unknown): unknown {
-  if (!textConfig || typeof textConfig !== "object") return undefined;
-  const verse = (textConfig as Record<string, unknown>).verse;
+  let parsed: unknown = textConfig;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return undefined;
+    }
+  }
+  if (!parsed || typeof parsed !== "object") return undefined;
+  const verse = (parsed as Record<string, unknown>).verse;
   if (!verse || typeof verse !== "object") return undefined;
   return (verse as Record<string, unknown>).lineHeight;
 }
@@ -677,9 +685,17 @@ export function createSettings(
         read(PROFILE_SCRIPTURE_ELEMENTS, TAG_SCRIPTURE_ELEMENTS),
         DEFAULT_SETTINGS.scriptureElements
       ),
+      // The legacy key is checked inside each layer, not after all of them,
+      // so a profile's old value still outranks a newer one on the device.
       verseLineHeight: parseNumber(
-        read(PROFILE_VERSE_LINE_HEIGHT, TAG_VERSE_LINE_HEIGHT) ??
-          readLegacyVerseLineHeight(read(PROFILE_TEXT_CONFIG, TAG_TEXT_CONFIG)),
+        getProfileConfigValue(profile, PROFILE_VERSE_LINE_HEIGHT) ??
+          readLegacyVerseLineHeight(
+            getProfileConfigValue(profile, PROFILE_TEXT_CONFIG)
+          ) ??
+          sessionOverrides[TAG_VERSE_LINE_HEIGHT] ??
+          readLegacyVerseLineHeight(sessionOverrides[TAG_TEXT_CONFIG]) ??
+          local[PROFILE_VERSE_LINE_HEIGHT] ??
+          readLegacyVerseLineHeight(local[PROFILE_TEXT_CONFIG]),
         DEFAULT_SETTINGS.verseLineHeight
       ),
       discoveredContent: parseDiscoveredContent(
