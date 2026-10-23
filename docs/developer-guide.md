@@ -35,28 +35,6 @@ This creates a new extension project with `create-seed-bible-extension`, runs it
 - **Node.js 22 or newer**, with **npm 11 or newer** (`npm install -g npm@latest`). npm 10, which comes with Node.js 22, crashes while installing a new project's tools. pnpm works too: use `pnpm` wherever this guide says `npm`.
 - **git**, **[pnpm](https://pnpm.io/installation)** (version 10 or newer) and **[Bun](https://bun.sh)**. You only need these for `npm run dev`, which downloads Seed Bible and runs it locally so you can try your extension in it.
 
-> **Before these packages are on npm.** `create-seed-bible-extension`, `seed-bible-extension-scripts` and `seed-bible` haven't been published to npm yet, so `npm create` can't find them. Until they are, make them from a clone of this repo and install them from files:
->
-> ```bash
-> # In a clone of https://github.com/HelloAOLab/seed-bible
-> pnpm install
-> pnpm build:extension-tools && pnpm build:seed-bible-package
-> mkdir -p /tmp/sb-packages
-> for p in seed-bible seed-bible-extension-scripts create-seed-bible-extension; do
->   (cd packages/$p && pnpm pack --pack-destination /tmp/sb-packages)
-> done
->
-> # Then, wherever you keep your projects
-> npx --package=/tmp/sb-packages/create-seed-bible-extension-0.1.0.tgz create-seed-bible-extension verse-art
-> cd verse-art
-> npm pkg set dependencies.seed-bible=file:/tmp/sb-packages/seed-bible-1.14.0.tgz \
->   devDependencies.seed-bible-extension-scripts=file:/tmp/sb-packages/seed-bible-extension-scripts-0.1.0.tgz
-> npm install
-> npm run dev -- --repo <path to your clone>
-> ```
->
-> Use the version numbers in the file names `pnpm pack` printed. `--repo` makes `npm run dev` run Seed Bible from your clone, since no released version can install an extension from a link yet; pass it every time you run `dev`. Otherwise, follow the steps below from Step 2.
-
 ### Step 1: Create the project
 
 ```bash
