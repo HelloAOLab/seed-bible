@@ -42,6 +42,28 @@ function failure(errorCode: string) {
 }
 
 describe("guardRecordsClient", () => {
+  it("reports which request found the session dead, with the server's message", async () => {
+    const reports: unknown[] = [];
+    const wrapped = guardRecordsClient(
+      { getData: vi.fn().mockResolvedValue(failure("session_expired")) },
+      {
+        getSessionKey: () => SESSION_KEY,
+        onSessionInvalidated: (errorCode, details) =>
+          reports.push({ errorCode, ...details }),
+      }
+    ) as { getData: () => Promise<unknown> };
+
+    await wrapped.getData();
+
+    expect(reports).toEqual([
+      {
+        errorCode: "session_expired",
+        method: "getData",
+        errorMessage: "session_expired happened",
+      },
+    ]);
+  });
+
   describe("transparency", () => {
     it("forwards arguments and results through to the wrapped client", async () => {
       const getData = vi.fn().mockResolvedValue({ success: true, data: 42 });

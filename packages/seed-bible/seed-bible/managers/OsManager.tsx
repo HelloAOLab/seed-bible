@@ -324,10 +324,12 @@ export function CasualOSManager(
   const client = guardRecordsClient(rawClient, {
     getSessionKey: () => sessionKey.peek(),
     getSessionReplacement: (key) => resolveSessionReplacement?.(key) ?? null,
-    onSessionInvalidated: (errorCode) => {
+    onSessionInvalidated: (errorCode, { method, errorMessage }) => {
       console.warn(`[OsManager] The session is no longer valid: ${errorCode}`);
       sessionInvalidated.value = {
         errorCode,
+        method,
+        errorMessage,
         id: ++sessionInvalidatedCount,
       };
     },
@@ -795,6 +797,21 @@ export function CasualOSManager(
       request.catch(() => linkPreviews.delete(key));
       linkPreviews.set(key, request);
       return request;
+    },
+
+    /**
+     * The record a file in the records server's own storage was uploaded
+     * to, or null for a URL anywhere else. The server is asked, rather than
+     * the URL's host trusted, since storage hosts differ between servers.
+     */
+    getFileRecordName: async (fileUrl: string): Promise<string | null> => {
+      const result = await client.getFile({ fileUrl });
+      if (!result.success) {
+        return null;
+      }
+      // Stored files live at `<storage>/<recordName>/<fileName>`.
+      const [recordName] = new URL(fileUrl).pathname.split("/").filter(Boolean);
+      return recordName ? decodeURIComponent(recordName) : null;
     },
 
     recordFile: async (

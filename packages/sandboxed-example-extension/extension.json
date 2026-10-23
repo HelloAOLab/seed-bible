@@ -1,0 +1,93 @@
+{
+  "id": "sandboxed-example-extension",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "permissions": ["reading:position"],
+  "optionalPermissions": ["embed:casualos"],
+  "network": [],
+  "settings": {
+    "greeting": {
+      "type": "string",
+      "default": "Hello, World"
+    },
+    "greetingSize": {
+      "type": "number",
+      "default": 1.5
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "showBanner": {
+      "type": "boolean",
+      "default": true
+    },
+    "repeatCount": {
+      "type": "number",
+      "default": 1,
+      "minimum": 1,
+      "maximum": 10,
+      "multipleOf": 1
+    },
+    "tone": {
+      "type": "string",
+      "default": "warm",
+      "enum": ["plain", "warm", "bold"]
+    },
+    "exampleClientId": {
+      "type": "string",
+      "sensitive": "exampleService"
+    },
+    "exampleApiKey": {
+      "type": "string",
+      "sensitive": "exampleService"
+    }
+  },
+  "sensitive": {
+    "exampleService": {
+      "host": "httpbin.org",
+      "requestMapping": {
+        "headers.authorization.bearer": "exampleApiKey",
+        "body.client_id": "exampleClientId"
+      }
+    }
+  },
+  "translations": {
+    "en": {
+      "title": "Sandboxed Example Extension",
+      "description": "The example extension, written as a sandboxed extension: a working reference for third-party developers.",
+      "my-example-tool": "My Example Tool",
+      "my-verse-tool": "My Verse Tool",
+      "my-below-reader-tool": "My Below Reader Tool",
+      "open-grid-portal": "Open grid portal",
+      "open-map-portal": "Open map portal",
+      "item-1": "Item 1",
+      "item-2": "Item 2",
+      "setting-greeting-title": "Greeting",
+      "setting-greeting-description": "The greeting shown by this extension's example tool.",
+      "setting-greetingSize-title": "Greeting size",
+      "setting-greetingSize-description": "How large the greeting is, in rem. 1 is normal text size, and decimals like 1.25 work.",
+      "setting-subtitle-title": "Subtitle",
+      "setting-subtitle-description": "Optional line shown under the greeting. This setting declares no default, so nothing shows until you set one.",
+      "setting-showBanner-title": "Show banner",
+      "setting-showBanner-description": "Whether to show the example banner.",
+      "setting-repeatCount-title": "Repeat count",
+      "setting-repeatCount-description": "How many times to repeat the greeting. A whole number from 1 to 10.",
+      "setting-tone-title": "Tone",
+      "setting-tone-description": "How the greeting is styled.",
+      "setting-tone-option-plain": "Plain",
+      "setting-tone-option-warm": "Warm",
+      "setting-tone-option-bold": "Bold",
+      "setting-exampleClientId-title": "Example client ID",
+      "setting-exampleClientId-description": "Sent in the body of requests to the example service.",
+      "setting-exampleApiKey-title": "Example API key",
+      "setting-exampleApiKey-description": "Sent as a bearer token to the example service.",
+      "sensitive-exampleService-title": "Example service",
+      "send-sensitive-request": "Send a request with the sensitive settings",
+      "example-banner": "This is the example banner. Turn it off in this extension's settings.",
+      "portal-permission-declined": "Showing a CasualOS portal needs your permission.",
+      "sensitive-result": "Example service: {{status}}",
+      "item-clicked": "{{item}} clicked!",
+      "loading": "Loading…"
+    }
+  }
+}
