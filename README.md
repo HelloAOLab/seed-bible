@@ -10,7 +10,11 @@ This repository holds its source code.
 
 ## Roadmap
 
-Curious what's coming next? The [roadmap](./ROADMAP.md) lays out what we're working on and what comes after it, in priority order, with where each piece stands today.
+Curious what's coming next? The [Seed Bible roadmap](https://www.helloao.org/seed-bible-roadmap.html) shows what we've just finished, what we're building now, and where we're headed next.
+
+## Building an extension
+
+You can add your own features to Seed Bible with an extension, built in your own project and shared with a link, with no need to change this repository. The [developer guide](./docs/developer-guide.md) starts with a quick start that has one running in a few minutes, and the [extension API reference](./docs/extension-api.md) covers everything an extension can do.
 
 ## Developing
 

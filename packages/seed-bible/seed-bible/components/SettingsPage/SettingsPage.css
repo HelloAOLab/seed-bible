@@ -64,48 +64,6 @@
   opacity: 0.5;
 }
 
-.sb-extensions-tabs {
-  display: flex;
-  gap: 0.375rem;
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 85%);
-}
-
-.sb-extensions-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.25rem;
-  margin-bottom: -1px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extensions-tab-active {
-  border-bottom-color: var(--sb-primary-color);
-  color: var(--sb-selected-tab-font-color);
-}
-
-.sb-extensions-tab-count {
-  min-width: 1.25rem;
-  padding: 0.0625rem 0.3125rem;
-  border-radius: 62.4375rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-  color: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.sb-extensions-tab-active .sb-extensions-tab-count {
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
-}
-
 .sb-extension-row {
   display: flex;
   align-items: stretch;
@@ -157,6 +115,11 @@
   font-size: 1.125rem;
 }
 
+.sb-extension-state-icon {
+  font-size: 1.125rem;
+  flex: 0 0 auto;
+}
+
 .sb-extension-row-content {
   display: flex;
   flex-direction: column;
@@ -175,27 +138,6 @@
   font-size: 0.75rem;
   opacity: 0.78;
   line-height: 1.25;
-}
-
-.sb-extension-state-icon {
-  font-size: 1.125rem;
-  flex: 0 0 auto;
-}
-
-.sb-extension-state-none {
-  opacity: 0.7;
-}
-
-.sb-extension-state-pending {
-  color: color-mix(in srgb, var(--sb-primary-color), black 6%);
-}
-
-.sb-extension-state-downloaded {
-  color: color-mix(in srgb, var(--sb-primary-color), black 18%);
-}
-
-.sb-extension-state-installed {
-  color: color-mix(in srgb, #2e7d32, var(--sb-primary-color) 35%);
 }
 
 .sb-pill-toggle {
@@ -228,6 +170,57 @@
 
 .sb-pill-toggle.is-on::before {
   left: 1.375rem;
+}
+
+.sb-extension-add-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.sb-extensions-add-link-button {
+  align-self: flex-start;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-extensions-add-link-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-extensions-add-link-button .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-extension-add-link-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sb-extension-add-link-row .sb-settings-text-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-extension-add-link-row .sb-settings-action-button {
+  width: auto;
+}
+
+.sb-extension-add-link-status {
+  margin: 0;
+  font-size: 0.8125rem;
+  opacity: 0.75;
 }
 
 .sb-extension-footer-actions {
@@ -1249,176 +1242,6 @@
   color: var(--sb-font-color);
 }
 
-.sb-account-settings-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.sb-account-settings-intro {
-  margin: 0;
-  line-height: 1.45;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-  max-width: 13.75rem;
-}
-
-.sb-account-picture-row {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-}
-
-.sb-account-picture-preview,
-.sb-account-picture-placeholder {
-  width: 3.875rem;
-  height: 3.875rem !important;
-  border-radius: 62.4375rem;
-  flex-shrink: 0;
-}
-
-.sb-account-picture-preview {
-  object-fit: cover;
-  border: 2px solid color-mix(in srgb, var(--sb-primary-color), transparent 60%);
-}
-
-.sb-account-picture-placeholder {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--sb-primary-color), #000 26%);
-  color: var(--sb-primary-font-color);
-}
-
-.sb-account-picture-placeholder .material-symbols-outlined {
-  font-size: 1.875rem;
-}
-
-.sb-account-picture-button {
-  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  border-radius: 0.25rem;
-  padding: 0.625rem 1.125rem;
-  background: transparent;
-  color: var(--sb-primary-color);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.sb-account-picture-button:disabled {
-  opacity: 0.65;
-  cursor: default;
-}
-
-.sb-account-text-input,
-.sb-account-textarea,
-.sb-account-uid-row {
-  border-radius: 0.625rem;
-  background: color-mix(in srgb, var(--sb-secondary-color), #9fa5ad 28%);
-}
-
-.sb-account-text-input,
-.sb-account-textarea {
-  border-color: transparent;
-  padding: 0.875rem 1rem;
-}
-
-.sb-account-textarea {
-  min-height: 6.25rem;
-  resize: vertical;
-}
-
-.sb-account-field-helper {
-  margin: 0;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 24%);
-}
-
-.sb-account-label-optional {
-  font-weight: 400;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 28%);
-}
-
-.sb-account-uid-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.625rem 0.625rem 0.625rem 0.875rem;
-}
-
-.sb-account-uid-value {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-}
-
-.sb-account-copy-uid-button {
-  border: none;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 34%);
-  width: 2.125rem;
-  height: 2.125rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.sb-account-copy-uid-button:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), #000 8%);
-}
-
-.sb-account-save-button {
-  width: 100%;
-  border-radius: 0.375rem;
-  padding: 0.875rem 1.125rem;
-  font-weight: 700;
-}
-
-.sb-account-save-button:disabled {
-  opacity: 0.75;
-  cursor: default;
-}
-
-.sb-account-save-saving {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.sb-account-signout-section {
-  margin-top: 0.625rem;
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  padding-top: 1rem;
-}
-
-.sb-account-signout-button {
-  width: 100%;
-  border: 2px solid #db1c1c;
-  border-radius: 0.375rem;
-  padding: 0.75rem 1rem;
-  background: transparent;
-  color: #db1c1c;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.sb-account-signout-button:hover {
-  background: color-mix(in srgb, #db1c1c, transparent 92%);
-}
-
-/* Account-page loading skeleton — the generic shimmer primitives and shape
-   classes now live in components/Skeleton/Skeleton.css (see <Skeleton> /
-   <SkeletonContainer>); AccountSettingsSkeleton composes them with the
-   sb-account-settings-layout / sb-settings-field-row layout classes above. */
-
 /* This can be added at main css too but that is not being used by setting bar to so avoid whole css load use here */
 @media screen and (max-width: 480px) {
   .hide-on-mobile {
@@ -1449,4 +1272,133 @@
  */
 .sb-customization-translation-picker .searchbar {
   width: 100%;
+}
+
+.sb-extensions-search {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  padding: 0 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
+  border-radius: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-extensions-search:focus-within {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-extensions-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.9375rem;
+}
+
+.sb-extensions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-extensions-section-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-extensions-group {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.sb-extensions-group > li + li {
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-extensions-item {
+  width: 100%;
+  min-height: 4.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 0.875rem;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-extensions-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 95%);
+}
+
+.sb-extensions-item:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: -2px;
+}
+
+.sb-extensions-item .sb-extension-consent-tile {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+}
+
+.sb-extensions-item-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sb-extensions-item-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.sb-extensions-item-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.sb-extensions-item-description {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-extensions-item-tag {
+  padding: 0.0625rem 0.4375rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-extensions-item-chevron {
+  flex: none;
+  opacity: 0.5;
 }
