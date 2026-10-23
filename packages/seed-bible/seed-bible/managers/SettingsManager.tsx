@@ -9,13 +9,12 @@ import * as z from "zod/v4";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
 import { isMinimalEmbedUrl } from "./EmbedMode";
-import { SYSTEM_THEME_ID, type ThemeHighlightColor } from "./ThemeManager";
+import { SYSTEM_THEME_ID } from "./ThemeManager";
 import { parseNumber } from "./Utils";
+import { CUSTOMIZATION_FONT_PRESETS } from "./CustomizationsManager";
 
 export type BookOrientation = "traditional" | "tanakh";
 export type UISize = "S" | "M" | "L" | "XL";
-export type TextAlignment = "unset" | "left" | "center" | "right";
-export type TextSectionId = "bookTitle" | "heading" | "verse";
 
 export type TextSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
 
@@ -94,24 +93,8 @@ export interface DiscoveredContentBehavior {
   showContent: boolean;
 }
 
-export interface TextSectionConfig {
-  font: string;
-  weight: string;
-  color: string;
-  marginVertical: number;
-  marginHorizontal: number;
-  bold: boolean;
-  italic: boolean;
-  underline: boolean;
-  alignment: TextAlignment;
-  /** Line height for the verse section. Other sections ignore this. */
-  lineHeight?: number;
-}
-
 export const VERSE_LINE_HEIGHT_OPTIONS: number[] = [1.5, 1.7, 2, 2.5];
 export const DEFAULT_VERSE_LINE_HEIGHT = 1.7;
-
-export type TextConfig = Record<TextSectionId, TextSectionConfig>;
 
 export interface ToolbarCustomization {
   /** Tool IDs that should be hidden from the toolbar. */
@@ -128,8 +111,9 @@ export interface AppSettings {
   uiSize: UISize;
   selectionUI: SelectionUIBehavior;
   scriptureElements: ScriptureElementsBehavior;
+  verseLineHeight: number;
+  fontOverride?: string | undefined;
   discoveredContent: DiscoveredContentBehavior;
-  textConfig: TextConfig;
   toolbar: ToolbarCustomization;
   keepScreenAwake: boolean;
   /**
@@ -144,10 +128,6 @@ export interface AppSettings {
   scriptureWidth: number;
   /** Selected theme preset id (owned/consumed by ThemeManager). */
   themeId: string;
-  /** User color overrides layered on top of the selected theme preset. */
-  customTheme: Record<string, string>;
-  /** User highlight-color overrides layered on top of the preset highlights. */
-  customHighlights: Record<string, Partial<ThemeHighlightColor>>;
   /**
    * Whether the compact discover panel sits beside the scripture text
    * (true, the default) when there's room, or is forced below it, after the
@@ -180,6 +160,10 @@ export const AppSettingsSchema = z.object({
     showHighlights: z.boolean(),
     showRedLettering: z.boolean(),
   }),
+  // Defaulted rather than required so settings exported before this option
+  // existed still import.
+  verseLineHeight: z.number().default(DEFAULT_VERSE_LINE_HEIGHT),
+  fontOverride: z.string().optional(),
   discoveredContent: z
     .object({
       showContent: z.boolean(),
@@ -188,44 +172,6 @@ export const AppSettingsSchema = z.object({
   verseSelectionEffects: z
     .enum(["default", "enabled", "disabled"])
     .default("default"),
-  textConfig: z.object({
-    bookTitle: z.object({
-      font: z.string(),
-      weight: z.string(),
-      color: z.string(),
-      marginVertical: z.number(),
-      marginHorizontal: z.number(),
-      bold: z.boolean(),
-      italic: z.boolean(),
-      underline: z.boolean(),
-      alignment: z.enum(["unset", "left", "center", "right"]),
-      lineHeight: z.number().optional(),
-    }),
-    heading: z.object({
-      font: z.string(),
-      weight: z.string(),
-      color: z.string(),
-      marginVertical: z.number(),
-      marginHorizontal: z.number(),
-      bold: z.boolean(),
-      italic: z.boolean(),
-      underline: z.boolean(),
-      alignment: z.enum(["unset", "left", "center", "right"]),
-      lineHeight: z.number().optional(),
-    }),
-    verse: z.object({
-      font: z.string(),
-      weight: z.string(),
-      color: z.string(),
-      marginVertical: z.number(),
-      marginHorizontal: z.number(),
-      bold: z.boolean(),
-      italic: z.boolean(),
-      underline: z.boolean(),
-      alignment: z.enum(["unset", "left", "center", "right"]),
-      lineHeight: z.number().optional(),
-    }),
-  }),
   toolbar: z.object({
     hidden: z.array(z.string()),
     order: z.array(z.string()),
@@ -241,15 +187,6 @@ export const AppSettingsSchema = z.object({
     .max(MAX_SCRIPTURE_WIDTH)
     .default(DEFAULT_SCRIPTURE_WIDTH),
   themeId: z.string(),
-  customTheme: z.record(z.string(), z.string()),
-  customHighlights: z.record(
-    z.string(),
-    z.object({
-      color: z.string().optional(),
-      fontColor: z.string().optional(),
-      wordsOfJesusFontColor: z.string().optional(),
-    })
-  ),
   // Defaulted rather than required so settings exported before this option
   // existed still import.
   discoverContentPanelInline: z.boolean().default(true),
@@ -267,14 +204,14 @@ const TAG_SELECTION_UI = "app.selectionUI";
 const TAG_SCRIPTURE_ELEMENTS = "app.scriptureElements";
 const TAG_DISCOVERED_CONTENT = "app.discoveredContent";
 const TAG_TEXT_CONFIG = "app.textConfig";
+const TAG_VERSE_LINE_HEIGHT = "app.verseLineHeight";
+const TAG_FONT_OVERRIDE = "app.fontOverride";
 const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
 const TAG_ASK_TO_SWITCH_UI_LANGUAGE = "app.askToSwitchUiLanguage";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
 const TAG_SCRIPTURE_WIDTH = "app.scriptureWidth";
 const TAG_THEME_ID = "app.themeId";
-const TAG_CUSTOM_THEME = "app.customTheme";
-const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
 const TAG_DISCOVER_CONTENT_PANEL_INLINE = "app.discoverContentPanelInline";
 const TAG_VERSE_SELECTION_EFFECTS = "app.verseSelectionEffects";
 
@@ -287,37 +224,16 @@ const PROFILE_SELECTION_UI = "selectionUI";
 const PROFILE_SCRIPTURE_ELEMENTS = "scriptureElements";
 const PROFILE_DISCOVERED_CONTENT = "discoveredContent";
 const PROFILE_TEXT_CONFIG = "textConfig";
+const PROFILE_VERSE_LINE_HEIGHT = "verseLineHeight";
+const PROFILE_FONT_OVERRIDE = "fontOverride";
 const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
 const PROFILE_ASK_TO_SWITCH_UI_LANGUAGE = "askToSwitchUiLanguage";
 const PROFILE_CUSTOM_HIGHLIGHT_COLORS = "customHighlightColors";
 const PROFILE_SCRIPTURE_WIDTH = "scriptureWidth";
 const PROFILE_THEME_ID = "themeId";
-const PROFILE_CUSTOM_THEME = "customTheme";
-const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
 const PROFILE_DISCOVER_CONTENT_PANEL_INLINE = "discoverContentPanelInline";
 const PROFILE_VERSE_SELECTION_EFFECTS = "verseSelectionEffects";
-
-export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
-  { value: "'Newsreader', serif", label: "Newsreader" },
-  { value: "'Plus Jakarta Sans', sans-serif", label: "Plus Jakarta Sans" },
-  { value: "system-ui, sans-serif", label: "System UI" },
-  { value: "'Helvetica Neue', sans-serif", label: "Helvetica Neue" },
-  { value: "'Roboto', sans-serif", label: "Roboto" },
-  { value: "'Inter', sans-serif", label: "Inter" },
-];
-
-export const TEXT_WEIGHT_OPTIONS: { value: string; label: string }[] = [
-  { value: "700", label: "bold" },
-  { value: "400", label: "regular" },
-  { value: "300", label: "light" },
-];
-
-// export const TEXT_SECTION_LABELS: Record<TextSectionId, string> = {
-//   bookTitle: "Book title",
-//   heading: "Heading",
-//   verse: "Verse",
-// };
 
 const DEFAULT_SELECTION_UI: SelectionUIBehavior = {
   showSelectedItems: true,
@@ -337,61 +253,6 @@ const DEFAULT_DISCOVERED_CONTENT: DiscoveredContentBehavior = {
   showContent: true,
 };
 
-/**
- * Empty `color` means "follow the active theme". The reader CSS reads
- * `--sb-{section}-font-color` directly; the text editor's color setting
- * writes to that same variable as a body inline override (so it beats the
- * theme's body-scoped CSS rule). Switching theme presets clears the
- * override — see `resetTextColors`.
- */
-const DEFAULT_TEXT_CONFIG: TextConfig = {
-  bookTitle: {
-    font: "'Newsreader', serif",
-    weight: "700",
-    color: "",
-    marginVertical: 12,
-    marginHorizontal: 0,
-    bold: true,
-    italic: false,
-    underline: false,
-    alignment: "unset",
-  },
-  heading: {
-    font: "'Plus Jakarta Sans', sans-serif",
-    weight: "700",
-    color: "",
-    marginVertical: 18,
-    marginHorizontal: 0,
-    bold: true,
-    italic: false,
-    underline: false,
-    alignment: "unset",
-  },
-  verse: {
-    font: "'Plus Jakarta Sans', sans-serif",
-    weight: "500",
-    color: "",
-    marginVertical: 0,
-    marginHorizontal: 0,
-    bold: false,
-    italic: false,
-    underline: false,
-    alignment: "unset",
-    lineHeight: DEFAULT_VERSE_LINE_HEIGHT,
-  },
-};
-
-/**
- * Maps each text section to the theme color variable it should override.
- * Exported so the settings UI can render the resolved theme color in the
- * "follow theme" swatch.
- */
-export const TEXT_SECTION_THEME_COLOR_VAR: Record<TextSectionId, string> = {
-  bookTitle: "--sb-book-title-font-color",
-  heading: "--sb-chapter-heading-font-color",
-  verse: "--sb-verse-font-color",
-};
-
 const DEFAULT_TOOLBAR_CONFIG: ToolbarCustomization = {
   hidden: [],
   order: [],
@@ -404,16 +265,15 @@ const DEFAULT_SETTINGS: AppSettings = {
   uiSize: "M",
   selectionUI: DEFAULT_SELECTION_UI,
   scriptureElements: DEFAULT_SCRIPTURE_ELEMENTS,
+  verseLineHeight: DEFAULT_VERSE_LINE_HEIGHT,
+  fontOverride: undefined,
   discoveredContent: DEFAULT_DISCOVERED_CONTENT,
-  textConfig: DEFAULT_TEXT_CONFIG,
   toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
   askToSwitchUiLanguage: true,
   customHighlightColors: [],
   scriptureWidth: DEFAULT_SCRIPTURE_WIDTH,
   themeId: SYSTEM_THEME_ID,
-  customTheme: {},
-  customHighlights: {},
   discoverContentPanelInline: true,
   verseSelectionEffects: "default",
 };
@@ -458,36 +318,6 @@ export function parseStringRecord(value: unknown): Record<string, string> {
     }
   }
   return result;
-}
-
-function parseHighlightOverrides(
-  value: unknown
-): Record<string, Partial<ThemeHighlightColor>> {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return {};
-    }
-  }
-  if (!parsed || typeof parsed !== "object") {
-    return {};
-  }
-  const obj = parsed as Record<string, unknown>;
-  const overrides: Record<string, Partial<ThemeHighlightColor>> = {};
-  for (const [id, entry] of Object.entries(obj)) {
-    if (!entry || typeof entry !== "object") continue;
-    const e = entry as Record<string, unknown>;
-    const sub: Partial<ThemeHighlightColor> = {};
-    if (typeof e.color === "string") sub.color = e.color;
-    if (typeof e.fontColor === "string") sub.fontColor = e.fontColor;
-    if (typeof e.wordsOfJesusFontColor === "string") {
-      sub.wordsOfJesusFontColor = e.wordsOfJesusFontColor;
-    }
-    if (Object.keys(sub).length > 0) overrides[id] = sub;
-  }
-  return overrides;
 }
 
 function parseBoolean(value: unknown, fallback: boolean): boolean {
@@ -661,44 +491,6 @@ function parseDiscoveredContent(
   };
 }
 
-function parseAlignment(
-  value: unknown,
-  fallback: TextAlignment
-): TextAlignment {
-  return value === "unset" ||
-    value === "left" ||
-    value === "center" ||
-    value === "right"
-    ? value
-    : fallback;
-}
-
-function parseTextSection(
-  value: unknown,
-  fallback: TextSectionConfig
-): TextSectionConfig {
-  if (!value || typeof value !== "object") return fallback;
-  const obj = value as Record<string, unknown>;
-  return {
-    font: typeof obj.font === "string" ? obj.font : fallback.font,
-    weight: typeof obj.weight === "string" ? obj.weight : fallback.weight,
-    color: typeof obj.color === "string" ? obj.color : fallback.color,
-    marginVertical: parseNumber(obj.marginVertical, fallback.marginVertical),
-    marginHorizontal: parseNumber(
-      obj.marginHorizontal,
-      fallback.marginHorizontal
-    ),
-    bold: typeof obj.bold === "boolean" ? obj.bold : fallback.bold,
-    italic: typeof obj.italic === "boolean" ? obj.italic : fallback.italic,
-    underline:
-      typeof obj.underline === "boolean" ? obj.underline : fallback.underline,
-    alignment: parseAlignment(obj.alignment, fallback.alignment),
-    ...(fallback.lineHeight !== undefined || obj.lineHeight !== undefined
-      ? { lineHeight: parseNumber(obj.lineHeight, fallback.lineHeight ?? 1.5) }
-      : {}),
-  };
-}
-
 function parseStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((v): v is string => typeof v === "string");
@@ -724,58 +516,40 @@ function parseToolbarConfig(
   };
 }
 
-function parseTextConfig(value: unknown, fallback: TextConfig): TextConfig {
-  let parsed: unknown = value;
+// The verse line-height used to live inside the per-section `textConfig`
+// (the removed "All settings" text editor). Every other field of that blob is
+// deliberately ignored so old customizations stop applying, but the line
+// height is still set from Display & Theme, so a value saved there before it
+// got its own key is still honored.
+function readLegacyVerseLineHeight(textConfig: unknown): unknown {
+  let parsed: unknown = textConfig;
   if (typeof parsed === "string") {
     try {
       parsed = JSON.parse(parsed);
     } catch {
-      return fallback;
+      return undefined;
     }
   }
-  if (!parsed || typeof parsed !== "object") return fallback;
-  const obj = parsed as Record<string, unknown>;
-  return {
-    bookTitle: parseTextSection(obj.bookTitle, fallback.bookTitle),
-    heading: parseTextSection(obj.heading, fallback.heading),
-    verse: parseTextSection(obj.verse, fallback.verse),
-  };
+  if (!parsed || typeof parsed !== "object") return undefined;
+  const verse = (parsed as Record<string, unknown>).verse;
+  if (!verse || typeof verse !== "object") return undefined;
+  return (verse as Record<string, unknown>).lineHeight;
 }
 
-function applyTextConfigToCSSVars(config: TextConfig) {
-  if (typeof document === "undefined") return;
-  const root = document.documentElement.style;
-  // The theme writes `--sb-*-font-color` to `body { ... }`. Inline styles on
-  // body win over CSS rules on body, so we override there. Writing to :root
-  // would lose to body's own custom property.
-  const body = document.body?.style ?? null;
-  for (const [section, cfg] of Object.entries(config)) {
-    const prefix = `--text-${section}`;
-    root.setProperty(`${prefix}-font`, cfg.font);
-    root.setProperty(`${prefix}-weight`, cfg.bold ? "700" : cfg.weight);
-    root.setProperty(`${prefix}-font-style`, cfg.italic ? "italic" : "normal");
-    root.setProperty(
-      `${prefix}-text-decoration`,
-      cfg.underline ? "underline" : "none"
-    );
-    root.setProperty(`${prefix}-alignment`, cfg.alignment);
-    root.setProperty(`${prefix}-margin-top`, `${cfg.marginVertical}px`);
-    root.setProperty(`${prefix}-margin-bottom`, `${cfg.marginVertical}px`);
-    root.setProperty(`${prefix}-margin-left`, `${cfg.marginHorizontal}px`);
-    root.setProperty(`${prefix}-margin-right`, `${cfg.marginHorizontal}px`);
-    if (cfg.lineHeight !== undefined) {
-      root.setProperty(`${prefix}-line-height`, String(cfg.lineHeight));
-    }
+// "No override" is persisted as this sentinel rather than `undefined`: the
+// `??` chain in `readSettings` skips `undefined`, so a signed-in user's
+// cleared profile value would fall through to a stale `login.localConfig`
+// font saved while signed out.
+const NO_FONT_OVERRIDE = "default";
 
-    if (body) {
-      const themeVar = TEXT_SECTION_THEME_COLOR_VAR[section as TextSectionId];
-      if (cfg.color) {
-        body.setProperty(themeVar, cfg.color);
-      } else {
-        body.removeProperty(themeVar);
-      }
-    }
-  }
+function parseFontOverride(
+  value: unknown,
+  fallback: AppSettings["fontOverride"]
+): AppSettings["fontOverride"] {
+  if (value === NO_FONT_OVERRIDE) return undefined;
+  return CUSTOMIZATION_FONT_PRESETS.some((option) => option.value === value)
+    ? (value as string)
+    : fallback;
 }
 
 export interface SettingsManager {
@@ -802,17 +576,10 @@ export interface SettingsManager {
   setSelectionUI: (patch: Partial<SelectionUIBehavior>) => void;
   setScriptureElements: (patch: Partial<ScriptureElementsBehavior>) => void;
   setDiscoveredContent: (patch: Partial<DiscoveredContentBehavior>) => void;
-  updateTextSection: (
-    section: TextSectionId,
-    patch: Partial<TextSectionConfig>
-  ) => void;
   /** Set the max width of the chapter content (Scripture Width control). */
   setScriptureWidth: (width: number) => void;
   /** Set the verse line-height (Scripture line-spacing control). */
   setVerseLineHeight: (lineHeight: number) => void;
-  /** Clear per-section color overrides so the active theme drives text colors. */
-  resetTextColors: () => void;
-  resetTextConfig: () => void;
   setToolbarHidden: (toolId: string, hidden: boolean) => void;
   setToolbarOrder: (order: string[]) => void;
   resetToolbarConfig: () => void;
@@ -823,18 +590,13 @@ export interface SettingsManager {
   resetToDefaults: () => void;
   /** Persists the selected theme preset id. Consumed by ThemeManager. */
   setThemeId: (themeId: string) => void;
-  /** Persists theme color overrides. Consumed by ThemeManager. */
-  setCustomTheme: (next: Record<string, string>) => void;
-  /** Persists theme highlight-color overrides. Consumed by ThemeManager. */
-  setCustomHighlights: (
-    next: Record<string, Partial<ThemeHighlightColor>>
-  ) => void;
   /**
    * Persists whether the compact discover panel sits inline beside the
    * scripture text. Consumed by `BibleReadingManager`'s per-tab
    * `discoverContentPanelInline` signal.
    */
   setDiscoverContentPanelInline: (discoverContentPanelInline: boolean) => void;
+  setFontOverride: (value: AppSettings["fontOverride"]) => void;
   setVerseSelectionEffects: (value: VerseSelectionEffects) => void;
 }
 
@@ -884,7 +646,7 @@ export function createSettings(
       local[profileKey];
 
     // The embed link's theme is the look the site owner chose. The viewer's
-    // saved theme and color edits would otherwise paint over it, so the
+    // saved theme would otherwise paint over it, so the
     // preview (and every signed-in visitor) would ignore the link.
     const embedTheme = sessionOverrides[TAG_THEME_ID];
     const pinnedEmbedTheme =
@@ -898,6 +660,10 @@ export function createSettings(
       fontSize: parseFontSize(
         read(PROFILE_FONT_SIZE, TAG_FONT_SIZE),
         presetConfig.fontSize
+      ),
+      fontOverride: parseFontOverride(
+        read(PROFILE_FONT_OVERRIDE, TAG_FONT_OVERRIDE),
+        DEFAULT_SETTINGS.fontOverride
       ),
       disablePanels: parseBoolean(
         read(PROFILE_DISABLE_PANELS, TAG_DISABLE_PANELS),
@@ -919,13 +685,22 @@ export function createSettings(
         read(PROFILE_SCRIPTURE_ELEMENTS, TAG_SCRIPTURE_ELEMENTS),
         DEFAULT_SETTINGS.scriptureElements
       ),
+      // The legacy key is checked inside each layer, not after all of them,
+      // so a profile's old value still outranks a newer one on the device.
+      verseLineHeight: parseNumber(
+        getProfileConfigValue(profile, PROFILE_VERSE_LINE_HEIGHT) ??
+          readLegacyVerseLineHeight(
+            getProfileConfigValue(profile, PROFILE_TEXT_CONFIG)
+          ) ??
+          sessionOverrides[TAG_VERSE_LINE_HEIGHT] ??
+          readLegacyVerseLineHeight(sessionOverrides[TAG_TEXT_CONFIG]) ??
+          local[PROFILE_VERSE_LINE_HEIGHT] ??
+          readLegacyVerseLineHeight(local[PROFILE_TEXT_CONFIG]),
+        DEFAULT_SETTINGS.verseLineHeight
+      ),
       discoveredContent: parseDiscoveredContent(
         read(PROFILE_DISCOVERED_CONTENT, TAG_DISCOVERED_CONTENT),
         DEFAULT_SETTINGS.discoveredContent
-      ),
-      textConfig: parseTextConfig(
-        read(PROFILE_TEXT_CONFIG, TAG_TEXT_CONFIG),
-        DEFAULT_SETTINGS.textConfig
       ),
       verseSelectionEffects: parseVerseSelectionEffects(
         read(PROFILE_VERSE_SELECTION_EFFECTS, TAG_VERSE_SELECTION_EFFECTS),
@@ -954,14 +729,6 @@ export function createSettings(
         pinnedEmbedTheme ?? read(PROFILE_THEME_ID, TAG_THEME_ID),
         DEFAULT_SETTINGS.themeId
       ),
-      customTheme: pinnedEmbedTheme
-        ? {}
-        : parseStringRecord(read(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)),
-      customHighlights: pinnedEmbedTheme
-        ? {}
-        : parseHighlightOverrides(
-            read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
-          ),
       discoverContentPanelInline: parseBoolean(
         read(
           PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
@@ -1069,24 +836,6 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_DISCOVERED_CONTENT, next);
   };
 
-  const writeTextConfig = (next: TextConfig) => {
-    settings.value = { ...settings.value, textConfig: next };
-    sessionOverrides[TAG_TEXT_CONFIG] = next;
-    saveProfileConfigValue(login, PROFILE_TEXT_CONFIG, next);
-  };
-
-  const updateTextSection = (
-    section: TextSectionId,
-    patch: Partial<TextSectionConfig>
-  ) => {
-    const nextSection = { ...settings.value.textConfig[section], ...patch };
-    const nextTextConfig = {
-      ...settings.value.textConfig,
-      [section]: nextSection,
-    };
-    writeTextConfig(nextTextConfig);
-  };
-
   const setScriptureWidth = (width: number) => {
     if (!Number.isFinite(width)) return;
     const clamped = Math.max(
@@ -1110,35 +859,9 @@ export function createSettings(
 
   const setVerseLineHeight = (lineHeight: number) => {
     if (!Number.isFinite(lineHeight)) return;
-    const current = settings.value.textConfig;
-    const nextTextConfig: TextConfig = {
-      ...current,
-      verse: { ...current.verse, lineHeight },
-    };
-    writeTextConfig(nextTextConfig);
-  };
-
-  const resetTextConfig = () => {
-    settings.value = { ...settings.value, textConfig: DEFAULT_TEXT_CONFIG };
-    sessionOverrides[TAG_TEXT_CONFIG] = DEFAULT_TEXT_CONFIG;
-    saveProfileConfigValue(login, PROFILE_TEXT_CONFIG, DEFAULT_TEXT_CONFIG);
-  };
-
-  const resetTextColors = () => {
-    const current = settings.value.textConfig;
-    let changed = false;
-    const next = {} as TextConfig;
-    for (const section of Object.keys(current) as TextSectionId[]) {
-      const cfg = current[section];
-      if (cfg.color !== "") {
-        changed = true;
-        next[section] = { ...cfg, color: "" };
-      } else {
-        next[section] = cfg;
-      }
-    }
-    if (!changed) return;
-    writeTextConfig(next);
+    settings.value = { ...settings.value, verseLineHeight: lineHeight };
+    sessionOverrides[TAG_VERSE_LINE_HEIGHT] = lineHeight;
+    saveProfileConfigValue(login, PROFILE_VERSE_LINE_HEIGHT, lineHeight);
   };
 
   const writeToolbarConfig = (next: ToolbarCustomization) => {
@@ -1226,20 +949,6 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_THEME_ID, themeId);
   };
 
-  const setCustomTheme = (next: Record<string, string>) => {
-    settings.value = { ...settings.value, customTheme: next };
-    sessionOverrides[TAG_CUSTOM_THEME] = next;
-    saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, next);
-  };
-
-  const setCustomHighlights = (
-    next: Record<string, Partial<ThemeHighlightColor>>
-  ) => {
-    settings.value = { ...settings.value, customHighlights: next };
-    sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = next;
-    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
-  };
-
   const setDiscoverContentPanelInline = (
     discoverContentPanelInline: boolean
   ) => {
@@ -1251,6 +960,13 @@ export function createSettings(
       PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
       discoverContentPanelInline
     );
+  };
+
+  const setFontOverride: SettingsManager["setFontOverride"] = (override) => {
+    const stored = override ?? NO_FONT_OVERRIDE;
+    settings.value = { ...settings.value, fontOverride: override };
+    sessionOverrides[TAG_FONT_OVERRIDE] = stored;
+    saveProfileConfigValue(login, PROFILE_FONT_OVERRIDE, stored);
   };
 
   const setAllSettings = (next: AppSettings) => {
@@ -1277,9 +993,9 @@ export function createSettings(
     sessionOverrides[TAG_SELECTION_UI] = DEFAULT_SETTINGS.selectionUI;
     sessionOverrides[TAG_SCRIPTURE_ELEMENTS] =
       DEFAULT_SETTINGS.scriptureElements;
+    sessionOverrides[TAG_VERSE_LINE_HEIGHT] = DEFAULT_SETTINGS.verseLineHeight;
     sessionOverrides[TAG_DISCOVERED_CONTENT] =
       DEFAULT_SETTINGS.discoveredContent;
-    sessionOverrides[TAG_TEXT_CONFIG] = DEFAULT_SETTINGS.textConfig;
     sessionOverrides[TAG_TOOLBAR] = DEFAULT_SETTINGS.toolbar;
     sessionOverrides[TAG_KEEP_AWAKE] = DEFAULT_SETTINGS.keepScreenAwake;
     sessionOverrides[TAG_ASK_TO_SWITCH_UI_LANGUAGE] =
@@ -1287,10 +1003,9 @@ export function createSettings(
     sessionOverrides[TAG_CUSTOM_HIGHLIGHT_COLORS] = [];
     sessionOverrides[TAG_SCRIPTURE_WIDTH] = DEFAULT_SETTINGS.scriptureWidth;
     sessionOverrides[TAG_THEME_ID] = DEFAULT_SETTINGS.themeId;
-    sessionOverrides[TAG_CUSTOM_THEME] = {};
-    sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
     sessionOverrides[TAG_DISCOVER_CONTENT_PANEL_INLINE] =
       DEFAULT_SETTINGS.discoverContentPanelInline;
+    sessionOverrides[TAG_FONT_OVERRIDE] = NO_FONT_OVERRIDE;
     sessionOverrides[TAG_VERSE_SELECTION_EFFECTS] =
       DEFAULT_SETTINGS.verseSelectionEffects ?? "default";
 
@@ -1318,6 +1033,11 @@ export function createSettings(
     );
     saveProfileConfigValue(
       login,
+      PROFILE_VERSE_LINE_HEIGHT,
+      DEFAULT_SETTINGS.verseLineHeight
+    );
+    saveProfileConfigValue(
+      login,
       PROFILE_DISCOVERED_CONTENT,
       DEFAULT_SETTINGS.discoveredContent
     );
@@ -1325,11 +1045,6 @@ export function createSettings(
       login,
       PROFILE_VERSE_SELECTION_EFFECTS,
       DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
-    );
-    saveProfileConfigValue(
-      login,
-      PROFILE_TEXT_CONFIG,
-      DEFAULT_SETTINGS.textConfig
     );
     saveProfileConfigValue(login, PROFILE_TOOLBAR, DEFAULT_SETTINGS.toolbar);
     saveProfileConfigValue(
@@ -1349,13 +1064,12 @@ export function createSettings(
       DEFAULT_SETTINGS.scriptureWidth
     );
     saveProfileConfigValue(login, PROFILE_THEME_ID, DEFAULT_SETTINGS.themeId);
-    saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, {});
-    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, {});
     saveProfileConfigValue(
       login,
       PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
       DEFAULT_SETTINGS.discoverContentPanelInline
     );
+    saveProfileConfigValue(login, PROFILE_FONT_OVERRIDE, NO_FONT_OVERRIDE);
   };
 
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
@@ -1370,10 +1084,23 @@ export function createSettings(
     document.documentElement.style.setProperty("--sb-ui-scale", String(scale));
   });
 
-  // Publish per-section text config as CSS variables (`--text-<section>-*`)
-  // so reader styles can consume typography preferences.
   effect(() => {
-    applyTextConfigToCSSVars(settings.value.textConfig);
+    if (typeof document === "undefined") return;
+    const root = document.documentElement.style;
+    const override = settings.value.fontOverride;
+    if (override) {
+      root.setProperty("--sb-scripture-font-override", override);
+    } else {
+      root.removeProperty("--sb-scripture-font-override");
+    }
+  });
+
+  effect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.style.setProperty(
+      "--text-verse-line-height",
+      String(settings.value.verseLineHeight)
+    );
   });
 
   // Publish the scripture margin (%) as a CSS variable consumed by
@@ -1408,11 +1135,8 @@ export function createSettings(
     setSelectionUI,
     setScriptureElements,
     setDiscoveredContent,
-    updateTextSection,
     setScriptureWidth,
     setVerseLineHeight,
-    resetTextColors,
-    resetTextConfig,
     setToolbarHidden,
     setToolbarOrder,
     resetToolbarConfig,
@@ -1422,9 +1146,8 @@ export function createSettings(
     setAllSettings,
     resetToDefaults,
     setThemeId,
-    setCustomTheme,
-    setCustomHighlights,
     setDiscoverContentPanelInline,
+    setFontOverride,
     setVerseSelectionEffects,
   };
 }

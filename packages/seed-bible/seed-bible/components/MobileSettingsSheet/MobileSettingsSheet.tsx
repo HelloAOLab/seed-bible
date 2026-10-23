@@ -3,7 +3,6 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   UI_SIZE_OPTIONS,
   VERSE_LINE_HEIGHT_OPTIONS,
-  DEFAULT_VERSE_LINE_HEIGHT,
   type UISize,
 } from "../../managers/SettingsManager";
 import { useI18n } from "../../i18n/I18nManager";
@@ -26,8 +25,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
   const fontSizeIndex = FONT_SIZE_OPTIONS.indexOf(
     fontSize as (typeof FONT_SIZE_OPTIONS)[number]
   );
-  const currentLineHeight =
-    current.textConfig.verse.lineHeight ?? DEFAULT_VERSE_LINE_HEIGHT;
+  const currentLineHeight = current.verseLineHeight;
   const lineHeightIndex = (() => {
     const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLineHeight);
     return idx === -1 ? 0 : idx;
