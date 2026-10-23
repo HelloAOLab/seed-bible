@@ -2136,17 +2136,18 @@ export function Tabs(props: TabsProps) {
         {tabs.map((tab) => {
           const isSelected = tab.id === selectedTabId;
           const shortTitle = tab.readingState.shortTitle.value;
+          const fullTitle = tab.readingState.title.value || shortTitle;
           const session = tab.sharedSession;
           const sessionUsers = session?.connectedUsers.value ?? [];
           const isPlayingAudio = isTabPlayingAudio(state, tab);
           const label =
             session && sessionUsers.length > 0
               ? t("collapsed-tab-shared-label", {
-                  title: shortTitle,
+                  title: fullTitle,
                   count: sessionUsers.length,
                   defaultValue: "{{title}} — shared session, {{count}} present",
                 })
-              : shortTitle;
+              : fullTitle;
 
           return (
             <button
@@ -2158,7 +2159,7 @@ export function Tabs(props: TabsProps) {
               }}
               className={`sb-collapsed-tab-tile${
                 isSelected ? " sb-collapsed-tab-tile-selected" : ""
-              }${session ? " sb-collapsed-tab-tile-shared" : ""}`}
+              }`}
               aria-label={
                 isPlayingAudio
                   ? t("collapsed-tab-playing-label", {
@@ -2167,13 +2168,8 @@ export function Tabs(props: TabsProps) {
                     })
                   : label
               }
-              title={shortTitle}
+              title={fullTitle}
             >
-              {session && (
-                <span className="sb-collapsed-tab-tag">
-                  {t("shared", { defaultValue: "Shared" })}
-                </span>
-              )}
               <span className="sb-collapsed-tab-title">{shortTitle}</span>
               {isPlayingAudio && (
                 <MaterialIcon
