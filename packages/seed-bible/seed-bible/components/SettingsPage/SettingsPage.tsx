@@ -36,7 +36,7 @@ import {
   getDefaultTranslationLabel,
 } from "../CustomizationEditPane/CustomizationPreviews";
 import { UnusedSensitiveSettingsList } from "../ExtensionSettingsForm/SensitiveSettingsForm";
-import { download, translateTitle } from "../../app/utils";
+import { download } from "../../app/utils";
 import type { ExtensionListEntry } from "../../managers/ExtensionManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -1168,100 +1168,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   );
 }
 
-function ToolbarSettingsView(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { tools: toolsManager, settings } = state;
-  const { t } = useI18n();
-
-  const onBack = () => {
-    state.sidebar.requestedSettingsView.value = "main";
-  };
-
-  const available = toolsManager.listToolbarTools();
-  const toolbarConfig = settings.settings.value.toolbar;
-  const hiddenSet = new Set(toolbarConfig.hidden);
-
-  const allIds = available.map((tool) => tool.id);
-  const orderedIds = [
-    // Ignore the order for now as pr Issue #1384
-    // ...toolbarConfig.order.filter((id) => allIds.includes(id)),
-    ...allIds.filter((id) => !toolbarConfig.order.includes(id)),
-  ];
-
-  const toggleVisible = (id: string) => {
-    settings.setToolbarHidden(id, !hiddenSet.has(id));
-  };
-
-  const isCustomized =
-    toolbarConfig.hidden.length > 0 || toolbarConfig.order.length > 0;
-
-  return (
-    <div className="sb-settings-page">
-      <SettingsBreadcrumbs
-        onBack={onBack}
-        trail={["Page settings", "Toolbar"]}
-      />
-      <SettingsHero
-        icon="tune"
-        title={t("toolbar", { defaultValue: "Toolbar" })}
-        description={t("toolbar_description", {
-          defaultValue:
-            "Choose which reader toolbar tools appear and in what order.",
-        })}
-      />
-
-      <section className="sb-settings-section">
-        <ul className="sb-toolbar-config-list">
-          {orderedIds.map((id) => {
-            const tool = available.find((entry) => entry.id === id);
-            if (!tool || !tool.isControllable) return null;
-            const title = translateTitle(t, tool.title);
-            const isHidden = hiddenSet.has(id);
-
-            return (
-              <li
-                key={id}
-                className={`sb-toolbar-config-row${
-                  isHidden ? " sb-toolbar-config-row-hidden" : ""
-                }`}
-              >
-                <span className="sb-toolbar-config-title">{title}</span>
-                <div className="sb-settings-toggle-row sb-toolbar-config-toggle">
-                  <input
-                    type="checkbox"
-                    checked={!isHidden}
-                    aria-label={`${title} visibility`}
-                    onChange={(event: Event) => {
-                      const target = event.currentTarget as HTMLInputElement;
-                      settings.setToolbarHidden(id, !target.checked);
-                    }}
-                    onClick={(event: Event) => {
-                      event.stopPropagation();
-                      toggleVisible(id);
-                    }}
-                  />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-
-        {isCustomized && (
-          <div className="sb-settings-actions">
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={() => settings.resetToolbarConfig()}
-            >
-              {t("reset-toolbar", { defaultValue: "Reset toolbar" })}
-            </button>
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
-
 function TextFormattingToolbar(props: {
   sectionId: TextSectionId;
   section: TextSectionConfig;
@@ -2106,22 +2012,6 @@ function SettingsMainView(props: { state: SeedBibleState }) {
           </li>
           <li>
             <button
-              className="sb-settings-nav-item hide-on-mobile"
-              onClick={() => onNavigate("toolbar")}
-            >
-              <span className="sb-settings-nav-icon">
-                <MaterialIcon>tune</MaterialIcon>
-              </span>
-              <span className="sb-settings-nav-label">
-                {t("toolbar", { defaultValue: "Toolbar" })}
-              </span>
-              <span className="material-symbols-outlined rtl-mirror">
-                chevron_right
-              </span>
-            </button>
-          </li>
-          <li>
-            <button
               className="sb-settings-nav-item"
               onClick={() =>
                 // A phone has no room beside the sidebar for the full page.
@@ -2281,7 +2171,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
 
 export function SettingsPage(props: { state: SeedBibleState }) {
   const { state } = props;
-  // Honor a deep-link requested by the sidebar (e.g. `?settingsView=toolbar`).
+  // Honor a deep-link requested by the sidebar (e.g. `?settingsView=extensions`).
   const currentView = state.sidebar.requestedSettingsView;
 
   if (currentView.value === "display-and-theme") {
@@ -2290,10 +2180,6 @@ export function SettingsPage(props: { state: SeedBibleState }) {
 
   if (currentView.value === "display-and-theme-all-settings") {
     return <AllSettingsView state={state} />;
-  }
-
-  if (currentView.value === "toolbar") {
-    return <ToolbarSettingsView state={state} />;
   }
 
   if (currentView.value === "extensions") {
