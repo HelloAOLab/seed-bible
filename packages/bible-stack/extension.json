@@ -1,6 +1,5 @@
 {
   "id": "bible-stack",
-  "dependencies": ["seed-bible-utils"],
   "translations": {
     "en": {
       "title": "Bible Stack",

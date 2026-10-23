@@ -1,36 +1,32 @@
 {
-  "name": "@seed-bible/ai-transcript-extension",
+  "name": "@seed-bible/transcription",
   "version": "1.0.0",
-  "description": "",
+  "description": "Turns sermon audio into a transcript and finds the Bible references in it. Shared by the transcript and Twitch extensions.",
   "type": "module",
   "private": true,
   "exports": {
     "./transcriptionManager": {
-      "import": "./ext_AI_Transcript/main/transcriptionManager.tsx"
+      "import": "./transcriptionManager.tsx"
     },
     "./explicit": {
-      "import": "./ext_AI_Transcript/main/explicit.tsx"
+      "import": "./explicit.tsx"
     },
     "./transcribe": {
-      "import": "./ext_AI_Transcript/main/transcribe.tsx"
+      "import": "./transcribe.tsx"
     },
     "./highlight": {
-      "import": "./ext_AI_Transcript/main/highlight.tsx"
+      "import": "./highlight.tsx"
     },
     "./infer": {
-      "import": "./ext_AI_Transcript/main/infer.tsx"
+      "import": "./infer.tsx"
     },
     "./types": {
-      "import": "./ext_AI_Transcript/main/types.tsx"
+      "import": "./types.tsx"
     },
     "./osis": {
-      "import": "./ext_AI_Transcript/main/osis.tsx"
+      "import": "./osis.tsx"
     }
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
@@ -40,7 +36,6 @@
     "seed-bible": "workspace:*",
     "uuid": "catalog:"
   },
-  "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.17.1"
 }

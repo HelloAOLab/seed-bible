@@ -1099,8 +1099,7 @@ describe("createExtensionManager", () => {
           import: importModule("pkg://autoinstall-dependency"),
           meta: {
             id: "ext.autoinstall-dependency",
-            // No autoinstall flag - only force-installed as a dependency,
-            // mirroring seed-bible-utils/scripture-map in production.
+            // No autoinstall flag - only force-installed as a dependency.
             translations: {
               en: {
                 title: "Dependency",
@@ -1697,7 +1696,7 @@ describe("createExtensionManager", () => {
   });
 
   it("unloadExtension() records the extension in the autoinstall-handled set even when it never had autoinstall:true", async () => {
-    // Mirrors seed-bible-utils in production: an extension that's only ever
+    // An extension that's only ever
     // force-installed as another extension's dependency, never carrying
     // autoinstall:true itself, so loadDefaultExtensions's batch marking never
     // touches it - this is the only path that records its uninstall.
