@@ -71,7 +71,7 @@ This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader.
 
 Separate packages that `export default` a function which, when called, calls `registerExtension({ id, init })`; the `init(context)` generator receives the `SeedBibleState` and yields cleanup functions. `ExtensionManager` invokes the default export on every install attempt (not just once at module load), which is what allows an extension to be uninstalled and reinstalled within the same session. `seed-bible-refresh-example-extension` is the reference template.
 
-Built-in extensions never depend on each other: no `dependencies` in `extension.json` or `registerExtension`, and no imports from another extension's package. Code two extensions share goes in a shared package — a `packages/<name>/` with no `extension.json` (e.g. `bible-locations`, `transcription`, `seed-bible-utils`) — and the bundler splits it into a chunk loaded with whichever extension needs it first. `test/unit/script/extensionBoundaries.test.ts` enforces this; see `docs/developer-guide.md` §4.4.
+Built-in extensions never depend on each other: no `dependencies` in `extension.json` or `registerExtension`, and no imports from another extension's package. Code two extensions share goes in a shared package — a `packages/<name>/` with no `extension.json` (e.g. `bible-locations`, `transcription`, `seed-bible-utils`) — and the bundler splits it into a chunk loaded with whichever extension needs it first. `test/unit/script/extensionBoundaries.test.ts` enforces this; see `docs/developer-guide.md` §8.2.4.
 
 ### Tests (`test/`)
 

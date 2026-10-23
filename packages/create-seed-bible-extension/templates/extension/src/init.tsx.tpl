@@ -3,8 +3,8 @@ import { defineExtension } from "seed-bible/extensions";
 // A starting point that shows how a sandboxed extension fits together. It
 // runs in its own iframe, isolated from Seed Bible, and reaches the app only
 // through `sb`, which checks every call against the permissions the user
-// granted. For the whole API, see §7 of docs/developer-guide.md in the
-// seed-bible repository.
+// granted. For the whole API, see docs/extension-api.md in the seed-bible
+// repository.
 export default defineExtension({
   // Runs once, in a hidden frame, when the extension starts.
   main: async (sb) => {

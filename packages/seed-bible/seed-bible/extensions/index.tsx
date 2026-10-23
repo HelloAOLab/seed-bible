@@ -75,8 +75,31 @@ export type {
 };
 export { SANDBOX_PERMISSIONS, SANDBOX_PERMISSION_INFO } from "./protocol";
 
-/** Why a call to the host failed; `code` says which way. */
+/**
+ * Why a call to Seed Bible failed. Every `sb.*` promise rejects with one of
+ * these when the app refuses or can't complete the call.
+ *
+ * - `permission_denied`: the call needs a permission that isn't granted.
+ * - `invalid_request`: bad arguments, a main-only call from a view, or a call
+ *   that needs a user interaction made at another time. `message` says which.
+ * - `not_found`: the pane, note, save or narration named doesn't exist.
+ * - `limit_exceeded`: too many tools or panes, storage full, a dialog
+ *   already open, or a response too large.
+ * - `unavailable`: not possible right now (signed out, a service failed, a
+ *   device couldn't be used, no reader open).
+ * - `internal`: a bug in Seed Bible itself.
+ *
+ * @example
+ * try {
+ *   await sb.notes.create({ bookId: "JHN", chapter: 3, text: "…" });
+ * } catch (err) {
+ *   if (err instanceof SandboxError && err.code === "unavailable") {
+ *     void sb.app.toast("Sign in to save notes.");
+ *   }
+ * }
+ */
 export class SandboxError extends Error {
+  /** Which way the call failed; see {@link SandboxError}. */
   readonly code: SandboxErrorCode;
 
   constructor(code: SandboxErrorCode, message: string) {
@@ -86,6 +109,7 @@ export class SandboxError extends Error {
   }
 }
 
+/** What a tool's `onSelect` is called with. */
 export interface SandboxToolSelectContext {
   /** The selected verses. Empty unless `reading:selection` is granted. */
   selection: SandboxSelectedVerse[];
@@ -93,49 +117,102 @@ export interface SandboxToolSelectContext {
 
 type ToolFlag = boolean | ReadonlySignal<boolean>;
 
+/** One entry in a tool's submenu (`SandboxToolOptions.items`). */
 export interface SandboxToolItemOptions {
+  /** Unique within the tool: letters, digits, `_`, `.` or `-`, up to 64. */
   id: string;
   title: SandboxTitle;
   icon?: SandboxIcon;
   isDisabled?: boolean;
+  /**
+   * Called when the user picks this entry. Counts as a user interaction, so
+   * it may open dialogs, copy, play audio or ask for permissions.
+   */
   onSelect: (context: SandboxToolSelectContext) => void | Promise<void>;
 }
 
+/** A button registered with one of the `sb.tools.register…` methods. */
 export interface SandboxToolOptions {
+  /**
+   * Unique within this extension: letters, digits, `_`, `.` or `-`, up to
+   * 64. Registering again with the same id replaces the tool.
+   */
   id: string;
+  /** The button's label or tooltip. */
   title: SandboxTitle;
+  /** A Material Symbols name (`{ material: "palette" }`) or an inline SVG. */
   icon: SandboxIcon;
-  /** Clamped by the host to 200–999, after the app's own tools. */
+  /**
+   * Lower comes first; defaults to 500. Clamped by the host to 200–999, so
+   * it always comes after the app's own tools.
+   */
   priority?: number;
-  /** A signal keeps the host up to date as it changes. */
+  /** A signal keeps the host up to date as it changes. Defaults to visible. */
   isVisible?: ToolFlag;
+  /** A signal keeps the host up to date as it changes. */
   isDisabled?: ToolFlag;
-  /** Mutually exclusive with `items`. */
+  /**
+   * Called when the user selects the tool. Counts as a user interaction, so
+   * it may open dialogs, copy, play audio or ask for permissions. Errors it
+   * throws are logged, not shown. Mutually exclusive with `items`.
+   */
   onSelect?: (context: SandboxToolSelectContext) => void | Promise<void>;
+  /** A submenu of 1–20 entries, instead of `onSelect`. */
   items?: SandboxToolItemOptions[];
 }
 
+/** Returned by the `sb.tools.register…` methods. */
 export interface SandboxToolHandle {
+  /**
+   * Changes any field but `id` and `onSelect`. Passing `items` replaces the
+   * whole submenu, handlers included.
+   */
   update: (
     patch: Partial<Omit<SandboxToolOptions, "id" | "onSelect">>
   ) => Promise<void>;
+  /** Removes the button. */
   unregister: () => Promise<void>;
 }
 
+/** Returned by `sb.portals.open`: a pane handle, plus messaging. */
 export interface SandboxPortalHandle extends SandboxPaneHandle {
-  /** Sends a message into the portal's CasualOS instance. */
+  /**
+   * Sends a JSON message (at most 64 KB) into the portal's CasualOS
+   * instance. Rejects with `unavailable` until the portal has loaded.
+   */
   send: (message: SandboxJsonValue) => Promise<void>;
-  /** Called with each message the portal's CasualOS instance sends. */
+  /** Called with each message the pattern sends with `os.sendEmbedMessage`. */
   onMessage: (listener: (message: unknown) => void) => void;
 }
 
+/** Returned by `sb.panes.open`. */
 export interface SandboxPaneHandle {
+  /** The pane's id, for `sb.panes.close`. */
   paneId: string;
+  /** Closes the pane. */
   close: () => Promise<void>;
   /** Called once when the pane closes, however it closed. */
   onClose: (listener: () => void) => void;
 }
 
+/**
+ * The API a sandboxed extension uses to reach Seed Bible, handed to `main`
+ * and to every view as `sb`.
+ *
+ * Each method sends a message to the app, which checks it against the
+ * permissions the user granted, so nearly all of them return a promise that
+ * rejects with a {@link SandboxError} when refused. Values that change while
+ * the extension runs are signals: read `.value`, inside a component or an
+ * `effect`, to follow them.
+ *
+ * Some calls are marked "Main code only": they reject with
+ * `invalid_request` when called from a view. Some are marked "Only right
+ * after the user interacts with this extension": call them from a tool's
+ * `onSelect` or a click in one of your views, or they reject with
+ * `invalid_request`.
+ *
+ * Full reference: `docs/extension-api.md` in the seed-bible repository.
+ */
 export interface SandboxContext {
   /**
    * The id Seed Bible knows this extension by: the folder its bundle is
@@ -143,11 +220,20 @@ export interface SandboxContext {
    * `https://example.com/extensions/#verse-art`.
    */
   extensionId: string;
+  /** What the user has granted, and a way to ask for optional permissions. */
   permissions: {
-    /** What the user has granted so far. */
+    /**
+     * What the user has granted so far, including what those imply
+     * (`highlights:write` includes `highlights:read`).
+     */
     granted: ReadonlySignal<readonly SandboxPermission[]>;
     /** What `extension.json` lists under `optionalPermissions`. */
     optional: readonly SandboxPermission[];
+    /**
+     * Whether `permission` is granted right now. Check it when a feature
+     * runs, not once at startup: the user can change optional permissions
+     * in Settings (which restarts the extension).
+     */
     has: (permission: SandboxPermission) => boolean;
     /**
      * Asks the user for one or more of the extension's `optionalPermissions`,
@@ -158,19 +244,33 @@ export interface SandboxContext {
      * The user is only asked right after they interact with this extension
      * (by selecting one of its tools, or inside one of its panes), so call it
      * from the click handler of the feature that needs it. Otherwise it
-     * rejects with an `invalid_request` `SandboxError`.
+     * rejects with an `invalid_request` `SandboxError`, as it does for a
+     * permission not listed under `optionalPermissions`.
+     *
+     * @example
+     * onSelect: async () => {
+     *   if (await sb.permissions.request("clipboard:write")) {
+     *     await sb.clipboard.writeText("John 3:16");
+     *   }
+     * }
      */
     request: (
       permissions: SandboxPermission | SandboxPermission[]
     ) => Promise<boolean>;
   };
+  /** The extension's own translations, from `extension.json`. */
   i18n: {
+    /** The app's current language code, like `"en"` or `"es"`. */
     language: ReadonlySignal<string>;
+    /** The current language's text direction. Already set on `<html>`. */
     direction: ReadonlySignal<"ltr" | "rtl">;
     /**
      * Looks `key` up in this extension's own `extension.json` translations
-     * for the current language (falling back to `en`), and fills `{{name}}`
-     * placeholders from `values`.
+     * for the current language (falling back to `en`, then `defaultValue`,
+     * then `key`), and fills `{{name}}` placeholders from `values`.
+     *
+     * @example
+     * sb.i18n.t("found", "Found {{count}} verses", { count: 3 });
      */
     t: (
       key: string,
@@ -178,64 +278,134 @@ export interface SandboxContext {
       values?: Record<string, string | number>
     ) => string;
   };
+  /** The app itself. */
   app: {
+    /** Whether the app is in its phone layout. */
     isMobile: ReadonlySignal<boolean>;
-    /** Shows a toast, labelled with this extension's name. */
+    /**
+     * Shows a short message (1–300 characters), prefixed with this
+     * extension's name.
+     */
     toast: (message: string) => Promise<void>;
   };
+  /** What the user is reading. */
   reading: {
-    /** Null unless `reading:position` is granted. */
+    /**
+     * The passage in the reader in view; any field is null before something
+     * is open. Null unless `reading:position` is granted.
+     */
     position: ReadonlySignal<SandboxReadingPosition | null>;
-    /** Empty unless `reading:selection` is granted. */
+    /** The verses the user has selected. Empty unless `reading:selection` is granted. */
     selection: ReadonlySignal<SandboxSelectedVerse[]>;
-    /** Needs `reading:navigate`. */
+    /**
+     * Moves the reader to a book and chapter, scrolled to `verse` if given.
+     * Needs `reading:navigate`.
+     */
     open: (ref: SandboxVerseRef) => Promise<void>;
   };
+  /**
+   * Buttons in the app's toolbars. Main code only. At most 20 per extension
+   * (`limit_exceeded` past that).
+   *
+   * @example
+   * await sb.tools.registerToolbarTool({
+   *   id: "art",
+   *   title: { key: "make-art", defaultValue: "Make art" },
+   *   icon: { material: "palette" },
+   *   onSelect: () =>
+   *     void sb.panes.open({ view: "art", placement: "side", title: "Art" }),
+   * });
+   */
   tools: {
+    /** A button in the reader's main toolbar. */
     registerToolbarTool: (
       tool: SandboxToolOptions
     ) => Promise<SandboxToolHandle>;
+    /**
+     * A button in the toolbar shown when the user selects verses. Its
+     * `onSelect` gets the selection if `reading:selection` is granted.
+     */
     registerVerseToolbarTool: (
       tool: SandboxToolOptions
     ) => Promise<SandboxToolHandle>;
+    /** A compact icon in the row above the reader. */
     registerQuickTool: (tool: SandboxToolOptions) => Promise<SandboxToolHandle>;
+    /** A button below the chapter text. */
     registerBelowReaderTool: (
       tool: SandboxToolOptions
     ) => Promise<SandboxToolHandle>;
   };
+  /**
+   * Panes (the app's windows) showing one of your `views`. The host draws
+   * the frame: title, close button and a badge with the extension's name.
+   * At most 5 open at once, portals included.
+   */
   panes: {
+    /**
+     * Opens one of your `views` in a pane. Opening with the `id` of a pane
+     * that's already open replaces its content instead of opening another.
+     * Rejects with `limit_exceeded` past 5 open panes.
+     */
     open: (options: SandboxPaneOptions) => Promise<SandboxPaneHandle>;
+    /** Closes one of this extension's panes; `not_found` if it isn't open. */
     close: (paneId: string) => Promise<void>;
   };
   /**
    * A small key/value store of this extension's own, kept by the host. A
-   * sandboxed frame has no `localStorage` of its own.
+   * sandboxed frame has no `localStorage` of its own. At most 256 KB in all
+   * (`limit_exceeded` past that); keys up to 200 characters. Synced to the
+   * user's account while they're signed in (the later write to a key wins),
+   * kept on the device while signed out, and deleted on uninstall. Needs no
+   * permission. Don't keep secrets here: use sensitive settings.
    */
   storage: {
+    /** The value stored under `key`, or null if there isn't one. */
     get: <T extends SandboxJsonValue = SandboxJsonValue>(
       key: string
     ) => Promise<T | null>;
+    /** Stores any JSON value under `key`, replacing what was there. */
     set: (key: string, value: SandboxJsonValue) => Promise<void>;
+    /** Removes `key`; does nothing if it isn't set. */
     remove: (key: string) => Promise<void>;
+    /** Every key that's set. */
     keys: () => Promise<string[]>;
   };
   /** This extension's own (non-sensitive) settings from `extension.json`. */
   settings: {
+    /**
+     * The setting's current value: the user's own, else the active
+     * Customization's default, else its `default` in `extension.json`, else
+     * null. Always null for a sensitive setting or an undeclared key. Not
+     * pushed on change, so read it again when you need it.
+     */
     get: (key: string) => Promise<string | number | boolean | null>;
     /**
      * Shows one of your `views` as this extension's settings, on its
-     * Settings tab in Settings → Extensions. Main code only.
+     * Settings tab in Settings → Extensions, with `surface: "settings"`.
+     * Calling it again replaces the panel. Main code only.
      */
     registerPanel: (view: string) => Promise<void>;
   };
   /**
    * An id for the signed-in user that's the same every time for this
    * extension but different for every extension, and isn't their real id.
-   * Null when signed out. Needs no permission.
+   * Null when signed out. Needs no permission. A friend's or session
+   * participant's `id` is that person's `identity` in this extension.
    */
   identity: ReadonlySignal<string | null>;
   /** Public Bible text. Needs no permission. */
   bible: {
+    /**
+     * Each verse of a chapter as plain text (no section headings). Rejects
+     * with `unavailable` if the translation or chapter can't be loaded.
+     *
+     * @example
+     * const { verses } = await sb.bible.chapter({
+     *   translationId: "BSB",
+     *   bookId: "JHN",
+     *   chapter: 3,
+     * });
+     */
     chapter: (ref: {
       translationId: string;
       bookId: string;
@@ -244,12 +414,21 @@ export interface SandboxContext {
   };
   /** Reading needs `highlights:read`; adding and removing, `highlights:write`. */
   highlights: {
-    /** The highlight color ids the current theme has. */
+    /**
+     * The highlight color ids the current theme has, for `add`'s `colorId`.
+     * Needs no permission.
+     */
     colors: () => Promise<string[]>;
+    /** The chapter's highlights. Needs `highlights:read`. */
     list: (ref: ChapterRef) => Promise<SandboxHighlight[]>;
+    /**
+     * Highlights 1–200 verses in one of `colors()`; any other `colorId`
+     * rejects with `invalid_request`. Needs `highlights:write`.
+     */
     add: (
       ref: ChapterRef & { verses: number[]; colorId: string }
     ) => Promise<void>;
+    /** Removes the highlight from those verses. Needs `highlights:write`. */
     remove: (ref: ChapterRef & { verses: number[] }) => Promise<void>;
   };
   /**
@@ -258,19 +437,34 @@ export interface SandboxContext {
    * Writing needs the user to be signed in (`unavailable` otherwise).
    */
   notes: {
+    /** The chapter's notes; empty when signed out. Needs `notes:read`. */
     list: (ref: { bookId: string; chapter: number }) => Promise<SandboxNote[]>;
+    /**
+     * Adds a note (1–10,000 characters) on `verses`, or the whole chapter
+     * without them, marked as this extension's. Blank lines become
+     * paragraphs. Needs `notes:write`.
+     */
     create: (note: {
       bookId: string;
       chapter: number;
       verses?: number[];
       text: string;
     }) => Promise<{ id: string }>;
+    /**
+     * Replaces the text of a note this extension added. `permission_denied`
+     * for anyone else's note; `not_found` if it isn't in that chapter.
+     * Needs `notes:write`.
+     */
     update: (note: {
       id: string;
       bookId: string;
       chapter: number;
       text: string;
     }) => Promise<void>;
+    /**
+     * Deletes a note this extension added, with the same rules as
+     * `update`. Needs `notes:write`.
+     */
     delete: (note: {
       id: string;
       bookId: string;
@@ -279,23 +473,45 @@ export interface SandboxContext {
   };
   /** Reading needs `saves:read`; writing, `saves:write` and a signed-in user. */
   saves: {
+    /** Every save (bookmark) the user has. Needs `saves:read`. */
     list: () => Promise<SandboxSave[]>;
+    /**
+     * Saves a chapter, a verse or an inclusive `[start, end]` range, in up
+     * to 10 categories. Needs `saves:write`; `unavailable` when signed out.
+     */
     add: (
       save: ChapterRef & {
         verse?: number | [number, number];
         categories?: string[];
       }
     ) => Promise<void>;
+    /**
+     * Removes a save by its id; `not_found` if there isn't one. Needs
+     * `saves:write`; `unavailable` when signed out.
+     */
     remove: (id: string) => Promise<void>;
   };
   /** Needs `reading:history`. Times in ms since the epoch, at most a year apart. */
   history: {
+    /**
+     * The chapters the user read between `from` and `to`, one event per
+     * sitting, up to 5,000.
+     *
+     * @example
+     * const lastWeek = await sb.history.list({
+     *   from: Date.now() - 7 * 24 * 60 * 60 * 1000,
+     *   to: Date.now(),
+     * });
+     */
     list: (range: {
       from: number;
       to: number;
     }) => Promise<SandboxReadingEvent[]>;
   };
-  /** Needs `profile:read`. Null when signed out. */
+  /**
+   * Needs `profile:read`. Null when signed out. Includes the user's real
+   * account id; to tell users apart without it, use `identity`.
+   */
   profile: { get: () => Promise<SandboxProfile | null> };
   /**
    * Needs `friends:read`. Empty when signed out. Ids are pseudonymous like
@@ -317,6 +533,7 @@ export interface SandboxContext {
    * with this extension. Each `play…` resolves when playback ends:
    * `finished` is false if it was stopped (by `stop()`, the user, something
    * else playing there, or the tab closing) rather than played to the end.
+   * Calls reject with `unavailable` when no reader is open to play in.
    */
   audio: {
     /** An audio file from one of the manifest's `network` hosts (`https:`). */
@@ -324,39 +541,62 @@ export interface SandboxContext {
     /**
      * The app's recorded narration of a chapter, by `reader` (see
      * `narrators`), or the first there is. Rejects with `not_found` when
-     * the chapter has none.
+     * the chapter has none; fall back to `readAloud`.
      */
     playNarration: (
       ref: ChapterRef & { reader?: string }
     ) => Promise<{ finished: boolean }>;
     /** Who has recorded narration for a chapter; empty when no one has. */
     narrators: (ref: ChapterRef) => Promise<string[]>;
-    /** Reads a chapter, or some of its verses, with the app's text-to-speech. */
+    /**
+     * Reads a chapter, or verses `fromVerse` to `toVerse` of it, with the
+     * app's text-to-speech.
+     */
     readAloud: (
       ref: ChapterRef & { fromVerse?: number; toVerse?: number }
     ) => Promise<{ finished: boolean }>;
+    /** Pauses what this extension is playing. */
     pause: () => Promise<void>;
+    /** Resumes it. Only right after the user interacts with this extension. */
     resume: () => Promise<void>;
     /** Seconds, or for `readAloud`, a verse index. */
     seek: (position: number) => Promise<void>;
+    /** Stops what this extension is playing; its `play…` resolves unfinished. */
     stop: () => Promise<void>;
     /** What this extension is playing; null when nothing is. */
     playback: ReadonlySignal<SandboxPlayback | null>;
   };
   /** Needs `clipboard:write`. Only right after the user interacts with this extension. */
-  clipboard: { writeText: (text: string) => Promise<void> };
+  clipboard: {
+    /** Copies up to 100,000 characters of text. */
+    writeText: (text: string) => Promise<void>;
+  };
   /**
    * CasualOS grid and map portals (`ao.bot` patterns), each in a pane the
-   * host draws. Needs `embed:casualos`.
+   * host draws. Needs `embed:casualos`. The pattern runs on `ao.bot`,
+   * outside the sandbox.
    */
   portals: {
+    /**
+     * Opens a portal in a pane. Counts toward the 5 open panes.
+     *
+     * @example
+     * const portal = await sb.portals.open({
+     *   pattern: { name: "my-pattern" },
+     *   portalType: "map",
+     *   placement: "side",
+     *   title: "Map",
+     * });
+     * portal.onMessage((message) => console.log(message));
+     */
     open: (options: SandboxPortalOptions) => Promise<SandboxPortalHandle>;
   };
   /**
    * The microphone and camera, through a dialog the host shows: the user
    * sees which extension is asking, presses the button themselves, and the
    * extension gets only the result. Only right after the user interacts
-   * with this extension. Each resolves null if the user cancels.
+   * with this extension, one dialog at a time. Each resolves null if the
+   * user cancels, and rejects with `unavailable` if the device can't be used.
    */
   devices: {
     /** Needs `device:microphone`. At most `maxSeconds` (default 60, up to 300). */
@@ -369,14 +609,26 @@ export interface SandboxContext {
    * since a provider is told which chapter is open. Main code only.
    */
   discover: {
+    /**
+     * Adds a provider the Discover panel asks for results whenever it needs
+     * them. `discover` must answer within 5 seconds with up to 50 results;
+     * otherwise, or if it throws, the provider shows nothing that time.
+     */
     registerProvider: (provider: {
+      /** Unique within this extension. */
       id: string;
+      /** Up to 100 characters. */
       title: string;
+      /** Up to 300 characters. */
       description: string;
+      /** Returns results for the chapter in `request`, as data. */
       discover: (
         request: SandboxDiscoverRequest
       ) => SandboxDiscoverResult[] | Promise<SandboxDiscoverResult[]>;
-      /** Called with a `content` result's `id` when the user picks it. */
+      /**
+       * Called with a `content` result's `id` when the user picks it. Not a
+       * user interaction, so open a pane from it rather than a dialog.
+       */
       onSelect?: (resultId: string) => void;
     }) => Promise<{ unregister: () => Promise<void> }>;
   };
@@ -385,11 +637,22 @@ export interface SandboxContext {
    * `chat:shared`. Main code only.
    */
   chats: {
+    /**
+     * Adds a participant the user can add to their chats. It only sees the
+     * chats it's added to. `respond` has 60 seconds to answer; past that,
+     * or if it throws, it says nothing that time.
+     */
     registerProvider: (provider: {
+      /** Unique within this extension. */
       id: string;
+      /** Shown as the participant's name; up to 100 characters. */
       name: string;
+      /** May be added to chats with other people. Needs `chat:shared`. */
       shared?: boolean;
-      /** Returns the reply, or null to stay quiet. */
+      /**
+       * Returns the reply (one whole message, up to 20,000 characters
+       * shown), or null to stay quiet. Gets the last 100 text messages.
+       */
       respond: (
         request: SandboxChatRequest
       ) => string | null | Promise<string | null>;
@@ -397,11 +660,13 @@ export interface SandboxContext {
   };
   /**
    * Dialogs, titled with the extension's name. Only right after the user
-   * interacts with this extension, one at a time. Each resolves when it's
-   * closed.
+   * interacts with this extension, one at a time (`limit_exceeded`
+   * otherwise). Each resolves when it's closed.
    */
   modals: {
+    /** A message (up to 2,000 characters) with an OK button. */
     alert: (dialog: { title: string; message: string }) => Promise<void>;
+    /** One of your `views`, shown with `surface: "modal"`. */
     open: (dialog: {
       title: string;
       view: string;
@@ -414,10 +679,30 @@ export interface SandboxContext {
    * the extension.
    */
   sensitive: {
+    /**
+     * Sends an `https:` request to a host the manifest's `sensitive` section
+     * declares, with the user's sensitive values filled in by the server.
+     * Resolves for any HTTP status, like `fetch`; `body` is the response
+     * text, up to 1 MB (`limit_exceeded` past that). Rejects with
+     * `unavailable` when it can't be sent; the message starts with why
+     * (`signed_out`, `not_set`, `unknown_destination`,
+     * `ambiguous_destination`, `invalid_url` or `request_failed`).
+     *
+     * @example
+     * const response = await sb.sensitive.fetch({
+     *   url: "https://api.example.com/v1/lookup",
+     *   method: "POST",
+     *   body: { reference: "JHN 3:16" },
+     * });
+     * const data = response.ok ? JSON.parse(response.body) : null;
+     */
     fetch: (request: {
       url: string;
+      /** Defaults to `GET`. */
       method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD";
+      /** Sent as JSON; a string is sent as-is. Ignored for GET and HEAD. */
       body?: unknown;
+      /** Which `sensitive` entry to use, if several declare the URL's host. */
       proxy?: string;
     }) => Promise<{
       status: number;
@@ -428,15 +713,21 @@ export interface SandboxContext {
   };
 }
 
+/** A chapter of a particular translation. */
 interface ChapterRef {
+  /** A Free Use Bible API translation id, like `"BSB"`. */
   translationId: string;
+  /** A three-letter USFM book code, like `"JHN"` or `"1CO"`. */
   bookId: string;
+  /** Starting at 1. */
   chapter: number;
 }
 
+/** What each of an extension's `views` is rendered with. */
 export interface SandboxViewProps {
+  /** The API, for this view's own frame. */
   sb: SandboxContext;
-  /** Whatever was passed as `props` when it was opened. */
+  /** Whatever was passed as `props` when it was opened; null if nothing. */
   props: SandboxJsonValue;
   /** Where the view is shown. */
   surface: "pane" | "modal" | "settings";
@@ -444,13 +735,20 @@ export interface SandboxViewProps {
   paneId: string;
 }
 
+/** What `defineExtension` takes. */
 export interface SandboxExtensionDefinition {
   /**
-   * Runs once in the extension's hidden background frame when it's
-   * installed: register tools here.
+   * Runs once in the extension's hidden background frame when it starts:
+   * register tools and providers here. If it throws, the extension fails
+   * to start. Don't wait on the user in it.
    */
   main?: (sb: SandboxContext) => void | Promise<void>;
-  /** The UI for each pane the extension opens, by name. */
+  /**
+   * The UI for each pane, dialog or settings panel the extension shows, by
+   * name. Each renders in its own frame, with the app's theme and fonts
+   * applied, and is destroyed when it closes. Styles must come from the
+   * bundle (inline, or CSS imported with `?inline`).
+   */
   views?: Record<string, (props: SandboxViewProps) => ComponentChild>;
 }
 

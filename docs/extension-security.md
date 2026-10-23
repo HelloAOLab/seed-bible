@@ -1,16 +1,16 @@
 # Third-Party Extension Security Model
 
-**Status:** Phase 1 (§9) is implemented; the later phases are still proposals. Where phase 1 ended up differing from the original plan, the text below says so, and §9 lists what it does and doesn't include. For how to write a sandboxed extension, see §7 of [`developer-guide.md`](./developer-guide.md).
+**Status:** Phase 1 (§9) is implemented; the later phases are still proposals. Where phase 1 ended up differing from the original plan, the text below says so, and §9 lists what it does and doesn't include. For how to write a sandboxed extension, see [`developer-guide.md`](./developer-guide.md) (its quick start and §4) and the [API reference](./extension-api.md).
 
 **Short version:** Third-party extensions should stop running as ordinary scripts inside the Seed Bible page. Instead, each one runs in its own sandboxed iframe that can't see the page, the user's login, or any user data. The extension declares the permissions it needs in `extension.json`. The user approves them when installing. From then on, the extension can only reach the app by sending messages to a "broker" in the host page, and the broker checks every message against what the user approved. Extensions built inside this repo (first-party) keep working exactly as they do today.
 
-This document builds on the extension system described in [`developer-guide.md`](./developer-guide.md), especially §3 (the two ways an extension reaches the app) and §8 (building an extension outside this repo).
+This document builds on the extension system described in [`developer-guide.md`](./developer-guide.md), especially §3 (how an extension works), §6 (running, building and shipping one) and §8 (built-in extensions).
 
 ---
 
 ## 1. The problem today
 
-There are two ways an extension gets into the app (developer guide §3):
+There are two ways an extension gets into the app (developer guide §§3 and 8):
 
 1. **Bundled**: the extension's source lives under `packages/`, is reviewed in a pull request, and is compiled into the app.
 2. **Loaded from a URL**: `ExtensionManager.loadExtensionFromUrl` calls `import(url)` on any URL, and `seed-bible-extension-scripts publish` + `discoverExtensionSet(url)` make this a real distribution path for third-party developers.

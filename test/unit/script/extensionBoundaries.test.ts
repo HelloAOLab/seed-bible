@@ -3,7 +3,7 @@ import path from "node:path";
 
 // Built-in extensions share code through shared packages (a `packages/<name>/`
 // with no `extension.json`), never by importing from, or depending on, one
-// another. See `docs/developer-guide.md` §4.4.
+// another. See `docs/developer-guide.md` §8.2.4.
 
 const packagesDir = path.resolve(__dirname, "../../../packages");
 

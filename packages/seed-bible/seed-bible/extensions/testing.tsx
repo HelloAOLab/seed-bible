@@ -67,7 +67,18 @@ export interface TestHostOptions {
   state?: Partial<SandboxState>;
   /** The extension's own settings, for `sb.settings.get`. */
   settings?: Record<string, string | number | boolean>;
-  /** Answers for calls the stand-in doesn't simulate, or replacements. */
+  /**
+   * Answers for calls the stand-in doesn't simulate (Bible text, user data,
+   * audio, devices, modals, sensitive requests), or replacements for ones it
+   * does, keyed by method: the `sb` path without `sb.`, so `sb.notes.create`
+   * is `"notes.create"`. Both `sb.modals` calls are `"modals.open"`. Without
+   * an answer, an unsimulated call rejects with a message naming it.
+   *
+   * @example
+   * answers: {
+   *   "bible.chapter": () => ({ verses: [{ number: 1, text: "In the beginning…" }] }),
+   * }
+   */
   answers?: { [M in SandboxMethod]?: TestAnswer<M> };
   /** The extension's id. Defaults to `"test-extension"`. */
   extensionId?: string;
@@ -93,9 +104,11 @@ export interface TestHost {
   tools: Map<string, SandboxToolDefinition>;
   /** Open panes and portals, by pane id. */
   panes: Map<string, TestPane>;
+  /** Every `sb.app.toast` message, in order. */
   toasts: string[];
   /** Every `sb.reading.open`. */
   opened: SandboxVerseRef[];
+  /** The extension's `sb.storage`. Set entries on it to seed storage. */
   storage: Map<string, SandboxJsonValue>;
   /** What `sb.clipboard.writeText` copied. */
   clipboard: string[];
@@ -144,7 +157,7 @@ export interface TestHost {
   ) => Promise<HTMLElement>;
   /** Waits until every message already sent between the two sides has arrived. */
   flush: () => Promise<void>;
-  /** Closes every channel. */
+  /** Closes every channel. Call it at the end of each test. */
   dispose: () => void;
 }
 

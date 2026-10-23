@@ -359,6 +359,42 @@ describe("PlayPlaylistView", () => {
     expect(playing.currentIndex.value).toBe(2);
   });
 
+  it("clicking the current queue item reopens it", () => {
+    const playlist = createPlaylist({
+      items: [
+        { type: "html", title: "Intro", html: "<p>Intro</p>" },
+        verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+      ],
+    });
+    const playing = createPlayingState([playlist]);
+    const showCurrentItem = vi.fn();
+    const jumpTo = vi.spyOn(playing, "jumpTo");
+    const { playlists } = createMockPlaylists(playing);
+    playlists.showCurrentItem = showCurrentItem;
+    const tabs = createMockTabs();
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const buttons = container.querySelectorAll(".sb-play-playlist-item-button");
+    act(() => {
+      buttons[0]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(showCurrentItem).toHaveBeenCalledTimes(1);
+    expect(jumpTo).not.toHaveBeenCalled();
+    expect(playing.currentIndex.value).toBe(0);
+  });
+
   it("shows a leading icon per item type", () => {
     const playlist = createPlaylist({
       items: [
