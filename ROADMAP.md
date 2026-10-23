@@ -6,7 +6,7 @@ This roadmap shows what we're working on and what comes next. Each item explains
 
 Want to help any of this happen sooner? [Here's how to get involved](#want-to-help).
 
-_Last updated 2026-10-19_
+_Last updated 2026-10-22_
 
 ## At a glance
 
@@ -19,7 +19,7 @@ _Last updated 2026-10-19_
 | 3   | [A friends feed on the Today screen](#3-a-friends-feed-on-the-today-screen)     | Community             | ✅ Done — more to come  |
 | 4   | [Private by default](#4-private-by-default)                                     | Privacy               | 💭 Planned              |
 | 5   | [A better customization editor](#5-a-better-customization-editor)               | Churches & ministries | 🚧 In progress          |
-| 6   | [Simpler bookmarks](#6-simpler-bookmarks)                                       | Reading               | ✅ Done                 |
+| 6   | [Simpler bookmarks](#6-simpler-bookmarks)                                       | Reading               | ✅ Done — more to come  |
 | 7   | [A gentler first visit](#7-a-gentler-first-visit)                               | First visit           | 🚧 In progress          |
 | 8   | [Extensions from other developers](#8-extensions-from-other-developers)         | Developers            | 🚧 In progress          |
 | 9   | [Developer documentation](#9-developer-documentation)                           | Developers            | 💭 Planned              |
@@ -31,6 +31,8 @@ _Last updated 2026-10-19_
 | 15  | [Switching between accounts](#15-switching-between-accounts)                    | Accounts              | 💭 Planned              |
 | 16  | [Connecting with other AI tools](#16-connecting-with-other-ai-tools)            | AI                    | 🚧 In progress          |
 | 17  | [Better shared reading sessions](#17-better-shared-reading-sessions)            | Community             | 🚧 In progress          |
+| 18  | [Playlists, rebuilt](#18-playlists-rebuilt)                                     | Study                 | 🚧 In progress          |
+| 19  | [Content matched to the right verses](#19-content-matched-to-the-right-verses)  | Churches & ministries | 💭 Planned              |
 
 ### How the pieces fit together
 
@@ -40,6 +42,8 @@ Several items are steps along the same path:
 - **Privacy needs groundwork (13 → 4).** Making something truly private means changing how it's stored, not just hiding it on screen. Reading history is the hardest piece to change, so it has its own item (13).
 - **Churches and ministries (1 → 5).** First, organizations need to be able to bring their own content (1). Then the tool they use to set up their own version of Seed Bible should get easier to use (5).
 - **AI (12 → 16).** First, Bonfire catches up with Seed Bible's other AI chat and learns to take actions for you (12). Then Seed Bible connects with other AI tools people already use (16).
+- **Playlists and AI (18, 12, 16).** Playlists are where much of the AI work pays off. AI chat can already build them (12), partners' AI will offer one at the end of a conversation (18), and outside AI tools will be able to make and share them (16).
+- **Getting content to the right chapter (19 → 1).** Working out which verses a video or article is about (19) is what lets any organization's content appear beside the right chapter (1).
 
 ---
 
@@ -65,14 +69,14 @@ Organizations do this through a **customization**: their own version of Seed Bib
 - A settings page where readers turn each source on or off. This is designed but not yet built.
 - One look for this content. The full-screen view will match the panel under the chapter. (We had planned to retire the full-screen view, but it's staying.)
 - On phones, show content for the verses you've selected right in the menu that opens when you select them, instead of only at the bottom of the chapter.
-- Polish before launch: the "All" filter misses some content, the panel occasionally doesn't appear, and its filters get cut off on wide screens. Reminders to mark off reading-plan days, in the panel and as pop-up notices, also turned out to be more distracting than helpful, so they're coming out.
+- Polish before launch: the "All" filter misses some content, and the panel occasionally doesn't appear. (Its filters getting cut off on wide screens is fixed.) Reminders to mark off reading-plan days, in the panel and as pop-up notices, also turned out to be more distracting than helpful, so they're coming out.
 
 **Still deciding**
 
 - What's the easiest way for an organization to supply content: a list in their customization, a link to a feed they already publish, or a small add-on? Add-ons work today, but building one asks a lot of someone who isn't a developer.
 - If a reader turns off a source their organization turned on, whose choice wins? We lean toward the reader's.
 
-_On GitHub:_ [#1719](https://github.com/HelloAOLab/seed-bible/issues/1719), [#2000](https://github.com/HelloAOLab/seed-bible/issues/2000), [#1998](https://github.com/HelloAOLab/seed-bible/issues/1998), [#1915](https://github.com/HelloAOLab/seed-bible/issues/1915), [#1917](https://github.com/HelloAOLab/seed-bible/issues/1917), [#1908](https://github.com/HelloAOLab/seed-bible/issues/1908), [#1994](https://github.com/HelloAOLab/seed-bible/issues/1994), [#1995](https://github.com/HelloAOLab/seed-bible/issues/1995), [#1830](https://github.com/HelloAOLab/seed-bible/issues/1830), [#1831](https://github.com/HelloAOLab/seed-bible/issues/1831), [#1868](https://github.com/HelloAOLab/seed-bible/issues/1868)
+_On GitHub:_ [#1719](https://github.com/HelloAOLab/seed-bible/issues/1719), [#2000](https://github.com/HelloAOLab/seed-bible/issues/2000), [#1998](https://github.com/HelloAOLab/seed-bible/issues/1998), [#1915](https://github.com/HelloAOLab/seed-bible/issues/1915), [#1917](https://github.com/HelloAOLab/seed-bible/issues/1917), [#1994](https://github.com/HelloAOLab/seed-bible/issues/1994), [#1995](https://github.com/HelloAOLab/seed-bible/issues/1995), [#1830](https://github.com/HelloAOLab/seed-bible/issues/1830), [#1831](https://github.com/HelloAOLab/seed-bible/issues/1831), [#1868](https://github.com/HelloAOLab/seed-bible/issues/1868)
 
 ---
 
@@ -185,7 +189,7 @@ _On GitHub:_ [#1983](https://github.com/HelloAOLab/seed-bible/pull/1983), [#1903
 
 ## 6. Simpler bookmarks
 
-✅ **Done.**
+✅ **Done**, with more to come.
 
 A bookmark is back to meaning what people expect: a marker for where you're up to, which you move along as you read. Collecting favorite passages is what Saves are for, and the old style of bookmarks has moved there.
 
@@ -196,7 +200,12 @@ A bookmark is back to meaning what people expect: a marker for where you're up t
 - **See at a glance** which of your bookmarks are on the chapter you're reading.
 - **Visible where you need them**: in your open tabs, on the Today screen, and in a sidebar panel for renaming, recoloring and deleting.
 
-_On GitHub:_ [#1984](https://github.com/HelloAOLab/seed-bible/pull/1984)
+**What's next**
+
+- **Black, gray and white bookmarks**, for people who don't want a bright color on every bookmark. Every bookmark also gets a subtle outline and shading, so each color stands out in both light and dark mode.
+- **A clearer bookmarks button in the Tabs menu.** It shows an outline when the bookmarks panel is closed and fills in when it's open, like the saves button beside it.
+
+_On GitHub:_ [#1984](https://github.com/HelloAOLab/seed-bible/pull/1984), [#2040](https://github.com/HelloAOLab/seed-bible/issues/2040), [#2039](https://github.com/HelloAOLab/seed-bible/issues/2039)
 
 ---
 
@@ -219,12 +228,15 @@ It's better, but still more than we'd like.
 - List every prompt a first-time visitor can see, and decide which to drop, combine or delay.
 - At most one prompt per visit, with the rest asked at the moment they become useful. For example, ask people to sign in when they first try to save something.
 - No flash of the wrong screen while the app loads.
+- **A tour offer that waits its turn.** The offer of a guided tour should appear only once you're actually reading, after a moment, and ease in. Today it can pop up the instant the Today screen closes, even over the sign-in screen.
+- **Back to where you were after signing in.** Signing in from your profile should return you to what you were doing, not leave you on your profile.
+- **Better tutorials throughout the app**, explaining each feature at the moment you first use it, not all at once on the first visit.
 
 **Still deciding**
 
 - Which prompts must stay on the first visit? Choosing a language is likely one, since everything else depends on being able to read it.
 
-_On GitHub:_ [#1813](https://github.com/HelloAOLab/seed-bible/issues/1813), [#1942](https://github.com/HelloAOLab/seed-bible/issues/1942), [#1886](https://github.com/HelloAOLab/seed-bible/issues/1886)
+_On GitHub:_ [#1813](https://github.com/HelloAOLab/seed-bible/issues/1813), [#1942](https://github.com/HelloAOLab/seed-bible/issues/1942), [#1886](https://github.com/HelloAOLab/seed-bible/issues/1886), [#2044](https://github.com/HelloAOLab/seed-bible/issues/2044), [#2045](https://github.com/HelloAOLab/seed-bible/issues/2045)
 
 ---
 
@@ -244,8 +256,9 @@ Extensions are add-ons that give Seed Bible new abilities, like audio narration,
 - A way for outside developers to publish extensions, and for readers to install and update them.
 - **Deciding how much to trust outside code.** An extension runs inside the app, so it could see anything the app can. Options include reviewing extensions before listing them, asking readers to approve what an extension may do when they install it, keeping extensions walled off from the rest of the app, or a mix. Part of this is making sure one extension can never use another's access keys.
 - A tidier Extensions screen that hides extensions which only exist to support other extensions.
+- **Clear answers when one extension needs another.** Show which extensions rely on each one. If you try to remove an extension that others still need, explain why and offer to remove them together, instead of it quietly coming back.
 
-_On GitHub:_ [#1482](https://github.com/HelloAOLab/seed-bible/issues/1482), [#1836](https://github.com/HelloAOLab/seed-bible/issues/1836), [#1943](https://github.com/HelloAOLab/seed-bible/issues/1943)
+_On GitHub:_ [#1482](https://github.com/HelloAOLab/seed-bible/issues/1482), [#1836](https://github.com/HelloAOLab/seed-bible/issues/1836), [#1943](https://github.com/HelloAOLab/seed-bible/issues/1943), [#2030](https://github.com/HelloAOLab/seed-bible/issues/2030)
 
 ---
 
@@ -378,13 +391,15 @@ _On GitHub:_ [#1660](https://github.com/HelloAOLab/seed-bible/issues/1660)
 Connect Seed Bible with other AI tools using the **Model Context Protocol (MCP)**, an open standard for linking AI assistants to apps and information. This works in two directions:
 
 - **Bring outside tools into Seed Bible's AI chat. ✅ Done.** An optional add-on in Settings lets you connect an online service, such as a commentary library or a church's sermon archive, so the AI chat can draw on it. It works with AI chats that can take actions, so not with Bonfire until item 12 is done.
+  - Next, the chat will name the tools the AI used, so you can tell when it drew on a connected service. Today it only says how many it used.
 - **Let your own AI assistant work with your Seed Bible. 💭 Next.** Connect an assistant like Claude or ChatGPT to your account and ask it to "find my notes on grace", "add Romans 8 to my morning playlist", or "what did I read last week?".
+  - **Making and sharing playlists** is the most important part. Someone studying with an AI assistant they already use should be able to say "make me a playlist on forgiveness and share it with my small group", and get a real Seed Bible playlist (item 18). This reaches people where they already are, which may matter even more than Seed Bible's own AI chat.
 
 **Still deciding**
 
 - How does an outside assistant sign in, and what is it allowed to do on your behalf? This needs the same care as item 8, and must respect your privacy choices from item 4.
 
-_On GitHub:_ [#1670](https://github.com/HelloAOLab/seed-bible/pull/1670)
+_On GitHub:_ [#1670](https://github.com/HelloAOLab/seed-bible/pull/1670), [#2047](https://github.com/HelloAOLab/seed-bible/issues/2047)
 
 ---
 
@@ -400,18 +415,62 @@ In a shared reading session, a group reads the same chapter together in real tim
 - The host decides whether only they can change the passage or highlight for everyone, and can appoint co-hosts.
 - You can see where others are reading, but only while their part of the chapter overlaps with yours.
 - When someone highlights a verse you can't see, a small notice at the top or bottom of the page shows who it was and which verse. Tap it to go there.
+- **See which verse someone picks.** When a host or co-host selects a verse, its number briefly flashes in their color for everyone. Hosts can let everyone's picks show or turn this off, and anyone can turn it off for themselves. It stays still for people whose device is set to reduce motion, unless they turn it on.
 
 **What's next**
 
 - **Follow someone's place.** Choose a person in the session, and your screen scrolls along with what they're reading. Scroll away to stop following, then tap once to catch up again. Hosts choose who can be followed, or have everyone follow the host as they join.
 - **See where everyone is**, even when they're far ahead of or behind you, with small markers at the top or bottom of the page.
 - **Less clutter in big groups.** Hosts can choose to show only their own place, which happens on its own once four or more people join.
-- **See which verse someone picks.** When the host selects a verse, its number briefly flashes in their color for everyone. Hosts can let everyone's picks show or turn this off, and anyone can turn it off for themselves.
 - **Invite friends straight into a session** (see item 2).
+- **See who's in the session on a computer.** On phones, tapping the participants' pictures opens a list where you can add them as friends. Computers get the same pictures beside the reader and the same list, and clicking someone's picture in the tab list opens it too.
+- **Related content in a session.** It's hidden in sessions today without explanation, which can look like a bug. Explain why, and let people turn it on for themselves.
 - **Notice when someone's connection drops.** Today, someone who suddenly loses signal can stay listed in the session for a long time, and if it's the host, nobody is told.
 - **A clear "Joining session…" message** while a session link loads. Today the page first shows something else, then switches to the session on its own.
+- **Voice and video calls in a session**, later on, so a group spread across different places can talk while they read, without needing a separate service for the call.
 
-_On GitHub:_ [#1986](https://github.com/HelloAOLab/seed-bible/issues/1986), [#1961](https://github.com/HelloAOLab/seed-bible/issues/1961), [#1962](https://github.com/HelloAOLab/seed-bible/issues/1962), [#1987](https://github.com/HelloAOLab/seed-bible/issues/1987), [#1965](https://github.com/HelloAOLab/seed-bible/issues/1965), [#1819](https://github.com/HelloAOLab/seed-bible/issues/1819), [#2024](https://github.com/HelloAOLab/seed-bible/issues/2024), [#1974](https://github.com/HelloAOLab/seed-bible/pull/1974)
+_On GitHub:_ [#1986](https://github.com/HelloAOLab/seed-bible/issues/1986), [#1961](https://github.com/HelloAOLab/seed-bible/issues/1961), [#1962](https://github.com/HelloAOLab/seed-bible/issues/1962), [#1965](https://github.com/HelloAOLab/seed-bible/issues/1965), [#1819](https://github.com/HelloAOLab/seed-bible/issues/1819), [#2024](https://github.com/HelloAOLab/seed-bible/issues/2024), [#2041](https://github.com/HelloAOLab/seed-bible/issues/2041), [#2037](https://github.com/HelloAOLab/seed-bible/issues/2037), [#1974](https://github.com/HelloAOLab/seed-bible/pull/1974), [#2015](https://github.com/HelloAOLab/seed-bible/pull/2015)
+
+---
+
+## 18. Playlists, rebuilt
+
+🚧 **In progress.**
+
+A playlist is a path through the Bible: passages, notes and videos in an order you choose, to follow yourself or share with others. Playlists are one of the main ways people teach and learn with Seed Bible. We want building one to be as easy as following one, and we want playlists to grow into full lessons and courses.
+
+**Where it stands**
+
+- Anyone can make and share a playlist, and friends' playlists appear throughout the app.
+- Seed Bible's AI chat can already build and edit playlists when you chat with Apologist's AI (see item 12).
+- A redesign of the playlist editor is underway. It opens full screen, and you edit each step right where it sits in the list, instead of in a form at the bottom.
+
+**What's next**
+
+- Finish the new editor, including better notes inside a playlist.
+- Make it clear when you're following a playlist, with separate controls for leaving the playlist and for playing audio.
+- **Playlists from AI conversations.** At the end of a conversation with a partner's AI, be offered a playlist that carries the study on in Seed Bible. This starts with Apologist's AI, and comes to Bonfire once it can take actions (item 12).
+- **Lessons and courses, later.** Steps an AI guides you through, quizzes, and steps that combine a passage, a video and questions, so a whole lesson or course can be a playlist.
+
+_On GitHub:_ [#2027](https://github.com/HelloAOLab/seed-bible/pull/2027), [#2013](https://github.com/HelloAOLab/seed-bible/issues/2013), [#1992](https://github.com/HelloAOLab/seed-bible/issues/1992)
+
+---
+
+## 19. Content matched to the right verses
+
+💭 **Planned.** Makes item 1 possible for any organization.
+
+For a video, article or study to appear beside the right chapter, something has to work out which books, chapters and verses it's about. Today that depends on the partner. Apologist content, for example, is found by searching the partner's library for the chapter being read, which is only approximate. We want a service of our own that does this well for any content an organization brings in.
+
+**What's planned**
+
+- A service that reads a piece of content and records which passages it relates to. Simple rules handle clear references like "John 3:16", and AI helps with everything else, like a sermon that discusses a passage without quoting it.
+- It works across languages. Book names and the way references are written differ from language to language, which is part of what makes this hard.
+- Every content source in item 1 uses it, so any organization's content can find its way to the right chapter.
+
+**Still deciding**
+
+- Build it entirely ourselves, or work with partners who already do part of this? We're planning as if it's ours to build.
 
 ---
 
