@@ -22,7 +22,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/indexedDbUtils";
 import { extractContentText } from "@packages/seed-bible/seed-bible/managers/ChapterText";
 import { TheographicEntityCard } from "./TheographicEntityCard";
-import { createIsPlaceOpen, createOpenPlace, type PlaceLocations } from "./map";
+import { createIsPlaceOpen, createOpenPlace } from "./map";
 import {
   EVENT_CONTENT_TYPE,
   PERSON_CONTENT_TYPE,
@@ -381,7 +381,7 @@ export interface TheographicClient {
   getEntity<T>(apiLink: string): Promise<T>;
   /**
    * Any other JSON file, by absolute URL, through the same cache: the
-   * locations extension's GeoJSON files.
+   * GeoJSON files additionalGeoJSON.json points at.
    */
   getResource<T>(url: string, options?: ReadOptions): Promise<T>;
 }
@@ -595,8 +595,6 @@ export interface TheographicProviderDeps {
   onReferenceClick: (ref: VerseRef, origin?: ReferenceOrigin) => void;
   /** Where a place's map opens. Omit and the map control is not offered. */
   panes?: PanesManager;
-  /** The locations extension's lookup, for places it has a file for. */
-  locations?: PlaceLocations;
   /** Whether the reader is on a phone-sized screen; hides "Open in map". */
   isMobile?: ReadonlySignal<boolean>;
 }
@@ -678,7 +676,7 @@ export function toDiscoverResults(
   context: DiscoverContext,
   deps: Pick<
     TheographicProviderDeps,
-    "client" | "onReferenceClick" | "locations" | "isMobile"
+    "client" | "onReferenceClick" | "isMobile"
   > & {
     openPlace?: (place: TheographicPlaceEntry) => void;
     isPlaceOpen?: (place: TheographicPlaceEntry) => boolean;
@@ -726,7 +724,6 @@ export function toDiscoverResults(
           openPlace={deps.openPlace}
           isPlaceOpen={deps.isPlaceOpen}
           isMobile={deps.isMobile}
-          locations={deps.locations}
           scripture={deps.scripture}
         />
       ),
@@ -748,10 +745,7 @@ export function createTheographicDiscoverProvider(
   deps: TheographicProviderDeps
 ): DiscoverProvider {
   let hasWarned = false;
-  const openPlace = createOpenPlace(deps.panes, {
-    client: deps.client,
-    locations: deps.locations,
-  });
+  const openPlace = createOpenPlace(deps.panes, { client: deps.client });
   const isPlaceOpen = createIsPlaceOpen(deps.panes);
 
   return {
@@ -784,7 +778,6 @@ export function createTheographicDiscoverProvider(
       return toDiscoverResults(data, context, {
         client: deps.client,
         onReferenceClick: deps.onReferenceClick,
-        locations: deps.locations,
         isMobile: deps.isMobile,
         openPlace,
         isPlaceOpen,
