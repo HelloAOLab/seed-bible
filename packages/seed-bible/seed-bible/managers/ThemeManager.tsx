@@ -1,5 +1,4 @@
 import {
-  batch,
   computed,
   effect,
   signal,
@@ -1192,9 +1191,9 @@ export function applyHighlightOverrides(
 
 /**
  * Filters a raw, already-decoded color-override record down to the keys the
- * customization UI actually exposes. `SettingsManager` stores/decodes the
- * raw `Record<string, string>` (it doesn't know about `ThemeColorKey`); this
- * is the theme-domain validation layered on top of that generic storage.
+ * customization UI actually exposes. A stored variant's colors decode to a
+ * plain `Record<string, string>` (storage doesn't know about
+ * `ThemeColorKey`); this is the theme-domain validation layered on top.
  */
 export function filterValidColorOverrides(
   raw: Record<string, string>
@@ -1231,8 +1230,7 @@ const THEME_FONT_FAMILY_KEYS: ThemeFontFamilyKey[] = [
 /**
  * Same purpose as `filterValidColorOverrides`, scoped to font-family keys.
  * Kept as its own function (rather than folded into `filterValidColorOverrides`)
- * so it isn't accidentally reachable from the app's own color-only
- * "Customize colors" feature, which only ever narrows against `ThemeColorKey`.
+ * so callers that only accept colors keep narrowing against `ThemeColorKey`.
  */
 export function filterValidFontFamilyOverrides(
   raw: Record<string, string>
@@ -1247,26 +1245,12 @@ export function filterValidFontFamilyOverrides(
   return overrides;
 }
 
-function applyOverrides(
-  theme: BibleTheme,
-  overrides: ThemeOverrides
-): BibleTheme {
-  const anyOverrides = Object.keys(overrides).length > 0;
-  if (!anyOverrides) {
-    return theme;
-  }
-  return {
-    ...theme,
-    variables: { ...theme.variables, ...overrides },
-  };
-}
-
 export interface ThemeManager {
   themes: Signal<BibleTheme[]>;
   selectedThemeId: ReadonlySignal<string>;
-  /** Effective theme = preset with custom overrides applied. */
+  /** The user's own theme: the preset for `selectedThemeId`. */
   currentTheme: ReadonlySignal<BibleTheme>;
-  /** The base preset for `selectedThemeId`, without custom overrides. */
+  /** The preset for `selectedThemeId`; the same signal as `currentTheme`. */
   basePresetTheme: ReadonlySignal<BibleTheme>;
   /**
    * The device's color scheme, tracked whatever theme is selected, so a
@@ -1280,40 +1264,7 @@ export interface ThemeManager {
    * until then. Repeat calls are no-ops.
    */
   hydrateSystemColorScheme: () => void;
-  /** User color overrides layered on top of the selected preset. */
-  customOverrides: ReadonlySignal<ThemeOverrides>;
-  /** User highlight color overrides layered on top of the preset highlights. */
-  customHighlightOverrides: ReadonlySignal<HighlightOverrides>;
   setTheme: (themeId: string) => void;
-  setCustomColor: (key: ThemeColorKey, value: string) => void;
-  resetCustomColor: (key: ThemeColorKey) => void;
-  resetAllCustomColors: () => void;
-  setHighlightColor: (
-    colorId: string,
-    patch: Partial<ThemeHighlightColor>
-  ) => void;
-  resetHighlightColor: (colorId: string) => void;
-  resetAllHighlightColors: () => void;
-  /**
-   * Live, non-committing preview of a theme color — reflected in
-   * `currentTheme` (and the injected `--sb-*` CSS) immediately, but never
-   * written to `settings`. Meant to be called on a `ColorPicker`'s
-   * `onPreview` while the user drags; `setCustomColor` clears any pending
-   * preview for the same key once the color is actually committed.
-   */
-  previewCustomColor: (key: ThemeColorKey, value: string) => void;
-  /** Discards a pending `previewCustomColor`, e.g. on the picker's `onCancel`. */
-  clearPreviewCustomColor: (key: ThemeColorKey) => void;
-  /** Same as `previewCustomColor`, for one field of a highlight color. */
-  previewHighlightColor: (
-    colorId: string,
-    patch: Partial<ThemeHighlightColor>
-  ) => void;
-  /** Discards a pending `previewHighlightColor` field, e.g. on `onCancel`. */
-  clearPreviewHighlightField: (
-    colorId: string,
-    field: keyof ThemeHighlightColor
-  ) => void;
 }
 
 export function createTheme(
@@ -1330,22 +1281,6 @@ export function createTheme(
   const hydrateSystemColorScheme = watchSystemColorScheme(prefersDarkScheme);
 
   const selectedThemeId = computed(() => settings.settings.value.themeId);
-  const customOverrides = computed(() =>
-    filterValidColorOverrides(settings.settings.value.customTheme)
-  );
-  const customHighlightOverrides = computed(
-    () => settings.settings.value.customHighlights
-  );
-
-  /**
-   * In-memory-only overrides from an open `ColorPicker`'s live drag. Never
-   * read from or written to `settings`, so there is nothing to undo on
-   * reload — a picker's `onCancel` (or the next commit for the same key)
-   * simply clears the entry and `currentTheme` falls back to
-   * `customOverrides`/`customHighlightOverrides`.
-   */
-  const previewOverrides = signal<ThemeOverrides>({});
-  const previewHighlightOverrides = signal<HighlightOverrides>({});
 
   const basePresetTheme = computed<BibleTheme>(() => {
     if (selectedThemeId.value === SYSTEM_THEME_ID) {
@@ -1361,25 +1296,13 @@ export function createTheme(
     );
   });
 
-  const currentTheme = computed<BibleTheme>(() => {
-    const withColorOverrides = applyOverrides(
-      applyOverrides(basePresetTheme.value, customOverrides.value),
-      previewOverrides.value
-    );
-    return applyHighlightOverrides(
-      applyHighlightOverrides(
-        withColorOverrides,
-        customHighlightOverrides.value
-      ),
-      previewHighlightOverrides.value
-    );
-  });
+  const currentTheme = basePresetTheme;
 
   const themeStyleText = computed(() =>
     composeThemeStyleText(currentTheme.value)
   );
 
-  // Writes the active theme (preset + custom overrides) directly to a
+  // Writes the active theme preset directly to a
   // <head> <style> tag, entirely outside the Preact tree. This is a plain
   // @preact/signals `effect()`, not `useEffect` — it runs synchronously the
   // moment `createTheme()` is called (during `createSeedBibleState()`,
@@ -1455,96 +1378,6 @@ export function createTheme(
     settings.setThemeId(themeId);
   };
 
-  const writeOverrides = (next: ThemeOverrides) => {
-    settings.setCustomTheme(next);
-  };
-
-  const previewCustomColor = (key: ThemeColorKey, value: string) => {
-    previewOverrides.value = { ...previewOverrides.value, [key]: value };
-  };
-
-  const clearPreviewCustomColor = (key: ThemeColorKey) => {
-    if (!(key in previewOverrides.value)) return;
-    const next = { ...previewOverrides.value };
-    delete next[key];
-    previewOverrides.value = next;
-  };
-
-  const setCustomColor = (key: ThemeColorKey, value: string) => {
-    batch(() => {
-      writeOverrides({ ...customOverrides.value, [key]: value });
-      clearPreviewCustomColor(key);
-    });
-  };
-
-  const resetCustomColor = (key: ThemeColorKey) => {
-    const next = { ...customOverrides.value };
-    delete next[key];
-    writeOverrides(next);
-  };
-
-  const resetAllCustomColors = () => {
-    writeOverrides({});
-  };
-
-  const writeHighlightOverrides = (next: HighlightOverrides) => {
-    settings.setCustomHighlights(next);
-  };
-
-  const previewHighlightColor = (
-    colorId: string,
-    patch: Partial<ThemeHighlightColor>
-  ) => {
-    const existing = previewHighlightOverrides.value[colorId] ?? {};
-    previewHighlightOverrides.value = {
-      ...previewHighlightOverrides.value,
-      [colorId]: { ...existing, ...patch },
-    };
-  };
-
-  const clearPreviewHighlightField = (
-    colorId: string,
-    field: keyof ThemeHighlightColor
-  ) => {
-    const existing = previewHighlightOverrides.value[colorId];
-    if (!existing || !(field in existing)) return;
-    const next = { ...previewHighlightOverrides.value };
-    const { [field]: _removed, ...rest } = existing;
-    if (Object.keys(rest).length === 0) {
-      delete next[colorId];
-    } else {
-      next[colorId] = rest;
-    }
-    previewHighlightOverrides.value = next;
-  };
-
-  const setHighlightColor = (
-    colorId: string,
-    patch: Partial<ThemeHighlightColor>
-  ) => {
-    batch(() => {
-      const current = customHighlightOverrides.value;
-      const existing = current[colorId] ?? {};
-      writeHighlightOverrides({
-        ...current,
-        [colorId]: { ...existing, ...patch },
-      });
-      for (const field of Object.keys(patch) as (keyof ThemeHighlightColor)[]) {
-        clearPreviewHighlightField(colorId, field);
-      }
-    });
-  };
-
-  const resetHighlightColor = (colorId: string) => {
-    const next = { ...customHighlightOverrides.value };
-    delete next[colorId];
-    writeHighlightOverrides(next);
-  };
-
-  const resetAllHighlightColors = () => {
-    writeHighlightOverrides({});
-  };
-
   return {
     themes,
     selectedThemeId,
@@ -1552,18 +1385,6 @@ export function createTheme(
     basePresetTheme,
     prefersDarkScheme,
     hydrateSystemColorScheme,
-    customOverrides,
-    customHighlightOverrides,
     setTheme,
-    setCustomColor,
-    resetCustomColor,
-    resetAllCustomColors,
-    setHighlightColor,
-    resetHighlightColor,
-    resetAllHighlightColors,
-    previewCustomColor,
-    clearPreviewCustomColor,
-    previewHighlightColor,
-    clearPreviewHighlightField,
   };
 }

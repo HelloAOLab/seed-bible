@@ -9,7 +9,7 @@ import * as z from "zod/v4";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
 import { isMinimalEmbedUrl } from "./EmbedMode";
-import { SYSTEM_THEME_ID, type ThemeHighlightColor } from "./ThemeManager";
+import { SYSTEM_THEME_ID } from "./ThemeManager";
 import { parseNumber } from "./Utils";
 import { CUSTOMIZATION_FONT_PRESETS } from "./CustomizationsManager";
 
@@ -128,10 +128,6 @@ export interface AppSettings {
   scriptureWidth: number;
   /** Selected theme preset id (owned/consumed by ThemeManager). */
   themeId: string;
-  /** User color overrides layered on top of the selected theme preset. */
-  customTheme: Record<string, string>;
-  /** User highlight-color overrides layered on top of the preset highlights. */
-  customHighlights: Record<string, Partial<ThemeHighlightColor>>;
   /**
    * Whether the compact discover panel sits beside the scripture text
    * (true, the default) when there's room, or is forced below it, after the
@@ -191,15 +187,6 @@ export const AppSettingsSchema = z.object({
     .max(MAX_SCRIPTURE_WIDTH)
     .default(DEFAULT_SCRIPTURE_WIDTH),
   themeId: z.string(),
-  customTheme: z.record(z.string(), z.string()),
-  customHighlights: z.record(
-    z.string(),
-    z.object({
-      color: z.string().optional(),
-      fontColor: z.string().optional(),
-      wordsOfJesusFontColor: z.string().optional(),
-    })
-  ),
   // Defaulted rather than required so settings exported before this option
   // existed still import.
   discoverContentPanelInline: z.boolean().default(true),
@@ -225,8 +212,6 @@ const TAG_ASK_TO_SWITCH_UI_LANGUAGE = "app.askToSwitchUiLanguage";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
 const TAG_SCRIPTURE_WIDTH = "app.scriptureWidth";
 const TAG_THEME_ID = "app.themeId";
-const TAG_CUSTOM_THEME = "app.customTheme";
-const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
 const TAG_DISCOVER_CONTENT_PANEL_INLINE = "app.discoverContentPanelInline";
 const TAG_VERSE_SELECTION_EFFECTS = "app.verseSelectionEffects";
 
@@ -247,8 +232,6 @@ const PROFILE_ASK_TO_SWITCH_UI_LANGUAGE = "askToSwitchUiLanguage";
 const PROFILE_CUSTOM_HIGHLIGHT_COLORS = "customHighlightColors";
 const PROFILE_SCRIPTURE_WIDTH = "scriptureWidth";
 const PROFILE_THEME_ID = "themeId";
-const PROFILE_CUSTOM_THEME = "customTheme";
-const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
 const PROFILE_DISCOVER_CONTENT_PANEL_INLINE = "discoverContentPanelInline";
 const PROFILE_VERSE_SELECTION_EFFECTS = "verseSelectionEffects";
 
@@ -291,8 +274,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   customHighlightColors: [],
   scriptureWidth: DEFAULT_SCRIPTURE_WIDTH,
   themeId: SYSTEM_THEME_ID,
-  customTheme: {},
-  customHighlights: {},
   discoverContentPanelInline: true,
   verseSelectionEffects: "default",
 };
@@ -337,36 +318,6 @@ export function parseStringRecord(value: unknown): Record<string, string> {
     }
   }
   return result;
-}
-
-function parseHighlightOverrides(
-  value: unknown
-): Record<string, Partial<ThemeHighlightColor>> {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return {};
-    }
-  }
-  if (!parsed || typeof parsed !== "object") {
-    return {};
-  }
-  const obj = parsed as Record<string, unknown>;
-  const overrides: Record<string, Partial<ThemeHighlightColor>> = {};
-  for (const [id, entry] of Object.entries(obj)) {
-    if (!entry || typeof entry !== "object") continue;
-    const e = entry as Record<string, unknown>;
-    const sub: Partial<ThemeHighlightColor> = {};
-    if (typeof e.color === "string") sub.color = e.color;
-    if (typeof e.fontColor === "string") sub.fontColor = e.fontColor;
-    if (typeof e.wordsOfJesusFontColor === "string") {
-      sub.wordsOfJesusFontColor = e.wordsOfJesusFontColor;
-    }
-    if (Object.keys(sub).length > 0) overrides[id] = sub;
-  }
-  return overrides;
 }
 
 function parseBoolean(value: unknown, fallback: boolean): boolean {
@@ -631,12 +582,6 @@ export interface SettingsManager {
   resetToDefaults: () => void;
   /** Persists the selected theme preset id. Consumed by ThemeManager. */
   setThemeId: (themeId: string) => void;
-  /** Persists theme color overrides. Consumed by ThemeManager. */
-  setCustomTheme: (next: Record<string, string>) => void;
-  /** Persists theme highlight-color overrides. Consumed by ThemeManager. */
-  setCustomHighlights: (
-    next: Record<string, Partial<ThemeHighlightColor>>
-  ) => void;
   /**
    * Persists whether the compact discover panel sits inline beside the
    * scripture text. Consumed by `BibleReadingManager`'s per-tab
@@ -693,7 +638,7 @@ export function createSettings(
       local[profileKey];
 
     // The embed link's theme is the look the site owner chose. The viewer's
-    // saved theme and color edits would otherwise paint over it, so the
+    // saved theme would otherwise paint over it, so the
     // preview (and every signed-in visitor) would ignore the link.
     const embedTheme = sessionOverrides[TAG_THEME_ID];
     const pinnedEmbedTheme =
@@ -768,14 +713,6 @@ export function createSettings(
         pinnedEmbedTheme ?? read(PROFILE_THEME_ID, TAG_THEME_ID),
         DEFAULT_SETTINGS.themeId
       ),
-      customTheme: pinnedEmbedTheme
-        ? {}
-        : parseStringRecord(read(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)),
-      customHighlights: pinnedEmbedTheme
-        ? {}
-        : parseHighlightOverrides(
-            read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
-          ),
       discoverContentPanelInline: parseBoolean(
         read(
           PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
@@ -996,20 +933,6 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_THEME_ID, themeId);
   };
 
-  const setCustomTheme = (next: Record<string, string>) => {
-    settings.value = { ...settings.value, customTheme: next };
-    sessionOverrides[TAG_CUSTOM_THEME] = next;
-    saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, next);
-  };
-
-  const setCustomHighlights = (
-    next: Record<string, Partial<ThemeHighlightColor>>
-  ) => {
-    settings.value = { ...settings.value, customHighlights: next };
-    sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = next;
-    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
-  };
-
   const setDiscoverContentPanelInline = (
     discoverContentPanelInline: boolean
   ) => {
@@ -1064,8 +987,6 @@ export function createSettings(
     sessionOverrides[TAG_CUSTOM_HIGHLIGHT_COLORS] = [];
     sessionOverrides[TAG_SCRIPTURE_WIDTH] = DEFAULT_SETTINGS.scriptureWidth;
     sessionOverrides[TAG_THEME_ID] = DEFAULT_SETTINGS.themeId;
-    sessionOverrides[TAG_CUSTOM_THEME] = {};
-    sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
     sessionOverrides[TAG_DISCOVER_CONTENT_PANEL_INLINE] =
       DEFAULT_SETTINGS.discoverContentPanelInline;
     sessionOverrides[TAG_FONT_OVERRIDE] = NO_FONT_OVERRIDE;
@@ -1127,8 +1048,6 @@ export function createSettings(
       DEFAULT_SETTINGS.scriptureWidth
     );
     saveProfileConfigValue(login, PROFILE_THEME_ID, DEFAULT_SETTINGS.themeId);
-    saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, {});
-    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, {});
     saveProfileConfigValue(
       login,
       PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
@@ -1211,8 +1130,6 @@ export function createSettings(
     setAllSettings,
     resetToDefaults,
     setThemeId,
-    setCustomTheme,
-    setCustomHighlights,
     setDiscoverContentPanelInline,
     setFontOverride,
     setVerseSelectionEffects,

@@ -1320,20 +1320,6 @@
   }
 }
 
-.sb-highlight-preview-pill {
-  display: inline-block;
-  padding: 0.25rem 0.625rem;
-  border-radius: 62.4375rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .sb-translation-license-notice,
 .sb-translation-website {
   text-align: center;
