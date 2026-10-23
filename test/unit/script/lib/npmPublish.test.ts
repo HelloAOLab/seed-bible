@@ -11,8 +11,14 @@ describe("alphaVersion", () => {
     );
   });
 
-  it("keeps the core of a version that is already a prerelease", () => {
-    expect(alphaVersion("1.15.0-rc.1", "42")).toBe("1.15.0-alpha.42");
+  it("extends a prerelease so the alpha sorts after it", () => {
+    // Semver ranks a longer prerelease above one it extends
+    // (1.15.0-rc.1.alpha.42 > 1.15.0-rc.1); 1.15.0-alpha.42 would rank below.
+    expect(alphaVersion("1.15.0-rc.1", "42")).toBe("1.15.0-rc.1.alpha.42");
+  });
+
+  it("drops build metadata from the version it starts from", () => {
+    expect(alphaVersion("1.15.0-rc.1+abc", "42")).toBe("1.15.0-rc.1.alpha.42");
   });
 
   it("rejects a non-numeric build number", () => {

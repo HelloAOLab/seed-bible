@@ -1,7 +1,7 @@
 /**
  * The workspace packages published to npm, in publish order: `seed-bible`
- * first because the other two reference it, so its new version is already on
- * the registry by the time they land.
+ * first, so that by the time `create-seed-bible-extension` lands, the
+ * `seed-bible` version it scaffolds projects with is already installable.
  */
 export const NPM_PACKAGES = [
   "seed-bible",
@@ -23,7 +23,9 @@ const SEMVER =
  * version that was last released to `main`, and semver sorts a prerelease
  * *below* its release (1.14.0-alpha.42 < 1.14.0), so `^1.14.0` would never
  * pick up an alpha. A version that is already a prerelease (e.g. 1.15.0-rc.1)
- * is unreleased, so its core is kept as-is.
+ * is unreleased, so the build is appended to it instead (1.15.0-rc.1.alpha.42):
+ * that sorts just after the prerelease it was built from, where
+ * 1.15.0-alpha.42 would sort before it (`alpha` < `rc`).
  */
 export function alphaVersion(version: string, buildNumber: string): string {
   if (!/^\d+$/.test(buildNumber)) {
@@ -38,10 +40,11 @@ export function alphaVersion(version: string, buildNumber: string): string {
   const major = Number(parts[1]);
   const minor = Number(parts[2]);
   const patch = Number(parts[3]);
-  const core = parts[4]
-    ? `${major}.${minor}.${patch}`
-    : `${major}.${minor}.${patch + 1}`;
-  return `${core}-alpha.${buildNumber}`;
+  const prerelease = parts[4];
+  if (prerelease) {
+    return `${major}.${minor}.${patch}-${prerelease}.alpha.${buildNumber}`;
+  }
+  return `${major}.${minor}.${patch + 1}-alpha.${buildNumber}`;
 }
 
 /** The version to publish for `version` on `channel`. */

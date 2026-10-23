@@ -50,8 +50,13 @@ jobs:
   release:
     # Only run after a successful prod deploy — never for a failed/cancelled
     # cd.yml run, and (via the trigger's `branches: [main]` filter above)
-    # never for cd.yml runs on other branches.
-    if: github.event.workflow_run.conclusion == 'success'
+    # never for cd.yml runs on other branches. Only cd.yml runs for pushes to
+    # this repository count: cd.yml also runs for pull requests, including
+    # from forks whose branch is named `main`.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

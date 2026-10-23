@@ -104,6 +104,6 @@ for anything installed from a link.
 
 ## Changelog and license
 
-Changes to this package are listed in [CHANGELOG.md](./CHANGELOG.md).
+Changes are listed in the [Seed Bible changelog](https://github.com/HelloAOLab/seed-bible/blob/main/CHANGELOG.md).
 
 Licensed under the [GNU Affero General Public License v3.0 or later](./LICENSE).

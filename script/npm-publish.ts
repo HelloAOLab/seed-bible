@@ -1,5 +1,6 @@
 import { program } from "commander";
 import { execFileSync, type ExecFileSyncOptions } from "node:child_process";
+import { writeFileSync } from "node:fs";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -15,7 +16,9 @@ const isWindows = process.platform === "win32";
 /**
  * Runs `npm`/`pnpm`. On Windows they are `.cmd` shims, which Node can only
  * start through a shell; the shell joins the arguments into one string, so
- * they're quoted to keep paths with spaces intact.
+ * they're quoted to keep paths with spaces intact. `"` and `%` aren't
+ * escaped: none of the arguments passed here (package names, versions, the
+ * temp folder) contain them.
  */
 function run(
   command: string,
@@ -49,9 +52,7 @@ function isPublished(name: string, version: string): boolean {
 
 program
   .name("npm-publish")
-  .description(
-    `Publishes ${NPM_PACKAGES.join(", ")} to npm. Expects the packages to be built already.`
-  )
+  .description(`Publishes ${NPM_PACKAGES.join(", ")} to npm.`)
   .requiredOption(
     "--channel <channel>",
     '"alpha" (develop: next patch + -alpha.<build-number>) or "latest" (main: the package.json version as-is).'
@@ -61,6 +62,10 @@ program
     "The build number appended to alpha versions. Required for --channel alpha."
   )
   .option(
+    "--build",
+    "Builds the packages after setting their versions, so the built code reports the version being published. Without it, the packages must already be built."
+  )
+  .option(
     "--dry-run",
     "Packs and runs `npm publish --dry-run` without uploading anything."
   )
@@ -68,6 +73,7 @@ program
     async (options: {
       channel: string;
       buildNumber?: string;
+      build?: boolean;
       dryRun?: boolean;
     }) => {
       if (options.channel !== "alpha" && options.channel !== "latest") {
@@ -92,17 +98,37 @@ program
         })
       );
 
+      // Synchronous, so it can also run from a signal handler: without one,
+      // Ctrl-C would leave the stamped versions in the tracked files.
+      const restore = () => {
+        for (const pkg of packages) {
+          writeFileSync(pkg.file, pkg.original, "utf-8");
+        }
+      };
+      const onSignal = (signal: NodeJS.Signals) => {
+        restore();
+        process.exit(signal === "SIGINT" ? 130 : 143);
+      };
+      process.once("SIGINT", onSignal);
+      process.once("SIGTERM", onSignal);
+
       const packDir = await mkdtemp(path.join(tmpdir(), "seed-bible-npm-"));
       try {
-        // Stamp every version before packing anything: `pnpm pack` turns
-        // `workspace:` references into the referenced package's version, which
-        // must be the one being published alongside it.
+        // Stamp every version before building or packing anything: the
+        // builds bake the version into the code, and `pnpm pack` turns
+        // `workspace:` references into the referenced package's version,
+        // which must be the one being published alongside it.
         for (const pkg of packages) {
           await writeFile(
             pkg.file,
             replaceVersionField(pkg.original, pkg.version),
             "utf-8"
           );
+        }
+
+        if (options.build) {
+          run("pnpm", ["build:seed-bible-package"], { stdio: "inherit" });
+          run("pnpm", ["build:extension-tools"], { stdio: "inherit" });
         }
 
         for (const pkg of packages) {
@@ -141,9 +167,9 @@ program
           );
         }
       } finally {
-        for (const pkg of packages) {
-          await writeFile(pkg.file, pkg.original, "utf-8");
-        }
+        restore();
+        process.off("SIGINT", onSignal);
+        process.off("SIGTERM", onSignal);
         await rm(packDir, { recursive: true, force: true });
       }
     }

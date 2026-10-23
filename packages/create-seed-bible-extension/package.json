@@ -4,6 +4,11 @@
   "description": "Scaffolds a new Seed Bible extension project (see seed-bible-extension-scripts for the check/test/build/dev toolkit it uses).",
   "type": "module",
   "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HelloAOLab/seed-bible.git",
+    "directory": "packages/create-seed-bible-extension"
+  },
   "bin": {
     "create-seed-bible-extension": "./dist/cli.js"
   },

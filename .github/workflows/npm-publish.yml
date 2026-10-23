@@ -12,7 +12,9 @@
 #
 # Like release.yml, this is triggered by `workflow_run` off cd.yml rather than
 # `push`, so it only publishes code that passed cd.yml's lint/typecheck/test
-# gates. The build number comes from that run too, so re-running this workflow
+# gates. Only cd.yml runs for pushes to this repository count: cd.yml also
+# runs for pull requests, whose `head_branch` can be `develop` (a release PR)
+# or `main` (a fork's branch). The build number comes from that run too, so re-running this workflow
 # reuses the same alpha versions and skips them instead of publishing
 # duplicates. `workflow_run` reads this file from the default branch
 # (`develop`), so changes to it only take effect once they reach develop.
@@ -37,7 +39,10 @@ permissions:
 
 jobs:
   publish:
-    if: github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     env:
       CHANNEL: ${{ github.event.workflow_run.head_branch == 'main' && 'latest' || 'alpha' }}
@@ -61,19 +66,16 @@ jobs:
           corepack enable
           pnpm install
 
-      - name: Build packages
-        run: |
-          pnpm build:seed-bible-package
-          pnpm build:extension-tools
-
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
         run: |
           set -o pipefail
+          # --build sets the versions before building, so the alpha's own
+          # version is the one baked into its code.
           pnpm npm:publish --channel "$CHANNEL" --build-number "$BUILD_NUMBER" \
-            | tee publish.log
+            --build | tee publish.log
           {
             echo "### npm ($CHANNEL)"
             grep -E "^(Published|.* already published)" publish.log | sed 's/^/- /'
