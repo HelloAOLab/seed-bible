@@ -555,6 +555,139 @@
   }
 }
 
+/* More popover anchored above the More button (the last mobile tab, or the
+   end of the desktop toolbar). Inline end so RTL (More on the left) grows the
+   menu into the screen instead of off the left edge. */
+.sb-mobile-more-menu {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: calc(100% + 0.5rem);
+  min-width: 12.5rem;
+  padding: 0.625rem;
+  background: var(--sb-reader-toolbar-background);
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.875rem;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.375rem;
+  z-index: 100;
+}
+
+.sb-mobile-more-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.9375rem;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  text-align: start;
+  transition: background-color 0.15s ease;
+}
+
+.sb-mobile-more-menu-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+.sb-mobile-more-menu-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.375rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  flex-shrink: 0;
+}
+
+.sb-mobile-more-menu-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-mobile-more-menu-unread-indicator {
+  flex-shrink: 0;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 62.4375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  pointer-events: none;
+}
+
+.sb-mobile-more-menu-typing-indicator {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+  pointer-events: none;
+  animation: sb-reader-toolbar-typing-pulse 1.4s ease-out infinite;
+}
+
+.sb-mobile-more-menu-social {
+  cursor: default;
+}
+
+.sb-mobile-more-menu-social:hover {
+  background: transparent;
+}
+
+.sb-mobile-more-menu-social-avatar {
+  background: radial-gradient(
+    circle at 30% 30%,
+    var(--sb-primary-color),
+    color-mix(in srgb, var(--sb-primary-color), #000 40%)
+  );
+  border-radius: 62.4375rem;
+}
+
+.sb-mobile-more-menu-toggle {
+  flex-shrink: 0;
+  width: 2.375rem;
+  height: 1.375rem;
+  border-radius: 62.4375rem;
+  border: none;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.2s ease;
+}
+
+.sb-mobile-more-menu-toggle-on {
+  background: var(--sb-primary-color);
+}
+
+.sb-mobile-more-menu-toggle-thumb {
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.2s ease;
+}
+
+.sb-mobile-more-menu-toggle-on .sb-mobile-more-menu-toggle-thumb {
+  left: 1.125rem;
+}
+
 @media (max-width: 480px) {
   .sb-reader-toolbar-wrap {
     position: fixed;
@@ -665,138 +798,6 @@
     text-align: center;
     line-height: 1;
     color: inherit;
-  }
-
-  /* More popover anchored above the More tab. Inline end so RTL (More tab
-     on the left) grows the menu into the screen instead of off the left edge. */
-  .sb-mobile-more-menu {
-    position: absolute;
-    inset-inline-end: 0;
-    bottom: calc(100% + 0.5rem);
-    min-width: 12.5rem;
-    padding: 0.625rem;
-    background: var(--sb-reader-toolbar-background);
-    border: 1px solid var(--sb-divider-color);
-    border-radius: 0.875rem;
-    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
-    display: flex;
-    flex-direction: column-reverse;
-    gap: 0.375rem;
-    z-index: 100;
-  }
-
-  .sb-mobile-more-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.625rem 0.75rem;
-    border: none;
-    background: transparent;
-    color: var(--sb-font-color);
-    font: inherit;
-    font-size: 0.9375rem;
-    border-radius: 0.625rem;
-    cursor: pointer;
-    text-align: start;
-    transition: background-color 0.15s ease;
-  }
-
-  .sb-mobile-more-menu-item:hover {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-  }
-
-  .sb-mobile-more-menu-icon {
-    width: 1.375rem;
-    height: 1.375rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.375rem;
-    color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
-    flex-shrink: 0;
-  }
-
-  .sb-mobile-more-menu-label {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .sb-mobile-more-menu-unread-indicator {
-    flex-shrink: 0;
-    min-width: 1rem;
-    height: 1rem;
-    padding: 0 0.25rem;
-    border-radius: 62.4375rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.625rem;
-    font-weight: 700;
-    line-height: 1;
-    background: var(--sb-primary-color);
-    color: var(--sb-primary-font-color);
-    pointer-events: none;
-  }
-
-  .sb-mobile-more-menu-typing-indicator {
-    flex-shrink: 0;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: #22c55e;
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
-    pointer-events: none;
-    animation: sb-reader-toolbar-typing-pulse 1.4s ease-out infinite;
-  }
-
-  .sb-mobile-more-menu-social {
-    cursor: default;
-  }
-
-  .sb-mobile-more-menu-social:hover {
-    background: transparent;
-  }
-
-  .sb-mobile-more-menu-social-avatar {
-    background: radial-gradient(
-      circle at 30% 30%,
-      var(--sb-primary-color),
-      color-mix(in srgb, var(--sb-primary-color), #000 40%)
-    );
-    border-radius: 62.4375rem;
-  }
-
-  .sb-mobile-more-menu-toggle {
-    flex-shrink: 0;
-    width: 2.375rem;
-    height: 1.375rem;
-    border-radius: 62.4375rem;
-    border: none;
-    background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
-    position: relative;
-    cursor: pointer;
-    padding: 0;
-    transition: background-color 0.2s ease;
-  }
-
-  .sb-mobile-more-menu-toggle-on {
-    background: var(--sb-primary-color);
-  }
-
-  .sb-mobile-more-menu-toggle-thumb {
-    position: absolute;
-    top: 0.125rem;
-    left: 0.125rem;
-    width: 1.125rem;
-    height: 1.125rem;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    transition: left 0.2s ease;
-  }
-
-  .sb-mobile-more-menu-toggle-on .sb-mobile-more-menu-toggle-thumb {
-    left: 1.125rem;
   }
 
   .sb-reader-toolbar-floating-button {

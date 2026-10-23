@@ -1836,6 +1836,198 @@ describe("BibleReaderToolbar mobile More menu", () => {
   });
 });
 
+describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+  let originalInnerHeight: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    originalInnerHeight = window.innerHeight;
+    window.innerWidth = 1200;
+    window.innerHeight = 900;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+    window.innerHeight = originalInnerHeight;
+  });
+
+  async function renderToolbar(): Promise<SeedBibleState> {
+    const state = await createTestSeedBibleState();
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(state.app.isMobile.value).toBe(false);
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    return state;
+  }
+
+  function registerExtensionTool(
+    state: SeedBibleState,
+    id: string,
+    title: string,
+    onSelect: () => void = vi.fn()
+  ) {
+    state.tools.registerToolbarTool({
+      id,
+      // Lower than every built-in tool, so priority alone would put it first.
+      priority: 1,
+      title,
+      icon: () => <span>{id}</span>,
+      isVisible: () => true,
+      onSelect,
+    });
+  }
+
+  const barLabels = () =>
+    Array.from(
+      container.querySelectorAll(
+        ".sb-reader-toolbar-labeled > .sb-reader-toolbar-item > .sb-reader-toolbar-button"
+      )
+    ).map((el) => el.getAttribute("aria-label"));
+
+  const moreButton = () =>
+    container.querySelector<HTMLButtonElement>(
+      '.sb-reader-toolbar-labeled button[aria-label="More"]'
+    );
+
+  const menuLabels = () =>
+    Array.from(container.querySelectorAll(".sb-mobile-more-menu-label")).map(
+      (el) => el.textContent
+    );
+
+  async function openMenu(): Promise<void> {
+    const button = moreButton();
+    if (!button) throw new Error("The desktop More button did not render.");
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(container.querySelector(".sb-mobile-more-menu")).not.toBeNull();
+  }
+
+  it("shows Today, Books and Search, with Discover moved into More", async () => {
+    await renderToolbar();
+
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Search",
+      "More",
+      "Next Chapter",
+    ]);
+
+    await openMenu();
+    expect(menuLabels()).toContain("Discover");
+  });
+
+  it("puts extension tools in the More menu instead of the toolbar", async () => {
+    const state = await renderToolbar();
+
+    await act(async () => {
+      registerExtensionTool(state, "ext-one", "Extension One");
+      registerExtensionTool(state, "ext-two", "Extension Two");
+      registerExtensionTool(state, "ext-three", "Extension Three");
+    });
+
+    expect(barLabels()).not.toContain("Extension One");
+    expect(barLabels()).not.toContain("Extension Two");
+    expect(barLabels()).not.toContain("Extension Three");
+
+    await openMenu();
+    expect(menuLabels()).toEqual(
+      expect.arrayContaining([
+        "Extension One",
+        "Extension Two",
+        "Extension Three",
+      ])
+    );
+  });
+
+  it("leaves out the More button when there is nothing to put in it", async () => {
+    const state = await renderToolbar();
+
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-discover");
+      state.tools.unregisterToolbarTool("open-plans");
+    });
+
+    expect(moreButton()).toBeNull();
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Search",
+      "Next Chapter",
+    ]);
+  });
+
+  it("runs a tool picked from the More menu and closes the menu", async () => {
+    const state = await renderToolbar();
+    const onSelect = vi.fn();
+    await act(async () => {
+      registerExtensionTool(state, "ext-one", "Extension One", onSelect);
+    });
+
+    await openMenu();
+    const item = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-mobile-more-menu-item")
+    ).find((el) => el.textContent?.includes("Extension One"));
+    if (!item) throw new Error("The extension tool is missing from More.");
+
+    await act(async () => {
+      item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(container.querySelector(".sb-mobile-more-menu")).toBeNull();
+  });
+
+  it("closes the More menu on Escape and returns focus to the More button", async () => {
+    await renderToolbar();
+    await openMenu();
+
+    await act(async () => {
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(container.querySelector(".sb-mobile-more-menu")).toBeNull();
+    expect(document.activeElement).toBe(moreButton());
+  });
+
+  it("opens the Today screen from the Today button", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
+      state.today.close();
+    });
+
+    const today = container.querySelector<HTMLButtonElement>(
+      '.sb-reader-toolbar-labeled button[aria-label="Today"]'
+    );
+    if (!today) throw new Error("The desktop Today button did not render.");
+    await act(async () => {
+      today.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.today.isOpen.value).toBe(true);
+  });
+});
+
 describe("BibleReaderToolbar — mobile Bible tab", () => {
   let container: HTMLDivElement;
   let originalInnerWidth: number;
