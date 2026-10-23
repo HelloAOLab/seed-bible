@@ -495,6 +495,12 @@ export interface AppState {
 
   /** Closes the Discover panel. */
   closeDiscover: () => void;
+
+  /**
+   * Whether crawlers should be told not to index this page: true only when
+   * it previews as a friend link (see `canonicalUrl`).
+   */
+  noIndex: ReadonlySignal<boolean>;
 }
 
 /**
@@ -551,6 +557,8 @@ export interface SeedBibleState {
    * highlights, notes, playlists, reading plans and reading history are shown.
    */
   friends: FriendsManager;
+  /** The profile behind the `?addFriend=` link the app was opened with, for its link preview. */
+  friendLinkPreview: FriendLinkPreviewLoader;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
   /** Chat session manager for in-app chat state. */
@@ -743,6 +751,12 @@ import {
 import { z } from "zod";
 import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 import { captureEvent } from "./Utils";
+import {
+  createFriendLinkPreviewLoader,
+  type FriendLinkPreviewLoader,
+  type FriendLinkSeed,
+} from "./FriendLinkPreviewLoader";
+import { ADD_FRIEND_PARAM } from "../components/FriendsPane/friendLinks";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -801,6 +815,9 @@ export interface CreateSeedBibleStateOptions {
 
   /** Same as `initialPlaylistPageSeed`, for a shared reading plan page. */
   initialReadingPlanPageSeed?: ReadingPlanPageSeed;
+
+  /** Same as `initialPlaylistPageSeed`, for an `?addFriend=` link's profile. */
+  initialFriendLinkSeed?: FriendLinkSeed;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -868,6 +885,11 @@ export function createSeedBibleState(
     }
   });
   const friends = createFriendsManager(os, login);
+  const friendLinkPreview = createFriendLinkPreviewLoader({
+    login,
+    navigation,
+    initialSeed: options.initialFriendLinkSeed,
+  });
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
@@ -2052,6 +2074,32 @@ export function createSeedBibleState(
       : name;
   });
 
+  /**
+   * The person an `?addFriend=` link names, when their profile has a name.
+   * Null on the about page and on any shared page's path, found or not: the
+   * page previews as itself there, so a friend link added to it never takes
+   * over part of its title, description, image or canonical link.
+   */
+  const friendLinkPerson = computed<{
+    name: string;
+    pictureUrl: string | null;
+  } | null>(() => {
+    if (
+      isAboutPage.value ||
+      parseSharedPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )
+    ) {
+      return null;
+    }
+    const profile = friendLinkPreview.result.value?.profile;
+    const name = profile?.name.trim();
+    return profile && name
+      ? { name, pictureUrl: profile.pictureUrl ?? null }
+      : null;
+  });
+
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
     void i18n.language.value;
@@ -2083,6 +2131,17 @@ export function createSeedBibleState(
 
       if (sharedPageLoadFailedTitle.value) {
         return `${sharedPageLoadFailedTitle.value} | ${seedBibleTitle}`;
+      }
+
+      // Server only: in the browser the friend link prompt is a one-off over
+      // the reader, so the tab follows the chapter from the start.
+      const person = friendLinkPerson.value;
+      if (import.meta.env.SSR && person) {
+        return t("friend-link-title", {
+          name: person.name,
+          brand: seedBibleTitle,
+          defaultValue: "Add {{name}} as a friend on {{brand}}",
+        });
       }
 
       if (!selectedTab.value) {
@@ -2120,6 +2179,18 @@ export function createSeedBibleState(
             : t("reading-plan-page-meta-description", {
                 defaultValue: "A Bible reading plan on Seed Bible.",
               })),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
+
+    const person = friendLinkPerson.value;
+    if (person) {
+      return truncateForMeta(
+        t("friend-link-meta-description", {
+          name: person.name,
+          brand: siteName.value,
+          defaultValue: "{{name}} wants to be your friend on the {{brand}}",
+        }),
         META_DESCRIPTION_MAX_GRAPHEMES
       );
     }
@@ -2200,8 +2271,21 @@ export function createSeedBibleState(
     if (heroImageUrl) {
       return { url: heroImageUrl, alt: sharedPageTitle.value ?? "" };
     }
+    const person = friendLinkPerson.value;
+    if (person?.pictureUrl) {
+      return { url: person.pictureUrl, alt: person.name };
+    }
     const logoUrl = customizationLogoUrl.value;
-    return logoUrl ? { url: logoUrl, alt: siteName.value } : null;
+    if (logoUrl) {
+      return { url: logoUrl, alt: siteName.value };
+    }
+    // Only a friend link falls back to the white-label logo so far, and only
+    // when it's absolute: crawlers don't resolve a relative og:image.
+    const brandingLogo = branding?.logo;
+    if (person && brandingLogo && /^https?:\/\//i.test(brandingLogo)) {
+      return { url: brandingLogo, alt: siteName.value };
+    }
+    return null;
   });
 
   /**
@@ -2232,6 +2316,14 @@ export function createSeedBibleState(
       return sharedPageTitle.value;
     }
 
+    const person = friendLinkPerson.value;
+    if (person) {
+      return t("friend-link-social-title", {
+        name: person.name,
+        defaultValue: "Add {{name}} as a friend",
+      });
+    }
+
     const chapter = selectedTab.value?.readingState.chapterData.value;
     if (!chapter) {
       return t("read-the-bible", {
@@ -2244,6 +2336,16 @@ export function createSeedBibleState(
       bookName: chapter.book.name,
       chapterNumber: chapter.chapter.number,
     });
+  });
+
+  /** The friend link's own address, when the page previews as one. */
+  const friendLinkPageUrl = computed<string | null>(() => {
+    const userId = friendLinkPreview.result.value?.userId;
+    if (!friendLinkPerson.value || !userId) {
+      return null;
+    }
+    const query = new URLSearchParams({ [ADD_FRIEND_PARAM]: userId });
+    return `${navigation.basePath || "/"}?${query}`;
   });
 
   /**
@@ -2291,6 +2393,10 @@ export function createSeedBibleState(
         locator: page.locator,
         title: page.title,
       })}`;
+    }
+
+    if (friendLinkPageUrl.value) {
+      return friendLinkPageUrl.value;
     }
 
     const readingState = selectedTab.value?.readingState;
@@ -3480,7 +3586,14 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
-  void setupFriendLinks({ navigation, login, friends, modals, toast });
+  void setupFriendLinks({
+    navigation,
+    login,
+    friends,
+    modals,
+    toast,
+    friendLinkPreview,
+  });
 
   // A shared `?readingPlan=` link loads the plan, then opens the pane once a
   // reading tab is actually there. The tab is usually ready after the network
@@ -3560,6 +3673,8 @@ export function createSeedBibleState(
     currentReadingState,
   });
 
+  const noIndex = computed(() => friendLinkPageUrl.value !== null);
+
   const state: SeedBibleState = {
     os,
     bibleData: data,
@@ -3582,6 +3697,7 @@ export function createSeedBibleState(
     saves,
     bookmarks,
     friends,
+    friendLinkPreview,
     annotations,
     chats,
     sessions,
@@ -3678,6 +3794,7 @@ export function createSeedBibleState(
       isDiscoverOpen: playlists.isDiscoverOpen,
       openDiscover: handleOpenDiscover,
       closeDiscover: handleCloseDiscover,
+      noIndex,
     },
   };
 

@@ -598,6 +598,8 @@ describe("render() server-rendered meta tags", () => {
     '<script type="application/json" id="app-customization-seed"><!-- CUSTOMIZATION_JSON --></script>',
     '<script type="application/json" id="app-playlist-page-seed"><!-- PLAYLIST_PAGE_JSON --></script>',
     '<script type="application/json" id="app-reading-plan-page-seed"><!-- READING_PLAN_PAGE_JSON --></script>',
+    '<script type="application/json" id="app-friend-link-seed"><!-- FRIEND_LINK_JSON --></script>',
+    '<script type="application/json" id="app-friend-link-seed"><!-- FRIEND_LINK_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -1634,6 +1636,28 @@ describe("render() server-rendered meta tags", () => {
       );
     });
 
+    it("keeps the playlist's preview, canonical link and indexing when a friend link is added to it", async () => {
+      const friendId = "35160ebe-fcea-4883-8b6c-7e8ae6035aff";
+      mockRecords({
+        "owner/playlist_shared": PLAYLIST,
+        "author-1/profile": { name: "Ruth" },
+        [`${friendId}/profile`]: { name: "Ana" },
+      });
+
+      const { html } = await renderResult(
+        `/en/playlist/owner.playlist_shared/psalms-for-hard-days?addFriend=${friendId}&useFreeBibleAPI=true`
+      );
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Psalms for Hard Days by Ruth"'
+      );
+      expect(html).toContain(
+        '<link rel="canonical" href="/en/playlist/owner.playlist_shared/psalms-for-hard-days"'
+      );
+      expect(html).not.toContain(`/?addFriend=${friendId}`);
+      expect(html).not.toContain('name="robots"');
+    });
+
     it("uses the playlist's cover as the only og:image", async () => {
       mockRecords({ "owner/playlist_shared": PLAYLIST });
 
@@ -1877,6 +1901,295 @@ describe("render() server-rendered meta tags", () => {
 
       expect(notFound).toBeUndefined();
       expect(html).toContain("<title>2024 | Seed Bible</title>");
+    });
+  });
+
+  describe("friend link", () => {
+    const CALL_PROCEDURE_URL =
+      "https://auth.seedbible.org/api/v3/callProcedure";
+    const USER_ID = "35160ebe-fcea-4883-8b6c-7e8ae6035aff";
+    const LINK_PATH = `/?addFriend=${USER_ID}&useFreeBibleAPI=true`;
+    const PICTURE_URL = "https://files.example/ana.png";
+
+    /**
+     * Answers `getData` for `{userId}/profile` from `profiles`. An ID in
+     * `missingAccounts` answers `record_not_found` (no such account); any
+     * other key answers `data_not_found` (an account that never saved one).
+     */
+    function mockProfiles(
+      profiles: Record<string, unknown>,
+      missingAccounts: string[] = []
+    ) {
+      const responses = createDefaultManagerResponseMap();
+      globalThis.fetch = (async (url: string, init?: RequestInit) => {
+        if (url === CALL_PROCEDURE_URL) {
+          const body = JSON.parse(String(init?.body));
+          const recordName = body.input?.recordName;
+          const key = `${recordName}/${body.input?.address}`;
+          if (body.procedure === "getData" && key in profiles) {
+            return createResponse({ success: true, data: profiles[key] });
+          }
+          if (missingAccounts.includes(recordName)) {
+            return createResponse({
+              success: false,
+              errorCode: "record_not_found",
+              errorMessage: "Record not found",
+            });
+          }
+          return createResponse({
+            success: false,
+            errorCode: "data_not_found",
+            errorMessage: "Data not found",
+          });
+        }
+        const response = responses[url];
+        if (!response) {
+          throw new Error(`No mocked response for ${url}`);
+        }
+        return response;
+      }) as typeof globalThis.fetch;
+    }
+
+    function readEmbeddedFriendLinkSeed(html: string): unknown {
+      const match = /id="app-friend-link-seed">([\s\S]*?)<\/script>/.exec(html);
+      if (!match) {
+        throw new Error("app-friend-link-seed script tag not found");
+      }
+      return JSON.parse(match[1]!);
+    }
+
+    it("titles, describes and illustrates the preview after the linked person", async () => {
+      mockProfiles({
+        [`${USER_ID}/profile`]: { name: "Ana", pictureUrl: PICTURE_URL },
+      });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain(
+        '<meta name="twitter:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain(
+        '<meta name="description" content="Ana wants to be your friend on the Seed Bible"'
+      );
+      expect(html).toContain(
+        '<meta property="og:description" content="Ana wants to be your friend on the Seed Bible"'
+      );
+      expect(html).toContain(
+        `<meta property="og:image" content="${PICTURE_URL}"`
+      );
+      expect(html).toContain('<meta property="og:image:alt" content="Ana"');
+      expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+    });
+
+    it("points og:url and the canonical link at the friend link itself, and keeps it out of search results", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        `<meta property="og:url" content="/?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain(
+        `<link rel="canonical" href="/?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain('<meta name="robots" content="noindex"');
+    });
+
+    it("titles the page after the linked person", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        "<title>Add Ana as a friend on Seed Bible</title>"
+      );
+    });
+
+    it("keeps the default image when the person has no picture", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+    });
+
+    describe("on a white-label deployment", () => {
+      const BRANDING = {
+        appName: "Acme Reader",
+        shortName: "Acme",
+        logo: "https://brand.example/acme-logo.png",
+        icon: "https://brand.example/acme-icon.png",
+        websiteUrl: "https://brand.example",
+      };
+
+      it("names the brand in the title and description", async () => {
+        mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+        const html = await renderHtml(LINK_PATH, { branding: BRANDING });
+
+        expect(html).toContain(
+          "<title>Add Ana as a friend on Acme Reader</title>"
+        );
+        expect(html).toContain(
+          '<meta property="og:description" content="Ana wants to be your friend on the Acme Reader"'
+        );
+        expect(html).toContain(
+          '<meta property="og:title" content="Add Ana as a friend"'
+        );
+      });
+
+      it("illustrates the preview with the brand's logo when the person has no picture", async () => {
+        mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+        const html = await renderHtml(LINK_PATH, { branding: BRANDING });
+
+        expect(html).toContain(
+          `<meta property="og:image" content="${BRANDING.logo}"`
+        );
+        expect(html).toContain(
+          '<meta property="og:image:alt" content="Acme Reader"'
+        );
+        expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      });
+
+      it("prefers the person's picture over the brand's logo", async () => {
+        mockProfiles({
+          [`${USER_ID}/profile`]: { name: "Ana", pictureUrl: PICTURE_URL },
+        });
+
+        const html = await renderHtml(LINK_PATH, { branding: BRANDING });
+
+        expect(html).toContain(
+          `<meta property="og:image" content="${PICTURE_URL}"`
+        );
+        expect(html).not.toContain(
+          `<meta property="og:image" content="${BRANDING.logo}"`
+        );
+      });
+
+      it("keeps the default image when the brand's logo isn't an absolute URL", async () => {
+        mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+        const html = await renderHtml(LINK_PATH, {
+          branding: { ...BRANDING, logo: "/img/acme-logo.png" },
+        });
+
+        expect(html).not.toContain(
+          '<meta property="og:image" content="/img/acme-logo.png"'
+        );
+        expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      });
+
+      it("doesn't use the brand's logo outside a friend link", async () => {
+        const html = await renderHtml("/?useFreeBibleAPI=true", {
+          branding: BRANDING,
+        });
+
+        expect(html).not.toContain(
+          `<meta property="og:image" content="${BRANDING.logo}"`
+        );
+        expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      });
+    });
+
+    it("embeds the loaded profile as a seed, without its private config", async () => {
+      mockProfiles({
+        [`${USER_ID}/profile`]: {
+          name: "Ana",
+          pictureUrl: PICTURE_URL,
+          config: { themeId: "dark", tutorialSeen: true },
+        },
+      });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(readEmbeddedFriendLinkSeed(html)).toEqual({
+        userId: USER_ID,
+        profile: { name: "Ana", pictureUrl: PICTURE_URL, config: null },
+      });
+      expect(html).not.toContain("tutorialSeen");
+    });
+
+    it("can't be broken out of by a name that closes the script tag", async () => {
+      const name = "</script><script>alert(1)</script>";
+      mockProfiles({ [`${USER_ID}/profile`]: { name } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).not.toContain("<script>alert(1)");
+      expect(readEmbeddedFriendLinkSeed(html)).toEqual({
+        userId: USER_ID,
+        profile: { name, config: null },
+      });
+    });
+
+    it("falls back to the chapter preview for an account that never saved a profile", async () => {
+      mockProfiles({});
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Read Genesis 1"'
+      );
+      expect(html).toContain('<link rel="canonical" href="/en/AAB/genesis/1"');
+      expect(html).not.toContain('name="robots"');
+    });
+
+    it("falls back to the chapter preview and seeds a missing account when no one has that ID", async () => {
+      mockProfiles({}, [USER_ID]);
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Read Genesis 1"'
+      );
+      expect(html).toContain('<link rel="canonical" href="/en/AAB/genesis/1"');
+      expect(html).not.toContain('name="robots"');
+      expect(readEmbeddedFriendLinkSeed(html)).toEqual({
+        userId: USER_ID,
+        profile: null,
+      });
+    });
+
+    it("leaves a page without a friend link indexable and unseeded", async () => {
+      const html = await renderHtml("/?useFreeBibleAPI=true");
+
+      expect(html).not.toContain('name="robots"');
+      expect(readEmbeddedFriendLinkSeed(html)).toBeNull();
+    });
+
+    it("leaves the about page's preview, canonical link and indexing to it when a friend link is added", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(
+        `/en/about?addFriend=${USER_ID}&useFreeBibleAPI=true`
+      );
+
+      expect(html).not.toMatch(/<title>[^<]*Ana/);
+      expect(html).not.toMatch(/<meta [^>]*Ana/);
+      expect(html).toContain('<link rel="canonical" href="/en/about"');
+      expect(html).not.toContain(`/?addFriend=${USER_ID}`);
+      expect(html).not.toContain('name="robots"');
+    });
+
+    it("leaves a missing shared playlist's preview, canonical link and indexing to it when a friend link is added", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(
+        `/en/playlist/owner.missing/old-title?addFriend=${USER_ID}&useFreeBibleAPI=true`
+      );
+
+      expect(html).toContain("<title>Playlist not found");
+      expect(html).not.toMatch(/<title>[^<]*Ana/);
+      expect(html).not.toMatch(/<meta [^>]*Ana/);
+      expect(html).not.toContain(`/?addFriend=${USER_ID}`);
+      expect(html).not.toContain('name="robots"');
     });
   });
 
