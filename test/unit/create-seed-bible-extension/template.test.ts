@@ -1,4 +1,4 @@
-import { rm, readFile } from "node:fs/promises";
+import { cp, rm, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { scaffoldExtension } from "@packages/create-seed-bible-extension/src/scaffold";
 import {
@@ -50,6 +50,41 @@ describe("a scaffolded extension", () => {
     );
     expect(catalogPreact).toBeDefined();
     expect(dependencies.preact).toBe(catalogPreact);
+  });
+
+  it("depends on the seed-bible packages released alongside it, once installed from npm", async () => {
+    // Installed from npm, the scaffolder sits alone in node_modules: none of
+    // this repo's other packages are next to it to read versions from.
+    const installed = path.resolve(
+      "node_modules/.cache/sb-template-test/installed/create-seed-bible-extension"
+    );
+    const source = path.resolve("packages/create-seed-bible-extension");
+    await cp(path.join(source, "src"), path.join(installed, "src"), {
+      recursive: true,
+    });
+    await cp(
+      path.join(source, "templates"),
+      path.join(installed, "templates"),
+      {
+        recursive: true,
+      }
+    );
+    await writeFile(
+      path.join(installed, "package.json"),
+      JSON.stringify({ name: "create-seed-bible-extension", version: "9.8.7" })
+    );
+    const { scaffoldExtension: scaffoldInstalled } = (await import(
+      path.join(installed, "src/scaffold.ts")
+    )) as typeof import("@packages/create-seed-bible-extension/src/scaffold");
+
+    const project = path.join(installed, "..", "project");
+    await scaffoldInstalled({ targetDir: project, name: "My Ext" });
+
+    const { dependencies, devDependencies } = JSON.parse(
+      await readFile(path.join(project, "package.json"), "utf-8")
+    );
+    expect(dependencies["seed-bible"]).toBe("^9.8.7");
+    expect(devDependencies["seed-bible-extension-scripts"]).toBe("^9.8.7");
   });
 
   it("is ready to host on GitHub Pages or Cloudflare", async () => {
