@@ -6,6 +6,9 @@
 
 ### 🔧 Changed
 
+- The desktop toolbar now matches the mobile one: Today, Books and Search, plus a More menu for everything else. ([#2059](https://github.com/HelloAOLab/seed-bible/pull/2059))
+  - Discover, Chat, Plans and buttons added by extensions are in More, so installing extensions no longer makes the toolbar wider.
+  - More only appears when it has something in it, and shows Chat's unread count while Chat is inside it.
 - Closing a text or link item during a playlist keeps going the way you were moving, instead of always moving on. ([#1953](https://github.com/HelloAOLab/seed-bible/pull/1953))
   - Forward after Next, and back after Previous.
   - Closing the first item moves on, including when you pressed Play on your own playlist.
