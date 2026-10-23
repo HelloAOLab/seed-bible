@@ -1990,11 +1990,25 @@ export function createSeedBibleState(
       : name;
   });
 
-  /** The person an `?addFriend=` link names, when their profile has a name. */
+  /**
+   * The person an `?addFriend=` link names, when their profile has a name.
+   * Null on the about page and on any shared page's path, found or not: the
+   * page previews as itself there, so a friend link added to it never takes
+   * over part of its title, description, image or canonical link.
+   */
   const friendLinkPerson = computed<{
     name: string;
     pictureUrl: string | null;
   } | null>(() => {
+    if (
+      isAboutPage.value ||
+      parseSharedPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )
+    ) {
+      return null;
+    }
     const profile = friendLinkPreview.result.value?.profile;
     const name = profile?.name.trim();
     return profile && name
@@ -2240,6 +2254,16 @@ export function createSeedBibleState(
     });
   });
 
+  /** The friend link's own address, when the page previews as one. */
+  const friendLinkPageUrl = computed<string | null>(() => {
+    const userId = friendLinkPreview.result.value?.userId;
+    if (!friendLinkPerson.value || !userId) {
+      return null;
+    }
+    const query = new URLSearchParams({ [ADD_FRIEND_PARAM]: userId });
+    return `${navigation.basePath || "/"}?${query}`;
+  });
+
   /**
    * The one URL that should be indexed for whatever the reader is looking at.
    *
@@ -2267,14 +2291,6 @@ export function createSeedBibleState(
    * would point every canonical at a URL that redirects.
    */
   const canonicalUrl = computed(() => {
-    const friendLinkUserId = friendLinkPreview.result.value?.userId;
-    if (friendLinkPerson.value && friendLinkUserId) {
-      const query = new URLSearchParams({
-        [ADD_FRIEND_PARAM]: friendLinkUserId,
-      });
-      return `${navigation.basePath || "/"}?${query}`;
-    }
-
     if (isAboutPage.value) {
       // Uses the *resolved* i18n language, not the raw URL segment, so a
       // garbage/unsupported language in the URL still canonicalizes to a
@@ -2293,6 +2309,10 @@ export function createSeedBibleState(
         locator: page.locator,
         title: page.title,
       })}`;
+    }
+
+    if (friendLinkPageUrl.value) {
+      return friendLinkPageUrl.value;
     }
 
     const readingState = selectedTab.value?.readingState;
@@ -3569,7 +3589,7 @@ export function createSeedBibleState(
     currentReadingState,
   });
 
-  const noIndex = computed(() => !!friendLinkPerson.value);
+  const noIndex = computed(() => friendLinkPageUrl.value !== null);
 
   const state: SeedBibleState = {
     os,
