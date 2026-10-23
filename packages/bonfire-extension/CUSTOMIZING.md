@@ -7,9 +7,10 @@ You can configure the Bonfire Chat Provider by setting the following variables a
 ### Supported Parameters
 
 - `autoinstall-ext_Bonfire` - Set to `true` to automatically install the Bonfire AI Chat provider.
-- `bonfireApiKey` - The API key that should be used to access Bonfire. Required.
-- `bonfireOrgId` - The organization ID from your Bonfire account. Required.
-- `bonfireAiId` - The AI ID from your Bonfire account. Required.
+- `bonfireOrgId` - The organization ID from your Bonfire account. If not specified, the Seed Bible organization is used.
+- `bonfireAiId` - The AI ID from your Bonfire account. If not specified, the Seed Bible AI is used.
+- `bonfireApiUrl` - The URL of a Bonfire `/v1/chat/completions` endpoint. When set, the chat provider sends the full conversation and Seed Bible's tools with every request, and runs the tools Bonfire asks for (tool calling). When not set, the Bonfire session API is used, which does not support tools.
+- `bonfireApiKey` - An API key sent as a bearer token to `bonfireApiUrl`. Optional.
 - `bonfireName` - The name that should be used for the chat provider. If not specified, then "Bonfire" will be used.
 - `bonfireIconUrl` - The URL to the icon that should be used. If not specified, then a default one will be used.
 
@@ -18,17 +19,23 @@ You can configure the Bonfire Chat Provider by setting the following variables a
 #### Basic setup with required parameters
 
 ```
-https://seedbible.org/?autoinstall-ext_Bonfire=true&bonfireApiKey=YOUR_API_KEY&bonfireOrgId=YOUR_ORG_ID&bonfireAiId=YOUR_AI_ID
+https://seedbible.org/?autoinstall-ext_Bonfire=true&bonfireOrgId=YOUR_ORG_ID&bonfireAiId=YOUR_AI_ID
+```
+
+#### Use the Bonfire Dev endpoint with tool calling
+
+```
+https://seedbible.org/?autoinstall-ext_Bonfire=true&bonfireApiUrl=https%3A%2F%2Fdev-api.heybonfire.com%2Fv1%2Fchat%2Fcompletions&bonfireApiKey=YOUR_API_KEY
 ```
 
 #### Load with a custom name
 
 ```
-https://seedbible.org/?autoinstall-ext_Bonfire=true&bonfireApiKey=YOUR_API_KEY&bonfireOrgId=YOUR_ORG_ID&bonfireAiId=YOUR_AI_ID&bonfireName=My%20Custom%20Name
+https://seedbible.org/?autoinstall-ext_Bonfire=true&bonfireOrgId=YOUR_ORG_ID&bonfireAiId=YOUR_AI_ID&bonfireName=My%20Custom%20Name
 ```
 
 #### Load with a custom icon
 
 ```
-https://seedbible.org/?autoinstall-ext_Bonfire=true&bonfireApiKey=YOUR_API_KEY&bonfireOrgId=YOUR_ORG_ID&bonfireAiId=YOUR_AI_ID&bonfireIconUrl=https%3A%2F%2Fexample.com%2Fmy-icon.png
+https://seedbible.org/?autoinstall-ext_Bonfire=true&bonfireOrgId=YOUR_ORG_ID&bonfireAiId=YOUR_AI_ID&bonfireIconUrl=https%3A%2F%2Fexample.com%2Fmy-icon.png
 ```
