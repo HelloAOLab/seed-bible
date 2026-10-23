@@ -2158,7 +2158,7 @@ export function Tabs(props: TabsProps) {
               }}
               className={`sb-collapsed-tab-tile${
                 isSelected ? " sb-collapsed-tab-tile-selected" : ""
-              }${session ? " sb-collapsed-tab-tile-shared" : ""}`}
+              }`}
               aria-label={
                 isPlayingAudio
                   ? t("collapsed-tab-playing-label", {
@@ -2169,11 +2169,6 @@ export function Tabs(props: TabsProps) {
               }
               title={shortTitle}
             >
-              {session && (
-                <span className="sb-collapsed-tab-tag">
-                  {t("shared", { defaultValue: "Shared" })}
-                </span>
-              )}
               <span className="sb-collapsed-tab-title">{shortTitle}</span>
               {isPlayingAudio && (
                 <MaterialIcon
