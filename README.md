@@ -87,7 +87,7 @@ pnpm release:prepare minor    # or: patch | major | an explicit version like 1.4
 
 This does three things in one commit's worth of edits:
 
-- bumps the `version` in `packages/seed-bible/package.json` (the version baked into the build),
+- bumps the `version` in `packages/seed-bible/package.json` (the version baked into the build), and sets `packages/seed-bible-extension-scripts` and `packages/create-seed-bible-extension` to the same version so the npm packages release together,
 - rewrites the CHANGELOG's `## TBD` heading to `## v<version> — <YYYY-MM-DD>`, and
 - inserts a fresh, empty `## TBD` above it so `develop` is ready for the next cycle.
 

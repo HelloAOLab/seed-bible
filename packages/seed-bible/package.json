@@ -53,7 +53,8 @@
   "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/HelloAOLab/seed-bible.git"
+    "url": "git+https://github.com/HelloAOLab/seed-bible.git",
+    "directory": "packages/seed-bible"
   },
   "bugs": {
     "url": "https://github.com/HelloAOLab/seed-bible/issues"
