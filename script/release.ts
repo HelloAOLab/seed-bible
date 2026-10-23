@@ -2,6 +2,7 @@ import { program } from "commander";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { bumpVersion, stampChangelog, today } from "./lib/changelog";
+import { replaceVersionField } from "./lib/npmPublish";
 
 // The authoritative app version: this is the one Vite bakes into the build as
 // __APP_VERSION__ (see vite.config.ts) and shows in the Settings footer. The
@@ -21,15 +22,11 @@ async function readAppVersion(): Promise<string> {
 
 async function writeAppVersion(version: string): Promise<void> {
   const text = await readFile(APP_PACKAGE_PATH, "utf-8");
-  // Rewrite only the first "version" field so the file's formatting, key order,
-  // and trailing newline are preserved exactly.
-  const updated = text.replace(/("version"\s*:\s*)"[^"]*"/, `$1"${version}"`);
-  if (updated === text) {
-    throw new Error(
-      `Could not find a "version" field to update in ${APP_PACKAGE_PATH}.`
-    );
-  }
-  await writeFile(APP_PACKAGE_PATH, updated, "utf-8");
+  await writeFile(
+    APP_PACKAGE_PATH,
+    replaceVersionField(text, version),
+    "utf-8"
+  );
 }
 
 program.name("release").description("Commands for preparing a release.");

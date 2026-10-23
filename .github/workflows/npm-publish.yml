@@ -1,0 +1,80 @@
+# Publish npm packages
+#
+# Publishes `seed-bible`, `seed-bible-extension-scripts` and
+# `create-seed-bible-extension` to npm after a successful deploy:
+#
+# - `develop` → the `alpha` dist-tag, as the next patch version plus the
+#   triggering cd.yml run's number (e.g. 1.14.0 → 1.14.1-alpha.1234). Install
+#   with `npm i seed-bible@alpha`.
+# - `main` → the `latest` dist-tag, as the package.json version unchanged.
+#   A version that is already on npm is skipped, so a deploy that didn't bump
+#   a package's version publishes nothing for it.
+#
+# Like release.yml, this is triggered by `workflow_run` off cd.yml rather than
+# `push`, so it only publishes code that passed cd.yml's lint/typecheck/test
+# gates. The build number comes from that run too, so re-running this workflow
+# reuses the same alpha versions and skips them instead of publishing
+# duplicates. `workflow_run` reads this file from the default branch
+# (`develop`), so changes to it only take effect once they reach develop.
+#
+# Requires the `NPM_TOKEN` secret: an npm automation/granular token with
+# publish rights to all three packages.
+name: Publish npm packages
+
+on:
+  workflow_run:
+    workflows: ["Continuous Deployment"]
+    types: [completed]
+    branches: [develop, main]
+
+concurrency:
+  group: npm-publish-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # npm provenance
+
+jobs:
+  publish:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      CHANNEL: ${{ github.event.workflow_run.head_branch == 'main' && 'latest' || 'alpha' }}
+      BUILD_NUMBER: ${{ github.event.workflow_run.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
+      - name: Install
+        run: |
+          corepack enable
+          pnpm install
+
+      - name: Build packages
+        run: |
+          pnpm build:seed-bible-package
+          pnpm build:extension-tools
+
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
+        run: |
+          set -o pipefail
+          pnpm npm:publish --channel "$CHANNEL" --build-number "$BUILD_NUMBER" \
+            | tee publish.log
+          {
+            echo "### npm ($CHANNEL)"
+            grep -E "^(Published|.* already published)" publish.log | sed 's/^/- /'
+          } >> "$GITHUB_STEP_SUMMARY"
