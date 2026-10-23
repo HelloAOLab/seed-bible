@@ -1,7 +1,9 @@
 import { batch, computed, effect, signal, type Signal } from "@preact/signals";
 import * as z from "zod/v4";
 import type { CasualOSManager, UserInfo } from "./OsManager";
-import type { FatalSessionErrorCode } from "./SessionGuard";
+import type { SessionInvalidatedEvent } from "./SessionGuard";
+import { captureEvent } from "./Utils";
+import { parseSessionKey } from "@casual-simulation/aux-common";
 import type {
   CompleteLoginResult,
   LoginRequestResult,
@@ -31,6 +33,28 @@ export interface SessionEndedEvent {
    */
   id: number;
 }
+
+/** What made a forced sign-out happen, as reported to analytics. */
+type ForcedSignOutCause =
+  | {
+      kind: "session_rejected";
+      invalidation: SessionInvalidatedEvent;
+    }
+  | { kind: "unparseable_session_key" };
+
+/** A session refresh that failed without ending the session. */
+interface RefreshFailure {
+  errorCode: string;
+  errorMessage: string | null;
+  atMs: number;
+}
+
+/**
+ * Refresh failures kept for the next forced sign-out's analytics event. Refreshes
+ * are only attempted at startup and once a week before expiry, so this only fills
+ * up if the app is left open for a very long time.
+ */
+const MAX_REFRESH_FAILURES = 5;
 
 export interface LoginManager {
   /**
@@ -323,6 +347,54 @@ function writeLocalConfig(config: Record<string, unknown>): void {
   }
 }
 
+/** How long before a session expires it gets refreshed. */
+const REFRESH_BEFORE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** `setTimeout` fires straight away for any delay longer than this (about 24.8 days). */
+const MAX_TIMER_DELAY_MS = 2 ** 31 - 1;
+
+/**
+ * Held by whichever tab is refreshing the session. Every tab on the device shares one
+ * saved key, and a refresh retires that key on the server, so two tabs refreshing at
+ * once means one of them is left holding a dead key.
+ */
+const SESSION_REFRESH_LOCK = "seed-bible:session-refresh";
+
+/**
+ * Runs `task` while holding the device-wide refresh lock, so tabs take turns. Browsers
+ * without the Web Locks API just run it; the other cross-tab checks still keep them
+ * correct there, at the cost of the occasional needless refresh.
+ */
+function withSessionRefreshLock<T>(task: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
+  return locks ? locks.request(SESSION_REFRESH_LOCK, task) : task();
+}
+
+function readStoredSessionKey(): string | null {
+  return typeof localStorage === "undefined"
+    ? null
+    : localStorage.getItem("sessionKey");
+}
+
+/**
+ * Whether `candidate` is a newer key for the same account as `oldKey` — what a refresh
+ * produces. Another account's key never counts: retrying a request under it would
+ * read or write the wrong person's data.
+ */
+function isSuccessorSessionKey(
+  candidate: string | null,
+  oldKey: string
+): candidate is string {
+  if (!candidate || candidate === oldKey) {
+    return false;
+  }
+  const next = parseSessionKey(candidate);
+  const previous = parseSessionKey(oldKey);
+  return (
+    !!next && !!previous && next[0] === previous[0] && next[3] >= previous[3]
+  );
+}
+
 export function createLoginManager({
   os,
 }: {
@@ -343,6 +415,23 @@ export function createLoginManager({
   // pressed "Sign out".
   let isSigningOut = false;
 
+  // Refreshes of the current session that failed but left it in place. When the
+  // session later dies, these are usually the story of why.
+  let refreshFailures: RefreshFailure[] = [];
+
+  // The key this tab last saved to (or loaded from) `localStorage`. Signing out only
+  // removes the saved key while it is still this one: if another tab has since saved
+  // a newer key, wiping it would sign that tab out on its next load as well.
+  let ownedStoredSessionKey: string | null = null;
+
+  // This tab's most recent refresh: the key it retires and the key it yields.
+  let pendingReplacement: {
+    oldKey: string;
+    newKey: Promise<string | null>;
+  } | null = null;
+
+  let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+
   /**
    * Drops every trace of the current session from memory. That is the whole teardown:
    * the persistence effect below mirrors the nulled signals into `localStorage`,
@@ -356,6 +445,7 @@ export function createLoginManager({
     // outlive the session with the user's name, location, description and
     // picture URL still readable on the device.
     clearCachedProfiles();
+    refreshFailures = [];
     batch(() => {
       sessionKey.value = null;
       connectionKey.value = null;
@@ -381,7 +471,10 @@ export function createLoginManager({
    * later, and an effect reads its dependencies eagerly on its first run. Don't
    * "tidy" this into a reset-after-read.
    */
-  const forceSignOut = (reason: SessionEndedReason) => {
+  const forceSignOut = (
+    reason: SessionEndedReason,
+    cause: ForcedSignOutCause
+  ) => {
     if (isSigningOut) {
       // A sign-out the user asked for is already tearing the session down.
       return;
@@ -392,6 +485,31 @@ export function createLoginManager({
       // a screenful of simultaneously-failing reads from stacking up.
       return;
     }
+
+    // Read before `clearSession` drops the key the session id comes from.
+    const parsed = parsedSessionKey.peek();
+    captureEvent("session_auto_signed_out", {
+      reason,
+      cause: cause.kind,
+      session_id: parsed?.sessionId ?? null,
+      session_expire_time:
+        parsed && Number.isFinite(parsed.expireTimeMs)
+          ? new Date(parsed.expireTimeMs).toISOString()
+          : null,
+      error_code:
+        cause.kind === "session_rejected" ? cause.invalidation.errorCode : null,
+      error_message:
+        cause.kind === "session_rejected"
+          ? cause.invalidation.errorMessage
+          : null,
+      failed_request:
+        cause.kind === "session_rejected" ? cause.invalidation.method : null,
+      refresh_errors: refreshFailures.map((failure) => ({
+        error_code: failure.errorCode,
+        error_message: failure.errorMessage,
+        time: new Date(failure.atMs).toISOString(),
+      })),
+    });
 
     clearSession();
     sessionEnded.value = {
@@ -405,13 +523,46 @@ export function createLoginManager({
   };
 
   /** Signs the user out because the server reported the session key dead. */
-  const forceLogout = (errorCode: FatalSessionErrorCode) => {
+  const forceLogout = (invalidation: SessionInvalidatedEvent) => {
     console.warn(
-      `[LoginManager] Signing out: the server reported '${errorCode}'.`
+      `[LoginManager] Signing out: the server reported '${invalidation.errorCode}'.`
     );
     forceSignOut(
-      errorCode === "user_is_banned" ? "account_suspended" : "signed_out"
+      invalidation.errorCode === "user_is_banned"
+        ? "account_suspended"
+        : "signed_out",
+      { kind: "session_rejected", invalidation }
     );
+  };
+
+  /**
+   * Switches to a session key another tab saved — after refreshing, or signing in.
+   * For the same account nothing else changes; for a different account (or after
+   * being signed out) the user info is reloaded, which also closes an open login
+   * prompt.
+   */
+  const adoptStoredSessionKey = (newKey: string) => {
+    const switchesAccount = parseSessionKey(newKey)?.[0] !== userId.peek();
+    // A key another tab saved is a fresh session, so earlier failures to refresh
+    // the old one no longer explain anything.
+    refreshFailures = [];
+    batch(() => {
+      if (switchesAccount) {
+        userInfo.value = null;
+      }
+      sessionKey.value = newKey;
+      connectionKey.value = localStorage.getItem("connectionKey");
+    });
+    client.sessionKey = newKey;
+
+    if (switchesAccount) {
+      loadUserInfo().catch((err) => {
+        console.warn(
+          "[LoginManager] Failed to load user info for a session from another tab",
+          err
+        );
+      });
+    }
   };
 
   effect(() => {
@@ -419,7 +570,17 @@ export function createLoginManager({
     if (!event) {
       return;
     }
-    forceLogout(event.errorCode);
+
+    // The refusal may only mean another tab refreshed and retired our key; its new
+    // key is then waiting in storage.
+    const current = sessionKey.peek();
+    const stored = readStoredSessionKey();
+    if (current && isSuccessorSessionKey(stored, current)) {
+      adoptStoredSessionKey(stored);
+      return;
+    }
+
+    forceLogout(event);
   });
 
   // Known hydration-mismatch risk: unlike `localConfig` below, this reads
@@ -445,36 +606,18 @@ export function createLoginManager({
     // Validate only after both keys are restored, so discarding a bad session key takes
     // the connection key with it. Checking earlier would clear a connection key that the
     // block above then puts straight back.
-    if (storedSessionKey) {
-      const parsed = parsedSessionKey.value;
-
-      if (!parsed) {
-        // The stored key isn't parseable, so there's no expiry to schedule against and
-        // nothing useful we could do with it. Reading `.expireTimeMs` off the null
-        // parse used to throw here, and nothing catches it — this runs inside
-        // `createSeedBibleState`, which `app/init.tsx` calls bare — so one bad
-        // character in localStorage meant a blank page with no way to sign out of it.
-        // Discarding the key lets the app start normally, signed out.
-        console.warn(
-          "[LoginManager] Discarding an unparseable stored session key."
-        );
-        forceSignOut("signed_out");
-      } else {
-        const timeUntilExpire = parsed.expireTimeMs - Date.now();
-        // Refresh the session 1 week before it expires
-        const refreshTime = timeUntilExpire - 7 * 24 * 60 * 60 * 1000;
-
-        if (refreshTime > 0) {
-          setTimeout(() => {
-            refreshSession();
-          }, refreshTime);
-        } else {
-          console.log(
-            "[LoginManager] Session is expiring soon, refreshing now"
-          );
-          refreshSession();
-        }
-      }
+    ownedStoredSessionKey = storedSessionKey;
+    if (storedSessionKey && !parsedSessionKey.value) {
+      // The stored key isn't parseable, so there's no expiry to schedule against and
+      // nothing useful we could do with it. Reading `.expireTimeMs` off the null
+      // parse used to throw here, and nothing catches it — this runs inside
+      // `createSeedBibleState`, which `app/init.tsx` calls bare — so one bad
+      // character in localStorage meant a blank page with no way to sign out of it.
+      // Discarding the key lets the app start normally, signed out.
+      console.warn(
+        "[LoginManager] Discarding an unparseable stored session key."
+      );
+      forceSignOut("signed_out", { kind: "unparseable_session_key" });
     }
   }
   /* eslint-enable seed-bible-hydration/no-immediate-storage-access */
@@ -653,6 +796,16 @@ export function createLoginManager({
     });
   };
 
+  function recordRefreshFailure(
+    errorCode: string,
+    errorMessage: string | null
+  ) {
+    refreshFailures = [
+      ...refreshFailures,
+      { errorCode, errorMessage, atMs: Date.now() },
+    ].slice(-MAX_REFRESH_FAILURES);
+  }
+
   async function refreshSession() {
     const sessionKeyAtRequest = sessionKey.peek();
     if (!sessionKeyAtRequest) {
@@ -660,34 +813,125 @@ export function createLoginManager({
     }
 
     console.log("[LoginManager] Refreshing session with existing session key");
-    const result = await client.replaceSession();
+    const replacement = withSessionRefreshLock(() =>
+      replaceSessionKey(sessionKeyAtRequest)
+    );
+    // Registered before any response can arrive. The server retires the old key as
+    // soon as it issues the new one, so other requests still carrying the old key
+    // start failing with `invalid_key` from that moment on; this is what lets them
+    // be retried with the new key rather than signing the user out.
+    pendingReplacement = { oldKey: sessionKeyAtRequest, newKey: replacement };
 
+    if (await replacement) {
+      await loadUserInfo();
+    }
+  }
+
+  /**
+   * Swaps the session key for a fresh one, resolving with the new key once it's
+   * installed. Runs under the refresh lock.
+   */
+  async function replaceSessionKey(
+    sessionKeyAtRequest: string
+  ): Promise<string | null> {
+    // Another tab may have refreshed while we waited for the lock. Replacing again
+    // would retire the key it just saved, so take that one instead.
+    const stored = readStoredSessionKey();
+    if (isSuccessorSessionKey(stored, sessionKeyAtRequest)) {
+      if (sessionKey.peek() === sessionKeyAtRequest) {
+        adoptStoredSessionKey(stored);
+      }
+      return sessionKey.peek() === stored ? stored : null;
+    }
     if (sessionKey.peek() !== sessionKeyAtRequest) {
-      // The session ended while the refresh was in flight — the user signed out, or
-      // this very call reported the key dead and the session guard already signed
-      // them out. Assigning a key now would resurrect a session we just dropped.
-      return;
+      // Signed out while waiting for the lock.
+      return null;
+    }
+
+    let result: Awaited<ReturnType<typeof client.replaceSession>>;
+    try {
+      result = await client.replaceSession();
+    } catch (err) {
+      // Offline, DNS, CORS and the like. The key may well still be good.
+      console.warn("[LoginManager] Failed to refresh session:", err);
+      if (sessionKey.peek() === sessionKeyAtRequest) {
+        recordRefreshFailure(
+          "request_failed",
+          err instanceof Error ? err.message : String(err)
+        );
+      }
+      return null;
+    }
+
+    const current = sessionKey.peek();
+    if (current !== sessionKeyAtRequest) {
+      // Either we picked up a newer key from another tab meanwhile — hand that back,
+      // so requests waiting on this refresh retry with it — or the session ended:
+      // the user signed out, or this very call reported the key dead and the session
+      // guard already signed them out. Assigning our key now would resurrect a
+      // session we just dropped.
+      return isSuccessorSessionKey(current, sessionKeyAtRequest)
+        ? current
+        : null;
     }
 
     if (result.success) {
       console.log("[LoginManager] Session refreshed successfully");
+      refreshFailures = [];
       sessionKey.value = result.sessionKey;
       connectionKey.value = result.connectionKey;
       client.sessionKey = result.sessionKey;
-      await loadUserInfo();
-    } else {
-      // Nothing is cleared here, on purpose. A refresh fails for transient reasons
-      // far more often than real ones (a mobile dead spot, a 500, a rate limit), and
-      // the key is usually still good for another week. The three codes that really
-      // do mean the session is gone are handled centrally by the session guard,
-      // which has already signed the user out by the time we reach this branch.
-      console.warn(
-        "[LoginManager] Failed to refresh session; keeping the existing session key:",
-        result.errorCode,
-        result.errorMessage
-      );
+      return result.sessionKey;
     }
+
+    // Nothing is cleared here, on purpose. A refresh fails for transient reasons
+    // far more often than real ones (a mobile dead spot, a 500, a rate limit), and
+    // the key is usually still good for another week. The three codes that really
+    // do mean the session is gone are handled centrally by the session guard,
+    // which has already signed the user out by the time we reach this branch.
+    console.warn(
+      "[LoginManager] Failed to refresh session; keeping the existing session key:",
+      result.errorCode,
+      result.errorMessage
+    );
+    recordRefreshFailure(result.errorCode, result.errorMessage ?? null);
+    return null;
   }
+
+  os.setSessionReplacementResolver((key) => {
+    if (pendingReplacement?.oldKey === key) {
+      return pendingReplacement.newKey;
+    }
+
+    // Not a refresh of ours, so perhaps another tab's. Waiting for the lock lets a
+    // refresh still in flight there finish and save its new key before we look.
+    return withSessionRefreshLock(async () => {
+      const stored = readStoredSessionKey();
+      if (!isSuccessorSessionKey(stored, key)) {
+        return null;
+      }
+      if (sessionKey.peek() === key) {
+        adoptStoredSessionKey(stored);
+      }
+      return stored;
+    });
+  });
+
+  const scheduleRefresh = (expireTimeMs: number) => {
+    const delay = expireTimeMs - REFRESH_BEFORE_EXPIRY_MS - Date.now();
+    if (delay <= 0) {
+      console.log("[LoginManager] Session is expiring soon, refreshing now");
+      refreshSession().catch((err) => {
+        console.warn("[LoginManager] Failed to refresh session", err);
+      });
+      return;
+    }
+    // Longer delays overflow `setTimeout` and fire at once, so wait in steps.
+    refreshTimer = setTimeout(
+      () => scheduleRefresh(expireTimeMs),
+      Math.min(delay, MAX_TIMER_DELAY_MS)
+    );
+  };
 
   async function cancelLogin() {
     isLoginOpen.value = false;
@@ -818,20 +1062,80 @@ export function createLoginManager({
   }
 
   effect(() => {
-    if (typeof localStorage !== "undefined") {
-      if (!sessionKey.value) {
-        localStorage.removeItem("sessionKey");
+    if (typeof localStorage === "undefined") {
+      return;
+    }
+
+    const key = sessionKey.value;
+    const connection = connectionKey.value;
+    if (key) {
+      localStorage.setItem("sessionKey", key);
+      if (connection) {
+        localStorage.setItem("connectionKey", connection);
       } else {
-        localStorage.setItem("sessionKey", sessionKey.value);
+        localStorage.removeItem("connectionKey");
+      }
+      ownedStoredSessionKey = key;
+      return;
+    }
+
+    if (isSigningOut || readStoredSessionKey() === ownedStoredSessionKey) {
+      localStorage.removeItem("sessionKey");
+      localStorage.removeItem("connectionKey");
+    }
+    ownedStoredSessionKey = null;
+  });
+
+  // Refreshes whatever key this tab holds now — restored at startup, from signing in,
+  // from a refresh, or picked up from another tab.
+  effect(() => {
+    const expireTimeMs = parsedSessionKey.value?.expireTimeMs;
+    clearTimeout(refreshTimer);
+    if (expireTimeMs === undefined || typeof localStorage === "undefined") {
+      return;
+    }
+    scheduleRefresh(expireTimeMs);
+  });
+
+  // Keeps this tab in step with the others. `storage` fires in every *other* tab
+  // when one writes, so a key changing here means another tab refreshed, signed in
+  // or signed out.
+  if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+    window.addEventListener("storage", (event) => {
+      if (event.storageArea !== localStorage) {
+        return;
+      }
+      // A null key means the whole of storage was cleared.
+      if (
+        event.key !== null &&
+        event.key !== "sessionKey" &&
+        event.key !== "connectionKey"
+      ) {
+        return;
       }
 
-      if (!connectionKey.value) {
-        localStorage.removeItem("connectionKey");
-      } else {
-        localStorage.setItem("connectionKey", connectionKey.value);
+      const stored = readStoredSessionKey();
+      if (stored === sessionKey.peek()) {
+        // The two keys are written one after the other, so the connection key can
+        // arrive in an event of its own.
+        if (stored) {
+          connectionKey.value = localStorage.getItem("connectionKey");
+        }
+        return;
       }
-    }
-  });
+
+      if (!stored) {
+        // Another tab signed out, or found the session dead. That tab has already
+        // told the user, so follow quietly rather than show a second notice.
+        clearSession();
+        return;
+      }
+
+      if (parseSessionKey(stored)) {
+        adoptStoredSessionKey(stored);
+      }
+    });
+  }
 
   if (sessionKey.value) {
     // Nobody awaits this, so it needs its own handler: a network failure here would

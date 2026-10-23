@@ -112,6 +112,39 @@ describe("closeModal", () => {
   });
 });
 
+describe("dismissModal", () => {
+  it("removes the modal and runs its onDismiss", () => {
+    const onDismiss = vi.fn();
+    manager.openModal({ id: "item", title: "T", content: "", onDismiss });
+
+    manager.dismissModal("item");
+
+    expect(manager.modals.value).toHaveLength(0);
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it("closeModal does not run onDismiss", () => {
+    const onDismiss = vi.fn();
+    manager.openModal({ id: "item", title: "T", content: "", onDismiss });
+
+    manager.closeModal("item");
+
+    expect(manager.modals.value).toHaveLength(0);
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it("is a no-op for an unknown id", () => {
+    const onDismiss = vi.fn();
+    manager.openModal({ id: "other", title: "T", content: "", onDismiss });
+
+    manager.dismissModal("missing");
+
+    expect(manager.modals.value).toHaveLength(1);
+    expect(manager.modals.value[0]?.id).toBe("other");
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+});
+
 describe("closeAllModals", () => {
   it("removes all open modals", () => {
     manager.openModal({ title: "A", content: "" });

@@ -1,0 +1,25 @@
+{
+  "name": "create-seed-bible-extension",
+  "version": "0.1.0",
+  "description": "Scaffolds a new Seed Bible extension project (see seed-bible-extension-scripts for the check/test/build/dev toolkit it uses).",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "bin": {
+    "create-seed-bible-extension": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "echo \"create-seed-bible-extension has no unit tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^6.0.3"
+  }
+}

@@ -22,6 +22,7 @@ import {
 } from "../managers/TodayManager";
 import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
+import { openExtensionConsentModal } from "../components/ExtensionConsentModal/ExtensionConsentModal";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
 import {
   SharedPageLoadFailedModalContent,
@@ -77,6 +78,12 @@ import {
   FriendsPaneTitle,
 } from "../components/FriendsPane/FriendsPane";
 import { setupFriendLinks } from "../components/FriendsPane/FriendLinkPrompts";
+import {
+  EXTENSIONS_PANE_ID,
+  ExtensionsPage,
+  ExtensionsPaneBackButton,
+  ExtensionsPaneTitle,
+} from "../components/ExtensionsPage/ExtensionsPage";
 import {
   createYourContentManager,
   type YourContentManager,
@@ -639,6 +646,21 @@ export interface SeedBibleState {
   /** Closes Friends (clears `friends` from the URL). */
   closeFriends: () => void;
 
+  /** True when the full-screen Extensions page is showing (desktop). */
+  isExtensionsOpen: ReadonlySignal<boolean>;
+  /**
+   * The extension whose page is open on the Extensions page, or null while
+   * it lists them all.
+   */
+  extensionsPageEntryId: ReadonlySignal<string | null>;
+  /**
+   * Opens the Extensions page, at `extensionId`'s page when given (reflected
+   * in the URL as `?extensions=open&extension=<id>`).
+   */
+  openExtensions: (extensionId?: string | null) => void;
+  /** Closes the Extensions page (clears `extensions` and `extension`). */
+  closeExtensions: () => void;
+
   /** True when the Profile screen is showing. */
   isProfileOpen: ReadonlySignal<boolean>;
   /** Opens the Profile screen (reflected in the URL as `?profile=open`). */
@@ -986,6 +1008,13 @@ export function createSeedBibleState(
   );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
+    requestSandboxConsent: (request) =>
+      openExtensionConsentModal(modals, request, {
+        userId: login.userId,
+        friends,
+      }),
+    records: os,
+    fileRecords: os,
   });
   const extensionSettings = createExtensionSettingsManager(
     os,
@@ -1132,6 +1161,40 @@ export function createSeedBibleState(
     friendsOpen.value = false;
   };
 
+  // The full-screen Extensions page, bound to `?extensions=open` and, while
+  // one extension's page is showing, `?extension=<id>`.
+  const extensionsOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("extensions") === "open"
+  );
+  const extensionsPageEntry = signal<string | null>(
+    import.meta.env.SSR
+      ? null
+      : navigation.currentUrl.value.searchParams.get("extension")
+  );
+  const isExtensionsOpen = computed(() => extensionsOpen.value);
+  const extensionsPageEntryId = computed(() =>
+    extensionsOpen.value ? extensionsPageEntry.value : null
+  );
+  const openExtensions = (extensionId: string | null = null) => {
+    // Today's URL binding would otherwise turn it straight back on over this
+    // page; see `openProfile` below.
+    if (today.isOpen.peek()) {
+      today.close();
+    }
+    batch(() => {
+      extensionsOpen.value = true;
+      extensionsPageEntry.value = extensionId;
+    });
+  };
+  const closeExtensions = () => {
+    batch(() => {
+      extensionsOpen.value = false;
+      extensionsPageEntry.value = null;
+    });
+  };
+
   // The Profile screen. Two-way bound to `?profile=open` so it can be
   // deep-linked and so the browser's back button leaves it, mirroring Today.
   //
@@ -1206,6 +1269,22 @@ export function createSeedBibleState(
       },
       set value(newValue) {
         friendsOpen.value = newValue === "open";
+      },
+    },
+    extensions: {
+      get value() {
+        return extensionsOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        extensionsOpen.value = newValue === "open";
+      },
+    },
+    extension: {
+      get value() {
+        return extensionsOpen.value ? extensionsPageEntry.value : null;
+      },
+      set value(newValue) {
+        extensionsPageEntry.value = newValue;
       },
     },
     "edit-profile": {
@@ -3650,6 +3729,10 @@ export function createSeedBibleState(
     isFriendsOpen,
     openFriends,
     closeFriends,
+    isExtensionsOpen,
+    extensionsPageEntryId,
+    openExtensions,
+    closeExtensions,
     isProfileOpen,
     openProfile,
     closeProfile,
@@ -4146,6 +4229,35 @@ export function createSeedBibleState(
     );
     if (!paneOpen && isFriendsOpen.peek()) {
       closeFriends();
+    }
+  });
+
+  const renderExtensionsPane = () => <ExtensionsPage state={state} />;
+  const renderExtensionsPaneTitle = () => <ExtensionsPaneTitle />;
+  const renderExtensionsPaneLeading = () => (
+    <ExtensionsPaneBackButton state={state} />
+  );
+
+  effect(() => {
+    if (isExtensionsOpen.value) {
+      panes.openPane({
+        id: EXTENSIONS_PANE_ID,
+        placement: "fullscreen",
+        title: renderExtensionsPaneTitle,
+        leading: renderExtensionsPaneLeading,
+        component: renderExtensionsPane,
+      });
+    } else {
+      panes.closePane(EXTENSIONS_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === EXTENSIONS_PANE_ID
+    );
+    if (!paneOpen && isExtensionsOpen.peek()) {
+      closeExtensions();
     }
   });
 

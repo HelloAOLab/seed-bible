@@ -2832,6 +2832,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     iconNode={
                       <SeedBibleIcon
                         size={24}
+                        animated
                         className="sb-reader-toolbar-seed-icon"
                       />
                     }
