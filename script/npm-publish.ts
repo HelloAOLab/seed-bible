@@ -1,5 +1,5 @@
 import { program } from "commander";
-import { execFileSync } from "node:child_process";
+import { execFileSync, type ExecFileSyncOptions } from "node:child_process";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -10,16 +10,40 @@ import {
   type NpmChannel,
 } from "./lib/npmPublish";
 
+const isWindows = process.platform === "win32";
+
+/**
+ * Runs `npm`/`pnpm`. On Windows they are `.cmd` shims, which Node can only
+ * start through a shell; the shell joins the arguments into one string, so
+ * they're quoted to keep paths with spaces intact.
+ */
+function run(
+  command: string,
+  args: string[],
+  options: ExecFileSyncOptions = {}
+): string {
+  const output = execFileSync(
+    command,
+    isWindows ? args.map((arg) => `"${arg}"`) : args,
+    { ...options, shell: isWindows, encoding: "utf-8" }
+  );
+  return output ?? "";
+}
+
 function isPublished(name: string, version: string): boolean {
   try {
-    const out = execFileSync("npm", ["view", `${name}@${version}`, "version"], {
-      encoding: "utf-8",
+    const out = run("npm", ["view", `${name}@${version}`, "version"], {
       stdio: ["ignore", "pipe", "pipe"],
     });
     return out.trim() === version;
-  } catch {
-    // `npm view` exits non-zero (E404) when the package or version doesn't exist.
-    return false;
+  } catch (err) {
+    // `npm view` fails with E404 when the package has never been published.
+    // Anything else (no npm, no network) must not be mistaken for that.
+    const stderr = (err as { stderr?: unknown }).stderr;
+    if (String(stderr ?? "").includes("E404")) {
+      return false;
+    }
+    throw err;
   }
 }
 
@@ -92,7 +116,7 @@ program
           // `pnpm pack` resolves `catalog:` and `workspace:` specifiers, which
           // npm can't; `npm publish` then handles auth and provenance.
           const outDir = path.join(packDir, pkg.name);
-          execFileSync("pnpm", ["pack", "--pack-destination", outDir], {
+          run("pnpm", ["pack", "--pack-destination", outDir], {
             cwd: pkg.dir,
             stdio: "inherit",
           });
@@ -111,7 +135,7 @@ program
           if (options.dryRun) {
             args.push("--dry-run");
           }
-          execFileSync("npm", args, { stdio: "inherit" });
+          run("npm", args, { stdio: "inherit" });
           console.log(
             `${options.dryRun ? "[dry run] " : ""}Published ${pkg.name}@${pkg.version} (${channel}).`
           );
