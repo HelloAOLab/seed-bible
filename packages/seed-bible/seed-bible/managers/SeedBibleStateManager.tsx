@@ -411,6 +411,7 @@ export interface AppState {
    * is always spelled out and why it follows the translation.
    */
   canonicalUrl: ReadonlySignal<string>;
+
   /** The title of the page. */
   title: ReadonlySignal<string>;
 
@@ -488,6 +489,10 @@ export interface AppState {
   /** Closes the Discover panel. */
   closeDiscover: () => void;
 
+  /**
+   * Whether crawlers should be told not to index this page: true only when
+   * it previews as a friend link (see `canonicalUrl`).
+   */
   noIndex: ReadonlySignal<boolean>;
 }
 
