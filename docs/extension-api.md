@@ -865,6 +865,7 @@ The manifest sits at the root of your project. `seed-bible-extension-scripts` va
 {
   "id": "verse-art",
   "version": "1.2.0",
+  "icon": "icon.png",
   "permissions": ["reading:selection"],
   "optionalPermissions": ["clipboard:write", "highlights:write"],
   "network": ["api.verse-art.example", "cdn.verse-art.example"],
@@ -896,16 +897,17 @@ The manifest sits at the root of your project. `seed-bible-extension-scripts` va
 }
 ```
 
-| Field                 | Notes                                                                                                                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `id`                  | Required. Your extension's name, unique among your own extensions. Combined with where it's hosted to make [`sb.extensionId`](#sbextensionid).                                 |
-| `version`             | A string, such as `"1.2.0"`.                                                                                                                                                   |
-| `permissions`         | Permissions the user must grant to install. Only the "Can be required" ones from [§7](#7-permissions-at-a-glance).                                                             |
-| `optionalPermissions` | Permissions you may ask for later with `sb.permissions.request`. A permission in both lists counts as required.                                                                |
-| `network`             | Every host your frames may contact (`fetch`, images, media, fonts), as bare hosts like `api.example.com` or `example.com:8443`. Everything else is blocked. Can't be optional. |
-| `settings`            | Settings the user can change on your extension's Settings tab. See below.                                                                                                      |
-| `sensitive`           | Destinations for sensitive settings. See below.                                                                                                                                |
-| `translations`        | Strings by language code. `title` and `description` name your extension in the app; other keys are yours for `sb.i18n.t` and `{ key }` titles. `en` is the fallback.           |
+| Field                 | Notes                                                                                                                                                                                                                                                                                                                         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                  | Required. Your extension's name, unique among your own extensions. Combined with where it's hosted to make [`sb.extensionId`](#sbextensionid).                                                                                                                                                                                |
+| `version`             | A string, such as `"1.2.0"`.                                                                                                                                                                                                                                                                                                  |
+| `icon`                | A square image in your project (`.png`, `.svg`, `.webp` or `.jpg`, under 256 KB), or an `https:` link to one. Shown wherever your extension is listed and in the install dialog, instead of colored initials. `publish` uploads it, `package` copies it next to the bundle, and `check` refuses one Seed Bible couldn't show. |
+| `permissions`         | Permissions the user must grant to install. Only the "Can be required" ones from [§7](#7-permissions-at-a-glance).                                                                                                                                                                                                            |
+| `optionalPermissions` | Permissions you may ask for later with `sb.permissions.request`. A permission in both lists counts as required.                                                                                                                                                                                                               |
+| `network`             | Every host your frames may contact (`fetch`, images, media, fonts), as bare hosts like `api.example.com` or `example.com:8443`. Everything else is blocked. Can't be optional.                                                                                                                                                |
+| `settings`            | Settings the user can change on your extension's Settings tab. See below.                                                                                                                                                                                                                                                     |
+| `sensitive`           | Destinations for sensitive settings. See below.                                                                                                                                                                                                                                                                               |
+| `translations`        | Strings by language code. `title` and `description` name your extension in the app; other keys are yours for `sb.i18n.t` and `{ key }` titles. `en` is the fallback.                                                                                                                                                          |
 
 **A manifest that names a permission this version of Seed Bible doesn't know won't install**, rather than install without it. A sandboxed extension can't declare `dependencies`, and `autoinstall` is ignored: it's never installed without the user being asked.
 

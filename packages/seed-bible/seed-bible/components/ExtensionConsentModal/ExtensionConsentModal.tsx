@@ -350,11 +350,31 @@ function tileHue(extensionId: string): number {
   return hash % TILE_HUES;
 }
 
+/** The extension's icon, or its initials on a color when it has none. */
 export function ExtensionTile({
   request,
 }: {
-  request: { extensionId: string; title: string };
+  request: { extensionId: string; title: string; icon?: string };
 }) {
+  // Keyed by URL so a new icon gets a fresh attempt after an old one failed.
+  const failedIcon = useSignal<string | null>(null);
+  const { icon } = request;
+  if (icon && failedIcon.value !== icon) {
+    return (
+      <span
+        className="sb-extension-consent-tile sb-extension-consent-tile-image"
+        aria-hidden="true"
+      >
+        <img
+          src={icon}
+          alt=""
+          onError={() => {
+            failedIcon.value = icon;
+          }}
+        />
+      </span>
+    );
+  }
   return (
     <span
       className={`sb-extension-consent-tile sb-extension-consent-tile-${tileHue(request.extensionId)}`}

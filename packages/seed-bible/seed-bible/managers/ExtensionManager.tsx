@@ -170,6 +170,13 @@ export interface ExtensionMeta {
    * is the code the user agreed to.
    */
   integrity?: string;
+
+  /**
+   * A link to a square image standing for the extension, shown in place of
+   * its initials. In a fetched `ExtensionSet` it may be relative to the set,
+   * and only an https: link (or http://localhost while developing) is kept.
+   */
+  icon?: string;
 }
 
 /**
@@ -707,6 +714,23 @@ export function isExtensionSetUrl(value: string): boolean {
     );
   } catch {
     return false;
+  }
+}
+
+/**
+ * `meta` with its icon resolved against the set it came from, or without
+ * one when it isn't a link Seed Bible will show.
+ */
+function withResolvedIcon(meta: ExtensionMeta, setUrl: string): ExtensionMeta {
+  const { icon, ...rest } = meta;
+  if (typeof icon !== "string") {
+    return rest;
+  }
+  try {
+    const resolved = new URL(icon, setUrl).href;
+    return isExtensionSetUrl(resolved) ? { ...rest, icon: resolved } : rest;
+  } catch {
+    return rest;
   }
 }
 
@@ -1682,6 +1706,7 @@ export function createExtensionManager(
       description: translation.description,
       sourceHost,
       version: manifest.version,
+      icon: uploaded.meta.icon,
     };
     const askConsent = async (
       request: Omit<SandboxConsentRequest, keyof typeof consentBase>
@@ -2047,13 +2072,18 @@ export function createExtensionManager(
         return null;
       }
 
-      // A bundle's URL may be relative to the set, so a folder from
-      // `seed-bible-extension-scripts package` works wherever it's hosted.
+      // A bundle's (and an icon's) URL may be relative to the set, so a
+      // folder from `seed-bible-extension-scripts package` works wherever
+      // it's hosted.
       const set = withSourcedIds({
         ...data,
         extensions: data.extensions.map((extension) =>
           "url" in extension
-            ? { ...extension, url: new URL(extension.url, url).href }
+            ? {
+                ...extension,
+                url: new URL(extension.url, url).href,
+                meta: withResolvedIcon(extension.meta, url),
+              }
             : extension
         ),
       });

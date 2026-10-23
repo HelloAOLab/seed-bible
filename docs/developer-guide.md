@@ -228,6 +228,7 @@ Declare them in `extension.json`. The user sees them, in plain language, before 
 {
   "id": "verse-art",
   "version": "1.0.0",
+  "icon": "icon.png",
   "permissions": ["reading:selection"],
   "optionalPermissions": ["reading:position"],
   "network": ["api.verse-art.example"],
@@ -261,6 +262,8 @@ Declare them in `extension.json`. The user sees them, in plain language, before 
 **"Can be required: No"** means the permission can only go under `optionalPermissions`, and you ask for it with `sb.permissions.request` when the feature that needs it is used. A manifest that lists one under `permissions` won't install, and `npm run check` (which `build` and `publish` run) stops with a message saying which to move. The rule: anything that changes the user's data, identifies them, reads their private notes, involves other people, or uses the microphone or camera is always optional. Users can also turn optional permissions on and off themselves, on your extension's page in Settings → Extensions. That restarts your extension with the new set, so read `sb.permissions.has()` rather than assuming.
 
 `network` lists every host your frames may contact (`fetch`, images, media, fonts); anything else is blocked. Requests arrive with `Origin: null`, so the server must allow that in its CORS headers (`Access-Control-Allow-Origin: *` does). A manifest that names a permission this version of Seed Bible doesn't know won't install, rather than install without it. Network hosts can't be optional.
+
+**Icon.** `icon` is a square image in your project (`.png`, `.svg`, `.webp` or `.jpg`, under 256 KB; 256 pixels across is plenty). Seed Bible shows it wherever your extension is listed, on its page and in the install dialog, in place of the colored initials it shows otherwise. `publish` uploads it to its own link and puts that link in the manifest; `package` copies it next to the bundle and `dev` serves it. You can also give a full `https:` link to an image hosted elsewhere. `check` refuses an icon Seed Bible couldn't show.
 
 **Needs no permission:** `sb.identity` (an id for the user that's the same every time for your extension, different for every extension, not their real id, and null when signed out), `sb.bible.chapter({ translationId, bookId, chapter })` for public Bible text, `sb.sensitive.fetch(...)` for requests that carry the user's sensitive settings such as API keys (see the [`sensitive` section](./extension-api.md#sensitive-settings) of `extension.json`), `sb.modals.alert`/`open`, and `sb.settings.registerPanel(view)` for a view on your extension's Settings page.
 

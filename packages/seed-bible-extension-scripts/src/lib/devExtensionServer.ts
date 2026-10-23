@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { loadExtensionProjectInfo } from "./project.js";
+import { readIcon } from "./icon.js";
 
 export interface DevExtensionServer {
   /** Where the `ExtensionSet` is served, for `?extensionSet=`. */
@@ -38,9 +39,20 @@ export async function startDevExtensionServer(options: {
       if (pathname === "/index.js") {
         response.setHeader("Content-Type", "text/javascript; charset=utf-8");
         response.end(await readFile(bundlePath));
+      } else if (pathname.startsWith("/icon")) {
+        const { meta } = await loadExtensionProjectInfo(root);
+        const icon = await readIcon(root, meta);
+        if (!icon) {
+          response.statusCode = 404;
+          response.end();
+          return;
+        }
+        response.setHeader("Content-Type", icon.mimeType);
+        response.end(icon.bytes);
       } else if (pathname === "/extension-set.json") {
         const bundle = await readFile(bundlePath);
         const { meta } = await loadExtensionProjectInfo(root);
+        const icon = await readIcon(root, meta);
         response.setHeader("Content-Type", "application/json");
         response.end(
           JSON.stringify({
@@ -50,6 +62,8 @@ export async function startDevExtensionServer(options: {
                 url: `${base}/index.js`,
                 meta: {
                   ...meta,
+                  // Named by its type so the browser can tell what it is.
+                  ...(icon && { icon: `${base}/icon${icon.extension}` }),
                   integrity: `sha384-${createHash("sha384").update(bundle).digest("base64")}`,
                 },
               },
