@@ -120,7 +120,7 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     titleDefault: "Toolbar",
     bodyKey: "tutorial.toolbarBody",
     bodyDefault:
-      "You can customize the toolbar to your liking. By default, book selection, navigation, and search are built in.",
+      "Book selection, navigation, search, and your reading tools all live here.",
     placement: "top",
   },
   {
