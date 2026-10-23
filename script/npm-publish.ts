@@ -97,6 +97,9 @@ program
             stdio: "inherit",
           });
           const [tarball] = await readdir(outDir);
+          if (!tarball) {
+            throw new Error(`pnpm pack produced no tarball for ${pkg.name}.`);
+          }
           const args = [
             "publish",
             path.join(outDir, tarball),
