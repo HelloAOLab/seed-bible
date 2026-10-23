@@ -484,7 +484,7 @@ async function saveCustomizationOrToast(
 
 /**
  * Opens (or, if already open, updates) the customization editor side pane on
- * a specific customization. Called from the customizations list in Settings.
+ * a specific customization. Called from the Branding section of Your content.
  */
 export function openCustomizationEditPane(
   state: SeedBibleState,

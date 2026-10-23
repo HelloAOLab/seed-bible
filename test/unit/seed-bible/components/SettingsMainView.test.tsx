@@ -84,17 +84,12 @@ describe("SettingsMainView", () => {
       (el) => el.textContent
     );
 
-  it("hides the Customize nav item when the user is signed out", () => {
-    renderMain(null);
+  it("has no Customize nav item, even when signed in", () => {
+    renderMain("user-1");
 
     expect(navLabels()).not.toContain("Customize");
   });
 
-  it("shows the Customize nav item when the user is signed in", () => {
-    renderMain("user-1");
-
-    expect(navLabels()).toContain("Customize");
-  });
   it("opens the full-screen Profile screen from Account", () => {
     const state = renderMain("user-1");
     const accountButton = Array.from(

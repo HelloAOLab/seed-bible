@@ -35,6 +35,7 @@ import { Spinner } from "../Spinner/Spinner";
 import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
 import { useI18n } from "../../i18n";
 import { UserImagesGrid } from "./UserImages";
+import { CustomizationCard } from "../CustomizationEditPane/CustomizationCard";
 import "./YourContentPane.css";
 
 export const YOUR_CONTENT_PANE_ID = "your-content-pane";
@@ -62,6 +63,10 @@ export interface YourContentScreenProps {
   onOpenReadingPlan: (plan: ReadingPlanMetadata) => void;
   /** Opens a reading plan in the plan editor and leaves this screen. */
   onEditReadingPlan: (plan: ReadingPlanMetadata) => void;
+  /** Opens a customization in its editor and leaves this screen. */
+  onEditCustomization: (customizationId: string) => void;
+  /** Creates a new customization, opens it in the editor and leaves this screen. */
+  onCreateCustomization: () => void;
 }
 
 /** Pane header title. A component so it can call `useI18n`. */
@@ -518,16 +523,23 @@ function readingPlanStatusLabel(
 
 /**
  * The "Your content" screen (issue #1553): everything the reader has made —
- * annotations, highlights, saves, playlists, reading plans and uploaded
- * images — in one place, filtered by a search box and a row of chips.
+ * annotations, highlights, saves, playlists, reading plans, branding
+ * customizations and uploaded images — in one place, filtered by a search box and a row of chips.
  *
  * "All" shows the first few of each section with a "See all" that switches
  * the chips to that one section in full.
  */
 export function YourContentPane(props: YourContentScreenProps) {
   const { state, onOpenPassage } = props;
-  const { yourContent, saves, playlists, annotations, readingPlans, gallery } =
-    state;
+  const {
+    yourContent,
+    saves,
+    playlists,
+    annotations,
+    readingPlans,
+    gallery,
+    customizations,
+  } = state;
   const { t } = useI18n();
   const userId = state.login.userId.value;
 
@@ -547,10 +559,12 @@ export function YourContentPane(props: YourContentScreenProps) {
     void yourContent.load({ force: true });
   }, []);
 
-  // Uploaded images live in the account's gallery, not in what `load` reads.
+  // Uploaded images and customizations each have their own store, not what
+  // `load` reads.
   useEffect(() => {
     if (userId) {
       void gallery.syncPhotos();
+      void customizations.load();
     }
   }, [userId]);
 
@@ -632,6 +646,9 @@ export function YourContentPane(props: YourContentScreenProps) {
         .filter((p) => matches(p.title, p.description))
         .sort((a, b) => b.createdAtMs - a.createdAtMs)
     : [];
+  const visibleCustomizations = userId
+    ? customizations.customizations.value.filter((c) => matches(c.name))
+    : [];
   // An image has no words to search, so any search hides them all.
   const visibleImages =
     userId && needle.length === 0 ? gallery.photos.value : [];
@@ -662,6 +679,8 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("playlists", { defaultValue: "Playlists" });
       case "reading-plans":
         return t("reading-plans", { defaultValue: "Reading plans" });
+      case "branding":
+        return t("branding", { defaultValue: "Branding" });
       case "images":
         return t("images", { defaultValue: "Images" });
     }
@@ -673,6 +692,7 @@ export function YourContentPane(props: YourContentScreenProps) {
     saves: visibleSaves.length,
     playlists: visiblePlaylists.length,
     "reading-plans": visibleReadingPlans.length,
+    branding: visibleCustomizations.length,
     images: visibleImages.length,
   };
 
@@ -717,6 +737,10 @@ export function YourContentPane(props: YourContentScreenProps) {
       case "reading-plans":
         return t("your-content-empty-reading-plans", {
           defaultValue: "Reading plans you create will show up here.",
+        });
+      case "branding":
+        return t("your-content-empty-branding", {
+          defaultValue: "Custom branding you create will show up here.",
         });
       case "images":
         return t("your-images-empty", {
@@ -764,6 +788,16 @@ export function YourContentPane(props: YourContentScreenProps) {
               </MaterialIcon>
               {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
             </ContextMenuItem>
+            {userId ? (
+              <ContextMenuItem onClick={props.onCreateCustomization}>
+                <MaterialIcon className="sb-context-menu-item-icon">
+                  palette
+                </MaterialIcon>
+                {t("create-custom-branding-menu-item", {
+                  defaultValue: "Custom Branding",
+                })}
+              </ContextMenuItem>
+            ) : null}
           </ContextMenuWithButton>
 
           <div className="sb-content-chips" role="tablist">
@@ -947,6 +981,27 @@ export function YourContentPane(props: YourContentScreenProps) {
                     plan={plan}
                     onOpen={() => props.onOpenReadingPlan(plan)}
                     onEdit={() => props.onEditReadingPlan(plan)}
+                  />
+                ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {showing("branding") && visibleCustomizations.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("branding", { defaultValue: "Branding" })}
+              onSeeAll={seeAll("branding", visibleCustomizations)}
+            />
+            <ul className="sb-cz-card-list">
+              {visibleCustomizations
+                .slice(0, limit(visibleCustomizations))
+                .map((customization) => (
+                  <CustomizationCard
+                    key={customization.id}
+                    state={state}
+                    customization={customization}
+                    onOpen={() => props.onEditCustomization(customization.id)}
                   />
                 ))}
             </ul>
