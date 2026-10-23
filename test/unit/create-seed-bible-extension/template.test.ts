@@ -39,6 +39,19 @@ describe("a scaffolded extension", () => {
     expect(scripts.package).toBe("seed-bible-extension-scripts package");
   });
 
+  it("pins the Preact version the seed-bible package requires", async () => {
+    // Published, `seed-bible`'s `catalog:` peer becomes this exact version,
+    // so any other pin makes `npm install` fail in every new project.
+    const catalogPreact = /^\s+preact:\s*"([^"]+)"/m.exec(
+      await readFile("pnpm-workspace.yaml", "utf-8")
+    )?.[1];
+    const { dependencies } = JSON.parse(
+      await readFile(path.join(target, "package.json"), "utf-8")
+    );
+    expect(catalogPreact).toBeDefined();
+    expect(dependencies.preact).toBe(catalogPreact);
+  });
+
   it("is ready to host on GitHub Pages or Cloudflare", async () => {
     const workflow = await readFile(
       path.join(target, ".github/workflows/deploy-pages.yml"),

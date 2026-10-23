@@ -87,6 +87,7 @@ are asked again only if a new version needs more than they already allowed.
 
 ## Learn more
 
-See §7 of `docs/developer-guide.md` in the
+See `docs/extension-api.md` in the
 [seed-bible repository](https://github.com/HelloAOLab/seed-bible) for the
-whole `sb` API, and `docs/extension-security.md` for how the sandbox works.
+reference to every `sb` call, `docs/developer-guide.md` for how extensions
+work and a tour of the API by example, and `docs/extension-security.md` for how the sandbox works.
