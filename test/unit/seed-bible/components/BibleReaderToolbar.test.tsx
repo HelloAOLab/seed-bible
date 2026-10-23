@@ -1689,7 +1689,7 @@ describe("BibleReaderToolbar mobile More menu", () => {
     return { state, moreButton };
   }
 
-  const menu = () => container.querySelector(".sb-mobile-more-menu");
+  const menu = () => container.querySelector(".sb-more-menu");
 
   async function openMenu(moreButton: HTMLButtonElement): Promise<void> {
     await act(async () => {
@@ -1715,7 +1715,7 @@ describe("BibleReaderToolbar mobile More menu", () => {
     const { moreButton } = await renderToolbar();
     await openMenu(moreButton);
 
-    const item = container.querySelector(".sb-mobile-more-menu-item");
+    const item = container.querySelector(".sb-more-menu-item");
     expect(item).not.toBeNull();
 
     await act(async () => {
@@ -1755,9 +1755,8 @@ describe("BibleReaderToolbar mobile More menu", () => {
 
     // A keyboard user tabs into the menu before deciding to back out, so focus
     // is inside the popover — which is about to be removed from the document.
-    const item = container.querySelector<HTMLButtonElement>(
-      ".sb-mobile-more-menu-item"
-    );
+    const item =
+      container.querySelector<HTMLButtonElement>(".sb-more-menu-item");
     item!.focus();
     expect(document.activeElement).toBe(item);
 
@@ -1778,13 +1777,13 @@ describe("BibleReaderToolbar mobile More menu", () => {
     await openMenu(moreButton);
 
     const labels = Array.from(
-      container.querySelectorAll(".sb-mobile-more-menu-label")
+      container.querySelectorAll(".sb-more-menu-label")
     ).map((el) => el.textContent);
 
     expect(labels).not.toContain("Share");
   });
 
-  it("keeps extension tools above Tabs in the default (non-chat-first) More menu", async () => {
+  it("lists extension tools below Tabs, nearest the More tab, in the default (non-chat-first) More menu", async () => {
     const { state, moreButton } = await renderToolbar();
 
     await act(async () => {
@@ -1801,14 +1800,16 @@ describe("BibleReaderToolbar mobile More menu", () => {
     await openMenu(moreButton);
 
     const labels = Array.from(
-      container.querySelectorAll(".sb-mobile-more-menu-label")
+      container.querySelectorAll(".sb-more-menu-label")
     ).map((el) => el.textContent);
 
+    // The menu opens upwards, and its DOM order is its on-screen order (top
+    // to bottom), so the item nearest the More tab comes last.
     const extensionIndex = labels.indexOf("Extension Tool");
     const tabsIndex = labels.indexOf("Tabs");
     expect(extensionIndex).toBeGreaterThanOrEqual(0);
     expect(tabsIndex).toBeGreaterThanOrEqual(0);
-    expect(extensionIndex).toBeLessThan(tabsIndex);
+    expect(tabsIndex).toBeLessThan(extensionIndex);
   });
 
   it("stops listening once the menu is closed", async () => {
@@ -1879,12 +1880,13 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     state: SeedBibleState,
     id: string,
     title: string,
-    onSelect: () => void = vi.fn()
+    onSelect: () => void = vi.fn(),
+    // Lower than every built-in tool, so priority alone would put it first.
+    priority = 1
   ) {
     state.tools.registerToolbarTool({
       id,
-      // Lower than every built-in tool, so priority alone would put it first.
-      priority: 1,
+      priority,
       title,
       icon: () => <span>{id}</span>,
       isVisible: () => true,
@@ -1905,7 +1907,7 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     );
 
   const menuLabels = () =>
-    Array.from(container.querySelectorAll(".sb-mobile-more-menu-label")).map(
+    Array.from(container.querySelectorAll(".sb-more-menu-label")).map(
       (el) => el.textContent
     );
 
@@ -1915,7 +1917,7 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     await act(async () => {
       button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
-    expect(container.querySelector(".sb-mobile-more-menu")).not.toBeNull();
+    expect(container.querySelector(".sb-more-menu")).not.toBeNull();
   }
 
   it("shows Today, Books and Search, with Discover moved into More", async () => {
@@ -1984,7 +1986,7 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
 
     await openMenu();
     const item = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-mobile-more-menu-item")
+      container.querySelectorAll<HTMLButtonElement>(".sb-more-menu-item")
     ).find((el) => el.textContent?.includes("Extension One"));
     if (!item) throw new Error("The extension tool is missing from More.");
 
@@ -1993,7 +1995,7 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     });
 
     expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(container.querySelector(".sb-mobile-more-menu")).toBeNull();
+    expect(container.querySelector(".sb-more-menu")).toBeNull();
   });
 
   it("closes the More menu on Escape and returns focus to the More button", async () => {
@@ -2006,8 +2008,178 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
       );
     });
 
-    expect(container.querySelector(".sb-mobile-more-menu")).toBeNull();
+    expect(container.querySelector(".sb-more-menu")).toBeNull();
     expect(document.activeElement).toBe(moreButton());
+  });
+
+  it("closes the search panel when Today is opened, as the mobile Today tab does", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
+      state.today.close();
+      state.sidebar.openSearchPanel();
+    });
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
+
+    const today = container.querySelector<HTMLButtonElement>(
+      '.sb-reader-toolbar-labeled button[aria-label="Today"]'
+    );
+    await act(async () => {
+      today!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.today.isOpen.value).toBe(true);
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(false);
+  });
+
+  it("shows Chat's unread count on the More button while Chat is inside the closed menu", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
+      const chat = state.chats.createLocalSession();
+      chat.appendMessage({ type: "text", text: "Hello" }, ["someone-else"]);
+    });
+    expect(state.chats.numberOfUnreadMessages.value).toBe(1);
+
+    // Chat is in More, not on the bar, so the badge has to be on More.
+    expect(barLabels()).not.toContain("Chat");
+    expect(
+      moreButton()!.querySelector(".sb-reader-toolbar-unread-indicator")
+        ?.textContent
+    ).toBe("1");
+
+    // Once the menu is open, the Chat entry carries the badge instead.
+    await openMenu();
+    expect(
+      moreButton()!.querySelector(".sb-reader-toolbar-unread-indicator")
+    ).toBeNull();
+    expect(
+      container.querySelector(".sb-more-menu-unread-indicator")?.textContent
+    ).toBe("1");
+  });
+
+  it("lists the items of a tool with a submenu in the More menu, and runs the one picked", async () => {
+    const state = await renderToolbar();
+    const onFirst = vi.fn();
+    const onSecond = vi.fn();
+    await act(async () => {
+      state.tools.registerToolbarTool({
+        id: "ext-menu",
+        priority: 1,
+        title: "Extension Menu",
+        icon: () => <span>menu</span>,
+        isVisible: () => true,
+        getItems: () => [
+          {
+            id: "first",
+            priority: 0,
+            title: "First Item",
+            icon: () => <span>1</span>,
+            onSelect: onFirst,
+          },
+          {
+            id: "second",
+            priority: 1,
+            title: "Second Item",
+            icon: () => <span>2</span>,
+            onSelect: onSecond,
+          },
+        ],
+      });
+    });
+
+    await openMenu();
+    expect(
+      Array.from(container.querySelectorAll(".sb-more-menu-group-title")).map(
+        (el) => el.textContent
+      )
+    ).toEqual(["Extension Menu"]);
+    expect(menuLabels()).toEqual(
+      expect.arrayContaining(["First Item", "Second Item"])
+    );
+
+    const second = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-more-menu-item")
+    ).find((el) => el.textContent?.includes("Second Item"));
+    await act(async () => {
+      second!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(onSecond).toHaveBeenCalledTimes(1);
+    expect(onFirst).not.toHaveBeenCalled();
+    expect(container.querySelector(".sb-more-menu")).toBeNull();
+  });
+
+  it("orders the More menu by the reader's Toolbar settings", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
+      registerExtensionTool(state, "ext-one", "Extension One", vi.fn(), 1);
+      registerExtensionTool(state, "ext-two", "Extension Two", vi.fn(), 2);
+    });
+
+    // By priority, Extension One would come first; the setting flips them.
+    await act(async () => {
+      state.settings.setToolbarOrder(["ext-two", "ext-one"]);
+    });
+    await openMenu();
+
+    // On-screen order, top to bottom: the first tool in the setting sits at
+    // the bottom, nearest the More button.
+    const labels = menuLabels();
+    expect(labels.indexOf("Extension One")).toBeLessThan(
+      labels.indexOf("Extension Two")
+    );
+  });
+
+  it("does not reopen the More menu by itself after its last tool goes away and comes back", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-discover");
+      state.tools.unregisterToolbarTool("open-plans");
+      registerExtensionTool(state, "ext-one", "Extension One");
+    });
+    await openMenu();
+
+    await act(async () => {
+      state.tools.unregisterToolbarTool("ext-one");
+    });
+    expect(moreButton()).toBeNull();
+
+    await act(async () => {
+      registerExtensionTool(state, "ext-one", "Extension One");
+    });
+    expect(moreButton()).not.toBeNull();
+    expect(container.querySelector(".sb-more-menu")).toBeNull();
+  });
+
+  it("moves focus into the More menu and between its items with the arrow keys", async () => {
+    // jsdom has no layout, so every element's `offsetParent` is null, which
+    // the keyboard-nav helper reads as "hidden". Give it a parent to find.
+    const offsetParent = vi
+      .spyOn(HTMLElement.prototype, "offsetParent", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.parentElement;
+      });
+    try {
+      const state = await renderToolbar();
+      await act(async () => {
+        registerExtensionTool(state, "ext-one", "Extension One");
+      });
+      await openMenu();
+
+      const items = Array.from(
+        container.querySelectorAll<HTMLButtonElement>(".sb-more-menu-item")
+      );
+      // The item nearest the More button (the last one) gets focus first.
+      expect(document.activeElement).toBe(items[items.length - 1]);
+
+      await act(async () => {
+        document.activeElement!.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true })
+        );
+      });
+      expect(document.activeElement).toBe(items[items.length - 2]);
+    } finally {
+      offsetParent.mockRestore();
+    }
   });
 
   it("opens the Today screen from the Today button", async () => {
@@ -4319,13 +4491,13 @@ describe("BibleReaderToolbar — the mobile bottom tab bar", () => {
   };
 
   const moreMenuLabels = () =>
-    Array.from(container.querySelectorAll(".sb-mobile-more-menu-label")).map(
+    Array.from(container.querySelectorAll(".sb-more-menu-label")).map(
       (el) => el.textContent
     );
 
   const moreMenuItem = (text: string) => {
     const item = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-mobile-more-menu-item")
+      container.querySelectorAll<HTMLButtonElement>(".sb-more-menu-item")
     ).find((candidate) => candidate.textContent?.includes(text));
     if (!item) throw new Error(`"${text}" was not in the More menu.`);
     return item;
@@ -4403,30 +4575,32 @@ describe("BibleReaderToolbar — the mobile bottom tab bar", () => {
   it("keeps Chat in its own place in the More menu under chatFirst", async () => {
     // Chat-first forces chat *visible*; it does not reorder the menu. The
     // tools are priority-ordered and chat keeps its own slot among them,
-    // ahead of the pinned app items at the bottom.
+    // nearer the More tab than the pinned app items. Labels are in on-screen
+    // order, top to bottom, so nearer the tab means later.
     const { state } = await renderToolbar({ chatFirst: true });
     await registerExtensionTool(state);
     await openMore();
 
     const labels = moreMenuLabels();
     expect(labels).toContain("Chat");
-    expect(labels.indexOf("Chat")).toBeLessThan(labels.indexOf("Saves"));
-    expect(labels.indexOf("Extension Tool")).toBeLessThan(
-      labels.indexOf("Saves")
+    expect(labels.indexOf("Saves")).toBeLessThan(labels.indexOf("Chat"));
+    expect(labels.indexOf("Saves")).toBeLessThan(
+      labels.indexOf("Extension Tool")
     );
-    expect(labels.indexOf("Saves")).toBeLessThan(labels.indexOf("Tabs"));
+    expect(labels.indexOf("Tabs")).toBeLessThan(labels.indexOf("Saves"));
   });
 
-  it("keeps extension tools above the pinned app items without chatFirst", async () => {
+  it("keeps extension tools nearer the More tab than the pinned app items without chatFirst", async () => {
     const { state } = await renderToolbar();
     await registerExtensionTool(state);
     await openMore();
 
+    // On-screen order, top to bottom: pinned items, then tools.
     const labels = moreMenuLabels();
-    expect(labels.indexOf("Extension Tool")).toBeLessThan(
-      labels.indexOf("Saves")
+    expect(labels.indexOf("Saves")).toBeLessThan(
+      labels.indexOf("Extension Tool")
     );
-    expect(labels.indexOf("Saves")).toBeLessThan(labels.indexOf("Tabs"));
+    expect(labels.indexOf("Tabs")).toBeLessThan(labels.indexOf("Saves"));
   });
 
   it("opens the chat panel from the More menu", async () => {
@@ -4439,7 +4613,7 @@ describe("BibleReaderToolbar — the mobile bottom tab bar", () => {
     await tap(moreMenuItem("Chat"));
 
     expect(state.sidebar.isChatPanelOpen.value).toBe(true);
-    expect(container.querySelector(".sb-mobile-more-menu")).toBeNull();
+    expect(container.querySelector(".sb-more-menu")).toBeNull();
   });
 
   it("highlights More while the chat panel is open", async () => {
@@ -4467,7 +4641,7 @@ describe("BibleReaderToolbar — the mobile bottom tab bar", () => {
 
     expect(state.sidebar.isMobileOpen.value).toBe(true);
     expect(state.saves.isFilterActive.value).toBe(true);
-    expect(container.querySelector(".sb-mobile-more-menu")).toBeNull();
+    expect(container.querySelector(".sb-more-menu")).toBeNull();
   });
 
   it("highlights More while Saves is open", async () => {
@@ -4714,7 +4888,7 @@ describe("BibleReaderToolbar — chat-first viewport resize", () => {
       moreButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     const chatItem = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-mobile-more-menu-item")
+      container.querySelectorAll<HTMLButtonElement>(".sb-more-menu-item")
     ).find((item) => item.textContent?.includes("Chat"));
     if (!chatItem) throw new Error("Chat was not in the More menu.");
     await act(async () => {

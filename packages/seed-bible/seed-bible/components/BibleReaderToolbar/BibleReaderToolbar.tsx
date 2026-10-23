@@ -1,5 +1,11 @@
 import "./BibleReaderToolbar.inline.css";
-import { effect, signal, useComputed, useSignal } from "@preact/signals";
+import {
+  effect,
+  signal,
+  useComputed,
+  useSignal,
+  useSignalEffect,
+} from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
@@ -24,8 +30,9 @@ import {
   SeedBibleIcon,
   SbTabsIcon,
   StopIcon,
+  TodayIcon,
 } from "../../components/icons";
-import type { ComponentChildren } from "preact";
+import { Fragment, type ComponentChildren } from "preact";
 import { createPortal } from "preact/compat";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import {
@@ -165,42 +172,6 @@ function spawnRipple(event: PointerEvent) {
   button.appendChild(ripple);
 }
 
-/** The Today tab/button icon: a page with a check mark. */
-function TodayIcon() {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-      <path
-        d="M9 18H11"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-      <path
-        d="M15 19L17 21L21 17"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-    </svg>
-  );
-}
-
 interface MobileBottomTabProps {
   iconName?: string;
   iconNode?: preact.ComponentChildren;
@@ -270,124 +241,159 @@ interface MoreMenuProps {
   hasTypingInChats?: boolean;
 }
 
+interface MoreMenuEntry {
+  id: string;
+  label: string;
+  iconName?: string;
+  iconNode?: preact.ComponentChildren;
+  disabled?: boolean;
+  onClick: () => void;
+}
+
+/**
+ * The More popover. It opens upwards from its button, so entries are listed
+ * nearest-the-button last: `tools[0]` ends up at the bottom, right above the
+ * button, and the DOM order matches what is on screen so Tab and the arrow
+ * keys move the way the list looks. `tools` keeps the order it arrives in,
+ * which is the reader's Toolbar settings order.
+ */
 function MoreMenu(props: MoreMenuProps) {
   const { onClose, tools, pinnedItems } = props;
   const { t } = useI18n();
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const extraItems = tools
-    .sort((a, b) => a.priority - b.priority)
-    .map((tool) => {
+  // Keyboard users land on the entry next to the More button, as with any
+  // menu button; the arrow keys take it from there.
+  useEffect(() => {
+    const entries = menuRef.current?.querySelectorAll<HTMLButtonElement>(
+      ".sb-more-menu-item:not([disabled])"
+    );
+    entries?.[entries.length - 1]?.focus();
+  }, []);
+
+  // Each group is one tool (or pinned item): a plain entry, or — for a tool
+  // with a submenu — its title over its own items, since the More menu has no
+  // room for a second popover.
+  const groups: Array<{
+    id: string;
+    title?: string;
+    entries: MoreMenuEntry[];
+  }> = [
+    ...tools.map((tool) => {
       const ToolIcon = tool.icon;
+      const label = translateTitle(t, tool.title);
+      const subItems =
+        tool.getItems?.().filter((item) => item.visible.value) ?? [];
+      if (subItems.length > 0) {
+        return {
+          id: tool.id,
+          title: label,
+          entries: subItems.map((item) => {
+            const ItemIcon = item.icon;
+            return {
+              id: `${tool.id}:${item.id}`,
+              label: translateTitle(t, item.title),
+              iconNode: <ItemIcon />,
+              disabled: item.disabled.value,
+              onClick: () => {
+                if (item.disabled.value) return;
+                onClose();
+                void item.onSelect();
+              },
+            };
+          }),
+        };
+      }
       return {
         id: tool.id,
-        label: translateTitle(t, tool.title),
-        iconNode: <ToolIcon />,
-        disabled: tool.disabled.value,
-        onClick: () => {
-          if (tool.disabled.value) return;
-          onClose();
-          tool.onSelect();
-        },
+        entries: [
+          {
+            id: tool.id,
+            label,
+            iconNode: <ToolIcon />,
+            disabled: tool.disabled.value,
+            onClick: () => {
+              if (tool.disabled.value) return;
+              onClose();
+              tool.onSelect();
+            },
+          },
+        ],
       };
-    });
-
-  const items: Array<{
-    id: string;
-    label: string;
-    iconName?: string;
-    iconNode?: preact.ComponentChildren;
-    disabled?: boolean;
-    onClick: () => void;
-  }> = [
-    // {
-    //   id: "discovery",
-    //   label: t("discovery", { defaultValue: "Discovery" }),
-    //   iconName: "explore",
-    //   onClick: () => {
-    //     onClose();
-    //     os.toast(
-    //       t("discovery-coming-soon", {
-    //         defaultValue: "Discovery is coming soon",
-    //       })
-    //     );
-    //   },
-    // },
-    ...extraItems,
-    ...(pinnedItems ?? []),
-  ];
+    }),
+    ...(pinnedItems ?? []).map((item) => ({
+      id: item.id,
+      entries: [item],
+    })),
+  ].reverse();
 
   return (
-    <div className="sb-mobile-more-menu" role="menu">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          className="sb-mobile-more-menu-item"
-          onClick={item.onClick}
-          disabled={item.disabled}
-          role="menuitem"
-        >
-          {item.iconNode ? (
-            <span className="sb-mobile-more-menu-icon" aria-hidden="true">
-              {item.iconNode}
-            </span>
-          ) : (
-            <span
-              className="material-symbols-outlined sb-mobile-more-menu-icon"
-              aria-hidden="true"
+    <div
+      ref={menuRef}
+      className="sb-more-menu"
+      role="menu"
+      onKeyDown={(event) => {
+        handleVerticalListKeyNav(event, event.currentTarget, {
+          itemSelector: ".sb-more-menu-item:not([disabled])",
+        });
+      }}
+    >
+      {groups.map((group) => (
+        <Fragment key={group.id}>
+          {group.title && (
+            <div className="sb-more-menu-group-title" role="presentation">
+              {group.title}
+            </div>
+          )}
+          {group.entries.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="sb-more-menu-item"
+              onClick={item.onClick}
+              disabled={item.disabled}
+              role="menuitem"
             >
-              {item.iconName}
-            </span>
-          )}
-          <span className="sb-mobile-more-menu-label">{item.label}</span>
-          {item.id === "open-chat" && props.unreadChatIndicator && (
-            <span
-              className="sb-mobile-more-menu-unread-indicator"
-              aria-label={
-                props.chatWasMentioned
-                  ? t("unread-mention", { defaultValue: "Unread mention" })
-                  : t("unread-messages", {
-                      defaultValue: "Unread messages: {{count}}",
-                      count: props.unreadChatIndicator,
-                    })
-              }
-            >
-              {props.unreadChatIndicator}
-            </span>
-          )}
-          {item.id === "open-chat" && props.hasTypingInChats && (
-            <span
-              className="sb-mobile-more-menu-typing-indicator"
-              aria-label={t("someone-is-typing", {
-                defaultValue: "Someone is typing...",
-              })}
-            />
-          )}
-        </button>
+              {item.iconNode ? (
+                <span className="sb-more-menu-icon" aria-hidden="true">
+                  {item.iconNode}
+                </span>
+              ) : (
+                <span
+                  className="material-symbols-outlined sb-more-menu-icon"
+                  aria-hidden="true"
+                >
+                  {item.iconName}
+                </span>
+              )}
+              <span className="sb-more-menu-label">{item.label}</span>
+              {item.id === "open-chat" && props.unreadChatIndicator && (
+                <span
+                  className="sb-more-menu-unread-indicator"
+                  aria-label={
+                    props.chatWasMentioned
+                      ? t("unread-mention", { defaultValue: "Unread mention" })
+                      : t("unread-messages", {
+                          defaultValue: "Unread messages: {{count}}",
+                          count: props.unreadChatIndicator,
+                        })
+                  }
+                >
+                  {props.unreadChatIndicator}
+                </span>
+              )}
+              {item.id === "open-chat" && props.hasTypingInChats && (
+                <span
+                  className="sb-more-menu-typing-indicator"
+                  aria-label={t("someone-is-typing", {
+                    defaultValue: "Someone is typing...",
+                  })}
+                />
+              )}
+            </button>
+          ))}
+        </Fragment>
       ))}
-      {/* <div className="sb-mobile-more-menu-item sb-mobile-more-menu-social">
-        <span
-          className="sb-mobile-more-menu-icon sb-mobile-more-menu-social-avatar"
-          aria-hidden="true"
-        />
-        <span className="sb-mobile-more-menu-label">
-          {t("social", { defaultValue: "Social" })}
-        </span>
-        <button
-          type="button"
-          className={`sb-mobile-more-menu-toggle${
-            isSocialOn.value ? " sb-mobile-more-menu-toggle-on" : ""
-          }`}
-          role="switch"
-          aria-checked={isSocialOn.value}
-          aria-label={t("social", { defaultValue: "Social" })}
-          onClick={() => {
-            isSocialOn.value = !isSocialOn.value;
-          }}
-        >
-          <span className="sb-mobile-more-menu-toggle-thumb" />
-        </button>
-      </div> */}
     </div>
   );
 }
@@ -1210,9 +1216,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     () => isSmallScreen.value && isVerseToolbarVisible.value
   );
   const isMoreMenuOpen = useSignal(false);
-  // The mobile More button, so dismissing its menu with Escape can hand focus
-  // back to it instead of dropping it on the removed popover.
+  // The More button (mobile tab or desktop button), so dismissing its menu
+  // with Escape can hand focus back to it instead of dropping it on the
+  // removed popover.
   const moreButtonRef = useRef<HTMLButtonElement>(null);
+  // The desktop More button disappears when its menu would be empty, so the
+  // menu has to close with it — otherwise it stays "open" with no button, and
+  // pops back up by itself the next time a tool arrives.
+  useSignalEffect(() => {
+    if (!isSmallScreen.value && moreTools.value.length === 0) {
+      isMoreMenuOpen.value = false;
+    }
+  });
   // Bottom chrome elements whose measured height drives
   // `--sb-reader-bottom-inset` on the document (chapter padding clears them).
   const toolbarWrapRef = useRef<HTMLDivElement>(null);
@@ -2558,9 +2573,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         data-tool-id="open-today"
         aria-label={t("today", { defaultValue: "Today" })}
         onClick={() => {
-          isMoreMenuOpen.value = false;
           selectedToolbarToolId.value = null;
-          props.state.today.open();
+          openTodayScreen();
         }}
       >
         <TodayIcon />
