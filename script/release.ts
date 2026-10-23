@@ -2,7 +2,7 @@ import { program } from "commander";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { bumpVersion, stampChangelog, today } from "./lib/changelog";
-import { replaceVersionField } from "./lib/npmPublish";
+import { NPM_PACKAGES, replaceVersionField } from "./lib/npmPublish";
 
 // The authoritative app version: this is the one Vite bakes into the build as
 // __APP_VERSION__ (see vite.config.ts) and shows in the Settings footer. The
@@ -20,21 +20,17 @@ async function readAppVersion(): Promise<string> {
   return parsed.version;
 }
 
-async function writeAppVersion(version: string): Promise<void> {
-  const text = await readFile(APP_PACKAGE_PATH, "utf-8");
-  await writeFile(
-    APP_PACKAGE_PATH,
-    replaceVersionField(text, version),
-    "utf-8"
-  );
-}
+// The npm packages ship in lockstep with the app, so they all get its version.
+const VERSIONED_PACKAGE_PATHS = NPM_PACKAGES.map((name) =>
+  path.resolve("packages", name, "package.json")
+);
 
 program.name("release").description("Commands for preparing a release.");
 
 program
   .command("prepare <bump>")
   .description(
-    'Bumps the app version and stamps the CHANGELOG on develop. <bump> is "major", "minor", "patch", or an explicit X.Y.Z version.'
+    'Bumps the app and npm package versions and stamps the CHANGELOG on develop. <bump> is "major", "minor", "patch", or an explicit X.Y.Z version.'
   )
   .option(
     "--date <date>",
@@ -45,16 +41,34 @@ program
     const next = bumpVersion(current, bump);
     const date = options.date ?? today();
 
-    // Compute the stamped changelog first: stampChangelog throws when there is
-    // no "## TBD" section, so we fail before touching any file.
+    // Compute every edit first: stampChangelog throws when there is no
+    // "## TBD" section and replaceVersionField when a package.json has no
+    // version, so we fail before touching any file.
     const changelog = await readFile(CHANGELOG_PATH, "utf-8");
     const stamped = stampChangelog(changelog, next, date);
+    const packages = await Promise.all(
+      VERSIONED_PACKAGE_PATHS.map(async (file) => {
+        const text = await readFile(file, "utf-8");
+        const { version } = JSON.parse(text) as { version?: string };
+        return {
+          file,
+          previous: version,
+          updated: replaceVersionField(text, next),
+        };
+      })
+    );
 
-    await writeAppVersion(next);
+    for (const pkg of packages) {
+      await writeFile(pkg.file, pkg.updated, "utf-8");
+    }
     await writeFile(CHANGELOG_PATH, stamped, "utf-8");
 
     console.log(`Prepared release v${next} (${date}).`);
-    console.log(`  - packages/seed-bible/package.json: ${current} -> ${next}`);
+    for (const pkg of packages) {
+      console.log(
+        `  - ${path.relative(process.cwd(), pkg.file)}: ${pkg.previous} -> ${next}`
+      );
+    }
     console.log(
       `  - CHANGELOG.md: "## TBD" -> "## v${next} — ${date}" (+ fresh TBD)`
     );
