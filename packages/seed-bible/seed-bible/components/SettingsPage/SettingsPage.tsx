@@ -29,7 +29,7 @@ import {
   getDefaultTranslationLabel,
 } from "../CustomizationEditPane/CustomizationPreviews";
 import { UnusedSensitiveSettingsList } from "../ExtensionSettingsForm/SensitiveSettingsForm";
-import { download, translateTitle } from "../../app/utils";
+import { translateTitle } from "../../app/utils";
 import type { ExtensionListEntry } from "../../managers/ExtensionManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
