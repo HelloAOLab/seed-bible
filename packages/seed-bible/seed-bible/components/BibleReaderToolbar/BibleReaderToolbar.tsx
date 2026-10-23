@@ -60,6 +60,10 @@ import {
   openDeleteAnnotationConfirm,
 } from "../DiscoverPane/AnnotationsSection";
 import {
+  VerseTaggedResultsSections,
+  verseTaggedResultsFor,
+} from "../DiscoverPane/DiscoveredResultsSections";
+import {
   ContextMenuWithButton,
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
@@ -1112,6 +1116,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const isMinimalEmbed = useComputed(
     () => props.state.app.isMinimalEmbed?.value ?? false
   );
+
+  const selectionDiscoveredContent = useComputed(() => {
+    const rs = readingState.value;
+    if (
+      !rs ||
+      !props.state.app.isMobile.value ||
+      isMinimalEmbed.value ||
+      !settings.settings.value.discoveredContent.showContent
+    ) {
+      return [];
+    }
+    return verseTaggedResultsFor(rs, props.state.discover.contentTypes.value);
+  });
   // A pane fills the whole screen when it's fullscreen, or (on mobile) for any
   // open pane — mobile renders every pane fullscreen. Mirrors the "fills the
   // screen" rule in PanesManager/SeedBibleStateManager. Used to hide the
@@ -1226,9 +1243,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   /**
    * Whether the collapsed sheet is hiding something: action cards past the
-   * first row, or notes on the selection. Measured height is not enough —
-   * the overflow row's padding, and a height left behind after that row
-   * unmounts, both read as "more" when the sheet is already showing everything.
+   * first row, or notes or discovered content on the selection. Measured
+   * height is not enough — the overflow row's padding, and a height left
+   * behind after that row unmounts, both read as "more" when the sheet is
+   * already showing everything.
    */
   const verseSheetHasHiddenContent = useComputed(() => {
     if (!isSmallScreen.value) return false;
@@ -1238,7 +1256,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       (showSaveCard.value ? 1 : 0);
     const annotationCount =
       readingState.value?.selectionAnnotations.value.length ?? 0;
-    return cardCount > VERSE_SHEET_COLLAPSED_COUNT || annotationCount > 0;
+    return (
+      cardCount > VERSE_SHEET_COLLAPSED_COUNT ||
+      annotationCount > 0 ||
+      selectionDiscoveredContent.value.length > 0
+    );
   });
 
   /** Whether there is anything to reveal — no overflow row, nothing to drag to. */
@@ -1880,11 +1902,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    * behavior instead of starting the sheet drag: buttons and inputs (so taps
    * still register as clicks — capturing the pointer on the panel would
    * otherwise steal their `pointerup`), the horizontal highlight-color
-   * strip (its own swipe gesture would fight the sheet's vertical one), and
-   * the notes once they scroll (a drag there moves the note, not the sheet).
+   * strip (its own swipe gesture would fight the sheet's vertical one),
+   * discovered content (extension cards often toggle on a plain `div`, which
+   * `button` doesn't cover), and the notes once they scroll (a drag there
+   * moves the note, not the sheet).
    */
   const VERSE_SHEET_DRAG_IGNORE_SELECTOR =
-    "button, input, a, .sb-verse-toolbar-swatches, .sb-verse-toolbar-overflow-scrollable";
+    "button, input, a, .sb-verse-toolbar-swatches, .sb-verse-toolbar-discovered, .sb-verse-toolbar-overflow-scrollable";
 
   /**
    * Entry point for the whole-panel version of the handle drag: any part of
@@ -3861,6 +3885,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                   />
                                 );
                               })}
+                            </div>
+                          )}
+                          {selectionDiscoveredContent.value.length > 0 && (
+                            <div className="sb-verse-toolbar-discovered">
+                              <VerseTaggedResultsSections
+                                groups={selectionDiscoveredContent.value}
+                              />
                             </div>
                           )}
                         </div>
