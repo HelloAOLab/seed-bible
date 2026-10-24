@@ -659,7 +659,8 @@ export interface SeedBibleState {
   openProfile: () => void;
   /** Closes the Profile screen (clears `profile` from the URL). */
   closeProfile: () => void;
-
+  /** Restores the screen the user was viewing before opening the profile after a successful sign-in. */
+  restoreProfileReturnTarget: () => void;
   /** True when the "Edit profile" screen is showing. */
   isEditProfileOpen: ReadonlySignal<boolean>;
   /** Opens "Edit profile" (reflected in the URL as `?edit-profile=open`). */
@@ -1185,16 +1186,29 @@ export function createSeedBibleState(
       : navigation.currentUrl.value.searchParams.get("profile") === "open"
   );
   const isProfileOpen = computed(() => profileOpen.value);
-  const openProfile = () => {
-    // Close Today before the profile flag flips. Opening the profile pane
-    // displaces Today's pane, but Today's URL binding is still `?today=open`
-    // until its own effect runs — and that binding turns Today straight back
-    // on, which removes the profile pane and closes the profile again. Closing
-    // first drops `?today=` before `?profile=open` is written, so the profile
-    // screen stays up (including over the welcome screen).
-    if (today.isOpen.peek()) {
-      today.close();
+  type ProfileReturnTarget = "today" | "reader";
+  let profileReturnTarget: ProfileReturnTarget | null = null;
+  const restoreProfileReturnTarget = () => {
+    const target = profileReturnTarget;
+    closeProfile();
+    profileReturnTarget = "reader";
+    if (target === "today") {
+      today.open();
     }
+  };
+  const openProfile = () => {
+    // Remember which screen to return to after a successful sign-in.
+    // Today must be closed before opening the profile because its URL binding
+    // can otherwise reopen the Today pane and immediately close the profile.
+    // If Today isn't open, keep the reader as the return target. When the
+    // profile is opened directly via `?profile=open`, default to the reader.
+    if (today.isOpen.peek()) {
+      profileReturnTarget = "today";
+      today.close();
+    } else if (!profileOpen.peek()) {
+      profileReturnTarget = "reader";
+    }
+
     profileOpen.value = true;
   };
   const closeProfile = () => {
@@ -3620,6 +3634,7 @@ export function createSeedBibleState(
     isProfileOpen,
     openProfile,
     closeProfile,
+    restoreProfileReturnTarget,
     isEditProfileOpen,
     openEditProfile,
     closeEditProfile,
