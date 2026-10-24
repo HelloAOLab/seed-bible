@@ -942,12 +942,7 @@ function getDefaultQuickToolbarTools(
         ) {
           return false;
         }
-        return getDiscoverPanelContent(
-          c.readingState,
-          c.annotations,
-          c.readingPlans,
-          c.features
-        ).hasAny;
+        return getDiscoverPanelContent(c.readingState, c.annotations).hasAny;
       },
       onSelect: (c) => {
         c.readingState.discoverContentPanelInline.value =
