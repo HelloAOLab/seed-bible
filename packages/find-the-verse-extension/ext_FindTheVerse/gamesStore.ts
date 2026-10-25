@@ -1,6 +1,5 @@
 import type { Signal } from "@preact/signals";
 import type { CasualOSManager } from "seed-bible/managers";
-import { v4 as uuid } from "uuid";
 import type { GameDraft, SavedGame } from "./types";
 
 export const GAMES_ADDRESS = "find-the-verse-games";
@@ -125,6 +124,20 @@ export async function persistGames(
 }
 
 /**
+ * `crypto.randomUUID` is missing on plain http pages. The fallback still
+ * gives a new id without pulling in the uuid package.
+ */
+function newGameId(): string {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+  return `game-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
  * Keeps the id and original creation date when `existing` is the game being
  * edited, so an edit replaces the game instead of adding a copy.
  */
@@ -134,7 +147,7 @@ export function toSavedGame(
   nowMs: number = Date.now()
 ): SavedGame {
   return {
-    id: existing?.id ?? uuid(),
+    id: existing?.id ?? newGameId(),
     name: draft.name.trim(),
     targetVerse: { ...draft.targetVerse },
     steps: draft.steps.map((step) => ({ hint: step.hint })),

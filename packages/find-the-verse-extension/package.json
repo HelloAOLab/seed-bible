@@ -10,8 +10,7 @@
   },
   "keywords": [],
   "dependencies": {
-    "seed-bible": "workspace:*",
-    "uuid": "catalog:"
+    "seed-bible": "workspace:*"
   },
   "author": "",
   "license": "ISC",
