@@ -78,17 +78,53 @@ export function openSearchWindow(): SearchWindow {
 }
 
 function compareSpots(a: BibleSpot, b: BibleSpot): number {
-  if (a.bookIndex !== b.bookIndex) return a.bookIndex - b.bookIndex;
+  if (a.bookIndex !== b.bookIndex) return a.bookIndex < b.bookIndex ? -1 : 1;
   if (a.chapterNumber !== b.chapterNumber) {
-    return a.chapterNumber - b.chapterNumber;
+    return a.chapterNumber < b.chapterNumber ? -1 : 1;
   }
-  return a.verseNumber - b.verseNumber;
+  if (a.verseNumber === b.verseNumber) return 0;
+  return a.verseNumber < b.verseNumber ? -1 : 1;
+}
+
+const OPEN_END = Number.POSITIVE_INFINITY;
+
+/**
+ * The furthest spot this guess rules out. A wrong book drops the whole book,
+ * and a wrong chapter drops the whole chapter. A wrong verse drops only that
+ * verse. `Infinity` is the far edge, so the selector can grey a book without
+ * knowing how many chapters it has.
+ */
+function ruledOutSpot(
+  guess: VersePosition,
+  result: Exclude<GuessResult, { kind: "correct" }>,
+  bookIndex: number
+): BibleSpot {
+  const after = result.direction === "after";
+  if (result.kind === "wrong_book") {
+    return {
+      bookIndex,
+      chapterNumber: after ? OPEN_END : 0,
+      verseNumber: after ? OPEN_END : 0,
+    };
+  }
+  if (result.kind === "wrong_chapter") {
+    return {
+      bookIndex,
+      chapterNumber: guess.chapterNumber,
+      verseNumber: after ? OPEN_END : 0,
+    };
+  }
+  return {
+    bookIndex,
+    chapterNumber: guess.chapterNumber,
+    verseNumber: guess.verseNumber,
+  };
 }
 
 /**
- * Pulls the window in around a wrong guess. A guess that is too early drops
- * everything up through that verse. A guess that is too late drops that verse
- * and everything after it. A later guess only moves a bound inward.
+ * Pulls the window in around a wrong guess. The new edge is the end of what
+ * the feedback ruled out, not only the verse that was tapped. A later guess
+ * only moves a bound inward.
  */
 export function tightenWindow(
   window: SearchWindow,
@@ -98,11 +134,7 @@ export function tightenWindow(
   if (result.kind === "correct") return window;
   const bookIndex = bookOrderIndex(guess.bookId);
   if (bookIndex < 0) return window;
-  const spot: BibleSpot = {
-    bookIndex,
-    chapterNumber: guess.chapterNumber,
-    verseNumber: guess.verseNumber,
-  };
+  const spot = ruledOutSpot(guess, result, bookIndex);
   if (result.direction === "after") {
     const after =
       window.after && compareSpots(window.after, spot) > 0
@@ -212,6 +244,7 @@ export function rangeHighlightCss(
 ): string {
   const rules = [
     ".sb-verse:has(.ftv-out-of-range) { opacity: 0.35; }",
+    ".sb-verse:has(.sb-verse-decoration-diminish) { opacity: 1; }",
     ".sb-bible-reader .sb-highlight-layer { display: none !important; }",
     ".sb-bible-reader .sb-highlight { color: inherit !important; }",
     ".sb-bible-reader .sb-verse-selected .sb-verse-decorator { border-bottom: none !important; text-decoration: none !important; }",

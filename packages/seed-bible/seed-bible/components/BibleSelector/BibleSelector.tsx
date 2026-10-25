@@ -555,6 +555,7 @@ const SideBarBooks = (props: {
               aria-current={isSelected ? "true" : undefined}
               aria-expanded={isSelected}
               onClick={() => handleClick({ book })}
+              // find-the-verse-extension greys ruled-out books with #booktab-${id}.sidebar-itm. Renaming this id or class stops that grey with no type error.
               id={`booktab-${book.id}`}
               style={itemGridStyle}
             >
@@ -990,6 +991,7 @@ const SideBarChapters = (props: {
       }, 1000);
       return (
         <button
+          // find-the-verse-extension greys ruled-out chapters with #chapter-btn-${n}.chapter-btn.
           id={`chapter-btn-${chapterNumber}`}
           style={
             isVisible === undefined

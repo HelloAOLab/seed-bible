@@ -9,6 +9,7 @@ export function blankSteps(): GameStep[] {
 }
 
 export function resetDraft(game: GameSignals) {
+  game.draftEpoch.value += 1;
   game.currentGameId.value = null;
   game.targetVerse.value = null;
   game.name.value = "";

@@ -148,9 +148,11 @@ function GamePane({
         game={game}
         state={state}
         onStart={(saved) => {
+          const epoch = game.draftEpoch.peek();
           game.notice.value = null;
           return onSaveGame(saved).then(
             () => {
+              if (game.draftEpoch.peek() !== epoch) return;
               resetDraft(game);
               game.phase.value = "idle";
             },
@@ -195,6 +197,7 @@ export default function initFindTheVerseExtension() {
         partialRevealText: signal(""),
         hintOpenFor: signal(null),
         playRound: signal(0),
+        draftEpoch: signal(0),
       };
 
       const savedGames = createSavedGamesController(
@@ -227,6 +230,7 @@ export default function initFindTheVerseExtension() {
 
       // Load a saved game into the creator for editing.
       function editGame(saved: SavedGame): void {
+        game.draftEpoch.value += 1;
         game.verseLookup.value += 1;
         game.targetVerse.value = { ...saved.targetVerse };
         game.name.value = saved.name;

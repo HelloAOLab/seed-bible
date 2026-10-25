@@ -1,5 +1,6 @@
 import type { SeedBibleState } from "seed-bible";
 import { resultMessage } from "./gameLogic";
+import { chanceView, GameName, HintControl } from "./PlayStatus";
 import type { GameSignals } from "./types";
 
 const NS = "find-the-verse-extension";
@@ -90,10 +91,11 @@ export function FindTheVerseReaderBanner({
   const won = game.won.value;
   const revealed = game.revealed.value;
   const lastResult = game.lastResult.value;
-  const chancesLeft = Math.max(0, steps.length - guessCount);
-  const chanceIndex = Math.min(guessCount, Math.max(0, steps.length - 1));
-  const currentHint = steps[chanceIndex]?.hint.trim() ?? "";
-  const gameName = game.name.value.trim();
+  const { chancesLeft, chanceIndex, currentHint } = chanceView(
+    steps,
+    guessCount
+  );
+  const gameName = game.name.value;
 
   if (won) {
     return (
@@ -110,11 +112,7 @@ export function FindTheVerseReaderBanner({
 
   return (
     <div style={strip}>
-      {gameName && (
-        <p style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>
-          {gameName}
-        </p>
-      )}
+      <GameName name={gameName} fontSize="0.95rem" />
       <div style={row}>
         <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>
           {chancesLeft === 0
@@ -125,35 +123,15 @@ export function FindTheVerseReaderBanner({
                 defaultValue: "{{left}} / {{total}} left",
               })}
         </span>
-        {currentHint ? (
-          hintOpenFor === chanceIndex ? (
-            <span style={{ fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
-              {currentHint}
-            </span>
-          ) : (
-            <button
-              type="button"
-              title={translate("show-hint", { defaultValue: "Show hint" })}
-              aria-label={translate("show-hint", { defaultValue: "Show hint" })}
-              onClick={() => {
-                game.hintOpenFor.value = chanceIndex;
-              }}
-              style={{
-                width: "1.6rem",
-                height: "1.6rem",
-                borderRadius: "99px",
-                border:
-                  "1px solid var(--sb-divider-color, rgba(0, 0, 0, 0.12))",
-                background: "var(--sb-background, #fff)",
-                color: "var(--sb-font-color, #333)",
-                cursor: "pointer",
-                fontWeight: 700,
-              }}
-            >
-              ?
-            </button>
-          )
-        ) : null}
+        <HintControl
+          hint={currentHint}
+          open={hintOpenFor === chanceIndex}
+          onShow={() => {
+            game.hintOpenFor.value = chanceIndex;
+          }}
+          t={translate}
+          buttonBackground="var(--sb-background, #fff)"
+        />
         <button
           type="button"
           style={{ ...textButton, marginLeft: "auto" }}

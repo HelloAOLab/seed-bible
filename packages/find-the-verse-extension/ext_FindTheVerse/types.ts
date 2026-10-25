@@ -65,7 +65,7 @@ export interface GameSignals {
   targetVerse: Signal<TargetVerse | null>;
   /** Label for the round. Shown in place of the reference until it is revealed. */
   name: Signal<string>;
-  /** One entry per chance; each may have an optional hint. */
+  /** One entry per chance. Every chance needs a hint before the game can be saved. */
   steps: Signal<GameStep[]>;
   /** True while waiting for the creator to tap a verse in the reader. */
   selectingViaToolbar: Signal<boolean>;
@@ -99,4 +99,9 @@ export interface GameSignals {
    * against this and does nothing if a later round has started.
    */
   playRound: Signal<number>;
+  /**
+   * Bumped when the draft is thrown away or replaced. A save that finishes
+   * later compares against this and does not clear whatever is on screen now.
+   */
+  draftEpoch: Signal<number>;
 }

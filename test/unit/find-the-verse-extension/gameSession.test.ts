@@ -34,6 +34,7 @@ function playingGame(): GameSignals {
     partialRevealText: signal("In ___"),
     hintOpenFor: signal(0),
     playRound: signal(3),
+    draftEpoch: signal(0),
   };
 }
 
@@ -52,6 +53,7 @@ describe("resetPlay", () => {
     expect(game.partialRevealText.value).toBe("");
     expect(game.hintOpenFor.value).toBeNull();
     expect(game.playRound.value).toBe(4);
+    expect(game.draftEpoch.value).toBe(1);
     expect(game.currentGameId.value).toBeNull();
     expect(game.targetVerse.value).toBeNull();
     expect(game.name.value).toBe("");

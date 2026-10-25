@@ -1,5 +1,6 @@
 import { useMemo } from "preact/hooks";
 import type { SeedBibleState } from "seed-bible";
+import { emphasizeVerses, type BookId } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
 import { bookDisplayName } from "./books";
 import {
@@ -8,6 +9,7 @@ import {
   revealThreshold,
 } from "./gameLogic";
 import type { GameSignals } from "./types";
+import { chanceView, GameName, HintControl } from "./PlayStatus";
 
 interface GamePlayerProps {
   game: GameSignals;
@@ -112,9 +114,9 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
     state.app.selectedTab.value?.readingState.translationBooks.value?.books;
 
   const totalChances = steps.length;
-  const chancesLeft = useMemo(
-    () => Math.max(0, steps.length - guessCount),
-    [steps.length, guessCount]
+  const { chancesLeft, chanceIndex, currentHint } = chanceView(
+    steps,
+    guessCount
   );
   const isOutOfChances = useMemo(
     () => !won && guessCount >= steps.length,
@@ -124,8 +126,6 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
     () => !won && guessCount >= revealThreshold(steps.length),
     [won, guessCount, steps.length]
   );
-  const chanceIndex = Math.min(guessCount, Math.max(0, steps.length - 1));
-  const currentHint = steps[chanceIndex]?.hint.trim() ?? "";
   const gameName = game.name.value.trim();
 
   if (!target) return null;
@@ -207,15 +207,18 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
       return;
     }
     game.revealed.value = true;
+    // Scroll alone doesn't show which verse it is. This is the reader's usual
+    // treatment: the verse stays lit and the rest of the chapter dims.
+    emphasizeVerses(reading, {
+      book: target.bookId as BookId,
+      chapter: target.chapterNumber,
+      verse: target.verseNumber,
+    });
   }
 
   return (
     <div style={s.root}>
-      {gameName && (
-        <p style={{ margin: 0, fontWeight: 700, fontSize: "1rem" }}>
-          {gameName}
-        </p>
-      )}
+      <GameName name={gameName} fontSize="1rem" />
       {/* Chance counter */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         {isOutOfChances ? (
@@ -231,36 +234,15 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
             })}
           </span>
         )}
-        {currentHint ? (
-          hintOpenFor === chanceIndex ? (
-            <span style={{ fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
-              {currentHint}
-            </span>
-          ) : (
-            <button
-              type="button"
-              title={t("show-hint", { defaultValue: "Show hint" })}
-              aria-label={t("show-hint", { defaultValue: "Show hint" })}
-              onClick={() => {
-                game.hintOpenFor.value = chanceIndex;
-              }}
-              style={{
-                width: "1.6rem",
-                height: "1.6rem",
-                borderRadius: "99px",
-                border:
-                  "1px solid var(--sb-divider-color, rgba(0, 0, 0, 0.12))",
-                background: "var(--sb-tertiary-color, #f0f0f0)",
-                color: "var(--sb-font-color, #333)",
-                cursor: "pointer",
-                fontWeight: 700,
-                lineHeight: 1,
-              }}
-            >
-              ?
-            </button>
-          )
-        ) : null}
+        <HintControl
+          hint={currentHint}
+          open={hintOpenFor === chanceIndex}
+          onShow={() => {
+            game.hintOpenFor.value = chanceIndex;
+          }}
+          t={t}
+          buttonBackground="var(--sb-tertiary-color, #f0f0f0)"
+        />
       </div>
 
       {/* Out-of-chances encouragement */}

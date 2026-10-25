@@ -41,6 +41,8 @@ export function watchSearchRange(
   }
 
   let painted: { reading: BibleReadingState; id: string } | null = null;
+  let paintKey = "";
+  let styleText = "";
   const clearPaint = () => {
     if (!painted) return;
     painted.reading.removeDecoration(painted.id);
@@ -54,6 +56,8 @@ export function watchSearchRange(
     const bookId = reading?.bookId.value ?? null;
     const chapterNumber = reading?.chapterNumber.value ?? null;
     const content = reading?.chapterData?.value?.chapter?.content;
+    // The verse list still belongs to the previous chapter until this flips.
+    const contentStale = reading?.isChapterContentStale?.value ?? false;
     const catalog = reading?.translationBooks.value?.books;
     const openBook = state.selector?.bookData.value ?? null;
 
@@ -86,13 +90,24 @@ export function watchSearchRange(
     }
 
     if (styleEl) {
-      styleEl.textContent = playing
+      const next = playing
         ? rangeHighlightCss(eliminatedBooks, eliminatedChapters)
         : "";
+      if (next !== styleText) {
+        styleEl.textContent = next;
+        styleText = next;
+      }
     }
 
-    if (!playing || !reading || !bookId || chapterNumber == null) {
+    if (
+      !playing ||
+      !reading ||
+      !bookId ||
+      chapterNumber == null ||
+      contentStale
+    ) {
       clearPaint();
+      paintKey = "";
       return;
     }
 
@@ -102,7 +117,13 @@ export function watchSearchRange(
       chapterNumber,
       verseNumbers(content)
     );
+    const nextKey = `${bookId}\0${chapterNumber}\0${outside.join(",")}`;
+    const samePaint =
+      nextKey === paintKey &&
+      (outside.length === 0 ? painted == null : painted?.reading === reading);
+    if (samePaint) return;
     clearPaint();
+    paintKey = nextKey;
     if (outside.length === 0) return;
     const id = reading.decorateVerses(bookId, chapterNumber, outside, {
       className: RANGE_CLASS,

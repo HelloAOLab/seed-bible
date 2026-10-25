@@ -1,5 +1,6 @@
 import type { Signal } from "@preact/signals";
 import type { CasualOSManager } from "seed-bible/managers";
+import { v4 as uuid } from "uuid";
 import type { GameDraft, SavedGame } from "./types";
 
 export const GAMES_ADDRESS = "find-the-verse-games";
@@ -133,7 +134,7 @@ export function toSavedGame(
   nowMs: number = Date.now()
 ): SavedGame {
   return {
-    id: existing?.id ?? crypto.randomUUID(),
+    id: existing?.id ?? uuid(),
     name: draft.name.trim(),
     targetVerse: { ...draft.targetVerse },
     steps: draft.steps.map((step) => ({ hint: step.hint })),

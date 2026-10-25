@@ -191,7 +191,7 @@ describe("search window", () => {
   const genesis = bookOrderIndex("GEN");
   const exodus = bookOrderIndex("EXO");
 
-  it("keeps Genesis 3:11 through the end of the Bible after a too-early guess", () => {
+  it("drops the whole chapter after a too-early chapter guess", () => {
     const guess: VersePosition = {
       bookId: "GEN",
       chapterNumber: 3,
@@ -207,16 +207,39 @@ describe("search window", () => {
     expect(window.after).toEqual({
       bookIndex: genesis,
       chapterNumber: 3,
-      verseNumber: 10,
+      verseNumber: Number.POSITIVE_INFINITY,
     });
     expect(versesOutOfRange(window, "GEN", 3, [1, 10, 11, 12])).toEqual([
-      1, 10,
+      1, 10, 11, 12,
     ]);
     expect(chapterOutOfRange(window, genesis, 2)).toBe(true);
-    expect(chapterOutOfRange(window, genesis, 3)).toBe(false);
+    expect(chapterOutOfRange(window, genesis, 3)).toBe(true);
     expect(chapterOutOfRange(window, genesis, 5)).toBe(false);
     expect(bookOutOfRange(window, genesis, 50)).toBe(false);
     expect(bookOutOfRange(window, exodus, 40)).toBe(false);
+  });
+
+  it("drops the whole book after a too-early book guess", () => {
+    const ruth: VersePosition = {
+      bookId: "RUT",
+      chapterNumber: 1,
+      verseNumber: 16,
+    };
+    const guess: VersePosition = {
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+    };
+    const window = tightenWindow(
+      openSearchWindow(),
+      guess,
+      evaluateGuess(ruth, guess)
+    );
+
+    expect(bookOutOfRange(window, genesis, 50)).toBe(true);
+    expect(chapterOutOfRange(window, genesis, 1)).toBe(true);
+    expect(chapterOutOfRange(window, genesis, 50)).toBe(true);
+    expect(bookOutOfRange(window, bookOrderIndex("RUT"), 4)).toBe(false);
   });
 
   it("cuts the far end when a later guess is too far ahead, and does not widen", () => {
@@ -243,11 +266,11 @@ describe("search window", () => {
 
     expect(narrowed.before).toEqual({
       bookIndex: exodus,
-      chapterNumber: 1,
-      verseNumber: 1,
+      chapterNumber: 0,
+      verseNumber: 0,
     });
     expect(bookOutOfRange(narrowed, exodus, 40)).toBe(true);
-    expect(versesOutOfRange(narrowed, "GEN", 3, [11])).toEqual([]);
+    expect(versesOutOfRange(narrowed, "GEN", 3, [11])).toEqual([11]);
     expect(
       tightenWindow(narrowed, behind, evaluateGuess(target, behind)).after
     ).toEqual(narrowed.after);
@@ -258,7 +281,7 @@ describe("rangeHighlightCss", () => {
   it("hides reader highlights and the tap underline while a round is on", () => {
     const css = rangeHighlightCss([], []);
     expect(css).toContain(".sb-highlight-layer");
-    expect(css).toContain(".sb-verse-selected");
+    expect(css).toContain(".sb-verse-decoration-diminish");
   });
 });
 

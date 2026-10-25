@@ -151,7 +151,6 @@ export function GameCreator({
   const refError = useSignal("");
   const saving = useSignal(false);
   const saveAttempted = useSignal(false);
-  const chancesDirty = useSignal(false);
   const errorPulse = useSignal(0);
   const { t } = useI18n("find-the-verse-extension");
 
@@ -173,6 +172,17 @@ export function GameCreator({
     const tab = state.app.selectedTab.value;
     const books = tab?.readingState.translationBooks.value?.books;
     const parsed = parseVerseReference(refInput.value, books);
+    if (
+      parsed &&
+      (parsed.endVerse != null || parsed.endChapter != null) &&
+      (parsed.endVerse !== parsed.verse || parsed.endChapter !== parsed.chapter)
+    ) {
+      refError.value = t("reference-range", {
+        defaultValue: "Pick a single verse, like John 1:1, not a range.",
+      });
+      errorPulse.value += 1;
+      return;
+    }
     // An unknown book name comes back as the raw text. Accepting it stores a
     // secret no tap can ever match, because that book has no place in order.
     if (!parsed?.verse || !isKnownBookId(parsed.book)) {
@@ -227,19 +237,16 @@ export function GameCreator({
   }
 
   function handleStepHintChange(index: number, hint: string) {
-    chancesDirty.value = true;
     const updated = [...game.steps.peek()];
     updated[index] = { hint };
     game.steps.value = updated;
   }
 
   function addStep() {
-    chancesDirty.value = true;
     game.steps.value = [...game.steps.peek(), { hint: "" }];
   }
 
   function removeStep(index: number) {
-    chancesDirty.value = true;
     const updated = game.steps.peek().filter((_, i) => i !== index);
     game.steps.value = updated;
   }
@@ -254,9 +261,8 @@ export function GameCreator({
     : t("verse-required", {
         defaultValue: "Pick the secret verse before saving.",
       });
-  const showChanceError = saveAttempted.value || chancesDirty.value;
   const chanceErrorMessage =
-    !showChanceError || emptyHint === null
+    !saveAttempted.value || emptyHint === null
       ? null
       : t("hint-gap", {
           number: emptyHint + 1,
@@ -440,7 +446,7 @@ export function GameCreator({
               <span style={s.stepNum}>#{i + 1}</span>
               <GrowingHint
                 placeholder={t("hint-placeholder", {
-                  defaultValue: "Optional hint…",
+                  defaultValue: "Hint for this chance…",
                 })}
                 value={step.hint}
                 onChange={(hint) => handleStepHintChange(i, hint)}
