@@ -44,7 +44,10 @@ export function HintControl({
       </span>
     );
   }
-  const label = t("show-hint", { defaultValue: "Show hint" });
+  const label = t("show-hint", {
+    defaultValue: "Show hint",
+    ns: "find-the-verse-extension",
+  });
   return (
     <button
       type="button"
