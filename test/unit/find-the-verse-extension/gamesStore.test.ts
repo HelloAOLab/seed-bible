@@ -439,4 +439,79 @@ describe("saved games controller", () => {
       true
     );
   });
+
+  it("drops a card when that game was already deleted on the server", async () => {
+    const { controller, os, savedGames } = setup();
+    os.getData.mockResolvedValueOnce({
+      success: true,
+      data: { games: [makeGame({ id: "gone" })] },
+    });
+    await controller.syncUser("user-1");
+
+    os.getData.mockResolvedValueOnce({
+      success: true,
+      data: { games: [] },
+    });
+    await controller.remove("gone");
+
+    expect(savedGames.value).toEqual([]);
+    expect(os.recordData).not.toHaveBeenCalled();
+  });
+
+  it("keeps a game that is still being saved when the panel reloads, and the next save keeps it too", async () => {
+    const { controller, os, savedGames } = setup();
+    let stored: SavedGame[] = [];
+    const loads: Array<() => void> = [];
+    os.getData.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          const snapshot = stored.map((game) => ({ ...game }));
+          loads.push(() =>
+            resolve({ success: true, data: { games: snapshot } })
+          );
+        })
+    );
+
+    let finishFirst: (() => void) | undefined;
+    os.recordData.mockImplementation(
+      (_user: unknown, _address: unknown, data: { games: SavedGame[] }) => {
+        const apply = () => {
+          stored = data.games;
+          return { success: true as const };
+        };
+        if (!finishFirst) {
+          return new Promise((resolve) => {
+            finishFirst = () => resolve(apply());
+          });
+        }
+        return Promise.resolve(apply());
+      }
+    );
+
+    const first = controller.save(draftOf(makeGame({ name: "One" })), null);
+    await vi.waitFor(() => expect(loads).toHaveLength(1));
+    loads[0]!();
+    await vi.waitFor(() => expect(finishFirst).toBeTypeOf("function"));
+    expect(savedGames.value.map((game) => game.name)).toEqual(["One"]);
+
+    const syncing = controller.syncUser("user-1");
+    const second = controller.save(draftOf(makeGame({ name: "Two" })), null);
+    // The reload must not blank the card while the first save is still writing.
+    expect(savedGames.value.map((game) => game.name)).toEqual(["One"]);
+    await Promise.resolve();
+
+    const raced = loads.length;
+    for (let i = 1; i < raced; i++) loads[i]!();
+    finishFirst!();
+
+    await vi.waitFor(() => expect(loads.length).toBeGreaterThan(raced));
+    for (let i = raced; i < loads.length; i++) loads[i]!();
+    await Promise.all([first, syncing, second]);
+
+    expect(savedGames.value.map((game) => game.name)).toEqual(["Two", "One"]);
+    const written = os.recordData.mock.calls.at(-1)?.[2] as {
+      games: SavedGame[];
+    };
+    expect(written.games.map((game) => game.name)).toEqual(["Two", "One"]);
+  });
 });

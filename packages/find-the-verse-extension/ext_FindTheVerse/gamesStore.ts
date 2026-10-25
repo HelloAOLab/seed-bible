@@ -199,8 +199,10 @@ export interface SavedGamesController {
  * Loads and writes the whole saved-game list.
  *
  * The in-memory list starts empty. Each save and delete loads the server list
- * again before writing, so a game saved from another tab is not erased.
- * `writeEpoch` is bumped when a write publishes a new list, so a load that
+ * on its own, so it never builds on a panel reload that started earlier.
+ * A reload waits until those writes finish, then fetches. For the same user
+ * it leaves the list on screen while that fetch is in flight.
+ * `writeEpoch` is bumped when a write publishes a list, so a load that
  * started earlier cannot apply its snapshot on top.
  */
 export function createSavedGamesController(
@@ -211,6 +213,7 @@ export function createSavedGamesController(
   let loadToken = 0;
   let writeEpoch = 0;
   let writeQueue: Promise<void> = Promise.resolve();
+  let listUser: string | null = null;
   let preserved: unknown[] = [];
   let inflight: {
     userId: string;
@@ -226,13 +229,33 @@ export function createSavedGamesController(
     return promise;
   }
 
+  let activeWrites = 0;
+
   function enqueue(task: () => Promise<void>): Promise<void> {
+    activeWrites += 1;
     const run = writeQueue.then(task, task);
     writeQueue = run.then(
-      () => undefined,
-      () => undefined
+      () => {
+        activeWrites -= 1;
+      },
+      () => {
+        activeWrites -= 1;
+      }
     );
     return run;
+  }
+
+  function publish(
+    userId: string,
+    games: SavedGame[],
+    nextPreserved: unknown[]
+  ) {
+    // A load that started before this publish must not paint its older list
+    // over the one we are storing.
+    writeEpoch += 1;
+    preserved = nextPreserved;
+    listUser = userId;
+    savedGames.value = games;
   }
 
   async function write(
@@ -241,27 +264,34 @@ export function createSavedGamesController(
     const userId = getUserId();
     if (!userId) throw new SavedGamesWriteError("signed_out");
 
-    // Always read the server list first. This device's copy can be missing a
-    // game saved from another tab, and writing that copy back would delete it.
-    const result = await requestLoad(userId);
+    // Own request, not the panel's. A reload that is already in flight may
+    // have read the server before this save, and building on that copy would
+    // delete the game when it is written back.
+    const result = await loadGames(userId, os);
     if (getUserId() !== userId) throw new SavedGamesWriteError("signed_out");
     if (result.status !== "ok") throw new SavedGamesWriteError("not_loaded");
 
     const previous = result.games;
     const next = build(previous);
-    if (next === previous) return;
     if (getUserId() !== userId) throw new SavedGamesWriteError("signed_out");
+    // The game is already gone on the server. Still show that list, or the
+    // card stays and Delete looks like it did nothing.
+    if (next === previous) {
+      publish(userId, previous, result.preserved);
+      return;
+    }
 
-    // A load that started before this write must not paint its older list
-    // over the one we are about to store.
-    writeEpoch += 1;
-    preserved = result.preserved;
-    savedGames.value = next;
+    publish(userId, next, result.preserved);
     try {
       await persistGames(userId, [...next, ...preserved], os);
     } catch (error) {
-      if (getUserId() === userId) savedGames.value = previous;
-      else savedGames.value = [];
+      if (getUserId() === userId) {
+        listUser = userId;
+        savedGames.value = previous;
+      } else {
+        listUser = null;
+        savedGames.value = [];
+      }
       if (error instanceof SavedGamesWriteError) throw error;
       throw new SavedGamesWriteError("persist_failed");
     }
@@ -270,19 +300,41 @@ export function createSavedGamesController(
   return {
     syncUser(userId) {
       const token = ++loadToken;
-      const writesAtStart = writeEpoch;
-      preserved = [];
-      savedGames.value = [];
-      if (!userId) return Promise.resolve("signed_out");
+      if (!userId) {
+        listUser = null;
+        preserved = [];
+        savedGames.value = [];
+        return Promise.resolve("signed_out");
+      }
+      // Same account: keep the cards up while the refresh is in flight.
+      // A different account must not see the previous list.
+      if (listUser !== userId) {
+        listUser = null;
+        preserved = [];
+        savedGames.value = [];
+      }
 
-      return requestLoad(userId).then((result) => {
-        if (token !== loadToken || getUserId() !== userId) return "stale";
-        if (writesAtStart !== writeEpoch) return "stale";
-        if (result.status !== "ok") return "error";
-        savedGames.value = result.games;
-        preserved = result.preserved;
-        return "ok";
-      });
+      // Nothing is being saved: start the fetch now. Waiting on an idle queue
+      // would put the list a turn behind the panel opening.
+      const startLoad = (): Promise<SyncUserResult> => {
+        if (token !== loadToken || getUserId() !== userId) {
+          return Promise.resolve("stale");
+        }
+        // After the writes that were already running. A save that starts
+        // during the fetch below bumps the counter and this result is dropped.
+        const writesAtStart = writeEpoch;
+        return requestLoad(userId).then((result) => {
+          if (token !== loadToken || getUserId() !== userId) return "stale";
+          if (writesAtStart !== writeEpoch) return "stale";
+          if (result.status !== "ok") return "error";
+          listUser = userId;
+          preserved = result.preserved;
+          savedGames.value = result.games;
+          return "ok";
+        });
+      };
+      if (activeWrites === 0) return startLoad();
+      return writeQueue.then(startLoad);
     },
 
     save(draft, editingId) {

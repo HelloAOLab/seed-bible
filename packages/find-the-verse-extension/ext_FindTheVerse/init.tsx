@@ -213,9 +213,10 @@ export default function initFindTheVerseExtension() {
         state.os
       );
 
-      // Load the list when the pane is open. A startup fetch would run for
-      // every signed-in user who has the extension installed, even if they
-      // never open it, and a failure would set an error on a closed panel.
+      // Load the list when the pane opens, and again when it is reopened.
+      // The reload keeps the current user's cards on screen while it fetches.
+      // A startup fetch would run for every signed-in user who has the
+      // extension installed, even if they never open it.
       let paneSyncKey: string | null = null;
       const disposeLoadEffect = effect(() => {
         const userId = state.login.userId.value;
@@ -315,7 +316,9 @@ export default function initFindTheVerseExtension() {
           ns: "find-the-verse-extension",
         },
         icon: () => <MaterialIcon>location_on</MaterialIcon>,
-        isVisible: () => true,
+        // Hidden during a round, including the win screen. Showing it there
+        // would throw that result away and open a new draft.
+        isVisible: () => game.phase.value !== "playing",
         onSelect: (toolContext) => {
           const v = toolContext.readingState.selectedVerses.value[0];
           if (!v) return;
