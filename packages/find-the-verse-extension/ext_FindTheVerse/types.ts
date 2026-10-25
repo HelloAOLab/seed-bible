@@ -65,7 +65,7 @@ export interface GameSignals {
   targetVerse: Signal<TargetVerse | null>;
   /** Label for the round. Shown in place of the reference until it is revealed. */
   name: Signal<string>;
-  /** One entry per chance. Every chance needs a hint before the game can be saved. */
+  /** One entry per chance. A hint is optional and can be left blank. */
   steps: Signal<GameStep[]>;
   /** True while waiting for the creator to tap a verse in the reader. */
   selectingViaToolbar: Signal<boolean>;

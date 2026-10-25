@@ -11,7 +11,7 @@ import {
   PlayGuesses,
   tightenWindow,
 } from "./gameLogic";
-import { blankSteps, resetDraft, resetPlay } from "./gameSession";
+import { blankSteps, beginRound, resetDraft, resetPlay } from "./gameSession";
 import { watchSearchRange } from "./searchRange";
 import {
   createSavedGamesController,
@@ -161,6 +161,13 @@ function GamePane({
             }
           );
         }}
+        onPlay={(draft) => {
+          beginRound(
+            game,
+            { id: null, ...draft },
+            state.app.selectedTab.value?.readingState
+          );
+        }}
         onCancel={() => {
           resetDraft(game);
           game.phase.value = "idle";
@@ -206,16 +213,36 @@ export default function initFindTheVerseExtension() {
         state.os
       );
 
-      // Load saved games whenever the user logs in (or on first mount if already logged in).
+      // Load the list when the pane is open. A startup fetch would run for
+      // every signed-in user who has the extension installed, even if they
+      // never open it, and a failure would set an error on a closed panel.
+      let paneSyncKey: string | null = null;
       const disposeLoadEffect = effect(() => {
         const userId = state.login.userId.value;
-        game.notice.value = null;
+        const open = state.panes.panes.value.some(
+          (pane) => pane.id === PANE_ID
+        );
+        if (!open) {
+          paneSyncKey = null;
+          if (!userId) void savedGames.syncUser(null);
+          return;
+        }
+        const key = userId ?? "";
+        if (paneSyncKey === key) return;
+        paneSyncKey = key;
+        const loadFailed = state.i18n.t("load-failed", {
+          defaultValue: "Couldn't load your saved games.",
+          ns: NS,
+        });
         void savedGames.syncUser(userId).then((result) => {
-          if (result === "error" && state.login.userId.peek() === userId) {
-            game.notice.value = state.i18n.t("load-failed", {
-              defaultValue: "Couldn't load your saved games.",
-              ns: NS,
-            });
+          const stillOpen = state.panes.panes
+            .peek()
+            .some((pane) => pane.id === PANE_ID);
+          if (!stillOpen || state.login.userId.peek() !== userId) return;
+          if (result === "error") {
+            game.notice.value = loadFailed;
+          } else if (result === "ok" && game.notice.peek() === loadFailed) {
+            game.notice.value = null;
           }
         });
       });
@@ -276,8 +303,8 @@ export default function initFindTheVerseExtension() {
         },
       });
 
-      // Verse toolbar action shown only while the creator is picking a target verse.
-      // The player taps a verse, the toolbar appears, and "Set as target" captures it.
+      // Verse toolbar action. A reader can start a game from the verse they
+      // are looking at; they do not have to open the creator first.
       yield state.tools.registerVerseToolbarTool({
         id: "find-the-verse-set-target",
         priority: 300,
@@ -288,8 +315,7 @@ export default function initFindTheVerseExtension() {
           ns: "find-the-verse-extension",
         },
         icon: () => <MaterialIcon>location_on</MaterialIcon>,
-        isVisible: () =>
-          game.selectingViaToolbar.value && game.phase.value === "creating",
+        isVisible: () => true,
         onSelect: (toolContext) => {
           const v = toolContext.readingState.selectedVerses.value[0];
           if (!v) return;
@@ -304,6 +330,13 @@ export default function initFindTheVerseExtension() {
             // is closed for this pick, so reopen it or the tap looks ignored.
             openGamePane();
             return;
+          }
+          // Already filling in a draft: keep the name and hints, only the verse
+          // changes. Otherwise open a fresh creator with this verse filled in.
+          const alreadyCreating = game.phase.peek() === "creating";
+          if (!alreadyCreating) {
+            resetPlay(game);
+            game.phase.value = "creating";
           }
           game.verseLookup.value += 1;
           game.notice.value = null;

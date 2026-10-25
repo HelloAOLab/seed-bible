@@ -328,17 +328,21 @@ describe("saved games controller", () => {
 
   it("applies a second save on top of the first instead of dropping it", async () => {
     const { controller, os, savedGames } = setup();
-    os.getData.mockResolvedValue({
+    let stored: SavedGame[] = [makeGame({ id: "old" })];
+    os.getData.mockImplementation(async () => ({
       success: true,
-      data: { games: [makeGame({ id: "old" })] },
-    });
+      data: { games: stored },
+    }));
     await controller.syncUser("user-1");
 
-    const resolvers: Array<(value: { success: true }) => void> = [];
+    const resolvers: Array<() => void> = [];
     os.recordData.mockImplementation(
-      () =>
+      (_user: unknown, _address: unknown, data: { games: SavedGame[] }) =>
         new Promise((resolve) => {
-          resolvers.push(resolve);
+          resolvers.push(() => {
+            stored = data.games;
+            resolve({ success: true });
+          });
         })
     );
 
@@ -347,11 +351,11 @@ describe("saved games controller", () => {
     await vi.waitFor(() => {
       expect(resolvers).toHaveLength(1);
     });
-    resolvers[0]!({ success: true });
+    resolvers[0]!();
     await vi.waitFor(() => {
       expect(resolvers).toHaveLength(2);
     });
-    resolvers[1]!({ success: true });
+    resolvers[1]!();
     await Promise.all([first, second]);
 
     expect(savedGames.value).toHaveLength(3);
@@ -359,6 +363,30 @@ describe("saved games controller", () => {
     expect(savedGames.value[0]?.id).not.toBe(savedGames.value[1]?.id);
     expect(savedGames.value[0]?.id).not.toBe("old");
     expect(savedGames.value[1]?.id).not.toBe("old");
+  });
+
+  it("keeps a game another device saved after this device loaded its list", async () => {
+    const { controller, os, savedGames } = setup();
+    os.getData.mockResolvedValueOnce({
+      success: true,
+      data: { games: [] },
+    });
+    await controller.syncUser("user-1");
+
+    const other = makeGame({ id: "one", name: "One" });
+    os.getData.mockResolvedValueOnce({
+      success: true,
+      data: { games: [other] },
+    });
+    await controller.save(draftOf(makeGame({ name: "Two" })), null);
+
+    expect(savedGames.value.map((game) => game.id)).toContain("one");
+    const written = os.recordData.mock.calls[0]?.[2] as {
+      games: SavedGame[];
+    };
+    expect(written.games).toHaveLength(2);
+    expect(written.games[1]?.id).toBe("one");
+    expect(written.games[0]?.name).toBe("Two");
   });
 
   it("replaces the edited game after the list loads, even if it was empty at click time", async () => {

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   bookDisplayName,
+  formatReference,
   bookOrderIndex,
   isKnownBookId,
 } from "@packages/find-the-verse-extension/ext_FindTheVerse/books";
@@ -8,7 +9,6 @@ import {
   bookOutOfRange,
   buildPartialReveal,
   chapterOutOfRange,
-  firstEmptyHint,
   evaluateGuess,
   openSearchWindow,
   PlayGuesses,
@@ -112,6 +112,9 @@ describe("book names", () => {
     expect(bookDisplayName("JHN")).toBe("John");
     expect(bookDisplayName("1SA")).toBe("1 Samuel");
     expect(bookDisplayName("NOT-A-BOOK")).toBe("NOT-A-BOOK");
+    expect(formatReference("JHN", 1, 1, [{ id: "JHN", name: "Juan" }])).toBe(
+      "Juan 1:1"
+    );
   });
 });
 
@@ -282,23 +285,5 @@ describe("rangeHighlightCss", () => {
     const css = rangeHighlightCss([], []);
     expect(css).toContain(".sb-highlight-layer");
     expect(css).toContain(".sb-verse-decoration-diminish");
-  });
-});
-
-describe("firstEmptyHint", () => {
-  it("finds the first empty hint, including one left at the end", () => {
-    expect(firstEmptyHint([{ hint: "a" }, { hint: "" }, { hint: "  " }])).toBe(
-      1
-    );
-  });
-
-  it("finds an empty hint left between filled ones", () => {
-    expect(firstEmptyHint([{ hint: "a" }, { hint: "" }, { hint: "c" }])).toBe(
-      1
-    );
-  });
-
-  it("accepts a list where every chance has a hint", () => {
-    expect(firstEmptyHint([{ hint: "a" }, { hint: "b" }])).toBeNull();
   });
 });

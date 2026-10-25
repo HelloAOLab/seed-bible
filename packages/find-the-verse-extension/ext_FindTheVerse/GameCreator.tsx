@@ -3,14 +3,14 @@ import { useLayoutEffect, useRef } from "preact/hooks";
 import type { SeedBibleState } from "seed-bible";
 import { extractContentText, parseVerseReference } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
-import { bookDisplayName, isKnownBookId } from "./books";
+import { formatReference, isKnownBookId } from "./books";
 import { FormField } from "./FormField";
-import { firstEmptyHint } from "./gameLogic";
 import type { GameDraft, GameSignals } from "./types";
 
 interface GameCreatorProps {
   game: GameSignals;
   state: SeedBibleState;
+  onPlay: (draft: GameDraft) => void;
   onStart: (draft: GameDraft) => Promise<void>;
   onCancel: () => void;
 }
@@ -117,8 +117,8 @@ function GrowingHint({
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
-  // Measure after each render so a new line, and a hint loaded from a saved
-  // game, both open the box to the text instead of leaving a one-line field.
+  // Grow with the text. Height lives on the DOM node, so it only needs to be
+  // measured when the value changes, including a hint loaded from a saved game.
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -127,7 +127,7 @@ function GrowingHint({
     // add that or the last line gets clipped as the box grows.
     const border = el.offsetHeight - el.clientHeight;
     el.style.height = `${el.scrollHeight + border}px`;
-  });
+  }, [value]);
 
   return (
     <textarea
@@ -144,6 +144,7 @@ function GrowingHint({
 export function GameCreator({
   game,
   state,
+  onPlay,
   onStart,
   onCancel,
 }: GameCreatorProps) {
@@ -251,7 +252,6 @@ export function GameCreator({
     game.steps.value = updated;
   }
 
-  const emptyHint = firstEmptyHint(steps);
   const nameMissing = gameName.trim().length === 0;
   const nameErrorMessage = t("name-required", {
     defaultValue: "Give this game a name.",
@@ -261,41 +261,48 @@ export function GameCreator({
     : t("verse-required", {
         defaultValue: "Pick the secret verse before saving.",
       });
-  const chanceErrorMessage =
-    !saveAttempted.value || emptyHint === null
-      ? null
-      : t("hint-gap", {
-          number: emptyHint + 1,
-          defaultValue:
-            "Chance {{number}} is empty. Fill it in or delete it before saving.",
-        });
 
-  // One field at a time. A name missed on Save wins, then the verse, then a
-  // hint gap. Fixing the current one lets the next message take its place.
-  let activeError: "name" | "verse" | "chances" | null = null;
+  // One field at a time. A name missed on Save or Start wins, then the verse.
+  // Fixing the current one lets the next message take its place.
+  let activeError: "name" | "verse" | null = null;
   if (saveAttempted.value && nameMissing) activeError = "name";
   else if (refError.value || (saveAttempted.value && target === null)) {
     activeError = "verse";
-  } else if (chanceErrorMessage) activeError = "chances";
+  }
 
   const nameError = activeError === "name" ? nameErrorMessage : null;
   const verseError = activeError === "verse" ? verseErrorMessage : null;
-  const chanceError = activeError === "chances" ? chanceErrorMessage : null;
 
   function rejectSave() {
     saveAttempted.value = true;
     errorPulse.value += 1;
   }
 
-  function handleSave() {
-    if (saving.value) return;
+  function readyDraft(): GameDraft | null {
     const verse = game.targetVerse.peek();
     const name = game.name.peek().trim();
-    const gap = firstEmptyHint(game.steps.peek());
-    if (!name || !verse || gap !== null) {
+    if (!name || !verse || game.steps.peek().length < 1) {
       rejectSave();
-      return;
+      return null;
     }
+    return {
+      name,
+      targetVerse: verse,
+      steps: game.steps.peek(),
+    };
+  }
+
+  function handlePlay() {
+    const draft = readyDraft();
+    if (!draft) return;
+    refError.value = "";
+    onPlay(draft);
+  }
+
+  function handleSave() {
+    if (saving.value) return;
+    const draft = readyDraft();
+    if (!draft) return;
     if (!state.login.userId.peek()) {
       game.notice.value = t("sign-in-to-save", {
         defaultValue: "Sign in to save games",
@@ -304,11 +311,7 @@ export function GameCreator({
     }
     refError.value = "";
     saving.value = true;
-    void onStart({
-      name: game.name.peek(),
-      targetVerse: verse,
-      steps: game.steps.peek(),
-    }).finally(() => {
+    void onStart(draft).finally(() => {
       saving.value = false;
     });
   }
@@ -373,8 +376,12 @@ export function GameCreator({
             {target && (
               <div style={{ ...s.versePreview, marginBottom: "8px" }}>
                 <strong>
-                  {bookDisplayName(target.bookId, translationBooks)}{" "}
-                  {target.chapterNumber}:{target.verseNumber}
+                  {formatReference(
+                    target.bookId,
+                    target.chapterNumber,
+                    target.verseNumber,
+                    translationBooks
+                  )}
                 </strong>
                 {target.verseText && (
                   <p
@@ -427,7 +434,7 @@ export function GameCreator({
         )}
       </FormField>
 
-      <FormField error={chanceError} pulse={errorPulse.value}>
+      <FormField error={null} pulse={errorPulse.value}>
         <div style={s.label}>
           {t("chances-label", {
             total: steps.length,
@@ -437,7 +444,7 @@ export function GameCreator({
         <p style={{ margin: "0 0 8px", opacity: 0.6, fontSize: "0.85rem" }}>
           {t("chances-start", {
             defaultValue:
-              "Start with 7. Add or remove any. Every chance needs a hint — fill an empty one or delete it before saving.",
+              "Start with 7. Add or remove any. A hint for each chance is optional.",
           })}
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -446,7 +453,7 @@ export function GameCreator({
               <span style={s.stepNum}>#{i + 1}</span>
               <GrowingHint
                 placeholder={t("hint-placeholder", {
-                  defaultValue: "Hint for this chance…",
+                  defaultValue: "Optional hint…",
                 })}
                 value={step.hint}
                 onChange={(hint) => handleStepHintChange(i, hint)}
@@ -488,13 +495,20 @@ export function GameCreator({
       )}
 
       {/* Actions */}
-      <div style={{ display: "flex", gap: "8px" }}>
+      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <button
+          type="button"
+          style={{ ...s.btn, ...s.primaryBtn, flex: "1 1 8rem" }}
+          onClick={handlePlay}
+        >
+          {t("start-game", { defaultValue: "Start game" })}
+        </button>
         <button
           type="button"
           style={{
             ...s.btn,
-            ...s.primaryBtn,
-            flex: 1,
+            ...s.secondaryBtn,
+            flex: "1 1 8rem",
             opacity: saving.value ? 0.45 : 1,
           }}
           disabled={saving.value}

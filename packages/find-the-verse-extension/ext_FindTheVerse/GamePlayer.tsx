@@ -1,8 +1,7 @@
-import { useMemo } from "preact/hooks";
 import type { SeedBibleState } from "seed-bible";
 import { emphasizeVerses, type BookId } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
-import { bookDisplayName } from "./books";
+import { formatReference } from "./books";
 import {
   buildPartialReveal,
   resultMessage,
@@ -114,18 +113,12 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
     state.app.selectedTab.value?.readingState.translationBooks.value?.books;
 
   const totalChances = steps.length;
-  const { chancesLeft, chanceIndex, currentHint } = chanceView(
+  const { chancesLeft, chanceIndex, currentHint, outOfChances } = chanceView(
     steps,
     guessCount
   );
-  const isOutOfChances = useMemo(
-    () => !won && guessCount >= steps.length,
-    [won, guessCount, steps.length]
-  );
-  const revealReady = useMemo(
-    () => !won && guessCount >= revealThreshold(steps.length),
-    [won, guessCount, steps.length]
-  );
+  const showOutOfChances = !won && outOfChances;
+  const revealReady = !won && guessCount >= revealThreshold(steps.length);
   const gameName = game.name.value.trim();
 
   if (!target) return null;
@@ -143,8 +136,12 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
             {t("you-found-it", { defaultValue: "You found it!" })}
           </p>
           <p style={{ opacity: 0.7, margin: 0 }}>
-            {bookDisplayName(target.bookId, translationBooks)}{" "}
-            {target.chapterNumber}:{target.verseNumber}
+            {formatReference(
+              target.bookId,
+              target.chapterNumber,
+              target.verseNumber,
+              translationBooks
+            )}
           </p>
           {target.verseText && (
             <p
@@ -221,7 +218,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
       <GameName name={gameName} fontSize="1rem" />
       {/* Chance counter */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        {isOutOfChances ? (
+        {showOutOfChances ? (
           <span style={s.pill("#e63946")}>
             {t("out-of-chances", { defaultValue: "Out of chances" })}
           </span>
@@ -246,7 +243,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
       </div>
 
       {/* Out-of-chances encouragement */}
-      {isOutOfChances && (
+      {showOutOfChances && (
         <div style={s.card}>
           <p style={{ margin: 0, fontSize: "0.9rem" }}>
             {t("keep-guessing", {
@@ -306,15 +303,24 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
               marginBottom: "4px",
             }}
           >
-            {bookDisplayName(target.bookId, translationBooks)}{" "}
-            {target.chapterNumber}:{target.verseNumber}
+            {formatReference(
+              target.bookId,
+              target.chapterNumber,
+              target.verseNumber,
+              translationBooks
+            )}
           </div>
           {target.verseText ? (
             <p style={{ margin: 0, fontSize: "0.9rem" }}>{target.verseText}</p>
           ) : (
             <p style={{ margin: 0, opacity: 0.6, fontSize: "0.9rem" }}>
               {t("navigate-to-verse", {
-                reference: `${bookDisplayName(target.bookId, translationBooks)} ${target.chapterNumber}:${target.verseNumber}`,
+                reference: formatReference(
+                  target.bookId,
+                  target.chapterNumber,
+                  target.verseNumber,
+                  translationBooks
+                ),
                 defaultValue: "Navigate to {{reference}} to read it.",
               })}
             </p>

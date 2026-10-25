@@ -198,8 +198,8 @@ export interface SavedGamesController {
 /**
  * Loads and writes the whole saved-game list.
  *
- * The in-memory list starts empty. Writing it before a successful load (or
- * after a failed one) would store only the game in hand and erase the rest.
+ * The in-memory list starts empty. Each save and delete loads the server list
+ * again before writing, so a game saved from another tab is not erased.
  * `writeEpoch` is bumped when a write publishes a new list, so a load that
  * started earlier cannot apply its snapshot on top.
  */
@@ -208,7 +208,6 @@ export function createSavedGamesController(
   getUserId: () => string | null,
   os: CasualOSManager
 ): SavedGamesController {
-  let loadedForUser: string | null = null;
   let loadToken = 0;
   let writeEpoch = 0;
   let writeQueue: Promise<void> = Promise.resolve();
@@ -242,30 +241,27 @@ export function createSavedGamesController(
     const userId = getUserId();
     if (!userId) throw new SavedGamesWriteError("signed_out");
 
-    if (loadedForUser !== userId) {
-      const result = await requestLoad(userId);
-      if (getUserId() !== userId) throw new SavedGamesWriteError("signed_out");
-      if (result.status !== "ok") throw new SavedGamesWriteError("not_loaded");
-      // Another load for this user may have published the list while this
-      // one was in flight. Writes themselves cannot: they run one at a time.
-      if (loadedForUser !== userId) {
-        savedGames.value = result.games;
-        preserved = result.preserved;
-        loadedForUser = userId;
-      }
-    }
+    // Always read the server list first. This device's copy can be missing a
+    // game saved from another tab, and writing that copy back would delete it.
+    const result = await requestLoad(userId);
+    if (getUserId() !== userId) throw new SavedGamesWriteError("signed_out");
+    if (result.status !== "ok") throw new SavedGamesWriteError("not_loaded");
 
-    const previous = savedGames.peek();
+    const previous = result.games;
     const next = build(previous);
     if (next === previous) return;
     if (getUserId() !== userId) throw new SavedGamesWriteError("signed_out");
 
+    // A load that started before this write must not paint its older list
+    // over the one we are about to store.
     writeEpoch += 1;
+    preserved = result.preserved;
     savedGames.value = next;
     try {
       await persistGames(userId, [...next, ...preserved], os);
     } catch (error) {
       if (getUserId() === userId) savedGames.value = previous;
+      else savedGames.value = [];
       if (error instanceof SavedGamesWriteError) throw error;
       throw new SavedGamesWriteError("persist_failed");
     }
@@ -275,7 +271,6 @@ export function createSavedGamesController(
     syncUser(userId) {
       const token = ++loadToken;
       const writesAtStart = writeEpoch;
-      loadedForUser = null;
       preserved = [];
       savedGames.value = [];
       if (!userId) return Promise.resolve("signed_out");
@@ -286,7 +281,6 @@ export function createSavedGamesController(
         if (result.status !== "ok") return "error";
         savedGames.value = result.games;
         preserved = result.preserved;
-        loadedForUser = userId;
         return "ok";
       });
     },

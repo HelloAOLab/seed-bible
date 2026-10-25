@@ -50,3 +50,13 @@ export function bookDisplayName(
     )
     .join(" ");
 }
+
+/** "John 1:1", using the open translation's book name when it is loaded. */
+export function formatReference(
+  bookId: string,
+  chapterNumber: number,
+  verseNumber: number,
+  books?: readonly BookNameSource[]
+): string {
+  return `${bookDisplayName(bookId, books)} ${chapterNumber}:${verseNumber}`;
+}

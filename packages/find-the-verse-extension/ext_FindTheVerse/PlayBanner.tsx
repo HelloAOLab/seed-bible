@@ -91,7 +91,7 @@ export function FindTheVerseReaderBanner({
   const won = game.won.value;
   const revealed = game.revealed.value;
   const lastResult = game.lastResult.value;
-  const { chancesLeft, chanceIndex, currentHint } = chanceView(
+  const { chancesLeft, chanceIndex, currentHint, outOfChances } = chanceView(
     steps,
     guessCount
   );
@@ -115,7 +115,7 @@ export function FindTheVerseReaderBanner({
       <GameName name={gameName} fontSize="0.95rem" />
       <div style={row}>
         <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>
-          {chancesLeft === 0
+          {outOfChances
             ? translate("out-of-chances", { defaultValue: "Out of chances" })
             : translate("chances-left", {
                 left: chancesLeft,

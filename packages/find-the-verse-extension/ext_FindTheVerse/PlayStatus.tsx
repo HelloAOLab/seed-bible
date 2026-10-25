@@ -5,7 +5,13 @@ export function chanceView(steps: readonly GameStep[], guessCount: number) {
   const chancesLeft = Math.max(0, total - guessCount);
   const chanceIndex = Math.min(guessCount, Math.max(0, total - 1));
   const currentHint = steps[chanceIndex]?.hint.trim() ?? "";
-  return { total, chancesLeft, chanceIndex, currentHint };
+  return {
+    total,
+    chancesLeft,
+    chanceIndex,
+    currentHint,
+    outOfChances: guessCount >= total,
+  };
 }
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;

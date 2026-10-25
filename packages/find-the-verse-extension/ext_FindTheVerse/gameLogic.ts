@@ -219,17 +219,6 @@ export function versesOutOfRange(
   );
 }
 
-/**
- * Index of the first chance with no hint, or null when every chance has one.
- * An empty chance at the end counts too: it has to be filled or deleted.
- */
-export function firstEmptyHint(
-  steps: readonly { hint: string }[]
-): number | null {
-  const index = steps.findIndex((step) => step.hint.trim().length === 0);
-  return index === -1 ? null : index;
-}
-
 const GREY =
   "color-mix(in srgb, var(--sb-font-color) 42%, var(--sb-book-selector-background, var(--sb-background, transparent)))";
 

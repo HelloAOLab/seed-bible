@@ -2,8 +2,8 @@ import type { SeedBibleState } from "seed-bible";
 import { useSignal } from "@preact/signals";
 import { ContextMenuItem, ContextMenuWithButton } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
-import { bookDisplayName } from "./books";
-import { resetPlay } from "./gameSession";
+import { formatReference } from "./books";
+import { beginRound } from "./gameSession";
 import type { GameSignals, SavedGame } from "./types";
 
 interface SavedGamesListProps {
@@ -125,7 +125,12 @@ function SavedGameCard({
   const referenceShown = useSignal(false);
   const { bookId, chapterNumber, verseNumber } = saved.targetVerse;
   const chances = saved.steps.length;
-  const reference = `${bookDisplayName(bookId, translationBooks)} ${chapterNumber}:${verseNumber}`;
+  const reference = formatReference(
+    bookId,
+    chapterNumber,
+    verseNumber,
+    translationBooks
+  );
   const gameName = saved.name.trim();
 
   return (
@@ -231,16 +236,16 @@ export function SavedGamesList({
   if (games.length === 0) return null;
 
   function loadGame(saved: SavedGame) {
-    const reading = state.app.selectedTab.value?.readingState;
-    // A verse already selected would be counted as soon as play starts.
-    reading?.clearSelectedVerses();
-    resetPlay(game);
-    game.currentGameId.value = saved.id;
-    game.name.value = saved.name;
-    game.targetVerse.value = saved.targetVerse;
-    game.steps.value = saved.steps.map((step) => ({ hint: step.hint }));
-    game.phase.value = "playing";
-    void reading?.selectChapter("GEN", 1);
+    beginRound(
+      game,
+      {
+        id: saved.id,
+        name: saved.name,
+        targetVerse: saved.targetVerse,
+        steps: saved.steps,
+      },
+      state.app.selectedTab.value?.readingState
+    );
   }
 
   const translationBooks =
