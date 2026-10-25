@@ -188,20 +188,14 @@ export function versesOutOfRange(
 }
 
 /**
- * Index of an empty hint that sits before a filled one, or null when the
- * hints are packed from the top. Trailing empty hints are still real chances.
+ * Index of the first chance with no hint, or null when every chance has one.
+ * An empty chance at the end counts too: it has to be filled or deleted.
  */
-export function emptyHintGap(
+export function firstEmptyHint(
   steps: readonly { hint: string }[]
 ): number | null {
-  for (let index = 0; index < steps.length; index++) {
-    if (steps[index]?.hint.trim()) continue;
-    const laterFilled = steps
-      .slice(index + 1)
-      .some((step) => step.hint.trim().length > 0);
-    if (laterFilled) return index;
-  }
-  return null;
+  const index = steps.findIndex((step) => step.hint.trim().length === 0);
+  return index === -1 ? null : index;
 }
 
 const GREY =

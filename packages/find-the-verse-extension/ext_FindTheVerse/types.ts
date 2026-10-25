@@ -14,10 +14,14 @@ export interface TargetVerse {
 
 export interface SavedGame {
   id: string;
+  /** What players see until someone chooses Show reference. */
+  name: string;
   targetVerse: TargetVerse;
   steps: GameStep[];
   createdAtMs: number;
 }
+
+export type GameDraft = Pick<SavedGame, "name" | "targetVerse" | "steps">;
 
 export interface VersePosition {
   bookId: string;
@@ -59,6 +63,8 @@ export interface GameSignals {
   savedGames: Signal<SavedGame[]>;
   /** The secret verse the creator chose. */
   targetVerse: Signal<TargetVerse | null>;
+  /** Label for the round. Shown in place of the reference until it is revealed. */
+  name: Signal<string>;
   /** One entry per chance; each may have an optional hint. */
   steps: Signal<GameStep[]>;
   /** True while waiting for the creator to tap a verse in the reader. */

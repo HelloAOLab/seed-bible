@@ -19,6 +19,7 @@ function playingGame(): GameSignals {
       verseNumber: 1,
       verseText: "In the beginning",
     }),
+    name: signal("Youth group"),
     steps: signal([{ hint: "a" }, { hint: "b" }]),
     selectingViaToolbar: signal(true),
     verseLookup: signal(0),
@@ -53,6 +54,7 @@ describe("resetPlay", () => {
     expect(game.playRound.value).toBe(4);
     expect(game.currentGameId.value).toBeNull();
     expect(game.targetVerse.value).toBeNull();
+    expect(game.name.value).toBe("");
     expect(game.selectingViaToolbar.value).toBe(false);
     expect(game.notice.value).toBeNull();
     expect(game.steps.value).toEqual(blankSteps());

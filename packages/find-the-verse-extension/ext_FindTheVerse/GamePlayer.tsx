@@ -126,6 +126,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
   );
   const chanceIndex = Math.min(guessCount, Math.max(0, steps.length - 1));
   const currentHint = steps[chanceIndex]?.hint.trim() ?? "";
+  const gameName = game.name.value.trim();
 
   if (!target) return null;
 
@@ -210,6 +211,11 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
 
   return (
     <div style={s.root}>
+      {gameName && (
+        <p style={{ margin: 0, fontWeight: 700, fontSize: "1rem" }}>
+          {gameName}
+        </p>
+      )}
       {/* Chance counter */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         {isOutOfChances ? (
@@ -227,7 +233,9 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
         )}
         {currentHint ? (
           hintOpenFor === chanceIndex ? (
-            <span style={{ fontSize: "0.85rem" }}>{currentHint}</span>
+            <span style={{ fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
+              {currentHint}
+            </span>
           ) : (
             <button
               type="button"

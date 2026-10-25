@@ -90,6 +90,7 @@ function savedGame(
 ): SavedGame {
   return {
     id,
+    name: "Youth group",
     targetVerse: {
       bookId,
       chapterNumber: 1,

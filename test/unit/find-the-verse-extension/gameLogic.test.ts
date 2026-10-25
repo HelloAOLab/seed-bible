@@ -8,7 +8,7 @@ import {
   bookOutOfRange,
   buildPartialReveal,
   chapterOutOfRange,
-  emptyHintGap,
+  firstEmptyHint,
   evaluateGuess,
   openSearchWindow,
   PlayGuesses,
@@ -262,14 +262,20 @@ describe("rangeHighlightCss", () => {
   });
 });
 
-describe("emptyHintGap", () => {
-  it("allows empty hints after the filled ones", () => {
-    expect(
-      emptyHintGap([{ hint: "a" }, { hint: "" }, { hint: "  " }])
-    ).toBeNull();
+describe("firstEmptyHint", () => {
+  it("finds the first empty hint, including one left at the end", () => {
+    expect(firstEmptyHint([{ hint: "a" }, { hint: "" }, { hint: "  " }])).toBe(
+      1
+    );
   });
 
   it("finds an empty hint left between filled ones", () => {
-    expect(emptyHintGap([{ hint: "a" }, { hint: "" }, { hint: "c" }])).toBe(1);
+    expect(firstEmptyHint([{ hint: "a" }, { hint: "" }, { hint: "c" }])).toBe(
+      1
+    );
+  });
+
+  it("accepts a list where every chance has a hint", () => {
+    expect(firstEmptyHint([{ hint: "a" }, { hint: "b" }])).toBeNull();
   });
 });

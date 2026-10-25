@@ -11,6 +11,7 @@ export function blankSteps(): GameStep[] {
 export function resetDraft(game: GameSignals) {
   game.currentGameId.value = null;
   game.targetVerse.value = null;
+  game.name.value = "";
   game.steps.value = blankSteps();
   game.selectingViaToolbar.value = false;
   game.notice.value = null;

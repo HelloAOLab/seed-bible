@@ -1,6 +1,6 @@
 import type { Signal } from "@preact/signals";
 import type { CasualOSManager } from "seed-bible/managers";
-import type { SavedGame } from "./types";
+import type { GameDraft, SavedGame } from "./types";
 
 export const GAMES_ADDRESS = "find-the-verse-games";
 
@@ -35,23 +35,42 @@ function isGameStep(value: unknown): boolean {
   return typeof (value as { hint?: unknown }).hint === "string";
 }
 
-function isSavedGame(value: unknown): value is SavedGame {
-  if (!value || typeof value !== "object") return false;
+function readSavedGame(value: unknown): SavedGame | null {
+  if (!value || typeof value !== "object") return null;
   const game = value as Record<string, unknown>;
   const target = game.targetVerse as Record<string, unknown> | null;
-  return (
-    typeof game.id === "string" &&
-    typeof game.createdAtMs === "number" &&
-    Array.isArray(game.steps) &&
-    game.steps.length >= 1 &&
-    game.steps.every(isGameStep) &&
-    !!target &&
-    typeof target === "object" &&
-    typeof target.bookId === "string" &&
-    typeof target.chapterNumber === "number" &&
-    typeof target.verseNumber === "number" &&
-    typeof target.verseText === "string"
-  );
+  const steps = game.steps;
+  if (
+    typeof game.id !== "string" ||
+    typeof game.createdAtMs !== "number" ||
+    !Array.isArray(steps) ||
+    steps.length < 1 ||
+    !steps.every(isGameStep) ||
+    !target ||
+    typeof target !== "object" ||
+    typeof target.bookId !== "string" ||
+    typeof target.chapterNumber !== "number" ||
+    typeof target.verseNumber !== "number" ||
+    typeof target.verseText !== "string"
+  ) {
+    return null;
+  }
+  return {
+    id: game.id,
+    // Games saved before names existed still load; the card falls back to
+    // the Show reference button when this is blank.
+    name: typeof game.name === "string" ? game.name : "",
+    createdAtMs: game.createdAtMs,
+    steps: steps.map((step) => ({
+      hint: (step as { hint: string }).hint,
+    })),
+    targetVerse: {
+      bookId: target.bookId,
+      chapterNumber: target.chapterNumber,
+      verseNumber: target.verseNumber,
+      verseText: target.verseText,
+    },
+  };
 }
 
 /**
@@ -76,7 +95,8 @@ export async function loadGames(
     const games: SavedGame[] = [];
     const preserved: unknown[] = [];
     for (const entry of data.games) {
-      if (isSavedGame(entry)) games.push(entry);
+      const saved = readSavedGame(entry);
+      if (saved) games.push(saved);
       else preserved.push(entry);
     }
     return { status: "ok", games, preserved };
@@ -108,12 +128,13 @@ export async function persistGames(
  * edited, so an edit replaces the game instead of adding a copy.
  */
 export function toSavedGame(
-  draft: Pick<SavedGame, "targetVerse" | "steps">,
+  draft: GameDraft,
   existing: SavedGame | undefined,
   nowMs: number = Date.now()
 ): SavedGame {
   return {
     id: existing?.id ?? crypto.randomUUID(),
+    name: draft.name.trim(),
     targetVerse: { ...draft.targetVerse },
     steps: draft.steps.map((step) => ({ hint: step.hint })),
     createdAtMs: existing?.createdAtMs ?? nowMs,
@@ -156,10 +177,7 @@ export interface SavedGamesController {
    * after the saved list has loaded, so a list that was empty at click time
    * still replaces that game instead of inserting a second copy.
    */
-  save(
-    draft: Pick<SavedGame, "targetVerse" | "steps">,
-    editingId: string | null
-  ): Promise<void>;
+  save(draft: GameDraft, editingId: string | null): Promise<void>;
   remove(id: string): Promise<void>;
 }
 

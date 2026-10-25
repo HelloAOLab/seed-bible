@@ -22,7 +22,7 @@ import { GameCreator } from "./GameCreator";
 import { GamePlayer } from "./GamePlayer";
 import { FindTheVerseReaderBanner } from "./PlayBanner";
 import { SavedGamesList } from "./SavedGamesList";
-import type { GameSignals, SavedGame } from "./types";
+import type { GameDraft, GameSignals, SavedGame } from "./types";
 
 const PANE_ID = "find-the-verse-pane";
 const NS = "find-the-verse-extension";
@@ -41,9 +41,7 @@ function GamePane({
 }: {
   game: GameSignals;
   state: SeedBibleState;
-  onSaveGame: (
-    draft: Pick<SavedGame, "targetVerse" | "steps">
-  ) => Promise<void>;
+  onSaveGame: (draft: GameDraft) => Promise<void>;
   onDeleteGame: (id: string) => Promise<void>;
   onEditGame: (saved: SavedGame) => void;
 }) {
@@ -185,6 +183,7 @@ export default function initFindTheVerseExtension() {
         notice: signal(null),
         savedGames: signal([]),
         targetVerse: signal(null),
+        name: signal(""),
         steps: signal(blankSteps()),
         selectingViaToolbar: signal(false),
         verseLookup: signal(0),
@@ -218,9 +217,7 @@ export default function initFindTheVerseExtension() {
         });
       });
 
-      function saveGame(
-        draft: Pick<SavedGame, "targetVerse" | "steps">
-      ): Promise<void> {
+      function saveGame(draft: GameDraft): Promise<void> {
         return savedGames.save(draft, game.currentGameId.peek());
       }
 
@@ -232,6 +229,7 @@ export default function initFindTheVerseExtension() {
       function editGame(saved: SavedGame): void {
         game.verseLookup.value += 1;
         game.targetVerse.value = { ...saved.targetVerse };
+        game.name.value = saved.name;
         game.steps.value = saved.steps.map((step) => ({ hint: step.hint }));
         game.currentGameId.value = saved.id;
         game.selectingViaToolbar.value = false;

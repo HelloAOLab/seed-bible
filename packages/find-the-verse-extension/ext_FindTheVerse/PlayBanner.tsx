@@ -93,6 +93,7 @@ export function FindTheVerseReaderBanner({
   const chancesLeft = Math.max(0, steps.length - guessCount);
   const chanceIndex = Math.min(guessCount, Math.max(0, steps.length - 1));
   const currentHint = steps[chanceIndex]?.hint.trim() ?? "";
+  const gameName = game.name.value.trim();
 
   if (won) {
     return (
@@ -109,6 +110,11 @@ export function FindTheVerseReaderBanner({
 
   return (
     <div style={strip}>
+      {gameName && (
+        <p style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>
+          {gameName}
+        </p>
+      )}
       <div style={row}>
         <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>
           {chancesLeft === 0
@@ -121,7 +127,9 @@ export function FindTheVerseReaderBanner({
         </span>
         {currentHint ? (
           hintOpenFor === chanceIndex ? (
-            <span style={{ fontSize: "0.85rem" }}>{currentHint}</span>
+            <span style={{ fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
+              {currentHint}
+            </span>
           ) : (
             <button
               type="button"

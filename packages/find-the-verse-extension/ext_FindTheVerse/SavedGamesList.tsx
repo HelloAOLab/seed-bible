@@ -86,6 +86,18 @@ const s = {
     textAlign: "left" as const,
     cursor: "pointer",
   },
+  revealLink: {
+    padding: 0,
+    border: "none",
+    background: "transparent",
+    color: "var(--sb-font-color, #333)",
+    fontWeight: 500,
+    fontSize: "0.8rem",
+    opacity: 0.7,
+    textAlign: "left" as const,
+    cursor: "pointer",
+    width: "fit-content",
+  },
 };
 
 function SavedGameCard({
@@ -114,12 +126,26 @@ function SavedGameCard({
   const { bookId, chapterNumber, verseNumber } = saved.targetVerse;
   const chances = saved.steps.length;
   const reference = `${bookDisplayName(bookId, translationBooks)} ${chapterNumber}:${verseNumber}`;
+  const gameName = saved.name.trim();
 
   return (
     <div style={s.card}>
       <div style={s.info}>
         {referenceShown.value ? (
           <span style={s.ref}>{reference}</span>
+        ) : gameName ? (
+          <>
+            <span style={s.ref}>{gameName}</span>
+            <button
+              type="button"
+              style={s.revealLink}
+              onClick={() => {
+                referenceShown.value = true;
+              }}
+            >
+              {t("show-reference", { defaultValue: "Show reference" })}
+            </button>
+          </>
         ) : (
           <button
             type="button"
@@ -210,6 +236,7 @@ export function SavedGamesList({
     reading?.clearSelectedVerses();
     resetPlay(game);
     game.currentGameId.value = saved.id;
+    game.name.value = saved.name;
     game.targetVerse.value = saved.targetVerse;
     game.steps.value = saved.steps.map((step) => ({ hint: step.hint }));
     game.phase.value = "playing";

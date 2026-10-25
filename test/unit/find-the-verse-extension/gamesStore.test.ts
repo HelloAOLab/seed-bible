@@ -15,6 +15,7 @@ import type { SavedGame } from "@packages/find-the-verse-extension/ext_FindTheVe
 function makeGame(overrides: Partial<SavedGame> = {}): SavedGame {
   return {
     id: "game-1",
+    name: "Youth group",
     createdAtMs: 1_000,
     steps: [{ hint: "" }],
     targetVerse: {
@@ -36,7 +37,7 @@ function deferred<T>() {
 }
 
 function draftOf(game: SavedGame) {
-  return { targetVerse: game.targetVerse, steps: game.steps };
+  return { name: game.name, targetVerse: game.targetVerse, steps: game.steps };
 }
 
 function setup(userId: string | null = "user-1") {
@@ -123,6 +124,22 @@ describe("loadGames", () => {
       preserved: broken,
     });
   });
+
+  it("keeps a game saved before names existed, with a blank name", async () => {
+    const { name: _name, ...legacy } = makeGame({ id: "legacy" });
+    const os = {
+      getData: vi.fn().mockResolvedValue({
+        success: true,
+        data: { games: [legacy] },
+      }),
+    } as unknown as CasualOSManager;
+
+    await expect(loadGames("user-1", os)).resolves.toEqual({
+      status: "ok",
+      games: [makeGame({ id: "legacy", name: "" })],
+      preserved: [],
+    });
+  });
 });
 
 describe("toSavedGame", () => {
@@ -134,6 +151,7 @@ describe("toSavedGame", () => {
     });
     const saved = toSavedGame(
       {
+        name: "  Evening study  ",
         targetVerse: { ...existing.targetVerse, verseNumber: 2 },
         steps: [{ hint: "a" }, { hint: "b" }],
       },
@@ -143,6 +161,7 @@ describe("toSavedGame", () => {
 
     expect(saved.id).toBe("keep");
     expect(saved.createdAtMs).toBe(50);
+    expect(saved.name).toBe("Evening study");
     expect(saved.targetVerse.verseNumber).toBe(2);
     expect(saved.steps).toEqual([{ hint: "a" }, { hint: "b" }]);
     expect(saved.steps).not.toBe(existing.steps);
@@ -151,7 +170,7 @@ describe("toSavedGame", () => {
   it("mints a new id for a game that is not an edit", () => {
     const draft = makeGame();
     const saved = toSavedGame(
-      { targetVerse: draft.targetVerse, steps: draft.steps },
+      { name: draft.name, targetVerse: draft.targetVerse, steps: draft.steps },
       undefined,
       10
     );
@@ -229,6 +248,7 @@ describe("saved games controller", () => {
 
     await controller.save(
       {
+        name: original.name,
         targetVerse: original.targetVerse,
         steps: [{ hint: "" }, { hint: "" }, { hint: "x" }],
       },
@@ -352,6 +372,7 @@ describe("saved games controller", () => {
 
     const saving = controller.save(
       {
+        name: "Kept",
         targetVerse: { ...original.targetVerse, verseNumber: 16 },
         steps: [{ hint: "later" }],
       },
