@@ -489,7 +489,6 @@
   "session-settings-section-sharing": "Sharing",
   "session-settings-section-participants": "Participants",
   "collapsed-tab-shared-label": "{{title}} — shared session, {{count}} present",
-  "shared": "Shared",
   "host": "Host",
   "co-host": "Co-host",
   "make-co-host": "Make co-host",
