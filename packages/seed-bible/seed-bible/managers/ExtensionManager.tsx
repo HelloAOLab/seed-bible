@@ -331,8 +331,27 @@ export class ExtensionInitalizer {
   private extensionExports = new Map<string, object>();
   private initializedExtensionIds = new Set<string>();
   private extensionContext: SeedBibleState | null = null;
+  private expectedRegistrationId: string | null = null;
 
   constructor() {}
+
+  /**
+   * Runs `run` (an extension's entry point) and rejects any
+   * `registerExtension()` call it makes under an id other than `id`, before
+   * that registration can replace another extension's. Only calls made
+   * synchronously inside `run` are checked: several extensions install
+   * concurrently, so an expectation held across an `await` would be checked
+   * against whichever extension happened to run last.
+   */
+  runAsExtension<T>(id: string, run: () => T): T {
+    const previous = this.expectedRegistrationId;
+    this.expectedRegistrationId = id;
+    try {
+      return run();
+    } finally {
+      this.expectedRegistrationId = previous;
+    }
+  }
 
   isExtensionRegistered(id: string): boolean {
     return this.registeredExtensions.has(id);
@@ -370,6 +389,13 @@ export class ExtensionInitalizer {
     if (typeof extension.init !== "function") {
       throw new Error(
         "registerExtension() requires an init(context) function."
+      );
+    }
+
+    const expectedId = this.expectedRegistrationId;
+    if (expectedId !== null && extension.id !== expectedId) {
+      throw new Error(
+        `Extension '${expectedId}' tried to register as '${extension.id}'. Check the id passed to registerExtension().`
       );
     }
 
@@ -1967,8 +1993,18 @@ export function createExtensionManager(
             installStack.delete(extensionId);
             return false;
           }
-          await mod.default();
+          const initializer = ExtensionInitalizer.getInstance();
+          await initializer.runAsExtension(extensionId, () => mod.default());
+          if (!initializer.isExtensionRegistered(extensionId)) {
+            console.error(
+              `Failed to install extension '${extensionId}': it finished without registering. Its default export must call registerExtension({ id: '${extensionId}', ... }).`
+            );
+            installStack.delete(extensionId);
+            return false;
+          }
         } catch (err) {
+          // It may have registered under its own id before failing.
+          unregisterExtension(extensionId);
           installStack.delete(extensionId);
           console.error("Failed to install extension:", extensionId, err);
           return false;
