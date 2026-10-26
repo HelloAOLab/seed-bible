@@ -1,6 +1,6 @@
 {
   "name": "seed-bible-extension-scripts",
-  "version": "1.14.0",
+  "version": "1.15.0",
   "description": "Toolkit for checking, testing, building, and running Seed Bible extensions from a standalone, out-of-tree project. Installed as a devDependency by projects scaffolded with create-seed-bible-extension.",
   "type": "module",
   "license": "AGPL-3.0-only",

@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.15.0 — 2026-10-26
+
+### ✨ Added
+
 - Add third-party extensions from a link; they run sandboxed and can only use the permissions you approve when installing. ([#2035](https://github.com/HelloAOLab/seed-bible/pull/2035))
   - The install dialog groups what the extension can do into cards and names who uploaded it.
   - Extensions can ask for extra permissions later, only when they need them.
