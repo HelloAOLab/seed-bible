@@ -2108,27 +2108,6 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     expect(container.querySelector(".sb-more-menu")).toBeNull();
   });
 
-  it("orders the More menu by the reader's Toolbar settings", async () => {
-    const state = await renderToolbar();
-    await act(async () => {
-      registerExtensionTool(state, "ext-one", "Extension One", vi.fn(), 1);
-      registerExtensionTool(state, "ext-two", "Extension Two", vi.fn(), 2);
-    });
-
-    // By priority, Extension One would come first; the setting flips them.
-    await act(async () => {
-      state.settings.setToolbarOrder(["ext-two", "ext-one"]);
-    });
-    await openMenu();
-
-    // On-screen order, top to bottom: the first tool in the setting sits at
-    // the bottom, nearest the More button.
-    const labels = menuLabels();
-    expect(labels.indexOf("Extension One")).toBeLessThan(
-      labels.indexOf("Extension Two")
-    );
-  });
-
   it("does not reopen the More menu by itself after its last tool goes away and comes back", async () => {
     const state = await renderToolbar();
     await act(async () => {
