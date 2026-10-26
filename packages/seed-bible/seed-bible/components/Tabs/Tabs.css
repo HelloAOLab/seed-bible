@@ -42,7 +42,18 @@
   /* Stack the logo below the hamburger button instead of beside it — side
      by side doesn't fit the narrow collapsed rail. */
   .sb-sidebar-top-start {
+    flex: 1 1 auto;
     flex-direction: column;
+  }
+
+  /* Pin the button to where it sits in the expanded sidebar so it doesn't
+     jump when toggling: the extra top/start offset makes up the difference
+     in sidebar padding (0.875rem/1rem expanded vs 0.625rem/0.5rem here),
+     plus 0.1875rem for being centered in the expanded header's taller row. */
+  .sb-sidebar-collapse-button {
+    align-self: flex-start;
+    margin-top: 0.4375rem;
+    margin-inline-start: 0.5rem;
   }
 }
 
