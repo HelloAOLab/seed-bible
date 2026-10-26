@@ -485,6 +485,31 @@ describe("DiscoverContentPanel", () => {
     expect(container.innerHTML).toBe("");
   });
 
+  it("in the full panel, leaves out the empty notes section when the chapter has other content", () => {
+    const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={createMockState({ annotationsForChapter: [] })}
+        />,
+        container
+      );
+    });
+
+    expect(container.textContent).toContain("Exodus 5:3");
+    expect(container.textContent).not.toContain(
+      "You don't have any notes for this chapter."
+    );
+    const chipLabels = Array.from(
+      container.querySelectorAll(".sb-dcp-chip")
+    ).map((el) => el.textContent);
+    expect(chipLabels).not.toContain("Notes");
+  });
+
   it("in the full panel, offers to create a note when the chapter has nothing to show", () => {
     const tab = createMockTab();
     const state = createMockState({ annotationsForChapter: [] });
@@ -2457,6 +2482,31 @@ describe("DiscoverContentPanel", () => {
 
       expect(container.textContent).toContain("Aaron card");
       expect(container.textContent).toContain("Moses card");
+    });
+
+    it("in the full panel, points to the filters rather than the empty notes prompt when everything is behind a chip", () => {
+      const tab = createMockTab({ discoveredContent: THEOGRAPHIC_FIXTURE });
+      const state = createMockState({
+        annotationsForChapter: [],
+        contentTypes: HIDDEN_TYPES,
+      });
+
+      act(() => {
+        render(
+          <DiscoverContentPanel
+            variant="full"
+            onClose={vi.fn()}
+            tab={tab}
+            state={state}
+          />,
+          container
+        );
+      });
+
+      expect(container.textContent).toContain("Pick a filter above");
+      expect(container.textContent).not.toContain(
+        "You don't have any notes for this chapter."
+      );
     });
 
     it("explains where the content went when it is all there is", () => {

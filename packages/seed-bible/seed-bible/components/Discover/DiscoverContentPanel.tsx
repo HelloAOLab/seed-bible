@@ -401,10 +401,11 @@ function DiscoverFilters({
  *   nothing waiting to sync. Its "+ Create" button creates an annotation.
  * - `full`: the Discover side pane's main view (see DiscoverPane). The pane is
  *   opened without its own header, so this one carries the close button and
- *   always renders: without a tab it shows a hint to select one, and the notes
- *   section always shows, its "Create a note" prompt standing in as the empty
- *   state. Adds friends' playlists (with their own chip), and its "+ Create"
- *   button offers a playlist as well as an annotation.
+ *   always renders: without a tab it shows a hint to select one, and for a
+ *   chapter with nothing to show, the empty notes section's "Create a note"
+ *   prompt stands in as the empty state. Adds friends' playlists (with their
+ *   own chip), and its "+ Create" button offers a playlist as well as an
+ *   annotation.
  */
 export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const { tab, state, variant } = props;
@@ -507,11 +508,6 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     return null;
   }
 
-  // The full panel always shows the notes section: its "Create a note"
-  // prompt doubles as the panel's empty state for a chapter with nothing
-  // else to show.
-  const showNotes = variant === "full" || showAnnotations;
-
   const hasCrossReferences =
     tab.readingState.discoveredCrossReferences.value.flatMap(
       (group) => group.results
@@ -534,15 +530,25 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     (definition) => contentTypeResultsFor(tab, definition.id).length > 0
   );
 
-  const hasVisibleUnderAll =
-    hasAnnotations ||
-    variant === "full" ||
+  const hasOtherContentUnderAll =
     hasFriendPlaylists ||
     hasCrossReferences ||
     hasStudyNotes ||
     hasContent ||
     plans.length > 0 ||
     typesWithResults.some((definition) => !definition.hiddenByDefault);
+
+  // The full panel never renders empty: when the chapter has nothing else to
+  // show, not even behind a filter chip, the notes section's "Create a note"
+  // prompt stands in as its empty state.
+  const showNotesAsEmptyState =
+    variant === "full" &&
+    !hasOtherContentUnderAll &&
+    typesWithResults.length === 0;
+  const showNotes = showAnnotations || showNotesAsEmptyState;
+
+  const hasVisibleUnderAll =
+    hasAnnotations || showNotesAsEmptyState || hasOtherContentUnderAll;
 
   const filters: {
     key: FilterKey;
