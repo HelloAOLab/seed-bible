@@ -33,6 +33,7 @@
       "select-from-reader": "Select from reader…",
       "chances-label": "Chances ({{total}})",
       "start-game": "Start game",
+      "save-and-start": "Save & Start",
       "chances-start": "Start with 7. You can add more or remove down to 3. At least 3 hints are needed.",
       "hints-needed": "At least 3 hints are needed.",
       "hint-placeholder": "Hint…",

@@ -13,7 +13,8 @@ interface GameCreatorProps {
   game: GameSignals;
   state: SeedBibleState;
   onPlay: (draft: GameDraft) => void;
-  onStart: (draft: GameDraft) => Promise<void>;
+  /** Saves the draft. Resolves false when this editor is no longer current. */
+  onStart: (draft: GameDraft) => Promise<boolean>;
   onCancel: () => void;
 }
 
@@ -306,11 +307,31 @@ export function GameCreator({
     };
   }
 
-  function handlePlay() {
+  async function handlePlay() {
     const draft = readyDraft();
-    if (!draft) return;
+    if (!draft || saving.value) return;
     refError.value = "";
-    onPlay(draft);
+    // A new game can be played without an account. An edit has to be written
+    // first, or Start would leave the saved copy on the old verse and hints.
+    if (game.currentGameId.peek() === null) {
+      onPlay(draft);
+      return;
+    }
+    if (!state.login.userId.peek()) {
+      game.notice.value = t("sign-in-to-save", {
+        defaultValue: "Sign in to save games",
+      });
+      return;
+    }
+    saving.value = true;
+    try {
+      const stillEditing = await onStart(draft);
+      if (stillEditing) onPlay(draft);
+    } catch {
+      // The save already reported why it failed. Stay on the editor.
+    } finally {
+      saving.value = false;
+    }
   }
 
   function handleSave() {
@@ -325,9 +346,14 @@ export function GameCreator({
     }
     refError.value = "";
     saving.value = true;
-    void onStart(draft).finally(() => {
-      saving.value = false;
-    });
+    void onStart(draft)
+      .then((stillEditing) => {
+        if (stillEditing) onCancel();
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        saving.value = false;
+      });
   }
 
   return (
@@ -512,10 +538,18 @@ export function GameCreator({
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
         <button
           type="button"
-          style={{ ...s.btn, ...s.primaryBtn, flex: "1 1 8rem" }}
-          onClick={handlePlay}
+          style={{
+            ...s.btn,
+            ...s.primaryBtn,
+            flex: "1 1 8rem",
+            opacity: saving.value ? 0.45 : 1,
+          }}
+          disabled={saving.value}
+          onClick={() => void handlePlay()}
         >
-          {t("start-game", { defaultValue: "Start game" })}
+          {editing
+            ? t("save-and-start", { defaultValue: "Save & Start" })
+            : t("start-game", { defaultValue: "Start game" })}
         </button>
         <button
           type="button"

@@ -124,8 +124,10 @@ describe("Find the Verse", () => {
   } | null;
   let reading: Reading;
   let selectedTab: Signal<{ readingState: Reading } | null>;
+  let recordData: ReturnType<typeof vi.fn>;
 
   function install(games: SavedGame[] = [], active: Reading = reading) {
+    recordData = vi.fn(async () => ({ success: true }));
     selectedTab = signal({ readingState: active });
     const state = {
       i18n: { t: mockTranslate },
@@ -135,6 +137,7 @@ describe("Find the Verse", () => {
           success: true,
           data: { games },
         })),
+        recordData,
       },
       app: { selectedTab },
       panes: {
@@ -329,6 +332,113 @@ describe("Find the Verse", () => {
     await showPane();
     expect(container.textContent).toContain("Create a game");
     expect(container.textContent).not.toContain("End game");
+  });
+
+  function playableGame(): SavedGame {
+    const game = savedGame(
+      "one",
+      "JHN",
+      "In the beginning was the Word",
+      "alpha hint"
+    );
+    game.steps = [
+      { hint: "alpha hint" },
+      { hint: "beta hint" },
+      { hint: "gamma hint" },
+    ];
+    return game;
+  }
+
+  async function openEditor(game: SavedGame) {
+    await act(async () => {
+      install([game]);
+      await Promise.resolve();
+    });
+    await openPane();
+    const menu = container.querySelector(".sb-context-menu-button");
+    if (!(menu instanceof HTMLButtonElement)) {
+      throw new Error("No game menu");
+    }
+    await act(async () => {
+      menu.click();
+    });
+    await act(async () => {
+      const edit = [...document.body.querySelectorAll("button")].find(
+        (button) => button.textContent?.includes("Edit")
+      );
+      if (!edit) throw new Error("No Edit item");
+      edit.click();
+    });
+  }
+
+  async function flushSave() {
+    for (let i = 0; i < 8; i += 1) await Promise.resolve();
+  }
+
+  it("saves an edited game before starting it", async () => {
+    await act(async () => {
+      install([playableGame()]);
+      await Promise.resolve();
+    });
+    await openPane();
+    await act(async () => {
+      clickButton(container, "Create a game");
+    });
+    expect(container.textContent).toContain("Start game");
+    expect(container.textContent).not.toContain("Save & Start");
+
+    await act(async () => {
+      clickButton(container, "Cancel");
+    });
+    const menu = container.querySelector(".sb-context-menu-button");
+    if (!(menu instanceof HTMLButtonElement)) throw new Error("No game menu");
+    await act(async () => {
+      menu.click();
+    });
+    await act(async () => {
+      const edit = [...document.body.querySelectorAll("button")].find(
+        (button) => button.textContent?.includes("Edit")
+      );
+      if (!edit) throw new Error("No Edit item");
+      edit.click();
+    });
+    expect(container.textContent).toContain("Save & Start");
+
+    const nameInput = container.querySelector("input");
+    if (!(nameInput instanceof HTMLInputElement)) {
+      throw new Error("No name field");
+    }
+    await act(async () => {
+      nameInput.value = "Revised name";
+      nameInput.dispatchEvent(new InputEvent("input", { bubbles: true }));
+      clickButton(container, "Save & Start");
+      await flushSave();
+    });
+
+    expect(recordData).toHaveBeenCalled();
+    const stored = recordData.mock.calls[0]?.[2] as {
+      games: Array<{ id: string; name: string }>;
+    };
+    expect(stored.games[0]).toMatchObject({ id: "one", name: "Revised name" });
+    expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(false);
+    expect(document.body.textContent).toContain("End game");
+  });
+
+  it("stays on the editor when saving an edit fails", async () => {
+    await openEditor(playableGame());
+    recordData.mockResolvedValue({ success: false });
+
+    await act(async () => {
+      clickButton(container, "Save & Start");
+      await flushSave();
+    });
+
+    expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(true);
+    expect(container.textContent).toContain(
+      "Couldn't save that game. Try again."
+    );
+    expect(container.textContent).toContain("Save & Start");
+    expect(document.body.textContent).not.toContain("End game");
   });
 
   it("does not carry an open hint into the next game", async () => {

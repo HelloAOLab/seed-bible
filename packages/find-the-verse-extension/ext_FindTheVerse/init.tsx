@@ -152,20 +152,17 @@ function GamePane({
           const epoch = game.draftEpoch.peek();
           game.notice.value = null;
           return onSaveGame(saved).then(
-            () => {
-              if (game.draftEpoch.peek() !== epoch) return;
-              resetDraft(game);
-              game.phase.value = "idle";
-            },
+            () => game.draftEpoch.peek() === epoch,
             (error: unknown) => {
               game.notice.value = noticeFor(error, "save");
+              throw error;
             }
           );
         }}
         onPlay={(draft) => {
           beginRound(
             game,
-            { id: null, ...draft },
+            { id: game.currentGameId.peek(), ...draft },
             state.app.selectedTab.value?.readingState
           );
           state.panes.closePane(PANE_ID);
