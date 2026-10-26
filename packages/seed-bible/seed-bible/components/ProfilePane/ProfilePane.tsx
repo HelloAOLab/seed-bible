@@ -451,7 +451,7 @@ export function ProfilePane(props: ProfileScreenProps) {
     try {
       const user = await login.login();
 
-      if (user) {
+      if (user && state.isProfileOpen.peek()) {
         state.restoreProfileReturnTarget();
       }
     } catch (error) {

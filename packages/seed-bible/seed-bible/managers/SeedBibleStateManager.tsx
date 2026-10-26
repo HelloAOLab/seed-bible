@@ -656,7 +656,7 @@ export interface SeedBibleState {
   /** True when the Profile screen is showing. */
   isProfileOpen: ReadonlySignal<boolean>;
   /** Opens the Profile screen (reflected in the URL as `?profile=open`). */
-  openProfile: () => void;
+  openProfile: (options?: { fromToday?: boolean }) => void;
   /** Closes the Profile screen (clears `profile` from the URL). */
   closeProfile: () => void;
   /** Restores the screen the user was viewing before opening the profile after a successful sign-in. */
@@ -1186,29 +1186,24 @@ export function createSeedBibleState(
       : navigation.currentUrl.value.searchParams.get("profile") === "open"
   );
   const isProfileOpen = computed(() => profileOpen.value);
-  type ProfileReturnTarget = "today" | "reader";
-  let profileReturnTarget: ProfileReturnTarget | null = null;
+  let returnToToday = false;
   const restoreProfileReturnTarget = () => {
-    const target = profileReturnTarget;
-    closeProfile();
-    profileReturnTarget = "reader";
-    if (target === "today") {
+    const shouldReturnToToday = returnToToday;
+    returnToToday = false;
+
+    profileOpen.value = false;
+
+    if (shouldReturnToToday) {
       today.open();
     }
   };
-  const openProfile = () => {
-    // Remember which screen to return to after a successful sign-in.
-    // Today must be closed before opening the profile because its URL binding
-    // can otherwise reopen the Today pane and immediately close the profile.
-    // If Today isn't open, keep the reader as the return target. When the
-    // profile is opened directly via `?profile=open`, default to the reader.
-    if (today.isOpen.peek()) {
-      profileReturnTarget = "today";
-      today.close();
-    } else if (!profileOpen.peek()) {
-      profileReturnTarget = "reader";
+  const openProfile = (options?: { fromToday?: boolean }) => {
+    if (!profileOpen.value || options?.fromToday !== undefined) {
+      returnToToday = options?.fromToday ?? today.isOpen.peek();
     }
-
+    if (today.isOpen.peek()) {
+      today.close();
+    }
     profileOpen.value = true;
   };
   const closeProfile = () => {
