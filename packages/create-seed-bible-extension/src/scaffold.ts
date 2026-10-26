@@ -12,38 +12,16 @@ import {
 const here = path.dirname(fileURLToPath(import.meta.url));
 const templateRoot = path.join(here, "..", "templates", "extension");
 
-/** Reads the installed `seed-bible-extension-scripts` version to pin in the scaffolded package.json, falling back to "*" if it can't be determined (e.g. not yet published). */
-async function resolveScriptsVersion(): Promise<string> {
-  const sibling = path.join(
-    here,
-    "..",
-    "..",
-    "seed-bible-extension-scripts",
-    "package.json"
-  );
-  if (existsSync(sibling)) {
-    const pkg = JSON.parse(await readFile(sibling, "utf-8")) as {
-      version?: string;
-    };
-    if (pkg.version) {
-      return `^${pkg.version}`;
-    }
-  }
-  return "*";
-}
-
-/** Reads the installed `seed-bible` version to pin in the scaffolded package.json, falling back to "*" if it can't be determined (e.g. not yet published). */
-async function resolveSeedBibleVersion(): Promise<string> {
-  const sibling = path.join(here, "..", "..", "seed-bible", "package.json");
-  if (existsSync(sibling)) {
-    const pkg = JSON.parse(await readFile(sibling, "utf-8")) as {
-      version?: string;
-    };
-    if (pkg.version) {
-      return `^${pkg.version}`;
-    }
-  }
-  return "*";
+/**
+ * The version range to give the scaffolded project for `seed-bible` and
+ * `seed-bible-extension-scripts`. All three packages are released together
+ * under one version, so this package's own version is the one that matches.
+ */
+async function resolvePackageVersion(): Promise<string> {
+  const pkg = JSON.parse(
+    await readFile(path.join(here, "..", "package.json"), "utf-8")
+  ) as { version?: string };
+  return pkg.version ? `^${pkg.version}` : "*";
 }
 
 async function walkTemplateFiles(dir: string): Promise<string[]> {
@@ -78,12 +56,13 @@ export async function scaffoldExtension(
   }
 
   const extensionId = toExtensionId(options.name);
+  const version = await resolvePackageVersion();
   const ctx: TemplateContext = {
     extensionId,
     packageName: extensionId,
     extensionPascalName: toPascalCase(extensionId),
-    scriptsVersion: await resolveScriptsVersion(),
-    seedBibleVersion: await resolveSeedBibleVersion(),
+    scriptsVersion: version,
+    seedBibleVersion: version,
   };
 
   await mkdir(targetDir, { recursive: true });

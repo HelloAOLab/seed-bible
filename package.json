@@ -26,6 +26,7 @@
     "pattern": "tsx script/pattern.ts",
     "notify": "tsx script/notify.ts",
     "release:prepare": "tsx script/release.ts prepare",
+    "npm:publish": "node --import tsx script/npm-publish.ts",
     "changelog:extract": "tsx script/changelog.ts extract",
     "build-size-report": "tsx script/build-size-report.ts",
     "coverage-summary": "tsx script/coverage-summary.ts",
