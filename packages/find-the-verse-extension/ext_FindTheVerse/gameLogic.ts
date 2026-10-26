@@ -219,6 +219,14 @@ export function versesOutOfRange(
   );
 }
 
+/** How many chances have a hint the player can open. */
+export function countFilledHints(steps: readonly { hint: string }[]): number {
+  return steps.reduce(
+    (count, step) => count + (step.hint.trim().length > 0 ? 1 : 0),
+    0
+  );
+}
+
 const GREY =
   "color-mix(in srgb, var(--sb-font-color) 42%, var(--sb-book-selector-background, var(--sb-background, transparent)))";
 

@@ -5,6 +5,8 @@ import { extractContentText, parseVerseReference } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
 import { formatReference, isKnownBookId } from "./books";
 import { FormField } from "./FormField";
+import { countFilledHints } from "./gameLogic";
+import { MIN_HINTS } from "./gameSession";
 import type { GameDraft, GameSignals } from "./types";
 
 interface GameCreatorProps {
@@ -248,8 +250,9 @@ export function GameCreator({
   }
 
   function removeStep(index: number) {
-    const updated = game.steps.peek().filter((_, i) => i !== index);
-    game.steps.value = updated;
+    const current = game.steps.peek();
+    if (current.length <= MIN_HINTS) return;
+    game.steps.value = current.filter((_, i) => i !== index);
   }
 
   const nameMissing = gameName.trim().length === 0;
@@ -262,16 +265,22 @@ export function GameCreator({
         defaultValue: "Pick the secret verse before saving.",
       });
 
-  // One field at a time. A name missed on Save or Start wins, then the verse.
-  // Fixing the current one lets the next message take its place.
-  let activeError: "name" | "verse" | null = null;
+  const hintsShort = countFilledHints(steps) < MIN_HINTS;
+  const hintErrorMessage = t("hints-needed", {
+    defaultValue: "At least 3 hints are needed.",
+  });
+
+  // One field at a time. A name missed on Save or Start wins, then the verse,
+  // then too few hints. Fixing the current one lets the next message take its place.
+  let activeError: "name" | "verse" | "chances" | null = null;
   if (saveAttempted.value && nameMissing) activeError = "name";
   else if (refError.value || (saveAttempted.value && target === null)) {
     activeError = "verse";
-  }
+  } else if (saveAttempted.value && hintsShort) activeError = "chances";
 
   const nameError = activeError === "name" ? nameErrorMessage : null;
   const verseError = activeError === "verse" ? verseErrorMessage : null;
+  const chanceError = activeError === "chances" ? hintErrorMessage : null;
 
   function rejectSave() {
     saveAttempted.value = true;
@@ -281,7 +290,12 @@ export function GameCreator({
   function readyDraft(): GameDraft | null {
     const verse = game.targetVerse.peek();
     const name = game.name.peek().trim();
-    if (!name || !verse || game.steps.peek().length < 1) {
+    if (
+      !name ||
+      !verse ||
+      game.steps.peek().length < MIN_HINTS ||
+      countFilledHints(game.steps.peek()) < MIN_HINTS
+    ) {
       rejectSave();
       return null;
     }
@@ -434,7 +448,7 @@ export function GameCreator({
         )}
       </FormField>
 
-      <FormField error={null} pulse={errorPulse.value}>
+      <FormField error={chanceError} pulse={errorPulse.value}>
         <div style={s.label}>
           {t("chances-label", {
             total: steps.length,
@@ -444,7 +458,7 @@ export function GameCreator({
         <p style={{ margin: "0 0 8px", opacity: 0.6, fontSize: "0.85rem" }}>
           {t("chances-start", {
             defaultValue:
-              "Start with 7. Add or remove any. A hint for each chance is optional.",
+              "Start with 7. You can add more or remove down to 3. At least 3 hints are needed.",
           })}
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -453,12 +467,12 @@ export function GameCreator({
               <span style={s.stepNum}>#{i + 1}</span>
               <GrowingHint
                 placeholder={t("hint-placeholder", {
-                  defaultValue: "Optional hint…",
+                  defaultValue: "Hint…",
                 })}
                 value={step.hint}
                 onChange={(hint) => handleStepHintChange(i, hint)}
               />
-              {steps.length > 1 && (
+              {steps.length > MIN_HINTS && (
                 <button
                   type="button"
                   style={s.removeBtn}

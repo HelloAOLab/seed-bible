@@ -1,8 +1,11 @@
 import { openSearchWindow } from "./gameLogic";
 import type { GameSignals, GameStep, TargetVerse } from "./types";
 
-/** A starting suggestion. Creators can remove rows or add more before saving. */
+/** A starting suggestion. Creators can remove rows down to {@link MIN_HINTS}. */
 export const SUGGESTED_CHANCES = 7;
+
+/** A game cannot start or be saved with fewer filled hints than this. */
+export const MIN_HINTS = 3;
 
 export function blankSteps(): GameStep[] {
   return Array.from({ length: SUGGESTED_CHANCES }, () => ({ hint: "" }));

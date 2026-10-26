@@ -12,6 +12,7 @@ interface SavedGamesListProps {
   state: SeedBibleState;
   onDelete: (id: string) => Promise<void>;
   onEdit: (saved: SavedGame) => void;
+  onRoundStarted: () => void;
 }
 
 const s = {
@@ -230,6 +231,7 @@ export function SavedGamesList({
   state,
   onDelete,
   onEdit,
+  onRoundStarted,
 }: SavedGamesListProps) {
   const { t } = useI18n("find-the-verse-extension");
   const confirmingId = useSignal<string | null>(null);
@@ -246,6 +248,7 @@ export function SavedGamesList({
       },
       state.app.selectedTab.value?.readingState
     );
+    onRoundStarted();
   }
 
   const translationBooks =

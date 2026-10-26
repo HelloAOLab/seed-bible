@@ -137,6 +137,7 @@ function GamePane({
             });
           }}
           onEdit={onEditGame}
+          onRoundStarted={() => state.panes.closePane(PANE_ID)}
         />
       </div>
     );
@@ -167,6 +168,7 @@ function GamePane({
             { id: null, ...draft },
             state.app.selectedTab.value?.readingState
           );
+          state.panes.closePane(PANE_ID);
         }}
         onCancel={() => {
           resetDraft(game);
@@ -285,6 +287,15 @@ export default function initFindTheVerseExtension() {
           ),
         });
       }
+
+      // On a phone the panel covers the reader. A win puts it back so the
+      // verse, confetti, and the rest of the win screen are on screen.
+      const disposeWinPane = effect(() => {
+        if (!game.won.value || game.phase.value !== "playing") return;
+        if (typeof window.matchMedia !== "function") return;
+        if (!window.matchMedia("(max-width: 480px)").matches) return;
+        openGamePane();
+      });
 
       // Open / re-open the pane when the toolbar button is clicked.
       // Closing it does not end a round: on a phone the pane covers the
@@ -410,6 +421,7 @@ export default function initFindTheVerseExtension() {
 
       yield disposeLoadEffect;
       yield disposeGuessEffect;
+      yield disposeWinPane;
       yield watchSearchRange(state, game);
       yield () => {
         state.panes.closePane(PANE_ID);
@@ -422,7 +434,10 @@ export default function initFindTheVerseExtension() {
             game={game}
             state={state}
             paneId={PANE_ID}
-            onEnd={() => resetPlay(game)}
+            onEnd={() => {
+              resetPlay(game);
+              openGamePane();
+            }}
             onCancelSelect={() => {
               game.selectingViaToolbar.value = false;
               openGamePane();

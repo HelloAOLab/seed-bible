@@ -271,6 +271,66 @@ describe("Find the Verse", () => {
     expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(false);
   });
 
+  it("hides the reader bar while the More menu is open, then brings it back", async () => {
+    const wrap = document.createElement("div");
+    wrap.className = "sb-reader-toolbar-wrap";
+    document.body.appendChild(wrap);
+    const games = [
+      savedGame("one", "JHN", "In the beginning was the Word", "alpha hint"),
+    ];
+    try {
+      await act(async () => {
+        install(games);
+        await Promise.resolve();
+      });
+      await openPane();
+      await act(async () => {
+        clickButton(container, "Play", 0);
+      });
+      await closePane();
+      expect(document.body.textContent).toContain("End game");
+
+      const menu = document.createElement("div");
+      menu.className = "sb-mobile-more-menu";
+      await act(async () => {
+        wrap.appendChild(menu);
+      });
+      expect(document.body.textContent).not.toContain("End game");
+
+      await act(async () => {
+        menu.remove();
+      });
+      expect(document.body.textContent).toContain("End game");
+    } finally {
+      wrap.remove();
+    }
+  });
+
+  it("returns to the game panel when End game is tapped on the reader bar", async () => {
+    const games = [
+      savedGame("one", "JHN", "In the beginning was the Word", "alpha hint"),
+    ];
+    await act(async () => {
+      install(games);
+      await Promise.resolve();
+    });
+    await openPane();
+    await act(async () => {
+      clickButton(container, "Play", 0);
+    });
+    await closePane();
+    expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(false);
+
+    await act(async () => {
+      clickButton(document.body, "End game");
+    });
+
+    expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(true);
+    await showPane();
+    expect(container.textContent).toContain("Create a game");
+    expect(container.textContent).not.toContain("End game");
+  });
+
   it("does not carry an open hint into the next game", async () => {
     const games = [
       savedGame("one", "JHN", "In the beginning was the Word", "alpha hint"),

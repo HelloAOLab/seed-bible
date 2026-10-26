@@ -10,6 +10,7 @@ import {
   buildPartialReveal,
   chapterOutOfRange,
   evaluateGuess,
+  countFilledHints,
   openSearchWindow,
   PlayGuesses,
   revealThreshold,
@@ -277,6 +278,19 @@ describe("search window", () => {
     expect(
       tightenWindow(narrowed, behind, evaluateGuess(target, behind)).after
     ).toEqual(narrowed.after);
+  });
+});
+
+describe("countFilledHints", () => {
+  it("counts only chances that have a hint", () => {
+    expect(
+      countFilledHints([
+        { hint: "a" },
+        { hint: "  " },
+        { hint: "b" },
+        { hint: "" },
+      ])
+    ).toBe(2);
   });
 });
 
