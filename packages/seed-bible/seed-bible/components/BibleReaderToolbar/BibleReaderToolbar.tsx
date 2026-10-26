@@ -5,7 +5,6 @@ import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import {
-  applyToolbarCustomization,
   MAX_CUSTOM_HIGHLIGHT_COLORS,
   UI_SIZE_SCALE_MAP,
 } from "../../managers/SettingsManager";
@@ -87,24 +86,23 @@ function readChatFirstFlag(url: URL): boolean {
 
 /**
  * When chat-first is on, force Chat into the labeled (desktop/laptop) toolbar
- * even if it was hidden by visibility rules or toolbar customization, and park
+ * even if it was hidden by visibility rules, and park
  * it just after the non-controllable reading nav cluster so it reads as a
  * primary action without displacing chapter navigation.
  */
 function applyChatFirstDesktopTools(
-  resolved: BibleReaderToolbarTool[],
-  customized: BibleReaderToolbarTool[]
+  resolved: BibleReaderToolbarTool[]
 ): BibleReaderToolbarTool[] {
   const chatTool = resolved.find((tool) => tool.id === "open-chat");
   if (!chatTool) {
-    return customized;
+    return resolved;
   }
 
   const promoted: BibleReaderToolbarTool = {
     ...chatTool,
     visible: CHAT_FIRST_VISIBLE,
   };
-  const withoutChat = customized.filter((tool) => tool.id !== "open-chat");
+  const withoutChat = resolved.filter((tool) => tool.id !== "open-chat");
   const firstControllable = withoutChat.findIndex(
     (tool) => tool.isControllable
   );
@@ -1006,14 +1004,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       navigation: props.state.navigation,
       data: props.state.bibleData,
     });
-    const customized = applyToolbarCustomization(
-      resolved,
-      settings.settings.value.toolbar
-    );
     if (!isChatFirst) {
-      return customized;
+      return resolved;
     }
-    return applyChatFirstDesktopTools(resolved, customized);
+    return applyChatFirstDesktopTools(resolved);
   });
 
   const unreadChatIndicator = useComputed(() => {
