@@ -185,7 +185,8 @@ export function readQueryReadingParams(url: URL): QueryReadingParams {
     url.searchParams.has("translationId") ||
     url.searchParams.has("translation") ||
     url.searchParams.has("book") ||
-    url.searchParams.has("chapter");
+    url.searchParams.has("chapter") ||
+    url.searchParams.has("lang");
 
   return { translationId, bookId, chapter, specified };
 }

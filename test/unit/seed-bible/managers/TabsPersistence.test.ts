@@ -66,6 +66,16 @@ describe("readQueryReadingParams", () => {
     expect(params.specified).toBe(true);
   });
 
+  it("flags a lone ?lang= as specified without naming a translation", () => {
+    const params = readQueryReadingParams(new URL("https://x.test/?lang=es"));
+    expect(params).toEqual({
+      translationId: null,
+      bookId: null,
+      chapter: null,
+      specified: true,
+    });
+  });
+
   it("treats an invalid chapter as absent but still specified", () => {
     const params = readQueryReadingParams(
       new URL("https://x.test/?book=JHN&chapter=0")

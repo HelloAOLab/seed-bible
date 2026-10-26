@@ -757,6 +757,57 @@ describe("createTabs", () => {
     expect(readingState.chapterNumber.value).toBe(2);
   });
 
+  it("switches restored tabs to the ?lang= language's default translation", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/?lang=es");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "EXO",
+            chapterNumber: 2,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "single",
+        slotTabIds: ["tab-1"],
+        selectedSlotIndex: 0,
+      })
+    );
+    const spanishBooks = {
+      ...aabBooks,
+      translation: {
+        ...aabBooks.translation,
+        id: "spa_onbv",
+        language: "spa",
+      },
+    };
+    setWebResponses({
+      ...createExampleManagerResponseMap(),
+      [makeExampleUrl("/api/spa_onbv/books.json")]:
+        createResponse(spanishBooks),
+      [makeExampleUrl("/api/spa_onbv/GEN/1.json")]: createResponse(
+        makeChapter(spanishBooks, "GEN", 1)
+      ),
+    });
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    manager.hydrateStoredTabs();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(manager.tabs.value).toHaveLength(1);
+    const readingState = manager.tabs.value[0]!.readingState;
+    expect(readingState.translationId.value).toBe("spa_onbv");
+    expect(readingState.bookId.value).toBe("GEN");
+    expect(readingState.chapterNumber.value).toBe(1);
+  });
+
   it("seeds only the URL-derived tab at construction, even with several tabs stored", async () => {
     window.localStorage.clear();
     window.history.replaceState(null, "", "/en/AAB/genesis/1");
