@@ -114,6 +114,33 @@ function getExtensionEnglishKeys(
     extensionEnglishKeys.set(id, englishKeys);
   }
 
+  // A shared package (no `extension.json`) loads its own strings from a
+  // `translations.json`, under its folder name as the namespace.
+  for (const pkg of fs.existsSync(packagesDir)
+    ? fs.readdirSync(packagesDir, { withFileTypes: true })
+    : []) {
+    const translationsPath = path.join(
+      packagesDir,
+      pkg.name,
+      "translations.json"
+    );
+    if (
+      pkg.isDirectory() &&
+      !fs.existsSync(path.join(packagesDir, pkg.name, "extension.json")) &&
+      fs.existsSync(translationsPath)
+    ) {
+      const translations = parseJsonFile(translationsPath) as {
+        en?: Record<string, unknown>;
+      };
+      if (translations.en) {
+        extensionEnglishKeys.set(
+          pkg.name,
+          flattenTranslationKeys(translations.en)
+        );
+      }
+    }
+  }
+
   return extensionEnglishKeys;
 }
 

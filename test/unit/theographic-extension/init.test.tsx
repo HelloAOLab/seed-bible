@@ -1,7 +1,6 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import {
-  registerExtension,
   setupExtensionContext,
   unregisterExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
@@ -20,23 +19,9 @@ function createContext() {
   return { context, discover };
 }
 
-/** Stands in for the locations extension, which Theographic depends on. */
-function registerLocations() {
-  registerExtension({
-    id: "ext_locations",
-    init: () => ({
-      findLocation: () => null,
-      getPlaceGeoJsonUrl: () => "",
-    }),
-  });
-}
-
-function install(options: { withLocations?: boolean } = {}) {
+function install() {
   const { context, discover } = createContext();
   setupExtensionContext(context);
-  if (options.withLocations ?? true) {
-    registerLocations();
-  }
   initTheographicExtension();
   return discover;
 }
@@ -44,14 +29,10 @@ function install(options: { withLocations?: boolean } = {}) {
 describe("initTheographicExtension", () => {
   afterEach(() => {
     unregisterExtension("theographic-extension");
-    unregisterExtension("ext_locations");
   });
 
-  it("waits for the locations extension before installing", () => {
-    const discover = install({ withLocations: false });
-    expect(discover.providers.value).toEqual([]);
-
-    registerLocations();
+  it("installs without the locations extension", () => {
+    const discover = install();
 
     expect(discover.providers.value.map((provider) => provider.id)).toEqual([
       "theographic",

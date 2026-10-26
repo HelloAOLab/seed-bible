@@ -3,7 +3,7 @@ import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { CreateTwitchPubState } from "./twitchPubManager";
 import initializeTwitchBot from "./initializeTwitchBot";
-import { createTranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
+import { createTranscriptionManager } from "@seed-bible/transcription/transcriptionManager";
 import App from "./App";
 import TwitchHeader from "./header";
 
