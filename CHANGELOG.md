@@ -38,6 +38,7 @@
 - Open the Profile screen from Settings > Account instead of an account form in the sidebar. ([#2056](https://github.com/HelloAOLab/seed-bible/pull/2056))
 - Show your name and description above your email and location on the profile card. ([#2043](https://github.com/HelloAOLab/seed-bible/pull/2043))
 - Find your customizations under Branding in Your content instead of on their own Settings page, and create one from Create > Custom Branding. ([#2063](https://github.com/HelloAOLab/seed-bible/pull/2063))
+- The sidebar now looks more streamlined and is less distracting when collapsed. ([#2061](https://github.com/HelloAOLab/seed-bible/pull/2061))
 
 ### 🐛 Fixed
 
