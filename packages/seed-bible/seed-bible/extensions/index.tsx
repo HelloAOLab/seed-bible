@@ -17,6 +17,16 @@ import {
   type SandboxDiscoverRequest,
   type SandboxDiscoverResult,
   type SandboxErrorCode,
+  type SandboxBook,
+  type SandboxChapter,
+  type SandboxCommentary,
+  type SandboxCommentaryBook,
+  type SandboxCommentaryChapter,
+  type SandboxCommentaryProfile,
+  type SandboxDataset,
+  type SandboxDatasetBook,
+  type SandboxDatasetChapter,
+  type SandboxTranslation,
   type SandboxHighlight,
   type SandboxHostRequestKind,
   type SandboxNote,
@@ -46,6 +56,20 @@ import {
 } from "./protocol";
 
 export type {
+  SandboxBook,
+  SandboxChapter,
+  SandboxChapterContent,
+  SandboxChapterRef,
+  SandboxCommentary,
+  SandboxCommentaryBook,
+  SandboxCommentaryChapter,
+  SandboxCommentaryProfile,
+  SandboxDataset,
+  SandboxDatasetBook,
+  SandboxDatasetChapter,
+  SandboxDatasetReference,
+  SandboxFootnote,
+  SandboxTranslation,
   SandboxChatMessage,
   SandboxChatRequest,
   SandboxDiscoverRequest,
@@ -393,14 +417,31 @@ export interface SandboxContext {
    * participant's `id` is that person's `identity` in this extension.
    */
   identity: ReadonlySignal<string | null>;
-  /** Public Bible text. Needs no permission. */
+  /**
+   * Public Bible text, commentaries and datasets from the
+   * [Free Use Bible API](https://bible.helloao.org). Needs no permission.
+   *
+   * Translations the user has downloaded are read from their device, so
+   * with no connection `translations`, `books` and `chapter` still answer
+   * for those. Commentaries and datasets always need a connection. A call
+   * that can't be answered rejects with `unavailable`.
+   */
   bible: {
     /**
-     * Each verse of a chapter as plain text (no section headings). Rejects
-     * with `unavailable` if the translation or chapter can't be loaded.
+     * Every translation the user can pick from. Offline, the ones the app
+     * already knows about, with `downloaded` marking those that can be read.
+     */
+    translations: () => Promise<SandboxTranslation[]>;
+    /** A translation's books, in its order. */
+    books: (ref: {
+      translationId: string;
+    }) => Promise<{ translation: SandboxTranslation; books: SandboxBook[] }>;
+    /**
+     * A chapter: each verse as plain text in `verses`, and headings, breaks
+     * and footnotes in `content` and `footnotes` for laying it out.
      *
      * @example
-     * const { verses } = await sb.bible.chapter({
+     * const { verses, next } = await sb.bible.chapter({
      *   translationId: "BSB",
      *   bookId: "JHN",
      *   chapter: 3,
@@ -410,7 +451,50 @@ export interface SandboxContext {
       translationId: string;
       bookId: string;
       chapter: number;
-    }) => Promise<{ verses: { number: number; text: string }[] }>;
+    }) => Promise<SandboxChapter>;
+    /** Every commentary available. */
+    commentaries: () => Promise<SandboxCommentary[]>;
+    /** The books a commentary covers. */
+    commentaryBooks: (ref: { commentaryId: string }) => Promise<{
+      commentary: SandboxCommentary;
+      books: SandboxCommentaryBook[];
+    }>;
+    /** A commentary's notes on a chapter. */
+    commentaryChapter: (ref: {
+      commentaryId: string;
+      bookId: string;
+      chapter: number;
+    }) => Promise<SandboxCommentaryChapter>;
+    /** A commentary's articles about people, places and topics. */
+    commentaryProfiles: (ref: {
+      commentaryId: string;
+    }) => Promise<SandboxCommentaryProfile[]>;
+    /** One of those articles, as paragraphs of plain text. */
+    commentaryProfile: (ref: {
+      commentaryId: string;
+      profileId: string;
+    }) => Promise<SandboxCommentaryProfile & { content: string[] }>;
+    /** Every dataset available, such as cross-references. */
+    datasets: () => Promise<SandboxDataset[]>;
+    /** The books a dataset covers. */
+    datasetBooks: (ref: {
+      datasetId: string;
+    }) => Promise<{ dataset: SandboxDataset; books: SandboxDatasetBook[] }>;
+    /**
+     * A dataset's entries for a chapter.
+     *
+     * @example
+     * const { verses } = await sb.bible.datasetChapter({
+     *   datasetId: "open-cross-ref",
+     *   bookId: "JHN",
+     *   chapter: 3,
+     * });
+     */
+    datasetChapter: (ref: {
+      datasetId: string;
+      bookId: string;
+      chapter: number;
+    }) => Promise<SandboxDatasetChapter>;
   };
   /** Reading needs `highlights:read`; adding and removing, `highlights:write`. */
   highlights: {
@@ -1120,7 +1204,17 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     },
     identity,
     bible: {
+      translations: () => call("bible.translations", {}),
+      books: (ref) => call("bible.books", ref),
       chapter: (ref) => call("bible.chapter", ref),
+      commentaries: () => call("bible.commentaries", {}),
+      commentaryBooks: (ref) => call("bible.commentaryBooks", ref),
+      commentaryChapter: (ref) => call("bible.commentaryChapter", ref),
+      commentaryProfiles: (ref) => call("bible.commentaryProfiles", ref),
+      commentaryProfile: (ref) => call("bible.commentaryProfile", ref),
+      datasets: () => call("bible.datasets", {}),
+      datasetBooks: (ref) => call("bible.datasetBooks", ref),
+      datasetChapter: (ref) => call("bible.datasetChapter", ref),
     },
     highlights: {
       colors: () => call("highlights.colors", {}),

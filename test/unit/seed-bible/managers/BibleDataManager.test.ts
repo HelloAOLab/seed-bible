@@ -299,6 +299,78 @@ describe("createBibleDataManager", () => {
     );
   });
 
+  describe("getTranslationCatalog()", () => {
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    it("returns the fetched catalog", async () => {
+      setWebResponses({
+        [makeEndpointUrl(
+          EXAMPLE_API_ENDPOINT,
+          "api/available_translations.json"
+        )]: createResponse(translations),
+      });
+      const manager = createManager();
+
+      expect((await manager.getTranslationCatalog()).map((t) => t.id)).toEqual([
+        "AAB",
+        "NIV",
+      ]);
+    });
+
+    it("falls back to the previous visit's catalog when the fetch fails", async () => {
+      localStorage.setItem(
+        "availableTranslations",
+        JSON.stringify(translations.translations)
+      );
+      webGetMock.mockRejectedValue(new TypeError("Failed to fetch"));
+      const manager = createManager();
+      manager.hydrateCachedCatalog();
+
+      expect((await manager.getTranslationCatalog()).map((t) => t.id)).toEqual([
+        "AAB",
+        "NIV",
+      ]);
+    });
+
+    it("rejects when the fetch fails and nothing is known", async () => {
+      webGetMock.mockRejectedValue(new TypeError("Failed to fetch"));
+      const manager = createManager();
+
+      await expect(manager.getTranslationCatalog()).rejects.toThrow(
+        "Failed to fetch"
+      );
+    });
+  });
+
+  it("reads commentaries and datasets from the default endpoint", async () => {
+    setWebResponses({
+      [makeEndpointUrl(
+        EXAMPLE_API_ENDPOINT,
+        "api/available_commentaries.json"
+      )]: createResponse({ commentaries: [{ id: "adam-clarke" }] }),
+      [makeEndpointUrl(EXAMPLE_API_ENDPOINT, "api/available_datasets.json")]:
+        createResponse({ datasets: [{ id: "open-cross-ref" }] }),
+      [makeEndpointUrl(
+        EXAMPLE_API_ENDPOINT,
+        "api/d/open-cross-ref/JHN/3.json"
+      )]: createResponse({ chapter: { number: 3, content: [] } }),
+    });
+    const manager = createManager();
+
+    expect((await manager.getCommentaries()).map((c) => c.id)).toEqual([
+      "adam-clarke",
+    ]);
+    expect((await manager.getDatasets()).map((d) => d.id)).toEqual([
+      "open-cross-ref",
+    ]);
+    expect(
+      (await manager.getDatasetBookChapter("open-cross-ref", "JHN", 3)).chapter
+        .number
+    ).toBe(3);
+  });
+
   describe("translationsCache option", () => {
     function createTestCache(): TranslationsCache {
       const store = new Map<string, Promise<Translation[]>>();

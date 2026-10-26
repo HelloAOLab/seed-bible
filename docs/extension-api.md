@@ -397,16 +397,58 @@ reading: {
 
 ### `sb.bible`
 
-Public Bible text. No permission needed.
+Public Bible text, commentaries and datasets from the [Free Use Bible API](https://bible.helloao.org). No permission needed.
 
 ```ts
 bible: {
+  // Translations
+  translations(): Promise<SandboxTranslation[]>;
+  books(ref: { translationId: string }):
+    Promise<{ translation: SandboxTranslation; books: SandboxBook[] }>;
   chapter(ref: { translationId: string; bookId: string; chapter: number }):
-    Promise<{ verses: { number: number; text: string }[] }>;
+    Promise<SandboxChapter>;
+
+  // Commentaries
+  commentaries(): Promise<SandboxCommentary[]>;
+  commentaryBooks(ref: { commentaryId: string }):
+    Promise<{ commentary: SandboxCommentary; books: SandboxCommentaryBook[] }>;
+  commentaryChapter(ref: { commentaryId: string; bookId: string; chapter: number }):
+    Promise<SandboxCommentaryChapter>;
+  commentaryProfiles(ref: { commentaryId: string }): Promise<SandboxCommentaryProfile[]>;
+  commentaryProfile(ref: { commentaryId: string; profileId: string }):
+    Promise<SandboxCommentaryProfile & { content: string[] }>;
+
+  // Datasets, such as cross-references
+  datasets(): Promise<SandboxDataset[]>;
+  datasetBooks(ref: { datasetId: string }):
+    Promise<{ dataset: SandboxDataset; books: SandboxDatasetBook[] }>;
+  datasetChapter(ref: { datasetId: string; bookId: string; chapter: number }):
+    Promise<SandboxDatasetChapter>;
 };
 ```
 
-Returns each verse of the chapter as plain text. Only verses are included, not section headings. Rejects with `unavailable` if the chapter can't be loaded (an unknown translation, or a book that translation doesn't have).
+**Translations.** `translations()` lists every translation the user can pick from. `books()` lists a translation's books in its own order, and `chapter()` loads one chapter:
+
+- `verses` is each verse as plain text, without headings. Use it when you only need the words.
+- `content` is the chapter in reading order: `heading`, `lineBreak` (a paragraph or stanza break), `hebrewSubtitle` (a psalm's superscription) and `verse` pieces. Use it to lay the chapter out. Each verse lists the ids of its `footnotes`.
+- `next` and `previous` are the chapters either side, crossing into the next or previous book (`{ bookId: "EXO", chapter: 1 }` after Genesis 50). They're null at either end of the Bible.
+
+```ts
+const { books } = await sb.bible.books({ translationId: "BSB" });
+const ref = { bookId: books[0].id, chapter: books[0].firstChapterNumber };
+const chapter = await sb.bible.chapter({ translationId: "BSB", ...ref });
+// Read on: chapter.next is where the next call goes.
+```
+
+**Offline.** Translations the user has downloaded are read from their device, so with no connection:
+
+- `translations()` still answers, with the translations the app already knows about. Each has `downloaded: true` if it can be read now.
+- `books()` and `chapter()` work for downloaded translations, and reject with `unavailable` for anything else.
+- Commentaries and datasets can't be downloaded, so those calls reject with `unavailable` (unless the same thing was already loaded this session).
+
+**Commentaries** have notes on chapters and verses (`commentaryChapter`), and some have articles about people, places and topics (`commentaryProfiles`, then `commentaryProfile` for one article's paragraphs). **Datasets** are verse-level data; `open-cross-ref` is cross-references. `datasetChapter` lists each verse that has entries, with the passages it points to (each with a relevance `score` when the dataset has one).
+
+Every call rejects with `unavailable` if what it asks for can't be loaded: offline, or an id or chapter that doesn't exist. Ids that can't be ids (`"../x"`) are refused with `invalid_request` before anything is fetched.
 
 ### `sb.history`
 
@@ -751,6 +793,149 @@ interface SandboxPlayback {
 }
 ```
 
+The `sb.bible` types:
+
+```ts
+interface SandboxTranslation {
+  id: string; // "BSB"
+  name: string; // In its own language
+  englishName: string;
+  shortName: string;
+  language: string; // ISO 639-3, like "eng"
+  languageName: string | null;
+  languageEnglishName: string | null;
+  textDirection: "ltr" | "rtl";
+  website: string;
+  licenseUrl: string;
+  licenseNotice: string | null; // Show it with the text when it's set
+  numberOfBooks: number;
+  totalNumberOfChapters: number;
+  totalNumberOfVerses: number;
+  downloaded: boolean; // Readable with no connection
+}
+
+interface SandboxBook {
+  id: string; // "JHN"
+  name: string;
+  commonName: string;
+  title: string | null;
+  order: number;
+  numberOfChapters: number;
+  firstChapterNumber: number;
+  lastChapterNumber: number;
+  totalNumberOfVerses: number;
+  isApocryphal: boolean;
+}
+
+interface SandboxChapterRef {
+  bookId: string;
+  chapter: number;
+}
+
+interface SandboxChapter {
+  translationId: string;
+  bookId: string;
+  chapter: number;
+  verses: { number: number; text: string }[];
+  content: SandboxChapterContent[];
+  footnotes: SandboxFootnote[];
+  next: SandboxChapterRef | null;
+  previous: SandboxChapterRef | null;
+}
+
+type SandboxChapterContent =
+  | { type: "heading"; text: string }
+  | { type: "lineBreak" }
+  | { type: "hebrewSubtitle"; text: string }
+  | { type: "verse"; number: number; text: string; footnotes: number[] };
+
+interface SandboxFootnote {
+  id: number;
+  text: string;
+  caller: string | null; // The mark to show, like "a"; "+" means any
+  verse: number | null;
+}
+
+interface SandboxCommentary {
+  id: string; // "adam-clarke"
+  name: string;
+  englishName: string;
+  language: string;
+  languageName: string | null;
+  languageEnglishName: string | null;
+  textDirection: "ltr" | "rtl";
+  website: string;
+  licenseUrl: string;
+  numberOfBooks: number;
+  totalNumberOfChapters: number;
+  totalNumberOfVerses: number;
+}
+
+interface SandboxCommentaryBook {
+  id: string;
+  name: string;
+  commonName: string;
+  order: number;
+  introduction: string | null;
+  numberOfChapters: number;
+  firstChapterNumber: number | null;
+  lastChapterNumber: number | null;
+  totalNumberOfVerses: number;
+}
+
+interface SandboxCommentaryChapter {
+  commentaryId: string;
+  bookId: string;
+  chapter: number;
+  introduction: string | null;
+  verses: { number: number; text: string }[];
+  next: SandboxChapterRef | null;
+  previous: SandboxChapterRef | null;
+}
+
+interface SandboxCommentaryProfile {
+  id: string;
+  subject: string;
+  reference: SandboxReference | null;
+}
+
+interface SandboxDataset {
+  id: string; // "open-cross-ref"
+  name: string;
+  englishName: string;
+  language: string;
+  languageName: string | null;
+  languageEnglishName: string | null;
+  textDirection: "ltr" | "rtl";
+  website: string;
+  licenseUrl: string;
+  numberOfBooks: number;
+  totalNumberOfChapters: number;
+  totalNumberOfVerses: number;
+  totalNumberOfReferences: number;
+}
+
+interface SandboxDatasetBook {
+  id: string;
+  order: number;
+  numberOfChapters: number;
+  firstChapterNumber: number;
+  lastChapterNumber: number | null;
+  totalNumberOfVerses: number;
+  totalNumberOfReferences: number;
+}
+
+interface SandboxDatasetChapter {
+  datasetId: string;
+  bookId: string;
+  chapter: number;
+  verses: {
+    verse: number;
+    references: (SandboxReference & { score?: number })[];
+  }[];
+}
+```
+
 ---
 
 ## 5. Errors
@@ -974,8 +1159,13 @@ function createTestHost(
 ```ts
 const host = await createTestHost(extension, {
   answers: {
-    "bible.chapter": () => ({
-      verses: [{ number: 16, text: "For God so loved…" }],
+    "bible.datasetChapter": () => ({
+      datasetId: "open-cross-ref",
+      bookId: "JHN",
+      chapter: 3,
+      verses: [
+        { verse: 16, references: [{ bookId: "ROM", chapter: 5, verse: 8 }] },
+      ],
     }),
     "highlights.list": () => [{ verse: 16, colorId: "yellow" }],
   },
