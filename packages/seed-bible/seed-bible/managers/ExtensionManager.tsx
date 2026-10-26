@@ -347,14 +347,7 @@ export class ExtensionInitalizer {
       return false;
     }
 
-    const cleanupFunctions = this.extensionCleanupFunctions.get(id) ?? [];
-    for (const cleanup of cleanupFunctions) {
-      try {
-        cleanup();
-      } catch (err) {
-        console.error(`Error during cleanup of extension '${id}':`, err);
-      }
-    }
+    this.runCleanupFunctions(id, this.extensionCleanupFunctions.get(id) ?? []);
     this.extensionCleanupFunctions.delete(id);
     this.registeredExtensions.delete(id);
     this.initializedExtensionIds.delete(id);
@@ -447,12 +440,12 @@ export class ExtensionInitalizer {
 
     this.initializedExtensionIds.add(id);
 
+    const cleanupFunctions: CleanupFunction[] = [];
     try {
       const cleanupIteratorOrReturn = extension.init(
         this.extensionContext,
         dependencyExports
       );
-      const cleanupFunctions: CleanupFunction[] = [];
       if (Symbol.iterator in cleanupIteratorOrReturn) {
         const iterator = cleanupIteratorOrReturn[Symbol.iterator]();
         while (true) {
@@ -481,7 +474,20 @@ export class ExtensionInitalizer {
       this.initializedExtensionIds.delete(id);
       initializationStack.delete(id);
       console.error(`Failed to initialize extension '${id}'.`, error);
+      // Undo what the half-finished `init` already set up, as an uninstall
+      // would, so a retry doesn't stack a second copy on top of it.
+      this.runCleanupFunctions(id, cleanupFunctions);
       return false;
+    }
+  }
+
+  private runCleanupFunctions(id: string, cleanupFunctions: CleanupFunction[]) {
+    for (const cleanup of cleanupFunctions) {
+      try {
+        cleanup();
+      } catch (err) {
+        console.error(`Error during cleanup of extension '${id}':`, err);
+      }
     }
   }
 

@@ -392,6 +392,36 @@ describe("ExtensionInitalizer", () => {
       initializer.getExtensionExports<{ version: number }>("ext.re-register")
     ).toEqual({ version: 2 });
   });
+
+  it("undoes what a failed init already set up, so each retry starts clean", () => {
+    let liveSubscriptions = 0;
+    let shouldFail = true;
+
+    initializer.registerExtension({
+      id: "ext.fails-partway",
+      init: function* () {
+        liveSubscriptions++;
+        yield () => {
+          liveSubscriptions--;
+        };
+        if (shouldFail) {
+          throw new Error("setup failed after subscribing");
+        }
+      },
+    });
+
+    initializer.setupExtensionContext(context);
+    expect(initializer.getExtensionExports("ext.fails-partway")).toBeNull();
+    expect(liveSubscriptions).toBe(0);
+
+    shouldFail = false;
+    initializer.setupExtensionContext(context);
+    expect(initializer.getExtensionExports("ext.fails-partway")).toEqual({});
+    expect(liveSubscriptions).toBe(1);
+
+    initializer.unregisterExtension("ext.fails-partway");
+    expect(liveSubscriptions).toBe(0);
+  });
 });
 
 describe("createExtensionManager", () => {

@@ -190,15 +190,23 @@ export default async function openDonationDialog({
 }) {
   if (document.getElementById("donation-container")) return;
 
+  // Not an extension, so nothing loads these strings for it; fetched only
+  // once the dialog is actually shown. Without them it still opens, in the
+  // English every `t()` call carries as its default. The namespace is this
+  // package's folder name, which is where the i18n lint looks up the keys.
+  try {
+    const { default: translations } = await import("./translations.json");
+    addTranslations("transcription", translations);
+  } catch (error) {
+    console.error("Couldn't load the donation dialog's translations.", error);
+  }
+  // Another call may have opened it while this one waited.
+  if (document.getElementById("donation-container")) return;
+
   const container = document.createElement("div");
   container.id = "donation-container";
   container.className = "twitchPub";
   document.body.appendChild(container);
-  // Not an extension, so nothing loads these strings for it; fetched only
-  // once the dialog is actually shown.
-  const { default: translations } = await import("./translations.json");
-  addTranslations("transcription", translations);
-  if (!container.isConnected) return;
   render(
     <DonationDialog onSuccess={onSuccess} i18n={context.i18n} />,
     container
