@@ -731,9 +731,8 @@ import {
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
-  DiscoverPaneHeader,
-  DiscoverPaneTitle,
-} from "../components/DiscoverPane/DiscoverPane";
+  DISCOVER_PANE_ID,
+} from "../components/Discover/DiscoverPane";
 import {
   AIBibleVerseRefSchema,
   convertToPlaylistItem,
@@ -3687,7 +3686,6 @@ export function createSeedBibleState(
   // `view` stays the source of truth for both whether Discover is open and
   // which sub-view shows inside it; DiscoverPane routes discover/create/play
   // internally off the same signal.
-  const DISCOVER_PANE_ID = "discover-pane";
 
   // view -> pane: open (or refresh, by reusing the id) while a view is set,
   // close when it clears. The pane commands read pane state via peek()
@@ -3700,19 +3698,8 @@ export function createSeedBibleState(
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
-        title: () => (
-          <DiscoverPaneTitle
-            playlists={playlists}
-            annotations={annotations}
-            tabs={tabs}
-            chats={chats}
-            openChatPanel={sidebar.openChatPanel}
-            modals={modals}
-          />
-        ),
-        header: () => (
-          <DiscoverPaneHeader playlists={playlists} annotations={annotations} />
-        ),
+        // Never shown: each Discover view renders its own header.
+        title: "Discover",
         onClose: (reason) => {
           if (reason !== "user") {
             return;
@@ -3732,6 +3719,7 @@ export function createSeedBibleState(
             toast={state.app.toast}
           />
         ),
+        showHeader: false,
       });
     } else {
       panes.closePane(DISCOVER_PANE_ID); // no-op when already closed

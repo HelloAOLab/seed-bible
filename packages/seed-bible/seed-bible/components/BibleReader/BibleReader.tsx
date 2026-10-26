@@ -83,7 +83,7 @@ import {
 } from "../Bookmarks/Bookmarks";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
-import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
+import { DiscoverContentPanel } from "../Discover/DiscoverContentPanel";
 import { ScriptureNotePopover } from "../ScriptureNote/ScriptureNote";
 import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
@@ -3439,7 +3439,11 @@ export function BibleReader(props: BibleReaderProps) {
     !isMinimalEmbed &&
     !state.app.isDiscoverOpen.value &&
     state.settings.settings.value.discoveredContent.showContent ? (
-      <DiscoverContentPanel tab={currentSlot.tab} state={state} />
+      <DiscoverContentPanel
+        variant="compact"
+        tab={currentSlot.tab}
+        state={state}
+      />
     ) : null;
 
   // Playback opens on the selected tab only. Other slots in a split view

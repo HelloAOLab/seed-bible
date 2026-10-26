@@ -1,4 +1,5 @@
 import "./DiscoverContentPanel.css";
+import type { ComponentChildren } from "preact";
 import { Signal, useSignal } from "@preact/signals";
 import { useCallback, useLayoutEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
@@ -12,10 +13,20 @@ import {
   ContentTypeSection,
   contentTypeResultsFor,
   hasRegisteredContentType,
-} from "../DiscoverPane/DiscoveredResultsSections";
-import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
-import { DiscoverEmpty } from "../DiscoverPane/DiscoverSection";
+  noTabHint,
+} from "./DiscoveredResultsSections";
+import { AnnotationsSection } from "./AnnotationsSection";
+import { DiscoverEmpty } from "./DiscoverSection";
+import { DiscoverPanelHeader } from "./DiscoverPanelHeader";
+import {
+  FriendPlaylistsSection,
+  friendPlaylistGroups,
+} from "./FriendPlaylistsSection";
 import { MaterialIcon } from "../icons";
+import {
+  ContextMenuWithButton,
+  ContextMenuItem,
+} from "../ContextMenu/ContextMenu";
 import { translateTitle } from "../../app/utils";
 import { ReadingPlansSection } from "../ReadingPlansSection/ReadingPlansSection";
 import {
@@ -26,6 +37,7 @@ import {
 type FilterKey =
   | "all"
   | "annotations"
+  | "friends-playlists"
   | "cross-references"
   | "study-notes"
   | "content"
@@ -100,16 +112,64 @@ function useSidePanelMaxHeight() {
     };
   }, []);
 }
+
+/**
+ * The full panel's "+ Create" button: a menu offering a new annotation or a
+ * new playlist. Looks the same as the compact panel's button, which only
+ * creates annotations.
+ */
+function DiscoverCreateMenu(props: { state: SeedBibleState }) {
+  const { annotations, playlists } = props.state;
+  const { t } = useI18n();
+
+  return (
+    <ContextMenuWithButton
+      buttonClassName="sb-dcp-create-btn"
+      aria-label={t("create-menu", { defaultValue: "Create" })}
+      icon={<>+ {t("create-playlist", { defaultValue: "Create" })}</>}
+    >
+      <ContextMenuItem onClick={() => void annotations.createNewAnnotation()}>
+        <MaterialIcon className="sb-context-menu-item-icon">
+          edit_note
+        </MaterialIcon>
+        {t("create-annotation-menu-item", { defaultValue: "Annotation" })}
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => void playlists.createNewPlaylist()}>
+        <MaterialIcon className="sb-context-menu-item-icon">
+          queue_music
+        </MaterialIcon>
+        {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
+      </ContextMenuItem>
+    </ContextMenuWithButton>
+  );
+}
+
 interface DiscoverFiltersProps {
   filters: { key: FilterKey; label: string }[];
   activeFilter: Signal<FilterKey>;
   displayFilter: FilterKey;
 }
 
-interface DiscoverContentPanelProps {
+type DiscoverPanelVariant = "full" | "compact";
+
+interface BaseDiscoverContentPanelProps {
   tab: ReaderTab | null;
   state: SeedBibleState;
+  variant: DiscoverPanelVariant;
 }
+
+interface CompactDiscoverContentPanelProps extends BaseDiscoverContentPanelProps {
+  variant: "compact";
+}
+
+interface FullDiscoverContentPanelProps extends BaseDiscoverContentPanelProps {
+  variant: "full";
+  onClose: () => void;
+}
+
+type DiscoverContentPanelProps =
+  | CompactDiscoverContentPanelProps
+  | FullDiscoverContentPanelProps;
 /**
  * Renders the filters for discover content and provides horizontal
  * scrolling controls when the filters do not fit within the available width.
@@ -327,18 +387,27 @@ function DiscoverFilters({
     </div>
   );
 }
+
 /**
- * Automatically-visible discover content — the reader's and their friends'
- * notes (annotations) plus discovered cross references/study notes/content — for
- * one reading tab. Rendered once per visible tab. Hides itself entirely when
- * there's no tab or there's nothing to show for the chapter, and omits the
- * notes section when the chapter has no notes and nothing waiting to sync.
- * Otherwise it always renders —
- * the "discover-content-panel" quick tool only controls whether the caller
- * places it beside the scripture text or below it (see BibleReader).
+ * Discover content for one reading tab — the reader's and their friends'
+ * notes (annotations), discovered cross references/study notes/content and
+ * reading plans for the chapter — behind a header and filter chips. Comes in
+ * two variants:
+ *
+ * - `compact`: rendered by BibleReader once per visible tab, beside the
+ *   scripture text or below it (the "discover-content-panel" quick tool picks
+ *   which). Hides itself entirely when there's no tab or nothing to show for
+ *   the chapter, and omits the notes section when the chapter has no notes and
+ *   nothing waiting to sync. Its "+ Create" button creates an annotation.
+ * - `full`: the Discover side pane's main view (see DiscoverPane). The pane is
+ *   opened without its own header, so this one carries the close button and
+ *   always renders: without a tab it shows a hint to select one, and the notes
+ *   section always shows, its "Create a note" prompt standing in as the empty
+ *   state. Adds friends' playlists (with their own chip), and its "+ Create"
+ *   button offers a playlist as well as an annotation.
  */
 export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
-  const { tab, state } = props;
+  const { tab, state, variant } = props;
 
   const { t } = useI18n();
 
@@ -346,11 +415,80 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
 
   const panelRef = useSidePanelMaxHeight();
 
+  const chapterBook = tab?.readingState.chapterData.value?.book;
+  const bookName =
+    chapterBook?.commonName ??
+    chapterBook?.name ??
+    tab?.readingState.bookId.value ??
+    null;
+
+  const panel = (content: ComponentChildren) => {
+    const body = (
+      <div
+        ref={variant === "compact" ? panelRef : undefined}
+        className={`sb-discover-content-panel${variant === "full" ? " sb-discover-content-panel--full" : ""}`}
+        aria-label={t("discover-content-panel", {
+          defaultValue: "Discover content",
+        })}
+      >
+        <DiscoverPanelHeader
+          title={
+            <>
+              <MaterialIcon className="sb-dcp-header-icon">
+                explore
+              </MaterialIcon>
+              <span>
+                {bookName
+                  ? t("discover-book-title", {
+                      defaultValue: "Discover {{book}}",
+                      book: bookName,
+                    })
+                  : t("discover", { defaultValue: "Discover" })}
+              </span>
+            </>
+          }
+          actions={
+            props.variant === "full" ? (
+              <DiscoverCreateMenu state={state} />
+            ) : (
+              <button
+                type="button"
+                className="sb-dcp-create-btn"
+                onClick={() => void state.annotations.createNewAnnotation()}
+              >
+                +{" "}
+                {t("create-playlist", {
+                  defaultValue: "Create",
+                })}
+              </button>
+            )
+          }
+          onClose={props.variant === "full" ? props.onClose : undefined}
+        />
+        {content}
+      </div>
+    );
+    // The wrapper only exists for BibleReader's layout, which sizes and
+    // places it beside or below the scripture; in the side pane the panel
+    // fills the pane instead.
+    return variant === "full" ? (
+      body
+    ) : (
+      <div className="sb-bible-reader-discover-panel">{body}</div>
+    );
+  };
+
+  // Out of the side pane, the compact panel just steps aside when there's
+  // nothing to show. The full panel holds the pane's only header and close
+  // button, so it always renders, with a hint in place of the content.
   if (!tab) {
-    return null;
+    return variant === "full"
+      ? panel(
+          <div className="sb-discover-content-panel-scroll">{noTabHint(t)}</div>
+        )
+      : null;
   }
 
-  const bookId = tab.readingState.bookId.value;
   const { hasAnnotations, showAnnotations, plans, hasAny } =
     getDiscoverPanelContent(
       tab.readingState,
@@ -359,15 +497,20 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
       state.features
     );
 
-  if (!hasAny) {
+  // Only the full panel shows friends' playlists: they aren't tied to the
+  // chapter, so they'd crowd the compact panel's chapter summary.
+  const hasFriendPlaylists =
+    props.variant === "full" &&
+    friendPlaylistGroups(state.friends, state.playlists).length > 0;
+
+  if (!hasAny && variant !== "full") {
     return null;
   }
 
-  const bookName =
-    tab.readingState.chapterData.value?.book.commonName ??
-    tab.readingState.chapterData.value?.book.name ??
-    bookId ??
-    "";
+  // The full panel always shows the notes section: its "Create a note"
+  // prompt doubles as the panel's empty state for a chapter with nothing
+  // else to show.
+  const showNotes = variant === "full" || showAnnotations;
 
   const hasCrossReferences =
     tab.readingState.discoveredCrossReferences.value.flatMap(
@@ -393,6 +536,8 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
 
   const hasVisibleUnderAll =
     hasAnnotations ||
+    variant === "full" ||
+    hasFriendPlaylists ||
     hasCrossReferences ||
     hasStudyNotes ||
     hasContent ||
@@ -410,12 +555,23 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
       }),
     },
 
-    ...(showAnnotations
+    ...(showNotes
       ? [
           {
             key: "annotations" as const,
             label: t("notes", {
               defaultValue: "Notes",
+            }),
+          },
+        ]
+      : []),
+
+    ...(hasFriendPlaylists
+      ? [
+          {
+            key: "friends-playlists" as const,
+            label: t("friends-playlists-filter", {
+              defaultValue: "Friends' playlists",
             }),
           },
         ]
@@ -471,103 +627,80 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     ? activeFilter.value
     : "all";
 
-  return (
-    <div className="sb-bible-reader-discover-panel">
-      <div
-        ref={panelRef}
-        className="sb-discover-content-panel"
-        aria-label={t("discover-content-panel", {
-          defaultValue: "Discover content",
-        })}
-      >
-        <div className="sb-dcp-header">
-          <div className="sb-dcp-header-title">
-            <MaterialIcon className="sb-dcp-header-icon">explore</MaterialIcon>
-
-            <span>
-              {t("discover-book-title", {
-                defaultValue: "Discover {{book}}",
-                book: bookName,
-              })}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            className="sb-dcp-create-btn"
-            onClick={() => void state.annotations.createNewAnnotation()}
-          >
-            +{" "}
-            {t("create-playlist", {
-              defaultValue: "Create",
-            })}
-          </button>
-        </div>
-
-        {showFilters && (
-          <DiscoverFilters
-            filters={filters}
-            activeFilter={activeFilter}
-            displayFilter={f}
+  return panel(
+    <>
+      {showFilters && (
+        <DiscoverFilters
+          filters={filters}
+          activeFilter={activeFilter}
+          displayFilter={f}
+        />
+      )}
+      <div className="sb-discover-content-panel-scroll">
+        {(f === "all" || f === "annotations") && showNotes && (
+          <AnnotationsSection
+            tab={tab}
+            annotations={state.annotations}
+            modals={state.modals}
+            toast={state.app.toast}
+            login={state.login}
+            friends={state.friends}
+            tabs={state.tabs}
+            discover={state.discover}
+            panes={state.panes}
+            onReferenceClick={state.app.openVerseReference}
           />
         )}
-        <div className="sb-discover-content-panel-scroll">
-          {(f === "all" || f === "annotations") && showAnnotations && (
-            <AnnotationsSection
+
+        {(f === "all" || f === "friends-playlists") && hasFriendPlaylists && (
+          <FriendPlaylistsSection
+            friends={state.friends}
+            playlists={state.playlists}
+            modals={state.modals}
+            toast={state.app.toast}
+          />
+        )}
+
+        {(f === "all" || f === "cross-references") && (
+          <CrossReferencesSection tab={tab} />
+        )}
+
+        {(f === "all" || f === "study-notes") && (
+          <StudyNotesSection tab={tab} />
+        )}
+
+        {(f === "all" || f === "content") && (
+          <ContentSection tab={tab} contentTypes={contentTypes} />
+        )}
+
+        {typesWithResults.map((definition) =>
+          f === `type:${definition.id}` ||
+          (f === "all" && !definition.hiddenByDefault) ? (
+            <ContentTypeSection
+              key={definition.id}
               tab={tab}
-              annotations={state.annotations}
-              modals={state.modals}
-              toast={state.app.toast}
-              login={state.login}
-              friends={state.friends}
-              tabs={state.tabs}
-              discover={state.discover}
-              panes={state.panes}
-              onReferenceClick={state.app.openVerseReference}
+              definition={definition}
             />
-          )}
+          ) : null
+        )}
 
-          {(f === "all" || f === "cross-references") && (
-            <CrossReferencesSection tab={tab} />
-          )}
+        {f === "all" && plans.length > 0 && (
+          <ReadingPlansSection
+            readingState={tab.readingState}
+            state={state}
+            plans={plans}
+          />
+        )}
 
-          {(f === "all" || f === "study-notes") && (
-            <StudyNotesSection tab={tab} />
-          )}
-
-          {(f === "all" || f === "content") && (
-            <ContentSection tab={tab} contentTypes={contentTypes} />
-          )}
-
-          {typesWithResults.map((definition) =>
-            f === `type:${definition.id}` ||
-            (f === "all" && !definition.hiddenByDefault) ? (
-              <ContentTypeSection
-                key={definition.id}
-                tab={tab}
-                definition={definition}
-              />
-            ) : null
-          )}
-
-          {f === "all" && plans.length > 0 && (
-            <ReadingPlansSection
-              readingState={tab.readingState}
-              state={state}
-              plans={plans}
-            />
-          )}
-
-          {f === "all" && !hasVisibleUnderAll && (
-            <DiscoverEmpty
-              text={t("discover-choose-filter-hint", {
-                defaultValue:
-                  "Pick a filter above to see more from this chapter.",
-              })}
-            />
-          )}
-        </div>
+        {f === "all" && !hasVisibleUnderAll && (
+          <DiscoverEmpty
+            text={t("discover-choose-filter-hint", {
+              defaultValue:
+                "Pick a filter above to see more from this chapter.",
+            })}
+          />
+        )}
       </div>
-    </div>
+    </>
   );
 }

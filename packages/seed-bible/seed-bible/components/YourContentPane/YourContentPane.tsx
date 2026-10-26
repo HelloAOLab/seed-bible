@@ -22,8 +22,8 @@ import {
   highlightKey,
   type ContentFilter,
 } from "../../managers/YourContentManager";
-import { AnnotationPreview } from "../DiscoverPane/AnnotationsSection";
-import { PlaylistRow } from "../DiscoverPane/PlaylistRow";
+import { AnnotationPreview } from "../Discover/AnnotationsSection";
+import { PlaylistRow } from "../Discover/PlaylistRow";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import { openSaveModalForLocation } from "../Tabs/Tabs";
 import {

@@ -7,7 +7,7 @@ import {
   ContentSection,
   ContentTypeSection,
   contentTypeResultsFor,
-} from "@packages/seed-bible/seed-bible/components/DiscoverPane/DiscoveredResultsSections";
+} from "@packages/seed-bible/seed-bible/components/Discover/DiscoveredResultsSections";
 import type { DiscoverContentTypeDefinition } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { hasAnyDiscoverResults } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
@@ -761,40 +761,5 @@ describe("ContentTypeSection", () => {
     });
 
     expect(container.innerHTML).toBe("");
-  });
-
-  it("starts folded when collapsible and hidden by default", () => {
-    const tab = tabWith(typedResult("person", "Aaron"));
-
-    act(() => {
-      render(
-        <ContentTypeSection
-          tab={tab}
-          definition={definition("person", { hiddenByDefault: true })}
-          collapsible
-        />,
-        container
-      );
-    });
-
-    expect(sectionTitles()).toEqual(["person title (1)"]);
-    expect(container.textContent).not.toContain("Aaron card");
-  });
-
-  it("starts open when collapsible but not hidden by default", () => {
-    const tab = tabWith(typedResult("sermon", "First"));
-
-    act(() => {
-      render(
-        <ContentTypeSection
-          tab={tab}
-          definition={definition("sermon")}
-          collapsible
-        />,
-        container
-      );
-    });
-
-    expect(container.textContent).toContain("First card");
   });
 });

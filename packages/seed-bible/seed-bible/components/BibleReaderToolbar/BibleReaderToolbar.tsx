@@ -58,7 +58,7 @@ import {
   AnnotationCommentMeta,
   annotationLocationLabel,
   openDeleteAnnotationConfirm,
-} from "../DiscoverPane/AnnotationsSection";
+} from "../Discover/AnnotationsSection";
 import {
   ContextMenuWithButton,
   ContextMenuItem,

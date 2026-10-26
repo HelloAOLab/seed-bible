@@ -12,10 +12,7 @@ import {
   type UserGalleryManager,
 } from "../../managers/UserGalleryManager";
 import { MaterialIcon } from "../icons";
-import {
-  DiscoverSection,
-  DiscoverEmpty,
-} from "../DiscoverPane/DiscoverSection";
+import { DiscoverSection, DiscoverEmpty } from "../Discover/DiscoverSection";
 import {
   PlaylistItemInput,
   type PlaylistItemInputHandle,
@@ -31,11 +28,22 @@ import {
   type ScriptureChapterLoader,
 } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import type { BibleDataManager } from "../../managers/BibleDataManager";
+import type { ChatsManager } from "../../managers/ChatsManager";
+import { translateTitle } from "../../app/utils";
+import { v4 as uuid } from "uuid";
+import {
+  ContextMenuWithButton,
+  ContextMenuItem,
+} from "../ContextMenu/ContextMenu";
+import { DiscoverPanelLayout } from "../Discover/DiscoverPanelHeader";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
   tabs: TabsManager;
   modals: ModalManager;
+  chats: ChatsManager;
+  openChatPanel: () => void;
+  onClose: () => void;
   /** Loads chapter text for the inline scripture previews. */
   bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
@@ -122,9 +130,136 @@ export function requestCancelPlaylistEditor(
   });
 }
 
+/**
+ * The form's header title: a back button, the playlist title as an editable
+ * input, and an AI button when an agent that can call tools is installed.
+ */
+function CreatePlaylistTitle(props: {
+  playlists: PlaylistManager;
+  modals: ModalManager;
+  chats: ChatsManager;
+  openChatPanel: () => void;
+  isItemDraftDirty: () => boolean;
+}) {
+  const { playlists, modals, chats, openChatPanel, isItemDraftDirty } = props;
+  const { t } = useI18n();
+  const editing = playlists.editingPlaylist.value;
+  const providers = chats.providers.value.filter((p) => p.supportsToolCalling);
+  const singleProvider = providers.length === 1 ? providers[0] : undefined;
+
+  // Opens the chat panel on a fresh local chat, seeded with a prompt
+  // message inviting the user to describe what they want changed, with
+  // the given AI provider already added as a participant.
+  // `PlaylistManager` already exposes the playlist-editing tools to every
+  // chat while a playlist is being edited, so replying here lets the AI
+  // add/update/remove items and edit the title/description.
+  const startAiChat = (providerId: string) => {
+    let chat = chats.chats.value.find(
+      (c) =>
+        c.participants.value.every((p) => !p.isRemote) &&
+        c.participants.value.some((p) => p.isAI && p.providerId === providerId)
+    );
+    if (!chat) {
+      chat = chats.createLocalSession({
+        messages: [
+          {
+            id: uuid(),
+            authors: [providerId],
+            timeMs: Date.now(),
+            targets: [],
+            type: "text",
+            text: t("ai-playlist-chat-prompt", {
+              defaultValue: "What do you want to add/change?",
+            }),
+          },
+        ],
+        providerIds: [],
+      });
+    }
+    chat.addParticipant(providerId);
+    chats.selectChat(chat.id);
+    openChatPanel();
+  };
+  const aiButtonLabel = t("ai", { defaultValue: "AI" });
+  const aiButtonAriaLabel = t("ai-edit-playlist", {
+    defaultValue: "Edit playlist with AI",
+  });
+
+  return (
+    <div className="sb-discover-title-row">
+      <button
+        type="button"
+        className="sb-reading-plans-back"
+        aria-label={t("back", { defaultValue: "Back" })}
+        onClick={() =>
+          requestCancelPlaylistEditor(playlists, modals, isItemDraftDirty())
+        }
+      >
+        <MaterialIcon>arrow_back</MaterialIcon>
+      </button>
+      <input
+        className="sb-settings-text-input sb-playlist-input"
+        type="text"
+        value={editing?.title ?? ""}
+        dir="auto"
+        onInput={(event: Event) => {
+          const value = (event.currentTarget as HTMLInputElement).value;
+          playlists.updateEditingPlaylistMetadata({
+            title: value.trim() ? value : null,
+          });
+        }}
+        placeholder={t("playlist-title_placeholder", {
+          defaultValue: "Playlist title",
+        })}
+      />
+      {providers.length > 1 ? (
+        // Multiple providers: let the user pick which one starts the chat.
+        <ContextMenuWithButton
+          buttonClassName="sb-discover-title-ai"
+          aria-label={aiButtonAriaLabel}
+          title={aiButtonLabel}
+          icon={<MaterialIcon>auto_awesome</MaterialIcon>}
+        >
+          {providers.map((provider) => (
+            <ContextMenuItem
+              key={provider.id}
+              onClick={() => startAiChat(provider.id)}
+            >
+              {translateTitle(t, provider.name)}
+            </ContextMenuItem>
+          ))}
+        </ContextMenuWithButton>
+      ) : (
+        singleProvider && (
+          <button
+            type="button"
+            className="sb-discover-title-ai"
+            aria-label={aiButtonAriaLabel}
+            title={aiButtonLabel}
+            onClick={() => startAiChat(singleProvider.id)}
+          >
+            <MaterialIcon>auto_awesome</MaterialIcon>
+          </button>
+        )
+      )}
+    </div>
+  );
+}
+
 /** Create-playlist screen shown inside the discover pane. */
 export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
-  const { playlists, tabs, modals, bibleData, os, login, gallery } = props;
+  const {
+    playlists,
+    tabs,
+    modals,
+    chats,
+    openChatPanel,
+    onClose,
+    bibleData,
+    os,
+    login,
+    gallery,
+  } = props;
   const { t } = useI18n();
   const [saving, setSaving] = useState(false);
   // Index of the item currently open for editing in the input section below, or
@@ -235,7 +370,18 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
   };
 
   return (
-    <div className="sb-discover-pane">
+    <DiscoverPanelLayout
+      title={
+        <CreatePlaylistTitle
+          playlists={playlists}
+          modals={modals}
+          chats={chats}
+          openChatPanel={openChatPanel}
+          isItemDraftDirty={() => inputRef.current?.isDirty() ?? false}
+        />
+      }
+      onClose={onClose}
+    >
       <DiscoverSection title={t("hero-image", { defaultValue: "Cover image" })}>
         <HeroImageField
           imageUrl={editing?.heroImageUrl}
@@ -411,6 +557,6 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
             : t("save", { defaultValue: "Save" })}
         </button>
       </div>
-    </div>
+    </DiscoverPanelLayout>
   );
 }

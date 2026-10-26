@@ -6,10 +6,16 @@ import {
   annotationVerseNumbers,
   findAnnotationChapterData,
   formatAnnotationVerseNumbers,
+  type Annotation,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import { extractContentText } from "../../managers/ChapterText";
-import { annotationBookName } from "../DiscoverPane/AnnotationsSection";
+import {
+  annotationBookName,
+  annotationLocationLabel,
+} from "../Discover/AnnotationsSection";
+import { DiscoverPanelLayout } from "../Discover/DiscoverPanelHeader";
+import { MaterialIcon } from "../icons";
 import type { ChapterVerse } from "../../managers/FreeUseBibleAPI";
 import type { TabsManager } from "../../managers/TabsManager";
 import { sanitize } from "../../managers/Sanitization";
@@ -77,11 +83,41 @@ interface CreateAnnotationFormProps {
   annotations: AnnotationsManager;
   tabs: TabsManager;
   toast: (message: string) => void;
+  onClose: () => void;
+}
+
+/** Back button plus "Annotate {location}", for the form's header. */
+function CreateAnnotationTitle(props: {
+  annotations: AnnotationsManager;
+  editing: Annotation;
+  tabs: TabsManager;
+}) {
+  const { annotations, editing, tabs } = props;
+  const { t } = useI18n();
+
+  return (
+    <div className="sb-discover-title-row">
+      <button
+        type="button"
+        className="sb-reading-plans-back"
+        aria-label={t("back", { defaultValue: "Back" })}
+        onClick={() => annotations.cancelEditingAnnotation()}
+      >
+        <MaterialIcon>arrow_back</MaterialIcon>
+      </button>
+      <span className="sb-discover-title" dir="auto">
+        {t("annotate-title", {
+          location: annotationLocationLabel(editing, tabs),
+          defaultValue: "Annotate {{location}}",
+        })}
+      </span>
+    </div>
+  );
 }
 
 /** Create/edit-annotation screen shown inside the discover pane. */
 export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
-  const { annotations, tabs, toast } = props;
+  const { annotations, tabs, toast, onClose } = props;
   const { t } = useI18n();
   const EditorComponent = useAnnotationEditor();
   const editorRef = useRef<AnnotationEditorHandle | null>(null);
@@ -154,7 +190,16 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
   };
 
   return (
-    <div className="sb-discover-pane">
+    <DiscoverPanelLayout
+      title={
+        <CreateAnnotationTitle
+          annotations={annotations}
+          editing={editing}
+          tabs={tabs}
+        />
+      }
+      onClose={onClose}
+    >
       {verseReference ? (
         <div className="sb-annotation-verse-quote">
           <p className="sb-annotation-verse-quote-reference">
@@ -219,6 +264,6 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
             : t("save", { defaultValue: "Save" })}
         </button>
       </div>
-    </div>
+    </DiscoverPanelLayout>
   );
 }

@@ -9,6 +9,7 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { createUserGalleryManager } from "@packages/seed-bible/seed-bible/managers/UserGalleryManager";
 import type { TabsManager } from "@packages/seed-bible/seed-bible/managers/TabsManager";
+import { createMockChats } from "../testUtils/mockChats";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -113,6 +114,9 @@ describe("CreatePlaylistForm cover upload", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={
             {
@@ -188,6 +192,9 @@ describe("CreatePlaylistForm cover upload", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={
             {
@@ -263,6 +270,9 @@ describe("CreatePlaylistForm cover upload", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={
             {

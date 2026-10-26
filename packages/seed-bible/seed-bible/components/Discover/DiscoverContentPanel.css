@@ -16,6 +16,24 @@
   gap: 12px;
 }
 
+/* Fills the side pane: the header and filters stay put and only the list
+   scrolls. */
+.sb-discover-content-panel--full {
+  position: static;
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+  max-height: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* Room to scroll the last items clear of whatever floats over the bottom of
+   the pane. */
+.sb-discover-content-panel--full .sb-discover-content-panel-scroll {
+  padding-bottom: 250px;
+}
+
 /* Beside the scripture the panel sticks while the chapter scrolls, so any
    part of it past the bottom of the visible pane can never be scrolled into
    view. Cap it to the on-screen pane height (measured in
@@ -30,28 +48,7 @@
   }
 }
 
-/* ── Header ── */
-
-.sb-dcp-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.sb-dcp-header-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--sb-font-color);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+/* ── Header (layout in DiscoverPanelHeader.css) ── */
 
 .sb-dcp-header-icon {
   font-size: 1.375rem;
@@ -73,6 +70,22 @@
 
 .sb-dcp-create-btn:hover {
   opacity: 0.88;
+}
+
+/* The full panel's create menu trigger (`DiscoverCreateMenu`) is also a
+   `.sb-context-menu-button`, whose fixed icon-button size, zero padding and
+   transparent background would otherwise win. */
+.sb-dcp-create-btn.sb-context-menu-button {
+  width: auto;
+  height: auto;
+  padding: 6px 12px;
+  border-radius: 50px;
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+}
+
+.sb-dcp-create-btn.sb-context-menu-button:hover {
+  background: var(--sb-primary-color);
 }
 
 /* ── Filter chips ── */
