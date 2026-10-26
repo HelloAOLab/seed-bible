@@ -19,8 +19,11 @@
 # duplicates. `workflow_run` reads this file from the default branch
 # (`develop`), so changes to it only take effect once they reach develop.
 #
-# Requires the `NPM_TOKEN` secret: an npm automation/granular token with
-# publish rights to all three packages.
+# Authenticates with npm trusted publishing (OIDC) rather than a stored token:
+# npm is retiring tokens that bypass 2FA for publishing. Each of the three
+# packages must list this repository and `npm-publish.yml` as a trusted
+# publisher (npmjs.com → package → Settings → Trusted Publisher). Trusted
+# publishing needs npm 11.5.1+, and adds provenance automatically.
 name: Publish npm packages
 
 on:
@@ -35,7 +38,7 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write # npm provenance
+  id-token: write # npm trusted publishing
 
 jobs:
   publish:
@@ -60,6 +63,8 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.3
+      - name: Update npm
+        run: npm install -g npm@^11.5.1
 
       - name: Install
         run: |
@@ -67,9 +72,6 @@ jobs:
           pnpm install
 
       - name: Publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
         run: |
           set -o pipefail
           # --build sets the versions before building, so the alpha's own
