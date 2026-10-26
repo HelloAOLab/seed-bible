@@ -392,6 +392,29 @@ describe("ExtensionInitalizer", () => {
       initializer.getExtensionExports<{ version: number }>("ext.re-register")
     ).toEqual({ version: 2 });
   });
+
+  it("runAsExtension() rejects a registration under another extension's id without replacing that extension", () => {
+    initializer.setupExtensionContext(context);
+    initializer.registerExtension({
+      id: "ext.victim",
+      init: () => ({ owner: "victim" }),
+    });
+
+    expect(() =>
+      initializer.runAsExtension("ext.impostor", () => {
+        initializer.registerExtension({
+          id: "ext.victim",
+          init: () => ({ owner: "impostor" }),
+        });
+      })
+    ).toThrow(
+      "Extension 'ext.impostor' tried to register as 'ext.victim'. Check the id passed to registerExtension()."
+    );
+
+    expect(initializer.getExtensionExports("ext.victim")).toEqual({
+      owner: "victim",
+    });
+  });
 });
 
 describe("createExtensionManager", () => {
@@ -1582,6 +1605,136 @@ describe("createExtensionManager", () => {
     ).toBe(false);
   });
 
+  it("loadExtension() fails, without replacing the other extension or saving the install, when an extension registers under another extension's id", async () => {
+    const manager = createExtensionManager(login);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const victimRegistration = { id: "ext.victim", init: () => ({}) };
+    registerExtension(victimRegistration);
+
+    const loaded = await manager.loadExtension({
+      import: () =>
+        Promise.resolve({
+          default: () => {
+            registerExtension({ id: "ext.impostor", init: () => ({}) });
+            registerExtension({ id: "ext.victim", init: () => ({}) });
+          },
+        }),
+      meta: {
+        id: "ext.impostor",
+        translations: { en: { title: "Impostor", description: "x" } },
+      },
+    });
+
+    expect(loaded).toBe(false);
+    const entries = manager.getExtensions();
+    expect(entries.find((e) => e.id === "ext.victim")?.registration).toBe(
+      victimRegistration
+    );
+    expect(entries.find((e) => e.id === "ext.impostor")?.installed).toBe(false);
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual([]);
+    expect(errorSpy).toHaveBeenCalledWith(
+      "Failed to install extension:",
+      "ext.impostor",
+      expect.objectContaining({
+        message:
+          "Extension 'ext.impostor' tried to register as 'ext.victim'. Check the id passed to registerExtension().",
+      })
+    );
+  });
+
+  it("loadExtension() fails, without saving the install, when an extension finishes without registering", async () => {
+    const manager = createExtensionManager(login);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    const loaded = await manager.loadExtension({
+      import: () => Promise.resolve({ default: () => undefined }),
+      meta: {
+        id: "ext.never-registers",
+        translations: { en: { title: "Never registers", description: "x" } },
+      },
+    });
+
+    expect(loaded).toBe(false);
+    expect(
+      manager.getExtensions().find((e) => e.id === "ext.never-registers")
+        ?.installed
+    ).toBe(false);
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual([]);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Failed to install extension 'ext.never-registers': it finished without registering."
+      )
+    );
+  });
+
+  it("keeps AI Transcript uninstalled across a reload while AI Transcript core stays installed (regression for #2032)", async () => {
+    const { default: coreManifest } =
+      await import("@packages/transcript-extension/extension.json");
+    const { default: uiManifest } =
+      await import("@packages/transcript-ui-extension/extension.json");
+    const transcriptSet: ExtensionSet = {
+      id: "set.transcript",
+      extensions: [
+        {
+          import: () =>
+            import("@packages/transcript-extension/ext_AI_Transcript/main/init"),
+          meta: {
+            id: coreManifest.id,
+            translations: { en: { title: "Core", description: "x" } },
+          },
+        },
+        {
+          // The real UI module pulls in its whole interface; the bug is in
+          // the core, so a stand-in that registers the UI's id is enough.
+          import: () =>
+            Promise.resolve({
+              default: () => {
+                registerExtension({ id: uiManifest.id, init: () => ({}) });
+              },
+            }),
+          meta: {
+            id: uiManifest.id,
+            dependencies: uiManifest.dependencies,
+            translations: { en: { title: "UI", description: "x" } },
+          },
+        },
+      ],
+    };
+    const isInstalled = (manager: ExtensionManager, id: string) =>
+      manager.getExtensions().find((e) => e.id === id)?.installed ?? false;
+
+    // Installing AI Transcript installs (and saves) the core along with it.
+    const firstVisit = createExtensionManager(login, {
+      defaultExtensions: transcriptSet,
+    });
+    await firstVisit.loadExtensionSet(
+      transcriptSet,
+      (ext) => ext.meta.id === uiManifest.id
+    );
+    expect(isInstalled(firstVisit, coreManifest.id)).toBe(true);
+    firstVisit.unloadExtension(uiManifest.id);
+
+    // A page reload starts with nothing registered.
+    for (const registration of ExtensionInitalizer.getInstance().listRegisteredExtensions()) {
+      ExtensionInitalizer.getInstance().unregisterExtension(registration.id);
+    }
+    const secondVisit = createExtensionManager(login, {
+      defaultExtensions: transcriptSet,
+    });
+    await secondVisit.loadDefaultExtensions();
+
+    expect(isInstalled(secondVisit, coreManifest.id)).toBe(true);
+    expect(isInstalled(secondVisit, uiManifest.id)).toBe(false);
+  });
+
   it("getAllExtensionsAsSet() returns undefined and warns when there are no extension packages", () => {
     const manager = createExtensionManager(login);
     const warnSpy = vi
@@ -1789,9 +1942,10 @@ describe("createExtensionManager", () => {
    * Builds an `import()`-style extension module whose resolution is
    * controlled by the caller via `resolve()`, instead of resolving as soon
    * as it's awaited. Useful for deterministically interleaving an
-   * extension's install with other async work in a test.
+   * extension's install with other async work in a test. Its default export
+   * registers `id`, like a real extension's does.
    */
-  function createDeferredExtensionModule(): {
+  function createDeferredExtensionModule(id: string): {
     promise: Promise<unknown>;
     resolve: () => void;
   } {
@@ -1801,7 +1955,12 @@ describe("createExtensionManager", () => {
     });
     return {
       promise,
-      resolve: () => resolvePromise({ default: vi.fn() }),
+      resolve: () =>
+        resolvePromise({
+          default: vi.fn(() => {
+            registerExtension({ id, init: () => ({}) });
+          }),
+        }),
     };
   }
 
@@ -2150,8 +2309,8 @@ describe("createExtensionManager", () => {
     // deferred promise, so each one's install resolves under direct,
     // synchronous test control instead of racing real
     // dynamic-import/module-mock timing.
-    const moduleA = createDeferredExtensionModule();
-    const moduleB = createDeferredExtensionModule();
+    const moduleA = createDeferredExtensionModule("ext.spam-a");
+    const moduleB = createDeferredExtensionModule("ext.spam-b");
     const extensionA = {
       import: () => moduleA.promise,
       meta: {
