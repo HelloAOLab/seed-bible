@@ -27,16 +27,8 @@ import {
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
 import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
-import {
-  buildCustomizationTutorialSteps,
-  openCustomizationEditPane,
-} from "../CustomizationEditPane/CustomizationEditPane";
-import {
-  CustomizationCardPreview,
-  getDefaultTranslationLabel,
-} from "../CustomizationEditPane/CustomizationPreviews";
 import { UnusedSensitiveSettingsList } from "../ExtensionSettingsForm/SensitiveSettingsForm";
-import { download, translateTitle } from "../../app/utils";
+import { download } from "../../app/utils";
 import type { ExtensionListEntry } from "../../managers/ExtensionManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -51,12 +43,7 @@ import { handleGridKeyNav } from "../../app/keyboardNav";
 import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
 import { normalizeHex } from "../ColorPicker/color";
 import { buildStaticPagePath } from "../../managers/StaticPagePath";
-import { useEffect } from "preact/hooks";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
-import {
-  ContextMenuItem,
-  ContextMenuWithButton,
-} from "../ContextMenu/ContextMenu";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -1168,100 +1155,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   );
 }
 
-function ToolbarSettingsView(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { tools: toolsManager, settings } = state;
-  const { t } = useI18n();
-
-  const onBack = () => {
-    state.sidebar.requestedSettingsView.value = "main";
-  };
-
-  const available = toolsManager.listToolbarTools();
-  const toolbarConfig = settings.settings.value.toolbar;
-  const hiddenSet = new Set(toolbarConfig.hidden);
-
-  const allIds = available.map((tool) => tool.id);
-  const orderedIds = [
-    // Ignore the order for now as pr Issue #1384
-    // ...toolbarConfig.order.filter((id) => allIds.includes(id)),
-    ...allIds.filter((id) => !toolbarConfig.order.includes(id)),
-  ];
-
-  const toggleVisible = (id: string) => {
-    settings.setToolbarHidden(id, !hiddenSet.has(id));
-  };
-
-  const isCustomized =
-    toolbarConfig.hidden.length > 0 || toolbarConfig.order.length > 0;
-
-  return (
-    <div className="sb-settings-page">
-      <SettingsBreadcrumbs
-        onBack={onBack}
-        trail={["Page settings", "Toolbar"]}
-      />
-      <SettingsHero
-        icon="tune"
-        title={t("toolbar", { defaultValue: "Toolbar" })}
-        description={t("toolbar_description", {
-          defaultValue:
-            "Choose which reader toolbar tools appear and in what order.",
-        })}
-      />
-
-      <section className="sb-settings-section">
-        <ul className="sb-toolbar-config-list">
-          {orderedIds.map((id) => {
-            const tool = available.find((entry) => entry.id === id);
-            if (!tool || !tool.isControllable) return null;
-            const title = translateTitle(t, tool.title);
-            const isHidden = hiddenSet.has(id);
-
-            return (
-              <li
-                key={id}
-                className={`sb-toolbar-config-row${
-                  isHidden ? " sb-toolbar-config-row-hidden" : ""
-                }`}
-              >
-                <span className="sb-toolbar-config-title">{title}</span>
-                <div className="sb-settings-toggle-row sb-toolbar-config-toggle">
-                  <input
-                    type="checkbox"
-                    checked={!isHidden}
-                    aria-label={`${title} visibility`}
-                    onChange={(event: Event) => {
-                      const target = event.currentTarget as HTMLInputElement;
-                      settings.setToolbarHidden(id, !target.checked);
-                    }}
-                    onClick={(event: Event) => {
-                      event.stopPropagation();
-                      toggleVisible(id);
-                    }}
-                  />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-
-        {isCustomized && (
-          <div className="sb-settings-actions">
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={() => settings.resetToolbarConfig()}
-            >
-              {t("reset-toolbar", { defaultValue: "Reset toolbar" })}
-            </button>
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
-
 function TextFormattingToolbar(props: {
   sectionId: TextSectionId;
   section: TextSectionConfig;
@@ -1808,7 +1701,7 @@ function AllSettingsView(props: { state: SeedBibleState }) {
             <p>
               {t("colors-controlled-by-customization", {
                 defaultValue:
-                  "Colors are controlled by the active Customization. Change which theme you're using from Display & Theme.",
+                  "Colors are controlled by the active Custom Branding. Change which theme you're using from Display & Theme.",
               })}
             </p>
             <button
@@ -1903,154 +1796,10 @@ function SettingsVersionFooter() {
   );
 }
 
-function CustomizationsSettingsView(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { customizations } = state;
-  const { t } = useI18n();
-
-  useEffect(() => {
-    void customizations.load();
-  }, []);
-
-  const onBack = () => {
-    state.sidebar.requestedSettingsView.value = "main";
-  };
-
-  const openCustomization = (id: string) => {
-    openCustomizationEditPane(state, id);
-  };
-
-  const handleCreate = async () => {
-    const created = await customizations.create();
-    openCustomizationEditPane(state, created.id);
-    // First-time-only overview: the customization name and logo, then a
-    // deep-linked tour of the new theme's editor sections.
-    state.tutorial.startContextual(
-      "customization-created",
-      buildCustomizationTutorialSteps(state, created.defaultVariantId)
-    );
-  };
-
-  const list = customizations.customizations.value;
-  const isEmpty = list.length === 0;
-
-  return (
-    <div className="sb-settings-page">
-      <SettingsBreadcrumbs
-        onBack={onBack}
-        trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
-          t("customize", { defaultValue: "Customize" }),
-        ]}
-      />
-      <section className="sb-settings-section">
-        <p className="sb-cz-intro">
-          {t("customizations-description", {
-            defaultValue:
-              "A customization bundles a logo, themes and extension rules. Share one with a church or group so everyone reads with the same setup.",
-          })}
-        </p>
-        {isEmpty ? (
-          customizations.isLoading.value ? (
-            <div className="sb-settings-empty-state">
-              <p>{t("loading", { defaultValue: "Loading…" })}</p>
-            </div>
-          ) : null
-        ) : (
-          <ul className="sb-cz-card-list">
-            {list.map((customization) => {
-              const previewVariant =
-                customization.variants.find(
-                  (v) => v.id === customization.defaultVariantId
-                ) ?? customization.variants[0];
-              return (
-                <li key={customization.id} className="sb-cz-card">
-                  <button
-                    type="button"
-                    className="sb-cz-card-open"
-                    onClick={() => openCustomization(customization.id)}
-                  >
-                    {previewVariant && (
-                      <CustomizationCardPreview
-                        theme={customizations.resolveEditingVariantTheme(
-                          previewVariant
-                        )}
-                        logoUrl={customization.logoUrl}
-                        heading={t("customization-preview-chapter", {
-                          defaultValue: "John 1",
-                        })}
-                      />
-                    )}
-                    <span className="sb-cz-card-text">
-                      <span className="sb-cz-card-title" dir="auto">
-                        {customization.name}
-                      </span>
-                      <span className="sb-cz-card-subtitle">
-                        {t("customization-card-summary", {
-                          themes: t("customization-theme-count", {
-                            count: customization.variants.length,
-                            defaultValue: "{{count}} themes",
-                          }),
-                          translation: getDefaultTranslationLabel(
-                            t,
-                            customization,
-                            state.bibleData.availableTranslations.value
-                          ),
-                          defaultValue: "{{themes}} · {{translation}}",
-                        })}
-                      </span>
-                    </span>
-                  </button>
-                  <ContextMenuWithButton
-                    anchorClassName="sb-cz-card-menu"
-                    buttonClassName="sb-cz-icon-button"
-                    aria-label={t("customization-options", {
-                      defaultValue: "Customization options",
-                    })}
-                  >
-                    <ContextMenuItem
-                      onClick={() => {
-                        navigator.clipboard.writeText(
-                          customizations.getShareLink(customization)
-                        );
-                        state.app.toast(
-                          t("customization-link-copied", {
-                            defaultValue:
-                              "Customization link copied to clipboard",
-                          })
-                        );
-                      }}
-                    >
-                      <MaterialIcon className="sb-context-menu-item-icon">
-                        share
-                      </MaterialIcon>
-                      <span>{t("share", { defaultValue: "Share" })}</span>
-                    </ContextMenuItem>
-                  </ContextMenuWithButton>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        <button
-          type="button"
-          className="sb-cz-new-button"
-          onClick={() => void handleCreate()}
-        >
-          <span className="material-symbols-outlined">add</span>
-          {t("new-customization", { defaultValue: "New customization" })}
-        </button>
-      </section>
-    </div>
-  );
-}
-
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { branding } = useAppConfig();
   const { t, language, availableLanguages, setLanguage } = useI18n();
-  const isLoggedIn = useComputed(() => state.login.userId.value !== null);
 
   const onNavigate = (view: RequestedSettingsView) => {
     state.sidebar.requestedSettingsView.value = view;
@@ -2098,22 +1847,6 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </span>
               <span className="sb-settings-nav-label">
                 {t("display-and-theme", { defaultValue: "Display & Theme" })}
-              </span>
-              <span className="material-symbols-outlined rtl-mirror">
-                chevron_right
-              </span>
-            </button>
-          </li>
-          <li>
-            <button
-              className="sb-settings-nav-item hide-on-mobile"
-              onClick={() => onNavigate("toolbar")}
-            >
-              <span className="sb-settings-nav-icon">
-                <MaterialIcon>tune</MaterialIcon>
-              </span>
-              <span className="sb-settings-nav-label">
-                {t("toolbar", { defaultValue: "Toolbar" })}
               </span>
               <span className="material-symbols-outlined rtl-mirror">
                 chevron_right
@@ -2181,24 +1914,6 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </span>
             </button>
           </li>
-          {isLoggedIn.value && (
-            <li>
-              <button
-                className="sb-settings-nav-item"
-                onClick={() => onNavigate("customizations")}
-              >
-                <span className="sb-settings-nav-icon">
-                  <MaterialIcon>palette</MaterialIcon>
-                </span>
-                <span className="sb-settings-nav-label">
-                  {t("customize", { defaultValue: "Customize" })}
-                </span>
-                <span className="material-symbols-outlined rtl-mirror">
-                  chevron_right
-                </span>
-              </button>
-            </li>
-          )}
           {!isSettingDisabled("about-seed-bible") && (
             <li>
               <button
@@ -2281,7 +1996,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
 
 export function SettingsPage(props: { state: SeedBibleState }) {
   const { state } = props;
-  // Honor a deep-link requested by the sidebar (e.g. `?settingsView=toolbar`).
+  // Honor a deep-link requested by the sidebar (e.g. `?settingsView=extensions`).
   const currentView = state.sidebar.requestedSettingsView;
 
   if (currentView.value === "display-and-theme") {
@@ -2292,16 +2007,8 @@ export function SettingsPage(props: { state: SeedBibleState }) {
     return <AllSettingsView state={state} />;
   }
 
-  if (currentView.value === "toolbar") {
-    return <ToolbarSettingsView state={state} />;
-  }
-
   if (currentView.value === "extensions") {
     return <ExtensionsSettingsView state={state} />;
-  }
-
-  if (currentView.value === "customizations") {
-    return <CustomizationsSettingsView state={state} />;
   }
 
   return <SettingsMainView state={state} />;

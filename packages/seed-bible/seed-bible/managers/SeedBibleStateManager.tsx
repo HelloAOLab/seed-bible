@@ -64,6 +64,10 @@ import {
   YourContentPaneTitle,
 } from "../components/YourContentPane/YourContentPane";
 import {
+  buildCustomizationTutorialSteps,
+  openCustomizationEditPane,
+} from "../components/CustomizationEditPane/CustomizationEditPane";
+import {
   PLAYLIST_HISTORY_PANE_ID,
   PlaylistHistoryPane,
   PlaylistHistoryPaneTitle,
@@ -3979,6 +3983,39 @@ export function createSeedBibleState(
     closeProfile();
     void playlists.createNewPlaylist();
   };
+  // The customization editor is a side pane beside the reader, so the
+  // fullscreen screens above it close first, as for the playlist editor.
+  const editCustomizationFromContent = (customizationId: string) => {
+    closeYourContent();
+    closeProfile();
+    openCustomizationEditPane(state, customizationId);
+  };
+  const createCustomizationFromContent = async () => {
+    closeYourContent();
+    closeProfile();
+    let created;
+    try {
+      created = await customizations.create();
+    } catch (error) {
+      console.error("Error creating customization:", error);
+      // Destructured for the translation lint rules, as in the toast above.
+      const { t } = i18n;
+      toast(
+        t("customization-create-failed", {
+          defaultValue:
+            "Couldn't create your Custom Branding. Please try again.",
+        })
+      );
+      return;
+    }
+    openCustomizationEditPane(state, created.id);
+    // First-time-only overview: the customization name and logo, then a
+    // deep-linked tour of the new theme's editor sections.
+    tutorial.startContextual(
+      "customization-created",
+      buildCustomizationTutorialSteps(state, created.defaultVariantId)
+    );
+  };
   // Both land in the plans pane, opened fullscreen the way the Profile card
   // opens it, and then drill straight into the plan so the user doesn't have
   // to find it in the list a second time.
@@ -4014,6 +4051,8 @@ export function createSeedBibleState(
       onCreatePlaylist={createPlaylistFromContent}
       onOpenReadingPlan={openReadingPlanFromContent}
       onEditReadingPlan={editReadingPlanFromContent}
+      onEditCustomization={editCustomizationFromContent}
+      onCreateCustomization={() => void createCustomizationFromContent()}
     />
   );
   const renderYourContentPaneTitle = () => <YourContentPaneTitle />;

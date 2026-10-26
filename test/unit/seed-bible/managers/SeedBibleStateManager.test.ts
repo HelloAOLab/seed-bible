@@ -1549,7 +1549,7 @@ describe("createSeedBibleState", () => {
     expect(state.selector.isOpen.value).toBe(false);
   });
 
-  it("selecting a side pane on desktop leaves the Settings sidebar open, so the Customization Center's list stays visible behind its editor pane", async () => {
+  it("selecting a side pane on desktop leaves the Settings sidebar open", async () => {
     const state = await createState();
     state.sidebar.openSettings();
     const pane = state.panes.openPane({
