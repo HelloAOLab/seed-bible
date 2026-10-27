@@ -119,22 +119,33 @@ describe("reader visibility while Today is open", () => {
   });
 });
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+/** Offer delay only. Leaves intervals (reading time, analytics) on the real clock. */
+function useOfferClock() {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+}
+
+async function advance(ms: number) {
+  await vi.advanceTimersByTimeAsync(ms);
 }
 
 describe("the offer card waits until the reader has stayed uncovered", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("does not offer on the profile page, including while signing in", async () => {
     const state = await createStateWithLoadedChapter(true);
+    useOfferClock();
 
     state.openProfile();
     await Promise.resolve();
     expect(state.isProfileOpen.value).toBe(true);
     expect(state.today.isOpen.value).toBe(false);
+    expect(state.onboarding.step.value).toBe("done");
     expect(state.tutorial.promptVisible.value).toBe(false);
 
     state.login.isLoginOpen.value = true;
-    await wait(TUTORIAL_OFFER_DELAY_MS + 300);
+    await advance(TUTORIAL_OFFER_DELAY_MS);
     expect(state.tutorial.promptVisible.value).toBe(false);
 
     state.login.isLoginOpen.value = false;
@@ -142,63 +153,87 @@ describe("the offer card waits until the reader has stayed uncovered", () => {
     expect(state.isProfileOpen.value).toBe(true);
 
     state.closeProfile();
-    await wait(300);
+    await advance(TUTORIAL_OFFER_DELAY_MS - 1);
     expect(state.tutorial.promptVisible.value).toBe(false);
-
-    await waitFor(
-      () => state.tutorial.promptVisible.value,
-      TUTORIAL_OFFER_DELAY_MS + 1500
-    );
+    await advance(1);
     expect(state.tutorial.promptVisible.value).toBe(true);
   });
 
   it("holds the offer while a modal or the sign-in dialog covers the reader", async () => {
     const state = await createStateWithLoadedChapter(true);
+    useOfferClock();
+
     state.modals.openModal({
       id: "cover",
       title: "Cover",
       content: "Covering the reader",
     });
-
     state.today.close();
-    await wait(TUTORIAL_OFFER_DELAY_MS + 300);
+    await advance(TUTORIAL_OFFER_DELAY_MS);
     expect(state.tutorial.promptVisible.value).toBe(false);
 
     state.modals.closeModal("cover");
     state.login.isLoginOpen.value = true;
-    await wait(TUTORIAL_OFFER_DELAY_MS + 300);
+    await advance(TUTORIAL_OFFER_DELAY_MS);
     expect(state.tutorial.promptVisible.value).toBe(false);
 
     state.login.isLoginOpen.value = false;
-    await wait(300);
+    await advance(TUTORIAL_OFFER_DELAY_MS - 1);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+    await advance(1);
+    expect(state.tutorial.promptVisible.value).toBe(true);
+  });
+
+  it("holds the offer for dialogs that are not opened through the modal manager", async () => {
+    const state = await createStateWithLoadedChapter(true);
+    expect(state.onboarding.step.value).toBe("done");
+    useOfferClock();
+
+    state.openTerms();
+    state.today.close();
+    await advance(TUTORIAL_OFFER_DELAY_MS);
     expect(state.tutorial.promptVisible.value).toBe(false);
 
-    await waitFor(
-      () => state.tutorial.promptVisible.value,
-      TUTORIAL_OFFER_DELAY_MS + 1500
-    );
+    state.closeTerms();
+    state.openPrivacy();
+    await advance(TUTORIAL_OFFER_DELAY_MS);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    state.closePrivacy();
+    state.openCodeOfConduct();
+    await advance(TUTORIAL_OFFER_DELAY_MS);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    state.closeCodeOfConduct();
+    state.onboarding.openInstall();
+    expect(state.onboarding.step.value).toBe("install");
+    await advance(TUTORIAL_OFFER_DELAY_MS);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    state.onboarding.dismissInstall();
+    expect(state.onboarding.step.value).toBe("done");
+    await advance(TUTORIAL_OFFER_DELAY_MS - 1);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+    await advance(1);
     expect(state.tutorial.promptVisible.value).toBe(true);
   });
 
   it("starts the wait over when a pane covers the reader during it", async () => {
     const state = await createStateWithLoadedChapter(true);
+    useOfferClock();
 
     state.today.close();
-    await wait(300);
+    await advance(TUTORIAL_OFFER_DELAY_MS - 1);
     expect(state.tutorial.promptVisible.value).toBe(false);
 
     state.today.open();
-    await wait(TUTORIAL_OFFER_DELAY_MS + 300);
+    await advance(TUTORIAL_OFFER_DELAY_MS);
     expect(state.tutorial.promptVisible.value).toBe(false);
 
     state.today.close();
-    await wait(300);
+    await advance(TUTORIAL_OFFER_DELAY_MS - 1);
     expect(state.tutorial.promptVisible.value).toBe(false);
-
-    await waitFor(
-      () => state.tutorial.promptVisible.value,
-      TUTORIAL_OFFER_DELAY_MS + 1500
-    );
+    await advance(1);
     expect(state.tutorial.promptVisible.value).toBe(true);
   });
 });

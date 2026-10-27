@@ -493,6 +493,39 @@ describe("createTutorialManager — reader visibility gate", () => {
     }
   });
 
+  it("holds the offer while the skip dialog from a feature tip is open", async () => {
+    vi.useFakeTimers();
+    try {
+      const tutorial = createTutorialManager(
+        createLogin(),
+        createReaderVisible(true),
+        createSelector(),
+        signal(false),
+        createPanes(),
+        createSidebar()
+      );
+      tutorial.hydrateStoredFlags();
+      tutorial.armAutoStart();
+
+      tutorial.startContextual("search");
+      expect(tutorial.running.value).toBe(true);
+      tutorial.skip();
+      expect(tutorial.running.value).toBe(false);
+      expect(tutorial.skipPromptVisible.value).toBe(true);
+
+      await elapseOfferDelay();
+      expect(tutorial.promptVisible.value).toBe(false);
+
+      tutorial.keepTutorials();
+      await elapseOfferDelay(TUTORIAL_OFFER_DELAY_MS - 1);
+      expect(tutorial.promptVisible.value).toBe(false);
+      await elapseOfferDelay(1);
+      expect(tutorial.promptVisible.value).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("holds the offer while a modal covers the reader, then waits the full delay", async () => {
     vi.useFakeTimers();
     try {

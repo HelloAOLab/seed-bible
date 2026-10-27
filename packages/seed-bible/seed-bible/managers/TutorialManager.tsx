@@ -556,10 +556,10 @@ export function createTutorialManager(
   isMinimalEmbed: ReadonlySignal<boolean> = signal(false),
   linkedTutorial: TutorialLinkRequest | null = null,
   /**
-   * True while a dialog covers the reader. That is a modal opened through
-   * `ModalManager`, or the sign-in modal (`login.isLoginOpen`), which is not
-   * one of those. The offer card waits this out the same way it waits out a
-   * fullscreen pane. A `?tutorial=` link does not consult it.
+   * True while a dialog covers the reader. The app builds this from
+   * `ModalManager` plus the dialogs drawn separately in `app/main.tsx`. The
+   * offer card waits this out the same way it waits out a fullscreen pane.
+   * A `?tutorial=` link does not consult it.
    */
   modalCoveringReader: ReadonlySignal<boolean> = signal(false)
 ): TutorialManager {
@@ -1018,12 +1018,14 @@ export function createTutorialManager(
       if (isMinimalEmbed.value) {
         return;
       }
-      // Uncovered means the chapter is on screen, no pane covers it, and no
-      // modal (including sign-in) covers it. A profile that hasn't loaded yet
-      // holds the wait too, so a returning user's completion can arrive first.
+      // Uncovered means the chapter is on screen, no pane or dialog covers it,
+      // and the "Turn off all tutorials?" follow-up isn't open. A profile that
+      // hasn't loaded yet holds the wait too, so a returning user's completion
+      // can arrive first.
       if (
         !readerVisible.value ||
         modalCoveringReader.value ||
+        skipPromptVisible.value ||
         (login.userId.value && login.profile.value === null)
       ) {
         return;
@@ -1036,7 +1038,7 @@ export function createTutorialManager(
       }
 
       const timer = setTimeout(() => {
-        if (autoStartChecked || running.peek()) {
+        if (autoStartChecked || running.peek() || skipPromptVisible.peek()) {
           return;
         }
         autoStartChecked = true;

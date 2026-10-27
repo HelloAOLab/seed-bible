@@ -1480,12 +1480,21 @@ export function createSeedBibleState(
     return true;
   });
 
-  // Open dialogs cover the reader the same way a fullscreen pane does. The
-  // sign-in modal is not opened through `modals`, so it has to be checked on
-  // its own. The offer card waits on this; `?tutorial=` links use
-  // `readerVisible` alone and still launch as soon as the reader is up.
+  // Dialogs that cover the reader. Pop-ups opened through `modals` are only
+  // part of the list: sign-in, Terms, Privacy, Code of Conduct, and the
+  // onboarding cards are drawn on their own in `app/main.tsx`. A new dialog
+  // that does not go through `modals` has to be added here, or the offer card
+  // can show on top of it. `onboarding.step` starts at "done" and only leaves
+  // it while an onboarding card is actually up, so a normal first visit is
+  // not held back. `?tutorial=` links use `readerVisible` alone.
   const modalCoveringReader = computed(
-    () => modals.modals.value.length > 0 || login.isLoginOpen.value
+    () =>
+      modals.modals.value.length > 0 ||
+      login.isLoginOpen.value ||
+      termsOpen.value ||
+      privacyOpen.value ||
+      codeOfConductOpen.value ||
+      onboarding.step.value !== "done"
   );
 
   // Client-only: SSR can't run the tour, and launching it there would put
