@@ -112,13 +112,40 @@
   background: var(--sb-primary-color);
 }
 
+/* Sets Create apart from the filters beside it. */
+.sb-content-toolbar-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 1.25rem;
+  background: var(--sb-divider-color);
+}
+
 .sb-content-chips {
+  --sb-content-chips-fade-left: 0px;
+  --sb-content-chips-fade-right: 0px;
   display: flex;
   flex: 1;
   min-width: 0;
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0px,
+    black var(--sb-content-chips-fade-left),
+    black calc(100% - var(--sb-content-chips-fade-right)),
+    transparent 100%
+  );
+}
+
+/* Each edge fades only while chips are hidden past it (`useScrollEdgeFade`),
+   like Today's filter pills. */
+.sb-content-chips[data-fade-left] {
+  --sb-content-chips-fade-left: 1.25rem;
+}
+
+.sb-content-chips[data-fade-right] {
+  --sb-content-chips-fade-right: 1.25rem;
 }
 
 .sb-content-chips::-webkit-scrollbar {
@@ -137,6 +164,14 @@
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+/* The same step up as Today's filter pills. */
+@media (hover: hover) {
+  .sb-content-chip:not(.sb-content-chip-active):hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  }
 }
 
 .sb-content-chip-active {

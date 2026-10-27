@@ -1,4 +1,4 @@
-import { useEffect } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { Annotation } from "../../managers/AnnotationsManager";
@@ -34,6 +34,8 @@ import { MaterialIcon } from "../icons";
 import { Spinner } from "../Spinner/Spinner";
 import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
 import { useI18n } from "../../i18n";
+import { useScrollEdgeFade } from "../useScrollEdgeFade";
+import { useHorizontalScroll } from "../useHorizontalScroll";
 import { UserImagesGrid } from "./UserImages";
 import { CustomizationCard } from "../CustomizationEditPane/CustomizationCard";
 import "./YourContentPane.css";
@@ -542,6 +544,11 @@ export function YourContentPane(props: YourContentScreenProps) {
   } = state;
   const { t } = useI18n();
   const userId = state.login.userId.value;
+  // The filter chips scroll horizontally with the vertical wheel, and fade at
+  // an edge only while chips are hidden past it.
+  const chipsRef = useRef<HTMLDivElement | null>(null);
+  useHorizontalScroll(chipsRef);
+  useScrollEdgeFade(chipsRef);
 
   // Reading plans are still behind a feature flag. With it off the user can't
   // make one, so the chip and the section go too rather than sitting empty.
@@ -800,7 +807,9 @@ export function YourContentPane(props: YourContentScreenProps) {
             ) : null}
           </ContextMenuWithButton>
 
-          <div className="sb-content-chips" role="tablist">
+          <span className="sb-content-toolbar-divider" aria-hidden="true" />
+
+          <div className="sb-content-chips" role="tablist" ref={chipsRef}>
             {contentFilters.map((value) => (
               <button
                 key={value}
