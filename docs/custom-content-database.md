@@ -38,7 +38,7 @@ After: a ministry that sets up a Customization can paste 200 YouTube links into 
 | `extractExplicitRefs` (`packages/transcription/explicit.tsx`), `parseVerseReference*`, `verseReferenceBounds` | Turning "John 3:16-18" text into `{book: "JHN", chapter: 3, verse: 16, endVerse: 18}`, and rejecting impossible references (e.g. "John 30") the AI might produce.                 |
 | `DiscoverManager.registerDiscoverProvider` / `registerContentType`                                            | Showing the content. Each category becomes a Discover content type, so category filter chips come for free.                                                                       |
 | `resolveLinkMedia` + `PlaylistLinkContent`                                                                    | Deciding whether a link is an embeddable video (YouTube/Vimeo), a video file, or a plain link, and opening it in a modal — the same thing `default-content-extension` does today. |
-| `server/index.ts` (Express)                                                                                   | A new small endpoint to fetch link metadata (see §5.2), because browsers can't read most other websites directly.                                                                 |
+| `os.getLinkPreview` + `managers/linkPreview.ts`                                                               | Fetching each link's title, description and image. It's the records server's link preview API that playlists and reading plans already use (see §5.2).                            |
 
 ## 4. Data model
 
@@ -75,6 +75,8 @@ interface ContentLibraryManifest {
   schemaVersion: 1;
   id: string;
   name: string;
+  /** Author given to new items, since link previews don't include one. */
+  defaultAuthor?: string;
   /** The owner's categories. AI suggestions are limited to these. */
   categories: ContentCategory[];
   /**
@@ -107,15 +109,14 @@ interface ContentItem {
   status: "pending" | "needs_review" | "published" | "failed";
   /** What the metadata fetch found. Kept so re-classification doesn't refetch. */
   fetched?: {
-    title?: string;
-    description?: string;
-    image?: string;
-    author?: string;
-    siteName?: string;
+    preview: LinkPreview | null; // from os.getLinkPreview (managers/linkPreview.ts)
     mediaKind: "embed" | "video" | "link"; // from resolveLinkMedia
     fetchedAt: number;
   };
-  /** What the owner sees and can edit. Starts as a copy of `fetched`. */
+  /**
+   * What the owner sees and can edit. Starts from `fetched.preview`; `author`
+   * starts from the manifest's `defaultAuthor`.
+   */
   title: string;
   description: string;
   image?: string;
@@ -208,19 +209,14 @@ Steps 1–4 run in the owner's browser, a few items at a time (proposal: 3 in pa
 
 ### 5.2 Fetch metadata
 
-**The problem:** a web page can't read another website's HTML from the browser — the browser blocks it (CORS) unless that site opts in. Most sites don't.
+Use the records server's existing link preview API, `os.getLinkPreview(url, locale)` in `OsManager`. Playlists and reading plans already use it for their link items, so it already handles the hard parts: the CasualOS server fetches the page (browsers can't read most other sites directly), so we add no fetcher or endpoint of our own, and `toLinkPreview` trims the result and drops unsafe image URLs. Successful lookups are cached for the page load.
 
-**The plan:** two paths.
+It returns `{ title, description, imageUrl, imageAlt, siteName }` from the page's Open Graph tags (the `og:` tags sites publish for link previews). Two gaps to plan around:
 
-1. **Known video sites, straight from the browser.** YouTube and Vimeo both offer public "oEmbed" endpoints that do allow browser requests and return title, author and thumbnail. These cover most of what ministries share, and need no server work.
-2. **Everything else, through a new endpoint on our own server:** `GET /api/link-preview?url=…` in `server/index.ts`. It fetches the page server-side and returns `{ title, description, image, author, siteName, publishedAt }` from the page's Open Graph / Twitter-card / `<title>` / `<meta name="description">` tags. For YouTube it also returns the full video description (oEmbed doesn't), because descriptions often list the passages covered — which makes step 3 much more accurate.
+- **No author field.** For a YouTube video, `siteName` is "YouTube", not the channel. So the item's `author` starts empty, and the library manifest gets an optional `defaultAuthor` (most libraries are one ministry's own content, e.g. "Expedition Bible") that new items inherit. The owner can override it per item.
+- **Descriptions are short.** Open Graph descriptions are usually a summary, capped at 1,000 characters by `toLinkPreview`. A YouTube video's full description, which often lists the passages covered, isn't available. Step 3 therefore finds fewer explicit references than it would with the full text, and the AI does more of the work. If that turns out to matter in practice, the fix belongs in the CasualOS link preview API (e.g. an optional longer description), not in a second fetcher here.
 
-The endpoint must be safe, because it fetches arbitrary URLs on a user's behalf:
-
-- Require a valid CasualOS session (only signed-in owners use it).
-- Block private and internal addresses (localhost, `10.*`, `169.254.*`, etc.) **after** DNS resolution and on every redirect, to prevent server-side request forgery (tricking our server into reading internal services).
-- `http`/`https` only, max 5 redirects, 5-second timeout, read at most 1 MB, only parse `text/html`.
-- Rate limit per user and cache results for a day.
+Imports run a few items at a time (§5) rather than all at once, so a 200-link paste doesn't flood the preview API.
 
 If the fetch fails, the item isn't lost: it goes to `needs_review` with an empty title and the owner fills it in by hand.
 
@@ -339,8 +335,7 @@ All new strings go into `en.json` only.
 | `managers/customContent/schema.ts`                           | zod schemas + types for manifest, item, chapter record (parsed on every read, like `customizationSchema`).                                                                                       |
 | `managers/customContent/chapterIndex.ts`                     | Pure functions: split references into per-chapter entries, compute affected chapters, build a chapter record from items. Most of the unit tests live here.                                       |
 | `managers/customContent/classify.ts`                         | Prompt, `aiChat` call, response parsing and validation.                                                                                                                                          |
-| `managers/customContent/linkMetadata.ts`                     | oEmbed for YouTube/Vimeo, `/api/link-preview` for the rest, URL normalization.                                                                                                                   |
-| `server/linkPreview.ts` (+ route in `server/index.ts`)       | The metadata endpoint with SSRF protection.                                                                                                                                                      |
+| `managers/customContent/linkMetadata.ts`                     | URL normalization and dedupe; wraps `os.getLinkPreview` + `resolveLinkMedia` into an item's `fetched` field.                                                                                     |
 | `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                   |
 | `CustomizationsManager.tsx`                                  | Add optional `contentLibraryId` to the schema and type.                                                                                                                                          |
 
@@ -350,15 +345,14 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 
 - **`chapterIndex`** (pure, no mocks): a cross-chapter range lands in both chapters with correctly clipped verses; a whole-chapter reference gives `verses: []`; moving an item from John 3 to John 4 lists both as affected and removes it from John 3; an empty rebuilt chapter is erased; one item with two categories appears once.
 - **`classify`**: category ids not in the library are dropped; impossible references ("John 30:1") are dropped; explicit references win over AI duplicates; malformed AI output retries once then falls back; owner-sourced references survive re-classify.
-- **`linkMetadata`**: URL normalization dedupes `youtu.be` / `youtube.com/watch` / tracking params; fetch failure yields `needs_review`, not a lost item.
+- **`linkMetadata`** (mock `os.getLinkPreview`): URL normalization dedupes `youtu.be` / `youtube.com/watch` / tracking params; a preview that fails or returns null yields `needs_review` with an empty title, not a lost item; new items inherit the manifest's `defaultAuthor`.
 - **Discover provider** (mock `os.getData`): manifest says empty → no `getData` call; missing record or failed read → `[]` and other providers still answer; results carry the right `contentType` and `verses`; switching Customization unregisters the provider and its content types.
-- **Server endpoint**: rejects `http://localhost`, `http://169.254.169.254`, a public host that redirects to a private address, non-HTML responses, oversized bodies.
 - **Signed-out viewer** opening a customization link sees the content (public-read markers are correct).
 
 ## 10. Rollout
 
-1. **Phase 1 — storage + reading.** Schemas, chapter index builder, Discover provider, and a minimal editor where the owner enters title/URL/categories/references by hand. Proves the per-chapter lookup end to end, with no AI or server work.
-2. **Phase 2 — automatic metadata.** oEmbed for YouTube/Vimeo, then the `/api/link-preview` endpoint; bulk paste and CSV import.
+1. **Phase 1 — storage + reading.** Schemas, chapter index builder, Discover provider, and a minimal editor where the owner enters title/URL/categories/references by hand. Proves the per-chapter lookup end to end, with no AI work.
+2. **Phase 2 — automatic metadata.** Fill items from `os.getLinkPreview`; bulk paste and CSV import.
 3. **Phase 3 — AI classification and review.** `aiChat` classification, review queue, confidence flags, auto-publish setting.
 4. **Phase 4 — polish.** Coverage view, rebuild index, chapter-record paging if real libraries need it.
 
