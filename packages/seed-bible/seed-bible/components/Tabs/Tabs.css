@@ -55,6 +55,14 @@
     margin-top: 0.5rem;
     margin-inline-start: 0.5rem;
   }
+
+  /* Dimmed on the rail (the same strength as the reader's header icons) so
+     they don't compete with the tabs. Opening settings expands the sidebar,
+     so the gear's selected color never needs to show here. */
+  .sb-sidebar-collapse-button,
+  .sb-sidebar-icon-button {
+    color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  }
 }
 
 /* Compact desktop (just above the mobile breakpoint): the row is too narrow
@@ -1342,6 +1350,22 @@
   justify-content: center;
   height: 2rem;
   width: 2rem;
+}
+
+/* The sidebar's edge icons (expand/collapse, settings) grow slightly on
+   hover, like the avatar beside settings, at the reader toolbar icons'
+   scale. Only where hover is real: a touch screen keeps `:hover` on a
+   tapped button, so it would stay enlarged. */
+.sb-sidebar-collapse-button,
+.sb-sidebar-icon-button {
+  transition: transform 0.15s ease;
+}
+
+@media (hover: hover) {
+  .sb-sidebar-collapse-button:hover,
+  .sb-sidebar-icon-button:hover {
+    transform: scale(1.08);
+  }
 }
 
 .sb-sidebar-icon-button path {
