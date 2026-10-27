@@ -2166,7 +2166,8 @@ export function Tabs(props: TabsProps) {
   // hidden from the tab strip.
   const tabs = tabsManager.tabs.value.filter((tab) => !tab.slotOnly);
   const selectedTabId = tabsManager.selectedTabId.value;
-  const panelsEnabled = app.panelsEnabled.value;
+  // Mobile shows one reader at a time, so a tab has no other panel to open in.
+  const panelsEnabled = app.panelsEnabled.value && !app.isMobile.value;
   const isSavesFilterActive = saves.isFilterActive.value;
   const isBookmarksPanelOpen = bookmarks.isPanelOpen.value;
   const { t } = useI18n();

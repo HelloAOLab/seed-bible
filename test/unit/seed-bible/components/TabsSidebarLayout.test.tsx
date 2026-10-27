@@ -630,3 +630,75 @@ describe("Sidebar self avatar", () => {
     ).toBeNull();
   });
 });
+
+describe("tab options menu", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    vi.useFakeTimers();
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+    vi.useRealTimers();
+  });
+
+  /** Renders the sidebar at `width` and returns the first tab's menu labels. */
+  async function tabMenuLabels(width: number) {
+    window.innerWidth = width;
+    const state = await createTestSeedBibleState();
+    state.settings.setDisablePanels(false);
+    // `viewportWidth` seeds from the server's guess, not `window.innerWidth`,
+    // so it's corrected the way the real post-mount effect does.
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    state.sidebar.isSidebarCollapsed.value = false;
+    state.sidebar.isMobileOpen.value = width <= 480;
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const menuButton = container.querySelector<HTMLButtonElement>(
+      ".sb-tab-row [aria-label='Open tab menu']"
+    );
+    expect(menuButton).not.toBeNull();
+    act(() => {
+      menuButton!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    return Array.from(document.querySelectorAll(".sb-tab-menu-item")).map(
+      (item) => item.textContent ?? ""
+    );
+  }
+
+  // Mobile shows one reader at a time, so there's no other panel to open in.
+  it("doesn't offer Open in new panel on mobile", async () => {
+    const labels = await tabMenuLabels(400);
+
+    expect(labels.length).toBeGreaterThan(0);
+    expect(labels.some((label) => label.includes("Open in new panel"))).toBe(
+      false
+    );
+  });
+
+  it("offers Open in new panel on desktop", async () => {
+    const labels = await tabMenuLabels(1280);
+
+    expect(labels.some((label) => label.includes("Open in new panel"))).toBe(
+      true
+    );
+  });
+});
