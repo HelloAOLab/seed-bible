@@ -123,6 +123,10 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                   className="sb-play-playlist-item-button"
                   aria-current={index === currentIndex}
                   onClick={() => {
+                    if (index === currentIndex) {
+                      playlists.showCurrentItem();
+                      return;
+                    }
                     playing.jumpTo(index);
                   }}
                 >

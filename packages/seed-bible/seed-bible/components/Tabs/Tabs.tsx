@@ -17,7 +17,12 @@ import {
   ContextMenuWithButton,
 } from "../../components/ContextMenu/ContextMenu";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import { MaterialIcon, SettingsIcon, StarIcon } from "../../components/icons";
+import {
+  MaterialIcon,
+  SettingsIcon,
+  StarIcon,
+  TodayIcon,
+} from "../../components/icons";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
@@ -381,6 +386,75 @@ function SessionSettingsModalContent(props: {
                 );
               })}
             </div>
+          </div>
+
+          <div className="sb-session-settings-section">
+            <div className="sb-session-settings-label">
+              {t("session-settings-verse-effects", {
+                defaultValue: "Verse selection effects",
+              })}
+            </div>
+
+            <div
+              className="sb-session-settings-duration-options"
+              role="group"
+              aria-label={t("session-settings-verse-effects", {
+                defaultValue: "Verse selection effects",
+              })}
+            >
+              {(
+                [
+                  { value: "hosts-only" },
+                  { value: "everyone" },
+                  { value: "none" },
+                ] as const
+              ).map((option) => {
+                const selected =
+                  options.verseSelectionEffectVisibility === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`sb-session-settings-duration-option${
+                      selected
+                        ? " sb-session-settings-duration-option-selected"
+                        : ""
+                    }`}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      session.updateOptions({
+                        verseSelectionEffectVisibility: option.value,
+                      });
+                    }}
+                  >
+                    {t(
+                      {
+                        "hosts-only":
+                          "session-settings-verse-effects-hosts-only",
+                        everyone: "session-settings-verse-effects-everyone",
+                        none: "session-settings-verse-effects-none",
+                      }[option.value]
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="sb-session-settings-description">
+              {options.verseSelectionEffectVisibility === "hosts-only"
+                ? t("session-settings-verse-effects-desc-hosts", {
+                    defaultValue: "Show effects when a host selects a verse.",
+                  })
+                : options.verseSelectionEffectVisibility === "everyone"
+                  ? t("session-settings-verse-effects-desc-everyone", {
+                      defaultValue: "Show effects when anyone selects a verse.",
+                    })
+                  : t("session-settings-verse-effects-desc-none", {
+                      defaultValue:
+                        "Verse selection effects are turned off for everyone.",
+                    })}
+            </p>
           </div>
         </div>
 
@@ -2067,17 +2141,18 @@ export function Tabs(props: TabsProps) {
         {tabs.map((tab) => {
           const isSelected = tab.id === selectedTabId;
           const shortTitle = tab.readingState.shortTitle.value;
+          const fullTitle = tab.readingState.title.value || shortTitle;
           const session = tab.sharedSession;
           const sessionUsers = session?.connectedUsers.value ?? [];
           const isPlayingAudio = isTabPlayingAudio(state, tab);
           const label =
             session && sessionUsers.length > 0
               ? t("collapsed-tab-shared-label", {
-                  title: shortTitle,
+                  title: fullTitle,
                   count: sessionUsers.length,
                   defaultValue: "{{title}} — shared session, {{count}} present",
                 })
-              : shortTitle;
+              : fullTitle;
 
           return (
             <button
@@ -2089,7 +2164,7 @@ export function Tabs(props: TabsProps) {
               }}
               className={`sb-collapsed-tab-tile${
                 isSelected ? " sb-collapsed-tab-tile-selected" : ""
-              }${session ? " sb-collapsed-tab-tile-shared" : ""}`}
+              }`}
               aria-label={
                 isPlayingAudio
                   ? t("collapsed-tab-playing-label", {
@@ -2098,13 +2173,8 @@ export function Tabs(props: TabsProps) {
                     })
                   : label
               }
-              title={shortTitle}
+              title={fullTitle}
             >
-              {session && (
-                <span className="sb-collapsed-tab-tag">
-                  {t("shared", { defaultValue: "Shared" })}
-                </span>
-              )}
               <span className="sb-collapsed-tab-title">{shortTitle}</span>
               {isPlayingAudio && (
                 <MaterialIcon
@@ -2295,36 +2365,7 @@ export function Tabs(props: TabsProps) {
                   state.today.open();
                 }}
               >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                  <path
-                    d="M9 18H11"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                  <path
-                    d="M15 19L17 21L21 17"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
+                <TodayIcon />
               </button>
 
               <button
@@ -2728,16 +2769,7 @@ export function Sidebar(props: SidebarProps) {
   // an overlay (see Tabs.css). When it does, we render a scrim behind it so
   // that (a) input to the reader below is blocked while the overlay is up and
   // (b) clicking anywhere outside the sidebar collapses it back to the rail.
-  //
-  // Neither is wanted while the Customization Center is open: previewing a
-  // customization means clicking around and selecting verses in the reader
-  // with the editor still open, so the scrim itself is skipped there rather
-  // than just no-op'ing its onClick — a still-present scrim would keep
-  // blocking those clicks from ever reaching the reader.
-  const isOverlay =
-    app.isCompactDesktop.value &&
-    !effectivelyCollapsed &&
-    !sidebar.isCustomizationViewOpen.value;
+  const isOverlay = app.isCompactDesktop.value && !effectivelyCollapsed;
 
   // The guided tour opens the pane-layout menu while its step is active so the
   // layout options are visible behind the coachmark.

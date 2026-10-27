@@ -284,33 +284,7 @@ describe("createSidebar", () => {
     expect(sidebar.isSearchPanelOpen.value).toBe(true);
   });
 
-  it.each(["customizations"] as const)(
-    "isCustomizationViewOpen is true while requestedSettingsView is %s",
-    (view) => {
-      const sidebar = createSidebar({
-        navigation,
-        chatsManager: createChatsManagerMock(),
-      });
-
-      sidebar.requestedSettingsView.value = view;
-
-      expect(sidebar.isCustomizationViewOpen.value).toBe(true);
-    }
-  );
-
-  it("isCustomizationViewOpen is false for other settings views, including when closed", () => {
-    const sidebar = createSidebar({
-      navigation,
-      chatsManager: createChatsManagerMock(),
-    });
-
-    expect(sidebar.isCustomizationViewOpen.value).toBe(false);
-
-    sidebar.requestedSettingsView.value = "display-and-theme";
-    expect(sidebar.isCustomizationViewOpen.value).toBe(false);
-  });
-
-  it("collapseSidebarOverlay() closes settings and collapses the sidebar when the Customization Center isn't open", () => {
+  it("collapseSidebarOverlay() closes settings and collapses the sidebar", () => {
     window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, "false");
     const sidebar = createSidebar({
       navigation,
@@ -330,24 +304,6 @@ describe("createSidebar", () => {
       "false"
     );
   });
-
-  it.each(["customizations"] as const)(
-    "collapseSidebarOverlay() no-ops while requestedSettingsView is %s, so a click on the reader can't close it",
-    (view) => {
-      const sidebar = createSidebar({
-        navigation,
-        chatsManager: createChatsManagerMock(),
-      });
-      sidebar.openSettingsToView(view);
-      sidebar.openSidebar();
-
-      sidebar.collapseSidebarOverlay();
-
-      expect(sidebar.requestedSettingsView.value).toBe(view);
-      expect(sidebar.isMobileOpen.value).toBe(true);
-      expect(sidebar.isSidebarCollapsed.value).toBe(false);
-    }
-  );
 
   it("openChatPanel() calls onOpenChatPanel callback", () => {
     const onOpenChatPanel = vi.fn();

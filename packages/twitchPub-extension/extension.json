@@ -2575,6 +2575,5 @@
       "dragToResize": "hudula ukuze ushintshe usayizi",
       "qrError": "Iphutha le-QR: {{error}}"
     }
-  },
-  "dependencies": ["ext_AI_Transcript"]
+  }
 }

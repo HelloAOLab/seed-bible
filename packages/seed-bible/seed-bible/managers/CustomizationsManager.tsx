@@ -1545,7 +1545,7 @@ export function createCustomizationsManager(
     const variant = buildVariant(preset.name, preset.id);
     const record: SeedBibleCustomization = {
       id: `customization_${uuid()}`,
-      name: `Customization ${customizations.value.length + 1}`,
+      name: `Custom Branding ${customizations.value.length + 1}`,
       variants: [variant],
       defaultVariantId: variant.id,
       logoUrl: null,

@@ -1,6 +1,9 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { createSidebar } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
+import type { ChatsManager } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import { SettingsPage } from "@packages/seed-bible/seed-bible/components/SettingsPage/SettingsPage";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
@@ -50,6 +53,8 @@ function createMockState(userId: string | null): SeedBibleState {
       start: vi.fn(),
     },
     app: {},
+    navigation: { batchWrites: (fn: () => void) => fn() },
+    openProfile: vi.fn(),
   } as unknown as SeedBibleState;
 }
 
@@ -79,17 +84,66 @@ describe("SettingsMainView", () => {
       (el) => el.textContent
     );
 
-  it("hides the Customize nav item when the user is signed out", () => {
-    renderMain(null);
+  it("has no Customize nav item, even when signed in", () => {
+    renderMain("user-1");
 
     expect(navLabels()).not.toContain("Customize");
   });
 
-  it("shows the Customize nav item when the user is signed in", () => {
-    renderMain("user-1");
+  it("opens the full-screen Profile screen from Account", () => {
+    const state = renderMain("user-1");
+    const accountButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-settings-nav-item")
+    ).find((button) => button.textContent?.includes("Account"))!;
 
-    expect(navLabels()).toContain("Customize");
+    act(() => {
+      accountButton.click();
+    });
+
+    expect(state.openProfile).toHaveBeenCalled();
+    expect(state.sidebar.closeSettings).toHaveBeenCalled();
   });
+
+  it("opening Profile from Account adds a single history entry", () => {
+    const navigation = createNavigationManager();
+    const sidebar = createSidebar({
+      chatsManager: { isOpen: signal(false) } as unknown as ChatsManager,
+      navigation,
+    });
+    const profileOpen = signal<string | null>(null);
+    const stopSyncingProfile = navigation.syncSignalsToUrl({
+      profile: profileOpen,
+    });
+    const state = {
+      ...createMockState("user-1"),
+      navigation,
+      sidebar,
+      openProfile: () => (profileOpen.value = "open"),
+    } as unknown as SeedBibleState;
+
+    try {
+      act(() => {
+        sidebar.openSettings();
+        render(<SettingsPage state={state} />, container);
+      });
+      const historyLengthBefore = window.history.length;
+
+      const accountButton = Array.from(
+        container.querySelectorAll<HTMLButtonElement>(".sb-settings-nav-item")
+      ).find((button) => button.textContent?.includes("Account"))!;
+      act(() => {
+        accountButton.click();
+      });
+
+      expect(window.history.length).toBe(historyLengthBefore + 1);
+      expect(window.location.search).toBe("?profile=open");
+    } finally {
+      stopSyncingProfile();
+      navigation.dispose();
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  });
+
   it("hides the About nav item when disabledSettings includes about-seed-bible", () => {
     const state = createMockState("user-1");
 

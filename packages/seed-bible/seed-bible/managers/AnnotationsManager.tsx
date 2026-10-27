@@ -160,6 +160,13 @@ export interface AnnotationsManager {
   deleteAnnotationAndRefresh: (annotation: Annotation) => Promise<void>;
 
   /**
+   * Saves an annotation (upsert) and updates the chapter cache, so it shows
+   * up on screen without a reload. Unlike `saveEditingAnnotation`, it leaves
+   * the editing draft and the Discover view alone. Rethrows on failure.
+   */
+  saveAnnotationAndRefresh: (annotation: Annotation) => Promise<Annotation>;
+
+  /**
    * True when a `recordOverride` was passed to `createAnnotationsManager`,
    * so annotations are being read/written against that record instead of
    * the signed-in account's own. The UI uses this to show a banner letting
@@ -1536,6 +1543,16 @@ export function createAnnotationsManager(
     leaveAnnotationEditor();
   };
 
+  const saveAnnotationAndRefresh = async (
+    annotation: Annotation
+  ): Promise<Annotation> => {
+    // Captured before awaiting, for the same reason as `saveEditingAnnotation`.
+    const recordId = effectiveRecordId();
+    const saved = await saveAnnotation(annotation);
+    upsertIntoCache(saved, recordId);
+    return saved;
+  };
+
   const deleteAnnotationAndRefresh = async (
     annotation: Annotation
   ): Promise<void> => {
@@ -1550,6 +1567,7 @@ export function createAnnotationsManager(
 
   const manager: AnnotationsManager = {
     saveAnnotation,
+    saveAnnotationAndRefresh,
     deleteAnnotation,
     listAnnotationsForChapter,
     listAllAnnotations,

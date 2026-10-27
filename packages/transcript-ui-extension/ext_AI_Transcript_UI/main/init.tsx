@@ -1,6 +1,6 @@
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
-import { createTranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
+import { createTranscriptionManager } from "@seed-bible/transcription/transcriptionManager";
 import { App } from "./App";
 import { ManagerProvider } from "./context";
 import type { Pane } from "seed-bible/managers";

@@ -6,6 +6,35 @@ import type { LoginManager } from "../managers/LoginManager";
 import { addTranslations, i18n } from "../i18n/I18nManager";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
+  createSandboxStorage,
+  type SandboxStorage,
+  type SandboxStorageRecords,
+} from "./ExtensionSandboxStorage";
+import {
+  activeGrant,
+  extensionSource,
+  mergeExtensionGrants,
+  missingFromGrant,
+  parseExtensionGrants,
+  parseSandboxManifest,
+  sourcedExtensionId,
+  splitSourcedExtensionId,
+  type ExtensionGrants,
+  type SandboxConsentHandler,
+  type SandboxConsentRequest,
+  type SandboxUploader,
+} from "./ExtensionPermissions";
+import type { CasualOSManager } from "./OsManager";
+import {
+  SANDBOX_PERMISSION_INFO,
+  type SandboxPermission,
+} from "../extensions/protocol";
+import {
+  fetchSandboxBundle,
+  startSandboxSession,
+  type SandboxFrameConnector,
+} from "./ExtensionSandboxManager";
+import {
   getProfileConfigValue,
   saveProfileConfigValue,
   saveProfileConfigValues,
@@ -109,10 +138,49 @@ export interface ExtensionMeta {
    * both reach `api.example.com` on the same request.
    */
   sensitive?: Record<string, ExtensionSensitiveProxyDefinition>;
+
+  /**
+   * Sandboxed (URL-loaded) extensions only: this version's number, recorded
+   * with the user's grant.
+   */
+  version?: string;
+
+  /**
+   * Sandboxed extensions only: the permissions it needs (see
+   * `SANDBOX_PERMISSIONS`). The user approves all of them at install.
+   */
+  permissions?: string[];
+
+  /**
+   * Sandboxed extensions only: permissions it may ask for later, when the
+   * feature that needs one is used (`sb.permissions.request`). The install
+   * dialog mentions them without granting them.
+   */
+  optionalPermissions?: string[];
+
+  /**
+   * Sandboxed extensions only: every host its frames may contact, like
+   * `api.example.com`. Enforced by the frames' Content Security Policy.
+   */
+  network?: string[];
+
+  /**
+   * Sandboxed extensions only, and required for them: the bundle's hash
+   * (`sha384-…`, as in HTML's `integrity` attribute), so the code that runs
+   * is the code the user agreed to.
+   */
+  integrity?: string;
+
+  /**
+   * A link to a square image standing for the extension, shown in place of
+   * its initials. In a fetched `ExtensionSet` it may be relative to the set,
+   * and only an https: link (or http://localhost while developing) is kept.
+   */
+  icon?: string;
 }
 
 /**
- * Renders an extension's own custom content for its "Configure" button in
+ * Renders an extension's own custom content for its Settings tab in
  * Settings → Extensions, in place of the generic scalar `ExtensionSettingsForm`
  * built from `ExtensionMeta.settings`. For settings that can't be expressed as
  * flat string/boolean/number values (e.g. a repeating list, or a field that
@@ -124,9 +192,15 @@ export type ExtensionSettingsPanelRenderer = () => ComponentChildren;
 
 export type Extension = UploadedExtension | ImportExtension;
 
+/**
+ * A third-party extension, loaded from a URL. It always runs sandboxed (see
+ * `ExtensionSandboxManager.tsx`), behind the permissions the user grants:
+ * where an extension comes from decides how much it's trusted, never
+ * anything it says about itself.
+ */
 export interface UploadedExtension {
   /**
-   * The URL of the extension to load.
+   * The URL of the extension's bundle, built with `seed-bible/extensions`.
    */
   url: string;
 
@@ -145,6 +219,11 @@ export interface UploadedExtension {
   loadFullTranslations?: () => Promise<ExtensionMeta["translations"]>;
 }
 
+/**
+ * An extension compiled into the app from this repository (see
+ * `vite-plugin-extensions.ts`). It runs in the page with the full
+ * `SeedBibleState`; reviewing it in a pull request is what makes that safe.
+ */
 export interface ImportExtension {
   /**
    * The function to dynamically import the extension module. The resolved
@@ -175,7 +254,7 @@ export interface ImportExtension {
  * this function triggers the extension's registration (typically via a
  * `registerExtension(...)` call). It must be safe to call more than once per
  * page load: native ES module evaluation is cached per specifier, so after
- * `unloadExtension()` a later `loadExtension()`/`loadExtensionFromUrl()` call
+ * `unloadExtension()` a later `loadExtension()` call
  * re-invokes this cached function reference rather than re-running the
  * module's top-level code.
  */
@@ -268,14 +347,7 @@ export class ExtensionInitalizer {
       return false;
     }
 
-    const cleanupFunctions = this.extensionCleanupFunctions.get(id) ?? [];
-    for (const cleanup of cleanupFunctions) {
-      try {
-        cleanup();
-      } catch (err) {
-        console.error(`Error during cleanup of extension '${id}':`, err);
-      }
-    }
+    this.runCleanupFunctions(id, this.extensionCleanupFunctions.get(id) ?? []);
     this.extensionCleanupFunctions.delete(id);
     this.registeredExtensions.delete(id);
     this.initializedExtensionIds.delete(id);
@@ -368,12 +440,12 @@ export class ExtensionInitalizer {
 
     this.initializedExtensionIds.add(id);
 
+    const cleanupFunctions: CleanupFunction[] = [];
     try {
       const cleanupIteratorOrReturn = extension.init(
         this.extensionContext,
         dependencyExports
       );
-      const cleanupFunctions: CleanupFunction[] = [];
       if (Symbol.iterator in cleanupIteratorOrReturn) {
         const iterator = cleanupIteratorOrReturn[Symbol.iterator]();
         while (true) {
@@ -402,7 +474,20 @@ export class ExtensionInitalizer {
       this.initializedExtensionIds.delete(id);
       initializationStack.delete(id);
       console.error(`Failed to initialize extension '${id}'.`, error);
+      // Undo what the half-finished `init` already set up, as an uninstall
+      // would, so a retry doesn't stack a second copy on top of it.
+      this.runCleanupFunctions(id, cleanupFunctions);
       return false;
+    }
+  }
+
+  private runCleanupFunctions(id: string, cleanupFunctions: CleanupFunction[]) {
+    for (const cleanup of cleanupFunctions) {
+      try {
+        cleanup();
+      } catch (err) {
+        console.error(`Error during cleanup of extension '${id}':`, err);
+      }
     }
   }
 
@@ -452,6 +537,92 @@ export interface ExtensionManagerOptions {
    * Defaults to no extensions.
    */
   defaultExtensions?: ExtensionSet | null;
+
+  /**
+   * Asks the user whether to grant a sandboxed extension what it needs.
+   * Without one, sandboxed extensions can only load with a grant the user
+   * already gave.
+   */
+  requestSandboxConsent?: SandboxConsentHandler;
+
+  /** Replaces the iframes sandboxed extensions run in; for tests. */
+  sandboxFrameConnector?: SandboxFrameConnector;
+
+  /** How often sandboxed extensions are checked on; for tests. */
+  sandboxHeartbeatIntervalMs?: number;
+
+  /**
+   * Where sandboxed extensions' `sb.storage` is synced, for a signed-in
+   * user (the app passes its `CasualOSManager`). Without it, storage stays
+   * on the device.
+   */
+  records?: SandboxStorageRecords;
+
+  /** How long storage writes are batched before they're synced; for tests. */
+  sandboxStoragePushDelayMs?: number;
+
+  /**
+   * Tells which bundles were uploaded to Seed Bible's own storage, so their
+   * uploader can be named instead of the storage's host (the app passes its
+   * `CasualOSManager`).
+   */
+  fileRecords?: Pick<CasualOSManager, "getFileRecordName">;
+}
+
+/** What a running sandboxed extension may do, as Settings shows it. */
+export interface SandboxPermissionSummary {
+  required: SandboxPermission[];
+  optional: SandboxPermission[];
+  /** What the user has granted (required ones included). */
+  granted: SandboxPermission[];
+  network: string[];
+  version: string | null;
+  sourceHost: string;
+  uploader?: SandboxUploader;
+}
+
+/**
+ * Whether an extension runs sandboxed: every URL-loaded one does. Only
+ * extensions compiled into the app from this repository run in the page.
+ */
+export function isSandboxedExtension(
+  extension: Extension
+): extension is UploadedExtension {
+  return "url" in extension && typeof extension.url === "string";
+}
+
+/**
+ * The extension with a third-party one's id prefixed by its source (see
+ * `sourcedExtensionId`), so it can't share an id with an extension built
+ * into the app or published from anywhere else. Null, with a warning, for one
+ * whose URL isn't valid. Returns the same object when nothing changes.
+ */
+function withSourcedId<T extends Extension>(extension: T): T | null {
+  if (!isSandboxedExtension(extension)) {
+    return extension;
+  }
+  let id: string;
+  try {
+    id = sourcedExtensionId(extension.url, extension.meta.id);
+  } catch {
+    console.warn(
+      `Ignoring extension '${extension.meta.id}': '${extension.url}' is not a valid URL.`
+    );
+    return null;
+  }
+  return id === extension.meta.id
+    ? extension
+    : { ...extension, meta: { ...extension.meta, id } };
+}
+
+/** `withSourcedId` for each of a set's extensions. */
+function withSourcedIds(set: ExtensionSet): ExtensionSet {
+  const extensions = set.extensions
+    .map(withSourcedId)
+    .filter((extension): extension is Extension => extension !== null);
+  return extensions.every((extension, i) => extension === set.extensions[i])
+    ? set
+    : { ...set, extensions };
 }
 
 /**
@@ -467,6 +638,134 @@ function isExtensionModule(value: unknown): value is ExtensionModule {
     value !== null &&
     "default" in value &&
     typeof (value as { default: unknown }).default === "function"
+  );
+}
+
+/**
+ * Runtime type guard for `ExtensionTranslation`, used by `isExtensionMeta`.
+ */
+function isExtensionTranslation(value: unknown): value is ExtensionTranslation {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Partial<ExtensionTranslation>).title === "string" &&
+    typeof (value as Partial<ExtensionTranslation>).description === "string"
+  );
+}
+
+/**
+ * Runtime type guard for `ExtensionMeta`, used by `isUploadedExtension`.
+ */
+function isExtensionMeta(value: unknown): value is ExtensionMeta {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const meta = value as Partial<ExtensionMeta>;
+  if (typeof meta.id !== "string") {
+    return false;
+  }
+  if (
+    typeof meta.translations !== "object" ||
+    meta.translations === null ||
+    !isExtensionTranslation(meta.translations.en)
+  ) {
+    return false;
+  }
+  if (
+    meta.dependencies !== undefined &&
+    (!Array.isArray(meta.dependencies) ||
+      !meta.dependencies.every((dep) => typeof dep === "string"))
+  ) {
+    return false;
+  }
+  if (meta.autoinstall !== undefined && typeof meta.autoinstall !== "boolean") {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Runtime type guard for `UploadedExtension` — the only `Extension` variant
+ * that can survive a round-trip through `JSON.parse` (`ImportExtension.import`
+ * is a function, which JSON can never carry), so this is what a fetched
+ * `ExtensionSet`'s entries are checked against.
+ */
+function isUploadedExtension(value: unknown): value is UploadedExtension {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Partial<UploadedExtension>).url === "string" &&
+    isExtensionMeta((value as Partial<UploadedExtension>).meta)
+  );
+}
+
+/**
+ * Runtime type guard for a fetched `ExtensionSet`. Used by
+ * `discoverExtensionSet` to validate arbitrary JSON from a URL before
+ * tracking it — `loadListTranslations` isn't checked since it's
+ * function-valued and can never appear in real JSON, so a fetched set simply
+ * never has it.
+ */
+/**
+ * Where an `ExtensionSet` may be fetched from: anywhere over HTTPS, or a
+ * local development server (see `seed-bible-extension-scripts dev`).
+ */
+export function isExtensionSetUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" ||
+      (url.protocol === "http:" &&
+        ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname))
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * `meta` with its icon resolved against the set it came from, or without
+ * one when it isn't a link Seed Bible will show.
+ */
+function withResolvedIcon(meta: ExtensionMeta, setUrl: string): ExtensionMeta {
+  const { icon, ...rest } = meta;
+  if (typeof icon !== "string") {
+    return rest;
+  }
+  try {
+    const resolved = new URL(icon, setUrl).href;
+    return isExtensionSetUrl(resolved) ? { ...rest, icon: resolved } : rest;
+  } catch {
+    return rest;
+  }
+}
+
+/**
+ * `seed-bible-extension-scripts publish` keeps a set in a CasualOS data
+ * record, so republishing updates it at the same link. Reading a record
+ * over HTTP answers with the record wrapped in a result object.
+ */
+function unwrapRecordData(url: string, body: unknown): unknown {
+  if (
+    new URL(url).pathname === "/api/v2/records/data" &&
+    typeof body === "object" &&
+    body !== null &&
+    (body as { success?: unknown }).success === true
+  ) {
+    return (body as { data?: unknown }).data;
+  }
+  return body;
+}
+
+function isExtensionSet(value: unknown): value is ExtensionSet {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const set = value as Partial<ExtensionSet>;
+  return (
+    typeof set.id === "string" &&
+    Array.isArray(set.extensions) &&
+    set.extensions.every(isUploadedExtension)
   );
 }
 
@@ -641,7 +940,7 @@ export function createExtensionManager(
   // so skipped the viewer's own defaults, which leaving it still owes them.
   let skippedDefaultLoad = false;
 
-  // Custom "Configure" panels extensions register for themselves, keyed by
+  // Custom settings panels extensions register for themselves, keyed by
   // extension id. Kept here (rather than on `ExtensionSettingsManager`) since
   // it's a property of the extension itself, like `meta.settings` — not of
   // any one viewer's saved values.
@@ -876,9 +1175,84 @@ export function createExtensionManager(
     saveProfileConfigValue(login, AUTOINSTALL_HANDLED_CONFIG_KEY, [...ids]);
   };
 
+  /**
+   * Where each installed third-party extension came from: the URL of the
+   * `ExtensionSet` it was discovered in, by extension id. The app's own set
+   * is always loaded, but a discovered one is forgotten on reload, so
+   * without this an installed extension would be skipped as unknown the
+   * next time the page loads. Kept on the device and in the profile config,
+   * like the installed ids themselves.
+   */
+  const EXTENSION_SOURCES_STORAGE_KEY = "sb-extension-sources";
+  const EXTENSION_SOURCES_CONFIG_KEY = "extensionSources";
+
+  /** The set each discovered extension was found in, this visit. */
+  const discoveredSetUrlById = new Map<string, string>();
+
+  const parseExtensionSources = (value: unknown): Record<string, string> => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return {};
+    }
+    return Object.fromEntries(
+      Object.entries(value).filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string"
+      )
+    );
+  };
+
+  const readExtensionSources = (): Record<string, string> => {
+    let local: Record<string, string> = {};
+    try {
+      const raw = safeLocalStorage.getItem(EXTENSION_SOURCES_STORAGE_KEY);
+      local = raw ? parseExtensionSources(JSON.parse(raw)) : {};
+    } catch (err) {
+      console.error("Failed to read extension sources:", err);
+    }
+    return {
+      ...local,
+      ...parseExtensionSources(
+        getProfileConfigValue(login.profile.value, EXTENSION_SOURCES_CONFIG_KEY)
+      ),
+    };
+  };
+
+  const writeExtensionSources = (sources: Record<string, string>) => {
+    try {
+      safeLocalStorage.setItem(
+        EXTENSION_SOURCES_STORAGE_KEY,
+        JSON.stringify(sources)
+      );
+    } catch (err) {
+      console.error("Failed to persist extension sources:", err);
+    }
+    if (login.userId.peek()) {
+      saveProfileConfigValue(login, EXTENSION_SOURCES_CONFIG_KEY, sources);
+    }
+  };
+
+  /** Remembers, or forgets, where an extension came from. */
+  const updateExtensionSource = (id: string, url: string | null) => {
+    const sources = readExtensionSources();
+    if ((sources[id] ?? null) === url) {
+      return;
+    }
+    if (url) {
+      sources[id] = url;
+    } else {
+      delete sources[id];
+    }
+    writeExtensionSources(sources);
+  };
+
   /** Records that the extension with the given ID has been installed. */
   const persistInstalledExtensionId = (id: string): void | Promise<void> => {
     const now = Date.now();
+    const discoveredAt = discoveredSetUrlById.get(id);
+    if (discoveredAt) {
+      void Promise.resolve(awaitProfileLoaded()).then(() =>
+        updateExtensionSource(id, discoveredAt)
+      );
+    }
     const ids = readPersistedExtensionIds();
     if (!ids.has(id)) {
       ids.add(id);
@@ -919,6 +1293,9 @@ export function createExtensionManager(
   /** Removes the extension with the given ID from the persisted set. */
   const forgetInstalledExtensionId = (id: string): void | Promise<void> => {
     const now = Date.now();
+    void Promise.resolve(awaitProfileLoaded()).then(() =>
+      updateExtensionSource(id, null)
+    );
     const ids = readPersistedExtensionIds();
     if (ids.delete(id)) {
       writePersistedExtensionIds(ids);
@@ -951,7 +1328,7 @@ export function createExtensionManager(
    * with the given ID, so `loadDefaultExtensions` won't force-reinstall it
    * again on a later load. Used directly (rather than via the batch write in
    * `loadDefaultExtensions`) by `unloadExtension`, since extensions that are
-   * only ever force-installed as a dependency (e.g. `seed-bible-utils`) never
+   * only ever force-installed as a dependency never
    * carry `autoinstall: true` themselves and so never pass through that
    * batch write at all — this is the only place their uninstall gets
    * recorded into the handled set.
@@ -1117,35 +1494,386 @@ export function createExtensionManager(
   // };
 
   /**
-   * Loads the given extension package by installing it from the provided record name and address. If the installation is successful, the extension ID will be added to the set of installed extensions and an "onExtensionInstalled" event will be shouted with the extension ID as a parameter.
-   * @param id The ID of the extension to install.
-   * @param url The URL of the extension package to install.
+   * The localStorage key and profile config key under which the user's
+   * grants to sandboxed extensions are kept, so an installed extension
+   * reloads without asking again, on this device and on others.
    */
-  const loadExtensionFromUrl = async (id: string, url: string) => {
-    if (isSatisfiedDependency(id)) {
-      return true;
-    }
+  const EXTENSION_GRANTS_STORAGE_KEY = "sb-extension-grants";
+  const EXTENSION_GRANTS_CONFIG_KEY = "extensionGrants";
 
+  const readExtensionGrants = async (): Promise<ExtensionGrants> => {
+    await awaitProfileLoaded();
+    let local: ExtensionGrants = {};
     try {
-      const mod: unknown = await import(/** @vite-ignore */ url);
-      if (!isExtensionModule(mod)) {
-        refreshExtensionsSignal();
-        console.error(
-          `Failed to install extension '${id}': the module at '${url}' does not \`export default\` a function. Extensions must export a default function that triggers registration when called.`
-        );
-        return false;
-      }
-      await mod.default();
-      installedExtensionIds.add(id);
-      refreshExtensionsSignal();
-      // shout("onExtensionInstalled", id);
-      console.log(`Successfully installed extension: ${id}`);
-      return true;
+      local = parseExtensionGrants(
+        JSON.parse(
+          safeLocalStorage.getItem(EXTENSION_GRANTS_STORAGE_KEY) ?? "{}"
+        )
+      );
     } catch (err) {
-      refreshExtensionsSignal();
-      console.error("Failed to install extension:", id, err);
+      console.error("Failed to read extension grants:", err);
+    }
+    const profile = parseExtensionGrants(
+      getProfileConfigValue(login.profile.value, EXTENSION_GRANTS_CONFIG_KEY)
+    );
+    return mergeExtensionGrants(local, profile);
+  };
+
+  const saveExtensionGrant = async (
+    id: string,
+    entry: ExtensionGrants[string]
+  ) => {
+    const grants = { ...(await readExtensionGrants()), [id]: entry };
+    try {
+      safeLocalStorage.setItem(
+        EXTENSION_GRANTS_STORAGE_KEY,
+        JSON.stringify(grants)
+      );
+    } catch (err) {
+      console.error("Failed to persist extension grants:", err);
+    }
+    await saveProfileConfigValue(login, EXTENSION_GRANTS_CONFIG_KEY, grants);
+  };
+
+  /** What each running sandboxed extension may do, for Settings. */
+  const sandboxPermissionsSignal = signal<
+    Record<string, SandboxPermissionSummary>
+  >({});
+  const sandboxedExtensions = new Map<
+    string,
+    { setGranted: (granted: SandboxPermission[]) => Promise<void> }
+  >();
+  // Each extension's `sb.storage`, kept across restarts (a Settings change)
+  // so writes waiting to sync aren't dropped.
+  const sandboxStorages = new Map<string, SandboxStorage>();
+
+  const storageFor = (id: string) => {
+    let storage = sandboxStorages.get(id);
+    if (!storage) {
+      storage = createSandboxStorage({
+        extensionId: id,
+        login,
+        records: options.records,
+        pushDelayMs: options.sandboxStoragePushDelayMs,
+      });
+      sandboxStorages.set(id, storage);
+    }
+    return storage;
+  };
+
+  /**
+   * Stops a sandboxed extension without uninstalling it. Its storage stops
+   * syncing once anything waiting has been sent.
+   */
+  const stopSandboxedExtension = (id: string) => {
+    const storage = sandboxStorages.get(id);
+    sandboxStorages.delete(id);
+    void storage?.dispose();
+    sandboxedExtensions.delete(id);
+    const { [id]: _removed, ...rest } = sandboxPermissionsSignal.peek();
+    sandboxPermissionsSignal.value = rest;
+    unregisterExtension(id);
+  };
+
+  /**
+   * Grants or takes back one of a running sandboxed extension's optional
+   * permissions, as the user chose in Settings, and restarts it so it runs
+   * with exactly that set. Required permissions can't be taken back short
+   * of uninstalling. Taking one back also takes back anything that includes
+   * it (taking back reading highlights takes back writing them too).
+   * Resolves false if there's nothing to change.
+   */
+  const setOptionalPermission = async (
+    id: string,
+    permission: SandboxPermission,
+    enabled: boolean
+  ): Promise<boolean> => {
+    const summary = sandboxPermissionsSignal.peek()[id];
+    const running = sandboxedExtensions.get(id);
+    if (!summary || !running || !summary.optional.includes(permission)) {
       return false;
     }
+    const next = enabled
+      ? [...new Set([...summary.granted, permission])]
+      : summary.granted.filter(
+          (p) =>
+            p !== permission &&
+            !(SANDBOX_PERMISSION_INFO[p].implies ?? []).includes(permission)
+        );
+    if (
+      next.length === summary.granted.length &&
+      next.every((p) => summary.granted.includes(p))
+    ) {
+      return false;
+    }
+    await running.setGranted(next);
+    return true;
+  };
+
+  // One consent dialog at a time, in the order they were asked for.
+  let consentQueue: Promise<unknown> = Promise.resolve();
+  /**
+   * Who uploaded a bundle in Seed Bible's own storage, which names the
+   * account it's stored under. Undefined for one hosted anywhere else, or
+   * when that can't be told; the host is shown instead.
+   */
+  const describeUploader = async (
+    url: string
+  ): Promise<SandboxUploader | undefined> => {
+    if (!options.fileRecords) {
+      return undefined;
+    }
+    try {
+      const recordName = await options.fileRecords.getFileRecordName(url);
+      if (!recordName) {
+        return undefined;
+      }
+      const profile = await login.getPublicProfile(recordName).catch((err) => {
+        console.warn(`Could not load the profile for ${recordName}:`, err);
+        return null;
+      });
+      return {
+        userId: recordName,
+        name: profile?.name?.trim() || null,
+        pictureUrl: profile?.pictureUrl || null,
+      };
+    } catch (err) {
+      console.warn(`Could not tell who uploaded '${url}':`, err);
+      return undefined;
+    }
+  };
+
+  const askSandboxConsent: SandboxConsentHandler = (request) => {
+    const handler = options.requestSandboxConsent;
+    if (!handler) {
+      console.error(
+        `Can't install extension '${request.extensionId}': there's no way to ask for its permissions here.`
+      );
+      return Promise.resolve(false);
+    }
+    const answer = consentQueue.then(() => handler(request));
+    consentQueue = answer.catch(() => {});
+    return answer.catch((err) => {
+      console.error("The extension consent dialog failed:", err);
+      return false;
+    });
+  };
+
+  /**
+   * Installs a URL-loaded extension into its sandbox: checks its manifest,
+   * downloads and verifies its bundle, asks the user for whatever an earlier
+   * grant doesn't cover, and registers it so the usual install/uninstall
+   * bookkeeping applies. Its `init` starts the sandbox session; uninstalling
+   * runs the session's cleanup, which removes everything it registered.
+   */
+  const installSandboxedExtension = async (
+    uploaded: UploadedExtension,
+    translations: ExtensionMeta["translations"]
+  ): Promise<boolean> => {
+    const extensionId = uploaded.meta.id;
+    const fail = (reason: unknown) => {
+      console.error(`Failed to install extension '${extensionId}':`, reason);
+      refreshExtensionsSignal();
+      return false;
+    };
+    if (typeof document === "undefined") {
+      return false;
+    }
+    const parsed = parseSandboxManifest(uploaded.meta);
+    if (!parsed.ok) {
+      return fail(parsed.error);
+    }
+    const { manifest } = parsed;
+
+    let source: string;
+    let sourceHost: string;
+    try {
+      source = extensionSource(uploaded.url);
+      sourceHost = new URL(uploaded.url).host;
+    } catch {
+      return fail(`'${uploaded.url}' is not a valid URL.`);
+    }
+
+    // Looked up alongside the bundle, and only waited for to ask the user.
+    const uploaderPromise = describeUploader(uploaded.url);
+    let uploader: SandboxUploader | undefined;
+
+    let code: string;
+    try {
+      code = await fetchSandboxBundle(uploaded.url, manifest.integrity);
+    } catch (err) {
+      return fail(err);
+    }
+
+    const translation = translations[i18n.language] ?? translations.en;
+    const consentBase = {
+      extensionId,
+      title: translation.title,
+      description: translation.description,
+      sourceHost,
+      version: manifest.version,
+      icon: uploaded.meta.icon,
+    };
+    const askConsent = async (
+      request: Omit<SandboxConsentRequest, keyof typeof consentBase>
+    ) =>
+      askSandboxConsent({
+        ...consentBase,
+        uploader: await uploaderPromise,
+        ...request,
+      });
+    const previous = activeGrant((await readExtensionGrants())[extensionId]);
+    const missing = missingFromGrant(previous, manifest, source);
+    // Optional permissions the user granted before, that this version still
+    // lists. An update keeps them; one from another source has none.
+    const keptOptional =
+      previous?.source === source
+        ? manifest.optionalPermissions.filter((p) =>
+            previous.permissions.includes(p)
+          )
+        : [];
+    let granted: SandboxPermission[] = [
+      ...manifest.permissions,
+      ...keptOptional,
+    ];
+    if (
+      !previous ||
+      previous.source !== source ||
+      missing.permissions.length > 0 ||
+      missing.network.length > 0
+    ) {
+      const agreed = await askConsent({
+        reason: previous?.source === source ? "update" : "install",
+        permissions: manifest.permissions,
+        network: manifest.network,
+        newPermissions: missing.permissions,
+        newNetwork: missing.network,
+        optionalPermissions: manifest.optionalPermissions.filter(
+          (p) => !keptOptional.includes(p)
+        ),
+      });
+      if (!agreed) {
+        console.info(`Installing extension '${extensionId}' was declined.`);
+        refreshExtensionsSignal();
+        return false;
+      }
+      await saveExtensionGrant(extensionId, {
+        permissions: granted,
+        network: manifest.network,
+        version: manifest.version,
+        source,
+        grantedAtMs: Date.now(),
+      });
+    }
+
+    /**
+     * Asks the user for optional permissions the running extension wants,
+     * and adds them to its saved grant if they agree.
+     */
+    const requestPermissions = async (
+      permissions: SandboxPermission[]
+    ): Promise<boolean> => {
+      const agreed = await askConsent({
+        reason: "request",
+        permissions,
+        network: [],
+        newPermissions: permissions,
+        newNetwork: [],
+        optionalPermissions: [],
+        alreadyAllowed: { permissions: granted, network: manifest.network },
+      });
+      // Uninstalled while the dialog was open: nothing left to grant to.
+      if (!agreed || !installedExtensionIds.has(extensionId)) {
+        return false;
+      }
+      granted = [...new Set([...granted, ...permissions])];
+      await saveGranted();
+      return true;
+    };
+
+    const saveGranted = async () => {
+      const current = activeGrant((await readExtensionGrants())[extensionId]);
+      await saveExtensionGrant(extensionId, {
+        permissions: granted,
+        network: current?.network ?? manifest.network,
+        version: current?.version ?? manifest.version,
+        source: current?.source ?? source,
+        grantedAtMs: Date.now(),
+      });
+      publishPermissions();
+    };
+
+    const publishPermissions = () => {
+      sandboxPermissionsSignal.value = {
+        ...sandboxPermissionsSignal.peek(),
+        [extensionId]: {
+          required: manifest.permissions,
+          optional: manifest.optionalPermissions,
+          granted,
+          network: manifest.network,
+          version: manifest.version,
+          sourceHost,
+          uploader,
+        },
+      };
+    };
+
+    // Settings shows the host until the uploader is known.
+    void uploaderPromise.then((found) => {
+      uploader = found;
+      if (found && sandboxPermissionsSignal.peek()[extensionId]) {
+        publishPermissions();
+      }
+    });
+
+    const start = () =>
+      registerExtension({
+        id: extensionId,
+        init: function* (context: SeedBibleState) {
+          const session = startSandboxSession({
+            extensionId,
+            title: translation.title,
+            translations,
+            granted,
+            optional: manifest.optionalPermissions,
+            requestPermissions,
+            network: manifest.network,
+            code,
+            context,
+            connector: options.sandboxFrameConnector,
+            storage: storageFor(extensionId),
+            heartbeatIntervalMs: options.sandboxHeartbeatIntervalMs,
+            // Stopped for the rest of the visit, but still installed: the
+            // next page load starts it again.
+            onUnresponsive: () => {
+              context.app.toast(
+                context.i18n.t("extension-stopped-responding", {
+                  name: translation.title,
+                })
+              );
+              stopSandboxedExtension(extensionId);
+            },
+          });
+          yield () => session.destroy();
+          return {};
+        },
+      });
+
+    sandboxedExtensions.set(extensionId, {
+      setGranted: async (next) => {
+        granted = next;
+        await saveGranted();
+        // Restarted, so every frame starts over with exactly the new set.
+        unregisterExtension(extensionId);
+        start();
+      },
+    });
+    publishPermissions();
+    start();
+    installedExtensionIds.add(extensionId);
+    refreshExtensionsSignal();
+    console.log(`Successfully installed sandboxed extension: ${extensionId}`);
+    return true;
   };
 
   /**
@@ -1158,6 +1886,11 @@ export function createExtensionManager(
     installStack: Set<string> = new Set(),
     options?: { persist?: boolean }
   ) => {
+    const sourced = withSourcedId(uploaded);
+    if (!sourced) {
+      return false;
+    }
+    uploaded = sourced;
     const extensionId = uploaded.meta.id;
     knownExtensionsById.set(extensionId, uploaded);
     refreshExtensionsSignal();
@@ -1179,6 +1912,19 @@ export function createExtensionManager(
       }
 
       installStack.add(extensionId);
+
+      if (isSandboxedExtension(uploaded)) {
+        const translations = uploaded.loadFullTranslations
+          ? await uploaded.loadFullTranslations()
+          : uploaded.meta.translations;
+        addTranslations(extensionId, translations);
+        const installed = await installSandboxedExtension(
+          uploaded,
+          translations
+        );
+        installStack.delete(extensionId);
+        return installed;
+      }
 
       const dependencies = uploaded.meta.dependencies ?? [];
       for (const dependencyId of dependencies) {
@@ -1217,11 +1963,7 @@ export function createExtensionManager(
         : uploaded.meta.translations;
       addTranslations(uploaded.meta.id, translations);
 
-      if ("url" in uploaded && uploaded.url) {
-        const installed = await loadExtensionFromUrl(extensionId, uploaded.url);
-        installStack.delete(extensionId);
-        return installed;
-      } else if ("import" in uploaded && uploaded.import) {
+      if ("import" in uploaded && uploaded.import) {
         try {
           const mod: unknown = await uploaded.import();
           if (!isExtensionModule(mod)) {
@@ -1273,6 +2015,7 @@ export function createExtensionManager(
     set: ExtensionSet,
     filter: (ext: Extension) => boolean = () => true
   ): Promise<Map<string, boolean>> => {
+    set = withSourcedIds(set);
     trackExtensionSet(set);
     hasLoadedExtensionSet = true;
 
@@ -1296,6 +2039,69 @@ export function createExtensionManager(
     // shout("onExtensionSetLoaded", set.id);
 
     return new Map(idsAndPromises.map(([id], index) => [id, results[index]!]));
+  };
+
+  /**
+   * Fetches an `ExtensionSet` published as JSON at `url` (see
+   * `seed-bible-extension-scripts publish`) and tracks its extensions —
+   * `loadExtensionSet(set, () => false)`'s existing "list but don't install"
+   * behavior — so they show up in the extensions list as available, the same
+   * way this app's own bundled set does. Returns the fetched set on success,
+   * or `null` (logging why) if the URL doesn't respond, isn't JSON, or isn't
+   * shaped like a real `ExtensionSet` — a set's entries must all be
+   * `UploadedExtension`s (`{ url, meta }`), since `ImportExtension.import` is
+   * a function and can never come from real JSON.
+   */
+  const discoverExtensionSet = async (
+    url: string
+  ): Promise<ExtensionSet | null> => {
+    if (!isExtensionSetUrl(url)) {
+      console.error(
+        `Failed to discover extension set at '${url}': only https: URLs (or http://localhost while developing) can be added.`
+      );
+      return null;
+    }
+    try {
+      const response = await fetch(url, { credentials: "omit" });
+      if (!response.ok) {
+        console.error(
+          `Failed to discover extension set at '${url}': ${response.status} ${response.statusText}`
+        );
+        return null;
+      }
+
+      const data = unwrapRecordData(url, await response.json());
+      if (!isExtensionSet(data)) {
+        console.error(
+          `Failed to discover extension set at '${url}': the fetched JSON is not a valid ExtensionSet.`
+        );
+        return null;
+      }
+
+      // A bundle's (and an icon's) URL may be relative to the set, so a
+      // folder from `seed-bible-extension-scripts package` works wherever
+      // it's hosted.
+      const set = withSourcedIds({
+        ...data,
+        extensions: data.extensions.map((extension) =>
+          "url" in extension
+            ? {
+                ...extension,
+                url: new URL(extension.url, url).href,
+                meta: withResolvedIcon(extension.meta, url),
+              }
+            : extension
+        ),
+      });
+      for (const extension of set.extensions) {
+        discoveredSetUrlById.set(extension.meta.id, url);
+      }
+      await loadExtensionSet(set, () => false);
+      return set;
+    } catch (err) {
+      console.error("Failed to discover extension set:", url, err);
+      return null;
+    }
   };
 
   /**
@@ -1343,12 +2149,58 @@ export function createExtensionManager(
    * skipped, and IDs that are not part of any known extension set are left
    * in storage (a later build may reintroduce them) but skipped for now.
    */
+  /**
+   * Fetches the sets that installed third-party extensions came from, so
+   * they're known again before they're loaded.
+   */
+  const rediscoverSavedSources = async (savedIds: Set<string>) => {
+    const sources = readExtensionSources();
+    const urls = new Set(
+      [...savedIds]
+        .filter((id) => !knownExtensionsById.has(id) && sources[id])
+        .map((id) => sources[id]!)
+    );
+    await Promise.all([...urls].map((url) => discoverExtensionSet(url)));
+  };
+
+  /**
+   * `?extensionSet=<url>` lists a hosted set's extensions for this visit,
+   * the way adding its URL in Settings does. Combined with
+   * `autoinstall-<id>=true`, it offers to install that extension: for a
+   * sandboxed one, that opens the consent dialog, never more. The link names
+   * the set, so `<id>` may be the id an extension in it declares; elsewhere
+   * only its full sourced id installs a third-party extension.
+   */
+  const loadLinkedExtensionSet = async () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const url = new URL(window.location.href);
+    const setUrl = url.searchParams.get("extensionSet");
+    if (!setUrl) {
+      return;
+    }
+    const set = await discoverExtensionSet(setUrl);
+    for (const extension of set?.extensions ?? []) {
+      const ids = [
+        extension.meta.id,
+        splitSourcedExtensionId(extension.meta.id)?.declaredId,
+      ];
+      if (
+        ids.some((id) => url.searchParams.get(`autoinstall-${id}`) === "true")
+      ) {
+        await loadExtension(extension);
+      }
+    }
+  };
+
   const loadSavedExtensions = async () => {
     if (scopedTargetIds !== null) {
       await reconcileInstalledExtensions(scopedTargetIds);
       return;
     }
     const savedIds = await computeSavedExtensionIds();
+    await rediscoverSavedSources(savedIds);
 
     const promises: Promise<boolean>[] = [];
     for (const id of savedIds) {
@@ -1391,6 +2243,7 @@ export function createExtensionManager(
    * default-extension reconciliation this set governs.
    */
   const loadDefaultExtensions = async () => {
+    void loadLinkedExtensionSet();
     if (!defaultExtensions) {
       console.warn("No available extensions found in bot tags.");
       return;
@@ -1423,8 +2276,13 @@ export function createExtensionManager(
     const url = new URL(window.location.href);
     const isUrlOverride = (ext: Extension) =>
       url.searchParams.get(`autoinstall-${ext.meta.id}`) === "true";
+    // A sandboxed extension's `autoinstall` is ignored: it must never install
+    // without the user being asked. A URL override still reaches the consent
+    // dialog through `loadExtension`.
     const isEligibleForAutoinstall = (ext: Extension) =>
-      Boolean(ext.meta.autoinstall) && !alreadyHandledIds.has(ext.meta.id);
+      !isSandboxedExtension(ext) &&
+      Boolean(ext.meta.autoinstall) &&
+      !alreadyHandledIds.has(ext.meta.id);
 
     const results = await loadExtensionSet(
       defaultExtensions,
@@ -1454,16 +2312,35 @@ export function createExtensionManager(
    * @param id The ID of the extension to unload.
    */
   const unloadExtension = (id: string, options?: { persist?: boolean }) => {
+    const known = knownExtensionsById.get(id);
+    const uninstallingSandboxed =
+      options?.persist !== false &&
+      known !== undefined &&
+      isSandboxedExtension(known);
+    // Taken out before stopping, so its pending writes and the clear below
+    // go out in order: a late write must not undo the clear.
+    const storageToClear = uninstallingSandboxed ? storageFor(id) : null;
+    if (storageToClear) {
+      sandboxStorages.delete(id);
+    }
+    if (sandboxedExtensions.has(id)) {
+      stopSandboxedExtension(id);
+    }
     unregisterExtension(id);
     installedExtensionIds.delete(id);
     if (options?.persist !== false) {
       void forgetInstalledExtensionId(id);
-      // Extensions that are only ever force-installed as a dependency (e.g.
-      // `seed-bible-utils`) never carry `autoinstall: true` themselves, so
+      // Extensions that are only ever force-installed as a dependency never
+      // carry `autoinstall: true` themselves, so
       // `loadDefaultExtensions` never records them in the "handled" set.
       // This is what records their uninstall, so they aren't dragged back
       // in the next time their dependent gets (re)installed.
       void persistHandledExtensionId(id);
+      // Reinstalling a sandboxed extension asks again, and starts it fresh.
+      if (storageToClear) {
+        void storageToClear.clear().then(() => storageToClear.dispose());
+        void saveExtensionGrant(id, { revokedAtMs: Date.now() });
+      }
     }
     refreshExtensionsSignal();
   };
@@ -1592,6 +2469,7 @@ export function createExtensionManager(
     loadExtensionSet,
     loadExtension,
     unloadExtension,
+    discoverExtensionSet,
     reconcileInstalledExtensions,
 
     extensions: extensionsSignal,
@@ -1600,6 +2478,11 @@ export function createExtensionManager(
     getAllExtensionsAsSet,
 
     registerSettingsPanel,
+    sandboxPermissions: sandboxPermissionsSignal as ReadonlySignal<
+      Record<string, SandboxPermissionSummary>
+    >,
+    setOptionalPermission,
+    describeUploader,
     settingsPanels: settingsPanelsSignal as ReadonlySignal<
       Record<string, ExtensionSettingsPanelRenderer>
     >,

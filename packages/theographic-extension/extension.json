@@ -4391,6 +4391,5 @@
       "place-type-cave": "Umhume",
       "place-type-tower": "Umbhoshongo"
     }
-  },
-  "dependencies": ["ext_locations"]
+  }
 }

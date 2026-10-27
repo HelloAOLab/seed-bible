@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
+  "private": true,
   "exports": {
     ".": {
       "import": "./ext_AI_Transcript_UI/main/init.tsx"
@@ -17,7 +18,7 @@
     "preact": "catalog:",
     "base64-js": "catalog:",
     "uuid": "catalog:",
-    "@seed-bible/ai-transcript-extension": "workspace:*"
+    "@seed-bible/transcription": "workspace:*"
   },
   "author": "",
   "license": "ISC",
