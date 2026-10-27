@@ -2450,7 +2450,7 @@ export function Tabs(props: TabsProps) {
             </button>
             <button
               type="button"
-              className="sb-tab-add-button"
+              className="sb-mobile-screen-header-button sb-tab-add-button"
               onClick={() => {
                 app.addTab();
               }}
@@ -2543,7 +2543,7 @@ export function Tabs(props: TabsProps) {
             onClick={() => {
               app.addTab();
             }}
-            className="sb-tab-add-button"
+            className="sb-sidebar-tabs-header-icon-button sb-tab-add-button"
             aria-label={t("create-new-tab", {
               defaultValue: "Create new tab",
             })}
