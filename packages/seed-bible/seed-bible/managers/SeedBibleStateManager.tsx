@@ -3783,6 +3783,7 @@ export function createSeedBibleState(
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
       onTakeTour={() => tutorial.acceptPrompt()}
+      onClose={() => today.close()}
     />
   );
   const renderTodayPaneTitle = () => <TodayPaneTitle />;
@@ -3794,6 +3795,9 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderTodayPaneTitle,
         component: renderTodayPane,
+        // Today's own close button (TodayCloseButton) stands in for the
+        // header's.
+        showHeader: false,
       });
     } else {
       panes.closePane(TODAY_PANE_ID); // no-op when already closed

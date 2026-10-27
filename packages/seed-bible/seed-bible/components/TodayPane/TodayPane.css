@@ -15,6 +15,25 @@
   font-weight: 600;
 }
 
+.sb-today-pane {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  /* Tints of the text colour for Today's close button, search bar and filter
+     pills (`--sb-today-surface`) and its bookmark cards (the lighter
+     `--sb-today-surface-light`), the same as Your content's
+     `--sb-content-surface-strong` and `--sb-content-surface` (which are scoped
+     to that screen). Only a selected filter pill keeps the primary colour, to
+     show it's selected. */
+  --sb-today-surface: color-mix(in srgb, var(--sb-font-color), transparent 91%);
+  --sb-today-surface-light: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 95%
+  );
+}
+
 .sb-today-container {
   width: 100%;
   height: 100%;
@@ -284,8 +303,8 @@
   color: var(--sb-primary-color);
 }
 
-.sb-today-header > button {
-  grid-row: 1 / 3;
+.sb-today-header > button,
+.sb-today-close-button {
   border: none;
   display: flex;
   justify-content: center;
@@ -293,10 +312,15 @@
   border-radius: 50%;
   width: 2.25rem;
   height: 2.25rem;
+  background-color: var(--sb-today-surface);
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+.sb-today-header > button {
+  grid-row: 1 / 3;
   justify-self: end;
   align-self: self-start;
-  background-color: var(--sb-secondary-color);
-  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-header > button:nth-of-type(1) {
@@ -307,8 +331,22 @@
   grid-column: 3 / 4;
 }
 
-.sb-today-header > button > span {
+/* Always the last one in the row, whatever other buttons join it. */
+.sb-today-header > button.sb-today-close-button {
+  grid-column: -2 / -1;
+}
+
+.sb-today-header > button > span,
+.sb-today-close-button > span {
   font-size: 1.25rem;
+}
+
+/* Where the header's close button would be: the top of the content column's
+   end edge (the column is 90% wide, capped at 51.25rem, and centered). */
+.sb-today-welcome-close-button {
+  position: absolute;
+  top: 2.25rem;
+  inset-inline-end: max(5%, (100% - 51.25rem) / 2);
 }
 
 .sb-today-container .sb-today-resume-card {
@@ -442,9 +480,25 @@
 }
 
 .sb-today-container .sb-today-search-container .sb-today-book-selector-button {
-  background-color: var(--sb-secondary-color);
-  border-color: var(--sb-primary-color);
+  background-color: color-mix(
+    in srgb,
+    var(--sb-secondary-color),
+    transparent 20%
+  );
+  /* Hidden rather than removed, so the button keeps the search bar's height. */
+  border-color: transparent;
   color: var(--sb-secondary-font-color);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+/* Goes fully solid, so it brightens to the full secondary colour. */
+@media (hover: hover) {
+  .sb-today-container
+    .sb-today-search-container
+    .sb-today-book-selector-button:hover {
+    background-color: var(--sb-secondary-color);
+  }
 }
 
 .sb-today-container .sb-today-search-container .sb-today-searchbar {
@@ -455,7 +509,7 @@
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: 1fr;
-  background-color: var(--sb-secondary-color);
+  background-color: var(--sb-today-surface);
   border-radius: 0.5rem;
   justify-content: center;
   align-items: center;
@@ -464,13 +518,13 @@
 }
 
 .sb-today-container .sb-today-search-container .sb-today-searchbar > span {
-  color: var(--sb-secondary-font-color);
+  color: var(--sb-font-color);
 }
 
 .sb-today-container .sb-today-search-container .sb-today-searchbar > input {
   background-color: transparent;
   border: none;
-  color: var(--sb-secondary-font-color);
+  color: var(--sb-font-color);
 }
 
 .sb-today-container
@@ -658,22 +712,18 @@
 
 .sb-today-container .sb-today-feed-card .sb-today-feed-kind-option {
   border: none;
-  background-color: var(--sb-secondary-color);
+  background-color: var(--sb-today-surface);
   border-radius: 1.875rem;
   padding: 0.5rem 0.875rem;
   font-size: 0.75rem;
   min-width: 3.25rem;
   font-weight: 500;
-  color: var(--sb-secondary-font-color);
+  color: var(--sb-font-color);
   flex-shrink: 0;
 }
 
 .sb-today-container .sb-today-feed-card .sb-today-feed-kind-option:hover {
-  background-color: color-mix(
-    in srgb,
-    var(--sb-secondary-color),
-    var(--sb-font-color) 8%
-  );
+  background-color: color-mix(in srgb, var(--sb-font-color), transparent 85%);
 }
 
 .sb-today-container
@@ -878,8 +928,19 @@
   padding: 0.625rem 0.875rem;
   border-radius: 0.75rem;
   font-size: 0.875rem;
-  background-color: var(--sb-secondary-color);
-  color: var(--sb-secondary-font-color);
+  background-color: var(--sb-today-surface-light);
+  color: var(--sb-font-color);
+  transition: background-color 0.15s ease;
+}
+
+/* Steps up to the stronger tint, like Your content's save rows. Hover-capable
+   pointers only, so a tap doesn't leave it highlighted. */
+@media (hover: hover) {
+  .sb-today-container
+    .sb-today-bookmarks-section
+    .sb-today-bookmarks-section-bookmark:hover {
+    background-color: var(--sb-today-surface);
+  }
 }
 
 .sb-today-container
@@ -902,6 +963,9 @@
   .sb-today-welcome-screen {
     margin-top: 1rem;
     gap: 1rem;
+  }
+  .sb-today-welcome-close-button {
+    top: 1rem;
   }
   .sb-today-header > h1 {
     font-size: 1.2rem;

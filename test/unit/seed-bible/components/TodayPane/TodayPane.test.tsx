@@ -15,6 +15,11 @@ import {
 import { SearchSection } from "@packages/seed-bible/seed-bible/components/TodayPane/SearchSection";
 import { SocialSection } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSection";
 
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
+
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext",
   () => ({
@@ -209,10 +214,25 @@ describe("TodayPane", () => {
       });
     });
 
+    // Welcome has no header row, so Today's close button sits beside it.
+    it("gives Welcome a close button that closes Today", () => {
+      const props = setup({ status: "empty" });
+
+      const close = container.querySelector<HTMLButtonElement>(
+        ".sb-today-welcome-close-button"
+      );
+      act(() => close!.click());
+
+      expect(props.onClose).toHaveBeenCalledTimes(1);
+    });
+
     it("hands each personalized section the props it needs", () => {
       const props = setup({ bookmarks: [aBookmark] });
 
-      expect(propsOf(Header)).toMatchObject({ login: props.login });
+      expect(propsOf(Header)).toMatchObject({
+        login: props.login,
+        onClose: props.onClose,
+      });
       expect(propsOf(ResumeReadingSection)).toMatchObject({
         today: props.today,
         onOpenPassage: props.onOpenPassage,
