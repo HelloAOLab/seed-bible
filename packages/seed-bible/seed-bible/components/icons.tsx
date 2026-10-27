@@ -513,6 +513,7 @@ export const Eraser = (props: any) => (
     />
   </svg>
 );
+/** The Today tab/button icon: a page with a check mark. */
 export const TodayIcon = (props: any) => (
   <svg
     width={24}
@@ -520,26 +521,27 @@ export const TodayIcon = (props: any) => (
     viewBox="0 0 24 24"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
     {...props}
   >
     <path
       d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <path
       d="M9 18H11"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <path
       d="M15 19L17 21L21 17"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
     />

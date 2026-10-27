@@ -1,9 +1,14 @@
 {
   "name": "seed-bible-extension-scripts",
-  "version": "0.1.0",
+  "version": "1.15.0",
   "description": "Toolkit for checking, testing, building, and running Seed Bible extensions from a standalone, out-of-tree project. Installed as a devDependency by projects scaffolded with create-seed-bible-extension.",
   "type": "module",
   "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HelloAOLab/seed-bible.git",
+    "directory": "packages/seed-bible-extension-scripts"
+  },
   "bin": {
     "seed-bible-extension-scripts": "./dist/cli.js"
   },

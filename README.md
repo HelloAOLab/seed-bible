@@ -10,7 +10,7 @@ This repository holds its source code.
 
 ## Roadmap
 
-Curious what's coming next? The [roadmap](./ROADMAP.md) lays out what we're working on and what comes after it, in priority order, with where each piece stands today.
+Curious what's coming next? The [Seed Bible roadmap](https://www.helloao.org/seed-bible-roadmap.html) shows what we've just finished, what we're building now, and where we're headed next.
 
 ## Building an extension
 
@@ -87,7 +87,7 @@ pnpm release:prepare minor    # or: patch | major | an explicit version like 1.4
 
 This does three things in one commit's worth of edits:
 
-- bumps the `version` in `packages/seed-bible/package.json` (the version baked into the build),
+- bumps the `version` in `packages/seed-bible/package.json` (the version baked into the build), and sets `packages/seed-bible-extension-scripts` and `packages/create-seed-bible-extension` to the same version so the npm packages release together,
 - rewrites the CHANGELOG's `## TBD` heading to `## v<version> — <YYYY-MM-DD>`, and
 - inserts a fresh, empty `## TBD` above it so `develop` is ready for the next cycle.
 

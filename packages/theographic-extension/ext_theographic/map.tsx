@@ -5,9 +5,10 @@ import { useI18n } from "seed-bible/i18n";
 import geoImporterPattern from "virtual:@pattern/geo-importer";
 import { v4 as uuid } from "uuid";
 import type {
-  LocationsExtensionApi,
+  findLocation,
+  getPlaceGeoJsonUrl,
   PlaceData,
-} from "@seed-bible/locations-extension";
+} from "@seed-bible/bible-locations";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import { withoutQualifier } from "./names";
 import type { TheographicClient, TheographicPlaceEntry } from "./provider";
@@ -30,7 +31,7 @@ export interface PlaceGeoJsonFeature {
      * For a lone Feature the importer places its label, and focuses the
      * camera, with `coordinates[1]` as X (longitude) and `coordinates[0]` as
      * Y (see `parseFeature` in `loadMap.tsx`). Confirmed by opening a place
-     * and seeing where the map lands. The locations extension's hand-built
+     * and seeing where the map lands. The hand-built known-places
      * files use this order too; OpenBible's are in spec order and focus from
      * their `bbox` instead, so they are passed through untouched.
      */
@@ -101,25 +102,25 @@ export function createIsPlaceOpen(
   };
 }
 
-/** The part of the locations extension's API the map uses. */
-export type PlaceLocations = Pick<
-  LocationsExtensionApi,
-  "findLocation" | "getPlaceGeoJsonUrl"
->;
+/** The place lookup the map uses: `@seed-bible/bible-locations`, or a stand-in. */
+export interface PlaceLocations {
+  findLocation: typeof findLocation;
+  getPlaceGeoJsonUrl: typeof getPlaceGeoJsonUrl;
+}
 
 /** Where a place's map data comes from, besides its own coordinates. */
 export interface PlaceMapSources {
-  /** Fetches, and caches, the locations extension's file. */
+  /** Fetches, and caches, a place's GeoJSON file. */
   client?: Pick<TheographicClient, "getResource">;
-  /** The locations extension's lookup. Without it, only coordinates are drawn. */
+  /** The known places' lookup. Without it, only coordinates are drawn. */
   locations?: PlaceLocations;
 }
 
 /**
- * The locations extension's entry for a place, or null when it has none.
+ * The known-places entry for a place, or null when it has none.
  *
  * Theographic adds a trailing qualifier to tell same-named places apart
- * ("Bethel (of Palestine)"), which the extension's file doesn't use, so the
+ * ("Bethel (of Palestine)"), which the known-places file doesn't use, so the
  * name is tried as given and then without it.
  */
 export function findKnownLocation(
@@ -170,7 +171,7 @@ export function fitsInPortalUrl(mapData: string): boolean {
  * The `mapData` to hand the geo-importer for a place, as the JSON text it
  * expects.
  *
- * The locations extension's file when it has one that fits in the portal's
+ * The known place's file when it has one that fits in the portal's
  * URL — an outline or a curated point, rather than the single coordinate the
  * dataset carries — and a point built from the coordinates otherwise, or when
  * that file can't be fetched. Null when there is nothing to draw at all.
