@@ -1,0 +1,371 @@
+# Custom Content Database for Customizations — Design
+
+Status: **Proposal** · Owner: TBD · Last updated: 2026-10-27
+
+## 1. Summary
+
+**Short answer:** a Customization owner pastes links to their content (videos, articles, podcasts). Seed Bible fetches each link's title, description and thumbnail, asks the AI which **categories** it belongs to and which **Bible verses** it covers, and lets the owner review the suggestions. Once approved, the content is written into **one record per Bible chapter** (for example, "everything about John 3"). A Discover provider then answers "what's in this chapter?" with a single record read, no searching required.
+
+Before: the only way to put your own content into Discover was to write an extension with a hand-built JSON file, like `default-content-extension` does with `discoveredContent.json`.
+
+After: a ministry that sets up a Customization can paste 200 YouTube links into the Customization editor, review what the AI tagged, press Publish, and everyone who opens their customization link sees that content in Discover on the right chapters, filterable by the ministry's own categories.
+
+## 2. Goals and non-goals
+
+**Goals**
+
+- Owners build a content library from links, without writing code or JSON.
+- Categories and relevant verses are suggested automatically, and the owner can correct them.
+- Content is stored per chapter so the reader fetches exactly one small record when a chapter opens.
+- Anyone viewing the Customization (signed in or not) sees the content in Discover.
+- Reuse what already exists: Customization records, `DiscoverManager`, `os.client.aiChat`, the reference parsers.
+
+**Non-goals (v1)**
+
+- Several people editing the same library (only the Customization owner edits).
+- Hosting the content itself. We store links and metadata; the video or article stays where it is.
+- Full-text search across the library (the chapter index is for lookup by chapter, not search).
+- Translating category names into other languages (they're shown as the owner typed them).
+
+## 3. How it fits into today's code
+
+| Existing piece                                                                                                | What we use it for                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CustomizationsManager` + `SeedBibleCustomization` record                                                     | The library belongs to a Customization. The Customization record gets a small pointer to its library; the active Customization decides which library Discover reads.              |
+| `OsManager` (`recordData`, `getData`, `listAllDataByMarker`, `eraseData`)                                     | All storage. Records live in the owner's record (`recordName` = owner's user id), the same place the Customization itself lives.                                                  |
+| The `publicRead:` marker convention (`CUSTOMIZATION_MARKER`)                                                  | Chapter records must be readable by any viewer of the customization link, so they use a `publicRead:` marker just like the Customization record does.                             |
+| `os.client.aiChat` (as used in `packages/transcription/infer.tsx`)                                            | Category and verse suggestions. The AI key stays on the CasualOS server.                                                                                                          |
+| `extractExplicitRefs` (`packages/transcription/explicit.tsx`), `parseVerseReference*`, `verseReferenceBounds` | Turning "John 3:16-18" text into `{book: "JHN", chapter: 3, verse: 16, endVerse: 18}`, and rejecting impossible references (e.g. "John 30") the AI might produce.                 |
+| `DiscoverManager.registerDiscoverProvider` / `registerContentType`                                            | Showing the content. Each category becomes a Discover content type, so category filter chips come for free.                                                                       |
+| `resolveLinkMedia` + `PlaylistLinkContent`                                                                    | Deciding whether a link is an embeddable video (YouTube/Vimeo), a video file, or a plain link, and opening it in a modal — the same thing `default-content-extension` does today. |
+| `server/index.ts` (Express)                                                                                   | A new small endpoint to fetch link metadata (see §5.2), because browsers can't read most other websites directly.                                                                 |
+
+## 4. Data model
+
+### 4.1 Where things are stored
+
+Everything lives in the **owner's CasualOS record** (the same `recordName` as the Customization). There are three kinds of records, distinguished by address prefix. `{libraryId}` is a uuid.
+
+| Record           | Address                                   | Marker                               | Who reads it                                         |
+| ---------------- | ----------------------------------------- | ------------------------------------ | ---------------------------------------------------- |
+| Library manifest | `content.{libraryId}`                     | `publicRead:seedBibleContentLibrary` | Every viewer, once, when the Customization activates |
+| Item (the truth) | `content.{libraryId}.item.{itemId}`       | `seedBibleContentItem` (private)     | Only the owner, while editing                        |
+| Chapter index    | `content.{libraryId}.ch.{BOOK}.{chapter}` | `publicRead:seedBibleContentChapter` | Every viewer, once per chapter they open             |
+
+**Why two copies of each item (item record + chapter entries)?** Items are what the owner edits; chapter records are what readers read. Keeping the full item separate means:
+
+- The reader never downloads things it doesn't need (owner notes, AI confidence, review state, the raw fetched metadata).
+- The chapter records can always be **rebuilt from the items** if something goes wrong. Items are the source of truth; chapter records are a derived index, like a book's index pages.
+
+### 4.2 The Customization pointer
+
+`SeedBibleCustomization` gets one optional field:
+
+```ts
+/** The content library shown in Discover while this customization is active. */
+contentLibraryId?: string;
+```
+
+It's optional so every existing Customization record keeps parsing. The library lives in the same record as the Customization, so `{recordName, contentLibraryId}` is enough to find it — the same `recordName` the `?customization={recordName}.{id}` link already carries.
+
+### 4.3 Library manifest
+
+```ts
+interface ContentLibraryManifest {
+  schemaVersion: 1;
+  id: string;
+  name: string;
+  /** The owner's categories. AI suggestions are limited to these. */
+  categories: ContentCategory[];
+  /**
+   * Every chapter that has at least one published item, as "BOOK.chapter"
+   * keys with a count, e.g. { "JHN.3": 4, "GEN.1": 12 }. Lets Discover skip
+   * the network entirely for chapters with no content, and lets the editor
+   * show coverage ("content on 214 of 1,189 chapters").
+   */
+  chapters: Record<string, number>;
+  updatedAt: number;
+}
+
+interface ContentCategory {
+  id: string; // stable slug, survives renames
+  name: string; // "Archaeology", "Sermons", "Kids"
+  description?: string; // helps the AI pick it correctly
+  hiddenByDefault?: boolean; // maps straight onto DiscoverContentTypeDefinition
+  priority?: number;
+}
+```
+
+Size check: 1,189 chapter keys × ~12 bytes ≈ 15 KB in the worst case. Fine to load once.
+
+### 4.4 Item (source of truth, private)
+
+```ts
+interface ContentItem {
+  id: string;
+  url: string;
+  status: "pending" | "needs_review" | "published" | "failed";
+  /** What the metadata fetch found. Kept so re-classification doesn't refetch. */
+  fetched?: {
+    title?: string;
+    description?: string;
+    image?: string;
+    author?: string;
+    siteName?: string;
+    mediaKind: "embed" | "video" | "link"; // from resolveLinkMedia
+    fetchedAt: number;
+  };
+  /** What the owner sees and can edit. Starts as a copy of `fetched`. */
+  title: string;
+  description: string;
+  image?: string;
+  author?: string;
+  /** First is the primary category — it decides which Discover section the item lands in. */
+  categoryIds: string[];
+  references: ContentReference[];
+  /** Why the item failed, for the editor to show. */
+  error?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+interface ContentReference {
+  book: string; // USFM id, "JHN"
+  chapter: number;
+  endChapter?: number;
+  verse?: number; // absent = whole chapter
+  endVerse?: number;
+  source: "explicit" | "ai" | "owner";
+  /** AI confidence 0–1; owner-added references are 1. */
+  confidence: number;
+}
+```
+
+`source` matters for review: references the owner typed are never overwritten by a later "re-classify", and the editor can show AI-suggested ones differently.
+
+### 4.5 Chapter index record (public, what Discover reads)
+
+```ts
+interface ContentChapterRecord {
+  schemaVersion: 1;
+  libraryId: string;
+  book: string;
+  chapter: number;
+  updatedAt: number;
+  entries: ContentChapterEntry[];
+}
+
+interface ContentChapterEntry {
+  itemId: string;
+  url: string;
+  mediaKind: "embed" | "video" | "link";
+  title: string;
+  description: string; // trimmed to ~300 characters
+  image?: string;
+  author?: string;
+  categoryIds: string[];
+  /**
+   * The verses of *this* chapter the item covers. Empty = the whole chapter.
+   * Matches DiscoverContentResult.verses, so selecting a verse in the reader
+   * narrows Discover to the items about it.
+   */
+  verses: number[];
+  /** Display label for the full reference, e.g. "Matthew 26:20–30". */
+  reference: {
+    book: string;
+    chapter: number;
+    endChapter?: number;
+    verse?: number;
+    endVerse?: number;
+  };
+}
+```
+
+**Splitting references across chapters.** A reference that spans chapters (e.g. Acts 1:13–2:4) produces an entry in **each** chapter it touches, with `verses` clipped to that chapter. A whole-chapter reference (`ACT 2`) produces `verses: []`. An item with five references in five chapters appears in five chapter records.
+
+**Size.** One entry is roughly 600 bytes. A heavily covered chapter (say 150 items on John 3) is ~90 KB. Before building, confirm the records server's per-record data limit. If a chapter would exceed a safe budget (proposal: 200 KB), split it into `…ch.JHN.3`, `…ch.JHN.3.p2`, … and record the page count in `manifest.chapters` (e.g. `{"JHN.3": {"count": 310, "pages": 2}}`). We don't expect to need this in v1, but the manifest shape should allow it.
+
+## 5. The ingest pipeline
+
+Here is what happens after the owner pastes links:
+
+```
+ paste links ──► 1. normalize & dedupe ──► 2. fetch metadata ──► 3. find references
+                                                                     │
+       publish ◄── 5. owner review ◄── 4. AI classify (categories + more verses)
+          │
+          ▼
+ 6. write item records ──► 7. rebuild affected chapter records ──► 8. update manifest
+```
+
+Steps 1–4 run in the owner's browser, a few items at a time (proposal: 3 in parallel) so a 200-link paste doesn't hammer anything. Each item's progress is visible in the editor (`pending` → `needs_review` or `failed`). Items are saved as soon as they're classified, so closing the tab mid-import loses nothing — reopening resumes the `pending` ones.
+
+### 5.1 Normalize and dedupe
+
+- Accept one URL per line, or a CSV with columns `url, title, categories, references` for owners who already have a spreadsheet. Any column the CSV fills in is treated as owner-provided and skips the matching automatic step.
+- Normalize before comparing (lowercase host, strip `www.`, drop tracking params like `utm_*`, map `youtu.be/ID` and `youtube.com/watch?v=ID` to the same key). A link already in the library is skipped with a note, not duplicated.
+- Reject non-`http(s)` URLs.
+
+### 5.2 Fetch metadata
+
+**The problem:** a web page can't read another website's HTML from the browser — the browser blocks it (CORS) unless that site opts in. Most sites don't.
+
+**The plan:** two paths.
+
+1. **Known video sites, straight from the browser.** YouTube and Vimeo both offer public "oEmbed" endpoints that do allow browser requests and return title, author and thumbnail. These cover most of what ministries share, and need no server work.
+2. **Everything else, through a new endpoint on our own server:** `GET /api/link-preview?url=…` in `server/index.ts`. It fetches the page server-side and returns `{ title, description, image, author, siteName, publishedAt }` from the page's Open Graph / Twitter-card / `<title>` / `<meta name="description">` tags. For YouTube it also returns the full video description (oEmbed doesn't), because descriptions often list the passages covered — which makes step 3 much more accurate.
+
+The endpoint must be safe, because it fetches arbitrary URLs on a user's behalf:
+
+- Require a valid CasualOS session (only signed-in owners use it).
+- Block private and internal addresses (localhost, `10.*`, `169.254.*`, etc.) **after** DNS resolution and on every redirect, to prevent server-side request forgery (tricking our server into reading internal services).
+- `http`/`https` only, max 5 redirects, 5-second timeout, read at most 1 MB, only parse `text/html`.
+- Rate limit per user and cache results for a day.
+
+If the fetch fails, the item isn't lost: it goes to `needs_review` with an empty title and the owner fills it in by hand.
+
+### 5.3 Find references the page states explicitly
+
+Before asking the AI, run the existing deterministic parser (`extractExplicitRefs`) over the title and description. If a YouTube description says "Today we study Romans 8:28–39", that's a certain reference — `source: "explicit"`, `confidence: 1`. This is cheap, exact, and gives the AI a strong hint.
+
+`extractExplicitRefs` lives in the `transcription` shared package; since core would now need it too, it should move to a shared package both can import (e.g. `seed-bible-utils`, or a new `bible-references` package), per the "shared code goes in a shared package" rule.
+
+### 5.4 AI classification
+
+One `os.client.aiChat` call per item, following the pattern already in `packages/transcription/infer.tsx`. The model receives:
+
+- the item's title, description, author and site name,
+- the explicit references from step 3,
+- the library's category list (id, name, description).
+
+It must answer with JSON only:
+
+```json
+{
+  "categoryIds": ["archaeology", "gospels"],
+  "references": [
+    { "reference": "Matthew 26:20-30", "confidence": 0.92, "role": "primary" },
+    { "reference": "Acts 2", "confidence": 0.7, "role": "mentioned" }
+  ],
+  "suggestedCategories": ["Holy Week"]
+}
+```
+
+Rules in the prompt and in code:
+
+- **Categories are limited to the owner's list.** Any id not in the list is dropped. The model may propose new names in `suggestedCategories`; the editor shows them as one-click "add this category" chips, never adds them silently. This keeps the taxonomy the owner's, not the AI's.
+- **Every reference is re-parsed and bounds-checked** with our own parser and `isVerseReferenceInBounds`. Anything that doesn't parse or doesn't exist is dropped. The model never writes book ids directly.
+- **Confidence threshold:** references under 0.5 are dropped; 0.5–0.75 are kept but flagged for review in the editor. Explicit references from step 3 always win over an AI duplicate.
+- Cap at ~10 references per item, keeping the highest-confidence ones, so a vague "overview of the whole Bible" video doesn't land in 300 chapters. The owner can still add more by hand.
+- Malformed JSON → one retry, then `needs_review` with whatever step 3 found.
+
+### 5.5 Owner review
+
+New items arrive as `needs_review`. The editor (§7) shows each with its thumbnail, title, categories and references as editable chips; low-confidence references are visually marked. The owner can approve items one at a time or "Publish all reviewed". An optional per-library setting **"Publish automatically when confidence is high"** lets owners with large imports skip review for items where every reference is ≥ 0.75 or explicit.
+
+### 5.6 Publish: write items, rebuild chapters, update manifest
+
+1. Save the item record with `status: "published"`.
+2. Work out the **affected chapters** = chapters the item touched before this edit ∪ chapters it touches now. (Both matter: an edit that moves an item from John 3 to John 4 must remove it from John 3.)
+3. For each affected chapter, rebuild the chapter record **from all published items in memory** (the editor has already loaded every item via `listAllDataByMarker`). If the rebuilt record has no entries, erase it.
+4. Update `manifest.chapters` counts and save the manifest.
+
+Writes go through one queue per library and are batched: publishing 200 items rebuilds each affected chapter once, not 200 times. Rebuilding from items (rather than patching chapter records in place) means a half-finished publish can always be repaired by a **"Rebuild index"** action that regenerates every chapter record from the items.
+
+Deleting an item = erase its item record, then rebuild its chapters. Deleting a category = remove its id from every item (items left with no category fall back to an "Other" section), then rebuild.
+
+## 6. Reading: the Discover provider
+
+### 6.1 Where it's registered
+
+Core (`CustomContentManager`, §8) registers it, in an `effect` on `customizations.activeCustomization`:
+
+- Active Customization has a `contentLibraryId` → load the manifest, register one Discover content type per category, register the provider.
+- Customization changes or is left → unregister everything (the cleanup functions `registerDiscoverProvider`/`registerContentType` return).
+
+Why core rather than an extension: the library is part of the Customization (edited in the Customization editor, stored next to it), and extensions can't depend on core-owned data that may not exist. The provider is ~60 lines; it doesn't justify a separate package. (Alternative considered: a built-in `custom-content-extension` so the owner could switch it off in the Customization's extension list. Not needed — an owner who doesn't want it just doesn't create a library.)
+
+### 6.2 What `discover({ book, chapter })` does
+
+```ts
+discover: async ({ book, chapter }) => {
+  const key = `${book}.${chapter}`;
+  if (!manifest.chapters[key]) return []; // no network for empty chapters
+  const result = await os.getData(recordName, `content.${libraryId}.ch.${key}`);
+  if (!result.success || !result.data) return []; // never break other providers
+  const parsed = contentChapterRecordSchema.safeParse(result.data);
+  if (!parsed.success) return [];
+  return parsed.data.entries.map((entry) => ({
+    type: "content",
+    contentType: `custom-content:${libraryId}:${entry.categoryIds[0] ?? "other"}`,
+    verses: entry.verses,
+    title: entry.title,
+    description: entry.description,
+    reference: entry.reference,
+    author: entry.author,
+    image: entry.image,
+    onClick: () => openContentModal(entry), // PlaylistLinkContent, like default-content-extension
+  }));
+};
+```
+
+- **One read per chapter, at most.** And zero reads for chapters the manifest says are empty. `DiscoverManager` already caches each provider's answer per chapter for the session, so returning to a chapter is free.
+- **Categories → filter chips.** Each category is registered as a content type (`title: category.name`, `hiddenByDefault`, `priority` from the category). The primary category (first in `categoryIds`) decides the section, so an item never appears twice in the same chapter. Secondary categories are shown as small tags on the card.
+- **Verse narrowing** works automatically through `verses`: selecting verse 16 in John 3 shows only items about John 3:16 (plus whole-chapter items).
+- **Errors return `[]`** and log a warning, so a missing or corrupt chapter record never takes down cross-references or other providers.
+
+### 6.3 Freshness
+
+The provider reads whatever's published. An owner who publishes while a viewer has the app open won't see a change on that viewer's screen until the next session, or until they leave the 50-chapter Discover cache. That's acceptable for curated content. The owner's own app re-registers the provider after every publish (a new provider object clears that provider's cache in `DiscoverManager`), so the owner sees their changes immediately.
+
+## 7. Editor UI
+
+A new **"Content"** section in `CustomizationEditPane`, next to Branding and Extensions:
+
+1. **Empty state:** "Add your videos, articles and podcasts to Discover" + **Create content library** (creates the manifest and sets `contentLibraryId`).
+2. **Categories:** a short editable list (name + optional description). Suggest the owner starts with 3–8.
+3. **Add content:** a textarea for links (one per line) or a CSV upload, and an **Import** button.
+4. **Items list:** filter tabs _Needs review · Published · Failed_. Each row: thumbnail, title, author, category chips, reference chips (low-confidence ones outlined), Edit / Re-classify / Delete. Bulk "Publish reviewed".
+5. **Coverage:** "Content on 214 of 1,189 chapters" with a link to see which books have none — useful for ministries filling gaps.
+6. **Maintenance:** "Rebuild index" (§5.6) for recovery.
+
+All new strings go into `en.json` only.
+
+## 8. Code layout
+
+| File                                                         | Contents                                                                                                                                                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `managers/CustomContentManager.tsx`                          | Signals for the library, items and import progress; create/delete library; import queue; publish/rebuild; registers the Discover provider. Receives `os`, `login`, `customizations`, `discover`. |
+| `managers/customContent/schema.ts`                           | zod schemas + types for manifest, item, chapter record (parsed on every read, like `customizationSchema`).                                                                                       |
+| `managers/customContent/chapterIndex.ts`                     | Pure functions: split references into per-chapter entries, compute affected chapters, build a chapter record from items. Most of the unit tests live here.                                       |
+| `managers/customContent/classify.ts`                         | Prompt, `aiChat` call, response parsing and validation.                                                                                                                                          |
+| `managers/customContent/linkMetadata.ts`                     | oEmbed for YouTube/Vimeo, `/api/link-preview` for the rest, URL normalization.                                                                                                                   |
+| `server/linkPreview.ts` (+ route in `server/index.ts`)       | The metadata endpoint with SSRF protection.                                                                                                                                                      |
+| `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                   |
+| `CustomizationsManager.tsx`                                  | Add optional `contentLibraryId` to the schema and type.                                                                                                                                          |
+
+## 9. Testing plan
+
+Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavior):
+
+- **`chapterIndex`** (pure, no mocks): a cross-chapter range lands in both chapters with correctly clipped verses; a whole-chapter reference gives `verses: []`; moving an item from John 3 to John 4 lists both as affected and removes it from John 3; an empty rebuilt chapter is erased; one item with two categories appears once.
+- **`classify`**: category ids not in the library are dropped; impossible references ("John 30:1") are dropped; explicit references win over AI duplicates; malformed AI output retries once then falls back; owner-sourced references survive re-classify.
+- **`linkMetadata`**: URL normalization dedupes `youtu.be` / `youtube.com/watch` / tracking params; fetch failure yields `needs_review`, not a lost item.
+- **Discover provider** (mock `os.getData`): manifest says empty → no `getData` call; missing record or failed read → `[]` and other providers still answer; results carry the right `contentType` and `verses`; switching Customization unregisters the provider and its content types.
+- **Server endpoint**: rejects `http://localhost`, `http://169.254.169.254`, a public host that redirects to a private address, non-HTML responses, oversized bodies.
+- **Signed-out viewer** opening a customization link sees the content (public-read markers are correct).
+
+## 10. Rollout
+
+1. **Phase 1 — storage + reading.** Schemas, chapter index builder, Discover provider, and a minimal editor where the owner enters title/URL/categories/references by hand. Proves the per-chapter lookup end to end, with no AI or server work.
+2. **Phase 2 — automatic metadata.** oEmbed for YouTube/Vimeo, then the `/api/link-preview` endpoint; bulk paste and CSV import.
+3. **Phase 3 — AI classification and review.** `aiChat` classification, review queue, confidence flags, auto-publish setting.
+4. **Phase 4 — polish.** Coverage view, rebuild index, chapter-record paging if real libraries need it.
+
+## 11. Open questions
+
+1. **Record size limit.** What is the CasualOS records server's per-record data limit for our deployment? It decides whether chapter paging (§4.5) is needed in v1.
+2. **AI cost and limits.** `aiChat` usage is metered per user on the records server. A 500-link import is 500 calls — is that within an owner's allowance, or do we need a batch prompt (several items per call) from the start?
+3. **Shared libraries.** Should two Customizations be able to point at the same library (e.g. one ministry with several branded customizations)? The pointer design allows it as long as both are in the same record; cross-record sharing would need the pointer to carry a `recordName` too.
+4. **Collaborators.** Ministries often have a team. CasualOS record permissions could grant others write access to the owner's record — worth a follow-up design once v1 is in use.
+5. **Moderation.** Content is chosen by the owner and shown only inside their Customization, so v1 does no moderation. Should a library ever be shown outside its Customization (e.g. a public directory), that would need revisiting.
