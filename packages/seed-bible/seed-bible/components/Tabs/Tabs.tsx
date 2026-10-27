@@ -748,6 +748,7 @@ export function openSessionSettingsModal(
       key: "session-settings",
       defaultValue: "Session settings",
     },
+    mobileSheet: true,
     content: () => (
       <SessionSettingsModalContent
         state={state}

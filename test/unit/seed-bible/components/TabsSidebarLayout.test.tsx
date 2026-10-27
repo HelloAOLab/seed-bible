@@ -2,6 +2,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import {
+  openSessionSettingsModal,
   openShareSessionModal,
   Sidebar,
 } from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
@@ -350,6 +351,20 @@ describe("tabs Share control", () => {
     act(() => openShareSessionModal(state, session));
 
     expect(findShareSheet(state)?.mobileSheet).toBe(true);
+  });
+
+  it("opens a shared session's settings as a bottom sheet on phones", async () => {
+    const state = await createState();
+    const session = { id: "session-1" } as BibleReadingSession;
+
+    act(() => openSessionSettingsModal(state, session));
+
+    const settings = state.modals.modals.value.find(
+      (modal) =>
+        typeof modal.title === "object" &&
+        modal.title.key === "session-settings"
+    );
+    expect(settings?.mobileSheet).toBe(true);
   });
 
   it("starts a new tab from the mobile tabs header's + button", async () => {
