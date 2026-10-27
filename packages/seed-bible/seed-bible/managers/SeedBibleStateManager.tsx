@@ -660,10 +660,11 @@ export interface SeedBibleState {
   /** True when the Profile screen is showing. */
   isProfileOpen: ReadonlySignal<boolean>;
   /** Opens the Profile screen (reflected in the URL as `?profile=open`). */
-  openProfile: () => void;
+  openProfile: (options?: { fromToday?: boolean }) => void;
   /** Closes the Profile screen (clears `profile` from the URL). */
   closeProfile: () => void;
-
+  /** Restores the screen the user was viewing before opening the profile after a successful sign-in. */
+  restoreProfileReturnTarget: () => void;
   /** True when the "Edit profile" screen is showing. */
   isEditProfileOpen: ReadonlySignal<boolean>;
   /** Opens "Edit profile" (reflected in the URL as `?edit-profile=open`). */
@@ -1189,14 +1190,23 @@ export function createSeedBibleState(
       : navigation.currentUrl.value.searchParams.get("profile") === "open"
   );
   const isProfileOpen = computed(() => profileOpen.value);
-  const openProfile = () => {
-    // Close Today before the profile flag flips. Opening the profile pane
-    // displaces Today's pane, but Today's URL binding is still `?today=open`
-    // until its own effect runs — and that binding turns Today straight back
-    // on, which removes the profile pane and closes the profile again. Closing
-    // first drops `?today=` before `?profile=open` is written, so the profile
-    // screen stays up (including over the welcome screen).
+  let returnToToday = false;
+  const restoreProfileReturnTarget = () => {
+    const shouldReturnToToday = returnToToday;
+    returnToToday = false;
+    navigation.batchWrites(() => {
+      profileOpen.value = false;
+      if (shouldReturnToToday) {
+        today.open();
+      }
+    });
+  };
+  const openProfile = (options?: { fromToday?: boolean }) => {
+    if (!profileOpen.value || options?.fromToday !== undefined) {
+      returnToToday = options?.fromToday ?? today.isOpen.peek();
+    }
     if (today.isOpen.peek()) {
+      // Close Today so its URL binding doesn't reopen it over the Profile pane.
       today.close();
     }
     profileOpen.value = true;
@@ -3624,6 +3634,7 @@ export function createSeedBibleState(
     isProfileOpen,
     openProfile,
     closeProfile,
+    restoreProfileReturnTarget,
     isEditProfileOpen,
     openEditProfile,
     closeEditProfile,
