@@ -79,11 +79,17 @@
     z-index: 121;
     height: 100%;
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.18);
-    /* The docked sidebar's `--sb-sidebar-background` is transparent in the
-       light theme (it blends with the page behind it). Floating over the
-       reader there's text behind it, so paint the opaque page background —
-       same approach as the mobile drawer (`.sb-tabs-sidebar-mobile-open`). */
-    background: var(--sb-background);
+    /* Docked, the sidebar paints `--sb-sidebar-background` over the page
+       background (in the light theme it's transparent, so the page shows
+       through). Floating over the reader there's text behind it, so paint
+       both layers here to look the same as docked — same as the mobile
+       drawer (`.sb-tabs-sidebar-mobile-open`). */
+    background:
+      linear-gradient(
+        var(--sb-sidebar-background),
+        var(--sb-sidebar-background)
+      ),
+      var(--sb-background);
   }
 }
 
@@ -1411,7 +1417,15 @@
     z-index: 100;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    background: var(--sb-background);
+    /* The desktop sidebar's look (its background over the page's) made
+       opaque, since the drawer covers the reader. See the compact-desktop
+       overlay rule above. */
+    background:
+      linear-gradient(
+        var(--sb-sidebar-background),
+        var(--sb-sidebar-background)
+      ),
+      var(--sb-background);
     /* Bottom buffer (+ safe area) so the last setting clears the screen edge.
        NOTE: a stray `padding: 0` here previously clobbered the bottom padding. */
     padding: 0 0 calc(2rem + env(safe-area-inset-bottom, 0px));
