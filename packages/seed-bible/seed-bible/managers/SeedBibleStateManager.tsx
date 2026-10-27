@@ -2189,7 +2189,7 @@ export function createSeedBibleState(
         t("friend-link-meta-description", {
           name: person.name,
           brand: siteName.value,
-          defaultValue: "{{name}} wants to be your friend on the {{brand}}",
+          defaultValue: "{{name}} wants to be your friend on {{brand}}",
         }),
         META_DESCRIPTION_MAX_GRAPHEMES
       );

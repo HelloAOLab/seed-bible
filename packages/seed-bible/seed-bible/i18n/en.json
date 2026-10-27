@@ -1168,7 +1168,7 @@
   "feed-empty-notes": "No notes in this time frame yet.",
   "feed-empty-reading": "No reading in this time frame yet.",
   "friend-link-social-title": "Add {{name}} as a friend",
-  "friend-link-meta-description": "{{name}} wants to be your friend on the {{brand}}",
+  "friend-link-meta-description": "{{name}} wants to be your friend on {{brand}}",
   "friend-link-title": "Add {{name}} as a friend on {{brand}}",
   "extension-consent-title": "Install {{name}}?",
   "extension-consent-update-title": "{{name}} wants new permissions",
