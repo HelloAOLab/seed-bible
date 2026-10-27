@@ -57,7 +57,7 @@ function save(id: string, verse?: number): Save {
     chapterNumber: 23,
     verse,
     createdAt: 1761955200000,
-    category: "My Saves",
+    categories: ["My Saves"],
   } as unknown as Save;
 }
 
@@ -1591,17 +1591,100 @@ describe("YourContentPane save options", () => {
     ).toEqual(["edit", "delete"]);
   });
 
-  it("deletes the save from the delete entry", () => {
-    const { removeSave } = renderWithSave();
+  /** Picks Delete from the save's menu and renders the confirmation. */
+  const chooseDelete = (openModal: ReturnType<typeof vi.fn>) => {
     openMenu();
-
     const remove = menuItems().find((item) => itemLabel(item) === "Delete");
     if (!remove) throw new Error("Delete was not in the menu.");
     act(() => {
       remove.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
+    expect(openModal).toHaveBeenCalledTimes(1);
+    const modal = openModal.mock.calls[0]![0] as {
+      content: () => preact.ComponentChildren;
+    };
+    const dialog = document.createElement("div");
+    act(() => render(<>{modal.content()}</>, dialog));
+    return dialog;
+  };
+
+  it("asks before deleting a save, then deletes it", async () => {
+    const { removeSave, openModal } = renderWithSave();
+
+    const dialog = chooseDelete(openModal);
+    expect(removeSave).not.toHaveBeenCalled();
+    expect(dialog.textContent).toContain(
+      'Delete save "Psalm 23"? This can\'t be undone.'
+    );
+
+    await act(async () => {
+      dialog
+        .querySelector<HTMLButtonElement>(".sb-session-settings-end")!
+        .click();
+    });
 
     expect(removeSave).toHaveBeenCalledWith("b1");
+  });
+
+  it("names every folder a save will be deleted from", () => {
+    const created = createState({
+      saves: [{ ...save("b1"), categories: ["My Saves", "Sermon prep"] }],
+    });
+    act(() => {
+      render(
+        <YourContentPane
+          state={created.state}
+          onOpenPassage={vi.fn()}
+          onPlayPlaylist={vi.fn()}
+          onEditPlaylist={vi.fn()}
+          onEditAnnotation={vi.fn()}
+          onCreatePlaylist={vi.fn()}
+          onOpenReadingPlan={vi.fn()}
+          onEditReadingPlan={vi.fn()}
+          onEditCustomization={vi.fn()}
+          onCreateCustomization={vi.fn()}
+        />,
+        container
+      );
+    });
+
+    const dialog = chooseDelete(created.openModal);
+
+    expect(dialog.textContent).toContain(
+      'Delete save "Psalm 23" from My Saves and Sermon prep?'
+    );
+  });
+
+  it("shows how many folders a save is in, naming them on hover", () => {
+    const created = createState({
+      saves: [{ ...save("b1"), categories: ["My Saves", "Sermon prep"] }],
+    });
+    act(() => {
+      render(
+        <YourContentPane
+          state={created.state}
+          onOpenPassage={vi.fn()}
+          onPlayPlaylist={vi.fn()}
+          onEditPlaylist={vi.fn()}
+          onEditAnnotation={vi.fn()}
+          onCreatePlaylist={vi.fn()}
+          onOpenReadingPlan={vi.fn()}
+          onEditReadingPlan={vi.fn()}
+          onEditCustomization={vi.fn()}
+          onCreateCustomization={vi.fn()}
+        />,
+        container
+      );
+    });
+
+    const folders = container.querySelector(".sb-content-save-folders")!;
+    expect(
+      folders.querySelector(".sb-content-save-folder-count")?.textContent
+    ).toBe("2");
+    expect(folders.getAttribute("title")).toBe("My Saves and Sermon prep");
+    expect(folders.getAttribute("aria-label")).toBe(
+      "In My Saves and Sermon prep"
+    );
   });
 
   it("does not open the passage when the options button is used", () => {

@@ -435,10 +435,24 @@
   text-transform: uppercase;
 }
 
-.sb-content-save-date {
+/* The second line: the date, then the folder count. */
+.sb-content-save-meta {
   grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   color: var(--sb-content-muted);
   font-size: 0.75rem;
+}
+
+.sb-content-save-folders {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sb-content-save-folders .material-symbols-outlined {
+  font-size: 0.875rem;
 }
 
 /* ----------------------------------------------------------- reading plans */

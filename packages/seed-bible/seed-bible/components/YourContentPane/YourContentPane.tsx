@@ -31,6 +31,7 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
+import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import { Spinner } from "../Spinner/Spinner";
 import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
 import { useI18n } from "../../i18n";
@@ -357,6 +358,36 @@ function SavePill(props: {
   const bookNames = state.today.bookNames.value;
   const verse = verseNumbersOf(save.verse)[0];
   const book = bookNames.get(save.bookId) ?? save.bookId;
+  const name = `${book} ${save.chapterNumber}${verse ? `:${verse}` : ""}`;
+  // "My Saves, Sermon prep, and Advent", joined the way the language does.
+  const folders = new Intl.ListFormat(language, { type: "conjunction" }).format(
+    save.categories
+  );
+
+  // The edit modal is where a save is taken out of just some of its folders,
+  // so Delete here removes it from all of them, after asking. Naming the
+  // folders matters most for a save that's in several.
+  const confirmDelete = () =>
+    openConfirmDeleteModal(state.modals, {
+      id: `delete-save-confirm-${save.id}`,
+      title: { key: "delete-save-confirm-title", defaultValue: "Delete save?" },
+      message: (t) =>
+        save.categories.length > 1
+          ? t("delete-save-confirm-message-folders", {
+              name,
+              folders,
+              defaultValue:
+                'Delete save "{{name}}" from {{folders}}? This can\'t be undone.',
+            })
+          : t("delete-save-confirm-message", {
+              name,
+              defaultValue: 'Delete save "{{name}}"? This can\'t be undone.',
+            }),
+      onConfirm: () => state.saves.removeSave(save.id),
+      failedMessage: (t) =>
+        t("delete-save-failed", { defaultValue: "Couldn't delete the save." }),
+      toast: state.app.toast,
+    });
 
   const location = {
     translationId: save.translationId,
@@ -381,14 +412,29 @@ function SavePill(props: {
           })
         }
       >
-        <span className="sb-content-save-name">
-          {`${book} ${save.chapterNumber}${verse ? `:${verse}` : ""}`}
-        </span>
+        <span className="sb-content-save-name">{name}</span>
         <span className="sb-content-save-translation">
           {save.translationId}
         </span>
-        <span className="sb-content-save-date">
-          {formatDate(save.createdAt, language, "short")}
+        <span className="sb-content-save-meta">
+          <span className="sb-content-save-date">
+            {formatDate(save.createdAt, language, "short")}
+          </span>
+          {/* How many folders it's in, so a save filed in several stands out;
+              the names are on hover and for screen readers. */}
+          <span
+            className="sb-content-save-folders"
+            title={folders}
+            aria-label={t("save-folders", {
+              folders,
+              defaultValue: "In {{folders}}",
+            })}
+          >
+            <MaterialIcon aria-hidden="true">folder</MaterialIcon>
+            <span className="sb-content-save-folder-count" aria-hidden="true">
+              {save.categories.length}
+            </span>
+          </span>
         </span>
       </button>
       <ContextMenuWithButton
@@ -407,14 +453,7 @@ function SavePill(props: {
           </MaterialIcon>
           <span>{t("edit-save", { defaultValue: "Edit save" })}</span>
         </ContextMenuItem>
-        <ContextMenuItem
-          onClick={() => {
-            // Removes the save outright, not from one folder: this list is
-            // flat, so there is no folder to remove it from. That is what the
-            // edit modal's own "Remove from all folders" does.
-            void state.saves.removeSave(save.id);
-          }}
-        >
+        <ContextMenuItem onClick={confirmDelete}>
           <MaterialIcon
             className="sb-context-menu-item-icon"
             aria-hidden="true"

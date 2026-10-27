@@ -53,6 +53,7 @@ import {
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
 import { openReaderLocation } from "./openReaderLocation";
+import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import { useScrollEdgeFadeRef } from "../useScrollEdgeFade";
 import {
   BookmarkGlyph,
@@ -1819,6 +1820,63 @@ function openSaveCategoryModal(
   });
 }
 
+/**
+ * Asks before deleting a saves folder, saying what happens to the saves in it:
+ * the ones only in this folder are deleted with it, and the rest stay in
+ * their other folders.
+ */
+function confirmDeleteSaveFolder(state: SeedBibleState, folderName: string) {
+  const inFolder = state.saves.saves
+    .peek()
+    .filter((save) => saveBelongsToCategory(save, folderName));
+  const onlyHere = inFolder.filter(
+    (save) => save.categories.length === 1
+  ).length;
+  const alsoElsewhere = inFolder.length - onlyHere;
+
+  openConfirmDeleteModal(state.modals, {
+    id: `delete-save-folder-confirm-${folderName}`,
+    title: {
+      key: "delete-save-folder-confirm-title",
+      defaultValue: "Delete folder?",
+    },
+    message: (t) =>
+      [
+        t("delete-save-folder-confirm-message", {
+          name: folderName,
+          defaultValue: 'Delete folder "{{name}}"?',
+        }),
+        onlyHere > 0
+          ? t("delete-save-folder-confirm-deletes", {
+              count: onlyHere,
+              defaultValue_one:
+                "The save that's only in this folder will be deleted too.",
+              defaultValue_other:
+                "The {{count}} saves that are only in this folder will be deleted too.",
+            })
+          : null,
+        alsoElsewhere > 0
+          ? t("delete-save-folder-confirm-keeps", {
+              count: alsoElsewhere,
+              defaultValue_one:
+                "The save that's also in another folder will stay there.",
+              defaultValue_other:
+                "The {{count}} saves that are also in other folders will stay there.",
+            })
+          : null,
+        t("cant-be-undone", { defaultValue: "This can't be undone." }),
+      ]
+        .filter(Boolean)
+        .join(" "),
+    onConfirm: () => state.saves.deleteCategory(folderName),
+    failedMessage: (t) =>
+      t("delete-save-folder-failed", {
+        defaultValue: "Couldn't delete the folder.",
+      }),
+    toast: state.app.toast,
+  });
+}
+
 interface SavesSectionProps {
   state: SeedBibleState;
   closeLayoutMenu: () => void;
@@ -2001,7 +2059,7 @@ function SavesSection(props: SavesSectionProps) {
                   <ContextMenuItem
                     className="sb-tab-menu-item"
                     onClick={() => {
-                      void saves.deleteCategory(category.name);
+                      confirmDeleteSaveFolder(state, category.name);
                     }}
                   >
                     <MaterialIcon

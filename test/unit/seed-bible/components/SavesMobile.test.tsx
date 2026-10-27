@@ -391,6 +391,90 @@ describe("mobile saves screen", () => {
     ]);
   });
 
+  describe("deleting a folder", () => {
+    /** Picks Delete from the named folder's menu. */
+    async function chooseDeleteFolder(name: string) {
+      await openSavesScreen();
+      const menuButton = Array.from(
+        container.querySelectorAll<HTMLButtonElement>(
+          "[aria-label='Folder options']"
+        )
+      ).find((button) =>
+        button.closest(".sb-save-category-header")?.textContent?.includes(name)
+      );
+      expect(menuButton).toBeDefined();
+      await act(async () => {
+        menuButton!.click();
+      });
+      const remove = Array.from(
+        document.querySelectorAll<HTMLElement>(".sb-tab-menu-item")
+      ).find((item) => item.textContent?.includes("Delete"));
+      await act(async () => {
+        remove!.click();
+      });
+    }
+
+    /** Renders the confirmation the way the modal host would. */
+    function renderConfirmation() {
+      const modal = state.modals.modals.value.at(-1);
+      expect(modal).toBeDefined();
+      return renderModalContent({
+        title: modal!.title,
+        content: modal!.content,
+      });
+    }
+
+    it("asks first, saying which saves go with it and which stay", async () => {
+      await act(async () => {
+        await state.saves.addSave("AAB", "EXO", 2, {
+          categories: ["Sermon prep"],
+        });
+        await state.saves.addSave("AAB", "EXO", 3, {
+          categories: ["My Saves", "Sermon prep"],
+        });
+      });
+
+      await chooseDeleteFolder("Sermon prep");
+
+      // Nothing is deleted until the user confirms.
+      expect(state.saves.categories.value.map((c) => c.name)).toContain(
+        "Sermon prep"
+      );
+      const dialog = renderConfirmation();
+      expect(dialog.textContent).toContain(
+        'Delete folder "Sermon prep"? ' +
+          "The save that's only in this folder will be deleted too. " +
+          "The save that's also in another folder will stay there. " +
+          "This can't be undone."
+      );
+
+      await act(async () => {
+        dialog
+          .querySelector<HTMLButtonElement>(".sb-session-settings-end")!
+          .click();
+      });
+
+      expect(state.saves.categories.value.map((c) => c.name)).not.toContain(
+        "Sermon prep"
+      );
+      expect(state.saves.saves.value.map((save) => save.categories)).toEqual([
+        ["My Saves"],
+      ]);
+    });
+
+    it("says only that it can't be undone for an empty folder", async () => {
+      await act(async () => {
+        await state.saves.createCategory("Empty");
+      });
+
+      await chooseDeleteFolder("Empty");
+
+      expect(renderConfirmation().textContent).toContain(
+        'Delete folder "Empty"? This can\'t be undone.'
+      );
+    });
+  });
+
   it("opens a save with no matching tab on the first tap and closes the drawer", async () => {
     // The default tab sits on AAB GEN 1, so this save has no open tab and
     // takes the "create a new tab" path.
