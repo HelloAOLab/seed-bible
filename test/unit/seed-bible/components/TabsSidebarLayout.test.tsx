@@ -155,32 +155,6 @@ describe("Sidebar collapsed layout", () => {
     expect(container.querySelector(".sb-sidebar-search-shell")).not.toBeNull();
   });
 
-  it("opens the Today screen from the sidebar's header button", async () => {
-    const state = await createState();
-    state.sidebar.isSidebarCollapsed.value = false;
-    expect(state.today.isOpen.value).toBe(false);
-
-    act(() => {
-      render(
-        <TestHost state={state}>
-          <Sidebar state={state} />
-        </TestHost>,
-        container
-      );
-    });
-
-    const button = container.querySelector<HTMLButtonElement>(
-      ".sb-sidebar-tabs-header-tasks-button"
-    );
-    expect(button).not.toBeNull();
-
-    act(() => {
-      button!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(state.today.isOpen.value).toBe(true);
-  });
-
   it("marks bottom actions as collapsed for vertical stacking", async () => {
     const state = await createState();
     state.sidebar.isSidebarCollapsed.value = true;

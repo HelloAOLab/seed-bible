@@ -1497,10 +1497,9 @@
    * Mobile tabs sidebar
    * ------------------------------------------------------------------ */
 
-  /* Hide the desktop header's small "+" and checklist/tasks icon on
-   * mobile; the mobile screen header has its own "+". */
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header .sb-tab-add-button,
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header-tasks-button {
+  /* Hide the desktop header's small "+" on mobile; the mobile screen header
+   * has its own "+". */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header .sb-tab-add-button {
     display: none;
   }
 

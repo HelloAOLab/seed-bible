@@ -17,12 +17,7 @@ import {
   ContextMenuWithButton,
 } from "../../components/ContextMenu/ContextMenu";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import {
-  MaterialIcon,
-  SettingsIcon,
-  StarIcon,
-  TodayIcon,
-} from "../../components/icons";
+import { MaterialIcon, SettingsIcon, StarIcon } from "../../components/icons";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
@@ -2481,18 +2476,6 @@ export function Tabs(props: TabsProps) {
           {t("tabs", { defaultValue: "Tabs" })}
         </h3>
         <div className="sb-sidebar-tabs-header-actions">
-          <button
-            type="button"
-            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
-            aria-label={t("tasks", { defaultValue: "Tasks" })}
-            title={t("tasks", { defaultValue: "Tasks" })}
-            onClick={() => {
-              state.today.open();
-            }}
-          >
-            <TodayIcon />
-          </button>
-
           <button
             type="button"
             className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
