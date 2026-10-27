@@ -773,10 +773,13 @@
   .sb-sidebar-settings-view {
     padding: 0.3125rem 0.75rem;
   }
-}
-@media (max-width: 480px) {
-  .sb-sidebar-settings-view {
-    padding: 5px 12px;
+
+  /* The mobile header is inset 1rem (see `.sb-tabs-sidebar-mobile-open
+     .sb-sidebar-tabs-header`); inset the content to match, so the rows start
+     where the title does and sit inside it like on desktop instead of
+     running edge to edge. */
+  .sb-sidebar-settings-content {
+    padding-inline: 1rem;
   }
 }
 
