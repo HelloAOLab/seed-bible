@@ -60,6 +60,68 @@
   font-size: 0.875rem;
 }
 
+.sb-chat-view-messages--ai-limits {
+  justify-content: safe center;
+}
+
+.sb-chat-ai-limits {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  color: var(--sb-font-color);
+  text-align: start;
+}
+
+.sb-chat-ai-limits-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.sb-chat-ai-limits-intro {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.sb-chat-ai-limits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0;
+  padding-inline-start: 1.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.sb-chat-ai-limits-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.125rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.sb-chat-ai-limits-check input {
+  flex: 0 0 auto;
+  margin-top: 0.2rem;
+  accent-color: var(--sb-primary-color, currentColor);
+}
+
+.sb-chat-ai-limits-check input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  outline-offset: 2px;
+}
+
 .sb-chat-view-presence {
   display: flex;
   flex-direction: row;
@@ -474,6 +536,11 @@ img.sb-chat-view-message-avatar {
 .sb-chat-view-input:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
   outline-offset: 1px;
+}
+
+.sb-chat-view-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .sb-chat-view-send {

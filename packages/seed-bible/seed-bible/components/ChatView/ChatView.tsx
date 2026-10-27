@@ -2,6 +2,7 @@ import "./ChatView.css";
 import { effect, useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import {
+  chatHasAI,
   chatHasOtherPeople,
   type ChatParticipant,
   type ChatMessage,
@@ -9,6 +10,11 @@ import {
   type ParsedChatTextMessage,
   type TranslationSuggestion,
 } from "../../managers/ChatsManager";
+import {
+  hasCurrentAiLimitsAcknowledgment,
+  readAiLimitsAcknowledgment,
+  saveAiLimitsAcknowledgment,
+} from "../../managers/AiLimitsAcknowledgment";
 import {
   readableTranslationRequest,
   switchReaderToTranslation,
@@ -624,6 +630,73 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
   );
 }
 
+const AI_LIMITS_TITLE_ID = "sb-ai-limits-title";
+const AI_LIMITS_CHECKBOX_ID = "sb-ai-limits-confirm";
+
+function AiLimitsNotice({ onAcknowledge }: { onAcknowledge: () => void }) {
+  const { t } = useI18n();
+  return (
+    <section className="sb-chat-ai-limits" aria-labelledby={AI_LIMITS_TITLE_ID}>
+      <h2 id={AI_LIMITS_TITLE_ID} className="sb-chat-ai-limits-title">
+        {t("ai-limits-title", { defaultValue: "Before you chat with AI" })}
+      </h2>
+      <p className="sb-chat-ai-limits-intro">
+        {t("ai-limits-intro", {
+          defaultValue:
+            "AI can be a helpful starting point, but keep its limits in mind:",
+        })}
+      </p>
+      <ul className="sb-chat-ai-limits-list">
+        <li>
+          {t("ai-limits-mistakes", {
+            defaultValue:
+              "It makes mistakes, and can sound confident when it's wrong.",
+          })}
+        </li>
+        <li>
+          {t("ai-limits-agreeable", {
+            defaultValue:
+              "It tends to tell you what you want to hear, and leans toward popular answers.",
+          })}
+        </li>
+        <li>
+          {t("ai-limits-scripture", {
+            defaultValue:
+              "It isn't a reliable source. Check what it says against Scripture.",
+          })}
+        </li>
+        <li>
+          {t("ai-limits-study", {
+            defaultValue:
+              "Study the Bible for yourself, and don't let AI do your thinking for you.",
+          })}
+        </li>
+      </ul>
+      <label
+        className="sb-chat-ai-limits-check"
+        htmlFor={AI_LIMITS_CHECKBOX_ID}
+      >
+        <input
+          id={AI_LIMITS_CHECKBOX_ID}
+          type="checkbox"
+          checked={false}
+          onChange={(event: Event) => {
+            if ((event.currentTarget as HTMLInputElement).checked) {
+              onAcknowledge();
+            }
+          }}
+        />
+        <span>
+          {t("ai-limits-confirm", {
+            defaultValue:
+              "I understand that AI can make mistakes and isn't a substitute for studying the Bible myself.",
+          })}
+        </span>
+      </label>
+    </section>
+  );
+}
+
 export function ChatView(props: ChatViewProps) {
   const { chat, state } = props;
   const { t } = useI18n();
@@ -655,10 +728,19 @@ export function ChatView(props: ChatViewProps) {
   // as a "you can type here" hint. Hidden the moment the field is focused
   // or has text, and reappears on blur if the field is empty again.
   const isInputFocused = useSignal(false);
+  const acknowledgedAiLimitsNow = useSignal(false);
+  const login = state.login;
+  const needsAiLimitsAcknowledgment =
+    chatHasAI(chat) &&
+    !acknowledgedAiLimitsNow.value &&
+    !hasCurrentAiLimitsAcknowledgment(
+      login ? readAiLimitsAcknowledgment(login) : null
+    );
   const showMobileInputHint =
     state.app.isMobile.value &&
     !isInputFocused.value &&
-    draft.value.length === 0;
+    draft.value.length === 0 &&
+    !needsAiLimitsAcknowledgment;
 
   const activeParticipants = chat.participants.value.filter(
     (participant) => participant.isActive
@@ -694,7 +776,8 @@ export function ChatView(props: ChatViewProps) {
   ];
   const totalMentionCount =
     (showEveryoneSuggestion ? 1 : 0) + allMentionSuggestions.length;
-  const isMentionPickerOpen = mentionContext !== null;
+  const isMentionPickerOpen =
+    mentionContext !== null && !needsAiLimitsAcknowledgment;
   const mentionActiveIndex = useSignal(0);
 
   const suggestionKey = suggestion
@@ -753,12 +836,13 @@ export function ChatView(props: ChatViewProps) {
   useEffect(() => {
     // Don't autofocus on mobile — focusing opens the soft keyboard.
     // The blinking hint caret (`showMobileInputHint` above) stands in for
-    // the real caret until the user taps in.
-    if (state.app.isMobile.value) {
+    // the real caret until the user taps in. Also wait until the AI-limits
+    // acknowledgment is out of the way, then focus so they can type.
+    if (state.app.isMobile.value || needsAiLimitsAcknowledgment) {
       return;
     }
     inputRef.current?.focus();
-  }, []);
+  }, [needsAiLimitsAcknowledgment]);
 
   // Verse-toolbar Ask AI (and similar) stash text on `chats.composerDraft`.
   // Merge it into the local draft once, then clear the signal so a later
@@ -882,10 +966,20 @@ export function ChatView(props: ChatViewProps) {
     cursorPosition.value = target.selectionStart ?? target.value.length;
   };
 
+  const acknowledgeAiLimits = () => {
+    if (acknowledgedAiLimitsNow.value) {
+      return;
+    }
+    acknowledgedAiLimitsNow.value = true;
+    if (login) {
+      void saveAiLimitsAcknowledgment(login);
+    }
+  };
+
   const handleSubmit = async (event: Event) => {
     event.preventDefault();
     const text = draft.value.trim();
-    if (!text || isSubmitting.value) {
+    if (!text || isSubmitting.value || needsAiLimitsAcknowledgment) {
       return;
     }
 
@@ -923,6 +1017,10 @@ export function ChatView(props: ChatViewProps) {
   };
 
   const handleComposeKeyDown = (event: KeyboardEvent) => {
+    if (needsAiLimitsAcknowledgment) {
+      return;
+    }
+
     if (isMentionPickerOpen) {
       if (event.key === "ArrowDown") {
         event.preventDefault();
@@ -1042,7 +1140,10 @@ export function ChatView(props: ChatViewProps) {
     }
   };
 
-  const canSubmit = draft.value.trim().length > 0 && !isSubmitting.value;
+  const canSubmit =
+    draft.value.trim().length > 0 &&
+    !isSubmitting.value &&
+    !needsAiLimitsAcknowledgment;
 
   const othersPresent = activeParticipants.filter((p) => !p.isSelf);
 
@@ -1104,21 +1205,29 @@ export function ChatView(props: ChatViewProps) {
         </div>
       ) : null}
       <div
-        className="sb-chat-view-messages"
+        className={
+          needsAiLimitsAcknowledgment && timelineGroups.length === 0
+            ? "sb-chat-view-messages sb-chat-view-messages--ai-limits"
+            : "sb-chat-view-messages"
+        }
         ref={messagesRef}
         role="log"
         aria-live="polite"
       >
         {timelineGroups.length === 0 ? (
-          <div className="sb-chat-view-empty">
-            <AskIcon className="sb-chat-view-empty-icon" />
-            <p className="sb-chat-view-empty-title">
-              {t("start-conversation", {
-                defaultValue: "Start a conversation",
-              })}
-            </p>
-            <PresencePrompt others={othersPresent} />
-          </div>
+          needsAiLimitsAcknowledgment ? (
+            <AiLimitsNotice onAcknowledge={acknowledgeAiLimits} />
+          ) : (
+            <div className="sb-chat-view-empty">
+              <AskIcon className="sb-chat-view-empty-icon" />
+              <p className="sb-chat-view-empty-title">
+                {t("start-conversation", {
+                  defaultValue: "Start a conversation",
+                })}
+              </p>
+              <PresencePrompt others={othersPresent} />
+            </div>
+          )
         ) : (
           timelineGroups.map((group) => {
             if (group.type === "join") {
@@ -1341,6 +1450,10 @@ export function ChatView(props: ChatViewProps) {
           </div>
         )}
 
+        {needsAiLimitsAcknowledgment && timelineGroups.length > 0 ? (
+          <AiLimitsNotice onAcknowledge={acknowledgeAiLimits} />
+        ) : null}
+
         <form className="sb-chat-view-compose" onSubmit={handleSubmit}>
           <div
             className={
@@ -1357,6 +1470,7 @@ export function ChatView(props: ChatViewProps) {
               ref={inputRef}
               className="sb-chat-view-input"
               rows={1}
+              disabled={needsAiLimitsAcknowledgment}
               placeholder={t("type-a-message", {
                 defaultValue: "Type a message...",
               })}
