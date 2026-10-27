@@ -710,15 +710,6 @@
   /* Widen the list slightly past the rail's padding so labels like
      "PSA 139" fit on one line in the tiles. */
   margin-inline: -0.10625rem;
-
-  &::before {
-    content: "";
-    flex-shrink: 0;
-    width: 1.75rem;
-    height: 1px;
-    margin-bottom: 0.375rem;
-    background: var(--sb-divider-color);
-  }
 }
 
 /* The tab lists hide their scrollbars, so an edge with tabs scrolled past it
