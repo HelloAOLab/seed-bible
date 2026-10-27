@@ -1,3 +1,4 @@
+import { TUTORIAL_OFFER_DELAY_MS } from "@packages/seed-bible/seed-bible/managers/TutorialManager";
 import {
   createTestSeedBibleState,
   waitFor,
@@ -57,7 +58,10 @@ describe("reader visibility while Today is open", () => {
     const state = await createStateWithLoadedChapter(false);
 
     expect(state.today.isOpen.value).toBe(false);
-    await waitFor(() => state.tutorial.promptVisible.value, 2000);
+    await waitFor(
+      () => state.tutorial.promptVisible.value,
+      TUTORIAL_OFFER_DELAY_MS + 1500
+    );
     expect(state.tutorial.promptVisible.value).toBe(true);
   });
 
@@ -75,7 +79,10 @@ describe("reader visibility while Today is open", () => {
     // instead could only ever have established "not yet".
     state.today.close();
 
-    await waitFor(() => state.tutorial.promptVisible.value, 2000);
+    await waitFor(
+      () => state.tutorial.promptVisible.value,
+      TUTORIAL_OFFER_DELAY_MS + 1500
+    );
     expect(state.tutorial.promptVisible.value).toBe(true);
   });
 
@@ -104,7 +111,94 @@ describe("reader visibility while Today is open", () => {
 
     state.today.close();
 
-    await waitFor(() => state.tutorial.promptVisible.value, 2000);
+    await waitFor(
+      () => state.tutorial.promptVisible.value,
+      TUTORIAL_OFFER_DELAY_MS + 1500
+    );
+    expect(state.tutorial.promptVisible.value).toBe(true);
+  });
+});
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+describe("the offer card waits until the reader has stayed uncovered", () => {
+  it("does not offer on the profile page, including while signing in", async () => {
+    const state = await createStateWithLoadedChapter(true);
+
+    state.openProfile();
+    await Promise.resolve();
+    expect(state.isProfileOpen.value).toBe(true);
+    expect(state.today.isOpen.value).toBe(false);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    state.login.isLoginOpen.value = true;
+    await wait(TUTORIAL_OFFER_DELAY_MS + 300);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    state.login.isLoginOpen.value = false;
+    expect(state.tutorial.promptVisible.value).toBe(false);
+    expect(state.isProfileOpen.value).toBe(true);
+
+    state.closeProfile();
+    await wait(300);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    await waitFor(
+      () => state.tutorial.promptVisible.value,
+      TUTORIAL_OFFER_DELAY_MS + 1500
+    );
+    expect(state.tutorial.promptVisible.value).toBe(true);
+  });
+
+  it("holds the offer while a modal or the sign-in dialog covers the reader", async () => {
+    const state = await createStateWithLoadedChapter(true);
+    state.modals.openModal({
+      id: "cover",
+      title: "Cover",
+      content: "Covering the reader",
+    });
+
+    state.today.close();
+    await wait(TUTORIAL_OFFER_DELAY_MS + 300);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    state.modals.closeModal("cover");
+    state.login.isLoginOpen.value = true;
+    await wait(TUTORIAL_OFFER_DELAY_MS + 300);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    state.login.isLoginOpen.value = false;
+    await wait(300);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    await waitFor(
+      () => state.tutorial.promptVisible.value,
+      TUTORIAL_OFFER_DELAY_MS + 1500
+    );
+    expect(state.tutorial.promptVisible.value).toBe(true);
+  });
+
+  it("starts the wait over when a pane covers the reader during it", async () => {
+    const state = await createStateWithLoadedChapter(true);
+
+    state.today.close();
+    await wait(300);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    state.today.open();
+    await wait(TUTORIAL_OFFER_DELAY_MS + 300);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    state.today.close();
+    await wait(300);
+    expect(state.tutorial.promptVisible.value).toBe(false);
+
+    await waitFor(
+      () => state.tutorial.promptVisible.value,
+      TUTORIAL_OFFER_DELAY_MS + 1500
+    );
     expect(state.tutorial.promptVisible.value).toBe(true);
   });
 });

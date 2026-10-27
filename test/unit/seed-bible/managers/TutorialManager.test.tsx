@@ -6,6 +6,7 @@ import {
   mirrorTutorialToUrl,
   MOBILE_TUTORIAL_STEPS,
   ONBOARDING_STEPS,
+  TUTORIAL_OFFER_DELAY_MS,
   type TutorialLinkRequest,
   type TutorialStep,
 } from "@packages/seed-bible/seed-bible/managers/TutorialManager";
@@ -45,6 +46,11 @@ function createPanes(): PanesManager {
     panes: signal([]),
     closeAll: vi.fn(),
   } as unknown as PanesManager;
+}
+
+/** Lets the offer delay elapse. Call only while fake timers are installed. */
+async function elapseOfferDelay(ms = TUTORIAL_OFFER_DELAY_MS) {
+  await vi.advanceTimersByTimeAsync(ms);
 }
 
 function createSidebar(collapsed = false): SidebarManager {
@@ -93,26 +99,33 @@ describe("createTutorialManager — session-link joins", () => {
     expect(tutorial.running.value).toBe(false);
   });
 
-  it("offers the onboarding tour on a normal (non-session-link) visit", () => {
+  it("offers the onboarding tour on a normal (non-session-link) visit", async () => {
     // Control for the test above: same state, only the flag differs — proving
     // it's the session-link flag that suppresses the offer, not the setup.
-    const tutorial = createTutorialManager(
-      createLogin(),
-      createReaderVisible(true),
-      createSelector(),
-      signal(false),
-      createPanes(),
-      createSidebar()
-    );
+    vi.useFakeTimers();
+    try {
+      const tutorial = createTutorialManager(
+        createLogin(),
+        createReaderVisible(true),
+        createSelector(),
+        signal(false),
+        createPanes(),
+        createSidebar()
+      );
 
-    // `createTutorialManager` no longer reads storage or watches for the
-    // offer-card moment at construction — both would put the card in the
-    // client's first render but not the SSR HTML. The real app makes these two
-    // calls from a post-mount effect via `app.hydrateFromStorage()`.
-    tutorial.hydrateStoredFlags();
-    tutorial.armAutoStart();
+      // `createTutorialManager` no longer reads storage or watches for the
+      // offer-card moment at construction — both would put the card in the
+      // client's first render but not the SSR HTML. The real app makes these two
+      // calls from a post-mount effect via `app.hydrateFromStorage()`.
+      tutorial.hydrateStoredFlags();
+      tutorial.armAutoStart();
 
-    expect(tutorial.promptVisible.value).toBe(true);
+      expect(tutorial.promptVisible.value).toBe(false);
+      await elapseOfferDelay();
+      expect(tutorial.promptVisible.value).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("does NOT pop a contextual tutorial when joined via a session link", () => {
@@ -328,16 +341,22 @@ describe("createTutorialManager — leaving the introduction early", () => {
     return tutorial;
   }
 
-  it("records No thanks without treating a finished tour the same way", () => {
-    const tutorial = createTutorial();
+  it("records No thanks without treating a finished tour the same way", async () => {
+    vi.useFakeTimers();
+    try {
+      const tutorial = createTutorial();
+      await elapseOfferDelay();
 
-    expect(tutorial.promptVisible.value).toBe(true);
-    tutorial.dismissPrompt();
+      expect(tutorial.promptVisible.value).toBe(true);
+      tutorial.dismissPrompt();
 
-    expect(tutorial.promptVisible.value).toBe(false);
-    expect(tutorial.running.value).toBe(false);
-    expect(tutorial.completed.value).toBe(true);
-    expect(tutorial.leftIntroductionEarly.value).toBe(true);
+      expect(tutorial.promptVisible.value).toBe(false);
+      expect(tutorial.running.value).toBe(false);
+      expect(tutorial.completed.value).toBe(true);
+      expect(tutorial.leftIntroductionEarly.value).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("records leaving the introduction tour before the end", () => {
@@ -409,30 +428,170 @@ describe("createTutorialManager — reader visibility gate", () => {
     expect(tutorial.promptVisible.value).toBe(false);
   });
 
-  it("offers the tour once the reader becomes visible", () => {
-    const readerVisible = signal(false);
+  it("offers the tour only after the reader has stayed visible for the delay", async () => {
+    vi.useFakeTimers();
+    try {
+      const readerVisible = signal(false);
 
-    const tutorial = createTutorialManager(
-      createLogin(),
-      readerVisible,
-      createSelector(),
-      signal(false),
-      createPanes(),
-      createSidebar()
-    );
+      const tutorial = createTutorialManager(
+        createLogin(),
+        readerVisible,
+        createSelector(),
+        signal(false),
+        createPanes(),
+        createSidebar()
+      );
 
-    // `createTutorialManager` no longer reads storage or watches for the
-    // offer-card moment at construction — both would put the card in the
-    // client's first render but not the SSR HTML. The real app makes these two
-    // calls from a post-mount effect via `app.hydrateFromStorage()`.
-    tutorial.hydrateStoredFlags();
-    tutorial.armAutoStart();
+      // `createTutorialManager` no longer reads storage or watches for the
+      // offer-card moment at construction — both would put the card in the
+      // client's first render but not the SSR HTML. The real app makes these two
+      // calls from a post-mount effect via `app.hydrateFromStorage()`.
+      tutorial.hydrateStoredFlags();
+      tutorial.armAutoStart();
 
-    expect(tutorial.promptVisible.value).toBe(false);
+      expect(tutorial.promptVisible.value).toBe(false);
 
-    readerVisible.value = true;
+      readerVisible.value = true;
 
-    expect(tutorial.promptVisible.value).toBe(true);
+      await elapseOfferDelay(TUTORIAL_OFFER_DELAY_MS - 1);
+      expect(tutorial.promptVisible.value).toBe(false);
+
+      await elapseOfferDelay(1);
+      expect(tutorial.promptVisible.value).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("restarts the wait when the reader is covered before the delay elapses", async () => {
+    vi.useFakeTimers();
+    try {
+      const readerVisible = signal(true);
+      const tutorial = createTutorialManager(
+        createLogin(),
+        readerVisible,
+        createSelector(),
+        signal(false),
+        createPanes(),
+        createSidebar()
+      );
+      tutorial.hydrateStoredFlags();
+      tutorial.armAutoStart();
+
+      await elapseOfferDelay(TUTORIAL_OFFER_DELAY_MS - 1);
+      readerVisible.value = false;
+      await elapseOfferDelay();
+      expect(tutorial.promptVisible.value).toBe(false);
+
+      readerVisible.value = true;
+      await elapseOfferDelay(TUTORIAL_OFFER_DELAY_MS - 1);
+      expect(tutorial.promptVisible.value).toBe(false);
+      await elapseOfferDelay(1);
+      expect(tutorial.promptVisible.value).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("holds the offer while a modal covers the reader, then waits the full delay", async () => {
+    vi.useFakeTimers();
+    try {
+      const modalCoveringReader = signal(true);
+      const tutorial = createTutorialManager(
+        createLogin(),
+        createReaderVisible(true),
+        createSelector(),
+        signal(false),
+        createPanes(),
+        createSidebar(),
+        signal(false),
+        signal(false),
+        null,
+        modalCoveringReader
+      );
+      tutorial.hydrateStoredFlags();
+      tutorial.armAutoStart();
+
+      await elapseOfferDelay();
+      expect(tutorial.promptVisible.value).toBe(false);
+
+      modalCoveringReader.value = false;
+      await elapseOfferDelay(TUTORIAL_OFFER_DELAY_MS - 1);
+      expect(tutorial.promptVisible.value).toBe(false);
+      await elapseOfferDelay(1);
+      expect(tutorial.promptVisible.value).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not offer the card once the tour was completed, skipped, or opted out", async () => {
+    vi.useFakeTimers();
+    try {
+      for (const key of ["sb-tutorial-seen", "sb-tutorial-opted-out"]) {
+        window.localStorage.clear();
+        window.localStorage.setItem(key, "true");
+        const tutorial = createTutorialManager(
+          createLogin(),
+          createReaderVisible(true),
+          createSelector(),
+          signal(false),
+          createPanes(),
+          createSidebar()
+        );
+        tutorial.hydrateStoredFlags();
+        tutorial.armAutoStart();
+        await elapseOfferDelay();
+        expect(tutorial.promptVisible.value).toBe(false);
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("waits out a still-loading profile, and skips the card when that profile already finished the tour", async () => {
+    vi.useFakeTimers();
+    try {
+      const login = createLogin();
+      login.userId.value = "user-1";
+      const tutorial = createTutorialManager(
+        login,
+        createReaderVisible(true),
+        createSelector(),
+        signal(false),
+        createPanes(),
+        createSidebar()
+      );
+      tutorial.hydrateStoredFlags();
+      tutorial.armAutoStart();
+
+      await elapseOfferDelay();
+      expect(tutorial.promptVisible.value).toBe(false);
+
+      login.profile.value = { name: "Ada", config: { tutorialSeen: true } };
+      await elapseOfferDelay();
+      expect(tutorial.promptVisible.value).toBe(false);
+
+      const fresh = createLogin();
+      fresh.userId.value = "user-2";
+      const offered = createTutorialManager(
+        fresh,
+        createReaderVisible(true),
+        createSelector(),
+        signal(false),
+        createPanes(),
+        createSidebar()
+      );
+      offered.hydrateStoredFlags();
+      offered.armAutoStart();
+      fresh.profile.value = { name: "Bea", config: {} };
+      await elapseOfferDelay(TUTORIAL_OFFER_DELAY_MS - 1);
+      expect(offered.promptVisible.value).toBe(false);
+      await elapseOfferDelay(1);
+      expect(offered.promptVisible.value).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
