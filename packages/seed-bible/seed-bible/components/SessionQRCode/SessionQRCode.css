@@ -96,12 +96,78 @@
 }
 
 .sb-session-qr-large-code {
+  position: relative;
+  overflow: hidden;
   width: min(20rem, 100%);
   aspect-ratio: 1;
   padding: 0.75rem;
   border-radius: 0.875rem;
   background: #ffffff;
   box-sizing: border-box;
+}
+
+/* The large code's modal blacks out everything behind it, not just dims it,
+   so the small code it was opened from (in the share sheet or the sidebar)
+   can't be scanned instead. */
+.sb-footnote-modal-overlay:has(.sb-session-qr-large) {
+  background: #000000;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The background deepens from the usual dim, the card rises into place,
+     then the code settles in and a sheen passes over it once. */
+  .sb-footnote-modal-overlay:has(.sb-session-qr-large) {
+    animation: sb-session-qr-backdrop-in 0.4s ease-out;
+
+    > .sb-footnote-modal {
+      animation: sb-session-qr-card-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+    }
+  }
+
+  .sb-session-qr-large-code img {
+    animation: sb-session-qr-code-in 0.4s 0.15s ease-out backwards;
+  }
+
+  .sb-session-qr-large-code::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      rgba(255, 255, 255, 0.75) 50%,
+      transparent 65%
+    );
+    transform: translateX(-100%);
+    animation: sb-session-qr-sheen 0.9s 0.45s ease-in-out forwards;
+    pointer-events: none;
+  }
+}
+
+@keyframes sb-session-qr-backdrop-in {
+  from {
+    background-color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+@keyframes sb-session-qr-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.94);
+  }
+}
+
+@keyframes sb-session-qr-code-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes sb-session-qr-sheen {
+  to {
+    transform: translateX(100%);
+  }
 }
 
 .sb-session-qr-info {
