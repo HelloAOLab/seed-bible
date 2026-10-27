@@ -384,14 +384,8 @@ function SavePill(props: {
         <span className="sb-content-save-name">
           {`${book} ${save.chapterNumber}${verse ? `:${verse}` : ""}`}
         </span>
-        <span
-          className={`sb-content-save-kind${
-            verse ? " sb-content-save-kind-verse" : ""
-          }`}
-        >
-          {verse
-            ? t("verse", { defaultValue: "Verse" })
-            : t("chapter", { defaultValue: "Chapter" })}
+        <span className="sb-content-save-translation">
+          {save.translationId}
         </span>
         <span className="sb-content-save-date">
           {formatDate(save.createdAt, language, "short")}
@@ -405,7 +399,13 @@ function SavePill(props: {
         <ContextMenuItem
           onClick={() => openSaveModalForLocation(state, location)}
         >
-          {t("edit-save", { defaultValue: "Edit save" })}
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            edit
+          </MaterialIcon>
+          <span>{t("edit-save", { defaultValue: "Edit save" })}</span>
         </ContextMenuItem>
         <ContextMenuItem
           onClick={() => {
@@ -415,7 +415,13 @@ function SavePill(props: {
             void state.saves.removeSave(save.id);
           }}
         >
-          {t("remove-save", { defaultValue: "Remove save" })}
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            delete
+          </MaterialIcon>
+          <span>{t("delete", { defaultValue: "Delete" })}</span>
         </ContextMenuItem>
       </ContextMenuWithButton>
     </div>

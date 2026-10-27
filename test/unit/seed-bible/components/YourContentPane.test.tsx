@@ -833,19 +833,18 @@ describe("YourContentPane", () => {
     });
   });
 
-  it("labels a verse save and a chapter save differently", () => {
+  it("shows each save's translation, like the sidebar", () => {
     const { state } = createState({
-      saves: [save("verse", 3), save("chapter")],
+      saves: [save("verse", 3), { ...save("chapter"), translationId: "AAB" }],
     });
     renderPane(state);
 
-    const kinds = Array.from(
-      container.querySelectorAll(".sb-content-save-kind")
+    const translations = Array.from(
+      container.querySelectorAll(".sb-content-save-translation")
     ).map((el) => el.textContent);
-    expect(kinds).toEqual(["Verse", "Chapter"]);
-    expect(
-      container.querySelector(".sb-content-save-kind-verse")?.textContent
-    ).toBe("Verse");
+    expect(translations).toEqual(["BSB", "AAB"]);
+    expect(container.textContent).not.toContain("Verse");
+    expect(container.textContent).not.toContain("Chapter");
   });
 
   it("names saves by book, chapter and verse", () => {
@@ -1569,6 +1568,10 @@ describe("YourContentPane save options", () => {
     Array.from(
       document.body.querySelectorAll<HTMLElement>(".sb-context-menu-item")
     );
+  /** An item's words, without its icon's ligature name. */
+  const itemLabel = (item: HTMLElement) =>
+    item.querySelector(":scope > span:not(.sb-context-menu-item-icon)")
+      ?.textContent;
 
   it("gives every save an options button", () => {
     renderWithSave();
@@ -1576,24 +1579,24 @@ describe("YourContentPane save options", () => {
     expect(container.querySelectorAll(".sb-content-save-menu")).toHaveLength(1);
   });
 
-  it("offers edit and remove, like the saves sidebar", () => {
+  it("offers edit and delete, each with an icon", () => {
     renderWithSave();
     openMenu();
 
-    expect(menuItems().map((item) => item.textContent)).toEqual([
-      "Edit save",
-      "Remove save",
-    ]);
+    expect(menuItems().map(itemLabel)).toEqual(["Edit save", "Delete"]);
+    expect(
+      menuItems().map(
+        (item) => item.querySelector(".sb-context-menu-item-icon")?.textContent
+      )
+    ).toEqual(["edit", "delete"]);
   });
 
-  it("removes the save from the remove entry", () => {
+  it("deletes the save from the delete entry", () => {
     const { removeSave } = renderWithSave();
     openMenu();
 
-    const remove = menuItems().find(
-      (item) => item.textContent === "Remove save"
-    );
-    if (!remove) throw new Error("Remove save was not in the menu.");
+    const remove = menuItems().find((item) => itemLabel(item) === "Delete");
+    if (!remove) throw new Error("Delete was not in the menu.");
     act(() => {
       remove.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });

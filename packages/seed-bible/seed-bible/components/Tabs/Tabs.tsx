@@ -1989,7 +1989,13 @@ function SavesSection(props: SavesSectionProps) {
                     closeContextMenus();
                   }}
                 >
-                  {t("rename", { defaultValue: "Rename" })}
+                  <MaterialIcon
+                    className="sb-context-menu-item-icon"
+                    aria-hidden="true"
+                  >
+                    edit
+                  </MaterialIcon>
+                  <span>{t("rename", { defaultValue: "Rename" })}</span>
                 </ContextMenuItem>
                 {category.name !== DEFAULT_SAVE_CATEGORY && (
                   <ContextMenuItem
@@ -1998,7 +2004,13 @@ function SavesSection(props: SavesSectionProps) {
                       void saves.deleteCategory(category.name);
                     }}
                   >
-                    {t("delete", { defaultValue: "Delete" })}
+                    <MaterialIcon
+                      className="sb-context-menu-item-icon"
+                      aria-hidden="true"
+                    >
+                      delete
+                    </MaterialIcon>
+                    <span>{t("delete", { defaultValue: "Delete" })}</span>
                   </ContextMenuItem>
                 )}
               </ContextMenuWithButton>
@@ -2086,9 +2098,17 @@ function SavesSection(props: SavesSectionProps) {
                               );
                             }}
                           >
-                            {t("edit-save", {
-                              defaultValue: "Edit save",
-                            })}
+                            <MaterialIcon
+                              className="sb-context-menu-item-icon"
+                              aria-hidden="true"
+                            >
+                              edit
+                            </MaterialIcon>
+                            <span>
+                              {t("edit-save", {
+                                defaultValue: "Edit save",
+                              })}
+                            </span>
                           </ContextMenuItem>
                           <ContextMenuItem
                             className="sb-tab-menu-item"
@@ -2099,9 +2119,36 @@ function SavesSection(props: SavesSectionProps) {
                               );
                             }}
                           >
-                            {t("remove-save", {
-                              defaultValue: "Remove save",
-                            })}
+                            {/* Only this folder's copy goes. That deletes the
+                                save when this is its only folder, but leaves
+                                it in any others, so the label says which. */}
+                            {save.categories.length > 1 ? (
+                              <>
+                                <MaterialIcon
+                                  className="sb-context-menu-item-icon"
+                                  aria-hidden="true"
+                                >
+                                  folder_delete
+                                </MaterialIcon>
+                                <span>
+                                  {t("remove-from-folder", {
+                                    defaultValue: "Remove from folder",
+                                  })}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <MaterialIcon
+                                  className="sb-context-menu-item-icon"
+                                  aria-hidden="true"
+                                >
+                                  delete
+                                </MaterialIcon>
+                                <span>
+                                  {t("delete", { defaultValue: "Delete" })}
+                                </span>
+                              </>
+                            )}
                           </ContextMenuItem>
                         </ContextMenuWithButton>
                       </div>

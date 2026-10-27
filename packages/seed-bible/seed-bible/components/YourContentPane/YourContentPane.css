@@ -387,11 +387,16 @@
   background: var(--sb-content-surface-strong);
 }
 
+/* Name and translation on one line, the date on its own line under them. */
 .sb-content-save {
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: auto auto;
   align-items: center;
-  gap: 8px;
+  justify-content: start;
+  column-gap: 8px;
+  row-gap: 2px;
   padding: 9px 12px;
+  text-align: start;
   border: none;
   border-radius: 8px 0 0 8px;
   background: transparent;
@@ -421,20 +426,17 @@
   font-weight: 700;
 }
 
-.sb-content-save-kind {
+/* Matches the translation on the sidebar's save and tab rows. */
+.sb-content-save-translation {
   color: var(--sb-content-muted);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
-/* A verse save is the more specific of the two, so it carries the accent. */
-.sb-content-save-kind-verse {
-  color: var(--sb-content-accent);
-}
-
 .sb-content-save-date {
+  grid-column: 1 / -1;
   color: var(--sb-content-muted);
   font-size: 0.75rem;
 }

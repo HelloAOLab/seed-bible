@@ -298,6 +298,99 @@ describe("mobile saves screen", () => {
     });
   });
 
+  describe("a save's options menu", () => {
+    /** Opens the first save's menu and returns its items. */
+    async function openSaveMenu() {
+      await openSavesScreen();
+      const menuButton = container.querySelector<HTMLButtonElement>(
+        "[aria-label='Save options']"
+      );
+      expect(menuButton).not.toBeNull();
+      await act(async () => {
+        menuButton!.click();
+      });
+      return Array.from(
+        document.querySelectorAll<HTMLElement>(".sb-tab-menu-item")
+      );
+    }
+
+    /** An item's words, without its icon's ligature name. */
+    const label = (item: HTMLElement) =>
+      item.querySelector(":scope > span:not(.sb-context-menu-item-icon)")
+        ?.textContent;
+
+    it("offers Delete, which deletes a save in only this folder", async () => {
+      await act(async () => {
+        await state.saves.addSave("AAB", "EXO", 2);
+      });
+
+      const items = await openSaveMenu();
+      expect(items.map(label)).toEqual(["Edit save", "Delete"]);
+
+      await act(async () => {
+        items[1]!.click();
+      });
+
+      expect(state.saves.saves.value).toEqual([]);
+    });
+
+    it("offers Remove from folder for a save that's in other folders too", async () => {
+      await act(async () => {
+        await state.saves.addSave("AAB", "EXO", 2, {
+          categories: ["My Saves", "Sermon prep"],
+        });
+      });
+
+      const items = await openSaveMenu();
+      expect(items.map(label)).toEqual(["Edit save", "Remove from folder"]);
+
+      await act(async () => {
+        items[1]!.click();
+      });
+
+      expect(state.saves.saves.value.map((save) => save.categories)).toEqual([
+        ["Sermon prep"],
+      ]);
+    });
+  });
+
+  it("gives a folder's options Rename and Delete, each with an icon", async () => {
+    await act(async () => {
+      await state.saves.addSave("AAB", "EXO", 2, {
+        categories: ["Sermon prep"],
+      });
+    });
+    await openSavesScreen();
+
+    const folderMenus = container.querySelectorAll<HTMLButtonElement>(
+      "[aria-label='Folder options']"
+    );
+    // The default folder can't be deleted, so use the one just made.
+    const sermonPrep = Array.from(folderMenus).find((button) =>
+      button
+        .closest(".sb-save-category-header")
+        ?.textContent?.includes("Sermon prep")
+    );
+    expect(sermonPrep).toBeDefined();
+    await act(async () => {
+      sermonPrep!.click();
+    });
+
+    const items = Array.from(
+      document.querySelectorAll<HTMLElement>(".sb-tab-menu-item")
+    );
+    expect(
+      items.map((item) => [
+        item.querySelector(".sb-context-menu-item-icon")?.textContent,
+        item.querySelector(":scope > span:not(.sb-context-menu-item-icon)")
+          ?.textContent,
+      ])
+    ).toEqual([
+      ["edit", "Rename"],
+      ["delete", "Delete"],
+    ]);
+  });
+
   it("opens a save with no matching tab on the first tap and closes the drawer", async () => {
     // The default tab sits on AAB GEN 1, so this save has no open tab and
     // takes the "create a new tab" path.
