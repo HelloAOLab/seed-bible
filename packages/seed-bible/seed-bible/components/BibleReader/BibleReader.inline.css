@@ -382,7 +382,8 @@
   border-radius: 50%;
   border: none;
   background: transparent;
-  color: var(--sb-font-color);
+  /* Same dimmed color as the save, bookmark and share buttons beside it. */
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   cursor: pointer;
   padding: 0;
   margin-inline-start: 0;
@@ -390,6 +391,7 @@
 
 .sb-bible-reader-mobile-header-settings:active {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
 }
 
 .sb-bible-reader-mobile-header-open-tab {

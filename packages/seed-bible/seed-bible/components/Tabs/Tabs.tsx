@@ -894,8 +894,9 @@ export function TabsHeader(props: TabsHeaderProps) {
           }
           title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <span className="material-symbols-outlined">
-            {effectivelyCollapsed ? "menu" : "menu_open"}
+          {/* Mirrored in RTL, where the sidebar is on the right. */}
+          <span className="material-symbols-outlined rtl-mirror">
+            {effectivelyCollapsed ? "left_panel_open" : "left_panel_close"}
           </span>
         </button>
 
