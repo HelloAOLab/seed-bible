@@ -170,7 +170,7 @@
 
 .sb-sidebar-tabs-title {
   margin: 0;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.125rem;
   color: var(--sb-font-color);
 }
@@ -1460,26 +1460,14 @@
     padding: 0.4375rem 1rem;
   }
 
-  /* The Tabs screen's header stays put while the list scrolls under it, like
-   * the Bookmarks and Saves screens (whose bodies scroll internally). Here
-   * the whole drawer is the scroller, so pin the header to its top. */
-  .sb-tabs-sidebar-mobile-open > .sb-mobile-screen-header {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--sb-background);
-  }
-
-  /* Spacing matches the Saves screen's body and rows. */
+  /* Row spacing matches the Saves screen. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
     gap: 0.375rem;
-    /* On mobile the whole drawer scrolls (see .sb-tabs-sidebar-mobile-open),
-     * so undo the desktop tab-list scroll region to avoid a nested scroll. */
+    /* The screen body (.sb-mobile-screen-body) is the scroller here, so undo
+     * the desktop tab-list scroll region to avoid a nested scroll. */
     flex: 0 0 auto;
     overflow: visible;
     min-height: auto;
-    margin-inline: 1rem;
-    padding: 0 0 6rem;
   }
 
   /* Plain rows like Bookmarks/Saves (the desktop row look, highlighted
@@ -1494,9 +1482,9 @@
   }
 
   /* ------------------------------------------------------------------
-   * Mobile saves section — the compact desktop rows feel cramped
-   * next to the roomy tab cards, so give the category headers and
-   * save rows larger touch targets and a touch more breathing room.
+   * Mobile saves section — the compact desktop rows are cramped for
+   * touch, so give the category headers and save rows larger touch
+   * targets and a touch more breathing room.
    * ------------------------------------------------------------------ */
   .sb-tabs-sidebar-mobile-open .sb-saves-section {
     gap: 0.375rem;
@@ -1523,11 +1511,11 @@
   }
 
   /* ------------------------------------------------------------------
-   * Full-screen mobile Saves view — a focused take-over (close /
-   * title / new-folder header over the collapsible categories) shown
-   * when the Saves bottom tab is active.
+   * Full-screen mobile drawer screens (Tabs, Bookmarks, Saves) — a
+   * fixed header over a body that scrolls on its own, so the scrollbar
+   * stays out of the header.
    * ------------------------------------------------------------------ */
-  .sb-saves-mobile-screen {
+  .sb-mobile-screen {
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -1535,11 +1523,12 @@
     min-height: 0;
   }
 
-  /* Header shared by the drawer's Tabs, Bookmarks and Saves screens. */
+  /* No gap between the trailing buttons: at 40px each their icons sit
+   * 16px apart, the same as the desktop header's 32px buttons with an
+   * 8px gap. The title's margin spaces it from the buttons instead. */
   .sb-mobile-screen-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     padding: 0.625rem 0.75rem;
     border-bottom: 1px solid var(--sb-divider-color);
   }
@@ -1547,7 +1536,7 @@
   .sb-mobile-screen-title {
     flex: 1 1 auto;
     min-width: 0;
-    margin: 0;
+    margin: 0 0.5rem;
     text-align: start;
     font-size: 1.125rem;
     font-weight: 600;
@@ -1577,7 +1566,15 @@
     background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   }
 
-  .sb-saves-mobile-body {
+  /* The 2rem new-tab button, centered in a 2.5rem slot like the other
+   * header buttons so it lines up with the Saves screen's new-folder
+   * button. */
+  .sb-mobile-screen-header .sb-tab-add-button {
+    flex-shrink: 0;
+    margin-inline: 0.25rem;
+  }
+
+  .sb-mobile-screen-body {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;

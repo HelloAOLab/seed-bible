@@ -2118,38 +2118,43 @@ function SavesSection(props: SavesSectionProps) {
 }
 
 /**
- * Top bar shared by the mobile drawer's Tabs, Bookmarks and Saves screens:
- * a Close (X) or Back arrow, a start-aligned title, then optional trailing
- * actions. Close when the screen was opened straight from the bottom
- * toolbar; Back when it was opened from another drawer screen.
+ * Layout shared by the mobile drawer's Tabs, Bookmarks and Saves screens: a
+ * fixed top bar (Close (X) or Back arrow, a start-aligned title, then
+ * optional trailing actions) over a body that scrolls on its own. Close when
+ * the screen was opened straight from the bottom toolbar; Back when it was
+ * opened from another drawer screen.
  */
-function MobileScreenHeader(props: {
+function MobileScreen(props: {
   title: string;
   isClose: boolean;
   onClose: () => void;
-  children?: ComponentChildren;
+  actions?: ComponentChildren;
+  children: ComponentChildren;
 }) {
-  const { title, isClose, onClose, children } = props;
+  const { title, isClose, onClose, actions, children } = props;
   const { t } = useI18n();
   const closeLabel = isClose
     ? t("close", { defaultValue: "Close" })
     : t("back", { defaultValue: "Back" });
 
   return (
-    <div className="sb-mobile-screen-header">
-      <button
-        type="button"
-        className="sb-mobile-screen-header-button"
-        onClick={onClose}
-        aria-label={closeLabel}
-        title={closeLabel}
-      >
-        <span className="material-symbols-outlined">
-          {isClose ? "close" : "arrow_back"}
-        </span>
-      </button>
-      <h2 className="sb-mobile-screen-title">{title}</h2>
-      {children}
+    <div className="sb-mobile-screen">
+      <div className="sb-mobile-screen-header">
+        <button
+          type="button"
+          className="sb-mobile-screen-header-button"
+          onClick={onClose}
+          aria-label={closeLabel}
+          title={closeLabel}
+        >
+          <span className="material-symbols-outlined">
+            {isClose ? "close" : "arrow_back"}
+          </span>
+        </button>
+        <h2 className="sb-mobile-screen-title">{title}</h2>
+        {actions}
+      </div>
+      <div className="sb-mobile-screen-body">{children}</div>
     </div>
   );
 }
@@ -2276,25 +2281,22 @@ export function Tabs(props: TabsProps) {
   // Mobile counterpart of the saves screen below, for the bookmarks panel.
   if (app.isMobile.value && isBookmarksPanelOpen) {
     return (
-      <div className="sb-saves-mobile-screen sb-bookmarks-mobile-screen">
-        <MobileScreenHeader
-          title={t("bookmarks", { defaultValue: "Bookmarks" })}
-          isClose={bookmarks.openedFromToolbar.value}
-          onClose={() => {
-            // From the More menu, Close dismisses the drawer; from the Tabs
-            // header, Back returns to the Tabs list.
-            if (bookmarks.openedFromToolbar.value) {
-              bookmarks.closePanel();
-              state.sidebar.closeSidebar();
-            } else {
-              bookmarks.closePanel();
-            }
-          }}
-        />
-        <div className="sb-saves-mobile-body">
-          <BookmarksPanel state={state} closeLayoutMenu={closeLayoutMenu} />
-        </div>
-      </div>
+      <MobileScreen
+        title={t("bookmarks", { defaultValue: "Bookmarks" })}
+        isClose={bookmarks.openedFromToolbar.value}
+        onClose={() => {
+          // From the More menu, Close dismisses the drawer; from the Tabs
+          // header, Back returns to the Tabs list.
+          if (bookmarks.openedFromToolbar.value) {
+            bookmarks.closePanel();
+            state.sidebar.closeSidebar();
+          } else {
+            bookmarks.closePanel();
+          }
+        }}
+      >
+        <BookmarksPanel state={state} closeLayoutMenu={closeLayoutMenu} />
+      </MobileScreen>
     );
   }
 
@@ -2315,25 +2317,24 @@ export function Tabs(props: TabsProps) {
     };
 
     return (
-      <div className="sb-saves-mobile-screen">
-        <MobileScreenHeader
-          title={t("saves", { defaultValue: "Saves" })}
-          isClose={saves.openedFromToolbar.value}
-          onClose={() => {
-            // Opened from the bottom toolbar → Close (X) dismisses the whole
-            // drawer. Opened from the Tabs header → Back arrow turns the
-            // filter off, returning to the Tabs list it came from.
-            if (saves.openedFromToolbar.value) {
-              // Reset the view (filter + source flag) so the next time the
-              // tabs drawer opens it starts on the Tabs list, not a stale
-              // saves screen.
-              saves.closeView();
-              state.sidebar.closeSidebar();
-            } else if (saves.isFilterActive.value) {
-              saves.toggleFilter();
-            }
-          }}
-        >
+      <MobileScreen
+        title={t("saves", { defaultValue: "Saves" })}
+        isClose={saves.openedFromToolbar.value}
+        onClose={() => {
+          // Opened from the bottom toolbar → Close (X) dismisses the whole
+          // drawer. Opened from the Tabs header → Back arrow turns the
+          // filter off, returning to the Tabs list it came from.
+          if (saves.openedFromToolbar.value) {
+            // Reset the view (filter + source flag) so the next time the
+            // tabs drawer opens it starts on the Tabs list, not a stale
+            // saves screen.
+            saves.closeView();
+            state.sidebar.closeSidebar();
+          } else if (saves.isFilterActive.value) {
+            saves.toggleFilter();
+          }
+        }}
+        actions={
           <button
             type="button"
             className="sb-mobile-screen-header-button"
@@ -2345,62 +2346,73 @@ export function Tabs(props: TabsProps) {
           >
             <span className="material-symbols-outlined">create_new_folder</span>
           </button>
-        </MobileScreenHeader>
-        <div className="sb-saves-mobile-body">
-          <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
-        </div>
-      </div>
+        }
+      >
+        <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
+      </MobileScreen>
     );
   }
 
-  return (
-    <>
-      {!app.isMobile.value && (
-        <div className="sb-sidebar-tabs-header">
-          <h3 className="sb-sidebar-tabs-title">
-            {t("tabs", { defaultValue: "Tabs" })}
-          </h3>
-          <div className="sb-sidebar-tabs-header-actions">
-            <button
-              type="button"
-              className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
-              aria-label={t("tasks", { defaultValue: "Tasks" })}
-              title={t("tasks", { defaultValue: "Tasks" })}
-              onClick={() => {
-                state.today.open();
-              }}
-            >
-              <TodayIcon />
-            </button>
+  const tabList = (
+    <div className="sb-sidebar-tab-list">
+      {isBookmarksPanelOpen && (
+        <>
+          <BookmarksPanel state={state} closeLayoutMenu={closeLayoutMenu} />
+          <div className="sb-sidebar-tabs-divider" role="separator" />
+        </>
+      )}
+      {isSavesFilterActive && (
+        <>
+          <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
+          <div className="sb-sidebar-tabs-divider" role="separator" />
+        </>
+      )}
+      {tabs.map((tab) => {
+        const isSelected = tab.id === selectedTabId;
+        return (
+          <TabRow
+            key={tab.id}
+            state={state}
+            tab={tab}
+            isSelected={isSelected}
+            closeLayoutMenu={closeLayoutMenu}
+            panelsEnabled={panelsEnabled}
+          />
+        );
+      })}
+    </div>
+  );
 
+  if (app.isMobile.value) {
+    return (
+      <MobileScreen
+        title={t("tabs", { defaultValue: "Tabs" })}
+        isClose={state.sidebar.tabsOpenedFromToolbar.value}
+        onClose={() => {
+          state.sidebar.closeSidebar();
+          if (!state.sidebar.tabsOpenedFromToolbar.value) {
+            state.selector.setOpen(true);
+          }
+        }}
+        actions={
+          <>
             <button
               type="button"
-              className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
-                isBookmarksPanelOpen
-                  ? " sb-sidebar-tabs-header-bookmarks-button-active"
-                  : ""
-              }`}
+              className="sb-mobile-screen-header-button sb-sidebar-tabs-header-bookmarks-button"
               aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
               aria-pressed={isBookmarksPanelOpen}
               title={bookmarksToggleLabel}
               onClick={() => {
+                // Opened from the Tabs header, so it gets a Back arrow.
                 bookmarks.openedFromToolbar.value = false;
                 bookmarks.togglePanel();
               }}
             >
-              <BookmarkStackIcon
-                bookmarks={allBookmarks}
-                size={24}
-                color={isBookmarksPanelOpen ? "currentColor" : undefined}
-              />
+              <BookmarkStackIcon bookmarks={allBookmarks} size={24} />
             </button>
             <button
               type="button"
-              className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button${
-                isSavesFilterActive
-                  ? " sb-sidebar-tabs-header-saves-button-active"
-                  : ""
-              }`}
+              className="sb-mobile-screen-header-button sb-sidebar-tabs-header-saves-button"
               aria-label={t("saves", { defaultValue: "Saves" })}
               aria-pressed={isSavesFilterActive}
               title={
@@ -2409,6 +2421,9 @@ export function Tabs(props: TabsProps) {
                   : t("show-saves", { defaultValue: "Show saves" })
               }
               onClick={() => {
+                // Opened from the Tabs header: backing out of the saves
+                // view should return here, so it gets a Back arrow (not an X).
+                saves.openedFromToolbar.value = false;
                 saves.toggleFilter();
               }}
             >
@@ -2416,18 +2431,25 @@ export function Tabs(props: TabsProps) {
             </button>
             <button
               type="button"
-              className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
-              onClick={state.sidebar.closeSidebar}
-              aria-label={t("close", { defaultValue: "Close" })}
-              title={t("close", { defaultValue: "Close" })}
+              className="sb-mobile-screen-header-button sb-sidebar-tabs-header-share-button"
+              aria-label={t("share", {
+                defaultValue: "Share",
+              })}
+              title={t("share", {
+                defaultValue: "Share",
+              })}
+              onClick={() => {
+                openShareSheetForCurrentTab(state);
+              }}
             >
-              <span className="material-symbols-outlined">close</span>
+              <MaterialIcon aria-hidden="true">share</MaterialIcon>
             </button>
             <button
+              type="button"
+              className="sb-tab-add-button"
               onClick={() => {
                 app.addTab();
               }}
-              className="sb-tab-add-button"
               aria-label={t("create-new-tab", {
                 defaultValue: "Create new tab",
               })}
@@ -2435,37 +2457,62 @@ export function Tabs(props: TabsProps) {
             >
               <span className="material-symbols-outlined">add</span>
             </button>
-          </div>
-        </div>
-      )}
-      {app.isMobile.value && (
-        <MobileScreenHeader
-          title={t("tabs", { defaultValue: "Tabs" })}
-          isClose={state.sidebar.tabsOpenedFromToolbar.value}
-          onClose={() => {
-            state.sidebar.closeSidebar();
-            if (!state.sidebar.tabsOpenedFromToolbar.value) {
-              state.selector.setOpen(true);
-            }
-          }}
-        >
+          </>
+        }
+      >
+        <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
+        {tabList}
+      </MobileScreen>
+    );
+  }
+
+  return (
+    <>
+      <div className="sb-sidebar-tabs-header">
+        <h3 className="sb-sidebar-tabs-title">
+          {t("tabs", { defaultValue: "Tabs" })}
+        </h3>
+        <div className="sb-sidebar-tabs-header-actions">
           <button
             type="button"
-            className="sb-mobile-screen-header-button sb-sidebar-tabs-header-bookmarks-button"
+            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
+            aria-label={t("tasks", { defaultValue: "Tasks" })}
+            title={t("tasks", { defaultValue: "Tasks" })}
+            onClick={() => {
+              state.today.open();
+            }}
+          >
+            <TodayIcon />
+          </button>
+
+          <button
+            type="button"
+            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
+              isBookmarksPanelOpen
+                ? " sb-sidebar-tabs-header-bookmarks-button-active"
+                : ""
+            }`}
             aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
             aria-pressed={isBookmarksPanelOpen}
             title={bookmarksToggleLabel}
             onClick={() => {
-              // Opened from the Tabs header, so it gets a Back arrow.
               bookmarks.openedFromToolbar.value = false;
               bookmarks.togglePanel();
             }}
           >
-            <BookmarkStackIcon bookmarks={allBookmarks} size={24} />
+            <BookmarkStackIcon
+              bookmarks={allBookmarks}
+              size={24}
+              color={isBookmarksPanelOpen ? "currentColor" : undefined}
+            />
           </button>
           <button
             type="button"
-            className="sb-mobile-screen-header-button sb-sidebar-tabs-header-saves-button"
+            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button${
+              isSavesFilterActive
+                ? " sb-sidebar-tabs-header-saves-button-active"
+                : ""
+            }`}
             aria-label={t("saves", { defaultValue: "Saves" })}
             aria-pressed={isSavesFilterActive}
             title={
@@ -2474,9 +2521,6 @@ export function Tabs(props: TabsProps) {
                 : t("show-saves", { defaultValue: "Show saves" })
             }
             onClick={() => {
-              // Opened from the Tabs header: backing out of the saves
-              // view should return here, so it gets a Back arrow (not an X).
-              saves.openedFromToolbar.value = false;
               saves.toggleFilter();
             }}
           >
@@ -2484,25 +2528,18 @@ export function Tabs(props: TabsProps) {
           </button>
           <button
             type="button"
-            className="sb-mobile-screen-header-button sb-sidebar-tabs-header-share-button"
-            aria-label={t("share", {
-              defaultValue: "Share",
-            })}
-            title={t("share", {
-              defaultValue: "Share",
-            })}
-            onClick={() => {
-              openShareSheetForCurrentTab(state);
-            }}
+            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
+            onClick={state.sidebar.closeSidebar}
+            aria-label={t("close", { defaultValue: "Close" })}
+            title={t("close", { defaultValue: "Close" })}
           >
-            <MaterialIcon aria-hidden="true">share</MaterialIcon>
+            <span className="material-symbols-outlined">close</span>
           </button>
           <button
-            type="button"
-            className="sb-tab-add-button"
             onClick={() => {
               app.addTab();
             }}
+            className="sb-tab-add-button"
             aria-label={t("create-new-tab", {
               defaultValue: "Create new tab",
             })}
@@ -2510,38 +2547,11 @@ export function Tabs(props: TabsProps) {
           >
             <span className="material-symbols-outlined">add</span>
           </button>
-        </MobileScreenHeader>
-      )}
+        </div>
+      </div>
 
       <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
-
-      <div className="sb-sidebar-tab-list">
-        {isBookmarksPanelOpen && (
-          <>
-            <BookmarksPanel state={state} closeLayoutMenu={closeLayoutMenu} />
-            <div className="sb-sidebar-tabs-divider" role="separator" />
-          </>
-        )}
-        {isSavesFilterActive && (
-          <>
-            <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
-            <div className="sb-sidebar-tabs-divider" role="separator" />
-          </>
-        )}
-        {tabs.map((tab) => {
-          const isSelected = tab.id === selectedTabId;
-          return (
-            <TabRow
-              key={tab.id}
-              state={state}
-              tab={tab}
-              isSelected={isSelected}
-              closeLayoutMenu={closeLayoutMenu}
-              panelsEnabled={panelsEnabled}
-            />
-          );
-        })}
-      </div>
+      {tabList}
     </>
   );
 }
