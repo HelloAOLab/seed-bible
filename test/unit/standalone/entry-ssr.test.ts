@@ -1972,10 +1972,10 @@ describe("render() server-rendered meta tags", () => {
         '<meta name="twitter:title" content="Add Ana as a friend"'
       );
       expect(html).toContain(
-        '<meta name="description" content="Ana wants to be your friend on the Seed Bible"'
+        '<meta name="description" content="Ana wants to be your friend on Seed Bible"'
       );
       expect(html).toContain(
-        '<meta property="og:description" content="Ana wants to be your friend on the Seed Bible"'
+        '<meta property="og:description" content="Ana wants to be your friend on Seed Bible"'
       );
       expect(html).toContain(
         `<meta property="og:image" content="${PICTURE_URL}"`
@@ -2037,7 +2037,7 @@ describe("render() server-rendered meta tags", () => {
           "<title>Add Ana as a friend on Acme Reader</title>"
         );
         expect(html).toContain(
-          '<meta property="og:description" content="Ana wants to be your friend on the Acme Reader"'
+          '<meta property="og:description" content="Ana wants to be your friend on Acme Reader"'
         );
         expect(html).toContain(
           '<meta property="og:title" content="Add Ana as a friend"'
