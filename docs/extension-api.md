@@ -408,6 +408,9 @@ bible: {
   chapter(ref: { translationId: string; bookId: string; chapter: number }):
     Promise<SandboxChapter>;
 
+  // Search
+  search(query: SandboxSearchQuery): Promise<SandboxSearchResults>;
+
   // Commentaries
   commentaries(): Promise<SandboxCommentary[]>;
   commentaryBooks(ref: { commentaryId: string }):
@@ -440,10 +443,24 @@ const chapter = await sb.bible.chapter({ translationId: "BSB", ...ref });
 // Read on: chapter.next is where the next call goes.
 ```
 
+**Search.** `search()` finds verses in one translation, by words (`"living water"`) or by reference (`"John 4:10"`), best match first. Narrow it to a book with `bookId`, and to one chapter of that book with `chapter`. Results come a page at a time: `perPage` (1–50, default 10) to a page, and `page` from 1. `found` is how many verses match in all, so `Math.ceil(found / perPage)` is the number of pages.
+
+```ts
+const { results, found } = await sb.bible.search({
+  translationId: "BSB",
+  query: "living water",
+  bookId: "JHN",
+});
+for (const { reference, text } of results) console.log(reference, text);
+```
+
+An empty query, or a `chapter` without a `bookId`, is refused with `invalid_request`.
+
 **Offline.** Translations the user has downloaded are read from their device, so with no connection:
 
 - `translations()` still answers, with the translations the app already knows about. Each has `downloaded: true` if it can be read now.
 - `books()` and `chapter()` work for downloaded translations, and reject with `unavailable` for anything else.
+- Search runs on Seed Bible's search server, so it rejects with `unavailable`, even for downloaded translations.
 - Commentaries and datasets can't be downloaded, so those calls reject with `unavailable` (unless the same thing was already loaded this session).
 
 **Commentaries** have notes on chapters and verses (`commentaryChapter`), and some have articles about people, places and topics (`commentaryProfiles`, then `commentaryProfile` for one article's paragraphs). **Datasets** are verse-level data; `open-cross-ref` is cross-references. `datasetChapter` lists each verse that has entries, with the passages it points to (each with a relevance `score` when the dataset has one).
@@ -854,6 +871,30 @@ interface SandboxFootnote {
   text: string;
   caller: string | null; // The mark to show, like "a"; "+" means any
   verse: number | null;
+}
+
+interface SandboxSearchQuery {
+  translationId: string;
+  query: string; // 1–200 characters
+  bookId?: string;
+  chapter?: number; // Needs bookId
+  page?: number; // From 1
+  perPage?: number; // 1–50, default 10
+}
+
+interface SandboxSearchResults {
+  results: SandboxSearchResult[]; // Best match first
+  found: number; // Matches across every page
+  page: number;
+}
+
+interface SandboxSearchResult {
+  translationId: string;
+  bookId: string;
+  chapter: number;
+  verse: number;
+  text: string;
+  reference: string; // "John 3:16"
 }
 
 interface SandboxCommentary {

@@ -618,6 +618,42 @@ export interface SandboxDatasetChapter {
   verses: { verse: number; references: SandboxDatasetReference[] }[];
 }
 
+/** What `sb.bible.search` takes. */
+export interface SandboxSearchQuery {
+  /** The translation to search, and whose language the query is in. */
+  translationId: string;
+  /** Words to find, or a reference like `"John 3:16"`. 1–200 characters. */
+  query: string;
+  /** Only verses in this book. */
+  bookId?: string;
+  /** Only verses in this chapter; needs `bookId`. */
+  chapter?: number;
+  /** From 1. Defaults to 1. */
+  page?: number;
+  /** 1–50. Defaults to 10. */
+  perPage?: number;
+}
+
+/** One verse `sb.bible.search` found. */
+export interface SandboxSearchResult {
+  translationId: string;
+  bookId: string;
+  chapter: number;
+  verse: number;
+  /** The verse as plain text. */
+  text: string;
+  /** How the translation writes the reference, like "John 3:16". */
+  reference: string;
+}
+
+/** A page of `sb.bible.search` results, best match first. */
+export interface SandboxSearchResults {
+  results: SandboxSearchResult[];
+  /** How many verses match in all, across every page. */
+  found: number;
+  page: number;
+}
+
 /** What a Discover provider can show, as data the host renders. */
 export type SandboxDiscoverResult =
   | {
@@ -829,6 +865,7 @@ export interface SandboxMethods {
     result: SandboxCommentaryProfile & { content: string[] };
   };
   "bible.datasets": { params: Record<string, never>; result: SandboxDataset[] };
+  "bible.search": { params: SandboxSearchQuery; result: SandboxSearchResults };
   "bible.datasetBooks": {
     params: { datasetId: string };
     result: { dataset: SandboxDataset; books: SandboxDatasetBook[] };

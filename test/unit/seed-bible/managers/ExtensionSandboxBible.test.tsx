@@ -8,6 +8,13 @@ vi.mock(
     i18n: { language: "en", on: () => {} },
   })
 );
+// The search server is reached only through the Typesense client.
+const typesenseSearch = vi.hoisted(() => vi.fn());
+vi.mock("typesense", () => ({
+  Client: class {
+    collections = () => ({ documents: () => ({ search: typesenseSearch }) });
+  },
+}));
 import {
   defineExtension,
   SandboxError,
@@ -20,6 +27,7 @@ import {
 import type { ExtensionManager } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createInMemoryTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
+import { createSearchManager } from "@packages/seed-bible/seed-bible/managers/SearchManager";
 import { useSandboxHarness } from "./sandboxHarness";
 import {
   aabBooks,
@@ -197,6 +205,8 @@ describe("sb.bible", () => {
       { offlineStore: createInMemoryTranslationStore() }
     );
     h.host.context.bibleData = bibleData;
+    h.host.context.search = createSearchManager();
+    typesenseSearch.mockReset();
     manager = h.createManager();
   });
 
@@ -435,6 +445,106 @@ describe("sb.bible", () => {
       expect(
         await codeOf(sb.bible.commentaryBooks({ commentaryId: "missing" }))
       ).toBe("unavailable");
+    });
+  });
+
+  describe("search", () => {
+    const hit = (
+      book: string,
+      chapter: number,
+      verse: number,
+      text: string
+    ) => ({
+      document: {
+        id: `AAB-${book}-${chapter}-${verse}`,
+        translation: "AAB",
+        book,
+        chapter,
+        verse,
+        text,
+        language: "eng",
+        reference: `${book} ${chapter}:${verse}`,
+      },
+    });
+
+    it("finds verses in the translation's language, a page at a time", async () => {
+      typesenseSearch.mockResolvedValue({
+        found: 23,
+        out_of: 31102,
+        page: 2,
+        hits: [hit("GEN", 1, 3, "Let there be light")],
+      });
+      const sb = await install();
+
+      expect(
+        await sb.bible.search({
+          translationId: "AAB",
+          query: "light",
+          bookId: "GEN",
+          chapter: 1,
+          page: 2,
+          perPage: 5,
+        })
+      ).toEqual({
+        results: [
+          {
+            translationId: "AAB",
+            bookId: "GEN",
+            chapter: 1,
+            verse: 3,
+            text: "Let there be light",
+            reference: "GEN 1:3",
+          },
+        ],
+        found: 23,
+        page: 2,
+      });
+      expect(typesenseSearch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          q: "light",
+          filter_by: 'translation:="AAB" && book:="GEN" && chapter:=1',
+          page: 2,
+          per_page: 5,
+        })
+      );
+    });
+
+    it("searches the whole translation when no book is given", async () => {
+      typesenseSearch.mockResolvedValue({ found: 0, page: 1, hits: [] });
+      const sb = await install();
+
+      expect(
+        await sb.bible.search({ translationId: "AAB", query: "manna" })
+      ).toEqual({ results: [], found: 0, page: 1 });
+      expect(typesenseSearch).toHaveBeenCalledWith(
+        expect.objectContaining({ filter_by: 'translation:="AAB"' })
+      );
+    });
+
+    it("refuses an empty query or a chapter without its book", async () => {
+      const sb = await install();
+
+      expect(
+        await codeOf(sb.bible.search({ translationId: "AAB", query: "  " }))
+      ).toBe("invalid_request");
+      expect(
+        await codeOf(
+          sb.bible.search({ translationId: "AAB", query: "light", chapter: 1 })
+        )
+      ).toBe("invalid_request");
+      expect(typesenseSearch).not.toHaveBeenCalled();
+    });
+
+    it("is unavailable when the search server can't be reached", async () => {
+      typesenseSearch.mockRejectedValue(new Error("Network Error"));
+      const sb = await install();
+
+      await expect(
+        sb.bible.search({ translationId: "AAB", query: "light" })
+      ).rejects.toMatchObject({
+        code: "unavailable",
+        message: 'Couldn\'t load search results for "light".',
+      });
     });
   });
 

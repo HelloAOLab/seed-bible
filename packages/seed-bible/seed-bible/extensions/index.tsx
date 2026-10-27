@@ -26,6 +26,8 @@ import {
   type SandboxDataset,
   type SandboxDatasetBook,
   type SandboxDatasetChapter,
+  type SandboxSearchQuery,
+  type SandboxSearchResults,
   type SandboxTranslation,
   type SandboxHighlight,
   type SandboxHostRequestKind,
@@ -69,6 +71,9 @@ export type {
   SandboxDatasetChapter,
   SandboxDatasetReference,
   SandboxFootnote,
+  SandboxSearchQuery,
+  SandboxSearchResult,
+  SandboxSearchResults,
   SandboxTranslation,
   SandboxChatMessage,
   SandboxChatRequest,
@@ -474,6 +479,18 @@ export interface SandboxContext {
       commentaryId: string;
       profileId: string;
     }) => Promise<SandboxCommentaryProfile & { content: string[] }>;
+    /**
+     * Finds verses in a translation by words or by reference, a page at a
+     * time, best match first. Needs a connection.
+     *
+     * @example
+     * const { results, found } = await sb.bible.search({
+     *   translationId: "BSB",
+     *   query: "living water",
+     *   bookId: "JHN",
+     * });
+     */
+    search: (query: SandboxSearchQuery) => Promise<SandboxSearchResults>;
     /** Every dataset available, such as cross-references. */
     datasets: () => Promise<SandboxDataset[]>;
     /** The books a dataset covers. */
@@ -1212,6 +1229,7 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
       commentaryChapter: (ref) => call("bible.commentaryChapter", ref),
       commentaryProfiles: (ref) => call("bible.commentaryProfiles", ref),
       commentaryProfile: (ref) => call("bible.commentaryProfile", ref),
+      search: (query) => call("bible.search", query),
       datasets: () => call("bible.datasets", {}),
       datasetBooks: (ref) => call("bible.datasetBooks", ref),
       datasetChapter: (ref) => call("bible.datasetChapter", ref),

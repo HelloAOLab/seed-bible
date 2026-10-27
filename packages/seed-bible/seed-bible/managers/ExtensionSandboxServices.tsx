@@ -24,6 +24,7 @@ import {
   type SandboxBibleData,
 } from "./ExtensionSandboxBible";
 import type { FriendsManager } from "./FriendsManager";
+import type { SearchManager } from "./SearchManager";
 import type { AppState } from "./SeedBibleStateManager";
 import {
   createSandboxAudio,
@@ -94,6 +95,7 @@ export interface SandboxServicesContext {
   login: Pick<LoginManager, "userId" | "profile">;
   bibleData: SandboxBibleData &
     Pick<SandboxAudioContext["bibleData"], "getAudioTimings">;
+  search: Pick<SearchManager, "searchVerses">;
   discover: Pick<DiscoverManager, "registerDiscoverProvider">;
   chats: Pick<ChatsManager, "registerProvider" | "chats">;
   modals: Pick<ModalManager, "openModal" | "closeModal">;
@@ -296,6 +298,20 @@ export const SANDBOX_SERVICE_SPECS: Partial<
       commentaryId: idSchema,
       profileId: z.string().regex(/^[A-Za-z0-9_.-]{1,128}$/),
     }),
+  },
+  "bible.search": {
+    schema: z
+      .object({
+        translationId: translationIdSchema,
+        query: z.string().trim().min(1).max(200),
+        bookId: bookIdSchema.optional(),
+        chapter: chapterSchema.optional(),
+        page: z.number().int().min(1).max(100).optional(),
+        perPage: z.number().int().min(1).max(50).optional(),
+      })
+      .refine(({ bookId, chapter }) => chapter === undefined || bookId, {
+        message: "Give a `bookId` to search one chapter.",
+      }),
   },
   "bible.datasets": { schema: z.object({}) },
   "bible.datasetBooks": { schema: z.object({ datasetId: idSchema }) },
@@ -736,7 +752,7 @@ export function createSandboxServices(
   /** `sb.bible`, with a failed load passed on as `unavailable`. */
   const bibleHandlers = (): SandboxServices["handlers"] =>
     Object.fromEntries(
-      Object.entries(createSandboxBible(context.bibleData)).map(
+      Object.entries(createSandboxBible(context.bibleData, context.search)).map(
         ([method, read]) => [
           method,
           async (params: unknown) => {

@@ -10,6 +10,7 @@ import type {
   Translation,
   TranslationBook,
 } from "./FreeUseBibleAPI";
+import type { SearchManager } from "./SearchManager";
 import {
   adjacentChapterRef,
   type ChapterRef,
@@ -62,7 +63,8 @@ export type SandboxBibleHandlers = {
  * at nothing) or a change in the API's format.
  */
 export function createSandboxBible(
-  bibleData: SandboxBibleData
+  bibleData: SandboxBibleData,
+  search: Pick<SearchManager, "searchVerses">
 ): SandboxBibleHandlers {
   const load = async <T>(what: string, read: () => Promise<T>) => {
     try {
@@ -259,6 +261,42 @@ export function createSandboxBible(
           profileId
         );
         return { ...profile(data.profile), content: data.content };
+      }),
+
+    "bible.search": ({
+      translationId,
+      query,
+      bookId,
+      chapter,
+      page,
+      perPage,
+    }) =>
+      load(`search results for "${query}"`, async () => {
+        // The index has a collection per language, so the translation's own
+        // language decides where to look. Its catalog is cached (or
+        // downloaded), so this rarely costs a request.
+        const { language } = (
+          await bibleData.getTranslationBooks(translationId)
+        ).translation;
+        const response = await search.searchVerses(
+          language,
+          translationId,
+          query,
+          { book: bookId, chapter },
+          { page, perPage }
+        );
+        return {
+          results: (response.hits ?? []).map(({ document }) => ({
+            translationId: document.translation,
+            bookId: document.book,
+            chapter: document.chapter,
+            verse: document.verse,
+            text: document.text,
+            reference: document.reference,
+          })),
+          found: response.found,
+          page: response.page,
+        };
       }),
 
     "bible.datasets": () =>
