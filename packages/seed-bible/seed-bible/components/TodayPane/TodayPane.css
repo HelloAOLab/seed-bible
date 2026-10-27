@@ -393,10 +393,57 @@
   border: none;
   background-color: var(--sb-primary-color);
   border-radius: 50%;
+  /* Clips the arrow as it races off one edge and back in the other. */
+  overflow: hidden;
+  /* Which way "forward" is: the arrow is mirrored for right-to-left text. */
+  --sb-today-resume-arrow-direction: 1;
+}
+
+[dir="rtl"] .sb-today-container .sb-today-resume-card > button {
+  --sb-today-resume-arrow-direction: -1;
 }
 
 .sb-today-container .sb-today-resume-card > button > span {
   color: var(--sb-primary-font-color);
+}
+
+/* On hover the button grows a little and the arrow races off the forward
+   edge, then comes back around from the other side into place. It moves with
+   `translate` rather than `transform`, which `.rtl-mirror` already uses. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .sb-today-container .sb-today-resume-card > button {
+    transition: transform 0.2s ease;
+  }
+
+  .sb-today-container .sb-today-resume-card > button:hover {
+    transform: scale(1.08);
+  }
+
+  .sb-today-container .sb-today-resume-card > button:hover > span {
+    animation: sb-today-resume-arrow-race 0.6s;
+  }
+}
+
+@keyframes sb-today-resume-arrow-race {
+  0% {
+    translate: 0;
+    animation-timing-function: ease-in;
+  }
+
+  /* Holds just past the edge, then jumps to just past the other one. */
+  45% {
+    translate: calc(var(--sb-today-resume-arrow-direction) * 2.5rem);
+    animation-timing-function: step-end;
+  }
+
+  45.1% {
+    translate: calc(var(--sb-today-resume-arrow-direction) * -2.5rem);
+    animation-timing-function: ease-out;
+  }
+
+  100% {
+    translate: 0;
+  }
 }
 
 /* Loading placeholder for the resume card — shown while the reading-history

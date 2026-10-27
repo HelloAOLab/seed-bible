@@ -55,7 +55,7 @@ export const ResumeReadingSection = (props: {
         }
         className="sb-today-clickable"
       >
-        <MaterialIcon>arrow_right_alt</MaterialIcon>
+        <MaterialIcon className="rtl-mirror">arrow_right_alt</MaterialIcon>
       </button>
     </div>
   );
