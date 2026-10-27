@@ -1,9 +1,11 @@
 import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { CasualOSManager } from "../../managers/OsManager";
 import type { GalleryPhoto } from "../../managers/UserGalleryManager";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n";
+import { download } from "../../app/utils";
 import "./YourContentPane.css";
 
 /** The parts of the app a delete touches: the gallery and the two cover users. */
@@ -148,6 +150,7 @@ export function openDeleteImageConfirm(
       key: "delete-image-confirm-title",
       defaultValue: "Delete image?",
     },
+    mobileSheet: true,
     content: () => (
       <ConfirmDeleteImageModalContent
         state={state}
@@ -160,12 +163,66 @@ export function openDeleteImageConfirm(
   return modalId;
 }
 
+/**
+ * A name for the saved file: the URL's own file name when it has one,
+ * otherwise a generic one with an extension for the image's type (`gif`,
+ * `webp`, `svg`…), or none for a type that isn't an image.
+ */
+function photoFileName(url: string, type: string): string {
+  try {
+    const last = new URL(url, window.location.href).pathname.split("/").pop();
+    if (last && /\.\w+$/.test(last)) {
+      return decodeURIComponent(last);
+    }
+  } catch {
+    // Not a parseable URL, or a malformed escape; fall through.
+  }
+  // "image/svg+xml" → "svg"; "image/jpeg" → the more familiar "jpg".
+  const subtype = type.startsWith("image/")
+    ? type.slice("image/".length).split("+")[0]
+    : "";
+  const extension = subtype === "jpeg" ? "jpg" : subtype;
+  return extension ? `seed-bible-image.${extension}` : "seed-bible-image";
+}
+
+/** Fetches an image hosted somewhere other than the records server. */
+async function fetchImage(url: string): Promise<Blob> {
+  // Skips the cache for the same reason `CasualOSManager.readFile` does.
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  return response.blob();
+}
+
+/**
+ * Saves the full-size image to disk. It's read rather than linked because a
+ * link's `download` attribute is ignored for another origin's file. If it
+ * can't be read, the image opens in a new tab instead, where it can still be
+ * saved by hand.
+ */
+async function downloadPhoto(
+  os: Pick<CasualOSManager, "readFile">,
+  photo: GalleryPhoto
+): Promise<void> {
+  try {
+    const blob =
+      (await os.readFile(photo.url)) ?? (await fetchImage(photo.url));
+    download(blob, photoFileName(photo.url, blob.type));
+  } catch (error) {
+    console.warn("Couldn't download the image; opening it instead.", error);
+    window.open(photo.url, "_blank", "noopener");
+  }
+}
+
 function ImagePreviewModalContent(props: {
+  os: Pick<CasualOSManager, "readFile">;
   photo: GalleryPhoto;
   onDelete: () => void;
   onClose: () => void;
 }) {
   const { t } = useI18n();
+  const isDownloading = useSignal(false);
   return (
     <div className="sb-images-preview">
       <img
@@ -174,6 +231,22 @@ function ImagePreviewModalContent(props: {
         alt={t("uploaded-image", { defaultValue: "Uploaded image" })}
       />
       <div className="sb-confirm-delete-actions">
+        <button
+          type="button"
+          className="sb-session-settings-cancel sb-images-preview-download"
+          disabled={isDownloading.value}
+          onClick={async () => {
+            isDownloading.value = true;
+            try {
+              await downloadPhoto(props.os, props.photo);
+            } finally {
+              isDownloading.value = false;
+            }
+          }}
+        >
+          <MaterialIcon aria-hidden="true">download</MaterialIcon>
+          {t("download", { defaultValue: "Download" })}
+        </button>
         <button
           type="button"
           className="sb-session-settings-cancel"
@@ -193,9 +266,13 @@ function ImagePreviewModalContent(props: {
   );
 }
 
-/** Shows one image at full size, with a way to delete it from there. */
+/**
+ * Shows one image at full size, with ways to download it and to delete it
+ * from there.
+ */
 export function openImagePreview(
   modals: ModalManager,
+  os: Pick<CasualOSManager, "readFile">,
   photo: GalleryPhoto,
   onDelete: () => void
 ): string {
@@ -203,8 +280,10 @@ export function openImagePreview(
   modals.openModal({
     id: modalId,
     title: { key: "uploaded-image", defaultValue: "Uploaded image" },
+    mobileSheet: true,
     content: () => (
       <ImagePreviewModalContent
+        os={os}
         photo={photo}
         onClose={() => modals.closeModal(modalId)}
         onDelete={() => {
@@ -253,7 +332,9 @@ export function UserImagesGrid(props: {
             type="button"
             className="sb-images-tile"
             onClick={() =>
-              openImagePreview(modals, photo, () => requestDelete(photo))
+              openImagePreview(modals, state.os, photo, () =>
+                requestDelete(photo)
+              )
             }
             aria-label={t("view-image", { defaultValue: "View image" })}
           >

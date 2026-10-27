@@ -566,6 +566,18 @@
   gap: 16px;
 }
 
+/* Download sits apart at the start of the row, Close and Delete at the end. */
+.sb-images-preview-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-inline-end: auto;
+}
+
+.sb-images-preview-download .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
 .sb-images-preview-img {
   display: block;
   max-width: 100%;

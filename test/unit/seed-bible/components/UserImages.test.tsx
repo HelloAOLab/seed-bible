@@ -31,6 +31,11 @@ interface StateOptions {
   deleteError?: Error;
   /** Makes clearing playlist covers fail, which must stop the delete. */
   clearPlaylistsError?: Error;
+  /**
+   * What the records server returns for a photo's file: its contents, or
+   * null for a URL it doesn't store. Defaults to null.
+   */
+  readFile?: (url: string) => Promise<Blob | null>;
 }
 
 function createState(options: StateOptions = {}) {
@@ -50,6 +55,7 @@ function createState(options: StateOptions = {}) {
   const clearPlanCovers = vi.fn(async (_url: string) => {});
   const toast = vi.fn((_message: string) => {});
   const modals = createModalManager();
+  const readFile = vi.fn(options.readFile ?? (async (_url: string) => null));
 
   const state = {
     gallery: { photos, deletePhoto },
@@ -63,6 +69,7 @@ function createState(options: StateOptions = {}) {
     },
     modals,
     app: { toast },
+    os: { readFile },
   } as unknown as SeedBibleState;
 
   return {
@@ -73,6 +80,7 @@ function createState(options: StateOptions = {}) {
     clearPlanCovers,
     toast,
     modals,
+    readFile,
   };
 }
 
@@ -175,6 +183,7 @@ describe("UserImagesGrid", () => {
 
     expect(deletePhoto).not.toHaveBeenCalled();
     expect(modals.modals.value).toHaveLength(1);
+    expect(modals.modals.value[0]!.mobileSheet).toBe(true);
     renderTopModal(modals);
     const text = modalContainer.textContent ?? "";
     expect(text).toContain("it will be removed from there too");
@@ -274,6 +283,7 @@ describe("UserImagesGrid", () => {
     });
 
     expect(modals.modals.value).toHaveLength(1);
+    expect(modals.modals.value[0]!.mobileSheet).toBe(true);
     renderTopModal(modals);
     expect(
       modalContainer.querySelector<HTMLImageElement>(".sb-images-preview-img")
@@ -290,5 +300,135 @@ describe("UserImagesGrid", () => {
     expect(modals.modals.value.map((modal) => modal.id)).toEqual([
       `delete-image-confirm-${a.id}`,
     ]);
+  });
+
+  describe("downloading from the preview", () => {
+    const originalCreateObjectURL = URL.createObjectURL;
+    const originalRevokeObjectURL = URL.revokeObjectURL;
+
+    beforeEach(() => {
+      // jsdom has no object URLs; `download` only needs one to hand the link.
+      URL.createObjectURL = vi.fn(() => "blob:test");
+      URL.revokeObjectURL = vi.fn();
+    });
+
+    afterEach(() => {
+      URL.createObjectURL = originalCreateObjectURL;
+      URL.revokeObjectURL = originalRevokeObjectURL;
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    });
+
+    async function openPreviewAndDownload(
+      a: GalleryPhoto,
+      options: Pick<StateOptions, "readFile"> = {}
+    ) {
+      const { state, modals } = createState({ photos: [a], ...options });
+      renderPane(state);
+      act(() => {
+        container.querySelector<HTMLButtonElement>(".sb-images-tile")!.click();
+      });
+      renderTopModal(modals);
+      await act(async () => {
+        modalContainer
+          .querySelector<HTMLButtonElement>(".sb-images-preview-download")!
+          .click();
+        await settle();
+      });
+    }
+
+    /** Records the file name each download link is clicked with. */
+    function captureSaves(): string[] {
+      const savedAs: string[] = [];
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+        function (this: HTMLAnchorElement) {
+          savedAs.push(this.download);
+        }
+      );
+      return savedAs;
+    }
+
+    it("saves a records-server image read through CasualOS", async () => {
+      const a = photo("a");
+      const fetchImage = vi.fn();
+      vi.stubGlobal("fetch", fetchImage);
+      const savedAs = captureSaves();
+      const openTab = vi.spyOn(window, "open").mockImplementation(() => null);
+
+      await openPreviewAndDownload(a, {
+        readFile: async () => new Blob(["image"], { type: "image/jpeg" }),
+      });
+
+      expect(savedAs).toEqual(["a.jpg"]);
+      expect(fetchImage).not.toHaveBeenCalled();
+      expect(openTab).not.toHaveBeenCalled();
+    });
+
+    it("fetches an image hosted elsewhere, skipping the cache", async () => {
+      const a = photo("a");
+      const fetchImage = vi.fn(
+        async () => new Response(new Blob(["image"], { type: "image/jpeg" }))
+      );
+      vi.stubGlobal("fetch", fetchImage);
+      const savedAs = captureSaves();
+      const openTab = vi.spyOn(window, "open").mockImplementation(() => null);
+
+      await openPreviewAndDownload(a);
+
+      expect(fetchImage).toHaveBeenCalledWith(a.url, { cache: "no-store" });
+      expect(savedAs).toEqual(["a.jpg"]);
+      expect(openTab).not.toHaveBeenCalled();
+    });
+
+    it("keeps a GIF or WebP's own file name", async () => {
+      const savedAs = captureSaves();
+      vi.spyOn(window, "open").mockImplementation(() => null);
+
+      for (const [id, type] of [
+        ["anim.gif", "image/gif"],
+        ["still.webp", "image/webp"],
+      ] as const) {
+        await openPreviewAndDownload(
+          { ...photo(id), url: `https://example.com/${id}` },
+          { readFile: async () => new Blob(["image"], { type }) }
+        );
+      }
+
+      expect(savedAs).toEqual(["anim.gif", "still.webp"]);
+    });
+
+    it("names a file without one after its image type", async () => {
+      const savedAs = captureSaves();
+      vi.spyOn(window, "open").mockImplementation(() => null);
+
+      for (const type of ["image/gif", "image/webp", "image/svg+xml"]) {
+        await openPreviewAndDownload(
+          { ...photo("a"), url: "https://example.com/files/a" },
+          { readFile: async () => new Blob(["image"], { type }) }
+        );
+      }
+
+      expect(savedAs).toEqual([
+        "seed-bible-image.gif",
+        "seed-bible-image.webp",
+        "seed-bible-image.svg",
+      ]);
+    });
+
+    it("opens the image in a new tab when it can't be fetched", async () => {
+      const a = photo("a");
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => {
+          throw new TypeError("Failed to fetch");
+        })
+      );
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const openTab = vi.spyOn(window, "open").mockImplementation(() => null);
+
+      await openPreviewAndDownload(a);
+
+      expect(openTab).toHaveBeenCalledWith(a.url, "_blank", "noopener");
+    });
   });
 });
