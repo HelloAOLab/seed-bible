@@ -238,12 +238,8 @@ describe("client hydration", () => {
     return { config, state };
   }
 
-  // Excludes the mobile "add a tab" button, which reuses `sb-tab-row` for its
-  // styling (Tabs.tsx) but isn't a reader tab.
   function countTabRows(container: HTMLElement): number {
-    return container.querySelectorAll(
-      ".sb-tab-row:not(.sb-tab-mobile-add-inline)"
-    ).length;
+    return container.querySelectorAll(".sb-tab-row").length;
   }
 
   // The reported repro: an explicit `?today=open` auto-opens Today once

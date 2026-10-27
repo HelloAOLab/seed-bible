@@ -331,6 +331,39 @@ describe("tabs Share control", () => {
     expect(createSharedSession).not.toHaveBeenCalled();
     expect(isShareSheetOpen(state)).toBe(true);
   });
+
+  it("starts a new tab from the mobile tabs header's + button", async () => {
+    window.innerWidth = 400;
+    const state = await createState();
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(state.app.isMobile.value).toBe(true);
+    state.sidebar.isMobileOpen.value = true;
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const addButton = container.querySelector<HTMLButtonElement>(
+      ".sb-mobile-screen-header [aria-label='Create new tab']"
+    );
+    expect(addButton).not.toBeNull();
+
+    act(() => {
+      addButton!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // The tab itself is created once a book is picked; the + closes the
+    // drawer and opens the book selector aimed at a new tab.
+    expect(state.sidebar.isMobileOpen.value).toBe(false);
+    expect(state.selector.forceNewTab.value).toBe(true);
+  });
 });
 
 describe("Sidebar self avatar", () => {
