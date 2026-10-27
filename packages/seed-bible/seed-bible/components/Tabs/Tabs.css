@@ -1523,9 +1523,11 @@
   }
 
   /* The settings view's header (the Tabs screen uses
-   * .sb-mobile-screen-header instead). */
+   * .sb-mobile-screen-header instead). The drawer has no top padding, so the
+   * top here makes up for it: with the view's 0.3125rem it lands the header
+   * 1.3125rem down, where the desktop sidebar's padding puts it. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header {
-    padding: 0.4375rem 1rem;
+    padding: 1rem 1rem 0.4375rem;
   }
 
   /* Row spacing matches the Saves screen. */
