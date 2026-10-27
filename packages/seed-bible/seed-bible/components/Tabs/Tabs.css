@@ -272,10 +272,16 @@
   margin-bottom: 0.25rem;
 }
 
+/* Sits in the tab list, which already spaces it from its neighbors; the
+   negative top margin cancels the saves/bookmarks section's bottom margin so
+   the gap is the same above and below. `flex-shrink: 0` because the list
+   shrinks its items once it overflows, and an empty 1px line would shrink
+   away to nothing. */
 .sb-sidebar-tabs-divider {
+  flex-shrink: 0;
   height: 1px;
   background: var(--sb-divider-color);
-  margin: 0.5rem 0 0.625rem;
+  margin-top: -0.25rem;
 }
 
 .sb-save-category {
@@ -283,9 +289,13 @@
   flex-direction: column;
 }
 
+/* The end padding matches a tab row's (0.375rem + its 1px border) so these
+   rows' "more" buttons line up with the tabs' below. Also on `.sb-save-item`
+   and `.sb-bookmarks-panel-row`. */
 .sb-save-category-header {
   display: flex;
   align-items: center;
+  padding-inline-end: calc(0.375rem + 1px);
   border-radius: 0.5rem;
   transition: background-color 0.15s ease;
 }
@@ -400,6 +410,7 @@
 .sb-save-item {
   display: flex;
   align-items: center;
+  padding-inline-end: calc(0.375rem + 1px);
   border-radius: 0.5rem;
 }
 
@@ -1508,7 +1519,11 @@
   /* Plain rows like Bookmarks/Saves (the desktop row look, highlighted
    * only when selected or hovered), with Saves' larger touch targets. */
   .sb-tabs-sidebar-mobile-open .sb-tab-row {
-    padding: 0.75rem 0.625rem;
+    /* The end padding stays the desktop row's, which the save and bookmark
+       rows match, so the "more" buttons sit in the same place on the Tabs,
+       Saves and Bookmarks screens. */
+    padding-block: 0.75rem;
+    padding-inline-start: 0.625rem;
     align-items: center;
   }
 

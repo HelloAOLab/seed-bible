@@ -331,6 +331,9 @@
 .sb-bookmarks-panel-row {
   display: flex;
   align-items: center;
+  /* Lines the "more" button up with the tab rows' (see
+     `.sb-save-category-header` in Tabs.css). */
+  padding-inline-end: calc(0.375rem + 1px);
   border-radius: 0.5rem;
 }
 
