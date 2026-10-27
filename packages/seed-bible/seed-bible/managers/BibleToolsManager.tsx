@@ -1693,6 +1693,7 @@ export function openShareModal(
 
   const modalId = modals.openModal({
     title: { key: "share-sheet-title", defaultValue: "Share" },
+    mobileSheet: true,
     content: () => (
       <ShareModal
         app={app}

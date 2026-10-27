@@ -2021,6 +2021,7 @@ describe("createBibleToolsManager", () => {
         key: "share-sheet-title",
         defaultValue: "Share",
       });
+      expect(openModal.mock.calls[0]?.[0]?.mobileSheet).toBe(true);
     });
   });
 

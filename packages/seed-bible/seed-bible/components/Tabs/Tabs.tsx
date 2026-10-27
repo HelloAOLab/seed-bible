@@ -775,6 +775,7 @@ export function openShareSessionModal(
   state.modals.openModal({
     id: modalId,
     title: { key: "share-sheet-title", defaultValue: "Share" },
+    mobileSheet: true,
     content: () => (
       <ShareModal
         app={state.app}

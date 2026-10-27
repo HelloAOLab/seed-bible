@@ -1,8 +1,12 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
+import {
+  openShareSessionModal,
+  Sidebar,
+} from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
 import type { ChatSession } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import {
   createTestSeedBibleState,
   type CreateTestSeedBibleStateOptions,
@@ -226,13 +230,19 @@ describe("Sidebar collapsed layout", () => {
   });
 });
 
-function isShareSheetOpen(
+function findShareSheet(
   state: Awaited<ReturnType<typeof createTestSeedBibleState>>
 ) {
-  return state.modals.modals.value.some(
+  return state.modals.modals.value.find(
     (modal) =>
       typeof modal.title === "object" && modal.title.key === "share-sheet-title"
   );
+}
+
+function isShareSheetOpen(
+  state: Awaited<ReturnType<typeof createTestSeedBibleState>>
+) {
+  return findShareSheet(state) !== undefined;
 }
 
 describe("tabs Share control", () => {
@@ -330,6 +340,16 @@ describe("tabs Share control", () => {
 
     expect(createSharedSession).not.toHaveBeenCalled();
     expect(isShareSheetOpen(state)).toBe(true);
+    expect(findShareSheet(state)?.mobileSheet).toBe(true);
+  });
+
+  it("opens a shared session's share sheet as a bottom sheet on phones", async () => {
+    const state = await createState();
+    const session = { id: "session-1" } as BibleReadingSession;
+
+    act(() => openShareSessionModal(state, session));
+
+    expect(findShareSheet(state)?.mobileSheet).toBe(true);
   });
 
   it("starts a new tab from the mobile tabs header's + button", async () => {
