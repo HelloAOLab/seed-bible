@@ -255,6 +255,7 @@ describe("openPhotoChooser", () => {
       key: "recent-uploads",
       defaultValue: "Recent uploads",
     });
+    expect(modals.modals.value[0]!.mobileSheet).toBe(true);
     const modalContainer = renderModalContent(modals);
 
     act(() => {

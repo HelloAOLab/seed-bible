@@ -218,4 +218,57 @@ describe("HeroImageField", () => {
     render(null, modalContainer);
     modalContainer.remove();
   });
+
+  it("crops an uploaded picture in a bottom sheet on phones", () => {
+    const modals = createModalManager();
+    act(() => {
+      render(
+        <HeroImageField
+          imageUrl={null}
+          onUpload={vi.fn()}
+          onRemove={vi.fn()}
+          photos={[]}
+          modals={modals}
+        />,
+        container
+      );
+    });
+    act(() => {
+      (
+        container.querySelector(
+          ".sb-hero-field-placeholder"
+        ) as HTMLButtonElement
+      ).click();
+    });
+    const modalContainer = document.createElement("div");
+    document.body.appendChild(modalContainer);
+    act(() => {
+      render(
+        modals.modals.value[0]!.content({
+          t: (key, options) => (options?.defaultValue as string) ?? key,
+        }),
+        modalContainer
+      );
+    });
+
+    const input = modalContainer.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    Object.defineProperty(input, "files", {
+      value: [new File(["x"], "cover.png", { type: "image/png" })],
+    });
+    act(() => {
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    expect(modals.modals.value).toHaveLength(1);
+    expect(modals.modals.value[0]!.title).toEqual({
+      key: "set-hero-image",
+      defaultValue: "Set cover image",
+    });
+    expect(modals.modals.value[0]!.mobileSheet).toBe(true);
+
+    render(null, modalContainer);
+    modalContainer.remove();
+  });
 });
