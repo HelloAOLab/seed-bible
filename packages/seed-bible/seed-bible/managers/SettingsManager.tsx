@@ -569,7 +569,8 @@ export function createSettings(
 
     // The embed link's theme is the look the site owner chose. The viewer's
     // saved theme would otherwise paint over it, so the
-    // preview (and every signed-in visitor) would ignore the link.
+    // preview (and every signed-in visitor) would ignore the link. The same
+    // goes for the viewer's saved font override, which beats every theme font.
     const embedTheme = sessionOverrides[TAG_THEME_ID];
     const pinnedEmbedTheme =
       isMinimalEmbed.value &&
@@ -584,7 +585,9 @@ export function createSettings(
         presetConfig.fontSize
       ),
       fontOverride: parseFontOverride(
-        read(PROFILE_FONT_OVERRIDE, TAG_FONT_OVERRIDE),
+        pinnedEmbedTheme
+          ? sessionOverrides[TAG_FONT_OVERRIDE]
+          : read(PROFILE_FONT_OVERRIDE, TAG_FONT_OVERRIDE),
         DEFAULT_SETTINGS.fontOverride
       ),
       disablePanels: parseBoolean(

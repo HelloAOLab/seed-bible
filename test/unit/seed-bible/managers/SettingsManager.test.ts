@@ -809,6 +809,43 @@ describe("scripture font override", () => {
     expect(appliedFontOverride()).toBe("");
   });
 
+  it("lets an embed link's theme outrank a signed-in viewer's saved font", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      loggedInLogin({ fontOverride: ROBOTO }),
+      navWith("?embed=minimal&app.themeId=light")
+    );
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("lets an embed link's theme outrank a font saved on the device", () => {
+    const login = makeFakeLogin(null);
+    login.localConfig.value = { fontOverride: ROBOTO };
+    const settings = createSettings(
+      CasualOSManager(),
+      login,
+      navWith("?embed=minimal&app.themeId=light")
+    );
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("keeps a font the embed link itself sets alongside its theme", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      loggedInLogin({ fontOverride: OPEN_SANS }),
+      navWith(
+        `?embed=minimal&app.themeId=light&app.fontOverride=${encodeURIComponent(ROBOTO)}`
+      )
+    );
+
+    expect(settings.settings.value.fontOverride).toBe(ROBOTO);
+    expect(appliedFontOverride()).toBe(ROBOTO);
+  });
+
   it("an anonymous choice, and a later switch back to Default, both survive a page refresh", () => {
     const os = CasualOSManager();
     const nav = navWith();
