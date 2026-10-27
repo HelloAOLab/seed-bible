@@ -710,6 +710,41 @@
   }
 }
 
+/* The tab lists hide their scrollbars, so an edge with tabs scrolled past it
+   fades out to hint there's more (`useScrollEdgeFadeRef`). A mask doesn't
+   affect layout, and it's only applied while there's something to hint at:
+   it clips anything painted outside the list's box. */
+.sb-sidebar-tab-list,
+.sb-sidebar-collapsed-tab-list {
+  --sb-tab-list-fade-top: 0px;
+  --sb-tab-list-fade-bottom: 0px;
+
+  &[data-fade-top],
+  &[data-fade-bottom] {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0px,
+      black var(--sb-tab-list-fade-top),
+      black calc(100% - var(--sb-tab-list-fade-bottom)),
+      transparent 100%
+    );
+  }
+
+  &[data-fade-top] {
+    --sb-tab-list-fade-top: 1.5rem;
+  }
+
+  &[data-fade-bottom] {
+    --sb-tab-list-fade-bottom: 3rem;
+  }
+}
+
+/* The expanded list's rows are taller and further apart than the rail's
+   tiles, so it needs a longer fade to cover about as many items. */
+.sb-sidebar-tab-list[data-fade-bottom] {
+  --sb-tab-list-fade-bottom: 5rem;
+}
+
 .sb-sidebar-settings-view {
   display: flex;
   flex-direction: column;

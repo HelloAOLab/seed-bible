@@ -58,6 +58,7 @@ import {
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
 import { openReaderLocation } from "./openReaderLocation";
+import { useScrollEdgeFadeRef } from "../useScrollEdgeFade";
 import {
   BookmarkGlyph,
   BookmarkStackIcon,
@@ -2177,10 +2178,13 @@ export function Tabs(props: TabsProps) {
   // The toggle draws the same stack as the reader's button, but for all of
   // the user's bookmarks: most recently moved in front, at most three shown.
   const allBookmarks = bookmarks.bookmarks.value;
+  // Desktop hides the tab lists' scrollbars, so fade an edge that has tabs
+  // scrolled past it to show there's more.
+  const tabListFadeRef = useScrollEdgeFadeRef("y");
 
   if (effectivelyCollapsed) {
     return (
-      <div className="sb-sidebar-collapsed-tab-list">
+      <div className="sb-sidebar-collapsed-tab-list" ref={tabListFadeRef}>
         {tabs.map((tab) => {
           const isSelected = tab.id === selectedTabId;
           const shortTitle = tab.readingState.shortTitle.value;
@@ -2354,7 +2358,7 @@ export function Tabs(props: TabsProps) {
   }
 
   const tabList = (
-    <div className="sb-sidebar-tab-list">
+    <div className="sb-sidebar-tab-list" ref={tabListFadeRef}>
       {isBookmarksPanelOpen && (
         <>
           <BookmarksPanel state={state} closeLayoutMenu={closeLayoutMenu} />
