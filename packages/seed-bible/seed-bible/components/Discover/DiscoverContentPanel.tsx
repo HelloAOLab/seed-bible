@@ -1,6 +1,6 @@
 import "./DiscoverContentPanel.css";
 import type { ComponentChildren } from "preact";
-import { Signal, useSignal } from "@preact/signals";
+import { Signal, useSignal, useSignalEffect } from "@preact/signals";
 import { useCallback, useLayoutEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
@@ -413,6 +413,17 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const { t } = useI18n();
 
   const activeFilter = useSignal<FilterKey>("all");
+
+  useSignalEffect(() => {
+    const target = state.discover.scrollToVerse.value;
+    if (
+      target &&
+      activeFilter.peek() !== "all" &&
+      activeFilter.peek() !== "annotations"
+    ) {
+      activeFilter.value = "annotations";
+    }
+  });
 
   const panelRef = useSidePanelMaxHeight();
 
