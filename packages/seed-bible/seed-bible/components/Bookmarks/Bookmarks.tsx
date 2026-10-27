@@ -645,6 +645,7 @@ export async function openBookmarkModal(
   state.modals.openModal({
     id: modalId,
     title: { key: "bookmark-chapter", defaultValue: "Bookmark chapter" },
+    mobileSheet: true,
     content: () => (
       <BookmarkPickerContent
         state={state}

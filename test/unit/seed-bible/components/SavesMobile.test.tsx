@@ -192,6 +192,7 @@ describe("mobile saves screen", () => {
       expect(openModal.mock.calls[0]![0].id).toBe(
         "save-category-AAB-GEN-1-chapter"
       );
+      expect(openModal.mock.calls[0]![0].mobileSheet).toBe(true);
     });
 
     it("edits the existing save when the chapter is already saved", async () => {

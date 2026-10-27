@@ -149,6 +149,17 @@ describe("bookmarks", () => {
   };
 
   describe("the bookmark modal", () => {
+    it("opens as a bottom sheet on phones", async () => {
+      await signIn();
+      const openModalSpy = vi.spyOn(state.modals, "openModal");
+
+      await act(async () => {
+        await openBookmarkModal(state, AAB_GEN_1);
+      });
+
+      expect(openModalSpy.mock.calls[0]![0].mobileSheet).toBe(true);
+    });
+
     it("places a first bookmark with a single press of Save", async () => {
       await signIn();
       const modal = await openModal();

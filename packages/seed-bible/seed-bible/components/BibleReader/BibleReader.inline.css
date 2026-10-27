@@ -1252,21 +1252,45 @@
   min-height: 0;
 }
 
-/* Mobile: dock the picker modal to the bottom of the screen as a sheet
- * (matches the design spec). The modal frame itself is reused, but the
- * outer overlay aligns it to the bottom and stretches it to full width. */
+/* Mobile: a modal opened with `mobileSheet` docks to the bottom of the screen
+ * as a sheet that slides up like the reader's settings sheet. The modal frame
+ * itself is reused, but the outer overlay aligns it to the bottom and
+ * stretches it to full width. */
 @media (max-width: 480px) {
-  .sb-footnote-modal-overlay:has(.sb-save-picker) {
+  .sb-footnote-modal-overlay-mobile-sheet {
     align-items: flex-end;
     padding: 0;
+
+    > .sb-footnote-modal {
+      width: 100%;
+      max-width: 100%;
+      padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+      border-radius: 1rem 1rem 0 0;
+      border-bottom: none;
+      box-shadow: 0 -8px 28px #00000033;
+    }
+
+    /* Reaching the end of the sheet's list shouldn't start scrolling the
+       page behind it. */
+    .sb-footnote-modal-content {
+      overscroll-behavior: contain;
+    }
   }
 
-  .sb-footnote-modal:has(.sb-save-picker) {
-    width: 100%;
-    max-width: 100%;
-    border-radius: 1rem 1rem 0 0;
-    border-bottom: none;
-    box-shadow: 0 -8px 28px #00000033;
+  @media (prefers-reduced-motion: no-preference) {
+    .sb-footnote-modal-overlay-mobile-sheet > .sb-footnote-modal {
+      animation: sb-modal-sheet-slide-up 0.25s ease-out;
+    }
+  }
+
+  @keyframes sb-modal-sheet-slide-up {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
   }
 }
 

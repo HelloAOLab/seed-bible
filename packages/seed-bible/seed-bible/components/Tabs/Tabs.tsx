@@ -1809,6 +1809,7 @@ function openSaveCategoryModal(
             key: "add-save-modal",
             defaultValue: "Add save",
           },
+    mobileSheet: true,
     content: () => (
       <SaveCategoryPickerContent
         state={state}
