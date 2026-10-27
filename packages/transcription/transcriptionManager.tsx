@@ -567,7 +567,7 @@ function createTranscriptionManager(
     if (!askedForDonation.value) {
       const { login } = seedBibleState;
       if (login.userId.value) {
-        openDonationDialog({
+        void openDonationDialog({
           onSuccess: () => {
             askedForDonation.value = true;
             window.localStorage.setItem("askedForDonation", "true");

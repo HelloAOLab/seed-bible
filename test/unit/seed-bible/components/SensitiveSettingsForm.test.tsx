@@ -142,7 +142,7 @@ describe("SensitiveSettingsForm", () => {
       container.querySelectorAll(".sb-settings-field-row")
     ).map((row) => row.textContent ?? "");
     expect(notes.find((text) => text.includes("apiKey"))).toContain(
-      "Provided by the customization"
+      "Provided by the Custom Branding"
     );
     expect(notes.find((text) => text.includes("clientId"))).toContain(
       "Not set"
@@ -178,10 +178,10 @@ describe("SensitiveSettingsForm", () => {
 
     expect(visibilitySelect().value).toBe("public");
     expect(container.textContent).toContain(
-      "Everyone using this customization sends requests with these values"
+      "Everyone using this Custom Branding sends requests with these values"
     );
     expect(visibilitySelect().selectedOptions[0]?.textContent).toBe(
-      "Everyone using this customization"
+      "Everyone using this Custom Branding"
     );
   });
 

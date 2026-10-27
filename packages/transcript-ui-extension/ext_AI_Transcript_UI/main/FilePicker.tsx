@@ -1,7 +1,7 @@
 import { useRef, useState } from "preact/hooks";
 import { useManager } from "./context";
 import { useI18n } from "seed-bible/i18n";
-import type { FileStatus } from "@seed-bible/ai-transcript-extension/types";
+import type { FileStatus } from "@seed-bible/transcription/types";
 
 const STATUS_TEXT: Record<FileStatus, string> = {
   queued: "Ready",

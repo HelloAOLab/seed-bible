@@ -35,28 +35,6 @@ This creates a new extension project with `create-seed-bible-extension`, runs it
 - **Node.js 22 or newer**, with **npm 11 or newer** (`npm install -g npm@latest`). npm 10, which comes with Node.js 22, crashes while installing a new project's tools. pnpm works too: use `pnpm` wherever this guide says `npm`.
 - **git**, **[pnpm](https://pnpm.io/installation)** (version 10 or newer) and **[Bun](https://bun.sh)**. You only need these for `npm run dev`, which downloads Seed Bible and runs it locally so you can try your extension in it.
 
-> **Before these packages are on npm.** `create-seed-bible-extension`, `seed-bible-extension-scripts` and `seed-bible` haven't been published to npm yet, so `npm create` can't find them. Until they are, make them from a clone of this repo and install them from files:
->
-> ```bash
-> # In a clone of https://github.com/HelloAOLab/seed-bible
-> pnpm install
-> pnpm build:extension-tools && pnpm build:seed-bible-package
-> mkdir -p /tmp/sb-packages
-> for p in seed-bible seed-bible-extension-scripts create-seed-bible-extension; do
->   (cd packages/$p && pnpm pack --pack-destination /tmp/sb-packages)
-> done
->
-> # Then, wherever you keep your projects
-> npx --package=/tmp/sb-packages/create-seed-bible-extension-0.1.0.tgz create-seed-bible-extension verse-art
-> cd verse-art
-> npm pkg set dependencies.seed-bible=file:/tmp/sb-packages/seed-bible-1.14.0.tgz \
->   devDependencies.seed-bible-extension-scripts=file:/tmp/sb-packages/seed-bible-extension-scripts-0.1.0.tgz
-> npm install
-> npm run dev -- --repo <path to your clone>
-> ```
->
-> Use the version numbers in the file names `pnpm pack` printed. `--repo` makes `npm run dev` run Seed Bible from your clone, since no released version can install an extension from a link yet; pass it every time you run `dev`. Otherwise, follow the steps below from Step 2.
-
 ### Step 1: Create the project
 
 ```bash
@@ -425,7 +403,7 @@ A user pastes your link into **Settings → Extensions → Add extensions from a
 
 ## 8. Built-in extensions: contributing to this repo
 
-Everything above is about extensions you build in your own project and ship from a link. Seed Bible also has **built-in extensions**: ones whose source lives in this repo under `packages/`, is reviewed in a pull request, and is compiled into the app. Every extension that ships with Seed Bible today works this way (`locations-extension`, `audio-reader-extension`, `apologist-extension`, `bonfire-extension`, `transcript-extension`, `twitchPub-extension`, `twitchSub-extension`, and the reference template, `seed-bible-refresh-example-extension`).
+Everything above is about extensions you build in your own project and ship from a link. Seed Bible also has **built-in extensions**: ones whose source lives in this repo under `packages/`, is reviewed in a pull request, and is compiled into the app. Every extension that ships with Seed Bible today works this way (`locations-extension`, `audio-reader-extension`, `apologist-extension`, `bonfire-extension`, `transcript-ui-extension`, `twitchPub-extension`, `twitchSub-extension`, and the reference template, `seed-bible-refresh-example-extension`).
 
 The difference that matters: **a built-in extension isn't sandboxed.** It runs in the app's own page, written with `registerExtension` from `seed-bible` instead of `defineExtension`, and gets the app's entire internal state, the same objects the app itself uses. That's why it can only ship through a reviewed pull request. If you're not a Seed Bible contributor, you want the sandboxed extensions in §§1–6 instead.
 
@@ -576,6 +554,20 @@ registerExtension({
 ```
 
 Circular dependencies are detected and rejected (with a console error) rather than causing an infinite loop.
+
+**The extensions in this repo don't depend on each other.** A dependency installs the other extension too, with everything it adds to the app, which is rarely what someone turning on the first one wanted: turning on Theographic used to turn on the Locations verse tool as well. When two built-in extensions need the same code, it goes in a _shared package_ instead: a folder under `packages/` with a `package.json` but no `extension.json`, so the app never lists or installs it. Each extension imports it like any other module:
+
+| Shared package                 | What it holds                                              | Used by                            |
+| ------------------------------ | ---------------------------------------------------------- | ---------------------------------- |
+| `@seed-bible/bible-locations`  | The known Bible places and where their map outlines live   | Locations, Theographic             |
+| `@seed-bible/transcription`    | Transcribing sermon audio and finding the references in it | AI Transcript UI, Twitch publisher |
+| `@seed-bible/seed-bible-utils` | Book arrangements, reading history and presence services   | Bible Stack, Scripture Map         |
+
+Nothing has to load these by hand. Every extension's code is already loaded on demand, through an `import()` per extension, and the bundler puts a module that two of those imports share into its own chunk. That chunk downloads the first time any extension that needs it is installed, and the browser reuses it for the next one.
+
+A shared package is plain modules, so anything it keeps lives once per page, not once per extension. When it needs per-app state that should be shared and then cleaned up, hand it out the way `acquireSeedBibleUtils(context)` does: the first extension to ask builds it, each one `yield`s the `release` it gets back, and it's torn down when the last one is uninstalled. A shared package that shows text brings its own translations in a `translations.json` (see `packages/transcription/donation.tsx`; the lint checks its keys under the folder name), since nothing installs it to load them.
+
+`test/unit/script/extensionBoundaries.test.ts` fails if a package under `packages/` with an `extension.json` imports from another one, or declares `dependencies`.
 
 ### 8.3 What built-in extensions can plug into
 

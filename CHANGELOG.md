@@ -6,15 +6,50 @@
 
 ### 🔧 Changed
 
-- Closing a text or link item during a playlist keeps going the way you were moving, instead of always moving on. ([#1953](https://github.com/HelloAOLab/seed-bible/pull/1953))
-  - Forward after Next, and back after Previous.
-  - Closing the first item moves on, including when you pressed Play on your own playlist.
-  - It stays put if you opened a later item directly, and it no longer ends the playlist.
-  - Tap the item you're already on in the queue to open it again.
-
 ### 🐛 Fixed
 
 ### 🗑️ Removed
+
+## v1.15.0 — 2026-10-26
+
+### ✨ Added
+
+- Add third-party extensions from a link; they run sandboxed and can only use the permissions you approve when installing. ([#2035](https://github.com/HelloAOLab/seed-bible/pull/2035))
+  - The install dialog groups what the extension can do into cards and names who uploaded it.
+  - Extensions can ask for extra permissions later, only when they need them.
+- Add tools for building, testing and publishing your own Seed Bible extensions, installable from npm. ([#2035](https://github.com/HelloAOLab/seed-bible/pull/2035), [#2057](https://github.com/HelloAOLab/seed-bible/pull/2057), [#2064](https://github.com/HelloAOLab/seed-bible/pull/2064))
+- Show other people in a shared session when you select a verse, with a brief effect in your color. ([#2015](https://github.com/HelloAOLab/seed-bible/pull/2015))
+  - Hosts choose who sees it: hosts only, everyone, or no one.
+  - You can turn the effect off for yourself; it follows your reduced-motion setting by default.
+- Animate the Books button's Seed Bible icon growing from a seed, once each time the app loads. ([#2052](https://github.com/HelloAOLab/seed-bible/pull/2052))
+
+### 🔧 Changed
+
+- The desktop toolbar now matches the mobile one: Today, Books and Search, plus a More menu for everything else. ([#2059](https://github.com/HelloAOLab/seed-bible/pull/2059))
+  - Discover, Chat, Plans and buttons added by extensions are in More, so installing extensions no longer makes the toolbar wider.
+  - More only appears when it has something in it, and shows Chat's unread count while Chat is inside it.
+- Closing a text or link item during a playlist keeps going the way you were moving, instead of always moving on. ([#1953](https://github.com/HelloAOLab/seed-bible/pull/1953))
+  - Closing the first item moves on, including when you pressed Play on your own playlist.
+  - It stays put if you opened a later item directly, and it no longer ends the playlist.
+  - Tap the item you're already on in the queue to open it again.
+- List extensions in Installed and Available sections with search, and give each one its own page with About, Permissions and Settings. ([#2035](https://github.com/HelloAOLab/seed-bible/pull/2035), [#2053](https://github.com/HelloAOLab/seed-bible/pull/2053), [#2055](https://github.com/HelloAOLab/seed-bible/pull/2055))
+  - On desktop, Extensions opens as a full-screen page instead of a list in the sidebar.
+  - Extensions can show their own icon instead of their initials.
+- Open the Profile screen from Settings > Account instead of an account form in the sidebar. ([#2056](https://github.com/HelloAOLab/seed-bible/pull/2056))
+- Show your name and description above your email and location on the profile card. ([#2043](https://github.com/HelloAOLab/seed-bible/pull/2043))
+- Find your customizations under Branding in Your content instead of on their own Settings page, and create one from Create > Custom Branding. ([#2063](https://github.com/HelloAOLab/seed-bible/pull/2063))
+- The sidebar now looks more streamlined and is less distracting when collapsed. ([#2061](https://github.com/HelloAOLab/seed-bible/pull/2061))
+
+### 🐛 Fixed
+
+- Fix the compact Discover panel's filters being cut off on desktop. ([#1950](https://github.com/HelloAOLab/seed-bible/pull/1950))
+- Fix being signed out unexpectedly when the app refreshed your session, especially with several tabs open. ([#2036](https://github.com/HelloAOLab/seed-bible/pull/2036))
+- Fix the reader toolbar covering the Log out button on the Profile screen. ([#2043](https://github.com/HelloAOLab/seed-bible/pull/2043))
+
+### 🗑️ Removed
+
+- Remove the Toolbar settings page for hiding and reordering toolbar buttons. ([#2062](https://github.com/HelloAOLab/seed-bible/pull/2062))
+- Remove the Download and Upload Extensions buttons from Settings > Extensions. ([#2035](https://github.com/HelloAOLab/seed-bible/pull/2035))
 
 ## v1.14.0 — 2026-10-19
 

@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { useState } from "preact/hooks";
 import type { SeedBibleState } from "seed-bible";
+import { addTranslations } from "seed-bible/i18n";
 import "./styles.css";
 
 const DONATE_URL = "https://better.giving/donate/1118469";
@@ -22,13 +23,13 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
 
   const rate = String(
     t("donationRate", {
-      ns: "ext_AI_Transcript",
+      ns: "transcription",
       defaultValue: "$1.10 per hour",
     })
   );
   const body = String(
     t("donationBody", {
-      ns: "ext_AI_Transcript",
+      ns: "transcription",
       defaultValue:
         "We're a small team, and this feature costs us about {{rate}} to run. A small donation covers your use — and keeps it available for everyone.",
       rate,
@@ -67,7 +68,7 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
             type="button"
             class="sbd-close"
             aria-label={t("close", {
-              ns: "ext_AI_Transcript",
+              ns: "transcription",
               defaultValue: "Close",
             })}
             onClick={closeDonationDialog}
@@ -78,7 +79,7 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
 
         <h2 class="sbd-title" id="sbd-title">
           {t("donationTitle", {
-            ns: "ext_AI_Transcript",
+            ns: "transcription",
             defaultValue: "Help keep this feature running",
           })}
         </h2>
@@ -110,7 +111,7 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
               {selected === amount && (
                 <span class="sbd-amount-badge">
                   {t("donationCovers", {
-                    ns: "ext_AI_Transcript",
+                    ns: "transcription",
                     defaultValue: "Covers ~{{hours}} hrs",
                     hours: hoursFor(amount),
                   })}
@@ -130,13 +131,13 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
             {selected == null && (
               <span class="sbd-amount-badge">
                 {t("donationCoversOther", {
-                  ns: "ext_AI_Transcript",
+                  ns: "transcription",
                   defaultValue: "Set your own",
                 })}
               </span>
             )}
             {t("donationOther", {
-              ns: "ext_AI_Transcript",
+              ns: "transcription",
               defaultValue: "Other",
             })}
           </button>
@@ -144,9 +145,9 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
 
         <button type="button" class="sbd-donate" onClick={donate}>
           {selected == null
-            ? t("donate", { ns: "ext_AI_Transcript", defaultValue: "Donate" })
+            ? t("donate", { ns: "transcription", defaultValue: "Donate" })
             : t("donateAmount", {
-                ns: "ext_AI_Transcript",
+                ns: "transcription",
                 defaultValue: "Donate {{amount}}",
                 amount: `$${selected}`,
               })}
@@ -154,7 +155,7 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
 
         <button type="button" class="sbd-dismiss" onClick={closeDonationDialog}>
           {t("donationDismiss", {
-            ns: "ext_AI_Transcript",
+            ns: "transcription",
             defaultValue: "Not now — take me back",
           })}
         </button>
@@ -170,7 +171,7 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
           </span>
           <span>
             {t("donationSecure", {
-              ns: "ext_AI_Transcript",
+              ns: "transcription",
               defaultValue: "Secure payment · one-time, no account needed",
             })}
           </span>
@@ -180,13 +181,26 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
   );
 };
 
-export default function openDonationDialog({
+export default async function openDonationDialog({
   onSuccess,
   context,
 }: {
   onSuccess: () => void;
   context: SeedBibleState;
 }) {
+  if (document.getElementById("donation-container")) return;
+
+  // Not an extension, so nothing loads these strings for it; fetched only
+  // once the dialog is actually shown. Without them it still opens, in the
+  // English every `t()` call carries as its default. The namespace is this
+  // package's folder name, which is where the i18n lint looks up the keys.
+  try {
+    const { default: translations } = await import("./translations.json");
+    addTranslations("transcription", translations);
+  } catch (error) {
+    console.error("Couldn't load the donation dialog's translations.", error);
+  }
+  // Another call may have opened it while this one waited.
   if (document.getElementById("donation-container")) return;
 
   const container = document.createElement("div");

@@ -96,12 +96,6 @@ export interface DiscoveredContentBehavior {
 export const VERSE_LINE_HEIGHT_OPTIONS: number[] = [1.5, 1.7, 2, 2.5];
 export const DEFAULT_VERSE_LINE_HEIGHT = 1.7;
 
-export interface ToolbarCustomization {
-  /** Tool IDs that should be hidden from the toolbar. */
-  hidden: string[];
-  /** Tool IDs in preferred display order. IDs not listed keep their default priority after the ordered ones. */
-  order: string[];
-}
 export type VerseSelectionEffects = "default" | "enabled" | "disabled";
 
 export interface AppSettings {
@@ -114,7 +108,6 @@ export interface AppSettings {
   verseLineHeight: number;
   fontOverride?: string | undefined;
   discoveredContent: DiscoveredContentBehavior;
-  toolbar: ToolbarCustomization;
   keepScreenAwake: boolean;
   /**
    * Whether picking a Bible translation written in another language may offer
@@ -172,10 +165,6 @@ export const AppSettingsSchema = z.object({
   verseSelectionEffects: z
     .enum(["default", "enabled", "disabled"])
     .default("default"),
-  toolbar: z.object({
-    hidden: z.array(z.string()),
-    order: z.array(z.string()),
-  }),
   keepScreenAwake: z.boolean(),
   // Defaulted rather than required so settings exported before this option
   // existed still import.
@@ -206,7 +195,6 @@ const TAG_DISCOVERED_CONTENT = "app.discoveredContent";
 const TAG_TEXT_CONFIG = "app.textConfig";
 const TAG_VERSE_LINE_HEIGHT = "app.verseLineHeight";
 const TAG_FONT_OVERRIDE = "app.fontOverride";
-const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
 const TAG_ASK_TO_SWITCH_UI_LANGUAGE = "app.askToSwitchUiLanguage";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
@@ -226,7 +214,6 @@ const PROFILE_DISCOVERED_CONTENT = "discoveredContent";
 const PROFILE_TEXT_CONFIG = "textConfig";
 const PROFILE_VERSE_LINE_HEIGHT = "verseLineHeight";
 const PROFILE_FONT_OVERRIDE = "fontOverride";
-const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
 const PROFILE_ASK_TO_SWITCH_UI_LANGUAGE = "askToSwitchUiLanguage";
 const PROFILE_CUSTOM_HIGHLIGHT_COLORS = "customHighlightColors";
@@ -253,11 +240,6 @@ const DEFAULT_DISCOVERED_CONTENT: DiscoveredContentBehavior = {
   showContent: true,
 };
 
-const DEFAULT_TOOLBAR_CONFIG: ToolbarCustomization = {
-  hidden: [],
-  order: [],
-};
-
 const DEFAULT_SETTINGS: AppSettings = {
   fontSize: "M",
   disablePanels: false,
@@ -268,7 +250,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   verseLineHeight: DEFAULT_VERSE_LINE_HEIGHT,
   fontOverride: undefined,
   discoveredContent: DEFAULT_DISCOVERED_CONTENT,
-  toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
   askToSwitchUiLanguage: true,
   customHighlightColors: [],
@@ -336,37 +317,6 @@ function parseVerseSelectionEffects(
   return value === "default" || value === "enabled" || value === "disabled"
     ? value
     : fallback;
-}
-
-/**
- * Apply the user's toolbar customization (hidden + explicit order) to a list
- * of tools identified by `id`. Hidden tools are removed; tools listed in
- * `order` come first in that order; remaining tools keep their natural order.
- */
-export function applyToolbarCustomization<T extends { id: string }>(
-  tools: T[],
-  config: ToolbarCustomization
-): T[] {
-  const hiddenSet = new Set(config.hidden);
-  const visible = tools.filter((t) => !hiddenSet.has(t.id));
-  if (config.order.length === 0) {
-    return visible;
-  }
-  const byId = new Map(visible.map((t) => [t.id, t] as const));
-  const ordered: T[] = [];
-  for (const id of config.order) {
-    const tool = byId.get(id);
-    if (tool) {
-      ordered.push(tool);
-      byId.delete(id);
-    }
-  }
-  for (const tool of visible) {
-    if (byId.has(tool.id)) {
-      ordered.push(tool);
-    }
-  }
-  return ordered;
 }
 
 export const UI_SIZE_OPTIONS: UISize[] = ["S", "M", "L", "XL"];
@@ -491,31 +441,6 @@ function parseDiscoveredContent(
   };
 }
 
-function parseStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((v): v is string => typeof v === "string");
-}
-
-function parseToolbarConfig(
-  value: unknown,
-  fallback: ToolbarCustomization
-): ToolbarCustomization {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return fallback;
-    }
-  }
-  if (!parsed || typeof parsed !== "object") return fallback;
-  const obj = parsed as Record<string, unknown>;
-  return {
-    hidden: parseStringArray(obj.hidden),
-    order: parseStringArray(obj.order),
-  };
-}
-
 // The verse line-height used to live inside the per-section `textConfig`
 // (the removed "All settings" text editor). Every other field of that blob is
 // deliberately ignored so old customizations stop applying, but the line
@@ -580,9 +505,6 @@ export interface SettingsManager {
   setScriptureWidth: (width: number) => void;
   /** Set the verse line-height (Scripture line-spacing control). */
   setVerseLineHeight: (lineHeight: number) => void;
-  setToolbarHidden: (toolId: string, hidden: boolean) => void;
-  setToolbarOrder: (order: string[]) => void;
-  resetToolbarConfig: () => void;
   setKeepScreenAwake: (enabled: boolean) => void;
   addCustomHighlightColor: (color: string) => void;
   removeCustomHighlightColor: (color: string) => void;
@@ -705,10 +627,6 @@ export function createSettings(
       verseSelectionEffects: parseVerseSelectionEffects(
         read(PROFILE_VERSE_SELECTION_EFFECTS, TAG_VERSE_SELECTION_EFFECTS),
         DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
-      ),
-      toolbar: parseToolbarConfig(
-        read(PROFILE_TOOLBAR, TAG_TOOLBAR),
-        DEFAULT_SETTINGS.toolbar
       ),
       keepScreenAwake: parseBoolean(
         read(PROFILE_KEEP_AWAKE, TAG_KEEP_AWAKE),
@@ -864,28 +782,6 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_VERSE_LINE_HEIGHT, lineHeight);
   };
 
-  const writeToolbarConfig = (next: ToolbarCustomization) => {
-    settings.value = { ...settings.value, toolbar: next };
-    sessionOverrides[TAG_TOOLBAR] = next;
-    saveProfileConfigValue(login, PROFILE_TOOLBAR, next);
-  };
-
-  const setToolbarHidden = (toolId: string, hidden: boolean) => {
-    const current = settings.value.toolbar;
-    const hiddenSet = new Set(current.hidden);
-    if (hidden) hiddenSet.add(toolId);
-    else hiddenSet.delete(toolId);
-    writeToolbarConfig({ ...current, hidden: [...hiddenSet] });
-  };
-
-  const setToolbarOrder = (order: string[]) => {
-    writeToolbarConfig({ ...settings.value.toolbar, order });
-  };
-
-  const resetToolbarConfig = () => {
-    writeToolbarConfig(DEFAULT_TOOLBAR_CONFIG);
-  };
-
   const setKeepScreenAwake = async (enabled: boolean) => {
     if (settings.value.keepScreenAwake === enabled) return;
     let nextValue = enabled;
@@ -996,7 +892,6 @@ export function createSettings(
     sessionOverrides[TAG_VERSE_LINE_HEIGHT] = DEFAULT_SETTINGS.verseLineHeight;
     sessionOverrides[TAG_DISCOVERED_CONTENT] =
       DEFAULT_SETTINGS.discoveredContent;
-    sessionOverrides[TAG_TOOLBAR] = DEFAULT_SETTINGS.toolbar;
     sessionOverrides[TAG_KEEP_AWAKE] = DEFAULT_SETTINGS.keepScreenAwake;
     sessionOverrides[TAG_ASK_TO_SWITCH_UI_LANGUAGE] =
       DEFAULT_SETTINGS.askToSwitchUiLanguage;
@@ -1046,7 +941,6 @@ export function createSettings(
       PROFILE_VERSE_SELECTION_EFFECTS,
       DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
     );
-    saveProfileConfigValue(login, PROFILE_TOOLBAR, DEFAULT_SETTINGS.toolbar);
     saveProfileConfigValue(
       login,
       PROFILE_KEEP_AWAKE,
@@ -1137,9 +1031,6 @@ export function createSettings(
     setDiscoveredContent,
     setScriptureWidth,
     setVerseLineHeight,
-    setToolbarHidden,
-    setToolbarOrder,
-    resetToolbarConfig,
     setKeepScreenAwake,
     addCustomHighlightColor,
     removeCustomHighlightColor,
