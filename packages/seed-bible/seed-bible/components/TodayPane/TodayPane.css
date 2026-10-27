@@ -435,6 +435,9 @@
   > h5 {
   font-size: 0.9rem;
   font-weight: 600;
+  /* Lighter than body text so the headings label the sections without
+     competing with what's in them. */
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
 .sb-today-container
@@ -446,7 +449,6 @@
   .sb-today-titled-section-header
   > button {
   margin: 0;
-  color: var(--sb-font-color);
 }
 
 .sb-today-container .sb-today-titled-section .sb-today-titled-section-header {
@@ -466,6 +468,7 @@
   appearance: none;
   border: none;
   background-color: transparent;
+  color: var(--sb-font-color);
   font-size: 0.85rem;
   text-decoration: underline;
   text-underline-offset: 0.25rem;
