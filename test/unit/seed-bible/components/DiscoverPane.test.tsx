@@ -121,6 +121,7 @@ function createMockState(
     panes: { closePane: overrides.closePane ?? vi.fn() },
     chats: createMockChats().chats,
     sidebar: { openChatPanel: vi.fn() },
+    discover: { scrollToVerse: signal(null) },
   } as unknown as SeedBibleState;
 }
 

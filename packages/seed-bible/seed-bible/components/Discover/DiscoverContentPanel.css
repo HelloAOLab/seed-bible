@@ -199,8 +199,6 @@
   display: none;
 }
 
-/* ── Scoped annotation card style (compact panel only) ── */
-
 .sb-discover-content-panel .sb-annotation-item {
   background: var(--sb-background);
   border-radius: 6px;

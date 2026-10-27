@@ -5170,6 +5170,7 @@ describe("BibleReader", () => {
       },
       tools: createBibleToolsManager(testBranding),
       tabs: { selectedTabId: signal("") },
+      discover: { scrollToVerse: signal(null) },
       playlists: {
         playing: signal(null),
         openingPlayback: signal(false),

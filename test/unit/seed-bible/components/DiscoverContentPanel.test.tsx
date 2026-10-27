@@ -1262,6 +1262,72 @@ describe("DiscoverContentPanel", () => {
       }
     });
 
+    it("switches from another filter to Notes and highlights the note targeted by discover.scrollToVerse", () => {
+      const tab = createMockTab({
+        chapterData: genesis1,
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const state = createMockState({
+        tab,
+        annotationsForChapter: [
+          createAnnotation({
+            id: "verse-3",
+            verseNumber: 3,
+          } as Partial<Annotation>),
+          createAnnotation({
+            id: "verse-7",
+            verseNumber: 7,
+          } as Partial<Annotation>),
+        ],
+      });
+      scrollIntoView.mockClear();
+      const rafSpy = vi
+        .spyOn(window, "requestAnimationFrame")
+        .mockImplementation((callback) => {
+          callback(0);
+          return 0;
+        });
+
+      try {
+        renderFull(tab, state);
+
+        const getChip = (label: string) =>
+          Array.from(container.querySelectorAll(".sb-dcp-chip")).find(
+            (el) => el.textContent === label
+          ) as HTMLButtonElement;
+
+        act(() => {
+          getChip("Cross Refs").dispatchEvent(
+            new MouseEvent("click", { bubbles: true })
+          );
+        });
+        expect(container.querySelector(".sb-annotation-group")).toBeNull();
+
+        act(() => {
+          state.discover.scrollToVerse.value = {
+            bookId: "GEN",
+            chapterNumber: 1,
+            verseNumber: 7,
+          };
+        });
+
+        expect(getChip("Notes").getAttribute("aria-selected")).toBe("true");
+        expect(container.textContent).not.toContain("Exodus 5:3");
+        expect(state.discover.scrollToVerse.value).toBeNull();
+        expect(scrollIntoView).toHaveBeenCalledWith({ block: "center" });
+
+        const groups = container.querySelectorAll(".sb-annotation-group");
+        expect(
+          groups[0]?.classList.contains("sb-annotation-group--highlighted")
+        ).toBe(false);
+        expect(
+          groups[1]?.classList.contains("sb-annotation-group--highlighted")
+        ).toBe(true);
+      } finally {
+        rafSpy.mockRestore();
+      }
+    });
+
     it("shows a note's author name resolved from their profile and a formatted updated time", async () => {
       const getUserProfile = vi
         .fn()
