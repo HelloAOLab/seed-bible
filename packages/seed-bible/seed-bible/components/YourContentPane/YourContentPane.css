@@ -497,7 +497,6 @@
 
 /* Positioned so the delete button can sit in the tile's corner. */
 .sb-images-item {
-  position: relative;
   min-width: 0;
 }
 
@@ -520,35 +519,6 @@
   object-fit: cover;
 }
 
-/*
- * Sits on top of the picture, so it is drawn for contrast against any image
- * rather than in the theme's colours, which a photo could match.
- */
-.sb-images-delete {
-  position: absolute;
-  top: 6px;
-  inset-inline-end: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: rgb(0 0 0 / 55%);
-  color: #fff;
-  cursor: pointer;
-}
-
-.sb-images-delete:hover {
-  background: #db1c1c;
-}
-
-.sb-images-delete .material-symbols-outlined {
-  font-size: 18px;
-}
-
 .sb-images-date {
   display: block;
   margin-top: 4px;
@@ -564,6 +534,45 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* Label over value, one detail per row. */
+.sb-images-preview-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.sb-images-preview-details dt {
+  margin-bottom: 2px;
+  color: var(--sb-content-muted);
+  font-size: 0.75rem;
+}
+
+.sb-images-preview-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* With room to spare, label and value share a line, which keeps the preview
+   short enough for the desktop modal's height cap. */
+@media (min-width: 481px) {
+  .sb-images-preview-details {
+    gap: 6px;
+  }
+
+  .sb-images-preview-details > div {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .sb-images-preview-details dt {
+    margin-bottom: 0;
+  }
 }
 
 /* Download sits apart at the start of the row, Close and Delete at the end. */

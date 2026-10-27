@@ -34,6 +34,25 @@ export function findPhotoUsage(
   };
 }
 
+/** The titles of the covers using a photo, with stand-ins for untitled ones. */
+function useCoverTitles(
+  state: Pick<SeedBibleState, "playlists" | "readingPlans">,
+  url: string
+): string[] {
+  const { t } = useI18n();
+  const usage = findPhotoUsage(state, url);
+  return [
+    ...usage.playlists.map(
+      (title) =>
+        title ?? t("untitled-playlist", { defaultValue: "Untitled playlist" })
+    ),
+    ...usage.readingPlans.map(
+      (title) =>
+        title ?? t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+    ),
+  ];
+}
+
 /**
  * Deletes a gallery photo everywhere it appears. The covers go first, so
  * nothing is left pointing at a file that is about to disappear; a cover that
@@ -59,18 +78,7 @@ function ConfirmDeleteImageModalContent(props: {
   const { state, photo, toast, onClose } = props;
   const { t } = useI18n();
   const isDeleting = useSignal(false);
-
-  const usage = findPhotoUsage(state, photo.url);
-  const usedBy = [
-    ...usage.playlists.map(
-      (title) =>
-        title ?? t("untitled-playlist", { defaultValue: "Untitled playlist" })
-    ),
-    ...usage.readingPlans.map(
-      (title) =>
-        title ?? t("untitled-reading-plan", { defaultValue: "Untitled plan" })
-    ),
-  ];
+  const usedBy = useCoverTitles(state, photo.url);
 
   const confirm = async () => {
     isDeleting.value = true;
@@ -125,10 +133,11 @@ function ConfirmDeleteImageModalContent(props: {
         </button>
         <button
           type="button"
-          className="sb-session-settings-end"
+          className="sb-session-settings-end sb-delete-button"
           onClick={() => void confirm()}
           disabled={isDeleting.value}
         >
+          <MaterialIcon aria-hidden="true">delete</MaterialIcon>
           {t("delete", { defaultValue: "Delete" })}
         </button>
       </div>
@@ -215,7 +224,108 @@ async function downloadPhoto(
   }
 }
 
+/** The image format named by a URL's file extension ("JPEG"), if it has one. */
+function photoFormat(url: string): string | null {
+  try {
+    const name = new URL(url, window.location.href).pathname.split("/").pop();
+    const extension = /\.(\w+)$/.exec(name ?? "")?.[1]?.toUpperCase();
+    if (!extension) {
+      return null;
+    }
+    return extension === "JPG" ? "JPEG" : extension;
+  } catch {
+    return null;
+  }
+}
+
+/** The image's details, under it in the preview. */
+function ImagePreviewDetails(props: {
+  state: Pick<SeedBibleState, "playlists" | "readingPlans">;
+  photo: GalleryPhoto;
+  size: { width: number; height: number } | null;
+}) {
+  const { state, photo, size } = props;
+  const { t, language } = useI18n();
+  const uploaded = formatUploadDateTime(photo.createdAtMs, language);
+  const format = photoFormat(photo.url);
+  const coverOf = useCoverTitles(state, photo.url);
+
+  return (
+    <dl className="sb-images-preview-details">
+      {uploaded ? (
+        <div>
+          <dt>{t("image-details-uploaded", { defaultValue: "Uploaded" })}</dt>
+          <dd>{uploaded}</dd>
+        </div>
+      ) : null}
+      {size ? (
+        <div>
+          <dt>
+            {t("image-details-dimensions", { defaultValue: "Dimensions" })}
+          </dt>
+          <dd>
+            {t("image-details-dimensions-value", {
+              width: size.width,
+              height: size.height,
+              defaultValue: "{{width}} × {{height}} px",
+            })}
+          </dd>
+        </div>
+      ) : null}
+      {format ? (
+        <div>
+          <dt>{t("image-details-type", { defaultValue: "Type" })}</dt>
+          <dd>{format}</dd>
+        </div>
+      ) : null}
+      <div>
+        <dt>{t("image-details-cover-of", { defaultValue: "Cover of" })}</dt>
+        <dd>
+          {coverOf.length > 0
+            ? coverOf.join(", ")
+            : t("image-details-not-a-cover", {
+                defaultValue: "Not used as a cover",
+              })}
+        </dd>
+      </div>
+    </dl>
+  );
+}
+
 function ImagePreviewModalContent(props: {
+  state: Pick<SeedBibleState, "playlists" | "readingPlans">;
+  photo: GalleryPhoto;
+}) {
+  const { t } = useI18n();
+  // Read off the image once it has loaded, so it costs no extra request.
+  const size = useSignal<{ width: number; height: number } | null>(null);
+  return (
+    <div className="sb-images-preview">
+      <img
+        className="sb-images-preview-img"
+        src={props.photo.url}
+        alt={t("uploaded-image", { defaultValue: "Uploaded image" })}
+        onLoad={(event) => {
+          const img = event.currentTarget as HTMLImageElement;
+          if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+            size.value = { width: img.naturalWidth, height: img.naturalHeight };
+          }
+        }}
+      />
+      <ImagePreviewDetails
+        state={props.state}
+        photo={props.photo}
+        size={size.value}
+      />
+    </div>
+  );
+}
+
+/**
+ * The preview's buttons. They're the modal's footer, outside its scrolling
+ * area, so a tall image and its details can't push them out of view.
+ */
+function ImagePreviewActions(props: {
   os: Pick<CasualOSManager, "readFile">;
   photo: GalleryPhoto;
   onDelete: () => void;
@@ -224,55 +334,49 @@ function ImagePreviewModalContent(props: {
   const { t } = useI18n();
   const isDownloading = useSignal(false);
   return (
-    <div className="sb-images-preview">
-      <img
-        className="sb-images-preview-img"
-        src={props.photo.url}
-        alt={t("uploaded-image", { defaultValue: "Uploaded image" })}
-      />
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel sb-images-preview-download"
-          disabled={isDownloading.value}
-          onClick={async () => {
-            isDownloading.value = true;
-            try {
-              await downloadPhoto(props.os, props.photo);
-            } finally {
-              isDownloading.value = false;
-            }
-          }}
-        >
-          <MaterialIcon aria-hidden="true">download</MaterialIcon>
-          {t("download", { defaultValue: "Download" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={props.onClose}
-        >
-          {t("close", { defaultValue: "Close" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={props.onDelete}
-        >
-          {t("delete", { defaultValue: "Delete" })}
-        </button>
-      </div>
+    <div className="sb-confirm-delete-actions">
+      <button
+        type="button"
+        className="sb-session-settings-cancel sb-images-preview-download"
+        disabled={isDownloading.value}
+        onClick={async () => {
+          isDownloading.value = true;
+          try {
+            await downloadPhoto(props.os, props.photo);
+          } finally {
+            isDownloading.value = false;
+          }
+        }}
+      >
+        <MaterialIcon aria-hidden="true">download</MaterialIcon>
+        {t("download", { defaultValue: "Download" })}
+      </button>
+      <button
+        type="button"
+        className="sb-session-settings-cancel"
+        onClick={props.onClose}
+      >
+        {t("close", { defaultValue: "Close" })}
+      </button>
+      <button
+        type="button"
+        className="sb-session-settings-end sb-delete-button"
+        onClick={props.onDelete}
+      >
+        <MaterialIcon aria-hidden="true">delete</MaterialIcon>
+        {t("delete", { defaultValue: "Delete" })}
+      </button>
     </div>
   );
 }
 
 /**
- * Shows one image at full size, with ways to download it and to delete it
- * from there.
+ * Shows one image at full size with its details, and ways to download it and
+ * to delete it from there.
  */
 export function openImagePreview(
   modals: ModalManager,
-  os: Pick<CasualOSManager, "readFile">,
+  state: Pick<SeedBibleState, "os" | "playlists" | "readingPlans">,
   photo: GalleryPhoto,
   onDelete: () => void
 ): string {
@@ -281,9 +385,10 @@ export function openImagePreview(
     id: modalId,
     title: { key: "uploaded-image", defaultValue: "Uploaded image" },
     mobileSheet: true,
-    content: () => (
-      <ImagePreviewModalContent
-        os={os}
+    content: () => <ImagePreviewModalContent state={state} photo={photo} />,
+    footer: () => (
+      <ImagePreviewActions
+        os={state.os}
         photo={photo}
         onClose={() => modals.closeModal(modalId)}
         onDelete={() => {
@@ -305,6 +410,17 @@ function formatUploadDate(ms: number, language: string): string {
     month: "short",
     day: "2-digit",
     year: "numeric",
+  });
+}
+
+/** "Sunday, November 2, 2025 at 3:14 PM"; empty for no usable timestamp. */
+function formatUploadDateTime(ms: number, language: string): string {
+  if (!Number.isFinite(ms) || ms <= 0) {
+    return "";
+  }
+  return new Date(ms).toLocaleString(language, {
+    dateStyle: "full",
+    timeStyle: "short",
   });
 }
 
@@ -332,22 +448,11 @@ export function UserImagesGrid(props: {
             type="button"
             className="sb-images-tile"
             onClick={() =>
-              openImagePreview(modals, state.os, photo, () =>
-                requestDelete(photo)
-              )
+              openImagePreview(modals, state, photo, () => requestDelete(photo))
             }
             aria-label={t("view-image", { defaultValue: "View image" })}
           >
             <img src={photo.url} alt="" loading="lazy" />
-          </button>
-          <button
-            type="button"
-            className="sb-images-delete"
-            onClick={() => requestDelete(photo)}
-            aria-label={t("delete-image", { defaultValue: "Delete image" })}
-            title={t("delete-image", { defaultValue: "Delete image" })}
-          >
-            <MaterialIcon>delete</MaterialIcon>
           </button>
           <span className="sb-images-date">
             {formatUploadDate(photo.createdAtMs, language)}

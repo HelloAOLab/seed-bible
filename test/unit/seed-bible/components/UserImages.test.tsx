@@ -108,6 +108,8 @@ function Grid(props: { state: SeedBibleState }) {
 describe("UserImagesGrid", () => {
   let container: HTMLDivElement;
   let modalContainer: HTMLDivElement;
+  /** The state `renderPane` last rendered, whose modals a click opens. */
+  let renderedState: SeedBibleState | null;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -123,25 +125,39 @@ describe("UserImagesGrid", () => {
   });
 
   function renderPane(state: SeedBibleState) {
+    renderedState = state;
     act(() => {
       render(<Grid state={state} />, container);
     });
   }
 
-  /** Renders the topmost open modal's body the way the modal host would. */
+  /** Renders the topmost open modal's body and footer as the modal host would. */
   function renderTopModal(modals: ModalManager) {
     const modal = modals.modals.value.at(-1);
     expect(modal).toBeDefined();
     act(() => {
-      render(<>{modal!.content({ t })}</>, modalContainer);
+      render(
+        <>
+          {modal!.content({ t })}
+          {modal!.footer?.({ t })}
+        </>,
+        modalContainer
+      );
     });
   }
 
+  /** Opens a tile's preview and presses its Delete, the way to delete one. */
   function clickDelete(index = 0) {
-    const buttons =
-      container.querySelectorAll<HTMLButtonElement>(".sb-images-delete");
+    const tiles =
+      container.querySelectorAll<HTMLButtonElement>(".sb-images-tile");
     act(() => {
-      buttons[index]!.click();
+      tiles[index]!.click();
+    });
+    renderTopModal(renderedState!.modals);
+    act(() => {
+      modalContainer
+        .querySelector<HTMLButtonElement>(".sb-session-settings-end")!
+        .click();
     });
   }
 
@@ -300,6 +316,72 @@ describe("UserImagesGrid", () => {
     expect(modals.modals.value.map((modal) => modal.id)).toEqual([
       `delete-image-confirm-${a.id}`,
     ]);
+  });
+
+  describe("the preview's details", () => {
+    /** Opens a photo's preview and returns its details as label → value. */
+    function openDetails(options: StateOptions) {
+      const { state, modals } = createState(options);
+      renderPane(state);
+      act(() => {
+        container.querySelector<HTMLButtonElement>(".sb-images-tile")!.click();
+      });
+      renderTopModal(modals);
+      return () =>
+        Object.fromEntries(
+          Array.from(
+            modalContainer.querySelectorAll(".sb-images-preview-details > div")
+          ).map((row) => [
+            row.querySelector("dt")!.textContent,
+            row.querySelector("dd")!.textContent,
+          ])
+        );
+    }
+
+    it("shows when it was uploaded in full, its type, and the covers using it", () => {
+      const a = photo("a");
+      const details = openDetails({
+        photos: [a],
+        playlists: [
+          { title: "Morning", heroImageUrl: a.url },
+          { title: null, heroImageUrl: a.url },
+        ],
+        readingPlans: [{ title: "Psalms", heroImageUrl: a.url }],
+      });
+
+      expect(details()).toEqual({
+        Uploaded: new Date(a.createdAtMs).toLocaleString("en", {
+          dateStyle: "full",
+          timeStyle: "short",
+        }),
+        Type: "JPEG",
+        "Cover of": "Morning, Untitled playlist, Psalms",
+      });
+    });
+
+    it("says so when no cover uses it", () => {
+      const details = openDetails({ photos: [photo("a")] });
+
+      expect(details()["Cover of"]).toBe("Not used as a cover");
+    });
+
+    it("adds its dimensions once the image has loaded", () => {
+      const details = openDetails({ photos: [photo("a")] });
+      expect(details().Dimensions).toBeUndefined();
+
+      const img = modalContainer.querySelector<HTMLImageElement>(
+        ".sb-images-preview-img"
+      )!;
+      Object.defineProperties(img, {
+        naturalWidth: { value: 1024 },
+        naturalHeight: { value: 768 },
+      });
+      act(() => {
+        img.dispatchEvent(new Event("load"));
+      });
+
+      expect(details().Dimensions).toBe("1024 × 768 px");
+    });
   });
 
   describe("downloading from the preview", () => {
