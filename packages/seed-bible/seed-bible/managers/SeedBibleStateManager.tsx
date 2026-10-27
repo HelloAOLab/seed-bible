@@ -164,6 +164,10 @@ import {
   type ExtensionManager,
 } from "../managers/ExtensionManager";
 import {
+  createExtensionReviewsManager,
+  type ExtensionReviewsManager,
+} from "../managers/ExtensionReviewsManager";
+import {
   createExtensionSettingsManager,
   type ExtensionSettingsManager,
 } from "../managers/ExtensionSettingsManager";
@@ -610,6 +614,8 @@ export interface SeedBibleState {
   app: AppState;
   /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
+  /** Which extensions are verified and reviewed, and changing that for admins. */
+  extensionReviews: ExtensionReviewsManager;
   /** Per-viewer values for extensions' declared settings, resolved against the active Customization's defaults. */
   extensionSettings: ExtensionSettingsManager;
 
@@ -988,13 +994,19 @@ export function createSeedBibleState(
     readingExtensions,
     () => annotations
   );
+  const extensionReviews = createExtensionReviewsManager(os, login);
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
     requestSandboxConsent: (request) =>
-      openExtensionConsentModal(modals, request, {
-        userId: login.userId,
-        friends,
-      }),
+      openExtensionConsentModal(
+        modals,
+        request,
+        {
+          userId: login.userId,
+          friends,
+        },
+        extensionReviews
+      ),
     records: os,
     fileRecords: os,
   });
@@ -3599,6 +3611,7 @@ export function createSeedBibleState(
     today,
     readingExtensions,
     extensions,
+    extensionReviews,
     extensionSettings,
     readingPlans,
     playlists,

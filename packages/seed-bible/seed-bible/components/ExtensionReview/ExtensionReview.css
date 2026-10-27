@@ -1,0 +1,45 @@
+.sb-extension-review-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-extension-review-badge .material-symbols-outlined {
+  font-size: 0.875rem;
+}
+
+.sb-extension-review-badge-verified {
+  color: #1d4f91;
+  background: #e1ecfa;
+}
+
+.sb-extension-review-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-extension-review-controls-note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-extension-review-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.sb-extension-review-controls-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #b3261e;
+}

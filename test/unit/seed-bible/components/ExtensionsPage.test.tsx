@@ -7,6 +7,10 @@ import {
   type ExtensionListEntry,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import {
+  createExtensionReviewsManager,
+  type ExtensionReviewsManager,
+} from "@packages/seed-bible/seed-bible/managers/ExtensionReviewsManager";
 
 // Return the defaultValue (or key), as the other component tests do, with
 // the extension's own title and description from its namespace.
@@ -128,8 +132,14 @@ describe("ExtensionsPage", () => {
     container.remove();
   });
 
-  function renderPage(entries: ExtensionListEntry[]) {
+  function renderPage(
+    entries: ExtensionListEntry[],
+    extensionReviews?: ExtensionReviewsManager
+  ) {
     const state = createMockState(entries);
+    if (extensionReviews) {
+      state.extensionReviews = extensionReviews;
+    }
     act(() => {
       render(<ExtensionsPage state={state} />, container);
     });
@@ -336,5 +346,165 @@ describe("ExtensionsPage", () => {
 
     expect(state.modals.closeModal).toHaveBeenCalledWith(registration.id);
     expect(state.openExtensions).toHaveBeenCalledWith("verse-art");
+  });
+
+  describe("review marks", () => {
+    const flush = () => act(async () => {});
+
+    /** The reviews record as the records server answers for it. */
+    function createReviews(
+      stored: Record<string, { verified: boolean; reviewed: boolean }>,
+      options: { admin?: boolean; refuseWrites?: boolean } = {}
+    ) {
+      const os = {
+        getData: vi.fn(async (_recordName: string, address: string) =>
+          address in stored
+            ? { success: true, data: stored[address] }
+            : { success: false, errorCode: "data_not_found" }
+        ),
+        recordData: vi.fn(
+          async (_recordKey: string, address: string, data: unknown) => {
+            if (options.refuseWrites) {
+              return { success: false, errorCode: "not_authorized" };
+            }
+            stored[address] = data as (typeof stored)[string];
+            return { success: true };
+          }
+        ),
+        isRecordAdmin: vi.fn().mockResolvedValue(options.admin ?? false),
+      };
+      const reviews = createExtensionReviewsManager(
+        os as unknown as Parameters<typeof createExtensionReviewsManager>[0],
+        { userId: signal<string | null>("user-1") },
+        "seed-bible-reviews"
+      );
+      return { os, reviews };
+    }
+
+    const badges = (root: ParentNode) =>
+      [...root.querySelectorAll(".sb-extension-review-badge")].map(
+        (badge) => badge.textContent
+      );
+    const notice = () =>
+      container.querySelector(".sb-extension-consent-notice")?.textContent;
+    const checkbox = (label: string) =>
+      [
+        ...container.querySelectorAll<HTMLLabelElement>(
+          ".sb-extension-review-control"
+        ),
+      ]
+        .find((item) => item.textContent === label)
+        ?.querySelector("input");
+
+    it("marks the cards of verified and reviewed extensions", async () => {
+      const { reviews } = createReviews({
+        "verse-art": { verified: true, reviewed: true },
+        maps: { verified: true, reviewed: false },
+      });
+      renderPage(
+        [
+          linked("verse-art", false),
+          builtIn("maps", false),
+          linked("other", false),
+        ],
+        reviews
+      );
+      await flush();
+
+      const cardBadges = Object.fromEntries(
+        [...container.querySelectorAll(".sb-extensions-card")].map((card) => [
+          card.querySelector(".sb-extensions-card-name")?.firstChild
+            ?.textContent,
+          badges(card),
+        ])
+      );
+      expect(cardBadges).toEqual({
+        "verse-art": [
+          "verifiedextension-review-verified",
+          "fact_checkextension-review-reviewed",
+        ],
+        maps: ["verifiedextension-review-verified"],
+        other: [],
+      });
+    });
+
+    it("says a reviewed extension has been reviewed, instead of warning", async () => {
+      const { reviews } = createReviews({
+        "verse-art": { verified: false, reviewed: true },
+      });
+      const state = renderPage([linked("verse-art", false)], reviews);
+      act(() => state.openExtensions("verse-art"));
+      await flush();
+
+      expect(notice()).toBe("fact_checkextension-consent-reviewed");
+    });
+
+    it("warns about an extension nobody has reviewed", async () => {
+      const { reviews } = createReviews({});
+      const state = renderPage([linked("verse-art", false)], reviews);
+      act(() => state.openExtensions("verse-art"));
+      await flush();
+
+      expect(notice()).toBe("infoextension-consent-unreviewed");
+    });
+
+    it("hides the review controls from anyone but an admin", async () => {
+      const { reviews } = createReviews({});
+      const state = renderPage([linked("verse-art", false)], reviews);
+      act(() => state.openExtensions("verse-art"));
+      await flush();
+
+      expect(
+        container.querySelector(".sb-extension-review-controls")
+      ).toBeNull();
+    });
+
+    it("lets an admin mark an extension reviewed, and shows it right away", async () => {
+      const stored = {};
+      const { os, reviews } = createReviews(stored, { admin: true });
+      const state = renderPage([linked("verse-art", false)], reviews);
+      act(() => state.openExtensions("verse-art"));
+      await flush();
+
+      const reviewed = checkbox("extension-review-reviewed")!;
+      expect(reviewed.checked).toBe(false);
+      await act(async () => {
+        reviewed.click();
+      });
+      await flush();
+
+      expect(os.recordData).toHaveBeenCalledWith(
+        "seed-bible-reviews",
+        "verse-art",
+        expect.objectContaining({ verified: false, reviewed: true }),
+        { marker: "publicRead" }
+      );
+      expect(checkbox("extension-review-reviewed")!.checked).toBe(true);
+      expect(badges(container)).toEqual([
+        "fact_checkextension-review-reviewed",
+      ]);
+      expect(notice()).toBe("fact_checkextension-consent-reviewed");
+    });
+
+    it("tells an admin when the change couldn't be saved", async () => {
+      const { reviews } = createReviews(
+        { "verse-art": { verified: true, reviewed: false } },
+        { admin: true, refuseWrites: true }
+      );
+      const state = renderPage([linked("verse-art", false)], reviews);
+      act(() => state.openExtensions("verse-art"));
+      await flush();
+
+      await act(async () => {
+        checkbox("extension-review-verified")!.click();
+      });
+      await flush();
+
+      expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+        "extension-review-admin-save-failed"
+      );
+      expect(checkbox("extension-review-verified")!.checked).toBe(true);
+      expect(badges(container)).toEqual(["verifiedextension-review-verified"]);
+    });
   });
 });

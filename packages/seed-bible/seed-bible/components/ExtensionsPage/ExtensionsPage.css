@@ -245,6 +245,10 @@
 }
 
 .sb-extensions-card-name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
   font-size: 1rem;
   font-weight: 600;
 }

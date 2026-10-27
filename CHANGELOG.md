@@ -4,6 +4,11 @@
 
 ### ✨ Added
 
+- Extensions can be marked Verified and Reviewed, shown on their cards and pages. ([#2075](https://github.com/HelloAOLab/seed-bible/pull/2075))
+  - The marks are public data in a record chosen at build time with `EXTENSION_REVIEWS_RECORD_NAME`, one per extension, stored at its full id.
+  - Admins of that record can change an extension's marks from its page.
+  - A reviewed extension's install dialog says it has been reviewed, instead of warning that it hasn't.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
