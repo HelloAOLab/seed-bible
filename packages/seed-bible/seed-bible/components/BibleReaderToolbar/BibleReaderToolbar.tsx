@@ -2433,7 +2433,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
-    props.state.openProfile();
     props.state.openProfile({ fromToday });
   };
 

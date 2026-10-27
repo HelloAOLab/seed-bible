@@ -1190,18 +1190,19 @@ export function createSeedBibleState(
   const restoreProfileReturnTarget = () => {
     const shouldReturnToToday = returnToToday;
     returnToToday = false;
-
-    profileOpen.value = false;
-
-    if (shouldReturnToToday) {
-      today.open();
-    }
+    navigation.batchWrites(() => {
+      profileOpen.value = false;
+      if (shouldReturnToToday) {
+        today.open();
+      }
+    });
   };
   const openProfile = (options?: { fromToday?: boolean }) => {
     if (!profileOpen.value || options?.fromToday !== undefined) {
       returnToToday = options?.fromToday ?? today.isOpen.peek();
     }
     if (today.isOpen.peek()) {
+      // Close Today so its URL binding doesn't reopen it over the Profile pane.
       today.close();
     }
     profileOpen.value = true;

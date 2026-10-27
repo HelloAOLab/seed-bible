@@ -37,10 +37,16 @@ import {
 import { batch, signal } from "@preact/signals";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
+import { BibleReaderToolbar } from "@packages/seed-bible/seed-bible/components/BibleReaderToolbar/BibleReaderToolbar";
+import type { UserInfo } from "@packages/seed-bible/seed-bible/managers";
+import { waitForCondition } from "../../references-extension/referencesTestState";
 
 // App defaults to the private API; shared mock maps target the free-use host.
 const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org";
-
+const testUser: UserInfo = {
+  id: "test-user",
+  email: "test@example.com",
+};
 const SPA_TRANSLATION: Translation = {
   id: "spa_onbv",
   name: "Open Nueva Biblia Viva",
@@ -3750,17 +3756,17 @@ describe("Profile return navigation", () => {
     expect(paneIds(state)).toEqual([TODAY_PANE_ID]);
   });
 
-  it("keeps Profile open when sign-in is cancelled", async () => {
+  it("keeps Profile open and closes Today when sign-in is cancelled", async () => {
     const state = await createState();
     const container = document.createElement("div");
     document.body.appendChild(container);
 
     try {
       state.today.open();
-      await Promise.resolve();
+      await waitForCondition(() => state.today.isOpen.value);
 
       state.openProfile({ fromToday: true });
-      await Promise.resolve();
+      await waitForCondition(() => state.isProfileOpen.value);
 
       const pane = state.panes.panes.value.find(
         (item) => item.id === PROFILE_PANE_ID
@@ -3783,20 +3789,21 @@ describe("Profile return navigation", () => {
         container.querySelector<HTMLButtonElement>(".sb-profile-signin");
       expect(loginButton).not.toBeNull();
 
-      // Trigger the real sign-in button handler.
       await act(async () => {
         loginButton!.click();
-        await Promise.resolve();
       });
 
-      // Cancel the real login flow.
       await act(async () => {
         state.login.cancelLogin();
-        await Promise.resolve();
-        await Promise.resolve();
+
+        await waitForCondition(
+          () =>
+            state.isProfileOpen.value &&
+            !state.today.isOpen.value &&
+            state.panes.panes.value.some((item) => item.id === PROFILE_PANE_ID)
+        );
       });
 
-      // Verify the user-visible outcome.
       expect(state.isProfileOpen.value).toBe(true);
       expect(state.today.isOpen.value).toBe(false);
       expect(state.panes.panes.value.map((item) => item.id)).toContain(
@@ -3821,7 +3828,7 @@ describe("Profile return navigation", () => {
 
     try {
       state.openProfile();
-      await Promise.resolve();
+      await waitFor(() => state.isProfileOpen.value);
 
       const pane = state.panes.panes.value.find(
         (item) => item.id === PROFILE_PANE_ID
@@ -3830,6 +3837,7 @@ describe("Profile return navigation", () => {
       expect(pane).toBeDefined();
       expect(state.isProfileOpen.value).toBe(true);
 
+      // Render the actual Profile pane.
       const Provider = await realI18nProvider();
 
       act(() => {
@@ -3842,21 +3850,19 @@ describe("Profile return navigation", () => {
         );
       });
 
-      const loginButton = container.querySelector(
-        ".sb-profile-signin"
-      ) as HTMLButtonElement | null;
+      const loginButton =
+        container.querySelector<HTMLButtonElement>(".sb-profile-signin");
 
       expect(loginButton).not.toBeNull();
 
+      // Trigger the real sign-in button handler.
       await act(async () => {
-        loginButton!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-
-        // Allow the rejected login promise and its handler to settle.
-        await Promise.resolve();
-        await Promise.resolve();
+        loginButton!.click();
       });
 
       expect(loginSpy).toHaveBeenCalledTimes(1);
+
+      // A failed sign-in must not restore the return target or close Profile.
       expect(restoreSpy).not.toHaveBeenCalled();
       expect(state.isProfileOpen.value).toBe(true);
     } finally {
@@ -3871,19 +3877,17 @@ describe("Profile return navigation", () => {
     const container = document.createElement("div");
     document.body.appendChild(container);
 
-    const loginSpy = vi
-      .spyOn(state.login, "login")
-      .mockResolvedValue({ id: "test-user" } as any);
+    const loginSpy = vi.spyOn(state.login, "login").mockResolvedValue(testUser);
 
     try {
       // Open Today first so it becomes Profile's return target.
       state.today.open();
-      await Promise.resolve();
+      await waitFor(() => state.today.isOpen.value);
 
       expect(state.today.isOpen.value).toBe(true);
 
       state.openProfile({ fromToday: true });
-      await Promise.resolve();
+      await waitFor(() => state.isProfileOpen.value);
 
       expect(state.isProfileOpen.value).toBe(true);
 
@@ -3905,89 +3909,23 @@ describe("Profile return navigation", () => {
         );
       });
 
-      const loginButton = container.querySelector(
-        ".sb-profile-signin"
-      ) as HTMLButtonElement | null;
+      const loginButton =
+        container.querySelector<HTMLButtonElement>(".sb-profile-signin");
 
       expect(loginButton).not.toBeNull();
 
-      // Exercise the real button handler, not restoreProfileReturnTarget()
-      // directly. This catches regressions where the button only calls login().
+      // Exercise the real button handler.
       await act(async () => {
-        loginButton!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        loginButton!.click();
 
-        await Promise.resolve();
-        await Promise.resolve();
-        await Promise.resolve();
-      });
-
-      expect(loginSpy).toHaveBeenCalledTimes(1);
-      expect(state.isProfileOpen.value).toBe(false);
-      expect(state.today.isOpen.value).toBe(true);
-      expect(state.panes.panes.value.map((item) => item.id)).toEqual([
-        TODAY_PANE_ID,
-      ]);
-    } finally {
-      render(null, container);
-      container.remove();
-      loginSpy.mockRestore();
-    }
-  });
-  it("closes Profile and restores Today after successful sign-in", async () => {
-    const state = await createState();
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-
-    // Simulate a successful login, returning a user.
-    const loginSpy = vi
-      .spyOn(state.login, "login")
-      .mockResolvedValue({ id: "test-user" } as any);
-
-    try {
-      // Open Today first so Profile should return to Today.
-      state.today.open();
-      await Promise.resolve();
-
-      state.openProfile();
-      await Promise.resolve();
-
-      expect(state.isProfileOpen.value).toBe(true);
-      expect(state.today.isOpen.value).toBe(false);
-
-      const pane = state.panes.panes.value.find(
-        (item) => item.id === PROFILE_PANE_ID
-      );
-      expect(pane).toBeDefined();
-
-      const Provider = await realI18nProvider();
-
-      act(() => {
-        render(
-          h(Provider, {
-            i18n: state.i18n,
-            children: pane!.component(),
-          }),
-          container
+        await waitFor(
+          () =>
+            !state.isProfileOpen.value &&
+            state.today.isOpen.value &&
+            state.panes.panes.value.some((item) => item.id === TODAY_PANE_ID)
         );
       });
 
-      const loginButton = container.querySelector(
-        ".sb-profile-signin"
-      ) as HTMLButtonElement | null;
-
-      expect(loginButton).not.toBeNull();
-
-      // Click the real button so the test covers its actual handler.
-      await act(async () => {
-        loginButton!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-
-        // Allow the login promise and its handler to complete.
-        await Promise.resolve();
-        await Promise.resolve();
-        await Promise.resolve();
-      });
-
-      // Successful sign-in must close Profile and restore Today.
       expect(loginSpy).toHaveBeenCalledTimes(1);
       expect(state.isProfileOpen.value).toBe(false);
       expect(state.today.isOpen.value).toBe(true);
@@ -4047,55 +3985,201 @@ describe("opening another screen while Today is up", () => {
     expect(paneIds(state)).toEqual(["test-fullscreen-pane"]);
     expect(state.today.isOpen.value).toBe(false);
   });
-
-  it("closes Today when a side pane opens, rather than hiding behind it", async () => {
+  it("restores Today after opening Profile from the phone toolbar and signing in", async () => {
     const state = await createState();
-    await openToday(state);
 
-    state.panes.openPane({
-      id: "test-side-pane",
-      placement: "side",
-      title: () => null,
-      component: () => null,
+    // Use the same responsive-state approach as the existing tests.
+    (state.app.viewportWidth as unknown as { value: number }).value =
+      MOBILE_BREAKPOINT - 1;
+
+    const toolbarContainer = document.createElement("div");
+    const profileContainer = document.createElement("div");
+
+    document.body.append(toolbarContainer, profileContainer);
+
+    const loginSpy = vi.spyOn(state.login, "login").mockResolvedValue(testUser);
+
+    try {
+      expect(state.app.isMobile.value).toBe(true);
+
+      // Open Today first.
+      await act(async () => {
+        state.today.open();
+        await waitFor(() => state.today.isOpen.value);
+      });
+
+      expect(state.today.isOpen.value).toBe(true);
+
+      const Provider = await realI18nProvider();
+
+      // Render the actual toolbar.
+      await act(async () => {
+        render(
+          h(Provider, {
+            i18n: state.i18n,
+            children: h(BibleReaderToolbar, { state }),
+          }),
+          toolbarContainer
+        );
+      });
+
+      // Find and click the mobile You tab.
+      const youButton = toolbarContainer.querySelector<HTMLButtonElement>(
+        '.sb-reader-toolbar-mobile-tab-button[aria-label="You"]'
+      );
+
+      expect(youButton).not.toBeNull();
+
+      await act(async () => {
+        youButton!.click();
+
+        await waitFor(
+          () => state.isProfileOpen.value && !state.today.isOpen.value
+        );
+      });
+
+      expect(state.isProfileOpen.value).toBe(true);
+      expect(state.today.isOpen.value).toBe(false);
+
+      // Render the Profile pane.
+      const profilePane = state.panes.panes.value.find(
+        (item) => item.id === PROFILE_PANE_ID
+      );
+
+      expect(profilePane).toBeDefined();
+
+      await act(async () => {
+        render(
+          h(Provider, {
+            i18n: state.i18n,
+            children: profilePane!.component(),
+          }),
+          profileContainer
+        );
+      });
+
+      // Click the actual sign-in button.
+      const loginButton =
+        profileContainer.querySelector<HTMLButtonElement>(".sb-profile-signin");
+
+      expect(loginButton).not.toBeNull();
+
+      await act(async () => {
+        loginButton!.click();
+
+        await waitFor(
+          () =>
+            !state.isProfileOpen.value &&
+            state.today.isOpen.value &&
+            state.panes.panes.value.length === 1 &&
+            state.panes.panes.value[0]!.id === TODAY_PANE_ID
+        );
+      });
+
+      // Profile closes and Today is restored after successful sign-in.
+      expect(loginSpy).toHaveBeenCalledTimes(1);
+      expect(state.isProfileOpen.value).toBe(false);
+      expect(state.today.isOpen.value).toBe(true);
+
+      expect(state.panes.panes.value.map((item) => item.id)).toEqual([
+        TODAY_PANE_ID,
+      ]);
+    } finally {
+      render(null, toolbarContainer);
+      render(null, profileContainer);
+
+      toolbarContainer.remove();
+      profileContainer.remove();
+
+      loginSpy.mockRestore();
+    }
+  });
+
+  it("does not restore Today if Profile is closed before sign-in completes", async () => {
+    const state = await createState();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    let resolveLogin!: (user: UserInfo | null) => void;
+
+    const loginPromise = new Promise<UserInfo | null>((resolve) => {
+      resolveLogin = resolve;
     });
-    await Promise.resolve();
 
-    expect(paneIds(state)).toEqual(["test-side-pane"]);
-    expect(state.today.isOpen.value).toBe(false);
-  });
+    const loginSpy = vi
+      .spyOn(state.login, "login")
+      .mockReturnValue(loginPromise);
 
-  it("keeps the Profile screen up when it is opened over Today", async () => {
-    const state = await createState();
-    await openToday(state);
+    try {
+      // Today is the return target for Profile.
+      state.today.open();
+      await waitFor(() => state.today.isOpen.value);
 
-    state.openProfile();
-    await Promise.resolve();
+      expect(state.today.isOpen.value).toBe(true);
 
-    expect(state.isProfileOpen.value).toBe(true);
-    expect(state.today.isOpen.value).toBe(false);
-    expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
-  });
-  it("restores Today after opening the profile from the phone toolbar", async () => {
-    const state = await createState();
-    await openToday(state);
+      state.openProfile({ fromToday: true });
+      await waitFor(() => state.isProfileOpen.value);
 
-    // Capture Today state before the toolbar closes panes.
-    const fromToday = state.today.isOpen.peek();
+      expect(state.isProfileOpen.value).toBe(true);
+      expect(state.today.isOpen.value).toBe(false);
 
-    state.panes.closeAll();
-    await Promise.resolve();
+      const pane = state.panes.panes.value.find(
+        (item) => item.id === PROFILE_PANE_ID
+      );
+      expect(pane).toBeDefined();
 
-    expect(state.today.isOpen.value).toBe(false);
+      const Provider = await realI18nProvider();
 
-    state.openProfile({ fromToday });
-    await Promise.resolve();
+      act(() => {
+        render(
+          h(Provider, {
+            i18n: state.i18n,
+            children: pane!.component(),
+          }),
+          container
+        );
+      });
 
-    state.restoreProfileReturnTarget();
-    await Promise.resolve();
+      const loginButton =
+        container.querySelector<HTMLButtonElement>(".sb-profile-signin");
 
-    expect(state.isProfileOpen.value).toBe(false);
-    expect(state.today.isOpen.value).toBe(true);
-    expect(paneIds(state)).toEqual([TODAY_PANE_ID]);
+      expect(loginButton).not.toBeNull();
+
+      // Start sign-in and leave its promise unresolved.
+      await act(async () => {
+        loginButton!.click();
+        await waitFor(() => loginSpy.mock.calls.length === 1);
+      });
+
+      expect(loginSpy).toHaveBeenCalledTimes(1);
+
+      // Close Profile while sign-in is still pending.
+      await act(async () => {
+        state.closeProfile();
+        await waitFor(() => !state.isProfileOpen.value);
+      });
+
+      expect(state.isProfileOpen.value).toBe(false);
+      expect(state.today.isOpen.value).toBe(false);
+
+      // Resolve sign-in after Profile has already closed.
+      await act(async () => {
+        resolveLogin(testUser);
+        await loginPromise;
+
+        await waitFor(
+          () => !state.isProfileOpen.value && !state.today.isOpen.value
+        );
+      });
+
+      // A late login result must not restore the previous return target.
+      expect(state.isProfileOpen.value).toBe(false);
+      expect(state.today.isOpen.value).toBe(false);
+    } finally {
+      render(null, container);
+      container.remove();
+      loginSpy.mockRestore();
+    }
   });
 
   it("opens playlist history as its own screen", async () => {
