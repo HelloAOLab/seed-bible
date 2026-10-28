@@ -734,7 +734,7 @@ button.sb-cz-logo:disabled {
   border-radius: 1rem;
   background: var(--sb-reader-background);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
+    0 0 0 1px var(--sb-divider-color),
     0 22px 40px #0000002c;
   animation: sb-cz-floating-preview-in 160ms ease-out;
 }

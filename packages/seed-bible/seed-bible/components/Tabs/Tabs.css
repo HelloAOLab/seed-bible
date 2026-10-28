@@ -1342,7 +1342,7 @@
 .sb-tab-menu {
   min-width: 13.125rem;
   padding: 0.375rem;
-  border: 1px solid var(--sb-secondary-color);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.5rem;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);

@@ -9,7 +9,7 @@
   overflow: hidden;
   background: var(--sb-reader-background);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
+    0 0 0 1px var(--sb-divider-color),
     0 4px 8px #0000002c;
   border-radius: 16px;
   padding: 1rem;

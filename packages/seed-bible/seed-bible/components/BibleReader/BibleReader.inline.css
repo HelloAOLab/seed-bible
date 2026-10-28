@@ -1164,7 +1164,8 @@
   padding: 1.125rem 1rem 1.5rem;
   box-sizing: border-box;
   border-radius: 0.875rem;
-  border: 1px solid var(--sb-secondary-color);
+  /* Just a hairline: the shadow is what lifts the modal off the page. */
+  border: 1px solid var(--sb-divider-color);
   box-shadow: 0 20px 48px #00000040;
 }
 
@@ -1172,7 +1173,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--sb-secondary-color);
+  border-bottom: 1px solid var(--sb-divider-color);
   padding-bottom: 0.625rem;
 }
 
