@@ -18,7 +18,10 @@ import type { SharedMarkerPermission } from "@casual-simulation/aux-common";
 import { sha256 } from "hash.js";
 import { first, firstValueFrom, timeout } from "rxjs";
 import { guardRecordsClient } from "./SessionGuard";
-import type { SessionInvalidatedEvent } from "./SessionGuard";
+import type {
+  SessionInvalidatedEvent,
+  SessionReplacementResolver,
+} from "./SessionGuard";
 import { toLinkPreview, type LinkPreview } from "./linkPreview";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
@@ -304,12 +307,29 @@ export function CasualOSManager(
   const sessionInvalidated = signal<SessionInvalidatedEvent | null>(null);
   let sessionInvalidatedCount = 0;
 
+  let resolveSessionReplacement: SessionReplacementResolver | null = null;
+
+  /**
+   * Lets `LoginManager` say whether a key has been swapped for a newer one — by a
+   * refresh in this tab or in another tab. Requests refused because the server
+   * already retired their key are then retried with the new key instead of signing
+   * the user out.
+   */
+  const setSessionReplacementResolver = (
+    resolver: SessionReplacementResolver | null
+  ) => {
+    resolveSessionReplacement = resolver;
+  };
+
   const client = guardRecordsClient(rawClient, {
     getSessionKey: () => sessionKey.peek(),
-    onSessionInvalidated: (errorCode) => {
+    getSessionReplacement: (key) => resolveSessionReplacement?.(key) ?? null,
+    onSessionInvalidated: (errorCode, { method, errorMessage }) => {
       console.warn(`[OsManager] The session is no longer valid: ${errorCode}`);
       sessionInvalidated.value = {
         errorCode,
+        method,
+        errorMessage,
         id: ++sessionInvalidatedCount,
       };
     },
@@ -504,6 +524,7 @@ export function CasualOSManager(
     connectionKey,
     clearBranchDeviceCache,
     sessionInvalidated,
+    setSessionReplacementResolver,
 
     getData: async (recordName: string, address: string) => {
       const result = await client.getData({
@@ -776,6 +797,21 @@ export function CasualOSManager(
       request.catch(() => linkPreviews.delete(key));
       linkPreviews.set(key, request);
       return request;
+    },
+
+    /**
+     * The record a file in the records server's own storage was uploaded
+     * to, or null for a URL anywhere else. The server is asked, rather than
+     * the URL's host trusted, since storage hosts differ between servers.
+     */
+    getFileRecordName: async (fileUrl: string): Promise<string | null> => {
+      const result = await client.getFile({ fileUrl });
+      if (!result.success) {
+        return null;
+      }
+      // Stored files live at `<storage>/<recordName>/<fileName>`.
+      const [recordName] = new URL(fileUrl).pathname.split("/").filter(Boolean);
+      return recordName ? decodeURIComponent(recordName) : null;
     },
 
     recordFile: async (

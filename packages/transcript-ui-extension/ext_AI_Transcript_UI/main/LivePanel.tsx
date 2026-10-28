@@ -1,10 +1,7 @@
 import { useManager } from "./context";
-import {
-  fmtRef,
-  highlightVerse,
-} from "@seed-bible/ai-transcript-extension/highlight";
+import { fmtRef, highlightVerse } from "@seed-bible/transcription/highlight";
 import { type SeedBibleState } from "seed-bible";
-import type { OutputSegment } from "@seed-bible/ai-transcript-extension/types";
+import type { OutputSegment } from "@seed-bible/transcription/types";
 import { useI18n } from "seed-bible/i18n";
 export function LivePanel() {
   const context = useManager();

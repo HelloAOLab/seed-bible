@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
+  "private": true,
   "exports": {
     ".": {
       "import": "./ext_twitchPub/host/init.tsx"
@@ -13,7 +14,7 @@
   },
   "keywords": [],
   "dependencies": {
-    "@seed-bible/ai-transcript-extension": "workspace:*",
+    "@seed-bible/transcription": "workspace:*",
     "base64-js": "catalog:",
     "preact": "catalog:",
     "qrcode": "^1.5.4",

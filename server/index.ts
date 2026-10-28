@@ -217,6 +217,41 @@ function logStreamFailure(
 }
 
 /**
+ * Per-request timings for the `Server-Timing` header, keyed by request so
+ * they reach `sendHtml` without threading them through every route.
+ */
+const requestTimings = new WeakMap<
+  IncomingMessage,
+  { start?: number; renderMs?: number }
+>();
+
+function recordRequestTiming(
+  req: IncomingMessage,
+  timing: { start?: number; renderMs?: number }
+): void {
+  requestTimings.set(req, { ...requestTimings.get(req), ...timing });
+}
+
+/**
+ * Tells the browser how long the server spent on this response, so client
+ * performance reporting (`app/webVitalsBreakdown.ts`) can separate server
+ * time from network time in the wait for the first byte. `total` covers
+ * everything up to sending headers (pointer lookup, build load, render);
+ * `render` is just the SSR render.
+ */
+function serverTimingHeader(req: IncomingMessage): string | undefined {
+  const timing = requestTimings.get(req);
+  const entries: string[] = [];
+  if (timing?.start !== undefined) {
+    entries.push(`total;dur=${(performance.now() - timing.start).toFixed(1)}`);
+  }
+  if (timing?.renderMs !== undefined) {
+    entries.push(`render;dur=${timing.renderMs.toFixed(1)}`);
+  }
+  return entries.length > 0 ? entries.join(", ") : undefined;
+}
+
+/**
  * Writes an HTML response, gzip-compressing it when the client supports it
  * and the body is large enough for compression to be worthwhile. Compression
  * is streamed through a Transform rather than buffered in full, so only one
@@ -235,6 +270,8 @@ function sendHtml(
     "content-type": "text/html; charset=utf-8",
     vary: "accept-encoding",
   };
+  const serverTiming = serverTimingHeader(req);
+  if (serverTiming) headers["server-timing"] = serverTiming;
 
   if (body.length >= GZIP_THRESHOLD_BYTES && acceptsGzip(req.headers)) {
     headers["content-encoding"] = "gzip";
@@ -482,6 +519,7 @@ export async function renderAndRespond(
     result = { html: preRenderedHtml };
   } finally {
     recordRender(renderStart, route.branch, renderFailed);
+    recordRequestTiming(req, { renderMs: performance.now() - renderStart });
   }
 
   if (typeof result === "object" && result !== null && "redirectTo" in result) {
@@ -672,6 +710,7 @@ async function handle(
   const metricBranch =
     isAssetRequest || routeName === "/__invalidate" ? "" : route.branch;
   const start = performance.now();
+  recordRequestTiming(req, { start });
 
   await withSpan(
     `${method} ${routeName}`,
@@ -1062,6 +1101,7 @@ async function startDevServer(): Promise<void> {
         throw e;
       }
       recordRender(renderStart, ROOT_BRANCH, false);
+      recordRequestTiming(req, { renderMs: performance.now() - renderStart });
 
       // 5. Send the rendered HTML back (or redirect, for legacy query-param
       // URLs being migrated to path-based routes, or a 404 for an

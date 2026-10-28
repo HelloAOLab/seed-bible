@@ -1,0 +1,23 @@
+{
+  "name": "@seed-bible/sandboxed-example-extension",
+  "version": "1.0.0",
+  "description": "The example extension, written as a sandboxed extension with seed-bible/extensions.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "check": "seed-bible-extension-scripts check",
+    "build": "seed-bible-extension-scripts build",
+    "dev": "seed-bible-extension-scripts dev --repo ../..",
+    "publish": "seed-bible-extension-scripts publish"
+  },
+  "dependencies": {
+    "seed-bible": "workspace:*",
+    "preact": "10.29.2",
+    "@preact/signals": "2.9.1"
+  },
+  "devDependencies": {
+    "seed-bible-extension-scripts": "workspace:*",
+    "typescript": "^6.0.3"
+  },
+  "license": "ISC"
+}

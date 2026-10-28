@@ -728,7 +728,7 @@ function ChevronLeftIcon() {
 }
 
 function OpenSelectorIcon() {
-  return <SeedBibleIcon size={28} className="sb-open-selector-icon" />;
+  return <SeedBibleIcon size={28} animated className="sb-open-selector-icon" />;
 }
 
 function ChevronRightIcon() {

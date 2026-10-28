@@ -6,16 +6,13 @@ import {
   THEOGRAPHIC_EXTENSION_ID,
 } from "./contentTypes";
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
-import type { LocationsExtensionApi } from "@seed-bible/locations-extension";
+import { findLocation, getPlaceGeoJsonUrl } from "@seed-bible/bible-locations";
 import {
   createIndexedDbTheographicStore,
   createTheographicClient,
   createTheographicDiscoverProvider,
   type ReferenceOrigin,
 } from "./provider";
-
-/** The locations extension's id, under which its API reaches `init`. */
-const LOCATIONS_EXTENSION_ID = "ext_locations";
 
 /**
  * Opens `ref` in the tab the card was showing, rather than in a new one.
@@ -55,14 +52,7 @@ export function openInSameTab(
 export default function initTheographicExtension() {
   registerExtension({
     id: THEOGRAPHIC_EXTENSION_ID,
-    // Places are drawn from the locations extension's GeoJSON files where it
-    // has one, found through its API rather than by reading its data directly.
-    dependencies: [LOCATIONS_EXTENSION_ID],
-    init: function* (context: SeedBibleState, dependencies) {
-      const locations = dependencies[LOCATIONS_EXTENSION_ID] as
-        | LocationsExtensionApi
-        | undefined;
-
+    init: function* (context: SeedBibleState) {
       yield context.discover.registerContentType({
         id: PERSON_CONTENT_TYPE,
         title: {
@@ -107,7 +97,7 @@ export default function initTheographicExtension() {
           onReferenceClick: (ref, origin) =>
             openInSameTab(context, ref, origin),
           panes: context.panes,
-          locations,
+          locations: { findLocation, getPlaceGeoJsonUrl },
           isMobile: context.app.isMobile,
         })
       );

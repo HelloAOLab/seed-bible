@@ -53,7 +53,7 @@ function place(
   };
 }
 
-/** A stand-in for the locations extension's API, listing a few places. */
+/** A stand-in for `@seed-bible/bible-locations`, listing a few places. */
 function fakeLocations(): PlaceLocations & {
   findLocation: ReturnType<typeof vi.fn>;
 } {
@@ -69,7 +69,7 @@ function fakeLocations(): PlaceLocations & {
 }
 
 describe("findKnownLocation", () => {
-  it("asks the locations extension for the name", () => {
+  it("looks the name up in the known places", () => {
     expect(findKnownLocation("Jerusalem", fakeLocations())).toEqual({
       place: "Jerusalem",
       geojson: "m66c5b8",
@@ -86,7 +86,7 @@ describe("findKnownLocation", () => {
     expect(findKnownLocation("Abana", fakeLocations())).toBeNull();
   });
 
-  it("answers null without the locations extension", () => {
+  it("answers null without a known-places lookup", () => {
     expect(findKnownLocation("Erech", undefined)).toBeNull();
   });
 });
@@ -177,7 +177,7 @@ describe("resolvePlaceMapData", () => {
     expect(JSON.parse(data!)).toMatchObject({ geometry: { type: "Point" } });
   });
 
-  it("draws the coordinates without the locations extension", async () => {
+  it("draws the coordinates without a known-places lookup", async () => {
     const getResource = vi.fn();
 
     const data = await resolvePlaceMapData(

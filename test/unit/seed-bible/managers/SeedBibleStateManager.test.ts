@@ -6,6 +6,7 @@ import {
 import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import { PROFILE_PANE_ID } from "@packages/seed-bible/seed-bible/components/ProfilePane/ProfilePane";
 import { PLAYLIST_HISTORY_PANE_ID } from "@packages/seed-bible/seed-bible/components/PlaylistHistoryPane/PlaylistHistoryPane";
+import { EXTENSIONS_PANE_ID } from "@packages/seed-bible/seed-bible/components/ExtensionsPage/ExtensionsPage";
 import {
   PlaylistPlayHistorySchema,
   PlaylistSchema,
@@ -1548,7 +1549,7 @@ describe("createSeedBibleState", () => {
     expect(state.selector.isOpen.value).toBe(false);
   });
 
-  it("selecting a side pane on desktop leaves the Settings sidebar open, so the Customization Center's list stays visible behind its editor pane", async () => {
+  it("selecting a side pane on desktop leaves the Settings sidebar open", async () => {
     const state = await createState();
     state.sidebar.openSettings();
     const pane = state.panes.openPane({
@@ -3792,6 +3793,126 @@ describe("opening another screen while Today is up", () => {
     expect(state.isPlaylistHistoryOpen.value).toBe(false);
     expect(state.isProfileOpen.value).toBe(true);
     expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
+  });
+});
+
+describe("the full-screen Extensions page", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const paneIds = (state: SeedBibleState) =>
+    state.panes.panes.value.map((pane) => pane.id);
+  const query = () => new URL(window.location.href).searchParams;
+
+  /** Renders the pane's back button, returning it (or null when there's none). */
+  const renderBackButton = async (
+    state: SeedBibleState,
+    container: HTMLElement
+  ) => {
+    const pane = state.panes.panes.value.find(
+      (item) => item.id === EXTENSIONS_PANE_ID
+    );
+    const Provider = await realI18nProvider();
+    const Leading = pane?.leading;
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: Leading ? h(Leading, {}) : null,
+        }),
+        container
+      );
+    });
+    return container.querySelector(
+      ".sb-extensions-page-back"
+    ) as HTMLButtonElement | null;
+  };
+
+  it("stays up when it's opened over Today", async () => {
+    const state = await createState();
+    state.today.open();
+    await Promise.resolve();
+
+    state.openExtensions();
+    await Promise.resolve();
+
+    expect(state.isExtensionsOpen.value).toBe(true);
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIds(state)).toEqual([EXTENSIONS_PANE_ID]);
+    expect(query().get("extensions")).toBe("open");
+  });
+
+  it("puts the open extension's page in the URL", async () => {
+    const state = await createState();
+
+    state.openExtensions("demo-extension");
+    await Promise.resolve();
+
+    expect(state.extensionsPageEntryId.value).toBe("demo-extension");
+    expect(query().get("extensions")).toBe("open");
+    expect(query().get("extension")).toBe("demo-extension");
+  });
+
+  it("opens at an extension's page from a link", async () => {
+    jsdom.reconfigure({
+      url: "https://example.com/?extensions=open&extension=demo-extension",
+    });
+    const state = await createState();
+
+    expect(state.isExtensionsOpen.value).toBe(true);
+    expect(state.extensionsPageEntryId.value).toBe("demo-extension");
+    expect(paneIds(state)).toEqual([EXTENSIONS_PANE_ID]);
+  });
+
+  it("forgets the page when its pane is closed", async () => {
+    const state = await createState();
+    state.openExtensions("demo-extension");
+    await Promise.resolve();
+
+    state.panes.closePane(EXTENSIONS_PANE_ID);
+    await Promise.resolve();
+
+    expect(state.isExtensionsOpen.value).toBe(false);
+    expect(state.extensionsPageEntryId.value).toBeNull();
+    expect(query().get("extensions")).toBeNull();
+    expect(query().get("extension")).toBeNull();
+
+    // Reopened, it lists them all rather than going back to that page.
+    state.openExtensions();
+    await Promise.resolve();
+    expect(state.extensionsPageEntryId.value).toBeNull();
+  });
+
+  it("goes back from an extension's page to the list", async () => {
+    const state = await createState();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    try {
+      state.openExtensions();
+      await Promise.resolve();
+      expect(await renderBackButton(state, container)).toBeNull();
+
+      state.openExtensions("demo-extension");
+      await Promise.resolve();
+      const back = await renderBackButton(state, container);
+      expect(back).not.toBeNull();
+      act(() => {
+        back!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    } finally {
+      render(null, container);
+      container.remove();
+    }
+
+    expect(state.isExtensionsOpen.value).toBe(true);
+    expect(state.extensionsPageEntryId.value).toBeNull();
+    expect(query().get("extension")).toBeNull();
   });
 });
 

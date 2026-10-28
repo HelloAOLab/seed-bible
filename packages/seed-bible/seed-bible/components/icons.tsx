@@ -1,4 +1,6 @@
+import { useEffect, useId, useState } from "preact/hooks";
 import { useAppConfig } from "../app/appConfig";
+import "./icons.css";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const SplitScreenIcon = ({ size = 24 }) => {
@@ -47,11 +49,190 @@ export const SpaceDefaultIcon = () => {
   );
 };
 
+const SEED_BIBLE_ICON_PATH =
+  "m331.11 57.54c7.57-3.65 16.62-4.99 26.18-3.88 73.91 8.58 144.62 15.2 197.44 4.67v-54.36c-44.45 12.58-118.68 5.53-191.34-2.9-19.53-2.27-38.64 0.77-55.26 8.78-11.78 5.67-22.08 13.37-30.56 22.57-8.48-9.2-18.77-16.9-30.55-22.57-16.63-8.01-35.73-11.05-55.26-8.78-72.66 8.43-146.9 15.48-191.35 2.9v54.36c52.83 10.53 123.54 3.91 197.45-4.67 9.55-1.11 18.6 0.23 26.17 3.88 16.52 7.96 26.89 24.29 27.07 42.62v10.89q-2.01-1.09-4.08-2.09c-16.63-8.01-35.73-11.04-55.26-8.78-72.66 8.44-146.9 15.49-191.35 2.9v54.36c52.83 10.53 123.54 3.91 197.45-4.67 9.55-1.11 18.6 0.24 26.17 3.88 16.52 7.96 26.89 24.29 27.07 42.63v6.01h-250.69v52.94h250.69v39.77h52.94v-39.77h250.69v-52.94h-250.69v-6.01c0.18-18.34 10.56-34.67 27.07-42.63 7.57-3.64 16.62-4.99 26.18-3.88 73.91 8.58 144.62 15.2 197.44 4.67v-54.36c-44.44 12.59-118.68 5.54-191.34-2.9-19.53-2.26-38.64 0.77-55.26 8.78q-2.07 1-4.09 2.09v-10.89c0.18-18.33 10.56-34.66 27.07-42.62z";
+
+// The icon is one compound path, so the animation draws it several times,
+// each clipped to one piece: the trunk (center column) and the left/right
+// halves of the ground bar and the middle and top "pages". Clipped copies leave
+// hairline seams where they meet, so the whole path is swapped in at the end.
+// The trunk column spans x 251.1–304.04 (center x 277.57).
+const SEED_BIBLE_ICON_BRANCHES = [
+  {
+    id: "ground-l",
+    side: "left",
+    points: "0,205.29 253,205.29 253,258.23 0,258.23",
+    hingeY: 231,
+    delay: 0.36,
+  },
+  {
+    id: "ground-r",
+    side: "right",
+    points: "302.14,205.29 555.14,205.29 555.14,258.23 302.14,258.23",
+    hingeY: 231,
+    delay: 0.36,
+  },
+  {
+    id: "middle-l",
+    side: "left",
+    points: "0,80 200,80 253,106 253,205.29 0,205.29",
+    hingeY: 155,
+    delay: 0.41,
+  },
+  {
+    id: "middle-r",
+    side: "right",
+    points: "555.14,80 355.14,80 302.14,106 302.14,205.29 555.14,205.29",
+    hingeY: 155,
+    delay: 0.41,
+  },
+  {
+    id: "top-l",
+    side: "left",
+    points: "0,0 253,0 253,106 200,80 0,80",
+    hingeY: 60,
+    delay: 0.46,
+  },
+  {
+    id: "top-r",
+    side: "right",
+    points: "555.14,0 302.14,0 302.14,106 355.14,80 555.14,80",
+    hingeY: 60,
+    delay: 0.46,
+  },
+] as const;
+
+// SVG flattens 3D transforms, so a page turning on the trunk's spine is faked
+// in 2D: the page widens out from its hinge on the trunk while its outer half
+// (folded at `fold`) trails behind with a lifted edge, like a bending page.
+// The halves overlap by a few units so no gap opens at the fold.
+const SEED_BIBLE_ICON_PAGE_SIDES = {
+  left: { hinge: 251.1, fold: 125, inner: [122, 260], outer: [0, 128] },
+  right: {
+    hinge: 304.04,
+    fold: 430.14,
+    inner: [295, 433.14],
+    outer: [427.14, 555.14],
+  },
+} as const;
+
+/**
+ * Plays once per page load: a seed appears at the base, the trunk grows up from
+ * it, then each branch unfolds outward from the trunk like a book's pages.
+ */
+function AnimatedSeedBiblePaths() {
+  const prefix = `sb-seed-icon-${useId().replace(/[^\w-]/g, "")}`;
+
+  return (
+    <>
+      <defs>
+        <clipPath id={`${prefix}-trunk`}>
+          <rect
+            class="sb-seed-icon-trunk-reveal"
+            x="251.1"
+            y="0"
+            width="52.94"
+            height="298"
+          />
+        </clipPath>
+        {SEED_BIBLE_ICON_BRANCHES.map((branch) => (
+          <clipPath key={branch.id} id={`${prefix}-${branch.id}`}>
+            <polygon points={branch.points} />
+          </clipPath>
+        ))}
+        {Object.entries(SEED_BIBLE_ICON_PAGE_SIDES).flatMap(([side, page]) =>
+          (["inner", "outer"] as const).map((half) => (
+            <clipPath key={`${side}-${half}`} id={`${prefix}-${side}-${half}`}>
+              <rect
+                x={page[half][0]}
+                y="0"
+                width={page[half][1] - page[half][0]}
+                height="298"
+              />
+            </clipPath>
+          ))
+        )}
+      </defs>
+      <ellipse class="sb-seed-icon-seed" cx="277.57" cy="280" rx="22" ry="15" />
+      {SEED_BIBLE_ICON_BRANCHES.map((branch) => {
+        const page = SEED_BIBLE_ICON_PAGE_SIDES[branch.side];
+        const piece = (half: "inner" | "outer") => (
+          <g clip-path={`url(#${prefix}-${branch.side}-${half})`}>
+            <g clip-path={`url(#${prefix}-${branch.id})`}>
+              <path d={SEED_BIBLE_ICON_PATH} />
+            </g>
+          </g>
+        );
+        return (
+          <g
+            key={branch.id}
+            class="sb-seed-icon-page"
+            style={{
+              transformOrigin: `${page.hinge}px ${branch.hingeY}px`,
+              animationDelay: `calc(${branch.delay}s - var(--sb-seed-icon-elapsed, 0s))`,
+            }}
+          >
+            {piece("inner")}
+            <g
+              class={`sb-seed-icon-page-edge sb-seed-icon-page-edge-${branch.side}`}
+              style={{
+                transformOrigin: `${page.fold}px ${branch.hingeY}px`,
+                animationDelay: `calc(${branch.delay}s - var(--sb-seed-icon-elapsed, 0s))`,
+              }}
+            >
+              {piece("outer")}
+            </g>
+          </g>
+        );
+      })}
+      {/* Above the pages, so their hinge ends tuck behind the trunk. */}
+      <g clip-path={`url(#${prefix}-trunk)`}>
+        <path d={SEED_BIBLE_ICON_PATH} />
+      </g>
+      <path class="sb-seed-icon-whole" d={SEED_BIBLE_ICON_PATH} />
+    </>
+  );
+}
+
+const SEED_BIBLE_ICON_INTRO_MS = 900;
+
+// When the first animated icon mounted (page lifetime). Toolbars remount their
+// icons whenever their tool list changes, e.g. when an extension adds a tool,
+// so without this the intro would replay each time. It's set on mount, not
+// render, so server rendering never counts as the first time and the client's
+// hydration render always matches the server's markup.
+let seedBibleIconIntroStartedAt: number | null = null;
+
+/**
+ * How far into the intro a newly mounted animated icon should start, or null
+ * if the intro has already finished and the icon should render static.
+ */
+function useSeedBibleIconIntroElapsed(animated: boolean): number | null {
+  const [elapsed] = useState(() => {
+    if (!animated) {
+      return null;
+    }
+    if (seedBibleIconIntroStartedAt === null) {
+      return 0;
+    }
+    const elapsed = Date.now() - seedBibleIconIntroStartedAt;
+    return elapsed < SEED_BIBLE_ICON_INTRO_MS ? elapsed : null;
+  });
+  useEffect(() => {
+    if (elapsed !== null && seedBibleIconIntroStartedAt === null) {
+      seedBibleIconIntroStartedAt = Date.now();
+    }
+  }, [elapsed]);
+  return elapsed;
+}
+
 export function SeedBibleIcon({
   size = 32,
+  animated = false,
   ...props
-}: { size?: number; [key: string]: any } = {}) {
+}: { size?: number; animated?: boolean; [key: string]: any } = {}) {
   const { branding } = useAppConfig();
+  const introElapsed = useSeedBibleIconIntroElapsed(animated);
 
   if (branding?.icon) {
     return (
@@ -77,9 +258,15 @@ export function SeedBibleIcon({
       style={{ fill: "currentColor" }}
       {...props}
     >
-      <g>
-        <path d="m331.11 57.54c7.57-3.65 16.62-4.99 26.18-3.88 73.91 8.58 144.62 15.2 197.44 4.67v-54.36c-44.45 12.58-118.68 5.53-191.34-2.9-19.53-2.27-38.64 0.77-55.26 8.78-11.78 5.67-22.08 13.37-30.56 22.57-8.48-9.2-18.77-16.9-30.55-22.57-16.63-8.01-35.73-11.05-55.26-8.78-72.66 8.43-146.9 15.48-191.35 2.9v54.36c52.83 10.53 123.54 3.91 197.45-4.67 9.55-1.11 18.6 0.23 26.17 3.88 16.52 7.96 26.89 24.29 27.07 42.62v10.89q-2.01-1.09-4.08-2.09c-16.63-8.01-35.73-11.04-55.26-8.78-72.66 8.44-146.9 15.49-191.35 2.9v54.36c52.83 10.53 123.54 3.91 197.45-4.67 9.55-1.11 18.6 0.24 26.17 3.88 16.52 7.96 26.89 24.29 27.07 42.63v6.01h-250.69v52.94h250.69v39.77h52.94v-39.77h250.69v-52.94h-250.69v-6.01c0.18-18.34 10.56-34.67 27.07-42.63 7.57-3.64 16.62-4.99 26.18-3.88 73.91 8.58 144.62 15.2 197.44 4.67v-54.36c-44.44 12.59-118.68 5.54-191.34-2.9-19.53-2.26-38.64 0.77-55.26 8.78q-2.07 1-4.09 2.09v-10.89c0.18-18.33 10.56-34.66 27.07-42.62z" />
-      </g>
+      {introElapsed === null ? (
+        <g>
+          <path d={SEED_BIBLE_ICON_PATH} />
+        </g>
+      ) : (
+        <g style={`--sb-seed-icon-elapsed: ${introElapsed}ms`}>
+          <AnimatedSeedBiblePaths />
+        </g>
+      )}
     </svg>
   );
 }
@@ -326,6 +513,7 @@ export const Eraser = (props: any) => (
     />
   </svg>
 );
+/** The Today tab/button icon: a page with a check mark. */
 export const TodayIcon = (props: any) => (
   <svg
     width={24}
@@ -333,26 +521,27 @@ export const TodayIcon = (props: any) => (
     viewBox="0 0 24 24"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
     {...props}
   >
     <path
       d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <path
       d="M9 18H11"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <path
       d="M15 19L17 21L21 17"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
     />

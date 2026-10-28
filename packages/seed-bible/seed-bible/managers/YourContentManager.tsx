@@ -24,6 +24,7 @@ export type ContentFilter =
   | "saves"
   | "playlists"
   | "reading-plans"
+  | "branding"
   | "images";
 
 export const CONTENT_FILTERS: ContentFilter[] = [
@@ -33,6 +34,7 @@ export const CONTENT_FILTERS: ContentFilter[] = [
   "saves",
   "playlists",
   "reading-plans",
+  "branding",
   "images",
 ];
 
