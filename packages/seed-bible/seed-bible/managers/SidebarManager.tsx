@@ -45,6 +45,12 @@ function writeStoredSidebarCollapsed(collapsed: boolean) {
   );
 }
 
+/**
+ * How recently the user must have expanded, collapsed or opened settings for
+ * the sidebar's next width change to count as theirs.
+ */
+const USER_RESIZE_WINDOW_MS = 1000;
+
 export interface CreateSidebarOptions {
   chatsManager: ChatsManager;
   navigation: NavigationManager;
@@ -58,6 +64,18 @@ export function createSidebar(options: CreateSidebarOptions) {
   ) as RequestedSettingsView | null;
   const isSidebarCollapsed = signal(false);
   const isMobileOpen = signal(false);
+
+  // When the user last asked for the sidebar to expand or collapse. The
+  // sidebar animates only those changes: the ones made for them (a saved
+  // choice or the new-visitor default applied on load, a viewport band) snap,
+  // or the page would open with the sidebar visibly closing.
+  let lastUserResizeAt = 0;
+  const rememberUserResize = () => {
+    lastUserResizeAt = Date.now();
+  };
+  /** Whether a width change happening now was asked for by the user. */
+  const isUserResize = () =>
+    Date.now() - lastUserResizeAt < USER_RESIZE_WINDOW_MS;
   // True when the mobile tabs drawer was opened directly from the bottom
   // toolbar (rather than from the book selector).
   const tabsOpenedFromToolbar = signal(false);
@@ -122,10 +140,12 @@ export function createSidebar(options: CreateSidebarOptions) {
   };
 
   const openSettings = () => {
+    rememberUserResize();
     requestedSettingsView.value = "main";
   };
 
   const toggleSettings = () => {
+    rememberUserResize();
     if (isSettingsOpen.value) {
       requestedSettingsView.value = null;
     } else {
@@ -135,10 +155,12 @@ export function createSidebar(options: CreateSidebarOptions) {
 
   /** Opens the settings sidebar jumping straight to a specific subpage. */
   const openSettingsToView = (view: RequestedSettingsView) => {
+    rememberUserResize();
     requestedSettingsView.value = view;
   };
 
   const closeSettings = () => {
+    rememberUserResize();
     requestedSettingsView.value = null;
     // On mobile the sidebar is a full-screen drawer, so closing settings
     // should dismiss the drawer entirely instead of falling back to the
@@ -153,6 +175,7 @@ export function createSidebar(options: CreateSidebarOptions) {
    * directly so they don't overwrite this preference.
    */
   const setSidebarCollapsed = (collapsed: boolean) => {
+    rememberUserResize();
     isSidebarCollapsed.value = collapsed;
     writeStoredSidebarCollapsed(collapsed);
   };
@@ -232,6 +255,7 @@ export function createSidebar(options: CreateSidebarOptions) {
     closeSettings,
     toggleSidebarCollapsed,
     setSidebarCollapsed,
+    isUserResize,
     hydrateStoredCollapsed,
     openSidebar,
     closeSidebar,

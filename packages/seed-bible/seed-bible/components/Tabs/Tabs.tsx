@@ -2833,6 +2833,9 @@ function SelfAvatarButton(props: { state: SeedBibleState }) {
   );
 }
 
+/** How long the sidebar's width transition runs; matches Tabs.css. */
+const SIDEBAR_RESIZE_MS = 250;
+
 export function Sidebar(props: SidebarProps) {
   const { state } = props;
   const { app, tabsLayout, sidebar } = state;
@@ -2845,6 +2848,32 @@ export function Sidebar(props: SidebarProps) {
   const isMobileOpen = sidebar.isMobileOpen.value;
   const effectivelyCollapsed = isCollapsed && !isMobileOpen && !isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
+
+  // Only an expand or collapse the user asked for animates (see
+  // `isUserResize`); the rest snap. While it animates the sidebar clips its
+  // contents (see Tabs.css), and only then: the pane-layout menu hangs out
+  // over the reader the rest of the time. A timer rather than
+  // `transitionend`, which never fires when there's no transition (mobile,
+  // reduced motion) and would leave it clipped. `animateToggle` covers the
+  // render that flips it, so the very first frame is already clipped; an
+  // effect alone lands a frame late, after the expanded list has been painted
+  // squeezed into the rail.
+  const isResizing = useSignal(false);
+  const previousCollapsed = useRef(effectivelyCollapsed);
+  const animateToggle =
+    previousCollapsed.current !== effectivelyCollapsed &&
+    sidebar.isUserResize();
+  useEffect(() => {
+    if (previousCollapsed.current === effectivelyCollapsed) return;
+    previousCollapsed.current = effectivelyCollapsed;
+    if (!animateToggle) return;
+    isResizing.value = true;
+    const timer = setTimeout(() => {
+      isResizing.value = false;
+    }, SIDEBAR_RESIZE_MS);
+    return () => clearTimeout(timer);
+  }, [effectivelyCollapsed]);
+  const resizing = animateToggle || isResizing.value;
 
   // In the compact-desktop band an expanded sidebar floats over the reader as
   // an overlay (see Tabs.css). When it does, we render a scrim behind it so
@@ -2874,7 +2903,7 @@ export function Sidebar(props: SidebarProps) {
         />
       )}
       <aside
-        className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}`}
+        className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}${resizing ? " sb-tabs-sidebar-resizing" : ""}`}
       >
         {!isSettingsOpen && (
           <TabsHeader

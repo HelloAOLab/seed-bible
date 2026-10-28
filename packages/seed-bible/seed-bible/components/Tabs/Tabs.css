@@ -26,6 +26,26 @@
   opacity: 1;
   transition: opacity 0.25s ease;
 }
+
+/* Docked on desktop, the user's own expand or collapse slides the width (and
+   the reader beside it) rather than jumping; `-resizing` is only set for
+   those, so changes made on load snap. While it runs, the contents are
+   clipped and held at the expanded width, so expanding reveals the list
+   instead of squeezing it into the narrow rail first. */
+@media (min-width: 769px) and (prefers-reduced-motion: no-preference) {
+  .sb-tabs-sidebar-resizing {
+    transition:
+      width 0.25s ease,
+      padding 0.25s ease,
+      opacity 0.25s ease;
+    overflow: hidden;
+
+    &:not(.sb-tabs-sidebar-collapsed) > * {
+      min-width: 18rem;
+    }
+  }
+}
+
 .sb-sidebar-branding-logo {
   width: 3.0625rem;
   height: 2.25rem;
