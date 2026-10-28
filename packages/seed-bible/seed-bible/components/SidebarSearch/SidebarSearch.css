@@ -123,9 +123,7 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 8%);
 }
 
-/* Collapsed tiles are tinted from their own text color (currentColor) rather
-   than the selected-tab theme variables, so the selected tile reads as a
-   neutral gray highlight in both light and dark themes. */
+/* Hover and selected match the expanded sidebar's tab rows (`.sb-tab-row`). */
 .sb-collapsed-tab-tile {
   width: 100%;
   min-height: 2.75rem;
@@ -142,15 +140,18 @@
   gap: 0.25rem;
   padding: 0.375rem 0;
   font: inherit;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
-.sb-collapsed-tab-tile:hover {
-  background: color-mix(in srgb, currentColor, transparent 96%);
+.sb-collapsed-tab-tile:hover:not(.sb-collapsed-tab-tile-selected) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
 }
 
-.sb-collapsed-tab-tile-selected,
-.sb-collapsed-tab-tile-selected:hover {
-  background: color-mix(in srgb, currentColor, transparent 86%);
+.sb-collapsed-tab-tile-selected {
+  background: var(--sb-selected-tab-background);
+  color: var(--sb-selected-tab-font-color);
 }
 
 .sb-collapsed-tab-title {
@@ -199,4 +200,8 @@
 .sb-collapsed-tab-tile .sb-collapsed-tab-audio-icon {
   font-size: 0.75rem;
   color: var(--sb-primary-color);
+}
+
+.sb-collapsed-tab-tile-selected .sb-collapsed-tab-audio-icon {
+  color: currentColor;
 }
