@@ -419,10 +419,10 @@ function SavePill(props: {
         }
       >
         <span className="sb-content-save-name">{name}</span>
-        <span className="sb-content-save-translation">
-          {save.translationId}
-        </span>
         <span className="sb-content-save-meta">
+          <span className="sb-content-save-translation">
+            {save.translationId}
+          </span>
           <span className="sb-content-save-date">
             {formatDate(save.createdAt, language, "short")}
           </span>

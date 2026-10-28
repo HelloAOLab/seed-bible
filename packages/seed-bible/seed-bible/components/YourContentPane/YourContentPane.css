@@ -391,17 +391,17 @@
   background: var(--sb-content-surface-strong);
 }
 
-/* Name and translation on one line, the date on its own line under them. */
+/* The name has a line to itself, so a long book name isn't cut short; the
+   translation, date and folder count go on the line under it. */
 .sb-content-save {
   flex: 1;
   min-width: 0;
-  display: grid;
-  /* The name gives way (with an ellipsis) before the translation does. */
-  grid-template-columns: minmax(0, max-content) auto;
-  align-items: center;
-  justify-content: start;
-  column-gap: 8px;
-  row-gap: 2px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
   padding: 9px 12px;
   text-align: start;
   border: none;
@@ -428,10 +428,10 @@
   color: inherit;
 }
 
+/* Wraps onto a second line rather than ending in an ellipsis when even its
+   own line is too narrow, as on a small phone. */
 .sb-content-save-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   font-size: 0.9375rem;
   font-weight: 700;
 }
@@ -445,10 +445,10 @@
   text-transform: uppercase;
 }
 
-/* The second line: the date, then the folder count. */
+/* The second line: the translation, the date, then the folder count. */
 .sb-content-save-meta {
-  grid-column: 1 / -1;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   color: var(--sb-content-muted);
