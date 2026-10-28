@@ -873,6 +873,47 @@
   flex: 1;
 }
 
+/* The whole row selects the tab, not just its text: this layer stretches the
+   button over the row's padding (the row is the positioned box). The button's
+   own content and the save and menu buttons after it sit above the layer, so
+   they keep their own clicks and tooltips. */
+.sb-tab-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.sb-tab-button > *,
+.sb-tab-button ~ * {
+  position: relative;
+}
+
+/* The tab's ⋯ shows on the selected tab, on hover, while its menu is open and
+   when the row has keyboard focus. Hidden rather than removed, so the row
+   keeps its height and a click on that spot falls through to the row and
+   selects the tab. Without hover (touch screens, the phone drawer) there'd be
+   no way to reveal it, so it always shows there. The drawer is told apart by
+   width, not `.sb-tabs-sidebar-mobile-open`: that class outlives the drawer
+   when the window is widened with it open. It fades with the row's
+   hover background; `visibility` flips at the start of a fade in and the end
+   of a fade out, so it's never clickable while fully invisible. */
+@media (hover: hover) and (min-width: 481px) {
+  .sb-tab-row > .sb-tab-menu-anchor {
+    transition:
+      opacity 0.15s ease,
+      visibility 0s;
+  }
+
+  .sb-tab-row:not(.sb-tab-row-selected, :hover, :has(:focus-visible))
+    > .sb-tab-menu-anchor:not(:has([aria-expanded="true"])) {
+    visibility: hidden;
+    opacity: 0;
+    transition:
+      opacity 0.15s ease,
+      visibility 0s 0.15s;
+  }
+}
+
 .sb-tab-main-content {
   display: flex;
   align-items: center;

@@ -1610,6 +1610,15 @@ export function createSeedBibleState(
     }
   });
 
+  // The tabs drawer only exists on phones. Still "open" once the window is
+  // wider than that, it would hold the desktop sidebar expanded and stop the
+  // collapse button working, so close it on the way out of mobile.
+  effect(() => {
+    if (!isMobile.value) {
+      sidebar.isMobileOpen.value = false;
+    }
+  });
+
   // The "compact desktop" band (just above the mobile breakpoint): an
   // expanded sidebar would overlay the reader rather than dock beside it
   // (see components/Tabs/Tabs.css), so start collapsed to a rail when entering the band.
