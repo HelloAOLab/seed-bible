@@ -539,7 +539,7 @@
   border: none;
   padding: 0.5rem;
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   grid-template-rows: 1fr;
   background-color: var(--sb-today-surface);
   border-radius: 0.5rem;

@@ -36,19 +36,6 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
 }
 
-.sb-sidebar-search-clear-button {
-  border: none;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 28%);
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
 .sb-sidebar-search-panel {
   position: absolute;
   top: calc(100% + 0.625rem);

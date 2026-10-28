@@ -6,6 +6,7 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { getDefaultTranslationForLanguage } from "../../managers/BibleReadingManager";
+import { SearchClearButton } from "../SearchClearButton/SearchClearButton";
 
 export interface SidebarSearchResult {
   id: string;
@@ -308,16 +309,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
           aria-label={t("search-verses", { defaultValue: "Search verses" })}
         />
         {searchQuery.value.trim().length > 0 && (
-          <button
-            onClick={() => {
-              runSearch("");
-            }}
-            className="sb-sidebar-search-clear-button"
-            aria-label={t("clear-search", { defaultValue: "Clear search" })}
-            title={t("clear-search", { defaultValue: "Clear search" })}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          <SearchClearButton onClear={() => runSearch("")} />
         )}
       </label>
 

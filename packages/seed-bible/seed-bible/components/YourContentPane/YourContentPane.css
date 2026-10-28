@@ -53,7 +53,7 @@
   box-sizing: border-box;
 }
 
-.sb-content-search .material-symbols-outlined {
+.sb-content-search > .material-symbols-outlined {
   flex-shrink: 0;
   color: var(--sb-font-color);
   font-size: 22px;
@@ -71,6 +71,12 @@
 
 .sb-content-search input:focus {
   outline: none;
+}
+
+/* The browser's own clear button (a blue × in Chrome); the shared one is
+   used instead, to match the other search bars. */
+.sb-content-search input::-webkit-search-cancel-button {
+  appearance: none;
 }
 
 .sb-content-search input::placeholder {

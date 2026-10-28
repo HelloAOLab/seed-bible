@@ -38,6 +38,7 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
+import { SearchClearButton } from "../SearchClearButton/SearchClearButton";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import { Spinner } from "../Spinner/Spinner";
 import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
@@ -690,6 +691,7 @@ export function YourContentPane(props: YourContentScreenProps) {
   // The filter chips scroll horizontally with the vertical wheel, and fade at
   // an edge only while chips are hidden past it.
   const chipsRef = useRef<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   useHorizontalScroll(chipsRef);
   useScrollEdgeFade(chipsRef);
 
@@ -914,6 +916,7 @@ export function YourContentPane(props: YourContentScreenProps) {
         <div className="sb-content-search">
           <MaterialIcon aria-hidden="true">search</MaterialIcon>
           <input
+            ref={searchInputRef}
             type="search"
             value={rawQuery}
             placeholder={t("search-placeholder", { defaultValue: "Search..." })}
@@ -926,6 +929,14 @@ export function YourContentPane(props: YourContentScreenProps) {
               ).value;
             }}
           />
+          {rawQuery ? (
+            <SearchClearButton
+              onClear={() => {
+                yourContent.query.value = "";
+                searchInputRef.current?.focus();
+              }}
+            />
+          ) : null}
         </div>
 
         <div className="sb-content-toolbar">

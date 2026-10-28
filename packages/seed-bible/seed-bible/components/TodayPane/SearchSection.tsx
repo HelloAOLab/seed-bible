@@ -3,6 +3,7 @@ import { useRef, useEffect } from "preact/hooks";
 import { TitledSection } from "./TitledSection";
 import { useClickOutside } from "../useClickOutside";
 import { MaterialIcon, SeedBibleIcon } from "../icons";
+import { SearchClearButton } from "../SearchClearButton/SearchClearButton";
 import { useI18n } from "../../i18n";
 import type {
   TodayManager,
@@ -64,6 +65,7 @@ function SearchBar(props: {
   const isOpen = useSignal(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   // `latestRequestRef` guards against out-of-order responses; `debounceTimeoutRef`
   // coalesces keystrokes into a single search.
@@ -139,6 +141,7 @@ function SearchBar(props: {
     <div className="sb-today-searchbar" ref={containerRef}>
       <MaterialIcon>search</MaterialIcon>
       <input
+        ref={inputRef}
         type="text"
         placeholder={t("today-search-verses", {
           defaultValue: "Search books, chapters, verses...",
@@ -149,6 +152,14 @@ function SearchBar(props: {
           isOpen.value = true;
         }}
       />
+      {query.value ? (
+        <SearchClearButton
+          onClear={() => {
+            runSearch("");
+            inputRef.current?.focus();
+          }}
+        />
+      ) : null}
       {showDropdown && (
         <div className="sb-today-searchbar-dropdown">
           {loading.value && (

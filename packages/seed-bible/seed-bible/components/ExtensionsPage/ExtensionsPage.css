@@ -68,6 +68,12 @@
   font-size: 0.9375rem;
 }
 
+/* The browser's own clear button (a blue × in Chrome); the shared one is
+   used instead, to match the other search bars. */
+.sb-extensions-page-search input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
 .sb-extensions-page-add-link {
   min-height: 2.75rem;
   display: flex;

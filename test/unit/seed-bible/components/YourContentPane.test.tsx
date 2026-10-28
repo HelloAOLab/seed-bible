@@ -454,6 +454,27 @@ describe("YourContentPane", () => {
     expect(load).toHaveBeenCalledWith({ force: true });
   });
 
+  it("clears the search with the ×, which shows only once something is typed", () => {
+    const { state, query } = createState();
+    renderPane(state);
+    const clear = () =>
+      container.querySelector<HTMLButtonElement>(
+        'button[aria-label="Clear search"]'
+      );
+    expect(clear()).toBeNull();
+
+    act(() => {
+      query.value = "psalm";
+    });
+    act(() => clear()!.click());
+
+    expect(query.value).toBe("");
+    expect(clear()).toBeNull();
+    expect(document.activeElement).toBe(
+      container.querySelector(".sb-content-search input")
+    );
+  });
+
   it("shows every section that has something in it", () => {
     const { state } = createState({
       annotations: [annotation("a", "<p>note</p>")],

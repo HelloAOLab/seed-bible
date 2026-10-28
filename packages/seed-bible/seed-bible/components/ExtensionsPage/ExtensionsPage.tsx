@@ -3,7 +3,9 @@ import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ExtensionListEntry } from "../../managers/ExtensionManager";
 import { useI18n } from "../../i18n/I18nManager";
+import { useRef } from "preact/hooks";
 import { MaterialIcon } from "../icons";
+import { SearchClearButton } from "../SearchClearButton/SearchClearButton";
 import {
   ExtensionTile,
   SourceLabel,
@@ -130,6 +132,7 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
   const { t } = useI18n();
   const catalog = useExtensionCatalog(state);
   const searchQuery = useSignal("");
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const filter = useSignal<Filter>("all");
 
   const openEntry = catalog.entries.find(
@@ -240,12 +243,21 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
             search
           </span>
           <input
+            ref={searchInputRef}
             type="search"
             value={searchQuery.value}
             onInput={(event) => (searchQuery.value = event.currentTarget.value)}
             placeholder={t("extensions-search")}
             aria-label={t("extensions-search")}
           />
+          {searchQuery.value ? (
+            <SearchClearButton
+              onClear={() => {
+                searchQuery.value = "";
+                searchInputRef.current?.focus();
+              }}
+            />
+          ) : null}
         </label>
         <button
           type="button"

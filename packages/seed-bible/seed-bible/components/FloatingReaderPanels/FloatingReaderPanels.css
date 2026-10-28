@@ -78,32 +78,6 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
-.sb-floating-search-clear {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.625rem;
-  height: 1.625rem;
-  padding: 0;
-  border: none;
-  border-radius: 62.4375rem;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.sb-floating-search-clear:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
-}
-
-.sb-floating-search-clear .material-symbols-outlined {
-  font-size: 1.125rem;
-}
-
 .sb-floating-search-results {
   display: flex;
   flex-direction: column;
