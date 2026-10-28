@@ -357,8 +357,12 @@
   line-height: 1.5;
 }
 
-.sb-content-highlight-ref {
-  display: block;
+/* The reference, then the translation the highlight was made in. */
+.sb-content-highlight-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
   margin-top: 2px;
   color: var(--sb-content-muted);
   font-size: 0.8125rem;
@@ -437,7 +441,8 @@
 }
 
 /* Matches the translation on the sidebar's save and tab rows. */
-.sb-content-save-translation {
+.sb-content-save-translation,
+.sb-content-highlight-translation {
   color: var(--sb-content-muted);
   font-size: 0.75rem;
   font-weight: 500;

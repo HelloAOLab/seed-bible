@@ -2116,7 +2116,8 @@ function SavesSection(props: SavesSectionProps) {
                             •
                           </span>
                           <span className="sb-tab-main-translation">
-                            {save.translationId}
+                            {translationBooksMap.get(save.translationId)
+                              ?.translation.shortName ?? save.translationId}
                           </span>
                         </button>
                         <ContextMenuWithButton

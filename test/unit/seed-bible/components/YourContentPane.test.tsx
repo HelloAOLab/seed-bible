@@ -12,6 +12,7 @@ import type { Playlist } from "@packages/seed-bible/seed-bible/managers/Playlist
 import type { ContentLoadStatus } from "@packages/seed-bible/seed-bible/managers/YourContentManager";
 import type { GalleryPhoto } from "@packages/seed-bible/seed-bible/managers/UserGalleryManager";
 import type { SeedBibleCustomization } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
+import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { LIGHT_THEME } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import {
   createReadingPlan,
@@ -176,6 +177,10 @@ interface StateOptions {
   deleteReadingPlanError?: Error;
   /** Makes deleting a customization fail, so the screen has to say so. */
   removeCustomizationError?: Error;
+  /** Translations whose book lists are already loaded. */
+  translations?: Translation[];
+  /** Translations the server has, whose book lists load when asked for. */
+  serverTranslations?: Translation[];
 }
 
 /** Renders the modal the screen last asked to open, as the modal host would. */
@@ -232,6 +237,27 @@ function createState(options: StateOptions = {}) {
   const filter = signal("all");
   const syncPhotos = vi.fn(async () => {});
   const loadCustomizations = vi.fn(async () => {});
+  const booksOf = (translation: Translation) => ({ translation, books: [] });
+  const translationBooks = signal(
+    new Map(
+      (options.translations ?? []).map((translation) => [
+        translation.id,
+        booksOf(translation),
+      ])
+    )
+  );
+  // Like the real manager: loading a translation's book list caches it.
+  const getTranslationBooks = vi.fn(async (translationId: string) => {
+    const found = options.serverTranslations?.find(
+      (translation) => translation.id === translationId
+    );
+    if (!found) throw new Error("not found");
+    translationBooks.value = new Map(translationBooks.value).set(
+      translationId,
+      booksOf(found)
+    );
+    return booksOf(found);
+  });
   const removeCustomization = vi.fn(async (_id: string) => {
     if (options.removeCustomizationError) {
       throw options.removeCustomizationError;
@@ -268,7 +294,11 @@ function createState(options: StateOptions = {}) {
       getShareLink: (c: SeedBibleCustomization) =>
         `https://example.com/?customization=${c.id}`,
     },
-    bibleData: { availableTranslations: signal([]) },
+    bibleData: {
+      availableTranslations: signal([]),
+      translationBooks,
+      getTranslationBooks,
+    },
     saves: {
       saves: signal(options.saves ?? []),
       categories: signal([{ name: "My Saves" }]),
@@ -331,6 +361,7 @@ function createState(options: StateOptions = {}) {
     syncPhotos,
     loadCustomizations,
     removeCustomization,
+    getTranslationBooks,
   };
 }
 
@@ -1061,6 +1092,52 @@ describe("YourContentPane", () => {
     expect(
       container.querySelector(".sb-content-highlight-ref")?.textContent
     ).toBe("John 1:1");
+  });
+
+  const translation = (id: string, shortName: string) =>
+    ({ id, shortName, name: shortName }) as Translation;
+
+  it("shows the short name of the translation a highlight was made in", () => {
+    const { state } = createState({
+      highlights: [{ ...highlight("JHN"), translationId: "arb_vdv" }],
+      translations: [translation("arb_vdv", "VDV")],
+    });
+    renderPane(state);
+
+    expect(
+      container.querySelector(".sb-content-highlight-translation")?.textContent
+    ).toBe("VDV");
+  });
+
+  it("loads a translation it doesn't know yet to show a save's short name", async () => {
+    const { state, getTranslationBooks } = createState({
+      saves: [{ ...save("b1"), translationId: "arb_vdv" }],
+      serverTranslations: [translation("arb_vdv", "VDV")],
+    });
+    renderPane(state);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(getTranslationBooks).toHaveBeenCalledWith("arb_vdv");
+    expect(
+      container.querySelector(".sb-content-save-translation")?.textContent
+    ).toBe("VDV");
+  });
+
+  it("keeps showing the id when the translation can't be loaded", async () => {
+    const { state } = createState({
+      highlights: [{ ...highlight("JHN"), translationId: "gone" }],
+    });
+    renderPane(state);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(
+      container.querySelector(".sb-content-highlight-translation")?.textContent
+    ).toBe("gone");
   });
 
   it("plays a playlist from its play button", () => {

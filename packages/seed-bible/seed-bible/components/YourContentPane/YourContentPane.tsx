@@ -152,6 +152,28 @@ function formatDate(
  * translation. Returns an empty string until it arrives (and if it never
  * does), which the cards render as just the reference.
  */
+/**
+ * A translation's short name ("VDV" for "arb_vdv"), the way the reader's
+ * header gets it: from the translation's book list, which this loads if no
+ * tab has (a save made in another translation, say). The id stands in until
+ * then, or if it won't load.
+ */
+function useTranslationShortName(
+  state: SeedBibleState,
+  translationId: string
+): string {
+  const { bibleData } = state;
+  const books = bibleData.translationBooks.value.get(translationId);
+
+  useEffect(() => {
+    if (!books) {
+      void bibleData.getTranslationBooks(translationId).catch(() => {});
+    }
+  }, [bibleData, translationId, books]);
+
+  return books?.translation.shortName ?? translationId;
+}
+
 function useVerseText(
   state: SeedBibleState,
   translationId: string | undefined,
@@ -314,6 +336,7 @@ function HighlightRow(props: {
   const { t } = useI18n();
   const bookNames = state.today.bookNames.value;
   const verses = verseNumbersOf(stored.highlight.verse);
+  const translation = useTranslationShortName(state, stored.translationId);
   const verseText = useVerseText(
     state,
     stored.translationId,
@@ -375,7 +398,12 @@ function HighlightRow(props: {
         {verseText ? (
           <span className="sb-content-highlight-text">{verseText}</span>
         ) : null}
-        <span className="sb-content-highlight-ref">{reference}</span>
+        <span className="sb-content-highlight-meta">
+          <span className="sb-content-highlight-ref">{reference}</span>
+          <span className="sb-content-highlight-translation">
+            {translation}
+          </span>
+        </span>
       </button>
       <ContextMenuWithButton
         icon="more_horiz"
@@ -406,6 +434,7 @@ function SavePill(props: {
   const bookNames = state.today.bookNames.value;
   const verse = verseNumbersOf(save.verse)[0];
   const book = bookNames.get(save.bookId) ?? save.bookId;
+  const translation = useTranslationShortName(state, save.translationId);
   // The whole range, so two saves that start on the same verse don't look
   // like duplicates.
   const name = `${book} ${save.chapterNumber}${formatSaveVerse(save.verse)}`;
@@ -465,9 +494,7 @@ function SavePill(props: {
       >
         <span className="sb-content-save-name">{name}</span>
         <span className="sb-content-save-meta">
-          <span className="sb-content-save-translation">
-            {save.translationId}
-          </span>
+          <span className="sb-content-save-translation">{translation}</span>
           <span className="sb-content-save-date">
             {formatDate(save.createdAt, language, "short")}
           </span>
