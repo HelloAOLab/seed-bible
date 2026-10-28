@@ -619,7 +619,6 @@
   "reading-plan-not-started": "Not started",
   "reading-plan-start": "Start plan",
   "reading-plan-streak": "{{count}}-day streak",
-  "reading-plan-mark-complete": "Mark as complete",
   "reading-plan-empty-sessions": "This plan doesn't have any readings yet.",
   "reading-plan-celebration-title": "Day {{day}} complete!",
   "reading-plan-complete-title": "Plan complete!",
@@ -651,7 +650,6 @@
   "reading-plan-preview-reading": "Preview {{reading}}",
   "reading-plan-mark-reading-complete": "Mark reading complete",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Mark {{passage}} as read",
   "reading-plan-read-nudge-title": "Nice reading!",
   "reading-plan-read-nudge-toast": "Mark {{passage}} complete?",
