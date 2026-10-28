@@ -3996,6 +3996,57 @@ describe("BibleReader", () => {
         });
     }
 
+    /**
+     * A 300px-tall screen over a 1000px chapter scrolled `scrolledBy` px down,
+     * with the test container as the scroller the gutter follows. jsdom does
+     * no layout, so the boxes are stubbed per element. Returns the restore.
+     */
+    function stubScrolledScreen(scrolledBy: number) {
+      const rectSpy = vi
+        .spyOn(Element.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: Element) {
+          const rect = { left: 0, right: 100, width: 100, x: 0, toJSON() {} };
+          if (this === container) {
+            return {
+              ...rect,
+              top: 0,
+              bottom: 300,
+              height: 300,
+              y: 0,
+            } as DOMRect;
+          }
+          if (this.classList.contains("sb-chapter-content")) {
+            return {
+              ...rect,
+              top: -scrolledBy,
+              bottom: 1000 - scrolledBy,
+              height: 1000,
+              y: -scrolledBy,
+            } as DOMRect;
+          }
+          return { ...rect, top: 0, bottom: 0, height: 0, y: 0 } as DOMRect;
+        });
+      container.style.overflowY = "auto";
+      return () => {
+        rectSpy.mockRestore();
+        container.style.overflowY = "";
+      };
+    }
+
+    function arrowsOnScreen() {
+      return [...container.querySelectorAll(".sb-presence-arrow")].map(
+        (arrow) => ({
+          direction: arrow.classList.contains("sb-presence-arrow-up")
+            ? "up"
+            : "down",
+          top: (arrow as HTMLElement).style.top,
+          lane: (arrow as HTMLElement).style.getPropertyValue(
+            "--sb-presence-lane-offset"
+          ),
+        })
+      );
+    }
+
     const visual = {
       defaultIcon: "pets",
       color: "rgb(10, 20, 30)",
@@ -4305,36 +4356,10 @@ describe("BibleReader", () => {
     // past them.
     it("pins a participant's avatar to the top of the screen while their verses run past it", () => {
       // The reader is scrolled 200px into the content, and the screen is 300px
-      // tall. jsdom does no layout, so the boxes are stubbed per element. Line
-      // boxes are in screen coordinates: a long range, verse 1 at 40 and verse
-      // 2 way down at 600 within the content.
+      // tall. Line boxes are in screen coordinates: a long range, verse 1 at 40
+      // and verse 2 way down at 600 within the content.
       stubLineBoxes({ 1: 40 - 200, 2: 600 - 200 });
-      const rectSpy = vi
-        .spyOn(Element.prototype, "getBoundingClientRect")
-        .mockImplementation(function (this: Element) {
-          const rect = { left: 0, right: 100, width: 100, x: 0, toJSON() {} };
-          if (this === container) {
-            return {
-              ...rect,
-              top: 0,
-              bottom: 300,
-              height: 300,
-              y: 0,
-            } as DOMRect;
-          }
-          if (this.classList.contains("sb-chapter-content")) {
-            return {
-              ...rect,
-              top: -200,
-              bottom: 800,
-              height: 1000,
-              y: -200,
-            } as DOMRect;
-          }
-          return { ...rect, top: 0, bottom: 0, height: 0, y: 0 } as DOMRect;
-        });
-      // Makes the test container the scroller the gutter follows.
-      container.style.overflowY = "auto";
+      const restoreScreen = stubScrolledScreen(200);
       const rafSpy = vi
         .spyOn(window, "requestAnimationFrame")
         .mockImplementation((callback: FrameRequestCallback) => {
@@ -4397,9 +4422,8 @@ describe("BibleReader", () => {
           )
         ).toBe("rgb(10, 20, 30)");
       } finally {
-        rectSpy.mockRestore();
+        restoreScreen();
         rafSpy.mockRestore();
-        container.style.overflowY = "";
       }
     });
 
@@ -4408,31 +4432,7 @@ describe("BibleReader", () => {
       // and the screen starts 310px into the content, so there is no room to
       // pin. Line boxes are stubbed in screen coordinates.
       stubLineBoxes({ 1: 40 - 310, 2: 300 - 310 });
-      const rectSpy = vi
-        .spyOn(Element.prototype, "getBoundingClientRect")
-        .mockImplementation(function (this: Element) {
-          const rect = { left: 0, right: 100, width: 100, x: 0, toJSON() {} };
-          if (this === container) {
-            return {
-              ...rect,
-              top: 0,
-              bottom: 300,
-              height: 300,
-              y: 0,
-            } as DOMRect;
-          }
-          if (this.classList.contains("sb-chapter-content")) {
-            return {
-              ...rect,
-              top: -310,
-              bottom: 690,
-              height: 1000,
-              y: -310,
-            } as DOMRect;
-          }
-          return { ...rect, top: 0, bottom: 0, height: 0, y: 0 } as DOMRect;
-        });
-      container.style.overflowY = "auto";
+      const restoreScreen = stubScrolledScreen(310);
 
       try {
         const fixture = createFixture();
@@ -4463,8 +4463,207 @@ describe("BibleReader", () => {
           false
         );
       } finally {
-        rectSpy.mockRestore();
-        container.style.overflowY = "";
+        restoreScreen();
+      }
+    });
+
+    // Someone whose verses were all below the screen used to have their bar
+    // and avatar both drawn down there out of sight, so a reader who had
+    // fallen behind had no sign of them at all.
+    it("holds the avatar of someone reading ahead at the bottom of the screen, under a down arrow", () => {
+      // Screen is 200px to 500px of the content; the peer is on 700 to 784.
+      stubLineBoxes({ 1: 700 - 200, 2: 760 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "peer", name: "Mary" },
+            ],
+            {
+              peer: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+
+        const stacks = container.querySelectorAll(".sb-presence-avatars");
+        expect(stacks).toHaveLength(1);
+        const stack = stacks[0] as HTMLElement;
+        // Screen bottom (500) less the room kept for the arrow (14) and the
+        // avatar's own height (20).
+        expect(stack.style.top).toBe("466px");
+        expect(stack.classList.contains("sb-presence-avatars-pinned")).toBe(
+          true
+        );
+        expect(
+          stack.querySelector(".sb-tab-user-icon")?.getAttribute("title")
+        ).toBe("Mary");
+        expect(arrowsOnScreen()).toEqual([
+          { direction: "down", top: "490px", lane: "0" },
+        ]);
+        expect(
+          (
+            container.querySelector(".sb-presence-arrow") as HTMLElement
+          ).style.getPropertyValue("--sb-presence-arrow-color")
+        ).toBe("rgb(10, 20, 30)");
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    it("holds the avatar of someone reading behind at the top of the screen, under an up arrow", () => {
+      // Screen is 200px to 500px of the content; the peer is on 40 to 124.
+      stubLineBoxes({ 1: 40 - 200, 2: 100 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "peer", name: "Mary" },
+            ],
+            {
+              peer: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+
+        const stack = container.querySelector(
+          ".sb-presence-avatars"
+        ) as HTMLElement;
+        expect(stack.style.top).toBe("214px");
+        expect(stack.classList.contains("sb-presence-avatars-pinned")).toBe(
+          true
+        );
+        expect(arrowsOnScreen()).toEqual([
+          { direction: "up", top: "204px", lane: "0" },
+        ]);
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    // A stack grows downward from its top, so one held at the bottom edge
+    // has to be lifted by its full height or it would cover the arrow and
+    // run off the screen.
+    it("stacks several people reading ahead upward from the bottom of the screen", () => {
+      stubLineBoxes({ 1: 700 - 200, 2: 760 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "mary", name: "Mary" },
+              { connectionId: "john", name: "John" },
+            ],
+            {
+              mary: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 1,
+              },
+              john: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 2,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+
+        const stacks = container.querySelectorAll(".sb-presence-avatars");
+        expect(stacks).toHaveLength(1);
+        const stack = stacks[0] as HTMLElement;
+        expect(
+          [...stack.querySelectorAll(".sb-tab-user-icon")]
+            .map((icon) => icon.getAttribute("title"))
+            .sort()
+        ).toEqual(["John", "Mary"]);
+        // Two avatars are 32px tall (20 + one 12px step), ending 14px above
+        // the bottom of the screen at 500.
+        expect(stack.style.top).toBe("454px");
+        // One arrow for the pair rather than one drawn over another.
+        expect(arrowsOnScreen()).toEqual([
+          { direction: "down", top: "490px", lane: "0" },
+        ]);
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    it("points both ways when people are reading on either side of the screen", () => {
+      // Screen is 200px to 500px; Mary is on 40 to 64, John on 700 to 724.
+      stubLineBoxes({ 1: 40 - 200, 2: 700 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "mary", name: "Mary" },
+              { connectionId: "john", name: "John" },
+            ],
+            {
+              mary: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 1,
+              },
+              john: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 2,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+
+        const stacks = [...container.querySelectorAll(".sb-presence-avatars")];
+        expect(
+          stacks.map((stack) => ({
+            top: (stack as HTMLElement).style.top,
+            who: stack
+              .querySelector(".sb-tab-user-icon")
+              ?.getAttribute("title"),
+          }))
+        ).toEqual([
+          { top: "214px", who: "Mary" },
+          { top: "466px", who: "John" },
+        ]);
+        expect(arrowsOnScreen().map((arrow) => arrow.direction)).toEqual([
+          "up",
+          "down",
+        ]);
+      } finally {
+        restoreScreen();
       }
     });
 
