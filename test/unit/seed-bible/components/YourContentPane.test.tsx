@@ -1024,6 +1024,22 @@ describe("YourContentPane", () => {
     ).toEqual(["Psalm 23:4", "Psalm 23:4-6"]);
   });
 
+  it("puts a dot between a save's details, with none left over when there's no folder count", () => {
+    const { state } = createState({
+      saves: [
+        save("one-folder", 1),
+        { ...save("two-folders", 2), categories: ["My Saves", "Sermon prep"] },
+      ],
+    });
+    renderPane(state);
+
+    const dots = Array.from(
+      container.querySelectorAll(".sb-content-save-meta")
+    ).map((meta) => meta.querySelectorAll(".sb-content-meta-sep").length);
+    // Translation • date, then • folder count on the second.
+    expect(dots).toEqual([1, 2]);
+  });
+
   it("counts folders only on a save that's in more than one", () => {
     const { state } = createState({
       saves: [

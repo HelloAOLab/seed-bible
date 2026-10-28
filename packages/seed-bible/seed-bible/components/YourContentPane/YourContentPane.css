@@ -361,8 +361,8 @@
 .sb-content-highlight-meta {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 0.375rem;
   margin-top: 2px;
   color: var(--sb-content-muted);
   font-size: 0.8125rem;
@@ -455,9 +455,15 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 0.375rem;
   color: var(--sb-content-muted);
   font-size: 0.75rem;
+}
+
+/* Sized like the tab rows' dot; the colour comes from the line it's on. */
+.sb-content-meta-sep {
+  font-size: 0.625rem;
+  line-height: 1;
 }
 
 .sb-content-save-folders {

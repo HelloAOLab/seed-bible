@@ -325,6 +325,15 @@ function AnnotationCard(props: {
   );
 }
 
+/** The dot between a card's details, as on the sidebar's tab rows. */
+function MetaSeparator() {
+  return (
+    <span className="sb-content-meta-sep" aria-hidden="true">
+      •
+    </span>
+  );
+}
+
 function HighlightRow(props: {
   state: SeedBibleState;
   stored: StoredHighlight;
@@ -400,6 +409,7 @@ function HighlightRow(props: {
         ) : null}
         <span className="sb-content-highlight-meta">
           <span className="sb-content-highlight-ref">{reference}</span>
+          <MetaSeparator />
           <span className="sb-content-highlight-translation">
             {translation}
           </span>
@@ -495,6 +505,7 @@ function SavePill(props: {
         <span className="sb-content-save-name">{name}</span>
         <span className="sb-content-save-meta">
           <span className="sb-content-save-translation">{translation}</span>
+          <MetaSeparator />
           <span className="sb-content-save-date">
             {formatDate(save.createdAt, language, "short")}
           </span>
@@ -502,19 +513,25 @@ function SavePill(props: {
               there to point out; the names are on hover and for screen
               readers. */}
           {save.categories.length > 1 ? (
-            <span
-              className="sb-content-save-folders"
-              title={folders}
-              aria-label={t("save-folders", {
-                folders,
-                defaultValue: "In {{folders}}",
-              })}
-            >
-              <MaterialIcon aria-hidden="true">folder</MaterialIcon>
-              <span className="sb-content-save-folder-count" aria-hidden="true">
-                {save.categories.length}
+            <>
+              <MetaSeparator />
+              <span
+                className="sb-content-save-folders"
+                title={folders}
+                aria-label={t("save-folders", {
+                  folders,
+                  defaultValue: "In {{folders}}",
+                })}
+              >
+                <MaterialIcon aria-hidden="true">folder</MaterialIcon>
+                <span
+                  className="sb-content-save-folder-count"
+                  aria-hidden="true"
+                >
+                  {save.categories.length}
+                </span>
               </span>
-            </span>
+            </>
           ) : null}
         </span>
       </button>
