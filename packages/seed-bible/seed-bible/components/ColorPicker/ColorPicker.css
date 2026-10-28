@@ -51,7 +51,7 @@
   gap: 0.75rem;
   width: min(16.5rem, calc(100vw - 2rem));
   padding: 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.75rem;
   background: var(--sb-menu-background, var(--sb-reader-background, #fff));
   color: var(--sb-menu-font-color, var(--sb-font-color));

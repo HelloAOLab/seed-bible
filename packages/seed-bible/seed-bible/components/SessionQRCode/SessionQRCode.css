@@ -30,7 +30,7 @@
   gap: 1rem;
   padding: 0.875rem;
   border-radius: 0.875rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border: 1px solid var(--sb-divider-color);
   background: color-mix(in srgb, var(--sb-font-color), transparent 95%);
 }
 

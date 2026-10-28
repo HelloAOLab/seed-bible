@@ -908,8 +908,7 @@
 }
 
 .sb-tab-users-section {
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 78%);
+  border-top: 1px solid var(--sb-divider-color);
   margin-top: 0.125rem;
   padding-top: 0.4375rem;
 }
@@ -1024,8 +1023,7 @@
   flex-direction: column;
   gap: 0.625rem;
   padding-top: 0.25rem;
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-top: 1px solid var(--sb-divider-color);
 }
 
 .sb-session-settings-duration-title {
@@ -1079,8 +1077,7 @@
   flex-shrink: 0;
   margin-top: 0.25rem;
   padding-top: 0.75rem;
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-top: 1px solid var(--sb-divider-color);
 }
 
 .sb-session-settings-cancel,

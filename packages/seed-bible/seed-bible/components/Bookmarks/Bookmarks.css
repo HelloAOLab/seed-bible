@@ -362,6 +362,6 @@
   flex-direction: column;
   gap: 0.625rem;
   padding: 0.625rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.625rem;
 }

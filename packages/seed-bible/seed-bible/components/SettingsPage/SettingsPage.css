@@ -34,7 +34,7 @@
 
 .sb-settings-empty-state {
   padding: 0.625rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.5rem;
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
@@ -300,7 +300,7 @@
   gap: 0.75rem;
   margin: 1rem 0 0;
   padding: 0.75rem 1rem 1rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.5rem;
 }
 
@@ -456,7 +456,7 @@
   overflow-y: auto;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.625rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   padding: 0.25rem;
@@ -471,8 +471,7 @@
   padding: 0.375rem 0.5rem;
   margin-bottom: 0.25rem;
   background: var(--sb-menu-background);
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  border-bottom: 1px solid var(--sb-divider-color);
   z-index: 1;
 }
 
@@ -1110,8 +1109,7 @@
   flex-direction: column;
   gap: 0.625rem;
   padding: 1rem 0.25rem;
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  border-bottom: 1px solid var(--sb-divider-color);
 }
 
 .sb-text-section:last-child {
@@ -1215,7 +1213,7 @@
   gap: 0.375rem;
   padding: 0.625rem;
   background: var(--sb-reader-background, #fff);
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.625rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   z-index: 50;
@@ -1244,8 +1242,7 @@
   font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
   padding-top: 0.375rem;
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-top: 1px solid var(--sb-divider-color);
 }
 
 .sb-text-format-palette-custom-swatch {
@@ -1457,14 +1454,13 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 1rem;
   overflow: hidden;
 }
 
 .sb-extensions-group > li + li {
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-top: 1px solid var(--sb-divider-color);
 }
 
 .sb-extensions-item {

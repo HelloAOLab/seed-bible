@@ -359,7 +359,7 @@
   inset-inline-start: 0;
   width: 23.25rem;
   padding: 1.25rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.875rem;
   background: var(--sb-reader-background);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
