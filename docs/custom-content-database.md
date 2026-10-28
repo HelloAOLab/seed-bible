@@ -1,10 +1,10 @@
 # Custom Content Database for Customizations — Design
 
-Status: **Proposal** · Owner: TBD · Last updated: 2026-10-28
+Status: **Proposal** · Owner: TBD · Last updated: 2026-10-29
 
 ## 1. Summary
 
-**Short answer:** a Customization owner pastes links to their content (videos, articles, podcasts). Seed Bible fetches each link's title, description and thumbnail, asks the AI which **categories** it belongs to and which **Bible verses** it covers, and lets the owner review the suggestions. Once approved, the content is written into **one record per Bible chapter** (for example, "everything about John 3"). A Discover provider then answers "what's in this chapter?" with a single record read, no searching required.
+**Short answer:** a Customization owner pastes links to their content (videos, articles, podcasts). Seed Bible fetches each link's title, description and thumbnail, asks the AI which **categories** it belongs to and which **Bible verses** it covers, and lets the owner review the suggestions. Each Customization's content lives in **its own CasualOS record**, separate from the owner's personal record. Imports run on **Cloudflare Workers** as a queue, so a batch of thousands of links keeps going after the owner closes the editor. Once approved, the content is written into **one entry per Bible chapter** (for example, "everything about John 3"). A Discover provider then answers "what's in this chapter?" with a single record read, no searching required.
 
 Before: the only way to put your own content into Discover was to write an extension with a hand-built JSON file, like `default-content-extension` does with `discoveredContent.json`.
 
@@ -32,29 +32,39 @@ Owners with a website full of content don't even need the links: they enter the 
 
 ## 3. How it fits into today's code
 
-| Existing piece                                                                                                | What we use it for                                                                                                                                                                |
-| ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CustomizationsManager` + `SeedBibleCustomization` record                                                     | The library belongs to a Customization. The Customization record gets a small pointer to its library; the active Customization decides which library Discover reads.              |
-| `OsManager` (`recordData`, `getData`, `listAllDataByMarker`, `eraseData`)                                     | All storage. Records live in the owner's record (`recordName` = owner's user id), the same place the Customization itself lives.                                                  |
-| The `publicRead:` marker convention (`CUSTOMIZATION_MARKER`)                                                  | Chapter records must be readable by any viewer of the customization link, so they use a `publicRead:` marker just like the Customization record does.                             |
-| `os.client.aiChat` (as used in `packages/transcription/infer.tsx`)                                            | Category and verse suggestions. The AI key stays on the CasualOS server.                                                                                                          |
-| `extractExplicitRefs` (`packages/transcription/explicit.tsx`), `parseVerseReference*`, `verseReferenceBounds` | Turning "John 3:16-18" text into `{book: "JHN", chapter: 3, verse: 16, endVerse: 18}`, and rejecting impossible references (e.g. "John 30") the AI might produce.                 |
-| `DiscoverManager.registerDiscoverProvider` / `registerContentType`                                            | Showing the content. Each category becomes a Discover content type, so category filter chips come for free.                                                                       |
-| `resolveLinkMedia` + `PlaylistLinkContent`                                                                    | Deciding whether a link is an embeddable video (YouTube/Vimeo), a video file, or a plain link, and opening it in a modal — the same thing `default-content-extension` does today. |
-| `os.getLinkPreview` + `managers/linkPreview.ts`                                                               | Fetching each link's title, description and image. It's the records server's link preview API that playlists and reading plans already use (see §5.2).                            |
-| `server/index.ts` (Express)                                                                                   | A new site-import job endpoint for Common Crawl lookups (§5.7). Single links don't need it; only whole-site imports do.                                                           |
+| Existing piece                                                                                                | What we use it for                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CustomizationsManager` + `SeedBibleCustomization` record                                                     | The library belongs to a Customization. The Customization record gets a small pointer to its library; the active Customization decides which library Discover reads.                                |
+| `OsManager` (`recordData`, `getData`, `listAllDataByMarker`, `eraseData`)                                     | Reading and editing the library from the app. Each Customization's content lives in **its own record**, owned by the Customization's owner (§4.1), not in their personal record.                    |
+| The `publicRead:` marker convention (`CUSTOMIZATION_MARKER`)                                                  | Chapter records must be readable by any viewer of the customization link, so they use a `publicRead:` marker just like the Customization record does.                                               |
+| `aiChat` (as used in `packages/transcription/infer.tsx`)                                                      | Category and verse suggestions. The import worker calls it with the owner's session key, so the AI key stays on the CasualOS server and usage counts against the owner, as it would in the browser. |
+| `extractExplicitRefs` (`packages/transcription/explicit.tsx`), `parseVerseReference*`, `verseReferenceBounds` | Turning "John 3:16-18" text into `{book: "JHN", chapter: 3, verse: 16, endVerse: 18}`, and rejecting impossible references (e.g. "John 30") the AI might produce.                                   |
+| `DiscoverManager.registerDiscoverProvider` / `registerContentType`                                            | Showing the content. Each category becomes a Discover content type, so category filter chips come for free.                                                                                         |
+| `resolveLinkMedia` + `PlaylistLinkContent`                                                                    | Deciding whether a link is an embeddable video (YouTube/Vimeo), a video file, or a plain link, and opening it in a modal — the same thing `default-content-extension` does today.                   |
+| `getLinkPreview` + `managers/linkPreview.ts`                                                                  | Fetching each link's title, description and image: the records server's link preview API that playlists and reading plans already use (see §5.2). The worker calls the same API.                    |
+| `getUserInfo` (as used in `LoginManager`) and `FATAL_SESSION_ERROR_CODES` (`SessionGuard.ts`)                 | How the worker checks who is calling, and which errors mean the session is dead (§5.8).                                                                                                             |
+| Cloudflare Workers, Queues and Durable Objects (new, `workers/content-import/`)                               | Running every import (pasted links, CSV, whole sites) as a queue, and publishing (§5.8).                                                                                                            |
 
 ## 4. Data model
 
 ### 4.1 Where things are stored
 
-Everything lives in the **owner's CasualOS record** (the same `recordName` as the Customization). There are three kinds of records, distinguished by address prefix. `{libraryId}` is a uuid.
+Each Customization's content gets **its own CasualOS record**, created when the owner presses "Create content library" and owned by them. Its name is generated, e.g. `seedbible-content-{uuid}`. The Customization record itself stays where it is today, in the owner's personal record (`recordName` = their user id).
 
-| Record           | Address                                   | Marker                               | Who reads it                                         |
-| ---------------- | ----------------------------------------- | ------------------------------------ | ---------------------------------------------------- |
-| Library manifest | `content.{libraryId}`                     | `publicRead:seedBibleContentLibrary` | Every viewer, once, when the Customization activates |
-| Item (the truth) | `content.{libraryId}.item.{itemId}`       | `seedBibleContentItem` (private)     | Only the owner, while editing                        |
-| Chapter index    | `content.{libraryId}.ch.{BOOK}.{chapter}` | `publicRead:seedBibleContentChapter` | Every viewer, once per chapter they open             |
+Why a separate record rather than the owner's personal one:
+
+- **No clutter.** A large library is thousands of entries. In the personal record they'd sit alongside the owner's private highlights, notes and other Customizations, mixing a public library with personal data.
+- **Clean deletion.** Deleting a library means deleting one record, instead of hunting down every entry by address prefix.
+- **Room to grow.** Permissions can be granted on this record alone. That makes team editing (open question 4) a matter of sharing one record, without giving anyone access to the owner's personal data. The import worker's access can also be limited to it.
+- **Sharing between Customizations.** Two Customizations can point at the same library just by naming the same record (open question 3).
+
+Inside the content record there are three kinds of data entry, distinguished by address:
+
+| Record           | Address               | Marker                               | Who reads it                                         |
+| ---------------- | --------------------- | ------------------------------------ | ---------------------------------------------------- |
+| Library manifest | `manifest`            | `publicRead:seedBibleContentLibrary` | Every viewer, once, when the Customization activates |
+| Item (the truth) | `item.{itemId}`       | `seedBibleContentItem` (private)     | The owner and the import worker                      |
+| Chapter index    | `ch.{BOOK}.{chapter}` | `publicRead:seedBibleContentChapter` | Every viewer, once per chapter they open             |
 
 **Why two copies of each item (item record + chapter entries)?** Items are what the owner edits; chapter records are what readers read. Keeping the full item separate means:
 
@@ -66,19 +76,20 @@ Everything lives in the **owner's CasualOS record** (the same `recordName` as th
 `SeedBibleCustomization` gets one optional field:
 
 ```ts
-/** The content library shown in Discover while this customization is active. */
-contentLibraryId?: string;
+/** The record holding the content library shown in Discover while this customization is active. */
+contentRecordName?: string;
 ```
 
-It's optional so every existing Customization record keeps parsing. The library lives in the same record as the Customization, so `{recordName, contentLibraryId}` is enough to find it — the same `recordName` the `?customization={recordName}.{id}` link already carries.
+It's optional so every existing Customization record keeps parsing. The record name alone is enough to find the library: a viewer who opened the `?customization={recordName}.{id}` link loads the Customization as today, then reads `manifest` from `contentRecordName`.
 
 ### 4.3 Library manifest
 
 ```ts
 interface ContentLibraryManifest {
   schemaVersion: 1;
-  id: string;
   name: string;
+  /** The Customization this library was created for (its `recordName.id` locator). */
+  customizationLocator: string;
   /** Author given to new items, since link previews don't include one. */
   defaultAuthor?: string;
   /** The owner's categories. AI suggestions are limited to these. */
@@ -153,7 +164,6 @@ interface ContentReference {
 ```ts
 interface ContentChapterRecord {
   schemaVersion: 1;
-  libraryId: string;
   book: string;
   chapter: number;
   updatedAt: number;
@@ -203,7 +213,9 @@ Here is what happens after the owner pastes links:
  6. write item records ──► 7. rebuild affected chapter records ──► 8. update manifest
 ```
 
-Steps 1–4 run in the owner's browser, a few items at a time (proposal: 3 in parallel) so a 200-link paste doesn't hammer anything. Each item's progress is visible in the editor (`pending` → `needs_review` or `failed`). Items are saved as soon as they're classified, so closing the tab mid-import loses nothing — reopening resumes the `pending` ones.
+Steps 2–4 run on the **import worker**, one queue message per link (§5.8). The browser only submits the links (step 1 runs in both places: the browser for instant feedback, the worker as the authority) and shows progress. Each item is written to the content record as soon as it's classified (`pending` → `needs_review` or `failed`). The import keeps running if the owner closes the editor, so a 5,000-link import works the same way as a 5-link one.
+
+Steps 6–8 (publishing) also run on the worker, through one writer per library, so publishing a large batch doesn't depend on the owner's tab staying open either.
 
 ### 5.1 Normalize and dedupe
 
@@ -213,14 +225,14 @@ Steps 1–4 run in the owner's browser, a few items at a time (proposal: 3 in pa
 
 ### 5.2 Fetch metadata
 
-Use the records server's existing link preview API, `os.getLinkPreview(url, locale)` in `OsManager`. Playlists and reading plans already use it for their link items, so it already handles the hard parts: the CasualOS server fetches the page (browsers can't read most other sites directly), so we add no fetcher or endpoint of our own, and `toLinkPreview` trims the result and drops unsafe image URLs. Successful lookups are cached for the page load.
+Use the records server's existing link preview API: the `getLinkPreview` procedure that `os.getLinkPreview(url, locale)` wraps in `OsManager`. Playlists and reading plans already use it for their link items. The worker calls the same procedure through the CasualOS SDK with the owner's session key, and trims the result with the same `toLinkPreview`, which drops unsafe image URLs. The CasualOS server does the page fetching, so for single links the worker needs no page fetcher of its own.
 
 It returns `{ title, description, imageUrl, imageAlt, siteName }` from the page's Open Graph tags (the `og:` tags sites publish for link previews). Two gaps to plan around:
 
 - **No author field.** For a YouTube video, `siteName` is "YouTube", not the channel. So the item's `author` starts empty, and the library manifest gets an optional `defaultAuthor` (most libraries are one ministry's own content, e.g. "Expedition Bible") that new items inherit. The owner can override it per item.
 - **Descriptions are short.** Open Graph descriptions are usually a summary, capped at 1,000 characters by `toLinkPreview`. A YouTube video's full description, which often lists the passages covered, isn't available. Step 3 therefore finds fewer explicit references than it would with the full text, and the AI does more of the work. For pasted links, if that turns out to matter in practice, the fix belongs in the CasualOS link preview API (e.g. an optional longer description). Pages imported from a whole site (§5.7) don't have this gap: their full text comes from the Common Crawl archive.
 
-Imports run a few items at a time (§5) rather than all at once, so a 200-link paste doesn't flood the preview API.
+The queue limits how many links are processed at once (§5.8), so a large import doesn't flood the preview API.
 
 If the fetch fails, the item isn't lost: it goes to `needs_review` with an empty title and the owner fills it in by hand.
 
@@ -232,7 +244,7 @@ Before asking the AI, run the existing deterministic parser (`extractExplicitRef
 
 ### 5.4 AI classification
 
-One `os.client.aiChat` call per item, following the pattern already in `packages/transcription/infer.tsx`. The model receives:
+One `aiChat` call per item, made by the worker with the owner's session key, following the pattern already in `packages/transcription/infer.tsx`. The model receives:
 
 - the item's title, description, author and site name,
 - the explicit references from step 3,
@@ -261,16 +273,16 @@ Rules in the prompt and in code:
 
 ### 5.5 Owner review
 
-New items arrive as `needs_review`. The editor (§7) shows each with its thumbnail, title, categories and references as editable chips; low-confidence references are visually marked. The owner can approve items one at a time or "Publish all reviewed". An optional per-library setting **"Publish automatically when confidence is high"** lets owners with large imports skip review for items where every reference is ≥ 0.75 or explicit.
+New items arrive as `needs_review`. The editor (§7) shows each with its thumbnail, title, categories and references as editable chips; low-confidence references are visually marked. The owner can approve items one at a time or "Publish all reviewed". An optional per-library setting **"Publish automatically when confidence is high"** lets owners with large imports skip review for items where every reference is ≥ 0.75 or explicit. The worker sends those items straight to the library writer (§5.6).
 
 ### 5.6 Publish: write items, rebuild chapters, update manifest
 
 1. Save the item record with `status: "published"`.
 2. Work out the **affected chapters** = chapters the item touched before this edit ∪ chapters it touches now. (Both matter: an edit that moves an item from John 3 to John 4 must remove it from John 3.)
-3. For each affected chapter, rebuild the chapter record **from all published items in memory** (the editor has already loaded every item via `listAllDataByMarker`). If the rebuilt record has no entries, erase it.
+3. For each affected chapter, rebuild the chapter record **from all published items** (the writer loads them from the content record with `listData`). If the rebuilt record has no entries, erase it.
 4. Update `manifest.chapters` counts and save the manifest.
 
-Writes go through one queue per library and are batched: publishing 200 items rebuilds each affected chapter once, not 200 times. Rebuilding from items (rather than patching chapter records in place) means a half-finished publish can always be repaired by a **"Rebuild index"** action that regenerates every chapter record from the items.
+Publishing runs on the worker, in the library's **single writer** (a Durable Object per content record, §5.8). Both the owner's "Publish" button and auto-publish send item ids there, so chapter records never have two writers racing each other. Writes are batched: publishing 200 items rebuilds each affected chapter once, not 200 times. Rebuilding from items (rather than patching chapter records in place) means a half-finished publish can always be repaired by a **"Rebuild index"** action that regenerates every chapter record from the items.
 
 Deleting an item = erase its item record, then rebuild its chapters. Deleting a category = remove its id from every item (items left with no category fall back to an "Other" section), then rebuild.
 
@@ -291,15 +303,15 @@ After: the owner enters one address, sees "Found 412 pages under /sermons/", unt
 - The page itself is stored inside a large **WARC file** (the web archive format) at `https://data.commoncrawl.org/{filename}`. We never download the whole file: an HTTP **range request** for bytes `offset` to `offset + length - 1` returns just that one page, as a gzip-compressed WARC record. Unzipped, it holds the HTTP response headers followed by the page's HTML.
 - For very large lookups there is also a **columnar index** (the same index as Parquet files, queryable with SQL tools such as Amazon Athena or DuckDB). It isn't needed for one ministry's site; noted in case we ever import at a much larger scale.
 
-#### Why this runs on our server, not in the browser
+#### Why this needs more than the link preview
 
-The link preview API (§5.2) works one URL at a time and returns only Open Graph tags, so it can't list a site's pages or return full text. That means this feature needs a fetcher of our own, and it has to live on the Seed Bible server (`server/index.ts`) for three reasons:
+The link preview API (§5.2) works one URL at a time and returns only Open Graph tags, so it can't list a site's pages or return full text. So site imports add a Common Crawl fetcher to the import worker (§5.8). It has to run there rather than in the browser for three reasons:
 
-1. **Politeness and rate limits.** Common Crawl's index server is a shared, free service and asks heavy users to go slowly. Only a server can enforce one queue for all our users; a hundred owners' browsers each querying in parallel can't.
-2. **The browser may not be allowed to read it.** We don't know whether the index and data hosts send the headers that let a web page read them (CORS). A server doesn't need them.
-3. **The work is heavy for a phone.** Unzipping WARC records and stripping HTML for hundreds of pages belongs on a server.
+1. **Politeness and rate limits.** Common Crawl's index server is a shared, free service and asks heavy users to go slowly. Only something shared, like the worker, can enforce one queue for all our users; a hundred owners' browsers each querying in parallel can't.
+2. **The browser may not be allowed to read it.** We don't know whether the index and data hosts send the headers that let a web page read them (CORS). A worker doesn't need them.
+3. **The work is heavy for a phone.** Unzipping WARC records and stripping HTML for hundreds of pages doesn't belong in a browser tab.
 
-The server does only the Common Crawl part, and hands back plain extracted documents. Classifying, reviewing and saving stay in the browser exactly as for pasted links. That keeps AI calls and record writes under the owner's own CasualOS session, as everywhere else in this design.
+Once a page is extracted it becomes an ordinary queue message, so classifying and saving work exactly as for a pasted link.
 
 #### The flow
 
@@ -309,7 +321,7 @@ The server does only the Common Crawl part, and hands back plain extracted docum
                                     steps 3–6 of §5 (refs, AI, review, publish) ◄─┘
 ```
 
-**A. List the site's pages.** `POST /api/site-import` with `{ site, include?, exclude? }` starts a job and returns its id; the editor checks on it with `GET /api/site-import/{id}`.
+**A. List the site's pages.** `POST /site-imports` on the worker with `{ contentRecordName, site, include?, exclude? }` starts a lookup and returns its id. The editor checks on it with `GET /site-imports/{id}`. The listing runs inside the job's Durable Object, through the shared Common Crawl gate (§5.8).
 
 - Query the **latest 3 crawls**, because each crawl only samples a site and a page missing from one is often in another. Keep only `status` 200 with `mime` `text/html`.
 - Merge the results: one entry per normalized URL (same rules as §5.1), keeping the **newest capture**. Captures with identical `digest` (the same content under two URLs) are collapsed.
@@ -317,16 +329,16 @@ The server does only the Common Crawl part, and hands back plain extracted docum
 - Drop any URL already in the library.
 - Cap a job at 2,000 pages (a number to tune). The owner can narrow the filters if they hit it.
 
-**B. The owner picks.** Before any page is downloaded, the editor shows the list grouped by path (`/sermons/` 412 · `/blog/` 96 · `/events/` 40), with each page's title when the index has one and the date it was captured. The owner ticks folders or individual pages. This step matters: it stops "import my whole site" from filling the library with contact pages and event announcements.
+**B. The owner picks.** Before any page is downloaded, the editor shows the list grouped by path (`/sermons/` 412 · `/blog/` 96 · `/events/` 40), with each page's title when the index has one and the date it was captured. The owner ticks folders or individual pages, and the chosen URLs are added to the import queue. This step matters: it stops "import my whole site" from filling the library with contact pages and event announcements.
 
-**C. Fetch and extract.** For each chosen page, the server makes one range request, unzips the record and pulls out:
+**C. Fetch and extract.** Each queue message for a chosen page makes one range request, unzips the record and pulls out:
 
 - `title`, `description`, `image`: the same Open Graph tags the link preview reads, falling back to `<title>` and the first `<img>` in the main content.
 - **Main text:** the article body with menus, footers and sidebars removed (a "readability"-style extractor), capped at 20,000 characters.
 - **Embedded media:** a YouTube or Vimeo `<iframe>` on the page. Sermon pages often wrap a video. The item keeps the **page** as its `url` (that's what the owner imported) and stores the video as `mediaUrl`, so Discover can open the video player directly (`resolveLinkMedia`).
 - **Author and date** when the page states them (`article:author`, `article:published_time`, JSON-LD). This fills the author gap from §5.2 for most sites.
 
-The browser then picks up each extracted document and runs the normal pipeline:
+The same message then runs the normal pipeline on the extracted page:
 
 - **Step 3** (explicit references) runs over the **full text**. This is where most of the gain comes from.
 - **Step 4** (AI) receives the title, description and the first ~4,000 characters of text, not the whole page. That keeps the cost per item close to a pasted link's.
@@ -366,14 +378,75 @@ siteSources?: {
 
 Common Crawl provides copies of pages, but the content still belongs to each site's owner. We keep only what a link preview would: a title, a short description, an image URL and the link back to the live page. Full text is never stored or shown. Because the expected use is a ministry importing **its own** site, the import screen asks the owner to confirm they own the site or have permission to list its content, the same responsibility they take on when pasting links.
 
-#### Server safeguards
+#### Common Crawl safeguards
 
-- Requires a valid CasualOS session (see open question 6).
-- Only ever contacts the Common Crawl hosts. The owner's input is used as a **search pattern** in the index query, never fetched directly, so this endpoint can't be used to make our server reach arbitrary or internal addresses.
-- **One global queue to the index server:** a single request at a time, waiting between pages, backing off and retrying on 503 or 429 errors. Each job is also capped per owner.
-- **Range requests run a few at a time** (proposal: 4). Each response is limited to its `length` and the extracted text is capped.
-- **Index results are cached for a day per crawl and site,** so two owners importing the same site, or an owner retrying, don't query Common Crawl twice.
-- Jobs are short-lived: results are dropped once the browser has collected them, or after 24 hours.
+- Only ever contacts the Common Crawl hosts. The owner's input is used as a **search pattern** in the index query, never fetched directly, so the worker can't be used to reach arbitrary or internal addresses this way.
+- **One global gate to the index server:** a single Durable Object (`CommonCrawlGate`) that every index query goes through, so there is one request at a time across all owners. It waits between result pages and backs off on 503 or 429 errors. Each job is also capped per owner.
+- **Range requests are limited by the queue's concurrency** (proposal: 4 at a time for `data.commoncrawl.org`). Each response is limited to its `length` and the extracted text is capped.
+- **Index results are cached for a day per crawl and site** (Workers KV), so two owners importing the same site, or an owner retrying, don't query Common Crawl twice.
+- Page listings are kept only until the owner has picked, or for 24 hours.
+
+### 5.8 The import worker (Cloudflare)
+
+**Short answer:** imports and publishing run on Cloudflare Workers. The browser hands over a list of links along with the owner's CasualOS session key. The worker checks the key with CasualOS, puts one message per link on a **Cloudflare Queue**, and processes the links in the background, acting as the owner. The editor shows live progress, but nothing depends on it staying open.
+
+Before (browser-only): a 2,000-link import meant keeping a tab open for an hour, and closing the laptop stopped it.
+
+After: the owner presses Import, sees "Importing 0 of 2,000", and can close the tab. When they come back, the items are waiting in _Needs review_.
+
+#### The pieces
+
+```
+ editor ──POST /imports──► API worker ──auth──► CasualOS getUserInfo
+                              │
+                              ├─► ImportJob (Durable Object, one per import: progress, the owner's key)
+                              └─► Queue "content-import": one message per link
+                                        │
+                                  queue consumer: link preview / Common Crawl ► refs ► aiChat ► write item
+                                        │                                                    │
+                                        ▼                                                    ▼
+                                  ImportJob counters                               content record (CasualOS)
+ Publish / auto-publish ──► LibraryWriter (Durable Object, one per content record) ──► chapter entries + manifest
+```
+
+- **API worker:** a small HTTP API: `POST /imports`, `GET /imports/{id}`, `POST /imports/{id}/cancel`, `POST /imports/{id}/resume`, `POST /site-imports` (§5.7), `POST /publish`. It only accepts requests from the Seed Bible app's origins (CORS).
+- **`ImportJob` Durable Object** (a Cloudflare Durable Object is a tiny, single-instance store-plus-program; one exists per import): holds the job's settings, its counters (queued, done, needs review, failed) and, encrypted, the owner's session key. The editor polls `GET /imports/{id}` every few seconds for progress.
+- **Queue `content-import`:** one message per link, carrying `{ jobId, itemId, url, origin }`. It never carries the session key. The consumer takes messages in batches (proposal: 10) with a cap on how many batches run at once. That cap is the main lever for staying under the preview API, `aiChat` and Common Crawl limits.
+- **Queue consumer:** for each message it runs steps 2–4: link preview (or Common Crawl fetch and extract, §5.7), explicit references, `aiChat`. It then writes the item to the content record and updates the job's counters.
+- **`LibraryWriter` Durable Object** (one per content record): the only thing that writes chapter entries and the manifest (§5.6).
+- **`CommonCrawlGate` Durable Object** (one, global): the polite single lane to the Common Crawl index (§5.7).
+
+#### Authentication: the owner's session key, checked with CasualOS
+
+The editor sends `Authorization: Bearer {sessionKey}`, the key the app already holds in `OsManager`. Before doing anything, the worker:
+
+1. Parses the user id out of the key (CasualOS session keys carry it, as `OsManager.parsedSessionKey` already relies on).
+2. Calls CasualOS `getUserInfo({ userId })` using that key, the same call `LoginManager` makes. Success proves the key is live and belongs to that user. Anything else is rejected with 401.
+3. Checks that the user can write to the target content record by writing a small `importStatus` entry to it with the same key (the editor reads this entry to find a running import). If CasualOS refuses, the request is rejected with 403 before anything is queued. Every later write is also made **as the user** with their key, so CasualOS enforces permissions on each one; the worker never needs its own admin access to anyone's records.
+
+**Handling the key carefully.** A session key is a full-account credential, so the worker treats it like a password:
+
+- It is stored only in the job's Durable Object, encrypted with a worker secret. It never goes in queue messages, logs or error reports.
+- It is deleted the moment the job finishes, is cancelled, or after 7 days, whichever comes first.
+- If CasualOS answers with one of `FATAL_SESSION_ERROR_CODES` (`session_expired`, `invalid_key`, `user_is_banned`), the job **pauses**; it never retries with a dead key. The editor then shows "Sign in again to continue this import", and `POST /imports/{id}/resume` supplies a fresh key. The same narrow list `SessionGuard.ts` uses applies here: a network blip or `server_error` is retried, not treated as a dead session.
+- Signing out in the app revokes the session, so the worker's copy stops working too. That's the right outcome: signing out stops your imports.
+
+A narrower credential would be better than a full session key. CasualOS **record keys** (`createRecordKey`, used today by `seed-bible-extension-scripts`) can grant access to a single record, so the worker could use one, scoped to the content record, for writes. `aiChat` and `getLinkPreview` still need the session, so this narrows what a leak would expose rather than removing the session key entirely. See open question 7.
+
+#### Reliability for large batches
+
+- **Retries.** A message that fails for a passing reason (a timeout, a 429 or 503, a server error) is retried with growing delays (Queue retry with delay). After 5 attempts it goes to a **dead-letter queue**, whose consumer marks the item `failed` with the reason, so nothing disappears silently.
+- **Idempotent.** Each message carries its `itemId`, chosen when the job is created, so a retry overwrites the same item instead of creating a duplicate.
+- **Never clobbers the owner.** If the owner edited an item while it was queued (its `updatedAt` is newer than the job's), the consumer skips it.
+- **Resumable.** The job's Durable Object knows what's done, so a pause (expired session) or cancel leaves a consistent state. Resuming re-queues only what's left.
+- **Fair.** Each job has its own concurrency budget (proposal: 3 links at a time), so one owner's 10,000-link import doesn't starve another owner's 20.
+- **Limits.** Cap a single import (proposal: 10,000 links), and only one running import per content record.
+
+#### Deployment
+
+The worker is its own project: `workers/content-import/`, with its own `wrangler` config. It sits outside `packages/*` so the extension bundler and the extension-boundary rules don't pick it up. It's deployed by a new job in `.github/workflows/cd.yml`, which needs a Cloudflare API token and the encryption secret as repository secrets. The app finds it through a build-time setting (e.g. `CONTENT_IMPORT_URL`), so staging and production each talk to their own worker.
+
+Code both the app and the worker need, the schemas, chapter index builder, reference parsing and classification prompt, moves into a shared package, `packages/content-library/` (no `extension.json`). That way the browser's editing and the worker's publishing build chapter entries with the same code.
 
 ## 6. Reading: the Discover provider
 
@@ -381,7 +454,7 @@ Common Crawl provides copies of pages, but the content still belongs to each sit
 
 Core (`CustomContentManager`, §8) registers it, in an `effect` on `customizations.activeCustomization`:
 
-- Active Customization has a `contentLibraryId` → load the manifest, register one Discover content type per category, register the provider.
+- Active Customization has a `contentRecordName` → load its `manifest`, register one Discover content type per category, register the provider.
 - Customization changes or is left → unregister everything (the cleanup functions `registerDiscoverProvider`/`registerContentType` return).
 
 Why core rather than an extension: the library is part of the Customization (edited in the Customization editor, stored next to it), and extensions can't depend on core-owned data that may not exist. The provider is ~60 lines; it doesn't justify a separate package. (Alternative considered: a built-in `custom-content-extension` so the owner could switch it off in the Customization's extension list. Not needed — an owner who doesn't want it just doesn't create a library.)
@@ -392,13 +465,13 @@ Why core rather than an extension: the library is part of the Customization (edi
 discover: async ({ book, chapter }) => {
   const key = `${book}.${chapter}`;
   if (!manifest.chapters[key]) return []; // no network for empty chapters
-  const result = await os.getData(recordName, `content.${libraryId}.ch.${key}`);
+  const result = await os.getData(contentRecordName, `ch.${key}`);
   if (!result.success || !result.data) return []; // never break other providers
   const parsed = contentChapterRecordSchema.safeParse(result.data);
   if (!parsed.success) return [];
   return parsed.data.entries.map((entry) => ({
     type: "content",
-    contentType: `custom-content:${libraryId}:${entry.categoryIds[0] ?? "other"}`,
+    contentType: `custom-content:${contentRecordName}:${entry.categoryIds[0] ?? "other"}`,
     verses: entry.verses,
     title: entry.title,
     description: entry.description,
@@ -417,34 +490,32 @@ discover: async ({ book, chapter }) => {
 
 ### 6.3 Freshness
 
-The provider reads whatever's published. An owner who publishes while a viewer has the app open won't see a change on that viewer's screen until the next session, or until they leave the 50-chapter Discover cache. That's acceptable for curated content. The owner's own app re-registers the provider after every publish (a new provider object clears that provider's cache in `DiscoverManager`), so the owner sees their changes immediately.
+The provider reads whatever's published. An owner who publishes while a viewer has the app open won't see a change on that viewer's screen until the next session, or until they leave the 50-chapter Discover cache. That's acceptable for curated content. The owner's own app re-registers the provider when the worker reports a publish finished (a new provider object clears that provider's cache in `DiscoverManager`), so the owner sees their changes as soon as they're live.
 
 ## 7. Editor UI
 
 A new **"Content"** section in `CustomizationEditPane`, next to Branding and Extensions:
 
-1. **Empty state:** "Add your videos, articles and podcasts to Discover" + **Create content library** (creates the manifest and sets `contentLibraryId`).
+1. **Empty state:** "Add your videos, articles and podcasts to Discover" + **Create content library** (creates the content record and its manifest, then sets `contentRecordName`).
 2. **Categories:** a short editable list (name + optional description). Suggest the owner starts with 3–8.
 3. **Add content:** two tabs. _Paste links_ is a textarea (one link per line) or a CSV upload, with an **Import** button. _Import a website_ is a site address, optional include/exclude paths and a **Find pages** button. It leads to the page picker grouped by folder (§5.7 step B), and then lists saved sites with **Check for new pages**.
-4. **Items list:** filter tabs _Needs review · Published · Failed_. Each row: thumbnail, title, author, category chips, reference chips (low-confidence ones outlined), Edit / Re-classify / Delete. Bulk "Publish reviewed".
-5. **Coverage:** "Content on 214 of 1,189 chapters" with a link to see which books have none — useful for ministries filling gaps.
-6. **Maintenance:** "Rebuild index" (§5.6) for recovery.
+4. **Import progress:** read from the worker ("Importing 1,240 of 2,000 · 31 failed"), with Cancel, and a "Sign in again to continue" prompt if the job paused on an expired session. Closing the editor doesn't stop it.
+5. **Items list:** filter tabs _Needs review · Published · Failed_. Each row: thumbnail, title, author, category chips, reference chips (low-confidence ones outlined), Edit / Re-classify / Delete. Bulk "Publish reviewed".
+6. **Coverage:** "Content on 214 of 1,189 chapters" with a link to see which books have none — useful for ministries filling gaps.
+7. **Maintenance:** "Rebuild index" (§5.6, runs on the worker) for recovery, and **Delete library**, which deletes the content record.
 
 All new strings go into `en.json` only.
 
 ## 8. Code layout
 
-| File                                                         | Contents                                                                                                                                                                                                        |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `managers/CustomContentManager.tsx`                          | Signals for the library, items and import progress; create/delete library; import queue; publish/rebuild; registers the Discover provider. Receives `os`, `login`, `customizations`, `discover`.                |
-| `managers/customContent/schema.ts`                           | zod schemas + types for manifest, item, chapter record (parsed on every read, like `customizationSchema`).                                                                                                      |
-| `managers/customContent/chapterIndex.ts`                     | Pure functions: split references into per-chapter entries, compute affected chapters, build a chapter record from items. Most of the unit tests live here.                                                      |
-| `managers/customContent/classify.ts`                         | Prompt, `aiChat` call, response parsing and validation.                                                                                                                                                         |
-| `managers/customContent/linkMetadata.ts`                     | URL normalization and dedupe; wraps `os.getLinkPreview` + `resolveLinkMedia` into an item's `fetched` field.                                                                                                    |
-| `managers/customContent/siteImport.ts`                       | Starts and checks site-import jobs, and feeds extracted documents into the import queue.                                                                                                                        |
-| `server/siteImport/` (+ routes in `server/index.ts`)         | `commonCrawl.ts` (crawl list, paged index queries, the shared polite queue, cache), `warc.ts` (range fetch, unzip, WARC/HTTP parse), `extract.ts` (metadata, main text, embedded media), `jobs.ts` (job state). |
-| `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                                  |
-| `CustomizationsManager.tsx`                                  | Add optional `contentLibraryId` to the schema and type.                                                                                                                                                         |
+| File                                                         | Contents                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `managers/CustomContentManager.tsx`                          | Signals for the library and items; create/delete the content record; item edits; talks to the import worker (start, progress, cancel, resume, publish); registers the Discover provider. Receives `os`, `login`, `customizations`, `discover`.                                                                                                                     |
+| `packages/content-library/` (shared, no `extension.json`)    | `schema.ts` (zod schemas for manifest, item, chapter entry), `chapterIndex.ts` (split references into chapters, affected chapters, build a chapter entry; most unit tests live here), `references.ts` (`extractExplicitRefs`, moved from `transcription`), `classify.ts` (prompt and response validation), `normalizeUrl.ts`. Used by both the app and the worker. |
+| `managers/customContent/importClient.ts`                     | Typed client for the worker's HTTP API, sending the session key.                                                                                                                                                                                                                                                                                                   |
+| `workers/content-import/`                                    | `src/api.ts` (routes, CORS, session check), `src/ImportJob.ts`, `src/LibraryWriter.ts`, `src/CommonCrawlGate.ts` (Durable Objects), `src/consumer.ts` and `src/deadLetter.ts` (queue consumers), `src/linkMetadata.ts` (`getLinkPreview` + `resolveLinkMedia`), `src/commonCrawl/` (`index.ts`, `warc.ts`, `extract.ts`), `wrangler` config.                       |
+| `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                                                                                                                                                                                     |
+| `CustomizationsManager.tsx`                                  | Add optional `contentRecordName` to the schema and type.                                                                                                                                                                                                                                                                                                           |
 
 ## 9. Testing plan
 
@@ -452,27 +523,33 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 
 - **`chapterIndex`** (pure, no mocks): a cross-chapter range lands in both chapters with correctly clipped verses; a whole-chapter reference gives `verses: []`; moving an item from John 3 to John 4 lists both as affected and removes it from John 3; an empty rebuilt chapter is erased; one item with two categories appears once.
 - **`classify`**: category ids not in the library are dropped; impossible references ("John 30:1") are dropped; explicit references win over AI duplicates; malformed AI output retries once then falls back; owner-sourced references survive re-classify.
-- **`linkMetadata`** (mock `os.getLinkPreview`): URL normalization dedupes `youtu.be` / `youtube.com/watch` / tracking params; a preview that fails or returns null yields `needs_review` with an empty title, not a lost item; new items inherit the manifest's `defaultAuthor`.
+- **`linkMetadata`** (worker, mock the CasualOS client's `getLinkPreview`): URL normalization dedupes `youtu.be` / `youtube.com/watch` / tracking params; a preview that fails or returns null yields `needs_review` with an empty title, not a lost item; new items inherit the manifest's `defaultAuthor`.
 - **Discover provider** (mock `os.getData`): manifest says empty → no `getData` call; missing record or failed read → `[]` and other providers still answer; results carry the right `contentType` and `verses`; switching Customization unregisters the provider and its content types.
-- **Site import (server)**, with recorded index responses and a small WARC fixture, no live network: pages across index result pages are all collected; the newest capture wins and identical `digest`s collapse; include/exclude and default noise filters apply; URLs already in the library are skipped; a WARC record parses to the right HTML, including non-UTF-8 pages; extraction finds the title, main text and an embedded YouTube iframe; a 503 from the index is retried with backoff, not reported as "no pages"; a site with zero captures returns a clear "not in the archive" result; the job cap is enforced.
-- **Site import (client)**: extracted documents go through steps 3–6 like pasted links; full text is never written to a record; explicit references found deep in the body text are picked up.
-- **Signed-out viewer** opening a customization link sees the content (public-read markers are correct).
+- **Worker authentication and key handling** (CasualOS client mocked): a missing or malformed key → 401; `getUserInfo` failing → 401; a key for a user who can't write the content record → 403; the key never appears in a queue message or log line; a `session_expired` during processing pauses the job instead of retrying, and `resume` with a new key carries on from where it stopped; a `server_error` is retried, not treated as a dead session.
+- **Worker queue** (run in the Workers runtime with `@cloudflare/vitest-pool-workers`): a retried message overwrites the same item, no duplicate; after 5 failures the item ends up `failed` with its reason; an item the owner edited after queueing is skipped; cancelling stops further messages; two jobs share concurrency fairly.
+- **`LibraryWriter`**: concurrent publish requests for overlapping chapters produce the same chapter entries as running them one after another.
+- **Site import (worker)**, with recorded index responses and a small WARC fixture, no live network: pages across index result pages are all collected; the newest capture wins and identical `digest`s collapse; include/exclude and default noise filters apply; URLs already in the library are skipped; a WARC record parses to the right HTML, including non-UTF-8 pages; extraction finds the title, main text and an embedded YouTube iframe; a 503 from the index is retried with backoff, not reported as "no pages"; a site with zero captures returns a clear "not in the archive" result; the job cap is enforced.
+- **Site import (end to end)**: extracted pages go through steps 3–6 like pasted links; full text is never written to a record; explicit references found deep in the body text are picked up.
+- **Signed-out viewer** opening a customization link sees the content (public-read markers on the content record are correct).
+- **Separate record**: creating a library writes nothing into the owner's personal record except `contentRecordName` on the Customization; deleting the library removes the content record.
 
 ## 10. Rollout
 
-1. **Phase 1 — storage + reading.** Schemas, chapter index builder, Discover provider, and a minimal editor where the owner enters title/URL/categories/references by hand. Proves the per-chapter lookup end to end, with no AI work.
-2. **Phase 2 — automatic metadata.** Fill items from `os.getLinkPreview`; bulk paste and CSV import.
+1. **Phase 1 — storage + reading.** The content record, schemas, chapter index builder, Discover provider, and a minimal editor where the owner enters title/URL/categories/references by hand (publishing from the browser for now). Proves the per-chapter lookup end to end, with no AI work and no worker.
+2. **Phase 2 — the import worker.** API worker with session-key authentication, `ImportJob`, the queue and dead-letter consumer, `LibraryWriter` (publishing moves to the worker), CD deployment. Items filled from `getLinkPreview`; bulk paste and CSV import.
 3. **Phase 3 — AI classification and review.** `aiChat` classification, review queue, confidence flags, auto-publish setting.
 4. **Phase 4 — polish.** Coverage view, rebuild index, chapter-record paging if real libraries need it.
-5. **Phase 5 — whole-site import.** The Common Crawl job endpoint, page picker, full-text extraction and "Check for new pages". It comes after Phase 3 because its main gain, better verse detection from full text, only pays off once classification exists.
+5. **Phase 5 — whole-site import.** `CommonCrawlGate`, the site-import endpoint, page picker, full-text extraction and "Check for new pages". It comes after Phase 3 because its main gain, better verse detection from full text, only pays off once classification exists.
 
 ## 11. Open questions
 
 1. **Record size limit.** What is the CasualOS records server's per-record data limit for our deployment? It decides whether chapter paging (§4.5) is needed in v1.
 2. **AI cost and limits.** `aiChat` usage is metered per user on the records server. A 500-link import is 500 calls — is that within an owner's allowance, or do we need a batch prompt (several items per call) from the start?
-3. **Shared libraries.** Should two Customizations be able to point at the same library (e.g. one ministry with several branded customizations)? The pointer design allows it as long as both are in the same record; cross-record sharing would need the pointer to carry a `recordName` too.
-4. **Collaborators.** Ministries often have a team. CasualOS record permissions could grant others write access to the owner's record — worth a follow-up design once v1 is in use.
+3. **Shared libraries.** Should two Customizations be able to point at the same library (e.g. one ministry with several branded customizations)? With the content in its own record, this is just two Customizations naming the same `contentRecordName`. The open part is the editor: which Customization "owns" the library and what deleting one does to the other.
+4. **Collaborators.** Ministries often have a team. Because each library is its own record, CasualOS permissions can grant a teammate write access to just that record. Worth a follow-up design once v1 is in use; the worker's permission check (§5.8) already works per record.
 5. **Moderation.** Content is chosen by the owner and shown only inside their Customization, so v1 does no moderation. Should a library ever be shown outside its Customization (e.g. a public directory), that would need revisiting.
-6. **Server authentication.** How should `server/index.ts` verify that a site-import request comes from a signed-in CasualOS user? Can it validate the session key with the records server, or do we need a token issued for the purpose?
-7. **Common Crawl terms and load.** Confirm the current terms of use and the guidance on request rates for the index server and `data.commoncrawl.org`, and whether our expected volume (a few thousand range requests per import) is welcome or should go through the columnar index instead.
-8. **Running jobs on the server.** Is the long-running host (`server/index.ts` / `Dockerfile`) the right place for these background jobs, or should they run as a separate worker so a large import can't slow page rendering?
+6. **Creating the content record.** Which CasualOS SDK call creates a new record owned by the user under a generated name, and are there limits on how many records one user may own? This decides whether "one record per Customization" needs a fallback for heavy users.
+7. **A narrower credential for the worker.** Can CasualOS issue something scoped to one record for writes, e.g. a record key for the content record, so the worker holds less than a full session key? `aiChat` and `getLinkPreview` still need a session. Could CasualOS add a session limited to those procedures?
+8. **Long-running imports and session lifetime.** How long do CasualOS sessions last? An import that outlives the session pauses and waits for the owner to sign in again (§5.8). If sessions are short, big imports will pause often.
+9. **Cloudflare account and cost.** Which Cloudflare account hosts the worker, and is the expected volume (queue operations, Durable Object requests, KV) inside the plan we want to pay for?
+10. **Common Crawl terms and load.** Confirm the current terms of use and the guidance on request rates for the index server and `data.commoncrawl.org`, and whether our expected volume (a few thousand range requests per import) is welcome or should go through the columnar index instead.
