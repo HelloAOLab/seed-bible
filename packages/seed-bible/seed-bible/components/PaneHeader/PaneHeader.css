@@ -9,8 +9,7 @@
   justify-content: space-between;
   gap: 8px;
   padding: 0 12px;
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 75%);
+  border-bottom: 1px solid var(--sb-divider-color);
   cursor: default;
   user-select: none;
 }
