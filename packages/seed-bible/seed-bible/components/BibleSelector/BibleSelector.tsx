@@ -180,7 +180,7 @@ export function BibleSelector(props: BibleSelectorProps) {
           className ? ` ${className}` : ""
         }`}
         dir={isRtl ? "rtl" : "ltr"}
-        // Dim the app behind the panel only while a spotlight tour step is up.
+        // A spotlight tour step dims the app behind the panel further.
         style={
           tourStepId && !glowing ? { background: "rgba(0,0,0,0.6)" } : undefined
         }

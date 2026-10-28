@@ -2,9 +2,12 @@
   flex: 1;
 }
 
+/* Dims the page behind the panel like a modal's backdrop
+   (`.sb-footnote-modal-overlay`); the overlay's background transition fades
+   it in and out. */
 .sb-selector-overlay.open {
   pointer-events: all;
-  /* background: rgba(0, 0, 0, 0.3); */
+  background: rgba(0, 0, 0, 0.45);
 }
 
 @media (max-width: 480px) {

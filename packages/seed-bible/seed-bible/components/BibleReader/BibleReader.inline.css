@@ -1153,6 +1153,32 @@
   box-sizing: border-box;
 }
 
+/* The dimmed backdrop and the modal on it fade in together (the modal is the
+   overlay's child, so fading the overlay fades both), while the modal rises
+   from below like the desktop book selector. Mobile sheets and the QR view
+   have their own entrances, which take precedence. */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-footnote-modal-overlay {
+    animation: sb-modal-fade-in 0.3s ease-out;
+  }
+
+  .sb-footnote-modal {
+    animation: sb-modal-rise 0.3s ease-out;
+  }
+}
+
+@keyframes sb-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sb-modal-rise {
+  from {
+    transform: translateY(50%);
+  }
+}
+
 .sb-footnote-modal {
   width: min(28.4375rem, 100%);
   max-height: min(40rem, calc(100dvh - 2rem));
