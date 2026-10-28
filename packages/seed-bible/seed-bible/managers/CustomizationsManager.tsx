@@ -866,6 +866,7 @@ export interface CustomizationsManager {
   hasUnsavedChanges: ReadonlySignal<boolean>;
   /** Persists `editingCustomization` and upserts it into `customizations`. No-op if there's no draft or the user is signed out. Also called automatically, debounced by 5 seconds, whenever one of the draft mutators below changes the draft. */
   saveEditingCustomization: () => Promise<void>;
+  /** Rejects, keeping the customization, if it or one of its sensitive proxies can't be erased. */
   remove: (id: string) => Promise<void>;
   /** Uploads the file, stages the resulting URL onto the open draft, and immediately persists it (unlike every other draft field, which auto-saves only after a short debounce). */
   uploadLogo: (file: File) => Promise<void>;
@@ -2058,16 +2059,17 @@ export function createCustomizationsManager(
       for (const pointer of Object.values(byProxy)) {
         const erased = await os.eraseProxy(pointer.recordName, pointer.address);
         if (!erased.success && erased.errorCode !== "data_not_found") {
-          console.error(
-            "Failed to clear a customization's sensitive settings:",
-            erased.errorCode
+          throw new Error(
+            `Failed to clear a customization's sensitive settings: ${erased.errorCode}`
           );
-          return;
         }
       }
     }
 
-    await os.eraseData(userId, id);
+    const result = await os.eraseData(userId, id);
+    if (!result.success && result.errorCode !== "data_not_found") {
+      throw new Error(`Failed to delete customization: ${result.errorCode}`);
+    }
     customizations.value = customizations.value.filter((c) => c.id !== id);
     if (editingCustomization.value?.id === id) {
       editingCustomization.value = null;

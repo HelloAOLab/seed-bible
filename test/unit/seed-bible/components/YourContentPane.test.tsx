@@ -174,6 +174,8 @@ interface StateOptions {
   plansEnabled?: boolean;
   /** Makes deleting a plan fail, so the screen has to say so. */
   deleteReadingPlanError?: Error;
+  /** Makes deleting a customization fail, so the screen has to say so. */
+  removeCustomizationError?: Error;
 }
 
 function createState(options: StateOptions = {}) {
@@ -211,6 +213,11 @@ function createState(options: StateOptions = {}) {
   const filter = signal("all");
   const syncPhotos = vi.fn(async () => {});
   const loadCustomizations = vi.fn(async () => {});
+  const removeCustomization = vi.fn(async (_id: string) => {
+    if (options.removeCustomizationError) {
+      throw options.removeCustomizationError;
+    }
+  });
 
   const state = {
     yourContent: {
@@ -237,6 +244,7 @@ function createState(options: StateOptions = {}) {
     customizations: {
       customizations: signal(options.customizations ?? []),
       load: loadCustomizations,
+      remove: removeCustomization,
       resolveEditingVariantTheme: () => LIGHT_THEME,
       getShareLink: (c: SeedBibleCustomization) =>
         `https://example.com/?customization=${c.id}`,
@@ -303,6 +311,7 @@ function createState(options: StateOptions = {}) {
     filter,
     syncPhotos,
     loadCustomizations,
+    removeCustomization,
   };
 }
 
@@ -495,6 +504,90 @@ describe("YourContentPane", () => {
       renderPane(state);
 
       expect(cardTitles()).toEqual(["Youth group"]);
+    });
+
+    /** Opens a card's menu, which portals into `document.body`. */
+    const openCardMenu = () => {
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-cz-card-menu button")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      return Array.from(
+        document.body.querySelectorAll<HTMLElement>(".sb-context-menu-item")
+      );
+    };
+
+    /** Picks Delete from the card's menu and renders the confirmation. */
+    const chooseDelete = (openModal: ReturnType<typeof vi.fn>) => {
+      const remove = openCardMenu().find((item) =>
+        item.textContent?.includes("Delete")
+      );
+      if (!remove) throw new Error("Delete was not in the menu.");
+      act(() => {
+        remove.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(openModal).toHaveBeenCalledTimes(1);
+      const modal = openModal.mock.calls[0]![0] as {
+        content: () => preact.ComponentChildren;
+      };
+      const dialog = document.createElement("div");
+      act(() => render(<>{modal.content()}</>, dialog));
+      return dialog;
+    };
+
+    const confirm = async (dialog: HTMLElement) => {
+      await act(async () => {
+        dialog
+          .querySelector<HTMLButtonElement>(".sb-session-settings-end")!
+          .click();
+      });
+    };
+
+    it("offers share and delete in a customization's menu", () => {
+      const { state } = createState({
+        customizations: [customization("c1", "Grace Church")],
+      });
+      renderPane(state);
+
+      expect(
+        openCardMenu().map(
+          (item) =>
+            item.querySelector(".sb-context-menu-item-icon")?.textContent
+        )
+      ).toEqual(["share", "delete"]);
+    });
+
+    it("asks before deleting a customization, then deletes it", async () => {
+      const { state, openModal, removeCustomization } = createState({
+        customizations: [customization("c1", "Grace Church")],
+      });
+      renderPane(state);
+
+      const dialog = chooseDelete(openModal);
+      expect(removeCustomization).not.toHaveBeenCalled();
+      expect(dialog.textContent).toContain(
+        'Delete Custom Branding "Grace Church"? This can\'t be undone.'
+      );
+
+      await confirm(dialog);
+
+      expect(removeCustomization).toHaveBeenCalledWith("c1");
+    });
+
+    it("says so when a customization can't be deleted", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      const { state, openModal, toast } = createState({
+        customizations: [customization("c1", "Grace Church")],
+        removeCustomizationError: new Error("server_error"),
+      });
+      renderPane(state);
+
+      await confirm(chooseDelete(openModal));
+
+      expect(toast).toHaveBeenCalledWith(
+        "Couldn't delete the Custom Branding."
+      );
     });
 
     it("says what will show up under the Branding chip when there is none", () => {
