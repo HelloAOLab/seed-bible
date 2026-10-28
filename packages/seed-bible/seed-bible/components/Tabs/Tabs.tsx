@@ -3,6 +3,7 @@ import "./Tabs.css";
 import { useSignal } from "@preact/signals";
 import {
   DEFAULT_SAVE_CATEGORY,
+  formatSaveVerse,
   saveBelongsToCategory,
   type SaveVerse,
 } from "../../managers/SavesManager";
@@ -1943,14 +1944,6 @@ function SavesSection(props: SavesSectionProps) {
     );
   };
 
-  const formatVerseRef = (
-    verse: number | [number, number] | undefined
-  ): string => {
-    if (verse === undefined) return "";
-    if (typeof verse === "number") return `:${verse}`;
-    return verse[0] === verse[1] ? `:${verse[0]}` : `:${verse[0]}-${verse[1]}`;
-  };
-
   const commitRename = (oldName: string) => {
     const next = renameValue.value.trim();
     renamingCategory.value = null;
@@ -2093,7 +2086,7 @@ function SavesSection(props: SavesSectionProps) {
                     const bookName =
                       lookupBookName(save.translationId, save.bookId) ??
                       save.bookId;
-                    const verseSuffix = formatVerseRef(save.verse);
+                    const verseSuffix = formatSaveVerse(save.verse);
                     return (
                       <div
                         key={save.id}

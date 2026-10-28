@@ -4,7 +4,11 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { Annotation } from "../../managers/AnnotationsManager";
 import { annotationVerseNumbers } from "../../managers/AnnotationsManager";
 import type { StoredHighlight } from "../../managers/HighlightsManager";
-import type { Save } from "../../managers/SavesManager";
+import {
+  compareSaves,
+  formatSaveVerse,
+  type Save,
+} from "../../managers/SavesManager";
 import type { Playlist } from "../../managers/PlaylistManager";
 import type { TodayPassageTarget } from "../../managers/TodayManager";
 import {
@@ -358,7 +362,9 @@ function SavePill(props: {
   const bookNames = state.today.bookNames.value;
   const verse = verseNumbersOf(save.verse)[0];
   const book = bookNames.get(save.bookId) ?? save.bookId;
-  const name = `${book} ${save.chapterNumber}${verse ? `:${verse}` : ""}`;
+  // The whole range, so two saves that start on the same verse don't look
+  // like duplicates.
+  const name = `${book} ${save.chapterNumber}${formatSaveVerse(save.verse)}`;
   // "My Saves, Sermon prep, and Advent", joined the way the language does.
   const folders = new Intl.ListFormat(language, { type: "conjunction" }).format(
     save.categories
@@ -420,21 +426,24 @@ function SavePill(props: {
           <span className="sb-content-save-date">
             {formatDate(save.createdAt, language, "short")}
           </span>
-          {/* How many folders it's in, so a save filed in several stands out;
-              the names are on hover and for screen readers. */}
-          <span
-            className="sb-content-save-folders"
-            title={folders}
-            aria-label={t("save-folders", {
-              folders,
-              defaultValue: "In {{folders}}",
-            })}
-          >
-            <MaterialIcon aria-hidden="true">folder</MaterialIcon>
-            <span className="sb-content-save-folder-count" aria-hidden="true">
-              {save.categories.length}
+          {/* Only for a save filed in several folders, which is what it's
+              there to point out; the names are on hover and for screen
+              readers. */}
+          {save.categories.length > 1 ? (
+            <span
+              className="sb-content-save-folders"
+              title={folders}
+              aria-label={t("save-folders", {
+                folders,
+                defaultValue: "In {{folders}}",
+              })}
+            >
+              <MaterialIcon aria-hidden="true">folder</MaterialIcon>
+              <span className="sb-content-save-folder-count" aria-hidden="true">
+                {save.categories.length}
+              </span>
             </span>
-          </span>
+          ) : null}
         </span>
       </button>
       <ContextMenuWithButton
@@ -683,11 +692,14 @@ export function YourContentPane(props: YourContentScreenProps) {
       verseTextByHighlight.get(highlightKey(h))
     )
   );
-  const visibleSaves = saves.saves.value.filter((b) =>
-    matches(
-      ...referenceFields(b.bookId, b.chapterNumber, verseNumbersOf(b.verse))
+  // In Bible order. The list arrives in the order the saves were made.
+  const visibleSaves = saves.saves.value
+    .filter((b) =>
+      matches(
+        ...referenceFields(b.bookId, b.chapterNumber, verseNumbersOf(b.verse))
+      )
     )
-  );
+    .sort(compareSaves);
   const visiblePlaylists = playlists.userPlaylists.value.filter((p) =>
     matches(p.title, p.description)
   );

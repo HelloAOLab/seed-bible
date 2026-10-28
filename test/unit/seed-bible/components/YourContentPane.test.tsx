@@ -842,9 +842,59 @@ describe("YourContentPane", () => {
     const translations = Array.from(
       container.querySelectorAll(".sb-content-save-translation")
     ).map((el) => el.textContent);
-    expect(translations).toEqual(["BSB", "AAB"]);
+    // The whole chapter comes before a verse in it.
+    expect(translations).toEqual(["AAB", "BSB"]);
     expect(container.textContent).not.toContain("Verse");
     expect(container.textContent).not.toContain("Chapter");
+  });
+
+  it("lists saves in Bible order, not the order they were made", () => {
+    const { state } = createState({
+      saves: [
+        { ...save("john"), bookId: "JHN", chapterNumber: 3 },
+        { ...save("psalm"), chapterNumber: 23 },
+        { ...save("genesis"), bookId: "GEN", chapterNumber: 1 },
+      ],
+    });
+    renderPane(state);
+
+    expect(
+      Array.from(container.querySelectorAll(".sb-content-save-name")).map(
+        (el) => el.textContent
+      )
+    ).toEqual(["Genesis 1", "Psalm 23", "John 3"]);
+  });
+
+  it("names a verse range in full, so two that start together don't look alike", () => {
+    const { state } = createState({
+      saves: [
+        save("one", 4),
+        { ...save("range"), verse: [4, 6] } as unknown as Save,
+      ],
+    });
+    renderPane(state);
+
+    expect(
+      Array.from(container.querySelectorAll(".sb-content-save-name")).map(
+        (el) => el.textContent
+      )
+    ).toEqual(["Psalm 23:4", "Psalm 23:4-6"]);
+  });
+
+  it("counts folders only on a save that's in more than one", () => {
+    const { state } = createState({
+      saves: [
+        save("one-folder", 1),
+        { ...save("two-folders", 2), categories: ["My Saves", "Sermon prep"] },
+      ],
+    });
+    renderPane(state);
+
+    const counts = container.querySelectorAll(".sb-content-save-folders");
+    expect(counts).toHaveLength(1);
+    expect(
+      counts[0]!.querySelector(".sb-content-save-folder-count")?.textContent
+    ).toBe("2");
   });
 
   it("names saves by book, chapter and verse", () => {

@@ -10,6 +10,7 @@ import type { LoginManager } from "../managers/LoginManager";
 import type { CasualOSManager } from "./OsManager";
 import { readRecord } from "./RecordRead";
 import { captureEvent } from "./Utils";
+import { canonicalBookIndex } from "./BibleDataManager";
 
 /**
  * Verse target for a save: a single verse number or an inclusive `[start, end]`
@@ -140,6 +141,36 @@ export function normalizeSaveCategories(
     unique.push(name);
   }
   return unique.length === 0 ? [DEFAULT_SAVE_CATEGORY] : unique;
+}
+
+/** ":4" or ":4-6" after a save's chapter; "" for a whole-chapter save. */
+export function formatSaveVerse(verse: SaveVerse | undefined): string {
+  if (verse === undefined) return "";
+  if (typeof verse === "number") return `:${verse}`;
+  return verse[0] === verse[1] ? `:${verse[0]}` : `:${verse[0]}-${verse[1]}`;
+}
+
+/**
+ * Bible order: book, then chapter, then verse (a whole chapter before its
+ * verses, a shorter range before a longer one from the same verse).
+ */
+export function compareSaves(a: Save, b: Save): number {
+  const book = canonicalBookIndex(a.bookId) - canonicalBookIndex(b.bookId);
+  if (book !== 0) return book;
+  if (a.bookId !== b.bookId) return a.bookId.localeCompare(b.bookId);
+  if (a.chapterNumber !== b.chapterNumber) {
+    return a.chapterNumber - b.chapterNumber;
+  }
+  const [aStart, aEnd] = verseBounds(a.verse);
+  const [bStart, bEnd] = verseBounds(b.verse);
+  return aStart - bStart || aEnd - bEnd;
+}
+
+/** A save's verses as `[start, end]`; a whole chapter is `[0, 0]`. */
+function verseBounds(verse: SaveVerse | undefined): [number, number] {
+  if (verse === undefined) return [0, 0];
+  if (typeof verse === "number") return [verse, verse];
+  return [verse[0], verse[1]];
 }
 
 /**

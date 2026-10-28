@@ -869,6 +869,16 @@ export const BOOK_SLUGS: Record<BookId, string> = {
   LAO: "lao",
 };
 
+/** Canonical Protestant + Apocrypha order, from {@link BOOK_SLUGS}' insertion order. */
+const CANONICAL_BOOK_ORDER = new Map(
+  (Object.keys(BOOK_SLUGS) as BookId[]).map((id, index) => [id, index])
+);
+
+/** A book's place in canonical order; a book it doesn't know sorts last. */
+export function canonicalBookIndex(bookId: string): number {
+  return CANONICAL_BOOK_ORDER.get(bookId as BookId) ?? Number.MAX_SAFE_INTEGER;
+}
+
 /**
  * Gets the canonical URL slug for a book (e.g. "GEN" -> "genesis"), used to
  * build path-based routes and the canonical URL. Falls back to a lowercased

@@ -365,9 +365,11 @@
 
 /* --------------------------------------------------------------- saves */
 
+/* Equal-width cards in columns: as many as fit at 10rem or wider, which is
+   two on a phone and three in the desktop column. */
 .sb-content-saves {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
   gap: 8px;
 }
 
@@ -377,7 +379,8 @@
  * two separate controls that happen to sit side by side.
  */
 .sb-content-save-row {
-  display: inline-flex;
+  display: flex;
+  min-width: 0;
   align-items: center;
   border-radius: 8px;
   background: var(--sb-content-surface);
@@ -389,8 +392,11 @@
 
 /* Name and translation on one line, the date on its own line under them. */
 .sb-content-save {
-  display: inline-grid;
-  grid-template-columns: auto auto;
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  /* The name gives way (with an ellipsis) before the translation does. */
+  grid-template-columns: minmax(0, max-content) auto;
   align-items: center;
   justify-content: start;
   column-gap: 8px;
@@ -422,6 +428,9 @@
 }
 
 .sb-content-save-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.9375rem;
   font-weight: 700;
 }

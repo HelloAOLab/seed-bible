@@ -1,6 +1,8 @@
 import {
+  compareSaves,
   createSavesManager,
   DEFAULT_SAVE_CATEGORY,
+  formatSaveVerse,
   normalizeSaveCategories,
   saveBelongsToCategory,
   type Save,
@@ -1201,5 +1203,51 @@ describe("SavesManager", () => {
 
     await manager.deleteCategory("Favorites");
     expect(manager.saves.value).toEqual([]);
+  });
+});
+
+describe("formatSaveVerse", () => {
+  it("formats a whole chapter, one verse, and a range", () => {
+    expect(formatSaveVerse(undefined)).toBe("");
+    expect(formatSaveVerse(4)).toBe(":4");
+    expect(formatSaveVerse([4, 6])).toBe(":4-6");
+    expect(formatSaveVerse([4, 4])).toBe(":4");
+  });
+});
+
+describe("compareSaves", () => {
+  const at = (
+    bookId: string,
+    chapterNumber: number,
+    verse?: number | [number, number]
+  ) =>
+    ({
+      id: `${bookId}-${chapterNumber}-${String(verse)}`,
+      translationId: "BSB",
+      bookId,
+      chapterNumber,
+      verse,
+      categories: [DEFAULT_SAVE_CATEGORY],
+      createdAt: 1,
+    }) as Save;
+
+  it("sorts by book in canonical order, then chapter, then verse", () => {
+    const saves = [
+      at("JHN", 3),
+      at("GEN", 11, [4, 6]),
+      at("GEN", 11, 4),
+      at("GEN", 11),
+      at("GEN", 2),
+      at("EXO", 1),
+    ];
+
+    expect(saves.sort(compareSaves).map((save) => save.id)).toEqual([
+      "GEN-2-undefined",
+      "GEN-11-undefined",
+      "GEN-11-4",
+      "GEN-11-4,6",
+      "EXO-1-undefined",
+      "JHN-3-undefined",
+    ]);
   });
 });
