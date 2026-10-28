@@ -41,6 +41,7 @@
   margin-bottom: 1.75rem;
 }
 
+/* Filled, with no outline, like the search bars on Your content and Today. */
 .sb-extensions-page-search {
   flex: 0 1 22.5rem;
   display: flex;
@@ -48,13 +49,9 @@
   gap: 0.625rem;
   min-height: 2.75rem;
   padding: 0 0.875rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 91%);
   color: var(--sb-extensions-page-muted);
-}
-
-.sb-extensions-page-search:focus-within {
-  border-color: var(--sb-primary-color);
 }
 
 .sb-extensions-page-search input {
