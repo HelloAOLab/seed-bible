@@ -29,6 +29,7 @@ import { useEffect, useRef } from "preact/hooks";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { Avatar } from "../Avatar/Avatar";
 import { ChatParticipantsIcon, MaterialIcon } from "../icons";
+import { SearchClearButton } from "../SearchClearButton/SearchClearButton";
 
 interface SearchResult {
   id: string;
@@ -700,18 +701,12 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
           }}
         />
         {hasQuery && (
-          <button
-            type="button"
-            className="sb-floating-search-clear"
-            onClick={() => {
+          <SearchClearButton
+            onClear={() => {
               runSearch("");
               inputRef.current?.focus();
             }}
-            aria-label={t("clear-search", { defaultValue: "Clear search" })}
-            title={t("clear-search", { defaultValue: "Clear search" })}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          />
         )}
       </div>
     </div>
