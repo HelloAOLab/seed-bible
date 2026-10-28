@@ -475,6 +475,23 @@ describe("mobile saves screen", () => {
     });
   });
 
+  it("lists a folder's saves in Bible order, not the order they were made", async () => {
+    await act(async () => {
+      await state.saves.addSave("AAB", "JHN", 3);
+      await state.saves.addSave("AAB", "EXO", 2, { verse: 5 });
+      await state.saves.addSave("AAB", "GEN", 1);
+      await state.saves.addSave("AAB", "EXO", 2);
+    });
+
+    await openSavesScreen();
+
+    const titles = Array.from(
+      container.querySelectorAll(".sb-save-item-button .sb-tab-main-title")
+    ).map((title) => title.textContent);
+    // Made in the order John, Exodus 2:5, Genesis, Exodus 2.
+    expect(titles).toEqual(["GEN 1", "EXO 2", "EXO 2:5", "JHN 3"]);
+  });
+
   it("opens a save with no matching tab on the first tap and closes the drawer", async () => {
     // The default tab sits on AAB GEN 1, so this save has no open tab and
     // takes the "create a new tab" path.

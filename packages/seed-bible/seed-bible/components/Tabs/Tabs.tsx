@@ -2,6 +2,7 @@ import "./Tabs.inline.css";
 import "./Tabs.css";
 import { useSignal } from "@preact/signals";
 import {
+  compareSaves,
   DEFAULT_SAVE_CATEGORY,
   formatSaveVerse,
   saveBelongsToCategory,
@@ -1901,7 +1902,8 @@ function SavesSection(props: SavesSectionProps) {
   const { t } = useI18n();
 
   const categories = saves.categories.value;
-  const allSaves = saves.saves.value;
+  // In Bible order. The list itself is in the order the saves were made.
+  const allSaves = [...saves.saves.value].sort(compareSaves);
   const expanded = saves.expandedCategories.value;
   // Subscribe to the translation books cache so book-name lookups re-render
   // when a previously unloaded translation finishes loading.
