@@ -1,6 +1,6 @@
 # Custom Content Database for Customizations — Design
 
-Status: **Proposal** · Owner: TBD · Last updated: 2026-10-27
+Status: **Proposal** · Owner: TBD · Last updated: 2026-10-28
 
 ## 1. Summary
 
@@ -10,11 +10,14 @@ Before: the only way to put your own content into Discover was to write an exten
 
 After: a ministry that sets up a Customization can paste 200 YouTube links into the Customization editor, review what the AI tagged, press Publish, and everyone who opens their customization link sees that content in Discover on the right chapters, filterable by the ministry's own categories.
 
+Owners with a website full of content don't even need the links: they enter the site's address, and Seed Bible finds its pages in the Common Crawl web archive and imports the ones they pick (§5.7).
+
 ## 2. Goals and non-goals
 
 **Goals**
 
 - Owners build a content library from links, without writing code or JSON.
+- Owners can import a whole website by its address, using the pages Common Crawl has archived.
 - Categories and relevant verses are suggested automatically, and the owner can correct them.
 - Content is stored per chapter so the reader fetches exactly one small record when a chapter opens.
 - Anyone viewing the Customization (signed in or not) sees the content in Discover.
@@ -39,6 +42,7 @@ After: a ministry that sets up a Customization can paste 200 YouTube links into 
 | `DiscoverManager.registerDiscoverProvider` / `registerContentType`                                            | Showing the content. Each category becomes a Discover content type, so category filter chips come for free.                                                                       |
 | `resolveLinkMedia` + `PlaylistLinkContent`                                                                    | Deciding whether a link is an embeddable video (YouTube/Vimeo), a video file, or a plain link, and opening it in a modal — the same thing `default-content-extension` does today. |
 | `os.getLinkPreview` + `managers/linkPreview.ts`                                                               | Fetching each link's title, description and image. It's the records server's link preview API that playlists and reading plans already use (see §5.2).                            |
+| `server/index.ts` (Express)                                                                                   | A new site-import job endpoint for Common Crawl lookups (§5.7). Single links don't need it; only whole-site imports do.                                                           |
 
 ## 4. Data model
 
@@ -214,7 +218,7 @@ Use the records server's existing link preview API, `os.getLinkPreview(url, loca
 It returns `{ title, description, imageUrl, imageAlt, siteName }` from the page's Open Graph tags (the `og:` tags sites publish for link previews). Two gaps to plan around:
 
 - **No author field.** For a YouTube video, `siteName` is "YouTube", not the channel. So the item's `author` starts empty, and the library manifest gets an optional `defaultAuthor` (most libraries are one ministry's own content, e.g. "Expedition Bible") that new items inherit. The owner can override it per item.
-- **Descriptions are short.** Open Graph descriptions are usually a summary, capped at 1,000 characters by `toLinkPreview`. A YouTube video's full description, which often lists the passages covered, isn't available. Step 3 therefore finds fewer explicit references than it would with the full text, and the AI does more of the work. If that turns out to matter in practice, the fix belongs in the CasualOS link preview API (e.g. an optional longer description), not in a second fetcher here.
+- **Descriptions are short.** Open Graph descriptions are usually a summary, capped at 1,000 characters by `toLinkPreview`. A YouTube video's full description, which often lists the passages covered, isn't available. Step 3 therefore finds fewer explicit references than it would with the full text, and the AI does more of the work. For pasted links, if that turns out to matter in practice, the fix belongs in the CasualOS link preview API (e.g. an optional longer description). Pages imported from a whole site (§5.7) don't have this gap: their full text comes from the Common Crawl archive.
 
 Imports run a few items at a time (§5) rather than all at once, so a 200-link paste doesn't flood the preview API.
 
@@ -270,6 +274,107 @@ Writes go through one queue per library and are batched: publishing 200 items re
 
 Deleting an item = erase its item record, then rebuild its chapters. Deleting a category = remove its id from every item (items left with no category fall back to an "Other" section), then rebuild.
 
+### 5.7 Importing a whole website from Common Crawl
+
+**Short answer:** instead of pasting links one by one, the owner types in a site, for example `gracecommunity.org/sermons/`. We look the site up in [Common Crawl](https://commoncrawl.org), a free public archive of web pages, to list every page it has saved from that site. The owner picks which pages to import. For those pages we pull the saved HTML from the archive and send each one through the same pipeline as a pasted link (steps 3–6).
+
+Before: a ministry with 400 sermon pages has to collect and paste 400 links. And each item only gets the page's short link-preview summary, so verses are found mostly by the AI guessing (§5.2).
+
+After: the owner enters one address, sees "Found 412 pages under /sermons/", unticks the ones they don't want, and imports. Each item is classified using the **full page text**, so a sermon page that says "Text: John 10:1–18" halfway down is picked up exactly, by the parser, instead of being guessed.
+
+> **To confirm before building.** This session's network couldn't reach commoncrawl.org, so the Common Crawl details below (endpoint names, query parameters, response fields, rate limits, terms) are from prior knowledge, not checked against current docs. Check each one against the live index server and the Common Crawl docs first.
+
+#### How Common Crawl is organized (the parts we use)
+
+- Common Crawl publishes a new **crawl** every month or two, each with an id like `CC-MAIN-2025-38`. The list of crawls is at `https://index.commoncrawl.org/collinfo.json`.
+- Each crawl has a **URL index** (a "CDX" server, the lookup service for "which pages did you save from this site?"): `https://index.commoncrawl.org/{crawlId}-index?url={site}/*&output=json`. It returns one JSON line per saved page, with the page's `url`, `timestamp`, HTTP `status`, `mime` type, `digest` (a fingerprint of the content), and where the page is stored: `filename`, `offset` and `length`. Big sites are split into pages of results: `showNumPages=true` says how many, and `page=N` fetches each one.
+- The page itself is stored inside a large **WARC file** (the web archive format) at `https://data.commoncrawl.org/{filename}`. We never download the whole file: an HTTP **range request** for bytes `offset` to `offset + length - 1` returns just that one page, as a gzip-compressed WARC record. Unzipped, it holds the HTTP response headers followed by the page's HTML.
+- For very large lookups there is also a **columnar index** (the same index as Parquet files, queryable with SQL tools such as Amazon Athena or DuckDB). It isn't needed for one ministry's site; noted in case we ever import at a much larger scale.
+
+#### Why this runs on our server, not in the browser
+
+The link preview API (§5.2) works one URL at a time and returns only Open Graph tags, so it can't list a site's pages or return full text. That means this feature needs a fetcher of our own, and it has to live on the Seed Bible server (`server/index.ts`) for three reasons:
+
+1. **Politeness and rate limits.** Common Crawl's index server is a shared, free service and asks heavy users to go slowly. Only a server can enforce one queue for all our users; a hundred owners' browsers each querying in parallel can't.
+2. **The browser may not be allowed to read it.** We don't know whether the index and data hosts send the headers that let a web page read them (CORS). A server doesn't need them.
+3. **The work is heavy for a phone.** Unzipping WARC records and stripping HTML for hundreds of pages belongs on a server.
+
+The server does only the Common Crawl part, and hands back plain extracted documents. Classifying, reviewing and saving stay in the browser exactly as for pasted links. That keeps AI calls and record writes under the owner's own CasualOS session, as everywhere else in this design.
+
+#### The flow
+
+```
+ owner enters site ──► A. list pages (index) ──► B. owner picks pages ──► C. fetch & extract (WARC)
+                                                                                  │
+                                    steps 3–6 of §5 (refs, AI, review, publish) ◄─┘
+```
+
+**A. List the site's pages.** `POST /api/site-import` with `{ site, include?, exclude? }` starts a job and returns its id; the editor checks on it with `GET /api/site-import/{id}`.
+
+- Query the **latest 3 crawls**, because each crawl only samples a site and a page missing from one is often in another. Keep only `status` 200 with `mime` `text/html`.
+- Merge the results: one entry per normalized URL (same rules as §5.1), keeping the **newest capture**. Captures with identical `digest` (the same content under two URLs) are collapsed.
+- Apply the owner's path filters. Include patterns like `/sermons/*`, exclude patterns like `/tag/*` or `/page/*`. Sensible defaults drop listing and archive pages (`/tag/`, `/category/`, `/page/N`, `/feed`, `?replytocom=`), which are noise for verse lookup.
+- Drop any URL already in the library.
+- Cap a job at 2,000 pages (a number to tune). The owner can narrow the filters if they hit it.
+
+**B. The owner picks.** Before any page is downloaded, the editor shows the list grouped by path (`/sermons/` 412 · `/blog/` 96 · `/events/` 40), with each page's title when the index has one and the date it was captured. The owner ticks folders or individual pages. This step matters: it stops "import my whole site" from filling the library with contact pages and event announcements.
+
+**C. Fetch and extract.** For each chosen page, the server makes one range request, unzips the record and pulls out:
+
+- `title`, `description`, `image`: the same Open Graph tags the link preview reads, falling back to `<title>` and the first `<img>` in the main content.
+- **Main text:** the article body with menus, footers and sidebars removed (a "readability"-style extractor), capped at 20,000 characters.
+- **Embedded media:** a YouTube or Vimeo `<iframe>` on the page. Sermon pages often wrap a video. The item keeps the **page** as its `url` (that's what the owner imported) and stores the video as `mediaUrl`, so Discover can open the video player directly (`resolveLinkMedia`).
+- **Author and date** when the page states them (`article:author`, `article:published_time`, JSON-LD). This fills the author gap from §5.2 for most sites.
+
+The browser then picks up each extracted document and runs the normal pipeline:
+
+- **Step 3** (explicit references) runs over the **full text**. This is where most of the gain comes from.
+- **Step 4** (AI) receives the title, description and the first ~4,000 characters of text, not the whole page. That keeps the cost per item close to a pasted link's.
+
+#### What gets stored
+
+Full page text is used during classification and then **discarded**. Only the usual summary fields are saved, so the library holds links and short descriptions, the same as for pasted links. Two additions to the data model:
+
+```ts
+// ContentItem (§4.4) gains:
+mediaUrl?: string; // video embedded in the page, opened instead of the page itself
+origin?:
+  | { kind: "paste" | "csv" }
+  | { kind: "site"; sourceId: string; crawlId: string; capturedAt: string };
+
+// ContentLibraryManifest (§4.3) gains:
+siteSources?: {
+  id: string;
+  site: string; // "gracecommunity.org/sermons/"
+  include: string[];
+  exclude: string[];
+  lastImportedAt: number;
+  newestCrawlId: string; // lets "Check for new pages" look only at newer crawls
+}[];
+```
+
+`siteSources` turns this into a repeatable action. **"Check for new pages"** re-runs step A against crawls newer than `newestCrawlId` and offers only URLs not already in the library.
+
+#### Limits to tell owners about plainly
+
+- **Not every page is there, and the archive lags.** Common Crawl samples sites and crawls every month or two, so last Sunday's sermon may not be in it yet, and some pages never are. The import screen says how many pages were found and when they were captured, and pasting links (§5.1) remains the way to add anything missing.
+- **Sites that block crawlers aren't in it.** Common Crawl follows each site's `robots.txt` rules. If a site has opted out, the lookup finds nothing, and the editor says so instead of showing an empty list with no explanation.
+- **Not for YouTube channels.** Video platforms build their pages with scripts and limit crawling, so the archive has little usable data for a channel. A channel import would need a different source (e.g. the YouTube Data API) and is out of scope here.
+- **Pages can be stale.** A page may have changed since it was captured. Links always point at the live site, so readers see the current version; only our summary can be out of date.
+
+#### Rights
+
+Common Crawl provides copies of pages, but the content still belongs to each site's owner. We keep only what a link preview would: a title, a short description, an image URL and the link back to the live page. Full text is never stored or shown. Because the expected use is a ministry importing **its own** site, the import screen asks the owner to confirm they own the site or have permission to list its content, the same responsibility they take on when pasting links.
+
+#### Server safeguards
+
+- Requires a valid CasualOS session (see open question 6).
+- Only ever contacts the Common Crawl hosts. The owner's input is used as a **search pattern** in the index query, never fetched directly, so this endpoint can't be used to make our server reach arbitrary or internal addresses.
+- **One global queue to the index server:** a single request at a time, waiting between pages, backing off and retrying on 503 or 429 errors. Each job is also capped per owner.
+- **Range requests run a few at a time** (proposal: 4). Each response is limited to its `length` and the extracted text is capped.
+- **Index results are cached for a day per crawl and site,** so two owners importing the same site, or an owner retrying, don't query Common Crawl twice.
+- Jobs are short-lived: results are dropped once the browser has collected them, or after 24 hours.
+
 ## 6. Reading: the Discover provider
 
 ### 6.1 Where it's registered
@@ -320,7 +425,7 @@ A new **"Content"** section in `CustomizationEditPane`, next to Branding and Ext
 
 1. **Empty state:** "Add your videos, articles and podcasts to Discover" + **Create content library** (creates the manifest and sets `contentLibraryId`).
 2. **Categories:** a short editable list (name + optional description). Suggest the owner starts with 3–8.
-3. **Add content:** a textarea for links (one per line) or a CSV upload, and an **Import** button.
+3. **Add content:** two tabs. _Paste links_ is a textarea (one link per line) or a CSV upload, with an **Import** button. _Import a website_ is a site address, optional include/exclude paths and a **Find pages** button. It leads to the page picker grouped by folder (§5.7 step B), and then lists saved sites with **Check for new pages**.
 4. **Items list:** filter tabs _Needs review · Published · Failed_. Each row: thumbnail, title, author, category chips, reference chips (low-confidence ones outlined), Edit / Re-classify / Delete. Bulk "Publish reviewed".
 5. **Coverage:** "Content on 214 of 1,189 chapters" with a link to see which books have none — useful for ministries filling gaps.
 6. **Maintenance:** "Rebuild index" (§5.6) for recovery.
@@ -329,15 +434,17 @@ All new strings go into `en.json` only.
 
 ## 8. Code layout
 
-| File                                                         | Contents                                                                                                                                                                                         |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `managers/CustomContentManager.tsx`                          | Signals for the library, items and import progress; create/delete library; import queue; publish/rebuild; registers the Discover provider. Receives `os`, `login`, `customizations`, `discover`. |
-| `managers/customContent/schema.ts`                           | zod schemas + types for manifest, item, chapter record (parsed on every read, like `customizationSchema`).                                                                                       |
-| `managers/customContent/chapterIndex.ts`                     | Pure functions: split references into per-chapter entries, compute affected chapters, build a chapter record from items. Most of the unit tests live here.                                       |
-| `managers/customContent/classify.ts`                         | Prompt, `aiChat` call, response parsing and validation.                                                                                                                                          |
-| `managers/customContent/linkMetadata.ts`                     | URL normalization and dedupe; wraps `os.getLinkPreview` + `resolveLinkMedia` into an item's `fetched` field.                                                                                     |
-| `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                   |
-| `CustomizationsManager.tsx`                                  | Add optional `contentLibraryId` to the schema and type.                                                                                                                                          |
+| File                                                         | Contents                                                                                                                                                                                                        |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `managers/CustomContentManager.tsx`                          | Signals for the library, items and import progress; create/delete library; import queue; publish/rebuild; registers the Discover provider. Receives `os`, `login`, `customizations`, `discover`.                |
+| `managers/customContent/schema.ts`                           | zod schemas + types for manifest, item, chapter record (parsed on every read, like `customizationSchema`).                                                                                                      |
+| `managers/customContent/chapterIndex.ts`                     | Pure functions: split references into per-chapter entries, compute affected chapters, build a chapter record from items. Most of the unit tests live here.                                                      |
+| `managers/customContent/classify.ts`                         | Prompt, `aiChat` call, response parsing and validation.                                                                                                                                                         |
+| `managers/customContent/linkMetadata.ts`                     | URL normalization and dedupe; wraps `os.getLinkPreview` + `resolveLinkMedia` into an item's `fetched` field.                                                                                                    |
+| `managers/customContent/siteImport.ts`                       | Starts and checks site-import jobs, and feeds extracted documents into the import queue.                                                                                                                        |
+| `server/siteImport/` (+ routes in `server/index.ts`)         | `commonCrawl.ts` (crawl list, paged index queries, the shared polite queue, cache), `warc.ts` (range fetch, unzip, WARC/HTTP parse), `extract.ts` (metadata, main text, embedded media), `jobs.ts` (job state). |
+| `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                                  |
+| `CustomizationsManager.tsx`                                  | Add optional `contentLibraryId` to the schema and type.                                                                                                                                                         |
 
 ## 9. Testing plan
 
@@ -347,6 +454,8 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 - **`classify`**: category ids not in the library are dropped; impossible references ("John 30:1") are dropped; explicit references win over AI duplicates; malformed AI output retries once then falls back; owner-sourced references survive re-classify.
 - **`linkMetadata`** (mock `os.getLinkPreview`): URL normalization dedupes `youtu.be` / `youtube.com/watch` / tracking params; a preview that fails or returns null yields `needs_review` with an empty title, not a lost item; new items inherit the manifest's `defaultAuthor`.
 - **Discover provider** (mock `os.getData`): manifest says empty → no `getData` call; missing record or failed read → `[]` and other providers still answer; results carry the right `contentType` and `verses`; switching Customization unregisters the provider and its content types.
+- **Site import (server)**, with recorded index responses and a small WARC fixture, no live network: pages across index result pages are all collected; the newest capture wins and identical `digest`s collapse; include/exclude and default noise filters apply; URLs already in the library are skipped; a WARC record parses to the right HTML, including non-UTF-8 pages; extraction finds the title, main text and an embedded YouTube iframe; a 503 from the index is retried with backoff, not reported as "no pages"; a site with zero captures returns a clear "not in the archive" result; the job cap is enforced.
+- **Site import (client)**: extracted documents go through steps 3–6 like pasted links; full text is never written to a record; explicit references found deep in the body text are picked up.
 - **Signed-out viewer** opening a customization link sees the content (public-read markers are correct).
 
 ## 10. Rollout
@@ -355,6 +464,7 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 2. **Phase 2 — automatic metadata.** Fill items from `os.getLinkPreview`; bulk paste and CSV import.
 3. **Phase 3 — AI classification and review.** `aiChat` classification, review queue, confidence flags, auto-publish setting.
 4. **Phase 4 — polish.** Coverage view, rebuild index, chapter-record paging if real libraries need it.
+5. **Phase 5 — whole-site import.** The Common Crawl job endpoint, page picker, full-text extraction and "Check for new pages". It comes after Phase 3 because its main gain, better verse detection from full text, only pays off once classification exists.
 
 ## 11. Open questions
 
@@ -363,3 +473,6 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 3. **Shared libraries.** Should two Customizations be able to point at the same library (e.g. one ministry with several branded customizations)? The pointer design allows it as long as both are in the same record; cross-record sharing would need the pointer to carry a `recordName` too.
 4. **Collaborators.** Ministries often have a team. CasualOS record permissions could grant others write access to the owner's record — worth a follow-up design once v1 is in use.
 5. **Moderation.** Content is chosen by the owner and shown only inside their Customization, so v1 does no moderation. Should a library ever be shown outside its Customization (e.g. a public directory), that would need revisiting.
+6. **Server authentication.** How should `server/index.ts` verify that a site-import request comes from a signed-in CasualOS user? Can it validate the session key with the records server, or do we need a token issued for the purpose?
+7. **Common Crawl terms and load.** Confirm the current terms of use and the guidance on request rates for the index server and `data.commoncrawl.org`, and whether our expected volume (a few thousand range requests per import) is welcome or should go through the columnar index instead.
+8. **Running jobs on the server.** Is the long-running host (`server/index.ts` / `Dockerfile`) the right place for these background jobs, or should they run as a separate worker so a large import can't slow page rendering?
