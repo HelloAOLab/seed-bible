@@ -40,7 +40,9 @@ function CloseButton(props: { onClose: () => void; primary?: boolean }) {
     <button
       type="button"
       className={
-        props.primary ? "sb-session-settings-end" : "sb-session-settings-cancel"
+        props.primary
+          ? "sb-friends-button sb-friends-button--primary"
+          : "sb-session-settings-cancel"
       }
       onClick={props.onClose}
     >
@@ -63,7 +65,7 @@ function SignInPrompt(props: {
         <CloseButton onClose={props.onClose} />
         <button
           type="button"
-          className="sb-session-settings-end"
+          className="sb-friends-button sb-friends-button--primary"
           onClick={props.onSignIn}
         >
           {t("log-in", { defaultValue: "Log in" })}
@@ -269,7 +271,7 @@ function AddFriendLinkPrompt(props: {
               {t("cancel", { defaultValue: "Cancel" })}
             </button>
             <BusyButton
-              className="sb-session-settings-end"
+              className="sb-friends-button sb-friends-button--primary"
               busy={busy.value}
               onClick={() => void runAction()}
             >
@@ -418,7 +420,7 @@ function FriendRequestLinkPrompt(props: {
           {t("decline", { defaultValue: "Decline" })}
         </BusyButton>
         <BusyButton
-          className="sb-session-settings-end"
+          className="sb-friends-button sb-friends-button--primary"
           busy={answering.value === "accept"}
           disabled={answering.value !== null}
           onClick={() => void answer(true)}
