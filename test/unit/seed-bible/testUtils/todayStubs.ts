@@ -50,7 +50,6 @@ export function todayScreenPropsStub(
     onOpenPassage: vi.fn(),
     onOpenBookSelector: vi.fn(),
     onTakeTour: vi.fn(),
-    onClose: vi.fn(),
     ...overrides,
   };
 }

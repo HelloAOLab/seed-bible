@@ -146,7 +146,6 @@ describe("Today screen reactivity", () => {
           onOpenPassage={vi.fn()}
           onOpenBookSelector={vi.fn()}
           onTakeTour={vi.fn()}
-          onClose={vi.fn()}
         />,
         container
       )

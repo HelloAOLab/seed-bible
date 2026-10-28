@@ -40,7 +40,6 @@ describe("Header", () => {
     options: {
       language?: string;
       username?: string | undefined;
-      onClose?: () => void;
     } = {}
   ) {
     mockI18nState.language = options.language ?? "en";
@@ -48,10 +47,7 @@ describe("Header", () => {
       render(
         // The real parent: `Header` reads the tick that keeps its clock current.
         <TimeProvider>
-          <Header
-            login={loginWithName(options.username)}
-            onClose={options.onClose ?? vi.fn()}
-          />
+          <Header login={loginWithName(options.username)} />
         </TimeProvider>,
         container
       )
@@ -205,18 +201,5 @@ describe("Header", () => {
       expect(heading()).toBe("Good morning, Al, ice!!");
       expect(nameElement()?.textContent).toBe("Al, ice!");
     });
-  });
-
-  // Today's pane has no header bar, so this is the only way to close it.
-  it("closes Today from the close button beside the greeting", () => {
-    const onClose = vi.fn();
-    setup({ onClose });
-
-    const close = header().querySelector<HTMLButtonElement>(
-      'button[aria-label="Close"]'
-    );
-    act(() => close!.click());
-
-    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -3,7 +3,6 @@ import { useI18n } from "../../i18n";
 import { useMemo } from "preact/hooks";
 import { useTimeContext } from "./TimeContext";
 import { trimmedOrNull } from "../../managers/Utils";
-import { TodayCloseButton } from "./CloseButton";
 
 /**
  * Stands in for the name while the greeting is translated, so the finished
@@ -16,7 +15,7 @@ import { TodayCloseButton } from "./CloseButton";
  */
 const NAME_PLACEHOLDER = "\uE000";
 
-export const Header = (props: { login: LoginManager; onClose: () => void }) => {
+export const Header = (props: { login: LoginManager }) => {
   const username = trimmedOrNull(props.login.profile.value?.name);
   const { t, language } = useI18n();
   // `TimeProvider` re-renders this subtree every ten seconds so the date and
@@ -80,7 +79,6 @@ export const Header = (props: { login: LoginManager; onClose: () => void }) => {
         {afterName === undefined ? null : <span>{username}</span>}
         {afterName}
       </h1>
-      <TodayCloseButton onClose={props.onClose} />
     </div>
   );
 };

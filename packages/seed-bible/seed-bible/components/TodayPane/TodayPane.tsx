@@ -12,7 +12,6 @@ import { ResumeReadingSection } from "./ResumeReadingSection";
 import { BookmarksSection, type BookmarkStripItem } from "./BookmarksSection";
 import { SearchSection } from "./SearchSection";
 import { SocialSection } from "./SocialSection";
-import { TodayCloseButton } from "./CloseButton";
 import { useI18n } from "../../i18n";
 import "./TodayPane.css";
 
@@ -38,8 +37,6 @@ export interface TodayScreenProps {
   onOpenBookSelector: () => void;
   /** Closes Today and starts the onboarding tour. */
   onTakeTour: () => void;
-  /** Closes Today, back to the reader. */
-  onClose: () => void;
 }
 
 export const TodayPane = memo<(props: TodayScreenProps) => preact.JSX.Element>(
@@ -85,14 +82,6 @@ function TodayContainer(props: TodayScreenProps) {
           <TodayContent {...props} />
         )}
       </div>
-      {/* The personalized layout's close button is in its header row; Welcome
-          has no such row, so its own sits in the same corner. */}
-      {showWelcome && (
-        <TodayCloseButton
-          onClose={props.onClose}
-          className="sb-today-welcome-close-button"
-        />
-      )}
     </div>
   );
 }
@@ -100,7 +89,7 @@ function TodayContainer(props: TodayScreenProps) {
 function TodayContent(props: TodayScreenProps) {
   return (
     <div className="sb-today-content">
-      <Header login={props.login} onClose={props.onClose} />
+      <Header login={props.login} />
       {/* Unconditional: `TodayContainer` only reaches here while history is
           loading or ready, and the resume card renders a placeholder for the
           former. The `empty` case rendered Welcome instead. */}
