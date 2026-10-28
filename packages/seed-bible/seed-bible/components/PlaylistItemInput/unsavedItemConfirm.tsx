@@ -40,14 +40,14 @@ function UnsavedItemConfirmModalContent(props: {
         </button>
         <button
           type="button"
-          className="sb-session-settings-cancel"
+          className="sb-unsaved-changes-discard"
           onClick={onDiscardAndSave}
         >
           {t("discard-and-save", { defaultValue: "Discard and save" })}
         </button>
         <button
           type="button"
-          className="sb-session-settings-end"
+          className="sb-friends-button sb-friends-button--primary"
           onClick={onAddAndSave}
         >
           {editing
