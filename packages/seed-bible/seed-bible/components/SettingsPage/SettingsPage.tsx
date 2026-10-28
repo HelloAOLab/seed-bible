@@ -1,9 +1,8 @@
 import "./SettingsPage.css";
 import { localizedThemeName } from "./localizedThemeName";
 import { useComputed, useSignal } from "@preact/signals";
-import { useRef } from "preact/hooks";
 import { ScriptureLineHeightIcon } from "../icons";
-import { SearchClearButton } from "../SearchClearButton/SearchClearButton";
+import { SearchBar } from "../SearchBar/SearchBar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   TEXT_FONT_OPTIONS,
@@ -920,7 +919,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const catalog = useExtensionCatalog(state);
   const { activeCustomization, nameOf, descriptionOf } = catalog;
   const searchQuery = useSignal("");
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
   // The extension whose page is open, in place of the list.
   const openExtensionId = useSignal<string | null>(null);
 
@@ -1085,29 +1083,13 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </div>
         ) : (
           <>
-            <label className="sb-extensions-search">
-              <span className="material-symbols-outlined" aria-hidden="true">
-                search
-              </span>
-              <input
-                ref={searchInputRef}
-                type="search"
-                value={searchQuery.value}
-                onInput={(event) =>
-                  (searchQuery.value = event.currentTarget.value)
-                }
-                placeholder={t("extensions-search")}
-                aria-label={t("extensions-search")}
-              />
-              {searchQuery.value ? (
-                <SearchClearButton
-                  onClear={() => {
-                    searchQuery.value = "";
-                    searchInputRef.current?.focus();
-                  }}
-                />
-              ) : null}
-            </label>
+            <SearchBar
+              value={searchQuery.value}
+              onInput={(value) => {
+                searchQuery.value = value;
+              }}
+              placeholder={t("extensions-search")}
+            />
             {query && shownExtensions.length === 0 ? (
               <div className="sb-settings-empty-state" role="status">
                 <p>

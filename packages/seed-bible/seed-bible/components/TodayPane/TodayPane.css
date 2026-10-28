@@ -533,37 +533,18 @@
   }
 }
 
+/* Holds the shared search bar and anchors the results dropdown under it. */
 .sb-today-container .sb-today-search-container .sb-today-searchbar {
+  position: relative;
   width: 100%;
   height: 100%;
-  border: none;
-  padding: 0.5rem;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-rows: 1fr;
-  background-color: var(--sb-today-surface);
-  border-radius: 0.5rem;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  position: relative;
-}
-
-.sb-today-container .sb-today-search-container .sb-today-searchbar > span {
-  color: var(--sb-font-color);
-}
-
-.sb-today-container .sb-today-search-container .sb-today-searchbar > input {
-  background-color: transparent;
-  border: none;
-  color: var(--sb-font-color);
 }
 
 .sb-today-container
   .sb-today-search-container
   .sb-today-searchbar
-  > input:focus {
-  outline: none;
+  > .sb-search-bar {
+  height: 100%;
 }
 
 .sb-today-container

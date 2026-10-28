@@ -42,45 +42,7 @@
 /* ------------------------------------------------------------------ search */
 
 .sb-content-search {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 48px;
   margin: var(--sb-content-padding);
-  padding: 0 16px;
-  border-radius: 8px;
-  background: var(--sb-content-surface-strong);
-  box-sizing: border-box;
-}
-
-.sb-content-search > .material-symbols-outlined {
-  flex-shrink: 0;
-  color: var(--sb-font-color);
-  font-size: 22px;
-}
-
-.sb-content-search input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-family: inherit;
-  font-size: 1rem;
-}
-
-.sb-content-search input:focus {
-  outline: none;
-}
-
-/* The browser's own clear button (a blue × in Chrome); the shared one is
-   used instead, to match the other search bars. */
-.sb-content-search input::-webkit-search-cancel-button {
-  appearance: none;
-}
-
-.sb-content-search input::placeholder {
-  color: var(--sb-content-muted);
 }
 
 /* ------------------------------------------------------------------- chips */

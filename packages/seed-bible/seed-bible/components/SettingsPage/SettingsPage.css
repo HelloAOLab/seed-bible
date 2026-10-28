@@ -1409,35 +1409,6 @@
   width: 100%;
 }
 
-/* Filled, with no outline, like the search bars on Your content and Today. */
-.sb-extensions-search {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  min-height: 2.75rem;
-  padding: 0 0.875rem;
-  border-radius: 0.5rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 91%);
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
-
-.sb-extensions-search input {
-  flex: 1 1 auto;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: 0.9375rem;
-}
-
-/* The browser's own clear button (a blue × in Chrome); the shared one is
-   used instead, to match the other search bars. */
-.sb-extensions-search input::-webkit-search-cancel-button {
-  appearance: none;
-}
-
 .sb-extensions-section {
   display: flex;
   flex-direction: column;

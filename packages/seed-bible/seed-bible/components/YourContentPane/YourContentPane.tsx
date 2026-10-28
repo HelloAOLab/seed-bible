@@ -38,7 +38,7 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
-import { SearchClearButton } from "../SearchClearButton/SearchClearButton";
+import { SearchBar } from "../SearchBar/SearchBar";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import { Spinner } from "../Spinner/Spinner";
 import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
@@ -691,7 +691,6 @@ export function YourContentPane(props: YourContentScreenProps) {
   // The filter chips scroll horizontally with the vertical wheel, and fade at
   // an edge only while chips are hidden past it.
   const chipsRef = useRef<HTMLDivElement | null>(null);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
   useHorizontalScroll(chipsRef);
   useScrollEdgeFade(chipsRef);
 
@@ -913,31 +912,17 @@ export function YourContentPane(props: YourContentScreenProps) {
   return (
     <div className="sb-content-screen">
       <div className="sb-content-inner">
-        <div className="sb-content-search">
-          <MaterialIcon aria-hidden="true">search</MaterialIcon>
-          <input
-            ref={searchInputRef}
-            type="search"
-            value={rawQuery}
-            placeholder={t("search-placeholder", { defaultValue: "Search..." })}
-            aria-label={t("search-your-content", {
-              defaultValue: "Search your content",
-            })}
-            onInput={(event) => {
-              yourContent.query.value = (
-                event.currentTarget as HTMLInputElement
-              ).value;
-            }}
-          />
-          {rawQuery ? (
-            <SearchClearButton
-              onClear={() => {
-                yourContent.query.value = "";
-                searchInputRef.current?.focus();
-              }}
-            />
-          ) : null}
-        </div>
+        <SearchBar
+          className="sb-content-search"
+          value={rawQuery}
+          onInput={(value) => {
+            yourContent.query.value = value;
+          }}
+          placeholder={t("search-placeholder", { defaultValue: "Search..." })}
+          aria-label={t("search-your-content", {
+            defaultValue: "Search your content",
+          })}
+        />
 
         <div className="sb-content-toolbar">
           {/* Outside the chip strip so it stays put while the chips scroll. */}
