@@ -40,7 +40,7 @@
 .sb-verse-number-flare {
   position: relative;
   z-index: 1;
-  animation: sb-verse-number-flare 1.2s ease-out;
+  animation: sb-verse-number-flare 3s ease-out;
   border-radius: 3px;
 }
 

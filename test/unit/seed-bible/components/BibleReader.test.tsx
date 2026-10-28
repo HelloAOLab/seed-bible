@@ -3904,7 +3904,7 @@ describe("BibleReader", () => {
         [1],
         expect.objectContaining({
           className: "sb-verse-number-flare",
-          removeAfterMs: 1200,
+          removeAfterMs: 3000,
           style: {
             "--sb-selection-flare-color": "#123456",
           },
