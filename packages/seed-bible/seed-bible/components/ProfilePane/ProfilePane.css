@@ -16,11 +16,7 @@
     var(--sb-font-color),
     transparent 95%
   );
-  --sb-profile-border: color-mix(
-    in srgb,
-    var(--sb-font-color),
-    transparent 88%
-  );
+  --sb-profile-border: var(--sb-divider-color);
   /* Secondary text: dates, counts, row subtitles. */
   --sb-profile-muted: color-mix(in srgb, var(--sb-font-color), transparent 42%);
   --sb-profile-accent: var(--sb-primary-color);

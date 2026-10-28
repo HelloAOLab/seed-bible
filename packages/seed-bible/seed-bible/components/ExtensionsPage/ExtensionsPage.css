@@ -4,11 +4,7 @@
  * `body`.
  */
 .sb-extensions-page {
-  --sb-extensions-page-border: color-mix(
-    in srgb,
-    var(--sb-font-color),
-    transparent 85%
-  );
+  --sb-extensions-page-border: var(--sb-divider-color);
   --sb-extensions-page-muted: color-mix(
     in srgb,
     var(--sb-font-color),

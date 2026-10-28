@@ -248,8 +248,7 @@
   padding: 0.25rem 0.75rem;
   gap: 0.5rem;
   background: var(--sb-reader-background);
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-bottom: 1px solid var(--sb-divider-color);
   z-index: 10;
   flex-shrink: 0;
 
