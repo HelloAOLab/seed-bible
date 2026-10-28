@@ -32,9 +32,10 @@
   font-family: var(--sb-font-family);
 }
 
+/* As wide as the Today screen's column. */
 .sb-content-inner {
   width: 100%;
-  max-width: 560px;
+  max-width: 51.25rem;
   margin: 0 auto;
 }
 
