@@ -4,7 +4,8 @@ import { PaneHeader } from "../PaneHeader/PaneHeader";
 import type { Pane, PanesManager } from "../../managers/PanesManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { UI_SIZE_SCALE_MAP } from "../../managers/SettingsManager";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
+import { useSignal } from "@preact/signals";
 
 interface DragState {
   mode: "move" | "resize";
@@ -304,6 +305,70 @@ interface SidePaneProps {
   pane: Pane;
 }
 
+/** How long a docked pane takes to slide in or out; matches PaneLayout.css. */
+const SIDE_PANE_SLIDE_MS = 250;
+
+/**
+ * Whether a docked pane opening or closing right now should slide. Only just
+ * after the user clicked or pressed a key (the browser's user activation), so
+ * a pane the app opens or closes on its own, such as on load, just appears
+ * or goes. Never with reduced motion, and not where the browser can't say.
+ */
+function shouldSlideSidePane(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) {
+    return false;
+  }
+  return navigator.userActivation?.isActive ?? false;
+}
+
+/**
+ * Slides a closing pane out. The pane itself is already gone by the time it
+ * would animate, so this slides a copy of how it looked: its elements cloned
+ * into the ghost host beside it (see app/main.tsx), with nothing behind them.
+ * Called while the pane is still on screen, just before it's removed.
+ */
+function slideOutCopyOf(shell: HTMLElement) {
+  const host = shell.parentElement?.querySelector<HTMLElement>(
+    ":scope > .sb-pane-side-ghost-host"
+  );
+  if (!host) return;
+
+  const copy = shell.cloneNode(true) as HTMLElement;
+  copy.removeAttribute("data-placement");
+  copy.style.setProperty("--sb-pane-side-width", `${shell.offsetWidth}px`);
+  copy.classList.remove("sb-pane-side-shell-entering");
+  copy.classList.add("sb-pane-side-shell-leaving");
+  copy.setAttribute("inert", "");
+  copy.setAttribute("aria-hidden", "true");
+  host.appendChild(copy);
+
+  // A clone starts scrolled to the top; put each scrolled list back where it
+  // was, or the copy jumps as it leaves. Read them all, then write.
+  const originals = shell.querySelectorAll<HTMLElement>("*");
+  const copies = copy.querySelectorAll<HTMLElement>("*");
+  const scrolled: [HTMLElement, number, number][] = [];
+  originals.forEach((element, index) => {
+    if (element.scrollTop || element.scrollLeft) {
+      scrolled.push([copies[index]!, element.scrollTop, element.scrollLeft]);
+    }
+  });
+  for (const [element, top, left] of scrolled) {
+    element.scrollTop = top;
+    element.scrollLeft = left;
+  }
+
+  // Ids would clash with the page; canvases copy blank and frames reload.
+  copy
+    .querySelectorAll("[id]")
+    .forEach((element) => element.removeAttribute("id"));
+  copy
+    .querySelectorAll("canvas, video, iframe")
+    .forEach((element) => element.remove());
+
+  setTimeout(() => copy.remove(), SIDE_PANE_SLIDE_MS);
+}
+
 /**
  * Renders the single side pane (if any) as a normal flex child in the
  * content row (see app/main.tsx), so it pushes the tabs layout instead of
@@ -314,14 +379,40 @@ export function SidePane(props: SidePaneProps) {
   const { app, panes: panesManager } = state;
   const { startResize, registerPaneElement } = usePaneDrag(state);
 
+  // Opening slides the width in from nothing; switching to another side pane
+  // reuses this one and doesn't. Closing slides out a copy (see above).
+  const shellRef = useRef<HTMLElement | null>(null);
+  const isEntering = useSignal(shouldSlideSidePane());
+  useEffect(() => {
+    if (!isEntering.peek()) return;
+    const timer = setTimeout(() => {
+      isEntering.value = false;
+    }, SIDE_PANE_SLIDE_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  // A layout effect's cleanup runs before the pane leaves the page, while
+  // there's still something to copy.
+  useLayoutEffect(
+    () => () => {
+      if (shellRef.current && shouldSlideSidePane()) {
+        slideOutCopyOf(shellRef.current);
+      }
+    },
+    []
+  );
+
   return (
     <div
-      className="sb-pane-side-shell"
+      className={`sb-pane-side-shell${isEntering.value ? " sb-pane-side-shell-entering" : ""}`}
       data-placement="side"
-      style={{ width: `${pane.width}px` }}
-      ref={(element: HTMLElement | null) =>
-        registerPaneElement(pane.id, element)
-      }
+      style={{
+        width: `${pane.width}px`,
+        "--sb-pane-side-width": `${pane.width}px`,
+      }}
+      ref={(element: HTMLElement | null) => {
+        shellRef.current = element;
+        registerPaneElement(pane.id, element);
+      }}
       onPointerDown={() => app.selectPane(pane.id)}
     >
       {pane.showHeader && (

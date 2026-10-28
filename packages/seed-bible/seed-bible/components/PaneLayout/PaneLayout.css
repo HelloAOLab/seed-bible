@@ -68,6 +68,47 @@
 /* On mobile, panes always render fullscreen (see app.effectivePanes), so
    .sb-pane-side-shell never renders there. */
 
+/* Holds the copy a closing side pane slides out as (see SidePane). Takes no
+   room of its own, so the copy sits in the row where the pane was. */
+.sb-pane-side-ghost-host {
+  display: contents;
+}
+
+/* Opening and closing slide the width (and the reader beside it). The
+   contents keep the pane's full width meanwhile, so they slide in and out
+   rather than squeezing. */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-pane-side-shell-entering {
+    animation: sb-pane-side-in 0.25s ease;
+  }
+
+  .sb-pane-side-shell-leaving {
+    animation: sb-pane-side-out 0.25s ease forwards;
+    pointer-events: none;
+  }
+
+  .sb-pane-side-shell-entering,
+  .sb-pane-side-shell-leaving {
+    > :not(.sb-pane-detached-resize-handle-side) {
+      min-width: var(--sb-pane-side-width);
+    }
+  }
+}
+
+@keyframes sb-pane-side-in {
+  from {
+    width: 0;
+    min-width: 0;
+  }
+}
+
+@keyframes sb-pane-side-out {
+  to {
+    width: 0;
+    min-width: 0;
+  }
+}
+
 .sb-pane-shell {
   min-width: 0;
   min-height: 0;
