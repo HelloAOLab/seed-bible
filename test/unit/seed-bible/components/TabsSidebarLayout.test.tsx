@@ -83,7 +83,6 @@ describe("Sidebar collapsed layout", () => {
     expect(collapsedTile).not.toBeNull();
     expect(collapsedTile?.textContent).toContain("GEN");
     expect(collapsedTile?.textContent).toContain("1");
-    expect(container.querySelector(".sb-sidebar-search-shell")).toBeNull();
     expect(container.querySelector(".sb-sidebar-tabs-header")).toBeNull();
   });
 
@@ -152,7 +151,6 @@ describe("Sidebar collapsed layout", () => {
     });
 
     expect(container.querySelector(".sb-pane-layout-anchor")).not.toBeNull();
-    expect(container.querySelector(".sb-sidebar-search-shell")).not.toBeNull();
   });
 
   it("marks bottom actions as collapsed for vertical stacking", async () => {

@@ -11,6 +11,12 @@
   cursor: text;
 }
 
+/* Inside a floating panel, on the reader's colour. */
+.sb-search-bar-panel {
+  border-radius: 0.625rem;
+  background: var(--sb-reader-background);
+}
+
 .sb-search-bar-icon {
   flex-shrink: 0;
   font-size: 1.375rem;

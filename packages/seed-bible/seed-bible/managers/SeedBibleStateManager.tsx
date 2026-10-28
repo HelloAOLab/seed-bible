@@ -1409,8 +1409,8 @@ export function createSeedBibleState(
   // The flip side is that this effect can't see a move *within* a chapter, so any
   // path that jumps to a verse and must reveal the reader has to call
   // `closeFullscreenPanes` itself rather than rely on this: verse reference links
-  // (`handleOpenVerseReference` below), the floating panels' jump actions, and
-  // sidebar search results (`SidebarSearch`) all do. Selecting a tab
+  // (`handleOpenVerseReference` below) and the floating panels' jump actions
+  // both do. Selecting a tab
   // (`handleSelectTab`) closes them too, which covers most of the remaining
   // paths incidentally.
   let lastReadingLocation: string | null = null;

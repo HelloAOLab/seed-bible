@@ -1,4 +1,5 @@
 import "./SearchBar.css";
+import type { Ref } from "preact";
 import { useRef } from "preact/hooks";
 import { MaterialIcon } from "../icons";
 import { SearchClearButton } from "../SearchClearButton/SearchClearButton";
@@ -11,7 +12,12 @@ export interface SearchBarProps {
   /** Defaults to the placeholder. */
   "aria-label"?: string;
   /** For callers that also need the input, e.g. to focus it themselves. */
-  inputRef?: { current: HTMLInputElement | null };
+  inputRef?: Ref<HTMLInputElement>;
+  /**
+   * The bar's surface. `filled` (the default) is for a screen's own
+   * background; `panel` sits inside a floating panel.
+   */
+  variant?: "filled" | "panel";
   onKeyDown?: (event: KeyboardEvent) => void;
   onFocus?: (event: FocusEvent) => void;
   /** Sizes or places the bar within its screen; the look comes from here. */
@@ -24,18 +30,28 @@ export interface SearchBarProps {
  * search does (filtering, results, keyboard navigation) stays with the screen.
  */
 export function SearchBar(props: SearchBarProps) {
-  const ownInputRef = useRef<HTMLInputElement | null>(null);
-  const inputRef = props.inputRef ?? ownInputRef;
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const setInput = (element: HTMLInputElement | null) => {
+    inputRef.current = element;
+    const callerRef = props.inputRef;
+    if (typeof callerRef === "function") {
+      callerRef(element);
+    } else if (callerRef) {
+      callerRef.current = element;
+    }
+  };
 
   return (
     <label
-      className={`sb-search-bar${props.className ? ` ${props.className}` : ""}`}
+      className={`sb-search-bar sb-search-bar-${props.variant ?? "filled"}${
+        props.className ? ` ${props.className}` : ""
+      }`}
     >
       <MaterialIcon className="sb-search-bar-icon" aria-hidden="true">
         search
       </MaterialIcon>
       <input
-        ref={inputRef}
+        ref={setInput}
         type="search"
         className="sb-search-bar-input"
         value={props.value}

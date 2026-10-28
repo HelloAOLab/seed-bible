@@ -82,8 +82,6 @@ export function createSidebar(options: CreateSidebarOptions) {
   const requestedSettingsView = signal<RequestedSettingsView>(initialView);
   const isSettingsOpen = computed(() => requestedSettingsView.value !== null);
 
-  const shouldFocusSearch = signal(false);
-
   // Floating reader panels (anchored above the reader toolbar) — separate
   // from the sidebar drawer. Only one can be open at a time so clicking
   // one closes the other.
@@ -99,7 +97,6 @@ export function createSidebar(options: CreateSidebarOptions) {
   const openSearchPanel = () => {
     isChatPanelOpen.value = false;
     isSearchPanelOpen.value = true;
-    shouldFocusSearch.value = true;
   };
 
   const closeSearchPanel = () => {
@@ -261,7 +258,6 @@ export function createSidebar(options: CreateSidebarOptions) {
     closeSidebar,
     collapseSidebarOverlay,
     openSearch,
-    shouldFocusSearch,
     isSearchPanelOpen,
     openSearchPanel,
     closeSearchPanel,

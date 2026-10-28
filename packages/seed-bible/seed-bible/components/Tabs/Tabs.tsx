@@ -32,7 +32,6 @@ import {
 } from "../../managers/SessionsManager";
 import { safeLocalStorage } from "../../app/ssrEnv";
 import { useI18n } from "../../i18n/I18nManager";
-import { SidebarSearch } from "../../components/SidebarSearch/SidebarSearch";
 import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
@@ -2565,7 +2564,6 @@ export function Tabs(props: TabsProps) {
           </>
         }
       >
-        <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
         {tabList}
       </MobileScreen>
     );
@@ -2643,7 +2641,6 @@ export function Tabs(props: TabsProps) {
         </div>
       </div>
 
-      <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
       {tabList}
     </>
   );

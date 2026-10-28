@@ -29,7 +29,7 @@ import { useEffect, useRef } from "preact/hooks";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { Avatar } from "../Avatar/Avatar";
 import { ChatParticipantsIcon, MaterialIcon } from "../icons";
-import { SearchClearButton } from "../SearchClearButton/SearchClearButton";
+import { SearchBar } from "../SearchBar/SearchBar";
 
 interface SearchResult {
   id: string;
@@ -680,35 +680,15 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
         </div>
       )}
 
-      <div className="sb-floating-search-input-wrap">
-        <span
-          className="material-symbols-outlined sb-floating-search-icon"
-          aria-hidden="true"
-        >
-          search
-        </span>
-        <input
-          ref={inputRef}
-          type="text"
-          className="sb-floating-search-input"
-          placeholder={t("search-verses", { defaultValue: "Search verses" })}
-          value={searchQuery.value}
-          onInput={(event) => {
-            runSearch((event.currentTarget as HTMLInputElement).value);
-          }}
-          onKeyDown={(event) => {
-            handleInputKeyDown(event);
-          }}
-        />
-        {hasQuery && (
-          <SearchClearButton
-            onClear={() => {
-              runSearch("");
-              inputRef.current?.focus();
-            }}
-          />
-        )}
-      </div>
+      <SearchBar
+        variant="panel"
+        className="sb-floating-search-input-wrap"
+        value={searchQuery.value}
+        inputRef={inputRef}
+        onInput={runSearch}
+        onKeyDown={handleInputKeyDown}
+        placeholder={t("search-verses", { defaultValue: "Search verses" })}
+      />
     </div>
   );
 }

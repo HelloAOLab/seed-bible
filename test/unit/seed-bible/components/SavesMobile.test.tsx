@@ -51,10 +51,6 @@ vi.mock("../components/SettingsPage", () => ({
   SettingsPage: () => <div>Settings Page</div>,
 }));
 
-vi.mock("../components/SidebarSearch", () => ({
-  SidebarSearch: () => <div>Sidebar Search</div>,
-}));
-
 /** The width `app.isMobile` needs to see for the mobile saves screen. */
 const MOBILE_VIEWPORT_WIDTH = 400;
 

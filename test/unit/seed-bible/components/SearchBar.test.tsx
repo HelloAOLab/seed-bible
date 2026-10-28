@@ -89,6 +89,24 @@ describe("SearchBar", () => {
     expect(document.activeElement).toBe(input());
   });
 
+  it("hands the input to a callback ref too", () => {
+    const seen: (HTMLInputElement | null)[] = [];
+    act(() => {
+      render(
+        <SearchBar
+          value=""
+          onInput={vi.fn()}
+          placeholder="Search..."
+          inputRef={(element) => {
+            seen.push(element);
+          }}
+        />,
+        container
+      );
+    });
+    expect(seen.at(-1)).toBe(input());
+  });
+
   it("uses the caller's input ref, so clearing focuses the same box", () => {
     const inputRef: { current: HTMLInputElement | null } = { current: null };
     act(() => render(<Screen inputRef={inputRef} />, container));
