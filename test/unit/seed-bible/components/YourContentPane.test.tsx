@@ -1172,10 +1172,8 @@ describe("YourContentPane", () => {
     renderPane(state);
     openPlaylistMenu();
 
-    const edit = menuItems().find((item) =>
-      item.textContent?.includes("Edit playlist")
-    );
-    if (!edit) throw new Error("Edit playlist was not in the options menu.");
+    const edit = menuItems().find((item) => item.textContent?.includes("Edit"));
+    if (!edit) throw new Error("Edit was not in the options menu.");
     act(() => {
       edit.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
@@ -1194,8 +1192,8 @@ describe("YourContentPane", () => {
 
     // Each label is preceded by its icon's ligature text.
     expect(menuItems().map((item) => item.textContent)).toEqual([
-      "shareShare playlist",
-      "editEdit playlist",
+      "shareShare",
+      "editEdit",
       "deleteDelete",
     ]);
   });
@@ -1504,7 +1502,7 @@ describe("YourContentPane", () => {
       const { state } = createState({ readingPlans: [plan] });
       renderPane(state);
       openPlanMenu();
-      clickMenuItem("Edit plan");
+      clickMenuItem("Edit");
 
       expect(onEditReadingPlan).toHaveBeenCalledWith(plan);
       expect(onOpenReadingPlan).not.toHaveBeenCalled();
@@ -1518,8 +1516,8 @@ describe("YourContentPane", () => {
       openPlanMenu();
 
       expect(menuItems().map((item) => item.textContent)).toEqual([
-        "shareShare plan",
-        "editEdit plan",
+        "shareShare",
+        "editEdit",
         "deleteDelete",
       ]);
 
@@ -1533,7 +1531,7 @@ describe("YourContentPane", () => {
       openPlanMenu();
 
       expect(menuItems().map((item) => item.textContent)).toEqual([
-        "editEdit plan",
+        "editEdit",
         "deleteDelete",
       ]);
     });
@@ -1754,7 +1752,7 @@ describe("YourContentPane save options", () => {
     renderWithSave();
     openMenu();
 
-    expect(menuItems().map(itemLabel)).toEqual(["Edit save", "Delete"]);
+    expect(menuItems().map(itemLabel)).toEqual(["Edit", "Delete"]);
     expect(
       menuItems().map(
         (item) => item.querySelector(".sb-context-menu-item-icon")?.textContent

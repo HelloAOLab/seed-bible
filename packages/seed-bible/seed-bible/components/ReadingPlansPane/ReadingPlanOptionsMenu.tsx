@@ -64,7 +64,7 @@ export function ReadingPlanOptionsMenu(props: {
           <MaterialIcon className="sb-context-menu-item-icon">
             share
           </MaterialIcon>
-          {t("share-reading-plan", { defaultValue: "Share plan" })}
+          {t("share", { defaultValue: "Share" })}
         </ContextMenuItem>
       ) : null}
       {onEdit ? (
@@ -77,7 +77,7 @@ export function ReadingPlanOptionsMenu(props: {
           <MaterialIcon className="sb-context-menu-item-icon">
             edit
           </MaterialIcon>
-          {t("edit-reading-plan", { defaultValue: "Edit plan" })}
+          {t("edit", { defaultValue: "Edit" })}
         </ContextMenuItem>
       ) : null}
       <ContextMenuItem

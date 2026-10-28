@@ -505,7 +505,7 @@ function SavePill(props: {
           >
             edit
           </MaterialIcon>
-          <span>{t("edit-save", { defaultValue: "Edit save" })}</span>
+          <span>{t("edit", { defaultValue: "Edit" })}</span>
         </ContextMenuItem>
         <ContextMenuItem onClick={confirmDelete}>
           <MaterialIcon

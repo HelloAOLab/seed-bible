@@ -600,7 +600,7 @@ describe("DiscoverPane", () => {
       );
 
       expect(items.map((el) => el.textContent)).toEqual([
-        expect.stringContaining("Share playlist"),
+        expect.stringContaining("Share"),
       ]);
       await act(async () => {
         (items[0] as HTMLElement).click();

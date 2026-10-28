@@ -286,7 +286,7 @@ describe("reading plan options menu", () => {
 
     openOptionsMenu();
 
-    expect(menuItemLabels()).toEqual(["Share plan", "Edit plan", "Delete"]);
+    expect(menuItemLabels()).toEqual(["Share", "Edit", "Delete"]);
     expect(readingPlans.selectReadingPlan).not.toHaveBeenCalled();
   });
 
@@ -375,7 +375,7 @@ describe("reading plan options menu", () => {
 
       openOptionsMenu();
 
-      expect(menuItemLabels()).toEqual(["Share plan", "Delete"]);
+      expect(menuItemLabels()).toEqual(["Share", "Delete"]);
     });
 
     it("offers Edit on the reader's own plan", () => {
@@ -387,9 +387,9 @@ describe("reading plan options menu", () => {
       renderDetail(readingPlans, createModalManager(), { onEdit });
 
       openOptionsMenu();
-      expect(menuItemLabels()).toEqual(["Share plan", "Edit plan", "Delete"]);
+      expect(menuItemLabels()).toEqual(["Share", "Edit", "Delete"]);
 
-      clickMenuItem("Edit plan");
+      clickMenuItem("Edit");
       expect(onEdit).toHaveBeenCalledTimes(1);
     });
 
