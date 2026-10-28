@@ -1480,6 +1480,23 @@ export function createSeedBibleState(
     return true;
   });
 
+  // Dialogs that cover the reader. Pop-ups opened through `modals` are only
+  // part of the list: sign-in, Terms, Privacy, Code of Conduct, and the
+  // onboarding cards are drawn on their own in `app/main.tsx`. A new dialog
+  // that does not go through `modals` has to be added here, or the offer card
+  // can show on top of it. `onboarding.step` starts at "done" and only leaves
+  // it while an onboarding card is actually up, so a normal first visit is
+  // not held back. `?tutorial=` links use `readerVisible` alone.
+  const modalCoveringReader = computed(
+    () =>
+      modals.modals.value.length > 0 ||
+      login.isLoginOpen.value ||
+      termsOpen.value ||
+      privacyOpen.value ||
+      codeOfConductOpen.value ||
+      onboarding.step.value !== "done"
+  );
+
   // Client-only: SSR can't run the tour, and launching it there would put
   // the overlay in the served HTML.
   const tutorialLink = import.meta.env.SSR
@@ -1494,7 +1511,8 @@ export function createSeedBibleState(
     sidebar,
     openedViaContentLink,
     isMinimalEmbed,
-    tutorialLink
+    tutorialLink,
+    modalCoveringReader
   );
 
   if (!import.meta.env.SSR) {

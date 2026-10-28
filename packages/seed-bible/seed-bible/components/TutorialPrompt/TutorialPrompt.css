@@ -72,3 +72,23 @@
   font-size: 1.05em;
   line-height: 1;
 }
+
+/* The card shows up a moment after the reader, so it should arrive as its own
+   element. Reduced motion leaves it in place with no slide. */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-tutorial-prompt {
+    animation: sb-tutorial-prompt-in 0.22s ease-out;
+  }
+}
+
+@keyframes sb-tutorial-prompt-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

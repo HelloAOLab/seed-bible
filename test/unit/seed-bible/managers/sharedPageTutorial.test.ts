@@ -9,6 +9,7 @@ import {
   makeUrl,
   translations,
 } from "./testUtils/mockBibleApiData";
+import { TUTORIAL_OFFER_DELAY_MS } from "@packages/seed-bible/seed-bible/managers/TutorialManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { SHARED_PAGE_MODAL_ID } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { PlaylistSchema } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
@@ -340,7 +341,10 @@ describe.each(PAGES)(
 
       state.today.close();
 
-      await waitFor(() => state.tutorial.promptVisible.value, 2000);
+      await waitFor(
+        () => state.tutorial.promptVisible.value,
+        TUTORIAL_OFFER_DELAY_MS + 1500
+      );
       expect(state.tutorial.promptVisible.value).toBe(true);
     });
   }

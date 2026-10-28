@@ -26,6 +26,14 @@ const PROFILE_TUTORIAL_SEEN = "tutorialSeen";
 const PROFILE_TUTORIAL_OPTED_OUT = "tutorialOptedOut";
 const PROFILE_TUTORIAL_FEATURES_SEEN = "tutorialFeaturesSeen";
 
+/**
+ * How long the reader has to stay uncovered before the first-run offer card
+ * appears. Long enough that a one-frame gap between panes — Today closing,
+ * then Profile opening — cannot trip it, and that the card arrives after the
+ * reader rather than in the same moment.
+ */
+export const TUTORIAL_OFFER_DELAY_MS = 1750;
+
 /** Where the popover sits relative to its highlighted target. */
 export type TutorialPlacement = "top" | "bottom" | "left" | "right";
 
@@ -511,15 +519,20 @@ export interface TutorialManager {
    * already true before the client's first render, so arming it eagerly would
    * put the card in the client tree but not in the SSR HTML. Call once from a
    * post-mount effect (via `AppState.hydrateFromStorage`). Idempotent.
+   *
+   * The card waits until the reader has stayed visible, with no pane or modal
+   * over it, for `TUTORIAL_OFFER_DELAY_MS`. Covering the reader during that
+   * wait starts the wait over. A `?tutorial=` link still launches as soon as
+   * the reader is visible.
    */
   armAutoStart: () => void;
 }
 
 /**
  * Drives the guided coachmark tour. Offers itself once for new users once the
- * reader is open to a chapter and visible (no fullscreen pane covering it),
- * and can be replayed from Settings. Completion is recorded on the user's
- * profile (backend) plus a local cache.
+ * reader has stayed open to a chapter and uncovered — no fullscreen pane and
+ * no modal — for a short moment, and can be replayed from Settings. Completion
+ * is recorded on the user's profile (backend) plus a local cache.
  */
 export function createTutorialManager(
   login: LoginManager,
@@ -541,7 +554,14 @@ export function createTutorialManager(
    * for coach marks aimed at chrome that isn't there.
    */
   isMinimalEmbed: ReadonlySignal<boolean> = signal(false),
-  linkedTutorial: TutorialLinkRequest | null = null
+  linkedTutorial: TutorialLinkRequest | null = null,
+  /**
+   * True while a dialog covers the reader. The app builds this from
+   * `ModalManager` plus the dialogs drawn separately in `app/main.tsx`. The
+   * offer card waits this out the same way it waits out a fullscreen pane.
+   * A `?tutorial=` link does not consult it.
+   */
+  modalCoveringReader: ReadonlySignal<boolean> = signal(false)
 ): TutorialManager {
   const running = signal<boolean>(false);
   const index = signal<number>(0);
@@ -947,11 +967,15 @@ export function createTutorialManager(
   };
 
   // Offer the tour once for new users, but only once the reader is open to a
-  // chapter and visible — no fullscreen pane (e.g. Today) covering it — and
-  // (when logged in) after the profile has loaded, otherwise a returning user
-  // could see the offer flash before their recorded completion arrives.
-  // Rather than launching the tour unannounced we surface the offer card;
-  // accepting it starts the tour. One-shot via `autoStartChecked`.
+  // chapter and has stayed uncovered — no fullscreen pane (e.g. Today) and no
+  // modal — for `TUTORIAL_OFFER_DELAY_MS`. The wait is what keeps a one-frame
+  // gap (Today closing, then Profile opening) from latching the card onto the
+  // screen that covers the reader, and what lets the reader land before the
+  // card asks for attention. Covering the reader during the wait starts it
+  // over. When logged in, the wait also holds until the profile has loaded,
+  // otherwise a returning user could see the offer before their recorded
+  // completion arrives. Rather than launching the tour unannounced we surface
+  // the offer card; accepting it starts the tour. One-shot via `autoStartChecked`.
   //
   // Deliberately NOT armed at construction. `readerVisible` derives from the
   // chapter data, which the client entry (`app/init.tsx`) already awaits before
@@ -961,7 +985,7 @@ export function createTutorialManager(
   // card renders before it). That puts an element in the client tree that the
   // served HTML doesn't have, which is exactly the divergence `hydrate()`
   // reports. `armAutoStart` is called from `AppState.hydrateFromStorage` after
-  // the first commit, so the card appears a moment later instead.
+  // the first commit, so the card is not part of the hydrated tree.
   let autoStartArmed = false;
   const armAutoStart = () => {
     if (autoStartArmed) {
@@ -974,7 +998,8 @@ export function createTutorialManager(
       }
       // A `?tutorial=` link asked for a specific tour: launch it (once the
       // reader is ready to be pointed at) in place of the offer card. Checked
-      // before the session-link guard because it is an explicit request.
+      // before the session-link guard because it is an explicit request, and
+      // it does not wait out the offer delay.
       if (linkedTutorial) {
         if (!readerVisible.value) {
           return;
@@ -993,16 +1018,36 @@ export function createTutorialManager(
       if (isMinimalEmbed.value) {
         return;
       }
-      if (!readerVisible.value) {
+      // Uncovered means the chapter is on screen, no pane or dialog covers it,
+      // and the "Turn off all tutorials?" follow-up isn't open. A profile that
+      // hasn't loaded yet holds the wait too, so a returning user's completion
+      // can arrive first.
+      if (
+        !readerVisible.value ||
+        modalCoveringReader.value ||
+        skipPromptVisible.value ||
+        (login.userId.value && login.profile.value === null)
+      ) {
         return;
       }
-      if (login.userId.value && login.profile.value === null) {
+      // Latch without showing, so a later uncover can't offer the card to
+      // someone who already finished, skipped, or opted out.
+      if (completed.value || optedOut.value) {
+        autoStartChecked = true;
         return;
       }
-      autoStartChecked = true;
-      if (!completed.value && !optedOut.value) {
-        promptVisible.value = true;
-      }
+
+      const timer = setTimeout(() => {
+        if (autoStartChecked || running.peek() || skipPromptVisible.peek()) {
+          return;
+        }
+        autoStartChecked = true;
+        if (!completed.peek() && !optedOut.peek()) {
+          promptVisible.value = true;
+        }
+      }, TUTORIAL_OFFER_DELAY_MS);
+
+      return () => clearTimeout(timer);
     });
   };
 
