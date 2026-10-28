@@ -6,7 +6,6 @@ import {
   latestReadingPlanProgress,
   summarizeCalendar,
 } from "../../managers/ReadingPlansManager";
-import { FEATURE_KEY_READING_PLANS } from "../../managers/FeaturesManager";
 import type { PlaylistPlayHistory } from "../../managers/PlaylistManager";
 import {
   isPlaylistPlayHistoryComplete,
@@ -438,16 +437,13 @@ export function ProfilePane(props: ProfileScreenProps) {
     onOpenPlaylistHistory,
     onContinuePlaylist,
   } = props;
-  const { login, features } = state;
+  const { login } = state;
   const { t } = useI18n();
 
   const userId = login.userId.value;
   const profile = login.profile.value;
   const displayName = getSelfDisplayName(state, t);
   const description = profile?.description ?? null;
-  const plansEnabled = features.isFeatureEnabled(
-    FEATURE_KEY_READING_PLANS
-  ).value;
 
   if (!userId) {
     return (
@@ -519,9 +515,7 @@ export function ProfilePane(props: ProfileScreenProps) {
           <ProfileContactLine state={state} />
         </div>
 
-        {plansEnabled ? (
-          <ReadingPlansCard state={state} onOpen={onOpenReadingPlans} />
-        ) : null}
+        <ReadingPlansCard state={state} onOpen={onOpenReadingPlans} />
 
         {state.playlists.userPlaylistHistory.value.length > 0 ? (
           <PlaylistHistoryCard

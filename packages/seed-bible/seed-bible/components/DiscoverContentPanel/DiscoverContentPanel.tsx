@@ -355,8 +355,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     getDiscoverPanelContent(
       tab.readingState,
       state.annotations,
-      state.readingPlans,
-      state.features
+      state.readingPlans
     );
 
   if (!hasAny) {

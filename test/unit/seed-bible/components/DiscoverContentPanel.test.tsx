@@ -180,11 +180,6 @@ function createMockState(
         pendingCount: signal(0),
       },
     },
-    // The real manager only returns plans while the reading-plans feature is
-    // on, so the flag follows whether any plans were given.
-    features: {
-      isFeatureEnabled: vi.fn(() => signal(readingPlansForChapter.length > 0)),
-    },
     readingPlans: {
       getReadingPlansForChapter: vi.fn(() => readingPlansForChapter),
     },

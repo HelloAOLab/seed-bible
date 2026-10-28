@@ -61,10 +61,7 @@ import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
 import type { UserGalleryManager } from "./UserGalleryManager";
 import { i18n, useI18n } from "../i18n";
-import {
-  FEATURE_KEY_READING_PLANS,
-  type FeaturesManager,
-} from "./FeaturesManager";
+import type { FeaturesManager } from "./FeaturesManager";
 import type { FriendsManager } from "./FriendsManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
@@ -945,8 +942,7 @@ function getDefaultQuickToolbarTools(
         return getDiscoverPanelContent(
           c.readingState,
           c.annotations,
-          c.readingPlans,
-          c.features
+          c.readingPlans
         ).hasAny;
       },
       onSelect: (c) => {
@@ -1247,34 +1243,6 @@ function getDefaultToolbarTools(
       },
     },
     {
-      id: "open-plans",
-      priority: 115,
-      title: { key: "plans", defaultValue: "Plans" },
-      icon: () => <MaterialIcon>menu_book</MaterialIcon>,
-      isVisible: (context) =>
-        !!context.readingPlans &&
-        !!context.modals &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
-      onSelect: (context) => {
-        if (!context.readingPlans || !context.modals) {
-          return;
-        }
-        openReadingPlansPane({
-          readingPlans: context.readingPlans,
-          readingState: context.readingState,
-          panesManager: context.panesManager,
-          modals: context.modals,
-          playlists: context.playlists,
-          bibleData: context.data,
-          os: context.os,
-          login: context.login,
-          gallery: context.gallery,
-          toast: context.toast,
-          friends: context.friends,
-        });
-      },
-    },
-    {
       id: "open-discover",
       priority: 120,
       title: { key: "discover", defaultValue: "Discover" },
@@ -1382,7 +1350,6 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       // how "Add to Playlist" follows `editingPlaylist`.
       isVisible: (context) =>
         !!context.readingPlans?.editingReadingPlan.value &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value &&
         context.readingState.selectedVerses.value.length > 0,
       onSelect: async (context) => {
         const readingPlans = context.readingPlans;

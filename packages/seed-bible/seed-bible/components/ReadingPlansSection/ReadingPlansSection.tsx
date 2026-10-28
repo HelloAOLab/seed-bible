@@ -4,7 +4,6 @@ import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import { FEATURE_KEY_READING_PLANS } from "../../managers/FeaturesManager";
 import { type PlanMatch } from "../../managers/ReadingPlansManager";
 
 interface ReadingPlanBelongsCardProps {
@@ -42,9 +41,6 @@ export function ReadingPlansSection(props: ReadingPlanBelongsCardProps) {
   const [notifyDismissed, setNotifyDismissed] = useState(false);
 
   const readingPlans = state.readingPlans;
-  const featureOn = state.features.isFeatureEnabled(
-    FEATURE_KEY_READING_PLANS
-  ).value;
 
   // Read signals unconditionally so the component stays subscribed.
   const bookId = readingState.bookId.value;
@@ -108,7 +104,7 @@ export function ReadingPlansSection(props: ReadingPlanBelongsCardProps) {
     };
   }, [bookId, chapter, matchCount]);
 
-  if (!readingPlans || !featureOn || matchCount === 0) {
+  if (!readingPlans || matchCount === 0) {
     return null;
   }
 

@@ -15,7 +15,6 @@ import {
   type ReadingPlanMetadata,
   type ReadingPlansManager,
 } from "../../managers/ReadingPlansManager";
-import { FEATURE_KEY_READING_PLANS } from "../../managers/FeaturesManager";
 import {
   CONTENT_FILTERS,
   annotationPlainText,
@@ -543,15 +542,6 @@ export function YourContentPane(props: YourContentScreenProps) {
   const { t } = useI18n();
   const userId = state.login.userId.value;
 
-  // Reading plans are still behind a feature flag. With it off the user can't
-  // make one, so the chip and the section go too rather than sitting empty.
-  const plansEnabled = state.features.isFeatureEnabled(
-    FEATURE_KEY_READING_PLANS
-  ).value;
-  const contentFilters = plansEnabled
-    ? CONTENT_FILTERS
-    : CONTENT_FILTERS.filter((value) => value !== "reading-plans");
-
   // Every open refreshes, so a verse highlighted or annotated in the reader
   // since the last visit shows up. It's quiet when content is already
   // loaded: the lists stay put instead of blanking to a spinner.
@@ -641,11 +631,9 @@ export function YourContentPane(props: YourContentScreenProps) {
   );
   // Newest first, like annotations. The list arrives in record order, which
   // is no order a reader would recognise.
-  const visibleReadingPlans = plansEnabled
-    ? readingPlans.userReadingPlans.value
-        .filter((p) => matches(p.title, p.description))
-        .sort((a, b) => b.createdAtMs - a.createdAtMs)
-    : [];
+  const visibleReadingPlans = readingPlans.userReadingPlans.value
+    .filter((p) => matches(p.title, p.description))
+    .sort((a, b) => b.createdAtMs - a.createdAtMs);
   const visibleCustomizations = userId
     ? customizations.customizations.value.filter((c) => matches(c.name))
     : [];
@@ -801,7 +789,7 @@ export function YourContentPane(props: YourContentScreenProps) {
           </ContextMenuWithButton>
 
           <div className="sb-content-chips" role="tablist">
-            {contentFilters.map((value) => (
+            {CONTENT_FILTERS.map((value) => (
               <button
                 key={value}
                 type="button"
