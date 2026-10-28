@@ -512,6 +512,14 @@ describe("createBibleToolsManager", () => {
     expect(withoutDisabled.length).toBe(withDisabled.length + 1);
   });
 
+  it("does not register a Plans button on the reader toolbar", () => {
+    const manager = createBibleToolsManager(testBranding);
+
+    expect(manager.listToolbarTools().map((tool) => tool.id)).not.toContain(
+      "open-plans"
+    );
+  });
+
   it("registerVerseToolbarTool() registers a verse toolbar tool", () => {
     const manager = createBibleToolsManager(testBranding);
     const context = createContext();
@@ -2175,6 +2183,69 @@ describe("createBibleToolsManager", () => {
       await tool?.onSelect();
 
       expect(clearSelectedVerses).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("add-to-reading-plan", () => {
+    function selectedVerse() {
+      return {
+        bookId: "GEN",
+        chapterNumber: 1,
+        translationId: "BSB",
+        verse: {
+          type: "verse" as const,
+          number: 1,
+          content: ["In the beginning"],
+        },
+      };
+    }
+
+    function planContext(options: {
+      editing?: boolean;
+      verses?: ReturnType<typeof selectedVerse>[];
+    }) {
+      const isFeatureEnabled = vi.fn(() => signal(false));
+      const context = createContext({
+        features: { isFeatureEnabled },
+        readingPlans: {
+          editingReadingPlan: signal(
+            options.editing ? { selectedSessionIndex: 0, plan: {} } : null
+          ),
+        } as any,
+      });
+      context.readingState.selectedVerses.value = (options.verses ?? []) as any;
+      return { context, isFeatureEnabled };
+    }
+
+    function toolFor(context: BibleToolContext) {
+      return createBibleToolsManager(testBranding)
+        .getVerseToolbarTools(context)
+        .find((entry) => entry.id === "add-to-reading-plan");
+    }
+
+    it("is visible while a plan draft is open and verses are selected", () => {
+      const { context, isFeatureEnabled } = planContext({
+        editing: true,
+        verses: [selectedVerse()],
+      });
+
+      expect(toolFor(context)?.visible.value).toBe(true);
+      expect(isFeatureEnabled).not.toHaveBeenCalled();
+    });
+
+    it("stays hidden when no plan draft is open", () => {
+      const { context } = planContext({
+        editing: false,
+        verses: [selectedVerse()],
+      });
+
+      expect(toolFor(context)?.visible.value).toBe(false);
+    });
+
+    it("stays hidden when a draft is open but no verses are selected", () => {
+      const { context } = planContext({ editing: true, verses: [] });
+
+      expect(toolFor(context)?.visible.value).toBe(false);
     });
   });
 });

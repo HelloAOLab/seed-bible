@@ -38,10 +38,6 @@ import {
   type FriendReadLimiter,
 } from "./friendContentFreshness";
 import { createLinkPreviewLoader } from "./linkPreview";
-import {
-  FEATURE_KEY_READING_PLANS,
-  type FeaturesManager,
-} from "./FeaturesManager";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -3033,18 +3029,13 @@ export function createReadingPlansManager(
 
   const getReadingPlansForChapter = (
     bookId: string | null,
-    chapter: number,
-    features: FeaturesManager
+    chapter: number
   ): PlanMatch[] => {
-    const featureOn = features.isFeatureEnabled(
-      FEATURE_KEY_READING_PLANS
-    ).value;
-
     const fullPlans = fullReadingPlans.value;
     const progresses = userReadingPlanProgresses.value;
 
     const matches: PlanMatch[] = [];
-    if (featureOn && bookId) {
+    if (bookId) {
       for (const plan of fullPlans) {
         const planId = formatReadingPlanId(plan.recordName, plan.address);
         const progress = latestReadingPlanProgress(progresses, planId);

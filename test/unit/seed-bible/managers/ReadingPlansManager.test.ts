@@ -57,10 +57,6 @@ import {
   type CivilDate,
 } from "@packages/seed-bible/seed-bible/managers/civilDate";
 import type { Mock } from "vitest";
-import {
-  FEATURE_KEY_READING_PLANS,
-  type FeaturesManager,
-} from "@packages/seed-bible/seed-bible/managers/FeaturesManager";
 
 // An arbitrary mid-week start instant to exercise "start any time".
 // 2026-06-17 is a Wednesday.
@@ -2693,11 +2689,6 @@ describe("createReadingPlansManager", () => {
   });
 
   describe("getReadingPlansForChapter", () => {
-    const featuresWith = (readingPlansOn: boolean): FeaturesManager => ({
-      isFeatureEnabled: (featureKey: string) =>
-        signal(featureKey === FEATURE_KEY_READING_PLANS && readingPlansOn),
-    });
-
     const verseReading = (
       id: string,
       ref: { bookId: string; chapter: number; endChapter?: number }
@@ -2762,11 +2753,7 @@ describe("createReadingPlansManager", () => {
       const progress = progressFor(genesisPlan);
       const manager = await loadManager([genesisPlan], [progress]);
 
-      const matches = manager.getReadingPlansForChapter(
-        "GEN",
-        2,
-        featuresWith(true)
-      );
+      const matches = manager.getReadingPlansForChapter("GEN", 2);
 
       expect(matches).toEqual([
         {
@@ -2790,11 +2777,7 @@ describe("createReadingPlansManager", () => {
         [progressFor(genesisPlan)]
       );
 
-      const matches = manager.getReadingPlansForChapter(
-        "GEN",
-        1,
-        featuresWith(true)
-      );
+      const matches = manager.getReadingPlansForChapter("GEN", 1);
 
       expect(matches.map((match) => match.planTitle)).toEqual(["Test Plan"]);
     });
@@ -2805,12 +2788,8 @@ describe("createReadingPlansManager", () => {
         [progressFor(genesisPlan)]
       );
 
-      expect(
-        manager.getReadingPlansForChapter("GEN", 3, featuresWith(true))
-      ).toEqual([]);
-      expect(
-        manager.getReadingPlansForChapter("EXO", 1, featuresWith(true))
-      ).toEqual([]);
+      expect(manager.getReadingPlansForChapter("GEN", 3)).toEqual([]);
+      expect(manager.getReadingPlansForChapter("EXO", 1)).toEqual([]);
     });
 
     it("returns nothing when there's no open book", async () => {
@@ -2819,20 +2798,7 @@ describe("createReadingPlansManager", () => {
         [progressFor(genesisPlan)]
       );
 
-      expect(
-        manager.getReadingPlansForChapter(null, 1, featuresWith(true))
-      ).toEqual([]);
-    });
-
-    it("returns nothing while the reading plans feature is off", async () => {
-      const manager = await loadManager(
-        [genesisPlan],
-        [progressFor(genesisPlan)]
-      );
-
-      expect(
-        manager.getReadingPlansForChapter("GEN", 1, featuresWith(false))
-      ).toEqual([]);
+      expect(manager.getReadingPlansForChapter(null, 1)).toEqual([]);
     });
 
     it("marks a multi-chapter reading complete only for the chapters recorded as read", async () => {
@@ -2862,8 +2828,7 @@ describe("createReadingPlansManager", () => {
       );
 
       const allCompleteAt = (chapter: number) =>
-        manager.getReadingPlansForChapter("GEN", chapter, featuresWith(true))[0]
-          ?.allComplete;
+        manager.getReadingPlansForChapter("GEN", chapter)[0]?.allComplete;
 
       expect([1, 2, 3].map(allCompleteAt)).toEqual([false, true, false]);
     });
@@ -2896,11 +2861,7 @@ describe("createReadingPlansManager", () => {
         ]
       );
 
-      const [match] = manager.getReadingPlansForChapter(
-        "GEN",
-        1,
-        featuresWith(true)
-      );
+      const [match] = manager.getReadingPlansForChapter("GEN", 1);
 
       expect(match?.sessions.map((session) => session.id)).toEqual([
         "s1",
@@ -2940,11 +2901,7 @@ describe("createReadingPlansManager", () => {
         ]
       );
 
-      const [match] = manager.getReadingPlansForChapter(
-        "GEN",
-        1,
-        featuresWith(true)
-      );
+      const [match] = manager.getReadingPlansForChapter("GEN", 1);
 
       expect(match?.allComplete).toBe(true);
     });
@@ -2972,11 +2929,7 @@ describe("createReadingPlansManager", () => {
         [abandonedRun, currentRun]
       );
 
-      const matches = manager.getReadingPlansForChapter(
-        "GEN",
-        1,
-        featuresWith(true)
-      );
+      const matches = manager.getReadingPlansForChapter("GEN", 1);
 
       expect(matches).toHaveLength(1);
       expect(matches[0]?.progress.id).toBe("progress-current");

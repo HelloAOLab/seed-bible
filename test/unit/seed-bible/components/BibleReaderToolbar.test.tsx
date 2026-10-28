@@ -1964,7 +1964,6 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
 
     await act(async () => {
       state.tools.unregisterToolbarTool("open-discover");
-      state.tools.unregisterToolbarTool("open-plans");
     });
 
     expect(moreButton()).toBeNull();
@@ -2112,7 +2111,6 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     const state = await renderToolbar();
     await act(async () => {
       state.tools.unregisterToolbarTool("open-discover");
-      state.tools.unregisterToolbarTool("open-plans");
       registerExtensionTool(state, "ext-one", "Extension One");
     });
     await openMenu();

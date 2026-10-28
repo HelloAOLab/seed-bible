@@ -52,7 +52,6 @@ import {
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
 import type { PlanMatch, ReadingPlansManager } from "./ReadingPlansManager";
-import type { FeaturesManager } from "./FeaturesManager";
 
 export interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
@@ -1382,8 +1381,7 @@ export interface DiscoverPanelContent {
 export function getDiscoverPanelContent(
   readingState: BibleReadingState,
   annotations: AnnotationsManager,
-  readingPlans: ReadingPlansManager,
-  features: FeaturesManager
+  readingPlans: ReadingPlansManager
 ): DiscoverPanelContent {
   const bookId = readingState.bookId.value;
   const chapterNumber = readingState.chapterNumber.value;
@@ -1400,11 +1398,7 @@ export function getDiscoverPanelContent(
       ? annotations.pendingCountForChapter(bookId, chapterNumber)
       : 0;
   const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
-  const plans = readingPlans.getReadingPlansForChapter(
-    bookId,
-    chapterNumber,
-    features
-  );
+  const plans = readingPlans.getReadingPlansForChapter(bookId, chapterNumber);
   const hasDiscoverResults = hasAnyDiscoverResults(readingState);
 
   return {
