@@ -505,11 +505,6 @@
   cursor: pointer;
 }
 
-/* Delete is destructive, so it reads red — matching the design's menu. */
-.sb-content-menu-delete {
-  color: #db1c1c;
-}
-
 /* -------------------------------------------------------------- your images */
 
 .sb-images-grid {

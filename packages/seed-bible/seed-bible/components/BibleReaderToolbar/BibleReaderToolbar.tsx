@@ -867,6 +867,7 @@ function VerseToolbarAnnotationGroup(props: {
                         modals,
                         annotations,
                         annotation,
+                        label,
                         toast
                       );
                     }}

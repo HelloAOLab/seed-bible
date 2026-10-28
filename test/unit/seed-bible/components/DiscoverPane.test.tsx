@@ -2020,7 +2020,7 @@ describe("DiscoverPane", () => {
       );
     });
     expect(modalContainer.textContent).toContain(
-      "Delete this annotation? This can't be undone."
+      "Delete the annotation on GEN 1? This can't be undone."
     );
 
     const confirmButton = modalContainer.querySelector(

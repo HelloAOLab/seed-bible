@@ -178,6 +178,25 @@ interface StateOptions {
   removeCustomizationError?: Error;
 }
 
+/** Renders the modal the screen last asked to open, as the modal host would. */
+function renderOpenedModal(openModal: ReturnType<typeof vi.fn>) {
+  const modal = openModal.mock.calls.at(-1)![0] as {
+    content: () => preact.ComponentChildren;
+  };
+  const dialog = document.createElement("div");
+  act(() => render(<>{modal.content()}</>, dialog));
+  return dialog;
+}
+
+/** Presses a confirmation's Delete button and waits for the delete to settle. */
+async function confirmDelete(dialog: HTMLElement) {
+  await act(async () => {
+    dialog
+      .querySelector<HTMLButtonElement>(".sb-session-settings-end")!
+      .click();
+  });
+}
+
 function createState(options: StateOptions = {}) {
   const load = vi.fn(async () => {});
   const removeAnnotation = vi.fn(() => {});
@@ -1230,15 +1249,15 @@ describe("YourContentPane", () => {
     });
   });
 
-  // Deleting hides the card immediately rather than waiting on the server —
-  // a note that stays on screen after "Delete" reads as a failure.
-  it("removes a deleted annotation from the list and from the record", () => {
+  // Once confirmed, deleting hides the card immediately rather than waiting
+  // on the server — a note that stays on screen after "Delete" reads as a
+  // failure.
+  it("asks before deleting an annotation, then removes it from the list and the record", async () => {
     const target = annotation("a", "<p>note</p>");
-    const { state, removeAnnotation, deleteAnnotationAndRefresh } = createState(
-      {
+    const { state, removeAnnotation, deleteAnnotationAndRefresh, openModal } =
+      createState({
         annotations: [target],
-      }
-    );
+      });
     renderPane(state);
 
     act(() => {
@@ -1252,6 +1271,14 @@ describe("YourContentPane", () => {
     act(() => {
       deleteItem.click();
     });
+
+    expect(removeAnnotation).not.toHaveBeenCalled();
+    const dialog = renderOpenedModal(openModal);
+    expect(dialog.textContent).toContain(
+      "Delete the annotation on Genesis 1:1? This can't be undone."
+    );
+
+    await confirmDelete(dialog);
 
     expect(removeAnnotation).toHaveBeenCalledWith("a");
     expect(deleteAnnotationAndRefresh).toHaveBeenCalledWith(target);
@@ -1294,12 +1321,13 @@ describe("YourContentPane", () => {
 
   // Without the rollback the note vanished from the screen while still
   // sitting in the record.
-  it("puts an annotation back when the server delete fails", async () => {
+  it("puts an annotation back and says so when the server delete fails", async () => {
     const target = annotation("a", "<p>note</p>");
-    const { state, removeAnnotation, restoreAnnotation } = createState({
-      annotations: [target],
-      deleteError: new Error("nope"),
-    });
+    const { state, removeAnnotation, restoreAnnotation, openModal, toast } =
+      createState({
+        annotations: [target],
+        deleteError: new Error("nope"),
+      });
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
@@ -1316,11 +1344,11 @@ describe("YourContentPane", () => {
     act(() => {
       deleteItem.click();
     });
+    await confirmDelete(renderOpenedModal(openModal));
 
     expect(removeAnnotation).toHaveBeenCalledWith("a");
-    await vi.waitFor(() => {
-      expect(restoreAnnotation).toHaveBeenCalledWith(target);
-    });
+    expect(restoreAnnotation).toHaveBeenCalledWith(target);
+    expect(toast).toHaveBeenCalledWith("Couldn't delete the annotation.");
     consoleError.mockRestore();
   });
 
@@ -1757,7 +1785,7 @@ describe("YourContentPane save options", () => {
     const dialog = chooseDelete(openModal);
     expect(removeSave).not.toHaveBeenCalled();
     expect(dialog.textContent).toContain(
-      'Delete save "Psalm 23"? This can\'t be undone.'
+      "Delete save for Psalm 23? This can't be undone."
     );
 
     await act(async () => {
@@ -1794,7 +1822,7 @@ describe("YourContentPane save options", () => {
     const dialog = chooseDelete(created.openModal);
 
     expect(dialog.textContent).toContain(
-      'Delete save "Psalm 23" from My Saves and Sermon prep?'
+      "Delete save for Psalm 23 from My Saves and Sermon prep?"
     );
   });
 
@@ -1910,50 +1938,63 @@ describe("YourContentPane clearing a highlight", () => {
     });
   };
 
-  const clearItem = () => {
+  const deleteItem = () => {
     const item = Array.from(
       document.body.querySelectorAll<HTMLElement>(".sb-context-menu-item")
-    ).find((candidate) => candidate.textContent?.includes("Clear highlight"));
-    if (!item) throw new Error("Clear highlight was not in the menu.");
+    ).find((candidate) => candidate.textContent?.includes("Delete"));
+    if (!item) throw new Error("Delete was not in the menu.");
     return item;
   };
 
-  it("gives every highlight a menu offering Clear highlight", () => {
+  /** Picks Delete from the highlight's menu and renders the confirmation. */
+  const chooseDelete = (openModal: ReturnType<typeof vi.fn>) => {
+    openMenu();
+    act(() => {
+      deleteItem().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    return renderOpenedModal(openModal);
+  };
+
+  it("gives every highlight a menu offering Delete, with an icon", () => {
     renderWithHighlight();
     openMenu();
 
-    expect(clearItem()).not.toBeUndefined();
+    expect(
+      deleteItem().querySelector(".sb-context-menu-item-icon")?.textContent
+    ).toBe("delete");
   });
 
-  it("clears the highlight from the list and on the server", async () => {
-    const { removeHighlight, unhighlightVerse, restoreHighlight } =
+  it("asks before deleting a highlight, then clears it from the list and on the server", async () => {
+    const { removeHighlight, unhighlightVerse, restoreHighlight, openModal } =
       renderWithHighlight();
-    openMenu();
 
-    await act(async () => {
-      clearItem().dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
+    const dialog = chooseDelete(openModal);
+    expect(removeHighlight).not.toHaveBeenCalled();
+    expect(dialog.textContent).toContain(
+      "Delete the highlight on John 1:1? This can't be undone."
+    );
+
+    await confirmDelete(dialog);
 
     expect(removeHighlight).toHaveBeenCalledWith(highlight("JHN"));
     expect(unhighlightVerse).toHaveBeenCalledWith("BSB", "JHN", 1, 1);
     expect(restoreHighlight).not.toHaveBeenCalled();
   });
 
-  it("puts the highlight back when the server call fails", async () => {
+  it("puts the highlight back and says so when the server call fails", async () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    const { removeHighlight, restoreHighlight } = renderWithHighlight({
-      unhighlightError: new Error("offline"),
-    });
-    openMenu();
+    const { removeHighlight, restoreHighlight, openModal, toast } =
+      renderWithHighlight({
+        unhighlightError: new Error("offline"),
+      });
 
-    await act(async () => {
-      clearItem().dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
+    await confirmDelete(chooseDelete(openModal));
 
     expect(removeHighlight).toHaveBeenCalled();
     expect(restoreHighlight).toHaveBeenCalledWith(highlight("JHN"));
+    expect(toast).toHaveBeenCalledWith("Couldn't delete the highlight.");
     expect(consoleError).toHaveBeenCalled();
   });
 

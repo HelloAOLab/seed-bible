@@ -26,7 +26,10 @@ import {
   highlightKey,
   type ContentFilter,
 } from "../../managers/YourContentManager";
-import { AnnotationPreview } from "../DiscoverPane/AnnotationsSection";
+import {
+  AnnotationPreview,
+  openDeleteAnnotationConfirm,
+} from "../DiscoverPane/AnnotationsSection";
 import { PlaylistRow } from "../DiscoverPane/PlaylistRow";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import { openSaveModalForLocation } from "../Tabs/Tabs";
@@ -215,7 +218,8 @@ function AnnotationCard(props: {
   annotation: Annotation;
   onOpenPassage: (target: TodayPassageTarget) => void;
   onEdit: () => void;
-  onDelete: () => void;
+  /** Erases the annotation, once the user has confirmed. */
+  onDelete: () => Promise<void>;
 }) {
   const { state, annotation } = props;
   const { t, language } = useI18n();
@@ -227,6 +231,12 @@ function AnnotationCard(props: {
     annotation.bookId,
     annotation.chapterNumber,
     verses[0]
+  );
+  const reference = formatReference(
+    bookNames,
+    annotation.bookId,
+    annotation.chapterNumber,
+    verses
   );
 
   const open = () =>
@@ -248,15 +258,33 @@ function AnnotationCard(props: {
           aria-label={t("more-options", { defaultValue: "More options" })}
         >
           <ContextMenuItem onClick={props.onEdit}>
-            <MaterialIcon>edit</MaterialIcon>
-            {t("edit", { defaultValue: "Edit" })}
+            <MaterialIcon
+              className="sb-context-menu-item-icon"
+              aria-hidden="true"
+            >
+              edit
+            </MaterialIcon>
+            <span>{t("edit", { defaultValue: "Edit" })}</span>
           </ContextMenuItem>
           <ContextMenuItem
-            className="sb-content-menu-delete"
-            onClick={props.onDelete}
+            onClick={() =>
+              openDeleteAnnotationConfirm(
+                state.modals,
+                state.annotations,
+                annotation,
+                reference,
+                state.app.toast,
+                props.onDelete
+              )
+            }
           >
-            <MaterialIcon>delete</MaterialIcon>
-            {t("delete", { defaultValue: "Delete" })}
+            <MaterialIcon
+              className="sb-context-menu-item-icon"
+              aria-hidden="true"
+            >
+              delete
+            </MaterialIcon>
+            <span>{t("delete", { defaultValue: "Delete" })}</span>
           </ContextMenuItem>
         </ContextMenuWithButton>
       </div>
@@ -265,14 +293,7 @@ function AnnotationCard(props: {
         {verseText ? (
           <span className="sb-content-quote-text">{verseText}</span>
         ) : null}
-        <span className="sb-content-quote-ref">
-          {formatReference(
-            bookNames,
-            annotation.bookId,
-            annotation.chapterNumber,
-            verses
-          )}
-        </span>
+        <span className="sb-content-quote-ref">{reference}</span>
       </button>
 
       <div className="sb-content-annotation-body">
@@ -286,7 +307,8 @@ function HighlightRow(props: {
   state: SeedBibleState;
   stored: StoredHighlight;
   onOpenPassage: (target: TodayPassageTarget) => void;
-  onClear: () => void;
+  /** Erases the highlight, once the user has confirmed. */
+  onClear: () => Promise<void>;
 }) {
   const { state, stored } = props;
   const { t } = useI18n();
@@ -305,6 +327,33 @@ function HighlightRow(props: {
   const color =
     stored.highlight.customColor ??
     `var(--sb-highlight-${stored.highlight.colorId}-color, var(--sb-primary-color))`;
+  const reference = formatReference(
+    bookNames,
+    stored.bookId,
+    stored.chapterNumber,
+    verses
+  );
+
+  const confirmDelete = () =>
+    openConfirmDeleteModal(state.modals, {
+      id: `delete-highlight-confirm-${highlightKey(stored)}`,
+      title: {
+        key: "delete-highlight-confirm-title",
+        defaultValue: "Delete highlight?",
+      },
+      message: (t) =>
+        t("delete-highlight-confirm-message", {
+          reference,
+          defaultValue:
+            "Delete the highlight on {{reference}}? This can't be undone.",
+        }),
+      onConfirm: props.onClear,
+      failedMessage: (t) =>
+        t("delete-highlight-failed", {
+          defaultValue: "Couldn't delete the highlight.",
+        }),
+      toast: state.app.toast,
+    });
 
   return (
     // The menu is a sibling of the quote, as on the annotation card above: a
@@ -326,26 +375,21 @@ function HighlightRow(props: {
         {verseText ? (
           <span className="sb-content-highlight-text">{verseText}</span>
         ) : null}
-        <span className="sb-content-highlight-ref">
-          {formatReference(
-            bookNames,
-            stored.bookId,
-            stored.chapterNumber,
-            verses
-          )}
-        </span>
+        <span className="sb-content-highlight-ref">{reference}</span>
       </button>
       <ContextMenuWithButton
         icon="more_horiz"
         buttonClassName="sb-content-kebab"
         aria-label={t("more-options", { defaultValue: "More options" })}
       >
-        <ContextMenuItem
-          className="sb-content-menu-delete"
-          onClick={props.onClear}
-        >
-          <MaterialIcon>delete</MaterialIcon>
-          {t("clear-highlight", { defaultValue: "Clear highlight" })}
+        <ContextMenuItem onClick={confirmDelete}>
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            delete
+          </MaterialIcon>
+          <span>{t("delete", { defaultValue: "Delete" })}</span>
         </ContextMenuItem>
       </ContextMenuWithButton>
     </div>
@@ -380,14 +424,15 @@ function SavePill(props: {
       message: (t) =>
         save.categories.length > 1
           ? t("delete-save-confirm-message-folders", {
-              name,
+              reference: name,
               folders,
               defaultValue:
-                'Delete save "{{name}}" from {{folders}}? This can\'t be undone.',
+                "Delete save for {{reference}} from {{folders}}? This can't be undone.",
             })
           : t("delete-save-confirm-message", {
-              name,
-              defaultValue: 'Delete save "{{name}}"? This can\'t be undone.',
+              reference: name,
+              defaultValue:
+                "Delete save for {{reference}}? This can't be undone.",
             }),
       onConfirm: () => state.saves.removeSave(save.id),
       failedMessage: (t) =>
@@ -932,18 +977,20 @@ export function YourContentPane(props: YourContentScreenProps) {
                     annotation={annotation}
                     onOpenPassage={onOpenPassage}
                     onEdit={() => props.onEditAnnotation(annotation)}
-                    onDelete={() => {
+                    onDelete={async () => {
                       // Drop it from the list straight away — waiting on the
                       // server would leave a deleted note on screen. If the
                       // delete then fails, put it back rather than showing a
                       // note as gone that is still there.
                       yourContent.removeAnnotation(annotation.id);
-                      void annotations
-                        .deleteAnnotationAndRefresh(annotation)
-                        .catch((error) => {
-                          console.error("Error deleting annotation:", error);
-                          yourContent.restoreAnnotation(annotation);
-                        });
+                      try {
+                        await annotations.deleteAnnotationAndRefresh(
+                          annotation
+                        );
+                      } catch (error) {
+                        yourContent.restoreAnnotation(annotation);
+                        throw error;
+                      }
                     }}
                   />
                 ))}
@@ -962,23 +1009,23 @@ export function YourContentPane(props: YourContentScreenProps) {
                 .slice(0, limit(visibleHighlights))
                 .map((stored, index) => (
                   <HighlightRow
-                    onClear={() => {
+                    onClear={async () => {
                       // Same optimistic pattern as deleting an annotation
                       // above: drop it now so a cleared highlight does not sit
                       // on screen waiting for the server, and put it back if
                       // the call fails.
                       yourContent.removeHighlight(stored);
-                      void state.highlights
-                        .unhighlightVerse(
+                      try {
+                        await state.highlights.unhighlightVerse(
                           stored.translationId,
                           stored.bookId,
                           stored.chapterNumber,
                           stored.highlight.verse
-                        )
-                        .catch((error) => {
-                          console.error("Error clearing highlight:", error);
-                          yourContent.restoreHighlight(stored);
-                        });
+                        );
+                      } catch (error) {
+                        yourContent.restoreHighlight(stored);
+                        throw error;
+                      }
                     }}
                     key={`${stored.translationId}/${stored.bookId}/${stored.chapterNumber}/${index}`}
                     state={state}
