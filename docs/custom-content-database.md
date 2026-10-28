@@ -43,7 +43,7 @@ Owners with a website full of content don't even need the links: they enter the 
 | `resolveLinkMedia` + `PlaylistLinkContent`                                                                    | Deciding whether a link is an embeddable video (YouTube/Vimeo), a video file, or a plain link, and opening it in a modal — the same thing `default-content-extension` does today.                   |
 | `getLinkPreview` + `managers/linkPreview.ts`                                                                  | Fetching each link's title, description and image: the records server's link preview API that playlists and reading plans already use (see §5.2). The worker calls the same API.                    |
 | `getUserInfo` (as used in `LoginManager`) and `FATAL_SESSION_ERROR_CODES` (`SessionGuard.ts`)                 | How the worker checks who is calling, and which errors mean the session is dead (§5.8).                                                                                                             |
-| Cloudflare Workers, Queues and Durable Objects (new, `workers/content-import/`)                               | Running every import (pasted links, CSV, whole sites) as a queue, and publishing (§5.8).                                                                                                            |
+| Cloudflare Workers, Queues, D1 and Durable Objects (new, `workers/content-import/`)                           | Running every import (pasted links, CSV, whole sites) as a queue, tracking jobs, and publishing (§5.8).                                                                                             |
 
 ## 4. Data model
 
@@ -321,7 +321,7 @@ Once a page is extracted it becomes an ordinary queue message, so classifying an
                                     steps 3–6 of §5 (refs, AI, review, publish) ◄─┘
 ```
 
-**A. List the site's pages.** `POST /site-imports` on the worker with `{ contentRecordName, site, include?, exclude? }` starts a lookup and returns its id. The editor checks on it with `GET /site-imports/{id}`. The listing runs inside the job's Durable Object, through the shared Common Crawl gate (§5.8).
+**A. List the site's pages.** `POST /site-imports` on the worker with `{ contentRecordName, site, include?, exclude? }` starts a lookup and returns its id. The editor checks on it with `GET /site-imports/{id}`. The listing runs as queue messages, one per index result page, each going through the shared Common Crawl gate (§5.8). The pages found are stored as `candidate` rows in the job's D1 table until the owner picks.
 
 - Query the **latest 3 crawls**, because each crawl only samples a site and a page missing from one is often in another. Keep only `status` 200 with `mime` `text/html`.
 - Merge the results: one entry per normalized URL (same rules as §5.1), keeping the **newest capture**. Captures with identical `digest` (the same content under two URLs) are collapsed.
@@ -399,22 +399,88 @@ After: the owner presses Import, sees "Importing 0 of 2,000", and can close the 
 ```
  editor ──POST /imports──► API worker ──auth──► CasualOS getUserInfo
                               │
-                              ├─► ImportJob (Durable Object, one per import: progress, the owner's key)
+                              ├─► D1: import_jobs + import_items rows (progress, status, encrypted key)
                               └─► Queue "content-import": one message per link
                                         │
-                                  queue consumer: link preview / Common Crawl ► refs ► aiChat ► write item
-                                        │                                                    │
-                                        ▼                                                    ▼
-                                  ImportJob counters                               content record (CasualOS)
+                                  queue consumer: claim slot ► link preview / Common Crawl ► refs ► aiChat ► write item
+                                        │                                                              │
+                                        ▼                                                              ▼
+                                  D1 item row → done / failed                                content record (CasualOS)
  Publish / auto-publish ──► LibraryWriter (Durable Object, one per content record) ──► chapter entries + manifest
 ```
 
 - **API worker:** a small HTTP API: `POST /imports`, `GET /imports/{id}`, `POST /imports/{id}/cancel`, `POST /imports/{id}/resume`, `POST /site-imports` (§5.7), `POST /publish`. It only accepts requests from the Seed Bible app's origins (CORS).
-- **`ImportJob` Durable Object** (a Cloudflare Durable Object is a tiny, single-instance store-plus-program; one exists per import): holds the job's settings, its counters (queued, done, needs review, failed) and, encrypted, the owner's session key. The editor polls `GET /imports/{id}` every few seconds for progress.
-- **Queue `content-import`:** one message per link, carrying `{ jobId, itemId, url, origin }`. It never carries the session key. The consumer takes messages in batches (proposal: 10) with a cap on how many batches run at once. That cap is the main lever for staying under the preview API, `aiChat` and Common Crawl limits.
-- **Queue consumer:** for each message it runs steps 2–4: link preview (or Common Crawl fetch and extract, §5.7), explicit references, `aiChat`. It then writes the item to the content record and updates the job's counters.
+- **D1 database** (Cloudflare's SQL database) holds every import as rows (below). The editor polls `GET /imports/{id}` every few seconds for progress.
+- **Queue `content-import`:** one message per link, carrying `{ jobId, itemId }`. It never carries the session key. The consumer takes messages in batches (proposal: 10) with a cap on how many batches run at once. That cap is the main lever for staying under the preview API, `aiChat` and Common Crawl limits.
+- **Queue consumer:** for each message it claims a slot (below), then runs steps 2–4: link preview (or Common Crawl fetch and extract, §5.7), explicit references, `aiChat`. It then writes the item to the content record and marks the item's row `done` or `failed`.
 - **`LibraryWriter` Durable Object** (one per content record): the only thing that writes chapter entries and the manifest (§5.6).
 - **`CommonCrawlGate` Durable Object** (one, global): the polite single lane to the Common Crawl index (§5.7).
+
+#### Why D1 for imports, and Durable Objects only for two jobs
+
+A Durable Object (a small Cloudflare program that runs one request at a time, with its own storage) is shut down after a minute or two idle, and its storage stays until our code deletes it. So everything an import must remember would have to be saved and reloaded anyway, and every object would need its own cleanup alarm. For job tracking, that is a database row with extra machinery. D1 gives us the same guarantees more simply:
+
+- **Safe concurrent updates.** SQL updates are atomic, so many queue messages finishing at once can't lose updates.
+- **Constraints for free.** A unique index enforces "one running import per library".
+- **Easy to inspect and clean up.** `SELECT * FROM import_jobs WHERE status = 'running'` shows every running import, and one scheduled job cleans up all of them. Leftovers can't hide in thousands of separate objects.
+
+Durable Objects stay where running one thing at a time is the whole point:
+
+- **`LibraryWriter`:** rebuilding chapter entries is a multi-step job that must never run twice at once for the same library. A Durable Object guarantees that. In D1 we'd be writing our own lock, with timeouts and crash recovery. It saves only the item ids waiting to be published, clearing them when done, so nothing lingers. A rebuild is repeatable (it starts from the items), so one interrupted by a restart is simply run again. The editor's "Rebuild index" is the backstop. It holds no session key: each publish request brings one, from the editor or, for auto-publish, from the import's row.
+- **`CommonCrawlGate`:** spacing out requests to Common Crawl is a rate limiter, which a single object does naturally. It only remembers when the last request went out; if a restart loses that, at worst one request goes out a little early.
+
+Both are idle most of the time and keep almost no data, so their lifetime needs no special handling.
+
+#### The import tables
+
+```sql
+CREATE TABLE import_jobs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  content_record_name TEXT NOT NULL,
+  kind TEXT NOT NULL,            -- 'links' | 'site'
+  status TEXT NOT NULL,          -- 'listing' | 'awaiting_pick' | 'running' | 'paused_signin'
+                                 -- | 'cancelled' | 'done' | 'expired'
+  session_key_enc BLOB,          -- encrypted; set to NULL as soon as the job stops
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL    -- created_at + 7 days
+);
+
+-- At most one active import per library.
+CREATE UNIQUE INDEX one_active_import ON import_jobs (content_record_name)
+  WHERE status IN ('listing', 'awaiting_pick', 'running', 'paused_signin');
+
+CREATE TABLE import_items (
+  job_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,         -- also the item's address in the content record
+  url TEXT NOT NULL,
+  origin TEXT NOT NULL,          -- JSON: paste / csv / site + crawl details
+  state TEXT NOT NULL,           -- 'candidate' | 'queued' | 'running' | 'done' | 'failed'
+  lease_until INTEGER,           -- set while 'running'
+  attempts INTEGER NOT NULL DEFAULT 0,
+  error TEXT,
+  PRIMARY KEY (job_id, item_id)
+);
+CREATE INDEX import_items_by_state ON import_items (job_id, state);
+```
+
+- **Progress isn't stored as counters; it's counted from the rows:** `SELECT state, COUNT(*) FROM import_items WHERE job_id = ? GROUP BY state`. With nothing to keep in step, the numbers can't drift from what actually happened.
+- **Fair sharing** (proposal: 3 links at a time per import) is one statement. Before working on an item, the consumer moves it from `queued` to `running` with a lease 10 minutes out, but only if fewer than 3 of the job's items hold an unexpired lease:
+
+  ```sql
+  UPDATE import_items SET state = 'running', lease_until = :leaseEnd, attempts = attempts + 1
+  WHERE job_id = :job AND item_id = :item AND state = 'queued'
+    AND (SELECT COUNT(*) FROM import_items
+         WHERE job_id = :job AND state = 'running' AND lease_until > :now) < 3;
+  ```
+
+  If no row changed, the message is put back on the queue with a short delay. A consumer that crashes mid-link never releases its slot, but its lease runs out and the slot frees itself. That item is put back to `queued` by the cleanup job (below).
+
+- **Pause and cancel** are a `status` change. The consumer reads the job's status before claiming a slot, so messages still waiting on the queue are dropped (cancelled) or put back (paused) instead of being worked on.
+- **Finishing.** After marking an item, the consumer checks whether any `queued` or `running` items remain. If none do, it moves the job to `done` with a conditional `UPDATE … WHERE status = 'running'`, so only one consumer wins. The winner erases the key, writes a short summary to the content record's `importStatus` entry ("1,969 imported, 31 failed"), and leaves the rows for the cleanup job.
+
+**D1's limit to keep in mind:** one database runs its writes one at a time. Each link costs about three small writes (claim, finish, and occasionally the finish check), so even hundreds of links a minute across all owners is light work. If we ever outgrow that, jobs can be spread over several databases by content record.
 
 #### Authentication: the owner's session key, checked with CasualOS
 
@@ -426,9 +492,9 @@ The editor sends `Authorization: Bearer {sessionKey}`, the key the app already h
 
 **Handling the key carefully.** A session key is a full-account credential, so the worker treats it like a password:
 
-- It is stored only in the job's Durable Object, encrypted with a worker secret. It never goes in queue messages, logs or error reports.
-- It is deleted the moment the job finishes, is cancelled, or after 7 days, whichever comes first.
-- If CasualOS answers with one of `FATAL_SESSION_ERROR_CODES` (`session_expired`, `invalid_key`, `user_is_banned`), the job **pauses**; it never retries with a dead key. The editor then shows "Sign in again to continue this import", and `POST /imports/{id}/resume` supplies a fresh key. The same narrow list `SessionGuard.ts` uses applies here: a network blip or `server_error` is retried, not treated as a dead session.
+- It is stored only in the job's `import_jobs` row, encrypted with a worker secret. It never goes in queue messages, logs or error reports.
+- It is erased (set to `NULL`) the moment the job finishes or is cancelled. The cleanup job erases it from any job past `expires_at` (7 days), including one paused and never resumed.
+- If CasualOS answers with one of `FATAL_SESSION_ERROR_CODES` (`session_expired`, `invalid_key`, `user_is_banned`), the job **pauses** (`paused_signin`); it never retries with a dead key. The editor then shows "Sign in again to continue this import", and `POST /imports/{id}/resume` supplies a fresh key. The same narrow list `SessionGuard.ts` uses applies here: a network blip or `server_error` is retried, not treated as a dead session.
 - Signing out in the app revokes the session, so the worker's copy stops working too. That's the right outcome: signing out stops your imports.
 
 A narrower credential would be better than a full session key. CasualOS **record keys** (`createRecordKey`, used today by `seed-bible-extension-scripts`) can grant access to a single record, so the worker could use one, scoped to the content record, for writes. `aiChat` and `getLinkPreview` still need the session, so this narrows what a leak would expose rather than removing the session key entirely. See open question 7.
@@ -436,11 +502,20 @@ A narrower credential would be better than a full session key. CasualOS **record
 #### Reliability for large batches
 
 - **Retries.** A message that fails for a passing reason (a timeout, a 429 or 503, a server error) is retried with growing delays (Queue retry with delay). After 5 attempts it goes to a **dead-letter queue**, whose consumer marks the item `failed` with the reason, so nothing disappears silently.
-- **Idempotent.** Each message carries its `itemId`, chosen when the job is created, so a retry overwrites the same item instead of creating a duplicate.
-- **Never clobbers the owner.** If the owner edited an item while it was queued (its `updatedAt` is newer than the job's), the consumer skips it.
-- **Resumable.** The job's Durable Object knows what's done, so a pause (expired session) or cancel leaves a consistent state. Resuming re-queues only what's left.
-- **Fair.** Each job has its own concurrency budget (proposal: 3 links at a time), so one owner's 10,000-link import doesn't starve another owner's 20.
-- **Limits.** Cap a single import (proposal: 10,000 links), and only one running import per content record.
+- **Idempotent.** Each message carries its `itemId`, chosen when the job is created, so a retry overwrites the same item instead of creating a duplicate. A message for an item that's already `done` is acknowledged and skipped.
+- **Never clobbers the owner.** If the owner edited an item while it was queued (its `updatedAt` in the content record is newer than the job's start), the consumer skips it.
+- **Resumable.** The item rows say exactly what's left, so resuming re-queues only the `queued` items.
+- **Fair.** Each job has its own slots (above), so one owner's 10,000-link import doesn't starve another owner's 20.
+- **Limits.** Cap a single import (proposal: 10,000 links). The unique index allows only one active import per content record.
+
+#### Cleanup
+
+A scheduled worker (a Cron Trigger, proposal: every 15 minutes):
+
+- Puts `running` items whose lease has expired back to `queued` and re-sends their messages.
+- Expires jobs past `expires_at`: sets them to `expired`, erases the key, and writes the summary to `importStatus`.
+- Deletes `candidate` rows the owner never picked, 24 hours after listing.
+- Deletes finished jobs and their item rows 30 days after they end. The lasting record is the `importStatus` entry and the items themselves, both in the content record.
 
 #### Deployment
 
@@ -508,14 +583,14 @@ All new strings go into `en.json` only.
 
 ## 8. Code layout
 
-| File                                                         | Contents                                                                                                                                                                                                                                                                                                                                                           |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `managers/CustomContentManager.tsx`                          | Signals for the library and items; create/delete the content record; item edits; talks to the import worker (start, progress, cancel, resume, publish); registers the Discover provider. Receives `os`, `login`, `customizations`, `discover`.                                                                                                                     |
-| `packages/content-library/` (shared, no `extension.json`)    | `schema.ts` (zod schemas for manifest, item, chapter entry), `chapterIndex.ts` (split references into chapters, affected chapters, build a chapter entry; most unit tests live here), `references.ts` (`extractExplicitRefs`, moved from `transcription`), `classify.ts` (prompt and response validation), `normalizeUrl.ts`. Used by both the app and the worker. |
-| `managers/customContent/importClient.ts`                     | Typed client for the worker's HTTP API, sending the session key.                                                                                                                                                                                                                                                                                                   |
-| `workers/content-import/`                                    | `src/api.ts` (routes, CORS, session check), `src/ImportJob.ts`, `src/LibraryWriter.ts`, `src/CommonCrawlGate.ts` (Durable Objects), `src/consumer.ts` and `src/deadLetter.ts` (queue consumers), `src/linkMetadata.ts` (`getLinkPreview` + `resolveLinkMedia`), `src/commonCrawl/` (`index.ts`, `warc.ts`, `extract.ts`), `wrangler` config.                       |
-| `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                                                                                                                                                                                     |
-| `CustomizationsManager.tsx`                                  | Add optional `contentRecordName` to the schema and type.                                                                                                                                                                                                                                                                                                           |
+| File                                                         | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `managers/CustomContentManager.tsx`                          | Signals for the library and items; create/delete the content record; item edits; talks to the import worker (start, progress, cancel, resume, publish); registers the Discover provider. Receives `os`, `login`, `customizations`, `discover`.                                                                                                                                                                                                            |
+| `packages/content-library/` (shared, no `extension.json`)    | `schema.ts` (zod schemas for manifest, item, chapter entry), `chapterIndex.ts` (split references into chapters, affected chapters, build a chapter entry; most unit tests live here), `references.ts` (`extractExplicitRefs`, moved from `transcription`), `classify.ts` (prompt and response validation), `normalizeUrl.ts`. Used by both the app and the worker.                                                                                        |
+| `managers/customContent/importClient.ts`                     | Typed client for the worker's HTTP API, sending the session key.                                                                                                                                                                                                                                                                                                                                                                                          |
+| `workers/content-import/`                                    | `src/api.ts` (routes, CORS, session check), `src/jobs.ts` (D1 queries: create, claim slot, finish, progress), `migrations/` (D1 schema), `src/LibraryWriter.ts` and `src/CommonCrawlGate.ts` (Durable Objects), `src/consumer.ts` and `src/deadLetter.ts` (queue consumers), `src/cleanup.ts` (Cron Trigger), `src/linkMetadata.ts` (`getLinkPreview` + `resolveLinkMedia`), `src/commonCrawl/` (`index.ts`, `warc.ts`, `extract.ts`), `wrangler` config. |
+| `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `CustomizationsManager.tsx`                                  | Add optional `contentRecordName` to the schema and type.                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ## 9. Testing plan
 
@@ -526,7 +601,8 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 - **`linkMetadata`** (worker, mock the CasualOS client's `getLinkPreview`): URL normalization dedupes `youtu.be` / `youtube.com/watch` / tracking params; a preview that fails or returns null yields `needs_review` with an empty title, not a lost item; new items inherit the manifest's `defaultAuthor`.
 - **Discover provider** (mock `os.getData`): manifest says empty → no `getData` call; missing record or failed read → `[]` and other providers still answer; results carry the right `contentType` and `verses`; switching Customization unregisters the provider and its content types.
 - **Worker authentication and key handling** (CasualOS client mocked): a missing or malformed key → 401; `getUserInfo` failing → 401; a key for a user who can't write the content record → 403; the key never appears in a queue message or log line; a `session_expired` during processing pauses the job instead of retrying, and `resume` with a new key carries on from where it stopped; a `server_error` is retried, not treated as a dead session.
-- **Worker queue** (run in the Workers runtime with `@cloudflare/vitest-pool-workers`): a retried message overwrites the same item, no duplicate; after 5 failures the item ends up `failed` with its reason; an item the owner edited after queueing is skipped; cancelling stops further messages; two jobs share concurrency fairly.
+- **Worker queue and D1** (run in the Workers runtime with `@cloudflare/vitest-pool-workers`, which provides a real local D1): a retried message overwrites the same item, no duplicate; after 5 failures the item ends up `failed` with its reason; an item the owner edited after queueing is skipped; cancelling stops further messages; a fourth item can't claim a slot while three leases are live, and can once one expires; many items finishing at once mark the job `done` exactly once and write one summary; progress counts match the item rows; starting a second import for the same library is refused.
+- **Cleanup**: expired leases go back to `queued`; a paused job past `expires_at` becomes `expired` with its key erased; old rows are deleted.
 - **`LibraryWriter`**: concurrent publish requests for overlapping chapters produce the same chapter entries as running them one after another.
 - **Site import (worker)**, with recorded index responses and a small WARC fixture, no live network: pages across index result pages are all collected; the newest capture wins and identical `digest`s collapse; include/exclude and default noise filters apply; URLs already in the library are skipped; a WARC record parses to the right HTML, including non-UTF-8 pages; extraction finds the title, main text and an embedded YouTube iframe; a 503 from the index is retried with backoff, not reported as "no pages"; a site with zero captures returns a clear "not in the archive" result; the job cap is enforced.
 - **Site import (end to end)**: extracted pages go through steps 3–6 like pasted links; full text is never written to a record; explicit references found deep in the body text are picked up.
@@ -536,7 +612,7 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 ## 10. Rollout
 
 1. **Phase 1 — storage + reading.** The content record, schemas, chapter index builder, Discover provider, and a minimal editor where the owner enters title/URL/categories/references by hand (publishing from the browser for now). Proves the per-chapter lookup end to end, with no AI work and no worker.
-2. **Phase 2 — the import worker.** API worker with session-key authentication, `ImportJob`, the queue and dead-letter consumer, `LibraryWriter` (publishing moves to the worker), CD deployment. Items filled from `getLinkPreview`; bulk paste and CSV import.
+2. **Phase 2 — the import worker.** API worker with session-key authentication, the D1 job tables and cleanup trigger, the queue and dead-letter consumer, `LibraryWriter` (publishing moves to the worker), CD deployment. Items filled from `getLinkPreview`; bulk paste and CSV import.
 3. **Phase 3 — AI classification and review.** `aiChat` classification, review queue, confidence flags, auto-publish setting.
 4. **Phase 4 — polish.** Coverage view, rebuild index, chapter-record paging if real libraries need it.
 5. **Phase 5 — whole-site import.** `CommonCrawlGate`, the site-import endpoint, page picker, full-text extraction and "Check for new pages". It comes after Phase 3 because its main gain, better verse detection from full text, only pays off once classification exists.
@@ -551,5 +627,5 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 6. **Creating the content record.** Which CasualOS SDK call creates a new record owned by the user under a generated name, and are there limits on how many records one user may own? This decides whether "one record per Customization" needs a fallback for heavy users.
 7. **A narrower credential for the worker.** Can CasualOS issue something scoped to one record for writes, e.g. a record key for the content record, so the worker holds less than a full session key? `aiChat` and `getLinkPreview` still need a session. Could CasualOS add a session limited to those procedures?
 8. **Long-running imports and session lifetime.** How long do CasualOS sessions last? An import that outlives the session pauses and waits for the owner to sign in again (§5.8). If sessions are short, big imports will pause often.
-9. **Cloudflare account and cost.** Which Cloudflare account hosts the worker, and is the expected volume (queue operations, Durable Object requests, KV) inside the plan we want to pay for?
+9. **Cloudflare account and cost.** Which Cloudflare account hosts the worker, and is the expected volume (queue operations, D1 reads and writes, Durable Object requests, KV) inside the plan we want to pay for?
 10. **Common Crawl terms and load.** Confirm the current terms of use and the guidance on request rates for the index server and `data.commoncrawl.org`, and whether our expected volume (a few thousand range requests per import) is welcome or should go through the columnar index instead.
