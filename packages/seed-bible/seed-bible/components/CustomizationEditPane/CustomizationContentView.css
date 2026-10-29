@@ -277,3 +277,42 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
   font-size: 0.875rem;
 }
+
+.sb-ccl-coverage-books {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-ccl-coverage-book {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.sb-ccl-coverage-book[data-empty] .sb-ccl-coverage-name,
+.sb-ccl-coverage-count {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-ccl-coverage-chapters {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: 2px;
+}
+
+.sb-ccl-coverage-chapter {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-ccl-coverage-chapter[data-covered] {
+  background: var(--sb-primary-color);
+}

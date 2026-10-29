@@ -1,6 +1,6 @@
 # Custom Content Database for Customizations — Design
 
-Status: **Phases 1–2 built**, later phases proposed · Owner: TBD · Last updated: 2026-10-29
+Status: **Phases 1–4 built**, Phase 5 proposed · Owner: TBD · Last updated: 2026-10-29
 
 ## 1. Summary
 
@@ -208,7 +208,7 @@ interface ContentChapterEntry {
 
 **Splitting references across chapters.** A reference that spans chapters (e.g. Acts 1:13–2:4) produces an entry in **each** chapter it touches, with `verses` clipped to that chapter. A whole-chapter reference (`ACT 2`) produces `verses: []`. An item with five references in five chapters appears in five chapter records.
 
-**Size.** One entry is roughly 600 bytes. A heavily covered chapter (say 150 items on John 3) is ~90 KB. Before building, confirm the records server's per-record data limit. If a chapter would exceed a safe budget (proposal: 200 KB), split it into `…ch.JHN.3`, `…ch.JHN.3.p2`, … and record the page count in the chapter index (e.g. `{"JHN.3": {"count": 310, "pages": 2}}`). We don't expect to need this in v1, but the index's shape should allow it.
+**Size.** One entry is roughly 600 bytes. A heavily covered chapter (say 150 items on John 3) is ~90 KB. CasualOS refuses a data entry bigger than the owner's plan allows (`maxItemSizeInBytes`, 500 KB unless the deployment sets otherwise), so a chapter that would pass 200 KB is split into pages: `ch.JHN.3`, `ch.JHN.3.p2`, … The chapter index lists the page count only for chapters that have more than one (`"pages": {"JHN.3": 2}`), so for almost every chapter it looks exactly as before. Discover reads all of a chapter's pages at once and shows each item once, even if a publish running at the same moment moved it from one page to another. When a chapter shrinks, publishing erases the pages it no longer needs; "Rebuild index" finds stray pages by listing the record, so it repairs them even if the index is lost.
 
 ## 5. The ingest pipeline
 
@@ -627,7 +627,7 @@ A new **"Content"** section in `CustomizationEditPane`, next to Branding and Ext
 3. **Add content:** two tabs. _Paste links_ is a textarea (one link per line) or a CSV upload, with an **Import** button. _Import a website_ is a site address, optional include/exclude paths and a **Find pages** button. It leads to the page picker grouped by folder (§5.7 step B), and then lists saved sites with **Check for new pages**.
 4. **Import progress:** read from the worker ("Importing 1,240 of 2,000 · 31 failed"), with Cancel, and a "Sign in again to continue" prompt if the job paused on an expired session. Closing the editor doesn't stop it.
 5. **Items list:** filter tabs _Needs review · Published · Failed_. Each row: thumbnail, title, author, category chips, reference chips (low-confidence ones outlined), Edit / Re-classify / Delete. Bulk "Publish reviewed".
-6. **Coverage:** "Content on 214 of 1,189 chapters" with a link to see which books have none — useful for ministries filling gaps.
+6. **Coverage:** "Content on 214 of 1,189 chapters", with **Show by book**: each of the 66 books as a row of chapter squares (filled where there's content, with the item count on hover), and **Only books with gaps** to hide books that are fully covered. Useful for ministries filling gaps.
 7. **Maintenance:** "Rebuild index" (§5.6, runs on the worker) for recovery, and **Delete library**, which deletes the content record.
 
 All new strings go into `en.json` only.
@@ -665,12 +665,12 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 1. **Phase 1 — storage + reading.** The content record, schemas, chapter index builder, Discover provider, and a minimal editor where the owner enters title/URL/categories/references by hand (publishing from the browser for now). Proves the per-chapter lookup end to end, with no AI work and no worker. _Built._
 2. **Phase 2 — the import worker.** API worker with session-key authentication, the D1 job tables and cleanup trigger, the queue and dead-letter consumer, `LibraryWriter` (publishing moves to the worker), CD deployment. Items filled from `getLinkPreview`; bulk paste and CSV import. _Built._ Without a configured worker (`VITE_CONTENT_IMPORT_URL` unset), bulk import is hidden and publishing stays in the browser, so development and self-hosted setups keep working. The worker type-checks without `@cloudflare/workers-types`, whose globals clash with the repo's DOM types: the Cloudflare APIs it uses are plain interfaces in `src/platform.ts`, and its tests run the real handlers against SQLite (`node:sqlite`) through those interfaces.
 3. **Phase 3 — AI classification and review.** Suggestions through chat providers' optional `classifyContent()` (Apologist implements it), only when the owner asks (per item or in bulk), run by the editor while it's open; step 1 automatically for every library; confidence flags, suggested categories, auto-publish setting. _Built._ Only built-in extensions can offer `classifyContent` for now: sandboxed (third-party) extensions register chat providers through a message protocol that doesn't carry it yet.
-4. **Phase 4 — polish.** Coverage view, rebuild index, chapter-record paging if real libraries need it.
+4. **Phase 4 — polish.** Coverage view, rebuild index (built in Phase 1), chapter-record paging. _Built._
 5. **Phase 5 — whole-site import.** `CommonCrawlGate`, the site-import endpoint, page picker, full-text extraction and "Check for new pages". It comes after Phase 3 because its main gain, better verse detection from full text, only pays off once classification exists.
 
 ## 11. Open questions
 
-1. **Record size limit.** What is the CasualOS records server's per-record data limit for our deployment? It decides whether chapter paging (§4.5) is needed in v1.
+1. **Record size limit.** _Answered:_ the limit is per data entry, not per record: `maxItemSizeInBytes`, 500 KB by default, configurable per subscription tier. Chapter paging (§4.5) keeps every page under 200 KB. Still worth checking: whether our deployment sets a lower limit for free plans.
 2. **AI cost and limits.** Suggestions cost one request to the chosen agent per item (e.g. Apologist usage on the Custom Branding's key). A 500-link import is 500 requests. Is that acceptable, or should `classifyContent` take several items at once?
 3. **Shared libraries.** Should two Customizations be able to point at the same library (e.g. one ministry with several branded customizations)? With the content in its own record, this is just two Customizations naming the same `contentRecordName`. The open part is the editor: which Customization "owns" the library and what deleting one does to the other.
 4. **Collaborators.** Ministries often have a team. Because each library is its own record, CasualOS permissions can grant a teammate write access to just that record. Worth a follow-up design once v1 is in use; the worker's permission check (§5.8) already works per record.

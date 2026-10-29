@@ -10,8 +10,11 @@ import type {
   DiscoverManager,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import {
+  CONTENT_ITEM_MARKER,
   CONTENT_MANIFEST_ADDRESS,
   contentChapterAddress,
+  contentItemAddress,
+  type ContentItem,
   type ContentReference,
 } from "@packages/seed-bible/seed-bible/managers/customContent/schema";
 import type { Mock } from "vitest";
@@ -276,6 +279,76 @@ describe("CustomContentManager", () => {
       expect(owner.customContent.chapterIndex.value?.chapters).toEqual({
         "JHN.10": 1,
       });
+    });
+  });
+
+  describe("chapters too big for one record entry", () => {
+    /**
+     * Published items on John 3, stored as an import would leave them, then
+     * the library opened again so the owner's editor knows about them.
+     * Together they're well over CasualOS's 500 KB limit for one entry.
+     */
+    async function crowdedChapter(server: FakeRecordsServer, count: number) {
+      const owner = await ownerWithLibrary(server);
+      const recordName = owner.customContent.recordName.value!;
+      const record = server.records.get(recordName)!;
+      for (let i = 0; i < count; i++) {
+        const id = `item-${i}`;
+        record.set(contentItemAddress(id), {
+          data: {
+            id,
+            url: `https://gracecommunity.org/sermons/${i}`,
+            status: "published",
+            title: `Born again, part ${i}`,
+            description: "Nicodemus comes to Jesus by night. ".repeat(10),
+            image: `https://gracecommunity.org/images/${"x".repeat(1000)}/${i}.jpg`,
+            categoryIds: [],
+            references: [ref({ book: "JHN", chapter: 3 })],
+            createdAt: i,
+            updatedAt: i,
+          } satisfies ContentItem,
+          markers: [CONTENT_ITEM_MARKER],
+        });
+      }
+      await owner.customContent.openLibrary(recordName);
+      await owner.customContent.rebuildIndex();
+      return { ...owner, record };
+    }
+
+    it("are split into pages, and readers see every item once", async () => {
+      const server = fakeRecordsServer();
+      const owner = await crowdedChapter(server, 400);
+
+      expect(owner.record.has(contentChapterAddress("JHN", 3, 2))).toBe(true);
+      const pages = owner.customContent.chapterIndex.value?.pages?.["JHN.3"];
+      expect(pages).toBeGreaterThan(1);
+      expect(
+        owner.record.has(contentChapterAddress("JHN", 3, pages! + 1))
+      ).toBe(false);
+
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 3);
+      expect(results).toHaveLength(400);
+      expect(new Set(results.map((r) => r.title)).size).toBe(400);
+    });
+
+    it("shrink back to one page when items are taken off", async () => {
+      const server = fakeRecordsServer();
+      const owner = await crowdedChapter(server, 400);
+      const remaining = owner.customContent.items.value.slice(0, 2);
+      for (const item of owner.customContent.items.value.slice(2)) {
+        await owner.customContent.deleteItem(item.id);
+      }
+
+      expect(
+        [...owner.record.keys()].filter((address) => address.startsWith("ch."))
+      ).toEqual([contentChapterAddress("JHN", 3)]);
+      expect(owner.customContent.chapterIndex.value?.pages).toBeUndefined();
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 3);
+      expect(results.map((r) => r.title).sort()).toEqual(
+        remaining.map((item) => item.title).sort()
+      );
     });
   });
 

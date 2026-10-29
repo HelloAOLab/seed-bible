@@ -1,4 +1,5 @@
 import {
+  BOOK_CHAPTER_VERSE_COUNTS,
   getBookChapterCount,
   getChapterVerseCount,
 } from "../bookChapterVerseCounts";
@@ -196,6 +197,46 @@ export function buildChapterRecord(
   return { schemaVersion: 1, book, chapter, updatedAt: now, entries };
 }
 
+/**
+ * Most bytes one chapter page may take. CasualOS refuses data entries over
+ * the owner's plan limit (500 KB unless configured otherwise), so pages stay
+ * well below it.
+ */
+export const CHAPTER_PAGE_BYTES = 200_000;
+
+const encoder = new TextEncoder();
+
+function byteLength(value: unknown): number {
+  return encoder.encode(JSON.stringify(value)).length;
+}
+
+/**
+ * Splits a chapter record into pages of at most `maxBytes` each, keeping
+ * the entries' order. Almost every chapter fits in one.
+ */
+export function paginateChapterRecord(
+  record: ContentChapterRecord,
+  maxBytes = CHAPTER_PAGE_BYTES
+): ContentChapterRecord[] {
+  const empty = byteLength({ ...record, entries: [] });
+  const pages: ContentChapterRecord[] = [];
+  let entries: ContentChapterEntry[] = [];
+  let size = empty;
+  for (const entry of record.entries) {
+    // +1 for the comma between entries.
+    const entrySize = byteLength(entry) + 1;
+    if (entries.length > 0 && size + entrySize > maxBytes) {
+      pages.push({ ...record, entries });
+      entries = [];
+      size = empty;
+    }
+    entries.push(entry);
+    size += entrySize;
+  }
+  pages.push({ ...record, entries });
+  return pages;
+}
+
 /** Published item count per chapter, for the manifest. */
 export function countPublishedChapters(
   items: readonly ContentItem[]
@@ -207,4 +248,37 @@ export function countPublishedChapters(
     }
   }
   return counts;
+}
+
+/** How much of one book a library covers. */
+export interface BookCoverage {
+  book: string;
+  /** Published items per chapter: `items[0]` is chapter 1. */
+  items: number[];
+  /** Chapters with at least one item. */
+  covered: number;
+}
+
+/**
+ * Which of the Bible's 1,189 chapters have published content, book by
+ * book in canonical order. Chapters outside the 66-book canon don't count.
+ */
+export function chapterCoverage(chapters: Readonly<Record<string, number>>): {
+  covered: number;
+  total: number;
+  books: BookCoverage[];
+} {
+  const books = Object.entries(BOOK_CHAPTER_VERSE_COUNTS).map(
+    ([book, verseCounts]): BookCoverage => {
+      const items = verseCounts.map(
+        (_, i) => chapters[contentChapterKey(book, i + 1)] ?? 0
+      );
+      return { book, items, covered: items.filter((n) => n > 0).length };
+    }
+  );
+  return {
+    covered: books.reduce((sum, book) => sum + book.covered, 0),
+    total: books.reduce((sum, book) => sum + book.items.length, 0),
+    books,
+  };
 }

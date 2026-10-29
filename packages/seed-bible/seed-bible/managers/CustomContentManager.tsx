@@ -1126,6 +1126,31 @@ export function createCustomContentManager(deps: {
     });
   };
 
+  /** One page of a chapter's entries; empty when it can't be read. */
+  const readChapterPage = async (
+    record: string,
+    book: string,
+    chapter: number,
+    page: number
+  ): Promise<ContentChapterEntry[]> => {
+    const result = await os.getData(
+      record,
+      contentChapterAddress(book, chapter, page)
+    );
+    if (!result.success) {
+      if (result.errorCode !== "data_not_found") {
+        console.warn("Could not load custom content for Discover", result);
+      }
+      return [];
+    }
+    const parsed = contentChapterRecordSchema.safeParse(result.data);
+    if (!parsed.success) {
+      console.warn("Invalid custom content chapter record:", parsed.error);
+      return [];
+    }
+    return parsed.data.entries;
+  };
+
   const registerLibrary = (
     record: string,
     library: ContentLibraryManifest,
@@ -1153,25 +1178,22 @@ export function createCustomContentManager(deps: {
       title: library.name,
       description: "Content from this Custom Branding's library.",
       discover: async ({ book, chapter }) => {
-        if (!index.chapters[contentChapterKey(book, chapter)]) {
+        const key = contentChapterKey(book, chapter);
+        if (!index.chapters[key]) {
           return [];
         }
-        const result = await os.getData(
-          record,
-          contentChapterAddress(book, chapter)
+        const pages = await Promise.all(
+          Array.from({ length: index.pages?.[key] ?? 1 }, (_, page) =>
+            readChapterPage(record, book, chapter, page + 1)
+          )
         );
-        if (!result.success) {
-          if (result.errorCode !== "data_not_found") {
-            console.warn("Could not load custom content for Discover", result);
-          }
-          return [];
-        }
-        const parsed = contentChapterRecordSchema.safeParse(result.data);
-        if (!parsed.success) {
-          console.warn("Invalid custom content chapter record:", parsed.error);
-          return [];
-        }
-        return parsed.data.entries.map((entry): DiscoverContentResult => {
+        // A publish running while this reads can move an entry to another
+        // page, so the same item may turn up twice.
+        const seen = new Set<string>();
+        const entries = pages
+          .flat()
+          .filter((entry) => !seen.has(entry.itemId) && seen.add(entry.itemId));
+        return entries.map((entry): DiscoverContentResult => {
           const primary = entry.categoryIds.find((id) => known.has(id));
           return {
             type: "content",

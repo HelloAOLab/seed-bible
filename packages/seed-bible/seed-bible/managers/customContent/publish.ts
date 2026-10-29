@@ -1,6 +1,7 @@
 import {
   buildChapterRecord,
   countPublishedChapters,
+  paginateChapterRecord,
   publishedChapterKeys,
 } from "./chapterIndex";
 import {
@@ -13,6 +14,7 @@ import {
   contentChapterIndexSchema,
   contentItemSchema,
   contentLibraryManifestSchema,
+  parseContentChapterAddress,
   parseContentChapterKey,
   type ContentChapterIndex,
   type ContentItem,
@@ -128,19 +130,33 @@ export async function publishChapters(
   const now = options.now ?? Date.now();
   const items = options.items ?? (await loadLibraryItems(store, recordName));
   const keys = new Set(options.keys ?? []);
+  /** Pages each chapter has stored now, so pages it no longer needs are erased. */
+  const storedPages = new Map<string, number>();
+  let pages: Record<string, number> = {};
   if (options.full) {
+    // A full rebuild is how a broken index gets repaired, so it doesn't
+    // read the old one: it finds every stored page by listing them.
     const existing = await store.listByMarker(
       recordName,
       CONTENT_CHAPTER_MARKER
     );
     for (const entry of existing) {
-      keys.add(entry.address.replace(/^ch\./, ""));
+      const parsed = parseContentChapterAddress(entry.address);
+      if (parsed) {
+        keys.add(parsed.key);
+        storedPages.set(
+          parsed.key,
+          Math.max(storedPages.get(parsed.key) ?? 1, parsed.page)
+        );
+      }
     }
     for (const item of items) {
       for (const key of publishedChapterKeys(item)) {
         keys.add(key);
       }
     }
+  } else {
+    pages = { ...(await readChapterIndex(store, recordName)).pages };
   }
 
   for (const key of keys) {
@@ -148,29 +164,44 @@ export async function publishChapters(
     if (!chapter) {
       continue;
     }
-    const address = contentChapterAddress(chapter.book, chapter.chapter);
     const built = buildChapterRecord(items, chapter.book, chapter.chapter, now);
-    if (built) {
+    const written = built ? paginateChapterRecord(built) : [];
+    for (const [position, page] of written.entries()) {
       assertStored(
         await store.recordData(
           recordName,
-          address,
-          built,
+          contentChapterAddress(chapter.book, chapter.chapter, position + 1),
+          page,
           CONTENT_CHAPTER_MARKER
         ),
         `update ${key}`
       );
-    } else {
-      const erased = await store.eraseData(recordName, address);
+    }
+    const before = Math.max(storedPages.get(key) ?? 1, pages[key] ?? 1);
+    for (let page = written.length + 1; page <= before; page++) {
+      const erased = await store.eraseData(
+        recordName,
+        contentChapterAddress(chapter.book, chapter.chapter, page)
+      );
       if (!erased.success && erased.errorCode !== "data_not_found") {
         assertStored(erased, `clear ${key}`);
       }
     }
+    if (written.length > 1) {
+      pages[key] = written.length;
+    } else {
+      delete pages[key];
+    }
   }
 
+  const chapters = countPublishedChapters(items);
+  const pagedChapters = Object.fromEntries(
+    Object.entries(pages).filter(([key]) => chapters[key])
+  );
   const index: ContentChapterIndex = {
     schemaVersion: 1,
-    chapters: countPublishedChapters(items),
+    chapters,
+    ...(Object.keys(pagedChapters).length > 0 ? { pages: pagedChapters } : {}),
     updatedAt: now,
   };
   assertStored(

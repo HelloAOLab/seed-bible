@@ -58,7 +58,10 @@ export function parsePassages(
  * The book's name in the open translation, or, with none, an English name
  * built from its URL slug ("1-john" → "1 John").
  */
-function bookName(bookId: string, books: TranslationBook[] | undefined) {
+export function contentBookName(
+  bookId: string,
+  books: TranslationBook[] | undefined
+): string {
   const fromTranslation = books?.find((book) => book.id === bookId)?.commonName;
   if (fromTranslation) {
     return fromTranslation;
@@ -83,7 +86,7 @@ export function formatContentReference(
   >,
   books?: TranslationBook[]
 ): string {
-  return `${bookName(reference.book, books)} ${formatRefLabel({
+  return `${contentBookName(reference.book, books)} ${formatRefLabel({
     bookId: reference.book,
     chapter: reference.chapter,
     endChapter: reference.endChapter,

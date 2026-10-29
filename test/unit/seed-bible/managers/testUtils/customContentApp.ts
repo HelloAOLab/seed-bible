@@ -26,6 +26,9 @@ interface StoredEntry {
  * run against, so tests check what ends up stored rather than which calls
  * were made.
  */
+/** CasualOS's default limit on one data entry (`maxItemSizeInBytes`). */
+const MAX_ITEM_BYTES = 500_000;
+
 export function fakeRecordsServer() {
   const records = new Map<string, Map<string, StoredEntry>>([
     [OWNER, new Map()],
@@ -58,6 +61,16 @@ export function fakeRecordsServer() {
             success: false,
             errorCode: record ? "server_error" : "record_not_found",
             errorMessage: "refused",
+          } as never;
+        }
+        if (
+          new TextEncoder().encode(JSON.stringify(data)).length > MAX_ITEM_BYTES
+        ) {
+          return {
+            success: false,
+            errorCode: "subscription_limit_reached",
+            errorMessage:
+              "The size of the item is larger than the subscription allows.",
           } as never;
         }
         record.set(address, {

@@ -9,6 +9,8 @@
   - The library is stored in its own record, not your personal one.
   - Import many links at once, pasted or from a CSV with titles, categories and passages. Imports run in the background, so they keep going after you close the page, and pause until you sign in again if your session ends.
   - Imported content gets the passages it names found automatically. When you ask, for one item or many at once, an AI agent such as Apologist (set up under Extensions with its key) suggests categories and more passages. Unsure suggestions are marked for you to check, and confident ones can be published without review.
+  - See which chapters your library covers, book by book, to find the gaps you might want to fill.
+  - Chapters with hundreds of items still show all of them in Discover.
 
 ### 🔧 Changed
 

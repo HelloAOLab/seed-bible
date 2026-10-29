@@ -186,6 +186,48 @@ describe("CustomizationContentView", () => {
     ).toBeUndefined();
   });
 
+  it("shows which chapters have content, book by book", async () => {
+    const server = fakeRecordsServer();
+    const { customContent } = await renderEditor(server);
+    await createLibrary();
+    for (const [url, book, chapter] of [
+      ["https://example.org/shepherd", "JHN", 10],
+      ["https://example.org/jude", "JUD", 1],
+    ] as const) {
+      await act(async () => {
+        await customContent.saveItem(
+          {
+            url,
+            title: url,
+            description: "",
+            categoryIds: [],
+            references: [{ book, chapter, source: "owner", confidence: 1 }],
+          },
+          { publish: true }
+        );
+      });
+    }
+
+    expect(container.textContent).toContain("Content on 2 of 1,189 chapters.");
+    await click(button("Show by book"));
+    const row = (name: string) =>
+      [...container.querySelectorAll(".sb-ccl-coverage-book")].find(
+        (li) => li.querySelector(".sb-ccl-coverage-name")?.textContent === name
+      );
+    expect(row("John")?.textContent).toContain("1 of 21");
+    expect(
+      [...row("John")!.querySelectorAll("[data-covered]")].map((square) =>
+        square.getAttribute("aria-label")
+      )
+    ).toEqual(["John 10: 1 items"]);
+    expect(row("Genesis")?.hasAttribute("data-empty")).toBe(true);
+
+    // Jude's only chapter is covered, so it has no gaps to show.
+    await click(button("Only books with gaps"));
+    expect(row("Jude")).toBeUndefined();
+    expect(row("John")).toBeDefined();
+  });
+
   describe("bulk import", () => {
     /** The import worker, as far as the editor can tell: it answers like the real API. */
     function stubImportService() {

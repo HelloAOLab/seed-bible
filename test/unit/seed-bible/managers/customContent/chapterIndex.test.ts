@@ -2,13 +2,17 @@ import {
   affectedChapterKeys,
   buildChapterRecord,
   CHAPTER_ENTRY_DESCRIPTION_LENGTH,
+  chapterCoverage,
   countPublishedChapters,
+  paginateChapterRecord,
   publishedChapterKeys,
   sliceReferenceByChapter,
 } from "@packages/seed-bible/seed-bible/managers/customContent/chapterIndex";
-import type {
-  ContentItem,
-  ContentReference,
+import {
+  contentChapterAddress,
+  parseContentChapterAddress,
+  type ContentItem,
+  type ContentReference,
 } from "@packages/seed-bible/seed-bible/managers/customContent/schema";
 
 function ref(
@@ -254,5 +258,62 @@ describe("countPublishedChapters", () => {
         item({ id: "c", status: "draft" }),
       ])
     ).toEqual({ "JHN.10": 2, "PSA.23": 1 });
+  });
+});
+
+describe("paginateChapterRecord", () => {
+  const items = Array.from({ length: 30 }, (_, i) =>
+    item({ id: `item-${i}`, title: `Sermon ${String(i).padStart(2, "0")}` })
+  );
+  const record = buildChapterRecord(items, "JHN", 10, 5)!;
+
+  it("keeps a chapter that fits in one page as it is", () => {
+    expect(paginateChapterRecord(record)).toEqual([record]);
+  });
+
+  it("splits a big chapter into pages under the size limit, in order", () => {
+    const maxBytes = 2000;
+    const pages = paginateChapterRecord(record, maxBytes);
+    expect(pages.length).toBeGreaterThan(1);
+    for (const page of pages) {
+      expect(JSON.stringify(page).length).toBeLessThanOrEqual(maxBytes);
+      expect(page).toMatchObject({ book: "JHN", chapter: 10, updatedAt: 5 });
+    }
+    expect(pages.flatMap((page) => page.entries)).toEqual(record.entries);
+  });
+
+  it("gives an entry bigger than the limit a page of its own rather than dropping it", () => {
+    const pages = paginateChapterRecord(record, 10);
+    expect(pages).toHaveLength(30);
+  });
+});
+
+describe("parseContentChapterAddress", () => {
+  it("reads the chapter and page back from an address", () => {
+    expect(parseContentChapterAddress(contentChapterAddress("1JN", 2))).toEqual(
+      { key: "1JN.2", page: 1 }
+    );
+    expect(
+      parseContentChapterAddress(contentChapterAddress("JHN", 3, 4))
+    ).toEqual({ key: "JHN.3", page: 4 });
+    expect(parseContentChapterAddress("item.abc")).toBeNull();
+    expect(parseContentChapterAddress("ch.JHN.p2")).toBeNull();
+  });
+});
+
+describe("chapterCoverage", () => {
+  it("counts covered chapters out of the whole Bible, book by book", () => {
+    const coverage = chapterCoverage({ "JHN.3": 4, "JHN.10": 1, "PSA.23": 2 });
+    expect(coverage).toMatchObject({ covered: 3, total: 1189 });
+    expect(coverage.books).toHaveLength(66);
+    const john = coverage.books.find((book) => book.book === "JHN")!;
+    expect(john.covered).toBe(2);
+    expect(john.items).toHaveLength(21);
+    expect(john.items[2]).toBe(4);
+    expect(john.items[9]).toBe(1);
+  });
+
+  it("leaves out chapters outside the 66-book canon", () => {
+    expect(chapterCoverage({ "TOB.1": 3 }).covered).toBe(0);
   });
 });

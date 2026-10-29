@@ -13,9 +13,11 @@ import type {
 } from "../../managers/customContent/schema";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import {
+  contentBookName,
   formatContentReference as formatReference,
   parsePassages,
 } from "../../managers/customContent/passages";
+import { chapterCoverage } from "../../managers/customContent/chapterIndex";
 import {
   parseImportCsv,
   parsePastedLinks,
@@ -720,6 +722,13 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
             </button>
           )}
         </div>
+
+        {chapterCount > 0 && (
+          <CoverageSection
+            chapters={customContent.chapterIndex.value?.chapters ?? {}}
+            books={books}
+          />
+        )}
       </section>
 
       <footer className="sb-cz-footer">
@@ -1566,6 +1575,114 @@ function AiSuggestionsRun(props: {
             defaultValue: "Suggest with {{agent}} for {{count}} items",
           })}
         </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Which chapters have published content, so owners can see the gaps they
+ * might want to fill. Each book is a row of chapter squares.
+ */
+function CoverageSection(props: {
+  chapters: Readonly<Record<string, number>>;
+  books: TranslationBook[] | undefined;
+}) {
+  const { t } = useI18n();
+  const open = useSignal(false);
+  const onlyGaps = useSignal(false);
+  const coverage = chapterCoverage(props.chapters);
+  const shown = coverage.books.filter(
+    (book) => !onlyGaps.value || book.covered < book.items.length
+  );
+
+  return (
+    <div className="sb-cz-group sb-ccl-coverage">
+      <h3 className="sb-settings-subheading">
+        {t("custom-content-coverage", { defaultValue: "Coverage" })}
+      </h3>
+      <p className="sb-cz-hint">
+        {t("custom-content-coverage-summary", {
+          covered: coverage.covered.toLocaleString(),
+          total: coverage.total.toLocaleString(),
+          defaultValue: "Content on {{covered}} of {{total}} chapters.",
+        })}
+      </p>
+      <div className="sb-ccl-filters">
+        <button
+          type="button"
+          className="sb-ccl-filter"
+          aria-expanded={open.value}
+          onClick={() => {
+            open.value = !open.value;
+          }}
+        >
+          {open.value
+            ? t("custom-content-coverage-hide", {
+                defaultValue: "Hide books",
+              })
+            : t("custom-content-coverage-show", {
+                defaultValue: "Show by book",
+              })}
+        </button>
+        {open.value && (
+          <button
+            type="button"
+            className="sb-ccl-filter"
+            aria-pressed={onlyGaps.value}
+            onClick={() => {
+              onlyGaps.value = !onlyGaps.value;
+            }}
+          >
+            {t("custom-content-coverage-gaps", {
+              defaultValue: "Only books with gaps",
+            })}
+          </button>
+        )}
+      </div>
+      {open.value && (
+        <ul className="sb-ccl-coverage-books">
+          {shown.map((book) => {
+            const name = contentBookName(book.book, props.books);
+            return (
+              <li
+                key={book.book}
+                className="sb-ccl-coverage-book"
+                data-empty={book.covered === 0 || undefined}
+              >
+                <span className="sb-ccl-coverage-name" dir="auto">
+                  {name}
+                </span>
+                <span className="sb-ccl-coverage-count">
+                  {t("custom-content-coverage-book", {
+                    covered: book.covered,
+                    total: book.items.length,
+                    defaultValue: "{{covered}} of {{total}}",
+                  })}
+                </span>
+                <span className="sb-ccl-coverage-chapters">
+                  {book.items.map((count, i) => {
+                    const label = t("custom-content-coverage-chapter", {
+                      chapter: `${name} ${i + 1}`,
+                      count,
+                      defaultValue: "{{chapter}}: {{count}} items",
+                    });
+                    return (
+                      <span
+                        key={i}
+                        className="sb-ccl-coverage-chapter"
+                        data-covered={count > 0 || undefined}
+                        title={label}
+                        aria-label={label}
+                        role="img"
+                      />
+                    );
+                  })}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

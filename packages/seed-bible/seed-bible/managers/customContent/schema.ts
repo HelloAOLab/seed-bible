@@ -33,8 +33,29 @@ export function contentChapterKey(book: string, chapter: number): string {
   return `${book}.${chapter}`;
 }
 
-export function contentChapterAddress(book: string, chapter: number): string {
-  return `ch.${contentChapterKey(book, chapter)}`;
+/**
+ * Where a chapter's entries are stored. A chapter too big for one record
+ * entry is split into pages: page 1 is `ch.JHN.3`, page 2 `ch.JHN.3.p2`.
+ */
+export function contentChapterAddress(
+  book: string,
+  chapter: number,
+  page = 1
+): string {
+  const address = `ch.${contentChapterKey(book, chapter)}`;
+  return page > 1 ? `${address}.p${page}` : address;
+}
+
+/** The chapter key and page a chapter address names, or null for anything else. */
+export function parseContentChapterAddress(
+  address: string
+): { key: string; page: number } | null {
+  const match = /^ch\.(.+?)(?:\.p(\d+))?$/.exec(address);
+  if (!match || !parseContentChapterKey(match[1]!)) {
+    return null;
+  }
+  const page = match[2] ? Number(match[2]) : 1;
+  return page >= 1 ? { key: match[1]!, page } : null;
 }
 
 export function parseContentChapterKey(
@@ -93,6 +114,8 @@ export const contentChapterIndexSchema = z.object({
    * content are absent, which lets Discover skip the network for them.
    */
   chapters: z.record(z.string(), z.number().int().nonnegative()),
+  /** Page count for the chapters split across several entries; others have one. */
+  pages: z.record(z.string(), z.number().int().min(2)).optional(),
   updatedAt: z.number(),
 });
 
