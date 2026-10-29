@@ -11,6 +11,9 @@ export interface SearchBarProps {
   placeholder: string;
   /** Defaults to the placeholder. */
   "aria-label"?: string;
+  id?: string;
+  /** The typed text's direction; "auto" for names in any script. */
+  dir?: "auto" | "ltr" | "rtl";
   /** For callers that also need the input, e.g. to focus it themselves. */
   inputRef?: Ref<HTMLInputElement>;
   /**
@@ -52,7 +55,9 @@ export function SearchBar(props: SearchBarProps) {
       </MaterialIcon>
       <input
         ref={setInput}
+        id={props.id}
         type="search"
+        dir={props.dir}
         className="sb-search-bar-input"
         value={props.value}
         placeholder={props.placeholder}

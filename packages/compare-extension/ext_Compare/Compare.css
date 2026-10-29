@@ -375,12 +375,10 @@
   gap: 8px;
 }
 
-/* Override the modal-oriented width the reader's `.searchbar` carries — in the
-   pane it takes whatever the filter button leaves. */
+/* The search takes whatever the filter button leaves. */
 .sb-compare-picker .sb-compare-search {
   flex: 1;
   min-width: 0;
-  width: auto;
 }
 
 .sb-compare-filters-button {

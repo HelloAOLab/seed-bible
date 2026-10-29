@@ -263,7 +263,7 @@ export const CONTEXTUAL_TUTORIALS: Record<string, TutorialStep[]> = {
   search: [
     {
       id: "selector-search",
-      target: ".searchbar",
+      target: ".sb-selector-book-search",
       titleKey: "tutorial.selectorSearchTitle",
       titleDefault: "Search by",
       bodyKey: "tutorial.selectorSearchBody",

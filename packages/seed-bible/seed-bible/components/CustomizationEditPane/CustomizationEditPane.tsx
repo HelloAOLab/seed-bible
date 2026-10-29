@@ -1,8 +1,8 @@
 import "../SettingsPage/SettingsPage.css";
 import "./CustomizationEditPane.css";
-// `.searchbar`/`.search-icon`/`.filters-icon` are defined here rather than in
-// a shared stylesheet — imported explicitly rather than relying on
-// `BibleSelector.tsx` happening to already be in the bundle.
+// `.filters-icon` is defined here rather than in a shared stylesheet —
+// imported explicitly rather than relying on `BibleSelector.tsx` happening to
+// already be in the bundle.
 import "../BibleSelector/BibleSelector.css";
 import { signal, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
@@ -46,6 +46,7 @@ import { useI18n } from "../../i18n/I18nManager";
 import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
+import { SearchBar } from "../SearchBar/SearchBar";
 import { confirmDeleteCustomization } from "./CustomizationCard";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import {
@@ -1400,22 +1401,16 @@ function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
         }
       }}
     >
-      <div className="searchbar flex-align-center">
-        <span className="material-symbols-outlined search-icon">search</span>
-        <input
-          type="search"
-          className="flex-1"
-          value={query.value}
+      <div className="sb-customization-translation-search-row">
+        <SearchBar
           dir="auto"
+          value={query.value}
+          onInput={(value) => {
+            query.value = value;
+          }}
           placeholder={t("search-translation", {
             defaultValue: "Search translations...",
           })}
-          aria-label={t("search-translation", {
-            defaultValue: "Search translations...",
-          })}
-          onInput={(event: Event) => {
-            query.value = (event.currentTarget as HTMLInputElement).value;
-          }}
         />
         <button
           type="button"
