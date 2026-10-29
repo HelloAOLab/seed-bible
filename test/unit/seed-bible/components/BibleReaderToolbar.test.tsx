@@ -2108,10 +2108,112 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     expect(container.querySelector(".sb-more-menu")).toBeNull();
   });
 
-  it("does not reopen the More menu by itself after its last tool goes away and comes back", async () => {
+  it("shows the fourth tool itself instead of More when only four fit", async () => {
+    const state = await renderToolbar();
+
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-plans");
+    });
+
+    expect(moreButton()).toBeNull();
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Search",
+      "Discover",
+      "Next Chapter",
+    ]);
+  });
+
+  it("swaps the fourth tool for More, holding it and the rest, when there are more than four", async () => {
+    const state = await renderToolbar();
+
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-plans");
+      registerExtensionTool(state, "ext-one", "Extension One");
+    });
+
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Search",
+      "More",
+      "Next Chapter",
+    ]);
+    await openMenu();
+    expect(menuLabels()).toEqual(
+      expect.arrayContaining(["Discover", "Extension One"])
+    );
+  });
+
+  it("shows Chat's unread count on the Chat button when Chat fits on the bar", async () => {
     const state = await renderToolbar();
     await act(async () => {
       state.tools.unregisterToolbarTool("open-discover");
+      state.tools.unregisterToolbarTool("open-plans");
+      const chat = state.chats.createLocalSession();
+      chat.appendMessage({ type: "text", text: "Hello" }, ["someone-else"]);
+    });
+
+    expect(moreButton()).toBeNull();
+    expect(barLabels()).toContain("Chat");
+    const chatButton = container.querySelector(
+      '.sb-reader-toolbar-labeled button[aria-label="Chat"]'
+    );
+    expect(
+      chatButton?.querySelector(".sb-reader-toolbar-unread-indicator")
+        ?.textContent
+    ).toBe("1");
+  });
+
+  it("does not reopen a tool's dropdown by itself after the tool moves into More and back", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-discover");
+      state.tools.unregisterToolbarTool("open-plans");
+      state.tools.registerToolbarTool({
+        id: "ext-menu",
+        priority: 1,
+        title: "Extension Menu",
+        icon: () => <span>menu</span>,
+        isVisible: () => true,
+        getItems: () => [
+          {
+            id: "first",
+            priority: 0,
+            title: "First Item",
+            icon: () => <span>1</span>,
+            onSelect: vi.fn(),
+          },
+        ],
+      });
+    });
+    const menuTool = container.querySelector<HTMLButtonElement>(
+      '.sb-reader-toolbar-labeled [data-tool-id="ext-menu"]'
+    );
+    if (!menuTool) throw new Error("The extension tool is not on the bar.");
+    await act(async () => {
+      menuTool.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(container.querySelector(".sb-tool-context-menu")).not.toBeNull();
+
+    await act(async () => {
+      registerExtensionTool(state, "ext-one", "Extension One");
+    });
+    expect(barLabels()).not.toContain("Extension Menu");
+
+    await act(async () => {
+      state.tools.unregisterToolbarTool("ext-one");
+    });
+    expect(barLabels()).toContain("Extension Menu");
+    expect(container.querySelector(".sb-tool-context-menu")).toBeNull();
+  });
+
+  it("does not reopen the More menu by itself after its tools fit on the bar again", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
       state.tools.unregisterToolbarTool("open-plans");
       registerExtensionTool(state, "ext-one", "Extension One");
     });
@@ -4770,6 +4872,54 @@ describe("BibleReaderToolbar — chat-first desktop / laptop toolbar", () => {
     if (searchIndex >= 0) {
       expect(chatIndex).toBeLessThan(searchIndex);
     }
+  });
+
+  const barLabels = () =>
+    Array.from(
+      container.querySelectorAll(
+        ".sb-reader-toolbar-labeled > .sb-reader-toolbar-item > .sb-reader-toolbar-button"
+      )
+    ).map((el) => el.getAttribute("aria-label"));
+
+  it("puts Chat in Search's place and Search in More when the tools don't fit", async () => {
+    await renderToolbar({ chatFirst: true });
+
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Chat",
+      "More",
+      "Next Chapter",
+    ]);
+
+    await act(async () => {
+      toolbarButton("More")!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    expect(
+      Array.from(container.querySelectorAll(".sb-more-menu-label")).map(
+        (el) => el.textContent
+      )
+    ).toEqual(expect.arrayContaining(["Search", "Discover", "Plans"]));
+  });
+
+  it("shows both Chat and Search, with no More, when they fit", async () => {
+    const { state } = await renderToolbar({ chatFirst: true });
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-discover");
+      state.tools.unregisterToolbarTool("open-plans");
+    });
+
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Chat",
+      "Search",
+      "Next Chapter",
+    ]);
   });
 
   it("shows Chat even when there are no providers or chats under chat-first", async () => {
