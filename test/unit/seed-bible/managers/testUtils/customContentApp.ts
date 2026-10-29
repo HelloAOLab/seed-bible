@@ -1,4 +1,5 @@
 import { createCustomContentManager } from "@packages/seed-bible/seed-bible/managers/CustomContentManager";
+import type { ContentImportService } from "@packages/seed-bible/seed-bible/managers/customContent/importClient";
 import { createCustomizationsManager } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
 import { createCustomizationVariantSelectionsManager } from "@packages/seed-bible/seed-bible/managers/CustomizationVariantSelectionsManager";
 import { createCustomizationExtensionPreferencesManager } from "@packages/seed-bible/seed-bible/managers/CustomizationExtensionPreferencesManager";
@@ -147,7 +148,12 @@ export type FakeRecordsServer = ReturnType<typeof fakeRecordsServer>;
 
 export function createApp(
   server: FakeRecordsServer,
-  options: { userId: string | null; href?: string }
+  options: {
+    userId: string | null;
+    href?: string;
+    importService?: ContentImportService | null;
+    importPollMs?: number;
+  }
 ) {
   const os = CasualOSManager();
   server.attach(os);
@@ -171,6 +177,8 @@ export function createApp(
     customizations,
     discover,
     modals,
+    importService: options.importService,
+    importPollMs: options.importPollMs,
   });
   return { os, customizations, discover, modals, customContent };
 }

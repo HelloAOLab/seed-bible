@@ -4,6 +4,9 @@ import { signal } from "@preact/signals";
 import { CustomizationContentView } from "@packages/seed-bible/seed-bible/components/CustomizationEditPane/CustomizationContentView";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { contentChapterAddress } from "@packages/seed-bible/seed-bible/managers/customContent/schema";
+import type { ContentImportService } from "@packages/seed-bible/seed-bible/managers/customContent/importClient";
+import type { ImportProgress } from "@packages/seed-bible/seed-bible/managers/customContent/importApi";
+import { ContentLibraryError } from "@packages/seed-bible/seed-bible/managers/customContent/publish";
 import {
   createApp,
   fakeRecordsServer,
@@ -33,8 +36,16 @@ afterEach(() => {
 });
 
 /** The owner, signed in, with a Custom Branding open in the editor. */
-async function renderEditor(server: FakeRecordsServer) {
-  const app = createApp(server, { userId: OWNER });
+async function renderEditor(
+  server: FakeRecordsServer,
+  options: { importService?: ContentImportService } = {}
+) {
+  const app = createApp(server, {
+    userId: OWNER,
+    importService: options.importService,
+    importPollMs: 5,
+  });
+  app.os.sessionKey.value = "vSK1.owner-session";
   const created = await app.customizations.create();
   app.customizations.startEditing(created.id);
   const toast = vi.fn();
@@ -148,7 +159,7 @@ describe("CustomizationContentView", () => {
     await waitForCondition(() => container.textContent!.includes("Draft"));
 
     expect(button("Publish").disabled).toBe(true);
-    expect(customContent.manifest.value?.chapters).toEqual({});
+    expect(customContent.chapterIndex.value?.chapters).toEqual({});
   });
 
   it("explains a plan limit instead of creating the library", async () => {
@@ -163,5 +174,128 @@ describe("CustomizationContentView", () => {
     expect(
       customizations.editingCustomization.value?.contentRecordName
     ).toBeUndefined();
+  });
+
+  describe("bulk import", () => {
+    /** The import worker, as far as the editor can tell: it answers like the real API. */
+    function stubImportService() {
+      let progress: ImportProgress | null = null;
+      const update = (patch: Partial<ImportProgress>) => {
+        progress = { ...progress!, ...patch };
+        return progress;
+      };
+      const service = {
+        startImport: vi.fn(async (_key: string, request) => {
+          progress = {
+            id: "import-1",
+            contentRecordName: request.contentRecordName,
+            status: "running",
+            total: request.items.length,
+            queued: request.items.length,
+            running: 0,
+            done: 0,
+            failed: 0,
+            skipped: 0,
+            createdAt: 1,
+            updatedAt: 1,
+          };
+          return progress;
+        }),
+        getImport: vi.fn(async () => progress!),
+        findActiveImport: vi.fn(async () => null),
+        cancelImport: vi.fn(async () => update({ status: "cancelled" })),
+        resumeImport: vi.fn(async () => update({ status: "running" })),
+        publish: vi.fn(),
+      } satisfies ContentImportService;
+      return { service, update };
+    }
+
+    async function typeLinks(text: string) {
+      const textarea = container.querySelector<HTMLTextAreaElement>(
+        "#sb-ccl-import-links"
+      )!;
+      await act(() => {
+        textarea.value = text;
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
+
+    it("isn't offered when no import service is set up", async () => {
+      const server = fakeRecordsServer();
+      await renderEditor(server);
+      await createLibrary();
+      expect(container.querySelector("#sb-ccl-import-links")).toBeNull();
+    });
+
+    it("imports pasted links, shows progress, and can be cancelled", async () => {
+      const server = fakeRecordsServer();
+      const { service } = stubImportService();
+      await renderEditor(server, { importService: service });
+      await createLibrary();
+
+      await typeLinks(
+        "https://example.org/a\nnot a link\nhttps://www.example.org/a/\nhttps://example.org/b"
+      );
+      await click(button("Import links"));
+      await waitForCondition(() =>
+        container.textContent!.includes("2 links are being imported.")
+      );
+      expect(service.startImport.mock.calls[0]![1].items).toEqual([
+        { url: "https://example.org/a" },
+        { url: "https://example.org/b" },
+      ]);
+      expect(container.textContent).toContain(
+        "1 were already in your library or listed twice."
+      );
+      expect(container.textContent).toContain(
+        "1 weren't links and were left out."
+      );
+      expect(container.textContent).toContain("Importing 0 of 2 · 0 failed");
+
+      await click(button("Cancel import"));
+      await waitForCondition(() =>
+        container.textContent!.includes(
+          "Import stopped after adding 0 links for review."
+        )
+      );
+    });
+
+    it("offers to continue an import that paused when the session ended", async () => {
+      const server = fakeRecordsServer();
+      const { service, update } = stubImportService();
+      await renderEditor(server, { importService: service });
+      await createLibrary();
+      await typeLinks("https://example.org/a");
+      await click(button("Import links"));
+
+      update({ status: "paused_signin" });
+      await waitForCondition(() =>
+        container.textContent!.includes("because your session ended")
+      );
+      await click(button("Continue"));
+      await waitForCondition(() =>
+        container.textContent!.includes("Importing 0 of 1")
+      );
+      expect(service.resumeImport).toHaveBeenCalledWith(
+        "vSK1.owner-session",
+        "import-1"
+      );
+    });
+
+    it("explains when another import is already running", async () => {
+      const server = fakeRecordsServer();
+      const { service } = stubImportService();
+      service.startImport.mockRejectedValueOnce(
+        new ContentLibraryError("import_running", "busy")
+      );
+      const { toast } = await renderEditor(server, { importService: service });
+      await createLibrary();
+      await typeLinks("https://example.org/a");
+      await click(button("Import links"));
+      await waitForCondition(() => toast.mock.calls.length > 0);
+      expect(toast).toHaveBeenCalledWith(
+        "An import is already running for this library. Wait for it to finish, or cancel it."
+      );
+    });
   });
 });

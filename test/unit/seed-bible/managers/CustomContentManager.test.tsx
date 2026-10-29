@@ -213,7 +213,7 @@ describe("CustomContentManager", () => {
       const record = server.records.get(owner.customContent.recordName.value!)!;
       expect(record.has(contentChapterAddress("JHN", 3))).toBe(false);
       expect(record.has(contentChapterAddress("JHN", 4))).toBe(true);
-      expect(owner.customContent.manifest.value?.chapters).toEqual({
+      expect(owner.customContent.chapterIndex.value?.chapters).toEqual({
         "JHN.4": 1,
       });
     });
@@ -224,7 +224,7 @@ describe("CustomContentManager", () => {
       const saved = await addSermon(owner.customContent);
       await owner.customContent.setItemPublished(saved.id, false);
 
-      expect(owner.customContent.manifest.value?.chapters).toEqual({});
+      expect(owner.customContent.chapterIndex.value?.chapters).toEqual({});
       const reader = await readerOf(server, owner.customizationId);
       expect(await discoverContent(reader.discover, "JHN", 10)).toEqual([]);
       expect(reader.os.getData).not.toHaveBeenCalledWith(
@@ -273,7 +273,7 @@ describe("CustomContentManager", () => {
       await owner.customContent.rebuildIndex();
       const record = server.records.get(owner.customContent.recordName.value!)!;
       expect(record.has(contentChapterAddress("JHN", 10))).toBe(true);
-      expect(owner.customContent.manifest.value?.chapters).toEqual({
+      expect(owner.customContent.chapterIndex.value?.chapters).toEqual({
         "JHN.10": 1,
       });
     });

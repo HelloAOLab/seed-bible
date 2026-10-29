@@ -140,6 +140,7 @@ import {
   createCustomContentManager,
   type CustomContentManager,
 } from "../managers/CustomContentManager";
+import { createContentImportClient } from "../managers/customContent/importClient";
 import {
   createCustomizationsManager,
   CUSTOMIZATION_FONT_FIELDS,
@@ -922,12 +923,19 @@ export function createSeedBibleState(
   const chats = createChatsManager(login, i18n, selectedTabTranslationBooks);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
+  const contentImportUrl = import.meta.env.VITE_CONTENT_IMPORT_URL;
   const customContent = createCustomContentManager({
     os,
     login,
     customizations,
     discover,
     modals,
+    // Set at build time; without it bulk import is off and publishing
+    // happens in the browser.
+    importService:
+      typeof contentImportUrl === "string" && contentImportUrl
+        ? createContentImportClient(contentImportUrl)
+        : null,
   });
   const readingExtensions = createBibleReadingExtensionManager();
   const tabs = createTabs(

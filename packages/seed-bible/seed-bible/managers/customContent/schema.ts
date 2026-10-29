@@ -6,8 +6,20 @@ import { z } from "zod";
  * See `docs/custom-content-database.md` §4.
  */
 export const CONTENT_MANIFEST_ADDRESS = "manifest";
+/**
+ * Published item counts per chapter. Separate from the manifest so the
+ * publisher and the editor never write the same entry: the editor owns the
+ * manifest's settings, publishing owns these counts.
+ */
+export const CONTENT_CHAPTER_INDEX_ADDRESS = "chapters";
 
 export const CONTENT_LIBRARY_MARKER = "publicRead:seedBibleContentLibrary";
+/**
+ * Where the import worker reports on the library's latest import. It also
+ * proves the worker can write to the record before it queues anything.
+ */
+export const CONTENT_IMPORT_STATUS_ADDRESS = "importStatus";
+export const CONTENT_IMPORT_STATUS_MARKER = "seedBibleContentImport";
 /** Items hold review state and owner notes, so only the owner reads them. */
 export const CONTENT_ITEM_MARKER = "seedBibleContentItem";
 export const CONTENT_CHAPTER_MARKER = "publicRead:seedBibleContentChapter";
@@ -59,6 +71,15 @@ export const contentLibraryManifestSchema = z.object({
   /** Author given to new items, since link previews don't include one. */
   defaultAuthor: z.string().max(200).optional(),
   categories: z.array(contentCategorySchema),
+  updatedAt: z.number(),
+});
+
+export type ContentLibraryManifest = z.infer<
+  typeof contentLibraryManifestSchema
+>;
+
+export const contentChapterIndexSchema = z.object({
+  schemaVersion: z.literal(1),
   /**
    * Published item count per chapter key (`"JHN.3"`). Chapters with no
    * content are absent, which lets Discover skip the network for them.
@@ -67,9 +88,7 @@ export const contentLibraryManifestSchema = z.object({
   updatedAt: z.number(),
 });
 
-export type ContentLibraryManifest = z.infer<
-  typeof contentLibraryManifestSchema
->;
+export type ContentChapterIndex = z.infer<typeof contentChapterIndexSchema>;
 
 export const CONTENT_REFERENCE_SOURCES = ["explicit", "ai", "owner"] as const;
 

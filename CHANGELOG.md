@@ -7,6 +7,7 @@
 - Add a content library to Custom Branding: add links to your videos and articles with the passages they cover, and everyone using your Custom Branding finds them in Discover on those chapters.
   - Each library has its own categories, which become Discover's filters and sections.
   - The library is stored in its own record, not your personal one.
+  - Import many links at once, pasted or from a CSV with titles, categories and passages. Imports run in the background, so they keep going after you close the page, and pause until you sign in again if your session ends.
 
 ### 🔧 Changed
 

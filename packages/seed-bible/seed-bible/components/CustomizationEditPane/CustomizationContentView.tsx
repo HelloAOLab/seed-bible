@@ -13,8 +13,12 @@ import type {
 } from "../../managers/customContent/schema";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import { BOOK_SLUGS, type BookId } from "../../managers/BibleDataManager";
-import { parseSingleVerseReference } from "../../managers/parseVerseReference";
-import { isVerseReferenceInBounds } from "../../managers/verseReferenceBounds";
+import { parsePassages } from "../../managers/customContent/passages";
+import {
+  parseImportCsv,
+  parsePastedLinks,
+  type ParsedImport,
+} from "../../managers/customContent/importEntries";
 import { formatRefLabel } from "../ScriptureItemInput/scriptureSuggestions";
 import { useI18n } from "../../i18n/I18nManager";
 
@@ -32,6 +36,67 @@ interface ItemDraft {
   /** References separated by `;` or new lines, e.g. "John 10:1-18; Psalm 23". */
   verses: string;
   published: boolean;
+}
+
+/** Items shown at a time; a big import can add thousands. */
+const PAGE_SIZE = 100;
+
+const ITEM_FILTERS = ["all", "review", "draft", "published"] as const;
+type ItemFilter = (typeof ITEM_FILTERS)[number];
+
+function matchesFilter(item: ContentItem, filter: ItemFilter): boolean {
+  switch (filter) {
+    case "review":
+      return (
+        item.status === "needs_review" ||
+        item.status === "pending" ||
+        item.status === "failed"
+      );
+    case "draft":
+      return item.status === "draft";
+    case "published":
+      return item.status === "published";
+    default:
+      return true;
+  }
+}
+
+function filterLabel(t: TFunction, filter: ItemFilter): string {
+  switch (filter) {
+    case "review":
+      return t("custom-content-filter-review", {
+        defaultValue: "Needs review",
+      });
+    case "draft":
+      return t("custom-content-filter-drafts", { defaultValue: "Drafts" });
+    case "published":
+      return t("custom-content-filter-published", {
+        defaultValue: "Published",
+      });
+    default:
+      return t("custom-content-filter-all", { defaultValue: "All" });
+  }
+}
+
+function statusLabel(t: TFunction, status: ContentItem["status"]): string {
+  switch (status) {
+    case "published":
+      return t("custom-content-status-published", {
+        defaultValue: "Published",
+      });
+    case "needs_review":
+      return t("custom-content-status-needs-review", {
+        defaultValue: "Needs review",
+      });
+    case "pending":
+      return t("custom-content-status-pending", {
+        defaultValue: "Importing",
+      });
+    case "failed":
+      return t("custom-content-status-failed", { defaultValue: "Failed" });
+    default:
+      return t("custom-content-status-draft", { defaultValue: "Draft" });
+  }
 }
 
 const EMPTY_DRAFT: ItemDraft = {
@@ -79,48 +144,6 @@ function formatReference(
   })}`;
 }
 
-/** Reads the typed references; anything that isn't a real passage is reported back as typed. */
-function parseReferences(
-  text: string,
-  books: TranslationBook[] | undefined
-): { references: ContentReference[]; unrecognized: string[] } {
-  const references: ContentReference[] = [];
-  const unrecognized: string[] = [];
-  for (const part of text.split(/[;\n]/)) {
-    const typed = part.trim();
-    if (!typed) {
-      continue;
-    }
-    const parsed = parseSingleVerseReference(typed, books);
-    if (
-      !parsed ||
-      !isVerseReferenceInBounds(
-        parsed.bookId,
-        parsed.chapter,
-        parsed.verse,
-        parsed.endChapter,
-        parsed.endVerse,
-        books
-      )
-    ) {
-      unrecognized.push(typed);
-      continue;
-    }
-    references.push({
-      book: parsed.bookId,
-      chapter: parsed.chapter,
-      ...(parsed.endChapter !== undefined
-        ? { endChapter: parsed.endChapter }
-        : {}),
-      ...(parsed.verse !== undefined ? { verse: parsed.verse } : {}),
-      ...(parsed.endVerse !== undefined ? { endVerse: parsed.endVerse } : {}),
-      source: "owner",
-      confidence: 1,
-    });
-  }
-  return { references, unrecognized };
-}
-
 function draftFromItem(
   item: ContentItem,
   books: TranslationBook[] | undefined
@@ -155,6 +178,26 @@ function errorMessage(t: TFunction, error: unknown): string {
     case "not_authorized":
       return t("custom-content-error-not-authorized", {
         defaultValue: "You don't have permission to change this library.",
+      });
+    case "import_running":
+      return t("custom-content-error-import-running", {
+        defaultValue:
+          "An import is already running for this library. Wait for it to finish, or cancel it.",
+      });
+    case "too_many_items":
+      return t("custom-content-error-too-many", {
+        defaultValue: "One import can hold up to 10,000 links.",
+      });
+    case "not_logged_in":
+    case "session_invalid":
+      return t("custom-content-error-signed-out", {
+        defaultValue: "Sign in again to continue.",
+      });
+    case "network_error":
+    case "casualos_unavailable":
+      return t("custom-content-error-unreachable", {
+        defaultValue:
+          "The import service couldn't be reached. Please try again.",
       });
     default:
       return t("custom-content-error-generic", {
@@ -324,6 +367,8 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
   const newCategory = useSignal("");
   const confirmingDelete = useSignal<string | null>(null);
   const confirmingDeleteLibrary = useSignal(false);
+  const filter = useSignal<ItemFilter>("all");
+  const visibleCount = useSignal(PAGE_SIZE);
 
   const manifest = customContent.manifest.value;
   const items = customContent.items.value;
@@ -348,7 +393,9 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
 
   const categoryName = (id: string) =>
     manifest.categories.find((category) => category.id === id)?.name;
-  const chapterCount = Object.keys(manifest.chapters).length;
+  const chapterCount = Object.keys(
+    customContent.chapterIndex.value?.chapters ?? {}
+  ).length;
   const publishedCount = items.filter((i) => i.status === "published").length;
 
   if (draft.value) {
@@ -502,6 +549,9 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
               {t("custom-content-add-item", { defaultValue: "Add content" })}
             </button>
           </div>
+          {customContent.canImport && (
+            <ImportPanel state={state} books={books} run={run} />
+          )}
           {items.length === 0 ? (
             <p className="sb-cz-hint">
               {t("custom-content-no-items", {
@@ -510,116 +560,150 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
               })}
             </p>
           ) : (
-            <ul className="sb-ccl-items">
-              {items.map((item) => (
-                <li key={item.id} className="sb-ccl-item">
-                  <div className="sb-ccl-item-text">
-                    <span className="sb-ccl-item-title" dir="auto">
-                      {item.title || displayUrl(item.url)}
-                    </span>
-                    <span className="sb-ccl-item-meta">
-                      <span
-                        className={`sb-ccl-status sb-ccl-status-${item.status}`}
-                      >
-                        {item.status === "published"
-                          ? t("custom-content-status-published", {
-                              defaultValue: "Published",
-                            })
-                          : t("custom-content-status-draft", {
-                              defaultValue: "Draft",
-                            })}
-                      </span>
-                      <span dir="auto">{displayUrl(item.url)}</span>
-                    </span>
-                    <span className="sb-ccl-item-meta">
-                      {[
-                        ...item.categoryIds
-                          .map(categoryName)
-                          .filter((name): name is string => !!name),
-                        ...item.references.map((reference) =>
-                          formatReference(reference, books)
-                        ),
-                      ].join(" · ") ||
-                        t("custom-content-no-verses", {
-                          defaultValue: "No passages yet",
-                        })}
-                    </span>
-                  </div>
-                  <div className="sb-ccl-item-actions">
-                    {confirmingDelete.value === item.id ? (
-                      <button
-                        type="button"
-                        className="sb-cz-button sb-cz-button-danger"
-                        disabled={busy}
-                        onClick={() => {
-                          confirmingDelete.value = null;
-                          void run(() => customContent.deleteItem(item.id));
-                        }}
-                      >
-                        {t("custom-content-confirm-delete-item", {
-                          defaultValue: "Confirm delete",
-                        })}
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className="sb-cz-button"
-                          disabled={busy}
-                          onClick={() => {
-                            draft.value = draftFromItem(item, books);
-                          }}
-                        >
-                          {t("custom-content-edit-item", {
-                            defaultValue: "Edit",
-                          })}
-                        </button>
-                        <button
-                          type="button"
-                          className="sb-cz-button"
-                          disabled={
-                            busy ||
-                            (item.status !== "published" &&
-                              item.references.length === 0)
-                          }
-                          onClick={() =>
-                            void run(() =>
-                              customContent.setItemPublished(
-                                item.id,
-                                item.status !== "published"
-                              )
-                            )
-                          }
-                        >
-                          {item.status === "published"
-                            ? t("custom-content-unpublish", {
-                                defaultValue: "Unpublish",
-                              })
-                            : t("custom-content-publish", {
-                                defaultValue: "Publish",
-                              })}
-                        </button>
-                        <button
-                          type="button"
-                          className="sb-cz-icon-button"
-                          disabled={busy}
-                          aria-label={t("custom-content-delete-item", {
-                            defaultValue: "Delete",
-                          })}
-                          onClick={() => {
-                            confirmingDelete.value = item.id;
-                          }}
-                        >
-                          <span className="material-symbols-outlined">
-                            delete
-                          </span>
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </li>
+            <div
+              className="sb-ccl-filters"
+              role="group"
+              aria-label={t("custom-content-filter", {
+                defaultValue: "Show",
+              })}
+            >
+              {ITEM_FILTERS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className="sb-ccl-filter"
+                  aria-pressed={filter.value === option}
+                  onClick={() => {
+                    filter.value = option;
+                    visibleCount.value = PAGE_SIZE;
+                  }}
+                >
+                  {filterLabel(t, option)} ·{" "}
+                  {items.filter((item) => matchesFilter(item, option)).length}
+                </button>
               ))}
+            </div>
+          )}
+          {items.length > 0 && (
+            <ul className="sb-ccl-items">
+              {items
+                .filter((item) => matchesFilter(item, filter.value))
+                .slice(0, visibleCount.value)
+                .map((item) => (
+                  <li key={item.id} className="sb-ccl-item">
+                    <div className="sb-ccl-item-text">
+                      <span className="sb-ccl-item-title" dir="auto">
+                        {item.title || displayUrl(item.url)}
+                      </span>
+                      <span className="sb-ccl-item-meta">
+                        <span
+                          className={`sb-ccl-status sb-ccl-status-${item.status}`}
+                        >
+                          {statusLabel(t, item.status)}
+                        </span>
+                        <span dir="auto">{displayUrl(item.url)}</span>
+                      </span>
+                      <span className="sb-ccl-item-meta">
+                        {[
+                          ...item.categoryIds
+                            .map(categoryName)
+                            .filter((name): name is string => !!name),
+                          ...item.references.map((reference) =>
+                            formatReference(reference, books)
+                          ),
+                        ].join(" · ") ||
+                          t("custom-content-no-verses", {
+                            defaultValue: "No passages yet",
+                          })}
+                      </span>
+                    </div>
+                    <div className="sb-ccl-item-actions">
+                      {confirmingDelete.value === item.id ? (
+                        <button
+                          type="button"
+                          className="sb-cz-button sb-cz-button-danger"
+                          disabled={busy}
+                          onClick={() => {
+                            confirmingDelete.value = null;
+                            void run(() => customContent.deleteItem(item.id));
+                          }}
+                        >
+                          {t("custom-content-confirm-delete-item", {
+                            defaultValue: "Confirm delete",
+                          })}
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="sb-cz-button"
+                            disabled={busy}
+                            onClick={() => {
+                              draft.value = draftFromItem(item, books);
+                            }}
+                          >
+                            {t("custom-content-edit-item", {
+                              defaultValue: "Edit",
+                            })}
+                          </button>
+                          <button
+                            type="button"
+                            className="sb-cz-button"
+                            disabled={
+                              busy ||
+                              (item.status !== "published" &&
+                                item.references.length === 0)
+                            }
+                            onClick={() =>
+                              void run(() =>
+                                customContent.setItemPublished(
+                                  item.id,
+                                  item.status !== "published"
+                                )
+                              )
+                            }
+                          >
+                            {item.status === "published"
+                              ? t("custom-content-unpublish", {
+                                  defaultValue: "Unpublish",
+                                })
+                              : t("custom-content-publish", {
+                                  defaultValue: "Publish",
+                                })}
+                          </button>
+                          <button
+                            type="button"
+                            className="sb-cz-icon-button"
+                            disabled={busy}
+                            aria-label={t("custom-content-delete-item", {
+                              defaultValue: "Delete",
+                            })}
+                            onClick={() => {
+                              confirmingDelete.value = item.id;
+                            }}
+                          >
+                            <span className="material-symbols-outlined">
+                              delete
+                            </span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </li>
+                ))}
             </ul>
+          )}
+          {items.filter((item) => matchesFilter(item, filter.value)).length >
+            visibleCount.value && (
+            <button
+              type="button"
+              className="sb-cz-button"
+              onClick={() => {
+                visibleCount.value += PAGE_SIZE;
+              }}
+            >
+              {t("custom-content-show-more", { defaultValue: "Show more" })}
+            </button>
           )}
         </div>
       </section>
@@ -693,7 +777,7 @@ function ItemForm(props: {
   const { t } = useI18n();
   const form = useSignal<ItemDraft>(props.draft);
   const manifest = state.customContent.manifest.value;
-  const parsed = parseReferences(form.value.verses, books);
+  const parsed = parsePassages(form.value.verses, books);
   const isNew = !form.value.id;
 
   const set =
@@ -933,5 +1017,266 @@ function Field(props: {
       {props.children}
       {props.hint && <span className="sb-cz-hint">{props.hint}</span>}
     </div>
+  );
+}
+
+/**
+ * Bulk import: links pasted one per line, or a CSV. The import service fills
+ * in each link's details in the background and adds it for review, so this
+ * keeps going after the editor closes.
+ */
+function ImportPanel(props: {
+  state: SeedBibleState;
+  books: TranslationBook[] | undefined;
+  run: (action: () => Promise<unknown>) => Promise<boolean>;
+}) {
+  const { state, books, run } = props;
+  const { customContent } = state;
+  const { t } = useI18n();
+  const links = useSignal("");
+  const message = useSignal<string | null>(null);
+  const isStarting = useSignal(false);
+  const progress = customContent.importProgress.value;
+  const active =
+    progress?.status === "running" || progress?.status === "paused_signin";
+
+  const start = async (parsed: ParsedImport) => {
+    if (parsed.entries.length === 0) {
+      message.value = t("custom-content-import-nothing", {
+        defaultValue:
+          "No links to import. Each link must start with http:// or https://.",
+      });
+      return;
+    }
+    isStarting.value = true;
+    try {
+      await run(async () => {
+        const summary = await customContent.importEntries(parsed.entries, {
+          books,
+        });
+        const notes = [
+          t("custom-content-import-queued", {
+            count: summary.queued,
+            defaultValue: "{{count}} links are being imported.",
+          }),
+        ];
+        const skipped = summary.alreadyInLibrary + parsed.duplicates;
+        if (skipped > 0) {
+          notes.push(
+            t("custom-content-import-skipped", {
+              count: skipped,
+              defaultValue:
+                "{{count}} were already in your library or listed twice.",
+            })
+          );
+        }
+        if (parsed.invalid.length > 0) {
+          notes.push(
+            t("custom-content-import-invalid", {
+              count: parsed.invalid.length,
+              defaultValue: "{{count}} weren't links and were left out.",
+            })
+          );
+        }
+        if (summary.unknownCategories.length > 0) {
+          notes.push(
+            t("custom-content-import-unknown-categories", {
+              names: summary.unknownCategories.join(", "),
+              defaultValue:
+                "Categories not in your library were left off: {{names}}.",
+            })
+          );
+        }
+        if (summary.unrecognizedPassages.length > 0) {
+          notes.push(
+            t("custom-content-import-unknown-passages", {
+              passages: summary.unrecognizedPassages.join("; "),
+              defaultValue: "Passages we didn't recognize: {{passages}}.",
+            })
+          );
+        }
+        message.value = notes.join(" ");
+        links.value = "";
+      });
+    } finally {
+      isStarting.value = false;
+    }
+  };
+
+  return (
+    <div className="sb-ccl-import">
+      {progress ? <ImportProgressBanner state={state} run={run} /> : null}
+      {!active && (
+        <>
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-ccl-import-links"
+          >
+            {t("custom-content-import-links", {
+              defaultValue: "Import links, one per line",
+            })}
+          </label>
+          <textarea
+            id="sb-ccl-import-links"
+            className="sb-cz-input sb-ccl-textarea"
+            rows={4}
+            placeholder={t("custom-content-import-links-placeholder", {
+              defaultValue:
+                "https://www.youtube.com/watch?v=…\nhttps://example.org/sermons/…",
+            })}
+            value={links.value}
+            onInput={(event) => {
+              links.value = (event.currentTarget as HTMLTextAreaElement).value;
+            }}
+          />
+          <div className="sb-ccl-import-actions">
+            <button
+              type="button"
+              className="sb-cz-button sb-cz-button-primary"
+              disabled={isStarting.value || !links.value.trim()}
+              onClick={() => void start(parsePastedLinks(links.value))}
+            >
+              {t("custom-content-import-start", {
+                defaultValue: "Import links",
+              })}
+            </button>
+            <label className="sb-cz-button sb-ccl-file">
+              {t("custom-content-import-csv", { defaultValue: "Upload CSV" })}
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="sr-only"
+                disabled={isStarting.value}
+                onChange={async (event) => {
+                  const input = event.currentTarget as HTMLInputElement;
+                  const file = input.files?.[0];
+                  input.value = "";
+                  if (!file) {
+                    return;
+                  }
+                  const parsed = parseImportCsv(await file.text());
+                  if (!parsed) {
+                    message.value = t("custom-content-import-csv-no-url", {
+                      defaultValue:
+                        'The CSV needs a header row with a "url" column.',
+                    });
+                    return;
+                  }
+                  await start(parsed);
+                }}
+              />
+            </label>
+          </div>
+          <p className="sb-cz-hint">
+            {t("custom-content-import-csv-hint", {
+              defaultValue:
+                "A CSV can also have title, description, author, categories and passages columns. Separate several categories or passages with a semicolon.",
+            })}
+          </p>
+        </>
+      )}
+      {message.value && (
+        <p className="sb-cz-hint" role="status">
+          {message.value}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ImportProgressBanner(props: {
+  state: SeedBibleState;
+  run: (action: () => Promise<unknown>) => Promise<boolean>;
+}) {
+  const { state, run } = props;
+  const { t } = useI18n();
+  const progress = state.customContent.importProgress.value;
+  if (!progress) {
+    return null;
+  }
+  const settled = progress.done + progress.failed;
+  const percent =
+    progress.total > 0 ? Math.round((settled / progress.total) * 100) : 0;
+
+  if (progress.status === "paused_signin") {
+    return (
+      <div className="sb-ccl-progress" role="status">
+        <p className="sb-ccl-progress-text">
+          {t("custom-content-import-paused", {
+            settled,
+            total: progress.total,
+            defaultValue:
+              "This import paused at {{settled}} of {{total}} because your session ended. Continue it with your current session?",
+          })}
+        </p>
+        <div className="sb-ccl-import-actions">
+          <button
+            type="button"
+            className="sb-cz-button sb-cz-button-primary"
+            onClick={() => void run(() => state.customContent.resumeImport())}
+          >
+            {t("custom-content-import-resume", { defaultValue: "Continue" })}
+          </button>
+          <button
+            type="button"
+            className="sb-cz-button"
+            onClick={() => void run(() => state.customContent.cancelImport())}
+          >
+            {t("custom-content-import-cancel", {
+              defaultValue: "Cancel import",
+            })}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (progress.status === "running") {
+    return (
+      <div className="sb-ccl-progress" role="status">
+        <p className="sb-ccl-progress-text">
+          {t("custom-content-import-running", {
+            settled,
+            total: progress.total,
+            failed: progress.failed,
+            defaultValue:
+              "Importing {{settled}} of {{total}} · {{failed}} failed. This keeps going if you close this page.",
+          })}
+        </p>
+        <div
+          className="sb-ccl-progress-bar"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={percent}
+        >
+          <div style={{ width: `${percent}%` }} />
+        </div>
+        <button
+          type="button"
+          className="sb-cz-button sb-cz-button-quiet"
+          onClick={() => void run(() => state.customContent.cancelImport())}
+        >
+          {t("custom-content-import-cancel", { defaultValue: "Cancel import" })}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <p className="sb-ccl-progress-text" role="status">
+      {progress.status === "done"
+        ? t("custom-content-import-done", {
+            done: progress.done,
+            failed: progress.failed,
+            defaultValue:
+              "Import finished: {{done}} added for review, {{failed}} couldn't be imported.",
+          })
+        : t("custom-content-import-stopped", {
+            done: progress.done,
+            defaultValue:
+              "Import stopped after adding {{done}} links for review.",
+          })}
+    </p>
   );
 }

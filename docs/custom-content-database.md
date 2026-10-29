@@ -1,6 +1,6 @@
 # Custom Content Database for Customizations — Design
 
-Status: **Proposal** · Owner: TBD · Last updated: 2026-10-29
+Status: **Phases 1–2 built**, later phases proposed · Owner: TBD · Last updated: 2026-10-29
 
 ## 1. Summary
 
@@ -58,13 +58,17 @@ Why a separate record rather than the owner's personal one:
 - **Room to grow.** Permissions can be granted on this record alone. That makes team editing (open question 4) a matter of sharing one record, without giving anyone access to the owner's personal data. The import worker's access can also be limited to it.
 - **Sharing between Customizations.** Two Customizations can point at the same library just by naming the same record (open question 3).
 
-Inside the content record there are three kinds of data entry, distinguished by address:
+Inside the content record these data entries are distinguished by address:
 
 | Record           | Address               | Marker                               | Who reads it                                         |
 | ---------------- | --------------------- | ------------------------------------ | ---------------------------------------------------- |
 | Library manifest | `manifest`            | `publicRead:seedBibleContentLibrary` | Every viewer, once, when the Customization activates |
 | Item (the truth) | `item.{itemId}`       | `seedBibleContentItem` (private)     | The owner and the import worker                      |
-| Chapter index    | `ch.{BOOK}.{chapter}` | `publicRead:seedBibleContentChapter` | Every viewer, once per chapter they open             |
+| Chapter record   | `ch.{BOOK}.{chapter}` | `publicRead:seedBibleContentChapter` | Every viewer, once per chapter they open             |
+| Chapter index    | `chapters`            | `publicRead:seedBibleContentLibrary` | Every viewer, once, with the manifest                |
+| Import status    | `importStatus`        | `seedBibleContentImport` (private)   | The owner; written by the import worker              |
+
+**Why the chapter index is separate from the manifest.** The editor writes the manifest (categories, default author); publishing writes the chapter counts. Once publishing moved to the import worker (§5.8), keeping both in one entry would let the editor and the worker each read, change and rewrite it, silently undoing each other's changes. So each entry has exactly one writer.
 
 **Why two copies of each item (item record + chapter entries)?** Items are what the owner edits; chapter records are what readers read. Keeping the full item separate means:
 
@@ -94,6 +98,12 @@ interface ContentLibraryManifest {
   defaultAuthor?: string;
   /** The owner's categories. AI suggestions are limited to these. */
   categories: ContentCategory[];
+  updatedAt: number;
+}
+
+/** The `chapters` entry, written only by publishing. */
+interface ContentChapterIndex {
+  schemaVersion: 1;
   /**
    * Every chapter that has at least one published item, as "BOOK.chapter"
    * keys with a count, e.g. { "JHN.3": 4, "GEN.1": 12 }. Lets Discover skip
@@ -198,7 +208,7 @@ interface ContentChapterEntry {
 
 **Splitting references across chapters.** A reference that spans chapters (e.g. Acts 1:13–2:4) produces an entry in **each** chapter it touches, with `verses` clipped to that chapter. A whole-chapter reference (`ACT 2`) produces `verses: []`. An item with five references in five chapters appears in five chapter records.
 
-**Size.** One entry is roughly 600 bytes. A heavily covered chapter (say 150 items on John 3) is ~90 KB. Before building, confirm the records server's per-record data limit. If a chapter would exceed a safe budget (proposal: 200 KB), split it into `…ch.JHN.3`, `…ch.JHN.3.p2`, … and record the page count in `manifest.chapters` (e.g. `{"JHN.3": {"count": 310, "pages": 2}}`). We don't expect to need this in v1, but the manifest shape should allow it.
+**Size.** One entry is roughly 600 bytes. A heavily covered chapter (say 150 items on John 3) is ~90 KB. Before building, confirm the records server's per-record data limit. If a chapter would exceed a safe budget (proposal: 200 KB), split it into `…ch.JHN.3`, `…ch.JHN.3.p2`, … and record the page count in the chapter index (e.g. `{"JHN.3": {"count": 310, "pages": 2}}`). We don't expect to need this in v1, but the index's shape should allow it.
 
 ## 5. The ingest pipeline
 
@@ -280,7 +290,7 @@ New items arrive as `needs_review`. The editor (§7) shows each with its thumbna
 1. Save the item record with `status: "published"`.
 2. Work out the **affected chapters** = chapters the item touched before this edit ∪ chapters it touches now. (Both matter: an edit that moves an item from John 3 to John 4 must remove it from John 3.)
 3. For each affected chapter, rebuild the chapter record **from all published items** (the writer loads them from the content record with `listData`). If the rebuilt record has no entries, erase it.
-4. Update `manifest.chapters` counts and save the manifest.
+4. Save the chapter counts to the `chapters` entry.
 
 Publishing runs on the worker, in the library's **single writer** (a Durable Object per content record, §5.8). Both the owner's "Publish" button and auto-publish send item ids there, so chapter records never have two writers racing each other. Writes are batched: publishing 200 items rebuilds each affected chapter once, not 200 times. Rebuilding from items (rather than patching chapter records in place) means a half-finished publish can always be repaired by a **"Rebuild index"** action that regenerates every chapter record from the items.
 
@@ -426,7 +436,7 @@ A Durable Object (a small Cloudflare program that runs one request at a time, wi
 
 Durable Objects stay where running one thing at a time is the whole point:
 
-- **`LibraryWriter`:** rebuilding chapter entries is a multi-step job that must never run twice at once for the same library. A Durable Object guarantees that. In D1 we'd be writing our own lock, with timeouts and crash recovery. It saves only the item ids waiting to be published, clearing them when done, so nothing lingers. A rebuild is repeatable (it starts from the items), so one interrupted by a restart is simply run again. The editor's "Rebuild index" is the backstop. It holds no session key: each publish request brings one, from the editor or, for auto-publish, from the import's row.
+- **`LibraryWriter`:** rebuilding chapter entries is a multi-step job that must never run twice at once for the same library. A Durable Object guarantees that. In D1 we'd be writing our own lock, with timeouts and crash recovery. It keeps nothing between requests. A Durable Object only handles one request at a time until it awaits a `fetch`, and publishing awaits CasualOS for every chapter, so it chains requests itself to make sure two publishes never interleave. A rebuild is repeatable (it starts from the items), so one interrupted by a restart is simply run again. The editor's "Rebuild index" is the backstop. It holds no session key: each publish request brings one, from the editor or, for auto-publish, from the import's row.
 - **`CommonCrawlGate`:** spacing out requests to Common Crawl is a rate limiter, which a single object does naturally. It only remembers when the last request went out; if a restart loses that, at worst one request goes out a little early.
 
 Both are idle most of the time and keep almost no data, so their lifetime needs no special handling.
@@ -539,7 +549,7 @@ Why core rather than an extension: the library is part of the Customization (edi
 ```ts
 discover: async ({ book, chapter }) => {
   const key = `${book}.${chapter}`;
-  if (!manifest.chapters[key]) return []; // no network for empty chapters
+  if (!chapterIndex.chapters[key]) return []; // no network for empty chapters
   const result = await os.getData(contentRecordName, `ch.${key}`);
   if (!result.success || !result.data) return []; // never break other providers
   const parsed = contentChapterRecordSchema.safeParse(result.data);
@@ -583,14 +593,14 @@ All new strings go into `en.json` only.
 
 ## 8. Code layout
 
-| File                                                         | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `managers/CustomContentManager.tsx`                          | Signals for the library and items; create/delete the content record; item edits; talks to the import worker (start, progress, cancel, resume, publish); registers the Discover provider. Receives `os`, `login`, `customizations`, `discover`.                                                                                                                                                                                                            |
-| `managers/customContent/` (in core, no browser dependencies) | `schema.ts` (zod schemas for manifest, item, chapter entry, and the record addresses), `chapterIndex.ts` (split references into chapters, affected chapters, build a chapter entry; most unit tests live here). Later: `references.ts` (`extractExplicitRefs`, moved from `transcription`), `classify.ts` (prompt and response validation), `normalizeUrl.ts`. Used by both the app and the worker.                                                       |
-| `managers/customContent/importClient.ts`                     | Typed client for the worker's HTTP API, sending the session key.                                                                                                                                                                                                                                                                                                                                                                                          |
-| `workers/content-import/`                                    | `src/api.ts` (routes, CORS, session check), `src/jobs.ts` (D1 queries: create, claim slot, finish, progress), `migrations/` (D1 schema), `src/LibraryWriter.ts` and `src/CommonCrawlGate.ts` (Durable Objects), `src/consumer.ts` and `src/deadLetter.ts` (queue consumers), `src/cleanup.ts` (Cron Trigger), `src/linkMetadata.ts` (`getLinkPreview` + `resolveLinkMedia`), `src/commonCrawl/` (`index.ts`, `warc.ts`, `extract.ts`), `wrangler` config. |
-| `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `CustomizationsManager.tsx`                                  | Add optional `contentRecordName` to the schema and type.                                                                                                                                                                                                                                                                                                                                                                                                  |
+| File                                                         | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `managers/CustomContentManager.tsx`                          | Signals for the library and items; create/delete the content record; item edits; talks to the import worker (start, progress, cancel, resume, publish); registers the Discover provider. Receives `os`, `login`, `customizations`, `discover`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `managers/customContent/` (in core)                          | `schema.ts` (zod schemas and record addresses), `chapterIndex.ts` (split references into chapters, affected chapters, build a chapter entry), `publish.ts` (rebuild chapters and the chapter index through a small store interface, so the browser and the worker publish with the same code), `importApi.ts` (the worker's request and response shapes), `importClient.ts` (the editor's client for the worker), `normalizeUrl.ts` (duplicate detection), `importEntries.ts` (pasted links and CSV), `passages.ts` (typed passages; browser only). Everything except `passages.ts` has no browser dependencies and is bundled by the worker. Later: `references.ts` (`extractExplicitRefs`, moved from `transcription`), `classify.ts` (prompt and response validation). |
+| `managers/customContent/importClient.ts`                     | Typed client for the worker's HTTP API, sending the session key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `workers/content-import/`                                    | `src/api.ts` (routes, CORS, session check), `src/jobs.ts` (D1 queries: create, claim slot, finish, progress), `migrations/` (D1 schema), `src/libraryWriter.ts` (Durable Object), `src/consumer.ts` (queue and dead-letter consumers), `src/cleanup.ts` (Cron Trigger), `src/casualos.ts` (the CasualOS procedure client: `getUserInfo`, data calls, `getLinkPreview`), `src/sessionKeys.ts` (reading and encrypting session keys), `src/platform.ts` (the Cloudflare APIs used, as plain interfaces), `wrangler.toml`. Phase 5 adds `src/commonCrawlGate.ts` and `src/commonCrawl/`.                                                                                                                                                                                     |
+| `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `CustomizationsManager.tsx`                                  | Add optional `contentRecordName` to the schema and type.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ## 9. Testing plan
 
@@ -611,8 +621,8 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 
 ## 10. Rollout
 
-1. **Phase 1 — storage + reading.** The content record, schemas, chapter index builder, Discover provider, and a minimal editor where the owner enters title/URL/categories/references by hand (publishing from the browser for now). Proves the per-chapter lookup end to end, with no AI work and no worker.
-2. **Phase 2 — the import worker.** API worker with session-key authentication, the D1 job tables and cleanup trigger, the queue and dead-letter consumer, `LibraryWriter` (publishing moves to the worker), CD deployment. Items filled from `getLinkPreview`; bulk paste and CSV import.
+1. **Phase 1 — storage + reading.** The content record, schemas, chapter index builder, Discover provider, and a minimal editor where the owner enters title/URL/categories/references by hand (publishing from the browser for now). Proves the per-chapter lookup end to end, with no AI work and no worker. _Built._
+2. **Phase 2 — the import worker.** API worker with session-key authentication, the D1 job tables and cleanup trigger, the queue and dead-letter consumer, `LibraryWriter` (publishing moves to the worker), CD deployment. Items filled from `getLinkPreview`; bulk paste and CSV import. _Built._ Without a configured worker (`VITE_CONTENT_IMPORT_URL` unset), bulk import is hidden and publishing stays in the browser, so development and self-hosted setups keep working. The worker type-checks without `@cloudflare/workers-types`, whose globals clash with the repo's DOM types: the Cloudflare APIs it uses are plain interfaces in `src/platform.ts`, and its tests run the real handlers against SQLite (`node:sqlite`) through those interfaces.
 3. **Phase 3 — AI classification and review.** `aiChat` classification, review queue, confidence flags, auto-publish setting.
 4. **Phase 4 — polish.** Coverage view, rebuild index, chapter-record paging if real libraries need it.
 5. **Phase 5 — whole-site import.** `CommonCrawlGate`, the site-import endpoint, page picker, full-text extraction and "Check for new pages". It comes after Phase 3 because its main gain, better verse detection from full text, only pays off once classification exists.

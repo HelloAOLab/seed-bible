@@ -1,0 +1,46 @@
+# Content import worker. Setup steps: README.md.
+name = "seed-bible-content-import"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+# Pinned in .github/workflows/cd.yml; deploy with that version.
+
+[vars]
+CASUALOS_ENDPOINT = "https://auth.seedbible.org"
+ALLOWED_ORIGINS = "https://seedbible.org,https://prod.seedbible.org,https://alpha.seedbible.org"
+DEAD_LETTER_QUEUE = "seed-bible-content-import-dlq"
+# SESSION_KEY_SECRET is a secret: `wrangler secret put SESSION_KEY_SECRET`.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "seed-bible-content-import"
+# Replaced by CD from the CONTENT_IMPORT_D1_DATABASE_ID variable.
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[queues.producers]]
+binding = "IMPORT_QUEUE"
+queue = "seed-bible-content-import"
+
+[[queues.consumers]]
+queue = "seed-bible-content-import"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 5
+max_concurrency = 4
+dead_letter_queue = "seed-bible-content-import-dlq"
+
+[[queues.consumers]]
+queue = "seed-bible-content-import-dlq"
+max_batch_size = 10
+max_batch_timeout = 30
+
+[[durable_objects.bindings]]
+name = "LIBRARY_WRITER"
+class_name = "LibraryWriter"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["LibraryWriter"]
+
+[triggers]
+crons = ["*/15 * * * *"]
