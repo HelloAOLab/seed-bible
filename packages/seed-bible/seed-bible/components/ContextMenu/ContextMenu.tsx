@@ -178,7 +178,8 @@ export function ContextMenuWithButton({
 
       const distanceToRightEdge = window.innerWidth - anchorRect.right;
       const distanceToLeftEdge = anchorRect.left;
-      if (distanceToLeftEdge < distanceToRightEdge) {
+      const alignLeft = distanceToLeftEdge < distanceToRightEdge;
+      if (alignLeft) {
         style.left = `${anchorRect.left}px`;
       } else {
         style.right = `${window.innerWidth - anchorRect.right}px`;
@@ -186,11 +187,17 @@ export function ContextMenuWithButton({
 
       const spaceBelow = window.innerHeight - anchorRect.bottom;
       const spaceAbove = anchorRect.top;
-      if (spaceBelow >= spaceAbove) {
+      const openBelow = spaceBelow >= spaceAbove;
+      if (openBelow) {
         style.top = `${anchorRect.bottom + MENU_GAP_PX}px`;
       } else {
         style.bottom = `${window.innerHeight - anchorRect.top + MENU_GAP_PX}px`;
       }
+
+      // The opening animation grows the menu out of the corner by its button.
+      style.transformOrigin = `${alignLeft ? "left" : "right"} ${
+        openBelow ? "top" : "bottom"
+      }`;
 
       menuStyle.value = style;
     };

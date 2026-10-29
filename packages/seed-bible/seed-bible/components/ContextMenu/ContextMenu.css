@@ -39,6 +39,21 @@
   z-index: 500;
 }
 
+/* Fades in while growing out of the corner by its button, which
+   `ContextMenuWithButton` sets as the `transform-origin`. */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-context-menu {
+    animation: sb-context-menu-open 0.15s ease-out;
+  }
+}
+
+@keyframes sb-context-menu-open {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
 .sb-context-menu-item {
   display: flex;
   align-items: center;
