@@ -1,6 +1,6 @@
 ---
 name: routine-pr-code-review
-description: Unattended code review for Claude Code routines. Reviews the pull request from the routine's GitHub context (or a PR number argument) with /code-review plus its own checks, checks the tests and the manual test plan, and posts the review as a PR comment without asking for confirmation. For an interactive review that waits for approval before posting, use code-review-pr instead.
+description: Unattended code review for Claude Code routines. Reviews the pull request from the routine's GitHub context (or a PR number argument) with /code-review plus its own checks, checks the tests and the manual test plan, and posts the review as a PR comment without asking for confirmation. For a review that returns to you instead of posting, use the `reviewer` subagent.
 ---
 
 Review a pull request on this repository and post the review as a comment on it.
@@ -19,16 +19,11 @@ Find this skill's earlier reviews in the PR's comments (`gh api repos/HelloAOLab
 
 If one of them already has the marker `<!-- routine-pr-code-review sha=<head commit>`, stop without posting. That happens when both routines run with no new commits in between, and a second review of the same code would only repeat the first.
 
+**How to review:** what to read, what to check and how to write the review all come from `.claude/code-review-guide.md`, which the `reviewer` subagent follows too. Read it from disk now. The steps below say how this skill fills in the parts the guide leaves to its caller.
+
 ## 2. Gather context
 
-Read all of this before judging the code:
-
-- The PR: its description, its comments, its inline code comments (`gh api repos/HelloAOLab/seed-bible/pulls/<n>/comments --paginate`) and its review summaries (`gh api repos/HelloAOLab/seed-bible/pulls/<n>/reviews --paginate`).
-- Linked issues: issues the PR body refers to (`Fixes`/`Closes`/`Resolves` and plain references), plus issues linked in its timeline (see `GITHUB.md`). Read each issue and its comments. They say what the PR is supposed to do.
-
-Use the conversation to learn what's already been discussed or decided. Don't re-raise something the thread settled. If you still think a settled point is a real problem, say so once, acknowledge the earlier decision, and explain what's new.
-
-**Follow-up reviews.** If step 1 found earlier reviews from this skill, this run is a follow-up, for example the PR was reviewed when it opened and is now marked ready for review. Read the newest one and the commit it recorded. Review the whole PR again, but open with a "Since the last review" list saying which earlier findings are fixed, still open, or no longer apply, and point out what changed since that commit (`git diff <old sha>..<head sha>` in the PR folder, fetching the old commit first if needed). Reviews from before the marker may not record a commit; then compare against the findings themselves.
+Follow section 1 of the guide. If step 1 found earlier reviews from this skill, this run is a follow-up (for example, the PR was reviewed when it opened and is now marked ready for review), and the newest of those is the earlier review the guide compares against.
 
 ## 3. Review
 
@@ -41,29 +36,14 @@ git worktree add --detach ../seed-bible-pr-<n> FETCH_HEAD   # reuse it if it alr
 
 Read files and run commands for the PR there. **Don't switch this checkout to the PR branch** (no `gh pr checkout`). The routine's skills are read from this checkout, which stays on the default branch, so the next skill gets the right instructions and a PR can't change the instructions it's reviewed under.
 
-**Do your own full review first, without looking at the manual test plan.** The review has to stand on its own; the plan check below adds to it, never replaces it.
+Then follow section 2 of the guide there. That folder is the one set aside for the guide's "fails without the fix" test check.
 
-Run the `code-review` skill on the PR (`/code-review <n>`) for the bug hunt. Don't use its `--comment` or `--fix` options: this skill posts one comment of its own and never changes the code. If it can't load the PR by number (it may use GitHub commands a routine blocks), give it a local branch instead: `git fetch origin pull/<n>/head:pr-<n>` (this creates a branch without switching to it), then `/code-review pr-<n>`.
-
-Then add what that pass doesn't cover:
-
-- **Does the PR deliver what the linked issues ask for?** Call out anything missing, or anything that behaves differently from what was asked.
-- **Repo conventions** in `CLAUDE.md`: signals instead of hooks for state, CasualOS access only through `OsManager`, translation keys added only to `en.json`, `ThemeManager` overriding `--sb-*` CSS variables, no `any`, and so on.
-- **Tests.** We want tests that check real-world behavior and can fail. For each new or changed test, check it against the testing rules in `CLAUDE.md`: does it assert something a user or caller would see, mock only at the `OsManager`/CasualOS boundary, cover error paths and edge cases, and avoid fixed-time sleeps? Flag tests that would pass no matter what the code does (assertions on mocks, missing `await`, conditions that are always true, a `try` that swallows the failure). Point out important behavior in the PR that has no test.
-- **Run the tests when the environment allows it**, in the PR folder. If `pnpm install` works there, run the changed and added test files with `pnpm vitest run <file>`. For a test that claims to guard against a bug, check that it really fails without the fix: temporarily restore the base version of the non-test files (`git checkout origin/<base> -- <files>`), run the test, confirm it fails, then put the PR version back (`git checkout HEAD -- <files>`). Say in the review what you ran and what happened. If you couldn't run them, say so; never imply tests were run when they weren't.
-
-**Last, check the code against the manual test plan**, as an extra pass on top of everything above. The entry skill runs the test plan first and tells you where its file is (`plans/seed-bible/<n>/<short commit>.json` in the `pr-test-plans` checkout). If you were run on your own, read it from GitHub: `gh api repos/HelloAOLab/pr-test-plans/contents/plans/seed-bible/<n>/<short commit>.json -H "Accept: application/vnd.github.raw"` (a 404 means there's no plan).
-
-- For each test, trace through the PR's code whether a tester following its steps would really see what it expects. A test the code won't pass is a finding: name the test ("T4 expects …") and show where the code goes another way.
-- Notice what the plan's user's-eye view brings up that your own review missed, like an empty state, a signed-out path, an error message, or a phone-width layout nobody handled.
-- Merge these into your findings; don't list them separately.
-- If there's no plan for this commit (none was needed, or writing it failed), skip this pass and say so in one line under Summary.
-
-Before writing a finding up, confirm it by re-reading the code it depends on. Drop findings you can't support. If something might be a problem but you can't tell, ask it as a question instead of stating it as a bug.
+- **The bug hunt:** run `/code-review <n>`. If it can't load the PR by number (it may use GitHub commands a routine blocks), give it a local branch instead: `git fetch origin pull/<n>/head:pr-<n>` (this creates a branch without switching to it), then `/code-review pr-<n>`.
+- **The manual test plan:** the entry skill runs the test plan first and tells you where its file is (`plans/seed-bible/<n>/<short commit>.json` in the `pr-test-plans` checkout). If you were run on your own, read it from GitHub as the guide describes.
 
 ## 4. Write the review
 
-Follow the writing style in `CLAUDE.md`: plain language, short answer first, and explain why each problem matters. Write the review to a file in this shape:
+Follow section 3 of the guide and write the review to a file. Its header is:
 
 ```markdown
 > [!NOTE]
@@ -72,37 +52,7 @@ Follow the writing style in `CLAUDE.md`: plain language, short answer first, and
 <!-- routine-pr-code-review sha=<full head sha> -->
 
 **Reviewed commit:** `<short sha>`
-
-## Summary
-
-<2–4 sentences: what the PR does, whether it delivers what the linked issue asks for, and the overall verdict: ready to merge, needs changes, or needs discussion.>
-
-## Since the last review
-
-<Follow-up reviews only: each earlier finding marked fixed, still open, or no longer applies.>
-
-## Findings
-
-### 🔴 Critical
-
-### 🟠 High
-
-### 🟡 Medium
-
-### 🔵 Low
-
-## Tests
-
-<What the tests cover, which ones are weak or can't fail, what's missing, and what you ran and what happened.>
 ```
-
-- Severity guide. **Critical**: data loss, security hole, crash, or a main flow broken for most users. **High**: a real bug users will hit, or the PR doesn't do what the issue asks. **Medium**: edge-case bugs, missing error handling, weak tests for important behavior. **Low**: small cleanups and nits. Leave out empty severity headings. If there are no findings, say so plainly.
-- Number findings in one sequence across all severities, written as **No. 1**, **No. 2**, and so on, so people can refer to them in replies.
-- Each finding has:
-  - A short title.
-  - What's wrong and why it matters, in plain words.
-  - **Steps to reproduce**, numbered, written so a human developer can see the problem in the app or a test. Include these only when the problem can actually be reproduced; don't invent steps for a theoretical issue.
-  - **Suggested fix**: concrete, with a short code snippet when that's clearer than prose.
 
 ## 5. Post
 
@@ -133,8 +83,3 @@ Post exactly once: `gh api repos/HelloAOLab/seed-bible/issues/<n>/comments -F bo
 4. **Update it:** `gh api -X PATCH repos/HelloAOLab/seed-bible/issues/comments/<id> -F body=@collapsed.md`.
 
 If collapsing fails, leave that review as it is and mention it in your output. The new review is what matters.
-
-**Gotchas**
-
-- GitHub turns `#` followed by a number into a link to that issue or PR. To refer to a list item or finding, write "No. 1", never "#1".
-- A GitHub comment can be at most 65,536 characters. If the review would be longer, shorten the Low findings first.
