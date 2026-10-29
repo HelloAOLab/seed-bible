@@ -214,16 +214,11 @@ describe("TodayPane", () => {
       });
     });
 
-    // Welcome has no header row, so Today's close button sits beside it.
-    it("gives Welcome a close button that closes Today", () => {
-      const props = setup({ status: "empty" });
+    // Only the personalized layout's header row has a close button.
+    it("shows Welcome without a close button", () => {
+      setup({ status: "empty" });
 
-      const close = container.querySelector<HTMLButtonElement>(
-        ".sb-today-welcome-close-button"
-      );
-      act(() => close!.click());
-
-      expect(props.onClose).toHaveBeenCalledTimes(1);
+      expect(container.querySelector(".sb-today-close-button")).toBeNull();
     });
 
     it("hands each personalized section the props it needs", () => {

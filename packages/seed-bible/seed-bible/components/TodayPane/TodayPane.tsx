@@ -12,7 +12,6 @@ import { ResumeReadingSection } from "./ResumeReadingSection";
 import { BookmarksSection, type BookmarkStripItem } from "./BookmarksSection";
 import { SearchSection } from "./SearchSection";
 import { SocialSection } from "./SocialSection";
-import { TodayCloseButton } from "./CloseButton";
 import { useI18n } from "../../i18n";
 import "./TodayPane.css";
 
@@ -85,14 +84,6 @@ function TodayContainer(props: TodayScreenProps) {
           <TodayContent {...props} />
         )}
       </div>
-      {/* The personalized layout's close button is in its header row; Welcome
-          has no such row, so its own sits in the same corner. */}
-      {showWelcome && (
-        <TodayCloseButton
-          onClose={props.onClose}
-          className="sb-today-welcome-close-button"
-        />
-      )}
     </div>
   );
 }

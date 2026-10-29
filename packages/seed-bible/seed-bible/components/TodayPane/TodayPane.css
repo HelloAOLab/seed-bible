@@ -348,14 +348,6 @@
   font-size: 1.25rem;
 }
 
-/* Where the header's close button would be: the top of the content column's
-   end edge (the column is 90% wide, capped at 51.25rem, and centered). */
-.sb-today-welcome-close-button {
-  position: absolute;
-  top: 2.25rem;
-  inset-inline-end: max(5%, (100% - 51.25rem) / 2);
-}
-
 .sb-today-container .sb-today-resume-card {
   width: 100%;
   background-color: var(--sb-secondary-color);
@@ -1001,9 +993,6 @@
   .sb-today-welcome-screen {
     margin-top: 1rem;
     gap: 1rem;
-  }
-  .sb-today-welcome-close-button {
-    top: 1rem;
   }
   .sb-today-header > h1 {
     font-size: 1.2rem;
