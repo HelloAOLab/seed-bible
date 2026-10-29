@@ -405,6 +405,19 @@
   background: var(--sb-reader-background);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
   z-index: 50;
+  /* The corner by its button, for the opening animation below. */
+  transform-origin: top left;
+}
+
+.sb-pane-layout-menu:dir(rtl) {
+  transform-origin: top right;
+}
+
+/* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-pane-layout-menu {
+    animation: sb-context-menu-open 0.15s ease-out;
+  }
 }
 
 .sb-pane-layout-menu-title {
