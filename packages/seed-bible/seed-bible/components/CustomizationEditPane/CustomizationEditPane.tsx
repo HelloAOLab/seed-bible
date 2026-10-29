@@ -42,6 +42,7 @@ import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { i18n } from "../../i18n";
 import { useI18n } from "../../i18n/I18nManager";
+import { CustomizationContentView } from "./CustomizationContentView";
 import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
@@ -78,7 +79,11 @@ const LogoCropModalContent = lazy(() =>
 
 export const CUSTOMIZATION_EDIT_PANE_ID = "customization-edit-pane";
 
-type CustomizationEditView = "edit" | "edit-variant" | "edit-extensions";
+type CustomizationEditView =
+  | "edit"
+  | "edit-variant"
+  | "edit-extensions"
+  | "edit-content";
 
 /**
  * Whether `foregroundKey` (e.g. `primaryFontColor`) has a known reading
@@ -347,6 +352,11 @@ export function CustomizationEditPaneTitle(props: {
   if (view === "edit-extensions") {
     return <>{t("customization-extensions", { defaultValue: "Extensions" })}</>;
   }
+  if (view === "edit-content") {
+    return (
+      <>{t("custom-content-library", { defaultValue: "Content library" })}</>
+    );
+  }
   if (view === "edit-variant") {
     const variant = record.variants.find(
       (v) => v.id === props.customizations.editingVariantId.value
@@ -545,6 +555,9 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
 
   if (view === "edit-extensions") {
     return <CustomizationEditExtensionsView state={state} />;
+  }
+  if (view === "edit-content") {
+    return <CustomizationContentView state={state} />;
   }
   if (view === "edit-variant") {
     return <CustomizationEditVariantView state={state} />;
@@ -846,6 +859,37 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                 defaultValue:
                   "{{available}} available · {{auto}} auto · {{hidden}} hidden",
               })}
+            </span>
+          </span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="sb-cz-row sb-cz-row-tall"
+          onClick={() => {
+            customizationEditView.value = "edit-content";
+          }}
+        >
+          <span className="material-symbols-outlined sb-cz-row-icon">
+            video_library
+          </span>
+          <span className="sb-cz-row-text">
+            <span className="sb-cz-row-label">
+              {t("custom-content-library", {
+                defaultValue: "Content library",
+              })}
+            </span>
+            <span className="sb-cz-row-hint">
+              {record.contentRecordName
+                ? t("custom-content-row-hint-ready", {
+                    defaultValue: "Your videos and articles in Discover",
+                  })
+                : t("custom-content-row-hint-empty", {
+                    defaultValue: "Add your videos and articles to Discover",
+                  })}
             </span>
           </span>
           <span className="material-symbols-outlined rtl-mirror">

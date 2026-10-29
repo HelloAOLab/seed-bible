@@ -4,6 +4,10 @@
 
 ### ✨ Added
 
+- Add a content library to Custom Branding: add links to your videos and articles with the passages they cover, and everyone using your Custom Branding finds them in Discover on those chapters.
+  - Each library has its own categories, which become Discover's filters and sections.
+  - The library is stored in its own record, not your personal one.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

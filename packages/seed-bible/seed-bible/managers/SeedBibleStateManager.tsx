@@ -137,6 +137,10 @@ import type {
   ThemeFontFamilyKey,
 } from "../managers/ThemeManager";
 import {
+  createCustomContentManager,
+  type CustomContentManager,
+} from "../managers/CustomContentManager";
+import {
   createCustomizationsManager,
   CUSTOMIZATION_FONT_FIELDS,
   CUSTOMIZATION_FONT_PRESETS,
@@ -583,6 +587,8 @@ export interface SeedBibleState {
   readingPlans: ReadingPlansManager;
   /** Discover manager for contextual content providers. */
   discover: DiscoverManager;
+  /** Customization content libraries: the editor's open library, and Discover for the active one. */
+  customContent: CustomContentManager;
   /** The Today screen: its open state and the data its cards read. */
   today: TodayManager;
   /**
@@ -916,6 +922,13 @@ export function createSeedBibleState(
   const chats = createChatsManager(login, i18n, selectedTabTranslationBooks);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
+  const customContent = createCustomContentManager({
+    os,
+    login,
+    customizations,
+    discover,
+    modals,
+  });
   const readingExtensions = createBibleReadingExtensionManager();
   const tabs = createTabs(
     navigation,
@@ -3596,6 +3609,7 @@ export function createSeedBibleState(
     navigation,
     i18n,
     discover,
+    customContent,
     today,
     readingExtensions,
     extensions,
