@@ -232,12 +232,17 @@ export async function openReadingPlanEditor(
  * Opens the editor on a new plan. An in-flight draft is resumed rather than
  * thrown away — the user may have stepped out of the editor to go read and add
  * a passage from the verse toolbar.
+ *
+ * Exported for the same reason as {@link openReadingPlanDetail}.
  */
-function openPlanCreate(readingPlans: ReadingPlansManager) {
+export function openPlanCreate(
+  readingPlans: ReadingPlansManager,
+  options: OpenPlanOptions = {}
+) {
   if (!readingPlans.editingReadingPlan.peek()) {
     readingPlans.startEditingReadingPlan();
   }
-  readingPlansView.value = "edit";
+  showPlan("edit", options);
 }
 
 /**

@@ -685,6 +685,7 @@
   "create-menu": "Create",
   "create-annotation-menu-item": "Annotation",
   "create-playlist-menu-item": "Playlist",
+  "create-reading-plan-menu-item": "Reading Plan",
   "create-custom-branding-menu-item": "Custom Branding",
   "annotate-title": "Annotate {{location}}",
   "annotation-options": "Annotation options",

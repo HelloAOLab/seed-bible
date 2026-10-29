@@ -1024,17 +1024,16 @@ export interface OpenReadingPlansPaneOptions {
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
   /**
-   * Where the pane opens. Defaults to "side" — docked beside the reader, which
-   * is what the toolbar's Plans tool wants. The Profile screen passes
-   * "fullscreen" so tapping "All plans" replaces it rather than opening a
-   * panel behind it.
+   * Where the pane opens. Defaults to "side" — docked beside the reader. The
+   * Profile and "Your content" screens pass "fullscreen" so the pane replaces
+   * them rather than opening a panel behind them.
    */
   placement?: PanePlacement;
   toast?: (message: string) => void;
   /**
    * Returns to the screen that opened the pane, from the plans list or from a
    * plan that screen opened directly. Without it the list has no back button,
-   * which is right for the toolbar: the reader is still there beside it.
+   * which is right for a docked pane: the reader is still there beside it.
    */
   onBack?: () => void;
 }
@@ -1042,9 +1041,9 @@ export interface OpenReadingPlansPaneOptions {
 export const READING_PLANS_PANE_ID = "reading-plans-pane";
 
 /**
- * Opens the reading plans pane. Shared by the reader toolbar's Plans tool and
- * the Profile screen's plans card so the two land on the same pane, with the
- * same chrome and the same scripture/playback wiring.
+ * Opens the reading plans pane. Shared by the Profile screen's plans card and
+ * the "Your content" screen so both land on the same pane, with the same
+ * chrome and the same scripture/playback wiring.
  */
 export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
   const {
@@ -1244,34 +1243,6 @@ function getDefaultToolbarTools(
       },
       onSelect: (context) => {
         context.openChat?.();
-      },
-    },
-    {
-      id: "open-plans",
-      priority: 115,
-      title: { key: "plans", defaultValue: "Plans" },
-      icon: () => <MaterialIcon>menu_book</MaterialIcon>,
-      isVisible: (context) =>
-        !!context.readingPlans &&
-        !!context.modals &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
-      onSelect: (context) => {
-        if (!context.readingPlans || !context.modals) {
-          return;
-        }
-        openReadingPlansPane({
-          readingPlans: context.readingPlans,
-          readingState: context.readingState,
-          panesManager: context.panesManager,
-          modals: context.modals,
-          playlists: context.playlists,
-          bibleData: context.data,
-          os: context.os,
-          login: context.login,
-          gallery: context.gallery,
-          toast: context.toast,
-          friends: context.friends,
-        });
       },
     },
     {
