@@ -316,3 +316,88 @@
 .sb-ccl-coverage-chapter[data-covered] {
   background: var(--sb-primary-color);
 }
+
+.sb-ccl-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.sb-ccl-check > input {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--sb-primary-color);
+}
+
+.sb-ccl-sites,
+.sb-ccl-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-ccl-sites-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.sb-ccl-sites-list,
+.sb-ccl-folders,
+.sb-ccl-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-ccl-site {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+}
+
+.sb-ccl-site-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.sb-ccl-site > .sb-cz-button {
+  margin-inline-start: auto;
+}
+
+.sb-ccl-folder {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-radius: 0.5rem;
+}
+
+.sb-ccl-folder-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sb-ccl-folder-count {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  font-size: 0.8125rem;
+}
+
+.sb-ccl-pages {
+  margin-top: 0.5rem;
+  padding-inline-start: 1.5rem;
+}
+
+.sb-ccl-page-url {
+  min-width: 0;
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}

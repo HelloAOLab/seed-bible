@@ -11,7 +11,10 @@ import {
   type ContentItem,
 } from "@packages/seed-bible/seed-bible/managers/customContent/schema";
 import type { ContentImportService } from "@packages/seed-bible/seed-bible/managers/customContent/importClient";
-import type { ImportProgress } from "@packages/seed-bible/seed-bible/managers/customContent/importApi";
+import type {
+  ImportProgress,
+  SiteImport,
+} from "@packages/seed-bible/seed-bible/managers/customContent/importApi";
 import { ContentLibraryError } from "@packages/seed-bible/seed-bible/managers/customContent/publish";
 import {
   createApp,
@@ -232,6 +235,7 @@ describe("CustomizationContentView", () => {
     /** The import worker, as far as the editor can tell: it answers like the real API. */
     function stubImportService() {
       let progress: ImportProgress | null = null;
+      let lookup: SiteImport | null = null;
       const update = (patch: Partial<ImportProgress>) => {
         progress = { ...progress!, ...patch };
         return progress;
@@ -241,6 +245,7 @@ describe("CustomizationContentView", () => {
           progress = {
             id: "import-1",
             contentRecordName: request.contentRecordName,
+            kind: "links",
             status: "running",
             total: request.items.length,
             queued: request.items.length,
@@ -258,8 +263,60 @@ describe("CustomizationContentView", () => {
         cancelImport: vi.fn(async () => update({ status: "cancelled" })),
         resumeImport: vi.fn(async () => update({ status: "running" })),
         publish: vi.fn(),
+        startSiteImport: vi.fn(async (_key: string, request) => {
+          lookup = {
+            progress: {
+              id: "site-1",
+              contentRecordName: request.contentRecordName,
+              kind: "site",
+              status: "listing",
+              total: 0,
+              queued: 0,
+              running: 0,
+              done: 0,
+              failed: 0,
+              skipped: 0,
+              createdAt: 1,
+              updatedAt: 1,
+            },
+            site: "gracecommunity.org/",
+            include: request.include ?? [],
+            exclude: request.exclude ?? [],
+            sourceId: "site_1",
+            crawls: [{ id: "CC-MAIN-2026-38", name: "September 2026" }],
+            lookups: { total: 2, done: 1, failed: 0 },
+            capped: false,
+          };
+          progress = lookup.progress;
+          return lookup;
+        }),
+        getSiteImport: vi.fn(async () => lookup!),
+        pickSitePages: vi.fn(async (_key: string, _id: string, ids) => {
+          lookup = null;
+          progress = {
+            ...progress!,
+            status: "running",
+            total: ids.length,
+            queued: ids.length,
+          };
+          return progress;
+        }),
       } satisfies ContentImportService;
-      return { service, update };
+      /** The lookup finishes, having found these pages. */
+      const listed = (urls: string[]) => {
+        lookup = {
+          ...lookup!,
+          progress: { ...lookup!.progress, status: "awaiting_pick" },
+          lookups: { total: 2, done: 2, failed: 0 },
+          candidates: urls.map((url, i) => ({
+            itemId: `item_${i}`,
+            url,
+            capturedAt: "20260914000000",
+          })),
+        };
+        progress = lookup.progress;
+      };
+      return { service, update, listed };
     }
 
     async function typeLinks(text: string) {
@@ -332,6 +389,88 @@ describe("CustomizationContentView", () => {
         "vSK1.owner-session",
         "import-1"
       );
+    });
+
+    it("looks a website up, lets the owner pick pages by folder, and imports them", async () => {
+      const server = fakeRecordsServer();
+      const { service, listed } = stubImportService();
+      await renderEditor(server, { importService: service });
+      await createLibrary();
+      await click(button("Import a website"));
+
+      await type("Website address", "not a site");
+      await click(
+        container.querySelector<HTMLInputElement>(
+          ".sb-ccl-check input[type=checkbox]"
+        )!
+      );
+      await click(button("Find pages"));
+      expect(container.textContent).toContain(
+        "Enter a website address, like gracecommunity.org/sermons."
+      );
+      expect(service.startSiteImport).not.toHaveBeenCalled();
+
+      await type("Website address", "gracecommunity.org");
+      await type("Skip pages under (optional)", "/events/, /blog/");
+      await click(button("Find pages"));
+      await waitForCondition(() =>
+        container.textContent!.includes("Looking up gracecommunity.org/")
+      );
+      expect(service.startSiteImport.mock.calls[0]![1]).toMatchObject({
+        site: "gracecommunity.org",
+        exclude: ["/events/", "/blog/"],
+      });
+
+      listed([
+        "https://gracecommunity.org/sermons/a",
+        "https://gracecommunity.org/sermons/b",
+        "https://gracecommunity.org/news/c",
+      ]);
+      await waitForCondition(() =>
+        container.textContent!.includes("Found 3 pages")
+      );
+      expect(container.textContent).toContain("3 pages selected");
+      const folder = (name: string) =>
+        [...container.querySelectorAll(".sb-ccl-folder")].find((li) =>
+          li.textContent!.includes(name)
+        )!;
+      await click(folder("/news/").querySelector<HTMLInputElement>("input")!);
+      expect(container.textContent).toContain("2 pages selected");
+
+      await click(button("Import 2 pages"));
+      await waitForCondition(() =>
+        container.textContent!.includes("Importing 0 of 2")
+      );
+      expect(service.pickSitePages.mock.calls[0]![2]).toEqual([
+        "item_0",
+        "item_1",
+      ]);
+    });
+
+    it("says plainly when the archive has nothing from the site", async () => {
+      const server = fakeRecordsServer();
+      const { service, listed } = stubImportService();
+      await renderEditor(server, { importService: service });
+      await createLibrary();
+      await click(button("Import a website"));
+      await type("Website address", "tiny-church.org");
+      await click(
+        container.querySelector<HTMLInputElement>(
+          ".sb-ccl-check input[type=checkbox]"
+        )!
+      );
+      await click(button("Find pages"));
+      listed([]);
+      await waitForCondition(() =>
+        container.textContent!.includes("Common Crawl has no pages saved from")
+      );
+      await click(button("Done"));
+      await waitForCondition(
+        () =>
+          service.cancelImport.mock.calls.length > 0 &&
+          !container.textContent!.includes("Common Crawl has no pages")
+      );
+      expect(container.textContent).not.toContain("Import stopped");
     });
 
     it("explains when another import is already running", async () => {

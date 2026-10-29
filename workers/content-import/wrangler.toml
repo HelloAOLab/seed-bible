@@ -38,9 +38,17 @@ max_batch_timeout = 30
 name = "LIBRARY_WRITER"
 class_name = "LibraryWriter"
 
+[[durable_objects.bindings]]
+name = "COMMON_CRAWL_GATE"
+class_name = "CommonCrawlGate"
+
 [[migrations]]
 tag = "v1"
 new_classes = ["LibraryWriter"]
+
+[[migrations]]
+tag = "v2"
+new_classes = ["CommonCrawlGate"]
 
 [triggers]
 crons = ["*/15 * * * *"]

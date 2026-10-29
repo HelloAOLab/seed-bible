@@ -29,7 +29,11 @@ export function isFatalSessionError(code: string): boolean {
 }
 
 export function isTransientError(code: string): boolean {
-  return TRANSIENT_ERROR_CODES.includes(code) || code.startsWith("http_5");
+  return (
+    TRANSIENT_ERROR_CODES.includes(code) ||
+    code.startsWith("http_5") ||
+    code === "http_429"
+  );
 }
 
 export type ProcedureResult =

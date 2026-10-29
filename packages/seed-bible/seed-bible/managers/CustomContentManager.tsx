@@ -15,10 +15,10 @@ import type { ChatProvider, ChatsManager } from "./ChatsManager";
 import {
   applyClassification,
   buildClassificationRequest,
-  findExplicitReferences,
   isConfidentlyClassified,
   type ContentClassificationResult,
 } from "./customContent/classify";
+import { findExplicitReferences } from "./customContent/explicitReferences";
 import {
   affectedChapterKeys,
   publishedChapterKeys,
@@ -28,6 +28,9 @@ import {
   MAX_IMPORT_ITEMS,
   type ImportItemInput,
   type ImportProgress,
+  type SiteCandidate,
+  type SiteImport,
+  type StartSiteImportRequest,
 } from "./customContent/importApi";
 import type { ContentImportService } from "./customContent/importClient";
 import type { ImportEntry } from "./customContent/importEntries";
@@ -64,6 +67,7 @@ import {
   type ContentChapterIndex,
   type ContentItem,
   type ContentLibraryManifest,
+  type ContentSiteSource,
   type ContentReference,
 } from "./customContent/schema";
 
@@ -162,6 +166,27 @@ export interface CustomContentManager {
   /** Continues an import that paused because the session it started with ended. */
   resumeImport: () => Promise<void>;
 
+  /**
+   * The open library's website import while it looks pages up in Common
+   * Crawl or waits for the owner to pick some. Null otherwise.
+   */
+  siteImport: ReadonlySignal<SiteImport | null>;
+  /** The pages that lookup found, without the ones already in the library. */
+  siteCandidates: ReadonlySignal<{
+    pages: readonly SiteCandidate[];
+    alreadyInLibrary: number;
+  }>;
+  /** Looks a website up in Common Crawl, to pick which of its pages to import. */
+  startSiteImport: (request: {
+    site: string;
+    include?: string[];
+    exclude?: string[];
+  }) => Promise<void>;
+  /** Looks a website imported before up again, in crawls newer than the last look. */
+  checkSiteForNewPages: (sourceId: string) => Promise<void>;
+  /** Imports the chosen pages, and remembers the site for "Check for new pages". */
+  pickSitePages: (itemIds: readonly string[]) => Promise<void>;
+
   /** Chat providers that can suggest categories and passages (they implement `classifyContent`). */
   classifierProviders: ReadonlySignal<readonly ChatProvider[]>;
   /** The open library's chosen provider, while it's registered. */
@@ -200,6 +225,8 @@ export interface AiSuggestionRun {
 
 const RECORD_NAME_PREFIX = "seedbible-content-";
 const DEFAULT_IMPORT_POLL_MS = 3000;
+/** Websites a library remembers for "Check for new pages", most recently imported first. */
+const MAX_SITE_SOURCES = 20;
 
 /** Discover content types are per library, so two libraries' categories never collide. */
 export function customContentTypeId(
@@ -274,6 +301,7 @@ export function createCustomContentManager(deps: {
   const chapterIndex = signal<ContentChapterIndex | null>(null);
   const items = signal<readonly ContentItem[]>([]);
   const importProgress = signal<ImportProgress | null>(null);
+  const siteImport = signal<SiteImport | null>(null);
   const pendingWrites = signal(0);
   const isSaving = computed(() => pendingWrites.value > 0);
   // Bumped after the owner publishes, so their own Discover picks it up.
@@ -398,6 +426,20 @@ export function createCustomContentManager(deps: {
   const isActive = (progress: ImportProgress | null) =>
     !!progress && ACTIVE_IMPORT_STATUSES.includes(progress.status);
 
+  /** A website import that hasn't started importing pages yet. */
+  const isSiteLookup = (progress: ImportProgress | null) =>
+    progress?.kind === "site" &&
+    (progress.status === "listing" || progress.status === "awaiting_pick");
+
+  const refreshSiteImport = async (
+    key: string,
+    id: string
+  ): Promise<SiteImport> => {
+    const next = await importService!.getSiteImport(key, id);
+    siteImport.value = isSiteLookup(next.progress) ? next : null;
+    return next;
+  };
+
   /**
    * Polls an import while the editor shows its library, reloading the items
    * whenever more of them have been added, and once more when it ends.
@@ -410,7 +452,14 @@ export function createCustomContentManager(deps: {
       generation === watchGeneration && recordName.value === record;
 
     const tick = async (): Promise<void> => {
-      if (!watching() || !importService || !isActive(importProgress.value)) {
+      if (
+        !watching() ||
+        !importService ||
+        !isActive(importProgress.value) ||
+        // Listed and waiting: nothing changes until the owner picks.
+        (importProgress.value?.status === "awaiting_pick" &&
+          siteImport.value?.candidates)
+      ) {
         return;
       }
       await new Promise((resolve) => setTimeout(resolve, importPollMs));
@@ -420,7 +469,9 @@ export function createCustomContentManager(deps: {
         return;
       }
       try {
-        const next = await importService.getImport(key, current.id);
+        const next = isSiteLookup(current)
+          ? (await refreshSiteImport(key, current.id)).progress
+          : await importService.getImport(key, current.id);
         if (!watching()) {
           return;
         }
@@ -441,6 +492,7 @@ export function createCustomContentManager(deps: {
   const stopWatching = () => {
     watchGeneration++;
     importProgress.value = null;
+    siteImport.value = null;
   };
 
   // --- Editing ---
@@ -485,6 +537,9 @@ export function createCustomContentManager(deps: {
     if (importService && key) {
       try {
         const active = await importService.findActiveImport(key, record);
+        if (active && isSiteLookup(active)) {
+          await refreshSiteImport(key, active.id);
+        }
         if (active && recordName.value === record) {
           watchImport(record, active);
         }
@@ -682,6 +737,11 @@ export function createCustomContentManager(deps: {
         ...(input.author?.trim() ? { author: input.author.trim() } : {}),
         categoryIds: input.categoryIds.filter((id) => knownCategories.has(id)),
         references: input.references,
+        // The embedded video belongs to the page; a new link drops it.
+        ...(before?.mediaUrl && before.url === url
+          ? { mediaUrl: before.mediaUrl }
+          : {}),
+        ...(before?.origin ? { origin: before.origin } : {}),
         createdAt: before?.createdAt ?? now,
         updatedAt: now,
       });
@@ -835,6 +895,7 @@ export function createCustomContentManager(deps: {
     );
     watchGeneration++;
     importProgress.value = cancelled;
+    siteImport.value = null;
     await reloadItems(record);
   };
 
@@ -849,6 +910,110 @@ export function createCustomContentManager(deps: {
       paused.id
     );
     watchImport(record, resumed);
+  };
+
+  // --- Importing a website ---
+
+  const siteCandidates = computed(() => {
+    const found = siteImport.value?.candidates ?? [];
+    const inLibrary = new Set(
+      items.value.map((item) => normalizeContentUrl(item.url)).filter(Boolean)
+    );
+    const pages = found.filter(
+      (page) => !inLibrary.has(normalizeContentUrl(page.url))
+    );
+    return { pages, alreadyInLibrary: found.length - pages.length };
+  });
+
+  const lookUpSite = async (
+    request: Omit<StartSiteImportRequest, "contentRecordName">
+  ): Promise<void> => {
+    if (!importService) {
+      throw new ContentLibraryError(
+        "import_unavailable",
+        "Importing isn't set up on this server."
+      );
+    }
+    const { record } = requireOpen();
+    const started = await importService.startSiteImport(requireSessionKey(), {
+      ...request,
+      contentRecordName: record,
+    });
+    siteImport.value = started;
+    watchImport(record, started.progress);
+  };
+
+  const startSiteImport = (request: {
+    site: string;
+    include?: string[];
+    exclude?: string[];
+  }): Promise<void> =>
+    lookUpSite({
+      site: request.site,
+      ...(request.include?.length ? { include: request.include } : {}),
+      ...(request.exclude?.length ? { exclude: request.exclude } : {}),
+    });
+
+  const checkSiteForNewPages = async (sourceId: string): Promise<void> => {
+    const source = manifest.value?.siteSources?.find((s) => s.id === sourceId);
+    if (!source) {
+      throw new ContentLibraryError(
+        "site_not_found",
+        "That website isn't saved in this library."
+      );
+    }
+    await lookUpSite({
+      site: source.site,
+      include: source.include,
+      exclude: source.exclude,
+      sourceId: source.id,
+      sinceCrawlId: source.newestCrawlId,
+    });
+  };
+
+  const pickSitePages = async (itemIds: readonly string[]): Promise<void> => {
+    const lookup = siteImport.value;
+    if (!importService || lookup?.progress.status !== "awaiting_pick") {
+      throw new ContentLibraryError(
+        "nothing_to_pick",
+        "There's no website import waiting for pages to be picked."
+      );
+    }
+    const { record } = requireOpen();
+    const started = await importService.pickSitePages(
+      requireSessionKey(),
+      lookup.progress.id,
+      itemIds
+    );
+    siteImport.value = null;
+    watchImport(record, started);
+    await queueWrite(async () => {
+      const { current } = requireOpen();
+      const sources = current.siteSources ?? [];
+      const previous = sources.find((s) => s.id === lookup.sourceId);
+      const newestCrawlId = [lookup.crawls[0]?.id, previous?.newestCrawlId]
+        .filter((id): id is string => !!id)
+        .sort()
+        .at(-1);
+      if (!newestCrawlId) {
+        return;
+      }
+      const source: ContentSiteSource = {
+        id: lookup.sourceId,
+        site: lookup.site,
+        include: lookup.include,
+        exclude: lookup.exclude,
+        lastImportedAt: Date.now(),
+        newestCrawlId,
+      };
+      await writeManifest(record, {
+        ...current,
+        siteSources: [source, ...sources.filter((s) => s.id !== source.id)]
+          .sort((a, b) => b.lastImportedAt - a.lastImportedAt)
+          .slice(0, MAX_SITE_SOURCES),
+        updatedAt: Date.now(),
+      });
+    });
   };
 
   // --- Suggesting categories and passages ---
@@ -1121,7 +1286,10 @@ export function createCustomContentManager(deps: {
       id: `custom-content-${entry.itemId}`,
       title: entry.title,
       content: () => (
-        <PlaylistLinkContent url={entry.url} title={entry.title} />
+        <PlaylistLinkContent
+          url={entry.mediaUrl ?? entry.url}
+          title={entry.title}
+        />
       ),
     });
   };
@@ -1270,6 +1438,11 @@ export function createCustomContentManager(deps: {
     isSaving,
     canImport: importService !== null,
     importProgress,
+    siteImport,
+    siteCandidates,
+    startSiteImport,
+    checkSiteForNewPages,
+    pickSitePages,
     openLibrary,
     closeLibrary,
     createLibrary,

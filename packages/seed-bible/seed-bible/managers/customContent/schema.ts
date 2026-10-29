@@ -84,6 +84,19 @@ export const contentCategorySchema = z.object({
 
 export type ContentCategory = z.infer<typeof contentCategorySchema>;
 
+export const contentSiteSourceSchema = z.object({
+  id: z.string().min(1),
+  /** As the owner typed it, e.g. `gracecommunity.org/sermons/`. */
+  site: z.string().min(1).max(500),
+  include: z.array(z.string().max(200)).max(20),
+  exclude: z.array(z.string().max(200)).max(20),
+  lastImportedAt: z.number(),
+  /** The newest crawl looked at, so the next check only needs newer ones. */
+  newestCrawlId: z.string().min(1).max(100),
+});
+
+export type ContentSiteSource = z.infer<typeof contentSiteSourceSchema>;
+
 export const contentLibraryManifestSchema = z.object({
   schemaVersion: z.literal(1),
   name: z.string().min(1).max(200),
@@ -100,6 +113,8 @@ export const contentLibraryManifestSchema = z.object({
   classifierProviderId: z.string().min(1).max(200).optional(),
   /** Publish imported items without review when every suggested passage is confident. */
   autoPublish: z.boolean().optional(),
+  /** Websites imported from Common Crawl, so "Check for new pages" can look again. */
+  siteSources: z.array(contentSiteSourceSchema).max(20).optional(),
   updatedAt: z.number(),
 });
 
@@ -152,6 +167,18 @@ export const CONTENT_ITEM_STATUSES = [
 
 export type ContentItemStatus = (typeof CONTENT_ITEM_STATUSES)[number];
 
+export const contentItemOriginSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("links") }),
+  z.object({
+    kind: z.literal("site"),
+    /** The `siteSources` entry it was imported through. */
+    sourceId: z.string(),
+    crawlId: z.string(),
+    /** When Common Crawl saved the page, as its 14-digit timestamp. */
+    capturedAt: z.string(),
+  }),
+]);
+
 export const contentItemSchema = z.object({
   id: z.string().min(1),
   url: z.string().min(1).max(MAX_CONTENT_URL_LENGTH),
@@ -163,6 +190,10 @@ export const contentItemSchema = z.object({
   /** The first is the primary category: it decides the item's Discover section. */
   categoryIds: z.array(z.string()),
   references: z.array(contentReferenceSchema),
+  /** A video embedded in the page, opened instead of the page itself. */
+  mediaUrl: z.string().max(MAX_CONTENT_URL_LENGTH).optional(),
+  /** Where an imported item came from. Absent for items added by hand. */
+  origin: contentItemOriginSchema.optional(),
   error: z.string().optional(),
   /**
    * The last time categories and passages were suggested for the item.
@@ -190,6 +221,8 @@ export const CONTENT_MEDIA_KINDS = ["embed", "video", "link"] as const;
 export const contentChapterEntrySchema = z.object({
   itemId: z.string().min(1),
   url: z.string().min(1),
+  /** What Discover opens, when it isn't `url` (a video embedded in the page). */
+  mediaUrl: z.string().optional(),
   mediaKind: z.enum(CONTENT_MEDIA_KINDS),
   title: z.string(),
   description: z.string(),

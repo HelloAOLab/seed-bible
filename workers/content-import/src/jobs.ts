@@ -1,7 +1,8 @@
-import type {
-  ImportItemInput,
-  ImportJobStatus,
-  ImportProgress,
+import {
+  ACTIVE_IMPORT_STATUSES,
+  type ImportItemInput,
+  type ImportJobStatus,
+  type ImportProgress,
 } from "../../../packages/seed-bible/seed-bible/managers/customContent/importApi";
 import type { D1Database, D1PreparedStatement } from "./platform";
 
@@ -27,6 +28,21 @@ export interface JobRow {
   updated_at: number;
   expires_at: number;
   finished_at: number | null;
+  kind: "links" | "site";
+  /** JSON {@link SiteJobDetails}, for a website import. */
+  site: string | null;
+  capped: number;
+}
+
+/** What a website import remembers about its lookup. */
+export interface SiteJobDetails {
+  site: string;
+  /** The search pattern sent to the index, e.g. `gracecommunity.org/sermons/*`. */
+  pattern: string;
+  include: string[];
+  exclude: string[];
+  sourceId: string;
+  crawls: { id: string; name: string; cdxApi: string }[];
 }
 
 export interface ItemRow {
@@ -34,7 +50,7 @@ export interface ItemRow {
   item_id: string;
   url: string;
   input: string;
-  state: "queued" | "running" | "done" | "failed";
+  state: "candidate" | "queued" | "running" | "done" | "failed";
   lease_until: number | null;
   attempts: number;
   error: string | null;
@@ -62,7 +78,10 @@ export function isActiveImportConflict(error: unknown): boolean {
  */
 export async function createJob(
   db: D1Database,
-  job: Omit<JobRow, "status" | "updated_at" | "finished_at">,
+  job: Omit<
+    JobRow,
+    "status" | "updated_at" | "finished_at" | "kind" | "site" | "capped"
+  >,
   items: readonly NewImportItem[]
 ): Promise<void> {
   await db
@@ -132,7 +151,8 @@ export function findActiveJob(
   return db
     .prepare(
       `SELECT * FROM import_jobs
-       WHERE content_record_name = ? AND status IN ('running', 'paused_signin')`
+       WHERE content_record_name = ?
+         AND status IN ('listing', 'awaiting_pick', 'running', 'paused_signin')`
     )
     .bind(contentRecordName)
     .first<JobRow>();
@@ -165,6 +185,7 @@ export async function jobProgress(
   return {
     id: job.id,
     contentRecordName: job.content_record_name,
+    kind: job.kind,
     status: job.status,
     total: job.total,
     queued: count("queued"),
@@ -250,7 +271,7 @@ export async function setJobStatus(
   now: number,
   options: { clearKey?: boolean; sessionKeyEnc?: string } = {}
 ): Promise<boolean> {
-  const ended = to === "running" || to === "paused_signin" ? null : now;
+  const ended = ACTIVE_IMPORT_STATUSES.includes(to) ? null : now;
   const keySql = options.sessionKeyEnc
     ? ", session_key_enc = ?"
     : options.clearKey
@@ -332,7 +353,8 @@ export async function jobsPastExpiry(
   const { results } = await db
     .prepare(
       `SELECT * FROM import_jobs
-       WHERE status IN ('running', 'paused_signin') AND expires_at <= ?`
+       WHERE status IN ('listing', 'awaiting_pick', 'running', 'paused_signin')
+         AND expires_at <= ?`
     )
     .bind(now)
     .all<JobRow>();
@@ -347,6 +369,12 @@ export async function deleteFinishedJobs(
     db
       .prepare(
         `DELETE FROM import_items WHERE job_id IN
+           (SELECT id FROM import_jobs WHERE finished_at IS NOT NULL AND finished_at <= ?)`
+      )
+      .bind(finishedBefore),
+    db
+      .prepare(
+        `DELETE FROM site_lookups WHERE job_id IN
            (SELECT id FROM import_jobs WHERE finished_at IS NOT NULL AND finished_at <= ?)`
       )
       .bind(finishedBefore),

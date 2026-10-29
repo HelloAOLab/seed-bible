@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { handleRequest } from "../../../../workers/content-import/src/api";
+import { clearCrawlCache } from "../../../../workers/content-import/src/siteImports";
 import { createContentImportClient } from "@packages/seed-bible/seed-bible/managers/customContent/importClient";
 import {
   parseImportCsv,
@@ -64,6 +65,7 @@ async function setup() {
 }
 
 beforeEach(() => {
+  clearCrawlCache();
   vi.spyOn(console, "log").mockImplementation(() => undefined);
   vi.spyOn(console, "warn").mockImplementation(() => undefined);
 });
@@ -215,5 +217,133 @@ describe("importing into a content library", () => {
     expect(owner.customContent.importProgress.value?.status).toBe("cancelled");
     await worker.drain();
     expect(owner.customContent.items.value).toEqual([]);
+  });
+
+  describe("from a website", () => {
+    const SITE = "https://gracecommunity.org/sermons";
+
+    async function lookedUp(
+      context: Awaited<ReturnType<typeof setup>>,
+      look: () => Promise<void>
+    ) {
+      await look();
+      expect(context.owner.customContent.siteImport.value).not.toBeNull();
+      await context.worker.drain();
+      await waitForCondition(
+        () => !!context.owner.customContent.siteImport.value?.candidates
+      );
+    }
+
+    it("imports the pages the owner picks, leaving out ones already in the library, and remembers the site", async () => {
+      const context = await setup();
+      const { owner, worker } = context;
+      worker.commonCrawl.addPage(
+        "CC-MAIN-2026-38",
+        `${SITE}/good-shepherd`,
+        "<title>The Good Shepherd</title><p>Our text: John 10:1-18.</p>"
+      );
+      worker.commonCrawl.addPage(
+        "CC-MAIN-2026-38",
+        `${SITE}/door`,
+        "<title>The Door</title>"
+      );
+      await owner.customContent.saveItem({
+        url: `${SITE}/door/`,
+        title: "Already here",
+        description: "",
+        categoryIds: [],
+        references: [],
+      });
+
+      await lookedUp(context, () =>
+        owner.customContent.startSiteImport({
+          site: "gracecommunity.org/sermons",
+        })
+      );
+      const { pages, alreadyInLibrary } =
+        owner.customContent.siteCandidates.value;
+      expect(pages.map((p) => p.url)).toEqual([`${SITE}/good-shepherd`]);
+      expect(alreadyInLibrary).toBe(1);
+
+      await owner.customContent.pickSitePages(pages.map((p) => p.itemId));
+      expect(owner.customContent.siteImport.value).toBeNull();
+      expect(owner.customContent.manifest.value?.siteSources).toEqual([
+        expect.objectContaining({
+          site: "gracecommunity.org/sermons/",
+          newestCrawlId: "CC-MAIN-2026-38",
+        }),
+      ]);
+      await worker.drain();
+      await waitForCondition(
+        () => owner.customContent.items.value.length === 2
+      );
+      expect(
+        owner.customContent.items.value.find(
+          (item) => item.title === "The Good Shepherd"
+        )
+      ).toMatchObject({
+        status: "needs_review",
+        references: [{ book: "JHN", chapter: 10, verse: 1, endVerse: 18 }],
+      });
+    });
+
+    it("checks a saved site again only in newer crawls", async () => {
+      const context = await setup();
+      const { owner, worker } = context;
+      worker.commonCrawl.addPage(
+        "CC-MAIN-2026-38",
+        `${SITE}/a`,
+        "<title>A</title>"
+      );
+      await lookedUp(context, () =>
+        owner.customContent.startSiteImport({
+          site: "gracecommunity.org/sermons",
+        })
+      );
+      await owner.customContent.pickSitePages(
+        owner.customContent.siteCandidates.value.pages.map((p) => p.itemId)
+      );
+      await worker.drain();
+      await waitForCondition(
+        () => owner.customContent.importProgress.value?.status === "done"
+      );
+
+      // A month later, a new crawl has a new sermon.
+      worker.clock.now += 30 * 24 * 60 * 60 * 1000;
+      worker.commonCrawl.crawls.unshift({
+        id: "CC-MAIN-2026-43",
+        name: "October",
+      });
+      worker.commonCrawl.addPage(
+        "CC-MAIN-2026-43",
+        `${SITE}/b`,
+        "<title>B</title>"
+      );
+      const source = owner.customContent.manifest.value!.siteSources![0]!;
+      await lookedUp(context, () =>
+        owner.customContent.checkSiteForNewPages(source.id)
+      );
+      expect(
+        owner.customContent.siteImport.value?.crawls.map((c) => c.id)
+      ).toEqual(["CC-MAIN-2026-43"]);
+      expect(
+        owner.customContent.siteCandidates.value.pages.map((p) => p.url)
+      ).toEqual([`${SITE}/b`]);
+    });
+
+    it("finds a website waiting for a pick again when the library is reopened", async () => {
+      const context = await setup();
+      const { owner, worker, recordName } = context;
+      worker.commonCrawl.addPage("CC-MAIN-2026-38", `${SITE}/a`, "");
+      await lookedUp(context, () =>
+        owner.customContent.startSiteImport({
+          site: "gracecommunity.org/sermons",
+        })
+      );
+      owner.customContent.closeLibrary();
+      expect(owner.customContent.siteImport.value).toBeNull();
+      await owner.customContent.openLibrary(recordName);
+      expect(owner.customContent.siteImport.value?.candidates).toHaveLength(1);
+    });
   });
 });

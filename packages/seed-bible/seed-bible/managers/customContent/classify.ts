@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { scanVerseReferencesInText } from "../BibleDataManager";
 import type { TranslationBook } from "../FreeUseBibleAPI";
 import { parsePassages } from "./passages";
+import { referenceKey } from "./explicitReferences";
 import { ContentLibraryError } from "./publish";
 import type { ContentCategory, ContentItem, ContentReference } from "./schema";
 
@@ -16,7 +16,9 @@ import type { ContentCategory, ContentItem, ContentReference } from "./schema";
  * trusted as given: categories are limited to the library's own, and every
  * passage is re-read by the app's own parser.
  *
- * Browser-only: the verse parser isn't part of what the import worker bundles.
+ * Browser-only, because it reads typed passages through `passages.ts`.
+ * Step 1 itself is in `explicitReferences.ts`, which the import worker
+ * bundles too.
  */
 
 /** What a chat provider's `classifyContent()` is asked. */
@@ -158,44 +160,6 @@ export function parseContentClassification(
       ? { suggestedCategories: parsed.data.suggestedCategories }
       : {}),
   };
-}
-
-function referenceKey(reference: ContentReference): string {
-  return [
-    reference.book,
-    reference.chapter,
-    reference.endChapter ?? "",
-    reference.verse ?? "",
-    reference.endVerse ?? "",
-  ].join("|");
-}
-
-/** Step 1: the passages an item's title and description name outright. */
-export function findExplicitReferences(
-  item: Pick<ContentItem, "title" | "description">,
-  books?: TranslationBook[]
-): ContentReference[] {
-  const found = new Map<string, ContentReference>();
-  for (const match of scanVerseReferencesInText(
-    `${item.title}\n${item.description}`,
-    books
-  )) {
-    const reference: ContentReference = {
-      book: match.ref.book,
-      chapter: match.ref.chapter,
-      ...(match.ref.endChapter !== undefined
-        ? { endChapter: match.ref.endChapter }
-        : {}),
-      ...(match.ref.verse !== undefined ? { verse: match.ref.verse } : {}),
-      ...(match.ref.endVerse !== undefined
-        ? { endVerse: match.ref.endVerse }
-        : {}),
-      source: "explicit",
-      confidence: 1,
-    };
-    found.set(referenceKey(reference), reference);
-  }
-  return [...found.values()];
 }
 
 /**

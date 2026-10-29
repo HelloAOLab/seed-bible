@@ -51,15 +51,31 @@ export interface DurableObjectNamespace {
 }
 
 /** One link of an import, as queued. Never carries the session key. */
-export interface ImportMessage {
+export interface ImportItemMessage {
+  kind?: "item";
   jobId: string;
   itemId: string;
 }
+
+/**
+ * One lookup in Common Crawl's index for a website import: how many result
+ * pages a crawl has (`page` -1), or one of those pages.
+ */
+export interface SiteLookupMessage {
+  kind: "lookup";
+  jobId: string;
+  crawlId: string;
+  page: number;
+}
+
+export type ImportMessage = ImportItemMessage | SiteLookupMessage;
 
 export interface Env {
   DB: D1Database;
   IMPORT_QUEUE: QueueSender<ImportMessage>;
   LIBRARY_WRITER: DurableObjectNamespace;
+  /** The single CommonCrawlGate every index request goes through. */
+  COMMON_CRAWL_GATE: DurableObjectNamespace;
   /** The CasualOS records server, e.g. `https://auth.seedbible.org`. */
   CASUALOS_ENDPOINT: string;
   /** Comma-separated origins allowed to call the API, e.g. `https://seedbible.org`. */

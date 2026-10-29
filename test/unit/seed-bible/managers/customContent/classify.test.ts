@@ -1,11 +1,11 @@
 import {
   applyClassification,
   buildClassificationRequest,
-  findExplicitReferences,
   isConfidentlyClassified,
   MAX_SUGGESTED_PASSAGES,
   parseContentClassification,
 } from "@packages/seed-bible/seed-bible/managers/customContent/classify";
+import { findExplicitReferences } from "@packages/seed-bible/seed-bible/managers/customContent/explicitReferences";
 import { ContentLibraryError } from "@packages/seed-bible/seed-bible/managers/customContent/publish";
 import type {
   ContentCategory,

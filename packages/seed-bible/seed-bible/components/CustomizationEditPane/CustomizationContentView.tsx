@@ -26,6 +26,15 @@ import {
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
 import { CONFIDENT_PASSAGE } from "../../managers/customContent/classify";
+import {
+  ACTIVE_IMPORT_STATUSES,
+  type SiteCandidate,
+} from "../../managers/customContent/importApi";
+import {
+  parseCaptureTimestamp,
+  parseSiteAddress,
+  siteFolder,
+} from "../../managers/customContent/siteImport";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -163,6 +172,16 @@ function errorMessage(t: TFunction, error: unknown): string {
     case "session_invalid":
       return t("custom-content-error-signed-out", {
         defaultValue: "Sign in again to continue.",
+      });
+    case "invalid_site":
+      return t("custom-content-error-invalid-site", {
+        defaultValue:
+          "Enter a website address, like gracecommunity.org/sermons.",
+      });
+    case "common_crawl_unavailable":
+      return t("custom-content-error-common-crawl", {
+        defaultValue:
+          "Common Crawl couldn't be reached. Please try again later.",
       });
     case "network_error":
     case "casualos_unavailable":
@@ -1059,9 +1078,10 @@ function ImportPanel(props: {
   const links = useSignal("");
   const message = useSignal<string | null>(null);
   const isStarting = useSignal(false);
+  const tab = useSignal<"links" | "site">("links");
   const progress = customContent.importProgress.value;
-  const active =
-    progress?.status === "running" || progress?.status === "paused_signin";
+  const lookup = customContent.siteImport.value;
+  const active = !!progress && ACTIVE_IMPORT_STATUSES.includes(progress.status);
 
   const start = async (parsed: ParsedImport) => {
     if (parsed.entries.length === 0) {
@@ -1128,8 +1148,39 @@ function ImportPanel(props: {
 
   return (
     <div className="sb-ccl-import">
-      {progress ? <ImportProgressBanner state={state} run={run} /> : null}
+      {lookup ? (
+        <SiteLookup state={state} run={run} />
+      ) : progress ? (
+        <ImportProgressBanner state={state} run={run} />
+      ) : null}
       {!active && (
+        <div className="sb-ccl-filters" role="group">
+          {(["links", "site"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              className="sb-ccl-filter"
+              aria-pressed={tab.value === option}
+              onClick={() => {
+                tab.value = option;
+                message.value = null;
+              }}
+            >
+              {option === "links"
+                ? t("custom-content-import-tab-links", {
+                    defaultValue: "Paste links",
+                  })
+                : t("custom-content-import-tab-site", {
+                    defaultValue: "Import a website",
+                  })}
+            </button>
+          ))}
+        </div>
+      )}
+      {!active && tab.value === "site" && (
+        <SiteImportForm state={state} run={run} />
+      )}
+      {!active && tab.value === "links" && (
         <>
           <label
             className="sb-settings-field-label"
@@ -1214,7 +1265,13 @@ function ImportProgressBanner(props: {
   const { state, run } = props;
   const { t } = useI18n();
   const progress = state.customContent.importProgress.value;
-  if (!progress) {
+  // A website lookup that ended before any page was picked imported nothing to report.
+  if (
+    !progress ||
+    (progress.kind === "site" &&
+      progress.total === 0 &&
+      !ACTIVE_IMPORT_STATUSES.includes(progress.status))
+  ) {
     return null;
   }
   const settled = progress.done + progress.failed;
@@ -1250,6 +1307,25 @@ function ImportProgressBanner(props: {
             })}
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (progress.status === "listing" || progress.status === "awaiting_pick") {
+    return (
+      <div className="sb-ccl-progress" role="status">
+        <p className="sb-ccl-progress-text">
+          {t("custom-content-site-looking", {
+            defaultValue: "Looking up your website in Common Crawl…",
+          })}
+        </p>
+        <button
+          type="button"
+          className="sb-cz-button sb-cz-button-quiet"
+          onClick={() => void run(() => state.customContent.cancelImport())}
+        >
+          {t("custom-content-import-cancel", { defaultValue: "Cancel import" })}
+        </button>
       </div>
     );
   }
@@ -1684,6 +1760,486 @@ function CoverageSection(props: {
           })}
         </ul>
       )}
+    </div>
+  );
+}
+
+/** A page's address within its site, e.g. `/sermons/good-shepherd`. */
+function sitePath(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return url;
+  }
+}
+
+/** Splits typed path patterns, one per line or separated by commas. */
+function splitPatterns(text: string): string[] {
+  return text
+    .split(/[\n,]/)
+    .map((pattern) => pattern.trim())
+    .filter(Boolean);
+}
+
+function SiteImportForm(props: {
+  state: SeedBibleState;
+  run: (action: () => Promise<unknown>) => Promise<boolean>;
+}) {
+  const { state, run } = props;
+  const { customContent } = state;
+  const { t, language } = useI18n();
+  const site = useSignal("");
+  const include = useSignal("");
+  const exclude = useSignal("");
+  const permission = useSignal(false);
+  const isStarting = useSignal(false);
+  const invalid = useSignal(false);
+  const sources = customContent.manifest.value?.siteSources ?? [];
+
+  const find = async () => {
+    if (!parseSiteAddress(site.value)) {
+      invalid.value = true;
+      return;
+    }
+    invalid.value = false;
+    isStarting.value = true;
+    try {
+      await run(() =>
+        customContent.startSiteImport({
+          site: site.value,
+          include: splitPatterns(include.value),
+          exclude: splitPatterns(exclude.value),
+        })
+      );
+    } finally {
+      isStarting.value = false;
+    }
+  };
+
+  return (
+    <>
+      <p className="sb-cz-hint">
+        {t("custom-content-site-intro", {
+          defaultValue:
+            "We'll look your site up in Common Crawl, a public archive of the web, and list the pages it has saved. You choose which ones to import.",
+        })}
+      </p>
+      <Field
+        id="sb-ccl-site"
+        label={t("custom-content-site-address", {
+          defaultValue: "Website address",
+        })}
+      >
+        <input
+          id="sb-ccl-site"
+          className="sb-cz-input"
+          inputMode="url"
+          placeholder="gracecommunity.org/sermons"
+          value={site.value}
+          aria-invalid={invalid.value || undefined}
+          onInput={(event) => {
+            site.value = (event.currentTarget as HTMLInputElement).value;
+            invalid.value = false;
+          }}
+        />
+      </Field>
+      {invalid.value && (
+        <p className="sb-ccl-error" role="alert">
+          {t("custom-content-error-invalid-site", {
+            defaultValue:
+              "Enter a website address, like gracecommunity.org/sermons.",
+          })}
+        </p>
+      )}
+      <Field
+        id="sb-ccl-site-include"
+        label={t("custom-content-site-include", {
+          defaultValue: "Only pages under (optional)",
+        })}
+      >
+        <input
+          id="sb-ccl-site-include"
+          className="sb-cz-input"
+          placeholder="/sermons/"
+          value={include.value}
+          onInput={(event) => {
+            include.value = (event.currentTarget as HTMLInputElement).value;
+          }}
+        />
+      </Field>
+      <Field
+        id="sb-ccl-site-exclude"
+        label={t("custom-content-site-exclude", {
+          defaultValue: "Skip pages under (optional)",
+        })}
+      >
+        <input
+          id="sb-ccl-site-exclude"
+          className="sb-cz-input"
+          placeholder="/events/, /blog/"
+          value={exclude.value}
+          onInput={(event) => {
+            exclude.value = (event.currentTarget as HTMLInputElement).value;
+          }}
+        />
+      </Field>
+      <p className="sb-cz-hint">
+        {t("custom-content-site-noise", {
+          defaultValue:
+            'Tag, category and "page 2" listing pages are skipped automatically.',
+        })}
+      </p>
+      <label className="sb-ccl-check">
+        <input
+          type="checkbox"
+          checked={permission.value}
+          onChange={(event) => {
+            permission.value = (
+              event.currentTarget as HTMLInputElement
+            ).checked;
+          }}
+        />
+        {t("custom-content-site-permission", {
+          defaultValue:
+            "I own this website or have permission to list its content in Seed Bible.",
+        })}
+      </label>
+      <div className="sb-ccl-import-actions">
+        <button
+          type="button"
+          className="sb-cz-button sb-cz-button-primary"
+          disabled={isStarting.value || !site.value.trim() || !permission.value}
+          onClick={() => void find()}
+        >
+          {t("custom-content-site-find", { defaultValue: "Find pages" })}
+        </button>
+      </div>
+      {sources.length > 0 && (
+        <div className="sb-ccl-sites">
+          <h4 className="sb-ccl-sites-title">
+            {t("custom-content-site-saved", { defaultValue: "Your websites" })}
+          </h4>
+          <ul className="sb-ccl-sites-list">
+            {sources.map((source) => (
+              <li key={source.id} className="sb-ccl-site">
+                <span className="sb-ccl-site-name" dir="ltr">
+                  {source.site}
+                </span>
+                <span className="sb-cz-hint">
+                  {t("custom-content-site-last-imported", {
+                    date: new Date(source.lastImportedAt).toLocaleDateString(
+                      language
+                    ),
+                    defaultValue: "Last imported {{date}}",
+                  })}
+                </span>
+                <button
+                  type="button"
+                  className="sb-cz-button"
+                  disabled={isStarting.value}
+                  onClick={() =>
+                    void run(() =>
+                      customContent.checkSiteForNewPages(source.id)
+                    )
+                  }
+                >
+                  {t("custom-content-site-check", {
+                    defaultValue: "Check for new pages",
+                  })}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  );
+}
+
+/** A website import looking pages up, then the list of pages to pick from. */
+function SiteLookup(props: {
+  state: SeedBibleState;
+  run: (action: () => Promise<unknown>) => Promise<boolean>;
+}) {
+  const { state, run } = props;
+  const { customContent } = state;
+  const { t, language } = useI18n();
+  const lookup = customContent.siteImport.value;
+  const { pages, alreadyInLibrary } = customContent.siteCandidates.value;
+  /** Unticked pages; everything starts ticked. */
+  const unticked = useSignal<ReadonlySet<string>>(new Set());
+  const openFolders = useSignal<ReadonlySet<string>>(new Set());
+  const isPicking = useSignal(false);
+  if (!lookup) {
+    return null;
+  }
+
+  const cancel = (
+    <button
+      type="button"
+      className="sb-cz-button"
+      onClick={() => void run(() => customContent.cancelImport())}
+    >
+      {t("custom-content-site-cancel", { defaultValue: "Cancel" })}
+    </button>
+  );
+
+  if (lookup.progress.status === "listing" || !lookup.candidates) {
+    return (
+      <div className="sb-ccl-progress" role="status">
+        <p className="sb-ccl-progress-text">
+          {t("custom-content-site-listing", {
+            site: lookup.site,
+            done: lookup.lookups.done + lookup.lookups.failed,
+            total: lookup.lookups.total,
+            defaultValue:
+              "Looking up {{site}} in Common Crawl ({{done}} of {{total}} lookups). This keeps going if you close this page.",
+          })}
+        </p>
+        <div className="sb-ccl-import-actions">{cancel}</div>
+      </div>
+    );
+  }
+
+  if (pages.length === 0) {
+    return (
+      <div className="sb-ccl-progress" role="status">
+        <p className="sb-ccl-progress-text">
+          {alreadyInLibrary > 0
+            ? t("custom-content-site-all-imported", {
+                site: lookup.site,
+                defaultValue:
+                  "Every page found for {{site}} is already in your library.",
+              })
+            : lookup.crawls.length === 0
+              ? t("custom-content-site-no-new-crawls", {
+                  defaultValue:
+                    "Common Crawl hasn't published a newer crawl since you last looked. Try again in a few weeks.",
+                })
+              : t("custom-content-site-none", {
+                  site: lookup.site,
+                  defaultValue:
+                    "Common Crawl has no pages saved from {{site}}. Some sites ask not to be archived, and small sites are often missed. You can still paste links.",
+                })}
+        </p>
+        <div className="sb-ccl-import-actions">
+          <button
+            type="button"
+            className="sb-cz-button"
+            onClick={() => void run(() => customContent.cancelImport())}
+          >
+            {t("custom-content-site-done", { defaultValue: "Done" })}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const folders = new Map<string, SiteCandidate[]>();
+  for (const page of pages) {
+    const folder = siteFolder(page.url);
+    folders.set(folder, [...(folders.get(folder) ?? []), page]);
+  }
+  const chosen = pages.filter((page) => !unticked.value.has(page.itemId));
+  const setTicked = (ids: readonly string[], ticked: boolean) => {
+    const next = new Set(unticked.value);
+    for (const id of ids) {
+      if (ticked) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+    }
+    unticked.value = next;
+  };
+  const dates = pages
+    .map((page) => parseCaptureTimestamp(page.capturedAt))
+    .filter((date): date is Date => !!date)
+    .sort((a, b) => a.getTime() - b.getTime());
+  const month = (date: Date) =>
+    date.toLocaleDateString(language, { month: "long", year: "numeric" });
+
+  return (
+    <div className="sb-ccl-picker">
+      <h4 className="sb-ccl-sites-title">
+        {t("custom-content-site-found", {
+          count: pages.length,
+          defaultValue: "Found {{count}} pages",
+        })}
+      </h4>
+      <p className="sb-cz-hint">
+        {[
+          dates.length > 0 &&
+            t("custom-content-site-captured", {
+              count: lookup.crawls.length,
+              from: month(dates[0]!),
+              to: month(dates[dates.length - 1]!),
+              defaultValue:
+                "From the {{count}} latest crawls, captured {{from}} – {{to}}.",
+            }),
+          alreadyInLibrary > 0 &&
+            t("custom-content-site-already", {
+              count: alreadyInLibrary,
+              defaultValue: "{{count}} already in your library aren't listed.",
+            }),
+          lookup.capped &&
+            t("custom-content-site-capped", {
+              count: pages.length,
+              defaultValue:
+                'More pages matched than one import can take, so only these are listed. Use "Only pages under" to narrow it down.',
+            }),
+          lookup.lookups.failed > 0 &&
+            t("custom-content-site-partial", {
+              defaultValue:
+                "Part of the archive couldn't be reached, so some pages may be missing.",
+            }),
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      </p>
+      <label className="sb-ccl-check">
+        <input
+          type="checkbox"
+          checked={chosen.length === pages.length}
+          ref={(input) => {
+            if (input) {
+              input.indeterminate =
+                chosen.length > 0 && chosen.length < pages.length;
+            }
+          }}
+          onChange={(event) =>
+            setTicked(
+              pages.map((page) => page.itemId),
+              (event.currentTarget as HTMLInputElement).checked
+            )
+          }
+        />
+        {t("custom-content-site-select-all", { defaultValue: "Select all" })}
+      </label>
+      <ul className="sb-ccl-folders">
+        {[...folders.entries()]
+          .sort((a, b) => b[1].length - a[1].length)
+          .map(([folder, folderPages]) => {
+            const ids = folderPages.map((page) => page.itemId);
+            const tickedCount = ids.filter(
+              (id) => !unticked.value.has(id)
+            ).length;
+            const isOpen = openFolders.value.has(folder);
+            return (
+              <li key={folder} className="sb-ccl-folder">
+                <div className="sb-ccl-folder-row">
+                  <label className="sb-ccl-check">
+                    <input
+                      type="checkbox"
+                      checked={tickedCount === ids.length}
+                      ref={(input) => {
+                        if (input) {
+                          input.indeterminate =
+                            tickedCount > 0 && tickedCount < ids.length;
+                        }
+                      }}
+                      onChange={(event) =>
+                        setTicked(
+                          ids,
+                          (event.currentTarget as HTMLInputElement).checked
+                        )
+                      }
+                    />
+                    <span dir="ltr">{folder}</span>
+                    <span className="sb-ccl-folder-count">{ids.length}</span>
+                  </label>
+                  <button
+                    type="button"
+                    className="sb-cz-button sb-cz-button-quiet"
+                    aria-expanded={isOpen}
+                    onClick={() => {
+                      const next = new Set(openFolders.value);
+                      if (isOpen) {
+                        next.delete(folder);
+                      } else {
+                        next.add(folder);
+                      }
+                      openFolders.value = next;
+                    }}
+                  >
+                    {isOpen
+                      ? t("custom-content-site-hide-pages", {
+                          defaultValue: "Hide pages",
+                        })
+                      : t("custom-content-site-show-pages", {
+                          defaultValue: "Show pages",
+                        })}
+                  </button>
+                </div>
+                {isOpen && (
+                  <ul className="sb-ccl-pages">
+                    {folderPages.map((page) => (
+                      <li key={page.itemId}>
+                        <label className="sb-ccl-check">
+                          <input
+                            type="checkbox"
+                            checked={!unticked.value.has(page.itemId)}
+                            onChange={(event) =>
+                              setTicked(
+                                [page.itemId],
+                                (event.currentTarget as HTMLInputElement)
+                                  .checked
+                              )
+                            }
+                          />
+                          <span
+                            className="sb-ccl-page-url"
+                            dir="ltr"
+                            title={page.url}
+                          >
+                            {sitePath(page.url)}
+                          </span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
+      </ul>
+      <p className="sb-cz-hint">
+        {t("custom-content-site-archive-note", {
+          defaultValue:
+            "The archive doesn't have every page, and new pages can take a month or two to appear. Missing a recent one? Paste its link instead.",
+        })}
+      </p>
+      <div className="sb-ccl-import-actions">
+        <span className="sb-cz-hint">
+          {t("custom-content-site-selected", {
+            count: chosen.length,
+            defaultValue: "{{count}} pages selected",
+          })}
+        </span>
+        <span className="sb-cz-footer-spacer" />
+        {cancel}
+        <button
+          type="button"
+          className="sb-cz-button sb-cz-button-primary"
+          disabled={chosen.length === 0 || isPicking.value}
+          onClick={async () => {
+            isPicking.value = true;
+            try {
+              await run(() =>
+                customContent.pickSitePages(chosen.map((page) => page.itemId))
+              );
+            } finally {
+              isPicking.value = false;
+            }
+          }}
+        >
+          {t("custom-content-site-import", {
+            count: chosen.length,
+            defaultValue: "Import {{count}} pages",
+          })}
+        </button>
+      </div>
     </div>
   );
 }

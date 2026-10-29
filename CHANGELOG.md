@@ -11,6 +11,7 @@
   - Imported content gets the passages it names found automatically. When you ask, for one item or many at once, an AI agent such as Apologist (set up under Extensions with its key) suggests categories and more passages. Unsure suggestions are marked for you to check, and confident ones can be published without review.
   - See which chapters your library covers, book by book, to find the gaps you might want to fill.
   - Chapters with hundreds of items still show all of them in Discover.
+  - Import a whole website: enter its address, and Seed Bible finds the pages the Common Crawl web archive has saved from it. Pick the folders or pages you want; each one's passages are found in its full text, and a video embedded in the page opens directly from Discover. "Check for new pages" looks again later.
 
 ### 🔧 Changed
 

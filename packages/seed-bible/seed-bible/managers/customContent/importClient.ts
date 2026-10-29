@@ -1,9 +1,12 @@
 import {
   importApiErrorSchema,
   importProgressSchema,
+  siteImportSchema,
   type ImportProgress,
   type PublishRequest,
+  type SiteImport,
   type StartImportRequest,
+  type StartSiteImportRequest,
 } from "./importApi";
 import { ContentLibraryError } from "./publish";
 import { contentChapterIndexSchema, type ContentChapterIndex } from "./schema";
@@ -27,6 +30,19 @@ export interface ContentImportService {
     sessionKey: string,
     request: PublishRequest
   ) => Promise<ContentChapterIndex>;
+  /** Starts looking a website up in Common Crawl. */
+  startSiteImport: (
+    sessionKey: string,
+    request: StartSiteImportRequest
+  ) => Promise<SiteImport>;
+  /** A website import's lookup, with the pages found once it's done. */
+  getSiteImport: (sessionKey: string, id: string) => Promise<SiteImport>;
+  /** Imports the chosen pages of a website import. */
+  pickSitePages: (
+    sessionKey: string,
+    id: string,
+    itemIds: readonly string[]
+  ) => Promise<ImportProgress>;
 }
 
 /** The import worker's HTTP API, at `baseUrl`. */
@@ -82,7 +98,33 @@ export function createContentImportClient(
     return parsed.data;
   };
 
+  const site = (json: unknown): SiteImport => {
+    const parsed = siteImportSchema.safeParse(json);
+    if (!parsed.success) {
+      throw new ContentLibraryError(
+        "invalid_response",
+        "The import service sent an unexpected answer."
+      );
+    }
+    return parsed.data;
+  };
+
   return {
+    startSiteImport: async (sessionKey, request) =>
+      site(await call(sessionKey, "POST", "/site-imports", request)),
+    getSiteImport: async (sessionKey, id) =>
+      site(
+        await call(sessionKey, "GET", `/site-imports/${encodeURIComponent(id)}`)
+      ),
+    pickSitePages: async (sessionKey, id, itemIds) =>
+      progress(
+        await call(
+          sessionKey,
+          "POST",
+          `/site-imports/${encodeURIComponent(id)}/pick`,
+          { itemIds }
+        )
+      ),
     startImport: async (sessionKey, request) =>
       progress(await call(sessionKey, "POST", "/imports", request)),
     getImport: async (sessionKey, id) =>

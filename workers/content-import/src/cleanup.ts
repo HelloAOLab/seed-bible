@@ -11,13 +11,15 @@ import {
   setJobStatus,
 } from "./jobs";
 import type { Env } from "./platform";
+import { deleteCandidates } from "./siteJobs";
 import { decryptSessionKey } from "./sessionKeys";
 
 /**
  * The scheduled tidy-up (a Cron Trigger):
  * - links whose consumer died mid-way get back in line once their lease ends;
  * - imports past their lifetime end, erasing the session key they held,
- *   including ones paused and never resumed;
+ *   including ones paused and never resumed, and website imports whose
+ *   owner never picked pages (their page lists are deleted);
  * - finished imports' rows are deleted after a while. The library keeps its
  *   own record of the import in `importStatus`.
  */
@@ -42,6 +44,9 @@ export async function runCleanup(env: Env, deps: WorkerDeps): Promise<void> {
       }))
     ) {
       continue;
+    }
+    if (job.kind === "site") {
+      await deleteCandidates(env.DB, job.id);
     }
     if (!job.session_key_enc) {
       continue;

@@ -28,7 +28,16 @@ import {
   type ItemRow,
   type JobRow,
 } from "./jobs";
-import type { Env, ImportMessage, MessageBatch } from "./platform";
+import { ArchiveError, fetchArchivedPage } from "./commonCrawl/warc";
+import { extractPage } from "./commonCrawl/extract";
+import { findPageReferences } from "../../../packages/seed-bible/seed-bible/managers/customContent/explicitReferences";
+import type {
+  Env,
+  ImportItemMessage,
+  ImportMessage,
+  MessageBatch,
+} from "./platform";
+import { processLookupDeadLetter, processLookupMessage } from "./siteImports";
 import { decryptSessionKey } from "./sessionKeys";
 import type { WorkerDeps } from "./deps";
 
@@ -76,6 +85,7 @@ function safeImageUrl(value: string | undefined): string | undefined {
  */
 async function importOne(
   client: CasualOSClient,
+  fetchImpl: typeof fetch,
   job: JobRow,
   row: ItemRow,
   now: number
@@ -92,23 +102,70 @@ async function importOne(
     throw new CasualOSError(existing.errorCode, "Couldn't check the item.");
   }
 
-  const preview = await client.getLinkPreview(input.url);
-  const author = clip(input.author ?? job.default_author ?? undefined, 200);
-  const image = safeImageUrl(preview?.imageUrl);
+  let details: {
+    title?: string;
+    description?: string;
+    image?: string;
+    author?: string;
+    mediaUrl?: string;
+  } | null;
+  let references = input.references;
+  let classification: ContentItem["classification"];
+  if (input.site) {
+    const page = extractPage(
+      (await fetchArchivedPage(fetchImpl, input.site)).html,
+      input.url
+    );
+    details = {
+      title: page.title,
+      description: page.description,
+      image: page.image,
+      author: page.author,
+      mediaUrl: page.mediaUrl,
+    };
+    // The full text names passages the short description doesn't. It's
+    // read here and thrown away; only the passages are kept, as step 1's
+    // result, so the editor doesn't redo it from the shorter description.
+    if (!references) {
+      references = findPageReferences(page);
+      classification = { status: "done", at: now };
+    }
+  } else {
+    const preview = await client.getLinkPreview(input.url);
+    details = preview && { ...preview, image: preview.imageUrl };
+  }
+  const author = clip(
+    input.author ?? details?.author ?? job.default_author ?? undefined,
+    200
+  );
+  const image = safeImageUrl(details?.image);
+  const mediaUrl = safeImageUrl(details?.mediaUrl);
   const item: ContentItem = contentItemSchema.parse({
     id: row.item_id,
     url: input.url,
     status: "needs_review",
-    title: clip(input.title ?? preview?.title, MAX_CONTENT_TITLE_LENGTH) ?? "",
+    title: clip(input.title ?? details?.title, MAX_CONTENT_TITLE_LENGTH) ?? "",
     description:
       clip(
-        input.description ?? preview?.description,
+        input.description ?? details?.description,
         MAX_CONTENT_DESCRIPTION_LENGTH
       ) ?? "",
     ...(image ? { image } : {}),
     ...(author ? { author } : {}),
+    ...(mediaUrl ? { mediaUrl } : {}),
     categoryIds: input.categoryIds ?? [],
-    references: input.references ?? [],
+    references: references ?? [],
+    ...(input.site
+      ? {
+          origin: {
+            kind: "site",
+            sourceId: input.site.sourceId,
+            crawlId: input.site.crawlId,
+            capturedAt: input.site.capturedAt,
+          },
+        }
+      : {}),
+    ...(classification ? { classification } : {}),
     createdAt: now,
     updatedAt: now,
   });
@@ -146,7 +203,7 @@ async function finishJob(
 export async function processImportMessage(
   env: Env,
   deps: WorkerDeps,
-  message: ImportMessage,
+  message: ImportItemMessage,
   attempts: number
 ): Promise<MessageOutcome> {
   const now = deps.now();
@@ -180,11 +237,11 @@ export async function processImportMessage(
   );
 
   try {
-    await importOne(client, job, row, now);
+    await importOne(client, deps.fetch, job, row, now);
     await settleItem(env.DB, job.id, row.item_id, { state: "done" });
   } catch (error) {
     const code =
-      error instanceof CasualOSError
+      error instanceof CasualOSError || error instanceof ArchiveError
         ? error.code
         : error instanceof SyntaxError || (error as Error)?.name === "ZodError"
           ? "invalid_item"
@@ -218,7 +275,7 @@ export async function processImportMessage(
 export async function processDeadLetter(
   env: Env,
   deps: WorkerDeps,
-  message: ImportMessage
+  message: ImportItemMessage
 ): Promise<void> {
   const now = deps.now();
   const row = await getItem(env.DB, message.jobId, message.itemId);
@@ -255,17 +312,23 @@ export async function handleQueueBatch(
   await Promise.all(
     batch.messages.map(async (message) => {
       try {
+        const body = message.body;
         if (deadLetters) {
-          await processDeadLetter(env, deps, message.body);
+          await (body.kind === "lookup"
+            ? processLookupDeadLetter(env, deps, body)
+            : processDeadLetter(env, deps, body));
           message.ack();
           return;
         }
-        const outcome = await processImportMessage(
-          env,
-          deps,
-          message.body,
-          message.attempts
-        );
+        const outcome =
+          body.kind === "lookup"
+            ? await processLookupMessage(
+                env,
+                deps,
+                body,
+                retryDelay(message.attempts)
+              )
+            : await processImportMessage(env, deps, body, message.attempts);
         if (outcome.kind === "retry") {
           message.retry({ delaySeconds: outcome.delaySeconds });
         } else if (outcome.kind === "later") {

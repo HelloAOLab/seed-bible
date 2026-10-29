@@ -4,6 +4,7 @@ import { handleQueueBatch } from "./consumer";
 import { defaultDeps } from "./deps";
 import type { Env, ImportMessage, MessageBatch } from "./platform";
 
+export { CommonCrawlGate } from "./commonCrawlGate";
 export { LibraryWriter } from "./libraryWriter";
 
 /** The content import worker. See `README.md` and docs/custom-content-database.md §5.8. */

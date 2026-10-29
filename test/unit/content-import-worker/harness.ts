@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { gzipSync } from "node:zlib";
+import { CommonCrawlGate } from "../../../workers/content-import/src/commonCrawlGate";
 import { LibraryWriter } from "../../../workers/content-import/src/libraryWriter";
 import { handleQueueBatch } from "../../../workers/content-import/src/consumer";
 import type { WorkerDeps } from "../../../workers/content-import/src/deps";
@@ -21,7 +23,7 @@ const MIGRATIONS = path.resolve(
 /** D1, backed by a real in-memory SQLite database with the worker's migrations applied. */
 export function createTestD1(): D1Database & { sqlite: DatabaseSync } {
   const sqlite = new DatabaseSync(":memory:");
-  for (const file of ["0001_import_jobs.sql"]) {
+  for (const file of ["0001_import_jobs.sql", "0002_site_imports.sql"]) {
     sqlite.exec(readFileSync(path.join(MIGRATIONS, file), "utf-8"));
   }
   type Bindable = string | number | null;
@@ -258,9 +260,28 @@ const MAX_RETRIES = 5;
  * when told to (applying Cloudflare's retry and dead-letter rules), and one
  * LibraryWriter per library.
  */
-export function createTestWorker(casualos: FakeCasualOS) {
+export function createTestWorker(
+  casualos: FakeCasualOS,
+  commonCrawl: FakeCommonCrawl = createFakeCommonCrawl()
+) {
   const clock = { now: 1_800_000_000_000 };
-  const deps: WorkerDeps = { fetch: casualos.fetch, now: () => clock.now };
+  /** Every outside request the worker made, by host. */
+  const requests: { host: string; url: string; at: number }[] = [];
+  const deps: WorkerDeps = {
+    fetch: async (input, init) => {
+      const url = new URL(String(input));
+      requests.push({ host: url.hostname, url: url.toString(), at: clock.now });
+      return url.hostname.endsWith("commoncrawl.org")
+        ? commonCrawl.fetch(url, init)
+        : casualos.fetch(input, init);
+    },
+    now: () => clock.now,
+    // Time passes instead of the test waiting for it.
+    sleep: async (ms) => {
+      clock.now += ms;
+    },
+  };
+  let gate: CommonCrawlGate | null = null;
   const db = createTestD1();
   const pending: { body: ImportMessage; attempts: number }[] = [];
   const deadLetters: { body: ImportMessage; attempts: number }[] = [];
@@ -290,6 +311,10 @@ export function createTestWorker(casualos: FakeCasualOS) {
         }
         return writers.get(name)!;
       },
+    },
+    COMMON_CRAWL_GATE: {
+      idFromName: (name) => name,
+      get: () => (gate ??= new CommonCrawlGate(null, env, deps)),
     },
     CASUALOS_ENDPOINT: "https://casualos.test",
     ALLOWED_ORIGINS: APP_ORIGIN,
@@ -333,7 +358,187 @@ export function createTestWorker(casualos: FakeCasualOS) {
     }
   };
 
-  return { env, deps, db, clock, sent, pending, drain };
+  return { env, deps, db, clock, sent, pending, drain, requests, commonCrawl };
 }
 
 export type TestWorker = ReturnType<typeof createTestWorker>;
+
+/** One saved page in the fake archive. */
+interface FakeCapture {
+  url: string;
+  timestamp: string;
+  status?: string;
+  mime?: string;
+  digest?: string;
+  filename: string;
+  offset: number;
+  length: number;
+}
+
+/** A WARC response record for a page, gzipped as Common Crawl stores each record. */
+export function warcRecord(
+  url: string,
+  html: string | Uint8Array,
+  options: { contentType?: string } = {}
+): Uint8Array {
+  const body = typeof html === "string" ? Buffer.from(html, "utf-8") : html;
+  const http = Buffer.concat([
+    Buffer.from(
+      `HTTP/1.1 200 OK\r\nContent-Type: ${options.contentType ?? "text/html; charset=UTF-8"}\r\nContent-Length: ${body.length}\r\n\r\n`,
+      "latin1"
+    ),
+    body,
+  ]);
+  const warc = Buffer.concat([
+    Buffer.from(
+      `WARC/1.0\r\nWARC-Type: response\r\nWARC-Target-URI: ${url}\r\nContent-Type: application/http; msgtype=response\r\nContent-Length: ${http.length}\r\n\r\n`,
+      "latin1"
+    ),
+    http,
+    Buffer.from("\r\n\r\n", "latin1"),
+  ]);
+  return gzipSync(warc);
+}
+
+/**
+ * Common Crawl, in memory: the list of crawls, each crawl's URL index
+ * (answering the pywb CDX queries the worker makes, paged), and WARC files
+ * answering range requests.
+ */
+export function createFakeCommonCrawl() {
+  const crawls: { id: string; name: string }[] = [
+    { id: "CC-MAIN-2026-38", name: "September 2026 Index" },
+    { id: "CC-MAIN-2026-30", name: "July 2026 Index" },
+    { id: "CC-MAIN-2026-22", name: "May 2026 Index" },
+    { id: "CC-MAIN-2026-13", name: "March 2026 Index" },
+  ];
+  const captures = new Map<string, FakeCapture[]>();
+  const files = new Map<string, Buffer>();
+  /** Captures per result page. */
+  const pageSize = { value: 50 };
+  /** HTTP statuses to answer the next index requests with, in order. */
+  const indexFailures: number[] = [];
+
+  /** Saves a page in a crawl, as an index entry plus a record in that crawl's WARC file. */
+  const addPage = (
+    crawlId: string,
+    url: string,
+    html: string | Uint8Array,
+    options: {
+      timestamp?: string;
+      digest?: string;
+      status?: string;
+      mime?: string;
+      contentType?: string;
+    } = {}
+  ) => {
+    const filename = `crawl-data/${crawlId}/segments/1/warc/part-00000.warc.gz`;
+    const record = Buffer.from(warcRecord(url, html, options));
+    const file = files.get(filename) ?? Buffer.alloc(0);
+    files.set(filename, Buffer.concat([file, record]));
+    const list = captures.get(crawlId) ?? [];
+    list.push({
+      url,
+      timestamp: options.timestamp ?? `${crawlId.slice(8, 12)}0901120000`,
+      status: options.status,
+      mime: options.mime,
+      digest: options.digest ?? `sha1:${url}`,
+      filename,
+      offset: file.length,
+      length: record.length,
+    });
+    captures.set(crawlId, list);
+  };
+
+  /** Captures matching a pywb prefix pattern like `example.org/sermons/*`. */
+  const matching = (crawlId: string, pattern: string) => {
+    const prefix = pattern.replace(/\*$/, "");
+    return (captures.get(crawlId) ?? []).filter((capture) =>
+      capture.url
+        .replace(/^https?:\/\//, "")
+        .replace(/^www\./, "")
+        .startsWith(prefix)
+    );
+  };
+
+  const fetchImpl = async (url: URL, init?: RequestInit): Promise<Response> => {
+    if (url.hostname === "index.commoncrawl.org") {
+      const failure = indexFailures.shift();
+      if (failure) {
+        return new Response("Slow down", { status: failure });
+      }
+      if (url.pathname === "/collinfo.json") {
+        return Response.json(
+          crawls.map((crawl) => ({
+            ...crawl,
+            "cdx-api": `https://index.commoncrawl.org/${crawl.id}-index`,
+          }))
+        );
+      }
+      const crawlId = /^\/(CC-MAIN-[\w-]+)-index$/.exec(url.pathname)?.[1];
+      const found = crawlId
+        ? matching(crawlId, url.searchParams.get("url") ?? "")
+        : [];
+      if (found.length === 0) {
+        return new Response(
+          "No Captures found for: " + url.searchParams.get("url"),
+          {
+            status: 404,
+          }
+        );
+      }
+      const pages = Math.ceil(found.length / pageSize.value);
+      if (url.searchParams.get("showNumPages") === "true") {
+        return Response.json({ pages, pageSize: 5, blocks: pages });
+      }
+      const page = Number(url.searchParams.get("page") ?? 0);
+      if (page >= pages) {
+        return new Response("Page out of range", { status: 400 });
+      }
+      const lines = found
+        .slice(page * pageSize.value, (page + 1) * pageSize.value)
+        .map((capture) =>
+          JSON.stringify({
+            urlkey: capture.url,
+            timestamp: capture.timestamp,
+            url: capture.url,
+            mime: capture.mime ?? "text/html",
+            status: capture.status ?? "200",
+            digest: capture.digest,
+            length: String(capture.length),
+            offset: String(capture.offset),
+            filename: capture.filename,
+          })
+        );
+      return new Response(lines.join("\n") + "\n");
+    }
+    if (url.hostname === "data.commoncrawl.org") {
+      const file = files.get(url.pathname.slice(1));
+      const range = /^bytes=(\d+)-(\d+)$/.exec(
+        new Headers(init?.headers).get("Range") ?? ""
+      );
+      if (!file || !range) {
+        return new Response("Not found", { status: 404 });
+      }
+      return new Response(
+        new Uint8Array(file.subarray(+range[1]!, +range[2]! + 1)),
+        {
+          status: 206,
+        }
+      );
+    }
+    throw new Error(`Unexpected request to ${url}`);
+  };
+
+  return {
+    crawls,
+    captures,
+    files,
+    pageSize,
+    indexFailures,
+    addPage,
+    fetch: fetchImpl,
+  };
+}
+
+export type FakeCommonCrawl = ReturnType<typeof createFakeCommonCrawl>;

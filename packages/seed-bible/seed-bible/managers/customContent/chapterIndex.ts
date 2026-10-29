@@ -166,7 +166,8 @@ export function buildChapterRecord(
     entries.push({
       itemId: item.id,
       url: item.url,
-      mediaKind: resolveLinkMedia(item.url).kind,
+      ...(item.mediaUrl ? { mediaUrl: item.mediaUrl } : {}),
+      mediaKind: resolveLinkMedia(item.mediaUrl ?? item.url).kind,
       title: item.title,
       description: trimDescription(item.description),
       ...(item.image ? { image: item.image } : {}),

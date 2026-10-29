@@ -1,20 +1,13 @@
 import {
+  ACTIVE_IMPORT_STATUSES,
   publishRequestSchema,
   startImportRequestSchema,
   type ImportItemInput,
 } from "../../../packages/seed-bible/seed-bible/managers/customContent/importApi";
 import { normalizeContentUrl } from "../../../packages/seed-bible/seed-bible/managers/customContent/normalizeUrl";
-import { readLibraryManifest } from "../../../packages/seed-bible/seed-bible/managers/customContent/publish";
-import {
-  CONTENT_IMPORT_STATUS_ADDRESS,
-  CONTENT_IMPORT_STATUS_MARKER,
-} from "../../../packages/seed-bible/seed-bible/managers/customContent/schema";
-import {
-  createCasualOSClient,
-  isFatalSessionError,
-  type CasualOSClient,
-} from "./casualos";
+import { createCasualOSClient, isFatalSessionError } from "./casualos";
 import type { WorkerDeps } from "./deps";
+import { HttpError, checkLibraryAccess, readBody, type Caller } from "./http";
 import { writeImportStatus } from "./importStatus";
 import {
   JOB_LIFETIME_MS,
@@ -27,30 +20,20 @@ import {
   setJobStatus,
   type JobRow,
 } from "./jobs";
-import type { Env, ImportMessage } from "./platform";
+import type { Env } from "./platform";
+import { enqueue } from "./queue";
+import { getSiteImport, pickSitePages, startSiteImport } from "./siteImports";
+import { deleteCandidates } from "./siteJobs";
 import {
   encryptSessionKey,
   sessionKeyFingerprint,
   sessionKeyUserId,
 } from "./sessionKeys";
 
-/** Messages per `sendBatch`, the queue's own limit. */
-const MESSAGES_PER_SEND = 100;
 /** How long a checked session key is trusted before asking CasualOS again. */
 const AUTH_CACHE_MS = 60 * 1000;
 
 const authCache = new Map<string, { userId: string; until: number }>();
-
-class HttpError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string,
-    message?: string,
-    readonly extra: Record<string, unknown> = {}
-  ) {
-    super(message ?? code);
-  }
-}
 
 function allowedOrigin(request: Request, env: Env): string | null {
   const origin = request.headers.get("Origin");
@@ -78,12 +61,6 @@ function json(body: unknown, status: number, origin: string | null): Response {
     status,
     headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
   });
-}
-
-interface Caller {
-  userId: string;
-  sessionKey: string;
-  client: CasualOSClient;
 }
 
 /**
@@ -135,35 +112,17 @@ async function authenticate(
   return { userId, sessionKey, client };
 }
 
-async function readBody(request: Request): Promise<unknown> {
-  try {
-    return await request.json();
-  } catch {
-    throw new HttpError(400, "invalid_request", "The request body isn't JSON.");
-  }
-}
-
-async function ownJob(env: Env, caller: Caller, id: string): Promise<JobRow> {
+export async function ownJob(
+  env: Env,
+  caller: Caller,
+  id: string
+): Promise<JobRow> {
   const job = await getJob(env.DB, id);
   // Someone else's import reads as missing, not forbidden.
   if (!job || job.user_id !== caller.userId) {
     throw new HttpError(404, "import_not_found");
   }
   return job;
-}
-
-async function enqueue(
-  env: Env,
-  jobId: string,
-  itemIds: readonly string[]
-): Promise<void> {
-  for (let i = 0; i < itemIds.length; i += MESSAGES_PER_SEND) {
-    await env.IMPORT_QUEUE.sendBatch(
-      itemIds
-        .slice(i, i + MESSAGES_PER_SEND)
-        .map((itemId): { body: ImportMessage } => ({ body: { jobId, itemId } }))
-    );
-  }
 }
 
 async function startImport(
@@ -179,40 +138,11 @@ async function startImport(
   const { contentRecordName } = parsed.data;
   const now = deps.now();
 
-  // Reading the manifest proves the library exists and finds its default
-  // author; writing the status entry proves the caller may write to it,
-  // before anything is queued.
-  let defaultAuthor: string | null = null;
-  try {
-    defaultAuthor =
-      (await readLibraryManifest(caller.client.store, contentRecordName))
-        .defaultAuthor ?? null;
-  } catch {
-    throw new HttpError(404, "library_not_found");
-  }
-  const probe = await caller.client.store.recordData(
+  const { defaultAuthor } = await checkLibraryAccess(
+    caller,
     contentRecordName,
-    CONTENT_IMPORT_STATUS_ADDRESS,
-    { status: "starting", updatedAt: now },
-    CONTENT_IMPORT_STATUS_MARKER
+    now
   );
-  if (!probe.success) {
-    if (
-      probe.errorCode === "not_authorized" ||
-      probe.errorCode === "record_not_found"
-    ) {
-      throw new HttpError(
-        403,
-        "not_authorized",
-        "You can't change this library."
-      );
-    }
-    throw new HttpError(
-      502,
-      "casualos_unavailable",
-      "CasualOS couldn't be reached. Please try again."
-    );
-  }
 
   const seen = new Set<string>();
   const items: { itemId: string; input: ImportItemInput }[] = [];
@@ -322,7 +252,7 @@ async function route(
         await setJobStatus(
           env.DB,
           job.id,
-          ["running", "paused_signin"],
+          ACTIVE_IMPORT_STATUSES,
           "cancelled",
           now,
           {
@@ -330,6 +260,9 @@ async function route(
           }
         )
       ) {
+        if (job.kind === "site") {
+          await deleteCandidates(env.DB, job.id);
+        }
         const cancelled = (await getJob(env.DB, job.id))!;
         await writeImportStatus(
           caller.client.store,
@@ -366,6 +299,20 @@ async function route(
         body: await jobProgress(env.DB, (await getJob(env.DB, job.id))!),
         status: 200,
       };
+    }
+  }
+
+  if (request.method === "POST" && path === "/site-imports") {
+    return startSiteImport(request, env, deps, caller);
+  }
+  const siteMatch = path.match(/^\/site-imports\/([^/]+)(?:\/(pick))?$/);
+  if (siteMatch) {
+    const job = await ownJob(env, caller, decodeURIComponent(siteMatch[1]!));
+    if (request.method === "GET" && !siteMatch[2]) {
+      return { body: await getSiteImport(env, job), status: 200 };
+    }
+    if (request.method === "POST" && siteMatch[2] === "pick") {
+      return pickSitePages(request, env, deps, caller, job);
     }
   }
 
