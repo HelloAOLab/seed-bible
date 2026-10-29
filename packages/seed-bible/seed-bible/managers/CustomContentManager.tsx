@@ -166,13 +166,36 @@ export interface CustomContentManager {
   classifierProviders: ReadonlySignal<readonly ChatProvider[]>;
   /** The open library's chosen provider, while it's registered. */
   classifier: ReadonlySignal<ChatProvider | null>;
-  /** Items still waiting for suggestions; they're worked on while the editor is open. */
+  /** Imported items still to be read for the passages they name; that happens by itself while the editor is open. */
   classifyQueue: ReadonlySignal<number>;
-  /** Picks the provider that suggests categories and passages, or none (only passages named in the text are found). */
+  /** Items waiting for review that the AI hasn't been asked about. */
+  aiCandidates: ReadonlySignal<number>;
+  /** The latest AI suggestion run the owner started, while the editor shows it. */
+  aiRun: ReadonlySignal<AiSuggestionRun | null>;
+  /** Picks the agent the owner can ask for suggestions, or none. */
   setClassifier: (providerId: string | null) => Promise<void>;
   setAutoPublish: (autoPublish: boolean) => Promise<void>;
-  /** Suggests categories and passages for one item again, replacing its earlier suggestions. */
+  /**
+   * Asks the chosen agent for categories and passages: for the given items,
+   * or by default every item waiting for review it hasn't been asked about.
+   * Only the owner starts this; nothing asks the AI by itself. Throws a
+   * `ContentLibraryError` ("no_classifier") without a chosen agent.
+   */
+  suggestWithAi: (ids?: readonly string[]) => Promise<void>;
+  /** Stops a run after the items already being asked about. */
+  stopSuggesting: () => void;
+  /** Asks the AI about one item, replacing its earlier suggestions. */
   classifyItem: (id: string) => Promise<void>;
+}
+
+/** Progress of an AI suggestion run. */
+export interface AiSuggestionRun {
+  total: number;
+  done: number;
+  failed: number;
+  running: boolean;
+  /** Stop was pressed; the items already being asked about are finishing. */
+  stopping?: boolean;
 }
 
 const RECORD_NAME_PREFIX = "seedbible-content-";
@@ -473,6 +496,9 @@ export function createCustomContentManager(deps: {
 
   const closeLibrary = (): void => {
     stopWatching();
+    stopRequested = true;
+    aiGeneration++;
+    aiRun.value = null;
     unsaved.clear();
     recordName.value = null;
     status.value = "closed";
@@ -839,14 +865,12 @@ export function createCustomContentManager(deps: {
   });
 
   /**
-   * Imported items waiting for suggestions: never classified, or classified
-   * only from their own text before a provider was set up. Failures aren't
-   * retried by themselves; the owner asks again with "Suggest again".
+   * Imported items whose text hasn't been read for the passages it names.
+   * That's the only suggesting that happens by itself; the AI is only asked
+   * when the owner asks ({@link suggestWithAi}).
    */
-  const needsClassification = (item: ContentItem): boolean =>
-    item.status === "needs_review" &&
-    (!item.classification ||
-      (!item.classification.providerId && classifier.value !== null));
+  const needsExplicitPassages = (item: ContentItem): boolean =>
+    item.status === "needs_review" && !item.classification;
 
   const classifying = new Set<string>();
   // Items whose result couldn't be saved; skipped until the library reopens,
@@ -855,19 +879,36 @@ export function createCustomContentManager(deps: {
   const classifyQueue = computed(
     () =>
       items.value.filter(
-        (item) => needsClassification(item) && !unsaved.has(item.id)
+        (item) => needsExplicitPassages(item) && !unsaved.has(item.id)
       ).length
   );
-  /** Requests to a provider at once, so a big import doesn't flood it. */
-  const CLASSIFY_CONCURRENCY = 2;
+  const aiCandidates = computed(
+    () =>
+      items.value.filter(
+        (item) =>
+          item.status === "needs_review" && !item.classification?.providerId
+      ).length
+  );
+  const aiRun = signal<AiSuggestionRun | null>(null);
+  /** Requests to a provider at once, so a big batch doesn't flood it. */
+  const AI_CONCURRENCY = 2;
 
-  const classifyOne = async (record: string, id: string): Promise<void> => {
+  /**
+   * Finds the passages an item names and, with `provider`, asks it for
+   * categories and more passages; then saves the result to the item as it
+   * is now (the owner may have edited it meanwhile). Returns false when the
+   * provider failed; the failure is recorded on the item.
+   */
+  const classifyOne = async (
+    record: string,
+    id: string,
+    provider: ChatProvider | null
+  ): Promise<boolean> => {
     const item = items.value.find((i) => i.id === id);
     const current = manifest.value;
     if (!item || !current || recordName.value !== record) {
-      return;
+      return true;
     }
-    const provider = classifier.value;
     const explicit = findExplicitReferences(item);
     let result: ContentClassificationResult | undefined;
     let error: string | undefined;
@@ -891,10 +932,10 @@ export function createCustomContentManager(deps: {
         return;
       }
       const { current: latestManifest, all } = requireOpen();
-      // Apply to the item as it is now: the owner may have edited it while
-      // the provider was answering. One they've published is theirs; leave it.
       const latest = all.find((i) => i.id === id);
-      if (!latest || (latest.status === "published" && !forced.has(id))) {
+      // The automatic pass leaves an item alone once the owner has moved it
+      // on; asking the AI is the owner's own request, so it applies anyway.
+      if (!latest || (!provider && !needsExplicitPassages(latest))) {
         return;
       }
       let next = applyClassification(latest, {
@@ -922,30 +963,27 @@ export function createCustomContentManager(deps: {
         await publish(record, { keys }, updated);
       }
     });
+    return !error;
   };
 
-  const forced = new Set<string>();
-
+  /** Reads newly imported items for the passages they name, while the library is open. */
   const pump = (): void => {
     const record = recordName.value;
     if (!record || status.value !== "ready") {
       return;
     }
     for (const item of items.value) {
-      if (classifying.size >= CLASSIFY_CONCURRENCY) {
-        return;
-      }
       if (
         classifying.has(item.id) ||
         unsaved.has(item.id) ||
-        !needsClassification(item)
+        !needsExplicitPassages(item)
       ) {
         continue;
       }
       classifying.add(item.id);
-      void classifyOne(record, item.id)
+      void classifyOne(record, item.id, null)
         .catch((error) => {
-          console.warn("Couldn't save suggestions for a content item:", error);
+          console.warn("Couldn't save passages for a content item:", error);
           unsaved.add(item.id);
         })
         .finally(() => {
@@ -955,15 +993,99 @@ export function createCustomContentManager(deps: {
     }
   };
 
-  // Works through the queue whenever items arrive (an import landing) or a
-  // provider becomes available, as long as the library is open.
   effect(() => {
     void items.value;
-    void classifier.value;
     if (status.value === "ready") {
       pump();
     }
   });
+
+  let aiGeneration = 0;
+  let stopRequested = false;
+
+  const suggestWithAi = async (ids?: readonly string[]): Promise<void> => {
+    const record = recordName.value;
+    const provider = classifier.value;
+    if (!record) {
+      return;
+    }
+    if (!provider) {
+      throw new ContentLibraryError(
+        "no_classifier",
+        "Choose an AI agent for this library first."
+      );
+    }
+    const queue = [
+      ...(ids ??
+        items.value
+          .filter(
+            (item) =>
+              item.status === "needs_review" && !item.classification?.providerId
+          )
+          .map((item) => item.id)),
+    ];
+    if (queue.length === 0) {
+      return;
+    }
+    const generation = ++aiGeneration;
+    stopRequested = false;
+    const run: AiSuggestionRun = {
+      total: queue.length,
+      done: 0,
+      failed: 0,
+      running: true,
+    };
+    aiRun.value = run;
+    const update = (patch: Partial<AiSuggestionRun>) => {
+      if (generation === aiGeneration) {
+        aiRun.value = { ...aiRun.value!, ...patch };
+      }
+    };
+
+    const worker = async (): Promise<void> => {
+      for (;;) {
+        const id = queue.shift();
+        if (
+          id === undefined ||
+          stopRequested ||
+          generation !== aiGeneration ||
+          recordName.value !== record
+        ) {
+          return;
+        }
+        unsaved.delete(id);
+        classifying.add(id);
+        let ok = false;
+        try {
+          ok = await classifyOne(record, id, provider);
+        } catch (error) {
+          console.warn("Couldn't save suggestions for a content item:", error);
+        } finally {
+          classifying.delete(id);
+        }
+        if (generation === aiGeneration) {
+          const latest = aiRun.value!;
+          update({
+            done: latest.done + 1,
+            failed: latest.failed + (ok ? 0 : 1),
+          });
+        }
+      }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(AI_CONCURRENCY, queue.length) }, worker)
+    );
+    update({ running: false });
+  };
+
+  // The items already being asked about finish and are saved; their count
+  // keeps going until they do, so the run reports what actually happened.
+  const stopSuggesting = (): void => {
+    if (aiRun.value?.running) {
+      stopRequested = true;
+      aiRun.value = { ...aiRun.value, stopping: true };
+    }
+  };
 
   const setClassifier = (providerId: string | null): Promise<void> =>
     queueWrite(async () => {
@@ -990,22 +1112,7 @@ export function createCustomContentManager(deps: {
       });
     });
 
-  const classifyItem = async (id: string): Promise<void> => {
-    const record = recordName.value;
-    if (!record) {
-      return;
-    }
-    unsaved.delete(id);
-    forced.add(id);
-    classifying.add(id);
-    try {
-      await classifyOne(record, id);
-    } finally {
-      forced.delete(id);
-      classifying.delete(id);
-      pump();
-    }
-  };
+  const classifyItem = (id: string): Promise<void> => suggestWithAi([id]);
 
   // --- Reading: Discover for the active Customization's library ---
 
@@ -1159,6 +1266,10 @@ export function createCustomContentManager(deps: {
     classifierProviders,
     classifier,
     classifyQueue,
+    aiCandidates,
+    aiRun,
+    suggestWithAi,
+    stopSuggesting,
     setClassifier,
     setAutoPublish,
     classifyItem,

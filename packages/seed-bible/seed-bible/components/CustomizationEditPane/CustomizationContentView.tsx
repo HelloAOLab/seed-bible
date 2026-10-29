@@ -525,13 +525,14 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
           )}
           {customContent.classifyQueue.value > 0 && (
             <p className="sb-cz-hint" role="status">
-              {t("custom-content-classify-queue", {
+              {t("custom-content-explicit-queue", {
                 count: customContent.classifyQueue.value,
                 defaultValue:
-                  "Suggesting categories and passages for {{count}} items. This happens while this page is open.",
+                  "Finding the passages named in {{count}} imported items.",
               })}
             </p>
           )}
+          <AiSuggestionsRun state={state} run={run} />
           <SuggestedCategories state={state} run={run} />
           {items.length === 0 ? (
             <p className="sb-cz-hint">
@@ -603,9 +604,9 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                       </span>
                       {item.classification?.status === "failed" && (
                         <span className="sb-ccl-item-meta sb-ccl-error">
-                          {t("custom-content-classify-failed", {
+                          {t("custom-content-ai-failed", {
                             defaultValue:
-                              "Couldn't get suggestions. Try again, or add passages yourself.",
+                              "The AI couldn't suggest anything for this item. Try again, or add passages yourself.",
                           })}
                         </span>
                       )}
@@ -627,22 +628,26 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                         </button>
                       ) : (
                         <>
-                          {item.status !== "published" && (
-                            <button
-                              type="button"
-                              className="sb-cz-button sb-cz-button-quiet"
-                              disabled={busy}
-                              onClick={() =>
-                                void run(() =>
-                                  customContent.classifyItem(item.id)
-                                )
-                              }
-                            >
-                              {t("custom-content-suggest-again", {
-                                defaultValue: "Suggest again",
-                              })}
-                            </button>
-                          )}
+                          {item.status !== "published" &&
+                            customContent.classifier.value && (
+                              <button
+                                type="button"
+                                className="sb-cz-button sb-cz-button-quiet"
+                                disabled={
+                                  busy ||
+                                  customContent.aiRun.value?.running === true
+                                }
+                                onClick={() =>
+                                  void run(() =>
+                                    customContent.classifyItem(item.id)
+                                  )
+                                }
+                              >
+                                {t("custom-content-suggest-with-ai", {
+                                  defaultValue: "Suggest with AI",
+                                })}
+                              </button>
+                            )}
                           <button
                             type="button"
                             className="sb-cz-button"
@@ -1391,9 +1396,9 @@ function AiSuggestionsSettings(props: {
                   defaultValue:
                     "No installed agent can suggest yet. Turn on an agent such as Apologist under Extensions, with its key.",
                 })
-              : t("custom-content-ai-hint", {
+              : t("custom-content-ai-on-request", {
                   defaultValue:
-                    "Set up the agent and its key under Extensions, the same as for chat.",
+                    "The AI is only asked when you press Suggest with AI. Passages named in the content are always found. Set up the agent and its key under Extensions, the same as for chat.",
                 })}
         </span>
       </div>
@@ -1407,9 +1412,9 @@ function AiSuggestionsSettings(props: {
             void run(() => customContent.setAutoPublish(checked));
           }}
         />
-        {t("custom-content-ai-auto-publish", {
+        {t("custom-content-ai-auto-publish-on-request", {
           defaultValue:
-            "Publish imported items without review when every passage is named in the content or a confident suggestion",
+            "When you ask the AI, publish items without further review if every passage is named in the content or a confident suggestion",
         })}
       </label>
     </div>
@@ -1482,5 +1487,86 @@ function SuggestedCategories(props: {
         </li>
       ))}
     </ul>
+  );
+}
+
+/**
+ * Asking the AI about many items at once, and how that run is going. The AI
+ * is only ever asked from here or an item's own button.
+ */
+function AiSuggestionsRun(props: {
+  state: SeedBibleState;
+  run: (action: () => Promise<unknown>) => Promise<boolean>;
+}) {
+  const { state, run } = props;
+  const { customContent } = state;
+  const { t } = useI18n();
+  const agent = customContent.classifier.value;
+  const progress = customContent.aiRun.value;
+  if (!agent) {
+    return null;
+  }
+  const agentName = translateTitle(t, agent.name);
+
+  if (progress?.running) {
+    return (
+      <div className="sb-ccl-progress" role="status">
+        <p className="sb-ccl-progress-text">
+          {t("custom-content-ai-running", {
+            agent: agentName,
+            done: progress.done,
+            total: progress.total,
+            failed: progress.failed,
+            defaultValue:
+              "Asking {{agent}}: {{done}} of {{total}} · {{failed}} failed. Keep this page open until it finishes.",
+          })}
+        </p>
+        {progress.stopping ? (
+          <p className="sb-cz-hint">
+            {t("custom-content-ai-stopping", {
+              defaultValue:
+                "Stopping after the items already being asked about…",
+            })}
+          </p>
+        ) : (
+          <button
+            type="button"
+            className="sb-cz-button sb-cz-button-quiet"
+            onClick={() => customContent.stopSuggesting()}
+          >
+            {t("custom-content-ai-stop", { defaultValue: "Stop" })}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  const candidates = customContent.aiCandidates.value;
+  return (
+    <div className="sb-ccl-progress">
+      {progress && (
+        <p className="sb-ccl-progress-text" role="status">
+          {t("custom-content-ai-finished", {
+            done: progress.done,
+            failed: progress.failed,
+            defaultValue:
+              "AI suggestions finished for {{done}} items, {{failed}} failed.",
+          })}
+        </p>
+      )}
+      {candidates > 0 && (
+        <button
+          type="button"
+          className="sb-cz-button"
+          onClick={() => void run(() => customContent.suggestWithAi())}
+        >
+          {t("custom-content-ai-suggest-all", {
+            count: candidates,
+            agent: agentName,
+            defaultValue: "Suggest with {{agent}} for {{count}} items",
+          })}
+        </button>
+      )}
+    </div>
   );
 }

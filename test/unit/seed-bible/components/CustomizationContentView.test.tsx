@@ -355,7 +355,7 @@ describe("CustomizationContentView", () => {
           'input[type="checkbox"]'
         ),
       ].find((input) =>
-        input.parentElement?.textContent?.includes("without review")
+        input.parentElement?.textContent?.includes("without further review")
       )!;
       expect(autoPublish.disabled).toBe(true);
 
@@ -400,6 +400,14 @@ describe("CustomizationContentView", () => {
         markers: [CONTENT_ITEM_MARKER],
       });
       await act(() => customContent.openLibrary(recordName));
+      await waitForCondition(() =>
+        container.textContent!.includes("Suggest with Grace Agent for 1 items")
+      );
+      // Nothing is asked of the AI until the owner presses the button.
+      expect(
+        container.querySelectorAll(".sb-ccl-ref-ai, .sb-ccl-ref-unsure")
+      ).toHaveLength(0);
+      await click(button("Suggest with Grace Agent for 1 items"));
 
       await waitForCondition(() =>
         container.textContent!.includes(
@@ -426,6 +434,57 @@ describe("CustomizationContentView", () => {
         )
       );
       expect(container.textContent).not.toContain("Suggested category:");
+    });
+
+    it("shows a bulk run's progress and can stop it", async () => {
+      const server = fakeRecordsServer();
+      const answers: (() => void)[] = [];
+      const slowAgent: ChatProvider = {
+        ...agent,
+        classifyContent: () =>
+          new Promise((resolve) => {
+            answers.push(() => resolve({ categoryIds: [], passages: [] }));
+          }),
+      };
+      const { customContent } = await renderEditor(server, {
+        chatProviders: [slowAgent],
+      });
+      await createLibrary();
+      await act(() => customContent.setClassifier("agent"));
+      const recordName = customContent.recordName.value!;
+      for (const id of ["a", "b", "c"]) {
+        server.records.get(recordName)!.set(contentItemAddress(id), {
+          data: {
+            id,
+            url: `https://example.org/${id}`,
+            status: "needs_review",
+            title: id,
+            description: "",
+            categoryIds: [],
+            references: [],
+            createdAt: 1,
+            updatedAt: 1,
+          } satisfies ContentItem,
+          markers: [CONTENT_ITEM_MARKER],
+        });
+      }
+      await act(() => customContent.openLibrary(recordName));
+      await waitForCondition(() =>
+        container.textContent!.includes("Suggest with Grace Agent for 3 items")
+      );
+
+      await click(button("Suggest with Grace Agent for 3 items"));
+      await waitForCondition(() =>
+        container.textContent!.includes("Asking Grace Agent: 0 of 3 · 0 failed")
+      );
+      await click(button("Stop"));
+      await act(() => answers.splice(0).forEach((answer) => answer()));
+      await waitForCondition(() =>
+        container.textContent!.includes("Suggest with Grace Agent for 1 items")
+      );
+      expect(container.textContent).toContain(
+        "AI suggestions finished for 2 items, 0 failed."
+      );
     });
   });
 });

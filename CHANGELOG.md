@@ -8,7 +8,7 @@
   - Each library has its own categories, which become Discover's filters and sections.
   - The library is stored in its own record, not your personal one.
   - Import many links at once, pasted or from a CSV with titles, categories and passages. Imports run in the background, so they keep going after you close the page, and pause until you sign in again if your session ends.
-  - Imported content gets suggested categories and passages: ones the content names are found automatically, and an AI agent such as Apologist (set up under Extensions with its key) suggests the rest. Unsure suggestions are marked for you to check, and confident ones can be published without review.
+  - Imported content gets the passages it names found automatically. When you ask, for one item or many at once, an AI agent such as Apologist (set up under Extensions with its key) suggests categories and more passages. Unsure suggestions are marked for you to check, and confident ones can be published without review.
 
 ### 🔧 Changed
 

@@ -282,20 +282,25 @@ A provider backed by a chat model only has to send `instructions` and `input` as
 
 **Apologist** implements it with one non-streaming request to its chat completions API, using the same model setting and the same request path as chat. With a saved key, that path is the CasualOS sensitive proxy, so the owner's key never reaches the browser.
 
+**The AI is only asked when the owner asks.** By default an imported item only gets step 1: the passages its own text names, found automatically while the editor is open. The chosen agent is asked only when the owner presses a button:
+
+- **Per item:** "Suggest with AI" on any item that isn't published. This also re-asks about an item, replacing its earlier suggestions.
+- **In bulk:** "Suggest with {{agent}} for N items" covers every item waiting for review that the AI hasn't been asked about. It runs two at a time and shows "Asking {{agent}}: 12 of 40 · 1 failed". **Stop** lets the items already being asked about finish (they're saved and counted) and starts no more.
+
+This keeps AI use (and the cost on the Custom Branding's key) under the owner's control, and means nothing changes an item behind the owner's back except finding the passages its text names.
+
 **Where it runs, and why.** Chat providers are registered by extensions inside the app, and Apologist's key reaches its server through the owner's CasualOS proxy from the browser. So steps 1–2 run in the editor, not in the import worker:
 
 - The worker still imports in the background (§5.8). Items arrive as `needs_review` with no `classification`.
-- While the library is open in the editor, a queue works through those items, two at a time.
-- Each item's result is saved to it as `classification` (provider, status, suggested category names, time).
-- Suggestions therefore need the editor open. The editor says so while items are waiting ("Suggesting categories and passages for 40 items. This happens while this page is open.").
+- While the library is open, step 1 runs by itself on those items and records `classification` without a `providerId`.
+- An AI run the owner starts needs the page open until it finishes; the editor says so while it runs.
 
-**Which items are classified, and when:**
+**Which items are touched:**
 
-- Imported items (`needs_review`) with no `classification` yet.
-- Items classified before an agent was chosen, which only had step 1, once one is chosen.
-- A failure (the provider threw) is recorded on the item and not retried by itself. The owner presses **Suggest again**.
-- Drafts and published items are left alone. **Suggest again** works on any unpublished item.
-- If the chosen agent's extension isn't installed for the Custom Branding, only step 1 runs, and the editor says the agent isn't available.
+- Step 1 (automatic): imported items (`needs_review`) with no `classification` yet. Drafts and published items are left alone.
+- AI (on request): the items the owner picks, or in bulk every `needs_review` item whose `classification` has no `providerId`.
+- A failure (the provider threw) is recorded on the item and never retried by itself.
+- Without a chosen agent, or if its extension isn't installed for the Custom Branding, the AI buttons don't appear and the editor says the agent isn't available.
 
 **Rules applied to every answer** (`applyClassification`):
 
@@ -319,7 +324,7 @@ New items arrive as `needs_review`. The editor (§7) shows each with its title, 
 
 Editing an item and saving it makes all its passages the owner's, since the owner has reviewed them.
 
-An optional per-library setting, **"Publish imported items without review when every passage is named in the content or a confident suggestion"**, publishes an item as soon as its suggestions arrive, if it has at least one passage and every AI passage is at least 0.75. It's only available once an agent is chosen. Publishing goes through the library writer (§5.6).
+An optional per-library setting, **"When you ask the AI, publish items without further review if every passage is named in the content or a confident suggestion"**, publishes an item as soon as AI suggestions the owner asked for arrive, if it has at least one passage and every AI passage is at least 0.75. It never applies to the automatic step 1, and it's only available once an agent is chosen. Publishing goes through the library writer (§5.6).
 
 ### 5.6 Publish: write items, rebuild chapters, update manifest
 
@@ -659,7 +664,7 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 
 1. **Phase 1 — storage + reading.** The content record, schemas, chapter index builder, Discover provider, and a minimal editor where the owner enters title/URL/categories/references by hand (publishing from the browser for now). Proves the per-chapter lookup end to end, with no AI work and no worker. _Built._
 2. **Phase 2 — the import worker.** API worker with session-key authentication, the D1 job tables and cleanup trigger, the queue and dead-letter consumer, `LibraryWriter` (publishing moves to the worker), CD deployment. Items filled from `getLinkPreview`; bulk paste and CSV import. _Built._ Without a configured worker (`VITE_CONTENT_IMPORT_URL` unset), bulk import is hidden and publishing stays in the browser, so development and self-hosted setups keep working. The worker type-checks without `@cloudflare/workers-types`, whose globals clash with the repo's DOM types: the Cloudflare APIs it uses are plain interfaces in `src/platform.ts`, and its tests run the real handlers against SQLite (`node:sqlite`) through those interfaces.
-3. **Phase 3 — AI classification and review.** Suggestions through chat providers' optional `classifyContent()` (Apologist implements it), run by the editor while it's open; step 1 for every library; confidence flags, suggested categories, auto-publish setting. _Built._ Only built-in extensions can offer `classifyContent` for now: sandboxed (third-party) extensions register chat providers through a message protocol that doesn't carry it yet.
+3. **Phase 3 — AI classification and review.** Suggestions through chat providers' optional `classifyContent()` (Apologist implements it), only when the owner asks (per item or in bulk), run by the editor while it's open; step 1 automatically for every library; confidence flags, suggested categories, auto-publish setting. _Built._ Only built-in extensions can offer `classifyContent` for now: sandboxed (third-party) extensions register chat providers through a message protocol that doesn't carry it yet.
 4. **Phase 4 — polish.** Coverage view, rebuild index, chapter-record paging if real libraries need it.
 5. **Phase 5 — whole-site import.** `CommonCrawlGate`, the site-import endpoint, page picker, full-text extraction and "Check for new pages". It comes after Phase 3 because its main gain, better verse detection from full text, only pays off once classification exists.
 
