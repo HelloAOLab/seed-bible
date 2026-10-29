@@ -68,11 +68,10 @@
 
   /* Pin the button to where it sits in the expanded sidebar so it doesn't
      jump when toggling: the extra top/start offset makes up the difference
-     in sidebar padding (0.875rem/1rem expanded vs 0.625rem/0.5rem here),
-     plus 0.25rem for being centered in the expanded header's 2rem row. */
+     in sidebar padding (0.875rem/1rem expanded vs 0.625rem/0.5rem here). */
   .sb-sidebar-collapse-button {
     align-self: flex-start;
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
     margin-inline-start: 0.5rem;
   }
 
@@ -165,11 +164,12 @@
    avatar on the end side. */
 .sb-sidebar-collapse-button {
   border: none;
+  border-radius: 0.5rem;
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
   width: 2rem;
-  height: 1.5rem;
+  height: 2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -180,6 +180,7 @@
    "more" button. */
 .sb-sidebar-top-actions .sb-sidebar-top-icon-button {
   border: none;
+  border-radius: 0.5rem;
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -1500,7 +1501,7 @@
 
 .sb-sidebar-icon-button {
   border: none;
-  border-radius: 62.4375rem;
+  border-radius: 0.5rem;
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -1511,19 +1512,24 @@
   width: 2rem;
 }
 
-/* The sidebar's edge icons (expand/collapse, settings) grow slightly on
-   hover, like the avatar beside settings, at the reader toolbar icons'
-   scale. Only where hover is real: a touch screen keeps `:hover` on a
-   tapped button, so it would stay enlarged. */
+/* The sidebar's icon buttons (expand/collapse, Panels, more, settings) hover
+   like the Tabs header's: a gray tint and a full-strength icon. Only where
+   hover is real: a touch screen keeps `:hover` on a tapped button, so the
+   tint would stick. */
 .sb-sidebar-collapse-button,
-.sb-sidebar-icon-button {
-  transition: transform 0.15s ease;
+.sb-sidebar-icon-button,
+.sb-sidebar-top-actions .sb-sidebar-top-icon-button {
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 @media (hover: hover) {
   .sb-sidebar-collapse-button:hover,
-  .sb-sidebar-icon-button:hover {
-    transform: scale(1.08);
+  .sb-sidebar-icon-button:hover,
+  .sb-sidebar-top-actions .sb-sidebar-top-icon-button:hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+    color: var(--sb-font-color);
   }
 }
 
@@ -1531,7 +1537,8 @@
   stroke: currentColor;
 }
 
-.sb-sidebar-icon-button-selected {
+.sb-sidebar-icon-button-selected,
+.sb-sidebar-icon-button-selected:hover {
   color: var(--sb-primary-color);
 }
 
