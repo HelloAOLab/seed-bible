@@ -619,8 +619,15 @@ function placeFloatingToolMenu(anchor: HTMLElement, menu: HTMLElement): void {
 
   const topPx = `${top}px`;
   const leftPx = `${left}px`;
+  // The corner by the trigger, for the opening animation.
+  const origin = `${alignToInlineStart ? "left" : "right"} ${
+    placeAbove ? "bottom" : "top"
+  }`;
   if (menu.style.top !== topPx) menu.style.top = topPx;
   if (menu.style.left !== leftPx) menu.style.left = leftPx;
+  if (menu.style.transformOrigin !== origin) {
+    menu.style.transformOrigin = origin;
+  }
   if (menu.style.visibility !== "visible") menu.style.visibility = "visible";
 }
 
