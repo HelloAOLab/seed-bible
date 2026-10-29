@@ -111,28 +111,15 @@ describe("CustomizationsManager", () => {
 
     type MinimalSettingsValue = {
       themeId: string;
-      customTheme: Record<string, string>;
-      customHighlights: Record<string, unknown>;
     };
     const settingsValue = signal<MinimalSettingsValue>({
       themeId: "light",
-      customTheme: {},
-      customHighlights: {},
     });
     settings = {
       settings: settingsValue,
       setThemeId: vi.fn((themeId: string) => {
         settingsValue.value = { ...settingsValue.value, themeId };
       }),
-      setCustomTheme: vi.fn((customTheme: Record<string, string>) => {
-        settingsValue.value = { ...settingsValue.value, customTheme };
-      }),
-      setCustomHighlights: vi.fn(
-        (customHighlights: Record<string, unknown>) => {
-          settingsValue.value = { ...settingsValue.value, customHighlights };
-        }
-      ),
-      resetTextColors: vi.fn(),
     } as unknown as Mocked<SettingsManager>;
   });
 
@@ -434,7 +421,6 @@ describe("CustomizationsManager", () => {
     });
     expect(manager.customizations.value).toEqual([created]);
     expect(manager.activeThemeOverrides.value).toEqual({});
-    expect(theme.customOverrides.value).toEqual({});
   });
 
   it("lightenColor() moves a color's lightness toward white by the given amount", () => {
@@ -811,6 +797,7 @@ describe("CustomizationsManager", () => {
       { name: "Open Sans", value: "Open Sans, sans-serif" },
       { name: "Playfair Display", value: "Playfair Display, serif" },
       { name: "Cormorant Garamond", value: "Cormorant Garamond, serif" },
+      { name: "Plus Jakarta Sans", value: "Plus Jakarta Sans, sans-serif" },
     ]);
 
     // Different fields have different Light-theme defaults.
@@ -1059,7 +1046,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("updateEditingName() updates the draft's name without persisting or touching the live theme", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
 
@@ -1067,7 +1054,6 @@ describe("CustomizationsManager", () => {
 
     expect(manager.editingCustomization.value?.name).toBe("My colors");
     expect(manager.customizations.value[0]?.name).toBe(created.name);
-    expect(theme.customOverrides.value).toEqual({});
   });
 
   it("updateEditingDefaultTranslationId() sets the draft's default translation without persisting, then persists it on save", async () => {
@@ -1513,7 +1499,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("startEditing() immediately previews the draft's unsaved colors on the live theme without persisting them to the user's theme settings", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     const variantId = created.variants[0]!.id;
     manager.startEditing(created.id);
@@ -1528,14 +1514,10 @@ describe("CustomizationsManager", () => {
     expect(manager.activeThemeOverrides.value.secondaryColor).toBe(
       lightenColor("#111111", SECONDARY_LIGHTEN_AMOUNT)
     );
-    // Regression check: none of this may ever write into the user's
-    // persisted, settings-backed theme overrides — only this in-memory
-    // signal.
-    expect(theme.customOverrides.value).toEqual({});
   });
 
   it("activeHighlightOverrides reflects the active variant's highlight colors, and resets to {} once editing stops", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     const variantId = created.variants[0]!.id;
     manager.startEditing(created.id);
@@ -1551,9 +1533,6 @@ describe("CustomizationsManager", () => {
     expect(manager.activeHighlightOverrides.value.yellow?.color).toBe(
       "#123456"
     );
-    // Regression check: same as activeThemeOverrides, this must never write
-    // into the user's persisted, settings-backed highlight overrides.
-    expect(theme.customHighlightOverrides.value).toEqual({});
 
     manager.stopEditing();
 
@@ -1573,7 +1552,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("stopEditing() resets the live theme's overrides", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
     manager.setEditingVariantColor(
@@ -1587,11 +1566,10 @@ describe("CustomizationsManager", () => {
 
     expect(manager.activeCustomization.value).toBeNull();
     expect(manager.activeThemeOverrides.value).toEqual({});
-    expect(theme.customOverrides.value).toEqual({});
   });
 
   it("remove() erases the record and resets the live theme if it was being edited", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
 
@@ -1600,7 +1578,6 @@ describe("CustomizationsManager", () => {
     expect(eraseDataMock).toHaveBeenCalledWith("user-1", created.id);
     expect(manager.customizations.value).toEqual([]);
     expect(manager.activeThemeOverrides.value).toEqual({});
-    expect(theme.customOverrides.value).toEqual({});
   });
 
   it("remove() clears editingCustomization only when the removed id matches", async () => {
@@ -2148,7 +2125,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("selectActiveVariant() persists the viewer's own choice, separate from the customization record and the user's default theme settings", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
     const second = manager.addEditingVariant();
@@ -2174,9 +2151,7 @@ describe("CustomizationsManager", () => {
       expect.anything()
     );
     // ...and never to the user's regular, persisted theme settings.
-    expect(theme.customOverrides.value).toEqual({});
     expect(settings.setThemeId).not.toHaveBeenCalled();
-    expect(settings.setCustomTheme).not.toHaveBeenCalled();
   });
 
   it("activeExtensionIds is empty when no customization is active", async () => {

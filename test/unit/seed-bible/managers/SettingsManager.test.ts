@@ -2,6 +2,7 @@ import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nMana
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import {
   createSettings,
+  DEFAULT_VERSE_LINE_HEIGHT,
   type AppSettings,
 } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
 import {
@@ -334,8 +335,6 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     settings.setDisablePanels(true);
     settings.setBookOrientation("tanakh");
     settings.setThemeId("dark");
-    settings.setCustomTheme({ primaryColor: "#000000" });
-    settings.setCustomHighlights({ yellow: { color: "#ffff00" } });
     settings.setDiscoverContentPanelInline(false);
     settings.setDiscoveredContent({ showContent: false });
 
@@ -345,8 +344,6 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.disablePanels).toBe(false);
     expect(settings.settings.value.bookOrientation).toBe("traditional");
     expect(settings.settings.value.themeId).toBe("system");
-    expect(settings.settings.value.customTheme).toEqual({});
-    expect(settings.settings.value.customHighlights).toEqual({});
     expect(settings.settings.value.discoverContentPanelInline).toBe(true);
     expect(settings.settings.value.discoveredContent.showContent).toBe(true);
   });
@@ -574,14 +571,10 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
     expect(localWins.settings.value.themeId).toBe("dark");
   });
 
-  it("lets an embed link's theme outrank a signed-in viewer's saved theme and colors", () => {
+  it("lets an embed link's theme outrank a signed-in viewer's saved theme", () => {
     const loggedIn = makeFakeLogin({
       name: "Test",
-      config: {
-        themeId: "dark",
-        customTheme: { background: "#123456" },
-        customHighlights: { yellow: { color: "#ffff00" } },
-      },
+      config: { themeId: "dark" },
     } as unknown as UserProfile);
     const settings = createSettings(
       os,
@@ -590,8 +583,6 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
     );
 
     expect(settings.settings.value.themeId).toBe("light");
-    expect(settings.settings.value.customTheme).toEqual({});
-    expect(settings.settings.value.customHighlights).toEqual({});
   });
 });
 
@@ -673,5 +664,361 @@ describe("custom highlight colors", () => {
       "#111111",
       "#222222",
     ]);
+  });
+});
+
+describe("scripture font override", () => {
+  const ROBOTO = "Roboto, sans-serif";
+  const OPEN_SANS = "Open Sans, sans-serif";
+  const FONT_OVERRIDE_VAR = "--sb-scripture-font-override";
+
+  const appliedFontOverride = () =>
+    document.documentElement.style.getPropertyValue(FONT_OVERRIDE_VAR);
+
+  const loggedInLogin = (config: Record<string, unknown> = {}) =>
+    makeFakeLogin({ name: "Test", config } as unknown as UserProfile);
+
+  const profileFontOverride = (login: LoginManager) =>
+    (login.profile.value as { config?: { fontOverride?: string } } | null)
+      ?.config?.fontOverride;
+
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    document.documentElement.style.removeProperty(FONT_OVERRIDE_VAR);
+    localStorage.clear();
+  });
+
+  it("defaults to no override, leaving the theme fonts in charge", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("persists a chosen font to the profile and publishes it as a CSS variable", () => {
+    const login = loggedInLogin();
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setFontOverride(ROBOTO);
+
+    expect(settings.settings.value.fontOverride).toBe(ROBOTO);
+    expect(profileFontOverride(login)).toBe(ROBOTO);
+    expect(appliedFontOverride()).toBe(ROBOTO);
+  });
+
+  it("persists a chosen font to login.localConfig when anonymous", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setFontOverride(ROBOTO);
+
+    expect(login.localConfig.value.fontOverride).toBe(ROBOTO);
+  });
+
+  it("switching back to Default clears the saved font and the CSS variable", () => {
+    const login = loggedInLogin({ fontOverride: ROBOTO });
+    const settings = createSettings(CasualOSManager(), login, navWith());
+    expect(appliedFontOverride()).toBe(ROBOTO);
+
+    settings.setFontOverride(undefined);
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(profileFontOverride(login)).not.toBe(ROBOTO);
+    expect(appliedFontOverride()).toBe("");
+
+    // A later session reading the same profile starts on Default too.
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.fontOverride).toBeUndefined();
+  });
+
+  it("switching back to Default sticks for a signed-in user whose device still has a font saved from before signing in", () => {
+    const login = loggedInLogin();
+    login.localConfig.value = { fontOverride: ROBOTO };
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setFontOverride(OPEN_SANS);
+    settings.setFontOverride(undefined);
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.fontOverride).toBeUndefined();
+  });
+
+  it("resetToDefaults sticks for a signed-in user whose device still has a font saved from before signing in", () => {
+    const login = loggedInLogin({ fontOverride: OPEN_SANS });
+    login.localConfig.value = { fontOverride: ROBOTO };
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.fontOverride).toBeUndefined();
+  });
+
+  it("ignores a saved font that is not one of the offered presets", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      loggedInLogin({ fontOverride: "Comic Sans MS, cursive" }),
+      navWith()
+    );
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("accepts a preset font from the app.fontOverride URL param", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith(`?app.fontOverride=${encodeURIComponent(ROBOTO)}`)
+    );
+
+    expect(settings.settings.value.fontOverride).toBe(ROBOTO);
+  });
+
+  it("ignores an app.fontOverride URL param that is not one of the offered presets", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith(`?app.fontOverride=${encodeURIComponent("url(evil), serif")}`)
+    );
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("resetToDefaults clears the font override", () => {
+    const login = loggedInLogin();
+    const settings = createSettings(CasualOSManager(), login, navWith());
+    settings.setFontOverride(ROBOTO);
+
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(profileFontOverride(login)).not.toBe(ROBOTO);
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("lets an embed link's theme outrank a signed-in viewer's saved font", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      loggedInLogin({ fontOverride: ROBOTO }),
+      navWith("?embed=minimal&app.themeId=light")
+    );
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("lets an embed link's theme outrank a font saved on the device", () => {
+    const login = makeFakeLogin(null);
+    login.localConfig.value = { fontOverride: ROBOTO };
+    const settings = createSettings(
+      CasualOSManager(),
+      login,
+      navWith("?embed=minimal&app.themeId=light")
+    );
+
+    expect(settings.settings.value.fontOverride).toBeUndefined();
+    expect(appliedFontOverride()).toBe("");
+  });
+
+  it("keeps a font the embed link itself sets alongside its theme", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      loggedInLogin({ fontOverride: OPEN_SANS }),
+      navWith(
+        `?embed=minimal&app.themeId=light&app.fontOverride=${encodeURIComponent(ROBOTO)}`
+      )
+    );
+
+    expect(settings.settings.value.fontOverride).toBe(ROBOTO);
+    expect(appliedFontOverride()).toBe(ROBOTO);
+  });
+
+  it("an anonymous choice, and a later switch back to Default, both survive a page refresh", () => {
+    const os = CasualOSManager();
+    const nav = navWith();
+    const refresh = () => {
+      const login = createLoginManager({ os });
+      login.hydrateLocalConfig();
+      return createSettings(os, login, nav);
+    };
+
+    createSettings(os, createLoginManager({ os }), nav).setFontOverride(ROBOTO);
+    const afterChoice = refresh();
+    expect(afterChoice.settings.value.fontOverride).toBe(ROBOTO);
+
+    afterChoice.setFontOverride(undefined);
+    expect(refresh().settings.value.fontOverride).toBeUndefined();
+  });
+});
+
+describe("removed per-section text settings", () => {
+  const TEXT_STYLE_VARS = [
+    "--text-bookTitle-font",
+    "--text-heading-margin-top",
+    "--text-verse-font-style",
+    "--text-verse-text-decoration",
+    "--text-verse-alignment",
+    "--text-verse-line-height",
+  ];
+  const VERSE_COLOR_VAR = "--sb-verse-font-color";
+
+  const appliedRootVar = (name: string) =>
+    document.documentElement.style.getPropertyValue(name);
+
+  const customizedTextConfig = {
+    bookTitle: { font: "'Inter', sans-serif" },
+    heading: { marginVertical: 40 },
+    verse: {
+      italic: true,
+      underline: true,
+      alignment: "center",
+      color: "#aa0000",
+      lineHeight: 2,
+    },
+  };
+
+  const loggedInLogin = (config: Record<string, unknown> = {}) =>
+    makeFakeLogin({ name: "Test", config } as unknown as UserProfile);
+
+  const profileConfig = (login: LoginManager) =>
+    (login.profile.value as { config?: Record<string, unknown> } | null)
+      ?.config ?? {};
+
+  afterEach(() => {
+    for (const name of TEXT_STYLE_VARS) {
+      document.documentElement.style.removeProperty(name);
+    }
+    document.body.style.removeProperty(VERSE_COLOR_VAR);
+    localStorage.clear();
+  });
+
+  it("no longer applies text styles a signed-in user saved in All settings", () => {
+    createSettings(
+      CasualOSManager(),
+      loggedInLogin({ textConfig: customizedTextConfig }),
+      navWith()
+    );
+
+    expect(appliedRootVar("--text-verse-font-style")).toBe("");
+    expect(appliedRootVar("--text-verse-text-decoration")).toBe("");
+    expect(appliedRootVar("--text-verse-alignment")).toBe("");
+    expect(appliedRootVar("--text-heading-margin-top")).toBe("");
+    expect(appliedRootVar("--text-bookTitle-font")).toBe("");
+    expect(document.body.style.getPropertyValue(VERSE_COLOR_VAR)).toBe("");
+  });
+
+  it("no longer applies text styles an anonymous visitor saved on the device", () => {
+    const login = makeFakeLogin(null);
+    login.localConfig.value = { textConfig: customizedTextConfig };
+
+    createSettings(CasualOSManager(), login, navWith());
+
+    expect(appliedRootVar("--text-verse-font-style")).toBe("");
+    expect(appliedRootVar("--text-verse-text-decoration")).toBe("");
+    expect(document.body.style.getPropertyValue(VERSE_COLOR_VAR)).toBe("");
+  });
+
+  it("keeps the verse line spacing saved alongside those old text styles", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      loggedInLogin({ textConfig: customizedTextConfig }),
+      navWith()
+    );
+
+    expect(settings.settings.value.verseLineHeight).toBe(2);
+    expect(appliedRootVar("--text-verse-line-height")).toBe("2");
+  });
+
+  it("keeps a signed-in user's old line spacing over a newer one saved on the device while signed out", () => {
+    const login = loggedInLogin({ textConfig: customizedTextConfig });
+    login.localConfig.value = { verseLineHeight: 2.5 };
+
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    expect(settings.settings.value.verseLineHeight).toBe(2);
+    expect(appliedRootVar("--text-verse-line-height")).toBe("2");
+  });
+
+  it("reads the old line spacing from a link that passes the text styles as JSON", () => {
+    const textConfigParam = encodeURIComponent(
+      JSON.stringify({ verse: { lineHeight: 2 } })
+    );
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith(`?app.textConfig=${textConfigParam}`)
+    );
+
+    expect(settings.settings.value.verseLineHeight).toBe(2);
+    expect(appliedRootVar("--text-verse-line-height")).toBe("2");
+  });
+
+  it("defaults the verse line spacing when nothing was saved", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    expect(settings.settings.value.verseLineHeight).toBe(
+      DEFAULT_VERSE_LINE_HEIGHT
+    );
+    expect(appliedRootVar("--text-verse-line-height")).toBe(
+      String(DEFAULT_VERSE_LINE_HEIGHT)
+    );
+  });
+
+  it("a new line spacing choice replaces the old saved one in later sessions", () => {
+    const login = loggedInLogin({ textConfig: customizedTextConfig });
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setVerseLineHeight(2.5);
+
+    expect(profileConfig(login).verseLineHeight).toBe(2.5);
+    expect(appliedRootVar("--text-verse-line-height")).toBe("2.5");
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.verseLineHeight).toBe(2.5);
+  });
+
+  it("resetToDefaults resets the line spacing even when an old one is saved", () => {
+    const login = loggedInLogin({ textConfig: customizedTextConfig });
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.verseLineHeight).toBe(
+      DEFAULT_VERSE_LINE_HEIGHT
+    );
+    const nextSession = createSettings(CasualOSManager(), login, navWith());
+    expect(nextSession.settings.value.verseLineHeight).toBe(
+      DEFAULT_VERSE_LINE_HEIGHT
+    );
+  });
+
+  it("an anonymous line spacing choice survives a page refresh", () => {
+    const os = CasualOSManager();
+    const nav = navWith();
+    const refresh = () => {
+      const login = createLoginManager({ os });
+      login.hydrateLocalConfig();
+      return createSettings(os, login, nav);
+    };
+
+    createSettings(os, createLoginManager({ os }), nav).setVerseLineHeight(2);
+
+    expect(refresh().settings.value.verseLineHeight).toBe(2);
   });
 });

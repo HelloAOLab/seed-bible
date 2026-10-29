@@ -533,157 +533,53 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(login.localConfig.value.themeId).toBe("light");
     expect(theme.selectedThemeId.value).toBe("light");
   });
+});
 
-  it("setCustomColor / resetCustomColor read back correctly through settings", () => {
-    const login = makeFakeLogin(null);
-    const settings = makeSettings(login);
-    const theme = createThemeManager(settings);
+describe("colors saved in the removed All settings screen", () => {
+  const savedColors = {
+    themeId: "light",
+    customTheme: { background: "#123456", verseFontColor: "#654321" },
+    customHighlights: { yellow: { color: "#ff00ff", fontColor: "#00ff00" } },
+  };
 
-    theme.setCustomColor("primaryColor", "#123456");
-    expect(theme.customOverrides.value.primaryColor).toBe("#123456");
-    expect(login.localConfig.value.customTheme).toEqual({
-      primaryColor: "#123456",
-    });
-
-    theme.resetCustomColor("primaryColor");
-    expect(theme.customOverrides.value.primaryColor).toBeUndefined();
-  });
-
-  it("keeps the rest of the theme CSS when a custom color is saved", () => {
-    document.getElementById("sb-theme-styles")?.remove();
-    const login = makeFakeLogin(null);
-    const settings = makeSettings(login);
-    const theme = createThemeManager(settings);
-
-    theme.setCustomColor("primaryColor", "#123456");
-
+  function expectLightThemeUntouched(
+    theme: ReturnType<typeof createThemeManager>
+  ) {
+    expect(theme.currentTheme.value.variables.background).toBe(
+      LIGHT_THEME.variables.background
+    );
+    expect(theme.currentTheme.value.variables.verseFontColor).toBe(
+      LIGHT_THEME.variables.verseFontColor
+    );
+    expect(theme.currentTheme.value.highlightColors.yellow).toEqual(
+      LIGHT_THEME.highlightColors.yellow
+    );
     const css = document.getElementById("sb-theme-styles")?.textContent ?? "";
-    expect(css).toContain("--sb-primary-color: #123456;");
-    expect(css).toContain("--sb-background:");
-    expect(css).toContain("--sb-font-color:");
-    expect(css).toContain("body {");
-  });
+    expect(css).toContain(
+      `--sb-background: ${LIGHT_THEME.variables.background};`
+    );
+    expect(css).not.toContain("#123456");
+    expect(css).not.toContain("#ff00ff");
+  }
 
-  it("updates theme-color when the app background color is customized", () => {
-    document.querySelectorAll('meta[name="theme-color"]').forEach((el) => {
-      el.remove();
-    });
+  beforeEach(() => {
     document.getElementById("sb-theme-styles")?.remove();
-    const login = makeFakeLogin(null);
-    const settings = makeSettings(login);
-    const theme = createThemeManager(settings);
-
-    theme.setCustomColor("background", "#123456");
-
-    expect(
-      (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
-        .content
-    ).toBe("#123456");
   });
 
-  it("setHighlightColor / resetHighlightColor read back correctly through settings", () => {
-    const login = makeFakeLogin(null);
-    const settings = makeSettings(login);
-    const theme = createThemeManager(settings);
+  it("no longer applies colors a signed-in user saved", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: savedColors,
+    } as unknown as UserProfile);
 
-    theme.setHighlightColor("yellow", { color: "#ffff00" });
-    expect(theme.customHighlightOverrides.value.yellow?.color).toBe("#ffff00");
-
-    theme.resetHighlightColor("yellow");
-    expect(theme.customHighlightOverrides.value.yellow).toBeUndefined();
+    expectLightThemeUntouched(createThemeManager(makeSettings(login)));
   });
 
-  it("previewCustomColor updates currentTheme live without persisting anything", () => {
+  it("no longer applies colors an anonymous visitor saved on the device", () => {
     const login = makeFakeLogin(null);
-    const settings = makeSettings(login);
-    const theme = createThemeManager(settings);
+    login.localConfig.value = savedColors;
 
-    theme.previewCustomColor("primaryColor", "#abcdef");
-
-    expect(theme.currentTheme.value.variables.primaryColor).toBe("#abcdef");
-    expect(theme.customOverrides.value.primaryColor).toBeUndefined();
-    expect(login.localConfig.value.customTheme).toBeUndefined();
-  });
-
-  it("clearPreviewCustomColor discards the preview and restores the persisted value", () => {
-    const login = makeFakeLogin(null);
-    const settings = makeSettings(login);
-    const theme = createThemeManager(settings);
-    const original = theme.currentTheme.value.variables.primaryColor;
-
-    theme.previewCustomColor("primaryColor", "#abcdef");
-    theme.clearPreviewCustomColor("primaryColor");
-
-    expect(theme.currentTheme.value.variables.primaryColor).toBe(original);
-  });
-
-  it("setCustomColor clears any pending preview, so the just-saved color actually shows", () => {
-    // Without clearing the preview, applyOverrides would keep layering it on
-    // top of the fresh commit and the swatch would still show the old drag
-    // value instead of the color that was just confirmed.
-    const login = makeFakeLogin(null);
-    const settings = makeSettings(login);
-    const theme = createThemeManager(settings);
-
-    theme.previewCustomColor("primaryColor", "#abcdef");
-    theme.setCustomColor("primaryColor", "#123456");
-
-    expect(theme.currentTheme.value.variables.primaryColor).toBe("#123456");
-  });
-
-  it("previewHighlightColor updates only the previewed field, leaving the other field's real value alone", () => {
-    const login = makeFakeLogin(null);
-    const settings = makeSettings(login);
-    const theme = createThemeManager(settings);
-    const originalFontColor =
-      theme.currentTheme.value.highlightColors.yellow.fontColor;
-
-    theme.previewHighlightColor("yellow", { color: "#ff00ff" });
-
-    expect(theme.currentTheme.value.highlightColors.yellow.color).toBe(
-      "#ff00ff"
-    );
-    expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
-      originalFontColor
-    );
-    expect(theme.customHighlightOverrides.value.yellow).toBeUndefined();
-  });
-
-  it("clearPreviewHighlightField discards only the named field, leaving a preview on the other field intact", () => {
-    const login = makeFakeLogin(null);
-    const settings = makeSettings(login);
-    const theme = createThemeManager(settings);
-
-    theme.previewHighlightColor("yellow", {
-      color: "#ff00ff",
-      fontColor: "#00ff00",
-    });
-    theme.clearPreviewHighlightField("yellow", "color");
-
-    expect(theme.currentTheme.value.highlightColors.yellow.color).not.toBe(
-      "#ff00ff"
-    );
-    expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
-      "#00ff00"
-    );
-  });
-
-  it("setHighlightColor clears only the committed field's preview, so an in-progress drag on the other field survives", () => {
-    const login = makeFakeLogin(null);
-    const settings = makeSettings(login);
-    const theme = createThemeManager(settings);
-
-    theme.previewHighlightColor("yellow", { color: "#ff00ff" });
-    theme.previewHighlightColor("yellow", { fontColor: "#00ff00" });
-
-    theme.setHighlightColor("yellow", { color: "#123456" });
-
-    expect(theme.currentTheme.value.highlightColors.yellow.color).toBe(
-      "#123456"
-    );
-    expect(theme.currentTheme.value.highlightColors.yellow.fontColor).toBe(
-      "#00ff00"
-    );
+    expectLightThemeUntouched(createThemeManager(makeSettings(login)));
   });
 });
 
