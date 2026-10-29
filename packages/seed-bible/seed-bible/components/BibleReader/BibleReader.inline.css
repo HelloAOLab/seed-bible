@@ -38,20 +38,44 @@
   z-index: 1;
 }
 .sb-verse-number-flare {
+  --sb-selection-flare-background: color-mix(
+    in srgb,
+    var(--sb-selection-flare-color) 25%,
+    transparent
+  );
   position: relative;
   z-index: 1;
-  animation: sb-verse-number-flare 3s ease-out;
+  /* Keep in sync with removeAfterMs in broadcastSelectedVerse (BibleReader.tsx). */
+  animation: sb-verse-number-flare 8s ease-out;
   border-radius: 3px;
 }
 
+/*
+ * 0–0.3s: border and background fade in.
+ * 1–3s: border fades out, leaving the background.
+ * 5–8s: background fades out.
+ */
 @keyframes sb-verse-number-flare {
-  0%,
-  33.333% {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+    background-color: transparent;
+  }
+
+  3.75%,
+  12.5% {
     box-shadow: 0 0 0 3px var(--sb-selection-flare-color);
+    background-color: var(--sb-selection-flare-background);
+  }
+
+  37.5%,
+  62.5% {
+    box-shadow: 0 0 0 0 transparent;
+    background-color: var(--sb-selection-flare-background);
   }
 
   100% {
     box-shadow: 0 0 0 0 transparent;
+    background-color: transparent;
   }
 }
 
@@ -59,7 +83,7 @@
   .sb-verse-number-flare {
     animation: none;
     color: var(--sb-selection-flare-color);
-    background-color: transparent;
+    background-color: var(--sb-selection-flare-background);
     box-shadow: 0 0 0 2px
       color-mix(in srgb, var(--sb-selection-flare-color) 35%, transparent);
   }

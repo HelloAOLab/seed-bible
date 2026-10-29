@@ -457,7 +457,7 @@ function broadcastSelectedVerse(
       style: {
         "--sb-selection-flare-color": user.visual.color,
       } as JSX.CSSProperties,
-      removeAfterMs: 3000,
+      removeAfterMs: 8000,
     },
     decorationId
   );
