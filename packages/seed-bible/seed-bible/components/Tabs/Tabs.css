@@ -887,20 +887,6 @@
   }
 }
 
-.sb-sidebar-settings-close-button {
-  border: none;
-  border-radius: 0.4375rem;
-  width: 1.875rem;
-  height: 1.875rem;
-  background: var(--sb-secondary-color);
-  color: var(--sb-font-color);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
 .sb-sidebar-settings-content {
   min-height: 0;
   flex: 1;
