@@ -980,16 +980,27 @@
    width, not `.sb-tabs-sidebar-mobile-open`: that class outlives the drawer
    when the window is widened with it open. It fades with the row's
    hover background; `visibility` flips at the start of a fade in and the end
-   of a fade out, so it's never clickable while fully invisible. */
+   of a fade out, so it's never clickable while fully invisible. Save,
+   save folder and bookmark rows follow the same rules; they have no selected
+   state. */
 @media (hover: hover) and (min-width: 481px) {
-  .sb-tab-row > .sb-tab-menu-anchor {
+  .sb-tab-row > .sb-tab-menu-anchor,
+  :is(.sb-save-category-header, .sb-save-item, .sb-bookmarks-panel-row)
+    > :is(.sb-save-category-menu-anchor, .sb-tab-menu-anchor) {
     transition:
       opacity 0.15s ease,
       visibility 0s;
   }
 
   .sb-tab-row:not(.sb-tab-row-selected, :hover, :has(:focus-visible))
-    > .sb-tab-menu-anchor:not(:has([aria-expanded="true"])) {
+    > .sb-tab-menu-anchor:not(:has([aria-expanded="true"])),
+  :is(.sb-save-category-header, .sb-save-item, .sb-bookmarks-panel-row):not(
+      :hover,
+      :has(:focus-visible)
+    )
+    > :is(.sb-save-category-menu-anchor, .sb-tab-menu-anchor):not(
+      :has([aria-expanded="true"])
+    ) {
     visibility: hidden;
     opacity: 0;
     transition:
