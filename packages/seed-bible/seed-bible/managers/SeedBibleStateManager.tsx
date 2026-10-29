@@ -930,6 +930,7 @@ export function createSeedBibleState(
     customizations,
     discover,
     modals,
+    chats,
     // Set at build time; without it bulk import is off and publishing
     // happens in the browser.
     importService:

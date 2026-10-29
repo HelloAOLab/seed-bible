@@ -1,3 +1,7 @@
+import type {
+  ContentClassificationRequest,
+  ContentClassificationResult,
+} from "./customContent/classify";
 import {
   computed,
   effect,
@@ -248,6 +252,18 @@ export interface ChatProvider {
   generateResponse: (
     context: ChatContext
   ) => ChatProviderResponse | Promise<ChatProviderResponse | null> | null;
+  /**
+   * Optional. Suggests which of a content library's categories a piece of
+   * content belongs in and which Bible passages it covers, for Custom
+   * Branding content libraries. A provider that talks to a chat model can
+   * send `request.instructions` and `request.input` as its system and user
+   * messages and return `parseContentClassification(reply)`; the app checks
+   * the answer either way (unknown categories and passages are dropped).
+   * Throwing marks the item as not classified, for the owner to retry.
+   */
+  classifyContent?: (
+    request: ContentClassificationRequest
+  ) => Promise<ContentClassificationResult>;
   /** Called when this provider is added as a participant to a chat. */
   onJoinChat?: (context: JoinLeaveChatContext) => void | Promise<void>;
   /** Called when this provider is removed as a participant from a chat. */

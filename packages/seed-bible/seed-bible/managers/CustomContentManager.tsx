@@ -11,6 +11,14 @@ import type { TranslationBook } from "./FreeUseBibleAPI";
 import type { LoginManager } from "./LoginManager";
 import type { ModalManager } from "./ModalManager";
 import type { CasualOSManager } from "./OsManager";
+import type { ChatProvider, ChatsManager } from "./ChatsManager";
+import {
+  applyClassification,
+  buildClassificationRequest,
+  findExplicitReferences,
+  isConfidentlyClassified,
+  type ContentClassificationResult,
+} from "./customContent/classify";
 import {
   affectedChapterKeys,
   publishedChapterKeys,
@@ -24,7 +32,10 @@ import {
 import type { ContentImportService } from "./customContent/importClient";
 import type { ImportEntry } from "./customContent/importEntries";
 import { normalizeContentUrl } from "./customContent/normalizeUrl";
-import { parsePassages } from "./customContent/passages";
+import {
+  formatContentReference,
+  parsePassages,
+} from "./customContent/passages";
 import {
   ContentLibraryError,
   assertStored,
@@ -150,6 +161,18 @@ export interface CustomContentManager {
   cancelImport: () => Promise<void>;
   /** Continues an import that paused because the session it started with ended. */
   resumeImport: () => Promise<void>;
+
+  /** Chat providers that can suggest categories and passages (they implement `classifyContent`). */
+  classifierProviders: ReadonlySignal<readonly ChatProvider[]>;
+  /** The open library's chosen provider, while it's registered. */
+  classifier: ReadonlySignal<ChatProvider | null>;
+  /** Items still waiting for suggestions; they're worked on while the editor is open. */
+  classifyQueue: ReadonlySignal<number>;
+  /** Picks the provider that suggests categories and passages, or none (only passages named in the text are found). */
+  setClassifier: (providerId: string | null) => Promise<void>;
+  setAutoPublish: (autoPublish: boolean) => Promise<void>;
+  /** Suggests categories and passages for one item again, replacing its earlier suggestions. */
+  classifyItem: (id: string) => Promise<void>;
 }
 
 const RECORD_NAME_PREFIX = "seedbible-content-";
@@ -211,11 +234,13 @@ export function createCustomContentManager(deps: {
     "registerDiscoverProvider" | "registerContentType"
   >;
   modals: Pick<ModalManager, "openModal">;
+  /** Chat providers registered by extensions; ones with `classifyContent` can suggest categories and passages. */
+  chats: Pick<ChatsManager, "providers">;
   /** The import worker. Without one, bulk import is off and publishing happens in the browser. */
   importService?: ContentImportService | null;
   importPollMs?: number;
 }): CustomContentManager {
-  const { os, login, customizations, discover, modals } = deps;
+  const { os, login, customizations, discover, modals, chats } = deps;
   const importService = deps.importService ?? null;
   const importPollMs = deps.importPollMs ?? DEFAULT_IMPORT_POLL_MS;
   const store = storeFor(os);
@@ -448,6 +473,7 @@ export function createCustomContentManager(deps: {
 
   const closeLibrary = (): void => {
     stopWatching();
+    unsaved.clear();
     recordName.value = null;
     status.value = "closed";
     manifest.value = null;
@@ -799,6 +825,188 @@ export function createCustomContentManager(deps: {
     watchImport(record, resumed);
   };
 
+  // --- Suggesting categories and passages ---
+
+  const classifierProviders = computed(() =>
+    chats.providers.value.filter((provider) => !!provider.classifyContent)
+  );
+  const classifier = computed(() => {
+    const id = manifest.value?.classifierProviderId;
+    return id
+      ? (classifierProviders.value.find((provider) => provider.id === id) ??
+          null)
+      : null;
+  });
+
+  /**
+   * Imported items waiting for suggestions: never classified, or classified
+   * only from their own text before a provider was set up. Failures aren't
+   * retried by themselves; the owner asks again with "Suggest again".
+   */
+  const needsClassification = (item: ContentItem): boolean =>
+    item.status === "needs_review" &&
+    (!item.classification ||
+      (!item.classification.providerId && classifier.value !== null));
+
+  const classifying = new Set<string>();
+  // Items whose result couldn't be saved; skipped until the library reopens,
+  // so a failing write doesn't retry in a tight loop.
+  const unsaved = new Set<string>();
+  const classifyQueue = computed(
+    () =>
+      items.value.filter(
+        (item) => needsClassification(item) && !unsaved.has(item.id)
+      ).length
+  );
+  /** Requests to a provider at once, so a big import doesn't flood it. */
+  const CLASSIFY_CONCURRENCY = 2;
+
+  const classifyOne = async (record: string, id: string): Promise<void> => {
+    const item = items.value.find((i) => i.id === id);
+    const current = manifest.value;
+    if (!item || !current || recordName.value !== record) {
+      return;
+    }
+    const provider = classifier.value;
+    const explicit = findExplicitReferences(item);
+    let result: ContentClassificationResult | undefined;
+    let error: string | undefined;
+    if (provider?.classifyContent) {
+      try {
+        result = await provider.classifyContent(
+          buildClassificationRequest(
+            item,
+            current.categories,
+            explicit.map((reference) => formatContentReference(reference))
+          )
+        );
+      } catch (caught) {
+        console.warn("Couldn't get suggestions for a content item:", caught);
+        error = caught instanceof Error ? caught.message : String(caught);
+      }
+    }
+
+    await queueWrite(async () => {
+      if (recordName.value !== record) {
+        return;
+      }
+      const { current: latestManifest, all } = requireOpen();
+      // Apply to the item as it is now: the owner may have edited it while
+      // the provider was answering. One they've published is theirs; leave it.
+      const latest = all.find((i) => i.id === id);
+      if (!latest || (latest.status === "published" && !forced.has(id))) {
+        return;
+      }
+      let next = applyClassification(latest, {
+        explicit,
+        result,
+        error,
+        providerId: provider?.id,
+        categories: latestManifest.categories,
+        now: Date.now(),
+      });
+      if (
+        latestManifest.autoPublish &&
+        latest.status === "needs_review" &&
+        provider &&
+        !error &&
+        isConfidentlyClassified(next)
+      ) {
+        next = { ...next, status: "published" };
+      }
+      await writeItem(record, next);
+      const updated = all.map((i) => (i.id === id ? next : i));
+      setItemsIfOpen(record, updated);
+      const keys = affectedChapterKeys(latest, next);
+      if (keys.size > 0) {
+        await publish(record, { keys }, updated);
+      }
+    });
+  };
+
+  const forced = new Set<string>();
+
+  const pump = (): void => {
+    const record = recordName.value;
+    if (!record || status.value !== "ready") {
+      return;
+    }
+    for (const item of items.value) {
+      if (classifying.size >= CLASSIFY_CONCURRENCY) {
+        return;
+      }
+      if (
+        classifying.has(item.id) ||
+        unsaved.has(item.id) ||
+        !needsClassification(item)
+      ) {
+        continue;
+      }
+      classifying.add(item.id);
+      void classifyOne(record, item.id)
+        .catch((error) => {
+          console.warn("Couldn't save suggestions for a content item:", error);
+          unsaved.add(item.id);
+        })
+        .finally(() => {
+          classifying.delete(item.id);
+          pump();
+        });
+    }
+  };
+
+  // Works through the queue whenever items arrive (an import landing) or a
+  // provider becomes available, as long as the library is open.
+  effect(() => {
+    void items.value;
+    void classifier.value;
+    if (status.value === "ready") {
+      pump();
+    }
+  });
+
+  const setClassifier = (providerId: string | null): Promise<void> =>
+    queueWrite(async () => {
+      const { record, current } = requireOpen();
+      const next: ContentLibraryManifest = {
+        ...current,
+        updatedAt: Date.now(),
+      };
+      if (providerId) {
+        next.classifierProviderId = providerId;
+      } else {
+        delete next.classifierProviderId;
+      }
+      await writeManifest(record, next);
+    });
+
+  const setAutoPublish = (autoPublish: boolean): Promise<void> =>
+    queueWrite(async () => {
+      const { record, current } = requireOpen();
+      await writeManifest(record, {
+        ...current,
+        autoPublish,
+        updatedAt: Date.now(),
+      });
+    });
+
+  const classifyItem = async (id: string): Promise<void> => {
+    const record = recordName.value;
+    if (!record) {
+      return;
+    }
+    unsaved.delete(id);
+    forced.add(id);
+    classifying.add(id);
+    try {
+      await classifyOne(record, id);
+    } finally {
+      forced.delete(id);
+      classifying.delete(id);
+      pump();
+    }
+  };
+
   // --- Reading: Discover for the active Customization's library ---
 
   const openEntry = (entry: ContentChapterEntry): void => {
@@ -948,5 +1156,11 @@ export function createCustomContentManager(deps: {
     importEntries,
     cancelImport,
     resumeImport,
+    classifierProviders,
+    classifier,
+    classifyQueue,
+    setClassifier,
+    setAutoPublish,
+    classifyItem,
   };
 }

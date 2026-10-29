@@ -1,3 +1,5 @@
+import { formatRefLabel } from "../../components/ScriptureItemInput/scriptureSuggestions";
+import { BOOK_SLUGS, type BookId } from "../BibleDataManager";
 import type { TranslationBook } from "../FreeUseBibleAPI";
 import { parseSingleVerseReference } from "../parseVerseReference";
 import { isVerseReferenceInBounds } from "../verseReferenceBounds";
@@ -50,4 +52,42 @@ export function parsePassages(
     });
   }
   return { references, unrecognized };
+}
+
+/**
+ * The book's name in the open translation, or, with none, an English name
+ * built from its URL slug ("1-john" → "1 John").
+ */
+function bookName(bookId: string, books: TranslationBook[] | undefined) {
+  const fromTranslation = books?.find((book) => book.id === bookId)?.commonName;
+  if (fromTranslation) {
+    return fromTranslation;
+  }
+  const slug = BOOK_SLUGS[bookId as BookId];
+  if (!slug) {
+    return bookId;
+  }
+  return slug
+    .split("-")
+    .map((word) =>
+      word === "of" ? word : word.charAt(0).toUpperCase() + word.slice(1)
+    )
+    .join(" ");
+}
+
+/** A passage as people write it, e.g. "John 10:1-18" or "1 John 2". */
+export function formatContentReference(
+  reference: Pick<
+    ContentReference,
+    "book" | "chapter" | "endChapter" | "verse" | "endVerse"
+  >,
+  books?: TranslationBook[]
+): string {
+  return `${bookName(reference.book, books)} ${formatRefLabel({
+    bookId: reference.book,
+    chapter: reference.chapter,
+    endChapter: reference.endChapter,
+    verse: reference.verse,
+    endVerse: reference.endVerse,
+  })}`;
 }

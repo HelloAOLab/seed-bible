@@ -1,4 +1,5 @@
 import { createCustomContentManager } from "@packages/seed-bible/seed-bible/managers/CustomContentManager";
+import type { ChatProvider } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { ContentImportService } from "@packages/seed-bible/seed-bible/managers/customContent/importClient";
 import { createCustomizationsManager } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
 import { createCustomizationVariantSelectionsManager } from "@packages/seed-bible/seed-bible/managers/CustomizationVariantSelectionsManager";
@@ -153,6 +154,8 @@ export function createApp(
     href?: string;
     importService?: ContentImportService | null;
     importPollMs?: number;
+    /** Chat providers, as extensions would register them. */
+    chatProviders?: ChatProvider[];
   }
 ) {
   const os = CasualOSManager();
@@ -179,6 +182,7 @@ export function createApp(
     modals,
     importService: options.importService,
     importPollMs: options.importPollMs,
+    chats: { providers: signal(options.chatProviders ?? []) },
   });
   return { os, customizations, discover, modals, customContent };
 }

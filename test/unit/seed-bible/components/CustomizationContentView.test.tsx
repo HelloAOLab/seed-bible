@@ -4,6 +4,12 @@ import { signal } from "@preact/signals";
 import { CustomizationContentView } from "@packages/seed-bible/seed-bible/components/CustomizationEditPane/CustomizationContentView";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { contentChapterAddress } from "@packages/seed-bible/seed-bible/managers/customContent/schema";
+import type { ChatProvider } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import {
+  CONTENT_ITEM_MARKER,
+  contentItemAddress,
+  type ContentItem,
+} from "@packages/seed-bible/seed-bible/managers/customContent/schema";
 import type { ContentImportService } from "@packages/seed-bible/seed-bible/managers/customContent/importClient";
 import type { ImportProgress } from "@packages/seed-bible/seed-bible/managers/customContent/importApi";
 import { ContentLibraryError } from "@packages/seed-bible/seed-bible/managers/customContent/publish";
@@ -38,12 +44,16 @@ afterEach(() => {
 /** The owner, signed in, with a Custom Branding open in the editor. */
 async function renderEditor(
   server: FakeRecordsServer,
-  options: { importService?: ContentImportService } = {}
+  options: {
+    importService?: ContentImportService;
+    chatProviders?: ChatProvider[];
+  } = {}
 ) {
   const app = createApp(server, {
     userId: OWNER,
     importService: options.importService,
     importPollMs: 5,
+    chatProviders: options.chatProviders,
   });
   app.os.sessionKey.value = "vSK1.owner-session";
   const created = await app.customizations.create();
@@ -296,6 +306,126 @@ describe("CustomizationContentView", () => {
       expect(toast).toHaveBeenCalledWith(
         "An import is already running for this library. Wait for it to finish, or cancel it."
       );
+    });
+  });
+
+  describe("AI suggestions", () => {
+    const agent: ChatProvider = {
+      id: "agent",
+      name: "Grace Agent",
+      supportsSharedChats: false,
+      generateResponse: () => null,
+      classifyContent: async () => ({
+        categoryIds: [],
+        passages: [{ reference: "Psalm 46", confidence: 0.6 }],
+        suggestedCategories: ["Holy Week"],
+      }),
+    };
+    const chatOnly: ChatProvider = {
+      id: "chat-only",
+      name: "Chat only",
+      supportsSharedChats: false,
+      generateResponse: () => null,
+    };
+
+    async function select(id: string, value: string) {
+      const element = container.querySelector<HTMLSelectElement>(`#${id}`)!;
+      await act(() => {
+        element.value = value;
+        element.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+    }
+
+    it("offers only agents that can suggest, and saves the choice", async () => {
+      const server = fakeRecordsServer();
+      const { customContent } = await renderEditor(server, {
+        chatProviders: [agent, chatOnly],
+      });
+      await createLibrary();
+
+      const options = [
+        ...container.querySelectorAll("#sb-ccl-classifier option"),
+      ].map((o) => o.textContent);
+      expect(options).toEqual([
+        "No AI: only passages named in the content",
+        "Grace Agent",
+      ]);
+      const autoPublish = [
+        ...container.querySelectorAll<HTMLInputElement>(
+          'input[type="checkbox"]'
+        ),
+      ].find((input) =>
+        input.parentElement?.textContent?.includes("without review")
+      )!;
+      expect(autoPublish.disabled).toBe(true);
+
+      await select("sb-ccl-classifier", "agent");
+      await waitForCondition(
+        () => customContent.manifest.value?.classifierProviderId === "agent"
+      );
+      expect(autoPublish.disabled).toBe(false);
+    });
+
+    it("says so when the chosen agent's extension is turned off", async () => {
+      const server = fakeRecordsServer();
+      const { customContent } = await renderEditor(server);
+      await createLibrary();
+      await act(() => customContent.setClassifier("agent"));
+      expect(container.textContent).toContain(
+        "The chosen agent isn't available."
+      );
+    });
+
+    it("marks passages the owner should check, and offers suggested categories", async () => {
+      const server = fakeRecordsServer();
+      const { customContent } = await renderEditor(server, {
+        chatProviders: [agent],
+      });
+      await createLibrary();
+      await act(() => customContent.setClassifier("agent"));
+      const recordName = customContent.recordName.value!;
+      const item: ContentItem = {
+        id: "a",
+        url: "https://example.org/a",
+        status: "needs_review",
+        title: "Be Still",
+        description: "Notes on Psalm 23.",
+        categoryIds: [],
+        references: [],
+        createdAt: 1,
+        updatedAt: 1,
+      };
+      server.records.get(recordName)!.set(contentItemAddress("a"), {
+        data: item,
+        markers: [CONTENT_ITEM_MARKER],
+      });
+      await act(() => customContent.openLibrary(recordName));
+
+      await waitForCondition(() =>
+        container.textContent!.includes(
+          "Suggested category: Holy Week (1 items)"
+        )
+      );
+      const chips = [...container.querySelectorAll(".sb-ccl-ref")];
+      expect(chips.map((chip) => chip.getAttribute("title"))).toEqual([
+        "Named in the content",
+        "Suggested, 60% sure. Please check it.",
+      ]);
+      expect(chips[1]!.textContent).toContain("Psalms 46 ?");
+
+      const suggestion =
+        container.querySelector<HTMLElement>(".sb-ccl-suggestion")!;
+      await click(
+        [...suggestion.querySelectorAll("button")].find(
+          (b) => b.textContent === "Add"
+        )!
+      );
+      await waitForCondition(() =>
+        customContent.manifest.value!.categories.some(
+          (c) => c.name === "Holy Week"
+        )
+      );
+      expect(container.textContent).not.toContain("Suggested category:");
     });
   });
 });

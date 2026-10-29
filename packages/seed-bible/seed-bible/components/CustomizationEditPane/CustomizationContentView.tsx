@@ -12,15 +12,18 @@ import type {
   ContentReference,
 } from "../../managers/customContent/schema";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import { BOOK_SLUGS, type BookId } from "../../managers/BibleDataManager";
-import { parsePassages } from "../../managers/customContent/passages";
+import {
+  formatContentReference as formatReference,
+  parsePassages,
+} from "../../managers/customContent/passages";
 import {
   parseImportCsv,
   parsePastedLinks,
   type ParsedImport,
 } from "../../managers/customContent/importEntries";
-import { formatRefLabel } from "../ScriptureItemInput/scriptureSuggestions";
 import { useI18n } from "../../i18n/I18nManager";
+import { translateTitle } from "../../app/utils";
+import { CONFIDENT_PASSAGE } from "../../managers/customContent/classify";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -109,40 +112,6 @@ const EMPTY_DRAFT: ItemDraft = {
   verses: "",
   published: false,
 };
-
-/**
- * The book's name in the open translation, or, with no translation open,
- * an English name built from its URL slug ("1-john" → "1 John").
- */
-function bookName(bookId: string, books: TranslationBook[] | undefined) {
-  const fromTranslation = books?.find((book) => book.id === bookId)?.commonName;
-  if (fromTranslation) {
-    return fromTranslation;
-  }
-  const slug = BOOK_SLUGS[bookId as BookId];
-  if (!slug) {
-    return bookId;
-  }
-  return slug
-    .split("-")
-    .map((word) =>
-      word === "of" ? word : word.charAt(0).toUpperCase() + word.slice(1)
-    )
-    .join(" ");
-}
-
-function formatReference(
-  reference: ContentReference,
-  books: TranslationBook[] | undefined
-): string {
-  return `${bookName(reference.book, books)} ${formatRefLabel({
-    bookId: reference.book,
-    chapter: reference.chapter,
-    endChapter: reference.endChapter,
-    verse: reference.verse,
-    endVerse: reference.endVerse,
-  })}`;
-}
 
 function draftFromItem(
   item: ContentItem,
@@ -530,6 +499,8 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
           />
         </div>
 
+        <AiSuggestionsSettings state={state} run={run} />
+
         <div className="sb-cz-group">
           <div className="sb-ccl-heading-row">
             <h3 className="sb-settings-subheading">
@@ -552,6 +523,16 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
           {customContent.canImport && (
             <ImportPanel state={state} books={books} run={run} />
           )}
+          {customContent.classifyQueue.value > 0 && (
+            <p className="sb-cz-hint" role="status">
+              {t("custom-content-classify-queue", {
+                count: customContent.classifyQueue.value,
+                defaultValue:
+                  "Suggesting categories and passages for {{count}} items. This happens while this page is open.",
+              })}
+            </p>
+          )}
+          <SuggestedCategories state={state} run={run} />
           {items.length === 0 ? (
             <p className="sb-cz-hint">
               {t("custom-content-no-items", {
@@ -604,18 +585,30 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                         <span dir="auto">{displayUrl(item.url)}</span>
                       </span>
                       <span className="sb-ccl-item-meta">
-                        {[
-                          ...item.categoryIds
-                            .map(categoryName)
-                            .filter((name): name is string => !!name),
-                          ...item.references.map((reference) =>
-                            formatReference(reference, books)
-                          ),
-                        ].join(" · ") ||
-                          t("custom-content-no-verses", {
-                            defaultValue: "No passages yet",
-                          })}
+                        {item.categoryIds
+                          .map(categoryName)
+                          .filter((name): name is string => !!name)
+                          .join(" · ")}
+                        {item.references.length === 0
+                          ? t("custom-content-no-verses", {
+                              defaultValue: "No passages yet",
+                            })
+                          : item.references.map((reference) => (
+                              <ReferenceChip
+                                key={formatReference(reference, books)}
+                                reference={reference}
+                                books={books}
+                              />
+                            ))}
                       </span>
+                      {item.classification?.status === "failed" && (
+                        <span className="sb-ccl-item-meta sb-ccl-error">
+                          {t("custom-content-classify-failed", {
+                            defaultValue:
+                              "Couldn't get suggestions. Try again, or add passages yourself.",
+                          })}
+                        </span>
+                      )}
                     </div>
                     <div className="sb-ccl-item-actions">
                       {confirmingDelete.value === item.id ? (
@@ -634,6 +627,22 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                         </button>
                       ) : (
                         <>
+                          {item.status !== "published" && (
+                            <button
+                              type="button"
+                              className="sb-cz-button sb-cz-button-quiet"
+                              disabled={busy}
+                              onClick={() =>
+                                void run(() =>
+                                  customContent.classifyItem(item.id)
+                                )
+                              }
+                            >
+                              {t("custom-content-suggest-again", {
+                                defaultValue: "Suggest again",
+                              })}
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="sb-cz-button"
@@ -1278,5 +1287,200 @@ function ImportProgressBanner(props: {
               "Import stopped after adding {{done}} links for review.",
           })}
     </p>
+  );
+}
+
+/** A passage, marked by where it came from so the owner knows what to check. */
+function ReferenceChip(props: {
+  reference: ContentReference;
+  books: TranslationBook[] | undefined;
+}) {
+  const { reference, books } = props;
+  const { t } = useI18n();
+  const unsure =
+    reference.source === "ai" && reference.confidence < CONFIDENT_PASSAGE;
+  const origin =
+    reference.source === "explicit"
+      ? t("custom-content-ref-explicit", {
+          defaultValue: "Named in the content",
+        })
+      : reference.source === "ai"
+        ? unsure
+          ? t("custom-content-ref-unsure", {
+              percent: Math.round(reference.confidence * 100),
+              defaultValue: "Suggested, {{percent}}% sure. Please check it.",
+            })
+          : t("custom-content-ref-ai", {
+              percent: Math.round(reference.confidence * 100),
+              defaultValue: "Suggested, {{percent}}% sure",
+            })
+        : t("custom-content-ref-owner", { defaultValue: "Added by you" });
+  return (
+    <span
+      className={`sb-ccl-ref sb-ccl-ref-${unsure ? "unsure" : reference.source}`}
+      title={origin}
+    >
+      {formatReference(reference, books)}
+      {unsure ? " ?" : ""}
+      <span className="sr-only"> ({origin})</span>
+    </span>
+  );
+}
+
+/**
+ * Which chat provider suggests categories and passages for imported items.
+ * The provider itself (an extension such as Apologist, with its key and
+ * agent) is set up under Extensions, the same as for chat.
+ */
+function AiSuggestionsSettings(props: {
+  state: SeedBibleState;
+  run: (action: () => Promise<unknown>) => Promise<boolean>;
+}) {
+  const { state, run } = props;
+  const { customContent } = state;
+  const { t } = useI18n();
+  const manifest = customContent.manifest.value;
+  if (!manifest) {
+    return null;
+  }
+  const providers = customContent.classifierProviders.value;
+  const chosen = manifest.classifierProviderId ?? "";
+  const missing = chosen !== "" && !providers.some((p) => p.id === chosen);
+
+  return (
+    <div className="sb-cz-group">
+      <h3 className="sb-settings-subheading">
+        {t("custom-content-ai", { defaultValue: "AI suggestions" })}
+      </h3>
+      <div className="sb-settings-field-row sb-ccl-field">
+        <label className="sb-settings-field-label" htmlFor="sb-ccl-classifier">
+          {t("custom-content-ai-provider", {
+            defaultValue: "Suggest categories and passages with",
+          })}
+        </label>
+        <select
+          id="sb-ccl-classifier"
+          className="sb-cz-input"
+          value={chosen}
+          disabled={customContent.isSaving.value}
+          onChange={(event) => {
+            const value = (event.currentTarget as HTMLSelectElement).value;
+            void run(() => customContent.setClassifier(value || null));
+          }}
+        >
+          <option value="">
+            {t("custom-content-ai-none", {
+              defaultValue: "No AI: only passages named in the content",
+            })}
+          </option>
+          {providers.map((provider) => (
+            <option key={provider.id} value={provider.id}>
+              {translateTitle(t, provider.name)}
+            </option>
+          ))}
+          {missing && <option value={chosen}>{chosen}</option>}
+        </select>
+        <span className="sb-cz-hint">
+          {missing
+            ? t("custom-content-ai-missing", {
+                defaultValue:
+                  "The chosen agent isn't available. Turn its extension on under Extensions.",
+              })
+            : providers.length === 0
+              ? t("custom-content-ai-none-available", {
+                  defaultValue:
+                    "No installed agent can suggest yet. Turn on an agent such as Apologist under Extensions, with its key.",
+                })
+              : t("custom-content-ai-hint", {
+                  defaultValue:
+                    "Set up the agent and its key under Extensions, the same as for chat.",
+                })}
+        </span>
+      </div>
+      <label className="sb-ccl-checkbox">
+        <input
+          type="checkbox"
+          checked={manifest.autoPublish === true}
+          disabled={customContent.isSaving.value || chosen === ""}
+          onChange={(event) => {
+            const checked = (event.currentTarget as HTMLInputElement).checked;
+            void run(() => customContent.setAutoPublish(checked));
+          }}
+        />
+        {t("custom-content-ai-auto-publish", {
+          defaultValue:
+            "Publish imported items without review when every passage is named in the content or a confident suggestion",
+        })}
+      </label>
+    </div>
+  );
+}
+
+/** New categories the AI thought would fit, gathered across items, for the owner to add or ignore. */
+function SuggestedCategories(props: {
+  state: SeedBibleState;
+  run: (action: () => Promise<unknown>) => Promise<boolean>;
+}) {
+  const { state, run } = props;
+  const { customContent } = state;
+  const { t } = useI18n();
+  const dismissed = useSignal<readonly string[]>([]);
+  const manifest = customContent.manifest.value;
+  if (!manifest) {
+    return null;
+  }
+  const existing = new Set(
+    manifest.categories.map((c) => c.name.trim().toLowerCase())
+  );
+  const counts = new Map<string, number>();
+  for (const item of customContent.items.value) {
+    for (const name of item.classification?.suggestedCategories ?? []) {
+      const key = name.toLowerCase();
+      if (!existing.has(key) && !dismissed.value.includes(key)) {
+        counts.set(name, (counts.get(name) ?? 0) + 1);
+      }
+    }
+  }
+  const suggestions = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  if (suggestions.length === 0) {
+    return null;
+  }
+  return (
+    <ul
+      className="sb-ccl-suggestions"
+      aria-label={t("custom-content-suggested-categories", {
+        defaultValue: "Suggested categories",
+      })}
+    >
+      {suggestions.map(([name, count]) => (
+        <li key={name} className="sb-ccl-suggestion">
+          <span>
+            {t("custom-content-suggested-category", {
+              name,
+              count,
+              defaultValue: "Suggested category: {{name}} ({{count}} items)",
+            })}
+          </span>
+          <button
+            type="button"
+            className="sb-cz-button"
+            onClick={() => void run(() => customContent.addCategory(name))}
+          >
+            {t("custom-content-add-category", { defaultValue: "Add" })}
+          </button>
+          <button
+            type="button"
+            className="sb-cz-button sb-cz-button-quiet"
+            onClick={() => {
+              dismissed.value = [...dismissed.value, name.toLowerCase()];
+            }}
+          >
+            {t("custom-content-dismiss", { defaultValue: "Dismiss" })}
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }

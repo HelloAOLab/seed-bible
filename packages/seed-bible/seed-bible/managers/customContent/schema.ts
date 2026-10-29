@@ -71,6 +71,14 @@ export const contentLibraryManifestSchema = z.object({
   /** Author given to new items, since link previews don't include one. */
   defaultAuthor: z.string().max(200).optional(),
   categories: z.array(contentCategorySchema),
+  /**
+   * The chat provider (by id) whose `classifyContent()` suggests categories
+   * and passages for imported items. Absent: only passages the content
+   * names outright are found.
+   */
+  classifierProviderId: z.string().min(1).max(200).optional(),
+  /** Publish imported items without review when every suggested passage is confident. */
+  autoPublish: z.boolean().optional(),
   updatedAt: z.number(),
 });
 
@@ -133,6 +141,21 @@ export const contentItemSchema = z.object({
   categoryIds: z.array(z.string()),
   references: z.array(contentReferenceSchema),
   error: z.string().optional(),
+  /**
+   * The last time categories and passages were suggested for the item.
+   * Absent: not yet. `providerId` absent: only step 1 ran (passages its text
+   * names), because the library had no AI configured.
+   */
+  classification: z
+    .object({
+      status: z.enum(["done", "failed"]),
+      providerId: z.string().optional(),
+      /** New category names the AI thought would fit, for the owner to add or ignore. */
+      suggestedCategories: z.array(z.string().max(100)).max(10).optional(),
+      error: z.string().max(500).optional(),
+      at: z.number(),
+    })
+    .optional(),
   createdAt: z.number(),
   updatedAt: z.number(),
 });

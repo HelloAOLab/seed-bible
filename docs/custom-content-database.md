@@ -21,7 +21,7 @@ Owners with a website full of content don't even need the links: they enter the 
 - Categories and relevant verses are suggested automatically, and the owner can correct them.
 - Content is stored per chapter so the reader fetches exactly one small record when a chapter opens.
 - Anyone viewing the Customization (signed in or not) sees the content in Discover.
-- Reuse what already exists: Customization records, `DiscoverManager`, `os.client.aiChat`, the reference parsers.
+- Reuse what already exists: Customization records, `DiscoverManager`, chat providers (such as Apologist) for AI, the reference parsers.
 
 **Non-goals (v1)**
 
@@ -32,18 +32,18 @@ Owners with a website full of content don't even need the links: they enter the 
 
 ## 3. How it fits into today's code
 
-| Existing piece                                                                                                | What we use it for                                                                                                                                                                                  |
-| ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CustomizationsManager` + `SeedBibleCustomization` record                                                     | The library belongs to a Customization. The Customization record gets a small pointer to its library; the active Customization decides which library Discover reads.                                |
-| `OsManager` (`recordData`, `getData`, `listAllDataByMarker`, `eraseData`)                                     | Reading and editing the library from the app. Each Customization's content lives in **its own record**, owned by the Customization's owner (§4.1), not in their personal record.                    |
-| The `publicRead:` marker convention (`CUSTOMIZATION_MARKER`)                                                  | Chapter records must be readable by any viewer of the customization link, so they use a `publicRead:` marker just like the Customization record does.                                               |
-| `aiChat` (as used in `packages/transcription/infer.tsx`)                                                      | Category and verse suggestions. The import worker calls it with the owner's session key, so the AI key stays on the CasualOS server and usage counts against the owner, as it would in the browser. |
-| `extractExplicitRefs` (`packages/transcription/explicit.tsx`), `parseVerseReference*`, `verseReferenceBounds` | Turning "John 3:16-18" text into `{book: "JHN", chapter: 3, verse: 16, endVerse: 18}`, and rejecting impossible references (e.g. "John 30") the AI might produce.                                   |
-| `DiscoverManager.registerDiscoverProvider` / `registerContentType`                                            | Showing the content. Each category becomes a Discover content type, so category filter chips come for free.                                                                                         |
-| `resolveLinkMedia` + `PlaylistLinkContent`                                                                    | Deciding whether a link is an embeddable video (YouTube/Vimeo), a video file, or a plain link, and opening it in a modal — the same thing `default-content-extension` does today.                   |
-| `getLinkPreview` + `managers/linkPreview.ts`                                                                  | Fetching each link's title, description and image: the records server's link preview API that playlists and reading plans already use (see §5.2). The worker calls the same API.                    |
-| `getUserInfo` (as used in `LoginManager`) and `FATAL_SESSION_ERROR_CODES` (`SessionGuard.ts`)                 | How the worker checks who is calling, and which errors mean the session is dead (§5.8).                                                                                                             |
-| Cloudflare Workers, Queues, D1 and Durable Objects (new, `workers/content-import/`)                           | Running every import (pasted links, CSV, whole sites) as a queue, tracking jobs, and publishing (§5.8).                                                                                             |
+| Existing piece                                                                                                | What we use it for                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CustomizationsManager` + `SeedBibleCustomization` record                                                     | The library belongs to a Customization. The Customization record gets a small pointer to its library; the active Customization decides which library Discover reads.                            |
+| `OsManager` (`recordData`, `getData`, `listAllDataByMarker`, `eraseData`)                                     | Reading and editing the library from the app. Each Customization's content lives in **its own record**, owned by the Customization's owner (§4.1), not in their personal record.                |
+| The `publicRead:` marker convention (`CUSTOMIZATION_MARKER`)                                                  | Chapter records must be readable by any viewer of the customization link, so they use a `publicRead:` marker just like the Customization record does.                                           |
+| Chat providers (`ChatsManager`), e.g. the Apologist extension                                                 | Category and passage suggestions, through a new optional `classifyContent()` on a chat provider (§5.4). The agent and its key are set up for the Custom Branding under Extensions, as for chat. |
+| `extractExplicitRefs` (`packages/transcription/explicit.tsx`), `parseVerseReference*`, `verseReferenceBounds` | Turning "John 3:16-18" text into `{book: "JHN", chapter: 3, verse: 16, endVerse: 18}`, and rejecting impossible references (e.g. "John 30") the AI might produce.                               |
+| `DiscoverManager.registerDiscoverProvider` / `registerContentType`                                            | Showing the content. Each category becomes a Discover content type, so category filter chips come for free.                                                                                     |
+| `resolveLinkMedia` + `PlaylistLinkContent`                                                                    | Deciding whether a link is an embeddable video (YouTube/Vimeo), a video file, or a plain link, and opening it in a modal — the same thing `default-content-extension` does today.               |
+| `getLinkPreview` + `managers/linkPreview.ts`                                                                  | Fetching each link's title, description and image: the records server's link preview API that playlists and reading plans already use (see §5.2). The worker calls the same API.                |
+| `getUserInfo` (as used in `LoginManager`) and `FATAL_SESSION_ERROR_CODES` (`SessionGuard.ts`)                 | How the worker checks who is calling, and which errors mean the session is dead (§5.8).                                                                                                         |
+| Cloudflare Workers, Queues, D1 and Durable Objects (new, `workers/content-import/`)                           | Running every import (pasted links, CSV, whole sites) as a queue, tracking jobs, and publishing (§5.8).                                                                                         |
 
 ## 4. Data model
 
@@ -248,42 +248,78 @@ If the fetch fails, the item isn't lost: it goes to `needs_review` with an empty
 
 ### 5.3 Find references the page states explicitly
 
-Before asking the AI, run the existing deterministic parser (`extractExplicitRefs`) over the title and description. If a YouTube description says "Today we study Romans 8:28–39", that's a certain reference — `source: "explicit"`, `confidence: 1`. This is cheap, exact, and gives the AI a strong hint.
+Before asking any AI, the app's own reference scanner (`scanVerseReferencesInText`, the one chat and footnotes use) reads the title and description. If a YouTube description says "Today we study Romans 8:28–39", that's a certain reference, saved with `source: "explicit"` and `confidence: 1`. This is cheap and exact, it gives the AI a strong hint, and it runs for every library, with or without AI.
 
-`extractExplicitRefs` lives in the `transcription` shared package; since core would now need it too, it should move to a shared package both can import (e.g. `seed-bible-utils`, or a new `bible-references` package), per the "shared code goes in a shared package" rule.
+_As built:_ steps 1 and 2 run in the editor (see §5.4 for why). Core uses its own scanner rather than moving `extractExplicitRefs` out of the `transcription` package, because core can't import workspace packages.
 
-### 5.4 AI classification
+### 5.4 AI classification, through chat providers
 
-One `aiChat` call per item, made by the worker with the owner's session key, following the pattern already in `packages/transcription/infer.tsx`. The model receives:
+**Short answer:** the owner picks a chat agent for the library, for example Apologist, set up with its key and agent under the Custom Branding's Extensions as it is today. Any chat provider can offer suggestions by implementing a new optional function, `classifyContent()`. The editor calls it for each imported item and checks the answer before saving anything.
 
-- the item's title, description, author and site name,
-- the explicit references from step 3,
-- the library's category list (id, name, description).
+**The provider API** (`ChatProvider` in `ChatsManager.tsx`):
 
-It must answer with JSON only:
+```ts
+classifyContent?: (
+  request: ContentClassificationRequest
+) => Promise<ContentClassificationResult>;
 
-```json
-{
-  "categoryIds": ["archaeology", "gospels"],
-  "references": [
-    { "reference": "Matthew 26:20-30", "confidence": 0.92, "role": "primary" },
-    { "reference": "Acts 2", "confidence": 0.7, "role": "mentioned" }
-  ],
-  "suggestedCategories": ["Holy Week"]
+interface ContentClassificationRequest {
+  content: { url: string; title: string; description: string; author?: string };
+  categories: { id: string; name: string; description?: string }[];
+  knownPassages: string[]; // step 1's passages, e.g. "Romans 8:28-39"
+  instructions: string; // a ready-made system/"developer" message
+  input: string; // the fields above as the user message
+}
+
+interface ContentClassificationResult {
+  categoryIds: string[];
+  passages: { reference: string; confidence: number }[];
+  suggestedCategories?: string[];
 }
 ```
 
-Rules in the prompt and in code:
+A provider backed by a chat model only has to send `instructions` and `input` as its two messages and return `parseContentClassification(reply)`. That parser tolerates code fences and prose around the JSON. The prompt and all the checks live in core (`managers/customContent/classify.ts`), so every provider gets the same behavior and none is trusted as given.
 
-- **Categories are limited to the owner's list.** Any id not in the list is dropped. The model may propose new names in `suggestedCategories`; the editor shows them as one-click "add this category" chips, never adds them silently. This keeps the taxonomy the owner's, not the AI's.
-- **Every reference is re-parsed and bounds-checked** with our own parser and `isVerseReferenceInBounds`. Anything that doesn't parse or doesn't exist is dropped. The model never writes book ids directly.
-- **Confidence threshold:** references under 0.5 are dropped; 0.5–0.75 are kept but flagged for review in the editor. Explicit references from step 3 always win over an AI duplicate.
-- Cap at ~10 references per item, keeping the highest-confidence ones, so a vague "overview of the whole Bible" video doesn't land in 300 chapters. The owner can still add more by hand.
-- Malformed JSON → one retry, then `needs_review` with whatever step 3 found.
+**Apologist** implements it with one non-streaming request to its chat completions API, using the same model setting and the same request path as chat. With a saved key, that path is the CasualOS sensitive proxy, so the owner's key never reaches the browser.
+
+**Where it runs, and why.** Chat providers are registered by extensions inside the app, and Apologist's key reaches its server through the owner's CasualOS proxy from the browser. So steps 1–2 run in the editor, not in the import worker:
+
+- The worker still imports in the background (§5.8). Items arrive as `needs_review` with no `classification`.
+- While the library is open in the editor, a queue works through those items, two at a time.
+- Each item's result is saved to it as `classification` (provider, status, suggested category names, time).
+- Suggestions therefore need the editor open. The editor says so while items are waiting ("Suggesting categories and passages for 40 items. This happens while this page is open.").
+
+**Which items are classified, and when:**
+
+- Imported items (`needs_review`) with no `classification` yet.
+- Items classified before an agent was chosen, which only had step 1, once one is chosen.
+- A failure (the provider threw) is recorded on the item and not retried by itself. The owner presses **Suggest again**.
+- Drafts and published items are left alone. **Suggest again** works on any unpublished item.
+- If the chosen agent's extension isn't installed for the Custom Branding, only step 1 runs, and the editor says the agent isn't available.
+
+**Rules applied to every answer** (`applyClassification`):
+
+- **Categories are limited to the owner's list.** Any id not in the list is dropped, at most 3 are kept, and categories the owner already gave (a CSV, an edit) are kept as they are.
+- **New category ideas** (`suggestedCategories`) are kept on the item. The editor gathers them across items as "Suggested category: Holy Week (6 items) [Add] [Dismiss]" and never adds one by itself. This keeps the taxonomy the owner's, not the AI's.
+- **Every passage is re-read and bounds-checked** by the app's own parser. Anything that doesn't parse or doesn't exist is dropped, and the model never writes book ids directly.
+- **Confidence:** passages under 0.5 are dropped. Those at 0.5–0.75 are kept but shown dashed with a "?" for the owner to check. A passage given without a confidence counts as 0.8.
+- **Explicit passages from step 1 always win** over an AI duplicate.
+- **The owner's own passages are never replaced.** Running again replaces only earlier suggestions.
+- **Cap:** at most 10 suggested passages per item, most confident first, so a vague overview doesn't land on hundreds of chapters.
+- **Bad answers:** an answer with no JSON is a failure, recorded on the item. Step 1's passages still apply.
 
 ### 5.5 Owner review
 
-New items arrive as `needs_review`. The editor (§7) shows each with its thumbnail, title, categories and references as editable chips; low-confidence references are visually marked. The owner can approve items one at a time or "Publish all reviewed". An optional per-library setting **"Publish automatically when confidence is high"** lets owners with large imports skip review for items where every reference is ≥ 0.75 or explicit. The worker sends those items straight to the library writer (§5.6).
+New items arrive as `needs_review`. The editor (§7) shows each with its title, categories and passages. Each passage chip shows where it came from:
+
+- **Named in the content:** tinted.
+- **Suggested by the AI:** outlined.
+- **Suggested but unsure:** dashed with a "?".
+- **Added by the owner:** grey.
+
+Editing an item and saving it makes all its passages the owner's, since the owner has reviewed them.
+
+An optional per-library setting, **"Publish imported items without review when every passage is named in the content or a confident suggestion"**, publishes an item as soon as its suggestions arrive, if it has at least one passage and every AI passage is at least 0.75. It's only available once an agent is chosen. Publishing goes through the library writer (§5.6).
 
 ### 5.6 Publish: write items, rebuild chapters, update manifest
 
@@ -412,7 +448,7 @@ After: the owner presses Import, sees "Importing 0 of 2,000", and can close the 
                               ├─► D1: import_jobs + import_items rows (progress, status, encrypted key)
                               └─► Queue "content-import": one message per link
                                         │
-                                  queue consumer: claim slot ► link preview / Common Crawl ► refs ► aiChat ► write item
+                                  queue consumer: claim slot ► link preview / Common Crawl ► write item
                                         │                                                              │
                                         ▼                                                              ▼
                                   D1 item row → done / failed                                content record (CasualOS)
@@ -421,8 +457,8 @@ After: the owner presses Import, sees "Importing 0 of 2,000", and can close the 
 
 - **API worker:** a small HTTP API: `POST /imports`, `GET /imports/{id}`, `POST /imports/{id}/cancel`, `POST /imports/{id}/resume`, `POST /site-imports` (§5.7), `POST /publish`. It only accepts requests from the Seed Bible app's origins (CORS).
 - **D1 database** (Cloudflare's SQL database) holds every import as rows (below). The editor polls `GET /imports/{id}` every few seconds for progress.
-- **Queue `content-import`:** one message per link, carrying `{ jobId, itemId }`. It never carries the session key. The consumer takes messages in batches (proposal: 10) with a cap on how many batches run at once. That cap is the main lever for staying under the preview API, `aiChat` and Common Crawl limits.
-- **Queue consumer:** for each message it claims a slot (below), then runs steps 2–4: link preview (or Common Crawl fetch and extract, §5.7), explicit references, `aiChat`. It then writes the item to the content record and marks the item's row `done` or `failed`.
+- **Queue `content-import`:** one message per link, carrying `{ jobId, itemId }`. It never carries the session key. The consumer takes messages in batches (proposal: 10) with a cap on how many batches run at once. That cap is the main lever for staying under the link preview API and Common Crawl limits.
+- **Queue consumer:** for each message it claims a slot (below), then fetches the link's details: link preview, or Common Crawl fetch and extract (§5.7). Suggestions (steps 3–4) happen in the editor afterwards (§5.4). It then writes the item to the content record and marks the item's row `done` or `failed`.
 - **`LibraryWriter` Durable Object** (one per content record): the only thing that writes chapter entries and the manifest (§5.6).
 - **`CommonCrawlGate` Durable Object** (one, global): the polite single lane to the Common Crawl index (§5.7).
 
@@ -507,7 +543,7 @@ The editor sends `Authorization: Bearer {sessionKey}`, the key the app already h
 - If CasualOS answers with one of `FATAL_SESSION_ERROR_CODES` (`session_expired`, `invalid_key`, `user_is_banned`), the job **pauses** (`paused_signin`); it never retries with a dead key. The editor then shows "Sign in again to continue this import", and `POST /imports/{id}/resume` supplies a fresh key. The same narrow list `SessionGuard.ts` uses applies here: a network blip or `server_error` is retried, not treated as a dead session.
 - Signing out in the app revokes the session, so the worker's copy stops working too. That's the right outcome: signing out stops your imports.
 
-A narrower credential would be better than a full session key. CasualOS **record keys** (`createRecordKey`, used today by `seed-bible-extension-scripts`) can grant access to a single record, so the worker could use one, scoped to the content record, for writes. `aiChat` and `getLinkPreview` still need the session, so this narrows what a leak would expose rather than removing the session key entirely. See open question 7.
+A narrower credential would be better than a full session key. CasualOS **record keys** (`createRecordKey`, used today by `seed-bible-extension-scripts`) can grant access to a single record, so the worker could use one, scoped to the content record, for writes. `getLinkPreview` still needs the session, so this narrows what a leak would expose rather than removing the session key entirely. See open question 7.
 
 #### Reliability for large batches
 
@@ -593,14 +629,14 @@ All new strings go into `en.json` only.
 
 ## 8. Code layout
 
-| File                                                         | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `managers/CustomContentManager.tsx`                          | Signals for the library and items; create/delete the content record; item edits; talks to the import worker (start, progress, cancel, resume, publish); registers the Discover provider. Receives `os`, `login`, `customizations`, `discover`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `managers/customContent/` (in core)                          | `schema.ts` (zod schemas and record addresses), `chapterIndex.ts` (split references into chapters, affected chapters, build a chapter entry), `publish.ts` (rebuild chapters and the chapter index through a small store interface, so the browser and the worker publish with the same code), `importApi.ts` (the worker's request and response shapes), `importClient.ts` (the editor's client for the worker), `normalizeUrl.ts` (duplicate detection), `importEntries.ts` (pasted links and CSV), `passages.ts` (typed passages; browser only). Everything except `passages.ts` has no browser dependencies and is bundled by the worker. Later: `references.ts` (`extractExplicitRefs`, moved from `transcription`), `classify.ts` (prompt and response validation). |
-| `managers/customContent/importClient.ts`                     | Typed client for the worker's HTTP API, sending the session key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `workers/content-import/`                                    | `src/api.ts` (routes, CORS, session check), `src/jobs.ts` (D1 queries: create, claim slot, finish, progress), `migrations/` (D1 schema), `src/libraryWriter.ts` (Durable Object), `src/consumer.ts` (queue and dead-letter consumers), `src/cleanup.ts` (Cron Trigger), `src/casualos.ts` (the CasualOS procedure client: `getUserInfo`, data calls, `getLinkPreview`), `src/sessionKeys.ts` (reading and encrypting session keys), `src/platform.ts` (the Cloudflare APIs used, as plain interfaces), `wrangler.toml`. Phase 5 adds `src/commonCrawlGate.ts` and `src/commonCrawl/`.                                                                                                                                                                                     |
-| `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `CustomizationsManager.tsx`                                  | Add optional `contentRecordName` to the schema and type.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| File                                                         | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `managers/CustomContentManager.tsx`                          | Signals for the library and items; create/delete the content record; item edits; talks to the import worker (start, progress, cancel, resume, publish); registers the Discover provider. Receives `os`, `login`, `customizations`, `discover`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `managers/customContent/` (in core)                          | `schema.ts` (zod schemas and record addresses), `chapterIndex.ts` (split references into chapters, affected chapters, build a chapter entry), `publish.ts` (rebuild chapters and the chapter index through a small store interface, so the browser and the worker publish with the same code), `importApi.ts` (the worker's request and response shapes), `importClient.ts` (the editor's client for the worker), `normalizeUrl.ts` (duplicate detection), `importEntries.ts` (pasted links and CSV), `passages.ts` (typed passages; browser only). Everything except `passages.ts` and `classify.ts` has no browser dependencies and is bundled by the worker. `classify.ts` (step 1, the `classifyContent` request and response, and the rules applied to every answer; browser only, like `passages.ts`). |
+| `managers/customContent/importClient.ts`                     | Typed client for the worker's HTTP API, sending the session key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `workers/content-import/`                                    | `src/api.ts` (routes, CORS, session check), `src/jobs.ts` (D1 queries: create, claim slot, finish, progress), `migrations/` (D1 schema), `src/libraryWriter.ts` (Durable Object), `src/consumer.ts` (queue and dead-letter consumers), `src/cleanup.ts` (Cron Trigger), `src/casualos.ts` (the CasualOS procedure client: `getUserInfo`, data calls, `getLinkPreview`), `src/sessionKeys.ts` (reading and encrypting session keys), `src/platform.ts` (the Cloudflare APIs used, as plain interfaces), `wrangler.toml`. Phase 5 adds `src/commonCrawlGate.ts` and `src/commonCrawl/`.                                                                                                                                                                                                                        |
+| `components/CustomizationEditPane/ContentLibrarySection.tsx` | The editor UI.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `CustomizationsManager.tsx`                                  | Add optional `contentRecordName` to the schema and type.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ## 9. Testing plan
 
@@ -623,19 +659,19 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 
 1. **Phase 1 — storage + reading.** The content record, schemas, chapter index builder, Discover provider, and a minimal editor where the owner enters title/URL/categories/references by hand (publishing from the browser for now). Proves the per-chapter lookup end to end, with no AI work and no worker. _Built._
 2. **Phase 2 — the import worker.** API worker with session-key authentication, the D1 job tables and cleanup trigger, the queue and dead-letter consumer, `LibraryWriter` (publishing moves to the worker), CD deployment. Items filled from `getLinkPreview`; bulk paste and CSV import. _Built._ Without a configured worker (`VITE_CONTENT_IMPORT_URL` unset), bulk import is hidden and publishing stays in the browser, so development and self-hosted setups keep working. The worker type-checks without `@cloudflare/workers-types`, whose globals clash with the repo's DOM types: the Cloudflare APIs it uses are plain interfaces in `src/platform.ts`, and its tests run the real handlers against SQLite (`node:sqlite`) through those interfaces.
-3. **Phase 3 — AI classification and review.** `aiChat` classification, review queue, confidence flags, auto-publish setting.
+3. **Phase 3 — AI classification and review.** Suggestions through chat providers' optional `classifyContent()` (Apologist implements it), run by the editor while it's open; step 1 for every library; confidence flags, suggested categories, auto-publish setting. _Built._ Only built-in extensions can offer `classifyContent` for now: sandboxed (third-party) extensions register chat providers through a message protocol that doesn't carry it yet.
 4. **Phase 4 — polish.** Coverage view, rebuild index, chapter-record paging if real libraries need it.
 5. **Phase 5 — whole-site import.** `CommonCrawlGate`, the site-import endpoint, page picker, full-text extraction and "Check for new pages". It comes after Phase 3 because its main gain, better verse detection from full text, only pays off once classification exists.
 
 ## 11. Open questions
 
 1. **Record size limit.** What is the CasualOS records server's per-record data limit for our deployment? It decides whether chapter paging (§4.5) is needed in v1.
-2. **AI cost and limits.** `aiChat` usage is metered per user on the records server. A 500-link import is 500 calls — is that within an owner's allowance, or do we need a batch prompt (several items per call) from the start?
+2. **AI cost and limits.** Suggestions cost one request to the chosen agent per item (e.g. Apologist usage on the Custom Branding's key). A 500-link import is 500 requests. Is that acceptable, or should `classifyContent` take several items at once?
 3. **Shared libraries.** Should two Customizations be able to point at the same library (e.g. one ministry with several branded customizations)? With the content in its own record, this is just two Customizations naming the same `contentRecordName`. The open part is the editor: which Customization "owns" the library and what deleting one does to the other.
 4. **Collaborators.** Ministries often have a team. Because each library is its own record, CasualOS permissions can grant a teammate write access to just that record. Worth a follow-up design once v1 is in use; the worker's permission check (§5.8) already works per record.
 5. **Moderation.** Content is chosen by the owner and shown only inside their Customization, so v1 does no moderation. Should a library ever be shown outside its Customization (e.g. a public directory), that would need revisiting.
 6. **Record limits.** _Partly answered in Phase 1:_ `client.createRecord({ recordName, ownerId })` creates the content record, owned by the signed-in user. It can fail with `subscription_limit_reached` when the owner's plan allows no more records; the editor explains this instead of creating the library. Still open: what those limits are on our deployment, and whether heavy users need a fallback.
-7. **A narrower credential for the worker.** Can CasualOS issue something scoped to one record for writes, e.g. a record key for the content record, so the worker holds less than a full session key? `aiChat` and `getLinkPreview` still need a session. Could CasualOS add a session limited to those procedures?
+7. **A narrower credential for the worker.** Can CasualOS issue something scoped to one record for writes, e.g. a record key for the content record, so the worker holds less than a full session key? `getLinkPreview` still needs a session. Could CasualOS add a session limited to that procedure?
 8. **Long-running imports and session lifetime.** How long do CasualOS sessions last? An import that outlives the session pauses and waits for the owner to sign in again (§5.8). If sessions are short, big imports will pause often.
 9. **Cloudflare account and cost.** Which Cloudflare account hosts the worker, and is the expected volume (queue operations, D1 reads and writes, Durable Object requests, KV) inside the plan we want to pay for?
 10. **Common Crawl terms and load.** Confirm the current terms of use and the guidance on request rates for the index server and `data.commoncrawl.org`, and whether our expected volume (a few thousand range requests per import) is welcome or should go through the columnar index instead.
