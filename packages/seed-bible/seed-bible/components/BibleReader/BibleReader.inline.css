@@ -51,8 +51,8 @@
 }
 
 /*
- * 0–0.3s: border and background fade in.
- * 1–3s: border fades into the background color, leaving a padded background.
+ * 0–0.15s: border and background fade in.
+ * 0.5–1.5s: border fades into the background color, leaving a padded background.
  * 5–8s: background fades out.
  *
  * The background's padding is a box-shadow ring rather than real padding so
@@ -64,13 +64,13 @@
     background-color: transparent;
   }
 
-  3.75%,
-  12.5% {
+  1.875%,
+  6.25% {
     box-shadow: 0 0 0 3px var(--sb-selection-flare-color);
     background-color: var(--sb-selection-flare-background);
   }
 
-  37.5%,
+  18.75%,
   62.5% {
     box-shadow: 0 0 0 3px var(--sb-selection-flare-background);
     background-color: var(--sb-selection-flare-background);
