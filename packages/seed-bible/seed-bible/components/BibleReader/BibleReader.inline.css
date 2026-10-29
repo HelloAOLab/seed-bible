@@ -40,7 +40,7 @@
 .sb-verse-number-flare {
   --sb-selection-flare-background: color-mix(
     in srgb,
-    var(--sb-selection-flare-color) 25%,
+    var(--sb-selection-flare-color) 45%,
     transparent
   );
   position: relative;
