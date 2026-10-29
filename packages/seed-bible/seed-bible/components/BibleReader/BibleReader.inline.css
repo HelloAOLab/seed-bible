@@ -52,8 +52,11 @@
 
 /*
  * 0–0.3s: border and background fade in.
- * 1–3s: border fades out, leaving the background.
+ * 1–3s: border fades into the background color, leaving a padded background.
  * 5–8s: background fades out.
+ *
+ * The background's padding is a box-shadow ring rather than real padding so
+ * the verse text doesn't shift when the flare starts and ends.
  */
 @keyframes sb-verse-number-flare {
   0% {
@@ -69,12 +72,12 @@
 
   37.5%,
   62.5% {
-    box-shadow: 0 0 0 0 transparent;
+    box-shadow: 0 0 0 3px var(--sb-selection-flare-background);
     background-color: var(--sb-selection-flare-background);
   }
 
   100% {
-    box-shadow: 0 0 0 0 transparent;
+    box-shadow: 0 0 0 3px transparent;
     background-color: transparent;
   }
 }
@@ -84,8 +87,7 @@
     animation: none;
     color: var(--sb-selection-flare-color);
     background-color: var(--sb-selection-flare-background);
-    box-shadow: 0 0 0 2px
-      color-mix(in srgb, var(--sb-selection-flare-color) 35%, transparent);
+    box-shadow: 0 0 0 3px var(--sb-selection-flare-background);
   }
 }
 
