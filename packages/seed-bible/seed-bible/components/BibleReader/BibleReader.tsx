@@ -21,6 +21,7 @@ import {
 } from "preact/compat";
 import {
   computed,
+  effect,
   signal,
   type ReadonlySignal,
   type Signal,
@@ -37,6 +38,7 @@ import type {
   BibleReadingState,
   BibleSelectedVerse,
   VerseDecoration,
+  VerseDecorationInput,
   VisibleVerseRange,
 } from "../../managers/BibleReadingManager";
 import type {
@@ -423,17 +425,46 @@ function getInlineText(part: ChapterVerse["content"][0]): string {
 function getVersePlainText(content: ChapterVerse["content"]): string {
   return content.map((part) => getInlineText(part)).join("");
 }
+/** Keep in sync with the `sb-verse-number-flare` animation duration. */
+const VERSE_FLARE_DURATION_MS = 8000;
+/** Keep in sync with the `sb-verse-number-flare-ending` animation duration. */
+const VERSE_FLARE_ENDING_MS = 600;
+
+/** A verse-selection flare this reader started and may need to end early. */
+interface BroadcastVerseFlare {
+  decorationId: string;
+  bookId: string;
+  chapterNumber: number;
+  verseNumber: number;
+  color: string;
+}
+
+function verseFlareDecoration(
+  color: string,
+  ending: boolean
+): VerseDecorationInput {
+  return {
+    className: ending
+      ? "sb-verse-number-flare sb-verse-number-flare-ending"
+      : "sb-verse-number-flare",
+    style: {
+      "--sb-selection-flare-color": color,
+    } as JSX.CSSProperties,
+    removeAfterMs: ending ? VERSE_FLARE_ENDING_MS : VERSE_FLARE_DURATION_MS,
+  };
+}
+
 function broadcastSelectedVerse(
   session: BibleReadingSession,
   bookId: string,
   chapterNumber: number,
   verseNumber: number
-) {
+): BroadcastVerseFlare | null {
   const user = session.currentUser.value;
-  if (!user) return;
+  if (!user) return null;
   const options = session.options.value;
   const visibility = options.verseSelectionEffectVisibility ?? "hosts-only";
-  if (visibility === "none") return;
+  if (visibility === "none") return null;
   if (
     visibility === "hosts-only" &&
     !(
@@ -441,7 +472,7 @@ function broadcastSelectedVerse(
       isSessionHost(options, user.connectionId)
     )
   ) {
-    return;
+    return null;
   }
   const connectionId = user.connectionId ?? user.userId ?? "anonymous";
 
@@ -452,14 +483,33 @@ function broadcastSelectedVerse(
     bookId,
     chapterNumber,
     [verseNumber],
-    {
-      className: "sb-verse-number-flare",
-      style: {
-        "--sb-selection-flare-color": user.visual.color,
-      } as JSX.CSSProperties,
-      removeAfterMs: 8000,
-    },
+    verseFlareDecoration(user.visual.color, false),
     decorationId
+  );
+
+  return {
+    decorationId,
+    bookId,
+    chapterNumber,
+    verseNumber,
+    color: user.visual.color,
+  };
+}
+
+/**
+ * Swaps a still-running flare for a short fade-out. Re-decorating under the
+ * same id replaces it (and its removal timer) for every session peer.
+ */
+function endVerseFlare(
+  session: BibleReadingSession,
+  flare: BroadcastVerseFlare
+) {
+  session.readingState.decorateVerses(
+    flare.bookId,
+    flare.chapterNumber,
+    [flare.verseNumber],
+    verseFlareDecoration(flare.color, true),
+    flare.decorationId
   );
 }
 
@@ -844,7 +894,9 @@ function renderChapterContent(
         decoration.verses.includes(verseNumber)
     );
   };
-  const getVerseFlareColor = (verseNumber: number): string | undefined => {
+  const getVerseFlare = (
+    verseNumber: number
+  ): { color: string; ending: boolean } | undefined => {
     if (
       !shouldShowVerseSelectionEffects(
         verseSelectionEffects,
@@ -903,7 +955,15 @@ function renderChapterContent(
 
     const color = flare?.style?.["--sb-selection-flare-color"];
 
-    return typeof color === "string" ? color : undefined;
+    return typeof color === "string"
+      ? {
+          color,
+          ending:
+            flare?.className
+              ?.split(/\s+/)
+              .includes("sb-verse-number-flare-ending") ?? false,
+        }
+      : undefined;
   };
 
   const decorationHighlights = decorationHighlightsByVerse(decorations, {
@@ -1072,13 +1132,17 @@ function renderChapterContent(
   const renderVerseNumberOrIcon = (
     verseNumber: number,
     verse: BibleSelectedVerse,
-    flareColor?: string
+    flare?: { color: string; ending: boolean }
   ) => {
     const hasAnnotation = getVerseAnnotations(verseNumber).length > 0;
 
-    const flareClass = flareColor ? "sb-verse-number-flare" : "";
-    const flareStyle = flareColor
-      ? ({ "--sb-selection-flare-color": flareColor } as JSX.CSSProperties)
+    const flareClass = flare
+      ? flare.ending
+        ? "sb-verse-number-flare sb-verse-number-flare-ending"
+        : "sb-verse-number-flare"
+      : "";
+    const flareStyle = flare
+      ? ({ "--sb-selection-flare-color": flare.color } as JSX.CSSProperties)
       : undefined;
 
     const handleAnnotationClick = (event: MouseEvent) =>
@@ -1133,7 +1197,7 @@ function renderChapterContent(
       verse: value,
       translationId: chapterData.translation.id,
     };
-    const verseFlareColor = getVerseFlareColor(value.number);
+    const verseFlare = getVerseFlare(value.number);
     const isSelected = selectedVerses.some(
       (v) =>
         v.verse.number === value.number &&
@@ -1221,11 +1285,7 @@ function renderChapterContent(
                   style={verseDecoratorStyle}
                 >
                   {segIndex === 0 &&
-                    renderVerseNumberOrIcon(
-                      value.number,
-                      verse,
-                      verseFlareColor
-                    )}
+                    renderVerseNumberOrIcon(value.number, verse, verseFlare)}
                   {segment.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -1259,11 +1319,7 @@ function renderChapterContent(
                 >
                   {segIndex === 0 &&
                     lineIndex === 0 &&
-                    renderVerseNumberOrIcon(
-                      value.number,
-                      verse,
-                      verseFlareColor
-                    )}
+                    renderVerseNumberOrIcon(value.number, verse, verseFlare)}
                   {line.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -1300,7 +1356,7 @@ function renderChapterContent(
         tabIndex={0}
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-          {renderVerseNumberOrIcon(value.number, verse, verseFlareColor)}
+          {renderVerseNumberOrIcon(value.number, verse, verseFlare)}
           {content.map((part, index) =>
             renderInlineContent(
               part,
@@ -3046,19 +3102,57 @@ export function BibleReader(props: BibleReaderProps) {
       handleHostVerseClick(firstSelectedVerse);
     }
   };
+  // Flares this reader started, so they can fade out early once their verse
+  // is deselected rather than lingering for the full duration.
+  const activeVerseFlaresRef = useRef(new Map<string, BroadcastVerseFlare>());
   const handleHostVerseClick = useCallback(
     (verse: BibleSelectedVerse) => {
       if (!sharedSession) return;
 
-      broadcastSelectedVerse(
+      const flare = broadcastSelectedVerse(
         sharedSession,
         verse.bookId,
         verse.chapterNumber,
         verse.verse.number
       );
+      if (flare) {
+        activeVerseFlaresRef.current.set(flare.decorationId, flare);
+      }
     },
     [sharedSession]
   );
+
+  useEffect(() => {
+    if (!sharedSession) return;
+    const activeFlares = activeVerseFlaresRef.current;
+
+    return effect(() => {
+      const selected = selectedVerses.value;
+      if (activeFlares.size === 0) return;
+
+      const liveDecorationIds = new Set(
+        sharedSession.readingState.decorations.peek().map(({ id }) => id)
+      );
+
+      for (const [id, flare] of activeFlares) {
+        if (!liveDecorationIds.has(id)) {
+          activeFlares.delete(id);
+          continue;
+        }
+
+        const stillSelected = selected.some(
+          (verse) =>
+            verse.bookId === flare.bookId &&
+            verse.chapterNumber === flare.chapterNumber &&
+            verse.verse.number === flare.verseNumber
+        );
+        if (!stillSelected) {
+          activeFlares.delete(id);
+          endVerseFlare(sharedSession, flare);
+        }
+      }
+    });
+  }, [sharedSession, selectedVerses]);
 
   // Only the current panel's title opens the selector; the side panels are
   // non-interactive previews for the swipe transition.

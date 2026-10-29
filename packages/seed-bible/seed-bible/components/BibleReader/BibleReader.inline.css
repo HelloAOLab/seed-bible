@@ -45,7 +45,7 @@
   );
   position: relative;
   z-index: 1;
-  /* Keep in sync with removeAfterMs in broadcastSelectedVerse (BibleReader.tsx). */
+  /* Keep in sync with VERSE_FLARE_DURATION_MS (BibleReader.tsx). */
   animation: sb-verse-number-flare 8s ease-out;
   border-radius: 3px;
 }
@@ -72,6 +72,24 @@
 
   18.75%,
   62.5% {
+    box-shadow: 0 0 0 3px var(--sb-selection-flare-background);
+    background-color: var(--sb-selection-flare-background);
+  }
+
+  100% {
+    box-shadow: 0 0 0 3px transparent;
+    background-color: transparent;
+  }
+}
+
+/* The flare's verse was deselected: fade out early. Keep in sync with
+   VERSE_FLARE_ENDING_MS (BibleReader.tsx). */
+.sb-verse-number-flare.sb-verse-number-flare-ending {
+  animation: sb-verse-number-flare-ending 0.6s ease-out forwards;
+}
+
+@keyframes sb-verse-number-flare-ending {
+  0% {
     box-shadow: 0 0 0 3px var(--sb-selection-flare-background);
     background-color: var(--sb-selection-flare-background);
   }
