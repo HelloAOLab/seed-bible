@@ -8,6 +8,7 @@ import {
 import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import {
   type BibleReadingState,
+  type BibleSelectedVerse,
   type VisibleVerseRange,
   type SelectedFootnote,
   type VerseDecoration,
@@ -17,6 +18,7 @@ import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayou
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   FreeUseBibleAPI,
+  type ChapterVerse,
   type Translation,
   type TranslationBook,
   type TranslationBookChapter,
@@ -109,7 +111,22 @@ function createVerseFlareSession({
   coHostUserIds?: string[];
   ownerByDecoration?: Record<string, string>;
 } = {}) {
-  const decorateVerses = vi.fn();
+  const decorations = signal<VerseDecoration[]>([]);
+  const decorateVerses = vi.fn(
+    (
+      bookId: string,
+      chapterNumber: number,
+      verses: number[],
+      decoration: Partial<VerseDecoration>,
+      id: string
+    ) => {
+      decorations.value = [
+        ...decorations.value.filter((existing) => existing.id !== id),
+        { ...decoration, id, bookId, chapterNumber, verses } as VerseDecoration,
+      ];
+      return id;
+    }
+  );
   const removeSharedDecoration = vi.fn();
 
   const session = {
@@ -125,6 +142,7 @@ function createVerseFlareSession({
     }),
     removeSharedDecoration,
     readingState: {
+      decorations,
       decorateVerses,
     },
     getDecorationOwner: vi.fn(
@@ -138,7 +156,7 @@ function createVerseFlareSession({
     participantPositions: signal(new Map()),
   };
 
-  return { session, decorateVerses, removeSharedDecoration };
+  return { session, decorations, decorateVerses, removeSharedDecoration };
 }
 
 function createFixture(): ReaderFixture {
@@ -3756,6 +3774,32 @@ describe("BibleReader", () => {
         verseNumber?.style.getPropertyValue("--sb-selection-flare-color")
       ).toBe("#ff0000");
     });
+    it("marks another user's flare as ending once they deselect the verse", () => {
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        visibility: "everyone",
+        ownerByDecoration: {
+          "selected-verse-flare-peer": "connection-peer",
+        },
+      });
+
+      renderWithFlare(fixture, session, [
+        {
+          ...flare("selected-verse-flare-peer", "#ff0000"),
+          className: "sb-verse-number-flare sb-verse-number-flare-ending",
+        },
+      ]);
+
+      const verseNumber = container.querySelector(".sb-verse-number");
+
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        true
+      );
+      expect(
+        verseNumber?.classList.contains("sb-verse-number-flare-ending")
+      ).toBe(true);
+    });
+
     it("does not show an incoming flare when effects are disabled", () => {
       const fixture = createFixture();
       const { session } = createVerseFlareSession({
@@ -3904,7 +3948,7 @@ describe("BibleReader", () => {
         [1],
         expect.objectContaining({
           className: "sb-verse-number-flare",
-          removeAfterMs: 1200,
+          removeAfterMs: 8000,
           style: {
             "--sb-selection-flare-color": "#123456",
           },
@@ -3940,6 +3984,101 @@ describe("BibleReader", () => {
       clickFirstVerse(fixture, session);
 
       expect(decorateVerses).toHaveBeenCalled();
+    });
+
+    function selectedVerse(
+      fixture: ReturnType<typeof createFixture>,
+      verseNumber: number
+    ): BibleSelectedVerse {
+      const chapter = fixture.chapterData.value!;
+      const verse = chapter.chapter.content.find(
+        (entry): entry is ChapterVerse =>
+          entry.type === "verse" && entry.number === verseNumber
+      )!;
+      return {
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        translationId: chapter.translation.id,
+        verse,
+      };
+    }
+
+    it("fades the flare out early when its verse is deselected", () => {
+      const fixture = createFixture();
+      const { session, decorations } = createVerseFlareSession({
+        userId: "host",
+        connectionId: "connection-host",
+        hostUserId: "host",
+      });
+
+      clickFirstVerse(fixture, session);
+      act(() => {
+        fixture.selectedVerses.value = [selectedVerse(fixture, 1)];
+      });
+      const [started] = decorations.value;
+      expect(started?.className).toBe("sb-verse-number-flare");
+
+      act(() => {
+        fixture.selectedVerses.value = [];
+      });
+
+      expect(decorations.value).toEqual([
+        expect.objectContaining({
+          id: started?.id,
+          verses: [1],
+          className: "sb-verse-number-flare sb-verse-number-flare-ending",
+          removeAfterMs: 600,
+          style: { "--sb-selection-flare-color": "#123456" },
+        }),
+      ]);
+    });
+
+    it("keeps the flare running while its verse stays selected", () => {
+      const fixture = createFixture();
+      const { session, decorations } = createVerseFlareSession({
+        userId: "host",
+        connectionId: "connection-host",
+        hostUserId: "host",
+      });
+
+      clickFirstVerse(fixture, session);
+      act(() => {
+        fixture.selectedVerses.value = [selectedVerse(fixture, 1)];
+      });
+      act(() => {
+        fixture.selectedVerses.value = [
+          selectedVerse(fixture, 1),
+          selectedVerse(fixture, 2),
+        ];
+      });
+
+      expect(decorations.value).toEqual([
+        expect.objectContaining({
+          className: "sb-verse-number-flare",
+          removeAfterMs: 8000,
+        }),
+      ]);
+    });
+
+    it("leaves an already-finished flare alone when its verse is deselected", () => {
+      const fixture = createFixture();
+      const { session, decorations, decorateVerses } = createVerseFlareSession({
+        userId: "host",
+        connectionId: "connection-host",
+        hostUserId: "host",
+      });
+
+      clickFirstVerse(fixture, session);
+      act(() => {
+        fixture.selectedVerses.value = [selectedVerse(fixture, 1)];
+      });
+      decorations.value = [];
+      act(() => {
+        fixture.selectedVerses.value = [];
+      });
+
+      expect(decorateVerses).toHaveBeenCalledTimes(1);
+      expect(decorations.value).toEqual([]);
     });
 
     it('does not broadcast any participant selection in "none" mode', () => {
