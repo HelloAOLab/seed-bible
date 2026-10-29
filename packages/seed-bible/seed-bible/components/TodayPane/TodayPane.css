@@ -20,8 +20,8 @@
   width: 100%;
   height: 100%;
 
-  /* Tints of the text colour for Today's search bar and filter pills
-     (`--sb-today-surface`) and its bookmark cards (the lighter
+  /* Tints of the text colour for Today's close button, search bar and filter
+     pills (`--sb-today-surface`) and its bookmark cards (the lighter
      `--sb-today-surface-light`), the same as Your content's
      `--sb-content-surface-strong` and `--sb-content-surface` (which are scoped
      to that screen). Only a selected filter pill keeps the primary colour, to
@@ -303,7 +303,8 @@
   color: var(--sb-primary-color);
 }
 
-.sb-today-header > button {
+.sb-today-header > button,
+.sb-today-close-button {
   border: none;
   display: flex;
   justify-content: center;
@@ -314,6 +315,16 @@
   background-color: var(--sb-today-surface);
   color: var(--sb-font-color);
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .sb-today-close-button:hover {
+    background-color: color-mix(in srgb, var(--sb-font-color), transparent 84%);
+  }
+}
+
+.sb-today-header > button {
   grid-row: 1 / 3;
   justify-self: end;
   align-self: self-start;
@@ -327,8 +338,22 @@
   grid-column: 3 / 4;
 }
 
-.sb-today-header > button > span {
+/* Always the last one in the row, whatever other buttons join it. */
+.sb-today-header > button.sb-today-close-button {
+  grid-column: -2 / -1;
+}
+
+.sb-today-header > button > span,
+.sb-today-close-button > span {
   font-size: 1.25rem;
+}
+
+/* Where the header's close button would be: the top of the content column's
+   end edge (the column is 90% wide, capped at 51.25rem, and centered). */
+.sb-today-welcome-close-button {
+  position: absolute;
+  top: 2.25rem;
+  inset-inline-end: max(5%, (100% - 51.25rem) / 2);
 }
 
 .sb-today-container .sb-today-resume-card {
@@ -976,6 +1001,9 @@
   .sb-today-welcome-screen {
     margin-top: 1rem;
     gap: 1rem;
+  }
+  .sb-today-welcome-close-button {
+    top: 1rem;
   }
   .sb-today-header > h1 {
     font-size: 1.2rem;
