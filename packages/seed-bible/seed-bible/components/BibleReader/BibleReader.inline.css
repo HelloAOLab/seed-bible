@@ -45,10 +45,7 @@
 }
 
 @keyframes sb-verse-number-flare {
-  0% {
-    box-shadow: 0 0 0 3px var(--sb-selection-flare-color);
-  }
-
+  0%,
   33.333% {
     box-shadow: 0 0 0 3px var(--sb-selection-flare-color);
   }
