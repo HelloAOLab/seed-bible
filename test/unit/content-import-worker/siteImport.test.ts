@@ -302,6 +302,16 @@ describe("website imports", () => {
     }
   });
 
+  it("counts an index error as a failed lookup, never as finding nothing", async () => {
+    const { worker, key, commonCrawl } = setup();
+    commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/a", "");
+    // The crawl list answers; the first count lookup is refused as malformed.
+    commonCrawl.indexFailures.push(0, 400);
+    const listed = await lookUp(worker, key);
+    expect(listed.lookups.failed).toBe(1);
+    expect(listed.progress.status).toBe("awaiting_pick");
+  });
+
   it("says plainly when the archive has nothing from the site", async () => {
     const { worker, key } = setup();
     const listed = await lookUp(worker, key, { site: "unknown-church.org" });

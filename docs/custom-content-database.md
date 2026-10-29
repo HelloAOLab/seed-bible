@@ -1,6 +1,6 @@
 # Custom Content Database for Customizations — Design
 
-Status: **Phases 1–5 built** · Common Crawl details still to check against the live service (§5.7) · Owner: TBD · Last updated: 2026-10-29
+Status: **Phases 1–5 built** · Common Crawl's index server still to try from the deployed worker (§5.7) · Owner: TBD · Last updated: 2026-10-29
 
 ## 1. Summary
 
@@ -345,14 +345,28 @@ Before: a ministry with 400 sermon pages has to collect and paste 400 links. And
 
 After: the owner enters one address, sees "Found 412 pages under /sermons/", unticks the ones they don't want, and imports. Each item is classified using the **full page text**, so a sermon page that says "Text: John 10:1–18" halfway down is picked up exactly, by the parser, instead of being guessed.
 
-> **Still to check against the live service.** Built against the pywb CDX server documentation (the software Common Crawl's index runs on), but the building session's network couldn't reach any `commoncrawl.org` host, so nothing here has been tried against the real index or archive. The code is written to cope with the uncertain parts. Before relying on it, check on the deployed worker:
+> **Checked against real data, except the index server itself.** Tested on 2026-10-29 with real Common Crawl data for gracechurch.org (crawl `CC-MAIN-2026-43`, 4,448 captures), read from the index files that `data.commoncrawl.org` also publishes. The index server, `index.commoncrawl.org`, reset every connection from the test environment, so it is still untried.
 >
-> - `collinfo.json` lists crawls with `id`, `name` and `cdx-api` (ids are sorted by name, so the order of the list doesn't matter).
+> Confirmed:
+>
+> - Index entries carry `url`, `mime`, `mime-detected`, `status`, `digest`, `length`, `offset` and `filename`, with numbers as strings. The worker reads both strings and numbers.
+> - The index treats `www.` and the bare domain as one site.
+> - A range request to `data.commoncrawl.org` returns one gzip member holding a WARC `response` record. Page bodies are stored decoded, with no chunking or gzip. Each page took about 300 ms to fetch.
+> - The worker's whole page path works on real pages: titles, images, and passages found in the page text (e.g. "Unless the Lord Builds the House…" → Psalm 127:1-2).
+>
+> What the real data changed:
+>
+> - Account, sign-in and shop pages are now skipped by default. gracechurch.org has 867 `/account/` pages, which had crowded sermons out of the 2,000-page limit.
+> - Named accented letters (`&ntilde;`, `&Eacute;`, …) are decoded.
+> - Result-page queries send no `filter` or `fl` parameters. The worker filters by status and type itself, so an index that reads those parameters differently can't quietly return nothing.
+> - Only a 404 from the index means "no pages". Any other error is a failed lookup, and the editor says some pages may be missing.
+>
+> Still to check on the deployed worker, against `index.commoncrawl.org`:
+>
+> - `collinfo.json` has `id`, `name` and `cdx-api`.
 > - `showNumPages=true` answers `{"pages": N, …}` for a prefix query like `url=gracecommunity.org/sermons/*`, and `page=N` works. A bare number is also accepted.
-> - A site with no captures answers 404, and a page past the last one answers 400. Both are read as "no pages".
-> - `filter==status:200` and `filter=~mime:text/html` are accepted. The worker re-checks both itself, so a server that ignores them only costs bandwidth.
-> - The index treats `www.` and the bare domain as the same site.
-> - A range request to `data.commoncrawl.org` returns one gzip member holding a WARC `response` record, and pages are stored with their body already decoded. Chunked and gzipped bodies are handled in case they aren't.
+> - `output=json` lines include `timestamp`. The index files do.
+> - A site with no captures answers 404.
 > - Common Crawl's current guidance on request rates and user agents, and its terms of use. The gate's spacing (below) is a guess.
 
 #### How Common Crawl is organized (the parts we use)
@@ -678,7 +692,7 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 2. **Phase 2 — the import worker.** API worker with session-key authentication, the D1 job tables and cleanup trigger, the queue and dead-letter consumer, `LibraryWriter` (publishing moves to the worker), CD deployment. Items filled from `getLinkPreview`; bulk paste and CSV import. _Built._ Without a configured worker (`VITE_CONTENT_IMPORT_URL` unset), bulk import is hidden and publishing stays in the browser, so development and self-hosted setups keep working. The worker type-checks without `@cloudflare/workers-types`, whose globals clash with the repo's DOM types: the Cloudflare APIs it uses are plain interfaces in `src/platform.ts`, and its tests run the real handlers against SQLite (`node:sqlite`) through those interfaces.
 3. **Phase 3 — AI classification and review.** Suggestions through chat providers' optional `classifyContent()` (Apologist implements it), only when the owner asks (per item or in bulk), run by the editor while it's open; step 1 automatically for every library; confidence flags, suggested categories, auto-publish setting. _Built._ Only built-in extensions can offer `classifyContent` for now: sandboxed (third-party) extensions register chat providers through a message protocol that doesn't carry it yet.
 4. **Phase 4 — polish.** Coverage view, rebuild index (built in Phase 1), chapter-record paging. _Built._
-5. **Phase 5 — whole-site import.** `CommonCrawlGate`, the site-import endpoint, page picker, full-text extraction and "Check for new pages". _Built_, except caching index results (§5.7), and not yet tried against the live Common Crawl service (see the note at the top of §5.7).
+5. **Phase 5 — whole-site import.** `CommonCrawlGate`, the site-import endpoint, page picker, full-text extraction and "Check for new pages". _Built_, except caching index results (§5.7). Tested on real Common Crawl data; the index server itself is still to try from the deployed worker (see the note at the top of §5.7).
 
 ## 11. Open questions
 

@@ -24,6 +24,14 @@ describe("extractPage", () => {
     expect(page.description).toBe("Today: John 10:7–9.");
   });
 
+  it("decodes accented letters however the page writes them", () => {
+    const page = extractPage(
+      "<title>Grace en Espa&ntilde;ol &middot; Espa&#xF1;ol &Eacute;glise</title>",
+      PAGE
+    );
+    expect(page.title).toBe("Grace en Español · Español Église");
+  });
+
   it("finds an embedded Vimeo video and the author named in the page", () => {
     const page = extractPage(
       `<meta name="author" content="Pastor Dana">

@@ -64,9 +64,10 @@ export function formatSiteAddress(site: SiteAddress): string {
 }
 
 /**
- * Listing and archive pages: tags, categories, "page 2" of a listing,
- * feeds, comment replies. They name many posts at once, so they're noise
- * for finding passages, and are left out unless the owner includes them.
+ * Listing and archive pages (tags, categories, "page 2" of a listing,
+ * feeds, comment replies), which name many posts at once, and account,
+ * sign-in and shop pages, which aren't content. Left out unless the owner
+ * includes them.
  */
 export const DEFAULT_SITE_EXCLUDES: readonly string[] = [
   "*/tag/*",
@@ -81,6 +82,16 @@ export const DEFAULT_SITE_EXCLUDES: readonly string[] = [
   "*/search*",
   "*?replytocom=*",
   "*?s=*",
+  "*/account/*",
+  "*/my-account*",
+  "*/login*",
+  "*/signin*",
+  "*/sign-in*",
+  "*/register*",
+  "*/cart*",
+  "*/checkout*",
+  "*/wp-admin/*",
+  "*/wp-login*",
 ];
 
 /**

@@ -20,7 +20,17 @@ export interface ExtractedPage {
   text: string;
 }
 
+/** Latin-1's named characters (code points 160–255), in order: accented letters and the like. */
+const LATIN1_ENTITY_NAMES =
+  "nbsp iexcl cent pound curren yen brvbar sect uml copy ordf laquo not shy reg macr deg plusmn sup2 sup3 acute micro para middot cedil sup1 ordm raquo frac14 frac12 frac34 iquest Agrave Aacute Acirc Atilde Auml Aring AElig Ccedil Egrave Eacute Ecirc Euml Igrave Iacute Icirc Iuml ETH Ntilde Ograve Oacute Ocirc Otilde Ouml times Oslash Ugrave Uacute Ucirc Uuml Yacute THORN szlig agrave aacute acirc atilde auml aring aelig ccedil egrave eacute ecirc euml igrave iacute icirc iuml eth ntilde ograve oacute ocirc otilde ouml divide oslash ugrave uacute ucirc uuml yacute thorn yuml";
+
 const NAMED_ENTITIES: Record<string, string> = {
+  ...Object.fromEntries(
+    LATIN1_ENTITY_NAMES.split(" ").map((name, i) => [
+      name,
+      String.fromCharCode(160 + i),
+    ])
+  ),
   amp: "&",
   lt: "<",
   gt: ">",
@@ -34,7 +44,6 @@ const NAMED_ENTITIES: Record<string, string> = {
   ldquo: "“",
   rdquo: "”",
   hellip: "…",
-  copy: "©",
 };
 
 export function decodeEntities(text: string): string {
@@ -50,7 +59,10 @@ export function decodeEntities(text: string): string {
           ? String.fromCodePoint(code)
           : entity;
       }
-      return NAMED_ENTITIES[body.toLowerCase()] ?? entity;
+      // Case matters: &Ntilde; is Ñ, &ntilde; is ñ.
+      return (
+        NAMED_ENTITIES[body] ?? NAMED_ENTITIES[body.toLowerCase()] ?? entity
+      );
     }
   );
 }

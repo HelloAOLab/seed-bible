@@ -67,6 +67,8 @@ describe("path filters", () => {
       "https://g.org/sermons/page/2",
       "https://g.org/sermons/feed",
       "https://g.org/sermons/a?replytocom=5",
+      "https://g.org/account/orders",
+      "https://g.org/login?next=/sermons",
     ]) {
       expect(keepSitePage(noise, {})).toBe(false);
     }

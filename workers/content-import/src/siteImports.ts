@@ -296,9 +296,9 @@ export async function processLookupMessage(
   if (RETRY_STATUSES.has(response.status)) {
     return { kind: "retry", delaySeconds: retryDelay };
   }
-  // The index answers 404 for a site it has nothing from, and 400 for a
-  // result page past the last one: both just mean no pages.
-  const empty = response.status === 404 || response.status === 400;
+  // The index answers 404 for a site it has nothing from. Anything else
+  // that isn't a 200 is a real failure, never read as "no pages".
+  const empty = response.status === 404;
   if (!empty && response.status !== 200) {
     await settleLookup(env.DB, job.id, crawl.id, message.page, {
       state: "failed",

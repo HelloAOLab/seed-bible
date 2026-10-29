@@ -80,7 +80,11 @@ export function pageCountUrl(crawl: Crawl, pattern: string): string {
   return url.toString();
 }
 
-/** One result page of a crawl's captures for the pattern: saved HTML pages only. */
+/**
+ * One result page of a crawl's captures for the pattern. No server-side
+ * filters: {@link parseCaptures} keeps only saved HTML pages itself, so an
+ * index that read a filter differently can't silently return nothing.
+ */
 export function resultPageUrl(
   crawl: Crawl,
   pattern: string,
@@ -90,12 +94,6 @@ export function resultPageUrl(
   url.searchParams.set("url", pattern);
   url.searchParams.set("output", "json");
   url.searchParams.set("page", String(page));
-  url.searchParams.append("filter", "=status:200");
-  url.searchParams.append("filter", "~mime:text/html");
-  url.searchParams.set(
-    "fl",
-    "url,timestamp,status,mime,digest,filename,offset,length"
-  );
   return url.toString();
 }
 
