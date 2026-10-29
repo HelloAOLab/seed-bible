@@ -129,6 +129,9 @@ const LEADING_NAV_TOOL_IDS = new Set([
   "previous-item",
 ]);
 
+/** Places in the desktop toolbar's primary group, the More button included. */
+const DESKTOP_PRIMARY_SLOTS = 4;
+
 /** Navigation tools that sit after More at the end of the desktop toolbar. */
 const TRAILING_NAV_TOOL_IDS = new Set(["next-chapter", "next-item"]);
 
@@ -1130,11 +1133,33 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
+  // Whether the desktop toolbar puts the More tools straight on the bar. Like
+  // the mobile bar, the primary group (Today plus every non-navigation tool)
+  // has DESKTOP_PRIMARY_SLOTS places: when everything fits, More would only
+  // stand in for the last tool, so the tool itself is shown; when it doesn't,
+  // More takes the last place and holds the rest.
+  const showMoreToolsOnDesktopBar = useComputed(() => {
+    if (isSmallScreen.value) return false;
+    const barToolCount = desktopBarTools.value.filter(
+      (tool) =>
+        !LEADING_NAV_TOOL_IDS.has(tool.id) &&
+        !TRAILING_NAV_TOOL_IDS.has(tool.id)
+    ).length;
+    // The extra 1 is Today.
+    return 1 + barToolCount + moreTools.value.length <= DESKTOP_PRIMARY_SLOTS;
+  });
+
+  // The tools in the More menu, or none when the menu (and its button) is not
+  // shown.
+  const moreMenuTools = useComputed(() =>
+    showMoreToolsOnDesktopBar.value ? [] : moreTools.value
+  );
+
   // Whether the chat tool is inside the More menu. Its unread badge is hidden
   // until the menu is opened, so the More button itself has to carry the
   // indicator.
   const chatInMoreMenu = useComputed(() =>
-    moreTools.value.some((tool) => tool.id === "open-chat")
+    moreMenuTools.value.some((tool) => tool.id === "open-chat")
   );
 
   const verseToolbarTools = useComputed(() => {
@@ -1218,7 +1243,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // menu has to close with it — otherwise it stays "open" with no button, and
   // pops back up by itself the next time a tool arrives.
   useSignalEffect(() => {
-    if (!isSmallScreen.value && moreTools.value.length === 0) {
+    if (!isSmallScreen.value && moreMenuTools.value.length === 0) {
       isMoreMenuOpen.value = false;
     }
   });
@@ -2605,7 +2630,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       </button>
       {isMoreMenuOpen.value && (
         <MoreMenu
-          tools={moreTools.value}
+          tools={moreMenuTools.value}
           unreadChatIndicator={unreadChatIndicator.value}
           chatWasMentioned={chats.wasMentioned.value}
           hasTypingInChats={hasTypingInChats.value}
@@ -3258,7 +3283,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       ...bar
                         .slice(todayIndex, moreIndex)
                         .flatMap(renderDesktopTool),
-                      moreTools.value.length > 0 ? desktopMoreButton : null,
+                      ...(showMoreToolsOnDesktopBar.value
+                        ? moreTools.value.flatMap(renderDesktopTool)
+                        : []),
+                      moreMenuTools.value.length > 0 ? desktopMoreButton : null,
                       ...bar.slice(moreIndex).flatMap(renderDesktopTool),
                     ];
                   })()}

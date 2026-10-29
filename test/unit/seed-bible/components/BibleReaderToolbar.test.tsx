@@ -2108,10 +2108,49 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     expect(container.querySelector(".sb-more-menu")).toBeNull();
   });
 
-  it("does not reopen the More menu by itself after its last tool goes away and comes back", async () => {
+  it("shows the fourth tool itself instead of More when only four fit", async () => {
+    const state = await renderToolbar();
+
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-plans");
+    });
+
+    expect(moreButton()).toBeNull();
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Search",
+      "Discover",
+      "Next Chapter",
+    ]);
+  });
+
+  it("swaps the fourth tool for More, holding it and the rest, when there are more than four", async () => {
+    const state = await renderToolbar();
+
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-plans");
+      registerExtensionTool(state, "ext-one", "Extension One");
+    });
+
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Search",
+      "More",
+      "Next Chapter",
+    ]);
+    await openMenu();
+    expect(menuLabels()).toEqual(
+      expect.arrayContaining(["Discover", "Extension One"])
+    );
+  });
+
+  it("does not reopen the More menu by itself after its tools fit on the bar again", async () => {
     const state = await renderToolbar();
     await act(async () => {
-      state.tools.unregisterToolbarTool("open-discover");
       state.tools.unregisterToolbarTool("open-plans");
       registerExtensionTool(state, "ext-one", "Extension One");
     });
