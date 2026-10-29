@@ -196,12 +196,10 @@ export function createSidebar(options: CreateSidebarOptions) {
   };
 
   const openSidebar = () => {
-    console.log("Opening sidebar");
     isMobileOpen.value = true;
   };
 
   const closeSidebar = () => {
-    console.log("Closing sidebar");
     isMobileOpen.value = false;
   };
 
