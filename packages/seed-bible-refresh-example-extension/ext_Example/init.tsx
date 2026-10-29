@@ -5,6 +5,9 @@ import { MaterialIcon, PortalComponent } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { v4 as uuid } from "uuid";
 
+const EXAMPLE_TOOL_PANE_ID = "example-tool-pane";
+const PORTAL_PANE_ID = "example-portal-pane";
+
 function OpenGridPortalIcon() {
   return <MaterialIcon>view_in_ar</MaterialIcon>;
 }
@@ -74,7 +77,14 @@ export default function initExampleExtension() {
         icon: () => <span>TOOL!</span>,
         onSelect: () => {
           console.log("Example tool selected!");
+          // Selecting the tool again closes its pane. The stable id is how it
+          // finds the pane it opened; `closePane` returns false when it isn't
+          // open.
+          if (context.panes.closePane(EXAMPLE_TOOL_PANE_ID)) {
+            return;
+          }
           context.panes.openPane({
+            id: EXAMPLE_TOOL_PANE_ID,
             placement: "side",
             title: "My Example Tool",
             component: () => {
@@ -244,7 +254,9 @@ export default function initExampleExtension() {
       // Toolbar tools can open a pane directly via context.panesManager.openPane.
       // Both tools below share the same stable pane id, so opening either one
       // replaces the other's content in place rather than opening a second
-      // pane — only one of these portals is ever open at a time.
+      // pane — only one of these portals is ever open at a time. Selecting a
+      // tool while its own portal is showing closes the pane instead.
+      let shownPortal: "grid" | "map" | null = null;
       yield context.tools.registerToolbarTool({
         id: "open-grid-portal",
         priority: 200,
@@ -255,12 +267,19 @@ export default function initExampleExtension() {
         },
         icon: OpenGridPortalIcon,
         onSelect: (context) => {
+          if (
+            shownPortal === "grid" &&
+            context.panesManager.closePane(PORTAL_PANE_ID)
+          ) {
+            return;
+          }
+          shownPortal = "grid";
           // Generate the portal instance id once, outside the render function,
           // so re-renders (e.g. dragging the pane) reuse the same `inst` and the
           // iframe keeps its document instead of reloading on every move.
           const inst = uuid();
           context.panesManager.openPane({
-            id: "example-portal-pane",
+            id: PORTAL_PANE_ID,
             placement: "floating",
             title: "Grid Portal",
             component: () => (
@@ -285,12 +304,19 @@ export default function initExampleExtension() {
         },
         icon: OpenMapPortalIcon,
         onSelect: (context) => {
+          if (
+            shownPortal === "map" &&
+            context.panesManager.closePane(PORTAL_PANE_ID)
+          ) {
+            return;
+          }
+          shownPortal = "map";
           // Generate the portal instance id once, outside the render function,
           // so re-renders (e.g. dragging the pane) reuse the same `inst` and the
           // iframe keeps its document instead of reloading on every move.
           const inst = uuid();
           context.panesManager.openPane({
-            id: "example-portal-pane",
+            id: PORTAL_PANE_ID,
             placement: "floating",
             title: "Map Portal",
             component: () => (

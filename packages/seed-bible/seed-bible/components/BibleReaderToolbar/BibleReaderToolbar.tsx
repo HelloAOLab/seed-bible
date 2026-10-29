@@ -1049,7 +1049,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       },
       chats,
       openSidebar: sidebar.openSidebar,
-      openSearch: sidebar.openSearch,
+      openSearch: sidebar.toggleSearchPanel,
       openChat: sidebar.toggleChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
@@ -2494,7 +2494,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const { t } = useI18n();
 
+  // Tapping Today again while its screen is showing closes it, like the You
+  // tab. When something covers it (search, chat, More), the tap brings Today
+  // back to the front instead.
   const openTodayScreen = () => {
+    if (activeMobileTab.peek() === "today") {
+      props.state.today.close();
+      return;
+    }
     isMoreMenuOpen.value = false;
     sidebar.closeSearchPanel();
     sidebar.closeChatPanel();

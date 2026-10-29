@@ -1259,6 +1259,12 @@ function getDefaultToolbarTools(
         if (!context.readingPlans || !context.modals) {
           return;
         }
+        // The button toggles the pane. Only here: the Profile screen and
+        // shared-plan links open it through the same function and must never
+        // close it.
+        if (context.panesManager.closePane(READING_PLANS_PANE_ID)) {
+          return;
+        }
         openReadingPlansPane({
           readingPlans: context.readingPlans,
           readingState: context.readingState,
