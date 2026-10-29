@@ -22,17 +22,6 @@
   margin-inline: auto;
 }
 
-.sb-extensions-page-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-}
-
 .sb-extensions-page-toolbar {
   display: flex;
   flex-wrap: wrap;

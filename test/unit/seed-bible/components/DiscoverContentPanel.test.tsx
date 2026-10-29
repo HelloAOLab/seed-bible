@@ -1162,7 +1162,37 @@ describe("DiscoverContentPanel", () => {
           .dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
 
-      expect(scrollBy).toHaveBeenCalledWith({ left: -40 });
+      expect(scrollBy).toHaveBeenCalledWith(
+        expect.objectContaining({ left: -40 })
+      );
+    });
+
+    // The scroll is smooth, so a second click lands while the row hasn't
+    // moved yet (the mocked `scrollBy` never moves it). It must step on from
+    // where the first click is headed, not pick the same pill again.
+    it("steps on another pill when the arrow is clicked again mid-scroll", () => {
+      renderPanel();
+      const row = getRow();
+      configureOverflow(row);
+      setRect(row, 0, 100);
+      const chips = Array.from(
+        row.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+      );
+      chips.forEach((chip, index) => {
+        setRect(chip, index * 60, index * 60 + 50);
+      });
+      const scrollBy = vi.fn();
+      row.scrollBy = scrollBy;
+      const endArrow = getArrow(END_LABEL)!;
+
+      act(() => endArrow.click());
+      act(() => endArrow.click());
+
+      // First click brings the second pill's end (110) to the edge (100);
+      // the second, from there, brings the third's end (170) to it.
+      expect(scrollBy.mock.calls.map(([options]) => options.left)).toEqual([
+        10, 70,
+      ]);
     });
   });
 

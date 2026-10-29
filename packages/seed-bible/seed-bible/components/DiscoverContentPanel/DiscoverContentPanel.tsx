@@ -16,6 +16,8 @@ import {
 import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
 import { DiscoverEmpty } from "../DiscoverPane/DiscoverSection";
 import { MaterialIcon } from "../icons";
+import { useHorizontalScroll } from "../useHorizontalScroll";
+import { useScrollEdgeFade } from "../useScrollEdgeFade";
 import { translateTitle } from "../../app/utils";
 import { ReadingPlansSection } from "../ReadingPlansSection/ReadingPlansSection";
 import {
@@ -36,6 +38,12 @@ type FilterKey =
  * windows, even if that means its bottom edge dips under the toolbar.
  */
 const MIN_SIDE_PANEL_HEIGHT_PX = 192;
+
+/**
+ * How long after an arrow click the next one steps on from that click's
+ * destination. Longer than a browser's smooth scroll, which is about 300–500ms.
+ */
+const PENDING_SCROLL_MS = 600;
 
 /**
  * Publishes `--sb-dcp-side-max-height` on the panel: the height of the part of
@@ -123,7 +131,13 @@ function DiscoverFilters({
   displayFilter,
 }: DiscoverFiltersProps) {
   const { t } = useI18n();
+  // The pills scroll horizontally with the vertical wheel, and fade at an
+  // edge only while pills are hidden past it.
   const filtersRef = useRef<HTMLDivElement>(null);
+  useHorizontalScroll(filtersRef);
+  useScrollEdgeFade(filtersRef);
+  // Where the arrows' last smooth scroll is headed, and when it was asked for.
+  const pendingScrollRef = useRef<{ left: number; at: number } | null>(null);
 
   const hasScrollableFilters = useSignal(false);
   const canScrollStart = useSignal(false);
@@ -175,48 +189,55 @@ function DiscoverFilters({
 
     const isRtl = getComputedStyle(container).direction === "rtl";
     const containerRect = container.getBoundingClientRect();
+    const current = container.scrollLeft;
 
-    let targetPill: HTMLButtonElement | undefined;
+    // Pills in `scrollLeft` units, where the visible stretch runs from
+    // `scrollLeft` to `scrollLeft + clientWidth` (RTL's `scrollLeft` is
+    // negative, which this handles too).
+    const spans = pills.map((pill) => {
+      const rect = pill.getBoundingClientRect();
+      const start = rect.left - containerRect.left + current;
+      return { start, end: start + rect.width };
+    });
 
-    if (direction === 1) {
-      // Toward the end: right in LTR, left in RTL.
-      targetPill = isRtl
-        ? pills.find((pill) => {
-            const rect = pill.getBoundingClientRect();
-            return rect.left < containerRect.left - 1;
-          })
-        : pills.find((pill) => {
-            const rect = pill.getBoundingClientRect();
-            return rect.right > containerRect.right + 1;
-          });
+    // Steps from where an earlier click's smooth scroll is headed rather than
+    // from where it has got to, so quick clicks each move on another pill.
+    const pending = pendingScrollRef.current;
+    const base =
+      pending && performance.now() - pending.at < PENDING_SCROLL_MS
+        ? pending.left
+        : current;
+    const viewStart = base;
+    const viewEnd = base + container.clientWidth;
+
+    // Toward the end is right in LTR, left in RTL. Bring the nearest pill
+    // hidden past that edge fully into view.
+    let next: number | undefined;
+    if ((direction === 1) !== isRtl) {
+      const hidden = spans.filter((span) => span.end > viewEnd + 1);
+      if (hidden.length > 0) {
+        next = base + Math.min(...hidden.map((span) => span.end)) - viewEnd;
+      }
     } else {
-      // Toward the start: left in LTR, right in RTL.
-      targetPill = isRtl
-        ? [...pills].reverse().find((pill) => {
-            const rect = pill.getBoundingClientRect();
-            return rect.right > containerRect.right + 1;
-          })
-        : [...pills].reverse().find((pill) => {
-            const rect = pill.getBoundingClientRect();
-            return rect.left < containerRect.left - 1;
-          });
+      const hidden = spans.filter((span) => span.start < viewStart - 1);
+      if (hidden.length > 0) {
+        next =
+          base - (viewStart - Math.max(...hidden.map((span) => span.start)));
+      }
     }
+    if (next === undefined) return;
 
-    if (!targetPill) return;
-
-    const targetRect = targetPill.getBoundingClientRect();
-
-    const scrollAmount =
-      direction === 1
-        ? isRtl
-          ? targetRect.left - containerRect.left
-          : targetRect.right - containerRect.right
-        : isRtl
-          ? targetRect.right - containerRect.right
-          : targetRect.left - containerRect.left;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    next = isRtl
+      ? Math.min(0, Math.max(-maxScroll, next))
+      : Math.min(maxScroll, Math.max(0, next));
+    pendingScrollRef.current = { left: next, at: performance.now() };
 
     container.scrollBy({
-      left: scrollAmount,
+      left: next - current,
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+        ? "auto"
+        : "smooth",
     });
   }, []);
   const showArrows = hasScrollableFilters.value;

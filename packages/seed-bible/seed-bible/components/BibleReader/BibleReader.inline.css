@@ -369,6 +369,7 @@
 .sb-bible-reader-mobile-header .sb-quick-toolbar-button {
   width: 2rem;
   height: 2rem;
+  border-radius: 50%;
 }
 
 .sb-bible-reader-mobile-header-settings {

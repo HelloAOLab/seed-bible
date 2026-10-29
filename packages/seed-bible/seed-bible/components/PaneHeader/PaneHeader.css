@@ -61,7 +61,9 @@
   gap: 4px;
 }
 
-.sb-pane-header-close-button {
+/* The close button, and the buttons panes put in the header (their back
+   buttons), share one look. */
+.sb-pane-header-button {
   flex: 0 0 auto;
   border: none;
   background: transparent;
@@ -76,6 +78,6 @@
   color: inherit;
 }
 
-.sb-pane-header-close-button:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
+.sb-pane-header-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
 }

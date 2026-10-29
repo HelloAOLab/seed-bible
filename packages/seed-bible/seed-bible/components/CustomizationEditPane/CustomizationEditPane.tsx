@@ -369,7 +369,7 @@ export function CustomizationEditPaneLeading() {
   return (
     <button
       type="button"
-      className="sb-settings-breadcrumbs-back"
+      className="sb-pane-header-button"
       onClick={() => {
         customizationEditView.value = "edit";
       }}

@@ -35,18 +35,18 @@
   height: 2.25rem;
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: 0.5rem;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   cursor: pointer;
   transition:
-    transform 0.15s ease,
     color 0.15s ease,
     background-color 0.15s ease;
 }
 
+/* The same as the save and bookmark buttons beside it. */
 .sb-quick-toolbar-button:hover:not(:disabled) {
-  transform: scale(1.08);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
 }
 

@@ -37,7 +37,7 @@ export function ExtensionsPaneBackButton(props: { state: SeedBibleState }) {
   return (
     <button
       type="button"
-      className="sb-extensions-page-back"
+      className="sb-pane-header-button sb-extensions-page-back"
       onClick={() => props.state.openExtensions()}
       aria-label={t("extensions-page-back")}
       title={t("extensions-page-back")}
