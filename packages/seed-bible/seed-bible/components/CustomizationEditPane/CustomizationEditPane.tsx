@@ -47,7 +47,10 @@ import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import { SearchBar } from "../SearchBar/SearchBar";
-import { confirmDeleteCustomization } from "./CustomizationCard";
+import {
+  CUSTOMIZATION_EDIT_PANE_ID,
+  confirmDeleteCustomization,
+} from "./CustomizationCard";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import {
   firstAcceptableSettingValue,
@@ -79,8 +82,6 @@ const LogoCropModalContent = lazy(() =>
     default: m.LogoCropModalContent,
   }))
 );
-
-export const CUSTOMIZATION_EDIT_PANE_ID = "customization-edit-pane";
 
 type CustomizationEditView = "edit" | "edit-variant" | "edit-extensions";
 
@@ -465,10 +466,6 @@ function openUnsavedChangesConfirm(
   });
 }
 
-/**
- * Saves the open draft, showing a toast if the server didn't keep it.
- * Resolves to whether the save went through.
- */
 /** Asks before deleting one of the open draft's themes, then deletes it and calls `onDeleted`. */
 function confirmDeleteVariant(
   state: SeedBibleState,
@@ -503,6 +500,10 @@ function confirmDeleteVariant(
   });
 }
 
+/**
+ * Saves the open draft, showing a toast if the server didn't keep it.
+ * Resolves to whether the save went through.
+ */
 async function saveCustomizationOrToast(
   state: SeedBibleState
 ): Promise<boolean> {
@@ -893,11 +894,7 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
         <button
           type="button"
           className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
-          onClick={() =>
-            confirmDeleteCustomization(state, record, () =>
-              state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID)
-            )
-          }
+          onClick={() => confirmDeleteCustomization(state, record)}
         >
           <span className="material-symbols-outlined">delete</span>
           {t("delete-customization", { defaultValue: "Delete" })}

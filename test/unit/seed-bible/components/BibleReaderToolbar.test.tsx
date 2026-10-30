@@ -2244,6 +2244,34 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     await press();
     expect(state.sidebar.isSearchPanelOpen.value).toBe(false);
   });
+
+  // Only the Search button toggles; a tool asking for search to be open
+  // must not close it.
+  it("leaves search open when another tool asks to open it", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
+      state.tools.registerToolbarTool({
+        id: "find-it",
+        priority: 1,
+        title: "Find it",
+        icon: () => <span>find-it</span>,
+        isVisible: () => true,
+        onSelect: (context) => context.openSearch(),
+      });
+      state.sidebar.openSearchPanel();
+    });
+
+    await openMenu();
+    const item = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-more-menu-item")
+    ).find((el) => el.textContent?.includes("Find it"));
+    if (!item) throw new Error("The tool is missing from More.");
+    await act(async () => {
+      item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
+  });
 });
 
 describe("BibleReaderToolbar — mobile Bible tab", () => {

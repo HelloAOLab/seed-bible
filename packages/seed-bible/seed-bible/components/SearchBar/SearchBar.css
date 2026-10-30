@@ -11,6 +11,13 @@
   cursor: text;
 }
 
+/* The input itself has no outline, so the bar shows where focus is. Browsers
+   treat any focus in a text box as visible focus, clicks included. */
+.sb-search-bar:has(.sb-search-bar-input:focus-visible) {
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--sb-font-color), transparent 55%);
+}
+
 /* Inside a floating panel, on the reader's colour. */
 .sb-search-bar-panel {
   border-radius: 0.625rem;

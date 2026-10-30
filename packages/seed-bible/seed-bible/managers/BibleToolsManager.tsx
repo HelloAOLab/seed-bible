@@ -199,6 +199,11 @@ export interface BibleToolContext {
   openSidebar: () => void;
   /** Opens the search interface. */
   openSearch: () => void;
+  /**
+   * Opens search, or closes it if it's already showing, as the toolbar's
+   * Search button does. Surfaces without it fall back to `openSearch`.
+   */
+  toggleSearch?: () => void;
   /** Opens the chat / cross-references floating panel. */
   openChat?: () => void;
   /** Opens the discover panel */
@@ -1227,7 +1232,11 @@ function getDefaultToolbarTools(
       title: { key: "search", defaultValue: "Search" },
       icon: () => <MaterialIcon>search</MaterialIcon>,
       onSelect: (context) => {
-        context.openSearch();
+        if (context.toggleSearch) {
+          context.toggleSearch();
+        } else {
+          context.openSearch();
+        }
       },
     },
     {

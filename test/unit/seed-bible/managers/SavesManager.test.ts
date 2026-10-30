@@ -1204,6 +1204,62 @@ describe("SavesManager", () => {
     await manager.deleteCategory("Favorites");
     expect(manager.saves.value).toEqual([]);
   });
+
+  describe("when the records server refuses a change", () => {
+    const refuse = () =>
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "Server error.",
+      } as never);
+
+    it("puts a deleted save back and reports the failure", async () => {
+      const save = createSave({ id: "keep-1", categories: ["Favorites"] });
+      setRecords({
+        saves: {
+          saves: [save],
+          categories: [{ name: DEFAULT_SAVE_CATEGORY }, { name: "Favorites" }],
+        },
+      });
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+      refuse();
+
+      await expect(manager.removeSave("keep-1")).rejects.toThrow();
+
+      expect(manager.saves.value.map((s) => s.id)).toEqual(["keep-1"]);
+    });
+
+    it("puts a deleted folder and its saves back", async () => {
+      setRecords({
+        saves: {
+          saves: [createSave({ id: "only-1", categories: ["Favorites"] })],
+          categories: [{ name: DEFAULT_SAVE_CATEGORY }, { name: "Favorites" }],
+        },
+      });
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+      refuse();
+
+      await expect(manager.deleteCategory("Favorites")).rejects.toThrow();
+
+      expect(manager.categories.value.map((c) => c.name)).toEqual([
+        DEFAULT_SAVE_CATEGORY,
+        "Favorites",
+      ]);
+      expect(manager.saves.value.map((s) => s.id)).toEqual(["only-1"]);
+    });
+
+    it("drops a new save that couldn't be stored", async () => {
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+      refuse();
+
+      await expect(manager.addSave("BSB", "GEN", 1)).rejects.toThrow();
+
+      expect(manager.isLocationSaved("BSB", "GEN", 1)).toBe(false);
+    });
+  });
 });
 
 describe("formatSaveVerse", () => {

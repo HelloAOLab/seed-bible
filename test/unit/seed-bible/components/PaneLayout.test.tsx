@@ -245,6 +245,42 @@ describe("PaneLayout", () => {
       ).toHaveLength(0);
     });
 
+    it("never puts a copy of the pane's frames or media on the page", async () => {
+      const state = await createTestSeedBibleState({
+        config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: false },
+      });
+      state.panes.openPane({
+        placement: "side",
+        title: "Portal",
+        component: () => (
+          <div className="portal-body">
+            <iframe title="portal" />
+            <audio />
+          </div>
+        ),
+      });
+      setUserActive(true);
+      act(() => render(<Row state={state} open />, container));
+
+      // A frame that reaches the page starts loading, even if it's taken out
+      // straight after; so the copy must arrive without one.
+      const host = container.querySelector(".sb-pane-side-ghost-host")!;
+      const observer = new MutationObserver(() => {});
+      observer.observe(host, { childList: true, subtree: true });
+      act(() => render(<Row state={state} open={false} />, container));
+      const records = observer.takeRecords();
+      observer.disconnect();
+
+      const copy = host.querySelector(".sb-pane-side-shell-leaving");
+      expect(copy?.querySelector(".portal-body")).not.toBeNull();
+      expect(copy?.querySelector("iframe, audio")).toBeNull();
+      const removedFromPage = records.flatMap((record) =>
+        Array.from(record.removedNodes, (node) => node.nodeName)
+      );
+      expect(removedFromPage).not.toContain("IFRAME");
+      expect(removedFromPage).not.toContain("AUDIO");
+    });
+
     it("just appears and goes when the user didn't just click", async () => {
       const state = await openNotes();
       setUserActive(false);

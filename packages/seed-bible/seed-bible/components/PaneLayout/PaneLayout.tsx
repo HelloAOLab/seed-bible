@@ -341,10 +341,10 @@ function slideOutCopyOf(shell: HTMLElement) {
   copy.classList.add("sb-pane-side-shell-leaving");
   copy.setAttribute("inert", "");
   copy.setAttribute("aria-hidden", "true");
-  host.appendChild(copy);
 
-  // A clone starts scrolled to the top; put each scrolled list back where it
-  // was, or the copy jumps as it leaves. Read them all, then write.
+  // A clone starts scrolled to the top; each scrolled list is put back where
+  // it was, or the copy jumps as it leaves. Paired up by position now, while
+  // the copy still matches the original element for element.
   const originals = shell.querySelectorAll<HTMLElement>("*");
   const copies = copy.querySelectorAll<HTMLElement>("*");
   const scrolled: [HTMLElement, number, number][] = [];
@@ -353,18 +353,21 @@ function slideOutCopyOf(shell: HTMLElement) {
       scrolled.push([copies[index]!, element.scrollTop, element.scrollLeft]);
     }
   });
-  for (const [element, top, left] of scrolled) {
-    element.scrollTop = top;
-    element.scrollLeft = left;
-  }
 
-  // Ids would clash with the page; canvases copy blank and frames reload.
+  // Before the copy joins the page: ids would clash with the real ones,
+  // canvases copy blank, and frames and media would start loading again.
   copy
     .querySelectorAll("[id]")
     .forEach((element) => element.removeAttribute("id"));
   copy
-    .querySelectorAll("canvas, video, iframe")
+    .querySelectorAll("canvas, video, audio, iframe")
     .forEach((element) => element.remove());
+
+  host.appendChild(copy);
+  for (const [element, top, left] of scrolled) {
+    element.scrollTop = top;
+    element.scrollLeft = left;
+  }
 
   setTimeout(() => copy.remove(), SIDE_PANE_SLIDE_MS);
 }

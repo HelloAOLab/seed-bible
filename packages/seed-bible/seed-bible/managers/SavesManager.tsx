@@ -1,4 +1,5 @@
 import {
+  batch,
   computed,
   effect,
   signal,
@@ -697,6 +698,35 @@ export function createSavesManager(
     return loadedUserId.value === userId;
   };
 
+  /**
+   * Shows a change straight away, then stores it. If storing fails the list
+   * goes back to how it was (unless another change has replaced it since) and
+   * the error is passed on, so a caller that reports the failure isn't
+   * contradicted by a list that still shows the change.
+   */
+  const commit = async (
+    nextSaves: Save[],
+    nextCategories: SaveCategory[]
+  ): Promise<void> => {
+    const prevSaves = saves.value;
+    const prevCategories = categories.value;
+    batch(() => {
+      saves.value = nextSaves;
+      categories.value = nextCategories;
+    });
+    try {
+      await persist(nextSaves, nextCategories);
+    } catch (error) {
+      if (saves.value === nextSaves && categories.value === nextCategories) {
+        batch(() => {
+          saves.value = prevSaves;
+          categories.value = prevCategories;
+        });
+      }
+      throw error;
+    }
+  };
+
   effect(() => {
     const userId = login.userId.value;
     if (!userId) {
@@ -781,8 +811,6 @@ export function createSavesManager(
     for (const name of categoryNames) {
       nextCategories = ensureCategory(nextCategories, name);
     }
-    saves.value = nextSaves;
-    categories.value = nextCategories;
     // Auto-expand every category that just received a save so the user sees the
     // new entry without having to click open the folder.
     const nextExpanded = new Set(expandedCategories.value);
@@ -790,7 +818,7 @@ export function createSavesManager(
       nextExpanded.add(name);
     }
     expandedCategories.value = nextExpanded;
-    await persist(nextSaves, nextCategories);
+    await commit(nextSaves, nextCategories);
   };
 
   const removeSave: SavesManager["removeSave"] = async (id) => {
@@ -799,8 +827,7 @@ export function createSavesManager(
     if (next.length === saves.value.length) {
       return;
     }
-    saves.value = next;
-    await persist(next, categories.value);
+    await commit(next, categories.value);
   };
 
   const removeSaveFromCategory: SavesManager["removeSaveFromCategory"] = async (
@@ -821,8 +848,7 @@ export function createSavesManager(
         : saves.value.map((save) =>
             save.id === id ? { ...save, categories: remaining } : save
           );
-    saves.value = next;
-    await persist(next, categories.value);
+    await commit(next, categories.value);
   };
 
   const setSaveCategories: SavesManager["setSaveCategories"] = async (
@@ -852,14 +878,12 @@ export function createSavesManager(
     const nextSaves = saves.value.map((save) =>
       save.id === id ? { ...save, categories: nextNames } : save
     );
-    saves.value = nextSaves;
-    categories.value = nextCategories;
     const nextExpanded = new Set(expandedCategories.value);
     for (const name of nextNames) {
       nextExpanded.add(name);
     }
     expandedCategories.value = nextExpanded;
-    await persist(nextSaves, nextCategories);
+    await commit(nextSaves, nextCategories);
   };
 
   const toggleFilter = () => {
@@ -891,11 +915,10 @@ export function createSavesManager(
       return;
     }
     const nextCategories = [...categories.value, { name: trimmed }];
-    categories.value = nextCategories;
     const nextExpanded = new Set(expandedCategories.value);
     nextExpanded.add(trimmed);
     expandedCategories.value = nextExpanded;
-    await persist(saves.value, nextCategories);
+    await commit(saves.value, nextCategories);
   };
 
   const renameCategory: SavesManager["renameCategory"] = async (
@@ -925,14 +948,12 @@ export function createSavesManager(
         ),
       };
     });
-    categories.value = nextCategories;
-    saves.value = nextSaves;
     const nextExpanded = new Set(expandedCategories.value);
     if (nextExpanded.delete(oldName)) {
       nextExpanded.add(trimmed);
     }
     expandedCategories.value = nextExpanded;
-    await persist(nextSaves, nextCategories);
+    await commit(nextSaves, nextCategories);
   };
 
   const deleteCategory: SavesManager["deleteCategory"] = async (name) => {
@@ -958,12 +979,10 @@ export function createSavesManager(
       }
       nextSaves.push({ ...save, categories: remaining });
     }
-    categories.value = nextCategories;
-    saves.value = nextSaves;
     const nextExpanded = new Set(expandedCategories.value);
     nextExpanded.delete(name);
     expandedCategories.value = nextExpanded;
-    await persist(nextSaves, nextCategories);
+    await commit(nextSaves, nextCategories);
   };
 
   // Dev-only: mirrors the list to the console whenever it changes, so folder

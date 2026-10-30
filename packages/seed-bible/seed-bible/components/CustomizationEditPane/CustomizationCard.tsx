@@ -13,14 +13,16 @@ import {
   getDefaultTranslationLabel,
 } from "./CustomizationPreviews";
 
+export const CUSTOMIZATION_EDIT_PANE_ID = "customization-edit-pane";
+
 /**
- * Asks before deleting a customization for good, then deletes it and calls
- * `onDeleted`. A failed delete is reported and leaves it in place.
+ * Asks before deleting a customization for good, then deletes it. If it was
+ * open in the editor, the editor closes too, whichever button deleted it. A
+ * failed delete is reported and leaves it in place.
  */
 export function confirmDeleteCustomization(
   state: SeedBibleState,
-  customization: SeedBibleCustomization,
-  onDeleted?: () => void
+  customization: SeedBibleCustomization
 ) {
   openConfirmDeleteModal(state.modals, {
     id: `delete-customization-confirm-${customization.id}`,
@@ -35,8 +37,14 @@ export function confirmDeleteCustomization(
           'Delete Custom Branding "{{name}}"? This can\'t be undone.',
       }),
     onConfirm: async () => {
+      // Read first: deleting the one being edited clears the draft.
+      const wasEditing =
+        state.customizations.editingCustomization.peek()?.id ===
+        customization.id;
       await state.customizations.remove(customization.id);
-      onDeleted?.();
+      if (wasEditing) {
+        state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID);
+      }
     },
     failedMessage: (t) =>
       t("delete-customization-failed", {

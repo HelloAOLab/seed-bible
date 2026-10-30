@@ -146,14 +146,6 @@ function formatDate(
 }
 
 /**
- * The text of a verse, fetched on demand.
- *
- * Nothing stores the wording of a highlighted or annotated verse, only its
- * reference — so the quoted line in each card is read back from the
- * translation. Returns an empty string until it arrives (and if it never
- * does), which the cards render as just the reference.
- */
-/**
  * A translation's short name ("VDV" for "arb_vdv"), the way the reader's
  * header gets it: from the translation's book list, which this loads if no
  * tab has (a save made in another translation, say). The id stands in until
@@ -175,6 +167,14 @@ function useTranslationShortName(
   return books?.translation.shortName ?? translationId;
 }
 
+/**
+ * The text of a verse, fetched on demand.
+ *
+ * Nothing stores the wording of a highlighted or annotated verse, only its
+ * reference — so the quoted line in each card is read back from the
+ * translation. Returns an empty string until it arrives (and if it never
+ * does), which the cards render as just the reference.
+ */
 function useVerseText(
   state: SeedBibleState,
   translationId: string | undefined,

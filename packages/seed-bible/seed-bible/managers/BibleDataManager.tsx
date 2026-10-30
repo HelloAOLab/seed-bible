@@ -1086,15 +1086,39 @@ export function createBibleDataManager(
     mergeTranslations,
   });
 
-  const getTranslationBooks = async (
+  // Lookups under way, by translation. A screen of rows can ask for the same
+  // list all at once (one per save or highlight); they share one lookup
+  // instead of each reading storage and setting up its own request.
+  const pendingTranslationBooks = new Map<string, Promise<TranslationBooks>>();
+
+  const getTranslationBooks = (
     translationId: string,
     options?: ApiRequestOptions
   ): Promise<TranslationBooks> => {
     const existing = translationBooks.value.get(translationId);
     if (existing) {
-      return existing;
+      return Promise.resolve(existing);
     }
+    // A caller that can cancel, or wants a refresh, gets its own lookup, so
+    // it can't cancel or reshape anyone else's.
+    if (options?.signal || options?.refresh) {
+      return loadTranslationBooks(translationId, options);
+    }
+    const pending = pendingTranslationBooks.get(translationId);
+    if (pending) {
+      return pending;
+    }
+    const lookup = loadTranslationBooks(translationId).finally(() => {
+      pendingTranslationBooks.delete(translationId);
+    });
+    pendingTranslationBooks.set(translationId, lookup);
+    return lookup;
+  };
 
+  const loadTranslationBooks = async (
+    translationId: string,
+    options?: ApiRequestOptions
+  ): Promise<TranslationBooks> => {
     const cacheBooks = (
       endpoint: string,
       books: TranslationBooks,

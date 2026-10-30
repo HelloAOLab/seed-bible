@@ -177,6 +177,8 @@ interface StateOptions {
   deleteReadingPlanError?: Error;
   /** Makes deleting a customization fail, so the screen has to say so. */
   removeCustomizationError?: Error;
+  /** The customization open in the editor, if any. */
+  editingCustomization?: SeedBibleCustomization;
   /** Translations whose book lists are already loaded. */
   translations?: Translation[];
   /** Translations the server has, whose book lists load when asked for. */
@@ -258,11 +260,17 @@ function createState(options: StateOptions = {}) {
     );
     return booksOf(found);
   });
-  const removeCustomization = vi.fn(async (_id: string) => {
+  const editingCustomization = signal(options.editingCustomization ?? null);
+  // As the manager does: deleting the one being edited clears the draft.
+  const removeCustomization = vi.fn(async (id: string) => {
     if (options.removeCustomizationError) {
       throw options.removeCustomizationError;
     }
+    if (editingCustomization.value?.id === id) {
+      editingCustomization.value = null;
+    }
   });
+  const closePane = vi.fn();
 
   const state = {
     yourContent: {
@@ -290,6 +298,7 @@ function createState(options: StateOptions = {}) {
       customizations: signal(options.customizations ?? []),
       load: loadCustomizations,
       remove: removeCustomization,
+      editingCustomization,
       resolveEditingVariantTheme: () => LIGHT_THEME,
       getShareLink: (c: SeedBibleCustomization) =>
         `https://example.com/?customization=${c.id}`,
@@ -339,10 +348,12 @@ function createState(options: StateOptions = {}) {
       getVerseText: vi.fn(async () => undefined),
       getDefaultTranslation: () => "BSB",
     },
+    panes: { closePane },
   } as unknown as SeedBibleState;
 
   return {
     state,
+    closePane,
     removeSave,
     readHighlightVerseText,
     highlightVerseText,
@@ -644,6 +655,31 @@ describe("YourContentPane", () => {
       await confirm(dialog);
 
       expect(removeCustomization).toHaveBeenCalledWith("c1");
+    });
+
+    it("closes the editor when deleting the customization open in it", async () => {
+      const grace = customization("c1", "Grace Church");
+      const { state, openModal, closePane } = createState({
+        customizations: [grace, customization("c2", "Hope Chapel")],
+        editingCustomization: grace,
+      });
+      renderPane(state);
+
+      await confirm(chooseDelete(openModal));
+
+      expect(closePane).toHaveBeenCalledWith("customization-edit-pane");
+    });
+
+    it("leaves the editor open when deleting a different customization", async () => {
+      const { state, openModal, closePane } = createState({
+        customizations: [customization("c1", "Grace Church")],
+        editingCustomization: customization("c2", "Hope Chapel"),
+      });
+      renderPane(state);
+
+      await confirm(chooseDelete(openModal));
+
+      expect(closePane).not.toHaveBeenCalled();
     });
 
     it("says so when a customization can't be deleted", async () => {

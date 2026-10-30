@@ -1036,15 +1036,19 @@
     padding: 0.5rem 0.75rem;
     font-size: 0.8125rem;
   }
+  /* A touch smaller on a phone than the shared search bar's own sizes. */
   .sb-today-container .sb-today-search-container .sb-today-searchbar {
-    gap: 0.3rem;
-  }
-  .sb-today-container .sb-today-search-container .sb-today-searchbar > span {
-    font-size: 1.2rem;
-  }
+    .sb-search-bar {
+      gap: 0.3rem;
+    }
 
-  .sb-today-container .sb-today-search-container .sb-today-searchbar > input {
-    font-size: 0.9rem;
+    .sb-search-bar-icon {
+      font-size: 1.2rem;
+    }
+
+    .sb-search-bar-input {
+      font-size: 0.9rem;
+    }
   }
 
   .sb-today-container
