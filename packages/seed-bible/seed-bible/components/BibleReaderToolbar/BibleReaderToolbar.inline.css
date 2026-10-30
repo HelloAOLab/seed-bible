@@ -1269,6 +1269,11 @@
   gap: 0.5rem;
 }
 
+.sb-verse-toolbar-discovered {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
 /* No click-to-navigate here (unlike DiscoverPane's row, which jumps to the
    verse on click) — the row itself isn't a button, so the pointer cursor
    DiscoverPane's clickable row uses isn't appropriate. The edit/delete menu
