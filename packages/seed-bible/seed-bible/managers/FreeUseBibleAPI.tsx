@@ -811,7 +811,7 @@ export interface CommentaryBooks {
   books: CommentaryBook[];
 }
 
-interface CommentaryBook {
+export interface CommentaryBook {
   /**
    * The ID of the book.
    * Matches the ID of the corresponding book in the Bible (GEN, EXO, etc.).
@@ -917,7 +917,7 @@ export interface CommentaryBookChapter {
   chapter: CommentaryChapterData;
 }
 
-interface CommentaryChapterData {
+export interface CommentaryChapterData {
   /**
    * The number of the chapter.
    */
@@ -977,7 +977,7 @@ interface VerseRef {
   endVerse?: number;
 }
 
-interface CommentaryProfile {
+export interface CommentaryProfile {
   /**
    * The ID of the profile.
    */
@@ -1121,7 +1121,7 @@ export interface DatasetBooks {
   books: DatasetBook[];
 }
 
-interface DatasetBook {
+export interface DatasetBook {
   /**
    * The ID of the book.
    * Matches the ID of the corresponding book in the Bible (GEN, EXO, etc.).
@@ -1208,7 +1208,7 @@ export interface DatasetBookChapter {
   chapter: DatasetChapterData;
 }
 
-interface DatasetChapterData {
+export interface DatasetChapterData {
   /**
    * The number of the chapter.
    */
@@ -1220,7 +1220,7 @@ interface DatasetChapterData {
   content: DatasetVerse[];
 }
 
-interface DatasetVerse {
+export interface DatasetVerse {
   /**
    * The number of the verse.
    */
@@ -1234,7 +1234,7 @@ interface DatasetVerse {
   references: DatasetReference[];
 }
 
-interface DatasetReference {
+export interface DatasetReference {
   /**
    * The ID of the book that is being referenced.
    */
@@ -1548,6 +1548,114 @@ export class FreeUseBibleAPI {
     options?: ApiRequestOptions
   ): Promise<AudioTimings> {
     return this._getJson<AudioTimings>(link, endpoint, options);
+  }
+
+  /** Gets the commentaries the API offers. */
+  async getAvailableCommentaries(
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<AvailableCommentaries> {
+    return this._getJson<AvailableCommentaries>(
+      "api/available_commentaries.json",
+      endpoint,
+      options
+    );
+  }
+
+  async getCommentaryBooks(
+    commentary: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryBooks> {
+    return this._getJson<CommentaryBooks>(
+      `api/c/${encodeURIComponent(commentary)}/books.json`,
+      endpoint,
+      options
+    );
+  }
+
+  async getCommentaryBookChapter(
+    commentary: string,
+    book: string,
+    chapter: number | string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryBookChapter> {
+    return this._getJson<CommentaryBookChapter>(
+      `api/c/${encodeURIComponent(commentary)}/${encodeURIComponent(
+        book
+      )}/${encodeURIComponent(String(chapter))}.json`,
+      endpoint,
+      options
+    );
+  }
+
+  /** The commentary's articles about people, places and topics. */
+  async getCommentaryProfiles(
+    commentary: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryProfiles> {
+    return this._getJson<CommentaryProfiles>(
+      `api/c/${encodeURIComponent(commentary)}/profiles.json`,
+      endpoint,
+      options
+    );
+  }
+
+  async getCommentaryProfile(
+    commentary: string,
+    profile: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryProfileContent> {
+    return this._getJson<CommentaryProfileContent>(
+      `api/c/${encodeURIComponent(commentary)}/profiles/${encodeURIComponent(
+        profile
+      )}.json`,
+      endpoint,
+      options
+    );
+  }
+
+  /** Gets the datasets (such as cross-references) the API offers. */
+  async getAvailableDatasets(
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<AvailableDatasets> {
+    return this._getJson<AvailableDatasets>(
+      "api/available_datasets.json",
+      endpoint,
+      options
+    );
+  }
+
+  async getDatasetBooks(
+    dataset: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<DatasetBooks> {
+    return this._getJson<DatasetBooks>(
+      `api/d/${encodeURIComponent(dataset)}/books.json`,
+      endpoint,
+      options
+    );
+  }
+
+  async getDatasetBookChapter(
+    dataset: string,
+    book: string,
+    chapter: number | string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<DatasetBookChapter> {
+    return this._getJson<DatasetBookChapter>(
+      `api/d/${encodeURIComponent(dataset)}/${encodeURIComponent(
+        book
+      )}/${encodeURIComponent(String(chapter))}.json`,
+      endpoint,
+      options
+    );
   }
 
   private _getJson<T>(

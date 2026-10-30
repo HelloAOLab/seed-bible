@@ -243,7 +243,7 @@ Declare them in `extension.json`. The user sees them, in plain language, before 
 
 **Icon.** `icon` is a square image in your project (`.png`, `.svg`, `.webp` or `.jpg`, under 256 KB; 256 pixels across is plenty). Seed Bible shows it wherever your extension is listed, on its page and in the install dialog, in place of the colored initials it shows otherwise. `publish` uploads it to its own link and puts that link in the manifest; `package` copies it next to the bundle and `dev` serves it. You can also give a full `https:` link to an image hosted elsewhere. `check` refuses an icon Seed Bible couldn't show.
 
-**Needs no permission:** `sb.identity` (an id for the user that's the same every time for your extension, different for every extension, not their real id, and null when signed out), `sb.bible.chapter({ translationId, bookId, chapter })` for public Bible text, `sb.sensitive.fetch(...)` for requests that carry the user's sensitive settings such as API keys (see the [`sensitive` section](./extension-api.md#sensitive-settings) of `extension.json`), `sb.modals.alert`/`open`, and `sb.settings.registerPanel(view)` for a view on your extension's Settings page.
+**Needs no permission:** `sb.identity` (an id for the user that's the same every time for your extension, different for every extension, not their real id, and null when signed out), `sb.bible` for public Bible text, search, commentaries and datasets (translations, books, chapters, verse search, cross-references; downloaded translations work offline), `sb.sensitive.fetch(...)` for requests that carry the user's sensitive settings such as API keys (see the [`sensitive` section](./extension-api.md#sensitive-settings) of `extension.json`), `sb.modals.alert`/`open`, and `sb.settings.registerPanel(view)` for a view on your extension's Settings page.
 
 ### Asking for optional permissions
 
@@ -330,7 +330,7 @@ it("toasts from its verse tool", async () => {
 - `host.tools`, `host.panes`, `host.toasts`, `host.storage`, `host.opened`, `host.clipboard` and `host.calls` record what the extension did.
 - `host.renderView(name)` renders a view into the test's document; `host.setState({ position })` moves the reader; `host.discover(...)` and `host.chat(...)` ask its providers.
 - `allowRequests: false` makes the "user" decline optional permissions.
-- For anything the stand-in doesn't simulate (Bible text, highlights, sensitive requests…), pass an answer in `answers: { "bible.chapter": () => ({ verses: [...] }) }`. Without one, the call fails with a message saying so.
+- For anything the stand-in doesn't simulate (Bible text, highlights, sensitive requests…), pass an answer in `answers: { "bible.chapter": () => chapter }`. Without one, the call fails with a message saying so.
 
 The [API reference](./extension-api.md#9-testing-with-createtesthost) lists every option.
 

@@ -430,6 +430,230 @@ export interface SandboxReference {
   endVerse?: number;
 }
 
+/** A Bible translation (`sb.bible.translations`). */
+export interface SandboxTranslation {
+  /** Like `"BSB"`: what the other `sb.bible` calls take as `translationId`. */
+  id: string;
+  /** Its name in its own language. */
+  name: string;
+  englishName: string;
+  shortName: string;
+  /** An ISO 639-3 code, like `"eng"`. */
+  language: string;
+  /** The language's name in that language; null if unknown. */
+  languageName: string | null;
+  languageEnglishName: string | null;
+  textDirection: "ltr" | "rtl";
+  website: string;
+  licenseUrl: string;
+  /** A notice the license asks to be shown with the text; null if none. */
+  licenseNotice: string | null;
+  numberOfBooks: number;
+  totalNumberOfChapters: number;
+  totalNumberOfVerses: number;
+  /** On the user's device, so it can be read with no connection. */
+  downloaded: boolean;
+}
+
+/** A book of a translation (`sb.bible.books`). */
+export interface SandboxBook {
+  /** A three-letter USFM book code, like `"JHN"`. */
+  id: string;
+  /** The name the translation gives it. */
+  name: string;
+  /** The name it's commonly known by, in the translation's language. */
+  commonName: string;
+  /** A longer title, if the translation gives one. */
+  title: string | null;
+  /** Its position in the translation, from 1. */
+  order: number;
+  numberOfChapters: number;
+  firstChapterNumber: number;
+  lastChapterNumber: number;
+  totalNumberOfVerses: number;
+  /** Part of the Apocrypha / Deuterocanon. */
+  isApocryphal: boolean;
+}
+
+/** A chapter of some book, as in a chapter's `next` and `previous`. */
+export interface SandboxChapterRef {
+  bookId: string;
+  chapter: number;
+}
+
+/** One piece of a chapter, in reading order (`SandboxChapter.content`). */
+export type SandboxChapterContent =
+  | { type: "heading"; text: string }
+  /** A paragraph or stanza break. */
+  | { type: "lineBreak" }
+  /** A psalm's superscription, like "A Psalm of David." */
+  | { type: "hebrewSubtitle"; text: string }
+  | {
+      type: "verse";
+      number: number;
+      text: string;
+      /** The `id`s of this verse's footnotes, in `SandboxChapter.footnotes`. */
+      footnotes: number[];
+    };
+
+export interface SandboxFootnote {
+  id: number;
+  text: string;
+  /** The mark to show in the text, like `"a"`; null for none, `"+"` for any. */
+  caller: string | null;
+  /** The verse it's on; null when the translation doesn't say. */
+  verse: number | null;
+}
+
+/** A chapter of Bible text (`sb.bible.chapter`). */
+export interface SandboxChapter {
+  translationId: string;
+  bookId: string;
+  chapter: number;
+  /** Each verse as plain text, without headings. */
+  verses: { number: number; text: string }[];
+  /** Headings, breaks and verses, for laying the chapter out. */
+  content: SandboxChapterContent[];
+  footnotes: SandboxFootnote[];
+  /** The chapter after this one, possibly in the next book; null at the end. */
+  next: SandboxChapterRef | null;
+  /** The chapter before this one; null at the start. */
+  previous: SandboxChapterRef | null;
+}
+
+/** A commentary on the Bible (`sb.bible.commentaries`). */
+export interface SandboxCommentary {
+  /** Like `"adam-clarke"`: what the commentary calls take as `commentaryId`. */
+  id: string;
+  name: string;
+  englishName: string;
+  language: string;
+  languageName: string | null;
+  languageEnglishName: string | null;
+  textDirection: "ltr" | "rtl";
+  website: string;
+  licenseUrl: string;
+  numberOfBooks: number;
+  totalNumberOfChapters: number;
+  totalNumberOfVerses: number;
+}
+
+/** A book a commentary covers (`sb.bible.commentaryBooks`). */
+export interface SandboxCommentaryBook {
+  id: string;
+  name: string;
+  commonName: string;
+  order: number;
+  /** The commentary's introduction to the book, if it has one. */
+  introduction: string | null;
+  numberOfChapters: number;
+  /** Null when the commentary covers only the book's introduction. */
+  firstChapterNumber: number | null;
+  lastChapterNumber: number | null;
+  totalNumberOfVerses: number;
+}
+
+/** A commentary's notes on one chapter (`sb.bible.commentaryChapter`). */
+export interface SandboxCommentaryChapter {
+  commentaryId: string;
+  bookId: string;
+  chapter: number;
+  /** The commentary's introduction to the chapter, if it has one. */
+  introduction: string | null;
+  /** The note on each verse it comments on, as plain text. */
+  verses: { number: number; text: string }[];
+  next: SandboxChapterRef | null;
+  previous: SandboxChapterRef | null;
+}
+
+/** An article in a commentary about a person, place or topic. */
+export interface SandboxCommentaryProfile {
+  id: string;
+  subject: string;
+  /** The passage it's about; null if it isn't about one. */
+  reference: SandboxReference | null;
+}
+
+/** A dataset of verse-level data, such as cross-references (`sb.bible.datasets`). */
+export interface SandboxDataset {
+  /** Like `"open-cross-ref"`: what the dataset calls take as `datasetId`. */
+  id: string;
+  name: string;
+  englishName: string;
+  language: string;
+  languageName: string | null;
+  languageEnglishName: string | null;
+  textDirection: "ltr" | "rtl";
+  website: string;
+  licenseUrl: string;
+  numberOfBooks: number;
+  totalNumberOfChapters: number;
+  totalNumberOfVerses: number;
+  totalNumberOfReferences: number;
+}
+
+/** A book a dataset covers (`sb.bible.datasetBooks`). */
+export interface SandboxDatasetBook {
+  id: string;
+  order: number;
+  numberOfChapters: number;
+  firstChapterNumber: number;
+  lastChapterNumber: number | null;
+  totalNumberOfVerses: number;
+  totalNumberOfReferences: number;
+}
+
+/** A passage a dataset points to, with how relevant it is. */
+export interface SandboxDatasetReference extends SandboxReference {
+  /** Higher is more relevant; absent when the dataset doesn't score them. */
+  score?: number;
+}
+
+/** A dataset's entries for one chapter (`sb.bible.datasetChapter`). */
+export interface SandboxDatasetChapter {
+  datasetId: string;
+  bookId: string;
+  chapter: number;
+  /** The verses that have entries, each with the passages it points to. */
+  verses: { verse: number; references: SandboxDatasetReference[] }[];
+}
+
+/** What `sb.bible.search` takes. */
+export interface SandboxSearchQuery {
+  /** The translation to search, and whose language the query is in. */
+  translationId: string;
+  /** Words to find, or a reference like `"John 3:16"`. 1–200 characters. */
+  query: string;
+  /** Only verses in this book. */
+  bookId?: string;
+  /** Only verses in this chapter; needs `bookId`. */
+  chapter?: number;
+  /** From 1. Defaults to 1. */
+  page?: number;
+  /** 1–50. Defaults to 10. */
+  perPage?: number;
+}
+
+/** One verse `sb.bible.search` found. */
+export interface SandboxSearchResult {
+  translationId: string;
+  bookId: string;
+  chapter: number;
+  verse: number;
+  /** The verse as plain text. */
+  text: string;
+  /** How the translation writes the reference, like "John 3:16". */
+  reference: string;
+}
+
+/** A page of `sb.bible.search` results, best match first. */
+export interface SandboxSearchResults {
+  results: SandboxSearchResult[];
+  /** How many verses match in all, across every page. */
+  found: number;
+  page: number;
+}
+
 /** What a Discover provider can show, as data the host renders. */
 export type SandboxDiscoverResult =
   | {
@@ -608,9 +832,47 @@ export interface SandboxMethods {
     params: Record<string, never>;
     result: SandboxProfile | null;
   };
+  "bible.translations": {
+    params: Record<string, never>;
+    result: SandboxTranslation[];
+  };
+  "bible.books": {
+    params: { translationId: string };
+    result: { translation: SandboxTranslation; books: SandboxBook[] };
+  };
   "bible.chapter": {
     params: { translationId: string; bookId: string; chapter: number };
-    result: { verses: { number: number; text: string }[] };
+    result: SandboxChapter;
+  };
+  "bible.commentaries": {
+    params: Record<string, never>;
+    result: SandboxCommentary[];
+  };
+  "bible.commentaryBooks": {
+    params: { commentaryId: string };
+    result: { commentary: SandboxCommentary; books: SandboxCommentaryBook[] };
+  };
+  "bible.commentaryChapter": {
+    params: { commentaryId: string; bookId: string; chapter: number };
+    result: SandboxCommentaryChapter;
+  };
+  "bible.commentaryProfiles": {
+    params: { commentaryId: string };
+    result: SandboxCommentaryProfile[];
+  };
+  "bible.commentaryProfile": {
+    params: { commentaryId: string; profileId: string };
+    result: SandboxCommentaryProfile & { content: string[] };
+  };
+  "bible.datasets": { params: Record<string, never>; result: SandboxDataset[] };
+  "bible.search": { params: SandboxSearchQuery; result: SandboxSearchResults };
+  "bible.datasetBooks": {
+    params: { datasetId: string };
+    result: { dataset: SandboxDataset; books: SandboxDatasetBook[] };
+  };
+  "bible.datasetChapter": {
+    params: { datasetId: string; bookId: string; chapter: number };
+    result: SandboxDatasetChapter;
   };
   "discover.register": {
     params: { id: string; title: string; description: string };

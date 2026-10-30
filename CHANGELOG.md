@@ -4,6 +4,11 @@
 
 ### ✨ Added
 
+- Extensions can read much more of the Free Use Bible API through `sb.bible`: list translations and their books, search for verses, and read commentaries and datasets such as cross-references.
+  - A chapter now comes with its headings, paragraph breaks, footnotes, and the chapters before and after it, as well as its plain-text verses.
+  - Translations the user has downloaded keep working with no connection, and the translation list marks which ones are downloaded.
+  - Extension tests that answer `bible.chapter` with `createTestHost` need to return the fuller chapter.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

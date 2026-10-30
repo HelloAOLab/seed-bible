@@ -9,7 +9,6 @@ import type { Annotation, AnnotationsManager } from "./AnnotationsManager";
 import type { Save, SavesManager } from "./SavesManager";
 import type { ReadingHistoryManager } from "./ReadingHistoryManager";
 import type { LoginManager } from "./LoginManager";
-import type { BibleDataManager } from "./BibleDataManager";
 import type {
   DiscoverManager,
   DiscoverReference,
@@ -19,9 +18,13 @@ import type { ChatParticipant, ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
 import type { ExtensionSettingsManager } from "./ExtensionSettingsManager";
 import { SensitiveSettingsError } from "./ExtensionSensitiveSettings";
-import { extractContentText } from "./ChapterText";
-import type { ChapterVerse } from "./FreeUseBibleAPI";
+import {
+  createSandboxBible,
+  SandboxBibleUnavailableError,
+  type SandboxBibleData,
+} from "./ExtensionSandboxBible";
 import type { FriendsManager } from "./FriendsManager";
+import type { SearchManager } from "./SearchManager";
 import type { AppState } from "./SeedBibleStateManager";
 import {
   createSandboxAudio,
@@ -90,10 +93,9 @@ export interface SandboxServicesContext {
   saves: Pick<SavesManager, "saves" | "addSave" | "removeSave">;
   readingHistory: Pick<ReadingHistoryManager, "getReadingEvents">;
   login: Pick<LoginManager, "userId" | "profile">;
-  bibleData: Pick<
-    BibleDataManager,
-    "getTranslationBookChapter" | "getAudioTimings"
-  >;
+  bibleData: SandboxBibleData &
+    Pick<SandboxAudioContext["bibleData"], "getAudioTimings">;
+  search: Pick<SearchManager, "searchVerses">;
   discover: Pick<DiscoverManager, "registerDiscoverProvider">;
   chats: Pick<ChatsManager, "registerProvider" | "chats">;
   modals: Pick<ModalManager, "openModal" | "closeModal">;
@@ -278,7 +280,48 @@ export const SANDBOX_SERVICE_SPECS: Partial<
       ),
   },
   "profile.get": { schema: z.object({}) },
+  "bible.translations": { schema: z.object({}) },
+  "bible.books": { schema: z.object({ translationId: translationIdSchema }) },
   "bible.chapter": { schema: chapterRefSchema },
+  "bible.commentaries": { schema: z.object({}) },
+  "bible.commentaryBooks": { schema: z.object({ commentaryId: idSchema }) },
+  "bible.commentaryChapter": {
+    schema: z.object({
+      commentaryId: idSchema,
+      bookId: bookIdSchema,
+      chapter: chapterSchema,
+    }),
+  },
+  "bible.commentaryProfiles": { schema: z.object({ commentaryId: idSchema }) },
+  "bible.commentaryProfile": {
+    schema: z.object({
+      commentaryId: idSchema,
+      profileId: z.string().regex(/^[A-Za-z0-9_.-]{1,128}$/),
+    }),
+  },
+  "bible.search": {
+    schema: z
+      .object({
+        translationId: translationIdSchema,
+        query: z.string().trim().min(1).max(200),
+        bookId: bookIdSchema.optional(),
+        chapter: chapterSchema.optional(),
+        page: z.number().int().min(1).max(100).optional(),
+        perPage: z.number().int().min(1).max(50).optional(),
+      })
+      .refine(({ bookId, chapter }) => chapter === undefined || bookId, {
+        message: "Give a `bookId` to search one chapter.",
+      }),
+  },
+  "bible.datasets": { schema: z.object({}) },
+  "bible.datasetBooks": { schema: z.object({ datasetId: idSchema }) },
+  "bible.datasetChapter": {
+    schema: z.object({
+      datasetId: idSchema,
+      bookId: bookIdSchema,
+      chapter: chapterSchema,
+    }),
+  },
   "discover.register": {
     schema: z.object({
       id: idSchema,
@@ -706,6 +749,28 @@ export function createSandboxServices(
 
   type Params<M extends SandboxMethod> = SandboxMethods[M]["params"];
 
+  /** `sb.bible`, with a failed load passed on as `unavailable`. */
+  const bibleHandlers = (): SandboxServices["handlers"] =>
+    Object.fromEntries(
+      Object.entries(createSandboxBible(context.bibleData, context.search)).map(
+        ([method, read]) => [
+          method,
+          async (params: unknown) => {
+            try {
+              return await (read as (params: unknown) => Promise<unknown>)(
+                params
+              );
+            } catch (err) {
+              if (err instanceof SandboxBibleUnavailableError) {
+                throw new SandboxBrokerError("unavailable", err.message);
+              }
+              throw err;
+            }
+          },
+        ]
+      )
+    );
+
   const handlers: SandboxServices["handlers"] = {
     "highlights.colors": () => highlightColors(),
 
@@ -875,30 +940,7 @@ export function createSandboxServices(
         : null;
     },
 
-    "bible.chapter": async (params) => {
-      const { translationId, bookId, chapter } =
-        params as Params<"bible.chapter">;
-      try {
-        const data = await context.bibleData.getTranslationBookChapter(
-          translationId,
-          bookId,
-          chapter
-        );
-        return {
-          verses: data.chapter.content
-            .filter((item): item is ChapterVerse => item.type === "verse")
-            .map((verse) => ({
-              number: verse.number,
-              text: extractContentText(verse.content),
-            })),
-        };
-      } catch {
-        throw new SandboxBrokerError(
-          "unavailable",
-          `Couldn't load ${translationId} ${bookId} ${chapter}.`
-        );
-      }
-    },
+    ...bibleHandlers(),
 
     "discover.register": (params) => {
       const { id, title, description } = params as Params<"discover.register">;
