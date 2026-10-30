@@ -1621,5 +1621,85 @@ describe("DiscoverContentPanel", () => {
         "192px"
       );
     });
+
+    describe("list cover", () => {
+      let reader: HTMLDivElement;
+      let headerBottom: number;
+      let listRect: { top: number; bottom: number };
+
+      beforeEach(() => {
+        // The mobile reader: its header overlays the top of the page scroller.
+        reader = document.createElement("div");
+        reader.className = "sb-bible-reader";
+        const header = document.createElement("div");
+        header.className = "sb-bible-reader-mobile-header";
+        headerBottom = 0;
+        header.getBoundingClientRect = () =>
+          ({ bottom: headerBottom }) as DOMRect;
+        reader.append(header, scroller);
+        document.body.appendChild(reader);
+        paneRect = { top: 0, bottom: 900 };
+        document.documentElement.style.setProperty(
+          "--sb-reader-bottom-chrome",
+          "150px"
+        );
+      });
+
+      afterEach(() => {
+        reader.remove();
+        document.documentElement.style.removeProperty(
+          "--sb-reader-bottom-chrome"
+        );
+      });
+
+      function renderWithList(rect: { top: number; bottom: number }) {
+        listRect = rect;
+        const panel = renderPanel();
+        const list = panel.querySelector(
+          ".sb-discover-content-panel-scroll"
+        ) as HTMLElement;
+        list.getBoundingClientRect = () =>
+          ({ top: listRect.top, bottom: listRect.bottom }) as DOMRect;
+        act(() => observedElements.get(scroller)?.());
+        return panel;
+      }
+
+      it("reports how much of the list is behind the bottom bars", () => {
+        const panel = renderWithList({ top: 300, bottom: 1000 });
+
+        // The bars cover everything below 900 − 150 = 750.
+        expect(panel.style.getPropertyValue("--sb-dcp-list-cover-bottom")).toBe(
+          "250px"
+        );
+        expect(panel.style.getPropertyValue("--sb-dcp-list-cover-top")).toBe(
+          "0px"
+        );
+      });
+
+      it("reports how much of the list is above the reader header", () => {
+        headerBottom = 48;
+        const panel = renderWithList({ top: -200, bottom: 600 });
+
+        expect(panel.style.getPropertyValue("--sb-dcp-list-cover-top")).toBe(
+          "248px"
+        );
+        expect(panel.style.getPropertyValue("--sb-dcp-list-cover-bottom")).toBe(
+          "0px"
+        );
+      });
+
+      it("re-measures when the page scrolls", () => {
+        const panel = renderWithList({ top: 300, bottom: 1000 });
+
+        listRect = { top: 0, bottom: 700 };
+        act(() => {
+          scroller.dispatchEvent(new Event("scroll"));
+        });
+
+        expect(panel.style.getPropertyValue("--sb-dcp-list-cover-bottom")).toBe(
+          "0px"
+        );
+      });
+    });
   });
 });

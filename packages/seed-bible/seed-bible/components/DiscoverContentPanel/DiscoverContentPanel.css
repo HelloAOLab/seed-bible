@@ -215,3 +215,10 @@
   border-radius: 6px;
   padding: 12px 16px;
 }
+
+/* Keeps a long note's sticky ⋮ (see DiscoverPane.css) inside the part of the
+   list that's on screen, not under the reader header or the bottom bars. */
+.sb-discover-content-panel .sb-annotation-item > .sb-context-menu-anchor {
+  top: calc(var(--sb-dcp-list-cover-top, 0px) + 0.5rem);
+  bottom: calc(var(--sb-dcp-list-cover-bottom, 0px) + 0.5rem);
+}

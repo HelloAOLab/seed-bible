@@ -21,6 +21,7 @@ import { translateTitle } from "../../app/utils";
 import { ReadingPlansSection } from "../ReadingPlansSection/ReadingPlansSection";
 import {
   findScrollContainer,
+  readBottomChromeCover,
   readBottomChromeInset,
 } from "../BibleReader/readerViewport";
 
@@ -50,8 +51,14 @@ const PENDING_SCROLL_MS = 600;
  * the fixed bottom toolbar. A plain `100vh` cap ignores the tab bar above the
  * pane, the toolbar floating over its bottom and split-pane layouts, so the
  * bottom of a long panel (and its last items) ended up out of reach.
+ *
+ * Also publishes `--sb-dcp-list-cover-top`/`-bottom`: how much of the panel's
+ * list is hidden behind the mobile reader header and the bottom chrome, or
+ * scrolled out of its pane. Where the panel scrolls with the page (mobile,
+ * stacked below the scripture) its list can sit partly off screen, and sticky
+ * children of the list only know the list's own edges.
  */
-function useSidePanelMaxHeight() {
+function usePanelViewportMeasures() {
   const cleanupRef = useRef<(() => void) | null>(null);
 
   return useCallback((panel: HTMLElement | null) => {
@@ -60,7 +67,17 @@ function useSidePanelMaxHeight() {
     if (!panel || typeof ResizeObserver === "undefined") return;
 
     const scroller = findScrollContainer(panel);
+    const reader = panel.closest<HTMLElement>(".sb-bible-reader");
     let frame = 0;
+
+    // Writing a custom property restyles the whole panel, and scrolling
+    // re-measures every frame, so only write values that changed.
+    const setPx = (name: string, px: number) => {
+      const value = `${Math.floor(px)}px`;
+      if (panel.style.getPropertyValue(name) !== value) {
+        panel.style.setProperty(name, value);
+      }
+    };
 
     const measure = () => {
       const viewportBottom = window.innerHeight - readBottomChromeInset();
@@ -74,9 +91,26 @@ function useSidePanelMaxHeight() {
         bottom - top - stickyTop,
         MIN_SIDE_PANEL_HEIGHT_PX
       );
-      panel.style.setProperty(
-        "--sb-dcp-side-max-height",
-        `${Math.floor(available)}px`
+      setPx("--sb-dcp-side-max-height", available);
+
+      const list = panel.querySelector<HTMLElement>(
+        ".sb-discover-content-panel-scroll"
+      );
+      if (!list) return;
+      const listRect = list.getBoundingClientRect();
+      const headerBottom =
+        reader
+          ?.querySelector(".sb-bible-reader-mobile-header")
+          ?.getBoundingClientRect().bottom ?? 0;
+      const visibleTop = Math.max(top, headerBottom);
+      const visibleBottom = Math.min(
+        rect?.bottom ?? window.innerHeight,
+        window.innerHeight - readBottomChromeCover()
+      );
+      setPx("--sb-dcp-list-cover-top", Math.max(visibleTop - listRect.top, 0));
+      setPx(
+        "--sb-dcp-list-cover-bottom",
+        Math.max(listRect.bottom - visibleBottom, 0)
       );
     };
 
@@ -86,6 +120,11 @@ function useSidePanelMaxHeight() {
     };
     const resizeObserver = new ResizeObserver(scheduleMeasure);
     if (scroller) resizeObserver.observe(scroller);
+    resizeObserver.observe(panel);
+    scroller?.addEventListener("scroll", scheduleMeasure, { passive: true });
+    // The mobile header slides away and back while scrolling; measure again
+    // once it has settled.
+    reader?.addEventListener("transitionend", scheduleMeasure);
     // BibleReaderToolbar rewrites `--sb-reader-bottom-inset` inline on the
     // root whenever the bottom chrome changes size.
     const insetObserver =
@@ -103,6 +142,8 @@ function useSidePanelMaxHeight() {
       cancelAnimationFrame(frame);
       resizeObserver.disconnect();
       insetObserver?.disconnect();
+      scroller?.removeEventListener("scroll", scheduleMeasure);
+      reader?.removeEventListener("transitionend", scheduleMeasure);
       window.removeEventListener("resize", scheduleMeasure);
     };
   }, []);
@@ -369,7 +410,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
 
   const activeFilter = useSignal<FilterKey>("all");
 
-  const panelRef = useSidePanelMaxHeight();
+  const panelRef = usePanelViewportMeasures();
 
   if (!tab) {
     return null;
