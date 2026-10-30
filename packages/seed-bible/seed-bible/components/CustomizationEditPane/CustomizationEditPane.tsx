@@ -76,9 +76,20 @@ const LogoCropModalContent = lazy(() =>
   }))
 );
 
+// Only owners building a content library see this screen, so it (and its
+// import and AI-suggestion code) isn't part of every reader's first load.
+const loadContentView = () => import("./CustomizationContentView");
+const CustomizationContentView = lazy(() =>
+  loadContentView().then((m) => ({ default: m.CustomizationContentView }))
+);
+
 export const CUSTOMIZATION_EDIT_PANE_ID = "customization-edit-pane";
 
-type CustomizationEditView = "edit" | "edit-variant" | "edit-extensions";
+type CustomizationEditView =
+  | "edit"
+  | "edit-variant"
+  | "edit-extensions"
+  | "edit-content";
 
 /**
  * Whether `foregroundKey` (e.g. `primaryFontColor`) has a known reading
@@ -347,6 +358,11 @@ export function CustomizationEditPaneTitle(props: {
   if (view === "edit-extensions") {
     return <>{t("customization-extensions", { defaultValue: "Extensions" })}</>;
   }
+  if (view === "edit-content") {
+    return (
+      <>{t("custom-content-library", { defaultValue: "Content library" })}</>
+    );
+  }
   if (view === "edit-variant") {
     const variant = record.variants.find(
       (v) => v.id === props.customizations.editingVariantId.value
@@ -546,10 +562,32 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
   if (view === "edit-extensions") {
     return <CustomizationEditExtensionsView state={state} />;
   }
+  if (view === "edit-content") {
+    return (
+      <Suspense fallback={<ContentViewLoading />}>
+        <CustomizationContentView state={state} />
+      </Suspense>
+    );
+  }
   if (view === "edit-variant") {
     return <CustomizationEditVariantView state={state} />;
   }
   return <CustomizationEditMainView state={state} />;
+}
+
+function ContentViewLoading() {
+  const { t } = useI18n();
+  return (
+    <div className="sb-settings-page sb-cz-page">
+      <SkeletonContainer
+        label={t("custom-content-loading", {
+          defaultValue: "Loading the content library…",
+        })}
+      >
+        <Skeleton width="100%" height="12rem" radius="0.625rem" />
+      </SkeletonContainer>
+    </div>
+  );
 }
 
 function CustomizationEditMainView(props: { state: SeedBibleState }) {
@@ -846,6 +884,39 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                 defaultValue:
                   "{{available}} available · {{auto}} auto · {{hidden}} hidden",
               })}
+            </span>
+          </span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="sb-cz-row sb-cz-row-tall"
+          onPointerEnter={() => void loadContentView()}
+          onFocus={() => void loadContentView()}
+          onClick={() => {
+            customizationEditView.value = "edit-content";
+          }}
+        >
+          <span className="material-symbols-outlined sb-cz-row-icon">
+            video_library
+          </span>
+          <span className="sb-cz-row-text">
+            <span className="sb-cz-row-label">
+              {t("custom-content-library", {
+                defaultValue: "Content library",
+              })}
+            </span>
+            <span className="sb-cz-row-hint">
+              {record.contentRecordName
+                ? t("custom-content-row-hint-ready", {
+                    defaultValue: "Your videos and articles in Discover",
+                  })
+                : t("custom-content-row-hint-empty", {
+                    defaultValue: "Add your videos and articles to Discover",
+                  })}
             </span>
           </span>
           <span className="material-symbols-outlined rtl-mirror">

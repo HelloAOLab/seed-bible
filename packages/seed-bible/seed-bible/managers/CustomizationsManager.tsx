@@ -374,6 +374,13 @@ const customizationSchema = z
      * Absent means "no override — use Seed Bible's normal default."
      */
     defaultTranslationId: z.string().min(1).optional(),
+    /**
+     * The CasualOS record holding this customization's content library (see
+     * `CustomContentManager`). Its own record rather than the owner's, so a
+     * large library doesn't fill the owner's personal record. Absent means
+     * the customization has no library.
+     */
+    contentRecordName: z.string().min(1).optional(),
     createdAt: z.number(),
     updatedAt: z.number(),
     /**
@@ -461,6 +468,8 @@ export interface SeedBibleCustomization {
    * Absent means no override.
    */
   defaultTranslationId?: string;
+  /** The record holding this customization's content library. Absent means it has none. */
+  contentRecordName?: string;
   createdAt: number;
   updatedAt: number;
   /** Per-extension availability while this customization is active. An id with no entry follows `defaultExtensionAvailability`. */
@@ -876,6 +885,12 @@ export interface CustomizationsManager {
   updateEditingName: (name: string) => void;
   /** Sets (or clears, given `null`) the draft's default translation. No-op with no open draft. */
   updateEditingDefaultTranslationId: (translationId: string | null) => void;
+  /**
+   * Points the open draft at a content library record (or at none), and
+   * saves it right away: the library already exists by then, so the pointer
+   * can't wait for the auto-save debounce.
+   */
+  setEditingContentRecordName: (recordName: string | null) => Promise<void>;
   /** Clears the draft's logo and immediately persists it (unlike every other draft field, which auto-saves only after a short debounce). No-op with no open draft. */
   removeEditingLogo: () => Promise<void>;
   /** Adds a new variant to the draft, based on the viewer's current preset (no overrides of its own yet). */
@@ -1684,6 +1699,26 @@ export function createCustomizationsManager(
     scheduleAutoSave();
   };
 
+  const setEditingContentRecordName = async (
+    recordName: string | null
+  ): Promise<void> => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    const next: SeedBibleCustomization = {
+      ...current,
+      updatedAt: Date.now(),
+    };
+    if (recordName) {
+      next.contentRecordName = recordName;
+    } else {
+      delete next.contentRecordName;
+    }
+    editingCustomization.value = next;
+    await saveEditingCustomization();
+  };
+
   const addEditingVariant = (): CustomizationThemeVariant | null => {
     const current = editingCustomization.value;
     if (!current) {
@@ -2388,6 +2423,7 @@ export function createCustomizationsManager(
     getShareLink,
     updateEditingName,
     updateEditingDefaultTranslationId,
+    setEditingContentRecordName,
     removeEditingLogo,
     addEditingVariant,
     applyPresetToEditingVariant,
