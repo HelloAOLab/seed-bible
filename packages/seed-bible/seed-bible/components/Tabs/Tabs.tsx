@@ -23,6 +23,7 @@ import {
   StarIcon,
   TodayIcon,
 } from "../../components/icons";
+import { CustomizableIcon } from "../CustomizableIcon/CustomizableIcon";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
@@ -983,12 +984,18 @@ export function TabsHeader(props: TabsHeaderProps) {
                 openShareSheetForCurrentTab(state);
               }}
             >
-              <MaterialIcon
+              <CustomizableIcon
+                id="share"
+                size={18}
                 className="sb-context-menu-item-icon"
-                aria-hidden="true"
               >
-                share
-              </MaterialIcon>
+                <MaterialIcon
+                  className="sb-context-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  share
+                </MaterialIcon>
+              </CustomizableIcon>
               <span>
                 {t("share", {
                   defaultValue: "Share",
@@ -2365,7 +2372,9 @@ export function Tabs(props: TabsProps) {
                   state.today.open();
                 }}
               >
-                <TodayIcon />
+                <CustomizableIcon id="today">
+                  <TodayIcon />
+                </CustomizableIcon>
               </button>
 
               <button
@@ -2383,11 +2392,13 @@ export function Tabs(props: TabsProps) {
                   bookmarks.togglePanel();
                 }}
               >
-                <BookmarkStackIcon
-                  bookmarks={allBookmarks}
-                  size={24}
-                  color={isBookmarksPanelOpen ? "currentColor" : undefined}
-                />
+                <CustomizableIcon id="bookmarks">
+                  <BookmarkStackIcon
+                    bookmarks={allBookmarks}
+                    size={24}
+                    color={isBookmarksPanelOpen ? "currentColor" : undefined}
+                  />
+                </CustomizableIcon>
               </button>
               <button
                 type="button"
@@ -2407,7 +2418,9 @@ export function Tabs(props: TabsProps) {
                   saves.toggleFilter();
                 }}
               >
-                <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
+                <CustomizableIcon id="saves">
+                  <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
+                </CustomizableIcon>
               </button>
               <button
                 type="button"
@@ -2476,7 +2489,9 @@ export function Tabs(props: TabsProps) {
                 bookmarks.togglePanel();
               }}
             >
-              <BookmarkStackIcon bookmarks={allBookmarks} size={24} />
+              <CustomizableIcon id="bookmarks">
+                <BookmarkStackIcon bookmarks={allBookmarks} size={24} />
+              </CustomizableIcon>
             </button>
             <button
               type="button"
@@ -2499,7 +2514,9 @@ export function Tabs(props: TabsProps) {
                 saves.toggleFilter();
               }}
             >
-              <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
+              <CustomizableIcon id="saves">
+                <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
+              </CustomizableIcon>
             </button>
             <button
               type="button"
@@ -2514,7 +2531,9 @@ export function Tabs(props: TabsProps) {
                 openShareSheetForCurrentTab(state);
               }}
             >
-              <MaterialIcon aria-hidden="true">share</MaterialIcon>
+              <CustomizableIcon id="share">
+                <MaterialIcon aria-hidden="true">share</MaterialIcon>
+              </CustomizableIcon>
             </button>
           </>
         )}

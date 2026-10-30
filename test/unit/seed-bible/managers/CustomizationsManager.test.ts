@@ -10,6 +10,7 @@ import {
   getFontPresetsForField,
   getReadableWordsOfJesusColor,
   lightenColor,
+  MAX_CUSTOM_ICON_BYTES,
   MIN_READABLE_CONTRAST_RATIO,
   SECONDARY_LIGHTEN_AMOUNT,
   TERTIARY_LIGHTEN_AMOUNT,
@@ -1906,6 +1907,163 @@ describe("CustomizationsManager", () => {
     expect(manager.customizations.value[0]?.logoUrl).toBe(
       "https://files.example.com/logo.png"
     );
+  });
+
+  function svgFile(name = "icon.svg", bytes = "<svg></svg>"): File {
+    return new File([bytes], name, { type: "image/svg+xml" });
+  }
+
+  it("uploadIcon() uploads the SVG, sets it as that icon on the draft, and immediately persists it", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+    recordFileMock.mockResolvedValue({
+      success: true,
+      url: "https://files.example.com/search.svg",
+    });
+    const file = svgFile();
+
+    await manager.uploadIcon("search", file);
+
+    expect(recordFileMock).toHaveBeenCalledWith("user-1", file, {
+      mimeType: "image/svg+xml",
+      marker: CUSTOMIZATION_MARKER,
+    });
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    expect(manager.customizations.value[0]?.icons).toEqual({
+      search: "https://files.example.com/search.svg",
+    });
+    expect(manager.activeIcons.value).toEqual({
+      search: "https://files.example.com/search.svg",
+    });
+  });
+
+  it("uploadIcon() keeps the draft's other custom icons", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordFileMock.mockResolvedValueOnce({
+      success: true,
+      url: "https://files.example.com/today.svg",
+    });
+    await manager.uploadIcon("today", svgFile());
+    recordFileMock.mockResolvedValueOnce({
+      success: true,
+      url: "https://files.example.com/chat.svg",
+    });
+
+    await manager.uploadIcon("chat", svgFile());
+
+    expect(manager.customizations.value[0]?.icons).toEqual({
+      today: "https://files.example.com/today.svg",
+      chat: "https://files.example.com/chat.svg",
+    });
+  });
+
+  it("uploadIcon() rejects a file that isn't an SVG without uploading or changing the draft", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    const png = new File(["fake image bytes"], "icon.png", {
+      type: "image/png",
+    });
+
+    await expect(manager.uploadIcon("share", png)).rejects.toThrow();
+
+    expect(recordFileMock).not.toHaveBeenCalled();
+    expect(manager.editingCustomization.value?.icons).toEqual({});
+  });
+
+  it("uploadIcon() rejects an SVG over the size limit without uploading", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    const huge = svgFile("huge.svg", "x".repeat(MAX_CUSTOM_ICON_BYTES + 1));
+
+    await expect(manager.uploadIcon("share", huge)).rejects.toThrow();
+
+    expect(recordFileMock).not.toHaveBeenCalled();
+  });
+
+  it("uploadIcon() leaves the draft unchanged when the upload fails", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordFileMock.mockResolvedValue({ success: false });
+
+    await expect(manager.uploadIcon("books", svgFile())).rejects.toThrow(
+      "Failed to upload icon."
+    );
+
+    expect(manager.editingCustomization.value?.icons).toEqual({});
+  });
+
+  it("removeEditingIcon() restores just that icon to the default and immediately persists it", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordFileMock.mockResolvedValueOnce({
+      success: true,
+      url: "https://files.example.com/saves.svg",
+    });
+    await manager.uploadIcon("saves", svgFile());
+    recordFileMock.mockResolvedValueOnce({
+      success: true,
+      url: "https://files.example.com/bookmarks.svg",
+    });
+    await manager.uploadIcon("bookmarks", svgFile());
+    recordDataMock.mockClear();
+
+    await manager.removeEditingIcon("saves");
+
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    expect(manager.customizations.value[0]?.icons).toEqual({
+      bookmarks: "https://files.example.com/bookmarks.svg",
+    });
+    expect(manager.activeIcons.value).toEqual({
+      bookmarks: "https://files.example.com/bookmarks.svg",
+    });
+  });
+
+  it("activeIcons is empty when no customization is active", () => {
+    const { manager } = createManager();
+
+    expect(manager.activeIcons.value).toEqual({});
+  });
+
+  it("a shared customization's icons apply to viewers, ignoring icon ids this build doesn't know", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        ...created,
+        icons: {
+          discover: "https://files.example.com/discover.svg",
+          "some-future-icon": "https://files.example.com/future.svg",
+        },
+      },
+    });
+
+    await manager.loadByLocator(`user-1.${created.id}`);
+
+    expect(manager.activeIcons.value).toEqual({
+      discover: "https://files.example.com/discover.svg",
+    });
+  });
+
+  it("loadByLocator() rejects a record whose icon URL isn't http(s)", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: { ...created, icons: { search: "javascript:alert(1)" } },
+    });
+
+    await manager.loadByLocator(`user-1.${created.id}`);
+
+    expect(manager.activeCustomization.value).toBeNull();
   });
 
   it("getShareLink() builds a link with the owner's recordName and the customization's id", async () => {

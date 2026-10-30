@@ -7,20 +7,24 @@ import "../BibleSelector/BibleSelector.css";
 import { signal, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
 import { useMemo, useRef } from "preact/hooks";
+import type { ComponentChildren } from "preact";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import {
   CUSTOMIZATION_COLOR_GROUPS,
   CUSTOMIZATION_CONTRAST_PAIRS,
   CUSTOMIZATION_FONT_FIELDS,
+  CUSTOMIZATION_ICON_IDS,
   EXTENSION_AVAILABILITY_VALUES,
   MIN_READABLE_CONTRAST_RATIO,
   buildCustomFontValue,
   getContrastRatio,
+  getCustomIconFileProblem,
   getDefaultExtensionAvailability,
   getExtensionAvailability,
   getExtensionSettingDefault,
   getFontPresetsForField,
+  type CustomizationIconId,
   type CustomizationsManager,
   type DefaultExtensionAvailability,
   type ExtensionAvailability,
@@ -42,7 +46,16 @@ import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { i18n } from "../../i18n";
 import { useI18n } from "../../i18n/I18nManager";
-import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
+import {
+  BookmarkIcon,
+  FiltersIcon,
+  MaterialIcon,
+  SeedBibleIcon,
+  StarIcon,
+  TickIcon,
+  TodayIcon,
+} from "../icons";
+import { CustomIconImage } from "../CustomizableIcon/CustomizableIcon";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import {
@@ -824,6 +837,8 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           </ul>
         </div>
 
+        <CustomizationIconsGroup state={state} />
+
         <button
           type="button"
           className="sb-cz-row sb-cz-row-tall"
@@ -902,6 +917,162 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           onSave={() => void handleSave()}
         />
       </footer>
+    </div>
+  );
+}
+
+const DEFAULT_CUSTOMIZATION_ICONS: Record<
+  CustomizationIconId,
+  ComponentChildren
+> = {
+  books: <SeedBibleIcon size={24} />,
+  search: <MaterialIcon>search</MaterialIcon>,
+  today: <TodayIcon />,
+  saves: <StarIcon />,
+  bookmarks: <BookmarkIcon />,
+  share: <MaterialIcon>share</MaterialIcon>,
+  chat: <MaterialIcon>chat_bubble_outline</MaterialIcon>,
+  discover: <MaterialIcon>explore</MaterialIcon>,
+};
+
+function CustomizationIconsGroup(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { customizations } = state;
+  const { t } = useI18n();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pickingIconId = useRef<CustomizationIconId | null>(null);
+  const uploadingIconId = useSignal<CustomizationIconId | null>(null);
+  const record = customizations.editingCustomization.value;
+  if (!record) {
+    return null;
+  }
+
+  const iconLabels: Record<CustomizationIconId, string> = {
+    books: t("books", { defaultValue: "Books" }),
+    search: t("search", { defaultValue: "Search" }),
+    today: t("today", { defaultValue: "Today" }),
+    saves: t("saves", { defaultValue: "Saves" }),
+    bookmarks: t("bookmarks", { defaultValue: "Bookmarks" }),
+    share: t("share", { defaultValue: "Share" }),
+    chat: t("chat", { defaultValue: "Chat" }),
+    discover: t("discover", { defaultValue: "Discover" }),
+  };
+
+  const pickFile = (iconId: CustomizationIconId) => {
+    pickingIconId.current = iconId;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChosen = async (event: Event) => {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    const iconId = pickingIconId.current;
+    // Cleared so picking the same file again still fires `change`.
+    input.value = "";
+    pickingIconId.current = null;
+    if (!file || !iconId) {
+      return;
+    }
+    const problem = getCustomIconFileProblem(file);
+    if (problem === "not-svg") {
+      state.app.toast(
+        t("custom-icon-must-be-svg", {
+          defaultValue: "Icons must be SVG files.",
+        })
+      );
+      return;
+    }
+    if (problem === "too-large") {
+      state.app.toast(
+        t("custom-icon-too-large", {
+          defaultValue: "That SVG is too large. Icons can be up to 256 KB.",
+        })
+      );
+      return;
+    }
+    uploadingIconId.value = iconId;
+    try {
+      await customizations.uploadIcon(iconId, file);
+    } catch (error) {
+      console.error("Failed to upload icon.", error);
+      state.app.toast(
+        t("custom-icon-upload-failed", {
+          defaultValue: "Couldn't upload that icon. Please try again.",
+        })
+      );
+    } finally {
+      uploadingIconId.value = null;
+    }
+  };
+
+  return (
+    <div className="sb-cz-group" data-tutorial="customization-icons">
+      <h3 className="sb-settings-subheading">
+        {t("customization-icons", { defaultValue: "Icons" })}
+      </h3>
+      <p className="sb-cz-hint sb-cz-icons-hint">
+        {t("customization-icons-hint", {
+          defaultValue:
+            "Upload an SVG to replace any of these icons. Icons are drawn as a single shape in the theme's icon color.",
+        })}
+      </p>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".svg,image/svg+xml"
+        hidden
+        onChange={(event) => void handleFileChosen(event)}
+      />
+      <ul className="sb-cz-icon-list">
+        {CUSTOMIZATION_ICON_IDS.map((iconId) => {
+          const url = record.icons?.[iconId];
+          const isBusy = uploadingIconId.value !== null;
+          return (
+            <li key={iconId} className="sb-cz-icon-row">
+              <span className="sb-cz-icon-preview" aria-hidden="true">
+                {url ? (
+                  <CustomIconImage url={url} />
+                ) : (
+                  DEFAULT_CUSTOMIZATION_ICONS[iconId]
+                )}
+              </span>
+              <span className="sb-cz-icon-name">{iconLabels[iconId]}</span>
+              <button
+                type="button"
+                className="sb-cz-button"
+                onClick={() => pickFile(iconId)}
+                disabled={isBusy}
+                aria-label={t("upload-custom-icon-for", {
+                  name: iconLabels[iconId],
+                  defaultValue: "Upload an SVG for {{name}}",
+                })}
+              >
+                {url
+                  ? t("replace-logo", { defaultValue: "Replace" })
+                  : t("upload-custom-icon", { defaultValue: "Upload SVG" })}
+              </button>
+              {url && (
+                <button
+                  type="button"
+                  className="sb-cz-icon-button"
+                  onClick={() => void customizations.removeEditingIcon(iconId)}
+                  disabled={isBusy}
+                  aria-label={t("reset-custom-icon", {
+                    name: iconLabels[iconId],
+                    defaultValue: "Use the default {{name}} icon",
+                  })}
+                  title={t("reset-custom-icon", {
+                    name: iconLabels[iconId],
+                    defaultValue: "Use the default {{name}} icon",
+                  })}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

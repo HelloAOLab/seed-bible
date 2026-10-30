@@ -1,4 +1,5 @@
 import { I18nProvider, useI18n } from "../i18n/I18nManager";
+import { CustomIconsProvider } from "../components/CustomizableIcon/CustomizableIcon";
 import { TabsLayout } from "../components/TabsLayout";
 import {
   PaneLayout,
@@ -233,7 +234,9 @@ function MainBody({
   return (
     <AppConfigProvider value={appConfig}>
       <I18nProvider i18n={state.i18n}>
-        <MainContent state={state} />
+        <CustomIconsProvider icons={state.customizations.activeIcons}>
+          <MainContent state={state} />
+        </CustomIconsProvider>
       </I18nProvider>
     </AppConfigProvider>
   );

@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Let Custom Branding replace the Books, Search, Today, Saves, Bookmarks, Share, Chat and Discover icons with its own SVGs, drawn in the theme's icon color.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

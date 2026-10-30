@@ -359,6 +359,44 @@ export const DEFAULT_EXTENSION_AVAILABILITY_VALUES = [
 export type DefaultExtensionAvailability =
   (typeof DEFAULT_EXTENSION_AVAILABILITY_VALUES)[number];
 
+/**
+ * App icons a customization can replace with its own SVG. Each is the icon
+ * of one navigation entry, wherever that entry appears (toolbar, mobile tab
+ * bar, More menu, sidebar header).
+ */
+export const CUSTOMIZATION_ICON_IDS = [
+  "books",
+  "search",
+  "today",
+  "saves",
+  "bookmarks",
+  "share",
+  "chat",
+  "discover",
+] as const;
+export type CustomizationIconId = (typeof CUSTOMIZATION_ICON_IDS)[number];
+/** Uploaded SVG URL per icon id. An id with no entry keeps the app's own icon. */
+export type CustomizationIcons = Partial<Record<CustomizationIconId, string>>;
+
+export const MAX_CUSTOM_ICON_BYTES = 256 * 1024;
+
+/** Why a file can't be used as a custom icon, or null when it can. */
+export function getCustomIconFileProblem(
+  file: File
+): "not-svg" | "too-large" | null {
+  if (file.type !== "image/svg+xml") {
+    return "not-svg";
+  }
+  if (file.size > MAX_CUSTOM_ICON_BYTES) {
+    return "too-large";
+  }
+  return null;
+}
+
+function isCustomizationIconId(id: string): id is CustomizationIconId {
+  return (CUSTOMIZATION_ICON_IDS as readonly string[]).includes(id);
+}
+
 const customizationSchema = z
   .object({
     id: z.string().min(1),
@@ -366,6 +404,15 @@ const customizationSchema = z
     variants: z.array(customizationVariantSchema).min(1),
     defaultVariantId: z.string().min(1),
     logoUrl: z.url().max(1024).optional().nullable(),
+    /**
+     * Uploaded SVG URLs replacing app icons, keyed by `CustomizationIconId`.
+     * Keys are left as plain strings so a record carrying an icon id this
+     * build doesn't know yet still loads; unknown ids are just ignored.
+     * Limited to http(s) since the URL ends up in a CSS `url()`.
+     */
+    icons: z
+      .record(z.string(), z.url({ protocol: /^https?$/ }).max(1024))
+      .optional(),
     /**
      * The translation viewers of this customization should start reading in,
      * overriding Seed Bible's own per-language default (see
@@ -455,6 +502,8 @@ export interface SeedBibleCustomization {
   /** The variant id shown to a viewer who hasn't picked one for this customization yet. Always references an entry in `variants`. */
   defaultVariantId: string;
   logoUrl?: string | null;
+  /** Uploaded SVG URLs replacing app icons. An id with no entry keeps the app's own icon. */
+  icons?: CustomizationIcons;
   /**
    * The translation viewers should start reading in while this
    * customization is active, overriding Seed Bible's per-language default.
@@ -869,6 +918,16 @@ export interface CustomizationsManager {
   remove: (id: string) => Promise<void>;
   /** Uploads the file, stages the resulting URL onto the open draft, and immediately persists it (unlike every other draft field, which auto-saves only after a short debounce). */
   uploadLogo: (file: File) => Promise<void>;
+  /**
+   * Uploads an SVG as one of the draft's custom icons and immediately
+   * persists the draft, like `uploadLogo`. Throws, without uploading, when
+   * `getCustomIconFileProblem` rejects the file.
+   */
+  uploadIcon: (iconId: CustomizationIconId, file: File) => Promise<void>;
+  /** Removes one of the draft's custom icons, restoring the app's own, and immediately persists the draft. No-op with no open draft. */
+  removeEditingIcon: (iconId: CustomizationIconId) => Promise<void>;
+  /** The active customization's custom icons, limited to ids this build knows. Empty when nothing is active. */
+  activeIcons: ReadonlySignal<CustomizationIcons>;
   /** A shareable link that auto-loads this customization via `loadByLocator`. */
   getShareLink: (customization: SeedBibleCustomization) => string;
   // Synchronous, draft-only mutators. Each no-ops if `editingCustomization` is
@@ -1549,6 +1608,7 @@ export function createCustomizationsManager(
       variants: [variant],
       defaultVariantId: variant.id,
       logoUrl: null,
+      icons: {},
       createdAt: now,
       updatedAt: now,
       extensionSettings: {},
@@ -2119,6 +2179,67 @@ export function createCustomizationsManager(
     await saveEditingCustomization();
   };
 
+  const uploadIcon = async (
+    iconId: CustomizationIconId,
+    file: File
+  ): Promise<void> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      throw new Error("Cannot upload an icon while signed out.");
+    }
+    const problem = getCustomIconFileProblem(file);
+    if (problem) {
+      throw new Error(`Cannot use this file as an icon: ${problem}.`);
+    }
+    if (!editingCustomization.value) {
+      return;
+    }
+
+    const result = await os.recordFile(userId, file, {
+      mimeType: file.type,
+      marker: CUSTOMIZATION_MARKER,
+    });
+    if (result.success === false) {
+      throw new Error("Failed to upload icon.");
+    }
+
+    // Re-read after the await: editing may have been closed meanwhile.
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      icons: { ...current.icons, [iconId]: result.url },
+      updatedAt: Date.now(),
+    };
+    await saveEditingCustomization();
+  };
+
+  const removeEditingIcon = async (
+    iconId: CustomizationIconId
+  ): Promise<void> => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    const icons = { ...current.icons };
+    delete icons[iconId];
+    editingCustomization.value = {
+      ...current,
+      icons,
+      updatedAt: Date.now(),
+    };
+    await saveEditingCustomization();
+  };
+
+  const activeIcons = computed<CustomizationIcons>(() => {
+    const icons = activeCustomization.value?.icons ?? {};
+    return Object.fromEntries(
+      Object.entries(icons).filter(([id]) => isCustomizationIconId(id))
+    );
+  });
+
   const setEditingExtensionAvailability = (
     extensionId: string,
     availability: ExtensionAvailability | null
@@ -2385,6 +2506,9 @@ export function createCustomizationsManager(
     saveEditingCustomization,
     remove,
     uploadLogo,
+    uploadIcon,
+    removeEditingIcon,
+    activeIcons,
     getShareLink,
     updateEditingName,
     updateEditingDefaultTranslationId,
