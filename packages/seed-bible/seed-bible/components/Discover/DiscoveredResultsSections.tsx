@@ -241,10 +241,8 @@ function ContentResultsList(props: { results: DiscoverContentResult[] }) {
 export function ContentTypeSection(props: {
   tab: ReaderTab | null;
   definition: DiscoverContentTypeDefinition;
-  /** Lets the reader fold the section away; hidden-by-default types start folded. */
-  collapsible?: boolean;
 }) {
-  const { tab, definition, collapsible } = props;
+  const { tab, definition } = props;
   const { t } = useI18n();
 
   if (!tab) {
@@ -260,8 +258,6 @@ export function ContentTypeSection(props: {
     <DiscoverSection
       title={translateTitle(t, definition.title)}
       count={results.length}
-      collapsible={collapsible}
-      defaultCollapsed={collapsible && !!definition.hiddenByDefault}
     >
       {definition.layout === "custom" ? (
         <ul className="sb-discover-list">

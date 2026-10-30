@@ -137,7 +137,8 @@ function createChapterData(
 }
 
 function createMockTabsManager(
-  chapterData: TranslationBookChapter | null = null
+  chapterData: TranslationBookChapter | null = null,
+  translationBooks: { books: { id: string; name: string }[] } | null = null
 ): TabsManager {
   return {
     tabs: signal(
@@ -145,7 +146,10 @@ function createMockTabsManager(
         ? [
             {
               id: "tab-1",
-              readingState: { chapterData: signal(chapterData) },
+              readingState: {
+                chapterData: signal(chapterData),
+                translationBooks: signal(translationBooks),
+              },
             },
           ]
         : []
@@ -179,6 +183,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={vi.fn()}
@@ -191,6 +196,112 @@ describe("CreateAnnotationForm", () => {
     expect(container.innerHTML).toBe("");
   });
 
+  describe("header", () => {
+    async function renderForm(
+      editing: Annotation,
+      tabs = createMockTabsManager(
+        createChapterData({ chapterNumber: editing.chapterNumber })
+      ),
+      onClose: () => void = vi.fn()
+    ) {
+      const mock = createMockAnnotationsManager(editing);
+      await act(async () => {
+        render(
+          <CreateAnnotationForm
+            annotations={mock.annotations}
+            tabs={tabs}
+            toast={vi.fn()}
+            onClose={onClose}
+          />,
+          container
+        );
+        await flushLazyLoad();
+      });
+      return mock;
+    }
+
+    function headerTitle() {
+      return container.querySelector(
+        ".sb-discover-panel-header .sb-discover-title"
+      )?.textContent;
+    }
+
+    it("shows 'Annotate {book} {chapter}' when no verses are selected", async () => {
+      await renderForm(createAnnotation({ chapterNumber: 3 }));
+
+      expect(headerTitle()).toBe("Annotate Genesis 3");
+    });
+
+    it("shows 'Annotate {book} {chapter}:{verse}' when a single verse is selected", async () => {
+      await renderForm(createAnnotation({ chapterNumber: 3, verseNumber: 5 }));
+
+      expect(headerTitle()).toBe("Annotate Genesis 3:5");
+    });
+
+    it("shows 'Annotate {book} {chapter}:{verse}-{endVerse}' when a range is selected", async () => {
+      await renderForm(
+        createAnnotation({
+          chapterNumber: 3,
+          verseNumber: 3,
+          endVerseNumber: 5,
+        })
+      );
+
+      expect(headerTitle()).toBe("Annotate Genesis 3:3-5");
+    });
+
+    it("shows a range plus a non-contiguous verse when the selection has a gap", async () => {
+      await renderForm(
+        createAnnotation({
+          chapterNumber: 3,
+          verseNumber: 3,
+          endVerseNumber: 7,
+          verseNumbers: [3, 4, 5, 7],
+        })
+      );
+
+      expect(headerTitle()).toBe("Annotate Genesis 3:3-5,7");
+    });
+
+    it("names the book from the translation's book list while the chapter is still downloading", async () => {
+      // The reader has moved on to John 5, but its loaded chapter is still
+      // the Genesis 1 it just left.
+      await renderForm(
+        createAnnotation({ bookId: "JHN", chapterNumber: 5 }),
+        createMockTabsManager(createChapterData(), {
+          books: [{ id: "JHN", name: "John" }],
+        })
+      );
+
+      expect(headerTitle()).toBe("Annotate John 5");
+    });
+
+    it("goes back from the back button", async () => {
+      const { cancelEditingAnnotation } = await renderForm(createAnnotation());
+
+      act(() => {
+        container
+          .querySelector(".sb-discover-panel-header .sb-reading-plans-back")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(cancelEditingAnnotation).toHaveBeenCalledTimes(1);
+    });
+
+    it("closes the pane from the close button", async () => {
+      const onClose = vi.fn();
+      await renderForm(createAnnotation(), undefined, onClose);
+
+      act(() => {
+        container
+          .querySelector(".sb-discover-panel-header-close")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("disables Save while the editor is empty, and enables it once typed", async () => {
     const { annotations } = createMockAnnotationsManager(createAnnotation());
     const tabs = createMockTabsManager();
@@ -198,6 +309,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={vi.fn()}
@@ -227,6 +339,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={toast}
@@ -263,6 +376,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={vi.fn()}
@@ -291,6 +405,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={vi.fn()}
@@ -317,6 +432,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={vi.fn()}
@@ -341,6 +457,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={vi.fn()}
@@ -362,6 +479,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={toast}
@@ -397,6 +515,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={toast}
@@ -424,6 +543,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={toast}
@@ -460,6 +580,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={toast}
@@ -496,6 +617,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={vi.fn()}
@@ -524,6 +646,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={vi.fn()}
@@ -547,6 +670,7 @@ describe("CreateAnnotationForm", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={vi.fn()}

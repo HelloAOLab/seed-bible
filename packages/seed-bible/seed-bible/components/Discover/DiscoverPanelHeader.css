@@ -1,0 +1,70 @@
+.sb-discover-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Grows so a sub-view's title input can take the row's free width; the
+   actions and close button keep their own size. */
+.sb-discover-panel-header-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--sb-font-color);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-discover-panel-header-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Matches `PaneHeader`'s close button, so closing Discover looks the same as
+   closing any other pane. */
+.sb-discover-panel-header-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-discover-panel-header-close:hover {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
+}
+
+.sb-discover-panel-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sb-discover-panel-layout > .sb-discover-panel-header {
+  padding: 12px 12px 0;
+}
+
+/* `.sb-discover-pane` fills its parent (`height: 100%`); under the header it
+   has to take only the space left over instead, or its bottom would sit past
+   the pane's edge. */
+.sb-discover-panel-layout > .sb-discover-panel-layout-body {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
