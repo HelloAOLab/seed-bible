@@ -366,6 +366,97 @@ describe("FreeUseBibleAPI", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  describe("getVerseOfTheDay()", () => {
+    const ordinaryVerses = Array.from({ length: 400 }, (_, i) => ({
+      book: "PSA",
+      chapter: Math.floor(i / 10) + 1,
+      verse: (i % 10) + 1,
+      categories: ["hope"],
+    }));
+    const christmasVerse = {
+      book: "LUK",
+      chapter: 2,
+      verse: 11,
+      categories: ["christmas"],
+    };
+    const versesPayload = {
+      dataset: { id: "verse-of-the-day" },
+      verses: [...ordinaryVerses, christmasVerse],
+      holidays: [{ id: "christmas", name: "Christmas", month: 12, day: 25 }],
+    };
+
+    it("fetches the verse-of-the-day dataset's verses", async () => {
+      fetchMock.mockResolvedValue(createResponse(versesPayload));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      const verse = await api.getVerseOfTheDay("2026-10-30");
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://example.com/api/d/verse-of-the-day/verses.json",
+        expect.anything()
+      );
+      expect(verse?.book).toBe("PSA");
+    });
+
+    it("picks the same verse for the same date and a different one the next day", async () => {
+      fetchMock.mockResolvedValue(createResponse(versesPayload));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      const first = await api.getVerseOfTheDay("2026-10-30");
+      const again = await api.getVerseOfTheDay(new Date(2026, 9, 30, 21));
+      const nextDay = await api.getVerseOfTheDay("2026-10-31");
+
+      expect(again).toEqual(first);
+      expect(nextDay).not.toEqual(first);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("uses the dataset's holidays", async () => {
+      fetchMock.mockResolvedValue(createResponse(versesPayload));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+
+      expect(await api.getVerseOfTheDay("2026-12-25")).toEqual(christmasVerse);
+      for (let day = 1; day <= 24; day++) {
+        const date = `2026-12-${String(day).padStart(2, "0")}`;
+        expect((await api.getVerseOfTheDay(date))?.book).toBe("PSA");
+      }
+    });
+
+    it("only picks from the given category", async () => {
+      fetchMock.mockResolvedValue(createResponse(versesPayload));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      const verse = await api.getVerseOfTheDay("2026-06-01", {
+        category: "christmas",
+      });
+
+      expect(verse).toEqual(christmasVerse);
+    });
+
+    it("returns null when the dataset has no verses", async () => {
+      fetchMock.mockResolvedValue(
+        createResponse({ ...versesPayload, verses: [] })
+      );
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+
+      expect(await api.getVerseOfTheDay("2026-10-30")).toBeNull();
+    });
+
+    it("rejects when the request fails", async () => {
+      fetchMock.mockResolvedValue(
+        createResponse({}, 500, "Internal Server Error")
+      );
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+
+      await expect(api.getVerseOfTheDay("2026-10-30")).rejects.toThrow(
+        "Status: 500"
+      );
+    });
+  });
+
   describe("snapshotResponseCache() / seedResponseCache()", () => {
     it("snapshots only successfully resolved responses", async () => {
       const payload = { translations: [{ id: "eng_kjv" }] };
