@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- In a shared session, see where people reading ahead of or behind you are: their picture stays at the top or bottom edge of the screen with an arrow pointing their way. ([#1961](https://github.com/HelloAOLab/seed-bible/issues/1961))
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
