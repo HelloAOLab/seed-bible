@@ -6,6 +6,7 @@
 
 - Add native iOS and Android apps, built with Capacitor from the same code as the website.
   - Links shared from the apps point at seedbible.org, and seedbible.org links open in the app when it's installed.
+  - CI builds both apps: test builds for pull requests and `develop`, signed store builds from `main`.
 
 ### 🔧 Changed
 
