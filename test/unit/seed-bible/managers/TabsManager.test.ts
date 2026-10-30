@@ -24,7 +24,10 @@ import {
   translations,
 } from "./testUtils/mockBibleApiData";
 import { signal, type ReadonlySignal } from "@preact/signals";
-import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import {
+  createNavigationManager as createUntrackedNavigationManager,
+  type NavigationManager,
+} from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
@@ -32,6 +35,18 @@ import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nMana
 let webGetMock: Mock;
 let logSpy: Mock;
 const originalFetch = globalThis.fetch;
+const liveNavigationManagers: NavigationManager[] = [];
+
+/**
+ * Every navigation manager patches the shared `window.history` and listens
+ * for `popstate`, so one left alive keeps writing its tabs' positions into the
+ * URL of the tests that follow. Creating them through here disposes them.
+ */
+function createNavigationManager(): NavigationManager {
+  const navigation = createUntrackedNavigationManager();
+  liveNavigationManagers.push(navigation);
+  return navigation;
+}
 
 beforeEach(() => {
   webGetMock = vi.fn();
@@ -42,6 +57,11 @@ beforeEach(() => {
 
 afterEach(() => {
   logSpy.mockRestore();
+  // Newest first: each manager's teardown only unwinds its own `history`
+  // patch while it is still the outermost one.
+  for (const navigation of liveNavigationManagers.splice(0).reverse()) {
+    navigation.dispose();
+  }
   // Reset to "/" so neither query params nor a book/chapter path written by
   // tab/URL sync effects leak into the next test's initial tab state.
   window.history.replaceState(null, "", "/");
@@ -757,27 +777,7 @@ describe("createTabs", () => {
     expect(readingState.chapterNumber.value).toBe(2);
   });
 
-  it("switches restored tabs to the ?lang= language's default translation", async () => {
-    window.localStorage.clear();
-    window.history.replaceState(null, "", "/?lang=es");
-    window.localStorage.setItem(
-      "sb-tabs-state",
-      JSON.stringify({
-        version: 1,
-        tabs: [
-          {
-            id: "tab-1",
-            translationId: "AAB",
-            bookId: "EXO",
-            chapterNumber: 2,
-          },
-        ],
-        selectedTabId: "tab-1",
-        layout: "single",
-        slotTabIds: ["tab-1"],
-        selectedSlotIndex: 0,
-      })
-    );
+  describe("a returning visitor opening a ?lang= link", () => {
     const spanishBooks = {
       ...aabBooks,
       translation: {
@@ -786,26 +786,79 @@ describe("createTabs", () => {
         language: "spa",
       },
     };
-    setWebResponses({
-      ...createExampleManagerResponseMap(),
-      [makeExampleUrl("/api/spa_onbv/books.json")]:
-        createResponse(spanishBooks),
-      [makeExampleUrl("/api/spa_onbv/GEN/1.json")]: createResponse(
-        makeChapter(spanishBooks, "GEN", 1)
-      ),
+
+    const arriveWithStoredAabTab = () => {
+      window.history.replaceState(null, "", "/?lang=es");
+      window.localStorage.setItem(
+        "sb-tabs-state",
+        JSON.stringify({
+          version: 1,
+          tabs: [
+            {
+              id: "tab-1",
+              translationId: "AAB",
+              bookId: "EXO",
+              chapterNumber: 2,
+            },
+          ],
+          selectedTabId: "tab-1",
+          layout: "single",
+          slotTabIds: ["tab-1"],
+          selectedSlotIndex: 0,
+        })
+      );
+      setWebResponses({
+        ...createExampleManagerResponseMap(),
+        [makeExampleUrl("/api/spa_onbv/books.json")]:
+          createResponse(spanishBooks),
+        [makeExampleUrl("/api/spa_onbv/GEN/1.json")]: createResponse(
+          makeChapter(spanishBooks, "GEN", 1)
+        ),
+        [makeExampleUrl("/api/spa_onbv/EXO/2.json")]: createResponse(
+          makeChapter(spanishBooks, "EXO", 2)
+        ),
+      });
+    };
+
+    it("switches the restored tab to the language's default translation, keeping the reader's place", async () => {
+      arriveWithStoredAabTab();
+
+      const { tabs: manager } = createTabsManager();
+      await waitForTabsToLoad(manager.tabs.value);
+
+      manager.hydrateStoredTabs();
+      await waitForTabsToLoad(manager.tabs.value);
+
+      expect(manager.tabs.value).toHaveLength(1);
+      const readingState = manager.tabs.value[0]!.readingState;
+      expect(readingState.translationId.value).toBe("spa_onbv");
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
     });
 
-    const { tabs: manager } = createTabsManager();
-    await waitForTabsToLoad(manager.tabs.value);
+    it("keeps the language's translation when a signed-in profile has a different one saved", async () => {
+      arriveWithStoredAabTab();
 
-    manager.hydrateStoredTabs();
-    await waitForTabsToLoad(manager.tabs.value);
+      const { tabs: manager, login } = createTabsManager();
+      await waitForTabsToLoad(manager.tabs.value);
+      manager.hydrateStoredTabs();
+      await waitForTabsToLoad(manager.tabs.value);
 
-    expect(manager.tabs.value).toHaveLength(1);
-    const readingState = manager.tabs.value[0]!.readingState;
-    expect(readingState.translationId.value).toBe("spa_onbv");
-    expect(readingState.bookId.value).toBe("GEN");
-    expect(readingState.chapterNumber.value).toBe(1);
+      const readingState = manager.tabs.value[0]!.readingState;
+      expect(readingState.translationId.value).toBe("spa_onbv");
+
+      login.userId.value = "user-1";
+      login.profile.value = { name: "", config: { translationId: "AAB" } };
+
+      // Give a (wrongly) triggered profile restore time to fetch AAB's books
+      // and switch the tab before checking it didn't.
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await waitForInitialLoad(readingState);
+
+      expect(readingState.translationId.value).toBe("spa_onbv");
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
+    });
   });
 
   it("seeds only the URL-derived tab at construction, even with several tabs stored", async () => {

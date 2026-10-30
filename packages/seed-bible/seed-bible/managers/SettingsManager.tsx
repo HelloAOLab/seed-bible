@@ -1020,7 +1020,18 @@ export function createSettings(
   // effect, and the profile's still-unsaved previous language would revert
   // `i18n.language` (leaving only `?translation=` applied). Only read
   // `login.profile` here so the effect subscribes to the profile alone.
+  //
+  // A `?lang=` link the visitor arrived on wins over the saved language for
+  // the whole session, matching how `TabsManager` keeps the link's translation
+  // over the saved one — otherwise the menus would revert while the text
+  // stayed in the link's language. Read from the frozen arrival snapshot
+  // because the reader rewrites the live URL into its canonical path.
+  const hadExplicitInitialUrlLanguage =
+    !!navigation.initialUrl.searchParams.get("lang");
   effect(() => {
+    if (hadExplicitInitialUrlLanguage) {
+      return;
+    }
     const profileLanguage = getProfileConfigValue(login.profile.value, "lang");
     const nextLanguage =
       typeof profileLanguage === "string" && profileLanguage.trim().length > 0

@@ -43,6 +43,7 @@ describe("readQueryReadingParams", () => {
       bookId: null,
       chapter: null,
       specified: false,
+      languageOnly: false,
     });
   });
 
@@ -55,6 +56,7 @@ describe("readQueryReadingParams", () => {
       bookId: "JHN",
       chapter: 3,
       specified: true,
+      languageOnly: false,
     });
   });
 
@@ -73,7 +75,23 @@ describe("readQueryReadingParams", () => {
       bookId: null,
       chapter: null,
       specified: true,
+      languageOnly: true,
     });
+  });
+
+  it("ignores an empty ?lang=, which changes no language", () => {
+    const params = readQueryReadingParams(new URL("https://x.test/?lang="));
+    expect(params.specified).toBe(false);
+    expect(params.languageOnly).toBe(false);
+  });
+
+  it("lets an explicit translation win over ?lang=", () => {
+    const params = readQueryReadingParams(
+      new URL("https://x.test/?lang=es&translation=AAB")
+    );
+    expect(params.translationId).toBe("AAB");
+    expect(params.specified).toBe(true);
+    expect(params.languageOnly).toBe(false);
   });
 
   it("treats an invalid chapter as absent but still specified", () => {
@@ -151,7 +169,13 @@ describe("reconcileStoredTabs", () => {
 
     const result = reconcileStoredTabs(
       state,
-      { translationId: null, bookId: null, chapter: null, specified: false },
+      {
+        translationId: null,
+        bookId: null,
+        chapter: null,
+        specified: false,
+        languageOnly: false,
+      },
       DEFAULT_TRANSLATION
     );
 
@@ -171,7 +195,13 @@ describe("reconcileStoredTabs", () => {
 
     const result = reconcileStoredTabs(
       state,
-      { translationId: "AAB", bookId: "JHN", chapter: 3, specified: true },
+      {
+        translationId: "AAB",
+        bookId: "JHN",
+        chapter: 3,
+        specified: true,
+        languageOnly: false,
+      },
       DEFAULT_TRANSLATION
     );
 
@@ -201,7 +231,13 @@ describe("reconcileStoredTabs", () => {
 
     const result = reconcileStoredTabs(
       state,
-      { translationId: "AAB", bookId: "JHN", chapter: 3, specified: true },
+      {
+        translationId: "AAB",
+        bookId: "JHN",
+        chapter: 3,
+        specified: true,
+        languageOnly: false,
+      },
       DEFAULT_TRANSLATION
     );
 
@@ -218,7 +254,13 @@ describe("reconcileStoredTabs", () => {
 
     const result = reconcileStoredTabs(
       state,
-      { translationId: null, bookId: "JHN", chapter: 3, specified: true },
+      {
+        translationId: null,
+        bookId: "JHN",
+        chapter: 3,
+        specified: true,
+        languageOnly: false,
+      },
       DEFAULT_TRANSLATION
     );
 
@@ -239,7 +281,13 @@ describe("reconcileStoredTabs", () => {
 
     const result = reconcileStoredTabs(
       state,
-      { translationId: "spa_onbv", bookId: "JHN", chapter: 3, specified: true },
+      {
+        translationId: "spa_onbv",
+        bookId: "JHN",
+        chapter: 3,
+        specified: true,
+        languageOnly: false,
+      },
       DEFAULT_TRANSLATION
     );
 
@@ -262,7 +310,13 @@ describe("reconcileStoredTabs", () => {
 
     const result = reconcileStoredTabs(
       state,
-      { translationId: "spa_onbv", bookId: "JHN", chapter: 3, specified: true },
+      {
+        translationId: "spa_onbv",
+        bookId: "JHN",
+        chapter: 3,
+        specified: true,
+        languageOnly: false,
+      },
       DEFAULT_TRANSLATION
     );
 
@@ -290,6 +344,7 @@ describe("reconcileStoredTabs", () => {
         bookId: null,
         chapter: null,
         specified: true,
+        languageOnly: false,
       },
       DEFAULT_TRANSLATION
     );
@@ -298,6 +353,97 @@ describe("reconcileStoredTabs", () => {
       translationId: "spa_onbv",
       bookId: DEFAULT_BOOK_ID,
       chapterNumber: DEFAULT_CHAPTER_NUMBER,
+    });
+  });
+
+  describe("for a language-only link", () => {
+    const languageOnlyQuery = {
+      translationId: null,
+      bookId: null,
+      chapter: null,
+      specified: true,
+      languageOnly: true,
+    };
+
+    it("switches the single tab's translation and keeps its place", () => {
+      const state = makeState({
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "JHN",
+            chapterNumber: 3,
+          },
+        ],
+      });
+
+      const result = reconcileStoredTabs(state, languageOnlyQuery, "spa_onbv");
+
+      expect(result.tabs).toEqual([
+        {
+          id: "tab-1",
+          translationId: "spa_onbv",
+          bookId: "JHN",
+          chapterNumber: 3,
+        },
+      ]);
+    });
+
+    it("leaves a tab already on the language's translation where it was", () => {
+      const state = makeState({
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "JHN",
+            chapterNumber: 3,
+          },
+        ],
+      });
+
+      const result = reconcileStoredTabs(state, languageOnlyQuery, "AAB");
+
+      expect(result.selectedTabId).toBe("tab-1");
+      expect(result.tabs).toEqual(state.tabs);
+    });
+
+    it("opens a new tab at the selected tab's place when several tabs but none match", () => {
+      const state = makeState({
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "AAB",
+            bookId: "PSA",
+            chapterNumber: 23,
+          },
+        ],
+        selectedTabId: "tab-2",
+      });
+
+      const result = reconcileStoredTabs(state, languageOnlyQuery, "spa_onbv");
+
+      expect(result.tabs).toHaveLength(3);
+      expect(result.selectedTabId).toBe("tab-3");
+      expect(result.tabs[2]).toEqual({
+        id: "tab-3",
+        translationId: "spa_onbv",
+        bookId: "PSA",
+        chapterNumber: 23,
+      });
+      // Opening the same link again matches that tab instead of adding another.
+      const again = reconcileStoredTabs(
+        { ...state, tabs: result.tabs, selectedTabId: result.selectedTabId },
+        languageOnlyQuery,
+        "spa_onbv"
+      );
+      expect(again.tabs).toHaveLength(3);
+      expect(again.selectedTabId).toBe("tab-3");
     });
   });
 
@@ -320,7 +466,13 @@ describe("reconcileStoredTabs", () => {
     // (rather than appending a new tab).
     const result = reconcileStoredTabs(
       state,
-      { translationId: "spa_onbv", bookId: "JHN", chapter: 3, specified: true },
+      {
+        translationId: "spa_onbv",
+        bookId: "JHN",
+        chapter: 3,
+        specified: true,
+        languageOnly: false,
+      },
       DEFAULT_TRANSLATION
     );
 
