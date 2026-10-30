@@ -45,6 +45,7 @@ import type { TutorialManager } from "../../managers/TutorialManager";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
+import { toShareableUrl } from "../../app/publicLinks";
 
 /**
  * CSS-only spotlight: the huge translucent box-shadow dims everything around
@@ -1670,7 +1671,7 @@ const TranslationRowActions = (props: {
         bibleLanguageToUiLocale(translation.language) ??
         undefined,
     });
-    navigator.clipboard.writeText(url.href);
+    navigator.clipboard.writeText(toShareableUrl(url).href);
 
     app.toast(
       t("copied-translation-share-link", {

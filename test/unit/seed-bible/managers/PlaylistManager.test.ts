@@ -46,6 +46,7 @@ import { act } from "preact/test-utils";
 import { pressAndRelease } from "../testUtils/pressAndRelease";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
 import type { Mock } from "vitest";
+import { injectNativeAppConfig } from "../testUtils/nativeAppConfig";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
 const MARKER = "publicRead:playlists";
@@ -4650,6 +4651,23 @@ describe("createPlaylistManager", () => {
         "/en/playlist/user-1.playlist-1/psalms-for-hard-days"
       );
       expect(url.search).toBe("");
+    });
+
+    it("points at the public website when shared from the native apps", async () => {
+      const manager = makeManager(
+        "user-1",
+        undefined,
+        "https://localhost/en/AAB/john/3"
+      );
+      await flush();
+      const remove = injectNativeAppConfig();
+      try {
+        expect(manager.getPlaylistUrl(makePlaylist({ title: "Psalms" }))).toBe(
+          "https://seedbible.org/en/playlist/user-1.playlist-1/psalms"
+        );
+      } finally {
+        remove();
+      }
     });
 
     it("leaves the title segment off an untitled playlist", async () => {

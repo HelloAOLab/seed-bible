@@ -38,6 +38,7 @@ import {
 import { signal, type Signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
 import { stubColorScheme } from "../testUtils/stubColorScheme";
+import { injectNativeAppConfig } from "../testUtils/nativeAppConfig";
 
 function hexToRgbTuple(hex: string): [number, number, number] {
   const num = parseInt(hex.replace("#", ""), 16);
@@ -1915,6 +1916,22 @@ describe("CustomizationsManager", () => {
     const link = manager.getShareLink(created);
 
     expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
+  });
+
+  it("getShareLink() points at the public website when shared from the native apps", async () => {
+    const nav = createNavigationManager({
+      initialHref: "capacitor://localhost/en/BSB/genesis/1",
+    });
+    const { manager } = createManager(nav);
+    const created = await manager.create();
+    const remove = injectNativeAppConfig();
+    try {
+      expect(manager.getShareLink(created)).toBe(
+        `https://seedbible.org/?customization=user-1.${created.id}`
+      );
+    } finally {
+      remove();
+    }
   });
 
   it("getShareLink() strips legacy reading-position query params (language, translation, book, chapter, ...) from the current URL, keeping only customization", async () => {

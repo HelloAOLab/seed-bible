@@ -35,6 +35,7 @@ import {
   type ThemeManager,
   type ThemeOverrides,
 } from "./ThemeManager";
+import { toShareableUrl } from "../app/publicLinks";
 
 export const CUSTOMIZATION_MARKER = "publicRead:seedBibleCustomization";
 
@@ -2342,9 +2343,11 @@ export function createCustomizationsManager(
 
   const getShareLink = (customization: SeedBibleCustomization): string => {
     const recordName = login.userId.value ?? "";
-    return navigation.linkToBareRoot({
-      customization: buildCustomizationLocator(recordName, customization.id),
-    });
+    return toShareableUrl(
+      navigation.linkToBareRoot({
+        customization: buildCustomizationLocator(recordName, customization.id),
+      })
+    ).toString();
   };
 
   const selectActiveVariant = async (variantId: string): Promise<void> => {

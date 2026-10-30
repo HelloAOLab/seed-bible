@@ -1,0 +1,347 @@
+# Native Apps
+#
+# Builds the Capacitor iOS and Android apps in `mobile/` (see mobile/README.md).
+#
+# Two kinds of build:
+#
+# - Check builds (pull requests that touch the apps, every push to `develop`):
+#   an installable debug APK for Android, and an iOS Simulator build. Neither
+#   needs any signing secrets, so they also run on forks. They catch native
+#   project breakage and give testers something to install.
+# - Release builds (every push to `main`, or a manual run with "release"
+#   ticked): a signed Android App Bundle (.aab) and APK, and a signed iOS
+#   App Store .ipa, ready to upload to Google Play and App Store Connect.
+#   Each platform falls back to a check build, with a warning, if its signing
+#   secrets aren't configured yet.
+#
+# The web app is built once (`pnpm build:native`) and shared with both
+# platform jobs, so the expensive macOS runner only does the iOS part.
+#
+# Version numbers: the user-facing version is `packages/seed-bible/package.json`'s
+# version; the build number (Android versionCode, iOS CFBundleVersion) is this
+# workflow's run number plus the optional `NATIVE_BUILD_NUMBER_OFFSET`
+# repository variable. Both stores reject an upload whose build number isn't
+# higher than the last one, so raise the offset if the run number is ever
+# reset (e.g. this file is renamed).
+#
+# Secrets (Settings → Secrets and variables → Actions):
+#
+#   Android release signing:
+#     ANDROID_KEYSTORE_BASE64     base64 of the upload keystore (.jks)
+#     ANDROID_KEYSTORE_PASSWORD   keystore password
+#     ANDROID_KEY_ALIAS           key alias inside the keystore
+#     ANDROID_KEY_PASSWORD        key password
+#
+#   iOS release signing:
+#     IOS_DISTRIBUTION_CERTIFICATE_BASE64   base64 of the "Apple Distribution"
+#                                           certificate + key, exported as .p12
+#     IOS_DISTRIBUTION_CERTIFICATE_PASSWORD password of that .p12
+#     IOS_PROVISIONING_PROFILE_BASE64       base64 of the App Store provisioning
+#                                           profile for org.seedbible.app (it
+#                                           must include Associated Domains)
+name: Native Apps
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    paths:
+      - "mobile/**"
+      - "standalone/native.ts"
+      - "standalone/nativeLinks.ts"
+      - "script/lib/nativeShell.ts"
+      - "script/lib/vite-plugin-native-shell.ts"
+      - "packages/seed-bible/seed-bible/app/publicLinks.ts"
+      - "index.html"
+      - "vite.config.ts"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/native.yml"
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Make signed release builds (needs the signing secrets)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: native-${{ github.ref }}
+  # Superseded PR/develop builds are cancelled; release builds never are.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Web bundle
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build-number: ${{ steps.version.outputs.build-number }}
+      release: ${{ steps.version.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Install
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+
+      - name: Resolve version
+        id: version
+        env:
+          OFFSET: ${{ vars.NATIVE_BUILD_NUMBER_OFFSET || '0' }}
+          RELEASE: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.release) }}
+        run: |
+          echo "version=$(node -p "require('./packages/seed-bible/package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "build-number=$(( ${{ github.run_number }} + OFFSET ))" >> "$GITHUB_OUTPUT"
+          echo "release=$RELEASE" >> "$GITHUB_OUTPUT"
+
+      - name: Build web bundle
+        run: pnpm build:native
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-web
+          path: standalone/dist/native
+          include-hidden-files: true
+          retention-days: 1
+
+  android:
+    name: Android
+    needs: web
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.web.outputs.version }}
+      BUILD_NUMBER: ${{ needs.web.outputs.build-number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      # Capacitor 8's Android project needs JDK 21.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Install
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: native-web
+          path: standalone/dist/native
+
+      - name: Copy the web bundle into the Android project
+        working-directory: mobile
+        run: pnpm exec cap sync android
+
+      - name: Decide build type
+        id: mode
+        env:
+          RELEASE: ${{ needs.web.outputs.release }}
+          HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          if [ "$RELEASE" = "true" ] && [ "$HAS_KEYSTORE" = "true" ]; then
+            echo "mode=release" >> "$GITHUB_OUTPUT"
+          else
+            if [ "$RELEASE" = "true" ]; then
+              echo "::warning title=Android release skipped::ANDROID_KEYSTORE_BASE64 isn't set, so this is an unsigned debug build. See .github/workflows/native.yml."
+            fi
+            echo "mode=debug" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build debug APK
+        if: steps.mode.outputs.mode == 'debug'
+        working-directory: mobile/android
+        run: ./gradlew assembleDebug -PversionCode="$BUILD_NUMBER" -PversionName="$VERSION"
+
+      - name: Build signed App Bundle and APK
+        if: steps.mode.outputs.mode == 'release'
+        working-directory: mobile/android
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/upload.jks"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+          ./gradlew bundleRelease assembleRelease -PversionCode="$BUILD_NUMBER" -PversionName="$VERSION"
+          rm -f "$ANDROID_KEYSTORE_PATH"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: seed-bible-android-${{ steps.mode.outputs.mode }}-${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+          path: |
+            mobile/android/app/build/outputs/apk/**/*.apk
+            mobile/android/app/build/outputs/bundle/**/*.aab
+          if-no-files-found: error
+
+  ios:
+    name: iOS
+    needs: web
+    runs-on: macos-latest
+    env:
+      VERSION: ${{ needs.web.outputs.version }}
+      BUILD_NUMBER: ${{ needs.web.outputs.build-number }}
+    steps:
+      - uses: actions/checkout@v4
+      # Capacitor 8 needs a current Xcode; pin the newest stable one rather
+      # than whatever the runner image defaults to.
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Install
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: native-web
+          path: standalone/dist/native
+
+      - name: Copy the web bundle into the iOS project
+        working-directory: mobile
+        run: pnpm exec cap sync ios
+
+      - name: Decide build type
+        id: mode
+        env:
+          RELEASE: ${{ needs.web.outputs.release }}
+          HAS_CERTIFICATE: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 != '' && secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' }}
+        run: |
+          if [ "$RELEASE" = "true" ] && [ "$HAS_CERTIFICATE" = "true" ]; then
+            echo "mode=release" >> "$GITHUB_OUTPUT"
+          else
+            if [ "$RELEASE" = "true" ]; then
+              echo "::warning title=iOS release skipped::The iOS signing secrets aren't set, so this is an unsigned Simulator build. See .github/workflows/native.yml."
+            fi
+            echo "mode=simulator" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build for the iOS Simulator
+        if: steps.mode.outputs.mode == 'simulator'
+        working-directory: mobile/ios/App
+        run: |
+          xcodebuild build \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            CODE_SIGNING_ALLOWED=NO
+          mkdir -p "$RUNNER_TEMP/output"
+          # Zipped with ditto so the .app bundle keeps its structure; drag it
+          # onto a booted Simulator to install it.
+          ditto -c -k --keepParent \
+            "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator/App.app" \
+            "$RUNNER_TEMP/output/SeedBible-simulator.zip"
+
+      - name: Install signing certificate and provisioning profile
+        if: steps.mode.outputs.mode == 'release'
+        id: signing
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          CERTIFICATE_PATH="$RUNNER_TEMP/distribution.p12"
+          PROFILE_PATH="$RUNNER_TEMP/app.mobileprovision"
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+
+          echo -n "$CERTIFICATE_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          echo -n "$PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
+
+          # A throwaway keychain for this run only; removed in the last step.
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          # The profile names itself and its team; read both rather than
+          # duplicating them in more secrets.
+          security cms -D -i "$PROFILE_PATH" > "$RUNNER_TEMP/profile.plist"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" "$RUNNER_TEMP/profile.plist")
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/profile.plist")
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" "$RUNNER_TEMP/profile.plist")
+          # Older Xcodes read the first folder, Xcode 16 and later the second.
+          for dir in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+            mkdir -p "$dir"
+            cp "$PROFILE_PATH" "$dir/$PROFILE_UUID.mobileprovision"
+          done
+          rm -f "$CERTIFICATE_PATH"
+
+          echo "profile-name=$PROFILE_NAME" >> "$GITHUB_OUTPUT"
+          echo "team-id=$TEAM_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Archive and export the App Store build
+        if: steps.mode.outputs.mode == 'release'
+        working-directory: mobile/ios/App
+        env:
+          PROFILE_NAME: ${{ steps.signing.outputs.profile-name }}
+          TEAM_ID: ${{ steps.signing.outputs.team-id }}
+        run: |
+          node ../../scripts/configureIosRelease.mjs App.xcodeproj/project.pbxproj \
+            --team "$TEAM_ID" --profile "$PROFILE_NAME" \
+            --version "$VERSION" --build "$BUILD_NUMBER"
+
+          xcodebuild archive \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/App.xcarchive"
+
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>teamID</key>
+            <string>$TEAM_ID</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>org.seedbible.app</key>
+              <string>$PROFILE_NAME</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/output"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: seed-bible-ios-${{ steps.mode.outputs.mode }}-${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+          path: |
+            ${{ runner.temp }}/output/*.ipa
+            ${{ runner.temp }}/output/*.zip
+          if-no-files-found: error
+
+      - name: Remove the signing keychain
+        if: always() && steps.mode.outputs.mode == 'release'
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
