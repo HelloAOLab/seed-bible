@@ -194,6 +194,7 @@
   "custom-content-import-unknown-passages": "Passages we didn't recognize: {{passages}}.",
   "custom-content-items": "Content",
   "custom-content-library": "Content library",
+  "custom-content-loading": "Loading the content library…",
   "custom-content-load-failed": "The content library couldn't be loaded.",
   "custom-content-missing": "This Custom Branding's content library couldn't be found. It may have been deleted.",
   "custom-content-new-category": "New category",

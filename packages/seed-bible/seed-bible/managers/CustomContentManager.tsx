@@ -12,13 +12,7 @@ import type { LoginManager } from "./LoginManager";
 import type { ModalManager } from "./ModalManager";
 import type { CasualOSManager } from "./OsManager";
 import type { ChatProvider, ChatsManager } from "./ChatsManager";
-import {
-  applyClassification,
-  buildClassificationRequest,
-  isConfidentlyClassified,
-  type ContentClassificationResult,
-} from "./customContent/classify";
-import { findExplicitReferences } from "./customContent/explicitReferences";
+import type { ContentClassificationResult } from "./customContent/classify";
 import {
   affectedChapterKeys,
   publishedChapterKeys,
@@ -35,10 +29,6 @@ import {
 import type { ContentImportService } from "./customContent/importClient";
 import type { ImportEntry } from "./customContent/importEntries";
 import { normalizeContentUrl } from "./customContent/normalizeUrl";
-import {
-  formatContentReference,
-  parsePassages,
-} from "./customContent/passages";
 import {
   ContentLibraryError,
   assertStored,
@@ -225,6 +215,12 @@ export interface AiSuggestionRun {
 
 const RECORD_NAME_PREFIX = "seedbible-content-";
 const DEFAULT_IMPORT_POLL_MS = 3000;
+
+/**
+ * Suggesting passages and categories only happens while an owner edits a
+ * library, so that code loads then rather than with every reader's app.
+ */
+const loadEditingHelpers = () => import("./customContent/classify");
 /** Websites a library remembers for "Check for new pages", most recently imported first. */
 const MAX_SITE_SOURCES = 20;
 
@@ -823,6 +819,9 @@ export function createCustomContentManager(deps: {
     let alreadyInLibrary = 0;
 
     const inputs: ImportItemInput[] = [];
+    const parsePassages = entries.some((entry) => entry.passages)
+      ? (await import("./customContent/passages")).parsePassages
+      : null;
     for (const entry of entries) {
       if (inLibrary.has(normalizeContentUrl(entry.url))) {
         alreadyInLibrary++;
@@ -839,7 +838,7 @@ export function createCustomContentManager(deps: {
       }
       let references: ContentReference[] | undefined;
       if (entry.passages) {
-        const parsed = parsePassages(entry.passages, options.books);
+        const parsed = parsePassages!(entry.passages, options.books);
         references = parsed.references;
         unrecognizedPassages.push(...parsed.unrecognized);
       }
@@ -1074,6 +1073,14 @@ export function createCustomContentManager(deps: {
     if (!item || !current || recordName.value !== record) {
       return true;
     }
+    const {
+      applyClassification,
+      buildClassificationRequest,
+      isConfidentlyClassified,
+    } = await loadEditingHelpers();
+    const { findExplicitReferences } =
+      await import("./customContent/explicitReferences");
+    const { formatContentReference } = await import("./customContent/passages");
     const explicit = findExplicitReferences(item);
     let result: ContentClassificationResult | undefined;
     let error: string | undefined;

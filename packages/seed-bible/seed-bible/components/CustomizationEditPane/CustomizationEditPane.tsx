@@ -42,7 +42,6 @@ import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { i18n } from "../../i18n";
 import { useI18n } from "../../i18n/I18nManager";
-import { CustomizationContentView } from "./CustomizationContentView";
 import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
@@ -75,6 +74,13 @@ const LogoCropModalContent = lazy(() =>
   import("../LogoCropModal/LogoCropModal").then((m) => ({
     default: m.LogoCropModalContent,
   }))
+);
+
+// Only owners building a content library see this screen, so it (and its
+// import and AI-suggestion code) isn't part of every reader's first load.
+const loadContentView = () => import("./CustomizationContentView");
+const CustomizationContentView = lazy(() =>
+  loadContentView().then((m) => ({ default: m.CustomizationContentView }))
 );
 
 export const CUSTOMIZATION_EDIT_PANE_ID = "customization-edit-pane";
@@ -557,12 +563,31 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
     return <CustomizationEditExtensionsView state={state} />;
   }
   if (view === "edit-content") {
-    return <CustomizationContentView state={state} />;
+    return (
+      <Suspense fallback={<ContentViewLoading />}>
+        <CustomizationContentView state={state} />
+      </Suspense>
+    );
   }
   if (view === "edit-variant") {
     return <CustomizationEditVariantView state={state} />;
   }
   return <CustomizationEditMainView state={state} />;
+}
+
+function ContentViewLoading() {
+  const { t } = useI18n();
+  return (
+    <div className="sb-settings-page sb-cz-page">
+      <SkeletonContainer
+        label={t("custom-content-loading", {
+          defaultValue: "Loading the content library…",
+        })}
+      >
+        <Skeleton width="100%" height="12rem" radius="0.625rem" />
+      </SkeletonContainer>
+    </div>
+  );
 }
 
 function CustomizationEditMainView(props: { state: SeedBibleState }) {
@@ -869,6 +894,8 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
         <button
           type="button"
           className="sb-cz-row sb-cz-row-tall"
+          onPointerEnter={() => void loadContentView()}
+          onFocus={() => void loadContentView()}
           onClick={() => {
             customizationEditView.value = "edit-content";
           }}

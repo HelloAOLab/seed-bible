@@ -658,6 +658,8 @@ describe("CustomizationContentView", () => {
       await waitForCondition(() =>
         container.textContent!.includes("Asking Grace Agent: 0 of 3 · 0 failed")
       );
+      // Two at a time: both are with the agent before Stop is pressed.
+      await waitForCondition(() => answers.length === 2);
       await click(button("Stop"));
       await act(() => answers.splice(0).forEach((answer) => answer()));
       await waitForCondition(() =>
