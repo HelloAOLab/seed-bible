@@ -15,6 +15,7 @@ import type {
   TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { MapManager } from "@packages/seed-bible/seed-bible/managers/MapManager";
 import type { ReadonlySignal } from "@preact/signals";
 import {
   requestToPromise,
@@ -595,6 +596,8 @@ export interface TheographicProviderDeps {
   onReferenceClick: (ref: VerseRef, origin?: ReferenceOrigin) => void;
   /** Where a place's map opens. Omit and the map control is not offered. */
   panes?: PanesManager;
+  /** Draws places' maps. Omit and places show no map. */
+  map?: MapManager;
   /** The locations extension's lookup, for places it has a file for. */
   locations?: PlaceLocations;
   /** Whether the reader is on a phone-sized screen; hides "Open in map". */
@@ -678,7 +681,7 @@ export function toDiscoverResults(
   context: DiscoverContext,
   deps: Pick<
     TheographicProviderDeps,
-    "client" | "onReferenceClick" | "locations" | "isMobile"
+    "client" | "onReferenceClick" | "locations" | "map" | "isMobile"
   > & {
     openPlace?: (place: TheographicPlaceEntry) => void;
     isPlaceOpen?: (place: TheographicPlaceEntry) => boolean;
@@ -727,6 +730,7 @@ export function toDiscoverResults(
           isPlaceOpen={deps.isPlaceOpen}
           isMobile={deps.isMobile}
           locations={deps.locations}
+          map={deps.map}
           scripture={deps.scripture}
         />
       ),
@@ -748,7 +752,7 @@ export function createTheographicDiscoverProvider(
   deps: TheographicProviderDeps
 ): DiscoverProvider {
   let hasWarned = false;
-  const openPlace = createOpenPlace(deps.panes, {
+  const openPlace = createOpenPlace(deps.panes, deps.map, {
     client: deps.client,
     locations: deps.locations,
   });
@@ -785,6 +789,7 @@ export function createTheographicDiscoverProvider(
         client: deps.client,
         onReferenceClick: deps.onReferenceClick,
         locations: deps.locations,
+        map: deps.map,
         isMobile: deps.isMobile,
         openPlace,
         isPlaceOpen,

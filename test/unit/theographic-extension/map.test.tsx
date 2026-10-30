@@ -3,24 +3,37 @@ import { act } from "preact/test-utils";
 import type { ComponentChild } from "preact";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import {
-  MAX_MAP_DATA_LENGTH,
+  createMapManager,
+  type LeafletModule,
+} from "@packages/seed-bible/seed-bible/managers/MapManager";
+import {
+  THEOGRAPHIC_ATTRIBUTION,
   canMapPlace,
   createIsPlaceOpen,
   createOpenPlace,
   findKnownLocation,
-  fitsInPortalUrl,
   placePaneId,
   resolvePlaceMapData,
   type PlaceLocations,
 } from "@packages/theographic-extension/ext_theographic/map";
 import type { TheographicPlaceEntry } from "@packages/theographic-extension/ext_theographic/provider";
+import {
+  getPlaceAttribution,
+  toStandardGeoJson,
+} from "@packages/bible-locations";
+import { waitFor } from "../seed-bible/testUtils/createTestSeedBibleState";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../seed-bible/testUtils/mockI18n");
   return mockI18nManager();
 });
 
+let leaflet: LeafletModule;
 let container: HTMLDivElement;
+
+beforeAll(async () => {
+  leaflet = await createMapManager({ panes: createPanes() }).loadLeaflet();
+}, 30_000);
 
 beforeEach(() => {
   container = document.createElement("div");
@@ -65,7 +78,16 @@ function fakeLocations(): PlaceLocations & {
   return {
     findLocation: vi.fn((name: string) => table[name.toLowerCase()] ?? null),
     getPlaceGeoJsonUrl: (entry) => `https://files.test/${entry.geojson}.json`,
+    toStandardGeoJson,
+    getPlaceAttribution,
   };
+}
+
+function readyMap(panes = createPanes()) {
+  return createMapManager({
+    panes,
+    importLeaflet: () => Promise.resolve(leaflet),
+  });
 }
 
 describe("findKnownLocation", () => {
@@ -107,22 +129,9 @@ describe("canMapPlace", () => {
   });
 });
 
-describe("fitsInPortalUrl", () => {
-  it("measures the data as it will be encoded in the URL", () => {
-    // Each space becomes "+" and each "é" six characters, so text well under
-    // the limit can still be over it once encoded.
-    const accented = "é".repeat(Math.ceil(MAX_MAP_DATA_LENGTH / 6) + 1);
-
-    expect(fitsInPortalUrl("x".repeat(MAX_MAP_DATA_LENGTH))).toBe(true);
-    expect(fitsInPortalUrl("x".repeat(MAX_MAP_DATA_LENGTH + 1))).toBe(false);
-    expect(fitsInPortalUrl(accented)).toBe(false);
-  });
-});
-
 describe("resolvePlaceMapData", () => {
-  const geojson = { type: "FeatureCollection", features: [] };
-
-  it("fetches a listed place's file, no longer than the map can take", async () => {
+  it("fetches an OpenBible place's file as it is, with OpenBible's credit", async () => {
+    const geojson = { type: "FeatureCollection", features: [] };
     const getResource = vi.fn().mockResolvedValue(geojson);
 
     await expect(
@@ -130,63 +139,97 @@ describe("resolvePlaceMapData", () => {
         client: { getResource },
         locations: fakeLocations(),
       })
-    ).resolves.toBe(JSON.stringify(geojson));
-    expect(getResource).toHaveBeenCalledWith(
-      "https://files.test/m66c5b8.json",
-      { maxLength: MAX_MAP_DATA_LENGTH }
-    );
+    ).resolves.toEqual({
+      data: geojson,
+      attribution: getPlaceAttribution({
+        place: "Jerusalem",
+        geojson: "m66c5b8",
+      }),
+    });
+    expect(getResource).toHaveBeenCalledWith("https://files.test/m66c5b8.json");
   });
 
-  it("builds a point for an unlisted place without fetching anything", async () => {
+  it("flips a hand-built place's file into standard order", async () => {
+    const getResource = vi.fn().mockResolvedValue({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: ["31.3222", "45.6361"] },
+      properties: { id: "Erech" },
+    });
+
+    const resolved = await resolvePlaceMapData(place("Erech"), {
+      client: { getResource },
+      locations: fakeLocations(),
+    });
+
+    expect(resolved).toEqual({
+      data: {
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [45.6361, 31.3222] },
+        properties: { id: "Erech" },
+      },
+      attribution: [],
+    });
+  });
+
+  it("draws a large file rather than falling back to the coordinates", async () => {
+    // Crete's outline, about 450 KB, was too long for the old map's URL.
+    const outline = {
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [Array.from({ length: 20_000 }, () => [24.5, 35.2])],
+      },
+      properties: {},
+    };
+    const getResource = vi.fn().mockResolvedValue(outline);
+
+    const resolved = await resolvePlaceMapData(
+      place("Jerusalem", { latitude: 31.78, longitude: 35.23 }),
+      { client: { getResource }, locations: fakeLocations() }
+    );
+
+    expect(resolved?.data).toBe(outline);
+  });
+
+  it("builds a point for an unlisted place, credited to Theographic", async () => {
     const getResource = vi.fn();
 
-    const data = await resolvePlaceMapData(
+    const resolved = await resolvePlaceMapData(
       place("Abana", { latitude: 33.5, longitude: 36.3 }),
       { client: { getResource }, locations: fakeLocations() }
     );
 
     expect(getResource).not.toHaveBeenCalled();
-    expect(JSON.parse(data!)).toMatchObject({
-      geometry: { type: "Point", coordinates: [33.5, 36.3] },
+    expect(resolved).toMatchObject({
+      data: { geometry: { type: "Point", coordinates: [36.3, 33.5] } },
+      attribution: [THEOGRAPHIC_ATTRIBUTION],
     });
   });
 
   it("falls back to the coordinates when the file fails to load", async () => {
     const getResource = vi.fn().mockRejectedValue(new Error("offline"));
 
-    const data = await resolvePlaceMapData(
+    const resolved = await resolvePlaceMapData(
       place("Erech", { latitude: 31.3, longitude: 45.6 }),
       { client: { getResource }, locations: fakeLocations() }
     );
 
-    expect(JSON.parse(data!)).toMatchObject({
-      geometry: { type: "Point", coordinates: [31.3, 45.6] },
+    expect(resolved).toMatchObject({
+      data: { geometry: { type: "Point", coordinates: [45.6, 31.3] } },
+      attribution: [THEOGRAPHIC_ATTRIBUTION],
     });
-  });
-
-  it("falls back to the coordinates when the file won't fit in the URL", async () => {
-    // Short enough as text, too long once every "é" is percent-encoded.
-    const accented = { name: "é".repeat(MAX_MAP_DATA_LENGTH / 2) };
-    const getResource = vi.fn().mockResolvedValue(accented);
-
-    const data = await resolvePlaceMapData(
-      place("Erech", { latitude: 31.3, longitude: 45.6 }),
-      { client: { getResource }, locations: fakeLocations() }
-    );
-
-    expect(JSON.parse(data!)).toMatchObject({ geometry: { type: "Point" } });
   });
 
   it("draws the coordinates without a known-places lookup", async () => {
     const getResource = vi.fn();
 
-    const data = await resolvePlaceMapData(
+    const resolved = await resolvePlaceMapData(
       place("Erech", { latitude: 31.3, longitude: 45.6 }),
       { client: { getResource } }
     );
 
     expect(getResource).not.toHaveBeenCalled();
-    expect(JSON.parse(data!)).toMatchObject({ geometry: { type: "Point" } });
+    expect(resolved?.data).toMatchObject({ geometry: { type: "Point" } });
   });
 
   it("answers null when the file fails and there are no coordinates", async () => {
@@ -213,7 +256,7 @@ describe("createIsPlaceOpen", () => {
     const isOpen = createIsPlaceOpen(panes);
 
     expect(isOpen(BABEL)).toBe(false);
-    createOpenPlace(panes)?.(BABEL);
+    createOpenPlace(panes, readyMap(panes))?.(BABEL);
     expect(isOpen(BABEL)).toBe(true);
     panes.closePane(placePaneId(BABEL));
     expect(isOpen(BABEL)).toBe(false);
@@ -221,7 +264,7 @@ describe("createIsPlaceOpen", () => {
 
   it("only counts that place's own pane", () => {
     const panes = createPanes();
-    createOpenPlace(panes)?.(BABEL);
+    createOpenPlace(panes, readyMap(panes))?.(BABEL);
 
     expect(createIsPlaceOpen(panes)(place("Erech"))).toBe(false);
   });
@@ -236,8 +279,7 @@ describe("createOpenPlace", () => {
     });
   }
 
-  it("fills the floating pane with the place's file once it loads", async () => {
-    const geojson = { type: "FeatureCollection", features: [] };
+  it("fills the floating pane with the place's map once its file loads", async () => {
     let answer: (value: unknown) => void = () => undefined;
     const getResource = vi.fn().mockImplementation(
       () =>
@@ -248,30 +290,59 @@ describe("createOpenPlace", () => {
     const panes = createPanes();
     const erech = place("Erech");
 
-    createOpenPlace(panes, {
+    createOpenPlace(panes, readyMap(panes), {
       client: { getResource },
       locations: fakeLocations(),
     })?.(erech);
     renderPane(panes, placePaneId(erech));
 
     expect(container.querySelector(".sb-theographic-map-loading")).toBeTruthy();
-    expect(container.querySelector("iframe")).toBeNull();
+    expect(container.querySelector(".leaflet-container")).toBeNull();
 
-    answer(geojson);
-    await flush();
-    await flush();
-
-    const src = new URL(
-      container.querySelector("iframe")!.getAttribute("src")!
+    answer({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: ["31.3222", "45.6361"] },
+      properties: { id: "Erech" },
+    });
+    await waitFor(
+      () => container.querySelector(".sb-geojson-map-point") !== null
     );
-    expect(JSON.parse(src.searchParams.get("mapData")!)).toEqual(geojson);
+
+    expect(container.querySelector(".sb-geojson-map-label")?.textContent).toBe(
+      "Erech"
+    );
+    // Zoom 10's tile over Erech, in southern Iraq — only reached once the
+    // hand-built file's latitude-first numbers have been flipped.
+    const tile = container
+      .querySelector("img.leaflet-tile")
+      ?.getAttribute("src");
+    expect(tile).toBe("https://tile.openstreetmap.org/10/641/418.png");
+  });
+
+  it("credits Theographic in the pane, which has no card beneath it", async () => {
+    const panes = createPanes();
+    const abana = place("Abana", { latitude: 33.5, longitude: 36.3 });
+
+    createOpenPlace(panes, readyMap(panes), { locations: fakeLocations() })?.(
+      abana
+    );
+    renderPane(panes, placePaneId(abana));
+    await waitFor(
+      () => container.querySelector(".sb-geojson-map-point") !== null
+    );
+
+    const credits = container.querySelector(
+      ".leaflet-control-attribution"
+    )?.textContent;
+    expect(credits).toContain("Theographic Bible Metadata");
+    expect(credits).toContain("OpenStreetMap");
   });
 
   it("says so, rather than showing an empty pane, when nothing can be drawn", async () => {
     const panes = createPanes();
     const erech = place("Erech");
 
-    createOpenPlace(panes, {
+    createOpenPlace(panes, readyMap(panes), {
       client: { getResource: () => Promise.reject(new Error("offline")) },
       locations: fakeLocations(),
     })?.(erech);
@@ -279,14 +350,16 @@ describe("createOpenPlace", () => {
     await flush();
     await flush();
 
-    expect(container.querySelector("iframe")).toBeNull();
+    expect(container.querySelector(".leaflet-container")).toBeNull();
     expect(container.textContent).toBe("This place can't be shown on the map.");
   });
 
   it("opens nothing for a place there is nothing to draw for", () => {
     const panes = createPanes();
 
-    createOpenPlace(panes, { locations: fakeLocations() })?.(place("Abana"));
+    createOpenPlace(panes, readyMap(panes), { locations: fakeLocations() })?.(
+      place("Abana")
+    );
 
     expect(panes.panes.value).toHaveLength(0);
   });

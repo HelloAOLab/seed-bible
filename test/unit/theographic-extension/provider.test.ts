@@ -18,6 +18,7 @@ import type {
 } from "@packages/theographic-extension/ext_theographic/provider";
 import type { DiscoverContext } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import { createMapManager } from "@packages/seed-bible/seed-bible/managers/MapManager";
 
 const DATASET = {
   id: "theographic",
@@ -248,26 +249,20 @@ describe("placeToGeoJson", () => {
     verses: [19],
   };
 
-  it("puts latitude before longitude, as the map portal expects", () => {
-    // Deliberately not GeoJSON's documented [longitude, latitude]: the
-    // importer labels and focuses a lone Feature with coordinates[0] as the
-    // latitude. Flipping these lands every place ~1,500 km away, and both
-    // numbers stay valid coordinates, so nothing else catches it.
+  it("puts longitude before latitude, GeoJSON's standard order", () => {
+    // Flipping these lands every place ~1,500 km away, and both numbers stay
+    // valid coordinates, so nothing else catches it.
     expect(placeToGeoJson(egypt)?.geometry.coordinates).toEqual([
-      26.4902, 29.8808,
+      29.8808, 26.4902,
     ]);
   });
 
-  it("builds a bare Point feature the importer will label and focus", () => {
+  it("builds a Point feature named after the place", () => {
     expect(placeToGeoJson(egypt)).toEqual({
       type: "Feature",
-      geometry: { type: "Point", coordinates: [26.4902, 29.8808] },
+      geometry: { type: "Point", coordinates: [29.8808, 26.4902] },
       properties: { id: "Egypt", name: "Egypt", featureType: "Region" },
     });
-  });
-
-  it("uses the readable name as the id, since that is the map label", () => {
-    expect(placeToGeoJson(egypt)?.properties.id).toBe("Egypt");
   });
 
   it("omits featureType when the dataset has none", () => {
@@ -307,17 +302,27 @@ describe("createOpenPlace", () => {
 
   function panesStub() {
     const openPane = vi.fn();
-    return { openPane, panes: { openPane } as unknown as PanesManager };
+    const panes = { openPane } as unknown as PanesManager;
+    // Leaflet's download never finishes: these tests only look at the pane.
+    const map = createMapManager({
+      panes,
+      importLeaflet: () => new Promise(() => undefined),
+    });
+    return { openPane, panes, map };
   }
 
   it("is undefined without a panes manager, so no control is offered", () => {
-    expect(createOpenPlace(undefined)).toBeUndefined();
+    expect(createOpenPlace(undefined, panesStub().map)).toBeUndefined();
+  });
+
+  it("is undefined without a map manager, so no control is offered", () => {
+    expect(createOpenPlace(panesStub().panes, undefined)).toBeUndefined();
   });
 
   it("opens a floating pane titled after the place", () => {
-    const { openPane, panes } = panesStub();
+    const { openPane, panes, map } = panesStub();
 
-    createOpenPlace(panes)?.(egypt);
+    createOpenPlace(panes, map)?.(egypt);
 
     expect(openPane).toHaveBeenCalledTimes(1);
     expect(openPane.mock.calls[0]![0]).toMatchObject({
@@ -328,17 +333,17 @@ describe("createOpenPlace", () => {
   });
 
   it("does nothing for a place the dataset has no position for", () => {
-    const { openPane, panes } = panesStub();
+    const { openPane, panes, map } = panesStub();
     const { latitude: _lat, longitude: _lng, ...noCoords } = egypt;
 
-    createOpenPlace(panes)?.(noCoords);
+    createOpenPlace(panes, map)?.(noCoords);
 
     expect(openPane).not.toHaveBeenCalled();
   });
 
   it("reuses one pane id per place, so reopening replaces rather than stacks", () => {
-    const { openPane, panes } = panesStub();
-    const open = createOpenPlace(panes);
+    const { openPane, panes, map } = panesStub();
+    const open = createOpenPlace(panes, map);
 
     open?.(egypt);
     open?.(egypt);

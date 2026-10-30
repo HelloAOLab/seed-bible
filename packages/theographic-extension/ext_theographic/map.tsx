@@ -1,53 +1,34 @@
 import { useSignal } from "@preact/signals";
-import { useEffect, useMemo } from "preact/hooks";
-import { MaterialIcon, PortalComponent, Skeleton } from "seed-bible/components";
+import { useEffect } from "preact/hooks";
+import type { ComponentChildren } from "preact";
+import { GeoJsonMap, MaterialIcon, Skeleton } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
-import geoImporterPattern from "virtual:@pattern/geo-importer";
-import { v4 as uuid } from "uuid";
 import type {
   findLocation,
+  getPlaceAttribution,
   getPlaceGeoJsonUrl,
   PlaceData,
+  toStandardGeoJson,
 } from "@seed-bible/bible-locations";
+import type {
+  Feature,
+  GeoJsonObject,
+  MapManager,
+  Point,
+} from "@packages/seed-bible/seed-bible/managers/MapManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import { withoutQualifier } from "./names";
 import type { TheographicClient, TheographicPlaceEntry } from "./provider";
 
-/**
- * A place as a GeoJSON point, ready to hand to the geo-importer map.
- *
- * A bare `Feature` rather than a `FeatureCollection` on purpose: the importer
- * labels and focuses the map on a lone `Feature`, while a collection is drawn
- * without either unless it also carries `metadata.name` and a `bbox`.
- */
-export interface PlaceGeoJsonFeature {
-  type: "Feature";
-  geometry: {
-    type: "Point";
-    /**
-     * Latitude first, then longitude — deliberately *not* GeoJSON's documented
-     * `[longitude, latitude]` order.
-     *
-     * For a lone Feature the importer places its label, and focuses the
-     * camera, with `coordinates[1]` as X (longitude) and `coordinates[0]` as
-     * Y (see `parseFeature` in `loadMap.tsx`). Confirmed by opening a place
-     * and seeing where the map lands. The hand-built known-places
-     * files use this order too; OpenBible's are in spec order and focus from
-     * their `bbox` instead, so they are passed through untouched.
-     */
-    coordinates: [number, number];
-  };
-  properties: {
-    /**
-     * Required by the importer's schema, and what it draws as the map label —
-     * so this is the readable name ("Egypt"), not the dataset's slug
-     * ("egypt_362").
-     */
-    id: string;
-    name: string;
-    featureType?: string;
-  };
-}
+/** The credit the Theographic dataset's own coordinates need on a map. */
+export const THEOGRAPHIC_ATTRIBUTION =
+  'Places: <a href="https://github.com/robertrouse/theographic-bible-metadata">Theographic Bible Metadata</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>)';
+
+/** A place as a GeoJSON point, `[longitude, latitude]` like all GeoJSON. */
+export type PlaceGeoJsonFeature = Feature<
+  Point,
+  { id: string; name: string; featureType?: string }
+>;
 
 /**
  * Turns a place's coordinates into a GeoJSON point.
@@ -67,7 +48,7 @@ export function placeToGeoJson(
     type: "Feature",
     geometry: {
       type: "Point",
-      coordinates: [latitude, longitude],
+      coordinates: [longitude, latitude],
     },
     properties: {
       id: place.name,
@@ -106,6 +87,8 @@ export function createIsPlaceOpen(
 export interface PlaceLocations {
   findLocation: typeof findLocation;
   getPlaceGeoJsonUrl: typeof getPlaceGeoJsonUrl;
+  toStandardGeoJson: typeof toStandardGeoJson;
+  getPlaceAttribution: typeof getPlaceAttribution;
 }
 
 /** Where a place's map data comes from, besides its own coordinates. */
@@ -147,62 +130,45 @@ export function canMapPlace(
   );
 }
 
-/**
- * The longest `mapData` the portal can be handed, in URL-encoded characters.
- *
- * The data travels in the ao.bot iframe's URL, and ao.bot's server drops any
- * request past about 16,200 characters (measured September 2026). The rest of
- * the URL and the browser's headers need some of that, hence the margin.
- * Most places' files are a few hundred characters; the few past this — Crete
- * is 1.35 MB encoded — are drawn from their coordinates instead.
- */
-export const MAX_MAP_DATA_LENGTH = 12_000;
-
-/** Whether `mapData` fits in the portal's URL. */
-export function fitsInPortalUrl(mapData: string): boolean {
-  const prefix = "mapData=".length;
-  return (
-    new URLSearchParams({ mapData }).toString().length - prefix <=
-    MAX_MAP_DATA_LENGTH
-  );
+/** What a place's map draws, and the credits that data needs. */
+export interface PlaceMapData {
+  data: GeoJsonObject;
+  attribution: string[];
 }
 
 /**
- * The `mapData` to hand the geo-importer for a place, as the JSON text it
- * expects.
+ * What to draw for a place.
  *
- * The known place's file when it has one that fits in the portal's
- * URL — an outline or a curated point, rather than the single coordinate the
- * dataset carries — and a point built from the coordinates otherwise, or when
- * that file can't be fetched. Null when there is nothing to draw at all.
+ * The known place's file when it has one — an outline or a curated point,
+ * rather than the single coordinate the dataset carries — and a point built
+ * from the coordinates otherwise, or when that file can't be fetched. Null
+ * when there is nothing to draw at all.
  */
 export async function resolvePlaceMapData(
   place: TheographicPlaceEntry,
   sources: PlaceMapSources
-): Promise<string | null> {
+): Promise<PlaceMapData | null> {
   const { client, locations } = sources;
   const known = findKnownLocation(place.name, locations);
   if (known && client && locations) {
     try {
-      // Nothing longer can fit once encoded, so there's no use keeping it.
       const geojson = await client.getResource<unknown>(
-        locations.getPlaceGeoJsonUrl(known),
-        { maxLength: MAX_MAP_DATA_LENGTH }
+        locations.getPlaceGeoJsonUrl(known)
       );
-      const mapData = JSON.stringify(geojson);
-      if (fitsInPortalUrl(mapData)) {
-        return mapData;
-      }
+      return {
+        data: locations.toStandardGeoJson(known, geojson),
+        attribution: locations.getPlaceAttribution(known),
+      };
     } catch {
       // Fall through to the coordinates.
     }
   }
 
   const point = placeToGeoJson(place);
-  return point ? JSON.stringify(point) : null;
+  return point ? { data: point, attribution: [THEOGRAPHIC_ATTRIBUTION] } : null;
 }
 
-type MapDataState = string | null | "loading";
+type MapDataState = PlaceMapData | null | "loading";
 
 /**
  * Loads a place's map data, again whenever the place changes.
@@ -212,7 +178,7 @@ type MapDataState = string | null | "loading";
  */
 function useMapData(
   key: string,
-  load: () => Promise<string | null>
+  load: () => Promise<PlaceMapData | null>
 ): MapDataState {
   const mapData = useSignal<MapDataState>("loading");
 
@@ -232,14 +198,16 @@ function useMapData(
   return mapData.value;
 }
 
-/**
- * The geo-importer portal, or a placeholder while its data loads.
- *
- * PortalComponent builds its iframe URL once, on mount, so it can only be
- * mounted once `mapData` is in hand.
- */
-function PlaceMapPortal(props: { mapData: string | "loading"; inst: string }) {
-  if (props.mapData === "loading") {
+/** A place's map, or a placeholder while its data loads. */
+function PlaceMapView(props: {
+  map: MapManager;
+  place: TheographicPlaceEntry;
+  mapData: PlaceMapData | "loading";
+  inline?: boolean;
+  controls?: ComponentChildren;
+}) {
+  const { map, place, mapData, inline, controls } = props;
+  if (mapData === "loading") {
     return (
       <Skeleton
         shape="block"
@@ -250,23 +218,32 @@ function PlaceMapPortal(props: { mapData: string | "loading"; inst: string }) {
     );
   }
   return (
-    <PortalComponent
-      portal="map"
-      portalType="map"
-      pattern={geoImporterPattern}
-      inst={props.inst}
-      query={{ mapData: props.mapData }}
+    <GeoJsonMap
+      map={map}
+      data={mapData.data}
+      attribution={
+        // The card an inline map sits in credits the dataset just below it;
+        // the floating pane has no card, so it keeps the credit.
+        inline
+          ? mapData.attribution.filter(
+              (credit) => credit !== THEOGRAPHIC_ATTRIBUTION
+            )
+          : mapData.attribution
+      }
+      label={place.name}
+      inline={inline}
+      controls={controls}
     />
   );
 }
 
 /** A place's map filling its floating pane. */
 function PlacePane(props: {
+  map: MapManager;
   place: TheographicPlaceEntry;
   sources: PlaceMapSources;
-  inst: string;
 }) {
-  const { place, sources, inst } = props;
+  const { map, place, sources } = props;
   const { t } = useI18n("theographic-extension");
   const mapData = useMapData(place.id, () =>
     resolvePlaceMapData(place, sources)
@@ -281,20 +258,21 @@ function PlacePane(props: {
       </p>
     );
   }
-  return <PlaceMapPortal mapData={mapData} inst={inst} />;
+  return <PlaceMapView map={map} place={place} mapData={mapData} />;
 }
 
 /**
- * Opens a place on the geo-importer map, in its own floating pane.
+ * Opens a place's map in its own floating pane.
  *
- * Undefined without a `PanesManager`, which is how the card decides whether
- * to offer the control at all.
+ * Undefined without a `PanesManager` and `MapManager`, which is how the card
+ * decides whether to offer the control at all.
  */
 export function createOpenPlace(
   panes: PanesManager | undefined,
+  map: MapManager | undefined,
   sources: PlaceMapSources = {}
 ): ((place: TheographicPlaceEntry) => void) | undefined {
-  if (!panes) {
+  if (!panes || !map) {
     return undefined;
   }
 
@@ -303,19 +281,14 @@ export function createOpenPlace(
       return;
     }
 
-    // The portal instance id is generated once, here — not inside the pane's
-    // render function — so re-renders (dragging or resizing the pane) reuse
-    // the same `inst` and the map iframe keeps its document instead of
-    // reloading.
-    const inst = uuid();
+    // Starts Leaflet's download alongside the place data rather than after.
+    void map.loadLeaflet().catch(() => undefined);
 
     panes.openPane({
       id: placePaneId(place),
       placement: "floating",
       title: place.name,
-      component: () => (
-        <PlacePane place={place} sources={sources} inst={inst} />
-      ),
+      component: () => <PlacePane map={map} place={place} sources={sources} />,
     });
   };
 }
@@ -332,12 +305,13 @@ export function formatCoordinates(
 }
 
 /**
- * A place drawn on the CasualOS map, inline in its card.
+ * A place's map, inline in its card.
  *
- * The same geo-importer portal the floating pane uses, sized to sit in the
- * card. Renders nothing for a place there turns out to be nothing to draw for.
+ * The same map the floating pane draws, sized to sit in the card. Renders
+ * nothing for a place there turns out to be nothing to draw for.
  */
 export function PlaceMap(props: {
+  map: MapManager;
   place: TheographicPlaceEntry;
   label: string;
   sources: PlaceMapSources;
@@ -346,10 +320,7 @@ export function PlaceMap(props: {
   /** The control's accessible name, already translated. */
   openLabel?: string;
 }) {
-  const { place, label, sources, onOpen, openLabel } = props;
-  // One portal instance per place shown. PortalComponent builds its iframe
-  // URL once on mount, so this only has to stay stable, not memoise `query`.
-  const inst = useMemo(() => uuid(), [place.id]);
+  const { map, place, label, sources, onOpen, openLabel } = props;
   const mapData = useMapData(place.id, () =>
     resolvePlaceMapData(place, sources)
   );
@@ -363,20 +334,27 @@ export function PlaceMap(props: {
   return (
     // A group rather than an image: it holds a real control as well.
     <div className="sb-theographic-map" role="group" aria-label={label}>
-      <PlaceMapPortal key={inst} mapData={mapData} inst={inst} />
+      <PlaceMapView
+        map={map}
+        place={place}
+        mapData={mapData}
+        inline
+        controls={
+          onOpen ? (
+            <button
+              type="button"
+              className="sb-geojson-map-control sb-theographic-map-open"
+              title={openLabel}
+              aria-label={openLabel}
+              onClick={onOpen}
+            >
+              <MaterialIcon>float_landscape_2</MaterialIcon>
+            </button>
+          ) : null
+        }
+      />
       {coordinates ? (
         <span className="sb-theographic-map-coords">{coordinates}</span>
-      ) : null}
-      {onOpen ? (
-        <button
-          type="button"
-          className="sb-theographic-map-open"
-          title={openLabel}
-          aria-label={openLabel}
-          onClick={onOpen}
-        >
-          <MaterialIcon>float_landscape_2</MaterialIcon>
-        </button>
       ) : null}
     </div>
   );

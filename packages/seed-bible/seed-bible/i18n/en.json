@@ -1249,5 +1249,8 @@
 
   "account": "Account",
   "scroll-filters-start": "Scroll filters toward start",
-  "scroll-filters-end": "Scroll filters toward end"
+  "scroll-filters-end": "Scroll filters toward end",
+  "map-failed-to-load": "The map couldn't load.",
+  "map-place-unavailable": "This place can't be shown on the map.",
+  "map-recenter": "Back to the place"
 }

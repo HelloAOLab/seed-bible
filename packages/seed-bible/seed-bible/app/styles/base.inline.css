@@ -240,6 +240,7 @@
   --sb-menu-font-color: #333;
 
   --sb-toolbar-icon-invert: 0;
+  --sb-map-tile-filter: none;
 
   --sb-tab-border: 1px solid transparent;
   --sb-tab-background: inherit;

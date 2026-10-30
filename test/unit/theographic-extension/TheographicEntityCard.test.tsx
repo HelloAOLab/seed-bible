@@ -20,11 +20,21 @@ import type {
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import {
+  createMapManager,
+  type LeafletModule,
+  type MapManager,
+} from "@packages/seed-bible/seed-bible/managers/MapManager";
+import {
   createIsPlaceOpen,
   createOpenPlace,
   placePaneId,
   type PlaceLocations,
 } from "@packages/theographic-extension/ext_theographic/map";
+import {
+  getPlaceAttribution,
+  toStandardGeoJson,
+} from "@packages/bible-locations";
+import { waitFor } from "../seed-bible/testUtils/createTestSeedBibleState";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../seed-bible/testUtils/mockI18n");
@@ -65,6 +75,19 @@ const AARON_DETAIL: TheographicPersonDetail = {
 };
 
 let container: HTMLDivElement;
+let leaflet: LeafletModule;
+
+beforeAll(async () => {
+  leaflet = await createMapManager({ panes: createPanes() }).loadLeaflet();
+}, 30_000);
+
+/** A map manager whose Leaflet is already downloaded. */
+function readyMap(panes = createPanes()): MapManager {
+  return createMapManager({
+    panes,
+    importLeaflet: () => Promise.resolve(leaflet),
+  });
+}
 
 beforeEach(() => {
   container = document.createElement("div");
@@ -89,6 +112,7 @@ function renderCard(
     openPlace?: (entry: TheographicPlaceEntry) => void;
     isPlaceOpen?: (entry: TheographicPlaceEntry) => boolean;
     scripture?: ScriptureReader;
+    map?: MapManager;
   } = {}
 ) {
   const getEntity = vi.fn<(path: string) => Promise<unknown>>(
@@ -115,6 +139,7 @@ function renderCard(
         openPlace={openPlace}
         isPlaceOpen={options.isPlaceOpen}
         locations={options.locations}
+        map={options.map ?? readyMap()}
         isMobile={options.isMobile}
         scripture={options.scripture}
       />,
@@ -287,6 +312,16 @@ describe("TheographicEntityCard", () => {
       expect(control()).toBeTruthy();
     });
 
+    it("puts the recenter button just below it", async () => {
+      await expandEgypt();
+      await waitFor(
+        () => container.querySelector(".sb-geojson-map-recenter") !== null
+      );
+
+      const recenter = container.querySelector(".sb-geojson-map-recenter");
+      expect(recenter?.previousElementSibling).toBe(control());
+    });
+
     it("uses the floating-window icon", async () => {
       await expandEgypt();
 
@@ -297,12 +332,14 @@ describe("TheographicEntityCard", () => {
       // The real pane manager, so this is the same open and close the reader
       // does — not a flag the test flips.
       const panes = createPanes();
+      const map = readyMap(panes);
       renderCard({
         contentType: "place_profile",
         entry: EGYPT,
         getEntity: () => Promise.resolve(EGYPT_DETAIL),
-        openPlace: createOpenPlace(panes),
+        openPlace: createOpenPlace(panes, map),
         isPlaceOpen: createIsPlaceOpen(panes),
+        map,
       });
       click(expandButton());
       await flush();
@@ -852,16 +889,13 @@ describe("the redesigned card", () => {
       },
     };
 
-    // Erech is in the locations extension's file; Abana isn't.
+    // Erech is in the locations extension's file; Abana isn't. Its file is
+    // hand-built, so latitude first and as text, a little off the dataset's
+    // own position.
     const ERECH_GEOJSON = {
-      type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          geometry: { type: "Polygon", coordinates: [] },
-          properties: { id: "Erech" },
-        },
-      ],
+      type: "Feature",
+      geometry: { type: "Point", coordinates: ["31.3", "45.6"] },
+      properties: { id: "Erech" },
     };
     const ERECH_FILE =
       "https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/Erech.geojson";
@@ -871,6 +905,8 @@ describe("the redesigned card", () => {
           ? { place: "Erech", geojson: "Erech" }
           : null,
       getPlaceGeoJsonUrl: () => ERECH_FILE,
+      toStandardGeoJson,
+      getPlaceAttribution,
     };
     const ABANA: TheographicPlaceEntry = {
       id: "abana_1",
@@ -901,28 +937,37 @@ describe("the redesigned card", () => {
       return rendered;
     }
 
-    function mapData(): unknown {
-      const iframe = container.querySelector(
-        ".sb-theographic-map iframe"
-      ) as HTMLIFrameElement | null;
-      if (!iframe) {
-        return null;
-      }
-      const src = new URL(iframe.getAttribute("src")!);
-      expect(src.host).toBe("ao.bot");
-      return JSON.parse(src.searchParams.get("mapData")!);
+    /** Waits for the card's map to draw, and reports what it drew. */
+    async function drawnMap() {
+      await waitFor(
+        () =>
+          container.querySelector(
+            ".sb-theographic-map .sb-geojson-map-point"
+          ) !== null
+      );
+      return {
+        tile: container
+          .querySelector(".sb-theographic-map img.leaflet-tile")
+          ?.getAttribute("src"),
+        credits:
+          container.querySelector(".leaflet-control-attribution")
+            ?.textContent ?? "",
+      };
     }
 
-    it("draws the locations extension's file, in an iframe, only when expanded", async () => {
+    it("draws the locations extension's file only when expanded", async () => {
       renderCard({ contentType: "place_profile", entry: ERECH });
       // Collapsed cards don't load a map each.
-      expect(container.querySelector("iframe")).toBeNull();
+      expect(container.querySelector(".sb-theographic-map")).toBeNull();
 
       render(null, container);
       const { getResource } = await expandPlace();
 
-      expect(getResource).toHaveBeenCalledWith(ERECH_FILE, expect.anything());
-      expect(mapData()).toEqual(ERECH_GEOJSON);
+      expect(getResource).toHaveBeenCalledWith(ERECH_FILE);
+      const map = await drawnMap();
+      // Zoom 10's tile over Uruk, in southern Iraq: the file's numbers flipped.
+      expect(map.tile).toBe("https://tile.openstreetmap.org/10/641/418.png");
+      expect(map.credits).not.toContain("Theographic");
       expect(
         container.querySelector(".sb-theographic-map-coords")?.textContent
       ).toBe("31.3222, 45.6361");
@@ -936,49 +981,53 @@ describe("the redesigned card", () => {
           ".sb-theographic-map .sb-theographic-map-loading"
         )
       ).toBeTruthy();
-      expect(container.querySelector(".sb-theographic-map iframe")).toBeNull();
+      expect(
+        container.querySelector(".sb-theographic-map .leaflet-container")
+      ).toBeNull();
     });
 
     it("draws a point from the coordinates for a place the file doesn't list", async () => {
       const { getResource } = await expandPlace(ABANA);
 
       expect(getResource).not.toHaveBeenCalled();
-      expect(mapData()).toMatchObject({
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [33.5, 36.3] },
-        properties: { id: "Abana" },
-      });
+      const map = await drawnMap();
+      // Zoom 10's tile over Damascus, which the Abana runs through.
+      expect(map.tile).toBe("https://tile.openstreetmap.org/10/615/410.png");
+      // The card credits the dataset below the map; the map doesn't repeat it.
+      expect(map.credits).not.toContain("Theographic");
+      expect(map.credits).toContain("OpenStreetMap");
     });
 
     it("falls back to the coordinates when the file can't be fetched", async () => {
       await expandPlace(ERECH, () => Promise.reject(new Error("offline")));
 
-      expect(mapData()).toMatchObject({
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [31.3222, 45.6361] },
-        properties: { id: "Erech" },
-      });
+      const map = await drawnMap();
+      expect(map.tile).toBe("https://tile.openstreetmap.org/10/641/418.png");
+      // The card credits the dataset below the map; the map doesn't repeat it.
+      expect(map.credits).not.toContain("Theographic");
+      expect(map.credits).toContain("OpenStreetMap");
     });
 
-    it("falls back to the coordinates when the file is too big for the map's URL", async () => {
-      // Crete's outline is 1.35 MB once encoded; ao.bot drops any request
-      // past about 16 KB, so the map would never load.
-      const crete = {
-        type: "FeatureCollection",
-        features: [{ type: "Feature", big: "x".repeat(20_000) }],
-      };
-      await expandPlace(ERECH, () => Promise.resolve(crete));
+    it("lets the reader's scrolling pass over the map", async () => {
+      await expandPlace(ABANA);
+      await drawnMap();
 
-      expect(mapData()).toMatchObject({
-        geometry: { type: "Point", coordinates: [31.3222, 45.6361] },
+      const wheel = new WheelEvent("wheel", {
+        deltaY: 100,
+        bubbles: true,
+        cancelable: true,
       });
+      container.querySelector(".leaflet-container")?.dispatchEvent(wheel);
+
+      expect(wheel.defaultPrevented).toBe(false);
     });
 
     it("still maps a listed place that has no coordinates", async () => {
       const { latitude: _lat, longitude: _lng, ...unplaced } = ERECH;
       await expandPlace(unplaced);
 
-      expect(mapData()).toEqual(ERECH_GEOJSON);
+      const map = await drawnMap();
+      expect(map.tile).toBe("https://tile.openstreetmap.org/10/641/418.png");
       // No coordinates to label the map with.
       expect(container.querySelector(".sb-theographic-map-coords")).toBeNull();
     });

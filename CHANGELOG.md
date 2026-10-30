@@ -6,6 +6,10 @@
 
 ### 🔧 Changed
 
+- Maps of Bible places now open in about a second instead of 5–10, drawn on an OpenStreetMap street map. ([#2054](https://github.com/HelloAOLab/seed-bible/issues/2054))
+  - Applies to Locations and to Theographic Data's place cards.
+  - The map shows where its place data comes from, and dims to match the dark theme.
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed

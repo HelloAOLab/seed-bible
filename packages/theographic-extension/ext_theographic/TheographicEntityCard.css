@@ -174,8 +174,7 @@
 
 /* ── Inline map ── */
 
-/* PortalComponent absolutely positions its iframe over a placeholder, so the
-   map needs a positioned box with a real height to fill. */
+/* The map fills its parent, so it needs a positioned box with a real height. */
 .sb-theographic-map {
   position: relative;
   height: 11rem;
@@ -200,28 +199,6 @@
 /* Holds the map's space while its data loads, edge to edge like the map. */
 .sb-theographic-map-loading {
   border-radius: 0;
-}
-
-/* Sits over the iframe, so it has to share the coordinates' stacking level. */
-.sb-theographic-map-open {
-  position: absolute;
-  inset-block-start: 6px;
-  inset-inline-end: 6px;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--sb-reader-background), transparent 10%);
-  color: var(--sb-primary-color);
-  font-size: 1.125rem;
-  cursor: pointer;
-}
-
-.sb-theographic-map-open:hover {
-  background: var(--sb-reader-background);
 }
 
 /* ── Full entry ── */
