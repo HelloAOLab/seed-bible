@@ -381,6 +381,36 @@
   flex: 1;
 }
 
+.sb-today-container .sb-today-verse-of-the-day-card {
+  width: 100%;
+  background-color: var(--sb-secondary-color);
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.sb-today-container .sb-today-verse-of-the-day-text {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: var(--sb-secondary-font-color);
+}
+
+.sb-today-container .sb-today-verse-of-the-day-reference {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--sb-primary-color);
+}
+
 .sb-today-container .sb-today-titled-section {
   width: 100%;
   display: flex;

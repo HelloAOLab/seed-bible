@@ -730,6 +730,8 @@
   "personal-greeting": "Welcome {{name}}",
   "resume-reading": "CONTINUE WHERE YOU LEFT OFF",
   "resume-reading-loading": "Loading your reading history…",
+  "verse-of-the-day": "Verse of the day",
+  "verse-of-the-day-loading": "Loading the verse of the day…",
   "selected-year": "Year: {{year}}",
   "notes-for-verse": "Notes for verse {{verse}}",
   "profile": "Profile",
