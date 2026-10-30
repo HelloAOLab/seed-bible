@@ -4,7 +4,10 @@ import type {
   TranslationBooks,
 } from "../managers/FreeUseBibleAPI";
 import { safeLocalStorage } from "../app/ssrEnv";
-import type { BibleDataManager } from "../managers/BibleDataManager";
+import type {
+  BibleDataManager,
+  CatalogStatus,
+} from "../managers/BibleDataManager";
 import { type BibleReadingState } from "../managers/BibleReadingManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
@@ -61,6 +64,13 @@ export interface GhostBook {
 
 export type BibleSelectorBookItem = TranslationBook | GhostBook;
 
+export type BooksStatus = "ready" | "loading" | "failed";
+
+export interface TranslationLoad {
+  translationId: string;
+  status: "loading" | "failed";
+}
+
 export type BibleSelectorPsalmsGroups =
   | "1-psalms"
   | "2-psalms"
@@ -95,9 +105,30 @@ export interface BibleSelectorState {
   availableTranslations: ReadonlySignal<Translation[]>;
 
   /** True while selector is loading translation/book data. */
-  loading: Signal<boolean>;
+  loading: ReadonlySignal<boolean>;
   /** Last selector error message, if any. */
   error: Signal<string | null>;
+
+  /** What the book grid can show: its books, a loading state, or a failure. */
+  booksStatus: ReadonlySignal<BooksStatus>;
+  /** Reloads the slot's translation after the book grid failed to load. */
+  retryBooks: () => Promise<void>;
+
+  /**
+   * Where the full translation catalog's download stands. Until it is
+   * `"loaded"`, the translation list holds only the translations the app has
+   * already met.
+   */
+  catalogStatus: ReadonlySignal<CatalogStatus>;
+  /** Downloads the translation catalog again after it failed. */
+  retryCatalog: () => void;
+
+  /**
+   * The translation a change (such as a pick from the list) is loading or
+   * failed to load. Null when none is pending or failed. The load the
+   * selector runs on open isn't tracked here; `booksStatus` covers that.
+   */
+  translationLoad: ReadonlySignal<TranslationLoad | null>;
 
   /** Translation currently selected in the selector UI. */
   selectedTranslationId: Signal<string | null>;
@@ -297,8 +328,12 @@ export function createBibleSelectorState(
     () => settings?.settings.value.bookOrientation ?? "traditional"
   );
 
-  const loading = signal(false);
+  // Loads can overlap (an open's sync and a pick from the list), so `loading`
+  // counts them rather than letting whichever finishes first clear it.
+  const pendingLoads = signal(0);
+  const loading = computed(() => pendingLoads.value > 0);
   const error = signal<string | null>(null);
+  const translationLoad = signal<TranslationLoad | null>(null);
 
   const search = signal("");
   const selectedTranslationId = signal<string | null>(null);
@@ -308,8 +343,34 @@ export function createBibleSelectorState(
   );
   const expandedBookId = signal<string | null>(null);
 
+  const booksStatus = computed<BooksStatus>(() => {
+    if (loading.value) return "loading";
+    return selectedTranslationBooks.value ? "ready" : "failed";
+  });
+
+  const catalogStatus = computed(() => dataManager.catalogStatus.value);
+
+  const loadCatalog = async () => {
+    try {
+      await dataManager.getTranslations();
+    } catch (err) {
+      console.error("Failed to load the translation catalog:", err);
+      throw err;
+    }
+  };
+
+  const retryCatalog = () => {
+    loadCatalog().catch(() => undefined);
+  };
+
+  // Each new sync or pick supersedes the ones before it, so a slow load that
+  // lands late can't swap in a translation the user has since moved past.
+  let latestSync = 0;
+  let latestTranslationLoad = 0;
+
   const syncStateFromSlot = async () => {
-    loading.value = true;
+    const sync = ++latestSync;
+    pendingLoads.value++;
     error.value = null;
 
     try {
@@ -326,14 +387,20 @@ export function createBibleSelectorState(
       // on it. Otherwise the catalog loads in the background for the
       // translation list, and a failed or slow download can't leave the books
       // grid empty.
+      let catalogFailed = false;
       if (!dataManager.catalogLoaded.value) {
         if (slotTranslationId) {
-          dataManager.getTranslations().catch((err) => {
-            console.error("Failed to load the translation catalog:", err);
-          });
+          retryCatalog();
         } else {
-          await dataManager.getTranslations();
+          catalogFailed = await loadCatalog().then(
+            () => false,
+            () => true
+          );
         }
+      }
+
+      if (sync !== latestSync) {
+        return;
       }
 
       const nextTranslationId =
@@ -343,28 +410,36 @@ export function createBibleSelectorState(
           (t) => t.id === tabsManager.defaultTranslation.id
         )?.id ??
         dataManager.availableTranslations.value[0]?.id ??
-        null;
+        // Without the catalog the default translation's ID is still known, so
+        // try it rather than give up.
+        (catalogFailed ? tabsManager.defaultTranslation.id : null);
 
       if (!nextTranslationId) {
         throw new Error("No available translations found.");
       }
 
-      await selectTranslation(nextTranslationId);
+      await loadTranslation(nextTranslationId, { fromSync: true });
 
-      if (currentBookId.value) {
+      if (sync === latestSync && currentBookId.value) {
         expandedBookId.value = currentBookId.value;
       }
     } catch (err) {
-      error.value =
-        err instanceof Error
-          ? err.message
-          : "Failed to load selector translation data.";
+      if (sync === latestSync) {
+        error.value =
+          err instanceof Error
+            ? err.message
+            : "Failed to load selector translation data.";
+      }
       if (typeof process === "object" && process.env.NODE_ENV === "test") {
         console.error("Error syncing Bible selector state from slot:", err);
       }
     } finally {
-      loading.value = false;
+      pendingLoads.value--;
     }
+  };
+
+  const retryBooks = async () => {
+    await syncStateFromSlot();
   };
 
   const setOpen = async (
@@ -386,12 +461,15 @@ export function createBibleSelectorState(
       slot.value = effectiveSlot;
       forceNewTab.value = options?.forNewTab === true;
 
+      // Opened before the sync so a load that has to reach the network shows
+      // the panel's loading state instead of a tap that seems to do nothing.
+      isOpen.value = true;
       await syncStateFromSlot();
-    } else {
-      forceNewTab.value = false;
+      return;
     }
 
-    isOpen.value = open;
+    forceNewTab.value = false;
+    isOpen.value = false;
   };
 
   const setTargetSlot = (slotId: string) => {
@@ -494,17 +572,47 @@ export function createBibleSelectorState(
     setOpen(false);
   };
 
-  const handleTranslationSelect = async (nextTranslationId: string) => {
+  /**
+   * Loads a translation's books into the selector.
+   *
+   * `fromSync` is the selector catching up to its slot on open: it only loads
+   * the books. Every other caller is changing the translation, so it also
+   * resets the list UI and, while the selector is open, moves the slot's tab to
+   * the new translation.
+   */
+  const loadTranslation = async (
+    nextTranslationId: string,
+    options: { fromSync: boolean }
+  ) => {
+    const request = ++latestTranslationLoad;
+    if (!options.fromSync) {
+      // A pick outranks an open's sync that is still waiting on the catalog.
+      latestSync++;
+    }
+
     if (nextTranslationId === selectedTranslationId.value) {
+      if (!options.fromSync) {
+        translationLoad.value = null;
+      }
       return;
     }
 
-    loading.value = true;
+    pendingLoads.value++;
     error.value = null;
+    if (!options.fromSync) {
+      translationLoad.value = {
+        translationId: nextTranslationId,
+        status: "loading",
+      };
+    }
 
     try {
       const books = await dataManager.getTranslationBooks(nextTranslationId);
+      if (request !== latestTranslationLoad) {
+        return;
+      }
       const firstBook = books.books[0] ?? null;
+      const previousTranslation = selectedTranslation.value;
 
       selectedTranslationBooks.value = books;
 
@@ -519,8 +627,12 @@ export function createBibleSelectorState(
         expandedBookId.value = firstBook.id;
       }
 
-      const previousTranslation = selectedTranslation.value;
       selectedTranslationId.value = nextTranslationId;
+      if (options.fromSync) {
+        return;
+      }
+
+      translationLoad.value = null;
       search.value = "";
       languageQuery.value = "";
       selectingTranslation.value = false;
@@ -538,18 +650,26 @@ export function createBibleSelectorState(
         }
       }
     } catch (err) {
+      if (request !== latestTranslationLoad) {
+        return;
+      }
       error.value =
         err instanceof Error
           ? err.message
           : "Failed to load translation books.";
-      return;
+      if (!options.fromSync) {
+        translationLoad.value = {
+          translationId: nextTranslationId,
+          status: "failed",
+        };
+      }
     } finally {
-      loading.value = false;
+      pendingLoads.value--;
     }
   };
 
   const selectTranslation = async (nextTranslationId: string) => {
-    await handleTranslationSelect(nextTranslationId);
+    await loadTranslation(nextTranslationId, { fromSync: false });
   };
 
   // The only entry point that should persist to the profile: a deliberate
@@ -602,7 +722,9 @@ export function createBibleSelectorState(
   });
 
   const openDownloadedTranslations = async (nextSlot?: TabSlot) => {
-    await setOpen(true, nextSlot);
+    // `setOpen` opens synchronously, before its load, so the list can be shown
+    // straight away rather than after the books arrive.
+    const opening = setOpen(true, nextSlot);
     if (!isOpen.value) {
       return;
     }
@@ -610,6 +732,7 @@ export function createBibleSelectorState(
       selectingTranslation.value = true;
       downloadedOnly.value = true;
     });
+    await opening;
   };
 
   // ─── SideBarBooks State ───────────────────────────────────────────────────────
@@ -970,6 +1093,11 @@ export function createBibleSelectorState(
     orientation,
     loading,
     error,
+    booksStatus,
+    retryBooks,
+    catalogStatus,
+    retryCatalog,
+    translationLoad,
     search,
     selectedTranslationId,
     selectedTranslation,

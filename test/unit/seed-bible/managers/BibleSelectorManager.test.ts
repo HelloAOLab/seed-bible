@@ -159,6 +159,10 @@ async function waitFor(
   }
 }
 
+async function flushPromises(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 async function waitForInitialLoad(state: BibleReadingState): Promise<void> {
   await waitFor(() => state.loading.value === false);
 }
@@ -266,34 +270,243 @@ describe("createBibleSelectorState", () => {
     expect(selector.expandedBookId.value).toBe("GEN");
   });
 
-  it("setOpen() shows the slot's books even when the translation catalog fails to load", async () => {
-    const responses = createExampleManagerResponseMap();
-    setWebResponses(responses);
-    const { dataManager, slot, tabsManager, tabsLayoutManager } =
-      await createManagersWithSelectedSlot();
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-    // The reader loads only its own translation's books, never the full
-    // catalog, so on a real first open the catalog is still unfetched.
-    dataManager.catalogLoaded.value = false;
+  describe("when the translation catalog hasn't been downloaded yet", () => {
+    let errorSpy: Mock;
     const catalogUrl = makeExampleUrl("/api/available_translations.json");
-    webGetMock.mockImplementation((url: string) =>
-      url === catalogUrl
-        ? Promise.reject(new Error("Network error"))
-        : Promise.resolve(responses[url])
-    );
 
-    const selector = createSelectorState(
-      dataManager,
-      tabsManager,
-      tabsLayoutManager
-    );
-    await selector.setOpen(true, slot);
+    beforeEach(() => {
+      errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    });
 
-    expect(selector.isOpen.value).toBe(true);
-    expect(selector.error.value).toBeNull();
-    expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
-    errorSpy.mockRestore();
+    afterEach(async () => {
+      // Let any background catalog rejection log while the spy is still up.
+      await flushPromises();
+      errorSpy.mockRestore();
+    });
+
+    /**
+     * A selector over a reader that has loaded its own translation but, like a
+     * real first visit, never the full catalog. `catalogResponse` decides what
+     * the catalog request does from here on.
+     */
+    async function createFirstVisitSelector(
+      catalogResponse: () => Promise<unknown>
+    ) {
+      const responses = createExampleManagerResponseMap();
+      setWebResponses(responses);
+      const managers = await createManagersWithSelectedSlot();
+      const dataManager = createDataManager();
+      // Only the reader's translation is known: the reader loads its own books,
+      // never the catalog.
+      await dataManager.getTranslationBooks(
+        managers.slot.tab!.readingState.translationId.value!
+      );
+      webGetMock.mockImplementation((url: string) =>
+        url === catalogUrl ? catalogResponse() : Promise.resolve(responses[url])
+      );
+      const tabsManager = managers.tabsManager;
+      const selector = createSelectorState(
+        dataManager,
+        tabsManager,
+        managers.tabsLayoutManager
+      );
+      return { ...managers, dataManager, selector, responses };
+    }
+
+    it("shows the slot's books even when the catalog fails to load", async () => {
+      const { selector, slot } = await createFirstVisitSelector(() =>
+        Promise.reject(new Error("Network error"))
+      );
+
+      await selector.setOpen(true, slot);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.error.value).toBeNull();
+      expect(selector.booksStatus.value).toBe("ready");
+      expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
+      await waitFor(() => selector.catalogStatus.value === "failed");
+    });
+
+    it("fills in the translation list once the background catalog download finishes", async () => {
+      let resolveCatalog!: () => void;
+      const { selector, slot, dataManager, responses } =
+        await createFirstVisitSelector(
+          () =>
+            new Promise((resolve) => {
+              resolveCatalog = () => resolve(responses[catalogUrl]);
+            })
+        );
+
+      await selector.setOpen(true, slot);
+
+      expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
+      expect(selector.catalogStatus.value).toBe("loading");
+      expect(dataManager.catalogLoaded.value).toBe(false);
+
+      resolveCatalog();
+      await waitFor(() => selector.catalogStatus.value === "loaded");
+
+      expect(dataManager.catalogLoaded.value).toBe(true);
+      expect(selector.availableTranslations.value.map((t) => t.id)).toEqual(
+        expect.arrayContaining(translations.translations.map((t) => t.id))
+      );
+    });
+
+    it("loads the full catalog when the failed download is retried", async () => {
+      let catalogFails = true;
+      const { selector, slot, responses } = await createFirstVisitSelector(
+        () =>
+          catalogFails
+            ? Promise.reject(new Error("Network error"))
+            : Promise.resolve(responses[catalogUrl])
+      );
+
+      await selector.setOpen(true, slot);
+      await waitFor(() => selector.catalogStatus.value === "failed");
+
+      catalogFails = false;
+      selector.retryCatalog();
+      await waitFor(() => selector.catalogStatus.value === "loaded");
+
+      expect(selector.availableTranslations.value.map((t) => t.id)).toEqual(
+        expect.arrayContaining(translations.translations.map((t) => t.id))
+      );
+    });
+  });
+
+  describe("book grid loading and failure", () => {
+    let errorSpy: Mock;
+
+    beforeEach(() => {
+      errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    afterEach(async () => {
+      await flushPromises();
+      errorSpy.mockRestore();
+    });
+
+    async function createSelectorWithUncachedBooks(
+      booksResponse: (
+        responses: WebResponseMap,
+        url: string
+      ) => Promise<unknown>
+    ) {
+      const responses = createExampleManagerResponseMap();
+      setWebResponses(responses);
+      const managers = await createManagersWithSelectedSlot();
+      // A fresh data manager has nothing cached, so the selector has to fetch
+      // the slot's books itself.
+      const dataManager = createDataManager();
+      await dataManager.getTranslations();
+      webGetMock.mockImplementation((url: string) =>
+        url.endsWith("/books.json")
+          ? booksResponse(responses, url)
+          : Promise.resolve(responses[url])
+      );
+      const selector = createSelectorState(
+        dataManager,
+        managers.tabsManager,
+        managers.tabsLayoutManager
+      );
+      return { ...managers, selector };
+    }
+
+    it("opens straight away and reports loading until the books arrive", async () => {
+      let resolveBooks!: () => void;
+      const { selector, slot } = await createSelectorWithUncachedBooks(
+        (responses, url) =>
+          new Promise((resolve) => {
+            resolveBooks = () => resolve(responses[url]);
+          })
+      );
+
+      const opening = selector.setOpen(true, slot);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.booksStatus.value).toBe("loading");
+
+      await waitFor(() => resolveBooks !== undefined);
+      resolveBooks();
+      await opening;
+
+      expect(selector.booksStatus.value).toBe("ready");
+      expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
+    });
+
+    it("reports a failure when the books can't load, and loads them on retry", async () => {
+      let booksFail = true;
+      const { selector, slot } = await createSelectorWithUncachedBooks(
+        (responses, url) =>
+          booksFail
+            ? Promise.reject(new Error("Network error"))
+            : Promise.resolve(responses[url])
+      );
+
+      await selector.setOpen(true, slot);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.booksStatus.value).toBe("failed");
+
+      booksFail = false;
+      await selector.retryBooks();
+
+      expect(selector.booksStatus.value).toBe("ready");
+      expect(selector.error.value).toBeNull();
+      expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
+    });
+
+    it("reports a picked translation that fails to load, and clears it when the retry works", async () => {
+      let nivFails = true;
+      const { selector, slot } = await createSelectorWithUncachedBooks(
+        (responses, url) =>
+          nivFails && url.includes("/NIV/")
+            ? Promise.reject(new Error("Network error"))
+            : Promise.resolve(responses[url])
+      );
+      await selector.setOpen(true, slot);
+      selector.selectingTranslation.value = true;
+
+      await selector.pickTranslation("NIV");
+
+      expect(selector.translationLoad.value).toEqual({
+        translationId: "NIV",
+        status: "failed",
+      });
+      // The list stays up so the user can try again or pick another.
+      expect(selector.selectingTranslation.value).toBe(true);
+
+      nivFails = false;
+      await selector.selectTranslation("NIV");
+
+      expect(selector.translationLoad.value).toBeNull();
+      expect(selector.selectedTranslationId.value).toBe("NIV");
+    });
+
+    it("keeps the latest translation when an earlier, slower load lands after it", async () => {
+      let resolveNiv!: () => void;
+      const { selector, slot } = await createSelectorWithUncachedBooks(
+        (responses, url) =>
+          url.includes("/NIV/")
+            ? new Promise((resolve) => {
+                resolveNiv = () => resolve(responses[url]);
+              })
+            : Promise.resolve(responses[url])
+      );
+      await selector.setOpen(true, slot);
+      const slotTranslationId = selector.selectedTranslationId.value;
+      selector.selectingTranslation.value = true;
+
+      const slowPick = selector.selectTranslation("NIV");
+      await waitFor(() => resolveNiv !== undefined);
+      // Reopening on the slot's own translation supersedes the pending pick.
+      await selector.setOpen(true, slot);
+      resolveNiv();
+      await slowPick;
+
+      expect(selector.selectedTranslationId.value).toBe(slotTranslationId);
+      expect(selector.loading.value).toBe(false);
+    });
   });
 
   it("syncs the open state to the `selector` URL query param", async () => {
@@ -1005,6 +1218,41 @@ describe("createBibleSelectorState", () => {
 
       expect(selector.isOpen.value).toBe(true);
       expect(selector.selectedTranslationId.value).toBe("NIV");
+    });
+
+    it("setOpen() falls back to the default translation's books when the catalog fails to load", async () => {
+      const responses = createExampleManagerResponseMap();
+      const catalogUrl = makeExampleUrl("/api/available_translations.json");
+      webGetMock.mockImplementation((url: string) =>
+        url === catalogUrl
+          ? Promise.reject(new Error("Network error"))
+          : Promise.resolve(responses[url])
+      );
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        const { tabsManager, tabsLayoutManager, tablessSlot } =
+          createManagersWithTablessSlot();
+        // Knows no translations at all, so nothing but the default
+        // translation's ID is left to go on once the catalog fails.
+        const dataManager = createDataManager();
+
+        const selector = createSelectorState(
+          dataManager,
+          tabsManager,
+          tabsLayoutManager
+        );
+        await selector.setOpen(true, tablessSlot);
+
+        expect(selector.isOpen.value).toBe(true);
+        expect(selector.error.value).toBeNull();
+        expect(selector.selectedTranslationId.value).toBe(
+          tabsManager.defaultTranslation.id
+        );
+        expect(selector.booksStatus.value).toBe("ready");
+        expect(selector.catalogStatus.value).toBe("failed");
+      } finally {
+        errorSpy.mockRestore();
+      }
     });
 
     it("setOpen() sets an error when no translations are available", async () => {
