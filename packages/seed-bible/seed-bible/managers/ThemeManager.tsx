@@ -314,6 +314,13 @@ export interface BibleThemeVariables {
   toolbarIconInvert?: string | null;
 
   /**
+   * CSS `filter` applied to a map's base imagery (`GeoJsonMap`). Tile servers
+   * draw one light map, so a dark theme dims and inverts it to sit with the
+   * rest of the page; `none` shows the tiles as drawn.
+   */
+  mapTileFilter?: string | null;
+
+  /**
    * Background for popover surfaces — context menus, tab menus, sidebar
    * search results, dropdown panels. Should generally be opaque and have
    * good contrast against the menu's text color in both themes.
@@ -668,6 +675,7 @@ export const LIGHT_THEME: BibleTheme = {
     menuFontColor: "#333",
 
     toolbarIconInvert: "0",
+    mapTileFilter: "none",
 
     readerToolbarFontColor: "#333",
     readerToolbarFontFamily: "system-ui, sans-serif",
@@ -861,6 +869,8 @@ export const DARK_THEME: BibleTheme = {
     menuFontColor: "#e6e6e6",
 
     toolbarIconInvert: "1",
+    mapTileFilter:
+      "invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9)",
 
     readerToolbarFontColor: "#e6e6e6",
     readerToolbarFontFamily: "system-ui, sans-serif",

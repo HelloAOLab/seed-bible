@@ -13,6 +13,7 @@ export * from "./FriendsManager";
 export * from "./FreeUseBibleAPI";
 export * from "./InvitationsManager";
 export * from "./LoginManager";
+export * from "./MapManager";
 export * from "./ModalManager";
 export * from "./NavigationManager";
 export * from "./OnboardingManager";

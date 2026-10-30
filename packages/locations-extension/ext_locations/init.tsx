@@ -1,17 +1,27 @@
 import { computed } from "@preact/signals";
 import { registerExtension } from "seed-bible";
-import { LocationIcon, PortalComponent } from "seed-bible/components";
+import { LocationIcon } from "seed-bible/components";
 import {
   findLocationsInVerses,
+  getPlaceAttribution,
   getPlaceGeoJsonUrl,
+  toStandardGeoJson,
   type PlaceData,
 } from "@seed-bible/bible-locations";
-import geoImporterPattern from "virtual:@pattern/geo-importer";
-import { v4 as uuid } from "uuid";
+
+/** A place's GeoJSON file, fetched and put in standard coordinate order. */
+export async function loadPlaceGeoJson(place: PlaceData) {
+  const url = getPlaceGeoJsonUrl(place);
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch GeoJSON for ${place.place}. Status: ${response.status}`
+    );
+  }
+  return toStandardGeoJson(place, await response.json());
+}
 
 export default function initLocationsExtension() {
-  console.log("Loaded locations extension", geoImporterPattern);
-
   registerExtension({
     id: "ext_locations",
     init: function* (context) {
@@ -27,43 +37,13 @@ export default function initLocationsExtension() {
         return findLocationsInVerses(selectedVerses.map((v) => v.verse));
       });
 
-      const showPlaceOnMap = async (place: PlaceData) => {
-        console.log("Show place!", place);
-
-        const url = getPlaceGeoJsonUrl(place);
-        const response = await fetch(url);
-
-        if (response.status !== 200) {
-          console.error(
-            "Failed to fetch geojson data for place:",
-            place,
-            response
-          );
-          return;
-        }
-
-        const data = await response.text();
-
-        // Generate the portal instance id once, here — not inside the pane's
-        // render function — so re-renders (dragging/resizing the pane) reuse the
-        // same `inst` and the map iframe keeps its document instead of
-        // reloading.
-        const inst = uuid();
-
-        context.panes.openPane({
-          placement: "floating",
+      const showPlaceOnMap = (place: PlaceData) => {
+        context.map.openMap({
+          id: `location-${place.place}`,
           title: place.place,
-          component: () => (
-            <PortalComponent
-              portal="map"
-              portalType="map"
-              pattern={geoImporterPattern}
-              inst={inst}
-              query={{
-                mapData: data,
-              }}
-            />
-          ),
+          label: place.place,
+          load: () => loadPlaceGeoJson(place),
+          attribution: getPlaceAttribution(place),
         });
       };
 
@@ -82,9 +62,7 @@ export default function initLocationsExtension() {
               options: { place: place.place },
             },
             icon: () => <span></span>,
-            onSelect: async () => {
-              await showPlaceOnMap(place);
-            },
+            onSelect: () => showPlaceOnMap(place),
           }));
         },
         priority: 100,

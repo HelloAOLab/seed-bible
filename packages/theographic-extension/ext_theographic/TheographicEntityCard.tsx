@@ -33,6 +33,7 @@ import type {
   TheographicRelatedEntity,
 } from "./provider";
 import { PlaceMap, canMapPlace, type PlaceLocations } from "./map";
+import type { MapManager } from "@packages/seed-bible/seed-bible/managers/MapManager";
 import { withoutQualifier } from "./names";
 
 type TheographicEntry =
@@ -65,6 +66,8 @@ interface TheographicEntityCardProps {
   isMobile?: ReadonlySignal<boolean>;
   /** The known places' lookup, for places with a map file. */
   locations?: PlaceLocations;
+  /** Draws a place's map. Without it, places show no map. */
+  map?: MapManager;
   /** Book names and verse text in the reader's translation. */
   scripture?: ScriptureReader;
 }
@@ -206,6 +209,7 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
     isPlaceOpen,
     isMobile,
     locations,
+    map,
     scripture,
   } = props;
   const { t } = useI18n("theographic-extension");
@@ -375,8 +379,9 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
               map={
                 // While the floating pane has this place's map, the card
                 // doesn't show a second copy; closing the pane brings it back.
-                place && isMappable && !isPlaceOpen?.(place) ? (
+                place && map && isMappable && !isPlaceOpen?.(place) ? (
                   <PlaceMap
+                    map={map}
                     place={place}
                     sources={{ client, locations }}
                     label={t("map-of", {

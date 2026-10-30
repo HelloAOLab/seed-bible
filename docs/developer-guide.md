@@ -615,7 +615,13 @@ The **locations extension** (`packages/locations-extension/`) uses this well: it
 
 #### Custom panes — your own UI, anywhere in the app's pane system
 
-`context.panes.openPane({...})` opens an arbitrary Preact component in one of three placements: `"side"` (a docked side panel), `"floating"` (a draggable/resizable window), or `"fullscreen"` (covers the reader). This is how a toolbar tool's `onSelect` typically shows its actual content. Panes can also embed a CasualOS grid or map portal via the `<PortalComponent>` helper (as the locations extension and the example extension both do), which is how an extension can render a whole separate CasualOS "pattern" application inside the main app.
+`context.panes.openPane({...})` opens an arbitrary Preact component in one of three placements: `"side"` (a docked side panel), `"floating"` (a draggable/resizable window), or `"fullscreen"` (covers the reader). This is how a toolbar tool's `onSelect` typically shows its actual content. Panes can also embed a CasualOS grid or map portal via the `<PortalComponent>` helper (as the example extension does), which is how an extension can render a whole separate CasualOS "pattern" application inside the main app.
+
+#### Maps — show places without starting CasualOS
+
+`context.map.openMap({ id, title, label, load, attribution })` opens a floating pane with a map of a place: `load()` fetches the place's GeoJSON (in standard `[longitude, latitude]` order), and `attribution` lists the credits that data needs. To put a map inside your own UI instead, such as a card, render `<GeoJsonMap map={context.map} data={...} />` from `seed-bible/components`; pass `inline` when it sits in scrolling content, so the mouse wheel and swipes scroll past it.
+
+The map is drawn with [Leaflet](https://leafletjs.com), which the `MapManager` downloads the first time any map is shown and never at startup. Don't import `leaflet` yourself: a static import would put it back in the startup bundle. The base map (currently OpenStreetMap's public tiles) and its credit are set once, in `MAP_TILE_SOURCE` in `managers/MapManager.tsx`. The locations and Theographic extensions both draw their maps this way.
 
 #### Discover providers — contribute content to the Discover panel
 
@@ -652,7 +658,7 @@ These are two different mechanisms and it's easy to conflate them because both l
 - An **extension** (`packages/*-extension/`, this guide) runs _inside_ the main Seed Bible app, in the same page, with full access to `SeedBibleState`. It's written the same way the app itself is (Preact/JSX/signals).
 - A **pattern** (`patterns/`) is a separate CasualOS application — bot scripts packaged into a `.aux` file — that gets embedded as a _cross-origin_ `ao.bot` iframe via `<PortalComponent>`. It runs in its own sandboxed context with its own CasualOS runtime (`os`, `thisBot`, `configBot` globals), and it communicates with the host page only through the iframe boundary (query params in, and whatever CasualOS's cross-frame APIs allow).
 
-The reason both show up together in the same example: a pane opened by an extension can embed a pattern. The locations extension does exactly this — it's an _extension_ (runs in the main app, reacts to verse selection) that opens a pane whose content is the `geo-importer` _pattern_ (a separate CasualOS map applet) to actually render the map. If you need custom code running inside a grid/map portal, you need a pattern; if you need to add a feature to the main app's UI or behavior, you need an extension. Patterns are out of scope for this guide — see `DEVELOPERS.md` for the basics of building one.
+The reason both show up together in the same example: a pane opened by an extension can embed a pattern. The example extension does exactly this — it's an _extension_ (runs in the main app) that opens a pane whose content is a CasualOS _pattern_. The `geo-importer` pattern is a richer CasualOS map applet that can be embedded this way, though the everyday maps of places use the lighter `context.map` instead. If you need custom code running inside a grid/map portal, you need a pattern; if you need to add a feature to the main app's UI or behavior, you need an extension. Patterns are out of scope for this guide — see `DEVELOPERS.md` for the basics of building one.
 
 #### A note on overloaded terminology
 
