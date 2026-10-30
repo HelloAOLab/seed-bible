@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh api repos/HelloAOLab/seed-bible/issues/*/comments -F body=@*)",
+      "Bash(gh api -X PATCH repos/HelloAOLab/seed-bible/issues/comments/* -F body=@*)",
+      "Bash(git push https://github.com/HelloAOLab/pr-test-plans.git HEAD:main)",
+      "mcp__github__add_issue_comment",
+      "mcp__github__update_issue_comment"
+    ],
+    "deny": [
+      "Bash(git push origin HEAD:main)",
+      "Bash(git push origin main)",
+      "Bash(git push https://github.com/HelloAOLab/seed-bible* main)",
+      "Bash(git push https://github.com/HelloAOLab/seed-bible*:main)"
+    ]
+  }
+}
