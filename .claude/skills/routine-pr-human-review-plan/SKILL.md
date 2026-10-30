@@ -172,10 +172,12 @@ From the `pr-test-plans` checkout, commit **only** the new plan file and push to
 ```bash
 git add plans/seed-bible/<n>/<short commit>.json
 git commit -m "chore: add test plan for seed-bible PR <n> (<short commit>)"
-git push origin HEAD:main
+git push https://github.com/HelloAOLab/pr-test-plans.git HEAD:main
 ```
 
-If the push is rejected because `main` moved (another plan landed first), run `git pull --rebase origin main` and push again, up to three times. Plans never touch the same file, so the rebase won't conflict.
+Use that push command exactly as written, as its own command (not chained after the commit). `.claude/settings.json` allows exactly that command and denies `git push origin HEAD:main`, which would also match a push to seed-bible's `main`.
+
+If the push is rejected because `main` moved (another plan landed first), run `git pull --rebase origin main` and push again with the same command, up to three times. Plans never touch the same file, so the rebase won't conflict.
 
 Go straight on to the comment once the push succeeds; don't wait for the site to update. The routine's sandbox can't reach `github.io` anyway, and the page tells anyone who clicks too early that new plans take a minute or two to appear.
 
