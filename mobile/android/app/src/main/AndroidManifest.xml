@@ -22,6 +22,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- App Links: opens seedbible.org links in the app. Android only
+                 honours this once https://seedbible.org/.well-known/assetlinks.json
+                 names this app's signing key (ANDROID_CERT_FINGERPRINTS in
+                 server/README.md); until then the links open in the browser. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="seedbible.org" />
+            </intent-filter>
+
         </activity>
 
         <provider

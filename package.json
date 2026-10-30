@@ -64,6 +64,8 @@
     "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.27.1",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
     "@casual-simulation/aux-common": "4.2.8-alpha.38630400059",
     "@casual-simulation/aux-records": "4.2.8-alpha.38630400059",
     "@casual-simulation/aux-runtime": "4.2.8-alpha.38630400059",

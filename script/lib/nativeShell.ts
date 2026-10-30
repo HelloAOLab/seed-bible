@@ -15,6 +15,8 @@ export interface NativeShellValues {
   themeStyleText: string;
   /** The built-in theme presets, keyed by theme id (see `THEME_PRESET_STYLE_TEXT`). */
   themePresetStyleText: Record<string, string>;
+  /** The public website, for links shared from the app (see `AppConfig.publicOrigin`). */
+  publicOrigin: string;
 }
 
 /** Same escaping `entry-ssr.tsx` applies to JSON spliced into a `<script>`. */
@@ -40,7 +42,12 @@ export function fillNativeShellPlaceholders(
     // Seeds the first render's viewport guess (see `renderedAsMobile` in
     // `SeedBibleStateManager.tsx`) until the real size is measured. Most
     // installs are phones.
-    CONFIG_JSON: escapeForScript(JSON.stringify({ renderedAsMobile: true })),
+    CONFIG_JSON: escapeForScript(
+      JSON.stringify({
+        renderedAsMobile: true,
+        publicOrigin: values.publicOrigin,
+      })
+    ),
     SEED_JSON: "{}",
     CUSTOMIZATION_JSON: "null",
     PLAYLIST_PAGE_JSON: "null",
@@ -50,6 +57,22 @@ export function fillNativeShellPlaceholders(
   return html.replace(
     PLACEHOLDER_RE,
     (match, name: string) => substitutions[name] ?? match
+  );
+}
+
+/** The app-only entry point: Capacitor and link handling (`standalone/native.ts`). */
+export const NATIVE_ENTRY_SRC = "/standalone/native.ts";
+
+/** Adds the app-only entry point after the app's own, at the end of `<body>`. */
+export function addNativeEntry(html: string): string {
+  const tag = `<script type="module" src="${NATIVE_ENTRY_SRC}"></script>`;
+  if (!html.includes("</body>")) {
+    throw new Error("index.html has no </body> to add the native entry to.");
+  }
+  return html.replace(
+    "</body>",
+    `  ${tag}
+  </body>`
   );
 }
 

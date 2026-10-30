@@ -61,6 +61,7 @@ import {
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
 } from "@packages/seed-bible/seed-bible/managers/FeaturesManager";
+import { injectNativeAppConfig } from "../testUtils/nativeAppConfig";
 
 // An arbitrary mid-week start instant to exercise "start any time".
 // 2026-06-17 is a Wednesday.
@@ -3330,6 +3331,21 @@ describe("createReadingPlansManager", () => {
         "https://seed.example/app/es/reading-plan/record-1.plan-1/test-plan"
       );
     });
+  });
+
+  it("getReadingPlanShareUrl points at the public website when shared from the native apps", () => {
+    const manager = makeManager("user-1", {
+      url: "capacitor://localhost/en/AAB/genesis/1",
+      translationId: "AAB",
+    });
+    const remove = injectNativeAppConfig();
+    try {
+      expect(manager.getReadingPlanShareUrl(makePlan())).toBe(
+        "https://seedbible.org/en/reading-plan/record-1.plan-1/test-plan"
+      );
+    } finally {
+      remove();
+    }
   });
 
   describe("reading plan page", () => {

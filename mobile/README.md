@@ -55,6 +55,37 @@ pnpm run:android
 pnpm run:ios
 ```
 
+## Links
+
+### Links shared from the app
+
+Inside the app the page's own address is `https://localhost` (Android) or `capacitor://localhost` (iOS), which only exists on that phone. So every link the app hands to someone else — sharing a passage or translation, session invites and their QR codes, playlists, reading plans, customizations, and verse links saved in notes — is rewritten to `https://seedbible.org` with the same path and query. The app build sets `publicOrigin` in the page config, and `toShareableUrl` in `packages/seed-bible/seed-bible/app/publicLinks.ts` does the rewrite. On the website nothing changes.
+
+### Opening seedbible.org links in the app
+
+Tapping a `https://seedbible.org/...` link on a phone with the app installed opens that page in the app instead of the browser, once the setup below is done. `standalone/native.ts` (only in the app build) handles three cases:
+
+- **The app wasn't running:** it starts on the linked page.
+- **The app was running:** it reloads at the linked page, so things only read at startup (a session to join, a customization) take effect.
+- **A seedbible.org link tapped inside the app** (for example a verse link in a note written on the website): it stays in the app, like any in-app link.
+
+Each platform only lets an app claim a website's links after checking a file on that website that names the app:
+
+1. **iOS (Universal Links).** The app requests `applinks:seedbible.org` in `ios/App/App/App.entitlements`. Turn on the Associated Domains capability for `org.seedbible.app` in the Apple Developer account, and set `APPLE_TEAM_ID` on the website server, which then serves `/.well-known/apple-app-site-association`.
+2. **Android (App Links).** `android/app/src/main/AndroidManifest.xml` claims `https://seedbible.org` with `autoVerify`. Set `ANDROID_CERT_FINGERPRINTS` on the website server to the SHA-256 fingerprint of the key the store build is signed with (with Play App Signing, Google's key, under Setup → App signing in the Play Console; add the upload or debug key too to test local builds). The server then serves `/.well-known/assetlinks.json`.
+
+Both variables are described in `server/README.md`. Until they're set, links keep opening in the browser; nothing breaks.
+
+To check it works:
+
+- iOS: on a device with the app installed, long-press a seedbible.org link in Notes or Messages; "Open in Seed Bible" should be offered.
+- Android: run `adb shell pm get-app-links org.seedbible.app`. `seedbible.org` should show `verified`.
+
+Two limits:
+
+- Only `seedbible.org` is claimed, not `www.seedbible.org` or other subdomains.
+- Branch deployments (`/b/...`) stay in the browser on iOS. Android can't exclude a path, so there they open in the app, which shows its not-found page.
+
 ## Before the first store release
 
 These are left as placeholders on purpose; each needs a decision or an account.
@@ -62,13 +93,12 @@ These are left as placeholders on purpose; each needs a decision or an account.
 - **App id.** `org.seedbible.app` is set in `capacitor.config.ts`, `android/app/build.gradle`, and the Xcode project. The stores never let an app change its id after it is first published, so confirm it first.
 - **Icons and splash screens.** The projects still have Capacitor's default icons. Put a 1024×1024 `icon.png` (and optionally `splash.png`) in `mobile/assets/`, then generate every size with `npx @capacitor/assets generate`.
 - **Version numbers.** Android: `versionCode` and `versionName` in `android/app/build.gradle`. iOS: `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in the Xcode project. Both start at 1.0 (build 1).
+- **Link verification.** Set `APPLE_TEAM_ID` and `ANDROID_CERT_FINGERPRINTS` on the website server (see [Links](#links)).
 - **Signing.** Android release builds need an upload keystore, and iOS builds need an Apple Developer team selected in Xcode. Never commit the keystore.
 
 ## Known gaps
 
 - **Cross-origin requests.** In the apps, the page's address is `https://localhost` on Android and `capacitor://localhost` on iOS, not `seedbible.org`. Any Seed Bible service that only accepts requests from the website's own address (the Bible API, sign-in and records, search, images) has to accept those two addresses too. This has not yet been checked against the live services.
-- **Shared links.** Links the app creates from the current address, such as invites to a shared reading session, start with that local address and won't open for anyone else.
-- **Links into the app.** Opening a `seedbible.org` link on a phone opens the browser, not the app; that needs Universal Links (iOS) and App Links (Android).
 - **Status bar.** The page sits between the status bar and the bottom system bar rather than behind them, because the reader's layout doesn't yet account for those areas everywhere (`ios.contentInset` and `SystemBars.insetsHandling` in `capacitor.config.ts`). The strips around the bars follow the system's light or dark mode, not a custom theme picked in Seed Bible.
 
 ## Generated files

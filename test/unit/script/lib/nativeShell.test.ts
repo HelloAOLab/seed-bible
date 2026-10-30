@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import path from "path";
 import {
+  addNativeEntry,
   fillNativeShellPlaceholders,
   findUnfilledPlaceholders,
 } from "../../../../script/lib/nativeShell";
@@ -20,6 +21,7 @@ const VALUES = {
     light: "body { --sb-background: #f8fafc; }",
     dark: "body { --sb-background: #0a0a0a; }",
   },
+  publicOrigin: "https://seedbible.org",
 };
 
 function loadDocument(html: string): void {
@@ -48,6 +50,7 @@ describe("fillNativeShellPlaceholders", () => {
       basePath: "",
       assetHost: "",
       renderedAsMobile: true,
+      publicOrigin: "https://seedbible.org",
     });
     // No server rendered this page, so the client renders rather than
     // hydrating onto it.
@@ -104,5 +107,18 @@ describe("findUnfilledPlaceholders", () => {
         "<!-- Default matches LIGHT_THEME in ThemeManager. --><!-- x -->"
       )
     ).toEqual([]);
+  });
+});
+
+describe("addNativeEntry", () => {
+  it("loads the app-only script after the app's own entry", () => {
+    const html = addNativeEntry(TEMPLATE);
+
+    expect(html.indexOf('src="/standalone/native.ts"')).toBeGreaterThan(
+      html.indexOf('src="/standalone/index.tsx"')
+    );
+    expect(html.indexOf('src="/standalone/native.ts"')).toBeLessThan(
+      html.indexOf("</body>")
+    );
   });
 });

@@ -5,9 +5,13 @@ import {
   THEME_PRESET_STYLE_TEXT,
 } from "../../packages/seed-bible/seed-bible/managers/ThemeManager";
 import {
+  addNativeEntry,
   fillNativeShellPlaceholders,
   findUnfilledPlaceholders,
 } from "./nativeShell";
+
+/** Where links shared from the apps point, and the site the apps open links for. */
+const PUBLIC_ORIGIN = "https://seedbible.org";
 
 /**
  * Fills `index.html`'s server placeholders at build time for the native app
@@ -21,6 +25,15 @@ import {
 export function nativeShellPlugin(): Plugin[] {
   return [
     {
+      name: "vite-plugin-native-shell:entry",
+      apply: "build",
+      transformIndexHtml: {
+        // `pre`, so Vite still bundles the script it adds.
+        order: "pre",
+        handler: (html) => addNativeEntry(html),
+      },
+    },
+    {
       name: "vite-plugin-native-shell:fill",
       apply: "build",
       transformIndexHtml: {
@@ -29,6 +42,7 @@ export function nativeShellPlugin(): Plugin[] {
           fillNativeShellPlaceholders(html, {
             themeStyleText: composeThemeStyleText(LIGHT_THEME),
             themePresetStyleText: THEME_PRESET_STYLE_TEXT,
+            publicOrigin: PUBLIC_ORIGIN,
           }),
       },
     },

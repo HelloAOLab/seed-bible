@@ -23,6 +23,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import { extractContentText } from "@packages/seed-bible/seed-bible/managers/ChapterText";
+import { injectNativeAppConfig } from "../testUtils/nativeAppConfig";
 
 const CUSTOM_TOOL_ID = "test-toolbar-tool";
 const CUSTOM_VERSE_TOOL_ID = "test-verse-toolbar-tool";
@@ -226,6 +227,18 @@ describe("getShareUrl", () => {
     expect(url.toString()).toBe(
       "https://example.test/en/NIV/genesis/1?verse=1%2C3"
     );
+  });
+
+  it("points at the public website when shared from the native apps", () => {
+    jsdom.reconfigure({ url: "https://localhost/en/NIV/genesis/1" });
+    const remove = injectNativeAppConfig();
+    try {
+      const url = getShareUrl(createShareUrlReadingState() as any);
+
+      expect(url.toString()).toBe("https://seedbible.org/en/NIV/genesis/1");
+    } finally {
+      remove();
+    }
   });
 
   it("builds supports consecutive verses", () => {

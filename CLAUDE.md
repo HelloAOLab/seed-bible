@@ -88,7 +88,7 @@ Unit tests in `test/unit/` mirror the package structure; integration tests live 
 
 ### Native apps (`mobile/`)
 
-The iOS and Android apps are a Capacitor wrapper in `mobile/` (its own pnpm workspace package). They ship a static copy of the web app built by `vite build --mode native`, which has no SSR, no service worker, and `index.html`'s server placeholders filled at build time by `script/lib/nativeShell.ts`. See `mobile/README.md`.
+The iOS and Android apps are a Capacitor wrapper in `mobile/` (its own pnpm workspace package). They ship a static copy of the web app built by `vite build --mode native`, which has no SSR, no service worker, and `index.html`'s server placeholders filled at build time by `script/lib/nativeShell.ts`. Inside the apps the page's origin is `https://localhost` / `capacitor://localhost`, so any link meant for someone else (share links, invites, links saved into notes) must go through `toShareableUrl` (`app/publicLinks.ts`), which swaps in `https://seedbible.org`. See `mobile/README.md`.
 
 ### Build System
 
