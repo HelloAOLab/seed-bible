@@ -775,6 +775,39 @@
   height: calc(80dvh - 3.125rem);
 }
 
+.sb-selector-status {
+  width: 100%;
+  margin: 0;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+.sb-selector-status p {
+  margin: 0;
+}
+
+.sb-selector-status--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.sb-selector-retry {
+  margin-top: 0.75rem;
+  padding: 0.5625rem 1.125rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
+  border-radius: 999px;
+  background: none;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
 .sidebar-itm {
   height: 2.75rem;
   width: 12.5rem;

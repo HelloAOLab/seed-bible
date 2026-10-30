@@ -2957,8 +2957,11 @@ export function BibleReader(props: BibleReaderProps) {
     void selectorState.setOpen(true, currentSlot);
   };
   const openTranslationSelector = async () => {
-    await selectorState.setOpen(true, currentSlot);
+    // Set after `setOpen` starts but before its load finishes, so the list is
+    // on screen straight away instead of after the books arrive.
+    const opening = selectorState.setOpen(true, currentSlot);
     selectorState.selectingTranslation.value = true;
+    await opening;
   };
 
   // The translation chip, in both the desktop and the mobile header: the short
