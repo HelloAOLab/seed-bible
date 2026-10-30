@@ -1,6 +1,7 @@
 import { signal } from "@preact/signals";
 import {
   createChatsManager,
+  chatHasAI,
   chatHasOtherPeople,
   resolveMessageTargets,
   type ChatMessage,
@@ -324,6 +325,39 @@ describe("chatHasOtherPeople", () => {
         chatWithParticipants([
           { isSelf: true, isAI: false, isActive: true },
           { isSelf: false, isAI: false, isActive: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(true);
+  });
+});
+
+describe("chatHasAI", () => {
+  it("is false for an empty chat and for a chat with only people", () => {
+    expect(chatHasAI(chatWithParticipants([]))).toBe(false);
+    expect(
+      chatHasAI(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(false);
+  });
+
+  it("is true when an AI agent is in the chat, including an inactive one", () => {
+    expect(
+      chatHasAI(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: true },
+        ] as ChatParticipant[])
+      )
+    ).toBe(true);
+    expect(
+      chatHasAI(
+        chatWithParticipants([
+          { isSelf: true, isAI: false, isActive: true },
+          { isSelf: false, isAI: true, isActive: false },
         ] as ChatParticipant[])
       )
     ).toBe(true);
