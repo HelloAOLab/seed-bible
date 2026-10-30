@@ -12,6 +12,7 @@ import { ResumeReadingSection } from "./ResumeReadingSection";
 import { BookmarksSection, type BookmarkStripItem } from "./BookmarksSection";
 import { SearchSection } from "./SearchSection";
 import { SocialSection } from "./SocialSection";
+import { VerseOfTheDaySection } from "./VerseOfTheDaySection";
 import { useI18n } from "../../i18n";
 import "./TodayPane.css";
 
@@ -95,6 +96,12 @@ function TodayContent(props: TodayScreenProps) {
         today={props.today}
         onOpenPassage={props.onOpenPassage}
       />
+      {props.login.userId.value && (
+        <VerseOfTheDaySection
+          today={props.today}
+          onOpenPassage={props.onOpenPassage}
+        />
+      )}
       {props.bookmarks.value.length > 0 && (
         <BookmarksSection
           today={props.today}

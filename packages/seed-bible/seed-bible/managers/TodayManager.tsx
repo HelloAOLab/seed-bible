@@ -59,6 +59,17 @@ export interface VerseSearchResult {
   text: string;
 }
 
+/** The verse of the day, with its text in the translation it was asked for. */
+export interface TodayVerseOfTheDay {
+  bookId: string;
+  chapter: number;
+  verse: number;
+  /** The last verse of the passage. Omitted when it is a single verse. */
+  endVerse?: number;
+  translationId: string;
+  text: string;
+}
+
 /** Books the reader currently has loaded, in the shape Today's cards want. */
 type TranslationBookSummary = {
   id: string;
@@ -150,6 +161,15 @@ export interface TodayManager {
     chapter: number,
     verse: number
   ) => Promise<string | undefined>;
+  /**
+   * The verse of the day for a `YYYY-MM-DD` date from the "verse-of-the-day"
+   * dataset, with its text in `translationId`. Null when the dataset has no
+   * verse for the day or the translation doesn't have its text.
+   */
+  getVerseOfTheDay: (
+    date: string,
+    translationId: string
+  ) => Promise<TodayVerseOfTheDay | null>;
   getDefaultTranslation: () => string | undefined;
   getReadingHistoryEvents: (
     recordName: string,
@@ -376,11 +396,13 @@ export function createTodayManager(options: {
     }));
   };
 
-  const getVerseText = async (
+  /** Plain text of verses `from` through `to`, or undefined when none exist. */
+  const getPassageText = async (
     translationId: string,
     bookId: string,
     chapter: number,
-    verse: number
+    from: number,
+    to: number
   ): Promise<string | undefined> => {
     const chapterData = await bibleData.getTranslationBookChapter(
       translationId,
@@ -388,18 +410,55 @@ export function createTodayManager(options: {
       chapter
     );
 
-    const verseContent = chapterData.chapter.content.find(
-      (item) => item.type === "verse" && item.number === verse
+    const verses = chapterData.chapter.content.flatMap((item) =>
+      item.type === "verse" && item.number >= from && item.number <= to
+        ? [item]
+        : []
     );
-    if (!verseContent || verseContent.type !== "verse") return undefined;
+    if (verses.length === 0) return undefined;
 
-    return verseContent.content
+    return verses
+      .flatMap((verse) => verse.content)
       .map((part) =>
         typeof part === "string" ? part : "text" in part ? part.text : ""
       )
       .join(" ")
       .replace(/\s+/g, " ")
       .trim();
+  };
+
+  const getVerseText = (
+    translationId: string,
+    bookId: string,
+    chapter: number,
+    verse: number
+  ): Promise<string | undefined> =>
+    getPassageText(translationId, bookId, chapter, verse, verse);
+
+  const getVerseOfTheDay = async (
+    date: string,
+    translationId: string
+  ): Promise<TodayVerseOfTheDay | null> => {
+    const picked = await bibleData.api.getVerseOfTheDay(date);
+    if (!picked) return null;
+
+    const text = await getPassageText(
+      translationId,
+      picked.book,
+      picked.chapter,
+      picked.verse,
+      picked.endVerse ?? picked.verse
+    );
+    if (!text) return null;
+
+    return {
+      bookId: picked.book,
+      chapter: picked.chapter,
+      verse: picked.verse,
+      ...(picked.endVerse !== undefined ? { endVerse: picked.endVerse } : {}),
+      translationId,
+      text,
+    };
   };
 
   // `effectivePanes` renders fullscreen panes unconditionally (app/main.tsx),
@@ -476,6 +535,7 @@ export function createTodayManager(options: {
     translationBooksMap,
     searchVerses,
     getVerseText,
+    getVerseOfTheDay,
     getDefaultTranslation,
     getReadingHistoryEvents: fetchReadingHistoryEvents,
     getTranslationBooks: (translation: string) =>
