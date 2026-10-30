@@ -266,6 +266,36 @@ describe("createBibleSelectorState", () => {
     expect(selector.expandedBookId.value).toBe("GEN");
   });
 
+  it("setOpen() shows the slot's books even when the translation catalog fails to load", async () => {
+    const responses = createExampleManagerResponseMap();
+    setWebResponses(responses);
+    const { dataManager, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    // The reader loads only its own translation's books, never the full
+    // catalog, so on a real first open the catalog is still unfetched.
+    dataManager.catalogLoaded.value = false;
+    const catalogUrl = makeExampleUrl("/api/available_translations.json");
+    webGetMock.mockImplementation((url: string) =>
+      url === catalogUrl
+        ? Promise.reject(new Error("Network error"))
+        : Promise.resolve(responses[url])
+    );
+
+    const selector = createSelectorState(
+      dataManager,
+      tabsManager,
+      tabsLayoutManager
+    );
+    await selector.setOpen(true, slot);
+
+    expect(selector.isOpen.value).toBe(true);
+    expect(selector.error.value).toBeNull();
+    expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
+    errorSpy.mockRestore();
+  });
+
   it("syncs the open state to the `selector` URL query param", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { dataManager, slot, tabsManager, tabsLayoutManager } =

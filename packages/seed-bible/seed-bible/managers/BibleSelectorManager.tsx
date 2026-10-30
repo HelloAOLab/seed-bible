@@ -313,16 +313,31 @@ export function createBibleSelectorState(
     error.value = null;
 
     try {
-      if (!dataManager.catalogLoaded.value) {
-        await dataManager.getTranslations();
-      }
-
-      const nextTranslationId =
+      const slotTranslationId =
         readingState.value?.translationId.value ??
         // Find the first slot with a translation ID in its reading state
         tabsLayoutManager.slots.value.find(
           (s) => s.tab?.readingState.translationId.value
         )?.tab?.readingState.translationId.value ??
+        null;
+
+      // A slot's translation needs no catalog — the reader has usually already
+      // cached its books — so only the default/first-available fallback waits
+      // on it. Otherwise the catalog loads in the background for the
+      // translation list, and a failed or slow download can't leave the books
+      // grid empty.
+      if (!dataManager.catalogLoaded.value) {
+        if (slotTranslationId) {
+          dataManager.getTranslations().catch((err) => {
+            console.error("Failed to load the translation catalog:", err);
+          });
+        } else {
+          await dataManager.getTranslations();
+        }
+      }
+
+      const nextTranslationId =
+        slotTranslationId ??
         // Fall back to default translation or first available translation
         dataManager.availableTranslations.value.find(
           (t) => t.id === tabsManager.defaultTranslation.id
