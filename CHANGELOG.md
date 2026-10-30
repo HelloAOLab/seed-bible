@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Add native iOS and Android apps, built with Capacitor from the same code as the website.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

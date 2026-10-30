@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Seed Bible</string>
+    <string name="title_activity_main">Seed Bible</string>
+    <string name="package_name">org.seedbible.app</string>
+    <string name="custom_url_scheme">org.seedbible.app</string>
+</resources>

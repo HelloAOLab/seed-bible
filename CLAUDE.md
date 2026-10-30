@@ -34,6 +34,7 @@ pnpm lint:fix          # Auto-fix linting issues
 pnpm check:ts          # TypeScript type check — client + patterns (non-emit)
 pnpm build             # Production build (client + SSR + server bundles)
 pnpm pattern pack <name>  # Package a patterns/<name> portal into .aux
+pnpm build:native      # Static web build for the Capacitor iOS/Android apps (mobile/)
 pnpm format            # Prettier formatting
 ```
 
@@ -84,6 +85,10 @@ Unit tests in `test/unit/` mirror the package structure; integration tests live 
 - Keep tests independent: no shared mutable fixtures, no dependence on run order.
 - Avoid fixed-duration sleeps for async work (a debounce, a fetch) — poll a condition with a timeout instead, as the `waitForCondition` helpers in several manager tests already do. A zero-delay flush of the microtask queue is fine; a hardcoded "wait 250ms and hope" is not.
 - Regression tests must fail on the pre-fix code — revert the fix locally, confirm red, then restore it. A regression test that passes either way isn't testing anything.
+
+### Native apps (`mobile/`)
+
+The iOS and Android apps are a Capacitor wrapper in `mobile/` (its own pnpm workspace package). They ship a static copy of the web app built by `vite build --mode native`, which has no SSR, no service worker, and `index.html`'s server placeholders filled at build time by `script/lib/nativeShell.ts`. See `mobile/README.md`.
 
 ### Build System
 

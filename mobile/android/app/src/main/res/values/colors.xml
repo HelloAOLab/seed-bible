@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Keep in sync with LIGHT_THEME / DARK_THEME `background` in
+         packages/seed-bible/seed-bible/managers/ThemeManager.tsx. Fills the
+         strips around the system bars and shows before the page paints. -->
+    <color name="sb_background">#f8fafc</color>
+</resources>
