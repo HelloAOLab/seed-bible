@@ -405,7 +405,8 @@ describe("UserImagesGrid", () => {
       a: GalleryPhoto,
       options: Pick<StateOptions, "readFile"> = {}
     ) {
-      const { state, modals } = createState({ photos: [a], ...options });
+      const created = createState({ photos: [a], ...options });
+      const { state, modals } = created;
       renderPane(state);
       act(() => {
         container.querySelector<HTMLButtonElement>(".sb-images-tile")!.click();
@@ -417,6 +418,7 @@ describe("UserImagesGrid", () => {
           .click();
         await settle();
       });
+      return created;
     }
 
     /** Records the file name each download link is clicked with. */
@@ -506,11 +508,32 @@ describe("UserImagesGrid", () => {
         })
       );
       vi.spyOn(console, "warn").mockImplementation(() => {});
-      const openTab = vi.spyOn(window, "open").mockImplementation(() => null);
+      const tab = { opener: window as Window | null };
+      const openTab = vi
+        .spyOn(window, "open")
+        .mockImplementation(() => tab as unknown as Window);
 
-      await openPreviewAndDownload(a);
+      const { toast } = await openPreviewAndDownload(a);
 
-      expect(openTab).toHaveBeenCalledWith(a.url, "_blank", "noopener");
+      expect(openTab).toHaveBeenCalledWith(a.url, "_blank");
+      expect(tab.opener).toBeNull();
+      expect(toast).not.toHaveBeenCalled();
+    });
+
+    it("says so when the image can't be fetched and its tab is blocked", async () => {
+      const a = photo("a");
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => {
+          throw new TypeError("Failed to fetch");
+        })
+      );
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      vi.spyOn(window, "open").mockImplementation(() => null);
+
+      const { toast } = await openPreviewAndDownload(a);
+
+      expect(toast).toHaveBeenCalledWith("Couldn't download the image.");
     });
   });
 });

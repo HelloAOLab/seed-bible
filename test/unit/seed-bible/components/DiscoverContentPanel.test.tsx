@@ -635,6 +635,43 @@ describe("DiscoverContentPanel", () => {
       expect(getArrow(END_LABEL)?.getAttribute("aria-disabled")).toBe("true");
     });
 
+    it("fades only the edges the arrows can still scroll toward", () => {
+      renderPanel();
+      const row = getRow();
+      const fades = () => ({
+        left: row.hasAttribute("data-fade-left"),
+        right: row.hasAttribute("data-fade-right"),
+      });
+      configureOverflow(row);
+
+      setDimension(row, "scrollLeft", 0);
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+      expect(fades()).toEqual({ left: false, right: true });
+
+      setDimension(row, "scrollLeft", 70);
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+      expect(fades()).toEqual({ left: true, right: true });
+
+      setDimension(row, "scrollLeft", 140);
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+      expect(fades()).toEqual({ left: true, right: false });
+
+      // In right-to-left the start is on the right.
+      row.style.direction = "rtl";
+      setDimension(row, "scrollLeft", 0);
+      act(() => {
+        row.dispatchEvent(new Event("scroll"));
+      });
+      expect(fades()).toEqual({ left: true, right: false });
+      expect(getArrow(START_LABEL)?.getAttribute("aria-disabled")).toBe("true");
+    });
+
     it("updates arrow visibility when the chapter's filters change but their count stays the same", () => {
       const state = createMockState({
         annotationsForChapter: [createAnnotation()],

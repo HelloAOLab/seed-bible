@@ -699,10 +699,78 @@ export function createSavesManager(
   };
 
   /**
+   * Writes run one after another. Each carries the whole list, so if two ran
+   * at once an older list could land last and bring back a save the newer
+   * one removed.
+   */
+  let writeQueue: Promise<void> = Promise.resolve();
+  let pendingWrites = 0;
+
+  const queueWrite = (
+    nextSaves: Save[],
+    nextCategories: SaveCategory[]
+  ): Promise<void> => {
+    pendingWrites++;
+    const write = writeQueue.then(() => persist(nextSaves, nextCategories));
+    writeQueue = write
+      .catch(() => {})
+      .finally(() => {
+        pendingWrites--;
+      });
+    return write;
+  };
+
+  /**
+   * After a failed write, waits for the queued writes to finish and then shows
+   * what is actually stored. A change made while the stored list is being read
+   * wins instead: it writes the whole list it shows, which brings the two back
+   * in step.
+   */
+  const resyncFromStorage = async (): Promise<void> => {
+    while (pendingWrites > 0) {
+      await writeQueue;
+    }
+    const userId = login.userId.value;
+    if (!userId || loadedUserId.value !== userId) {
+      return;
+    }
+    const shownSaves = saves.value;
+    const shownCategories = categories.value;
+    let data: Awaited<ReturnType<typeof os.getData>>;
+    try {
+      data = await os.getData(userId, STORAGE_ADDRESS);
+    } catch (error) {
+      console.warn("Could not re-read the saves after a failed write.", error);
+      return;
+    }
+    if (
+      pendingWrites > 0 ||
+      login.userId.value !== userId ||
+      saves.value !== shownSaves ||
+      categories.value !== shownCategories
+    ) {
+      return;
+    }
+    const stored = readRecord(data, persistedSavesPayloadSchema, "saves");
+    if (stored.status !== "found") {
+      return;
+    }
+    const normalized = normalizeSaves(
+      stored.value.saves,
+      stored.value.categories
+    );
+    batch(() => {
+      saves.value = normalized.saves;
+      categories.value = normalized.categories;
+    });
+  };
+
+  /**
    * Shows a change straight away, then stores it. If storing fails the list
-   * goes back to how it was (unless another change has replaced it since) and
-   * the error is passed on, so a caller that reports the failure isn't
-   * contradicted by a list that still shows the change.
+   * goes back to how it was and the error is passed on, so a caller that
+   * reports the failure isn't contradicted by a list that still shows the
+   * change. When another change has replaced the list since, going back isn't
+   * possible, so the list is re-read from storage once the writes settle.
    */
   const commit = async (
     nextSaves: Save[],
@@ -715,13 +783,15 @@ export function createSavesManager(
       categories.value = nextCategories;
     });
     try {
-      await persist(nextSaves, nextCategories);
+      await queueWrite(nextSaves, nextCategories);
     } catch (error) {
       if (saves.value === nextSaves && categories.value === nextCategories) {
         batch(() => {
           saves.value = prevSaves;
           categories.value = prevCategories;
         });
+      } else {
+        void resyncFromStorage();
       }
       throw error;
     }

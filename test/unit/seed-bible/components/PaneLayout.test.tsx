@@ -158,17 +158,17 @@ describe("PaneLayout", () => {
   });
 
   describe("sliding a side pane in and out", () => {
-    /** Whether the browser counts the user as having just clicked. */
-    const setUserActive = (isActive: boolean) => {
-      Object.defineProperty(navigator, "userActivation", {
-        configurable: true,
-        value: { isActive, hasBeenActive: isActive },
-      });
+    const userClicks = () =>
+      document.body.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    /** Moves the clock on, so an earlier click no longer counts. */
+    const timePasses = (ms: number) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(Date.now() + ms);
     };
 
     afterEach(() => {
       vi.useRealTimers();
-      Reflect.deleteProperty(navigator, "userActivation");
     });
 
     /** The content row as app/main.tsx lays it out. */
@@ -210,7 +210,7 @@ describe("PaneLayout", () => {
     it("slides in when opened just after a click, and a copy slides out when closed", async () => {
       const state = await openNotes();
       vi.useFakeTimers();
-      setUserActive(true);
+      userClicks();
 
       act(() => render(<Row state={state} open />, container));
       const shell = container.querySelector('[data-placement="side"]');
@@ -259,7 +259,7 @@ describe("PaneLayout", () => {
           </div>
         ),
       });
-      setUserActive(true);
+      userClicks();
       act(() => render(<Row state={state} open />, container));
 
       // A frame that reaches the page starts loading, even if it's taken out
@@ -283,7 +283,7 @@ describe("PaneLayout", () => {
 
     it("just appears and goes when the user didn't just click", async () => {
       const state = await openNotes();
-      setUserActive(false);
+      timePasses(60_000);
 
       act(() => render(<Row state={state} open />, container));
       expect(
@@ -296,6 +296,21 @@ describe("PaneLayout", () => {
       expect(
         container.querySelector(".sb-pane-side-ghost-host")?.children
       ).toHaveLength(0);
+    });
+
+    it("just appears when the app opens it a few seconds after a click", async () => {
+      const state = await openNotes();
+      vi.useFakeTimers();
+      userClicks();
+      vi.advanceTimersByTime(3000);
+
+      act(() => render(<Row state={state} open />, container));
+
+      expect(
+        container
+          .querySelector('[data-placement="side"]')
+          ?.classList.contains("sb-pane-side-shell-entering")
+      ).toBe(false);
     });
   });
 });

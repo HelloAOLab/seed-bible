@@ -17,7 +17,6 @@ import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
 import { DiscoverEmpty } from "../DiscoverPane/DiscoverSection";
 import { MaterialIcon } from "../icons";
 import { useHorizontalScroll } from "../useHorizontalScroll";
-import { useScrollEdgeFade } from "../useScrollEdgeFade";
 import { translateTitle } from "../../app/utils";
 import { ReadingPlansSection } from "../ReadingPlansSection/ReadingPlansSection";
 import {
@@ -132,10 +131,9 @@ function DiscoverFilters({
 }: DiscoverFiltersProps) {
   const { t } = useI18n();
   // The pills scroll horizontally with the vertical wheel, and fade at an
-  // edge only while pills are hidden past it.
+  // edge only while pills are hidden past it (see `updateScrollState`).
   const filtersRef = useRef<HTMLDivElement>(null);
   useHorizontalScroll(filtersRef);
-  useScrollEdgeFade(filtersRef);
   // Where the arrows' last smooth scroll is headed, and when it was asked for.
   const pendingScrollRef = useRef<{ left: number; at: number } | null>(null);
 
@@ -146,20 +144,27 @@ function DiscoverFilters({
     .map((filter) => `${filter.key}:${filter.label}`)
     .join("|");
 
+  // The arrows and the edge fades both follow this, so they never disagree
+  // about whether there's more to scroll.
   const updateScrollState = useCallback((isRtl: boolean) => {
     const container = filtersRef.current;
     const wrapper = container?.parentElement;
+    const setScrollable = (start: boolean, end: boolean) => {
+      canScrollStart.value = start;
+      canScrollEnd.value = end;
+      // The fades are physical sides; the start is on the right in RTL.
+      container?.toggleAttribute("data-fade-left", isRtl ? end : start);
+      container?.toggleAttribute("data-fade-right", isRtl ? start : end);
+    };
     if (!container || !wrapper) {
       hasScrollableFilters.value = false;
-      canScrollStart.value = false;
-      canScrollEnd.value = false;
+      setScrollable(false, false);
       return;
     }
     const hasOverflow = container.scrollWidth > wrapper.clientWidth + 1;
     hasScrollableFilters.value = hasOverflow;
     if (!hasOverflow) {
-      canScrollStart.value = false;
-      canScrollEnd.value = false;
+      setScrollable(false, false);
       return;
     }
     const maxScroll = Math.max(
@@ -170,8 +175,7 @@ function DiscoverFilters({
       ? Math.abs(container.scrollLeft)
       : container.scrollLeft;
 
-    canScrollStart.value = position > 1;
-    canScrollEnd.value = position < maxScroll - 1;
+    setScrollable(position > 1, position < maxScroll - 1);
   }, []);
 
   const scrollFilters = useCallback((direction: -1 | 1) => {

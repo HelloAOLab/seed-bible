@@ -4,7 +4,7 @@ import { PaneHeader } from "../PaneHeader/PaneHeader";
 import type { Pane, PanesManager } from "../../managers/PanesManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { UI_SIZE_SCALE_MAP } from "../../managers/SettingsManager";
-import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
+import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 
 interface DragState {
@@ -309,17 +309,37 @@ interface SidePaneProps {
 const SIDE_PANE_SLIDE_MS = 250;
 
 /**
+ * How soon after a click or key press a pane change still counts as the
+ * user's. The browser's own user activation lasts several seconds, long
+ * enough to catch panes the app swaps on its own after an unrelated click.
+ */
+const USER_INPUT_WINDOW_MS = 1000;
+
+let lastUserInputAt = -Infinity;
+if (typeof window !== "undefined") {
+  const rememberUserInput = () => {
+    lastUserInputAt = Date.now();
+  };
+  for (const type of ["pointerdown", "click", "keydown"]) {
+    window.addEventListener(type, rememberUserInput, {
+      capture: true,
+      passive: true,
+    });
+  }
+}
+
+/**
  * Whether a docked pane opening or closing right now should slide. Only just
- * after the user clicked or pressed a key (the browser's user activation), so
- * a pane the app opens or closes on its own, such as on load, just appears
- * or goes. Never with reduced motion, and not where the browser can't say.
+ * after the user clicked or pressed a key, so a pane the app opens or closes
+ * on its own, such as on load, just appears or goes. Never with reduced
+ * motion.
  */
 function shouldSlideSidePane(): boolean {
   if (typeof window === "undefined") return false;
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) {
     return false;
   }
-  return navigator.userActivation?.isActive ?? false;
+  return Date.now() - lastUserInputAt < USER_INPUT_WINDOW_MS;
 }
 
 /**
@@ -385,7 +405,8 @@ export function SidePane(props: SidePaneProps) {
   // Opening slides the width in from nothing; switching to another side pane
   // reuses this one and doesn't. Closing slides out a copy (see above).
   const shellRef = useRef<HTMLElement | null>(null);
-  const isEntering = useSignal(shouldSlideSidePane());
+  const [slidesIn] = useState(shouldSlideSidePane);
+  const isEntering = useSignal(slidesIn);
   useEffect(() => {
     if (!isEntering.peek()) return;
     const timer = setTimeout(() => {

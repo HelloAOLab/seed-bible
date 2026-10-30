@@ -988,6 +988,7 @@
   "delete-image-usage-warning": "If you've used it as the cover of a playlist or reading plan, it will be removed from there too.",
   "delete-image-used-by": "It's currently the cover of:",
   "delete-image-failed": "Couldn't delete the image.",
+  "download-image-failed": "Couldn't download the image.",
   "session-qr-title": "Share via QR",
   "session-qr-subtitle": "Let others scan to join this session.",
   "session-qr-alt": "QR code to join this session",

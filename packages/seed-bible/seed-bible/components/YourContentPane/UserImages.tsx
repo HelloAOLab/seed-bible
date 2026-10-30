@@ -172,19 +172,26 @@ export function openDeleteImageConfirm(
   return modalId;
 }
 
+/** The last part of a URL's path ("a photo.jpg"), decoded, if it has one. */
+function urlFileName(url: string): string | null {
+  try {
+    const last = new URL(url, window.location.href).pathname.split("/").pop();
+    return last ? decodeURIComponent(last) : null;
+  } catch {
+    // Not a parseable URL, or a malformed escape.
+    return null;
+  }
+}
+
 /**
  * A name for the saved file: the URL's own file name when it has one,
  * otherwise a generic one with an extension for the image's type (`gif`,
  * `webp`, `svg`…), or none for a type that isn't an image.
  */
 function photoFileName(url: string, type: string): string {
-  try {
-    const last = new URL(url, window.location.href).pathname.split("/").pop();
-    if (last && /\.\w+$/.test(last)) {
-      return decodeURIComponent(last);
-    }
-  } catch {
-    // Not a parseable URL, or a malformed escape; fall through.
+  const name = urlFileName(url);
+  if (name && /\.\w+$/.test(name)) {
+    return name;
   }
   // "image/svg+xml" → "svg"; "image/jpeg" → the more familiar "jpg".
   const subtype = type.startsWith("image/")
@@ -208,11 +215,13 @@ async function fetchImage(url: string): Promise<Blob> {
  * Saves the full-size image to disk. It's read rather than linked because a
  * link's `download` attribute is ignored for another origin's file. If it
  * can't be read, the image opens in a new tab instead, where it can still be
- * saved by hand.
+ * saved by hand. That tab opens after the read, so a popup blocker may stop
+ * it; `onFailed` then lets the user know nothing happened.
  */
 async function downloadPhoto(
   os: Pick<CasualOSManager, "readFile">,
-  photo: GalleryPhoto
+  photo: GalleryPhoto,
+  onFailed: () => void
 ): Promise<void> {
   try {
     const blob =
@@ -220,22 +229,24 @@ async function downloadPhoto(
     download(blob, photoFileName(photo.url, blob.type));
   } catch (error) {
     console.warn("Couldn't download the image; opening it instead.", error);
-    window.open(photo.url, "_blank", "noopener");
+    // Not "noopener": with it, `window.open` returns null even when the tab
+    // opens, so a blocked tab couldn't be told apart.
+    const tab = window.open(photo.url, "_blank");
+    if (tab) {
+      tab.opener = null;
+    } else {
+      onFailed();
+    }
   }
 }
 
 /** The image format named by a URL's file extension ("JPEG"), if it has one. */
 function photoFormat(url: string): string | null {
-  try {
-    const name = new URL(url, window.location.href).pathname.split("/").pop();
-    const extension = /\.(\w+)$/.exec(name ?? "")?.[1]?.toUpperCase();
-    if (!extension) {
-      return null;
-    }
-    return extension === "JPG" ? "JPEG" : extension;
-  } catch {
+  const extension = /\.(\w+)$/.exec(urlFileName(url) ?? "")?.[1]?.toUpperCase();
+  if (!extension) {
     return null;
   }
+  return extension === "JPG" ? "JPEG" : extension;
 }
 
 /** The image's details, under it in the preview. */
@@ -327,6 +338,7 @@ function ImagePreviewModalContent(props: {
  */
 function ImagePreviewActions(props: {
   os: Pick<CasualOSManager, "readFile">;
+  toast: (message: string) => void;
   photo: GalleryPhoto;
   onDelete: () => void;
   onClose: () => void;
@@ -342,7 +354,13 @@ function ImagePreviewActions(props: {
         onClick={async () => {
           isDownloading.value = true;
           try {
-            await downloadPhoto(props.os, props.photo);
+            await downloadPhoto(props.os, props.photo, () =>
+              props.toast(
+                t("download-image-failed", {
+                  defaultValue: "Couldn't download the image.",
+                })
+              )
+            );
           } finally {
             isDownloading.value = false;
           }
@@ -376,7 +394,7 @@ function ImagePreviewActions(props: {
  */
 export function openImagePreview(
   modals: ModalManager,
-  state: Pick<SeedBibleState, "os" | "playlists" | "readingPlans">,
+  state: Pick<SeedBibleState, "app" | "os" | "playlists" | "readingPlans">,
   photo: GalleryPhoto,
   onDelete: () => void
 ): string {
@@ -389,6 +407,7 @@ export function openImagePreview(
     footer: () => (
       <ImagePreviewActions
         os={state.os}
+        toast={state.app.toast}
         photo={photo}
         onClose={() => modals.closeModal(modalId)}
         onDelete={() => {

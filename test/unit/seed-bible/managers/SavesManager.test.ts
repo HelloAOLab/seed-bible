@@ -1259,6 +1259,60 @@ describe("SavesManager", () => {
 
       expect(manager.isLocationSaved("BSB", "GEN", 1)).toBe(false);
     });
+
+    it("shows what's stored when two quick deletes are both refused", async () => {
+      setRecords({
+        saves: {
+          saves: [createSave({ id: "a" }), createSave({ id: "b" })],
+          categories: [{ name: DEFAULT_SAVE_CATEGORY }],
+        },
+      });
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+      refuse();
+
+      const results = await Promise.allSettled([
+        manager.removeSave("a"),
+        manager.removeSave("b"),
+      ]);
+      await flushPromises();
+
+      expect(results.map((result) => result.status)).toEqual([
+        "rejected",
+        "rejected",
+      ]);
+      expect(manager.saves.value.map((s) => s.id)).toEqual(["a", "b"]);
+    });
+  });
+
+  it("stores one change at a time, so an older list can't land last", async () => {
+    setRecords({
+      saves: {
+        saves: [createSave({ id: "a" }), createSave({ id: "b" })],
+        categories: [{ name: DEFAULT_SAVE_CATEGORY }],
+      },
+    });
+    const manager = createSavesManager(os, login);
+    await flushPromises();
+    let finishFirst!: () => void;
+    recordDataMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishFirst = () => resolve({ success: true });
+        })
+    );
+
+    const first = manager.removeSave("a");
+    const second = manager.removeSave("b");
+    await flushPromises();
+
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    finishFirst();
+    await Promise.all([first, second]);
+
+    expect(recordDataMock).toHaveBeenCalledTimes(2);
+    const lastWrite = recordDataMock.mock.calls[1]![2] as { saves: Save[] };
+    expect(lastWrite.saves).toEqual([]);
   });
 });
 

@@ -9,6 +9,7 @@ import {
   formatSaveVerse,
   type Save,
 } from "../../managers/SavesManager";
+import { translationShortName } from "../../managers/BibleDataManager";
 import type { Playlist } from "../../managers/PlaylistManager";
 import type { TodayPassageTarget } from "../../managers/TodayManager";
 import {
@@ -164,7 +165,7 @@ function useTranslationShortName(
     }
   }, [bibleData, translationId, books]);
 
-  return books?.translation.shortName ?? translationId;
+  return translationShortName(bibleData.translationBooks.value, translationId);
 }
 
 /**

@@ -8,6 +8,7 @@ import {
   saveBelongsToCategory,
   type SaveVerse,
 } from "../../managers/SavesManager";
+import { translationShortName } from "../../managers/BibleDataManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import {
   TAB_SLOT_LAYOUT_OPTIONS,
@@ -2115,8 +2116,10 @@ function SavesSection(props: SavesSectionProps) {
                             •
                           </span>
                           <span className="sb-tab-main-translation">
-                            {translationBooksMap.get(save.translationId)
-                              ?.translation.shortName ?? save.translationId}
+                            {translationShortName(
+                              translationBooksMap,
+                              save.translationId
+                            )}
                           </span>
                         </button>
                         <ContextMenuWithButton

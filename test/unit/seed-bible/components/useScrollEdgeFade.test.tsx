@@ -28,6 +28,7 @@ describe("useScrollEdgeFade", () => {
           resizeCallbacks.push(callback);
         }
         observe() {}
+        unobserve() {}
         disconnect() {}
       }
     );
@@ -268,5 +269,44 @@ describe("useScrollEdgeFadeRef (vertical)", () => {
     geometry.scrollTop = 100;
     collapsed.dispatchEvent(new Event("scroll"));
     expect(fades(collapsed)).toEqual({ top: true, bottom: false });
+  });
+
+  it("stops watching an item once it's removed", async () => {
+    const watched = new Set<Element>();
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe(el: Element) {
+          watched.add(el);
+        }
+        unobserve(el: Element) {
+          watched.delete(el);
+        }
+        disconnect() {
+          watched.clear();
+        }
+      }
+    );
+    const geometry = { scrollHeight: 300, clientHeight: 200, scrollTop: 0 };
+    act(() =>
+      render(
+        <List collapsed={false} items={["a", "b"]} geometry={geometry} />,
+        container
+      )
+    );
+    const removed = container.querySelectorAll(".expanded > span")[1]!;
+
+    act(() =>
+      render(
+        <List collapsed={false} items={["a"]} geometry={geometry} />,
+        container
+      )
+    );
+    // MutationObserver callbacks run as a microtask.
+    await Promise.resolve();
+
+    expect(watched.has(removed)).toBe(false);
+    expect(watched.size).toBe(2);
+    vi.unstubAllGlobals();
   });
 });

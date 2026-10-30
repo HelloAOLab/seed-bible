@@ -61,6 +61,11 @@ function attachScrollEdgeFade(
             resizeObserver?.observe(node);
           }
         }
+        for (const node of Array.from(record.removedNodes)) {
+          if (node instanceof Element) {
+            resizeObserver?.unobserve(node);
+          }
+        }
       }
       update();
     });

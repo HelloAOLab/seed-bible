@@ -880,6 +880,19 @@ export function canonicalBookIndex(bookId: string): number {
 }
 
 /**
+ * A translation's short code (`VDV` for `arb_vdv`), or its id until its books
+ * have loaded.
+ */
+export function translationShortName(
+  translationBooks: ReadonlyMap<string, TranslationBooks>,
+  translationId: string
+): string {
+  return (
+    translationBooks.get(translationId)?.translation.shortName ?? translationId
+  );
+}
+
+/**
  * Gets the canonical URL slug for a book (e.g. "GEN" -> "genesis"), used to
  * build path-based routes and the canonical URL. Falls back to a lowercased
  * version of the id itself for an unrecognized value (e.g. a malformed
