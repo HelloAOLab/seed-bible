@@ -225,6 +225,28 @@ describe("ExtensionsPage", () => {
     );
   });
 
+  it("clears a search with the ×, which shows only once something is typed", () => {
+    renderPage([builtIn("audio", true)]);
+    const input = container.querySelector<HTMLInputElement>(
+      'input[type="search"]'
+    )!;
+    const clear = () =>
+      container.querySelector<HTMLButtonElement>(".sb-search-clear-button");
+    expect(clear()).toBeNull();
+
+    act(() => {
+      input.value = "nothing like it";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    act(() => clear()!.click());
+
+    expect(input.value).toBe("");
+    expect(container.querySelector('[role="status"]')).toBeNull();
+    expect(sections()).not.toEqual([]);
+    expect(clear()).toBeNull();
+    expect(document.activeElement).toBe(input);
+  });
+
   it("opens an extension's page from its card", () => {
     const state = renderPage([
       builtIn("audio", true),

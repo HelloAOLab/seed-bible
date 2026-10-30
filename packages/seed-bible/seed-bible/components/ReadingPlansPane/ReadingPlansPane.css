@@ -37,24 +37,6 @@
   opacity: 0.9;
 }
 
-.sb-rp-pane-back {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.sb-rp-pane-back:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-}
-
 .sb-reading-plans-empty {
   padding: 24px 8px;
   font-size: 0.9375rem;

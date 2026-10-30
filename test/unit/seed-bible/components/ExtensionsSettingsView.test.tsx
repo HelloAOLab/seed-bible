@@ -251,6 +251,22 @@ describe("ExtensionsSettingsView", () => {
       search("");
       expect(rowNames()).toEqual(["Verse Art", "Word Study", "Scripture Map"]);
     });
+
+    it("clears the search with the ×, which shows only once something is typed", () => {
+      renderExtensions(entries());
+      const clear = () =>
+        container.querySelector<HTMLButtonElement>(".sb-search-clear-button");
+      expect(clear()).toBeNull();
+
+      search("zzz");
+      act(() => clear()!.click());
+
+      expect(rowNames()).toEqual(["Verse Art", "Word Study", "Scripture Map"]);
+      expect(clear()).toBeNull();
+      expect(document.activeElement).toBe(
+        container.querySelector('input[type="search"]')
+      );
+    });
   });
 
   describe("extensions the active customization hides", () => {

@@ -133,6 +133,7 @@ export function HeroImageField(props: {
   const openCropModal = (file: File) => {
     const modalId = modals.openModal({
       title: { key: "set-hero-image", defaultValue: "Set cover image" },
+      mobileSheet: true,
       content: () => (
         <Suspense
           fallback={

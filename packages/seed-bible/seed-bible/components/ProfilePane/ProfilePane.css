@@ -16,11 +16,7 @@
     var(--sb-font-color),
     transparent 95%
   );
-  --sb-profile-border: color-mix(
-    in srgb,
-    var(--sb-font-color),
-    transparent 88%
-  );
+  --sb-profile-border: var(--sb-divider-color);
   /* Secondary text: dates, counts, row subtitles. */
   --sb-profile-muted: color-mix(in srgb, var(--sb-font-color), transparent 42%);
   --sb-profile-accent: var(--sb-primary-color);
@@ -462,17 +458,6 @@ button.sb-profile-plans-link {
 }
 
 /* ------------------------------------------------------------ edit profile */
-
-.sb-profile-pane-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-}
 
 .sb-profile-field {
   display: flex;

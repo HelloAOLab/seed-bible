@@ -31,13 +31,27 @@
   min-width: 12.5rem;
   max-width: 17.5rem;
   padding: 0.375rem;
-  border: 1px solid
-    color-mix(in srgb, var(--sb-menu-font-color), transparent 80%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.5rem;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   box-shadow: 0 10px 30px #00000014;
   z-index: 500;
+}
+
+/* Fades in while growing out of the corner by its button, which
+   `ContextMenuWithButton` sets as the `transform-origin`. */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-context-menu {
+    animation: sb-context-menu-open 0.15s ease-out;
+  }
+}
+
+@keyframes sb-context-menu-open {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
 }
 
 .sb-context-menu-item {

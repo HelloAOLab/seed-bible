@@ -36,7 +36,10 @@ const testBranding = {
   websiteUrl: "",
 };
 
-function createMockState(userId: string | null): SeedBibleState {
+function createMockState(
+  userId: string | null,
+  options: { isMobile?: boolean } = {}
+): SeedBibleState {
   return {
     sidebar: {
       requestedSettingsView: signal<string>("main"),
@@ -52,8 +55,13 @@ function createMockState(userId: string | null): SeedBibleState {
     tutorial: {
       start: vi.fn(),
     },
-    app: {},
-    navigation: { batchWrites: (fn: () => void) => fn() },
+    app: { isMobile: signal(options.isMobile ?? false) },
+    i18n: { language: signal("en") },
+    navigation: {
+      batchWrites: (fn: () => void) => fn(),
+      currentUrl: signal(new URL("https://example.test/?settingsView=main")),
+      push: vi.fn(),
+    },
     openProfile: vi.fn(),
   } as unknown as SeedBibleState;
 }
@@ -71,8 +79,11 @@ describe("SettingsMainView", () => {
     container.remove();
   });
 
-  function renderMain(userId: string | null) {
-    const state = createMockState(userId);
+  function renderMain(
+    userId: string | null,
+    options: { isMobile?: boolean } = {}
+  ) {
+    const state = createMockState(userId, options);
     act(() => {
       render(<SettingsPage state={state} />, container);
     });
@@ -90,21 +101,51 @@ describe("SettingsMainView", () => {
     expect(navLabels()).not.toContain("Customize");
   });
 
-  it("opens the full-screen Profile screen from Account", () => {
-    const state = renderMain("user-1");
-    const accountButton = Array.from(
+  const navButton = (label: string) =>
+    Array.from(
       container.querySelectorAll<HTMLButtonElement>(".sb-settings-nav-item")
-    ).find((button) => button.textContent?.includes("Account"))!;
+    ).find((button) => button.textContent?.includes(label))!;
 
-    act(() => {
-      accountButton.click();
-    });
+  it("opens Profile from Account and keeps Settings open beside it", () => {
+    const state = renderMain("user-1");
+
+    act(() => navButton("Account").click());
+
+    expect(state.openProfile).toHaveBeenCalled();
+    expect(state.sidebar.closeSettings).not.toHaveBeenCalled();
+  });
+
+  it("closes Settings when opening Profile on a phone, where it covers the screen", () => {
+    const state = renderMain("user-1", { isMobile: true });
+
+    act(() => navButton("Account").click());
 
     expect(state.openProfile).toHaveBeenCalled();
     expect(state.sidebar.closeSettings).toHaveBeenCalled();
   });
 
-  it("opening Profile from Account adds a single history entry", () => {
+  it("opens About and keeps Settings open beside it", () => {
+    const state = renderMain("user-1");
+
+    act(() => navButton("About Seed Bible").click());
+
+    // Settings' screen stays in the URL, or the new page would close it.
+    expect(state.navigation.push).toHaveBeenCalledWith(
+      "/en/about?settingsView=main"
+    );
+    expect(state.sidebar.closeSettings).not.toHaveBeenCalled();
+  });
+
+  it("closes Settings when opening About on a phone", () => {
+    const state = renderMain("user-1", { isMobile: true });
+
+    act(() => navButton("About Seed Bible").click());
+
+    expect(state.navigation.push).toHaveBeenCalledWith("/en/about");
+    expect(state.sidebar.closeSettings).toHaveBeenCalled();
+  });
+
+  it("opening Profile from Account on a phone adds a single history entry", () => {
     const navigation = createNavigationManager();
     const sidebar = createSidebar({
       chatsManager: { isOpen: signal(false) } as unknown as ChatsManager,
@@ -115,7 +156,7 @@ describe("SettingsMainView", () => {
       profile: profileOpen,
     });
     const state = {
-      ...createMockState("user-1"),
+      ...createMockState("user-1", { isMobile: true }),
       navigation,
       sidebar,
       openProfile: () => (profileOpen.value = "open"),

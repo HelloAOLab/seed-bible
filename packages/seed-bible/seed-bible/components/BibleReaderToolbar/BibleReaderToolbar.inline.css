@@ -210,11 +210,29 @@
   background: var(--sb-reader-toolbar-background);
   box-shadow: var(--sb-reader-toolbar-box-shadow);
   z-index: 2;
+  /* The corner by its button, for the opening animation below. */
+  transform-origin: bottom right;
+}
+
+.sb-tool-context-menu:dir(rtl) {
+  transform-origin: bottom left;
 }
 
 .sb-tool-context-menu-below {
   bottom: auto;
   top: calc(100% + 0.5rem);
+  transform-origin: top right;
+}
+
+.sb-tool-context-menu-below:dir(rtl) {
+  transform-origin: top left;
+}
+
+/* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-tool-context-menu {
+    animation: sb-context-menu-open 0.15s ease-out;
+  }
 }
 
 /* Submenu opened from a card inside the drag-to-reveal row. That row clips
@@ -539,6 +557,19 @@
   flex-direction: column;
   gap: 0.375rem;
   z-index: 100;
+  /* The corner by the More button, for the opening animation below. */
+  transform-origin: bottom right;
+}
+
+.sb-more-menu:dir(rtl) {
+  transform-origin: bottom left;
+}
+
+/* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-more-menu {
+    animation: sb-context-menu-open 0.15s ease-out;
+  }
 }
 
 .sb-more-menu-item {

@@ -34,7 +34,7 @@
 
 .sb-settings-empty-state {
   padding: 0.625rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.5rem;
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
@@ -300,7 +300,7 @@
   gap: 0.75rem;
   margin: 1rem 0 0;
   padding: 0.75rem 1rem 1rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.5rem;
 }
 
@@ -456,7 +456,7 @@
   overflow-y: auto;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.625rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   padding: 0.25rem;
@@ -471,8 +471,7 @@
   padding: 0.375rem 0.5rem;
   margin-bottom: 0.25rem;
   background: var(--sb-menu-background);
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  border-bottom: 1px solid var(--sb-divider-color);
   z-index: 1;
 }
 
@@ -1110,8 +1109,7 @@
   flex-direction: column;
   gap: 0.625rem;
   padding: 1rem 0.25rem;
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  border-bottom: 1px solid var(--sb-divider-color);
 }
 
 .sb-text-section:last-child {
@@ -1215,7 +1213,7 @@
   gap: 0.375rem;
   padding: 0.625rem;
   background: var(--sb-reader-background, #fff);
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.625rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   z-index: 50;
@@ -1244,8 +1242,7 @@
   font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
   padding-top: 0.375rem;
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-top: 1px solid var(--sb-divider-color);
 }
 
 .sb-text-format-palette-custom-swatch {
@@ -1400,42 +1397,20 @@
   overflow-y: auto;
 }
 
-/*
- * `.searchbar` (`BibleSelector.css`) is 80% width there because that page's
- * search field sits next to a separate filter icon in the same row. Here
- * the filter button is nested inside `.searchbar` itself, so 80% leaves a
- * dead gap down the right side of this narrower popover — scoped to this
- * picker rather than changing the shared rule, which the reader's own
- * layout still depends on.
- */
-.sb-customization-translation-picker .searchbar {
-  width: 100%;
-}
-
-.sb-extensions-search {
+/* The search takes the row; its filter button sits beside it, as in the
+   Compare extension's picker. The bar is the button's height (`.filters-icon`),
+   like the book selector's compact translation search. */
+.sb-customization-translation-search-row {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  min-height: 2.75rem;
-  padding: 0 0.875rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  border-radius: 0.75rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
+  gap: 0.5rem;
 
-.sb-extensions-search:focus-within {
-  border-color: var(--sb-primary-color);
-}
-
-.sb-extensions-search input {
-  flex: 1 1 auto;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: 0.9375rem;
+  > .sb-search-bar {
+    flex: 1;
+    min-width: 0;
+    min-height: 1.875rem;
+    height: 1.875rem;
+  }
 }
 
 .sb-extensions-section {
@@ -1457,14 +1432,13 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 1rem;
   overflow: hidden;
 }
 
 .sb-extensions-group > li + li {
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-top: 1px solid var(--sb-divider-color);
 }
 
 .sb-extensions-item {

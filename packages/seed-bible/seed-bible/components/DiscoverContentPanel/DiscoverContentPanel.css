@@ -9,7 +9,7 @@
   overflow: hidden;
   background: var(--sb-reader-background);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
+    0 0 0 1px var(--sb-divider-color),
     0 4px 8px #0000002c;
   border-radius: 16px;
   padding: 1rem;
@@ -90,6 +90,8 @@
   gap: 0.5rem;
 }
 .sb-dcp-filters {
+  --sb-dcp-filters-fade-left: 0px;
+  --sb-dcp-filters-fade-right: 0px;
   display: flex;
   flex-wrap: nowrap;
   gap: 0.5rem;
@@ -100,6 +102,23 @@
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0px,
+    black var(--sb-dcp-filters-fade-left),
+    black calc(100% - var(--sb-dcp-filters-fade-right)),
+    transparent 100%
+  );
+}
+
+/* Each edge fades only while pills are hidden past it (`useScrollEdgeFade`),
+   like Your content's and Today's pills. */
+.sb-dcp-filters[data-fade-left] {
+  --sb-dcp-filters-fade-left: 1.25rem;
+}
+
+.sb-dcp-filters[data-fade-right] {
+  --sb-dcp-filters-fade-right: 1.25rem;
 }
 
 .sb-dcp-filters::-webkit-scrollbar {
@@ -116,8 +135,11 @@
   border-radius: 50%;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
-  box-shadow: 0 0.3rem 0.5rem rgb(0 0 0 / 12%);
   cursor: pointer;
+}
+/* The same hover as the pills it scrolls. */
+.sb-dcp-filters-arrow:hover:not([aria-disabled="true"]) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
 }
 .sb-dcp-filters-arrow .material-symbols-outlined {
   font-size: 1.4rem;
@@ -192,4 +214,11 @@
   background: var(--sb-background);
   border-radius: 6px;
   padding: 12px 16px;
+}
+
+/* Keeps a long note's sticky ⋮ (see DiscoverPane.css) inside the part of the
+   list that's on screen, not under the reader header or the bottom bars. */
+.sb-discover-content-panel .sb-annotation-item > .sb-context-menu-anchor {
+  top: calc(var(--sb-dcp-list-cover-top, 0px) + 0.5rem);
+  bottom: calc(var(--sb-dcp-list-cover-bottom, 0px) + 0.5rem);
 }

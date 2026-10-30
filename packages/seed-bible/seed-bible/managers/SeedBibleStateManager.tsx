@@ -1409,8 +1409,8 @@ export function createSeedBibleState(
   // The flip side is that this effect can't see a move *within* a chapter, so any
   // path that jumps to a verse and must reveal the reader has to call
   // `closeFullscreenPanes` itself rather than rely on this: verse reference links
-  // (`handleOpenVerseReference` below), the floating panels' jump actions, and
-  // sidebar search results (`SidebarSearch`) all do. Selecting a tab
+  // (`handleOpenVerseReference` below) and the floating panels' jump actions
+  // both do. Selecting a tab
   // (`handleSelectTab`) closes them too, which covers most of the remaining
   // paths incidentally.
   let lastReadingLocation: string | null = null;
@@ -1607,6 +1607,15 @@ export function createSeedBibleState(
   effect(() => {
     if (isMobileLandscape.value) {
       sidebar.isSidebarCollapsed.value = true;
+    }
+  });
+
+  // The tabs drawer only exists on phones. Still "open" once the window is
+  // wider than that, it would hold the desktop sidebar expanded and stop the
+  // collapse button working, so close it on the way out of mobile.
+  effect(() => {
+    if (!isMobile.value) {
+      sidebar.isMobileOpen.value = false;
     }
   });
 
@@ -3783,6 +3792,7 @@ export function createSeedBibleState(
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
       onTakeTour={() => tutorial.acceptPrompt()}
+      onClose={() => today.close()}
     />
   );
   const renderTodayPaneTitle = () => <TodayPaneTitle />;
@@ -3794,6 +3804,9 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderTodayPaneTitle,
         component: renderTodayPane,
+        // Today's own close button (TodayCloseButton) stands in for the
+        // header's.
+        showHeader: false,
       });
     } else {
       panes.closePane(TODAY_PANE_ID); // no-op when already closed
@@ -4193,6 +4206,8 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderAboutPaneTitle,
         component: renderAboutPane,
+        // The page's own hero card names it.
+        showHeader: false,
       });
     } else {
       panes.closePane(ABOUT_PANE_ID); // no-op when already closed

@@ -1,6 +1,8 @@
 import {
+  compareSaves,
   createSavesManager,
   DEFAULT_SAVE_CATEGORY,
+  formatSaveVerse,
   normalizeSaveCategories,
   saveBelongsToCategory,
   type Save,
@@ -1201,5 +1203,161 @@ describe("SavesManager", () => {
 
     await manager.deleteCategory("Favorites");
     expect(manager.saves.value).toEqual([]);
+  });
+
+  describe("when the records server refuses a change", () => {
+    const refuse = () =>
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "Server error.",
+      } as never);
+
+    it("puts a deleted save back and reports the failure", async () => {
+      const save = createSave({ id: "keep-1", categories: ["Favorites"] });
+      setRecords({
+        saves: {
+          saves: [save],
+          categories: [{ name: DEFAULT_SAVE_CATEGORY }, { name: "Favorites" }],
+        },
+      });
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+      refuse();
+
+      await expect(manager.removeSave("keep-1")).rejects.toThrow();
+
+      expect(manager.saves.value.map((s) => s.id)).toEqual(["keep-1"]);
+    });
+
+    it("puts a deleted folder and its saves back", async () => {
+      setRecords({
+        saves: {
+          saves: [createSave({ id: "only-1", categories: ["Favorites"] })],
+          categories: [{ name: DEFAULT_SAVE_CATEGORY }, { name: "Favorites" }],
+        },
+      });
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+      refuse();
+
+      await expect(manager.deleteCategory("Favorites")).rejects.toThrow();
+
+      expect(manager.categories.value.map((c) => c.name)).toEqual([
+        DEFAULT_SAVE_CATEGORY,
+        "Favorites",
+      ]);
+      expect(manager.saves.value.map((s) => s.id)).toEqual(["only-1"]);
+    });
+
+    it("drops a new save that couldn't be stored", async () => {
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+      refuse();
+
+      await expect(manager.addSave("BSB", "GEN", 1)).rejects.toThrow();
+
+      expect(manager.isLocationSaved("BSB", "GEN", 1)).toBe(false);
+    });
+
+    it("shows what's stored when two quick deletes are both refused", async () => {
+      setRecords({
+        saves: {
+          saves: [createSave({ id: "a" }), createSave({ id: "b" })],
+          categories: [{ name: DEFAULT_SAVE_CATEGORY }],
+        },
+      });
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+      refuse();
+
+      const results = await Promise.allSettled([
+        manager.removeSave("a"),
+        manager.removeSave("b"),
+      ]);
+      await flushPromises();
+
+      expect(results.map((result) => result.status)).toEqual([
+        "rejected",
+        "rejected",
+      ]);
+      expect(manager.saves.value.map((s) => s.id)).toEqual(["a", "b"]);
+    });
+  });
+
+  it("stores one change at a time, so an older list can't land last", async () => {
+    setRecords({
+      saves: {
+        saves: [createSave({ id: "a" }), createSave({ id: "b" })],
+        categories: [{ name: DEFAULT_SAVE_CATEGORY }],
+      },
+    });
+    const manager = createSavesManager(os, login);
+    await flushPromises();
+    let finishFirst!: () => void;
+    recordDataMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishFirst = () => resolve({ success: true });
+        })
+    );
+
+    const first = manager.removeSave("a");
+    const second = manager.removeSave("b");
+    await flushPromises();
+
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    finishFirst();
+    await Promise.all([first, second]);
+
+    expect(recordDataMock).toHaveBeenCalledTimes(2);
+    const lastWrite = recordDataMock.mock.calls[1]![2] as { saves: Save[] };
+    expect(lastWrite.saves).toEqual([]);
+  });
+});
+
+describe("formatSaveVerse", () => {
+  it("formats a whole chapter, one verse, and a range", () => {
+    expect(formatSaveVerse(undefined)).toBe("");
+    expect(formatSaveVerse(4)).toBe(":4");
+    expect(formatSaveVerse([4, 6])).toBe(":4-6");
+    expect(formatSaveVerse([4, 4])).toBe(":4");
+  });
+});
+
+describe("compareSaves", () => {
+  const at = (
+    bookId: string,
+    chapterNumber: number,
+    verse?: number | [number, number]
+  ) =>
+    ({
+      id: `${bookId}-${chapterNumber}-${String(verse)}`,
+      translationId: "BSB",
+      bookId,
+      chapterNumber,
+      verse,
+      categories: [DEFAULT_SAVE_CATEGORY],
+      createdAt: 1,
+    }) as Save;
+
+  it("sorts by book in canonical order, then chapter, then verse", () => {
+    const saves = [
+      at("JHN", 3),
+      at("GEN", 11, [4, 6]),
+      at("GEN", 11, 4),
+      at("GEN", 11),
+      at("GEN", 2),
+      at("EXO", 1),
+    ];
+
+    expect(saves.sort(compareSaves).map((save) => save.id)).toEqual([
+      "GEN-2-undefined",
+      "GEN-11-undefined",
+      "GEN-11-4",
+      "GEN-11-4,6",
+      "EXO-1-undefined",
+      "JHN-3-undefined",
+    ]);
   });
 });

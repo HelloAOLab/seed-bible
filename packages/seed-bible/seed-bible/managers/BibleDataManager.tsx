@@ -869,6 +869,29 @@ export const BOOK_SLUGS: Record<BookId, string> = {
   LAO: "lao",
 };
 
+/** Canonical Protestant + Apocrypha order, from {@link BOOK_SLUGS}' insertion order. */
+const CANONICAL_BOOK_ORDER = new Map(
+  (Object.keys(BOOK_SLUGS) as BookId[]).map((id, index) => [id, index])
+);
+
+/** A book's place in canonical order; a book it doesn't know sorts last. */
+export function canonicalBookIndex(bookId: string): number {
+  return CANONICAL_BOOK_ORDER.get(bookId as BookId) ?? Number.MAX_SAFE_INTEGER;
+}
+
+/**
+ * A translation's short code (`VDV` for `arb_vdv`), or its id until its books
+ * have loaded.
+ */
+export function translationShortName(
+  translationBooks: ReadonlyMap<string, TranslationBooks>,
+  translationId: string
+): string {
+  return (
+    translationBooks.get(translationId)?.translation.shortName ?? translationId
+  );
+}
+
 /**
  * Gets the canonical URL slug for a book (e.g. "GEN" -> "genesis"), used to
  * build path-based routes and the canonical URL. Falls back to a lowercased
@@ -1076,15 +1099,39 @@ export function createBibleDataManager(
     mergeTranslations,
   });
 
-  const getTranslationBooks = async (
+  // Lookups under way, by translation. A screen of rows can ask for the same
+  // list all at once (one per save or highlight); they share one lookup
+  // instead of each reading storage and setting up its own request.
+  const pendingTranslationBooks = new Map<string, Promise<TranslationBooks>>();
+
+  const getTranslationBooks = (
     translationId: string,
     options?: ApiRequestOptions
   ): Promise<TranslationBooks> => {
     const existing = translationBooks.value.get(translationId);
     if (existing) {
-      return existing;
+      return Promise.resolve(existing);
     }
+    // A caller that can cancel, or wants a refresh, gets its own lookup, so
+    // it can't cancel or reshape anyone else's.
+    if (options?.signal || options?.refresh) {
+      return loadTranslationBooks(translationId, options);
+    }
+    const pending = pendingTranslationBooks.get(translationId);
+    if (pending) {
+      return pending;
+    }
+    const lookup = loadTranslationBooks(translationId).finally(() => {
+      pendingTranslationBooks.delete(translationId);
+    });
+    pendingTranslationBooks.set(translationId, lookup);
+    return lookup;
+  };
 
+  const loadTranslationBooks = async (
+    translationId: string,
+    options?: ApiRequestOptions
+  ): Promise<TranslationBooks> => {
     const cacheBooks = (
       endpoint: string,
       books: TranslationBooks,

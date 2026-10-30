@@ -7,14 +7,57 @@ import {
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n";
+import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import {
   CustomizationCardPreview,
   getDefaultTranslationLabel,
 } from "./CustomizationPreviews";
 
+export const CUSTOMIZATION_EDIT_PANE_ID = "customization-edit-pane";
+
+/**
+ * Asks before deleting a customization for good, then deletes it. If it was
+ * open in the editor, the editor closes too, whichever button deleted it. A
+ * failed delete is reported and leaves it in place.
+ */
+export function confirmDeleteCustomization(
+  state: SeedBibleState,
+  customization: SeedBibleCustomization
+) {
+  openConfirmDeleteModal(state.modals, {
+    id: `delete-customization-confirm-${customization.id}`,
+    title: {
+      key: "delete-customization-confirm-title",
+      defaultValue: "Delete Custom Branding?",
+    },
+    message: (t) =>
+      t("delete-customization-confirm-message", {
+        name: customization.name,
+        defaultValue:
+          'Delete Custom Branding "{{name}}"? This can\'t be undone.',
+      }),
+    onConfirm: async () => {
+      // Read first: deleting the one being edited clears the draft.
+      const wasEditing =
+        state.customizations.editingCustomization.peek()?.id ===
+        customization.id;
+      await state.customizations.remove(customization.id);
+      if (wasEditing) {
+        state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID);
+      }
+    },
+    failedMessage: (t) =>
+      t("delete-customization-failed", {
+        defaultValue: "Couldn't delete the Custom Branding.",
+      }),
+    toast: state.app.toast,
+  });
+}
+
 /**
  * One customization in a list: a miniature of its default theme with its
- * logo, its name and a short summary, plus a menu to copy its share link.
+ * logo, its name and a short summary, plus a menu to copy its share link or
+ * delete it.
  */
 export function CustomizationCard(props: {
   state: SeedBibleState;
@@ -84,6 +127,14 @@ export function CustomizationCard(props: {
             share
           </MaterialIcon>
           <span>{t("share", { defaultValue: "Share" })}</span>
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => confirmDeleteCustomization(state, customization)}
+        >
+          <MaterialIcon className="sb-context-menu-item-icon">
+            delete
+          </MaterialIcon>
+          <span>{t("delete", { defaultValue: "Delete" })}</span>
         </ContextMenuItem>
       </ContextMenuWithButton>
     </li>

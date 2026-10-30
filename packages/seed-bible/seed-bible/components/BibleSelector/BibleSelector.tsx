@@ -45,6 +45,7 @@ import type { TutorialManager } from "../../managers/TutorialManager";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
+import { SearchBar as SearchField } from "../SearchBar/SearchBar";
 
 /**
  * CSS-only spotlight: the huge translucent box-shadow dims everything around
@@ -180,7 +181,7 @@ export function BibleSelector(props: BibleSelectorProps) {
           className ? ` ${className}` : ""
         }`}
         dir={isRtl ? "rtl" : "ltr"}
-        // Dim the app behind the panel only while a spotlight tour step is up.
+        // A spotlight tour step dims the app behind the panel further.
         style={
           tourStepId && !glowing ? { background: "rgba(0,0,0,0.6)" } : undefined
         }
@@ -315,29 +316,22 @@ const SearchBar = (props: {
               </div>
 
               <div
-                className="searchbar flex-align-center"
+                className="sb-selector-book-search"
                 style={
                   tourStepId === "selector-search" ? SPOTLIGHT_STYLE : undefined
                 }
               >
-                <span className="search-icon material-symbols-outlined">
-                  Search
-                </span>
-                <input
-                  type="text"
-                  placeholder={t("search-books", {
-                    defaultValue: "Search books...",
-                  })}
+                <SearchField
                   value={search.value}
-                  className="flex-1"
-                  onInput={(e) => {
-                    setSearch((e.target as HTMLInputElement).value);
-                  }}
+                  onInput={setSearch}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.keyCode === 13) {
                       handleEnter();
                     }
                   }}
+                  placeholder={t("search-books", {
+                    defaultValue: "Search books...",
+                  })}
                 />
               </div>
               <div
@@ -872,7 +866,7 @@ const SideBarChapters = (props: {
       // Don't yank focus off the search field while the user is typing.
       // openBookId also changes when search narrows to a single book.
       const active = document.activeElement as HTMLElement | null;
-      if (!active?.closest(".searchbar")) {
+      if (!active?.closest(".sb-search-bar")) {
         bookTab.focus({ preventScroll: true });
       }
 
@@ -1503,26 +1497,17 @@ const TranslationModal = (props: {
                 close
               </span>
             )}
-            <div
-              className="searchbar flex-align-center"
-              style={{ width: "100%", height: "1.875rem" }}
-            >
-              <span className="search-icon material-symbols-outlined">
-                Search
-              </span>
-              <input
-                type="text"
-                placeholder={t("search-translation", {
-                  defaultValue: "Search Translation",
-                })}
-                value={languageQuery.value}
-                onChange={(e) => {
-                  languageQuery.value = (e.target as HTMLInputElement).value;
-                }}
-                id="translation-search-input"
-                className="flex-1"
-              />
-            </div>
+            <SearchField
+              id="translation-search-input"
+              className="sb-selector-translation-search"
+              value={languageQuery.value}
+              onInput={(value) => {
+                languageQuery.value = value;
+              }}
+              placeholder={t("search-translation", {
+                defaultValue: "Search Translation",
+              })}
+            />
             <span
               onClick={(e) => {
                 e.stopPropagation();

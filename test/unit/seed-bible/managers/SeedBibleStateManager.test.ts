@@ -1650,6 +1650,18 @@ describe("createSeedBibleState", () => {
     });
   });
 
+  it("closes the tabs drawer when the window widens past phone size, so the sidebar can collapse again", async () => {
+    const state = await createTestSeedBibleState({
+      config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: true },
+    });
+    state.sidebar.openSidebar();
+    expect(state.sidebar.isMobileOpen.value).toBe(true);
+
+    (state.app.viewportWidth as unknown as { value: number }).value = 1200;
+
+    expect(state.sidebar.isMobileOpen.value).toBe(false);
+  });
+
   describe("mobile tab slot restrictions", () => {
     // isMobile is derived from viewportWidth; the returned signal is the same
     // writable instance, so tests drive the mobile layout by writing to it.

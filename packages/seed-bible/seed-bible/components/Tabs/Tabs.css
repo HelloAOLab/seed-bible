@@ -26,6 +26,26 @@
   opacity: 1;
   transition: opacity 0.25s ease;
 }
+
+/* Docked on desktop, the user's own expand or collapse slides the width (and
+   the reader beside it) rather than jumping; `-resizing` is only set for
+   those, so changes made on load snap. While it runs, the contents are
+   clipped and held at the expanded width, so expanding reveals the list
+   instead of squeezing it into the narrow rail first. */
+@media (min-width: 769px) and (prefers-reduced-motion: no-preference) {
+  .sb-tabs-sidebar-resizing {
+    transition:
+      width 0.25s ease,
+      padding 0.25s ease,
+      opacity 0.25s ease;
+    overflow: hidden;
+
+    &:not(.sb-tabs-sidebar-collapsed) > * {
+      min-width: 18rem;
+    }
+  }
+}
+
 .sb-sidebar-branding-logo {
   width: 3.0625rem;
   height: 2.25rem;
@@ -48,12 +68,19 @@
 
   /* Pin the button to where it sits in the expanded sidebar so it doesn't
      jump when toggling: the extra top/start offset makes up the difference
-     in sidebar padding (0.875rem/1rem expanded vs 0.625rem/0.5rem here),
-     plus 0.1875rem for being centered in the expanded header's taller row. */
+     in sidebar padding (0.875rem/1rem expanded vs 0.625rem/0.5rem here). */
   .sb-sidebar-collapse-button {
     align-self: flex-start;
-    margin-top: 0.4375rem;
+    margin-top: 0.25rem;
     margin-inline-start: 0.5rem;
+  }
+
+  /* Dimmed on the rail (the same strength as the reader's header icons) so
+     they don't compete with the tabs. Opening settings expands the sidebar,
+     so the gear's selected color never needs to show here. */
+  .sb-sidebar-collapse-button,
+  .sb-sidebar-icon-button {
+    color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   }
 }
 
@@ -71,11 +98,17 @@
     z-index: 121;
     height: 100%;
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.18);
-    /* The docked sidebar's `--sb-sidebar-background` is transparent in the
-       light theme (it blends with the page behind it). Floating over the
-       reader there's text behind it, so paint the opaque page background —
-       same approach as the mobile drawer (`.sb-tabs-sidebar-mobile-open`). */
-    background: var(--sb-background);
+    /* Docked, the sidebar paints `--sb-sidebar-background` over the page
+       background (in the light theme it's transparent, so the page shows
+       through). Floating over the reader there's text behind it, so paint
+       both layers here to look the same as docked — same as the mobile
+       drawer (`.sb-tabs-sidebar-mobile-open`). */
+    background:
+      linear-gradient(
+        var(--sb-sidebar-background),
+        var(--sb-sidebar-background)
+      ),
+      var(--sb-background);
   }
 }
 
@@ -103,7 +136,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 1.75rem;
+  min-height: 2rem;
   padding-bottom: 0.375rem;
 }
 
@@ -125,30 +158,42 @@
   gap: 0.5rem;
 }
 
+/* Buttons along the sidebar's edges are 2rem wide and sit flush with its
+   padding, so their icons all center 2rem in from the edge: the hamburger
+   and settings on the start side; the top-row actions, new-tab button and
+   avatar on the end side. */
 .sb-sidebar-collapse-button {
   border: none;
+  border-radius: 0.5rem;
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 2rem;
+  height: 2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
 }
 
-.sb-sidebar-top-icon-button {
+/* Scoped to the top row to outrank `.sb-context-menu-button`'s size on the
+   "more" button. */
+.sb-sidebar-top-actions .sb-sidebar-top-icon-button {
   border: none;
+  border-radius: 0.5rem;
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;
+  height: 2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  /* These sit inside block anchor divs; baseline alignment there can make
+     the row taller than the button, which would throw off the collapsed
+     hamburger's pinned offset. */
+  vertical-align: top;
 }
 
 .sb-sidebar-tabs-header {
@@ -160,7 +205,7 @@
 
 .sb-sidebar-tabs-title {
   margin: 0;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.125rem;
   color: var(--sb-font-color);
 }
@@ -262,10 +307,16 @@
   margin-bottom: 0.25rem;
 }
 
+/* Sits in the tab list, which already spaces it from its neighbors; the
+   negative top margin cancels the saves/bookmarks section's bottom margin so
+   the gap is the same above and below. `flex-shrink: 0` because the list
+   shrinks its items once it overflows, and an empty 1px line would shrink
+   away to nothing. */
 .sb-sidebar-tabs-divider {
+  flex-shrink: 0;
   height: 1px;
   background: var(--sb-divider-color);
-  margin: 0.5rem 0 0.625rem;
+  margin-top: -0.25rem;
 }
 
 .sb-save-category {
@@ -273,9 +324,13 @@
   flex-direction: column;
 }
 
+/* The end padding matches a tab row's (0.375rem + its 1px border) so these
+   rows' "more" buttons line up with the tabs' below. Also on `.sb-save-item`
+   and `.sb-bookmarks-panel-row`. */
 .sb-save-category-header {
   display: flex;
   align-items: center;
+  padding-inline-end: calc(0.375rem + 1px);
   border-radius: 0.5rem;
   transition: background-color 0.15s ease;
 }
@@ -390,6 +445,7 @@
 .sb-save-item {
   display: flex;
   align-items: center;
+  padding-inline-end: calc(0.375rem + 1px);
   border-radius: 0.5rem;
 }
 
@@ -689,15 +745,125 @@
   /* Widen the list slightly past the rail's padding so labels like
      "PSA 139" fit on one line in the tiles. */
   margin-inline: -0.10625rem;
+}
 
-  &::before {
-    content: "";
-    flex-shrink: 0;
-    width: 1.75rem;
-    height: 1px;
-    margin-bottom: 0.375rem;
-    background: var(--sb-divider-color);
+/* The collapsed rail's tab tiles. */
+/* Hover and selected match the expanded sidebar's tab rows (`.sb-tab-row`). */
+.sb-collapsed-tab-tile {
+  width: 100%;
+  min-height: 2.75rem;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--sb-tab-background);
+  color: var(--sb-tab-font-color);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0;
+  font: inherit;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-collapsed-tab-tile:hover:not(.sb-collapsed-tab-tile-selected) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-collapsed-tab-tile-selected {
+  background: var(--sb-selected-tab-background);
+  color: var(--sb-selected-tab-font-color);
+}
+
+.sb-collapsed-tab-title {
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: color-mix(in srgb, currentColor, transparent 30%);
+}
+
+.sb-collapsed-tab-tile-selected .sb-collapsed-tab-title {
+  font-weight: 700;
+  color: currentColor;
+}
+
+.sb-collapsed-tab-presence {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  pointer-events: none;
+}
+
+.sb-collapsed-tab-presence-dot {
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 62.4375rem;
+  box-sizing: border-box;
+}
+
+/* Host / co-host dots get a colored ring so roles read at a glance. */
+.sb-collapsed-tab-presence-dot-host {
+  box-shadow: 0 0 0 1px #f59e0b;
+}
+
+.sb-collapsed-tab-presence-dot-cohost {
+  box-shadow: 0 0 0 1px #6366f1;
+}
+
+.sb-collapsed-tab-presence-more {
+  font-size: 0.4375rem;
+  font-weight: 700;
+  line-height: 1;
+  color: color-mix(in srgb, currentColor, transparent 30%);
+}
+
+.sb-collapsed-tab-tile .sb-collapsed-tab-audio-icon {
+  font-size: 0.75rem;
+  color: var(--sb-primary-color);
+}
+
+.sb-collapsed-tab-tile-selected .sb-collapsed-tab-audio-icon {
+  color: currentColor;
+}
+
+/* The tab lists hide their scrollbars, so an edge with tabs scrolled past it
+   fades out to hint there's more (`useScrollEdgeFadeRef`). A mask doesn't
+   affect layout, and it's only applied while there's something to hint at:
+   it clips anything painted outside the list's box. */
+.sb-sidebar-tab-list,
+.sb-sidebar-collapsed-tab-list {
+  --sb-tab-list-fade-top: 0px;
+  --sb-tab-list-fade-bottom: 0px;
+
+  &[data-fade-top],
+  &[data-fade-bottom] {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0px,
+      black var(--sb-tab-list-fade-top),
+      black calc(100% - var(--sb-tab-list-fade-bottom)),
+      transparent 100%
+    );
   }
+
+  &[data-fade-top] {
+    --sb-tab-list-fade-top: 1.5rem;
+  }
+
+  &[data-fade-bottom] {
+    --sb-tab-list-fade-bottom: 3rem;
+  }
+}
+
+/* The expanded list's rows are taller and further apart than the rail's
+   tiles, so it needs a longer fade to cover about as many items. */
+.sb-sidebar-tab-list[data-fade-bottom] {
+  --sb-tab-list-fade-bottom: 5rem;
 }
 
 .sb-sidebar-settings-view {
@@ -712,25 +878,14 @@
   .sb-sidebar-settings-view {
     padding: 0.3125rem 0.75rem;
   }
-}
-@media (max-width: 480px) {
-  .sb-sidebar-settings-view {
-    padding: 5px 12px;
-  }
-}
 
-.sb-sidebar-settings-close-button {
-  border: none;
-  border-radius: 0.4375rem;
-  width: 1.875rem;
-  height: 1.875rem;
-  background: var(--sb-secondary-color);
-  color: var(--sb-font-color);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
+  /* The mobile header is inset 1rem (see `.sb-tabs-sidebar-mobile-open
+     .sb-sidebar-tabs-header`); inset the content to match, so the rows start
+     where the title does and sit inside it like on desktop instead of
+     running edge to edge. */
+  .sb-sidebar-settings-content {
+    padding-inline: 1rem;
+  }
 }
 
 .sb-sidebar-settings-content {
@@ -789,6 +944,58 @@
   flex: 1;
 }
 
+/* The whole row selects the tab, not just its text: this layer stretches the
+   button over the row's padding (the row is the positioned box). The button's
+   own content and the save and menu buttons after it sit above the layer, so
+   they keep their own clicks and tooltips. */
+.sb-tab-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.sb-tab-button > *,
+.sb-tab-button ~ * {
+  position: relative;
+}
+
+/* The tab's ⋯ shows on the selected tab, on hover, while its menu is open and
+   when the row has keyboard focus. Hidden rather than removed, so the row
+   keeps its height and a click on that spot falls through to the row and
+   selects the tab. Without hover (touch screens, the phone drawer) there'd be
+   no way to reveal it, so it always shows there. The drawer is told apart by
+   width, not `.sb-tabs-sidebar-mobile-open`: that class outlives the drawer
+   when the window is widened with it open. It fades with the row's
+   hover background; `visibility` flips at the start of a fade in and the end
+   of a fade out, so it's never clickable while fully invisible. Save,
+   save folder and bookmark rows follow the same rules; they have no selected
+   state. */
+@media (hover: hover) and (min-width: 481px) {
+  .sb-tab-row > .sb-tab-menu-anchor,
+  :is(.sb-save-category-header, .sb-save-item, .sb-bookmarks-panel-row)
+    > :is(.sb-save-category-menu-anchor, .sb-tab-menu-anchor) {
+    transition:
+      opacity 0.15s ease,
+      visibility 0s;
+  }
+
+  .sb-tab-row:not(.sb-tab-row-selected, :hover, :has(:focus-visible))
+    > .sb-tab-menu-anchor:not(:has([aria-expanded="true"])),
+  :is(.sb-save-category-header, .sb-save-item, .sb-bookmarks-panel-row):not(
+      :hover,
+      :has(:focus-visible)
+    )
+    > :is(.sb-save-category-menu-anchor, .sb-tab-menu-anchor):not(
+      :has([aria-expanded="true"])
+    ) {
+    visibility: hidden;
+    opacity: 0;
+    transition:
+      opacity 0.15s ease,
+      visibility 0s 0.15s;
+  }
+}
+
 .sb-tab-main-content {
   display: flex;
   align-items: center;
@@ -844,8 +1051,7 @@
 }
 
 .sb-tab-users-section {
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 78%);
+  border-top: 1px solid var(--sb-divider-color);
   margin-top: 0.125rem;
   padding-top: 0.4375rem;
 }
@@ -960,8 +1166,7 @@
   flex-direction: column;
   gap: 0.625rem;
   padding-top: 0.25rem;
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-top: 1px solid var(--sb-divider-color);
 }
 
 .sb-session-settings-duration-title {
@@ -1015,8 +1220,7 @@
   flex-shrink: 0;
   margin-top: 0.25rem;
   padding-top: 0.75rem;
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-top: 1px solid var(--sb-divider-color);
 }
 
 .sb-session-settings-cancel,
@@ -1048,6 +1252,17 @@
 
 .sb-session-settings-end:hover {
   background: #dc2626;
+}
+
+/* A red Delete button, led by a trash can. */
+.sb-delete-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.sb-delete-button .material-symbols-outlined {
+  font-size: 1.125rem;
 }
 
 /* Session URL row (top of the session settings panel) */
@@ -1182,8 +1397,8 @@
 }
 
 .sb-sidebar-self-avatar {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
   border: none;
   background: transparent;
@@ -1222,42 +1437,32 @@
   opacity: 0.75;
 }
 
-.sb-tab-add-button {
+/* `.sb-tab-add-button` itself has no styles: the header "+" buttons look like
+   their neighbors, and the class is what the "add-tab" tutorial step
+   targets. */
+.sb-collapsed-tab-add-button {
   border: none;
   border-radius: 0.5rem;
-  width: 2rem;
-  height: 2rem;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
+  width: 100%;
+  height: 2.25rem;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: filter 0.15s ease;
 
-  &.sb-collapsed-tab-add-button {
-    width: 100%;
-    height: 2.25rem;
-    flex-shrink: 0;
-    margin-top: 0.25rem;
-    background: transparent;
-    color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-
-    &:hover {
-      filter: none;
-      background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-    }
+  &:hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
   }
-}
 
-.sb-tab-add-button:hover {
-  filter: brightness(0.95);
-}
-
-.sb-tab-add-button .material-symbols-outlined {
-  font-size: 1.375rem;
-  font-weight: 500;
+  .material-symbols-outlined {
+    font-size: 1.375rem;
+    font-weight: 500;
+  }
 }
 
 .sb-tab-pane-count {
@@ -1277,7 +1482,7 @@
 .sb-tab-menu {
   min-width: 13.125rem;
   padding: 0.375rem;
-  border: 1px solid var(--sb-secondary-color);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.5rem;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
@@ -1296,22 +1501,44 @@
 
 .sb-sidebar-icon-button {
   border: none;
-  border-radius: 62.4375rem;
+  border-radius: 0.5rem;
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 2.1875rem;
-  width: 2.1875rem;
+  height: 2rem;
+  width: 2rem;
+}
+
+/* The sidebar's icon buttons (expand/collapse, Panels, more, settings) hover
+   like the Tabs header's: a gray tint and a full-strength icon. Only where
+   hover is real: a touch screen keeps `:hover` on a tapped button, so the
+   tint would stick. */
+.sb-sidebar-collapse-button,
+.sb-sidebar-icon-button,
+.sb-sidebar-top-actions .sb-sidebar-top-icon-button {
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .sb-sidebar-collapse-button:hover,
+  .sb-sidebar-icon-button:hover,
+  .sb-sidebar-top-actions .sb-sidebar-top-icon-button:hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+    color: var(--sb-font-color);
+  }
 }
 
 .sb-sidebar-icon-button path {
   stroke: currentColor;
 }
 
-.sb-sidebar-icon-button-selected {
+.sb-sidebar-icon-button-selected,
+.sb-sidebar-icon-button-selected:hover {
   color: var(--sb-primary-color);
 }
 
@@ -1350,7 +1577,15 @@
     z-index: 100;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    background: var(--sb-background);
+    /* The desktop sidebar's look (its background over the page's) made
+       opaque, since the drawer covers the reader. See the compact-desktop
+       overlay rule above. */
+    background:
+      linear-gradient(
+        var(--sb-sidebar-background),
+        var(--sb-sidebar-background)
+      ),
+      var(--sb-background);
     /* Bottom buffer (+ safe area) so the last setting clears the screen edge.
        NOTE: a stray `padding: 0` here previously clobbered the bottom padding. */
     padding: 0 0 calc(2rem + env(safe-area-inset-bottom, 0px));
@@ -1416,15 +1651,12 @@
   }
 
   /* ------------------------------------------------------------------
-   * Mobile tabs sidebar — tab card + floating "+" FAB
+   * Mobile tabs sidebar
    * ------------------------------------------------------------------ */
 
-  /* Hide the small "+" and the checklist/tasks icon from the header on
-   * mobile — the design shows only the saves + X icons up top. The "+"
-   * is surfaced as a full-width inline button at the bottom of the tab
-   * list. */
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header .sb-tab-add-button,
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header-tasks-button {
+  /* Hide the desktop header's small "+" on mobile; the mobile screen header
+   * has its own "+". */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header .sb-tab-add-button {
     display: none;
   }
 
@@ -1446,129 +1678,43 @@
     display: none;
   }
 
-  /* Header gets a little more breathing room and a bottom divider so it
-   * reads as a real top-bar over the tab list. */
+  /* The settings view's header (the Tabs screen uses
+   * .sb-mobile-screen-header instead). The drawer has no top padding, so the
+   * top here makes up for it: with the view's 0.3125rem it lands the header
+   * 1.3125rem down, where the desktop sidebar's padding puts it. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header {
-    padding: 0.4375rem 1rem;
+    padding: 1rem 1rem 0.4375rem;
   }
 
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-title {
-    /* Grow to fill the row so the new-session (+) and saves buttons group
-     * together at the trailing edge instead of being spread by space-between. */
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    font-family: var(--text-bookTitle-font);
-    color: var(--sb-book-title-font-color);
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  /* The settings sidebar (main list, and every settings subpage, including
-   * Account) shares .sb-sidebar-tabs-title with the tab-list header above,
-   * but its "Settings" heading isn't a book title — restore the plain
-   * heading style so it renders the same as on desktop. */
-  .sb-tabs-sidebar-mobile-open
-    .sb-sidebar-settings-view
-    .sb-sidebar-tabs-title {
-    flex: initial;
-    font-size: 1.125rem;
-    font-weight: 700;
-    font-family: inherit;
-    color: var(--sb-font-color);
-  }
-
-  /* Tab list takes the body of the sidebar; leave room at the bottom for
-   * the floating Add button so the last tab isn't covered. */
+  /* Row spacing matches the Saves screen. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    gap: 0.75rem;
-    /* On mobile the whole drawer scrolls (see .sb-tabs-sidebar-mobile-open),
-     * so undo the desktop tab-list scroll region to avoid a nested scroll. */
+    gap: 0.375rem;
+    /* The screen body (.sb-mobile-screen-body) is the scroller here, so undo
+     * the desktop tab-list scroll region to avoid a nested scroll. */
     flex: 0 0 auto;
     overflow: visible;
     min-height: auto;
-
-    /* Add a thin divider above the inline button so it visually separates
-     * from the tab list, matching the design. */
-    margin-inline: 1rem;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--sb-divider-color);
   }
 
-  /* Tab card on mobile — plain by default, peach pill when selected. */
+  /* Plain rows like Bookmarks/Saves (the desktop row look, highlighted
+   * only when selected or hovered), with Saves' larger touch targets. */
   .sb-tabs-sidebar-mobile-open .sb-tab-row {
-    padding: 0.75rem 0.875rem;
-    border-radius: 0.75rem;
-    background: var(--sb-tertiary-color);
-    border: 1px solid transparent;
-    min-height: 3.25rem;
+    /* The end padding stays the desktop row's, which the save and bookmark
+       rows match, so the "more" buttons sit in the same place on the Tabs,
+       Saves and Bookmarks screens. */
+    padding-block: 0.75rem;
+    padding-inline-start: 0.625rem;
     align-items: center;
-  }
-
-  .sb-tabs-sidebar-mobile-open .sb-tab-row-selected {
-    background: var(--sb-secondary-color);
-    border-color: transparent;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-tab-main-content {
-    font-size: 1rem;
-  }
-
-  .sb-tabs-sidebar-mobile-open .sb-tab-main-title {
-    font-weight: 600;
-  }
-
-  /* Floating "+" FAB is no longer used on mobile — replaced by the inline
-   * "Add new tab" row at the bottom of the tab list. */
-  .sb-tab-mobile-add-fab {
-    display: none;
-  }
-
-  /* Inline "Add new tab" button — orange icon tile + label, full-width,
-   * sits right below the tab list. Scoped under the mobile-open sidebar
-   * so it beats the default `display: none` further down in this file. */
-  .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-inline {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 0px 1rem 4rem;
-    padding: 0.5rem 0.9375rem;
-    border: none;
-    background: var(--sb-tertiary-color);
-    color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-    font: inherit;
     font-size: 0.9375rem;
-    cursor: pointer;
-    text-align: start;
-    justify-content: space-between;
-  }
-
-  .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-inline-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 0.5rem;
-    background: var(--sb-primary-color);
-    color: var(--sb-primary-font-color);
-    flex-shrink: 0;
-  }
-
-  .sb-tabs-sidebar-mobile-open
-    .sb-tab-mobile-add-inline-icon
-    .material-symbols-outlined {
-    font-size: 1.375rem;
-    font-weight: 500;
   }
 
   /* ------------------------------------------------------------------
-   * Mobile saves section — the compact desktop rows feel cramped
-   * next to the roomy tab cards, so give the category headers and
-   * save rows larger touch targets and a touch more breathing room.
+   * Mobile saves section — the compact desktop rows are cramped for
+   * touch, so give the category headers and save rows larger touch
+   * targets and a touch more breathing room.
    * ------------------------------------------------------------------ */
   .sb-tabs-sidebar-mobile-open .sb-saves-section {
     gap: 0.375rem;
@@ -1595,11 +1741,11 @@
   }
 
   /* ------------------------------------------------------------------
-   * Full-screen mobile Saves view — a focused take-over (close /
-   * title / new-folder header over the collapsible categories) shown
-   * when the Saves bottom tab is active.
+   * Full-screen mobile drawer screens (Tabs, Bookmarks, Saves) — a
+   * fixed header over a body that scrolls on its own, so the scrollbar
+   * stays out of the header.
    * ------------------------------------------------------------------ */
-  .sb-saves-mobile-screen {
+  .sb-mobile-screen {
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -1607,28 +1753,30 @@
     min-height: 0;
   }
 
-  .sb-saves-mobile-header {
+  /* No gap between the trailing buttons: at 40px each their icons sit
+   * 16px apart, the same as the desktop header's 32px buttons with an
+   * 8px gap. The title's margin spaces it from the buttons instead. */
+  .sb-mobile-screen-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     padding: 0.625rem 0.75rem;
     border-bottom: 1px solid var(--sb-divider-color);
   }
 
-  .sb-saves-mobile-title {
+  .sb-mobile-screen-title {
     flex: 1 1 auto;
-    margin: 0;
-    text-align: center;
-    font-size: 1.25rem;
+    min-width: 0;
+    margin: 0 0.5rem;
+    text-align: start;
+    font-size: 1.125rem;
     font-weight: 600;
-    font-family: var(--text-bookTitle-font);
     color: var(--sb-book-title-font-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .sb-saves-mobile-header-button {
+  .sb-mobile-screen-header-button {
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
@@ -1640,14 +1788,15 @@
     background: transparent;
     color: var(--sb-font-color);
     cursor: pointer;
-    border-radius: 62.4375rem;
+    /* Rounded square, like the desktop sidebar's header buttons. */
+    border-radius: 0.5rem;
   }
 
-  .sb-saves-mobile-header-button:hover {
+  .sb-mobile-screen-header-button:hover {
     background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   }
 
-  .sb-saves-mobile-body {
+  .sb-mobile-screen-body {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -1747,27 +1896,5 @@
 
   .sb-selector-panel .separator {
     display: none;
-  }
-
-  .sb-tab-mobile-add-fab:hover {
-    background: color-mix(in srgb, var(--sb-primary-color), #000 8%);
-  }
-
-  .sb-tab-mobile-add-fab .material-symbols-outlined {
-    font-size: 1.75rem;
-    color: var(--sb-primary-font-color);
-  }
-}
-
-/* Desktop hides the mobile add-tab affordances — they only appear when
- * the mobile sidebar overlay is visible. */
-.sb-tab-mobile-add-fab,
-.sb-tab-mobile-add-inline {
-  display: none;
-}
-
-@media (max-width: 480px) {
-  .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-fab {
-    display: inline-flex;
   }
 }

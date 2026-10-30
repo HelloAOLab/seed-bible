@@ -16,10 +16,12 @@ import {
 import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
 import { DiscoverEmpty } from "../DiscoverPane/DiscoverSection";
 import { MaterialIcon } from "../icons";
+import { useHorizontalScroll } from "../useHorizontalScroll";
 import { translateTitle } from "../../app/utils";
 import { ReadingPlansSection } from "../ReadingPlansSection/ReadingPlansSection";
 import {
   findScrollContainer,
+  readBottomChromeCover,
   readBottomChromeInset,
 } from "../BibleReader/readerViewport";
 
@@ -38,13 +40,25 @@ type FilterKey =
 const MIN_SIDE_PANEL_HEIGHT_PX = 192;
 
 /**
+ * How long after an arrow click the next one steps on from that click's
+ * destination. Longer than a browser's smooth scroll, which is about 300–500ms.
+ */
+const PENDING_SCROLL_MS = 600;
+
+/**
  * Publishes `--sb-dcp-side-max-height` on the panel: the height of the part of
  * its pane that's actually on screen, below the panel's sticky `top` and above
  * the fixed bottom toolbar. A plain `100vh` cap ignores the tab bar above the
  * pane, the toolbar floating over its bottom and split-pane layouts, so the
  * bottom of a long panel (and its last items) ended up out of reach.
+ *
+ * Also publishes `--sb-dcp-list-cover-top`/`-bottom`: how much of the panel's
+ * list is hidden behind the mobile reader header and the bottom chrome, or
+ * scrolled out of its pane. Where the panel scrolls with the page (mobile,
+ * stacked below the scripture) its list can sit partly off screen, and sticky
+ * children of the list only know the list's own edges.
  */
-function useSidePanelMaxHeight() {
+function usePanelViewportMeasures() {
   const cleanupRef = useRef<(() => void) | null>(null);
 
   return useCallback((panel: HTMLElement | null) => {
@@ -53,7 +67,17 @@ function useSidePanelMaxHeight() {
     if (!panel || typeof ResizeObserver === "undefined") return;
 
     const scroller = findScrollContainer(panel);
+    const reader = panel.closest<HTMLElement>(".sb-bible-reader");
     let frame = 0;
+
+    // Writing a custom property restyles the whole panel, and scrolling
+    // re-measures every frame, so only write values that changed.
+    const setPx = (name: string, px: number) => {
+      const value = `${Math.floor(px)}px`;
+      if (panel.style.getPropertyValue(name) !== value) {
+        panel.style.setProperty(name, value);
+      }
+    };
 
     const measure = () => {
       const viewportBottom = window.innerHeight - readBottomChromeInset();
@@ -67,9 +91,26 @@ function useSidePanelMaxHeight() {
         bottom - top - stickyTop,
         MIN_SIDE_PANEL_HEIGHT_PX
       );
-      panel.style.setProperty(
-        "--sb-dcp-side-max-height",
-        `${Math.floor(available)}px`
+      setPx("--sb-dcp-side-max-height", available);
+
+      const list = panel.querySelector<HTMLElement>(
+        ".sb-discover-content-panel-scroll"
+      );
+      if (!list) return;
+      const listRect = list.getBoundingClientRect();
+      const headerBottom =
+        reader
+          ?.querySelector(".sb-bible-reader-mobile-header")
+          ?.getBoundingClientRect().bottom ?? 0;
+      const visibleTop = Math.max(top, headerBottom);
+      const visibleBottom = Math.min(
+        rect?.bottom ?? window.innerHeight,
+        window.innerHeight - readBottomChromeCover()
+      );
+      setPx("--sb-dcp-list-cover-top", Math.max(visibleTop - listRect.top, 0));
+      setPx(
+        "--sb-dcp-list-cover-bottom",
+        Math.max(listRect.bottom - visibleBottom, 0)
       );
     };
 
@@ -79,6 +120,11 @@ function useSidePanelMaxHeight() {
     };
     const resizeObserver = new ResizeObserver(scheduleMeasure);
     if (scroller) resizeObserver.observe(scroller);
+    resizeObserver.observe(panel);
+    scroller?.addEventListener("scroll", scheduleMeasure, { passive: true });
+    // The mobile header slides away and back while scrolling; measure again
+    // once it has settled.
+    reader?.addEventListener("transitionend", scheduleMeasure);
     // BibleReaderToolbar rewrites `--sb-reader-bottom-inset` inline on the
     // root whenever the bottom chrome changes size.
     const insetObserver =
@@ -96,6 +142,8 @@ function useSidePanelMaxHeight() {
       cancelAnimationFrame(frame);
       resizeObserver.disconnect();
       insetObserver?.disconnect();
+      scroller?.removeEventListener("scroll", scheduleMeasure);
+      reader?.removeEventListener("transitionend", scheduleMeasure);
       window.removeEventListener("resize", scheduleMeasure);
     };
   }, []);
@@ -123,7 +171,12 @@ function DiscoverFilters({
   displayFilter,
 }: DiscoverFiltersProps) {
   const { t } = useI18n();
+  // The pills scroll horizontally with the vertical wheel, and fade at an
+  // edge only while pills are hidden past it (see `updateScrollState`).
   const filtersRef = useRef<HTMLDivElement>(null);
+  useHorizontalScroll(filtersRef);
+  // Where the arrows' last smooth scroll is headed, and when it was asked for.
+  const pendingScrollRef = useRef<{ left: number; at: number } | null>(null);
 
   const hasScrollableFilters = useSignal(false);
   const canScrollStart = useSignal(false);
@@ -132,20 +185,27 @@ function DiscoverFilters({
     .map((filter) => `${filter.key}:${filter.label}`)
     .join("|");
 
+  // The arrows and the edge fades both follow this, so they never disagree
+  // about whether there's more to scroll.
   const updateScrollState = useCallback((isRtl: boolean) => {
     const container = filtersRef.current;
     const wrapper = container?.parentElement;
+    const setScrollable = (start: boolean, end: boolean) => {
+      canScrollStart.value = start;
+      canScrollEnd.value = end;
+      // The fades are physical sides; the start is on the right in RTL.
+      container?.toggleAttribute("data-fade-left", isRtl ? end : start);
+      container?.toggleAttribute("data-fade-right", isRtl ? start : end);
+    };
     if (!container || !wrapper) {
       hasScrollableFilters.value = false;
-      canScrollStart.value = false;
-      canScrollEnd.value = false;
+      setScrollable(false, false);
       return;
     }
     const hasOverflow = container.scrollWidth > wrapper.clientWidth + 1;
     hasScrollableFilters.value = hasOverflow;
     if (!hasOverflow) {
-      canScrollStart.value = false;
-      canScrollEnd.value = false;
+      setScrollable(false, false);
       return;
     }
     const maxScroll = Math.max(
@@ -156,8 +216,7 @@ function DiscoverFilters({
       ? Math.abs(container.scrollLeft)
       : container.scrollLeft;
 
-    canScrollStart.value = position > 1;
-    canScrollEnd.value = position < maxScroll - 1;
+    setScrollable(position > 1, position < maxScroll - 1);
   }, []);
 
   const scrollFilters = useCallback((direction: -1 | 1) => {
@@ -175,48 +234,55 @@ function DiscoverFilters({
 
     const isRtl = getComputedStyle(container).direction === "rtl";
     const containerRect = container.getBoundingClientRect();
+    const current = container.scrollLeft;
 
-    let targetPill: HTMLButtonElement | undefined;
+    // Pills in `scrollLeft` units, where the visible stretch runs from
+    // `scrollLeft` to `scrollLeft + clientWidth` (RTL's `scrollLeft` is
+    // negative, which this handles too).
+    const spans = pills.map((pill) => {
+      const rect = pill.getBoundingClientRect();
+      const start = rect.left - containerRect.left + current;
+      return { start, end: start + rect.width };
+    });
 
-    if (direction === 1) {
-      // Toward the end: right in LTR, left in RTL.
-      targetPill = isRtl
-        ? pills.find((pill) => {
-            const rect = pill.getBoundingClientRect();
-            return rect.left < containerRect.left - 1;
-          })
-        : pills.find((pill) => {
-            const rect = pill.getBoundingClientRect();
-            return rect.right > containerRect.right + 1;
-          });
+    // Steps from where an earlier click's smooth scroll is headed rather than
+    // from where it has got to, so quick clicks each move on another pill.
+    const pending = pendingScrollRef.current;
+    const base =
+      pending && performance.now() - pending.at < PENDING_SCROLL_MS
+        ? pending.left
+        : current;
+    const viewStart = base;
+    const viewEnd = base + container.clientWidth;
+
+    // Toward the end is right in LTR, left in RTL. Bring the nearest pill
+    // hidden past that edge fully into view.
+    let next: number | undefined;
+    if ((direction === 1) !== isRtl) {
+      const hidden = spans.filter((span) => span.end > viewEnd + 1);
+      if (hidden.length > 0) {
+        next = base + Math.min(...hidden.map((span) => span.end)) - viewEnd;
+      }
     } else {
-      // Toward the start: left in LTR, right in RTL.
-      targetPill = isRtl
-        ? [...pills].reverse().find((pill) => {
-            const rect = pill.getBoundingClientRect();
-            return rect.right > containerRect.right + 1;
-          })
-        : [...pills].reverse().find((pill) => {
-            const rect = pill.getBoundingClientRect();
-            return rect.left < containerRect.left - 1;
-          });
+      const hidden = spans.filter((span) => span.start < viewStart - 1);
+      if (hidden.length > 0) {
+        next =
+          base - (viewStart - Math.max(...hidden.map((span) => span.start)));
+      }
     }
+    if (next === undefined) return;
 
-    if (!targetPill) return;
-
-    const targetRect = targetPill.getBoundingClientRect();
-
-    const scrollAmount =
-      direction === 1
-        ? isRtl
-          ? targetRect.left - containerRect.left
-          : targetRect.right - containerRect.right
-        : isRtl
-          ? targetRect.right - containerRect.right
-          : targetRect.left - containerRect.left;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    next = isRtl
+      ? Math.min(0, Math.max(-maxScroll, next))
+      : Math.min(maxScroll, Math.max(0, next));
+    pendingScrollRef.current = { left: next, at: performance.now() };
 
     container.scrollBy({
-      left: scrollAmount,
+      left: next - current,
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+        ? "auto"
+        : "smooth",
     });
   }, []);
   const showArrows = hasScrollableFilters.value;
@@ -344,7 +410,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
 
   const activeFilter = useSignal<FilterKey>("all");
 
-  const panelRef = useSidePanelMaxHeight();
+  const panelRef = usePanelViewportMeasures();
 
   if (!tab) {
     return null;

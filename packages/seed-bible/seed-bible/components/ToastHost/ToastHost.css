@@ -30,7 +30,7 @@
   gap: 0.25rem;
   padding: 0.25rem;
   padding-right: 0.5rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.75rem;
   background: var(--sb-reader-background);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
@@ -156,7 +156,7 @@
 .sb-toast {
   pointer-events: auto;
   padding: 0.625rem 1.125rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.75rem;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);

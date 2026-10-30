@@ -123,7 +123,7 @@ export function PlaylistRow(props: {
           <MaterialIcon className="sb-context-menu-item-icon">
             share
           </MaterialIcon>
-          {t("share-playlist", { defaultValue: "Share playlist" })}
+          {t("share", { defaultValue: "Share" })}
         </ContextMenuItem>
         {props.readOnly ? null : (
           <>
@@ -136,7 +136,7 @@ export function PlaylistRow(props: {
               <MaterialIcon className="sb-context-menu-item-icon">
                 edit
               </MaterialIcon>
-              {t("edit-playlist", { defaultValue: "Edit playlist" })}
+              {t("edit", { defaultValue: "Edit" })}
             </ContextMenuItem>
             <ContextMenuItem
               className="sb-context-menu-item--danger"

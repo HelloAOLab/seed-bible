@@ -293,6 +293,7 @@ function MainContent(props: {
             <TabsLayout state={state} />
           </main>
           {sidePane && <SidePane state={state} pane={sidePane} />}
+          <div className="sb-pane-side-ghost-host" />
           {fullscreenPane && (
             <FullscreenPane state={state} pane={fullscreenPane} />
           )}

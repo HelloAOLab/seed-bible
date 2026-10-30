@@ -168,6 +168,35 @@
   cursor: pointer;
 }
 
+/* Annotations can run for pages, which would leave the centred ⋮ off-screen
+   while reading the card. Sticky to both edges, it stays centred on short
+   cards and on long ones stays within view, but never leaves its card. */
+.sb-annotation-item > .sb-context-menu-anchor {
+  position: sticky;
+  top: 0.5rem;
+  bottom: 0.5rem;
+}
+
+/* The ⋮ follows the sidebar tab rows' rules (see Tabs.css): shown on hover,
+   keyboard focus or while its menu is open, always on touch and phone
+   widths, fading in and out with `visibility` flipped at the visible end. */
+@media (hover: hover) and (min-width: 481px) {
+  .sb-annotation-item > .sb-context-menu-anchor {
+    transition:
+      opacity 0.15s ease,
+      visibility 0s;
+  }
+
+  .sb-annotation-item:not(:hover, :has(:focus-visible))
+    > .sb-context-menu-anchor:not(:has([aria-expanded="true"])) {
+    visibility: hidden;
+    opacity: 0;
+    transition:
+      opacity 0.15s ease,
+      visibility 0s 0.15s;
+  }
+}
+
 .sb-annotation-item-preview {
   font-size: 0.9rem;
 

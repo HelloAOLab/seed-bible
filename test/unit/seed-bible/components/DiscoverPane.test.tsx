@@ -600,7 +600,7 @@ describe("DiscoverPane", () => {
       );
 
       expect(items.map((el) => el.textContent)).toEqual([
-        expect.stringContaining("Share playlist"),
+        expect.stringContaining("Share"),
       ]);
       await act(async () => {
         (items[0] as HTMLElement).click();
@@ -2020,7 +2020,7 @@ describe("DiscoverPane", () => {
       );
     });
     expect(modalContainer.textContent).toContain(
-      "Delete this annotation? This can't be undone."
+      "Delete the annotation on GEN 1? This can't be undone."
     );
 
     const confirmButton = modalContainer.querySelector(
@@ -2453,7 +2453,7 @@ describe("DiscoverPaneTitle", () => {
     });
 
     expect(container.textContent).toBe("Discover");
-    expect(container.querySelector(".sb-reading-plans-back")).toBeNull();
+    expect(container.querySelector('button[aria-label="Back"]')).toBeNull();
   });
 
   it("shows a back button and the playlist title in the play view", () => {
@@ -2484,7 +2484,7 @@ describe("DiscoverPaneTitle", () => {
     );
 
     const backButton = container.querySelector(
-      ".sb-reading-plans-back"
+      'button[aria-label="Back"]'
     ) as HTMLButtonElement;
     act(() => {
       backButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -2571,7 +2571,7 @@ describe("DiscoverPaneTitle", () => {
     });
 
     expect(container.textContent).toBe("Discover");
-    expect(container.querySelector(".sb-reading-plans-back")).toBeNull();
+    expect(container.querySelector('button[aria-label="Back"]')).toBeNull();
   });
 
   it("shows a back button and an editable title input in the create view", () => {
@@ -2607,7 +2607,7 @@ describe("DiscoverPaneTitle", () => {
     expect(playlists.editingPlaylist.value?.title).toBe("Morning Devotion");
 
     const backButton = container.querySelector(
-      ".sb-reading-plans-back"
+      'button[aria-label="Back"]'
     ) as HTMLButtonElement;
     act(() => {
       backButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -2640,7 +2640,9 @@ describe("DiscoverPaneTitle", () => {
 
     act(() => {
       (
-        container.querySelector(".sb-reading-plans-back") as HTMLButtonElement
+        container.querySelector(
+          'button[aria-label="Back"]'
+        ) as HTMLButtonElement
       ).dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
@@ -3017,7 +3019,7 @@ describe("DiscoverPaneTitle", () => {
     );
 
     const backButton = container.querySelector(
-      ".sb-reading-plans-back"
+      'button[aria-label="Back"]'
     ) as HTMLButtonElement;
     act(() => {
       backButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));

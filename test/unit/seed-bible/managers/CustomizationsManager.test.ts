@@ -69,7 +69,7 @@ describe("CustomizationsManager", () => {
       .mockResolvedValue({ success: true } as never);
     eraseDataMock = vi
       .spyOn(os, "eraseData")
-      .mockResolvedValue(undefined as never);
+      .mockResolvedValue({ success: true } as never);
     listAllDataByMarkerMock = vi
       .spyOn(os, "listAllDataByMarker")
       .mockResolvedValue({ success: true, items: [] });
@@ -1616,6 +1616,34 @@ describe("CustomizationsManager", () => {
     expect(manager.editingCustomization.value).toBeNull();
   });
 
+  it("remove() rejects and keeps the customization when its record can't be erased", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    eraseDataMock.mockResolvedValue({
+      success: false,
+      errorCode: "server_error",
+      errorMessage: "",
+    } as never);
+
+    await expect(manager.remove(created.id)).rejects.toThrow("server_error");
+
+    expect(manager.customizations.value.map((c) => c.id)).toEqual([created.id]);
+  });
+
+  it("remove() treats a record that's already gone as deleted", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    eraseDataMock.mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "",
+    } as never);
+
+    await manager.remove(created.id);
+
+    expect(manager.customizations.value).toEqual([]);
+  });
+
   describe("a customization's sensitive proxies", () => {
     const pointer = {
       recordName: "user-1",
@@ -1814,9 +1842,8 @@ describe("CustomizationsManager", () => {
       expect(manager.customizations.value).toEqual([]);
     });
 
-    it("remove() keeps the customization when a proxy can't be erased", async () => {
+    it("remove() rejects and keeps the customization when a proxy can't be erased", async () => {
       recordDataMock.mockResolvedValue({ success: true });
-      vi.spyOn(console, "error").mockImplementation(() => undefined);
       vi.spyOn(os, "eraseProxy").mockResolvedValue({
         success: false,
         errorCode: "server_error",
@@ -1831,7 +1858,7 @@ describe("CustomizationsManager", () => {
         pointer
       );
 
-      await manager.remove(created.id);
+      await expect(manager.remove(created.id)).rejects.toThrow("server_error");
 
       expect(eraseDataMock).not.toHaveBeenCalled();
       expect(manager.customizations.value.map((c) => c.id)).toEqual([

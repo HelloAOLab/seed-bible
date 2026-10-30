@@ -32,48 +32,17 @@
   font-family: var(--sb-font-family);
 }
 
+/* As wide as the Today screen's column. */
 .sb-content-inner {
   width: 100%;
-  max-width: 560px;
+  max-width: 51.25rem;
   margin: 0 auto;
 }
 
 /* ------------------------------------------------------------------ search */
 
 .sb-content-search {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 48px;
   margin: var(--sb-content-padding);
-  padding: 0 16px;
-  border-radius: 8px;
-  background: var(--sb-content-surface-strong);
-  box-sizing: border-box;
-}
-
-.sb-content-search .material-symbols-outlined {
-  flex-shrink: 0;
-  color: var(--sb-font-color);
-  font-size: 22px;
-}
-
-.sb-content-search input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-family: inherit;
-  font-size: 1rem;
-}
-
-.sb-content-search input:focus {
-  outline: none;
-}
-
-.sb-content-search input::placeholder {
-  color: var(--sb-content-muted);
 }
 
 /* ------------------------------------------------------------------- chips */
@@ -112,13 +81,40 @@
   background: var(--sb-primary-color);
 }
 
+/* Sets Create apart from the filters beside it. */
+.sb-content-toolbar-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 1.25rem;
+  background: var(--sb-divider-color);
+}
+
 .sb-content-chips {
+  --sb-content-chips-fade-left: 0px;
+  --sb-content-chips-fade-right: 0px;
   display: flex;
   flex: 1;
   min-width: 0;
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0px,
+    black var(--sb-content-chips-fade-left),
+    black calc(100% - var(--sb-content-chips-fade-right)),
+    transparent 100%
+  );
+}
+
+/* Each edge fades only while chips are hidden past it (`useScrollEdgeFade`),
+   like Today's filter pills. */
+.sb-content-chips[data-fade-left] {
+  --sb-content-chips-fade-left: 1.25rem;
+}
+
+.sb-content-chips[data-fade-right] {
+  --sb-content-chips-fade-right: 1.25rem;
 }
 
 .sb-content-chips::-webkit-scrollbar {
@@ -137,6 +133,14 @@
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+/* The same step up as Today's filter pills. */
+@media (hover: hover) {
+  .sb-content-chip:not(.sb-content-chip-active):hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  }
 }
 
 .sb-content-chip-active {
@@ -321,8 +325,12 @@
   line-height: 1.5;
 }
 
-.sb-content-highlight-ref {
-  display: block;
+/* The reference, then the translation the highlight was made in. */
+.sb-content-highlight-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
   margin-top: 2px;
   color: var(--sb-content-muted);
   font-size: 0.8125rem;
@@ -330,9 +338,11 @@
 
 /* --------------------------------------------------------------- saves */
 
+/* Equal-width cards in columns: as many as fit at 10rem or wider, which is
+   two on a phone and three in the desktop column. */
 .sb-content-saves {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
   gap: 8px;
 }
 
@@ -342,7 +352,8 @@
  * two separate controls that happen to sit side by side.
  */
 .sb-content-save-row {
-  display: inline-flex;
+  display: flex;
+  min-width: 0;
   align-items: center;
   border-radius: 8px;
   background: var(--sb-content-surface);
@@ -352,11 +363,19 @@
   background: var(--sb-content-surface-strong);
 }
 
+/* The name has a line to itself, so a long book name isn't cut short; the
+   translation, date and folder count go on the line under it. */
 .sb-content-save {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
   padding: 9px 12px;
+  text-align: start;
   border: none;
   border-radius: 8px 0 0 8px;
   background: transparent;
@@ -381,27 +400,48 @@
   color: inherit;
 }
 
+/* Wraps onto a second line rather than ending in an ellipsis when even its
+   own line is too narrow, as on a small phone. */
 .sb-content-save-name {
+  overflow-wrap: anywhere;
   font-size: 0.9375rem;
   font-weight: 700;
 }
 
-.sb-content-save-kind {
+/* Matches the translation on the sidebar's save and tab rows. */
+.sb-content-save-translation,
+.sb-content-highlight-translation {
   color: var(--sb-content-muted);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
-/* A verse save is the more specific of the two, so it carries the accent. */
-.sb-content-save-kind-verse {
-  color: var(--sb-content-accent);
-}
-
-.sb-content-save-date {
+/* The second line: the translation, the date, then the folder count. */
+.sb-content-save-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
   color: var(--sb-content-muted);
   font-size: 0.75rem;
+}
+
+/* Sized like the tab rows' dot; the colour comes from the line it's on. */
+.sb-content-meta-sep {
+  font-size: 0.625rem;
+  line-height: 1;
+}
+
+.sb-content-save-folders {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sb-content-save-folders .material-symbols-outlined {
+  font-size: 0.875rem;
 }
 
 /* ----------------------------------------------------------- reading plans */
@@ -444,11 +484,6 @@
   cursor: pointer;
 }
 
-/* Delete is destructive, so it reads red — matching the design's menu. */
-.sb-content-menu-delete {
-  color: #db1c1c;
-}
-
 /* -------------------------------------------------------------- your images */
 
 .sb-images-grid {
@@ -462,7 +497,6 @@
 
 /* Positioned so the delete button can sit in the tile's corner. */
 .sb-images-item {
-  position: relative;
   min-width: 0;
 }
 
@@ -485,35 +519,6 @@
   object-fit: cover;
 }
 
-/*
- * Sits on top of the picture, so it is drawn for contrast against any image
- * rather than in the theme's colours, which a photo could match.
- */
-.sb-images-delete {
-  position: absolute;
-  top: 6px;
-  inset-inline-end: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: rgb(0 0 0 / 55%);
-  color: #fff;
-  cursor: pointer;
-}
-
-.sb-images-delete:hover {
-  background: #db1c1c;
-}
-
-.sb-images-delete .material-symbols-outlined {
-  font-size: 18px;
-}
-
 .sb-images-date {
   display: block;
   margin-top: 4px;
@@ -529,6 +534,57 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* Label over value, one detail per row. */
+.sb-images-preview-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.sb-images-preview-details dt {
+  margin-bottom: 2px;
+  color: var(--sb-content-muted);
+  font-size: 0.75rem;
+}
+
+.sb-images-preview-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* With room to spare, label and value share a line, which keeps the preview
+   short enough for the desktop modal's height cap. */
+@media (min-width: 481px) {
+  .sb-images-preview-details {
+    gap: 6px;
+  }
+
+  .sb-images-preview-details > div {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .sb-images-preview-details dt {
+    margin-bottom: 0;
+  }
+}
+
+/* Download sits apart at the start of the row, Close and Delete at the end. */
+.sb-images-preview-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-inline-end: auto;
+}
+
+.sb-images-preview-download .material-symbols-outlined {
+  font-size: 1.125rem;
 }
 
 .sb-images-preview-img {

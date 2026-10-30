@@ -1,4 +1,5 @@
 import {
+  batch,
   computed,
   effect,
   signal,
@@ -10,6 +11,7 @@ import type { LoginManager } from "../managers/LoginManager";
 import type { CasualOSManager } from "./OsManager";
 import { readRecord } from "./RecordRead";
 import { captureEvent } from "./Utils";
+import { canonicalBookIndex } from "./BibleDataManager";
 
 /**
  * Verse target for a save: a single verse number or an inclusive `[start, end]`
@@ -140,6 +142,36 @@ export function normalizeSaveCategories(
     unique.push(name);
   }
   return unique.length === 0 ? [DEFAULT_SAVE_CATEGORY] : unique;
+}
+
+/** ":4" or ":4-6" after a save's chapter; "" for a whole-chapter save. */
+export function formatSaveVerse(verse: SaveVerse | undefined): string {
+  if (verse === undefined) return "";
+  if (typeof verse === "number") return `:${verse}`;
+  return verse[0] === verse[1] ? `:${verse[0]}` : `:${verse[0]}-${verse[1]}`;
+}
+
+/**
+ * Bible order: book, then chapter, then verse (a whole chapter before its
+ * verses, a shorter range before a longer one from the same verse).
+ */
+export function compareSaves(a: Save, b: Save): number {
+  const book = canonicalBookIndex(a.bookId) - canonicalBookIndex(b.bookId);
+  if (book !== 0) return book;
+  if (a.bookId !== b.bookId) return a.bookId.localeCompare(b.bookId);
+  if (a.chapterNumber !== b.chapterNumber) {
+    return a.chapterNumber - b.chapterNumber;
+  }
+  const [aStart, aEnd] = verseBounds(a.verse);
+  const [bStart, bEnd] = verseBounds(b.verse);
+  return aStart - bStart || aEnd - bEnd;
+}
+
+/** A save's verses as `[start, end]`; a whole chapter is `[0, 0]`. */
+function verseBounds(verse: SaveVerse | undefined): [number, number] {
+  if (verse === undefined) return [0, 0];
+  if (typeof verse === "number") return [verse, verse];
+  return [verse[0], verse[1]];
 }
 
 /**
@@ -666,6 +698,105 @@ export function createSavesManager(
     return loadedUserId.value === userId;
   };
 
+  /**
+   * Writes run one after another. Each carries the whole list, so if two ran
+   * at once an older list could land last and bring back a save the newer
+   * one removed.
+   */
+  let writeQueue: Promise<void> = Promise.resolve();
+  let pendingWrites = 0;
+
+  const queueWrite = (
+    nextSaves: Save[],
+    nextCategories: SaveCategory[]
+  ): Promise<void> => {
+    pendingWrites++;
+    const write = writeQueue.then(() => persist(nextSaves, nextCategories));
+    writeQueue = write
+      .catch(() => {})
+      .finally(() => {
+        pendingWrites--;
+      });
+    return write;
+  };
+
+  /**
+   * After a failed write, waits for the queued writes to finish and then shows
+   * what is actually stored. A change made while the stored list is being read
+   * wins instead: it writes the whole list it shows, which brings the two back
+   * in step.
+   */
+  const resyncFromStorage = async (): Promise<void> => {
+    while (pendingWrites > 0) {
+      await writeQueue;
+    }
+    const userId = login.userId.value;
+    if (!userId || loadedUserId.value !== userId) {
+      return;
+    }
+    const shownSaves = saves.value;
+    const shownCategories = categories.value;
+    let data: Awaited<ReturnType<typeof os.getData>>;
+    try {
+      data = await os.getData(userId, STORAGE_ADDRESS);
+    } catch (error) {
+      console.warn("Could not re-read the saves after a failed write.", error);
+      return;
+    }
+    if (
+      pendingWrites > 0 ||
+      login.userId.value !== userId ||
+      saves.value !== shownSaves ||
+      categories.value !== shownCategories
+    ) {
+      return;
+    }
+    const stored = readRecord(data, persistedSavesPayloadSchema, "saves");
+    if (stored.status !== "found") {
+      return;
+    }
+    const normalized = normalizeSaves(
+      stored.value.saves,
+      stored.value.categories
+    );
+    batch(() => {
+      saves.value = normalized.saves;
+      categories.value = normalized.categories;
+    });
+  };
+
+  /**
+   * Shows a change straight away, then stores it. If storing fails the list
+   * goes back to how it was and the error is passed on, so a caller that
+   * reports the failure isn't contradicted by a list that still shows the
+   * change. When another change has replaced the list since, going back isn't
+   * possible, so the list is re-read from storage once the writes settle.
+   */
+  const commit = async (
+    nextSaves: Save[],
+    nextCategories: SaveCategory[]
+  ): Promise<void> => {
+    const prevSaves = saves.value;
+    const prevCategories = categories.value;
+    batch(() => {
+      saves.value = nextSaves;
+      categories.value = nextCategories;
+    });
+    try {
+      await queueWrite(nextSaves, nextCategories);
+    } catch (error) {
+      if (saves.value === nextSaves && categories.value === nextCategories) {
+        batch(() => {
+          saves.value = prevSaves;
+          categories.value = prevCategories;
+        });
+      } else {
+        void resyncFromStorage();
+      }
+      throw error;
+    }
+  };
+
   effect(() => {
     const userId = login.userId.value;
     if (!userId) {
@@ -750,8 +881,6 @@ export function createSavesManager(
     for (const name of categoryNames) {
       nextCategories = ensureCategory(nextCategories, name);
     }
-    saves.value = nextSaves;
-    categories.value = nextCategories;
     // Auto-expand every category that just received a save so the user sees the
     // new entry without having to click open the folder.
     const nextExpanded = new Set(expandedCategories.value);
@@ -759,7 +888,7 @@ export function createSavesManager(
       nextExpanded.add(name);
     }
     expandedCategories.value = nextExpanded;
-    await persist(nextSaves, nextCategories);
+    await commit(nextSaves, nextCategories);
   };
 
   const removeSave: SavesManager["removeSave"] = async (id) => {
@@ -768,8 +897,7 @@ export function createSavesManager(
     if (next.length === saves.value.length) {
       return;
     }
-    saves.value = next;
-    await persist(next, categories.value);
+    await commit(next, categories.value);
   };
 
   const removeSaveFromCategory: SavesManager["removeSaveFromCategory"] = async (
@@ -790,8 +918,7 @@ export function createSavesManager(
         : saves.value.map((save) =>
             save.id === id ? { ...save, categories: remaining } : save
           );
-    saves.value = next;
-    await persist(next, categories.value);
+    await commit(next, categories.value);
   };
 
   const setSaveCategories: SavesManager["setSaveCategories"] = async (
@@ -821,14 +948,12 @@ export function createSavesManager(
     const nextSaves = saves.value.map((save) =>
       save.id === id ? { ...save, categories: nextNames } : save
     );
-    saves.value = nextSaves;
-    categories.value = nextCategories;
     const nextExpanded = new Set(expandedCategories.value);
     for (const name of nextNames) {
       nextExpanded.add(name);
     }
     expandedCategories.value = nextExpanded;
-    await persist(nextSaves, nextCategories);
+    await commit(nextSaves, nextCategories);
   };
 
   const toggleFilter = () => {
@@ -860,11 +985,10 @@ export function createSavesManager(
       return;
     }
     const nextCategories = [...categories.value, { name: trimmed }];
-    categories.value = nextCategories;
     const nextExpanded = new Set(expandedCategories.value);
     nextExpanded.add(trimmed);
     expandedCategories.value = nextExpanded;
-    await persist(saves.value, nextCategories);
+    await commit(saves.value, nextCategories);
   };
 
   const renameCategory: SavesManager["renameCategory"] = async (
@@ -894,14 +1018,12 @@ export function createSavesManager(
         ),
       };
     });
-    categories.value = nextCategories;
-    saves.value = nextSaves;
     const nextExpanded = new Set(expandedCategories.value);
     if (nextExpanded.delete(oldName)) {
       nextExpanded.add(trimmed);
     }
     expandedCategories.value = nextExpanded;
-    await persist(nextSaves, nextCategories);
+    await commit(nextSaves, nextCategories);
   };
 
   const deleteCategory: SavesManager["deleteCategory"] = async (name) => {
@@ -927,12 +1049,10 @@ export function createSavesManager(
       }
       nextSaves.push({ ...save, categories: remaining });
     }
-    categories.value = nextCategories;
-    saves.value = nextSaves;
     const nextExpanded = new Set(expandedCategories.value);
     nextExpanded.delete(name);
     expandedCategories.value = nextExpanded;
-    await persist(nextSaves, nextCategories);
+    await commit(nextSaves, nextCategories);
   };
 
   // Dev-only: mirrors the list to the console whenever it changes, so folder

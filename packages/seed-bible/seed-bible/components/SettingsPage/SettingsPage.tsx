@@ -2,6 +2,7 @@ import "./SettingsPage.css";
 import { localizedThemeName } from "./localizedThemeName";
 import { useComputed, useSignal } from "@preact/signals";
 import { ScriptureLineHeightIcon } from "../icons";
+import { SearchBar } from "../SearchBar/SearchBar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   TEXT_FONT_OPTIONS,
@@ -1082,20 +1083,13 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </div>
         ) : (
           <>
-            <label className="sb-extensions-search">
-              <span className="material-symbols-outlined" aria-hidden="true">
-                search
-              </span>
-              <input
-                type="search"
-                value={searchQuery.value}
-                onInput={(event) =>
-                  (searchQuery.value = event.currentTarget.value)
-                }
-                placeholder={t("extensions-search")}
-                aria-label={t("extensions-search")}
-              />
-            </label>
+            <SearchBar
+              value={searchQuery.value}
+              onInput={(value) => {
+                searchQuery.value = value;
+              }}
+              placeholder={t("extensions-search")}
+            />
             {query && shownExtensions.length === 0 ? (
               <div className="sb-settings-empty-state" role="status">
                 <p>
@@ -1819,7 +1813,13 @@ function SettingsMainView(props: { state: SeedBibleState }) {
             <button
               className="sb-settings-nav-item"
               onClick={() => {
-                // One history entry, so Back from Profile returns to Settings.
+                // Beside the sidebar, Settings stays open, as for Extensions.
+                if (!state.app.isMobile.value) {
+                  state.openProfile();
+                  return;
+                }
+                // On a phone Settings covers the screen, so it closes — in one
+                // history entry, so Back from Profile returns to Settings.
                 state.navigation.batchWrites(() => {
                   state.sidebar.closeSettings();
                   state.openProfile();
@@ -1919,12 +1919,26 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <button
                 className="sb-settings-nav-item"
                 onClick={() => {
-                  state.sidebar.closeSettings();
+                  const path = buildStaticPagePath({
+                    language: state.i18n.language.value,
+                    page: "about",
+                  });
+                  // On a phone Settings covers the screen, so it closes.
+                  if (state.app.isMobile.value) {
+                    state.sidebar.closeSettings();
+                    state.navigation.push(path);
+                    return;
+                  }
+                  // Beside the sidebar Settings stays open, as for Extensions.
+                  // Which Settings screen is showing lives in the URL, so it
+                  // has to come along or the new page would close Settings.
+                  const settingsView = state.navigation.currentUrl
+                    .peek()
+                    .searchParams.get("settingsView");
                   state.navigation.push(
-                    buildStaticPagePath({
-                      language: state.i18n.language.value,
-                      page: "about",
-                    })
+                    settingsView
+                      ? `${path}?${new URLSearchParams({ settingsView })}`
+                      : path
                   );
                 }}
               >
