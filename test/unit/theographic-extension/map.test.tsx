@@ -7,6 +7,7 @@ import {
   type LeafletModule,
 } from "@packages/seed-bible/seed-bible/managers/MapManager";
 import {
+  THEOGRAPHIC_ATTRIBUTION,
   canMapPlace,
   createIsPlaceOpen,
   createOpenPlace,
@@ -190,7 +191,7 @@ describe("resolvePlaceMapData", () => {
     expect(resolved?.data).toBe(outline);
   });
 
-  it("builds a point for an unlisted place, leaving the credit to the card", async () => {
+  it("builds a point for an unlisted place, credited to Theographic", async () => {
     const getResource = vi.fn();
 
     const resolved = await resolvePlaceMapData(
@@ -201,7 +202,7 @@ describe("resolvePlaceMapData", () => {
     expect(getResource).not.toHaveBeenCalled();
     expect(resolved).toMatchObject({
       data: { geometry: { type: "Point", coordinates: [36.3, 33.5] } },
-      attribution: [],
+      attribution: [THEOGRAPHIC_ATTRIBUTION],
     });
   });
 
@@ -215,7 +216,7 @@ describe("resolvePlaceMapData", () => {
 
     expect(resolved).toMatchObject({
       data: { geometry: { type: "Point", coordinates: [45.6, 31.3] } },
-      attribution: [],
+      attribution: [THEOGRAPHIC_ATTRIBUTION],
     });
   });
 
@@ -316,6 +317,25 @@ describe("createOpenPlace", () => {
       .querySelector("img.leaflet-tile")
       ?.getAttribute("src");
     expect(tile).toBe("https://tile.openstreetmap.org/10/641/418.png");
+  });
+
+  it("credits Theographic in the pane, which has no card beneath it", async () => {
+    const panes = createPanes();
+    const abana = place("Abana", { latitude: 33.5, longitude: 36.3 });
+
+    createOpenPlace(panes, readyMap(panes), { locations: fakeLocations() })?.(
+      abana
+    );
+    renderPane(panes, placePaneId(abana));
+    await waitFor(
+      () => container.querySelector(".sb-geojson-map-point") !== null
+    );
+
+    const credits = container.querySelector(
+      ".leaflet-control-attribution"
+    )?.textContent;
+    expect(credits).toContain("Theographic Bible Metadata");
+    expect(credits).toContain("OpenStreetMap");
   });
 
   it("says so, rather than showing an empty pane, when nothing can be drawn", async () => {

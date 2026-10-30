@@ -20,6 +20,10 @@ import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/Pane
 import { withoutQualifier } from "./names";
 import type { TheographicClient, TheographicPlaceEntry } from "./provider";
 
+/** The credit the Theographic dataset's own coordinates need on a map. */
+export const THEOGRAPHIC_ATTRIBUTION =
+  'Places: <a href="https://github.com/robertrouse/theographic-bible-metadata">Theographic Bible Metadata</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>)';
+
 /** A place as a GeoJSON point, `[longitude, latitude]` like all GeoJSON. */
 export type PlaceGeoJsonFeature = Feature<
   Point,
@@ -161,8 +165,7 @@ export async function resolvePlaceMapData(
   }
 
   const point = placeToGeoJson(place);
-  // The card these maps belong to already credits the dataset beneath them.
-  return point ? { data: point, attribution: [] } : null;
+  return point ? { data: point, attribution: [THEOGRAPHIC_ATTRIBUTION] } : null;
 }
 
 type MapDataState = PlaceMapData | null | "loading";
@@ -218,7 +221,15 @@ function PlaceMapView(props: {
     <GeoJsonMap
       map={map}
       data={mapData.data}
-      attribution={mapData.attribution}
+      attribution={
+        // The card an inline map sits in credits the dataset just below it;
+        // the floating pane has no card, so it keeps the credit.
+        inline
+          ? mapData.attribution.filter(
+              (credit) => credit !== THEOGRAPHIC_ATTRIBUTION
+            )
+          : mapData.attribution
+      }
       label={place.name}
       inline={inline}
       controls={controls}

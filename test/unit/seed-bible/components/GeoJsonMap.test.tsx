@@ -311,6 +311,21 @@ describe("GeoJsonMap", () => {
 
     expect(wheelZooms()).toBe(true);
   });
+
+  it("can be closed in the middle of a wheel zoom", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      await show(<GeoJsonMap map={readyMap()} data={ACCO} />);
+      wheelZooms();
+
+      // Leaflet zooms a moment after the wheel; the map is gone by then.
+      act(() => render(null, container));
+
+      expect(() => vi.advanceTimersByTime(1000)).not.toThrow();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 /** Whether a wheel over the map zooms it, which stops the page scrolling. */

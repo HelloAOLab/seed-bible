@@ -33,6 +33,19 @@ function hasArea(size: { x: number; y: number }): boolean {
   return size.x > 0 && size.y > 0;
 }
 
+/**
+ * Removes a Leaflet map. Leaflet 1.9 waits about 40ms after a wheel event
+ * before zooming, and doesn't cancel that wait when the map is removed: a map
+ * closed mid-scroll would then try to zoom a map that's gone, and throw.
+ */
+function removeMap(map: LeafletMap) {
+  const wheel = map.scrollWheelZoom as unknown as {
+    _timer?: ReturnType<typeof setTimeout>;
+  };
+  clearTimeout(wheel._timer);
+  map.remove();
+}
+
 interface DrawnMap {
   map: LeafletMap;
   /** Moves the view back to the data, as it was first shown. */
@@ -107,7 +120,7 @@ function drawMap(
     }
     return { map, fit };
   } catch (error) {
-    map.remove();
+    removeMap(map);
     throw error;
   }
 }
@@ -206,7 +219,7 @@ export function GeoJsonMap(props: {
     return () => {
       observer?.disconnect();
       recenter.value = null;
-      drawn.map.remove();
+      removeMap(drawn.map);
     };
   }, [L, map, data, label, credits, inline]);
 
