@@ -37,6 +37,13 @@ import type { Mock } from "vitest";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 import {
+  createSettings,
+  type SettingsManager,
+} from "@packages/seed-bible/seed-bible/managers/SettingsManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { makeFakeLogin } from "./testUtils/fakeLogin";
+import {
   createDiscoverManager,
   type DiscoverContext,
   type DiscoverManager,
@@ -3344,6 +3351,138 @@ describe("createBibleReadingState", () => {
       expect(state.discoveredStudyNotes.value).toEqual([]);
       expect(state.discoveredCrossReferences.value).toEqual([]);
       expect(state.discoveredContent.value).toEqual([]);
+    });
+  });
+
+  describe("discovered content in shared sessions", () => {
+    const genesisOneContent = () => ({
+      id: "provider",
+      title: "Provider",
+      description: "One result for Genesis 1.",
+      discover: () => [
+        {
+          type: "content" as const,
+          title: "Overview",
+          description: "desc",
+          reference: { book: "GEN", chapter: 1, verse: 1 },
+        },
+      ],
+    });
+
+    async function createReadingState(options: {
+      isShared: boolean;
+      settings: SettingsManager;
+    }) {
+      const discoverManager = createDiscoverManager();
+      discoverManager.registerDiscoverProvider(genesisOneContent());
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        { isShared: options.isShared },
+        discoverManager,
+        undefined,
+        undefined,
+        options.settings
+      );
+      await waitForInitialLoad(state);
+      return state;
+    }
+
+    function createSettingsManager() {
+      return createSettings(
+        CasualOSManager(),
+        makeFakeLogin({ name: "Test", config: {} } as unknown as UserProfile),
+        createNavigationManager({ initialHref: "http://localhost:3000/" })
+      );
+    }
+
+    it("hides discovered content in a session and reports it as hidden", async () => {
+      const state = await createReadingState({
+        isShared: true,
+        settings: createSettingsManager(),
+      });
+
+      await waitFor(() => state.hasHiddenDiscoveredContent.value);
+      expect(state.discoveredContent.value).toEqual([]);
+      expect(state.showSharedSessionHint.value).toBe(false);
+    });
+
+    it("shows it after Turn on, and keeps it on for future sessions", async () => {
+      const settings = createSettingsManager();
+      const state = await createReadingState({ isShared: true, settings });
+      await waitFor(() => state.hasHiddenDiscoveredContent.value);
+
+      state.turnOnDiscoveredContent();
+
+      expect(
+        state.discoveredContent.value.flatMap((group) =>
+          group.results.map((result) => result.title)
+        )
+      ).toEqual(["Overview"]);
+      expect(state.hasHiddenDiscoveredContent.value).toBe(false);
+      expect(
+        settings.settings.value.discoveredContent.showInSharedSessions
+      ).toBe(true);
+
+      const nextSession = await createReadingState({
+        isShared: true,
+        settings,
+      });
+      await waitFor(() => nextSession.discoveredContent.value.length > 0);
+      expect(nextSession.hasHiddenDiscoveredContent.value).toBe(false);
+    });
+
+    it("hides it again when the setting is turned off mid-session", async () => {
+      const settings = createSettingsManager();
+      settings.setDiscoveredContent({ showInSharedSessions: true });
+      const state = await createReadingState({ isShared: true, settings });
+      await waitFor(() => state.discoveredContent.value.length > 0);
+
+      settings.setDiscoveredContent({ showInSharedSessions: false });
+
+      expect(state.discoveredContent.value).toEqual([]);
+      expect(state.hasHiddenDiscoveredContent.value).toBe(true);
+    });
+
+    it("shows the hint once discovered content is on screen, until it is acknowledged", async () => {
+      const settings = createSettingsManager();
+      settings.setDiscoveredContent({ showInSharedSessions: true });
+      const state = await createReadingState({ isShared: true, settings });
+      await waitFor(() => state.discoveredContent.value.length > 0);
+
+      expect(state.showSharedSessionHint.value).toBe(true);
+
+      state.dismissSharedSessionHint();
+
+      expect(state.showSharedSessionHint.value).toBe(false);
+      const nextSession = await createReadingState({
+        isShared: true,
+        settings,
+      });
+      await waitFor(() => nextSession.discoveredContent.value.length > 0);
+      expect(nextSession.showSharedSessionHint.value).toBe(false);
+    });
+
+    it("leaves reading outside a session alone: content shows and there is no hint", async () => {
+      const state = await createReadingState({
+        isShared: false,
+        settings: createSettingsManager(),
+      });
+
+      await waitFor(() => state.discoveredContent.value.length > 0);
+      expect(state.hasHiddenDiscoveredContent.value).toBe(false);
+      expect(state.showSharedSessionHint.value).toBe(false);
+    });
+
+    it("keeps a session's inline-panel toggle out of the user's settings", async () => {
+      const settings = createSettingsManager();
+      const state = await createReadingState({ isShared: true, settings });
+
+      state.discoverContentPanelInline.value = false;
+
+      expect(settings.settings.value.discoverContentPanelInline).toBe(true);
     });
   });
 

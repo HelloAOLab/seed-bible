@@ -703,6 +703,39 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             }}
           />
         </div>
+
+        <div className="sb-settings-toggle-row">
+          <div className="sb-settings-toggle-text">
+            <label
+              className="sb-settings-toggle-label"
+              htmlFor="sb-show-discovered-content-in-sessions"
+            >
+              {t("show-discovered-content-in-sessions", {
+                defaultValue: "Show in shared sessions",
+              })}
+            </label>
+            <p
+              id="sb-show-discovered-content-in-sessions-description"
+              className="sb-settings-toggle-description"
+            >
+              {t("show-discovered-content-in-sessions-description", {
+                defaultValue: "Only you see it. Others in the session won't.",
+              })}
+            </p>
+          </div>
+          <input
+            id="sb-show-discovered-content-in-sessions"
+            type="checkbox"
+            aria-describedby="sb-show-discovered-content-in-sessions-description"
+            checked={current.discoveredContent.showInSharedSessions}
+            onChange={(event: Event) => {
+              settings.setDiscoveredContent({
+                showInSharedSessions: (event.currentTarget as HTMLInputElement)
+                  .checked,
+              });
+            }}
+          />
+        </div>
         <h3 className="sb-settings-subheading">
           {t("session", { defaultValue: "Session" })}
         </h3>

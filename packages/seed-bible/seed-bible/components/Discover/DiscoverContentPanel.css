@@ -204,3 +204,177 @@
   border-radius: 6px;
   padding: 12px 16px;
 }
+
+/* ── Discovered content hidden in a shared session ── */
+
+.sb-dcp-hidden-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.sb-dcp-hidden-notice-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--sb-tertiary-color);
+}
+
+.sb-dcp-hidden-notice-icon,
+.sb-dcp-hidden-notice-message,
+.sb-dcp-hidden-notice-dismiss,
+.sb-dcp-hidden-banner-icon,
+.sb-dcp-hidden-banner-close {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-dcp-hidden-notice-title {
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.sb-dcp-hidden-notice-message {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+}
+
+.sb-dcp-hidden-notice-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.sb-dcp-hidden-notice-dismiss,
+.sb-dcp-hidden-notice-turn-on,
+.sb-dcp-hidden-banner-turn-on,
+.sb-dcp-hidden-banner-close {
+  appearance: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sb-dcp-hidden-notice-dismiss {
+  border: none;
+  background: transparent;
+}
+
+.sb-dcp-hidden-notice-turn-on {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--sb-link-color);
+}
+
+.sb-dcp-hidden-notice-turn-on:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-dcp-hidden-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--sb-tertiary-color);
+}
+
+.sb-dcp-hidden-banner-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sb-dcp-hidden-banner-text p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.sb-dcp-hidden-banner-icon {
+  font-size: 1.4rem;
+}
+
+.sb-dcp-hidden-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sb-dcp-hidden-banner-turn-on {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  color: var(--sb-primary-color);
+  background: transparent;
+}
+
+.sb-dcp-hidden-banner-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+}
+
+.sb-dcp-hidden-banner-close .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+/* ── Hint that discovered content is private in a shared session ── */
+
+.sb-dcp-session-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 75%);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-dcp-session-hint-icon {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  color: var(--sb-primary-color);
+}
+
+.sb-dcp-session-hint-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.sb-dcp-session-hint-body p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sb-dcp-session-hint-dismiss {
+  appearance: none;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-link-color);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-dcp-session-hint-dismiss:hover {
+  text-decoration: underline;
+}

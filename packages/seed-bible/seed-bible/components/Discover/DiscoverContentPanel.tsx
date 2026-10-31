@@ -388,6 +388,119 @@ function DiscoverFilters({
   );
 }
 
+interface HiddenContentWarningProps {
+  handleAccept: () => void;
+  handleDismiss: () => void;
+}
+
+function ContentWarning(props: HiddenContentWarningProps) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-dcp-hidden-notice">
+      <div className="sb-dcp-hidden-notice-icon" aria-hidden="true">
+        <MaterialIcon>visibility_off</MaterialIcon>
+      </div>
+      <p className="sb-dcp-hidden-notice-title">
+        {t("discover-hidden-in-session", {
+          defaultValue: "Discovered content is off in shared sessions",
+        })}
+      </p>
+      <p className="sb-dcp-hidden-notice-message">
+        {t("discover-hidden-in-session-reason", {
+          defaultValue:
+            "It's only visible to you, so it's hidden while you read with others.",
+        })}
+      </p>
+      <div className="sb-dcp-hidden-notice-actions">
+        <button
+          type="button"
+          className="sb-dcp-hidden-notice-dismiss"
+          onClick={props.handleDismiss}
+        >
+          {t("discover-hidden-in-session-not-now", {
+            defaultValue: "Not now",
+          })}
+        </button>
+        <button
+          type="button"
+          className="sb-dcp-hidden-notice-turn-on"
+          onClick={props.handleAccept}
+        >
+          {t("discover-hidden-in-session-turn-on", {
+            defaultValue: "Turn on",
+          })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InlineContentWarning(props: HiddenContentWarningProps) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-dcp-hidden-banner">
+      <div className="sb-dcp-hidden-banner-text">
+        <MaterialIcon className="sb-dcp-hidden-banner-icon" aria-hidden="true">
+          visibility_off
+        </MaterialIcon>
+        <p>
+          {t("discover-hidden-in-session", {
+            defaultValue: "Discovered content is off in shared sessions",
+          })}
+        </p>
+      </div>
+      <div className="sb-dcp-hidden-banner-actions">
+        <button
+          type="button"
+          className="sb-dcp-hidden-banner-turn-on"
+          onClick={props.handleAccept}
+        >
+          {t("discover-hidden-in-session-turn-on", {
+            defaultValue: "Turn on",
+          })}
+        </button>
+        <button
+          type="button"
+          className="sb-dcp-hidden-banner-close"
+          onClick={props.handleDismiss}
+          aria-label={t("dismiss", { defaultValue: "Dismiss" })}
+          title={t("dismiss", { defaultValue: "Dismiss" })}
+        >
+          <MaterialIcon>close</MaterialIcon>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SharedSessionHint(props: { onDismiss: () => void }) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-dcp-session-hint" role="note">
+      <MaterialIcon className="sb-dcp-session-hint-icon" aria-hidden="true">
+        info
+      </MaterialIcon>
+      <div className="sb-dcp-session-hint-body">
+        <p>
+          {t("discover-shared-session-hint", {
+            defaultValue:
+              "Only you can see discovered content. Everything else in the session is shared.",
+          })}
+        </p>
+        <button
+          type="button"
+          className="sb-dcp-session-hint-dismiss"
+          onClick={props.onDismiss}
+        >
+          {t("discover-shared-session-hint-got-it", {
+            defaultValue: "Got it",
+          })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Discover content for one reading tab — the reader's and their friends'
  * notes (annotations), discovered cross references/study notes/content and
@@ -501,13 +614,18 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
       : null;
   }
 
-  const { hasAnnotations, showAnnotations, plans, hasAny } =
-    getDiscoverPanelContent(
-      tab.readingState,
-      state.annotations,
-      state.readingPlans,
-      state.features
-    );
+  const {
+    hasAnnotations,
+    showAnnotations,
+    plans,
+    hasAny,
+    showHiddenContentWarning,
+  } = getDiscoverPanelContent(
+    tab.readingState,
+    state.annotations,
+    state.readingPlans,
+    state.features
+  );
 
   // Only the full panel shows friends' playlists: they aren't tied to the
   // chapter, so they'd crowd the compact panel's chapter summary.
@@ -559,7 +677,10 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const showNotes = showAnnotations || showNotesAsEmptyState;
 
   const hasVisibleUnderAll =
-    hasAnnotations || showNotesAsEmptyState || hasOtherContentUnderAll;
+    hasAnnotations ||
+    showNotesAsEmptyState ||
+    hasOtherContentUnderAll ||
+    showHiddenContentWarning;
 
   const filters: {
     key: FilterKey;
@@ -646,6 +767,11 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
 
   return panel(
     <>
+      {tab.readingState.showSharedSessionHint.value && (
+        <SharedSessionHint
+          onDismiss={() => tab.readingState.dismissSharedSessionHint()}
+        />
+      )}
       {showFilters && (
         <DiscoverFilters
           filters={filters}
@@ -654,6 +780,22 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         />
       )}
       <div className="sb-discover-content-panel-scroll">
+        {showHiddenContentWarning &&
+          (hasAnnotations || plans.length > 0 ? (
+            <InlineContentWarning
+              handleAccept={() => tab.readingState.turnOnDiscoveredContent()}
+              handleDismiss={() =>
+                tab.readingState.dismissHiddenContentWarning()
+              }
+            />
+          ) : (
+            <ContentWarning
+              handleAccept={() => tab.readingState.turnOnDiscoveredContent()}
+              handleDismiss={() =>
+                tab.readingState.dismissHiddenContentWarning()
+              }
+            />
+          ))}
         {(f === "all" || f === "annotations") && showNotes && (
           <AnnotationsSection
             tab={tab}
