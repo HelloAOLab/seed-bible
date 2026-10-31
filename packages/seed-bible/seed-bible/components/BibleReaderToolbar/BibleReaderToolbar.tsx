@@ -129,6 +129,9 @@ const LEADING_NAV_TOOL_IDS = new Set([
   "previous-item",
 ]);
 
+/** Places in the desktop toolbar's primary group, the More button included. */
+const DESKTOP_PRIMARY_SLOTS = 4;
+
 /** Navigation tools that sit after More at the end of the desktop toolbar. */
 const TRAILING_NAV_TOOL_IDS = new Set(["next-chapter", "next-item"]);
 
@@ -1100,8 +1103,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // is not kept out even under chat-first: the mobile bar is fixed at five
   // tabs, so the More menu is chat's only home there. On desktop it's Search
   // plus Chat under chat-first — Books is not controllable, so it always
-  // stays. Everything else, including every extension tool, goes into More so
-  // installing extensions can't crowd the bar.
+  // stays. Everything else, including every extension tool, goes into More on
+  // mobile; on desktop it goes into More unless it all fits in the primary
+  // group (see `desktopToolsFit`).
   const primaryToolIds = useComputed(
     () =>
       new Set(
@@ -1120,9 +1124,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
-  // The tools shown directly in the desktop toolbar: chapter navigation and
-  // other non-controllable tools, plus the primary ones.
-  const desktopBarTools = useComputed(() =>
+  // Chapter navigation and other non-controllable tools, plus the primary ones.
+  const primaryBarTools = useComputed(() =>
     tools.value.filter(
       (tool) =>
         tool.visible.value &&
@@ -1130,11 +1133,60 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
+  // Whether every desktop tool fits on the bar. Like the mobile bar, the
+  // primary group (Today plus every non-navigation tool) has
+  // DESKTOP_PRIMARY_SLOTS places: when everything fits, More would only stand
+  // in for the last tool, so the tool itself is shown; when it doesn't, More
+  // takes the last place and holds the rest.
+  const desktopToolsFit = useComputed(() => {
+    if (isSmallScreen.value) return false;
+    const barToolCount = primaryBarTools.value.filter(
+      (tool) =>
+        !LEADING_NAV_TOOL_IDS.has(tool.id) &&
+        !TRAILING_NAV_TOOL_IDS.has(tool.id)
+    ).length;
+    // The extra 1 is Today.
+    return 1 + barToolCount + moreTools.value.length <= DESKTOP_PRIMARY_SLOTS;
+  });
+
+  // The controllable tools that keep their own desktop button. Under
+  // chat-first, a full bar has room for only one of Search and Chat next to
+  // More, so Chat keeps its place and Search moves into More.
+  const desktopPinnedToolIds = useComputed(() =>
+    !desktopToolsFit.value &&
+    primaryBarTools.value.some((tool) => tool.id === "open-chat")
+      ? new Set(["open-chat"])
+      : primaryToolIds.value
+  );
+
+  // The tools shown directly in the desktop toolbar, apart from the More tools
+  // that fit (see `desktopToolsFit`).
+  const desktopBarTools = useComputed(() =>
+    tools.value.filter(
+      (tool) =>
+        tool.visible.value &&
+        (!tool.isControllable || desktopPinnedToolIds.value.has(tool.id))
+    )
+  );
+
+  // The tools in the More menu, or none when the menu (and its button) is not
+  // shown.
+  const moreMenuTools = useComputed(() => {
+    if (isSmallScreen.value) return moreTools.value;
+    if (desktopToolsFit.value) return [];
+    return tools.value.filter(
+      (tool) =>
+        tool.visible.value &&
+        tool.isControllable &&
+        !desktopPinnedToolIds.value.has(tool.id)
+    );
+  });
+
   // Whether the chat tool is inside the More menu. Its unread badge is hidden
   // until the menu is opened, so the More button itself has to carry the
   // indicator.
   const chatInMoreMenu = useComputed(() =>
-    moreTools.value.some((tool) => tool.id === "open-chat")
+    moreMenuTools.value.some((tool) => tool.id === "open-chat")
   );
 
   const verseToolbarTools = useComputed(() => {
@@ -1218,7 +1270,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // menu has to close with it — otherwise it stays "open" with no button, and
   // pops back up by itself the next time a tool arrives.
   useSignalEffect(() => {
-    if (!isSmallScreen.value && moreTools.value.length === 0) {
+    if (!isSmallScreen.value && moreMenuTools.value.length === 0) {
       isMoreMenuOpen.value = false;
     }
   });
@@ -1227,6 +1279,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const toolbarWrapRef = useRef<HTMLDivElement>(null);
   const verseToolbarRef = useRef<HTMLDivElement>(null);
   const selectedToolbarToolId = useSignal<string | null>(null);
+  // A tool's own dropdown is drawn only while the tool is on the bar. If the
+  // tool moves into More while its dropdown is open, close it, so it doesn't
+  // pop back open when the tool returns to the bar.
+  useSignalEffect(() => {
+    const id = selectedToolbarToolId.value;
+    if (
+      id &&
+      !isSmallScreen.value &&
+      moreMenuTools.value.some((tool) => tool.id === id)
+    ) {
+      selectedToolbarToolId.value = null;
+    }
+  });
   const selectedVerseToolId = useSignal<string | null>(null);
   // Whether the mobile verse sheet is showing its overflow actions. Collapsed by
   // default; reset whenever the selection clears. Reached by dragging the grab
@@ -2605,7 +2670,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       </button>
       {isMoreMenuOpen.value && (
         <MoreMenu
-          tools={moreTools.value}
+          tools={moreMenuTools.value}
           unreadChatIndicator={unreadChatIndicator.value}
           chatWasMentioned={chats.wasMentioned.value}
           hasTypingInChats={hasTypingInChats.value}
@@ -3258,7 +3323,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       ...bar
                         .slice(todayIndex, moreIndex)
                         .flatMap(renderDesktopTool),
-                      moreTools.value.length > 0 ? desktopMoreButton : null,
+                      ...(desktopToolsFit.value
+                        ? moreTools.value.flatMap(renderDesktopTool)
+                        : []),
+                      moreMenuTools.value.length > 0 ? desktopMoreButton : null,
                       ...bar.slice(moreIndex).flatMap(renderDesktopTool),
                     ];
                   })()}

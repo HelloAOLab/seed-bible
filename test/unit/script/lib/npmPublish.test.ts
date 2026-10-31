@@ -54,6 +54,12 @@ describe("replaceVersionField", () => {
     );
   });
 
+  it("leaves the file unchanged when the version is already the one asked for", () => {
+    // The latest channel publishes the package.json version as-is.
+    const input = `{\n  "name": "x",\n  "version": "1.0.0"\n}\n`;
+    expect(replaceVersionField(input, "1.0.0")).toBe(input);
+  });
+
   it("throws when there is no version field", () => {
     expect(() => replaceVersionField(`{ "name": "x" }`, "1.0.0")).toThrow(
       /version/
