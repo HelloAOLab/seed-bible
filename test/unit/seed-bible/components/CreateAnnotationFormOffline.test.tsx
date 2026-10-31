@@ -126,6 +126,7 @@ describe("CreateAnnotationForm when the rich text editor can't load", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={createMockTabsManager()}
           toast={toast}

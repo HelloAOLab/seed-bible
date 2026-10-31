@@ -1,28 +1,26 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { DiscoverContentPanel } from "@packages/seed-bible/seed-bible/components/DiscoverContentPanel/DiscoverContentPanel";
+import { DiscoverContentPanel } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverContentPanel";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { PlanMatch } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
+import type { Playlist } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import type { Friend } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
+import {
+  createModalManager,
+  type ModalManager,
+} from "@packages/seed-bible/seed-bible/managers/ModalManager";
+import { ME } from "../testUtils/fakeSharedPermissions";
 import {
   createDiscoverManager,
   type DiscoverContentTypeDefinition,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { createRealFriendContent } from "../testUtils/realFriendContent";
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const actual = await vi.importActual<
-    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
-  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
-  return {
-    ...actual,
-    useI18n: () => ({
-      t: (key: string, options?: Record<string, unknown>) =>
-        (options?.defaultValue as string | undefined) ?? key,
-      language: "en",
-    }),
-  };
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
 });
 
 vi.mock("@packages/seed-bible/seed-bible/managers/Sanitization", () => ({
@@ -109,6 +107,13 @@ function createMockTab(
     discoveredCrossReferences?: unknown[];
     discoveredContent?: unknown[];
     selectedVerses?: number[];
+    chapterData?: {
+      book: { id: string; name: string };
+      chapter: { number: number };
+    };
+    translationId?: string;
+    selectTranslationAndChapter?: ReturnType<typeof vi.fn>;
+    decorateVerses?: ReturnType<typeof vi.fn>;
   } = {}
 ): ReaderTab {
   return {
@@ -116,7 +121,13 @@ function createMockTab(
     readingState: {
       bookId: signal("GEN"),
       chapterNumber: signal(1),
-      chapterData: signal(null),
+      chapterData: signal(overrides.chapterData ?? null),
+      translationBooks: signal(null),
+      translationId: signal(overrides.translationId ?? "BSB"),
+      selectTranslationAndChapter:
+        overrides.selectTranslationAndChapter ??
+        vi.fn().mockResolvedValue(undefined),
+      decorateVerses: overrides.decorateVerses ?? vi.fn(() => "decoration-1"),
       discoverContentPanelInline: signal(true),
       discoveredCrossReferences: signal(
         overrides.discoveredCrossReferences ?? []
@@ -138,8 +149,19 @@ function createMockState(
     pendingCountForChapter?: number;
     contentTypes?: DiscoverContentTypeDefinition[];
     readingPlansForChapter?: PlanMatch[];
+    /** Friends, each with the playlists they've published. */
+    friendPlaylists?: { friend: Friend; playlists: Playlist[] }[];
+    /** The open reader tab, which notes read their book names from. */
+    tab?: ReaderTab;
+    userId?: string | null;
+    getUserProfile?: ReturnType<typeof vi.fn>;
+    openVerseReference?: ReturnType<typeof vi.fn>;
+    modals?: ModalManager;
+    hasRecordOverride?: boolean;
+    deleteAnnotationAndRefreshImpl?: () => Promise<void>;
   } = {}
 ): SeedBibleState {
+  const friendPlaylists = overrides.friendPlaylists ?? [];
   const readingPlansForChapter = overrides.readingPlansForChapter ?? [];
   const discover = createDiscoverManager();
   for (const definition of overrides.contentTypes ?? []) {
@@ -148,20 +170,25 @@ function createMockState(
   return {
     app: {
       toast: vi.fn(),
-      openVerseReference: vi.fn().mockResolvedValue(undefined),
+      openVerseReference:
+        overrides.openVerseReference ?? vi.fn().mockResolvedValue(undefined),
       openDiscover: vi.fn(),
     },
     login: {
-      userId: signal(null),
-      getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
+      userId: signal(overrides.userId ?? null),
+      getUserProfile:
+        overrides.getUserProfile ?? vi.fn().mockResolvedValue({ name: "" }),
     },
-    tabs: { tabs: signal([]), selectedTabId: signal(null) },
+    tabs: {
+      tabs: signal(overrides.tab ? [overrides.tab] : []),
+      selectedTabId: signal(overrides.tab?.id ?? null),
+    },
     panes: { closeFullscreenPanes: vi.fn() },
-    modals: { openModal: vi.fn(), closeModal: vi.fn() },
+    modals: overrides.modals ?? { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
     friends: {
-      friends: signal([]),
-      friendIds: signal([]),
+      friends: signal(friendPlaylists.map((entry) => entry.friend)),
+      friendIds: signal(friendPlaylists.map((entry) => entry.friend.userId)),
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() =>
@@ -172,12 +199,17 @@ function createMockState(
         () => overrides.annotationsForChapter ?? []
       ),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
-      hasRecordOverride: false,
+      editAnnotation: vi.fn(),
+      deleteAnnotationAndRefresh: vi.fn(
+        overrides.deleteAnnotationAndRefreshImpl ?? (() => Promise.resolve())
+      ),
+      hasRecordOverride: overrides.hasRecordOverride ?? false,
       pendingCountForChapter: vi.fn(
         () => overrides.pendingCountForChapter ?? 0
       ),
       sync: {
         pendingCount: signal(0),
+        conflicts: signal([]),
       },
     },
     // The real manager only returns plans while the reading-plans feature is
@@ -187,6 +219,15 @@ function createMockState(
     },
     readingPlans: {
       getReadingPlansForChapter: vi.fn(() => readingPlansForChapter),
+    },
+    playlists: {
+      createNewPlaylist: vi.fn().mockResolvedValue(undefined),
+      getUserPlaylists: vi.fn((userId: string) =>
+        signal(
+          friendPlaylists.find((entry) => entry.friend.userId === userId)
+            ?.playlists ?? []
+        )
+      ),
     },
   } as unknown as SeedBibleState;
 }
@@ -213,7 +254,11 @@ describe("DiscoverContentPanel", () => {
   it("renders nothing when there is no tab", () => {
     act(() => {
       render(
-        <DiscoverContentPanel tab={null} state={createMockState()} />,
+        <DiscoverContentPanel
+          variant="compact"
+          tab={null}
+          state={createMockState()}
+        />,
         container
       );
     });
@@ -221,12 +266,84 @@ describe("DiscoverContentPanel", () => {
     expect(container.innerHTML).toBe("");
   });
 
+  it("sits in the reader's layout wrapper when compact, but fills the side pane when full", () => {
+    const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="compact"
+          tab={tab}
+          state={createMockState()}
+        />,
+        container
+      );
+    });
+    expect(
+      container.querySelector(
+        ".sb-bible-reader-discover-panel > .sb-discover-content-panel"
+      )
+    ).not.toBeNull();
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={createMockState()}
+        />,
+        container
+      );
+    });
+    expect(
+      container.querySelector(".sb-bible-reader-discover-panel")
+    ).toBeNull();
+    expect(
+      container.querySelector(".sb-discover-content-panel--full")
+    ).not.toBeNull();
+  });
+
+  it("in the full panel, keeps its header and asks for a tab when there is none", () => {
+    const onClose = vi.fn();
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={onClose}
+          tab={null}
+          state={createMockState()}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-discover-panel-header-title")?.textContent
+    ).toContain("Discover");
+    expect(container.querySelector(".sb-dcp-create-btn")).not.toBeNull();
+    expect(container.textContent).toContain(
+      "Select a tab to discover related material."
+    );
+
+    act(() => {
+      container
+        .querySelector(".sb-discover-panel-header-close")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("renders the discovered content", () => {
     const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
 
     act(() => {
       render(
-        <DiscoverContentPanel tab={tab} state={createMockState()} />,
+        <DiscoverContentPanel
+          variant="compact"
+          tab={tab}
+          state={createMockState()}
+        />,
         container
       );
     });
@@ -241,7 +358,10 @@ describe("DiscoverContentPanel", () => {
     const state = createMockState({ annotationsForChapter: [] });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     expect(
@@ -265,7 +385,10 @@ describe("DiscoverContentPanel", () => {
     });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     const sectionTitles = Array.from(
@@ -288,7 +411,10 @@ describe("DiscoverContentPanel", () => {
     });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     expect(
@@ -330,7 +456,10 @@ describe("DiscoverContentPanel", () => {
     } as unknown as SeedBibleState;
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     await vi.waitFor(() =>
@@ -347,10 +476,77 @@ describe("DiscoverContentPanel", () => {
     const state = createMockState({ annotationsForChapter: [] });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     expect(container.innerHTML).toBe("");
+  });
+
+  it("in the full panel, leaves out the empty notes section when the chapter has other content", () => {
+    const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={createMockState({ annotationsForChapter: [] })}
+        />,
+        container
+      );
+    });
+
+    expect(container.textContent).toContain("Exodus 5:3");
+    expect(container.textContent).not.toContain(
+      "You don't have any notes for this chapter."
+    );
+    const chipLabels = Array.from(
+      container.querySelectorAll(".sb-dcp-chip")
+    ).map((el) => el.textContent);
+    expect(chipLabels).not.toContain("Notes");
+  });
+
+  it("in the full panel, offers to create a note when the chapter has nothing to show", () => {
+    const tab = createMockTab();
+    const state = createMockState({ annotationsForChapter: [] });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-discover-panel-header-title")?.textContent
+    ).toContain("Discover GEN");
+    expect(
+      container.querySelector(".sb-discover-panel-header-close")
+    ).not.toBeNull();
+    expect(container.textContent).toContain(
+      "You don't have any notes for this chapter."
+    );
+    expect(container.textContent).not.toContain(
+      "Pick a filter above to see more from this chapter."
+    );
+
+    act(() => {
+      (
+        container.querySelector(
+          ".sb-discover-empty-action"
+        ) as HTMLButtonElement
+      ).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(state.annotations.createNewAnnotation).toHaveBeenCalledTimes(1);
   });
 
   it("renders the reading-plans section when a followed plan covers the chapter and nothing else exists", () => {
@@ -361,7 +557,10 @@ describe("DiscoverContentPanel", () => {
     });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     expect(
@@ -382,7 +581,10 @@ describe("DiscoverContentPanel", () => {
     });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     const chipLabels = Array.from(
@@ -398,7 +600,10 @@ describe("DiscoverContentPanel", () => {
     });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     expect(container.querySelector(".sb-dcp-filters")).toBeNull();
@@ -411,7 +616,10 @@ describe("DiscoverContentPanel", () => {
     });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     const chips = Array.from(container.querySelectorAll(".sb-dcp-chip"));
@@ -440,7 +648,10 @@ describe("DiscoverContentPanel", () => {
     });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     const getChip = (label: string) =>
@@ -464,7 +675,11 @@ describe("DiscoverContentPanel", () => {
 
     act(() => {
       render(
-        <DiscoverContentPanel tab={tabWithoutCrossReferences} state={state} />,
+        <DiscoverContentPanel
+          variant="compact"
+          tab={tabWithoutCrossReferences}
+          state={state}
+        />,
         container
       );
     });
@@ -493,7 +708,10 @@ describe("DiscoverContentPanel", () => {
     );
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     const getChip = (label: string) =>
@@ -513,13 +731,998 @@ describe("DiscoverContentPanel", () => {
     // does not get filter chips.
     act(() => {
       annotationsForChapter.value = [];
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     expect(getChip("All")!.getAttribute("aria-selected")).toBe("true");
     expect(getChip("Notes")).toBeUndefined();
     expect(container.textContent).toContain("Exodus 5:3");
     expect(container.textContent).toContain("A related article");
+  });
+
+  describe("notes in the full panel", () => {
+    const genesis1 = {
+      book: { id: "GEN", name: "Genesis" },
+      chapter: { number: 1 },
+    };
+
+    function renderFull(tab: ReaderTab, state: SeedBibleState) {
+      act(() => {
+        render(
+          <DiscoverContentPanel
+            variant="full"
+            onClose={vi.fn()}
+            tab={tab}
+            state={state}
+          />,
+          container
+        );
+      });
+    }
+
+    /** Opens the first note's menu, which is portaled to <body>. */
+    function openNoteMenu(): HTMLButtonElement[] {
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-annotation-item-menu")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      return Array.from(
+        document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')
+      );
+    }
+
+    const groupTitles = () =>
+      Array.from(
+        container.querySelectorAll(".sb-annotation-group-header-title")
+      ).map((el) => el.textContent);
+
+    it("doesn't list the user's own playlists or their playlist history", () => {
+      const tab = createMockTab();
+      const state = createMockState({ tab });
+      renderFull(tab, {
+        ...state,
+        playlists: {
+          ...state.playlists,
+          userPlaylists: signal([
+            { id: "p1", title: "Evening Reading", items: [] },
+          ]),
+          userPlaylistHistory: signal([
+            { id: "hist-1", playlistTitle: "Shared Study" },
+          ]),
+        },
+      } as unknown as SeedBibleState);
+
+      expect(container.textContent).not.toContain("Evening Reading");
+      expect(container.textContent).not.toContain("Shared Study");
+      expect(container.textContent).not.toContain("Playlist history");
+    });
+
+    it("drops a friend's note once you unfriend them", async () => {
+      const tab = createMockTab();
+      const mockState = createMockState({ tab });
+      const { login, friends, annotations } = await createRealFriendContent({
+        friendIds: ["ada"],
+        names: { ada: "Ada" },
+        notes: {
+          ada: [
+            createAnnotation({
+              id: "a1",
+              data: {
+                type: "comment",
+                html: "<p>Ada's note</p>",
+                userId: "ada",
+              },
+            } as Partial<Annotation>),
+          ],
+        },
+        discover: mockState.discover,
+      });
+      renderFull(tab, {
+        ...mockState,
+        login,
+        friends,
+        annotations,
+      } as unknown as SeedBibleState);
+      await vi.waitFor(() =>
+        expect(container.textContent).toContain("Ada's note")
+      );
+
+      await act(() => friends.unfriend("ada"));
+
+      expect(container.textContent).not.toContain("Ada's note");
+    });
+
+    it("hides the record-override banner when notes aren't routed through an override", () => {
+      const tab = createMockTab();
+      renderFull(tab, createMockState({ tab, hasRecordOverride: false }));
+
+      expect(
+        container.querySelector(".sb-annotation-override-banner")
+      ).toBeNull();
+    });
+
+    it("shows the record-override banner when notes are routed through a team record, with a button that reloads the URL without the query param", async () => {
+      const tab = createMockTab();
+      const state = createMockState({ tab, hasRecordOverride: true });
+      const originalLocation = window.location;
+      Object.defineProperty(window, "location", {
+        value: new URL(
+          "https://example.com/read?book=GEN&annotationRecordKey=team-record"
+        ),
+        writable: true,
+        configurable: true,
+      });
+
+      try {
+        renderFull(tab, state);
+
+        // The banner is lazily loaded, so it only mounts once the dynamic
+        // import resolves - which (being a real, unmocked import rather than
+        // a pre-resolved one) can take more than a single tick.
+        await vi.waitFor(() => {
+          expect(
+            container.querySelector(".sb-annotation-override-banner")
+          ).not.toBeNull();
+        });
+
+        const banner = container.querySelector(
+          ".sb-annotation-override-banner"
+        );
+        expect(banner?.textContent).toContain(
+          "Notes are being saved and loaded from your team's account."
+        );
+
+        const button = container.querySelector(
+          ".sb-annotation-override-banner-button"
+        ) as HTMLButtonElement;
+        expect(button?.textContent).toBe("Save to my account");
+
+        act(() => {
+          button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        });
+
+        expect(window.location.href).toBe("https://example.com/read?book=GEN");
+      } finally {
+        Object.defineProperty(window, "location", {
+          value: originalLocation,
+          writable: true,
+          configurable: true,
+        });
+      }
+    });
+
+    it("says how many changes are waiting to sync, and stays quiet when none are", () => {
+      function renderWith(pendingCountForChapter: number): string | null {
+        const tab = createMockTab();
+        renderFull(tab, createMockState({ tab, pendingCountForChapter }));
+        const text =
+          container.querySelector(".sb-annotations-pending-sync")
+            ?.textContent ?? null;
+        render(null, container);
+        return text;
+      }
+
+      expect(renderWith(0)).toBeNull();
+      expect(renderWith(1)).toBe("1 change waiting to sync");
+      expect(renderWith(3)).toBe("3 changes waiting to sync");
+    });
+
+    it("lists notes with a book/chapter/verse location label and a sanitized preview", () => {
+      const tab = createMockTab({ chapterData: genesis1 });
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              verseNumber: 3,
+              data: { type: "comment", html: "<p>Great verse</p>" },
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      const items = container.querySelectorAll(".sb-annotation-item");
+      expect(items).toHaveLength(1);
+      expect(groupTitles()).toEqual(["Genesis 1:3"]);
+      expect(
+        items[0]?.querySelector(".sb-annotation-item-preview")?.textContent
+      ).toBe("Great verse");
+    });
+
+    it("clicking a verse-reference link inside a note's preview navigates to that reference, without also navigating to the note's own verse", async () => {
+      const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+      const openVerseReference = vi.fn().mockResolvedValue(undefined);
+      const tab = createMockTab({
+        chapterData: genesis1,
+        selectTranslationAndChapter,
+      });
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          openVerseReference,
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              verseNumber: 3,
+              data: {
+                type: "comment",
+                html: '<p>See <a class="sb-verse-reference-link" href="/read?book=JHN&chapter=3">John 3:16</a></p>',
+              },
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      const link = container.querySelector(
+        ".sb-annotation-item-preview a.sb-verse-reference-link"
+      ) as HTMLAnchorElement;
+      expect(link).not.toBeNull();
+
+      await act(async () => {
+        link.dispatchEvent(
+          new MouseEvent("click", { bubbles: true, cancelable: true })
+        );
+        await Promise.resolve();
+      });
+
+      expect(openVerseReference).toHaveBeenCalledWith(
+        expect.objectContaining({ book: "JHN", chapter: 3, verse: 16 })
+      );
+      // The row's own navigate-on-click (to GEN 1:3) must not also fire.
+      expect(selectTranslationAndChapter).not.toHaveBeenCalled();
+    });
+
+    it("clicking a note navigates to its verse and emphasizes it, without opening it for editing", async () => {
+      const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+      const decorateVerses = vi.fn(() => "decoration-1");
+      const tab = createMockTab({
+        translationId: "BSB",
+        chapterData: genesis1,
+        selectTranslationAndChapter,
+        decorateVerses,
+      });
+      const state = createMockState({
+        tab,
+        annotationsForChapter: [
+          createAnnotation({
+            id: "a1",
+            verseNumber: 3,
+            endVerseNumber: 5,
+          } as Partial<Annotation>),
+        ],
+      });
+      renderFull(tab, state);
+
+      await act(async () => {
+        container
+          .querySelector(".sb-annotation-item")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(selectTranslationAndChapter).toHaveBeenCalledWith(
+        "BSB",
+        "GEN",
+        1,
+        { scrollToVerse: 3 }
+      );
+      expect(decorateVerses).toHaveBeenCalledWith(
+        "GEN",
+        1,
+        [3, 4, 5],
+        expect.objectContaining({
+          className: "sb-verse-decoration-diminish",
+          containerClassName: "sb-chapter-decoration-diminish",
+          removeAfterMs: 3000,
+        })
+      );
+      expect(state.annotations.editAnnotation).not.toHaveBeenCalled();
+    });
+
+    it("clicking a note with a gapped verse selection only emphasizes its actual verses", async () => {
+      const decorateVerses = vi.fn(() => "decoration-1");
+      const tab = createMockTab({ chapterData: genesis1, decorateVerses });
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              verseNumber: 3,
+              endVerseNumber: 7,
+              verseNumbers: [3, 4, 5, 7],
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      await act(async () => {
+        container
+          .querySelector(".sb-annotation-item")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(decorateVerses).toHaveBeenCalledWith(
+        "GEN",
+        1,
+        [3, 4, 5, 7],
+        expect.objectContaining({
+          className: "sb-verse-decoration-diminish",
+          containerClassName: "sb-chapter-decoration-diminish",
+          removeAfterMs: 3000,
+        })
+      );
+    });
+
+    it("clicking a note with no verse targeting doesn't navigate or emphasize anything", async () => {
+      const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+      const decorateVerses = vi.fn(() => "decoration-1");
+      const tab = createMockTab({
+        chapterData: genesis1,
+        selectTranslationAndChapter,
+        decorateVerses,
+      });
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              verseNumber: null,
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      await act(async () => {
+        container
+          .querySelector(".sb-annotation-item")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        await Promise.resolve();
+      });
+
+      expect(selectTranslationAndChapter).not.toHaveBeenCalled();
+      expect(decorateVerses).not.toHaveBeenCalled();
+    });
+
+    it("labels notes by book/chapter, verse range, and gapped selection", () => {
+      const tab = createMockTab({ chapterData: genesis1 });
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          annotationsForChapter: [
+            createAnnotation({
+              id: "whole",
+              verseNumber: null,
+            } as Partial<Annotation>),
+            createAnnotation({
+              id: "range",
+              verseNumber: 3,
+              endVerseNumber: 5,
+            } as Partial<Annotation>),
+            createAnnotation({
+              id: "gapped",
+              verseNumber: 8,
+              endVerseNumber: 12,
+              verseNumbers: [8, 9, 10, 12],
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      expect(groupTitles()).toEqual([
+        "Genesis 1",
+        "Genesis 1:3-5",
+        "Genesis 1:8-10,12",
+      ]);
+    });
+
+    it("groups notes with the same verse range together and gives each distinct range its own group, ordered by verse", () => {
+      const tab = createMockTab({ chapterData: genesis1 });
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          annotationsForChapter: [
+            createAnnotation({
+              id: "verse-7",
+              verseNumber: 7,
+            } as Partial<Annotation>),
+            createAnnotation({
+              id: "verse-3-a",
+              verseNumber: 3,
+            } as Partial<Annotation>),
+            createAnnotation({
+              id: "chapter-note",
+              verseNumber: null,
+            } as Partial<Annotation>),
+            createAnnotation({
+              id: "verse-3-b",
+              verseNumber: 3,
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      expect(groupTitles()).toEqual([
+        "Genesis 1",
+        "Genesis 1:3",
+        "Genesis 1:7",
+      ]);
+      const groups = container.querySelectorAll(".sb-annotation-group");
+      expect(groups[1]?.querySelectorAll(".sb-annotation-item")).toHaveLength(
+        2
+      );
+    });
+
+    it("collapses and re-expands a group's notes when its header is clicked", () => {
+      const tab = createMockTab();
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              verseNumber: 3,
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      const header = container.querySelector(
+        ".sb-annotation-group-header"
+      ) as HTMLButtonElement;
+      expect(header.getAttribute("aria-expanded")).toBe("true");
+      expect(container.querySelectorAll(".sb-annotation-item")).toHaveLength(1);
+
+      act(() => {
+        header.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(header.getAttribute("aria-expanded")).toBe("false");
+      expect(container.querySelectorAll(".sb-annotation-item")).toHaveLength(0);
+
+      act(() => {
+        header.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(header.getAttribute("aria-expanded")).toBe("true");
+      expect(container.querySelectorAll(".sb-annotation-item")).toHaveLength(1);
+    });
+
+    it("scrolls to and briefly highlights the group targeted by discover.scrollToVerse, then clears it", () => {
+      const tab = createMockTab({ chapterData: genesis1 });
+      const state = createMockState({
+        tab,
+        annotationsForChapter: [
+          createAnnotation({
+            id: "verse-3",
+            verseNumber: 3,
+          } as Partial<Annotation>),
+          createAnnotation({
+            id: "verse-7",
+            verseNumber: 7,
+          } as Partial<Annotation>),
+        ],
+      });
+      scrollIntoView.mockClear();
+      const rafSpy = vi
+        .spyOn(window, "requestAnimationFrame")
+        .mockImplementation((callback) => {
+          callback(0);
+          return 0;
+        });
+      vi.useFakeTimers();
+
+      try {
+        renderFull(tab, state);
+
+        act(() => {
+          state.discover.scrollToVerse.value = {
+            bookId: "GEN",
+            chapterNumber: 1,
+            verseNumber: 7,
+          };
+        });
+
+        // Consumed once, immediately.
+        expect(state.discover.scrollToVerse.value).toBeNull();
+        expect(scrollIntoView).toHaveBeenCalledWith({ block: "center" });
+
+        const groups = container.querySelectorAll(".sb-annotation-group");
+        expect(
+          groups[0]?.classList.contains("sb-annotation-group--highlighted")
+        ).toBe(false);
+        expect(
+          groups[1]?.classList.contains("sb-annotation-group--highlighted")
+        ).toBe(true);
+
+        act(() => {
+          vi.advanceTimersByTime(2000);
+        });
+
+        expect(
+          groups[1]?.classList.contains("sb-annotation-group--highlighted")
+        ).toBe(false);
+      } finally {
+        vi.useRealTimers();
+        rafSpy.mockRestore();
+      }
+    });
+
+    it("switches from another filter to Notes and highlights the note targeted by discover.scrollToVerse", () => {
+      const tab = createMockTab({
+        chapterData: genesis1,
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const state = createMockState({
+        tab,
+        annotationsForChapter: [
+          createAnnotation({
+            id: "verse-3",
+            verseNumber: 3,
+          } as Partial<Annotation>),
+          createAnnotation({
+            id: "verse-7",
+            verseNumber: 7,
+          } as Partial<Annotation>),
+        ],
+      });
+      scrollIntoView.mockClear();
+      const rafSpy = vi
+        .spyOn(window, "requestAnimationFrame")
+        .mockImplementation((callback) => {
+          callback(0);
+          return 0;
+        });
+
+      try {
+        renderFull(tab, state);
+
+        const getChip = (label: string) =>
+          Array.from(container.querySelectorAll(".sb-dcp-chip")).find(
+            (el) => el.textContent === label
+          ) as HTMLButtonElement;
+
+        act(() => {
+          getChip("Cross Refs").dispatchEvent(
+            new MouseEvent("click", { bubbles: true })
+          );
+        });
+        expect(container.querySelector(".sb-annotation-group")).toBeNull();
+
+        act(() => {
+          state.discover.scrollToVerse.value = {
+            bookId: "GEN",
+            chapterNumber: 1,
+            verseNumber: 7,
+          };
+        });
+
+        expect(getChip("Notes").getAttribute("aria-selected")).toBe("true");
+        expect(container.textContent).not.toContain("Exodus 5:3");
+        expect(state.discover.scrollToVerse.value).toBeNull();
+        expect(scrollIntoView).toHaveBeenCalledWith({ block: "center" });
+
+        const groups = container.querySelectorAll(".sb-annotation-group");
+        expect(
+          groups[0]?.classList.contains("sb-annotation-group--highlighted")
+        ).toBe(false);
+        expect(
+          groups[1]?.classList.contains("sb-annotation-group--highlighted")
+        ).toBe(true);
+      } finally {
+        rafSpy.mockRestore();
+      }
+    });
+
+    it("shows a note's author name resolved from their profile and a formatted updated time", async () => {
+      const getUserProfile = vi
+        .fn()
+        .mockResolvedValue({ name: "Jordan Rivera" });
+      const tab = createMockTab();
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          getUserProfile,
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              verseNumber: 3,
+              data: {
+                type: "comment",
+                html: "<p>Hi</p>",
+                userId: "user-42",
+                userName: "Loading Placeholder",
+                updatedAtMs: Date.UTC(2026, 0, 5, 10, 30),
+              },
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      expect(getUserProfile).toHaveBeenCalledWith("user-42");
+      await vi.waitFor(() => {
+        expect(
+          container.querySelector(".sb-annotation-comment-author-name")
+            ?.textContent
+        ).toBe("Jordan Rivera");
+      });
+      const expectedUpdated = new Intl.DateTimeFormat("en", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date(Date.UTC(2026, 0, 5, 10, 30)));
+      expect(
+        container.querySelector(".sb-annotation-comment-updated")?.textContent
+      ).toBe(`| ${expectedUpdated}`);
+    });
+
+    it("shows a note's author avatar from their profile picture, before the name", async () => {
+      const getUserProfile = vi.fn().mockResolvedValue({
+        name: "Jordan Rivera",
+        pictureUrl: "https://example.com/jordan.png",
+      });
+      const tab = createMockTab();
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          getUserProfile,
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              verseNumber: 3,
+              data: { type: "comment", html: "<p>Hi</p>", userId: "user-99" },
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      await vi.waitFor(() => {
+        expect(
+          container
+            .querySelector(".sb-tab-user-icon-has-image img")
+            ?.getAttribute("src")
+        ).toBe("https://example.com/jordan.png");
+      });
+
+      const author = container.querySelector(".sb-annotation-comment-author")!;
+      const children = Array.from(author.children);
+      const avatarIndex = children.findIndex((el) =>
+        el.classList.contains("sb-tab-user-icon")
+      );
+      const nameIndex = children.findIndex((el) =>
+        el.classList.contains("sb-annotation-comment-author-name")
+      );
+      expect(avatarIndex).toBeGreaterThanOrEqual(0);
+      expect(avatarIndex).toBeLessThan(nameIndex);
+    });
+
+    it("shows a generic account icon on your own notes when nobody else has annotated", () => {
+      const tab = createMockTab();
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          userId: "user-self",
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              verseNumber: 3,
+              data: { type: "comment", html: "<p>Hi</p>", userId: "user-self" },
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      expect(
+        container.querySelector(".sb-tab-user-icon-generic")?.textContent
+      ).toContain("account_circle");
+      expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+    });
+
+    it("shows your profile picture on your own notes even when nobody else has annotated", async () => {
+      const getUserProfile = vi.fn().mockResolvedValue({
+        name: "Ada",
+        pictureUrl: "https://example.com/ada.png",
+      });
+      const tab = createMockTab();
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          userId: "user-self-with-picture",
+          getUserProfile,
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              verseNumber: 3,
+              data: {
+                type: "comment",
+                html: "<p>Hi</p>",
+                userId: "user-self-with-picture",
+              },
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      await vi.waitFor(() => {
+        expect(
+          container
+            .querySelector(".sb-tab-user-icon-has-image img")
+            ?.getAttribute("src")
+        ).toBe("https://example.com/ada.png");
+      });
+      expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+      expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+    });
+
+    it("shows the animal fallback on your own notes when other people have also annotated", () => {
+      const tab = createMockTab();
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          userId: "user-self",
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              verseNumber: 3,
+              data: {
+                type: "comment",
+                html: "<p>Mine</p>",
+                userId: "user-self",
+              },
+            } as Partial<Annotation>),
+            createAnnotation({
+              id: "a2",
+              verseNumber: 4,
+              data: {
+                type: "comment",
+                html: "<p>Theirs</p>",
+                userId: "user-other",
+              },
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      expect(
+        container.querySelectorAll(".sb-tab-user-icon-animal")
+      ).toHaveLength(2);
+      expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+    });
+
+    it("shows a fallback avatar derived from the user id when another author has no profile picture", () => {
+      const tab = createMockTab();
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              verseNumber: 3,
+              data: {
+                type: "comment",
+                html: "<p>Hi</p>",
+                userId: "user-no-picture",
+                userName: "No Picture",
+              },
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      expect(
+        container.querySelector(".sb-tab-user-icon-animal")
+      ).not.toBeNull();
+      expect(container.querySelector(".sb-tab-user-icon-has-image")).toBeNull();
+    });
+
+    it("edits your note from its menu", () => {
+      const annotation = createAnnotation({
+        id: "a1",
+        data: { type: "comment", html: "<p>Hello</p>", userId: "user-1" },
+      } as Partial<Annotation>);
+      const tab = createMockTab();
+      const state = createMockState({
+        tab,
+        userId: "user-1",
+        annotationsForChapter: [annotation],
+      });
+      renderFull(tab, state);
+
+      const editItem = openNoteMenu().find((el) =>
+        el.textContent?.includes("Edit")
+      );
+      expect(editItem).not.toBeUndefined();
+      act(() => {
+        editItem!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(state.annotations.editAnnotation).toHaveBeenCalledWith(annotation);
+    });
+
+    // Notes written while signed out are saved with no author, and keep none
+    // once they move to the account on sign-in.
+    it("keeps the menu on your own note that has no author", () => {
+      const tab = createMockTab();
+      renderFull(
+        tab,
+        createMockState({
+          tab,
+          userId: "user-1",
+          annotationsForChapter: [
+            createAnnotation({
+              id: "a1",
+              data: { type: "comment", html: "<p>Hello</p>", userId: null },
+            } as Partial<Annotation>),
+          ],
+        })
+      );
+
+      const labels = openNoteMenu().map((el) => el.textContent);
+      expect(labels).toEqual([
+        expect.stringContaining("Edit"),
+        expect.stringContaining("Delete"),
+      ]);
+    });
+
+    it("shows no menu on a friend's note, even one naming you as its author", async () => {
+      const tab = createMockTab();
+      const mockState = createMockState({ tab });
+      // The real managers, so the note arrives the way a friend's note does.
+      const { login, friends, annotations } = await createRealFriendContent({
+        friendIds: ["ada"],
+        notes: {
+          ada: [
+            createAnnotation({
+              id: "a1",
+              data: { type: "comment", html: "<p>Hello</p>", userId: ME },
+            } as Partial<Annotation>),
+          ],
+        },
+        discover: mockState.discover,
+      });
+      renderFull(tab, {
+        ...mockState,
+        login,
+        friends,
+        annotations,
+      } as unknown as SeedBibleState);
+
+      await vi.waitFor(() =>
+        expect(container.querySelector(".sb-annotation-item")).not.toBeNull()
+      );
+      expect(container.querySelector(".sb-annotation-item-menu")).toBeNull();
+    });
+
+    it("deleting a note from its menu asks first; confirming deletes it and closes the dialog", async () => {
+      const annotation = createAnnotation({
+        id: "a1",
+        data: { type: "comment", html: "<p>Hello</p>", userId: "user-1" },
+      } as Partial<Annotation>);
+      const modals = createModalManager();
+      const tab = createMockTab();
+      const state = createMockState({
+        tab,
+        userId: "user-1",
+        modals,
+        annotationsForChapter: [annotation],
+      });
+      renderFull(tab, state);
+
+      const deleteItem = openNoteMenu().find((el) =>
+        el.textContent?.includes("Delete")
+      )!;
+      act(() => {
+        deleteItem.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      const modal = modals.modals.value.find(
+        (m) => m.id === "delete-annotation-confirm-a1"
+      );
+      expect(modal).not.toBeUndefined();
+
+      const modalContainer = document.createElement("div");
+      document.body.appendChild(modalContainer);
+      act(() => {
+        render(
+          modal!.content({
+            t: (key, options) => (options?.defaultValue as string) ?? key,
+          }),
+          modalContainer
+        );
+      });
+      expect(modalContainer.textContent).toContain(
+        "Delete this annotation? This can't be undone."
+      );
+
+      await act(async () => {
+        modalContainer
+          .querySelector(".sb-session-settings-end")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(state.annotations.deleteAnnotationAndRefresh).toHaveBeenCalledWith(
+        annotation
+      );
+      expect(
+        modals.modals.value.some((m) => m.id === "delete-annotation-confirm-a1")
+      ).toBe(false);
+
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
+
+    it("says so, but still closes the dialog, when deleting a note fails", async () => {
+      const modals = createModalManager();
+      const tab = createMockTab();
+      const state = createMockState({
+        tab,
+        userId: "user-1",
+        modals,
+        deleteAnnotationAndRefreshImpl: () => Promise.reject(new Error("nope")),
+        annotationsForChapter: [
+          createAnnotation({
+            id: "a1",
+            data: { type: "comment", html: "<p>Hello</p>", userId: "user-1" },
+          } as Partial<Annotation>),
+        ],
+      });
+      renderFull(tab, state);
+
+      const deleteItem = openNoteMenu().find((el) =>
+        el.textContent?.includes("Delete")
+      )!;
+      act(() => {
+        deleteItem.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      const modal = modals.modals.value.find(
+        (m) => m.id === "delete-annotation-confirm-a1"
+      )!;
+      const modalContainer = document.createElement("div");
+      document.body.appendChild(modalContainer);
+      act(() => {
+        render(modal.content({ t: (key) => key }), modalContainer);
+      });
+
+      await act(async () => {
+        modalContainer
+          .querySelector(".sb-session-settings-end")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(state.app.toast).toHaveBeenCalledWith(
+        "Couldn't delete the annotation."
+      );
+      expect(
+        modals.modals.value.some((m) => m.id === "delete-annotation-confirm-a1")
+      ).toBe(false);
+
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
   });
 
   describe("filter scrolling arrows", () => {
@@ -584,7 +1787,10 @@ describe("DiscoverContentPanel", () => {
       })
     ) {
       act(() => {
-        render(<DiscoverContentPanel tab={tab} state={state} />, container);
+        render(
+          <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+          container
+        );
       });
     }
 
@@ -689,7 +1895,14 @@ describe("DiscoverContentPanel", () => {
       setDimension(wrapper, "clientWidth", 100);
 
       act(() => {
-        render(<DiscoverContentPanel tab={nextTab} state={state} />, container);
+        render(
+          <DiscoverContentPanel
+            variant="compact"
+            tab={nextTab}
+            state={state}
+          />,
+          container
+        );
       });
 
       const updatedRow = getRow();
@@ -720,7 +1933,10 @@ describe("DiscoverContentPanel", () => {
       });
 
       act(() => {
-        render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+        render(
+          <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+          parent
+        );
       });
 
       const row = parent.querySelector<HTMLElement>(".sb-dcp-filters");
@@ -861,7 +2077,10 @@ describe("DiscoverContentPanel", () => {
 
       const renderInParent = () => {
         act(() => {
-          render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+          render(
+            <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+            parent
+          );
         });
       };
 
@@ -929,7 +2148,14 @@ describe("DiscoverContentPanel", () => {
       });
 
       act(() => {
-        render(<DiscoverContentPanel tab={nextTab} state={state} />, container);
+        render(
+          <DiscoverContentPanel
+            variant="compact"
+            tab={nextTab}
+            state={state}
+          />,
+          container
+        );
       });
 
       expect(row.scrollLeft).toBeGreaterThan(0);
@@ -1007,7 +2233,10 @@ describe("DiscoverContentPanel", () => {
       });
 
       act(() => {
-        render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+        render(
+          <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+          parent
+        );
       });
 
       const row = parent.querySelector<HTMLElement>(".sb-dcp-filters")!;
@@ -1065,7 +2294,10 @@ describe("DiscoverContentPanel", () => {
       });
 
       act(() => {
-        render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+        render(
+          <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+          parent
+        );
       });
 
       const row = parent.querySelector<HTMLElement>(".sb-dcp-filters")!;
@@ -1123,7 +2355,10 @@ describe("DiscoverContentPanel", () => {
       });
 
       act(() => {
-        render(<DiscoverContentPanel tab={tab} state={state} />, parent);
+        render(
+          <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+          parent
+        );
       });
 
       const row = parent.querySelector<HTMLElement>(".sb-dcp-filters");
@@ -1215,7 +2450,10 @@ describe("DiscoverContentPanel", () => {
         contentTypes,
       });
       act(() => {
-        render(<DiscoverContentPanel tab={tab} state={state} />, container);
+        render(
+          <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+          container
+        );
       });
     }
 
@@ -1294,7 +2532,10 @@ describe("DiscoverContentPanel", () => {
         contentTypes: HIDDEN_TYPES,
       });
       act(() => {
-        render(<DiscoverContentPanel tab={tab} state={state} />, container);
+        render(
+          <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+          container
+        );
       });
 
       expect(chipLabels()).toEqual(["All", "People"]);
@@ -1309,6 +2550,31 @@ describe("DiscoverContentPanel", () => {
       expect(container.textContent).toContain("Moses card");
     });
 
+    it("in the full panel, points to the filters rather than the empty notes prompt when everything is behind a chip", () => {
+      const tab = createMockTab({ discoveredContent: THEOGRAPHIC_FIXTURE });
+      const state = createMockState({
+        annotationsForChapter: [],
+        contentTypes: HIDDEN_TYPES,
+      });
+
+      act(() => {
+        render(
+          <DiscoverContentPanel
+            variant="full"
+            onClose={vi.fn()}
+            tab={tab}
+            state={state}
+          />,
+          container
+        );
+      });
+
+      expect(container.textContent).toContain("Pick a filter above");
+      expect(container.textContent).not.toContain(
+        "You don't have any notes for this chapter."
+      );
+    });
+
     it("explains where the content went when it is all there is", () => {
       const tab = createMockTab({ discoveredContent: THEOGRAPHIC_FIXTURE });
       const state = createMockState({
@@ -1317,7 +2583,10 @@ describe("DiscoverContentPanel", () => {
       });
 
       act(() => {
-        render(<DiscoverContentPanel tab={tab} state={state} />, container);
+        render(
+          <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+          container
+        );
       });
 
       expect(container.textContent).toContain("Pick a filter above");
@@ -1372,26 +2641,210 @@ describe("DiscoverContentPanel", () => {
     });
   });
 
-  it("clicking '+ Create' calls createNewAnnotation", () => {
+  describe("friends' playlists", () => {
+    const ada: Friend = { userId: "ada", name: "Ada", pictureUrl: null };
+    const psalms: Playlist = {
+      id: "p1",
+      recordName: "ada",
+      authorUserId: "ada",
+      title: "Psalms of Ascent",
+      description: null,
+      items: [],
+      createdAtMs: 1,
+      updatedAtMs: 1,
+    };
+
+    const chipLabels = () =>
+      Array.from(container.querySelectorAll(".sb-dcp-chip")).map(
+        (el) => el.textContent
+      );
+    const sectionTitles = () =>
+      Array.from(container.querySelectorAll(".sb-discover-section-title")).map(
+        (el) => el.textContent
+      );
+
+    function renderFull(tab: ReaderTab, state: SeedBibleState) {
+      act(() => {
+        render(
+          <DiscoverContentPanel
+            variant="full"
+            onClose={vi.fn()}
+            tab={tab}
+            state={state}
+          />,
+          container
+        );
+      });
+    }
+
+    it("in the full panel, lists them under All with a chip of their own, after Notes", () => {
+      const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+      renderFull(
+        tab,
+        createMockState({
+          annotationsForChapter: [createAnnotation()],
+          friendPlaylists: [{ friend: ada, playlists: [psalms] }],
+        })
+      );
+
+      expect(chipLabels()).toEqual([
+        "All",
+        "Notes",
+        "Friends' playlists",
+        "Cross Refs",
+      ]);
+      expect(sectionTitles()).toContain("Playlists from your friends");
+      expect(
+        container.querySelector(".sb-friend-playlists-group-name")?.textContent
+      ).toBe("Ada");
+      expect(container.textContent).toContain("Psalms of Ascent");
+    });
+
+    it("shows only them once their chip is picked", () => {
+      const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+      renderFull(
+        tab,
+        createMockState({
+          annotationsForChapter: [createAnnotation()],
+          friendPlaylists: [{ friend: ada, playlists: [psalms] }],
+        })
+      );
+
+      const chip = Array.from(container.querySelectorAll(".sb-dcp-chip")).find(
+        (el) => el.textContent === "Friends' playlists"
+      ) as HTMLButtonElement;
+      act(() => {
+        chip.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(chip.getAttribute("aria-selected")).toBe("true");
+      expect(sectionTitles()).toEqual(["Playlists from your friends"]);
+      expect(container.textContent).toContain("Psalms of Ascent");
+      expect(container.textContent).not.toContain("Exodus 5:3");
+    });
+
+    it("in the full panel, still shows them when the chapter has nothing else", () => {
+      renderFull(
+        createMockTab(),
+        createMockState({
+          friendPlaylists: [{ friend: ada, playlists: [psalms] }],
+        })
+      );
+
+      expect(sectionTitles()).toContain("Playlists from your friends");
+      expect(container.textContent).toContain("Psalms of Ascent");
+    });
+
+    it("offers no chip when no friend has a playlist", () => {
+      renderFull(
+        createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE }),
+        createMockState({
+          annotationsForChapter: [createAnnotation()],
+          friendPlaylists: [{ friend: ada, playlists: [] }],
+        })
+      );
+
+      expect(chipLabels()).not.toContain("Friends' playlists");
+      expect(sectionTitles()).not.toContain("Playlists from your friends");
+    });
+
+    it("leaves them out of the compact panel", () => {
+      act(() => {
+        render(
+          <DiscoverContentPanel
+            variant="compact"
+            tab={createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE })}
+            state={createMockState({
+              annotationsForChapter: [createAnnotation()],
+              friendPlaylists: [{ friend: ada, playlists: [psalms] }],
+            })}
+          />,
+          container
+        );
+      });
+
+      expect(chipLabels()).not.toContain("Friends' playlists");
+      expect(sectionTitles()).not.toContain("Playlists from your friends");
+      expect(container.textContent).not.toContain("Psalms of Ascent");
+    });
+  });
+
+  it("in the compact panel, '+ Create' creates an annotation straight away", () => {
     const tab = createMockTab();
     const state = createMockState({
       annotationsForChapter: [createAnnotation()],
     });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+      render(
+        <DiscoverContentPanel variant="compact" tab={tab} state={state} />,
+        container
+      );
     });
 
     const createButton = container.querySelector(
       ".sb-dcp-create-btn"
     ) as HTMLButtonElement;
     expect(createButton).toBeTruthy();
+    expect(createButton.getAttribute("aria-haspopup")).toBeNull();
 
     act(() => {
       createButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
     expect(state.annotations.createNewAnnotation).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+  });
+
+  it("in the full panel, '+ Create' offers an annotation or a playlist", () => {
+    const tab = createMockTab();
+    const state = createMockState({
+      annotationsForChapter: [createAnnotation()],
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const openMenu = () => {
+      act(() => {
+        container
+          .querySelector(".sb-dcp-create-btn")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      // The menu is portaled to <body>, outside the render container.
+      return Array.from(
+        document.querySelectorAll('[role="menuitem"]')
+      ) as HTMLButtonElement[];
+    };
+
+    let items = openMenu();
+    expect(items.map((item) => item.textContent)).toEqual([
+      expect.stringContaining("Annotation"),
+      expect.stringContaining("Playlist"),
+    ]);
+    // Opening the menu doesn't create anything by itself.
+    expect(state.annotations.createNewAnnotation).not.toHaveBeenCalled();
+    expect(state.playlists.createNewPlaylist).not.toHaveBeenCalled();
+
+    act(() => {
+      items[0]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(state.annotations.createNewAnnotation).toHaveBeenCalledTimes(1);
+
+    items = openMenu();
+    act(() => {
+      items[1]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(state.playlists.createNewPlaylist).toHaveBeenCalledTimes(1);
   });
 
   describe("side panel max height", () => {
@@ -1447,6 +2900,7 @@ describe("DiscoverContentPanel", () => {
       act(() => {
         render(
           <DiscoverContentPanel
+            variant="compact"
             tab={createMockTab()}
             state={createMockState({
               annotationsForChapter: [createAnnotation()],

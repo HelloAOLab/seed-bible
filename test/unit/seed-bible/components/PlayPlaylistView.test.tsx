@@ -47,7 +47,8 @@ function verseItem(
 
 function createMockPlaylists(
   playing: ReturnType<typeof createPlayingState> | null,
-  authorName: string | null = null
+  authorName: string | null = null,
+  openingPlayback = false
 ): {
   playlists: PlaylistManager;
   goBackFromPlayingView: ReturnType<typeof vi.fn>;
@@ -57,6 +58,7 @@ function createMockPlaylists(
     playlists: {
       playing: signal(playing),
       playingAuthorName: signal(authorName),
+      openingPlayback: signal(openingPlayback),
       goBackFromPlayingView,
     } as unknown as PlaylistManager,
     goBackFromPlayingView,
@@ -108,6 +110,7 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -120,8 +123,83 @@ describe("PlayPlaylistView", () => {
     expect(container.querySelector(".sb-play-playlist")).toBeNull();
   });
 
-  // The playlist title and back button now live in the pane header
-  // (`DiscoverPaneTitle`), covered by the DiscoverPane test suite.
+  describe("header", () => {
+    function renderView(
+      playlists: PlaylistManager,
+      onClose: () => void = vi.fn()
+    ) {
+      act(() => {
+        render(
+          <PlayPlaylistView
+            onClose={onClose}
+            playlists={playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+            state={state}
+          />,
+          container
+        );
+      });
+    }
+
+    it("shows the playing playlist's title, and goes back from the back button", () => {
+      const { playlists, goBackFromPlayingView } = createMockPlaylists(
+        createPlayingState([createPlaylist({ title: "Evening Reading" })])
+      );
+      renderView(playlists);
+
+      expect(
+        container.querySelector(".sb-discover-panel-header .sb-discover-title")
+          ?.textContent
+      ).toBe("Evening Reading");
+
+      act(() => {
+        container
+          .querySelector(".sb-reading-plans-back")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(goBackFromPlayingView).toHaveBeenCalledTimes(1);
+    });
+
+    it("falls back to 'Untitled playlist'", () => {
+      const { playlists } = createMockPlaylists(
+        createPlayingState([createPlaylist({ title: null })])
+      );
+      renderView(playlists);
+
+      expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+        "Untitled playlist"
+      );
+    });
+
+    it("shows a spinner while the playlist is still opening", () => {
+      const playing = createPlayingState([createPlaylist()]);
+      renderView(createMockPlaylists(playing).playlists);
+      expect(
+        container.querySelector(".sb-discover-panel-header .sb-spinner")
+      ).toBeNull();
+
+      renderView(createMockPlaylists(playing, null, true).playlists);
+      expect(
+        container.querySelector(".sb-discover-panel-header .sb-spinner")
+      ).not.toBeNull();
+    });
+
+    it("closes the pane from the close button", () => {
+      const onClose = vi.fn();
+      renderView(
+        createMockPlaylists(createPlayingState([createPlaylist()])).playlists,
+        onClose
+      );
+
+      act(() => {
+        container
+          .querySelector(".sb-discover-panel-header-close")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
 
   it("renders one queue item per item and marks the current one", () => {
     const playlist = createPlaylist({
@@ -137,6 +215,7 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -175,6 +254,7 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -206,6 +286,7 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={createMockTabs()}
           modals={modals}
@@ -230,6 +311,7 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={createMockTabs()}
           modals={modals}
@@ -251,6 +333,7 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -277,6 +360,7 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -310,6 +394,7 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -342,6 +427,7 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -376,6 +462,7 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -410,6 +497,7 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -452,6 +540,7 @@ describe("PlayPlaylistView", () => {
       act(() => {
         render(
           <PlayPlaylistView
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -483,6 +572,7 @@ describe("PlayPlaylistView", () => {
       act(() => {
         render(
           <PlayPlaylistView
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -538,6 +628,7 @@ describe("PlayPlaylistView", () => {
       act(() => {
         render(
           <PlayPlaylistView
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}

@@ -18,6 +18,11 @@ import type {
   TranslationBook,
   TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import {
+  createMockChats,
+  createMockProvider,
+  type MockChatsResult,
+} from "../testUtils/mockChats";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -239,8 +244,210 @@ describe("CreatePlaylistForm", () => {
     vi.restoreAllMocks();
   });
 
-  // The title input and the header back button now live in the pane header
-  // (`DiscoverPaneTitle`), covered by the DiscoverPane test suite.
+  describe("header", () => {
+    let chatsFixture: MockChatsResult;
+    let openChatPanel: ReturnType<typeof vi.fn<() => void>>;
+    let onClose: ReturnType<typeof vi.fn<() => void>>;
+
+    beforeEach(() => {
+      chatsFixture = createMockChats();
+      openChatPanel = vi.fn<() => void>();
+      onClose = vi.fn<() => void>();
+    });
+
+    function renderForm(
+      mock: MockPlaylistsResult,
+      modals = createModalManager()
+    ) {
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            chats={chatsFixture.chats}
+            openChatPanel={openChatPanel}
+            onClose={onClose}
+            playlists={mock.playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+          />,
+          container
+        );
+      });
+      return modals;
+    }
+
+    function click(selector: string, root: ParentNode = container) {
+      act(() => {
+        (root.querySelector(selector) as HTMLElement).dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+    }
+
+    it("shows the playlist title in an input and writes edits back to the draft", () => {
+      const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
+      renderForm(mock);
+
+      const input = container.querySelector(
+        ".sb-discover-panel-header .sb-playlist-input"
+      ) as HTMLInputElement;
+      expect(input.value).toBe("Draft");
+
+      act(() => {
+        input.value = "Morning Devotion";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      expect(mock.playlists.editingPlaylist.value?.title).toBe(
+        "Morning Devotion"
+      );
+    });
+
+    it("stores a whitespace-only title as null", () => {
+      const mock = createMockPlaylists(createPlaylist({ title: "Something" }));
+      renderForm(mock);
+
+      const input = container.querySelector(
+        ".sb-discover-panel-header .sb-playlist-input"
+      ) as HTMLInputElement;
+      act(() => {
+        input.value = "   ";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+
+      expect(mock.playlists.editingPlaylist.value?.title).toBeNull();
+    });
+
+    it("leaves the editor from Back when nothing changed", () => {
+      const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
+      const modals = renderForm(mock);
+
+      click(".sb-reading-plans-back[aria-label='Back']");
+
+      expect(mock.cancelEditingPlaylist).toHaveBeenCalledTimes(1);
+      expect(modals.modals.value).toHaveLength(0);
+    });
+
+    it("asks before leaving the editor from Back when the playlist is dirty", () => {
+      const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
+      mock.isEditingPlaylistDirty.mockReturnValue(true);
+      const modals = renderForm(mock);
+
+      click(".sb-reading-plans-back[aria-label='Back']");
+
+      expect(mock.cancelEditingPlaylist).not.toHaveBeenCalled();
+      expect(modals.modals.value[0]!.title).toEqual({
+        key: "unsaved-changes",
+        defaultValue: "Unsaved changes",
+      });
+    });
+
+    it("asks before leaving the editor from Back when an item draft is unsaved", () => {
+      stubItemInputControl.isDirty = true;
+      const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
+      const modals = renderForm(mock);
+
+      click(".sb-reading-plans-back[aria-label='Back']");
+
+      expect(mock.cancelEditingPlaylist).not.toHaveBeenCalled();
+      expect(modals.modals.value[0]!.title).toEqual({
+        key: "unsaved-changes",
+        defaultValue: "Unsaved changes",
+      });
+    });
+
+    it("closes the pane from the close button", () => {
+      renderForm(createMockPlaylists(createPlaylist()));
+
+      click(".sb-discover-panel-header-close");
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides the AI button when no agent can edit playlists", () => {
+      const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
+      renderForm(mock);
+      expect(container.querySelector(".sb-discover-title-ai")).toBeNull();
+
+      // An installed agent that cannot call tools (e.g. Bonfire) still cannot
+      // edit the playlist, so the button stays hidden.
+      act(() => {
+        chatsFixture.providers.value = [
+          createMockProvider("bonfire", "Bonfire", false),
+        ];
+      });
+      expect(container.querySelector(".sb-discover-title-ai")).toBeNull();
+      expect(chatsFixture.createLocalSession).not.toHaveBeenCalled();
+      expect(openChatPanel).not.toHaveBeenCalled();
+    });
+
+    it("with exactly one AI provider, the AI button adds it automatically without showing a menu", () => {
+      chatsFixture = createMockChats([createMockProvider("provider-1")]);
+      renderForm(createMockPlaylists(createPlaylist({ title: "Draft" })));
+
+      click(".sb-discover-title-ai");
+
+      expect(document.querySelector('[role="menu"]')).toBeNull();
+      expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+      const history = chatsFixture.createLocalSession.mock.calls[0]![0];
+      expect(history.messages).toHaveLength(1);
+      expect(history.messages[0]).toMatchObject({
+        authors: ["provider-1"],
+        type: "text",
+        text: "What do you want to add/change?",
+      });
+      expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-1");
+      expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+      expect(openChatPanel).toHaveBeenCalledTimes(1);
+    });
+
+    it("with multiple AI providers, the AI button shows a menu and starts the chat with the selected provider", () => {
+      chatsFixture = createMockChats([
+        createMockProvider("provider-1", "Provider One"),
+        createMockProvider("provider-2", "Provider Two"),
+      ]);
+      renderForm(createMockPlaylists(createPlaylist({ title: "Draft" })));
+
+      click(".sb-discover-title-ai");
+      // Opening the menu doesn't start a chat by itself.
+      expect(chatsFixture.createLocalSession).not.toHaveBeenCalled();
+
+      // The menu is portaled to <body>, outside the render container.
+      const menuItems = Array.from(
+        document.querySelectorAll('[role="menuitem"]')
+      ) as HTMLButtonElement[];
+      expect(menuItems.map((item) => item.textContent)).toEqual([
+        "Provider One",
+        "Provider Two",
+      ]);
+
+      act(() => {
+        menuItems[1]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+      expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-2");
+      expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+      expect(openChatPanel).toHaveBeenCalledTimes(1);
+    });
+
+    it("leaves AI providers that can't call tools out of the AI button", () => {
+      chatsFixture = createMockChats([
+        createMockProvider("provider-1", "Provider One"),
+        createMockProvider("provider-2", "No Tools", false),
+      ]);
+      renderForm(createMockPlaylists(createPlaylist({ title: "Draft" })));
+
+      // Only one tool-calling provider remains, so it's added straight away,
+      // same as the single-provider case.
+      click(".sb-discover-title-ai");
+
+      expect(document.querySelector('[role="menu"]')).toBeNull();
+      expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+      expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-1");
+      expect(chatsFixture.addParticipant).not.toHaveBeenCalledWith(
+        "provider-2"
+      );
+    });
+  });
 
   it("shows the current description and writes edits back to the draft", () => {
     const { playlists, updateEditingPlaylistMetadata } = createMockPlaylists(
@@ -252,6 +459,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -289,6 +499,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -316,6 +529,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -370,6 +586,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -416,6 +635,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -448,6 +670,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -477,6 +702,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -499,6 +727,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -526,6 +757,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -588,6 +822,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -637,6 +874,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -686,6 +926,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -723,6 +966,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={createMockTabs()}
           modals={modals}
@@ -749,6 +995,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -775,6 +1024,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -827,6 +1079,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={createMockTabs(tab)}
             modals={createModalManager()}
@@ -890,6 +1145,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -916,6 +1174,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -962,6 +1223,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -1000,6 +1264,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -1039,6 +1306,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -1091,6 +1361,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -1139,6 +1412,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -1180,6 +1456,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -1219,6 +1498,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1250,6 +1532,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1314,6 +1599,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1349,6 +1637,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1378,6 +1669,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1409,6 +1703,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={createMockTabs()}
             modals={modals}
@@ -1442,6 +1739,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={createMockTabs()}
             modals={modals}
@@ -1481,6 +1781,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={createMockTabs()}
             modals={modals}
@@ -1550,6 +1853,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1588,6 +1894,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1625,6 +1934,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1663,6 +1975,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
