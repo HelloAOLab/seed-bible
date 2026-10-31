@@ -92,6 +92,16 @@ export interface ScriptureElementsBehavior {
 
 export interface DiscoveredContentBehavior {
   showContent: boolean;
+  /**
+   * Whether discovered content shows in shared sessions too. It is personal —
+   * only the reader sees it — so sessions hide it unless this is on.
+   */
+  showInSharedSessions: boolean;
+  /**
+   * Whether the reader has acknowledged the hint that only they can see
+   * discovered content in a shared session.
+   */
+  sharedSessionHintSeen: boolean;
 }
 
 export interface TextSectionConfig {
@@ -176,8 +186,14 @@ export const AppSettingsSchema = z.object({
   discoveredContent: z
     .object({
       showContent: z.boolean(),
+      showInSharedSessions: z.boolean().default(false),
+      sharedSessionHintSeen: z.boolean().default(false),
     })
-    .default({ showContent: true }),
+    .default({
+      showContent: true,
+      showInSharedSessions: false,
+      sharedSessionHintSeen: false,
+    }),
   verseSelectionEffects: z
     .enum(["default", "enabled", "disabled"])
     .default("default"),
@@ -322,6 +338,8 @@ const DEFAULT_SCRIPTURE_ELEMENTS: ScriptureElementsBehavior = {
 
 const DEFAULT_DISCOVERED_CONTENT: DiscoveredContentBehavior = {
   showContent: true,
+  showInSharedSessions: false,
+  sharedSessionHintSeen: false,
 };
 
 /**
@@ -608,6 +626,14 @@ function parseDiscoveredContent(
       typeof obj.showContent === "boolean"
         ? obj.showContent
         : fallback.showContent,
+    showInSharedSessions:
+      typeof obj.showInSharedSessions === "boolean"
+        ? obj.showInSharedSessions
+        : fallback.showInSharedSessions,
+    sharedSessionHintSeen:
+      typeof obj.sharedSessionHintSeen === "boolean"
+        ? obj.sharedSessionHintSeen
+        : fallback.sharedSessionHintSeen,
   };
 }
 

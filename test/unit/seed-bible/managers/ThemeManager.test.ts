@@ -24,7 +24,7 @@ import {
   type UserProfile,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
-import { signal } from "@preact/signals";
+import { makeFakeLogin } from "./testUtils/fakeLogin";
 import {
   getContrastRatio,
   MIN_READABLE_CONTRAST_RATIO,
@@ -323,29 +323,6 @@ describe("applyHighlightOverrides", () => {
     expect(theme.highlightColors.yellow?.color).toBe("#fff59d");
   });
 });
-
-/**
- * Minimal LoginManager stand-in, matching the one in
- * `SettingsManager.test.ts` — `createTheme` now reads/writes exclusively
- * through `SettingsManager`, so these tests build a real `SettingsManager`
- * against a fake `login` and pass it in, rather than touching `login`
- * directly.
- */
-function makeFakeLogin(initialProfile: UserProfile | null): LoginManager {
-  const userId = signal<string | null>(initialProfile ? "user-1" : null);
-  const profile = signal<UserProfile | null>(initialProfile);
-  const localConfig = signal<Record<string, unknown>>({});
-  return {
-    userId,
-    profile,
-    localConfig,
-    profilePromise: Promise.resolve(initialProfile),
-    updateProfile: (newData: Partial<UserProfile>) => {
-      if (!profile.value) return;
-      profile.value = { ...profile.value, ...newData };
-    },
-  } as unknown as LoginManager;
-}
 
 function navWith(hrefSuffix = ""): ReturnType<typeof createNavigationManager> {
   return createNavigationManager({

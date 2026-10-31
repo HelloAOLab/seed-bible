@@ -114,8 +114,12 @@ function createMockTab(
     translationId?: string;
     selectTranslationAndChapter?: ReturnType<typeof vi.fn>;
     decorateVerses?: ReturnType<typeof vi.fn>;
+    showSharedSessionHint?: boolean;
   } = {}
 ): ReaderTab {
+  const showSharedSessionHint = signal(
+    overrides.showSharedSessionHint ?? false
+  );
   return {
     id: "tab-1",
     readingState: {
@@ -134,6 +138,12 @@ function createMockTab(
       ),
       discoveredStudyNotes: signal([]),
       discoveredContent: signal(overrides.discoveredContent ?? []),
+      hasHiddenDiscoveredContent: signal(false),
+      userDismissedHiddenContentWarning: signal(false),
+      showSharedSessionHint,
+      dismissSharedSessionHint: () => {
+        showSharedSessionHint.value = false;
+      },
       selectedVerses: signal(
         (overrides.selectedVerses ?? []).map((verse) => ({
           verse: { number: verse },
@@ -350,6 +360,39 @@ describe("DiscoverContentPanel", () => {
 
     const panel = container.querySelector(".sb-discover-content-panel");
     expect(panel).not.toBeNull();
+    expect(container.textContent).toContain("Exodus 5:3");
+  });
+
+  it("shows the shared-session hint above the content until Got it is pressed", () => {
+    const tab = createMockTab({
+      discoveredCrossReferences: RESULTS_FIXTURE,
+      showSharedSessionHint: true,
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="compact"
+          tab={tab}
+          state={createMockState()}
+        />,
+        container
+      );
+    });
+
+    const hint = container.querySelector(".sb-dcp-session-hint");
+    expect(hint?.textContent).toContain(
+      "Only you can see discovered content. Everything else in the session is shared."
+    );
+    expect(container.textContent).toContain("Exodus 5:3");
+
+    act(() => {
+      (
+        hint?.querySelector(".sb-dcp-session-hint-dismiss") as HTMLButtonElement
+      ).click();
+    });
+
+    expect(container.querySelector(".sb-dcp-session-hint")).toBeNull();
     expect(container.textContent).toContain("Exodus 5:3");
   });
 

@@ -565,6 +565,18 @@
   color: var(--sb-font-color);
 }
 
+.sb-settings-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sb-settings-toggle-description {
+  margin: 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
 /* Custom pill-toggle (ported from develop design) */
 .sb-settings-toggle-row input[type="checkbox"] {
   appearance: none;
