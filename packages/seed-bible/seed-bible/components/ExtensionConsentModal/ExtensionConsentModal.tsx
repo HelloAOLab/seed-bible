@@ -2,6 +2,7 @@ import "./ExtensionConsentModal.css";
 import { useSignal, type ReadonlySignal } from "@preact/signals";
 import type { ComponentChildren } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
+import { formatList } from "../../app/utils";
 import type {
   ModalContentProps,
   ModalManager,
@@ -448,18 +449,6 @@ function permissionNoun(t: Translate, permission: SandboxPermission): string {
       return t("extension-permission-noun-microphone");
     case "device:camera":
       return t("extension-permission-noun-camera");
-  }
-}
-
-/** "your highlights, your notes and your camera", in the language's own idiom. */
-function formatList(items: string[], language: string): string {
-  try {
-    return new Intl.ListFormat(language, {
-      style: "long",
-      type: "conjunction",
-    }).format(items);
-  } catch {
-    return items.join(", ");
   }
 }
 

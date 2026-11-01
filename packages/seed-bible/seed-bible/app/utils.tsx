@@ -148,6 +148,17 @@ export const formatRelativeTime = (
   return format.format(0, "second");
 };
 
+export function formatList(items: string[], language: string): string {
+  try {
+    return new Intl.ListFormat(language, {
+      style: "long",
+      type: "conjunction",
+    }).format(items);
+  } catch {
+    return items.join(", ");
+  }
+}
+
 export const download = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

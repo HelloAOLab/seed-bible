@@ -66,7 +66,10 @@ import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
 import { useOverlayDismiss } from "../useOverlayDismiss";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
-import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
+import {
+  DesktopSessionParticipants,
+  MobileSessionParticipants,
+} from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
@@ -3755,6 +3758,12 @@ export function BibleReader(props: BibleReaderProps) {
                   }
                   className="sb-quick-toolbar-reader"
                 />
+                {sharedSession ? (
+                  <DesktopSessionParticipants
+                    state={state}
+                    session={sharedSession}
+                  />
+                ) : null}
               </div>
             )}
           </div>

@@ -3,7 +3,7 @@ import { render, type VNode } from "preact";
 import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
 import { ParticipantFriendButton } from "@packages/seed-bible/seed-bible/components/FriendsPane/ParticipantFriendButton";
-import { openSessionSettingsModal } from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
+import { openSessionSettingsModal } from "@packages/seed-bible/seed-bible/components/SessionSettings/SessionSettings";
 import {
   createFriendsManager,
   type FriendsManager,

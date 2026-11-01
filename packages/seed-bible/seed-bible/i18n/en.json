@@ -471,6 +471,8 @@
   "animal-nature": "Tree",
   "visual-color-animal-anonymous": "{{color}} {{animal}} (Anonymous)",
   "participants": "Participants",
+  "tab-participants": "Participants in {{tab}}",
+  "participant-with-role": "{{name}} ({{role}})",
   "no-participants-match": "No participants match",
   "active": "Active",
   "inactive": "Inactive",

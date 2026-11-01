@@ -22,6 +22,7 @@ import { useHorizontalScroll } from "../useHorizontalScroll";
 import { useScrollEdgeFade } from "../useScrollEdgeFade";
 import { useTimeContext } from "./TimeContext";
 import { useI18n } from "../../i18n";
+import { formatList } from "../../app/utils";
 import {
   getTimelineYearTimespan,
   type Timespan,
@@ -548,7 +549,7 @@ function CrossedPathsRow(props: {
     ...item.userIds.filter((id) => id === props.selfUserId),
     ...item.userIds.filter((id) => id !== props.selfUserId),
   ];
-  const names = formatNameList(
+  const names = formatList(
     orderedIds.map((id) =>
       displayName(id, props.selfUserId, userProfileMap.get(id), t)
     ),
@@ -796,16 +797,4 @@ function displayName(
     return t("you", { defaultValue: "You" });
   }
   return profile?.name ?? t("anonymous", { defaultValue: "Anonymous" });
-}
-
-/** "You and Jonah", "You, Jonah and Ruth" — in the language's own idiom. */
-function formatNameList(names: string[], language: string): string {
-  try {
-    return new Intl.ListFormat(language, {
-      style: "long",
-      type: "conjunction",
-    }).format(names);
-  } catch {
-    return names.join(", ");
-  }
 }
