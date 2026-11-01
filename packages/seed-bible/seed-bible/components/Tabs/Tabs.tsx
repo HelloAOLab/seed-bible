@@ -24,38 +24,38 @@ import {
   TodayIcon,
 } from "../../components/icons";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
-import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
 import {
   isSessionHost,
   type BibleReadingSession,
   getConnectedUserVisualKey,
   getUserAnimalVisual,
-  getSessionUrl,
 } from "../../managers/SessionsManager";
 import { safeLocalStorage } from "../../app/ssrEnv";
 import { useI18n } from "../../i18n/I18nManager";
 import { SidebarSearch } from "../../components/SidebarSearch/SidebarSearch";
-import {
-  handleGridKeyNav,
-  handleHorizontalListKeyNav,
-} from "../../app/keyboardNav";
+import { handleGridKeyNav } from "../../app/keyboardNav";
 import {
   Avatar,
   SessionUserAvatar,
   getUserDisplayName,
   getUserSessionRole,
-  sessionRoleRank,
+  sortUsersBySessionRole,
 } from "../Avatar/Avatar";
+import {
+  SessionParticipantsSheet,
+  openSessionParticipantsModal,
+} from "../SessionParticipants/SessionParticipants";
+import { formatList } from "../../app/utils";
+import {
+  isLocalSessionHost,
+  openSessionSettingsModal,
+  openShareSessionModal,
+} from "../SessionSettings/SessionSettings";
 import { useEffect, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
 import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 import { useAppConfig } from "../../app/appConfig";
-import { SessionQRCode } from "../SessionQRCode/SessionQRCode";
-import {
-  ParticipantFriendButton,
-  rowsWithFriendButton,
-} from "../FriendsPane/ParticipantFriendButton";
 import { openReaderLocation } from "./openReaderLocation";
 import {
   BookmarkGlyph,
@@ -108,27 +108,6 @@ function renderLayoutPreview(layoutId: TabSlotLayoutId) {
   );
 }
 
-const HIGHLIGHT_DURATION_OPTIONS: { label: string; value: number | null }[] = [
-  { label: "∞", value: null },
-  { label: "8s", value: 8 },
-  { label: "16s", value: 16 },
-  { label: "20s", value: 20 },
-];
-
-/**
- * Modal content: host-side controls for a shared session. Ported from
- * develop's "Scripture Navigation" panel.
- *
- * - "Only Host can navigate" toggles `allowedNavigators` between `null`
- *   (everyone) and `[hostUserId]` (host only).
- * - "Only Host can highlight" toggles `allowedDecorators` the same way.
- * - Highlight duration picker writes `highlightDurationSeconds`.
- * - "End Session" removes the tab (which disposes the session and removes
- *   its registry entry automatically via `wrapSessionLifecycle`).
- *
- * Non-host participants see the current settings and who's there, but can't
- * change them. Everyone can add the other participants as friends.
- */
 /**
  * localStorage flag: once the host ticks "Don't show this again" in the
  * close-confirmation dialog, subsequent host-closes skip the dialog and end
@@ -140,463 +119,6 @@ const SESSION_CLOSE_CONFIRM_DISMISSED_KEY =
 function isSessionCloseConfirmDismissed(): boolean {
   return (
     safeLocalStorage.getItem(SESSION_CLOSE_CONFIRM_DISMISSED_KEY) === "true"
-  );
-}
-
-/**
- * True when the local client is the host or a co-host of the given session.
- */
-export function isLocalSessionHost(
-  state: SeedBibleState,
-  session: BibleReadingSession
-): boolean {
-  const options = session.options.value;
-  return (
-    isSessionHost(options, state.login.userId.value) ||
-    isSessionHost(
-      options,
-      getConnectedUserVisualKey({
-        userId: state.login.userId.value,
-        connectionId: state.os.connectionId,
-      })
-    )
-  );
-}
-
-function SessionSettingsModalContent(props: {
-  state: SeedBibleState;
-  session: BibleReadingSession;
-  onEndSession: () => void;
-  onClose: () => void;
-}) {
-  const { state, session, onEndSession, onClose } = props;
-  const { t } = useI18n();
-  const options = session.options.value;
-  const hostId = options.hostUserId;
-  const isHost = isLocalSessionHost(state, session);
-
-  const onlyHostNavigate =
-    Array.isArray(options.allowedNavigators) &&
-    options.allowedNavigators.length > 0;
-  const onlyHostHighlight =
-    Array.isArray(options.allowedDecorators) &&
-    options.allowedDecorators.length > 0;
-  const shareTranslation = options.shareTranslation;
-  const sessionUrl = getSessionUrl(session);
-
-  const urlCopied = useSignal(false);
-  const copySessionUrl = () => {
-    try {
-      navigator.clipboard.writeText(sessionUrl.href);
-      urlCopied.value = true;
-      setTimeout(() => {
-        urlCopied.value = false;
-      }, 1200);
-    } catch (error) {
-      console.error("Failed to copy session URL.", error);
-    }
-  };
-
-  const setNavigatorsOnlyHost = (onlyHost: boolean) => {
-    if (!isHost || !hostId) return;
-    session.updateOptions({
-      allowedNavigators: onlyHost ? [hostId] : null,
-    });
-  };
-
-  const setDecoratorsOnlyHost = (onlyHost: boolean) => {
-    if (!isHost || !hostId) return;
-    session.updateOptions({
-      allowedDecorators: onlyHost ? [hostId] : null,
-    });
-  };
-
-  const setHighlightDuration = (seconds: number | null) => {
-    if (!isHost) return;
-    session.updateOptions({ highlightDurationSeconds: seconds });
-  };
-
-  const setShareTranslation = (share: boolean) => {
-    if (!isHost) return;
-    session.updateOptions({ shareTranslation: share });
-  };
-
-  const setCoHost = (coHostKey: string, makeCoHost: boolean) => {
-    if (!isHost) return;
-    const existing = options.coHostUserIds ?? [];
-    const next = makeCoHost
-      ? existing.includes(coHostKey)
-        ? existing
-        : [...existing, coHostKey]
-      : existing.filter((id) => id !== coHostKey);
-    session.updateOptions({ coHostUserIds: next });
-  };
-
-  // Everyone connected, host first, then co-hosts, then peers (Array.sort is
-  // stable so peers keep their existing order within a rank — matches the
-  // sidebar tab row and the mobile sheet). The host is listed like any other
-  // user, with a "Host" badge, but can't be promoted, so their row shows no
-  // co-host action.
-  const participants = [...session.connectedUsers.value].sort(
-    (a, b) =>
-      sessionRoleRank(getUserSessionRole(options, a)) -
-      sessionRoleRank(getUserSessionRole(options, b))
-  );
-  const friendButtonRows = rowsWithFriendButton(participants);
-
-  return (
-    <div className="sb-session-settings">
-      <div className="sb-session-settings-scroll">
-        <div className="sb-session-settings-url">
-          <span className="sb-session-settings-label">
-            {t("session-url", { defaultValue: "Session URL" })}
-          </span>
-          <div className="sb-session-settings-url-row">
-            <span
-              className="sb-session-settings-url-value"
-              title={sessionUrl.href}
-            >
-              {sessionUrl.href}
-            </span>
-            <button
-              type="button"
-              className="sb-session-settings-copy-url"
-              onClick={copySessionUrl}
-              aria-label={t("copy", { defaultValue: "Copy" })}
-              title={
-                urlCopied.value
-                  ? t("copied", { defaultValue: "Copied" })
-                  : t("copy", { defaultValue: "Copy" })
-              }
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                {urlCopied.value ? "check" : "content_copy"}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        <SessionQRCode url={sessionUrl.href} modals={state.modals} />
-
-        {!isHost && (
-          <p className="sb-session-settings-note">
-            {t("session-settings-host-only_note", {
-              defaultValue: "Only the session host can change these settings.",
-            })}
-          </p>
-        )}
-
-        <div className="sb-session-settings-section">
-          <div className="sb-session-settings-section-title">
-            {t("session-settings-section-navigation", {
-              defaultValue: "Navigation",
-            })}
-          </div>
-
-          <div className="sb-session-settings-row">
-            <label
-              className="sb-session-settings-label"
-              htmlFor="sb-session-only-host-navigate"
-            >
-              {t("session-settings-host-only_navigate", {
-                defaultValue: "Only host can navigate",
-              })}
-            </label>
-            <input
-              id="sb-session-only-host-navigate"
-              type="checkbox"
-              checked={onlyHostNavigate}
-              disabled={!isHost}
-              onChange={(event: Event) => {
-                setNavigatorsOnlyHost(
-                  (event.currentTarget as HTMLInputElement).checked
-                );
-              }}
-            />
-          </div>
-          <p className="sb-session-settings-description">
-            {onlyHostNavigate
-              ? t("session-settings-navigate-desc_host", {
-                  defaultValue:
-                    "Only the host can change the passage for everyone.",
-                })
-              : t("session-settings-navigate-desc_all", {
-                  defaultValue:
-                    "Everyone in the session can change the passage.",
-                })}
-          </p>
-
-          <div className="sb-session-settings-row">
-            <label
-              className="sb-session-settings-label"
-              htmlFor="sb-session-only-host-highlight"
-            >
-              {t("session-settings-host-only_highlight", {
-                defaultValue: "Only host can highlight",
-              })}
-            </label>
-            <input
-              id="sb-session-only-host-highlight"
-              type="checkbox"
-              checked={onlyHostHighlight}
-              disabled={!isHost}
-              onChange={(event: Event) => {
-                setDecoratorsOnlyHost(
-                  (event.currentTarget as HTMLInputElement).checked
-                );
-              }}
-            />
-          </div>
-          <p className="sb-session-settings-description">
-            {onlyHostHighlight
-              ? t("session-settings-highlight-desc_host", {
-                  defaultValue: "Only the host can highlight for everyone.",
-                })
-              : t("session-settings-highlight-desc_all", {
-                  defaultValue: "Everyone in the session can highlight.",
-                })}
-          </p>
-
-          <div className="sb-session-settings-duration">
-            <div className="sb-session-settings-duration-title">
-              {t("session-settings-highlight-duration", {
-                defaultValue: "Highlight for",
-              })}
-            </div>
-            <div
-              className="sb-session-settings-duration-options"
-              role="radiogroup"
-              onKeyDown={(event) => {
-                handleHorizontalListKeyNav(event, event.currentTarget);
-              }}
-            >
-              {HIGHLIGHT_DURATION_OPTIONS.map((option) => {
-                const selected =
-                  options.highlightDurationSeconds === option.value;
-                return (
-                  <button
-                    key={option.label}
-                    type="button"
-                    className={`sb-session-settings-duration-option${selected ? " sb-session-settings-duration-option-selected" : ""}`}
-                    disabled={!isHost}
-                    onClick={() => setHighlightDuration(option.value)}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="sb-session-settings-section">
-            <div className="sb-session-settings-label">
-              {t("session-settings-verse-effects", {
-                defaultValue: "Verse selection effects",
-              })}
-            </div>
-
-            <div
-              className="sb-session-settings-duration-options"
-              role="group"
-              aria-label={t("session-settings-verse-effects", {
-                defaultValue: "Verse selection effects",
-              })}
-            >
-              {(
-                [
-                  { value: "hosts-only" },
-                  { value: "everyone" },
-                  { value: "none" },
-                ] as const
-              ).map((option) => {
-                const selected =
-                  options.verseSelectionEffectVisibility === option.value;
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`sb-session-settings-duration-option${
-                      selected
-                        ? " sb-session-settings-duration-option-selected"
-                        : ""
-                    }`}
-                    aria-pressed={selected}
-                    onClick={() => {
-                      session.updateOptions({
-                        verseSelectionEffectVisibility: option.value,
-                      });
-                    }}
-                  >
-                    {t(
-                      {
-                        "hosts-only":
-                          "session-settings-verse-effects-hosts-only",
-                        everyone: "session-settings-verse-effects-everyone",
-                        none: "session-settings-verse-effects-none",
-                      }[option.value]
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <p className="sb-session-settings-description">
-              {options.verseSelectionEffectVisibility === "hosts-only"
-                ? t("session-settings-verse-effects-desc-hosts", {
-                    defaultValue: "Show effects when a host selects a verse.",
-                  })
-                : options.verseSelectionEffectVisibility === "everyone"
-                  ? t("session-settings-verse-effects-desc-everyone", {
-                      defaultValue: "Show effects when anyone selects a verse.",
-                    })
-                  : t("session-settings-verse-effects-desc-none", {
-                      defaultValue:
-                        "Verse selection effects are turned off for everyone.",
-                    })}
-            </p>
-          </div>
-        </div>
-
-        <div className="sb-session-settings-section">
-          <div className="sb-session-settings-section-title">
-            {t("session-settings-section-sharing", { defaultValue: "Sharing" })}
-          </div>
-
-          <div className="sb-session-settings-row">
-            <label
-              className="sb-session-settings-label"
-              htmlFor="sb-session-share-translation"
-            >
-              {t("session-settings-share-translation", {
-                defaultValue: "Share translation",
-              })}
-            </label>
-            <input
-              id="sb-session-share-translation"
-              type="checkbox"
-              checked={shareTranslation}
-              disabled={!isHost}
-              onChange={(event: Event) => {
-                setShareTranslation(
-                  (event.currentTarget as HTMLInputElement).checked
-                );
-              }}
-            />
-          </div>
-          <p className="sb-session-settings-description">
-            {shareTranslation
-              ? t("session-settings-share-translation-desc_shared", {
-                  defaultValue:
-                    "Everyone reads the same translation. Changing it updates it for everyone.",
-                })
-              : t("session-settings-share-translation-desc_unique", {
-                  defaultValue:
-                    "Each person keeps their own translation. Changing yours won't affect others.",
-                })}
-          </p>
-        </div>
-
-        {participants.length > 0 && (
-          <div className="sb-session-settings-section">
-            <div className="sb-session-settings-section-title">
-              {t("session-settings-section-participants", {
-                defaultValue: "Participants",
-              })}
-            </div>
-            <ul className="sb-session-participants">
-              {participants.map((user) => {
-                const coHostKey = getConnectedUserVisualKey(user);
-                const role = getUserSessionRole(options, user);
-                const isHostUser = role === "host";
-                const isCoHost = role === "co-host";
-                const visual = getUserAnimalVisual(coHostKey);
-                const imageUrl = user.profile?.pictureUrl ?? null;
-                return (
-                  <li
-                    key={user.connectionId}
-                    className="sb-session-participant"
-                  >
-                    <span
-                      className={`sb-session-participant-avatar${imageUrl ? " sb-session-participant-avatar-has-image" : ""}`}
-                      style={
-                        imageUrl
-                          ? {
-                              borderColor: visual.color,
-                              backgroundImage: `url(${imageUrl})`,
-                            }
-                          : { backgroundColor: visual.color }
-                      }
-                      aria-hidden="true"
-                    >
-                      {!imageUrl && (
-                        <MaterialIcon>{visual.defaultIcon}</MaterialIcon>
-                      )}
-                    </span>
-                    <span
-                      className="sb-session-participant-name"
-                      title={getUserDisplayName(user)}
-                    >
-                      {getUserDisplayName(user)}
-                      {isHostUser && (
-                        <span className="sb-session-participant-badge">
-                          {t("host", { defaultValue: "Host" })}
-                        </span>
-                      )}
-                      {isCoHost && (
-                        <span className="sb-session-participant-badge">
-                          {t("co-host", { defaultValue: "Co-host" })}
-                        </span>
-                      )}
-                    </span>
-                    {friendButtonRows.has(user.connectionId) && (
-                      <ParticipantFriendButton
-                        state={state}
-                        userId={user.userId}
-                        displayName={getUserDisplayName(user)}
-                      />
-                    )}
-                    {isHost && !isHostUser && (
-                      <button
-                        type="button"
-                        className={`sb-session-participant-action${isCoHost ? " sb-session-participant-action-active" : ""}`}
-                        onClick={() => setCoHost(coHostKey, !isCoHost)}
-                      >
-                        {isCoHost
-                          ? t("remove-co-host", {
-                              defaultValue: "Remove co-host",
-                            })
-                          : t("make-co-host", { defaultValue: "Make co-host" })}
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      <div className="sb-session-settings-actions">
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={() => {
-            onEndSession();
-            onClose();
-          }}
-        >
-          {t("end-session", { defaultValue: "End Session" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-        >
-          {t("close", { defaultValue: "Close" })}
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -727,69 +249,6 @@ function SessionCloseConfirmModalContent(props: {
       )}
     </div>
   );
-}
-
-/**
- * Opens the session settings modal for a shared session. Shared by the tab
- * kebab and the mobile reader participants sheet so both open the exact same
- * dialog. Ending the session from the modal removes whichever tab is backed by
- * this session.
- */
-export function openSessionSettingsModal(
-  state: SeedBibleState,
-  session: BibleReadingSession
-) {
-  const modalId = `session-settings-${session.id}`;
-  state.modals.openModal({
-    id: modalId,
-    title: {
-      key: "session-settings",
-      defaultValue: "Session settings",
-    },
-    content: () => (
-      <SessionSettingsModalContent
-        state={state}
-        session={session}
-        onEndSession={() => {
-          const tab = state.tabs.tabs.value.find(
-            (t) => t.sharedSession === session
-          );
-          if (tab) state.tabs.removeTab(tab.id);
-        }}
-        onClose={() => {
-          state.modals.closeModal(modalId);
-        }}
-      />
-    ),
-  });
-}
-
-export function openShareSessionModal(
-  state: SeedBibleState,
-  session: BibleReadingSession
-) {
-  const shareUrl = getSessionUrl(session);
-  const modalId = `share-session-${session.id}`;
-  state.modals.openModal({
-    id: modalId,
-    title: { key: "share-sheet-title", defaultValue: "Share" },
-    content: () => (
-      <ShareModal
-        app={state.app}
-        modals={state.modals}
-        session={session}
-        hideShareLink
-        onClose={() => state.modals.closeModal(modalId)}
-        onShareVia={() => {
-          void navigator.share?.({
-            title: document.title,
-            url: shareUrl.href,
-          });
-          state.modals.closeModal(modalId);
-        }}
-      />
-    ),
-  });
 }
 
 /**
@@ -1200,7 +659,7 @@ function TabRow(props: TabRowProps) {
   }
 
   const { app, saves, bookmarks } = state;
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   // One small ribbon in the color of the most recently moved bookmark here;
   // several colors at this size would be unreadable.
@@ -1214,7 +673,8 @@ function TabRow(props: TabRowProps) {
   const shortSubTitle = tab.readingState.shortSubTitle.value;
   const title = tab.readingState.title.value;
   const isPlayingAudio = isTabPlayingAudio(state, tab);
-  const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
+  const sharedSession = tab.sharedSession;
+  const connectedUsers = sharedSession?.connectedUsers.value ?? [];
   // Fills the star, and decides whether pressing it files or edits.
   const isChapterSaved = saves.isLocationSaved(
     tab.readingState.translationId.value,
@@ -1231,85 +691,131 @@ function TabRow(props: TabRowProps) {
     openSaveModalForLocation(state, { translationId, bookId, chapterNumber });
   };
 
+  const selectThisTab = () => {
+    closeContextMenus();
+    closeLayoutMenu();
+    app.selectTab(tab.id);
+  };
+
+  const isParticipantsSheetOpen = useSignal(false);
+  const sessionOptions = sharedSession?.options.value;
+  const participants = sessionOptions
+    ? sortUsersBySessionRole(sessionOptions, connectedUsers).map((user) => {
+        const role = getUserSessionRole(sessionOptions, user);
+        const roleLabel =
+          role === "host"
+            ? t("host", { defaultValue: "Host" })
+            : role === "co-host"
+              ? t("co-host", { defaultValue: "Co-host" })
+              : undefined;
+        return { user, role, roleLabel };
+      })
+    : [];
+  // The avatars button is named "Participants in <tab>", which hides its
+  // contents from screen readers, so who's there is given as its description.
+  const participantsDescriptionId = `sb-tab-participants-${tab.id}`;
+  const participantsDescription = formatList(
+    participants.map(({ user, roleLabel }) =>
+      roleLabel
+        ? t("participant-with-role", {
+            defaultValue: "{{name}} ({{role}})",
+            name: getUserDisplayName(user),
+            role: roleLabel,
+          })
+        : getUserDisplayName(user)
+    ),
+    language
+  );
+
   return (
     <div className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}`}>
-      <button
-        onClick={() => {
-          closeContextMenus();
-          closeLayoutMenu();
-          app.selectTab(tab.id);
-        }}
-        className={`sb-tab-button`}
-      >
-        {/* Only the label takes the translation's direction — the row itself
+      <div className="sb-tab-row-body">
+        <button onClick={selectThisTab} className={`sb-tab-button`}>
+          {/* Only the label takes the translation's direction — the row itself
             stays in the UI direction, or an English translation would pin the
             whole card to LTR inside an otherwise RTL sidebar. */}
-        <div
-          className="sb-tab-main-content"
-          dir={tab.readingState.translation.value?.textDirection ?? "auto"}
-        >
-          <span className="sb-tab-main-title">{title}</span>
-          <span className="sb-tab-main-sep" aria-hidden="true">
-            •
-          </span>
-          <span className="sb-tab-main-translation">{shortSubTitle}</span>
-          {frontBookmark && (
-            <span
-              className="sb-tab-bookmark-marker"
-              role="img"
-              aria-label={bookmarkButtonLabel(t, bookmarksHere)}
-              title={bookmarkButtonLabel(t, bookmarksHere)}
-            >
-              <BookmarkGlyph colorId={frontBookmark.colorId} size={12} />
+          <div
+            className="sb-tab-main-content"
+            dir={tab.readingState.translation.value?.textDirection ?? "auto"}
+          >
+            <span className="sb-tab-main-title">{title}</span>
+            <span className="sb-tab-main-sep" aria-hidden="true">
+              •
             </span>
-          )}
-          {isPlayingAudio && (
-            <MaterialIcon
-              className="sb-tab-audio-icon"
-              role="img"
-              aria-label={t("tab-playing-audio", {
-                defaultValue: "Playing audio",
-              })}
-            >
-              volume_up
-            </MaterialIcon>
-          )}
-        </div>
+            <span className="sb-tab-main-translation">{shortSubTitle}</span>
+            {frontBookmark && (
+              <span
+                className="sb-tab-bookmark-marker"
+                role="img"
+                aria-label={bookmarkButtonLabel(t, bookmarksHere)}
+                title={bookmarkButtonLabel(t, bookmarksHere)}
+              >
+                <BookmarkGlyph colorId={frontBookmark.colorId} size={12} />
+              </span>
+            )}
+            {isPlayingAudio && (
+              <MaterialIcon
+                className="sb-tab-audio-icon"
+                role="img"
+                aria-label={t("tab-playing-audio", {
+                  defaultValue: "Playing audio",
+                })}
+              >
+                volume_up
+              </MaterialIcon>
+            )}
+          </div>
+        </button>
 
-        {tab.sharedSession && connectedUsers.length > 0 && (
-          <div className="sb-tab-users-section">
-            <div className="sb-tab-users-list">
-              {(() => {
-                const sessionOptions = tab.sharedSession.options.value;
-                // Host first, then co-hosts, then everyone else — Array.sort
-                // is stable so peers keep their existing order within a rank.
-                const sortedUsers = [...connectedUsers].sort(
-                  (a, b) =>
-                    sessionRoleRank(getUserSessionRole(sessionOptions, a)) -
-                    sessionRoleRank(getUserSessionRole(sessionOptions, b))
-                );
-                return sortedUsers.map((user) => {
-                  const role = getUserSessionRole(sessionOptions, user);
-                  const roleLabel =
-                    role === "host"
-                      ? t("host", { defaultValue: "Host" })
-                      : role === "co-host"
-                        ? t("co-host", { defaultValue: "Co-host" })
-                        : undefined;
-                  return (
-                    <SessionUserAvatar
-                      key={user.connectionId}
-                      user={user}
-                      role={role}
-                      roleLabel={roleLabel}
-                    />
-                  );
-                });
-              })()}
-            </div>
+        {/* A sibling of the tab button, not inside it: a button can't nest
+            another button. Clicking the avatars opens the participants modal
+            (a bottom sheet on mobile); clicking the rest of this strip only
+            selects the tab, like the tab button above it. */}
+        {sharedSession && participants.length > 0 && (
+          <div className="sb-tab-users-section" onClick={selectThisTab}>
+            <button
+              type="button"
+              className="sb-tab-users-list"
+              aria-label={t("tab-participants", {
+                defaultValue: "Participants in {{tab}}",
+                tab: title,
+              })}
+              aria-describedby={participantsDescriptionId}
+              title={t("participants", { defaultValue: "Participants" })}
+              onClick={(event: MouseEvent) => {
+                event.stopPropagation();
+                selectThisTab();
+                if (app.isMobile.value) {
+                  isParticipantsSheetOpen.value = true;
+                } else {
+                  openSessionParticipantsModal(state, sharedSession);
+                }
+              }}
+            >
+              {participants.map(({ user, role, roleLabel }) => (
+                <SessionUserAvatar
+                  key={user.connectionId}
+                  user={user}
+                  role={role}
+                  roleLabel={roleLabel}
+                />
+              ))}
+            </button>
+            <span id={participantsDescriptionId} hidden>
+              {participantsDescription}
+            </span>
           </div>
         )}
-      </button>
+        {sharedSession && isParticipantsSheetOpen.value && (
+          <SessionParticipantsSheet
+            state={state}
+            session={sharedSession}
+            onClose={() => {
+              isParticipantsSheetOpen.value = false;
+            }}
+          />
+        )}
+      </div>
 
       {isSelected && !tab.sharedSession && (
         <button
@@ -2188,11 +1694,7 @@ export function Tabs(props: TabsProps) {
                 sessionUsers.length > 0 &&
                 (() => {
                   const options = session.options.value;
-                  const sorted = [...sessionUsers].sort(
-                    (a, b) =>
-                      sessionRoleRank(getUserSessionRole(options, a)) -
-                      sessionRoleRank(getUserSessionRole(options, b))
-                  );
+                  const sorted = sortUsersBySessionRole(options, sessionUsers);
                   const shown = sorted.slice(0, 3);
                   const extra = sorted.length - shown.length;
                   return (

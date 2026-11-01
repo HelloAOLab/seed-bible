@@ -843,20 +843,45 @@
   align-items: center;
 }
 
+/* Holds the tab button and, for a shared tab, the avatar strip below it. */
+.sb-tab-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .sb-tab-users-section {
   border-top: 1px solid
     color-mix(in srgb, var(--sb-font-color), transparent 78%);
   margin-top: 0.125rem;
   padding-top: 0.4375rem;
+  cursor: pointer;
 }
 
+/* Opens the tab's participants modal. Shrinks to the avatars so the rest of
+   the strip still just selects the tab. */
 .sb-tab-users-list {
-  display: flex;
+  display: inline-flex;
+  vertical-align: top;
+  max-width: 100%;
   align-items: center;
   flex-wrap: wrap;
   /* Extra column gap leaves room for the overlaid role label to overflow a
      little; row gap keeps the label clear of a wrapped row below. */
   gap: 0.75rem 0.625rem;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 0.125rem;
+  margin: -0.125rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.sb-tab-users-list:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
 }
 
 /* Shared-session settings modal — ported from develop's Scripture Navigation panel */

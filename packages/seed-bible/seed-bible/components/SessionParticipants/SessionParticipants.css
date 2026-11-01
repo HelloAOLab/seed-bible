@@ -1,6 +1,7 @@
-/* Mobile reader header: compact shared-session presence indicator. Shows an
+/* Reader header: compact shared-session presence indicator. Shows an
  * overlapping stack of participant avatars (host first) that opens the
- * participants sheet when tapped. Mirrors the chat presence-avatar overlap. */
+ * participants sheet (mobile) or modal (desktop). Mirrors the chat
+ * presence-avatar overlap. */
 .sb-session-participants-stack {
   flex-shrink: 0;
   display: inline-flex;
@@ -14,6 +15,11 @@
 
 .sb-session-participants-stack:active {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+/* Desktop reader quick tools: same stack, with a hover state for the mouse. */
+.sb-session-participants-stack-desktop:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 
 .sb-session-participants-stack-item {
@@ -166,6 +172,21 @@
 
 .sb-session-participants-share-button:active {
   background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+/* Desktop participants modal: the settings / share rows sit in the modal
+ * footer, below a divider that matches the mobile sheet's. */
+.sb-session-participants-modal-actions {
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  padding-top: 0.5rem;
+}
+
+.sb-session-participants-modal-actions
+  .sb-session-participants-settings-button:hover,
+.sb-session-participants-modal-actions
+  .sb-session-participants-share-button:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
 }
 
 /* Participants list (host can promote/demote co-hosts inline) */

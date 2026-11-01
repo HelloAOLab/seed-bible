@@ -47,6 +47,22 @@ export function sessionRoleRank(role: SessionRole | null): number {
   return role === "host" ? 0 : role === "co-host" ? 1 : 2;
 }
 
+/**
+ * A copy of `users` ordered host first, then co-hosts, then everyone else.
+ * Array.sort is stable, so peers keep their existing order within a rank —
+ * every participant surface lists people in the same order.
+ */
+export function sortUsersBySessionRole(
+  options: SessionOptions,
+  users: readonly ConnectedSessionUser[]
+): ConnectedSessionUser[] {
+  return [...users].sort(
+    (a, b) =>
+      sessionRoleRank(getUserSessionRole(options, a)) -
+      sessionRoleRank(getUserSessionRole(options, b))
+  );
+}
+
 /** Material icon shown when there is no profile picture and nobody else to tell apart. */
 export const GENERIC_AVATAR_ICON = "account_circle";
 
