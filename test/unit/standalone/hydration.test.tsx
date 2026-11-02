@@ -556,10 +556,12 @@ describe("client hydration", () => {
     expect(decision).toEqual({ hydrate: true });
   });
 
-  // The server can't see the device, so it always paints Light. Both theme
-  // tags (the head `#sb-theme-styles` and the in-tree `<style>` that
-  // `ExternalResourceDependencies` renders, which wins) only repaint on a
-  // post-mount *change*, so the device's scheme has to arrive after mount.
+  // The server can't see the device, so it always paints Light. The head
+  // `#sb-theme-styles` tag only repaints on a post-mount *change*, so the
+  // device's scheme has to arrive after mount. The in-tree `<style>` that
+  // `ExternalResourceDependencies` renders must stay empty with no
+  // Customization: it sits later in the document, so any theme in it would
+  // paint over the head tag.
   it.each([
     ["a first-time visitor on a dark device", null, true, DARK_THEME],
     ["a visitor who saved System on a dark device", "system", true, DARK_THEME],
@@ -584,10 +586,10 @@ describe("client hydration", () => {
       });
 
       const expected = `--sb-background: ${expectedTheme.variables.background};`;
-      const inTreeCss = Array.from(container.querySelectorAll("style"))
+      const inTreeThemeCss = Array.from(container.querySelectorAll("style"))
         .map((style) => style.innerHTML)
-        .find((css) => css.includes("--sb-background"));
-      expect(inTreeCss).toContain(expected);
+        .filter((css) => css.includes("--sb-background"));
+      expect(inTreeThemeCss).toEqual([]);
       expect(document.getElementById("sb-theme-styles")?.textContent).toContain(
         expected
       );

@@ -34,6 +34,27 @@ function installServerRenderedHead(): void {
   ].join("");
 }
 
+/**
+ * Signs `userId` in the way `LoginManager` leaves storage: a CasualOS V1
+ * session key, plus the profile copy it caches for that account.
+ */
+function signInWithCachedProfile(
+  userId: string,
+  config: Record<string, unknown>
+): void {
+  const b64 = (text: string) => btoa(text);
+  localStorage.setItem(
+    "sessionKey",
+    `vSK1.${b64(userId)}.${b64("session")}.${b64("secret")}.${b64(
+      String(Date.now() + 86_400_000)
+    )}`
+  );
+  localStorage.setItem(
+    `sb-profile-cache-${userId}`,
+    JSON.stringify({ name: "Reader", config })
+  );
+}
+
 function runInlineThemeScript(): void {
   new Function(readInlineThemeScript())();
 }
@@ -109,6 +130,57 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
+  });
+
+  it("paints a signed-in account's cached Dark on a light device", () => {
+    installServerRenderedHead();
+    stubColorScheme(false);
+    signInWithCachedProfile("user-1", { themeId: "dark" });
+
+    runInlineThemeScript();
+
+    expect(paintedBackground()).toBe(DARK_THEME.variables.background);
+  });
+
+  it("prefers the signed-in account's cached theme over the device's anonymous one", () => {
+    installServerRenderedHead();
+    stubColorScheme(true);
+    signInWithCachedProfile("user-1", { themeId: "light" });
+    localStorage.setItem(
+      "sb-profile-config-local",
+      JSON.stringify({ themeId: "dark" })
+    );
+
+    runInlineThemeScript();
+
+    expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
+  });
+
+  it("ignores a cached profile belonging to a different account", () => {
+    installServerRenderedHead();
+    stubColorScheme(true);
+    signInWithCachedProfile("user-1", {});
+    localStorage.setItem(
+      "sb-profile-cache-user-2",
+      JSON.stringify({ name: "Other", config: { themeId: "light" } })
+    );
+
+    runInlineThemeScript();
+
+    expect(paintedBackground()).toBe(DARK_THEME.variables.background);
+  });
+
+  it("falls back to the device's saved theme when the session key is malformed", () => {
+    installServerRenderedHead();
+    stubColorScheme(false);
+    localStorage.setItem("sessionKey", "vSK1.%%%not-base64%%%.x.y.z");
+    localStorage.setItem(
+      "sb-profile-config-local",
+      JSON.stringify({ themeId: "dark" })
+    );
+
+    expect(runInlineThemeScript).not.toThrow();
+    expect(paintedBackground()).toBe(DARK_THEME.variables.background);
   });
 
   it("keeps the server's theme when the saved config is corrupt", () => {

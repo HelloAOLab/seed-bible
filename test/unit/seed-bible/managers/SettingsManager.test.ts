@@ -27,6 +27,7 @@ function makeFakeLogin(initialProfile: UserProfile | null): LoginManager {
   return {
     userId,
     profile,
+    cachedProfile: signal<UserProfile | null>(null),
     localConfig,
     profilePromise: Promise.resolve(initialProfile),
     updateProfile: (newData: Partial<UserProfile>) => {
@@ -572,6 +573,64 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
 
     const localWins = createSettings(os, anon, navWith());
     expect(localWins.settings.value.themeId).toBe("dark");
+  });
+
+  // `index.html`'s pre-hydration script paints a signed-in account's theme
+  // from the profile copy cached on the device. If settings ignored that
+  // copy until the network load landed, the first post-mount theme change
+  // would repaint the default (System) over it, then flip back.
+  it("uses a signed-in account's cached theme and colors while its profile is still loading", () => {
+    const login = makeFakeLogin(null);
+    login.userId.value = "user-1";
+    login.cachedProfile.value = {
+      name: "Test",
+      config: {
+        themeId: "dark",
+        customTheme: { background: "#123456" },
+        customHighlights: { yellow: { color: "#ffff00" } },
+      },
+    } as unknown as UserProfile;
+
+    const settings = createSettings(os, login, navWith());
+
+    expect(settings.settings.value.themeId).toBe("dark");
+    expect(settings.settings.value.customTheme).toEqual({
+      background: "#123456",
+    });
+    expect(settings.settings.value.customHighlights).toEqual({
+      yellow: { color: "#ffff00" },
+    });
+  });
+
+  it("switches to the loaded profile's theme once it arrives, over the cached copy", () => {
+    const login = makeFakeLogin(null);
+    login.userId.value = "user-1";
+    login.cachedProfile.value = {
+      name: "Test",
+      config: { themeId: "dark" },
+    } as unknown as UserProfile;
+    const settings = createSettings(os, login, navWith());
+
+    login.profile.value = {
+      name: "Test",
+      config: { themeId: "light" },
+    } as unknown as UserProfile;
+
+    expect(settings.settings.value.themeId).toBe("light");
+  });
+
+  it("reads only theme settings from the cached profile, so other settings still match the server's first render", () => {
+    const login = makeFakeLogin(null);
+    login.userId.value = "user-1";
+    login.cachedProfile.value = {
+      name: "Test",
+      config: { themeId: "dark", fontSize: "XL" },
+    } as unknown as UserProfile;
+
+    const settings = createSettings(os, login, navWith());
+
+    expect(settings.settings.value.themeId).toBe("dark");
+    expect(settings.settings.value.fontSize).not.toBe("XL");
   });
 
   it("lets an embed link's theme outrank a signed-in viewer's saved theme and colors", () => {

@@ -75,7 +75,26 @@
       // reflects the server's default-light guess, not this device's saved
       // preference. See ThemeManager.tsx / CLAUDE.md for why this stays
       // `body`-scoped.
+      //
+      // Same precedence as SettingsManager's readSettings: a signed-in
+      // account's theme (from the profile copy LoginManager caches under
+      // "sb-profile-cache-<userId>"), then the anonymous device store.
       (function () {
+        function readAccountThemeId() {
+          try {
+            // A CasualOS session key is "vSK1.<base64 userId>.<...>".
+            var sessionKey = localStorage.getItem("sessionKey");
+            if (!sessionKey || sessionKey.indexOf("vSK1.") !== 0) return null;
+            var userId = atob(sessionKey.split(".")[1] || "");
+            if (!userId) return null;
+            var cached = localStorage.getItem("sb-profile-cache-" + userId);
+            var config = cached && JSON.parse(cached).config;
+            var id = config && config.themeId;
+            return typeof id === "string" && id ? id : null;
+          } catch (e) {
+            return null;
+          }
+        }
         try {
           var raw = localStorage.getItem("sb-profile-config-local");
           var params = new URLSearchParams(window.location.search);
@@ -86,6 +105,7 @@
               : null;
           var themeId =
             (linkTheme && linkTheme.trim()) ||
+            readAccountThemeId() ||
             (raw && JSON.parse(raw).themeId) ||
             "system";
           if (themeId === "system") {

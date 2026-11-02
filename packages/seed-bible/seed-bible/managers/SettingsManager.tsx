@@ -805,6 +805,20 @@ export function createSettings(
       sessionOverrides[urlKey] ??
       local[profileKey];
 
+    // While a signed-in account's profile is still loading, its theme comes
+    // from the copy cached on this device. `index.html`'s pre-hydration
+    // script paints from that same copy, so reading the default (System)
+    // here instead would repaint over it on the first post-mount theme
+    // change, then flip back once the load lands. Theme keys only: the
+    // theme reaches the first paint through `<style>` tags Preact doesn't
+    // diff during hydration, while settings like font size change the
+    // rendered markup and would make it disagree with the server's.
+    const themeProfile = profile ?? login.cachedProfile.value;
+    const readTheme = (profileKey: string, urlKey: string): unknown =>
+      getProfileConfigValue(themeProfile, profileKey) ??
+      sessionOverrides[urlKey] ??
+      local[profileKey];
+
     // The embed link's theme is the look the site owner chose. The viewer's
     // saved theme and color edits would otherwise paint over it, so the
     // preview (and every signed-in visitor) would ignore the link.
@@ -869,16 +883,16 @@ export function createSettings(
         DEFAULT_SETTINGS.scriptureWidth
       ),
       themeId: parseThemeId(
-        pinnedEmbedTheme ?? read(PROFILE_THEME_ID, TAG_THEME_ID),
+        pinnedEmbedTheme ?? readTheme(PROFILE_THEME_ID, TAG_THEME_ID),
         DEFAULT_SETTINGS.themeId
       ),
       customTheme: pinnedEmbedTheme
         ? {}
-        : parseStringRecord(read(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)),
+        : parseStringRecord(readTheme(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)),
       customHighlights: pinnedEmbedTheme
         ? {}
         : parseHighlightOverrides(
-            read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
+            readTheme(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
           ),
       discoverContentPanelInline: parseBoolean(
         read(
