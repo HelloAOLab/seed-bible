@@ -4,11 +4,35 @@
 
 ### ✨ Added
 
+- Download your uploaded images from Your content, and see their details in the image preview. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Delete branding from Your content. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Let extensions use the same search bar as the rest of the app. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+
 ### 🔧 Changed
+
+- Ask before deleting highlights, notes, saves, folders, branding and themes on Your content, naming what will be deleted. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Close Today, Search, Plans and the Bible Stack window when their button is pressed again, instead of opening them again. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Give every search box the same look, with a round clear button instead of the browser's blue ×. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Animate menus, modals, the sidebar and docked side panes as they open and close. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Give sidebar, pane header and reader header buttons one hover style. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Show a tab, bookmark or save row's ⋯ button on desktop only on hover or for the selected tab, and make the whole tab row clickable. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Outline modals, menus and panels with the theme's divider color instead of its secondary color. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Lay out saves on Your content as an even grid in Bible order, with each save's translation and folder count. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+  - Highlights and saves show short translation codes, like `VDV`.
+  - Saves in the sidebar are also listed in Bible order.
+- Replace the Today screen's header with a close button beside the greeting. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Open Share, session settings, the photo pickers and image previews as bottom sheets on phones. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Keep Settings open on desktop when opening Account or About, as it already did for Extensions. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Fade the edges of scrolling tab lists and filter pills, and let the mouse wheel scroll the pills sideways. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 
 ### 🐛 Fixed
 
+- Fix the desktop sidebar's collapse button getting stuck after widening the window with the phone drawer open. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Fix "Open in new panel" showing in the tab menu on phones. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+
 ### 🗑️ Removed
+
+- Remove the Today button from the sidebar's Tabs header; Today is still in the toolbar. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 
 ## v1.15.0 — 2026-10-26
 
