@@ -261,6 +261,19 @@ export function initTelemetry(options: InitTelemetryOptions = {}): Telemetry {
   };
 }
 
+/**
+ * Bucket edges for every duration histogram, in seconds. The SDK default edges
+ * (0, 5, 10, ... 10000) assume milliseconds, so second-valued samples all land
+ * in the first bucket and percentiles collapse to a constant.
+ */
+export const DURATION_BUCKET_BOUNDARIES_SECONDS = [
+  0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10,
+];
+
+const DURATION_ADVICE = {
+  explicitBucketBoundaries: DURATION_BUCKET_BOUNDARIES_SECONDS,
+};
+
 function createInstruments(meter: Meter): Instruments {
   meter
     .createObservableGauge("seedbible.process.memory", {
@@ -278,10 +291,12 @@ function createInstruments(meter: Meter): Instruments {
     httpDuration: meter.createHistogram("http.server.request.duration", {
       description: "Duration of inbound HTTP requests",
       unit: "s",
+      advice: DURATION_ADVICE,
     }),
     renderDuration: meter.createHistogram("seedbible.ssr.render.duration", {
       description: "Duration of the SSR render() call",
       unit: "s",
+      advice: DURATION_ADVICE,
     }),
     renderFailures: meter.createCounter("seedbible.ssr.render.failures", {
       description:
@@ -293,12 +308,14 @@ function createInstruments(meter: Meter): Instruments {
     storeDuration: meter.createHistogram("seedbible.store.operation.duration", {
       description: "Duration of artifact store reads",
       unit: "s",
+      advice: DURATION_ADVICE,
     }),
     assetProxyDuration: meter.createHistogram(
       "seedbible.asset_proxy.duration",
       {
         description: "Duration of upstream fetches made by the asset proxy",
         unit: "s",
+        advice: DURATION_ADVICE,
       }
     ),
   };
