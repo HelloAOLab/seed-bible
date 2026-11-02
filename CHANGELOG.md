@@ -8,6 +8,8 @@
 
 ### 🐛 Fixed
 
+- Search works again after a lost connection; before, one failed attempt to load search left every later search showing "Failed to fetch dynamically imported module" until the app was restarted.
+
 ### 🗑️ Removed
 
 ## v1.15.0 — 2026-10-26

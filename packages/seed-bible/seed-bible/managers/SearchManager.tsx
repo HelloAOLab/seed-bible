@@ -1,6 +1,7 @@
 // Type-only: erased at build time, so it costs nothing in the bundle. The
 // runtime client is loaded on demand in `getClient` below.
 import type * as Typesense from "typesense";
+import { retryChunkImport } from "./retryChunkImport";
 import * as z from "zod/v4";
 import type { TranslationBook } from "./FreeUseBibleAPI";
 
@@ -203,7 +204,9 @@ function buildVerseFilterBy(
   return `${translationFilter} && ${additionalFilter}`;
 }
 
-export function createSearchManager(): SearchManager {
+export function createSearchManager(
+  loadTypesense: () => Promise<typeof Typesense> = () => import("typesense")
+): SearchManager {
   if (import.meta.env.SSR) {
     return {
       searchVerses: async () => ({
@@ -220,11 +223,17 @@ export function createSearchManager(): SearchManager {
   // Typesense (and the copy of axios it brings with it) is ~150 KB, and nobody
   // needs it until they run their first search — so it is fetched then rather
   // than at boot. The promise is cached, so the chunk is downloaded once and
-  // every later search reuses the same client.
+  // every later search reuses the same client. A failed download (offline, a
+  // dropped connection) is not cached: the next search tries again, through
+  // `retryChunkImport` because the browser remembers the failed URL.
   let clientPromise: Promise<Typesense.Client> | null = null;
+  let loadFailed = false;
   const getClient = (): Promise<Typesense.Client> => {
     if (!clientPromise) {
-      clientPromise = import("typesense").then(
+      const load = loadFailed
+        ? retryChunkImport(loadTypesense)
+        : loadTypesense();
+      clientPromise = load.then(
         (Typesense) =>
           new Typesense.Client({
             apiKey: TYPESENSE_API_KEY,
@@ -237,6 +246,10 @@ export function createSearchManager(): SearchManager {
             ],
           })
       );
+      clientPromise.catch(() => {
+        clientPromise = null;
+        loadFailed = true;
+      });
     }
     return clientPromise;
   };

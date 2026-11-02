@@ -19,7 +19,7 @@ import {
   type AnnotationEditorHandle,
   type AnnotationEditorProps,
 } from "./PlainTextAnnotationEditor";
-import { retryChunkImport } from "./retryChunkImport";
+import { retryChunkImport } from "../../managers/retryChunkImport";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the annotation composer. If that fetch fails (e.g. offline

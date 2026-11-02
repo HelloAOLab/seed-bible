@@ -133,6 +133,29 @@ describe("createSearchManager", () => {
       filter_by: 'translation:="NIV" && translation_id:="NIV"',
     });
   });
+  it("tries to load the search client again after a failed download", async () => {
+    const typesense = (await vi.importMock(
+      "typesense"
+    )) as typeof import("typesense");
+    const loadTypesense = vi
+      .fn<() => Promise<typeof import("typesense")>>()
+      .mockRejectedValueOnce(
+        new TypeError("Failed to fetch dynamically imported module")
+      )
+      .mockResolvedValue(typesense);
+    const manager = createSearchManager(loadTypesense);
+    const typesenseMock = await getTypesenseMock();
+    const response = { found: 0, out_of: 0, page: 1, hits: [] };
+    typesenseMock.search.mockResolvedValue(response);
+
+    await expect(manager.searchVerses("eng", "BSB", "desire")).rejects.toThrow(
+      "Failed to fetch dynamically imported module"
+    );
+
+    await expect(manager.searchVerses("eng", "BSB", "desire")).resolves.toBe(
+      response
+    );
+  });
 });
 
 describe("matchBookReferences", () => {

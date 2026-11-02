@@ -2,7 +2,7 @@ import {
   failedChunkUrl,
   reloadFailedStylesheets,
   retryChunkImport,
-} from "@packages/seed-bible/seed-bible/components/CreateAnnotationForm/retryChunkImport";
+} from "@packages/seed-bible/seed-bible/managers/retryChunkImport";
 
 const CHUNK = "https://cdn.example.com/assets/TipTapEditor-abc123.js";
 
