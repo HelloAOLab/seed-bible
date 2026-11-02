@@ -21,7 +21,7 @@ import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 import { hasReadingUrlPosition } from "./ReadingUrlPath";
 import { isNonReadingPagePath } from "./StaticPagePath";
 import { isMinimalEmbedUrl } from "./EmbedMode";
-import type { TranslationBooks } from "./FreeUseBibleAPI";
+import type { Translation, TranslationBooks } from "./FreeUseBibleAPI";
 import type { Annotation, AnnotationsManager } from "./AnnotationsManager";
 import {
   buildCommunityFeed,
@@ -67,6 +67,8 @@ export interface TodayVerseOfTheDay {
   /** The last verse of the passage. Omitted when it is a single verse. */
   endVerse?: number;
   translationId: string;
+  /** The translation's abbreviation, such as "BSB". */
+  translationShortName: string;
   text: string;
 }
 
@@ -396,14 +398,17 @@ export function createTodayManager(options: {
     }));
   };
 
-  /** Plain text of verses `from` through `to`, or undefined when none exist. */
-  const getPassageText = async (
+  /**
+   * Plain text of verses `from` through `to`, with the translation it came
+   * from, or undefined when none of the verses exist.
+   */
+  const getPassage = async (
     translationId: string,
     bookId: string,
     chapter: number,
     from: number,
     to: number
-  ): Promise<string | undefined> => {
+  ): Promise<{ text: string; translation: Translation } | undefined> => {
     const chapterData = await bibleData.getTranslationBookChapter(
       translationId,
       bookId,
@@ -417,7 +422,7 @@ export function createTodayManager(options: {
     );
     if (verses.length === 0) return undefined;
 
-    return verses
+    const text = verses
       .flatMap((verse) => verse.content)
       .map((part) =>
         typeof part === "string" ? part : "text" in part ? part.text : ""
@@ -425,15 +430,16 @@ export function createTodayManager(options: {
       .join(" ")
       .replace(/\s+/g, " ")
       .trim();
+    return { text, translation: chapterData.translation };
   };
 
-  const getVerseText = (
+  const getVerseText = async (
     translationId: string,
     bookId: string,
     chapter: number,
     verse: number
   ): Promise<string | undefined> =>
-    getPassageText(translationId, bookId, chapter, verse, verse);
+    (await getPassage(translationId, bookId, chapter, verse, verse))?.text;
 
   const getVerseOfTheDay = async (
     date: string,
@@ -442,14 +448,14 @@ export function createTodayManager(options: {
     const picked = await bibleData.api.getVerseOfTheDay(date);
     if (!picked) return null;
 
-    const text = await getPassageText(
+    const passage = await getPassage(
       translationId,
       picked.book,
       picked.chapter,
       picked.verse,
       picked.endVerse ?? picked.verse
     );
-    if (!text) return null;
+    if (!passage?.text) return null;
 
     return {
       bookId: picked.book,
@@ -457,7 +463,8 @@ export function createTodayManager(options: {
       verse: picked.verse,
       ...(picked.endVerse !== undefined ? { endVerse: picked.endVerse } : {}),
       translationId,
-      text,
+      translationShortName: passage.translation.shortName || translationId,
+      text: passage.text,
     };
   };
 

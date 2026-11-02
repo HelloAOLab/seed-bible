@@ -84,7 +84,7 @@ export const VerseOfTheDaySection = (props: {
     return null;
   }
 
-  const title = t("verse-of-the-day", { defaultValue: "Verse of the day" });
+  const title = t("verse-of-the-day", { defaultValue: "VERSE OF THE DAY" });
 
   if (current.status === "loading") {
     return (
@@ -130,7 +130,11 @@ export const VerseOfTheDaySection = (props: {
             })
           }
         >
-          {reference}
+          <span dir="auto">{reference}</span>
+          <span aria-hidden="true">•</span>
+          <span className="sb-today-verse-of-the-day-translation">
+            {verse.translationShortName}
+          </span>
           <MaterialIcon>arrow_right_alt</MaterialIcon>
         </button>
       </div>

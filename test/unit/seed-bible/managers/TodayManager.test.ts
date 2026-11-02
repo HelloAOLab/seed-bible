@@ -12,8 +12,10 @@ import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
 import {
+  aabBooks,
   createDefaultManagerResponseMap,
   createResponse,
+  makeChapter,
   makeUrl,
 } from "./testUtils/mockBibleApiData";
 
@@ -515,8 +517,28 @@ describe("Today's verse of the day", () => {
       chapter: 1,
       verse: 2,
       translationId: "AAB",
+      translationShortName: "AAB",
       text: "Verse 2",
     });
+  });
+
+  // A short name that differs from the id, so reading the id back can't pass.
+  it("names the translation by its short name", async () => {
+    const chapter = makeChapter(aabBooks, "GEN", 1);
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [makeUrl("/api/AAB/GEN/1.json")]: createResponse({
+          ...chapter,
+          translation: { ...chapter.translation, shortName: "AncAB" },
+        }),
+        [VERSES_URL]: datasetWith({ book: "GEN", chapter: 1, verse: 1 }),
+      },
+    });
+
+    const verse = await state.today.getVerseOfTheDay("2026-10-30", "AAB");
+
+    expect(verse?.translationShortName).toBe("AncAB");
   });
 
   it("joins the text of every verse in a passage", async () => {

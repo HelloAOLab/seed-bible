@@ -401,14 +401,30 @@
 
 .sb-today-container .sb-today-verse-of-the-day-reference {
   display: flex;
-  align-items: center;
-  gap: 0.25rem;
+  align-items: baseline;
+  column-gap: 0.375rem;
   padding: 0;
   border: none;
   background-color: transparent;
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--sb-primary-color);
+}
+
+/* The text lines up on a shared baseline; the icon has none worth sharing. */
+.sb-today-container
+  .sb-today-verse-of-the-day-reference
+  > .material-symbols-outlined {
+  align-self: center;
+}
+
+/* Same treatment as a bookmark's translation (`.sb-bookmark-label-translation`). */
+.sb-today-container .sb-today-verse-of-the-day-translation {
+  font-weight: 500;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .sb-today-container .sb-today-titled-section {

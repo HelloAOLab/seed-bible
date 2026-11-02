@@ -17,7 +17,8 @@ const JOHN_3_16: TodayVerseOfTheDay = {
   bookId: "JHN",
   chapter: 3,
   verse: 16,
-  translationId: "BSB",
+  translationId: "bsb_id",
+  translationShortName: "BSB",
   text: "For God so loved the world…",
 };
 
@@ -71,7 +72,7 @@ describe("VerseOfTheDaySection", () => {
     await waitFor(() => text() !== undefined);
 
     expect(text()).toBe("For God so loved the world…");
-    expect(referenceButton()?.textContent).toContain("John 3:16");
+    expect(referenceButton()?.textContent).toContain("John 3:16•BSB");
   });
 
   it("shows a placeholder while the verse loads", () => {
@@ -117,7 +118,7 @@ describe("VerseOfTheDaySection", () => {
       bookId: "JHN",
       chapter: 3,
       verse: 16,
-      translationId: "BSB",
+      translationId: "bsb_id",
     });
   });
 
