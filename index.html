@@ -120,43 +120,65 @@
       // touches; SettingsManager takes over once the real settings load
       // (see EARLY_CONFIG_ATTR). Links with `app.*` overrides are skipped,
       // since those win over saved settings.
+      //
+      // The values come from the copy SettingsManager keeps of just these
+      // four settings (it is written signed in or out), falling back to the
+      // anonymous local config, which is emptied as soon as someone signs in.
       (function () {
         try {
           if (/[?&]app\./.test(window.location.search)) return;
-          var raw = localStorage.getItem("sb-profile-config-local");
-          if (!raw || raw.length > 200000) return;
-          var config = JSON.parse(raw);
-          if (!config || typeof config !== "object") return;
+          var read = function (key, maxLength) {
+            var raw = localStorage.getItem(key);
+            if (!raw || raw.length > maxLength) return null;
+            var parsed = JSON.parse(raw);
+            return parsed && typeof parsed === "object" ? parsed : null;
+          };
+          var saved = null;
+          try {
+            saved = read("sb-reader-settings-early", 2000);
+          } catch (e) {}
+          var legacy = null;
+          if (!saved) {
+            // Same limits as LoginManager's readLocalConfig (50,000
+            // characters, 100 keys); past them the app treats the store as
+            // corrupt, so painting from it would only be undone.
+            legacy = read("sb-profile-config-local", 50000);
+            if (legacy && Object.keys(legacy).length > 100) legacy = null;
+          }
+          var config = saved || legacy;
+          if (!config) return;
+          var lineHeight = saved ? config.verseLineHeight : null;
+          if (legacy) {
+            try {
+              var text = config.textConfig;
+              if (typeof text === "string") text = JSON.parse(text);
+              lineHeight = text && text.verse && text.verse.lineHeight;
+            } catch (e) {}
+          }
           var root = document.documentElement;
           var applied = false;
+          var apply = function (name, value) {
+            root.style.setProperty(name, value);
+            applied = true;
+          };
           var uiScales = { S: 0.85, M: 1, L: 1.15, XL: 1.3 };
           var fontSizes = { XS: 12, S: 14, M: 16, L: 18, XL: 20, XXL: 22 };
           if (uiScales.hasOwnProperty(config.uiSize)) {
-            root.style.setProperty(
-              "--sb-ui-scale",
-              String(uiScales[config.uiSize])
-            );
+            apply("--sb-ui-scale", String(uiScales[config.uiSize]));
           }
           if (fontSizes.hasOwnProperty(config.fontSize)) {
-            root.style.setProperty(
-              "--sb-early-font-size",
-              fontSizes[config.fontSize] + "px"
-            );
-            applied = true;
+            apply("--sb-early-font-size", fontSizes[config.fontSize] + "px");
           }
           var width = Number(config.scriptureWidth);
           if (isFinite(width) && width >= 24 && width <= 192) {
-            root.style.setProperty("--sb-scripture-width", width + "ch");
+            apply("--sb-scripture-width", width + "ch");
           }
-          var text = config.textConfig;
-          if (typeof text === "string") text = JSON.parse(text);
-          var lineHeight = text && text.verse && Number(text.verse.lineHeight);
+          lineHeight = Number(lineHeight);
           if (isFinite(lineHeight) && lineHeight > 0 && lineHeight < 10) {
-            root.style.setProperty(
-              "--text-verse-line-height",
-              String(lineHeight)
-            );
+            apply("--text-verse-line-height", String(lineHeight));
           }
+          // Any applied value means SettingsManager must not write its
+          // defaults over it on the way to the real settings.
           if (applied) root.setAttribute("data-sb-early-config", "");
         } catch (e) {
           // Corrupt/inaccessible storage — the defaults stand.
@@ -188,13 +210,18 @@
         // the font file itself has arrived, since until then the (invisible)
         // glyph names would still take up their full width.
         window.__sbIconsStylesheetReady = function () {
-          if (document.fonts && document.fonts.load) {
+          if (!document.fonts || !document.fonts.load) return clear();
+          var tries = 0;
+          (function check() {
+            // Resolves with no faces until the stylesheet's @font-face is
+            // registered, so an empty answer means "not yet", not "done".
             document.fonts
               .load("24px 'Material Symbols Outlined'", "a")
-              .then(clear, clear);
-          } else {
-            clear();
-          }
+              .then(function (faces) {
+                if (faces.length || ++tries > 20) clear();
+                else window.setTimeout(check, 100);
+              }, clear);
+          })();
         };
         // Never leave icons invisible if the font can't be fetched.
         window.setTimeout(clear, 4000);

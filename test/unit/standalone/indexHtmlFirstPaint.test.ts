@@ -3,8 +3,16 @@ import { resolve } from "node:path";
 import { STATIC_FONT_STYLESHEETS } from "@packages/seed-bible/seed-bible/app/fontStylesheets";
 import { withMetricFallback } from "@packages/seed-bible/seed-bible/app/fontFallbacks";
 import {
+  MAX_LOCAL_CONFIG_JSON_LENGTH,
+  MAX_LOCAL_CONFIG_KEYS,
+} from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import {
   DEFAULT_SCRIPTURE_WIDTH,
   DEFAULT_VERSE_LINE_HEIGHT,
+  MAX_SCRIPTURE_WIDTH,
+  MIN_SCRIPTURE_WIDTH,
+  READER_SETTINGS_MIRROR_KEY,
+  UI_SIZE_SCALE_MAP,
 } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
 import {
   DARK_THEME,
@@ -113,6 +121,195 @@ describe("index.html early reader config script", () => {
   });
 });
 
+describe("index.html early config script: what gets marked as applied", () => {
+  afterEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute("style");
+    document.documentElement.removeAttribute("data-sb-early-config");
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("marks the page when only the scripture width was saved", () => {
+    const html = runEarlyConfig({ scriptureWidth: 90 });
+
+    expect(html.style.getPropertyValue("--sb-scripture-width")).toBe("90ch");
+    expect(html.hasAttribute("data-sb-early-config")).toBe(true);
+  });
+
+  it("marks the page when only the UI size was saved", () => {
+    const html = runEarlyConfig({ uiSize: "XL" });
+
+    expect(html.style.getPropertyValue("--sb-ui-scale")).toBe("1.3");
+    expect(html.hasAttribute("data-sb-early-config")).toBe(true);
+  });
+
+  it("keeps earlier values, and the mark, when the text config is corrupt", () => {
+    const html = runEarlyConfig({
+      uiSize: "L",
+      scriptureWidth: 70,
+      textConfig: "{not json",
+    });
+
+    expect(html.style.getPropertyValue("--sb-ui-scale")).toBe("1.15");
+    expect(html.style.getPropertyValue("--sb-scripture-width")).toBe("70ch");
+    expect(html.hasAttribute("data-sb-early-config")).toBe(true);
+  });
+});
+
+describe("index.html early config script: signed-in readers", () => {
+  afterEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute("style");
+    document.documentElement.removeAttribute("data-sb-early-config");
+  });
+
+  it("paints from the settings copy even though the local config is empty", () => {
+    localStorage.setItem("sb-profile-config-local", "{}");
+    localStorage.setItem(
+      READER_SETTINGS_MIRROR_KEY,
+      JSON.stringify({
+        uiSize: "L",
+        fontSize: "XXL",
+        scriptureWidth: 100,
+        verseLineHeight: 2,
+      })
+    );
+    new Function(earlyConfigScript())();
+
+    const style = document.documentElement.style;
+    expect(style.getPropertyValue("--sb-ui-scale")).toBe("1.15");
+    expect(style.getPropertyValue("--sb-early-font-size")).toBe("22px");
+    expect(style.getPropertyValue("--sb-scripture-width")).toBe("100ch");
+    expect(style.getPropertyValue("--text-verse-line-height")).toBe("2");
+  });
+
+  it("prefers the settings copy over the anonymous local config", () => {
+    localStorage.setItem(
+      "sb-profile-config-local",
+      JSON.stringify({ uiSize: "S" })
+    );
+    localStorage.setItem(
+      READER_SETTINGS_MIRROR_KEY,
+      JSON.stringify({ uiSize: "XL" })
+    );
+    new Function(earlyConfigScript())();
+
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-ui-scale")
+    ).toBe("1.3");
+  });
+});
+
+describe("index.html early config script: limits and tables", () => {
+  afterEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute("style");
+    document.documentElement.removeAttribute("data-sb-early-config");
+  });
+
+  it("uses the same size and key limits as LoginManager's local config read", () => {
+    const script = earlyConfigScript();
+
+    expect(script).toContain(
+      `"sb-profile-config-local", ${MAX_LOCAL_CONFIG_JSON_LENGTH}`
+    );
+    expect(script).toContain(
+      `Object.keys(legacy).length > ${MAX_LOCAL_CONFIG_KEYS}`
+    );
+  });
+
+  it("ignores a local config the app itself would treat as corrupt", () => {
+    const tooManyKeys: Record<string, unknown> = { uiSize: "XL" };
+    for (let i = 0; i <= MAX_LOCAL_CONFIG_KEYS; i++) tooManyKeys[`k${i}`] = i;
+    const html = runEarlyConfig(tooManyKeys);
+    expect(html.hasAttribute("data-sb-early-config")).toBe(false);
+    expect(html.getAttribute("style")).toBeNull();
+
+    const tooLong = {
+      uiSize: "XL",
+      pad: "x".repeat(MAX_LOCAL_CONFIG_JSON_LENGTH),
+    };
+    expect(runEarlyConfig(tooLong).getAttribute("style")).toBeNull();
+  });
+
+  it("uses the same tables and width range as the settings and styles", () => {
+    const script = earlyConfigScript();
+    const table = (name: string) =>
+      new Function(
+        `return ${new RegExp(`var ${name} = (\\{[^}]*\\});`).exec(script)![1]}`
+      )();
+
+    expect(table("uiScales")).toEqual(UI_SIZE_SCALE_MAP);
+
+    const cssSizes: Record<string, number> = {};
+    for (const m of baseCss.matchAll(
+      /\.sb-font-size-(\w+)\s*{\s*font-size:\s*(\d+)px/g
+    )) {
+      cssSizes[m[1]!.toUpperCase()] = Number(m[2]);
+    }
+    expect(table("fontSizes")).toEqual(cssSizes);
+
+    expect(script).toContain(`width >= ${MIN_SCRIPTURE_WIDTH}`);
+    expect(script).toContain(`width <= ${MAX_SCRIPTURE_WIDTH}`);
+  });
+});
+
+describe("index.html icon reveal", () => {
+  function iconReadyHandler(fonts: unknown) {
+    document.documentElement.className = "sb-icons-pending";
+    Object.defineProperty(document, "fonts", {
+      value: fonts,
+      configurable: true,
+    });
+    const script = Array.from(
+      indexHtml.matchAll(/<script>([\s\S]*?)<\/script>/g),
+      (match) => match[1]!
+    ).find((body) => body.includes("__sbIconsStylesheetReady"))!;
+    new Function(script)();
+    return (window as unknown as { __sbIconsStylesheetReady: () => void })
+      .__sbIconsStylesheetReady;
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+    delete (document as unknown as { fonts?: unknown }).fonts;
+    document.documentElement.className = "";
+  });
+
+  it("keeps icons hidden until a font face has actually loaded", async () => {
+    vi.useFakeTimers();
+    const load = vi
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValue([{}]);
+    const ready = iconReadyHandler({ load });
+
+    ready();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(
+      document.documentElement.classList.contains("sb-icons-pending")
+    ).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(250);
+    expect(load).toHaveBeenCalledTimes(3);
+    expect(
+      document.documentElement.classList.contains("sb-icons-pending")
+    ).toBe(false);
+  });
+
+  it("reveals icons anyway when the font API is missing", () => {
+    vi.useFakeTimers();
+    const ready = iconReadyHandler(undefined);
+
+    ready();
+
+    expect(
+      document.documentElement.classList.contains("sb-icons-pending")
+    ).toBe(false);
+  });
+});
+
 describe("index.html font loading", () => {
   const linkedHrefs = Array.from(
     indexHtml.matchAll(
@@ -179,6 +376,17 @@ describe("metric-matched fallback fonts", () => {
     }
   });
 
+  it("also covers a theme's plain body font", () => {
+    const css = generateThemeCssVariables({
+      ...LIGHT_THEME,
+      variables: { ...LIGHT_THEME.variables, fontFamily: "Newsreader, serif" },
+    });
+
+    expect(css).toContain(
+      `--sb-font-family: Newsreader, "Newsreader Fallback", serif;`
+    );
+  });
+
   it("puts the fallback in the first-paint font defaults and theme output", () => {
     expect(baseCss.replace(/\s+/g, " ")).toContain(
       `--text-verse-font: "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", sans-serif;`
@@ -203,6 +411,15 @@ describe("critical CSS defaults agree with the settings defaults", () => {
     expect(readerCss).not.toContain("48rem");
     expect(readerCss).toContain(
       `var(--sb-scripture-width, ${DEFAULT_SCRIPTURE_WIDTH}ch)`
+    );
+  });
+
+  it("keeps boxed verse numbers from changing the line's width, in poetry too", () => {
+    expect(readerCss).toMatch(
+      /\.sb-verse-number-annotated\s*{[^}]*margin-inline-start:\s*calc\(0\.625em - 3px\)[^}]*margin-inline-end:\s*calc\(0\.3125em - 3px\)/
+    );
+    expect(readerCss).toMatch(
+      /\.sb-verse-line \.sb-verse-number-annotated\s*{[^}]*margin-inline-start:\s*calc\(-1\.2em - 3px\)/
     );
   });
 

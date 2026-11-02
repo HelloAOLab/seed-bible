@@ -380,7 +380,7 @@ html[data-sb-early-config] .sb-bible-reader {
 }
 
 /* Material Symbols icons ship with a fixed `font-size: 24px` from the Google
-   Fonts stylesheet (loaded in main.tsx), which ignores the UI Size knob.
+   Fonts stylesheet (preloaded in index.html), which ignores the UI Size knob.
    Re-express that base in rem so every icon scales with the chrome by default
    (1.5rem = 24px at size M — a no-op at M). Scoped
    `.sb-* .material-symbols-outlined` rules (specificity 0,2,0) still win and

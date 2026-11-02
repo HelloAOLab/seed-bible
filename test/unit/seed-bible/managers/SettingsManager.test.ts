@@ -2,6 +2,7 @@ import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nMana
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import {
   EARLY_CONFIG_ATTR,
+  READER_SETTINGS_MIRROR_KEY,
   createSettings,
   type AppSettings,
 } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
@@ -735,5 +736,101 @@ describe("SettingsManager with settings applied before first paint", () => {
     expect(
       document.documentElement.style.getPropertyValue("--sb-scripture-width")
     ).toBe("68ch");
+  });
+});
+
+describe("SettingsManager's early-config copy", () => {
+  const mirror = () => {
+    const raw = localStorage.getItem(READER_SETTINGS_MIRROR_KEY);
+    return raw ? JSON.parse(raw) : null;
+  };
+
+  afterEach(() => {
+    localStorage.clear();
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("does not overwrite the saved copy with the seed defaults on startup", () => {
+    localStorage.setItem(
+      READER_SETTINGS_MIRROR_KEY,
+      JSON.stringify({ uiSize: "XL" })
+    );
+
+    createSettings(CasualOSManager(), makeFakeLogin(null), navWith());
+
+    expect(mirror()).toEqual({ uiSize: "XL" });
+  });
+
+  it("copies the four settings when they change, for a signed-out reader", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    settings.setUISize("L");
+    settings.setScriptureWidth(90);
+    settings.setFontSize("XL");
+    settings.setVerseLineHeight(2.2);
+
+    expect(mirror()).toEqual({
+      uiSize: "L",
+      fontSize: "XL",
+      scriptureWidth: 90,
+      verseLineHeight: 2.2,
+    });
+  });
+
+  it("copies a signed-in reader's profile settings even though the local config is empty", () => {
+    const login = makeFakeLogin(null);
+    createSettings(CasualOSManager(), login, navWith());
+
+    login.userId.value = "user-1";
+    login.profile.value = {
+      name: "Test",
+      config: { uiSize: "S", scriptureWidth: 40 },
+    } as unknown as UserProfile;
+
+    expect(mirror()).toMatchObject({ uiSize: "S", scriptureWidth: 40 });
+  });
+
+  it("holds off while a signed-in account's profile is still loading", () => {
+    localStorage.setItem(
+      READER_SETTINGS_MIRROR_KEY,
+      JSON.stringify({ uiSize: "XL" })
+    );
+    const login = makeFakeLogin(null);
+    createSettings(CasualOSManager(), login, navWith());
+
+    login.userId.value = "user-1";
+
+    expect(mirror()).toEqual({ uiSize: "XL" });
+  });
+
+  it("writes the defaults back on reset so none get stuck", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+    settings.setUISize("XL");
+    settings.setScriptureWidth(120);
+
+    settings.resetToDefaults();
+
+    expect(mirror()).toMatchObject({ uiSize: "M", scriptureWidth: 68 });
+  });
+
+  it("leaves the copy alone for a link that sets its own app settings", () => {
+    window.history.replaceState({}, "", "/?app.uiSize=XL");
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith("?app.uiSize=XL")
+    );
+
+    settings.setScriptureWidth(90);
+
+    expect(mirror()).toBeNull();
   });
 });

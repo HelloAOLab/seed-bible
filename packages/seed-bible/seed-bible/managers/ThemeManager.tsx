@@ -450,7 +450,7 @@ export function generateThemeCssVariables(variables: BibleTheme): string {
     .map(([key, value]) => {
       const css = sanitizeCssValue(String(value));
       return `--sb-${toKebabCase(key)}: ${
-        key.endsWith("FontFamily") ? withMetricFallback(css) : css
+        /fontfamily$/i.test(key) ? withMetricFallback(css) : css
       };`;
     })
     .join("\n");

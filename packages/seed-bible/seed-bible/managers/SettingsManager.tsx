@@ -255,6 +255,14 @@ export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
  */
 export const EARLY_CONFIG_ATTR = "data-sb-early-config";
 
+/**
+ * Device-local copy of the four settings `index.html`'s early-config script
+ * paints before first paint. The anonymous local config can't serve: it is
+ * emptied once someone signs in, and signed-in readers are the ones most
+ * likely to have customised these.
+ */
+export const READER_SETTINGS_MIRROR_KEY = "sb-reader-settings-early";
+
 const TAG_FONT_SIZE = "app.fontSize";
 const TAG_DISABLE_PANELS = "app.disablePanels";
 const TAG_BOOK_ORIENTATION = "app.bookOrientation";
@@ -1324,6 +1332,45 @@ export function createSettings(
       "--sb-scripture-width",
       `${width}ch`
     );
+  });
+
+  // Keep the early-config script's copy current, signed in or out. Never
+  // written on the first run (it only sees the SSR-matching defaults, which
+  // would wipe the saved copy), nor while a signed-in account's profile is
+  // still loading (the same defaults), nor when the link itself sets
+  // `app.*` values, which the script ignores too and which aren't the
+  // reader's own choices. A reset writes the defaults, so none get stuck.
+  let isFirstMirrorWrite = true;
+  effect(() => {
+    const current = settings.value;
+    const signedInWithoutProfile =
+      login.userId.value !== null && login.profile.value === null;
+    const snapshot = {
+      uiSize: current.uiSize,
+      fontSize: current.fontSize,
+      scriptureWidth: current.scriptureWidth,
+      verseLineHeight:
+        current.textConfig.verse.lineHeight ?? DEFAULT_VERSE_LINE_HEIGHT,
+    };
+    if (isFirstMirrorWrite) {
+      isFirstMirrorWrite = false;
+      return;
+    }
+    if (
+      signedInWithoutProfile ||
+      typeof window === "undefined" ||
+      /[?&]app\./.test(window.location.search)
+    ) {
+      return;
+    }
+    try {
+      localStorage.setItem(
+        READER_SETTINGS_MIRROR_KEY,
+        JSON.stringify(snapshot)
+      );
+    } catch {
+      // Storage blocked or full: the next visit just paints the defaults.
+    }
   });
 
   // Keep the OS wake-lock in sync with the persisted setting. Survives

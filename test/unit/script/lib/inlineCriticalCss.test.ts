@@ -66,6 +66,8 @@ describe("makeStylesheetsNonBlocking()", () => {
     expect(result).toContain(
       `<noscript><link rel="stylesheet" href="/icons.css"></noscript>`
     );
+    // Rewriting the fallback too would add a second preload for the icons.
+    expect(result.match(/rel="preload"[^>]*icons\.css/g)).toHaveLength(1);
     expect(result).toContain(
       `<link rel="preload" as="style" href="/app.css" onload=`
     );

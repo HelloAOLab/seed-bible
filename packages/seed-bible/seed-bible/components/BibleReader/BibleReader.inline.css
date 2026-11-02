@@ -778,15 +778,23 @@
 }
 
 /* Notes load after the chapter is on screen, so this must not change how much
-   room the number takes: the 3px of border + padding on each side is cancelled
-   out of the margins, which keeps the lines from re-wrapping. */
+   room the number takes: the 3px of border + padding on each side comes
+   straight back out of the margins, which keeps the lines from re-wrapping.
+   The margins can go negative at the smallest reader sizes; that lets the box
+   overlap its neighbours by under a pixel rather than push the text. */
 .sb-verse-number-annotated {
   border: 1px solid var(--sb-verse-font-color);
   border-radius: 4px;
   padding: 2px;
   margin-inline-start: calc(0.625em - 3px);
-  margin-inline-end: max(0px, calc(0.3125em - 3px));
+  margin-inline-end: calc(0.3125em - 3px);
   cursor: pointer;
+}
+
+/* Poetry lines pull the number into the gutter with a more specific rule
+   (`.sb-verse-line .sb-verse-number`), which would otherwise win. */
+.sb-verse-line .sb-verse-number-annotated {
+  margin-inline-start: calc(-1.2em - 3px);
 }
 
 .sb-verse-annotation-icon {
