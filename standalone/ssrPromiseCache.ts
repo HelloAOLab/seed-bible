@@ -1,7 +1,6 @@
-export interface SsrPromiseCache<V> {
-  get(key: string): Promise<V> | undefined;
-  set(key: string, promise: Promise<V>): void;
-  delete(key: string): void;
+import type { PromiseCache } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+
+export interface SsrPromiseCache<V> extends PromiseCache<V> {
   /** Test-only seam: drops every entry. */
   clear(): void;
 }
@@ -21,13 +20,28 @@ export function positiveNumberFromEnv(
 }
 
 /**
+ * Like `positiveNumberFromEnv`, but for a count: fractions are floored and
+ * anything below 1 falls back (a fractional bound like 0.5 would otherwise
+ * evict every entry right after inserting it).
+ */
+export function positiveIntegerFromEnv(
+  raw: string | undefined,
+  fallback: number
+): number {
+  const parsed = Math.floor(Number(raw));
+  return Number.isFinite(parsed) && parsed >= 1 ? parsed : fallback;
+}
+
+/**
  * A TTL'd, size-bounded cache of promises. Storing the promise (not the
  * resolved value) is what lets concurrent callers share one in-flight
  * request. Callers are responsible for `delete`-ing a promise that rejects
  * so a failure is never served from cache.
  *
- * When full, the oldest-inserted entry is evicted (Map iteration order);
- * re-`set`ting a key moves it to the newest position.
+ * When full, the least recently used entry is evicted: a hit moves the key
+ * to the newest position (Map iteration order), as does re-`set`ting it. A
+ * hit does not extend the TTL, which is measured from insertion, so a hot
+ * chapter is still refreshed periodically.
  */
 export function createSsrPromiseCache<V>(options: {
   ttlMs: number;
@@ -44,6 +58,8 @@ export function createSsrPromiseCache<V>(options: {
         entries.delete(key);
         return undefined;
       }
+      entries.delete(key);
+      entries.set(key, entry);
       return entry.promise;
     },
     set(key, promise) {

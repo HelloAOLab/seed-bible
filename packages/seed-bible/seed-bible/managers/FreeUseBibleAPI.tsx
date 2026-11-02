@@ -1301,20 +1301,36 @@ export interface ApiRequestOptions {
   refresh?: boolean;
 }
 
+/** A cache of in-flight or settled promises keyed by string. */
+export interface PromiseCache<V> {
+  get(key: string): Promise<V> | undefined;
+  set(key: string, promise: Promise<V>): void;
+  delete(key: string): void;
+}
+
 /**
  * Optional process-wide cache of request promises keyed by full URL, shared
  * between `FreeUseBibleAPI` instances. Only the SSR host supplies one (see
  * `standalone/ssrApiResponseCache.ts`): each render builds a fresh API
  * instance, so without it every render refetches the same chapter.
  */
-export interface ApiResponseCache {
-  get(url: string): Promise<unknown> | undefined;
-  set(url: string, promise: Promise<unknown>): void;
-  delete(url: string): void;
-}
+export type ApiResponseCache = PromiseCache<unknown>;
 
-/** Per-URL bookkeeping for an in-flight request shared by multiple callers. */
-interface PendingRequestSubscription {
+/**
+ * Hard ceiling on a fetch that lives in a shared cache. Subscribers with no
+ * `signal` can never cancel a request, so without this a request that never
+ * answers would stay cached (and be adopted by every later render) until the
+ * socket's own much longer timeout. Just above the SSR chapter deadline (5 s),
+ * after which no render is still waiting for the result.
+ */
+const SHARED_FETCH_TIMEOUT_MS = 6000;
+
+/**
+ * Bookkeeping for one in-flight request, shared by every caller of it —
+ * across API instances when a shared cache is in use. Looked up by the
+ * request's own promise so it travels with the promise through the cache.
+ */
+interface PendingRequest {
   /** Owns the actual `fetch()` call — never a caller's own signal. */
   controller: AbortController;
   /**
@@ -1325,12 +1341,16 @@ interface PendingRequestSubscription {
    * done so, at which point the real request is safe to cancel too.
    */
   subscriberCount: number;
+  settled: boolean;
+  /** Drops the request from whichever caches still point at it. */
+  evict: () => void;
 }
+
+const pendingRequests = new WeakMap<Promise<unknown>, PendingRequest>();
 
 export class FreeUseBibleAPI {
   endpoint: string;
   private _responseCache = new Map<string, Promise<unknown>>();
-  private _requestSubscriptions = new Map<string, PendingRequestSubscription>();
   /**
    * Successfully resolved responses, keyed the same as `_responseCache`. Kept
    * separate from that cache of promises because a promise can't be read back
@@ -1583,19 +1603,20 @@ export class FreeUseBibleAPI {
 
     const shared = this._sharedCache?.get(url) as Promise<T> | undefined;
     if (shared) {
-      // Not subscribed to: this instance doesn't own the fetch, so a
-      // caller's signal can't cancel it (the owner may be another render).
-      const adopted = shared.then((json) => {
-        this._resolvedResponses.set(url, json);
-        return json;
-      });
-      this._responseCache.set(url, adopted);
-      adopted.catch(() => {
-        if (this._responseCache.get(url) === adopted) {
-          this._responseCache.delete(url);
+      // Adopt another render's request. Cached locally too so this instance
+      // keeps answering from it if the shared entry is evicted mid-render.
+      this._responseCache.set(url, shared);
+      shared.then(
+        (json) => {
+          this._resolvedResponses.set(url, json);
+        },
+        () => {
+          if (this._responseCache.get(url) === shared) {
+            this._responseCache.delete(url);
+          }
         }
-      });
-      return adopted;
+      );
+      return this._subscribeToRequest(url, shared, options?.signal);
     }
 
     // Own controller for the real fetch — deliberately never a caller's own
@@ -1604,7 +1625,13 @@ export class FreeUseBibleAPI {
     // aborted once every subscriber has walked away (see
     // `_subscribeToRequest`).
     const controller = new AbortController();
-    this._requestSubscriptions.set(url, { controller, subscriberCount: 0 });
+    let timedOut = false;
+    const timer = this._sharedCache
+      ? setTimeout(() => {
+          timedOut = true;
+          controller.abort();
+        }, SHARED_FETCH_TIMEOUT_MS)
+      : undefined;
 
     const request: Promise<T> = fetch(url, { signal: controller.signal })
       .then(async (response) => {
@@ -1618,18 +1645,35 @@ export class FreeUseBibleAPI {
         return json;
       })
       .catch((error) => {
-        this._responseCache.delete(url);
         // Failures (including timeouts and aborts) must never be served to
-        // later renders; only drop it if it's still this request's entry.
+        // later renders. A timeout is rethrown as a plain error so callers
+        // don't mistake it for their own cancellation (an AbortError).
+        pending.evict();
+        throw timedOut
+          ? new Error(
+              `Request to ${url} timed out after ${SHARED_FETCH_TIMEOUT_MS} ms`
+            )
+          : error;
+      })
+      .finally(() => {
+        clearTimeout(timer);
+        pending.settled = true;
+      });
+
+    const pending: PendingRequest = {
+      controller,
+      subscriberCount: 0,
+      settled: false,
+      evict: () => {
+        if (this._responseCache.get(url) === request) {
+          this._responseCache.delete(url);
+        }
         if (this._sharedCache?.get(url) === request) {
           this._sharedCache.delete(url);
         }
-        throw error;
-      })
-      .finally(() => {
-        this._requestSubscriptions.delete(url);
-      });
-
+      },
+    };
+    pendingRequests.set(request, pending);
     this._responseCache.set(url, request);
     this._sharedCache?.set(url, request);
     return this._subscribeToRequest(url, request, options?.signal);
@@ -1640,16 +1684,17 @@ export class FreeUseBibleAPI {
    * no `signal` (or one requesting an already-settled response) just gets
    * the shared promise directly. A caller with a `signal` gets a wrapper
    * promise that rejects the moment *its own* signal aborts — without
-   * affecting any other subscriber — and, only once every subscriber has
-   * done the same, aborts the real underlying request.
+   * affecting any other subscriber, in this instance or another — and, only
+   * once every subscriber has done the same, aborts the real underlying
+   * request. That holds whether or not the request is still in a cache.
    */
   private _subscribeToRequest<T>(
     url: string,
     sharedPromise: Promise<T>,
     signal?: AbortSignal
   ): Promise<T> {
-    const subscription = this._requestSubscriptions.get(url);
-    if (!subscription) {
+    const subscription = pendingRequests.get(sharedPromise);
+    if (!subscription || subscription.settled) {
       // Already settled — nothing left to subscribe to or cancel.
       return sharedPromise;
     }
@@ -1672,20 +1717,13 @@ export class FreeUseBibleAPI {
         if (subscription.subscriberCount <= 0) {
           // Reaching zero means every caller that *could* walk away has, so
           // nobody is waiting on this request any more and it is safe to
-          // cancel. Drop it from both maps first, synchronously: the rejection
-          // — and the cache eviction that rides on it — only land a microtask
-          // later, and a caller arriving in between would otherwise be handed
-          // this doomed promise and inherit an abort it never asked for.
+          // cancel. Evict first, synchronously: the rejection — and the
+          // cache eviction that rides on it — only land a microtask later,
+          // and a caller arriving in between would otherwise be handed this
+          // doomed promise and inherit an abort it never asked for.
           // Reachable by navigating back to a chapter whose request was just
-          // superseded. Both deletes are idempotent with the ones in
-          // `_getJson`.
-          this._requestSubscriptions.delete(url);
-          this._responseCache.delete(url);
-          if (this._sharedCache?.get(url) === sharedPromise) {
-            // Other renders may have adopted this fetch; let it finish
-            // rather than abort it out from under them.
-            return void reject(this._abortError());
-          }
+          // superseded.
+          subscription.evict();
           subscription.controller.abort();
         }
         reject(this._abortError());

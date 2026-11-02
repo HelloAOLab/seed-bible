@@ -4,6 +4,7 @@ import {
   FreeUseBibleAPI,
   type ApiRequestOptions,
   type AudioTimings,
+  type PromiseCache,
   type Translation,
   type TranslationBook,
   type TranslationBookChapter,
@@ -29,11 +30,7 @@ import {
  * many HTTP requests within a single long-running server process, since
  * `localStorage` (the client's cross-page-load cache) doesn't exist there.
  */
-export interface TranslationsCache {
-  get(endpoint: string): Promise<Translation[]> | undefined;
-  set(endpoint: string, promise: Promise<Translation[]>): void;
-  delete(endpoint: string): void;
-}
+export type TranslationsCache = PromiseCache<Translation[]>;
 
 /** How a set of translations should be folded into the known-translations list. */
 export interface MergeTranslationsOptions {

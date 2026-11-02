@@ -918,12 +918,70 @@ describe("render() server-rendered meta tags", () => {
         return inner(url);
       }) as typeof globalThis.fetch;
 
+      // One failing render's fetch count is the baseline; two concurrent
+      // failing renders must not exceed it, proving they shared the request.
       await renderHtml(path);
-      const fetchesWhileFailing = chapterFetches;
+      const singleRenderFetches = chapterFetches;
+      resetSsrApiResponseCacheForTests();
+      chapterFetches = 0;
+      await Promise.all([renderHtml(path), renderHtml(path)]);
+      expect(chapterFetches).toBe(singleRenderFetches);
+
       fail = false;
+      chapterFetches = 0;
       const html = await renderHtml(path);
 
-      expect(chapterFetches).toBeGreaterThan(fetchesWhileFailing);
+      expect(chapterFetches).toBeGreaterThan(0);
+      const config = JSON.parse(
+        html.match(/id="app-config">([^<]*)</)?.[1] as string
+      ) as { ssrChapterContentSettled: boolean };
+      expect(config.ssrChapterContentSettled).toBe(true);
+    });
+
+    it("recovers on the next render after a chapter fetch hangs past the deadline", async () => {
+      const inner = globalThis.fetch;
+      let hang = true;
+      let chapterFetches = 0;
+      globalThis.fetch = (async (
+        url: string,
+        init?: { signal?: AbortSignal }
+      ) => {
+        if (url.endsWith("/AAB/GEN/1.json")) {
+          chapterFetches++;
+          if (hang) {
+            return new Promise((_resolve, reject) => {
+              init?.signal?.addEventListener("abort", () =>
+                reject(new DOMException("aborted", "AbortError"))
+              );
+            });
+          }
+        }
+        return inner(url);
+      }) as unknown as typeof globalThis.fetch;
+
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      try {
+        let hungHtml: string | undefined;
+        const hungRender = renderHtml(path).then((html) => {
+          hungHtml = html;
+        });
+        while (hungHtml === undefined) {
+          await vi.advanceTimersByTimeAsync(500);
+        }
+        await hungRender;
+        expect(chapterFetches).toBeGreaterThan(0);
+        // Past the shared fetch's own hard timeout, in case another caller
+        // without a signal kept the render's abort from cancelling it.
+        await vi.advanceTimersByTimeAsync(2000);
+      } finally {
+        vi.useRealTimers();
+      }
+
+      hang = false;
+      chapterFetches = 0;
+      const html = await renderHtml(path);
+
+      expect(chapterFetches).toBeGreaterThan(0);
       const config = JSON.parse(
         html.match(/id="app-config">([^<]*)</)?.[1] as string
       ) as { ssrChapterContentSettled: boolean };

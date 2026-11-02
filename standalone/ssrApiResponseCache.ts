@@ -1,21 +1,22 @@
 import type { ApiResponseCache } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   createSsrPromiseCache,
+  positiveIntegerFromEnv,
   positiveNumberFromEnv,
 } from "./ssrPromiseCache";
 
 /**
  * Chapter and book-catalog JSON is static per translation release, so a
- * short TTL is enough to absorb repeat renders and the rare slow upstream
- * fetch (renders otherwise wait up to the 5 s chapter deadline). Configurable
+ * short TTL is enough to absorb repeat renders and concurrent renders of the
+ * same chapter (which share one in-flight fetch). Configurable
  * for ops without a redeploy.
  */
-export const API_RESPONSE_TTL_MS = positiveNumberFromEnv(
+const API_RESPONSE_TTL_MS = positiveNumberFromEnv(
   process.env.SSR_API_RESPONSE_CACHE_TTL_MS,
   10 * 60_000
 );
 
-export const API_RESPONSE_MAX_ENTRIES = positiveNumberFromEnv(
+const API_RESPONSE_MAX_ENTRIES = positiveIntegerFromEnv(
   process.env.SSR_API_RESPONSE_CACHE_MAX_ENTRIES,
   500
 );
