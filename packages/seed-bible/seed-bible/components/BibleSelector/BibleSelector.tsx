@@ -42,6 +42,7 @@ import {
 } from "../../managers/OfflineTranslationsManager";
 import { downloadTranslationWithToast } from "../OfflineDownloadPrompt/downloadTranslationWithToast";
 import type { TutorialManager } from "../../managers/TutorialManager";
+import { Spinner } from "../Spinner/Spinner";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
@@ -272,6 +273,7 @@ const SearchBar = (props: {
     selectedTranslationBooks,
     selectedTranslation,
     openTabs,
+    booksStatus,
   } = bibleSelectorState;
 
   const selectedTestament = bibleSelectorState.selectedTestament;
@@ -409,11 +411,15 @@ const SearchBar = (props: {
         style={tourStepId === "selector-books" ? SPOTLIGHT_STYLE : undefined}
       >
         {(!selectingTranslation.value || !isMobile.value) &&
-          selectedTranslationBooks.value?.books &&
-          selectedTestamentData.value &&
-          selectedTranslation.value && (
-            <SideBarBooks app={app} bibleSelectorState={bibleSelectorState} />
-          )}
+          (booksStatus.value === "ready" ? (
+            selectedTranslationBooks.value?.books &&
+            selectedTestamentData.value &&
+            selectedTranslation.value && (
+              <SideBarBooks app={app} bibleSelectorState={bibleSelectorState} />
+            )
+          ) : (
+            <BooksStatusMessage bibleSelectorState={bibleSelectorState} />
+          ))}
         {selectingTranslation.value && (
           <TranslationModal
             app={app}
@@ -426,6 +432,135 @@ const SearchBar = (props: {
       </div>
     </>
   );
+};
+
+/** Stands in for the book grid while its books load, or after they failed to. */
+const BooksStatusMessage = (props: {
+  bibleSelectorState: BibleSelectorState;
+}) => {
+  const { booksStatus, retryBooks } = props.bibleSelectorState;
+  const { t } = useI18n();
+
+  if (booksStatus.value === "loading") {
+    return (
+      <p className="sb-selector-status sb-selector-status--loading">
+        <Spinner />
+        {t("loading-books", { defaultValue: "Loading books…" })}
+      </p>
+    );
+  }
+
+  return (
+    <div className="sb-selector-status" role="alert">
+      <p>
+        {t("books-load-failed", {
+          defaultValue:
+            "The books couldn't be loaded. Check your connection and try again.",
+        })}
+      </p>
+      <button
+        type="button"
+        className="sb-selector-retry"
+        onClick={() => void retryBooks()}
+      >
+        {t("try-again", { defaultValue: "Try again" })}
+      </button>
+    </div>
+  );
+};
+
+/**
+ * Shown above the translation list while it can't be trusted to be complete:
+ * the full catalog is still downloading or failed to, or a translation the
+ * user picked is loading or failed to load.
+ */
+const TranslationListStatus = (props: {
+  bibleSelectorState: BibleSelectorState;
+}) => {
+  const {
+    catalogStatus,
+    retryCatalog,
+    translationLoad,
+    selectTranslation,
+    availableTranslations,
+    downloadedOnly,
+  } = props.bibleSelectorState;
+  const { t } = useI18n();
+
+  const load = translationLoad.value;
+  if (load) {
+    const translation = availableTranslations.value.find(
+      (candidate) => candidate.id === load.translationId
+    );
+    const name = translation?.shortName ?? load.translationId;
+    if (load.status === "loading") {
+      return (
+        <p className="sb-selector-status sb-selector-status--loading">
+          <Spinner />
+          {t("loading-translation", {
+            defaultValue: "Loading {{name}}…",
+            name,
+          })}
+        </p>
+      );
+    }
+    return (
+      <div className="sb-selector-status" role="alert">
+        <p>
+          {t("translation-load-failed", {
+            defaultValue: "{{name}} couldn't be loaded.",
+            name,
+          })}
+        </p>
+        <button
+          type="button"
+          className="sb-selector-retry"
+          onClick={() => void selectTranslation(load.translationId)}
+        >
+          {t("try-again", { defaultValue: "Try again" })}
+        </button>
+      </div>
+    );
+  }
+
+  // The saved-on-device list comes from the device itself, so it is complete
+  // without the catalog.
+  if (downloadedOnly.value) {
+    return null;
+  }
+
+  if (catalogStatus.value === "loading") {
+    return (
+      <p className="sb-selector-status sb-selector-status--loading">
+        <Spinner />
+        {t("loading-translations", {
+          defaultValue: "Loading translations…",
+        })}
+      </p>
+    );
+  }
+
+  if (catalogStatus.value === "failed") {
+    return (
+      <div className="sb-selector-status" role="alert">
+        <p>
+          {t("translations-load-failed", {
+            defaultValue:
+              "Couldn't load the full list of translations, so some may be missing.",
+          })}
+        </p>
+        <button
+          type="button"
+          className="sb-selector-retry"
+          onClick={() => retryCatalog()}
+        >
+          {t("try-again", { defaultValue: "Try again" })}
+        </button>
+      </div>
+    );
+  }
+
+  return null;
 };
 
 const SideBarBooks = (props: {
@@ -1570,6 +1705,7 @@ const TranslationModal = (props: {
               </button>
             </div>
           )}
+          <TranslationListStatus bibleSelectorState={bibleSelectorState} />
           {LanguageList}
           <div className="footer">
             <div

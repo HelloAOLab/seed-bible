@@ -1249,5 +1249,11 @@
 
   "account": "Account",
   "scroll-filters-start": "Scroll filters toward start",
-  "scroll-filters-end": "Scroll filters toward end"
+  "scroll-filters-end": "Scroll filters toward end",
+  "loading-books": "Loading books…",
+  "books-load-failed": "The books couldn't be loaded. Check your connection and try again.",
+  "loading-translation": "Loading {{name}}…",
+  "translation-load-failed": "{{name}} couldn't be loaded.",
+  "loading-translations": "Loading translations…",
+  "translations-load-failed": "Couldn't load the full list of translations, so some may be missing."
 }

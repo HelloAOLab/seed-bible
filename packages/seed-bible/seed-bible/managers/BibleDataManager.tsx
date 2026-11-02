@@ -1,4 +1,9 @@
-import { signal, effect, type Signal } from "@preact/signals";
+import {
+  signal,
+  effect,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
   FreeUseBibleAPI,
@@ -64,6 +69,14 @@ export interface BibleDataManager {
    * default translation) must check this instead of the list's length.
    */
   catalogLoaded: Signal<boolean>;
+  /**
+   * Where the default endpoint's catalog download stands, for UI that has to
+   * say "still loading" or "couldn't load" while the translation list holds
+   * only what the reader has merged in. Stays `"loaded"` once it has been
+   * fetched or restored: a later refresh failing doesn't make the list
+   * incomplete again.
+   */
+  catalogStatus: ReadonlySignal<CatalogStatus>;
   translationBooks: Signal<Map<string, TranslationBooks>>;
   api: FreeUseBibleAPI;
 
@@ -944,6 +957,8 @@ export function findClosestBookId(input: string): BookId | null {
   return bestIsAmbiguous ? null : bestId;
 }
 
+export type CatalogStatus = "idle" | "loading" | "loaded" | "failed";
+
 export interface CreateBibleDataManagerOptions {
   /**
    * Where downloaded translations are stored. Defaults to IndexedDB; tests pass
@@ -967,6 +982,7 @@ export function createBibleDataManager(
   const endpoints = signal<string[]>([defaultEndpoint]);
   const availableTranslations = signal<Translation[]>([]);
   const catalogLoaded = signal<boolean>(false);
+  const catalogStatus = signal<CatalogStatus>("idle");
   const translationBooks = signal<Map<string, TranslationBooks>>(new Map());
   const translationEndpoints = signal<Map<string, string>>(new Map());
 
@@ -1021,12 +1037,17 @@ export function createBibleDataManager(
     translationEndpoints.value = nextTranslationEndpoints;
   };
 
+  // Translation IDs a custom (non-default) source has supplied this session.
+  const customSourceIds = new Set<string>();
+
   const getTranslations = async (
     endpoint?: string,
     options?: { refresh?: boolean }
   ): Promise<Translation[]> => {
     const normalizedEndpoint = normalizeEndpoint(endpoint ?? defaultEndpoint);
     ensureEndpointTracked(normalizedEndpoint);
+
+    const isDefaultCatalog = normalizedEndpoint === defaultEndpoint;
 
     if (options?.refresh) {
       translationsCache?.delete(normalizedEndpoint);
@@ -1052,8 +1073,36 @@ export function createBibleDataManager(
       });
     }
 
-    const result = await resultPromise;
-    mergeTranslations(normalizedEndpoint, result);
+    if (isDefaultCatalog && catalogStatus.peek() !== "loaded") {
+      catalogStatus.value = "loading";
+    }
+
+    let result: Translation[];
+    try {
+      result = await resultPromise;
+    } catch (err) {
+      if (isDefaultCatalog && catalogStatus.peek() !== "loaded") {
+        catalogStatus.value = "failed";
+      }
+      throw err;
+    }
+
+    if (isDefaultCatalog) {
+      // The default catalog can land after a custom source was added (the
+      // selector loads it in the background), and it must not take back a
+      // translation ID that source claimed, or that translation's books and
+      // chapters would start loading from the default server.
+      mergeTranslations(
+        normalizedEndpoint,
+        result.filter((translation) => !customSourceIds.has(translation.id))
+      );
+      catalogStatus.value = "loaded";
+    } else {
+      for (const translation of result) {
+        customSourceIds.add(translation.id);
+      }
+      mergeTranslations(normalizedEndpoint, result);
+    }
     catalogLoaded.value = true;
     return result;
   };
@@ -1278,6 +1327,7 @@ export function createBibleDataManager(
         // persistence effect above), so restoring it means the catalog is
         // already known, not just this session's active translation.
         catalogLoaded.value = true;
+        catalogStatus.value = "loaded";
       }
     } catch {
       // Ignore a malformed cache; the live catalog fetch is authoritative.
@@ -1299,6 +1349,7 @@ export function createBibleDataManager(
     endpoints,
     availableTranslations,
     catalogLoaded,
+    catalogStatus,
     translationBooks,
     api,
     offline,
