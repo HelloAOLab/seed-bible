@@ -1271,17 +1271,34 @@ export function createSettings(
   // saved UI size, reader font size, scripture width and line height straight
   // from localStorage. This manager's first run still sees the SSR-matching
   // defaults (see `LoginManager.localConfig`), so writing them would undo that
-  // until `hydrateLocalConfig()` re-derives the settings a moment later. Each
-  // effect below therefore skips its first write in that case; the re-derive
-  // always produces a new `settings` object, so every one of them runs again
-  // with the real values.
+  // until `hydrateLocalConfig()` re-derives the settings a moment later, and
+  // for a signed-in reader even that re-derive only has defaults until the
+  // profile arrives (the anonymous local config is empty once signed in), which
+  // would widen the column to the default and then narrow it again. Each effect
+  // below therefore holds its write back for the first run and for as long as a
+  // signed-in account's profile is still loading; the re-derive always
+  // produces a new `settings` object, so every one of them runs again with the
+  // real values.
   const hadEarlyConfig =
     typeof document !== "undefined" &&
     document.documentElement.hasAttribute(EARLY_CONFIG_ATTR);
+  let sawProfileLoading = false;
+  const isProfileStillLoading = () => {
+    if (login.userId.value === null || login.profile.value !== null) {
+      return false;
+    }
+    const loading = login.isProfileLoading?.value ?? false;
+    sawProfileLoading ||= loading;
+    // Not started yet, or in flight; a load that ended without a profile
+    // (offline, server error) releases the hold so settings stay editable.
+    return loading || !sawProfileLoading;
+  };
   const skipFirstWriteAfterEarlyConfig = () => {
     let first = hadEarlyConfig;
     return () => {
-      const skip = first;
+      // Evaluated first so the effect subscribes to the login signals.
+      const waiting = hadEarlyConfig && isProfileStillLoading();
+      const skip = first || waiting;
       first = false;
       return skip;
     };

@@ -714,6 +714,53 @@ describe("SettingsManager with settings applied before first paint", () => {
     );
   });
 
+  it("keeps the early values for a signed-in reader until the profile arrives", () => {
+    document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
+    document.documentElement.style.setProperty("--sb-scripture-width", "40ch");
+    document.documentElement.style.setProperty("--sb-ui-scale", "1.3");
+    const login = makeFakeLogin(null);
+    login.userId.value = "user-1";
+    createSettings(CasualOSManager(), login, navWith());
+
+    // What hydrateLocalConfig does for a signed-in reader: the local config
+    // is empty, so the settings re-derive to the defaults.
+    login.localConfig.value = {};
+
+    const style = document.documentElement.style;
+    expect(style.getPropertyValue("--sb-scripture-width")).toBe("40ch");
+    expect(style.getPropertyValue("--sb-ui-scale")).toBe("1.3");
+    expect(document.documentElement.hasAttribute(EARLY_CONFIG_ATTR)).toBe(true);
+
+    login.profile.value = {
+      name: "Test",
+      config: { scriptureWidth: 40, uiSize: "XL" },
+    } as unknown as UserProfile;
+
+    expect(style.getPropertyValue("--sb-scripture-width")).toBe("40ch");
+    expect(style.getPropertyValue("--sb-ui-scale")).toBe("1.3");
+    expect(document.documentElement.hasAttribute(EARLY_CONFIG_ATTR)).toBe(
+      false
+    );
+  });
+
+  it("applies the profile's values over the early ones when they differ", () => {
+    document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
+    document.documentElement.style.setProperty("--sb-scripture-width", "40ch");
+    const login = makeFakeLogin(null);
+    login.userId.value = "user-1";
+    createSettings(CasualOSManager(), login, navWith());
+    login.localConfig.value = {};
+
+    login.profile.value = {
+      name: "Test",
+      config: { scriptureWidth: 90 },
+    } as unknown as UserProfile;
+
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-scripture-width")
+    ).toBe("90ch");
+  });
+
   it("corrects the early values when the real settings differ from them", () => {
     document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
     document.documentElement.style.setProperty("--sb-ui-scale", "1.3");

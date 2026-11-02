@@ -139,6 +139,28 @@
           } catch (e) {}
           var legacy = null;
           if (!saved) {
+            // Signed-in readers on a device that has not written the copy
+            // yet (it predates it, or this is the first visit since): the
+            // profile LoginManager cached on the last visit holds the same
+            // settings under `config`. A brand-new device has neither, so a
+            // signed-in reader there still waits for the profile.
+            try {
+              for (var i = 0; i < localStorage.length && !legacy; i++) {
+                var key = localStorage.key(i);
+                if (key && key.indexOf("sb-profile-cache-") === 0) {
+                  var cached = read(key, 500000);
+                  if (
+                    cached &&
+                    cached.config &&
+                    typeof cached.config === "object"
+                  ) {
+                    legacy = cached.config;
+                  }
+                }
+              }
+            } catch (e) {}
+          }
+          if (!saved && !legacy) {
             // Same limits as LoginManager's readLocalConfig (50,000
             // characters, 100 keys); past them the app treats the store as
             // corrupt, so painting from it would only be undone.

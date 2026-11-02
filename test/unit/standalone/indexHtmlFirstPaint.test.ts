@@ -203,6 +203,62 @@ describe("index.html early config script: signed-in readers", () => {
   });
 });
 
+describe("index.html early config script: signed-in reader's cached profile", () => {
+  afterEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute("style");
+    document.documentElement.removeAttribute("data-sb-early-config");
+  });
+
+  it("paints from the cached profile when the settings copy does not exist yet", () => {
+    localStorage.setItem(
+      "sb-profile-cache-user-1",
+      JSON.stringify({
+        name: "Test",
+        config: { scriptureWidth: 40, uiSize: "L", fontSize: "XL" },
+      })
+    );
+    new Function(earlyConfigScript())();
+
+    const html = document.documentElement;
+    expect(html.style.getPropertyValue("--sb-scripture-width")).toBe("40ch");
+    expect(html.style.getPropertyValue("--sb-ui-scale")).toBe("1.15");
+    expect(html.hasAttribute("data-sb-early-config")).toBe(true);
+  });
+
+  it("prefers the cached profile over the anonymous local config", () => {
+    localStorage.setItem(
+      "sb-profile-config-local",
+      JSON.stringify({ scriptureWidth: 100 })
+    );
+    localStorage.setItem(
+      "sb-profile-cache-user-1",
+      JSON.stringify({ name: "Test", config: { scriptureWidth: 40 } })
+    );
+    new Function(earlyConfigScript())();
+
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-scripture-width")
+    ).toBe("40ch");
+  });
+
+  it("skips a cached profile that has no config and falls back to the local config", () => {
+    localStorage.setItem(
+      "sb-profile-cache-user-1",
+      JSON.stringify({ name: "T" })
+    );
+    localStorage.setItem(
+      "sb-profile-config-local",
+      JSON.stringify({ scriptureWidth: 50 })
+    );
+    new Function(earlyConfigScript())();
+
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-scripture-width")
+    ).toBe("50ch");
+  });
+});
+
 describe("index.html early config script: limits and tables", () => {
   afterEach(() => {
     localStorage.clear();
