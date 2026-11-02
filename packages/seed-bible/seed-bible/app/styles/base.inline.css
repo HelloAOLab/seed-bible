@@ -51,7 +51,8 @@
   --sb-scripture-width: 68ch;
 
   /* Text config variables — overridden at runtime by SettingsManager. */
-  --text-bookTitle-font: "Newsreader", "Newsreader Fallback", serif;
+  --text-bookTitle-font:
+    "Newsreader", "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;
   --text-bookTitle-weight: 700;
   --text-bookTitle-color: #333;
   --text-bookTitle-font-style: normal;
@@ -63,7 +64,8 @@
   --text-bookTitle-margin-right: 0;
 
   --text-heading-font:
-    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", sans-serif;
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --text-heading-weight: 700;
   --text-heading-color: #333;
   --text-heading-font-style: normal;
@@ -75,7 +77,8 @@
   --text-heading-margin-right: 0;
 
   --text-verse-font:
-    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", sans-serif;
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --text-verse-weight: 500;
   --text-verse-color: #333;
   --text-verse-font-style: normal;
@@ -112,16 +115,19 @@
   --sb-reader-font-family: inherit;
   --sb-reader-font-color: #333;
 
-  --sb-book-title-font-family: "Newsreader", "Newsreader Fallback", serif;
+  --sb-book-title-font-family:
+    "Newsreader", "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;
   --sb-book-title-font-color: #333;
 
   --sb-chapter-heading-font-family:
-    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", sans-serif;
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --sb-chapter-heading-font-color: #333;
   --sb-chapter-heading-font-style: normal;
 
   --sb-verse-font-family:
-    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", sans-serif;
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --sb-verse-font-color: #333;
   --sb-verse-cursor: pointer;
 
@@ -133,7 +139,8 @@
   --sb-selected-verse-text-decoration: underline dotted;
   --sb-selected-verse-text-decoration-color: currentColor;
 
-  --sb-hebrew-subtitle-font-family: "Newsreader", "Newsreader Fallback", serif;
+  --sb-hebrew-subtitle-font-family:
+    "Newsreader", "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;
   --sb-hebrew-subtitle-font-color: #333;
   --sb-hebrew-subtitle-font-style: italic;
 
@@ -326,25 +333,48 @@ html {
   font-size: calc(16px * var(--sb-ui-scale, 1));
 }
 
-/* Metric-matched stand-ins used while the Google web fonts download (see
-   app/fontFallbacks.ts). size-adjust scales the local font to the web font's
-   average glyph width; the overrides then restore the web font's own line
-   box, so the chapter lays out at nearly its final size before the swap. */
+/* Metric-matched stand-ins used while the Google web fonts download. The
+   numbers are measured, and why they are what they are is written up beside
+   FALLBACK_FACES in app/fontFallbacks.ts (a test keeps these in step with it).
+   size-adjust scales the local font to the web font's width; the overrides
+   restore the web font's own line box. A device that lacks the first face's
+   local fonts (Android) skips it and uses the next one in the stack. */
 @font-face {
   font-family: "Plus Jakarta Sans Fallback";
-  src: local("Arial"), local("Liberation Sans"), local("Helvetica");
-  size-adjust: 108.5%;
-  ascent-override: 95.7%;
-  descent-override: 20.5%;
+  src:
+    local("Arial"), local("Arimo"), local("Liberation Sans"), local("Helvetica");
+  size-adjust: 105.2%;
+  ascent-override: 98.7%;
+  descent-override: 21.1%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans Fallback Roboto";
+  src: local("Roboto"), local("Roboto-Regular");
+  size-adjust: 106.1%;
+  ascent-override: 97.8%;
+  descent-override: 20.9%;
   line-gap-override: 0%;
 }
 
 @font-face {
   font-family: "Newsreader Fallback";
-  src: local("Times New Roman"), local("Liberation Serif"), local("Times");
-  size-adjust: 107%;
-  ascent-override: 68.7%;
-  descent-override: 24.8%;
+  src:
+    local("Times New Roman"), local("Liberation Serif"), local("Tinos"),
+    local("Times");
+  size-adjust: 105%;
+  ascent-override: 70%;
+  descent-override: 25.2%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Newsreader Fallback Noto Serif";
+  src: local("Noto Serif");
+  size-adjust: 90%;
+  ascent-override: 81.7%;
+  descent-override: 29.4%;
   line-gap-override: 0%;
 }
 

@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { STATIC_FONT_STYLESHEETS } from "@packages/seed-bible/seed-bible/app/fontStylesheets";
-import { withMetricFallback } from "@packages/seed-bible/seed-bible/app/fontFallbacks";
+import {
+  FALLBACK_FACES,
+  withMetricFallback,
+} from "@packages/seed-bible/seed-bible/app/fontFallbacks";
 import {
   MAX_LOCAL_CONFIG_JSON_LENGTH,
   MAX_LOCAL_CONFIG_KEYS,
@@ -333,6 +336,18 @@ describe("index.html font loading", () => {
     expect(firstPaint).toContain("display=swap");
   });
 
+  it("preloads only the reading font's latin file, as a CORS font fetch", () => {
+    const preloads = Array.from(
+      indexHtml.matchAll(/<link\b[^>]*rel="preload"[^>]*as="font"[^>]*>/g),
+      (match) => match[0]
+    );
+
+    expect(preloads).toHaveLength(1);
+    expect(preloads[0]).toContain("fonts.gstatic.com/s/plusjakartasans/");
+    expect(preloads[0]).toContain('type="font/woff2"');
+    expect(preloads[0]).toContain("crossorigin");
+  });
+
   it("hides icon names until the icon font is in, without blocking on it", () => {
     expect(indexHtml).toMatch(
       /rel="preload"\s+as="style"[^>]*Material\+Symbols/
@@ -347,13 +362,13 @@ describe("index.html font loading", () => {
 describe("metric-matched fallback fonts", () => {
   it("adds the fallback face before the generic family", () => {
     expect(withMetricFallback("'Plus Jakarta Sans', sans-serif")).toBe(
-      `'Plus Jakarta Sans', "Plus Jakarta Sans Fallback", sans-serif`
+      `'Plus Jakarta Sans', "Plus Jakarta Sans Fallback", "Plus Jakarta Sans Fallback Roboto", sans-serif`
     );
     expect(withMetricFallback("Newsreader, serif")).toBe(
-      `Newsreader, "Newsreader Fallback", serif`
+      `Newsreader, "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif`
     );
     expect(withMetricFallback("Newsreader")).toBe(
-      `Newsreader, "Newsreader Fallback"`
+      `Newsreader, "Newsreader Fallback", "Newsreader Fallback Noto Serif"`
     );
   });
 
@@ -363,16 +378,39 @@ describe("metric-matched fallback fonts", () => {
     expect(withMetricFallback("system-ui, sans-serif")).toBe(
       "system-ui, sans-serif"
     );
-    const covered = `"Newsreader", "Newsreader Fallback", serif`;
+    const covered = `"Newsreader", "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif`;
     expect(withMetricFallback(covered)).toBe(covered);
   });
 
-  it("declares both faces in the critical CSS with the size and line overrides", () => {
-    for (const name of ["Plus Jakarta Sans Fallback", "Newsreader Fallback"]) {
-      const face = new RegExp(
-        `@font-face\\s*{[^}]*font-family:\\s*"${name}"[^}]*size-adjust[^}]*ascent-override[^}]*descent-override`
+  it("declares every face in the critical CSS with the calibrated numbers", () => {
+    for (const face of FALLBACK_FACES) {
+      const rule = new RegExp(
+        `@font-face\\s*{[^}]*font-family:\\s*"${face.family}"[^}]*}`
+      ).exec(baseCss);
+      expect(rule, face.family).not.toBeNull();
+      const css = rule![0];
+      expect(css.match(/local\("([^"]+)"\)/g)).toEqual(
+        face.local.map((name) => `local("${name}")`)
       );
-      expect(baseCss).toMatch(face);
+      expect(css).toContain(`size-adjust: ${face.sizeAdjust}%`);
+      expect(css).toContain(`ascent-override: ${face.ascent}%`);
+      expect(css).toContain(`descent-override: ${face.descent}%`);
+      expect(css).toContain("line-gap-override: 0%");
+    }
+  });
+
+  it("keeps the overrides consistent with the web fonts' own line metrics", () => {
+    const webMetrics: Record<string, { ascent: number; descent: number }> = {
+      "plus jakarta sans": { ascent: 103.8, descent: 22.2 },
+      newsreader: { ascent: 73.5, descent: 26.5 },
+    };
+    for (const face of FALLBACK_FACES) {
+      const real = webMetrics[face.web]!;
+      expect(face.ascent * (face.sizeAdjust / 100)).toBeCloseTo(real.ascent, 0);
+      expect(face.descent * (face.sizeAdjust / 100)).toBeCloseTo(
+        real.descent,
+        0
+      );
     }
   });
 
@@ -383,21 +421,21 @@ describe("metric-matched fallback fonts", () => {
     });
 
     expect(css).toContain(
-      `--sb-font-family: Newsreader, "Newsreader Fallback", serif;`
+      `--sb-font-family: Newsreader, "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;`
     );
   });
 
   it("puts the fallback in the first-paint font defaults and theme output", () => {
     expect(baseCss.replace(/\s+/g, " ")).toContain(
-      `--text-verse-font: "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", sans-serif;`
+      `--text-verse-font: "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", "Plus Jakarta Sans Fallback Roboto", sans-serif;`
     );
     for (const theme of [LIGHT_THEME, DARK_THEME]) {
       const css = generateThemeCssVariables(theme);
       expect(css).toContain(
-        `--sb-verse-font-family: Plus Jakarta Sans, "Plus Jakarta Sans Fallback", sans-serif;`
+        `--sb-verse-font-family: Plus Jakarta Sans, "Plus Jakarta Sans Fallback", "Plus Jakarta Sans Fallback Roboto", sans-serif;`
       );
       expect(css).toContain(
-        `--sb-book-title-font-family: Newsreader, "Newsreader Fallback", serif;`
+        `--sb-book-title-font-family: Newsreader, "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;`
       );
     }
   });

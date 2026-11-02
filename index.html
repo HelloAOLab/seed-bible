@@ -185,6 +185,20 @@
         }
       })();
     </script>
+    <!-- The reading font's latin file (27 KB; Google serves it from a
+         versioned, immutable URL), fetched alongside the stylesheet that names
+         it instead of after it, so on a decent connection it is in before the
+         first layout and the chapter never re-wraps. If Google ever moves the
+         file this 404s harmlessly and the calibrated fallback face carries
+         the first paint, as it does on a slow connection. Newsreader's
+         132 KB file is deliberately not preloaded; it only sets titles. -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+      href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2"
+    />
     <!-- Fonts load without blocking first paint. The two stylesheets below
          are rewritten at build time into non-blocking preloads (see
          script/lib/inlineCriticalCss.ts); the icon stylesheet is written out
