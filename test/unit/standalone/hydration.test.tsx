@@ -385,10 +385,14 @@ describe("client hydration", () => {
     ).toHaveLength(2);
   });
 
+  // A bare "/" redirects to the Today page, so the root only reaches the
+  // reader (and gets its address rewritten to the reading path) with
+  // `?today=closed`.
+  const ROOT_READER_PATH = "/?today=closed&useFreeBibleAPI=true";
+
   it("hydrates a load of / even though startup rewrites the address bar to the reading path", async () => {
-    const { container, beforeHtml } = await installSsrDocument(
-      "/?useFreeBibleAPI=true"
-    );
+    const { container, beforeHtml } =
+      await installSsrDocument(ROOT_READER_PATH);
     const { config, state } = await createClientState();
 
     // Startup moved the address bar off "/" ...
@@ -411,7 +415,7 @@ describe("client hydration", () => {
   });
 
   it("still declines when the arrival URL differs from what the server rendered", async () => {
-    const { container } = await installSsrDocument("/?useFreeBibleAPI=true");
+    const { container } = await installSsrDocument(ROOT_READER_PATH);
     jsdom.reconfigure({
       url: "http://ssr.local/en/AAB/exodus/2?useFreeBibleAPI=true",
     });
@@ -428,7 +432,7 @@ describe("client hydration", () => {
 
   describe("UI language check", () => {
     async function decideWith(renderedLanguage: string | undefined) {
-      const { container } = await installSsrDocument("/?useFreeBibleAPI=true");
+      const { container } = await installSsrDocument(ROOT_READER_PATH);
       const { config, state } = await createClientState();
       const marked = { ...config };
       if (renderedLanguage === undefined) {
