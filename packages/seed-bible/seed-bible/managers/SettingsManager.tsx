@@ -1,5 +1,6 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import i18n from "i18next";
+import { withMetricFallback } from "../app/fontFallbacks";
 import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
@@ -247,6 +248,12 @@ export const AppSettingsSchema = z.object({
 export const MOBILE_SCRIPTURE_MARGIN = 5;
 
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
+
+/**
+ * Attribute `index.html`'s early-config script puts on `<html>` when it has
+ * applied saved reader settings before first paint (see `base.inline.css`).
+ */
+export const EARLY_CONFIG_ATTR = "data-sb-early-config";
 
 const TAG_FONT_SIZE = "app.fontSize";
 const TAG_DISABLE_PANELS = "app.disablePanels";
@@ -676,7 +683,7 @@ function applyTextConfigToCSSVars(config: TextConfig) {
   const body = document.body?.style ?? null;
   for (const [section, cfg] of Object.entries(config)) {
     const prefix = `--text-${section}`;
-    root.setProperty(`${prefix}-font`, cfg.font);
+    root.setProperty(`${prefix}-font`, withMetricFallback(cfg.font));
     root.setProperty(`${prefix}-weight`, cfg.bold ? "700" : cfg.weight);
     root.setProperty(`${prefix}-font-style`, cfg.italic ? "italic" : "normal");
     root.setProperty(
@@ -1252,31 +1259,70 @@ export function createSettings(
     );
   };
 
+  // `index.html`'s early-config script may already have painted the device's
+  // saved UI size, reader font size, scripture width and line height straight
+  // from localStorage. This manager's first run still sees the SSR-matching
+  // defaults (see `LoginManager.localConfig`), so writing them would undo that
+  // until `hydrateLocalConfig()` re-derives the settings a moment later. Each
+  // effect below therefore skips its first write in that case; the re-derive
+  // always produces a new `settings` object, so every one of them runs again
+  // with the real values.
+  const hadEarlyConfig =
+    typeof document !== "undefined" &&
+    document.documentElement.hasAttribute(EARLY_CONFIG_ATTR);
+  const skipFirstWriteAfterEarlyConfig = () => {
+    let first = hadEarlyConfig;
+    return () => {
+      const skip = first;
+      first = false;
+      return skip;
+    };
+  };
+
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
   // (see app/styles/base.css). Chrome sized in `rem` tracks this; reader text keeps its
   // own font-size knob (`.sb-bible-reader` carries `.sb-font-size-*`), so it
   // stays independent without the old root-`zoom` + counter-zoom hack.
+  const skipUiScaleWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
     if (typeof document === "undefined") {
       return;
     }
     const scale = UI_SIZE_SCALE_MAP[settings.value.uiSize];
+    if (skipUiScaleWrite()) return;
     document.documentElement.style.setProperty("--sb-ui-scale", String(scale));
+  });
+
+  // The early-config script sizes the reader through a CSS rule keyed on
+  // `EARLY_CONFIG_ATTR` instead of the `.sb-font-size-*` class (which doesn't
+  // exist yet); once the real settings are in, the class takes over again.
+  const skipFontSizeWrite = skipFirstWriteAfterEarlyConfig();
+  effect(() => {
+    if (typeof document === "undefined") return;
+    void settings.value.fontSize;
+    if (skipFontSizeWrite()) return;
+    document.documentElement.removeAttribute(EARLY_CONFIG_ATTR);
   });
 
   // Publish per-section text config as CSS variables (`--text-<section>-*`)
   // so reader styles can consume typography preferences.
+  const skipTextConfigWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
-    applyTextConfigToCSSVars(settings.value.textConfig);
+    const textConfig = settings.value.textConfig;
+    if (skipTextConfigWrite()) return;
+    applyTextConfigToCSSVars(textConfig);
   });
 
   // Publish the scripture margin (%) as a CSS variable consumed by
   // `.sb-bible-reader`'s horizontal padding.
+  const skipScriptureWidthWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
     if (typeof document === "undefined") return;
+    const width = settings.value.scriptureWidth;
+    if (skipScriptureWidthWrite()) return;
     document.documentElement.style.setProperty(
       "--sb-scripture-width",
-      `${settings.value.scriptureWidth}ch`
+      `${width}ch`
     );
   });
 

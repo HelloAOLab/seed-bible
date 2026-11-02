@@ -1,6 +1,7 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import {
+  EARLY_CONFIG_ATTR,
   createSettings,
   type AppSettings,
 } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
@@ -673,5 +674,66 @@ describe("custom highlight colors", () => {
       "#111111",
       "#222222",
     ]);
+  });
+});
+
+describe("SettingsManager with settings applied before first paint", () => {
+  afterEach(() => {
+    document.documentElement.removeAttribute(EARLY_CONFIG_ATTR);
+    document.documentElement.removeAttribute("style");
+  });
+
+  it("keeps the early UI size and width until the saved settings arrive, then takes over", () => {
+    document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
+    document.documentElement.style.setProperty("--sb-ui-scale", "1.3");
+    document.documentElement.style.setProperty("--sb-scripture-width", "90ch");
+    const login = makeFakeLogin(null);
+
+    createSettings(CasualOSManager(), login, navWith());
+
+    // Seed defaults must not overwrite what the early script painted.
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-ui-scale")
+    ).toBe("1.3");
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-scripture-width")
+    ).toBe("90ch");
+    expect(document.documentElement.hasAttribute(EARLY_CONFIG_ATTR)).toBe(true);
+
+    login.localConfig.value = { uiSize: "XL", scriptureWidth: 90 };
+
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-ui-scale")
+    ).toBe("1.3");
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-scripture-width")
+    ).toBe("90ch");
+    expect(document.documentElement.hasAttribute(EARLY_CONFIG_ATTR)).toBe(
+      false
+    );
+  });
+
+  it("corrects the early values when the real settings differ from them", () => {
+    document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
+    document.documentElement.style.setProperty("--sb-ui-scale", "1.3");
+    const login = makeFakeLogin(null);
+    createSettings(CasualOSManager(), login, navWith());
+
+    login.localConfig.value = { uiSize: "S" };
+
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-ui-scale")
+    ).toBe("0.85");
+  });
+
+  it("writes the defaults straight away when nothing was applied early", () => {
+    createSettings(CasualOSManager(), makeFakeLogin(null), navWith());
+
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-ui-scale")
+    ).toBe("1");
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-scripture-width")
+    ).toBe("68ch");
   });
 });

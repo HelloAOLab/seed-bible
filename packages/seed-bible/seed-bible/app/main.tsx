@@ -45,10 +45,7 @@ import { TutorialSkipPrompt } from "../components/TutorialSkipPrompt/TutorialSki
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
 import { OfflineRecoveryToast } from "../components/OfflineDownloadPrompt/OfflineRecoveryToast";
-import {
-  customFontStylesheet,
-  STATIC_FONT_STYLESHEETS,
-} from "./fontStylesheets";
+import { customFontStylesheet } from "./fontStylesheets";
 
 /**
  * Font `<link>`s, plus the CSS for the active Customization layered on top
@@ -91,13 +88,10 @@ export function ExternalResourceDependencies({
 
   return (
     <>
-      {STATIC_FONT_STYLESHEETS.map((href) => (
-        <link key={href} rel="stylesheet" href={href} />
-      ))}
       {googleFontFamilies.value.length > 0 && (
         // A customization variant can name any Google Font by typing its
         // exact name — this loads whatever isn't already covered by the
-        // static presets above.
+        // static presets, which `index.html` links without blocking paint.
         <link
           rel="stylesheet"
           href={customFontStylesheet(googleFontFamilies.value)!}
