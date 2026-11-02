@@ -100,8 +100,12 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
         ? { hydrate: false, reason: "chapter-load-timed-out" }
         : decideHydration({
             config,
-            pathname: location.pathname,
-            search: location.search,
+            // The URL the page arrived at, not `location`: creating the state
+            // already rewrote the address bar to the canonical reading path,
+            // but the server rendered for the arrival URL (`/`, the PWA start
+            // URL), so comparing the rewritten one would always mismatch.
+            pathname: state.navigation.initialUrl.pathname,
+            search: state.navigation.initialUrl.search,
             container,
             clientCommit: __GIT_COMMIT__,
           });

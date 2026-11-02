@@ -413,6 +413,78 @@ describe("client hydration", () => {
     ).toHaveLength(2);
   });
 
+  it("hydrates a load of / even though startup rewrites the address bar to the reading path", async () => {
+    const html = await renderSsrDocument("/?useFreeBibleAPI=true");
+    document.open();
+    document.write(html);
+    document.close();
+    jsdom.reconfigure({ url: "http://ssr.local/?useFreeBibleAPI=true" });
+
+    const container = document.getElementById("app")!;
+    const config = readInjectedConfig();
+    const state = createSeedBibleState({
+      config,
+      apiResponseSnapshot: readInjectedApiResponseSnapshot(),
+    });
+    await Promise.all([
+      state.i18n.ready,
+      Promise.all(
+        state.tabs.tabs.value.map((t) => t.readingState.chapterDataPromise)
+      ),
+    ]);
+
+    // Startup moved the address bar off "/" ...
+    expect(location.pathname).not.toBe("/");
+    // Checking the rewritten address (what init.tsx used to do) declines.
+    expect(
+      decideHydration({
+        config,
+        pathname: location.pathname,
+        search: location.search,
+        container,
+        clientCommit: __GIT_COMMIT__,
+      })
+    ).toEqual({ hydrate: false, reason: "url-mismatch" });
+    // ... but the markup on screen was rendered for the arrival URL.
+    const arrival = state.navigation.initialUrl;
+    expect(arrival.pathname).toBe("/");
+    expect(
+      decideHydration({
+        config,
+        pathname: arrival.pathname,
+        search: arrival.search,
+        container,
+        clientCommit: __GIT_COMMIT__,
+      })
+    ).toEqual({ hydrate: true });
+  });
+
+  it("still declines when the arrival URL differs from what the server rendered", async () => {
+    const html = await renderSsrDocument("/?useFreeBibleAPI=true");
+    document.open();
+    document.write(html);
+    document.close();
+    jsdom.reconfigure({
+      url: "http://ssr.local/en/AAB/exodus/2?useFreeBibleAPI=true",
+    });
+
+    const config = readInjectedConfig();
+    const state = createSeedBibleState({
+      config,
+      apiResponseSnapshot: readInjectedApiResponseSnapshot(),
+    });
+    const arrival = state.navigation.initialUrl;
+    expect(
+      decideHydration({
+        config,
+        pathname: arrival.pathname,
+        search: arrival.search,
+        container: document.getElementById("app")!,
+        clientCommit: __GIT_COMMIT__,
+      })
+    ).toEqual({ hydrate: false, reason: "url-mismatch" });
+  });
+
   it("declines to hydrate when the live URL doesn't match what was rendered", async () => {
     const html = await renderSsrDocument();
     document.open();
