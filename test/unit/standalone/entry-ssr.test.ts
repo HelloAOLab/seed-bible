@@ -970,9 +970,6 @@ describe("render() server-rendered meta tags", () => {
         }
         await hungRender;
         expect(chapterFetches).toBeGreaterThan(0);
-        // Past the shared fetch's own hard timeout, in case another caller
-        // without a signal kept the render's abort from cancelling it.
-        await vi.advanceTimersByTimeAsync(2000);
       } finally {
         vi.useRealTimers();
       }

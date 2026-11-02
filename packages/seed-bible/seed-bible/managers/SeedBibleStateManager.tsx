@@ -3645,6 +3645,12 @@ export function createSeedBibleState(
     closeCodeOfConduct,
     features,
     dispose: () => {
+      // Aborts each tab's open chapter request. Without this an SSR render
+      // that hit its deadline leaves its fetch subscribed, so a hung request
+      // stays in the shared response cache for the next render to adopt.
+      for (const tab of tabs.tabs.value) {
+        tab.readingState.dispose();
+      }
       i18n.dispose();
       disposeReadingTicker();
     },
