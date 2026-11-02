@@ -106,6 +106,7 @@ import {
 } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
+  type ApiResponseCache,
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
   type TranslationBook,
@@ -772,6 +773,11 @@ export interface CreateSeedBibleStateOptions {
    */
   translationsCache?: TranslationsCache;
   /**
+   * Process-wide cache of chapter/book-catalog requests, SSR host only —
+   * see `standalone/ssrApiResponseCache.ts`.
+   */
+  apiResponseCache?: ApiResponseCache;
+  /**
    * A `FreeUseBibleAPI.snapshotResponseCache()` snapshot to seed the new
    * `FreeUseBibleAPI` instance with, so it doesn't refetch data another
    * instance already fetched. The client uses this to seed its own API cache
@@ -832,7 +838,8 @@ export function createSeedBibleState(
   const branding = options.config?.branding;
   const brandingThemes = branding?.whiteLabelThemes;
   const api = new FreeUseBibleAPI(
-    getDefaultAPIEndpoint(navigation.currentUrl.value)
+    getDefaultAPIEndpoint(navigation.currentUrl.value),
+    options.apiResponseCache
   );
   if (options.apiResponseSnapshot) {
     api.seedResponseCache(options.apiResponseSnapshot);
@@ -3638,6 +3645,12 @@ export function createSeedBibleState(
     closeCodeOfConduct,
     features,
     dispose: () => {
+      // Aborts each tab's open chapter request. Without this an SSR render
+      // that hit its deadline leaves its fetch subscribed, so a hung request
+      // stays in the shared response cache for the next render to adopt.
+      for (const tab of tabs.tabs.value) {
+        tab.readingState.dispose();
+      }
       i18n.dispose();
       disposeReadingTicker();
     },
