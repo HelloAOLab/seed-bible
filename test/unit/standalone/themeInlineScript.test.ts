@@ -170,6 +170,20 @@ describe("index.html pre-hydration theme script", () => {
     expect(paintedBackground()).toBe(DARK_THEME.variables.background);
   });
 
+  it("ignores a cached profile the app would reject, so the theme doesn't switch after the app starts", () => {
+    installServerRenderedHead();
+    stubColorScheme(false);
+    signInWithCachedProfile("user-1", { themeId: "dark" });
+    localStorage.setItem(
+      "sb-profile-cache-user-1",
+      JSON.stringify({ config: { themeId: "dark" } })
+    );
+
+    runInlineThemeScript();
+
+    expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
+  });
+
   it("falls back to the device's saved theme when the session key is malformed", () => {
     installServerRenderedHead();
     stubColorScheme(false);

@@ -24,10 +24,15 @@ function makeFakeLogin(initialProfile: UserProfile | null): LoginManager {
   const userId = signal<string | null>(initialProfile ? "user-1" : null);
   const profile = signal<UserProfile | null>(initialProfile);
   const localConfig = signal<Record<string, unknown>>({});
+  const isLocalConfigHydrated = signal(false);
   return {
     userId,
     profile,
     cachedProfile: signal<UserProfile | null>(null),
+    isLocalConfigHydrated,
+    hydrateLocalConfig: () => {
+      isLocalConfigHydrated.value = true;
+    },
     localConfig,
     profilePromise: Promise.resolve(initialProfile),
     updateProfile: (newData: Partial<UserProfile>) => {
@@ -579,6 +584,21 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
   // from the profile copy cached on the device. If settings ignored that
   // copy until the network load landed, the first post-mount theme change
   // would repaint the default (System) over it, then flip back.
+  it("keeps the server's default theme for the first render, then uses the cached account theme once mounted", () => {
+    const login = makeFakeLogin(null);
+    login.userId.value = "user-1";
+    login.cachedProfile.value = {
+      name: "Test",
+      config: { themeId: "dark" },
+    } as unknown as UserProfile;
+
+    const settings = createSettings(os, login, navWith());
+    expect(settings.settings.value.themeId).toBe("system");
+
+    login.hydrateLocalConfig();
+    expect(settings.settings.value.themeId).toBe("dark");
+  });
+
   it("uses a signed-in account's cached theme and colors while its profile is still loading", () => {
     const login = makeFakeLogin(null);
     login.userId.value = "user-1";
@@ -592,6 +612,7 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
     } as unknown as UserProfile;
 
     const settings = createSettings(os, login, navWith());
+    login.hydrateLocalConfig();
 
     expect(settings.settings.value.themeId).toBe("dark");
     expect(settings.settings.value.customTheme).toEqual({
@@ -610,6 +631,7 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
       config: { themeId: "dark" },
     } as unknown as UserProfile;
     const settings = createSettings(os, login, navWith());
+    login.hydrateLocalConfig();
 
     login.profile.value = {
       name: "Test",
@@ -628,6 +650,7 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
     } as unknown as UserProfile;
 
     const settings = createSettings(os, login, navWith());
+    login.hydrateLocalConfig();
 
     expect(settings.settings.value.themeId).toBe("dark");
     expect(settings.settings.value.fontSize).not.toBe("XL");

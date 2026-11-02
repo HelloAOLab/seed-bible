@@ -88,8 +88,14 @@
             var userId = atob(sessionKey.split(".")[1] || "");
             if (!userId) return null;
             var cached = localStorage.getItem("sb-profile-cache-" + userId);
-            var config = cached && JSON.parse(cached).config;
-            var id = config && config.themeId;
+            var profile = cached && JSON.parse(cached);
+            // LoginManager ignores a cached copy that fails its profile
+            // schema. Checking the fields it always requires keeps this
+            // script from painting a theme the app then won't use.
+            if (!profile || typeof profile.name !== "string") return null;
+            var config = profile.config;
+            if (!config || typeof config !== "object") return null;
+            var id = config.themeId;
             return typeof id === "string" && id ? id : null;
           } catch (e) {
             return null;

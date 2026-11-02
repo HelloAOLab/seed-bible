@@ -339,6 +339,7 @@ function makeFakeLogin(initialProfile: UserProfile | null): LoginManager {
     userId,
     profile,
     cachedProfile: signal<UserProfile | null>(null),
+    isLocalConfigHydrated: signal(false),
     localConfig,
     profilePromise: Promise.resolve(initialProfile),
     updateProfile: (newData: Partial<UserProfile>) => {

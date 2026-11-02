@@ -1,6 +1,6 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import i18n from "i18next";
-import type { LoginManager } from "../managers/LoginManager";
+import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
@@ -800,24 +800,33 @@ export function createSettings(
     const settingsPreset = parseSettingsPreset(sessionOverrides.settingsPreset);
     const presetConfig = getPresetConfig(settingsPreset);
 
-    const read = (profileKey: string, urlKey: string): unknown =>
-      getProfileConfigValue(profile, profileKey) ??
+    const readFrom = (
+      source: UserProfile | null,
+      profileKey: string,
+      urlKey: string
+    ): unknown =>
+      getProfileConfigValue(source, profileKey) ??
       sessionOverrides[urlKey] ??
       local[profileKey];
+    const read = (profileKey: string, urlKey: string): unknown =>
+      readFrom(profile, profileKey, urlKey);
 
     // While a signed-in account's profile is still loading, its theme comes
     // from the copy cached on this device. `index.html`'s pre-hydration
     // script paints from that same copy, so reading the default (System)
     // here instead would repaint over it on the first post-mount theme
-    // change, then flip back once the load lands. Theme keys only: the
-    // theme reaches the first paint through `<style>` tags Preact doesn't
-    // diff during hydration, while settings like font size change the
-    // rendered markup and would make it disagree with the server's.
-    const themeProfile = profile ?? login.cachedProfile.value;
+    // change, then flip back once the load lands.
+    //
+    // Only from right after mount, like `localConfig`. The theme picks a
+    // shared customization's variant, which is rendered into a `<style>`
+    // Preact leaves alone while hydrating, so it only repaints on a change
+    // after mount. That later change is also what writes custom colors to
+    // `#sb-theme-styles`, which skips its first write.
+    const themeProfile =
+      profile ??
+      (login.isLocalConfigHydrated.value ? login.cachedProfile.value : null);
     const readTheme = (profileKey: string, urlKey: string): unknown =>
-      getProfileConfigValue(themeProfile, profileKey) ??
-      sessionOverrides[urlKey] ??
-      local[profileKey];
+      readFrom(themeProfile, profileKey, urlKey);
 
     // The embed link's theme is the look the site owner chose. The viewer's
     // saved theme and color edits would otherwise paint over it, so the
