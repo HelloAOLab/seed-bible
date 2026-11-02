@@ -15,6 +15,7 @@ import {
 } from "../seed-bible/managers/testUtils/mockBibleApiData";
 import { buildChapterUrl } from "../../../script/lib/sitemap";
 import { resetSsrTranslationsCacheForTests } from "../../../standalone/ssrTranslationsCache";
+import { resetSsrApiResponseCacheForTests } from "../../../standalone/ssrApiResponseCache";
 import i18n from "i18next";
 
 describe("sharedPageQueryRedirect", () => {
@@ -634,6 +635,7 @@ describe("render() server-rendered meta tags", () => {
     // see ssrTranslationsCache.ts). Reset it so one test's cached response
     // can't leak into the next.
     resetSsrTranslationsCacheForTests();
+    resetSsrApiResponseCacheForTests();
   });
 
   afterEach(() => {
@@ -865,6 +867,68 @@ describe("render() server-rendered meta tags", () => {
     expect(html).not.toMatch(
       /media="\(prefers-color-scheme:[^"]*\)"[^>]*name="theme-color"/
     );
+  });
+
+  describe("chapter response cache", () => {
+    const countChapterFetches = () => {
+      const inner = globalThis.fetch;
+      const urls: string[] = [];
+      globalThis.fetch = (async (url: string) => {
+        urls.push(url);
+        return inner(url);
+      }) as typeof globalThis.fetch;
+      return () => urls.filter((url) => url.endsWith("/AAB/GEN/1.json")).length;
+    };
+    const path = "/en/AAB/genesis/1?useFreeBibleAPI=true";
+
+    it("does not refetch the chapter on a second render", async () => {
+      const chapterFetches = countChapterFetches();
+
+      const first = await renderHtml(path);
+      const second = await renderHtml(path);
+
+      expect(chapterFetches()).toBe(1);
+      expect(second).toContain("app-seed-data");
+      expect(
+        JSON.parse(second.match(/id="app-seed-data">([^<]*)</)?.[1] as string)
+      ).toEqual(
+        JSON.parse(first.match(/id="app-seed-data">([^<]*)</)?.[1] as string)
+      );
+    });
+
+    it("shares one fetch between concurrent renders of the same chapter", async () => {
+      const chapterFetches = countChapterFetches();
+
+      await Promise.all([renderHtml(path), renderHtml(path), renderHtml(path)]);
+
+      expect(chapterFetches()).toBe(1);
+    });
+
+    it("does not cache a failed chapter fetch", async () => {
+      const inner = globalThis.fetch;
+      let fail = true;
+      let chapterFetches = 0;
+      globalThis.fetch = (async (url: string) => {
+        if (url.endsWith("/AAB/GEN/1.json")) {
+          chapterFetches++;
+          if (fail) {
+            throw new Error("upstream down");
+          }
+        }
+        return inner(url);
+      }) as typeof globalThis.fetch;
+
+      await renderHtml(path);
+      const fetchesWhileFailing = chapterFetches;
+      fail = false;
+      const html = await renderHtml(path);
+
+      expect(chapterFetches).toBeGreaterThan(fetchesWhileFailing);
+      const config = JSON.parse(
+        html.match(/id="app-config">([^<]*)</)?.[1] as string
+      ) as { ssrChapterContentSettled: boolean };
+      expect(config.ssrChapterContentSettled).toBe(true);
+    });
   });
 
   it("injects the fetched API responses into the #app-seed-data JSON script tag", async () => {

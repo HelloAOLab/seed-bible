@@ -366,6 +366,112 @@ describe("FreeUseBibleAPI", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  describe("shared response cache", () => {
+    const makeSharedCache = () => {
+      const map = new Map<string, Promise<unknown>>();
+      return {
+        get: (url: string) => map.get(url),
+        set: (url: string, p: Promise<unknown>) => void map.set(url, p),
+        delete: (url: string) => void map.delete(url),
+      };
+    };
+    const url = "https://bible.helloao.org/api/available_translations.json";
+
+    it("lets a second API instance reuse a response without refetching, and still snapshot it", async () => {
+      const shared = makeSharedCache();
+      fetchMock.mockResolvedValue(createResponse({ translations: [] }));
+
+      await new FreeUseBibleAPI(
+        FREE_USE_BIBLE_API_ENDPOINT,
+        shared
+      ).getAvailableTranslations();
+      const second = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT, shared);
+      await second.getAvailableTranslations();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(second.snapshotResponseCache()[url]).toEqual({ translations: [] });
+    });
+
+    it("shares one in-flight fetch between concurrent instances", async () => {
+      const shared = makeSharedCache();
+      fetchMock.mockResolvedValue(createResponse({ translations: [] }));
+
+      await Promise.all([
+        new FreeUseBibleAPI(
+          FREE_USE_BIBLE_API_ENDPOINT,
+          shared
+        ).getAvailableTranslations(),
+        new FreeUseBibleAPI(
+          FREE_USE_BIBLE_API_ENDPOINT,
+          shared
+        ).getAvailableTranslations(),
+      ]);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not cache a failed fetch, for the failing or any other instance", async () => {
+      const shared = makeSharedCache();
+      fetchMock.mockResolvedValueOnce(createResponse({}, 500, "Server Error"));
+      await expect(
+        new FreeUseBibleAPI(
+          FREE_USE_BIBLE_API_ENDPOINT,
+          shared
+        ).getAvailableTranslations()
+      ).rejects.toThrow("Status: 500");
+
+      fetchMock.mockResolvedValueOnce(createResponse({ translations: [] }));
+      await expect(
+        new FreeUseBibleAPI(
+          FREE_USE_BIBLE_API_ENDPOINT,
+          shared
+        ).getAvailableTranslations()
+      ).resolves.toEqual({ translations: [] });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("keeps a shared fetch alive when the instance that started it aborts", async () => {
+      const shared = makeSharedCache();
+      let finish!: (r: unknown) => void;
+      fetchMock.mockImplementation(
+        (_url: string, init: { signal: AbortSignal }) =>
+          new Promise((resolve, reject) => {
+            finish = resolve;
+            init.signal.addEventListener("abort", () =>
+              reject(new DOMException("aborted", "AbortError"))
+            );
+          })
+      );
+      const controller = new AbortController();
+      const owner = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT, shared);
+      const ownerResult = owner.getAvailableTranslations(undefined, {
+        signal: controller.signal,
+      });
+      const other = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT, shared);
+      const otherResult = other.getAvailableTranslations();
+
+      controller.abort();
+      await expect(ownerResult).rejects.toThrow();
+      finish(createResponse({ translations: [] }));
+
+      await expect(otherResult).resolves.toEqual({ translations: [] });
+    });
+
+    it("refresh bypasses the shared cache", async () => {
+      const shared = makeSharedCache();
+      fetchMock.mockResolvedValue(createResponse({ translations: [] }));
+      const api = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT, shared);
+      await api.getAvailableTranslations();
+
+      await new FreeUseBibleAPI(
+        FREE_USE_BIBLE_API_ENDPOINT,
+        shared
+      ).getAvailableTranslations(undefined, { refresh: true });
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe("snapshotResponseCache() / seedResponseCache()", () => {
     it("snapshots only successfully resolved responses", async () => {
       const payload = { translations: [{ id: "eng_kjv" }] };

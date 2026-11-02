@@ -27,6 +27,7 @@ import {
   composeThemeStyleText,
   THEME_PRESET_STYLE_TEXT,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import { ssrApiResponseCache } from "./ssrApiResponseCache";
 import { ssrTranslationsCache } from "./ssrTranslationsCache";
 import {
   buildSharedPagePath,
@@ -624,6 +625,7 @@ export async function render(
     config,
     initialHref: href,
     translationsCache: ssrTranslationsCache,
+    apiResponseCache: ssrApiResponseCache,
   });
   try {
     return await renderState(state, options, config, href, notFound);

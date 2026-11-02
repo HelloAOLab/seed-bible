@@ -1301,6 +1301,18 @@ export interface ApiRequestOptions {
   refresh?: boolean;
 }
 
+/**
+ * Optional process-wide cache of request promises keyed by full URL, shared
+ * between `FreeUseBibleAPI` instances. Only the SSR host supplies one (see
+ * `standalone/ssrApiResponseCache.ts`): each render builds a fresh API
+ * instance, so without it every render refetches the same chapter.
+ */
+export interface ApiResponseCache {
+  get(url: string): Promise<unknown> | undefined;
+  set(url: string, promise: Promise<unknown>): void;
+  delete(url: string): void;
+}
+
 /** Per-URL bookkeeping for an in-flight request shared by multiple callers. */
 interface PendingRequestSubscription {
   /** Owns the actual `fetch()` call — never a caller's own signal. */
@@ -1327,8 +1339,11 @@ export class FreeUseBibleAPI {
    */
   private _resolvedResponses = new Map<string, unknown>();
 
-  constructor(endpoint: string) {
+  private _sharedCache?: ApiResponseCache;
+
+  constructor(endpoint: string, sharedCache?: ApiResponseCache) {
     this.endpoint = endpoint;
+    this._sharedCache = sharedCache;
   }
 
   /**
@@ -1559,10 +1574,28 @@ export class FreeUseBibleAPI {
     if (options?.refresh) {
       this._responseCache.delete(url);
       this._resolvedResponses.delete(url);
+      this._sharedCache?.delete(url);
     }
     const existing = this._responseCache.get(url) as Promise<T> | undefined;
     if (existing) {
       return this._subscribeToRequest(url, existing, options?.signal);
+    }
+
+    const shared = this._sharedCache?.get(url) as Promise<T> | undefined;
+    if (shared) {
+      // Not subscribed to: this instance doesn't own the fetch, so a
+      // caller's signal can't cancel it (the owner may be another render).
+      const adopted = shared.then((json) => {
+        this._resolvedResponses.set(url, json);
+        return json;
+      });
+      this._responseCache.set(url, adopted);
+      adopted.catch(() => {
+        if (this._responseCache.get(url) === adopted) {
+          this._responseCache.delete(url);
+        }
+      });
+      return adopted;
     }
 
     // Own controller for the real fetch — deliberately never a caller's own
@@ -1586,6 +1619,11 @@ export class FreeUseBibleAPI {
       })
       .catch((error) => {
         this._responseCache.delete(url);
+        // Failures (including timeouts and aborts) must never be served to
+        // later renders; only drop it if it's still this request's entry.
+        if (this._sharedCache?.get(url) === request) {
+          this._sharedCache.delete(url);
+        }
         throw error;
       })
       .finally(() => {
@@ -1593,6 +1631,7 @@ export class FreeUseBibleAPI {
       });
 
     this._responseCache.set(url, request);
+    this._sharedCache?.set(url, request);
     return this._subscribeToRequest(url, request, options?.signal);
   }
 
@@ -1642,6 +1681,11 @@ export class FreeUseBibleAPI {
           // `_getJson`.
           this._requestSubscriptions.delete(url);
           this._responseCache.delete(url);
+          if (this._sharedCache?.get(url) === sharedPromise) {
+            // Other renders may have adopted this fetch; let it finish
+            // rather than abort it out from under them.
+            return void reject(this._abortError());
+          }
           subscription.controller.abort();
         }
         reject(this._abortError());
