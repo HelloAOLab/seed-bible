@@ -760,6 +760,7 @@ async function renderState(
   const clientConfig: AppConfig = {
     ...config,
     renderedForPath: options.path,
+    renderedLanguage: state.i18n.language.peek(),
     // This bundle's own build identity, not the requested branch — see
     // AppConfig.renderedByCommit.
     renderedByCommit: __GIT_COMMIT__,

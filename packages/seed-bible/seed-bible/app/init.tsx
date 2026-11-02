@@ -7,7 +7,7 @@ import { readInjectedCustomizationSeed } from "../app/customizationSeed";
 import { readTrustedSharedPageSeeds } from "../app/sharedPageSeeds";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import {
-  decideHydration,
+  decideStartupHydration,
   isRenderedByThisBuild,
   type HydrationDecision,
 } from "../app/hydrationGate";
@@ -98,16 +98,12 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
     const decision: HydrationDecision =
       chapterLoads === "timed-out"
         ? { hydrate: false, reason: "chapter-load-timed-out" }
-        : decideHydration({
+        : decideStartupHydration({
             config,
-            // The URL the page arrived at, not `location`: creating the state
-            // already rewrote the address bar to the canonical reading path,
-            // but the server rendered for the arrival URL (`/`, the PWA start
-            // URL), so comparing the rewritten one would always mismatch.
-            pathname: state.navigation.initialUrl.pathname,
-            search: state.navigation.initialUrl.search,
+            navigation: state.navigation,
             container,
             clientCommit: __GIT_COMMIT__,
+            clientLanguage: state.i18n.language.peek(),
           });
 
     const app = <Main initialState={state} config={config} />;
