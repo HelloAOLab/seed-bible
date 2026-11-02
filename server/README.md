@@ -176,7 +176,13 @@ the route is a bounded label (`/`, `/healthz`, `/__invalidate`, `/b/:branch`,
 `/b/:branch/:buildId`, `asset-proxy`). Nested under it, as applicable:
 `store.readPointer`, `store.fetchArtifacts`, `store.fetchHtml`, `build.import`
 (evaluating a branch's SSR bundle — the cold-start cost), `ssr.render`, and
-`asset.proxy`. An inbound `traceparent` header is honoured, so a trace started
+`asset.proxy`. Inside `ssr.render`, each thing the render waits on before it
+can produce HTML gets its own span — `ssr.wait.i18n`, `ssr.wait.chapter`,
+`ssr.wait.playlistPage`, `ssr.wait.readingPlanPage`,
+`ssr.wait.playlistPlayback` (only the ones that apply to that page) — followed
+by `ssr.renderToString` for turning the app into HTML. These come from the
+branch's own SSR bundle (`standalone/ssrSpans.ts`), so a branch deployed before
+they were added won't have them. An inbound `traceparent` header is honoured, so a trace started
 by a CDN or load balancer continues here. `GET /healthz` is deliberately **not**
 traced: it fires constantly and would drown out real traffic.
 

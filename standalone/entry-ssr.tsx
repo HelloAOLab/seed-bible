@@ -28,6 +28,7 @@ import {
   THEME_PRESET_STYLE_TEXT,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { ssrTranslationsCache } from "./ssrTranslationsCache";
+import { traceStep, traceWait } from "./ssrSpans";
 import {
   buildSharedPagePath,
   type SharedPageKind,
@@ -658,24 +659,36 @@ async function renderState(
   // it here, before any suspending render is attempted, keeps that race from
   // being reachable at all.
   await Promise.all([
-    state.i18n.ready,
-    state.app.selectedTab.value?.readingState.chapterDataPromise,
+    traceWait("ssr.wait.i18n", state.i18n.ready),
+    traceWait(
+      "ssr.wait.chapter",
+      state.app.selectedTab.value?.readingState.chapterDataPromise
+    ),
     // So the title, meta and modal describe a shared playlist or reading
     // plan link's content. Awaited here with the chapter, not suspended on
     // during the render, for the reason above.
-    state.playlists.initialPlaylistPageLoadPromise,
-    state.readingPlans.initialReadingPlanPageLoadPromise,
+    traceWait(
+      "ssr.wait.playlistPage",
+      state.playlists.initialPlaylistPageLoadPromise
+    ),
+    traceWait(
+      "ssr.wait.readingPlanPage",
+      state.readingPlans.initialReadingPlanPageLoadPromise
+    ),
   ]);
   // A reload mid-playlist names only its step, not the chapter; the reader
   // moves there once the playlist has loaded, so wait for that too before
   // rendering.
-  await state.playlists.initialPlaybackPromise;
+  await traceWait(
+    "ssr.wait.playlistPlayback",
+    state.playlists.initialPlaybackPromise
+  );
 
-  const [appHtml] = await Promise.all([
+  const appHtml = await traceStep("ssr.renderToString", () =>
     renderToStringAsync(
       <Main initialState={state} config={config} initialHref={href} />
-    ),
-  ]);
+    )
+  );
 
   // Read once — used both in the meta block below and to decide whether
   // `options.html`'s default `og:image` tags need stripping first (see
