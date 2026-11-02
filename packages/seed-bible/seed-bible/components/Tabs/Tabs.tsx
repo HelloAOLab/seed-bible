@@ -404,9 +404,18 @@ function SessionSettingsModalContent(props: {
             >
               {(
                 [
-                  { value: "hosts-only" },
-                  { value: "everyone" },
-                  { value: "none" },
+                  {
+                    value: "hosts-only",
+                    label: t("session-settings-verse-effects-hosts-only"),
+                  },
+                  {
+                    value: "everyone",
+                    label: t("session-settings-verse-effects-everyone"),
+                  },
+                  {
+                    value: "none",
+                    label: t("session-settings-verse-effects-none"),
+                  },
                 ] as const
               ).map((option) => {
                 const selected =
@@ -428,14 +437,7 @@ function SessionSettingsModalContent(props: {
                       });
                     }}
                   >
-                    {t(
-                      {
-                        "hosts-only":
-                          "session-settings-verse-effects-hosts-only",
-                        everyone: "session-settings-verse-effects-everyone",
-                        none: "session-settings-verse-effects-none",
-                      }[option.value]
-                    )}
+                    {option.label}
                   </button>
                 );
               })}
