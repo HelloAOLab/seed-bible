@@ -24,7 +24,7 @@
  *  | What                                   | Strategy                        |
  *  |----------------------------------------|---------------------------------|
  *  | Core assets (entry JS, vendor, CSS, …) | Precache (install time)         |
- *  | Page HTML (any non-`/b/` navigation)   | StaleWhileRevalidate, one shared entry (per customization link, else the plain shell) |
+ *  | Page HTML (any non-`/b/` navigation)   | One entry per URL; see "The app shell" below |
  *  | Other assets of *this* build           | CacheFirst                      |
  *  | Google Fonts / Fontshare stylesheets   | StaleWhileRevalidate            |
  *  | Google Fonts / Fontshare font files    | CacheFirst                      |
@@ -40,10 +40,14 @@ import {
 } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
 import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
+import { hasDownloadedTranslation } from "./swOffline";
 import {
+  blankAppContainer,
+  chooseNavigationStrategy,
   getAppShellCacheKey,
   isAppShellNavigation,
   isCacheableStaticAsset,
+  pickShellSource,
 } from "./swRouting";
 
 // `declare let` (rather than `const`) so this shadows the `self: WorkerGlobalScope`
@@ -62,31 +66,21 @@ declare const __ASSET_BASE_URL__: string;
 
 const DAY_SECONDS = 60 * 60 * 24;
 
-const HTML_CACHE = "seed-bible-html";
 /**
- * One entry for the plain shell, plus one per distinct customization locator
- * a visitor has opened — see the `ExpirationPlugin` on the HTML route below.
+ * The `-v2` suffix is the cache's format version: v1 held a single shared
+ * entry for every URL, which showed the wrong chapter. `activate` deletes
+ * `LEGACY_HTML_CACHES` so that stale entry is never served again.
  */
-const MAX_HTML_CACHE_ENTRIES = 25;
+const HTML_CACHE = "seed-bible-html-v2";
+const LEGACY_HTML_CACHES = ["seed-bible-html"];
+/** One entry per page URL; least-recently-used pages are evicted past this. */
+const MAX_HTML_CACHE_ENTRIES = 60;
 const ASSET_CACHE = "seed-bible-assets";
 const FONT_STYLESHEET_CACHE = "seed-bible-font-stylesheets";
 const FONT_FILE_CACHE = "seed-bible-font-files";
 
 /** Absolute form of `__ASSET_BASE_URL__`, so it can be compared against request URLs. */
 const ASSET_BASE_HREF = new URL(__ASSET_BASE_URL__, self.location.href).href;
-
-/**
- * Rewrites this route's cache reads/writes to `getAppShellCacheKey`'s result
- * instead of Workbox's default (the request URL), so every navigation shares
- * a cache entry with every other navigation carrying the same
- * `?customization=...` locator (or, with none, the plain shell) — see the
- * comment above the HTML route below for why one shared entry per
- * customization, not one per path, is the goal.
- */
-const appShellCacheKeyPlugin = {
-  cacheKeyWillBeUsed: async ({ request }: { request: Request }) =>
-    getAppShellCacheKey(self.location.origin, new URL(request.url)),
-};
 
 /**
  * Origins the fonts come from. The stylesheet hosts are fetched as CSS; the
@@ -115,35 +109,16 @@ cleanupOutdatedCaches();
 // ─── The app shell (HTML) ────────────────────────────────────────────────────
 
 /**
- * All navigations share a cached HTML entry keyed by `getAppShellCacheKey`,
- * not one per path — see `appShellCacheKeyPlugin` above. Ordinary navigations
- * all pool into the one plain-shell entry; a `?customization=...` link pools
- * instead into that locator's own entry, so a customization's branded HTML
- * (theme, favicon) can't leak onto — or get overwritten by — the plain shell
- * or a different customization. The goal changed from "serve the exact page
- * requested" to "load instantly, without touching the network, once
- * *anything* for this key is cached": this worker's main audience is
- * returning visitors on slow or unreliable connections, some of whom already
- * have an entire translation downloaded locally and don't need the HTML
- * request at all to keep reading.
+ * Each URL's HTML is cached under its own key (`getAppShellCacheKey`), so a
+ * cache hit is the page that was asked for and the client can hydrate it
+ * instead of redrawing a different chapter. How a load is answered depends on
+ * `chooseNavigationStrategy` (see `swRouting.ts`):
  *
- * The cost: the client calls Preact's `hydrate()` when the served HTML
- * happens to match the requested path exactly, and `render()` otherwise (see
- * `app/hydrationGate.ts`). With one shared entry per key, that match now only
- * happens for requests this worker never intercepts in the first place — i.e.
- * before a service worker controls the page at all, when the browser always
- * gets a fresh, exact per-path SSR response — or by coincidence, when the
- * cached entry happens to be the same page being reopened. Every other
- * navigation gets the (mismatched) cached entry and falls back to `render()`,
- * the same already-tested path a cache miss took before. That's an accepted
- * trade-off here: instant, network-free loads vs. a brief client-side
- * re-render on most navigations.
- *
- * `StaleWhileRevalidate` is what keeps each entry current over time: every use
- * serves the cached copy immediately, then fetches the real path in the
- * background and overwrites that one shared entry with it, so the *next* load
- * sharing its key — of any path, for the same customization link or lack of
- * one — reflects whatever just shipped.
+ *  - Downloaded a translation: cached page for this URL if present, else a
+ *    content-free shell built from another cached page (the app fills it from
+ *    its local data), with this URL fetched in the background for next time.
+ *  - Otherwise: network first, so a first visit to a chapter gets real
+ *    server-rendered HTML; the cache only covers being offline.
  */
 
 /**
@@ -238,6 +213,88 @@ self.addEventListener("install", (event) => {
   );
 });
 
+/** Stores a 200 page under its own URL's key; anything else is ignored. */
+async function cachePage(requestUrl: URL, response: Response): Promise<void> {
+  // Never let a 404 (unknown branch) or 500 (render error) become the stored
+  // copy of the app. Server redirects arrive as opaque (status 0) responses
+  // for navigations, so they are rejected here too; the browser follows the
+  // redirect itself and the destination's 200 is stored on its own fetch event.
+  if (response.status !== 200) return;
+  const cache = await caches.open(HTML_CACHE);
+  const key = getAppShellCacheKey(self.location.origin, requestUrl);
+  // Delete first so a refreshed page moves to the newest position in
+  // `cache.keys()`, which is insertion-ordered and drives eviction below.
+  await cache.delete(key);
+  await cache.put(key, response);
+  const keys = await cache.keys();
+  await Promise.all(
+    keys
+      .slice(0, Math.max(0, keys.length - MAX_HTML_CACHE_ENTRIES))
+      .map((k) => cache.delete(k))
+  );
+}
+
+async function fetchAndCachePage(request: Request): Promise<Response> {
+  const response = await fetch(request);
+  const copy = response.clone();
+  await cachePage(new URL(request.url), copy).catch(() => {});
+  return response;
+}
+
+async function buildBlankShell(requestUrl: URL): Promise<Response | null> {
+  const cache = await caches.open(HTML_CACHE);
+  const sourceKey = pickShellSource(
+    requestUrl,
+    (await cache.keys()).map((request) => request.url)
+  );
+  const source = sourceKey ? await cache.match(sourceKey) : undefined;
+  if (!source) return null;
+  const blank = blankAppContainer(await source.text());
+  if (blank === null) return null;
+  return new Response(blank, {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
+}
+
+async function handleNavigation(event: FetchEvent): Promise<Response> {
+  const { request } = event;
+  const requestUrl = new URL(request.url);
+  const cache = await caches.open(HTML_CACHE);
+  const cached = await cache.match(
+    getAppShellCacheKey(self.location.origin, requestUrl)
+  );
+  const downloaded = await hasDownloadedTranslation(self.indexedDB);
+
+  // Computed lazily and only when it can change the decision.
+  const shell =
+    !cached && downloaded ? await buildBlankShell(requestUrl) : null;
+
+  const strategy = chooseNavigationStrategy({
+    hasCachedPage: !!cached,
+    hasShellSource: !!shell,
+    hasDownloadedTranslation: downloaded,
+  });
+
+  if (strategy === "cached-with-revalidate" && cached) {
+    event.waitUntil(fetchAndCachePage(request).catch(() => {}));
+    return cached;
+  }
+  if (strategy === "blank-shell" && shell) {
+    event.waitUntil(fetchAndCachePage(request).catch(() => {}));
+    return shell;
+  }
+  try {
+    return await fetchAndCachePage(request);
+  } catch (error) {
+    // Offline and not a downloader: any copy of this page beats an error.
+    if (cached) return cached;
+    const fallback = await buildBlankShell(requestUrl);
+    if (fallback) return fallback;
+    throw error;
+  }
+}
+
 registerRoute(
   ({ url, request }) =>
     isAppShellNavigation({
@@ -245,42 +302,14 @@ registerRoute(
       requestMode: request.mode,
       origin: self.location.origin,
     }),
-  new StaleWhileRevalidate({
-    cacheName: HTML_CACHE,
-    plugins: [
-      // Rewrites both the read and the write to `getAppShellCacheKey`'s
-      // result for the request. Placed first so `ExpirationPlugin` below —
-      // whose bookkeeping keys off the effective request — sees that same
-      // rewritten key; `CacheableResponsePlugin` only looks at response
-      // status, so ordering doesn't affect it.
-      appShellCacheKeyPlugin,
-      // Never let a 404 (unknown branch) or 500 (render error) become the
-      // stored copy of the app.
-      //
-      // This is also what makes the server's redirects harmless here. A
-      // navigation request carries `redirect: "manual"`, and Workbox passes
-      // navigations through to `fetch` untouched, so the 301/302 the host
-      // serves for a legacy or non-canonical reading URL arrives as an
-      // opaque redirect — status 0, which this rejects. The browser then
-      // follows the redirect itself and we see a fresh fetch event for the
-      // destination, whose 200 is what gets stored.
-      new CacheableResponsePlugin({ statuses: [200] }),
-      // One entry for the plain shell, plus one per distinct customization
-      // locator a visitor has actually opened — no `maxAgeSeconds` is needed
-      // since `StaleWhileRevalidate` refreshes whichever entry was just used
-      // from the network on every single hit. `maxEntries` bounds this so a
-      // device that has opened many different customization links over time
-      // doesn't grow the cache without limit; least-recently-used entries are
-      // evicted first once the cap is hit, and the plain shell is refreshed
-      // far more often than any single customization in practice, so it's
-      // the one least likely to be the one evicted.
-      new ExpirationPlugin({
-        maxEntries: MAX_HTML_CACHE_ENTRIES,
-        purgeOnQuotaError: true,
-      }),
-    ],
-  })
+  ({ event }) => handleNavigation(event as FetchEvent)
 );
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    Promise.all(LEGACY_HTML_CACHES.map((name) => caches.delete(name)))
+  );
+});
 
 // ─── Static assets ───────────────────────────────────────────────────────────
 
