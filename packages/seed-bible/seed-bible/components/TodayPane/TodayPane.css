@@ -476,8 +476,12 @@
   padding: 1.25rem;
 }
 
+/* The font matches the reader's verse text (`.sb-verse` in BibleReader.inline.css). */
 .sb-today-container .sb-today-verse-of-the-day-text {
   margin: 0;
+  font-family: var(--text-verse-font);
+  font-weight: var(--text-verse-weight);
+  font-style: var(--text-verse-font-style);
   font-size: 1.1rem;
   line-height: 1.5;
   color: var(--sb-secondary-font-color);
