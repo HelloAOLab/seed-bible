@@ -315,7 +315,7 @@ export function ReadingPlansPaneLeading(props: {
   return (
     <button
       type="button"
-      className="sb-rp-icon-button sb-rp-pane-back"
+      className="sb-pane-header-button sb-rp-pane-back"
       onClick={() => {
         if (!onList) {
           backToPlansList(readingPlans);

@@ -20,6 +20,11 @@ import { SearchSection } from "@packages/seed-bible/seed-bible/components/TodayP
 import { SocialSection } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSection";
 import { VerseOfTheDaySection } from "@packages/seed-bible/seed-bible/components/TodayPane/VerseOfTheDaySection";
 
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
+
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext",
   () => ({
@@ -239,10 +244,20 @@ describe("TodayPane", () => {
       });
     });
 
+    // Only the personalized layout's header row has a close button.
+    it("shows Welcome without a close button", () => {
+      setup({ status: "empty" });
+
+      expect(container.querySelector(".sb-today-close-button")).toBeNull();
+    });
+
     it("hands each personalized section the props it needs", () => {
       const props = setup({ bookmarks: [aBookmark] });
 
-      expect(propsOf(Header)).toMatchObject({ login: props.login });
+      expect(propsOf(Header)).toMatchObject({
+        login: props.login,
+        onClose: props.onClose,
+      });
       expect(propsOf(ResumeReadingSection)).toMatchObject({
         today: props.today,
         onOpenPassage: props.onOpenPassage,

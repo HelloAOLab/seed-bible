@@ -163,9 +163,9 @@ export default defineConfig(({ isSsrBuild }) => ({
             registerType: "autoUpdate",
             // A hand-written worker (`standalone/sw.ts`) rather than a
             // generated one: the offline behaviour this deployment needs —
-            // StaleWhileRevalidate HTML keyed to a single shared shell entry
-            // (so a controlled navigation loads instantly with no network
-            // round-trip, refreshed in the background for next time), and
+            // per-URL HTML pages (a saved copy, or a content-free shell for
+            // people with a downloaded translation; network first for
+            // everyone else), and
             // asset caching scoped to this build's own chunks — can't be
             // expressed in `generateSW`'s declarative config.
             strategies: "injectManifest",
