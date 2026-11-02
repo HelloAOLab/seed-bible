@@ -8,6 +8,10 @@
 
 ### 🐛 Fixed
 
+- Fix the app briefly showing the light theme while loading when your theme or device is set to dark. ([#2107](https://github.com/HelloAOLab/seed-bible/pull/2107))
+  - The first screen now uses your saved theme, including the one saved to your account when you're signed in.
+  - With nothing saved yet, it follows your device's light or dark setting until your account loads.
+
 ### 🗑️ Removed
 
 ## v1.15.0 — 2026-10-26
