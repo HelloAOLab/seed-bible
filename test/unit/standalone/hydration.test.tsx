@@ -9,7 +9,10 @@ import {
 import { readInjectedApiResponseSnapshot } from "@packages/seed-bible/seed-bible/app/apiResponseSeed";
 import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
-import { decideHydration } from "@packages/seed-bible/seed-bible/app/hydrationGate";
+import {
+  decideHydration,
+  decideStartupHydration,
+} from "@packages/seed-bible/seed-bible/app/hydrationGate";
 import { waitForInitialChapterLoads } from "@packages/seed-bible/seed-bible/app/initialChapterLoadWait";
 import { createDefaultManagerResponseMap } from "../seed-bible/managers/testUtils/mockBibleApiData";
 import {
@@ -411,6 +414,93 @@ describe("client hydration", () => {
     expect(
       JSON.parse(localStorage.getItem("sb-tabs-state")!).tabs
     ).toHaveLength(2);
+  });
+
+  it("hydrates a load of / even though startup rewrites the address bar to the reading path", async () => {
+    const { container, beforeHtml } = await installSsrDocument(
+      "/?useFreeBibleAPI=true"
+    );
+    const { config, state } = await createClientState();
+
+    // Startup moved the address bar off "/" ...
+    expect(location.pathname).not.toBe("/");
+    // ... but the markup on screen was rendered for the arrival URL.
+    expect(
+      decideStartupHydration({
+        config,
+        navigation: state.navigation,
+        container,
+        clientCommit: __GIT_COMMIT__,
+        clientLanguage: state.i18n.language.peek(),
+      })
+    ).toEqual({ hydrate: true });
+
+    hydrate(<Main initialState={state} config={config} />, container);
+    expect(normalizeKnownSsrClientDivergences(container.innerHTML)).toBe(
+      normalizeKnownSsrClientDivergences(beforeHtml)
+    );
+  });
+
+  it("still declines when the arrival URL differs from what the server rendered", async () => {
+    const { container } = await installSsrDocument("/?useFreeBibleAPI=true");
+    jsdom.reconfigure({
+      url: "http://ssr.local/en/AAB/exodus/2?useFreeBibleAPI=true",
+    });
+    const { config, state } = await createClientState();
+    expect(
+      decideStartupHydration({
+        config,
+        navigation: state.navigation,
+        container,
+        clientCommit: __GIT_COMMIT__,
+      })
+    ).toEqual({ hydrate: false, reason: "url-mismatch" });
+  });
+
+  describe("UI language check", () => {
+    async function decideWith(renderedLanguage: string | undefined) {
+      const { container } = await installSsrDocument("/?useFreeBibleAPI=true");
+      const { config, state } = await createClientState();
+      const marked = { ...config };
+      if (renderedLanguage === undefined) {
+        delete marked.renderedLanguage;
+      } else {
+        marked.renderedLanguage = renderedLanguage;
+      }
+      return {
+        rendered: config.renderedLanguage,
+        decision: decideStartupHydration({
+          config: marked,
+          navigation: state.navigation,
+          container,
+          clientCommit: __GIT_COMMIT__,
+          clientLanguage: state.i18n.language.peek(),
+        }),
+      };
+    }
+
+    it("records the language the server rendered in", async () => {
+      const { rendered } = await decideWith("en");
+      expect(rendered).toBe("en");
+    });
+
+    it("hydrates when the client's language matches the server's", async () => {
+      const { decision } = await decideWith("en");
+      expect(decision).toEqual({ hydrate: true });
+    });
+
+    it("declines when the client would render in a different language", async () => {
+      const { decision } = await decideWith("es");
+      expect(decision).toEqual({
+        hydrate: false,
+        reason: "language-mismatch",
+      });
+    });
+
+    it("keeps hydrating a cached page that carries no language marker", async () => {
+      const { decision } = await decideWith(undefined);
+      expect(decision).toEqual({ hydrate: true });
+    });
   });
 
   it("declines to hydrate when the live URL doesn't match what was rendered", async () => {
