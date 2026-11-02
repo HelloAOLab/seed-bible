@@ -328,6 +328,30 @@
   visibility: hidden;
 }
 
+/* A session participant's name, which opens their profile. Styled as plain
+   text so it reads as a name in the list, not a button, and cut off with an
+   ellipsis when it runs long. */
+.sb-participant-profile-button {
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-participant-profile-button:hover {
+    text-decoration: underline;
+  }
+}
+
 /* "Friends" / "Requested" in place of Add friend on a session participant. */
 .sb-participant-friend-status {
   flex-shrink: 0;

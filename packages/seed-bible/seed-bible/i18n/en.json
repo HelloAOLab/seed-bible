@@ -1016,6 +1016,7 @@
   "person-profile-empty": "This person hasn't set up their profile yet.",
   "person-profile-no-account": "We couldn't find anyone with this user ID. It may have been copied incorrectly.",
   "view-profile-of": "View {{name}}'s profile",
+  "person-profile-friends": "You're friends with {{name}}.",
   "add-friend-link-already-friends": "You're already friends with {{name}}.",
   "add-friend-link-already-sent": "You've already sent {{name}} a friend request.",
   "add-friend-link-they-asked": "{{name}} has already sent you a friend request.",

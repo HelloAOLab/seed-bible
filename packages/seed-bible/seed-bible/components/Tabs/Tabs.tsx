@@ -54,6 +54,7 @@ import { useAppConfig } from "../../app/appConfig";
 import { SessionQRCode } from "../SessionQRCode/SessionQRCode";
 import {
   ParticipantFriendButton,
+  ParticipantName,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
 import { openReaderLocation } from "./openReaderLocation";
@@ -537,7 +538,11 @@ function SessionSettingsModalContent(props: {
                       className="sb-session-participant-name"
                       title={getUserDisplayName(user)}
                     >
-                      {getUserDisplayName(user)}
+                      <ParticipantName
+                        state={state}
+                        userId={user.userId}
+                        displayName={getUserDisplayName(user)}
+                      />
                       {isHostUser && (
                         <span className="sb-session-participant-badge">
                           {t("host", { defaultValue: "Host" })}

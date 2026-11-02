@@ -3,7 +3,8 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { SessionConnectionInfo } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { displayNameOf } from "../../managers/Utils";
-import { BusyButton } from "./FriendsPane";
+import { BusyButton } from "./friendActions";
+import { openPersonProfile } from "./PersonCard";
 
 /**
  * The connection IDs of the participant rows that get a friend button: one per
@@ -22,6 +23,41 @@ export function rowsWithFriendButton(
     }
   }
   return rows;
+}
+
+/**
+ * A session participant's name, as a button that opens their profile when
+ * they're signed in to an account. Anonymous participants have only a per-tab
+ * connection ID, so there's no profile to open and the name stays plain text.
+ */
+export function ParticipantName(props: {
+  state: SeedBibleState;
+  userId: string | null | undefined;
+  displayName: string;
+  /** Runs first, for a list that has to get out of the profile's way. */
+  onOpenProfile?: () => void;
+}) {
+  const { state, userId, displayName, onOpenProfile } = props;
+  const { t } = useI18n();
+  if (!userId) {
+    return <>{displayName}</>;
+  }
+  return (
+    <button
+      type="button"
+      className="sb-participant-profile-button"
+      aria-label={t("view-profile-of", {
+        name: displayName,
+        defaultValue: "View {{name}}'s profile",
+      })}
+      onClick={() => {
+        onOpenProfile?.();
+        openPersonProfile(state, userId);
+      }}
+    >
+      {displayName}
+    </button>
+  );
 }
 
 /**
