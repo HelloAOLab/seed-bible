@@ -8,8 +8,14 @@
 const OFFLINE_DB_NAME = "seed-bible-offline";
 const TRANSLATIONS_STORE = "translations";
 
+/**
+ * Whether the translation `translationId` is stored on this device (matched
+ * case-insensitively, since URLs and stored ids can differ in case). With a
+ * null id — a page that doesn't name a translation — whether any is.
+ */
 export async function hasDownloadedTranslation(
-  factory: IDBFactory
+  factory: IDBFactory,
+  translationId: string | null = null
 ): Promise<boolean> {
   try {
     return await new Promise<boolean>((resolve) => {
@@ -29,16 +35,25 @@ export async function hasDownloadedTranslation(
             resolve(false);
             return;
           }
-          const count = db
+          const store = db
             .transaction(TRANSLATIONS_STORE, "readonly")
-            .objectStore(TRANSLATIONS_STORE)
-            .count();
-          count.onsuccess = () => resolve(count.result > 0);
-          count.onerror = () => resolve(false);
+            .objectStore(TRANSLATIONS_STORE);
+          const keysRequest = store.getAllKeys();
+          keysRequest.onsuccess = () => {
+            const keys = keysRequest.result.map((key) => String(key));
+            resolve(
+              translationId === null
+                ? keys.length > 0
+                : keys.some(
+                    (key) => key.toLowerCase() === translationId.toLowerCase()
+                  )
+            );
+          };
+          keysRequest.onerror = () => resolve(false);
         } catch {
           resolve(false);
         } finally {
-          // Safe: the pending count request keeps the transaction alive.
+          // Safe: the pending request keeps the transaction alive.
           db.close();
         }
       };

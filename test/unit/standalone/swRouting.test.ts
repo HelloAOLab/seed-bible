@@ -2,9 +2,12 @@ import {
   blankAppContainer,
   chooseNavigationStrategy,
   getAppShellCacheKey,
+  getHtmlCacheName,
   isAppShellNavigation,
   isCacheableStaticAsset,
   pickShellSource,
+  staleHtmlCacheNames,
+  translationIdFromPath,
 } from "../../../standalone/swRouting";
 
 const ORIGIN = "https://seedbible.org";
@@ -282,5 +285,76 @@ describe("blankAppContainer()", () => {
 
   it("returns null when there is no app container", () => {
     expect(blankAppContainer("<html><body>hi</body></html>")).toBeNull();
+  });
+});
+
+describe("getAppShellCacheKey() tracking params", () => {
+  const key = (href: string) => getAppShellCacheKey(ORIGIN, new URL(href));
+
+  it("shares one entry between a page and its campaign-tagged links", () => {
+    const plain = key(`${ORIGIN}/en/AAB/genesis/1`);
+    expect(key(`${ORIGIN}/en/AAB/genesis/1?utm_source=x&utm_medium=y`)).toBe(
+      plain
+    );
+    expect(key(`${ORIGIN}/en/AAB/genesis/1?fbclid=1&gclid=2`)).toBe(plain);
+  });
+
+  it("keeps params that change the page", () => {
+    expect(
+      key(`${ORIGIN}/en/AAB/genesis/1?customization=o.a&utm_source=x`)
+    ).toBe(key(`${ORIGIN}/en/AAB/genesis/1?customization=o.a`));
+    expect(key(`${ORIGIN}/?book=GEN&chapter=1`)).not.toBe(key(`${ORIGIN}/`));
+  });
+});
+
+describe("pickShellSource() recency", () => {
+  it("builds from the newest saved page, not the oldest", () => {
+    const keys = [`${ORIGIN}/en/AAB/a/1`, `${ORIGIN}/en/AAB/b/1`];
+    expect(pickShellSource(new URL(`${ORIGIN}/en/AAB/c/1`), keys)).toBe(
+      keys[1]
+    );
+  });
+});
+
+describe("HTML cache versioning", () => {
+  const current = getHtmlCacheName("build-2");
+
+  it("names the cache after the build", () => {
+    expect(getHtmlCacheName("build-1")).not.toBe(getHtmlCacheName("build-2"));
+  });
+
+  it("deletes every other build's pages and the old unversioned caches", () => {
+    expect(
+      staleHtmlCacheNames(
+        [
+          "seed-bible-html",
+          "seed-bible-html-v2",
+          getHtmlCacheName("build-1"),
+          current,
+          "seed-bible-assets",
+          "workbox-precache-v2",
+        ],
+        current
+      )
+    ).toEqual([
+      "seed-bible-html",
+      "seed-bible-html-v2",
+      getHtmlCacheName("build-1"),
+    ]);
+  });
+});
+
+describe("translationIdFromPath()", () => {
+  it("reads the translation from reading URLs, with or without a language", () => {
+    expect(translationIdFromPath("/BSB/john/3")).toBe("BSB");
+    expect(translationIdFromPath("/es/spa_onbv/genesis/1")).toBe("spa_onbv");
+  });
+
+  it("is null where no translation is named", () => {
+    expect(translationIdFromPath("/")).toBeNull();
+    expect(translationIdFromPath("/en/playlist/my-list/3")).toBeNull();
+    expect(translationIdFromPath("/en/reading-plan/plan/2")).toBeNull();
+    expect(translationIdFromPath("/BSB/john/notanumber")).toBeNull();
+    expect(translationIdFromPath("/BSB/john/0")).toBeNull();
   });
 });

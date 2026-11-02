@@ -1,20 +1,23 @@
 import { hasDownloadedTranslation } from "../../../standalone/swOffline";
 
-interface FakeDb {
-  stores: Record<string, number>;
+interface FakeRequest<T> {
+  result?: T;
+  transaction?: { abort: () => void };
+  onsuccess?: () => void;
+  onerror?: () => void;
+  onupgradeneeded?: () => void;
 }
 
-/** Minimal IDBFactory: just enough of open()/count() for the probe. */
-function fakeFactory(db: FakeDb | null): {
-  factory: IDBFactory;
-  aborted: () => boolean;
-  closed: () => boolean;
-} {
+/** `null` is a database that doesn't exist; otherwise its stored translation ids by store name. */
+type FakeDb = Record<string, string[]> | null;
+
+/** Minimal IDBFactory: just enough of open()/getAllKeys() for the probe. */
+function fakeFactory(db: FakeDb) {
   let aborted = false;
   let closed = false;
   const factory = {
     open() {
-      const request: any = {};
+      const request: FakeRequest<unknown> = {};
       queueMicrotask(() => {
         if (!db) {
           request.transaction = {
@@ -22,17 +25,17 @@ function fakeFactory(db: FakeDb | null): {
               aborted = true;
             },
           };
-          request.onupgradeneeded();
+          request.onupgradeneeded?.();
           return;
         }
         request.result = {
-          objectStoreNames: { contains: (n: string) => n in db.stores },
+          objectStoreNames: { contains: (n: string) => n in db },
           transaction: () => ({
             objectStore: (n: string) => ({
-              count: () => {
-                const count: any = { result: db.stores[n] };
-                queueMicrotask(() => count.onsuccess());
-                return count;
+              getAllKeys: () => {
+                const keys: FakeRequest<string[]> = { result: db[n] };
+                queueMicrotask(() => keys.onsuccess?.());
+                return keys;
               },
             }),
           }),
@@ -40,7 +43,7 @@ function fakeFactory(db: FakeDb | null): {
             closed = true;
           },
         };
-        request.onsuccess();
+        request.onsuccess?.();
       });
       return request;
     },
@@ -49,15 +52,26 @@ function fakeFactory(db: FakeDb | null): {
 }
 
 describe("hasDownloadedTranslation()", () => {
-  it("is true when a translation is stored", async () => {
-    const f = fakeFactory({ stores: { translations: 2 } });
+  it("with no translation named, is true when any translation is stored", async () => {
+    const f = fakeFactory({ translations: ["BSB", "AAB"] });
     expect(await hasDownloadedTranslation(f.factory)).toBe(true);
     expect(f.closed()).toBe(true);
   });
 
   it("is false when the store is empty", async () => {
-    const f = fakeFactory({ stores: { translations: 0 } });
+    const f = fakeFactory({ translations: [] });
     expect(await hasDownloadedTranslation(f.factory)).toBe(false);
+  });
+
+  it("is true only for the translation that was downloaded", async () => {
+    const f = fakeFactory({ translations: ["BSB"] });
+    expect(await hasDownloadedTranslation(f.factory, "BSB")).toBe(true);
+    expect(await hasDownloadedTranslation(f.factory, "AAB")).toBe(false);
+  });
+
+  it("matches the translation id regardless of case", async () => {
+    const f = fakeFactory({ translations: ["spa_onbv"] });
+    expect(await hasDownloadedTranslation(f.factory, "SPA_ONBV")).toBe(true);
   });
 
   it("is false, and does not leave an empty database behind, when the database never existed", async () => {
@@ -67,7 +81,7 @@ describe("hasDownloadedTranslation()", () => {
   });
 
   it("is false when the database exists without the translations store", async () => {
-    const f = fakeFactory({ stores: {} });
+    const f = fakeFactory({});
     expect(await hasDownloadedTranslation(f.factory)).toBe(false);
   });
 

@@ -54,9 +54,17 @@ export function isAppShellNavigation(input: AppShellNavigationInput): boolean {
 export const CUSTOMIZATION_QUERY_PARAM = "customization";
 
 /**
+ * Query params that only record where a visitor came from. The server renders
+ * the same page regardless, so they must not split one page into several
+ * cache entries.
+ */
+const TRACKING_PARAM_RE =
+  /^(utm_.+|fbclid|gclid|dclid|gbraid|wbraid|msclkid|twclid|ttclid|igshid|mc_cid|mc_eid|_ga|_gl)$/i;
+
+/**
  * Cache key a navigation's HTML is stored/read under: the page's own URL
- * (origin, path and query, no fragment), so each chapter's HTML is cached
- * separately and a cache hit is always the page that was asked for — which is
+ * (origin, path and meaningful query, no fragment), so each chapter's HTML is
+ * cached separately and a cache hit is the page that was asked for — which is
  * what lets the client `hydrate()` instead of redrawing a different chapter.
  *
  * This used to be a single shared `/__app-shell` key, which meant nearly every
@@ -64,7 +72,12 @@ export const CUSTOMIZATION_QUERY_PARAM = "customization";
  * `app/hydrationGate.ts`).
  */
 export function getAppShellCacheKey(origin: string, requestUrl: URL): string {
-  return `${origin}${requestUrl.pathname}${requestUrl.search}`;
+  const params = new URLSearchParams();
+  for (const [name, value] of requestUrl.searchParams) {
+    if (!TRACKING_PARAM_RE.test(name)) params.append(name, value);
+  }
+  const query = params.toString();
+  return `${origin}${requestUrl.pathname}${query ? `?${query}` : ""}`;
 }
 
 function customizationOf(href: string): string | null {
@@ -73,7 +86,9 @@ function customizationOf(href: string): string | null {
 
 /**
  * Picks which cached page to strip down into a content-free shell for a
- * request that has no cached HTML of its own. Only a page with the same
+ * request that has no cached HTML of its own. `cachedKeys` is in
+ * `cache.keys()` order (oldest first) and the newest match wins, since it was
+ * rendered by the most recent build and server code. Only a page with the same
  * customization locator (or, for a plain request, none) qualifies, so one
  * customization's branding can't appear on another page.
  */
@@ -82,7 +97,7 @@ export function pickShellSource(
   cachedKeys: readonly string[]
 ): string | undefined {
   const wanted = requestUrl.searchParams.get(CUSTOMIZATION_QUERY_PARAM);
-  return cachedKeys.find((key) => customizationOf(key) === wanted);
+  return cachedKeys.findLast((key) => customizationOf(key) === wanted);
 }
 
 export type NavigationStrategy =
@@ -122,6 +137,72 @@ export function chooseNavigationStrategy(
     return "blank-shell";
   }
   return "network-first";
+}
+
+/** Prefix shared by every HTML cache this worker has ever created. */
+export const HTML_CACHE_PREFIX = "seed-bible-html";
+
+/**
+ * The HTML cache name for one build. Each saved page loads its own build's
+ * scripts, and a new build's precache replaces the old build's, so pages saved
+ * by an older build can't boot offline — they must not outlive it.
+ */
+export function getHtmlCacheName(buildId: string): string {
+  return `${HTML_CACHE_PREFIX}-${buildId}`;
+}
+
+/**
+ * The caches to delete when a build activates: every HTML cache except this
+ * build's own. Also catches the unversioned `seed-bible-html` of the original
+ * shared-page design and its `-v2` successor.
+ */
+export function staleHtmlCacheNames(
+  allCacheNames: readonly string[],
+  currentName: string
+): string[] {
+  return allCacheNames.filter(
+    (name) => name.startsWith(HTML_CACHE_PREFIX) && name !== currentName
+  );
+}
+
+const SHARED_PAGE_SEGMENTS = ["playlist", "reading-plan"];
+
+/**
+ * The translation id a reading URL asks for, from
+ * `/{translationId}/{book}/{chapter}` or `/{lang}/{translationId}/{book}/{chapter}`;
+ * null for any other path (home, shared playlist/reading-plan pages, legacy
+ * query URLs). Mirrors `parseReadingPath` in the app, minus book resolution.
+ */
+export function translationIdFromPath(pathname: string): string | null {
+  const segments = pathname
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    });
+  let translationId: string | undefined;
+  let chapter: string | undefined;
+  if (segments.length === 4) {
+    translationId = segments[1];
+    chapter = segments[3];
+    if (SHARED_PAGE_SEGMENTS.includes(translationId?.toLowerCase() ?? "")) {
+      return null;
+    }
+  } else if (segments.length === 3) {
+    translationId = segments[0];
+    chapter = segments[2];
+  } else {
+    return null;
+  }
+  const chapterNumber = Number(chapter);
+  if (!translationId || !Number.isFinite(chapterNumber) || chapterNumber <= 0) {
+    return null;
+  }
+  return translationId;
 }
 
 const APP_CONTAINER_OPEN_RE = /<div\s+id="app"\s*>/;
