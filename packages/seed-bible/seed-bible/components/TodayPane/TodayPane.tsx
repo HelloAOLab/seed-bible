@@ -16,6 +16,8 @@ import { useI18n } from "../../i18n";
 import "./TodayPane.css";
 
 import { memo } from "preact/compat";
+import { useLayoutEffect } from "preact/hooks";
+import { useSignal } from "@preact/signals";
 
 /**
  * What the Today screen needs from the rest of the app: the managers its cards
@@ -60,9 +62,20 @@ export function TodayPaneTitle() {
  * reading history (`empty`). `loading` and `ready` both render the personalized
  * layout (`loading` shows placeholders), so a returning user never flashes
  * Welcome while their history loads.
+ *
+ * The first render always shows Welcome. The server can't see the session
+ * (it lives in `localStorage`), so it renders the signed-out state, and the
+ * client's first pass has to match it: `hydrate()` keeps the server's
+ * attributes, so the personalized layout would otherwise inherit Welcome's.
+ * The layout effect swaps in the real state before the browser paints.
  */
 function TodayContainer(props: TodayScreenProps) {
-  const showWelcome = props.today.readingHistory.value.status === "empty";
+  const mounted = useSignal(false);
+  useLayoutEffect(() => {
+    mounted.value = true;
+  }, []);
+  const showWelcome =
+    !mounted.value || props.today.readingHistory.value.status === "empty";
 
   return (
     <div

@@ -246,59 +246,32 @@ describe("client hydration", () => {
     ).length;
   }
 
-  // The reported repro: an explicit `?today=open` auto-opens Today once
-  // `TodayManager.hydrateAutoOpen` runs -- the exact case `isOpen`'s
-  // seed-then-correct pattern exists for. A bare "/" would also auto-open
-  // Today, but the reader canonicalizes it to an explicit reading path via
-  // `history.replaceState` before this point, which would make the live URL
-  // disagree with `renderedForPath` for an unrelated reason (a real
-  // "url-mismatch", not the bug this test exists to catch) -- an already-
-  // canonical path with `?today=open` added avoids that entirely.
-  const TODAY_OPEN_PATH = `${PATH}&today=open`;
+  const TODAY_PATH = "/en/today?useFreeBibleAPI=true";
 
-  it("hydrates Today closed on an explicit ?today=open, matching SSR, then opens it after mount", async () => {
-    const { container, beforeHtml } = await installSsrDocument(TODAY_OPEN_PATH);
-    // Sanity check: SSR really did render the reader closed rather than
-    // Today's Welcome screen, or the rest of this test wouldn't be
-    // exercising the mismatch at all.
-    expect(beforeHtml).not.toContain("sb-today-container");
+  // The server renders the Today page itself, so the screen a visitor sees
+  // before the scripts load is Today, not the reader with Today arriving on
+  // top of it a moment later.
+  it("server-renders the Today page and hydrates onto it without changing the DOM", async () => {
+    const { container, beforeHtml } = await installSsrDocument(TODAY_PATH);
+    expect(beforeHtml).toContain("sb-today-welcome-screen");
 
     const { config, state } = await createClientState();
-    // The fix's core invariant, asserted directly: `isOpen` still matches
-    // what SSR rendered (closed) here, even though this URL will auto-open
-    // Today as soon as the post-mount effect runs. On the pre-fix code,
-    // `isOpen` seeded from `todayWillAutoOpenForUrl` at construction, so
-    // this would already be `true`.
-    expect(state.today.isOpen.value).toBe(false);
-
-    const decision = decideHydration({
-      config,
-      pathname: location.pathname,
-      search: location.search,
-      container,
-      clientCommit: __GIT_COMMIT__,
-    });
-    expect(decision).toEqual({ hydrate: true });
+    expect(state.today.isOpen.value).toBe(true);
+    expect(
+      decideHydration({
+        config,
+        pathname: location.pathname,
+        search: location.search,
+        container,
+        clientCommit: __GIT_COMMIT__,
+      })
+    ).toEqual({ hydrate: true });
 
     hydrate(<Main initialState={state} config={config} />, container);
 
-    // Byte-identical to the served HTML. On the pre-fix code, `isOpen` would
-    // already have been `true` for this URL, and `hydrate()` would have
-    // silently patched the whole open Today screen onto markup the server
-    // never sent.
     expect(normalizeKnownSsrClientDivergences(container.innerHTML)).toBe(
       normalizeKnownSsrClientDivergences(beforeHtml)
     );
-
-    // ...and only now, via `MainBody`'s post-mount effect calling
-    // `today.hydrateAutoOpen()`, does Today actually open.
-    await act(async () => {
-      state.today.hydrateAutoOpen();
-      await Promise.resolve();
-    });
-
-    expect(state.today.isOpen.value).toBe(true);
-    expect(container.innerHTML).toContain("sb-today-container");
   });
 
   it("hydrates cleanly when the visitor already has this chapter's tab saved", async () => {
