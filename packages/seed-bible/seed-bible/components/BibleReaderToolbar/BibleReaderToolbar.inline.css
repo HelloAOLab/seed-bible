@@ -184,7 +184,7 @@
  * invert them in dark themes (toolbarIconInvert=1) to keep dark glyphs
  * visible on dark surfaces. SVG icons are unaffected — they already use
  * `currentColor` and follow the toolbar font color. */
-.sb-reader-toolbar-button img,
+.sb-reader-toolbar-button img:not(.sb-tab-user-icon-image),
 .sb-more-menu-icon img,
 .sb-tool-context-menu-item img,
 .sb-verse-toolbar-draggable button img,
