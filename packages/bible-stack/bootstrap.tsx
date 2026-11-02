@@ -21,6 +21,8 @@ import type {
 } from "./models/userPresence";
 import { useRef } from "preact/hooks";
 
+const BIBLE_STACK_PANE_ID = "bible-stack-pane";
+
 const Icon = () => {
   return <MaterialIcon>layers</MaterialIcon>;
 };
@@ -35,9 +37,15 @@ export const bootstrapExtension = () => {
 
       yield context.tools.registerBelowReaderTool({
         onSelect: () => {
+          // Selecting the tool again closes its window instead of opening
+          // another; `closePane` returns false when it isn't open.
+          if (context.panes.closePane(BIBLE_STACK_PANE_ID)) {
+            return;
+          }
           const dimension = "stack";
           const inst = uuid();
           context.panes.openPane({
+            id: BIBLE_STACK_PANE_ID,
             placement: "floating",
             title: () => {
               const { t } = useI18n();

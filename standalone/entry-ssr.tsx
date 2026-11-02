@@ -31,6 +31,7 @@ import {
   composeThemeStyleText,
   THEME_PRESET_STYLE_TEXT,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import { ssrApiResponseCache } from "./ssrApiResponseCache";
 import { ssrTranslationsCache } from "./ssrTranslationsCache";
 import {
   buildSharedPagePath,
@@ -666,6 +667,7 @@ export async function render(
     config,
     initialHref: href,
     translationsCache: ssrTranslationsCache,
+    apiResponseCache: ssrApiResponseCache,
   });
   try {
     return await renderState(state, options, config, href, notFound);
@@ -802,6 +804,7 @@ async function renderState(
   const clientConfig: AppConfig = {
     ...config,
     renderedForPath: options.path,
+    renderedLanguage: state.i18n.language.peek(),
     // This bundle's own build identity, not the requested branch — see
     // AppConfig.renderedByCommit.
     renderedByCommit: __GIT_COMMIT__,

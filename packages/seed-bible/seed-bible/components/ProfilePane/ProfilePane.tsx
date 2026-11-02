@@ -130,7 +130,7 @@ export function ProfileBackButton(props: { onBack: () => void }) {
   return (
     <button
       type="button"
-      className="sb-profile-pane-back"
+      className="sb-pane-header-button sb-profile-pane-back"
       onClick={props.onBack}
       aria-label={t("back", { defaultValue: "Back" })}
       title={t("back", { defaultValue: "Back" })}
