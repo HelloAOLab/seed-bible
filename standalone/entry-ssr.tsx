@@ -30,6 +30,11 @@ import {
 import { ssrApiResponseCache } from "./ssrApiResponseCache";
 import { ssrTranslationsCache } from "./ssrTranslationsCache";
 import {
+  createRenderTimer,
+  type RenderTimer,
+  type RenderTiming,
+} from "./ssrRenderTimings";
+import {
   buildSharedPagePath,
   type SharedPageKind,
 } from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
@@ -553,7 +558,7 @@ export function acceptLanguageRedirect(
 export async function render(
   options: RenderOptions
 ): Promise<
-  | { html: string; notFound?: true }
+  | { html: string; notFound?: true; timings?: RenderTiming[] }
   | { redirectTo: string; redirectStatus?: number; vary?: string }
   | string
 > {
@@ -627,8 +632,17 @@ export async function render(
     translationsCache: ssrTranslationsCache,
     apiResponseCache: ssrApiResponseCache,
   });
+  const timer = createRenderTimer();
   try {
-    return await renderState(state, options, config, href, notFound);
+    const result = await renderState(
+      state,
+      options,
+      config,
+      href,
+      notFound,
+      timer
+    );
+    return { ...result, timings: timer.timings };
   } finally {
     state.dispose();
   }
@@ -639,7 +653,8 @@ async function renderState(
   options: RenderOptions,
   config: AppConfig,
   href: string,
-  notFound: boolean
+  notFound: boolean,
+  timer: RenderTimer
 ): Promise<{ html: string; notFound?: true }> {
   // Block until the detected language's translations are loaded so the
   // server-rendered HTML (and og:locale meta below) is in the right language
@@ -660,24 +675,36 @@ async function renderState(
   // it here, before any suspending render is attempted, keeps that race from
   // being reachable at all.
   await Promise.all([
-    state.i18n.ready,
-    state.app.selectedTab.value?.readingState.chapterDataPromise,
+    timer.wait("ssr.wait.i18n", state.i18n.ready),
+    timer.wait(
+      "ssr.wait.chapter",
+      state.app.selectedTab.value?.readingState.chapterDataPromise
+    ),
     // So the title, meta and modal describe a shared playlist or reading
     // plan link's content. Awaited here with the chapter, not suspended on
     // during the render, for the reason above.
-    state.playlists.initialPlaylistPageLoadPromise,
-    state.readingPlans.initialReadingPlanPageLoadPromise,
+    timer.wait(
+      "ssr.wait.playlistPage",
+      state.playlists.initialPlaylistPageLoadPromise
+    ),
+    timer.wait(
+      "ssr.wait.readingPlanPage",
+      state.readingPlans.initialReadingPlanPageLoadPromise
+    ),
   ]);
   // A reload mid-playlist names only its step, not the chapter; the reader
   // moves there once the playlist has loaded, so wait for that too before
   // rendering.
-  await state.playlists.initialPlaybackPromise;
+  await timer.wait(
+    "ssr.wait.playlistPlayback",
+    state.playlists.initialPlaybackPromise
+  );
 
-  const [appHtml] = await Promise.all([
+  const appHtml = await timer.step("ssr.renderToString", () =>
     renderToStringAsync(
       <Main initialState={state} config={config} initialHref={href} />
-    ),
-  ]);
+    )
+  );
 
   // Read once — used both in the meta block below and to decide whether
   // `options.html`'s default `og:image` tags need stripping first (see
