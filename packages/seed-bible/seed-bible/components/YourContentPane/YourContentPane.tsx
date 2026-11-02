@@ -651,7 +651,9 @@ export function YourContentPane(props: YourContentScreenProps) {
     : [];
   // An image has no words to search, so any search hides them all.
   const visibleImages =
-    userId && needle.length === 0 ? gallery.photos.value : [];
+    userId && needle.length === 0
+      ? [...gallery.photos.value].sort((a, b) => b.createdAtMs - a.createdAtMs)
+      : [];
 
   const showing = (section: ContentFilter) =>
     filter === "all" || filter === section;

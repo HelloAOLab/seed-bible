@@ -28,11 +28,16 @@ export const GalleryPhotoSchema = z.object({
   // strings are the only thing we cannot show.
   url: z.string().min(1).max(2048),
   createdAtMs: z.coerce.number().positive(),
+  lastUsedAtMs: z.coerce.number().positive().optional(),
 });
 
 export type GalleryPhoto = z.infer<typeof GalleryPhotoSchema>;
 
 export type UserGalleryManager = ReturnType<typeof createUserGalleryManager>;
+
+function photoLastUsedAtMs(photo: GalleryPhoto) {
+  return photo.lastUsedAtMs ?? photo.createdAtMs;
+}
 
 function prependPhoto(
   list: readonly GalleryPhoto[],
@@ -49,12 +54,17 @@ export function mergeGalleryPhotos(
   for (const group of groups) {
     for (const photo of group) {
       const existing = byUrl.get(photo.url);
-      if (!existing || photo.createdAtMs >= existing.createdAtMs) {
+      if (
+        !existing ||
+        photoLastUsedAtMs(photo) >= photoLastUsedAtMs(existing)
+      ) {
         byUrl.set(photo.url, photo);
       }
     }
   }
-  return [...byUrl.values()].sort((a, b) => b.createdAtMs - a.createdAtMs);
+  return [...byUrl.values()].sort(
+    (a, b) => photoLastUsedAtMs(b) - photoLastUsedAtMs(a)
+  );
 }
 
 function readCachedGallery(userId: string): GalleryPhoto[] {
@@ -108,12 +118,14 @@ export async function rememberPhotoInGallery(
     throw new Error("Cannot save an empty photo URL to gallery");
   }
   const found = existing.find((photo) => photo.url === trimmed);
+  const now = Date.now();
   const photo: GalleryPhoto = found
-    ? { ...found, createdAtMs: Date.now() }
+    ? { ...found, lastUsedAtMs: now }
     : {
         id: `photo_${uuid()}`,
         url: trimmed,
-        createdAtMs: Date.now(),
+        createdAtMs: now,
+        lastUsedAtMs: now,
       };
   const result = await os.recordData(userId, photo.id, photo, {
     marker: USER_GALLERY_MARKER,
@@ -235,7 +247,7 @@ export function createUserGalleryManager(
       // minutes — the listing can lag a fresh write, and a photo saved while
       // this list was in flight is newer than the request itself.
       const recentLocal = mergeGalleryPhotos(photos.peek(), cached).filter(
-        (photo) => photo.createdAtMs >= startedAtMs - LIST_LAG_GRACE_MS
+        (photo) => photoLastUsedAtMs(photo) >= startedAtMs - LIST_LAG_GRACE_MS
       );
       photos.value = commitPhotos(
         userId,
