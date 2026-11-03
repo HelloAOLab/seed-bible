@@ -113,15 +113,19 @@ Two limits:
 - Only `seedbible.org` is claimed, not `www.seedbible.org` or other subdomains.
 - Branch deployments (`/b/...`) stay in the browser on iOS. Android can't exclude a path, so there they open in the app, which shows its not-found page.
 
-## Android icons and splash screen
+## App icons and splash screens
 
-Everything is generated from the icon's shape in `packages/seed-bible/seed-bible/components/seedBibleIconShape.ts`, which the web app's icon uses too. After changing the icon or its intro animation, regenerate from `mobile/`:
+Both apps' icons and splash screens are generated from the icon's shape in `packages/seed-bible/seed-bible/components/seedBibleIconShape.ts`, which the web app's icon uses too. After changing the icon or its intro animation, regenerate both from `mobile/`:
 
 ```bash
-pnpm assets:android
+pnpm assets
 ```
 
-That runs `scripts/generateAndroidAssets.ts`, which writes:
+To regenerate one platform only, run `pnpm assets:android` or `pnpm assets:ios`.
+
+### Android
+
+`pnpm assets:android` runs `scripts/generateAndroidAssets.ts`, which writes:
 
 - **Launcher icon** (`drawable/ic_launcher_foreground.xml`): the dark Seed Bible mark on white, as an adaptive icon (Android 8+). The same shape is the themed icon that Android 13+ tints to match the wallpaper.
 - **Older launcher icons** (`mipmap-*/ic_launcher*.png`): PNGs for Android 7, which has no adaptive icons.
@@ -135,12 +139,27 @@ That runs `scripts/generateAndroidAssets.ts`, which writes:
 
 The animation copies the web intro's timings from `components/icons.css`; if those change, update them at the top of the generator too. One difference: on the web each page bends as it opens, but Android's vector format can't skew, so the pages there open with a slight overshoot instead.
 
+### iOS
+
+`pnpm assets:ios` runs `scripts/generateIosAssets.ts`, which writes into `ios/App/App/Assets.xcassets/`:
+
+- **App icon** (`AppIcon.appiconset`): the dark mark on white, plus the dark and tinted versions iOS 18+ uses when the home screen is set to those styles. The main icon has no transparency, which the App Store requires.
+- **Launch screen icon** (`LaunchIcon.imageset`): the finished icon, dark on light and light on dark.
+- **Launch screen background** (`LaunchBackground.colorset`): the app's light or dark background, the same colors as Android's.
+
+`Base.lproj/LaunchScreen.storyboard` shows that background with the icon centered, the same size as on Android.
+
+Differences from Android:
+
+- **No animation.** iOS launch screens are a still image by design, so they show the icon as Android's animation ends.
+- **Updating on a test device.** iOS caches launch screens. If a change doesn't show up, delete the app and install it again.
+
 ## Before the first store release
 
 These are left as placeholders on purpose; each needs a decision or an account.
 
 - **App id.** `org.seedbible.app` is set in `capacitor.config.ts`, `android/app/build.gradle`, and the Xcode project. The stores never let an app change its id after it is first published, so confirm it first.
-- **iOS icons and launch screen.** Android has the Seed Bible icon and splash screen (see [Android icons and splash screen](#android-icons-and-splash-screen)). iOS still has Capacitor's defaults.
+- **Store icons.** Upload `assets/play-store-icon.png` in the Play Console. App Store Connect takes the icon from the build itself.
 - **Version numbers.** CI sets them (see [Builds in CI](#builds-in-ci)). Local builds default to 1.0 (build 1).
 - **Link verification.** Set `APPLE_TEAM_ID` and `ANDROID_CERT_FINGERPRINTS` on the website server (see [Links](#links)).
 - **Signing.** Add the signing secrets listed in [Builds in CI](#builds-in-ci). To sign a local build instead, select your Apple Developer team in Xcode, or set the `ANDROID_KEYSTORE_*` variables before running Gradle. Never commit the keystore or certificate.

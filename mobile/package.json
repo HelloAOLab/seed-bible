@@ -11,7 +11,9 @@
     "open:ios": "cap open ios",
     "run:android": "cap run android",
     "run:ios": "cap run ios",
-    "assets:android": "tsx scripts/generateAndroidAssets.ts"
+    "assets:android": "tsx scripts/generateAndroidAssets.ts",
+    "assets:ios": "tsx scripts/generateIosAssets.ts",
+    "assets": "pnpm assets:android && pnpm assets:ios"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",

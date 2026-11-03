@@ -6,7 +6,7 @@
 
 - Add native iOS and Android apps, built with Capacitor from the same code as the website.
   - Links shared from the apps point at seedbible.org, and seedbible.org links open in the app when it's installed.
-  - The Android app uses the Seed Bible icon, and its splash screen plays the seed-growing intro from the Books button.
+  - Both apps use the Seed Bible icon, including iOS's dark and tinted icon styles. The Android splash screen plays the seed-growing intro from the Books button; the iOS launch screen shows the finished icon.
   - CI builds both apps: test builds for pull requests and `develop`, signed store builds from `main`.
 
 ### 🔧 Changed
