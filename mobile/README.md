@@ -113,12 +113,34 @@ Two limits:
 - Only `seedbible.org` is claimed, not `www.seedbible.org` or other subdomains.
 - Branch deployments (`/b/...`) stay in the browser on iOS. Android can't exclude a path, so there they open in the app, which shows its not-found page.
 
+## Android icons and splash screen
+
+Everything is generated from the icon's shape in `packages/seed-bible/seed-bible/components/seedBibleIconShape.ts`, which the web app's icon uses too. After changing the icon or its intro animation, regenerate from `mobile/`:
+
+```bash
+pnpm assets:android
+```
+
+That runs `scripts/generateAndroidAssets.ts`, which writes:
+
+- **Launcher icon** (`drawable/ic_launcher_foreground.xml`): the dark Seed Bible mark on white, as an adaptive icon (Android 8+). The same shape is the themed icon that Android 13+ tints to match the wallpaper.
+- **Older launcher icons** (`mipmap-*/ic_launcher*.png`): PNGs for Android 7, which has no adaptive icons.
+- **Play Store icon** (`assets/play-store-icon.png`): the 512 × 512 icon Google Play asks for. Upload it in the Play Console.
+- **Splash icon** (`drawable/splash_icon_animated.xml`):
+  - On Android 12+, it plays the same intro as the web app's Books button: a seed appears, the trunk grows from it, and the pages open out from the trunk.
+  - Android 7–11 show the finished icon, without the animation.
+  - The background and icon colors follow the phone's light or dark mode (`sb_background` and `sb_icon` in `values/colors.xml` and `values-night/colors.xml`).
+
+`MainActivity` keeps the splash screen up for the animation's full second. Without that, Android removes it as soon as the app draws its first frame, often mid-animation.
+
+The animation copies the web intro's timings from `components/icons.css`; if those change, update them at the top of the generator too. One difference: on the web each page bends as it opens, but Android's vector format can't skew, so the pages there open with a slight overshoot instead.
+
 ## Before the first store release
 
 These are left as placeholders on purpose; each needs a decision or an account.
 
 - **App id.** `org.seedbible.app` is set in `capacitor.config.ts`, `android/app/build.gradle`, and the Xcode project. The stores never let an app change its id after it is first published, so confirm it first.
-- **Icons and splash screens.** The projects still have Capacitor's default icons. Put a 1024×1024 `icon.png` (and optionally `splash.png`) in `mobile/assets/`, then generate every size with `npx @capacitor/assets generate`.
+- **iOS icons and launch screen.** Android has the Seed Bible icon and splash screen (see [Android icons and splash screen](#android-icons-and-splash-screen)). iOS still has Capacitor's defaults.
 - **Version numbers.** CI sets them (see [Builds in CI](#builds-in-ci)). Local builds default to 1.0 (build 1).
 - **Link verification.** Set `APPLE_TEAM_ID` and `ANDROID_CERT_FINGERPRINTS` on the website server (see [Links](#links)).
 - **Signing.** Add the signing secrets listed in [Builds in CI](#builds-in-ci). To sign a local build instead, select your Apple Developer team in Xcode, or set the `ANDROID_KEYSTORE_*` variables before running Gradle. Never commit the keystore or certificate.

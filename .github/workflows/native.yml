@@ -52,6 +52,7 @@ on:
       - "script/lib/nativeShell.ts"
       - "script/lib/vite-plugin-native-shell.ts"
       - "packages/seed-bible/seed-bible/app/publicLinks.ts"
+      - "packages/seed-bible/seed-bible/components/seedBibleIconShape.ts"
       - "index.html"
       - "vite.config.ts"
       - "package.json"

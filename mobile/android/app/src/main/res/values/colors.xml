@@ -4,4 +4,6 @@
          packages/seed-bible/seed-bible/managers/ThemeManager.tsx. Fills the
          strips around the system bars and shows before the page paints. -->
     <color name="sb_background">#f8fafc</color>
+    <!-- The splash screen's Seed Bible icon: the light theme's text color. -->
+    <color name="sb_icon">#191919</color>
 </resources>
