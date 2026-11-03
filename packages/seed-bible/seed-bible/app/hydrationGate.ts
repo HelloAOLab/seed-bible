@@ -1,12 +1,24 @@
 import type { AppConfig } from "./appConfig";
 import { stripBasePath } from "../managers/ReadingUrlPath";
+import type { NavigationManager } from "../managers/NavigationManager";
 
 export interface HydrationGateContext {
   config: AppConfig;
-  /** `location.pathname` from the live document. */
+  /**
+   * Pathname of the address the page arrived at (`navigation.initialUrl`),
+   * read before startup rewrites the address bar to the canonical reading
+   * path. The server rendered for the arrival address, so the live
+   * `location` would wrongly differ for `/` and the PWA start URL. Callers
+   * at startup should use `decideStartupHydration`.
+   */
   pathname: string;
-  /** `location.search` from the live document. */
+  /** Search string of the arrival address; see `pathname`. */
   search: string;
+  /**
+   * The UI language the client will render its first paint in. Optional:
+   * omitted means skip the language check.
+   */
+  clientLanguage?: string;
   /** The element `hydrate()`/`render()` will target (e.g. `#app`). */
   container: Element;
   /**
@@ -27,6 +39,7 @@ export type HydrationDeclineReason =
   | "chapter-load-incomplete"
   | "chapter-load-timed-out"
   | "url-mismatch"
+  | "language-mismatch"
   | "build-mismatch";
 
 export type HydrationDecision =
@@ -62,7 +75,8 @@ export function isRenderedByThisBuild(
  * otherwise happen.
  */
 export function decideHydration(ctx: HydrationGateContext): HydrationDecision {
-  const { config, pathname, search, container, clientCommit } = ctx;
+  const { config, pathname, search, container, clientCommit, clientLanguage } =
+    ctx;
 
   // A shell that was never actually filled in (a non-whitelisted branch's
   // stale fallback with a swallowed substitution, or a render() error path)
@@ -99,5 +113,36 @@ export function decideHydration(ctx: HydrationGateContext): HydrationDecision {
     return { hydrate: false, reason: "url-mismatch" };
   }
 
+  // The language never appears in the URL on a bare `/`, so a server/client
+  // disagreement there would otherwise hydrate silently into wrong-language
+  // markup. A page without the marker can't be checked.
+  if (
+    config.renderedLanguage !== undefined &&
+    clientLanguage !== undefined &&
+    config.renderedLanguage !== clientLanguage
+  ) {
+    return { hydrate: false, reason: "language-mismatch" };
+  }
+
   return { hydrate: true };
+}
+
+/**
+ * The startup call to `decideHydration`. Reads the arrival URL from
+ * `navigation.initialUrl` (not `location`, which creating the app state has
+ * already rewritten) and the language the client settled on.
+ */
+export function decideStartupHydration(ctx: {
+  config: AppConfig;
+  navigation: Pick<NavigationManager, "initialUrl">;
+  container: Element;
+  clientCommit: string;
+  clientLanguage?: string;
+}): HydrationDecision {
+  const { navigation, ...rest } = ctx;
+  return decideHydration({
+    ...rest,
+    pathname: navigation.initialUrl.pathname,
+    search: navigation.initialUrl.search,
+  });
 }

@@ -366,6 +366,226 @@ describe("FreeUseBibleAPI", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  describe("shared response cache", () => {
+    const makeSharedCache = () => {
+      const map = new Map<string, Promise<unknown>>();
+      return {
+        get: (url: string) => map.get(url),
+        set: (url: string, p: Promise<unknown>) => void map.set(url, p),
+        delete: (url: string) => void map.delete(url),
+      };
+    };
+    const url = "https://bible.helloao.org/api/available_translations.json";
+    const newApi = (shared: ReturnType<typeof makeSharedCache>) =>
+      new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT, shared);
+
+    /**
+     * A fetch that stays pending until `finish`/`fail` is called, and
+     * rejects with an AbortError if its signal aborts first.
+     */
+    const stubControllableFetch = () => {
+      const signals: AbortSignal[] = [];
+      let finish!: (r: unknown) => void;
+      let fail!: (e: unknown) => void;
+      fetchMock.mockImplementation(
+        (_url: string, init: { signal: AbortSignal }) =>
+          new Promise((resolve, reject) => {
+            signals.push(init.signal);
+            finish = resolve;
+            fail = reject;
+            init.signal.addEventListener("abort", () =>
+              reject(new DOMException("aborted", "AbortError"))
+            );
+          })
+      );
+      return {
+        signals,
+        finish: (payload: unknown) => finish(createResponse(payload)),
+        fail: (e: unknown) => fail(e),
+      };
+    };
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("lets a second API instance reuse a response without refetching, and still snapshot it", async () => {
+      const shared = makeSharedCache();
+      fetchMock.mockResolvedValue(createResponse({ translations: [] }));
+
+      await newApi(shared).getAvailableTranslations();
+      const second = newApi(shared);
+      await second.getAvailableTranslations();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(second.snapshotResponseCache()[url]).toEqual({ translations: [] });
+    });
+
+    it("shares one in-flight fetch between concurrent instances", async () => {
+      const shared = makeSharedCache();
+      fetchMock.mockResolvedValue(createResponse({ translations: [] }));
+
+      await Promise.all([
+        newApi(shared).getAvailableTranslations(),
+        newApi(shared).getAvailableTranslations(),
+      ]);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not cache a failed fetch, for the failing or any other instance", async () => {
+      const shared = makeSharedCache();
+      const fetchStub = stubControllableFetch();
+      const first = newApi(shared).getAvailableTranslations();
+      const second = newApi(shared).getAvailableTranslations();
+      // Both callers are waiting on the same single request.
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      fetchStub.fail(new Error("upstream down"));
+      await expect(first).rejects.toThrow("upstream down");
+      await expect(second).rejects.toThrow("upstream down");
+
+      fetchMock.mockResolvedValueOnce(createResponse({ translations: [] }));
+      await expect(newApi(shared).getAvailableTranslations()).resolves.toEqual({
+        translations: [],
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("keeps a shared fetch alive when the instance that started it aborts", async () => {
+      const shared = makeSharedCache();
+      const fetchStub = stubControllableFetch();
+      const controller = new AbortController();
+      const ownerResult = newApi(shared).getAvailableTranslations(undefined, {
+        signal: controller.signal,
+      });
+      const otherResult = newApi(shared).getAvailableTranslations();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      controller.abort();
+      await expect(ownerResult).rejects.toThrow();
+      expect(fetchStub.signals[0]?.aborted).toBe(false);
+      fetchStub.finish({ translations: [] });
+
+      await expect(otherResult).resolves.toEqual({ translations: [] });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("aborts the shared fetch once the last subscriber in any instance walks away", async () => {
+      const shared = makeSharedCache();
+      const fetchStub = stubControllableFetch();
+      const a = new AbortController();
+      const b = new AbortController();
+      const resultA = newApi(shared).getAvailableTranslations(undefined, {
+        signal: a.signal,
+      });
+      const resultB = newApi(shared).getAvailableTranslations(undefined, {
+        signal: b.signal,
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      a.abort();
+      await expect(resultA).rejects.toThrow();
+      expect(fetchStub.signals[0]?.aborted).toBe(false);
+      b.abort();
+      await expect(resultB).rejects.toThrow();
+
+      expect(fetchStub.signals[0]?.aborted).toBe(true);
+      // The doomed request is gone, so the next caller fetches fresh.
+      fetchMock.mockResolvedValueOnce(createResponse({ translations: [] }));
+      await expect(newApi(shared).getAvailableTranslations()).resolves.toEqual({
+        translations: [],
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not let one subscriber's abort cancel a fetch whose cache entry was evicted", async () => {
+      const shared = makeSharedCache();
+      const fetchStub = stubControllableFetch();
+      const a = new AbortController();
+      const b = new AbortController();
+      const resultA = newApi(shared).getAvailableTranslations(undefined, {
+        signal: a.signal,
+      });
+      const resultB = newApi(shared).getAvailableTranslations(undefined, {
+        signal: b.signal,
+      });
+      shared.delete(url);
+
+      a.abort();
+      await expect(resultA).rejects.toThrow();
+      expect(fetchStub.signals[0]?.aborted).toBe(false);
+      fetchStub.finish({ translations: [] });
+
+      await expect(resultB).resolves.toEqual({ translations: [] });
+    });
+
+    it("rejects an adopting caller whose signal is already aborted without cancelling the shared fetch", async () => {
+      const shared = makeSharedCache();
+      const fetchStub = stubControllableFetch();
+      const owner = newApi(shared).getAvailableTranslations();
+      const aborted = new AbortController();
+      aborted.abort();
+
+      await expect(
+        newApi(shared).getAvailableTranslations(undefined, {
+          signal: aborted.signal,
+        })
+      ).rejects.toMatchObject({ name: "AbortError" });
+      expect(fetchStub.signals[0]?.aborted).toBe(false);
+      fetchStub.finish({ translations: [] });
+
+      await expect(owner).resolves.toEqual({ translations: [] });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("times out a hung shared fetch with a plain error and lets the next caller start fresh", async () => {
+      vi.useFakeTimers();
+      const shared = makeSharedCache();
+      stubControllableFetch();
+      // The owner walked away, but a signal-less caller can never leave, so
+      // only the hard timeout can end this request.
+      const ownerAbort = new AbortController();
+      const owner = newApi(shared).getAvailableTranslations(undefined, {
+        signal: ownerAbort.signal,
+      });
+      const waiter = newApi(shared).getAvailableTranslations();
+      ownerAbort.abort();
+      await expect(owner).rejects.toThrow();
+      const waiterOutcome = waiter.then(
+        () => null,
+        (e: Error) => e
+      );
+
+      await vi.advanceTimersByTimeAsync(6000);
+
+      const error = await waiterOutcome;
+      expect(error?.message).toMatch(/timed out/);
+      expect(error?.name).not.toBe("AbortError");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      fetchMock.mockResolvedValueOnce(createResponse({ translations: [] }));
+      await expect(newApi(shared).getAvailableTranslations()).resolves.toEqual({
+        translations: [],
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("refresh bypasses the shared cache", async () => {
+      const shared = makeSharedCache();
+      fetchMock.mockResolvedValue(createResponse({ translations: [] }));
+      await newApi(shared).getAvailableTranslations();
+      await newApi(shared).getAvailableTranslations();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      await newApi(shared).getAvailableTranslations(undefined, {
+        refresh: true,
+      });
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe("snapshotResponseCache() / seedResponseCache()", () => {
     it("snapshots only successfully resolved responses", async () => {
       const payload = { translations: [{ id: "eng_kjv" }] };
