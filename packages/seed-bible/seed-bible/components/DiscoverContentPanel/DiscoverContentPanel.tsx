@@ -18,7 +18,6 @@ import { DiscoverEmpty } from "../DiscoverPane/DiscoverSection";
 import { MaterialIcon } from "../icons";
 import { useHorizontalScroll } from "../useHorizontalScroll";
 import { translateTitle } from "../../app/utils";
-import { ReadingPlansSection } from "../ReadingPlansSection/ReadingPlansSection";
 import {
   findScrollContainer,
   readBottomChromeCover,
@@ -417,13 +416,10 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   }
 
   const bookId = tab.readingState.bookId.value;
-  const { hasAnnotations, showAnnotations, plans, hasAny } =
-    getDiscoverPanelContent(
-      tab.readingState,
-      state.annotations,
-      state.readingPlans,
-      state.features
-    );
+  const { hasAnnotations, showAnnotations, hasAny } = getDiscoverPanelContent(
+    tab.readingState,
+    state.annotations
+  );
 
   if (!hasAny) {
     return null;
@@ -462,7 +458,6 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     hasCrossReferences ||
     hasStudyNotes ||
     hasContent ||
-    plans.length > 0 ||
     typesWithResults.some((definition) => !definition.hiddenByDefault);
 
   const filters: {
@@ -614,14 +609,6 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
                 definition={definition}
               />
             ) : null
-          )}
-
-          {f === "all" && plans.length > 0 && (
-            <ReadingPlansSection
-              readingState={tab.readingState}
-              state={state}
-              plans={plans}
-            />
           )}
 
           {f === "all" && !hasVisibleUnderAll && (
