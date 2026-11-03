@@ -1,7 +1,7 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import i18n from "i18next";
 import { withMetricFallback } from "../app/fontFallbacks";
-import type { LoginManager } from "../managers/LoginManager";
+import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
@@ -530,10 +530,32 @@ export function createSettings(
     const settingsPreset = parseSettingsPreset(sessionOverrides.settingsPreset);
     const presetConfig = getPresetConfig(settingsPreset);
 
-    const read = (profileKey: string, urlKey: string): unknown =>
-      getProfileConfigValue(profile, profileKey) ??
+    const readFrom = (
+      source: UserProfile | null,
+      profileKey: string,
+      urlKey: string
+    ): unknown =>
+      getProfileConfigValue(source, profileKey) ??
       sessionOverrides[urlKey] ??
       local[profileKey];
+    const read = (profileKey: string, urlKey: string): unknown =>
+      readFrom(profile, profileKey, urlKey);
+
+    // While a signed-in account's profile is still loading, its theme comes
+    // from the copy cached on this device. `index.html`'s pre-hydration
+    // script paints from that same copy, so reading the default (System)
+    // here instead would repaint over it on the first post-mount theme
+    // change, then flip back once the load lands.
+    //
+    // Only from right after mount, like `localConfig`. The theme picks a
+    // shared customization's variant, which is rendered into a `<style>`
+    // Preact leaves alone while hydrating, so it only repaints on a change
+    // after mount.
+    const themeProfile =
+      profile ??
+      (login.isLocalConfigHydrated.value ? login.cachedProfile.value : null);
+    const readTheme = (profileKey: string, urlKey: string): unknown =>
+      readFrom(themeProfile, profileKey, urlKey);
 
     // The embed link's theme is the look the site owner chose. The viewer's
     // saved theme would otherwise paint over it, so the
@@ -615,7 +637,7 @@ export function createSettings(
         DEFAULT_SETTINGS.scriptureWidth
       ),
       themeId: parseThemeId(
-        pinnedEmbedTheme ?? read(PROFILE_THEME_ID, TAG_THEME_ID),
+        pinnedEmbedTheme ?? readTheme(PROFILE_THEME_ID, TAG_THEME_ID),
         DEFAULT_SETTINGS.themeId
       ),
       discoverContentPanelInline: parseBoolean(

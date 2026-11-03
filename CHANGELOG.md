@@ -46,6 +46,9 @@
 - Fix pages briefly showing a different chapter on load before redrawing the right one. ([#2102](https://github.com/HelloAOLab/seed-bible/pull/2102), [#2104](https://github.com/HelloAOLab/seed-bible/pull/2104))
 - Fix the book selector sometimes opening empty; it now shows a loading or failed message instead. ([#2091](https://github.com/HelloAOLab/seed-bible/pull/2091))
 - Fix "Open in new panel" showing in the tab menu on phones. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Fix the app briefly showing the light theme while loading when your theme or device is set to dark. ([#2107](https://github.com/HelloAOLab/seed-bible/pull/2107))
+  - The first screen now uses your saved theme, including the one saved to your account when you're signed in.
+  - With nothing saved yet, it follows your device's light or dark setting until your account loads.
 
 ### 🗑️ Removed
 
