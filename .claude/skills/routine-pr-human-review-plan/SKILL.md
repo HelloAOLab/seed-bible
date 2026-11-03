@@ -175,7 +175,7 @@ git commit -m "chore: add test plan for seed-bible PR <n> (<short commit>)"
 git push https://github.com/HelloAOLab/pr-test-plans.git HEAD:main
 ```
 
-Use that push command exactly as written, as its own command (not chained after the commit). `.claude/settings.json` allows exactly that command and denies `git push origin HEAD:main`, which would also match a push to seed-bible's `main`.
+Use that push command exactly as written, as its own command (not chained after the commit). `.claude/settings.json` allows exactly that command, so the push doesn't wait on the auto mode check.
 
 If the push is rejected because `main` moved (another plan landed first), run `git pull --rebase origin main` and push again with the same command, up to three times. Plans never touch the same file, so the rebase won't conflict.
 
