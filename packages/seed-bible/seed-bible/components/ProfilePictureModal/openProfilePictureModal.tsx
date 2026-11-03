@@ -39,6 +39,7 @@ export function openProfilePictureModal(
       key: "change-profile-picture",
       defaultValue: "Change profile picture",
     },
+    mobileSheet: true,
     content: () => (
       <Suspense
         fallback={

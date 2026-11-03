@@ -28,22 +28,18 @@
   "searching": "தேடுகிறது...",
   "no-search-results": "பொருந்தும் வசனங்கள் இல்லை.",
   "open-chapter": "திறந்த அத்தியாயம்",
-
   "uploading": "பதிவேற்றப்படுகிறது...",
   "profile-name": "சுயவிவரப் பெயர்",
   "profile-name-placeholder": "உதாரணமாக கிரேக் குடும்பம்",
-
   "description": "விளக்கம்",
   "optional": "(விருப்பத்திற்குரியது)",
   "description-placeholder": "உங்கள் சுயவிவர விளக்கத்தை உள்ளிடவும்...",
   "location": "இடம்",
   "location-placeholder": "எ.கா. ஆஸ்டின், டெக்சாஸ்",
-
   "copied": "நகலெடுக்கப்பட்டது",
   "copy": "நகல்",
   "save-changes": "மாற்றங்களைச் சேமிக்கவும்",
   "sign-out": "வெளியேறு",
-
   "log-in": "உள்நுழை",
   "tanakh": "தனாக்",
   "traditional": "பாரம்பரியமான",
@@ -57,7 +53,6 @@
   "scripture-settings": "வேத அமைப்புகள்",
   "scripture-elements": "வேதக் கூறுகள்",
   "scripture-settings-font-size-example": "ஒரு",
-
   "show-headings": "தலைப்புகளைக் காட்டு",
   "show-verse-numbers": "வசன எண்களைக் காட்டு",
   "show-footnotes": "அடிக்குறிப்புகளைக் காட்டு",
@@ -71,7 +66,6 @@
   "no-extensions-available": "நீட்டிப்புகள் எதுவும் வழங்கப்படவில்லை.",
   "install": "நிறுவு",
   "uninstall": "நிறுவல் நீக்கு",
-
   "custom": "தனிப்பயன்",
   "text-section-bookTitle": "புத்தகத் தலைப்பு உரை",
   "text-section-heading": "தலைப்பு உரை",
@@ -92,7 +86,6 @@
   "show-selected-items": "தேர்ந்தெடுக்கப்பட்ட உருப்படிகளைக் காட்டு",
   "show-highlight-colors": "சிறப்புக் வண்ணங்களைக் காட்டு",
   "show-icon-text": "சின்னத்தின் உரையை காட்டு",
-
   "extensions": "நீட்டிப்புகள்",
   "display": "காட்சி",
   "theme-and-text": "கருப்பொருள் மற்றும் உரை",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "வேதவசன எழுத்துரு அளவை அதிகரிக்கவும்",
   "change-line-spacing": "வரி இடைவெளியை மாற்றவும்",
   "line-spacing_lineHeight": "வரி இடைவெளி: {{lineHeight}}",
-
   "italic": "சாய்வெழுத்து",
   "underline": "அடிக்கோடிடு",
   "alignment_x": "சீரமைப்பு: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "உரை நிறம்",
   "follow_theme": "கருப்பொருளைப் பின்பற்றவும்",
   "reset-to-default": "இயல்புநிலைக்கு மீட்டமைக்கவும்",
-
   "id_highlight-text-color": "{{id}} சிறப்பித்துக் காட்டும் உரை நிறம்",
   "id_highlight-background-color": "{{id}} சிறப்பித்துக் காட்டும் பின்னணி நிறம்",
   "all-settings-description": "ஒவ்வொரு உரைப் பகுதியையும் செம்மைப்படுத்தி, ஒவ்வொரு தீம் வண்ணத்தையும் தனிப்பயனாக்குங்கள்.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "என்டி",
   "apocrypha": "அப்போக்ரிஃபா",
-
   "custom-translations": "தனிப்பயன் மொழிபெயர்ப்புகள்",
   "no-translation-results-found": "முடிவுகள் எதுவும் காணப்படவில்லை. பகுதியளவு நிறைவடைந்த மொழிபெயர்ப்புகளையும் உள்ளடக்கி உங்கள் தேடலை விரிவுபடுத்த விரும்புகிறீர்களா?",
   "show-all-translations": "அனைத்து மொழிபெயர்ப்புகளையும் காட்டு",
@@ -159,7 +149,6 @@
   "4-psalms": "4 சங்கீதங்கள்",
   "5-psalms": "5 சங்கீதங்கள்",
   "remove-bookmark": "புக்மார்க்கை அகற்று",
-
   "chat": "அரட்டை",
   "today": "இன்று",
   "you": "நீங்கள்",
@@ -169,7 +158,6 @@
   "category-options": "கோப்புறை விருப்பங்கள்",
   "rename": "மறுபெயரிடு",
   "delete": "நீக்கு",
-
   "bookmark-options": "புக்மார்க் விருப்பங்கள்",
   "new-folder-placeholder": "கோப்புறை பெயர்",
   "tasks": "பணிகள்",
@@ -180,12 +168,10 @@
   "folder-name-taken": "அந்தப் பெயரில் ஒரு கோப்புறை ஏற்கனவே உள்ளது.",
   "add-to-new": "புதியவற்றில் சேர்க்கவும்",
   "save": "சேமிக்கவும்",
-
   "apocrypha-info-text": "இந்தப் பிரிவில் உள்ள எந்த எழுத்துக்களும் தொடக்ககால யூத அல்லது கிறிஸ்தவ சமூகங்களால் ஒருபோதும் வேதநூலாகக் கருதப்படவில்லை. பைபிள் என்பது ஒரு குறிப்பிட்ட புத்தகங்களின் தொகுப்பாகும். யூதர்களும் கிறிஸ்தவர்களும் பழைய ஏற்பாட்டில் எப்போதும் உடன்பட்டுள்ளனர்; இது, யூத மக்கள் தனாக் என்றும் கிறிஸ்தவர்கள் பழைய ஏற்பாடு என்றும் அழைக்கும் ஒரு நிலையான புனித எழுத்துக்களின் தொகுப்பிலிருந்து வருகிறது. தனாக் மற்றும் பழைய ஏற்பாட்டின் உள்ளடக்கம் முற்றிலும் ஒன்றுதான், ஆனால் அவை பொதுவாக வெவ்வேறு விதமாக வரிசைப்படுத்தப்பட்டுள்ளன. கூடுதலாக, கிறிஸ்தவர்கள் புதிய ஏற்பாட்டையும் அங்கீகரிக்கின்றனர்; அது இயேசுவின் கதை, அவருடைய போதனைகள் மற்றும் அவருடைய சீடர்களின் எழுத்துக்களைக் கூறுகிறது. கீழே உள்ள எழுத்துக்கள் பைபிள் எழுதப்பட்ட காலத்தில் அறியப்பட்டவையாகவும் பரவலாக வாசிக்கப்பட்டவையாகவும் இருந்தன, ஆனால் அவை ஒருபோதும் வேதநூலாகக் கருதப்படவில்லை. பண்டைய எழுத்தாளர்கள் சில சமயங்களில் கவிஞர்கள், தத்துவஞானிகள் மற்றும் பிற எழுத்துக்கள் உட்பட பரந்த அளவிலான நூல்களை மேற்கோள் காட்டியிருந்தாலும், ஒன்றை மேற்கோள் காட்டுவது என்பது அதை வேதநூலாகக் கருதுவதற்குச் சமமானதல்ல. இந்த எழுத்துக்கள் வரலாற்று மற்றும் இலக்கியக் குறிப்புக்காக மட்டுமே இங்கு சேர்க்கப்பட்டுள்ளன.",
   "seed-bible": "விதை பைபிள்",
   "take-photo": "புகைப்படம் எடு",
   "choose-from-gallery": "கேலரியில் இருந்து தேர்வு செய்யவும்",
-
   "crop-your-photo": "உங்கள் புகைப்படத்தை செதுக்குங்கள்",
   "zoom": "ஜூம்",
   "set-picture": "படத்தை அமைக்கவும்",
@@ -211,10 +197,8 @@
   "read-the-bible": "பைபிளை வாசியுங்கள்",
   "seed-bible-description": "சீட் பைபிளில் {{bookName}} {{chapterNumber}} ஐ வாசிக்கவும்.",
   "social-title": "{{bookName}} {{chapterNumber}} -ஐப் படிக்கவும்",
-
   "chapter-navigation": "அத்தியாய வழிசெலுத்தல்",
   "tutorial.skip": "தவிர்க்கவும்",
-
   "tutorial.back": "திரும்பி",
   "tutorial.done": "முடிந்தது",
   "tutorial.next": "அடுத்து",
@@ -327,11 +311,9 @@
   "study-notes": "ஆய்வுக் குறிப்புகள்",
   "content": "உள்ளடக்கம்",
   "untitled-playlist": "தலைப்பிடப்படாத பிளேலிஸ்ட்",
-
   "discover-annotations-empty": "உங்களிடம் குறிப்புகள் எதுவும் இல்லை",
   "discover-cross-references-empty": "இந்த அத்தியாயத்திற்கு குறுக்குக் குறிப்புகள் இல்லை.",
   "discover-study-notes-empty": "இந்த அத்தியாயத்திற்குப் பாடக் குறிப்புகள் இல்லை.",
-
   "discover-select-tab": "தொடர்புடைய உள்ளடக்கங்களைக் கண்டறிய ஒரு தாவலைத் தேர்ந்தெடுக்கவும்.",
   "create-playlist": "உருவாக்கு",
   "playlist-title_placeholder": "பிளேலிஸ்ட் தலைப்பு",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "பிளேலிஸ்ட்டை நீக்க முடியவில்லை.",
   "collapsed-tab-shared-label": "{{title}} — பகிரப்பட்ட அமர்வு, {{count}} பேர் கலந்துகொள்கின்றனர்",
   "playlist-add-mode-label": "பொருள் வகை",
-
   "session-host-reconnected": "அமர்வுடன் மீண்டும் இணைக்கப்பட்டது",
   "session-host-left": "தொகுப்பாளர் வெளியேறினார் — நீங்கள் அமர்விலிருந்து நீக்கப்பட்டீர்கள்.",
   "drag-to-reorder-playlist-item": "மறுவரிசைப்படுத்த இழுக்கவும்",
   "saving": "சேமிக்கிறது…",
-
   "unsaved-item-confirm-message": "இன்னும் பிளேலிஸ்ட்டில் சேர்க்கப்படாத ஒரு உருப்படியை நீங்கள் சேர்க்கத் தொடங்கியுள்ளீர்கள். நீங்கள் என்ன செய்ய விரும்புகிறீர்கள்?",
   "discard-and-save": "நிராகரித்து சேமி",
   "add-and-save": "சேர்த்து சேமி",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "முன்னோட்டம் {{reading}}",
   "reading-plan-mark-reading-complete": "வாசிப்பு நிறைவடைந்தது எனக் குறிக்கவும்",
   "reading-plan-link-video": "வீடியோ",
-
   "reading-plan-mark-passage-complete": "{{passage}} படித்ததாகக் குறிக்கவும்",
   "reading-plan-read-nudge-title": "நல்ல வாசிப்பு!",
   "reading-plan-read-nudge-toast": "மார்க் {{passage}} நிறைவடைந்துவிட்டாரா?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "இணையத்தில் பைபிளைப் படியுங்கள், தேடுங்கள் மற்றும் ஆய்வு செய்யுங்கள். பல மொழிகளில் இலவச மொழிபெயர்ப்புகள், சிறப்பித்துக் காட்டல்கள், குறிப்புகள், புக்மார்க்குகள் மற்றும் வாசிப்புத் திட்டங்களுடன் கிடைக்கின்றன.",
   "all": "அனைத்தும்",
-
   "today-bookmarks": "புக்மார்க்குகள்",
   "today-search-verses": "புத்தகங்கள், அதிகாரம், வசனங்களைத் தேடுங்கள்....",
   "anonymous-greeting": "வரவேற்கிறோம்!",
   "community": "சமூகம்",
   "go-somewhere-new": "புதிய இடத்திற்குச் செல்லுங்கள்",
-
   "open-bible": "திறந்த புத்தகம்",
   "personal-greeting": "வரவேற்கிறோம், {{name}} !",
   "resume-reading": "நீங்கள் விட்ட இடத்திலிருந்து தொடரவும்",
   "resume-reading-loading": "உங்கள் வாசிப்பு வரலாறு ஏற்றப்படுகிறது…",
   "selected-year": "ஆண்டு: {{year}}",
-
   "theme-light": "ஒளி",
   "theme-dark": "இருள்",
   "installed-extensions": "நிறுவப்பட்டது",
@@ -543,7 +519,6 @@
   "extension-state-installed": "நிறுவப்பட்டது",
   "extension-state-downloaded": "பதிவிறக்கம் செய்யப்பட்டது",
   "extension-state-pending": "நிறுவப்படுகிறது…",
-
   "tutorial.stepProgress": "{{current}} {{total}} படி",
   "tutorial.offlineDownloadTitle": "உங்கள் சாதனத்தில் சேமித்து வைக்க தட்டவும்.",
   "tutorial.offlineDownloadBody": "இந்தச் சின்னம் உள்ள எந்த மொழிபெயர்ப்பையும் ஆஃப்லைனில் படிப்பதற்காகச் சேமித்துக் கொள்ளலாம்.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "இந்த தளவமைப்பு மெனுவிலிருந்து, எத்தனை பத்திகளை அருகருகே படிக்க வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும்.",
   "tutorial.addTabTitle": "மேலும் பத்திகளைத் திறக்கவும்",
   "tutorial.addTabBody": "பல புத்தகங்களை அல்லது மொழிபெயர்ப்புகளை அருகருகே வைத்துப் படிக்க, ஒரு புதிய தாவலைச் சேர்க்கவும்.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % நிறைவு - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % நிறைவு",
   "playlist-history-continue": "தொடரவும்",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "இந்த அத்தியாயத்திற்கான {{count}} குறிப்புகள்",
   "create-folder": "கோப்புறையை உருவாக்கவும்",
   "edit-bookmark": "புக்மார்க்கைத் திருத்து",
-
   "greeting-afternoon": "மதிய வணக்கம்!",
   "greeting-afternoon-named": "மதிய வணக்கம், {{name}} !",
   "greeting-evening": "மாலை வணக்கம்!",
@@ -652,32 +625,24 @@
   "ask-ai": "AI-யிடம் கேளுங்கள்",
   "unread-mention": "படிக்காத குறிப்பு",
   "unread-messages": "படிக்காத செய்திகள்: {{count}}",
-
   "scripture-width": "வேத அகலம்",
   "decrease-scripture-width": "வேதத்தின் அகலத்தைக் குறைக்கவும்",
   "increase-scripture-width": "எழுத்து அகலத்தை அதிகரிக்கவும்",
   "annotations": "குறிப்புகள்",
   "discover-content-panel": "கண்டுபிடிப்பு உள்ளடக்கம்",
   "discover-book-title": "{{book}} கண்டறியுங்கள்",
-
   "about-title": "விதை பைபிள் பற்றி",
   "about-meta-description": "சீட் பைபிள் என்பது உங்கள் குடும்பத்தினர், நண்பர்கள் மற்றும் சமூகத்தினருடன் இணைந்து திருமறையை வாசிப்பதற்காக உருவாக்கப்பட்ட ஒரு இலவச பைபிள் செயலியாகும் — இது என்றென்றும் இலவசம், விளம்பரங்களோ கட்டணத் தடைகளோ இல்லை.",
-
   "about-action-open-passage": "ஒரு பத்தியைத் திறக்கவும்",
   "about-action-donate": "நன்கொடை அளிக்கவும்",
   "about-action-discord": "டிஸ்கார்டில் சேரவும்",
   "recent-uploads": "சமீபத்திய பதிவேற்றங்கள்",
-
   "customization-not-found": "இந்தத் தனிப்பயனாக்கம் கண்டறியப்படவில்லை.",
   "customization-name": "பெயர்",
   "customization-primaryColor": "முதன்மை",
-
   "customization-secondaryColor": "இரண்டாம் நிலை",
-
   "customization-tertiaryColor": "மூன்றாம் நிலை",
-
   "customization-fonts": "எழுத்துருக்கள்",
-
   "custom-font-option": "தனிப்பயன்…",
   "custom-font-name-placeholder": "கூகிள் எழுத்துரு பெயர்",
   "delete-customization": "நீக்கு",
@@ -690,10 +655,8 @@
   "extension-availability-available": "இணையம்",
   "extension-availability-auto-installed": "தானாக நிறுவப்பட்டது",
   "extension-availability-hidden": "மறைக்கப்பட்ட",
-
   "variants": "கருப்பொருள்கள்",
   "add-variant": "தீம் சேர்க்கவும்",
-
   "base-theme-description": "நீங்கள் தனிப்பயனாக்காத எதற்கும், இந்தக் கருப்பொருளில் முன்னமைக்கப்பட்ட மாற்றங்களே மீண்டும் பயன்படுத்தப்படும். உங்கள் சொந்தத் திருத்தங்கள் தக்கவைக்கப்படும்.",
   "reset-to-base-theme": "அடிப்படை கருப்பொருளுக்கு மீட்டமைக்கவும்",
   "low-contrast-warning": "{{label}} : மாறுபாடு {{ratio}} :1 மட்டுமே உள்ளது — உரை படிக்கக்கூடியதாக இருக்க, குறைந்தபட்சம் {{minRatio}} :1 ஐ இலக்காகக் கொள்ளுங்கள்.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "இன்னும் இங்கே சேமிப்புகள் இல்லை.",
   "save-options": "சேமிப்பு விருப்பங்கள்",
   "saves": "சேமிக்கிறது",
-
   "hide-saves": "மறை சேமிப்புகள்",
   "show-saves": "சேமிப்புகளைக் காட்டு",
   "save-verses": "சேமிக்கவும்",
   "new-save-folder": "புதிய கோப்புறை",
   "edit-save": "திருத்து சேமி",
   "remove-save-from-all-folders": "அனைத்து கோப்புறைகளிலிருந்தும் அகற்றவும்",
-
   "color-hue": "ஹியூ",
   "color-saturation": "செறிவு மற்றும் பிரகாசம்",
   "hex-color": "ஹெக்ஸ் நிறம்",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "வடிவமைப்புத் திருத்தியை ஏற்ற முடியவில்லை. இந்தக் குறிப்பில் உள்ள வடிவமைப்பு இழக்கப்படும், எனவே நீங்கள் மீண்டும் இணைக்கும் வரை இதைத் திருத்த முடியாது.",
   "annotation-text": "குறிப்புரை உரை",
   "notes-for-verse": "வசனத்திற்கான குறிப்புகள் {{verse}}",
-
   "configure-extension-defaults": "இயல்புநிலை மேலெழுதல்களை உள்ளமைக்கவும்",
-
   "extension-settings-defaults-title": "{{name}} மேலெழுதல்கள்",
   "no-extension-settings": "இந்த நீட்டிப்பில் உள்ளமைக்கக்கூடிய அமைப்புகள் எதுவும் இல்லை.",
   "extension-settings-save-failed": "உங்கள் அமைப்புகளைச் சேமிக்க முடியவில்லை.",
@@ -872,7 +831,6 @@
   "setting-no-default": "இயல்புநிலை இல்லை",
   "override-setting": "{{name}} ஐ மேலெழுது",
   "override-setting-label": "மேலெழுது",
-
   "discover-choose-filter-hint": "இந்த அத்தியாயத்திலிருந்து மேலும் காண, மேலே உள்ள வடிகட்டிகளில் ஒன்றைத் தேர்ந்தெடுக்கவும்.",
   "take-a-tour": "ஒரு சுற்றுப்பயணம் மேற்கொள்ளுங்கள்",
   "share-reading-plan": "திட்டத்தைப் பகிரவும்",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "எனது புக்மார்க் {{number}}",
   "bookmark-move-hint": "இந்த அத்தியாயத்திற்கு நகர்த்த, புக்மார்க்கைத் தட்டவும்.",
   "move-bookmark-here": "{{name}} இங்கே நகர்த்தவும்",
-
   "play": "விளையாடு",
   "pause": "இடைநிறுத்தம்",
   "audio-playback-position": "பின்னணி நிலை",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "வசனம் {{verse}}",
   "tab-playing-audio": "ஆடியோவை இயக்குகிறது",
   "collapsed-tab-playing-label": "{{label}} — ஆடியோவை இயக்குகிறது",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "கருப்பொருள்களின் {{count}}",
   "customization-theme-count_one": "{{count}} தீம்",
@@ -1104,7 +1060,6 @@
   "about-community-body": "விசுவாசம் என்பது கூட்டாக வாழ்வதற்காக உண்டானது. சீட் பைபிள், உங்கள் குடும்பத்தினர், நெருங்கிய நண்பர்கள் மற்றும் உங்கள் வீட்டுத் திருச்சபையினருடன் சேர்ந்து வேதத்தை வாசிப்பதற்காக உருவாக்கப்பட்டுள்ளது.",
   "discovered-content": "கண்டறியப்பட்ட உள்ளடக்கம்",
   "show-discovered-content": "கண்டறியப்பட்ட உள்ளடக்கத்தைக் காட்டு",
-
   "extension-availability-default": "இயல்புநிலை ( {{availability}} )",
   "customization-extensions-default": "மற்ற நீட்டிப்புகளுக்கான இயல்புநிலை",
   "customization-extensions-default-hint": "கீழே நீங்கள் அமைக்காத, பின்னர் சேர்க்கப்படும் புதிய நீட்டிப்புகள் உட்பட, அனைத்து நீட்டிப்புகளுக்கும் இது பொருந்தும்.",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "பிளேலிஸ்ட்டுக்குத் திரும்பு",
   "playlist-scripture-note-aria": "{{passage}} பற்றிய குறிப்பு",
   "playlist-scripture-note-progress": "{{current}} {{total}}",
-
   "unsaved-item-edit-confirm-message": "நீங்கள் ஒரு உருப்படியை மாற்றியுள்ளீர்கள், ஆனால் அந்த மாற்றங்களை இன்னும் சேமிக்கவில்லை. நீங்கள் என்ன செய்ய விரும்புகிறீர்கள்?",
   "keep-changes-and-save": "மாற்றங்களைச் சேமித்து வைக்கவும்",
   "reading-plan-edit-reading": "திருத்து",
@@ -1152,7 +1106,6 @@
   "branding": "பிராண்டிங்",
   "create-custom-branding-menu-item": "தனிப்பயன் பிராண்டிங்",
   "your-content-empty-branding": "நீங்கள் உருவாக்கும் தனிப்பயன் பிராண்டிங் இங்கே காட்டப்படும்.",
-
   "extension-consent-from": "{{host}} இலிருந்து",
   "extension-consent-source-version": "பதிப்பு {{version}} · {{host}} இலிருந்து",
   "extension-consent-uploader-unnamed": "ஒரு விதை பைபிள் பயனர்",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "நீங்கள் எந்த வசனங்களைத் தேர்ந்தெடுக்கிறீர்கள் என்று பாருங்கள்",
   "extension-permission-reading-navigate": "திறந்த பாதைகள்",
   "extension-permission-network": "{{host}} உடன் இணைக்கவும்",
-
   "extension-consent-not-now": "இப்போது இல்லை",
   "extension-consent-nothing-yet": "தற்போதைக்கு, அதற்கு உங்கள் தகவல்கள் எதையும் அணுக முடியாது.",
   "extension-permission-reading-history": "உங்கள் வாசிப்பு வரலாற்றைப் பார்க்கவும்",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "ரத்துசெய்",
   "extension-consent-high-risk": "உணர்திறன் மிக்க",
   "extension-modal-ok": "சரி",
-
   "extension-permissions-restart-note": "மாற்றங்கள் உடனடியாக அமலுக்கு வரும். அவற்றைச் செயல்படுத்த {{name}} மறுதொடக்கம் செய்யப்படும்.",
   "extension-permissions-saved": "சேமிக்கப்பட்டது. புதிய அனுமதிகளுடன் {{name}} மீண்டும் தொடங்கப்பட்டது.",
   "extension-permissions-failed": "அது சேமிக்கப்படவில்லை. மீண்டும் முயற்சிக்கவும்.",
@@ -1276,8 +1227,51 @@
   "session-settings-verse-effects-desc-hosts": "தொகுப்பாளர் ஒரு வசனத்தைத் தேர்ந்தெடுக்கும்போது ஏற்படும் விளைவுகளைக் காட்டு.",
   "session-settings-verse-effects-desc-everyone": "யாரேனும் ஒரு வசனத்தைத் தேர்ந்தெடுக்கும்போது ஏற்படும் விளைவுகளைக் காட்டு.",
   "session-settings-verse-effects-desc-none": "அனைவருக்கும் சரணத் தேர்வு விளைவுகள் முடக்கப்பட்டுள்ளன.",
-
   "account": "கணக்கு",
   "scroll-filters-start": "வடிப்பான்களைத் தொடக்கத்தை நோக்கி உருட்டவும்",
-  "scroll-filters-end": "முடிவில் ஸ்க்ரோல் வடிப்பான்கள்"
+  "scroll-filters-end": "முடிவில் ஸ்க்ரோல் வடிப்பான்கள்",
+  "download": "பதிவிறக்கம்",
+  "image-details-uploaded": "பதிவேற்றப்பட்டது",
+  "image-details-dimensions": "பரிமாணங்கள்",
+  "image-details-dimensions-value": "{{width}} × {{height}} பிக்சல்",
+  "image-details-type": "வகை",
+  "image-details-cover-of": "அட்டை",
+  "image-details-not-a-cover": "மூடியாகப் பயன்படுத்தப்படவில்லை",
+  "delete-customization-confirm-title": "தனிப்பயன் பிராண்டிங்கை நீக்கவா?",
+  "delete-customization-confirm-message": "தனிப்பயன் பிராண்டிங் \" {{name}} \"-ஐ நீக்கவா? இதை மீண்டும் பழைய நிலைக்குக் கொண்டுவர முடியாது.",
+  "delete-customization-failed": "தனிப்பயன் பிராண்டிங்கை நீக்க முடியவில்லை.",
+  "delete-variant-confirm-title": "தீம்மை நீக்கவா?",
+  "delete-variant-confirm-message": "\" {{name}} \" என்ற கருப்பொருளை நீக்கவா? இதை மீண்டும் பழைய நிலைக்குக் கொண்டுவர முடியாது.",
+  "delete-variant-confirm-message-unnamed": "இந்த தீம்-ஐ நீக்கவா? இதை மீண்டும் பழைய நிலைக்குக் கொண்டுவர முடியாது.",
+  "delete-variant-failed": "தீம்மை நீக்க முடியவில்லை.",
+  "delete-highlight-confirm-title": "ஹைலைட்டை நீக்கவா?",
+  "delete-highlight-confirm-message": "{{reference}} மீதான ஹைலைட்டை நீக்கவா? இதை மீண்டும் பழைய நிலைக்குக் கொண்டுவர முடியாது.",
+  "delete-highlight-failed": "ஹைலைட்டை நீக்க முடியவில்லை.",
+  "delete-annotation-on-confirm-message": "{{reference}} இல் உள்ள குறிப்பை நீக்கவா? இதை மீண்டும் பழைய நிலைக்குக் கொண்டுவர முடியாது.",
+  "remove-from-folder": "கோப்புறையிலிருந்து அகற்று",
+  "save-folders": "{{folders}}",
+  "delete-save-confirm-title": "சேமிப்பை நீக்கவா?",
+  "delete-save-confirm-message": "{{reference}} க்கான சேமிப்பை நீக்கவா? இதை மீண்டும் பழைய நிலைக்குக் கொண்டுவர முடியாது.",
+  "delete-save-confirm-message-folders": "{{folders}} இல் உள்ள {{reference}} க்கான சேமிப்பை நீக்கவா? இதை மீண்டும் பழைய நிலைக்குக் கொண்டுவர முடியாது.",
+  "delete-save-failed": "சேமிப்பை நீக்க முடியவில்லை.",
+  "delete-save-folder-confirm-title": "கோப்புறையை நீக்கவா?",
+  "delete-save-folder-confirm-message": "\" {{name}} \" கோப்புறையை நீக்கவா?",
+  "delete-save-folder-confirm-deletes": "இந்தக் கோப்புறையில் மட்டும் உள்ள {{count}} சேமிப்புகளும் நீக்கப்படும்.",
+  "delete-save-folder-confirm-deletes_one": "இந்த கோப்புறையில் மட்டும் உள்ள சேமிப்பும் நீக்கப்படும்.",
+  "delete-save-folder-confirm-deletes_other": "இந்தக் கோப்புறையில் மட்டும் உள்ள {{count}} சேமிப்புகளும் நீக்கப்படும்.",
+  "delete-save-folder-confirm-keeps": "மற்ற கோப்புறைகளிலும் உள்ள {{count}} சேமிப்புகள் அங்கேயே இருக்கும்.",
+  "delete-save-folder-confirm-keeps_one": "மற்றொரு கோப்புறையில் உள்ள சேமிப்பு அங்கேயே இருக்கும்.",
+  "delete-save-folder-confirm-keeps_other": "மற்ற கோப்புறைகளிலும் உள்ள {{count}} சேமிப்புகள் அங்கேயே இருக்கும்.",
+  "cant-be-undone": "இதை மாற்ற முடியாது.",
+  "delete-save-folder-failed": "கோப்புறையை நீக்க முடியவில்லை.",
+  "download-image-failed": "படத்தை பதிவிறக்கம் செய்ய முடியவில்லை.",
+  "session-settings-verse-effects-hosts-only": "ஹோஸ்ட்கள் மட்டும்",
+  "session-settings-verse-effects-everyone": "அனைவரும்",
+  "session-settings-verse-effects-none": "ஏதுமில்லை",
+  "loading-books": "புத்தகங்கள் ஏற்றப்படுகின்றன…",
+  "books-load-failed": "புத்தகங்களை ஏற்ற முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.",
+  "loading-translation": "{{name}} ஏற்றப்படுகிறது …",
+  "translation-load-failed": "{{name}} ஏற்றப்படவில்லை.",
+  "loading-translations": "மொழிபெயர்ப்புகள் ஏற்றப்படுகின்றன…",
+  "translations-load-failed": "மொழிபெயர்ப்புகளின் முழுப் பட்டியலையும் ஏற்ற முடியவில்லை, எனவே சில விடுபட்டிருக்கலாம்."
 }

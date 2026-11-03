@@ -28,22 +28,18 @@
   "searching": "Søker...",
   "no-search-results": "Ingen samsvarende vers.",
   "open-chapter": "Åpne kapittel",
-
   "uploading": "Laster opp...",
   "profile-name": "Profilnavn",
   "profile-name-placeholder": "f.eks. Craig-familien",
-
   "description": "Beskrivelse",
   "optional": "(Valgfri)",
   "description-placeholder": "Skriv inn profilbeskrivelsen din...",
   "location": "Sted",
   "location-placeholder": "f.eks. Austin, Texas",
-
   "copied": "Kopiert",
   "copy": "Kopiere",
   "save-changes": "Lagre endringer",
   "sign-out": "Logg ut",
-
   "log-in": "Logg inn",
   "tanakh": "Tanach",
   "traditional": "Tradisjonell",
@@ -57,7 +53,6 @@
   "scripture-settings": "Skriftlige innstillinger",
   "scripture-elements": "Skriftelementer",
   "scripture-settings-font-size-example": "EN",
-
   "show-headings": "Vis overskrifter",
   "show-verse-numbers": "Vis versnumre",
   "show-footnotes": "Vis fotnoter",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Ingen utvidelser tilgjengelig.",
   "install": "Installer",
   "uninstall": "Avinstaller",
-
   "custom": "Skikk",
   "text-section-bookTitle": "Boktitteltekst",
   "text-section-heading": "Overskriftstekst",
@@ -92,7 +86,6 @@
   "show-selected-items": "Vis valgte elementer",
   "show-highlight-colors": "Vis uthevingsfarger",
   "show-icon-text": "Vis ikontekst",
-
   "extensions": "Utvidelser",
   "display": "Utstilling",
   "theme-and-text": "Tema og tekst",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Øk skriftstørrelsen på skriftstedene",
   "change-line-spacing": "Endre linjeavstand",
   "line-spacing_lineHeight": "Linjeavstand: {{lineHeight}}",
-
   "italic": "Kursiv",
   "underline": "Understrek",
   "alignment_x": "Justering: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Tekstfarge",
   "follow_theme": "Følg temaet",
   "reset-to-default": "Tilbakestill til standard",
-
   "id_highlight-text-color": "{{id}} uthevingstekstfarge",
   "id_highlight-background-color": "Bakgrunnsfarge for utheving av {{id}}",
   "all-settings-description": "Finjuster hver tekstdel og tilpass hver temafarge.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokryfe skrifter",
-
   "custom-translations": "Tilpassede oversettelser",
   "no-translation-results-found": "Ingen resultater funnet. Vil du utvide søket ditt til å inkludere delvis fullstendige oversettelser også?",
   "show-all-translations": "Vis alle oversettelser",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Salmer",
   "5-psalms": "5 Salmer",
   "remove-bookmark": "Fjern bokmerke",
-
   "chat": "Chat",
   "today": "I dag",
   "you": "Du",
@@ -169,7 +158,6 @@
   "category-options": "Mappealternativer",
   "rename": "Gi nytt navn",
   "delete": "Slett",
-
   "bookmark-options": "Bokmerkealternativer",
   "new-folder-placeholder": "Mappenavn",
   "tasks": "Oppgaver",
@@ -180,12 +168,10 @@
   "folder-name-taken": "En mappe med det navnet finnes allerede.",
   "add-to-new": "Legg til i ny",
   "save": "Spare",
-
   "apocrypha-info-text": "Ingen av skriftene i denne delen ble noen gang ansett som Skriften av tidlige jødiske eller kristne samfunn. Bibelen er en spesifikk samling av bøker. Jøder og kristne har alltid vært enige om Det gamle testamentet, som kommer fra et fast sett med hellige skrifter som det jødiske folket kalte Tanakh og kristne kaller Det gamle testamentet. Innholdet i Tanakh og Det gamle testamentet er nøyaktig det samme, men er ofte ordnet forskjellig. Kristne anerkjenner i tillegg Det nye testamentet, som forteller historien om Jesus, hans lære og skriftene til hans etterfølgere. Skriftene nedenfor var kjente og mye lest på den tiden Bibelen ble skrevet, men de ble aldri behandlet som Skriften. Selv om oldtidens forfattere noen ganger siterte et bredt spekter av tekster, inkludert poeter, filosofer og andre skrifter, er det å sitere noe ikke det samme som å behandle det som Skriften. Disse skriftene er inkludert her kun for historisk og litterær referanse.",
   "seed-bible": "Frøbibelen",
   "take-photo": "Ta et bilde",
   "choose-from-gallery": "Velg fra galleriet",
-
   "crop-your-photo": "Beskjær bildet ditt",
   "zoom": "Zoom",
   "set-picture": "Sett bilde",
@@ -211,10 +197,8 @@
   "read-the-bible": "Les Bibelen",
   "seed-bible-description": "Les {{bookName}} {{chapterNumber}} i Frøbibelen",
   "social-title": "Les {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Kapittelnavigasjon",
   "tutorial.skip": "Hopp over",
-
   "tutorial.back": "Tilbake",
   "tutorial.done": "Ferdig",
   "tutorial.next": "Neste",
@@ -327,11 +311,9 @@
   "study-notes": "Studienotater",
   "content": "Innhold",
   "untitled-playlist": "Spilleliste uten navn",
-
   "discover-annotations-empty": "Du har ingen merknader",
   "discover-cross-references-empty": "Ingen kryssreferanser for dette kapittelet.",
   "discover-study-notes-empty": "Ingen studienotater for dette kapittelet.",
-
   "discover-select-tab": "Velg en fane for å oppdage relatert materiale.",
   "create-playlist": "Skape",
   "playlist-title_placeholder": "Spillelistetittel",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "Kunne ikke slette spillelisten.",
   "collapsed-tab-shared-label": "{{title}} — delt økt, {{count}} tilstede",
   "playlist-add-mode-label": "Varetype",
-
   "session-host-reconnected": "Tilkoblet til økten igjen",
   "session-host-left": "Verten forlot – du ble fjernet fra økten",
   "drag-to-reorder-playlist-item": "Dra for å endre rekkefølge",
   "saving": "Lagrer…",
-
   "unsaved-item-confirm-message": "Du har begynt å legge til et element som ikke er lagt til spillelisten ennå. Hva vil du gjøre?",
   "discard-and-save": "Forkast og lagre",
   "add-and-save": "Legg til og lagre",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "{{reading}}",
   "reading-plan-mark-reading-complete": "Marker lesing fullført",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Merk {{passage}} som lest",
   "reading-plan-read-nudge-title": "Fin lesning!",
   "reading-plan-read-nudge-toast": "Marker {{passage}} som fullført?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Les, søk og studer Bibelen på nett. Gratis oversettelser på mange språk, med uthevinger, notater, bokmerker og leseplaner.",
   "all": "Alle",
-
   "today-bookmarks": "BOKMERKER",
   "today-search-verses": "Søk etter bøker, kapitler, vers ...",
   "anonymous-greeting": "Velkomst!",
   "community": "FELLESSKAP",
   "go-somewhere-new": "DRA ET NYTT STED",
-
   "open-bible": "Åpne Bibelen",
   "personal-greeting": "Velkommen, {{name}} !",
   "resume-reading": "FORTSETT DER DU SLUTTE",
   "resume-reading-loading": "Laster inn lesehistorikken din …",
   "selected-year": "År: {{year}}",
-
   "theme-light": "Lys",
   "theme-dark": "Mørk",
   "installed-extensions": "Installert",
@@ -543,7 +519,6 @@
   "extension-state-installed": "Installert",
   "extension-state-downloaded": "Nedlastet",
   "extension-state-pending": "Installerer…",
-
   "tutorial.stepProgress": "Trinn {{current}} av {{total}}",
   "tutorial.offlineDownloadTitle": "Trykk for å beholde den på enheten din",
   "tutorial.offlineDownloadBody": "Alle oversettelser med dette ikonet kan lagres for lesing uten nett.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "Velg hvor mange avsnitt du vil lese side om side fra denne layoutmenyen.",
   "tutorial.addTabTitle": "Åpne flere passasjer",
   "tutorial.addTabBody": "Legg til en ny fane for å lese flere bøker eller oversettelser side om side.",
-
   "playlist-history-session-summary": "{{time}} – {{percent}} % fullført – {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} – {{percent}} % fullført",
   "playlist-history-continue": "Fortsette",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "{{count}} notater for dette kapittelet",
   "create-folder": "Opprett mappe",
   "edit-bookmark": "Rediger bokmerke",
-
   "greeting-afternoon": "God ettermiddag!",
   "greeting-afternoon-named": "God ettermiddag, {{name}} !",
   "greeting-evening": "God kveld!",
@@ -652,32 +625,24 @@
   "ask-ai": "Spør AI",
   "unread-mention": "Ulest omtale",
   "unread-messages": "Uleste meldinger: {{count}}",
-
   "scripture-width": "Skriftbredde",
   "decrease-scripture-width": "Reduser bredden på skriftstedet",
   "increase-scripture-width": "Øk bredden på skriftstedet",
   "annotations": "Annoteringer",
   "discover-content-panel": "Oppdag innhold",
   "discover-book-title": "Oppdag {{book}}",
-
   "about-title": "Om Seed Bible",
   "about-meta-description": "Seed Bible er en gratis bibelapp laget for å lese Skriften sammen med familie, venner og lokalsamfunn – gratis for alltid, uten annonser eller betalingsmurer.",
-
   "about-action-open-passage": "Åpne en passasje",
   "about-action-donate": "Donere",
   "about-action-discord": "Bli med i Discord",
   "recent-uploads": "Nylige opplastinger",
-
   "customization-not-found": "Denne tilpasningen ble ikke funnet.",
   "customization-name": "Navn",
   "customization-primaryColor": "Primær",
-
   "customization-secondaryColor": "Sekundær",
-
   "customization-tertiaryColor": "Tertiær",
-
   "customization-fonts": "Skrifter",
-
   "custom-font-option": "Skikk…",
   "custom-font-name-placeholder": "Google Font-navn",
   "delete-customization": "Slett",
@@ -690,10 +655,8 @@
   "extension-availability-available": "Tilgjengelig",
   "extension-availability-auto-installed": "Automatisk installert",
   "extension-availability-hidden": "Skjult",
-
   "variants": "Temaer",
   "add-variant": "Legg til tema",
-
   "base-theme-description": "Endringer som dette temaet bruker som forhåndsinnstilling for alt du ikke har tilpasset. Dine egne redigeringer beholdes.",
   "reset-to-base-theme": "Tilbakestill til basistemaet",
   "low-contrast-warning": "{{label}} : kontrasten er bare {{ratio}} :1 — sikt mot minst {{minRatio}} :1 slik at teksten forblir lesbar.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "Ingen lagringer her ennå.",
   "save-options": "Lagre alternativer",
   "saves": "Lagrer",
-
   "hide-saves": "Skjul lagrede",
   "show-saves": "Vis lagrede",
   "save-verses": "Spare",
   "new-save-folder": "Ny mappe",
   "edit-save": "Rediger lagre",
   "remove-save-from-all-folders": "Fjern fra alle mapper",
-
   "color-hue": "Fargetone",
   "color-saturation": "Metning og lysstyrke",
   "hex-color": "Heksadesimal farge",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "Formateringsredigereren kunne ikke lastes inn. Dette notatet har formatering som ville gått tapt, så det kan ikke redigeres før du kobler til på nytt.",
   "annotation-text": "Annotasjonstekst",
   "notes-for-verse": "Noter for vers {{verse}}",
-
   "configure-extension-defaults": "Konfigurer standard overstyringer",
-
   "extension-settings-defaults-title": "Standard overstyringer {{name}}",
   "no-extension-settings": "Denne utvidelsen har ingen konfigurerbare innstillinger.",
   "extension-settings-save-failed": "Kunne ikke lagre innstillingene dine.",
@@ -872,7 +831,6 @@
   "setting-no-default": "Ingen standard",
   "override-setting": "Overstyr {{name}}",
   "override-setting-label": "Overstyr",
-
   "discover-choose-filter-hint": "Velg et filter ovenfor for å se mer fra dette kapittelet.",
   "take-a-tour": "Ta en omvisning",
   "share-reading-plan": "Deleplan",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "Mitt bokmerke {{number}}",
   "bookmark-move-hint": "Trykk på et bokmerke for å flytte det til dette kapittelet.",
   "move-bookmark-here": "Flytt {{name}} hit",
-
   "play": "Spille",
   "pause": "Pause",
   "audio-playback-position": "Avspillingsposisjon",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "Vers {{verse}}",
   "tab-playing-audio": "Spille av lyd",
   "collapsed-tab-playing-label": "{{label}} — spiller av lyd",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} temaer",
   "customization-theme-count_one": "{{count}}",
@@ -1104,7 +1060,6 @@
   "about-community-body": "Tro er ment å leves sammen. Seed Bible er laget for å lese Skriften med familien, dine nærmeste venner og din husmenighet.",
   "discovered-content": "Oppdaget innhold",
   "show-discovered-content": "Vis oppdaget innhold",
-
   "extension-availability-default": "Standard ( {{availability}} )",
   "customization-extensions-default": "Standard for andre utvidelser",
   "customization-extensions-default-hint": "Gjelder for alle utvidelser du ikke har angitt nedenfor, inkludert nye som legges til senere",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "Tilbake til spillelisten",
   "playlist-scripture-note-aria": "Merknad om {{passage}}",
   "playlist-scripture-note-progress": "{{current}} av {{total}}",
-
   "unsaved-item-edit-confirm-message": "Du har endret et element, men har ikke lagret endringene ennå. Hva vil du gjøre?",
   "keep-changes-and-save": "Behold endringene og lagre",
   "reading-plan-edit-reading": "Rediger lesing",
@@ -1152,7 +1106,6 @@
   "branding": "Merkevarebygging",
   "create-custom-branding-menu-item": "Tilpasset merkevarebygging",
   "your-content-empty-branding": "Tilpasset merkevarebygging du oppretter vil vises her.",
-
   "extension-consent-from": "Fra {{host}}",
   "extension-consent-source-version": "Versjon {{version}} · fra {{host}}",
   "extension-consent-uploader-unnamed": "en Seed Bible-bruker",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "Se hvilke vers du velger",
   "extension-permission-reading-navigate": "Åpne passasjer",
   "extension-permission-network": "Koble til {{host}}",
-
   "extension-consent-not-now": "Ikke nå",
   "extension-consent-nothing-yet": "Foreløpig vil den ikke ha tilgang til noe av informasjonen din.",
   "extension-permission-reading-history": "Se lesehistorikken din",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "Kansellere",
   "extension-consent-high-risk": "Følsom",
   "extension-modal-ok": "OK",
-
   "extension-permissions-restart-note": "Endringene trer i kraft umiddelbart. {{name}} starter på nytt for å aktivere dem.",
   "extension-permissions-saved": "Lagret. {{name}} startet på nytt med de nye tillatelsene.",
   "extension-permissions-failed": "Det ble ikke lagret. Prøv på nytt.",
@@ -1276,8 +1227,51 @@
   "session-settings-verse-effects-desc-hosts": "Vis effekter når en vert velger et vers.",
   "session-settings-verse-effects-desc-everyone": "Vis effekter når noen velger et vers.",
   "session-settings-verse-effects-desc-none": "Versvalgseffekter er slått av for alle.",
-
   "account": "Konto",
   "scroll-filters-start": "Bla filtrene mot start",
-  "scroll-filters-end": "Bla filtrene mot slutten"
+  "scroll-filters-end": "Bla filtrene mot slutten",
+  "download": "Last ned",
+  "image-details-uploaded": "Opplastet",
+  "image-details-dimensions": "Dimensjoner",
+  "image-details-dimensions-value": "{{width}} × {{height}} piksler",
+  "image-details-type": "Type",
+  "image-details-cover-of": "Omslag til",
+  "image-details-not-a-cover": "Ikke brukt som deksel",
+  "delete-customization-confirm-title": "Slette tilpasset merkevarebygging?",
+  "delete-customization-confirm-message": "Vil du slette den tilpassede merkevaren « {{name}} »? Dette kan ikke angres.",
+  "delete-customization-failed": "Kunne ikke slette den tilpassede merkevaren.",
+  "delete-variant-confirm-title": "Slette temaet?",
+  "delete-variant-confirm-message": "Slette temaet « {{name}} »? Dette kan ikke angres.",
+  "delete-variant-confirm-message-unnamed": "Vil du slette dette temaet? Dette kan ikke angres.",
+  "delete-variant-failed": "Kunne ikke slette temaet.",
+  "delete-highlight-confirm-title": "Slette utheving?",
+  "delete-highlight-confirm-message": "Slette uthevingen på {{reference}} ? Dette kan ikke angres.",
+  "delete-highlight-failed": "Kunne ikke slette uthevingen.",
+  "delete-annotation-on-confirm-message": "Slette annoteringen på {{reference}} ? Dette kan ikke angres.",
+  "remove-from-folder": "Fjern fra mappe",
+  "save-folders": "{{folders}}",
+  "delete-save-confirm-title": "Slette lagret?",
+  "delete-save-confirm-message": "Slett lagring for {{reference}} ? Dette kan ikke angres.",
+  "delete-save-confirm-message-folders": "Slette lagret fil for {{reference}} fra {{folders}} ? Dette kan ikke angres.",
+  "delete-save-failed": "Kunne ikke slette lagringen.",
+  "delete-save-folder-confirm-title": "Slette mappen?",
+  "delete-save-folder-confirm-message": "Slette mappen « {{name}} »?",
+  "delete-save-folder-confirm-deletes": "De {{count}} lagrede elementene som bare er i denne mappen, vil også bli slettet.",
+  "delete-save-folder-confirm-deletes_one": "Lagringen som bare er i denne mappen vil også bli slettet.",
+  "delete-save-folder-confirm-deletes_other": "De {{count}} lagrede elementene som bare er i denne mappen, vil også bli slettet.",
+  "delete-save-folder-confirm-keeps": "De {{count}} lagrede filene som også er i andre mapper, vil bli værende der.",
+  "delete-save-folder-confirm-keeps_one": "Lagringen som også er i en annen mappe, vil bli værende der.",
+  "delete-save-folder-confirm-keeps_other": "De {{count}} lagrede filene som også er i andre mapper, vil bli værende der.",
+  "cant-be-undone": "Dette kan ikke angres.",
+  "delete-save-folder-failed": "Kunne ikke slette mappen.",
+  "download-image-failed": "Kunne ikke laste ned bildet.",
+  "session-settings-verse-effects-hosts-only": "Kun verter",
+  "session-settings-verse-effects-everyone": "Alle",
+  "session-settings-verse-effects-none": "Ingen",
+  "loading-books": "Laster inn bøker …",
+  "books-load-failed": "Bøkene kunne ikke lastes inn. Sjekk tilkoblingen din og prøv på nytt.",
+  "loading-translation": "Laster inn {{name}} …",
+  "translation-load-failed": "Kunne ikke laste inn {{name}} .",
+  "loading-translations": "Laster inn oversettelser…",
+  "translations-load-failed": "Kunne ikke laste inn hele listen over oversettelser, så noen kan mangle."
 }

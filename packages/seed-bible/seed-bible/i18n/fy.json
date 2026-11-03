@@ -28,22 +28,18 @@
   "searching": "Sykje...",
   "no-search-results": "Gjin oerienkommende fersen.",
   "open-chapter": "Iepenje haadstik",
-
   "uploading": "Oan it opladen...",
   "profile-name": "Profylnamme",
   "profile-name-placeholder": "bygelyks Craig-famylje",
-
   "description": "Beskriuwing",
   "optional": "(Fakultatyf)",
   "description-placeholder": "Fier jo profylbeskriuwing yn...",
   "location": "Lokaasje",
   "location-placeholder": "bygelyks Austin, TX",
-
   "copied": "Kopiearre",
   "copy": "Kopy",
   "save-changes": "Bewarje wizigingen",
   "sign-out": "Útlogge",
-
   "log-in": "Oanmelde",
   "tanakh": "Tenach",
   "traditional": "Tradisjoneel",
@@ -57,7 +53,6 @@
   "scripture-settings": "Skriftynstellingen",
   "scripture-elements": "Skriftlike eleminten",
   "scripture-settings-font-size-example": "IN",
-
   "show-headings": "Kopteksten sjen litte",
   "show-verse-numbers": "Fersnûmers sjen litte",
   "show-footnotes": "Fuotnoten sjen litte",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Gjin útwreidings beskikber.",
   "install": "Ynstallearje",
   "uninstall": "Deynstallearje",
-
   "custom": "Oanpast",
   "text-section-bookTitle": "Tekst fan 'e boektitel",
   "text-section-heading": "Koptekst",
@@ -92,7 +86,6 @@
   "show-selected-items": "Selektearre items sjen litte",
   "show-highlight-colors": "Markearringskleuren sjen litte",
   "show-icon-text": "Ikoantekst sjen litte",
-
   "extensions": "Útwreidings",
   "display": "Skerm",
   "theme-and-text": "Tema & tekst",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Fergrutsje de lettergrutte fan 'e Skrift",
   "change-line-spacing": "Rigelôfstân feroarje",
   "line-spacing_lineHeight": "Rigelôfstân: {{lineHeight}}",
-
   "italic": "Kursyf",
   "underline": "Ûnderstreekje",
   "alignment_x": "Útrjochting: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Tekstkleur",
   "follow_theme": "Folgje tema",
   "reset-to-default": "Weromsette nei standert",
-
   "id_highlight-text-color": "{{id}} markearje tekstkleur",
   "id_highlight-background-color": "{{id}} markearringseftergrûnkleur",
   "all-settings-description": "Fynôfstimme elke tekstseksje en oanpasse elke temakleur.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokryf",
-
   "custom-translations": "Oanpaste oersettings",
   "no-translation-results-found": "Gjin resultaten fûn. Wolle jo jo sykjen útwreidzje om ek foar in part folsleine oersettings op te nimmen?",
   "show-all-translations": "Alle oersettings sjen litte",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalmen",
   "5-psalms": "5 Psalmen",
   "remove-bookmark": "Blêdwizer fuortsmite",
-
   "chat": "Chat",
   "today": "Hjoed",
   "you": "Jo",
@@ -169,7 +158,6 @@
   "category-options": "Mapopsjes",
   "rename": "Omneame",
   "delete": "Wiskje",
-
   "bookmark-options": "Opsjes foar blêdwizers",
   "new-folder-placeholder": "Mapnamme",
   "tasks": "Taken",
@@ -180,12 +168,10 @@
   "folder-name-taken": "In map mei dy namme bestiet al.",
   "add-to-new": "Tafoegje oan nij",
   "save": "Rêde",
-
   "apocrypha-info-text": "Gjin fan 'e geskriften yn dizze seksje waarden ea as Skrift beskôge troch iere Joadske of kristlike mienskippen. De Bibel is in spesifike samling boeken. Joaden en kristenen hawwe it altyd iens west oer it Alde Testamint, dat komt fan in fêste set hillige geskriften dy't it Joadske folk de Tenach neamt en kristenen it Alde Testamint. De ynhâld fan 'e Tenach en it Alde Testamint is presys itselde, mar binne meastentiids oars ynrjochte. Kristenen erkenne ek it Nije Testamint, dat it ferhaal fan Jezus, syn lear en de geskriften fan syn folgelingen fertelt. De geskriften hjirûnder wiene bekend en breed lêzen yn 'e tiid dat de Bibel skreaun waard, mar se waarden nea as Skrift behannele. Wylst âlde auteurs soms in breed skala oan teksten sitearren, ynklusyf dichters, filosofen en oare geskriften, is it sitearjen fan wat net itselde as it as Skrift behannelje. Dizze geskriften binne hjir allinich opnommen foar histoaryske en literêre referinsje.",
   "seed-bible": "Siedbibel",
   "take-photo": "Nim in foto",
   "choose-from-gallery": "Kies út galery",
-
   "crop-your-photo": "Besnij dyn foto",
   "zoom": "Ynzoomje",
   "set-picture": "Ofbylding ynstelle",
@@ -211,10 +197,8 @@
   "read-the-bible": "Lês de Bibel",
   "seed-bible-description": "Lês {{bookName}} {{chapterNumber}} yn 'e Siedbibel",
   "social-title": "Lês {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Haadstiknavigaasje",
   "tutorial.skip": "Oerslaan",
-
   "tutorial.back": "Rêch",
   "tutorial.done": "Klear",
   "tutorial.next": "Folgjende",
@@ -327,11 +311,9 @@
   "study-notes": "Stúdzjenotysjes",
   "content": "Ynhâld",
   "untitled-playlist": "Untitled playlist",
-
   "discover-annotations-empty": "Jo hawwe gjin annotaasjes",
   "discover-cross-references-empty": "Gjin krúsferwizings foar dit haadstik.",
   "discover-study-notes-empty": "Gjin stúdzjenotysjes foar dit haadstik.",
-
   "discover-select-tab": "Selektearje in ljepblêd om relatearre materiaal te ûntdekken.",
   "create-playlist": "Meitsje",
   "playlist-title_placeholder": "Titel fan 'e playlist",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "Koe de playlist net wiskje.",
   "collapsed-tab-shared-label": "{{title}} — dielde sesje, {{count}} oanwêzich",
   "playlist-add-mode-label": "Itemtype",
-
   "session-host-reconnected": "Wer ferbûn mei de sesje",
   "session-host-left": "De host is fuortgien - jo binne út 'e sesje fuorthelle",
   "drag-to-reorder-playlist-item": "Sleep om te werskikken",
   "saving": "Dwaande mei bewarjen…",
-
   "unsaved-item-confirm-message": "Jo binne begûn mei it tafoegjen fan in item dat noch net oan de ôfspyllist tafoege is. Wat wolle jo dwaan?",
   "discard-and-save": "Fuortsmite en bewarje",
   "add-and-save": "Taheakje en bewarje",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "Foarbyld {{reading}}",
   "reading-plan-mark-reading-complete": "Markearje lêzen foltôge",
   "reading-plan-link-video": "Fideo",
-
   "reading-plan-mark-passage-complete": "Markearje {{passage}} as lêzen",
   "reading-plan-read-nudge-title": "Moai lêzen!",
   "reading-plan-read-nudge-toast": "Markearje {{passage}} as foltôge?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Lês, sykje en bestudearje de Bibel online. Fergese oersettings yn in protte talen, mei markearrings, notysjes, blêdwizers en lêsplannen.",
   "all": "Alle",
-
   "today-bookmarks": "Blêdwizers",
   "today-search-verses": "Sykje boeken, haadstikken, fersen....",
   "anonymous-greeting": "Wolkom!",
   "community": "MIENSKIP",
   "go-somewhere-new": "GEAN EARNE NIJS",
-
   "open-bible": "Iepen Bibel",
   "personal-greeting": "Wolkom, {{name}} !",
   "resume-reading": "GEAN TROCH WAAR JO BLIJF BINNE",
   "resume-reading-loading": "Dyn lêshistoarje oan it laden…",
   "selected-year": "Jier: {{year}}",
-
   "theme-light": "Ljocht",
   "theme-dark": "Tsjuster",
   "installed-extensions": "Ynstallearre",
@@ -543,7 +519,6 @@
   "extension-state-installed": "Ynstallearre",
   "extension-state-downloaded": "Ynladen",
   "extension-state-pending": "Ynstallearjen…",
-
   "tutorial.stepProgress": "Stap {{current}} fan {{total}}",
   "tutorial.offlineDownloadTitle": "Tik om it op jo apparaat te hâlden",
   "tutorial.offlineDownloadBody": "Elke oersetting mei dit ikoan kin bewarre wurde foar offline lêzen.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "Kies út dit yndielingsmenu hoefolle passaazjes jo neist elkoar lêze wolle.",
   "tutorial.addTabTitle": "Mear passaazjes iepenje",
   "tutorial.addTabBody": "Foegje in nij ljepblêd ta om ferskate boeken of oersettings neist elkoar te lêzen.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % klear - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % klear",
   "playlist-history-continue": "Trochgean",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "{{count}} notysjes foar dit haadstik",
   "create-folder": "Map oanmeitsje",
   "edit-bookmark": "Blêdwizer bewurkje",
-
   "greeting-afternoon": "Goeiemiddei!",
   "greeting-afternoon-named": "Goeiemiddei, {{name}} !",
   "greeting-evening": "Goejûn!",
@@ -652,32 +625,24 @@
   "ask-ai": "Freegje AI",
   "unread-mention": "Net lêzen fermelding",
   "unread-messages": "Net lêzen berjochten: {{count}}",
-
   "scripture-width": "Skriftbreedte",
   "decrease-scripture-width": "Ferminderje de breedte fan 'e skrift",
   "increase-scripture-width": "Fergrutsje de breedte fan 'e Skrift",
   "annotations": "Annotaasjes",
   "discover-content-panel": "Ynhâld ûntdekke",
   "discover-book-title": "Untdek {{book}}",
-
   "about-title": "Oer de Seed Bible",
   "about-meta-description": "Seed Bible is in fergese Bibel-app boud foar it lêzen fan 'e Skrift tegearre mei jo famylje, freonen en mienskip - foar altyd fergees, gjin advertinsjes of betelmuorren.",
-
   "about-action-open-passage": "Iepenje in passaazje",
   "about-action-donate": "Donearje",
   "about-action-discord": "Doch mei oan Discord",
   "recent-uploads": "Resinte uploads",
-
   "customization-not-found": "Dizze oanpassing koe net fûn wurde.",
   "customization-name": "Namme",
   "customization-primaryColor": "Primêr",
-
   "customization-secondaryColor": "Sekundêr",
-
   "customization-tertiaryColor": "Tertiêr",
-
   "customization-fonts": "Lettertypen",
-
   "custom-font-option": "Oanpast…",
   "custom-font-name-placeholder": "Google Font-namme",
   "delete-customization": "Wiskje",
@@ -690,10 +655,8 @@
   "extension-availability-available": "Beskikber",
   "extension-availability-auto-installed": "Automatysk ynstallearre",
   "extension-availability-hidden": "Ferburgen",
-
   "variants": "Tema's",
   "add-variant": "Tema tafoegje",
-
   "base-theme-description": "Wizigingen dy't dit tema foarôf ynsteld hawwe, falle werom op foar alles dat jo net oanpast hawwe. Jo eigen bewurkingen wurde bewarre.",
   "reset-to-base-theme": "Weromsette nei basistema",
   "low-contrast-warning": "{{label}} : kontrast is mar {{ratio}} :1 — stribje nei teminsten {{minRatio}} :1 sadat tekst lêsber bliuwt.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "Hjir noch gjin bewarrings.",
   "save-options": "Opsjes foar bewarjen",
   "saves": "Bewarret",
-
   "hide-saves": "Bewarre ferbergje",
   "show-saves": "Bewarre bestannen sjen litte",
   "save-verses": "Rêde",
   "new-save-folder": "Nije map",
   "edit-save": "Bewarje bewurkje",
   "remove-save-from-all-folders": "Fuortsmite út alle mappen",
-
   "color-hue": "Tint",
   "color-saturation": "Saturaasje en helderheid",
   "hex-color": "Heksadesimale kleur",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "De opmaakbewurker koe net lade. Dizze notysje hat opmaak dy't ferlern gean soe, dus it kin net bewurke wurde oant jo opnij ferbine.",
   "annotation-text": "Annotaasjetekst",
   "notes-for-verse": "Notysjes foar fers {{verse}}",
-
   "configure-extension-defaults": "Standert oerskriuwingen ynstelle",
-
   "extension-settings-defaults-title": "Standert oerskriuwingen fan {{name}}",
   "no-extension-settings": "Dizze útwreiding hat gjin konfigurearbere ynstellings.",
   "extension-settings-save-failed": "Koe jo ynstellings net bewarje.",
@@ -872,7 +831,6 @@
   "setting-no-default": "Gjin standert",
   "override-setting": "Oerskriuwe {{name}}",
   "override-setting-label": "Oerskriuwe",
-
   "discover-choose-filter-hint": "Kies in filter hjirboppe om mear fan dit haadstik te sjen.",
   "take-a-tour": "Nim in toer",
   "share-reading-plan": "Dielplan",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "Myn blêdwizer {{number}}",
   "bookmark-move-hint": "Tik op in blêdwizer om it nei dit haadstik te ferpleatsen.",
   "move-bookmark-here": "Ferpleats {{name}} hjirhinne",
-
   "play": "Toanielstik",
   "pause": "Skoftsje",
   "audio-playback-position": "Ofspielposysje",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "Fers {{verse}}",
   "tab-playing-audio": "Audio ôfspielje",
   "collapsed-tab-playing-label": "{{label}} — audio ôfspielje",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} tema's",
   "customization-theme-count_one": "{{count}}",
@@ -1104,7 +1060,6 @@
   "about-community-body": "Leauwe is bedoeld om tegearre libbe te wurden. Seed Bible is boud foar it lêzen fan de Skrift mei jo famylje, jo bêste freonen en jo hûsgemeente.",
   "discovered-content": "Untdutsen ynhâld",
   "show-discovered-content": "Untdutsen ynhâld sjen litte",
-
   "extension-availability-default": "Standert ( {{availability}} )",
   "customization-extensions-default": "Standert foar oare útwreidings",
   "customization-extensions-default-hint": "Jildt foar elke útwreiding dy't jo hjirûnder net ynsteld hawwe, ynklusyf nije dy't letter tafoege wurde",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "Werom nei de ôfspiellist",
   "playlist-scripture-note-aria": "Opmerking oer {{passage}}",
   "playlist-scripture-note-progress": "{{current}} fan {{total}}",
-
   "unsaved-item-edit-confirm-message": "Jo hawwe in item feroare, mar hawwe dy wizigingen noch net bewarre. Wat wolle jo dwaan?",
   "keep-changes-and-save": "Bewarje de wizigingen en bewarje se",
   "reading-plan-edit-reading": "Lês bewurkje",
@@ -1152,7 +1106,6 @@
   "branding": "Branding",
   "create-custom-branding-menu-item": "Oanpaste branding",
   "your-content-empty-branding": "Oanpaste branding dy't jo meitsje sil hjir ferskine.",
-
   "extension-consent-from": "Fan {{host}}",
   "extension-consent-source-version": "Ferzje {{version}} · fan {{host}}",
   "extension-consent-uploader-unnamed": "in brûker fan 'e siedbibel",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "Sjoch hokker fersen jo selektearje",
   "extension-permission-reading-navigate": "Iepen passaazjes",
   "extension-permission-network": "Ferbine mei {{host}}",
-
   "extension-consent-not-now": "Net no",
   "extension-consent-nothing-yet": "Foar no sil it gjin tagong hawwe ta ien fan jo ynformaasje.",
   "extension-permission-reading-history": "Sjoch jo lêshistoarje",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "Annulearje",
   "extension-consent-high-risk": "Gefoelich",
   "extension-modal-ok": "Okee",
-
   "extension-permissions-restart-note": "Wizigingen wurde direkt fan krêft. {{name}} start opnij op om se op te heljen.",
   "extension-permissions-saved": "Opslein. {{name}} opnij starte mei de nije tagongsrjochten.",
   "extension-permissions-failed": "Dat is net opslein. Besykje it nochris.",
@@ -1276,8 +1227,51 @@
   "session-settings-verse-effects-desc-hosts": "Lit effekten sjen as in gasthear in fers selektearret.",
   "session-settings-verse-effects-desc-everyone": "Lit effekten sjen as immen in fers selektearret.",
   "session-settings-verse-effects-desc-none": "Effekten foar ferseleksje binne foar elkenien útskeakele.",
-
   "account": "Rekken",
   "scroll-filters-start": "Rôlje filters nei it begjin",
-  "scroll-filters-end": "Rôlje filters nei it ein"
+  "scroll-filters-end": "Rôlje filters nei it ein",
+  "download": "Download",
+  "image-details-uploaded": "Uploade",
+  "image-details-dimensions": "Ofmjittings",
+  "image-details-dimensions-value": "{{width}} × {{height}} piksels",
+  "image-details-type": "Type",
+  "image-details-cover-of": "Omslach fan",
+  "image-details-not-a-cover": "Net brûkt as in omslach",
+  "delete-customization-confirm-title": "Oanpaste branding wiskje?",
+  "delete-customization-confirm-message": "Oanpaste branding \" {{name}} \" wiskje? Dit kin net ûngedien makke wurde.",
+  "delete-customization-failed": "Koe de oanpaste branding net wiskje.",
+  "delete-variant-confirm-title": "Tema wiskje?",
+  "delete-variant-confirm-message": "Tema \" {{name}} \" wiskje? Dit kin net ûngedien makke wurde.",
+  "delete-variant-confirm-message-unnamed": "Dit tema wiskje? Dit kin net ûngedien makke wurde.",
+  "delete-variant-failed": "Koe it tema net wiskje.",
+  "delete-highlight-confirm-title": "Markearring wiskje?",
+  "delete-highlight-confirm-message": "De markearring op {{reference}} wiskje? Dit kin net ûngedien makke wurde.",
+  "delete-highlight-failed": "Koe de markearring net wiskje.",
+  "delete-annotation-on-confirm-message": "De annotaasje op {{reference}} wiskje? Dit kin net ûngedien makke wurde.",
+  "remove-from-folder": "Fuortsmite út map",
+  "save-folders": "Yn {{folders}}",
+  "delete-save-confirm-title": "Opslach wiskje?",
+  "delete-save-confirm-message": "Bewarre foar {{reference}} wiskje? Dit kin net ûngedien makke wurde.",
+  "delete-save-confirm-message-folders": "Bewarre foar {{reference}} út {{folders}} wiskje? Dit kin net ûngedien makke wurde.",
+  "delete-save-failed": "Koe de opslach net wiskje.",
+  "delete-save-folder-confirm-title": "Map wiskje?",
+  "delete-save-folder-confirm-message": "Map \" {{name}} \" wiskje?",
+  "delete-save-folder-confirm-deletes": "De {{count}} bewarre bestannen dy't allinich yn dizze map binne, wurde ek wiske.",
+  "delete-save-folder-confirm-deletes_one": "De opslach dy't allinich yn dizze map is, sil ek wiske wurde.",
+  "delete-save-folder-confirm-deletes_other": "De {{count}} bewarre bestannen dy't allinich yn dizze map binne, wurde ek wiske.",
+  "delete-save-folder-confirm-keeps": "De {{count}} bewarre bestannen dy't ek yn oare mappen binne, sille dêr bliuwe.",
+  "delete-save-folder-confirm-keeps_one": "De bewarre bestannen dy't ek yn in oare map steane, sille dêr bliuwe.",
+  "delete-save-folder-confirm-keeps_other": "De {{count}} bewarre bestannen dy't ek yn oare mappen binne, sille dêr bliuwe.",
+  "cant-be-undone": "Dit kin net ûngedien makke wurde.",
+  "delete-save-folder-failed": "Koe de map net wiskje.",
+  "download-image-failed": "Koe de ôfbylding net downloade.",
+  "session-settings-verse-effects-hosts-only": "Allinnich hosts",
+  "session-settings-verse-effects-everyone": "Elkenien",
+  "session-settings-verse-effects-none": "Gjin",
+  "loading-books": "Boeken laden…",
+  "books-load-failed": "De boeken koene net laden wurde. Kontrolearje jo ferbining en besykje it opnij.",
+  "loading-translation": "Ynladen fan {{name}} …",
+  "translation-load-failed": "{{name}} koe net laden wurde.",
+  "loading-translations": "Oersettings laden…",
+  "translations-load-failed": "Koe de folsleine list mei oersettings net lade, dus guon kinne ûntbrekke."
 }

@@ -139,7 +139,7 @@
   background-color: var(--sb-background);
   color: var(--sb-reader-font-color);
   border-radius: 4px;
-  border: solid 1px var(--sb-secondary-color);
+  border: solid 1px var(--sb-divider-color);
   padding: 4px;
   gap: 4px;
   box-shadow: 0 0 4px 0px var(--sb-divider-color);

@@ -5,6 +5,7 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
+import { withMetricFallback } from "../app/fontFallbacks";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { SettingsManager } from "./SettingsManager";
 
@@ -445,10 +446,12 @@ function sanitizeCssValue(value: string): string {
 export function generateThemeCssVariables(variables: BibleTheme): string {
   const cssVariables = Object.entries(variables.variables)
     .filter(([, value]) => value !== undefined && value !== null)
-    .map(
-      ([key, value]) =>
-        `--sb-${toKebabCase(key)}: ${sanitizeCssValue(String(value))};`
-    )
+    .map(([key, value]) => {
+      const css = sanitizeCssValue(String(value));
+      return `--sb-${toKebabCase(key)}: ${
+        /fontfamily$/i.test(key) ? withMetricFallback(css) : css
+      };`;
+    })
     .join("\n");
 
   const highlightColorVariables = Object.entries(variables.highlightColors)

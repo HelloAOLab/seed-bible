@@ -7,6 +7,7 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
+import { READING_PLANS_PANE_ID } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import {
   createTestSeedBibleState,
   waitFor,
@@ -1998,6 +1999,28 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     expect(container.querySelector(".sb-more-menu")).toBeNull();
   });
 
+  it("closes the reading plans pane when Plans is picked again", async () => {
+    const state = await renderToolbar();
+    const pickPlans = async () => {
+      await openMenu();
+      const item = Array.from(
+        container.querySelectorAll<HTMLButtonElement>(".sb-more-menu-item")
+      ).find((el) => el.textContent?.includes("Plans"));
+      if (!item) throw new Error("Plans is missing from More.");
+      await act(async () => {
+        item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    };
+    const plansPaneOpen = () =>
+      state.panes.panes.value.some((pane) => pane.id === READING_PLANS_PANE_ID);
+
+    await pickPlans();
+    expect(plansPaneOpen()).toBe(true);
+
+    await pickPlans();
+    expect(plansPaneOpen()).toBe(false);
+  });
+
   it("closes the More menu on Escape and returns focus to the More button", async () => {
     await renderToolbar();
     await openMenu();
@@ -2108,10 +2131,112 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     expect(container.querySelector(".sb-more-menu")).toBeNull();
   });
 
-  it("does not reopen the More menu by itself after its last tool goes away and comes back", async () => {
+  it("shows the fourth tool itself instead of More when only four fit", async () => {
+    const state = await renderToolbar();
+
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-plans");
+    });
+
+    expect(moreButton()).toBeNull();
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Search",
+      "Discover",
+      "Next Chapter",
+    ]);
+  });
+
+  it("swaps the fourth tool for More, holding it and the rest, when there are more than four", async () => {
+    const state = await renderToolbar();
+
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-plans");
+      registerExtensionTool(state, "ext-one", "Extension One");
+    });
+
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Search",
+      "More",
+      "Next Chapter",
+    ]);
+    await openMenu();
+    expect(menuLabels()).toEqual(
+      expect.arrayContaining(["Discover", "Extension One"])
+    );
+  });
+
+  it("shows Chat's unread count on the Chat button when Chat fits on the bar", async () => {
     const state = await renderToolbar();
     await act(async () => {
       state.tools.unregisterToolbarTool("open-discover");
+      state.tools.unregisterToolbarTool("open-plans");
+      const chat = state.chats.createLocalSession();
+      chat.appendMessage({ type: "text", text: "Hello" }, ["someone-else"]);
+    });
+
+    expect(moreButton()).toBeNull();
+    expect(barLabels()).toContain("Chat");
+    const chatButton = container.querySelector(
+      '.sb-reader-toolbar-labeled button[aria-label="Chat"]'
+    );
+    expect(
+      chatButton?.querySelector(".sb-reader-toolbar-unread-indicator")
+        ?.textContent
+    ).toBe("1");
+  });
+
+  it("does not reopen a tool's dropdown by itself after the tool moves into More and back", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-discover");
+      state.tools.unregisterToolbarTool("open-plans");
+      state.tools.registerToolbarTool({
+        id: "ext-menu",
+        priority: 1,
+        title: "Extension Menu",
+        icon: () => <span>menu</span>,
+        isVisible: () => true,
+        getItems: () => [
+          {
+            id: "first",
+            priority: 0,
+            title: "First Item",
+            icon: () => <span>1</span>,
+            onSelect: vi.fn(),
+          },
+        ],
+      });
+    });
+    const menuTool = container.querySelector<HTMLButtonElement>(
+      '.sb-reader-toolbar-labeled [data-tool-id="ext-menu"]'
+    );
+    if (!menuTool) throw new Error("The extension tool is not on the bar.");
+    await act(async () => {
+      menuTool.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(container.querySelector(".sb-tool-context-menu")).not.toBeNull();
+
+    await act(async () => {
+      registerExtensionTool(state, "ext-one", "Extension One");
+    });
+    expect(barLabels()).not.toContain("Extension Menu");
+
+    await act(async () => {
+      state.tools.unregisterToolbarTool("ext-one");
+    });
+    expect(barLabels()).toContain("Extension Menu");
+    expect(container.querySelector(".sb-tool-context-menu")).toBeNull();
+  });
+
+  it("does not reopen the More menu by itself after its tools fit on the bar again", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
       state.tools.unregisterToolbarTool("open-plans");
       registerExtensionTool(state, "ext-one", "Extension One");
     });
@@ -2176,6 +2301,78 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     });
 
     expect(state.today.isOpen.value).toBe(true);
+  });
+
+  it("closes the Today screen when the Today button is pressed again", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
+      state.today.close();
+    });
+    const today = container.querySelector<HTMLButtonElement>(
+      '.sb-reader-toolbar-labeled button[aria-label="Today"]'
+    );
+    if (!today) throw new Error("The desktop Today button did not render.");
+    const press = async () => {
+      await act(async () => {
+        today.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    };
+
+    await press();
+    expect(state.today.isOpen.value).toBe(true);
+
+    await press();
+    expect(state.today.isOpen.value).toBe(false);
+    expect(
+      state.panes.panes.value.some((pane) => pane.id === TODAY_PANE_ID)
+    ).toBe(false);
+  });
+
+  it("closes the search panel when the Search button is pressed again, as the mobile Search tab does", async () => {
+    const state = await renderToolbar();
+    const search = container.querySelector<HTMLButtonElement>(
+      '.sb-reader-toolbar-labeled button[aria-label="Search"]'
+    );
+    if (!search) throw new Error("The desktop Search button did not render.");
+    const press = async () => {
+      await act(async () => {
+        search.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    };
+
+    await press();
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
+
+    await press();
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(false);
+  });
+
+  // Only the Search button toggles; a tool asking for search to be open
+  // must not close it.
+  it("leaves search open when another tool asks to open it", async () => {
+    const state = await renderToolbar();
+    await act(async () => {
+      state.tools.registerToolbarTool({
+        id: "find-it",
+        priority: 1,
+        title: "Find it",
+        icon: () => <span>find-it</span>,
+        isVisible: () => true,
+        onSelect: (context) => context.openSearch(),
+      });
+      state.sidebar.openSearchPanel();
+    });
+
+    await openMenu();
+    const item = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-more-menu-item")
+    ).find((el) => el.textContent?.includes("Find it"));
+    if (!item) throw new Error("The tool is missing from More.");
+    await act(async () => {
+      item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
   });
 });
 
@@ -4370,6 +4567,27 @@ describe("BibleReaderToolbar — the mobile Today tab", () => {
     expect(isActive()).toBe(false);
   });
 
+  it("closes Today when tapped while Today is showing", async () => {
+    const { state, tab } = await renderToolbar();
+
+    await tapTab(tab);
+    expect(state.today.isOpen.value).toBe(true);
+
+    await tapTab(tab);
+    expect(state.today.isOpen.value).toBe(false);
+  });
+
+  it("brings Today back to the front, not closed, when the search panel covers it", async () => {
+    const { state, tab } = await renderToolbar();
+    await tapTab(tab);
+    await act(async () => state.sidebar.openSearchPanel());
+
+    await tapTab(tab);
+
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(false);
+    expect(state.today.isOpen.value).toBe(true);
+  });
+
   /**
    * An ordering guard. `openTodayScreen` closes what is on screen before
    * calling `today.open()`; swap those two and the close sweeps away the pane
@@ -4770,6 +4988,54 @@ describe("BibleReaderToolbar — chat-first desktop / laptop toolbar", () => {
     if (searchIndex >= 0) {
       expect(chatIndex).toBeLessThan(searchIndex);
     }
+  });
+
+  const barLabels = () =>
+    Array.from(
+      container.querySelectorAll(
+        ".sb-reader-toolbar-labeled > .sb-reader-toolbar-item > .sb-reader-toolbar-button"
+      )
+    ).map((el) => el.getAttribute("aria-label"));
+
+  it("puts Chat in Search's place and Search in More when the tools don't fit", async () => {
+    await renderToolbar({ chatFirst: true });
+
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Chat",
+      "More",
+      "Next Chapter",
+    ]);
+
+    await act(async () => {
+      toolbarButton("More")!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    expect(
+      Array.from(container.querySelectorAll(".sb-more-menu-label")).map(
+        (el) => el.textContent
+      )
+    ).toEqual(expect.arrayContaining(["Search", "Discover", "Plans"]));
+  });
+
+  it("shows both Chat and Search, with no More, when they fit", async () => {
+    const { state } = await renderToolbar({ chatFirst: true });
+    await act(async () => {
+      state.tools.unregisterToolbarTool("open-discover");
+      state.tools.unregisterToolbarTool("open-plans");
+    });
+
+    expect(barLabels()).toEqual([
+      "Previous Chapter",
+      "Today",
+      "Books",
+      "Chat",
+      "Search",
+      "Next Chapter",
+    ]);
   });
 
   it("shows Chat even when there are no providers or chats under chat-first", async () => {

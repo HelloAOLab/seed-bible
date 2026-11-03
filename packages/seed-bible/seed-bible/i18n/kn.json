@@ -28,22 +28,18 @@
   "searching": "ಹುಡುಕಲಾಗುತ್ತಿದೆ...",
   "no-search-results": "ಯಾವುದೇ ಹೊಂದಾಣಿಕೆಯ ಪದ್ಯಗಳಿಲ್ಲ.",
   "open-chapter": "ಅಧ್ಯಾಯವನ್ನು ತೆರೆಯಿರಿ",
-
   "uploading": "ಅಪ್‌ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...",
   "profile-name": "ಪ್ರೊಫೈಲ್ ಹೆಸರು",
   "profile-name-placeholder": "ಉದಾ: ಕ್ರೇಗ್ ಕುಟುಂಬ",
-
   "description": "ವಿವರಣೆ",
   "optional": "(ಐಚ್ಛಿಕ)",
   "description-placeholder": "ನಿಮ್ಮ ಪ್ರೊಫೈಲ್ ವಿವರಣೆಯನ್ನು ನಮೂದಿಸಿ...",
   "location": "ಸ್ಥಳ",
   "location-placeholder": "ಉದಾ. ಆಸ್ಟಿನ್, TX",
-
   "copied": "ನಕಲಿಸಲಾಗಿದೆ",
   "copy": "ನಕಲಿಸಿ",
   "save-changes": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ",
   "sign-out": "ಸೈನ್ ಔಟ್ ಮಾಡಿ",
-
   "log-in": "ಲಾಗ್ ಇನ್",
   "tanakh": "ತನಾಖ್",
   "traditional": "ಸಾಂಪ್ರದಾಯಿಕ",
@@ -57,7 +53,6 @@
   "scripture-settings": "ಸ್ಕ್ರಿಪ್ಚರ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
   "scripture-elements": "ಧರ್ಮಗ್ರಂಥದ ಅಂಶಗಳು",
   "scripture-settings-font-size-example": "ಅ",
-
   "show-headings": "ಶೀರ್ಷಿಕೆಗಳನ್ನು ತೋರಿಸಿ",
   "show-verse-numbers": "ಪದ್ಯ ಸಂಖ್ಯೆಗಳನ್ನು ತೋರಿಸಿ",
   "show-footnotes": "ಅಡಿಟಿಪ್ಪಣಿಗಳನ್ನು ತೋರಿಸಿ",
@@ -71,7 +66,6 @@
   "no-extensions-available": "ಯಾವುದೇ ವಿಸ್ತರಣೆಗಳು ಲಭ್ಯವಿಲ್ಲ.",
   "install": "ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ",
   "uninstall": "ಅಸ್ಥಾಪಿಸು",
-
   "custom": "ಕಸ್ಟಮ್",
   "text-section-bookTitle": "ಪುಸ್ತಕ ಶೀರ್ಷಿಕೆ ಪಠ್ಯ",
   "text-section-heading": "ಶೀರ್ಷಿಕೆ ಪಠ್ಯ",
@@ -92,7 +86,6 @@
   "show-selected-items": "ಆಯ್ಕೆಮಾಡಿದ ಐಟಂಗಳನ್ನು ತೋರಿಸಿ",
   "show-highlight-colors": "ಹೈಲೈಟ್ ಬಣ್ಣಗಳನ್ನು ತೋರಿಸಿ",
   "show-icon-text": "ಐಕಾನ್ ಪಠ್ಯವನ್ನು ತೋರಿಸಿ",
-
   "extensions": "ವಿಸ್ತರಣೆಗಳು",
   "display": "ಪ್ರದರ್ಶನ",
   "theme-and-text": "ಥೀಮ್ ಮತ್ತು ಪಠ್ಯ",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "ಸ್ಕ್ರಿಪ್ಚರ್ ಫಾಂಟ್ ಗಾತ್ರವನ್ನು ಹೆಚ್ಚಿಸಿ",
   "change-line-spacing": "ಸಾಲಿನ ಅಂತರವನ್ನು ಬದಲಾಯಿಸಿ",
   "line-spacing_lineHeight": "ಸಾಲಿನ ಅಂತರ: {{lineHeight}}",
-
   "italic": "ಇಟಾಲಿಕ್",
   "underline": "ಅಂಡರ್‌ಲೈನ್",
   "alignment_x": "ಜೋಡಣೆ: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "ಪಠ್ಯ ಬಣ್ಣ",
   "follow_theme": "ಥೀಮ್ ಅನುಸರಿಸಿ",
   "reset-to-default": "ಡೀಫಾಲ್ಟ್‌ಗೆ ಮರುಹೊಂದಿಸಿ",
-
   "id_highlight-text-color": "{{id}} ಪಠ್ಯ ಬಣ್ಣವನ್ನು ಹೈಲೈಟ್ ಮಾಡಿ",
   "id_highlight-background-color": "{{id}} ಹಿನ್ನೆಲೆ ಬಣ್ಣವನ್ನು ಹೈಲೈಟ್ ಮಾಡಿ",
   "all-settings-description": "ಪ್ರತಿಯೊಂದು ಪಠ್ಯ ವಿಭಾಗವನ್ನು ಸೂಕ್ಷ್ಮವಾಗಿ ಟ್ಯೂನ್ ಮಾಡಿ ಮತ್ತು ಪ್ರತಿಯೊಂದು ಥೀಮ್ ಬಣ್ಣವನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ.",
@@ -141,7 +132,6 @@
   "old-testament_short": "ಓವರ್ಟೈಮ್",
   "new-testament_short": "ನವೋದಯ",
   "apocrypha": "ಅಪೋಕ್ರಿಫಾ",
-
   "custom-translations": "ಕಸ್ಟಮ್ ಅನುವಾದಗಳು",
   "no-translation-results-found": "ಯಾವುದೇ ಫಲಿತಾಂಶಗಳು ಕಂಡುಬಂದಿಲ್ಲ. ಭಾಗಶಃ ಪೂರ್ಣಗೊಂಡ ಅನುವಾದಗಳನ್ನು ಸೇರಿಸಲು ನಿಮ್ಮ ಹುಡುಕಾಟವನ್ನು ವಿಸ್ತರಿಸಲು ನೀವು ಬಯಸುವಿರಾ?",
   "show-all-translations": "ಎಲ್ಲಾ ಅನುವಾದಗಳನ್ನು ತೋರಿಸಿ",
@@ -159,7 +149,6 @@
   "4-psalms": "4 ಕೀರ್ತನೆಗಳು",
   "5-psalms": "5 ಕೀರ್ತನೆಗಳು",
   "remove-bookmark": "ಬುಕ್‌ಮಾರ್ಕ್ ತೆಗೆದುಹಾಕಿ",
-
   "chat": "ಚಾಟ್ ಮಾಡಿ",
   "today": "ಇಂದು",
   "you": "ನೀವು",
@@ -169,7 +158,6 @@
   "category-options": "ಫೋಲ್ಡರ್ ಆಯ್ಕೆಗಳು",
   "rename": "ಮರುಹೆಸರಿಸಿ",
   "delete": "ಅಳಿಸಿ",
-
   "bookmark-options": "ಬುಕ್‌ಮಾರ್ಕ್ ಆಯ್ಕೆಗಳು",
   "new-folder-placeholder": "ಫೋಲ್ಡರ್ ಹೆಸರು",
   "tasks": "ಕಾರ್ಯಗಳು",
@@ -180,12 +168,10 @@
   "folder-name-taken": "ಆ ಹೆಸರಿನ ಫೋಲ್ಡರ್ ಈಗಾಗಲೇ ಅಸ್ತಿತ್ವದಲ್ಲಿದೆ.",
   "add-to-new": "ಹೊಸದಕ್ಕೆ ಸೇರಿಸಿ",
   "save": "ಉಳಿಸಿ",
-
   "apocrypha-info-text": "ಈ ವಿಭಾಗದ ಯಾವುದೇ ಬರಹಗಳನ್ನು ಆರಂಭಿಕ ಯಹೂದಿ ಅಥವಾ ಕ್ರಿಶ್ಚಿಯನ್ ಸಮುದಾಯಗಳು ಎಂದಿಗೂ ಧರ್ಮಗ್ರಂಥವೆಂದು ಪರಿಗಣಿಸಿಲ್ಲ. ಬೈಬಲ್ ಒಂದು ನಿರ್ದಿಷ್ಟ ಪುಸ್ತಕಗಳ ಸಂಗ್ರಹವಾಗಿದೆ. ಯಹೂದಿಗಳು ಮತ್ತು ಕ್ರಿಶ್ಚಿಯನ್ನರು ಯಾವಾಗಲೂ ಹಳೆಯ ಒಡಂಬಡಿಕೆಯ ಬಗ್ಗೆ ಒಪ್ಪಿಕೊಂಡಿದ್ದಾರೆ, ಇದು ಯಹೂದಿ ಜನರು ತನಾಖ್ ಎಂದು ಕರೆಯುವ ಮತ್ತು ಕ್ರಿಶ್ಚಿಯನ್ನರು ಹಳೆಯ ಒಡಂಬಡಿಕೆ ಎಂದು ಕರೆಯುವ ಪವಿತ್ರ ಬರಹಗಳ ಸ್ಥಿರ ಗುಂಪಿನಿಂದ ಬಂದಿದೆ. ತನಾಖ್ ಮತ್ತು ಹಳೆಯ ಒಡಂಬಡಿಕೆಯ ವಿಷಯಗಳು ನಿಖರವಾಗಿ ಒಂದೇ ಆಗಿರುತ್ತವೆ, ಆದರೆ ಸಾಮಾನ್ಯವಾಗಿ ವಿಭಿನ್ನವಾಗಿ ಜೋಡಿಸಲ್ಪಟ್ಟಿರುತ್ತವೆ. ಕ್ರಿಶ್ಚಿಯನ್ನರು ಹೆಚ್ಚುವರಿಯಾಗಿ ಹೊಸ ಒಡಂಬಡಿಕೆಯನ್ನು ಗುರುತಿಸುತ್ತಾರೆ, ಇದು ಯೇಸುವಿನ ಕಥೆ, ಅವನ ಬೋಧನೆಗಳು ಮತ್ತು ಅವನ ಅನುಯಾಯಿಗಳ ಬರಹಗಳನ್ನು ಹೇಳುತ್ತದೆ. ಕೆಳಗಿನ ಬರಹಗಳು ಬೈಬಲ್ ಬರೆಯಲ್ಪಟ್ಟ ಸಮಯದಲ್ಲಿ ತಿಳಿದಿದ್ದವು ಮತ್ತು ವ್ಯಾಪಕವಾಗಿ ಓದಲ್ಪಟ್ಟವು, ಆದರೆ ಅವುಗಳನ್ನು ಎಂದಿಗೂ ಧರ್ಮಗ್ರಂಥವೆಂದು ಪರಿಗಣಿಸಲಾಗಿಲ್ಲ. ಪ್ರಾಚೀನ ಲೇಖಕರು ಕೆಲವೊಮ್ಮೆ ಕವಿಗಳು, ತತ್ವಜ್ಞಾನಿಗಳು ಮತ್ತು ಇತರ ಬರಹಗಳನ್ನು ಒಳಗೊಂಡಂತೆ ವ್ಯಾಪಕ ಶ್ರೇಣಿಯ ಪಠ್ಯಗಳನ್ನು ಉಲ್ಲೇಖಿಸಿದರೂ, ಏನನ್ನಾದರೂ ಉಲ್ಲೇಖಿಸುವುದು ಅದನ್ನು ಧರ್ಮಗ್ರಂಥವೆಂದು ಪರಿಗಣಿಸುವುದಕ್ಕೆ ಸಮನಾಗಿರುವುದಿಲ್ಲ. ಈ ಬರಹಗಳನ್ನು ಇಲ್ಲಿ ಐತಿಹಾಸಿಕ ಮತ್ತು ಸಾಹಿತ್ಯಿಕ ಉಲ್ಲೇಖಕ್ಕಾಗಿ ಮಾತ್ರ ಸೇರಿಸಲಾಗಿದೆ.",
   "seed-bible": "ಬೀಜ ಬೈಬಲ್",
   "take-photo": "ಫೋಟೋ ತೆಗೆಯಿರಿ",
   "choose-from-gallery": "ಗ್ಯಾಲರಿಯಿಂದ ಆರಿಸಿ",
-
   "crop-your-photo": "ನಿಮ್ಮ ಫೋಟೋವನ್ನು ಕ್ರಾಪ್ ಮಾಡಿ",
   "zoom": "ಜೂಮ್ ಮಾಡಿ",
   "set-picture": "ಚಿತ್ರವನ್ನು ಹೊಂದಿಸಿ",
@@ -211,10 +197,8 @@
   "read-the-bible": "ಬೈಬಲ್ ಓದಿ",
   "seed-bible-description": "ಬೀಜ ಬೈಬಲ್‌ನಲ್ಲಿ {{bookName}} {{chapterNumber}} ಓದಿ",
   "social-title": "{{bookName}} {{chapterNumber}} ಓದಿ",
-
   "chapter-navigation": "ಅಧ್ಯಾಯ ಸಂಚರಣೆ",
   "tutorial.skip": "ಬಿಟ್ಟುಬಿಡಿ",
-
   "tutorial.back": "ಹಿಂದೆ",
   "tutorial.done": "ಮುಗಿದಿದೆ",
   "tutorial.next": "ಮುಂದೆ",
@@ -327,11 +311,9 @@
   "study-notes": "ಅಧ್ಯಯನ ಟಿಪ್ಪಣಿಗಳು",
   "content": "ವಿಷಯ",
   "untitled-playlist": "ಶೀರ್ಷಿಕೆರಹಿತ ಪ್ಲೇಪಟ್ಟಿ",
-
   "discover-annotations-empty": "ನೀವು ಯಾವುದೇ ಟಿಪ್ಪಣಿಗಳನ್ನು ಹೊಂದಿಲ್ಲ.",
   "discover-cross-references-empty": "ಈ ಅಧ್ಯಾಯಕ್ಕೆ ಯಾವುದೇ ಅಡ್ಡ ಉಲ್ಲೇಖಗಳಿಲ್ಲ.",
   "discover-study-notes-empty": "ಈ ಅಧ್ಯಾಯಕ್ಕೆ ಯಾವುದೇ ಅಧ್ಯಯನ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ.",
-
   "discover-select-tab": "ಸಂಬಂಧಿತ ವಿಷಯವನ್ನು ಕಂಡುಹಿಡಿಯಲು ಟ್ಯಾಬ್ ಆಯ್ಕೆಮಾಡಿ.",
   "create-playlist": "ರಚಿಸಿ",
   "playlist-title_placeholder": "ಪ್ಲೇಪಟ್ಟಿ ಶೀರ್ಷಿಕೆ",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "ಪ್ಲೇಪಟ್ಟಿಯನ್ನು ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
   "collapsed-tab-shared-label": "{{title}} — ಹಂಚಿಕೊಂಡ ಅವಧಿ, {{count}} ಪ್ರಸ್ತುತ",
   "playlist-add-mode-label": "ಐಟಂ ಪ್ರಕಾರ",
-
   "session-host-reconnected": "ಅಧಿವೇಶನಕ್ಕೆ ಮರುಸಂಪರ್ಕಿಸಲಾಗಿದೆ",
   "session-host-left": "ಆತಿಥೇಯರು ಹೊರಟುಹೋದರು — ನಿಮ್ಮನ್ನು ಅಧಿವೇಶನದಿಂದ ತೆಗೆದುಹಾಕಲಾಗಿದೆ.",
   "drag-to-reorder-playlist-item": "ಮರುಕ್ರಮಗೊಳಿಸಲು ಎಳೆಯಿರಿ",
   "saving": "ಉಳಿಸಲಾಗುತ್ತಿದೆ…",
-
   "unsaved-item-confirm-message": "ನೀವು ಇನ್ನೂ ಪ್ಲೇಪಟ್ಟಿಗೆ ಸೇರಿಸದ ಐಟಂ ಅನ್ನು ಸೇರಿಸಲು ಪ್ರಾರಂಭಿಸಿದ್ದೀರಿ. ನೀವು ಏನು ಮಾಡಲು ಬಯಸುತ್ತೀರಿ?",
   "discard-and-save": "ತಿರಸ್ಕರಿಸಿ ಮತ್ತು ಉಳಿಸಿ",
   "add-and-save": "ಸೇರಿಸಿ ಮತ್ತು ಉಳಿಸಿ",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "ಪೂರ್ವವೀಕ್ಷಣೆ {{reading}}",
   "reading-plan-mark-reading-complete": "ಓದುವಿಕೆ ಪೂರ್ಣಗೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸಿ",
   "reading-plan-link-video": "ವೀಡಿಯೊ",
-
   "reading-plan-mark-passage-complete": "{{passage}} ಅನ್ನು ಓದಿದಂತೆ ಗುರುತಿಸಿ",
   "reading-plan-read-nudge-title": "ಓದುವಿಕೆ ಚೆನ್ನಾಗಿದೆ!",
   "reading-plan-read-nudge-toast": "{{passage}} ಪೂರ್ಣಗೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸುವುದೇ?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "ಬೈಬಲ್ ಅನ್ನು ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ಓದಿ, ಹುಡುಕಿ ಮತ್ತು ಅಧ್ಯಯನ ಮಾಡಿ. ಮುಖ್ಯಾಂಶಗಳು, ಟಿಪ್ಪಣಿಗಳು, ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು ಮತ್ತು ಓದುವ ಯೋಜನೆಗಳೊಂದಿಗೆ ಹಲವು ಭಾಷೆಗಳಲ್ಲಿ ಉಚಿತ ಅನುವಾದಗಳು.",
   "all": "ಎಲ್ಲವೂ",
-
   "today-bookmarks": "ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು",
   "today-search-verses": "ಪುಸ್ತಕಗಳು, ಅಧ್ಯಾಯ, ಪದ್ಯಗಳನ್ನು ಹುಡುಕಿ....",
   "anonymous-greeting": "ಸ್ವಾಗತ!",
   "community": "ಸಮುದಾಯ",
   "go-somewhere-new": "ಹೊಸದಕ್ಕೆ ಹೋಗಿ",
-
   "open-bible": "ಬೈಬಲ್ ತೆರೆಯಿರಿ",
   "personal-greeting": "ಸ್ವಾಗತ, {{name}} !",
   "resume-reading": "ನೀವು ಎಲ್ಲಿಗೆ ಬಿಟ್ಟಿದ್ದೀರೋ ಅಲ್ಲಿಂದಲೇ ಮುಂದುವರಿಯಿರಿ",
   "resume-reading-loading": "ನಿಮ್ಮ ಓದುವ ಇತಿಹಾಸವನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...",
   "selected-year": "ವರ್ಷ: {{year}}",
-
   "theme-light": "ಬೆಳಕು",
   "theme-dark": "ಕತ್ತಲೆ",
   "installed-extensions": "ಸ್ಥಾಪಿಸಲಾಗಿದೆ",
@@ -543,7 +519,6 @@
   "extension-state-installed": "ಸ್ಥಾಪಿಸಲಾಗಿದೆ",
   "extension-state-downloaded": "ಡೌನ್‌ಲೋಡ್ ಮಾಡಲಾಗಿದೆ",
   "extension-state-pending": "ಸ್ಥಾಪಿಸಲಾಗುತ್ತಿದೆ...",
-
   "tutorial.stepProgress": "{{current}} ಹಂತ {{total}} ರಲ್ಲಿ",
   "tutorial.offlineDownloadTitle": "ಅದನ್ನು ನಿಮ್ಮ ಸಾಧನದಲ್ಲಿ ಇರಿಸಿಕೊಳ್ಳಲು ಟ್ಯಾಪ್ ಮಾಡಿ",
   "tutorial.offlineDownloadBody": "ಈ ಐಕಾನ್ ಹೊಂದಿರುವ ಯಾವುದೇ ಅನುವಾದವನ್ನು ಆಫ್‌ಲೈನ್ ಓದುವಿಕೆಗಾಗಿ ಉಳಿಸಬಹುದು.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "ಈ ಲೇಔಟ್ ಮೆನುವಿನಿಂದ ಎಷ್ಟು ಪ್ಯಾಸೇಜ್‌ಗಳನ್ನು ಪಕ್ಕಪಕ್ಕದಲ್ಲಿ ಓದಬೇಕೆಂದು ಆರಿಸಿ.",
   "tutorial.addTabTitle": "ಹೆಚ್ಚಿನ ಪ್ಯಾಸೇಜ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ",
   "tutorial.addTabBody": "ಹಲವಾರು ಪುಸ್ತಕಗಳು ಅಥವಾ ಅನುವಾದಗಳನ್ನು ಅಕ್ಕಪಕ್ಕದಲ್ಲಿ ಓದಲು ಹೊಸ ಟ್ಯಾಬ್ ಸೇರಿಸಿ.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % ಪೂರ್ಣಗೊಂಡಿದೆ - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ಪೂರ್ಣಗೊಂಡಿದೆ",
   "playlist-history-continue": "ಮುಂದುವರಿಸಿ",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "ಈ ಅಧ್ಯಾಯಕ್ಕೆ {{count}} ಟಿಪ್ಪಣಿಗಳು",
   "create-folder": "ಫೋಲ್ಡರ್ ರಚಿಸಿ",
   "edit-bookmark": "ಬುಕ್‌ಮಾರ್ಕ್ ಸಂಪಾದಿಸಿ",
-
   "greeting-afternoon": "ಶುಭ ಅಪರಾಹ್ನ!",
   "greeting-afternoon-named": "ಶುಭ ಮಧ್ಯಾಹ್ನ, {{name}} !",
   "greeting-evening": "ಶುಭ ಸಂಜೆ!",
@@ -652,32 +625,24 @@
   "ask-ai": "AI ಕೇಳಿ",
   "unread-mention": "ಓದದಿರುವ ಉಲ್ಲೇಖ",
   "unread-messages": "ಓದದಿರುವ ಸಂದೇಶಗಳು: {{count}}",
-
   "scripture-width": "ಸ್ಕ್ರಿಪ್ಚರ್ ಅಗಲ",
   "decrease-scripture-width": "ಸ್ಕ್ರಿಪ್ಚರ್ ಅಗಲವನ್ನು ಕಡಿಮೆ ಮಾಡಿ",
   "increase-scripture-width": "ಸ್ಕ್ರಿಪ್ಚರ್ ಅಗಲವನ್ನು ಹೆಚ್ಚಿಸಿ",
   "annotations": "ಟಿಪ್ಪಣಿಗಳು",
   "discover-content-panel": "ವಿಷಯವನ್ನು ಅನ್ವೇಷಿಸಿ",
   "discover-book-title": "{{book}} ಅನ್ವೇಷಿಸಿ",
-
   "about-title": "ಬೀಜ ಬೈಬಲ್ ಬಗ್ಗೆ",
   "about-meta-description": "ಸೀಡ್ ಬೈಬಲ್ ನಿಮ್ಮ ಕುಟುಂಬ, ಸ್ನೇಹಿತರು ಮತ್ತು ಸಮುದಾಯದೊಂದಿಗೆ ಸ್ಕ್ರಿಪ್ಚರ್ ಓದಲು ನಿರ್ಮಿಸಲಾದ ಉಚಿತ ಬೈಬಲ್ ಅಪ್ಲಿಕೇಶನ್ ಆಗಿದೆ - ಜಾಹೀರಾತುಗಳು ಅಥವಾ ಪೇವಾಲ್‌ಗಳಿಲ್ಲದೆ ಶಾಶ್ವತವಾಗಿ ಉಚಿತ.",
-
   "about-action-open-passage": "ಪ್ಯಾಸೇಜ್ ತೆರೆಯಿರಿ",
   "about-action-donate": "ದಾನ ಮಾಡಿ",
   "about-action-discord": "ಡಿಸ್ಕಾರ್ಡ್ ಸೇರಿ",
   "recent-uploads": "ಇತ್ತೀಚಿನ ಅಪ್‌ಲೋಡ್‌ಗಳು",
-
   "customization-not-found": "ಈ ಕಸ್ಟಮೈಸೇಶನ್ ಕಂಡುಬಂದಿಲ್ಲ.",
   "customization-name": "ಹೆಸರು",
   "customization-primaryColor": "ಪ್ರಾಥಮಿಕ",
-
   "customization-secondaryColor": "ದ್ವಿತೀಯ",
-
   "customization-tertiaryColor": "ತೃತೀಯ",
-
   "customization-fonts": "ಫಾಂಟ್‌ಗಳು",
-
   "custom-font-option": "ಕಸ್ಟಮ್...",
   "custom-font-name-placeholder": "ಗೂಗಲ್ ಫಾಂಟ್ ಹೆಸರು",
   "delete-customization": "ಅಳಿಸಿ",
@@ -690,10 +655,8 @@
   "extension-availability-available": "ಲಭ್ಯವಿದೆ",
   "extension-availability-auto-installed": "ಸ್ವಯಂ-ಸ್ಥಾಪಿಸಲಾಗಿದೆ",
   "extension-availability-hidden": "ಮರೆಮಾಡಲಾಗಿದೆ",
-
   "variants": "ಥೀಮ್‌ಗಳು",
   "add-variant": "ಥೀಮ್ ಸೇರಿಸಿ",
-
   "base-theme-description": "ನೀವು ಕಸ್ಟಮೈಸ್ ಮಾಡದ ಯಾವುದಕ್ಕೂ ಈ ಥೀಮ್ ಅನ್ನು ಮೊದಲೇ ಹೊಂದಿಸುವ ಬದಲಾವಣೆಗಳು ಹಿಂತಿರುಗುತ್ತವೆ. ನಿಮ್ಮ ಸ್ವಂತ ಸಂಪಾದನೆಗಳನ್ನು ಇರಿಸಲಾಗುತ್ತದೆ.",
   "reset-to-base-theme": "ಮೂಲ ಥೀಮ್‌ಗೆ ಮರುಹೊಂದಿಸಿ",
   "low-contrast-warning": "{{label}} : ಕಾಂಟ್ರಾಸ್ಟ್ ಕೇವಲ {{ratio}} :1 — ಕನಿಷ್ಠ {{minRatio}} :1 ಗುರಿಯಿಟ್ಟು ಪಠ್ಯವನ್ನು ಓದಲು ಸಾಧ್ಯವಾಗುವಂತೆ ಇರಿಸಿ.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "ಇಲ್ಲಿ ಇನ್ನೂ ಯಾವುದೇ ಉಳಿತಾಯಗಳಿಲ್ಲ.",
   "save-options": "ಆಯ್ಕೆಗಳನ್ನು ಉಳಿಸಿ",
   "saves": "ಉಳಿಸುತ್ತದೆ",
-
   "hide-saves": "ಉಳಿಸುವಿಕೆಗಳನ್ನು ಮರೆಮಾಡಿ",
   "show-saves": "ಉಳಿಸುವಿಕೆಗಳನ್ನು ತೋರಿಸಿ",
   "save-verses": "ಉಳಿಸಿ",
   "new-save-folder": "ಹೊಸ ಫೋಲ್ಡರ್",
   "edit-save": "ಉಳಿಸುವಿಕೆಯನ್ನು ಸಂಪಾದಿಸಿ",
   "remove-save-from-all-folders": "ಎಲ್ಲಾ ಫೋಲ್ಡರ್‌ಗಳಿಂದ ತೆಗೆದುಹಾಕಿ",
-
   "color-hue": "ವರ್ಣ",
   "color-saturation": "ಶುದ್ಧತ್ವ ಮತ್ತು ಹೊಳಪು",
   "hex-color": "ಹೆಕ್ಸ್ ಬಣ್ಣ",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "ಫಾರ್ಮ್ಯಾಟಿಂಗ್ ಎಡಿಟರ್ ಲೋಡ್ ಆಗಲಿಲ್ಲ. ಈ ಟಿಪ್ಪಣಿಯಲ್ಲಿ ಕಳೆದುಹೋಗುವ ಫಾರ್ಮ್ಯಾಟಿಂಗ್ ಇದೆ, ಆದ್ದರಿಂದ ನೀವು ಮರುಸಂಪರ್ಕಿಸುವವರೆಗೆ ಅದನ್ನು ಸಂಪಾದಿಸಲಾಗುವುದಿಲ್ಲ.",
   "annotation-text": "ಟಿಪ್ಪಣಿ ಪಠ್ಯ",
   "notes-for-verse": "ಪದ್ಯ {{verse}} ಕ್ಕೆ ಟಿಪ್ಪಣಿಗಳು",
-
   "configure-extension-defaults": "ಡೀಫಾಲ್ಟ್ ಓವರ್‌ರೈಡ್‌ಗಳನ್ನು ಕಾನ್ಫಿಗರ್ ಮಾಡಿ",
-
   "extension-settings-defaults-title": "{{name}} ಡೀಫಾಲ್ಟ್ ಓವರ್‌ರೈಡ್‌ಗಳು",
   "no-extension-settings": "ಈ ವಿಸ್ತರಣೆಯು ಯಾವುದೇ ಕಾನ್ಫಿಗರ್ ಮಾಡಬಹುದಾದ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಹೊಂದಿಲ್ಲ.",
   "extension-settings-save-failed": "ನಿಮ್ಮ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
@@ -872,7 +831,6 @@
   "setting-no-default": "ಡೀಫಾಲ್ಟ್ ಇಲ್ಲ",
   "override-setting": "{{name}} ಅನ್ನು ಅತಿಕ್ರಮಿಸಿ",
   "override-setting-label": "ಅತಿಕ್ರಮಿಸು",
-
   "discover-choose-filter-hint": "ಈ ಅಧ್ಯಾಯದಿಂದ ಇನ್ನಷ್ಟು ನೋಡಲು ಮೇಲಿನ ಫಿಲ್ಟರ್ ಅನ್ನು ಆರಿಸಿ.",
   "take-a-tour": "ಪ್ರವಾಸ ಕೈಗೊಳ್ಳಿ",
   "share-reading-plan": "ಯೋಜನೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "ನನ್ನ ಬುಕ್‌ಮಾರ್ಕ್ {{number}}",
   "bookmark-move-hint": "ಈ ಅಧ್ಯಾಯಕ್ಕೆ ಸರಿಸಲು ಬುಕ್‌ಮಾರ್ಕ್ ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ.",
   "move-bookmark-here": "{{name}} ಅನ್ನು ಇಲ್ಲಿಗೆ ಸರಿಸಿ",
-
   "play": "ಪ್ಲೇ ಮಾಡಿ",
   "pause": "ವಿರಾಮಗೊಳಿಸಿ",
   "audio-playback-position": "ಪ್ಲೇಬ್ಯಾಕ್ ಸ್ಥಾನ",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "ಪದ್ಯ {{verse}}",
   "tab-playing-audio": "ಆಡಿಯೋ ಪ್ಲೇ ಆಗುತ್ತಿದೆ",
   "collapsed-tab-playing-label": "{{label}} — ಆಡಿಯೋ ಪ್ಲೇ ಆಗುತ್ತಿದೆ",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} ಥೀಮ್‌ಗಳು",
   "customization-theme-count_one": "{{count}} ಥೀಮ್",
@@ -1104,7 +1060,6 @@
   "about-community-body": "ನಂಬಿಕೆ ಎಂದರೆ ಒಟ್ಟಿಗೆ ಬದುಕುವುದು. ಸೀಡ್ ಬೈಬಲ್ ಅನ್ನು ನಿಮ್ಮ ಕುಟುಂಬ, ನಿಮ್ಮ ಹತ್ತಿರದ ಸ್ನೇಹಿತರು ಮತ್ತು ನಿಮ್ಮ ಮನೆಯ ಚರ್ಚ್‌ನೊಂದಿಗೆ ಧರ್ಮಗ್ರಂಥವನ್ನು ಓದಲು ನಿರ್ಮಿಸಲಾಗಿದೆ.",
   "discovered-content": "ಕಂಡುಹಿಡಿದ ವಿಷಯ",
   "show-discovered-content": "ಕಂಡುಹಿಡಿದ ವಿಷಯವನ್ನು ತೋರಿಸಿ",
-
   "extension-availability-default": "ಡೀಫಾಲ್ಟ್ ( {{availability}} )",
   "customization-extensions-default": "ಇತರ ವಿಸ್ತರಣೆಗಳಿಗೆ ಡೀಫಾಲ್ಟ್",
   "customization-extensions-default-hint": "ನೀವು ಕೆಳಗೆ ಹೊಂದಿಸದ ಪ್ರತಿಯೊಂದು ವಿಸ್ತರಣೆಗೂ ಅನ್ವಯಿಸುತ್ತದೆ, ನಂತರ ಸೇರಿಸಲಾದ ಹೊಸ ವಿಸ್ತರಣೆಗಳು ಸೇರಿದಂತೆ.",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "ಪ್ಲೇಪಟ್ಟಿಗೆ ಹಿಂತಿರುಗಿ",
   "playlist-scripture-note-aria": "{{passage}} ಕುರಿತು ಟಿಪ್ಪಣಿ",
   "playlist-scripture-note-progress": "{{current}} / {{total}}",
-
   "unsaved-item-edit-confirm-message": "ನೀವು ಒಂದು ಐಟಂ ಅನ್ನು ಬದಲಾಯಿಸಿದ್ದೀರಿ ಆದರೆ ಆ ಬದಲಾವಣೆಗಳನ್ನು ಇನ್ನೂ ಉಳಿಸಿಲ್ಲ. ನೀವು ಏನು ಮಾಡಲು ಬಯಸುತ್ತೀರಿ?",
   "keep-changes-and-save": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ ಮತ್ತು ಉಳಿಸಿ",
   "reading-plan-edit-reading": "ಓದುವಿಕೆಯನ್ನು ಸಂಪಾದಿಸಿ",
@@ -1152,7 +1106,6 @@
   "branding": "ಬ್ರ್ಯಾಂಡಿಂಗ್",
   "create-custom-branding-menu-item": "ಕಸ್ಟಮ್ ಬ್ರ್ಯಾಂಡಿಂಗ್",
   "your-content-empty-branding": "ನೀವು ರಚಿಸುವ ಕಸ್ಟಮ್ ಬ್ರ್ಯಾಂಡಿಂಗ್ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
-
   "extension-consent-from": "{{host}} ಇಂದ",
   "extension-consent-source-version": "{ {{host}} ನಿಂದ ಆವೃತ್ತಿ {{version}} ·",
   "extension-consent-uploader-unnamed": "ಬೀಜ ಬೈಬಲ್ ಬಳಕೆದಾರ",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "ನೀವು ಯಾವ ಪದ್ಯಗಳನ್ನು ಆರಿಸುತ್ತೀರಿ ಎಂದು ನೋಡಿ",
   "extension-permission-reading-navigate": "ತೆರೆದ ಹಾದಿಗಳು",
   "extension-permission-network": "{{host}} ಗೆ ಸಂಪರ್ಕಪಡಿಸಿ",
-
   "extension-consent-not-now": "ಈಗಲ್ಲ",
   "extension-consent-nothing-yet": "ಇದೀಗ, ಅದು ನಿಮ್ಮ ಯಾವುದೇ ಮಾಹಿತಿಗೆ ಪ್ರವೇಶವನ್ನು ಹೊಂದಿರುವುದಿಲ್ಲ.",
   "extension-permission-reading-history": "ನಿಮ್ಮ ಓದುವ ಇತಿಹಾಸವನ್ನು ನೋಡಿ",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "ರದ್ದುಮಾಡಿ",
   "extension-consent-high-risk": "ಸೂಕ್ಷ್ಮ",
   "extension-modal-ok": "ಸರಿ",
-
   "extension-permissions-restart-note": "ಬದಲಾವಣೆಗಳು ತಕ್ಷಣವೇ ಜಾರಿಗೆ ಬರುತ್ತವೆ. {{name}} ಅವುಗಳನ್ನು ಮರುಪ್ರಾರಂಭಿಸಲು ಪ್ರಾರಂಭಿಸುತ್ತದೆ.",
   "extension-permissions-saved": "ಉಳಿಸಲಾಗಿದೆ. {{name}} ಹೊಸ ಅನುಮತಿಗಳೊಂದಿಗೆ ಮರುಪ್ರಾರಂಭಿಸಲಾಗಿದೆ.",
   "extension-permissions-failed": "ಅದು ಉಳಿಸಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
@@ -1276,8 +1227,51 @@
   "session-settings-verse-effects-desc-hosts": "ನಿರೂಪಕರು ಪದ್ಯವನ್ನು ಆಯ್ಕೆ ಮಾಡಿದಾಗ ಪರಿಣಾಮಗಳನ್ನು ತೋರಿಸಿ.",
   "session-settings-verse-effects-desc-everyone": "ಯಾರಾದರೂ ಪದ್ಯವನ್ನು ಆಯ್ಕೆ ಮಾಡಿದಾಗ ಪರಿಣಾಮಗಳನ್ನು ತೋರಿಸಿ.",
   "session-settings-verse-effects-desc-none": "ಪದ್ಯ ಆಯ್ಕೆ ಪರಿಣಾಮಗಳನ್ನು ಎಲ್ಲರಿಗೂ ಆಫ್ ಮಾಡಲಾಗಿದೆ.",
-
   "account": "ಖಾತೆ",
   "scroll-filters-start": "ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಆರಂಭದ ಕಡೆಗೆ ಸ್ಕ್ರಾಲ್ ಮಾಡಿ",
-  "scroll-filters-end": "ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಅಂತ್ಯಕ್ಕೆ ಸ್ಕ್ರಾಲ್ ಮಾಡಿ"
+  "scroll-filters-end": "ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಅಂತ್ಯಕ್ಕೆ ಸ್ಕ್ರಾಲ್ ಮಾಡಿ",
+  "download": "ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+  "image-details-uploaded": "ಅಪ್‌ಲೋಡ್ ಮಾಡಲಾಗಿದೆ",
+  "image-details-dimensions": "ಆಯಾಮಗಳು",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "ಪ್ರಕಾರ",
+  "image-details-cover-of": "ಇದರ ಮುಖಪುಟ",
+  "image-details-not-a-cover": "ಕವರ್ ಆಗಿ ಬಳಸಲಾಗಿಲ್ಲ",
+  "delete-customization-confirm-title": "ಕಸ್ಟಮ್ ಬ್ರ್ಯಾಂಡಿಂಗ್ ಅನ್ನು ಅಳಿಸುವುದೇ?",
+  "delete-customization-confirm-message": "ಕಸ್ಟಮ್ ಬ್ರ್ಯಾಂಡಿಂಗ್ \" {{name}} \" ಅನ್ನು ಅಳಿಸುವುದೇ? ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "delete-customization-failed": "ಕಸ್ಟಮ್ ಬ್ರ್ಯಾಂಡಿಂಗ್ ಅನ್ನು ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+  "delete-variant-confirm-title": "ಥೀಮ್ ಅಳಿಸುವುದೇ?",
+  "delete-variant-confirm-message": "\" {{name}} \" ಥೀಮ್ ಅನ್ನು ಅಳಿಸುವುದೇ? ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "delete-variant-confirm-message-unnamed": "ಈ ಥೀಮ್ ಅನ್ನು ಅಳಿಸಬೇಕೇ? ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "delete-variant-failed": "ಥೀಮ್ ಅನ್ನು ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+  "delete-highlight-confirm-title": "ಹೈಲೈಟ್ ಅಳಿಸುವುದೇ?",
+  "delete-highlight-confirm-message": "{{reference}} ನಲ್ಲಿರುವ ಹೈಲೈಟ್ ಅನ್ನು ಅಳಿಸುವುದೇ? ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "delete-highlight-failed": "ಹೈಲೈಟ್ ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+  "delete-annotation-on-confirm-message": "{{reference}} ನಲ್ಲಿರುವ ಟಿಪ್ಪಣಿಯನ್ನು ಅಳಿಸುವುದೇ? ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "remove-from-folder": "ಫೋಲ್ಡರ್‌ನಿಂದ ತೆಗೆದುಹಾಕಿ",
+  "save-folders": "{{folders}}",
+  "delete-save-confirm-title": "ಉಳಿಸುವಿಕೆಯನ್ನು ಅಳಿಸುವುದೇ?",
+  "delete-save-confirm-message": "{{reference}} ಗಾಗಿ ಉಳಿಸುವಿಕೆಯನ್ನು ಅಳಿಸುವುದೇ? ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "delete-save-confirm-message-folders": "{{folders}} ನಿಂದ {{reference}} ಗಾಗಿ ಉಳಿಸುವಿಕೆಯನ್ನು ಅಳಿಸುವುದೇ? ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "delete-save-failed": "ಉಳಿಸುವಿಕೆಯನ್ನು ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+  "delete-save-folder-confirm-title": "ಫೋಲ್ಡರ್ ಅಳಿಸುವುದೇ?",
+  "delete-save-folder-confirm-message": "\" {{name}} \" ಫೋಲ್ಡರ್ ಅಳಿಸುವುದೇ?",
+  "delete-save-folder-confirm-deletes": "ಈ ಫೋಲ್ಡರ್‌ನಲ್ಲಿ ಮಾತ್ರ ಇರುವ {{count}} ಸೇವ್‌ಗಳನ್ನು ಸಹ ಅಳಿಸಲಾಗುತ್ತದೆ.",
+  "delete-save-folder-confirm-deletes_one": "ಈ ಫೋಲ್ಡರ್‌ನಲ್ಲಿ ಮಾತ್ರ ಇರುವ ಸೇವ್ ಅನ್ನು ಸಹ ಅಳಿಸಲಾಗುತ್ತದೆ.",
+  "delete-save-folder-confirm-deletes_other": "ಈ ಫೋಲ್ಡರ್‌ನಲ್ಲಿ ಮಾತ್ರ ಇರುವ {{count}} ಸೇವ್‌ಗಳನ್ನು ಸಹ ಅಳಿಸಲಾಗುತ್ತದೆ.",
+  "delete-save-folder-confirm-keeps": "ಇತರ ಫೋಲ್ಡರ್‌ಗಳಲ್ಲಿರುವ {{count}} ಸೇವ್‌ಗಳು ಅಲ್ಲಿಯೇ ಉಳಿಯುತ್ತವೆ.",
+  "delete-save-folder-confirm-keeps_one": "ಇನ್ನೊಂದು ಫೋಲ್ಡರ್‌ನಲ್ಲಿರುವ ಸೇವ್ ಕೂಡ ಅಲ್ಲಿಯೇ ಉಳಿಯುತ್ತದೆ.",
+  "delete-save-folder-confirm-keeps_other": "ಇತರ ಫೋಲ್ಡರ್‌ಗಳಲ್ಲಿರುವ {{count}} ಸೇವ್‌ಗಳು ಅಲ್ಲಿಯೇ ಉಳಿಯುತ್ತವೆ.",
+  "cant-be-undone": "ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "delete-save-folder-failed": "ಫೋಲ್ಡರ್ ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+  "download-image-failed": "ಚಿತ್ರವನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+  "session-settings-verse-effects-hosts-only": "ಹೋಸ್ಟ್‌ಗಳು ಮಾತ್ರ",
+  "session-settings-verse-effects-everyone": "ಎಲ್ಲರೂ",
+  "session-settings-verse-effects-none": "ಯಾವುದೂ ಇಲ್ಲ",
+  "loading-books": "ಪುಸ್ತಕಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...",
+  "books-load-failed": "ಪುಸ್ತಕಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಹಾಗೂ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  "loading-translation": "{{name}} ಲೋಡ್ ಆಗುತ್ತಿದೆ …",
+  "translation-load-failed": "{{name}} ಅನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+  "loading-translations": "ಅನುವಾದಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...",
+  "translations-load-failed": "ಅನುವಾದಗಳ ಪೂರ್ಣ ಪಟ್ಟಿಯನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ, ಆದ್ದರಿಂದ ಕೆಲವು ಕಾಣೆಯಾಗಿರಬಹುದು."
 }

@@ -814,6 +814,34 @@ export function CasualOSManager(
       return recordName ? decodeURIComponent(recordName) : null;
     },
 
+    /**
+     * Reads a file stored on the records server through the signed request
+     * the server hands out for it, or null for a URL it doesn't store.
+     */
+    readFile: async (fileUrl: string): Promise<Blob | null> => {
+      const result = await client.getFile({ fileUrl });
+      if (!result.success) {
+        return null;
+      }
+      const headers = { ...result.requestHeaders };
+      for (const header of UNSAFE_HEADERS) {
+        delete headers[header];
+      }
+      const response = await fetch(result.requestUrl, {
+        method: result.requestMethod,
+        headers,
+        // An <img> showing the same file may have cached it without the CORS
+        // headers a fetch needs, which would make the read fail.
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        throw new Error(
+          `Failed to read file. (${response.status} ${response.statusText})`
+        );
+      }
+      return response.blob();
+    },
+
     recordFile: async (
       recordKey: string,
       data: object | string | number | boolean,

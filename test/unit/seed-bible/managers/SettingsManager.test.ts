@@ -1,6 +1,8 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import {
+  EARLY_CONFIG_ATTR,
+  READER_SETTINGS_MIRROR_KEY,
   createSettings,
   DEFAULT_VERSE_LINE_HEIGHT,
   type AppSettings,
@@ -1020,5 +1022,227 @@ describe("removed per-section text settings", () => {
     createSettings(os, createLoginManager({ os }), nav).setVerseLineHeight(2);
 
     expect(refresh().settings.value.verseLineHeight).toBe(2);
+  });
+});
+
+describe("SettingsManager with settings applied before first paint", () => {
+  afterEach(() => {
+    document.documentElement.removeAttribute(EARLY_CONFIG_ATTR);
+    document.documentElement.removeAttribute("style");
+  });
+
+  it("keeps the early UI size and width until the saved settings arrive, then takes over", () => {
+    document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
+    document.documentElement.style.setProperty("--sb-ui-scale", "1.3");
+    document.documentElement.style.setProperty("--sb-scripture-width", "90ch");
+    const login = makeFakeLogin(null);
+
+    createSettings(CasualOSManager(), login, navWith());
+
+    // Seed defaults must not overwrite what the early script painted.
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-ui-scale")
+    ).toBe("1.3");
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-scripture-width")
+    ).toBe("90ch");
+    expect(document.documentElement.hasAttribute(EARLY_CONFIG_ATTR)).toBe(true);
+
+    login.localConfig.value = { uiSize: "XL", scriptureWidth: 90 };
+
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-ui-scale")
+    ).toBe("1.3");
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-scripture-width")
+    ).toBe("90ch");
+    expect(document.documentElement.hasAttribute(EARLY_CONFIG_ATTR)).toBe(
+      false
+    );
+  });
+
+  it("keeps the early line spacing until the saved settings arrive", () => {
+    document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
+    document.documentElement.style.setProperty(
+      "--text-verse-line-height",
+      "2.4"
+    );
+    const login = makeFakeLogin(null);
+
+    createSettings(CasualOSManager(), login, navWith());
+
+    const style = document.documentElement.style;
+    expect(style.getPropertyValue("--text-verse-line-height")).toBe("2.4");
+
+    login.localConfig.value = { verseLineHeight: 2.2 };
+
+    expect(style.getPropertyValue("--text-verse-line-height")).toBe("2.2");
+  });
+
+  it("keeps the early values for a signed-in reader until the profile arrives", () => {
+    document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
+    document.documentElement.style.setProperty("--sb-scripture-width", "40ch");
+    document.documentElement.style.setProperty("--sb-ui-scale", "1.3");
+    const login = makeFakeLogin(null);
+    login.userId.value = "user-1";
+    createSettings(CasualOSManager(), login, navWith());
+
+    // What hydrateLocalConfig does for a signed-in reader: the local config
+    // is empty, so the settings re-derive to the defaults.
+    login.localConfig.value = {};
+
+    const style = document.documentElement.style;
+    expect(style.getPropertyValue("--sb-scripture-width")).toBe("40ch");
+    expect(style.getPropertyValue("--sb-ui-scale")).toBe("1.3");
+    expect(document.documentElement.hasAttribute(EARLY_CONFIG_ATTR)).toBe(true);
+
+    login.profile.value = {
+      name: "Test",
+      config: { scriptureWidth: 40, uiSize: "XL" },
+    } as unknown as UserProfile;
+
+    expect(style.getPropertyValue("--sb-scripture-width")).toBe("40ch");
+    expect(style.getPropertyValue("--sb-ui-scale")).toBe("1.3");
+    expect(document.documentElement.hasAttribute(EARLY_CONFIG_ATTR)).toBe(
+      false
+    );
+  });
+
+  it("applies the profile's values over the early ones when they differ", () => {
+    document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
+    document.documentElement.style.setProperty("--sb-scripture-width", "40ch");
+    const login = makeFakeLogin(null);
+    login.userId.value = "user-1";
+    createSettings(CasualOSManager(), login, navWith());
+    login.localConfig.value = {};
+
+    login.profile.value = {
+      name: "Test",
+      config: { scriptureWidth: 90 },
+    } as unknown as UserProfile;
+
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-scripture-width")
+    ).toBe("90ch");
+  });
+
+  it("corrects the early values when the real settings differ from them", () => {
+    document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
+    document.documentElement.style.setProperty("--sb-ui-scale", "1.3");
+    const login = makeFakeLogin(null);
+    createSettings(CasualOSManager(), login, navWith());
+
+    login.localConfig.value = { uiSize: "S" };
+
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-ui-scale")
+    ).toBe("0.85");
+  });
+
+  it("writes the defaults straight away when nothing was applied early", () => {
+    createSettings(CasualOSManager(), makeFakeLogin(null), navWith());
+
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-ui-scale")
+    ).toBe("1");
+    expect(
+      document.documentElement.style.getPropertyValue("--sb-scripture-width")
+    ).toBe("68ch");
+  });
+});
+
+describe("SettingsManager's early-config copy", () => {
+  const mirror = () => {
+    const raw = localStorage.getItem(READER_SETTINGS_MIRROR_KEY);
+    return raw ? JSON.parse(raw) : null;
+  };
+
+  afterEach(() => {
+    localStorage.clear();
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("does not overwrite the saved copy with the seed defaults on startup", () => {
+    localStorage.setItem(
+      READER_SETTINGS_MIRROR_KEY,
+      JSON.stringify({ uiSize: "XL" })
+    );
+
+    createSettings(CasualOSManager(), makeFakeLogin(null), navWith());
+
+    expect(mirror()).toEqual({ uiSize: "XL" });
+  });
+
+  it("copies the four settings when they change, for a signed-out reader", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+
+    settings.setUISize("L");
+    settings.setScriptureWidth(90);
+    settings.setFontSize("XL");
+    settings.setVerseLineHeight(2.2);
+
+    expect(mirror()).toEqual({
+      uiSize: "L",
+      fontSize: "XL",
+      scriptureWidth: 90,
+      verseLineHeight: 2.2,
+    });
+  });
+
+  it("copies a signed-in reader's profile settings even though the local config is empty", () => {
+    const login = makeFakeLogin(null);
+    createSettings(CasualOSManager(), login, navWith());
+
+    login.userId.value = "user-1";
+    login.profile.value = {
+      name: "Test",
+      config: { uiSize: "S", scriptureWidth: 40 },
+    } as unknown as UserProfile;
+
+    expect(mirror()).toMatchObject({ uiSize: "S", scriptureWidth: 40 });
+  });
+
+  it("holds off while a signed-in account's profile is still loading", () => {
+    localStorage.setItem(
+      READER_SETTINGS_MIRROR_KEY,
+      JSON.stringify({ uiSize: "XL" })
+    );
+    const login = makeFakeLogin(null);
+    createSettings(CasualOSManager(), login, navWith());
+
+    login.userId.value = "user-1";
+
+    expect(mirror()).toEqual({ uiSize: "XL" });
+  });
+
+  it("writes the defaults back on reset so none get stuck", () => {
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith()
+    );
+    settings.setUISize("XL");
+    settings.setScriptureWidth(120);
+
+    settings.resetToDefaults();
+
+    expect(mirror()).toMatchObject({ uiSize: "M", scriptureWidth: 68 });
+  });
+
+  it("leaves the copy alone for a link that sets its own app settings", () => {
+    window.history.replaceState({}, "", "/?app.uiSize=XL");
+    const settings = createSettings(
+      CasualOSManager(),
+      makeFakeLogin(null),
+      navWith("?app.uiSize=XL")
+    );
+
+    settings.setScriptureWidth(90);
+
+    expect(mirror()).toBeNull();
   });
 });

@@ -28,22 +28,18 @@
   "searching": "Otsin...",
   "no-search-results": "Sobivaid salme pole.",
   "open-chapter": "Ava peatükk",
-
   "uploading": "Üleslaadimine...",
   "profile-name": "Profiili nimi",
   "profile-name-placeholder": "nt Craigi perekond",
-
   "description": "Kirjeldus",
   "optional": "(Valikuline)",
   "description-placeholder": "Sisesta oma profiili kirjeldus...",
   "location": "Asukoht",
   "location-placeholder": "nt Austin, Texas",
-
   "copied": "Kopeeritud",
   "copy": "Kopeeri",
   "save-changes": "Salvesta muudatused",
   "sign-out": "Logi välja",
-
   "log-in": "Logi sisse",
   "tanakh": "Tanahh",
   "traditional": "Traditsiooniline",
@@ -57,7 +53,6 @@
   "scripture-settings": "Pühakirja seaded",
   "scripture-elements": "Pühakirja elemendid",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Näita pealkirju",
   "show-verse-numbers": "Näita salmi numbreid",
   "show-footnotes": "Näita allmärkusi",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Laiendusi pole saadaval.",
   "install": "Paigalda",
   "uninstall": "Desinstalli",
-
   "custom": "Kohandatud",
   "text-section-bookTitle": "Raamatu pealkirja tekst",
   "text-section-heading": "Pealkirja tekst",
@@ -92,7 +86,6 @@
   "show-selected-items": "Kuva valitud üksused",
   "show-highlight-colors": "Kuva esiletõstmise värvid",
   "show-icon-text": "Kuva ikooni tekst",
-
   "extensions": "Laiendused",
   "display": "Ekraan",
   "theme-and-text": "Teema ja tekst",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Suurenda pühakirja fondi suurust",
   "change-line-spacing": "Muuda reavahe",
   "line-spacing_lineHeight": "Reavahe: {{lineHeight}}",
-
   "italic": "Kursiiv",
   "underline": "Allajoonimine",
   "alignment_x": "Joondus: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Teksti värv",
   "follow_theme": "Jälgi teemat",
   "reset-to-default": "Lähtesta vaikesätetele",
-
   "id_highlight-text-color": "{{id}} esiletõstetud teksti värv",
   "id_highlight-background-color": "{{id}} esiletõstmise taustavärv",
   "all-settings-description": "Täpsusta iga tekstiosa ja kohanda iga teema värvi.",
@@ -141,7 +132,6 @@
   "old-testament_short": "Lisaaeg",
   "new-testament_short": "NT",
   "apocrypha": "Apokrüüfid",
-
   "custom-translations": "Kohandatud tõlked",
   "no-translation-results-found": "Tulemusi ei leitud. Kas soovite oma otsingut laiendada, et see hõlmaks ka osaliselt täielikke tõlkeid?",
   "show-all-translations": "Näita kõiki tõlkeid",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalmi",
   "5-psalms": "5 Psalmi",
   "remove-bookmark": "Eemalda järjehoidja",
-
   "chat": "Vestlus",
   "today": "Täna",
   "you": "Sina",
@@ -169,7 +158,6 @@
   "category-options": "Kausta valikud",
   "rename": "Nimeta ümber",
   "delete": "Kustuta",
-
   "bookmark-options": "Järjehoidjate valikud",
   "new-folder-placeholder": "Kausta nimi",
   "tasks": "Ülesanded",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Selle nimega kaust on juba olemas.",
   "add-to-new": "Lisa uude",
   "save": "Salvesta",
-
   "apocrypha-info-text": "Ühtegi selles osas olevat kirjutist ei pidanud varased juudi ega kristlikud kogukonnad kunagi pühakirjaks. Piibel on kindel raamatute kogu. Juudid ja kristlased on alati olnud ühel meelel Vanas Testamendis, mis pärineb kindlast pühakirjade kogumist, mida juudi rahvas nimetas Tanahhiks ja kristlased Vanaks Testamendiks. Tanahhi ja Vana Testamendi sisu on täpselt sama, kuid need on tavaliselt erinevalt paigutatud. Kristlased tunnustavad lisaks Uut Testamenti, mis jutustab Jeesuse loo, tema õpetustest ja tema järgijate kirjutistest. Allpool loetletud kirjutised olid Piibli kirjutamise ajal tuntud ja laialdaselt loetud, kuid neid ei käsitletud kunagi pühakirjana. Kuigi iidsed autorid tsiteerisid mõnikord laia valikut tekste, sealhulgas luuletajaid, filosoofe ja teisi kirjutisi, ei ole millegi tsiteerimine sama, mis selle käsitlemine pühakirjana. Need kirjutised on siia lisatud ainult ajaloolise ja kirjandusliku viitena.",
   "seed-bible": "Seemne Piibel",
   "take-photo": "Tehke foto",
   "choose-from-gallery": "Vali galeriist",
-
   "crop-your-photo": "Kärpige oma fotot",
   "zoom": "Suum",
   "set-picture": "Määra pilt",
@@ -211,10 +197,8 @@
   "read-the-bible": "Loe Piiblit",
   "seed-bible-description": "Loe Seemne Piiblist peatükki {{bookName}} {{chapterNumber}}",
   "social-title": "Loe raamatut {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Peatükkide navigeerimine",
   "tutorial.skip": "Jäta vahele",
-
   "tutorial.back": "Tagasi",
   "tutorial.done": "Valmis",
   "tutorial.next": "Järgmine",
@@ -327,11 +311,9 @@
   "study-notes": "Õppemärkmed",
   "content": "Sisu",
   "untitled-playlist": "Pealkirjata esitusloend",
-
   "discover-annotations-empty": "Teil pole märkusi",
   "discover-cross-references-empty": "Selle peatüki kohta ristviiteid ei ole.",
   "discover-study-notes-empty": "Selle peatüki kohta õppemärkmeid pole.",
-
   "discover-select-tab": "Seotud materjali leidmiseks valige vahekaart.",
   "create-playlist": "Loo",
   "playlist-title_placeholder": "Esitusloendi pealkiri",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "Esitusloendit ei saanud kustutada.",
   "collapsed-tab-shared-label": "{{title}} — jagatud seanss, kohal {{count}}",
   "playlist-add-mode-label": "Toote tüüp",
-
   "session-host-reconnected": "Seansiga uuesti ühendatud",
   "session-host-left": "Saatejuht lahkus – teid eemaldati seansist",
   "drag-to-reorder-playlist-item": "Lohista ümberjärjestamiseks",
   "saving": "Salvestamine…",
-
   "unsaved-item-confirm-message": "Oled hakanud lisama üksust, mida pole veel esitusloendisse lisatud. Mida soovid teha?",
   "discard-and-save": "Loobu ja salvesta",
   "add-and-save": "Lisa ja salvesta",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "Eelvaade {{reading}}",
   "reading-plan-mark-reading-complete": "Märgi lugemine lõpetatuks",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Märgi {{passage}} loetuks",
   "reading-plan-read-nudge-title": "Head lugemist!",
   "reading-plan-read-nudge-toast": "Kas märkida {{passage}} lõpetatuks?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Loe, otsi ja uuri Piiblit veebis. Tasuta tõlked paljudes keeltes koos esiletõstmiste, märkmete, järjehoidjate ja lugemisplaanidega.",
   "all": "Kõik",
-
   "today-bookmarks": "JÄRJEHOIDJAD",
   "today-search-verses": "Otsi raamatuid, peatükke, salme...",
   "anonymous-greeting": "Tere tulemast!",
   "community": "KOGUKOND",
   "go-somewhere-new": "MINE KUSKILLE UUT KOHTA",
-
   "open-bible": "Avatud Piibel",
   "personal-greeting": "Tere tulemast, {{name}} !",
   "resume-reading": "Jätka sealt, kus sa lahkusid",
   "resume-reading-loading": "Lugemisajaloo laadimine…",
   "selected-year": "Aasta: {{year}}",
-
   "theme-light": "Valgus",
   "theme-dark": "Tume",
   "installed-extensions": "Paigaldatud",
@@ -543,7 +519,6 @@
   "extension-state-installed": "Paigaldatud",
   "extension-state-downloaded": "Allalaaditud",
   "extension-state-pending": "Paigaldamine…",
-
   "tutorial.stepProgress": "Samm {{current}} kokku {{total}}",
   "tutorial.offlineDownloadTitle": "Puudutage, et see oma seadmesse salvestada",
   "tutorial.offlineDownloadBody": "Selle ikooniga tõlkeid saab salvestada võrguühenduseta lugemiseks.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "Valige sellest küljendusmenüüst, mitu lõiku kõrvuti lugeda.",
   "tutorial.addTabTitle": "Ava rohkem lõike",
   "tutorial.addTabBody": "Lisa uus vahekaart, et lugeda mitut raamatut või tõlget kõrvuti.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % valmisolekust - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % valmisolekust",
   "playlist-history-continue": "Jätka",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "{{count}} märkust selle peatüki kohta",
   "create-folder": "Loo kaust",
   "edit-bookmark": "Muuda järjehoidjat",
-
   "greeting-afternoon": "Tere päevast!",
   "greeting-afternoon-named": "Tere päevast, {{name}} !",
   "greeting-evening": "Tere õhtust!",
@@ -652,32 +625,24 @@
   "ask-ai": "Küsi tehisintellektilt",
   "unread-mention": "Lugemata mainimine",
   "unread-messages": "Lugemata sõnumeid: {{count}}",
-
   "scripture-width": "Pühakirja laius",
   "decrease-scripture-width": "Vähenda pühakirja laiust",
   "increase-scripture-width": "Suurenda pühakirja laiust",
   "annotations": "Märkused",
   "discover-content-panel": "Avasta sisu",
   "discover-book-title": "Avasta {{book}}",
-
   "about-title": "Seemnepiibli kohta",
   "about-meta-description": "Seed Bible on tasuta piiblirakendus, mis on loodud pühakirja lugemiseks koos pere, sõprade ja kogukonnaga – igavesti tasuta, ilma reklaamide või tasuliste müürideta.",
-
   "about-action-open-passage": "Ava lõik",
   "about-action-donate": "Anneta",
   "about-action-discord": "Liitu Discordiga",
   "recent-uploads": "Hiljutised üleslaadimised",
-
   "customization-not-found": "Seda kohandust ei leitud.",
   "customization-name": "Nimi",
   "customization-primaryColor": "Esmane",
-
   "customization-secondaryColor": "Teisejärguline",
-
   "customization-tertiaryColor": "Kolmanda taseme",
-
   "customization-fonts": "Fondid",
-
   "custom-font-option": "Kohandatud…",
   "custom-font-name-placeholder": "Google'i fondi nimi",
   "delete-customization": "Kustuta",
@@ -690,10 +655,8 @@
   "extension-availability-available": "Saadaval",
   "extension-availability-auto-installed": "Automaatselt installitud",
   "extension-availability-hidden": "Peidetud",
-
   "variants": "Teemad",
   "add-variant": "Lisa teema",
-
   "base-theme-description": "Selle teema eelseadistatud muudatused kehtivad kõige jaoks, mida te pole kohandanud. Teie enda muudatused säilivad.",
   "reset-to-base-theme": "Lähtesta baasteemale",
   "low-contrast-warning": "{{label}} : kontrastsus on ainult {{ratio}} :1 — püüdke saavutada vähemalt {{minRatio}} :1, et tekst jääks loetavaks.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "Siin pole veel ühtegi salvestust.",
   "save-options": "Salvesta valikud",
   "saves": "Salvestab",
-
   "hide-saves": "Peida salvestused",
   "show-saves": "Näita salvestusi",
   "save-verses": "Salvesta",
   "new-save-folder": "Uus kaust",
   "edit-save": "Muuda salvesta",
   "remove-save-from-all-folders": "Eemalda kõikidest kaustadest",
-
   "color-hue": "Värvitoon",
   "color-saturation": "Küllastus ja heledus",
   "hex-color": "Kuueteistkümnendvärv",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "Vormindamisredaktorit ei õnnestunud laadida. Sellel märkmel on vorming, mis läheks kaotsi, seega ei saa seda enne uuesti ühenduse loomist muuta.",
   "annotation-text": "Märkuse tekst",
   "notes-for-verse": "Märkused salmi {{verse}} kohta",
-
   "configure-extension-defaults": "Vaikimisi tühistamiste konfigureerimine",
-
   "extension-settings-defaults-title": "Vaikimisi tühistamised {{name}}",
   "no-extension-settings": "Sellel laiendusel pole konfigureeritavaid sätteid.",
   "extension-settings-save-failed": "Teie seadeid ei õnnestunud salvestada.",
@@ -872,7 +831,6 @@
   "setting-no-default": "Vaikimisi pole",
   "override-setting": "Alista {{name}}",
   "override-setting-label": "Tühistamine",
-
   "discover-choose-filter-hint": "Selle peatüki lisateabe nägemiseks valige ülalolev filter.",
   "take-a-tour": "Tehke ringkäik",
   "share-reading-plan": "Jagamisplaan",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "Minu järjehoidja {{number}}",
   "bookmark-move-hint": "Selle peatükki teisaldamiseks puudutage järjehoidjat.",
   "move-bookmark-here": "Liiguta {{name}} siia",
-
   "play": "Mängi",
   "pause": "Paus",
   "audio-playback-position": "Taasesituse positsioon",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "Salm {{verse}}",
   "tab-playing-audio": "Heli esitamine",
   "collapsed-tab-playing-label": "{{label}} — esitab heli",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} teemat",
   "customization-theme-count_one": "{{count}} teema",
@@ -1104,7 +1060,6 @@
   "about-community-body": "Usk on mõeldud koos elamiseks. Seemnepiibel on loodud Pühakirja lugemiseks koos pere, lähimate sõprade ja kodukirikuga.",
   "discovered-content": "Avastatud sisu",
   "show-discovered-content": "Kuva avastatud sisu",
-
   "extension-availability-default": "Vaikimisi ( {{availability}} )",
   "customization-extensions-default": "Vaikimisi teiste laienduste puhul",
   "customization-extensions-default-hint": "Kehtib kõigile allpool määramata laiendustele, sh hiljem lisatud uutele laiendustele",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "Tagasi esitusloendisse",
   "playlist-scripture-note-aria": "Märkus {{passage}} kohta",
   "playlist-scripture-note-progress": "{{current}} kokku {{total}}",
-
   "unsaved-item-edit-confirm-message": "Oled muutnud ühte elementi, aga pole neid muudatusi veel salvestanud. Mida sa teha soovid?",
   "keep-changes-and-save": "Säilita muudatused ja salvesta",
   "reading-plan-edit-reading": "Redigeeri lugemist",
@@ -1152,7 +1106,6 @@
   "branding": "Bränding",
   "create-custom-branding-menu-item": "Kohandatud bränding",
   "your-content-empty-branding": "Sinu loodud kohandatud bränding kuvatakse siin.",
-
   "extension-consent-from": "Alates {{host}}",
   "extension-consent-source-version": "Versioon {{version}} · hostist {{host}}",
   "extension-consent-uploader-unnamed": "Seed Bible'i kasutaja",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "Vaata, millised salmid sa valid",
   "extension-permission-reading-navigate": "Avatud lõigud",
   "extension-permission-network": "Loo ühendus serveriga {{host}}",
-
   "extension-consent-not-now": "Mitte praegu",
   "extension-consent-nothing-yet": "Praegu pole sellel juurdepääsu teie teabele.",
   "extension-permission-reading-history": "Vaadake oma lugemisajalugu",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "Tühista",
   "extension-consent-high-risk": "Tundlik",
   "extension-modal-ok": "Olgu",
-
   "extension-permissions-restart-note": "Muudatused jõustuvad kohe. Nende salvestamiseks taaskäivitub {{name}} .",
   "extension-permissions-saved": "Salvestatud. {{name}} taaskäivitas uute õigustega.",
   "extension-permissions-failed": "See ei salvestanud. Proovi uuesti.",
@@ -1276,8 +1227,51 @@
   "session-settings-verse-effects-desc-hosts": "Näita efekte, kui saatejuht valib salmi.",
   "session-settings-verse-effects-desc-everyone": "Näita efekte, kui keegi valib salmi.",
   "session-settings-verse-effects-desc-none": "Salmivaliku efektid on kõigil välja lülitatud.",
-
   "account": "Konto",
   "scroll-filters-start": "Kerige filtreid alguse poole",
-  "scroll-filters-end": "Kerige filtreid lõpuni"
+  "scroll-filters-end": "Kerige filtreid lõpuni",
+  "download": "Laadi alla",
+  "image-details-uploaded": "Üles laaditud",
+  "image-details-dimensions": "Mõõtmed",
+  "image-details-dimensions-value": "{{width}} × {{height}} pikslit",
+  "image-details-type": "Tüüp",
+  "image-details-cover-of": "Kaas",
+  "image-details-not-a-cover": "Ei kasutata kattena",
+  "delete-customization-confirm-title": "Kustutada kohandatud bränding?",
+  "delete-customization-confirm-message": "Kas kustutada kohandatud bränding \" {{name}} \"? Seda toimingut ei saa tagasi võtta.",
+  "delete-customization-failed": "Kohandatud brändingut ei saanud kustutada.",
+  "delete-variant-confirm-title": "Kustutada teema?",
+  "delete-variant-confirm-message": "Kas kustutada teema \" {{name}} \"? Seda ei saa tagasi võtta.",
+  "delete-variant-confirm-message-unnamed": "Kas kustutada see teema? Seda ei saa tagasi võtta.",
+  "delete-variant-failed": "Teemat ei saanud kustutada.",
+  "delete-highlight-confirm-title": "Kustutada esiletõst?",
+  "delete-highlight-confirm-message": "Kas kustutada esiletõstmine lehelt {{reference}} ? Seda toimingut ei saa tagasi võtta.",
+  "delete-highlight-failed": "Esiletõstmist ei saanud kustutada.",
+  "delete-annotation-on-confirm-message": "Kas kustutada märkus lehel {{reference}} ? Seda toimingut ei saa tagasi võtta.",
+  "remove-from-folder": "Eemalda kaustast",
+  "save-folders": "{{folders}}",
+  "delete-save-confirm-title": "Kustutada salvestus?",
+  "delete-save-confirm-message": "Kas kustutada salvestus {{reference}} kohta? Seda ei saa tagasi võtta.",
+  "delete-save-confirm-message-folders": "Kas kustutada salvestuskoht {{reference}} kaustast {{folders}} ? Seda ei saa tagasi võtta.",
+  "delete-save-failed": "Salvestusfaili ei saanud kustutada.",
+  "delete-save-folder-confirm-title": "Kustutada kaust?",
+  "delete-save-folder-confirm-message": "Kustutada kaust \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Selles kaustas olevad {{count}} salvestust kustutatakse samuti.",
+  "delete-save-folder-confirm-deletes_one": "Ainult selles kaustas olevad salvestused kustutatakse samuti.",
+  "delete-save-folder-confirm-deletes_other": "Selles kaustas olevad {{count}} salvestust kustutatakse samuti.",
+  "delete-save-folder-confirm-keeps": "Teistes kaustades olevad {{count}} salvestust jäävad sinna alles.",
+  "delete-save-folder-confirm-keeps_one": "Salvestus, mis asub ka teises kaustas, jääb sinna.",
+  "delete-save-folder-confirm-keeps_other": "Teistes kaustades olevad {{count}} salvestust jäävad sinna alles.",
+  "cant-be-undone": "Seda ei saa tagasi võtta.",
+  "delete-save-folder-failed": "Kausta ei saanud kustutada.",
+  "download-image-failed": "Pildi allalaadimine ebaõnnestus.",
+  "session-settings-verse-effects-hosts-only": "Ainult võõrustajad",
+  "session-settings-verse-effects-everyone": "Kõik",
+  "session-settings-verse-effects-none": "Puudub",
+  "loading-books": "Raamatute laadimine…",
+  "books-load-failed": "Raamatuid ei õnnestunud laadida. Kontrollige oma ühendust ja proovige uuesti.",
+  "loading-translation": "Laadin {{name}} …",
+  "translation-load-failed": "{{name}} ei saanud laadida.",
+  "loading-translations": "Tõlgete laadimine…",
+  "translations-load-failed": "Täieliku tõlgete loendi laadimine ebaõnnestus, seega mõned võivad puududa."
 }
