@@ -7,6 +7,7 @@
 - Download your uploaded images from Your content, and see their details in the image preview. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 - Delete branding from Your content. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 - Let extensions use the same search bar as the rest of the app. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Show a verse of the day on the Today screen for signed-in users, in the translation you're reading. ([#2094](https://github.com/HelloAOLab/seed-bible/pull/2094))
 
 ### 🔧 Changed
 
@@ -16,6 +17,7 @@
 - Animate menus, modals, the sidebar and docked side panes as they open and close. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 - Give sidebar, pane header and reader header buttons one hover style. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 - Show a tab, bookmark or save row's ⋯ button on desktop only on hover or for the selected tab, and make the whole tab row clickable. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+  - Note cards' ⋮ button also appears on hover, and stays in view while scrolling long cards.
 - Outline modals, menus and panels with the theme's divider color instead of its secondary color. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 - Lay out saves on Your content as an even grid in Bible order, with each save's translation and folder count. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
   - Highlights and saves show short translation codes, like `VDV`.
@@ -24,10 +26,15 @@
 - Open Share, session settings, the photo pickers and image previews as bottom sheets on phones. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 - Keep Settings open on desktop when opening Account or About, as it already did for Extensions. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 - Fade the edges of scrolling tab lists and filter pills, and let the mouse wheel scroll the pills sideways. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Show a fourth tool in the desktop toolbar instead of the More button when there are only four. ([#2085](https://github.com/HelloAOLab/seed-bible/pull/2085))
+- Make the selected verse's flare last longer, with a soft background that fades out early if you deselect the verse. ([#2082](https://github.com/HelloAOLab/seed-bible/pull/2082), [#2083](https://github.com/HelloAOLab/seed-bible/pull/2083))
+- Show the chapter sooner on first load, with less text jumping around as fonts and saved reading settings load. ([#2106](https://github.com/HelloAOLab/seed-bible/pull/2106), [#2105](https://github.com/HelloAOLab/seed-bible/pull/2105))
 
 ### 🐛 Fixed
 
 - Fix the desktop sidebar's collapse button getting stuck after widening the window with the phone drawer open. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
+- Fix pages briefly showing a different chapter on load before redrawing the right one. ([#2102](https://github.com/HelloAOLab/seed-bible/pull/2102), [#2104](https://github.com/HelloAOLab/seed-bible/pull/2104))
+- Fix the book selector sometimes opening empty; it now shows a loading or failed message instead. ([#2091](https://github.com/HelloAOLab/seed-bible/pull/2091))
 - Fix "Open in new panel" showing in the tab menu on phones. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 
 ### 🗑️ Removed
