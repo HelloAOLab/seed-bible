@@ -197,6 +197,22 @@ describe("SearchSection", () => {
       expect(dropdown()).not.toBeNull();
     });
 
+    it("clears what's typed with the ×, shown only once there's something to clear", async () => {
+      setup();
+      const clear = () =>
+        q<HTMLButtonElement>('button[aria-label="Clear search"]');
+      expect(clear()).toBeNull();
+
+      await search("gen");
+      act(() => clear()!.click());
+
+      expect(input().value).toBe("");
+      expect(dropdown()).toBeNull();
+      expect(clear()).toBeNull();
+      // Back in the box, ready for the next search.
+      expect(document.activeElement).toBe(input());
+    });
+
     it("keeps the dropdown closed for a whitespace-only query", async () => {
       setup();
       await search("   ");

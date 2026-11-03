@@ -28,22 +28,18 @@
   "searching": "Naghahanap...",
   "no-search-results": "Walang magkatugmang mga bersikulo.",
   "open-chapter": "Buksan ang kabanata",
-
   "uploading": "Nag-a-upload...",
   "profile-name": "Pangalan ng profile",
   "profile-name-placeholder": "halimbawa pamilya Craig",
-
   "description": "Paglalarawan",
   "optional": "(Opsyonal)",
   "description-placeholder": "Ilagay ang deskripsyon ng iyong profile...",
   "location": "Lokasyon",
   "location-placeholder": "hal. Austin, TX",
-
   "copied": "Kinopya",
   "copy": "Kopyahin",
   "save-changes": "I-save ang mga pagbabago",
   "sign-out": "Mag-sign out",
-
   "log-in": "Mag-log in",
   "tanakh": "Tanakh",
   "traditional": "Tradisyonal",
@@ -57,7 +53,6 @@
   "scripture-settings": "Mga setting ng Kasulatan",
   "scripture-elements": "Mga elemento ng banal na kasulatan",
   "scripture-settings-font-size-example": "Isang",
-
   "show-headings": "Ipakita ang mga heading",
   "show-verse-numbers": "Ipakita ang mga numero ng talata",
   "show-footnotes": "Ipakita ang mga talababa",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Walang magagamit na mga extension.",
   "install": "I-install",
   "uninstall": "I-uninstall",
-
   "custom": "Pasadya",
   "text-section-bookTitle": "Teksto ng Pamagat ng Aklat",
   "text-section-heading": "Teksto ng Pamagat",
@@ -92,7 +86,6 @@
   "show-selected-items": "Ipakita ang mga napiling item",
   "show-highlight-colors": "Ipakita ang mga kulay ng highlight",
   "show-icon-text": "Ipakita ang teksto ng icon",
-
   "extensions": "Mga Extension",
   "display": "Ipakita",
   "theme-and-text": "Tema at teksto",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Dagdagan ang laki ng font ng banal na kasulatan",
   "change-line-spacing": "Baguhin ang pagitan ng mga linya",
   "line-spacing_lineHeight": "Paglalayo ng linya: {{lineHeight}}",
-
   "italic": "Italiko",
   "underline": "Salungguhitan",
   "alignment_x": "Paghahanay: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Kulay ng teksto",
   "follow_theme": "Sundan ang tema",
   "reset-to-default": "I-reset sa default",
-
   "id_highlight-text-color": "{{id}} kulay ng teksto na i-highlight",
   "id_highlight-background-color": "{{id}} i-highlight ang kulay ng background",
   "all-settings-description": "Ayusin ang bawat seksyon ng teksto at i-customize ang kulay ng bawat tema.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokripa",
-
   "custom-translations": "Mga pasadyang pagsasalin",
   "no-translation-results-found": "Walang nakitang resulta. Gusto mo bang palawakin ang iyong paghahanap para maisama rin ang mga bahagyang kumpletong pagsasalin?",
   "show-all-translations": "Ipakita ang lahat ng pagsasalin",
@@ -159,7 +149,6 @@
   "4-psalms": "4 na Awit",
   "5-psalms": "5 Mga Awit",
   "remove-bookmark": "Alisin ang bookmark",
-
   "chat": "Makipag-chat",
   "today": "Ngayon",
   "you": "Ikaw",
@@ -169,7 +158,6 @@
   "category-options": "Mga opsyon sa folder",
   "rename": "Palitan ang pangalan",
   "delete": "Burahin",
-
   "bookmark-options": "Mga opsyon sa pag-bookmark",
   "new-folder-placeholder": "Pangalan ng folder",
   "tasks": "Mga Gawain",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Mayroon nang folder na may ganoong pangalan.",
   "add-to-new": "Idagdag sa bago",
   "save": "I-save",
-
   "apocrypha-info-text": "Wala sa mga sulatin sa seksyong ito ang kailanman itinuring na Kasulatan ng mga sinaunang komunidad ng mga Hudyo o Kristiyano. Ang Bibliya ay isang partikular na koleksyon ng mga aklat. Ang mga Hudyo at Kristiyano ay palaging nagkakasundo sa Lumang Tipan, na nagmula sa isang takdang hanay ng mga sagradong sulatin na tinatawag ng mga Hudyo na Tanakh at tinatawag ng mga Kristiyano na Lumang Tipan. Ang nilalaman ng Tanakh at Lumang Tipan ay eksaktong pareho, ngunit karaniwang magkaiba ang pagkakaayos. Kinikilala rin ng mga Kristiyano ang Bagong Tipan, na nagsasalaysay ng kuwento ni Hesus, ng kanyang mga turo, at ng mga sulatin ng kanyang mga tagasunod. Ang mga sulatin sa ibaba ay kilala at malawakang binabasa noong panahong isinulat ang Bibliya, ngunit hindi kailanman itinuring ang mga ito bilang Kasulatan. Bagama't minsan ay sumisipi ang mga sinaunang may-akda ng iba't ibang teksto kabilang ang mga makata, pilosopo, at iba pang mga sulatin, ang pagsipi sa isang bagay ay hindi katulad ng pagtrato dito bilang Kasulatan. Ang mga sulating ito ay kasama rito para sa sanggunian sa kasaysayan at panitikan lamang.",
   "seed-bible": "Bibliya ng Binhi",
   "take-photo": "Kumuha ng litrato",
   "choose-from-gallery": "Pumili mula sa gallery",
-
   "crop-your-photo": "I-crop ang iyong larawan",
   "zoom": "Mag-zoom",
   "set-picture": "Itakda ang larawan",
@@ -211,10 +197,8 @@
   "read-the-bible": "Basahin ang Bibliya",
   "seed-bible-description": "Basahin ang {{bookName}} {{chapterNumber}} sa Bibliyang Binhi",
   "social-title": "Basahin ang {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Pag-navigate sa kabanata",
   "tutorial.skip": "Laktawan",
-
   "tutorial.back": "Balik",
   "tutorial.done": "Tapos na",
   "tutorial.next": "Susunod",
@@ -327,11 +311,9 @@
   "study-notes": "Mga tala sa pag-aaral",
   "content": "Nilalaman",
   "untitled-playlist": "Walang pamagat na playlist",
-
   "discover-annotations-empty": "Wala kang mga anotasyon",
   "discover-cross-references-empty": "Walang mga cross reference para sa kabanatang ito.",
   "discover-study-notes-empty": "Walang tala sa pag-aaral para sa kabanatang ito.",
-
   "discover-select-tab": "Pumili ng tab para matuklasan ang mga kaugnay na materyal.",
   "create-playlist": "Gumawa",
   "playlist-title_placeholder": "Pamagat ng playlist",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "Hindi mabura ang playlist.",
   "collapsed-tab-shared-label": "{{title}} — nakabahaging sesyon, {{count}} ang naroroon",
   "playlist-add-mode-label": "Uri ng item",
-
   "session-host-reconnected": "Muling nakakonekta sa sesyon",
   "session-host-left": "Umalis ang host — inalis ka na sa sesyon",
   "drag-to-reorder-playlist-item": "I-drag upang ayusing muli",
   "saving": "Sine-save…",
-
   "unsaved-item-confirm-message": "Nagsimula kang magdagdag ng item na hindi pa naidaragdag sa playlist. Ano ang gusto mong gawin?",
   "discard-and-save": "I-discard at i-save",
   "add-and-save": "Idagdag at i-save",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "Preview {{reading}}",
   "reading-plan-mark-reading-complete": "Markahan ang pagbasa bilang tapos na",
   "reading-plan-link-video": "Bidyo",
-
   "reading-plan-mark-passage-complete": "Markahan {{passage}} bilang nabasa na",
   "reading-plan-read-nudge-title": "Magandang pagbabasa!",
   "reading-plan-read-nudge-toast": "Markahan {{passage}} na kumpleto na?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Magbasa, maghanap, at mag-aral ng Bibliya online. Libreng mga salin sa maraming wika, kasama ang mga highlight, tala, bookmark, at mga plano sa pagbabasa.",
   "all": "Lahat",
-
   "today-bookmarks": "MGA BOOKMARK",
   "today-search-verses": "Maghanap ng mga aklat, kabanata, talata....",
   "anonymous-greeting": "Maligayang pagdating!",
   "community": "KOMUNIDAD",
   "go-somewhere-new": "PUMUNTA SA BAGONG LUGAR",
-
   "open-bible": "Bukas na Bibliya",
   "personal-greeting": "Maligayang pagdating, {{name}} !",
   "resume-reading": "MAGPATULOY KUNG SAAN KA UMALIS",
   "resume-reading-loading": "Nilo-load ang iyong history ng pagbabasa…",
   "selected-year": "Taon: {{year}}",
-
   "theme-light": "Liwanag",
   "theme-dark": "Madilim",
   "installed-extensions": "Naka-install na",
@@ -543,7 +519,6 @@
   "extension-state-installed": "Naka-install na",
   "extension-state-downloaded": "Na-download na",
   "extension-state-pending": "Ini-install…",
-
   "tutorial.stepProgress": "Hakbang {{current}} ng {{total}}",
   "tutorial.offlineDownloadTitle": "I-tap para mapanatili ito sa iyong device",
   "tutorial.offlineDownloadBody": "Maaaring i-save ang anumang pagsasalin na may ganitong icon para sa pagbabasa offline.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "Piliin kung ilang sipi ang babasahin nang magkatabi mula sa menu ng layout na ito.",
   "tutorial.addTabTitle": "Magbukas ng mas maraming sipi",
   "tutorial.addTabBody": "Magdagdag ng bagong tab para magbasa ng ilang aklat o pagsasalin nang magkatabi.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % kumpleto - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % kumpleto",
   "playlist-history-continue": "Magpatuloy",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "{{count}} mga tala para sa kabanatang ito",
   "create-folder": "Gumawa ng folder",
   "edit-bookmark": "I-edit ang bookmark",
-
   "greeting-afternoon": "Magandang hapon!",
   "greeting-afternoon-named": "Magandang hapon, {{name}} !",
   "greeting-evening": "Magandang gabi!",
@@ -652,32 +625,24 @@
   "ask-ai": "Magtanong sa AI",
   "unread-mention": "Hindi pa nababasang pagbanggit",
   "unread-messages": "Mga hindi pa nababasang mensahe: {{count}}",
-
   "scripture-width": "Lapad ng Kasulatan",
   "decrease-scripture-width": "Bawasan ang lapad ng banal na kasulatan",
   "increase-scripture-width": "Dagdagan ang lapad ng banal na kasulatan",
   "annotations": "Mga Anotasyon",
   "discover-content-panel": "Tuklasin ang nilalaman",
   "discover-book-title": "Tuklasin ang {{book}}",
-
   "about-title": "Tungkol sa Bibliya ng Binhi",
   "about-meta-description": "Ang Seed Bible ay isang libreng Bible app na ginawa para sa pagbabasa ng Banal na Kasulatan kasama ang iyong pamilya, mga kaibigan, at komunidad — libre magpakailanman, walang mga ad o paywall.",
-
   "about-action-open-passage": "Magbukas ng isang sipi",
   "about-action-donate": "Mag-donate",
   "about-action-discord": "Sumali sa Discord",
   "recent-uploads": "Mga kamakailang upload",
-
   "customization-not-found": "Hindi mahanap ang pagpapasadya na ito.",
   "customization-name": "Pangalan",
   "customization-primaryColor": "Pangunahin",
-
   "customization-secondaryColor": "Pangalawa",
-
   "customization-tertiaryColor": "Tersyarya",
-
   "customization-fonts": "Mga Font",
-
   "custom-font-option": "Pasadya…",
   "custom-font-name-placeholder": "Pangalan ng Font ng Google",
   "delete-customization": "Burahin",
@@ -690,10 +655,8 @@
   "extension-availability-available": "Magagamit",
   "extension-availability-auto-installed": "Awtomatikong naka-install",
   "extension-availability-hidden": "Nakatago",
-
   "variants": "Mga Tema",
   "add-variant": "Magdagdag ng tema",
-
   "base-theme-description": "Ang mga pagbabagong itinakda para sa temang ito ay babalik sa anumang hindi mo pa na-customize. Ang sarili mong mga pag-edit ay mananatili.",
   "reset-to-base-theme": "I-reset sa pangunahing tema",
   "low-contrast-warning": "{{label}} : ang contrast ay {{ratio}} :1 lamang — sikaping hindi bababa sa {{minRatio}} :1 para manatiling nababasa ang teksto.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "Wala pang na-save dito.",
   "save-options": "I-save ang mga opsyon",
   "saves": "Nagse-save",
-
   "hide-saves": "Itago ang mga na-save",
   "show-saves": "Ipakita ang mga pag-save",
   "save-verses": "I-save",
   "new-save-folder": "Bagong folder",
   "edit-save": "I-edit ang pag-save",
   "remove-save-from-all-folders": "Alisin mula sa lahat ng folder",
-
   "color-hue": "Kulay",
   "color-saturation": "Saturation at liwanag",
   "hex-color": "Kulay heksagonal",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "Hindi ma-load ang formatting editor. May formatting ang note na ito na mawawala, kaya hindi ito mae-edit hangga't hindi ka muling kumonekta.",
   "annotation-text": "Teksto ng anotasyon",
   "notes-for-verse": "Mga tala para sa bersikulo {{verse}}",
-
   "configure-extension-defaults": "I-configure ang mga default na override",
-
   "extension-settings-defaults-title": "Mga default na override ng {{name}}",
   "no-extension-settings": "Walang mga setting na maaaring i-configure ang extension na ito.",
   "extension-settings-save-failed": "Hindi ma-save ang iyong mga setting.",
@@ -872,7 +831,6 @@
   "setting-no-default": "Walang default",
   "override-setting": "I-override si {{name}}",
   "override-setting-label": "I-override",
-
   "discover-choose-filter-hint": "Pumili ng filter sa itaas para makakita ng higit pa mula sa kabanatang ito.",
   "take-a-tour": "Maglibot",
   "share-reading-plan": "Plano ng pagbabahagi",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "Ang aking bookmark {{number}}",
   "bookmark-move-hint": "Mag-tap ng bookmark para ilipat ito sa kabanatang ito.",
   "move-bookmark-here": "Ilipat si {{name}} dito",
-
   "play": "Maglaro",
   "pause": "Ihinto",
   "audio-playback-position": "Posisyon ng pag-playback",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "Bersikulo {{verse}}",
   "tab-playing-audio": "Pagpapatugtog ng audio",
   "collapsed-tab-playing-label": "{{label}} — nagpapatugtog ng audio",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "mga tema na {{count}}",
   "customization-theme-count_one": "tema na {{count}}",
@@ -1104,7 +1060,6 @@
   "about-community-body": "Ang pananampalataya ay dapat isabuhay nang sama-sama. Ang Seed Bible ay ginawa para sa pagbabasa ng Banal na Kasulatan kasama ang iyong pamilya, iyong malalapit na kaibigan, at ang iyong simbahan sa bahay.",
   "discovered-content": "Natuklasan na Nilalaman",
   "show-discovered-content": "Ipakita ang natuklasang nilalaman",
-
   "extension-availability-default": "Default ( {{availability}} )",
   "customization-extensions-default": "Default para sa iba pang mga extension",
   "customization-extensions-default-hint": "Nalalapat sa bawat extension na hindi mo pa naitakda sa ibaba, kasama ang mga bago na idadagdag sa ibang pagkakataon",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "Balik sa playlist",
   "playlist-scripture-note-aria": "Tala sa {{passage}}",
   "playlist-scripture-note-progress": "{{current}} ng {{total}}",
-
   "unsaved-item-edit-confirm-message": "Binago mo ang isang item ngunit hindi mo pa nase-save ang mga pagbabagong iyon. Ano ang gusto mong gawin?",
   "keep-changes-and-save": "Panatilihin ang mga pagbabago at i-save",
   "reading-plan-edit-reading": "I-edit ang pagbabasa",
@@ -1152,7 +1106,6 @@
   "branding": "Pagba-brand",
   "create-custom-branding-menu-item": "Pasadyang Pagba-brand",
   "your-content-empty-branding": "Lalabas dito ang Custom Branding na gagawin mo.",
-
   "extension-consent-from": "Mula kay {{host}}",
   "extension-consent-source-version": "Bersyon {{version}} · mula sa {{host}}",
   "extension-consent-uploader-unnamed": "isang Gumagamit ng Bibliyang Binhi",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "Tingnan kung aling mga bersikulo ang iyong pipiliin",
   "extension-permission-reading-navigate": "Mga bukas na daanan",
   "extension-permission-network": "Kumonekta sa {{host}}",
-
   "extension-consent-not-now": "Hindi ngayon",
   "extension-consent-nothing-yet": "Sa ngayon, wala itong access sa alinman sa iyong impormasyon.",
   "extension-permission-reading-history": "Tingnan ang iyong kasaysayan ng pagbabasa",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "Kanselahin",
   "extension-consent-high-risk": "Sensitibo",
   "extension-modal-ok": "Sige",
-
   "extension-permissions-restart-note": "Magkakabisa agad ang mga pagbabago. Magsisimula muli {{name}} para kunin ang mga ito.",
   "extension-permissions-saved": "Na-save na. Na-restart {{name}} gamit ang mga bagong pahintulot.",
   "extension-permissions-failed": "Hindi iyon nakapag-save. Subukan muli.",
@@ -1276,8 +1227,53 @@
   "session-settings-verse-effects-desc-hosts": "Ipakita ang mga epekto kapag pumili ng isang taludtod ang isang host.",
   "session-settings-verse-effects-desc-everyone": "Ipakita ang mga epekto kapag may pumili ng isang talata.",
   "session-settings-verse-effects-desc-none": "Naka-off para sa lahat ang mga epekto ng pagpili ng taludtod.",
-
   "account": "Account",
   "scroll-filters-start": "Mag-scroll ng mga filter patungo sa simula",
-  "scroll-filters-end": "Mag-scroll ng mga filter patungo sa dulo"
+  "scroll-filters-end": "Mag-scroll ng mga filter patungo sa dulo",
+  "download": "I-download",
+  "image-details-uploaded": "Na-upload",
+  "image-details-dimensions": "Mga Dimensyon",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Uri",
+  "image-details-cover-of": "Takip ng",
+  "image-details-not-a-cover": "Hindi ginagamit bilang takip",
+  "delete-customization-confirm-title": "Burahin ang Pasadyang Pagba-brand?",
+  "delete-customization-confirm-message": "Burahin ang Custom Branding na \" {{name}} \"? Hindi na ito maaaring i-undo.",
+  "delete-customization-failed": "Hindi matanggal ang Custom Branding.",
+  "delete-variant-confirm-title": "Burahin ang tema?",
+  "delete-variant-confirm-message": "Burahin ang temang \" {{name}} \"? Hindi na ito maaaring i-undo.",
+  "delete-variant-confirm-message-unnamed": "Burahin ang temang ito? Hindi na ito maaaring i-undo.",
+  "delete-variant-failed": "Hindi mabura ang tema.",
+  "delete-highlight-confirm-title": "Burahin ang highlight?",
+  "delete-highlight-confirm-message": "Burahin ang highlight sa {{reference}} ? Hindi na ito maaaring i-undo.",
+  "delete-highlight-failed": "Hindi mabura ang highlight.",
+  "delete-annotation-on-confirm-message": "Burahin ang anotasyon sa {{reference}} ? Hindi na ito maaaring bawiin.",
+  "remove-from-folder": "Alisin mula sa folder",
+  "save-folders": "Sa {{folders}}",
+  "delete-save-confirm-title": "Burahin ang pag-save?",
+  "delete-save-confirm-message": "Burahin ang save para sa {{reference}} ? Hindi na ito maaaring bawiin.",
+  "delete-save-confirm-message-folders": "Burahin ang save for {{reference}} mula sa {{folders}} ? Hindi na ito maaaring i-undo.",
+  "delete-save-failed": "Hindi mabura ang na-save.",
+  "delete-save-folder-confirm-title": "Burahin ang folder?",
+  "delete-save-folder-confirm-message": "Burahin ang folder na \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Ang mga {{count}} na na-save na nasa folder na ito lamang ay mabubura rin.",
+  "delete-save-folder-confirm-deletes_one": "Mabubura rin ang save na nasa folder na ito lang.",
+  "delete-save-folder-confirm-deletes_other": "Ang mga {{count}} na na-save na nasa folder na ito lamang ay mabubura rin.",
+  "delete-save-folder-confirm-keeps": "Ang mga {{count}} na na-save na nasa iba pang mga folder ay mananatili roon.",
+  "delete-save-folder-confirm-keeps_one": "Ang save na nasa ibang folder din ay mananatili roon.",
+  "delete-save-folder-confirm-keeps_other": "Ang mga {{count}} na na-save na nasa iba pang mga folder ay mananatili roon.",
+  "cant-be-undone": "Hindi na ito maaaring bawiin.",
+  "delete-save-folder-failed": "Hindi mabura ang folder.",
+  "download-image-failed": "Hindi ma-download ang larawan.",
+  "session-settings-verse-effects-hosts-only": "Mga host lamang",
+  "session-settings-verse-effects-everyone": "Lahat",
+  "session-settings-verse-effects-none": "Wala",
+  "loading-books": "Naglo-load ng mga libro…",
+  "books-load-failed": "Hindi ma-load ang mga libro. Suriin ang iyong koneksyon at subukang muli.",
+  "loading-translation": "Naglo-load si {{name}} …",
+  "translation-load-failed": "Hindi ma-load si {{name}} .",
+  "loading-translations": "Naglo-load ng mga pagsasalin…",
+  "translations-load-failed": "Hindi ma-load ang buong listahan ng mga pagsasalin, kaya maaaring may ilan na nawawala.",
+  "verse-of-the-day": "BERDORA NG ARAW",
+  "verse-of-the-day-loading": "Nilo-load ang bersikulo ng araw…"
 }

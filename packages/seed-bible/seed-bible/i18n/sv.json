@@ -28,22 +28,18 @@
   "searching": "Sökande...",
   "no-search-results": "Inga matchande verser.",
   "open-chapter": "Öppna kapitel",
-
   "uploading": "Laddar upp...",
   "profile-name": "Profilnamn",
   "profile-name-placeholder": "t.ex. Craig-familjen",
-
   "description": "Beskrivning",
   "optional": "(Frivillig)",
   "description-placeholder": "Ange din profilbeskrivning...",
   "location": "Plats",
   "location-placeholder": "t.ex. Austin, Texas",
-
   "copied": "Kopierad",
   "copy": "Kopiera",
   "save-changes": "Spara ändringar",
   "sign-out": "Logga ut",
-
   "log-in": "Logga in",
   "tanakh": "Tanach",
   "traditional": "Traditionell",
@@ -57,7 +53,6 @@
   "scripture-settings": "Skriftliga inställningar",
   "scripture-elements": "Skriftliga element",
   "scripture-settings-font-size-example": "En",
-
   "show-headings": "Visa rubriker",
   "show-verse-numbers": "Visa versnummer",
   "show-footnotes": "Visa fotnoter",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Inga tillägg tillgängliga.",
   "install": "Installera",
   "uninstall": "Avinstallera",
-
   "custom": "Beställnings",
   "text-section-bookTitle": "Boktiteltext",
   "text-section-heading": "Rubriktext",
@@ -92,7 +86,6 @@
   "show-selected-items": "Visa valda objekt",
   "show-highlight-colors": "Visa markeringsfärger",
   "show-icon-text": "Visa ikontext",
-
   "extensions": "Tillägg",
   "display": "Visa",
   "theme-and-text": "Tema och text",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Öka teckenstorleken på bibelverserna",
   "change-line-spacing": "Ändra radavstånd",
   "line-spacing_lineHeight": "Radavstånd: {{lineHeight}}",
-
   "italic": "Kursiv",
   "underline": "Betona",
   "alignment_x": "Justering: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Textfärg",
   "follow_theme": "Följ temat",
   "reset-to-default": "Återställ till standard",
-
   "id_highlight-text-color": "{{id}} markeringstextfärg",
   "id_highlight-background-color": "Bakgrundsfärg för markering av {{id}}",
   "all-settings-description": "Finjustera varje textavsnitt och anpassa varje temafärg.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "De apokryfiska böckerna",
-
   "custom-translations": "Anpassade översättningar",
   "no-translation-results-found": "Inga resultat hittades. Vill du utöka din sökning till att även inkludera delvis fullständiga översättningar?",
   "show-all-translations": "Visa alla översättningar",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalmerna",
   "5-psalms": "5 Psalmerna",
   "remove-bookmark": "Ta bort bokmärke",
-
   "chat": "Chatt",
   "today": "I dag",
   "you": "Du",
@@ -169,7 +158,6 @@
   "category-options": "Mappalternativ",
   "rename": "Döpa om",
   "delete": "Radera",
-
   "bookmark-options": "Bokmärkesalternativ",
   "new-folder-placeholder": "Mappnamn",
   "tasks": "Uppgifter",
@@ -180,12 +168,10 @@
   "folder-name-taken": "En mapp med det namnet finns redan.",
   "add-to-new": "Lägg till i nytt",
   "save": "Spara",
-
   "apocrypha-info-text": "Inget av skrifterna i detta avsnitt betraktades någonsin som Skriften av tidiga judiska eller kristna samfund. Bibeln är en specifik samling böcker. Judar och kristna har alltid varit överens om Gamla testamentet, som kommer från en fast uppsättning heliga skrifter som det judiska folket kallar Tanakh och kristna kallar Gamla testamentet. Innehållet i Tanakh och Gamla testamentet är exakt detsamma, men är vanligtvis ordnade på olika sätt. Kristna erkänner dessutom Nya testamentet, som berättar historien om Jesus, hans läror och hans efterföljares skrifter. Skrifterna nedan var kända och allmänt lästa vid den tidpunkt då Bibeln skrevs, men de behandlades aldrig som Skriften. Medan forntida författare ibland citerade en mängd olika texter, inklusive poeter, filosofer och andra skrifter, är det inte samma sak att citera något som att behandla det som Skriften. Dessa skrifter inkluderas här endast för historisk och litterär referens.",
   "seed-bible": "Fröbibeln",
   "take-photo": "Ta ett foto",
   "choose-from-gallery": "Välj från galleriet",
-
   "crop-your-photo": "Beskär ditt foto",
   "zoom": "Zoom",
   "set-picture": "Ställ in bild",
@@ -211,10 +197,8 @@
   "read-the-bible": "Läs Bibeln",
   "seed-bible-description": "Läs {{bookName}} {{chapterNumber}} i Fröbibeln",
   "social-title": "Läs {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Kapitelnavigering",
   "tutorial.skip": "Hoppa",
-
   "tutorial.back": "Tillbaka",
   "tutorial.done": "Gjort",
   "tutorial.next": "Nästa",
@@ -327,11 +311,9 @@
   "study-notes": "Studieanteckningar",
   "content": "Innehåll",
   "untitled-playlist": "Namnlös spellista",
-
   "discover-annotations-empty": "Du har inga anteckningar",
   "discover-cross-references-empty": "Inga korsreferenser för detta kapitel.",
   "discover-study-notes-empty": "Inga studieanteckningar för detta kapitel.",
-
   "discover-select-tab": "Välj en flik för att upptäcka relaterat material.",
   "create-playlist": "Skapa",
   "playlist-title_placeholder": "Spellistan titel",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "Kunde inte ta bort spellistan.",
   "collapsed-tab-shared-label": "{{title}} — delad session, {{count}} närvarande",
   "playlist-add-mode-label": "Artikeltyp",
-
   "session-host-reconnected": "Återansluten till sessionen",
   "session-host-left": "Värden lämnade — du togs bort från sessionen",
   "drag-to-reorder-playlist-item": "Dra för att ändra ordning",
   "saving": "Sparar…",
-
   "unsaved-item-confirm-message": "Du har börjat lägga till ett objekt som ännu inte har lagts till i spellistan. Vad vill du göra?",
   "discard-and-save": "Kasta och spara",
   "add-and-save": "Lägg till och spara",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "{{reading}}",
   "reading-plan-mark-reading-complete": "Markeringsläsning klar",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Markera {{passage}} som läst",
   "reading-plan-read-nudge-title": "Trevlig läsning!",
   "reading-plan-read-nudge-toast": "Markera {{passage}} som klar?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Läs, sök och studera Bibeln online. Gratis översättningar på många språk, med markeringar, anteckningar, bokmärken och läsplaner.",
   "all": "Alla",
-
   "today-bookmarks": "BOKMÄRKEN",
   "today-search-verses": "Sök böcker, kapitel, verser....",
   "anonymous-greeting": "Välkomna!",
   "community": "GEMENSKAP",
   "go-somewhere-new": "GÅ NÅGONSTANS NY",
-
   "open-bible": "Öppna Bibeln",
   "personal-greeting": "Välkommen, {{name}} !",
   "resume-reading": "FORTSÄTT DÄR DU SLUTADE",
   "resume-reading-loading": "Läser in din läshistorik…",
   "selected-year": "År: {{year}}",
-
   "theme-light": "Ljus",
   "theme-dark": "Mörk",
   "installed-extensions": "Installerad",
@@ -543,7 +519,6 @@
   "extension-state-installed": "Installerad",
   "extension-state-downloaded": "Nedladdad",
   "extension-state-pending": "Installerar…",
-
   "tutorial.stepProgress": "Steg {{current}} av {{total}}",
   "tutorial.offlineDownloadTitle": "Tryck för att spara den på din enhet",
   "tutorial.offlineDownloadBody": "Alla översättningar med den här ikonen kan sparas för läsning offline.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "Välj hur många avsnitt som ska läsas sida vid sida från den här layoutmenyn.",
   "tutorial.addTabTitle": "Öppna fler avsnitt",
   "tutorial.addTabBody": "Lägg till en ny flik för att läsa flera böcker eller översättningar sida vid sida.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % klart - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % klart",
   "playlist-history-continue": "Fortsätta",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "{{count}} anteckningar för detta kapitel",
   "create-folder": "Skapa mapp",
   "edit-bookmark": "Redigera bokmärke",
-
   "greeting-afternoon": "God eftermiddag!",
   "greeting-afternoon-named": "God eftermiddag, {{name}} !",
   "greeting-evening": "god afton!",
@@ -652,32 +625,24 @@
   "ask-ai": "Fråga AI",
   "unread-mention": "Oläst omnämnande",
   "unread-messages": "Olästa meddelanden: {{count}}",
-
   "scripture-width": "Skriftbredd",
   "decrease-scripture-width": "Minska bredden på bibelversen",
   "increase-scripture-width": "Öka skriftbredden",
   "annotations": "Annoteringar",
   "discover-content-panel": "Upptäck innehåll",
   "discover-book-title": "Upptäck {{book}}",
-
   "about-title": "Om Seed Bible",
   "about-meta-description": "Seed Bible är en gratis bibelapp byggd för att läsa Skriften tillsammans med familj, vänner och gemenskap – gratis för alltid, inga annonser eller betalväggar.",
-
   "about-action-open-passage": "Öppna en passage",
   "about-action-donate": "Donera",
   "about-action-discord": "Gå med i Discord",
   "recent-uploads": "Senaste uppladdningar",
-
   "customization-not-found": "Den här anpassningen kunde inte hittas.",
   "customization-name": "Namn",
   "customization-primaryColor": "Primär",
-
   "customization-secondaryColor": "Sekundär",
-
   "customization-tertiaryColor": "Tertiär",
-
   "customization-fonts": "Typsnitt",
-
   "custom-font-option": "Beställnings…",
   "custom-font-name-placeholder": "Google Font-namn",
   "delete-customization": "Radera",
@@ -690,10 +655,8 @@
   "extension-availability-available": "Tillgänglig",
   "extension-availability-auto-installed": "Automatiskt installerad",
   "extension-availability-hidden": "Dold",
-
   "variants": "Teman",
   "add-variant": "Lägg till tema",
-
   "base-theme-description": "Ändringar som förinställt detta tema används för allt du inte har anpassat. Dina egna redigeringar sparas.",
   "reset-to-base-theme": "Återställ till grundtema",
   "low-contrast-warning": "{{label}} : kontrasten är bara {{ratio}} :1 — sikta på minst {{minRatio}} :1 så att texten förblir läsbar.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "Inga sparade objekt här ännu.",
   "save-options": "Spara alternativ",
   "saves": "Sparar",
-
   "hide-saves": "Dölj sparade",
   "show-saves": "Visa sparade",
   "save-verses": "Spara",
   "new-save-folder": "Ny mapp",
   "edit-save": "Redigera spara",
   "remove-save-from-all-folders": "Ta bort från alla mappar",
-
   "color-hue": "Nyans",
   "color-saturation": "Mättnad och ljusstyrka",
   "hex-color": "Hexfärg",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "Formateringsredigeraren kunde inte läsas in. Den här anteckningen har formatering som skulle gå förlorad, så den kan inte redigeras förrän du ansluter igen.",
   "annotation-text": "Annoteringstext",
   "notes-for-verse": "Noter för vers {{verse}}",
-
   "configure-extension-defaults": "Konfigurera standardöverskridanden",
-
   "extension-settings-defaults-title": "Standardöverskridningar för {{name}}",
   "no-extension-settings": "Det här tillägget har inga konfigurerbara inställningar.",
   "extension-settings-save-failed": "Det gick inte att spara dina inställningar.",
@@ -872,7 +831,6 @@
   "setting-no-default": "Ingen standard",
   "override-setting": "Åsidosätt {{name}}",
   "override-setting-label": "Åsidosätta",
-
   "discover-choose-filter-hint": "Välj ett filter ovan för att se mer från det här kapitlet.",
   "take-a-tour": "Ta en rundtur",
   "share-reading-plan": "Dela planen",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "Mitt bokmärke {{number}}",
   "bookmark-move-hint": "Tryck på ett bokmärke för att flytta det till det här kapitlet.",
   "move-bookmark-here": "Flytta {{name}} hit",
-
   "play": "Spela",
   "pause": "Paus",
   "audio-playback-position": "Uppspelningsposition",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "Vers {{verse}}",
   "tab-playing-audio": "Spelar upp ljud",
   "collapsed-tab-playing-label": "{{label}} — spelar upp ljud",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} teman",
   "customization-theme-count_one": "{{count}}",
@@ -1104,7 +1060,6 @@
   "about-community-body": "Tro är till för att levas tillsammans. Seed Bible är skapad för att läsa Skriften med din familj, dina närmaste vänner och din husförsamling.",
   "discovered-content": "Upptäckt innehåll",
   "show-discovered-content": "Visa upptäckt innehåll",
-
   "extension-availability-default": "Standard ( {{availability}} )",
   "customization-extensions-default": "Standard för andra tillägg",
   "customization-extensions-default-hint": "Gäller alla tillägg som du inte har angett nedan, inklusive nya som läggs till senare.",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "Tillbaka till spellistan",
   "playlist-scripture-note-aria": "Anmärkning om {{passage}}",
   "playlist-scripture-note-progress": "{{current}} av {{total}}",
-
   "unsaved-item-edit-confirm-message": "Du har ändrat ett objekt men har inte sparat ändringarna än. Vad vill du göra?",
   "keep-changes-and-save": "Behåll ändringarna och spara",
   "reading-plan-edit-reading": "Redigera läsning",
@@ -1152,7 +1106,6 @@
   "branding": "Varumärkesbyggande",
   "create-custom-branding-menu-item": "Anpassad varumärkesbyggande",
   "your-content-empty-branding": "Anpassad varumärkesbyggande som du skapar kommer att visas här.",
-
   "extension-consent-from": "Från {{host}}",
   "extension-consent-source-version": "Version {{version}} · från {{host}}",
   "extension-consent-uploader-unnamed": "en Seed Bible-användare",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "Se vilka verser du väljer",
   "extension-permission-reading-navigate": "Öppna passager",
   "extension-permission-network": "Anslut till {{host}}",
-
   "extension-consent-not-now": "Inte nu",
   "extension-consent-nothing-yet": "För närvarande kommer den inte att ha tillgång till någon av dina uppgifter.",
   "extension-permission-reading-history": "Se din läshistorik",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "Avboka",
   "extension-consent-high-risk": "Känslig",
   "extension-modal-ok": "OK",
-
   "extension-permissions-restart-note": "Ändringarna träder i kraft direkt. {{name}} startar om för att hämta dem.",
   "extension-permissions-saved": "Sparad. {{name}} startade om med de nya behörigheterna.",
   "extension-permissions-failed": "Det sparades inte. Försök igen.",
@@ -1276,8 +1227,53 @@
   "session-settings-verse-effects-desc-hosts": "Visa effekter när en värd väljer en vers.",
   "session-settings-verse-effects-desc-everyone": "Visa effekter när någon väljer en vers.",
   "session-settings-verse-effects-desc-none": "Versvalseffekter är avstängda för alla.",
-
   "account": "Konto",
   "scroll-filters-start": "Bläddra filtren mot början",
-  "scroll-filters-end": "Bläddra filtren mot slutet"
+  "scroll-filters-end": "Bläddra filtren mot slutet",
+  "download": "Ladda ner",
+  "image-details-uploaded": "Uppladdad",
+  "image-details-dimensions": "Mått",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Typ",
+  "image-details-cover-of": "Omslag till",
+  "image-details-not-a-cover": "Används inte som omslag",
+  "delete-customization-confirm-title": "Ta bort anpassad varumärkesbyggande?",
+  "delete-customization-confirm-message": "Vill du ta bort den anpassade varumärkesprofilen \" {{name}} \"? Det här kan inte ångras.",
+  "delete-customization-failed": "Det gick inte att ta bort den anpassade varumärkesprofilen.",
+  "delete-variant-confirm-title": "Ta bort temat?",
+  "delete-variant-confirm-message": "Vill du ta bort temat \" {{name}} \"? Det här kan inte ångras.",
+  "delete-variant-confirm-message-unnamed": "Vill du ta bort det här temat? Det går inte att ångra åtgärden.",
+  "delete-variant-failed": "Kunde inte ta bort temat.",
+  "delete-highlight-confirm-title": "Ta bort markering?",
+  "delete-highlight-confirm-message": "Ta bort markeringen på {{reference}} ? Detta kan inte ångras.",
+  "delete-highlight-failed": "Kunde inte ta bort markeringen.",
+  "delete-annotation-on-confirm-message": "Ta bort annoteringen på {{reference}} ? Detta kan inte ångras.",
+  "remove-from-folder": "Ta bort från mappen",
+  "save-folders": "I {{folders}}",
+  "delete-save-confirm-title": "Ta bort sparade filer?",
+  "delete-save-confirm-message": "Radera sparade för {{reference}} ? Detta kan inte ångras.",
+  "delete-save-confirm-message-folders": "Vill du ta bort det som sparats för {{reference}} från {{folders}} ? Det här kan inte ångras.",
+  "delete-save-failed": "Kunde inte radera det sparade.",
+  "delete-save-folder-confirm-title": "Ta bort mapp?",
+  "delete-save-folder-confirm-message": "Ta bort mappen \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "De {{count}} sparade filerna som bara finns i den här mappen kommer också att raderas.",
+  "delete-save-folder-confirm-deletes_one": "Den sparade filen som bara finns i den här mappen kommer också att raderas.",
+  "delete-save-folder-confirm-deletes_other": "De {{count}} sparade filerna som bara finns i den här mappen kommer också att raderas.",
+  "delete-save-folder-confirm-keeps": "De {{count}} sparade filerna som också finns i andra mappar kommer att finnas kvar där.",
+  "delete-save-folder-confirm-keeps_one": "Den sparade filen som också finns i en annan mapp kommer att finnas kvar där.",
+  "delete-save-folder-confirm-keeps_other": "De {{count}} sparade filerna som också finns i andra mappar kommer att finnas kvar där.",
+  "cant-be-undone": "Detta kan inte ångras.",
+  "delete-save-folder-failed": "Kunde inte ta bort mappen.",
+  "download-image-failed": "Kunde inte ladda ner bilden.",
+  "session-settings-verse-effects-hosts-only": "Endast värdar",
+  "session-settings-verse-effects-everyone": "Alla",
+  "session-settings-verse-effects-none": "Ingen",
+  "loading-books": "Laddar böcker…",
+  "books-load-failed": "Det gick inte att läsa in böckerna. Kontrollera anslutningen och försök igen.",
+  "loading-translation": "Laddar {{name}} …",
+  "translation-load-failed": "{{name}} kunde inte laddas.",
+  "loading-translations": "Läser in översättningar…",
+  "translations-load-failed": "Kunde inte ladda hela listan med översättningar, så vissa kan saknas.",
+  "verse-of-the-day": "DAGENS VERS",
+  "verse-of-the-day-loading": "Laddar dagens vers…"
 }

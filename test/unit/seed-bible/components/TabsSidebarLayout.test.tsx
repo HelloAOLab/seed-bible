@@ -1,8 +1,13 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
+import {
+  openSessionSettingsModal,
+  openShareSessionModal,
+  Sidebar,
+} from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
 import type { ChatSession } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import {
   createTestSeedBibleState,
   type CreateTestSeedBibleStateOptions,
@@ -78,7 +83,6 @@ describe("Sidebar collapsed layout", () => {
     expect(collapsedTile).not.toBeNull();
     expect(collapsedTile?.textContent).toContain("GEN");
     expect(collapsedTile?.textContent).toContain("1");
-    expect(container.querySelector(".sb-sidebar-search-shell")).toBeNull();
     expect(container.querySelector(".sb-sidebar-tabs-header")).toBeNull();
   });
 
@@ -147,33 +151,6 @@ describe("Sidebar collapsed layout", () => {
     });
 
     expect(container.querySelector(".sb-pane-layout-anchor")).not.toBeNull();
-    expect(container.querySelector(".sb-sidebar-search-shell")).not.toBeNull();
-  });
-
-  it("opens the Today screen from the sidebar's header button", async () => {
-    const state = await createState();
-    state.sidebar.isSidebarCollapsed.value = false;
-    expect(state.today.isOpen.value).toBe(false);
-
-    act(() => {
-      render(
-        <TestHost state={state}>
-          <Sidebar state={state} />
-        </TestHost>,
-        container
-      );
-    });
-
-    const button = container.querySelector<HTMLButtonElement>(
-      ".sb-sidebar-tabs-header-tasks-button"
-    );
-    expect(button).not.toBeNull();
-
-    act(() => {
-      button!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(state.today.isOpen.value).toBe(true);
   });
 
   it("marks bottom actions as collapsed for vertical stacking", async () => {
@@ -226,13 +203,19 @@ describe("Sidebar collapsed layout", () => {
   });
 });
 
-function isShareSheetOpen(
+function findShareSheet(
   state: Awaited<ReturnType<typeof createTestSeedBibleState>>
 ) {
-  return state.modals.modals.value.some(
+  return state.modals.modals.value.find(
     (modal) =>
       typeof modal.title === "object" && modal.title.key === "share-sheet-title"
   );
+}
+
+function isShareSheetOpen(
+  state: Awaited<ReturnType<typeof createTestSeedBibleState>>
+) {
+  return findShareSheet(state) !== undefined;
 }
 
 describe("tabs Share control", () => {
@@ -330,6 +313,63 @@ describe("tabs Share control", () => {
 
     expect(createSharedSession).not.toHaveBeenCalled();
     expect(isShareSheetOpen(state)).toBe(true);
+    expect(findShareSheet(state)?.mobileSheet).toBe(true);
+  });
+
+  it("opens a shared session's share sheet as a bottom sheet on phones", async () => {
+    const state = await createState();
+    const session = { id: "session-1" } as BibleReadingSession;
+
+    act(() => openShareSessionModal(state, session));
+
+    expect(findShareSheet(state)?.mobileSheet).toBe(true);
+  });
+
+  it("opens a shared session's settings as a bottom sheet on phones", async () => {
+    const state = await createState();
+    const session = { id: "session-1" } as BibleReadingSession;
+
+    act(() => openSessionSettingsModal(state, session));
+
+    const settings = state.modals.modals.value.find(
+      (modal) =>
+        typeof modal.title === "object" &&
+        modal.title.key === "session-settings"
+    );
+    expect(settings?.mobileSheet).toBe(true);
+  });
+
+  it("starts a new tab from the mobile tabs header's + button", async () => {
+    window.innerWidth = 400;
+    const state = await createState();
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(state.app.isMobile.value).toBe(true);
+    state.sidebar.isMobileOpen.value = true;
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const addButton = container.querySelector<HTMLButtonElement>(
+      ".sb-mobile-screen-header [aria-label='Create new tab']"
+    );
+    expect(addButton).not.toBeNull();
+
+    act(() => {
+      addButton!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // The tab itself is created once a book is picked; the + closes the
+    // drawer and opens the book selector aimed at a new tab.
+    expect(state.sidebar.isMobileOpen.value).toBe(false);
+    expect(state.selector.forceNewTab.value).toBe(true);
   });
 });
 
@@ -586,5 +626,77 @@ describe("Sidebar self avatar", () => {
         ".sb-sidebar-self-avatar .sb-tab-user-icon-generic"
       )
     ).toBeNull();
+  });
+});
+
+describe("tab options menu", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    vi.useFakeTimers();
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+    vi.useRealTimers();
+  });
+
+  /** Renders the sidebar at `width` and returns the first tab's menu labels. */
+  async function tabMenuLabels(width: number) {
+    window.innerWidth = width;
+    const state = await createTestSeedBibleState();
+    state.settings.setDisablePanels(false);
+    // `viewportWidth` seeds from the server's guess, not `window.innerWidth`,
+    // so it's corrected the way the real post-mount effect does.
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    state.sidebar.isSidebarCollapsed.value = false;
+    state.sidebar.isMobileOpen.value = width <= 480;
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const menuButton = container.querySelector<HTMLButtonElement>(
+      ".sb-tab-row [aria-label='Open tab menu']"
+    );
+    expect(menuButton).not.toBeNull();
+    act(() => {
+      menuButton!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    return Array.from(document.querySelectorAll(".sb-tab-menu-item")).map(
+      (item) => item.textContent ?? ""
+    );
+  }
+
+  // Mobile shows one reader at a time, so there's no other panel to open in.
+  it("doesn't offer Open in new panel on mobile", async () => {
+    const labels = await tabMenuLabels(400);
+
+    expect(labels.length).toBeGreaterThan(0);
+    expect(labels.some((label) => label.includes("Open in new panel"))).toBe(
+      false
+    );
+  });
+
+  it("offers Open in new panel on desktop", async () => {
+    const labels = await tabMenuLabels(1280);
+
+    expect(labels.some((label) => label.includes("Open in new panel"))).toBe(
+      true
+    );
   });
 });
