@@ -14,6 +14,7 @@ export interface ManagedModal {
    */
   onDismiss: (() => void) | null;
   useCasualOSApp: boolean;
+  mobileSheet: boolean;
 }
 
 export interface ModalContentProps {
@@ -43,6 +44,14 @@ export interface ModalRegistration {
    * Defaults to true.
    */
   useCasualOSApp?: boolean;
+
+  /**
+   * Whether to show the modal as a sheet docked to the bottom of the screen,
+   * sliding up, on phone-sized screens. Wider screens still center it. Suits
+   * pickers and forms; short confirmations read better centered.
+   * Defaults to false.
+   */
+  mobileSheet?: boolean;
 }
 
 export interface ModalManager {
@@ -83,6 +92,7 @@ export function createModalManager(): ModalManager {
           modal.footer === undefined ? null : toContentRenderer(modal.footer),
         onDismiss: modal.onDismiss ?? null,
         useCasualOSApp: modal.useCasualOSApp ?? true,
+        mobileSheet: modal.mobileSheet ?? false,
       },
     ];
 
