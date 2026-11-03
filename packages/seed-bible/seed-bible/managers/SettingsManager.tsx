@@ -6,7 +6,6 @@ import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "../managers/ProfileConfigSync";
-import * as z from "zod/v4";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
 import { isMinimalEmbedUrl } from "./EmbedMode";
@@ -137,51 +136,6 @@ export const DEFAULT_SCRIPTURE_WIDTH = 68; // ch
 export const MAX_SCRIPTURE_WIDTH = 192; // ch
 export const MIN_SCRIPTURE_WIDTH = 24; // ch
 
-export const AppSettingsSchema = z.object({
-  fontSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
-  disablePanels: z.boolean(),
-  bookOrientation: z.enum(["traditional", "tanakh"]),
-  uiSize: z.enum(["S", "M", "L", "XL"]),
-  selectionUI: z.object({
-    showSelectedItems: z.boolean(),
-    showHighlightColors: z.boolean(),
-    showIconText: z.boolean(),
-  }),
-  scriptureElements: z.object({
-    showHeadings: z.boolean(),
-    showVerseNumbers: z.boolean(),
-    showFootnotes: z.boolean(),
-    showHighlights: z.boolean(),
-    showRedLettering: z.boolean(),
-  }),
-  // Defaulted rather than required so settings exported before this option
-  // existed still import.
-  verseLineHeight: z.number().default(DEFAULT_VERSE_LINE_HEIGHT),
-  fontOverride: z.string().optional(),
-  discoveredContent: z
-    .object({
-      showContent: z.boolean(),
-    })
-    .default({ showContent: true }),
-  verseSelectionEffects: z
-    .enum(["default", "enabled", "disabled"])
-    .default("default"),
-  keepScreenAwake: z.boolean(),
-  // Defaulted rather than required so settings exported before this option
-  // existed still import.
-  askToSwitchUiLanguage: z.boolean().default(true),
-  customHighlightColors: z.array(z.string()).max(3),
-  scriptureWidth: z
-    .number()
-    .min(MIN_SCRIPTURE_WIDTH)
-    .max(MAX_SCRIPTURE_WIDTH)
-    .default(DEFAULT_SCRIPTURE_WIDTH),
-  themeId: z.string(),
-  // Defaulted rather than required so settings exported before this option
-  // existed still import.
-  discoverContentPanelInline: z.boolean().default(true),
-});
-
 export const MOBILE_SCRIPTURE_MARGIN = 5;
 
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
@@ -193,7 +147,7 @@ export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
 export const EARLY_CONFIG_ATTR = "data-sb-early-config";
 
 /**
- * Device-local copy of the four settings `index.html`'s early-config script
+ * Device-local copy of the five settings `index.html`'s early-config script
  * paints before first paint. The anonymous local config can't serve: it is
  * emptied once someone signs in, and signed-in readers are the ones most
  * likely to have customised these.
@@ -523,7 +477,6 @@ export interface SettingsManager {
   setKeepScreenAwake: (enabled: boolean) => void;
   addCustomHighlightColor: (color: string) => void;
   removeCustomHighlightColor: (color: string) => void;
-  setAllSettings: (next: AppSettings) => void;
   resetToDefaults: () => void;
   /** Persists the selected theme preset id. Consumed by ThemeManager. */
   setThemeId: (themeId: string) => void;
@@ -883,20 +836,6 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_FONT_OVERRIDE, stored);
   };
 
-  const setAllSettings = (next: AppSettings) => {
-    next = AppSettingsSchema.parse(next);
-    settings.value = next;
-    if (login.userId.value) {
-      const existingProfile = login.profile.value;
-      login.updateProfile({
-        config: {
-          ...(existingProfile?.config ?? {}),
-          ...next,
-        },
-      });
-    }
-  };
-
   const resetToDefaults = () => {
     nextCustomHighlightSlot = 0;
     settings.value = DEFAULT_SETTINGS;
@@ -985,10 +924,10 @@ export function createSettings(
   };
 
   // `index.html`'s early-config script may already have painted the device's
-  // saved UI size, reader font size, scripture width and line height straight
-  // from localStorage. This manager's first run still sees the SSR-matching
-  // defaults (see `LoginManager.localConfig`), so writing them would undo that
-  // until `hydrateLocalConfig()` re-derives the settings a moment later, and
+  // saved UI size, reader font size, scripture width, line height and
+  // scripture font straight from localStorage. This manager's first run still
+  // sees the SSR-matching defaults (see `LoginManager.localConfig`), so
+  // writing them would undo that until `hydrateLocalConfig()` re-derives the settings a moment later, and
   // for a signed-in reader even that re-derive only has defaults until the
   // profile arrives (the anonymous local config is empty once signed in), which
   // would widen the column to the default and then narrow it again. Each effect
@@ -1035,10 +974,12 @@ export function createSettings(
     document.documentElement.style.setProperty("--sb-ui-scale", String(scale));
   });
 
+  const skipFontOverrideWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
     if (typeof document === "undefined") return;
     const root = document.documentElement.style;
     const override = settings.value.fontOverride;
+    if (skipFontOverrideWrite()) return;
     if (override) {
       root.setProperty(
         "--sb-scripture-font-override",
@@ -1100,6 +1041,7 @@ export function createSettings(
       fontSize: current.fontSize,
       scriptureWidth: current.scriptureWidth,
       verseLineHeight: current.verseLineHeight,
+      fontOverride: current.fontOverride,
     };
     if (isFirstMirrorWrite) {
       isFirstMirrorWrite = false;
@@ -1149,7 +1091,6 @@ export function createSettings(
     setKeepScreenAwake,
     addCustomHighlightColor,
     removeCustomHighlightColor,
-    setAllSettings,
     resetToDefaults,
     setThemeId,
     setDiscoverContentPanelInline,

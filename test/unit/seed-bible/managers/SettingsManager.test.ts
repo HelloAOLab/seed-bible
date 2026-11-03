@@ -5,7 +5,6 @@ import {
   READER_SETTINGS_MIRROR_KEY,
   createSettings,
   DEFAULT_VERSE_LINE_HEIGHT,
-  type AppSettings,
 } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
 import {
   createLoginManager,
@@ -403,19 +402,6 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.discoveredContent.showContent).toBe(false);
     expect((login.profile.value as any)?.config?.discoveredContent).toEqual({
       showContent: false,
-    });
-  });
-
-  it("setAllSettings accepts settings saved before discoveredContent existed and shows the content", () => {
-    const login = makeFakeLogin(null);
-    const settings = createSettings(CasualOSManager(), login, navWith());
-    const { discoveredContent: _omitted, ...legacySettings } =
-      settings.settings.value;
-
-    settings.setAllSettings(legacySettings as AppSettings);
-
-    expect(settings.settings.value.discoveredContent).toEqual({
-      showContent: true,
     });
   });
 
@@ -1079,6 +1065,33 @@ describe("SettingsManager with settings applied before first paint", () => {
     expect(style.getPropertyValue("--text-verse-line-height")).toBe("2.2");
   });
 
+  it("keeps the early scripture font until the saved settings arrive", () => {
+    document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
+    document.documentElement.style.setProperty(
+      "--sb-scripture-font-override",
+      "Roboto, sans-serif"
+    );
+    const login = makeFakeLogin(null);
+    login.userId.value = "user-1";
+
+    createSettings(CasualOSManager(), login, navWith());
+    login.localConfig.value = {};
+
+    const style = document.documentElement.style;
+    expect(style.getPropertyValue("--sb-scripture-font-override")).toBe(
+      "Roboto, sans-serif"
+    );
+
+    login.profile.value = {
+      name: "Test",
+      config: { fontOverride: "Open Sans, sans-serif" },
+    } as unknown as UserProfile;
+
+    expect(style.getPropertyValue("--sb-scripture-font-override")).toBe(
+      "Open Sans, sans-serif"
+    );
+  });
+
   it("keeps the early values for a signed-in reader until the profile arrives", () => {
     document.documentElement.setAttribute(EARLY_CONFIG_ATTR, "");
     document.documentElement.style.setProperty("--sb-scripture-width", "40ch");
@@ -1173,7 +1186,7 @@ describe("SettingsManager's early-config copy", () => {
     expect(mirror()).toEqual({ uiSize: "XL" });
   });
 
-  it("copies the four settings when they change, for a signed-out reader", () => {
+  it("copies the five settings when they change, for a signed-out reader", () => {
     const settings = createSettings(
       CasualOSManager(),
       makeFakeLogin(null),
@@ -1184,12 +1197,14 @@ describe("SettingsManager's early-config copy", () => {
     settings.setScriptureWidth(90);
     settings.setFontSize("XL");
     settings.setVerseLineHeight(2.2);
+    settings.setFontOverride("Cormorant Garamond, serif");
 
     expect(mirror()).toEqual({
       uiSize: "L",
       fontSize: "XL",
       scriptureWidth: 90,
       verseLineHeight: 2.2,
+      fontOverride: "Cormorant Garamond, serif",
     });
   });
 

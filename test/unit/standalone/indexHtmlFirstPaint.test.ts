@@ -5,6 +5,7 @@ import {
   FALLBACK_FACES,
   withMetricFallback,
 } from "@packages/seed-bible/seed-bible/app/fontFallbacks";
+import { CUSTOMIZATION_FONT_PRESETS } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
 import {
   MAX_LOCAL_CONFIG_JSON_LENGTH,
   MAX_LOCAL_CONFIG_KEYS,
@@ -319,6 +320,59 @@ describe("index.html early config script: limits and tables", () => {
 
     expect(script).toContain(`width >= ${MIN_SCRIPTURE_WIDTH}`);
     expect(script).toContain(`width <= ${MAX_SCRIPTURE_WIDTH}`);
+  });
+});
+
+describe("index.html early config script: scripture font", () => {
+  const FONT_OVERRIDE_VAR = "--sb-scripture-font-override";
+
+  const runWithSavedCopy = (copy: unknown): HTMLElement => {
+    localStorage.setItem(READER_SETTINGS_MIRROR_KEY, JSON.stringify(copy));
+    new Function(earlyConfigScript())();
+    return document.documentElement;
+  };
+
+  afterEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute("style");
+    document.documentElement.removeAttribute("data-sb-early-config");
+    window.history.replaceState({}, "", "/");
+  });
+
+  it.each(CUSTOMIZATION_FONT_PRESETS.map((preset) => [preset.name, preset]))(
+    "paints the saved %s font the same way the app will",
+    (_name, preset) => {
+      const html = runWithSavedCopy({ fontOverride: preset.value });
+
+      expect(html.style.getPropertyValue(FONT_OVERRIDE_VAR)).toBe(
+        withMetricFallback(preset.value)
+      );
+      expect(html.hasAttribute("data-sb-early-config")).toBe(true);
+    }
+  );
+
+  it("paints the font a signed-out reader saved in the local config", () => {
+    const html = runEarlyConfig({ fontOverride: "Roboto, sans-serif" });
+
+    expect(html.style.getPropertyValue(FONT_OVERRIDE_VAR)).toBe(
+      "Roboto, sans-serif"
+    );
+  });
+
+  it("leaves the theme's fonts alone when Default was chosen", () => {
+    const html = runEarlyConfig({ fontOverride: "default" });
+
+    expect(html.style.getPropertyValue(FONT_OVERRIDE_VAR)).toBe("");
+    expect(html.hasAttribute("data-sb-early-config")).toBe(false);
+  });
+
+  it("never writes a stored value that isn't one of the font choices", () => {
+    const html = runWithSavedCopy({
+      fontOverride: "x; } body { display: none",
+    });
+
+    expect(html.style.getPropertyValue(FONT_OVERRIDE_VAR)).toBe("");
+    expect(html.hasAttribute("data-sb-early-config")).toBe(false);
   });
 });
 
