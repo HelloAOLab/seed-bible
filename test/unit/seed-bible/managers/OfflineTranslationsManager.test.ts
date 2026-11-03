@@ -570,17 +570,34 @@ describe("checking downloads for updates", () => {
 
 describe("automatically applying an update to the translation in use", () => {
   /** Stands in for `navigator.connection`, absent from jsdom by default. */
-  function setConnection(saveData: boolean | undefined): void {
+  function setConnection(
+    connection: { saveData?: boolean; type?: string } | undefined
+  ): void {
     Object.defineProperty(navigator, "connection", {
-      value: saveData === undefined ? undefined : { saveData },
+      value: connection,
+      configurable: true,
+    });
+  }
+
+  /**
+   * Stands in for `matchMedia("(pointer: fine)")` — a mouse or trackpad when
+   * true, a touchscreen when false. jsdom has no `matchMedia` at all.
+   */
+  function setFinePointer(fine: boolean): void {
+    Object.defineProperty(window, "matchMedia", {
+      value: (query: string) => ({
+        matches: query === "(pointer: fine)" && fine,
+        media: query,
+      }),
       configurable: true,
     });
   }
 
   afterEach(() => {
-    // Never leaves a fake `navigator.connection` behind for another test to
-    // trip over.
+    // Never leaves a fake `navigator.connection` or `matchMedia` behind for
+    // another test to trip over.
     delete (navigator as { connection?: unknown }).connection;
+    delete (window as { matchMedia?: unknown }).matchMedia;
     vi.useRealTimers();
   });
 
@@ -597,34 +614,16 @@ describe("automatically applying an update to the translation in use", () => {
     return manager;
   }
 
-  it("downloads the update immediately when there is no connection info", async () => {
-    setConnection(undefined);
-    const manager = await harnessWithDetectedUpdate();
-
+  async function expectDownloaded(manager: BibleDataManager): Promise<void> {
     await manager.offline.checkAndApplyUpdate("AAB");
 
     expect(manager.offline.updatePrompt.value).toBeNull();
     expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
       false
     );
-  });
+  }
 
-  it("downloads the update immediately when the device isn't trying to save data", async () => {
-    setConnection(false);
-    const manager = await harnessWithDetectedUpdate();
-
-    await manager.offline.checkAndApplyUpdate("AAB");
-
-    expect(manager.offline.updatePrompt.value).toBeNull();
-    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
-      false
-    );
-  });
-
-  it("offers the update instead of downloading when the device wants to save data", async () => {
-    setConnection(true);
-    const manager = await harnessWithDetectedUpdate();
-
+  async function expectOffered(manager: BibleDataManager): Promise<void> {
     await manager.offline.checkAndApplyUpdate("AAB");
 
     expect(manager.offline.updatePrompt.value?.id).toBe("AAB");
@@ -632,13 +631,72 @@ describe("automatically applying an update to the translation in use", () => {
     expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
       true
     );
+  }
+
+  it("downloads the update immediately on Wi-Fi", async () => {
+    setConnection({ type: "wifi" });
+    await expectDownloaded(await harnessWithDetectedUpdate());
+  });
+
+  it("downloads the update immediately on Ethernet", async () => {
+    setConnection({ type: "ethernet", saveData: false });
+    await expectDownloaded(await harnessWithDetectedUpdate());
+  });
+
+  it("offers the update instead of downloading on cellular data", async () => {
+    setConnection({ type: "cellular" });
+    // A fine pointer must not outweigh a link type the browser did report.
+    setFinePointer(true);
+    await expectOffered(await harnessWithDetectedUpdate());
+  });
+
+  it("offers the update instead of downloading on a tethered Bluetooth link", async () => {
+    setConnection({ type: "bluetooth" });
+    await expectOffered(await harnessWithDetectedUpdate());
+  });
+
+  it("offers the update instead of downloading when the device wants to save data, even on Wi-Fi", async () => {
+    setConnection({ type: "wifi", saveData: true });
+    await expectOffered(await harnessWithDetectedUpdate());
+  });
+
+  it("downloads the update immediately on a desktop that reports no link type", async () => {
+    // Desktop Chromium: `navigator.connection` exists but has no `type`.
+    setConnection({ saveData: false });
+    setFinePointer(true);
+    await expectDownloaded(await harnessWithDetectedUpdate());
+  });
+
+  it("downloads the update immediately on a desktop browser with no connection info", async () => {
+    // Firefox and Safari on a computer.
+    setConnection(undefined);
+    setFinePointer(true);
+    await expectDownloaded(await harnessWithDetectedUpdate());
+  });
+
+  it("offers the update on a touch device with no connection info", async () => {
+    // Safari on an iPhone — could be on Wi-Fi or cellular, no way to tell.
+    setConnection(undefined);
+    setFinePointer(false);
+    await expectOffered(await harnessWithDetectedUpdate());
+  });
+
+  it("offers the update when the link type is unknown on a touch device", async () => {
+    setConnection({ type: "unknown" });
+    setFinePointer(false);
+    await expectOffered(await harnessWithDetectedUpdate());
+  });
+
+  it("offers the update when nothing at all can be learned about the device", async () => {
+    setConnection(undefined);
+    await expectOffered(await harnessWithDetectedUpdate());
   });
 
   it("does not offer a download for another translation while an update prompt is on screen", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-03-01T09:00:00Z"));
 
-    setConnection(true);
+    setConnection({ saveData: true });
     const manager = await harnessWithDetectedUpdate();
 
     // NIV clears every other gate `offerDownloadPrompt` checks: it's been in
@@ -657,7 +715,7 @@ describe("automatically applying an update to the translation in use", () => {
   });
 
   it("offers the update in place of a recovery suggestion still on screen", async () => {
-    setConnection(true);
+    setConnection({ saveData: true });
     const manager = await harnessWithDetectedUpdate();
     // A corner card the reader is free to ignore — it must not hold the
     // update back for the rest of the visit.
@@ -671,7 +729,7 @@ describe("automatically applying an update to the translation in use", () => {
   });
 
   it("does not re-offer the same update once it has already been shown", async () => {
-    setConnection(true);
+    setConnection({ saveData: true });
     const manager = await harnessWithDetectedUpdate();
 
     await manager.offline.checkAndApplyUpdate("AAB");
@@ -683,7 +741,7 @@ describe("automatically applying an update to the translation in use", () => {
   });
 
   it("offers a newer update even after an older one was dismissed", async () => {
-    setConnection(true);
+    setConnection({ saveData: true });
     const manager = await harnessWithDetectedUpdate();
     await manager.offline.checkAndApplyUpdate("AAB");
     manager.offline.dismissUpdatePrompt();
@@ -696,7 +754,7 @@ describe("automatically applying an update to the translation in use", () => {
   });
 
   it("does not retry a failed download attempt on every subsequent call", async () => {
-    setConnection(undefined);
+    setConnection({ type: "wifi" });
     const manager = await harnessWithDetectedUpdate();
 
     // The newer version's `complete.json` is broken — a flaky connection or a
@@ -738,7 +796,7 @@ describe("automatically applying an update to the translation in use", () => {
   });
 
   it("retries once a newer update appears after a failed attempt", async () => {
-    setConnection(undefined);
+    setConnection({ type: "wifi" });
     const manager = await harnessWithDetectedUpdate();
 
     setWebResponses(
@@ -764,7 +822,7 @@ describe("automatically applying an update to the translation in use", () => {
   });
 
   it("does nothing for a translation that isn't downloaded", async () => {
-    setConnection(undefined);
+    setConnection({ type: "wifi" });
     const { manager } = await createHarness(defaultResponses());
     await manager.getTranslations();
 
@@ -776,7 +834,7 @@ describe("automatically applying an update to the translation in use", () => {
   });
 
   it("does nothing while the device reports no connection", async () => {
-    setConnection(undefined);
+    setConnection({ type: "wifi" });
     const manager = await harnessWithDetectedUpdate();
 
     const onLineSpy = vi
@@ -795,7 +853,7 @@ describe("automatically applying an update to the translation in use", () => {
   });
 
   it("is triggered automatically for the translation marked in use", async () => {
-    setConnection(undefined);
+    setConnection({ type: "wifi" });
     const manager = await harnessWithDetectedUpdate();
 
     manager.offline.noteTranslationInUse("AAB");

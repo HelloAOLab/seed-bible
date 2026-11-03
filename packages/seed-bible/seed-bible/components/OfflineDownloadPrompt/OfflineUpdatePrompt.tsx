@@ -6,12 +6,13 @@ import { useOverlayDismiss } from "../useOverlayDismiss";
 
 /**
  * Offers to update the downloaded translation the reader is currently in, once
- * a newer version has been found while the device wants to save data.
+ * a newer version has been found while the device may be on a metered
+ * connection.
  *
  * The offer itself is decided by {@link OfflineTranslationsManager} — see
- * `checkAndApplyUpdate` — which only shows this when
- * `navigator.connection.saveData` is true; otherwise the update is downloaded
- * without asking and this never renders. Shares its markup and styling with
+ * `checkAndApplyUpdate` — which only shows this when the connection isn't known
+ * to be unmetered; otherwise the update is downloaded without asking and this
+ * never renders. Shares its markup and styling with
  * `OfflineDownloadPrompt` since it presents the same kind of choice.
  */
 export function OfflineUpdatePrompt({

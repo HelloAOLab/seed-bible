@@ -249,9 +249,8 @@ export interface OfflineTranslationsManager {
   /**
    * The translation currently being offered as an update to its downloaded
    * copy, or null when no update offer is on screen. Populated by
-   * {@link checkAndApplyUpdate} instead of downloading automatically, only when
-   * the device reports `navigator.connection.saveData` — see that method's doc
-   * comment.
+   * {@link checkAndApplyUpdate} instead of downloading automatically, when the
+   * connection isn't known to be unmetered — see that method's doc comment.
    */
   updatePrompt: ReadonlySignal<Translation | null>;
 
@@ -347,13 +346,12 @@ export interface OfflineTranslationsManager {
    * Does nothing when the translation isn't downloaded, has no update pending,
    * is already downloading, or the device is offline. Otherwise:
    *
-   * - No `navigator.connection` info at all → the update is downloaded
-   *   immediately, since there's nothing to say the user would mind.
-   * - `navigator.connection.saveData` is true → nothing is downloaded
-   *   automatically; the translation is offered through {@link updatePrompt}
-   *   instead, so the user decides whether to spend the data.
-   * - Otherwise (connection info exists, `saveData` false or unset) → the
-   *   update is downloaded immediately, same as with no connection info.
+   * - On an unmetered connection → the update is downloaded immediately.
+   * - Otherwise → nothing is downloaded automatically; the translation is
+   *   offered through {@link updatePrompt} instead, so the user decides
+   *   whether to spend the data.
+   *
+   * See {@link isUnmeteredConnection} for how "unmetered" is decided.
    *
    * Each content hash is only ever acted on once per session for a given
    * translation — a download attempt (whether it succeeds or fails) or a
@@ -693,13 +691,23 @@ function toErrorMessage(error: unknown): string {
 }
 
 /**
- * The one field of the (non-standard, Chromium-only) Network Information API
- * the update check reads. Absent from TypeScript's DOM types since the API
- * never reached a broad standard, hence the manual shape here.
+ * The fields of the (non-standard, Chromium-only) Network Information API the
+ * update check reads. Absent from TypeScript's DOM types since the API never
+ * reached a broad standard, hence the manual shape here.
  */
 interface NetworkInformationLike {
   saveData?: boolean;
+  /**
+   * The kind of link the device is on. Only Chromium on Android and ChromeOS
+   * report it; desktop Chromium has `navigator.connection` without this field.
+   */
+  type?: string;
 }
+
+const UNMETERED_CONNECTION_TYPES = new Set(["wifi", "ethernet"]);
+
+/** Types that say nothing about whether the link is metered. */
+const UNDETERMINED_CONNECTION_TYPES = new Set(["unknown", "other"]);
 
 /** Reads `navigator.connection`, or null wherever it doesn't exist (SSR, most non-Chromium browsers). */
 function getNetworkConnection(): NetworkInformationLike | null {
@@ -709,6 +717,36 @@ function getNetworkConnection(): NetworkInformationLike | null {
   return (
     (navigator as Navigator & { connection?: NetworkInformationLike })
       .connection ?? null
+  );
+}
+
+/**
+ * Whether the device is most likely on a connection the user doesn't pay per
+ * megabyte for — no browser reports "metered" directly, so this infers it:
+ *
+ * - The user turned on data saving (`saveData`) → metered, whatever the link.
+ * - A known link type → unmetered only for Wi-Fi and Ethernet; cellular,
+ *   Bluetooth tethering, WiMAX and the rest count as metered.
+ * - No usable link type (desktop Chromium, Firefox, Safari) → unmetered only
+ *   when the main pointer is a mouse or trackpad. Desktops and laptops are
+ *   almost always on a fixed line, while a touch-first device without link
+ *   info is most often an iPhone or iPad that may well be on cellular.
+ */
+function isUnmeteredConnection(): boolean {
+  const connection = getNetworkConnection();
+  if (connection?.saveData === true) {
+    return false;
+  }
+
+  const type = connection?.type;
+  if (type && !UNDETERMINED_CONNECTION_TYPES.has(type)) {
+    return UNMETERED_CONNECTION_TYPES.has(type);
+  }
+
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(pointer: fine)").matches
   );
 }
 
@@ -1392,8 +1430,7 @@ export function createOfflineTranslationsManager(
       return;
     }
 
-    const connection = getNetworkConnection();
-    if (!connection || connection.saveData !== true) {
+    if (isUnmeteredConnection()) {
       // Marked before the download even starts (not just on success) so a
       // failure can't be retried by the next page turn — see the map's doc
       // comment above.
@@ -1402,8 +1439,8 @@ export function createOfflineTranslationsManager(
       return;
     }
 
-    // The device wants to save data, so ask instead of spending bandwidth on
-    // its behalf. Never stack this on top of another prompt already on screen
+    // The connection may cost the user money, so ask instead of spending data
+    // on their behalf. Never stack this on top of another prompt already on screen
     // — and don't mark the hash handled until it's actually offered, so a
     // prompt that couldn't be shown this time still gets a next try.
     if (blockingPromptOnScreen()) {

@@ -6,6 +6,8 @@
 
 ### 🔧 Changed
 
+- Download updates to offline translations automatically only on Wi-Fi, Ethernet or a computer; on cellular data, with data saver on, or on a phone or tablet that can't tell, ask first.
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed
