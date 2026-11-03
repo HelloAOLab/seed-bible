@@ -511,18 +511,18 @@ describe("audio-reader playback controls", () => {
     function attachSession(host: boolean) {
       const readingState = getReadingState(state);
       const sharedAudio = signal<SharedAudioPlayback | null>(null);
-      let revision = 0;
+      let written = 0;
       const publish = vi.fn((command: SharedAudioPlaybackCommand | null) => {
         if (!host) return false as const;
         if (command === null) {
           sharedAudio.value = null;
           return null;
         }
-        revision += 1;
+        written += 1;
         const next: SharedAudioPlayback = {
           ...command,
           updatedAtMs: Date.now(),
-          revision,
+          id: `local-${written}`,
         };
         sharedAudio.value = next;
         return next;
@@ -565,8 +565,9 @@ describe("audio-reader playback controls", () => {
         translationId: readingState.translationId.value ?? "",
         position: 0,
         unit: "seconds",
+        verseNumber: null,
         updatedAtMs: Date.now(),
-        revision: 1,
+        id: "host-1",
         ...overrides,
       };
     }
@@ -628,7 +629,7 @@ describe("audio-reader playback controls", () => {
       sharedAudio.value = hostCommand(readingState, {
         playing: false,
         position: 12,
-        revision: 2,
+        id: "host-2",
       });
 
       expect(pauseSpy).toHaveBeenCalled();
@@ -641,7 +642,7 @@ describe("audio-reader playback controls", () => {
     it("starts a joiner at the host's place when the session is already playing", () => {
       const readingState = getReadingState(state);
       const sharedAudio = signal<SharedAudioPlayback | null>(
-        hostCommand(readingState, { position: 8, revision: 4 })
+        hostCommand(readingState, { position: 8, id: "host-4" })
       );
       const tab = state.tabs.tabs.peek()[0]!;
       tab.sharedSession = {
@@ -680,7 +681,7 @@ describe("audio-reader playback controls", () => {
       sharedAudio.value = hostCommand(readingState, {
         bookId: "EXO",
         chapterNumber: 2,
-        revision: 1,
+        id: "host-exo",
       });
 
       expect(playSpy).not.toHaveBeenCalled();
@@ -688,7 +689,7 @@ describe("audio-reader playback controls", () => {
 
       sharedAudio.value = hostCommand(readingState, {
         position: 4,
-        revision: 2,
+        id: "host-gen",
       });
 
       expect(playSpy).toHaveBeenCalled();
@@ -706,6 +707,87 @@ describe("audio-reader playback controls", () => {
 
       expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
       expect(audio.current!.paused).toBe(true);
+    });
+
+    it("asks for a tap when autoplay is blocked, then starts on the next gesture", async () => {
+      const { sharedAudio, readingState } = attachSession(false);
+      const toast = vi.spyOn(state.app, "toast");
+      playSpy.mockImplementation(() =>
+        Promise.reject(
+          Object.assign(new Error("blocked"), { name: "NotAllowedError" })
+        )
+      );
+
+      sharedAudio.value = hostCommand(readingState, {
+        id: "blocked-1",
+        position: 3,
+      });
+
+      await vi.waitFor(() => {
+        expect(toast).toHaveBeenCalledWith("Tap to listen along");
+      });
+      expect(
+        state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+      ).toBe(false);
+
+      playSpy.mockImplementation(function (this: HTMLAudioElement) {
+        Object.defineProperty(this, "paused", {
+          configurable: true,
+          value: false,
+        });
+        this.dispatchEvent(new Event("play"));
+        return Promise.resolve();
+      });
+      window.dispatchEvent(new PointerEvent("pointerdown"));
+
+      await vi.waitFor(() => {
+        expect(
+          state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+        ).toBe(true);
+      });
+    });
+
+    it("does not republish a command it is only following", () => {
+      const { publish, sharedAudio, readingState } = attachSession(true);
+      publish.mockClear();
+
+      sharedAudio.value = hostCommand(readingState, { id: "cohost-command" });
+
+      expect(playSpy).toHaveBeenCalled();
+      fire("play");
+      fire("pause");
+
+      expect(publish).not.toHaveBeenCalled();
+    });
+
+    it("does not clear shared audio once someone else is leading", () => {
+      const { publish, sharedAudio, readingState } = attachSession(true);
+      pressPlay();
+
+      sharedAudio.value = hostCommand(readingState, {
+        id: "cohost-now",
+        position: 15,
+      });
+      publish.mockClear();
+      state.audioPlayback.controllerFor(readingState)!.stop();
+
+      expect(publish).not.toHaveBeenCalledWith(null);
+      expect(sharedAudio.value?.id).toBe("cohost-now");
+    });
+
+    it("follows a different translation by verse instead of by seconds", async () => {
+      const { sharedAudio, readingState } = attachSession(false);
+
+      sharedAudio.value = hostCommand(readingState, {
+        id: "other-translation",
+        translationId: "OTHER",
+        position: 90,
+        verseNumber: 2,
+      });
+
+      await vi.waitFor(() => {
+        expect(audio.current!.currentTime).toBeCloseTo(5, 0);
+      });
     });
   });
 });
