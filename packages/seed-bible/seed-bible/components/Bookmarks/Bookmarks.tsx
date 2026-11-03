@@ -64,11 +64,9 @@ export function BookmarkGlyph(props: {
   colorId: string;
   size?: number;
   className?: string;
-  /** Paints the ribbon in this CSS color instead of the bookmark's own. */
-  color?: string;
 }) {
   const size = props.size ?? 16;
-  const color = props.color ?? bookmarkColorValue(props.colorId);
+  const color = bookmarkColorValue(props.colorId);
   return (
     <svg
       className={`sb-bookmark-glyph${props.className ? ` ${props.className}` : ""}`}
@@ -97,15 +95,18 @@ export function BookmarkGlyph(props: {
 export function BookmarkStackIcon(props: {
   bookmarks: readonly Bookmark[];
   size?: number;
-  /** Paints every ribbon in this CSS color instead of each bookmark's own. */
-  color?: string;
+  /**
+   * Draws every ribbon as an unfilled outline in the text color, keeping the
+   * count — for a toggle that is off.
+   */
+  outline?: boolean;
 }) {
   const size = props.size ?? 22;
   const shown = props.bookmarks.slice(0, MAX_STACKED_GLYPHS);
   // Mask ids must be unique on the page, and usable inside `url(#…)`.
   const maskPrefix = `sb-bookmark-stack-${useId().replace(/[^\w-]/g, "")}`;
 
-  if (shown.length === 0) {
+  if (shown.length === 0 || (props.outline && shown.length === 1)) {
     return (
       <svg
         width={size}
@@ -125,13 +126,7 @@ export function BookmarkStackIcon(props: {
   }
 
   if (shown.length === 1) {
-    return (
-      <BookmarkGlyph
-        colorId={shown[0]!.colorId}
-        size={size}
-        color={props.color}
-      />
-    );
+    return <BookmarkGlyph colorId={shown[0]!.colorId} size={size} />;
   }
 
   const layout = STACK_LAYOUTS[shown.length]!;
@@ -199,7 +194,16 @@ export function BookmarkStackIcon(props: {
             className="sb-bookmark-stack-ribbon"
             d={BOOKMARK_PATH}
             transform={ribbon.transform}
-            fill={props.color ?? bookmarkColorValue(ribbon.bookmark.colorId)}
+            fill={
+              props.outline
+                ? "none"
+                : bookmarkColorValue(ribbon.bookmark.colorId)
+            }
+            stroke={props.outline ? "currentColor" : undefined}
+            // Undoes the ribbon's scale, so a stacked outline is as heavy as
+            // a lone one.
+            stroke-width={props.outline ? 1.5 / STACK_SCALE : undefined}
+            stroke-linejoin={props.outline ? "round" : undefined}
           />
         </g>
       ))}
@@ -402,7 +406,7 @@ export function BookmarkLabel(props: {
 
 /**
  * The bookmark modal. Tapping one of your bookmarks moves it to `location`
- * and closes the modal.
+ * and closes the modal; its arrow instead opens the chapter it is on now.
  *
  * Below them, while one is being created, sits the create form with its own
  * Save. A user with no bookmarks gets that same form already open, prefilled
@@ -511,6 +515,23 @@ function BookmarkPickerContent(props: {
                 chapterText={locationText(bookmark)}
                 translationId={bookmark.translationId}
               />
+            </button>
+            <button
+              type="button"
+              className="sb-bookmark-picker-open"
+              disabled={isSaving.value}
+              aria-label={t("open-bookmark-named", {
+                defaultValue: "Open {{name}}",
+                name: bookmark.name,
+              })}
+              title={t("open-chapter", { defaultValue: "Open chapter" })}
+              onClick={() => {
+                openReaderLocation(state, bookmark, onClose);
+              }}
+            >
+              <MaterialIcon className="rtl-mirror" aria-hidden="true">
+                arrow_forward
+              </MaterialIcon>
             </button>
             <button
               type="button"

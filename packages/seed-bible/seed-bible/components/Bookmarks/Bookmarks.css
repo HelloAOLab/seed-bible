@@ -186,6 +186,7 @@
   cursor: not-allowed;
 }
 
+.sb-bookmark-picker-open,
 .sb-bookmark-picker-remove {
   flex-shrink: 0;
   display: inline-flex;
@@ -201,16 +202,19 @@
   cursor: pointer;
 }
 
+.sb-bookmark-picker-open:hover:not(:disabled),
 .sb-bookmark-picker-remove:hover:not(:disabled) {
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
   color: var(--sb-font-color);
 }
 
+.sb-bookmark-picker-open:disabled,
 .sb-bookmark-picker-remove:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
+.sb-bookmark-picker-open .material-symbols-outlined,
 .sb-bookmark-picker-remove .material-symbols-outlined {
   font-size: 1.125rem;
 }

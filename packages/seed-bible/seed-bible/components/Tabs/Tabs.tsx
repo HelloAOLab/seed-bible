@@ -2282,6 +2282,8 @@ export function Tabs(props: TabsProps) {
     : t("show-bookmarks", { defaultValue: "Show bookmarks" });
   // The toggle draws the same stack as the reader's button, but for all of
   // the user's bookmarks: most recently moved in front, at most three shown.
+  // Like the saves star beside it, it is an outline while off and filled
+  // while on — here in the bookmarks' own colors.
   const allBookmarks = bookmarks.bookmarks.value;
   // Desktop hides the tab lists' scrollbars, so fade an edge that has tabs
   // scrolled past it to show there's more.
@@ -2517,7 +2519,11 @@ export function Tabs(props: TabsProps) {
                 bookmarks.togglePanel();
               }}
             >
-              <BookmarkStackIcon bookmarks={allBookmarks} size={24} />
+              <BookmarkStackIcon
+                bookmarks={allBookmarks}
+                size={24}
+                outline={!isBookmarksPanelOpen}
+              />
             </button>
             <button
               type="button"
@@ -2599,7 +2605,7 @@ export function Tabs(props: TabsProps) {
             <BookmarkStackIcon
               bookmarks={allBookmarks}
               size={24}
-              color={isBookmarksPanelOpen ? "currentColor" : undefined}
+              outline={!isBookmarksPanelOpen}
             />
           </button>
           <button

@@ -229,6 +229,31 @@ describe("bookmarks", () => {
       );
     });
 
+    it("opens a bookmark's chapter from its arrow, leaving the bookmark where it is", async () => {
+      await signIn([aBookmark({ name: "Reading plan", ...AAB_EXO_3 })]);
+      const closeModal = vi.spyOn(state.modals, "closeModal");
+      const modal = await openModal(AAB_GEN_1);
+
+      const open = button(modal, ".sb-bookmark-picker-open");
+      expect(open.getAttribute("aria-label")).toBe("Open Reading plan");
+      await click(open);
+
+      const selected = () =>
+        state.tabs.tabs.value.find(
+          (tab) => tab.id === state.tabs.selectedTabId.value
+        )!.readingState;
+      await vi.waitFor(() =>
+        expect({
+          translationId: selected().translationId.value,
+          bookId: selected().bookId.value,
+          chapterNumber: selected().chapterNumber.value,
+        }).toEqual(AAB_EXO_3)
+      );
+      expect(closeModal).toHaveBeenCalledWith("bookmark-AAB-GEN-1");
+      expect(state.bookmarks.bookmarks.value[0]).toMatchObject(AAB_EXO_3);
+      expect(recordData).not.toHaveBeenCalled();
+    });
+
     it("keeps numbering new bookmarks as My bookmark 2, 3, …", async () => {
       await signIn([
         aBookmark({ id: "a", name: "My bookmark" }),
@@ -378,17 +403,35 @@ describe("bookmarks", () => {
       expect(front!.getAttribute("mask")).toBeNull();
     });
 
-    it("paints every ribbon in a given color when asked", () => {
-      const root = renderInto(
+    it("keeps the bookmarks' colors unless asked for an outline", () => {
+      const bookmarks = [
+        aBookmark({ id: "a", colorId: "red" }),
+        aBookmark({ id: "b", colorId: "green" }),
+      ];
+      expect(fills(icon(bookmarks))).not.toContain("none");
+      expect(
+        fills(renderInto(<BookmarkStackIcon bookmarks={bookmarks} outline />))
+      ).toEqual(["none", "none"]);
+    });
+
+    it("draws stacked outlines as heavy as a lone one", () => {
+      const lone = renderInto(
+        <BookmarkStackIcon bookmarks={[aBookmark()]} outline />
+      ).querySelector("path")!;
+      const stacked = renderInto(
         <BookmarkStackIcon
-          bookmarks={[
-            aBookmark({ id: "a", colorId: "red" }),
-            aBookmark({ id: "b", colorId: "green" }),
-          ]}
-          color="currentColor"
+          bookmarks={[aBookmark({ id: "a" }), aBookmark({ id: "b" })]}
+          outline
         />
+      ).querySelector(".sb-bookmark-stack-ribbon")!;
+      // Each stacked ribbon is scaled down, which thins its stroke with it.
+      const scale = Number(
+        stacked.getAttribute("transform")!.match(/scale\(([\d.]+)\)/)![1]
       );
-      expect(fills(root)).toEqual(["currentColor", "currentColor"]);
+
+      expect(Number(stacked.getAttribute("stroke-width")) * scale).toBeCloseTo(
+        Number(lone.getAttribute("stroke-width"))
+      );
     });
 
     it("stops at three ribbons", () => {
@@ -449,12 +492,19 @@ describe("bookmarks", () => {
     });
 
     describe("the bookmarks toggle", () => {
-      const toggleFills = () =>
-        Array.from(
-          container.querySelectorAll(
-            ".sb-sidebar-tabs-header-bookmarks-button .sb-bookmark-stack-ribbon"
-          )
-        ).map((path) => path.getAttribute("fill"));
+      const toggle = () =>
+        container.querySelector<HTMLButtonElement>(
+          ".sb-sidebar-tabs-header-bookmarks-button"
+        )!;
+      /** Each ribbon's paint, back to front. */
+      const toggleRibbons = () =>
+        Array.from(toggle().querySelectorAll(".sb-bookmark-stack-ribbon")).map(
+          (path) => ({
+            fill: path.getAttribute("fill"),
+            stroke: path.getAttribute("stroke"),
+          })
+        );
+      const outlined = { fill: "none", stroke: "currentColor" };
 
       beforeEach(async () => {
         // On different chapters, neither of them the one being read.
@@ -471,24 +521,72 @@ describe("bookmarks", () => {
         ]);
       });
 
-      it("shows the stack for all of the user's bookmarks, wherever they are", async () => {
+      // Like the saves star beside it: the bookmarks' own colors would make a
+      // closed toggle look switched on.
+      it("outlines a ribbon per bookmark, wherever they are, while the panel is closed", async () => {
         await renderSidebar();
 
-        // Back to front: the most recently moved is painted last, on top.
-        expect(toggleFills()).toEqual([
-          "var(--sb-bookmark-red-color)",
-          "var(--sb-bookmark-green-color)",
-        ]);
+        expect(toggleRibbons()).toEqual([outlined, outlined]);
+        expect(
+          toggle().classList.contains(
+            "sb-sidebar-tabs-header-bookmarks-button-active"
+          )
+        ).toBe(false);
       });
 
-      it("paints the stack in the active color while the panel is open", async () => {
+      it("fills the same ribbons in the bookmarks' own colors while the panel is open", async () => {
         await act(async () => {
           state.bookmarks.isPanelOpen.value = true;
         });
         await renderSidebar();
 
-        expect(toggleFills()).toEqual(["currentColor", "currentColor"]);
+        // Back to front: the most recently moved is painted last, on top.
+        expect(toggleRibbons()).toEqual([
+          { fill: "var(--sb-bookmark-red-color)", stroke: null },
+          { fill: "var(--sb-bookmark-green-color)", stroke: null },
+        ]);
+        expect(
+          toggle().classList.contains(
+            "sb-sidebar-tabs-header-bookmarks-button-active"
+          )
+        ).toBe(true);
       });
+
+      it("is outlined on mobile too", async () => {
+        const originalInnerWidth = window.innerWidth;
+        window.innerWidth = 400;
+        try {
+          await act(async () => {
+            window.dispatchEvent(new Event("resize"));
+          });
+          expect(state.app.isMobile.value).toBe(true);
+          await renderSidebar();
+
+          expect(toggle().classList).toContain(
+            "sb-mobile-screen-header-button"
+          );
+          expect(toggleRibbons()).toEqual([outlined, outlined]);
+        } finally {
+          window.innerWidth = originalInnerWidth;
+          await act(async () => {
+            window.dispatchEvent(new Event("resize"));
+          });
+        }
+      });
+    });
+
+    it("outlines the bookmarks toggle for a single bookmark while the panel is closed", async () => {
+      await signIn([aBookmark({ colorId: "red" })]);
+      await renderSidebar();
+
+      const toggle = container.querySelector(
+        ".sb-sidebar-tabs-header-bookmarks-button"
+      )!;
+      const ribbons = toggle.querySelectorAll("path");
+      expect(ribbons).toHaveLength(1);
+      expect(toggle.querySelector("svg")!.getAttribute("fill")).toBe("none");
+      expect(ribbons[0]!.getAttribute("fill")).toBeNull();
+      expect(ribbons[0]!.getAttribute("stroke")).toBe("currentColor");
     });
 
     it("shows no marker for a bookmark in another translation", async () => {

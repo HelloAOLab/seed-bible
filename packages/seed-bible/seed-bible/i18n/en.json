@@ -1092,6 +1092,7 @@
   "edit-bookmark": "Edit bookmark",
   "remove-bookmark": "Remove bookmark",
   "remove-bookmark-named": "Remove {{name}}",
+  "open-bookmark-named": "Open {{name}}",
   "bookmark-limit-reached": "You can have up to {{max}} bookmarks. Move or remove one to make room.",
   "bookmarks-empty": "No bookmarks yet. Use the bookmark button above a chapter to place one.",
   "bookmark-save-failed": "Couldn't save your bookmark. Please try again.",
