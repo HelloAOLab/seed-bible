@@ -7,6 +7,8 @@ import {
   readInjectedConfig,
 } from "@packages/seed-bible/seed-bible/app/appConfig";
 import { readInjectedApiResponseSnapshot } from "@packages/seed-bible/seed-bible/app/apiResponseSeed";
+import { readInjectedCustomizationSeed } from "@packages/seed-bible/seed-bible/app/customizationSeed";
+import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
 import {
@@ -20,6 +22,33 @@ import {
   LIGHT_THEME,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { stubColorScheme } from "../seed-bible/testUtils/stubColorScheme";
+import { installSharedDocumentMock } from "../seed-bible/testUtils/createTestSeedBibleState";
+
+// A signed-in test makes the app read reading history while its state is
+// still being built, before a test could stub the client it creates. Every
+// client gets a local shared document instead, so that read never reaches
+// the network.
+vi.mock(
+  "@packages/seed-bible/seed-bible/managers/OsManager",
+  async (importOriginal) => {
+    const original =
+      await importOriginal<
+        typeof import("@packages/seed-bible/seed-bible/managers/OsManager")
+      >();
+    return {
+      ...original,
+      CasualOSManager: (
+        ...args: Parameters<typeof original.CasualOSManager>
+      ) => {
+        const os = original.CasualOSManager(...args);
+        installSharedDocumentMock({ os } as Parameters<
+          typeof installSharedDocumentMock
+        >[0]);
+        return os;
+      },
+    };
+  }
+);
 
 const TEMPLATE = [
   "<!doctype html><html><head>",
@@ -28,6 +57,7 @@ const TEMPLATE = [
   "<!-- META -->",
   '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
   '<script type="application/json" id="app-seed-data"><!-- SEED_JSON --></script>',
+  '<script type="application/json" id="app-customization-seed"><!-- CUSTOMIZATION_JSON --></script>',
   '<div id="app"><!-- APP_HTML --></div></body></html>',
 ].join("");
 
@@ -66,11 +96,18 @@ function seedStoredTabsState(
   );
 }
 
-async function renderSsrDocument(path: string = PATH): Promise<string> {
+async function renderSsrDocument(
+  path: string = PATH,
+  extraResponses: Record<string, Response> = {}
+): Promise<string> {
   jsdom.reconfigure({ url: `http://ssr.local${path}` });
   localStorage.clear();
   const responses = createDefaultManagerResponseMap();
   globalThis.fetch = (async (url: string) => {
+    const extra = extraResponses[url];
+    if (extra) {
+      return extra.clone();
+    }
     const response = responses[url];
     if (!response) {
       throw new Error(`No mocked response for ${url}`);
@@ -177,7 +214,11 @@ describe("client hydration", () => {
     // in place matches what a real browser has available too.
     const config = readInjectedConfig();
     const apiResponseSnapshot = readInjectedApiResponseSnapshot();
-    const state = createSeedBibleState({ config, apiResponseSnapshot });
+    const state = createSeedBibleState({
+      config,
+      apiResponseSnapshot,
+      initialCustomizationSeed: readInjectedCustomizationSeed(),
+    });
 
     await Promise.all([
       state.i18n.ready,
@@ -213,11 +254,14 @@ describe("client hydration", () => {
    * below can seed `localStorage` between the SSR render (which must not see it)
    * and the client's `createSeedBibleState` (which must).
    */
-  async function installSsrDocument(path: string = PATH): Promise<{
+  async function installSsrDocument(
+    path: string = PATH,
+    extraResponses: Record<string, Response> = {}
+  ): Promise<{
     container: HTMLElement;
     beforeHtml: string;
   }> {
-    const html = await renderSsrDocument(path);
+    const html = await renderSsrDocument(path, extraResponses);
     document.open();
     document.write(html);
     document.close();
@@ -619,10 +663,12 @@ describe("client hydration", () => {
     expect(decision).toEqual({ hydrate: true });
   });
 
-  // The server can't see the device, so it always paints Light. Both theme
-  // tags (the head `#sb-theme-styles` and the in-tree `<style>` that
-  // `ExternalResourceDependencies` renders, which wins) only repaint on a
-  // post-mount *change*, so the device's scheme has to arrive after mount.
+  // The server can't see the device, so it always paints Light. The head
+  // `#sb-theme-styles` tag only repaints on a post-mount *change*, so the
+  // device's scheme has to arrive after mount. The in-tree `<style>` that
+  // `ExternalResourceDependencies` renders must stay empty with no
+  // Customization: it sits later in the document, so any theme in it would
+  // paint over the head tag.
   it.each([
     ["a first-time visitor on a dark device", null, true, DARK_THEME],
     ["a visitor who saved System on a dark device", "system", true, DARK_THEME],
@@ -647,15 +693,113 @@ describe("client hydration", () => {
       });
 
       const expected = `--sb-background: ${expectedTheme.variables.background};`;
-      const inTreeCss = Array.from(container.querySelectorAll("style"))
+      const inTreeThemeCss = Array.from(container.querySelectorAll("style"))
         .map((style) => style.innerHTML)
-        .find((css) => css.includes("--sb-background"));
-      expect(inTreeCss).toContain(expected);
+        .filter((css) => css.includes("--sb-background"));
+      expect(inTreeThemeCss).toEqual([]);
       expect(document.getElementById("sb-theme-styles")?.textContent).toContain(
         expected
       );
     }
   );
+});
+
+describe("client hydration with a shared customization link", () => {
+  const CALL_PROCEDURE_URL = "https://auth.seedbible.org/api/v3/callProcedure";
+  const LIGHT_VARIANT_COLOR = "#aa1111";
+  const DARK_VARIANT_COLOR = "#22bb22";
+  const customizationResponse = () =>
+    new Response(
+      JSON.stringify({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_light",
+              name: "Light",
+              baseTheme: "light",
+              themes: { primaryColor: LIGHT_VARIANT_COLOR },
+              createdAt: 1,
+              updatedAt: 1,
+            },
+            {
+              id: "variant_dark",
+              name: "Dark",
+              baseTheme: "dark",
+              themes: { primaryColor: DARK_VARIANT_COLOR },
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_dark",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      }),
+      { headers: { "Content-Type": "application/json" } }
+    );
+  const path = `${PATH}&customization=owner.customization_shared`;
+
+  let originalFetch: typeof globalThis.fetch;
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+  });
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    localStorage.clear();
+    vi.unstubAllGlobals();
+  });
+
+  // The server renders System on a light device, so it picks the link's
+  // light variant. A signed-in account that saved Dark doesn't follow the
+  // device, so the link's default (dark) variant applies. Preact leaves a
+  // `dangerouslySetInnerHTML` tag alone while hydrating, so the account's
+  // theme has to arrive after mount, as a change, to repaint it.
+  it("repaints the customization for a signed-in account's cached theme after mount", async () => {
+    const html = await renderSsrDocument(path, {
+      [CALL_PROCEDURE_URL]: customizationResponse(),
+    });
+    expect(html).toContain(`--sb-primary-color: ${LIGHT_VARIANT_COLOR};`);
+    document.open();
+    document.write(html);
+    document.close();
+    jsdom.reconfigure({ url: `http://ssr.local${path}` });
+    const container = document.getElementById("app")!;
+
+    stubColorScheme(false);
+    localStorage.setItem(
+      "sessionKey",
+      formatV1SessionKey("user-1", "session-1", "secret-1", Date.now() + 864e5)
+    );
+    localStorage.setItem(
+      "sb-profile-cache-user-1",
+      JSON.stringify({ name: "Reader", config: { themeId: "dark" } })
+    );
+    const config = readInjectedConfig();
+    const state = createSeedBibleState({
+      config,
+      apiResponseSnapshot: readInjectedApiResponseSnapshot(),
+      initialCustomizationSeed: readInjectedCustomizationSeed(),
+    });
+    await Promise.all([
+      state.i18n.ready,
+      Promise.all(
+        state.tabs.tabs.value.map((t) => t.readingState.chapterDataPromise)
+      ),
+    ]);
+
+    await act(async () => {
+      hydrate(<Main initialState={state} config={config} />, container);
+    });
+
+    const inTreeCss = Array.from(container.querySelectorAll("style"))
+      .map((style) => style.innerHTML)
+      .find((css) => css.includes("--sb-primary-color"));
+    expect(inTreeCss).toContain(`--sb-primary-color: ${DARK_VARIANT_COLOR};`);
+  });
 });
 
 describe("waitForInitialChapterLoads()", () => {

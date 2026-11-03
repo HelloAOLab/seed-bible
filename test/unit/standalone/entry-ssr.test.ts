@@ -930,6 +930,20 @@ describe("render() server-rendered meta tags", () => {
     expect(injected).toContain("--sb-");
   });
 
+  // The pre-hydration script in `index.html` corrects `#sb-theme-styles` to
+  // the device's saved or System theme. A `body` rule anywhere later in the
+  // document would beat it, and the server only knows the Light default, so
+  // the page would show Light until the app mounted.
+  it("keeps theme colors out of the app markup when no customization is linked", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const themeStyles = Array.from(doc.querySelectorAll("style"))
+      .filter((style) => style.id !== "sb-theme-styles")
+      .filter((style) => style.textContent?.includes("--sb-background"));
+    expect(themeStyles).toEqual([]);
+  });
+
   it("injects the built-in theme presets into the #sb-theme-presets tag, for the pre-hydration script", async () => {
     const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
 

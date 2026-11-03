@@ -7,6 +7,8 @@ import {
   ContentSection,
   ContentTypeSection,
   contentTypeResultsFor,
+  verseTaggedResultsFor,
+  VerseTaggedResultsSections,
 } from "@packages/seed-bible/seed-bible/components/DiscoverPane/DiscoveredResultsSections";
 import type { DiscoverContentTypeDefinition } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { hasAnyDiscoverResults } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -623,6 +625,137 @@ describe("contentTypeResultsFor", () => {
     });
 
     expect(contentTypeResultsFor(selected, "person_profile")).toEqual([]);
+  });
+});
+
+describe("verseTaggedResultsFor", () => {
+  const contentTypes = [
+    definition("cross_references", { hiddenByDefault: true }),
+    definition("person_profile"),
+  ];
+
+  function tabWith(results: unknown[], selectedVerses: number[]) {
+    return createMockTab({
+      discoveredContent: [{ providerId: "p1", results }],
+      selectedVerses,
+    });
+  }
+
+  const summarize = (tab: ReaderTab) =>
+    verseTaggedResultsFor(tab.readingState, contentTypes).map((group) => ({
+      type: group.definition?.id ?? null,
+      titles: group.results.map((result) => result.title),
+    }));
+
+  it("is empty with no verse selected, even when results are tagged", () => {
+    const tab = tabWith([typedResult("person_profile", "Aaron", [14])], []);
+
+    expect(summarize(tab)).toEqual([]);
+  });
+
+  it("groups the results tagged for the selection by type, in type order", () => {
+    const tab = tabWith(
+      [
+        typedResult("person_profile", "Aaron", [14, 27]),
+        typedResult("cross_references", "Exodus 4:14", [14]),
+        typedResult("person_profile", "Moses", [1]),
+      ],
+      [14]
+    );
+
+    expect(summarize(tab)).toEqual([
+      { type: "cross_references", titles: ["Exodus 4:14"] },
+      { type: "person_profile", titles: ["Aaron"] },
+    ]);
+  });
+
+  it("leaves out a result that doesn't say which verses it covers", () => {
+    const tab = tabWith(
+      [
+        typedResult("person_profile", "Chapter overview"),
+        typedResult("person_profile", "Aaron", [14]),
+      ],
+      [14]
+    );
+
+    expect(summarize(tab)).toEqual([
+      { type: "person_profile", titles: ["Aaron"] },
+    ]);
+  });
+
+  it("puts tagged results of an unregistered type in a last, untyped group", () => {
+    const tab = tabWith(
+      [
+        typedResult("unregistered", "Mystery", [14]),
+        { ...typedResult("", "No type", [14]), contentType: undefined },
+        typedResult("person_profile", "Aaron", [14]),
+      ],
+      [14]
+    );
+
+    expect(summarize(tab)).toEqual([
+      { type: "person_profile", titles: ["Aaron"] },
+      { type: null, titles: ["Mystery", "No type"] },
+    ]);
+  });
+
+  it("is empty when nothing is tagged for the selected verses", () => {
+    const tab = tabWith([typedResult("person_profile", "Aaron", [14])], [3]);
+
+    expect(summarize(tab)).toEqual([]);
+  });
+});
+
+describe("VerseTaggedResultsSections", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  it("titles each group by its type and renders custom types as their card alone", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            typedResult("cross_references", "Exodus 4:14", [14]),
+            typedResult("unregistered", "Mystery", [14]),
+          ],
+        },
+      ],
+      selectedVerses: [14],
+    });
+    const groups = verseTaggedResultsFor(tab.readingState, [
+      definition("cross_references", { layout: "custom" }),
+    ]);
+
+    act(() => {
+      render(<VerseTaggedResultsSections groups={groups} />, container);
+    });
+
+    const sections = [
+      ...container.querySelectorAll<HTMLElement>(".sb-discover-section"),
+    ];
+    expect(
+      sections.map(
+        (section) =>
+          section.querySelector(".sb-discover-section-title")?.textContent
+      )
+    ).toEqual(["cross_references title (1)", "Content (1)"]);
+
+    // The custom card replaces the standard title/description layout.
+    expect(sections[0]?.textContent).toContain("Exodus 4:14 card");
+    expect(sections[0]?.querySelector(".sb-discover-item-title")).toBeNull();
+    expect(
+      sections[1]?.querySelector(".sb-discover-item-title")?.textContent
+    ).toBe("Mystery");
   });
 });
 

@@ -28,22 +28,18 @@
   "searching": "Zoeken...",
   "no-search-results": "Geen overeenkomende verzen.",
   "open-chapter": "Open hoofdstuk",
-
   "uploading": "Bezig met uploaden...",
   "profile-name": "Profielnaam",
   "profile-name-placeholder": "bijvoorbeeld de familie Craig",
-
   "description": "Beschrijving",
   "optional": "(Optioneel)",
   "description-placeholder": "Voer je profielbeschrijving in...",
   "location": "Locatie",
   "location-placeholder": "bijv. Austin, TX",
-
   "copied": "Gekopieerd",
   "copy": "Kopiëren",
   "save-changes": "Wijzigingen opslaan",
   "sign-out": "Uitloggen",
-
   "log-in": "Inloggen",
   "tanakh": "Tanakh",
   "traditional": "Traditioneel",
@@ -57,7 +53,6 @@
   "scripture-settings": "Schriftteksten",
   "scripture-elements": "Schriftelementen",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Toon kopteksten",
   "show-verse-numbers": "Toon versnummers",
   "show-footnotes": "Toon voetnoten",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Geen uitbreidingen beschikbaar.",
   "install": "Installeren",
   "uninstall": "Verwijderen",
-
   "custom": "Aangepast",
   "text-section-bookTitle": "Boektitel Tekst",
   "text-section-heading": "Koptekst",
@@ -92,7 +86,6 @@
   "show-selected-items": "Toon geselecteerde items",
   "show-highlight-colors": "Markeerkleuren weergeven",
   "show-icon-text": "Toon pictogramtekst",
-
   "extensions": "Uitbreidingen",
   "display": "Weergave",
   "theme-and-text": "Thema en tekst",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Vergroot de lettergrootte van de Bijbelteksten",
   "change-line-spacing": "Regelafstand wijzigen",
   "line-spacing_lineHeight": "Regelafstand: {{lineHeight}}",
-
   "italic": "Cursief",
   "underline": "Onderstrepen",
   "alignment_x": "Uitlijning: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Tekstkleur",
   "follow_theme": "Volg het thema",
   "reset-to-default": "Terugzetten naar standaardinstellingen",
-
   "id_highlight-text-color": "{{id}} markeer tekstkleur",
   "id_highlight-background-color": "{{id}} markeer achtergrondkleur",
   "all-settings-description": "Verfijn elk tekstgedeelte en pas elke themakleur aan.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apocrypha",
-
   "custom-translations": "Aangepaste vertalingen",
   "no-translation-results-found": "Geen resultaten gevonden. Wilt u uw zoekopdracht uitbreiden naar gedeeltelijk voltooide vertalingen?",
   "show-all-translations": "Toon alle vertalingen",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalmen",
   "5-psalms": "5 Psalmen",
   "remove-bookmark": "Verwijder bladwijzer",
-
   "chat": "Chat",
   "today": "Vandaag",
   "you": "Jij",
@@ -169,7 +158,6 @@
   "category-options": "Mapopties",
   "rename": "Naam wijzigen",
   "delete": "Verwijderen",
-
   "bookmark-options": "Bladwijzeropties",
   "new-folder-placeholder": "Mapnaam",
   "tasks": "Taken",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Er bestaat al een map met die naam.",
   "add-to-new": "Toevoegen aan nieuw",
   "save": "Redden",
-
   "apocrypha-info-text": "Geen van de geschriften in dit gedeelte werd ooit als Heilige Schrift beschouwd door vroege Joodse of christelijke gemeenschappen. De Bijbel is een specifieke verzameling boeken. Joden en christenen zijn het altijd eens geweest over het Oude Testament, dat afkomstig is van een vaste verzameling heilige geschriften die de Joden de Tanakh noemen en christenen het Oude Testament. De inhoud van de Tanakh en het Oude Testament is exact hetzelfde, maar ze zijn doorgaans anders geordend. Christenen erkennen daarnaast het Nieuwe Testament, dat het verhaal van Jezus, zijn leer en de geschriften van zijn volgelingen vertelt. De onderstaande geschriften waren bekend en werden veel gelezen in de tijd dat de Bijbel werd geschreven, maar ze werden nooit als Heilige Schrift beschouwd. Hoewel oude auteurs soms een breed scala aan teksten citeerden, waaronder dichters, filosofen en andere geschriften, is citeren niet hetzelfde als het als Heilige Schrift beschouwen. Deze geschriften zijn hier alleen opgenomen ter historische en literaire referentie.",
   "seed-bible": "Zaadbijbel",
   "take-photo": "Maak een foto",
   "choose-from-gallery": "Kies uit de galerij",
-
   "crop-your-photo": "Snijd je foto bij.",
   "zoom": "Zoom",
   "set-picture": "Setfoto",
@@ -211,10 +197,8 @@
   "read-the-bible": "Lees de Bijbel",
   "seed-bible-description": "Lees {{bookName}} {{chapterNumber}} in de Seed Bible",
   "social-title": "Lees {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Hoofdstuknavigatie",
   "tutorial.skip": "Overslaan",
-
   "tutorial.back": "Rug",
   "tutorial.done": "Klaar",
   "tutorial.next": "Volgende",
@@ -327,11 +311,9 @@
   "study-notes": "Studienotities",
   "content": "Inhoud",
   "untitled-playlist": "Naamloze afspeellijst",
-
   "discover-annotations-empty": "Je hebt geen aantekeningen.",
   "discover-cross-references-empty": "Er zijn geen kruisverwijzingen voor dit hoofdstuk.",
   "discover-study-notes-empty": "Er zijn geen studienotities voor dit hoofdstuk.",
-
   "discover-select-tab": "Selecteer een tabblad om gerelateerd materiaal te ontdekken.",
   "create-playlist": "Creëren",
   "playlist-title_placeholder": "Playlisttitel",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "Ik kon de afspeellijst niet verwijderen.",
   "collapsed-tab-shared-label": "{{title}} — gedeelde sessie, {{count}} aanwezig",
   "playlist-add-mode-label": "Artikeltype",
-
   "session-host-reconnected": "De verbinding met de sessie is hersteld.",
   "session-host-left": "De host is vertrokken — u bent uit de sessie verwijderd.",
   "drag-to-reorder-playlist-item": "Sleep om opnieuw te ordenen",
   "saving": "Bezig met opslaan…",
-
   "unsaved-item-confirm-message": "Je bent begonnen met het toevoegen van een item dat nog niet aan de afspeellijst is toegevoegd. Wat wil je doen?",
   "discard-and-save": "Negeren en opslaan",
   "add-and-save": "Toevoegen en opslaan",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "Voorbeeld {{reading}}",
   "reading-plan-mark-reading-complete": "Markeer als voltooid",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Markeer {{passage}} als gelezen",
   "reading-plan-read-nudge-title": "Veel leesplezier!",
   "reading-plan-read-nudge-toast": "Markeer {{passage}} als voltooid?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Lees, zoek en bestudeer de Bijbel online. Gratis vertalingen in vele talen, met markeringen, aantekeningen, bladwijzers en leesplannen.",
   "all": "Alle",
-
   "today-bookmarks": "BLADWIJZERS",
   "today-search-verses": "Zoek in boeken, hoofdstukken, verzen...",
   "anonymous-greeting": "Welkom!",
   "community": "GEMEENSCHAP",
   "go-somewhere-new": "GA NAAR EEN NIEUWE PLEK",
-
   "open-bible": "Open Bijbel",
   "personal-greeting": "Welkom, {{name}} !",
   "resume-reading": "GA VERDER WAAR JE GEBLEVEN BENT GEBLEVEN",
   "resume-reading-loading": "Je leesgeschiedenis wordt geladen...",
   "selected-year": "Jaar: {{year}}",
-
   "theme-light": "Licht",
   "theme-dark": "Donker",
   "installed-extensions": "Geïnstalleerd",
@@ -543,7 +519,6 @@
   "extension-state-installed": "Geïnstalleerd",
   "extension-state-downloaded": "Gedownload",
   "extension-state-pending": "Installeren…",
-
   "tutorial.stepProgress": "Stap {{current}} van {{total}}",
   "tutorial.offlineDownloadTitle": "Tik om het op je apparaat te bewaren.",
   "tutorial.offlineDownloadBody": "Elke vertaling met dit pictogram kan worden opgeslagen om offline te lezen.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "Kies in dit lay-outmenu hoeveel passages u naast elkaar wilt lezen.",
   "tutorial.addTabTitle": "Open meer passages",
   "tutorial.addTabBody": "Voeg een nieuw tabblad toe om meerdere boeken of vertalingen naast elkaar te lezen.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % voltooid - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % voltooid",
   "playlist-history-continue": "Doorgaan",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "{{count}} notities voor dit hoofdstuk",
   "create-folder": "Map aanmaken",
   "edit-bookmark": "Bladwijzer bewerken",
-
   "greeting-afternoon": "Goedemiddag!",
   "greeting-afternoon-named": "Goedemiddag, {{name}} !",
   "greeting-evening": "Goedeavond!",
@@ -652,32 +625,24 @@
   "ask-ai": "Vraag het aan AI",
   "unread-mention": "Ongelezen vermelding",
   "unread-messages": "Ongelezen berichten: {{count}}",
-
   "scripture-width": "Schriftbreedte",
   "decrease-scripture-width": "Verklein de breedte van de Bijbeltekst",
   "increase-scripture-width": "Vergroot de breedte van de Bijbeltekst",
   "annotations": "Annotaties",
   "discover-content-panel": "Ontdek inhoud",
   "discover-book-title": "Ontdek {{book}}",
-
   "about-title": "Over Seed Bible",
   "about-meta-description": "Seed Bible is een gratis Bijbel-app, speciaal ontwikkeld om samen met familie, vrienden en de gemeenschap de Schrift te lezen. De app is voor altijd gratis, zonder advertenties of betaalmuren.",
-
   "about-action-open-passage": "Open een doorgang",
   "about-action-donate": "Doneer",
   "about-action-discord": "Word lid van Discord",
   "recent-uploads": "Recente uploads",
-
   "customization-not-found": "Deze aanpassing kon niet worden gevonden.",
   "customization-name": "Naam",
   "customization-primaryColor": "Primair",
-
   "customization-secondaryColor": "Secundair",
-
   "customization-tertiaryColor": "Tertiair",
-
   "customization-fonts": "Lettertypen",
-
   "custom-font-option": "Aangepast…",
   "custom-font-name-placeholder": "Google-lettertypenaam",
   "delete-customization": "Verwijderen",
@@ -690,10 +655,8 @@
   "extension-availability-available": "Beschikbaar",
   "extension-availability-auto-installed": "Automatisch geïnstalleerd",
   "extension-availability-hidden": "Verborgen",
-
   "variants": "Thema's",
   "add-variant": "Thema toevoegen",
-
   "base-theme-description": "Wijzigingen waarnaar dit thema terugvalt voor alles wat u niet hebt aangepast. Uw eigen bewerkingen blijven behouden.",
   "reset-to-base-theme": "Terugzetten naar basisthema",
   "low-contrast-warning": "{{label}} : contrast is slechts {{ratio}} :1 — streef naar minimaal {{minRatio}} :1 zodat de tekst leesbaar blijft.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "Nog geen saves hier.",
   "save-options": "Opties opslaan",
   "saves": "Bespaart",
-
   "hide-saves": "Opslaan verbergen",
   "show-saves": "Toon opgeslagen gegevens",
   "save-verses": "Redden",
   "new-save-folder": "Nieuwe map",
   "edit-save": "Bewerken opslaan",
   "remove-save-from-all-folders": "Verwijderen uit alle mappen",
-
   "color-hue": "Tint",
   "color-saturation": "Verzadiging en helderheid",
   "hex-color": "Hex-kleur",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "De opmaakeditor kon niet worden geladen. Deze notitie bevat opmaak die verloren zou gaan, dus kan deze pas worden bewerkt nadat u opnieuw verbinding hebt gemaakt.",
   "annotation-text": "Annotatietekst",
   "notes-for-verse": "Aantekeningen bij vers {{verse}}",
-
   "configure-extension-defaults": "Standaardinstellingen configureren",
-
   "extension-settings-defaults-title": "{{name}} standaard overschrijft",
   "no-extension-settings": "Deze extensie heeft geen instelbare instellingen.",
   "extension-settings-save-failed": "Je instellingen konden niet worden opgeslagen.",
@@ -872,7 +831,6 @@
   "setting-no-default": "Geen standaardwaarde",
   "override-setting": "{{name}} overschrijven",
   "override-setting-label": "Overschrijven",
-
   "discover-choose-filter-hint": "Selecteer hierboven een filter om meer uit dit hoofdstuk te bekijken.",
   "take-a-tour": "Maak een rondleiding",
   "share-reading-plan": "Deel het plan",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "Mijn bladwijzer {{number}}",
   "bookmark-move-hint": "Tik op een bladwijzer om deze naar dit hoofdstuk te verplaatsen.",
   "move-bookmark-here": "Verplaats {{name}} hierheen",
-
   "play": "Toneelstuk",
   "pause": "Pauze",
   "audio-playback-position": "Afspeelpositie",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "Vers {{verse}}",
   "tab-playing-audio": "Audio afspelen",
   "collapsed-tab-playing-label": "{{label}} — audio afspelen",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} thema's",
   "customization-theme-count_one": "{{count}} thema",
@@ -1104,7 +1060,6 @@
   "about-community-body": "Geloof is bedoeld om samen te beleven. Seed Bible is ontworpen om de Schrift te lezen met je familie, je beste vrienden en je huisgemeente.",
   "discovered-content": "Ontdekte inhoud",
   "show-discovered-content": "Toon gevonden inhoud",
-
   "extension-availability-default": "Standaard ( {{availability}} )",
   "customization-extensions-default": "Standaardwaarde voor andere extensies",
   "customization-extensions-default-hint": "Dit geldt voor alle extensies die u hieronder niet hebt ingesteld, inclusief nieuwe extensies die later worden toegevoegd.",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "Terug naar afspeellijst",
   "playlist-scripture-note-aria": "Opmerking over {{passage}}",
   "playlist-scripture-note-progress": "{{current}} van {{total}}",
-
   "unsaved-item-edit-confirm-message": "Je hebt een item gewijzigd, maar de wijzigingen nog niet opgeslagen. Wat wil je doen?",
   "keep-changes-and-save": "Wijzigingen behouden en opslaan",
   "reading-plan-edit-reading": "Lezen bewerken",
@@ -1152,7 +1106,6 @@
   "branding": "Merkidentiteit",
   "create-custom-branding-menu-item": "Maatwerk branding",
   "your-content-empty-branding": "De door u aangemaakte huisstijl wordt hier weergegeven.",
-
   "extension-consent-from": "Van {{host}}",
   "extension-consent-source-version": "Versie {{version}} · van {{host}}",
   "extension-consent-uploader-unnamed": "een Seed Bible-gebruiker",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "Kijk welke verzen je selecteert",
   "extension-permission-reading-navigate": "Open doorgangen",
   "extension-permission-network": "Verbinden met {{host}}",
-
   "extension-consent-not-now": "Nu niet",
   "extension-consent-nothing-yet": "Voorlopig heeft het geen toegang tot uw gegevens.",
   "extension-permission-reading-history": "Bekijk je leesgeschiedenis",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "Annuleren",
   "extension-consent-high-risk": "Gevoelig",
   "extension-modal-ok": "OK",
-
   "extension-permissions-restart-note": "De wijzigingen worden direct van kracht. {{name}} wordt opnieuw opgestart om ze te verwerken.",
   "extension-permissions-saved": "Opgeslagen. {{name}} is opnieuw opgestart met de nieuwe machtigingen.",
   "extension-permissions-failed": "Dat is niet opgeslagen. Probeer het opnieuw.",
@@ -1276,8 +1227,53 @@
   "session-settings-verse-effects-desc-hosts": "Toon effecten wanneer een presentator een vers selecteert.",
   "session-settings-verse-effects-desc-everyone": "Toon effecten wanneer iemand een vers selecteert.",
   "session-settings-verse-effects-desc-none": "De effecten voor het selecteren van verzen zijn voor iedereen uitgeschakeld.",
-
   "account": "Rekening",
   "scroll-filters-start": "Schuif de filters naar het begin",
-  "scroll-filters-end": "Scrol de filters naar het einde"
+  "scroll-filters-end": "Scrol de filters naar het einde",
+  "download": "Download",
+  "image-details-uploaded": "Geüpload",
+  "image-details-dimensions": "Afmetingen",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Type",
+  "image-details-cover-of": "Omslag van",
+  "image-details-not-a-cover": "Niet bedoeld als omslag",
+  "delete-customization-confirm-title": "Aangepaste huisstijl verwijderen?",
+  "delete-customization-confirm-message": "Aangepaste branding \" {{name}} \" verwijderen? Dit kan niet ongedaan worden gemaakt.",
+  "delete-customization-failed": "Het lukte niet om de aangepaste huisstijl te verwijderen.",
+  "delete-variant-confirm-title": "Thema verwijderen?",
+  "delete-variant-confirm-message": "Thema \" {{name}} \" verwijderen? Dit kan niet ongedaan gemaakt worden.",
+  "delete-variant-confirm-message-unnamed": "Dit thema verwijderen? Dit kan niet ongedaan worden gemaakt.",
+  "delete-variant-failed": "Het thema kon niet worden verwijderd.",
+  "delete-highlight-confirm-title": "Markering verwijderen?",
+  "delete-highlight-confirm-message": "De markering op {{reference}} verwijderen? Dit kan niet ongedaan worden gemaakt.",
+  "delete-highlight-failed": "Kon de markering niet verwijderen.",
+  "delete-annotation-on-confirm-message": "De annotatie op {{reference}} verwijderen? Dit kan niet ongedaan gemaakt worden.",
+  "remove-from-folder": "Verwijderen uit map",
+  "save-folders": "In {{folders}}",
+  "delete-save-confirm-title": "Opslaan verwijderen?",
+  "delete-save-confirm-message": "Opslaan voor {{reference}} verwijderen? Dit kan niet ongedaan gemaakt worden.",
+  "delete-save-confirm-message-folders": "Verwijder de opslag voor {{reference}} uit {{folders}} ? Dit kan niet ongedaan worden gemaakt.",
+  "delete-save-failed": "Het lukte niet om het opgeslagen spel te verwijderen.",
+  "delete-save-folder-confirm-title": "Map verwijderen?",
+  "delete-save-folder-confirm-message": "Map \" {{name}} \" verwijderen?",
+  "delete-save-folder-confirm-deletes": "De {{count}} opgeslagen bestanden die zich alleen in deze map bevinden, worden ook verwijderd.",
+  "delete-save-folder-confirm-deletes_one": "De opgeslagen bestanden die zich alleen in deze map bevinden, worden ook verwijderd.",
+  "delete-save-folder-confirm-deletes_other": "De {{count}} opgeslagen bestanden die zich alleen in deze map bevinden, worden ook verwijderd.",
+  "delete-save-folder-confirm-keeps": "De {{count}} opgeslagen bestanden die zich ook in andere mappen bevinden, blijven daar staan.",
+  "delete-save-folder-confirm-keeps_one": "Het opgeslagen spelbestand dat zich ook in een andere map bevindt, blijft daar staan.",
+  "delete-save-folder-confirm-keeps_other": "De {{count}} opgeslagen bestanden die zich ook in andere mappen bevinden, blijven daar staan.",
+  "cant-be-undone": "Dit kan niet ongedaan gemaakt worden.",
+  "delete-save-folder-failed": "De map kon niet worden verwijderd.",
+  "download-image-failed": "Het downloaden van de afbeelding lukte niet.",
+  "session-settings-verse-effects-hosts-only": "Alleen voor hosts",
+  "session-settings-verse-effects-everyone": "Iedereen",
+  "session-settings-verse-effects-none": "Geen",
+  "loading-books": "Boeken laden…",
+  "books-load-failed": "De boeken konden niet worden geladen. Controleer uw internetverbinding en probeer het opnieuw.",
+  "loading-translation": "{{name}} laden …",
+  "translation-load-failed": "{{name}} kon niet worden geladen.",
+  "loading-translations": "Vertalingen worden geladen…",
+  "translations-load-failed": "Het lukte niet om de volledige lijst met vertalingen te laden, dus mogelijk ontbreken er enkele.",
+  "verse-of-the-day": "VERS VAN DE DAG",
+  "verse-of-the-day-loading": "Het vers van de dag wordt geladen..."
 }

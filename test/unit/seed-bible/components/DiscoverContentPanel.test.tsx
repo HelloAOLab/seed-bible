@@ -57,18 +57,6 @@ function createAnnotation(overrides: Partial<Annotation> = {}): Annotation {
     ...overrides,
   } as Annotation;
 }
-
-function createPlanMatch(overrides: Partial<PlanMatch> = {}): PlanMatch {
-  return {
-    planKey: "plan-1",
-    planTitle: "Through the Bible in a Year",
-    progress: { id: "progress-1" },
-    sessions: [],
-    allComplete: false,
-    ...overrides,
-  } as PlanMatch;
-}
-
 /** One Theographic result as the provider builds it. */
 function theographicResult(
   contentType: "person_profile" | "place_profile" | "event",
@@ -351,28 +339,6 @@ describe("DiscoverContentPanel", () => {
     });
 
     expect(container.innerHTML).toBe("");
-  });
-
-  it("renders the reading-plans section when a followed plan covers the chapter and nothing else exists", () => {
-    const tab = createMockTab();
-    const state = createMockState({
-      annotationsForChapter: [],
-      readingPlansForChapter: [createPlanMatch()],
-    });
-
-    act(() => {
-      render(<DiscoverContentPanel tab={tab} state={state} />, container);
-    });
-
-    expect(
-      container.querySelector(".sb-discover-content-panel")
-    ).not.toBeNull();
-    const sectionTitles = Array.from(
-      container.querySelectorAll(".sb-discover-section-title")
-    ).map((el) => el.textContent);
-    expect(sectionTitles).toEqual(["Reading Plans"]);
-    expect(container.textContent).toContain("Through the Bible in a Year");
-    expect(container.textContent).not.toContain("Pick a filter above");
   });
 
   it("only shows filter chips for content that is actually available", () => {

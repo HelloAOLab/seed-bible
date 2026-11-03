@@ -19,7 +19,7 @@ import {
   parseStaticPagePath,
 } from "./StaticPagePath";
 import { isMinimalEmbedUrl } from "./EmbedMode";
-import type { TranslationBooks } from "./FreeUseBibleAPI";
+import type { Translation, TranslationBooks } from "./FreeUseBibleAPI";
 import type { Annotation, AnnotationsManager } from "./AnnotationsManager";
 import {
   buildCommunityFeed,
@@ -54,6 +54,19 @@ export interface VerseSearchResult {
   chapterNumber: number;
   verseNumber: number | null;
   reference: string;
+  text: string;
+}
+
+/** The verse of the day, with its text in the translation it was asked for. */
+export interface TodayVerseOfTheDay {
+  bookId: string;
+  chapter: number;
+  verse: number;
+  /** The last verse of the passage. Omitted when it is a single verse. */
+  endVerse?: number;
+  translationId: string;
+  /** The translation's abbreviation, such as "BSB". */
+  translationShortName: string;
   text: string;
 }
 
@@ -184,6 +197,15 @@ export interface TodayManager {
     chapter: number,
     verse: number
   ) => Promise<string | undefined>;
+  /**
+   * The verse of the day for a `YYYY-MM-DD` date from the "verse-of-the-day"
+   * dataset, with its text in `translationId`. Null when the dataset has no
+   * verse for the day or the translation doesn't have its text.
+   */
+  getVerseOfTheDay: (
+    date: string,
+    translationId: string
+  ) => Promise<TodayVerseOfTheDay | null>;
   getDefaultTranslation: () => string | undefined;
   getReadingHistoryEvents: (
     recordName: string,
@@ -411,30 +433,74 @@ export function createTodayManager(options: {
     }));
   };
 
-  const getVerseText = async (
+  /**
+   * Plain text of verses `from` through `to`, with the translation it came
+   * from, or undefined when none of the verses exist.
+   */
+  const getPassage = async (
     translationId: string,
     bookId: string,
     chapter: number,
-    verse: number
-  ): Promise<string | undefined> => {
+    from: number,
+    to: number
+  ): Promise<{ text: string; translation: Translation } | undefined> => {
     const chapterData = await bibleData.getTranslationBookChapter(
       translationId,
       bookId,
       chapter
     );
 
-    const verseContent = chapterData.chapter.content.find(
-      (item) => item.type === "verse" && item.number === verse
+    const verses = chapterData.chapter.content.flatMap((item) =>
+      item.type === "verse" && item.number >= from && item.number <= to
+        ? [item]
+        : []
     );
-    if (!verseContent || verseContent.type !== "verse") return undefined;
+    if (verses.length === 0) return undefined;
 
-    return verseContent.content
+    const text = verses
+      .flatMap((verse) => verse.content)
       .map((part) =>
         typeof part === "string" ? part : "text" in part ? part.text : ""
       )
       .join(" ")
       .replace(/\s+/g, " ")
       .trim();
+    return { text, translation: chapterData.translation };
+  };
+
+  const getVerseText = async (
+    translationId: string,
+    bookId: string,
+    chapter: number,
+    verse: number
+  ): Promise<string | undefined> =>
+    (await getPassage(translationId, bookId, chapter, verse, verse))?.text;
+
+  const getVerseOfTheDay = async (
+    date: string,
+    translationId: string
+  ): Promise<TodayVerseOfTheDay | null> => {
+    const picked = await bibleData.api.getVerseOfTheDay(date);
+    if (!picked) return null;
+
+    const passage = await getPassage(
+      translationId,
+      picked.book,
+      picked.chapter,
+      picked.verse,
+      picked.endVerse ?? picked.verse
+    );
+    if (!passage?.text) return null;
+
+    return {
+      bookId: picked.book,
+      chapter: picked.chapter,
+      verse: picked.verse,
+      ...(picked.endVerse !== undefined ? { endVerse: picked.endVerse } : {}),
+      translationId,
+      translationShortName: passage.translation.shortName || translationId,
+      text: passage.text,
+    };
   };
 
   // Derived from the path, so the server and the client's first render agree
@@ -486,6 +552,7 @@ export function createTodayManager(options: {
     translationBooksMap,
     searchVerses,
     getVerseText,
+    getVerseOfTheDay,
     getDefaultTranslation,
     getReadingHistoryEvents: fetchReadingHistoryEvents,
     getTranslationBooks: (translation: string) =>
