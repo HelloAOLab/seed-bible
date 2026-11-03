@@ -112,7 +112,8 @@
     </script>
     <script>
       // Applies the device's saved reader settings (UI size, reader font
-      // size, scripture width, verse line height) before first paint. The
+      // size, scripture width, verse line height, scripture font) before
+      // first paint. The
       // app seeds its settings with the defaults so hydration matches the
       // server's HTML, then applies the saved ones after mount, which used
       // to resize and reflow the chapter on every visit. These are CSS
@@ -122,7 +123,7 @@
       // since those win over saved settings.
       //
       // The values come from the copy SettingsManager keeps of just these
-      // four settings (it is written signed in or out), falling back to the
+      // five settings (it is written signed in or out), falling back to the
       // anonymous local config, which is emptied as soon as someone signs in.
       (function () {
         try {
@@ -169,8 +170,10 @@
           }
           var config = saved || legacy;
           if (!config) return;
-          var lineHeight = saved ? config.verseLineHeight : null;
-          if (legacy) {
+          // Line height has its own key now; older configs only kept it
+          // inside the removed per-section `textConfig`.
+          var lineHeight = config.verseLineHeight;
+          if (legacy && lineHeight == null) {
             try {
               var text = config.textConfig;
               if (typeof text === "string") text = JSON.parse(text);
@@ -198,6 +201,27 @@
           lineHeight = Number(lineHeight);
           if (isFinite(lineHeight) && lineHeight > 0 && lineHeight < 10) {
             apply("--text-verse-line-height", String(lineHeight));
+          }
+          // The saved value is one of CUSTOMIZATION_FONT_PRESETS; it is looked
+          // up here rather than written into CSS as-is. The stacks carry the
+          // same fallback faces SettingsManager adds (a test keeps the two in
+          // step).
+          var scriptureFonts = {
+            "Newsreader, serif":
+              'Newsreader, "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif',
+            "system-ui, sans-serif": "system-ui, sans-serif",
+            "Roboto, sans-serif": "Roboto, sans-serif",
+            "Open Sans, sans-serif": "Open Sans, sans-serif",
+            "Playfair Display, serif": "Playfair Display, serif",
+            "Cormorant Garamond, serif": "Cormorant Garamond, serif",
+            "Plus Jakarta Sans, sans-serif":
+              'Plus Jakarta Sans, "Plus Jakarta Sans Fallback", "Plus Jakarta Sans Fallback Roboto", sans-serif',
+          };
+          if (scriptureFonts.hasOwnProperty(config.fontOverride)) {
+            apply(
+              "--sb-scripture-font-override",
+              scriptureFonts[config.fontOverride]
+            );
           }
           // Any applied value means SettingsManager must not write its
           // defaults over it on the way to the real settings.
