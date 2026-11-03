@@ -322,7 +322,10 @@
   margin: 0;
   font-size: 1.1875rem;
   font-weight: 600;
-  font-family: var(--sb-scripture-font-override, var(--text-bookTitle-font));
+  font-family: var(
+    --sb-scripture-font-override,
+    var(--sb-book-title-font-family)
+  );
   color: var(--sb-book-title-font-color);
   white-space: nowrap;
   text-overflow: ellipsis;
