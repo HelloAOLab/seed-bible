@@ -370,10 +370,6 @@
 .sb-today-container .sb-today-resume-card > h1 {
   margin: 0;
   text-box: auto;
-  font-family: var(
-    --sb-scripture-font-override,
-    var(--sb-book-title-font-family)
-  );
   font-size: 1.5rem;
   color: var(--sb-secondary-font-color);
   grid-column: 1 / 2;
