@@ -59,9 +59,10 @@ let saveListeningSpan: SaveListeningSpan | null = null;
 let audioPlayback: AudioPlaybackManager | null = null;
 
 /**
- * True while a playlist is playing on this tab. The playlist borrows the
- * reader and changes the chapter; the paused narration has to stay so it can
- * continue when the playlist gives the tab back.
+ * True while this tab's own playlist is borrowing the reader. The playlist
+ * changes the chapter; the paused narration has to stay so it can continue
+ * when that playlist gives the tab back. This is the tab's playlist, not
+ * whichever tab happens to be on screen.
  */
 let playlistHoldsReadingState: (
   readingState: BibleReadingState
@@ -561,7 +562,8 @@ function beginSession(session: ListeningSession): void {
     `${readingState.translationId.value}|${readingState.bookId.value}|${readingState.chapterNumber.value}`;
   const opened = untracked(chapterKey);
   const stopWatching = effect(() => {
-    // Read through the function so this effect follows the playlist signal.
+    // Call it inside the effect so the session follows this tab's playlist,
+    // including the moment that playlist lets the tab go.
     const held = playlistHoldsReadingState(readingState);
     if (chapterKey() !== opened && !held) untracked(() => endSession(session));
   });
@@ -1300,7 +1302,7 @@ export default function initAudioReaderExtension() {
 
       audioPlayback = context.audioPlayback;
       playlistHoldsReadingState = (readingState) =>
-        context.playlists.playing.value?.tab?.readingState === readingState;
+        context.playlists.holdsReadingState(readingState);
       const speech = context.textToSpeech;
       textToSpeech = speech;
       // The audio element and the synthesiser outlive the install, but nothing

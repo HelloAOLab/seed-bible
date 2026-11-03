@@ -3309,18 +3309,6 @@ export function createSeedBibleState(
     }
   });
 
-  // Profile, playlist history, and a reading plan all cover the reader. A
-  // click there can sit on a confirmation first, so those screens stay until
-  // playback has actually started — then they get out of the way.
-  let playlistWasPlaying = false;
-  effect(() => {
-    const isPlaying = !!playlists.playing.value;
-    if (isPlaying && !playlistWasPlaying && typeof window !== "undefined") {
-      panes.closeFullscreenPanes();
-    }
-    playlistWasPlaying = isPlaying;
-  });
-
   /**
    * Builds the AI tools that let a provider interact with the core app state.
    */
@@ -4006,17 +3994,23 @@ export function createSeedBibleState(
   });
 
   // "Your content", the third fullscreen screen, wired like the two above.
-  // Each handler closes the screen first: all three destinations (reader,
-  // playlist player, annotation editor) sit behind it.
+  // Passage and editor handlers close the screen first: those destinations
+  // sit behind it. Playing a playlist waits until it has actually started,
+  // so cancelling the Audio Reader question stays on this screen.
   const openPassageFromContent = (target: TodayPassageTarget) => {
     closeYourContent();
     closeProfile();
     openTodayPassage(state, today, target);
   };
   const playPlaylistFromContent = (playlist: Playlist) => {
-    closeYourContent();
-    closeProfile();
-    playlists.startPlaying(playlist, 0);
+    // Stay on Your content until playback starts. Closing first, then
+    // cancelling the Audio Reader question, would leave the bare reader.
+    playlists.startPlaying(playlist, 0, {
+      onStart: () => {
+        closeYourContent();
+        closeProfile();
+      },
+    });
   };
   const editPlaylistFromContent = (playlist: Playlist) => {
     closeYourContent();
