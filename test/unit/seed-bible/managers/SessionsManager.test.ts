@@ -355,6 +355,7 @@ describe("SessionsManager", () => {
   let mockUserProfilesMap: ReturnType<typeof createMockSharedMap>;
   let mockReadingPositionsMap: ReturnType<typeof createMockSharedMap>;
   let mockExtensionsMap: ReturnType<typeof createMockSharedMap>;
+  let mockAudioMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
     getChapterHighlights: Mock;
   };
@@ -393,6 +394,7 @@ describe("SessionsManager", () => {
     mockUserProfilesMap = createMockSharedMap();
     mockReadingPositionsMap = createMockSharedMap();
     mockExtensionsMap = createMockSharedMap();
+    mockAudioMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockStatusUpdated = createMockStatusUpdatedObservable();
     mockDocument = {
@@ -415,6 +417,10 @@ describe("SessionsManager", () => {
 
         if (name === "reading_extensions") {
           return mockExtensionsMap;
+        }
+
+        if (name === "audio_playback") {
+          return mockAudioMap;
         }
 
         return mockMap;
@@ -2655,6 +2661,134 @@ describe("SessionsManager", () => {
 
       expect(session.readingState.disableExtension).toHaveBeenCalledWith("x");
       expect(session.readingState.isExtensionEnabled("x")).toBe(false);
+    });
+  });
+
+  describe("shared audio playback", () => {
+    const playing = {
+      playing: true,
+      bookId: "GEN",
+      chapterNumber: 1,
+      translationId: "BSB",
+      position: 12.5,
+      unit: "seconds" as const,
+    };
+
+    function manager() {
+      return createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+    }
+
+    it("lets the host publish play and pause, and ignores an identical repeat", async () => {
+      const session = await manager().createSession();
+
+      const started = session.publishAudioPlayback(playing);
+      expect(started).toMatchObject({ ...playing, revision: 1 });
+      expect(session.sharedAudio.value).toEqual(started);
+      expect(mockAudioMap.set).toHaveBeenCalledWith("current", started);
+
+      const paused = session.publishAudioPlayback({
+        ...playing,
+        playing: false,
+        position: 20,
+      });
+      expect(paused).toMatchObject({
+        playing: false,
+        position: 20,
+        revision: 2,
+      });
+
+      mockAudioMap.set.mockClear();
+      expect(
+        session.publishAudioPlayback({
+          ...playing,
+          playing: false,
+          position: 20,
+        })
+      ).toBe(paused);
+      expect(mockAudioMap.set).not.toHaveBeenCalled();
+    });
+
+    it("lets the host clear shared audio", async () => {
+      const session = await manager().createSession();
+      session.publishAudioPlayback(playing);
+
+      expect(session.publishAudioPlayback(null)).toBeNull();
+      expect(session.sharedAudio.value).toBeNull();
+      expect(mockAudioMap.delete).toHaveBeenCalledWith("current");
+
+      mockAudioMap.delete.mockClear();
+      expect(session.publishAudioPlayback(null)).toBeNull();
+      expect(mockAudioMap.delete).not.toHaveBeenCalled();
+    });
+
+    it("ignores playback published by someone who is not the host or a co-host", async () => {
+      mockOptionsMap.set("hostUserId", "someone-else");
+      const session = await manager().joinSession("group-abc");
+
+      expect(session.publishAudioPlayback(playing)).toBe(false);
+      expect(mockAudioMap.set).not.toHaveBeenCalled();
+      expect(session.sharedAudio.value).toBeNull();
+    });
+
+    it("lets a co-host publish playback", async () => {
+      mockOptionsMap.set("hostUserId", "someone-else");
+      mockOptionsMap.set("coHostUserIds", [os.connectionId]);
+      const session = await manager().joinSession("group-abc");
+
+      expect(session.publishAudioPlayback(playing)).toMatchObject({
+        playing: true,
+        revision: 1,
+      });
+    });
+
+    it("loads audio that is already in the session and follows later changes", async () => {
+      mockAudioMap = createMockSharedMap({
+        current: { ...playing, updatedAtMs: 50, revision: 4 },
+      });
+      const session = await manager().joinSession("group-abc");
+
+      expect(session.sharedAudio.value).toMatchObject({
+        playing: true,
+        position: 12.5,
+        revision: 4,
+      });
+
+      mockAudioMap.setEmitOnSet(true);
+      mockAudioMap.set("current", {
+        ...playing,
+        playing: false,
+        position: 3,
+        updatedAtMs: 80,
+        revision: 5,
+      });
+
+      expect(session.sharedAudio.value).toMatchObject({
+        playing: false,
+        position: 3,
+        revision: 5,
+      });
+
+      mockAudioMap.delete("current");
+      expect(session.sharedAudio.value).toBeNull();
+    });
+
+    it("ignores a shared audio value it cannot read", async () => {
+      const session = await manager().createSession();
+      session.publishAudioPlayback(playing);
+      mockAudioMap.setEmitOnSet(true);
+
+      mockAudioMap.set("current", { playing: "yes" });
+
+      expect(session.sharedAudio.value).toMatchObject({
+        playing: true,
+        revision: 1,
+      });
     });
   });
 });

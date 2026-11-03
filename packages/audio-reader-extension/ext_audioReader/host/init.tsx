@@ -15,9 +15,12 @@ import {
   type AudioPlaybackManager,
   type PlaybackVerse,
   type PlaybackVerseMark,
+  type BibleReadingSession,
   type BibleReadingState,
   type ChapterVerse,
   type QuickToolContext,
+  type SharedAudioPlayback,
+  type SharedAudioPlaybackCommand,
   type SpeechVerse,
   type TextToSpeechManager,
   type TranslationBookChapter,
@@ -60,6 +63,53 @@ let audioPlayback: AudioPlaybackManager | null = null;
 
 /** The browser's speech synthesiser, for as long as the extension is installed. */
 let textToSpeech: TextToSpeechManager | null = null;
+
+/** Open reader tabs, so a press can find the shared session it belongs to. */
+let readOpenTabs:
+  | (() => {
+      readingState: BibleReadingState;
+      sharedSession: BibleReadingSession | null;
+    }[])
+  | null = null;
+
+/**
+ * True while a remote play/pause is being applied. The local player reports
+ * that as its own play/pause, and publishing it again would bounce the
+ * command around the session.
+ */
+let applyingSharedAudio = false;
+
+/** True while this client is writing shared audio, so it doesn't follow its own echo. */
+let publishingSharedAudio = false;
+
+/**
+ * Revision this client last wrote for a session, or null if it cleared
+ * playback. Absent until it has written once — a participant who never
+ * leads must not wipe the host's audio on the way out.
+ */
+const sharedAudioEcho = new Map<string, number | null>();
+
+/** Sessions this client is following, so a later "stopped" actually stops them. */
+const sharedAudioFollowed = new Set<string>();
+
+/**
+ * Last remote revision already applied. Kept apart from {@link sharedAudioEcho}
+ * so following the host is not mistaken for having published the command —
+ * a follower must not be able to clear it for everyone else.
+ */
+const sharedAudioApplied = new Map<string, number>();
+
+/** Sessions whose dispose already publishes a stop. Wrapping twice would stop twice. */
+const sharedDisposeWrapped = new WeakSet<BibleReadingSession>();
+
+/**
+ * How far a follower may be from the host, in seconds, before it seeks.
+ * Closer than this, seeking just stutters playback that is already together.
+ */
+const SHARED_AUDIO_SEEK_THRESHOLD_SECONDS = 1.5;
+
+/** A skewed clock must not fling a late joiner hours past the end of the chapter. */
+const SHARED_AUDIO_MAX_CATCH_UP_SECONDS = 60 * 60;
 
 /** The chapter a stretch of listening is credited to. */
 export interface ListeningTarget {
@@ -390,6 +440,12 @@ interface SessionBase {
   /** Takes the session's controls down and stops watching its tab. */
   teardown: () => void;
   ended: boolean;
+  /**
+   * The shared session this listening was started in, captured then so a
+   * tab closing can still tell everyone else to stop after the tab itself
+   * is already gone.
+   */
+  sharedSession: BibleReadingSession | null;
 }
 
 /** A tab listening to its chapter's recorded narration. */
@@ -456,6 +512,7 @@ function ensureAudio(): HTMLAudioElement | null {
       if (!session) return;
       session.isPlaying.value = true;
       resumeVerseHighlight(session, el.currentTime);
+      publishSharedFrom(session);
     };
     el.onpause = () => {
       const session = heardRecording();
@@ -464,7 +521,12 @@ function ensureAudio(): HTMLAudioElement | null {
       // The end of a chapter fires `pause` immediately before `ended` (per the
       // media spec) — that's the highlight finishing on schedule, not a user
       // pause, so it should fade out as already arranged rather than freeze.
-      if (!el.ended) pauseVerseHighlight(session);
+      // The `ended` handler stops the session for everyone; publishing a
+      // pause here too would make peers pause and then immediately stop.
+      if (!el.ended) {
+        pauseVerseHighlight(session);
+        publishSharedFrom(session);
+      }
     };
     el.onended = () => {
       const session = heardRecording();
@@ -545,6 +607,7 @@ function makeAudible(session: ListeningSession): void {
  */
 function beginSession(session: ListeningSession): void {
   const { readingState } = session;
+  rememberSharedSession(session);
   sessions.set(readingState, session);
   const hide = audioPlayback?.show(readingState, session.controller);
 
@@ -570,38 +633,255 @@ function endSession(
   options: { keepHighlight?: boolean } = {}
 ): void {
   if (session.ended) return;
-  session.ended = true;
-  if (sessions.get(session.readingState) === session) {
-    sessions.delete(session.readingState);
-  }
-
-  if (audible === session) {
-    if (session.kind === "recording") {
-      if (audioEl) {
-        if (!audioEl.paused) audioEl.pause();
-        audioEl.currentTime = 0;
-      }
-      resumeAt = null;
-    } else {
-      textToSpeech?.stop();
+  // Pausing the element and stopping speech both report a local pause.
+  // Hold publishing off until the stop itself goes out, or peers pause at
+  // the start of the chapter and then stop.
+  const publishStop = !applyingSharedAudio;
+  const previousApplying = applyingSharedAudio;
+  applyingSharedAudio = true;
+  try {
+    session.ended = true;
+    if (sessions.get(session.readingState) === session) {
+      sessions.delete(session.readingState);
     }
-    audible = null;
-  }
 
-  session.isPlaying.value = false;
-  session.position.value = 0;
-  if (session.kind === "recording") {
-    if (!options.keepHighlight) pauseVerseHighlight(session);
-  } else {
-    highlightSpokenVerse(session, null);
+    if (audible === session) {
+      if (session.kind === "recording") {
+        if (audioEl) {
+          if (!audioEl.paused) audioEl.pause();
+          audioEl.currentTime = 0;
+        }
+        resumeAt = null;
+      } else {
+        textToSpeech?.stop();
+      }
+      audible = null;
+    }
+
+    session.isPlaying.value = false;
+    session.position.value = 0;
+    if (session.kind === "recording") {
+      if (!options.keepHighlight) pauseVerseHighlight(session);
+    } else {
+      highlightSpokenVerse(session, null);
+    }
+    session.readingState.readAlongVerse.value = null;
+    session.teardown();
+  } finally {
+    applyingSharedAudio = previousApplying;
   }
-  session.readingState.readAlongVerse.value = null;
-  session.teardown();
+  if (publishStop) publishSharedAudio(session, null);
 }
 
 /** Ends every tab's listening, as an uninstall must. */
 function endAllSessions(): void {
   for (const session of [...sessions.values()]) endSession(session);
+}
+
+function sharedSessionFor(
+  readingState: BibleReadingState
+): BibleReadingSession | null {
+  const tabs = readOpenTabs?.() ?? [];
+  for (const tab of tabs) {
+    if (tab.sharedSession?.readingState === readingState) {
+      return tab.sharedSession;
+    }
+  }
+  return null;
+}
+
+/**
+ * Remembers which shared session this listening belongs to, and makes
+ * leaving that session stop the audio for everyone else. `removeTab`
+ * disposes the session before the tab list updates, so the stop has to
+ * happen inside dispose — by then the tab is the only thing that knew.
+ */
+function rememberSharedSession(session: ListeningSession): void {
+  const shared = sharedSessionFor(session.readingState);
+  session.sharedSession = shared;
+  if (!shared || sharedDisposeWrapped.has(shared)) return;
+  sharedDisposeWrapped.add(shared);
+  const originalDispose = shared.dispose;
+  shared.dispose = () => {
+    try {
+      const current = sessions.get(shared.readingState);
+      if (current && !current.ended) {
+        publishSharedAudio(current, null);
+      }
+    } finally {
+      originalDispose();
+    }
+  };
+}
+
+function sharedAudioCommand(
+  session: ListeningSession
+): SharedAudioPlaybackCommand {
+  return {
+    playing: session.isPlaying.peek(),
+    bookId: session.bookId,
+    chapterNumber: session.chapterNumber,
+    translationId: session.readingState.translationId.peek() ?? "",
+    position: session.position.peek(),
+    unit: session.controller.unit,
+  };
+}
+
+function publishSharedAudio(
+  session: ListeningSession,
+  command: SharedAudioPlaybackCommand | null
+): void {
+  if (applyingSharedAudio || publishingSharedAudio) return;
+  const shared = session.sharedSession;
+  if (!shared) return;
+  // Only the client that started the shared audio may clear it. A
+  // participant ending their own player, or a co-host who never pressed
+  // play, must not stop the host for everyone else.
+  if (command === null && typeof sharedAudioEcho.get(shared.id) !== "number") {
+    return;
+  }
+  publishingSharedAudio = true;
+  try {
+    const written = shared.publishAudioPlayback(command);
+    if (written !== false) {
+      sharedAudioEcho.set(
+        shared.id,
+        written === null ? null : written.revision
+      );
+    }
+  } catch {
+    // The session document can already be gone. Local playback still stops.
+  } finally {
+    publishingSharedAudio = false;
+  }
+}
+
+function publishSharedFrom(session: ListeningSession): void {
+  publishSharedAudio(session, sharedAudioCommand(session));
+}
+
+function sharedPlaybackTarget(playback: SharedAudioPlayback): number {
+  if (!playback.playing || playback.unit !== "seconds")
+    return playback.position;
+  const elapsedSeconds = (Date.now() - playback.updatedAtMs) / 1000;
+  if (!Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) {
+    return playback.position;
+  }
+  return (
+    playback.position +
+    Math.min(elapsedSeconds, SHARED_AUDIO_MAX_CATCH_UP_SECONDS)
+  );
+}
+
+function sharedPositionClose(
+  unit: SharedAudioPlayback["unit"],
+  current: number,
+  target: number
+): boolean {
+  if (unit === "verses") return current === target;
+  return Math.abs(current - target) < SHARED_AUDIO_SEEK_THRESHOLD_SECONDS;
+}
+
+/**
+ * Starts listening to `chapter` in `readingState`'s tab: a recording when
+ * the chapter has one, otherwise the browser's voice. Null when neither
+ * can say anything.
+ */
+function startListening(
+  context: SeedBibleState,
+  readingState: BibleReadingState,
+  chapter: TranslationBookChapter
+): ListeningSession | null {
+  const chapterAudio = chapterAudioReader(readingState);
+  const session = chapterAudio
+    ? createRecordingSession(
+        context.bibleData,
+        readingState,
+        chapter,
+        chapterAudio
+      )
+    : createSpeechSession(context, readingState, chapter);
+  if (!session) return null;
+  beginSession(session);
+  return session;
+}
+
+/**
+ * Makes `readingState` follow the host's shared audio. No-op until the
+ * reader is actually on that chapter — session navigation brings everyone
+ * there, and playing a chapter they aren't looking at has nothing to
+ * highlight.
+ */
+function applySharedPlayback(
+  context: SeedBibleState,
+  readingState: BibleReadingState,
+  sessionId: string,
+  playback: SharedAudioPlayback | null,
+  chapter: TranslationBookChapter | null
+): void {
+  if (publishingSharedAudio) return;
+
+  if (!playback) {
+    if (!sharedAudioFollowed.has(sessionId)) return;
+    sharedAudioFollowed.delete(sessionId);
+    sharedAudioApplied.delete(sessionId);
+    const listening = sessions.get(readingState);
+    if (listening) endSession(listening);
+    return;
+  }
+
+  // Our own write, or a command we already followed.
+  if (
+    sharedAudioEcho.get(sessionId) === playback.revision ||
+    sharedAudioApplied.get(sessionId) === playback.revision
+  ) {
+    return;
+  }
+  if (
+    !chapter ||
+    chapter.book.id !== playback.bookId ||
+    chapter.chapter.number !== playback.chapterNumber
+  ) {
+    return;
+  }
+
+  applyingSharedAudio = true;
+  try {
+    let listening = sessions.get(readingState) ?? null;
+    if (
+      !listening ||
+      listening.ended ||
+      listening.bookId !== playback.bookId ||
+      listening.chapterNumber !== playback.chapterNumber
+    ) {
+      listening = startListening(context, readingState, chapter);
+      if (!listening) {
+        // Nothing can play this chapter. Remember the revision so the
+        // failure doesn't toast again on every session update.
+        sharedAudioApplied.set(sessionId, playback.revision);
+        return;
+      }
+    }
+
+    const target = sharedPlaybackTarget(playback);
+    if (
+      listening.controller.unit === playback.unit &&
+      !sharedPositionClose(playback.unit, listening.position.peek(), target)
+    ) {
+      listening.controller.seek(target);
+    }
+
+    if (playback.playing && !listening.isPlaying.peek()) {
+      listening.controller.play();
+    } else if (!playback.playing && listening.isPlaying.peek()) {
+      listening.controller.pause();
+    }
+
+    sharedAudioFollowed.add(sessionId);
+    sharedAudioApplied.set(sessionId, playback.revision);
+  } finally {
+    applyingSharedAudio = false;
+  }
 }
 
 /**
@@ -685,6 +965,7 @@ function createRecordingSession(
     headings: chapterVerseHeadings(chapter),
     teardown: () => undefined,
     ended: false,
+    sharedSession: null,
     controller: undefined as unknown as AudioPlaybackController,
   };
 
@@ -695,7 +976,12 @@ function createRecordingSession(
     duration: session.duration,
     play: () => playRecording(session),
     pause: () => {
-      if (audible === session) audioEl?.pause();
+      if (audible === session && audioEl && !audioEl.paused) {
+        audioEl.pause();
+        return;
+      }
+      session.isPlaying.value = false;
+      publishSharedFrom(session);
     },
     seek: (seconds) => {
       if (!Number.isFinite(seconds)) return;
@@ -713,6 +999,7 @@ function createRecordingSession(
       // doesn't snap back to the old position for a moment after being let go.
       session.position.value = target;
       seekVerseHighlight(session, target);
+      publishSharedFrom(session);
     },
     stop: () => endSession(session),
     verseAt: (seconds): PlaybackVerse | null => {
@@ -941,6 +1228,7 @@ function createSpeechSession(
     headings: chapterVerseHeadings(chapter),
     teardown: () => undefined,
     ended: false,
+    sharedSession: null,
     controller: undefined as unknown as AudioPlaybackController,
   };
 
@@ -951,7 +1239,12 @@ function createSpeechSession(
     duration: session.duration,
     play: () => speakFrom(session, session.position.peek()),
     pause: () => {
-      if (audible === session) textToSpeech?.stop();
+      if (audible === session) {
+        textToSpeech?.stop();
+        return;
+      }
+      session.isPlaying.value = false;
+      publishSharedFrom(session);
     },
     seek: (position) => {
       if (!Number.isFinite(position)) return;
@@ -963,6 +1256,7 @@ function createSpeechSession(
       }
       const verse = verses[index];
       if (verse) followVerse(readingState, verse.number);
+      publishSharedFrom(session);
     },
     stop: () => endSession(session),
     verseAt: (position): PlaybackVerse | null => {
@@ -1297,7 +1591,47 @@ export default function initAudioReaderExtension() {
         endAllSessions();
         audioPlayback = null;
         textToSpeech = null;
+        readOpenTabs = null;
+        sharedAudioEcho.clear();
+        sharedAudioFollowed.clear();
+        sharedAudioApplied.clear();
+        applyingSharedAudio = false;
+        publishingSharedAudio = false;
       };
+
+      readOpenTabs = () => context.tabs.tabs.peek();
+      sharedAudioEcho.clear();
+      sharedAudioFollowed.clear();
+      sharedAudioApplied.clear();
+
+      // Host play/pause is written into the session; everyone else follows
+      // it. The host's own write is ignored here (see `publishingSharedAudio`)
+      // so pressing play doesn't start a second copy.
+      yield effect(() => {
+        const pending = context.tabs.tabs.value.flatMap((tab) => {
+          const shared = tab.sharedSession;
+          if (!shared) return [];
+          return [
+            {
+              readingState: tab.readingState,
+              sessionId: shared.id,
+              playback: shared.sharedAudio.value,
+              chapter: tab.readingState.chapterData.value,
+            },
+          ];
+        });
+        untracked(() => {
+          for (const item of pending) {
+            applySharedPlayback(
+              context,
+              item.readingState,
+              item.sessionId,
+              item.playback,
+              item.chapter
+            );
+          }
+        });
+      });
 
       yield context.tools.registerQuickTool({
         id: "ext_audioReader-play",
@@ -1328,18 +1662,9 @@ export default function initAudioReaderExtension() {
 
           const chapter = readingState.chapterData.peek();
           if (!chapter) return;
-          const chapterAudio = chapterAudioReader(readingState);
           // No recording for this chapter, so read it aloud instead.
-          const session = chapterAudio
-            ? createRecordingSession(
-                context.bibleData,
-                readingState,
-                chapter,
-                chapterAudio
-              )
-            : createSpeechSession(context, readingState, chapter);
+          const session = startListening(context, readingState, chapter);
           if (!session) return;
-          beginSession(session);
           session.controller.play();
         }, TOGGLE_DEBOUNCE_MS),
       });
@@ -1362,7 +1687,11 @@ export default function initAudioReaderExtension() {
       yield effect(() => {
         const speaking = speech.isSpeaking.value;
         untracked(() => {
-          if (audible?.kind === "speech") audible.isPlaying.value = speaking;
+          if (audible?.kind !== "speech") return;
+          const session = audible;
+          const wasPlaying = session.isPlaying.peek();
+          session.isPlaying.value = speaking;
+          if (wasPlaying !== speaking) publishSharedFrom(session);
         });
       });
 

@@ -1,3 +1,4 @@
+import { signal } from "@preact/signals";
 import initAudioReaderExtension from "@packages/audio-reader-extension/ext_audioReader/host/init";
 import {
   setupExtensionContext,
@@ -7,6 +8,11 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { QuickToolContext } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { AudioPlaybackController } from "@packages/seed-bible/seed-bible/managers/AudioPlaybackManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import type {
+  BibleReadingSession,
+  SharedAudioPlayback,
+  SharedAudioPlaybackCommand,
+} from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { createTestSeedBibleState } from "../../seed-bible/testUtils/createTestSeedBibleState";
 import {
   aabBooks,
@@ -468,6 +474,238 @@ describe("audio-reader playback controls", () => {
 
       expect(controlsFor(first)).toBeNull();
       expect(controlsFor(second)?.isPlaying.value).toBe(true);
+    });
+  });
+
+  describe("shared session playback", () => {
+    let playSpy: ReturnType<typeof vi.spyOn>;
+    let pauseSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      playSpy = vi
+        .spyOn(HTMLAudioElement.prototype, "play")
+        .mockImplementation(function (this: HTMLAudioElement) {
+          Object.defineProperty(this, "paused", {
+            configurable: true,
+            value: false,
+          });
+          this.dispatchEvent(new Event("play"));
+          return Promise.resolve();
+        });
+      pauseSpy = vi
+        .spyOn(HTMLAudioElement.prototype, "pause")
+        .mockImplementation(function (this: HTMLAudioElement) {
+          Object.defineProperty(this, "paused", {
+            configurable: true,
+            value: true,
+          });
+          this.dispatchEvent(new Event("pause"));
+        });
+    });
+
+    afterEach(() => {
+      playSpy.mockRestore();
+      pauseSpy.mockRestore();
+    });
+
+    function attachSession(host: boolean) {
+      const readingState = getReadingState(state);
+      const sharedAudio = signal<SharedAudioPlayback | null>(null);
+      let revision = 0;
+      const publish = vi.fn((command: SharedAudioPlaybackCommand | null) => {
+        if (!host) return false as const;
+        if (command === null) {
+          sharedAudio.value = null;
+          return null;
+        }
+        revision += 1;
+        const next: SharedAudioPlayback = {
+          ...command,
+          updatedAtMs: Date.now(),
+          revision,
+        };
+        sharedAudio.value = next;
+        return next;
+      });
+      const session = {
+        id: "session-shared-audio",
+        document: {},
+        readingState,
+        sharedAudio,
+        publishAudioPlayback: publish,
+        dispose: vi.fn(),
+        options: signal({
+          allowedNavigators: null,
+          allowedDecorators: null,
+          hostUserId: null,
+          highlightDurationSeconds: 16,
+          endedAt: null,
+          shareTranslation: false,
+          coHostUserIds: [],
+          verseSelectionEffectVisibility: "hosts-only" as const,
+        }),
+        connectedUsers: signal([]),
+        isSynced: signal(true),
+      } as unknown as BibleReadingSession;
+      const tab = state.tabs.tabs.peek()[0]!;
+      tab.sharedSession = session;
+      state.tabs.tabs.value = [...state.tabs.tabs.peek()];
+      return { publish, sharedAudio, readingState };
+    }
+
+    function hostCommand(
+      readingState: ReturnType<typeof getReadingState>,
+      overrides: Partial<SharedAudioPlayback> = {}
+    ): SharedAudioPlayback {
+      const chapter = readingState.chapterData.value!;
+      return {
+        playing: true,
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        translationId: readingState.translationId.value ?? "",
+        position: 0,
+        unit: "seconds",
+        updatedAtMs: Date.now(),
+        revision: 1,
+        ...overrides,
+      };
+    }
+
+    it("publishes the host's play, pause, and stop to the session", () => {
+      const { publish, readingState } = attachSession(true);
+      const chapter = readingState.chapterData.value!;
+
+      pressPlay();
+
+      expect(publish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          playing: true,
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          unit: "seconds",
+        })
+      );
+
+      pressPlay();
+
+      expect(publish).toHaveBeenLastCalledWith(
+        expect.objectContaining({ playing: false })
+      );
+
+      publish.mockClear();
+      state.audioPlayback.controllerFor(readingState)!.stop();
+      expect(publish).toHaveBeenCalledWith(null);
+    });
+
+    it("does not publish a participant's own playback", () => {
+      const { publish, sharedAudio } = attachSession(false);
+
+      pressPlay();
+
+      expect(publish).toHaveBeenCalled();
+      expect(sharedAudio.value).toBeNull();
+      expect(
+        state.audioPlayback.controllerFor(getReadingState(state))?.isPlaying
+          .value
+      ).toBe(true);
+    });
+
+    it("plays and pauses a participant when the host does", () => {
+      const { sharedAudio, readingState } = attachSession(false);
+      const playing = hostCommand(readingState, { position: 30 });
+
+      sharedAudio.value = playing;
+
+      expect(playSpy).toHaveBeenCalled();
+      expect(audio.current!.currentTime).toBeCloseTo(30, 0);
+      expect(
+        state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+      ).toBe(true);
+
+      // The shared audio element lives for the whole page, so a previous
+      // test may have left a short duration on it. Seek clamps to that.
+      reportDuration(120);
+      sharedAudio.value = hostCommand(readingState, {
+        playing: false,
+        position: 12,
+        revision: 2,
+      });
+
+      expect(pauseSpy).toHaveBeenCalled();
+      expect(audio.current!.currentTime).toBeCloseTo(12, 0);
+      expect(
+        state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+      ).toBe(false);
+    });
+
+    it("starts a joiner at the host's place when the session is already playing", () => {
+      const readingState = getReadingState(state);
+      const sharedAudio = signal<SharedAudioPlayback | null>(
+        hostCommand(readingState, { position: 8, revision: 4 })
+      );
+      const tab = state.tabs.tabs.peek()[0]!;
+      tab.sharedSession = {
+        id: "session-already-playing",
+        document: {},
+        readingState,
+        sharedAudio,
+        publishAudioPlayback: vi.fn(() => false),
+        dispose: vi.fn(),
+        options: signal({
+          allowedNavigators: null,
+          allowedDecorators: null,
+          hostUserId: null,
+          highlightDurationSeconds: 16,
+          endedAt: null,
+          shareTranslation: false,
+          coHostUserIds: [],
+          verseSelectionEffectVisibility: "hosts-only" as const,
+        }),
+        connectedUsers: signal([]),
+        isSynced: signal(true),
+      } as unknown as BibleReadingSession;
+      state.tabs.tabs.value = [...state.tabs.tabs.peek()];
+
+      expect(playSpy).toHaveBeenCalled();
+      expect(audio.current!.currentTime).toBeCloseTo(8, 0);
+      expect(
+        state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+      ).toBe(true);
+    });
+
+    it("waits until the reader is on the host's chapter", async () => {
+      const { sharedAudio, readingState } = attachSession(false);
+      playSpy.mockClear();
+
+      sharedAudio.value = hostCommand(readingState, {
+        bookId: "EXO",
+        chapterNumber: 2,
+        revision: 1,
+      });
+
+      expect(playSpy).not.toHaveBeenCalled();
+      expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
+
+      sharedAudio.value = hostCommand(readingState, {
+        position: 4,
+        revision: 2,
+      });
+
+      expect(playSpy).toHaveBeenCalled();
+      expect(audio.current!.currentTime).toBeCloseTo(4, 0);
+    });
+
+    it("stops a participant when the host stops", () => {
+      const { sharedAudio, readingState } = attachSession(false);
+      sharedAudio.value = hostCommand(readingState, { position: 5 });
+      expect(
+        state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+      ).toBe(true);
+
+      sharedAudio.value = null;
+
+      expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
+      expect(audio.current!.paused).toBe(true);
     });
   });
 });

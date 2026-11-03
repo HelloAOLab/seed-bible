@@ -151,6 +151,89 @@ export function isSessionHost(
   );
 }
 
+/**
+ * What the host (or a co-host) wants the session to hear.
+ *
+ * `position` is seconds for a recording and a verse index for speech.
+ * Participants play their own translation's narration of the same chapter —
+ * the translation here is the one the host was reading, not a command to
+ * switch anyone else's.
+ */
+export interface SharedAudioPlaybackCommand {
+  playing: boolean;
+  bookId: string;
+  chapterNumber: number;
+  translationId: string;
+  position: number;
+  unit: "seconds" | "verses";
+}
+
+/**
+ * A {@link SharedAudioPlaybackCommand} as stored in the session, with enough
+ * extra to tell a repeat from a new press and to catch a late joiner up.
+ */
+export interface SharedAudioPlayback extends SharedAudioPlaybackCommand {
+  /** Host clock when `position` was sampled. */
+  updatedAtMs: number;
+  /** Bumps on every real change, so play-pause-play of one spot stays distinct. */
+  revision: number;
+}
+
+const AUDIO_PLAYBACK_KEY = "current";
+
+function parseSharedAudioPlayback(value: unknown): SharedAudioPlayback | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const bookId = toStringOrNull(record.bookId);
+  const chapterNumber = toPositiveIntOrNull(record.chapterNumber);
+  const translationId = toStringOrNull(record.translationId);
+  const position = record.position;
+  const updatedAtMs = record.updatedAtMs;
+  const revision = record.revision;
+  if (
+    typeof record.playing !== "boolean" ||
+    !bookId ||
+    chapterNumber === null ||
+    translationId === null ||
+    (record.unit !== "seconds" && record.unit !== "verses") ||
+    typeof position !== "number" ||
+    !Number.isFinite(position) ||
+    position < 0 ||
+    typeof updatedAtMs !== "number" ||
+    !Number.isFinite(updatedAtMs) ||
+    typeof revision !== "number" ||
+    !Number.isInteger(revision) ||
+    revision <= 0
+  ) {
+    return null;
+  }
+  return {
+    playing: record.playing,
+    bookId,
+    chapterNumber,
+    translationId,
+    position,
+    unit: record.unit,
+    updatedAtMs,
+    revision,
+  };
+}
+
+function sharedAudioCommandsMatch(
+  current: SharedAudioPlayback | null,
+  next: SharedAudioPlaybackCommand
+): boolean {
+  if (!current) return false;
+  return (
+    current.playing === next.playing &&
+    current.bookId === next.bookId &&
+    current.chapterNumber === next.chapterNumber &&
+    current.translationId === next.translationId &&
+    current.unit === next.unit &&
+    current.position === next.position
+  );
+}
+
 type SessionOptionValue = SessionOptions[keyof SessionOptions];
 type SessionDecorationValue = VerseDecoration;
 
@@ -668,6 +751,23 @@ export interface BibleReadingSession {
    * is null or empty every participant may decorate.
    */
   userCanDecorate: (sessionId: string) => boolean;
+
+  /**
+   * The chapter audio the host last told the session to play, or null when
+   * nothing is shared (never started, or the host stopped it). Everyone
+   * else's player follows this.
+   */
+  sharedAudio: ReadonlySignal<SharedAudioPlayback | null>;
+
+  /**
+   * Publishes the host's play, pause, or seek so the rest of the session
+   * hears the same chapter. Returns the stored snapshot, null when playback
+   * was cleared, or false when this client isn't the host or a co-host —
+   * their listening stays on their own device.
+   */
+  publishAudioPlayback: (
+    command: SharedAudioPlaybackCommand | null
+  ) => SharedAudioPlayback | null | false;
 }
 
 /**
@@ -751,6 +851,29 @@ async function createBibleReadingSession(
   // in for this.
   const readingPositionsMap =
     document.getMap<ParticipantReadingPosition>("reading_positions");
+  // One shared play/pause for the whole session, written only by the host
+  // (or a co-host). Participants follow `sharedAudio`; their own presses
+  // never land here.
+  const audioPlaybackMap =
+    document.getMap<SharedAudioPlayback>("audio_playback");
+  const sharedAudio = signal<SharedAudioPlayback | null>(
+    parseSharedAudioPlayback(audioPlaybackMap.get(AUDIO_PLAYBACK_KEY))
+  );
+  const syncSharedAudio = () => {
+    const raw = audioPlaybackMap.get(AUDIO_PLAYBACK_KEY);
+    if (raw == null) {
+      if (sharedAudio.peek() !== null) sharedAudio.value = null;
+      return;
+    }
+    const next = parseSharedAudioPlayback(raw);
+    // A value we can't read isn't a stop — leave whatever is already playing
+    // rather than dropping it because one field arrived corrupt.
+    if (!next) return;
+    // Same revision means this is our own write arriving back, already
+    // reflected in the signal. Replacing it would look like a new command.
+    if (sharedAudio.peek()?.revision === next.revision) return;
+    sharedAudio.value = next;
+  };
   const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
   const allUsers = signal<ConnectedSessionUser[]>([]);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
@@ -1325,6 +1448,58 @@ async function createBibleReadingSession(
     }
   );
 
+  const audioPlaybackSubscription =
+    audioPlaybackMap.changes.subscribe(syncSharedAudio);
+
+  const publishAudioPlayback = (
+    command: SharedAudioPlaybackCommand | null
+  ): SharedAudioPlayback | null | false => {
+    if (!isSessionHost(options.peek(), localSessionId.peek())) {
+      return false;
+    }
+
+    if (command === null) {
+      if (
+        sharedAudio.peek() === null &&
+        audioPlaybackMap.get(AUDIO_PLAYBACK_KEY) == null
+      ) {
+        return null;
+      }
+      try {
+        document.transact(() => {
+          audioPlaybackMap.delete(AUDIO_PLAYBACK_KEY);
+        });
+      } catch {
+        return false;
+      }
+      sharedAudio.value = null;
+      return null;
+    }
+
+    const current = sharedAudio.peek();
+    // A repeat of the command already stored (the play button settling, or
+    // our own player echoing a press) must not bump the revision — peers
+    // would treat it as a new seek and jump.
+    if (sharedAudioCommandsMatch(current, command)) {
+      return current;
+    }
+
+    const next: SharedAudioPlayback = {
+      ...command,
+      updatedAtMs: Date.now(),
+      revision: (current?.revision ?? 0) + 1,
+    };
+    try {
+      document.transact(() => {
+        audioPlaybackMap.set(AUDIO_PLAYBACK_KEY, next);
+      });
+    } catch {
+      return false;
+    }
+    sharedAudio.value = next;
+    return next;
+  };
+
   const subscribeToRemoteClients = () =>
     document.remoteClients.subscribe((event) => {
       if (event.type === "client_connected") {
@@ -1836,6 +2011,7 @@ async function createBibleReadingSession(
     extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     readingPositionsSubscription.unsubscribe();
+    audioPlaybackSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
     statusUpdatedSubscription.unsubscribe();
     stopSync();
@@ -1891,6 +2067,8 @@ async function createBibleReadingSession(
     localSessionId,
     userCanNavigate,
     userCanDecorate,
+    sharedAudio,
+    publishAudioPlayback,
     getDecorationOwner: (decorationId: string) =>
       decorationOwners.get(decorationId),
   };

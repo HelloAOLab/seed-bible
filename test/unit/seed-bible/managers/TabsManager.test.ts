@@ -236,6 +236,8 @@ function createMockSharedSession(
     isHost: vi.fn().mockReturnValue(false),
     isSynced: signal(true),
     getDecorationOwner: () => undefined,
+    sharedAudio: signal(null),
+    publishAudioPlayback: vi.fn(() => false),
   } as BibleReadingSession;
 }
 
