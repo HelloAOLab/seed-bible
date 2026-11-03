@@ -26,7 +26,9 @@ import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
 import {
   isSessionHost,
+  VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
   type BibleReadingSession,
+  type ViewingAreaVisibility,
   getConnectedUserVisualKey,
   getUserAnimalVisual,
   getSessionUrl,
@@ -123,6 +125,8 @@ const HIGHLIGHT_DURATION_OPTIONS: { label: string; value: number | null }[] = [
  *   (everyone) and `[hostUserId]` (host only).
  * - "Only Host can highlight" toggles `allowedDecorators` the same way.
  * - Highlight duration picker writes `highlightDurationSeconds`.
+ * - "Viewing areas" writes `viewingAreaVisibility`: everyone, hosts only, or
+ *   automatic (everyone below four people, hosts only from four on).
  * - "End Session" removes the tab (which disposes the session and removes
  *   its registry entry automatically via `wrapSessionLifecycle`).
  *
@@ -219,6 +223,12 @@ function SessionSettingsModalContent(props: {
   const setShareTranslation = (share: boolean) => {
     if (!isHost) return;
     session.updateOptions({ shareTranslation: share });
+  };
+
+  const viewingAreaVisibility = options.viewingAreaVisibility ?? "auto";
+  const setViewingAreaVisibility = (visibility: ViewingAreaVisibility) => {
+    if (!isHost) return;
+    session.updateOptions({ viewingAreaVisibility: visibility });
   };
 
   const setCoHost = (coHostKey: string, makeCoHost: boolean) => {
@@ -458,6 +468,78 @@ function SessionSettingsModalContent(props: {
                     })}
             </p>
           </div>
+        </div>
+
+        <div className="sb-session-settings-section">
+          <div className="sb-session-settings-section-title">
+            {t("session-settings-viewing-areas", {
+              defaultValue: "Viewing areas",
+            })}
+          </div>
+
+          <div
+            className="sb-session-settings-duration-options"
+            role="group"
+            aria-label={t("session-settings-viewing-areas", {
+              defaultValue: "Viewing areas",
+            })}
+          >
+            {(
+              [
+                {
+                  value: "auto",
+                  label: t("session-settings-viewing-areas-auto", {
+                    defaultValue: "Automatic",
+                  }),
+                },
+                {
+                  value: "everyone",
+                  label: t("session-settings-viewing-areas-everyone", {
+                    defaultValue: "Everyone",
+                  }),
+                },
+                {
+                  value: "hosts-only",
+                  label: t("session-settings-viewing-areas-hosts-only", {
+                    defaultValue: "Hosts only",
+                  }),
+                },
+              ] as const
+            ).map((option) => {
+              const selected = viewingAreaVisibility === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`sb-session-settings-duration-option${
+                    selected
+                      ? " sb-session-settings-duration-option-selected"
+                      : ""
+                  }`}
+                  aria-pressed={selected}
+                  disabled={!isHost}
+                  onClick={() => setViewingAreaVisibility(option.value)}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="sb-session-settings-description">
+            {viewingAreaVisibility === "everyone"
+              ? t("session-settings-viewing-areas-desc-everyone", {
+                  defaultValue: "Show where everyone is reading.",
+                })
+              : viewingAreaVisibility === "hosts-only"
+                ? t("session-settings-viewing-areas-desc-hosts", {
+                    defaultValue: "Show where the hosts are reading.",
+                  })
+                : t("session-settings-viewing-areas-desc-auto", {
+                    count: VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
+                    defaultValue:
+                      "Show everyone's place when fewer than {{count}} people are here, and only hosts when there are {{count}} or more.",
+                  })}
+          </p>
         </div>
 
         <div className="sb-session-settings-section">

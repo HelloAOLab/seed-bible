@@ -95,6 +95,48 @@ export type SessionStartPosition = Pick<
 >;
 export type VerseSelectionEffectVisibility = "hosts-only" | "everyone" | "none";
 
+/**
+ * Whose viewing-area bars a shared session draws beside the chapter.
+ *
+ * "auto" is the default: everyone while fewer than
+ * `VIEWING_AREA_HOSTS_ONLY_MIN_USERS` people are connected, and only hosts
+ * from that many on. A host can set "everyone" or "hosts-only" instead.
+ */
+export type ViewingAreaVisibility = "auto" | "everyone" | "hosts-only";
+
+/**
+ * A person's own choice of whose viewing-area bars they see. "default"
+ * follows the session setting, including its automatic cutoff.
+ */
+export type ViewingAreaPreference = "default" | "everyone" | "hosts-only";
+
+/**
+ * Connected people at which "auto" switches from everyone's bars to hosts
+ * only. Four people is where the gutter starts to crowd.
+ */
+export const VIEWING_AREA_HOSTS_ONLY_MIN_USERS = 4;
+
+/**
+ * Whose bars to draw. An explicit personal preference wins over the session
+ * setting. Otherwise the session setting applies, and "auto" follows the
+ * head count.
+ */
+export function resolveViewingAreaVisibility(
+  sessionVisibility: ViewingAreaVisibility | null | undefined,
+  connectedUserCount: number,
+  preference: ViewingAreaPreference | null | undefined = "default"
+): "everyone" | "hosts-only" {
+  if (preference === "everyone" || preference === "hosts-only") {
+    return preference;
+  }
+  if (sessionVisibility === "everyone" || sessionVisibility === "hosts-only") {
+    return sessionVisibility;
+  }
+  return connectedUserCount >= VIEWING_AREA_HOSTS_ONLY_MIN_USERS
+    ? "hosts-only"
+    : "everyone";
+}
+
 export interface SessionOptions {
   allowedNavigators: string[] | null;
   allowedDecorators: string[] | null;
@@ -132,6 +174,12 @@ export interface SessionOptions {
    */
   coHostUserIds: string[];
   verseSelectionEffectVisibility: VerseSelectionEffectVisibility;
+  /**
+   * Whose viewing-area bars are drawn beside the chapter. See
+   * `ViewingAreaVisibility`. Each person can still override this for their
+   * own screen.
+   */
+  viewingAreaVisibility: ViewingAreaVisibility;
 }
 
 /**
@@ -294,7 +342,14 @@ const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   shareTranslation: false,
   coHostUserIds: [],
   verseSelectionEffectVisibility: "hosts-only",
+  viewingAreaVisibility: "auto",
 };
+
+function parseViewingAreaVisibility(value: unknown): ViewingAreaVisibility {
+  return value === "auto" || value === "everyone" || value === "hosts-only"
+    ? value
+    : DEFAULT_SESSION_OPTIONS.viewingAreaVisibility;
+}
 
 function getSessionDataSnapshot(
   readingState: Pick<
@@ -357,6 +412,9 @@ function getSessionOptionsFromMap(
       rawVerseSelectionEffectVisibility === "none"
         ? rawVerseSelectionEffectVisibility
         : DEFAULT_SESSION_OPTIONS.verseSelectionEffectVisibility,
+    viewingAreaVisibility: parseViewingAreaVisibility(
+      optionsMap.get("viewingAreaVisibility")
+    ),
     endedAt:
       typeof rawEndedAt === "number" && Number.isFinite(rawEndedAt)
         ? rawEndedAt
@@ -395,6 +453,7 @@ function sessionOptionsMatch(
     left.highlightDurationSeconds === right.highlightDurationSeconds &&
     left.verseSelectionEffectVisibility ===
       right.verseSelectionEffectVisibility &&
+    left.viewingAreaVisibility === right.viewingAreaVisibility &&
     left.endedAt === right.endedAt &&
     left.shareTranslation === right.shareTranslation &&
     stringArraysMatch(left.coHostUserIds, right.coHostUserIds)
@@ -791,6 +850,12 @@ async function createBibleReadingSession(
       }
       if (optionsMap.get("coHostUserIds") === undefined) {
         optionsMap.set("coHostUserIds", defaultOptions.coHostUserIds);
+      }
+      if (optionsMap.get("viewingAreaVisibility") === undefined) {
+        optionsMap.set(
+          "viewingAreaVisibility",
+          defaultOptions.viewingAreaVisibility
+        );
       }
     });
   }
@@ -1715,6 +1780,10 @@ async function createBibleReadingSession(
         typeof newOptions.verseSelectionEffectVisibility === "undefined"
           ? currentOptions.verseSelectionEffectVisibility
           : newOptions.verseSelectionEffectVisibility,
+      viewingAreaVisibility:
+        typeof newOptions.viewingAreaVisibility === "undefined"
+          ? currentOptions.viewingAreaVisibility
+          : newOptions.viewingAreaVisibility,
       endedAt:
         typeof newOptions.endedAt === "undefined"
           ? currentOptions.endedAt
@@ -1772,6 +1841,15 @@ async function createBibleReadingSession(
         optionsMap.set(
           "verseSelectionEffectVisibility",
           nextOptions.verseSelectionEffectVisibility
+        );
+      }
+      if (
+        currentOptions.viewingAreaVisibility !==
+        nextOptions.viewingAreaVisibility
+      ) {
+        optionsMap.set(
+          "viewingAreaVisibility",
+          nextOptions.viewingAreaVisibility
         );
       }
 

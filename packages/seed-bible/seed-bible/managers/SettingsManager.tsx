@@ -10,6 +10,7 @@ import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import { SYSTEM_THEME_ID, type ThemeHighlightColor } from "./ThemeManager";
+import type { ViewingAreaPreference } from "./SessionsManager";
 import { parseNumber } from "./Utils";
 
 export type BookOrientation = "traditional" | "tanakh";
@@ -115,6 +116,13 @@ export type TextConfig = Record<TextSectionId, TextSectionConfig>;
 
 export type VerseSelectionEffects = "default" | "enabled" | "disabled";
 
+/**
+ * Whose viewing-area bars this person wants to see in a shared session.
+ * "default" follows the session, including the automatic cutoff at four
+ * people. "everyone" and "hosts-only" override that for this screen only.
+ */
+export type ViewingAreaIndicators = ViewingAreaPreference;
+
 export interface AppSettings {
   fontSize: TextSize;
   disablePanels: boolean;
@@ -150,6 +158,11 @@ export interface AppSettings {
    */
   discoverContentPanelInline: boolean;
   verseSelectionEffects?: VerseSelectionEffects;
+  /**
+   * Whose viewing-area bars this person sees in a shared session. See
+   * `ViewingAreaIndicators`.
+   */
+  viewingAreaIndicators?: ViewingAreaIndicators;
 }
 
 export const DEFAULT_SCRIPTURE_WIDTH = 68; // ch
@@ -180,6 +193,11 @@ export const AppSettingsSchema = z.object({
     .default({ showContent: true }),
   verseSelectionEffects: z
     .enum(["default", "enabled", "disabled"])
+    .default("default"),
+  // Defaulted rather than required so settings exported before this option
+  // existed still import.
+  viewingAreaIndicators: z
+    .enum(["default", "everyone", "hosts-only"])
     .default("default"),
   textConfig: z.object({
     bookTitle: z.object({
@@ -265,6 +283,7 @@ const TAG_CUSTOM_THEME = "app.customTheme";
 const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
 const TAG_DISCOVER_CONTENT_PANEL_INLINE = "app.discoverContentPanelInline";
 const TAG_VERSE_SELECTION_EFFECTS = "app.verseSelectionEffects";
+const TAG_VIEWING_AREA_INDICATORS = "app.viewingAreaIndicators";
 
 // Profile.config keys are stored unprefixed.
 const PROFILE_FONT_SIZE = "fontSize";
@@ -284,6 +303,7 @@ const PROFILE_CUSTOM_THEME = "customTheme";
 const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
 const PROFILE_DISCOVER_CONTENT_PANEL_INLINE = "discoverContentPanelInline";
 const PROFILE_VERSE_SELECTION_EFFECTS = "verseSelectionEffects";
+const PROFILE_VIEWING_AREA_INDICATORS = "viewingAreaIndicators";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -397,6 +417,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   customHighlights: {},
   discoverContentPanelInline: true,
   verseSelectionEffects: "default",
+  viewingAreaIndicators: "default",
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -485,6 +506,15 @@ function parseVerseSelectionEffects(
   fallback: VerseSelectionEffects
 ): VerseSelectionEffects {
   return value === "default" || value === "enabled" || value === "disabled"
+    ? value
+    : fallback;
+}
+
+function parseViewingAreaIndicators(
+  value: unknown,
+  fallback: ViewingAreaIndicators
+): ViewingAreaIndicators {
+  return value === "default" || value === "everyone" || value === "hosts-only"
     ? value
     : fallback;
 }
@@ -758,6 +788,7 @@ export interface SettingsManager {
    */
   setDiscoverContentPanelInline: (discoverContentPanelInline: boolean) => void;
   setVerseSelectionEffects: (value: VerseSelectionEffects) => void;
+  setViewingAreaIndicators: (value: ViewingAreaIndicators) => void;
 }
 
 export function createSettings(
@@ -852,6 +883,10 @@ export function createSettings(
       verseSelectionEffects: parseVerseSelectionEffects(
         read(PROFILE_VERSE_SELECTION_EFFECTS, TAG_VERSE_SELECTION_EFFECTS),
         DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
+      ),
+      viewingAreaIndicators: parseViewingAreaIndicators(
+        read(PROFILE_VIEWING_AREA_INDICATORS, TAG_VIEWING_AREA_INDICATORS),
+        DEFAULT_SETTINGS.viewingAreaIndicators ?? "default"
       ),
       keepScreenAwake: parseBoolean(
         read(PROFILE_KEEP_AWAKE, TAG_KEEP_AWAKE),
@@ -1026,6 +1061,17 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_VERSE_SELECTION_EFFECTS, value);
   };
 
+  const setViewingAreaIndicators = (value: ViewingAreaIndicators) => {
+    settings.value = {
+      ...settings.value,
+      viewingAreaIndicators: value,
+    };
+
+    sessionOverrides[TAG_VIEWING_AREA_INDICATORS] = value;
+
+    saveProfileConfigValue(login, PROFILE_VIEWING_AREA_INDICATORS, value);
+  };
+
   const setVerseLineHeight = (lineHeight: number) => {
     if (!Number.isFinite(lineHeight)) return;
     const current = settings.value.textConfig;
@@ -1188,6 +1234,8 @@ export function createSettings(
       DEFAULT_SETTINGS.discoverContentPanelInline;
     sessionOverrides[TAG_VERSE_SELECTION_EFFECTS] =
       DEFAULT_SETTINGS.verseSelectionEffects ?? "default";
+    sessionOverrides[TAG_VIEWING_AREA_INDICATORS] =
+      DEFAULT_SETTINGS.viewingAreaIndicators ?? "default";
 
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
@@ -1220,6 +1268,11 @@ export function createSettings(
       login,
       PROFILE_VERSE_SELECTION_EFFECTS,
       DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_VIEWING_AREA_INDICATORS,
+      DEFAULT_SETTINGS.viewingAreaIndicators ?? "default"
     );
     saveProfileConfigValue(
       login,
@@ -1317,5 +1370,6 @@ export function createSettings(
     setCustomHighlights,
     setDiscoverContentPanelInline,
     setVerseSelectionEffects,
+    setViewingAreaIndicators,
   };
 }

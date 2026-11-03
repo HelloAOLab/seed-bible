@@ -61,6 +61,7 @@ import type { FriendsManager } from "../../managers/FriendsManager";
 import {
   isSessionHost,
   getConnectedUserVisualKey,
+  resolveViewingAreaVisibility,
   type BibleReadingSession,
   type ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
@@ -2849,8 +2850,24 @@ export function BibleReader(props: BibleReaderProps) {
   const presenceChapterNumber = chapterNumber.value;
   if (sharedSession && presenceBookId && presenceChapterNumber > 0) {
     const positions = sharedSession.participantPositions.value;
-    for (const user of sharedSession.connectedUsers.value) {
+    const sessionOptions = sharedSession.options.value;
+    const connectedUsers = sharedSession.connectedUsers.value;
+    // Hosts choose a session-wide rule; each person can override it. "auto"
+    // shows everyone below four people and only hosts from four on.
+    const viewingAreas = resolveViewingAreaVisibility(
+      sessionOptions.viewingAreaVisibility,
+      connectedUsers.length,
+      state?.settings?.settings.value.viewingAreaIndicators
+    );
+    for (const user of connectedUsers) {
       if (user.isSelf) continue;
+      if (
+        viewingAreas === "hosts-only" &&
+        !isSessionHost(sessionOptions, user.userId) &&
+        !isSessionHost(sessionOptions, user.connectionId)
+      ) {
+        continue;
+      }
       const position = positions.get(user.connectionId);
       if (
         !position ||
