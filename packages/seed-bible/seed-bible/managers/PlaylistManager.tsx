@@ -19,6 +19,7 @@ import type { ChatsManager } from "./ChatsManager";
 import { openPlaylistItemPreview } from "../components/playlistItemPreview";
 import { PlaylistFinishedModalContent } from "../components/PlaylistFinishedModal/PlaylistFinishedModal";
 import type { I18nManager } from "../i18n";
+import { useI18n } from "../i18n/I18nManager";
 import type {
   BibleReadingExtensionManager,
   ReadingExtensionInstance,
@@ -31,7 +32,11 @@ import {
   type GeneratedPlaylist,
 } from "./AIManager";
 import type { DiscoverManager } from "./DiscoverManager";
-import { emphasizeVerses } from "./BibleReadingManager";
+import { emphasizeVerses, type BibleReadingState } from "./BibleReadingManager";
+import type {
+  AudioPlaybackController,
+  AudioPlaybackManager,
+} from "./AudioPlaybackManager";
 import {
   canonicalBookIndex,
   type BookId,
@@ -1214,6 +1219,42 @@ export function playbackRequestFromUrl(
 
 const PLAYLIST_FINISHED_MODAL_ID = "playlist-finished";
 
+/** One dialog for "this playlist will pause Audio Reader", so a second click updates it instead of stacking another. */
+const PLAYLIST_PAUSE_AUDIO_MODAL_ID = "playlist-pause-audio-reader";
+
+function PauseAudioReaderConfirm(props: {
+  onCancel: () => void;
+  onPlay: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-confirm-delete">
+      <p className="sb-confirm-delete-message">
+        {t("pause-audio-for-playlist-message", {
+          defaultValue:
+            "Playing this playlist will pause Audio Reader. When the playlist ends, it continues from where you left off.",
+        })}
+      </p>
+      <div className="sb-confirm-delete-actions">
+        <button
+          type="button"
+          className="sb-session-settings-cancel"
+          onClick={props.onCancel}
+        >
+          {t("cancel")}
+        </button>
+        <button
+          type="button"
+          className="sb-photo-modal-button sb-photo-modal-button-primary"
+          onClick={props.onPlay}
+        >
+          {t("play-playlist", { defaultValue: "Play playlist" })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** Stable id so navigating between non-verse items updates the same modal instead of closing/reopening it. */
 const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
 
@@ -1238,6 +1279,7 @@ export function createPlaylistManager(
   readingExtensionManager: BibleReadingExtensionManager,
   discover: DiscoverManager,
   chats: ChatsManager,
+  audioPlayback: Pick<AudioPlaybackManager, "controllerFor">,
   initialPlaylistPageSeed?: PlaylistPageSeed,
   options: {
     /**
@@ -2219,6 +2261,132 @@ export function createPlaylistManager(
   };
 
   /**
+   * Audio Reader narration paused so a playlist could play, and where to put
+   * the reader back so that narration can continue. A second playlist started
+   * while this is already paused must not replace it with an empty list.
+   */
+  interface PausedNarration {
+    readingState: BibleReadingState;
+    controller: AudioPlaybackController;
+    translationId: string;
+    bookId: string | null;
+    chapterNumber: number;
+  }
+  let audioToResume: PausedNarration[] = [];
+  /** Set while navigating back to a paused chapter, so that URL sync cannot nest another stop. */
+  let restoringNarration = false;
+  /** The open "pause Audio Reader?" question, if the user has not answered yet. */
+  let pauseDecision: { resolve: (agreed: boolean) => void } | null = null;
+
+  const narrationsPlaying = (): PausedNarration[] => {
+    const found: PausedNarration[] = [];
+    for (const tab of tabs.tabs.peek()) {
+      const readingState = tab.readingState;
+      const controller = audioPlayback.controllerFor(readingState);
+      if (!controller?.isPlaying.peek()) {
+        continue;
+      }
+      found.push({
+        readingState,
+        controller,
+        translationId: readingState.translationId.peek(),
+        bookId: readingState.bookId.peek(),
+        chapterNumber: readingState.chapterNumber.peek(),
+      });
+    }
+    return found;
+  };
+
+  const pausePlayingAudioReaders = () => {
+    const playingNow = narrationsPlaying();
+    if (playingNow.length === 0) {
+      return;
+    }
+    audioToResume = playingNow;
+    for (const item of playingNow) {
+      item.controller.pause();
+    }
+  };
+
+  const narrationLeftItsChapter = (
+    item: PausedNarration
+  ): item is PausedNarration & { bookId: string } => {
+    if (item.bookId === null) {
+      return false;
+    }
+    if (audioPlayback.controllerFor(item.readingState) !== item.controller) {
+      return false;
+    }
+    return (
+      item.readingState.translationId.peek() !== item.translationId ||
+      item.readingState.bookId.peek() !== item.bookId ||
+      item.readingState.chapterNumber.peek() !== item.chapterNumber
+    );
+  };
+
+  const resumePausedAudioReaders = () => {
+    const saved = audioToResume;
+    audioToResume = [];
+    for (const item of saved) {
+      if (audioPlayback.controllerFor(item.readingState) !== item.controller) {
+        continue;
+      }
+      item.controller.play();
+    }
+  };
+
+  const settlePauseDecision = (agreed: boolean) => {
+    const decision = pauseDecision;
+    if (!decision) {
+      return;
+    }
+    pauseDecision = null;
+    modals.closeModal(PLAYLIST_PAUSE_AUDIO_MODAL_ID);
+    decision.resolve(agreed);
+  };
+
+  /**
+   * Asks before a playlist takes over Audio Reader. Resolves true immediately
+   * when nothing is narrating, and true or false once the user answers.
+   * A question already on screen is the same question: the newest start is
+   * what Play will run, and every waiter hears the one answer.
+   */
+  const confirmPauseIfNarrationPlaying = (): Promise<boolean> => {
+    if (narrationsPlaying().length === 0) {
+      return Promise.resolve(true);
+    }
+    if (pauseDecision) {
+      return new Promise((resolve) => {
+        const previous = pauseDecision!.resolve;
+        pauseDecision = {
+          resolve: (agreed) => {
+            previous(agreed);
+            resolve(agreed);
+          },
+        };
+      });
+    }
+    return new Promise((resolve) => {
+      pauseDecision = { resolve };
+      modals.openModal({
+        id: PLAYLIST_PAUSE_AUDIO_MODAL_ID,
+        title: {
+          key: "pause-audio-for-playlist-title",
+          defaultValue: "Pause Audio Reader?",
+        },
+        useCasualOSApp: false,
+        onDismiss: () => settlePauseDecision(false),
+        content: () => (
+          <PauseAudioReaderConfirm
+            onCancel={() => settlePauseDecision(false)}
+            onPlay={() => settlePauseDecision(true)}
+          />
+        ),
+      });
+    });
+  };
+
+  /**
    * Starts playing the given playlist(s) at `initialStep`, by enabling the
    * playlist reading extension on the target tab (a shared-session tab if there
    * is one, otherwise the selected tab) with the playback state as its data. A
@@ -2230,15 +2398,18 @@ export function createPlaylistManager(
    * single history row for the first recorded playlist is opened or reset.
    *
    * Returns the live playing state, or null when there is no tab to play on.
+   * Pauses Audio Reader in every tab first. Callers that talk to a person use
+   * {@link startPlaying}, which asks before doing this.
    */
-  const startPlaying = (
+  const startPlayingNow = (
     playlist: SimplePlaylist | SimplePlaylist[],
     initialStep = 0,
     options?: StartPlayingOptions
   ): PlayingState | null => {
+    pausePlayingAudioReaders();
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
-    // Play on the active tab only. Other tabs keep their own playback (if any)
-    // untouched, so playback is isolated per reading state.
+    // Play on the active tab only. Other tabs keep their own playlist
+    // playback, so one playlist does not take over another tab's queue.
     const targetTab = activeTab.value;
 
     const queue = playlists.flatMap((p) =>
@@ -2310,6 +2481,30 @@ export function createPlaylistManager(
   };
 
   /**
+   * Starts a playlist the user asked for. When Audio Reader is narrating in
+   * any tab, asks first and returns null until they answer: Play pauses it
+   * and starts, Cancel leaves both alone. A link, reload, or server render
+   * goes through {@link startPlayingNow} instead, because nobody is there to
+   * answer and playback must not wait.
+   */
+  const startPlaying = (
+    playlist: SimplePlaylist | SimplePlaylist[],
+    initialStep = 0,
+    options?: StartPlayingOptions
+  ): PlayingState | null => {
+    if (narrationsPlaying().length === 0) {
+      return startPlayingNow(playlist, initialStep, options);
+    }
+    void confirmPauseIfNarrationPlaying().then((agreed) => {
+      if (!agreed) {
+        return;
+      }
+      startPlayingNow(playlist, initialStep, options);
+    });
+    return null;
+  };
+
+  /**
    * Loads a playlist by locator and plays it at `stepIndex` (0-based). Reuses
    * the playlist a playlist page already loaded for the same locator. Resolves
    * once the reader has moved to that step, so the server can render it.
@@ -2330,7 +2525,7 @@ export function createPlaylistManager(
         loaded?.locator === locator
           ? loaded.item
           : await loadPlaylist(recordName, id);
-      const state = startPlaying(playlist, stepIndex ?? 0, {
+      const state = startPlayingNow(playlist, stepIndex ?? 0, {
         sharedOpening: true,
       });
       if (state) {
@@ -2394,9 +2589,9 @@ export function createPlaylistManager(
    * Stops the active tab's playback and returns to the discover view. Only the
    * active reading state is disabled (disposing its live playing state, and in
    * a shared session propagating the stop to participants) — other tabs'
-   * playback is left running.
+   * playlist playback is left running.
    */
-  const stopPlaying = (): void => {
+  const endPlaylist = (): void => {
     finalizeActivePlayHistory();
     const tab = activeTab.peek();
     if (tab?.readingState.isExtensionEnabled(PLAYLIST_READING_EXTENSION_ID)) {
@@ -2423,59 +2618,91 @@ export function createPlaylistManager(
   };
 
   /**
-   * Loads the playlist for a history row and starts playback at the saved step.
-   * The playlist's history row is reset to this new session.
+   * Stops the playlist, then continues any Audio Reader it paused. When the
+   * playlist moved the reader, go back to that chapter first, while the
+   * playlist still holds the tab, so Audio Reader does not throw the place away.
    */
-  const continueFromHistory = async (
-    entry: PlaylistPlayHistory
-  ): Promise<void> => {
+  const stopPlaying = (): void => {
+    if (restoringNarration) {
+      return;
+    }
+    const toRestore = audioToResume.filter(narrationLeftItsChapter);
+    if (toRestore.length === 0) {
+      endPlaylist();
+      resumePausedAudioReaders();
+      return;
+    }
+    restoringNarration = true;
+    void Promise.all(
+      toRestore.map((item) =>
+        item.readingState.selectTranslationAndChapter(
+          item.translationId,
+          item.bookId,
+          item.chapterNumber,
+          { updateUrl: false }
+        )
+      )
+    ).finally(() => {
+      restoringNarration = false;
+      endPlaylist();
+      resumePausedAudioReaders();
+    });
+  };
+
+  /**
+   * Loads a history row's playlist and starts it at `step`. Resolves false
+   * when the user declines to pause Audio Reader, without starting and
+   * without an error, so the screen that asked can stay put.
+   */
+  const openHistoryPlayback = async (
+    entry: PlaylistPlayHistory,
+    step: number
+  ): Promise<boolean> => {
     const generation = beginOpeningPlayback();
     try {
       const playlist = await loadPlaylist(
         entry.playlistRecordName,
         entry.playlistId
       );
-      const step = Math.max(0, entry.currentStep);
-      const playingState = startPlaying(playlist, step);
+      const agreed = await confirmPauseIfNarrationPlaying();
+      if (!agreed) {
+        finishOpeningPlayback(generation);
+        return false;
+      }
+      const playingState = startPlayingNow(playlist, step);
       if (!playingState) {
         throw new Error("Cannot play a playlist without an open tab.");
       }
       await playingState.whenSettled();
+      return true;
     } catch (error) {
       finishOpeningPlayback(generation);
       throw error;
     }
   };
+
+  /**
+   * Loads the playlist for a history row and starts playback at the saved step.
+   * The playlist's history row is reset to this new session.
+   * Resolves false when the user declines to pause Audio Reader.
+   */
+  const continueFromHistory = (entry: PlaylistPlayHistory): Promise<boolean> =>
+    openHistoryPlayback(entry, Math.max(0, entry.currentStep));
 
   /**
    * Loads the playlist for a history row and starts playback from the beginning.
    * The playlist's history row is reset to this new session.
+   * Resolves false when the user declines to pause Audio Reader.
    */
-  const replayFromHistory = async (
-    entry: PlaylistPlayHistory
-  ): Promise<void> => {
-    const generation = beginOpeningPlayback();
-    try {
-      const playlist = await loadPlaylist(
-        entry.playlistRecordName,
-        entry.playlistId
-      );
-      const playingState = startPlaying(playlist, 0);
-      if (!playingState) {
-        throw new Error("Cannot play a playlist without an open tab.");
-      }
-      await playingState.whenSettled();
-    } catch (error) {
-      finishOpeningPlayback(generation);
-      throw error;
-    }
-  };
+  const replayFromHistory = (entry: PlaylistPlayHistory): Promise<boolean> =>
+    openHistoryPlayback(entry, 0);
 
   /**
    * Continues a history row, or replays it when that session already finished.
-   * Resolves once the first item is on screen.
+   * Resolves true once the first item is on screen, or false when the user
+   * declines to pause Audio Reader.
    */
-  const playFromHistory = (entry: PlaylistPlayHistory): Promise<void> =>
+  const playFromHistory = (entry: PlaylistPlayHistory): Promise<boolean> =>
     isPlaylistPlayHistoryComplete(entry)
       ? replayFromHistory(entry)
       : continueFromHistory(entry);

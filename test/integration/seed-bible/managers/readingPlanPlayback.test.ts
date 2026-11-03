@@ -13,6 +13,7 @@ import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createBibleReadingExtensionManager } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
 import { createPlaylistManager } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import { createAudioPlaybackManager } from "@packages/seed-bible/seed-bible/managers/AudioPlaybackManager";
 import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
@@ -162,7 +163,8 @@ function setup() {
     discover,
     {
       removeContext: vi.fn(),
-    } as any
+    } as any,
+    createAudioPlaybackManager()
   );
 
   // What TabsManager does in the real app: each navigation writes the reading

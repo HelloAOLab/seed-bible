@@ -58,6 +58,15 @@ let saveListeningSpan: SaveListeningSpan | null = null;
  */
 let audioPlayback: AudioPlaybackManager | null = null;
 
+/**
+ * True while a playlist is playing on this tab. The playlist borrows the
+ * reader and changes the chapter; the paused narration has to stay so it can
+ * continue when the playlist gives the tab back.
+ */
+let playlistHoldsReadingState: (
+  readingState: BibleReadingState
+) => boolean = () => false;
+
 /** The browser's speech synthesiser, for as long as the extension is installed. */
 let textToSpeech: TextToSpeechManager | null = null;
 
@@ -552,7 +561,9 @@ function beginSession(session: ListeningSession): void {
     `${readingState.translationId.value}|${readingState.bookId.value}|${readingState.chapterNumber.value}`;
   const opened = untracked(chapterKey);
   const stopWatching = effect(() => {
-    if (chapterKey() !== opened) untracked(() => endSession(session));
+    // Read through the function so this effect follows the playlist signal.
+    const held = playlistHoldsReadingState(readingState);
+    if (chapterKey() !== opened && !held) untracked(() => endSession(session));
   });
 
   session.teardown = () => {
@@ -1288,12 +1299,15 @@ export default function initAudioReaderExtension() {
       };
 
       audioPlayback = context.audioPlayback;
+      playlistHoldsReadingState = (readingState) =>
+        context.playlists.playing.value?.tab?.readingState === readingState;
       const speech = context.textToSpeech;
       textToSpeech = speech;
       // The audio element and the synthesiser outlive the install, but nothing
       // would be left to show or control them, so an uninstall ends every
       // tab's listening outright.
       yield () => {
+        playlistHoldsReadingState = () => false;
         endAllSessions();
         audioPlayback = null;
         textToSpeech = null;

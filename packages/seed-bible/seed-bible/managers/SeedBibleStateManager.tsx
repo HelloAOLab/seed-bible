@@ -1391,6 +1391,7 @@ export function createSeedBibleState(
     readingExtensions,
     discover,
     chats,
+    audioPlayback,
     options.initialPlaylistPageSeed,
     { friendReads }
   );
@@ -3308,6 +3309,18 @@ export function createSeedBibleState(
     }
   });
 
+  // Profile, playlist history, and a reading plan all cover the reader. A
+  // click there can sit on a confirmation first, so those screens stay until
+  // playback has actually started — then they get out of the way.
+  let playlistWasPlaying = false;
+  effect(() => {
+    const isPlaying = !!playlists.playing.value;
+    if (isPlaying && !playlistWasPlaying && typeof window !== "undefined") {
+      panes.closeFullscreenPanes();
+    }
+    playlistWasPlaying = isPlaying;
+  });
+
   /**
    * Builds the AI tools that let a provider interact with the core app state.
    */
@@ -3913,8 +3926,12 @@ export function createSeedBibleState(
     // failed load only toasts after they've already left.
     const { t } = i18n;
     return playlists.playFromHistory(entry).then(
-      () => {
-        closeProfile();
+      (started) => {
+        // Cancel leaves the profile where it is. Closing here used to happen
+        // as soon as the question opened, so the playlist never started.
+        if (started !== false) {
+          closeProfile();
+        }
       },
       (error) => {
         toast(playlistHistoryOpenFailedMessage(t));
