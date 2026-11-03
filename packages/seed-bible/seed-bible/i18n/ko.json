@@ -22,22 +22,18 @@
   "clear-search": "검색 결과 지우기",
   "searching": "수색...",
   "no-search-results": "일치하는 구절이 없습니다.",
-
   "uploading": "업로드 중...",
   "profile-name": "프로필 이름",
   "profile-name-placeholder": "예: 크레이그 가족",
-
   "description": "설명",
   "optional": "(선택 과목)",
   "description-placeholder": "프로필 설명을 입력하세요...",
   "location": "위치",
   "location-placeholder": "예: 텍사스주 오스틴",
-
   "copied": "복사됨",
   "copy": "복사",
   "save-changes": "변경 사항 저장",
   "sign-out": "로그아웃",
-
   "log-in": "로그인",
   "session-settings": "세션 설정",
   "shared-session-click-to-join": "공유 중입니다 — 클릭해서 참여하세요",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "테마를 선택하고 성경과 UI가 표시되는 방식을 조정하세요.",
   "scripture-settings": "성경 설정",
   "scripture-settings-font-size-example": "에이",
-
   "all-settings": "모든 설정",
   "no-extensions-available": "사용 가능한 연장 옵션이 없습니다.",
   "install": "설치하다",
   "uninstall": "제거",
-
   "custom": "관습",
   "text-section-bookTitle": "책 제목 본문",
   "text-section-heading": "제목 텍스트",
@@ -79,7 +73,6 @@
   "show-selected-items": "선택한 항목 표시",
   "show-highlight-colors": "강조 색상 표시",
   "show-icon-text": "아이콘 텍스트 표시",
-
   "extensions": "확장 기능",
   "display": "표시하다",
   "keep-screen-awake": "화면이 꺼지지 않도록 유지하세요",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "성경 글자 크기를 키우세요",
   "change-line-spacing": "줄 간격 변경",
   "line-spacing_lineHeight": "줄 간격: {{lineHeight}}",
-
   "italic": "이탤릭체",
   "underline": "밑줄",
   "alignment_x": "정렬: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "텍스트 색상",
   "follow_theme": "테마를 따르세요",
   "reset-to-default": "기본 설정으로 재설정",
-
   "id_highlight-text-color": "{{id}} 강조 텍스트 색상",
   "id_highlight-background-color": "{{id}} 강조 배경색",
   "all-settings-description": "각 텍스트 섹션을 세밀하게 조정하고 테마 색상을 원하는 대로 설정하세요.",
@@ -126,7 +117,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "외전",
-
   "custom-translations": "맞춤 번역",
   "no-translation-results-found": "검색 결과가 없습니다. 부분적으로 완성된 번역물까지 포함하여 검색 범위를 넓히시겠습니까?",
   "show-all-translations": "모든 번역 보기",
@@ -138,7 +128,6 @@
   "complete-translations": "완전한 번역",
   "all-translations": "모든 번역",
   "popular-translations": "인기 번역",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 시편",
   "2-psalms": "시편 2편",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "모든 설정으로 이동",
   "more": "더",
   "remove-bookmark": "북마크 제거",
-
   "chat": "채팅",
   "today": "오늘",
   "you": "너",
@@ -170,7 +158,6 @@
   "category-options": "폴더 옵션",
   "rename": "이름 변경",
   "delete": "삭제",
-
   "bookmark-options": "북마크 옵션",
   "new-folder-placeholder": "폴더 이름",
   "tasks": "과제",
@@ -182,11 +169,9 @@
   "folder-name-taken": "해당 이름의 폴더가 이미 존재합니다.",
   "add-to-new": "새 항목에 추가",
   "save": "구하다",
-
   "seed-bible": "씨앗 성경",
   "take-photo": "사진을 찍으세요",
   "choose-from-gallery": "갤러리에서 선택하세요",
-
   "crop-your-photo": "사진을 자르세요",
   "zoom": "줌",
   "set-picture": "사진 설정",
@@ -212,10 +197,8 @@
   "read-the-bible": "성경을 읽으세요",
   "seed-bible-description": "씨앗 성경에서 {{bookName}} {{chapterNumber}} 장을 읽으십시오.",
   "social-title": "{{bookName}} {{chapterNumber}} 를 읽으세요.",
-
   "chapter-navigation": "챕터 탐색",
   "tutorial.skip": "건너뛰다",
-
   "tutorial.back": "뒤쪽에",
   "tutorial.done": "완료",
   "tutorial.next": "다음",
@@ -328,11 +311,9 @@
   "study-notes": "학습 노트",
   "content": "콘텐츠",
   "untitled-playlist": "제목 없는 재생 목록",
-
   "discover-annotations-empty": "주석이 없습니다.",
   "discover-cross-references-empty": "이 장에는 상호 참조가 없습니다.",
   "discover-study-notes-empty": "이 장에는 학습 자료가 없습니다.",
-
   "discover-select-tab": "관련 자료를 보려면 탭을 선택하세요.",
   "create-playlist": "만들다",
   "playlist-title_placeholder": "재생 목록 제목",
@@ -381,12 +362,10 @@
   "delete-playlist-failed": "재생목록을 삭제할 수 없었습니다.",
   "collapsed-tab-shared-label": "{{title}} — 공유 세션, {{count}} 명 참여",
   "playlist-add-mode-label": "품목 유형",
-
   "session-host-reconnected": "세션에 다시 연결되었습니다.",
   "session-host-left": "호스트가 나갔습니다. 따라서 세션에서 퇴장당하셨습니다.",
   "drag-to-reorder-playlist-item": "드래그하여 순서 변경",
   "saving": "저장 중…",
-
   "unsaved-item-confirm-message": "아직 재생목록에 추가되지 않은 항목을 입력하기 시작했습니다. 어떻게 하시겠습니까?",
   "discard-and-save": "삭제하고 저장",
   "add-and-save": "추가하고 저장",
@@ -514,7 +493,6 @@
   "reading-plan-preview-reading": "미리보기 {{reading}}",
   "reading-plan-mark-reading-complete": "읽기 완료 표시",
   "reading-plan-link-video": "동영상",
-
   "reading-plan-mark-passage-complete": "{{passage}} 읽음으로 표시하세요",
   "reading-plan-read-nudge-title": "재밌게 읽으셨어요!",
   "reading-plan-read-nudge-toast": "{{passage}} 완료로 표시하시겠습니까?",
@@ -522,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "온라인으로 성경을 읽고, 검색하고, 공부하세요. 다양한 언어로 된 무료 번역본과 하이라이트, 메모, 책갈피, 읽기 계획 기능을 제공합니다.",
   "all": "모두",
-
   "today-bookmarks": "즐겨찾기",
   "today-search-verses": "책, 장, 절 등을 검색하세요.",
   "anonymous-greeting": "환영!",
   "community": "지역 사회",
   "go-somewhere-new": "새로운 곳으로 가세요",
-
   "open-bible": "성경을 펼쳐보세요",
   "personal-greeting": "{{name}} 님, 환영합니다!",
   "resume-reading": "중단했던 부분부터 계속 진행하세요",
   "resume-reading-loading": "읽기 기록을 불러오는 중…",
   "selected-year": "연도: {{year}}",
-
   "theme-light": "빛",
   "theme-dark": "어두운",
   "installed-extensions": "설치됨",
@@ -544,7 +519,6 @@
   "extension-state-installed": "설치됨",
   "extension-state-downloaded": "다운로드됨",
   "extension-state-pending": "설치 중…",
-
   "tutorial.stepProgress": "{{current}} {{total}}",
   "tutorial.offlineDownloadTitle": "탭하여 기기에 저장하세요",
   "tutorial.offlineDownloadBody": "이 아이콘이 있는 번역은 오프라인에서 읽을 수 있도록 저장할 수 있습니다.",
@@ -578,7 +552,6 @@
   "tutorial.paneLayoutBody": "이 레이아웃 메뉴에서 나란히 읽을 구절 수를 선택하세요.",
   "tutorial.addTabTitle": "더 많은 통로를 열어보세요",
   "tutorial.addTabBody": "여러 권의 책이나 번역본을 나란히 읽으려면 새 탭을 추가하세요.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % 완료 - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % 완료",
   "playlist-history-continue": "계속하다",
@@ -637,7 +610,6 @@
   "chapter-notes-count_other": "이 장에 대한 메모는 {{count}} 개입니다.",
   "create-folder": "폴더 생성",
   "edit-bookmark": "북마크 편집",
-
   "greeting-afternoon": "좋은 오후에요!",
   "greeting-afternoon-named": "안녕하세요, {{name}} !",
   "greeting-evening": "좋은 저녁이에요!",
@@ -653,32 +625,24 @@
   "ask-ai": "AI에게 물어보세요",
   "unread-mention": "읽지 않은 언급",
   "unread-messages": "읽지 않은 메시지: {{count}}",
-
   "scripture-width": "성경 구절 너비",
   "decrease-scripture-width": "성경 구절 너비를 줄이세요",
   "increase-scripture-width": "성경 구절 너비를 늘리세요",
   "annotations": "주석",
   "discover-content-panel": "콘텐츠를 찾아보세요",
   "discover-book-title": "{{book}} 찾아보세요",
-
   "about-title": "씨앗의 성경에 대하여",
   "about-meta-description": "Seed Bible은 가족, 친구, 지역 사회 구성원들과 함께 성경을 읽을 수 있도록 만들어진 무료 성경 앱입니다. 광고나 유료 콘텐츠 없이 평생 무료로 이용할 수 있습니다.",
-
   "about-action-open-passage": "통로를 열어보세요",
   "about-action-donate": "기부하세요",
   "about-action-discord": "디스코드에 참여하세요",
   "recent-uploads": "최근 업로드",
-
   "customization-not-found": "해당 사용자 지정 옵션을 찾을 수 없습니다.",
   "customization-name": "이름",
   "customization-primaryColor": "주요한",
-
   "customization-secondaryColor": "반성",
-
   "customization-tertiaryColor": "제삼기",
-
   "customization-fonts": "글꼴",
-
   "custom-font-option": "관습…",
   "custom-font-name-placeholder": "구글 폰트 이름",
   "delete-customization": "삭제",
@@ -691,10 +655,8 @@
   "extension-availability-available": "사용 가능",
   "extension-availability-auto-installed": "자동 설치됨",
   "extension-availability-hidden": "숨겨진",
-
   "variants": "테마",
   "add-variant": "테마 추가",
-
   "base-theme-description": "이 테마는 사용자가 직접 설정하지 않은 항목에 대해 기본 설정으로 되돌아가는 변경 사항을 적용합니다. 사용자가 직접 수정한 내용은 유지됩니다.",
   "reset-to-base-theme": "기본 테마로 재설정",
   "low-contrast-warning": "{{label}} : 명암비가 {{ratio}} :1에 불과합니다. 텍스트를 읽기 쉽게 유지하려면 최소 {{minRatio}} :1을 목표로 하세요.",
@@ -740,14 +702,12 @@
   "save-folder-empty": "아직 저장된 파일이 없습니다.",
   "save-options": "저장 옵션",
   "saves": "저장",
-
   "hide-saves": "숨기기 저장",
   "show-saves": "저장 기능을 보여줍니다",
   "save-verses": "구하다",
   "new-save-folder": "새 폴더",
   "edit-save": "편집 저장",
   "remove-save-from-all-folders": "모든 폴더에서 제거",
-
   "color-hue": "색조",
   "color-saturation": "채도와 밝기",
   "hex-color": "헥스 컬러",
@@ -862,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "서식 편집기를 불러올 수 없습니다. 이 메모에는 서식이 포함되어 있어 편집 시 서식이 손실될 수 있으므로 다시 연결하기 전까지는 편집할 수 없습니다.",
   "annotation-text": "주석 텍스트",
   "notes-for-verse": "{{verse}} 절에 대한 참고 사항",
-
   "configure-extension-defaults": "기본값 재정의를 구성합니다.",
-
   "extension-settings-defaults-title": "{{name}} 기본값 재정의",
   "no-extension-settings": "이 확장 프로그램에는 설정 가능한 옵션이 없습니다.",
   "extension-settings-save-failed": "설정을 저장할 수 없습니다.",
@@ -873,7 +831,6 @@
   "setting-no-default": "기본값 없음",
   "override-setting": "{{name}} 재정의하세요",
   "override-setting-label": "보수",
-
   "discover-choose-filter-hint": "위의 필터를 선택하여 이 장의 더 많은 내용을 확인하세요.",
   "take-a-tour": "투어를 해보세요",
   "share-reading-plan": "공유 플랜",
@@ -1057,7 +1014,6 @@
   "my-bookmark-numbered": "내 북마크 {{number}}",
   "bookmark-move-hint": "책갈피를 탭하면 이 장으로 이동합니다.",
   "move-bookmark-here": "{{name}} 여기로 이동하세요",
-
   "play": "놀다",
   "pause": "정지시키다",
   "audio-playback-position": "재생 위치",
@@ -1066,7 +1022,6 @@
   "audio-scrub-verse": "절 {{verse}}",
   "tab-playing-audio": "오디오 재생 중",
   "collapsed-tab-playing-label": "{{label}} — 오디오 재생 중",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} 개의 테마",
   "customization-theme-count_one": "{{count}} 테마",
@@ -1105,7 +1060,6 @@
   "about-community-body": "신앙생활은 함께하는 것입니다. 시드 바이블은 가족, 친한 친구, 가정 교회와 함께 성경을 읽도록 만들어졌습니다.",
   "discovered-content": "발견된 콘텐츠",
   "show-discovered-content": "검색된 콘텐츠 표시",
-
   "extension-availability-default": "기본값( {{availability}} )",
   "customization-extensions-default": "다른 확장 프로그램의 기본값",
   "customization-extensions-default-hint": "아래에 설정하지 않은 모든 확장 프로그램(나중에 추가되는 새 확장 프로그램 포함)에 적용됩니다.",
@@ -1138,7 +1092,6 @@
   "playlist-scripture-note-return": "재생 목록으로 돌아가기",
   "playlist-scripture-note-aria": "{{passage}} 에 대한 참고 사항",
   "playlist-scripture-note-progress": "{{current}} 의 {{total}}",
-
   "unsaved-item-edit-confirm-message": "항목을 변경했지만 아직 변경 사항을 저장하지 않았습니다. 어떻게 하시겠습니까?",
   "keep-changes-and-save": "변경 사항을 저장하고 저장하세요.",
   "reading-plan-edit-reading": "읽기 편집",
@@ -1153,7 +1106,6 @@
   "branding": "브랜딩",
   "create-custom-branding-menu-item": "맞춤형 브랜딩",
   "your-content-empty-branding": "직접 제작한 맞춤 브랜딩이 여기에 표시됩니다.",
-
   "extension-consent-from": "{{host}} 에서",
   "extension-consent-source-version": "버전 {{version}} · {{host}} 에서 제공",
   "extension-consent-uploader-unnamed": "씨앗 성경 사용자",
@@ -1201,7 +1153,6 @@
   "extension-permission-reading-selection": "어떤 구절을 선택했는지 확인해 보세요.",
   "extension-permission-reading-navigate": "열린 통로",
   "extension-permission-network": "{{host}} 에 연결하세요",
-
   "extension-consent-not-now": "지금은 안 돼",
   "extension-consent-nothing-yet": "현재로서는 사용자의 정보에 접근할 수 없습니다.",
   "extension-permission-reading-history": "내 읽기 기록을 확인하세요",
@@ -1239,7 +1190,6 @@
   "extension-capture-cancel": "취소",
   "extension-consent-high-risk": "예민한",
   "extension-modal-ok": "좋아요",
-
   "extension-permissions-restart-note": "변경 사항은 즉시 적용됩니다. {{name}} 재시작하면 변경 사항이 반영됩니다.",
   "extension-permissions-saved": "저장되었습니다. {{name}} 이 새 권한으로 다시 시작되었습니다.",
   "extension-permissions-failed": "저장되지 않았습니다. 다시 시도해 주세요.",
@@ -1277,8 +1227,51 @@
   "session-settings-verse-effects-desc-hosts": "호스트가 구절을 선택할 때 효과를 표시합니다.",
   "session-settings-verse-effects-desc-everyone": "구절을 선택할 때 효과를 표시합니다.",
   "session-settings-verse-effects-desc-none": "구절 선택 효과는 모든 사용자에게 비활성화되어 있습니다.",
-
   "account": "계정",
   "scroll-filters-start": "스크롤 필터를 시작 위치로 이동하세요.",
-  "scroll-filters-end": "스크롤 필터를 끝까지 밀어주세요."
+  "scroll-filters-end": "스크롤 필터를 끝까지 밀어주세요.",
+  "download": "다운로드",
+  "image-details-uploaded": "업로드됨",
+  "image-details-dimensions": "치수",
+  "image-details-dimensions-value": "{{width}} × {{height}} 픽셀",
+  "image-details-type": "유형",
+  "image-details-cover-of": "표지",
+  "image-details-not-a-cover": "덮개로 사용되지 않음",
+  "delete-customization-confirm-title": "맞춤 브랜딩을 삭제하시겠습니까?",
+  "delete-customization-confirm-message": "사용자 지정 브랜딩 \" {{name}} \"을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+  "delete-customization-failed": "사용자 지정 브랜딩을 삭제할 수 없습니다.",
+  "delete-variant-confirm-title": "테마를 삭제하시겠습니까?",
+  "delete-variant-confirm-message": "\" {{name}} \" 테마를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+  "delete-variant-confirm-message-unnamed": "이 테마를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+  "delete-variant-failed": "테마를 삭제할 수 없었습니다.",
+  "delete-highlight-confirm-title": "강조 표시를 삭제하시겠습니까?",
+  "delete-highlight-confirm-message": "{{reference}} 에 대한 강조 표시를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+  "delete-highlight-failed": "하이라이트를 삭제할 수 없었습니다.",
+  "delete-annotation-on-confirm-message": "{{reference}} 에 있는 주석을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+  "remove-from-folder": "폴더에서 제거",
+  "save-folders": "{{folders}} 에",
+  "delete-save-confirm-title": "삭제 저장?",
+  "delete-save-confirm-message": "{{reference}} 에 대한 저장을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+  "delete-save-confirm-message-folders": "{{folders}} 에서 {{reference}} 에 대한 저장을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+  "delete-save-failed": "저장 파일을 삭제할 수 없습니다.",
+  "delete-save-folder-confirm-title": "폴더를 삭제하시겠습니까?",
+  "delete-save-folder-confirm-message": "\" {{name}} \" 폴더를 삭제하시겠습니까?",
+  "delete-save-folder-confirm-deletes": "이 폴더에만 있는 {{count}} 개의 저장 파일도 삭제됩니다.",
+  "delete-save-folder-confirm-deletes_one": "이 폴더에만 있는 저장 파일도 함께 삭제됩니다.",
+  "delete-save-folder-confirm-deletes_other": "이 폴더에만 있는 {{count}} 개의 저장 파일도 삭제됩니다.",
+  "delete-save-folder-confirm-keeps": "다른 폴더에도 저장된 {{count}} 개의 파일은 해당 폴더에 그대로 남아 있습니다.",
+  "delete-save-folder-confirm-keeps_one": "다른 폴더에 저장된 파일은 그 폴더에 그대로 남아 있습니다.",
+  "delete-save-folder-confirm-keeps_other": "다른 폴더에도 저장된 {{count}} 개의 파일은 해당 폴더에 그대로 남아 있습니다.",
+  "cant-be-undone": "이건 되돌릴 수 없어.",
+  "delete-save-folder-failed": "폴더를 삭제할 수 없습니다.",
+  "download-image-failed": "이미지를 다운로드할 수 없습니다.",
+  "session-settings-verse-effects-hosts-only": "호스트 전용",
+  "session-settings-verse-effects-everyone": "모든 사람",
+  "session-settings-verse-effects-none": "없음",
+  "loading-books": "책 불러오는 중…",
+  "books-load-failed": "책을 불러올 수 없습니다. 인터넷 연결 상태를 확인하고 다시 시도해 주세요.",
+  "loading-translation": "{{name}} 로딩 중…",
+  "translation-load-failed": "{{name}} (를) 불러올 수 없습니다.",
+  "loading-translations": "번역 불러오는 중…",
+  "translations-load-failed": "전체 번역 목록을 불러올 수 없어서 일부 번역이 누락되었을 수 있습니다."
 }

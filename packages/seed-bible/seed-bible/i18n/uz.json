@@ -28,22 +28,18 @@
   "searching": "Qidirilmoqda...",
   "no-search-results": "Mos keladigan oyatlar yo'q.",
   "open-chapter": "Bobni ochish",
-
   "uploading": "Yuklanmoqda...",
   "profile-name": "Profil nomi",
   "profile-name-placeholder": "masalan, Kreyg oilasi",
-
   "description": "Tavsif",
   "optional": "(Ixtiyoriy)",
   "description-placeholder": "Profil tavsifingizni kiriting...",
   "location": "Joylashuv",
   "location-placeholder": "masalan, Ostin, Texas",
-
   "copied": "Nusxalandi",
   "copy": "Nusxalash",
   "save-changes": "O'zgarishlarni saqlash",
   "sign-out": "tizimdan chiqish",
-
   "log-in": "Tizimga kirish",
   "tanakh": "Tanax",
   "traditional": "An'anaviy",
@@ -57,7 +53,6 @@
   "scripture-settings": "Muqaddas Kitob sozlamalari",
   "scripture-elements": "Muqaddas Kitob elementlari",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Sarlavhalarni ko'rsatish",
   "show-verse-numbers": "Oyat raqamlarini ko'rsatish",
   "show-footnotes": "Izohlarni ko'rsatish",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Kengaytmalar mavjud emas.",
   "install": "O'rnatish",
   "uninstall": "O'chirish",
-
   "custom": "Maxsus",
   "text-section-bookTitle": "Kitob sarlavhasi matni",
   "text-section-heading": "Sarlavha matni",
@@ -92,7 +86,6 @@
   "show-selected-items": "Tanlangan elementlarni ko'rsatish",
   "show-highlight-colors": "Yoritilgan ranglarni ko'rsatish",
   "show-icon-text": "Belgi matnini ko'rsatish",
-
   "extensions": "Kengaytmalar",
   "display": "Displey",
   "theme-and-text": "Mavzu va matn",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Muqaddas Kitob shriftining o'lchamini kattalashtiring",
   "change-line-spacing": "Qator oralig'ini o'zgartirish",
   "line-spacing_lineHeight": "Qator oralig'i: {{lineHeight}}",
-
   "italic": "Kursiv",
   "underline": "Tagiga chizilgan",
   "alignment_x": "Hizalama: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Matn rangi",
   "follow_theme": "Mavzuni kuzatib boring",
   "reset-to-default": "Standart holatga qaytarish",
-
   "id_highlight-text-color": "{{id}} matn rangini belgilash",
   "id_highlight-background-color": "{{id}} ta'kidlash fon rangi",
   "all-settings-description": "Har bir matn qismini aniq sozlang va har bir mavzu rangini sozlang.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokrif",
-
   "custom-translations": "Maxsus tarjimalar",
   "no-translation-results-found": "Hech qanday natija topilmadi. Qidiruvingizni qisman to'liq tarjimalarni ham qo'shish uchun kengaytirmoqchimisiz?",
   "show-all-translations": "Barcha tarjimalarni ko'rsatish",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Zabur",
   "5-psalms": "5 Zabur",
   "remove-bookmark": "Xatcho'pni olib tashlash",
-
   "chat": "Chat",
   "today": "Bugun",
   "you": "Siz",
@@ -169,7 +158,6 @@
   "category-options": "Papka parametrlari",
   "rename": "Qayta nomlash",
   "delete": "O'chirish",
-
   "bookmark-options": "Xatcho'p parametrlari",
   "new-folder-placeholder": "Papka nomi",
   "tasks": "Vazifalar",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Bu nomli papka allaqachon mavjud.",
   "add-to-new": "Yangisiga qo'shish",
   "save": "Saqlash",
-
   "apocrypha-info-text": "Ushbu bo'limdagi yozuvlarning hech biri ilk yahudiy yoki nasroniy jamoalari tomonidan hech qachon Muqaddas Kitob deb hisoblanmagan. Muqaddas Kitob o'ziga xos kitoblar to'plamidir. Yahudiylar va nasroniylar har doim Eski Ahd haqida kelishib olishgan, bu yahudiy xalqi Tanax va nasroniylar Eski Ahd deb ataydigan muqaddas yozuvlarning belgilangan to'plamidan kelib chiqadi. Tanax va Eski Ahdning mazmuni bir xil, ammo odatda turlicha joylashtirilgan. Xristianlar shuningdek, Iso, uning ta'limotlari va izdoshlarining yozuvlari haqidagi hikoyani hikoya qiluvchi Yangi Ahdni tan olishadi. Quyidagi yozuvlar Muqaddas Kitob yozilgan paytda ma'lum bo'lgan va keng o'qilgan, ammo ular hech qachon Muqaddas Kitob sifatida qabul qilinmagan. Qadimgi mualliflar ba'zan shoirlar, faylasuflar va boshqa yozuvlarni o'z ichiga olgan turli xil matnlarni iqtibos qilgan bo'lsalar-da, biror narsani iqtibos qilish uni Muqaddas Kitob sifatida qabul qilish bilan bir xil emas. Bu yozuvlar bu yerda faqat tarixiy va adabiy ma'lumotnoma uchun keltirilgan.",
   "seed-bible": "Urug'lik Muqaddas Kitobi",
   "take-photo": "Suratga oling",
   "choose-from-gallery": "Galereyadan tanlang",
-
   "crop-your-photo": "Suratingizni qirqing",
   "zoom": "Kattalashtirish",
   "set-picture": "Rasmni o'rnating",
@@ -211,10 +197,8 @@
   "read-the-bible": "Muqaddas Kitobni o'qing",
   "seed-bible-description": "Urug'lar Muqaddas Kitobida {{bookName}} {{chapterNumber}} ni o'qing",
   "social-title": "{{bookName}} {{chapterNumber}} ni o'qing",
-
   "chapter-navigation": "Bob navigatsiyasi",
   "tutorial.skip": "O'tkazib yuborish",
-
   "tutorial.back": "Orqaga",
   "tutorial.done": "Bajarildi",
   "tutorial.next": "Keyingisi",
@@ -327,11 +311,9 @@
   "study-notes": "O'quv yozuvlari",
   "content": "Tarkib",
   "untitled-playlist": "Nomsiz pleylist",
-
   "discover-annotations-empty": "Sizda izohlar yo'q",
   "discover-cross-references-empty": "Ushbu bob uchun o'zaro havolalar yo'q.",
   "discover-study-notes-empty": "Ushbu bob uchun o'quv yozuvlari yo'q.",
-
   "discover-select-tab": "Tegishli materiallarni topish uchun yorliqni tanlang.",
   "create-playlist": "Yaratish",
   "playlist-title_placeholder": "Pleylist nomi",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "Pleylistni o'chirib bo'lmadi.",
   "collapsed-tab-shared-label": "{{title}} — umumiy sessiya, {{count}} mavjud",
   "playlist-add-mode-label": "Mahsulot turi",
-
   "session-host-reconnected": "Sessiyaga qayta ulandi",
   "session-host-left": "Xost ketdi — siz sessiyadan chiqarildingiz",
   "drag-to-reorder-playlist-item": "Qayta tartiblash uchun torting",
   "saving": "Saqlanmoqda…",
-
   "unsaved-item-confirm-message": "Siz hali pleylistga qo'shilmagan elementni qo'shishni boshladingiz. Nima qilmoqchisiz?",
   "discard-and-save": "Bekor qilish va saqlash",
   "add-and-save": "Qo'shish va saqlash",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "Oldindan ko'rish {{reading}}",
   "reading-plan-mark-reading-complete": "O'qishni tugallangan deb belgilash",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "{{passage}} ni o'qilgan deb belgilash",
   "reading-plan-read-nudge-title": "Yaxshi o'qish!",
   "reading-plan-read-nudge-toast": "{{passage}} tugallangan deb belgilansinmi?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Muqaddas Kitobni onlayn o'qing, qidiring va o'rganing. Ko'p tillarda bepul tarjimalar, asosiy fikrlar, eslatmalar, xatcho'plar va o'qish rejalari bilan.",
   "all": "Hammasi",
-
   "today-bookmarks": "XATCHOMLAR",
   "today-search-verses": "Kitoblar, boblar, oyatlarni qidiring....",
   "anonymous-greeting": "Xush kelibsiz!",
   "community": "JAMOAT",
   "go-somewhere-new": "YANGI YERGA BORING",
-
   "open-bible": "Ochiq Muqaddas Kitob",
   "personal-greeting": "Xush kelibsiz, {{name}} !",
   "resume-reading": "KETGAN YERINGIZDA DAVOM ETING",
   "resume-reading-loading": "O'qish tarixingiz yuklanmoqda…",
   "selected-year": "Yil: {{year}}",
-
   "theme-light": "Yorug'lik",
   "theme-dark": "Qorong'u",
   "installed-extensions": "O'rnatilgan",
@@ -543,7 +519,6 @@
   "extension-state-installed": "O'rnatilgan",
   "extension-state-downloaded": "Yuklab olindi",
   "extension-state-pending": "Oʻrnatilmoqda…",
-
   "tutorial.stepProgress": "{{current}} {{total}} -qadam",
   "tutorial.offlineDownloadTitle": "Uni qurilmangizda saqlash uchun bosing",
   "tutorial.offlineDownloadBody": "Ushbu belgi bilan har qanday tarjimani oflayn o'qish uchun saqlash mumkin.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "Ushbu maket menyusidan yonma-yon o'qiladigan parchalar sonini tanlang.",
   "tutorial.addTabTitle": "Ko'proq parchalarni oching",
   "tutorial.addTabBody": "Bir nechta kitob yoki tarjimalarni yonma-yon o'qish uchun yangi yorliq qo'shing.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % bajarildi - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % bajarildi",
   "playlist-history-continue": "Davom etish",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "Ushbu bob uchun {{count}} ta eslatma",
   "create-folder": "Jild yaratish",
   "edit-bookmark": "Xatcho'pni tahrirlash",
-
   "greeting-afternoon": "Hayrli kun!",
   "greeting-afternoon-named": "Xayrli kun, {{name}} !",
   "greeting-evening": "Hayrli kech!",
@@ -652,32 +625,24 @@
   "ask-ai": "AI dan so'rang",
   "unread-mention": "O'qilmagan eslatma",
   "unread-messages": "O'qilmagan xabarlar: {{count}}",
-
   "scripture-width": "Muqaddas Kitobning kengligi",
   "decrease-scripture-width": "Muqaddas yozuv kengligini kichraytiring",
   "increase-scripture-width": "Muqaddas Yozuv kengligini oshiring",
   "annotations": "Izohlar",
   "discover-content-panel": "Kontentni kashf eting",
   "discover-book-title": "{{book}} ni kashf eting",
-
   "about-title": "Urug'lik Muqaddas Kitobi haqida",
   "about-meta-description": "Seed Bible - bu oilangiz, do'stlaringiz va jamoangiz bilan birgalikda Muqaddas Kitobni o'qish uchun yaratilgan bepul Muqaddas Kitob ilovasi - abadiy bepul, reklamalar yoki pullik devorlar yo'q.",
-
   "about-action-open-passage": "Yo'lakni oching",
   "about-action-donate": "Xayriya qiling",
   "about-action-discord": "Discordga qo'shiling",
   "recent-uploads": "So'nggi yuklamalar",
-
   "customization-not-found": "Ushbu sozlash topilmadi.",
   "customization-name": "Ism",
   "customization-primaryColor": "Asosiy",
-
   "customization-secondaryColor": "Ikkilamchi",
-
   "customization-tertiaryColor": "Uchlamchi",
-
   "customization-fonts": "Shriftlar",
-
   "custom-font-option": "Maxsus…",
   "custom-font-name-placeholder": "Google shrifti nomi",
   "delete-customization": "O'chirish",
@@ -690,10 +655,8 @@
   "extension-availability-available": "Mavjud",
   "extension-availability-auto-installed": "Avtomatik o'rnatilgan",
   "extension-availability-hidden": "Yashirin",
-
   "variants": "Mavzular",
   "add-variant": "Mavzu qo'shish",
-
   "base-theme-description": "Ushbu mavzuni oldindan o'rnatgan o'zgarishlar siz sozlamagan har qanday narsaga tegishli. Sizning shaxsiy tahrirlaringiz saqlanadi.",
   "reset-to-base-theme": "Asosiy mavzuga qaytarish",
   "low-contrast-warning": "{{label}} : kontrast faqat {{ratio}} :1 — matn o'qilishi oson bo'lishi uchun kamida {{minRatio}} :1 ga intiling.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "Bu yerda hali hech qanday saqlash imkoniyati yo'q.",
   "save-options": "Saqlash parametrlari",
   "saves": "Seyvlar",
-
   "hide-saves": "Saqlanganlarni yashirish",
   "show-saves": "Saqlanganlarni ko'rsatish",
   "save-verses": "Saqlash",
   "new-save-folder": "Yangi papka",
   "edit-save": "Saqlashni tahrirlash",
   "remove-save-from-all-folders": "Barcha papkalardan olib tashlash",
-
   "color-hue": "Rang",
   "color-saturation": "To'yinganlik va yorqinlik",
   "hex-color": "Olti burchakli rang",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "Formatlash muharriri yuklanmadi. Ushbu eslatmada yo'qoladigan formatlash mavjud, shuning uchun uni qayta ulanmaguningizcha tahrirlab bo'lmaydi.",
   "annotation-text": "Izoh matni",
   "notes-for-verse": "{{verse}} oyatiga izohlar",
-
   "configure-extension-defaults": "Standart qayta belgilashlarni sozlash",
-
   "extension-settings-defaults-title": "{{name}} standart qayta oʻzgartirishlar",
   "no-extension-settings": "Ushbu kengaytmada sozlanadigan sozlamalar yo'q.",
   "extension-settings-save-failed": "Sozlamalaringizni saqlab bo'lmadi.",
@@ -872,7 +831,6 @@
   "setting-no-default": "Standart yo'q",
   "override-setting": "{{name}} ni bekor qilish",
   "override-setting-label": "Bekor qilish",
-
   "discover-choose-filter-hint": "Ushbu bobdan ko'proq ma'lumot olish uchun yuqoridagi filtrni tanlang.",
   "take-a-tour": "Sayohat qiling",
   "share-reading-plan": "Rejani ulashish",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "Mening xatcho'pim {{number}}",
   "bookmark-move-hint": "Ushbu bobga ko'chirish uchun xatcho'pga teging.",
   "move-bookmark-here": "{{name}} ni bu yerga ko'chiring",
-
   "play": "O'yin",
   "pause": "To'xtatib turish",
   "audio-playback-position": "Ijro etish holati",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "Oyat {{verse}}",
   "tab-playing-audio": "Audio ijro etilmoqda",
   "collapsed-tab-playing-label": "{{label}} — audio ijro etilmoqda",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} ta mavzu",
   "customization-theme-count_one": "{{count}} mavzu",
@@ -1104,7 +1060,6 @@
   "about-community-body": "Imon birgalikda yashash uchun mo'ljallangan. Muqaddas Kitob oilangiz, eng yaqin do'stlaringiz va uy cherkovingiz bilan Muqaddas Kitobni o'qish uchun yaratilgan.",
   "discovered-content": "Topilgan kontent",
   "show-discovered-content": "Topilgan kontentni ko'rsatish",
-
   "extension-availability-default": "Standart ( {{availability}} )",
   "customization-extensions-default": "Boshqa kengaytmalar uchun standart",
   "customization-extensions-default-hint": "Quyida oʻrnatmagan barcha kengaytmalarga, jumladan, keyinroq qoʻshilgan yangilariga ham tegishli",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "Pleylistga qaytish",
   "playlist-scripture-note-aria": "{{passage}} haqida eslatma",
   "playlist-scripture-note-progress": "{{current}} {{total}}",
-
   "unsaved-item-edit-confirm-message": "Siz elementni o'zgartirdingiz, lekin hali o'zgarishlarni saqlamadingiz. Nima qilishni xohlaysiz?",
   "keep-changes-and-save": "O'zgarishlarni saqlang va saqlang",
   "reading-plan-edit-reading": "O'qishni tahrirlash",
@@ -1152,7 +1106,6 @@
   "branding": "Brending",
   "create-custom-branding-menu-item": "Maxsus brending",
   "your-content-empty-branding": "Siz yaratgan maxsus brending bu yerda ko'rsatiladi.",
-
   "extension-consent-from": "{{host}} dan",
   "extension-consent-source-version": "Versiya {{version}} · {{host}}",
   "extension-consent-uploader-unnamed": "Muqaddas Kitobdan Seed foydalanuvchisi",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "Qaysi oyatlarni tanlaganingizni ko'ring",
   "extension-permission-reading-navigate": "Ochiq o'tish joylari",
   "extension-permission-network": "{{host}} ga ulaning",
-
   "extension-consent-not-now": "Hozir emas",
   "extension-consent-nothing-yet": "Hozircha u sizning hech qanday ma'lumotingizga kira olmaydi.",
   "extension-permission-reading-history": "O'qish tarixingizni ko'ring",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "Bekor qilish",
   "extension-consent-high-risk": "Sezgir",
   "extension-modal-ok": "KELISHDIKMI",
-
   "extension-permissions-restart-note": "Oʻzgarishlar darhol kuchga kiradi. {{name}} ularni olish uchun qayta ishga tushadi.",
   "extension-permissions-saved": "Saqlandi. {{name}} yangi ruxsatnomalar bilan qayta ishga tushirildi.",
   "extension-permissions-failed": "Bu saqlanmadi. Qaytadan urinib ko'ring.",
@@ -1276,8 +1227,51 @@
   "session-settings-verse-effects-desc-hosts": "Xost oyatni tanlaganda effektlarni ko'rsatish.",
   "session-settings-verse-effects-desc-everyone": "Kimdir oyatni tanlaganda effektlarni ko'rsating.",
   "session-settings-verse-effects-desc-none": "Oyat tanlash effektlari hamma uchun o'chirilgan.",
-
   "account": "Hisob",
   "scroll-filters-start": "Filtrlarni boshlash tomon aylantiring",
-  "scroll-filters-end": "Filtrlarni oxirigacha aylantiring"
+  "scroll-filters-end": "Filtrlarni oxirigacha aylantiring",
+  "download": "Yuklab olish",
+  "image-details-uploaded": "Yuklandi",
+  "image-details-dimensions": "Olchamlari",
+  "image-details-dimensions-value": "{{width}} × {{height}} piksel",
+  "image-details-type": "Turi",
+  "image-details-cover-of": "Muqova",
+  "image-details-not-a-cover": "Qopqoq sifatida ishlatilmaydi",
+  "delete-customization-confirm-title": "Maxsus brending oʻchirib tashlansinmi?",
+  "delete-customization-confirm-message": "\" {{name}} \" maxsus brendingini o'chirib tashlamoqchimisiz? Buni bekor qilib bo'lmaydi.",
+  "delete-customization-failed": "Maxsus brendingni o'chirib bo'lmadi.",
+  "delete-variant-confirm-title": "Mavzu oʻchirilsinmi?",
+  "delete-variant-confirm-message": "\" {{name}} \" mavzusini o'chirib tashlaysizmi? Buni bekor qilib bo'lmaydi.",
+  "delete-variant-confirm-message-unnamed": "Bu mavzu o'chirib tashlansinmi? Buni ortga qaytarib bo'lmaydi.",
+  "delete-variant-failed": "Mavzuni o'chirib bo'lmadi.",
+  "delete-highlight-confirm-title": "Belgilangan vaqt oʻchirilsinmi?",
+  "delete-highlight-confirm-message": "{{reference}} dagi belgilangan joyni o'chirib tashlaysizmi? Buni bekor qilib bo'lmaydi.",
+  "delete-highlight-failed": "Belgilangan joyni o'chirib bo'lmadi.",
+  "delete-annotation-on-confirm-message": "{{reference}} dagi izohni o'chirib tashlaysizmi? Buni bekor qilib bo'lmaydi.",
+  "remove-from-folder": "Jilddan olib tashlash",
+  "save-folders": "{{folders}} ichida",
+  "delete-save-confirm-title": "Saqlangan fayl oʻchirilsinmi?",
+  "delete-save-confirm-message": "{{reference}} uchun saqlashni o'chirib tashlaysizmi? Buni bekor qilib bo'lmaydi.",
+  "delete-save-confirm-message-folders": "{{reference}} uchun saqlashni {{folders}} dan o'chirib tashlaysizmi? Buni bekor qilib bo'lmaydi.",
+  "delete-save-failed": "Saqlangan faylni o'chirib bo'lmadi.",
+  "delete-save-folder-confirm-title": "Jild oʻchirilsinmi?",
+  "delete-save-folder-confirm-message": "\" {{name}} \" papkasi o'chirilsinmi?",
+  "delete-save-folder-confirm-deletes": "Faqat shu papkada joylashgan {{count}} ta saqlangan fayllar ham o'chiriladi.",
+  "delete-save-folder-confirm-deletes_one": "Faqat shu papkada saqlangan fayl ham o'chiriladi.",
+  "delete-save-folder-confirm-deletes_other": "Faqat shu papkada joylashgan {{count}} ta saqlangan fayllar ham o'chiriladi.",
+  "delete-save-folder-confirm-keeps": "Boshqa papkalarda ham saqlangan {{count}} fayllar o'sha yerda qoladi.",
+  "delete-save-folder-confirm-keeps_one": "Boshqa papkada saqlangan fayl o'sha yerda qoladi.",
+  "delete-save-folder-confirm-keeps_other": "Boshqa papkalarda ham saqlangan {{count}} fayllar o'sha yerda qoladi.",
+  "cant-be-undone": "Buni bekor qilib bo'lmaydi.",
+  "delete-save-folder-failed": "Jildni o'chirib bo'lmadi.",
+  "download-image-failed": "Rasmni yuklab olib bo'lmadi.",
+  "session-settings-verse-effects-hosts-only": "Faqat xostlar",
+  "session-settings-verse-effects-everyone": "Hamma",
+  "session-settings-verse-effects-none": "Hech biri",
+  "loading-books": "Kitoblar yuklanmoqda…",
+  "books-load-failed": "Kitoblarni yuklab bo'lmadi. Ulanishni tekshiring va qaytadan urinib ko'ring.",
+  "loading-translation": "{{name}} yuklanmoqda…",
+  "translation-load-failed": "{{name}} yuklanmadi.",
+  "loading-translations": "Tarjimalar yuklanmoqda…",
+  "translations-load-failed": "Tarjimalarning to'liq ro'yxatini yuklab bo'lmadi, shuning uchun ba'zilari yo'q bo'lishi mumkin."
 }

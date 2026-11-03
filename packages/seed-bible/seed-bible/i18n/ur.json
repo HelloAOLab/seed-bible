@@ -22,22 +22,18 @@
   "clear-search": "تلاش صاف کریں۔",
   "searching": "تلاش کر رہا ہے...",
   "no-search-results": "کوئی مماثل آیات نہیں۔",
-
   "uploading": "اپ لوڈ ہو رہا ہے...",
   "profile-name": "پروفائل کا نام",
   "profile-name-placeholder": "مثال کے طور پر کریگ فیملی",
-
   "description": "تفصیل",
   "optional": "(اختیاری)",
   "description-placeholder": "اپنے پروفائل کی تفصیل درج کریں...",
   "location": "مقام",
   "location-placeholder": "مثال کے طور پر آسٹن، ٹی ایکس",
-
   "copied": "کاپی",
   "copy": "کاپی",
   "save-changes": "تبدیلیاں محفوظ کریں۔",
   "sign-out": "سائن آؤٹ کریں۔",
-
   "log-in": "لاگ ان کریں۔",
   "session-settings": "سیشن کی ترتیبات",
   "shared-session-click-to-join": "اشتراک کر رہا ہے - شامل ہونے کے لیے کلک کریں۔",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "ایک تھیم چنیں اور کلام پاک اور یوزر انٹرفیس کے دکھائے جانے کے انداز کو ایڈجسٹ کریں۔",
   "scripture-settings": "کتاب کی ترتیبات",
   "scripture-settings-font-size-example": "اے",
-
   "all-settings": "تمام ترتیبات",
   "no-extensions-available": "کوئی ایکسٹینشن دستیاب نہیں ہے۔",
   "install": "انسٹال کریں۔",
   "uninstall": "ان انسٹال کریں۔",
-
   "custom": "حسب ضرورت",
   "text-section-bookTitle": "کتاب کا عنوان متن",
   "text-section-heading": "سرخی کا متن",
@@ -79,7 +73,6 @@
   "show-selected-items": "منتخب آئٹمز دکھائیں۔",
   "show-highlight-colors": "نمایاں رنگ دکھائیں۔",
   "show-icon-text": "آئیکن کا متن دکھائیں۔",
-
   "extensions": "ایکسٹینشنز",
   "display": "ڈسپلے",
   "keep-screen-awake": "اسکرین کو بیدار رکھیں",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "صحیفے کے فونٹ کا سائز بڑھائیں۔",
   "change-line-spacing": "لائن کے وقفہ کاری کو تبدیل کریں۔",
   "line-spacing_lineHeight": "لائن میں وقفہ کاری: {{lineHeight}}",
-
   "italic": "ترچھا",
   "underline": "انڈر لائن",
   "alignment_x": "صف بندی: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "متن کا رنگ",
   "follow_theme": "تھیم پر عمل کریں۔",
   "reset-to-default": "ڈیفالٹ پر ری سیٹ کریں۔",
-
   "id_highlight-text-color": "{{id}} متن کا رنگ نمایاں کریں۔",
   "id_highlight-background-color": "{{id}} پس منظر کا رنگ نمایاں کریں۔",
   "all-settings-description": "ہر ٹیکسٹ سیکشن کو ٹھیک بنائیں اور ہر تھیم کے رنگ کو حسب ضرورت بنائیں۔",
@@ -126,7 +117,6 @@
   "old-testament_short": "او ٹی",
   "new-testament_short": "این ٹی",
   "apocrypha": "Apocrypha",
-
   "custom-translations": "حسب ضرورت ترجمہ",
   "no-translation-results-found": "کوئی نتیجہ نہیں ملا۔ کیا آپ جزوی طور پر مکمل ترجمے کو بھی شامل کرنے کے لیے اپنی تلاش کو بڑھانا چاہیں گے؟",
   "show-all-translations": "تمام ترجمے دکھائیں۔",
@@ -138,7 +128,6 @@
   "complete-translations": "مکمل تراجم",
   "all-translations": "تمام تراجم",
   "popular-translations": "مشہور تراجم",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 زبور",
   "2-psalms": "2 زبور",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "تمام ترتیبات پر جائیں۔",
   "more": "مزید",
   "remove-bookmark": "بک مارک کو ہٹا دیں۔",
-
   "chat": "گپ شپ",
   "today": "آج",
   "you": "آپ",
@@ -170,7 +158,6 @@
   "category-options": "فولڈر کے اختیارات",
   "rename": "نام تبدیل کریں۔",
   "delete": "حذف کریں۔",
-
   "bookmark-options": "بک مارک کے اختیارات",
   "new-folder-placeholder": "فولڈر کا نام",
   "tasks": "کام",
@@ -182,11 +169,9 @@
   "folder-name-taken": "اس نام کا فولڈر پہلے سے موجود ہے۔",
   "add-to-new": "نئے میں شامل کریں۔",
   "save": "محفوظ کریں۔",
-
   "seed-bible": "بیج بائبل",
   "take-photo": "تصویر کھینچو",
   "choose-from-gallery": "گیلری سے انتخاب کریں۔",
-
   "crop-your-photo": "اپنی تصویر کو تراشیں۔",
   "zoom": "زوم",
   "set-picture": "تصویر سیٹ کریں۔",
@@ -212,10 +197,8 @@
   "read-the-bible": "بائبل پڑھیں",
   "seed-bible-description": "سیڈ بائبل میں {{bookName}} {{chapterNumber}} پڑھیں",
   "social-title": "پڑھیں {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "باب نیویگیشن",
   "tutorial.skip": "چھوڑیں۔",
-
   "tutorial.back": "پیچھے",
   "tutorial.done": "ہو گیا",
   "tutorial.next": "اگلا",
@@ -328,11 +311,9 @@
   "study-notes": "مطالعہ کے نوٹس",
   "content": "مواد",
   "untitled-playlist": "بلا عنوان پلے لسٹ",
-
   "discover-annotations-empty": "آپ کے پاس کوئی تشریحات نہیں ہیں۔",
   "discover-cross-references-empty": "اس باب کے لیے کوئی کراس حوالہ نہیں ہے۔",
   "discover-study-notes-empty": "اس باب کے لیے کوئی مطالعہ نوٹس نہیں۔",
-
   "discover-select-tab": "متعلقہ مواد دریافت کرنے کے لیے ایک ٹیب منتخب کریں۔",
   "create-playlist": "بنائیں",
   "playlist-title_placeholder": "پلے لسٹ کا عنوان",
@@ -381,12 +362,10 @@
   "delete-playlist-failed": "پلے لسٹ کو حذف نہیں کیا جا سکا۔",
   "collapsed-tab-shared-label": "{{title}} — مشترکہ سیشن، {{count}} موجودہ",
   "playlist-add-mode-label": "آئٹم کی قسم",
-
   "session-host-reconnected": "سیشن سے دوبارہ منسلک ہو گیا۔",
   "session-host-left": "میزبان چلا گیا — آپ کو سیشن سے ہٹا دیا گیا تھا۔",
   "drag-to-reorder-playlist-item": "دوبارہ ترتیب دینے کے لیے گھسیٹیں",
   "saving": "محفوظ ہو رہا ہے…",
-
   "unsaved-item-confirm-message": "آپ نے ایک ایسا آئٹم شامل کرنا شروع کیا ہے جو ابھی تک پلے لسٹ میں شامل نہیں کیا گیا۔ آپ کیا کرنا چاہیں گے؟",
   "discard-and-save": "مسترد کریں اور محفوظ کریں",
   "add-and-save": "شامل کریں اور محفوظ کریں",
@@ -514,7 +493,6 @@
   "reading-plan-preview-reading": "پیش نظارہ {{reading}}",
   "reading-plan-mark-reading-complete": "پڑھنا مکمل نشان زد کریں۔",
   "reading-plan-link-video": "ویڈیو",
-
   "reading-plan-mark-passage-complete": "{{passage}} کو پڑھا ہوا نشان زد کریں۔",
   "reading-plan-read-nudge-title": "اچھا پڑھنا!",
   "reading-plan-read-nudge-toast": "{{passage}} کو مکمل نشان زد کریں؟",
@@ -522,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "بائبل کو آن لائن پڑھیں، تلاش کریں اور مطالعہ کریں۔ ہائی لائٹس، نوٹس، بُک مارکس اور پڑھنے کے منصوبوں کے ساتھ کئی زبانوں میں مفت ترجمہ۔",
   "all": "تمام",
-
   "today-bookmarks": "بک مارکس",
   "today-search-verses": "کتابیں، باب، آیات تلاش کریں۔",
   "anonymous-greeting": "خوش آمدید!",
   "community": "کمیونٹی",
   "go-somewhere-new": "نئی جگہ پر جائیں۔",
-
   "open-bible": "بائبل کھولیں۔",
   "personal-greeting": "خوش آمدید، {{name}} !",
   "resume-reading": "وہیں سے جاری رکھیں جہاں آپ نے چھوڑا تھا۔",
   "resume-reading-loading": "آپ کی پڑھنے کی سرگزشت لوڈ ہو رہی ہے…",
   "selected-year": "سال: {{year}}",
-
   "theme-light": "روشنی",
   "theme-dark": "اندھیرا",
   "installed-extensions": "انسٹال",
@@ -544,7 +519,6 @@
   "extension-state-installed": "انسٹال",
   "extension-state-downloaded": "ڈاؤن لوڈ کیا گیا۔",
   "extension-state-pending": "انسٹال ہو رہا ہے…",
-
   "tutorial.stepProgress": "{{current}} {{total}}",
   "tutorial.offlineDownloadTitle": "اسے اپنے آلے پر رکھنے کے لیے تھپتھپائیں۔",
   "tutorial.offlineDownloadBody": "اس آئیکن کے ساتھ کوئی بھی ترجمہ آف لائن پڑھنے کے لیے محفوظ کیا جا سکتا ہے۔",
@@ -578,7 +552,6 @@
   "tutorial.paneLayoutBody": "اس ترتیب کے مینو سے منتخب کریں کہ کتنے حصئوں کو ساتھ ساتھ پڑھنا ہے۔",
   "tutorial.addTabTitle": "مزید حوالے کھولیں۔",
   "tutorial.addTabBody": "ساتھ ساتھ متعدد کتابیں یا ترجمے پڑھنے کے لیے ایک نیا ٹیب شامل کریں۔",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % مکمل - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % مکمل",
   "playlist-history-continue": "جاری رکھیں",
@@ -637,7 +610,6 @@
   "chapter-notes-count_other": "اس باب کے لیے {{count}} نوٹس",
   "create-folder": "فولڈر بنائیں",
   "edit-bookmark": "بک مارک میں ترمیم کریں۔",
-
   "greeting-afternoon": "شب بخیر!",
   "greeting-afternoon-named": "دوپہر بخیر، {{name}} !",
   "greeting-evening": "شب بخیر!",
@@ -653,32 +625,24 @@
   "ask-ai": "AI سے پوچھیں۔",
   "unread-mention": "بغیر پڑھے ہوئے ذکر",
   "unread-messages": "بغیر پڑھے ہوئے پیغامات: {{count}}",
-
   "scripture-width": "کتاب کی چوڑائی",
   "decrease-scripture-width": "صحیفے کی چوڑائی کو کم کریں۔",
   "increase-scripture-width": "صحیفے کی چوڑائی میں اضافہ کریں۔",
   "annotations": "تشریحات",
   "discover-content-panel": "مواد دریافت کریں۔",
   "discover-book-title": "دریافت کریں {{book}}",
-
   "about-title": "بیج بائبل کے بارے میں",
   "about-meta-description": "Seed Bible ایک مفت بائبل ایپ ہے جسے آپ کے خاندان، دوستوں اور کمیونٹی کے ساتھ مل کر کلام پڑھنے کے لیے بنایا گیا ہے — ہمیشہ کے لیے مفت، کوئی اشتہارات یا پے وال نہیں۔",
-
   "about-action-open-passage": "ایک راستہ کھولیں۔",
   "about-action-donate": "عطیہ کریں۔",
   "about-action-discord": "ڈسکارڈ میں شامل ہوں۔",
   "recent-uploads": "حالیہ اپ لوڈز",
-
   "customization-not-found": "یہ حسب ضرورت نہیں مل سکی۔",
   "customization-name": "نام",
   "customization-primaryColor": "پرائمری",
-
   "customization-secondaryColor": "ثانوی",
-
   "customization-tertiaryColor": "ترتیری",
-
   "customization-fonts": "فونٹس",
-
   "custom-font-option": "حسب ضرورت…",
   "custom-font-name-placeholder": "گوگل فونٹ کا نام",
   "delete-customization": "حذف کریں۔",
@@ -691,10 +655,8 @@
   "extension-availability-available": "دستیاب ہے۔",
   "extension-availability-auto-installed": "خودکار انسٹال",
   "extension-availability-hidden": "پوشیدہ",
-
   "variants": "تھیمز",
   "add-variant": "تھیم شامل کریں۔",
-
   "base-theme-description": "تبدیلیاں جو اس تھیم کو پہلے سے سیٹ کرتی ہیں ان چیزوں کے لیے واپس آتی ہیں جو آپ نے اپنی مرضی کے مطابق نہیں کی ہیں۔ آپ کی اپنی ترامیم رکھی جاتی ہیں۔",
   "reset-to-base-theme": "بیس تھیم پر ری سیٹ کریں۔",
   "low-contrast-warning": "{{label}} : کنٹراسٹ صرف {{ratio}} :1 ہے — کم از کم {{minRatio}} :1 کا مقصد ہے تاکہ متن پڑھنے کے قابل رہے۔",
@@ -740,14 +702,12 @@
   "save-folder-empty": "یہاں ابھی تک کوئی محفوظ نہیں ہے۔",
   "save-options": "اختیارات محفوظ کریں۔",
   "saves": "بچاتا ہے۔",
-
   "hide-saves": "بچت چھپائیں۔",
   "show-saves": "بچت دکھائیں۔",
   "save-verses": "محفوظ کریں۔",
   "new-save-folder": "نیا فولڈر",
   "edit-save": "محفوظ کریں میں ترمیم کریں۔",
   "remove-save-from-all-folders": "تمام فولڈرز سے ہٹا دیں۔",
-
   "color-hue": "رنگت",
   "color-saturation": "سنترپتی اور چمک",
   "hex-color": "ہیکس رنگ",
@@ -862,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "فارمیٹنگ ایڈیٹر لوڈ نہیں ہو سکا۔ اس نوٹ میں فارمیٹنگ ہے جو ختم ہو جائے گی، اس لیے اس میں ترمیم نہیں کی جا سکتی جب تک کہ آپ دوبارہ منسلک نہ ہوں۔",
   "annotation-text": "تشریحی متن",
   "notes-for-verse": "آیت {{verse}} کے لیے نوٹس",
-
   "configure-extension-defaults": "ڈیفالٹ اوور رائیڈز کو ترتیب دیں۔",
-
   "extension-settings-defaults-title": "{{name}} ڈیفالٹ اوور رائیڈز",
   "no-extension-settings": "اس ایکسٹینشن میں قابل ترتیب ترتیبات نہیں ہیں۔",
   "extension-settings-save-failed": "آپ کی ترتیبات کو محفوظ نہیں کیا جا سکا۔",
@@ -873,7 +831,6 @@
   "setting-no-default": "کوئی ڈیفالٹ نہیں۔",
   "override-setting": "اوور رائیڈ {{name}}",
   "override-setting-label": "اوور رائڈ",
-
   "discover-choose-filter-hint": "اس باب سے مزید دیکھنے کے لیے اوپر ایک فلٹر چنیں۔",
   "take-a-tour": "ایک سیر کریں۔",
   "share-reading-plan": "منصوبہ شیئر کریں۔",
@@ -1057,7 +1014,6 @@
   "my-bookmark-numbered": "میرا بک مارک {{number}}",
   "bookmark-move-hint": "بک مارک کو اس باب میں منتقل کرنے کے لیے اسے تھپتھپائیں۔",
   "move-bookmark-here": "{{name}} کو یہاں منتقل کریں۔",
-
   "play": "کھیلیں",
   "pause": "توقف",
   "audio-playback-position": "پلے بیک پوزیشن",
@@ -1066,7 +1022,6 @@
   "audio-scrub-verse": "آیت {{verse}}",
   "tab-playing-audio": "آڈیو چل رہا ہے۔",
   "collapsed-tab-playing-label": "{{label}} — آڈیو چل رہا ہے۔",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} تھیمز",
   "customization-theme-count_one": "{{count}} تھیم",
@@ -1105,7 +1060,6 @@
   "about-community-body": "ایمان کا مطلب ایک ساتھ رہنا ہے۔ سیڈ بائبل کو آپ کے خاندان، آپ کے قریبی دوستوں اور آپ کے گھر کے چرچ کے ساتھ کلام پڑھنے کے لیے بنایا گیا ہے۔",
   "discovered-content": "دریافت شدہ مواد",
   "show-discovered-content": "دریافت شدہ مواد دکھائیں۔",
-
   "extension-availability-default": "پہلے سے طے شدہ ( {{availability}} )",
   "customization-extensions-default": "دیگر ایکسٹینشنز کے لیے ڈیفالٹ",
   "customization-extensions-default-hint": "ہر اس ایکسٹینشن پر لاگو ہوتا ہے جسے آپ نے نیچے سیٹ نہیں کیا ہے، بشمول بعد میں شامل کردہ نئی",
@@ -1138,7 +1092,6 @@
   "playlist-scripture-note-return": "پلے لسٹ پر واپس جائیں۔",
   "playlist-scripture-note-aria": "{{passage}} پر نوٹ",
   "playlist-scripture-note-progress": "{ {{total}} میں سے {{ {{current}} }}",
-
   "unsaved-item-edit-confirm-message": "آپ نے ایک آئٹم کو تبدیل کیا ہے لیکن ابھی تک ان تبدیلیوں کو محفوظ نہیں کیا ہے۔ آپ کیا کرنا چاہیں گے؟",
   "keep-changes-and-save": "تبدیلیاں رکھیں اور محفوظ کریں۔",
   "reading-plan-edit-reading": "پڑھنے میں ترمیم کریں۔",
@@ -1153,7 +1106,6 @@
   "branding": "برانڈنگ",
   "create-custom-branding-menu-item": "اپنی مرضی کے مطابق برانڈنگ",
   "your-content-empty-branding": "آپ کی تخلیق کردہ حسب ضرورت برانڈنگ یہاں ظاہر ہوگی۔",
-
   "extension-consent-from": "{{host}} سے",
   "extension-consent-source-version": "ورژن {{version}} · {{host}} سے",
   "extension-consent-uploader-unnamed": "ایک بیج بائبل صارف",
@@ -1201,7 +1153,6 @@
   "extension-permission-reading-selection": "دیکھیں کہ آپ کون سی آیات منتخب کرتے ہیں۔",
   "extension-permission-reading-navigate": "راستے کھولیں۔",
   "extension-permission-network": "{{host}} سے جڑیں",
-
   "extension-consent-not-now": "ابھی نہیں۔",
   "extension-consent-nothing-yet": "ابھی کے لیے، اسے آپ کی کسی بھی معلومات تک رسائی حاصل نہیں ہوگی۔",
   "extension-permission-reading-history": "اپنی پڑھنے کی تاریخ دیکھیں",
@@ -1239,7 +1190,6 @@
   "extension-capture-cancel": "منسوخ کریں۔",
   "extension-consent-high-risk": "حساس",
   "extension-modal-ok": "ٹھیک ہے",
-
   "extension-permissions-restart-note": "تبدیلیاں فوراً لاگو ہوتی ہیں۔ انہیں لینے کے لیے {{name}} دوبارہ شروع ہوتا ہے۔",
   "extension-permissions-saved": "محفوظ کیا گیا۔ {{name}} نئی اجازتوں کے ساتھ دوبارہ شروع ہوا۔",
   "extension-permissions-failed": "یہ نہیں بچا۔ دوبارہ کوشش کریں۔",
@@ -1277,8 +1227,51 @@
   "session-settings-verse-effects-desc-hosts": "جب میزبان کسی آیت کا انتخاب کرتا ہے تو اثرات دکھائیں۔",
   "session-settings-verse-effects-desc-everyone": "جب کوئی آیت منتخب کرے تو اثرات دکھائیں۔",
   "session-settings-verse-effects-desc-none": "آیت کے انتخاب کے اثرات سب کے لیے بند ہیں۔",
-
   "account": "اکاؤنٹ",
   "scroll-filters-start": "فلٹرز کو شروع کرنے کی طرف اسکرول کریں۔",
-  "scroll-filters-end": "فلٹرز کو اختتام کی طرف اسکرول کریں۔"
+  "scroll-filters-end": "فلٹرز کو اختتام کی طرف اسکرول کریں۔",
+  "download": "ڈاؤن لوڈ کریں۔",
+  "image-details-uploaded": "اپ لوڈ کیا گیا",
+  "image-details-dimensions": "طول و عرض",
+  "image-details-dimensions-value": "{{width}} × {{height}} پکسلز",
+  "image-details-type": "قسم",
+  "image-details-cover-of": "کا احاطہ",
+  "image-details-not-a-cover": "کور کے طور پر استعمال نہیں کیا جاتا ہے۔",
+  "delete-customization-confirm-title": "حسب ضرورت برانڈنگ کو حذف کریں؟",
+  "delete-customization-confirm-message": "اپنی مرضی کی برانڈنگ \" {{name}} \" کو حذف کریں؟ اسے کالعدم نہیں کیا جا سکتا۔",
+  "delete-customization-failed": "حسب ضرورت برانڈنگ کو حذف نہیں کیا جا سکا۔",
+  "delete-variant-confirm-title": "تھیم حذف کریں؟",
+  "delete-variant-confirm-message": "تھیم \" {{name}} \" کو حذف کریں؟ اسے کالعدم نہیں کیا جا سکتا۔",
+  "delete-variant-confirm-message-unnamed": "اس تھیم کو حذف کریں؟ اسے کالعدم نہیں کیا جا سکتا۔",
+  "delete-variant-failed": "تھیم کو حذف نہیں کیا جا سکا۔",
+  "delete-highlight-confirm-title": "ہائی لائٹ کو حذف کریں؟",
+  "delete-highlight-confirm-message": "{{reference}} پر نمایاں کو حذف کریں؟ اسے کالعدم نہیں کیا جا سکتا۔",
+  "delete-highlight-failed": "ہائی لائٹ کو حذف نہیں کیا جا سکا۔",
+  "delete-annotation-on-confirm-message": "{{reference}} پر تشریح حذف کریں؟ اسے کالعدم نہیں کیا جا سکتا۔",
+  "remove-from-folder": "فولڈر سے ہٹا دیں۔",
+  "save-folders": "{{folders}} میں",
+  "delete-save-confirm-title": "محفوظ کریں کو حذف کریں؟",
+  "delete-save-confirm-message": "{{reference}} کے لیے محفوظ کو حذف کریں؟ اسے کالعدم نہیں کیا جا سکتا۔",
+  "delete-save-confirm-message-folders": "{{folders}} سے {{reference}} کے لیے محفوظ کو حذف کریں؟ اسے کالعدم نہیں کیا جا سکتا۔",
+  "delete-save-failed": "محفوظ کو حذف نہیں کیا جا سکا۔",
+  "delete-save-folder-confirm-title": "فولڈر حذف کریں؟",
+  "delete-save-folder-confirm-message": "فولڈر \" {{name}} \" کو حذف کریں؟",
+  "delete-save-folder-confirm-deletes": "صرف اس فولڈر میں موجود {{count}} محفوظات کو بھی حذف کر دیا جائے گا۔",
+  "delete-save-folder-confirm-deletes_one": "صرف اس فولڈر میں موجود محفوظ کو بھی حذف کر دیا جائے گا۔",
+  "delete-save-folder-confirm-deletes_other": "صرف اس فولڈر میں موجود {{count}} محفوظات کو بھی حذف کر دیا جائے گا۔",
+  "delete-save-folder-confirm-keeps": "{{count}} محفوظات جو دوسرے فولڈرز میں بھی ہیں وہیں رہیں گی۔",
+  "delete-save-folder-confirm-keeps_one": "دوسرے فولڈر میں جو سیو ہے وہ وہیں رہے گا۔",
+  "delete-save-folder-confirm-keeps_other": "{{count}} محفوظات جو دوسرے فولڈرز میں بھی ہیں وہیں رہیں گی۔",
+  "cant-be-undone": "اسے کالعدم نہیں کیا جا سکتا۔",
+  "delete-save-folder-failed": "فولڈر کو حذف نہیں کیا جا سکا۔",
+  "download-image-failed": "تصویر ڈاؤن لوڈ نہیں ہو سکی۔",
+  "session-settings-verse-effects-hosts-only": "صرف میزبان",
+  "session-settings-verse-effects-everyone": "ہر کوئی",
+  "session-settings-verse-effects-none": "کوئی نہیں۔",
+  "loading-books": "کتابیں لوڈ ہو رہی ہیں…",
+  "books-load-failed": "کتابیں لوڈ نہیں ہو سکیں۔ اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔",
+  "loading-translation": "لوڈ ہو رہا ہے {{name}} …",
+  "translation-load-failed": "{{name}} کو لوڈ نہیں کیا جا سکا۔",
+  "loading-translations": "ترجمے لوڈ ہو رہے ہیں…",
+  "translations-load-failed": "تراجم کی مکمل فہرست لوڈ نہیں کی جا سکی، اس لیے کچھ غائب ہو سکتے ہیں۔"
 }
