@@ -852,7 +852,7 @@ describe("the redesigned card", () => {
       },
     };
 
-    // Erech is in the locations extension's file; Abana isn't.
+    // Erech is in the known places' file; Abana isn't.
     const ERECH_GEOJSON = {
       type: "FeatureCollection",
       features: [
@@ -913,7 +913,7 @@ describe("the redesigned card", () => {
       return JSON.parse(src.searchParams.get("mapData")!);
     }
 
-    it("draws the locations extension's file, in an iframe, only when expanded", async () => {
+    it("draws the known place's file, in an iframe, only when expanded", async () => {
       renderCard({ contentType: "place_profile", entry: ERECH });
       // Collapsed cards don't load a map each.
       expect(container.querySelector("iframe")).toBeNull();

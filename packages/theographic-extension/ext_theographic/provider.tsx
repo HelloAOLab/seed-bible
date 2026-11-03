@@ -381,7 +381,7 @@ export interface TheographicClient {
   getEntity<T>(apiLink: string): Promise<T>;
   /**
    * Any other JSON file, by absolute URL, through the same cache: the
-   * locations extension's GeoJSON files.
+   * known places' GeoJSON files.
    */
   getResource<T>(url: string, options?: ReadOptions): Promise<T>;
 }
@@ -595,7 +595,7 @@ export interface TheographicProviderDeps {
   onReferenceClick: (ref: VerseRef, origin?: ReferenceOrigin) => void;
   /** Where a place's map opens. Omit and the map control is not offered. */
   panes?: PanesManager;
-  /** The locations extension's lookup, for places it has a file for. */
+  /** The known places' lookup (`@seed-bible/bible-locations`), for places with a file. */
   locations?: PlaceLocations;
   /** Whether the reader is on a phone-sized screen; hides "Open in map". */
   isMobile?: ReadonlySignal<boolean>;

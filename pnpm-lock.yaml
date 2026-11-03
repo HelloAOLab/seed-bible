@@ -500,15 +500,6 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
-  packages/locations-extension:
-    dependencies:
-      '@seed-bible/bible-locations':
-        specifier: workspace:*
-        version: link:../bible-locations
-      seed-bible:
-        specifier: workspace:*
-        version: link:../seed-bible
-
   packages/mcp-extension:
     dependencies:
       '@modelcontextprotocol/client':

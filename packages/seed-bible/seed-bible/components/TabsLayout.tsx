@@ -119,7 +119,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   // When a mobile pane or the chat panel opens (both fill the screen above the
   // bottom toolbar there), the verse sheet yields and the default bottom
   // toolbar comes back. Clear scroll-hide so that bar isn't left translated
-  // off-screen — e.g. after Locations opens a map, or Ask AI opens the chat,
+  // off-screen — e.g. after Compare opens its pane, or Ask AI opens the chat,
   // from a verse selection while the user had scrolled down.
   useEffect(() => {
     if (!isCompactReader) return;

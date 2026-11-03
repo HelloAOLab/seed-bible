@@ -924,7 +924,7 @@ const VERSE_SHEET_PINNED_MIN_NOTE_ROOM_PX = 48;
  * Registered tools that come right after Highlight and Save on the mobile
  * sheet, in this order, ahead of everything else. With Highlight and Save that
  * makes the collapsed row Highlight, Save, Note, Copy and starts the drawer
- * with Share and Compare, so extension tools (Ask AI, Locations, ...) can't
+ * with Share and Compare, so extension tools (Ask AI, ...) can't
  * push the core actions off the first row however low their priority.
  */
 const VERSE_SHEET_LEADING_TOOL_IDS = [
