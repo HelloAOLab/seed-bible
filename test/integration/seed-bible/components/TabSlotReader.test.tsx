@@ -1085,6 +1085,56 @@ describe("TabSlotReader integration", () => {
     }
   });
 
+  // A track left on its own GPU layer let Android Chrome keep stale tiles of
+  // the outgoing chapter painted over the end of the new one after a swipe.
+  it("puts the track on its own layer only while a finger drags it sideways", () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement;
+      const track = container.querySelector(
+        ".sb-reader-swipe-track"
+      ) as HTMLDivElement;
+
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 200, clientY: 300 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 200, clientY: 100 }]);
+        dispatchTouch(viewport, "touchend", []);
+      });
+      expect(track.style.willChange).toBe("");
+
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+      });
+      expect(track.style.willChange).toBe("transform");
+
+      act(() => {
+        dispatchTouch(viewport, "touchend", []);
+        vi.advanceTimersByTime(250);
+      });
+      expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+      expect(track.style.willChange).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // Swipe parks an inline translateX on the track. Switching to the larger
   // layout must not reuse that node as desktop content, or the chapter sits
   // partly offscreen.

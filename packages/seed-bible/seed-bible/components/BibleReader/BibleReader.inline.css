@@ -544,7 +544,6 @@
   width: 300%;
   height: 100%;
   transform: translateX(-33.333%);
-  will-change: transform;
 }
 
 .sb-bible-reader[dir="rtl"] .sb-reader-swipe-track {

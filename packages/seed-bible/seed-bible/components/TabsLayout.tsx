@@ -65,6 +65,23 @@ function clearSwipeTrackInlineStyles(track: HTMLDivElement | null) {
   }
   track.style.removeProperty("transition");
   track.style.removeProperty("transform");
+  track.style.removeProperty("will-change");
+}
+
+/**
+ * Keep the track on its own GPU layer only while a finger drags it. Left on
+ * permanently (as `will-change` in the stylesheet once was), Android Chrome
+ * kept stale tiles of the chapter swapped in under it after a swipe — the
+ * last lines of the new chapter painted over with the old chapter's text, so
+ * the reader looked cut off. The settle and snap-back slides are CSS
+ * transitions, which the browser promotes on its own for their duration.
+ */
+function setSwipeTrackDragging(track: HTMLDivElement, dragging: boolean) {
+  if (dragging) {
+    track.style.willChange = "transform";
+  } else {
+    track.style.removeProperty("will-change");
+  }
 }
 
 export function TabSlotReader(props: TabSlotReaderProps) {
@@ -518,6 +535,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           Math.abs(dx) > SWIPE_LOCK_THRESHOLD_PX
         ) {
           swipeDirectionLocked.current = "h";
+          const track = swipeTrackRef.current;
+          if (track) {
+            setSwipeTrackDragging(track, true);
+          }
         } else if (Math.abs(dy) > SWIPE_LOCK_THRESHOLD_PX) {
           swipeDirectionLocked.current = "v";
           return;
@@ -636,6 +657,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
+      setSwipeTrackDragging(track, false);
       const sign = rtl ? 1 : -1;
 
       if (shouldLoadNext && hasNext) {
@@ -664,6 +686,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
       const track = swipeTrackRef.current;
       if (track) {
+        setSwipeTrackDragging(track, false);
         track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = centreTransform();
       }
