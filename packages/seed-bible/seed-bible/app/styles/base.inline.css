@@ -46,8 +46,13 @@
   --sb-ui-scale: 1;
   --sb-scripture-margin: 27%;
 
+  /* Matches DEFAULT_SCRIPTURE_WIDTH in SettingsManager; the runtime value only
+     replaces it when the reader has chosen a different width. */
+  --sb-scripture-width: 68ch;
+
   /* Text config variables — overridden at runtime by SettingsManager. */
-  --text-bookTitle-font: "Newsreader", serif;
+  --text-bookTitle-font:
+    "Newsreader", "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;
   --text-bookTitle-weight: 700;
   --text-bookTitle-color: #333;
   --text-bookTitle-font-style: normal;
@@ -58,7 +63,9 @@
   --text-bookTitle-margin-left: 0;
   --text-bookTitle-margin-right: 0;
 
-  --text-heading-font: "Plus Jakarta Sans", sans-serif;
+  --text-heading-font:
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --text-heading-weight: 700;
   --text-heading-color: #333;
   --text-heading-font-style: normal;
@@ -69,7 +76,9 @@
   --text-heading-margin-left: 0;
   --text-heading-margin-right: 0;
 
-  --text-verse-font: "Plus Jakarta Sans", sans-serif;
+  --text-verse-font:
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --text-verse-weight: 500;
   --text-verse-color: #333;
   --text-verse-font-style: normal;
@@ -106,14 +115,19 @@
   --sb-reader-font-family: inherit;
   --sb-reader-font-color: #333;
 
-  --sb-book-title-font-family: "Newsreader", serif;
+  --sb-book-title-font-family:
+    "Newsreader", "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;
   --sb-book-title-font-color: #333;
 
-  --sb-chapter-heading-font-family: "Plus Jakarta Sans", sans-serif;
+  --sb-chapter-heading-font-family:
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --sb-chapter-heading-font-color: #333;
   --sb-chapter-heading-font-style: normal;
 
-  --sb-verse-font-family: "Plus Jakarta Sans", sans-serif;
+  --sb-verse-font-family:
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --sb-verse-font-color: #333;
   --sb-verse-cursor: pointer;
 
@@ -125,7 +139,8 @@
   --sb-selected-verse-text-decoration: underline dotted;
   --sb-selected-verse-text-decoration-color: currentColor;
 
-  --sb-hebrew-subtitle-font-family: "Newsreader", serif;
+  --sb-hebrew-subtitle-font-family:
+    "Newsreader", "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;
   --sb-hebrew-subtitle-font-color: #333;
   --sb-hebrew-subtitle-font-style: italic;
 
@@ -318,8 +333,84 @@ html {
   font-size: calc(16px * var(--sb-ui-scale, 1));
 }
 
+/* Metric-matched stand-ins used while the Google web fonts download. The
+   numbers are measured, and why they are what they are is written up beside
+   FALLBACK_FACES in app/fontFallbacks.ts (a test keeps these in step with it).
+   size-adjust scales the local font to the web font's width; the overrides
+   restore the web font's own line box. A device that lacks the first face's
+   local fonts (Android) skips it and uses the next one in the stack. */
+@font-face {
+  font-family: "Plus Jakarta Sans Fallback";
+  src:
+    local("Arial"), local("Arimo"), local("Liberation Sans"), local("Helvetica");
+  size-adjust: 105.2%;
+  ascent-override: 98.7%;
+  descent-override: 21.1%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans Fallback Roboto";
+  src: local("Roboto"), local("Roboto-Regular");
+  size-adjust: 106.1%;
+  ascent-override: 97.8%;
+  descent-override: 20.9%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Newsreader Fallback";
+  src:
+    local("Times New Roman"), local("Liberation Serif"), local("Tinos"),
+    local("Times");
+  size-adjust: 105%;
+  ascent-override: 70%;
+  descent-override: 25.2%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Newsreader Fallback Noto Serif";
+  src: local("Noto Serif");
+  size-adjust: 90%;
+  ascent-override: 81.7%;
+  descent-override: 29.4%;
+  line-gap-override: 0%;
+}
+
+/* The icon font's stylesheet loads without blocking first paint, so its base
+   rule is repeated here (identical to Google's) for icons to be sized and
+   shaped from the start. Until the font arrives (`sb-icons-pending`, set and
+   cleared by index.html) the glyph name is hidden and clipped to the icon's
+   square, rather than flashing as a long word that reflows the toolbar. */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+}
+
+html.sb-icons-pending .material-symbols-outlined {
+  width: 1em;
+  overflow: hidden;
+  color: transparent;
+}
+
+/* Saved reader font size, applied by index.html's early-config script before
+   the `.sb-font-size-*` class (which follows the hydrated settings) exists.
+   SettingsManager removes the attribute once the real settings are in. */
+html[data-sb-early-config] .sb-bible-reader {
+  font-size: var(--sb-early-font-size, 16px);
+}
+
 /* Material Symbols icons ship with a fixed `font-size: 24px` from the Google
-   Fonts stylesheet (loaded in main.tsx), which ignores the UI Size knob.
+   Fonts stylesheet (preloaded in index.html), which ignores the UI Size knob.
    Re-express that base in rem so every icon scales with the chrome by default
    (1.5rem = 24px at size M — a no-op at M). Scoped
    `.sb-* .material-symbols-outlined` rules (specificity 0,2,0) still win and

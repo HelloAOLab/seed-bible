@@ -251,8 +251,8 @@ const LOCAL_CONFIG_STORAGE_KEY = "sb-profile-config-local";
 // there's no fixed schema to validate this free-form bag against, so a
 // size/shape sanity check is the next best thing to keep corrupt data from
 // becoming durable account state.
-const MAX_LOCAL_CONFIG_JSON_LENGTH = 50_000;
-const MAX_LOCAL_CONFIG_KEYS = 100;
+export const MAX_LOCAL_CONFIG_JSON_LENGTH = 50_000;
+export const MAX_LOCAL_CONFIG_KEYS = 100;
 
 function readCachedProfile(userId: string): UserProfile | null {
   if (typeof localStorage === "undefined") {

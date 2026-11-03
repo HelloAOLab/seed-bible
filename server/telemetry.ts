@@ -65,6 +65,7 @@ import {
   ATTR_SERVICE_VERSION,
 } from "@opentelemetry/semantic-conventions";
 import type { ArtifactStore, BranchArtifacts, BranchPointer } from "./store";
+import type { RenderTiming } from "../standalone/ssrRenderTimings";
 
 /** Name reported as the instrumentation scope on every span and metric. */
 const SCOPE_NAME = "seed-bible/server";
@@ -416,6 +417,35 @@ export async function withSpan<T>(
       }
     }
   );
+}
+
+/**
+ * Turns the step timings an SSR render returned into child spans of the
+ * currently active span (call it inside the `ssr.render` span). The render
+ * can't create these spans itself: in production it runs in a worker thread
+ * with no tracer provider and no view of this thread's span context.
+ */
+export function recordRenderTimings(result: unknown): void {
+  const activeTracer = tracer;
+  if (!enabled || !activeTracer) return;
+  if (typeof result !== "object" || result === null) return;
+  const timings = (result as { timings?: unknown }).timings;
+  if (!Array.isArray(timings)) return;
+
+  for (const timing of timings as RenderTiming[]) {
+    const span = activeTracer.startSpan(timing.name, {
+      startTime: timing.startTime,
+    });
+    if (timing.error) {
+      recordError(
+        span,
+        Object.assign(new Error(timing.error.message), {
+          name: timing.error.name ?? "Error",
+        })
+      );
+    }
+    span.end(timing.endTime);
+  }
 }
 
 /** Marks a span as failed and attaches the error. */

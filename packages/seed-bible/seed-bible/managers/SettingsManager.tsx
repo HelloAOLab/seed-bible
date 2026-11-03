@@ -1,5 +1,6 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import i18n from "i18next";
+import { withMetricFallback } from "../app/fontFallbacks";
 import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
@@ -247,6 +248,20 @@ export const AppSettingsSchema = z.object({
 export const MOBILE_SCRIPTURE_MARGIN = 5;
 
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
+
+/**
+ * Attribute `index.html`'s early-config script puts on `<html>` when it has
+ * applied saved reader settings before first paint (see `base.inline.css`).
+ */
+export const EARLY_CONFIG_ATTR = "data-sb-early-config";
+
+/**
+ * Device-local copy of the four settings `index.html`'s early-config script
+ * paints before first paint. The anonymous local config can't serve: it is
+ * emptied once someone signs in, and signed-in readers are the ones most
+ * likely to have customised these.
+ */
+export const READER_SETTINGS_MIRROR_KEY = "sb-reader-settings-early";
 
 const TAG_FONT_SIZE = "app.fontSize";
 const TAG_DISABLE_PANELS = "app.disablePanels";
@@ -676,7 +691,7 @@ function applyTextConfigToCSSVars(config: TextConfig) {
   const body = document.body?.style ?? null;
   for (const [section, cfg] of Object.entries(config)) {
     const prefix = `--text-${section}`;
-    root.setProperty(`${prefix}-font`, cfg.font);
+    root.setProperty(`${prefix}-font`, withMetricFallback(cfg.font));
     root.setProperty(`${prefix}-weight`, cfg.bold ? "700" : cfg.weight);
     root.setProperty(`${prefix}-font-style`, cfg.italic ? "italic" : "normal");
     root.setProperty(
@@ -1275,32 +1290,127 @@ export function createSettings(
     );
   };
 
+  // `index.html`'s early-config script may already have painted the device's
+  // saved UI size, reader font size, scripture width and line height straight
+  // from localStorage. This manager's first run still sees the SSR-matching
+  // defaults (see `LoginManager.localConfig`), so writing them would undo that
+  // until `hydrateLocalConfig()` re-derives the settings a moment later, and
+  // for a signed-in reader even that re-derive only has defaults until the
+  // profile arrives (the anonymous local config is empty once signed in), which
+  // would widen the column to the default and then narrow it again. Each effect
+  // below therefore holds its write back for the first run and for as long as a
+  // signed-in account's profile is still loading; the re-derive always
+  // produces a new `settings` object, so every one of them runs again with the
+  // real values.
+  const hadEarlyConfig =
+    typeof document !== "undefined" &&
+    document.documentElement.hasAttribute(EARLY_CONFIG_ATTR);
+  let sawProfileLoading = false;
+  const isProfileStillLoading = () => {
+    if (login.userId.value === null || login.profile.value !== null) {
+      return false;
+    }
+    const loading = login.isProfileLoading?.value ?? false;
+    sawProfileLoading ||= loading;
+    // Not started yet, or in flight; a load that ended without a profile
+    // (offline, server error) releases the hold so settings stay editable.
+    return loading || !sawProfileLoading;
+  };
+  const skipFirstWriteAfterEarlyConfig = () => {
+    let first = hadEarlyConfig;
+    return () => {
+      // Evaluated first so the effect subscribes to the login signals.
+      const waiting = hadEarlyConfig && isProfileStillLoading();
+      const skip = first || waiting;
+      first = false;
+      return skip;
+    };
+  };
+
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
   // (see app/styles/base.css). Chrome sized in `rem` tracks this; reader text keeps its
   // own font-size knob (`.sb-bible-reader` carries `.sb-font-size-*`), so it
   // stays independent without the old root-`zoom` + counter-zoom hack.
+  const skipUiScaleWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
     if (typeof document === "undefined") {
       return;
     }
     const scale = UI_SIZE_SCALE_MAP[settings.value.uiSize];
+    if (skipUiScaleWrite()) return;
     document.documentElement.style.setProperty("--sb-ui-scale", String(scale));
+  });
+
+  // The early-config script sizes the reader through a CSS rule keyed on
+  // `EARLY_CONFIG_ATTR` instead of the `.sb-font-size-*` class (which doesn't
+  // exist yet); once the real settings are in, the class takes over again.
+  const skipFontSizeWrite = skipFirstWriteAfterEarlyConfig();
+  effect(() => {
+    if (typeof document === "undefined") return;
+    void settings.value.fontSize;
+    if (skipFontSizeWrite()) return;
+    document.documentElement.removeAttribute(EARLY_CONFIG_ATTR);
   });
 
   // Publish per-section text config as CSS variables (`--text-<section>-*`)
   // so reader styles can consume typography preferences.
+  const skipTextConfigWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
-    applyTextConfigToCSSVars(settings.value.textConfig);
+    const textConfig = settings.value.textConfig;
+    if (skipTextConfigWrite()) return;
+    applyTextConfigToCSSVars(textConfig);
   });
 
   // Publish the scripture margin (%) as a CSS variable consumed by
   // `.sb-bible-reader`'s horizontal padding.
+  const skipScriptureWidthWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
     if (typeof document === "undefined") return;
+    const width = settings.value.scriptureWidth;
+    if (skipScriptureWidthWrite()) return;
     document.documentElement.style.setProperty(
       "--sb-scripture-width",
-      `${settings.value.scriptureWidth}ch`
+      `${width}ch`
     );
+  });
+
+  // Keep the early-config script's copy current, signed in or out. Never
+  // written on the first run (it only sees the SSR-matching defaults, which
+  // would wipe the saved copy), nor while a signed-in account's profile is
+  // still loading (the same defaults), nor when the link itself sets
+  // `app.*` values, which the script ignores too and which aren't the
+  // reader's own choices. A reset writes the defaults, so none get stuck.
+  let isFirstMirrorWrite = true;
+  effect(() => {
+    const current = settings.value;
+    const signedInWithoutProfile =
+      login.userId.value !== null && login.profile.value === null;
+    const snapshot = {
+      uiSize: current.uiSize,
+      fontSize: current.fontSize,
+      scriptureWidth: current.scriptureWidth,
+      verseLineHeight:
+        current.textConfig.verse.lineHeight ?? DEFAULT_VERSE_LINE_HEIGHT,
+    };
+    if (isFirstMirrorWrite) {
+      isFirstMirrorWrite = false;
+      return;
+    }
+    if (
+      signedInWithoutProfile ||
+      typeof window === "undefined" ||
+      /[?&]app\./.test(window.location.search)
+    ) {
+      return;
+    }
+    try {
+      localStorage.setItem(
+        READER_SETTINGS_MIRROR_KEY,
+        JSON.stringify(snapshot)
+      );
+    } catch {
+      // Storage blocked or full: the next visit just paints the defaults.
+    }
   });
 
   // Keep the OS wake-lock in sync with the persisted setting. Survives
