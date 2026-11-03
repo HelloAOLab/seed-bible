@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.16.0 — 2026-11-03
+
+### ✨ Added
+
 - Download your uploaded images from Your content, and see their details in the image preview. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 - Delete branding from Your content. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
 - Let extensions use the same search bar as the rest of the app. ([#2090](https://github.com/HelloAOLab/seed-bible/pull/2090))
