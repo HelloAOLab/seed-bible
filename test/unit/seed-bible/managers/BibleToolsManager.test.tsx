@@ -1658,19 +1658,6 @@ describe("createBibleToolsManager", () => {
       settings.value = { discoveredContent: { showContent: false } };
       expect(resolveTool()?.visible.value).toBe(false);
     });
-    it("is visible when there is at least one reading plan", () => {
-      const manager = createBibleToolsManager(testBranding);
-      const context = createQuickToolContext({
-        readingPlansForChapter: [{ planId: "test-plan" }],
-      });
-
-      const tool = manager
-        .getQuickTools(context)
-        .find((t) => t.id === "discover-content-panel");
-
-      expect(tool).toBeDefined();
-      expect(tool?.visible.value).toBe(true);
-    });
 
     it("is visible when the chapter only has pending annotation changes", () => {
       const manager = createBibleToolsManager(testBranding);

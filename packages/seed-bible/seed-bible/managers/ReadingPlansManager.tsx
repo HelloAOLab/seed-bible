@@ -38,10 +38,6 @@ import {
   type FriendReadLimiter,
 } from "./friendContentFreshness";
 import { createLinkPreviewLoader } from "./linkPreview";
-import {
-  FEATURE_KEY_READING_PLANS,
-  type FeaturesManager,
-} from "./FeaturesManager";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -2304,44 +2300,6 @@ export function createReadingPlansManager(
    * that happen to share the session (and aren't reachable from the reader at
    * all) are left alone. No-op when the progress isn't found.
    */
-  const setPassageCompleteForProgress = async (
-    progressId: string,
-    session: ReadingPlanSession,
-    bookId: string,
-    chapter: number,
-    complete: boolean
-  ) => {
-    const current = userReadingPlanProgresses.value.find(
-      (p) => p.id === progressId
-    );
-    if (!current) {
-      return;
-    }
-    const nowMs = Date.now();
-    let updated = current;
-    for (const reading of session.readings) {
-      const item = reading.item;
-      if (item.type !== "bible-verse" || item.ref.bookId !== bookId) {
-        continue;
-      }
-      if (!readingChapters(reading).includes(chapter)) {
-        continue;
-      }
-      updated = markReadingChapterCompleteInProgress(
-        updated,
-        session,
-        reading.id,
-        chapter,
-        nowMs,
-        complete
-      );
-    }
-    if (updated === current) {
-      return;
-    }
-    await applyProgressUpdate(updated);
-  };
-
   /**
    * Starts a plan for the signed-in user: creates a fresh progress, persists it,
    * and adds it to the list. Always creates a new record (a user may have more
@@ -3031,61 +2989,6 @@ export function createReadingPlansManager(
     }
   };
 
-  const getReadingPlansForChapter = (
-    bookId: string | null,
-    chapter: number,
-    features: FeaturesManager
-  ): PlanMatch[] => {
-    const featureOn = features.isFeatureEnabled(
-      FEATURE_KEY_READING_PLANS
-    ).value;
-
-    const fullPlans = fullReadingPlans.value;
-    const progresses = userReadingPlanProgresses.value;
-
-    const matches: PlanMatch[] = [];
-    if (featureOn && bookId) {
-      for (const plan of fullPlans) {
-        const planId = formatReadingPlanId(plan.recordName, plan.address);
-        const progress = latestReadingPlanProgress(progresses, planId);
-        if (!progress) {
-          continue; // only plans the user is actually following
-        }
-        const sessions = plan.sessions.filter((s) =>
-          sessionMatchesPassage(s, bookId, chapter)
-        );
-        if (sessions.length === 0) {
-          continue;
-        }
-        // Done means "this chapter is read", not "the whole session is read":
-        // every reading covering the open chapter has that chapter recorded.
-        const allComplete = sessions.every((s) => {
-          const sp = progress.sessions.find(
-            (entry) => entry.sessionId === s.id
-          );
-          return s.readings.every((reading) => {
-            const item = reading.item;
-            if (item.type !== "bible-verse" || item.ref.bookId !== bookId) {
-              return true; // not this passage — not this card's business
-            }
-            if (!readingChapters(reading).includes(chapter)) {
-              return true;
-            }
-            return isReadingChapterComplete(sp, reading.id, chapter);
-          });
-        });
-        matches.push({
-          planKey: planId,
-          planTitle: plan.title ?? null,
-          progress,
-          sessions,
-          allComplete,
-        });
-      }
-    }
-    return matches;
-  };
-
   effect(() => {
     void syncReadingPlanProgresses();
     void syncReadingPlans();
@@ -3100,7 +3003,6 @@ export function createReadingPlansManager(
   return {
     fullReadingPlans,
     setSessionCompleteForProgress,
-    setPassageCompleteForProgress,
     userReadingPlanProgresses,
     userReadingPlans,
     getUserReadingPlanProgresses,
@@ -3147,7 +3049,6 @@ export function createReadingPlansManager(
     retryReadingPlanPage: readingPlanPageLoader.retry,
     initialReadingPlanPageLoadPromise: readingPlanPageLoader.initialLoadPromise,
     getReadingPlanPageSeed: readingPlanPageLoader.getSeed,
-    getReadingPlansForChapter,
   };
 }
 

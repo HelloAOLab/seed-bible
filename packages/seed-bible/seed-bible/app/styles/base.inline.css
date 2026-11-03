@@ -50,7 +50,8 @@
      replaces it when the reader has chosen a different width. */
   --sb-scripture-width: 68ch;
 
-  /* Text config variables — overridden at runtime by SettingsManager. */
+  /* Scripture text defaults. Only --text-verse-line-height is overridden at
+     runtime (by SettingsManager). */
   --text-bookTitle-font:
     "Newsreader", "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;
   --text-bookTitle-weight: 700;
