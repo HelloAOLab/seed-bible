@@ -138,6 +138,8 @@ describe("Today pane wiring", () => {
       (candidate) => candidate.id === TODAY_PANE_ID
     );
     expect(pane?.placement).toBe("fullscreen");
+    // Today draws its own close button instead of the pane header's.
+    expect(pane?.showHeader).toBe(false);
   });
 
   it("closes the pane again when the screen is closed", async () => {
@@ -151,9 +153,9 @@ describe("Today pane wiring", () => {
     expect(state.today.isOpen.value).toBe(false);
   });
 
-  // The pane header's close button removes the pane directly, so the open state
-  // has to follow it or the toolbar toggle would need two clicks to reopen.
-  it("clears the open state when the pane is closed from its header", async () => {
+  // Removing the pane directly has to clear the open state too, or the toolbar
+  // toggle would need two clicks to reopen it.
+  it("clears the open state when the pane is closed directly", async () => {
     const state = await createTestSeedBibleState();
 
     state.today.open();

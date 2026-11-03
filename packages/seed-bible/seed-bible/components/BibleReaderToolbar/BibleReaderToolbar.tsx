@@ -622,8 +622,15 @@ function placeFloatingToolMenu(anchor: HTMLElement, menu: HTMLElement): void {
 
   const topPx = `${top}px`;
   const leftPx = `${left}px`;
+  // The corner by the trigger, for the opening animation.
+  const origin = `${alignToInlineStart ? "left" : "right"} ${
+    placeAbove ? "bottom" : "top"
+  }`;
   if (menu.style.top !== topPx) menu.style.top = topPx;
   if (menu.style.left !== leftPx) menu.style.left = leftPx;
+  if (menu.style.transformOrigin !== origin) {
+    menu.style.transformOrigin = origin;
+  }
   if (menu.style.visibility !== "visible") menu.style.visibility = "visible";
 }
 
@@ -870,6 +877,7 @@ function VerseToolbarAnnotationGroup(props: {
                         modals,
                         annotations,
                         annotation,
+                        label,
                         toast
                       );
                     }}
@@ -1052,6 +1060,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
+      toggleSearch: sidebar.toggleSearchPanel,
       openChat: sidebar.toggleChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
@@ -2558,7 +2567,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const { t } = useI18n();
 
+  // Tapping Today again while its screen is showing closes it, like the You
+  // tab. When something covers it (search, chat, More), the tap brings Today
+  // back to the front instead.
   const openTodayScreen = () => {
+    if (activeMobileTab.peek() === "today") {
+      props.state.today.close();
+      return;
+    }
     isMoreMenuOpen.value = false;
     sidebar.closeSearchPanel();
     sidebar.closeChatPanel();

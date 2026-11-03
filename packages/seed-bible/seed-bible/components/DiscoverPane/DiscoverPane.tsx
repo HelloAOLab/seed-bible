@@ -115,7 +115,7 @@ export function DiscoverPaneTitle(props: {
       <div className="sb-discover-title-row">
         <button
           type="button"
-          className="sb-reading-plans-back"
+          className="sb-pane-header-button"
           aria-label={t("back", { defaultValue: "Back" })}
           onClick={() => annotations.cancelEditingAnnotation()}
         >
@@ -140,7 +140,7 @@ export function DiscoverPaneTitle(props: {
       <div className="sb-discover-title-row">
         <button
           type="button"
-          className="sb-reading-plans-back"
+          className="sb-pane-header-button"
           aria-label={t("back", { defaultValue: "Back" })}
           onClick={() => playlists.goBackFromPlayingView()}
         >
@@ -203,7 +203,7 @@ export function DiscoverPaneTitle(props: {
       <div className="sb-discover-title-row">
         <button
           type="button"
-          className="sb-reading-plans-back"
+          className="sb-pane-header-button"
           aria-label={t("back", { defaultValue: "Back" })}
           onClick={() => {
             if (props.modals) {
