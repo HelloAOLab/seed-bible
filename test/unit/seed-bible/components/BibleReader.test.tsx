@@ -4144,6 +4144,7 @@ describe("BibleReader", () => {
     function createSession(
       users: Array<{
         connectionId: string;
+        userId?: string | null;
         isSelf?: boolean;
         name?: string;
         pictureUrl?: string | null;
@@ -4156,13 +4157,18 @@ describe("BibleReader", () => {
           firstVerse?: number;
           lastVerse?: number;
         }
-      >
+      >,
+      sessionOptions?: {
+        hostUserId?: string | null;
+        coHostUserIds?: string[];
+        viewingAreaVisibility?: "auto" | "everyone" | "hosts-only";
+      }
     ) {
       return {
         connectedUsers: signal(
           users.map((user) => ({
             connectionId: user.connectionId,
-            userId: user.connectionId,
+            userId: user.userId === undefined ? user.connectionId : user.userId,
             isSelf: user.isSelf ?? false,
             isActive: true,
             joinedAtMs: 0,
@@ -4174,23 +4180,38 @@ describe("BibleReader", () => {
           }))
         ),
         participantPositions: signal(new Map(Object.entries(positions))),
-        options: signal({ hostUserId: null, allowedNavigators: [] }),
+        options: signal({
+          hostUserId: sessionOptions?.hostUserId ?? null,
+          coHostUserIds: sessionOptions?.coHostUserIds ?? [],
+          allowedNavigators: [],
+          viewingAreaVisibility: sessionOptions?.viewingAreaVisibility,
+        }),
       } as any;
     }
 
-    function renderReader(session: unknown, fixture: ReaderFixture) {
+    function renderReader(
+      session: unknown,
+      fixture: ReaderFixture,
+      state = createMobileState()
+    ) {
       act(() => {
         render(
           <BibleReader
             currentSlot={fixture.slot}
             selectorState={fixture.selectorState}
             readingState={fixture.readingState}
-            state={createMobileState()}
+            state={state}
             sharedSession={session as any}
           />,
           container
         );
       });
+    }
+
+    function markerNames() {
+      return [
+        ...container.querySelectorAll(".sb-presence-avatars .sb-tab-user-icon"),
+      ].map((icon) => icon.getAttribute("title"));
     }
 
     it("draws a bar spanning the verses another participant can see", () => {
@@ -4326,7 +4347,10 @@ describe("BibleReader", () => {
               id,
               { bookId: "GEN", chapterNumber: 1, firstVerse: 1, lastVerse: 2 },
             ])
-          )
+          ),
+          // Six people would otherwise hide everyone but the hosts. This case
+          // is about how a crowd on the same verses is drawn.
+          { viewingAreaVisibility: "everyone" }
         ),
         fixture
       );
@@ -4605,6 +4629,200 @@ describe("BibleReader", () => {
         rectSpy.mockRestore();
         container.style.overflowY = "";
       }
+    });
+
+    const sameChapter = (ids: string[]) =>
+      Object.fromEntries(
+        ids.map((id) => [
+          id,
+          { bookId: "GEN", chapterNumber: 1, firstVerse: 1, lastVerse: 2 },
+        ])
+      );
+
+    it("shows everyone's place while fewer than four people are here", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture
+      );
+
+      expect(markerNames().sort()).toEqual(["Host", "Mary"]);
+    });
+
+    it("shows only hosts once four people are here, until the host says otherwise", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const session = createSession(
+        [
+          { connectionId: "me", isSelf: true },
+          { connectionId: "host", name: "Host" },
+          { connectionId: "cohost", name: "Co-host" },
+          { connectionId: "mary", name: "Mary" },
+        ],
+        sameChapter(["host", "cohost", "mary"]),
+        {
+          hostUserId: "host",
+          coHostUserIds: ["cohost"],
+          viewingAreaVisibility: "auto",
+        }
+      );
+      renderReader(session, fixture);
+
+      expect(markerNames().sort()).toEqual(["Co-host", "Host"]);
+
+      act(() => {
+        session.options.value = {
+          ...session.options.value,
+          viewingAreaVisibility: "everyone",
+        };
+      });
+
+      expect(markerNames().sort()).toEqual(["Co-host", "Host", "Mary"]);
+    });
+
+    it("hides other participants when the host chooses hosts only, even in a small session", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "hosts-only" }
+        ),
+        fixture
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+      expect(container.querySelector(".sb-presence-gutter")).not.toBeNull();
+    });
+
+    it("lets a person choose to see everyone even when the session would show only hosts", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "everyone",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+            { connectionId: "john", name: "John" },
+          ],
+          sameChapter(["host", "mary", "john"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames().sort()).toEqual(["Host", "John", "Mary"]);
+    });
+
+    it("lets a person choose to see only hosts even when the session is small", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "hosts-only",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+    });
+
+    it("keeps the host's hosts-only choice when someone set Everyone for themselves", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "everyone",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "hosts-only" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+    });
+
+    it("counts a person with two tabs once, so three people still show everyone's place", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", userId: "me", isSelf: true },
+            { connectionId: "ada-laptop", userId: "ada", name: "Ada" },
+            { connectionId: "ada-phone", userId: "ada", name: "Ada" },
+            { connectionId: "bob", userId: "bob", name: "Bob" },
+          ],
+          sameChapter(["ada-laptop", "ada-phone", "bob"]),
+          { hostUserId: "me", viewingAreaVisibility: "auto" }
+        ),
+        fixture
+      );
+
+      expect(markerNames().sort()).toEqual(["Ada", "Ada", "Bob"]);
+    });
+
+    it("shows everyone when automatic would show only hosts but none of them are here", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "mary", name: "Mary" },
+            { connectionId: "john", name: "John" },
+            { connectionId: "ann", name: "Ann" },
+          ],
+          sameChapter(["mary", "john", "ann"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture
+      );
+
+      expect(markerNames().sort()).toEqual(["Ann", "John", "Mary"]);
     });
 
     it("draws no gutter outside a shared session", () => {

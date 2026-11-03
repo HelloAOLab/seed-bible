@@ -18,7 +18,9 @@ import {
   type TextSize,
   type UISize,
   type VerseSelectionEffects,
+  type ViewingAreaIndicators,
 } from "../../managers/SettingsManager";
+import { VIEWING_AREA_HOSTS_ONLY_MIN_USERS } from "../../managers/SessionsManager";
 import {
   DARK_THEME,
   DEFAULT_HIGHLIGHT_IDS,
@@ -739,6 +741,50 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
               {t("disabled", { defaultValue: "Disabled" })}
             </option>
           </select>
+        </div>
+        <div className="sb-settings-field-row">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-viewing-area-indicators"
+          >
+            {t("viewing-area-indicators", {
+              defaultValue: "Viewing areas",
+            })}
+          </label>
+
+          <select
+            id="sb-viewing-area-indicators"
+            className="sb-settings-language-select"
+            value={current.viewingAreaIndicators ?? "default"}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+
+              settings.setViewingAreaIndicators(
+                target.value as ViewingAreaIndicators
+              );
+            }}
+          >
+            <option value="default">
+              {t("default", { defaultValue: "Default" })}
+            </option>
+            <option value="everyone">
+              {t("session-settings-viewing-areas-everyone", {
+                defaultValue: "Everyone",
+              })}
+            </option>
+            <option value="hosts-only">
+              {t("session-settings-viewing-areas-hosts-only", {
+                defaultValue: "Hosts only",
+              })}
+            </option>
+          </select>
+          <p className="sb-settings-field-description">
+            {t("viewing-area-indicators-desc", {
+              count: VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
+              defaultValue:
+                "Applies while the session is Automatic. Default shows everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. If the host picks Everyone or Hosts only, that applies to everyone.",
+            })}
+          </p>
         </div>
         <h3 className="sb-settings-subheading">
           {t("display", { defaultValue: "Display" })}

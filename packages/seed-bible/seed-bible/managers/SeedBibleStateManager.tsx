@@ -192,7 +192,7 @@ import {
 } from "./ChatsManager";
 import {
   createSessionsManager,
-  isSessionHost,
+  isConnectedUserHost,
   type BibleReadingSession,
   type SessionsManager,
   type SessionStartPosition,
@@ -2680,8 +2680,10 @@ export function createSeedBibleState(
         locallyHostedSessionIds.has(session.id) ||
         (hostUserId !== null &&
           (hostUserId === localId || hostUserId === localConnectionId)) ||
-        isSessionHost(options, localId) ||
-        isSessionHost(options, localConnectionId);
+        isConnectedUserHost(options, {
+          userId: localId,
+          connectionId: localConnectionId,
+        });
 
       // Only end the session for everyone when the leaving client is the
       // LAST connected host/co-host. If another host/co-host is still
@@ -2689,10 +2691,7 @@ export function createSeedBibleState(
       // of ending it. Explicit "End session" writes `endedAt` directly, so
       // it bypasses this heuristic.
       const anotherHostStillConnected = session.connectedUsers.value.some(
-        (user) =>
-          !user.isSelf &&
-          (isSessionHost(options, user.userId) ||
-            isSessionHost(options, user.connectionId))
+        (user) => !user.isSelf && isConnectedUserHost(options, user)
       );
 
       if (isHost && !anotherHostStillConnected && options.endedAt === null) {
@@ -2816,18 +2815,13 @@ export function createSeedBibleState(
     return false;
   };
   const sessionHostIsConnected = (session: BibleReadingSession): boolean =>
-    session.connectedUsers.value.some(
-      (user) =>
-        isSessionHost(session.options.value, user.userId) ||
-        isSessionHost(session.options.value, user.connectionId)
+    session.connectedUsers.value.some((user) =>
+      isConnectedUserHost(session.options.value, user)
     );
   const sessionWeAreHost = (session: BibleReadingSession): boolean =>
     locallyHostedSessionIds.has(session.id) ||
     session.connectedUsers.value.some(
-      (user) =>
-        user.isSelf &&
-        (isSessionHost(session.options.value, user.userId) ||
-          isSessionHost(session.options.value, user.connectionId))
+      (user) => user.isSelf && isConnectedUserHost(session.options.value, user)
     );
   // Whether this client's view of who's present is worth acting on. We are
   // definitionally present in our own session, so a list that doesn't even

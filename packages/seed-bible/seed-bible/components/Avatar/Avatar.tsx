@@ -1,7 +1,7 @@
 import "./Avatar.css";
 import { useSignal } from "@preact/signals";
 import {
-  isSessionHost,
+  isConnectedUserHost,
   type ConnectedSessionUser,
   type ConnectionSessionUserVisual,
   type SessionOptions,
@@ -33,10 +33,7 @@ export function getUserSessionRole(
   ) {
     return "host";
   }
-  if (
-    isSessionHost(options, user.userId) ||
-    isSessionHost(options, user.connectionId)
-  ) {
+  if (isConnectedUserHost(options, user)) {
     return "co-host";
   }
   return null;
