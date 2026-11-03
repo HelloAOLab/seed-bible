@@ -782,7 +782,7 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             {t("viewing-area-indicators-desc", {
               count: VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
               defaultValue:
-                "Default follows the session: everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more, unless the host has chosen otherwise. Pick Everyone or Hosts only to choose for yourself.",
+                "Applies while the session is Automatic. Default shows everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. If the host picks Everyone or Hosts only, that applies to everyone.",
             })}
           </p>
         </div>

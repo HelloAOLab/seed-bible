@@ -59,7 +59,8 @@ import {
 } from "../../managers/AnnotationsManager";
 import type { FriendsManager } from "../../managers/FriendsManager";
 import {
-  isSessionHost,
+  countSessionPeople,
+  isConnectedUserHost,
   getConnectedUserVisualKey,
   resolveViewingAreaVisibility,
   type BibleReadingSession,
@@ -466,13 +467,7 @@ function broadcastSelectedVerse(
   const options = session.options.value;
   const visibility = options.verseSelectionEffectVisibility ?? "hosts-only";
   if (visibility === "none") return null;
-  if (
-    visibility === "hosts-only" &&
-    !(
-      isSessionHost(options, user.userId) ||
-      isSessionHost(options, user.connectionId)
-    )
-  ) {
+  if (visibility === "hosts-only" && !isConnectedUserHost(options, user)) {
     return null;
   }
   const connectionId = user.connectionId ?? user.userId ?? "anonymous";
@@ -942,10 +937,7 @@ function renderChapterContent(
 
         if (
           !ownerUser ||
-          !(
-            isSessionHost(session.options.value, ownerUser.userId) ||
-            isSessionHost(session.options.value, ownerUser.connectionId)
-          )
+          !isConnectedUserHost(session.options.value, ownerUser)
         ) {
           return false;
         }
@@ -2852,19 +2844,17 @@ export function BibleReader(props: BibleReaderProps) {
     const positions = sharedSession.participantPositions.value;
     const sessionOptions = sharedSession.options.value;
     const connectedUsers = sharedSession.connectedUsers.value;
-    // Hosts choose a session-wide rule; each person can override it. "auto"
-    // shows everyone below four people and only hosts from four on.
     const viewingAreas = resolveViewingAreaVisibility(
       sessionOptions.viewingAreaVisibility,
-      connectedUsers.length,
-      state?.settings?.settings.value.viewingAreaIndicators
+      countSessionPeople(connectedUsers),
+      state?.settings?.settings.value.viewingAreaIndicators,
+      connectedUsers.some((user) => isConnectedUserHost(sessionOptions, user))
     );
     for (const user of connectedUsers) {
       if (user.isSelf) continue;
       if (
         viewingAreas === "hosts-only" &&
-        !isSessionHost(sessionOptions, user.userId) &&
-        !isSessionHost(sessionOptions, user.connectionId)
+        !isConnectedUserHost(sessionOptions, user)
       ) {
         continue;
       }

@@ -4144,6 +4144,7 @@ describe("BibleReader", () => {
     function createSession(
       users: Array<{
         connectionId: string;
+        userId?: string | null;
         isSelf?: boolean;
         name?: string;
         pictureUrl?: string | null;
@@ -4167,7 +4168,7 @@ describe("BibleReader", () => {
         connectedUsers: signal(
           users.map((user) => ({
             connectionId: user.connectionId,
-            userId: user.connectionId,
+            userId: user.userId === undefined ? user.connectionId : user.userId,
             isSelf: user.isSelf ?? false,
             isActive: true,
             joinedAtMs: 0,
@@ -4757,6 +4758,71 @@ describe("BibleReader", () => {
       );
 
       expect(markerNames()).toEqual(["Host"]);
+    });
+
+    it("keeps the host's hosts-only choice when someone set Everyone for themselves", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "everyone",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "hosts-only" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+    });
+
+    it("counts a person with two tabs once, so three people still show everyone's place", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", userId: "me", isSelf: true },
+            { connectionId: "ada-laptop", userId: "ada", name: "Ada" },
+            { connectionId: "ada-phone", userId: "ada", name: "Ada" },
+            { connectionId: "bob", userId: "bob", name: "Bob" },
+          ],
+          sameChapter(["ada-laptop", "ada-phone", "bob"]),
+          { hostUserId: "me", viewingAreaVisibility: "auto" }
+        ),
+        fixture
+      );
+
+      expect(markerNames().sort()).toEqual(["Ada", "Ada", "Bob"]);
+    });
+
+    it("shows everyone when automatic would show only hosts but none of them are here", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "mary", name: "Mary" },
+            { connectionId: "john", name: "John" },
+            { connectionId: "ann", name: "Ann" },
+          ],
+          sameChapter(["mary", "john", "ann"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture
+      );
+
+      expect(markerNames().sort()).toEqual(["Ann", "John", "Mary"]);
     });
 
     it("draws no gutter outside a shared session", () => {

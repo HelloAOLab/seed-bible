@@ -105,36 +105,44 @@ export type VerseSelectionEffectVisibility = "hosts-only" | "everyone" | "none";
 export type ViewingAreaVisibility = "auto" | "everyone" | "hosts-only";
 
 /**
- * A person's own choice of whose viewing-area bars they see. "default"
- * follows the session setting, including its automatic cutoff.
+ * A person's own choice while the session is on "auto". "default" follows
+ * the automatic cutoff. An explicit session setting wins over this.
  */
 export type ViewingAreaPreference = "default" | "everyone" | "hosts-only";
 
 /**
  * Connected people at which "auto" switches from everyone's bars to hosts
- * only. Four people is where the gutter starts to crowd.
+ * only. Past this the gutter starts to crowd.
  */
 export const VIEWING_AREA_HOSTS_ONLY_MIN_USERS = 4;
 
 /**
- * Whose bars to draw. An explicit personal preference wins over the session
- * setting. Otherwise the session setting applies, and "auto" follows the
- * head count.
+ * Whose bars to draw. An explicit session setting wins. A personal
+ * preference applies only while the session is on "auto", which follows
+ * `connectedUserCount`. Hosts-only falls back to everyone when no host is
+ * connected, so the margin is not left blank.
  */
 export function resolveViewingAreaVisibility(
   sessionVisibility: ViewingAreaVisibility | null | undefined,
   connectedUserCount: number,
-  preference: ViewingAreaPreference | null | undefined = "default"
+  preference: ViewingAreaPreference | null | undefined = "default",
+  hostConnected = true
 ): "everyone" | "hosts-only" {
-  if (preference === "everyone" || preference === "hosts-only") {
-    return preference;
-  }
+  let mode: "everyone" | "hosts-only";
   if (sessionVisibility === "everyone" || sessionVisibility === "hosts-only") {
-    return sessionVisibility;
+    mode = sessionVisibility;
+  } else if (preference === "everyone" || preference === "hosts-only") {
+    mode = preference;
+  } else {
+    mode =
+      connectedUserCount >= VIEWING_AREA_HOSTS_ONLY_MIN_USERS
+        ? "hosts-only"
+        : "everyone";
   }
-  return connectedUserCount >= VIEWING_AREA_HOSTS_ONLY_MIN_USERS
-    ? "hosts-only"
-    : "everyone";
+  if (mode === "hosts-only" && !hostConnected) {
+    return "everyone";
+  }
+  return mode;
 }
 
 export interface SessionOptions {
@@ -176,8 +184,8 @@ export interface SessionOptions {
   verseSelectionEffectVisibility: VerseSelectionEffectVisibility;
   /**
    * Whose viewing-area bars are drawn beside the chapter. See
-   * `ViewingAreaVisibility`. Each person can still override this for their
-   * own screen.
+   * `ViewingAreaVisibility`. While this is "auto", each person can still
+   * override it for their own screen.
    */
   viewingAreaVisibility: ViewingAreaVisibility;
 }
@@ -196,6 +204,21 @@ export function isSessionHost(
   return (
     options.hostUserId === sessionId ||
     (options.coHostUserIds ?? []).includes(sessionId)
+  );
+}
+
+/**
+ * True when this connected user is the host or a co-host. Checks both ids
+ * because a signed-in host is stored by user id and an anonymous one by
+ * connection id.
+ */
+export function isConnectedUserHost(
+  options: SessionOptions,
+  user: { userId?: string | null; connectionId?: string | null }
+): boolean {
+  return (
+    isSessionHost(options, user.userId ?? null) ||
+    isSessionHost(options, user.connectionId ?? null)
   );
 }
 
@@ -658,6 +681,20 @@ export function getConnectedUserVisualKey(user: {
   connectionId?: string | null;
 }): string {
   return user.userId ?? user.connectionId ?? "anonymous";
+}
+
+/**
+ * Distinct people in a session. One person with the session open in two
+ * tabs counts once. A signed-out guest has no user id, so each of their
+ * connections still counts as its own person.
+ */
+export function countSessionPeople(
+  users: readonly {
+    userId?: string | null;
+    connectionId?: string | null;
+  }[]
+): number {
+  return new Set(users.map((user) => getConnectedUserVisualKey(user))).size;
 }
 
 export interface BibleReadingSession {

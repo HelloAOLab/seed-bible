@@ -25,7 +25,7 @@ import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
 import {
-  isSessionHost,
+  isConnectedUserHost,
   VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
   type BibleReadingSession,
   type ViewingAreaVisibility,
@@ -126,7 +126,8 @@ const HIGHLIGHT_DURATION_OPTIONS: { label: string; value: number | null }[] = [
  * - "Only Host can highlight" toggles `allowedDecorators` the same way.
  * - Highlight duration picker writes `highlightDurationSeconds`.
  * - "Viewing areas" writes `viewingAreaVisibility`: everyone, hosts only, or
- *   automatic (everyone below four people, hosts only from four on).
+ *   automatic (everyone below `VIEWING_AREA_HOSTS_ONLY_MIN_USERS`, hosts only
+ *   from that many on).
  * - "End Session" removes the tab (which disposes the session and removes
  *   its registry entry automatically via `wrapSessionLifecycle`).
  *
@@ -154,17 +155,10 @@ export function isLocalSessionHost(
   state: SeedBibleState,
   session: BibleReadingSession
 ): boolean {
-  const options = session.options.value;
-  return (
-    isSessionHost(options, state.login.userId.value) ||
-    isSessionHost(
-      options,
-      getConnectedUserVisualKey({
-        userId: state.login.userId.value,
-        connectionId: state.os.connectionId,
-      })
-    )
-  );
+  return isConnectedUserHost(session.options.value, {
+    userId: state.login.userId.value,
+    connectionId: state.os.connectionId,
+  });
 }
 
 function SessionSettingsModalContent(props: {
@@ -732,10 +726,7 @@ function SessionCloseConfirmModalContent(props: {
 
   const options = session.options.value;
   const candidates = session.connectedUsers.value.filter(
-    (user) =>
-      !user.isSelf &&
-      !isSessionHost(options, user.userId) &&
-      !isSessionHost(options, user.connectionId)
+    (user) => !user.isSelf && !isConnectedUserHost(options, user)
   );
 
   return (

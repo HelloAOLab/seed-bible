@@ -1292,7 +1292,7 @@
   "session-settings-viewing-areas-desc-everyone": "Show where everyone is reading.",
   "session-settings-viewing-areas-desc-hosts": "Show where the hosts are reading.",
   "viewing-area-indicators": "Viewing areas",
-  "viewing-area-indicators-desc": "Default follows the session: everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more, unless the host has chosen otherwise. Pick Everyone or Hosts only to choose for yourself.",
+  "viewing-area-indicators-desc": "Applies while the session is Automatic. Default shows everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. If the host picks Everyone or Hosts only, that applies to everyone.",
 
   "account": "Account",
   "scroll-filters-start": "Scroll filters toward start",

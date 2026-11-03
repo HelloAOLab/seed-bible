@@ -1,9 +1,12 @@
 import { batch, effect, signal } from "@preact/signals";
 import {
+  countSessionPeople,
   createSessionsManager,
   getUserAnimalVisual,
+  isConnectedUserHost,
   resolveViewingAreaVisibility,
   type BibleReadingSession,
+  type SessionOptions,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import {
   createBibleReadingState,
@@ -916,8 +919,9 @@ describe("SessionsManager", () => {
       ["default", undefined, 1, "everyone"],
       ["default", "everyone", 10, "everyone"],
       ["default", "hosts-only", 1, "hosts-only"],
-      ["everyone", "hosts-only", 10, "everyone"],
-      ["hosts-only", "everyone", 2, "hosts-only"],
+      ["everyone", "hosts-only", 10, "hosts-only"],
+      ["hosts-only", "everyone", 2, "everyone"],
+      ["everyone", "auto", 8, "everyone"],
       ["hosts-only", "auto", 2, "hosts-only"],
     ] as const)(
       "preference %s with session %s and %i people shows %s",
@@ -927,6 +931,55 @@ describe("SessionsManager", () => {
         ).toBe(expected);
       }
     );
+
+    it("shows everyone when hosts only would apply but no host is connected", () => {
+      expect(resolveViewingAreaVisibility("auto", 6, "default", false)).toBe(
+        "everyone"
+      );
+      expect(
+        resolveViewingAreaVisibility("hosts-only", 2, "everyone", false)
+      ).toBe("everyone");
+      expect(
+        resolveViewingAreaVisibility("hosts-only", 6, "default", true)
+      ).toBe("hosts-only");
+    });
+
+    it("counts one person with two tabs as one person, and each signed-out guest separately", () => {
+      expect(
+        countSessionPeople([
+          { userId: "ada", connectionId: "laptop" },
+          { userId: "ada", connectionId: "phone" },
+          { userId: null, connectionId: "guest" },
+          { userId: null, connectionId: "guest-2" },
+        ])
+      ).toBe(3);
+    });
+
+    it("recognizes a host by user id and a co-host by connection id", () => {
+      const options = {
+        hostUserId: "host",
+        coHostUserIds: ["co-connection"],
+      } as SessionOptions;
+
+      expect(
+        isConnectedUserHost(options, {
+          userId: "host",
+          connectionId: "other",
+        })
+      ).toBe(true);
+      expect(
+        isConnectedUserHost(options, {
+          userId: "someone",
+          connectionId: "co-connection",
+        })
+      ).toBe(true);
+      expect(
+        isConnectedUserHost(options, {
+          userId: "guest",
+          connectionId: "guest-connection",
+        })
+      ).toBe(false);
+    });
 
     it("createSession() stores automatic viewing areas", async () => {
       const manager = createSessionsManager(
