@@ -1087,7 +1087,7 @@ describe("TabSlotReader integration", () => {
 
   // A track left on its own GPU layer let Android Chrome keep stale tiles of
   // the outgoing chapter painted over the end of the new one after a swipe.
-  it("puts the track on its own layer only while a finger drags it sideways", () => {
+  it("puts the track on its own layer only while a finger drags it sideways", async () => {
     vi.useFakeTimers();
     const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
@@ -1126,9 +1126,32 @@ describe("TabSlotReader integration", () => {
 
       act(() => {
         dispatchTouch(viewport, "touchend", []);
-        vi.advanceTimersByTime(250);
+      });
+      expect(track.style.willChange).toBe("");
+
+      // Through the slide, the navigation and the recentre that follows.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(250 + 1000);
       });
       expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+      expect(track.style.transform).toBe(CENTRE_PANEL_TRANSFORM);
+      expect(track.style.willChange).toBe("");
+
+      // The browser takes the gesture over mid-drag.
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 150, clientY: 50 }]);
+        dispatchTouch(viewport, "touchcancel", []);
+      });
+      expect(track.style.willChange).toBe("");
+
+      // A second finger lands mid-drag: another touchstart, no touchcancel.
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 150, clientY: 50 }]);
+        dispatchTouch(viewport, "touchstart", [{ clientX: 150, clientY: 60 }]);
+        dispatchTouch(viewport, "touchend", []);
+      });
       expect(track.style.willChange).toBe("");
     } finally {
       vi.useRealTimers();

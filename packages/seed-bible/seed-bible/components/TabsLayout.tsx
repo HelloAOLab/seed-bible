@@ -65,7 +65,7 @@ function clearSwipeTrackInlineStyles(track: HTMLDivElement | null) {
   }
   track.style.removeProperty("transition");
   track.style.removeProperty("transform");
-  track.style.removeProperty("will-change");
+  setSwipeTrackDragging(track, false);
 }
 
 /**
@@ -491,6 +491,9 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
       const track = swipeTrackRef.current;
       if (track) {
+        // A second finger fires another touchstart without a touchcancel, so
+        // the gesture it interrupts may never reach the end-of-drag release.
+        setSwipeTrackDragging(track, false);
         track.style.transition = "none";
         // Recentre unconditionally: a committed swipe may have left the track
         // resting on a neighbouring panel, and `onTouchMove` measures from
