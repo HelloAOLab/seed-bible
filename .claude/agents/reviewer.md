@@ -23,8 +23,10 @@ You review code on the Seed Bible repository (`HelloAOLab/seed-bible`) and retur
 ## 1. Work out what to review
 
 - **A PR number:** read it with `gh api repos/HelloAOLab/seed-bible/pulls/<n>`. The head commit is `head.sha`; the base branch is `base.ref`.
-- **A branch name:** review `develop...<branch>` (what the branch adds since it split from `develop`). If a PR exists for it (`gh api "repos/HelloAOLab/seed-bible/pulls?head=HelloAOLab:<branch>&state=all"`), treat it as that PR.
-- **Nothing:** review the current branch: `git diff develop...HEAD` for the commits, plus `git diff HEAD` and untracked files (`git status --short`) for uncommitted work. Say in the Summary that uncommitted changes were included. If a PR already exists for the branch, read its conversation too, but review the local code, since it's what the user is working on.
+- **A branch name:** review the local branch: `develop...<branch>` (what the branch adds since it split from `develop`). If it's the branch you're on, include uncommitted work too, as below.
+- **Nothing:** review the current branch: `git diff develop...HEAD` for the commits, plus `git diff HEAD` and untracked files (`git status --short`) for uncommitted work. Say in the Summary that uncommitted changes were included.
+
+For a branch, look for a PR (`gh api "repos/HelloAOLab/seed-bible/pulls?head=HelloAOLab:<branch>&state=all"`). If there is one, read its conversation and use its test plan, but review the local code, since it's what the user is working on and may have commits the PR doesn't have yet. The test plan is named for the PR's head commit; if the local branch isn't at that commit, say in the Summary that the plan is for an older commit.
 
 If the target is ambiguous (for example, a number that isn't a PR), stop and say so. Never guess a PR.
 
@@ -43,13 +45,23 @@ Follow section 2 of the guide. What it leaves to you:
   git worktree add --detach ../seed-bible-pr-<n> FETCH_HEAD   # reuse it if it already exists
   ```
 
-  For a branch or the current work, read files in place.
+  For the current branch, read files in place. For any other branch, the files in place belong to the wrong branch, so give it a worktree too: `git worktree add --detach ../seed-bible-review-<branch, with / as -> <branch>`.
 
-- **The bug hunt:** `/code-review <n>` for a PR, `/code-review <branch>` for a branch, or `/code-review` with no target for the current work. If the skill isn't available to you, do the bug hunt yourself: read each changed file end to end and trace the changed paths for wrong logic, missing `await`s, unhandled errors, signed-out and empty states, and races.
-- **The folder for the "fails without the fix" check.** For a PR, its worktree. Otherwise make a throwaway worktree at `HEAD` (`git worktree add --detach ../seed-bible-review-check HEAD`), bring over uncommitted work if the test or fix lives there (`git diff HEAD | git -C ../seed-bible-review-check apply`, then copy any untracked test files), and `pnpm install` there. Never do this check in the user's checkout.
+- **The bug hunt:** `/code-review <n>` for a PR, or `/code-review <branch>` for a branch. Name the branch even when it's the current one: with no target, the skill may look only at uncommitted changes and skip the branch's commits. When uncommitted work is included, read those changes yourself as well, since a branch target may cover only commits. If the skill isn't available to you, do the bug hunt yourself: read each changed file end to end and trace the changed paths for wrong logic, missing `await`s, unhandled errors, signed-out and empty states, and races.
+- **The folder for the "fails without the fix" check.** For a PR or another branch, its worktree. For the current branch, make a throwaway worktree at `HEAD` and bring over all uncommitted work, including untracked files, since the test or the fix may live there:
+
+  ```bash
+  git worktree add --detach ../seed-bible-review-check HEAD
+  git diff HEAD > ../seed-bible-review-check.patch
+  (cd ../seed-bible-review-check && git apply ../seed-bible-review-check.patch)
+  git ls-files -z --others --exclude-standard | xargs -0 -r cp --parents -t ../seed-bible-review-check
+  ```
+
+  Then `pnpm install` there. When the guide says to put the change's version back, `git checkout HEAD -- <files>` drops the uncommitted part, so re-apply it afterwards: `git apply --include=<file> ../seed-bible-review-check.patch`, with one `--include` per file. Never do this check in the user's checkout.
+
 - **Checking in the app.** If a finding is easier to confirm in the running app than by reading code, you may drive a browser to check it.
 
-Remove any worktree you created when you're done (`git worktree remove --force <path>`). Leave one you found already there.
+Remove any worktree you created when you're done (`git worktree remove --force <path>`), and the patch file if you made one. Leave a worktree you found already there.
 
 ## 4. Return the review
 
