@@ -2420,8 +2420,9 @@ export function createPlaylistManager(
         rememberPaused.get(heir.readingState)?.(live);
       }
 
-      const toReturn = needsChapter.filter((item) =>
-        open.has(item.readingState)
+      const toReturn = needsChapter.filter(
+        (item): item is PausedNarration & { bookId: string } =>
+          item.bookId !== null && open.has(item.readingState)
       );
       const finish = () => {
         for (const item of toReturn) {
