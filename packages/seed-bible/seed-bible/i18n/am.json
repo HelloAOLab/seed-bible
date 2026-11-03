@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} በመጫን ላይ …",
   "translation-load-failed": "{{name}} ሊጫን አልቻለም።",
   "loading-translations": "ትርጉሞችን በመጫን ላይ…",
-  "translations-load-failed": "ሙሉውን የትርጉም ዝርዝር መጫን አልተቻለም፣ ስለዚህ አንዳንዶቹ ሊጎድሉ ይችላሉ።"
+  "translations-load-failed": "ሙሉውን የትርጉም ዝርዝር መጫን አልተቻለም፣ ስለዚህ አንዳንዶቹ ሊጎድሉ ይችላሉ።",
+  "verse-of-the-day": "የዕለቱ ጥቅስ",
+  "verse-of-the-day-loading": "የዕለቱን ጥቅስ በመጫን ላይ…"
 }

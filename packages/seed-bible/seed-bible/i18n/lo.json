@@ -1273,5 +1273,7 @@
   "loading-translation": "ກຳລັງໂຫຼດ {{name}} …",
   "translation-load-failed": "ບໍ່ສາມາດໂຫຼດ {{name}} ໄດ້.",
   "loading-translations": "ກຳລັງໂຫຼດການແປພາສາ…",
-  "translations-load-failed": "ບໍ່ສາມາດໂຫຼດລາຍຊື່ການແປພາສາທັງໝົດໄດ້, ດັ່ງນັ້ນບາງຄຳອາດຈະຫາຍໄປ."
+  "translations-load-failed": "ບໍ່ສາມາດໂຫຼດລາຍຊື່ການແປພາສາທັງໝົດໄດ້, ດັ່ງນັ້ນບາງຄຳອາດຈະຫາຍໄປ.",
+  "verse-of-the-day": "ຂໍ້ພຣະຄຳພີປະຈຳວັນ",
+  "verse-of-the-day-loading": "ກຳລັງໂຫຼດຂໍ້ພຣະຄຳພີປະຈຳວັນ..."
 }

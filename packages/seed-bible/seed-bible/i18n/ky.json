@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} жүктөлүүдө …",
   "translation-load-failed": "{{name}} жүктөлбөй койду.",
   "loading-translations": "Котормолор жүктөлүүдө…",
-  "translations-load-failed": "Котормолордун толук тизмеси жүктөлбөй койду, андыктан айрымдары жок болушу мүмкүн."
+  "translations-load-failed": "Котормолордун толук тизмеси жүктөлбөй койду, андыктан айрымдары жок болушу мүмкүн.",
+  "verse-of-the-day": "КҮНДҮН АЯТЫ",
+  "verse-of-the-day-loading": "Күндүн аяты жүктөлүүдө…"
 }

@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} लोड होत आहे…",
   "translation-load-failed": "{{name}} लोड होऊ शकले नाही.",
   "loading-translations": "भाषांतरे लोड होत आहेत…",
-  "translations-load-failed": "भाषांतरांची संपूर्ण यादी लोड होऊ शकली नाही, त्यामुळे काही भाषांतरे कदाचित उपलब्ध नसतील."
+  "translations-load-failed": "भाषांतरांची संपूर्ण यादी लोड होऊ शकली नाही, त्यामुळे काही भाषांतरे कदाचित उपलब्ध नसतील.",
+  "verse-of-the-day": "आजचा श्लोक",
+  "verse-of-the-day-loading": "आजचा श्लोक लोड होत आहे…"
 }

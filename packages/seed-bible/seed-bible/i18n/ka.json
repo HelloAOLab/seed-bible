@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} იტვირთება …",
   "translation-load-failed": "{{name}} ის ჩატვირთვა ვერ მოხერხდა.",
   "loading-translations": "თარგმანების ჩატვირთვა…",
-  "translations-load-failed": "თარგმანების სრული სიის ჩატვირთვა ვერ მოხერხდა, ამიტომ შესაძლოა ზოგიერთი აკლდეს."
+  "translations-load-failed": "თარგმანების სრული სიის ჩატვირთვა ვერ მოხერხდა, ამიტომ შესაძლოა ზოგიერთი აკლდეს.",
+  "verse-of-the-day": "დღის ლექსი",
+  "verse-of-the-day-loading": "დღის ლექსის ჩატვირთვა…"
 }

@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} laden …",
   "translation-load-failed": "{{name}} kon niet worden geladen.",
   "loading-translations": "Vertalingen worden geladen…",
-  "translations-load-failed": "Het lukte niet om de volledige lijst met vertalingen te laden, dus mogelijk ontbreken er enkele."
+  "translations-load-failed": "Het lukte niet om de volledige lijst met vertalingen te laden, dus mogelijk ontbreken er enkele.",
+  "verse-of-the-day": "VERS VAN DE DAG",
+  "verse-of-the-day-loading": "Het vers van de dag wordt geladen..."
 }

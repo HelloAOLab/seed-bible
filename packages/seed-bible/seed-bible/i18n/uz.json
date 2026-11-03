@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} yuklanmoqda…",
   "translation-load-failed": "{{name}} yuklanmadi.",
   "loading-translations": "Tarjimalar yuklanmoqda…",
-  "translations-load-failed": "Tarjimalarning to'liq ro'yxatini yuklab bo'lmadi, shuning uchun ba'zilari yo'q bo'lishi mumkin."
+  "translations-load-failed": "Tarjimalarning to'liq ro'yxatini yuklab bo'lmadi, shuning uchun ba'zilari yo'q bo'lishi mumkin.",
+  "verse-of-the-day": "KUN OYATI",
+  "verse-of-the-day-loading": "Kun oyati yuklanmoqda…"
 }

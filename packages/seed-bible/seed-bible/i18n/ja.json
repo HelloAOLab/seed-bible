@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} …",
   "translation-load-failed": "{{name}}を読み込めませんでした。",
   "loading-translations": "翻訳を読み込んでいます…",
-  "translations-load-failed": "翻訳リスト全体を読み込むことができなかったため、一部が欠落している可能性があります。"
+  "translations-load-failed": "翻訳リスト全体を読み込むことができなかったため、一部が欠落している可能性があります。",
+  "verse-of-the-day": "今日の聖句",
+  "verse-of-the-day-loading": "今日の聖句を読み込んでいます…"
 }

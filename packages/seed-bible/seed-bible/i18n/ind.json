@@ -1273,5 +1273,7 @@
   "loading-translation": "Memuat {{name}} …",
   "translation-load-failed": "{{name}} tidak dapat dimuat.",
   "loading-translations": "Sedang memuat terjemahan…",
-  "translations-load-failed": "Daftar terjemahan lengkap tidak dapat dimuat, jadi beberapa mungkin hilang."
+  "translations-load-failed": "Daftar terjemahan lengkap tidak dapat dimuat, jadi beberapa mungkin hilang.",
+  "verse-of-the-day": "AYAT HARI INI",
+  "verse-of-the-day-loading": "Memuat ayat hari ini…"
 }

@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} betöltése …",
   "translation-load-failed": "{{name}} fájl betöltése sikertelen.",
   "loading-translations": "Fordítások betöltése…",
-  "translations-load-failed": "Nem sikerült betölteni a fordítások teljes listáját, ezért előfordulhat, hogy néhány hiányzik."
+  "translations-load-failed": "Nem sikerült betölteni a fordítások teljes listáját, ezért előfordulhat, hogy néhány hiányzik.",
+  "verse-of-the-day": "A NAP VERSE",
+  "verse-of-the-day-loading": "A nap versének betöltése…"
 }

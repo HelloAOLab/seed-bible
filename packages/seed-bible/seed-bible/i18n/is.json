@@ -1273,5 +1273,7 @@
   "loading-translation": "Hleður inn {{name}} …",
   "translation-load-failed": "Ekki var hægt að hlaða {{name}} .",
   "loading-translations": "Hleður inn þýðingum…",
-  "translations-load-failed": "Ekki tókst að hlaða inn öllum þýðingunum, svo sumar gætu vantað."
+  "translations-load-failed": "Ekki tókst að hlaða inn öllum þýðingunum, svo sumar gætu vantað.",
+  "verse-of-the-day": "VERS DAGSINS",
+  "verse-of-the-day-loading": "Hleður inn vers dagsins…"
 }

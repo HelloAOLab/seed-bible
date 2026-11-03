@@ -1273,5 +1273,7 @@
   "loading-translation": "جارٍ تحميل {{name}} …",
   "translation-load-failed": "تعذر تحميل {{name}} .",
   "loading-translations": "جارٍ تحميل الترجمات…",
-  "translations-load-failed": "تعذر تحميل القائمة الكاملة للترجمات، لذا قد تكون بعضها مفقودة."
+  "translations-load-failed": "تعذر تحميل القائمة الكاملة للترجمات، لذا قد تكون بعضها مفقودة.",
+  "verse-of-the-day": "آية اليوم",
+  "verse-of-the-day-loading": "جارٍ تحميل آية اليوم..."
 }

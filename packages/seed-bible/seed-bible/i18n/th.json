@@ -1273,5 +1273,7 @@
   "loading-translation": "กำลังโหลด {{name}} …",
   "translation-load-failed": "ไม่สามารถโหลด {{name}} ได้",
   "loading-translations": "กำลังโหลดคำแปล…",
-  "translations-load-failed": "ไม่สามารถโหลดรายการคำแปลทั้งหมดได้ ดังนั้นบางคำแปลอาจหายไป"
+  "translations-load-failed": "ไม่สามารถโหลดรายการคำแปลทั้งหมดได้ ดังนั้นบางคำแปลอาจหายไป",
+  "verse-of-the-day": "ข้อพระคัมภีร์ประจำวัน",
+  "verse-of-the-day-loading": "กำลังโหลดข้อความประจำวัน..."
 }

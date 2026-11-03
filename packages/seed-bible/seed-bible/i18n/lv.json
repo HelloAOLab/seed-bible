@@ -1273,5 +1273,7 @@
   "loading-translation": "Notiek {{name}} ielāde…",
   "translation-load-failed": "Nevarēja ielādēt {{name}} .",
   "loading-translations": "Notiek tulkojumu ielāde…",
-  "translations-load-failed": "Nevarēja ielādēt pilnu tulkojumu sarakstu, tāpēc daži var trūkt."
+  "translations-load-failed": "Nevarēja ielādēt pilnu tulkojumu sarakstu, tāpēc daži var trūkt.",
+  "verse-of-the-day": "DIENAS PANTS",
+  "verse-of-the-day-loading": "Notiek dienas panta ielāde…"
 }

@@ -1273,5 +1273,7 @@
   "loading-translation": "Duke ngarkuar {{name}} …",
   "translation-load-failed": "{{name}} nuk mund të ngarkohej.",
   "loading-translations": "Duke ngarkuar përkthimet…",
-  "translations-load-failed": "Nuk mund të ngarkohej lista e plotë e përkthimeve, kështu që disa mund të mungojnë."
+  "translations-load-failed": "Nuk mund të ngarkohej lista e plotë e përkthimeve, kështu që disa mund të mungojnë.",
+  "verse-of-the-day": "Vargu i ditës",
+  "verse-of-the-day-loading": "Duke ngarkuar vargun e ditës…"
 }

@@ -1273,5 +1273,7 @@
   "loading-translation": "טוען את {{name}} …",
   "translation-load-failed": "לא ניתן היה לטעון את {{name}} .",
   "loading-translations": "טוען תרגומים…",
-  "translations-load-failed": "לא ניתן היה לטעון את רשימת התרגומים המלאה, לכן ייתכן שחלקם חסרים."
+  "translations-load-failed": "לא ניתן היה לטעון את רשימת התרגומים המלאה, לכן ייתכן שחלקם חסרים.",
+  "verse-of-the-day": "פסוק היום",
+  "verse-of-the-day-loading": "טוען את פסוק היום..."
 }

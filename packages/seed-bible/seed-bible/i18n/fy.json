@@ -1273,5 +1273,7 @@
   "loading-translation": "Ynladen fan {{name}} …",
   "translation-load-failed": "{{name}} koe net laden wurde.",
   "loading-translations": "Oersettings laden…",
-  "translations-load-failed": "Koe de folsleine list mei oersettings net lade, dus guon kinne ûntbrekke."
+  "translations-load-failed": "Koe de folsleine list mei oersettings net lade, dus guon kinne ûntbrekke.",
+  "verse-of-the-day": "FERS FAN DE DEI",
+  "verse-of-the-day-loading": "It fers fan 'e dei oan it laden…"
 }

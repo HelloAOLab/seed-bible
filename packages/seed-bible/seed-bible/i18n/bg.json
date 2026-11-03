@@ -1273,5 +1273,7 @@
   "loading-translation": "Зареждане на {{name}} …",
   "translation-load-failed": "{{name}} не можа да бъде зареден.",
   "loading-translations": "Зареждане на преводи…",
-  "translations-load-failed": "Не можа да се зареди пълният списък с преводи, така че е възможно някои да липсват."
+  "translations-load-failed": "Не можа да се зареди пълният списък с преводи, така че е възможно някои да липсват.",
+  "verse-of-the-day": "СТИХ НА ДЕНЯ",
+  "verse-of-the-day-loading": "Зареждане на стиха на деня…"
 }

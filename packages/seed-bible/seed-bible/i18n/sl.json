@@ -1273,5 +1273,7 @@
   "loading-translation": "Nalaganje {{name}} …",
   "translation-load-failed": "{{name}} ni bilo mogoče naložiti.",
   "loading-translations": "Nalaganje prevodov …",
-  "translations-load-failed": "Celotnega seznama prevodov ni bilo mogoče naložiti, zato nekateri morda manjkajo."
+  "translations-load-failed": "Celotnega seznama prevodov ni bilo mogoče naložiti, zato nekateri morda manjkajo.",
+  "verse-of-the-day": "VERZ DNEVA",
+  "verse-of-the-day-loading": "Nalaganje verza dneva ..."
 }

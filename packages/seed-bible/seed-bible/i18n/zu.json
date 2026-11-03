@@ -1273,5 +1273,7 @@
   "loading-translation": "Ilayisha {{name}} …",
   "translation-load-failed": "{{name}} ayikwazanga ukulayishwa.",
   "loading-translations": "Ilayisha ukuhumusha…",
-  "translations-load-failed": "Ayikwazanga ukulayisha uhlu oluphelele lwezinguqulo, ngakho ezinye kungenzeka ukuthi azikho."
+  "translations-load-failed": "Ayikwazanga ukulayisha uhlu oluphelele lwezinguqulo, ngakho ezinye kungenzeka ukuthi azikho.",
+  "verse-of-the-day": "Ivesi Losuku",
+  "verse-of-the-day-loading": "Ilayisha ivesi losuku..."
 }

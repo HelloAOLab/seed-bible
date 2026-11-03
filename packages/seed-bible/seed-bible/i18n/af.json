@@ -1273,5 +1273,7 @@
   "loading-translation": "Laai {{name}} …",
   "translation-load-failed": "{{name}} kon nie gelaai word nie.",
   "loading-translations": "Laai vertalings…",
-  "translations-load-failed": "Kon nie die volledige lys vertalings laai nie, so sommige mag dalk ontbreek."
+  "translations-load-failed": "Kon nie die volledige lys vertalings laai nie, so sommige mag dalk ontbreek.",
+  "verse-of-the-day": "VERS VAN DIE DAG",
+  "verse-of-the-day-loading": "Laai tans die vers van die dag…"
 }

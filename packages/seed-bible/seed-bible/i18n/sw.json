@@ -1273,5 +1273,7 @@
   "loading-translation": "Inapakia {{name}} …",
   "translation-load-failed": "{{name}} haikuweza kupakiwa.",
   "loading-translations": "Inapakia tafsiri…",
-  "translations-load-failed": "Haikuweza kupakia orodha kamili ya tafsiri, kwa hivyo baadhi zinaweza kuwa hazipo."
+  "translations-load-failed": "Haikuweza kupakia orodha kamili ya tafsiri, kwa hivyo baadhi zinaweza kuwa hazipo.",
+  "verse-of-the-day": "AYA YA SIKU",
+  "verse-of-the-day-loading": "Inapakia mstari wa siku..."
 }

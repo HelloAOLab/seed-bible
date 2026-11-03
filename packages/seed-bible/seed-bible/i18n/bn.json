@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} লোড হচ্ছে …",
   "translation-load-failed": "{{name}} লোড করা যায়নি।",
   "loading-translations": "অনুবাদ লোড হচ্ছে…",
-  "translations-load-failed": "অনুবাদের সম্পূর্ণ তালিকা লোড করা যায়নি, তাই কিছু অনুবাদ বাদ থাকতে পারে।"
+  "translations-load-failed": "অনুবাদের সম্পূর্ণ তালিকা লোড করা যায়নি, তাই কিছু অনুবাদ বাদ থাকতে পারে।",
+  "verse-of-the-day": "দিনের শ্লোক",
+  "verse-of-the-day-loading": "দিনের শ্লোকটি লোড করা হচ্ছে…"
 }

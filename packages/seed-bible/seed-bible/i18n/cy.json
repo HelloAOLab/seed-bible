@@ -1273,5 +1273,7 @@
   "loading-translation": "Yn llwytho {{name}} …",
   "translation-load-failed": "Ni ellid llwytho {{name}} .",
   "loading-translations": "Wrthi'n llwytho cyfieithiadau…",
-  "translations-load-failed": "Methwyd llwytho'r rhestr lawn o gyfieithiadau, felly efallai bod rhai ar goll."
+  "translations-load-failed": "Methwyd llwytho'r rhestr lawn o gyfieithiadau, felly efallai bod rhai ar goll.",
+  "verse-of-the-day": "ADNOD Y DYDD",
+  "verse-of-the-day-loading": "Wrthi'n llwytho pennill y dydd…"
 }

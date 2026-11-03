@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} ይጽዕን ኣሎ ...",
   "translation-load-failed": "{{name}} ክጽዓን ኣይከኣለን።",
   "loading-translations": "ትርጉማት ኣብ ምጽዓን...",
-  "translations-load-failed": "ምሉእ ዝርዝር ትርጉማት ክጽዕን ስለዘይከኣለ፡ ገሊኡ ክጎድል ይኽእል እዩ።"
+  "translations-load-failed": "ምሉእ ዝርዝር ትርጉማት ክጽዕን ስለዘይከኣለ፡ ገሊኡ ክጎድል ይኽእል እዩ።",
+  "verse-of-the-day": "ጥቕሲ ናይቲ መዓልቲ",
+  "verse-of-the-day-loading": "ጥቕሲ ናይቲ መዓልቲ ኣብ ምጽዓን..."
 }

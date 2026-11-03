@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} yükleniyor…",
   "translation-load-failed": "{{name}} yüklenemedi.",
   "loading-translations": "Çeviriler yükleniyor…",
-  "translations-load-failed": "Çevirilerin tam listesi yüklenemedi, bu nedenle bazıları eksik olabilir."
+  "translations-load-failed": "Çevirilerin tam listesi yüklenemedi, bu nedenle bazıları eksik olabilir.",
+  "verse-of-the-day": "GÜNÜN AYETİ",
+  "verse-of-the-day-loading": "Günün ayeti yükleniyor…"
 }

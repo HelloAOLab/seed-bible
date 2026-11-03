@@ -1273,5 +1273,7 @@
   "loading-translation": "Laster inn {{name}} …",
   "translation-load-failed": "Kunne ikke laste inn {{name}} .",
   "loading-translations": "Laster inn oversettelser…",
-  "translations-load-failed": "Kunne ikke laste inn hele listen over oversettelser, så noen kan mangle."
+  "translations-load-failed": "Kunne ikke laste inn hele listen over oversettelser, så noen kan mangle.",
+  "verse-of-the-day": "DAGENS VERS",
+  "verse-of-the-day-loading": "Laster inn dagens vers…"
 }

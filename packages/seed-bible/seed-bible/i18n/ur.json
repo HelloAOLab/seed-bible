@@ -1273,5 +1273,7 @@
   "loading-translation": "لوڈ ہو رہا ہے {{name}} …",
   "translation-load-failed": "{{name}} کو لوڈ نہیں کیا جا سکا۔",
   "loading-translations": "ترجمے لوڈ ہو رہے ہیں…",
-  "translations-load-failed": "تراجم کی مکمل فہرست لوڈ نہیں کی جا سکی، اس لیے کچھ غائب ہو سکتے ہیں۔"
+  "translations-load-failed": "تراجم کی مکمل فہرست لوڈ نہیں کی جا سکی، اس لیے کچھ غائب ہو سکتے ہیں۔",
+  "verse-of-the-day": "دن کی آیت",
+  "verse-of-the-day-loading": "دن کی آیت لوڈ ہو رہی ہے…"
 }

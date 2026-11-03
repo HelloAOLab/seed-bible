@@ -1273,5 +1273,7 @@
   "loading-translation": "Kraunama {{name}} …",
   "translation-load-failed": "Nepavyko įkelti {{name}} .",
   "loading-translations": "Įkeliami vertimai…",
-  "translations-load-failed": "Nepavyko įkelti viso vertimų sąrašo, todėl kai kurių gali trūkti."
+  "translations-load-failed": "Nepavyko įkelti viso vertimų sąrašo, todėl kai kurių gali trūkti.",
+  "verse-of-the-day": "DIENOS EILIŠĖ",
+  "verse-of-the-day-loading": "Kraunama dienos eilėraštis…"
 }

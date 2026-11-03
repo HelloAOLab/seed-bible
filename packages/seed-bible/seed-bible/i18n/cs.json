@@ -1273,5 +1273,7 @@
   "loading-translation": "Načítání {{name}} …",
   "translation-load-failed": "{{name}} se nepodařilo načíst.",
   "loading-translations": "Načítání překladů…",
-  "translations-load-failed": "Nepodařilo se načíst celý seznam překladů, takže některé mohou chybět."
+  "translations-load-failed": "Nepodařilo se načíst celý seznam překladů, takže některé mohou chybět.",
+  "verse-of-the-day": "VERŠ DNE",
+  "verse-of-the-day-loading": "Načítání dnešního verše…"
 }

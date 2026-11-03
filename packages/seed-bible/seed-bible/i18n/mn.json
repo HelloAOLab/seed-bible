@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} ачааллаж байна …",
   "translation-load-failed": "{{name}} г ачаалж чадсангүй.",
   "loading-translations": "Орчуулгыг ачаалж байна…",
-  "translations-load-failed": "Орчуулгын бүрэн жагсаалтыг ачаалж чадсангүй, зарим нь дутуу байж магадгүй."
+  "translations-load-failed": "Орчуулгын бүрэн жагсаалтыг ачаалж чадсангүй, зарим нь дутуу байж магадгүй.",
+  "verse-of-the-day": "ӨДРИЙН ШҮЛЭГ",
+  "verse-of-the-day-loading": "Өдрийн шүлгийг ачаалж байна..."
 }

@@ -1273,5 +1273,7 @@
   "loading-translation": "در حال بارگذاری {{name}} ...",
   "translation-load-failed": "{{name}} قابل بارگذاری نیست.",
   "loading-translations": "در حال بارگذاری ترجمه‌ها…",
-  "translations-load-failed": "نتوانستم لیست کامل ترجمه‌ها را بارگذاری کنم، بنابراین ممکن است برخی از آنها از قلم افتاده باشند."
+  "translations-load-failed": "نتوانستم لیست کامل ترجمه‌ها را بارگذاری کنم، بنابراین ممکن است برخی از آنها از قلم افتاده باشند.",
+  "verse-of-the-day": "آیه روز",
+  "verse-of-the-day-loading": "در حال بارگذاری آیه روز…"
 }

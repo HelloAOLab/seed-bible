@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} بارول کیږي …",
   "translation-load-failed": "{{name}} پورته نشو.",
   "loading-translations": "ژباړې بارېږي…",
-  "translations-load-failed": "د ژباړو بشپړ لیست نه شو پورته کولی، نو ممکن ځینې یې ورک وي."
+  "translations-load-failed": "د ژباړو بشپړ لیست نه شو پورته کولی، نو ممکن ځینې یې ورک وي.",
+  "verse-of-the-day": "د ورځې آیت",
+  "verse-of-the-day-loading": "د ورځې آیت پورته کول…"
 }

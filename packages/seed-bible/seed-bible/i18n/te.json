@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} లోడ్ అవుతోంది…",
   "translation-load-failed": "{{name}} లోడ్ కాలేదు.",
   "loading-translations": "అనువాదాలు లోడ్ అవుతున్నాయి…",
-  "translations-load-failed": "అనువాదాల పూర్తి జాబితాను లోడ్ చేయలేకపోయాము, అందువల్ల కొన్ని అందుబాటులో లేకపోవచ్చు."
+  "translations-load-failed": "అనువాదాల పూర్తి జాబితాను లోడ్ చేయలేకపోయాము, అందువల్ల కొన్ని అందుబాటులో లేకపోవచ్చు.",
+  "verse-of-the-day": "రోజు సూక్తి",
+  "verse-of-the-day-loading": "ఈనాటి వచనం లోడ్ అవుతోంది…"
 }

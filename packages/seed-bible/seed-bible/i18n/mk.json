@@ -1273,5 +1273,7 @@
   "loading-translation": "Се вчитува {{name}} …",
   "translation-load-failed": "{{name}} не можеше да се вчита.",
   "loading-translations": "Се вчитуваат преводи…",
-  "translations-load-failed": "Не можеше да се вчита целиот список на преводи, па затоа некои можеби недостасуваат."
+  "translations-load-failed": "Не можеше да се вчита целиот список на преводи, па затоа некои можеби недостасуваат.",
+  "verse-of-the-day": "СТИХ НА ДЕНОТ",
+  "verse-of-the-day-loading": "Се вчитува стихот на денот…"
 }

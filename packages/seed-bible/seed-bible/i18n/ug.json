@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} يۈكلەنمەكتە …",
   "translation-load-failed": "{{name}} نى يۈكلىگىلى بولمىدى.",
   "loading-translations": "تەرجىمىلەر يۈكلەنمەكتە…",
-  "translations-load-failed": "تەرجىمىلەرنىڭ تولۇق تىزىملىكىنى يۈكلىيەلمىدى، شۇڭا بەزىلىرى يوقاپ كەتكەن بولۇشى مۇمكىن."
+  "translations-load-failed": "تەرجىمىلەرنىڭ تولۇق تىزىملىكىنى يۈكلىيەلمىدى، شۇڭا بەزىلىرى يوقاپ كەتكەن بولۇشى مۇمكىن.",
+  "verse-of-the-day": "كۈننىڭ ئايىتى",
+  "verse-of-the-day-loading": "كۈننىڭ ئايىتى يۈكلەنمەكتە…"
 }

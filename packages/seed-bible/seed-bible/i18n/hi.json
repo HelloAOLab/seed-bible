@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} लोड हो रहा है…",
   "translation-load-failed": "{{name}} लोड नहीं हो सका।",
   "loading-translations": "अनुवाद लोड हो रहे हैं…",
-  "translations-load-failed": "अनुवादों की पूरी सूची लोड नहीं हो सकी, इसलिए कुछ अनुवाद गायब हो सकते हैं।"
+  "translations-load-failed": "अनुवादों की पूरी सूची लोड नहीं हो सकी, इसलिए कुछ अनुवाद गायब हो सकते हैं।",
+  "verse-of-the-day": "आज का श्लोक",
+  "verse-of-the-day-loading": "आज का श्लोक लोड हो रहा है…"
 }

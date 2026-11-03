@@ -1273,5 +1273,7 @@
   "loading-translation": "Загрузка {{name}} …",
   "translation-load-failed": "Не ўдалося загрузіць {{name}} .",
   "loading-translations": "Загрузка перакладаў…",
-  "translations-load-failed": "Не атрымалася загрузіць поўны спіс перакладаў, таму некаторыя могуць адсутнічаць."
+  "translations-load-failed": "Не атрымалася загрузіць поўны спіс перакладаў, таму некаторыя могуць адсутнічаць.",
+  "verse-of-the-day": "ВЕРШ ДНЯ",
+  "verse-of-the-day-loading": "Загрузка верша дня…"
 }

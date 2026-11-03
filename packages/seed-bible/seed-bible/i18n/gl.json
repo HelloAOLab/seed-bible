@@ -1273,5 +1273,7 @@
   "loading-translation": "Cargando {{name}} …",
   "translation-load-failed": "Non se puido cargar {{name}} .",
   "loading-translations": "Cargando traducións…",
-  "translations-load-failed": "Non se puido cargar a lista completa de traducións, polo que pode que falten algunhas."
+  "translations-load-failed": "Non se puido cargar a lista completa de traducións, polo que pode que falten algunhas.",
+  "verse-of-the-day": "VERSO DO DÍA",
+  "verse-of-the-day-loading": "Cargando o verso do día…"
 }

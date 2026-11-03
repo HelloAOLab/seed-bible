@@ -1273,5 +1273,7 @@
   "loading-translation": "Đang tải {{name}} …",
   "translation-load-failed": "Không thể tải {{name}} .",
   "loading-translations": "Đang tải bản dịch…",
-  "translations-load-failed": "Không thể tải toàn bộ danh sách bản dịch, vì vậy một số bản dịch có thể bị thiếu."
+  "translations-load-failed": "Không thể tải toàn bộ danh sách bản dịch, vì vậy một số bản dịch có thể bị thiếu.",
+  "verse-of-the-day": "CÂU THƠ TRONG NGÀY",
+  "verse-of-the-day-loading": "Đang tải câu Kinh Thánh của ngày hôm nay…"
 }

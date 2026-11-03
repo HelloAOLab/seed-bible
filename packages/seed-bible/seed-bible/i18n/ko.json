@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} 로딩 중…",
   "translation-load-failed": "{{name}} (를) 불러올 수 없습니다.",
   "loading-translations": "번역 불러오는 중…",
-  "translations-load-failed": "전체 번역 목록을 불러올 수 없어서 일부 번역이 누락되었을 수 있습니다."
+  "translations-load-failed": "전체 번역 목록을 불러올 수 없어서 일부 번역이 누락되었을 수 있습니다.",
+  "verse-of-the-day": "오늘의 말씀",
+  "verse-of-the-day-loading": "오늘의 말씀 불러오는 중…"
 }

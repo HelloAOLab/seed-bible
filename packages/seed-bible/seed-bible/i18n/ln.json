@@ -1273,5 +1273,7 @@
   "loading-translation": "Kokɔtisa {{name}} ...",
   "translation-load-failed": "{{name}} ekokaki kozala te.",
   "loading-translations": "Chargement ya mabongoli...",
-  "translations-load-failed": "Ekokaki te ko charger liste mobimba ya mabongoli, yango wana misusu ekoki kozanga."
+  "translations-load-failed": "Ekokaki te ko charger liste mobimba ya mabongoli, yango wana misusu ekoki kozanga.",
+  "verse-of-the-day": "VERSER YA MOKOLO",
+  "verse-of-the-day-loading": "Chargement ya verset ya mokolo..."
 }

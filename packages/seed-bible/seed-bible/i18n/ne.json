@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} लोड हुँदै ...",
   "translation-load-failed": "{{name}} लोड गर्न सकिएन।",
   "loading-translations": "अनुवादहरू लोड गर्दै...",
-  "translations-load-failed": "अनुवादहरूको पूर्ण सूची लोड गर्न सकिएन, त्यसैले केही छुटेका हुन सक्छन्।"
+  "translations-load-failed": "अनुवादहरूको पूर्ण सूची लोड गर्न सकिएन, त्यसैले केही छुटेका हुन सक्छन्।",
+  "verse-of-the-day": "दिनको पद",
+  "verse-of-the-day-loading": "आजको पद लोड गर्दै..."
 }

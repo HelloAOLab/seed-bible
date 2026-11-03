@@ -1273,5 +1273,7 @@
   "loading-translation": "Laadin {{name}} …",
   "translation-load-failed": "{{name}} ei saanud laadida.",
   "loading-translations": "Tõlgete laadimine…",
-  "translations-load-failed": "Täieliku tõlgete loendi laadimine ebaõnnestus, seega mõned võivad puududa."
+  "translations-load-failed": "Täieliku tõlgete loendi laadimine ebaõnnestus, seega mõned võivad puududa.",
+  "verse-of-the-day": "PÄEVA VÄLJ",
+  "verse-of-the-day-loading": "Päeva salmi laadimine…"
 }

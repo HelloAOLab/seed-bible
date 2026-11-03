@@ -1273,5 +1273,7 @@
   "loading-translation": "Ojekarga hína {{name}} ...",
   "translation-load-failed": "{{name}} ndaikatúi ojekarga.",
   "loading-translations": "Ojekarga umi ñe'ẽasa...",
-  "translations-load-failed": "Ndaikatúi ojekarga pe lista completa umi traduksión rehegua, upévare ikatu oĩ ofaltáva."
+  "translations-load-failed": "Ndaikatúi ojekarga pe lista completa umi traduksión rehegua, upévare ikatu oĩ ofaltáva.",
+  "verse-of-the-day": "VERSIÓN DEL DÍA rehegua",
+  "verse-of-the-day-loading": "Ojekargávo pe versículo ára rehegua..."
 }

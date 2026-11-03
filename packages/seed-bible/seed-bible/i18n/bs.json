@@ -1273,5 +1273,7 @@
   "loading-translation": "Učitavanje {{name}} …",
   "translation-load-failed": "{{name}} nije mogla biti učitana.",
   "loading-translations": "Učitavanje prijevoda…",
-  "translations-load-failed": "Nije moguće učitati cijelu listu prijevoda, tako da neki možda nedostaju."
+  "translations-load-failed": "Nije moguće učitati cijelu listu prijevoda, tako da neki možda nedostaju.",
+  "verse-of-the-day": "STIH DANA",
+  "verse-of-the-day-loading": "Učitava se stih dana…"
 }

@@ -1273,5 +1273,7 @@
   "loading-translation": "កំពុងផ្ទុក {{name}} …",
   "translation-load-failed": "មិនអាចផ្ទុក {{name}} បានទេ។",
   "loading-translations": "កំពុងផ្ទុកការបកប្រែ...",
-  "translations-load-failed": "មិនអាចផ្ទុកបញ្ជីពេញលេញនៃការបកប្រែបានទេ ដូច្នេះខ្លះអាចបាត់។"
+  "translations-load-failed": "មិនអាចផ្ទុកបញ្ជីពេញលេញនៃការបកប្រែបានទេ ដូច្នេះខ្លះអាចបាត់។",
+  "verse-of-the-day": "ខគម្ពីរប្រចាំថ្ងៃ",
+  "verse-of-the-day-loading": "កំពុងផ្ទុកខគម្ពីរប្រចាំថ្ងៃ..."
 }

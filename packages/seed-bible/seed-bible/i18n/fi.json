@@ -1273,5 +1273,7 @@
   "loading-translation": "Ladataan {{name}} …",
   "translation-load-failed": "{{name}} ei voitu ladata.",
   "loading-translations": "Käännöksiä ladataan…",
-  "translations-load-failed": "Käännösten koko luetteloa ei voitu ladata, joten joitakin saattaa puuttua."
+  "translations-load-failed": "Käännösten koko luetteloa ei voitu ladata, joten joitakin saattaa puuttua.",
+  "verse-of-the-day": "PÄIVÄN JAKE",
+  "verse-of-the-day-loading": "Päivän jaetta ladataan…"
 }

@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} yüklənir …",
   "translation-load-failed": "{{name}} yüklənə bilmədi.",
   "loading-translations": "Tərcümələr yüklənir…",
-  "translations-load-failed": "Tərcümələrin tam siyahısını yükləmək mümkün olmadı, ona görə də bəziləri çatışmamış ola bilər."
+  "translations-load-failed": "Tərcümələrin tam siyahısını yükləmək mümkün olmadı, ona görə də bəziləri çatışmamış ola bilər.",
+  "verse-of-the-day": "GÜNÜN AYƏSİ",
+  "verse-of-the-day-loading": "Günün ayəsi yüklənir..."
 }

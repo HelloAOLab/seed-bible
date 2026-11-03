@@ -1273,5 +1273,7 @@
   "loading-translation": "Naglo-load si {{name}} …",
   "translation-load-failed": "Hindi ma-load si {{name}} .",
   "loading-translations": "Naglo-load ng mga pagsasalin…",
-  "translations-load-failed": "Hindi ma-load ang buong listahan ng mga pagsasalin, kaya maaaring may ilan na nawawala."
+  "translations-load-failed": "Hindi ma-load ang buong listahan ng mga pagsasalin, kaya maaaring may ilan na nawawala.",
+  "verse-of-the-day": "BERDORA NG ARAW",
+  "verse-of-the-day-loading": "Nilo-load ang bersikulo ng araw…"
 }

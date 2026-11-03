@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} લોડ કરી રહ્યું છે …",
   "translation-load-failed": "{{name}} લોડ કરી શકાયું નથી.",
   "loading-translations": "અનુવાદો લોડ કરી રહ્યું છે…",
-  "translations-load-failed": "અનુવાદોની સંપૂર્ણ સૂચિ લોડ કરી શકાઈ નથી, તેથી કેટલાક ખૂટતા હોઈ શકે છે."
+  "translations-load-failed": "અનુવાદોની સંપૂર્ણ સૂચિ લોડ કરી શકાઈ નથી, તેથી કેટલાક ખૂટતા હોઈ શકે છે.",
+  "verse-of-the-day": "દિવસનો શ્લોક",
+  "verse-of-the-day-loading": "આજનું શ્લોક લોડ કરી રહ્યું છે..."
 }

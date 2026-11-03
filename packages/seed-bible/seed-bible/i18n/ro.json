@@ -1273,5 +1273,7 @@
   "loading-translation": "Se încarcă {{name}} …",
   "translation-load-failed": "{{name}} nu a putut fi încărcat.",
   "loading-translations": "Se încarcă traducerile…",
-  "translations-load-failed": "Nu s-a putut încărca lista completă de traduceri, așadar este posibil ca unele să lipsească."
+  "translations-load-failed": "Nu s-a putut încărca lista completă de traduceri, așadar este posibil ca unele să lipsească.",
+  "verse-of-the-day": "VERSETUL ZILEI",
+  "verse-of-the-day-loading": "Se încarcă versetul zilei…"
 }

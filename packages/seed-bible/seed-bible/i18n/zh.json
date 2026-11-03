@@ -1273,5 +1273,7 @@
   "loading-translation": "正在加载{{name}} …",
   "translation-load-failed": "{{name}}无法加载。",
   "loading-translations": "正在加载翻译…",
-  "translations-load-failed": "无法加载完整的翻译列表，因此可能缺少一些翻译。"
+  "translations-load-failed": "无法加载完整的翻译列表，因此可能缺少一些翻译。",
+  "verse-of-the-day": "每日经文",
+  "verse-of-the-day-loading": "正在加载今日经文……"
 }

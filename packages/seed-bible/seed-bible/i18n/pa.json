@@ -1273,5 +1273,7 @@
   "loading-translation": "{{name}} ਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ …",
   "translation-load-failed": "{{name}} ਲੋਡ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।",
   "loading-translations": "ਅਨੁਵਾਦ ਲੋਡ ਕੀਤੇ ਜਾ ਰਹੇ ਹਨ…",
-  "translations-load-failed": "ਅਨੁਵਾਦਾਂ ਦੀ ਪੂਰੀ ਸੂਚੀ ਲੋਡ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ, ਇਸ ਲਈ ਕੁਝ ਗੁੰਮ ਹੋ ਸਕਦੇ ਹਨ।"
+  "translations-load-failed": "ਅਨੁਵਾਦਾਂ ਦੀ ਪੂਰੀ ਸੂਚੀ ਲੋਡ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ, ਇਸ ਲਈ ਕੁਝ ਗੁੰਮ ਹੋ ਸਕਦੇ ਹਨ।",
+  "verse-of-the-day": "ਦਿਨ ਦੀ ਆਇਤ",
+  "verse-of-the-day-loading": "ਅੱਜ ਦੀ ਆਇਤ ਲੋਡ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ..."
 }
