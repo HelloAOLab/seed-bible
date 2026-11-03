@@ -15,8 +15,8 @@ describe("mobile swipe track stylesheet", () => {
       ),
       "utf8"
     );
-    const rules = [...css.matchAll(/([^{}]*)\{([^{}]*)\}/g)].filter(([, s]) =>
-      s.includes(".sb-reader-swipe-track")
+    const rules = [...css.matchAll(/([^{}]*)\{([^{}]*)\}/g)].filter(
+      ([, selector]) => selector?.includes(".sb-reader-swipe-track")
     );
 
     expect(rules.length).toBeGreaterThan(0);
