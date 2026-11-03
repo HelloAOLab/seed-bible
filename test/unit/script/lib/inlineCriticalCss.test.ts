@@ -54,6 +54,25 @@ describe("injectCriticalStyles()", () => {
 });
 
 describe("makeStylesheetsNonBlocking()", () => {
+  it("leaves a stylesheet link inside a <noscript> fallback alone", () => {
+    const html = [
+      `<link rel="preload" as="style" href="/icons.css">`,
+      `<noscript><link rel="stylesheet" href="/icons.css"></noscript>`,
+      `<link rel="stylesheet" href="/app.css">`,
+    ].join("\n");
+
+    const result = makeStylesheetsNonBlocking(html);
+
+    expect(result).toContain(
+      `<noscript><link rel="stylesheet" href="/icons.css"></noscript>`
+    );
+    // Rewriting the fallback too would add a second preload for the icons.
+    expect(result.match(/rel="preload"[^>]*icons\.css/g)).toHaveLength(1);
+    expect(result).toContain(
+      `<link rel="preload" as="style" href="/app.css" onload=`
+    );
+  });
+
   function stylesheetHtml(link: string): string {
     return `<head><link rel="icon" href="/favicon.ico">${link}</head>`;
   }
