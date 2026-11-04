@@ -1,6 +1,8 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import type { ComponentChild } from "preact";
+import { signal } from "@preact/signals";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import {
   MAX_MAP_DATA_LENGTH,
@@ -9,7 +11,7 @@ import {
   createOpenPlace,
   findKnownLocation,
   fitsInPortalUrl,
-  placePaneId,
+  placeMapId,
   resolvePlaceMapData,
   type PlaceLocations,
 } from "@packages/theographic-extension/ext_theographic/map";
@@ -215,7 +217,7 @@ describe("createIsPlaceOpen", () => {
     expect(isOpen(BABEL)).toBe(false);
     createOpenPlace(panes)?.(BABEL);
     expect(isOpen(BABEL)).toBe(true);
-    panes.closePane(placePaneId(BABEL));
+    panes.closePane(placeMapId(BABEL));
     expect(isOpen(BABEL)).toBe(false);
   });
 
@@ -252,7 +254,7 @@ describe("createOpenPlace", () => {
       client: { getResource },
       locations: fakeLocations(),
     })?.(erech);
-    renderPane(panes, placePaneId(erech));
+    renderPane(panes, placeMapId(erech));
 
     expect(container.querySelector(".sb-theographic-map-loading")).toBeTruthy();
     expect(container.querySelector("iframe")).toBeNull();
@@ -275,7 +277,7 @@ describe("createOpenPlace", () => {
       client: { getResource: () => Promise.reject(new Error("offline")) },
       locations: fakeLocations(),
     })?.(erech);
-    renderPane(panes, placePaneId(erech));
+    renderPane(panes, placeMapId(erech));
     await flush();
     await flush();
 
@@ -289,5 +291,81 @@ describe("createOpenPlace", () => {
     createOpenPlace(panes, { locations: fakeLocations() })?.(place("Abana"));
 
     expect(panes.panes.value).toHaveLength(0);
+  });
+
+  describe("on a phone", () => {
+    const BABEL = place("Babel", { latitude: 32.5365, longitude: 44.4209 });
+
+    function phoneWithDiscoverOpen() {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+      const modals = createModalManager();
+      panes.openPane({
+        id: "discover-pane",
+        placement: "side",
+        title: "Discover",
+        component: () => null,
+      });
+      const openPlace = createOpenPlace(panes, {}, { isMobile, modals });
+      return { isMobile, panes, modals, openPlace };
+    }
+
+    it("opens a sheet over Discover instead of a pane, so Discover stays as it was", () => {
+      const { panes, modals, openPlace } = phoneWithDiscoverOpen();
+      const discover = panes.panes.value[0];
+
+      openPlace?.(BABEL);
+
+      expect(modals.modals.value).toEqual([
+        expect.objectContaining({
+          id: placeMapId(BABEL),
+          title: "Babel",
+          mobileSheet: true,
+        }),
+      ]);
+      // A pane would have closed Discover; the sheet leaves it untouched.
+      expect(panes.panes.value).toEqual([discover]);
+    });
+
+    it("fills the sheet with the place's map", async () => {
+      const { modals, openPlace } = phoneWithDiscoverOpen();
+      openPlace?.(BABEL);
+
+      const Content = () =>
+        modals.modals.value[0]!.content({ t: (key) => key }) as ComponentChild;
+      act(() => {
+        render(<Content />, container);
+      });
+      await flush();
+      await flush();
+
+      const sheet = container.querySelector(".sb-theographic-map-sheet");
+      expect(sheet?.querySelector("iframe")).not.toBeNull();
+    });
+
+    it("opens the floating pane once the screen is wider", () => {
+      const { isMobile, panes, modals, openPlace } = phoneWithDiscoverOpen();
+      isMobile.value = false;
+
+      openPlace?.(BABEL);
+
+      expect(modals.modals.value).toEqual([]);
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual([
+        "discover-pane",
+        placeMapId(BABEL),
+      ]);
+    });
+
+    it("counts the place as open while its sheet is", () => {
+      const { panes, modals, openPlace } = phoneWithDiscoverOpen();
+      const isOpen = createIsPlaceOpen(panes, modals);
+
+      openPlace?.(BABEL);
+      expect(isOpen(BABEL)).toBe(true);
+      expect(isOpen(place("Erech"))).toBe(false);
+
+      modals.dismissModal(placeMapId(BABEL));
+      expect(isOpen(BABEL)).toBe(false);
+    });
   });
 });
