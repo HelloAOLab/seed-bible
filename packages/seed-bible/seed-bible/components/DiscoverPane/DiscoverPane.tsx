@@ -5,9 +5,6 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager } from "../../managers/TabsManager";
 import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
 import type { ModalManager } from "../../managers/ModalManager";
-import type { ChatsManager } from "../../managers/ChatsManager";
-import { translateTitle } from "../../app/utils";
-import { v4 as uuid } from "uuid";
 import type { AnnotationsManager } from "../../managers/AnnotationsManager";
 import type { Friend, FriendsManager } from "../../managers/FriendsManager";
 import {
@@ -22,10 +19,6 @@ import {
   ContextMenuWithButton,
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
-import {
-  CreatePlaylistForm,
-  requestCancelPlaylistEditor,
-} from "../CreatePlaylistForm/CreatePlaylistForm";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection } from "./DiscoverSection";
@@ -177,21 +170,17 @@ export function DiscoverPaneHeader(props: {
 /**
  * Title rendered in the pane's `PaneHeader` (passed as the pane's `title`
  * render function, see `SeedBibleStateManager`). In the discover sub-view it's
- * just the "Discover" label; while viewing or editing a playlist it becomes a
- * back button plus the playlist title (an editable input when editing), so
- * those controls live in the pane header rather than below it. Reads the
- * `actualView`/`playing`/`editingPlaylist` signals, so it stays reactive and
- * resets alongside the pane body when the active tab stops playing.
+ * just the "Discover" label; while playing a playlist it shows the playlist,
+ * and while annotating, a back button and where. Reads the
+ * `actualView`/`playing` signals, so it stays reactive and resets alongside
+ * the pane body when the active tab stops playing.
  */
 export function DiscoverPaneTitle(props: {
   playlists: PlaylistManager;
   annotations: AnnotationsManager;
   tabs: TabsManager;
-  chats: ChatsManager;
-  openChatPanel: () => void;
-  modals?: ModalManager;
 }) {
-  const { playlists, annotations, tabs, chats, openChatPanel } = props;
+  const { playlists, annotations, tabs } = props;
   const { t } = useI18n();
   const view = playlists.actualView.value;
 
@@ -260,120 +249,6 @@ export function DiscoverPaneTitle(props: {
     );
   }
 
-  if (view === "create_playlist") {
-    const editing = playlists.editingPlaylist.value;
-    const providers = chats.providers.value.filter(
-      (p) => p.supportsToolCalling
-    );
-    const singleProvider = providers.length === 1 ? providers[0] : undefined;
-    // Opens the chat panel on a fresh local chat, seeded with a prompt
-    // message inviting the user to describe what they want changed, with
-    // the given AI provider already added as a participant.
-    // `PlaylistManager` already exposes the playlist-editing tools to every
-    // chat while a playlist is being edited, so replying here lets the AI
-    // add/update/remove items and edit the title/description.
-    const startAiChat = (providerId: string) => {
-      let chat = chats.chats.value.find(
-        (c) =>
-          c.participants.value.every((p) => !p.isRemote) &&
-          c.participants.value.some(
-            (p) => p.isAI && p.providerId === providerId
-          )
-      );
-      if (!chat) {
-        chat = chats.createLocalSession({
-          messages: [
-            {
-              id: uuid(),
-              authors: [providerId],
-              timeMs: Date.now(),
-              targets: [],
-              type: "text",
-              text: t("ai-playlist-chat-prompt", {
-                defaultValue: "What do you want to add/change?",
-              }),
-            },
-          ],
-          providerIds: [],
-        });
-      }
-      chat.addParticipant(providerId);
-      chats.selectChat(chat.id);
-      openChatPanel();
-    };
-    const aiButtonLabel = t("ai", { defaultValue: "AI" });
-    const aiButtonAriaLabel = t("ai-edit-playlist", {
-      defaultValue: "Edit playlist with AI",
-    });
-    return (
-      <div className="sb-discover-title-row">
-        <button
-          type="button"
-          className="sb-reading-plans-back"
-          aria-label={t("back", { defaultValue: "Back" })}
-          onClick={() => {
-            if (props.modals) {
-              requestCancelPlaylistEditor(playlists, props.modals);
-              return;
-            }
-            playlists.cancelEditingPlaylist();
-          }}
-        >
-          <MaterialIcon>arrow_back</MaterialIcon>
-        </button>
-        <input
-          className="sb-settings-text-input sb-playlist-input"
-          type="text"
-          value={editing?.title ?? ""}
-          dir="auto"
-          onInput={(event: Event) => {
-            const value = (event.currentTarget as HTMLInputElement).value;
-            playlists.updateEditingPlaylistMetadata({
-              title: value.trim() ? value : null,
-            });
-          }}
-          placeholder={t("playlist-title_placeholder", {
-            defaultValue: "Playlist title",
-          })}
-        />
-        {providers.length > 1 ? (
-          // Multiple providers: let the user pick which one starts the chat.
-          <ContextMenuWithButton
-            buttonClassName="sb-discover-title-ai"
-            aria-label={aiButtonAriaLabel}
-            title={aiButtonLabel}
-            icon={
-              <>
-                <MaterialIcon>auto_awesome</MaterialIcon>
-              </>
-            }
-          >
-            {providers.map((provider) => (
-              <ContextMenuItem
-                key={provider.id}
-                onClick={() => startAiChat(provider.id)}
-              >
-                {translateTitle(t, provider.name)}
-              </ContextMenuItem>
-            ))}
-          </ContextMenuWithButton>
-        ) : (
-          singleProvider && (
-            <button
-              type="button"
-              className="sb-discover-title-ai"
-              aria-label={aiButtonAriaLabel}
-              title={aiButtonLabel}
-              onClick={() => startAiChat(singleProvider.id)}
-            >
-              <MaterialIcon>auto_awesome</MaterialIcon>
-            </button>
-          )
-        )}
-      </div>
-    );
-  }
-
   return <>{t("discover", { defaultValue: "Discover" })}</>;
 }
 
@@ -388,21 +263,8 @@ export function DiscoverPaneTitle(props: {
  */
 export function DiscoverPane(props: DiscoverPaneProps) {
   const { tabs, playlists, annotations, modals } = props;
+  const { t } = useI18n();
   const { actualView } = playlists;
-
-  if (actualView.value === "create_playlist") {
-    return (
-      <CreatePlaylistForm
-        playlists={playlists}
-        tabs={tabs}
-        modals={modals}
-        bibleData={props.state.bibleData}
-        os={props.state.os}
-        login={props.state.login}
-        gallery={props.state.gallery}
-      />
-    );
-  }
 
   if (actualView.value === "create_annotation") {
     return (
@@ -429,8 +291,31 @@ export function DiscoverPane(props: DiscoverPaneProps) {
   const selectedTab =
     tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
 
+  const hiddenDraft = playlists.editorHidden.value
+    ? playlists.editingPlaylist.value
+    : null;
+
   return (
     <div className="sb-discover-pane">
+      {hiddenDraft ? (
+        <div className="sb-discover-resume-edit" role="status">
+          <span className="sb-discover-resume-edit-text" dir="auto">
+            {t("playlist-resume-editing-text", {
+              defaultValue: "You were editing {{title}}.",
+              title:
+                hiddenDraft.title ||
+                t("untitled-playlist", { defaultValue: "Untitled playlist" }),
+            })}
+          </span>
+          <button
+            type="button"
+            className="sb-settings-save-button"
+            onClick={() => playlists.resumeEditing()}
+          >
+            {t("playlist-resume-editing", { defaultValue: "Continue editing" })}
+          </button>
+        </div>
+      ) : null}
       <AnnotationsSection
         tab={selectedTab}
         annotations={annotations}

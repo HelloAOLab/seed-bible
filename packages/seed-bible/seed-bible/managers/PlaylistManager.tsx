@@ -1370,20 +1370,16 @@ export function createPlaylistManager(
   const view = discover.view;
   const isDiscoverOpen = discover.isDiscoverOpen;
 
-  /** The playlist currently being edited/created in the pane, or null. */
+  /** The playlist currently being edited/created in the editor, or null. */
   const editingPlaylist = signal<Playlist | null>(null);
   /**
-   * Where the editor shows: inside the Discover side pane, or as its own
-   * fullscreen screen with the steps, the open step and its settings side by
-   * side. Decided when editing starts: the screen needs the width, so phones
-   * get the pane.
+   * Whether the editor is out of sight while its draft is kept: another
+   * fullscreen screen (Today, a playing step) took its place. Discover then
+   * offers to continue editing.
    */
-  const editorPlacement = signal<"pane" | "fullscreen">("pane");
+  const editorHidden = signal(false);
   const openEditor = () => {
-    editorPlacement.value = isMobile.peek() ? "pane" : "fullscreen";
-    if (editorPlacement.value === "pane") {
-      view.value = "create_playlist";
-    }
+    editorHidden.value = false;
   };
   /** Copy of the draft when the editor opened, for unsaved-change detection. */
   const editingPlaylistBaseline = signal<Playlist | null>(null);
@@ -2232,15 +2228,20 @@ export function createPlaylistManager(
   };
 
   /**
-   * Moves a fullscreen editor into the Discover side pane, keeping the draft:
-   * for when another fullscreen screen takes the editor's place mid-edit.
+   * Puts the editor out of sight, keeping the draft, for when another
+   * fullscreen screen takes its place mid-edit.
    */
-  const moveEditorToPane = (): void => {
-    if (!editingPlaylist.peek() || editorPlacement.peek() === "pane") {
-      return;
+  const hideEditor = (): void => {
+    if (editingPlaylist.peek()) {
+      editorHidden.value = true;
     }
-    editorPlacement.value = "pane";
-    view.value = "create_playlist";
+  };
+
+  /** Brings back an editor `hideEditor` put away, draft and all. */
+  const resumeEditing = (): void => {
+    if (editingPlaylist.peek()) {
+      editorHidden.value = false;
+    }
   };
 
   /**
@@ -3433,13 +3434,8 @@ export function createPlaylistManager(
   // as soon as the user leaves the editor (save or cancel), so the tools
   // aren't offered outside of an actual editing session.
   effect(() => {
-    // The fullscreen editor is open whether or not Discover is; otherwise the
-    // draft is only being edited while Discover shows it.
     const draft = editingPlaylist.value;
-    const editorOpen =
-      !!draft &&
-      (editorPlacement.value === "fullscreen" || isDiscoverOpen.value);
-    if (!draft || !editorOpen) {
+    if (!draft || editorHidden.value) {
       chats.removeContext(PLAYLIST_EDITOR_CHAT_CONTEXT_ID);
       return;
     }
@@ -3493,8 +3489,9 @@ export function createPlaylistManager(
     playFromHistory,
     questionResponses,
     saveQuestionResponse,
-    editorPlacement,
-    moveEditorToPane,
+    editorHidden: editorHidden as ReadonlySignal<boolean>,
+    hideEditor,
+    resumeEditing,
     removePlayHistory,
     getPlaylistUrl,
     playlistPage,

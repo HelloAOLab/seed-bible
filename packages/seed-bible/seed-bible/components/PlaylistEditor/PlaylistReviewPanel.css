@@ -1,5 +1,5 @@
 /* Review & publish fills the editor: a header with the way back, then the
-   playlist's details on the left and how it will appear on the right. */
+   playlist as a shared link shows it, in one readable column. */
 .sb-playlist-review {
   display: flex;
   flex-direction: column;
@@ -15,11 +15,12 @@
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
+  border-bottom: 1px solid var(--sb-divider-color);
 }
 
-.sb-playlist-review-title {
+.sb-playlist-review-heading {
   margin: 0;
-  font-size: 1.375rem;
+  font-size: 1.125rem;
   font-weight: 700;
 }
 
@@ -27,55 +28,52 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
-  gap: 32px;
-  max-width: 76rem;
   width: 100%;
+  max-width: 36rem;
   margin: 0 auto;
-  padding: 24px 32px 40px;
+  padding: 24px 16px calc(24px + var(--pe-toolbar-clearance));
   box-sizing: border-box;
 }
 
-.sb-playlist-review-form,
-.sb-playlist-review-side {
+.sb-playlist-review-title {
+  margin: 0 0 12px;
+  font-family: var(--sb-book-title-font-family);
+  font-size: 1.5rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.sb-playlist-review-steps {
+  margin: 16px 0 0;
+  padding-inline-start: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  min-width: 0;
+  gap: 8px;
 }
 
-.sb-playlist-review-title-input {
-  font-family: var(--sb-book-title-font-family);
-  font-size: 1.5rem;
+.sb-playlist-review-step {
+  padding-inline-start: 4px;
+}
+
+.sb-playlist-review-step-label {
+  display: block;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
-/* Upload a picture, or let the title stand as the cover. */
-.sb-playlist-review-covers {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(10rem, 16rem));
-  gap: 14px;
+.sb-playlist-review-step-meta {
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
-.sb-playlist-review-cover-upload {
-  min-height: 8rem;
+.sb-playlist-review-section {
+  margin-top: 24px;
 }
 
-.sb-playlist-review-cover-text {
-  min-height: 8rem;
-  border: 1px solid var(--sb-divider-color);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 80%);
-  color: var(--sb-font-color);
-  font-family: var(--sb-book-title-font-family);
-  font-size: 1.5rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-playlist-review-cover-text--selected {
-  border-color: var(--sb-primary-color);
+.sb-playlist-review-section-title {
+  margin: 0 0 10px;
+  font-size: 0.9375rem;
+  font-weight: 700;
 }
 
 .sb-playlist-visibility {
@@ -110,7 +108,7 @@
   height: 20px;
   border: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 50%);
   border-radius: 50%;
-  background: var(--sb-font-color);
+  background: transparent;
 }
 
 .sb-playlist-visibility-choice--selected .sb-playlist-visibility-radio {
@@ -136,55 +134,6 @@
 .sb-playlist-visibility-description {
   font-size: 0.875rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-}
-
-.sb-playlist-review-card {
-  overflow: hidden;
-  border: 1px solid var(--sb-divider-color);
-  border-radius: 12px;
-}
-
-.sb-playlist-review-card-cover {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 6;
-  object-fit: cover;
-}
-
-.sb-playlist-review-card-cover--text {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  box-sizing: border-box;
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 80%);
-  font-family: var(--sb-book-title-font-family);
-  font-size: 1.75rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.sb-playlist-review-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px 16px;
-}
-
-.sb-playlist-review-card-title {
-  font-size: 1.0625rem;
-  font-weight: 700;
-}
-
-.sb-playlist-review-card-meta {
-  font-size: 0.875rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-}
-
-.sb-playlist-review-checks-card {
-  padding: 14px 16px;
-  border: 1px solid var(--sb-divider-color);
-  border-radius: 12px;
 }
 
 .sb-playlist-review-checks {
@@ -224,26 +173,4 @@
   text-decoration: underline;
   text-underline-offset: 0.15em;
   cursor: pointer;
-}
-
-.sb-playlist-review-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.sb-playlist-review-actions .sb-playlist-editor-secondary,
-.sb-playlist-review-publish {
-  min-height: 48px;
-}
-
-@media (max-width: 900px) {
-  .sb-playlist-review-body {
-    grid-template-columns: minmax(0, 1fr);
-    padding: 16px;
-  }
-
-  .sb-playlist-review-covers {
-    grid-template-columns: 1fr 1fr;
-  }
 }

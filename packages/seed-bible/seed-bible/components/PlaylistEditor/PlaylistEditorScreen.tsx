@@ -25,7 +25,13 @@ import {
   playlistItemMinutes,
   playlistMinutes,
 } from "../playlistItemSubtitle";
-import { requestCancelPlaylistEditor } from "../CreatePlaylistForm/CreatePlaylistForm";
+import {
+  PlaylistCoverField,
+  PlaylistDescriptionField,
+  PlaylistTitleField,
+  requestCancelPlaylistEditor,
+} from "./playlistEditorFields";
+import { PlaylistEditorAiButton } from "./PlaylistEditorAiButton";
 import { usePlaylistEditor } from "./usePlaylistEditor";
 import { PlaylistEditorStepList } from "./PlaylistEditorStepList";
 import { PlaylistReviewPanel } from "./PlaylistReviewPanel";
@@ -64,17 +70,20 @@ const TYPE_MODES: AddMode[] = [
   "question",
 ];
 
+const COVER_MODAL_ID = "playlist-editor-cover";
+
 /**
- * The fullscreen playlist editor, for screens wide enough to show it: the
- * steps down the left; the open step's editor
- * (or a preview of it) in the middle; and the step's settings on the right.
- * Edits are kept as the author moves between steps; Review & publish is
- * where the playlist is saved. Phones get the one-column
- * `CreatePlaylistForm` in the Discover pane instead; the two share their
- * editing state through `usePlaylistEditor`.
+ * The playlist editor, in three screens. A new playlist starts on its
+ * details (title, description, cover). The steps screen lists the steps
+ * down the left, the open step's editor (or a preview of it) in the middle,
+ * and the step's settings on the right, with the details still editable in
+ * its header. Review & publish shows the playlist as a shared link would,
+ * and is where it is saved. On a phone the steps screen shows the list or
+ * the open step, one at a time. Edits are kept as the author moves between
+ * steps and screens.
  */
 export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
-  const { state, playlists, tabs, modals } = props;
+  const { state, playlists, tabs, modals, chats, openChatPanel } = props;
   const { t, language } = useI18n();
   const editor = usePlaylistEditor({
     playlists,
@@ -111,13 +120,19 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
   const translationName =
     tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value)
       ?.readingState.translation?.value?.shortName ?? undefined;
-  // The last look before publishing takes the middle column's place.
-  const [reviewOpen, setReviewOpen] = useState(false);
+  const narrow = state.app?.isMobile?.value ?? false;
+  // A playlist with nothing in it yet starts on its details.
+  const [screen, setScreen] = useState<"details" | "steps" | "review">(() => {
+    const draft = playlists.editingPlaylist.peek();
+    return draft && !draft.title && draft.items.length === 0
+      ? "details"
+      : "steps";
+  });
   const openReview = () => {
     const proceed = () => {
       setOpenIndex(null);
       setAddOpen(false);
-      setReviewOpen(true);
+      setScreen("review");
     };
     if (openIndex !== null && editInputRef.current?.isDirty()) {
       void saveOpenItem().then((saved) => {
@@ -146,24 +161,23 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
           defaultValue: "Draft · not saved yet",
         });
 
-  // Plays the draft with people: a session is started on a new tab and the
-  // draft plays there, so the group reads it as it stands now.
-  const testWithGroup = async () => {
-    if (!editing || !state.app?.createSharedSession) {
-      return;
-    }
-    if (openIndex !== null && editInputRef.current?.isDirty()) {
-      if (!(await saveOpenItem())) {
-        return;
-      }
-    }
-    const draft = playlists.editingPlaylist.peek();
-    if (!draft) {
-      return;
-    }
-    await state.app.createSharedSession();
-    playlists.startPlaying(draft, 0, { history: false });
-  };
+  const leave = () =>
+    requestCancelPlaylistEditor(playlists, modals, hasUnsavedItemInput());
+
+  const openCover = () =>
+    modals.openModal({
+      id: COVER_MODAL_ID,
+      title: t("hero-image", { defaultValue: "Cover image" }),
+      content: () => (
+        <PlaylistCoverField
+          playlists={playlists}
+          modals={modals}
+          os={state.os}
+          login={state.login}
+          gallery={state.gallery}
+        />
+      ),
+    });
 
   // "Add a step" and a change of kind both go through the modal; the step
   // lands after the open one (or at the end), or in the changed step's place.
@@ -227,24 +241,78 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
 
   const issues = openIndex !== null ? (stepIssues.get(openIndex) ?? []) : [];
 
-  if (reviewOpen) {
+  if (screen === "details") {
+    return (
+      <div className="sb-playlist-editor sb-playlist-details">
+        <header className="sb-playlist-editor-header">
+          <button
+            type="button"
+            className="sb-reading-plans-back sb-playlist-editor-back"
+            aria-label={t("back", { defaultValue: "Back" })}
+            onClick={leave}
+          >
+            <MaterialIcon>chevron_left</MaterialIcon>
+          </button>
+          <h2 className="sb-playlist-details-heading">
+            {t("playlist-details-heading", { defaultValue: "New playlist" })}
+          </h2>
+        </header>
+        <div className="sb-playlist-details-body">
+          <label className="sb-playlist-editor-field">
+            <span className="sb-playlist-editor-field-label">
+              {t("playlist-review-title", { defaultValue: "Title" })}
+            </span>
+            <PlaylistTitleField
+              playlists={playlists}
+              className="sb-settings-text-input sb-playlist-input sb-playlist-details-title"
+              autoFocus
+            />
+          </label>
+          <label className="sb-playlist-editor-field">
+            <span className="sb-playlist-editor-field-label">
+              {t("description", { defaultValue: "Description" })}
+            </span>
+            <PlaylistDescriptionField playlists={playlists} />
+          </label>
+          <div className="sb-playlist-editor-field">
+            <span className="sb-playlist-editor-field-label">
+              {t("hero-image", { defaultValue: "Cover image" })}
+            </span>
+            <PlaylistCoverField
+              playlists={playlists}
+              modals={modals}
+              os={state.os}
+              login={state.login}
+              gallery={state.gallery}
+            />
+          </div>
+          <div className="sb-playlist-details-actions">
+            <button
+              type="button"
+              className="sb-settings-save-button sb-playlist-details-next"
+              onClick={() => setScreen("steps")}
+            >
+              {t("next", { defaultValue: "Next" })}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "review") {
     return (
       <PlaylistReviewPanel
         playlists={playlists}
-        modals={modals}
         books={books}
         resolveBookName={resolveBookName}
         authorName={state.login?.profile?.value?.name ?? null}
         translationName={translationName}
-        os={state.os}
-        login={state.login}
-        gallery={state.gallery}
         onOpenItem={(index) => {
-          setReviewOpen(false);
+          setScreen("steps");
           requestOpen(index);
         }}
-        onBack={() => setReviewOpen(false)}
-        onTestWithGroup={() => void testWithGroup()}
+        onBack={() => setScreen("steps")}
         onPublish={handleSave}
         publishing={saving}
       />
@@ -262,94 +330,133 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
           type="button"
           className="sb-reading-plans-back sb-playlist-editor-back"
           aria-label={t("back", { defaultValue: "Back" })}
-          onClick={() =>
-            requestCancelPlaylistEditor(
-              playlists,
-              modals,
-              hasUnsavedItemInput()
-            )
-          }
+          onClick={leave}
         >
           <MaterialIcon>chevron_left</MaterialIcon>
         </button>
+        <button
+          type="button"
+          className="sb-playlist-editor-cover"
+          aria-label={t("hero-image", { defaultValue: "Cover image" })}
+          onClick={openCover}
+        >
+          {editing?.heroImageUrl ? (
+            <img src={editing.heroImageUrl} alt="" />
+          ) : (
+            <MaterialIcon>add_photo_alternate</MaterialIcon>
+          )}
+        </button>
         <div className="sb-playlist-editor-heading">
-          <input
+          <PlaylistTitleField
+            playlists={playlists}
             className="sb-playlist-editor-title"
-            type="text"
-            value={editing?.title ?? ""}
-            dir="auto"
-            aria-label={t("playlist-title_placeholder", {
-              defaultValue: "Playlist title",
-            })}
-            onInput={(event: Event) => {
-              const value = (event.currentTarget as HTMLInputElement).value;
-              playlists.updateEditingPlaylistMetadata({
-                title: value.trim() ? value : null,
-              });
-            }}
-            placeholder={t("playlist-title_placeholder", {
-              defaultValue: "Playlist title",
-            })}
+          />
+          <PlaylistDescriptionField
+            playlists={playlists}
+            className="sb-playlist-editor-description"
+            rows={1}
           />
           <span className="sb-playlist-editor-summary">{draftLine}</span>
         </div>
-        <div
-          className="sb-playlist-editor-modes"
-          role="group"
-          aria-label={t("playlist-editor-mode-edit", {
-            defaultValue: "Edit",
-          })}
-        >
+        <div className="sb-playlist-editor-actions">
+          <div
+            className="sb-playlist-editor-modes"
+            role="group"
+            aria-label={t("playlist-editor-mode-edit", {
+              defaultValue: "Edit",
+            })}
+          >
+            <button
+              type="button"
+              className={`sb-playlist-editor-mode${
+                mode === "edit" ? " sb-playlist-editor-mode--on" : ""
+              }`}
+              aria-pressed={mode === "edit"}
+              onClick={() => setMode("edit")}
+            >
+              {t("playlist-editor-mode-edit", { defaultValue: "Edit" })}
+            </button>
+            <button
+              type="button"
+              className={`sb-playlist-editor-mode${
+                mode === "preview" ? " sb-playlist-editor-mode--on" : ""
+              }`}
+              aria-pressed={mode === "preview"}
+              onClick={() => {
+                if (openIndex !== null && editInputRef.current?.isDirty()) {
+                  void saveOpenItem().then((saved) => {
+                    if (saved) setMode("preview");
+                  });
+                  return;
+                }
+                setMode("preview");
+              }}
+            >
+              {t("playlist-editor-mode-preview", { defaultValue: "Preview" })}
+            </button>
+          </div>
+          <PlaylistEditorAiButton chats={chats} openChatPanel={openChatPanel} />
           <button
             type="button"
-            className={`sb-playlist-editor-mode${
-              mode === "edit" ? " sb-playlist-editor-mode--on" : ""
-            }`}
-            aria-pressed={mode === "edit"}
-            onClick={() => setMode("edit")}
+            className="sb-settings-save-button sb-playlist-editor-primary"
+            onClick={openReview}
           >
-            {t("playlist-editor-mode-edit", { defaultValue: "Edit" })}
-          </button>
-          <button
-            type="button"
-            className={`sb-playlist-editor-mode${
-              mode === "preview" ? " sb-playlist-editor-mode--on" : ""
-            }`}
-            aria-pressed={mode === "preview"}
-            onClick={() => {
-              if (openIndex !== null && editInputRef.current?.isDirty()) {
-                void saveOpenItem().then((saved) => {
-                  if (saved) setMode("preview");
-                });
-                return;
-              }
-              setMode("preview");
-            }}
-          >
-            {t("playlist-editor-mode-preview", { defaultValue: "Preview" })}
+            {t("playlist-review-publish", { defaultValue: "Review & publish" })}
           </button>
         </div>
-        <button
-          type="button"
-          className="sb-playlist-editor-secondary"
-          onClick={() => void testWithGroup()}
-        >
-          {t("playlist-editor-test-group", {
-            defaultValue: "Test with a group",
-          })}
-        </button>
-        <button
-          type="button"
-          className="sb-settings-save-button sb-playlist-editor-primary"
-          aria-pressed={reviewOpen}
-          onClick={openReview}
-        >
-          {t("playlist-review-publish", { defaultValue: "Review & publish" })}
-        </button>
       </header>
 
-      <div className="sb-playlist-editor-columns">
+      <div
+        className={`sb-playlist-editor-columns${
+          narrow ? " sb-playlist-editor-columns--narrow" : ""
+        }`}
+      >
+        {narrow && openIndex !== null ? (
+          <nav
+            className="sb-playlist-editor-stepbar"
+            aria-label={t("playlist-editor-steps", { defaultValue: "Steps" })}
+          >
+            <button
+              type="button"
+              className="sb-playlist-editor-stepbar-back"
+              onClick={() => requestOpen(null)}
+            >
+              <MaterialIcon>chevron_left</MaterialIcon>
+              {t("playlist-editor-all-steps", { defaultValue: "All steps" })}
+            </button>
+            <span className="sb-playlist-editor-stepbar-count">
+              {t("playlist-editor-step-of", {
+                defaultValue: "Step {{number}} of {{count}}",
+                number: openIndex + 1,
+                count: stepCount,
+              })}
+            </span>
+            <button
+              type="button"
+              className="sb-playlist-editor-stepbar-arrow"
+              aria-label={t("playlist-editor-previous-step", {
+                defaultValue: "Previous step",
+              })}
+              disabled={openIndex === 0}
+              onClick={() => requestOpen(openIndex - 1)}
+            >
+              <MaterialIcon>expand_less</MaterialIcon>
+            </button>
+            <button
+              type="button"
+              className="sb-playlist-editor-stepbar-arrow"
+              aria-label={t("playlist-editor-next-step", {
+                defaultValue: "Next step",
+              })}
+              disabled={openIndex >= items.length - 1}
+              onClick={() => requestOpen(openIndex + 1)}
+            >
+              <MaterialIcon>expand_more</MaterialIcon>
+            </button>
+          </nav>
+        ) : null}
         <aside
+          hidden={narrow && openIndex !== null}
           className="sb-playlist-editor-steps"
           aria-label={t("playlist-editor-steps", { defaultValue: "Steps" })}
         >
@@ -375,7 +482,6 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
               type="button"
               className="sb-playlist-add-toggle"
               onClick={() => {
-                setReviewOpen(false);
                 setMode("edit");
                 openAddStep({});
               }}
@@ -387,6 +493,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
         </aside>
 
         <main
+          hidden={narrow && openIndex === null}
           className="sb-playlist-editor-main"
           aria-label={
             openItem
@@ -425,9 +532,9 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
               </p>
               <PlaylistItemInput
                 ref={editInputRef}
-                // Remount when the open item changes so the sub-inputs seed
-                // fresh values from it.
-                key={`edit-${openIndex}`}
+                // Remount when the open item, or its kind, changes so the
+                // sub-inputs seed fresh values from it.
+                key={`edit-${openIndex}-${modeForItem(openItem)}`}
                 id={`sb-playlist-item-editor-${openIndex}`}
                 books={books}
                 onAdd={(added) => addItem(added)}
@@ -472,6 +579,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
         </main>
 
         <aside
+          hidden={narrow && openIndex === null}
           className="sb-playlist-editor-settings"
           aria-label={t("playlist-editor-step-settings", {
             defaultValue: "Step settings",
@@ -511,7 +619,6 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
                         }`}
                         onClick={() => {
                           if (selected) return;
-                          setReviewOpen(false);
                           setMode("edit");
                           openAddStep({ replace: openIndex, mode: candidate });
                         }}

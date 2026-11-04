@@ -1291,41 +1291,62 @@ describe("createPlaylistManager", () => {
     expect(editing.description).toBeNull();
     expect(editing.items).toEqual([]);
     expect(editing.heroImageUrl).toBeNull();
-    // A wide screen gets the fullscreen editor, so Discover's view is left alone.
-    expect(manager.editorPlacement.value).toBe("fullscreen");
-    expect(manager.view.value).not.toBe("create_playlist");
+    // The editor is its own screen, so Discover's view is left alone.
+    expect(manager.editorHidden.value).toBe(false);
+    expect(manager.view.value).toBeNull();
     // Creating a draft does not persist anything yet.
     expect(recordDataMock).not.toHaveBeenCalled();
   });
 
-  it("createNewPlaylist opens the editor inside the Discover pane on a phone", async () => {
+  it("createNewPlaylist opens the same editor on a phone", async () => {
     const manager = makeManager("user-1");
     await flush();
     lastIsMobile.value = true;
 
     await manager.createNewPlaylist();
 
-    expect(manager.editorPlacement.value).toBe("pane");
-    expect(manager.view.value).toBe("create_playlist");
+    expect(manager.editingPlaylist.value).not.toBeNull();
+    expect(manager.editorHidden.value).toBe(false);
+    expect(manager.view.value).toBeNull();
   });
 
-  it("moveEditorToPane keeps the draft and carries it into the Discover pane", async () => {
+  it("hideEditor keeps the draft out of sight until resumeEditing brings it back", async () => {
     const manager = makeManager("user-1");
     await flush();
     await manager.createNewPlaylist();
-    expect(manager.editorPlacement.value).toBe("fullscreen");
+    manager.updateEditingPlaylistMetadata({ title: "Hagar" });
     const draft = manager.editingPlaylist.value;
 
-    manager.moveEditorToPane();
+    manager.hideEditor();
 
-    expect(manager.editorPlacement.value).toBe("pane");
-    expect(manager.view.value).toBe("create_playlist");
+    expect(manager.editorHidden.value).toBe(true);
     expect(manager.editingPlaylist.value).toBe(draft);
 
-    // Nothing to move when no playlist is being edited.
-    manager.cancelEditingPlaylist();
-    manager.moveEditorToPane();
-    expect(manager.editingPlaylist.value).toBeNull();
+    manager.resumeEditing();
+
+    expect(manager.editorHidden.value).toBe(false);
+    expect(manager.editingPlaylist.value?.title).toBe("Hagar");
+  });
+
+  it("hideEditor does nothing when no playlist is being edited", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.hideEditor();
+
+    expect(manager.editorHidden.value).toBe(false);
+  });
+
+  it("editing another playlist brings a hidden editor back into sight", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+    manager.hideEditor();
+
+    manager.editPlaylist(makePlaylist({ id: "p-other" }));
+
+    expect(manager.editorHidden.value).toBe(false);
+    expect(manager.editingPlaylist.value?.id).toBe("p-other");
   });
 
   it("createNewPlaylist prompts a signed-out user to log in and uses the returned id", async () => {
@@ -1338,7 +1359,7 @@ describe("createPlaylistManager", () => {
     expect(loginMock).toHaveBeenCalled();
     expect(manager.editingPlaylist.value!.recordName).toBe("user-2");
     expect(manager.editingPlaylist.value!.authorUserId).toBe("user-2");
-    expect(manager.editorPlacement.value).toBe("fullscreen");
+    expect(manager.editorHidden.value).toBe(false);
   });
 
   it("createNewPlaylist is a no-op when login is cancelled", async () => {

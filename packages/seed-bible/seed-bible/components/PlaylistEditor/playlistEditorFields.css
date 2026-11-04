@@ -24,8 +24,3 @@
     var(--sb-primary-color) 16%
   );
 }
-
-.sb-playlist-add-done {
-  display: block;
-  margin: -8px 0 16px auto;
-}

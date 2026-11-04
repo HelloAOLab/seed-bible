@@ -3940,4 +3940,84 @@ describe("the fullscreen playlist editor", () => {
     expect(title!.isConnected).toBe(true);
     expect(document.activeElement).toBe(title);
   });
+
+  const EDITOR_PANE_ID = "playlist-editor-pane";
+  const editorOpen = (state: SeedBibleState) =>
+    state.panes.panes.value.some((pane) => pane.id === EDITOR_PANE_ID);
+
+  it("opens the same editor on a phone", async () => {
+    const state = await createTestSeedBibleState();
+    (state.app.viewportWidth as unknown as { value: number }).value = 400;
+
+    state.playlists.editPlaylist(htmlPlaylist());
+
+    expect(editorOpen(state)).toBe(true);
+    expect(state.playlists.view.value).not.toBe("discover");
+  });
+
+  it("keeps the draft when another fullscreen screen takes the editor's place, and brings it back", async () => {
+    const state = await createTestSeedBibleState();
+    (state.app.viewportWidth as unknown as { value: number }).value = 1200;
+    state.playlists.editPlaylist(htmlPlaylist());
+    state.playlists.updateEditingPlaylistMetadata({ title: "Evening" });
+
+    state.panes.openPane({
+      placement: "fullscreen",
+      title: "Another screen",
+      component: () => null,
+    });
+
+    expect(editorOpen(state)).toBe(false);
+    expect(state.playlists.editorHidden.value).toBe(true);
+    expect(state.playlists.editingPlaylist.value?.title).toBe("Evening");
+
+    state.playlists.resumeEditing();
+
+    expect(editorOpen(state)).toBe(true);
+    expect(state.playlists.editingPlaylist.value?.title).toBe("Evening");
+  });
+
+  it("reopens the editor when the author goes back from the unsaved-changes prompt after closing it", async () => {
+    const state = await createTestSeedBibleState();
+    (state.app.viewportWidth as unknown as { value: number }).value = 1200;
+    state.playlists.editPlaylist(htmlPlaylist());
+    state.playlists.updateEditingPlaylistMetadata({ title: "Evening" });
+
+    state.panes.closePane(EDITOR_PANE_ID, "user");
+
+    expect(editorOpen(state)).toBe(false);
+    const prompt = state.modals.modals.value.find(
+      (modal) => modal.id === "playlist-unsaved-changes-confirm"
+    )!;
+    expect(prompt).toBeDefined();
+    const Provider = await realI18nProvider();
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: prompt.content({ t: (key: string) => key }),
+        }),
+        container
+      );
+    });
+    const goBack = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Go back"
+    )!;
+    act(() => goBack.click());
+
+    expect(editorOpen(state)).toBe(true);
+    expect(state.playlists.editorHidden.value).toBe(false);
+    expect(state.playlists.editingPlaylist.value?.title).toBe("Evening");
+  });
+
+  it("leaves the editor straight away when it closes with nothing unsaved", async () => {
+    const state = await createTestSeedBibleState();
+    (state.app.viewportWidth as unknown as { value: number }).value = 1200;
+    state.playlists.editPlaylist(htmlPlaylist());
+
+    state.panes.closePane(EDITOR_PANE_ID, "user");
+
+    expect(state.playlists.editingPlaylist.value).toBeNull();
+    expect(editorOpen(state)).toBe(false);
+  });
 });

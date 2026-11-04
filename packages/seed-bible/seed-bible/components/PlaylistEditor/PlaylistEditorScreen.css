@@ -2,6 +2,25 @@
    pane. Each column scrolls on its own so a long step list and a long note
    never fight over the page. Under 900px the columns stack and the page
    scrolls as one. */
+/* The reader toolbar floats over the bottom of the screen; content keeps
+   clear of it. The numbers mirror the toolbar's own variables, as the
+   reading plan editor's footer does. On a phone the pane already sits above
+   the toolbar, so only the home indicator needs room. */
+.sb-playlist-editor,
+.sb-playlist-review {
+  --pe-toolbar-clearance: calc(
+    var(--sb-reader-toolbar-bottom, 1.125rem) +
+      var(--sb-reader-toolbar-button-height, 3.25rem) + 0.5rem
+  );
+}
+
+@media (max-width: 480px) {
+  .sb-playlist-editor,
+  .sb-playlist-review {
+    --pe-toolbar-clearance: env(safe-area-inset-bottom, 0px);
+  }
+}
+
 .sb-playlist-editor {
   display: flex;
   flex-direction: column;
@@ -114,7 +133,7 @@
       19rem
     );
   gap: 8px;
-  padding: 8px;
+  padding: 8px 8px var(--pe-toolbar-clearance);
 }
 
 .sb-playlist-editor-steps,
@@ -377,6 +396,167 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
+/* The cover, as a small thumbnail that opens the cover picker. */
+.sb-playlist-editor-cover {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 48px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
+  color: var(--sb-primary-color);
+  cursor: pointer;
+}
+
+.sb-playlist-editor-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sb-playlist-editor-description {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  padding: 2px 0;
+  resize: none;
+}
+
+.sb-playlist-editor-description:focus {
+  outline: none;
+  border-bottom-color: var(--sb-primary-color);
+}
+
+.sb-playlist-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The hidden attribute loses to the columns' own display rules. */
+.sb-playlist-editor-columns [hidden] {
+  display: none;
+}
+
+/* A new playlist's first screen: its title, description and cover. */
+.sb-playlist-details-heading {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.sb-playlist-details-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: 24px 16px calc(24px + var(--pe-toolbar-clearance));
+  box-sizing: border-box;
+}
+
+.sb-playlist-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-playlist-editor-field-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-playlist-details-title {
+  font-family: var(--sb-book-title-font-family);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.sb-playlist-details-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sb-playlist-details-next {
+  min-width: 8rem;
+  min-height: 44px;
+}
+
+/* A phone shows the step list, or one step with a bar to get back to the
+   list and to the steps either side of it. */
+.sb-playlist-editor-columns--narrow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 0 calc(24px + var(--pe-toolbar-clearance));
+  overflow-y: auto;
+}
+
+.sb-playlist-editor-columns--narrow .sb-playlist-editor-steps,
+.sb-playlist-editor-columns--narrow .sb-playlist-editor-main,
+.sb-playlist-editor-columns--narrow .sb-playlist-editor-settings {
+  overflow: visible;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  padding: 0 16px;
+}
+
+.sb-playlist-editor-stepbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--sb-divider-color);
+  background: var(--sb-background);
+}
+
+.sb-playlist-editor-stepbar-back,
+.sb-playlist-editor-stepbar-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-playlist-editor-stepbar-arrow:disabled {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 65%);
+  cursor: default;
+}
+
+.sb-playlist-editor-stepbar-count {
+  flex: 1;
+  text-align: center;
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
 @media (max-width: 900px) {
   .sb-playlist-editor {
     height: auto;
@@ -391,5 +571,9 @@
   .sb-playlist-editor-main,
   .sb-playlist-editor-settings {
     overflow: visible;
+  }
+
+  .sb-playlist-editor-actions {
+    width: 100%;
   }
 }

@@ -1,4 +1,5 @@
 import "./SharedPageModal.css";
+import type { ComponentChildren } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
 
 /** A button in the shared-page modal, beside its Close button. */
@@ -25,6 +26,10 @@ export function SharedPageModalContent(props: {
   status?: string | null;
   actions: SharedPageModalAction[];
   onClose: () => void;
+  /** What the Close button says, when it does something other than close. */
+  closeLabel?: string;
+  /** Shown above the buttons. */
+  children?: ComponentChildren;
 }) {
   const { heroImageUrl, authorName, description, lengthLabel, status } = props;
   const { t } = useI18n();
@@ -47,9 +52,10 @@ export function SharedPageModalContent(props: {
       ) : null}
       <p className="sb-shared-page-modal-count">{lengthLabel}</p>
       {status ? <p className="sb-shared-page-modal-status">{status}</p> : null}
+      {props.children}
       <div className="sb-shared-page-modal-actions">
         <button type="button" onClick={props.onClose}>
-          {t("close", { defaultValue: "Close" })}
+          {props.closeLabel ?? t("close", { defaultValue: "Close" })}
         </button>
         {props.actions.map((action) => (
           <button

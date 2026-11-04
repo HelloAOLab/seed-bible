@@ -35,7 +35,7 @@ import {
   type SharedPageKind,
 } from "../managers/SharedPagePath";
 import type { PlaylistPageSeed } from "../managers/PlaylistManager";
-import { requestCancelPlaylistEditor } from "../components/CreatePlaylistForm/CreatePlaylistForm";
+import { requestCancelPlaylistEditor } from "../components/PlaylistEditor/playlistEditorFields";
 import {
   PlaylistEditorScreen,
   PlaylistEditorScreenTitle,
@@ -3558,9 +3558,6 @@ export function createSeedBibleState(
             playlists={playlists}
             annotations={annotations}
             tabs={tabs}
-            chats={chats}
-            openChatPanel={sidebar.openChatPanel}
-            modals={modals}
           />
         ),
         header: () => (
@@ -3604,11 +3601,11 @@ export function createSeedBibleState(
     }
   });
 
-  // The fullscreen playlist editor, mirrored from the playlist manager's
-  // editing state: open while a playlist is being edited with the fullscreen
-  // placement, closed when the edit ends. Same reconciling pair as Discover
-  // above. A screen that takes its place mid-edit (Today, say) moves the
-  // draft into the Discover pane rather than dropping it.
+  // The playlist editor, mirrored from the playlist manager's editing state:
+  // open while a playlist is being edited, closed when the edit ends. Same
+  // reconciling pair as Discover above. Whatever else closes it (a screen
+  // that takes its place, such as Today) only puts it out of sight: the draft
+  // is kept, and Discover offers to continue editing.
   const PLAYLIST_EDITOR_PANE_ID = "playlist-editor-pane";
   // Whether there is a draft at all, not the draft itself: reopening the pane
   // hands it a new component, which remounts the editor and loses its focus
@@ -3617,20 +3614,18 @@ export function createSeedBibleState(
     () => playlists.editingPlaylist.value !== null
   );
   effect(() => {
-    if (
-      editingAPlaylist.value &&
-      playlists.editorPlacement.value === "fullscreen"
-    ) {
+    if (editingAPlaylist.value && !playlists.editorHidden.value) {
       panes.openPane({
         id: PLAYLIST_EDITOR_PANE_ID,
         placement: "fullscreen",
         showHeader: false,
         title: () => <PlaylistEditorScreenTitle playlists={playlists} />,
         onClose: (reason) => {
-          if (reason === "displaced") {
-            playlists.moveEditorToPane();
-          } else if (reason === "user") {
-            requestCancelPlaylistEditor(playlists, modals);
+          playlists.hideEditor();
+          if (reason === "user") {
+            requestCancelPlaylistEditor(playlists, modals, false, {
+              onStay: playlists.resumeEditing,
+            });
           }
         },
         component: () => (

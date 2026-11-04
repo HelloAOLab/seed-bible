@@ -10,7 +10,6 @@ import type { TranslatableTitle } from "./BibleToolsManager";
 export type DiscoverView =
   | null
   | "discover"
-  | "create_playlist"
   | "play_playlist"
   | "create_annotation";
 

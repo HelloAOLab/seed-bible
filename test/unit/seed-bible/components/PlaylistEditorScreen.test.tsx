@@ -27,7 +27,7 @@ interface StubPlaylistItemInputProps {
   onCancelEdit?: () => void;
 }
 
-const stubItemInputControl = { isDirty: false };
+const stubItemInputControl = { isDirty: false, commits: true };
 
 vi.mock(
   "@packages/seed-bible/seed-bible/components/PlaylistItemInput/PlaylistItemInput",
@@ -41,7 +41,14 @@ vi.mock(
     ) {
       useImperativeHandle(ref, () => ({
         isDirty: () => stubItemInputControl.isDirty,
-        commit: () => true,
+        commit: () => {
+          if (!stubItemInputControl.commits) {
+            return false;
+          }
+          props.onUpdate?.({ type: "html", html: "<p>Changed</p>" });
+          stubItemInputControl.isDirty = false;
+          return true;
+        },
       }));
       return (
         <div
@@ -79,7 +86,10 @@ function verseItem(bookId: string, chapter: number): PlaylistItemData {
   return { type: "bible-verse", ref: { bookId, chapter } };
 }
 
-function createPlaylist(items: PlaylistItemData[]): Playlist {
+function createPlaylist(
+  items: PlaylistItemData[],
+  overrides: Partial<Playlist> = {}
+): Playlist {
   return {
     id: "playlist-1",
     recordName: "user-1",
@@ -89,12 +99,37 @@ function createPlaylist(items: PlaylistItemData[]): Playlist {
     items,
     createdAtMs: 1,
     updatedAtMs: 1,
+    ...overrides,
   };
 }
 
-function createMocks(items: PlaylistItemData[]) {
-  const editingPlaylist = signal<Playlist | null>(createPlaylist(items));
-  const updateEditingPlaylistItem = vi.fn();
+interface MockOptions {
+  playlist?: Partial<Playlist>;
+  mobile?: boolean;
+}
+
+function createMocks(items: PlaylistItemData[], options: MockOptions = {}) {
+  const editingPlaylist = signal<Playlist | null>(
+    createPlaylist(items, options.playlist)
+  );
+  const updateEditingPlaylistItem = vi.fn(
+    (index: number, item: PlaylistItemData) => {
+      const current = editingPlaylist.value!;
+      editingPlaylist.value = {
+        ...current,
+        items: current.items.map((old, i) => (i === index ? item : old)),
+      };
+    }
+  );
+  const updateEditingPlaylistMetadata = vi.fn((updates: Partial<Playlist>) => {
+    editingPlaylist.value = { ...editingPlaylist.value!, ...updates };
+  });
+  const reorderEditingPlaylistItem = vi.fn((from: number, to: number) => {
+    const next = [...editingPlaylist.value!.items];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved!);
+    editingPlaylist.value = { ...editingPlaylist.value!, items: next };
+  });
   const removeEditingPlaylistItem = vi.fn((index: number) => {
     const current = editingPlaylist.value!;
     editingPlaylist.value = {
@@ -110,9 +145,9 @@ function createMocks(items: PlaylistItemData[]) {
     removeEditingPlaylistItem,
     addEditingPlaylistItem: vi.fn(),
     insertEditingPlaylistItem: vi.fn(),
-    reorderEditingPlaylistItem: vi.fn(),
+    reorderEditingPlaylistItem,
     userPlaylists: signal([]),
-    updateEditingPlaylistMetadata: vi.fn(),
+    updateEditingPlaylistMetadata,
     saveEditingPlaylist,
     cancelEditingPlaylist,
     isEditingPlaylistDirty: vi.fn(() => false),
@@ -158,6 +193,7 @@ function createMocks(items: PlaylistItemData[]) {
     os: undefined,
     login: undefined,
     gallery: undefined,
+    app: { isMobile: signal(options.mobile ?? false) },
   } as unknown as SeedBibleState;
   return {
     playlists,
@@ -165,6 +201,8 @@ function createMocks(items: PlaylistItemData[]) {
     chats,
     state,
     updateEditingPlaylistItem,
+    updateEditingPlaylistMetadata,
+    reorderEditingPlaylistItem,
     removeEditingPlaylistItem,
     saveEditingPlaylist,
     cancelEditingPlaylist,
@@ -178,6 +216,7 @@ describe("PlaylistEditorScreen", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     stubItemInputControl.isDirty = false;
+    stubItemInputControl.commits = true;
   });
 
   afterEach(() => {
@@ -185,8 +224,8 @@ describe("PlaylistEditorScreen", () => {
     container.remove();
   });
 
-  function renderScreen(items: PlaylistItemData[]) {
-    const mocks = createMocks(items);
+  function renderScreen(items: PlaylistItemData[], options?: MockOptions) {
+    const mocks = createMocks(items, options);
     const modals = createModalManager();
     act(() => {
       render(
@@ -332,6 +371,7 @@ describe("PlaylistEditorScreen", () => {
     expect(updateEditingPlaylistItem).toHaveBeenLastCalledWith(0, {
       type: "html",
       html: "<p>Hi</p>",
+      pause: true,
       minutes: 6,
     });
   });
@@ -387,6 +427,16 @@ describe("PlaylistEditorScreen", () => {
       })
     );
     expect(modals.modals.value).toHaveLength(0);
+    // The editor stays open, now on the step's new kind.
+    expect(
+      main()
+        .querySelector(".stub-playlist-item-input--edit")
+        ?.getAttribute("data-edit-type")
+    ).toBe("question");
+    expect(
+      main().querySelector(".sb-playlist-editor-eyebrow")?.textContent
+    ).toBe("Step 2 · Question");
+    expect(rowButtons()[1]!.getAttribute("aria-current")).toBe("true");
   });
 
   it("warns when a step repeats the passage before it, and can drop the earlier one", () => {
@@ -520,32 +570,391 @@ describe("PlaylistEditorScreen", () => {
     expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
   });
 
-  describe("review and publish", () => {
-    const reviewButton = () =>
-      Array.from(container.querySelectorAll("button")).find(
-        (b) => b.textContent === "Review & publish"
+  const buttonByText = (text: string, root: ParentNode = container) =>
+    Array.from(root.querySelectorAll<HTMLButtonElement>("button")).find(
+      (b) => b.textContent === text
+    );
+
+  /** Renders the modal with `id` into its own host, returning the host. */
+  function renderModal(
+    modals: ReturnType<typeof createModalManager>,
+    id: string
+  ) {
+    const modal = modals.modals.value.find((m) => m.id === id)!;
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    act(() => {
+      render(<>{modal.content({ t: (key: string) => key })}</>, host);
+    });
+    return host;
+  }
+
+  it("lists a fresh playlist's steps as empty, with no way to test it with a group", () => {
+    renderScreen([]);
+
+    expect(
+      container.querySelector(".sb-playlist-editor-steps")?.textContent
+    ).toContain("No items yet.");
+    expect(buttonByText("Test with a group")).toBeUndefined();
+  });
+
+  it("names each step's passage in the translation being read", () => {
+    renderScreen([verseItem("EXO", 3), verseItem("XYZ", 1)]);
+
+    expect(
+      Array.from(rowButtons()).map(
+        (b) => b.querySelector(".sb-discover-item-title")?.textContent
+      )
+    ).toEqual(["Exodus 3", "XYZ 1"]);
+  });
+
+  it("saves the open step's unsaved edits when another step is opened", async () => {
+    const { updateEditingPlaylistItem } = renderScreen([
+      verseItem("GEN", 16),
+      { type: "html", html: "<p>Hi</p>" },
+    ]);
+    act(() => rowButtons()[1]!.click());
+    stubItemInputControl.isDirty = true;
+
+    await act(async () => {
+      rowButtons()[0]!.click();
+      await Promise.resolve();
+    });
+
+    expect(updateEditingPlaylistItem).toHaveBeenCalledWith(1, {
+      type: "html",
+      html: "<p>Changed</p>",
+    });
+    expect(rowButtons()[0]!.getAttribute("aria-current")).toBe("true");
+  });
+
+  it("keeps a step open when its unsaved edits don't save", async () => {
+    renderScreen([verseItem("GEN", 16), { type: "html", html: "<p>Hi</p>" }]);
+    act(() => rowButtons()[1]!.click());
+    stubItemInputControl.isDirty = true;
+    stubItemInputControl.commits = false;
+
+    await act(async () => {
+      rowButtons()[0]!.click();
+      await Promise.resolve();
+    });
+
+    expect(rowButtons()[1]!.getAttribute("aria-current")).toBe("true");
+  });
+
+  describe("a new playlist's details", () => {
+    const labels = () =>
+      Array.from(
+        container.querySelectorAll(".sb-playlist-editor-field-label")
+      ).map((el) => el.textContent);
+
+    it("starts on its title, description and cover, and Next goes on to the steps", () => {
+      const { playlists } = renderScreen([], { playlist: { title: null } });
+
+      expect(container.querySelector(".sb-playlist-details")).not.toBeNull();
+      expect(container.querySelector(".sb-playlist-editor-columns")).toBeNull();
+      expect(labels()).toEqual(["Title", "Description", "Cover image"]);
+      expect(container.querySelector(".stub-hero-image-field")).not.toBeNull();
+
+      const title = container.querySelector<HTMLInputElement>(
+        ".sb-playlist-details-title"
+      )!;
+      act(() => {
+        title.value = "Hagar";
+        title.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      expect(playlists.editingPlaylist.value?.title).toBe("Hagar");
+
+      act(() => buttonByText("Next")!.click());
+
+      expect(container.querySelector(".sb-playlist-details")).toBeNull();
+      expect(
+        container.querySelector<HTMLInputElement>(".sb-playlist-editor-title")
+          ?.value
+      ).toBe("Hagar");
+      expect(
+        container.querySelector(".sb-playlist-editor-columns")
+      ).not.toBeNull();
+    });
+
+    it("opens a playlist that already has a title straight on its steps", () => {
+      renderScreen([], { playlist: { description: "Something" } });
+      expect(container.querySelector(".sb-playlist-details")).toBeNull();
+      expect(
+        container.querySelector(".sb-playlist-editor-columns")
+      ).not.toBeNull();
+    });
+
+    it("keeps a description's line breaks, and stores a blank one as none", () => {
+      const { playlists } = renderScreen([], { playlist: { title: null } });
+      const description = container.querySelector<HTMLTextAreaElement>(
+        ".sb-playlist-description-input"
       )!;
 
-    it("fills the editor with the last look: the details, who can open it, how it appears and what to check", () => {
-      const { playlists } = renderScreen([
-        verseItem("GEN", 16),
-        verseItem("GEN", 16),
+      act(() => {
+        description.value = "First line\nSecond line";
+        description.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      expect(playlists.editingPlaylist.value?.description).toBe(
+        "First line\nSecond line"
+      );
+
+      act(() => {
+        description.value = "   ";
+        description.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      expect(playlists.editingPlaylist.value?.description).toBeNull();
+    });
+  });
+
+  it("keeps the title, description and cover editable on the steps screen", () => {
+    const { playlists, modals } = renderScreen([verseItem("GEN", 16)]);
+
+    const title = container.querySelector<HTMLInputElement>(
+      ".sb-playlist-editor-title"
+    )!;
+    act(() => {
+      title.value = "   ";
+      title.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(playlists.editingPlaylist.value?.title).toBeNull();
+
+    const description = container.querySelector<HTMLTextAreaElement>(
+      ".sb-playlist-editor-description"
+    )!;
+    act(() => {
+      description.value = "The God who sees";
+      description.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(playlists.editingPlaylist.value?.description).toBe(
+      "The God who sees"
+    );
+
+    const cover = container.querySelector<HTMLButtonElement>(
+      ".sb-playlist-editor-cover"
+    )!;
+    expect(cover.querySelector("img")).toBeNull();
+    act(() => cover.click());
+    const host = renderModal(modals, "playlist-editor-cover");
+    expect(host.querySelector(".stub-hero-image-field")).not.toBeNull();
+    render(null, host);
+    host.remove();
+
+    act(() => {
+      playlists.updateEditingPlaylistMetadata({
+        heroImageUrl: "https://example.com/cover.jpg",
+      });
+    });
+    expect(cover.querySelector("img")?.getAttribute("src")).toBe(
+      "https://example.com/cover.jpg"
+    );
+  });
+
+  describe("leaving with unsaved changes", () => {
+    function leaveDirty() {
+      const mocks = renderScreen([verseItem("GEN", 16)]);
+      (
+        mocks.playlists.isEditingPlaylistDirty as ReturnType<typeof vi.fn>
+      ).mockReturnValue(true);
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-playlist-editor-back")!
+          .click();
+      });
+      const host = renderModal(
+        mocks.modals,
+        "playlist-unsaved-changes-confirm"
+      );
+      return { ...mocks, host };
+    }
+
+    afterEach(() => {
+      document.body
+        .querySelectorAll("body > div:not(:first-child)")
+        .forEach((el) => {
+          render(null, el);
+          el.remove();
+        });
+    });
+
+    it("asks first, and Confirm discards the changes", () => {
+      const { cancelEditingPlaylist, modals, host } = leaveDirty();
+      expect(cancelEditingPlaylist).not.toHaveBeenCalled();
+
+      act(() => buttonByText("Confirm", host)!.click());
+
+      expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
+      expect(modals.modals.value).toHaveLength(0);
+    });
+
+    it("Save & exit saves the playlist", () => {
+      const { saveEditingPlaylist, cancelEditingPlaylist, host } = leaveDirty();
+
+      act(() => buttonByText("Save & exit", host)!.click());
+
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+      expect(cancelEditingPlaylist).not.toHaveBeenCalled();
+    });
+
+    it("Go back stays in the editor", () => {
+      const { cancelEditingPlaylist, saveEditingPlaylist, modals, host } =
+        leaveDirty();
+
+      act(() => buttonByText("Go back", host)!.click());
+
+      expect(modals.modals.value).toHaveLength(0);
+      expect(cancelEditingPlaylist).not.toHaveBeenCalled();
+      expect(saveEditingPlaylist).not.toHaveBeenCalled();
+      expect(
+        container.querySelector(".sb-playlist-editor-header")
+      ).not.toBeNull();
+    });
+  });
+
+  describe("on a phone", () => {
+    const steps = () => container.querySelector(".sb-playlist-editor-steps")!;
+    const stepbar = () =>
+      container.querySelector(".sb-playlist-editor-stepbar");
+
+    it("shows the step list, or one step with the way back and to the steps beside it", () => {
+      renderScreen(
+        [verseItem("GEN", 16), { type: "html", html: "<p>Hi</p>" }],
+        { mobile: true }
+      );
+
+      expect(steps().hasAttribute("hidden")).toBe(false);
+      expect(main().hasAttribute("hidden")).toBe(true);
+      expect(settings().hasAttribute("hidden")).toBe(true);
+      expect(stepbar()).toBeNull();
+
+      act(() => rowButtons()[0]!.click());
+
+      expect(steps().hasAttribute("hidden")).toBe(true);
+      expect(main().hasAttribute("hidden")).toBe(false);
+      expect(settings().hasAttribute("hidden")).toBe(false);
+      expect(
+        stepbar()?.querySelector(".sb-playlist-editor-stepbar-count")
+          ?.textContent
+      ).toBe("Step 1 of 2");
+      const [previous, next] = Array.from(
+        stepbar()!.querySelectorAll<HTMLButtonElement>(
+          ".sb-playlist-editor-stepbar-arrow"
+        )
+      );
+      expect(previous!.disabled).toBe(true);
+
+      act(() => next!.click());
+      expect(
+        main().querySelector(".sb-playlist-editor-eyebrow")?.textContent
+      ).toBe("Step 2 · Note");
+      expect(
+        stepbar()!.querySelectorAll<HTMLButtonElement>(
+          ".sb-playlist-editor-stepbar-arrow"
+        )[1]!.disabled
+      ).toBe(true);
+
+      act(() => buttonByText("chevron_leftAll steps")!.click());
+      expect(stepbar()).toBeNull();
+      expect(steps().hasAttribute("hidden")).toBe(false);
+      expect(main().hasAttribute("hidden")).toBe(true);
+    });
+
+    it("shows all three columns on a wide screen", () => {
+      renderScreen([verseItem("GEN", 16)]);
+      act(() => rowButtons()[0]!.click());
+
+      expect(steps().hasAttribute("hidden")).toBe(false);
+      expect(main().hasAttribute("hidden")).toBe(false);
+      expect(stepbar()).toBeNull();
+    });
+  });
+
+  describe("drag to reorder", () => {
+    let offsetHeightSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      offsetHeightSpy = vi
+        .spyOn(HTMLLIElement.prototype, "offsetHeight", "get")
+        .mockReturnValue(40);
+    });
+
+    afterEach(() => {
+      offsetHeightSpy.mockRestore();
+    });
+
+    it("moves a step by its handle, keeping the open step open", () => {
+      const { playlists, reorderEditingPlaylistItem } = renderScreen([
+        verseItem("GEN", 1),
+        verseItem("GEN", 2),
+        verseItem("GEN", 3),
       ]);
+      const handles = container.querySelectorAll(
+        ".sb-discover-item-drag-handle"
+      );
+      expect(handles).toHaveLength(3);
+      expect(handles[0]?.getAttribute("aria-label")).toBe("Drag to reorder");
+      act(() => rowButtons()[0]!.click());
+
+      act(() => {
+        handles[0]!.dispatchEvent(
+          new PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerId: 1,
+            clientY: 0,
+          })
+        );
+        window.dispatchEvent(
+          new PointerEvent("pointermove", { pointerId: 1, clientY: 45 })
+        );
+      });
+
+      expect(reorderEditingPlaylistItem).toHaveBeenCalledWith(0, 1);
+      expect(playlists.editingPlaylist.value?.items).toEqual([
+        verseItem("GEN", 2),
+        verseItem("GEN", 1),
+        verseItem("GEN", 3),
+      ]);
+      expect(rowButtons()[1]!.getAttribute("aria-current")).toBe("true");
+    });
+  });
+
+  describe("review and publish", () => {
+    const reviewButton = () => buttonByText("Review & publish")!;
+    const publishButton = () =>
+      container.querySelector<HTMLButtonElement>(
+        ".sb-shared-page-modal-start"
+      )!;
+
+    it("shows the playlist as a shared link would, with no details to fill in again", () => {
+      renderScreen([verseItem("GEN", 16), verseItem("GEN", 16)], {
+        playlist: { description: "The God who sees" },
+      });
 
       act(() => reviewButton().click());
 
       const review = container.querySelector(".sb-playlist-review")!;
-      expect(review).not.toBeNull();
       expect(container.querySelector(".sb-playlist-editor-header")).toBeNull();
       expect(
-        review.querySelector(".sb-playlist-review-title")?.textContent
+        review.querySelector(".sb-playlist-review-heading")?.textContent
       ).toBe("Review & publish");
       expect(
-        review.querySelector(".sb-playlist-review-card-title")?.textContent
+        review.querySelector(".sb-playlist-review-title")?.textContent
       ).toBe("Angel of the LORD");
       expect(
-        review.querySelector(".sb-playlist-review-card-meta")?.textContent
+        review.querySelector(".sb-shared-page-modal-description")?.textContent
+      ).toBe("The God who sees");
+      expect(
+        review.querySelector(".sb-shared-page-modal-count")?.textContent
       ).toBe("2 steps · ~8 min");
+      expect(
+        Array.from(
+          review.querySelectorAll(".sb-playlist-review-step-label")
+        ).map((el) => el.textContent)
+      ).toEqual(["Genesis 16", "Genesis 16"]);
+      // The title, description and cover are edited on the steps screen.
+      expect(review.querySelector("input, textarea")).toBeNull();
+      expect(review.querySelector(".stub-hero-image-field")).toBeNull();
+
       const checks = Array.from(
         review.querySelectorAll(".sb-playlist-review-check")
       ).map((el) => el.textContent);
@@ -553,31 +962,98 @@ describe("PlaylistEditorScreen", () => {
       expect(checks.join(" ")).toContain(
         "Steps 1 and 2 show the same passage."
       );
+      expect(buttonByText("Test with a group")).toBeUndefined();
 
-      const choices = Array.from(
-        review.querySelectorAll<HTMLButtonElement>(
-          ".sb-playlist-visibility-choice"
-        )
-      );
-      expect(
-        choices.map(
-          (b) => b.querySelector(".sb-playlist-visibility-title")?.textContent
-        )
-      ).toEqual(["Only me", "Anyone with the link", "Public in Discover"]);
-      act(() => choices[0]!.click());
-      expect(playlists.updateEditingPlaylistMetadata).toHaveBeenCalledWith({
-        visibility: "private",
-      });
-
-      act(() => {
-        review
-          .querySelector<HTMLButtonElement>(".sb-playlist-editor-back")!
-          .click();
-      });
+      act(() => buttonByText("Keep editing")!.click());
       expect(container.querySelector(".sb-playlist-review")).toBeNull();
       expect(
         container.querySelector(".sb-playlist-editor-header")
       ).not.toBeNull();
+    });
+
+    it("offers only me or anyone with the link, and saves a private one as a draft", () => {
+      const { playlists } = renderScreen([verseItem("GEN", 16)]);
+      act(() => reviewButton().click());
+
+      const choices = () =>
+        Array.from(
+          container.querySelectorAll<HTMLButtonElement>(
+            ".sb-playlist-visibility-choice"
+          )
+        );
+      expect(
+        choices().map(
+          (b) => b.querySelector(".sb-playlist-visibility-title")?.textContent
+        )
+      ).toEqual(["Only me", "Anyone with the link"]);
+      // A playlist saved before the choice existed opens for anyone with the link.
+      expect(choices()[1]!.getAttribute("aria-checked")).toBe("true");
+      expect(publishButton().textContent).toBe("Publish");
+
+      act(() => choices()[0]!.click());
+      expect(playlists.editingPlaylist.value?.visibility).toBe("private");
+      expect(choices()[0]!.getAttribute("aria-checked")).toBe("true");
+      expect(publishButton().textContent).toBe("Save draft");
+
+      act(() => choices()[1]!.click());
+      expect(playlists.editingPlaylist.value?.visibility).toBe("public");
+      expect(publishButton().textContent).toBe("Publish");
+    });
+
+    it("leaves a playlist an earlier build made unlisted as it is", () => {
+      const { updateEditingPlaylistMetadata } = renderScreen(
+        [verseItem("GEN", 16)],
+        { playlist: { visibility: "unlisted" } }
+      );
+      act(() => reviewButton().click());
+      const link = container.querySelectorAll<HTMLButtonElement>(
+        ".sb-playlist-visibility-choice"
+      )[1]!;
+      expect(link.getAttribute("aria-checked")).toBe("true");
+
+      act(() => link.click());
+
+      expect(updateEditingPlaylistMetadata).not.toHaveBeenCalled();
+    });
+
+    it("can't publish a playlist with no steps", () => {
+      renderScreen([]);
+      act(() => reviewButton().click());
+      expect(publishButton().disabled).toBe(true);
+    });
+
+    it("saves the open step's unsaved edits before showing the review", async () => {
+      const { updateEditingPlaylistItem } = renderScreen([
+        { type: "html", html: "<p>Hi</p>" },
+      ]);
+      act(() => rowButtons()[0]!.click());
+      stubItemInputControl.isDirty = true;
+
+      await act(async () => {
+        reviewButton().click();
+        await Promise.resolve();
+      });
+
+      expect(updateEditingPlaylistItem).toHaveBeenCalledWith(0, {
+        type: "html",
+        html: "<p>Changed</p>",
+      });
+      expect(container.querySelector(".sb-playlist-review")).not.toBeNull();
+    });
+
+    it("stays on the step when its unsaved edits don't save", async () => {
+      renderScreen([{ type: "html", html: "<p>Hi</p>" }]);
+      act(() => rowButtons()[0]!.click());
+      stubItemInputControl.isDirty = true;
+      stubItemInputControl.commits = false;
+
+      await act(async () => {
+        reviewButton().click();
+        await Promise.resolve();
+      });
+
+      expect(container.querySelector(".sb-playlist-review")).toBeNull();
+      expect(rowButtons()[0]!.getAttribute("aria-current")).toBe("true");
     });
 
     it("'Fix' opens the step a check points at, and Publish saves", async () => {
@@ -600,12 +1076,38 @@ describe("PlaylistEditorScreen", () => {
 
       act(() => reviewButton().click());
       await act(async () => {
-        container
-          .querySelector<HTMLButtonElement>(".sb-playlist-review-publish")!
-          .click();
+        publishButton().click();
         await Promise.resolve();
       });
       expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+    });
+
+    it("disables Publish while saving, saves once for a double click, and offers it again if saving fails", async () => {
+      const { saveEditingPlaylist } = renderScreen([verseItem("GEN", 16)]);
+      let fail: (error: Error) => void = () => {};
+      (saveEditingPlaylist as ReturnType<typeof vi.fn>).mockReturnValue(
+        new Promise<void>((_, reject) => {
+          fail = reject;
+        })
+      );
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      act(() => reviewButton().click());
+
+      act(() => publishButton().click());
+      act(() => publishButton().click());
+
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+      expect(publishButton().disabled).toBe(true);
+      expect(publishButton().textContent).toBe("Saving…");
+
+      await act(async () => {
+        fail(new Error("offline"));
+        await Promise.resolve();
+      });
+
+      expect(publishButton().disabled).toBe(false);
+      expect(publishButton().textContent).toBe("Publish");
+      errorSpy.mockRestore();
     });
   });
 });
