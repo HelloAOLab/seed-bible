@@ -651,6 +651,7 @@ describe("BibleReaderToolbar — clearing highlights", () => {
       allUsers: signal([]),
       connectedUsers: signal([]),
       currentUser: signal(null),
+      isAwayFromGroup: signal(false),
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),
@@ -5928,5 +5929,151 @@ describe("BibleReaderToolbar — a playing passage's hidden note on desktop", ()
     act(() => showNote()!.click());
     expect(playing.noteExpanded.value).toBe(true);
     expect(showNote()).toBeNull();
+  });
+});
+
+describe("BibleReaderToolbar — away from the session group", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  /**
+   * Puts the selected tab in a session whose group is on Exodus 2. The host is
+   * a connected peer; `isAwayFromGroup` stands in for the session's own
+   * comparison, which `SessionsManager.test.ts` covers.
+   */
+  async function renderInSession(viewportWidth: number, away: boolean) {
+    window.innerWidth = viewportWidth;
+    const state = await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+    });
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    const tab = state.app.currentReadingState.value!.tab;
+    await waitFor(() => !!tab.readingState.translationBooks.value);
+    const isAwayFromGroup = signal(away);
+    const rejoinGroup = vi.fn(async () => {
+      isAwayFromGroup.value = false;
+    });
+    tab.sharedSession = {
+      id: "group-abc",
+      options: signal({
+        allowedNavigators: ["host-user"],
+        allowedDecorators: null,
+        hostUserId: "host-user",
+        coHostUserIds: null,
+        highlightDurationSeconds: 16,
+        shareTranslation: true,
+        endedAt: null,
+      }),
+      localSessionId: signal("user-1"),
+      userCanDecorate: () => true,
+      userCanNavigate: (id: string) => id === "host-user",
+      isHost: () => false,
+      readingState: tab.readingState,
+      allUsers: signal([]),
+      connectedUsers: signal([
+        {
+          isSelf: false,
+          connectionId: "conn-host",
+          userId: "host-user",
+          profile: { name: "Grace" },
+          visual: {
+            defaultIcon: "pets",
+            color: "#8B5CF6",
+            colorName: "purple",
+          },
+          isActive: true,
+          joinedAtMs: null,
+        },
+      ]),
+      currentUser: signal(null),
+      groupPosition: signal({
+        translationId: "AAB",
+        bookId: "EXO",
+        chapterNumber: 2,
+        scrollToVerse: null,
+      }),
+      isAwayFromGroup,
+      rejoinGroup,
+      document: {} as never,
+      updateOptions: vi.fn(),
+      dispose: vi.fn(),
+    } as unknown as NonNullable<typeof tab.sharedSession>;
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    return { state, rejoinGroup };
+  }
+
+  const groupBar = () =>
+    container.querySelector<HTMLElement>(".sb-session-group-bar");
+
+  it("shows where the group is above the chapter nav on mobile and rejoins it", async () => {
+    const { rejoinGroup } = await renderInSession(MOBILE_VIEWPORT_WIDTH, true);
+
+    const bar = groupBar();
+    expect(bar).not.toBeNull();
+    expect(bar!.parentElement?.classList).toContain("sb-reader-floating-nav");
+    expect(bar!.textContent).toContain("Group is on Exodus 2");
+    // The person leading the group is shown beside the label.
+    expect(bar!.querySelectorAll(".sb-session-group-bar-leader")).toHaveLength(
+      1
+    );
+
+    const rejoin = bar!.querySelector<HTMLButtonElement>(
+      ".sb-session-group-bar-rejoin"
+    )!;
+    expect(rejoin.getAttribute("aria-label")).toBe(
+      "Rejoin the group at Exodus 2"
+    );
+    await act(async () => {
+      rejoin.click();
+    });
+
+    expect(rejoinGroup).toHaveBeenCalledTimes(1);
+    expect(groupBar()).toBeNull();
+  });
+
+  it("tops the floating toolbar with the group bar on desktop", async () => {
+    await renderInSession(1200, true);
+
+    const bar = groupBar();
+    expect(bar).not.toBeNull();
+    const toolbar = bar!.parentElement!;
+    expect(toolbar.classList).toContain("sb-reader-toolbar");
+    expect(toolbar.classList).toContain("sb-reader-toolbar-has-group-bar");
+    expect(bar!.textContent).toContain("Group is on Exodus 2");
+  });
+
+  it("shows nothing while the reader is with the group", async () => {
+    await renderInSession(1200, false);
+
+    expect(groupBar()).toBeNull();
+    expect(
+      container
+        .querySelector(".sb-reader-toolbar")
+        ?.classList.contains("sb-reader-toolbar-has-group-bar")
+    ).toBe(false);
   });
 });

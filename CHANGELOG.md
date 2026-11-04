@@ -5,6 +5,7 @@
 ### ✨ Added
 
 - In a shared session, see where people reading ahead of or behind you are: their picture stays at the top or bottom edge of the screen with an arrow pointing their way. ([#1961](https://github.com/HelloAOLab/seed-bible/issues/1961))
+- In a shared session where only hosts can navigate, reading a different chapter from the group now shows where the group is above the toolbar, with a Rejoin button to go back.
 
 ### 🔧 Changed
 

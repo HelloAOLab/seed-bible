@@ -1002,6 +1002,113 @@ describe("SessionsManager", () => {
     });
   });
 
+  describe("being away from the group", () => {
+    /**
+     * Joins a session whose group is on John 3, as a reader who may not move
+     * the group (only "conn-allowed" can).
+     */
+    async function joinAsFollower() {
+      mockMap = createMockSharedMap({
+        translationId: "BSB",
+        bookId: "JHN",
+        chapterNumber: 3,
+      });
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      const session = await manager.joinSession("group-abc");
+      mockOptionsMap.setEmitOnSet(true);
+      session.updateOptions({ allowedNavigators: ["conn-allowed"] });
+      await waitFor(
+        () => session.options.value.allowedNavigators?.[0] === "conn-allowed"
+      );
+      return session;
+    }
+
+    it("reports a follower who reads another chapter as away, and rejoin takes them back", async () => {
+      const session = await joinAsFollower();
+      expect(session.readingState.bookId.value).toBe("JHN");
+      expect(session.isAwayFromGroup.value).toBe(false);
+
+      session.readingState.bookId.value = "ROM";
+      session.readingState.chapterNumber.value = 8;
+
+      expect(session.isAwayFromGroup.value).toBe(true);
+      expect(session.groupPosition.value).toMatchObject({
+        bookId: "JHN",
+        chapterNumber: 3,
+      });
+
+      await session.rejoinGroup();
+
+      expect(session.readingState.bookId.value).toBe("JHN");
+      expect(session.readingState.chapterNumber.value).toBe(3);
+      expect(session.isAwayFromGroup.value).toBe(false);
+    });
+
+    it("never reports someone who may navigate as away", async () => {
+      mockMap = createMockSharedMap({
+        translationId: "BSB",
+        bookId: "JHN",
+        chapterNumber: 3,
+      });
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      const session = await manager.joinSession("group-abc");
+
+      session.readingState.bookId.value = "ROM";
+      session.readingState.chapterNumber.value = 8;
+
+      expect(session.isAwayFromGroup.value).toBe(false);
+    });
+
+    it("follows the group's position as the hosts move it", async () => {
+      const session = await joinAsFollower();
+
+      mockMap.set("chapterNumber", 4);
+      mockMap.emitChange();
+
+      expect(session.groupPosition.value).toMatchObject({
+        bookId: "JHN",
+        chapterNumber: 4,
+      });
+      await waitFor(() => session.readingState.chapterNumber.value === 4);
+    });
+
+    it("doesn't report a follower as away while the hosts' new chapter is still loading", async () => {
+      const session = await joinAsFollower();
+      const load = deferred<void>();
+      const select = session.readingState
+        .selectTranslationAndChapter as unknown as Mock;
+      const realSelect = select.getMockImplementation()!;
+      select.mockImplementationOnce(async (...args: unknown[]) => {
+        await load.promise;
+        return realSelect(...args);
+      });
+
+      mockMap.set("chapterNumber", 4);
+      mockMap.emitChange();
+
+      // The group has moved on but this reader is still on chapter 3.
+      expect(session.groupPosition.value.chapterNumber).toBe(4);
+      expect(session.readingState.chapterNumber.value).toBe(3);
+      expect(session.isAwayFromGroup.value).toBe(false);
+
+      load.resolve();
+      await waitFor(() => session.readingState.chapterNumber.value === 4);
+      expect(session.isAwayFromGroup.value).toBe(false);
+    });
+  });
+
   it("syncs local decorations to the shared decorations map", async () => {
     const manager = createSessionsManager(
       os,

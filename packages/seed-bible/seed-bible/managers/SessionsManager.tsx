@@ -78,6 +78,8 @@ interface SessionData {
   scrollToVerse: number | null;
 }
 
+export type SessionGroupPosition = Readonly<SessionData>;
+
 /**
  * Where a new session should begin reading.
  *
@@ -623,6 +625,23 @@ export interface BibleReadingSession {
   >;
 
   /**
+   * Where the group is: the session-wide position that navigators publish
+   * and everyone else follows. Null book/chapter until one has been set.
+   */
+  groupPosition: ReadonlySignal<SessionGroupPosition>;
+
+  /**
+   * True when this reader isn't allowed to move the group and is on a
+   * different chapter from it — they navigated off on their own. Stays false
+   * while a move to the group's position is still loading, so it doesn't
+   * flicker on every chapter the hosts turn to.
+   */
+  isAwayFromGroup: ReadonlySignal<boolean>;
+
+  /** Moves this reader back to the group's current position. */
+  rejoinGroup: () => Promise<void>;
+
+  /**
    * Whether this client's own connection to the shared document is
    * currently synced. False while resyncing (e.g. right after a mobile
    * device resumes from the background) — during that window, this
@@ -805,6 +824,16 @@ async function createBibleReadingSession(
   let pendingRemoteSync: SessionData | null = null;
   /** Non-null while `queueRemoteSync`'s drain loop is running. */
   let remoteSyncDrain: Promise<void> | null = null;
+  const isRemoteSyncRunning = signal(false);
+  const groupPosition = signal<SessionGroupPosition>(
+    getSessionDataFromMap(stateMap)
+  );
+  const refreshGroupPosition = () => {
+    const next = getSessionDataFromMap(stateMap);
+    if (!sessionDataMatches(next, groupPosition.peek())) {
+      groupPosition.value = next;
+    }
+  };
   /** Armed while a local navigation is waiting to be published to peers. */
   let publishTimer: ReturnType<typeof setTimeout> | null = null;
   /** Armed while our own reading position is waiting to be broadcast. */
@@ -1131,6 +1160,7 @@ async function createBibleReadingSession(
   const queueRemoteSync = (sessionData: SessionData): Promise<void> => {
     pendingRemoteSync = sessionData;
     if (!remoteSyncDrain) {
+      isRemoteSyncRunning.value = true;
       remoteSyncDrain = (async () => {
         try {
           while (pendingRemoteSync) {
@@ -1140,6 +1170,7 @@ async function createBibleReadingSession(
           }
         } finally {
           remoteSyncDrain = null;
+          isRemoteSyncRunning.value = false;
         }
       })();
     }
@@ -1174,9 +1205,11 @@ async function createBibleReadingSession(
     });
   }
 
+  refreshGroupPosition();
   syncDecorationsFromSession();
 
   const mapSubscription = stateMap.changes.subscribe(() => {
+    refreshGroupPosition();
     const nextSessionData = getSessionDataFromMap(stateMap);
 
     if (
@@ -1459,6 +1492,7 @@ async function createBibleReadingSession(
         stateMap.set("scrollToVerse", nextSessionData.scrollToVerse);
       }
     });
+    refreshGroupPosition();
   };
 
   const schedulePublish = () => {
@@ -1863,6 +1897,24 @@ async function createBibleReadingSession(
     document.unsubscribe();
   };
 
+  const isAwayFromGroup = computed(() => {
+    if (userCanNavigate(localSessionId.value) || isRemoteSyncRunning.value) {
+      return false;
+    }
+    const group = groupPosition.value;
+    if (!group.bookId || !group.chapterNumber) {
+      return false;
+    }
+    return (
+      readingState.bookId.value !== group.bookId ||
+      readingState.chapterNumber.value !== group.chapterNumber
+    );
+  });
+
+  // A plain `queueRemoteSync`, so a rejoin and a host's move arriving at the
+  // same moment coalesce into one load toward the newest position.
+  const rejoinGroup = () => queueRemoteSync(getSessionDataFromMap(stateMap));
+
   const isHost = (user: ConnectedSessionUser | null): boolean => {
     if (!user) return false;
     const hostUserId = options.value.hostUserId;
@@ -1882,6 +1934,9 @@ async function createBibleReadingSession(
     connectedUsers,
     currentUser,
     participantPositions,
+    groupPosition,
+    isAwayFromGroup,
+    rejoinGroup,
     isSynced,
     removeSharedDecoration,
     decorationOwner: (decorationId) =>

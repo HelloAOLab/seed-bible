@@ -40,6 +40,7 @@ import {
   openSaveModalForLocation,
 } from "../Tabs/Tabs";
 import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
+import { SessionGroupBar } from "../SessionGroupBar/SessionGroupBar";
 import { playlistItemLabel } from "../playlistItemLabel";
 import {
   ScriptureNoteSheet,
@@ -2346,6 +2347,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       root.style.setProperty("--sb-reader-bottom-chrome", `${chromePx}px`);
     };
 
+    // The session group bar also sits outside its host's box (on top of the
+    // nav on mobile, on top of the toolbar on desktop), so it's added on too.
+    const groupBarHeight = (host: HTMLElement) => {
+      const bar = host.querySelector(":scope > .sb-session-group-bar");
+      return bar instanceof HTMLElement ? bar.offsetHeight : 0;
+    };
+
     // A playing passage's note sheet rides on top of the floating nav, outside
     // its box, so it's added on: a long note would otherwise cover the end of
     // the chapter and the discovered content after it.
@@ -2353,7 +2361,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       const noteSheet = nav.querySelector(".sb-scripture-note-sheet");
       return (
         nav.offsetHeight +
-        (noteSheet instanceof HTMLElement ? noteSheet.offsetHeight : 0)
+        (noteSheet instanceof HTMLElement ? noteSheet.offsetHeight : 0) +
+        groupBarHeight(nav)
       );
     };
 
@@ -2373,7 +2382,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       }
       if (!(toolbar instanceof HTMLElement)) return;
 
-      let insetPx = toolbar.offsetHeight;
+      let insetPx = toolbar.offsetHeight + groupBarHeight(toolbar);
       if (nav instanceof HTMLElement) {
         insetPx += navHeight(nav);
       } else {
@@ -2409,13 +2418,23 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         observer.observe(wrap);
         const toolbar = wrap.querySelector(".sb-reader-toolbar");
         const nav = wrap.querySelector(".sb-reader-floating-nav");
-        if (toolbar instanceof HTMLElement) observer.observe(toolbar);
+        if (toolbar instanceof HTMLElement) {
+          observer.observe(toolbar);
+          // The desktop group bar comes and goes inside the toolbar.
+          mutationObserver?.observe(toolbar, { childList: true });
+          const groupBar = toolbar.querySelector(
+            ":scope > .sb-session-group-bar"
+          );
+          if (groupBar instanceof HTMLElement) observer.observe(groupBar);
+        }
         if (nav instanceof HTMLElement) {
           observer.observe(nav);
           // The note sheet comes and goes with the playing step, and resizes
           // as it collapses or its note loads.
           const noteSheet = nav.querySelector(".sb-scripture-note-sheet");
           if (noteSheet instanceof HTMLElement) observer.observe(noteSheet);
+          const groupBar = nav.querySelector(":scope > .sb-session-group-bar");
+          if (groupBar instanceof HTMLElement) observer.observe(groupBar);
           mutationObserver?.observe(nav, { childList: true });
         }
         mutationObserver?.observe(wrap, { childList: true });
@@ -3058,6 +3077,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       resolveBookName={resolveBookName}
                     />
                   )}
+                  {/* Shares the spot above the nav with the note sheet, so
+                      only one of them is ever shown. */}
+                  {!playing && sessionState.value && (
+                    <SessionGroupBar
+                      session={sessionState.value}
+                      resolveBookName={resolveBookName}
+                      layout="mobile"
+                    />
+                  )}
                   {!playing && audio && AudioIcon && (
                     <div className="sb-reader-floating-nav-play-wrap">
                       <button
@@ -3192,8 +3220,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 !isSmallScreen.value && desktopPlayback.value
                   ? " sb-reader-toolbar-has-audio"
                   : ""
+              }${
+                !isSmallScreen.value &&
+                sessionState.value?.isAwayFromGroup.value
+                  ? " sb-reader-toolbar-has-group-bar"
+                  : ""
               }`}
             >
+              {!isSmallScreen.value && sessionState.value && (
+                <SessionGroupBar
+                  session={sessionState.value}
+                  resolveBookName={resolveBookName}
+                  layout="desktop"
+                />
+              )}
               {isSmallScreen.value ? (
                 <>
                   <MobileBottomTab
