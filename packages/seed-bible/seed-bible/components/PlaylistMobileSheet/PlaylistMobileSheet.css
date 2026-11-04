@@ -1,6 +1,7 @@
 /* Docked to the top edge of the floating chapter navigation (3.125rem tall,
    see BibleReaderToolbar.inline.css), inside the toolbar wrap that is fixed
-   to the bottom of the screen on phones. It grows upwards from there. */
+   to the bottom of the screen on phones. Folded it is one slim bar; opened,
+   the note and the rest grow upwards above the bar. */
 .sb-playlist-sheet {
   position: absolute;
   left: 0;
@@ -8,81 +9,30 @@
   bottom: calc(100% + 3.125rem);
   display: flex;
   flex-direction: column;
-  max-height: 60vh;
-  border-radius: 16px 16px 0 0;
+  max-height: 55vh;
+  overflow: hidden;
+  border-radius: 14px 14px 0 0;
   background: var(--sb-reader-toolbar-background, var(--sb-background));
   color: var(--sb-font-color);
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.16);
   z-index: 1;
 }
 
-.sb-playlist-sheet-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-  padding-inline-end: 8px;
-}
-
-.sb-playlist-sheet-handle {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 16px 0 6px 16px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.sb-playlist-sheet-grip {
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  width: 36px;
-  height: 4px;
-  margin-left: -18px;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
-}
-
-.sb-playlist-sheet-eyebrow {
-  flex-basis: 100%;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--sb-primary-color);
-}
-
-.sb-playlist-sheet-eyebrow .material-symbols-outlined {
+/* How far through the playlist, as a hairline along the top edge. */
+.sb-playlist-sheet-progress {
   flex-shrink: 0;
-  font-size: 1rem;
+  display: flex;
+  gap: 2px;
 }
 
-.sb-playlist-sheet-eyebrow-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sb-playlist-sheet-collapsed-title {
+.sb-playlist-sheet-segment {
   flex: 1;
-  min-width: 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  height: 3px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+}
+
+.sb-playlist-sheet-segment--reached {
+  background: var(--sb-primary-color);
 }
 
 .sb-playlist-sheet-body {
@@ -91,43 +41,12 @@
   gap: 8px;
   min-height: 0;
   overflow-y: auto;
-  padding: 0 16px 14px;
-}
-
-.sb-playlist-sheet-progress {
-  flex-basis: 100%;
-  display: flex;
-  gap: 4px;
-}
-
-.sb-playlist-sheet-segment {
-  flex: 1;
-  height: 4px;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
-}
-
-.sb-playlist-sheet-segment--reached {
-  background: var(--sb-primary-color);
-}
-
-.sb-playlist-sheet-title {
-  margin: 0;
-  font-family: var(--sb-book-title-font-family);
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.2;
+  padding: 12px 16px 4px;
 }
 
 .sb-playlist-sheet-note {
   font-size: 0.9375rem;
   line-height: 1.55;
-}
-
-.sb-playlist-sheet-detail {
-  margin: 0;
-  font-size: 0.875rem;
-  opacity: 0.85;
 }
 
 .sb-playlist-sheet-up-next {
@@ -139,25 +58,103 @@
   white-space: nowrap;
 }
 
-.sb-playlist-sheet-body .sb-playlist-item-nav {
-  margin-top: 4px;
+.sb-playlist-sheet-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 4px 6px;
 }
 
+.sb-playlist-sheet--open .sb-playlist-sheet-bar {
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+.sb-playlist-sheet-handle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-playlist-sheet-bar-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-playlist-sheet-bar-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-playlist-sheet-bar-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-playlist-sheet-bar-meta .material-symbols-outlined {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  color: var(--sb-primary-color);
+}
+
+.sb-playlist-sheet-chevron {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  opacity: 0.6;
+}
+
+.sb-playlist-sheet-step,
 .sb-playlist-sheet-listen {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  margin-top: 14px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 50%;
   background: transparent;
   color: var(--sb-font-color);
-  opacity: 0.7;
   cursor: pointer;
+}
+
+.sb-playlist-sheet-step:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.sb-playlist-sheet-step--next {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-playlist-sheet-listen {
+  opacity: 0.7;
 }
 
 .sb-playlist-sheet-listen--on {

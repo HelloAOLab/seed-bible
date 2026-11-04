@@ -82,7 +82,7 @@
   font-size: 1.125rem;
 }
 
-.sb-step-screen-close {
+.sb-step-screen-more {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -96,7 +96,7 @@
   cursor: pointer;
 }
 
-.sb-step-screen-close:hover,
+.sb-step-screen-more:hover,
 .sb-step-screen-read-with:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
@@ -215,13 +215,51 @@
 }
 
 @media (max-width: 700px) {
+  /* A phone keeps to the step: the playlist's name on one line, the way on
+     in one row, and the rest (sharing, stopping) behind More. */
   .sb-step-screen-header {
-    padding: 12px 16px;
+    position: relative;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 10px 8px 8px 16px;
   }
 
+  .sb-step-screen-heading {
+    min-width: 0;
+  }
+
+  .sb-step-screen-eyebrow,
+  .sb-step-screen-read-with,
+  .sb-step-screen-up-next,
+  .sb-step-screen-previous-label {
+    display: none;
+  }
+
+  .sb-step-screen-playlist {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1.0625rem;
+  }
+
+  /* The progress runs along the top edge, as a thin line. */
   .sb-step-screen-progress {
-    order: 5;
-    width: 100%;
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    width: auto;
+    gap: 2px;
+  }
+
+  .sb-step-screen-progress .sb-step-screen-segment {
+    height: 3px;
+    border-radius: 0;
+  }
+
+  .sb-step-screen-previous {
+    flex: none;
+    width: 2.75rem;
+    padding: 0;
   }
 
   .sb-step-screen-content {

@@ -1373,5 +1373,8 @@
   "playlist-visibility-summary": "Who can open it: {{who}}",
   "playlist-review-change": "Change",
   "playlist-compare-missing": "Choose both passages to compare",
-  "playlist-compare-passages": "Passages"
+  "playlist-compare-passages": "Passages",
+  "playlist-sheet-place": "Step {{step}} of {{total}} · {{playlist}}",
+  "playlist-more": "More",
+  "playlist-stop": "Stop playlist"
 }

@@ -9,6 +9,10 @@ import {
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
 import { MaterialIcon } from "../icons";
+import {
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "../ContextMenu/ContextMenu";
 import { playlistItemLabel } from "../playlistItemLabel";
 import {
   minutesLabel,
@@ -182,14 +186,24 @@ function PlaylistStepScreenBody(props: {
             })}
           </button>
         ) : null}
-        <button
-          type="button"
-          className="sb-step-screen-close"
-          aria-label={t("close", { defaultValue: "Close" })}
-          onClick={() => playlists.stopPlaying()}
+        {/* Stopping is in a menu rather than one tap away, so it isn't hit
+            by mistake. */}
+        <ContextMenuWithButton
+          buttonClassName="sb-step-screen-more"
+          aria-label={t("playlist-more", { defaultValue: "More" })}
+          icon={<MaterialIcon>more_horiz</MaterialIcon>}
         >
-          <MaterialIcon>close</MaterialIcon>
-        </button>
+          {!session ? (
+            <ContextMenuItem onClick={() => void readWithOthers()}>
+              {t("playlist-read-with-others", {
+                defaultValue: "Read with others",
+              })}
+            </ContextMenuItem>
+          ) : null}
+          <ContextMenuItem onClick={() => playlists.stopPlaying()}>
+            {t("playlist-stop", { defaultValue: "Stop playlist" })}
+          </ContextMenuItem>
+        </ContextMenuWithButton>
       </header>
 
       <div className="sb-step-screen-body">
@@ -288,9 +302,13 @@ function PlaylistStepScreenBody(props: {
               <button
                 type="button"
                 className="sb-step-screen-previous"
+                aria-label={t("previous", { defaultValue: "Previous" })}
                 onClick={() => void playing.previous()}
               >
-                {t("previous", { defaultValue: "Previous" })}
+                <MaterialIcon>arrow_back</MaterialIcon>
+                <span className="sb-step-screen-previous-label">
+                  {t("previous", { defaultValue: "Previous" })}
+                </span>
               </button>
             ) : null}
             <button

@@ -46,7 +46,7 @@ describe("PlaylistMobileSheet", () => {
     return playing;
   }
 
-  it("opens on the step with its kind, the playlist, its note and what's next", async () => {
+  it("opens on a step's note, with the step and its place in the bar beneath", async () => {
     renderSheet([
       {
         type: "bible-verse",
@@ -58,11 +58,11 @@ describe("PlaylistMobileSheet", () => {
     ]);
 
     expect(
-      container.querySelector(".sb-playlist-sheet-eyebrow-text")?.textContent
-    ).toBe("Note + Scripture · Angel of the LORD");
-    expect(
-      container.querySelector(".sb-playlist-sheet-title")?.textContent
+      container.querySelector(".sb-playlist-sheet-bar-title")?.textContent
     ).toBe("Hagar and the Angel");
+    expect(
+      container.querySelector(".sb-playlist-sheet-bar-meta")?.textContent
+    ).toContain("Step 1 of 2 · Angel of the LORD");
     await vi.waitFor(() =>
       expect(
         container.querySelector(".sb-playlist-sheet-note")?.textContent
@@ -76,21 +76,56 @@ describe("PlaylistMobileSheet", () => {
     ).toHaveLength(1);
   });
 
-  it("folds to one line from its handle and opens again", () => {
+  it("is just the bar for a passage without a note, and opens from it", () => {
     renderSheet([{ type: "bible-verse", ref: { bookId: "GEN", chapter: 16 } }]);
     const handle = container.querySelector<HTMLButtonElement>(
       ".sb-playlist-sheet-handle"
     )!;
-    expect(handle.getAttribute("aria-expanded")).toBe("true");
-
-    act(() => handle.click());
+    expect(handle.getAttribute("aria-expanded")).toBe("false");
     expect(container.querySelector(".sb-playlist-sheet-body")).toBeNull();
     expect(
-      container.querySelector(".sb-playlist-sheet-collapsed-title")?.textContent
+      container.querySelector(".sb-playlist-sheet-bar-title")?.textContent
     ).toBe("Genesis 16");
 
     act(() => handle.click());
     expect(container.querySelector(".sb-playlist-sheet-body")).not.toBeNull();
+    act(() => handle.click());
+    expect(container.querySelector(".sb-playlist-sheet-body")).toBeNull();
+  });
+
+  it("keeps Previous and Next in reach whether open or folded", async () => {
+    const playing = renderSheet([
+      {
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 16 },
+        note: "<p>Look.</p>",
+      },
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 22 } },
+    ]);
+    const step = (label: string) =>
+      container.querySelector<HTMLButtonElement>(
+        `.sb-playlist-sheet-step[aria-label="${label}"]`
+      )!;
+    expect(step("Previous").disabled).toBe(true);
+
+    // Folded away, the bar still steps.
+    act(() =>
+      container
+        .querySelector<HTMLButtonElement>(".sb-playlist-sheet-handle")!
+        .click()
+    );
+    expect(container.querySelector(".sb-playlist-sheet-body")).toBeNull();
+    await act(async () => {
+      step("Next step").click();
+      await Promise.resolve();
+    });
+
+    expect(playing.currentIndex.value).toBe(1);
+    expect(
+      container.querySelector(".sb-playlist-sheet-bar-title")?.textContent
+    ).toBe("Genesis 22");
+    expect(step("Finish")).not.toBeNull();
+    expect(step("Previous").disabled).toBe(false);
   });
 
   it("Listen asks for the playlist to be read aloud, and is left out when it can't be", () => {
@@ -116,25 +151,6 @@ describe("PlaylistMobileSheet", () => {
       false
     );
     expect(container.querySelector(".sb-playlist-sheet-listen")).toBeNull();
-  });
-
-  it("Next step moves the playlist on", async () => {
-    const playing = renderSheet([
-      { type: "bible-verse", ref: { bookId: "GEN", chapter: 16 } },
-      { type: "bible-verse", ref: { bookId: "GEN", chapter: 22 } },
-    ]);
-
-    await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>(".sb-playlist-item-nav-next")!
-        .click();
-      await Promise.resolve();
-    });
-
-    expect(playing.currentIndex.value).toBe(1);
-    expect(
-      container.querySelector(".sb-playlist-sheet-title")?.textContent
-    ).toBe("Genesis 22");
   });
 
   it("leaves text, link, question and compare steps to the step screen", () => {

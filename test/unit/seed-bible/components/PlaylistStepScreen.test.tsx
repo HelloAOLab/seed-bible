@@ -195,13 +195,19 @@ describe("PlaylistStepScreen", () => {
     expect(playing.currentIndex.value).toBe(4);
   });
 
-  it("closing the screen stops the playlist", () => {
+  it("stops the playlist only from More, not in one tap", () => {
     const { stopPlaying } = renderScreen(ITEMS, 0);
+    expect(container.querySelector(".sb-step-screen-close")).toBeNull();
     act(() => {
       container
-        .querySelector<HTMLButtonElement>(".sb-step-screen-close")!
+        .querySelector<HTMLButtonElement>(".sb-step-screen-more")!
         .click();
     });
+    const stop = Array.from(
+      document.querySelectorAll<HTMLElement>("button, [role='menuitem']")
+    ).find((element) => element.textContent?.trim() === "Stop playlist");
+    expect(stopPlaying).not.toHaveBeenCalled();
+    act(() => stop!.click());
     expect(stopPlaying).toHaveBeenCalledTimes(1);
   });
 
