@@ -103,6 +103,7 @@ function createMockTab(
     selectTranslationAndChapter?: ReturnType<typeof vi.fn>;
     decorateVerses?: ReturnType<typeof vi.fn>;
     showSharedSessionHint?: boolean;
+    hasHiddenDiscoveredContent?: boolean;
   } = {}
 ): ReaderTab {
   const showSharedSessionHint = signal(
@@ -126,7 +127,9 @@ function createMockTab(
       ),
       discoveredStudyNotes: signal([]),
       discoveredContent: signal(overrides.discoveredContent ?? []),
-      hasHiddenDiscoveredContent: signal(false),
+      hasHiddenDiscoveredContent: signal(
+        overrides.hasHiddenDiscoveredContent ?? false
+      ),
       userDismissedHiddenContentWarning: signal(false),
       showSharedSessionHint,
       dismissSharedSessionHint: () => {
@@ -433,6 +436,49 @@ describe("DiscoverContentPanel", () => {
       container.querySelectorAll(".sb-dcp-chip")
     ).map((el) => el.textContent);
     expect(chipLabels).toEqual(["All", "Notes", "Cross Refs"]);
+  });
+
+  it("shows the full hidden-content warning when nothing else is showing", () => {
+    const tab = createMockTab({ hasHiddenDiscoveredContent: true });
+    const state = createMockState({ annotationsForChapter: [] });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-dcp-hidden-notice")).not.toBeNull();
+    expect(container.querySelector(".sb-dcp-hidden-banner")).toBeNull();
+  });
+
+  it("shows the hidden-content warning inline when a note deletion is still waiting to sync", () => {
+    const tab = createMockTab({ hasHiddenDiscoveredContent: true });
+    const state = createMockState({
+      annotationsForChapter: [],
+      pendingCountForChapter: 1,
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-dcp-hidden-banner")).not.toBeNull();
+    expect(container.querySelector(".sb-dcp-hidden-notice")).toBeNull();
   });
 
   it("renders the tab's notes (annotations) even when there are no other discovered results", () => {
@@ -2819,6 +2865,19 @@ describe("DiscoverContentPanel", () => {
 
       expect(chipLabels()).not.toContain("Friends' playlists");
       expect(sectionTitles()).not.toContain("Playlists from your friends");
+    });
+
+    it("shows the hidden-content warning inline when they are showing", () => {
+      renderFull(
+        createMockTab({ hasHiddenDiscoveredContent: true }),
+        createMockState({
+          annotationsForChapter: [],
+          friendPlaylists: [{ friend: ada, playlists: [psalms] }],
+        })
+      );
+
+      expect(container.querySelector(".sb-dcp-hidden-banner")).not.toBeNull();
+      expect(container.querySelector(".sb-dcp-hidden-notice")).toBeNull();
     });
 
     it("leaves them out of the compact panel", () => {
