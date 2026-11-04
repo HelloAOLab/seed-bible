@@ -45,11 +45,15 @@ export function QuestionStepContent(props: {
     null
   );
 
+  // An answer that loads, or that saving just stored, fills the box; only a
+  // new question clears "Saved", or it would vanish as soon as it showed.
   useEffect(() => {
     setText(initialResponse?.text ?? "");
     setVisibility(initialResponse?.visibility ?? "private");
+  }, [item.prompt, initialResponse?.text, initialResponse?.visibility]);
+  useEffect(() => {
     setSaved(null);
-  }, [item, initialResponse?.text, initialResponse?.visibility]);
+  }, [item.prompt]);
 
   const canShare = !!item.shareable && !!inSession;
   const dirty =

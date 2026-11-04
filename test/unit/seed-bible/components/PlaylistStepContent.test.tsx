@@ -87,6 +87,30 @@ describe("QuestionStepContent", () => {
     expect(container.textContent).toContain("Saved to your profile.");
   });
 
+  it("still says the answer was saved once the saved answer comes back", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const show = (initialResponse?: { text: string; visibility: "private" }) =>
+      render(
+        <QuestionStepContent
+          item={{ ...question }}
+          initialResponse={initialResponse}
+          onSave={onSave}
+        />,
+        container
+      );
+    act(() => show());
+    type("A God who sees.");
+    await act(async () => {
+      saveButton().click();
+      await Promise.resolve();
+    });
+
+    // The app re-renders with the answer it now holds, and a fresh item.
+    act(() => show({ text: "A God who sees.", visibility: "private" }));
+
+    expect(container.textContent).toContain("Saved to your profile.");
+  });
+
   it("offers sharing with the session when the author allows and the reader is in one", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     act(() => {
