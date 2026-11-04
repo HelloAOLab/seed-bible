@@ -93,4 +93,64 @@ describe("PlaylistLinkContent", () => {
       container.querySelector(".sb-play-playlist-link-preview")
     ).toBeNull();
   });
+
+  it("shows a video's transcript, folded away, under the video", () => {
+    act(() => {
+      render(
+        <PlaylistLinkContent
+          url="https://www.youtube.com/watch?v=abc123"
+          transcript={"Hagar ran.\nThe angel found her."}
+        />,
+        container
+      );
+    });
+
+    const transcript = container.querySelector<HTMLDetailsElement>(
+      ".sb-play-playlist-transcript"
+    );
+    expect(transcript?.open).toBe(false);
+    expect(transcript?.querySelector("summary")?.textContent).toBe(
+      "Transcript"
+    );
+    expect(transcript?.querySelector("p")?.textContent).toBe(
+      "Hagar ran.\nThe angel found her."
+    );
+  });
+
+  it("has no transcript section when the author wrote none", () => {
+    act(() => {
+      render(
+        <PlaylistLinkContent
+          url="https://www.youtube.com/watch?v=abc123"
+          transcript="  "
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-play-playlist-transcript")).toBeNull();
+  });
+
+  it("frames a video site at 16:9 but lets an embedded page fill the space", () => {
+    act(() => {
+      render(
+        <PlaylistLinkContent url="https://www.youtube.com/watch?v=abc123" />,
+        container
+      );
+    });
+    expect(
+      container.querySelector(".sb-play-playlist-content-embed--video iframe")
+    ).not.toBeNull();
+
+    act(() => {
+      render(
+        <PlaylistLinkContent url="https://example.com/page" embed />,
+        container
+      );
+    });
+    expect(container.querySelector("iframe")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-play-playlist-content-embed--video")
+    ).toBeNull();
+  });
 });

@@ -22,34 +22,56 @@ export function PlaylistLinkContent(props: {
   title?: string;
   embed?: boolean;
   preview?: LinkPreview;
+  /** What is said in the video, for readers who can't hear it. */
+  transcript?: string;
 }) {
   const { t } = useI18n();
   const media = resolveLinkMedia(props.url);
+  const transcript = props.transcript?.trim() ? (
+    <details className="sb-play-playlist-transcript">
+      <summary>
+        {t("playlist-video-transcript", { defaultValue: "Transcript" })}
+      </summary>
+      <p dir="auto">{props.transcript}</p>
+    </details>
+  ) : null;
 
   if (media.kind === "video") {
     return (
-      <div className="sb-play-playlist-content-embed">
-        <video
-          className="sb-play-playlist-content-video"
-          src={media.url}
-          controls
-          playsInline
-        />
+      <div className="sb-play-playlist-content-media">
+        <div className="sb-play-playlist-content-embed sb-play-playlist-content-embed--video">
+          <video
+            className="sb-play-playlist-content-video"
+            src={media.url}
+            controls
+            playsInline
+          />
+        </div>
+        {transcript}
       </div>
     );
   }
 
   if (media.kind === "embed" || (media.kind === "link" && props.embed)) {
+    // A known video site plays at 16:9; any other page fills the space.
+    const video = media.kind === "embed";
     return (
-      <div className="sb-play-playlist-content-embed">
-        <iframe
-          className="sb-play-playlist-content-iframe"
-          src={media.url}
-          allow="autoplay; encrypted-media; web-share; fullscreen"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-          title={props.title?.trim() || props.url}
-        />
+      <div className="sb-play-playlist-content-media">
+        <div
+          className={`sb-play-playlist-content-embed${
+            video ? " sb-play-playlist-content-embed--video" : ""
+          }`}
+        >
+          <iframe
+            className="sb-play-playlist-content-iframe"
+            src={media.url}
+            allow="autoplay; encrypted-media; web-share; fullscreen"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+            title={props.title?.trim() || props.url}
+          />
+        </div>
+        {transcript}
       </div>
     );
   }

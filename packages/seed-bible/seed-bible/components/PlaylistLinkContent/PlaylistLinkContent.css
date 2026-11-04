@@ -12,6 +12,42 @@
   min-height: 0;
 }
 
+.sb-play-playlist-content-media {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+/* A video keeps its shape whatever the space around it: as wide as it can
+   be, at 16:9, and never taller than most of the screen. */
+.sb-play-playlist-content-embed--video {
+  flex: none;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 75vh;
+}
+
+.sb-play-playlist-transcript {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.sb-play-playlist-transcript summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--sb-primary-color);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-play-playlist-transcript p {
+  margin: 0;
+  white-space: pre-line;
+}
+
 .sb-play-playlist-content-iframe {
   width: 100%;
   height: 100%;

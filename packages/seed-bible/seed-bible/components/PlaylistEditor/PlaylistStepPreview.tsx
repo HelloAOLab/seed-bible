@@ -97,6 +97,7 @@ export function PlaylistStepPreview(props: {
           title={item.title}
           embed={item.embed}
           preview={item.preview}
+          transcript={item.transcript}
         />
       ) : item.type === "question" ? (
         <QuestionStepContent item={item} />
