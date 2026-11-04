@@ -58,6 +58,16 @@ describe("toStandardGeoJson", () => {
     });
   });
 
+  it("leaves an empty list of positions empty", () => {
+    const file = {
+      type: "Feature",
+      geometry: { type: "MultiPoint", coordinates: [] },
+      properties: {},
+    };
+
+    expect(toStandardGeoJson(ACCO, file)).toEqual(file);
+  });
+
   it("leaves the fetched file itself untouched", () => {
     const file = {
       type: "Feature",

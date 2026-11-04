@@ -87,10 +87,11 @@ function flipPositions(value: unknown): unknown {
 
 /** A position is an array of numbers; anything deeper is a list of them. */
 function flipCoordinates(coordinates: unknown): unknown {
-  if (!Array.isArray(coordinates)) {
+  // An empty list holds no position, not one missing both its numbers.
+  if (!Array.isArray(coordinates) || coordinates.length === 0) {
     return coordinates;
   }
-  if (coordinates.length > 0 && Array.isArray(coordinates[0])) {
+  if (Array.isArray(coordinates[0])) {
     return coordinates.map(flipCoordinates);
   }
   const [latitude, longitude, ...rest] = coordinates.map(Number);
