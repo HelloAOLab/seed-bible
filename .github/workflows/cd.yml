@@ -88,6 +88,9 @@ jobs:
           PATTERN_RECORD_KEY: ${{ secrets.RECORD_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # The content import worker (workers/content-import). Unset leaves
+          # bulk import off and publishing in the browser.
+          VITE_CONTENT_IMPORT_URL: ${{ vars.CONTENT_IMPORT_URL }}
         run: pnpm build
 
       - name: Configure AWS credentials
@@ -230,6 +233,52 @@ jobs:
           else
             echo "Deployed branch **$BRANCH** → \`https://alpha.seedbible.org/b/$BRANCH/$BUILD_ID\`" >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  # ─── Content import worker ─────────────────────────────────────────────────
+  # One worker serves every branch's deployment, so it deploys from main only,
+  # after the app's own quality gates pass. Skipped until the Cloudflare
+  # secrets exist (setup: workers/content-import/README.md).
+  deploy-content-import-worker:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: deploy
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      D1_DATABASE_ID: ${{ vars.CONTENT_IMPORT_D1_DATABASE_ID }}
+      WRANGLER: pnpm dlx wrangler@4.127.1
+    steps:
+      - uses: actions/checkout@v4
+        if: env.CLOUDFLARE_API_TOKEN != ''
+
+      - uses: actions/setup-node@v4
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        with:
+          node-version: 24.x
+
+      # The worker bundles zod and shared code from the repo's node_modules.
+      - name: Install
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: |
+          corepack enable
+          pnpm install
+
+      - name: Point wrangler at the D1 database
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        working-directory: workers/content-import
+        run: |
+          test -n "$D1_DATABASE_ID" || { echo "Set the CONTENT_IMPORT_D1_DATABASE_ID variable."; exit 1; }
+          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$D1_DATABASE_ID/" wrangler.toml
+
+      - name: Apply D1 migrations
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        working-directory: workers/content-import
+        run: $WRANGLER d1 migrations apply seed-bible-content-import --remote
+
+      - name: Deploy worker
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        working-directory: workers/content-import
+        run: $WRANGLER deploy
 
   # Covers the case where a branch was already deployed (via `push`) before
   # its PR was opened: the deploy job's comment step only finds PRs that
