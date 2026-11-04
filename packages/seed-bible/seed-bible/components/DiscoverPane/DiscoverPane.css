@@ -364,6 +364,35 @@
   max-width: 100%;
 }
 
+/* Aliases and facts on an extension's `metadata` card. */
+.sb-discover-facts {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.sb-discover-fact {
+  display: flex;
+  gap: 6px;
+}
+
+.sb-discover-fact dt {
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.sb-discover-fact dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Author, host and duration under an extension's video or website card. */
+.sb-discover-link-details {
+  opacity: 0.75;
+  overflow-wrap: anywhere;
+}
+
 .sb-annotations-pending-sync {
   margin: 0 0 0.5rem;
   font-size: 0.8125rem;

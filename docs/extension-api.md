@@ -534,13 +534,50 @@ discover: {
 
 The app calls `discover` whenever the Discover panel needs results, with `{ providerId, translationId, bookId, chapter, language }`. Return up to 50 results, each one of:
 
-| `type`              | Fields                                                                              | Shown as                                                                                                                                 |
-| ------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `"content"`         | `id`, `title`, `description`, `reference`, and optional `verses`, `author`, `image` | A card. Selecting it calls your `onSelect(id)`. (This doesn't count as a user interaction, so open a pane from it rather than a dialog.) |
-| `"cross-reference"` | `reference`, `crossReference`                                                       | A link from one passage to another.                                                                                                      |
-| `"study-note"`      | `reference`, `text` (1–5,000 characters)                                            | A note on the passage.                                                                                                                   |
+| `type`              | Fields                                                                                                      | Shown as                                                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"content"`         | `id`, `title`, `description`, `reference`, and optional `verses`, `author`, `image`                         | A card. Selecting it calls your `onSelect(id)`. (This doesn't count as a user interaction, so open a pane from it rather than a dialog.)                             |
+| `"cross-reference"` | `reference`, `crossReference`                                                                               | A link from one passage to another.                                                                                                                                  |
+| `"study-note"`      | `reference`, `text` (1–5,000 characters)                                                                    | A note on the passage.                                                                                                                                               |
+| `"metadata"`        | `id`, `kind`, `name`, `reference`, and optional `description`, `verses`, `aliases`, `facts`, `image`        | A card in the section for its `kind` (People, Places, Events, Groups, Objects or Topics), listing its other names and facts. Selecting it calls your `onSelect(id)`. |
+| `"video"`           | `title`, `reference`, `url`, and optional `description`, `verses`, `thumbnail`, `durationSeconds`, `author` | A card in the Videos section showing the author, the link's host name and the length. Selecting it opens `url` in a new browser tab.                                 |
+| `"website"`         | `title`, `reference`, `url`, and optional `description`, `verses`, `image`, `author`                        | A card in the Websites section showing the author and the link's host name. Selecting it opens `url` in a new browser tab.                                           |
 
-`reference` is a [`SandboxReference`](#4-shared-types). `image` must be an `https:` URL on one of your `network` hosts, or it's dropped. `author` defaults to your extension's name.
+`reference` is a [`SandboxReference`](#4-shared-types). `image` and `thumbnail` must be `https:` URLs on one of your `network` hosts, or they're dropped. `author` defaults to your extension's name.
+
+A `metadata` result describes something the passage mentions. `kind` is one of `"person"`, `"place"`, `"event"`, `"group"` (a tribe, nation or party), `"object"` (like the ark or the temple) or `"topic"`. `aliases` is up to 10 other names, and `facts` up to 20 `{ label, value }` pairs, like `{ label: "Born", value: "c. 1000 BC" }`. Give `verses` so the card shows up when the reader selects one of them.
+
+A `video` or `website` result's `url` can be on any host, but must be `https:`; a result with any other link is dropped. Because the reader leaves the app when they follow it, the card always shows the link's host name, so they can see where it goes first.
+
+```ts
+await sb.discover.registerProvider({
+  id: "people",
+  title: "People in the passage",
+  description: "Who's who in this chapter.",
+  discover: ({ bookId, chapter }) => [
+    {
+      type: "metadata",
+      id: "nicodemus",
+      kind: "person",
+      name: "Nicodemus",
+      description: "A Pharisee who came to Jesus by night.",
+      reference: { bookId, chapter },
+      verses: [1, 4, 9],
+      facts: [{ label: "Group", value: "Pharisees" }],
+    },
+    {
+      type: "video",
+      title: "Overview: John",
+      reference: { bookId, chapter },
+      url: "https://video.example.org/watch?v=john",
+      durationSeconds: 485,
+      author: "Example Studio",
+    },
+  ],
+  onSelect: (id) =>
+    void sb.panes.open({ view: "person", title: "Person", props: { id } }),
+});
+```
 
 If `discover` takes longer than **5 seconds**, throws, or returns something that doesn't match, your provider shows nothing for that request (the error is logged in the console). Results are data, not markup: you can't render your own UI in the Discover panel.
 

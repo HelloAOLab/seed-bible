@@ -23,6 +23,11 @@ import {
   SANDBOX_PERMISSIONS,
   type SandboxPermission,
 } from "@packages/seed-bible/seed-bible/extensions/protocol";
+import {
+  I18nProvider,
+  createI18nManager,
+} from "@packages/seed-bible/seed-bible/i18n";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createRawFrame, sourced, useSandboxHarness } from "./sandboxHarness";
 
 describe("sandboxed extension services", () => {
@@ -484,6 +489,185 @@ describe("sandboxed extension services", () => {
       });
 
       expect(await discover()).toEqual([]);
+    });
+
+    function renderContent(result: unknown) {
+      const container = document.createElement("div");
+      render(
+        <I18nProvider
+          i18n={createI18nManager(createNavigationManager(), ["en"])}
+        >
+          {(result as { content: ComponentChildren }).content}
+        </I18nProvider>,
+        container
+      );
+      return container;
+    }
+
+    it("shows a person, place or other metadata in its kind's section, with its facts", async () => {
+      const selected: string[] = [];
+      const { sb } = await install({
+        id: "ext.metadata",
+        permissions: ["reading:position"],
+      });
+      await sb.discover.registerProvider({
+        id: "p",
+        title: "People and places",
+        description: "",
+        discover: () => [
+          {
+            type: "metadata",
+            id: "nicodemus",
+            kind: "person",
+            name: "Nicodemus",
+            description: "A Pharisee who came to Jesus by night.",
+            reference: { bookId: "JHN", chapter: 3 },
+            verses: [1, 4, 9],
+            aliases: ["Nikodemos"],
+            facts: [{ label: "Group", value: "Pharisees" }],
+          },
+          {
+            type: "metadata",
+            id: "aenon",
+            kind: "place",
+            name: "Aenon near Salim",
+            reference: { bookId: "JHN", chapter: 3, verse: 23 },
+          },
+        ],
+        onSelect: (resultId) => void selected.push(resultId),
+      });
+
+      const results = await discover();
+
+      expect(results).toEqual([
+        expect.objectContaining({
+          type: "content",
+          contentType: "extension_person",
+          title: "Nicodemus",
+          description: "A Pharisee who came to Jesus by night.",
+          verses: [1, 4, 9],
+        }),
+        expect.objectContaining({
+          contentType: "extension_place",
+          title: "Aenon near Salim",
+          description: "",
+        }),
+      ]);
+      const sections = h.host.discover.contentTypes.value.map(
+        (type) => type.id
+      );
+      expect(sections).toEqual(
+        expect.arrayContaining(["extension_person", "extension_place"])
+      );
+      const card = renderContent(results[0]);
+      expect(card.textContent).toContain("Nikodemos");
+      expect(card.textContent).toContain("Group");
+      expect(card.textContent).toContain("Pharisees");
+
+      (results[0] as { onClick: () => void }).onClick();
+      await vi.waitFor(() => expect(selected).toEqual(["nicodemus"]));
+    });
+
+    it("opens a video or website in a new tab, shows where it leads, and drops links that aren't https", async () => {
+      const open = vi.spyOn(window, "open").mockReturnValue(null);
+      const { sb } = await install({
+        id: "ext.links",
+        permissions: ["reading:position"],
+        network: ["img.example.com"],
+      });
+      await sb.discover.registerProvider({
+        id: "p",
+        title: "Links",
+        description: "",
+        discover: () => [
+          {
+            type: "video",
+            title: "Overview of John",
+            reference: { bookId: "JHN", chapter: 3 },
+            url: "https://video.example.org/watch?v=1",
+            thumbnail: "https://img.example.com/thumb.jpg",
+            durationSeconds: 485,
+            author: "Example Studio",
+          },
+          {
+            type: "website",
+            title: "Born again",
+            description: "An article on John 3.",
+            reference: { bookId: "JHN", chapter: 3, verse: 3 },
+            url: "https://articles.example.org/born-again",
+            image: "https://tracker.example.net/pixel.gif",
+          },
+          {
+            type: "website",
+            title: "Script link",
+            reference: { bookId: "JHN", chapter: 3 },
+            url: "javascript:alert(1)",
+          },
+          {
+            type: "video",
+            title: "Plain http",
+            reference: { bookId: "JHN", chapter: 3 },
+            url: "http://video.example.org/watch?v=2",
+          },
+        ],
+      });
+
+      const results = await discover();
+
+      expect(results).toEqual([
+        expect.objectContaining({
+          contentType: "extension_video",
+          title: "Overview of John",
+          image: "https://img.example.com/thumb.jpg",
+        }),
+        expect.objectContaining({
+          contentType: "extension_website",
+          title: "Born again",
+          description: "An article on John 3.",
+          image: undefined,
+        }),
+      ]);
+      expect(renderContent(results[0]).textContent).toBe(
+        "Example Studio · video.example.org · 8:05"
+      );
+      expect(renderContent(results[1]).textContent).toBe(
+        "articles.example.org"
+      );
+
+      (results[1] as { onClick: () => void }).onClick();
+      expect(open).toHaveBeenCalledWith(
+        "https://articles.example.org/born-again",
+        "_blank",
+        "noopener,noreferrer"
+      );
+    });
+
+    it("keeps the shared sections while any extension still provides results", async () => {
+      const first = await install({
+        id: "ext.sections-a",
+        permissions: ["reading:position"],
+      });
+      const second = await install({
+        id: "ext.sections-b",
+        permissions: ["reading:position"],
+      });
+      const provider = {
+        id: "p",
+        title: "P",
+        description: "",
+        discover: () => [],
+      };
+      await first.sb.discover.registerProvider(provider);
+      await second.sb.discover.registerProvider(provider);
+      const sectionIds = () =>
+        h.host.discover.contentTypes.value.map((type) => type.id);
+      expect(sectionIds()).toContain("extension_video");
+
+      manager.unloadExtension(sourced("ext.sections-a"));
+      expect(sectionIds()).toContain("extension_video");
+
+      manager.unloadExtension(sourced("ext.sections-b"));
+      expect(sectionIds()).toEqual([]);
     });
 
     it("removes its providers when it's uninstalled", async () => {

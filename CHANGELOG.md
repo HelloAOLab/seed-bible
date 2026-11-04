@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Let third-party extensions suggest people, places, events and other details, videos and websites for a chapter in the Discover panel, shown in their own sections.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
