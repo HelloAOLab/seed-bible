@@ -366,18 +366,15 @@ describe("sandboxed extension services", () => {
     it("reads public Bible text without any permission", async () => {
       const { sb } = await install({ id: "ext.bible" });
 
-      expect(
-        await sb.bible.chapter({
-          translationId: "BSB",
-          bookId: "JHN",
-          chapter: 1,
-        })
-      ).toEqual({
-        verses: [
-          { number: 1, text: "In the beginning" },
-          { number: 2, text: "was the Word." },
-        ],
+      const chapter = await sb.bible.chapter({
+        translationId: "BSB",
+        bookId: "JHN",
+        chapter: 1,
       });
+      expect(chapter.verses).toEqual([
+        { number: 1, text: "In the beginning" },
+        { number: 2, text: "was the Word." },
+      ]);
     });
   });
 

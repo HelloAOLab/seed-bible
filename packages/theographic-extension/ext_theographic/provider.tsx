@@ -14,6 +14,7 @@ import type {
   Dataset,
   TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { ModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { ReadonlySignal } from "@preact/signals";
 import {
@@ -381,7 +382,7 @@ export interface TheographicClient {
   getEntity<T>(apiLink: string): Promise<T>;
   /**
    * Any other JSON file, by absolute URL, through the same cache: the
-   * locations extension's GeoJSON files.
+   * known places' GeoJSON files.
    */
   getResource<T>(url: string, options?: ReadOptions): Promise<T>;
 }
@@ -595,10 +596,12 @@ export interface TheographicProviderDeps {
   onReferenceClick: (ref: VerseRef, origin?: ReferenceOrigin) => void;
   /** Where a place's map opens. Omit and the map control is not offered. */
   panes?: PanesManager;
-  /** The locations extension's lookup, for places it has a file for. */
+  /** The known places' lookup (`@seed-bible/bible-locations`), for places with a file. */
   locations?: PlaceLocations;
-  /** Whether the reader is on a phone-sized screen; hides "Open in map". */
+  /** Whether the reader is on a phone-sized screen, where the map opens in a sheet. */
   isMobile?: ReadonlySignal<boolean>;
+  /** Where the map opens on a phone, as a sheet over Discover. */
+  modals?: ModalManager;
 }
 
 /** The chapter a card was discovered for. */
@@ -748,11 +751,12 @@ export function createTheographicDiscoverProvider(
   deps: TheographicProviderDeps
 ): DiscoverProvider {
   let hasWarned = false;
-  const openPlace = createOpenPlace(deps.panes, {
-    client: deps.client,
-    locations: deps.locations,
-  });
-  const isPlaceOpen = createIsPlaceOpen(deps.panes);
+  const openPlace = createOpenPlace(
+    deps.panes,
+    { client: deps.client, locations: deps.locations },
+    { isMobile: deps.isMobile, modals: deps.modals }
+  );
+  const isPlaceOpen = createIsPlaceOpen(deps.panes, deps.modals);
 
   return {
     id: "theographic",
