@@ -173,11 +173,11 @@ describe("PlaylistPartyPanel", () => {
     expect(container.querySelector(".sb-party-foot")?.textContent).toBe(
       "Everyone in the session follows your steps"
     );
+    // The host moves the group on; only the readers are counted.
     expect(container.querySelector(".sb-party-ready-count")?.textContent).toBe(
-      "1 of 3"
+      "1 of 2"
     );
     expect(people()).toEqual([
-      { name: "Mazen", state: "reading", ready: false },
       { name: "Sara", state: "check", ready: true },
       { name: "Daniel", state: "still reading Genesis 16:13", ready: false },
     ]);
@@ -324,8 +324,9 @@ describe("PlaylistPartyPanel", () => {
       { compact: true, onOpenChat }
     );
 
+    // The host's own readiness doesn't count: the host moves everyone on.
     expect(container.querySelector(".sb-party-compact-line")?.textContent).toBe(
-      "Mazen moves the group on when everyone's ready1 of 3 ready"
+      "Mazen moves the group on when everyone's ready0 of 2 ready"
     );
     expect(container.querySelector(".sb-party-people")).toBeNull();
     act(() => {

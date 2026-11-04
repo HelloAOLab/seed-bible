@@ -51,7 +51,12 @@ export function PlaylistPartyPanel(props: {
 
   const isReady = (user: ConnectedSessionUser) =>
     readiness.get(user.connectionId)?.step === step;
-  const readyCount = users.filter(isReady).length;
+  // Those who lead move the group on rather than say they're ready, so the
+  // count is of everyone else: a host and two readers, one ready, is 1 of 2.
+  const readers = users.filter(
+    (user) => getUserSessionRole(options, user) === null
+  );
+  const readyCount = readers.filter(isReady).length;
   const selfReady = !!self && isReady(self);
   const nextStep = step + 2;
   const hasNext = step < total - 1;
@@ -162,7 +167,7 @@ export function PlaylistPartyPanel(props: {
             {t("party-ready-count-of", {
               defaultValue: "{{ready}} of {{total}} ready",
               ready: readyCount,
-              total: users.length,
+              total: readers.length,
             })}
           </span>
         </p>
@@ -191,12 +196,12 @@ export function PlaylistPartyPanel(props: {
             {t("party-ready-count", {
               defaultValue: "{{ready}} of {{total}}",
               ready: readyCount,
-              total: users.length,
+              total: readers.length,
             })}
           </span>
         </div>
         <ul className="sb-party-people">
-          {users.map((user) => {
+          {readers.map((user) => {
             const ready = isReady(user);
             return (
               <li
