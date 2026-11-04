@@ -2602,6 +2602,32 @@ describe("createPlaylistManager", () => {
     expect(session.tab.readingState.isExtensionEnabled("playlist")).toBe(true);
   });
 
+  it("finds its tab when a session's playlist starts before the tab is added", async () => {
+    // Joining a session enables the synced playlist on the session's reading
+    // state first, and adds the tab for it after.
+    const sessionTab = makeTabWithExtensionMocks(
+      "tab-session",
+      selectTranslationAndChapterMock
+    );
+    const tabsManager = makeTabs(sessionTab.tab);
+    tabsManager.tabs.value = [];
+    const manager = makeManager("user-1", tabsManager);
+    await flush();
+    const playlist = makePlaylist({
+      id: "p",
+      items: [{ type: "html", html: "<p>one</p>" }],
+    });
+    sessionTab.tab.readingState.enableExtension("playlist", {
+      playlists: [playlist],
+      queue: playlist.items,
+      step: 0,
+    });
+
+    tabsManager.tabs.value = [sessionTab.tab];
+
+    expect(manager.playing.value?.tab).toBe(sessionTab.tab);
+  });
+
   it("starts no session when nothing is playing", async () => {
     const manager = makeManager("user-1");
     await flush();

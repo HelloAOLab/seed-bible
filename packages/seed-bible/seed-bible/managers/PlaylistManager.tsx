@@ -980,8 +980,15 @@ function expandChapterRange(item: ScriptureStep): ScriptureStep[] {
 export function createPlayingState(
   sourcePlaylists: SimplePlaylist[],
   tab: ReaderTab | null = null,
-  onFinish?: () => void
+  onFinish?: () => void,
+  /**
+   * Finds the tab when it's needed, in place of `tab`, for playback that
+   * starts before its tab exists: a session's playlist is enabled from the
+   * synced data while joining, and the tab is added once the join finishes.
+   */
+  findTab?: () => ReaderTab | null
 ) {
+  const resolveTab = findTab ?? (() => tab);
   const playlists = signal<SimplePlaylist[]>(sourcePlaylists);
   const queue = signal<PlaylistItemData[]>(
     sourcePlaylists.flatMap((playlist) =>
@@ -1044,6 +1051,7 @@ export function createPlayingState(
   let phraseDecorationIds: string[] = [];
 
   const disposeDecoration = () => {
+    const tab = resolveTab();
     if (tab && decorationId) {
       tab.readingState.removeDecoration(decorationId);
       decorationId = null;
@@ -1058,6 +1066,7 @@ export function createPlayingState(
 
   const navigateToCurrentItem = async () => {
     const item = currentItem.value;
+    const tab = resolveTab();
     if (!tab || item?.type !== "bible-verse") {
       return;
     }
@@ -1240,6 +1249,7 @@ export function createPlayingState(
     } else {
       // Check if navigation is needed to display the current reference
       const current = currentItem.peek();
+      const tab = resolveTab();
       if (current?.type === "bible-verse" && tab?.readingState) {
         if (
           current.ref.bookId !== tab.readingState.bookId.peek() ||
@@ -1273,7 +1283,9 @@ export function createPlayingState(
     canFinish,
     canPressNext,
     finishPromptShown: finishPromptShown as ReadonlySignal<boolean>,
-    tab,
+    get tab(): ReaderTab | null {
+      return resolveTab();
+    },
     listenAlong,
     setListenAlong,
     next,
@@ -2687,7 +2699,10 @@ export function createPlaylistManager(
     const sourceItem = source.currentItem.peek();
     await createSession();
     const next = startPlaying(sourcePlaylists, 0);
+    // Only once the playlist is playing somewhere else: never stop the one
+    // just started.
     if (
+      next?.tab !== sourceTab &&
       sourceTab.readingState.isExtensionEnabled(PLAYLIST_READING_EXTENSION_ID)
     ) {
       sourceTab.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
@@ -2881,16 +2896,27 @@ export function createPlaylistManager(
         step: 0,
       };
 
-      // The tab this reading state belongs to, so bible-verse items navigate it.
-      const tab =
+      // The tab this reading state belongs to, so bible-verse items navigate
+      // it. Looked up when needed: joining a session enables playback before
+      // the session's tab is added.
+      const findTab = () =>
         tabs.tabs.value.find((t) => t.readingState === readingState) ?? null;
 
-      const playingState = createPlayingState(initial.playlists, tab, () => {
-        const playlist = playingState.playlists.peek()[0];
-        if (playlist && isRecordedPlaylist(playlist)) {
-          openPlaylistFinishedModal(playlist, playingState.queue.peek(), tab);
-        }
-      });
+      const playingState = createPlayingState(
+        initial.playlists,
+        null,
+        () => {
+          const playlist = playingState.playlists.peek()[0];
+          if (playlist && isRecordedPlaylist(playlist)) {
+            openPlaylistFinishedModal(
+              playlist,
+              playingState.queue.peek(),
+              findTab()
+            );
+          }
+        },
+        findTab
+      );
       // Apply the synced queue + position (a peer's queue may differ from the
       // raw playlist items after add/remove/reorder).
       playingState.setState(initial);
