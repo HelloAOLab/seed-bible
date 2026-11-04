@@ -22,6 +22,7 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { AppState } from "../../managers/SeedBibleStateManager";
 import {
   canPreviewPlaylistItem,
   openPlaylistItemPreview,
@@ -59,6 +60,8 @@ interface ReadingPlanDetailProps {
   /** Called after the plan has been deleted, so the pane can leave this view. */
   onDeleted?: () => void;
   toast?: (message: string) => void;
+  /** Lets Share open the share sheet rather than only copy the plan's link. */
+  app?: AppState;
 }
 
 function formatShortDate(ms: number): string {
@@ -90,6 +93,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     onEdit,
     onDeleted,
     toast,
+    app,
   } = props;
   const { t } = useI18n();
 
@@ -137,6 +141,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
         onEdit={canEdit && onEdit ? onEdit : undefined}
         onDeleted={onDeleted}
         modals={modals}
+        app={app}
         toast={toast}
       />
     </div>

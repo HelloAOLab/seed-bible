@@ -342,7 +342,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         friends={props.state.friends}
         playlists={playlists}
         modals={modals}
-        toast={props.toast}
+        app={props.state.app}
       />
 
       <CrossReferencesSection tab={selectedTab} />
@@ -380,9 +380,9 @@ function FriendPlaylistsSection(props: {
   friends: FriendsManager;
   playlists: PlaylistManager;
   modals: ModalManager;
-  toast: SeedBibleState["app"]["toast"];
+  app: SeedBibleState["app"];
 }) {
-  const { friends, playlists, modals, toast } = props;
+  const { friends, playlists, modals, app } = props;
   const { t } = useI18n();
 
   // Reading each friend's view here (rather than only `friendIds`)
@@ -412,7 +412,7 @@ function FriendPlaylistsSection(props: {
             playlists={group.playlists}
             playlistsManager={playlists}
             modals={modals}
-            toast={toast}
+            app={app}
           />
         ))}
       </ul>
@@ -426,9 +426,9 @@ function FriendPlaylistGroup(props: {
   playlists: Playlist[];
   playlistsManager: PlaylistManager;
   modals: ModalManager;
-  toast: SeedBibleState["app"]["toast"];
+  app: SeedBibleState["app"];
 }) {
-  const { friend, playlists, playlistsManager, modals, toast } = props;
+  const { friend, playlists, playlistsManager, modals, app } = props;
   const { t } = useI18n();
 
   const displayName = displayNameOf(friend, t);
@@ -450,7 +450,7 @@ function FriendPlaylistGroup(props: {
             playlist={playlist}
             playlists={playlistsManager}
             modals={modals}
-            toast={toast}
+            app={app}
             readOnly
           />
         ))}

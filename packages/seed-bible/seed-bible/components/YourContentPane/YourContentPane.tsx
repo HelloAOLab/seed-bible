@@ -605,6 +605,7 @@ function ReadingPlanRow(props: {
         fullPlan={plan.status === "draft" ? null : full}
         onEdit={props.onEdit}
         modals={state.modals}
+        app={state.app}
         toast={state.app.toast}
         buttonClassName="sb-discover-item-menu"
       />
@@ -1110,7 +1111,7 @@ export function YourContentPane(props: YourContentScreenProps) {
                   playlist={p}
                   playlists={playlists}
                   modals={state.modals}
-                  toast={state.app.toast}
+                  app={state.app}
                   onPlay={props.onPlayPlaylist}
                   onEdit={props.onEditPlaylist}
                 />

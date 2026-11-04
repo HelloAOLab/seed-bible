@@ -23,6 +23,7 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { AppState } from "../../managers/SeedBibleStateManager";
 import type { Friend, FriendsManager } from "../../managers/FriendsManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
@@ -73,6 +74,8 @@ interface ReadingPlansPaneProps {
   ) => void;
   /** Shown after a plan share URL is copied. Optional — copy still works without it. */
   toast?: (message: string) => void;
+  /** Lets a plan's Share open the share sheet rather than only copy its link. */
+  app?: AppState;
 }
 
 type ReadingPlansView = "list" | "edit" | "detail";
@@ -374,6 +377,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     onOpenScripture,
     onPlayReadings,
     toast,
+    app,
   } = props;
   // The view outlives this component, so closing the pane to go read and add a
   // passage brings the user back to the editor they were in, not to the list.
@@ -426,6 +430,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
         onOpenScripture={onOpenScripture}
         onPlayReadings={onPlayReadings}
         toast={toast}
+        app={app}
         onEdit={() => {
           const plan = readingPlans.selectedReadingPlan.peek();
           if (plan) {
@@ -449,6 +454,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
       onEdit={(plan) => void editPlan(plan)}
       onRestart={(plan) => void restartPlan(plan)}
       toast={toast}
+      app={app}
     />
   );
 }
@@ -476,6 +482,7 @@ interface ReadingPlansListProps {
   /** Starts a completed plan over on a fresh progress, then opens it. */
   onRestart: (plan: ReadingPlanMetadata) => void;
   toast?: (message: string) => void;
+  app?: AppState;
 }
 
 /** Resolves a book id to its display name, for reading labels/typeaheads. */
@@ -509,6 +516,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
     onEdit,
     onRestart,
     toast,
+    app,
   } = props;
   const { t } = useI18n();
   // Deleting a plan erases it for good, so the button asks once first rather
@@ -575,6 +583,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
       fullPlan={row.full}
       onEdit={() => onEdit(row.meta)}
       modals={modals}
+      app={app}
       toast={toast}
     />
   );

@@ -10,6 +10,12 @@ const QR_RENDER_SIZE = 512;
 const QR_FILE_NAME = "seed-bible-session-qr.png";
 
 /**
+ * What the code links to, which only changes the wording: a session invites
+ * people to join it, a playlist or reading plan just opens.
+ */
+export type QRCodeKind = "session" | "playlist" | "readingPlan";
+
+/**
  * Generates a PNG data URL for the given link. `dataUrl` stays null until
  * generation finishes; `failed` flips on if the link can't be encoded.
  */
@@ -95,54 +101,106 @@ function SaveQRCodeButton(props: { dataUrl: string | null }) {
   );
 }
 
-function QRCodeErrorMessage() {
+function QRCodeErrorMessage(props: { kind: QRCodeKind }) {
   const { t } = useI18n();
   return (
     <span className="sb-session-qr-error" role="status">
-      {t("session-qr-error", {
-        defaultValue:
-          "Couldn't generate a QR code. Copy the session link to share it instead.",
-      })}
+      {props.kind === "playlist"
+        ? t("playlist-qr-error", {
+            defaultValue:
+              "Couldn't generate a QR code. Copy the playlist link to share it instead.",
+          })
+        : props.kind === "readingPlan"
+          ? t("reading-plan-qr-error", {
+              defaultValue:
+                "Couldn't generate a QR code. Copy the reading plan link to share it instead.",
+            })
+          : t("session-qr-error", {
+              defaultValue:
+                "Couldn't generate a QR code. Copy the session link to share it instead.",
+            })}
     </span>
   );
 }
 
+function useQRCodeLabels(kind: QRCodeKind) {
+  const { t } = useI18n();
+  if (kind === "playlist") {
+    return {
+      subtitle: t("playlist-qr-subtitle", {
+        defaultValue: "Let others scan to open this playlist.",
+      }),
+      alt: t("playlist-qr-alt", {
+        defaultValue: "QR code to open this playlist",
+      }),
+      scan: t("link-qr-scan-to-open", { defaultValue: "Scan to open" }),
+      description: t("playlist-qr-scan-description", {
+        defaultValue: "Opens this playlist on their phone.",
+      }),
+    };
+  }
+  if (kind === "readingPlan") {
+    return {
+      subtitle: t("reading-plan-qr-subtitle", {
+        defaultValue: "Let others scan to open this reading plan.",
+      }),
+      alt: t("reading-plan-qr-alt", {
+        defaultValue: "QR code to open this reading plan",
+      }),
+      scan: t("link-qr-scan-to-open", { defaultValue: "Scan to open" }),
+      description: t("reading-plan-qr-scan-description", {
+        defaultValue: "Opens this reading plan on their phone.",
+      }),
+    };
+  }
+  return {
+    subtitle: t("session-qr-subtitle", {
+      defaultValue: "Let others scan to join this session.",
+    }),
+    alt: t("session-qr-alt", {
+      defaultValue: "QR code to join this session",
+    }),
+    scan: t("session-qr-scan-to-join", { defaultValue: "Scan to join" }),
+    description: t("session-qr-scan-description", {
+      defaultValue: "Opens this passage, in this session, on their phone.",
+    }),
+  };
+}
+
 /**
- * Opens a modal with a large version of the session QR code, for when the
- * small one is hard to scan from across a room.
+ * Opens a modal with a large version of the QR code, for when the small one
+ * is hard to scan from across a room.
  */
-export function openSessionQRCodeModal(modals: ModalManager, url: string) {
+export function openSessionQRCodeModal(
+  modals: ModalManager,
+  url: string,
+  kind: QRCodeKind = "session"
+) {
   modals.openModal({
     id: `session-qr-${url}`,
-    title: { key: "session-qr-modal-title", defaultValue: "Scan to join" },
-    content: () => <SessionQRCodeLarge url={url} />,
+    title:
+      kind === "session"
+        ? { key: "session-qr-modal-title", defaultValue: "Scan to join" }
+        : { key: "link-qr-scan-to-open", defaultValue: "Scan to open" },
+    content: () => <SessionQRCodeLarge url={url} kind={kind} />,
   });
 }
 
-function SessionQRCodeLarge(props: { url: string }) {
-  const { t } = useI18n();
+function SessionQRCodeLarge(props: { url: string; kind: QRCodeKind }) {
+  const labels = useQRCodeLabels(props.kind);
   const { dataUrl, failed } = useQRCodeDataUrl(props.url);
 
   if (failed.value) {
-    return <QRCodeErrorMessage />;
+    return <QRCodeErrorMessage kind={props.kind} />;
   }
 
   return (
     <div className="sb-session-qr-large">
       <div className="sb-session-qr-large-code">
-        {dataUrl.value && (
-          <img
-            src={dataUrl.value}
-            alt={t("session-qr-alt", {
-              defaultValue: "QR code to join this session",
-            })}
-          />
-        )}
+        {dataUrl.value && <img src={dataUrl.value} alt={labels.alt} />}
       </div>
       <span className="sb-session-qr-card-description">
-        {t("session-qr-scan-description", {
-          defaultValue: "Opens this passage, in this session, on their phone.",
-        })}
+        {labels.description}
       </span>
       <SaveQRCodeButton dataUrl={dataUrl.value} />
     </div>
@@ -150,13 +208,19 @@ function SessionQRCodeLarge(props: { url: string }) {
 }
 
 /**
- * Card that shows a scannable QR code for a session link, so people reading
- * together in person can join without typing or sending the URL. Tapping the
- * code opens a large version of it.
+ * Card that shows a scannable QR code for a session or playlist link, so
+ * people together in person can open it without typing or sending the URL.
+ * Tapping the code opens a large version of it.
  */
-export function SessionQRCode(props: { url: string; modals: ModalManager }) {
+export function SessionQRCode(props: {
+  url: string;
+  modals: ModalManager;
+  kind?: QRCodeKind;
+}) {
   const { url, modals } = props;
+  const kind = props.kind ?? "session";
   const { t } = useI18n();
+  const labels = useQRCodeLabels(kind);
   const { dataUrl, failed } = useQRCodeDataUrl(url);
 
   return (
@@ -165,33 +229,22 @@ export function SessionQRCode(props: { url: string; modals: ModalManager }) {
         <span className="sb-session-qr-title">
           {t("session-qr-title", { defaultValue: "Share via QR" })}
         </span>
-        <span className="sb-session-qr-subtitle">
-          {t("session-qr-subtitle", {
-            defaultValue: "Let others scan to join this session.",
-          })}
-        </span>
+        <span className="sb-session-qr-subtitle">{labels.subtitle}</span>
       </div>
       {failed.value ? (
-        <QRCodeErrorMessage />
+        <QRCodeErrorMessage kind={kind} />
       ) : (
         <div className="sb-session-qr-card">
           <button
             type="button"
             className="sb-session-qr-code"
-            onClick={() => openSessionQRCodeModal(modals, url)}
+            onClick={() => openSessionQRCodeModal(modals, url, kind)}
             disabled={!dataUrl.value}
             aria-label={t("session-qr-enlarge", {
               defaultValue: "Show a larger QR code",
             })}
           >
-            {dataUrl.value && (
-              <img
-                src={dataUrl.value}
-                alt={t("session-qr-alt", {
-                  defaultValue: "QR code to join this session",
-                })}
-              />
-            )}
+            {dataUrl.value && <img src={dataUrl.value} alt={labels.alt} />}
             <span
               className="sb-session-qr-enlarge-icon material-symbols-outlined"
               aria-hidden="true"
@@ -200,14 +253,9 @@ export function SessionQRCode(props: { url: string; modals: ModalManager }) {
             </span>
           </button>
           <div className="sb-session-qr-info">
-            <span className="sb-session-qr-card-title">
-              {t("session-qr-scan-to-join", { defaultValue: "Scan to join" })}
-            </span>
+            <span className="sb-session-qr-card-title">{labels.scan}</span>
             <span className="sb-session-qr-card-description">
-              {t("session-qr-scan-description", {
-                defaultValue:
-                  "Opens this passage, in this session, on their phone.",
-              })}
+              {labels.description}
             </span>
             <SaveQRCodeButton dataUrl={dataUrl.value} />
           </div>

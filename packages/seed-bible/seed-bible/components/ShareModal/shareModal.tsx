@@ -6,6 +6,7 @@ import type { ModalManager } from "../../managers/ModalManager";
 import {
   SessionQRCode,
   openSessionQRCodeModal,
+  type QRCodeKind,
 } from "../SessionQRCode/SessionQRCode";
 import {
   buildEmbedIframeHtml,
@@ -44,6 +45,15 @@ export interface ShareModalProps {
   themes?: { readonly value: readonly EmbedThemeChoice[] };
   /** Active customization locator (`recordName.id`), if the viewer is in one. */
   customizationLocator?: { readonly value: string | null };
+  /**
+   * A link to show as a QR code when there's no session to show one for.
+   */
+  linkQRCode?: { url: string; kind: QRCodeKind };
+  /**
+   * Runs after "Start and share session" creates the session (and selects
+   * its tab), before the invite link is copied.
+   */
+  onSessionStarted?: (session: BibleReadingSession) => void;
 }
 
 function embedThemeLabel(
@@ -197,6 +207,7 @@ export const ShareModal = (props: ShareModalProps) => {
           onClick: async () => {
             try {
               const session = await props.app.createSharedSession();
+              props.onSessionStarted?.(session);
               await copySessionLink(session);
             } catch (error) {
               console.error("Failed to start and share a session.", error);
@@ -298,12 +309,18 @@ export const ShareModal = (props: ShareModalProps) => {
           </button>
         ))}
       </div>
-      {props.session && (
+      {props.session ? (
         <SessionQRCode
           url={getSessionUrl(props.session).href}
           modals={props.modals}
         />
-      )}
+      ) : props.linkQRCode ? (
+        <SessionQRCode
+          url={props.linkQRCode.url}
+          kind={props.linkQRCode.kind}
+          modals={props.modals}
+        />
+      ) : null}
     </div>
   );
 };
