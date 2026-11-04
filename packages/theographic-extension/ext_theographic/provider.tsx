@@ -2,7 +2,6 @@ import type {
   DiscoverContentResult,
   DiscoverContentType,
   DiscoverContext,
-  DiscoverManager,
   DiscoverProvider,
   DiscoverResult,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
@@ -15,6 +14,7 @@ import type {
   Dataset,
   TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { ModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { ReadonlySignal } from "@preact/signals";
 import {
@@ -598,10 +598,10 @@ export interface TheographicProviderDeps {
   panes?: PanesManager;
   /** The known places' lookup (`@seed-bible/bible-locations`), for places with a file. */
   locations?: PlaceLocations;
-  /** Whether the reader is on a phone-sized screen, where the map opens full screen. */
+  /** Whether the reader is on a phone-sized screen, where the map opens in a sheet. */
   isMobile?: ReadonlySignal<boolean>;
-  /** Reopened when a full-screen map that closed it is closed. */
-  discover?: Pick<DiscoverManager, "view">;
+  /** Where the map opens on a phone, as a sheet over Discover. */
+  modals?: ModalManager;
 }
 
 /** The chapter a card was discovered for. */
@@ -754,9 +754,9 @@ export function createTheographicDiscoverProvider(
   const openPlace = createOpenPlace(
     deps.panes,
     { client: deps.client, locations: deps.locations },
-    { isMobile: deps.isMobile, discover: deps.discover }
+    { isMobile: deps.isMobile, modals: deps.modals }
   );
-  const isPlaceOpen = createIsPlaceOpen(deps.panes);
+  const isPlaceOpen = createIsPlaceOpen(deps.panes, deps.modals);
 
   return {
     id: "theographic",

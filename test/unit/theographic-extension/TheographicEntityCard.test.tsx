@@ -18,11 +18,12 @@ import type {
   TheographicPlaceEntry,
 } from "@packages/theographic-extension/ext_theographic/provider";
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import {
   createIsPlaceOpen,
   createOpenPlace,
-  placePaneId,
+  placeMapId,
   type PlaceLocations,
 } from "@packages/theographic-extension/ext_theographic/map";
 
@@ -265,32 +266,21 @@ describe("TheographicEntityCard", () => {
       expect(openPlace).toHaveBeenCalledWith(EGYPT);
     });
 
-    it("offers the map full screen on a phone-sized screen, and a floating window once it widens", async () => {
-      const isMobile = signal(true);
+    it("is offered on a phone-sized screen too, as the same control", async () => {
       const { openPlace } = renderCard({
         contentType: "place_profile",
         entry: EGYPT,
         getEntity: () => Promise.resolve(EGYPT_DETAIL),
-        isMobile,
+        isMobile: signal(true),
       });
       click(expandButton());
       await flush();
 
-      // Every pane fills a phone's screen, so the same control opens it there.
-      expect(control()?.getAttribute("aria-label")).toBe(
-        "Show map full screen"
-      );
-      expect(control()?.getAttribute("title")).toBe("Show map full screen");
-      expect(control()?.textContent).toBe("open_in_full");
-      click(control() as HTMLElement);
-      expect(openPlace).toHaveBeenCalledWith(EGYPT);
-
-      act(() => {
-        isMobile.value = false;
-      });
-
+      // Where the map opens (a sheet there) is `openPlace`'s business.
       expect(control()?.getAttribute("aria-label")).toBe("Open in map");
       expect(control()?.textContent).toBe("float_landscape_2");
+      click(control() as HTMLElement);
+      expect(openPlace).toHaveBeenCalledWith(EGYPT);
     });
 
     it("uses the floating-window icon", async () => {
@@ -319,17 +309,49 @@ describe("TheographicEntityCard", () => {
       click(control() as HTMLElement);
 
       expect(panes.panes.value.map((pane) => pane.id)).toEqual([
-        placePaneId(EGYPT),
+        placeMapId(EGYPT),
       ]);
       expect(inlineMap()).toBeNull();
 
       act(() => {
-        panes.closePane(placePaneId(EGYPT));
+        panes.closePane(placeMapId(EGYPT));
       });
 
       expect(inlineMap()).toBeTruthy();
       // Still expanded: only the map moved, the card stayed open.
       expect(expandButton().getAttribute("aria-expanded")).toBe("true");
+    });
+
+    it("keeps the map's space on a phone while the sheet is open, and the map once it closes", async () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+      const modals = createModalManager();
+      renderCard({
+        contentType: "place_profile",
+        entry: EGYPT,
+        getEntity: () => Promise.resolve(EGYPT_DETAIL),
+        openPlace: createOpenPlace(panes, {}, { isMobile, modals }),
+        isPlaceOpen: createIsPlaceOpen(panes, modals),
+        isMobile,
+      });
+      click(expandButton());
+      await flush();
+
+      click(control() as HTMLElement);
+
+      // An empty box the map's size, so the list under the sheet doesn't get
+      // shorter and come back scrolled somewhere else.
+      const box = container.querySelector(".sb-theographic-map");
+      expect(box).toBeTruthy();
+      expect(box?.getAttribute("aria-hidden")).toBe("true");
+      expect(box?.childElementCount).toBe(0);
+      expect(control()).toBeNull();
+
+      act(() => {
+        modals.dismissModal(placeMapId(EGYPT));
+      });
+
+      expect(control()).toBeTruthy();
     });
 
     it("keeps the rest of the card while the map is in the pane", async () => {

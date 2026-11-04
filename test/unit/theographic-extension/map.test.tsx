@@ -2,7 +2,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import type { ComponentChild } from "preact";
 import { signal } from "@preact/signals";
-import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import {
   MAX_MAP_DATA_LENGTH,
@@ -11,7 +11,7 @@ import {
   createOpenPlace,
   findKnownLocation,
   fitsInPortalUrl,
-  placePaneId,
+  placeMapId,
   resolvePlaceMapData,
   type PlaceLocations,
 } from "@packages/theographic-extension/ext_theographic/map";
@@ -217,7 +217,7 @@ describe("createIsPlaceOpen", () => {
     expect(isOpen(BABEL)).toBe(false);
     createOpenPlace(panes)?.(BABEL);
     expect(isOpen(BABEL)).toBe(true);
-    panes.closePane(placePaneId(BABEL));
+    panes.closePane(placeMapId(BABEL));
     expect(isOpen(BABEL)).toBe(false);
   });
 
@@ -254,7 +254,7 @@ describe("createOpenPlace", () => {
       client: { getResource },
       locations: fakeLocations(),
     })?.(erech);
-    renderPane(panes, placePaneId(erech));
+    renderPane(panes, placeMapId(erech));
 
     expect(container.querySelector(".sb-theographic-map-loading")).toBeTruthy();
     expect(container.querySelector("iframe")).toBeNull();
@@ -277,7 +277,7 @@ describe("createOpenPlace", () => {
       client: { getResource: () => Promise.reject(new Error("offline")) },
       locations: fakeLocations(),
     })?.(erech);
-    renderPane(panes, placePaneId(erech));
+    renderPane(panes, placeMapId(erech));
     await flush();
     await flush();
 
@@ -293,80 +293,79 @@ describe("createOpenPlace", () => {
     expect(panes.panes.value).toHaveLength(0);
   });
 
-  describe("coming back to Discover", () => {
+  describe("on a phone", () => {
     const BABEL = place("Babel", { latitude: 32.5365, longitude: 44.4209 });
 
-    /** The reader with Discover open, as the app shows it: a side pane that clears `view` when it closes. */
-    function readerWithDiscover(onPhone: boolean) {
-      const isMobile = signal(onPhone);
+    function phoneWithDiscoverOpen() {
+      const isMobile = signal(true);
       const panes = createPanes(isMobile);
-      const discover = createDiscoverManager();
-      discover.view.value = "discover";
+      const modals = createModalManager();
       panes.openPane({
         id: "discover-pane",
         placement: "side",
         title: "Discover",
         component: () => null,
-        onClose: () => {
-          discover.view.value = null;
-        },
       });
-      const openPlace = createOpenPlace(panes, {}, { isMobile, discover });
-      return { panes, discover, openPlace };
+      const openPlace = createOpenPlace(panes, {}, { isMobile, modals });
+      return { isMobile, panes, modals, openPlace };
     }
 
-    const paneIds = (panes: ReturnType<typeof createPanes>) =>
-      panes.panes.value.map((pane) => pane.id);
-
-    it("reopens Discover on a phone when the reader closes the map it opened", () => {
-      const { panes, discover, openPlace } = readerWithDiscover(true);
+    it("opens a sheet over Discover instead of a pane, so Discover stays as it was", () => {
+      const { panes, modals, openPlace } = phoneWithDiscoverOpen();
+      const discover = panes.panes.value[0];
 
       openPlace?.(BABEL);
-      // A phone shows one pane at a time, so the map took Discover's place.
-      expect(paneIds(panes)).toEqual([placePaneId(BABEL)]);
-      expect(discover.view.value).toBeNull();
 
-      panes.closePane(placePaneId(BABEL), "user");
-
-      expect(discover.view.value).toBe("discover");
+      expect(modals.modals.value).toEqual([
+        expect.objectContaining({
+          id: placeMapId(BABEL),
+          title: "Babel",
+          mobileSheet: true,
+        }),
+      ]);
+      // A pane would have closed Discover; the sheet leaves it untouched.
+      expect(panes.panes.value).toEqual([discover]);
     });
 
-    it("leaves Discover closed when something else pushes the map out", () => {
-      const { panes, discover, openPlace } = readerWithDiscover(true);
+    it("fills the sheet with the place's map", async () => {
+      const { modals, openPlace } = phoneWithDiscoverOpen();
       openPlace?.(BABEL);
 
-      panes.openPane({
-        id: "other",
-        placement: "fullscreen",
-        title: "Other",
-        component: () => null,
+      const Content = () =>
+        modals.modals.value[0]!.content({ t: (key) => key }) as ComponentChild;
+      act(() => {
+        render(<Content />, container);
       });
+      await flush();
+      await flush();
 
-      expect(paneIds(panes)).toEqual(["other"]);
-      expect(discover.view.value).toBeNull();
+      const sheet = container.querySelector(".sb-theographic-map-sheet");
+      expect(sheet?.querySelector("iframe")).not.toBeNull();
     });
 
-    it("leaves Discover alone on a wider screen, where the map floats beside it", () => {
-      const { panes, discover, openPlace } = readerWithDiscover(false);
+    it("opens the floating pane once the screen is wider", () => {
+      const { isMobile, panes, modals, openPlace } = phoneWithDiscoverOpen();
+      isMobile.value = false;
+
       openPlace?.(BABEL);
-      expect(paneIds(panes)).toEqual(["discover-pane", placePaneId(BABEL)]);
 
-      // The reader closes Discover first, then the map: Discover stays shut.
-      panes.closePane("discover-pane", "user");
-      panes.closePane(placePaneId(BABEL), "user");
-
-      expect(discover.view.value).toBeNull();
+      expect(modals.modals.value).toEqual([]);
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual([
+        "discover-pane",
+        placeMapId(BABEL),
+      ]);
     });
 
-    it("doesn't open Discover when the map was opened from outside it", () => {
-      const isMobile = signal(true);
-      const panes = createPanes(isMobile);
-      const discover = createDiscoverManager();
+    it("counts the place as open while its sheet is", () => {
+      const { panes, modals, openPlace } = phoneWithDiscoverOpen();
+      const isOpen = createIsPlaceOpen(panes, modals);
 
-      createOpenPlace(panes, {}, { isMobile, discover })?.(BABEL);
-      panes.closePane(placePaneId(BABEL), "user");
+      openPlace?.(BABEL);
+      expect(isOpen(BABEL)).toBe(true);
+      expect(isOpen(place("Erech"))).toBe(false);
 
-      expect(discover.view.value).toBeNull();
+      modals.dismissModal(placeMapId(BABEL));
+      expect(isOpen(BABEL)).toBe(false);
     });
   });
 });

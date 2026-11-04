@@ -9,7 +9,7 @@ import type {
   getPlaceGeoJsonUrl,
   PlaceData,
 } from "@seed-bible/bible-locations";
-import type { DiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import type { ModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import { withoutQualifier } from "./names";
 import type { TheographicClient, TheographicPlaceEntry } from "./provider";
@@ -78,28 +78,33 @@ export function placeToGeoJson(
   };
 }
 
-/** The id a place's floating map pane is opened under, one per place. */
-export function placePaneId(place: Pick<TheographicPlaceEntry, "id">): string {
+/** The id a place's map pane or sheet is opened under, one per place. */
+export function placeMapId(place: Pick<TheographicPlaceEntry, "id">): string {
   return `theographic-place-${place.id}`;
 }
 
 /**
- * Whether a place's map is currently open in its floating pane.
+ * Whether a place's map is currently open in its floating pane, or on a
+ * phone, its sheet.
  *
- * Reads the pane list itself rather than tracking open/close here, so it stays
- * right however the pane goes away — its close button, being displaced, or
- * closed from code. Read during render, it re-renders the reader when that
- * changes.
+ * Reads the pane and modal lists themselves rather than tracking open/close
+ * here, so it stays right however the map goes away — its close button, being
+ * displaced, or closed from code. Read during render, it re-renders the
+ * reader when that changes.
  */
 export function createIsPlaceOpen(
-  panes: PanesManager | undefined
+  panes: PanesManager | undefined,
+  modals?: ModalManager
 ): (place: TheographicPlaceEntry) => boolean {
   if (!panes) {
     return () => false;
   }
   return (place) => {
-    const id = placePaneId(place);
-    return panes.panes.value.some((pane) => pane.id === id);
+    const id = placeMapId(place);
+    return (
+      panes.panes.value.some((pane) => pane.id === id) ||
+      (modals?.modals.value.some((modal) => modal.id === id) ?? false)
+    );
   };
 }
 
@@ -261,7 +266,7 @@ function PlaceMapPortal(props: { mapData: string | "loading"; inst: string }) {
   );
 }
 
-/** A place's map filling its floating pane. */
+/** A place's map filling its floating pane or sheet. */
 function PlacePane(props: {
   place: TheographicPlaceEntry;
   sources: PlaceMapSources;
@@ -286,21 +291,21 @@ function PlacePane(props: {
 }
 
 /**
- * Opens a place on the geo-importer map, in its own floating pane.
+ * Opens a place on the geo-importer map, in its own floating pane or sheet.
  *
  * Undefined without a `PanesManager`, which is how the card decides whether
  * to offer the control at all.
  *
- * On a phone only one pane shows at a time, so opening the map closes
- * Discover; closing the map brings Discover back, the way leaving one of
- * Discover's own sub-views does.
+ * On a phone it opens in a sheet instead: a pane there fills the screen and
+ * closes the others, Discover included, while a sheet sits over it and leaves
+ * it as it was.
  */
 export function createOpenPlace(
   panes: PanesManager | undefined,
   sources: PlaceMapSources = {},
-  screen: {
+  phone: {
     isMobile?: ReadonlySignal<boolean>;
-    discover?: Pick<DiscoverManager, "view">;
+    modals?: ModalManager;
   } = {}
 ): ((place: TheographicPlaceEntry) => void) | undefined {
   if (!panes) {
@@ -317,23 +322,27 @@ export function createOpenPlace(
     // the same `inst` and the map iframe keeps its document instead of
     // reloading.
     const inst = uuid();
-    const { isMobile, discover } = screen;
-    const returnTo = isMobile?.peek() ? discover?.view.peek() : null;
+    const renderMap = () => (
+      <PlacePane place={place} sources={sources} inst={inst} />
+    );
+
+    if (phone.isMobile?.peek() && phone.modals) {
+      phone.modals.openModal({
+        id: placeMapId(place),
+        title: place.name,
+        content: () => (
+          <div className="sb-theographic-map-sheet">{renderMap()}</div>
+        ),
+        mobileSheet: true,
+      });
+      return;
+    }
 
     panes.openPane({
-      id: placePaneId(place),
+      id: placeMapId(place),
       placement: "floating",
       title: place.name,
-      component: () => (
-        <PlacePane place={place} sources={sources} inst={inst} />
-      ),
-      // Only when the reader closes it: a map pushed out by another pane
-      // shouldn't pull Discover back over that one.
-      onClose: (reason) => {
-        if (reason === "user" && returnTo && discover) {
-          discover.view.value = returnTo;
-        }
-      },
+      component: renderMap,
     });
   };
 }
@@ -359,21 +368,12 @@ export function PlaceMap(props: {
   place: TheographicPlaceEntry;
   label: string;
   sources: PlaceMapSources;
-  /** Opens this map in its own pane. Omit and no control is shown. */
+  /** Opens this map in its own pane or sheet. Omit and no control is shown. */
   onOpen?: () => void;
   /** The control's accessible name, already translated. */
   openLabel?: string;
-  /** The control's Material Symbol, for where the pane will appear. */
-  openIcon?: string;
 }) {
-  const {
-    place,
-    label,
-    sources,
-    onOpen,
-    openLabel,
-    openIcon = "float_landscape_2",
-  } = props;
+  const { place, label, sources, onOpen, openLabel } = props;
   // One portal instance per place shown. PortalComponent builds its iframe
   // URL once on mount, so this only has to stay stable, not memoise `query`.
   const inst = useMemo(() => uuid(), [place.id]);
@@ -402,7 +402,7 @@ export function PlaceMap(props: {
           aria-label={openLabel}
           onClick={onOpen}
         >
-          <MaterialIcon>{openIcon}</MaterialIcon>
+          <MaterialIcon>float_landscape_2</MaterialIcon>
         </button>
       ) : null}
     </div>

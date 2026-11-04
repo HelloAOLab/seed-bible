@@ -56,12 +56,9 @@ interface TheographicEntityCardProps {
   client: TheographicClient;
   onReferenceClick: (ref: VerseRef) => void;
   openPlace?: (entry: TheographicPlaceEntry) => void;
-  /** Whether a place's map is currently open in its floating pane. */
+  /** Whether a place's map is currently open in its floating pane or sheet. */
   isPlaceOpen?: (entry: TheographicPlaceEntry) => boolean;
-  /**
-   * Whether the reader is on a phone-sized screen, where every pane fills the
-   * screen, so the map's control is offered as a full-screen view instead.
-   */
+  /** Whether the reader is on a phone-sized screen, where the map opens in a sheet. */
   isMobile?: ReadonlySignal<boolean>;
   /** The known places' lookup, for places with a map file. */
   locations?: PlaceLocations;
@@ -373,9 +370,16 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
               references={references}
               bookName={bookName}
               map={
-                // While the floating pane has this place's map, the card
-                // doesn't show a second copy; closing the pane brings it back.
-                place && isMappable && !isPlaceOpen?.(place) ? (
+                !place || !isMappable ? null : isPlaceOpen?.(place) ? (
+                  // While the pane or sheet has this place's map, the card
+                  // doesn't show a second copy. On a phone the sheet sits
+                  // over the card, so it keeps the map's space: otherwise the
+                  // list shrinks underneath and the reader comes back to it
+                  // scrolled somewhere else.
+                  isMobile?.value ? (
+                    <div className="sb-theographic-map" aria-hidden="true" />
+                  ) : null
+                ) : (
                   <PlaceMap
                     place={place}
                     sources={{ client, locations }}
@@ -384,16 +388,11 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
                       defaultValue: "Map of {{place}}",
                     })}
                     onOpen={openPlace ? () => openPlace(place) : undefined}
-                    openLabel={
-                      isMobile?.value
-                        ? t("open-map-full-screen", {
-                            defaultValue: "Show map full screen",
-                          })
-                        : t("open-in-map", { defaultValue: "Open in map" })
-                    }
-                    openIcon={isMobile?.value ? "open_in_full" : undefined}
+                    openLabel={t("open-in-map", {
+                      defaultValue: "Open in map",
+                    })}
                   />
-                ) : null
+                )
               }
             />
           )}
