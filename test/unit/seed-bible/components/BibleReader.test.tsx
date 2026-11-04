@@ -8,6 +8,7 @@ import {
 import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import {
   type BibleReadingState,
+  type BibleSelectedVerse,
   type VisibleVerseRange,
   type SelectedFootnote,
   type VerseDecoration,
@@ -17,6 +18,7 @@ import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayou
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   FreeUseBibleAPI,
+  type ChapterVerse,
   type Translation,
   type TranslationBook,
   type TranslationBookChapter,
@@ -109,7 +111,22 @@ function createVerseFlareSession({
   coHostUserIds?: string[];
   ownerByDecoration?: Record<string, string>;
 } = {}) {
-  const decorateVerses = vi.fn();
+  const decorations = signal<VerseDecoration[]>([]);
+  const decorateVerses = vi.fn(
+    (
+      bookId: string,
+      chapterNumber: number,
+      verses: number[],
+      decoration: Partial<VerseDecoration>,
+      id: string
+    ) => {
+      decorations.value = [
+        ...decorations.value.filter((existing) => existing.id !== id),
+        { ...decoration, id, bookId, chapterNumber, verses } as VerseDecoration,
+      ];
+      return id;
+    }
+  );
   const removeSharedDecoration = vi.fn();
 
   const session = {
@@ -125,6 +142,7 @@ function createVerseFlareSession({
     }),
     removeSharedDecoration,
     readingState: {
+      decorations,
       decorateVerses,
     },
     getDecorationOwner: vi.fn(
@@ -138,7 +156,7 @@ function createVerseFlareSession({
     participantPositions: signal(new Map()),
   };
 
-  return { session, decorateVerses, removeSharedDecoration };
+  return { session, decorations, decorateVerses, removeSharedDecoration };
 }
 
 function createFixture(): ReaderFixture {
@@ -3756,6 +3774,32 @@ describe("BibleReader", () => {
         verseNumber?.style.getPropertyValue("--sb-selection-flare-color")
       ).toBe("#ff0000");
     });
+    it("marks another user's flare as ending once they deselect the verse", () => {
+      const fixture = createFixture();
+      const { session } = createVerseFlareSession({
+        visibility: "everyone",
+        ownerByDecoration: {
+          "selected-verse-flare-peer": "connection-peer",
+        },
+      });
+
+      renderWithFlare(fixture, session, [
+        {
+          ...flare("selected-verse-flare-peer", "#ff0000"),
+          className: "sb-verse-number-flare sb-verse-number-flare-ending",
+        },
+      ]);
+
+      const verseNumber = container.querySelector(".sb-verse-number");
+
+      expect(verseNumber?.classList.contains("sb-verse-number-flare")).toBe(
+        true
+      );
+      expect(
+        verseNumber?.classList.contains("sb-verse-number-flare-ending")
+      ).toBe(true);
+    });
+
     it("does not show an incoming flare when effects are disabled", () => {
       const fixture = createFixture();
       const { session } = createVerseFlareSession({
@@ -3904,7 +3948,7 @@ describe("BibleReader", () => {
         [1],
         expect.objectContaining({
           className: "sb-verse-number-flare",
-          removeAfterMs: 1200,
+          removeAfterMs: 8000,
           style: {
             "--sb-selection-flare-color": "#123456",
           },
@@ -3940,6 +3984,101 @@ describe("BibleReader", () => {
       clickFirstVerse(fixture, session);
 
       expect(decorateVerses).toHaveBeenCalled();
+    });
+
+    function selectedVerse(
+      fixture: ReturnType<typeof createFixture>,
+      verseNumber: number
+    ): BibleSelectedVerse {
+      const chapter = fixture.chapterData.value!;
+      const verse = chapter.chapter.content.find(
+        (entry): entry is ChapterVerse =>
+          entry.type === "verse" && entry.number === verseNumber
+      )!;
+      return {
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        translationId: chapter.translation.id,
+        verse,
+      };
+    }
+
+    it("fades the flare out early when its verse is deselected", () => {
+      const fixture = createFixture();
+      const { session, decorations } = createVerseFlareSession({
+        userId: "host",
+        connectionId: "connection-host",
+        hostUserId: "host",
+      });
+
+      clickFirstVerse(fixture, session);
+      act(() => {
+        fixture.selectedVerses.value = [selectedVerse(fixture, 1)];
+      });
+      const [started] = decorations.value;
+      expect(started?.className).toBe("sb-verse-number-flare");
+
+      act(() => {
+        fixture.selectedVerses.value = [];
+      });
+
+      expect(decorations.value).toEqual([
+        expect.objectContaining({
+          id: started?.id,
+          verses: [1],
+          className: "sb-verse-number-flare sb-verse-number-flare-ending",
+          removeAfterMs: 600,
+          style: { "--sb-selection-flare-color": "#123456" },
+        }),
+      ]);
+    });
+
+    it("keeps the flare running while its verse stays selected", () => {
+      const fixture = createFixture();
+      const { session, decorations } = createVerseFlareSession({
+        userId: "host",
+        connectionId: "connection-host",
+        hostUserId: "host",
+      });
+
+      clickFirstVerse(fixture, session);
+      act(() => {
+        fixture.selectedVerses.value = [selectedVerse(fixture, 1)];
+      });
+      act(() => {
+        fixture.selectedVerses.value = [
+          selectedVerse(fixture, 1),
+          selectedVerse(fixture, 2),
+        ];
+      });
+
+      expect(decorations.value).toEqual([
+        expect.objectContaining({
+          className: "sb-verse-number-flare",
+          removeAfterMs: 8000,
+        }),
+      ]);
+    });
+
+    it("leaves an already-finished flare alone when its verse is deselected", () => {
+      const fixture = createFixture();
+      const { session, decorations, decorateVerses } = createVerseFlareSession({
+        userId: "host",
+        connectionId: "connection-host",
+        hostUserId: "host",
+      });
+
+      clickFirstVerse(fixture, session);
+      act(() => {
+        fixture.selectedVerses.value = [selectedVerse(fixture, 1)];
+      });
+      decorations.value = [];
+      act(() => {
+        fixture.selectedVerses.value = [];
+      });
+
+      expect(decorateVerses).toHaveBeenCalledTimes(1);
+      expect(decorations.value).toEqual([]);
     });
 
     it('does not broadcast any participant selection in "none" mode', () => {
@@ -3994,6 +4133,57 @@ describe("BibleReader", () => {
           } as DOMRect;
           return [rect] as unknown as DOMRectList;
         });
+    }
+
+    /**
+     * A 300px-tall screen over a 1000px chapter scrolled `scrolledBy` px down,
+     * with the test container as the scroller the gutter follows. jsdom does
+     * no layout, so the boxes are stubbed per element. Returns the restore.
+     */
+    function stubScrolledScreen(scrolledBy: number) {
+      const rectSpy = vi
+        .spyOn(Element.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: Element) {
+          const rect = { left: 0, right: 100, width: 100, x: 0, toJSON() {} };
+          if (this === container) {
+            return {
+              ...rect,
+              top: 0,
+              bottom: 300,
+              height: 300,
+              y: 0,
+            } as DOMRect;
+          }
+          if (this.classList.contains("sb-chapter-content")) {
+            return {
+              ...rect,
+              top: -scrolledBy,
+              bottom: 1000 - scrolledBy,
+              height: 1000,
+              y: -scrolledBy,
+            } as DOMRect;
+          }
+          return { ...rect, top: 0, bottom: 0, height: 0, y: 0 } as DOMRect;
+        });
+      container.style.overflowY = "auto";
+      return () => {
+        rectSpy.mockRestore();
+        container.style.overflowY = "";
+      };
+    }
+
+    function arrowsOnScreen() {
+      return [...container.querySelectorAll(".sb-presence-arrow")].map(
+        (arrow) => ({
+          direction: arrow.classList.contains("sb-presence-arrow-up")
+            ? "up"
+            : "down",
+          top: (arrow as HTMLElement).style.top,
+          lane: (arrow as HTMLElement).style.getPropertyValue(
+            "--sb-presence-lane-offset"
+          ),
+        })
+      );
     }
 
     const visual = {
@@ -4305,36 +4495,10 @@ describe("BibleReader", () => {
     // past them.
     it("pins a participant's avatar to the top of the screen while their verses run past it", () => {
       // The reader is scrolled 200px into the content, and the screen is 300px
-      // tall. jsdom does no layout, so the boxes are stubbed per element. Line
-      // boxes are in screen coordinates: a long range, verse 1 at 40 and verse
-      // 2 way down at 600 within the content.
+      // tall. Line boxes are in screen coordinates: a long range, verse 1 at 40
+      // and verse 2 way down at 600 within the content.
       stubLineBoxes({ 1: 40 - 200, 2: 600 - 200 });
-      const rectSpy = vi
-        .spyOn(Element.prototype, "getBoundingClientRect")
-        .mockImplementation(function (this: Element) {
-          const rect = { left: 0, right: 100, width: 100, x: 0, toJSON() {} };
-          if (this === container) {
-            return {
-              ...rect,
-              top: 0,
-              bottom: 300,
-              height: 300,
-              y: 0,
-            } as DOMRect;
-          }
-          if (this.classList.contains("sb-chapter-content")) {
-            return {
-              ...rect,
-              top: -200,
-              bottom: 800,
-              height: 1000,
-              y: -200,
-            } as DOMRect;
-          }
-          return { ...rect, top: 0, bottom: 0, height: 0, y: 0 } as DOMRect;
-        });
-      // Makes the test container the scroller the gutter follows.
-      container.style.overflowY = "auto";
+      const restoreScreen = stubScrolledScreen(200);
       const rafSpy = vi
         .spyOn(window, "requestAnimationFrame")
         .mockImplementation((callback: FrameRequestCallback) => {
@@ -4397,9 +4561,8 @@ describe("BibleReader", () => {
           )
         ).toBe("rgb(10, 20, 30)");
       } finally {
-        rectSpy.mockRestore();
+        restoreScreen();
         rafSpy.mockRestore();
-        container.style.overflowY = "";
       }
     });
 
@@ -4408,31 +4571,7 @@ describe("BibleReader", () => {
       // and the screen starts 310px into the content, so there is no room to
       // pin. Line boxes are stubbed in screen coordinates.
       stubLineBoxes({ 1: 40 - 310, 2: 300 - 310 });
-      const rectSpy = vi
-        .spyOn(Element.prototype, "getBoundingClientRect")
-        .mockImplementation(function (this: Element) {
-          const rect = { left: 0, right: 100, width: 100, x: 0, toJSON() {} };
-          if (this === container) {
-            return {
-              ...rect,
-              top: 0,
-              bottom: 300,
-              height: 300,
-              y: 0,
-            } as DOMRect;
-          }
-          if (this.classList.contains("sb-chapter-content")) {
-            return {
-              ...rect,
-              top: -310,
-              bottom: 690,
-              height: 1000,
-              y: -310,
-            } as DOMRect;
-          }
-          return { ...rect, top: 0, bottom: 0, height: 0, y: 0 } as DOMRect;
-        });
-      container.style.overflowY = "auto";
+      const restoreScreen = stubScrolledScreen(310);
 
       try {
         const fixture = createFixture();
@@ -4463,8 +4602,313 @@ describe("BibleReader", () => {
           false
         );
       } finally {
-        rectSpy.mockRestore();
-        container.style.overflowY = "";
+        restoreScreen();
+      }
+    });
+
+    // Someone whose verses are all below the screen still needs a sign on
+    // screen, or a reader who has fallen behind can't tell where they are.
+    it("holds the avatar of someone reading ahead at the bottom of the screen, under a down arrow", () => {
+      // Screen is 200px to 500px of the content; the peer is on 700 to 784.
+      stubLineBoxes({ 1: 700 - 200, 2: 760 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "peer", name: "Mary" },
+            ],
+            {
+              peer: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+
+        const stacks = container.querySelectorAll(".sb-presence-avatars");
+        expect(stacks).toHaveLength(1);
+        const stack = stacks[0] as HTMLElement;
+        // Screen bottom (500) less the room kept for the arrow (14) and the
+        // avatar's own height (20).
+        expect(stack.style.top).toBe("466px");
+        expect(stack.classList.contains("sb-presence-avatars-pinned")).toBe(
+          true
+        );
+        expect(
+          stack.querySelector(".sb-tab-user-icon")?.getAttribute("title")
+        ).toBe("Mary");
+        expect(arrowsOnScreen()).toEqual([
+          { direction: "down", top: "490px", lane: "0" },
+        ]);
+        expect(
+          (
+            container.querySelector(".sb-presence-arrow") as HTMLElement
+          ).style.getPropertyValue("--sb-presence-arrow-color")
+        ).toBe("rgb(10, 20, 30)");
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    it("holds the avatar of someone reading behind at the top of the screen, under an up arrow", () => {
+      // Screen is 200px to 500px of the content; the peer is on 40 to 124.
+      stubLineBoxes({ 1: 40 - 200, 2: 100 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "peer", name: "Mary" },
+            ],
+            {
+              peer: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+
+        const stack = container.querySelector(
+          ".sb-presence-avatars"
+        ) as HTMLElement;
+        expect(stack.style.top).toBe("214px");
+        expect(stack.classList.contains("sb-presence-avatars-pinned")).toBe(
+          true
+        );
+        expect(arrowsOnScreen()).toEqual([
+          { direction: "up", top: "204px", lane: "0" },
+        ]);
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    // A stack grows downward from its top, so one held at the bottom edge
+    // has to be lifted by its full height or it would cover the arrow and
+    // run off the screen.
+    it("stacks several people reading ahead upward from the bottom of the screen", () => {
+      stubLineBoxes({ 1: 700 - 200, 2: 760 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "mary", name: "Mary" },
+              { connectionId: "john", name: "John" },
+            ],
+            {
+              mary: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 1,
+              },
+              john: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 2,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+
+        const stacks = container.querySelectorAll(".sb-presence-avatars");
+        expect(stacks).toHaveLength(1);
+        const stack = stacks[0] as HTMLElement;
+        expect(
+          [...stack.querySelectorAll(".sb-tab-user-icon")]
+            .map((icon) => icon.getAttribute("title"))
+            .sort()
+        ).toEqual(["John", "Mary"]);
+        // Two avatars are 32px tall (20 + one 12px step), ending 14px above
+        // the bottom of the screen at 500.
+        expect(stack.style.top).toBe("454px");
+        // One arrow for the pair rather than one drawn over another.
+        expect(arrowsOnScreen()).toEqual([
+          { direction: "down", top: "490px", lane: "0" },
+        ]);
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    it("points both ways when people are reading on either side of the screen", () => {
+      // Screen is 200px to 500px; Mary is on 40 to 64, John on 700 to 724.
+      stubLineBoxes({ 1: 40 - 200, 2: 700 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        const fixture = createFixture();
+        renderReader(
+          createSession(
+            [
+              { connectionId: "me", isSelf: true },
+              { connectionId: "mary", name: "Mary" },
+              { connectionId: "john", name: "John" },
+            ],
+            {
+              mary: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 1,
+                lastVerse: 1,
+              },
+              john: {
+                bookId: "GEN",
+                chapterNumber: 1,
+                firstVerse: 2,
+                lastVerse: 2,
+              },
+            }
+          ),
+          fixture
+        );
+
+        const stacks = [...container.querySelectorAll(".sb-presence-avatars")];
+        expect(
+          stacks.map((stack) => ({
+            top: (stack as HTMLElement).style.top,
+            who: stack
+              .querySelector(".sb-tab-user-icon")
+              ?.getAttribute("title"),
+          }))
+        ).toEqual([
+          { top: "214px", who: "Mary" },
+          { top: "466px", who: "John" },
+        ]);
+        expect(arrowsOnScreen().map((arrow) => arrow.direction)).toEqual([
+          "up",
+          "down",
+        ]);
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    function renderPeople(
+      people: Record<string, { firstVerse: number; lastVerse: number }>
+    ) {
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            ...Object.keys(people).map((id) => ({
+              connectionId: id,
+              name: id,
+            })),
+          ],
+          Object.fromEntries(
+            Object.entries(people).map(([id, range]) => [
+              id,
+              { bookId: "GEN", chapterNumber: 1, ...range },
+            ])
+          )
+        ),
+        fixture
+      );
+    }
+
+    function avatarStacks() {
+      return [...container.querySelectorAll(".sb-presence-avatars")].map(
+        (stack) => ({
+          top: (stack as HTMLElement).style.top,
+          who: [...stack.querySelectorAll(".sb-tab-user-icon")]
+            .map((icon) => icon.getAttribute("title"))
+            .sort(),
+        })
+      );
+    }
+
+    // Both arrows would be drawn on the same spot on the centre line, so the
+    // one for the person off the screen is left out.
+    it("draws one down arrow when a centre-line bar runs off the bottom and someone else is below the screen", () => {
+      // Screen is 200px to 500px. Mary's bar runs from 450 to 724, off the
+      // bottom; John is on 700 to 724, wholly below.
+      stubLineBoxes({ 1: 450 - 200, 2: 700 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        renderPeople({
+          mary: { firstVerse: 1, lastVerse: 2 },
+          john: { firstVerse: 2, lastVerse: 2 },
+        });
+
+        expect(arrowsOnScreen()).toEqual([
+          { direction: "down", top: "490px", lane: "0" },
+        ]);
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    // An avatar at the very bottom of the screen would sit under the stack
+    // lifted above the arrow, so it joins that stack instead.
+    it("adds someone whose verses start in the last few pixels of the screen to the stack held at the bottom", () => {
+      // Screen is 200px to 500px. John's bar starts at 490, just inside the
+      // bottom; Mary is on 700 to 724, wholly below.
+      stubLineBoxes({ 1: 490 - 200, 2: 700 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        renderPeople({
+          john: { firstVerse: 1, lastVerse: 1 },
+          mary: { firstVerse: 2, lastVerse: 2 },
+        });
+
+        // Two avatars are 32px tall, ending 14px above the bottom at 500.
+        expect(avatarStacks()).toEqual([
+          { top: "454px", who: ["john", "mary"] },
+        ]);
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    // Lifting the stack at the bottom edge can run it into an avatar just
+    // above, which would then be drawn over it, so the two are merged.
+    it("merges the stack held at the bottom into an avatar it is lifted into", () => {
+      // Screen is 200px to 500px. John's avatar sits at the top of his bar at
+      // 440 (440 to 460). Mary and Ann are on 700 to 724, wholly below: their
+      // stack is 32px tall, so lifting it above the arrow puts its top at 454,
+      // inside John's avatar.
+      stubLineBoxes({ 1: 440 - 200, 2: 700 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        renderPeople({
+          john: { firstVerse: 1, lastVerse: 1 },
+          mary: { firstVerse: 2, lastVerse: 2 },
+          ann: { firstVerse: 2, lastVerse: 2 },
+        });
+
+        // Three avatars are 44px tall, which would end at 486 from 442, so the
+        // merged stack keeps John's higher top.
+        expect(avatarStacks()).toEqual([
+          { top: "440px", who: ["ann", "john", "mary"] },
+        ]);
+      } finally {
+        restoreScreen();
       }
     });
 

@@ -106,6 +106,7 @@ import {
 } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
+  type ApiResponseCache,
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
   type TranslationBook,
@@ -499,6 +500,12 @@ export interface AppState {
 
   /** Closes the Discover panel. */
   closeDiscover: () => void;
+
+  /**
+   * Whether crawlers should be told not to index this page: true only when
+   * it previews as a friend link (see `canonicalUrl`).
+   */
+  noIndex: ReadonlySignal<boolean>;
 }
 
 /**
@@ -555,6 +562,8 @@ export interface SeedBibleState {
    * highlights, notes, playlists, reading plans and reading history are shown.
    */
   friends: FriendsManager;
+  /** The profile behind the `?addFriend=` link the app was opened with, for its link preview. */
+  friendLinkPreview: FriendLinkPreviewLoader;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
   /** Chat session manager for in-app chat state. */
@@ -660,10 +669,11 @@ export interface SeedBibleState {
   /** True when the Profile screen is showing. */
   isProfileOpen: ReadonlySignal<boolean>;
   /** Opens the Profile screen (reflected in the URL as `?profile=open`). */
-  openProfile: () => void;
+  openProfile: (options?: { fromToday?: boolean }) => void;
   /** Closes the Profile screen (clears `profile` from the URL). */
   closeProfile: () => void;
-
+  /** Restores the screen the user was viewing before opening the profile after a successful sign-in. */
+  restoreProfileReturnTarget: () => void;
   /** True when the "Edit profile" screen is showing. */
   isEditProfileOpen: ReadonlySignal<boolean>;
   /** Opens "Edit profile" (reflected in the URL as `?edit-profile=open`). */
@@ -747,6 +757,12 @@ import {
 import { z } from "zod";
 import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 import { captureEvent } from "./Utils";
+import {
+  createFriendLinkPreviewLoader,
+  type FriendLinkPreviewLoader,
+  type FriendLinkSeed,
+} from "./FriendLinkPreviewLoader";
+import { ADD_FRIEND_PARAM } from "../components/FriendsPane/friendLinks";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -771,6 +787,11 @@ export interface CreateSeedBibleStateOptions {
    * behavior (per-page-load cache + localStorage) is unchanged.
    */
   translationsCache?: TranslationsCache;
+  /**
+   * Process-wide cache of chapter/book-catalog requests, SSR host only —
+   * see `standalone/ssrApiResponseCache.ts`.
+   */
+  apiResponseCache?: ApiResponseCache;
   /**
    * A `FreeUseBibleAPI.snapshotResponseCache()` snapshot to seed the new
    * `FreeUseBibleAPI` instance with, so it doesn't refetch data another
@@ -805,6 +826,9 @@ export interface CreateSeedBibleStateOptions {
 
   /** Same as `initialPlaylistPageSeed`, for a shared reading plan page. */
   initialReadingPlanPageSeed?: ReadingPlanPageSeed;
+
+  /** Same as `initialPlaylistPageSeed`, for an `?addFriend=` link's profile. */
+  initialFriendLinkSeed?: FriendLinkSeed;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -832,7 +856,8 @@ export function createSeedBibleState(
   const branding = options.config?.branding;
   const brandingThemes = branding?.whiteLabelThemes;
   const api = new FreeUseBibleAPI(
-    getDefaultAPIEndpoint(navigation.currentUrl.value)
+    getDefaultAPIEndpoint(navigation.currentUrl.value),
+    options.apiResponseCache
   );
   if (options.apiResponseSnapshot) {
     api.seedResponseCache(options.apiResponseSnapshot);
@@ -872,6 +897,11 @@ export function createSeedBibleState(
     }
   });
   const friends = createFriendsManager(os, login);
+  const friendLinkPreview = createFriendLinkPreviewLoader({
+    login,
+    navigation,
+    initialSeed: options.initialFriendLinkSeed,
+  });
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
@@ -1189,14 +1219,23 @@ export function createSeedBibleState(
       : navigation.currentUrl.value.searchParams.get("profile") === "open"
   );
   const isProfileOpen = computed(() => profileOpen.value);
-  const openProfile = () => {
-    // Close Today before the profile flag flips. Opening the profile pane
-    // displaces Today's pane, but Today's URL binding is still `?today=open`
-    // until its own effect runs — and that binding turns Today straight back
-    // on, which removes the profile pane and closes the profile again. Closing
-    // first drops `?today=` before `?profile=open` is written, so the profile
-    // screen stays up (including over the welcome screen).
+  let returnToToday = false;
+  const restoreProfileReturnTarget = () => {
+    const shouldReturnToToday = returnToToday;
+    returnToToday = false;
+    navigation.batchWrites(() => {
+      profileOpen.value = false;
+      if (shouldReturnToToday) {
+        today.open();
+      }
+    });
+  };
+  const openProfile = (options?: { fromToday?: boolean }) => {
+    if (!profileOpen.value || options?.fromToday !== undefined) {
+      returnToToday = options?.fromToday ?? today.isOpen.peek();
+    }
     if (today.isOpen.peek()) {
+      // Close Today so its URL binding doesn't reopen it over the Profile pane.
       today.close();
     }
     profileOpen.value = true;
@@ -1409,8 +1448,8 @@ export function createSeedBibleState(
   // The flip side is that this effect can't see a move *within* a chapter, so any
   // path that jumps to a verse and must reveal the reader has to call
   // `closeFullscreenPanes` itself rather than rely on this: verse reference links
-  // (`handleOpenVerseReference` below), the floating panels' jump actions, and
-  // sidebar search results (`SidebarSearch`) all do. Selecting a tab
+  // (`handleOpenVerseReference` below) and the floating panels' jump actions
+  // both do. Selecting a tab
   // (`handleSelectTab`) closes them too, which covers most of the remaining
   // paths incidentally.
   let lastReadingLocation: string | null = null;
@@ -1480,6 +1519,23 @@ export function createSeedBibleState(
     return true;
   });
 
+  // Dialogs that cover the reader. Pop-ups opened through `modals` are only
+  // part of the list: sign-in, Terms, Privacy, Code of Conduct, and the
+  // onboarding cards are drawn on their own in `app/main.tsx`. A new dialog
+  // that does not go through `modals` has to be added here, or the offer card
+  // can show on top of it. `onboarding.step` starts at "done" and only leaves
+  // it while an onboarding card is actually up, so a normal first visit is
+  // not held back. `?tutorial=` links use `readerVisible` alone.
+  const modalCoveringReader = computed(
+    () =>
+      modals.modals.value.length > 0 ||
+      login.isLoginOpen.value ||
+      termsOpen.value ||
+      privacyOpen.value ||
+      codeOfConductOpen.value ||
+      onboarding.step.value !== "done"
+  );
+
   // Client-only: SSR can't run the tour, and launching it there would put
   // the overlay in the served HTML.
   const tutorialLink = import.meta.env.SSR
@@ -1494,7 +1550,8 @@ export function createSeedBibleState(
     sidebar,
     openedViaContentLink,
     isMinimalEmbed,
-    tutorialLink
+    tutorialLink,
+    modalCoveringReader
   );
 
   if (!import.meta.env.SSR) {
@@ -1607,6 +1664,15 @@ export function createSeedBibleState(
   effect(() => {
     if (isMobileLandscape.value) {
       sidebar.isSidebarCollapsed.value = true;
+    }
+  });
+
+  // The tabs drawer only exists on phones. Still "open" once the window is
+  // wider than that, it would hold the desktop sidebar expanded and stop the
+  // collapse button working, so close it on the way out of mobile.
+  effect(() => {
+    if (!isMobile.value) {
+      sidebar.isMobileOpen.value = false;
     }
   });
 
@@ -2056,6 +2122,32 @@ export function createSeedBibleState(
       : name;
   });
 
+  /**
+   * The person an `?addFriend=` link names, when their profile has a name.
+   * Null on the about page and on any shared page's path, found or not: the
+   * page previews as itself there, so a friend link added to it never takes
+   * over part of its title, description, image or canonical link.
+   */
+  const friendLinkPerson = computed<{
+    name: string;
+    pictureUrl: string | null;
+  } | null>(() => {
+    if (
+      isAboutPage.value ||
+      parseSharedPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )
+    ) {
+      return null;
+    }
+    const profile = friendLinkPreview.result.value?.profile;
+    const name = profile?.name.trim();
+    return profile && name
+      ? { name, pictureUrl: profile.pictureUrl ?? null }
+      : null;
+  });
+
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
     void i18n.language.value;
@@ -2087,6 +2179,17 @@ export function createSeedBibleState(
 
       if (sharedPageLoadFailedTitle.value) {
         return `${sharedPageLoadFailedTitle.value} | ${seedBibleTitle}`;
+      }
+
+      // Server only: in the browser the friend link prompt is a one-off over
+      // the reader, so the tab follows the chapter from the start.
+      const person = friendLinkPerson.value;
+      if (import.meta.env.SSR && person) {
+        return t("friend-link-title", {
+          name: person.name,
+          brand: seedBibleTitle,
+          defaultValue: "Add {{name}} as a friend on {{brand}}",
+        });
       }
 
       if (!selectedTab.value) {
@@ -2124,6 +2227,18 @@ export function createSeedBibleState(
             : t("reading-plan-page-meta-description", {
                 defaultValue: "A Bible reading plan on Seed Bible.",
               })),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
+
+    const person = friendLinkPerson.value;
+    if (person) {
+      return truncateForMeta(
+        t("friend-link-meta-description", {
+          name: person.name,
+          brand: siteName.value,
+          defaultValue: "{{name}} wants to be your friend on {{brand}}",
+        }),
         META_DESCRIPTION_MAX_GRAPHEMES
       );
     }
@@ -2204,8 +2319,21 @@ export function createSeedBibleState(
     if (heroImageUrl) {
       return { url: heroImageUrl, alt: sharedPageTitle.value ?? "" };
     }
+    const person = friendLinkPerson.value;
+    if (person?.pictureUrl) {
+      return { url: person.pictureUrl, alt: person.name };
+    }
     const logoUrl = customizationLogoUrl.value;
-    return logoUrl ? { url: logoUrl, alt: siteName.value } : null;
+    if (logoUrl) {
+      return { url: logoUrl, alt: siteName.value };
+    }
+    // Only a friend link falls back to the white-label logo so far, and only
+    // when it's absolute: crawlers don't resolve a relative og:image.
+    const brandingLogo = branding?.logo;
+    if (person && brandingLogo && /^https?:\/\//i.test(brandingLogo)) {
+      return { url: brandingLogo, alt: siteName.value };
+    }
+    return null;
   });
 
   /**
@@ -2236,6 +2364,14 @@ export function createSeedBibleState(
       return sharedPageTitle.value;
     }
 
+    const person = friendLinkPerson.value;
+    if (person) {
+      return t("friend-link-social-title", {
+        name: person.name,
+        defaultValue: "Add {{name}} as a friend",
+      });
+    }
+
     const chapter = selectedTab.value?.readingState.chapterData.value;
     if (!chapter) {
       return t("read-the-bible", {
@@ -2248,6 +2384,16 @@ export function createSeedBibleState(
       bookName: chapter.book.name,
       chapterNumber: chapter.chapter.number,
     });
+  });
+
+  /** The friend link's own address, when the page previews as one. */
+  const friendLinkPageUrl = computed<string | null>(() => {
+    const userId = friendLinkPreview.result.value?.userId;
+    if (!friendLinkPerson.value || !userId) {
+      return null;
+    }
+    const query = new URLSearchParams({ [ADD_FRIEND_PARAM]: userId });
+    return `${navigation.basePath || "/"}?${query}`;
   });
 
   /**
@@ -2295,6 +2441,10 @@ export function createSeedBibleState(
         locator: page.locator,
         title: page.title,
       })}`;
+    }
+
+    if (friendLinkPageUrl.value) {
+      return friendLinkPageUrl.value;
     }
 
     const readingState = selectedTab.value?.readingState;
@@ -3484,7 +3634,14 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
-  void setupFriendLinks({ navigation, login, friends, modals, toast });
+  void setupFriendLinks({
+    navigation,
+    login,
+    friends,
+    modals,
+    toast,
+    friendLinkPreview,
+  });
 
   // A shared `?readingPlan=` link loads the plan, then opens the pane once a
   // reading tab is actually there. The tab is usually ready after the network
@@ -3564,6 +3721,8 @@ export function createSeedBibleState(
     currentReadingState,
   });
 
+  const noIndex = computed(() => friendLinkPageUrl.value !== null);
+
   const state: SeedBibleState = {
     os,
     bibleData: data,
@@ -3586,6 +3745,7 @@ export function createSeedBibleState(
     saves,
     bookmarks,
     friends,
+    friendLinkPreview,
     annotations,
     chats,
     sessions,
@@ -3624,6 +3784,7 @@ export function createSeedBibleState(
     isProfileOpen,
     openProfile,
     closeProfile,
+    restoreProfileReturnTarget,
     isEditProfileOpen,
     openEditProfile,
     closeEditProfile,
@@ -3638,6 +3799,12 @@ export function createSeedBibleState(
     closeCodeOfConduct,
     features,
     dispose: () => {
+      // Aborts each tab's open chapter request. Without this an SSR render
+      // that hit its deadline leaves its fetch subscribed, so a hung request
+      // stays in the shared response cache for the next render to adopt.
+      for (const tab of tabs.tabs.value) {
+        tab.readingState.dispose();
+      }
       i18n.dispose();
       disposeReadingTicker();
     },
@@ -3682,6 +3849,7 @@ export function createSeedBibleState(
       isDiscoverOpen: playlists.isDiscoverOpen,
       openDiscover: handleOpenDiscover,
       closeDiscover: handleCloseDiscover,
+      noIndex,
     },
   };
 
@@ -3783,6 +3951,7 @@ export function createSeedBibleState(
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
       onTakeTour={() => tutorial.acceptPrompt()}
+      onClose={() => today.close()}
     />
   );
   const renderTodayPaneTitle = () => <TodayPaneTitle />;
@@ -3794,6 +3963,9 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderTodayPaneTitle,
         component: renderTodayPane,
+        // Today's own close button (TodayCloseButton) stands in for the
+        // header's.
+        showHeader: false,
       });
     } else {
       panes.closePane(TODAY_PANE_ID); // no-op when already closed
@@ -4193,6 +4365,8 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderAboutPaneTitle,
         component: renderAboutPane,
+        // The page's own hero card names it.
+        showHeader: false,
       });
     } else {
       panes.closePane(ABOUT_PANE_ID); // no-op when already closed

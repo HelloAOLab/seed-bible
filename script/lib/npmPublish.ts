@@ -70,12 +70,9 @@ export function replaceVersionField(
   packageJson: string,
   version: string
 ): string {
-  const updated = packageJson.replace(
-    /("version"\s*:\s*)"[^"]*"/,
-    `$1"${version}"`
-  );
-  if (updated === packageJson) {
+  const field = /("version"\s*:\s*)"[^"]*"/;
+  if (!field.test(packageJson)) {
     throw new Error('Could not find a "version" field to update.');
   }
-  return updated;
+  return packageJson.replace(field, `$1"${version}"`);
 }

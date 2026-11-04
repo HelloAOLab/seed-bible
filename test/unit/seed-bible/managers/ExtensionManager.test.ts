@@ -415,6 +415,36 @@ describe("ExtensionInitalizer", () => {
       owner: "victim",
     });
   });
+
+  it("undoes what a failed init already set up, so each retry starts clean", () => {
+    let liveSubscriptions = 0;
+    let shouldFail = true;
+
+    initializer.registerExtension({
+      id: "ext.fails-partway",
+      init: function* () {
+        liveSubscriptions++;
+        yield () => {
+          liveSubscriptions--;
+        };
+        if (shouldFail) {
+          throw new Error("setup failed after subscribing");
+        }
+      },
+    });
+
+    initializer.setupExtensionContext(context);
+    expect(initializer.getExtensionExports("ext.fails-partway")).toBeNull();
+    expect(liveSubscriptions).toBe(0);
+
+    shouldFail = false;
+    initializer.setupExtensionContext(context);
+    expect(initializer.getExtensionExports("ext.fails-partway")).toEqual({});
+    expect(liveSubscriptions).toBe(1);
+
+    initializer.unregisterExtension("ext.fails-partway");
+    expect(liveSubscriptions).toBe(0);
+  });
 });
 
 describe("createExtensionManager", () => {
@@ -1122,8 +1152,7 @@ describe("createExtensionManager", () => {
           import: importModule("pkg://autoinstall-dependency"),
           meta: {
             id: "ext.autoinstall-dependency",
-            // No autoinstall flag - only force-installed as a dependency,
-            // mirroring seed-bible-utils/scripture-map in production.
+            // No autoinstall flag - only force-installed as a dependency.
             translations: {
               en: {
                 title: "Dependency",
@@ -1675,66 +1704,6 @@ describe("createExtensionManager", () => {
     );
   });
 
-  it("keeps AI Transcript uninstalled across a reload while AI Transcript core stays installed (regression for #2032)", async () => {
-    const { default: coreManifest } =
-      await import("@packages/transcript-extension/extension.json");
-    const { default: uiManifest } =
-      await import("@packages/transcript-ui-extension/extension.json");
-    const transcriptSet: ExtensionSet = {
-      id: "set.transcript",
-      extensions: [
-        {
-          import: () =>
-            import("@packages/transcript-extension/ext_AI_Transcript/main/init"),
-          meta: {
-            id: coreManifest.id,
-            translations: { en: { title: "Core", description: "x" } },
-          },
-        },
-        {
-          // The real UI module pulls in its whole interface; the bug is in
-          // the core, so a stand-in that registers the UI's id is enough.
-          import: () =>
-            Promise.resolve({
-              default: () => {
-                registerExtension({ id: uiManifest.id, init: () => ({}) });
-              },
-            }),
-          meta: {
-            id: uiManifest.id,
-            dependencies: uiManifest.dependencies,
-            translations: { en: { title: "UI", description: "x" } },
-          },
-        },
-      ],
-    };
-    const isInstalled = (manager: ExtensionManager, id: string) =>
-      manager.getExtensions().find((e) => e.id === id)?.installed ?? false;
-
-    // Installing AI Transcript installs (and saves) the core along with it.
-    const firstVisit = createExtensionManager(login, {
-      defaultExtensions: transcriptSet,
-    });
-    await firstVisit.loadExtensionSet(
-      transcriptSet,
-      (ext) => ext.meta.id === uiManifest.id
-    );
-    expect(isInstalled(firstVisit, coreManifest.id)).toBe(true);
-    firstVisit.unloadExtension(uiManifest.id);
-
-    // A page reload starts with nothing registered.
-    for (const registration of ExtensionInitalizer.getInstance().listRegisteredExtensions()) {
-      ExtensionInitalizer.getInstance().unregisterExtension(registration.id);
-    }
-    const secondVisit = createExtensionManager(login, {
-      defaultExtensions: transcriptSet,
-    });
-    await secondVisit.loadDefaultExtensions();
-
-    expect(isInstalled(secondVisit, coreManifest.id)).toBe(true);
-    expect(isInstalled(secondVisit, uiManifest.id)).toBe(false);
-  });
-
   it("getAllExtensionsAsSet() returns undefined and warns when there are no extension packages", () => {
     const manager = createExtensionManager(login);
     const warnSpy = vi
@@ -1850,7 +1819,7 @@ describe("createExtensionManager", () => {
   });
 
   it("unloadExtension() records the extension in the autoinstall-handled set even when it never had autoinstall:true", async () => {
-    // Mirrors seed-bible-utils in production: an extension that's only ever
+    // An extension that's only ever
     // force-installed as another extension's dependency, never carrying
     // autoinstall:true itself, so loadDefaultExtensions's batch marking never
     // touches it - this is the only path that records its uninstall.

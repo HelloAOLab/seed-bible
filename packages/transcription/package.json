@@ -1,0 +1,41 @@
+{
+  "name": "@seed-bible/transcription",
+  "version": "1.0.0",
+  "description": "Turns sermon audio into a transcript and finds the Bible references in it. Shared by the transcript and Twitch extensions.",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./transcriptionManager": {
+      "import": "./transcriptionManager.tsx"
+    },
+    "./explicit": {
+      "import": "./explicit.tsx"
+    },
+    "./transcribe": {
+      "import": "./transcribe.tsx"
+    },
+    "./highlight": {
+      "import": "./highlight.tsx"
+    },
+    "./infer": {
+      "import": "./infer.tsx"
+    },
+    "./types": {
+      "import": "./types.tsx"
+    },
+    "./osis": {
+      "import": "./osis.tsx"
+    }
+  },
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
+    "base64-js": "catalog:",
+    "bible-passage-reference-parser": "^3.2.0",
+    "preact": "catalog:",
+    "seed-bible": "workspace:*",
+    "uuid": "catalog:"
+  },
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1"
+}

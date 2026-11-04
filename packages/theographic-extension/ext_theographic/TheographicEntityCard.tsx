@@ -56,14 +56,11 @@ interface TheographicEntityCardProps {
   client: TheographicClient;
   onReferenceClick: (ref: VerseRef) => void;
   openPlace?: (entry: TheographicPlaceEntry) => void;
-  /** Whether a place's map is currently open in its floating pane. */
+  /** Whether a place's map is currently open in its floating pane or sheet. */
   isPlaceOpen?: (entry: TheographicPlaceEntry) => boolean;
-  /**
-   * Whether the reader is on a phone-sized screen, where the map isn't offered
-   * in a pane: panes there take the whole screen, over the card that opened it.
-   */
+  /** Whether the reader is on a phone-sized screen, where the map opens in a sheet. */
   isMobile?: ReadonlySignal<boolean>;
-  /** The locations extension's lookup, for places it has a map file for. */
+  /** The known places' lookup, for places with a map file. */
   locations?: PlaceLocations;
   /** Book names and verse text in the reader's translation. */
   scripture?: ScriptureReader;
@@ -215,7 +212,7 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
     contentType === PLACE_CONTENT_TYPE
       ? (entry as TheographicPlaceEntry)
       : null;
-  // A place can be drawn from the locations extension's file even when the
+  // A place can be drawn from its known-places file even when the
   // dataset has no coordinates for it.
   const isMappable = place != null && canMapPlace(place, locations);
 
@@ -373,9 +370,16 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
               references={references}
               bookName={bookName}
               map={
-                // While the floating pane has this place's map, the card
-                // doesn't show a second copy; closing the pane brings it back.
-                place && isMappable && !isPlaceOpen?.(place) ? (
+                !place || !isMappable ? null : isPlaceOpen?.(place) ? (
+                  // While the pane or sheet has this place's map, the card
+                  // doesn't show a second copy. On a phone the sheet sits
+                  // over the card, so it keeps the map's space: otherwise the
+                  // list shrinks underneath and the reader comes back to it
+                  // scrolled somewhere else.
+                  isMobile?.value ? (
+                    <div className="sb-theographic-map" aria-hidden="true" />
+                  ) : null
+                ) : (
                   <PlaceMap
                     place={place}
                     sources={{ client, locations }}
@@ -383,16 +387,12 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
                       place: place.name,
                       defaultValue: "Map of {{place}}",
                     })}
-                    onOpen={
-                      openPlace && !isMobile?.value
-                        ? () => openPlace(place)
-                        : undefined
-                    }
+                    onOpen={openPlace ? () => openPlace(place) : undefined}
                     openLabel={t("open-in-map", {
                       defaultValue: "Open in map",
                     })}
                   />
-                ) : null
+                )
               }
             />
           )}
