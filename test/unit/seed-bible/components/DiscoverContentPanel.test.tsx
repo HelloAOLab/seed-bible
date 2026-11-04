@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { signal } from "@preact/signals";
+import { signal, type Signal } from "@preact/signals";
 import { DiscoverContentPanel } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverContentPanel";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
@@ -102,6 +102,8 @@ function createMockTab(
     translationId?: string;
     selectTranslationAndChapter?: ReturnType<typeof vi.fn>;
     decorateVerses?: ReturnType<typeof vi.fn>;
+    isDiscovering?: boolean;
+    showDiscoveryLoader?: boolean;
   } = {}
 ): ReaderTab {
   return {
@@ -122,6 +124,8 @@ function createMockTab(
       ),
       discoveredStudyNotes: signal([]),
       discoveredContent: signal(overrides.discoveredContent ?? []),
+      isDiscovering: signal(overrides.isDiscovering ?? false),
+      showDiscoveryLoader: signal(overrides.showDiscoveryLoader ?? false),
       selectedVerses: signal(
         (overrides.selectedVerses ?? []).map((verse) => ({
           verse: { number: verse },
@@ -535,6 +539,100 @@ describe("DiscoverContentPanel", () => {
       ).dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     expect(state.annotations.createNewAnnotation).toHaveBeenCalledTimes(1);
+  });
+
+  it("in the full panel, waits for discovery to finish before offering to create a note", () => {
+    const tab = createMockTab({ isDiscovering: true });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={createMockState({ annotationsForChapter: [] })}
+        />,
+        container
+      );
+    });
+
+    expect(container.textContent).not.toContain(
+      "You don't have any notes for this chapter."
+    );
+    expect(container.textContent).not.toContain(
+      "Pick a filter above to see more from this chapter."
+    );
+    expect(container.querySelector(".sb-dcp-discovery-loader")).toBeNull();
+
+    act(() => {
+      (tab.readingState.isDiscovering as Signal<boolean>).value = false;
+    });
+
+    expect(container.textContent).toContain(
+      "You don't have any notes for this chapter."
+    );
+  });
+
+  it("in the full panel, shows a loader after the results that have arrived while discovery continues", () => {
+    const tab = createMockTab({
+      discoveredCrossReferences: RESULTS_FIXTURE,
+      isDiscovering: true,
+      showDiscoveryLoader: true,
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={createMockState({ annotationsForChapter: [] })}
+        />,
+        container
+      );
+    });
+
+    const loader = container.querySelector(".sb-dcp-discovery-loader");
+    expect(
+      loader?.querySelector('[role="status"]')?.getAttribute("aria-label")
+    ).toBe("Loading…");
+    const crossReference = Array.from(container.querySelectorAll("*")).find(
+      (el) => el.textContent === "Exodus 5:3"
+    );
+    expect(
+      crossReference!.compareDocumentPosition(loader!) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    act(() => {
+      (tab.readingState.isDiscovering as Signal<boolean>).value = false;
+      (tab.readingState.showDiscoveryLoader as Signal<boolean>).value = false;
+    });
+
+    expect(container.querySelector(".sb-dcp-discovery-loader")).toBeNull();
+    expect(container.textContent).toContain("Exodus 5:3");
+  });
+
+  it("leaves the discovery loader out of the compact panel", () => {
+    const tab = createMockTab({
+      discoveredCrossReferences: RESULTS_FIXTURE,
+      isDiscovering: true,
+      showDiscoveryLoader: true,
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="compact"
+          tab={tab}
+          state={createMockState({ annotationsForChapter: [] })}
+        />,
+        container
+      );
+    });
+
+    expect(container.textContent).toContain("Exodus 5:3");
+    expect(container.querySelector(".sb-dcp-discovery-loader")).toBeNull();
   });
 
   it("only shows filter chips for content that is actually available", () => {

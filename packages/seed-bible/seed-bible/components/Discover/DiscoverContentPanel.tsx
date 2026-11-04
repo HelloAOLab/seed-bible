@@ -23,6 +23,7 @@ import {
   friendPlaylistGroups,
 } from "./FriendPlaylistsSection";
 import { MaterialIcon } from "../icons";
+import { Spinner } from "../Spinner/Spinner";
 import {
   ContextMenuWithButton,
   ContextMenuItem,
@@ -613,17 +614,26 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     hasContent ||
     typesWithResults.some((definition) => !definition.hiddenByDefault);
 
+  // Results stream in after the chapter opens, so until discovery is done
+  // "nothing yet" can't be told apart from "nothing at all".
+  const isDiscovering =
+    variant === "full" && tab.readingState.isDiscovering.value;
+
   // The full panel never renders empty: when the chapter has nothing else to
   // show, not even behind a filter chip, the notes section's "Create a note"
   // prompt stands in as its empty state.
   const showNotesAsEmptyState =
     variant === "full" &&
+    !isDiscovering &&
     !hasOtherContentUnderAll &&
     typesWithResults.length === 0;
   const showNotes = showAnnotations || showNotesAsEmptyState;
 
   const hasVisibleUnderAll =
-    hasAnnotations || showNotesAsEmptyState || hasOtherContentUnderAll;
+    hasAnnotations ||
+    showNotesAsEmptyState ||
+    hasOtherContentUnderAll ||
+    isDiscovering;
 
   const filters: {
     key: FilterKey;
@@ -764,6 +774,17 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             />
           ) : null
         )}
+
+        {f === "all" &&
+          variant === "full" &&
+          tab.readingState.showDiscoveryLoader.value && (
+            <div className="sb-dcp-discovery-loader">
+              <Spinner
+                size="1.25rem"
+                label={t("loading", { defaultValue: "Loading…" })}
+              />
+            </div>
+          )}
 
         {f === "all" && !hasVisibleUnderAll && (
           <DiscoverEmpty

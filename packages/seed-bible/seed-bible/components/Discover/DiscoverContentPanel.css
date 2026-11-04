@@ -233,3 +233,11 @@
   top: calc(var(--sb-dcp-list-cover-top, 0px) + 0.5rem);
   bottom: calc(var(--sb-dcp-list-cover-bottom, 0px) + 0.5rem);
 }
+
+.sb-dcp-discovery-loader {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+  color: var(--sb-font-color);
+  opacity: 0.6;
+}
