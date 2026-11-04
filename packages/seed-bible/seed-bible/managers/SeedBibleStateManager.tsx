@@ -665,10 +665,11 @@ export interface SeedBibleState {
   /** True when the Profile screen is showing. */
   isProfileOpen: ReadonlySignal<boolean>;
   /** Opens the Profile screen (reflected in the URL as `?profile=open`). */
-  openProfile: () => void;
+  openProfile: (options?: { fromToday?: boolean }) => void;
   /** Closes the Profile screen (clears `profile` from the URL). */
   closeProfile: () => void;
-
+  /** Restores the screen the user was viewing before opening the profile after a successful sign-in. */
+  restoreProfileReturnTarget: () => void;
   /** True when the "Edit profile" screen is showing. */
   isEditProfileOpen: ReadonlySignal<boolean>;
   /** Opens "Edit profile" (reflected in the URL as `?edit-profile=open`). */
@@ -1222,7 +1223,21 @@ export function createSeedBibleState(
       : navigation.currentUrl.value.searchParams.get("profile") === "open"
   );
   const isProfileOpen = computed(() => profileOpen.value);
-  const openProfile = () => {
+  let returnToToday = false;
+  const restoreProfileReturnTarget = () => {
+    const shouldReturnToToday = returnToToday;
+    returnToToday = false;
+    navigation.batchWrites(() => {
+      profileOpen.value = false;
+      if (shouldReturnToToday) {
+        today.open();
+      }
+    });
+  };
+  const openProfile = (options?: { fromToday?: boolean }) => {
+    if (!profileOpen.value || options?.fromToday !== undefined) {
+      returnToToday = options?.fromToday ?? today.isOpen.peek();
+    }
     // Leave the Today page before the profile flag flips, so `?profile=open`
     // lands on the reader's URL. Left to the displaced-pane effect instead,
     // it would be written onto "/{lang}/today" first, and Back would then
@@ -3695,6 +3710,7 @@ export function createSeedBibleState(
     isProfileOpen,
     openProfile,
     closeProfile,
+    restoreProfileReturnTarget,
     isEditProfileOpen,
     openEditProfile,
     closeEditProfile,

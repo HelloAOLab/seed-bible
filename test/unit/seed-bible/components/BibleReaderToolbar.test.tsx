@@ -2723,7 +2723,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
       icon: () => <span className="material-symbols-outlined">compare</span>,
       onSelect: () => {},
     });
-    // Sorts before Note and Copy by priority, as Ask AI and Locations do.
+    // Sorts before Note and Copy by priority, as Ask AI does.
     state.tools.registerVerseToolbarTool({
       id: "test-ask-ai",
       priority: 80,
