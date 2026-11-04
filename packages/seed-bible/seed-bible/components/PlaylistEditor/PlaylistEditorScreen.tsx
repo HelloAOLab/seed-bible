@@ -34,7 +34,10 @@ import {
 import { PlaylistEditorAiButton } from "./PlaylistEditorAiButton";
 import { usePlaylistEditor } from "./usePlaylistEditor";
 import { PlaylistEditorStepList } from "./PlaylistEditorStepList";
-import { PlaylistReviewPanel } from "./PlaylistReviewPanel";
+import {
+  PlaylistReviewPanel,
+  PlaylistVisibilityField,
+} from "./PlaylistReviewPanel";
 import { PlaylistStepPreview } from "./PlaylistStepPreview";
 import { openAddStepModal } from "./AddStepModal";
 
@@ -249,12 +252,17 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
             type="button"
             className="sb-reading-plans-back sb-playlist-editor-back"
             aria-label={t("back", { defaultValue: "Back" })}
-            onClick={leave}
+            // A playlist with steps came here from them, so goes back to them.
+            onClick={items.length > 0 ? () => setScreen("steps") : leave}
           >
             <MaterialIcon>chevron_left</MaterialIcon>
           </button>
           <h2 className="sb-playlist-details-heading">
-            {t("playlist-details-heading", { defaultValue: "New playlist" })}
+            {items.length > 0
+              ? t("playlist-details-heading-existing", {
+                  defaultValue: "Playlist details",
+                })
+              : t("playlist-details-heading", { defaultValue: "New playlist" })}
           </h2>
         </header>
         <div className="sb-playlist-details-body">
@@ -286,6 +294,14 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
               gallery={state.gallery}
             />
           </div>
+          <div className="sb-playlist-editor-field">
+            <span className="sb-playlist-editor-field-label">
+              {t("playlist-visibility-label", {
+                defaultValue: "Who can open it",
+              })}
+            </span>
+            <PlaylistVisibilityField playlists={playlists} />
+          </div>
           <div className="sb-playlist-details-actions">
             <button
               type="button"
@@ -312,6 +328,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
           setScreen("steps");
           requestOpen(index);
         }}
+        onEditDetails={() => setScreen("details")}
         onBack={() => setScreen("steps")}
         onPublish={handleSave}
         publishing={saving}

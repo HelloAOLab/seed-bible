@@ -653,7 +653,15 @@ describe("PlaylistEditorScreen", () => {
 
       expect(container.querySelector(".sb-playlist-details")).not.toBeNull();
       expect(container.querySelector(".sb-playlist-editor-columns")).toBeNull();
-      expect(labels()).toEqual(["Title", "Description", "Cover image"]);
+      expect(labels()).toEqual([
+        "Title",
+        "Description",
+        "Cover image",
+        "Who can open it",
+      ]);
+      expect(
+        container.querySelector(".sb-playlist-details-heading")?.textContent
+      ).toBe("New playlist");
       expect(container.querySelector(".stub-hero-image-field")).not.toBeNull();
 
       const title = container.querySelector<HTMLInputElement>(
@@ -675,6 +683,50 @@ describe("PlaylistEditorScreen", () => {
       expect(
         container.querySelector(".sb-playlist-editor-columns")
       ).not.toBeNull();
+    });
+
+    it("leaves the editor from a new playlist's details", () => {
+      const { cancelEditingPlaylist } = renderScreen([], {
+        playlist: { title: null },
+      });
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-playlist-editor-back")!
+          .click();
+      });
+      expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
+    });
+
+    it("offers who can open it, defaulting to me and my friends, and sets each choice", () => {
+      const { playlists } = renderScreen([], { playlist: { title: null } });
+      const choices = () =>
+        Array.from(
+          container.querySelectorAll<HTMLButtonElement>(
+            ".sb-playlist-visibility-choice"
+          )
+        );
+      expect(
+        choices().map(
+          (b) => b.querySelector(".sb-playlist-visibility-title")?.textContent
+        )
+      ).toEqual(["Only me", "Me and my friends", "Anyone with a link"]);
+      // A playlist saved before the choice existed is shared with friends.
+      expect(choices().map((b) => b.getAttribute("aria-checked"))).toEqual([
+        "false",
+        "true",
+        "false",
+      ]);
+
+      act(() => choices()[0]!.click());
+      expect(playlists.editingPlaylist.value?.visibility).toBe("private");
+      expect(choices()[0]!.getAttribute("aria-checked")).toBe("true");
+
+      act(() => choices()[2]!.click());
+      expect(playlists.editingPlaylist.value?.visibility).toBe("unlisted");
+      expect(choices()[2]!.getAttribute("aria-checked")).toBe("true");
+
+      act(() => choices()[1]!.click());
+      expect(playlists.editingPlaylist.value?.visibility).toBe("public");
     });
 
     it("opens a playlist that already has a title straight on its steps", () => {
@@ -971,33 +1023,66 @@ describe("PlaylistEditorScreen", () => {
       ).not.toBeNull();
     });
 
-    it("offers only me or anyone with the link, and saves a private one as a draft", () => {
+    const visibilityLine = () =>
+      container.querySelector(".sb-playlist-review-visibility");
+
+    it("says who can open it, with no choice to make there, and saves a private one as a draft", () => {
       const { playlists } = renderScreen([verseItem("GEN", 16)]);
       act(() => reviewButton().click());
 
-      const choices = () =>
-        Array.from(
-          container.querySelectorAll<HTMLButtonElement>(
-            ".sb-playlist-visibility-choice"
-          )
-        );
-      expect(
-        choices().map(
-          (b) => b.querySelector(".sb-playlist-visibility-title")?.textContent
-        )
-      ).toEqual(["Only me", "Anyone with the link"]);
-      // A playlist saved before the choice existed opens for anyone with the link.
-      expect(choices()[1]!.getAttribute("aria-checked")).toBe("true");
+      expect(container.querySelector(".sb-playlist-visibility")).toBeNull();
+      expect(visibilityLine()?.textContent).toBe(
+        "Who can open it: Me and my friends Change"
+      );
       expect(publishButton().textContent).toBe("Publish");
 
-      act(() => choices()[0]!.click());
-      expect(playlists.editingPlaylist.value?.visibility).toBe("private");
-      expect(choices()[0]!.getAttribute("aria-checked")).toBe("true");
+      act(() => {
+        playlists.updateEditingPlaylistMetadata({ visibility: "private" });
+      });
+      expect(visibilityLine()?.textContent).toBe(
+        "Who can open it: Only me Change"
+      );
       expect(publishButton().textContent).toBe("Save draft");
 
-      act(() => choices()[1]!.click());
-      expect(playlists.editingPlaylist.value?.visibility).toBe("public");
+      act(() => {
+        playlists.updateEditingPlaylistMetadata({ visibility: "unlisted" });
+      });
+      expect(visibilityLine()?.textContent).toBe(
+        "Who can open it: Anyone with a link Change"
+      );
       expect(publishButton().textContent).toBe("Publish");
+    });
+
+    it("'Change' opens the playlist's details, whose back arrow returns to the steps", () => {
+      const { playlists } = renderScreen([verseItem("GEN", 16)]);
+      act(() => reviewButton().click());
+
+      act(() => buttonByText("Change", visibilityLine()!)!.click());
+
+      expect(container.querySelector(".sb-playlist-review")).toBeNull();
+      expect(container.querySelector(".sb-playlist-details")).not.toBeNull();
+      expect(
+        container.querySelector(".sb-playlist-details-heading")?.textContent
+      ).toBe("Playlist details");
+      act(() => {
+        container
+          .querySelectorAll<HTMLButtonElement>(
+            ".sb-playlist-visibility-choice"
+          )[2]!
+          .click();
+      });
+      expect(playlists.editingPlaylist.value?.visibility).toBe("unlisted");
+
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-playlist-editor-back")!
+          .click();
+      });
+      expect(playlists.editingPlaylist.value).not.toBeNull();
+      expect(container.querySelector(".sb-playlist-details")).toBeNull();
+      expect(
+        container.querySelector(".sb-playlist-editor-columns")
+      ).not.toBeNull();
     });
 
     it("leaves a playlist an earlier build made unlisted as it is", () => {
@@ -1006,9 +1091,10 @@ describe("PlaylistEditorScreen", () => {
         { playlist: { visibility: "unlisted" } }
       );
       act(() => reviewButton().click());
+      act(() => buttonByText("Change", visibilityLine()!)!.click());
       const link = container.querySelectorAll<HTMLButtonElement>(
         ".sb-playlist-visibility-choice"
-      )[1]!;
+      )[2]!;
       expect(link.getAttribute("aria-checked")).toBe("true");
 
       act(() => link.click());
@@ -1065,7 +1151,9 @@ describe("PlaylistEditorScreen", () => {
 
       act(() => {
         container
-          .querySelector<HTMLButtonElement>(".sb-playlist-review-check-fix")!
+          .querySelector<HTMLButtonElement>(
+            ".sb-playlist-review-checks .sb-playlist-review-check-fix"
+          )!
           .click();
       });
       expect(container.querySelector(".sb-playlist-review")).toBeNull();

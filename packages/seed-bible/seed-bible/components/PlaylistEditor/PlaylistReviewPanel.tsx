@@ -14,18 +14,37 @@ import { publishChecks } from "./publishChecks";
 
 export type PlaylistVisibility = NonNullable<Playlist["visibility"]>;
 
+/** What each "Who can open it" choice is called, for a summary line. */
+export function visibilityLabel(
+  visibility: Playlist["visibility"],
+  t: ReturnType<typeof useI18n>["t"]
+): string {
+  switch (visibility ?? "public") {
+    case "private":
+      return t("playlist-visibility-private", { defaultValue: "Only me" });
+    case "unlisted":
+      return t("playlist-visibility-unlisted", {
+        defaultValue: "Anyone with a link",
+      });
+    default:
+      return t("playlist-visibility-friends", {
+        defaultValue: "Me and my friends",
+      });
+  }
+}
+
 /**
- * The "Who can open it" choice: only the author, as a draft, or anyone with
- * the link. A playlist anyone can open also shows to the author's friends in
- * Discover, as every playlist did before this choice existed; there is no
- * public search yet to offer more than that. A playlist an earlier build left
- * unlisted counts as "anyone with the link" and stays unlisted.
+ * The "Who can open it" choice. Only me keeps a draft private. Me and my
+ * friends is how every playlist worked before this choice existed: friends
+ * find it in Discover (it is stored readable by link, as all shared
+ * playlists are). Anyone with a link keeps it out of friends' Discover, so
+ * only people sent the link find it.
  */
 export function PlaylistVisibilityField(props: { playlists: PlaylistManager }) {
   const { playlists } = props;
   const { t } = useI18n();
   const editing = playlists.editingPlaylist.value;
-  const onlyMe = editing?.visibility === "private";
+  const current: PlaylistVisibility = editing?.visibility ?? "public";
   const choices: {
     value: PlaylistVisibility;
     selected: boolean;
@@ -34,20 +53,26 @@ export function PlaylistVisibilityField(props: { playlists: PlaylistManager }) {
   }[] = [
     {
       value: "private",
-      selected: onlyMe,
-      label: t("playlist-visibility-private", { defaultValue: "Only me" }),
+      selected: current === "private",
+      label: visibilityLabel("private", t),
       description: t("playlist-visibility-private-description", {
         defaultValue: "Keep it as a draft for yourself",
       }),
     },
     {
       value: "public",
-      selected: !onlyMe,
-      label: t("playlist-visibility-unlisted", {
-        defaultValue: "Anyone with the link",
+      selected: current === "public",
+      label: visibilityLabel("public", t),
+      description: t("playlist-visibility-friends-description", {
+        defaultValue: "Your friends see it in Discover",
       }),
-      description: t("playlist-visibility-link-description", {
-        defaultValue: "Your friends also see it in Discover",
+    },
+    {
+      value: "unlisted",
+      selected: current === "unlisted",
+      label: visibilityLabel("unlisted", t),
+      description: t("playlist-visibility-link-only-description", {
+        defaultValue: "Only people you send the link to",
       }),
     },
   ];
@@ -92,8 +117,8 @@ export function PlaylistVisibilityField(props: { playlists: PlaylistManager }) {
 /**
  * The last look before publishing: the playlist as a shared link shows it
  * (cover, author, description, length), its steps in order, who can open
- * it, and anything worth checking first. Its details are edited on the
- * steps screen; this one only shows them.
+ * it, and anything worth checking first. Nothing is edited here: who can
+ * open it is chosen on the details screen, which "Change" goes back to.
  */
 export function PlaylistReviewPanel(props: {
   playlists: PlaylistManager;
@@ -103,6 +128,8 @@ export function PlaylistReviewPanel(props: {
   translationName?: string;
   /** Opens the step a check points at. */
   onOpenItem: (index: number) => void;
+  /** Goes to the details screen, where who can open it is chosen. */
+  onEditDetails: () => void;
   onBack: () => void;
   onPublish: () => void;
   publishing: boolean;
@@ -114,6 +141,7 @@ export function PlaylistReviewPanel(props: {
     authorName,
     translationName,
     onOpenItem,
+    onEditDetails,
     onBack,
     onPublish,
     publishing,
@@ -184,14 +212,21 @@ export function PlaylistReviewPanel(props: {
             ))}
           </ol>
 
-          <section className="sb-playlist-review-section">
-            <h4 className="sb-playlist-review-section-title">
-              {t("playlist-visibility-label", {
-                defaultValue: "Who can open it",
+          <p className="sb-playlist-review-visibility">
+            <span>
+              {t("playlist-visibility-summary", {
+                defaultValue: "Who can open it: {{who}}",
+                who: visibilityLabel(editing?.visibility, t),
               })}
-            </h4>
-            <PlaylistVisibilityField playlists={playlists} />
-          </section>
+            </span>{" "}
+            <button
+              type="button"
+              className="sb-playlist-review-check-fix"
+              onClick={onEditDetails}
+            >
+              {t("playlist-review-change", { defaultValue: "Change" })}
+            </button>
+          </p>
 
           <section className="sb-playlist-review-section">
             <h4 className="sb-playlist-review-section-title">

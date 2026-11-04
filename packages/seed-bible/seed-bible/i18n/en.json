@@ -676,7 +676,7 @@
   "playlist-listen": "Listen",
   "playlist-listening": "Listening",
   "playlist-visibility-label": "Who can open it",
-  "playlist-visibility-unlisted": "Anyone with the link",
+  "playlist-visibility-unlisted": "Anyone with a link",
   "playlist-review-publish": "Review & publish",
   "playlist-review-before": "Before you publish",
   "playlist-review-fix": "Fix",
@@ -1360,7 +1360,6 @@
   "feed-empty-notes": "No notes in this time frame yet.",
   "feed-empty-reading": "No reading in this time frame yet.",
   "playlist-details-heading": "New playlist",
-  "playlist-visibility-link-description": "Your friends also see it in Discover",
   "playlist-review-keep-editing": "Keep editing",
   "playlist-save-draft": "Save draft",
   "playlist-editor-all-steps": "All steps",
@@ -1373,5 +1372,11 @@
   "playlist-question-answer-label": "Your answer (optional)",
   "playlist-question-author-answer": "{{author}}'s answer",
   "playlist-question-the-answer": "The author's answer",
-  "playlist-question-show-answer": "Show the author's answer"
+  "playlist-question-show-answer": "Show the author's answer",
+  "playlist-visibility-friends": "Me and my friends",
+  "playlist-visibility-friends-description": "Your friends see it in Discover",
+  "playlist-visibility-link-only-description": "Only people you send the link to",
+  "playlist-details-heading-existing": "Playlist details",
+  "playlist-visibility-summary": "Who can open it: {{who}}",
+  "playlist-review-change": "Change"
 }
