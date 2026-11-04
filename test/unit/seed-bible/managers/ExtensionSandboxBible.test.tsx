@@ -25,7 +25,10 @@ import {
   type BibleDataManager,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import type { ExtensionManager } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
-import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import {
+  FreeUseBibleAPI,
+  type ChapterContent,
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createInMemoryTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import { createSearchManager } from "@packages/seed-bible/seed-bible/managers/SearchManager";
 import { useSandboxHarness } from "./sandboxHarness";
@@ -68,6 +71,39 @@ const commentaryBook = (id: string, order: number) => ({
   totalNumberOfVerses: 80,
 });
 
+/** A commentary book with only an introduction, and no chapters. */
+const introductionOnlyBook = (id: string, order: number) => ({
+  ...commentaryBook(id, order),
+  introduction: `An introduction to ${id}.`,
+  firstChapterNumber: null,
+  firstChapterApiLink: null,
+  lastChapterNumber: null,
+  lastChapterApiLink: null,
+  numberOfChapters: 0,
+  totalNumberOfVerses: 0,
+});
+
+const commentaryChapter = (
+  book: string,
+  order: number,
+  chapter: number,
+  links: { next: string | null; previous: string | null }
+) => ({
+  commentary,
+  book: commentaryBook(book, order),
+  thisChapterLink: `/api/c/adam-clarke/${book}/${chapter}.json`,
+  nextChapterApiLink: links.next,
+  previousChapterApiLink: links.previous,
+  numberOfVerses: 1,
+  chapter: {
+    number: chapter,
+    introduction: chapter === 3 ? "The fall." : undefined,
+    content: [
+      { type: "verse", number: 1, content: [`${book} ${chapter}:1 note.`] },
+    ],
+  },
+});
+
 const dataset = {
   id: "open-cross-ref",
   name: "Open Cross Ref",
@@ -91,18 +127,27 @@ function apiResponses(): WebResponseMap {
       translations: [aabBooks.translation],
     }),
     [api("api/AAB/books.json")]: createResponse(aabBooks),
-    [api("api/AAB/GEN/50.json")]: createResponse(
-      makeChapter(aabBooks, "GEN", 50, [
+    [api("api/AAB/GEN/50.json")]: createResponse({
+      ...makeChapter(aabBooks, "GEN", 50, [
         { type: "heading", content: ["Joseph's Death"] },
+        {
+          type: "hebrew_subtitle",
+          content: ["Of Joseph", { noteId: 1 }],
+        },
         { type: "verse", number: 1, content: ["Joseph wept", { noteId: 0 }] },
         { type: "line_break" },
+        // A kind of content the API might add later.
+        { type: "table" } as unknown as ChapterContent,
         {
           type: "verse",
           number: 2,
           content: [{ text: "and was embalmed.", wordsOfJesus: false }],
         },
-      ])
-    ),
+      ]),
+      // As the real API links them: across into Exodus at the end of Genesis.
+      nextChapterApiLink: "/api/AAB/EXO/1.json",
+      previousChapterApiLink: "/api/AAB/GEN/49.json",
+    }),
     [api("api/AAB/complete.json")]: createResponse(
       makeCompleteTranslation(aabBooks, 2)
     ),
@@ -111,23 +156,25 @@ function apiResponses(): WebResponseMap {
     }),
     [api("api/c/adam-clarke/books.json")]: createResponse({
       commentary,
-      books: [commentaryBook("GEN", 1), commentaryBook("EXO", 2)],
+      books: [
+        commentaryBook("GEN", 1),
+        introductionOnlyBook("EXO", 2),
+        commentaryBook("LEV", 3),
+      ],
     }),
-    [api("api/c/adam-clarke/GEN/3.json")]: createResponse({
-      commentary,
-      book: commentaryBook("GEN", 1),
-      thisChapterLink: "/api/c/adam-clarke/GEN/3.json",
-      nextChapterApiLink: "/api/c/adam-clarke/EXO/1.json",
-      previousChapterApiLink: "/api/c/adam-clarke/GEN/2.json",
-      numberOfVerses: 1,
-      chapter: {
-        number: 3,
-        introduction: "The fall.",
-        content: [
-          { type: "verse", number: 1, content: ["The serpent was subtle."] },
-        ],
-      },
-    }),
+    // The API's links step over Exodus, which has no chapters.
+    [api("api/c/adam-clarke/GEN/3.json")]: createResponse(
+      commentaryChapter("GEN", 1, 3, {
+        next: "/api/c/adam-clarke/LEV/1.json",
+        previous: "/api/c/adam-clarke/GEN/2.json",
+      })
+    ),
+    [api("api/c/adam-clarke/LEV/1.json")]: createResponse(
+      commentaryChapter("LEV", 3, 1, {
+        next: "/api/c/adam-clarke/LEV/2.json",
+        previous: "/api/c/adam-clarke/GEN/3.json",
+      })
+    ),
     [api("api/c/adam-clarke/profiles/aaron.json")]: createResponse({
       commentary,
       profile: {
@@ -181,25 +228,30 @@ describe("sb.bible", () => {
   let bibleData: BibleDataManager;
   /** Whether the Bible API can be reached, as a connection would allow. */
   let online: boolean;
+  /** What the Bible API serves; a test can add to it before installing. */
+  let responses: WebResponseMap;
 
   beforeEach(() => {
     online = true;
-    const responses = apiResponses();
+    responses = apiResponses();
     // Extension bundles still come from the harness; only the Bible API is
     // served (or cut off) here.
     const harnessFetch = globalThis.fetch;
-    vi.stubGlobal("fetch", (url: string, init?: RequestInit) => {
-      if (!url.startsWith(EXAMPLE_API_ENDPOINT)) {
-        return harnessFetch(url, init);
-      }
-      if (!online) {
-        return Promise.reject(new TypeError("Failed to fetch"));
-      }
-      const response = responses[url];
-      return response
-        ? Promise.resolve(response)
-        : Promise.resolve(createResponse(null, 404, "Not Found"));
-    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string, init?: RequestInit) => {
+        if (!url.startsWith(EXAMPLE_API_ENDPOINT)) {
+          return harnessFetch(url, init);
+        }
+        if (!online) {
+          return Promise.reject(new TypeError("Failed to fetch"));
+        }
+        const response = responses[url];
+        return response
+          ? Promise.resolve(response)
+          : Promise.resolve(createResponse(null, 404, "Not Found"));
+      })
+    );
     bibleData = createBibleDataManager(
       new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
       { offlineStore: createInMemoryTranslationStore() }
@@ -338,6 +390,7 @@ describe("sb.bible", () => {
         ],
         content: [
           { type: "heading", text: "Joseph's Death" },
+          { type: "hebrewSubtitle", text: "Of Joseph", footnotes: [1] },
           { type: "verse", number: 1, text: "Joseph wept", footnotes: [0] },
           { type: "lineBreak" },
           {
@@ -389,13 +442,26 @@ describe("sb.bible", () => {
 
     it("refuses ids that aren't ids before asking the API", async () => {
       const sb = await install();
+      const requested = vi.mocked(globalThis.fetch).mock.calls.length;
 
-      expect(
-        await codeOf(sb.bible.books({ translationId: "../secrets" }))
-      ).toBe("invalid_request");
-      expect(
-        await codeOf(sb.bible.commentaryBooks({ commentaryId: "a/b" }))
-      ).toBe("invalid_request");
+      for (const id of ["../secrets", "..", ".", "a/b"]) {
+        expect(await codeOf(sb.bible.books({ translationId: id }))).toBe(
+          "invalid_request"
+        );
+        expect(
+          await codeOf(sb.bible.commentaryBooks({ commentaryId: id }))
+        ).toBe("invalid_request");
+        expect(
+          await codeOf(
+            sb.bible.datasetChapter({
+              datasetId: id,
+              bookId: "GEN",
+              chapter: 1,
+            })
+          )
+        ).toBe("invalid_request");
+      }
+      expect(vi.mocked(globalThis.fetch).mock.calls.length).toBe(requested);
     });
   });
 
@@ -417,10 +483,27 @@ describe("sb.bible", () => {
         bookId: "GEN",
         chapter: 3,
         introduction: "The fall.",
-        verses: [{ number: 1, text: "The serpent was subtle." }],
-        next: { bookId: "EXO", chapter: 1 },
+        verses: [{ number: 1, text: "GEN 3:1 note." }],
+        next: { bookId: "LEV", chapter: 1 },
         previous: { bookId: "GEN", chapter: 2 },
       });
+    });
+
+    it("steps over a book with only an introduction, both ways", async () => {
+      const sb = await install();
+
+      const genesis = await sb.bible.commentaryChapter({
+        commentaryId: "adam-clarke",
+        bookId: "GEN",
+        chapter: 3,
+      });
+      const leviticus = await sb.bible.commentaryChapter({
+        commentaryId: "adam-clarke",
+        ...genesis.next!,
+      });
+
+      expect(leviticus.bookId).toBe("LEV");
+      expect(leviticus.previous).toEqual({ bookId: "GEN", chapter: 3 });
     });
 
     it("reads a profile", async () => {
@@ -582,6 +665,28 @@ describe("sb.bible", () => {
       const sb = await install();
 
       expect(await codeOf(sb.bible.datasets())).toBe("unavailable");
+    });
+
+    it("reports a response it can't read as the app's own failure, and logs it", async () => {
+      const errors = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      responses[api("api/d/open-cross-ref/GEN/1.json")] = createResponse({
+        dataset,
+        chapter: { number: 1, content: [{ verse: 1 }] },
+      });
+      const sb = await install();
+
+      expect(
+        await codeOf(
+          sb.bible.datasetChapter({
+            datasetId: "open-cross-ref",
+            bookId: "GEN",
+            chapter: 1,
+          })
+        )
+      ).toBe("internal");
+      expect(errors).toHaveBeenCalled();
     });
   });
 

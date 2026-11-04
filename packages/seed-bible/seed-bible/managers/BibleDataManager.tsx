@@ -105,10 +105,11 @@ export interface BibleDataManager {
    * Every translation the app can offer right now, for callers that just want
    * a list to pick from (such as extensions).
    *
-   * Online, this is the full catalog, fetched like `getTranslations()`. When
-   * that fails, or the device is offline, it answers from what is already
-   * known instead: the previous visit's cached catalog plus every downloaded
-   * translation. Rejects only when nothing at all is known.
+   * This is the full catalog, fetched like `getTranslations()` unless it is
+   * already known this session (`catalogLoaded`). When that fetch fails, or
+   * the device is offline, it answers from what is already known instead:
+   * every downloaded translation, plus whatever else the app has seen.
+   * Rejects only when nothing at all is known.
    */
   getTranslationCatalog: () => Promise<Translation[]>;
 
@@ -1137,6 +1138,12 @@ export function createBibleDataManager(
     // been read, and they are the whole fallback for a first visit made
     // offline, so wait for that before trusting the list.
     await offline.ready;
+    // Once the full catalog is known, answer from it: fetching again would
+    // re-merge it, which rewrites the saved copy and re-renders every
+    // translation picker, on every call.
+    if (catalogLoaded.peek()) {
+      return availableTranslations.peek();
+    }
     const known = availableTranslations.peek();
     if (offline.isOnline.peek() || known.length === 0) {
       try {

@@ -11,11 +11,8 @@ import type {
   TranslationBook,
 } from "./FreeUseBibleAPI";
 import type { SearchManager } from "./SearchManager";
-import {
-  adjacentChapterRef,
-  type ChapterRef,
-  type OfflineTranslationsManager,
-} from "./OfflineTranslationsManager";
+import type { OfflineTranslationsManager } from "./OfflineTranslationsManager";
+import { SandboxBrokerError } from "./ExtensionSandboxErrors";
 import type {
   SandboxBook,
   SandboxChapterContent,
@@ -46,9 +43,6 @@ export type SandboxBibleData = Pick<
   | "getDatasetBookChapter"
 > & { offline: Pick<OfflineTranslationsManager, "isDownloaded"> };
 
-/** Something `sb.bible` couldn't load: offline, or no such thing. */
-export class SandboxBibleUnavailableError extends Error {}
-
 type BibleMethod = Extract<SandboxMethod, `bible.${string}`>;
 
 export type SandboxBibleHandlers = {
@@ -66,11 +60,17 @@ export function createSandboxBible(
   bibleData: SandboxBibleData,
   search: Pick<SearchManager, "searchVerses">
 ): SandboxBibleHandlers {
+  /**
+   * Reads from the app's data, passing on a failure (offline, or no such
+   * thing) as `unavailable`. Only the read is covered: a mistake in turning
+   * the result into the extension's shape is a bug, which the broker logs
+   * and reports as `internal`.
+   */
   const load = async <T>(what: string, read: () => Promise<T>) => {
     try {
       return await read();
     } catch {
-      throw new SandboxBibleUnavailableError(`Couldn't load ${what}.`);
+      throw new SandboxBrokerError("unavailable", `Couldn't load ${what}.`);
     }
   };
 
@@ -91,31 +91,6 @@ export function createSandboxBible(
     totalNumberOfVerses: value.totalNumberOfVerses,
     downloaded: bibleData.offline.isDownloaded(value.id),
   });
-
-  /**
-   * The chapters around this one, by the translation's own book order. A
-   * catalog that can't be loaded just leaves them unknown: the chapter
-   * itself loaded, and that's what was asked for.
-   */
-  const neighbours = async (
-    books: () => Promise<Parameters<typeof adjacentChapterRef>[0]>,
-    bookId: string,
-    chapter: number
-  ) => {
-    const toRef = (ref: ChapterRef | null): SandboxChapterRef | null =>
-      ref && { bookId: ref.book, chapter: ref.chapter };
-    try {
-      const catalog = await books();
-      return {
-        next: toRef(adjacentChapterRef(catalog, bookId, chapter, "next")),
-        previous: toRef(
-          adjacentChapterRef(catalog, bookId, chapter, "previous")
-        ),
-      };
-    } catch {
-      return { next: null, previous: null };
-    }
-  };
 
   const commentary = (value: Commentary): SandboxCommentary => ({
     id: value.id,
@@ -160,193 +135,196 @@ export function createSandboxBible(
   });
 
   return {
-    "bible.translations": () =>
-      load("the list of translations", async () =>
-        (await bibleData.getTranslationCatalog()).map(translation)
-      ),
+    "bible.translations": async () =>
+      (
+        await load("the list of translations", () =>
+          bibleData.getTranslationCatalog()
+        )
+      ).map(translation),
 
-    "bible.books": ({ translationId }) =>
-      load(`the books of ${translationId}`, async () => {
-        const data = await bibleData.getTranslationBooks(translationId);
-        return {
-          translation: translation(data.translation),
-          books: data.books.map(book),
-        };
-      }),
+    "bible.books": async ({ translationId }) => {
+      const data = await load(`the books of ${translationId}`, () =>
+        bibleData.getTranslationBooks(translationId)
+      );
+      return {
+        translation: translation(data.translation),
+        books: data.books.map(book),
+      };
+    },
 
-    "bible.chapter": ({ translationId, bookId, chapter }) =>
-      load(`${translationId} ${bookId} ${chapter}`, async () => {
-        const data = await bibleData.getTranslationBookChapter(
-          translationId,
-          bookId,
-          chapter
-        );
-        const verses = data.chapter.content.filter(
-          (item): item is ChapterVerse => item.type === "verse"
-        );
-        return {
-          translationId,
-          bookId,
-          chapter,
-          verses: verses.map((verse) => ({
-            number: verse.number,
-            text: extractContentText(verse.content),
-          })),
-          content: data.chapter.content.map(chapterContent),
-          footnotes: (data.chapter.footnotes ?? []).map((note) => ({
-            id: note.noteId,
-            text: note.text,
-            caller: note.caller ?? null,
-            verse: note.reference?.verse ?? null,
-          })),
-          ...(await neighbours(
-            async () =>
-              (await bibleData.getTranslationBooks(translationId)).books,
-            bookId,
-            chapter
-          )),
-        };
-      }),
+    "bible.chapter": async ({ translationId, bookId, chapter }) => {
+      const data = await load(`${translationId} ${bookId} ${chapter}`, () =>
+        bibleData.getTranslationBookChapter(translationId, bookId, chapter)
+      );
+      const verses = data.chapter.content.filter(
+        (item): item is ChapterVerse => item.type === "verse"
+      );
+      return {
+        translationId,
+        bookId,
+        chapter,
+        verses: verses.map((verse) => ({
+          number: verse.number,
+          text: extractContentText(verse.content),
+        })),
+        content: data.chapter.content.flatMap(chapterContent),
+        footnotes: (data.chapter.footnotes ?? []).map((note) => ({
+          id: note.noteId,
+          text: note.text,
+          caller: note.caller ?? null,
+          verse: note.reference?.verse ?? null,
+        })),
+        next: chapterRefFromLink(data.nextChapterApiLink),
+        previous: chapterRefFromLink(data.previousChapterApiLink),
+      };
+    },
 
-    "bible.commentaries": () =>
-      load("the list of commentaries", async () =>
-        (await bibleData.getCommentaries()).map(commentary)
-      ),
+    "bible.commentaries": async () =>
+      (
+        await load("the list of commentaries", () =>
+          bibleData.getCommentaries()
+        )
+      ).map(commentary),
 
-    "bible.commentaryBooks": ({ commentaryId }) =>
-      load(`the books of ${commentaryId}`, async () => {
-        const data = await bibleData.getCommentaryBooks(commentaryId);
-        return {
-          commentary: commentary(data.commentary),
-          books: data.books.map(commentaryBook),
-        };
-      }),
+    "bible.commentaryBooks": async ({ commentaryId }) => {
+      const data = await load(`the books of ${commentaryId}`, () =>
+        bibleData.getCommentaryBooks(commentaryId)
+      );
+      return {
+        commentary: commentary(data.commentary),
+        books: data.books.map(commentaryBook),
+      };
+    },
 
-    "bible.commentaryChapter": ({ commentaryId, bookId, chapter }) =>
-      load(`${commentaryId} ${bookId} ${chapter}`, async () => {
-        const data = await bibleData.getCommentaryBookChapter(
-          commentaryId,
-          bookId,
-          chapter
-        );
-        return {
-          commentaryId,
-          bookId,
-          chapter,
-          introduction: data.chapter.introduction ?? null,
-          verses: data.chapter.content
-            .filter((item) => item.type === "verse")
-            .map((verse) => ({
-              number: verse.number,
-              text: extractContentText(verse.content),
-            })),
-          ...(await neighbours(
-            async () =>
-              (await bibleData.getCommentaryBooks(commentaryId)).books,
-            bookId,
-            chapter
-          )),
-        };
-      }),
+    "bible.commentaryChapter": async ({ commentaryId, bookId, chapter }) => {
+      const data = await load(`${commentaryId} ${bookId} ${chapter}`, () =>
+        bibleData.getCommentaryBookChapter(commentaryId, bookId, chapter)
+      );
+      return {
+        commentaryId,
+        bookId,
+        chapter,
+        introduction: data.chapter.introduction ?? null,
+        verses: data.chapter.content.map((verse) => ({
+          number: verse.number,
+          text: extractContentText(verse.content),
+        })),
+        next: chapterRefFromLink(data.nextChapterApiLink),
+        previous: chapterRefFromLink(data.previousChapterApiLink),
+      };
+    },
 
-    "bible.commentaryProfiles": ({ commentaryId }) =>
-      load(`the profiles of ${commentaryId}`, async () =>
-        (await bibleData.getCommentaryProfiles(commentaryId)).map(profile)
-      ),
+    "bible.commentaryProfiles": async ({ commentaryId }) =>
+      (
+        await load(`the profiles of ${commentaryId}`, () =>
+          bibleData.getCommentaryProfiles(commentaryId)
+        )
+      ).map(profile),
 
-    "bible.commentaryProfile": ({ commentaryId, profileId }) =>
-      load(`${commentaryId} profile ${profileId}`, async () => {
-        const data = await bibleData.getCommentaryProfile(
-          commentaryId,
-          profileId
-        );
-        return { ...profile(data.profile), content: data.content };
-      }),
+    "bible.commentaryProfile": async ({ commentaryId, profileId }) => {
+      const data = await load(`${commentaryId} profile ${profileId}`, () =>
+        bibleData.getCommentaryProfile(commentaryId, profileId)
+      );
+      return { ...profile(data.profile), content: data.content };
+    },
 
-    "bible.search": ({
+    "bible.search": async ({
       translationId,
       query,
       bookId,
       chapter,
       page,
       perPage,
-    }) =>
-      load(`search results for "${query}"`, async () => {
+    }) => {
+      const response = await load(`search results for "${query}"`, async () => {
         // The index has a collection per language, so the translation's own
         // language decides where to look. Its catalog is cached (or
         // downloaded), so this rarely costs a request.
         const { language } = (
           await bibleData.getTranslationBooks(translationId)
         ).translation;
-        const response = await search.searchVerses(
+        return search.searchVerses(
           language,
           translationId,
           query,
           { book: bookId, chapter },
           { page, perPage }
         );
-        return {
-          results: (response.hits ?? []).map(({ document }) => ({
-            translationId: document.translation,
-            bookId: document.book,
-            chapter: document.chapter,
-            verse: document.verse,
-            text: document.text,
-            reference: document.reference,
-          })),
-          found: response.found,
-          page: response.page,
-        };
-      }),
+      });
+      return {
+        results: (response.hits ?? []).map(({ document }) => ({
+          translationId: document.translation,
+          bookId: document.book,
+          chapter: document.chapter,
+          verse: document.verse,
+          text: document.text,
+          reference: document.reference,
+        })),
+        found: response.found,
+        page: response.page,
+      };
+    },
 
-    "bible.datasets": () =>
-      load("the list of datasets", async () =>
-        (await bibleData.getDatasets()).map(dataset)
+    "bible.datasets": async () =>
+      (await load("the list of datasets", () => bibleData.getDatasets())).map(
+        dataset
       ),
 
-    "bible.datasetBooks": ({ datasetId }) =>
-      load(`the books of ${datasetId}`, async () => {
-        const data = await bibleData.getDatasetBooks(datasetId);
-        return {
-          dataset: dataset(data.dataset),
-          books: data.books.map((entry) => ({
-            id: entry.id,
-            order: entry.order,
-            numberOfChapters: entry.numberOfChapters,
-            firstChapterNumber: entry.firstChapterNumber,
-            lastChapterNumber: entry.lastChapterNumber,
-            totalNumberOfVerses: entry.totalNumberOfVerses,
-            totalNumberOfReferences: entry.totalNumberOfReferences,
-          })),
-        };
-      }),
+    "bible.datasetBooks": async ({ datasetId }) => {
+      const data = await load(`the books of ${datasetId}`, () =>
+        bibleData.getDatasetBooks(datasetId)
+      );
+      return {
+        dataset: dataset(data.dataset),
+        books: data.books.map((entry) => ({
+          id: entry.id,
+          order: entry.order,
+          numberOfChapters: entry.numberOfChapters,
+          firstChapterNumber: entry.firstChapterNumber,
+          lastChapterNumber: entry.lastChapterNumber,
+          totalNumberOfVerses: entry.totalNumberOfVerses,
+          totalNumberOfReferences: entry.totalNumberOfReferences,
+        })),
+      };
+    },
 
-    "bible.datasetChapter": ({ datasetId, bookId, chapter }) =>
-      load(`${datasetId} ${bookId} ${chapter}`, async () => {
-        const data = await bibleData.getDatasetBookChapter(
-          datasetId,
-          bookId,
-          chapter
-        );
-        return {
-          datasetId,
-          bookId,
-          chapter,
-          verses: data.chapter.content.map((entry) => ({
-            verse: entry.verse,
-            references: entry.references.map((reference) => ({
-              bookId: reference.book,
-              chapter: reference.chapter,
-              verse: reference.verse,
-              ...optionalRange(reference),
-              ...(reference.score === undefined
-                ? {}
-                : { score: reference.score }),
-            })),
+    "bible.datasetChapter": async ({ datasetId, bookId, chapter }) => {
+      const data = await load(`${datasetId} ${bookId} ${chapter}`, () =>
+        bibleData.getDatasetBookChapter(datasetId, bookId, chapter)
+      );
+      return {
+        datasetId,
+        bookId,
+        chapter,
+        verses: data.chapter.content.map((entry) => ({
+          verse: entry.verse,
+          references: entry.references.map((reference) => ({
+            bookId: reference.book,
+            chapter: reference.chapter,
+            verse: reference.verse,
+            ...optionalRange(reference),
+            ...(reference.score === undefined
+              ? {}
+              : { score: reference.score }),
           })),
-        };
-      }),
+        })),
+      };
+    },
   };
+}
+
+/**
+ * The book and chapter an API chapter link names, like `GEN 2` from
+ * `/api/BSB/GEN/2.json` or `/api/c/adam-clarke/GEN/2.json`. The API's own
+ * next/previous links skip what doesn't exist (such as a commentary book
+ * with only an introduction), and a downloaded chapter's links follow the
+ * same pattern, so this is always the real neighbour.
+ */
+function chapterRefFromLink(link: string | null): SandboxChapterRef | null {
+  const match = link?.match(/\/([^/]+)\/(\d+)\.json$/);
+  return match
+    ? { bookId: decodeURIComponent(match[1]!), chapter: Number(match[2]) }
+    : null;
 }
 
 function book(value: TranslationBook): SandboxBook {
@@ -389,25 +367,42 @@ function optionalRange(value: {
   };
 }
 
-function chapterContent(item: ChapterContent): SandboxChapterContent {
+/** The ids of the footnotes marked in a verse or subtitle. */
+function footnoteIds(parts: readonly (string | object)[]): number[] {
+  return parts.flatMap((part) =>
+    typeof part === "object" &&
+    "noteId" in part &&
+    typeof part.noteId === "number"
+      ? [part.noteId]
+      : []
+  );
+}
+
+/** One piece of a chapter; none for a kind the API adds later. */
+function chapterContent(item: ChapterContent): SandboxChapterContent[] {
   switch (item.type) {
     case "heading":
-      return { type: "heading", text: extractContentText(item.content) };
+      return [{ type: "heading", text: extractContentText(item.content) }];
     case "line_break":
-      return { type: "lineBreak" };
+      return [{ type: "lineBreak" }];
     case "hebrew_subtitle":
-      return {
-        type: "hebrewSubtitle",
-        text: extractContentText(item.content),
-      };
+      return [
+        {
+          type: "hebrewSubtitle",
+          text: extractContentText(item.content),
+          footnotes: footnoteIds(item.content),
+        },
+      ];
     case "verse":
-      return {
-        type: "verse",
-        number: item.number,
-        text: extractContentText(item.content),
-        footnotes: item.content.flatMap((part) =>
-          typeof part === "object" && "noteId" in part ? [part.noteId] : []
-        ),
-      };
+      return [
+        {
+          type: "verse",
+          number: item.number,
+          text: extractContentText(item.content),
+          footnotes: footnoteIds(item.content),
+        },
+      ];
+    default:
+      return [];
   }
 }

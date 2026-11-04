@@ -449,7 +449,7 @@ export interface CreateOfflineTranslationsManagerOptions {
 }
 
 /** A book plus chapter coordinate, used for next/previous resolution. */
-export interface ChapterRef {
+interface ChapterRef {
   book: string;
   chapter: number;
 }
@@ -639,14 +639,8 @@ function toAudioTimingsLinks(
  * Finds the chapter immediately before or after the given one, crossing book
  * boundaries the way the API's own next/previous links do.
  */
-export function adjacentChapterRef(
-  books: readonly (Pick<
-    TranslationBook,
-    "id" | "order" | "numberOfChapters"
-  > & {
-    firstChapterNumber: number | null;
-    lastChapterNumber: number | null;
-  })[],
+function adjacentChapterRef(
+  books: TranslationBook[],
   bookId: string,
   chapterNumber: number,
   direction: "next" | "previous"

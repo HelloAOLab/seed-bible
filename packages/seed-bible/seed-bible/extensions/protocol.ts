@@ -487,7 +487,12 @@ export type SandboxChapterContent =
   /** A paragraph or stanza break. */
   | { type: "lineBreak" }
   /** A psalm's superscription, like "A Psalm of David." */
-  | { type: "hebrewSubtitle"; text: string }
+  | {
+      type: "hebrewSubtitle";
+      text: string;
+      /** The `id`s of its footnotes, in `SandboxChapter.footnotes`. */
+      footnotes: number[];
+    }
   | {
       type: "verse";
       number: number;

@@ -319,6 +319,32 @@ describe("createBibleDataManager", () => {
       ]);
     });
 
+    it("answers from the known catalog without fetching or re-saving it", async () => {
+      setWebResponses({
+        [makeEndpointUrl(
+          EXAMPLE_API_ENDPOINT,
+          "api/available_translations.json"
+        )]: createResponse(translations),
+      });
+      const manager = createManager();
+      await manager.getTranslationCatalog();
+      const catalog = manager.availableTranslations.value;
+      const requests = webGetMock.mock.calls.length;
+      const saves = vi.spyOn(Storage.prototype, "setItem");
+
+      await manager.getTranslationCatalog();
+      await manager.getTranslationCatalog();
+
+      expect(webGetMock.mock.calls.length).toBe(requests);
+      // A new list would rewrite the saved catalog and re-render pickers.
+      expect(manager.availableTranslations.value).toBe(catalog);
+      expect(saves).not.toHaveBeenCalledWith(
+        "availableTranslations",
+        expect.anything()
+      );
+      saves.mockRestore();
+    });
+
     it("falls back to the previous visit's catalog when the fetch fails", async () => {
       localStorage.setItem(
         "availableTranslations",

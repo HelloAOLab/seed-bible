@@ -21,11 +21,11 @@ import {
   createSandboxServices,
   pseudonymousIdentity,
   SANDBOX_SERVICE_SPECS,
-  SandboxBrokerError,
   SandboxViewFrame,
   type SandboxServicesContext,
   type SandboxSessionApi,
 } from "./ExtensionSandboxServices";
+import { SandboxBrokerError } from "./ExtensionSandboxErrors";
 import { splitSourcedExtensionId } from "./ExtensionPermissions";
 import { translateTitle } from "../app/utils";
 import { useI18n } from "../i18n";

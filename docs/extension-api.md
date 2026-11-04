@@ -433,7 +433,7 @@ bible: {
 **Translations.** `translations()` lists every translation the user can pick from. `books()` lists a translation's books in its own order, and `chapter()` loads one chapter:
 
 - `verses` is each verse as plain text, without headings. Use it when you only need the words.
-- `content` is the chapter in reading order: `heading`, `lineBreak` (a paragraph or stanza break), `hebrewSubtitle` (a psalm's superscription) and `verse` pieces. Use it to lay the chapter out. Each verse lists the ids of its `footnotes`.
+- `content` is the chapter in reading order: `heading`, `lineBreak` (a paragraph or stanza break), `hebrewSubtitle` (a psalm's superscription) and `verse` pieces. Use it to lay the chapter out. Each verse and subtitle lists the ids of its `footnotes`, so you know where to put each footnote's mark.
 - `next` and `previous` are the chapters either side, crossing into the next or previous book (`{ bookId: "EXO", chapter: 1 }` after Genesis 50). They're null at either end of the Bible.
 
 ```ts
@@ -863,7 +863,7 @@ interface SandboxChapter {
 type SandboxChapterContent =
   | { type: "heading"; text: string }
   | { type: "lineBreak" }
-  | { type: "hebrewSubtitle"; text: string }
+  | { type: "hebrewSubtitle"; text: string; footnotes: number[] }
   | { type: "verse"; number: number; text: string; footnotes: number[] };
 
 interface SandboxFootnote {
