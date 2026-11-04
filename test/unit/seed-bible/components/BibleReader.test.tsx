@@ -4785,6 +4785,31 @@ describe("BibleReader", () => {
       expect(markerNames()).toEqual(["Host"]);
     });
 
+    it("lets someone choose hosts only even when the host is showing everyone", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "hosts-only",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "everyone" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+    });
+
     it("counts a person with two tabs once, so three people still show everyone's place", () => {
       stubLineBoxes({ 1: 40, 2: 70 });
       const fixture = createFixture();

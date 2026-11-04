@@ -1289,10 +1289,10 @@
   "session-settings-viewing-areas-everyone": "Everyone",
   "session-settings-viewing-areas-hosts-only": "Hosts only",
   "session-settings-viewing-areas-desc-auto": "Show everyone's place when fewer than {{count}} people are here, and only hosts when there are {{count}} or more.",
-  "session-settings-viewing-areas-desc-everyone": "Show where everyone is reading.",
+  "session-settings-viewing-areas-desc-everyone": "Show where everyone is reading. Each person can still hide the other bars on their own screen.",
   "session-settings-viewing-areas-desc-hosts": "Show where the hosts are reading.",
   "viewing-area-indicators": "Viewing areas",
-  "viewing-area-indicators-desc": "Applies while the session is Automatic. Default shows everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. If the host picks Everyone or Hosts only, that applies to everyone.",
+  "viewing-area-indicators-desc": "Default follows the session: everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. Hosts only hides the other bars on your screen, even when the session is showing everyone. Everyone cannot show those bars when the host has set the session to hosts only.",
 
   "account": "Account",
   "scroll-filters-start": "Scroll filters toward start",

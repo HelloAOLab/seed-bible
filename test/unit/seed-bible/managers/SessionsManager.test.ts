@@ -920,7 +920,7 @@ describe("SessionsManager", () => {
       ["default", "everyone", 10, "everyone"],
       ["default", "hosts-only", 1, "hosts-only"],
       ["everyone", "hosts-only", 10, "hosts-only"],
-      ["hosts-only", "everyone", 2, "everyone"],
+      ["hosts-only", "everyone", 2, "hosts-only"],
       ["everyone", "auto", 8, "everyone"],
       ["hosts-only", "auto", 2, "hosts-only"],
     ] as const)(

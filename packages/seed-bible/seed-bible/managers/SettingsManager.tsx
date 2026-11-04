@@ -117,9 +117,9 @@ export type TextConfig = Record<TextSectionId, TextSectionConfig>;
 export type VerseSelectionEffects = "default" | "enabled" | "disabled";
 
 /**
- * Whose viewing-area bars this person wants to see while the session is on
- * automatic. "default" follows that cutoff. "everyone" and "hosts-only"
- * replace it on this screen. An explicit session setting still wins.
+ * Whose viewing-area bars this person wants to see. "default" follows the
+ * session. "hosts-only" hides other bars on this screen. "everyone" follows
+ * a session that is showing everyone, and does not widen a hosts-only one.
  */
 export type ViewingAreaIndicators = ViewingAreaPreference;
 

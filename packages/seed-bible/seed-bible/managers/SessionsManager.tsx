@@ -105,8 +105,10 @@ export type VerseSelectionEffectVisibility = "hosts-only" | "everyone" | "none";
 export type ViewingAreaVisibility = "auto" | "everyone" | "hosts-only";
 
 /**
- * A person's own choice while the session is on "auto". "default" follows
- * the automatic cutoff. An explicit session setting wins over this.
+ * A person's own choice of whose bars they see. "default" follows the
+ * session. "hosts-only" hides other people's bars on this screen, including
+ * when the session is set to everyone. "everyone" cannot widen a session
+ * the host has set to hosts only.
  */
 export type ViewingAreaPreference = "default" | "everyone" | "hosts-only";
 
@@ -117,10 +119,12 @@ export type ViewingAreaPreference = "default" | "everyone" | "hosts-only";
 export const VIEWING_AREA_HOSTS_ONLY_MIN_USERS = 4;
 
 /**
- * Whose bars to draw. An explicit session setting wins. A personal
- * preference applies only while the session is on "auto", which follows
- * `connectedUserCount`. Hosts-only falls back to everyone when no host is
- * connected, so the margin is not left blank.
+ * Whose bars to draw. Hosts only from either the session or this person
+ * hides other bars. A personal "everyone" applies on automatic and when the
+ * session is showing everyone, and does not widen a hosts-only session.
+ * "auto" with no personal choice follows `connectedUserCount`. Hosts-only
+ * falls back to everyone when no host is connected, so the margin is not
+ * left blank.
  */
 export function resolveViewingAreaVisibility(
   sessionVisibility: ViewingAreaVisibility | null | undefined,
@@ -129,10 +133,10 @@ export function resolveViewingAreaVisibility(
   hostConnected = true
 ): "everyone" | "hosts-only" {
   let mode: "everyone" | "hosts-only";
-  if (sessionVisibility === "everyone" || sessionVisibility === "hosts-only") {
-    mode = sessionVisibility;
-  } else if (preference === "everyone" || preference === "hosts-only") {
-    mode = preference;
+  if (sessionVisibility === "hosts-only" || preference === "hosts-only") {
+    mode = "hosts-only";
+  } else if (sessionVisibility === "everyone" || preference === "everyone") {
+    mode = "everyone";
   } else {
     mode =
       connectedUserCount >= VIEWING_AREA_HOSTS_ONLY_MIN_USERS
@@ -184,8 +188,8 @@ export interface SessionOptions {
   verseSelectionEffectVisibility: VerseSelectionEffectVisibility;
   /**
    * Whose viewing-area bars are drawn beside the chapter. See
-   * `ViewingAreaVisibility`. While this is "auto", each person can still
-   * override it for their own screen.
+   * `ViewingAreaVisibility`. Each person can still choose hosts only for
+   * their own screen. They cannot widen a hosts-only session.
    */
   viewingAreaVisibility: ViewingAreaVisibility;
 }

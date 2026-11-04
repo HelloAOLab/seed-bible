@@ -522,7 +522,8 @@ function SessionSettingsModalContent(props: {
           <p className="sb-session-settings-description">
             {viewingAreaVisibility === "everyone"
               ? t("session-settings-viewing-areas-desc-everyone", {
-                  defaultValue: "Show where everyone is reading.",
+                  defaultValue:
+                    "Show where everyone is reading. Each person can still hide the other bars on their own screen.",
                 })
               : viewingAreaVisibility === "hosts-only"
                 ? t("session-settings-viewing-areas-desc-hosts", {

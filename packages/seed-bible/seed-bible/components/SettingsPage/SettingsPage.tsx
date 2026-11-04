@@ -782,7 +782,7 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             {t("viewing-area-indicators-desc", {
               count: VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
               defaultValue:
-                "Applies while the session is Automatic. Default shows everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. If the host picks Everyone or Hosts only, that applies to everyone.",
+                "Default follows the session: everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. Hosts only hides the other bars on your screen, even when the session is showing everyone. Everyone cannot show those bars when the host has set the session to hosts only.",
             })}
           </p>
         </div>
