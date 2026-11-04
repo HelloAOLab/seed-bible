@@ -238,12 +238,23 @@ async function connect(address?: string): Promise<void> {
   adb(["reverse", `tcp:${HMR_PORT}`, `tcp:${HMR_PORT}`], connected);
   console.log(adb(["reverse", "--list"], connected).trim());
   console.log(`Ready: open ${APP_ORIGIN} on the phone.`);
+  // Other commands use ANDROID_SERIAL as-is, so an ip:port that matched by IP
+  // alone would send them to the old port.
+  if (wanted && wanted !== connected && !wanted.startsWith("adb-")) {
+    console.log(
+      `ANDROID_SERIAL is ${wanted}, but the phone is now at ${connected}. Set ANDROID_SERIAL=${connected} (or the phone's adb-… name from \`status\`) before other commands.`
+    );
+  }
 }
 
 function hasChrome(device: string): boolean {
-  // `pm path` exits non-zero when the package isn't installed.
-  const { ok, out } = tryAdb(["shell", "pm", "path", CHROME], device);
-  return ok && out.includes("package:");
+  // Enabled packages only: Samsung phones often have Chrome installed but
+  // disabled, and `-p` with a disabled package can't open anything.
+  const { ok, out } = tryAdb(
+    ["shell", "pm", "list", "packages", "-e", CHROME],
+    device
+  );
+  return ok && out.split("\n").some((l) => l.trim() === `package:${CHROME}`);
 }
 
 function open(path = ""): void {
@@ -284,7 +295,7 @@ function open(path = ""): void {
   console.log(`Opened ${url}`);
   if (!useChrome) {
     console.log(
-      "Chrome isn't installed, so it opened in the default browser. `logs` and tab reuse need Chrome."
+      "Chrome isn't installed (or is disabled), so it opened in the default browser. `logs` and tab reuse need Chrome."
     );
   }
 }
@@ -352,7 +363,10 @@ function formatPreview(preview: ObjectPreview): string {
         : formatPreview(e.value)
     );
     if (preview.overflow) parts.push("…");
-    return `${preview.subtype === "set" ? "Set" : "Map"}{${parts.join(", ")}}`;
+    // Chrome's own label, e.g. Map(2), WeakSet, Set(3).
+    const label =
+      preview.description ?? (preview.subtype === "set" ? "Set" : "Map");
+    return `${label}{${parts.join(", ")}}`;
   }
   // A Map/Set entry's key or value can be a primitive, previewed as just its
   // description.
@@ -479,6 +493,14 @@ async function logs(seconds: number, reload: boolean): Promise<void> {
       !msg.params.frame.parentId &&
       !isAppTab(msg.params.frame.url)
     ) {
+      // A failed load shows Chrome's error page (chrome-error://…), with the
+      // URL that failed in unreachableUrl — not the user browsing away.
+      const failed = msg.params.frame.unreachableUrl;
+      if (failed && isAppTab(failed)) {
+        fail(
+          `[${time()}] The page failed to load. Is \`pnpm dev\` running? Then check the forwards with \`status\`.`
+        );
+      }
       console.log(`[${time()}] Tab left ${APP_ORIGIN}; stopped.`);
       process.exit(0);
     } else if (msg.method === "Runtime.consoleAPICalled") {
