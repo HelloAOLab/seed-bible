@@ -83,7 +83,7 @@ export function PaneHeader(props: PaneHeaderProps) {
         </div>
       )}
       <button
-        className="sb-pane-header-close-button"
+        className="sb-pane-header-button sb-pane-header-close-button"
         aria-label={t("close", { defaultValue: "Close" })}
         title={t("close", { defaultValue: "Close" })}
         onPointerDown={(event: PointerEvent) => {

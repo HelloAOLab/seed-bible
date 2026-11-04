@@ -64,7 +64,11 @@ import {
   AnnotationCommentMeta,
   annotationLocationLabel,
   openDeleteAnnotationConfirm,
-} from "../DiscoverPane/AnnotationsSection";
+} from "../Discover/AnnotationsSection";
+import {
+  VerseTaggedResultsSections,
+  verseTaggedResultsFor,
+} from "../Discover/DiscoveredResultsSections";
 import {
   ContextMenuWithButton,
   ContextMenuItem,
@@ -128,6 +132,9 @@ const LEADING_NAV_TOOL_IDS = new Set([
   "previous-chapter",
   "previous-item",
 ]);
+
+/** Places in the desktop toolbar's primary group, the More button included. */
+const DESKTOP_PRIMARY_SLOTS = 4;
 
 /** Navigation tools that sit after More at the end of the desktop toolbar. */
 const TRAILING_NAV_TOOL_IDS = new Set(["next-chapter", "next-item"]);
@@ -619,8 +626,15 @@ function placeFloatingToolMenu(anchor: HTMLElement, menu: HTMLElement): void {
 
   const topPx = `${top}px`;
   const leftPx = `${left}px`;
+  // The corner by the trigger, for the opening animation.
+  const origin = `${alignToInlineStart ? "left" : "right"} ${
+    placeAbove ? "bottom" : "top"
+  }`;
   if (menu.style.top !== topPx) menu.style.top = topPx;
   if (menu.style.left !== leftPx) menu.style.left = leftPx;
+  if (menu.style.transformOrigin !== origin) {
+    menu.style.transformOrigin = origin;
+  }
   if (menu.style.visibility !== "visible") menu.style.visibility = "visible";
 }
 
@@ -867,6 +881,7 @@ function VerseToolbarAnnotationGroup(props: {
                         modals,
                         annotations,
                         annotation,
+                        label,
                         toast
                       );
                     }}
@@ -913,7 +928,7 @@ const VERSE_SHEET_PINNED_MIN_NOTE_ROOM_PX = 48;
  * Registered tools that come right after Highlight and Save on the mobile
  * sheet, in this order, ahead of everything else. With Highlight and Save that
  * makes the collapsed row Highlight, Save, Note, Copy and starts the drawer
- * with Share and Compare, so extension tools (Ask AI, Locations, ...) can't
+ * with Share and Compare, so extension tools (Ask AI, ...) can't
  * push the core actions off the first row however low their priority.
  */
 const VERSE_SHEET_LEADING_TOOL_IDS = [
@@ -1049,6 +1064,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
+      toggleSearch: sidebar.toggleSearchPanel,
       openChat: sidebar.toggleChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
@@ -1100,8 +1116,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // is not kept out even under chat-first: the mobile bar is fixed at five
   // tabs, so the More menu is chat's only home there. On desktop it's Search
   // plus Chat under chat-first — Books is not controllable, so it always
-  // stays. Everything else, including every extension tool, goes into More so
-  // installing extensions can't crowd the bar.
+  // stays. Everything else, including every extension tool, goes into More on
+  // mobile; on desktop it goes into More unless it all fits in the primary
+  // group (see `desktopToolsFit`).
   const primaryToolIds = useComputed(
     () =>
       new Set(
@@ -1120,9 +1137,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
-  // The tools shown directly in the desktop toolbar: chapter navigation and
-  // other non-controllable tools, plus the primary ones.
-  const desktopBarTools = useComputed(() =>
+  // Chapter navigation and other non-controllable tools, plus the primary ones.
+  const primaryBarTools = useComputed(() =>
     tools.value.filter(
       (tool) =>
         tool.visible.value &&
@@ -1130,11 +1146,60 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
+  // Whether every desktop tool fits on the bar. Like the mobile bar, the
+  // primary group (Today plus every non-navigation tool) has
+  // DESKTOP_PRIMARY_SLOTS places: when everything fits, More would only stand
+  // in for the last tool, so the tool itself is shown; when it doesn't, More
+  // takes the last place and holds the rest.
+  const desktopToolsFit = useComputed(() => {
+    if (isSmallScreen.value) return false;
+    const barToolCount = primaryBarTools.value.filter(
+      (tool) =>
+        !LEADING_NAV_TOOL_IDS.has(tool.id) &&
+        !TRAILING_NAV_TOOL_IDS.has(tool.id)
+    ).length;
+    // The extra 1 is Today.
+    return 1 + barToolCount + moreTools.value.length <= DESKTOP_PRIMARY_SLOTS;
+  });
+
+  // The controllable tools that keep their own desktop button. Under
+  // chat-first, a full bar has room for only one of Search and Chat next to
+  // More, so Chat keeps its place and Search moves into More.
+  const desktopPinnedToolIds = useComputed(() =>
+    !desktopToolsFit.value &&
+    primaryBarTools.value.some((tool) => tool.id === "open-chat")
+      ? new Set(["open-chat"])
+      : primaryToolIds.value
+  );
+
+  // The tools shown directly in the desktop toolbar, apart from the More tools
+  // that fit (see `desktopToolsFit`).
+  const desktopBarTools = useComputed(() =>
+    tools.value.filter(
+      (tool) =>
+        tool.visible.value &&
+        (!tool.isControllable || desktopPinnedToolIds.value.has(tool.id))
+    )
+  );
+
+  // The tools in the More menu, or none when the menu (and its button) is not
+  // shown.
+  const moreMenuTools = useComputed(() => {
+    if (isSmallScreen.value) return moreTools.value;
+    if (desktopToolsFit.value) return [];
+    return tools.value.filter(
+      (tool) =>
+        tool.visible.value &&
+        tool.isControllable &&
+        !desktopPinnedToolIds.value.has(tool.id)
+    );
+  });
+
   // Whether the chat tool is inside the More menu. Its unread badge is hidden
   // until the menu is opened, so the More button itself has to carry the
   // indicator.
   const chatInMoreMenu = useComputed(() =>
-    moreTools.value.some((tool) => tool.id === "open-chat")
+    moreMenuTools.value.some((tool) => tool.id === "open-chat")
   );
 
   const verseToolbarTools = useComputed(() => {
@@ -1187,6 +1252,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const isMinimalEmbed = useComputed(
     () => props.state.app.isMinimalEmbed?.value ?? false
   );
+
+  const selectionDiscoveredContent = useComputed(() => {
+    const rs = readingState.value;
+    if (
+      !rs ||
+      !props.state.app.isMobile.value ||
+      isMinimalEmbed.value ||
+      !settings.settings.value.discoveredContent.showContent
+    ) {
+      return [];
+    }
+    return verseTaggedResultsFor(rs, props.state.discover.contentTypes.value);
+  });
   // A pane fills the whole screen when it's fullscreen, or (on mobile) for any
   // open pane — mobile renders every pane fullscreen. Mirrors the "fills the
   // screen" rule in PanesManager/SeedBibleStateManager. Used to hide the
@@ -1218,7 +1296,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // menu has to close with it — otherwise it stays "open" with no button, and
   // pops back up by itself the next time a tool arrives.
   useSignalEffect(() => {
-    if (!isSmallScreen.value && moreTools.value.length === 0) {
+    if (!isSmallScreen.value && moreMenuTools.value.length === 0) {
       isMoreMenuOpen.value = false;
     }
   });
@@ -1227,6 +1305,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const toolbarWrapRef = useRef<HTMLDivElement>(null);
   const verseToolbarRef = useRef<HTMLDivElement>(null);
   const selectedToolbarToolId = useSignal<string | null>(null);
+  // A tool's own dropdown is drawn only while the tool is on the bar. If the
+  // tool moves into More while its dropdown is open, close it, so it doesn't
+  // pop back open when the tool returns to the bar.
+  useSignalEffect(() => {
+    const id = selectedToolbarToolId.value;
+    if (
+      id &&
+      !isSmallScreen.value &&
+      moreMenuTools.value.some((tool) => tool.id === id)
+    ) {
+      selectedToolbarToolId.value = null;
+    }
+  });
   const selectedVerseToolId = useSignal<string | null>(null);
   // Whether the mobile verse sheet is showing its overflow actions. Collapsed by
   // default; reset whenever the selection clears. Reached by dragging the grab
@@ -1310,9 +1401,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   /**
    * Whether the collapsed sheet is hiding something: action cards past the
-   * first row, or notes on the selection. Measured height is not enough —
-   * the overflow row's padding, and a height left behind after that row
-   * unmounts, both read as "more" when the sheet is already showing everything.
+   * first row, or notes or discovered content on the selection. Measured
+   * height is not enough — the overflow row's padding, and a height left
+   * behind after that row unmounts, both read as "more" when the sheet is
+   * already showing everything.
    */
   const verseSheetHasHiddenContent = useComputed(() => {
     if (!isSmallScreen.value) return false;
@@ -1322,7 +1414,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       (showSaveCard.value ? 1 : 0);
     const annotationCount =
       readingState.value?.selectionAnnotations.value.length ?? 0;
-    return cardCount > VERSE_SHEET_COLLAPSED_COUNT || annotationCount > 0;
+    return (
+      cardCount > VERSE_SHEET_COLLAPSED_COUNT ||
+      annotationCount > 0 ||
+      selectionDiscoveredContent.value.length > 0
+    );
   });
 
   /** Whether there is anything to reveal — no overflow row, nothing to drag to. */
@@ -1964,11 +2060,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    * behavior instead of starting the sheet drag: buttons and inputs (so taps
    * still register as clicks — capturing the pointer on the panel would
    * otherwise steal their `pointerup`), the horizontal highlight-color
-   * strip (its own swipe gesture would fight the sheet's vertical one), and
-   * the notes once they scroll (a drag there moves the note, not the sheet).
+   * strip (its own swipe gesture would fight the sheet's vertical one),
+   * discovered content (extension cards often toggle on a plain `div`, which
+   * `button` doesn't cover), and the notes once they scroll (a drag there
+   * moves the note, not the sheet).
    */
   const VERSE_SHEET_DRAG_IGNORE_SELECTOR =
-    "button, input, a, .sb-verse-toolbar-swatches, .sb-verse-toolbar-overflow-scrollable";
+    "button, input, a, .sb-verse-toolbar-swatches, .sb-verse-toolbar-discovered, .sb-verse-toolbar-overflow-scrollable";
 
   /**
    * Entry point for the whole-panel version of the handle drag: any part of
@@ -2493,7 +2591,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const { t } = useI18n();
 
+  // Tapping Today again while its screen is showing closes it, like the You
+  // tab. When something covers it (search, chat, More), the tap brings Today
+  // back to the front instead.
   const openTodayScreen = () => {
+    if (activeMobileTab.peek() === "today") {
+      props.state.today.close();
+      return;
+    }
     isMoreMenuOpen.value = false;
     sidebar.closeSearchPanel();
     sidebar.closeChatPanel();
@@ -2506,6 +2611,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // The "You" tab. Tapping it again while the Profile screen is up closes it,
   // matching how Search and Tabs toggle.
   const openProfileScreen = () => {
+    const fromToday = props.state.today.isOpen.peek();
     if (props.state.isProfileOpen.value) {
       props.state.closeProfile();
       return;
@@ -2516,7 +2622,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
-    props.state.openProfile();
+    props.state.openProfile({ fromToday });
   };
 
   // Chat's unread/typing badges, shown on the More button while chat is
@@ -2605,7 +2711,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       </button>
       {isMoreMenuOpen.value && (
         <MoreMenu
-          tools={moreTools.value}
+          tools={moreMenuTools.value}
           unreadChatIndicator={unreadChatIndicator.value}
           chatWasMentioned={chats.wasMentioned.value}
           hasTypingInChats={hasTypingInChats.value}
@@ -3258,7 +3364,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       ...bar
                         .slice(todayIndex, moreIndex)
                         .flatMap(renderDesktopTool),
-                      moreTools.value.length > 0 ? desktopMoreButton : null,
+                      ...(desktopToolsFit.value
+                        ? moreTools.value.flatMap(renderDesktopTool)
+                        : []),
+                      moreMenuTools.value.length > 0 ? desktopMoreButton : null,
                       ...bar.slice(moreIndex).flatMap(renderDesktopTool),
                     ];
                   })()}
@@ -3989,6 +4098,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                   />
                                 );
                               })}
+                            </div>
+                          )}
+                          {selectionDiscoveredContent.value.length > 0 && (
+                            <div className="sb-verse-toolbar-discovered">
+                              <VerseTaggedResultsSections
+                                groups={selectionDiscoveredContent.value}
+                              />
                             </div>
                           )}
                         </div>

@@ -14,7 +14,7 @@
   },
   "keywords": [],
   "dependencies": {
-    "@seed-bible/ai-transcript-extension": "workspace:*",
+    "@seed-bible/transcription": "workspace:*",
     "base64-js": "catalog:",
     "preact": "catalog:",
     "qrcode": "^1.5.4",

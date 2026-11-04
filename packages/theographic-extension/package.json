@@ -14,7 +14,7 @@
   "keywords": [],
   "dependencies": {
     "seed-bible": "workspace:*",
-    "@seed-bible/locations-extension": "workspace:*"
+    "@seed-bible/bible-locations": "workspace:*"
   },
   "author": "",
   "license": "ISC",

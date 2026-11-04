@@ -10,7 +10,7 @@ import {
   type SeedBibleState,
 } from "@packages/seed-bible/seed-bible/managers";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
-import type { UtilsAPI } from "@packages/seed-bible-utils/infrastructure/models/seedBible";
+import { acquireSeedBibleUtils } from "@seed-bible/seed-bible-utils";
 import { v4 as uuid } from "uuid";
 import bibleStackPattern from "virtual:@pattern/bible-stack";
 import { useComputed, useSignal, useSignalEffect } from "@preact/signals";
@@ -21,32 +21,31 @@ import type {
 } from "./models/userPresence";
 import { useRef } from "preact/hooks";
 
+const BIBLE_STACK_PANE_ID = "bible-stack-pane";
+
 const Icon = () => {
   return <MaterialIcon>layers</MaterialIcon>;
 };
 
-const seedBibleUtilsId = "seed-bible-utils";
-
-interface DependenciesMap {
-  [seedBibleUtilsId]: UtilsAPI;
-}
-
-const dependencies: (keyof DependenciesMap)[] = [seedBibleUtilsId];
-
 export const bootstrapExtension = () => {
   registerExtension({
     id: "bible-stack",
-    dependencies,
-    init: function* (context: SeedBibleState, dependenciesMap) {
-      const { bookNames } = dependenciesMap[
-        seedBibleUtilsId
-      ] as DependenciesMap[typeof seedBibleUtilsId];
+    init: function* (context: SeedBibleState) {
+      const utils = acquireSeedBibleUtils(context);
+      yield utils.release;
+      const { bookNames } = utils.api;
 
       yield context.tools.registerBelowReaderTool({
         onSelect: () => {
+          // Selecting the tool again closes its window instead of opening
+          // another; `closePane` returns false when it isn't open.
+          if (context.panes.closePane(BIBLE_STACK_PANE_ID)) {
+            return;
+          }
           const dimension = "stack";
           const inst = uuid();
           context.panes.openPane({
+            id: BIBLE_STACK_PANE_ID,
             placement: "floating",
             title: () => {
               const { t } = useI18n();

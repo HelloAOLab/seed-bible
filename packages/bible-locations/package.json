@@ -1,0 +1,13 @@
+{
+  "name": "@seed-bible/bible-locations",
+  "version": "1.0.0",
+  "description": "Place names found in the Bible and where their GeoJSON outlines live. Shared by the extensions that map places.",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": {
+      "import": "./index.ts"
+    }
+  },
+  "license": "ISC"
+}

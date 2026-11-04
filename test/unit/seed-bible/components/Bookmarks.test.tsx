@@ -20,10 +20,6 @@ vi.mock("@packages/seed-bible/seed-bible/components/SettingsPage", () => ({
   SettingsPage: () => <div>Settings Page</div>,
 }));
 
-vi.mock("@packages/seed-bible/seed-bible/components/SidebarSearch", () => ({
-  SidebarSearch: () => <div>Sidebar Search</div>,
-}));
-
 const USER_ID = "user-1";
 /** The chapter the test state's default tab opens on. */
 const AAB_GEN_1 = { translationId: "AAB", bookId: "GEN", chapterNumber: 1 };
@@ -149,6 +145,17 @@ describe("bookmarks", () => {
   };
 
   describe("the bookmark modal", () => {
+    it("opens as a bottom sheet on phones", async () => {
+      await signIn();
+      const openModalSpy = vi.spyOn(state.modals, "openModal");
+
+      await act(async () => {
+        await openBookmarkModal(state, AAB_GEN_1);
+      });
+
+      expect(openModalSpy.mock.calls[0]![0].mobileSheet).toBe(true);
+    });
+
     it("places a first bookmark with a single press of Save", async () => {
       await signIn();
       const modal = await openModal();

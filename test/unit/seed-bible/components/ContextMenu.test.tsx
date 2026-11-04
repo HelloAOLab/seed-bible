@@ -227,6 +227,8 @@ describe("ContextMenu", () => {
     // coordinates, so its left edge lines up with the anchor's left edge.
     expect(leftMenu?.style.left).toBe("10px");
     expect(leftMenu?.style.right).toBe("");
+    // It opens below the anchor, so it grows out of its top-left corner.
+    expect(leftMenu?.style.transformOrigin).toBe("left top");
 
     act(() => {
       rightButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -241,5 +243,6 @@ describe("ContextMenu", () => {
     // 10px from the viewport's right edge.
     expect(rightMenu?.style.right).toBe("10px");
     expect(rightMenu?.style.left).toBe("");
+    expect(rightMenu?.style.transformOrigin).toBe("right top");
   });
 });

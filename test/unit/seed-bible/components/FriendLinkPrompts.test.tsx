@@ -14,6 +14,7 @@ import type {
   LoginManager,
   UserProfile,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import type { FriendLinkSeed } from "@packages/seed-bible/seed-bible/managers/FriendLinkPreviewLoader";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import {
   fail,
@@ -41,6 +42,7 @@ describe("friend links", () => {
   let updateQueryParams: ReturnType<typeof vi.fn>;
   let toast: Mock<(message: string) => void>;
   let openModalId: string | null;
+  let friendLinkPreview: FriendLinkDeps["friendLinkPreview"];
 
   const deps = (): FriendLinkDeps => ({
     navigation: {
@@ -50,6 +52,7 @@ describe("friend links", () => {
     login,
     friends,
     toast,
+    friendLinkPreview,
     // Renders whichever prompt is open into `dialog`, as the app's modal host
     // would, so tests can read it and click it.
     modals: {
@@ -122,6 +125,11 @@ describe("friend links", () => {
     updateQueryParams = vi.fn();
     toast = vi.fn<(message: string) => void>();
     openModalId = null;
+    // A loader with nothing loaded, so the prompt reads the profile itself.
+    friendLinkPreview = {
+      result: signal<FriendLinkSeed | null>(null),
+      initialLoadPromise: Promise.resolve(),
+    };
   });
 
   afterEach(() => {
@@ -390,6 +398,86 @@ describe("friend links", () => {
       await click("Log in");
 
       expect(openModalId).toBeNull();
+    });
+
+    describe("with the profile the friend link loader already has", () => {
+      const loaderWith = (loaded: FriendLinkSeed | null) => {
+        friendLinkPreview = {
+          result: signal(loaded),
+          initialLoadPromise: Promise.resolve(),
+        };
+      };
+
+      it("shows that profile without reading it again", async () => {
+        loaderWith({
+          userId: ADA_ID,
+          profile: { name: "Ada Lovelace", location: "London" },
+        });
+        await openWith(`?addFriend=${ADA_ID}`);
+
+        expect(text()).toContain("Send Ada Lovelace a friend request?");
+        expect(text()).toContain("London");
+        expect(login.getPublicProfile).not.toHaveBeenCalledWith(ADA_ID);
+      });
+
+      it("explains a link the loader found matches no account, without reading it again", async () => {
+        loaderWith({ userId: ADA_ID, profile: null });
+        await openWith(`?addFriend=${ADA_ID}`);
+
+        expect(text()).toContain(
+          "This friend link doesn't match anyone's account."
+        );
+        expect(button("Send request")).toBeUndefined();
+        expect(login.getPublicProfile).not.toHaveBeenCalledWith(ADA_ID);
+      });
+
+      it("reads the profile itself when the loader has someone else's", async () => {
+        loaderWith({
+          userId: "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff",
+          profile: { name: "Beth" },
+        });
+        await openWith(`?addFriend=${ADA_ID}`);
+
+        expect(login.getPublicProfile).toHaveBeenCalledWith(ADA_ID);
+        expect(text()).toContain("Send Ada a friend request?");
+        expect(text()).not.toContain("Beth");
+      });
+
+      it("reads the profile itself when the loader couldn't load it", async () => {
+        loaderWith(null);
+        await openWith(`?addFriend=${ADA_ID}`);
+
+        expect(login.getPublicProfile).toHaveBeenCalledWith(ADA_ID);
+        expect(text()).toContain("Send Ada a friend request?");
+      });
+
+      it("waits for a load already in flight instead of starting a second one", async () => {
+        const loaded = signal<FriendLinkSeed | null>(null);
+        let finishLoad!: () => void;
+        friendLinkPreview = {
+          result: loaded,
+          initialLoadPromise: new Promise<void>(
+            (resolve) => (finishLoad = resolve)
+          ),
+        };
+        currentUrl.value = new URL(
+          `https://seedbible.test/?addFriend=${ADA_ID}`
+        );
+
+        const opening = setupFriendLinks(deps());
+        await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+        expect(openModalId).toBeNull();
+
+        await act(async () => {
+          loaded.value = { userId: ADA_ID, profile: { name: "Ada Lovelace" } };
+          finishLoad();
+          await opening;
+        });
+        await settle();
+
+        expect(text()).toContain("Send Ada Lovelace a friend request?");
+        expect(login.getPublicProfile).not.toHaveBeenCalledWith(ADA_ID);
+      });
     });
   });
 

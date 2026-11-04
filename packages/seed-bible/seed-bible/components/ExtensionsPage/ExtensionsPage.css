@@ -4,11 +4,7 @@
  * `body`.
  */
 .sb-extensions-page {
-  --sb-extensions-page-border: color-mix(
-    in srgb,
-    var(--sb-font-color),
-    transparent 85%
-  );
+  --sb-extensions-page-border: var(--sb-divider-color);
   --sb-extensions-page-muted: color-mix(
     in srgb,
     var(--sb-font-color),
@@ -26,17 +22,6 @@
   margin-inline: auto;
 }
 
-.sb-extensions-page-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-}
-
 .sb-extensions-page-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -47,29 +32,6 @@
 
 .sb-extensions-page-search {
   flex: 0 1 22.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  min-height: 2.75rem;
-  padding: 0 0.875rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  border-radius: 0.75rem;
-  color: var(--sb-extensions-page-muted);
-}
-
-.sb-extensions-page-search:focus-within {
-  border-color: var(--sb-primary-color);
-}
-
-.sb-extensions-page-search input {
-  flex: 1 1 auto;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: 0.9375rem;
 }
 
 .sb-extensions-page-add-link {

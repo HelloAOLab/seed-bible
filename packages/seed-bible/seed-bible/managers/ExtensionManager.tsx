@@ -331,8 +331,27 @@ export class ExtensionInitalizer {
   private extensionExports = new Map<string, object>();
   private initializedExtensionIds = new Set<string>();
   private extensionContext: SeedBibleState | null = null;
+  private expectedRegistrationId: string | null = null;
 
   constructor() {}
+
+  /**
+   * Runs `run` (an extension's entry point) and rejects any
+   * `registerExtension()` call it makes under an id other than `id`, before
+   * that registration can replace another extension's. Only calls made
+   * synchronously inside `run` are checked: several extensions install
+   * concurrently, so an expectation held across an `await` would be checked
+   * against whichever extension happened to run last.
+   */
+  runAsExtension<T>(id: string, run: () => T): T {
+    const previous = this.expectedRegistrationId;
+    this.expectedRegistrationId = id;
+    try {
+      return run();
+    } finally {
+      this.expectedRegistrationId = previous;
+    }
+  }
 
   isExtensionRegistered(id: string): boolean {
     return this.registeredExtensions.has(id);
@@ -347,14 +366,7 @@ export class ExtensionInitalizer {
       return false;
     }
 
-    const cleanupFunctions = this.extensionCleanupFunctions.get(id) ?? [];
-    for (const cleanup of cleanupFunctions) {
-      try {
-        cleanup();
-      } catch (err) {
-        console.error(`Error during cleanup of extension '${id}':`, err);
-      }
-    }
+    this.runCleanupFunctions(id, this.extensionCleanupFunctions.get(id) ?? []);
     this.extensionCleanupFunctions.delete(id);
     this.registeredExtensions.delete(id);
     this.initializedExtensionIds.delete(id);
@@ -370,6 +382,13 @@ export class ExtensionInitalizer {
     if (typeof extension.init !== "function") {
       throw new Error(
         "registerExtension() requires an init(context) function."
+      );
+    }
+
+    const expectedId = this.expectedRegistrationId;
+    if (expectedId !== null && extension.id !== expectedId) {
+      throw new Error(
+        `Extension '${expectedId}' tried to register as '${extension.id}'. Check the id passed to registerExtension().`
       );
     }
 
@@ -447,12 +466,12 @@ export class ExtensionInitalizer {
 
     this.initializedExtensionIds.add(id);
 
+    const cleanupFunctions: CleanupFunction[] = [];
     try {
       const cleanupIteratorOrReturn = extension.init(
         this.extensionContext,
         dependencyExports
       );
-      const cleanupFunctions: CleanupFunction[] = [];
       if (Symbol.iterator in cleanupIteratorOrReturn) {
         const iterator = cleanupIteratorOrReturn[Symbol.iterator]();
         while (true) {
@@ -481,7 +500,20 @@ export class ExtensionInitalizer {
       this.initializedExtensionIds.delete(id);
       initializationStack.delete(id);
       console.error(`Failed to initialize extension '${id}'.`, error);
+      // Undo what the half-finished `init` already set up, as an uninstall
+      // would, so a retry doesn't stack a second copy on top of it.
+      this.runCleanupFunctions(id, cleanupFunctions);
       return false;
+    }
+  }
+
+  private runCleanupFunctions(id: string, cleanupFunctions: CleanupFunction[]) {
+    for (const cleanup of cleanupFunctions) {
+      try {
+        cleanup();
+      } catch (err) {
+        console.error(`Error during cleanup of extension '${id}':`, err);
+      }
     }
   }
 
@@ -1322,7 +1354,7 @@ export function createExtensionManager(
    * with the given ID, so `loadDefaultExtensions` won't force-reinstall it
    * again on a later load. Used directly (rather than via the batch write in
    * `loadDefaultExtensions`) by `unloadExtension`, since extensions that are
-   * only ever force-installed as a dependency (e.g. `seed-bible-utils`) never
+   * only ever force-installed as a dependency never
    * carry `autoinstall: true` themselves and so never pass through that
    * batch write at all — this is the only place their uninstall gets
    * recorded into the handled set.
@@ -1967,8 +1999,18 @@ export function createExtensionManager(
             installStack.delete(extensionId);
             return false;
           }
-          await mod.default();
+          const initializer = ExtensionInitalizer.getInstance();
+          await initializer.runAsExtension(extensionId, () => mod.default());
+          if (!initializer.isExtensionRegistered(extensionId)) {
+            console.error(
+              `Failed to install extension '${extensionId}': it finished without registering. Its default export must call registerExtension({ id: '${extensionId}', ... }).`
+            );
+            installStack.delete(extensionId);
+            return false;
+          }
         } catch (err) {
+          // It may have registered under its own id before failing.
+          unregisterExtension(extensionId);
           installStack.delete(extensionId);
           console.error("Failed to install extension:", extensionId, err);
           return false;
@@ -2324,8 +2366,8 @@ export function createExtensionManager(
     installedExtensionIds.delete(id);
     if (options?.persist !== false) {
       void forgetInstalledExtensionId(id);
-      // Extensions that are only ever force-installed as a dependency (e.g.
-      // `seed-bible-utils`) never carry `autoinstall: true` themselves, so
+      // Extensions that are only ever force-installed as a dependency never
+      // carry `autoinstall: true` themselves, so
       // `loadDefaultExtensions` never records them in the "handled" set.
       // This is what records their uninstall, so they aren't dragged back
       // in the next time their dependent gets (re)installed.
