@@ -6,6 +6,7 @@ import {
   type Signal,
 } from "@preact/signals";
 import type { TranslatableTitle } from "./BibleToolsManager";
+import { SHARED_CONTENT_TYPE_DEFINITIONS } from "./DiscoverSharedContentTypes";
 
 export type DiscoverView =
   | null
@@ -94,6 +95,12 @@ export interface DiscoverContentResult {
   image?: string;
   /** Called when the item's card is clicked. */
   onClick?: () => void;
+  /**
+   * Overrides the type's {@link DiscoverContentTypeDefinition.layout} for
+   * this result, so a provider whose `content` is already the whole card can
+   * share a section with providers whose results use the standard layout.
+   */
+  layout?: "standard" | "custom";
 }
 
 export interface DiscoverCrossReferenceResult {
@@ -149,6 +156,16 @@ export interface DiscoverManager {
   registerContentType: (
     definition: DiscoverContentTypeDefinition
   ) => () => void;
+
+  /**
+   * Registers the shared content types ("People", "Videos" and so on; see
+   * `SHARED_CONTENT_TYPES`) for as long as at least one caller holds them, and returns the
+   * release — `yield` it from an extension's `init`. Counted rather than
+   * registered per caller, so that with two providers using them, removing
+   * one doesn't take the sections away from the other. Releasing twice is
+   * safe.
+   */
+  retainSharedContentTypes: () => () => void;
 
   /** Registered content types, sorted by `priority` then registration order. */
   contentTypes: ReadonlySignal<readonly DiscoverContentTypeDefinition[]>;
@@ -246,6 +263,8 @@ export function createDiscoverManager(): DiscoverManager {
         (b.priority ?? DEFAULT_CONTENT_TYPE_PRIORITY)
     )
   );
+  let sharedContentTypeHolders = 0;
+  let unregisterSharedContentTypes: (() => void) | null = null;
   const view = signal<DiscoverView>(null);
   const isDiscoverOpen = computed(() => !!view.value);
   const scrollToVerse = signal<DiscoverScrollTarget | null>(null);
@@ -364,6 +383,26 @@ export function createDiscoverManager(): DiscoverManager {
 
     registerContentType(definition: DiscoverContentTypeDefinition) {
       return registerById(registeredContentTypes, definition);
+    },
+    retainSharedContentTypes() {
+      if (sharedContentTypeHolders++ === 0) {
+        const unregisters = SHARED_CONTENT_TYPE_DEFINITIONS.map((definition) =>
+          registerById(registeredContentTypes, definition)
+        );
+        unregisterSharedContentTypes = () =>
+          unregisters.forEach((unregister) => unregister());
+      }
+      let released = false;
+      return () => {
+        if (released) {
+          return;
+        }
+        released = true;
+        if (--sharedContentTypeHolders === 0) {
+          unregisterSharedContentTypes?.();
+          unregisterSharedContentTypes = null;
+        }
+      };
     },
     contentTypes,
 

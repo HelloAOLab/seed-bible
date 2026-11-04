@@ -39,44 +39,34 @@ describe("initTheographicExtension", () => {
     ]);
   });
 
-  it("declares people, places and events as their own content types", () => {
+  it("files people, places and events under core's shared sections", () => {
     const discover = install();
 
-    expect(discover.contentTypes.value).toEqual([
-      {
-        id: "person_profile",
-        title: {
-          key: "people",
-          ns: "theographic-extension",
-          defaultValue: "People",
-        },
-        hiddenByDefault: true,
-        layout: "custom",
-        priority: 100,
-      },
-      {
-        id: "place_profile",
-        title: {
-          key: "places",
-          ns: "theographic-extension",
-          defaultValue: "Places",
-        },
-        hiddenByDefault: true,
-        layout: "custom",
-        priority: 110,
-      },
-      {
-        id: "event",
-        title: {
-          key: "events",
-          ns: "theographic-extension",
-          defaultValue: "Events",
-        },
-        hiddenByDefault: true,
-        layout: "custom",
-        priority: 120,
-      },
-    ]);
+    expect(
+      discover.contentTypes.value.map((type) => ({
+        id: type.id,
+        hiddenByDefault: type.hiddenByDefault,
+      }))
+    ).toEqual(
+      expect.arrayContaining([
+        { id: "person", hiddenByDefault: true },
+        { id: "place", hiddenByDefault: true },
+        { id: "event", hiddenByDefault: true },
+      ])
+    );
+  });
+
+  it("leaves the shared sections to another provider still using them when uninstalled", () => {
+    const discover = install();
+    const releaseOther = discover.retainSharedContentTypes();
+
+    unregisterExtension("theographic-extension");
+
+    expect(discover.contentTypes.value.map((type) => type.id)).toContain(
+      "person"
+    );
+    releaseOther();
+    expect(discover.contentTypes.value).toEqual([]);
   });
 
   it("registers its discover provider", () => {
