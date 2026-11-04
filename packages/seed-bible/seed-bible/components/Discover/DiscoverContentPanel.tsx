@@ -833,7 +833,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
       )}
       <div className="sb-discover-content-panel-scroll">
         {showHiddenContentWarning &&
-          (hasAnnotations ? (
+          (showAnnotations || hasFriendPlaylists ? (
             <InlineContentWarning
               handleAccept={() => tab.readingState.turnOnDiscoveredContent()}
               handleDismiss={() =>
