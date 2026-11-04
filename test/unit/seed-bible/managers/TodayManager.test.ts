@@ -11,6 +11,13 @@ import { act } from "preact/test-utils";
 import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
+import {
+  aabBooks,
+  createDefaultManagerResponseMap,
+  createResponse,
+  makeChapter,
+  makeUrl,
+} from "./testUtils/mockBibleApiData";
 
 describe("todayWillAutoOpenForUrl", () => {
   describe("with no explicit ?today param", () => {
@@ -138,6 +145,8 @@ describe("Today pane wiring", () => {
       (candidate) => candidate.id === TODAY_PANE_ID
     );
     expect(pane?.placement).toBe("fullscreen");
+    // Today draws its own close button instead of the pane header's.
+    expect(pane?.showHeader).toBe(false);
   });
 
   it("closes the pane again when the screen is closed", async () => {
@@ -151,9 +160,9 @@ describe("Today pane wiring", () => {
     expect(state.today.isOpen.value).toBe(false);
   });
 
-  // The pane header's close button removes the pane directly, so the open state
-  // has to follow it or the toolbar toggle would need two clicks to reopen.
-  it("clears the open state when the pane is closed from its header", async () => {
+  // Removing the pane directly has to clear the open state too, or the toolbar
+  // toggle would need two clicks to reopen it.
+  it("clears the open state when the pane is closed directly", async () => {
     const state = await createTestSeedBibleState();
 
     state.today.open();
@@ -472,5 +481,108 @@ describe("Today's Community section", () => {
       expect(await feedTypes()).toEqual(["reading"]);
       expect((await feedTypes()).sort()).toEqual(["note", "reading"]);
     });
+  });
+});
+
+describe("Today's verse of the day", () => {
+  const VERSES_URL = makeUrl("/api/d/verse-of-the-day/verses.json");
+
+  // Points the app at the endpoint the mocked responses are keyed by.
+  beforeEach(() => {
+    window.history.replaceState(null, "", "/?useFreeBibleAPI");
+  });
+
+  /** The dataset with a single entry, so whichever day is asked, it's picked. */
+  const datasetWith = (verse: {
+    book: string;
+    chapter: number;
+    verse: number;
+    endVerse?: number;
+  }) =>
+    createResponse({
+      dataset: { id: "verse-of-the-day" },
+      verses: [{ ...verse, categories: ["hope"] }],
+    });
+
+  it("returns the day's verse with its text in the requested translation", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: datasetWith({ book: "GEN", chapter: 1, verse: 2 }),
+      },
+    });
+
+    const verse = await state.today.getVerseOfTheDay("2026-10-30", "AAB");
+
+    expect(verse).toEqual({
+      bookId: "GEN",
+      chapter: 1,
+      verse: 2,
+      translationId: "AAB",
+      translationShortName: "AAB",
+      text: "Verse 2",
+    });
+  });
+
+  // A short name that differs from the id, so reading the id back can't pass.
+  it("names the translation by its short name", async () => {
+    const chapter = makeChapter(aabBooks, "GEN", 1);
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [makeUrl("/api/AAB/GEN/1.json")]: createResponse({
+          ...chapter,
+          translation: { ...chapter.translation, shortName: "AncAB" },
+        }),
+        [VERSES_URL]: datasetWith({ book: "GEN", chapter: 1, verse: 1 }),
+      },
+    });
+
+    const verse = await state.today.getVerseOfTheDay("2026-10-30", "AAB");
+
+    expect(verse?.translationShortName).toBe("AncAB");
+  });
+
+  it("joins the text of every verse in a passage", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: datasetWith({
+          book: "GEN",
+          chapter: 1,
+          verse: 1,
+          endVerse: 2,
+        }),
+      },
+    });
+
+    const verse = await state.today.getVerseOfTheDay("2026-10-30", "AAB");
+
+    expect(verse?.endVerse).toBe(2);
+    expect(verse?.text).toBe("Verse 1 Verse 2");
+  });
+
+  it("returns null when the translation doesn't have the verse", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: datasetWith({ book: "GEN", chapter: 1, verse: 31 }),
+      },
+    });
+
+    expect(await state.today.getVerseOfTheDay("2026-10-30", "AAB")).toBeNull();
+  });
+
+  it("rejects when the dataset can't be fetched", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: createResponse({}, 500, "Internal Server Error"),
+      },
+    });
+
+    await expect(
+      state.today.getVerseOfTheDay("2026-10-30", "AAB")
+    ).rejects.toThrow("Status: 500");
   });
 });

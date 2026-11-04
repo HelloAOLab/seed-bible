@@ -11,6 +11,7 @@ import type {
   WorkerMessage,
   WorkerRequest,
 } from "./ssrWorker";
+import type { RenderTiming } from "../standalone/ssrRenderTimings";
 
 export type RenderFn = (opts: {
   path: string;
@@ -24,7 +25,7 @@ export type RenderFn = (opts: {
   };
   html: string;
 }) => Promise<
-  | { html: string; notFound?: true }
+  | { html: string; notFound?: true; timings?: RenderTiming[] }
   | { redirectTo: string; redirectStatus?: number; vary?: string }
   | string
 >;

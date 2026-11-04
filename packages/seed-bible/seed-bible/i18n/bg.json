@@ -28,22 +28,18 @@
   "searching": "Търсене...",
   "no-search-results": "Няма съответстващи стихове.",
   "open-chapter": "Отворена глава",
-
   "uploading": "Качване...",
   "profile-name": "Име на профила",
   "profile-name-placeholder": "например семейство Крейг",
-
   "description": "Описание",
   "optional": "(По избор)",
   "description-placeholder": "Въведете описанието на профила си...",
   "location": "Местоположение",
   "location-placeholder": "напр. Остин, Тексас",
-
   "copied": "Копирано",
   "copy": "Копиране",
   "save-changes": "Запазване на промените",
   "sign-out": "Изход",
-
   "log-in": "Вход",
   "tanakh": "Танах",
   "traditional": "Традиционен",
@@ -57,7 +53,6 @@
   "scripture-settings": "Осветителни тела на Писанието",
   "scripture-elements": "Елементи от Писанието",
   "scripture-settings-font-size-example": "А",
-
   "show-headings": "Показване на заглавия",
   "show-verse-numbers": "Показване на номерата на стиховете",
   "show-footnotes": "Показване на бележки под линия",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Няма налични разширения.",
   "install": "Инсталиране",
   "uninstall": "Деинсталиране",
-
   "custom": "Персонализирано",
   "text-section-bookTitle": "Текст на заглавието на книгата",
   "text-section-heading": "Текст на заглавието",
@@ -92,7 +86,6 @@
   "show-selected-items": "Показване на избраните елементи",
   "show-highlight-colors": "Показване на цветовете за акцентиране",
   "show-icon-text": "Показване на текста на иконата",
-
   "extensions": "Разширения",
   "display": "Дисплей",
   "theme-and-text": "Тема и текст",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Увеличете размера на шрифта на свещените писания",
   "change-line-spacing": "Промяна на разстоянието между редовете",
   "line-spacing_lineHeight": "Разстояние между редовете: {{lineHeight}}",
-
   "italic": "Курсив",
   "underline": "Подчертаване",
   "alignment_x": "Подравняване: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Цвят на текста",
   "follow_theme": "Следвайте темата",
   "reset-to-default": "Възстановяване на фабричните настройки",
-
   "id_highlight-text-color": "{{id}} цвят на текста за маркиране",
   "id_highlight-background-color": "{{id}} цвят на фона на маркировката",
   "all-settings-description": "Прецизно настройте всяка текстова секция и персонализирайте всеки цвят на темата.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "НТ",
   "apocrypha": "Апокрифи",
-
   "custom-translations": "Персонализирани преводи",
   "no-translation-results-found": "Няма намерени резултати. Искате ли да разширите търсенето си, за да включите и частично пълни преводи?",
   "show-all-translations": "Покажи всички преводи",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Псалми",
   "5-psalms": "5 Псалми",
   "remove-bookmark": "Премахване на отметката",
-
   "chat": "Чат",
   "today": "Днес",
   "you": "Ти",
@@ -169,7 +158,6 @@
   "category-options": "Опции за папки",
   "rename": "Преименуване",
   "delete": "Изтриване",
-
   "bookmark-options": "Опции за отметки",
   "new-folder-placeholder": "Име на папката",
   "tasks": "Задачи",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Папка с това име вече съществува.",
   "add-to-new": "Добави към ново",
   "save": "Запазване",
-
   "apocrypha-info-text": "Нито едно от писанията в този раздел не е било считано за Писание от ранните еврейски или християнски общности. Библията е специфична колекция от книги. Евреите и християните винаги са били единодушни относно Стария завет, който произлиза от фиксиран набор от свещени писания, които еврейският народ нарича Танах, а християните - Стар завет. Съдържанието на Танах и Стария завет е абсолютно едно и също, но обикновено е подредено по различен начин. Християните освен това признават Новия завет, който разказва историята на Исус, неговите учения и писанията на неговите последователи. Писанията по-долу са били известни и широко четени по времето, когато е била написана Библията, но никога не са били третирани като Писание. Докато древните автори понякога са цитирали широк спектър от текстове, включително поети, философи и други писания, цитирането на нещо не е същото като третирането му като Писание. Тези писания са включени тук само за историческа и литературна справка.",
   "seed-bible": "Библия на семената",
   "take-photo": "Направете снимка",
   "choose-from-gallery": "Изберете от галерията",
-
   "crop-your-photo": "Изрязване на снимката ви",
   "zoom": "Мащабиране",
   "set-picture": "Задаване на снимка",
@@ -211,10 +197,8 @@
   "read-the-bible": "Прочетете Библията",
   "seed-bible-description": "Прочетете {{bookName}} {{chapterNumber}} в Библията на семената",
   "social-title": "Прочетете {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Навигация по главите",
   "tutorial.skip": "Пропускане",
-
   "tutorial.back": "Обратно",
   "tutorial.done": "Готово",
   "tutorial.next": "Следващо",
@@ -327,11 +311,9 @@
   "study-notes": "Бележки за учене",
   "content": "Съдържание",
   "untitled-playlist": "Безименен плейлист",
-
   "discover-annotations-empty": "Нямате анотации",
   "discover-cross-references-empty": "Няма кръстосани препратки за тази глава.",
   "discover-study-notes-empty": "Няма учебни бележки за тази глава.",
-
   "discover-select-tab": "Изберете раздел, за да откриете свързани материали.",
   "create-playlist": "Създаване",
   "playlist-title_placeholder": "Заглавие на плейлиста",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "Плейлистът не можа да бъде изтрит.",
   "collapsed-tab-shared-label": "{{title}} — споделена сесия, {{count}} присъстващи",
   "playlist-add-mode-label": "Тип артикул",
-
   "session-host-reconnected": "Възстановена връзка със сесията",
   "session-host-left": "Домакинът напусна — бяхте отстранени от сесията",
   "drag-to-reorder-playlist-item": "Плъзнете, за да пренаредите",
   "saving": "Запазване…",
-
   "unsaved-item-confirm-message": "Започнахте да добавяте елемент, който все още не е добавен към плейлистата. Какво искате да направите?",
   "discard-and-save": "Отхвърли и запази",
   "add-and-save": "Добави и запази",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "Преглед {{reading}}",
   "reading-plan-mark-reading-complete": "Маркиране на четенето като завършено",
   "reading-plan-link-video": "Видео",
-
   "reading-plan-mark-passage-complete": "Маркирай {{passage}} като прочетено",
   "reading-plan-read-nudge-title": "Приятно четиво!",
   "reading-plan-read-nudge-toast": "Да се ​​отбележи ли {{passage}} като завършен?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Четете, търсете и изучавайте Библията онлайн. Безплатни преводи на много езици, с акценти, бележки, отметки и планове за четене.",
   "all": "Всички",
-
   "today-bookmarks": "ОТМЕТКИ",
   "today-search-verses": "Търсене на книги, глави, стихове...",
   "anonymous-greeting": "Добре дошли!",
   "community": "ОБЩНОСТ",
   "go-somewhere-new": "ОТИДИ НЯКАДЕ НОВО",
-
   "open-bible": "Отворена Библия",
   "personal-greeting": "Добре дошъл/дошла, {{name}} !",
   "resume-reading": "ПРОДЪЛЖЕТЕ ОТКЪДЕТО СТЕ СПРИЧАЛИ",
   "resume-reading-loading": "Зареждане на историята ви на четене…",
   "selected-year": "Година: {{year}}",
-
   "theme-light": "Светлина",
   "theme-dark": "Тъмно",
   "installed-extensions": "Инсталирано",
@@ -543,7 +519,6 @@
   "extension-state-installed": "Инсталирано",
   "extension-state-downloaded": "Изтеглено",
   "extension-state-pending": "Инсталиране…",
-
   "tutorial.stepProgress": "Стъпка {{current}} от {{total}}",
   "tutorial.offlineDownloadTitle": "Докоснете, за да го запазите на устройството си",
   "tutorial.offlineDownloadBody": "Всеки превод с тази икона може да бъде запазен за четене офлайн.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "Изберете колко пасажа да прочетете един до друг от това меню за оформление.",
   "tutorial.addTabTitle": "Отворете още пасажи",
   "tutorial.addTabBody": "Добавете нов раздел, за да четете няколко книги или превода един до друг.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % завършено - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % завършено",
   "playlist-history-continue": "Продължи",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "{{count}} бележки за тази глава",
   "create-folder": "Създаване на папка",
   "edit-bookmark": "Редактиране на отметка",
-
   "greeting-afternoon": "Добър ден!",
   "greeting-afternoon-named": "Добър ден, {{name}} !",
   "greeting-evening": "Добър вечер!",
@@ -652,32 +625,24 @@
   "ask-ai": "Попитайте ИИ",
   "unread-mention": "Непрочетено споменаване",
   "unread-messages": "Непрочетени съобщения: {{count}}",
-
   "scripture-width": "Ширина на Писанието",
   "decrease-scripture-width": "Намаляване на ширината на писанията",
   "increase-scripture-width": "Увеличете ширината на писанията",
   "annotations": "Анотации",
   "discover-content-panel": "Открийте съдържание",
   "discover-book-title": "Открийте {{book}}",
-
   "about-title": "Относно Библията на семената",
   "about-meta-description": "Seed Bible е безплатно библейско приложение, създадено за четене на Писанието заедно със семейството, приятелите и общността ви - безплатно завинаги, без реклами или платени достъпи.",
-
   "about-action-open-passage": "Отворете проход",
   "about-action-donate": "Дарете",
   "about-action-discord": "Присъединете се към Discord",
   "recent-uploads": "Последни качвания",
-
   "customization-not-found": "Тази персонализация не можа да бъде намерена.",
   "customization-name": "Име",
   "customization-primaryColor": "Основно",
-
   "customization-secondaryColor": "Вторично",
-
   "customization-tertiaryColor": "Третичен",
-
   "customization-fonts": "Шрифтове",
-
   "custom-font-option": "Персонализирано…",
   "custom-font-name-placeholder": "Име на шрифта в Google",
   "delete-customization": "Изтриване",
@@ -690,10 +655,8 @@
   "extension-availability-available": "Налично",
   "extension-availability-auto-installed": "Автоматично инсталирано",
   "extension-availability-hidden": "Скрито",
-
   "variants": "Теми",
   "add-variant": "Добавяне на тема",
-
   "base-theme-description": "Промените, които предварително задава тази тема, се използват за всичко, което не сте персонализирали. Вашите собствени редакции се запазват.",
   "reset-to-base-theme": "Възстановяване към основната тема",
   "low-contrast-warning": "{{label}} : контрастът е само {{ratio}} :1 — стремете се към поне {{minRatio}} :1, за да остане текстът четим.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "Тук все още няма запазени файлове.",
   "save-options": "Опции за запазване",
   "saves": "Запазвания",
-
   "hide-saves": "Скриване на запазените файлове",
   "show-saves": "Показване на запазени файлове",
   "save-verses": "Запазване",
   "new-save-folder": "Нова папка",
   "edit-save": "Редактиране на запазване",
   "remove-save-from-all-folders": "Премахване от всички папки",
-
   "color-hue": "Хюе",
   "color-saturation": "Наситеност и яркост",
   "hex-color": "Шестнадесетичен цвят",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "Редакторът за форматиране не можа да се зареди. Тази бележка има форматиране, което ще бъде загубено, така че не може да бъде редактирана, докато не се свържете отново.",
   "annotation-text": "Текст на анотацията",
   "notes-for-verse": "Бележки за стих {{verse}}",
-
   "configure-extension-defaults": "Конфигуриране на замени по подразбиране",
-
   "extension-settings-defaults-title": "{{name}} презаписвания по подразбиране",
   "no-extension-settings": "Това разширение няма конфигурируеми настройки.",
   "extension-settings-save-failed": "Не можах да запазя настройките ви.",
@@ -872,7 +831,6 @@
   "setting-no-default": "Няма по подразбиране",
   "override-setting": "Презапишете {{name}}",
   "override-setting-label": "Замяна",
-
   "discover-choose-filter-hint": "Изберете филтър по-горе, за да видите още от тази глава.",
   "take-a-tour": "Направете обиколка",
   "share-reading-plan": "Споделяне на план",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "Моят отметка {{number}}",
   "bookmark-move-hint": "Докоснете отметка, за да я преместите в тази глава.",
   "move-bookmark-here": "Преместете {{name}} тук",
-
   "play": "Играй",
   "pause": "Пауза",
   "audio-playback-position": "Позиция на възпроизвеждане",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "Стих {{verse}}",
   "tab-playing-audio": "Възпроизвеждане на аудио",
   "collapsed-tab-playing-label": "{{label}} — възпроизвеждане на аудио",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} теми",
   "customization-theme-count_one": "{{count}} тема",
@@ -1104,7 +1060,6 @@
   "about-community-body": "Вярата е предназначена да се живее заедно. Seed Bible е създадена за четене на Писанието със семейството ви, най-близките ви приятели и домашната ви църква.",
   "discovered-content": "Открито съдържание",
   "show-discovered-content": "Показване на открито съдържание",
-
   "extension-availability-default": "По подразбиране ( {{availability}} )",
   "customization-extensions-default": "По подразбиране за други разширения",
   "customization-extensions-default-hint": "Важи за всяко разширение, което не сте задали по-долу, включително новодобавените по-късно",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "Обратно към плейлиста",
   "playlist-scripture-note-aria": "Бележка върху {{passage}}",
   "playlist-scripture-note-progress": "{{current}} от {{total}}",
-
   "unsaved-item-edit-confirm-message": "Променили сте елемент, но все още не сте запазили тези промени. Какво искате да направите?",
   "keep-changes-and-save": "Запази промените и ги запази",
   "reading-plan-edit-reading": "Редактиране на четенето",
@@ -1152,7 +1106,6 @@
   "branding": "Брандиране",
   "create-custom-branding-menu-item": "Персонализирано брандиране",
   "your-content-empty-branding": "Създаденият от вас персонализиран брандинг ще се показва тук.",
-
   "extension-consent-from": "От {{host}}",
   "extension-consent-source-version": "Версия {{version}} · от {{host}}",
   "extension-consent-uploader-unnamed": "потребител на Библията от семето",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "Вижте кои стихове сте избрали",
   "extension-permission-reading-navigate": "Отворени проходи",
   "extension-permission-network": "Свържете се с {{host}}",
-
   "extension-consent-not-now": "Не сега",
   "extension-consent-nothing-yet": "Засега няма да има достъп до никаква от вашата информация.",
   "extension-permission-reading-history": "Вижте историята си на четене",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "Отказ",
   "extension-consent-high-risk": "Чувствителен",
   "extension-modal-ok": "Добре",
-
   "extension-permissions-restart-note": "Промените влизат в сила веднага. {{name}} се рестартира, за да ги приеме.",
   "extension-permissions-saved": "Запазено. {{name}} е рестартиран с новите разрешения.",
   "extension-permissions-failed": "Това не запази. Опитайте отново.",
@@ -1276,8 +1227,53 @@
   "session-settings-verse-effects-desc-hosts": "Показване на ефекти, когато водещият избере стих.",
   "session-settings-verse-effects-desc-everyone": "Показване на ефекти, когато някой избере стих.",
   "session-settings-verse-effects-desc-none": "Ефектите за избор на стих са изключени за всички.",
-
   "account": "Профил",
   "scroll-filters-start": "Превъртете филтрите към началото",
-  "scroll-filters-end": "Превъртете филтрите към края"
+  "scroll-filters-end": "Превъртете филтрите към края",
+  "download": "Изтегляне",
+  "image-details-uploaded": "Качено",
+  "image-details-dimensions": "Размери",
+  "image-details-dimensions-value": "{{width}} × {{height}} пиксела",
+  "image-details-type": "Тип",
+  "image-details-cover-of": "Корица на",
+  "image-details-not-a-cover": "Не се използва като покривало",
+  "delete-customization-confirm-title": "Изтриване на персонализираното брандиране?",
+  "delete-customization-confirm-message": "Изтриване на персонализирано брандиране „ {{name}} “? Това не може да бъде отменено.",
+  "delete-customization-failed": "Не можах да изтрия персонализираното брандиране.",
+  "delete-variant-confirm-title": "Да се ​​изтрие ли темата?",
+  "delete-variant-confirm-message": "Да се ​​изтрие ли темата „ {{name}} “? Това не може да се отмени.",
+  "delete-variant-confirm-message-unnamed": "Да се ​​изтрие ли тази тема? Това не може да се отмени.",
+  "delete-variant-failed": "Темата не можа да бъде изтрита.",
+  "delete-highlight-confirm-title": "Да се ​​изтрие ли акцентът?",
+  "delete-highlight-confirm-message": "Да се ​​изтрие ли акцентът на {{reference}} ? Това не може да се отмени.",
+  "delete-highlight-failed": "Не можа да се изтрие акцентът.",
+  "delete-annotation-on-confirm-message": "Да се ​​изтрие ли анотацията на {{reference}} ? Това не може да се отмени.",
+  "remove-from-folder": "Премахване от папката",
+  "save-folders": "В {{folders}}",
+  "delete-save-confirm-title": "Изтриване на запазеното?",
+  "delete-save-confirm-message": "Изтриване на запазеното за {{reference}} ? Това не може да бъде отменено.",
+  "delete-save-confirm-message-folders": "Да се ​​изтрие ли запазеното за {{reference}} от {{folders}} ? Това не може да се отмени.",
+  "delete-save-failed": "Запазеното не можа да бъде изтрито.",
+  "delete-save-folder-confirm-title": "Да се ​​изтрие ли папката?",
+  "delete-save-folder-confirm-message": "Да се ​​изтрие ли папката „ {{name}} “?",
+  "delete-save-folder-confirm-deletes": "Запазените файлове {{count}} , които са само в тази папка, също ще бъдат изтрити.",
+  "delete-save-folder-confirm-deletes_one": "Запазването, което е само в тази папка, също ще бъде изтрито.",
+  "delete-save-folder-confirm-deletes_other": "Запазените файлове {{count}} , които са само в тази папка, също ще бъдат изтрити.",
+  "delete-save-folder-confirm-keeps": "Запазените файлове {{count}} , които са и в други папки, ще останат там.",
+  "delete-save-folder-confirm-keeps_one": "Запазеното, което е и в друга папка, ще остане там.",
+  "delete-save-folder-confirm-keeps_other": "Запазените файлове {{count}} , които са и в други папки, ще останат там.",
+  "cant-be-undone": "Това не може да се отмени.",
+  "delete-save-folder-failed": "Папката не можа да бъде изтрита.",
+  "download-image-failed": "Не можах да изтегля изображението.",
+  "session-settings-verse-effects-hosts-only": "Само за домакини",
+  "session-settings-verse-effects-everyone": "Всеки",
+  "session-settings-verse-effects-none": "Няма",
+  "loading-books": "Зареждане на книги…",
+  "books-load-failed": "Книгите не можаха да бъдат заредени. Проверете връзката си и опитайте отново.",
+  "loading-translation": "Зареждане на {{name}} …",
+  "translation-load-failed": "{{name}} не можа да бъде зареден.",
+  "loading-translations": "Зареждане на преводи…",
+  "translations-load-failed": "Не можа да се зареди пълният списък с преводи, така че е възможно някои да липсват.",
+  "verse-of-the-day": "СТИХ НА ДЕНЯ",
+  "verse-of-the-day-loading": "Зареждане на стиха на деня…"
 }
