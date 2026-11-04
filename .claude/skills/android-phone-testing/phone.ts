@@ -24,7 +24,7 @@ const LOCAL_PORT = Number(process.env.PORT ?? PHONE_PORT);
 // Vite's default HMR WebSocket port; the dev server runs Vite in middleware
 // mode, which opens it separately from PORT.
 const HMR_PORT = 24678;
-const DEVTOOLS_PORT = 9333;
+const DEVTOOLS_SOCKET = "localabstract:chrome_devtools_remote";
 const APP_ORIGIN = `http://localhost:${PHONE_PORT}`;
 const CHROME = "com.android.chrome";
 
@@ -105,19 +105,24 @@ function stateOf(serial: string): string | undefined {
   return devices().find((d) => d.serial === serial)?.state;
 }
 
+function devtoolsForwards(): { serial: string; local: string }[] {
+  const { ok, out } = tryAdb(["forward", "--list"]);
+  if (!ok) return [];
+  return out
+    .split("\n")
+    .map((line) => line.trim().split(/\s+/))
+    .filter(([, , remote]) => remote === DEVTOOLS_SOCKET)
+    .map(([serial, local]) => ({ serial, local }));
+}
+
 /**
- * Removes `logs`' DevTools forward from every device. It reaches every tab in
- * the phone's Chrome, and a hard kill of `logs` (e.g. a tool timeout) skips
- * its own cleanup, so other commands sweep up after it too.
+ * Removes DevTools forwards left behind by a hard-killed `logs` (e.g. a tool
+ * timeout skips its cleanup). They reach every tab in the phone's Chrome. A
+ * `logs` run that's mid-attach and loses its forward to this retries.
  */
 function removeDevtoolsForwards(): void {
-  const { ok, out } = tryAdb(["forward", "--list"]);
-  if (!ok) return;
-  for (const line of out.split("\n")) {
-    const [serial, local] = line.trim().split(/\s+/);
-    if (local === `tcp:${DEVTOOLS_PORT}`) {
-      tryAdb(["forward", "--remove", local], serial);
-    }
+  for (const { serial, local } of devtoolsForwards()) {
+    tryAdb(["forward", "--remove", local], serial);
   }
 }
 
@@ -355,7 +360,24 @@ interface RemoteObject {
   preview?: ObjectPreview;
 }
 
+/**
+ * Subtypes whose preview lists their contents. For the rest (dates, regexps,
+ * DOM nodes, promises…) the preview's properties are empty or unhelpful and
+ * the description is what's worth printing.
+ */
+const EXPANDED = new Set([
+  undefined,
+  "array",
+  "map",
+  "set",
+  "weakmap",
+  "weakset",
+]);
+
 function formatPreview(preview: ObjectPreview): string {
+  if (!EXPANDED.has(preview.subtype)) {
+    return preview.description ?? preview.subtype ?? preview.type;
+  }
   if (preview.entries) {
     const parts = preview.entries.map((e) =>
       e.key
@@ -382,8 +404,11 @@ function formatPreview(preview: ObjectPreview): string {
 
 function format(arg: RemoteObject): string {
   if (arg.unserializableValue) return arg.unserializableValue;
-  // Errors keep their description so the stack trace comes through.
-  if (arg.preview && arg.subtype !== "error") return formatPreview(arg.preview);
+  // Errors (not in EXPANDED) keep their description, so the stack trace comes
+  // through.
+  if (arg.preview && EXPANDED.has(arg.subtype)) {
+    return formatPreview(arg.preview);
+  }
   if (arg.value !== undefined) {
     return typeof arg.value === "string"
       ? arg.value
@@ -400,53 +425,138 @@ function isAppTab(url: string): boolean {
   }
 }
 
+function openSocket(url: string): Promise<WebSocket> {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(url);
+    ws.addEventListener("open", () => resolve(ws), { once: true });
+    ws.addEventListener("error", () => reject(new Error("error")), {
+      once: true,
+    });
+    ws.addEventListener("close", () => reject(new Error("closed")), {
+      once: true,
+    });
+  });
+}
+
+/**
+ * Forwards a free local port to the phone Chrome's DevTools socket, picks the
+ * app's tab and opens a connection to it. Each run gets its own port, so runs
+ * don't share one; if `connect`/`status` sweeps the forward away mid-attach,
+ * it retries once.
+ */
+async function attach(
+  device: string
+): Promise<{ ws: WebSocket; tab: Target; appTabs: Target[] }> {
+  let local: string | undefined;
+  // The forward reaches every tab in the phone's Chrome, so it shouldn't
+  // outlive this command. Signals are turned into a normal exit so the exit
+  // handler runs; a hard kill can't be caught, which is why `connect` and
+  // `status` also sweep up.
+  process.on("exit", () => {
+    if (local) tryAdb(["forward", "--remove", local], device);
+  });
+  for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
+    process.on(signal, () => process.exit(130));
+  }
+
+  for (let attempt = 1; ; attempt++) {
+    // tcp:0 asks adb for a free port and prints it.
+    const port = adb(["forward", "tcp:0", DEVTOOLS_SOCKET], device).trim();
+    const forward = `tcp:${port}`;
+    local = forward;
+    try {
+      // 127.0.0.1, not localhost: where localhost resolves to ::1 first,
+      // adb's IPv4-only forward isn't reached.
+      const targets = (await (
+        await fetch(`http://127.0.0.1:${port}/json`, {
+          signal: AbortSignal.timeout(5000),
+        })
+      ).json()) as Target[];
+      // This listing includes every tab open in the phone's Chrome — the
+      // owner's personal browsing. Only ever look at, print or attach to the
+      // app's tabs.
+      const appTabs = targets.filter(
+        (t) => t.type === "page" && isAppTab(t.url)
+      );
+      if (appTabs.length === 0) {
+        fail(
+          `No ${APP_ORIGIN} tab open in the phone's Chrome. Run \`open\` first.`
+        );
+      }
+      const tab = appTabs.find((t) => t.webSocketDebuggerUrl);
+      if (!tab?.webSocketDebuggerUrl) {
+        fail(
+          "The app's tab is already being inspected by another DevTools window (e.g. chrome://inspect on this computer). Close that, then try again."
+        );
+      }
+      const ws = await openSocket(tab.webSocketDebuggerUrl);
+      // An open connection survives removing its forward, so drop it now:
+      // even a hard kill of this command then leaves nothing behind.
+      tryAdb(["forward", "--remove", forward], device);
+      local = undefined;
+      return { ws, tab, appTabs };
+    } catch {
+      const swept = !devtoolsForwards().some(
+        (f) => f.serial === device && f.local === forward
+      );
+      tryAdb(["forward", "--remove", forward], device);
+      local = undefined;
+      if (attempt === 1 && swept) continue;
+      fail(
+        "Couldn't reach Chrome on the phone — it isn't open, or the phone dropped off. Run `status`, then `open`."
+      );
+    }
+  }
+}
+
+interface DevtoolsMessage {
+  id?: number;
+  method?: string;
+  params?: unknown;
+}
+
+interface CallFrame {
+  url: string;
+  lineNumber: number;
+}
+
+interface FrameNavigated {
+  frame: { parentId?: string; url: string; unreachableUrl?: string };
+}
+
+interface ConsoleAPICalled {
+  type: string;
+  args: RemoteObject[];
+  timestamp: number;
+  stackTrace?: { callFrames: CallFrame[] };
+}
+
+interface ExceptionThrown {
+  timestamp: number;
+  exceptionDetails: {
+    text: string;
+    url?: string;
+    lineNumber: number;
+    exception?: RemoteObject;
+  };
+}
+
+interface LogEntryAdded {
+  entry: {
+    level: string;
+    source: string;
+    text: string;
+    url?: string;
+    timestamp: number;
+  };
+}
+
 async function logs(seconds: number, reload: boolean): Promise<void> {
   // Started first: if the phone drops mid-run, requests through the forward
   // hang instead of failing.
   setTimeout(() => process.exit(0), seconds * 1000);
 
-  const device = serial();
-  adb(
-    ["forward", `tcp:${DEVTOOLS_PORT}`, "localabstract:chrome_devtools_remote"],
-    device
-  );
-  // The forward reaches every tab in the phone's Chrome, so it shouldn't
-  // outlive this command. Signals are turned into a normal exit so the exit
-  // handler runs; a hard kill can't be caught, which is why `connect` and
-  // `status` also remove it.
-  process.on("exit", removeDevtoolsForwards);
-  for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
-    process.on(signal, () => process.exit(130));
-  }
-
-  let targets: Target[];
-  try {
-    // 127.0.0.1, not localhost: where localhost resolves to ::1 first, adb's
-    // IPv4-only forward isn't reached.
-    targets = (await (
-      await fetch(`http://127.0.0.1:${DEVTOOLS_PORT}/json`, {
-        signal: AbortSignal.timeout(5000),
-      })
-    ).json()) as Target[];
-  } catch {
-    fail(
-      "Couldn't reach Chrome on the phone — it isn't open, or the phone dropped off. Run `status`, then `open`."
-    );
-  }
-  // This listing includes every tab open in the phone's Chrome — the owner's
-  // personal browsing. Only ever look at, print or attach to the app's tabs.
-  const appTabs = targets.filter((t) => t.type === "page" && isAppTab(t.url));
-  if (appTabs.length === 0) {
-    fail(
-      `No ${APP_ORIGIN} tab open in the phone's Chrome. Run \`open\` first.`
-    );
-  }
-  const tab = appTabs.find((t) => t.webSocketDebuggerUrl);
-  if (!tab?.webSocketDebuggerUrl) {
-    fail(
-      "The app's tab is already being inspected by another DevTools window (e.g. chrome://inspect on this computer). Close that, then try again."
-    );
-  }
+  const { ws, tab, appTabs } = await attach(serial());
   if (appTabs.length > 1) {
     console.log(
       `${appTabs.length} app tabs are open; attaching to the first:\n${appTabs.map((t) => `  ${t.url}`).join("\n")}`
@@ -457,8 +567,6 @@ async function logs(seconds: number, reload: boolean): Promise<void> {
   // Messages replayed from before attaching keep their original time.
   const time = (ms?: number) =>
     (ms ? new Date(ms) : new Date()).toLocaleTimeString();
-  const ws = new WebSocket(tab.webSocketDebuggerUrl);
-  let opened = false;
   let nextId = 1;
   let pendingEnables = new Set<number>();
   let reloadId: number | undefined;
@@ -468,35 +576,20 @@ async function logs(seconds: number, reload: boolean): Promise<void> {
     return id;
   };
 
-  ws.addEventListener("open", () => {
-    opened = true;
-    // An open connection survives removing its forward, so drop it now: even
-    // a hard kill of this command then leaves nothing behind.
-    removeDevtoolsForwards();
-    // Both replay what was logged before attaching, then stream new entries.
-    pendingEnables = new Set([send("Runtime.enable"), send("Log.enable")]);
-    // For frameNavigated: the connection belongs to the tab, not the page, so
-    // it would follow the tab to another site.
-    send("Page.enable");
-  });
-
   ws.addEventListener("message", (event) => {
-    const msg = JSON.parse(String(event.data));
-    if (pendingEnables.delete(msg.id) && pendingEnables.size === 0) {
+    const msg = JSON.parse(String(event.data)) as DevtoolsMessage;
+    if (msg.id !== undefined && pendingEnables.delete(msg.id)) {
       // Reload only once both replays are done, so the marker separates
       // earlier messages from the reload's.
-      if (reload) reloadId = send("Page.reload");
+      if (pendingEnables.size === 0 && reload) reloadId = send("Page.reload");
     } else if (msg.id !== undefined && msg.id === reloadId) {
       console.log(`[${time()}] --- reloaded ---`);
-    } else if (
-      msg.method === "Page.frameNavigated" &&
-      !msg.params.frame.parentId &&
-      !isAppTab(msg.params.frame.url)
-    ) {
+    } else if (msg.method === "Page.frameNavigated") {
+      const { frame } = msg.params as FrameNavigated;
+      if (frame.parentId || isAppTab(frame.url)) return;
       // A failed load shows Chrome's error page (chrome-error://…), with the
       // URL that failed in unreachableUrl — not the user browsing away.
-      const failed = msg.params.frame.unreachableUrl;
-      if (failed && isAppTab(failed)) {
+      if (frame.unreachableUrl && isAppTab(frame.unreachableUrl)) {
         fail(
           `[${time()}] The page failed to load. Is \`pnpm dev\` running? Then check the forwards with \`status\`.`
         );
@@ -504,7 +597,8 @@ async function logs(seconds: number, reload: boolean): Promise<void> {
       console.log(`[${time()}] Tab left ${APP_ORIGIN}; stopped.`);
       process.exit(0);
     } else if (msg.method === "Runtime.consoleAPICalled") {
-      const { type, args, stackTrace, timestamp } = msg.params;
+      const { type, args, stackTrace, timestamp } =
+        msg.params as ConsoleAPICalled;
       const where = stackTrace?.callFrames?.[0];
       const loc = where
         ? `  (${where.url.replace(APP_ORIGIN, "")}:${where.lineNumber + 1})`
@@ -515,7 +609,7 @@ async function logs(seconds: number, reload: boolean): Promise<void> {
         `[${time(timestamp)}] console.${method}: ${args.map(format).join(" ")}${loc}`
       );
     } else if (msg.method === "Runtime.exceptionThrown") {
-      const { exceptionDetails: d, timestamp } = msg.params;
+      const { exceptionDetails: d, timestamp } = msg.params as ExceptionThrown;
       // format() rather than description: a rejection with a non-Error value
       // (e.g. a string) has no description, only the value.
       const what = d.exception ? `${d.text} ${format(d.exception)}` : d.text;
@@ -524,23 +618,25 @@ async function logs(seconds: number, reload: boolean): Promise<void> {
         : "";
       console.log(`[${time(timestamp)}] UNCAUGHT: ${what}${loc}`);
     } else if (msg.method === "Log.entryAdded") {
-      const e = msg.params.entry;
+      const e = (msg.params as LogEntryAdded).entry;
       console.log(
         `[${time(e.timestamp)}] browser ${e.level} (${e.source}): ${e.text}${e.url ? `  ${e.url}` : ""}`
       );
     }
   });
 
-  ws.addEventListener("error", () => {
-    if (!opened) fail("Couldn't attach to the app's tab in Chrome.");
-  });
   ws.addEventListener("close", () => {
-    if (!opened) fail("Couldn't attach to the app's tab in Chrome.");
     // Chrome on Android also closes the connection when the tab goes to
     // another site (a renderer swap), before any frameNavigated arrives.
     console.log(`[${time()}] Tab closed or left ${APP_ORIGIN}; stopped.`);
     process.exit(0);
   });
+
+  // Both replay what was logged before attaching, then stream new entries.
+  pendingEnables = new Set([send("Runtime.enable"), send("Log.enable")]);
+  // For frameNavigated: the connection belongs to the tab, not the page, so
+  // it would follow the tab to another site.
+  send("Page.enable");
 }
 
 function status(): void {
@@ -551,10 +647,13 @@ function status(): void {
     return;
   }
   for (const d of list) console.log(`${d.serial}\t${d.state}`);
-  const ready = list.find((d) => d.state === "device");
-  if (ready) {
-    console.log("\nForwards (phone → this computer):");
-    console.log(adb(["reverse", "--list"], ready.serial).trim() || "none");
+  // The same phone the other commands would use.
+  const target =
+    process.env.ANDROID_SERIAL ??
+    list.find((d) => d.state === "device")?.serial;
+  if (target) {
+    console.log(`\nForwards on ${target} (phone → this computer):`);
+    console.log(adb(["reverse", "--list"], target).trim() || "none");
   }
 }
 
