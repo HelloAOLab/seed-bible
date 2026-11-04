@@ -4019,6 +4019,14 @@ export function createSeedBibleState(
     closeProfile();
     playlists.startPlaying(playlist, 0);
   };
+  // Back from the playlist editor, the screen opens on just the playlists so
+  // the one just edited is easy to find. The search is cleared too: a
+  // leftover query could hide it, e.g. after a rename.
+  const returnToContentPlaylists = () => {
+    yourContent.query.value = "";
+    yourContent.filter.value = "playlists";
+    openYourContent();
+  };
   const editPlaylistFromContent = (playlist: Playlist) => {
     closeYourContent();
     closeProfile();
@@ -4026,7 +4034,7 @@ export function createSeedBibleState(
     // beside the reader — so the fullscreen screens above it have to close
     // first, or the editor opens behind them. Leaving the editor reopens
     // this screen rather than leaving the user on Discover.
-    playlists.editPlaylist(playlist, { onExit: openYourContent });
+    playlists.editPlaylist(playlist, { onExit: returnToContentPlaylists });
   };
   const editAnnotationFromContent = (annotation: Annotation) => {
     closeYourContent();
@@ -4038,7 +4046,9 @@ export function createSeedBibleState(
   const createPlaylistFromContent = () => {
     closeYourContent();
     closeProfile();
-    void playlists.createNewPlaylist(undefined, { onExit: openYourContent });
+    void playlists.createNewPlaylist(undefined, {
+      onExit: returnToContentPlaylists,
+    });
   };
   // The customization editor is a side pane beside the reader, so the
   // fullscreen screens above it close first, as for the playlist editor.
