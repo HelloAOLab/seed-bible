@@ -50,6 +50,8 @@ interface DrawnMap {
   map: LeafletMap;
   /** Moves the view back to the data, as it was first shown. */
   fit: () => void;
+  /** Whether the map is a still preview, which touch can't move. */
+  isStill: boolean;
 }
 
 /**
@@ -64,11 +66,17 @@ function drawMap(
   options: DrawOptions
 ): DrawnMap {
   const { tileSource, data, label, attribution = [], inline } = options;
+  // An inline map sits in scrolling content: the wheel, or a finger on a
+  // phone, should scroll past it, not get caught panning it. On a phone it's
+  // a still preview: a pinch only half works there (the page takes the first
+  // finger), so it doesn't zoom either.
+  const isStill = inline && L.Browser.mobile;
   const map = L.map(container, {
-    // An inline map sits in scrolling content: the wheel, or a finger on a
-    // phone, should scroll past it, not get caught panning it.
     scrollWheelZoom: !inline,
-    dragging: !(inline && L.Browser.mobile),
+    dragging: !isStill,
+    touchZoom: !isStill,
+    doubleClickZoom: !isStill,
+    zoomControl: !isStill,
   });
 
   try {
@@ -118,7 +126,7 @@ function drawMap(
         className: "sb-geojson-map-label",
       });
     }
-    return { map, fit };
+    return { map, fit, isStill };
   } catch (error) {
     removeMap(map);
     throw error;
@@ -147,6 +155,11 @@ export function GeoJsonMap(props: {
    * swiping pass over it instead of moving the map.
    */
   inline?: boolean;
+  /**
+   * Called when an inline map on a phone is tapped. It can't be moved there,
+   * so a tap can open a full map instead.
+   */
+  onTap?: () => void;
   /** Buttons for the map's top corner, stacked above its recenter button. */
   controls?: ComponentChildren;
   className?: string;
@@ -157,11 +170,16 @@ export function GeoJsonMap(props: {
     label,
     attribution,
     inline = false,
+    onTap,
     controls,
     className,
   } = props;
   const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
+  // Read when tapped, so a caller passing a fresh function each render
+  // doesn't redraw the map.
+  const tapHandler = useRef(onTap);
+  tapHandler.current = onTap;
   const isInvalid = useSignal(false);
   /** Re-fits the drawn map to its data; null until a map is drawn. */
   const recenter = useSignal<(() => void) | null>(null);
@@ -191,7 +209,11 @@ export function GeoJsonMap(props: {
         inline,
       });
       isInvalid.value = false;
-      recenter.value = drawn.fit;
+      if (drawn.isStill) {
+        drawn.map.on("click", () => tapHandler.current?.());
+      } else {
+        recenter.value = drawn.fit;
+      }
     } catch (error) {
       console.error("Failed to draw map data", error);
       isInvalid.value = true;

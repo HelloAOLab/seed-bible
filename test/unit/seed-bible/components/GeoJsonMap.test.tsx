@@ -326,7 +326,72 @@ describe("GeoJsonMap", () => {
       vi.useRealTimers();
     }
   });
+
+  describe("inline on a phone", () => {
+    beforeEach(() => {
+      setMobile(true);
+    });
+
+    afterEach(() => {
+      setMobile(false);
+    });
+
+    it("is a still preview, without zoom or recenter buttons", async () => {
+      await show(<GeoJsonMap map={readyMap()} data={ACCO} inline />);
+
+      expect(container.querySelector(".leaflet-control-zoom")).toBeNull();
+      expect(container.querySelector(".sb-geojson-map-recenter")).toBeNull();
+    });
+
+    it("calls onTap when tapped", async () => {
+      const onTap = vi.fn();
+      await show(
+        <GeoJsonMap map={readyMap()} data={ACCO} inline onTap={onTap} />
+      );
+
+      tap();
+
+      expect(onTap).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps its zoom buttons as a full map", async () => {
+      const onTap = vi.fn();
+      await show(<GeoJsonMap map={readyMap()} data={ACCO} onTap={onTap} />);
+
+      expect(container.querySelector(".leaflet-control-zoom")).not.toBeNull();
+      tap();
+      expect(onTap).not.toHaveBeenCalled();
+    });
+  });
+
+  it("can still be moved inline on a computer, so a click doesn't call onTap", async () => {
+    const onTap = vi.fn();
+    await show(
+      <GeoJsonMap map={readyMap()} data={ACCO} inline onTap={onTap} />
+    );
+
+    expect(container.querySelector(".leaflet-control-zoom")).not.toBeNull();
+    tap();
+    expect(onTap).not.toHaveBeenCalled();
+  });
 });
+
+/** Makes Leaflet take the device for a phone, or not. */
+function setMobile(isMobile: boolean) {
+  Object.defineProperty(leaflet.Browser, "mobile", {
+    value: isMobile,
+    configurable: true,
+  });
+}
+
+/** A tap (or click) in the middle of the map. */
+function tap() {
+  container
+    .querySelector(".leaflet-container")
+    ?.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, clientX: 50, clientY: 50 })
+    );
+}
 
 /** Whether a wheel over the map zooms it, which stops the page scrolling. */
 function wheelZooms(): boolean {

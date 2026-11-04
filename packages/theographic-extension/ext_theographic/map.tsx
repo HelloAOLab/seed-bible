@@ -210,9 +210,10 @@ function PlaceMapView(props: {
   place: TheographicPlaceEntry;
   mapData: PlaceMapData | "loading";
   inline?: boolean;
+  onTap?: () => void;
   controls?: ComponentChildren;
 }) {
-  const { map, place, mapData, inline, controls } = props;
+  const { map, place, mapData, inline, onTap, controls } = props;
   if (mapData === "loading") {
     return (
       <Skeleton
@@ -238,6 +239,7 @@ function PlaceMapView(props: {
       }
       label={place.name}
       inline={inline}
+      onTap={onTap}
       controls={controls}
     />
   );
@@ -344,7 +346,10 @@ export function PlaceMap(props: {
   place: TheographicPlaceEntry;
   label: string;
   sources: PlaceMapSources;
-  /** Opens this map in its own pane or sheet. Omit and no control is shown. */
+  /**
+   * Opens this map in its own pane or sheet: from its corner control, or on
+   * a phone, a tap on the map. Omit and neither is offered.
+   */
   onOpen?: () => void;
   /** The control's accessible name, already translated. */
   openLabel?: string;
@@ -368,6 +373,7 @@ export function PlaceMap(props: {
         place={place}
         mapData={mapData}
         inline
+        onTap={onOpen}
         controls={
           onOpen ? (
             <button

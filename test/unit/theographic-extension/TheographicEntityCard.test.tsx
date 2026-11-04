@@ -308,6 +308,35 @@ describe("TheographicEntityCard", () => {
       expect(openPlace).toHaveBeenCalledWith(EGYPT);
     });
 
+    it("opens the place when the map itself is tapped on a phone", async () => {
+      Object.defineProperty(leaflet.Browser, "mobile", {
+        value: true,
+        configurable: true,
+      });
+      try {
+        const { openPlace } = await expandEgypt();
+        await waitFor(
+          () =>
+            container.querySelector(
+              ".sb-theographic-map .leaflet-container"
+            ) !== null
+        );
+
+        container
+          .querySelector(".sb-theographic-map .leaflet-container")
+          ?.dispatchEvent(
+            new MouseEvent("click", { bubbles: true, clientX: 50, clientY: 50 })
+          );
+
+        expect(openPlace).toHaveBeenCalledWith(EGYPT);
+      } finally {
+        Object.defineProperty(leaflet.Browser, "mobile", {
+          value: false,
+          configurable: true,
+        });
+      }
+    });
+
     it("puts the recenter button just below it", async () => {
       await expandEgypt();
       await waitFor(
