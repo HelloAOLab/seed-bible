@@ -4467,9 +4467,8 @@ describe("BibleReader", () => {
       }
     });
 
-    // Someone whose verses were all below the screen used to have their bar
-    // and avatar both drawn down there out of sight, so a reader who had
-    // fallen behind had no sign of them at all.
+    // Someone whose verses are all below the screen still needs a sign on
+    // screen, or a reader who has fallen behind can't tell where they are.
     it("holds the avatar of someone reading ahead at the bottom of the screen, under a down arrow", () => {
       // Screen is 200px to 500px of the content; the peer is on 700 to 784.
       stubLineBoxes({ 1: 700 - 200, 2: 760 - 200 });
@@ -4661,6 +4660,113 @@ describe("BibleReader", () => {
         expect(arrowsOnScreen().map((arrow) => arrow.direction)).toEqual([
           "up",
           "down",
+        ]);
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    function renderPeople(
+      people: Record<string, { firstVerse: number; lastVerse: number }>
+    ) {
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            ...Object.keys(people).map((id) => ({
+              connectionId: id,
+              name: id,
+            })),
+          ],
+          Object.fromEntries(
+            Object.entries(people).map(([id, range]) => [
+              id,
+              { bookId: "GEN", chapterNumber: 1, ...range },
+            ])
+          )
+        ),
+        fixture
+      );
+    }
+
+    function avatarStacks() {
+      return [...container.querySelectorAll(".sb-presence-avatars")].map(
+        (stack) => ({
+          top: (stack as HTMLElement).style.top,
+          who: [...stack.querySelectorAll(".sb-tab-user-icon")]
+            .map((icon) => icon.getAttribute("title"))
+            .sort(),
+        })
+      );
+    }
+
+    // Both arrows would be drawn on the same spot on the centre line, so the
+    // one for the person off the screen is left out.
+    it("draws one down arrow when a centre-line bar runs off the bottom and someone else is below the screen", () => {
+      // Screen is 200px to 500px. Mary's bar runs from 450 to 724, off the
+      // bottom; John is on 700 to 724, wholly below.
+      stubLineBoxes({ 1: 450 - 200, 2: 700 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        renderPeople({
+          mary: { firstVerse: 1, lastVerse: 2 },
+          john: { firstVerse: 2, lastVerse: 2 },
+        });
+
+        expect(arrowsOnScreen()).toEqual([
+          { direction: "down", top: "490px", lane: "0" },
+        ]);
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    // An avatar at the very bottom of the screen would sit under the stack
+    // lifted above the arrow, so it joins that stack instead.
+    it("adds someone whose verses start in the last few pixels of the screen to the stack held at the bottom", () => {
+      // Screen is 200px to 500px. John's bar starts at 490, just inside the
+      // bottom; Mary is on 700 to 724, wholly below.
+      stubLineBoxes({ 1: 490 - 200, 2: 700 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        renderPeople({
+          john: { firstVerse: 1, lastVerse: 1 },
+          mary: { firstVerse: 2, lastVerse: 2 },
+        });
+
+        // Two avatars are 32px tall, ending 14px above the bottom at 500.
+        expect(avatarStacks()).toEqual([
+          { top: "454px", who: ["john", "mary"] },
+        ]);
+      } finally {
+        restoreScreen();
+      }
+    });
+
+    // Lifting the stack at the bottom edge can run it into an avatar just
+    // above, which would then be drawn over it, so the two are merged.
+    it("merges the stack held at the bottom into an avatar it is lifted into", () => {
+      // Screen is 200px to 500px. John's avatar sits at the top of his bar at
+      // 440 (440 to 460). Mary and Ann are on 700 to 724, wholly below: their
+      // stack is 32px tall, so lifting it above the arrow puts its top at 454,
+      // inside John's avatar.
+      stubLineBoxes({ 1: 440 - 200, 2: 700 - 200 });
+      const restoreScreen = stubScrolledScreen(200);
+
+      try {
+        renderPeople({
+          john: { firstVerse: 1, lastVerse: 1 },
+          mary: { firstVerse: 2, lastVerse: 2 },
+          ann: { firstVerse: 2, lastVerse: 2 },
+        });
+
+        // Three avatars are 44px tall, which would end at 486 from 442, so the
+        // merged stack keeps John's higher top.
+        expect(avatarStacks()).toEqual([
+          { top: "440px", who: ["ann", "john", "mary"] },
         ]);
       } finally {
         restoreScreen();

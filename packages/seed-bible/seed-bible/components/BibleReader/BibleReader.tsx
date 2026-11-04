@@ -1863,7 +1863,7 @@ function placePresenceArrows(
     const bottom = marker.top + marker.height;
     if (marker.top < viewport.top && bottom > viewport.top) {
       arrows.push({
-        key: `${marker.connectionId}:up`,
+        key: `${marker.connectionId}:up:${marker.lane}`,
         direction: "up",
         top: viewport.top + PRESENCE_EDGE_INSET_PX,
         lane: marker.lane,
@@ -1872,7 +1872,7 @@ function placePresenceArrows(
     }
     if (bottom > viewport.bottom && marker.top < viewport.bottom) {
       arrows.push({
-        key: `${marker.connectionId}:down`,
+        key: `${marker.connectionId}:down:${marker.lane}`,
         direction: "down",
         top: viewport.bottom - PRESENCE_EDGE_INSET_PX - PRESENCE_ARROW_PX,
         lane: marker.lane,
@@ -1882,12 +1882,14 @@ function placePresenceArrows(
   }
   const centreArrow = (direction: PresenceArrow["direction"]) =>
     arrows.some((arrow) => arrow.direction === direction && arrow.lane === 0);
-  // Keyed like the arrow the same person's bar has while it runs off that
-  // edge, so the arrow stays put instead of fading out and back in as the
-  // last of their verses leaves the screen.
+  // Keyed like the arrow a centre-line bar has while it runs off that edge, so
+  // when the last of that person's verses leaves the screen the arrow stays
+  // put instead of fading out and back in. An arrow in a side lane has a
+  // different key, so it fades out while this one fades in on the centre
+  // line rather than sliding across.
   if (nearestAbove && !centreArrow("up")) {
     arrows.push({
-      key: `${nearestAbove.connectionId}:up`,
+      key: `${nearestAbove.connectionId}:up:0`,
       direction: "up",
       top: viewport.top + PRESENCE_EDGE_INSET_PX,
       lane: 0,
@@ -1896,7 +1898,7 @@ function placePresenceArrows(
   }
   if (nearestBelow && !centreArrow("down")) {
     arrows.push({
-      key: `${nearestBelow.connectionId}:down`,
+      key: `${nearestBelow.connectionId}:down:0`,
       direction: "down",
       top: viewport.bottom - PRESENCE_EDGE_INSET_PX - PRESENCE_ARROW_PX,
       lane: 0,
