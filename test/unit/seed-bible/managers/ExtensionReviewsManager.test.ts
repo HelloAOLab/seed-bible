@@ -46,16 +46,22 @@ describe("ExtensionReviewsManager", () => {
     createExtensionReviewsManager(os, { userId }, recordName);
 
   describe("reading", () => {
-    it("reads an extension's review from the record, at its full id", async () => {
+    it("reads an extension's verification from the record, at its full id", async () => {
       getData.mockResolvedValue({
         success: true,
-        data: { verified: true, reviewed: false, updatedAtMs: 5 },
+        data: {
+          verified: true,
+          verifiedAtMs: 3,
+          publicNotes: "Published by the Verse Art team.",
+          updatedAtMs: 5,
+        },
       });
       const reviews = create();
 
       expect(await reviews.load(VERSE_ART)).toEqual({
         verified: true,
-        reviewed: false,
+        verifiedAtMs: 3,
+        publicNotes: "Published by the Verse Art team.",
         updatedAtMs: 5,
       });
       expect(getData).toHaveBeenCalledWith({
@@ -76,24 +82,21 @@ describe("ExtensionReviewsManager", () => {
       expect(getData).toHaveBeenCalledTimes(1);
     });
 
-    it("counts an extension the record says nothing about as unreviewed", async () => {
+    it("counts an extension the record says nothing about as unverified", async () => {
       const reviews = create();
 
       expect(await reviews.load(VERSE_ART)).toBeNull();
       expect(reviews.reviews.value).toEqual({ [VERSE_ART]: null });
     });
 
-    it("treats anything but true as not verified or reviewed", async () => {
+    it("ignores fields of the wrong type", async () => {
       getData.mockResolvedValue({
         success: true,
-        data: { verified: "yes", reviewed: 1 },
+        data: { verified: "yes", verifiedAtMs: "today", publicNotes: 7 },
       });
       const reviews = create();
 
-      expect(await reviews.load(VERSE_ART)).toEqual({
-        verified: false,
-        reviewed: false,
-      });
+      expect(await reviews.load(VERSE_ART)).toEqual({ verified: false });
     });
 
     it("tries again later when the record couldn't be read", async () => {
@@ -105,9 +108,9 @@ describe("ExtensionReviewsManager", () => {
 
       getData.mockResolvedValueOnce({
         success: true,
-        data: { verified: true, reviewed: true },
+        data: { verified: true },
       });
-      expect(await reviews.load(VERSE_ART)).toMatchObject({ reviewed: true });
+      expect(await reviews.load(VERSE_ART)).toMatchObject({ verified: true });
     });
 
     it("reads nothing when the build has no reviews record", async () => {
@@ -125,7 +128,7 @@ describe("ExtensionReviewsManager", () => {
     });
   });
 
-  describe("who can change reviews", () => {
+  describe("who can verify extensions", () => {
     it("is nobody while signed out", async () => {
       listPermissions.mockResolvedValue({ success: true });
       const reviews = create();
@@ -183,52 +186,127 @@ describe("ExtensionReviewsManager", () => {
     });
   });
 
-  describe("changing a review", () => {
-    it("saves it as public data at the extension's full id", async () => {
+  describe("internal notes", () => {
+    it("are read from a private entry beside the public one", async () => {
+      getData.mockResolvedValue({
+        success: true,
+        data: { internalNotes: "Checked the publisher's domain." },
+      });
+      const reviews = create();
+
+      expect(await reviews.loadInternalNotes(VERSE_ART)).toBe(
+        "Checked the publisher's domain."
+      );
+      expect(getData).toHaveBeenCalledWith({
+        recordName: RECORD,
+        address: `internal/${VERSE_ART}`,
+      });
+    });
+
+    it("are empty for an extension nobody has written any for", async () => {
+      const reviews = create();
+
+      expect(await reviews.loadInternalNotes(VERSE_ART)).toBe("");
+    });
+
+    it("are null when the record won't let them be read", async () => {
+      getData.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+      });
+      const reviews = create();
+
+      expect(await reviews.loadInternalNotes(VERSE_ART)).toBeNull();
+    });
+  });
+
+  describe("verifying an extension", () => {
+    const DETAILS = {
+      verifiedAtMs: Date.UTC(2026, 10, 1),
+      publicNotes: "  Published by the Verse Art team.  ",
+      internalNotes: "Checked the publisher's domain.",
+    };
+
+    it("saves the public details for everyone and the internal notes privately", async () => {
       userId.value = "admin-1";
       const reviews = create();
 
-      expect(
-        await reviews.setReview(VERSE_ART, { verified: true, reviewed: true })
-      ).toBe(true);
+      expect(await reviews.verify(VERSE_ART, DETAILS)).toBe(true);
 
       expect(recordData).toHaveBeenCalledWith({
         recordKey: RECORD,
         address: VERSE_ART,
-        data: expect.objectContaining({
+        data: {
           verified: true,
-          reviewed: true,
+          verifiedAtMs: DETAILS.verifiedAtMs,
+          publicNotes: "Published by the Verse Art team.",
           updatedBy: "admin-1",
           updatedAtMs: expect.any(Number),
-        }),
+        },
         markers: ["publicRead"],
       });
+      expect(recordData).toHaveBeenCalledWith({
+        recordKey: RECORD,
+        address: `internal/${VERSE_ART}`,
+        data: expect.objectContaining({
+          internalNotes: "Checked the publisher's domain.",
+        }),
+        markers: ["private"],
+      });
+      // The internal notes never reach the public entry.
+      const publicWrite = recordData.mock.calls.find(
+        ([request]) => request.address === VERSE_ART
+      )![0];
+      expect(JSON.stringify(publicWrite.data)).not.toContain("domain");
       expect(await reviews.load(VERSE_ART)).toMatchObject({
         verified: true,
-        reviewed: true,
+        verifiedAtMs: DETAILS.verifiedAtMs,
       });
       expect(getData).not.toHaveBeenCalled();
     });
 
-    it("keeps the old review when the record refuses the change", async () => {
+    it("leaves out public notes that are only spaces", async () => {
+      const reviews = create();
+
+      await reviews.verify(VERSE_ART, { ...DETAILS, publicNotes: "   " });
+
+      expect(reviews.reviews.value[VERSE_ART]).not.toHaveProperty(
+        "publicNotes"
+      );
+    });
+
+    it("doesn't mark it verified when the internal notes are refused", async () => {
+      recordData.mockImplementation(async (request: { address: string }) =>
+        request.address.startsWith("internal/")
+          ? { success: false, errorCode: "not_authorized" }
+          : { success: true }
+      );
+      const reviews = create();
+
+      expect(await reviews.verify(VERSE_ART, DETAILS)).toBe(false);
+      expect(recordData).not.toHaveBeenCalledWith(
+        expect.objectContaining({ address: VERSE_ART })
+      );
+      expect(reviews.reviews.value[VERSE_ART]).toBeUndefined();
+    });
+
+    it("keeps the old verification when the record refuses the change", async () => {
       getData.mockResolvedValue({
         success: true,
-        data: { verified: true, reviewed: false },
+        data: { verified: true, verifiedAtMs: 1 },
       });
-      recordData.mockResolvedValue({
-        success: false,
-        errorCode: "not_authorized",
-        errorMessage: "You are not authorized to perform this action.",
-      });
+      recordData.mockImplementation(async (request: { address: string }) =>
+        request.address === VERSE_ART
+          ? { success: false, errorCode: "not_authorized" }
+          : { success: true }
+      );
       const reviews = create();
       await reviews.load(VERSE_ART);
 
-      expect(
-        await reviews.setReview(VERSE_ART, { verified: false, reviewed: true })
-      ).toBe(false);
-      expect(reviews.reviews.value[VERSE_ART]).toMatchObject({
+      expect(await reviews.verify(VERSE_ART, DETAILS)).toBe(false);
+      expect(reviews.reviews.value[VERSE_ART]).toEqual({
         verified: true,
-        reviewed: false,
+        verifiedAtMs: 1,
       });
     });
 
@@ -238,22 +316,39 @@ describe("ExtensionReviewsManager", () => {
       const reviews = create();
       const loading = reviews.load(VERSE_ART);
 
-      await reviews.setReview(VERSE_ART, { verified: true, reviewed: true });
+      await reviews.verify(VERSE_ART, DETAILS);
       answer({ success: false, errorCode: "data_not_found" });
 
-      expect(await loading).toMatchObject({ verified: true, reviewed: true });
+      expect(await loading).toMatchObject({ verified: true });
       expect(reviews.reviews.value[VERSE_ART]).toMatchObject({
-        reviewed: true,
+        verified: true,
       });
     });
 
     it("can't be saved without a reviews record", async () => {
       const reviews = create(null);
 
-      expect(
-        await reviews.setReview(VERSE_ART, { verified: true, reviewed: true })
-      ).toBe(false);
+      expect(await reviews.verify(VERSE_ART, DETAILS)).toBe(false);
       expect(recordData).not.toHaveBeenCalled();
+    });
+
+    it("can be taken away, leaving the internal notes alone", async () => {
+      const reviews = create();
+      await reviews.verify(VERSE_ART, DETAILS);
+      recordData.mockClear();
+
+      expect(await reviews.unverify(VERSE_ART)).toBe(true);
+
+      expect(recordData).toHaveBeenCalledTimes(1);
+      expect(recordData).toHaveBeenCalledWith({
+        recordKey: RECORD,
+        address: VERSE_ART,
+        data: expect.objectContaining({ verified: false }),
+        markers: ["publicRead"],
+      });
+      expect(reviews.reviews.value[VERSE_ART]).toMatchObject({
+        verified: false,
+      });
     });
   });
 });

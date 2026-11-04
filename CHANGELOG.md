@@ -9,10 +9,11 @@
   - A chapter now comes with its headings, paragraph breaks, footnotes, and the chapters before and after it, as well as its plain-text verses.
   - Translations the user has downloaded keep working with no connection, and the translation list marks which ones are downloaded.
   - Extension tests that answer `bible.chapter` with `createTestHost` need to return the fuller chapter.
-- Extensions can be marked Verified and Reviewed, shown on their cards and pages. ([#2075](https://github.com/HelloAOLab/seed-bible/pull/2075))
-  - The marks are public data in a record chosen at build time with `EXTENSION_REVIEWS_RECORD_NAME`, one per extension, stored at its full id.
-  - Admins of that record can change an extension's marks from its page.
-  - A reviewed extension's install dialog says it has been reviewed, instead of warning that it hasn't.
+- Extensions can be marked Verified, shown on their cards and pages. ([#2075](https://github.com/HelloAOLab/seed-bible/pull/2075))
+  - Hovering over the Verified mark shows when the extension was verified and the reviewer's public notes.
+  - Admins of the reviews record, chosen at build time with `EXTENSION_REVIEWS_RECORD_NAME`, mark an extension verified from its page, in a dialog that asks when it was verified and for public and internal notes.
+  - Internal notes are kept private to the record's admins.
+  - A verified extension's install dialog says it has been verified, instead of warning that it hasn't been reviewed.
 
 ### 🔧 Changed
 

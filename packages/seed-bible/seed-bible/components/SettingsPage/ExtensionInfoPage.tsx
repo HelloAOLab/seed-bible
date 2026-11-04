@@ -30,6 +30,7 @@ import {
   useExtensionReview,
 } from "../ExtensionReview/ExtensionReview";
 import type { ExtensionReviewsManager } from "../../managers/ExtensionReviewsManager";
+import type { ModalManager } from "../../managers/ModalManager";
 
 export type ExtensionInstallState =
   | "none"
@@ -47,8 +48,10 @@ export interface ExtensionInfoPageProps {
   installState: ExtensionInstallState;
   extensions: PermissionsApi & Pick<ExtensionManager, "describeUploader">;
   people?: ConsentPeople;
-  /** Which extensions are verified and reviewed. */
+  /** Which extensions are verified. */
   reviews?: ExtensionReviewsManager;
+  /** Opens the dialog an admin marks an extension verified in. */
+  modals?: ModalManager;
   /**
    * "narrow" stacks everything for the sidebar; "wide" lays it out across a
    * full-screen page, with the tabs down the side.
@@ -191,9 +194,11 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
 
   const unreviewed = url && <ExtensionReviewNotice review={review} />;
 
-  const reviewControls = props.reviews && (
+  const reviewControls = props.reviews && props.modals && (
     <ExtensionReviewControls
       reviews={props.reviews}
+      modals={props.modals}
+      name={name}
       extensionId={entry.id}
       review={review}
     />

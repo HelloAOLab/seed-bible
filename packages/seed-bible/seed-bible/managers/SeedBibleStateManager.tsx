@@ -623,7 +623,7 @@ export interface SeedBibleState {
   app: AppState;
   /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
-  /** Which extensions are verified and reviewed, and changing that for admins. */
+  /** Which extensions are verified, and verifying them for admins. */
   extensionReviews: ExtensionReviewsManager;
   /** Per-viewer values for extensions' declared settings, resolved against the active Customization's defaults. */
   extensionSettings: ExtensionSettingsManager;

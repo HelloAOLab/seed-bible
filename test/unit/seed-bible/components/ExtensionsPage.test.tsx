@@ -11,6 +11,7 @@ import {
   createExtensionReviewsManager,
   type ExtensionReviewsManager,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionReviewsManager";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 
 // Return the defaultValue (or key), as the other component tests do, with
 // the extension's own title and description from its namespace.
@@ -23,10 +24,18 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
     useI18n: () => ({
       t: (
         key: string,
-        options?: { defaultValue?: string; ns?: string; host?: string }
+        options?: {
+          defaultValue?: string;
+          ns?: string;
+          host?: string;
+          date?: string;
+        }
       ) => {
         if (options?.ns) {
           return key === "title" ? options.ns : "";
+        }
+        if (options?.date) {
+          return `${key} ${options.date}`;
         }
         if (key === "extension-consent-from") {
           return `From ${options?.host}`;
@@ -370,12 +379,24 @@ describe("ExtensionsPage", () => {
     expect(state.openExtensions).toHaveBeenCalledWith("verse-art");
   });
 
-  describe("review marks", () => {
+  describe("verification", () => {
     const flush = () => act(async () => {});
+    const VERIFIED_AT = new Date(2026, 9, 30, 14, 5).getTime();
+    let modalContainer: HTMLDivElement;
+
+    beforeEach(() => {
+      modalContainer = document.createElement("div");
+      document.body.appendChild(modalContainer);
+    });
+
+    afterEach(() => {
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
 
     /** The reviews record as the records server answers for it. */
     function createReviews(
-      stored: Record<string, { verified: boolean; reviewed: boolean }>,
+      stored: Record<string, unknown>,
       options: { admin?: boolean; refuseWrites?: boolean } = {}
     ) {
       const os = {
@@ -389,7 +410,7 @@ describe("ExtensionsPage", () => {
             if (options.refuseWrites) {
               return { success: false, errorCode: "not_authorized" };
             }
-            stored[address] = data as (typeof stored)[string];
+            stored[address] = data;
             return { success: true };
           }
         ),
@@ -403,25 +424,66 @@ describe("ExtensionsPage", () => {
       return { os, reviews };
     }
 
+    /** Opens verse-art's page with a real modal manager behind it. */
+    async function openVerseArt(reviews: ExtensionReviewsManager) {
+      const state = renderPage([linked("verse-art", false)], reviews);
+      const modals = createModalManager();
+      state.modals = modals as unknown as typeof state.modals;
+      act(() => state.openExtensions("verse-art"));
+      await flush();
+      return modals;
+    }
+
+    /** Shows whichever modal is open, as the app's modal host would. */
+    async function renderModal(modals: ReturnType<typeof createModalManager>) {
+      const modal = modals.modals.value.at(-1);
+      act(() => {
+        render(
+          modal ? <>{modal.content({ t: (key) => key })}</> : null,
+          modalContainer
+        );
+      });
+      await flush();
+    }
+
     const badges = (root: ParentNode) =>
       [...root.querySelectorAll(".sb-extension-review-badge")].map(
         (badge) => badge.textContent
       );
     const notice = () =>
       container.querySelector(".sb-extension-consent-notice")?.textContent;
-    const checkbox = (label: string) =>
-      [
-        ...container.querySelectorAll<HTMLLabelElement>(
-          ".sb-extension-review-control"
-        ),
-      ]
-        .find((item) => item.textContent === label)
-        ?.querySelector("input");
+    const buttonNamed = (root: ParentNode, label: string) =>
+      [...root.querySelectorAll<HTMLButtonElement>("button")].find((item) =>
+        item.textContent?.includes(label)
+      );
+    const field = <T extends HTMLElement>(name: string) =>
+      modalContainer.querySelector<T>(`[name="${name}"]`)!;
+    const type = (
+      element: HTMLInputElement | HTMLTextAreaElement,
+      value: string
+    ) =>
+      act(() => {
+        element.value = value;
+        element.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    /** Submits the modal's form and lets both of its writes settle. */
+    const submit = async () => {
+      act(() => {
+        modalContainer
+          .querySelector("form")!
+          .dispatchEvent(
+            new Event("submit", { bubbles: true, cancelable: true })
+          );
+      });
+      for (let i = 0; i < 5; i++) {
+        await flush();
+      }
+    };
 
-    it("marks the cards of verified and reviewed extensions", async () => {
+    it("marks the cards of verified extensions", async () => {
       const { reviews } = createReviews({
-        "verse-art": { verified: true, reviewed: true },
-        maps: { verified: true, reviewed: false },
+        "verse-art": { verified: true, verifiedAtMs: VERIFIED_AT },
+        maps: { verified: false },
       });
       renderPage(
         [
@@ -441,92 +503,201 @@ describe("ExtensionsPage", () => {
         ])
       );
       expect(cardBadges).toEqual({
-        "verse-art": [
-          "verifiedextension-review-verified",
-          "fact_checkextension-review-reviewed",
-        ],
-        maps: ["verifiedextension-review-verified"],
+        "verse-art": ["verifiedextension-review-verified"],
+        maps: [],
         other: [],
       });
     });
 
-    it("says a reviewed extension has been reviewed, instead of warning", async () => {
+    it("shows when it was verified and the public notes on hovering over the mark", async () => {
       const { reviews } = createReviews({
-        "verse-art": { verified: false, reviewed: true },
+        "verse-art": {
+          verified: true,
+          verifiedAtMs: VERIFIED_AT,
+          publicNotes: "Published by the Verse Art team.",
+        },
       });
-      const state = renderPage([linked("verse-art", false)], reviews);
-      act(() => state.openExtensions("verse-art"));
+      renderPage([linked("verse-art", false)], reviews);
       await flush();
+      const badge = container.querySelector(".sb-extension-review-badge")!;
 
-      expect(notice()).toBe("fact_checkextension-consent-reviewed");
+      act(() => {
+        badge.dispatchEvent(new Event("pointerenter"));
+      });
+      const tooltip = () =>
+        document.body.querySelector(".sb-extension-review-tooltip");
+      expect(tooltip()?.textContent).toBe(
+        "extension-review-verified-on Oct 30, 2026" +
+          "Published by the Verse Art team."
+      );
+
+      act(() => {
+        badge.dispatchEvent(new Event("pointerleave"));
+      });
+      expect(tooltip()).toBeNull();
     });
 
-    it("warns about an extension nobody has reviewed", async () => {
+    it("says a verified extension has been verified, instead of warning", async () => {
+      const { reviews } = createReviews({
+        "verse-art": { verified: true, verifiedAtMs: VERIFIED_AT },
+      });
+      await openVerseArt(reviews);
+
+      expect(notice()).toBe("verifiedextension-consent-verified");
+    });
+
+    it("warns about an extension nobody has verified", async () => {
       const { reviews } = createReviews({});
-      const state = renderPage([linked("verse-art", false)], reviews);
-      act(() => state.openExtensions("verse-art"));
-      await flush();
+      await openVerseArt(reviews);
 
       expect(notice()).toBe("infoextension-consent-unreviewed");
     });
 
-    it("hides the review controls from anyone but an admin", async () => {
+    it("hides the verification controls from anyone but an admin", async () => {
       const { reviews } = createReviews({});
-      const state = renderPage([linked("verse-art", false)], reviews);
-      act(() => state.openExtensions("verse-art"));
-      await flush();
+      await openVerseArt(reviews);
 
       expect(
         container.querySelector(".sb-extension-review-controls")
       ).toBeNull();
     });
 
-    it("lets an admin mark an extension reviewed, and shows it right away", async () => {
-      const stored = {};
+    it("lets an admin mark an extension verified, with when and their notes", async () => {
+      const stored: Record<string, unknown> = {};
       const { os, reviews } = createReviews(stored, { admin: true });
-      const state = renderPage([linked("verse-art", false)], reviews);
-      act(() => state.openExtensions("verse-art"));
-      await flush();
+      const modals = await openVerseArt(reviews);
+      expect(
+        container.querySelector(".sb-extension-review-controls input")
+      ).toBeNull();
 
-      const reviewed = checkbox("extension-review-reviewed")!;
-      expect(reviewed.checked).toBe(false);
-      await act(async () => {
-        reviewed.click();
+      act(() =>
+        buttonNamed(container, "extension-review-mark-verified")!.click()
+      );
+      await renderModal(modals);
+
+      type(field<HTMLInputElement>("verifiedAt"), "2026-10-30T14:05");
+      type(
+        field<HTMLTextAreaElement>("publicNotes"),
+        "Published by the Verse Art team."
+      );
+      type(
+        field<HTMLTextAreaElement>("internalNotes"),
+        "Checked the publisher's domain."
+      );
+      await submit();
+
+      expect(stored["verse-art"]).toMatchObject({
+        verified: true,
+        verifiedAtMs: VERIFIED_AT,
+        publicNotes: "Published by the Verse Art team.",
       });
-      await flush();
-
+      expect(stored["internal/verse-art"]).toMatchObject({
+        internalNotes: "Checked the publisher's domain.",
+      });
       expect(os.recordData).toHaveBeenCalledWith(
         "seed-bible-reviews",
-        "verse-art",
-        expect.objectContaining({ verified: false, reviewed: true }),
-        { marker: "publicRead" }
+        "internal/verse-art",
+        expect.anything(),
+        { marker: "private" }
       );
-      expect(checkbox("extension-review-reviewed")!.checked).toBe(true);
-      expect(badges(container)).toEqual([
-        "fact_checkextension-review-reviewed",
-      ]);
-      expect(notice()).toBe("fact_checkextension-consent-reviewed");
+      expect(modals.modals.value).toEqual([]);
+      expect(badges(container)).toEqual(["verifiedextension-review-verified"]);
+      expect(notice()).toBe("verifiedextension-consent-verified");
+      expect(
+        container.querySelector(".sb-extension-review-controls-note")
+          ?.textContent
+      ).toBe("extension-review-admin-verified-on Oct 30, 2026");
     });
 
-    it("tells an admin when the change couldn't be saved", async () => {
+    it("fills in an existing verification when an admin edits it", async () => {
       const { reviews } = createReviews(
-        { "verse-art": { verified: true, reviewed: false } },
+        {
+          "verse-art": {
+            verified: true,
+            verifiedAtMs: VERIFIED_AT,
+            publicNotes: "Published by the Verse Art team.",
+          },
+          "internal/verse-art": {
+            internalNotes: "Checked the publisher's domain.",
+          },
+        },
+        { admin: true }
+      );
+      const modals = await openVerseArt(reviews);
+
+      act(() => buttonNamed(container, "extension-review-edit")!.click());
+      await renderModal(modals);
+
+      expect(field<HTMLInputElement>("verifiedAt").value).toBe(
+        "2026-10-30T14:05"
+      );
+      expect(field<HTMLTextAreaElement>("publicNotes").value).toBe(
+        "Published by the Verse Art team."
+      );
+      expect(field<HTMLTextAreaElement>("internalNotes").value).toBe(
+        "Checked the publisher's domain."
+      );
+    });
+
+    it("won't save over internal notes it couldn't read", async () => {
+      const { os, reviews } = createReviews({}, { admin: true });
+      os.getData.mockImplementation(
+        async (_recordName: string, address: string) =>
+          address.startsWith("internal/")
+            ? { success: false, errorCode: "server_error" }
+            : { success: false, errorCode: "data_not_found" }
+      );
+      const modals = await openVerseArt(reviews);
+
+      act(() =>
+        buttonNamed(container, "extension-review-mark-verified")!.click()
+      );
+      await renderModal(modals);
+
+      expect(modalContainer.querySelector('[role="alert"]')?.textContent).toBe(
+        "extension-review-modal-internal-notes-failed"
+      );
+      expect(
+        buttonNamed(modalContainer, "extension-review-mark-verified")!.disabled
+      ).toBe(true);
+    });
+
+    it("keeps the modal open and says so when the record refuses", async () => {
+      const { reviews } = createReviews(
+        {},
         { admin: true, refuseWrites: true }
       );
-      const state = renderPage([linked("verse-art", false)], reviews);
-      act(() => state.openExtensions("verse-art"));
-      await flush();
+      const modals = await openVerseArt(reviews);
+
+      act(() =>
+        buttonNamed(container, "extension-review-mark-verified")!.click()
+      );
+      await renderModal(modals);
+      await submit();
+      await renderModal(modals);
+
+      expect(modals.modals.value).toHaveLength(1);
+      expect(modalContainer.querySelector('[role="alert"]')?.textContent).toBe(
+        "extension-review-admin-save-failed"
+      );
+      expect(badges(container)).toEqual([]);
+    });
+
+    it("lets an admin take the mark away", async () => {
+      const stored: Record<string, unknown> = {
+        "verse-art": { verified: true, verifiedAtMs: VERIFIED_AT },
+      };
+      const { reviews } = createReviews(stored, { admin: true });
+      await openVerseArt(reviews);
 
       await act(async () => {
-        checkbox("extension-review-verified")!.click();
+        buttonNamed(container, "extension-review-unverify")!.click();
       });
       await flush();
 
-      expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-        "extension-review-admin-save-failed"
-      );
-      expect(checkbox("extension-review-verified")!.checked).toBe(true);
-      expect(badges(container)).toEqual(["verifiedextension-review-verified"]);
+      expect(stored["verse-art"]).toMatchObject({ verified: false });
+      expect(badges(container)).toEqual([]);
+      expect(notice()).toBe("infoextension-consent-unreviewed");
     });
   });
 });

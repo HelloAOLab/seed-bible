@@ -156,6 +156,7 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
           extensions={state.extensions}
           people={catalog.people}
           reviews={state.extensionReviews}
+          modals={state.modals}
           onInstall={() => void catalog.install(openEntry.id)}
           onUninstall={() => catalog.uninstall(openEntry.id)}
           settings={catalog.renderSettings(openEntry)}

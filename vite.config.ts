@@ -149,7 +149,7 @@ export default defineConfig(({ isSsrBuild }) => ({
 
     __BRANDING_CONFIG__: JSON.stringify(brandingConfig),
 
-    // The record holding which extensions are verified and reviewed (see
+    // The record holding which extensions are verified (see
     // `managers/ExtensionReviewsManager.tsx`).
     __EXTENSION_REVIEWS_RECORD__: JSON.stringify(
       process.env.EXTENSION_REVIEWS_RECORD_NAME?.trim() || null
