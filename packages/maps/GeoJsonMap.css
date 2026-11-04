@@ -12,6 +12,16 @@
   overflow: hidden;
 }
 
+/* The map in its phone sheet. The sheet sizes to its content, so this sets
+   how much of the screen the map takes, leaving the sheet's header room
+   within its own height limit. */
+.sb-map-sheet {
+  position: relative;
+  height: min(65dvh, 30rem);
+  overflow: hidden;
+  border-radius: 6px;
+}
+
 .sb-geojson-map-canvas {
   position: absolute;
   inset: 0;
@@ -60,19 +70,41 @@
   border-top-color: var(--sb-menu-background);
 }
 
-.sb-geojson-map .leaflet-bar a {
+/* Leaflet's stylesheet loads after this one, when a map first opens, so these
+   rules out-rank its own (`.leaflet-bar a:hover`, `.leaflet-bar
+   a.leaflet-disabled`, `.leaflet-container .leaflet-control-attribution`)
+   rather than tie with them and lose: its light defaults are unreadable in a
+   dark theme. */
+.sb-geojson-map .leaflet-container .leaflet-bar a {
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   border-bottom-color: var(--sb-divider-color);
 }
 
-.sb-geojson-map .leaflet-control-attribution {
-  background: color-mix(in srgb, var(--sb-reader-background), transparent 20%);
+/* Only where there's a real pointer: a phone keeps `:hover` on whatever was
+   last tapped, which would leave a pressed button tinted. */
+@media (hover: hover) {
+  .sb-geojson-map .leaflet-container .leaflet-bar a:hover {
+    background: color-mix(
+      in srgb,
+      var(--sb-menu-font-color) 10%,
+      var(--sb-menu-background)
+    );
+  }
+}
+
+.sb-geojson-map .leaflet-container .leaflet-bar a.leaflet-disabled {
+  background: var(--sb-menu-background);
+  color: color-mix(in srgb, var(--sb-menu-font-color), transparent 65%);
+}
+
+.sb-geojson-map .leaflet-container .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--sb-reader-background), transparent 15%);
   color: var(--sb-primary-color);
   font-size: 0.625rem;
 }
 
-.sb-geojson-map .leaflet-control-attribution a {
+.sb-geojson-map .leaflet-container .leaflet-control-attribution a {
   color: var(--sb-primary-color);
 }
 

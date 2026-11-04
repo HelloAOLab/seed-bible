@@ -102,7 +102,6 @@ export default function initTheographicExtension() {
           onReferenceClick: (ref, origin) =>
             openInSameTab(context, ref, origin),
           panes: context.panes,
-          map: context.map,
           locations: {
             findLocation,
             getPlaceGeoJsonUrl,

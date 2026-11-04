@@ -3,15 +3,22 @@ import { useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import type { Map as LeafletMap } from "leaflet";
-import { useI18n } from "../../i18n/I18nManager";
 import type {
+  Feature,
+  FeatureCollection,
   GeoJsonObject,
-  LeafletModule,
-  MapManager,
-  MapTileSource,
-} from "../../managers/MapManager";
-import { Skeleton } from "../Skeleton/Skeleton";
-import { MaterialIcon } from "../icons";
+  GeometryCollection,
+} from "geojson";
+import { MaterialIcon, Skeleton } from "seed-bible/components";
+import { useI18n } from "seed-bible/i18n";
+import {
+  leafletLoader,
+  MAP_TILE_SOURCE,
+  type LeafletLoader,
+  type LeafletModule,
+  type MapTileSource,
+} from "./leaflet";
+import { addMapTranslations } from "./translations";
 
 /** How far in a lone point is shown: a town and the country around it. */
 export const POINT_ZOOM = 10;
@@ -20,6 +27,22 @@ export const POINT_ZOOM = 10;
 const DEFAULT_VIEW = { center: [31.5, 35] as [number, number], zoom: 6 };
 
 const POINT_TYPES = new Set(["Point", "MultiPoint"]);
+
+/** Whether the data holds anything besides points: an outline or a line. */
+function hasShape(data: GeoJsonObject): boolean {
+  switch (data.type) {
+    case "FeatureCollection":
+      return (data as FeatureCollection).features.some(hasShape);
+    case "Feature": {
+      const { geometry } = data as Feature;
+      return geometry !== null && hasShape(geometry);
+    }
+    case "GeometryCollection":
+      return (data as GeometryCollection).geometries.some(hasShape);
+    default:
+      return !POINT_TYPES.has(data.type);
+  }
+}
 
 interface DrawOptions {
   tileSource: MapTileSource;
@@ -102,6 +125,9 @@ function drawMap(
     }).addTo(map);
 
     const bounds = layer.getBounds();
+    // An outline fills the view, however small. Points alone stop at a town
+    // and the country around it, so there's something to place them by.
+    const maxZoom = hasShape(data) ? tileSource.maxZoom : POINT_ZOOM;
     // Fits to the data's bounds rather than restoring a saved view: the
     // container may have been resized since, which changes the zoom needed.
     const fit = () => {
@@ -110,7 +136,7 @@ function drawMap(
       } else if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
         map.setView(bounds.getCenter(), POINT_ZOOM);
       } else {
-        map.fitBounds(bounds, { padding: [24, 24], maxZoom: POINT_ZOOM });
+        map.fitBounds(bounds, { padding: [24, 24], maxZoom });
       }
     };
     fit();
@@ -140,7 +166,6 @@ function drawMap(
  * placeholder holds its space meanwhile); after that maps open at once.
  */
 export function GeoJsonMap(props: {
-  map: MapManager;
   /** In standard `[longitude, latitude]` order. */
   data: GeoJsonObject;
   /**
@@ -163,9 +188,10 @@ export function GeoJsonMap(props: {
   /** Buttons for the map's top corner, stacked above its recenter button. */
   controls?: ComponentChildren;
   className?: string;
+  /** Where Leaflet comes from. For tests; every map shares one by default. */
+  loader?: LeafletLoader;
 }) {
   const {
-    map,
     data,
     label,
     attribution,
@@ -173,7 +199,9 @@ export function GeoJsonMap(props: {
     onTap,
     controls,
     className,
+    loader = leafletLoader,
   } = props;
+  addMapTranslations();
   const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
   // Read when tapped, so a caller passing a fresh function each render
@@ -183,12 +211,12 @@ export function GeoJsonMap(props: {
   const isInvalid = useSignal(false);
   /** Re-fits the drawn map to its data; null until a map is drawn. */
   const recenter = useSignal<(() => void) | null>(null);
-  const L = map.leaflet.value;
-  const status = map.status.value;
+  const L = loader.leaflet.value;
+  const status = loader.status.value;
 
   useEffect(() => {
-    void map.loadLeaflet().catch(() => undefined);
-  }, [map]);
+    void loader.load().catch(() => undefined);
+  }, [loader]);
 
   // Joined so a caller passing a fresh array each render doesn't redraw.
   const credits = attribution?.join("\n") ?? "";
@@ -202,7 +230,7 @@ export function GeoJsonMap(props: {
     let drawn: DrawnMap;
     try {
       drawn = drawMap(L, element, {
-        tileSource: map.tileSource,
+        tileSource: MAP_TILE_SOURCE,
         data,
         label,
         attribution: credits ? credits.split("\n") : [],
@@ -243,7 +271,7 @@ export function GeoJsonMap(props: {
       recenter.value = null;
       removeMap(drawn.map);
     };
-  }, [L, map, data, label, credits, inline]);
+  }, [L, data, label, credits, inline]);
 
   const classes = ["sb-geojson-map", className].filter(Boolean).join(" ");
   // An inline map sits in something that already names it (a card), and a
@@ -264,8 +292,12 @@ export function GeoJsonMap(props: {
             <button
               type="button"
               className="sb-geojson-map-control sb-geojson-map-recenter"
-              title={t("map-recenter", { defaultValue: "Back to the place" })}
-              aria-label={t("map-recenter", {
+              title={t("recenter", {
+                ns: "maps",
+                defaultValue: "Back to the place",
+              })}
+              aria-label={t("recenter", {
+                ns: "maps",
                 defaultValue: "Back to the place",
               })}
               onClick={() => recenter.value?.()}
@@ -287,14 +319,15 @@ export function GeoJsonMap(props: {
       {status === "failed" ? (
         <div className="sb-geojson-map-overlay sb-geojson-map-message">
           <span>
-            {t("map-failed-to-load", {
+            {t("failed-to-load", {
+              ns: "maps",
               defaultValue: "The map couldn't load.",
             })}
           </span>
           <button
             type="button"
             className="sb-geojson-map-retry"
-            onClick={() => void map.loadLeaflet().catch(() => undefined)}
+            onClick={() => void loader.load().catch(() => undefined)}
           >
             {t("try-again", { defaultValue: "Try again" })}
           </button>
@@ -302,7 +335,8 @@ export function GeoJsonMap(props: {
       ) : null}
       {isInvalid.value ? (
         <p className="sb-geojson-map-overlay sb-geojson-map-message">
-          {t("map-place-unavailable", {
+          {t("place-unavailable", {
+            ns: "maps",
             defaultValue: "This place can't be shown on the map.",
           })}
         </p>

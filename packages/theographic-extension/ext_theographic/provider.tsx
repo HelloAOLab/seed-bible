@@ -16,7 +16,6 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { ModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
-import type { MapManager } from "@packages/seed-bible/seed-bible/managers/MapManager";
 import type { ReadonlySignal } from "@preact/signals";
 import {
   requestToPromise,
@@ -597,8 +596,6 @@ export interface TheographicProviderDeps {
   onReferenceClick: (ref: VerseRef, origin?: ReferenceOrigin) => void;
   /** Where a place's map opens. Omit and the map control is not offered. */
   panes?: PanesManager;
-  /** Draws places' maps. Omit and places show no map. */
-  map?: MapManager;
   /** The known places' lookup (`@seed-bible/bible-locations`), for places with a file. */
   locations?: PlaceLocations;
   /** Whether the reader is on a phone-sized screen, where the map opens in a sheet. */
@@ -684,7 +681,7 @@ export function toDiscoverResults(
   context: DiscoverContext,
   deps: Pick<
     TheographicProviderDeps,
-    "client" | "onReferenceClick" | "locations" | "map" | "isMobile"
+    "client" | "onReferenceClick" | "locations" | "isMobile"
   > & {
     openPlace?: (place: TheographicPlaceEntry) => void;
     isPlaceOpen?: (place: TheographicPlaceEntry) => boolean;
@@ -733,7 +730,6 @@ export function toDiscoverResults(
           isPlaceOpen={deps.isPlaceOpen}
           isMobile={deps.isMobile}
           locations={deps.locations}
-          map={deps.map}
           scripture={deps.scripture}
         />
       ),
@@ -755,13 +751,14 @@ export function createTheographicDiscoverProvider(
   deps: TheographicProviderDeps
 ): DiscoverProvider {
   let hasWarned = false;
-  const openPlace = createOpenPlace(
-    deps.panes,
-    deps.map,
-    { client: deps.client, locations: deps.locations },
-    { isMobile: deps.isMobile, modals: deps.modals }
-  );
-  const isPlaceOpen = createIsPlaceOpen(deps.panes, deps.modals);
+  const mapHost = deps.panes
+    ? { panes: deps.panes, modals: deps.modals, isMobile: deps.isMobile }
+    : undefined;
+  const openPlace = createOpenPlace(mapHost, {
+    client: deps.client,
+    locations: deps.locations,
+  });
+  const isPlaceOpen = createIsPlaceOpen(mapHost);
 
   return {
     id: "theographic",
@@ -794,7 +791,6 @@ export function createTheographicDiscoverProvider(
         client: deps.client,
         onReferenceClick: deps.onReferenceClick,
         locations: deps.locations,
-        map: deps.map,
         isMobile: deps.isMobile,
         openPlace,
         isPlaceOpen,

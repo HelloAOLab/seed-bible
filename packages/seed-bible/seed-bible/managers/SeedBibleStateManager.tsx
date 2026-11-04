@@ -113,7 +113,6 @@ import {
 } from "../managers/FreeUseBibleAPI";
 import { createPanes } from "../managers/PanesManager";
 import type { Pane, PanesManager } from "../managers/PanesManager";
-import { createMapManager, type MapManager } from "../managers/MapManager";
 import { createTabsLayout } from "../managers/TabsLayoutManager";
 import type {
   TabSlot,
@@ -537,11 +536,6 @@ export interface SeedBibleState {
   tabsLayout: TabsLayoutManager;
   /** Custom (non-tab) pane manager: fullscreen/side/floating panes. */
   panes: PanesManager;
-  /**
-   * Draws places on a map, downloading the map library the first time one is
-   * shown, and holds the base map's tile source.
-   */
-  map: MapManager;
   /** Bible selector state for book/chapter picking. */
   selector: BibleSelectorState;
   /** Dynamic tool registry used by reader panes/toolbars. */
@@ -1396,7 +1390,6 @@ export function createSeedBibleState(
   // on mobile every pane is displayed fullscreen, so opening one closes the
   // rest.
   const panes = createPanes(isMobile);
-  const map = createMapManager({ panes });
   const playlists = createPlaylistManager(
     os,
     login,
@@ -3629,7 +3622,6 @@ export function createSeedBibleState(
     tabs,
     tabsLayout,
     panes,
-    map,
     selector,
     tools,
     login,

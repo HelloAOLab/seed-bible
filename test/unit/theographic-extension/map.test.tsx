@@ -4,10 +4,7 @@ import type { ComponentChild } from "preact";
 import { signal } from "@preact/signals";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
-import {
-  createMapManager,
-  type LeafletModule,
-} from "@packages/seed-bible/seed-bible/managers/MapManager";
+import { leafletLoader } from "@packages/maps";
 import {
   THEOGRAPHIC_ATTRIBUTION,
   canMapPlace,
@@ -30,11 +27,10 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   return mockI18nManager();
 });
 
-let leaflet: LeafletModule;
 let container: HTMLDivElement;
 
 beforeAll(async () => {
-  leaflet = await createMapManager({ panes: createPanes() }).loadLeaflet();
+  await leafletLoader.load();
 }, 30_000);
 
 beforeEach(() => {
@@ -83,13 +79,6 @@ function fakeLocations(): PlaceLocations & {
     toStandardGeoJson,
     getPlaceAttribution,
   };
-}
-
-function readyMap(panes = createPanes()) {
-  return createMapManager({
-    panes,
-    importLeaflet: () => Promise.resolve(leaflet),
-  });
 }
 
 describe("findKnownLocation", () => {
@@ -255,10 +244,10 @@ describe("createIsPlaceOpen", () => {
 
   it("follows the place's pane opening and closing", () => {
     const panes = createPanes();
-    const isOpen = createIsPlaceOpen(panes);
+    const isOpen = createIsPlaceOpen({ panes });
 
     expect(isOpen(BABEL)).toBe(false);
-    createOpenPlace(panes, readyMap(panes))?.(BABEL);
+    createOpenPlace({ panes })?.(BABEL);
     expect(isOpen(BABEL)).toBe(true);
     panes.closePane(placeMapId(BABEL));
     expect(isOpen(BABEL)).toBe(false);
@@ -266,9 +255,9 @@ describe("createIsPlaceOpen", () => {
 
   it("only counts that place's own pane", () => {
     const panes = createPanes();
-    createOpenPlace(panes, readyMap(panes))?.(BABEL);
+    createOpenPlace({ panes })?.(BABEL);
 
-    expect(createIsPlaceOpen(panes)(place("Erech"))).toBe(false);
+    expect(createIsPlaceOpen({ panes })(place("Erech"))).toBe(false);
   });
 });
 
@@ -292,13 +281,16 @@ describe("createOpenPlace", () => {
     const panes = createPanes();
     const erech = place("Erech");
 
-    createOpenPlace(panes, readyMap(panes), {
-      client: { getResource },
-      locations: fakeLocations(),
-    })?.(erech);
+    createOpenPlace(
+      { panes },
+      {
+        client: { getResource },
+        locations: fakeLocations(),
+      }
+    )?.(erech);
     renderPane(panes, placeMapId(erech));
 
-    expect(container.querySelector(".sb-theographic-map-loading")).toBeTruthy();
+    expect(container.querySelector(".sb-skeleton")).toBeTruthy();
     expect(container.querySelector(".leaflet-container")).toBeNull();
 
     answer({
@@ -325,9 +317,7 @@ describe("createOpenPlace", () => {
     const panes = createPanes();
     const abana = place("Abana", { latitude: 33.5, longitude: 36.3 });
 
-    createOpenPlace(panes, readyMap(panes), { locations: fakeLocations() })?.(
-      abana
-    );
+    createOpenPlace({ panes }, { locations: fakeLocations() })?.(abana);
     renderPane(panes, placeMapId(abana));
     await waitFor(
       () => container.querySelector(".sb-geojson-map-point") !== null
@@ -344,10 +334,13 @@ describe("createOpenPlace", () => {
     const panes = createPanes();
     const erech = place("Erech");
 
-    createOpenPlace(panes, readyMap(panes), {
-      client: { getResource: () => Promise.reject(new Error("offline")) },
-      locations: fakeLocations(),
-    })?.(erech);
+    createOpenPlace(
+      { panes },
+      {
+        client: { getResource: () => Promise.reject(new Error("offline")) },
+        locations: fakeLocations(),
+      }
+    )?.(erech);
     renderPane(panes, placeMapId(erech));
     await flush();
     await flush();
@@ -359,9 +352,10 @@ describe("createOpenPlace", () => {
   it("opens nothing for a place there is nothing to draw for", () => {
     const panes = createPanes();
 
-    createOpenPlace(panes, readyMap(panes), { locations: fakeLocations() })?.(
-      place("Abana")
-    );
+    createOpenPlace(
+      { panes },
+      { locations: fakeLocations() }
+    )?.(place("Abana"));
 
     expect(panes.panes.value).toHaveLength(0);
   });
@@ -379,12 +373,7 @@ describe("createOpenPlace", () => {
         title: "Discover",
         component: () => null,
       });
-      const openPlace = createOpenPlace(
-        panes,
-        readyMap(panes),
-        {},
-        { isMobile, modals }
-      );
+      const openPlace = createOpenPlace({ panes, modals, isMobile });
       return { isMobile, panes, modals, openPlace };
     }
 
@@ -416,9 +405,8 @@ describe("createOpenPlace", () => {
       });
       await waitFor(
         () =>
-          container.querySelector(
-            ".sb-theographic-map-sheet .sb-geojson-map-point"
-          ) !== null
+          container.querySelector(".sb-map-sheet .sb-geojson-map-point") !==
+          null
       );
     });
 
@@ -437,7 +425,7 @@ describe("createOpenPlace", () => {
 
     it("counts the place as open while its sheet is", () => {
       const { panes, modals, openPlace } = phoneWithDiscoverOpen();
-      const isOpen = createIsPlaceOpen(panes, modals);
+      const isOpen = createIsPlaceOpen({ panes, modals });
 
       openPlace?.(BABEL);
       expect(isOpen(BABEL)).toBe(true);

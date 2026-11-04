@@ -314,9 +314,9 @@ export interface BibleThemeVariables {
   toolbarIconInvert?: string | null;
 
   /**
-   * CSS `filter` applied to a map's base imagery (`GeoJsonMap`). Tile servers
-   * draw one light map, so a dark theme dims and inverts it to sit with the
-   * rest of the page; `none` shows the tiles as drawn.
+   * CSS `filter` applied to a map's base imagery (`@seed-bible/maps`). Tile
+   * servers draw one light map, so a dark theme dims and inverts it to sit
+   * with the rest of the page; `none` shows the tiles as drawn.
    */
   mapTileFilter?: string | null;
 

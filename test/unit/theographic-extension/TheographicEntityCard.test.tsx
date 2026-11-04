@@ -20,11 +20,7 @@ import type {
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
-import {
-  createMapManager,
-  type LeafletModule,
-  type MapManager,
-} from "@packages/seed-bible/seed-bible/managers/MapManager";
+import { leafletLoader, type LeafletModule } from "@packages/maps";
 import {
   createIsPlaceOpen,
   createOpenPlace,
@@ -79,16 +75,8 @@ let container: HTMLDivElement;
 let leaflet: LeafletModule;
 
 beforeAll(async () => {
-  leaflet = await createMapManager({ panes: createPanes() }).loadLeaflet();
+  leaflet = await leafletLoader.load();
 }, 30_000);
-
-/** A map manager whose Leaflet is already downloaded. */
-function readyMap(panes = createPanes()): MapManager {
-  return createMapManager({
-    panes,
-    importLeaflet: () => Promise.resolve(leaflet),
-  });
-}
 
 beforeEach(() => {
   container = document.createElement("div");
@@ -113,7 +101,6 @@ function renderCard(
     openPlace?: (entry: TheographicPlaceEntry) => void;
     isPlaceOpen?: (entry: TheographicPlaceEntry) => boolean;
     scripture?: ScriptureReader;
-    map?: MapManager;
   } = {}
 ) {
   const getEntity = vi.fn<(path: string) => Promise<unknown>>(
@@ -140,7 +127,6 @@ function renderCard(
         openPlace={openPlace}
         isPlaceOpen={options.isPlaceOpen}
         locations={options.locations}
-        map={options.map ?? readyMap()}
         isMobile={options.isMobile}
         scripture={options.scripture}
       />,
@@ -357,14 +343,12 @@ describe("TheographicEntityCard", () => {
       // The real pane manager, so this is the same open and close the reader
       // does — not a flag the test flips.
       const panes = createPanes();
-      const map = readyMap(panes);
       renderCard({
         contentType: "place_profile",
         entry: EGYPT,
         getEntity: () => Promise.resolve(EGYPT_DETAIL),
-        openPlace: createOpenPlace(panes, map),
-        isPlaceOpen: createIsPlaceOpen(panes),
-        map,
+        openPlace: createOpenPlace({ panes }),
+        isPlaceOpen: createIsPlaceOpen({ panes }),
       });
       click(expandButton());
       await flush();
@@ -396,13 +380,8 @@ describe("TheographicEntityCard", () => {
         contentType: "place_profile",
         entry: EGYPT,
         getEntity: () => Promise.resolve(EGYPT_DETAIL),
-        openPlace: createOpenPlace(
-          panes,
-          readyMap(panes),
-          {},
-          { isMobile, modals }
-        ),
-        isPlaceOpen: createIsPlaceOpen(panes, modals),
+        openPlace: createOpenPlace({ panes, modals, isMobile }),
+        isPlaceOpen: createIsPlaceOpen({ panes, modals }),
         isMobile,
       });
       click(expandButton());

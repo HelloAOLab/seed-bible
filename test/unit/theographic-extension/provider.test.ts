@@ -17,8 +17,7 @@ import type {
   TheographicClient,
 } from "@packages/theographic-extension/ext_theographic/provider";
 import type { DiscoverContext } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
-import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
-import { createMapManager } from "@packages/seed-bible/seed-bible/managers/MapManager";
+import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 
 const DATASET = {
   id: "theographic",
@@ -300,56 +299,43 @@ describe("createOpenPlace", () => {
     verses: [19],
   };
 
-  function panesStub() {
-    const openPane = vi.fn();
-    const panes = { openPane } as unknown as PanesManager;
-    // Leaflet's download never finishes: these tests only look at the pane.
-    const map = createMapManager({
-      panes,
-      importLeaflet: () => new Promise(() => undefined),
-    });
-    return { openPane, panes, map };
-  }
-
-  it("is undefined without a panes manager, so no control is offered", () => {
-    expect(createOpenPlace(undefined, panesStub().map)).toBeUndefined();
-  });
-
-  it("is undefined without a map manager, so no control is offered", () => {
-    expect(createOpenPlace(panesStub().panes, undefined)).toBeUndefined();
+  it("is undefined without anywhere to open the map, so no control is offered", () => {
+    expect(createOpenPlace(undefined)).toBeUndefined();
   });
 
   it("opens a floating pane titled after the place", () => {
-    const { openPane, panes, map } = panesStub();
+    const panes = createPanes();
 
-    createOpenPlace(panes, map)?.(egypt);
+    createOpenPlace({ panes })?.(egypt);
 
-    expect(openPane).toHaveBeenCalledTimes(1);
-    expect(openPane.mock.calls[0]![0]).toMatchObject({
-      id: "theographic-place-egypt_362",
-      placement: "floating",
-      title: "Egypt",
-    });
+    expect(panes.panes.value).toEqual([
+      expect.objectContaining({
+        id: "theographic-place-egypt_362",
+        placement: "floating",
+        title: "Egypt",
+      }),
+    ]);
   });
 
   it("does nothing for a place the dataset has no position for", () => {
-    const { openPane, panes, map } = panesStub();
+    const panes = createPanes();
     const { latitude: _lat, longitude: _lng, ...noCoords } = egypt;
 
-    createOpenPlace(panes, map)?.(noCoords);
+    createOpenPlace({ panes })?.(noCoords);
 
-    expect(openPane).not.toHaveBeenCalled();
+    expect(panes.panes.value).toEqual([]);
   });
 
-  it("reuses one pane id per place, so reopening replaces rather than stacks", () => {
-    const { openPane, panes, map } = panesStub();
-    const open = createOpenPlace(panes, map);
+  it("keeps one pane per place, so reopening doesn't stack another", () => {
+    const panes = createPanes();
+    const open = createOpenPlace({ panes });
 
     open?.(egypt);
     open?.(egypt);
 
-    const [first, second] = openPane.mock.calls.map((c) => c[0].id);
-    expect(first).toBe(second);
+    expect(panes.panes.value.map((pane) => pane.id)).toEqual([
+      "theographic-place-egypt_362",
+    ]);
   });
 });
 

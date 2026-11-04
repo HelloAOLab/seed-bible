@@ -1,8 +1,7 @@
-import { useSignal, type ReadonlySignal } from "@preact/signals";
+import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
-import type { ComponentChildren } from "preact";
-import { GeoJsonMap, MaterialIcon, Skeleton } from "seed-bible/components";
-import { useI18n } from "seed-bible/i18n";
+import type { Feature, GeoJsonObject, Point } from "geojson";
+import { MaterialIcon, Skeleton } from "seed-bible/components";
 import type {
   findLocation,
   getPlaceAttribution,
@@ -10,14 +9,7 @@ import type {
   PlaceData,
   toStandardGeoJson,
 } from "@seed-bible/bible-locations";
-import type {
-  Feature,
-  GeoJsonObject,
-  MapManager,
-  Point,
-} from "@packages/seed-bible/seed-bible/managers/MapManager";
-import type { ModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
-import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import { GeoJsonMap, isMapOpen, openMap, type MapHost } from "@seed-bible/maps";
 import { withoutQualifier } from "./names";
 import type { TheographicClient, TheographicPlaceEntry } from "./provider";
 
@@ -66,27 +58,16 @@ export function placeMapId(place: Pick<TheographicPlaceEntry, "id">): string {
 
 /**
  * Whether a place's map is currently open in its floating pane, or on a
- * phone, its sheet.
- *
- * Reads the pane and modal lists themselves rather than tracking open/close
- * here, so it stays right however the map goes away — its close button, being
- * displaced, or closed from code. Read during render, it re-renders the
- * reader when that changes.
+ * phone, its sheet. Read during render, it re-renders the reader when that
+ * changes.
  */
 export function createIsPlaceOpen(
-  panes: PanesManager | undefined,
-  modals?: ModalManager
+  host: MapHost | undefined
 ): (place: TheographicPlaceEntry) => boolean {
-  if (!panes) {
+  if (!host) {
     return () => false;
   }
-  return (place) => {
-    const id = placeMapId(place);
-    return (
-      panes.panes.value.some((pane) => pane.id === id) ||
-      (modals?.modals.value.some((modal) => modal.id === id) ?? false)
-    );
-  };
+  return (place) => isMapOpen(host, placeMapId(place));
 }
 
 /** The place lookup the map uses: `@seed-bible/bible-locations`, or a stand-in. */
@@ -204,91 +185,17 @@ function useMapData(
   return mapData.value;
 }
 
-/** A place's map, or a placeholder while its data loads. */
-function PlaceMapView(props: {
-  map: MapManager;
-  place: TheographicPlaceEntry;
-  mapData: PlaceMapData | "loading";
-  inline?: boolean;
-  onTap?: () => void;
-  controls?: ComponentChildren;
-}) {
-  const { map, place, mapData, inline, onTap, controls } = props;
-  if (mapData === "loading") {
-    return (
-      <Skeleton
-        shape="block"
-        width="100%"
-        height="100%"
-        className="sb-theographic-map-loading"
-      />
-    );
-  }
-  return (
-    <GeoJsonMap
-      map={map}
-      data={mapData.data}
-      attribution={
-        // The card an inline map sits in credits the dataset just below it;
-        // the floating pane has no card, so it keeps the credit.
-        inline
-          ? mapData.attribution.filter(
-              (credit) => credit !== THEOGRAPHIC_ATTRIBUTION
-            )
-          : mapData.attribution
-      }
-      label={place.name}
-      inline={inline}
-      onTap={onTap}
-      controls={controls}
-    />
-  );
-}
-
-/** A place's map filling its floating pane or sheet. */
-function PlacePane(props: {
-  map: MapManager;
-  place: TheographicPlaceEntry;
-  sources: PlaceMapSources;
-}) {
-  const { map, place, sources } = props;
-  const { t } = useI18n("theographic-extension");
-  const mapData = useMapData(place.id, () =>
-    resolvePlaceMapData(place, sources)
-  );
-
-  if (mapData === null) {
-    return (
-      <p className="sb-theographic-card-hint">
-        {t("map-unavailable", {
-          defaultValue: "This place can't be shown on the map.",
-        })}
-      </p>
-    );
-  }
-  return <PlaceMapView map={map} place={place} mapData={mapData} />;
-}
-
 /**
- * Opens a place's map in its own floating pane or sheet.
+ * Opens a place's map in its own floating pane, or on a phone, a sheet.
  *
- * Undefined without a `PanesManager` and `MapManager`, which is how the card
- * decides whether to offer the control at all.
- *
- * On a phone it opens in a sheet instead: a pane there fills the screen and
- * closes the others, Discover included, while a sheet sits over it and leaves
- * it as it was.
+ * Undefined without anywhere to open it, which is how the card decides
+ * whether to offer the control at all.
  */
 export function createOpenPlace(
-  panes: PanesManager | undefined,
-  map: MapManager | undefined,
-  sources: PlaceMapSources = {},
-  phone: {
-    isMobile?: ReadonlySignal<boolean>;
-    modals?: ModalManager;
-  } = {}
+  host: MapHost | undefined,
+  sources: PlaceMapSources = {}
 ): ((place: TheographicPlaceEntry) => void) | undefined {
-  if (!panes || !map) {
+  if (!host) {
     return undefined;
   }
 
@@ -296,30 +203,11 @@ export function createOpenPlace(
     if (!canMapPlace(place, sources.locations)) {
       return;
     }
-
-    // Starts Leaflet's download alongside the place data rather than after.
-    void map.loadLeaflet().catch(() => undefined);
-    const renderMap = () => (
-      <PlacePane map={map} place={place} sources={sources} />
-    );
-
-    if (phone.isMobile?.peek() && phone.modals) {
-      phone.modals.openModal({
-        id: placeMapId(place),
-        title: place.name,
-        content: () => (
-          <div className="sb-theographic-map-sheet">{renderMap()}</div>
-        ),
-        mobileSheet: true,
-      });
-      return;
-    }
-
-    panes.openPane({
+    openMap(host, {
       id: placeMapId(place),
-      placement: "floating",
       title: place.name,
-      component: renderMap,
+      label: place.name,
+      load: () => resolvePlaceMapData(place, sources),
     });
   };
 }
@@ -339,10 +227,10 @@ export function formatCoordinates(
  * A place's map, inline in its card.
  *
  * The same map the floating pane draws, sized to sit in the card. Renders
- * nothing for a place there turns out to be nothing to draw for.
+ * nothing for a place there turns out to be nothing to draw for, where the
+ * pane says so instead.
  */
 export function PlaceMap(props: {
-  map: MapManager;
   place: TheographicPlaceEntry;
   label: string;
   sources: PlaceMapSources;
@@ -354,7 +242,7 @@ export function PlaceMap(props: {
   /** The control's accessible name, already translated. */
   openLabel?: string;
 }) {
-  const { map, place, label, sources, onOpen, openLabel } = props;
+  const { place, label, sources, onOpen, openLabel } = props;
   const mapData = useMapData(place.id, () =>
     resolvePlaceMapData(place, sources)
   );
@@ -368,26 +256,39 @@ export function PlaceMap(props: {
   return (
     // A group rather than an image: it holds a real control as well.
     <div className="sb-theographic-map" role="group" aria-label={label}>
-      <PlaceMapView
-        map={map}
-        place={place}
-        mapData={mapData}
-        inline
-        onTap={onOpen}
-        controls={
-          onOpen ? (
-            <button
-              type="button"
-              className="sb-geojson-map-control sb-theographic-map-open"
-              title={openLabel}
-              aria-label={openLabel}
-              onClick={onOpen}
-            >
-              <MaterialIcon>float_landscape_2</MaterialIcon>
-            </button>
-          ) : null
-        }
-      />
+      {mapData === "loading" ? (
+        <Skeleton
+          shape="block"
+          width="100%"
+          height="100%"
+          className="sb-theographic-map-loading"
+        />
+      ) : (
+        <GeoJsonMap
+          data={mapData.data}
+          // The card credits the dataset just below the map; the floating
+          // pane has no card, so it keeps the credit.
+          attribution={mapData.attribution.filter(
+            (credit) => credit !== THEOGRAPHIC_ATTRIBUTION
+          )}
+          label={place.name}
+          inline
+          onTap={onOpen}
+          controls={
+            onOpen ? (
+              <button
+                type="button"
+                className="sb-geojson-map-control sb-theographic-map-open"
+                title={openLabel}
+                aria-label={openLabel}
+                onClick={onOpen}
+              >
+                <MaterialIcon>float_landscape_2</MaterialIcon>
+              </button>
+            ) : null
+          }
+        />
+      )}
       {coordinates ? (
         <span className="sb-theographic-map-coords">{coordinates}</span>
       ) : null}

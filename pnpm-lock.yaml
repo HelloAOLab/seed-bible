@@ -496,6 +496,19 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/maps:
+    dependencies:
+      leaflet:
+        specifier: 1.9.4
+        version: 1.9.4
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+    devDependencies:
+      '@types/leaflet':
+        specifier: 1.9.20
+        version: 1.9.20
+
   packages/mcp-extension:
     dependencies:
       '@modelcontextprotocol/client':
@@ -607,12 +620,6 @@ importers:
       '@tiptap/starter-kit':
         specifier: 'catalog:'
         version: 3.27.1
-      '@types/geojson':
-        specifier: 7946.0.16
-        version: 7946.0.16
-      '@types/leaflet':
-        specifier: 1.9.20
-        version: 1.9.20
       axios:
         specifier: 'catalog:'
         version: 1.13.5
@@ -631,9 +638,6 @@ importers:
       i18next-resources-to-backend:
         specifier: 'catalog:'
         version: 1.2.1
-      leaflet:
-        specifier: 1.9.4
-        version: 1.9.4
       preact:
         specifier: 'catalog:'
         version: 10.29.8(preact-render-to-string@6.7.0)
@@ -747,6 +751,9 @@ importers:
       '@seed-bible/bible-locations':
         specifier: workspace:*
         version: link:../bible-locations
+      '@seed-bible/maps':
+        specifier: workspace:*
+        version: link:../maps
       seed-bible:
         specifier: workspace:*
         version: link:../seed-bible
@@ -3327,6 +3334,7 @@ packages:
   '@smithy/core@3.24.7':
     resolution: {integrity: sha512-KoUi4M1f3BG6kzN1FnCwL7oyFptTbyBJKjR6yhSib+JHRdUmM1o+VwsFtJ66NZCkCzVfJMWRHJNo0R0jznp0Pg==}
     engines: {node: '>=18.0.0'}
+    deprecated: Deprecated due to a bug in custom logger data redaction. See https://github.com/aws/aws-sdk-js-v3/issues/8393.
 
   '@smithy/credential-provider-imds@4.3.9':
     resolution: {integrity: sha512-ZlfJ/4Fa3jYb+3eaohPfG9utX9HmdhFNcFtpoGAhUhdynAOmGXtmigbi7eEiONKM+ykHw8RwKuDEb85Lx7t7fA==}

@@ -1,7 +1,6 @@
 export * from "./icons";
 export * from "./PortalComponent/PortalComponent";
 export * from "./Skeleton/Skeleton";
-export * from "./GeoJsonMap/GeoJsonMap";
 export * from "./ExpandableText/ExpandableText";
 export * from "./PlaylistLinkContent/PlaylistLinkContent";
 export * from "./SearchBar/SearchBar";

@@ -1,16 +1,16 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { GeoJsonMap } from "@packages/seed-bible/seed-bible/components/GeoJsonMap/GeoJsonMap";
+import type { GeoJsonObject } from "geojson";
 import {
-  createMapManager,
-  type GeoJsonObject,
+  createLeafletLoader,
+  GeoJsonMap,
+  leafletLoader,
   type LeafletModule,
-} from "@packages/seed-bible/seed-bible/managers/MapManager";
-import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
-import { waitFor } from "../testUtils/createTestSeedBibleState";
+} from "@packages/maps";
+import { waitFor } from "../seed-bible/testUtils/createTestSeedBibleState";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  const { mockI18nManager } = await import("../seed-bible/testUtils/mockI18n");
   return mockI18nManager();
 });
 
@@ -63,7 +63,7 @@ let leaflet: LeafletModule;
 let container: HTMLDivElement;
 
 beforeAll(async () => {
-  leaflet = await createMapManager({ panes: createPanes() }).loadLeaflet();
+  leaflet = await leafletLoader.load();
 }, 30_000);
 
 beforeEach(() => {
@@ -76,13 +76,6 @@ afterEach(() => {
   container.remove();
 });
 
-function readyMap() {
-  return createMapManager({
-    panes: createPanes(),
-    importLeaflet: () => Promise.resolve(leaflet),
-  });
-}
-
 async function show(element: preact.JSX.Element) {
   act(() => {
     render(element, container);
@@ -92,6 +85,34 @@ async function show(element: preact.JSX.Element) {
       container.querySelector(".leaflet-container") !== null ||
       container.querySelector(".sb-geojson-map-message") !== null
   );
+}
+
+/**
+ * Shows a map, then lays it out at 300 by 200. jsdom gives every element a
+ * size of 0, so the map is first drawn the way it would be in a box that
+ * hasn't been laid out yet, and fits its data again once it has a size.
+ */
+async function showSized(element: preact.JSX.Element) {
+  const resized: Array<() => void> = [];
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(callback: () => void) {
+        resized.push(callback);
+      }
+      observe() {}
+      disconnect() {}
+    }
+  );
+  try {
+    await show(element);
+    const canvas = container.querySelector(".leaflet-container")!;
+    Object.defineProperty(canvas, "clientWidth", { value: 300 });
+    Object.defineProperty(canvas, "clientHeight", { value: 200 });
+    act(() => resized.forEach((callback) => callback()));
+  } finally {
+    vi.unstubAllGlobals();
+  }
 }
 
 /** The zoom levels of the base-map tiles currently shown. */
@@ -109,16 +130,18 @@ function tiles(): string[] {
 describe("GeoJsonMap", () => {
   it("holds its space until the map library arrives, then draws", async () => {
     let finish: () => void = () => undefined;
-    const map = createMapManager({
-      panes: createPanes(),
-      importLeaflet: () =>
+    const loader = createLeafletLoader(
+      () =>
         new Promise((resolve) => {
           finish = () => resolve(leaflet);
-        }),
-    });
+        })
+    );
 
     act(() => {
-      render(<GeoJsonMap map={map} data={ACCO} label="Acco" />, container);
+      render(
+        <GeoJsonMap loader={loader} data={ACCO} label="Acco" />,
+        container
+      );
     });
     expect(container.querySelector(".sb-skeleton")).toBeTruthy();
     expect(container.querySelector(".leaflet-container")).toBeNull();
@@ -131,7 +154,7 @@ describe("GeoJsonMap", () => {
   });
 
   it("centres a lone point on where it is", async () => {
-    await show(<GeoJsonMap map={readyMap()} data={ACCO} />);
+    await show(<GeoJsonMap data={ACCO} />);
 
     // Zoom 10's tile over Acco, on the coast north of Haifa. Read the other
     // way round, the same numbers land in Cyprus: tile 10/605/405.
@@ -139,7 +162,7 @@ describe("GeoJsonMap", () => {
   });
 
   it("goes back to the place after the reader has moved away", async () => {
-    await show(<GeoJsonMap map={readyMap()} data={ACCO} />);
+    await show(<GeoJsonMap data={ACCO} />);
     const zoomOut = container.querySelector(
       ".leaflet-control-zoom-out"
     ) as HTMLElement;
@@ -160,7 +183,6 @@ describe("GeoJsonMap", () => {
   it("stacks the caller's controls above the recenter button", async () => {
     await show(
       <GeoJsonMap
-        map={readyMap()}
         data={ACCO}
         controls={<button className="extra">Open</button>}
       />
@@ -173,13 +195,10 @@ describe("GeoJsonMap", () => {
   });
 
   it("offers no recenter button until there is a map to move", () => {
-    const map = createMapManager({
-      panes: createPanes(),
-      importLeaflet: () => new Promise(() => undefined),
-    });
+    const loader = createLeafletLoader(() => new Promise(() => undefined));
 
     act(() => {
-      render(<GeoJsonMap map={map} data={ACCO} />, container);
+      render(<GeoJsonMap loader={loader} data={ACCO} />, container);
     });
 
     expect(container.querySelector(".sb-geojson-map-recenter")).toBeNull();
@@ -188,7 +207,6 @@ describe("GeoJsonMap", () => {
   it("credits the base map and the place data", async () => {
     await show(
       <GeoJsonMap
-        map={readyMap()}
         data={ACCO}
         attribution={['Places: <a href="https://example.test">Example</a>']}
       />
@@ -203,7 +221,7 @@ describe("GeoJsonMap", () => {
   });
 
   it("labels the place, as text", async () => {
-    await show(<GeoJsonMap map={readyMap()} data={ACCO} label="<b>Acco</b>" />);
+    await show(<GeoJsonMap data={ACCO} label="<b>Acco</b>" />);
 
     const label = container.querySelector(".sb-geojson-map-label");
     expect(label?.textContent).toBe("<b>Acco</b>");
@@ -214,40 +232,41 @@ describe("GeoJsonMap", () => {
   });
 
   it("fits an outline into view", async () => {
-    await show(<GeoJsonMap map={readyMap()} data={JERUSALEM_OUTLINE} />);
+    await show(<GeoJsonMap data={JERUSALEM_OUTLINE} />);
 
     expect(container.querySelector(".sb-geojson-map-shape")).toBeTruthy();
   });
 
   it("frames a large outline again once a map drawn with no size gets one", async () => {
-    // jsdom gives every element a size of 0, so this map is drawn the way it
-    // would be in a box that hasn't been laid out yet.
-    const resized: Array<() => void> = [];
-    vi.stubGlobal(
-      "ResizeObserver",
-      class {
-        constructor(callback: () => void) {
-          resized.push(callback);
-        }
-        observe() {}
-        disconnect() {}
-      }
-    );
-    try {
-      await show(<GeoJsonMap map={readyMap()} data={CRETE_OUTLINE} />);
-      // With no size to fit into, Leaflet falls back to the closest zoom.
-      expect(zooms()).toEqual(["10"]);
+    await showSized(<GeoJsonMap data={CRETE_OUTLINE} />);
 
-      const canvas = container.querySelector(".leaflet-container")!;
-      Object.defineProperty(canvas, "clientWidth", { value: 300 });
-      Object.defineProperty(canvas, "clientHeight", { value: 200 });
-      act(() => resized.forEach((callback) => callback()));
+    // The whole island fits a 300 by 200 box at zoom 6.
+    expect(zooms()).toEqual(["6"]);
+  });
 
-      // The whole island fits a 300 by 200 box at zoom 6.
-      expect(zooms()).toEqual(["6"]);
-    } finally {
-      vi.unstubAllGlobals();
-    }
+  it("fits a small outline as closely as it fits, closer than a lone point", async () => {
+    await showSized(<GeoJsonMap data={JERUSALEM_OUTLINE} />);
+
+    // About a kilometre across: zoom 14 frames it in a 300 by 200 box.
+    expect(zooms()).toEqual(["14"]);
+  });
+
+  it("keeps points close together at a lone point's zoom", async () => {
+    const twoPoints = {
+      type: "Feature",
+      geometry: {
+        type: "MultiPoint",
+        coordinates: [
+          [35.2257, 31.7728],
+          [35.2376, 31.7837],
+        ],
+      },
+      properties: {},
+    } as GeoJsonObject;
+
+    await showSized(<GeoJsonMap data={twoPoints} />);
+
+    expect(zooms()).toEqual(["10"]);
   });
 
   it("offers to try again when the map library fails to download", async () => {
@@ -255,9 +274,9 @@ describe("GeoJsonMap", () => {
       .fn<() => Promise<LeafletModule>>()
       .mockRejectedValueOnce(new Error("offline"))
       .mockResolvedValueOnce(leaflet);
-    const map = createMapManager({ panes: createPanes(), importLeaflet });
+    const loader = createLeafletLoader(importLeaflet);
 
-    await show(<GeoJsonMap map={map} data={ACCO} />);
+    await show(<GeoJsonMap loader={loader} data={ACCO} />);
     expect(container.textContent).toContain("The map couldn't load.");
 
     const retry = container.querySelector(
@@ -275,10 +294,7 @@ describe("GeoJsonMap", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     await show(
-      <GeoJsonMap
-        map={readyMap()}
-        data={{ type: "NotGeoJson" } as unknown as GeoJsonObject}
-      />
+      <GeoJsonMap data={{ type: "NotGeoJson" } as unknown as GeoJsonObject} />
     );
     await waitFor(
       () => container.querySelector(".sb-geojson-map-message") !== null
@@ -289,7 +305,7 @@ describe("GeoJsonMap", () => {
   });
 
   it("doesn't add a landmark for an inline map, which its card already names", async () => {
-    await show(<GeoJsonMap map={readyMap()} data={ACCO} label="Acco" inline />);
+    await show(<GeoJsonMap data={ACCO} label="Acco" inline />);
 
     const map = container.querySelector(".sb-geojson-map");
     expect(map?.getAttribute("role")).toBeNull();
@@ -301,13 +317,13 @@ describe("GeoJsonMap", () => {
   });
 
   it("lets the wheel scroll past an inline map instead of zooming it", async () => {
-    await show(<GeoJsonMap map={readyMap()} data={ACCO} inline />);
+    await show(<GeoJsonMap data={ACCO} inline />);
 
     expect(wheelZooms()).toBe(false);
   });
 
   it("zooms a full map with the wheel", async () => {
-    await show(<GeoJsonMap map={readyMap()} data={ACCO} />);
+    await show(<GeoJsonMap data={ACCO} />);
 
     expect(wheelZooms()).toBe(true);
   });
@@ -315,7 +331,7 @@ describe("GeoJsonMap", () => {
   it("can be closed in the middle of a wheel zoom", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     try {
-      await show(<GeoJsonMap map={readyMap()} data={ACCO} />);
+      await show(<GeoJsonMap data={ACCO} />);
       wheelZooms();
 
       // Leaflet zooms a moment after the wheel; the map is gone by then.
@@ -337,7 +353,7 @@ describe("GeoJsonMap", () => {
     });
 
     it("is a still preview, without zoom or recenter buttons", async () => {
-      await show(<GeoJsonMap map={readyMap()} data={ACCO} inline />);
+      await show(<GeoJsonMap data={ACCO} inline />);
 
       expect(container.querySelector(".leaflet-control-zoom")).toBeNull();
       expect(container.querySelector(".sb-geojson-map-recenter")).toBeNull();
@@ -345,9 +361,7 @@ describe("GeoJsonMap", () => {
 
     it("calls onTap when tapped", async () => {
       const onTap = vi.fn();
-      await show(
-        <GeoJsonMap map={readyMap()} data={ACCO} inline onTap={onTap} />
-      );
+      await show(<GeoJsonMap data={ACCO} inline onTap={onTap} />);
 
       tap();
 
@@ -356,7 +370,7 @@ describe("GeoJsonMap", () => {
 
     it("keeps its zoom buttons as a full map", async () => {
       const onTap = vi.fn();
-      await show(<GeoJsonMap map={readyMap()} data={ACCO} onTap={onTap} />);
+      await show(<GeoJsonMap data={ACCO} onTap={onTap} />);
 
       expect(container.querySelector(".leaflet-control-zoom")).not.toBeNull();
       tap();
@@ -366,9 +380,7 @@ describe("GeoJsonMap", () => {
 
   it("can still be moved inline on a computer, so a click doesn't call onTap", async () => {
     const onTap = vi.fn();
-    await show(
-      <GeoJsonMap map={readyMap()} data={ACCO} inline onTap={onTap} />
-    );
+    await show(<GeoJsonMap data={ACCO} inline onTap={onTap} />);
 
     expect(container.querySelector(".leaflet-control-zoom")).not.toBeNull();
     tap();
