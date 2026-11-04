@@ -4021,3 +4021,54 @@ describe("the fullscreen playlist editor", () => {
     expect(editorOpen(state)).toBe(false);
   });
 });
+
+describe("a playing playlist's step screen", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const stepScreenOpen = (state: SeedBibleState) =>
+    state.panes.panes.value.some((pane) => pane.id === "playlist-step-pane");
+
+  it("comes back when the reader returns to the playlist's tab from a passage it opened", async () => {
+    const state = await createState();
+    const playlistTab = state.tabs.selectedTabId.value!;
+    state.playlists.startPlaying(
+      {
+        id: "p1",
+        title: "Two wells",
+        description: null,
+        items: [
+          {
+            type: "compare",
+            refs: [
+              { bookId: "GEN", chapter: 16, verse: 13 },
+              { bookId: "GEN", chapter: 21, verse: 17 },
+            ],
+          },
+        ],
+      },
+      0,
+      { history: false }
+    );
+    await waitFor(() => stepScreenOpen(state));
+
+    // "Open Genesis 21 in a tab", as the compare step does it.
+    const opened = state.tabs.addTab(undefined, {
+      initialBookId: "GEN",
+      initialChapterNumber: 21,
+    });
+    state.app.selectTab(opened.id);
+    await waitFor(() => !stepScreenOpen(state));
+
+    state.app.selectTab(playlistTab);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(stepScreenOpen(state)).toBe(true);
+  });
+});

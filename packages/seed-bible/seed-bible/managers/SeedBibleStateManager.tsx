@@ -2416,6 +2416,9 @@ export function createSeedBibleState(
    * entry, so pressing back afterwards would land on a stale duplicate of the
    * destination instead of where the user actually came from.
    */
+  /** Bumped to have the playlist step screen look again at the selected tab. */
+  const playlistStepScreenRecheck = signal(0);
+
   const navigateFromSidebar = (navigate: () => void) => {
     navigation.batchWrites(() => {
       closeSidebarAndSettings();
@@ -2429,6 +2432,9 @@ export function createSeedBibleState(
       tabsLayout.setSelectedSlotTab(tabId);
       panes.closeFullscreenPanes();
     });
+    // A playlist step that isn't scripture is what its tab shows, not
+    // something covering the reader: coming back to the tab brings it back.
+    playlistStepScreenRecheck.value += 1;
   };
 
   const handleAddTab = () => {
@@ -3654,6 +3660,7 @@ export function createSeedBibleState(
   const PLAYLIST_STEP_PANE_ID = "playlist-step-pane";
   let playerViewToRestore = false;
   effect(() => {
+    void playlistStepScreenRecheck.value;
     const playing = playlists.playing.value;
     const item = playing?.currentItem.value ?? null;
     const onScreen = !!item && item.type !== "bible-verse";
