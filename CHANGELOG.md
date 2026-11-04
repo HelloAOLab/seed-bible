@@ -4,7 +4,7 @@
 
 ### ✨ Added
 
-- Let third-party extensions suggest people, places, events and other details, videos and websites for a chapter in the Discover panel, shown in their own sections.
+- Let third-party extensions suggest people, places, events and other details, videos and websites for a chapter in the Discover panel, shown in their own sections. Theographic's people, places and events share these sections, so each appears once even with several providers installed.
 
 ### 🔧 Changed
 

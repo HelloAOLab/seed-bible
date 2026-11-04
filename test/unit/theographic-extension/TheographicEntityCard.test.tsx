@@ -84,7 +84,7 @@ function renderCard(
     isMobile?: ReadonlySignal<boolean>;
     onReferenceClick?: (ref: VerseRef) => void;
     verses?: number[];
-    contentType?: "person_profile" | "place_profile" | "event";
+    contentType?: "person" | "place" | "event";
     entry?: TheographicPersonEntry | TheographicPlaceEntry;
     openPlace?: (entry: TheographicPlaceEntry) => void;
     isPlaceOpen?: (entry: TheographicPlaceEntry) => boolean;
@@ -103,7 +103,7 @@ function renderCard(
   act(() => {
     render(
       <TheographicEntityCard
-        contentType={options.contentType ?? "person_profile"}
+        contentType={options.contentType ?? "person"}
         entry={options.entry ?? AARON}
         description="Male"
         verses={options.verses ?? AARON.verses}
@@ -216,7 +216,7 @@ describe("TheographicEntityCard", () => {
       entry: TheographicPlaceEntry = EGYPT
     ): Promise<ReturnType<typeof renderCard>> {
       const rendered = renderCard({
-        contentType: "place_profile",
+        contentType: "place",
         entry,
         getEntity: () => Promise.resolve(EGYPT_DETAIL),
       });
@@ -226,7 +226,7 @@ describe("TheographicEntityCard", () => {
     }
 
     it("sits on the map, not in the header", async () => {
-      renderCard({ contentType: "place_profile", entry: EGYPT });
+      renderCard({ contentType: "place", entry: EGYPT });
       // Collapsed there's no map, so nothing to open.
       expect(control()).toBeNull();
 
@@ -243,7 +243,7 @@ describe("TheographicEntityCard", () => {
     });
 
     it("stays away from people and events", async () => {
-      renderCard({ contentType: "person_profile" });
+      renderCard({ contentType: "person" });
       click(expandButton());
       await flush();
       expect(control()).toBeNull();
@@ -268,7 +268,7 @@ describe("TheographicEntityCard", () => {
     it("isn't offered on a phone-sized screen, and returns when it widens", async () => {
       const isMobile = signal(true);
       renderCard({
-        contentType: "place_profile",
+        contentType: "place",
         entry: EGYPT,
         getEntity: () => Promise.resolve(EGYPT_DETAIL),
         isMobile,
@@ -298,7 +298,7 @@ describe("TheographicEntityCard", () => {
       // does — not a flag the test flips.
       const panes = createPanes();
       renderCard({
-        contentType: "place_profile",
+        contentType: "place",
         entry: EGYPT,
         getEntity: () => Promise.resolve(EGYPT_DETAIL),
         openPlace: createOpenPlace(panes),
@@ -328,7 +328,7 @@ describe("TheographicEntityCard", () => {
 
     it("keeps the rest of the card while the map is in the pane", async () => {
       renderCard({
-        contentType: "place_profile",
+        contentType: "place",
         entry: EGYPT,
         getEntity: () => Promise.resolve(EGYPT_DETAIL),
         isPlaceOpen: () => true,
@@ -647,14 +647,14 @@ describe("the redesigned card", () => {
       apiLink: "/api/d/theographic/places/erech_1.json",
       verses: [10],
     };
-    renderCard({ contentType: "place_profile", entry: city });
+    renderCard({ contentType: "place", entry: city });
     expect(
       container.querySelector(".sb-theographic-card-kind")?.textContent
     ).toBe("City");
 
     render(null, container);
     const { featureType: _type, ...untyped } = city;
-    renderCard({ contentType: "place_profile", entry: untyped });
+    renderCard({ contentType: "place", entry: untyped });
     expect(
       container.querySelector(".sb-theographic-card-kind")?.textContent
     ).toBe("Place");
@@ -738,7 +738,7 @@ describe("the redesigned card", () => {
     const detail = AARON_WITH_REFERENCES;
     const cardFor = (scripture: ScriptureReader) => (
       <TheographicEntityCard
-        contentType="person_profile"
+        contentType="person"
         entry={AARON}
         description="Male"
         verses={AARON.verses}
@@ -888,7 +888,7 @@ describe("the redesigned card", () => {
       detail: TheographicPlaceDetail = ERECH_DETAIL
     ) {
       const rendered = renderCard({
-        contentType: "place_profile",
+        contentType: "place",
         entry,
         scripture: fakeScripture(),
         getEntity: () => Promise.resolve(detail),
@@ -914,7 +914,7 @@ describe("the redesigned card", () => {
     }
 
     it("draws the locations extension's file, in an iframe, only when expanded", async () => {
-      renderCard({ contentType: "place_profile", entry: ERECH });
+      renderCard({ contentType: "place", entry: ERECH });
       // Collapsed cards don't load a map each.
       expect(container.querySelector("iframe")).toBeNull();
 
@@ -992,7 +992,7 @@ describe("the redesigned card", () => {
     });
 
     it("shows its broad type collapsed, and its sub type once opened", async () => {
-      renderCard({ contentType: "place_profile", entry: ABANA });
+      renderCard({ contentType: "place", entry: ABANA });
       const kind = () =>
         container.querySelector(".sb-theographic-card-kind")?.textContent;
       expect(kind()).toBe("Water");

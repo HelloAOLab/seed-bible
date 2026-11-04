@@ -542,13 +542,13 @@ describe("sandboxed extension services", () => {
       expect(results).toEqual([
         expect.objectContaining({
           type: "content",
-          contentType: "extension_person",
+          contentType: "person",
           title: "Nicodemus",
           description: "A Pharisee who came to Jesus by night.",
           verses: [1, 4, 9],
         }),
         expect.objectContaining({
-          contentType: "extension_place",
+          contentType: "place",
           title: "Aenon near Salim",
           description: "",
         }),
@@ -556,9 +556,7 @@ describe("sandboxed extension services", () => {
       const sections = h.host.discover.contentTypes.value.map(
         (type) => type.id
       );
-      expect(sections).toEqual(
-        expect.arrayContaining(["extension_person", "extension_place"])
-      );
+      expect(sections).toEqual(expect.arrayContaining(["person", "place"]));
       const card = renderContent(results[0]);
       expect(card.textContent).toContain("Nikodemos");
       expect(card.textContent).toContain("Group");
@@ -616,12 +614,12 @@ describe("sandboxed extension services", () => {
 
       expect(results).toEqual([
         expect.objectContaining({
-          contentType: "extension_video",
+          contentType: "video",
           title: "Overview of John",
           image: "https://img.example.com/thumb.jpg",
         }),
         expect.objectContaining({
-          contentType: "extension_website",
+          contentType: "website",
           title: "Born again",
           description: "An article on John 3.",
           image: undefined,
@@ -661,10 +659,10 @@ describe("sandboxed extension services", () => {
       await second.sb.discover.registerProvider(provider);
       const sectionIds = () =>
         h.host.discover.contentTypes.value.map((type) => type.id);
-      expect(sectionIds()).toContain("extension_video");
+      expect(sectionIds()).toContain("video");
 
       manager.unloadExtension(sourced("ext.sections-a"));
-      expect(sectionIds()).toContain("extension_video");
+      expect(sectionIds()).toContain("video");
 
       manager.unloadExtension(sourced("ext.sections-b"));
       expect(sectionIds()).toEqual([]);

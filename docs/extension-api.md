@@ -545,7 +545,7 @@ The app calls `discover` whenever the Discover panel needs results, with `{ prov
 
 `reference` is a [`SandboxReference`](#4-shared-types). `image` and `thumbnail` must be `https:` URLs on one of your `network` hosts, or they're dropped. `author` defaults to your extension's name.
 
-A `metadata` result describes something the passage mentions. `kind` is one of `"person"`, `"place"`, `"event"`, `"group"` (a tribe, nation or party), `"object"` (like the ark or the temple) or `"topic"`. `aliases` is up to 10 other names, and `facts` up to 20 `{ label, value }` pairs, like `{ label: "Born", value: "c. 1000 BC" }`. Give `verses` so the card shows up when the reader selects one of them.
+A `metadata` result describes something the passage mentions. These sections are shared with the app's built-in providers (like Theographic's people, places and events), and start folded: in the compact Discover panel they're left out of "All" until the reader picks their chip, since a chapter can mention dozens of people. `kind` is one of `"person"`, `"place"`, `"event"`, `"group"` (a tribe, nation or party), `"object"` (like the ark or the temple) or `"topic"`. `aliases` is up to 10 other names, and `facts` up to 20 `{ label, value }` pairs, like `{ label: "Born", value: "c. 1000 BC" }`. Give `verses` so the card shows up when the reader selects one of them.
 
 A `video` or `website` result's `url` can be on any host, but must be `https:`; a result with any other link is dropped. Because the reader leaves the app when they follow it, the card always shows the link's host name, so they can see where it goes first.
 

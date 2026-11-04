@@ -24,14 +24,11 @@ import type { ChapterVerse } from "./FreeUseBibleAPI";
 import type { FriendsManager } from "./FriendsManager";
 import type { AppState } from "./SeedBibleStateManager";
 import {
-  EXTENSION_METADATA_CONTENT_TYPES,
-  EXTENSION_VIDEO_CONTENT_TYPE,
-  EXTENSION_WEBSITE_CONTENT_TYPE,
   httpsUrl,
   LinkDetails,
   MetadataDetails,
-  retainExtensionContentTypes,
 } from "./ExtensionDiscoverKinds";
+import { SHARED_CONTENT_TYPES } from "./DiscoverSharedContentTypes";
 import {
   createSandboxAudio,
   SandboxAudioError,
@@ -105,7 +102,7 @@ export interface SandboxServicesContext {
   >;
   discover: Pick<
     DiscoverManager,
-    "registerDiscoverProvider" | "registerContentType"
+    "registerDiscoverProvider" | "retainSharedContentTypes"
   >;
   chats: Pick<ChatsManager, "registerProvider" | "chats">;
   modals: Pick<ModalManager, "openModal" | "closeModal">;
@@ -759,7 +756,7 @@ export function createSandboxServices(
       case "metadata":
         return {
           type: "content",
-          contentType: EXTENSION_METADATA_CONTENT_TYPES[result.kind],
+          contentType: SHARED_CONTENT_TYPES[result.kind],
           title: result.name,
           description: result.description ?? "",
           reference: toDiscoverReference(result.reference),
@@ -781,8 +778,8 @@ export function createSandboxServices(
         return {
           type: "content",
           contentType: isVideo
-            ? EXTENSION_VIDEO_CONTENT_TYPE
-            : EXTENSION_WEBSITE_CONTENT_TYPE,
+            ? SHARED_CONTENT_TYPES.video
+            : SHARED_CONTENT_TYPES.website,
           title: result.title,
           description: result.description ?? "",
           reference: toDiscoverReference(result.reference),
@@ -1003,7 +1000,7 @@ export function createSandboxServices(
     "discover.register": (params) => {
       const { id, title, description } = params as Params<"discover.register">;
       discoverProviders.get(id)?.();
-      const releaseContentTypes = retainExtensionContentTypes(context.discover);
+      const releaseContentTypes = context.discover.retainSharedContentTypes();
       const unregisterProvider = context.discover.registerDiscoverProvider({
         id: scopedId(id),
         title,

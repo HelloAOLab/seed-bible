@@ -697,6 +697,7 @@ export function toDiscoverResults(
     results.push({
       type: "content",
       contentType,
+      layout: "custom",
       verses,
       title: entry.name,
       description,
