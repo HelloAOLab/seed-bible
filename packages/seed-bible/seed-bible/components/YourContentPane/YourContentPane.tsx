@@ -1110,7 +1110,7 @@ export function YourContentPane(props: YourContentScreenProps) {
                   playlist={p}
                   playlists={playlists}
                   modals={state.modals}
-                  toast={state.app.toast}
+                  app={state.app}
                   onPlay={props.onPlayPlaylist}
                   onEdit={props.onEditPlaylist}
                 />

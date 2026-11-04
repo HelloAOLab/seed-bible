@@ -515,6 +515,7 @@ describe("DiscoverPane", () => {
         content.login,
         discover
       );
+      const modals = createModalManager();
       const { annotations } = createMockAnnotations();
       const state = createMockState(false, {
         userId: ME,
@@ -527,7 +528,7 @@ describe("DiscoverPane", () => {
             tabs={createMockTabs(createMockTab())}
             playlists={playlists}
             annotations={annotations}
-            modals={createModalManager()}
+            modals={modals}
             state={state}
             toast={state.app.toast}
           />,
@@ -544,7 +545,7 @@ describe("DiscoverPane", () => {
         }
       });
       await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
-      return { ...content, playlists, state };
+      return { ...content, playlists, state, modals };
     };
 
     it("lists each friend's playlists under their name, leaving out friends with none", async () => {
@@ -592,7 +593,7 @@ describe("DiscoverPane", () => {
     });
 
     it("shares a friend's playlist, and offers nothing to edit or delete it", async () => {
-      const { playlists, state } = await renderWithFriends([ada], {
+      const { modals } = await renderWithFriends([ada], {
         ada: [createPlaylist({ id: "p1", recordName: "ada" })],
       });
       const items = Array.from(
@@ -606,38 +607,11 @@ describe("DiscoverPane", () => {
         (items[0] as HTMLElement).click();
       });
 
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        playlists.getPlaylistUrl(playlists.getUserPlaylists("ada").value[0]!)
-      );
-      expect(state.app.toast).toHaveBeenCalledWith(
-        "Playlist URL copied to clipboard"
-      );
-    });
-
-    it("says so when sharing a friend's playlist can't copy the link", async () => {
-      const consoleError = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
-      (navigator.clipboard.writeText as Mock).mockRejectedValueOnce(
-        new Error("denied")
-      );
-      const { state } = await renderWithFriends([ada], {
-        ada: [createPlaylist({ id: "p1", recordName: "ada" })],
-      });
-
-      await act(async () => {
-        friendsSection()!
-          .querySelector<HTMLElement>('[role="menuitem"]')!
-          .click();
-      });
-
-      expect(state.app.toast).toHaveBeenCalledWith(
-        "Couldn't copy the playlist link"
-      );
-      expect(state.app.toast).not.toHaveBeenCalledWith(
-        "Playlist URL copied to clipboard"
-      );
-      consoleError.mockRestore();
+      // The share sheet opens rather than the link being copied outright.
+      expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+      expect(modals.modals.value.map((m) => m.id)).toEqual([
+        "share-playlist-ada-p1",
+      ]);
     });
 
     it("shows a friend's playlist cover, as your own playlists do", async () => {
