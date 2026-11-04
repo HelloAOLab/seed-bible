@@ -1,6 +1,8 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import type { ComponentChild } from "preact";
+import { signal } from "@preact/signals";
+import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import {
   MAX_MAP_DATA_LENGTH,
@@ -289,5 +291,82 @@ describe("createOpenPlace", () => {
     createOpenPlace(panes, { locations: fakeLocations() })?.(place("Abana"));
 
     expect(panes.panes.value).toHaveLength(0);
+  });
+
+  describe("coming back to Discover", () => {
+    const BABEL = place("Babel", { latitude: 32.5365, longitude: 44.4209 });
+
+    /** The reader with Discover open, as the app shows it: a side pane that clears `view` when it closes. */
+    function readerWithDiscover(onPhone: boolean) {
+      const isMobile = signal(onPhone);
+      const panes = createPanes(isMobile);
+      const discover = createDiscoverManager();
+      discover.view.value = "discover";
+      panes.openPane({
+        id: "discover-pane",
+        placement: "side",
+        title: "Discover",
+        component: () => null,
+        onClose: () => {
+          discover.view.value = null;
+        },
+      });
+      const openPlace = createOpenPlace(panes, {}, { isMobile, discover });
+      return { panes, discover, openPlace };
+    }
+
+    const paneIds = (panes: ReturnType<typeof createPanes>) =>
+      panes.panes.value.map((pane) => pane.id);
+
+    it("reopens Discover on a phone when the reader closes the map it opened", () => {
+      const { panes, discover, openPlace } = readerWithDiscover(true);
+
+      openPlace?.(BABEL);
+      // A phone shows one pane at a time, so the map took Discover's place.
+      expect(paneIds(panes)).toEqual([placePaneId(BABEL)]);
+      expect(discover.view.value).toBeNull();
+
+      panes.closePane(placePaneId(BABEL), "user");
+
+      expect(discover.view.value).toBe("discover");
+    });
+
+    it("leaves Discover closed when something else pushes the map out", () => {
+      const { panes, discover, openPlace } = readerWithDiscover(true);
+      openPlace?.(BABEL);
+
+      panes.openPane({
+        id: "other",
+        placement: "fullscreen",
+        title: "Other",
+        component: () => null,
+      });
+
+      expect(paneIds(panes)).toEqual(["other"]);
+      expect(discover.view.value).toBeNull();
+    });
+
+    it("leaves Discover alone on a wider screen, where the map floats beside it", () => {
+      const { panes, discover, openPlace } = readerWithDiscover(false);
+      openPlace?.(BABEL);
+      expect(paneIds(panes)).toEqual(["discover-pane", placePaneId(BABEL)]);
+
+      // The reader closes Discover first, then the map: Discover stays shut.
+      panes.closePane("discover-pane", "user");
+      panes.closePane(placePaneId(BABEL), "user");
+
+      expect(discover.view.value).toBeNull();
+    });
+
+    it("doesn't open Discover when the map was opened from outside it", () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+      const discover = createDiscoverManager();
+
+      createOpenPlace(panes, {}, { isMobile, discover })?.(BABEL);
+      panes.closePane(placePaneId(BABEL), "user");
+
+      expect(discover.view.value).toBeNull();
+    });
   });
 });

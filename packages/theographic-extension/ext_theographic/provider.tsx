@@ -2,6 +2,7 @@ import type {
   DiscoverContentResult,
   DiscoverContentType,
   DiscoverContext,
+  DiscoverManager,
   DiscoverProvider,
   DiscoverResult,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
@@ -597,8 +598,10 @@ export interface TheographicProviderDeps {
   panes?: PanesManager;
   /** The known places' lookup (`@seed-bible/bible-locations`), for places with a file. */
   locations?: PlaceLocations;
-  /** Whether the reader is on a phone-sized screen; hides "Open in map". */
+  /** Whether the reader is on a phone-sized screen, where the map opens full screen. */
   isMobile?: ReadonlySignal<boolean>;
+  /** Reopened when a full-screen map that closed it is closed. */
+  discover?: Pick<DiscoverManager, "view">;
 }
 
 /** The chapter a card was discovered for. */
@@ -748,10 +751,11 @@ export function createTheographicDiscoverProvider(
   deps: TheographicProviderDeps
 ): DiscoverProvider {
   let hasWarned = false;
-  const openPlace = createOpenPlace(deps.panes, {
-    client: deps.client,
-    locations: deps.locations,
-  });
+  const openPlace = createOpenPlace(
+    deps.panes,
+    { client: deps.client, locations: deps.locations },
+    { isMobile: deps.isMobile, discover: deps.discover }
+  );
   const isPlaceOpen = createIsPlaceOpen(deps.panes);
 
   return {

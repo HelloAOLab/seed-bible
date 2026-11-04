@@ -1,4 +1,4 @@
-import { useSignal } from "@preact/signals";
+import { useSignal, type ReadonlySignal } from "@preact/signals";
 import { useEffect, useMemo } from "preact/hooks";
 import { MaterialIcon, PortalComponent, Skeleton } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
@@ -9,6 +9,7 @@ import type {
   getPlaceGeoJsonUrl,
   PlaceData,
 } from "@seed-bible/bible-locations";
+import type { DiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import { withoutQualifier } from "./names";
 import type { TheographicClient, TheographicPlaceEntry } from "./provider";
@@ -289,10 +290,18 @@ function PlacePane(props: {
  *
  * Undefined without a `PanesManager`, which is how the card decides whether
  * to offer the control at all.
+ *
+ * On a phone only one pane shows at a time, so opening the map closes
+ * Discover; closing the map brings Discover back, the way leaving one of
+ * Discover's own sub-views does.
  */
 export function createOpenPlace(
   panes: PanesManager | undefined,
-  sources: PlaceMapSources = {}
+  sources: PlaceMapSources = {},
+  screen: {
+    isMobile?: ReadonlySignal<boolean>;
+    discover?: Pick<DiscoverManager, "view">;
+  } = {}
 ): ((place: TheographicPlaceEntry) => void) | undefined {
   if (!panes) {
     return undefined;
@@ -308,6 +317,8 @@ export function createOpenPlace(
     // the same `inst` and the map iframe keeps its document instead of
     // reloading.
     const inst = uuid();
+    const { isMobile, discover } = screen;
+    const returnTo = isMobile?.peek() ? discover?.view.peek() : null;
 
     panes.openPane({
       id: placePaneId(place),
@@ -316,6 +327,13 @@ export function createOpenPlace(
       component: () => (
         <PlacePane place={place} sources={sources} inst={inst} />
       ),
+      // Only when the reader closes it: a map pushed out by another pane
+      // shouldn't pull Discover back over that one.
+      onClose: (reason) => {
+        if (reason === "user" && returnTo && discover) {
+          discover.view.value = returnTo;
+        }
+      },
     });
   };
 }
