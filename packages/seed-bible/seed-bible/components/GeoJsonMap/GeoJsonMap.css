@@ -27,6 +27,12 @@
   filter: var(--sb-map-tile-filter);
 }
 
+/* The verse toolbar inverts every image inside it in dark themes, meant for
+   extensions' raster icons. On a tile that would undo the dimming above. */
+.sb-geojson-map .leaflet-tile {
+  filter: none;
+}
+
 .sb-geojson-map-shape {
   stroke: var(--sb-primary-color);
   stroke-width: 2;
