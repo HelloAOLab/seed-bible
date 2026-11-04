@@ -88,7 +88,10 @@ overrides:
   # Security fixes for transitive dependencies whose parents haven't picked up
   # the patched release yet. Each selector only matches the vulnerable range and
   # moves it to the patched version in the same major, so no API changes.
-  "axios@<1.21.0": "^1.21.0"
+  # The one exception is uuid: the CasualOS SDK packages pin uuid 10, which has
+  # no patched release, so they move to 11. They only use v4, v5, v7 and parse,
+  # which work the same in 11 (11 changed only how v1/v7 handle their options).
+  "axios@>=1 <1.21.0": "^1.21.0"
   "ajv@>=6 <6.14.0": "^6.14.0"
   "ajv@>=8 <8.18.0": "^8.18.0"
   "brace-expansion@>=1 <1.1.21": "^1.1.21"
@@ -96,15 +99,15 @@ overrides:
   "brace-expansion@>=5 <5.0.12": "^5.0.12"
   "fast-uri@>=3 <3.1.9": "^3.1.9"
   "flatted@>=3 <3.4.2": "^3.4.2"
-  "@humanfs/node@<0.16.8": "^0.16.8"
+  "@humanfs/node@>=0.16 <0.16.8": "^0.16.8"
   "js-yaml@>=4 <4.3.2": "^4.3.2"
-  "minimatch@<3.1.5": "^3.1.5"
+  "minimatch@>=3 <3.1.5": "^3.1.5"
   "minimatch@>=9 <9.0.9": "^9.0.9"
   "picomatch@>=4 <4.0.4": "^4.0.4"
   "protobufjs@>=7 <7.6.5": "^7.6.5"
-  "@protobufjs/utf8@<1.1.1": "^1.1.1"
+  "@protobufjs/utf8@>=1 <1.1.1": "^1.1.1"
   "simple-git@>=3 <3.36.0": "^3.36.0"
-  "source-map-js@<1.2.2": "^1.2.2"
+  "source-map-js@>=1 <1.2.2": "^1.2.2"
   "undici@>=7 <7.30.1": "^7.30.1"
-  "uuid@<11.1.1": "^11.1.1"
+  "uuid@>=10 <11.1.1": "^11.1.1"
   "ws@>=8 <8.21.0": "^8.21.0"
