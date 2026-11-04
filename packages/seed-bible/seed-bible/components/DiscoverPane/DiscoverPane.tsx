@@ -16,10 +16,7 @@ import {
   ContextMenuWithButton,
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
-import {
-  CreatePlaylistForm,
-  requestCancelPlaylistEditor,
-} from "../CreatePlaylistForm/CreatePlaylistForm";
+import { PlaylistEditorPanel } from "../PlaylistEditor/PlaylistEditorPanel";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection } from "./DiscoverSection";
@@ -90,21 +87,18 @@ export function DiscoverPaneHeader(props: {
 /**
  * Title rendered in the pane's `PaneHeader` (passed as the pane's `title`
  * render function, see `SeedBibleStateManager`). In the discover sub-view it's
- * just the "Discover" label; while viewing or editing a playlist it becomes a
- * back button plus the playlist title (an editable input when editing), so
- * those controls live in the pane header rather than below it. Reads the
- * `actualView`/`playing`/`editingPlaylist` signals, so it stays reactive and
+ * just the "Discover" label; while playing a playlist or annotating it becomes
+ * a back button plus a title, so those controls live in the pane header
+ * rather than below it. (The playlist editor hides this header and draws its
+ * own.) Reads the `actualView`/`playing` signals, so it stays reactive and
  * resets alongside the pane body when the active tab stops playing.
  */
 export function DiscoverPaneTitle(props: {
   playlists: PlaylistManager;
   annotations: AnnotationsManager;
   tabs: TabsManager;
-  chats: ChatsManager;
-  openChatPanel: () => void;
-  modals?: ModalManager;
 }) {
-  const { playlists, annotations, tabs, chats, openChatPanel } = props;
+  const { playlists, annotations, tabs } = props;
   const { t } = useI18n();
   const view = playlists.actualView.value;
 
@@ -154,121 +148,92 @@ export function DiscoverPaneTitle(props: {
     );
   }
 
-  if (view === "create_playlist") {
-    const editing = playlists.editingPlaylist.value;
-    const providers = chats.providers.value.filter(
-      (p) => p.supportsToolCalling
+  return <>{t("discover", { defaultValue: "Discover" })}</>;
+}
+
+/**
+ * Starts a chat with an AI that can edit the open playlist, when an AI that
+ * can use tools is available. `PlaylistManager` hands every chat the
+ * playlist-editing tools while a playlist is being edited, so replying lets
+ * the AI add, change and remove steps and rename the playlist.
+ */
+export function EditPlaylistWithAiButton(props: {
+  chats: ChatsManager;
+  openChatPanel: () => void;
+}) {
+  const { chats, openChatPanel } = props;
+  const { t } = useI18n();
+  const providers = chats.providers.value.filter((p) => p.supportsToolCalling);
+  const singleProvider = providers.length === 1 ? providers[0] : undefined;
+  // Opens the chat panel on a fresh local chat, seeded with a prompt message
+  // inviting the user to describe what they want changed, with the given AI
+  // provider already added as a participant.
+  const startAiChat = (providerId: string) => {
+    let chat = chats.chats.value.find(
+      (c) =>
+        c.participants.value.every((p) => !p.isRemote) &&
+        c.participants.value.some((p) => p.isAI && p.providerId === providerId)
     );
-    const singleProvider = providers.length === 1 ? providers[0] : undefined;
-    // Opens the chat panel on a fresh local chat, seeded with a prompt
-    // message inviting the user to describe what they want changed, with
-    // the given AI provider already added as a participant.
-    // `PlaylistManager` already exposes the playlist-editing tools to every
-    // chat while a playlist is being edited, so replying here lets the AI
-    // add/update/remove items and edit the title/description.
-    const startAiChat = (providerId: string) => {
-      let chat = chats.chats.value.find(
-        (c) =>
-          c.participants.value.every((p) => !p.isRemote) &&
-          c.participants.value.some(
-            (p) => p.isAI && p.providerId === providerId
-          )
-      );
-      if (!chat) {
-        chat = chats.createLocalSession({
-          messages: [
-            {
-              id: uuid(),
-              authors: [providerId],
-              timeMs: Date.now(),
-              targets: [],
-              type: "text",
-              text: t("ai-playlist-chat-prompt", {
-                defaultValue: "What do you want to add/change?",
-              }),
-            },
-          ],
-          providerIds: [],
-        });
-      }
-      chat.addParticipant(providerId);
-      chats.selectChat(chat.id);
-      openChatPanel();
-    };
-    const aiButtonLabel = t("ai", { defaultValue: "AI" });
-    const aiButtonAriaLabel = t("ai-edit-playlist", {
-      defaultValue: "Edit playlist with AI",
-    });
+    if (!chat) {
+      chat = chats.createLocalSession({
+        messages: [
+          {
+            id: uuid(),
+            authors: [providerId],
+            timeMs: Date.now(),
+            targets: [],
+            type: "text",
+            text: t("ai-playlist-chat-prompt", {
+              defaultValue: "What do you want to add/change?",
+            }),
+          },
+        ],
+        providerIds: [],
+      });
+    }
+    chat.addParticipant(providerId);
+    chats.selectChat(chat.id);
+    openChatPanel();
+  };
+  const aiButtonLabel = t("ai", { defaultValue: "AI" });
+  const aiButtonAriaLabel = t("ai-edit-playlist", {
+    defaultValue: "Edit playlist with AI",
+  });
+
+  if (providers.length > 1) {
+    // Multiple providers: let the user pick which one starts the chat.
     return (
-      <div className="sb-discover-title-row">
-        <button
-          type="button"
-          className="sb-pane-header-button"
-          aria-label={t("back", { defaultValue: "Back" })}
-          onClick={() => {
-            if (props.modals) {
-              requestCancelPlaylistEditor(playlists, props.modals);
-              return;
-            }
-            playlists.cancelEditingPlaylist();
-          }}
-        >
-          <MaterialIcon>arrow_back</MaterialIcon>
-        </button>
-        <input
-          className="sb-settings-text-input sb-playlist-input"
-          type="text"
-          value={editing?.title ?? ""}
-          dir="auto"
-          onInput={(event: Event) => {
-            const value = (event.currentTarget as HTMLInputElement).value;
-            playlists.updateEditingPlaylistMetadata({
-              title: value.trim() ? value : null,
-            });
-          }}
-          placeholder={t("playlist-title_placeholder", {
-            defaultValue: "Playlist title",
-          })}
-        />
-        {providers.length > 1 ? (
-          // Multiple providers: let the user pick which one starts the chat.
-          <ContextMenuWithButton
-            buttonClassName="sb-discover-title-ai"
-            aria-label={aiButtonAriaLabel}
-            title={aiButtonLabel}
-            icon={
-              <>
-                <MaterialIcon>auto_awesome</MaterialIcon>
-              </>
-            }
+      <ContextMenuWithButton
+        buttonClassName="sb-discover-title-ai"
+        aria-label={aiButtonAriaLabel}
+        title={aiButtonLabel}
+        icon={<MaterialIcon>auto_awesome</MaterialIcon>}
+      >
+        {providers.map((provider) => (
+          <ContextMenuItem
+            key={provider.id}
+            onClick={() => startAiChat(provider.id)}
           >
-            {providers.map((provider) => (
-              <ContextMenuItem
-                key={provider.id}
-                onClick={() => startAiChat(provider.id)}
-              >
-                {translateTitle(t, provider.name)}
-              </ContextMenuItem>
-            ))}
-          </ContextMenuWithButton>
-        ) : (
-          singleProvider && (
-            <button
-              type="button"
-              className="sb-discover-title-ai"
-              aria-label={aiButtonAriaLabel}
-              title={aiButtonLabel}
-              onClick={() => startAiChat(singleProvider.id)}
-            >
-              <MaterialIcon>auto_awesome</MaterialIcon>
-            </button>
-          )
-        )}
-      </div>
+            {translateTitle(t, provider.name)}
+          </ContextMenuItem>
+        ))}
+      </ContextMenuWithButton>
     );
   }
-
-  return <>{t("discover", { defaultValue: "Discover" })}</>;
+  if (!singleProvider) {
+    return null;
+  }
+  return (
+    <button
+      type="button"
+      className="sb-discover-title-ai"
+      aria-label={aiButtonAriaLabel}
+      title={aiButtonLabel}
+      onClick={() => startAiChat(singleProvider.id)}
+    >
+      <MaterialIcon>auto_awesome</MaterialIcon>
+    </button>
+  );
 }
 
 /**
@@ -286,14 +251,16 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   if (actualView.value === "create_playlist") {
     return (
-      <CreatePlaylistForm
+      <PlaylistEditorPanel
         playlists={playlists}
         tabs={tabs}
         modals={modals}
-        bibleData={props.state.bibleData}
-        os={props.state.os}
-        login={props.state.login}
-        gallery={props.state.gallery}
+        headerActions={
+          <EditPlaylistWithAiButton
+            chats={props.state.chats}
+            openChatPanel={props.state.sidebar.openChatPanel}
+          />
+        }
       />
     );
   }

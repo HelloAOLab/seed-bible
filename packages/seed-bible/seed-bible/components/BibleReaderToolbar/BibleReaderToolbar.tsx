@@ -10,6 +10,7 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
+import { isPlaylistEditorTab } from "../PlaylistEditor/PlaylistEditorWorkspace";
 import {
   MAX_CUSTOM_HIGHLIGHT_COLORS,
   UI_SIZE_SCALE_MAP,
@@ -1004,6 +1005,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   );
 
   if (!readingState.value) {
+    return null;
+  }
+
+  // On desktop the playlist editor floats its own bar where this one goes.
+  if (
+    !props.state.app.isMobile.value &&
+    isPlaylistEditorTab(props.state, selectedTab.value)
+  ) {
     return null;
   }
 
@@ -3018,6 +3027,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           {isSmallScreen.value &&
             activeMobileTab.value === "bible" &&
+            // The playlist editor has its own bar where chapter nav floats.
+            !isPlaylistEditorTab(props.state, selectedTab.value) &&
             (() => {
               const audio =
                 audioPlayTool.value && audioPlayTool.value.visible.value

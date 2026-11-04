@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="12" height="17" viewBox="0 0 12 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Drag handle">
+<circle id="Grip dot" cx="8.5" cy="14.5" r="1.5" fill="#7B8791"/>
+<circle id="Grip dot_2" cx="3.5" cy="14.5" r="1.5" fill="#7B8791"/>
+<circle id="Grip dot_3" cx="8.5" cy="9.5" r="1.5" fill="#7B8791"/>
+<circle id="Grip dot_4" cx="3.5" cy="9.5" r="1.5" fill="#7B8791"/>
+<circle id="Grip dot_5" cx="8.5" cy="4.5" r="1.5" fill="#7B8791"/>
+<circle id="Grip dot_6" cx="3.5" cy="4.5" r="1.5" fill="#7B8791"/>
+</g>
+</svg>

@@ -486,6 +486,7 @@ function ScriptureNotePopoverBody(props: {
             <PlaylistHtmlContent
               html={item.note}
               onReferenceClick={(ref) => void playing.visitReference(ref)}
+              onStepClick={(index) => void playing.jumpTo(index)}
             />
           </div>
         ) : null}
@@ -639,6 +640,7 @@ function ScriptureNoteSheetBody(props: {
           <PlaylistHtmlContent
             html={item.note!}
             onReferenceClick={(ref) => void playing.visitReference(ref)}
+            onStepClick={(index) => void playing.jumpTo(index)}
           />
         </div>
       ) : null}

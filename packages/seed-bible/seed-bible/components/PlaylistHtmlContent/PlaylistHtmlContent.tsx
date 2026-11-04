@@ -14,12 +14,15 @@ import {
  *
  * With `onReferenceClick`, a scripture reference in the snippet calls it
  * instead of following its link, which would leave the page it's shown on.
+ * With `onStepClick`, a link to another step of the playlist (inserted by the
+ * editor's "Link item") calls it with that step's index.
  */
 export function PlaylistHtmlContent(props: {
   html: string;
   onReferenceClick?: (ref: VerseRef) => void;
+  onStepClick?: (index: number) => void;
 }) {
-  const { html, onReferenceClick } = props;
+  const { html, onReferenceClick, onStepClick } = props;
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -29,6 +32,23 @@ export function PlaylistHtmlContent(props: {
   }, [html]);
 
   const handleClick = (event: JSX.TargetedMouseEvent<HTMLDivElement>) => {
+    const stepLink = (event.target as HTMLElement).closest?.(
+      'a[href^="#playlist-step-"]'
+    );
+    if (stepLink) {
+      // Without a handler there's nowhere to go, so the click does nothing
+      // rather than jumping the page to a missing anchor.
+      event.preventDefault();
+      const step = parseInt(
+        stepLink.getAttribute("href")!.slice("#playlist-step-".length),
+        10
+      );
+      if (onStepClick && step >= 1) {
+        event.stopPropagation();
+        onStepClick(step - 1);
+      }
+      return;
+    }
     if (!onReferenceClick) {
       return;
     }

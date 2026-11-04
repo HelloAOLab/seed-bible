@@ -102,6 +102,12 @@ import {
   measureReaderViewport,
   type ReaderViewport,
 } from "./readerViewport";
+import {
+  isPlaylistEditorTab,
+  playlistEditorScriptureStep,
+  PlaylistReaderHint,
+  PlaylistScriptureStepSlot,
+} from "../PlaylistEditor/PlaylistEditorWorkspace";
 
 interface ReaderChapterActionProps {
   state: SeedBibleState;
@@ -878,7 +884,8 @@ function renderChapterContent(
   sharedSession?: BibleReadingSession | null,
   verseSelectionEffects: VerseSelectionEffects = "default",
   prefersReducedMotionValue?: boolean,
-  hideHighlights = false
+  hideHighlights = false,
+  afterVerse?: ChapterAfterVerse | null
 ) {
   if (!chapterData) {
     return null;
@@ -1469,6 +1476,10 @@ function renderChapterContent(
 
       if (colorKey === null) {
         nodes.push(renderVerseNode(entry, i));
+        if (afterVerse?.verse === entry.number) {
+          nodes.push(afterVerse.node);
+          previousWasVerse = false;
+        }
         i += 1;
         continue;
       }
@@ -1534,6 +1545,14 @@ function renderChapterContent(
           })}
         </span>
       );
+      if (
+        afterVerse &&
+        afterVerse.verse >= firstVerse &&
+        afterVerse.verse <= lastVerse
+      ) {
+        nodes.push(afterVerse.node);
+        previousWasVerse = false;
+      }
       i = j;
       continue;
     }
@@ -1543,6 +1562,16 @@ function renderChapterContent(
   }
 
   return nodes;
+}
+
+/**
+ * Something shown in the chapter's flow right after a verse, pushing the text
+ * below it down — such as the playlist editor's note for the passage it's on.
+ * Keyed, since it sits among the keyed verses.
+ */
+export interface ChapterAfterVerse {
+  verse: number;
+  node: JSX.Element;
 }
 
 interface BibleReaderProps {
@@ -2159,6 +2188,8 @@ interface ChapterContentProps {
    * embed so the page does not show highlights the visitor does not have.
    */
   hideHighlights?: boolean;
+  /** Shown in the chapter's flow right after one of its verses. */
+  afterVerse?: ChapterAfterVerse | null;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -2186,6 +2217,7 @@ function ChapterContent(props: ChapterContentProps) {
     prefersReducedMotionValue,
     highlightAuthors,
     hideHighlights = false,
+    afterVerse,
   } = props;
 
   const { t } = useI18n();
@@ -2818,7 +2850,8 @@ function ChapterContent(props: ChapterContentProps) {
         sharedSession,
         verseSelectionEffects,
         prefersReducedMotionValue,
-        hideHighlights
+        hideHighlights,
+        afterVerse
       )}
     </div>
   );
@@ -3608,6 +3641,7 @@ export function BibleReader(props: BibleReaderProps) {
               }
               prefersReducedMotionValue={prefersReducedMotionValue}
               highlightAuthors={highlightAuthors}
+              afterVerse={editorAfterVerse}
             />
           </Suspense>
         ))}
@@ -3664,6 +3698,43 @@ export function BibleReader(props: BibleReaderProps) {
     state.playlists.view.value !== "play_playlist" &&
     currentSlot.tab != null &&
     state.tabs.selectedTabId.value === currentSlot.tab.id;
+
+  const editingPlaylistHere =
+    !!state && isPlaylistEditorTab(state, currentSlot.tab);
+  // The playlist editor's note for the open scripture step, after its last
+  // verse in this chapter (or after the chapter, for a whole-chapter step).
+  const editorStep = state
+    ? playlistEditorScriptureStep(state, currentSlot.tab)
+    : null;
+  const shownChapter = chapterData.value;
+  let editorAfterVerse: ChapterAfterVerse | null = null;
+  if (
+    state &&
+    editorStep &&
+    shownChapter &&
+    shownChapter.book.id === editorStep.item.ref.bookId &&
+    shownChapter.chapter.number === editorStep.item.ref.chapter
+  ) {
+    const { ref } = editorStep.item;
+    const runsPastChapter =
+      ref.endChapter != null && ref.endChapter > ref.chapter;
+    editorAfterVerse = {
+      verse:
+        ref.verse == null || runsPastChapter
+          ? shownChapter.numberOfVerses
+          : (ref.endVerse ?? ref.verse),
+      node: (
+        <PlaylistScriptureStepSlot
+          key="playlist-editor-step"
+          state={state}
+          index={editorStep.index}
+          item={editorStep.item}
+          firstVerse={ref.verse ?? 1}
+          compact={isCompactReader}
+        />
+      ),
+    };
+  }
 
   // Desktop shows a playing passage's note beside it, in the reader playback is
   // bound to; mobile shows it in a sheet above the floating nav instead.
@@ -3930,46 +4001,50 @@ export function BibleReader(props: BibleReaderProps) {
                 {translationLabel}
               </button>
             </div>
-            {state && (
-              <div className="sb-bible-reader-actions">
-                {/* Chapter actions lead, extension quick tools follow — the
+            {editingPlaylistHere ? (
+              <PlaylistReaderHint />
+            ) : (
+              state && (
+                <div className="sb-bible-reader-actions">
+                  {/* Chapter actions lead, extension quick tools follow — the
                     same order as the mobile header cluster below, so Save
                     doesn't swap sides with Share between breakpoints. */}
-                {!state.playlists.playing.value && (
-                  <>
-                    <ReaderSaveButton
-                      state={state}
-                      translationId={translationId.value}
-                      bookId={bookId.value}
-                      chapterNumber={chapterNumber.value}
-                    />
-                    <ReaderBookmarkButton
-                      state={state}
-                      translationId={translationId.value}
-                      bookId={bookId.value}
-                      chapterNumber={chapterNumber.value}
-                    />
-                  </>
-                )}
-                <QuickToolbar
-                  toolsManager={state.tools}
-                  readingState={readingState}
-                  playlists={state.playlists}
-                  annotations={state.annotations}
-                  features={state.features}
-                  settings={state.settings}
-                  sharedSession={sharedSession ?? null}
-                  readingPlans={state.readingPlans}
-                  toast={state.app.toast}
-                  modals={state.modals}
-                  app={state.app}
-                  embedThemes={state.theme?.themes}
-                  customizationLocator={
-                    state.customizations?.activeCustomizationLocator
-                  }
-                  className="sb-quick-toolbar-reader"
-                />
-              </div>
+                  {!state.playlists.playing.value && (
+                    <>
+                      <ReaderSaveButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
+                      <ReaderBookmarkButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
+                    </>
+                  )}
+                  <QuickToolbar
+                    toolsManager={state.tools}
+                    readingState={readingState}
+                    playlists={state.playlists}
+                    annotations={state.annotations}
+                    features={state.features}
+                    settings={state.settings}
+                    sharedSession={sharedSession ?? null}
+                    readingPlans={state.readingPlans}
+                    toast={state.app.toast}
+                    modals={state.modals}
+                    app={state.app}
+                    embedThemes={state.theme?.themes}
+                    customizationLocator={
+                      state.customizations?.activeCustomizationLocator
+                    }
+                    className="sb-quick-toolbar-reader"
+                  />
+                </div>
+              )
             )}
           </div>
           <div

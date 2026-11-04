@@ -17,6 +17,10 @@ import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../app/utils";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { revealReadAlongVerse } from "./BibleReader/readerViewport";
+import {
+  isPlaylistEditorTab,
+  PlaylistEditorWorkspace,
+} from "./PlaylistEditor/PlaylistEditorWorkspace";
 
 interface TabSlotReaderProps {
   slot: TabSlot;
@@ -840,42 +844,50 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     clearSwipeTrackInlineStyles(swipeTrackRef.current);
   }
 
-  return (
-    <div className="sb-pane-reader-outer">
-      <div
-        className={`sb-pane-reader${isCompactReader ? " sb-pane-reader-mobile" : ""}`}
-        ref={slotScrollerRefCallback}
-      >
-        <BibleReader
-          currentSlot={slot}
+  const editingPlaylistHere = isPlaylistEditorTab(state, tab);
+  const reader = (
+    <div
+      className={`sb-pane-reader${isCompactReader ? " sb-pane-reader-mobile" : ""}`}
+      ref={slotScrollerRefCallback}
+    >
+      <BibleReader
+        currentSlot={slot}
+        readingState={readingState}
+        selectorState={state.selector}
+        state={state}
+        mobileChrome={mobileChrome}
+        sharedSession={tab.sharedSession}
+      />
+      {!isCompactReader && !editingPlaylistHere && (
+        <BelowReaderToolbar
+          toolsManager={state.tools}
           readingState={readingState}
-          selectorState={state.selector}
-          state={state}
-          mobileChrome={mobileChrome}
           sharedSession={tab.sharedSession}
+          selectorState={state.selector}
+          tabsManager={state.tabs}
+          panesManager={state.panes}
+          tabsLayoutManager={state.tabsLayout}
+          openSidebar={state.sidebar.openSidebar}
+          openSearch={state.sidebar.openSearch}
+          currentSlot={slot}
+          toast={state.app.toast}
+          openChat={state.sidebar.openChatPanel}
+          chats={state.chats}
+          features={state.features}
+          app={state.app}
         />
-        {!isCompactReader && (
-          <BelowReaderToolbar
-            toolsManager={state.tools}
-            readingState={readingState}
-            sharedSession={tab.sharedSession}
-            selectorState={state.selector}
-            tabsManager={state.tabs}
-            panesManager={state.panes}
-            tabsLayoutManager={state.tabsLayout}
-            openSidebar={state.sidebar.openSidebar}
-            openSearch={state.sidebar.openSearch}
-            currentSlot={slot}
-            toast={state.app.toast}
-            openChat={state.sidebar.openChatPanel}
-            chats={state.chats}
-            features={state.features}
-            app={state.app}
-          />
-        )}
-      </div>
+      )}
     </div>
   );
+
+  if (editingPlaylistHere) {
+    return (
+      <PlaylistEditorWorkspace state={state} compact={isCompactReader}>
+        {reader}
+      </PlaylistEditorWorkspace>
+    );
+  }
+  return <div className="sb-pane-reader-outer">{reader}</div>;
 }
 
 function EmptySlotToolbar({

@@ -79,6 +79,28 @@ export const VerseRefSchema = z.object({
   toEndOfChapter: z.boolean().optional(),
 });
 
+/**
+ * Per-step settings from the playlist editor's toolbar, shared by every item
+ * type. All optional, and only ever added as fields, so a playlist saved with
+ * them still parses where they aren't known (unknown keys are dropped there).
+ */
+const PlaylistStepSettings = {
+  /** How long the author expects the step to take, in whole minutes. */
+  minutes: z.number().int().positive().max(999).optional(),
+  /** In a group session, the leader waits for everyone before moving on. */
+  pauseForGroup: z.boolean().optional(),
+  /** Only the session leader sees this step. */
+  leaderOnly: z.boolean().optional(),
+};
+
+/** How a compare step lays out its two passages for readers. */
+export const CompareLayoutSchema = z.enum(["side-by-side", "stacked"]);
+export type CompareLayout = z.infer<typeof CompareLayoutSchema>;
+
+/** Who can read the answers to a question step. */
+export const QuestionResponsesSchema = z.enum(["private", "shared"]);
+export type QuestionResponses = z.infer<typeof QuestionResponsesSchema>;
+
 export const BibleVersePlaylistItem = z.object({
   type: z.literal("bible-verse"),
   ref: VerseRefSchema,
@@ -90,6 +112,18 @@ export const BibleVersePlaylistItem = z.object({
   note: z.string().optional(),
   /** Optional plain-text heading for the note, shown above it. */
   noteTitle: z.string().optional(),
+  /**
+   * Makes this a compare step: `ref` is the first passage and this holds the
+   * second. Stored on a scripture item so a reader that doesn't know compare
+   * steps still shows the first passage with its note.
+   */
+  compare: z
+    .object({
+      ref: VerseRefSchema,
+      layout: CompareLayoutSchema.optional(),
+    })
+    .optional(),
+  ...PlaylistStepSettings,
 });
 
 export const PlaylistItem = z.discriminatedUnion("type", [
@@ -98,6 +132,17 @@ export const PlaylistItem = z.discriminatedUnion("type", [
     type: z.literal("html"),
     title: z.string().optional(),
     html: z.string(),
+    /**
+     * Makes this a question step; `html` holds the question itself, so a
+     * reader that doesn't know question steps still shows it as a note.
+     */
+    question: z
+      .object({
+        hint: z.string().optional(),
+        responses: QuestionResponsesSchema.optional(),
+      })
+      .optional(),
+    ...PlaylistStepSettings,
   }),
   z.object({
     type: z.literal("link"),
@@ -111,6 +156,9 @@ export const PlaylistItem = z.discriminatedUnion("type", [
     embed: z.boolean().optional(),
     /** The page's title, description, and image, fetched when it was saved. */
     preview: LinkPreviewSchema.optional(),
+    /** Shows the video's transcript below it, where one is available. */
+    transcript: z.boolean().optional(),
+    ...PlaylistStepSettings,
   }),
 ]);
 
@@ -186,6 +234,14 @@ function isRecordedPlaylist(
 }
 export type PlaylistItemData = z.infer<typeof PlaylistItem>;
 export type VerseRef = z.infer<typeof VerseRefSchema>;
+
+/** The kinds of step the editor's "Add a step" menu offers. */
+export type NewPlaylistStepKind =
+  | "scripture"
+  | "note"
+  | "video"
+  | "question"
+  | "compare";
 
 /**
  * One verse or whole-chapter selection to collapse into playlist items.
@@ -1274,6 +1330,30 @@ export function createPlaylistManager(
   /** Copy of the draft when the editor opened, for unsaved-change detection. */
   const editingPlaylistBaseline = signal<Playlist | null>(null);
 
+  /** The step open in the editor, as an index into the draft; -1 for none. */
+  const editorStepIndex = signal(-1);
+  /** Whether the editor shows steps for editing or as readers will see them. */
+  const editorMode = signal<"edit" | "preview">("edit");
+  /**
+   * The open "Add a step" menu and the step new ones go after (-1 puts them
+   * first), or null while it's closed.
+   */
+  const editorAddMenu = signal<{ afterIndex: number } | null>(null);
+  /** The scripture step whose verses are being re-picked in the reader. */
+  const editorVersePickIndex = signal<number | null>(null);
+  /** Phone only: whether the sheet listing every step is open. */
+  const editorStepsSheetOpen = signal(false);
+
+  const resetEditorUi = (itemCount: number) => {
+    batch(() => {
+      editorStepIndex.value = itemCount > 0 ? 0 : -1;
+      editorMode.value = "edit";
+      editorAddMenu.value = null;
+      editorVersePickIndex.value = null;
+      editorStepsSheetOpen.value = false;
+    });
+  };
+
   const linkPreviews = createLinkPreviewLoader((url) =>
     os.getLinkPreview(url, i18n.language.peek())
   );
@@ -1284,6 +1364,10 @@ export function createPlaylistManager(
    * while the fetch was in flight is left alone.
    */
   const requestEditingItemPreview = (item: PlaylistItemData) => {
+    // A video step still waiting for its link has nothing to preview.
+    if (item.type === "link" && !URL.canParse(item.url)) {
+      return;
+    }
     linkPreviews.request(item, (original, previewed) => {
       const current = editingPlaylist.peek();
       if (!current) {
@@ -1316,6 +1400,130 @@ export function createPlaylistManager(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
   );
+
+  /**
+   * The open step while it's scripture, as a key that only changes when the
+   * passage the reader should show does — typing a note into the step leaves
+   * it alone, so the reader isn't sent back to the passage on every keystroke.
+   */
+  const editorScriptureKey = computed<string | null>(() => {
+    const tab = activeTab.value;
+    const item = editingPlaylist.value?.items[editorStepIndex.value];
+    // A compare step is edited in its own card, not over the reader.
+    if (!tab || item?.type !== "bible-verse" || item.compare) {
+      return null;
+    }
+    return JSON.stringify([tab.id, item.ref, item.translationId ?? null]);
+  });
+
+  let editorDecoration: { tab: ReaderTab; id: string } | null = null;
+  let editorNavigationCount = 0;
+  const clearEditorDecoration = () => {
+    if (editorDecoration) {
+      editorDecoration.tab.readingState.removeDecoration(editorDecoration.id);
+      editorDecoration = null;
+    }
+  };
+
+  // Opens the open scripture step's chapter in the selected tab and
+  // highlights its verses, dimming the rest of the chapter around them.
+  effect(() => {
+    const key = editorScriptureKey.value;
+    const navigation = ++editorNavigationCount;
+    untracked(() => {
+      clearEditorDecoration();
+      const tab = activeTab.peek();
+      const item = editingPlaylist.peek()?.items[editorStepIndex.peek()];
+      if (!key || !tab || item?.type !== "bible-verse") {
+        return;
+      }
+      const { ref } = item;
+      void (async () => {
+        await tab.readingState.selectTranslationAndChapter(
+          item.translationId ?? tab.readingState.translationId.peek(),
+          ref.bookId,
+          ref.chapter,
+          ref.verse != null ? { scrollToVerse: ref.verse } : undefined
+        );
+        if (navigation !== editorNavigationCount || ref.verse == null) {
+          return;
+        }
+        // A range running into later chapters is highlighted through the end
+        // of the one on screen.
+        const lastVerse =
+          ref.endChapter != null && ref.endChapter > ref.chapter
+            ? (tab.readingState.chapterData.peek()?.numberOfVerses ?? ref.verse)
+            : (ref.endVerse ?? ref.verse);
+        const verses: number[] = [];
+        for (let verse = ref.verse; verse <= lastVerse; verse++) {
+          verses.push(verse);
+        }
+        editorDecoration = {
+          tab,
+          id: tab.readingState.decorateVerses(ref.bookId, ref.chapter, verses, {
+            className: "sb-playlist-editor-step-verse",
+            containerClassName: "sb-playlist-editor-step-chapter",
+            highlight: {
+              colorId: "playlist-editor-step",
+              customColor: "var(--sb-playlist-editor-step-highlight)",
+            },
+            localOnly: true,
+          }),
+        };
+      })();
+    });
+  });
+
+  /**
+   * The verses picked in the reader for the step in `editorVersePickIndex`,
+   * as the reference Apply would give it, or null before any are picked.
+   */
+  const editorVersePickRef = computed<VerseRef | null>(() => {
+    if (editorVersePickIndex.value === null) {
+      return null;
+    }
+    const selected = activeTab.value?.readingState.selectedVerses.value ?? [];
+    const first = selected[0];
+    if (!first) {
+      return null;
+    }
+    const numbers = selected
+      .filter(
+        (s) =>
+          s.bookId === first.bookId && s.chapterNumber === first.chapterNumber
+      )
+      .map((s) => s.verse.number)
+      .sort((a, b) => a - b);
+    const start = numbers[0]!;
+    const end = numbers[numbers.length - 1]!;
+    return {
+      bookId: first.bookId,
+      chapter: first.chapterNumber,
+      verse: start,
+      ...(end > start ? { endVerse: end } : {}),
+    };
+  });
+
+  // Picking verses in the reader while a scripture step is open is how its
+  // passage is changed: the first verse picked starts it, and Apply or Cancel
+  // in the pick bar ends it.
+  effect(() => {
+    const selected =
+      activeTab.value?.readingState.selectedVerses.value.length ?? 0;
+    untracked(() => {
+      const index = editorStepIndex.peek();
+      const item = editingPlaylist.peek()?.items[index];
+      if (
+        selected > 0 &&
+        item?.type === "bible-verse" &&
+        !item.compare &&
+        editorMode.peek() === "edit" &&
+        editorVersePickIndex.peek() === null
+      ) {
+        editorVersePickIndex.value = index;
+      }
+    });
+  });
 
   /**
    * The playback state shown in the UI, or null when the active tab isn't
@@ -1950,6 +2158,7 @@ export function createPlaylistManager(
     linkPreviews.cancel();
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(draft);
+    resetEditorUi(draft.items.length);
     view.value = "create_playlist";
     draft.items.forEach(requestEditingItemPreview);
 
@@ -1966,6 +2175,7 @@ export function createPlaylistManager(
     const draft = clonePlaylist(playlist);
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(playlist);
+    resetEditorUi(draft.items.length);
     view.value = "create_playlist";
     // Links saved before previews existed, or whose preview missed the save
     // cutoff, get one now so the next save stores it.
@@ -1984,6 +2194,12 @@ export function createPlaylistManager(
     if (!current) {
       return;
     }
+    const invalid = editingPlaylistInvalidSteps();
+    if (invalid.length > 0) {
+      throw new Error(
+        `Step ${invalid[0]! + 1} is incomplete; a playlist saved with it would fail to load.`
+      );
+    }
     const playlist: Playlist = { ...current, updatedAtMs: Date.now() };
     await savePlaylist(playlist);
     const exists = userPlaylists.value.some((p) => p.id === playlist.id);
@@ -1995,6 +2211,7 @@ export function createPlaylistManager(
     userPlaylists.value = exists
       ? userPlaylists.value.map((p) => (p.id === playlist.id ? playlist : p))
       : [...userPlaylists.value, playlist];
+    closeEditorUi();
     editingPlaylist.value = null;
     editingPlaylistBaseline.value = null;
     view.value = "discover";
@@ -2097,14 +2314,20 @@ export function createPlaylistManager(
     if (index < 0 || index > current.items.length) {
       return `error: index out of range (0-${current.items.length})`;
     }
-    editingPlaylist.value = {
-      ...current,
-      items: [
-        ...current.items.slice(0, index),
-        item,
-        ...current.items.slice(index),
-      ],
-    };
+    batch(() => {
+      editingPlaylist.value = {
+        ...current,
+        items: [
+          ...current.items.slice(0, index),
+          item,
+          ...current.items.slice(index),
+        ],
+      };
+      // The open step keeps pointing at the same step.
+      if (editorStepIndex.peek() >= index) {
+        editorStepIndex.value += 1;
+      }
+    });
     requestEditingItemPreview(item);
     return "success";
   };
@@ -2146,10 +2369,27 @@ export function createPlaylistManager(
     if (!current) {
       return "error: no editing playlist";
     }
-    editingPlaylist.value = {
-      ...current,
-      items: current.items.filter((_, i) => i !== index),
-    };
+    batch(() => {
+      editingPlaylist.value = {
+        ...current,
+        items: current.items.filter((_, i) => i !== index),
+      };
+      // Removing the open step opens the one that took its place (or the new
+      // last step); any other open step keeps pointing at the same step.
+      const open = editorStepIndex.peek();
+      const remaining = current.items.length - 1;
+      if (open === index) {
+        editorStepIndex.value = Math.min(index, remaining - 1);
+      } else if (open > index) {
+        editorStepIndex.value = open - 1;
+      }
+      const picking = editorVersePickIndex.peek();
+      if (picking === index) {
+        editorVersePickIndex.value = null;
+      } else if (picking !== null && picking > index) {
+        editorVersePickIndex.value = picking - 1;
+      }
+    });
     return "success";
   };
 
@@ -2157,9 +2397,8 @@ export function createPlaylistManager(
    * Moves an item within the currently-edited playlist from one index to
    * another. No-op when there is no playlist being edited, either index is
    * out of range, or the indices are equal. Mirrors `reorderQueue`'s splice
-   * semantics; unlike `reorderQueue` there's no `currentIndex`-style value to
-   * follow along here — the caller is responsible for keeping any "currently
-   * being edited" index pointed at the same logical item.
+   * semantics, and like `reorderQueue`'s `currentIndex`, the editor's open
+   * step follows the item it was on.
    */
   const reorderEditingPlaylistItem = (from: number, to: number): string => {
     const current = editingPlaylist.value;
@@ -2180,13 +2419,137 @@ export function createPlaylistManager(
       return "success";
     }
     nextItems.splice(to, 0, moved);
-    editingPlaylist.value = { ...current, items: nextItems };
+    const follow = (i: number | null): number | null => {
+      if (i === null) return null;
+      if (i === from) return to;
+      if (from < i && to >= i) return i - 1;
+      if (from > i && to <= i) return i + 1;
+      return i;
+    };
+    batch(() => {
+      editingPlaylist.value = { ...current, items: nextItems };
+      editorStepIndex.value = follow(editorStepIndex.peek()) ?? -1;
+      editorVersePickIndex.value = follow(editorVersePickIndex.peek());
+    });
     return "success";
+  };
+
+  /** Inserts a copy of a step right after it and opens the copy. */
+  const duplicateEditingPlaylistItem = (index: number): string => {
+    const item = editingPlaylist.peek()?.items[index];
+    if (!item) {
+      return "error: no such step";
+    }
+    const copy = JSON.parse(JSON.stringify(item)) as PlaylistItemData;
+    const result = insertEditingPlaylistItem(index + 1, copy);
+    if (result === "success") {
+      selectEditorStep(index + 1);
+    }
+    return result;
+  };
+
+  /** Opens a step in the editor, ending any verse pick in progress. */
+  const selectEditorStep = (index: number): void => {
+    const count = editingPlaylist.peek()?.items.length ?? 0;
+    if (index < -1 || index >= count) {
+      return;
+    }
+    batch(() => {
+      editorStepIndex.value = index;
+      editorVersePickIndex.value = null;
+      editorStepsSheetOpen.value = false;
+    });
+  };
+
+  /**
+   * Adds a new step of the given kind after `afterIndex` and opens it. A
+   * scripture step starts on the chapter being read, with the reader waiting
+   * for its verses to be picked.
+   */
+  const addEditorStep = (kind: NewPlaylistStepKind, afterIndex: number) => {
+    const tab = activeTab.peek();
+    const chapter = tab?.readingState.chapterData.peek();
+    const bookId = chapter?.book.id ?? "GEN";
+    const chapterNumber = chapter?.chapter.number ?? 1;
+    const index = Math.max(
+      0,
+      Math.min(afterIndex + 1, editingPlaylist.peek()?.items.length ?? 0)
+    );
+    const item: PlaylistItemData =
+      kind === "scripture"
+        ? { type: "bible-verse", ref: { bookId, chapter: chapterNumber } }
+        : kind === "compare"
+          ? {
+              type: "bible-verse",
+              ref: { bookId, chapter: chapterNumber },
+              compare: { ref: { bookId, chapter: chapterNumber } },
+            }
+          : kind === "question"
+            ? { type: "html", html: "", question: {} }
+            : kind === "video"
+              ? // An empty link isn't a valid step; the card asks for one and
+                // saving refuses until it has it.
+                { type: "link", url: "", embed: true }
+              : { type: "html", html: "" };
+    batch(() => {
+      if (insertEditingPlaylistItem(index, item) !== "success") {
+        return;
+      }
+      editorAddMenu.value = null;
+      editorMode.value = "edit";
+      selectEditorStep(index);
+      if (kind === "scripture") {
+        tab?.readingState.clearSelectedVerses();
+        editorVersePickIndex.value = index;
+      }
+    });
+  };
+
+  /** Gives the step being picked the verses picked in the reader. */
+  const applyEditorVersePick = (): void => {
+    const index = editorVersePickIndex.peek();
+    const ref = editorVersePickRef.peek();
+    const item =
+      index === null ? undefined : editingPlaylist.peek()?.items[index];
+    batch(() => {
+      if (index !== null && ref && item?.type === "bible-verse") {
+        updateEditingPlaylistItem(index, { ...item, ref });
+      }
+      editorVersePickIndex.value = null;
+    });
+    activeTab.peek()?.readingState.clearSelectedVerses();
+  };
+
+  /** Ends a verse pick, leaving the step's passage as it was. */
+  const cancelEditorVersePick = (): void => {
+    editorVersePickIndex.value = null;
+    activeTab.peek()?.readingState.clearSelectedVerses();
+  };
+
+  /**
+   * The steps that can't be saved as they are (a video step with no link,
+   * say), by index. Saving refuses while there are any, since a playlist with
+   * an invalid step would fail to load.
+   */
+  const editingPlaylistInvalidSteps = (): number[] =>
+    (editingPlaylist.peek()?.items ?? []).flatMap((item, index) =>
+      PlaylistItem.safeParse(item).success ? [] : [index]
+    );
+
+  const closeEditorUi = () => {
+    clearEditorDecoration();
+    batch(() => {
+      editorStepIndex.value = -1;
+      editorAddMenu.value = null;
+      editorVersePickIndex.value = null;
+      editorStepsSheetOpen.value = false;
+    });
   };
 
   /** Discards the current edit and returns to the discover view. */
   const cancelEditingPlaylist = (): void => {
     linkPreviews.cancel();
+    closeEditorUi();
     editingPlaylist.value = null;
     editingPlaylistBaseline.value = null;
     view.value = "discover";
@@ -3208,8 +3571,20 @@ export function createPlaylistManager(
     updateEditingPlaylistItem,
     removeEditingPlaylistItem,
     reorderEditingPlaylistItem,
+    duplicateEditingPlaylistItem,
     cancelEditingPlaylist,
     isEditingPlaylistDirty,
+    editingPlaylistInvalidSteps,
+    editorStepIndex,
+    editorMode,
+    editorAddMenu,
+    editorVersePickIndex,
+    editorVersePickRef,
+    editorStepsSheetOpen,
+    selectEditorStep,
+    addEditorStep,
+    applyEditorVersePick,
+    cancelEditorVersePick,
     listPlaylists,
     getUserPlaylists,
     loadPlaylist,

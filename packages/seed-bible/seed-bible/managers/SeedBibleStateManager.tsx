@@ -3868,18 +3868,20 @@ export function createSeedBibleState(
   // this effect and re-open the pane mid-update, which would trip preact's
   // "Cycle detected". The pane -> view effect below clears `view` on close.
   effect(() => {
-    if (playlists.view.value) {
+    const view = playlists.view.value;
+    if (view && !(view === "create_playlist" && isMobile.value)) {
+      const editingPlaylist = view === "create_playlist";
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
+        // The playlist editor draws its own header, as a floating card.
+        showHeader: !editingPlaylist,
+        shellClassName: editingPlaylist ? "sb-pe-pane-shell" : undefined,
         title: () => (
           <DiscoverPaneTitle
             playlists={playlists}
             annotations={annotations}
             tabs={tabs}
-            chats={chats}
-            openChatPanel={sidebar.openChatPanel}
-            modals={modals}
           />
         ),
         header: () => (
@@ -3905,6 +3907,13 @@ export function createSeedBibleState(
           />
         ),
       });
+    } else if (view === "create_playlist") {
+      // On a phone the editor takes over the reader, with its steps in a
+      // sheet, rather than filling the screen as a pane — so every pane is
+      // closed, or one already on screen (Today, say) would cover the editor.
+      for (const pane of panes.panes.peek()) {
+        panes.closePane(pane.id, "displaced");
+      }
     } else {
       panes.closePane(DISCOVER_PANE_ID); // no-op when already closed
     }
@@ -3918,7 +3927,10 @@ export function createSeedBibleState(
     const paneOpen = panes.panes.value.some(
       (pane) => pane.id === DISCOVER_PANE_ID
     );
-    if (!paneOpen && playlists.view.peek()) {
+    const view = playlists.view.peek();
+    // On a phone the editor deliberately runs without the pane.
+    const editingOnPhone = view === "create_playlist" && isMobile.peek();
+    if (!paneOpen && view && !editingOnPhone) {
       playlists.view.value = null;
     }
   });

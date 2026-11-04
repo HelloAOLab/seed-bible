@@ -1,0 +1,1768 @@
+/*
+ * The playlist editor: its step list (the side pane on desktop, a sheet on a
+ * phone), the toolbar and step cards over the reader, and the bars along the
+ * bottom.
+ *
+ * Accents use the design's own oranges, which read on light and dark
+ * backgrounds alike. Neutrals (text, borders, quiet surfaces) are mixed from
+ * the theme's font and reader colors instead, so they follow whichever theme
+ * is active; in the light theme they land on the design's values.
+ */
+.sb-pe {
+  --pe-accent: #d36433;
+  --pe-accent-strong: #e2673a;
+  --pe-accent-text: #c9572b;
+  --pe-add: #ed6535;
+  --pe-danger: #c24a2a;
+  --pe-surface: var(--sb-reader-background, #fff);
+  --pe-text: var(--sb-font-color, #1f1b18);
+  --pe-accent-soft: color-mix(
+    in srgb,
+    var(--pe-accent-strong) 22%,
+    var(--pe-surface)
+  );
+  --pe-accent-tint: color-mix(
+    in srgb,
+    var(--pe-accent-strong) 9%,
+    var(--pe-surface)
+  );
+  --pe-accent-line: color-mix(
+    in srgb,
+    var(--pe-accent-strong) 40%,
+    var(--pe-surface)
+  );
+  --pe-muted: color-mix(in srgb, var(--pe-text) 58%, var(--pe-surface));
+  --pe-faint: color-mix(in srgb, var(--pe-text) 42%, var(--pe-surface));
+  --pe-border: color-mix(in srgb, var(--pe-text) 17%, var(--pe-surface));
+  --pe-border-soft: color-mix(in srgb, var(--pe-text) 9%, var(--pe-surface));
+  --pe-border-faint: color-mix(in srgb, var(--pe-text) 6%, var(--pe-surface));
+  --pe-surface-subtle: color-mix(in srgb, var(--pe-text) 2%, var(--pe-surface));
+  --pe-shadow: rgba(31, 27, 24, 0.04);
+  --pe-font-ui: "Lexend", "Plus Jakarta Sans", sans-serif;
+  --pe-font-list: "Plus Jakarta Sans", sans-serif;
+  --pe-font-label: "Figtree", "Plus Jakarta Sans", sans-serif;
+  --pe-font-title: "Newsreader", serif;
+  --pe-font-passage: "Literata", "Newsreader", serif;
+
+  color: var(--pe-text);
+  box-sizing: border-box;
+
+  & *,
+  & *::before,
+  & *::after {
+    box-sizing: border-box;
+  }
+
+  /* `:where` keeps this reset at one class's weight: enough to override the
+     app's global `button` styles, while any editor class declared below
+     still wins. */
+  & :where(button) {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  & button:focus-visible,
+  & input:focus-visible,
+  & textarea:focus-visible {
+    outline: 2px solid var(--pe-accent-strong);
+    outline-offset: 2px;
+  }
+}
+
+/* Icons are the design's own SVGs, used as masks so they take the color of
+   the text around them. */
+.sb-pe-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.sb-pe-icon--arrow-right {
+  -webkit-mask-image: url("./icons/arrow-right.svg");
+  mask-image: url("./icons/arrow-right.svg");
+}
+.sb-pe-icon--audio {
+  -webkit-mask-image: url("./icons/audio.svg");
+  mask-image: url("./icons/audio.svg");
+}
+.sb-pe-icon--book-open {
+  -webkit-mask-image: url("./icons/book-open.svg");
+  mask-image: url("./icons/book-open.svg");
+}
+.sb-pe-icon--chevron-down {
+  -webkit-mask-image: url("./icons/chevron-down.svg");
+  mask-image: url("./icons/chevron-down.svg");
+}
+.sb-pe-icon--close {
+  -webkit-mask-image: url("./icons/close.svg");
+  mask-image: url("./icons/close.svg");
+}
+.sb-pe-icon--copy {
+  -webkit-mask-image: url("./icons/copy.svg");
+  mask-image: url("./icons/copy.svg");
+}
+.sb-pe-icon--drag-handle {
+  -webkit-mask-image: url("./icons/drag-handle.svg");
+  mask-image: url("./icons/drag-handle.svg");
+}
+.sb-pe-icon--eye {
+  -webkit-mask-image: url("./icons/eye.svg");
+  mask-image: url("./icons/eye.svg");
+}
+.sb-pe-icon--info {
+  -webkit-mask-image: url("./icons/info.svg");
+  mask-image: url("./icons/info.svg");
+}
+.sb-pe-icon--items-list {
+  -webkit-mask-image: url("./icons/items-list.svg");
+  mask-image: url("./icons/items-list.svg");
+}
+.sb-pe-icon--link {
+  -webkit-mask-image: url("./icons/link.svg");
+  mask-image: url("./icons/link.svg");
+}
+.sb-pe-icon--note {
+  -webkit-mask-image: url("./icons/note.svg");
+  mask-image: url("./icons/note.svg");
+}
+.sb-pe-icon--pencil {
+  -webkit-mask-image: url("./icons/pencil.svg");
+  mask-image: url("./icons/pencil.svg");
+}
+.sb-pe-icon--play {
+  -webkit-mask-image: url("./icons/play.svg");
+  mask-image: url("./icons/play.svg");
+}
+.sb-pe-icon--scripture {
+  -webkit-mask-image: url("./icons/scripture.svg");
+  mask-image: url("./icons/scripture.svg");
+}
+.sb-pe-icon--settings {
+  -webkit-mask-image: url("./icons/settings.svg");
+  mask-image: url("./icons/settings.svg");
+}
+.sb-pe-icon--trash {
+  -webkit-mask-image: url("./icons/trash.svg");
+  mask-image: url("./icons/trash.svg");
+}
+.sb-pe-icon--video {
+  -webkit-mask-image: url("./icons/video.svg");
+  mask-image: url("./icons/video.svg");
+}
+
+/* ---------- Step list (side pane on desktop, sheet on a phone) ---------- */
+
+.sb-pane-side-shell.sb-pe-pane-shell {
+  margin: 11px 10px 10px 0;
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.1);
+  height: calc(100% - 21px);
+}
+
+.sb-pe-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--pe-surface);
+  font-family: var(--pe-font-list);
+}
+
+.sb-pe-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 15px;
+  border-bottom: 1px solid var(--pe-border-soft);
+}
+
+.sb-pe-panel-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.sb-pe-panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sb-pe-panel-title {
+  margin: 0;
+  font-family: var(--pe-font-title);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 26px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-pe-panel-title-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid var(--pe-accent-line);
+  background: transparent;
+  color: inherit;
+  font-family: var(--pe-font-title);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 26px;
+}
+
+.sb-pe-panel-title-input:focus {
+  outline: none;
+  border-bottom-color: var(--pe-accent-strong);
+}
+
+.sb-pe-panel-rename .sb-pe-icon {
+  width: 11px;
+  height: 11px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-panel-status {
+  margin: 0;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.sb-pe-panel-close {
+  display: flex;
+}
+
+.sb-pe-panel-close .sb-pe-icon {
+  color: var(--pe-text);
+}
+
+.sb-pe-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 16px 0;
+}
+
+.sb-pe-step-count {
+  margin: 0;
+  font-weight: 500;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: var(--pe-muted);
+}
+
+.sb-pe-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-pe-step-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px 0 14px;
+  border: 1px solid var(--pe-border);
+  border-radius: 6px;
+  background: var(--pe-surface);
+}
+
+.sb-pe-step--active {
+  background: rgba(211, 100, 51, 0.05);
+  border-color: rgba(211, 100, 51, 0.3);
+}
+
+.sb-pe-step--dragging {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.sb-pe-step--invalid {
+  border-color: var(--pe-danger);
+}
+
+.sb-pe-step-main {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sb-pe-step-handle {
+  display: flex;
+  touch-action: none;
+  cursor: grab;
+  color: #7b8791;
+}
+
+.sb-pe-step-handle .sb-pe-icon {
+  width: 12px;
+  height: 17px;
+}
+
+.sb-pe-step-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  height: 42px;
+  text-align: start;
+  color: var(--pe-text);
+}
+
+.sb-pe-step-open .sb-pe-icon {
+  width: 18px;
+  height: 14.04px;
+  color: #69737c;
+}
+
+.sb-pe-step-open .sb-pe-icon--note {
+  width: 14px;
+  height: 14px;
+}
+
+.sb-pe-step--active .sb-pe-step-open,
+.sb-pe-step--active .sb-pe-step-open .sb-pe-icon {
+  color: var(--pe-accent);
+}
+
+.sb-pe-step-label {
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.sb-pe-step-meta {
+  flex-shrink: 0;
+  font-family: var(--pe-font-label);
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--pe-muted);
+}
+
+.sb-pe-step-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.sb-pe-step-action {
+  display: flex;
+  color: var(--pe-text);
+}
+
+.sb-pe-step-action--danger {
+  color: var(--pe-danger);
+}
+
+.sb-pe-step-action .sb-pe-icon--pencil {
+  width: 11px;
+  height: 11px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-panel-footer {
+  position: relative;
+  padding: 8px 16px 22px;
+}
+
+.sb-pe-add-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--pe-add);
+  border-radius: 10px;
+  color: var(--pe-add);
+  font-family: var(--pe-font-label);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.sb-pe-add-step-plus {
+  font-size: 18px;
+}
+
+.sb-pe-add-step-text {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+/* "Add a step" menu */
+
+.sb-pe-add-menu {
+  position: absolute;
+  inset-inline: 12px;
+  bottom: 100%;
+  z-index: 5;
+  padding: 24px 20px 20px;
+  border-radius: 10px;
+  background: var(--pe-surface);
+  filter: drop-shadow(0 1px 6.5px rgba(0, 0, 0, 0.1));
+  font-family: var(--pe-font-ui);
+}
+
+.sb-pe-add-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sb-pe-add-menu-title {
+  margin: 0;
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 22px;
+}
+
+.sb-pe-add-menu-close .sb-pe-icon {
+  color: var(--pe-muted);
+}
+
+.sb-pe-add-menu-where {
+  margin: 16px 0 10px;
+  font-size: 12px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-add-menu-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-pe-add-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 11px 0;
+  border-radius: 8px;
+  text-align: start;
+}
+
+.sb-pe-add-option:hover {
+  background: var(--pe-surface-subtle);
+}
+
+.sb-pe-add-option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  font-family: var(--pe-font-label);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.sb-pe-add-option-icon .sb-pe-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.sb-pe-add-option-icon--scripture {
+  background: color-mix(in srgb, #e2673a 20%, var(--pe-surface));
+  color: #c9572b;
+}
+.sb-pe-add-option-icon--note {
+  background: color-mix(in srgb, var(--pe-text) 8%, var(--pe-surface));
+  color: var(--pe-text);
+}
+.sb-pe-add-option-icon--video {
+  background: color-mix(in srgb, #4d74c4 13%, var(--pe-surface));
+  color: color-mix(in srgb, #3d5fa8 65%, var(--pe-text));
+}
+.sb-pe-add-option-icon--question {
+  background: color-mix(in srgb, #8a9a4c 14%, var(--pe-surface));
+  color: color-mix(in srgb, #5d6a2c 65%, var(--pe-text));
+}
+.sb-pe-add-option-icon--compare {
+  background: color-mix(in srgb, #a2558f 14%, var(--pe-surface));
+  color: color-mix(in srgb, #7e3b6d 65%, var(--pe-text));
+}
+
+/* The compare icon: two side-by-side columns, as in the layout picker. */
+.sb-pe-compare-glyph {
+  display: flex;
+  gap: 2px;
+}
+.sb-pe-compare-glyph::before,
+.sb-pe-compare-glyph::after {
+  content: "";
+  width: 5px;
+  height: 11px;
+  border: 1.5px solid currentColor;
+  border-radius: 1.5px;
+}
+
+.sb-pe-add-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sb-pe-add-option-name {
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 19px;
+}
+
+.sb-pe-add-option-desc {
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--pe-muted);
+}
+
+/* ---------- Workspace over the reader ---------- */
+
+.sb-pane-reader-outer.sb-pe-workspace {
+  position: relative;
+  flex-direction: column;
+}
+
+.sb-pe-workspace .sb-pane-reader {
+  flex: 1;
+  min-height: 0;
+}
+
+/* A card covers the reader, which stays mounted so its place in the chapter
+   survives switching between steps. */
+.sb-pe-workspace--card .sb-pane-reader {
+  display: none;
+}
+
+/* The editor's header replaces the reader's own on a phone, chapter title
+   included. */
+.sb-pe-workspace--mobile .sb-bible-reader-mobile-header,
+.sb-pe-workspace--mobile .sb-bible-reader-mobile-content-title {
+  display: none;
+}
+
+.sb-pe-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  margin-top: 5px;
+  padding: 8px 24px;
+  border-top: 1px solid var(--pe-border-faint);
+  background: var(--pe-surface-subtle);
+  font-family: var(--pe-font-ui);
+  font-size: 12px;
+  line-height: 15px;
+  color: color-mix(in srgb, var(--pe-text) 90%, var(--pe-surface));
+}
+
+.sb-pe-toolbar-settings {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.sb-pe-reading-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.sb-pe-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 98px;
+  padding: 0 9px;
+  height: 30px;
+  border: 1px solid var(--pe-border);
+  border-radius: 999px;
+  background: var(--pe-surface);
+  text-align: center;
+}
+
+.sb-pe-stepper-button {
+  width: 12px;
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.sb-pe-stepper-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sb-pe-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.sb-pe-switch-track {
+  position: relative;
+  flex-shrink: 0;
+  width: 30px;
+  height: 18px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pe-text) 22%, var(--pe-surface));
+  transition: background-color 0.15s ease;
+}
+
+.sb-pe-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease;
+}
+
+.sb-pe-switch[aria-checked="true"] .sb-pe-switch-track {
+  background: var(--pe-accent-strong);
+}
+
+.sb-pe-switch[aria-checked="true"] .sb-pe-switch-track::after {
+  transform: translateX(12px);
+}
+
+.sb-pe-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 6px 9px;
+}
+
+.sb-pe-toolbar-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.sb-pe-toolbar-action--danger {
+  color: var(--pe-danger);
+}
+
+/* The step card, centred where the chapter would be. */
+.sb-pe-card-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 24px 140px;
+}
+
+.sb-pe-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 753px;
+  margin: 0 auto;
+  padding: 29px;
+  border: 1px solid var(--pe-border-soft);
+  border-radius: 16px;
+  background: var(--pe-surface);
+  box-shadow: 0 1px 1px var(--pe-shadow);
+  font-family: var(--pe-font-ui);
+}
+
+.sb-pe-eyebrow {
+  margin: 0;
+  font-family: var(--pe-font-ui);
+  font-weight: 600;
+  font-size: 10px;
+  line-height: 13px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--pe-accent-text);
+}
+
+.sb-pe-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.sb-pe-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sb-pe-field-label {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+  padding: 0;
+}
+
+.sb-pe-field-hint {
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--pe-muted);
+  text-align: end;
+}
+
+.sb-pe-input,
+.sb-pe-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--pe-border);
+  border-radius: 10px;
+  background: var(--pe-surface);
+  color: var(--pe-text);
+  font-family: var(--pe-font-ui);
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.sb-pe-input::placeholder,
+.sb-pe-textarea::placeholder {
+  color: #757575;
+}
+
+.sb-pe-textarea {
+  display: block;
+  resize: vertical;
+  line-height: 22.4px;
+  min-height: 68px;
+}
+
+.sb-pe-textarea--tall {
+  min-height: 182px;
+}
+
+.sb-pe-input:focus,
+.sb-pe-textarea:focus {
+  outline: none;
+  border-color: var(--pe-accent-strong);
+}
+
+.sb-pe-input--invalid {
+  border-color: var(--pe-danger);
+}
+
+.sb-pe-count {
+  align-self: flex-end;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--pe-faint);
+}
+
+.sb-pe-error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--pe-danger);
+}
+
+.sb-pe-options {
+  display: flex;
+  gap: 8px;
+}
+
+.sb-pe-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--pe-border);
+  border-radius: 10px;
+  text-align: start;
+}
+
+.sb-pe-option[aria-checked="true"] {
+  background: var(--pe-accent-soft);
+  border-color: var(--pe-accent-strong);
+}
+
+.sb-pe-option-name {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.sb-pe-option-desc {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--pe-muted);
+}
+
+/* Video link check */
+.sb-pe-link-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px;
+  border: 1px solid var(--pe-border-soft);
+  border-radius: 10px;
+  background: var(--pe-surface-subtle);
+}
+
+.sb-pe-link-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 96px;
+  height: 54px;
+  border-radius: 6px;
+  background: #1f1b18 center / cover no-repeat;
+  color: #fff;
+}
+
+.sb-pe-link-check-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sb-pe-link-check-title {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.sb-pe-link-check-url {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--pe-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-pe-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--pe-border);
+  border-radius: 10px;
+  text-align: start;
+}
+
+.sb-pe-toggle-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sb-pe-toggle-row-name {
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.sb-pe-toggle-row-desc {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--pe-muted);
+}
+
+/* Compare */
+.sb-pe-passage {
+  margin: 0;
+  padding: 11px 13px 12px;
+  border: 1px solid var(--pe-border-faint);
+  border-radius: 10px;
+  background: var(--pe-surface-subtle);
+  font-family: var(--pe-font-passage);
+  font-size: 13px;
+  line-height: 20.8px;
+  color: color-mix(in srgb, var(--pe-text) 75%, #8a6a52);
+}
+
+.sb-pe-layouts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sb-pe-layout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--pe-border);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.sb-pe-layout--side {
+  width: 159px;
+}
+
+.sb-pe-layout--stacked {
+  width: 184px;
+}
+
+.sb-pe-layout[aria-checked="true"] {
+  background: var(--pe-accent-tint);
+  border-color: var(--pe-accent-strong);
+}
+
+.sb-pe-layout-glyph {
+  display: flex;
+  gap: 3px;
+  width: 31px;
+}
+
+.sb-pe-layout-glyph span {
+  background: var(--pe-accent-line);
+}
+
+.sb-pe-layout--side .sb-pe-layout-glyph span {
+  width: 14px;
+  height: 20px;
+  border-radius: 3px;
+}
+
+.sb-pe-layout--stacked .sb-pe-layout-glyph {
+  flex-direction: column;
+}
+
+.sb-pe-layout--stacked .sb-pe-layout-glyph span {
+  width: 100%;
+  height: 8px;
+  border-radius: 2px;
+}
+
+/* Compare, as readers see it */
+.sb-pe-compare-preview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 20px;
+}
+
+.sb-pe-compare-preview--stacked {
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.sb-pe-compare-preview-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.sb-pe-compare-preview:not(.sb-pe-compare-preview--stacked)
+  .sb-pe-compare-preview-column
+  + .sb-pe-compare-preview-column {
+  border-inline-start: 1px solid var(--pe-border-soft);
+  padding-inline-start: 20px;
+}
+
+.sb-pe-compare-preview-ref {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--pe-border);
+  border-radius: 6px;
+  font-family: var(--pe-font-passage);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.sb-pe-compare-preview-text {
+  margin: 0;
+  font-family: var(--pe-font-passage);
+  font-size: 16px;
+  line-height: 29px;
+}
+
+/* A note or question as readers see it */
+.sb-pe-preview-title {
+  margin: 0;
+  font-family: var(--pe-font-title);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 30px;
+}
+
+.sb-pe-preview-body {
+  font-family: var(--pe-font-list);
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.sb-pe-preview-answer {
+  min-height: 96px;
+}
+
+.sb-pe-preview-note {
+  margin: 0;
+  text-align: start;
+}
+
+.sb-pe-video-frame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  border-radius: 10px;
+  background: #1f1b18;
+}
+
+/* INSERT row under a note */
+.sb-pe-insert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sb-pe-insert-label {
+  font-family: var(--pe-font-list);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--pe-faint);
+}
+
+.sb-pe-insert-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sb-pe-insert-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 33px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--pe-text) 14%, var(--pe-surface));
+  border-radius: 10px;
+  background: var(--pe-surface);
+  font-family: var(--pe-font-list);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.sb-pe-insert-action .sb-pe-icon {
+  width: 12px;
+  height: 12px;
+  color: #f24f2c;
+}
+
+.sb-pe-insert-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--pe-border-soft);
+  border-radius: 10px;
+  background: var(--pe-surface-subtle);
+}
+
+.sb-pe-insert-picker-row {
+  display: flex;
+  gap: 6px;
+}
+
+.sb-pe-insert-picker-row .sb-pe-input {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.sb-pe-insert-picker-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.sb-pe-insert-picker-list button {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-align: start;
+  font-size: 13px;
+}
+
+.sb-pe-insert-picker-list button:hover {
+  background: var(--pe-border-faint);
+}
+
+.sb-pe-insert-picker-go {
+  flex-shrink: 0;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--pe-accent-strong);
+  color: #fff;
+  font-size: 13px;
+}
+
+/* The note editor itself: TipTap, dressed as a plain text area. */
+.sb-pe-rich {
+  min-height: 68px;
+  font-family: var(--pe-font-ui);
+  font-size: 14px;
+  line-height: 22.4px;
+
+  & .sb-editor-toolbar {
+    display: none;
+  }
+
+  & .sb-editor-content,
+  & .ProseMirror {
+    min-height: inherit;
+    outline: none;
+  }
+
+  & .ProseMirror p {
+    margin: 0;
+  }
+
+  & .ProseMirror p.is-editor-empty:first-child::before,
+  & .ProseMirror-empty-placeholder::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    color: #757575;
+  }
+
+  & a {
+    color: var(--pe-accent-text);
+  }
+}
+
+.sb-pe-rich-field {
+  padding: 12px 14px;
+  border: 1px solid var(--pe-border);
+  border-radius: 10px;
+  cursor: text;
+}
+
+.sb-pe-rich-field--tall .sb-pe-rich {
+  min-height: 157px;
+}
+
+.sb-pe-rich-field:focus-within {
+  border-color: var(--pe-accent-strong);
+}
+
+.sb-pe-rich-field-inner {
+  position: relative;
+}
+
+.sb-pe-rich-placeholder {
+  position: absolute;
+  inset: 0 0 auto;
+  pointer-events: none;
+  font-family: var(--pe-font-ui);
+  font-size: 14px;
+  line-height: 22.4px;
+  color: #757575;
+}
+
+/* ---------- Scripture steps, in the reader ---------- */
+
+.sb-playlist-editor-step-chapter {
+  --sb-playlist-editor-step-highlight: color-mix(
+    in srgb,
+    #e2673a 20%,
+    var(--sb-reader-background, #fff)
+  );
+  position: relative;
+
+  & .sb-verse:not(:has(.sb-playlist-editor-step-verse)),
+  & .sb-chapter-heading {
+    opacity: 0.6;
+  }
+
+  /* Decoration highlights are drawn as an outline, the look of a highlight
+     someone else in a session is pointing at; the step's passage is a plain
+     fill instead. */
+  & .sb-highlight-ribbon-broadcast {
+    fill-opacity: 1;
+    stroke-width: 0;
+  }
+}
+
+.sb-pe-step-slot {
+  display: block;
+  margin: 26px 0;
+  font-size: 1rem;
+}
+
+/* On desktop the step's passage is also set larger than the chapter around
+   it; a phone keeps one size and only dims the rest. The reader's header
+   takes the editor's size, with the hint on the right. */
+.sb-pe-workspace:not(.sb-pe-workspace--mobile) {
+  & .sb-playlist-editor-step-chapter {
+    & .sb-verse:not(:has(.sb-playlist-editor-step-verse)),
+    & .sb-chapter-heading {
+      font-size: 0.8875em;
+    }
+
+    & .sb-verse:has(.sb-playlist-editor-step-verse) {
+      font-size: 1.125em;
+    }
+  }
+
+  & .sb-bible-reader-header {
+    align-items: center;
+    margin-bottom: 26px;
+    padding-bottom: 16px;
+  }
+
+  & .sb-bible-reader-title {
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 36px;
+  }
+
+  & .sb-bible-reader-title-sep {
+    margin: 0 0.1em;
+  }
+
+  & .sb-bible-reader-translation {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: var(--sb-verse-font-family, "Plus Jakarta Sans", sans-serif);
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+}
+
+.sb-pe-step-marker {
+  position: absolute;
+  left: -33px;
+  font-family: var(--pe-font-label);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 15px;
+  color: #e94f1a;
+  pointer-events: none;
+}
+
+.sb-pe-add-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px dashed var(--pe-border);
+  border-radius: 6px;
+  font-family: var(--pe-font-list);
+  font-size: 13px;
+  color: color-mix(in srgb, var(--pe-text) 85%, var(--pe-surface));
+}
+
+.sb-pe-add-note-plus {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.sb-pe-note-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  max-width: 680px;
+  padding: 16px 17px 15px;
+  border: 1px solid var(--pe-accent-line);
+  border-radius: 12px;
+  background: var(--pe-surface);
+  font-family: var(--pe-font-ui);
+}
+
+.sb-pe-note-preview {
+  max-width: 680px;
+  padding: 16px 17px;
+  border-inline-start: 3px solid var(--pe-accent-line);
+  font-family: var(--pe-font-list);
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.sb-pe-reader-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+  font-family: var(--pe-font-list);
+  font-size: 12px;
+  line-height: 1.2;
+  color: color-mix(in srgb, var(--pe-text) 50%, var(--pe-surface));
+  white-space: nowrap;
+}
+
+.sb-pe-reader-hint .sb-pe-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- Bottom of the reader ---------- */
+
+.sb-pe-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 17px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 25px;
+  pointer-events: none;
+
+  & > * {
+    pointer-events: auto;
+  }
+}
+
+.sb-pe-actionbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px 10px;
+  border: 1px solid var(--pe-border-soft);
+  border-radius: 16px;
+  background: var(--pe-surface);
+  filter: drop-shadow(0 2px 9px rgba(0, 0, 0, 0.08));
+  font-family: var(--pe-font-ui);
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.sb-pe-mode {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--pe-text) 13%, var(--pe-surface));
+  border-radius: 10px;
+}
+
+.sb-pe-mode-option {
+  padding: 7px 14px;
+  border-radius: 7px;
+}
+
+.sb-pe-mode-option[aria-pressed="true"] {
+  background: var(--pe-accent-soft);
+  color: var(--pe-accent-text);
+  font-weight: 500;
+}
+
+.sb-pe-publish {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 18px;
+  border-radius: 10px;
+  background: var(--pe-accent-strong);
+  color: #fff;
+  font-family: var(--pe-font-ui);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.sb-pe-pickbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 999px;
+  background: #1f1b18;
+  box-shadow: 0 8px 12px rgba(31, 27, 24, 0.18);
+  font-family: var(--pe-font-ui);
+  font-size: 13px;
+  line-height: 16px;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.sb-pe-pickbar-ref {
+  color: #f4b89c;
+}
+
+.sb-pe-pickbar-cancel {
+  color: #cfc8c2;
+}
+
+.sb-pe-pickbar-apply {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #e2673a;
+  color: #fff;
+  font-weight: 500;
+}
+
+.sb-pe-pickbar-apply:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------- Phone ---------- */
+
+.sb-pe-mobile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 11px 24px;
+  border-bottom: 1px solid var(--pe-border-soft);
+  background: var(--pe-surface);
+  font-family: var(--pe-font-list);
+}
+
+.sb-pe-mobile-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.sb-pe-mobile-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-pe-mobile-status {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pe-faint);
+}
+
+.sb-pe-mobile-header-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.sb-pe-square-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid color-mix(in srgb, var(--pe-text) 13%, var(--pe-surface));
+  border-radius: 10px;
+}
+
+.sb-pe-square-button.sb-pe-step-action--danger {
+  color: var(--pe-danger);
+}
+
+.sb-pe-workspace--mobile .sb-pe-card-scroll {
+  padding: 20px 24px 24px;
+}
+
+.sb-pe-workspace--mobile .sb-pe-card {
+  max-width: 354px;
+}
+
+.sb-pe-workspace--mobile .sb-pe-insert {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sb-pe-step-settings {
+  max-width: 354px;
+  margin: 20px auto 0;
+  border: 1px solid var(--pe-border-soft);
+  border-radius: 10px;
+  background: var(--pe-surface);
+  box-shadow: 0 1px 1px var(--pe-shadow);
+  font-family: var(--pe-font-ui);
+}
+
+.sb-pe-step-settings-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.sb-pe-step-settings-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sb-pe-step-settings[data-open="true"] .sb-pe-icon--chevron-down {
+  transform: rotate(180deg);
+}
+
+.sb-pe-step-settings-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 0 16px 16px;
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.sb-pe-mobile-bottom {
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 17px 9px;
+  border-top: 1px solid var(--pe-border-soft);
+  background: var(--pe-surface);
+  filter: drop-shadow(0 -1px 7px rgba(0, 0, 0, 0.1));
+}
+
+/* Clears the app's bottom tabs, which stay fixed below the editor. */
+.sb-pe-workspace--mobile .sb-pe-mobile-bottom {
+  margin-bottom: var(--sb-reader-bottom-chrome);
+}
+
+.sb-pe-mobile-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.sb-pe-items-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  width: 124px;
+  height: 44px;
+  border: 1px solid color-mix(in srgb, var(--pe-text) 13%, var(--pe-surface));
+  border-radius: 10px;
+  font-family: var(--pe-font-list);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 16px;
+}
+
+.sb-pe-items-button .sb-pe-icon {
+  width: 12px;
+  height: 13.5px;
+}
+
+.sb-pe-items-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 31px;
+  height: 21px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pe-text) 6%, var(--pe-surface));
+  font-weight: 400;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--pe-text) 70%, var(--pe-surface));
+}
+
+.sb-pe-mobile-bottom .sb-pe-add-step {
+  width: 76px;
+  flex: 0 0 auto;
+}
+
+.sb-pe-mobile-bottom .sb-pe-publish {
+  flex: 1;
+  height: 44px;
+}
+
+.sb-pe-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.sb-pe-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* Sits on the editor's bottom bar: its 44px buttons, 19px of padding and
+     its border, above the app's own bottom tabs. */
+  bottom: calc(var(--sb-reader-bottom-chrome) + 64px);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  max-height: min(422px, 80%);
+  padding: 12px 14px 23px;
+  border-radius: 28px 28px 0 0;
+  background: var(--pe-surface);
+}
+
+.sb-pe-sheet-handle {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 16px;
+}
+
+.sb-pe-sheet-handle::before {
+  content: "";
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--pe-text) 20%, var(--pe-surface));
+}
+
+.sb-pe-sheet .sb-pe-panel {
+  min-height: 0;
+  height: auto;
+  flex: 1;
+}
+
+.sb-pe-sheet .sb-pe-panel-header {
+  height: 40px;
+  padding: 0 8px;
+  margin-bottom: 16px;
+  border-bottom: none;
+}
+
+.sb-pe-sheet .sb-pe-panel-title {
+  font-family: var(--pe-font-label);
+  font-size: 15.5px;
+  line-height: 19px;
+}
+
+.sb-pe-sheet .sb-pe-panel-body {
+  padding: 0 16px;
+}
+
+.sb-pe-sheet .sb-pe-step-label {
+  font-size: 12px;
+}
+
+/* ---------- Review & publish ---------- */
+
+.sb-pe-review {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: var(--pe-font-ui);
+}
+
+.sb-pe-review-problems {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--pe-danger);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.sb-pe-review-problems ul {
+  margin: 6px 0 0;
+  padding-inline-start: 18px;
+}
+
+.sb-pe-review-problems button {
+  text-decoration: underline;
+  color: var(--pe-danger);
+}
+
+.sb-pe-review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.sb-pe-review-back {
+  padding: 11px 18px;
+  border: 1px solid var(--pe-border);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.sb-pe-publish:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
