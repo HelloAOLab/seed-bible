@@ -665,7 +665,9 @@ describe("ComparePane", () => {
     const title = mount(titleNode);
     containers.push(title);
     act(() => {
-      title.querySelector<HTMLButtonElement>(".sb-reading-plans-back")!.click();
+      title
+        .querySelector<HTMLButtonElement>('button[aria-label="Back"]')!
+        .click();
     });
 
     expect(state.view.value).toBe("compare");

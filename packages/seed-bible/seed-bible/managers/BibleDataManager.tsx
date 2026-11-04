@@ -1,4 +1,9 @@
-import { signal, effect, type Signal } from "@preact/signals";
+import {
+  signal,
+  effect,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
   FreeUseBibleAPI,
@@ -12,6 +17,7 @@ import {
   type Dataset,
   type DatasetBookChapter,
   type DatasetBooks,
+  type PromiseCache,
   type Translation,
   type TranslationBook,
   type TranslationBookChapter,
@@ -37,11 +43,7 @@ import {
  * many HTTP requests within a single long-running server process, since
  * `localStorage` (the client's cross-page-load cache) doesn't exist there.
  */
-export interface TranslationsCache {
-  get(endpoint: string): Promise<Translation[]> | undefined;
-  set(endpoint: string, promise: Promise<Translation[]>): void;
-  delete(endpoint: string): void;
-}
+export type TranslationsCache = PromiseCache<Translation[]>;
 
 /** How a set of translations should be folded into the known-translations list. */
 export interface MergeTranslationsOptions {
@@ -75,6 +77,14 @@ export interface BibleDataManager {
    * default translation) must check this instead of the list's length.
    */
   catalogLoaded: Signal<boolean>;
+  /**
+   * Where the default endpoint's catalog download stands, for UI that has to
+   * say "still loading" or "couldn't load" while the translation list holds
+   * only what the reader has merged in. Stays `"loaded"` once it has been
+   * fetched or restored: a later refresh failing doesn't make the list
+   * incomplete again.
+   */
+  catalogStatus: ReadonlySignal<CatalogStatus>;
   translationBooks: Signal<Map<string, TranslationBooks>>;
   api: FreeUseBibleAPI;
 
@@ -926,6 +936,29 @@ export const BOOK_SLUGS: Record<BookId, string> = {
   LAO: "lao",
 };
 
+/** Canonical Protestant + Apocrypha order, from {@link BOOK_SLUGS}' insertion order. */
+const CANONICAL_BOOK_ORDER = new Map(
+  (Object.keys(BOOK_SLUGS) as BookId[]).map((id, index) => [id, index])
+);
+
+/** A book's place in canonical order; a book it doesn't know sorts last. */
+export function canonicalBookIndex(bookId: string): number {
+  return CANONICAL_BOOK_ORDER.get(bookId as BookId) ?? Number.MAX_SAFE_INTEGER;
+}
+
+/**
+ * A translation's short code (`VDV` for `arb_vdv`), or its id until its books
+ * have loaded.
+ */
+export function translationShortName(
+  translationBooks: ReadonlyMap<string, TranslationBooks>,
+  translationId: string
+): string {
+  return (
+    translationBooks.get(translationId)?.translation.shortName ?? translationId
+  );
+}
+
 /**
  * Gets the canonical URL slug for a book (e.g. "GEN" -> "genesis"), used to
  * build path-based routes and the canonical URL. Falls back to a lowercased
@@ -1004,6 +1037,8 @@ export function findClosestBookId(input: string): BookId | null {
   return bestIsAmbiguous ? null : bestId;
 }
 
+export type CatalogStatus = "idle" | "loading" | "loaded" | "failed";
+
 export interface CreateBibleDataManagerOptions {
   /**
    * Where downloaded translations are stored. Defaults to IndexedDB; tests pass
@@ -1027,6 +1062,7 @@ export function createBibleDataManager(
   const endpoints = signal<string[]>([defaultEndpoint]);
   const availableTranslations = signal<Translation[]>([]);
   const catalogLoaded = signal<boolean>(false);
+  const catalogStatus = signal<CatalogStatus>("idle");
   const translationBooks = signal<Map<string, TranslationBooks>>(new Map());
   const translationEndpoints = signal<Map<string, string>>(new Map());
 
@@ -1081,12 +1117,17 @@ export function createBibleDataManager(
     translationEndpoints.value = nextTranslationEndpoints;
   };
 
+  // Translation IDs a custom (non-default) source has supplied this session.
+  const customSourceIds = new Set<string>();
+
   const getTranslations = async (
     endpoint?: string,
     options?: { refresh?: boolean }
   ): Promise<Translation[]> => {
     const normalizedEndpoint = normalizeEndpoint(endpoint ?? defaultEndpoint);
     ensureEndpointTracked(normalizedEndpoint);
+
+    const isDefaultCatalog = normalizedEndpoint === defaultEndpoint;
 
     if (options?.refresh) {
       translationsCache?.delete(normalizedEndpoint);
@@ -1112,8 +1153,36 @@ export function createBibleDataManager(
       });
     }
 
-    const result = await resultPromise;
-    mergeTranslations(normalizedEndpoint, result);
+    if (isDefaultCatalog && catalogStatus.peek() !== "loaded") {
+      catalogStatus.value = "loading";
+    }
+
+    let result: Translation[];
+    try {
+      result = await resultPromise;
+    } catch (err) {
+      if (isDefaultCatalog && catalogStatus.peek() !== "loaded") {
+        catalogStatus.value = "failed";
+      }
+      throw err;
+    }
+
+    if (isDefaultCatalog) {
+      // The default catalog can land after a custom source was added (the
+      // selector loads it in the background), and it must not take back a
+      // translation ID that source claimed, or that translation's books and
+      // chapters would start loading from the default server.
+      mergeTranslations(
+        normalizedEndpoint,
+        result.filter((translation) => !customSourceIds.has(translation.id))
+      );
+      catalogStatus.value = "loaded";
+    } else {
+      for (const translation of result) {
+        customSourceIds.add(translation.id);
+      }
+      mergeTranslations(normalizedEndpoint, result);
+    }
     catalogLoaded.value = true;
     return result;
   };
@@ -1157,15 +1226,39 @@ export function createBibleDataManager(
     return availableTranslations.peek();
   };
 
-  const getTranslationBooks = async (
+  // Lookups under way, by translation. A screen of rows can ask for the same
+  // list all at once (one per save or highlight); they share one lookup
+  // instead of each reading storage and setting up its own request.
+  const pendingTranslationBooks = new Map<string, Promise<TranslationBooks>>();
+
+  const getTranslationBooks = (
     translationId: string,
     options?: ApiRequestOptions
   ): Promise<TranslationBooks> => {
     const existing = translationBooks.value.get(translationId);
     if (existing) {
-      return existing;
+      return Promise.resolve(existing);
     }
+    // A caller that can cancel, or wants a refresh, gets its own lookup, so
+    // it can't cancel or reshape anyone else's.
+    if (options?.signal || options?.refresh) {
+      return loadTranslationBooks(translationId, options);
+    }
+    const pending = pendingTranslationBooks.get(translationId);
+    if (pending) {
+      return pending;
+    }
+    const lookup = loadTranslationBooks(translationId).finally(() => {
+      pendingTranslationBooks.delete(translationId);
+    });
+    pendingTranslationBooks.set(translationId, lookup);
+    return lookup;
+  };
 
+  const loadTranslationBooks = async (
+    translationId: string,
+    options?: ApiRequestOptions
+  ): Promise<TranslationBooks> => {
     const cacheBooks = (
       endpoint: string,
       books: TranslationBooks,
@@ -1418,6 +1511,7 @@ export function createBibleDataManager(
         // persistence effect above), so restoring it means the catalog is
         // already known, not just this session's active translation.
         catalogLoaded.value = true;
+        catalogStatus.value = "loaded";
       }
     } catch {
       // Ignore a malformed cache; the live catalog fetch is authoritative.
@@ -1439,6 +1533,7 @@ export function createBibleDataManager(
     endpoints,
     availableTranslations,
     catalogLoaded,
+    catalogStatus,
     translationBooks,
     api,
     offline,

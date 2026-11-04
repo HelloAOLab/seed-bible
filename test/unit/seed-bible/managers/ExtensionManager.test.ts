@@ -392,6 +392,36 @@ describe("ExtensionInitalizer", () => {
       initializer.getExtensionExports<{ version: number }>("ext.re-register")
     ).toEqual({ version: 2 });
   });
+
+  it("undoes what a failed init already set up, so each retry starts clean", () => {
+    let liveSubscriptions = 0;
+    let shouldFail = true;
+
+    initializer.registerExtension({
+      id: "ext.fails-partway",
+      init: function* () {
+        liveSubscriptions++;
+        yield () => {
+          liveSubscriptions--;
+        };
+        if (shouldFail) {
+          throw new Error("setup failed after subscribing");
+        }
+      },
+    });
+
+    initializer.setupExtensionContext(context);
+    expect(initializer.getExtensionExports("ext.fails-partway")).toBeNull();
+    expect(liveSubscriptions).toBe(0);
+
+    shouldFail = false;
+    initializer.setupExtensionContext(context);
+    expect(initializer.getExtensionExports("ext.fails-partway")).toEqual({});
+    expect(liveSubscriptions).toBe(1);
+
+    initializer.unregisterExtension("ext.fails-partway");
+    expect(liveSubscriptions).toBe(0);
+  });
 });
 
 describe("createExtensionManager", () => {
@@ -1099,8 +1129,7 @@ describe("createExtensionManager", () => {
           import: importModule("pkg://autoinstall-dependency"),
           meta: {
             id: "ext.autoinstall-dependency",
-            // No autoinstall flag - only force-installed as a dependency,
-            // mirroring seed-bible-utils/scripture-map in production.
+            // No autoinstall flag - only force-installed as a dependency.
             translations: {
               en: {
                 title: "Dependency",
@@ -1697,7 +1726,7 @@ describe("createExtensionManager", () => {
   });
 
   it("unloadExtension() records the extension in the autoinstall-handled set even when it never had autoinstall:true", async () => {
-    // Mirrors seed-bible-utils in production: an extension that's only ever
+    // An extension that's only ever
     // force-installed as another extension's dependency, never carrying
     // autoinstall:true itself, so loadDefaultExtensions's batch marking never
     // touches it - this is the only path that records its uninstall.

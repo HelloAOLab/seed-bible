@@ -1,5 +1,5 @@
-import { bootstrapExtension } from "./infrastructure/di/bootstrap";
-
-export default function init() {
-  bootstrapExtension();
-}
+export {
+  acquireSeedBibleUtils,
+  type SeedBibleUtilsLease,
+} from "./infrastructure/di/bootstrap";
+export type { UtilsAPI } from "./infrastructure/models/seedBible";

@@ -1,13 +1,15 @@
-import { useSignal } from "@preact/signals";
+import { useSignal, type ReadonlySignal } from "@preact/signals";
 import { useEffect, useMemo } from "preact/hooks";
 import { MaterialIcon, PortalComponent, Skeleton } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import geoImporterPattern from "virtual:@pattern/geo-importer";
 import { v4 as uuid } from "uuid";
 import type {
-  LocationsExtensionApi,
+  findLocation,
+  getPlaceGeoJsonUrl,
   PlaceData,
-} from "@seed-bible/locations-extension";
+} from "@seed-bible/bible-locations";
+import type { ModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import { withoutQualifier } from "./names";
 import type { TheographicClient, TheographicPlaceEntry } from "./provider";
@@ -30,7 +32,7 @@ export interface PlaceGeoJsonFeature {
      * For a lone Feature the importer places its label, and focuses the
      * camera, with `coordinates[1]` as X (longitude) and `coordinates[0]` as
      * Y (see `parseFeature` in `loadMap.tsx`). Confirmed by opening a place
-     * and seeing where the map lands. The locations extension's hand-built
+     * and seeing where the map lands. The hand-built known-places
      * files use this order too; OpenBible's are in spec order and focus from
      * their `bbox` instead, so they are passed through untouched.
      */
@@ -76,50 +78,55 @@ export function placeToGeoJson(
   };
 }
 
-/** The id a place's floating map pane is opened under, one per place. */
-export function placePaneId(place: Pick<TheographicPlaceEntry, "id">): string {
+/** The id a place's map pane or sheet is opened under, one per place. */
+export function placeMapId(place: Pick<TheographicPlaceEntry, "id">): string {
   return `theographic-place-${place.id}`;
 }
 
 /**
- * Whether a place's map is currently open in its floating pane.
+ * Whether a place's map is currently open in its floating pane, or on a
+ * phone, its sheet.
  *
- * Reads the pane list itself rather than tracking open/close here, so it stays
- * right however the pane goes away — its close button, being displaced, or
- * closed from code. Read during render, it re-renders the reader when that
- * changes.
+ * Reads the pane and modal lists themselves rather than tracking open/close
+ * here, so it stays right however the map goes away — its close button, being
+ * displaced, or closed from code. Read during render, it re-renders the
+ * reader when that changes.
  */
 export function createIsPlaceOpen(
-  panes: PanesManager | undefined
+  panes: PanesManager | undefined,
+  modals?: ModalManager
 ): (place: TheographicPlaceEntry) => boolean {
   if (!panes) {
     return () => false;
   }
   return (place) => {
-    const id = placePaneId(place);
-    return panes.panes.value.some((pane) => pane.id === id);
+    const id = placeMapId(place);
+    return (
+      panes.panes.value.some((pane) => pane.id === id) ||
+      (modals?.modals.value.some((modal) => modal.id === id) ?? false)
+    );
   };
 }
 
-/** The part of the locations extension's API the map uses. */
-export type PlaceLocations = Pick<
-  LocationsExtensionApi,
-  "findLocation" | "getPlaceGeoJsonUrl"
->;
+/** The place lookup the map uses: `@seed-bible/bible-locations`, or a stand-in. */
+export interface PlaceLocations {
+  findLocation: typeof findLocation;
+  getPlaceGeoJsonUrl: typeof getPlaceGeoJsonUrl;
+}
 
 /** Where a place's map data comes from, besides its own coordinates. */
 export interface PlaceMapSources {
-  /** Fetches, and caches, the locations extension's file. */
+  /** Fetches, and caches, a place's GeoJSON file. */
   client?: Pick<TheographicClient, "getResource">;
-  /** The locations extension's lookup. Without it, only coordinates are drawn. */
+  /** The known places' lookup. Without it, only coordinates are drawn. */
   locations?: PlaceLocations;
 }
 
 /**
- * The locations extension's entry for a place, or null when it has none.
+ * The known-places entry for a place, or null when it has none.
  *
  * Theographic adds a trailing qualifier to tell same-named places apart
- * ("Bethel (of Palestine)"), which the extension's file doesn't use, so the
+ * ("Bethel (of Palestine)"), which the known-places file doesn't use, so the
  * name is tried as given and then without it.
  */
 export function findKnownLocation(
@@ -170,7 +177,7 @@ export function fitsInPortalUrl(mapData: string): boolean {
  * The `mapData` to hand the geo-importer for a place, as the JSON text it
  * expects.
  *
- * The locations extension's file when it has one that fits in the portal's
+ * The known place's file when it has one that fits in the portal's
  * URL — an outline or a curated point, rather than the single coordinate the
  * dataset carries — and a point built from the coordinates otherwise, or when
  * that file can't be fetched. Null when there is nothing to draw at all.
@@ -259,7 +266,7 @@ function PlaceMapPortal(props: { mapData: string | "loading"; inst: string }) {
   );
 }
 
-/** A place's map filling its floating pane. */
+/** A place's map filling its floating pane or sheet. */
 function PlacePane(props: {
   place: TheographicPlaceEntry;
   sources: PlaceMapSources;
@@ -284,14 +291,22 @@ function PlacePane(props: {
 }
 
 /**
- * Opens a place on the geo-importer map, in its own floating pane.
+ * Opens a place on the geo-importer map, in its own floating pane or sheet.
  *
  * Undefined without a `PanesManager`, which is how the card decides whether
  * to offer the control at all.
+ *
+ * On a phone it opens in a sheet instead: a pane there fills the screen and
+ * closes the others, Discover included, while a sheet sits over it and leaves
+ * it as it was.
  */
 export function createOpenPlace(
   panes: PanesManager | undefined,
-  sources: PlaceMapSources = {}
+  sources: PlaceMapSources = {},
+  phone: {
+    isMobile?: ReadonlySignal<boolean>;
+    modals?: ModalManager;
+  } = {}
 ): ((place: TheographicPlaceEntry) => void) | undefined {
   if (!panes) {
     return undefined;
@@ -307,14 +322,27 @@ export function createOpenPlace(
     // the same `inst` and the map iframe keeps its document instead of
     // reloading.
     const inst = uuid();
+    const renderMap = () => (
+      <PlacePane place={place} sources={sources} inst={inst} />
+    );
+
+    if (phone.isMobile?.peek() && phone.modals) {
+      phone.modals.openModal({
+        id: placeMapId(place),
+        title: place.name,
+        content: () => (
+          <div className="sb-theographic-map-sheet">{renderMap()}</div>
+        ),
+        mobileSheet: true,
+      });
+      return;
+    }
 
     panes.openPane({
-      id: placePaneId(place),
+      id: placeMapId(place),
       placement: "floating",
       title: place.name,
-      component: () => (
-        <PlacePane place={place} sources={sources} inst={inst} />
-      ),
+      component: renderMap,
     });
   };
 }
@@ -340,7 +368,7 @@ export function PlaceMap(props: {
   place: TheographicPlaceEntry;
   label: string;
   sources: PlaceMapSources;
-  /** Opens this map in its own pane. Omit and no control is shown. */
+  /** Opens this map in its own pane or sheet. Omit and no control is shown. */
   onOpen?: () => void;
   /** The control's accessible name, already translated. */
   openLabel?: string;
