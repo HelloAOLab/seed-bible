@@ -28,22 +28,18 @@
   "searching": "వెతుకుతోంది...",
   "no-search-results": "సరిపోలే పద్యాలు లేవు.",
   "open-chapter": "ఓపెన్ చాప్టర్",
-
   "uploading": "అప్‌లోడ్ అవుతోంది...",
   "profile-name": "ప్రొఫైల్ పేరు",
   "profile-name-placeholder": "ఉదా. క్రెయిగ్ కుటుంబం",
-
   "description": "వివరణ",
   "optional": "(ఐచ్ఛికం)",
   "description-placeholder": "మీ ప్రొఫైల్ వివరణను నమోదు చేయండి...",
   "location": "స్థానం",
   "location-placeholder": "ఉదా: ఆస్టిన్, TX",
-
   "copied": "కాపీ చేయబడింది",
   "copy": "కాపీ",
   "save-changes": "మార్పులను సేవ్ చేయండి",
   "sign-out": "సైన్ అవుట్",
-
   "log-in": "లాగిన్ అవ్వండి",
   "tanakh": "తనాఖ్",
   "traditional": "సాంప్రదాయ",
@@ -57,7 +53,6 @@
   "scripture-settings": "లేఖన అమరికలు",
   "scripture-elements": "లేఖన అంశాలు",
   "scripture-settings-font-size-example": "ఎ",
-
   "show-headings": "శీర్షికలను చూపించు",
   "show-verse-numbers": "పద్య సంఖ్యలను చూపించు",
   "show-footnotes": "పాదసూచికలను చూపించు",
@@ -71,7 +66,6 @@
   "no-extensions-available": "గడువు పొడిగింపులు అందుబాటులో లేవు.",
   "install": "ఇన్‌స్టాల్ చేయండి",
   "uninstall": "అన్‌ఇన్‌స్టాల్ చేయండి",
-
   "custom": "కస్టమ్",
   "text-section-bookTitle": "పుస్తక శీర్షిక వచనం",
   "text-section-heading": "శీర్షిక వచనం",
@@ -92,7 +86,6 @@
   "show-selected-items": "ఎంచుకున్న అంశాలను చూపించు",
   "show-highlight-colors": "హైలైట్ రంగులను చూపించు",
   "show-icon-text": "ఐకాన్ టెక్స్ట్‌ను చూపించు",
-
   "extensions": "పొడిగింపులు",
   "display": "ప్రదర్శన",
   "theme-and-text": "థీమ్ & టెక్స్ట్",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "లేఖన ఫాంట్ పరిమాణాన్ని పెంచండి",
   "change-line-spacing": "లైన్ స్పేసింగ్‌ను మార్చండి",
   "line-spacing_lineHeight": "లైన్ స్పేసింగ్: {{lineHeight}}",
-
   "italic": "ఇటాలిక్",
   "underline": "అండర్‌లైన్",
   "alignment_x": "అమరిక: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "టెక్స్ట్ రంగు",
   "follow_theme": "థీమ్‌ను అనుసరించండి",
   "reset-to-default": "డిఫాల్ట్‌కు రీసెట్ చేయండి",
-
   "id_highlight-text-color": "{{id}} హైలైట్ టెక్స్ట్ రంగు",
   "id_highlight-background-color": "{{id}} హైలైట్ నేపథ్య రంగు",
   "all-settings-description": "ప్రతి టెక్స్ట్ విభాగాన్ని చక్కగా సర్దుబాటు చేయండి మరియు ప్రతి థీమ్ రంగును అనుకూలీకరించండి.",
@@ -141,7 +132,6 @@
   "old-testament_short": "ఓటీ",
   "new-testament_short": "ఎన్టీ",
   "apocrypha": "అపోక్రిఫా",
-
   "custom-translations": "అనుకూల అనువాదాలు",
   "no-translation-results-found": "ఫలితాలు ఏవీ కనుగొనబడలేదు. పాక్షికంగా పూర్తి చేయబడిన అనువాదాలను కూడా చేర్చడానికి మీరు మీ శోధనను విస్తరించాలనుకుంటున్నారా?",
   "show-all-translations": "అన్ని అనువాదాలను చూపించు",
@@ -159,7 +149,6 @@
   "4-psalms": "4 కీర్తనలు",
   "5-psalms": "5 కీర్తనలు",
   "remove-bookmark": "బుక్‌మార్క్‌ను తొలగించండి",
-
   "chat": "చాట్",
   "today": "ఈరోజు",
   "you": "మీరు",
@@ -169,7 +158,6 @@
   "category-options": "ఫోల్డర్ ఎంపికలు",
   "rename": "పేరు మార్చండి",
   "delete": "తొలగించు",
-
   "bookmark-options": "బుక్‌మార్క్ ఎంపికలు",
   "new-folder-placeholder": "ఫోల్డర్ పేరు",
   "tasks": "పనులు",
@@ -180,12 +168,10 @@
   "folder-name-taken": "ఆ పేరుతో ఒక ఫోల్డర్ ఇప్పటికే ఉంది.",
   "add-to-new": "కొత్త వాటికి జోడించండి",
   "save": "సేవ్ చేయండి",
-
   "apocrypha-info-text": "ఈ విభాగంలోని రచనలలో దేనినీ తొలి యూదు లేదా క్రైస్తవ సమాజాలు ఎన్నడూ పవిత్ర గ్రంథంగా పరిగణించలేదు. బైబిల్ అనేది పుస్తకాల యొక్క ఒక నిర్దిష్ట సంకలనం. యూదులు మరియు క్రైస్తవులు పాత నిబంధన విషయంలో ఎల్లప్పుడూ ఏకీభవించారు. ఇది, యూదు ప్రజలు తనాఖ్ అని మరియు క్రైస్తవులు పాత నిబంధన అని పిలిచే ఒక స్థిరమైన పవిత్ర గ్రంథాల సమితి నుండి వచ్చింది. తనాఖ్ మరియు పాత నిబంధనలోని విషయాలు ఖచ్చితంగా ఒకేలా ఉంటాయి, కానీ అవి సాధారణంగా వేర్వేరుగా అమర్చబడి ఉంటాయి. క్రైస్తవులు అదనంగా కొత్త నిబంధనను కూడా గుర్తిస్తారు, ఇది యేసు కథ, ఆయన బోధనలు మరియు ఆయన అనుచరుల రచనలను వివరిస్తుంది. బైబిల్ వ్రాయబడిన కాలంలో ఈ క్రింది రచనలు సుపరిచితం మరియు విస్తృతంగా చదవబడ్డాయి, కానీ వాటిని ఎన్నడూ పవిత్ర గ్రంథంగా పరిగణించలేదు. ప్రాచీన రచయితలు కొన్నిసార్లు కవులు, తత్వవేత్తలు మరియు ఇతర రచనలతో సహా అనేక రకాల గ్రంథాలను ఉటంకించినప్పటికీ, ఒకదాన్ని ఉటంకించడం అనేది దానిని పవిత్ర గ్రంథంగా పరిగణించడంతో సమానం కాదు. ఈ రచనలు కేవలం చారిత్రక మరియు సాహిత్య సూచన కోసం మాత్రమే ఇక్కడ చేర్చబడ్డాయి.",
   "seed-bible": "సీడ్ బైబిల్",
   "take-photo": "ఫోటో తీయండి",
   "choose-from-gallery": "గ్యాలరీ నుండి ఎంచుకోండి",
-
   "crop-your-photo": "మీ ఫోటోను కత్తిరించండి",
   "zoom": "జూమ్",
   "set-picture": "చిత్రాన్ని సెట్ చేయండి",
@@ -211,10 +197,8 @@
   "read-the-bible": "బైబిలు చదవండి",
   "seed-bible-description": "సీడ్ బైబిల్‌లో {{bookName}} {{chapterNumber}} చదవండి",
   "social-title": "{{bookName}} {{chapterNumber}} చదవండి",
-
   "chapter-navigation": "అధ్యాయ నావిగేషన్",
   "tutorial.skip": "దాటవేయి",
-
   "tutorial.back": "వెనుక",
   "tutorial.done": "పూర్తయింది",
   "tutorial.next": "తరువాత",
@@ -327,11 +311,9 @@
   "study-notes": "అధ్యయన గమనికలు",
   "content": "కంటెంట్",
   "untitled-playlist": "పేరులేని ప్లేజాబితా",
-
   "discover-annotations-empty": "మీకు ఎలాంటి వ్యాఖ్యానాలు లేవు",
   "discover-cross-references-empty": "ఈ అధ్యాయానికి అనుబంధ సూచనలు లేవు.",
   "discover-study-notes-empty": "ఈ అధ్యాయానికి స్టడీ నోట్స్ లేవు.",
-
   "discover-select-tab": "సంబంధిత సమాచారాన్ని కనుగొనడానికి ఒక ట్యాబ్‌ను ఎంచుకోండి.",
   "create-playlist": "సృష్టించండి",
   "playlist-title_placeholder": "ప్లేలిస్ట్ శీర్షిక",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "ప్లేలిస్ట్‌ను తొలగించలేకపోయాను.",
   "collapsed-tab-shared-label": "{{title}} — భాగస్వామ్య సెషన్, {{count}} హాజరు",
   "playlist-add-mode-label": "వస్తువు రకం",
-
   "session-host-reconnected": "సెషన్‌కు తిరిగి కనెక్ట్ చేయబడింది",
   "session-host-left": "హోస్ట్ నిష్క్రమించారు — మిమ్మల్ని సెషన్ నుండి తొలగించారు",
   "drag-to-reorder-playlist-item": "క్రమాన్ని మార్చడానికి లాగండి",
   "saving": "సేవ్ చేస్తోంది…",
-
   "unsaved-item-confirm-message": "మీరు ఇంకా ప్లేలిస్ట్‌కు జోడించని అంశాన్ని జోడించడం ప్రారంభించారు. మీరు ఏమి చేయాలనుకుంటున్నారు?",
   "discard-and-save": "విస్మరించి సేవ్ చేయండి",
   "add-and-save": "జోడించి సేవ్ చేయండి",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "ప్రివ్యూ {{reading}}",
   "reading-plan-mark-reading-complete": "చదవడం పూర్తి చేసినట్లు గుర్తించండి",
   "reading-plan-link-video": "వీడియో",
-
   "reading-plan-mark-passage-complete": "{{passage}} ను చదివినట్లుగా గుర్తించండి",
   "reading-plan-read-nudge-title": "చదివి ఆనందించండి!",
   "reading-plan-read-nudge-toast": "{{passage}} పూర్తి చేసినట్లుగా గుర్తించాలా?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "ఆన్‌లైన్‌లో బైబిల్‌ను చదవండి, శోధించండి మరియు అధ్యయనం చేయండి. అనేక భాషలలో ఉచిత అనువాదాలు, ముఖ్యాంశాలు, గమనికలు, బుక్‌మార్క్‌లు మరియు పఠన ప్రణాళికలతో లభిస్తాయి.",
   "all": "అన్నీ",
-
   "today-bookmarks": "బుక్‌మార్క్‌లు",
   "today-search-verses": "పుస్తకాలు, అధ్యాయాలు, వచనాలు వెతకండి....",
   "anonymous-greeting": "స్వాగతం!",
   "community": "సంఘం",
   "go-somewhere-new": "కొత్త ప్రదేశానికి వెళ్లండి",
-
   "open-bible": "ఓపెన్ బైబిల్",
   "personal-greeting": "స్వాగతం, {{name}} !",
   "resume-reading": "మీరు ఆపిన చోట నుండి కొనసాగించండి",
   "resume-reading-loading": "మీ పఠన చరిత్ర లోడ్ అవుతోంది…",
   "selected-year": "సంవత్సరం: {{year}}",
-
   "theme-light": "కాంతి",
   "theme-dark": "చీకటి",
   "installed-extensions": "ఇన్‌స్టాల్ చేయబడింది",
@@ -543,7 +519,6 @@
   "extension-state-installed": "ఇన్‌స్టాల్ చేయబడింది",
   "extension-state-downloaded": "డౌన్‌లోడ్ చేయబడింది",
   "extension-state-pending": "ఇన్‌స్టాల్ అవుతోంది…",
-
   "tutorial.stepProgress": "దశ {{current}} of {{total}}",
   "tutorial.offlineDownloadTitle": "మీ పరికరంలో ఉంచుకోవడానికి నొక్కండి",
   "tutorial.offlineDownloadBody": "ఈ చిహ్నంతో ఉన్న ఏ అనువాదాన్నైనా ఆఫ్‌లైన్‌లో చదవడానికి భద్రపరచుకోవచ్చు.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "ఈ లేఅవుట్ మెనూ నుండి ఎన్ని పేరాగ్రాఫ్‌లను పక్కపక్కనే చదవాలో ఎంచుకోండి.",
   "tutorial.addTabTitle": "మరిన్ని మార్గాలను తెరవండి",
   "tutorial.addTabBody": "అనేక పుస్తకాలను లేదా అనువాదాలను పక్కపక్కనే చదవడానికి కొత్త ట్యాబ్‌ను జోడించండి.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % పూర్తయింది - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % పూర్తయింది",
   "playlist-history-continue": "కొనసాగించండి",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "ఈ అధ్యాయానికి {{count}} నోట్స్",
   "create-folder": "ఫోల్డర్‌ను సృష్టించండి",
   "edit-bookmark": "బుక్‌మార్క్‌ను సవరించండి",
-
   "greeting-afternoon": "శుభ మధ్యాహ్నం!",
   "greeting-afternoon-named": "శుభ మధ్యాహ్నం, {{name}} !",
   "greeting-evening": "శుభ సాయం!",
@@ -652,32 +625,24 @@
   "ask-ai": "AIని అడగండి",
   "unread-mention": "చదవని ప్రస్తావన",
   "unread-messages": "చదవని సందేశాలు: {{count}}",
-
   "scripture-width": "లేఖన వెడల్పు",
   "decrease-scripture-width": "లేఖన వెడల్పును తగ్గించండి",
   "increase-scripture-width": "లేఖన వెడల్పును పెంచండి",
   "annotations": "వ్యాఖ్యానాలు",
   "discover-content-panel": "కంటెంట్‌ను కనుగొనండి",
   "discover-book-title": "{{book}} కనుగొనండి",
-
   "about-title": "సీడ్ బైబిల్ గురించి",
   "about-meta-description": "సీడ్ బైబిల్ అనేది మీ కుటుంబం, స్నేహితులు మరియు సంఘంతో కలిసి లేఖనాలను చదవడానికి రూపొందించబడిన ఒక ఉచిత బైబిల్ యాప్ — ఇది ఎప్పటికీ ఉచితం, ఇందులో ప్రకటనలు లేదా చెల్లింపు అవరోధాలు ఉండవు.",
-
   "about-action-open-passage": "ఒక మార్గాన్ని తెరవండి",
   "about-action-donate": "విరాళం ఇవ్వండి",
   "about-action-discord": "డిస్కార్డ్‌లో చేరండి",
   "recent-uploads": "ఇటీవలి అప్‌లోడ్‌లు",
-
   "customization-not-found": "ఈ అనుకూలీకరణ కనుగొనబడలేదు.",
   "customization-name": "పేరు",
   "customization-primaryColor": "ప్రాథమిక",
-
   "customization-secondaryColor": "సెకండరీ",
-
   "customization-tertiaryColor": "తృతీయ",
-
   "customization-fonts": "ఫాంట్లు",
-
   "custom-font-option": "కస్టమ్…",
   "custom-font-name-placeholder": "గూగుల్ ఫాంట్ పేరు",
   "delete-customization": "తొలగించు",
@@ -690,10 +655,8 @@
   "extension-availability-available": "అందుబాటులో ఉంది",
   "extension-availability-auto-installed": "స్వయంచాలకంగా ఇన్‌స్టాల్ చేయబడింది",
   "extension-availability-hidden": "దాచిన",
-
   "variants": "థీమ్‌లు",
   "add-variant": "థీమ్‌ను జోడించండి",
-
   "base-theme-description": "మీరు అనుకూలీకరించని దేనికైనా ఈ థీమ్ తిరిగి వెళ్లే ప్రీసెట్‌ను మార్చండి. మీ స్వంత సవరణలు అలాగే ఉంచబడతాయి.",
   "reset-to-base-theme": "బేస్ థీమ్‌కు రీసెట్ చేయండి",
   "low-contrast-warning": "{{label}} : కాంట్రాస్ట్ కేవలం {{ratio}} :1 మాత్రమే — టెక్స్ట్ స్పష్టంగా కనిపించడానికి కనీసం {{minRatio}} :1 ఉండేలా లక్ష్యంగా పెట్టుకోండి.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "ఇక్కడ ఇంకా సేవ్‌లు ఏమీ జరగలేదు.",
   "save-options": "ఎంపికలను సేవ్ చేయండి",
   "saves": "సేవ్స్",
-
   "hide-saves": "సేవ్‌లను దాచండి",
   "show-saves": "సేవ్‌లను చూపించు",
   "save-verses": "సేవ్ చేయండి",
   "new-save-folder": "కొత్త ఫోల్డర్",
   "edit-save": "సవరించు సేవ్ చేయి",
   "remove-save-from-all-folders": "అన్ని ఫోల్డర్‌ల నుండి తొలగించండి",
-
   "color-hue": "హ్యూ",
   "color-saturation": "సంతృప్తత మరియు ప్రకాశం",
   "hex-color": "హెక్స్ రంగు",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "ఫార్మాటింగ్ ఎడిటర్ లోడ్ అవ్వలేదు. ఈ నోట్‌లో ఉన్న ఫార్మాటింగ్ పోతుంది, కాబట్టి మీరు తిరిగి కనెక్ట్ అయ్యే వరకు దీన్ని ఎడిట్ చేయలేరు.",
   "annotation-text": "వ్యాఖ్యాన వచనం",
   "notes-for-verse": "పద్యం {{verse}} కొరకు గమనికలు",
-
   "configure-extension-defaults": "డిఫాల్ట్ ఓవర్‌రైడ్‌లను కాన్ఫిగర్ చేయండి",
-
   "extension-settings-defaults-title": "{{name}} డిఫాల్ట్ ఓవర్‌రైడ్‌లు",
   "no-extension-settings": "ఈ ఎక్స్టెన్షన్‌లో కాన్ఫిగర్ చేయదగిన సెట్టింగ్‌లు ఏవీ లేవు.",
   "extension-settings-save-failed": "మీ సెట్టింగ్‌లను సేవ్ చేయలేకపోయాము.",
@@ -872,7 +831,6 @@
   "setting-no-default": "డిఫాల్ట్ లేదు",
   "override-setting": "{{name}} ను అధిగమించండి",
   "override-setting-label": "ఓవర్‌రైడ్",
-
   "discover-choose-filter-hint": "ఈ అధ్యాయం నుండి మరిన్ని చూడటానికి పైన ఉన్న ఫిల్టర్‌ను ఎంచుకోండి.",
   "take-a-tour": "పర్యటన చేయండి",
   "share-reading-plan": "షేర్ ప్లాన్",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "నా బుక్‌మార్క్ {{number}}",
   "bookmark-move-hint": "ఈ అధ్యాయానికి తరలించడానికి బుక్‌మార్క్‌ను నొక్కండి.",
   "move-bookmark-here": "{{name}} ను ఇక్కడికి తరలించండి",
-
   "play": "ఆట",
   "pause": "విరామం",
   "audio-playback-position": "ప్లేబ్యాక్ స్థానం",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "పద్యం {{verse}}",
   "tab-playing-audio": "ఆడియో ప్లే అవుతోంది",
   "collapsed-tab-playing-label": "{{label}} — ఆడియో ప్లే అవుతోంది",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} థీమ్‌లు",
   "customization-theme-count_one": "{{count}} థీమ్",
@@ -1104,7 +1060,6 @@
   "about-community-body": "విశ్వాసం అనేది కలిసి జీవించడానికి ఉద్దేశించబడింది. సీడ్ బైబిల్ మీ కుటుంబంతో, మీ అత్యంత సన్నిహిత స్నేహితులతో మరియు మీ గృహ సంఘంతో కలిసి లేఖనాలను చదవడానికి రూపొందించబడింది.",
   "discovered-content": "కనుగొనబడిన కంటెంట్",
   "show-discovered-content": "కనుగొనబడిన కంటెంట్‌ను చూపించు",
-
   "extension-availability-default": "డిఫాల్ట్ ( {{availability}} )",
   "customization-extensions-default": "ఇతర పొడిగింపులకు డిఫాల్ట్",
   "customization-extensions-default-hint": "తర్వాత జోడించిన కొత్త వాటితో సహా, మీరు కింద సెట్ చేయని ప్రతి ఎక్స్‌టెన్షన్‌కు ఇది వర్తిస్తుంది.",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "ప్లేలిస్ట్‌కు తిరిగి వెళ్లండి",
   "playlist-scripture-note-aria": "{{passage}} పై గమనిక",
   "playlist-scripture-note-progress": "{{current}} of {{total}}",
-
   "unsaved-item-edit-confirm-message": "మీరు ఒక అంశాన్ని మార్చారు కానీ ఆ మార్పులను ఇంకా సేవ్ చేయలేదు. మీరు ఏమి చేయాలనుకుంటున్నారు?",
   "keep-changes-and-save": "మార్పులను ఉంచి, భద్రపరచండి",
   "reading-plan-edit-reading": "సవరణ పఠనం",
@@ -1152,7 +1106,6 @@
   "branding": "బ్రాండింగ్",
   "create-custom-branding-menu-item": "కస్టమ్ బ్రాండింగ్",
   "your-content-empty-branding": "మీరు సృష్టించే కస్టమ్ బ్రాండింగ్ ఇక్కడ కనిపిస్తుంది.",
-
   "extension-consent-from": "{{host}} నుండి",
   "extension-consent-source-version": "వెర్షన్ {{version}} · {{host}} నుండి",
   "extension-consent-uploader-unnamed": "సీడ్ బైబిల్ వినియోగదారుడు",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "మీరు ఏ పద్యాలను ఎంచుకుంటారో చూడండి",
   "extension-permission-reading-navigate": "బహిరంగ మార్గాలు",
   "extension-permission-network": "{{host}} కు కనెక్ట్ అవ్వండి",
-
   "extension-consent-not-now": "ఇప్పుడు కాదు",
   "extension-consent-nothing-yet": "ప్రస్తుతానికి, దీనికి మీ సమాచారంలో దేనికీ యాక్సెస్ ఉండదు.",
   "extension-permission-reading-history": "మీ పఠన చరిత్రను చూడండి",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "రద్దు చేయండి",
   "extension-consent-high-risk": "సున్నితమైన",
   "extension-modal-ok": "సరే",
-
   "extension-permissions-restart-note": "మార్పులు తక్షణమే అమలులోకి వస్తాయి. వాటిని స్వీకరించడానికి {{name}} పునఃప్రారంభించబడుతుంది.",
   "extension-permissions-saved": "సేవ్ చేయబడింది. {{name}} కొత్త అనుమతులతో పునఃప్రారంభించబడింది.",
   "extension-permissions-failed": "అది సేవ్ అవ్వలేదు. మళ్ళీ ప్రయత్నించండి.",
@@ -1276,8 +1227,53 @@
   "session-settings-verse-effects-desc-hosts": "హోస్ట్ ఒక పద్యాన్ని ఎంచుకున్నప్పుడు ప్రభావాలను చూపించండి.",
   "session-settings-verse-effects-desc-everyone": "ఎవరైనా ఒక పద్యాన్ని ఎంచుకున్నప్పుడు ప్రభావాలను చూపించండి.",
   "session-settings-verse-effects-desc-none": "అందరికీ పద్య ఎంపిక ప్రభావాలు నిలిపివేయబడ్డాయి.",
-
   "account": "ఖాతా",
   "scroll-filters-start": "ప్రారంభం వైపు ఫిల్టర్‌లను స్క్రోల్ చేయండి",
-  "scroll-filters-end": "చివరి వైపుకు స్క్రోల్ ఫిల్టర్లు"
+  "scroll-filters-end": "చివరి వైపుకు స్క్రోల్ ఫిల్టర్లు",
+  "download": "డౌన్‌లోడ్",
+  "image-details-uploaded": "అప్‌లోడ్ చేయబడింది",
+  "image-details-dimensions": "కొలతలు",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "రకం",
+  "image-details-cover-of": "కవర్",
+  "image-details-not-a-cover": "కవర్‌గా ఉపయోగించబడదు",
+  "delete-customization-confirm-title": "కస్టమ్ బ్రాండింగ్‌ను తొలగించాలా?",
+  "delete-customization-confirm-message": "కస్టమ్ బ్రాండింగ్ \" {{name}} \"ను తొలగించాలా? దీన్ని రద్దు చేయడం సాధ్యపడదు.",
+  "delete-customization-failed": "కస్టమ్ బ్రాండింగ్‌ను తొలగించలేకపోయాను.",
+  "delete-variant-confirm-title": "థీమ్‌ను తొలగించాలా?",
+  "delete-variant-confirm-message": "\" {{name}} \" థీమ్‌ను తొలగించాలా? దీన్ని రద్దు చేయడం సాధ్యపడదు.",
+  "delete-variant-confirm-message-unnamed": "ఈ థీమ్‌ను తొలగించాలా? దీన్ని వెనక్కి తీసుకోలేరు.",
+  "delete-variant-failed": "థీమ్‌ను తొలగించలేకపోయాను.",
+  "delete-highlight-confirm-title": "హైలైట్‌ను తొలగించాలా?",
+  "delete-highlight-confirm-message": "{{reference}} పై ఉన్న హైలైట్‌ను తొలగించాలా? దీన్ని రద్దు చేయడం సాధ్యపడదు.",
+  "delete-highlight-failed": "హైలైట్‌ను తొలగించలేకపోయాను.",
+  "delete-annotation-on-confirm-message": "{{reference}} పై ఉన్న వ్యాఖ్యను తొలగించాలా? దీన్ని రద్దు చేయడం సాధ్యపడదు.",
+  "remove-from-folder": "ఫోల్డర్ నుండి తొలగించండి",
+  "save-folders": "{{folders}}",
+  "delete-save-confirm-title": "సేవ్ తొలగించాలా?",
+  "delete-save-confirm-message": "{{reference}} కోసం సేవ్‌ను తొలగించాలా? దీన్ని రద్దు చేయడం సాధ్యపడదు.",
+  "delete-save-confirm-message-folders": "{{folders}} నుండి {{reference}} కోసం సేవ్‌ను తొలగించాలా? దీన్ని రద్దు చేయడం సాధ్యపడదు.",
+  "delete-save-failed": "సేవ్‌ను తొలగించలేకపోయాను.",
+  "delete-save-folder-confirm-title": "ఫోల్డర్‌ను తొలగించాలా?",
+  "delete-save-folder-confirm-message": "\" {{name}} \" ఫోల్డర్‌ను తొలగించాలా?",
+  "delete-save-folder-confirm-deletes": "ఈ ఫోల్డర్‌లో మాత్రమే ఉన్న {{count}} సేవ్‌లు కూడా తొలగించబడతాయి.",
+  "delete-save-folder-confirm-deletes_one": "ఈ ఫోల్డర్‌లో మాత్రమే ఉన్న సేవ్ కూడా తొలగించబడుతుంది.",
+  "delete-save-folder-confirm-deletes_other": "ఈ ఫోల్డర్‌లో మాత్రమే ఉన్న {{count}} సేవ్‌లు కూడా తొలగించబడతాయి.",
+  "delete-save-folder-confirm-keeps": "ఇతర ఫోల్డర్‌లలో కూడా ఉన్న {{count}} సేవ్‌లు అక్కడే ఉంటాయి.",
+  "delete-save-folder-confirm-keeps_one": "వేరొక ఫోల్డర్‌లో ఉన్న సేవ్ అక్కడే ఉంటుంది.",
+  "delete-save-folder-confirm-keeps_other": "ఇతర ఫోల్డర్‌లలో కూడా ఉన్న {{count}} సేవ్‌లు అక్కడే ఉంటాయి.",
+  "cant-be-undone": "దీన్ని వెనక్కి తీసుకోలేము.",
+  "delete-save-folder-failed": "ఫోల్డర్‌ను తొలగించలేకపోయాను.",
+  "download-image-failed": "చిత్రాన్ని డౌన్‌లోడ్ చేయలేకపోయాను.",
+  "session-settings-verse-effects-hosts-only": "హోస్ట్‌లు మాత్రమే",
+  "session-settings-verse-effects-everyone": "ప్రతిఒక్కరూ",
+  "session-settings-verse-effects-none": "ఏదీ లేదు",
+  "loading-books": "పుస్తకాలు లోడ్ అవుతున్నాయి…",
+  "books-load-failed": "పుస్తకాలు లోడ్ కాలేదు. మీ కనెక్షన్‌ను సరిచూసుకుని, మళ్లీ ప్రయత్నించండి.",
+  "loading-translation": "{{name}} లోడ్ అవుతోంది…",
+  "translation-load-failed": "{{name}} లోడ్ కాలేదు.",
+  "loading-translations": "అనువాదాలు లోడ్ అవుతున్నాయి…",
+  "translations-load-failed": "అనువాదాల పూర్తి జాబితాను లోడ్ చేయలేకపోయాము, అందువల్ల కొన్ని అందుబాటులో లేకపోవచ్చు.",
+  "verse-of-the-day": "రోజు సూక్తి",
+  "verse-of-the-day-loading": "ఈనాటి వచనం లోడ్ అవుతోంది…"
 }

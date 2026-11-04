@@ -2365,3 +2365,224 @@ describe("BibleSelector offline downloads", () => {
     expect(downloadedFilterNote()).toBeNull();
   });
 });
+
+describe("BibleSelector loading and failure states", () => {
+  let container: HTMLDivElement;
+  let errorSpy: Mock;
+  const catalogUrl = makeUrl("/api/available_translations.json");
+
+  beforeEach(() => {
+    jsdom.reconfigure({ url: "https://seedbible.org/?useFreeBibleAPI" });
+    localStorage.clear();
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(async () => {
+    render(null, container);
+    container.remove();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    errorSpy.mockRestore();
+  });
+
+  /**
+   * A first visit: the reader has its own translation's books and the
+   * catalog hasn't been fetched. `respond` can take over any request; return
+   * undefined to let the usual mocked response through.
+   */
+  async function createFirstVisit(
+    respond: (url: string) => Promise<unknown> | undefined
+  ) {
+    const state = await createTestSeedBibleState({
+      responses: createDefaultSelectorManagerResponseMap(),
+    });
+    const mockedFetch = globalThis.fetch;
+    globalThis.fetch = ((url: string, init?: RequestInit) =>
+      respond(String(url)) ??
+      mockedFetch(url, init)) as unknown as typeof globalThis.fetch;
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={state.selector.isOpen.value}
+          onClose={vi.fn()}
+          selectorState={state.selector}
+          bibleDataManager={state.bibleData}
+          app={state.app}
+        />,
+        container
+      );
+    });
+    return { state, slot };
+  }
+
+  /**
+   * Opens a tab on a translation whose books haven't loaded. The API caches
+   * responses, so the reader's own translation would never reach the network
+   * again; a new tab on a translation whose requests are failing is left
+   * reading a translation nothing has loaded.
+   */
+  async function openTabOnUnloadedTranslation(
+    state: SeedBibleState,
+    translationId: string
+  ): Promise<TabSlot> {
+    const tab = state.tabs.addTab(undefined, {
+      initialTranslationId: translationId,
+      initialBookId: "MAT",
+      initialChapterNumber: 1,
+    });
+    const slotId = state.tabsLayout.slots.value[0]!.id;
+    state.tabsLayout.openTabInSlot(slotId, tab.id);
+    await waitFor(() => tab.readingState.loading.value === false);
+    const slot = state.tabsLayout.slots.value.find((s) => s.id === slotId)!;
+    expect(slot.tab?.readingState.translationId.value).toBe(translationId);
+    return slot;
+  }
+
+  function deferred() {
+    let resolve!: () => void;
+    let reject!: (error: Error) => void;
+    const promise = new Promise<void>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  const text = () => container.textContent ?? "";
+  const tryAgainButton = () =>
+    Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Try again"
+    );
+
+  it("shows a loading message in place of the books until they arrive", async () => {
+    let booksArrive = false;
+    const books = deferred();
+    const { state } = await createFirstVisit((url) => {
+      if (!url.includes("/NIV/")) return undefined;
+      return booksArrive
+        ? books.promise.then(
+            () => createDefaultSelectorManagerResponseMap()[url]
+          )
+        : Promise.reject(new Error("Network error"));
+    });
+    const slot = await openTabOnUnloadedTranslation(state, "NIV");
+    booksArrive = true;
+
+    let opening!: Promise<void>;
+    act(() => {
+      opening = state.selector.setOpen(true, slot);
+    });
+    await waitFor(() => text().includes("Loading books…"));
+    expect(container.querySelector("#booktab-MAT")).toBeNull();
+
+    books.resolve();
+    await act(async () => {
+      await opening;
+    });
+    await waitFor(() => Boolean(container.querySelector("#booktab-MAT")));
+    expect(text()).not.toContain("Loading books…");
+  });
+
+  it("explains a failed book load and loads the books on Try again", async () => {
+    let booksFail = true;
+    const { state } = await createFirstVisit((url) =>
+      url.includes("/NIV/") && booksFail
+        ? Promise.reject(new Error("Network error"))
+        : undefined
+    );
+    const slot = await openTabOnUnloadedTranslation(state, "NIV");
+
+    await act(async () => {
+      await state.selector.setOpen(true, slot);
+    });
+    await waitFor(() => text().includes("The books couldn't be loaded."));
+    expect(container.querySelector("#booktab-MAT")).toBeNull();
+
+    booksFail = false;
+    await act(async () => {
+      tryAgainButton()!.click();
+    });
+    await waitFor(() => Boolean(container.querySelector("#booktab-MAT")));
+    expect(text()).not.toContain("The books couldn't be loaded.");
+  });
+
+  it("shows the translation list is still loading while the catalog downloads", async () => {
+    const catalog = deferred();
+    const { state, slot } = await createFirstVisit((url) =>
+      url === catalogUrl
+        ? catalog.promise.then(
+            () => createDefaultSelectorManagerResponseMap()[catalogUrl]
+          )
+        : undefined
+    );
+
+    await act(async () => {
+      await state.selector.setOpen(true, slot);
+      state.selector.selectingTranslation.value = true;
+    });
+    await waitFor(() => text().includes("Loading translations…"));
+
+    await act(async () => {
+      catalog.resolve();
+    });
+    await waitFor(() => !text().includes("Loading translations…"));
+    expect(state.bibleData.catalogStatus.value).toBe("loaded");
+  });
+
+  it("says the translation list may be incomplete when the catalog fails, and fills it in on Try again", async () => {
+    let catalogFails = true;
+    const { state, slot } = await createFirstVisit((url) =>
+      url === catalogUrl && catalogFails
+        ? Promise.reject(new Error("Network error"))
+        : undefined
+    );
+
+    await act(async () => {
+      await state.selector.setOpen(true, slot);
+      state.selector.selectingTranslation.value = true;
+    });
+    await waitFor(() =>
+      text().includes("Couldn't load the full list of translations")
+    );
+    // The book grid is unaffected: the reader's books are still there.
+    expect(state.selector.booksStatus.value).toBe("ready");
+
+    catalogFails = false;
+    await act(async () => {
+      tryAgainButton()!.click();
+    });
+    await waitFor(() => state.bibleData.catalogStatus.value === "loaded");
+    await waitFor(
+      () =>
+        !text().includes("Couldn't load the full list of translations") &&
+        !text().includes("Loading translations…")
+    );
+    expect(state.selector.availableTranslations.value.map((t) => t.id)).toEqual(
+      expect.arrayContaining(["AAB", "BSB", "NIV"])
+    );
+  });
+
+  it("explains a picked translation that fails to load, and keeps the list open", async () => {
+    const { state, slot } = await createFirstVisit((url) =>
+      url.includes("/NIV/")
+        ? Promise.reject(new Error("Network error"))
+        : undefined
+    );
+
+    await act(async () => {
+      await state.selector.setOpen(true, slot);
+      state.selector.selectingTranslation.value = true;
+    });
+    await waitFor(() => state.bibleData.catalogStatus.value === "loaded");
+
+    await act(async () => {
+      await state.selector.pickTranslation("NIV");
+    });
+    await waitFor(() => text().includes("NIV couldn't be loaded."));
+    expect(state.selector.selectingTranslation.value).toBe(true);
+    expect(tryAgainButton()).toBeDefined();
+  });
+});

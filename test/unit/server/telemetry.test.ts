@@ -19,6 +19,9 @@ import {
   markRenderDegraded,
   recordCacheLookup,
   recordHttpRequest,
+  recordRender,
+  recordAssetProxy,
+  DURATION_BUCKET_BOUNDARIES_SECONDS,
   requestSpanAttributes,
   routeLabel,
   setBranchAllowlistForTesting,
@@ -303,6 +306,40 @@ describe("with telemetry enabled", () => {
     );
     expect(mainPoint?.value.count).toBe(1);
     expect(mainPoint?.value.sum).toBeGreaterThan(0);
+  });
+
+  it("buckets duration histograms on a seconds scale", async () => {
+    const start = performance.now() - 300;
+    recordHttpRequest(start, {
+      method: "GET",
+      statusCode: 200,
+      route: "/",
+      branch: "main",
+    });
+    recordRender(start, "main", false);
+    recordAssetProxy(start, 200);
+
+    await telemetry.forceFlush();
+    const metrics = metricsExporter
+      .getMetrics()
+      .flatMap((rm) => rm.scopeMetrics)
+      .flatMap((sm) => sm.metrics);
+
+    for (const name of [
+      "http.server.request.duration",
+      "seedbible.ssr.render.duration",
+      "seedbible.asset_proxy.duration",
+    ]) {
+      const metric = metrics.find((m) => m.descriptor.name === name);
+      const [point] = (metric?.dataPoints ?? []) as DataPoint<HistogramData>[];
+      expect(point, name).toBeDefined();
+      expect(point!.value.buckets.boundaries).toEqual(
+        DURATION_BUCKET_BOUNDARIES_SECONDS
+      );
+      // A ~0.3 s sample must not fall in the first (<= 5 ms) bucket.
+      expect(point!.value.buckets.counts[0]).toBe(0);
+      expect(point!.value.buckets.counts.reduce((a, b) => a + b, 0)).toBe(1);
+    }
   });
 
   it("counts cache hits and misses separately", async () => {

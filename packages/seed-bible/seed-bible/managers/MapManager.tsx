@@ -41,9 +41,9 @@ export type LeafletStatus = "idle" | "loading" | "ready" | "failed";
  * Downloads Leaflet and its stylesheet.
  *
  * Only ever reached through `import()`, so the bundler gives Leaflet a file of
- * its own that the startup bundle never includes: Locations loads with the
- * app to find places in each chapter, and a static import anywhere on that
- * path would send the map library to every visitor.
+ * its own that the startup bundle never includes: an installed Theographic
+ * loads with the app to list each chapter's places, and a static import
+ * anywhere on that path would send the map library to every visitor.
  */
 async function importLeaflet(): Promise<LeafletModule> {
   const [module] = await Promise.all([

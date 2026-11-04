@@ -1,4 +1,4 @@
-import { useSignal } from "@preact/signals";
+import { useSignal, type ReadonlySignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import { GeoJsonMap, MaterialIcon, Skeleton } from "seed-bible/components";
@@ -16,6 +16,7 @@ import type {
   MapManager,
   Point,
 } from "@packages/seed-bible/seed-bible/managers/MapManager";
+import type { ModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import { withoutQualifier } from "./names";
 import type { TheographicClient, TheographicPlaceEntry } from "./provider";
@@ -58,28 +59,33 @@ export function placeToGeoJson(
   };
 }
 
-/** The id a place's floating map pane is opened under, one per place. */
-export function placePaneId(place: Pick<TheographicPlaceEntry, "id">): string {
+/** The id a place's map pane or sheet is opened under, one per place. */
+export function placeMapId(place: Pick<TheographicPlaceEntry, "id">): string {
   return `theographic-place-${place.id}`;
 }
 
 /**
- * Whether a place's map is currently open in its floating pane.
+ * Whether a place's map is currently open in its floating pane, or on a
+ * phone, its sheet.
  *
- * Reads the pane list itself rather than tracking open/close here, so it stays
- * right however the pane goes away — its close button, being displaced, or
- * closed from code. Read during render, it re-renders the reader when that
- * changes.
+ * Reads the pane and modal lists themselves rather than tracking open/close
+ * here, so it stays right however the map goes away — its close button, being
+ * displaced, or closed from code. Read during render, it re-renders the
+ * reader when that changes.
  */
 export function createIsPlaceOpen(
-  panes: PanesManager | undefined
+  panes: PanesManager | undefined,
+  modals?: ModalManager
 ): (place: TheographicPlaceEntry) => boolean {
   if (!panes) {
     return () => false;
   }
   return (place) => {
-    const id = placePaneId(place);
-    return panes.panes.value.some((pane) => pane.id === id);
+    const id = placeMapId(place);
+    return (
+      panes.panes.value.some((pane) => pane.id === id) ||
+      (modals?.modals.value.some((modal) => modal.id === id) ?? false)
+    );
   };
 }
 
@@ -237,7 +243,7 @@ function PlaceMapView(props: {
   );
 }
 
-/** A place's map filling its floating pane. */
+/** A place's map filling its floating pane or sheet. */
 function PlacePane(props: {
   map: MapManager;
   place: TheographicPlaceEntry;
@@ -262,15 +268,23 @@ function PlacePane(props: {
 }
 
 /**
- * Opens a place's map in its own floating pane.
+ * Opens a place's map in its own floating pane or sheet.
  *
  * Undefined without a `PanesManager` and `MapManager`, which is how the card
  * decides whether to offer the control at all.
+ *
+ * On a phone it opens in a sheet instead: a pane there fills the screen and
+ * closes the others, Discover included, while a sheet sits over it and leaves
+ * it as it was.
  */
 export function createOpenPlace(
   panes: PanesManager | undefined,
   map: MapManager | undefined,
-  sources: PlaceMapSources = {}
+  sources: PlaceMapSources = {},
+  phone: {
+    isMobile?: ReadonlySignal<boolean>;
+    modals?: ModalManager;
+  } = {}
 ): ((place: TheographicPlaceEntry) => void) | undefined {
   if (!panes || !map) {
     return undefined;
@@ -283,12 +297,27 @@ export function createOpenPlace(
 
     // Starts Leaflet's download alongside the place data rather than after.
     void map.loadLeaflet().catch(() => undefined);
+    const renderMap = () => (
+      <PlacePane map={map} place={place} sources={sources} />
+    );
+
+    if (phone.isMobile?.peek() && phone.modals) {
+      phone.modals.openModal({
+        id: placeMapId(place),
+        title: place.name,
+        content: () => (
+          <div className="sb-theographic-map-sheet">{renderMap()}</div>
+        ),
+        mobileSheet: true,
+      });
+      return;
+    }
 
     panes.openPane({
-      id: placePaneId(place),
+      id: placeMapId(place),
       placement: "floating",
       title: place.name,
-      component: () => <PlacePane map={map} place={place} sources={sources} />,
+      component: renderMap,
     });
   };
 }
@@ -315,7 +344,7 @@ export function PlaceMap(props: {
   place: TheographicPlaceEntry;
   label: string;
   sources: PlaceMapSources;
-  /** Opens this map in its own pane. Omit and no control is shown. */
+  /** Opens this map in its own pane or sheet. Omit and no control is shown. */
   onOpen?: () => void;
   /** The control's accessible name, already translated. */
   openLabel?: string;

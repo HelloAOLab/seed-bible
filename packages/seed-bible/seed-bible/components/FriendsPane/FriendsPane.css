@@ -11,11 +11,7 @@
     var(--sb-font-color),
     transparent 95%
   );
-  --sb-friends-border: color-mix(
-    in srgb,
-    var(--sb-font-color),
-    transparent 88%
-  );
+  --sb-friends-border: var(--sb-divider-color);
   --sb-friends-muted: color-mix(in srgb, var(--sb-font-color), transparent 42%);
 
   height: 100%;
@@ -56,7 +52,7 @@
   /* Matches the compact Discover panel (`.sb-discover-content-panel`): a 1px
      ring in place of a border, plus a soft drop shadow. */
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
+    0 0 0 1px var(--sb-divider-color),
     0 4px 8px #0000002c;
 }
 

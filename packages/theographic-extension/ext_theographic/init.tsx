@@ -110,6 +110,7 @@ export default function initTheographicExtension() {
             getPlaceAttribution,
           },
           isMobile: context.app.isMobile,
+          modals: context.modals,
         })
       );
     },

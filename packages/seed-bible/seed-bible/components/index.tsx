@@ -4,6 +4,7 @@ export * from "./Skeleton/Skeleton";
 export * from "./GeoJsonMap/GeoJsonMap";
 export * from "./ExpandableText/ExpandableText";
 export * from "./PlaylistLinkContent/PlaylistLinkContent";
+export * from "./SearchBar/SearchBar";
 export * from "./TranslationList/TranslationList";
 export * from "./TranslationList/TranslationViewModeMenu";
 export * from "./useDragReorder";

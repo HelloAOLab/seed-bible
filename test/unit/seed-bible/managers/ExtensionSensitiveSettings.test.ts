@@ -823,8 +823,6 @@ describe("ExtensionSettingsManager sensitive settings", () => {
     const settings = {
       settings: signal({
         themeId: "light",
-        customTheme: {},
-        customHighlights: {},
       }),
     } as unknown as SettingsManager;
 

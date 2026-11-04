@@ -28,22 +28,18 @@
   "searching": "Buscando...",
   "no-search-results": "Sen versos coincidentes.",
   "open-chapter": "Abrir capítulo",
-
   "uploading": "Cargando...",
   "profile-name": "Nome do perfil",
   "profile-name-placeholder": "por exemplo, a familia Craig",
-
   "description": "Descrición",
   "optional": "(Opcional)",
   "description-placeholder": "Introduce a descrición do teu perfil...",
   "location": "Localización",
   "location-placeholder": "por exemplo, Austin, Texas",
-
   "copied": "Copiado",
   "copy": "Copiar",
   "save-changes": "Gardar os cambios",
   "sign-out": "Pechar sesión",
-
   "log-in": "Iniciar sesión",
   "tanakh": "Tanakh",
   "traditional": "Tradicional",
@@ -57,7 +53,6 @@
   "scripture-settings": "Configuración das escrituras",
   "scripture-elements": "Elementos das Escrituras",
   "scripture-settings-font-size-example": "Unha",
-
   "show-headings": "Mostrar títulos",
   "show-verse-numbers": "Mostrar os números dos versos",
   "show-footnotes": "Mostrar notas ao pé",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Non hai extensións dispoñibles.",
   "install": "Instalar",
   "uninstall": "Desinstalar",
-
   "custom": "Personalizado",
   "text-section-bookTitle": "Texto do título do libro",
   "text-section-heading": "Texto de título",
@@ -92,7 +86,6 @@
   "show-selected-items": "Mostrar os elementos seleccionados",
   "show-highlight-colors": "Mostrar as cores de realce",
   "show-icon-text": "Mostrar texto da icona",
-
   "extensions": "Extensións",
   "display": "Pantalla",
   "theme-and-text": "Tema e texto",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Aumentar o tamaño da fonte das escrituras",
   "change-line-spacing": "Cambiar o espazamento entre liñas",
   "line-spacing_lineHeight": "Espazado entre liñas: {{lineHeight}}",
-
   "italic": "Cursiva",
   "underline": "Subliñado",
   "alignment_x": "Aliñamento: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Cor do texto",
   "follow_theme": "Seguir o tema",
   "reset-to-default": "Restablecer aos valores predeterminados",
-
   "id_highlight-text-color": "cor de texto destacado {{id}}",
   "id_highlight-background-color": "cor de fondo de resaltado {{id}}",
   "all-settings-description": "Axusta cada sección de texto e personaliza cada cor do tema.",
@@ -141,7 +132,6 @@
   "old-testament_short": "Tempo anterior",
   "new-testament_short": "NT",
   "apocrypha": "Apócrifos",
-
   "custom-translations": "Traducións personalizadas",
   "no-translation-results-found": "Non se atoparon resultados. Queres ampliar a túa busca para incluír tamén traducións parcialmente completas?",
   "show-all-translations": "Mostrar todas as traducións",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Salmos",
   "5-psalms": "5 Salmos",
   "remove-bookmark": "Eliminar marcador",
-
   "chat": "Chat",
   "today": "Hoxe",
   "you": "Ti",
@@ -169,7 +158,6 @@
   "category-options": "Opcións de cartafol",
   "rename": "Renomear",
   "delete": "Eliminar",
-
   "bookmark-options": "Opcións de marcadores",
   "new-folder-placeholder": "Nome do cartafol",
   "tasks": "Tarefas",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Xa existe unha carpeta con ese nome.",
   "add-to-new": "Engadir a novo",
   "save": "Gardar",
-
   "apocrypha-info-text": "Ningún dos escritos desta sección foi considerado nunca Escritura polas primeiras comunidades xudías ou cristiás. A Biblia é unha colección específica de libros. Xudeus e cristiáns sempre estiveron de acordo no Antigo Testamento, que provén dun conxunto fixo de escritos sagrados que o pobo xudeu chamaba Tanakh e os cristiáns chaman Antigo Testamento. O contido do Tanakh e do Antigo Testamento é exactamente o mesmo, pero adoitan estar dispostos de xeito diferente. Os cristiáns recoñecen ademais o Novo Testamento, que conta a historia de Xesús, as súas ensinanzas e os escritos dos seus seguidores. Os escritos seguintes eran coñecidos e amplamente lidos na época en que se escribiu a Biblia, pero nunca foron tratados como Escritura. Aínda que os autores antigos ás veces citaban unha ampla gama de textos, incluídos poetas, filósofos e outros escritos, citar algo non é o mesmo que tratalo como Escritura. Estes escritos inclúense aquí só para referencia histórica e literaria.",
   "seed-bible": "Biblia das sementes",
   "take-photo": "Fai unha foto",
   "choose-from-gallery": "Escolle da galería",
-
   "crop-your-photo": "Recortar a túa foto",
   "zoom": "Zoom",
   "set-picture": "Definir imaxe",
@@ -211,10 +197,8 @@
   "read-the-bible": "Ler a Biblia",
   "seed-bible-description": "Ler {{bookName}} {{chapterNumber}} na Biblia das Sementes",
   "social-title": "Ler {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Navegación por capítulos",
   "tutorial.skip": "Omitir",
-
   "tutorial.back": "Volver",
   "tutorial.done": "Feito",
   "tutorial.next": "Seguinte",
@@ -327,11 +311,9 @@
   "study-notes": "Notas de estudo",
   "content": "Contido",
   "untitled-playlist": "Lista de reprodución sen título",
-
   "discover-annotations-empty": "Non tes anotacións",
   "discover-cross-references-empty": "Non hai referencias cruzadas para este capítulo.",
   "discover-study-notes-empty": "Non hai apuntamentos de estudo para este capítulo.",
-
   "discover-select-tab": "Selecciona unha lapela para descubrir material relacionado.",
   "create-playlist": "Crear",
   "playlist-title_placeholder": "Título da lista de reprodución",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "Non se puido eliminar a lista de reprodución.",
   "collapsed-tab-shared-label": "{{title}} — sesión compartida, {{count}} presentes",
   "playlist-add-mode-label": "Tipo de elemento",
-
   "session-host-reconnected": "Volveu conectarse á sesión",
   "session-host-left": "O anfitrión marchou; elimináronte da sesión",
   "drag-to-reorder-playlist-item": "Arrastra para reordenar",
   "saving": "Gardando…",
-
   "unsaved-item-confirm-message": "Comezaches a engadir un elemento que aínda non foi engadido á lista de reprodución. Que che gustaría facer?",
   "discard-and-save": "Descartar e gardar",
   "add-and-save": "Engadir e gardar",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "Vista previa {{reading}}",
   "reading-plan-mark-reading-complete": "Marcar lectura completa",
   "reading-plan-link-video": "Vídeo",
-
   "reading-plan-mark-passage-complete": "Marcar {{passage}} como lida",
   "reading-plan-read-nudge-title": "Boa lectura!",
   "reading-plan-read-nudge-toast": "Marcar {{passage}} como completa?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Le, busca e estuda a Biblia en liña. Traducións gratuítas en moitos idiomas, con resaltados, notas, marcadores e plans de lectura.",
   "all": "Todo",
-
   "today-bookmarks": "MARCAPÁXINAS",
   "today-search-verses": "Buscar libros, capítulos, versos...",
   "anonymous-greeting": "Benvido/a!",
   "community": "COMUNIDADE",
   "go-somewhere-new": "VAIA A ALGÚN LUGAR NOVO",
-
   "open-bible": "Biblia aberta",
   "personal-greeting": "Benvido/a, {{name}} !",
   "resume-reading": "CONTINÚA ONDE QUEDACHES",
   "resume-reading-loading": "Cargando o historial de lectura…",
   "selected-year": "Ano: {{year}}",
-
   "theme-light": "Luz",
   "theme-dark": "Escuro",
   "installed-extensions": "Instalado",
@@ -543,7 +519,6 @@
   "extension-state-installed": "Instalado",
   "extension-state-downloaded": "Descargado",
   "extension-state-pending": "Instalando…",
-
   "tutorial.stepProgress": "Paso {{current}} de {{total}}",
   "tutorial.offlineDownloadTitle": "Toca para gardalo no teu dispositivo",
   "tutorial.offlineDownloadBody": "Calquera tradución con esta icona pódese gardar para lela sen conexión.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "Escolle cantas pasaxes queres ler unha ao lado da outra neste menú de deseño.",
   "tutorial.addTabTitle": "Abrir máis pasaxes",
   "tutorial.addTabBody": "Engade unha nova lapela para ler varios libros ou traducións xuntos.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % completado - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % completado",
   "playlist-history-continue": "Continuar",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "{{count}} notas para este capítulo",
   "create-folder": "Crear cartafol",
   "edit-bookmark": "Editar marcador",
-
   "greeting-afternoon": "Boas tardes!",
   "greeting-afternoon-named": "Boas tardes, {{name}} !",
   "greeting-evening": "Boas noites!",
@@ -652,32 +625,24 @@
   "ask-ai": "Pregunta á IA",
   "unread-mention": "Mención sen ler",
   "unread-messages": "Mensaxes sen ler: {{count}}",
-
   "scripture-width": "Largura da escritura",
   "decrease-scripture-width": "Reducir o ancho da escritura",
   "increase-scripture-width": "Aumentar o ancho das escrituras",
   "annotations": "Anotacións",
   "discover-content-panel": "Descubrir contido",
   "discover-book-title": "Descubrir {{book}}",
-
   "about-title": "Acerca da Biblia das Sementes",
   "about-meta-description": "Seed Bible é unha aplicación bíblica gratuíta deseñada para ler as Escrituras xunto coa túa familia, amigos e comunidade: gratuíta para sempre, sen anuncios nin muros de pago.",
-
   "about-action-open-passage": "Abrir unha pasaxe",
   "about-action-donate": "Doar",
   "about-action-discord": "Únete a Discord",
   "recent-uploads": "Cargas recentes",
-
   "customization-not-found": "Non se puido atopar esta personalización.",
   "customization-name": "Nome",
   "customization-primaryColor": "Primaria",
-
   "customization-secondaryColor": "Secundaria",
-
   "customization-tertiaryColor": "Terciario",
-
   "customization-fonts": "Fontes",
-
   "custom-font-option": "Personalizado…",
   "custom-font-name-placeholder": "Nome da fonte de Google",
   "delete-customization": "Eliminar",
@@ -690,10 +655,8 @@
   "extension-availability-available": "Dispoñible",
   "extension-availability-auto-installed": "Instalado automaticamente",
   "extension-availability-hidden": "Oculto",
-
   "variants": "Temas",
   "add-variant": "Engadir tema",
-
   "base-theme-description": "As modificacións que predefiniron este tema son as que se usan para calquera cousa que non personalizases. As túas propias edicións consérvanse.",
   "reset-to-base-theme": "Restablecer ao tema base",
   "low-contrast-warning": "{{label}} : o contraste é só {{ratio}} :1; procúrase que sexa polo menos {{minRatio}} :1 para que o texto siga sendo lexible.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "Aínda non hai gardados aquí.",
   "save-options": "Gardar opcións",
   "saves": "Garda",
-
   "hide-saves": "Ocultar gardados",
   "show-saves": "Mostrar gardados",
   "save-verses": "Gardar",
   "new-save-folder": "Nova carpeta",
   "edit-save": "Editar gardar",
   "remove-save-from-all-folders": "Eliminar de todas as carpetas",
-
   "color-hue": "Ton",
   "color-saturation": "Saturación e brillo",
   "hex-color": "Cor hexadecimal",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "Non se puido cargar o editor de formato. Esta nota ten formato que se perdería, polo que non se pode editar ata que volvas conectarte.",
   "annotation-text": "Texto de anotación",
   "notes-for-verse": "Notas para o verso {{verse}}",
-
   "configure-extension-defaults": "Configurar as substitucións predeterminadas",
-
   "extension-settings-defaults-title": "{{name}} substitucións predeterminadas",
   "no-extension-settings": "Esta extensión non ten configuracións configurables.",
   "extension-settings-save-failed": "Non se puido gardar a configuración.",
@@ -872,7 +831,6 @@
   "setting-no-default": "Sen predeterminado",
   "override-setting": "Anular {{name}}",
   "override-setting-label": "Anular",
-
   "discover-choose-filter-hint": "Escolle un filtro enriba para ver máis contido deste capítulo.",
   "take-a-tour": "Fai un percorrido",
   "share-reading-plan": "Plan de accións",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "O meu marcador {{number}}",
   "bookmark-move-hint": "Toca un marcador para movelo a este capítulo.",
   "move-bookmark-here": "Mover {{name}} aquí",
-
   "play": "Reproducir",
   "pause": "Pausa",
   "audio-playback-position": "Posición de reprodución",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "Verso {{verse}}",
   "tab-playing-audio": "Reproducindo audio",
   "collapsed-tab-playing-label": "{{label}} — reproducindo audio",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} temas",
   "customization-theme-count_one": "Tema {{count}}",
@@ -1104,7 +1060,6 @@
   "about-community-body": "A fe está feita para vivirse xuntos. A Biblia Semente está deseñada para ler as Escrituras coa túa familia, os teus amigos máis próximos e a túa igrexa doméstica.",
   "discovered-content": "Contido descuberto",
   "show-discovered-content": "Mostrar contido descuberto",
-
   "extension-availability-default": "Predeterminado ( {{availability}} )",
   "customization-extensions-default": "Predeterminado para outras extensións",
   "customization-extensions-default-hint": "Aplícase a todas as extensións que non definiches a continuación, incluídas as novas engadidas máis tarde",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "Volver á lista de reprodución",
   "playlist-scripture-note-aria": "Nota sobre {{passage}}",
   "playlist-scripture-note-progress": "{{current}} de {{total}}",
-
   "unsaved-item-edit-confirm-message": "Cambiaches un elemento pero aínda non gardaches eses cambios. Que queres facer?",
   "keep-changes-and-save": "Gardar os cambios e gardar",
   "reading-plan-edit-reading": "Editar lectura",
@@ -1152,7 +1106,6 @@
   "branding": "Imaxe de marca",
   "create-custom-branding-menu-item": "Marca personalizada",
   "your-content-empty-branding": "A marca personalizada que crees aparecerá aquí.",
-
   "extension-consent-from": "De {{host}}",
   "extension-consent-source-version": "Versión {{version}} · de {{host}}",
   "extension-consent-uploader-unnamed": "Un usuario da Biblia das sementes",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "Mira que versos seleccionas",
   "extension-permission-reading-navigate": "Pasaxes abertas",
   "extension-permission-network": "Conectar a {{host}}",
-
   "extension-consent-not-now": "Agora non",
   "extension-consent-nothing-yet": "Por agora, non terá acceso a ningunha da túa información.",
   "extension-permission-reading-history": "Ver o teu historial de lectura",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "Cancelar",
   "extension-consent-high-risk": "Sensible",
   "extension-modal-ok": "De acordo",
-
   "extension-permissions-restart-note": "Os cambios teñen efecto de inmediato. {{name}} reinicia para recollelos.",
   "extension-permissions-saved": "Gardado. {{name}} reiniciouse cos novos permisos.",
   "extension-permissions-failed": "Iso non se gardou. Téntao de novo.",
@@ -1276,8 +1227,53 @@
   "session-settings-verse-effects-desc-hosts": "Mostrar efectos cando un anfitrión selecciona un verso.",
   "session-settings-verse-effects-desc-everyone": "Mostrar efectos cando alguén selecciona un verso.",
   "session-settings-verse-effects-desc-none": "Os efectos de selección de versos están desactivados para todos.",
-
   "account": "Conta",
   "scroll-filters-start": "Desprazar os filtros cara ao inicio",
-  "scroll-filters-end": "Desprazar os filtros cara ao final"
+  "scroll-filters-end": "Desprazar os filtros cara ao final",
+  "download": "Descargar",
+  "image-details-uploaded": "Cargado",
+  "image-details-dimensions": "Dimensións",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Tipo",
+  "image-details-cover-of": "Cuberta de",
+  "image-details-not-a-cover": "Non se usa como cuberta",
+  "delete-customization-confirm-title": "Eliminar a marca personalizada?",
+  "delete-customization-confirm-message": "Eliminar a marca personalizada \" {{name}} \"? Isto non se pode desfacer.",
+  "delete-customization-failed": "Non se puido eliminar a marca personalizada.",
+  "delete-variant-confirm-title": "Eliminar o tema?",
+  "delete-variant-confirm-message": "Eliminar o tema \" {{name}} \"? Isto non se pode desfacer.",
+  "delete-variant-confirm-message-unnamed": "Queres eliminar este tema? Isto non se pode desfacer.",
+  "delete-variant-failed": "Non se puido eliminar o tema.",
+  "delete-highlight-confirm-title": "Eliminar o resaltado?",
+  "delete-highlight-confirm-message": "Eliminar o realce en {{reference}} ? Isto non se pode desfacer.",
+  "delete-highlight-failed": "Non se puido eliminar o destacado.",
+  "delete-annotation-on-confirm-message": "Eliminar a anotación en {{reference}} ? Isto non se pode desfacer.",
+  "remove-from-folder": "Eliminar da carpeta",
+  "save-folders": "En {{folders}}",
+  "delete-save-confirm-title": "Eliminar a gardada?",
+  "delete-save-confirm-message": "Eliminar gardar para {{reference}} ? Isto non se pode desfacer.",
+  "delete-save-confirm-message-folders": "Eliminar a gardada para {{reference}} de {{folders}} ? Isto non se pode desfacer.",
+  "delete-save-failed": "Non se puido eliminar a gardada.",
+  "delete-save-folder-confirm-title": "Eliminar o cartafol?",
+  "delete-save-folder-confirm-message": "Eliminar o cartafol \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Tamén se eliminarán as {{count}} gardadas que só estean nesta carpeta.",
+  "delete-save-folder-confirm-deletes_one": "A gardada que só estea nesta carpeta tamén se eliminará.",
+  "delete-save-folder-confirm-deletes_other": "Tamén se eliminarán as {{count}} gardadas que só estean nesta carpeta.",
+  "delete-save-folder-confirm-keeps": "As {{count}} gardadas que tamén estean noutras carpetas permanecerán alí.",
+  "delete-save-folder-confirm-keeps_one": "O gardado que tamén está noutra carpeta permanecerá alí.",
+  "delete-save-folder-confirm-keeps_other": "As {{count}} gardadas que tamén estean noutras carpetas permanecerán alí.",
+  "cant-be-undone": "Isto non se pode desfacer.",
+  "delete-save-folder-failed": "Non se puido eliminar o cartafol.",
+  "download-image-failed": "Non se puido descargar a imaxe.",
+  "session-settings-verse-effects-hosts-only": "Só anfitrións",
+  "session-settings-verse-effects-everyone": "Todos",
+  "session-settings-verse-effects-none": "Ningún",
+  "loading-books": "Cargando libros…",
+  "books-load-failed": "Non se puideron cargar os libros. Comproba a túa conexión e téntao de novo.",
+  "loading-translation": "Cargando {{name}} …",
+  "translation-load-failed": "Non se puido cargar {{name}} .",
+  "loading-translations": "Cargando traducións…",
+  "translations-load-failed": "Non se puido cargar a lista completa de traducións, polo que pode que falten algunhas.",
+  "verse-of-the-day": "VERSO DO DÍA",
+  "verse-of-the-day-loading": "Cargando o verso do día…"
 }

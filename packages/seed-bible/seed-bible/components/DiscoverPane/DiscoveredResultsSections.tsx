@@ -53,6 +53,57 @@ export function contentTypeResultsFor(
   );
 }
 
+/** One content type's share of {@link verseTaggedResultsFor}. */
+export interface VerseTaggedResultGroup {
+  /** `null` for results whose type isn't registered, shown as plain "Content". */
+  definition: DiscoverContentTypeDefinition | null;
+  results: ContentResult[];
+}
+
+/**
+ * The chapter's content results tagged for any of the selected verses,
+ * grouped by registered type in priority order, with untyped ones last.
+ *
+ * Unlike {@link contentTypeResultsFor}, a result that doesn't name its verses
+ * is left out: it's about the whole chapter, not the verses in hand. Types
+ * that are hidden by default are included, since a reader who has selected a
+ * verse is asking about exactly that verse.
+ */
+export function verseTaggedResultsFor(
+  readingState: Pick<
+    ReaderTab["readingState"],
+    "discoveredContent" | "selectedVerses"
+  >,
+  contentTypes: readonly DiscoverContentTypeDefinition[]
+): VerseTaggedResultGroup[] {
+  const selected = new Set(
+    readingState.selectedVerses.value.map((item) => item.verse.number)
+  );
+  if (selected.size === 0) {
+    return [];
+  }
+
+  const tagged = readingState.discoveredContent.value
+    .flatMap((group) => group.results)
+    .filter((result) => result.verses?.some((verse) => selected.has(verse)));
+
+  const groups: VerseTaggedResultGroup[] = contentTypes
+    .map((definition) => ({
+      definition,
+      results: tagged.filter((result) => result.contentType === definition.id),
+    }))
+    .filter((group) => group.results.length > 0);
+
+  const untyped = tagged.filter(
+    (result) => !hasRegisteredContentType(result, contentTypes)
+  );
+  if (untyped.length > 0) {
+    groups.push({ definition: null, results: untyped });
+  }
+
+  return groups;
+}
+
 /**
  * Whether a result belongs to a registered type, and so gets that type's own
  * chip and section instead of appearing under the generic "Content".
@@ -232,12 +283,7 @@ function ContentResultsList(props: { results: DiscoverContentResult[] }) {
   );
 }
 
-/**
- * The section for one registered content type.
- *
- * `"custom"` types supply the whole card in each result's `content`, so only
- * that is rendered; `"standard"` ones get the same layout as ordinary content.
- */
+/** The section for one registered content type. */
 export function ContentTypeSection(props: {
   tab: ReaderTab | null;
   definition: DiscoverContentTypeDefinition;
@@ -263,18 +309,60 @@ export function ContentTypeSection(props: {
       collapsible={collapsible}
       defaultCollapsed={collapsible && !!definition.hiddenByDefault}
     >
-      {definition.layout === "custom" ? (
-        <ul className="sb-discover-list">
-          {results.map((result, index) => (
-            <li key={index} className="sb-discover-item">
-              {result.content}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <ContentResultsList results={results} />
-      )}
+      <ContentTypeResultsList definition={definition} results={results} />
     </DiscoverSection>
+  );
+}
+
+/** One section per group from {@link verseTaggedResultsFor}. */
+export function VerseTaggedResultsSections(props: {
+  groups: readonly VerseTaggedResultGroup[];
+}) {
+  const { t } = useI18n();
+
+  return (
+    <>
+      {props.groups.map(({ definition, results }) => (
+        <DiscoverSection
+          key={definition?.id ?? ""}
+          title={
+            definition
+              ? translateTitle(t, definition.title)
+              : t("content", { defaultValue: "Content" })
+          }
+          count={results.length}
+        >
+          {definition ? (
+            <ContentTypeResultsList definition={definition} results={results} />
+          ) : (
+            <ContentResultsList results={results} />
+          )}
+        </DiscoverSection>
+      ))}
+    </>
+  );
+}
+
+/**
+ * `"custom"` types supply the whole card in each result's `content`, so only
+ * that is rendered; `"standard"` ones get the same layout as ordinary content.
+ */
+function ContentTypeResultsList(props: {
+  definition: DiscoverContentTypeDefinition;
+  results: DiscoverContentResult[];
+}) {
+  if (props.definition.layout !== "custom") {
+    return <ContentResultsList results={props.results} />;
+  }
+
+  return (
+    <ul className="sb-discover-list">
+      {props.results.map((result, index) => (
+        <li key={index} className="sb-discover-item">
+          {result.content}
+        </li>
+      ))}
+    </ul>
   );
 }
 
