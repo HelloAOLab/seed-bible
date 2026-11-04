@@ -1004,14 +1004,17 @@
 /* "Continue your playlist": the unfinished playlist, how far it got, and the
    step to pick up at. Sits under the resume-reading card in the same box
    style, so the two "carry on" cards read as a pair. */
+/* Same surface and text as the Resume reading card above it, so it follows
+   the theme the way that one does. */
 .sb-today-container .sb-today-continue-card {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding: 1.25rem;
-  border: 1px solid var(--sb-divider-color);
   border-radius: 1rem;
+  background-color: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-container .sb-today-continue-eyebrow {
@@ -1035,6 +1038,7 @@
   font-size: 1.5rem;
   font-weight: 600;
   line-height: 1.2;
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-container .sb-today-continue-progress {
@@ -1046,7 +1050,11 @@
   flex: 1;
   height: 0.25rem;
   border-radius: 0.125rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  background: color-mix(
+    in srgb,
+    var(--sb-secondary-font-color),
+    transparent 80%
+  );
 }
 
 .sb-today-container .sb-today-continue-segment--reached {
@@ -1066,12 +1074,13 @@
 .sb-today-container .sb-today-continue-step-title {
   font-size: 1rem;
   font-weight: 600;
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-container .sb-today-continue-step-meta {
   margin: 0;
   font-size: 0.8125rem;
-  opacity: 0.75;
+  color: color-mix(in srgb, var(--sb-secondary-font-color), transparent 30%);
 }
 
 .sb-today-container .sb-today-continue-resume {
