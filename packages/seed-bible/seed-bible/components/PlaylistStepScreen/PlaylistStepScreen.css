@@ -28,8 +28,7 @@
 }
 
 .sb-step-screen-eyebrow,
-.sb-step-screen-step-eyebrow,
-.sb-step-screen-scene-eyebrow {
+.sb-step-screen-step-eyebrow {
   margin: 0;
   font-size: 0.6875rem;
   font-weight: 700;
@@ -141,69 +140,6 @@
 
 .sb-step-screen-text > :first-child {
   margin-top: 0;
-}
-
-/* The overview's map of the playlist: one card per scene. */
-.sb-step-screen-map {
-  margin-top: 28px;
-}
-
-.sb-step-screen-map-title {
-  margin: 0 0 12px;
-  font-size: 1.0625rem;
-  font-weight: 700;
-}
-
-.sb-step-screen-scenes {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: 12px;
-}
-
-.sb-step-screen-scene-button {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  width: 100%;
-  min-height: 7rem;
-  padding: 14px 16px;
-  border: 1px solid var(--sb-divider-color);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.sb-step-screen-scene-button:hover {
-  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 40%);
-}
-
-.sb-step-screen-scene-eyebrow {
-  color: var(--sb-primary-color);
-}
-
-.sb-step-screen-scene-title {
-  font-family: var(--sb-book-title-font-family);
-  font-size: 1.375rem;
-  font-weight: 600;
-  line-height: 1.15;
-}
-
-.sb-step-screen-scene-subtitle {
-  font-size: 0.8125rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-}
-
-.sb-step-screen-scene-kinds {
-  margin-top: 8px;
-  font-size: 0.8125rem;
-  font-weight: 600;
 }
 
 .sb-step-screen-footer {

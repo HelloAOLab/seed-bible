@@ -2,9 +2,7 @@ import "./PlayPlaylistView.css";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager } from "../../managers/TabsManager";
 import {
-  expandCrossChapterItem,
   queueIndexOfStep,
-  type PlaylistItemData,
   type PlaylistManager,
 } from "../../managers/PlaylistManager";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
@@ -39,41 +37,12 @@ interface PlayPlaylistViewProps {
 }
 
 /**
- * The scene heading, if any, that starts at each queue position: the scenes
- * of the playlist the queue was built from, placed by counting the steps each
- * source item expands into. Empty when the queue no longer matches the
- * playlist (steps were added, removed or reordered during playback), since
- * the headings could then land on the wrong steps.
- */
-export function queueSceneHeadings(
-  items: PlaylistItemData[],
-  queueLength: number
-): Map<number, string> {
-  const headings = new Map<number, string>();
-  let cursor = 0;
-  let pending: string | null = null;
-  for (const item of items) {
-    if (item.type === "scene") {
-      pending = item.title;
-      continue;
-    }
-    const count = expandCrossChapterItem(item).length;
-    if (pending !== null && count > 0) {
-      headings.set(cursor, pending);
-      pending = null;
-    }
-    cursor += count;
-  }
-  return cursor === queueLength ? headings : new Map();
-}
-
-/**
  * Playback screen shown inside the discover pane while a playlist is playing:
  * the cover, a segmented progress bar, a card for the current step with
  * Previous / Next step (and the author's note, for a passage that has one),
- * and the numbered queue beneath it with each step's kind and length,
- * grouped under its scenes, with the steps already read ticked off. The
- * playlist's own title and author sit in the pane header.
+ * and the numbered queue beneath it with each step's kind and length, with
+ * the steps already read ticked off. The playlist's own title and author sit
+ * in the pane header.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   const { playlists, tabs, modals, state } = props;
@@ -98,7 +67,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   const currentItem = playing.currentItem.value;
   const playlist = playing.playlists.value[0];
   const heroImageUrl = playlist?.heroImageUrl ?? null;
-  const sceneHeadings = queueSceneHeadings(playlist?.items ?? [], queue.length);
   // A playlist playing in a shared session is a group reading it together.
   const session = playing.tab?.sharedSession ?? null;
 
@@ -265,7 +233,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
             {queue.map((item, index) => {
               const isCurrent = index === currentIndex;
               const isDone = index < currentIndex;
-              const heading = sceneHeadings.get(index);
               return (
                 <li
                   key={index}
@@ -277,9 +244,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                   }
                   dir="auto"
                 >
-                  {heading !== undefined ? (
-                    <h4 className="sb-play-playlist-scene">{heading}</h4>
-                  ) : null}
                   {/* In a shared session the leader sets the order for
                       everyone, so no one reorders their own copy. */}
                   {!session ? (

@@ -69,7 +69,7 @@ export const AIBibleVerseRefSchema = z.object({
  * {@link PlaylistItemData}.
  */
 export const AIPlaylistItemSchema = z.object({
-  type: z.enum(["bible-verse", "link", "html", "question", "compare", "scene"]),
+  type: z.enum(["bible-verse", "link", "html", "question", "compare"]),
   bibleVerse: AIBibleVerseRefSchema.extend({
     /** The author's note on the passage, as HTML, and its optional title. */
     note: z.string().nullable().default(null),
@@ -111,8 +111,6 @@ export const AIPlaylistItemSchema = z.object({
     })
     .nullable()
     .default(null),
-  /** A heading over the steps that follow it, up to the next scene. */
-  scene: z.object({ title: z.string() }).nullable().default(null),
   link: z
     .object({
       title: z.string().nullable(),
@@ -200,11 +198,6 @@ export function convertToPlaylistItem(
         })),
         description: item.compare.description ?? undefined,
       };
-    case "scene":
-      if (!item.scene) {
-        throw new Error('Item has type "scene" but no scene was provided.');
-      }
-      return { type: item.type, title: item.scene.title };
     case "link":
       if (!item.link) {
         throw new Error('Item has type "link" but no link was provided.');
@@ -300,12 +293,6 @@ export function convertToAiPlaylistItem(
           description: item.description ?? null,
         },
       };
-    case "scene":
-      return {
-        ...EMPTY_AI_ITEM,
-        type: item.type,
-        scene: { title: item.title },
-      };
   }
 }
 
@@ -316,7 +303,6 @@ const EMPTY_AI_ITEM = {
   html: null,
   question: null,
   compare: null,
-  scene: null,
 } as const;
 
 export function generateFunctionTool<T>(options: {

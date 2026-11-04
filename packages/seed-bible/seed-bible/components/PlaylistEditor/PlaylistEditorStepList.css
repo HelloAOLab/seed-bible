@@ -78,29 +78,6 @@
   white-space: nowrap;
 }
 
-/* A scene row is a heading over the steps after it: small caps, no number. */
-.sb-playlist-editor-scene {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 95%);
-  border-style: dashed;
-}
-
-.sb-playlist-editor-scene .sb-discover-item-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.sb-playlist-editor-scene .sb-playlist-editor-item-subtitle {
-  display: none;
-}
-
-.sb-playlist-editor-scene
-  .sb-playlist-editor-item-number
-  .material-symbols-outlined {
-  font-size: 1rem;
-}
-
 /* "Add item" sits at the bottom as a dashed button until it's pressed; the
    add box then takes its place. */
 .sb-playlist-add-toggle {
@@ -126,110 +103,31 @@
   background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
 }
 
-.sb-playlist-add-scene {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  min-height: 36px;
-  margin: -8px 0 16px;
-  padding: 6px 12px;
-  border: none;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-playlist-add-scene:hover {
-  color: var(--sb-primary-color);
-}
-
-/* ------------------------------------------------ grouped under scenes */
-
-.sb-playlist-step-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.sb-playlist-step-group-head {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  min-height: 32px;
-  margin: 6px 0 2px;
-}
-
-.sb-playlist-step-group-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  cursor: pointer;
-}
-
-.sb-playlist-step-group-toggle .material-symbols-outlined {
-  font-size: 1.125rem;
-}
-
-.sb-playlist-step-group-title {
-  flex: 1;
-  min-width: 0;
-  padding: 2px 4px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--sb-font-color);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 700;
-  text-align: start;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-button.sb-playlist-step-group-title {
-  cursor: pointer;
-}
-
-button.sb-playlist-step-group-title:hover,
-.sb-playlist-step-group--open .sb-playlist-step-group-title {
-  color: var(--sb-primary-color);
-}
-
-.sb-playlist-step-groups .sb-playlist-step-list {
+.sb-playlist-step-list.sb-playlist-step-list--fullscreen {
   margin: 0;
 }
 
-.sb-playlist-step-groups .sb-playlist-editor-item {
+.sb-playlist-step-list--fullscreen .sb-playlist-editor-item {
   border-color: transparent;
   padding: 6px 8px 6px 4px;
 }
 
-.sb-playlist-step-groups .sb-playlist-editor-item:hover {
+.sb-playlist-step-list--fullscreen .sb-playlist-editor-item:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 95%);
 }
 
-.sb-playlist-step-groups .sb-discover-item--editing {
+.sb-playlist-step-list--fullscreen .sb-discover-item--editing {
   border-color: color-mix(in srgb, var(--sb-primary-color), transparent 50%);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
 }
 
-.sb-playlist-step-groups .sb-discover-item--editing .sb-discover-item-title {
+.sb-playlist-step-list--fullscreen
+  .sb-discover-item--editing
+  .sb-discover-item-title {
   color: var(--sb-font-color);
 }
 
-.sb-playlist-step-groups .sb-discover-item-title {
+.sb-playlist-step-list--fullscreen .sb-discover-item-title {
   font-size: 0.9375rem;
   font-weight: 600;
 }

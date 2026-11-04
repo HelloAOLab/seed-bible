@@ -7,7 +7,11 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import { PlaylistItem, type PlaylistItemData } from "./PlaylistManager";
+import {
+  encodePlaylistItem,
+  PlaylistItem,
+  type PlaylistItemData,
+} from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import { omit } from "es-toolkit";
@@ -1691,7 +1695,19 @@ export function createReadingPlansManager(
   // a plan (say, as "complete") that the content record doesn't back up.
   const saveReadingPlan = async (plan: ReadingPlan) => {
     const metadata = omit(plan, ["sessions"]);
-    await os.recordData(plan.recordName, plan.address, plan, {
+    // Its readings are stored the way playlist steps are; see
+    // `encodePlaylistItem`.
+    const stored = {
+      ...plan,
+      sessions: plan.sessions.map((session) => ({
+        ...session,
+        readings: session.readings.map((reading) => ({
+          ...reading,
+          item: encodePlaylistItem(reading.item),
+        })),
+      })),
+    };
+    await os.recordData(plan.recordName, plan.address, stored, {
       marker: "publicRead:readingPlan",
     });
     await os.recordData(plan.recordName, `${plan.address}_metadata`, metadata, {

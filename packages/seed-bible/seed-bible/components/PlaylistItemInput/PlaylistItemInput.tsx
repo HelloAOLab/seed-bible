@@ -22,10 +22,7 @@ import {
   CompareItemInput,
   type CompareItemInputHandle,
 } from "../CompareItemInput/CompareItemInput";
-import {
-  SceneItemInput,
-  type SceneItemInputHandle,
-} from "../SceneItemInput/SceneItemInput";
+
 import {
   PlaylistItemInlinePreview,
   type ScriptureChapterLoader,
@@ -82,8 +79,7 @@ export type AddMode =
   | "link"
   | "video"
   | "compare"
-  | "question"
-  | "scene";
+  | "question";
 
 interface ModeOption {
   mode: AddMode;
@@ -165,7 +161,6 @@ export function modeForItem(item: PlaylistItemData): AddMode {
       return item.embed ? "video" : "link";
     case "question":
     case "compare":
-    case "scene":
       return item.type;
   }
 }
@@ -187,15 +182,14 @@ type LeafHandle =
   | TextItemInputHandle
   | LinkItemInputHandle
   | QuestionItemInputHandle
-  | CompareItemInputHandle
-  | SceneItemInputHandle;
+  | CompareItemInputHandle;
 
 /**
  * Input section for adding an item to the currently-edited playlist or plan,
  * or editing an existing one when `editItem` is set. Owns only the selected
  * mode; each mode is a self-contained component that tracks its own input
  * state (see `ScriptureItemInput`, `TextItemInput`, `LinkItemInput`,
- * `QuestionItemInput`, `CompareItemInput`, `SceneItemInput`). Switching modes
+ * `QuestionItemInput`, `CompareItemInput`). Switching modes
  * unmounts the previous one, so its state resets naturally.
  *
  * Adding renders as its own "Add item" section with a picker of step kinds.
@@ -297,19 +291,12 @@ export const PlaylistItemInput = forwardRef<
         initialItem={editItem?.type === "question" ? editItem : undefined}
         submitLabel={submitLabel}
       />
-    ) : mode === "compare" ? (
+    ) : (
       <CompareItemInput
         ref={assignLeafRef}
         books={books}
         onAdd={submit}
         initialItem={editItem?.type === "compare" ? editItem : undefined}
-        submitLabel={submitLabel}
-      />
-    ) : (
-      <SceneItemInput
-        ref={assignLeafRef}
-        onAdd={submit}
-        initialItem={editItem?.type === "scene" ? editItem : undefined}
         submitLabel={submitLabel}
       />
     );

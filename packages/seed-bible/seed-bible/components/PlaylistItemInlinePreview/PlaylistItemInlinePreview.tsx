@@ -86,13 +86,6 @@ export function PlaylistItemInlinePreview(props: {
             />
           ))}
         </div>
-      ) : item.type === "scene" ? (
-        <p className="sb-item-inline-preview-status">
-          {t("playlist-scene-preview", {
-            defaultValue:
-              "A heading over the steps that follow it, up to the next scene.",
-          })}
-        </p>
       ) : (
         <div className="sb-item-inline-preview-link">
           <span className="sb-item-inline-preview-link-title">

@@ -34,16 +34,6 @@ export function PlaylistStepPreview(props: {
 }) {
   const { item, stepNumber, stepCount, loadChapter, resolveBookName } = props;
   const { t } = useI18n();
-  if (item.type === "scene") {
-    return (
-      <div className="sb-step-preview" dir="auto">
-        <p className="sb-step-preview-eyebrow">
-          {t("playlist-item-scene", { defaultValue: "Scene" })}
-        </p>
-        <h1 className="sb-step-preview-title">{item.title}</h1>
-      </div>
-    );
-  }
   const title =
     item.type === "bible-verse"
       ? item.noteTitle?.trim() || playlistItemLabel(item, t, resolveBookName)

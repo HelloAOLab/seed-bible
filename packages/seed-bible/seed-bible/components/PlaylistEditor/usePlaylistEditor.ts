@@ -180,18 +180,15 @@ export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
   const addItem = (item: PlaylistItemData): number => {
     if (replaceIndex !== null && items[replaceIndex]) {
       const old = items[replaceIndex]!;
-      const settings =
-        old.type !== "scene"
-          ? {
-              ...(old.minutes ? { minutes: old.minutes } : {}),
-              ...(old.pause ? { pause: old.pause } : {}),
-              ...(old.leaderOnly ? { leaderOnly: old.leaderOnly } : {}),
-            }
-          : {};
-      playlists.updateEditingPlaylistItem(
-        replaceIndex,
-        item.type === "scene" ? item : { ...settings, ...item }
-      );
+      const settings = {
+        ...(old.minutes ? { minutes: old.minutes } : {}),
+        ...(old.pause ? { pause: old.pause } : {}),
+        ...(old.leaderOnly ? { leaderOnly: old.leaderOnly } : {}),
+      };
+      playlists.updateEditingPlaylistItem(replaceIndex, {
+        ...settings,
+        ...item,
+      });
       setReplaceIndex(null);
       return replaceIndex;
     }
@@ -245,7 +242,7 @@ export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
     pause?: boolean;
     leaderOnly?: boolean;
   }) => {
-    if (openIndex === null || !openItem || openItem.type === "scene") {
+    if (openIndex === null || !openItem) {
       return;
     }
     const next = { ...openItem } as typeof openItem & {
@@ -295,36 +292,12 @@ export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
     });
   };
 
-  // Scenes are headings, not steps: steps are numbered past them.
-  const stepNumbers = new Map<number, number>();
-  let stepCount = 0;
-  items.forEach((item, index) => {
-    if (item.type !== "scene") {
-      stepCount += 1;
-      stepNumbers.set(index, stepCount);
-    }
-  });
+  const stepCount = items.length;
   // What a text item or note can link to: every step, by its number.
-  const stepLinkTargets: StepLinkTarget[] = items.flatMap((item, index) => {
-    const number = stepNumbers.get(index);
-    return number
-      ? [{ number, label: playlistItemLabel(item, t, resolveBookName) }]
-      : [];
-  });
-
-  /** Adds a scene heading at the end of the list and opens it for naming. */
-  const addScene = () => {
-    const sceneCount = items.filter((item) => item.type === "scene").length;
-    const index = items.length;
-    playlists.addEditingPlaylistItem({
-      type: "scene",
-      title: t("playlist-scene-default", {
-        defaultValue: "Scene {{number}}",
-        number: sceneCount + 1,
-      }),
-    });
-    requestOpen(index);
-  };
+  const stepLinkTargets: StepLinkTarget[] = items.map((item, index) => ({
+    number: index + 1,
+    label: playlistItemLabel(item, t, resolveBookName),
+  }));
 
   const doSave = async () => {
     setSaving(true);
@@ -407,10 +380,8 @@ export function usePlaylistEditor(options: UsePlaylistEditorOptions) {
     requestOpen,
     requestCloseAdd,
     removeItem,
-    stepNumbers,
     stepCount,
     stepLinkTargets,
-    addScene,
     handleSave,
     hasUnsavedItemInput,
   };

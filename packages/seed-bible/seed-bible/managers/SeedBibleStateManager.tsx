@@ -3661,8 +3661,7 @@ export function createSeedBibleState(
   effect(() => {
     const playing = playlists.playing.value;
     const item = playing?.currentItem.value ?? null;
-    const onScreen =
-      !!item && item.type !== "bible-verse" && item.type !== "scene";
+    const onScreen = !!item && item.type !== "bible-verse";
     const yieldsToPlayer =
       isMobile.value && playlists.view.value === "play_playlist";
     if (playing && onScreen && !yieldsToPlayer) {

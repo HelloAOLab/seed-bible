@@ -27,7 +27,6 @@ describe("AI playlist item conversions", () => {
       ],
       description: "Who does each person think they met?",
     },
-    { type: "scene", title: "Scene 1 · Hagar" },
     {
       type: "bible-verse",
       ref: { bookId: "GEN", chapter: 16 },
@@ -47,14 +46,15 @@ describe("AI playlist item conversions", () => {
   });
 
   it("fills in nothing for the fields a kind doesn't use", () => {
-    expect(convertToAiPlaylistItem({ type: "scene", title: "Intro" })).toEqual({
-      type: "scene",
+    expect(
+      convertToAiPlaylistItem({ type: "question", prompt: "Why?" })
+    ).toEqual({
+      type: "question",
       bibleVerse: null,
       link: null,
       html: null,
-      question: null,
+      question: { title: null, prompt: "Why?", shareable: null },
       compare: null,
-      scene: { title: "Intro" },
     });
   });
 

@@ -210,9 +210,8 @@ describe("PlaylistEditorScreen", () => {
   const settings = () =>
     container.querySelector(".sb-playlist-editor-settings")!;
 
-  it("starts with no step open: the steps grouped under their scenes, with the length in the head", () => {
+  it("starts with no step open: the numbered steps, with the length in the head", () => {
     renderScreen([
-      { type: "scene", title: "Intro" },
       verseItem("GEN", 16),
       { type: "html", html: "<p>Hi</p>", title: "A note" },
     ]);
@@ -228,8 +227,10 @@ describe("PlaylistEditorScreen", () => {
       container.querySelector(".sb-playlist-editor-column-count")?.textContent
     ).toBe("2 · ~5 min");
     expect(
-      container.querySelector(".sb-playlist-step-group-title")?.textContent
-    ).toBe("Scene 1 · Intro");
+      Array.from(
+        container.querySelectorAll(".sb-playlist-editor-item-number")
+      ).map((el) => el.textContent)
+    ).toEqual(["1", "2"]);
     expect(
       Array.from(
         container.querySelectorAll(".sb-playlist-editor-item-subtitle")
@@ -240,28 +241,6 @@ describe("PlaylistEditorScreen", () => {
     expect(settings().textContent).toContain(
       "Select a step to see its settings."
     );
-  });
-
-  it("puts the steps before the first scene under Intro, and folds a scene away", () => {
-    renderScreen([
-      { type: "html", html: "<p>Hi</p>", title: "Overview" },
-      { type: "scene", title: "Hagar" },
-      verseItem("GEN", 16),
-    ]);
-    const heads = Array.from(
-      container.querySelectorAll(".sb-playlist-step-group-title")
-    ).map((el) => el.textContent);
-    expect(heads).toEqual(["Intro", "Scene 1 · Hagar"]);
-    expect(rowButtons()).toHaveLength(2);
-
-    act(() => {
-      container
-        .querySelectorAll<HTMLButtonElement>(
-          ".sb-playlist-step-group-toggle"
-        )[1]!
-        .click();
-    });
-    expect(rowButtons()).toHaveLength(1);
   });
 
   it("opens a step's editor in the middle column and its settings on the right", () => {
@@ -449,7 +428,6 @@ describe("PlaylistEditorScreen", () => {
 
   it("'Add step' opens the Add-a-step modal, placing what it adds after the open step", async () => {
     const { modals, playlists } = renderScreen([
-      { type: "scene", title: "Hagar" },
       verseItem("GEN", 16),
       verseItem("GEN", 22),
     ]);
@@ -471,7 +449,7 @@ describe("PlaylistEditorScreen", () => {
       render(<>{modal.content({ t: (key: string) => key })}</>, host);
     });
     expect(host.querySelector(".sb-add-step-position")?.textContent).toBe(
-      "After step 1 · Scene 1 · Hagar"
+      "After step 1"
     );
     const input = host.querySelector<HTMLInputElement>(
       ".sb-passage-picker-input"
@@ -489,7 +467,7 @@ describe("PlaylistEditorScreen", () => {
     render(null, host);
     host.remove();
 
-    expect(playlists.insertEditingPlaylistItem).toHaveBeenCalledWith(2, {
+    expect(playlists.insertEditingPlaylistItem).toHaveBeenCalledWith(1, {
       type: "bible-verse",
       ref: { bookId: "EXO", chapter: 3 },
     });
@@ -550,7 +528,6 @@ describe("PlaylistEditorScreen", () => {
 
     it("fills the editor with the last look: the details, who can open it, how it appears and what to check", () => {
       const { playlists } = renderScreen([
-        { type: "scene", title: "Intro" },
         verseItem("GEN", 16),
         verseItem("GEN", 16),
       ]);
@@ -568,7 +545,7 @@ describe("PlaylistEditorScreen", () => {
       ).toBe("Angel of the LORD");
       expect(
         review.querySelector(".sb-playlist-review-card-meta")?.textContent
-      ).toBe("2 steps · ~8 min · 1 scenes");
+      ).toBe("2 steps · ~8 min");
       const checks = Array.from(
         review.querySelectorAll(".sb-playlist-review-check")
       ).map((el) => el.textContent);

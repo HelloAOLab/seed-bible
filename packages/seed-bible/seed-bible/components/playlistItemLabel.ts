@@ -79,9 +79,5 @@ export function playlistItemLabel(
         item.title?.trim() ||
         item.refs.map((ref) => verseRefLabel(ref, resolveBookName)).join(" · ")
       );
-    case "scene":
-      return (
-        item.title.trim() || t("playlist-item-scene", { defaultValue: "Scene" })
-      );
   }
 }

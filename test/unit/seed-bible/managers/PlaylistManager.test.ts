@@ -32,7 +32,10 @@ import {
   type PlaylistReadingExtensionInstance,
   type SimplePlaylist,
   queueIndexOfStep,
+  encodePlaylist,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import { LinkPreviewSchema } from "@packages/seed-bible/seed-bible/managers/linkPreview";
+import { z } from "zod";
 import { openPlaylistItemPreview } from "@packages/seed-bible/seed-bible/components/playlistItemPreview";
 import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
@@ -883,22 +886,28 @@ describe("createPlaylistManager", () => {
       stop();
     });
 
-    it("keeps a private playlist under the private marker and lists it with the author's own", async () => {
+    it("keeps a private playlist under the private playlists marker and lists it with the author's own", async () => {
       listDataByMarkerMock.mockImplementation(
         async (recordName: unknown, marker: unknown) => ({
           success: true,
           items:
-            recordName === "user-1" && marker === "private"
+            recordName === "user-1" && marker === "private:playlists"
               ? [
                   {
+                    address: "p-draft",
                     data: {
                       ...makePlaylist({ id: "p-draft" }),
                       visibility: "private",
                     },
                   },
                 ]
-              : recordName === "user-1"
-                ? [{ data: makePlaylist({ id: "p-public" }) }]
+              : recordName === "user-1" && marker === "publicRead:playlists"
+                ? [
+                    {
+                      address: "p-public",
+                      data: makePlaylist({ id: "p-public" }),
+                    },
+                  ]
                 : [],
         })
       );
@@ -917,8 +926,38 @@ describe("createPlaylistManager", () => {
         "user-1",
         "p-draft",
         expect.objectContaining({ visibility: "private" }),
-        { marker: "private" }
+        { marker: "private:playlists" }
       );
+    });
+
+    it("lists the author's other playlists when a record among them isn't a playlist", async () => {
+      // Answers to question steps, and other private rows, never share the
+      // playlists' marker; but a row that doesn't parse mustn't empty the list.
+      listDataByMarkerMock.mockImplementation(
+        async (recordName: unknown, marker: unknown) => ({
+          success: true,
+          items:
+            recordName === "user-1" && marker === "publicRead:playlists"
+              ? [
+                  {
+                    address: "answer-1",
+                    data: { prompt: "Why?", text: "Because." },
+                  },
+                  {
+                    address: "p-public",
+                    data: makePlaylist({ id: "p-public" }),
+                  },
+                ]
+              : [],
+        })
+      );
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.userPlaylists.value.map((p) => p.id)).toEqual([
+        "p-public",
+      ]);
     });
 
     it("counts a change of who can open it as an unsaved change", async () => {
@@ -1166,6 +1205,48 @@ describe("createPlaylistManager", () => {
       playlist
     );
     expect(getDataMock).toHaveBeenCalledWith("user-9", "playlist-9");
+  });
+
+  it("saves a question and a compare step in the shape older builds read", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    manager.editPlaylist(
+      makePlaylist({
+        id: "p-new",
+        items: [NEW_QUESTION_STEP, NEW_COMPARE_STEP],
+      })
+    );
+    await manager.saveEditingPlaylist();
+
+    const saved = recordDataMock.mock.calls.at(-1)![2];
+    expect(
+      (saved.items as { type: string }[]).map((item) => item.type)
+    ).toEqual(["html", "bible-verse"]);
+    expect(PRODUCTION_PLAYLIST_SCHEMA.safeParse(saved).success).toBe(true);
+    // Read back by this build, they are the steps the author made.
+    expect(PlaylistSchema.parse(saved).items).toEqual([
+      NEW_QUESTION_STEP,
+      NEW_COMPARE_STEP,
+    ]);
+  });
+
+  it("doesn't write a playlist back just because it was opened and played", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    getDataMock.mockResolvedValueOnce({
+      success: true,
+      data: ALPHA_PLAYLIST_RECORD,
+    });
+
+    const playlist = await manager.loadPlaylist("user-9", "playlist-alpha");
+    manager.startPlaying(playlist);
+    await flush();
+
+    expect(
+      recordDataMock.mock.calls.some(
+        ([, address]) => address === "playlist-alpha"
+      )
+    ).toBe(false);
   });
 
   it("loadPlaylist throws when the record cannot be fetched", async () => {
@@ -2066,7 +2147,6 @@ describe("createPlaylistManager", () => {
             html: null,
             question: null,
             compare: null,
-            scene: null,
           },
         ],
       });
@@ -5369,6 +5449,30 @@ describe("createPlayingState", () => {
       ]);
     });
 
+    it("asks a passage's question once, on its first stop", () => {
+      const playing = createPlayingState([
+        {
+          id: "p1",
+          title: null,
+          description: null,
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13 },
+              refs: [{ bookId: "GEN", chapter: 21, verse: 17, endVerse: 19 }],
+              question: { prompt: "Who hears?" },
+            },
+          ],
+        },
+      ]);
+
+      expect(
+        playing.queue.value.map(
+          (item) => item.type === "bible-verse" && item.question?.prompt
+        )
+      ).toEqual(["Who hears?", undefined]);
+    });
+
     it("keeps a note on a cross-chapter passage's first chapter", () => {
       const playing = createPlayingState([
         {
@@ -5398,13 +5502,11 @@ describe("createPlayingState", () => {
 
 describe("queueIndexOfStep", () => {
   const items: PlaylistItemData[] = [
-    { type: "scene", title: "Intro" },
     { type: "html", html: "<p>Welcome</p>" },
     {
       type: "bible-verse",
       ref: { bookId: "GEN", chapter: 16, endChapter: 17 },
     },
-    { type: "scene", title: "Scene 2" },
     { type: "question", prompt: "Why?" },
   ];
 
@@ -5518,5 +5620,191 @@ describe("queueIndexOfStep", () => {
       await playing.next();
       expect(removeDecoration).toHaveBeenCalledWith("phrase-1");
     });
+  });
+});
+
+/**
+ * The playlist schema of the build in production before question and compare
+ * steps (`main` at the time), kept here as the yardstick for "older builds
+ * can still read what this one saves". Zod drops fields it doesn't know, and
+ * rejects a step type it doesn't.
+ */
+const PRODUCTION_VERSE_REF = z.object({
+  bookId: z.string(),
+  chapter: z.number().positive(),
+  endChapter: z.number().positive().optional(),
+  verse: z.number().positive().optional(),
+  endVerse: z.number().positive().optional(),
+  toEndOfChapter: z.boolean().optional(),
+});
+const PRODUCTION_PLAYLIST_SCHEMA = z.object({
+  id: z.string(),
+  recordName: z.string(),
+  authorUserId: z.string(),
+  title: z.string().nullable(),
+  description: z.string().nullable(),
+  heroImageUrl: z.url().max(2048).nullable().optional(),
+  items: z.array(
+    z.discriminatedUnion("type", [
+      z.object({
+        type: z.literal("bible-verse"),
+        ref: PRODUCTION_VERSE_REF,
+        translationId: z.string().optional(),
+        note: z.string().optional(),
+        noteTitle: z.string().optional(),
+      }),
+      z.object({
+        type: z.literal("html"),
+        title: z.string().optional(),
+        html: z.string(),
+      }),
+      z.object({
+        type: z.literal("link"),
+        title: z.string().optional(),
+        url: z.url(),
+        embed: z.boolean().optional(),
+        preview: LinkPreviewSchema.optional(),
+      }),
+    ])
+  ),
+  createdAtMs: z.number().positive(),
+  updatedAtMs: z.number().positive(),
+});
+
+/** A playlist saved by the production build: scripture with a note, text, a link. */
+const PRODUCTION_PLAYLIST_RECORD = {
+  id: "playlist-old",
+  recordName: "user-9",
+  authorUserId: "user-9",
+  title: "Hagar",
+  description: "The God who sees",
+  heroImageUrl: "https://example.com/cover.png",
+  items: [
+    {
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13 },
+      translationId: "BSB",
+      note: "<p>She names God.</p>",
+      noteTitle: "El Roi",
+    },
+    { type: "html", title: "Pray", html: "<p>Pray.</p>" },
+    { type: "link", url: "https://example.com/video", embed: true },
+  ],
+  createdAtMs: 1,
+  updatedAtMs: 2,
+};
+
+/** A playlist saved by an earlier build of this editor, with its own step types. */
+const ALPHA_PLAYLIST_RECORD = {
+  id: "playlist-alpha",
+  recordName: "user-9",
+  authorUserId: "user-9",
+  title: "Alpha",
+  description: null,
+  visibility: "unlisted",
+  items: [
+    { type: "scene", title: "Scene 1" },
+    { type: "question", prompt: "Who sees you?", shareable: true },
+    {
+      type: "compare",
+      refs: [
+        { bookId: "GEN", chapter: 16, verse: 7 },
+        { bookId: "GEN", chapter: 21, verse: 17 },
+      ],
+    },
+  ],
+  createdAtMs: 1,
+  updatedAtMs: 2,
+};
+
+const NEW_QUESTION_STEP: PlaylistItemData = {
+  type: "question",
+  title: "Think",
+  prompt: "Who sees you?\nWhy?",
+  shareable: true,
+  minutes: 3,
+};
+const NEW_COMPARE_STEP: PlaylistItemData = {
+  type: "compare",
+  title: "Two wells",
+  translationId: "BSB",
+  description: "Look for <water>.",
+  refs: [
+    { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13, label: "Hagar" },
+    { bookId: "GEN", chapter: 21, verse: 17, phrases: ["the boy"] },
+  ],
+  terms: [{ text: "well", label: "water" }],
+  phraseLabel: "God hears",
+  leaderOnly: true,
+};
+
+describe("the stored playlist format", () => {
+  it("reads a playlist saved by the production build as it was saved", () => {
+    expect(PlaylistSchema.parse(PRODUCTION_PLAYLIST_RECORD)).toEqual(
+      PRODUCTION_PLAYLIST_RECORD
+    );
+  });
+
+  it("saves a production playlist unchanged", () => {
+    const playlist = PlaylistSchema.parse(PRODUCTION_PLAYLIST_RECORD);
+    expect(encodePlaylist(playlist)).toEqual(PRODUCTION_PLAYLIST_RECORD);
+  });
+
+  it("reads a playlist an earlier build of the editor saved, skipping its scenes", () => {
+    const playlist = PlaylistSchema.parse(ALPHA_PLAYLIST_RECORD);
+    expect(playlist.items.map((item) => item.type)).toEqual([
+      "question",
+      "compare",
+    ]);
+    expect(playlist.visibility).toBe("unlisted");
+  });
+
+  it("saves an earlier build's playlist in a shape the production build reads", () => {
+    const encoded = encodePlaylist(PlaylistSchema.parse(ALPHA_PLAYLIST_RECORD));
+    const asProductionReadsIt = PRODUCTION_PLAYLIST_SCHEMA.parse(encoded);
+    // The question shows as text, the compare as its first passage.
+    expect(asProductionReadsIt.items).toEqual([
+      { type: "html", html: "<p>Who sees you?</p>" },
+      {
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 16, verse: 7 },
+      },
+    ]);
+  });
+
+  it("brings every kind of step back from storage as it was", () => {
+    const playlist = PlaylistSchema.parse({
+      ...PRODUCTION_PLAYLIST_RECORD,
+      items: [
+        ...PRODUCTION_PLAYLIST_RECORD.items,
+        NEW_QUESTION_STEP,
+        NEW_COMPARE_STEP,
+      ],
+    });
+    const stored = JSON.parse(JSON.stringify(encodePlaylist(playlist)));
+
+    expect(PRODUCTION_PLAYLIST_SCHEMA.safeParse(stored).success).toBe(true);
+    expect(PlaylistSchema.parse(stored)).toEqual(playlist);
+  });
+
+  it("escapes a question's text in the copy older builds show", () => {
+    const stored = encodePlaylist(
+      PlaylistSchema.parse({
+        ...PRODUCTION_PLAYLIST_RECORD,
+        items: [{ type: "question", prompt: "<b>Why</b> & how?" }],
+      })
+    );
+    expect((stored.items as { html: string }[])[0]!.html).toBe(
+      "<p>&lt;b&gt;Why&lt;/b&gt; &amp; how?</p>"
+    );
+  });
+
+  it("keeps a step as the text older builds show when its question doesn't parse", () => {
+    const item = PlaylistItem.parse({
+      type: "html",
+      html: "<p>Why?</p>",
+      question: { shareable: "yes" },
+    });
+    expect(item).toEqual({ type: "html", html: "<p>Why?</p>" });
   });
 });

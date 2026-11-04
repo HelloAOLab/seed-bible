@@ -7,7 +7,7 @@ import { verseRefLabel } from "./playlistItemLabel";
 /**
  * What kind of step this is, as the reader sees it: Scripture, Note +
  * Scripture when a passage carries a note, Note for a text step, Link, Video
- * for a link that plays one, Compare, Question, or Scene.
+ * for a link that plays one, Compare, or Question.
  */
 export function playlistItemKind(
   item: Playlist["items"][number],
@@ -30,8 +30,6 @@ export function playlistItemKind(
       return t("playlist-add-mode-question", { defaultValue: "Question" });
     case "compare":
       return t("playlist-add-mode-compare", { defaultValue: "Compare" });
-    case "scene":
-      return t("playlist-item-scene", { defaultValue: "Scene" });
   }
 }
 
@@ -71,8 +69,6 @@ export function playlistItemSubtitle(
       return withDetail(
         item.refs.map((ref) => verseRefLabel(ref, resolveBookName)).join(" · ")
       );
-    case "scene":
-      return kind;
   }
 }
 
@@ -91,14 +87,12 @@ export function playlistItemIcon(item: Playlist["items"][number]): string {
       return "help";
     case "compare":
       return "compare_arrows";
-    case "scene":
-      return "bookmark";
   }
 }
 
 /** How long a step takes: what the author said, or the estimate. */
 export function playlistItemMinutes(item: Playlist["items"][number]): number {
-  if (item.type !== "scene" && item.minutes) {
+  if (item.minutes) {
     return item.minutes;
   }
   return playlistItemAutoMinutes(item);
@@ -128,8 +122,6 @@ export function playlistItemAutoMinutes(
       return 2;
     case "compare":
       return 3;
-    case "scene":
-      return 0;
   }
 }
 

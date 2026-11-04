@@ -1,7 +1,6 @@
 import "./PlaylistStepScreen.css";
 import { useI18n } from "../../i18n/I18nManager";
 import {
-  expandCrossChapterItem,
   queueIndexOfStep,
   type PlayingState,
   type PlaylistItemData,
@@ -27,50 +26,6 @@ import {
 import { PlaylistPartyPanel } from "../PlaylistPartyPanel/PlaylistPartyPanel";
 import { isLocalSessionHost } from "../Tabs/Tabs";
 
-/** A scene of the playlist and the queue steps (1-based) it spans. */
-export interface PlaylistSceneSummary {
-  title: string;
-  subtitle: string | null;
-  firstStep: number;
-  lastStep: number;
-  /** The kinds of the steps under it, in order, as the reader sees them. */
-  kinds: string[];
-}
-
-/**
- * The playlist's scenes with the steps each one covers, counting queue
- * steps (so a passage that spans chapters counts once per chapter). A scene
- * with nothing under it is left out.
- */
-export function playlistScenes(
-  items: PlaylistItemData[],
-  t: ReturnType<typeof useI18n>["t"]
-): PlaylistSceneSummary[] {
-  const scenes: PlaylistSceneSummary[] = [];
-  let cursor = 0;
-  let open: PlaylistSceneSummary | null = null;
-  for (const item of items) {
-    if (item.type === "scene") {
-      open = {
-        title: item.title,
-        subtitle: item.subtitle?.trim() || null,
-        firstStep: cursor + 1,
-        lastStep: cursor,
-        kinds: [],
-      };
-      scenes.push(open);
-      continue;
-    }
-    const count = expandCrossChapterItem(item).length;
-    if (open && count > 0) {
-      open.lastStep = cursor + count;
-      open.kinds.push(playlistItemKind(item, t));
-    }
-    cursor += count;
-  }
-  return scenes.filter((scene) => scene.lastStep >= scene.firstStep);
-}
-
 /** The pane's title (read by assistive tech; the pane shows no header). */
 export function PlaylistStepScreenTitle(props: { playlists: PlaylistManager }) {
   const { t } = useI18n();
@@ -87,9 +42,8 @@ export function PlaylistStepScreenTitle(props: { playlists: PlaylistManager }) {
  * A text, link, question or compare step filling the reader area while it
  * plays: the playlist's name and length over a progress bar, the step's
  * kind, position and length over its title and content, and the way on at
- * the foot. The first step of a playlist with scenes doubles as its
- * overview, mapping where the playlist goes. Scripture steps show in the
- * reader instead, with the playlist in its side panel or sheet.
+ * the foot. Scripture steps show in the reader instead, with the playlist in
+ * its side panel or sheet.
  */
 export function PlaylistStepScreen(props: {
   playlists: PlaylistManager;
@@ -98,12 +52,7 @@ export function PlaylistStepScreen(props: {
   const { playlists, state } = props;
   const playing = playlists.playing.value;
   const item = playing?.currentItem.value ?? null;
-  if (
-    !playing ||
-    !item ||
-    item.type === "bible-verse" ||
-    item.type === "scene"
-  ) {
+  if (!playing || !item || item.type === "bible-verse") {
     return null;
   }
   return (
@@ -118,7 +67,7 @@ export function PlaylistStepScreen(props: {
 
 function PlaylistStepScreenBody(props: {
   playing: PlayingState;
-  item: Exclude<PlaylistItemData, { type: "bible-verse" | "scene" }>;
+  item: Exclude<PlaylistItemData, { type: "bible-verse" }>;
   playlists: PlaylistManager;
   state: SeedBibleState;
 }) {
@@ -131,8 +80,7 @@ function PlaylistStepScreenBody(props: {
   const author = playlists.playingAuthorName.value;
   const options = playlists.playingStepOptions(playing);
   const resolveBookName = options.resolveBookName ?? ((id: string) => id);
-  const scenes =
-    index === 0 && item.type === "html" ? playlistScenes(items, t) : [];
+
   const nextItem = queue[index + 1] ?? null;
   // In a shared session the leader moves the group on and everyone else says
   // they're ready, as on scripture steps, instead of each stepping alone.
@@ -289,59 +237,6 @@ function PlaylistStepScreenBody(props: {
               playing={playing}
             />
           )}
-
-          {scenes.length > 0 ? (
-            <section
-              className="sb-step-screen-map"
-              aria-label={t("playlist-where-it-goes", {
-                defaultValue: "Where this playlist goes",
-              })}
-            >
-              <h3 className="sb-step-screen-map-title">
-                {t("playlist-where-it-goes", {
-                  defaultValue: "Where this playlist goes",
-                })}
-              </h3>
-              <ol className="sb-step-screen-scenes">
-                {scenes.map((scene, i) => (
-                  <li key={i} className="sb-step-screen-scene">
-                    <button
-                      type="button"
-                      className="sb-step-screen-scene-button"
-                      onClick={() => void playing.jumpTo(scene.firstStep - 1)}
-                    >
-                      <span className="sb-step-screen-scene-eyebrow">
-                        {scene.firstStep === scene.lastStep
-                          ? t("playlist-scene-eyebrow-one", {
-                              defaultValue: "Scene {{index}} · Step {{step}}",
-                              index: i + 1,
-                              step: scene.firstStep,
-                            })
-                          : t("playlist-scene-eyebrow", {
-                              defaultValue:
-                                "Scene {{index}} · Steps {{from}}–{{to}}",
-                              index: i + 1,
-                              from: scene.firstStep,
-                              to: scene.lastStep,
-                            })}
-                      </span>
-                      <span className="sb-step-screen-scene-title">
-                        {scene.title}
-                      </span>
-                      {scene.subtitle ? (
-                        <span className="sb-step-screen-scene-subtitle">
-                          {scene.subtitle}
-                        </span>
-                      ) : null}
-                      <span className="sb-step-screen-scene-kinds">
-                        {scene.kinds.join(" · ")}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          ) : null}
         </article>
       </div>
 

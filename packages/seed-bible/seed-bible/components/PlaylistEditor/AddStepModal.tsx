@@ -58,7 +58,7 @@ export interface AddStepModalOptions {
   steps?: StepLinkTarget[];
   /** The kind the modal opens on. */
   initialMode?: AddMode;
-  /** "After step 4 · Scene 2 · Abraham", under the title. */
+  /** "After step 4", under the title. */
   position?: string;
   /** The modal's title when it replaces a step's kind rather than adding one. */
   title?: string;

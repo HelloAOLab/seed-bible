@@ -137,8 +137,7 @@ export function PlaylistReviewPanel(props: {
   const { t } = useI18n();
   const editing = playlists.editingPlaylist.value;
   const items = editing?.items ?? [];
-  const steps = items.filter((item) => item.type !== "scene").length;
-  const scenes = items.filter((item) => item.type === "scene").length;
+  const steps = items.length;
   const checks = publishChecks(items, books, t, resolveBookName, {
     translationName,
   });
@@ -265,12 +264,6 @@ export function PlaylistReviewPanel(props: {
                     count: steps,
                   }),
                   `~${minutesLabel(playlistMinutes(items), t)}`,
-                  scenes > 0
-                    ? t("playlist-scene-count", {
-                        defaultValue: "{{count}} scenes",
-                        count: scenes,
-                      })
-                    : null,
                 ]
                   .filter(Boolean)
                   .join(" · ")}

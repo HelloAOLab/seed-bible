@@ -17,6 +17,7 @@ import type { ModalManager } from "./ModalManager";
 import type { ChatsManager } from "./ChatsManager";
 import type { PlaylistItemPreviewOptions } from "../components/playlistItemPreview";
 import { PlaylistFinishedModalContent } from "../components/PlaylistFinishedModal/PlaylistFinishedModal";
+import { plainTextToHtml } from "../components/CreateAnnotationForm/PlainTextAnnotationEditor";
 import type { I18nManager } from "../i18n";
 import type {
   BibleReadingExtensionManager,
@@ -161,22 +162,10 @@ export const ComparePlaylistItem = StepSettingsSchema.extend({
   phraseLabel: z.string().optional(),
 });
 
-/**
- * A heading in the playlist: the steps after it, up to the next scene, are
- * grouped under it in the editor and the queue. Never played as a step.
- */
-export const ScenePlaylistItem = z.object({
-  type: z.literal("scene"),
-  title: z.string(),
-  /** Where the scene takes place, under its title: "Genesis 16 · the road to Shur". */
-  subtitle: z.string().optional(),
-});
-
-export const PlaylistItem = z.discriminatedUnion("type", [
+const PlaylistItemUnion = z.discriminatedUnion("type", [
   BibleVersePlaylistItem,
   QuestionPlaylistItem,
   ComparePlaylistItem,
-  ScenePlaylistItem,
   StepSettingsSchema.extend({
     type: z.literal("html"),
     title: z.string().optional(),
@@ -199,6 +188,137 @@ export const PlaylistItem = z.discriminatedUnion("type", [
   }),
 ]);
 
+/*
+ * Playlists are stored in the shape the app has always saved: scripture, text
+ * and link steps. Builds that predate question and compare steps check every
+ * step's type, and one they don't know fails the author's whole list there.
+ * So a question is stored as a text step showing the question, and a compare
+ * as a scripture step on its first passage, each with the rest of the step in
+ * a field older builds ignore. Reading turns them back into the steps the
+ * editor and player use; stored records are only rewritten when the author
+ * saves an edit.
+ */
+
+const StoredQuestionSchema = QuestionPlaylistItem.pick({
+  prompt: true,
+  shareable: true,
+});
+const StoredCompareSchema = ComparePlaylistItem.pick({
+  title: true,
+  refs: true,
+  description: true,
+  terms: true,
+  phraseLabel: true,
+});
+
+function isRecordObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function stepSettingsOf(item: Record<string, unknown>): StepSettings {
+  const parsed = StepSettingsSchema.safeParse(item);
+  return parsed.success ? parsed.data : {};
+}
+
+/**
+ * A stored step as the editor and player use it. A step whose extra field
+ * doesn't parse stays the text or scripture step older builds show.
+ */
+function decodeStoredItem(raw: unknown): unknown {
+  if (!isRecordObject(raw)) {
+    return raw;
+  }
+  if (raw.type === "html" && raw.question !== undefined) {
+    const question = StoredQuestionSchema.safeParse(raw.question);
+    if (question.success) {
+      return {
+        ...stepSettingsOf(raw),
+        type: "question",
+        ...(typeof raw.title === "string" ? { title: raw.title } : {}),
+        ...question.data,
+      };
+    }
+  }
+  if (raw.type === "bible-verse" && raw.compare !== undefined) {
+    const compare = StoredCompareSchema.safeParse(raw.compare);
+    if (compare.success) {
+      return {
+        ...stepSettingsOf(raw),
+        type: "compare",
+        ...(typeof raw.translationId === "string"
+          ? { translationId: raw.translationId }
+          : {}),
+        ...compare.data,
+      };
+    }
+  }
+  return raw;
+}
+
+export const PlaylistItem = z.preprocess(decodeStoredItem, PlaylistItemUnion);
+
+/**
+ * A playlist's steps as stored. Scenes, headings over steps that an earlier
+ * build of the editor could add, are skipped: they were never played.
+ */
+const PlaylistItemsSchema = z.preprocess(
+  (raw) =>
+    Array.isArray(raw)
+      ? raw.filter((item) => !(isRecordObject(item) && item.type === "scene"))
+      : raw,
+  z.array(PlaylistItem)
+);
+
+/** A step in the shape it is stored in; see `decodeStoredItem`. */
+export function encodePlaylistItem(
+  item: PlaylistItemData
+): Record<string, unknown> {
+  if (item.type === "question") {
+    const { type: _type, title, prompt, shareable, ...settings } = item;
+    return {
+      ...settings,
+      type: "html",
+      ...(title ? { title } : {}),
+      html: plainTextToHtml(prompt),
+      question: { prompt, ...(shareable ? { shareable } : {}) },
+    };
+  }
+  if (item.type === "compare") {
+    const {
+      type: _type,
+      translationId,
+      title,
+      refs,
+      description,
+      terms,
+      phraseLabel,
+      ...settings
+    } = item;
+    const { label: _label, phrases: _phrases, ...ref } = refs[0]!;
+    return {
+      ...settings,
+      type: "bible-verse",
+      ref,
+      ...(translationId ? { translationId } : {}),
+      ...(title ? { noteTitle: title } : {}),
+      ...(description ? { note: plainTextToHtml(description) } : {}),
+      compare: {
+        refs,
+        ...(title ? { title } : {}),
+        ...(description ? { description } : {}),
+        ...(terms ? { terms } : {}),
+        ...(phraseLabel ? { phraseLabel } : {}),
+      },
+    };
+  }
+  return item;
+}
+
+/** A playlist in the shape it is stored in; see `decodeStoredItem`. */
+export function encodePlaylist(playlist: Playlist): Record<string, unknown> {
+  return { ...playlist, items: playlist.items.map(encodePlaylistItem) };
+}
+
 export const PlaylistSchema = z.object({
   id: z.string(),
   recordName: z.string(),
@@ -216,10 +336,19 @@ export const PlaylistSchema = z.object({
    * as every playlist was before this existed.
    */
   visibility: z.enum(["public", "unlisted", "private"]).optional(),
-  items: z.array(PlaylistItem),
+  items: PlaylistItemsSchema,
   createdAtMs: z.number().positive(),
   updatedAtMs: z.number().positive(),
 });
+
+/** Where playlists anyone with the link can open are stored. */
+const PUBLIC_PLAYLIST_MARKER = "publicRead:playlists";
+/**
+ * Where "Only me" playlists are stored: readable by their author alone, and
+ * apart from the account's other private records so listing playlists reads
+ * only playlists.
+ */
+const PRIVATE_PLAYLIST_MARKER = "private:playlists";
 
 function clonePlaylist(playlist: Playlist): Playlist {
   return PlaylistSchema.parse(JSON.parse(JSON.stringify(playlist)));
@@ -717,18 +846,21 @@ const MAX_CHAPTER_NUMBER = 150;
 export function expandCrossChapterItem(
   item: PlaylistItemData
 ): PlaylistItemData[] {
-  // A scene is a heading over the steps that follow it, not a step itself.
-  if (item.type === "scene") {
-    return [];
-  }
   if (item.type !== "bible-verse") {
     return [item];
   }
 
   // Each passage of the step, main one first, split per chapter. The note
-  // rides on the first stop only: it belongs to the step, not to each chapter.
-  // Highlights go with the chapter they're in.
-  const { refs: extraRefs, note, noteTitle, highlights, ...single } = item;
+  // and its question ride on the first stop only: they belong to the step, not
+  // to each chapter. Highlights go with the chapter they're in.
+  const {
+    refs: extraRefs,
+    note,
+    noteTitle,
+    question,
+    highlights,
+    ...single
+  } = item;
   const stops = [item.ref, ...(extraRefs ?? [])].flatMap((ref) =>
     expandChapterRange({ ...single, ref })
   );
@@ -742,6 +874,7 @@ export function expandCrossChapterItem(
       ...stop,
       ...(index === 0 && note ? { note } : {}),
       ...(index === 0 && noteTitle ? { noteTitle } : {}),
+      ...(index === 0 && question ? { question } : {}),
       ...(own?.length ? { highlights: own } : {}),
     };
   });
@@ -750,7 +883,7 @@ export function expandCrossChapterItem(
 type ScriptureStep = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
 /**
- * Where editor step `stepNumber` (1-based, counting every item but scenes)
+ * Where editor step `stepNumber` (1-based)
  * starts in the queue built from `items`: the first of the stops it expands
  * into. Null when there is no such step.
  */
@@ -762,11 +895,9 @@ export function queueIndexOfStep(
   let cursor = 0;
   for (const item of items) {
     const count = expandCrossChapterItem(item).length;
-    if (item.type !== "scene") {
-      step += 1;
-      if (step === stepNumber) {
-        return count > 0 ? cursor : null;
-      }
+    step += 1;
+    if (step === stepNumber) {
+      return count > 0 ? cursor : null;
     }
     cursor += count;
   }
@@ -1425,10 +1556,17 @@ export function createPlaylistManager(
   // A private playlist is a draft only its author reads; the others are
   // readable by anyone with the link, and public ones also listed.
   const savePlaylist = async (playlist: Playlist) => {
-    await os.recordData(playlist.recordName, playlist.id, playlist, {
-      marker:
-        playlist.visibility === "private" ? "private" : "publicRead:playlists",
-    });
+    await os.recordData(
+      playlist.recordName,
+      playlist.id,
+      encodePlaylist(playlist),
+      {
+        marker:
+          playlist.visibility === "private"
+            ? PRIVATE_PLAYLIST_MARKER
+            : PUBLIC_PLAYLIST_MARKER,
+      }
+    );
   };
 
   /** The reader's answers to question steps, by `questionResponseKey`. */
@@ -1513,7 +1651,11 @@ export function createPlaylistManager(
 
   const savePlayHistory = async (entry: PlaylistPlayHistory) => {
     const parsed = PlaylistPlayHistorySchema.parse(entry);
-    await os.recordData(parsed.recordName, parsed.id, parsed, {
+    const stored = {
+      ...parsed,
+      lastItem: parsed.lastItem ? encodePlaylistItem(parsed.lastItem) : null,
+    };
+    await os.recordData(parsed.recordName, parsed.id, stored, {
       marker: PLAYLIST_PLAY_HISTORY_MARKER,
     });
   };
@@ -1845,7 +1987,7 @@ export function createPlaylistManager(
   const listPlaylists = async (
     recordName: string,
     onPage?: () => void,
-    markers: string[] = ["publicRead:playlists"]
+    markers: string[] = [PUBLIC_PLAYLIST_MARKER]
   ) => {
     // Keyed by id: a playlist moving between markers mustn't show up twice.
     const playlists = new Map<string, Playlist>();
@@ -1856,9 +1998,18 @@ export function createPlaylistManager(
         onPage
       );
       for (const record of records.items) {
-        const playlist = PlaylistSchema.parse(record.data);
-        if (!playlists.has(playlist.id)) {
-          playlists.set(playlist.id, playlist);
+        // One record this build can't read (saved by a newer one, say) is
+        // left out rather than failing the whole list.
+        const parsed = PlaylistSchema.safeParse(record.data);
+        if (!parsed.success) {
+          console.warn(
+            `Skipped playlist record ${recordName}/${record.address} that doesn't parse:`,
+            parsed.error
+          );
+          continue;
+        }
+        if (!playlists.has(parsed.data.id)) {
+          playlists.set(parsed.data.id, parsed.data);
         }
       }
     }
@@ -2367,12 +2518,7 @@ export function createPlaylistManager(
     // read.
     const queue = playlists.flatMap((p) =>
       p.items
-        .filter(
-          (item) =>
-            item.type === "scene" ||
-            !item.leaderOnly ||
-            !!targetTab?.sharedSession
-        )
+        .filter((item) => !item.leaderOnly || !!targetTab?.sharedSession)
         .flatMap(expandCrossChapterItem)
     );
     const step =
@@ -2606,8 +2752,8 @@ export function createPlaylistManager(
     try {
       // The author's own list holds their private drafts as well.
       const playlists = await listPlaylists(login.userId.value, undefined, [
-        "publicRead:playlists",
-        "private",
+        PUBLIC_PLAYLIST_MARKER,
+        PRIVATE_PLAYLIST_MARKER,
       ]);
       userPlaylists.value = playlists;
     } catch (error) {

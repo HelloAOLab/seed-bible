@@ -66,7 +66,7 @@ const TYPE_MODES: AddMode[] = [
 
 /**
  * The fullscreen playlist editor, for screens wide enough to show it: the
- * steps down the left, grouped under their scenes; the open step's editor
+ * steps down the left; the open step's editor
  * (or a preview of it) in the middle; and the step's settings on the right.
  * Edits are kept as the author moves between steps; Review & publish is
  * where the playlist is saved. Phones get the one-column
@@ -100,10 +100,8 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
     loadChapter,
     requestOpen,
     removeItem,
-    stepNumbers,
     stepCount,
     stepLinkTargets,
-    addScene,
     handleSave,
     hasUnsavedItemInput,
     saveOpenItem,
@@ -130,7 +128,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
     proceed();
   };
 
-  const openStepNumber = openIndex !== null ? stepNumbers.get(openIndex) : null;
+  const openStepNumber = openIndex !== null ? openIndex + 1 : null;
   const dirty = playlists.isEditingPlaylistDirty() || hasUnsavedItemInput();
   const isSaved = playlists.userPlaylists.value.some(
     (playlist) => playlist.id === editing?.id
@@ -172,36 +170,13 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
   const openAddStep = (options: { replace?: number; mode?: AddMode }) => {
     const proceed = () => {
       const after = options.replace === undefined ? openIndex : null;
-      const sceneOf = (index: number | null) => {
-        if (index === null) return null;
-        for (let i = index; i >= 0; i -= 1) {
-          const item = items[i];
-          if (item?.type === "scene") {
-            let number = 0;
-            for (let j = 0; j <= i; j += 1) {
-              if (items[j]?.type === "scene") number += 1;
-            }
-            return t("playlist-editor-scene-group", {
-              defaultValue: "Scene {{number}} · {{title}}",
-              number,
-              title: item.title,
-            });
-          }
-        }
-        return null;
-      };
-      const afterStep = after !== null ? stepNumbers.get(after) : undefined;
-      const position = [
-        afterStep
+      const position =
+        after !== null
           ? t("playlist-editor-add-after", {
               defaultValue: "After step {{step}}",
-              step: afterStep,
+              step: after + 1,
             })
-          : null,
-        sceneOf(after),
-      ]
-        .filter(Boolean)
-        .join(" · ");
+          : "";
       openAddStepModal(modals, t, {
         books,
         loadChapter,
@@ -217,18 +192,17 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
         onAdd: (item) => {
           if (options.replace !== undefined) {
             const old = items[options.replace];
-            const settings =
-              old && old.type !== "scene"
-                ? {
-                    ...(old.minutes ? { minutes: old.minutes } : {}),
-                    ...(old.pause ? { pause: true } : {}),
-                    ...(old.leaderOnly ? { leaderOnly: true } : {}),
-                  }
-                : {};
-            playlists.updateEditingPlaylistItem(
-              options.replace,
-              item.type === "scene" ? item : { ...settings, ...item }
-            );
+            const settings = old
+              ? {
+                  ...(old.minutes ? { minutes: old.minutes } : {}),
+                  ...(old.pause ? { pause: true } : {}),
+                  ...(old.leaderOnly ? { leaderOnly: true } : {}),
+                }
+              : {};
+            playlists.updateEditingPlaylistItem(options.replace, {
+              ...settings,
+              ...item,
+            });
             setOpenIndex(options.replace);
             return;
           }
@@ -390,7 +364,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
             </span>
           </div>
           {items.length > 0 ? (
-            <PlaylistEditorStepList editor={editor} caret={false} grouped />
+            <PlaylistEditorStepList editor={editor} caret={false} fullscreen />
           ) : (
             <p className="sb-playlist-editor-empty">
               {t("playlist-items-empty", { defaultValue: "No items yet." })}
@@ -408,18 +382,6 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
             >
               <MaterialIcon>add</MaterialIcon>
               {t("playlist-add-step", { defaultValue: "Add step" })}
-            </button>
-            <button
-              type="button"
-              className="sb-playlist-add-scene"
-              onClick={() => {
-                setReviewOpen(false);
-                setMode("edit");
-                addScene();
-              }}
-            >
-              <MaterialIcon>add</MaterialIcon>
-              {t("playlist-add-scene", { defaultValue: "Add scene" })}
             </button>
           </div>
         </aside>
@@ -454,12 +416,10 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
           ) : openItem && openIndex !== null ? (
             <div className="sb-playlist-editor-step">
               <p className="sb-playlist-editor-eyebrow">
-                {openItem.type === "scene"
-                  ? t("playlist-item-scene", { defaultValue: "Scene" })
-                  : t("playlist-editor-step-n", {
-                      defaultValue: "Step {{number}}",
-                      number: openStepNumber ?? "",
-                    })}
+                {t("playlist-editor-step-n", {
+                  defaultValue: "Step {{number}}",
+                  number: openStepNumber ?? "",
+                })}
                 {" · "}
                 {playlistItemKind(openItem, t)}
               </p>
@@ -485,22 +445,19 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
                   // The editor only knows the step's content; its settings
                   // stay as the settings column set them.
                   const current = items[openIndex];
-                  const settings =
-                    current && current.type !== "scene"
-                      ? {
-                          ...(current.minutes
-                            ? { minutes: current.minutes }
-                            : {}),
-                          ...(current.pause ? { pause: true } : {}),
-                          ...(current.leaderOnly ? { leaderOnly: true } : {}),
-                        }
-                      : {};
-                  playlists.updateEditingPlaylistItem(
-                    openIndex,
-                    updated.type === "scene"
-                      ? updated
-                      : { ...settings, ...updated }
-                  );
+                  const settings = current
+                    ? {
+                        ...(current.minutes
+                          ? { minutes: current.minutes }
+                          : {}),
+                        ...(current.pause ? { pause: true } : {}),
+                        ...(current.leaderOnly ? { leaderOnly: true } : {}),
+                      }
+                    : {};
+                  playlists.updateEditingPlaylistItem(openIndex, {
+                    ...settings,
+                    ...updated,
+                  });
                 }}
                 onCancelEdit={() => setOpenIndex(null)}
               />
@@ -527,7 +484,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
               })}
             </span>
           </div>
-          {openItem && openIndex !== null && openItem.type !== "scene" ? (
+          {openItem && openIndex !== null ? (
             <>
               <div className="sb-playlist-editor-setting">
                 <span className="sb-playlist-editor-setting-label">
@@ -670,23 +627,6 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
                 })}
               </button>
             </>
-          ) : openItem && openIndex !== null ? (
-            <>
-              <p className="sb-playlist-editor-empty">
-                {t("playlist-editor-scene-settings", {
-                  defaultValue: "A scene is a heading over the steps after it.",
-                })}
-              </p>
-              <button
-                type="button"
-                className="sb-playlist-editor-delete"
-                onClick={() => removeItem(openIndex)}
-              >
-                {t("playlist-editor-delete-scene", {
-                  defaultValue: "Delete scene",
-                })}
-              </button>
-            </>
           ) : (
             <p className="sb-playlist-editor-empty">
               {t("playlist-editor-no-step", {
@@ -701,34 +641,23 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
 }
 
 /**
- * The step before `index` (skipping scenes) when it shows the same passage,
- * with its step number, so the settings can offer to drop the repeat.
+ * The step before `index` when it shows the same passage, with its step
+ * number, so the settings can offer to drop the repeat.
  */
 function previousSamePassage(
   items: PlaylistItemData[],
   index: number
 ): { index: number; step: number; ref: VerseRefOf } | null {
   const current = items[index];
-  if (current?.type !== "bible-verse") {
-    return null;
-  }
-  let step = 0;
-  let previous: { index: number; step: number } | null = null;
-  for (let i = 0; i < index; i += 1) {
-    const item = items[i]!;
-    if (item.type === "scene") continue;
-    step += 1;
-    previous = { index: i, step };
-  }
-  const before = previous ? items[previous.index] : null;
+  const before = index > 0 ? items[index - 1] : undefined;
   if (
-    !previous ||
+    current?.type !== "bible-verse" ||
     before?.type !== "bible-verse" ||
     JSON.stringify(before.ref) !== JSON.stringify(current.ref)
   ) {
     return null;
   }
-  return { ...previous, ref: current.ref };
+  return { index: index - 1, step: index, ref: current.ref };
 }
 
 type VerseRefOf = Extract<PlaylistItemData, { type: "bible-verse" }>["ref"];
@@ -739,7 +668,7 @@ type VerseRefOf = Extract<PlaylistItemData, { type: "bible-verse" }>["ref"];
  * field goes back to the estimate.
  */
 function ReadingTimeSetting(props: {
-  item: Exclude<PlaylistItemData, { type: "scene" }>;
+  item: PlaylistItemData;
   onChange: (minutes: number | null) => void;
 }) {
   const { item, onChange } = props;

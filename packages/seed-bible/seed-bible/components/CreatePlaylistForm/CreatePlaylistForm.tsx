@@ -217,7 +217,6 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     requestCloseAdd,
     stepCount,
     stepLinkTargets,
-    addScene,
     handleSave,
     hasUnsavedItemInput,
   } = editor;
@@ -313,14 +312,6 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
           {t("playlist-add-item", { defaultValue: "Add item" })}
         </button>
       )}
-      <button
-        type="button"
-        className="sb-playlist-add-scene"
-        onClick={addScene}
-      >
-        <MaterialIcon>add</MaterialIcon>
-        {t("playlist-add-scene", { defaultValue: "Add scene" })}
-      </button>
 
       <div className="sb-discover-actions">
         <button

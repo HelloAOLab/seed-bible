@@ -145,15 +145,6 @@ describe("playlistItemLabel for the newer step kinds", () => {
       )
     ).toBe("The angel who speaks as God");
   });
-
-  it("labels a scene by its title", () => {
-    expect(
-      playlistItemLabel({ type: "scene", title: "Intro" }, t, resolveBookName)
-    ).toBe("Intro");
-    expect(
-      playlistItemLabel({ type: "scene", title: " " }, t, resolveBookName)
-    ).toBe("Scene");
-  });
 });
 
 describe("playlistItemLabel for a step with several passages", () => {

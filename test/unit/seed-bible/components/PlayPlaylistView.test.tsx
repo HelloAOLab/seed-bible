@@ -1,10 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import {
-  PlayPlaylistView,
-  queueSceneHeadings,
-} from "@packages/seed-bible/seed-bible/components/PlayPlaylistView/PlayPlaylistView";
+import { PlayPlaylistView } from "@packages/seed-bible/seed-bible/components/PlayPlaylistView/PlayPlaylistView";
 import {
   createPlayingState,
   type Playlist,
@@ -598,7 +595,7 @@ describe("PlayPlaylistView", () => {
   });
 });
 
-describe("scenes and notes in the player", () => {
+describe("notes in the player", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
@@ -609,72 +606,6 @@ describe("scenes and notes in the player", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-  });
-
-  it("places a scene heading over the first step of each scene, counting expanded steps", () => {
-    const headings = queueSceneHeadings(
-      [
-        { type: "scene", title: "Intro" },
-        { type: "html", html: "<p>Welcome</p>" },
-        { type: "scene", title: "Scene 1 · Hagar" },
-        // Expands into two steps, one per chapter.
-        verseItem({ ref: { bookId: "GEN", chapter: 16, endChapter: 17 } }),
-        { type: "scene", title: "Scene 2 · Moses" },
-        verseItem({ ref: { bookId: "EXO", chapter: 3 } }),
-      ],
-      4
-    );
-    expect(Array.from(headings.entries())).toEqual([
-      [0, "Intro"],
-      [1, "Scene 1 · Hagar"],
-      [3, "Scene 2 · Moses"],
-    ]);
-  });
-
-  it("gives no headings once the queue no longer matches the playlist", () => {
-    expect(
-      queueSceneHeadings([{ type: "scene", title: "Intro" }, verseItem()], 2)
-        .size
-    ).toBe(0);
-  });
-
-  it("shows scene headings in the queue and never a scene as a step", () => {
-    const playing = createPlayingState([
-      createPlaylist({
-        items: [
-          { type: "scene", title: "Intro" },
-          verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
-          { type: "scene", title: "Scene 1" },
-          verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
-        ],
-      }),
-    ]);
-    const { playlists } = createMockPlaylists(playing);
-    act(() => {
-      render(
-        <PlayPlaylistView
-          playlists={playlists}
-          tabs={createMockTabs()}
-          modals={modals}
-          state={state}
-        />,
-        container
-      );
-    });
-
-    expect(container.querySelectorAll(".sb-play-playlist-item")).toHaveLength(
-      2
-    );
-    expect(
-      Array.from(container.querySelectorAll(".sb-play-playlist-scene")).map(
-        (el) => el.textContent
-      )
-    ).toEqual(["Intro", "Scene 1"]);
-    expect(
-      container
-        .querySelector(".sb-play-progress")
-        ?.getAttribute("aria-valuemax")
-    ).toBe("2");
   });
 
   it("shows a passage's note in the current step card, headed by the note's title", async () => {

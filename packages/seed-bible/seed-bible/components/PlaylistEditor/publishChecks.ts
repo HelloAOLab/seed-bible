@@ -35,8 +35,7 @@ function verseLinkCount(html: string | undefined): number {
 /**
  * What to look at before publishing: whether every passage is in the
  * translation being read, whether two steps in a row show the same passage,
- * whether a scene has nothing in it, whether a video has a transcript, and
- * how much the playlist holds. Each line is either reassurance or a
+ * whether a video has a transcript, and how much the playlist holds. Each line is either reassurance or a
  * pointer, never a blocker.
  */
 export function publishChecks(
@@ -47,9 +46,7 @@ export function publishChecks(
   options: { translationName?: string } = {}
 ): PublishCheck[] {
   const checks: PublishCheck[] = [];
-  const steps = items.filter((item) => item.type !== "scene");
-
-  if (steps.length === 0) {
+  if (items.length === 0) {
     checks.push({
       ok: false,
       message: t("publish-check-no-steps", {
@@ -149,9 +146,6 @@ export function publishChecks(
   // The same passage twice in a row.
   let previous: { index: number; ref: VerseRef } | null = null;
   items.forEach((item, index) => {
-    if (item.type === "scene") {
-      return;
-    }
     const current =
       item.type === "bible-verse" ? { index, ref: item.ref } : null;
     if (current && previous && sameRef(current.ref, previous.ref)) {
@@ -161,8 +155,8 @@ export function publishChecks(
         action: t("playlist-review-fix", { defaultValue: "Fix" }),
         message: t("publish-check-repeated-passage", {
           defaultValue: "Steps {{first}} and {{second}} show the same passage.",
-          first: stepNumber(items, previous.index),
-          second: stepNumber(items, current.index),
+          first: previous.index + 1,
+          second: current.index + 1,
         }),
       });
     }
@@ -184,40 +178,11 @@ export function publishChecks(
         }),
         message: t("publish-check-video-transcript", {
           defaultValue: "Video in step {{step}} has no transcript.",
-          step: stepNumber(items, index),
-        }),
-      });
-    }
-  });
-
-  // Scenes with nothing under them.
-  items.forEach((item, index) => {
-    if (item.type !== "scene") {
-      return;
-    }
-    const next = items[index + 1];
-    if (!next || next.type === "scene") {
-      checks.push({
-        ok: false,
-        itemIndex: index,
-        message: t("publish-check-empty-scene", {
-          defaultValue: "The scene “{{title}}” has no steps in it.",
-          title: item.title,
+          step: index + 1,
         }),
       });
     }
   });
 
   return checks;
-}
-
-/** The 1-based step number of `index`, counting every item but scenes. */
-function stepNumber(items: PlaylistItemData[], index: number): number {
-  let step = 0;
-  for (let i = 0; i <= index; i += 1) {
-    if (items[i]?.type !== "scene") {
-      step += 1;
-    }
-  }
-  return step;
 }

@@ -101,9 +101,6 @@ describe("playlistItemSubtitle for the newer step kinds", () => {
         (id) => ({ GEN: "Genesis", EXO: "Exodus" })[id] ?? id
       )
     ).toBe("Compare · Genesis 16 · Exodus 3");
-    expect(playlistItemSubtitle({ type: "scene", title: "Intro" }, t)).toBe(
-      "Scene"
-    );
   });
 });
 
@@ -156,16 +153,14 @@ describe("playlistItemSubtitle for a step with several passages", () => {
       ).toBe(5);
     });
 
-    it("gives a whole chapter a few minutes, a scene none, and adds the steps up", () => {
+    it("gives a whole chapter a few minutes and adds the steps up", () => {
       const items = [
-        { type: "scene", title: "Hagar" },
         { type: "bible-verse", ref: { bookId: "GEN", chapter: 16 } },
         { type: "question", prompt: "Why?" },
       ] as const;
-      expect(playlistItemMinutes(items[0])).toBe(0);
-      expect(playlistItemMinutes(items[1])).toBe(4);
+      expect(playlistItemMinutes(items[0])).toBe(4);
       expect(playlistMinutes([...items])).toBe(6);
-      expect(playlistItemQueueLine(items[1], t)).toBe("Scripture · 4 min");
+      expect(playlistItemQueueLine(items[0], t)).toBe("Scripture · 4 min");
     });
   });
 });

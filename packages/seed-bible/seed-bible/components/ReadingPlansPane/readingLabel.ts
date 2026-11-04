@@ -26,7 +26,5 @@ export function readingLabel(
       return item.title ?? item.prompt ?? fallback;
     case "compare":
       return item.title ?? item.refs.map(refLabel).join(" · ");
-    case "scene":
-      return item.title || fallback;
   }
 }

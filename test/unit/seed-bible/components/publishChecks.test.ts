@@ -24,7 +24,7 @@ const messages = (items: PlaylistItemData[]) =>
 
 describe("publishChecks", () => {
   it("asks for a step before anything else", () => {
-    expect(messages([{ type: "scene", title: "Intro" }])).toEqual([
+    expect(messages([])).toEqual([
       [false, "Add at least one step before publishing."],
     ]);
   });
@@ -66,7 +66,6 @@ describe("publishChecks", () => {
   it("flags the same passage shown twice in a row, by step number", () => {
     const checks = publishChecks(
       [
-        { type: "scene", title: "Intro" },
         {
           type: "bible-verse",
           ref: { bookId: "GEN", chapter: 16, verse: 7, endVerse: 13 },
@@ -88,30 +87,8 @@ describe("publishChecks", () => {
       check.message.includes("same passage")
     );
     expect(repeated.map((check) => [check.message, check.itemIndex])).toEqual([
-      ["Steps 1 and 2 show the same passage.", 2],
-      ["Steps 2 and 3 show the same passage.", 3],
-    ]);
-  });
-
-  it("flags a scene with nothing under it", () => {
-    const checks = publishChecks(
-      [
-        { type: "scene", title: "Empty" },
-        { type: "scene", title: "Full" },
-        { type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } },
-        { type: "scene", title: "Trailing" },
-      ],
-      books,
-      t,
-      resolveBookName
-    );
-    expect(
-      checks
-        .filter((check) => check.message.includes("has no steps"))
-        .map((check) => check.message)
-    ).toEqual([
-      "The scene “Empty” has no steps in it.",
-      "The scene “Trailing” has no steps in it.",
+      ["Steps 1 and 2 show the same passage.", 1],
+      ["Steps 2 and 3 show the same passage.", 2],
     ]);
   });
 

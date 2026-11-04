@@ -19,11 +19,11 @@ import { playlistItemLabel } from "./playlistItemLabel";
 
 /**
  * Whether an item has content of its own to preview. Scripture is read in the
- * reader rather than previewed, and a scene is a heading, so text, links,
- * questions and comparisons qualify.
+ * reader rather than previewed, so text, links, questions and comparisons
+ * qualify.
  */
 export function canPreviewPlaylistItem(item: PlaylistItemData): boolean {
-  return item.type !== "bible-verse" && item.type !== "scene";
+  return item.type !== "bible-verse";
 }
 
 /** What the question and compare steps need from the app beyond the item. */
@@ -52,7 +52,7 @@ export interface PlaylistItemPreviewOptions {
  * HTML snippet renders sanitized, a link renders as a video, an embed, or an
  * "Open" button depending on what its URL points at, a question shows its
  * prompt with a box to answer in, and a comparison its passages side by side.
- * Scripture items are ignored — they have no preview — and so are scenes.
+ * Scripture items are ignored — they have no preview.
  *
  * `modalId` is the caller's own, so a reading-plan preview can't close the
  * playlist playback modal (or the reverse) out from under the user.
