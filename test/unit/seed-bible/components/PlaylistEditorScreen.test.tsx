@@ -523,8 +523,11 @@ describe("PlaylistEditorScreen", () => {
     });
   });
 
-  it("Preview shows the open step as the reader sees it", () => {
-    renderScreen([{ type: "html", html: "<p>Hi there</p>", title: "A note" }]);
+  it("Preview shows every step, in order, as the reader sees it", () => {
+    renderScreen([
+      { type: "html", html: "<p>Hi there</p>", title: "A note" },
+      { type: "html", html: "<p>Bye</p>", title: "Another" },
+    ]);
     act(() => rowButtons()[0]!.click());
     act(() => {
       Array.from(container.querySelectorAll("button"))
@@ -532,12 +535,14 @@ describe("PlaylistEditorScreen", () => {
         .click();
     });
     expect(main().querySelector(".stub-playlist-item-input")).toBeNull();
-    expect(main().querySelector(".sb-step-preview-title")?.textContent).toBe(
-      "A note"
-    );
     expect(
-      main().querySelector(".sb-step-preview-eyebrow")?.textContent
-    ).toContain("Note · Step 1 of 1 · 1 min");
+      Array.from(main().querySelectorAll(".sb-step-preview-title")).map(
+        (el) => el.textContent
+      )
+    ).toEqual(["A note", "Another"]);
+    expect(
+      main().querySelectorAll(".sb-step-preview-eyebrow")[1]?.textContent
+    ).toContain("Note · Step 2 of 2 · 1 min");
   });
 
   it("Back leaves the editor, and the header says when the draft has unsaved changes", () => {
@@ -911,6 +916,60 @@ describe("PlaylistEditorScreen", () => {
       expect(main().hasAttribute("hidden")).toBe(true);
     });
 
+    it("goes back to the step list after adding a step", async () => {
+      const { modals, playlists } = renderScreen([verseItem("GEN", 16)], {
+        mobile: true,
+      });
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-playlist-add-toggle")!
+          .click();
+      });
+      const modal = modals.modals.value.find(
+        (m) => m.id === "playlist-add-step"
+      )!;
+      const host = document.createElement("div");
+      document.body.appendChild(host);
+      act(() => {
+        render(<>{modal.content({ t: (key: string) => key })}</>, host);
+      });
+      const input = host.querySelector<HTMLInputElement>(
+        ".sb-passage-picker-input"
+      )!;
+      act(() => {
+        input.value = "Exodus 3";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      await act(async () => {
+        Array.from(host.querySelectorAll("button"))
+          .find((b) => b.textContent?.startsWith("Add step"))!
+          .click();
+        await Promise.resolve();
+      });
+      render(null, host);
+      host.remove();
+
+      expect(playlists.addEditingPlaylistItem).toHaveBeenCalled();
+      expect(steps().hasAttribute("hidden")).toBe(false);
+      expect(main().hasAttribute("hidden")).toBe(true);
+      expect(stepbar()).toBeNull();
+    });
+
+    it("previews every step in place of the list", () => {
+      renderScreen(
+        [verseItem("GEN", 16), { type: "html", html: "<p>Hi</p>" }],
+        {
+          mobile: true,
+        }
+      );
+      act(() => buttonByText("Preview")!.click());
+
+      expect(steps().hasAttribute("hidden")).toBe(true);
+      expect(settings().hasAttribute("hidden")).toBe(true);
+      expect(main().hasAttribute("hidden")).toBe(false);
+      expect(main().querySelectorAll(".sb-step-preview")).toHaveLength(2);
+    });
+
     it("shows all three columns on a wide screen", () => {
       renderScreen([verseItem("GEN", 16)]);
       act(() => rowButtons()[0]!.click());
@@ -998,11 +1057,20 @@ describe("PlaylistEditorScreen", () => {
       expect(
         review.querySelector(".sb-shared-page-modal-count")?.textContent
       ).toBe("2 steps · ~8 min");
+      // Every step, as readers will see it, to check in one read.
       expect(
-        Array.from(
-          review.querySelectorAll(".sb-playlist-review-step-label")
-        ).map((el) => el.textContent)
+        Array.from(review.querySelectorAll(".sb-step-preview-title")).map(
+          (el) => el.textContent
+        )
       ).toEqual(["Genesis 16", "Genesis 16"]);
+      expect(
+        Array.from(review.querySelectorAll(".sb-step-preview-eyebrow")).map(
+          (el) => el.textContent
+        )
+      ).toEqual([
+        "menu_bookScripture · Step 1 of 2 · 4 min",
+        "menu_bookScripture · Step 2 of 2 · 4 min",
+      ]);
       // The title, description and cover are edited on the steps screen.
       expect(review.querySelector("input, textarea")).toBeNull();
       expect(review.querySelector(".stub-hero-image-field")).toBeNull();

@@ -516,7 +516,6 @@
   "playlist-editor-remove-step-n": "Remove step {{step}}",
   "playlist-editor-keep-both": "Keep both",
   "playlist-editor-pick-step": "Pick a step on the left, or add one.",
-  "playlist-editor-preview-empty": "Pick a step to preview it.",
   "playlist-editor-add-after": "After step {{step}}",
   "chat-highlighted-phrase": "highlighted a phrase",
   "chat-highlighted-verse": "highlighted a verse",
@@ -1376,5 +1375,6 @@
   "playlist-compare-passages": "Passages",
   "playlist-sheet-place": "Step {{step}} of {{total}} · {{playlist}}",
   "playlist-more": "More",
-  "playlist-stop": "Stop playlist"
+  "playlist-stop": "Stop playlist",
+  "playlist-review-steps": "The steps as readers will see them"
 }

@@ -1,4 +1,5 @@
 import "./PlaylistStepPreview.css";
+import { useEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import { MaterialIcon } from "../icons";
@@ -109,5 +110,43 @@ export function PlaylistStepPreview(props: {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * Every step of a playlist, in order, each as the reader will see it, to
+ * check the whole playlist in one read. `focusIndex` brings that step into
+ * view, as when the author previews from an open step.
+ */
+export function PlaylistStepPreviews(props: {
+  items: PlaylistItemData[];
+  loadChapter?: ScriptureChapterLoader;
+  resolveBookName: (bookId: string) => string;
+  focusIndex?: number | null;
+}) {
+  const { items, loadChapter, resolveBookName, focusIndex } = props;
+  const listRef = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    if (focusIndex == null) {
+      return;
+    }
+    listRef.current?.children[focusIndex]?.scrollIntoView?.({
+      block: "start",
+    });
+  }, [focusIndex]);
+  return (
+    <ol ref={listRef} className="sb-step-previews">
+      {items.map((item, index) => (
+        <li key={index} className="sb-step-previews-step">
+          <PlaylistStepPreview
+            item={item}
+            stepNumber={index + 1}
+            stepCount={items.length}
+            loadChapter={loadChapter}
+            resolveBookName={resolveBookName}
+          />
+        </li>
+      ))}
+    </ol>
   );
 }

@@ -64,3 +64,25 @@
   font-size: 1.25rem;
   line-height: 1.35;
 }
+
+/* All the steps, one after another, divided by a rule. */
+.sb-step-previews {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-step-previews-step {
+  padding: 32px 0;
+  scroll-margin-top: 8px;
+}
+
+.sb-step-previews-step:first-child {
+  padding-top: 0;
+}
+
+.sb-step-previews-step + .sb-step-previews-step {
+  border-top: 1px solid var(--sb-divider-color);
+}

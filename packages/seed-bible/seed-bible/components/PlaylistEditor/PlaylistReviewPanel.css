@@ -24,6 +24,11 @@
   font-weight: 700;
 }
 
+.sb-playlist-review-header-publish {
+  margin-inline-start: auto;
+  min-height: 40px;
+}
+
 .sb-playlist-review-body {
   flex: 1;
   min-height: 0;
@@ -43,27 +48,9 @@
   overflow-wrap: anywhere;
 }
 
-.sb-playlist-review-steps {
-  margin: 16px 0 0;
-  padding-inline-start: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sb-playlist-review-step {
-  padding-inline-start: 4px;
-}
-
-.sb-playlist-review-step-label {
-  display: block;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.sb-playlist-review-step-meta {
-  font-size: 0.8125rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+/* The steps as readers will see them, a size down from the step screen. */
+.sb-playlist-review-previews .sb-step-preview-title {
+  font-size: 1.375rem;
 }
 
 .sb-playlist-review-section {

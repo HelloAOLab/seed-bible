@@ -38,7 +38,7 @@ import {
   PlaylistReviewPanel,
   PlaylistVisibilityField,
 } from "./PlaylistReviewPanel";
-import { PlaylistStepPreview } from "./PlaylistStepPreview";
+import { PlaylistStepPreviews } from "./PlaylistStepPreview";
 import { openAddStepModal } from "./AddStepModal";
 
 /** Pane title; the screen draws its own header, so this only names the pane. */
@@ -223,13 +223,15 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
             setOpenIndex(options.replace);
             return;
           }
+          // A phone goes back to the list, to see the step take its place
+          // and add the next; a wide screen opens it beside the list.
           if (after !== null && after < items.length - 1) {
             playlists.insertEditingPlaylistItem(after + 1, item);
-            setOpenIndex(after + 1);
+            setOpenIndex(narrow ? null : after + 1);
             return;
           }
           playlists.addEditingPlaylistItem(item);
-          setOpenIndex(items.length);
+          setOpenIndex(narrow ? null : items.length);
         },
       });
     };
@@ -328,6 +330,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
           setScreen("steps");
           requestOpen(index);
         }}
+        loadChapter={loadChapter}
         onEditDetails={() => setScreen("details")}
         onBack={() => setScreen("steps")}
         onPublish={handleSave}
@@ -428,7 +431,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
           narrow ? " sb-playlist-editor-columns--narrow" : ""
         }`}
       >
-        {narrow && openIndex !== null ? (
+        {narrow && openIndex !== null && mode !== "preview" ? (
           <nav
             className="sb-playlist-editor-stepbar"
             aria-label={t("playlist-editor-steps", { defaultValue: "Steps" })}
@@ -473,7 +476,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
           </nav>
         ) : null}
         <aside
-          hidden={narrow && openIndex !== null}
+          hidden={narrow && (openIndex !== null || mode === "preview")}
           className="sb-playlist-editor-steps"
           aria-label={t("playlist-editor-steps", { defaultValue: "Steps" })}
         >
@@ -510,7 +513,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
         </aside>
 
         <main
-          hidden={narrow && openIndex === null}
+          hidden={narrow && openIndex === null && mode !== "preview"}
           className="sb-playlist-editor-main"
           aria-label={
             openItem
@@ -522,19 +525,16 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
           }
         >
           {mode === "preview" ? (
-            openItem && openIndex !== null ? (
-              <PlaylistStepPreview
-                item={openItem}
-                stepNumber={openStepNumber ?? null}
-                stepCount={stepCount}
+            items.length > 0 ? (
+              <PlaylistStepPreviews
+                items={items}
                 loadChapter={loadChapter}
                 resolveBookName={resolveBookName}
+                focusIndex={openIndex}
               />
             ) : (
               <p className="sb-playlist-editor-empty sb-playlist-editor-placeholder">
-                {t("playlist-editor-preview-empty", {
-                  defaultValue: "Pick a step to preview it.",
-                })}
+                {t("playlist-items-empty", { defaultValue: "No items yet." })}
               </p>
             )
           ) : openItem && openIndex !== null ? (
@@ -596,7 +596,7 @@ export function PlaylistEditorScreen(props: PlaylistEditorScreenProps) {
         </main>
 
         <aside
-          hidden={narrow && openIndex === null}
+          hidden={narrow && (openIndex === null || mode === "preview")}
           className="sb-playlist-editor-settings"
           aria-label={t("playlist-editor-step-settings", {
             defaultValue: "Step settings",

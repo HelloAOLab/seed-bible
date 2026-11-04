@@ -4,13 +4,10 @@ import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import { MaterialIcon } from "../icons";
 import { SharedPageModalContent } from "../SharedPageModal/SharedPageModal";
-import { playlistItemLabel } from "../playlistItemLabel";
-import {
-  minutesLabel,
-  playlistItemQueueLine,
-  playlistMinutes,
-} from "../playlistItemSubtitle";
+import { minutesLabel, playlistMinutes } from "../playlistItemSubtitle";
 import { publishChecks } from "./publishChecks";
+import { PlaylistStepPreviews } from "./PlaylistStepPreview";
+import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 
 export type PlaylistVisibility = NonNullable<Playlist["visibility"]>;
 
@@ -124,6 +121,8 @@ export function PlaylistReviewPanel(props: {
   playlists: PlaylistManager;
   books: TranslationBook[];
   resolveBookName: (bookId: string) => string;
+  /** Loads chapters, for the steps' passages as readers will see them. */
+  loadChapter?: ScriptureChapterLoader;
   authorName?: string | null;
   translationName?: string;
   /** Opens the step a check points at. */
@@ -138,6 +137,7 @@ export function PlaylistReviewPanel(props: {
     playlists,
     books,
     resolveBookName,
+    loadChapter,
     authorName,
     translationName,
     onOpenItem,
@@ -156,6 +156,11 @@ export function PlaylistReviewPanel(props: {
     editing?.title?.trim() ||
     t("untitled-playlist", { defaultValue: "Untitled playlist" });
   const onlyMe = editing?.visibility === "private";
+  const publishLabel = publishing
+    ? t("saving", { defaultValue: "Saving…" })
+    : onlyMe
+      ? t("playlist-save-draft", { defaultValue: "Save draft" })
+      : t("playlist-publish", { defaultValue: "Publish" });
 
   return (
     <div className="sb-playlist-review">
@@ -171,6 +176,15 @@ export function PlaylistReviewPanel(props: {
         <h2 className="sb-playlist-review-heading">
           {t("playlist-review-publish", { defaultValue: "Review & publish" })}
         </h2>
+        {/* Also up here: the steps can make the page long. */}
+        <button
+          type="button"
+          className="sb-settings-save-button sb-playlist-review-header-publish"
+          disabled={publishing || items.length === 0}
+          onClick={onPublish}
+        >
+          {publishLabel}
+        </button>
       </header>
       <div className="sb-playlist-review-body">
         <h3 className="sb-playlist-review-title">{title}</h3>
@@ -188,30 +202,13 @@ export function PlaylistReviewPanel(props: {
           onClose={onBack}
           actions={[
             {
-              label: publishing
-                ? t("saving", { defaultValue: "Saving…" })
-                : onlyMe
-                  ? t("playlist-save-draft", { defaultValue: "Save draft" })
-                  : t("playlist-publish", { defaultValue: "Publish" }),
+              label: publishLabel,
               primary: true,
               disabled: publishing || items.length === 0,
               onClick: onPublish,
             },
           ]}
         >
-          <ol className="sb-playlist-review-steps">
-            {items.map((item, index) => (
-              <li key={index} className="sb-playlist-review-step">
-                <span className="sb-playlist-review-step-label" dir="auto">
-                  {playlistItemLabel(item, t, resolveBookName)}
-                </span>
-                <span className="sb-playlist-review-step-meta">
-                  {playlistItemQueueLine(item, t)}
-                </span>
-              </li>
-            ))}
-          </ol>
-
           <p className="sb-playlist-review-visibility">
             <span>
               {t("playlist-visibility-summary", {
@@ -262,6 +259,21 @@ export function PlaylistReviewPanel(props: {
                 </li>
               ))}
             </ul>
+          </section>
+
+          <section className="sb-playlist-review-section">
+            <h4 className="sb-playlist-review-section-title">
+              {t("playlist-review-steps", {
+                defaultValue: "The steps as readers will see them",
+              })}
+            </h4>
+            <div className="sb-playlist-review-previews">
+              <PlaylistStepPreviews
+                items={items}
+                loadChapter={loadChapter}
+                resolveBookName={resolveBookName}
+              />
+            </div>
           </section>
         </SharedPageModalContent>
       </div>
