@@ -1391,6 +1391,7 @@ export function createSeedBibleState(
     readingExtensions,
     discover,
     chats,
+    audioPlayback,
     options.initialPlaylistPageSeed,
     { friendReads }
   );
@@ -3931,8 +3932,12 @@ export function createSeedBibleState(
     // failed load only toasts after they've already left.
     const { t } = i18n;
     return playlists.playFromHistory(entry).then(
-      () => {
-        closeProfile();
+      (started) => {
+        // Cancel leaves the profile where it is. Closing here used to happen
+        // as soon as the question opened, so the playlist never started.
+        if (started !== false) {
+          closeProfile();
+        }
       },
       (error) => {
         toast(playlistHistoryOpenFailedMessage(t));
@@ -4007,17 +4012,23 @@ export function createSeedBibleState(
   });
 
   // "Your content", the third fullscreen screen, wired like the two above.
-  // Each handler closes the screen first: all three destinations (reader,
-  // playlist player, annotation editor) sit behind it.
+  // Passage and editor handlers close the screen first: those destinations
+  // sit behind it. Playing a playlist waits until it has actually started,
+  // so cancelling the Audio Reader question stays on this screen.
   const openPassageFromContent = (target: TodayPassageTarget) => {
     closeYourContent();
     closeProfile();
     openTodayPassage(state, today, target);
   };
   const playPlaylistFromContent = (playlist: Playlist) => {
-    closeYourContent();
-    closeProfile();
-    playlists.startPlaying(playlist, 0);
+    // Stay on Your content until playback starts. Closing first, then
+    // cancelling the Audio Reader question, would leave the bare reader.
+    playlists.startPlaying(playlist, 0, {
+      onStart: () => {
+        closeYourContent();
+        closeProfile();
+      },
+    });
   };
   const editPlaylistFromContent = (playlist: Playlist) => {
     closeYourContent();

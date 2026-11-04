@@ -39,6 +39,8 @@ import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import { createAudioPlaybackManager } from "@packages/seed-bible/seed-bible/managers/AudioPlaybackManager";
+import type { AudioPlaybackController } from "@packages/seed-bible/seed-bible/managers/AudioPlaybackManager";
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
 import { h, render, type ComponentChildren } from "preact";
@@ -440,6 +442,7 @@ describe("createPlaylistManager", () => {
   let lastI18n: ReturnType<typeof createI18nManager>;
   let lastChatsAddContext: Mock;
   let lastChatsRemoveContext: Mock;
+  let lastAudioPlayback: ReturnType<typeof createAudioPlaybackManager>;
 
   const makeManager = (
     id: string | null = "user-1",
@@ -489,6 +492,8 @@ describe("createPlaylistManager", () => {
     const discover = createDiscoverManager();
     lastChatsAddContext = addContext;
     lastChatsRemoveContext = removeContext;
+    const audioPlayback = createAudioPlaybackManager();
+    lastAudioPlayback = audioPlayback;
     return createPlaylistManager(
       os,
       login,
@@ -500,6 +505,7 @@ describe("createPlaylistManager", () => {
       readingExtensionManager,
       discover,
       chats,
+      audioPlayback,
       initialPlaylistPageSeed
     );
   };
@@ -2191,6 +2197,431 @@ describe("createPlaylistManager", () => {
 
     expect(result).toBeNull();
     expect(manager.playing.value).toBeNull();
+  });
+
+  describe("startPlaying while Audio Reader is playing", () => {
+    const listen = (
+      readingState: NonNullable<TabArg>["readingState"],
+      position: number
+    ) => {
+      const isPlaying = signal(true);
+      const currentTime = signal(position);
+      const play = vi.fn(() => {
+        isPlaying.value = true;
+      });
+      const pause = vi.fn(() => {
+        isPlaying.value = false;
+      });
+      const stop = vi.fn();
+      const controller: AudioPlaybackController = {
+        unit: "seconds",
+        isPlaying,
+        currentTime,
+        duration: signal<number | null>(100),
+        play,
+        pause,
+        seek: vi.fn(),
+        stop,
+      };
+      lastAudioPlayback.show(readingState, controller);
+      return { isPlaying, currentTime, controller, play, pause, stop };
+    };
+
+    const renderPauseDialog = () => {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      act(() => {
+        render(
+          h(I18nProvider, {
+            i18n: lastI18n,
+            children: h(ModalHost, { manager: lastModals }),
+          }),
+          container
+        );
+      });
+      const click = (label: string) => {
+        const button = Array.from(container.querySelectorAll("button")).find(
+          (candidate) => candidate.textContent === label
+        );
+        expect(button).toBeTruthy();
+        act(() => {
+          button!.click();
+        });
+      };
+      return {
+        click,
+        cleanup: () => {
+          render(null, container);
+          container.remove();
+        },
+      };
+    };
+
+    const htmlPlaylist = () =>
+      makePlaylist({
+        items: [{ type: "html", html: "<p>hi</p>" }],
+      });
+
+    it("asks before pausing, and Cancel leaves Audio Reader playing", async () => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      const manager = makeManager("user-1", makeTabs(tab));
+      await flush();
+      const audio = listen(tab.readingState, 12);
+
+      const result = manager.startPlaying(htmlPlaylist());
+      expect(result).toBeNull();
+      expect(manager.playing.value).toBeNull();
+      expect(
+        lastModals.modals.value.some(
+          (modal) => modal.id === "playlist-pause-audio-reader"
+        )
+      ).toBe(true);
+      expect(audio.pause).not.toHaveBeenCalled();
+      expect(audio.isPlaying.value).toBe(true);
+
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Cancel");
+      } finally {
+        dialog.cleanup();
+      }
+      await flush();
+
+      expect(manager.playing.value).toBeNull();
+      expect(audio.pause).not.toHaveBeenCalled();
+      expect(audio.isPlaying.value).toBe(true);
+    });
+
+    it("pauses every tab on confirm and continues from that place when the playlist ends", async () => {
+      const first = makeTab("tab-1", selectTranslationAndChapterMock);
+      const second = makeTab("tab-2", selectTranslationAndChapterMock);
+      const tabs = makeTabs(first);
+      tabs.tabs.value = [first, second];
+      const manager = makeManager("user-1", tabs);
+      await flush();
+      const here = listen(first.readingState, 12);
+      const elsewhere = listen(second.readingState, 34);
+
+      expect(manager.startPlaying(htmlPlaylist())).toBeNull();
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Play playlist");
+      } finally {
+        dialog.cleanup();
+      }
+      await flush();
+
+      expect(manager.playing.value).not.toBeNull();
+      expect(here.pause).toHaveBeenCalledTimes(1);
+      expect(elsewhere.pause).toHaveBeenCalledTimes(1);
+      expect(here.stop).not.toHaveBeenCalled();
+      expect(elsewhere.stop).not.toHaveBeenCalled();
+      expect(here.currentTime.value).toBe(12);
+      expect(elsewhere.currentTime.value).toBe(34);
+      expect(here.isPlaying.value).toBe(false);
+      expect(elsewhere.isPlaying.value).toBe(false);
+      expect(lastAudioPlayback.controllerFor(first.readingState)).toBe(
+        here.controller
+      );
+      expect(lastAudioPlayback.controllerFor(second.readingState)).toBe(
+        elsewhere.controller
+      );
+
+      manager.stopPlaying();
+      await flush();
+
+      expect(here.play).toHaveBeenCalledTimes(1);
+      expect(elsewhere.play).toHaveBeenCalledTimes(1);
+      expect(here.isPlaying.value).toBe(true);
+      expect(elsewhere.isPlaying.value).toBe(true);
+      expect(here.currentTime.value).toBe(12);
+      expect(elsewhere.currentTime.value).toBe(34);
+    });
+
+    it("goes back to the chapter Audio Reader paused in before continuing it", async () => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      tab.readingState.bookId.value = "JHN";
+      tab.readingState.chapterNumber.value = 3;
+      const manager = makeManager("user-1", makeTabs(tab));
+      await flush();
+      const audio = listen(tab.readingState, 12);
+
+      expect(manager.startPlaying(htmlPlaylist())).toBeNull();
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Play playlist");
+      } finally {
+        dialog.cleanup();
+      }
+      await flush();
+
+      tab.readingState.bookId.value = "GEN";
+      tab.readingState.chapterNumber.value = 1;
+      selectTranslationAndChapterMock.mockClear();
+
+      manager.stopPlaying();
+      await flush();
+
+      expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+        "BSB",
+        "JHN",
+        3,
+        { updateUrl: false }
+      );
+      expect(audio.play).toHaveBeenCalledTimes(1);
+      expect(audio.currentTime.value).toBe(12);
+      expect(audio.isPlaying.value).toBe(true);
+    });
+
+    it("continueFromHistory waits for the answer and does not start on cancel", async () => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      const playlist = htmlPlaylist();
+      getDataMock.mockResolvedValue({ success: true, data: playlist });
+      const manager = makeManager("user-1", makeTabs(tab));
+      await flush();
+      const audio = listen(tab.readingState, 12);
+
+      const pending = manager.continueFromHistory(makeHistory());
+      await flush();
+
+      expect(manager.playing.value).toBeNull();
+      expect(audio.isPlaying.value).toBe(true);
+
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Cancel");
+      } finally {
+        dialog.cleanup();
+      }
+      await expect(pending).resolves.toBe(false);
+      expect(manager.playing.value).toBeNull();
+      expect(audio.pause).not.toHaveBeenCalled();
+      expect(audio.isPlaying.value).toBe(true);
+    });
+
+    it("continueFromHistory starts after the user agrees to pause Audio Reader", async () => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      const playlist = htmlPlaylist();
+      getDataMock.mockResolvedValue({ success: true, data: playlist });
+      const manager = makeManager("user-1", makeTabs(tab));
+      await flush();
+      listen(tab.readingState, 12);
+
+      const pending = manager.playFromHistory(makeHistory());
+      await flush();
+      expect(manager.playing.value).toBeNull();
+
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Play playlist");
+      } finally {
+        dialog.cleanup();
+      }
+
+      await expect(pending).resolves.toBe(true);
+      expect(manager.playing.value).not.toBeNull();
+    });
+
+    it("switching tabs does not resume Audio Reader or move the playlist's chapter", async () => {
+      const first = makeTab("tab-1", selectTranslationAndChapterMock);
+      const second = makeTab("tab-2", selectTranslationAndChapterMock);
+      const tabs = makeTabs(first);
+      tabs.tabs.value = [first, second];
+      const manager = makeManager("user-1", tabs);
+      await flush();
+      const audio = listen(first.readingState, 12);
+      first.readingState.bookId.value = "JHN";
+      first.readingState.chapterNumber.value = 3;
+
+      expect(manager.startPlaying(htmlPlaylist())).toBeNull();
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Play playlist");
+      } finally {
+        dialog.cleanup();
+      }
+      await flush();
+      first.readingState.bookId.value = "GEN";
+      first.readingState.chapterNumber.value = 1;
+      selectTranslationAndChapterMock.mockClear();
+
+      tabs.selectedTabId.value = second.id;
+      const url = new URL(lastNavigation.currentUrl.value);
+      url.searchParams.set("book", "EXO");
+      url.searchParams.delete("playlist");
+      url.searchParams.delete("playlistStep");
+      lastNavigation.push(url.toString());
+      await flush();
+
+      expect(first.readingState.isExtensionEnabled("playlist")).toBe(true);
+      expect(audio.play).not.toHaveBeenCalled();
+      expect(audio.isPlaying.value).toBe(false);
+      expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+    });
+
+    it("stopping another tab's playlist does not resume narration this one paused", async () => {
+      const first = makeTab("tab-1", selectTranslationAndChapterMock);
+      const second = makeTab("tab-2", selectTranslationAndChapterMock);
+      const tabs = makeTabs(first);
+      tabs.tabs.value = [first, second];
+      const manager = makeManager("user-1", tabs);
+      await flush();
+      const audio = listen(first.readingState, 12);
+
+      expect(manager.startPlaying(htmlPlaylist())).toBeNull();
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Play playlist");
+      } finally {
+        dialog.cleanup();
+      }
+      await flush();
+
+      tabs.selectedTabId.value = second.id;
+      manager.startPlaying(
+        makePlaylist({ id: "other", items: [{ type: "html", html: "b" }] })
+      );
+      manager.stopPlaying();
+      await flush();
+
+      expect(first.readingState.isExtensionEnabled("playlist")).toBe(true);
+      expect(audio.play).not.toHaveBeenCalled();
+      expect(audio.isPlaying.value).toBe(false);
+    });
+
+    it("continues Audio Reader when the playlist extension goes away without Stop", async () => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      const manager = makeManager("user-1", makeTabs(tab));
+      await flush();
+      const audio = listen(tab.readingState, 12);
+
+      expect(manager.startPlaying(htmlPlaylist())).toBeNull();
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Play playlist");
+      } finally {
+        dialog.cleanup();
+      }
+      await flush();
+      expect(audio.play).not.toHaveBeenCalled();
+
+      tab.readingState.disableExtension("playlist");
+      await flush();
+
+      expect(audio.play).toHaveBeenCalledTimes(1);
+      expect(audio.isPlaying.value).toBe(true);
+      expect(audio.currentTime.value).toBe(12);
+    });
+
+    it("drops the paused narration when its tab is already closed", async () => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      const tabs = makeTabs(tab);
+      const manager = makeManager("user-1", tabs);
+      await flush();
+      const audio = listen(tab.readingState, 12);
+
+      expect(manager.startPlaying(htmlPlaylist())).toBeNull();
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Play playlist");
+      } finally {
+        dialog.cleanup();
+      }
+      await flush();
+
+      manager.stopPlaying();
+      tabs.tabs.value = [];
+      await flush();
+
+      expect(audio.play).not.toHaveBeenCalled();
+      expect(audio.isPlaying.value).toBe(false);
+    });
+
+    it("leaves the playlist page in place until the user agrees to pause Audio Reader", async () => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      const tabs = makeTabs(tab);
+      const leaveStaticPage = tabs.leaveStaticPage as Mock;
+      const manager = makeManager(
+        null,
+        tabs,
+        "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist",
+        {
+          locator: "user-1.playlist-1",
+          item: htmlPlaylist(),
+          authorName: null,
+        }
+      );
+      await flush();
+      listen(tab.readingState, 12);
+
+      manager.startPlaylistPage();
+      await flush();
+
+      expect(leaveStaticPage).not.toHaveBeenCalled();
+      expect(manager.playing.value).toBeNull();
+
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Cancel");
+      } finally {
+        dialog.cleanup();
+      }
+      await flush();
+      expect(leaveStaticPage).not.toHaveBeenCalled();
+      expect(manager.playing.value).toBeNull();
+    });
+
+    it("leaves the playlist page once the user agrees, and then starts", async () => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      const tabs = makeTabs(tab);
+      const leaveStaticPage = tabs.leaveStaticPage as Mock;
+      const manager = makeManager(
+        null,
+        tabs,
+        "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist",
+        {
+          locator: "user-1.playlist-1",
+          item: htmlPlaylist(),
+          authorName: null,
+        }
+      );
+      await flush();
+      listen(tab.readingState, 12);
+
+      manager.startPlaylistPage();
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Play playlist");
+      } finally {
+        dialog.cleanup();
+      }
+      await flush();
+
+      expect(leaveStaticPage).toHaveBeenCalledWith({ push: true });
+      expect(manager.playing.value).not.toBeNull();
+    });
+
+    it("does not re-check the playlist URL when an Audio Reader session starts", async () => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      const playlist = makePlaylist({
+        items: [{ type: "html", html: "<p>hi</p>" }],
+      });
+      getDataMock.mockResolvedValue({ success: true, data: playlist });
+      const manager = makeManager(
+        "user-1",
+        makeTabs(tab),
+        "http://localhost:3000/?playlist=user-1.playlist-1&playlistStep=1"
+      );
+      await flush();
+      expect(manager.playing.value).not.toBeNull();
+
+      const audio = listen(tab.readingState, 12);
+      await flush();
+
+      expect(audio.pause).not.toHaveBeenCalled();
+      expect(manager.playing.value).not.toBeNull();
+      expect(tab.readingState.isExtensionEnabled("playlist")).toBe(true);
+    });
   });
 
   it("startPlaying prefers always uses the selected tab", async () => {

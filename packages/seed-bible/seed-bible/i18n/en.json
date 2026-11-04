@@ -413,6 +413,8 @@
   "playlist-add-link-error": "Enter a valid URL",
   "playlist-add-link-embed": "Embed this link",
   "play-playlist": "Play playlist",
+  "pause-audio-for-playlist-title": "Pause Audio Reader?",
+  "pause-audio-for-playlist-message": "Playing this playlist will pause Audio Reader. When the playlist ends, it continues from where you left off.",
   "stop": "Stop",
   "queue": "Queue",
   "previous": "Previous",
