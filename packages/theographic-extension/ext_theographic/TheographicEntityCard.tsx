@@ -59,8 +59,8 @@ interface TheographicEntityCardProps {
   /** Whether a place's map is currently open in its floating pane. */
   isPlaceOpen?: (entry: TheographicPlaceEntry) => boolean;
   /**
-   * Whether the reader is on a phone-sized screen, where the map isn't offered
-   * in a pane: panes there take the whole screen, over the card that opened it.
+   * Whether the reader is on a phone-sized screen, where every pane fills the
+   * screen, so the map's control is offered as a full-screen view instead.
    */
   isMobile?: ReadonlySignal<boolean>;
   /** The known places' lookup, for places with a map file. */
@@ -383,14 +383,15 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
                       place: place.name,
                       defaultValue: "Map of {{place}}",
                     })}
-                    onOpen={
-                      openPlace && !isMobile?.value
-                        ? () => openPlace(place)
-                        : undefined
+                    onOpen={openPlace ? () => openPlace(place) : undefined}
+                    openLabel={
+                      isMobile?.value
+                        ? t("open-map-full-screen", {
+                            defaultValue: "Show map full screen",
+                          })
+                        : t("open-in-map", { defaultValue: "Open in map" })
                     }
-                    openLabel={t("open-in-map", {
-                      defaultValue: "Open in map",
-                    })}
+                    openIcon={isMobile?.value ? "open_in_full" : undefined}
                   />
                 ) : null
               }

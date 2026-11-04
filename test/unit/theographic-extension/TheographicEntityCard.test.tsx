@@ -265,9 +265,9 @@ describe("TheographicEntityCard", () => {
       expect(openPlace).toHaveBeenCalledWith(EGYPT);
     });
 
-    it("isn't offered on a phone-sized screen, and returns when it widens", async () => {
+    it("offers the map full screen on a phone-sized screen, and a floating window once it widens", async () => {
       const isMobile = signal(true);
-      renderCard({
+      const { openPlace } = renderCard({
         contentType: "place_profile",
         entry: EGYPT,
         getEntity: () => Promise.resolve(EGYPT_DETAIL),
@@ -276,15 +276,21 @@ describe("TheographicEntityCard", () => {
       click(expandButton());
       await flush();
 
-      // The map itself still shows; only the control to pop it out is gone.
-      expect(container.querySelector(".sb-theographic-map")).toBeTruthy();
-      expect(control()).toBeNull();
+      // Every pane fills a phone's screen, so the same control opens it there.
+      expect(control()?.getAttribute("aria-label")).toBe(
+        "Show map full screen"
+      );
+      expect(control()?.getAttribute("title")).toBe("Show map full screen");
+      expect(control()?.textContent).toBe("open_in_full");
+      click(control() as HTMLElement);
+      expect(openPlace).toHaveBeenCalledWith(EGYPT);
 
       act(() => {
         isMobile.value = false;
       });
 
-      expect(control()).toBeTruthy();
+      expect(control()?.getAttribute("aria-label")).toBe("Open in map");
+      expect(control()?.textContent).toBe("float_landscape_2");
     });
 
     it("uses the floating-window icon", async () => {

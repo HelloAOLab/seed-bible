@@ -345,8 +345,17 @@ export function PlaceMap(props: {
   onOpen?: () => void;
   /** The control's accessible name, already translated. */
   openLabel?: string;
+  /** The control's Material Symbol, for where the pane will appear. */
+  openIcon?: string;
 }) {
-  const { place, label, sources, onOpen, openLabel } = props;
+  const {
+    place,
+    label,
+    sources,
+    onOpen,
+    openLabel,
+    openIcon = "float_landscape_2",
+  } = props;
   // One portal instance per place shown. PortalComponent builds its iframe
   // URL once on mount, so this only has to stay stable, not memoise `query`.
   const inst = useMemo(() => uuid(), [place.id]);
@@ -375,7 +384,7 @@ export function PlaceMap(props: {
           aria-label={openLabel}
           onClick={onOpen}
         >
-          <MaterialIcon>float_landscape_2</MaterialIcon>
+          <MaterialIcon>{openIcon}</MaterialIcon>
         </button>
       ) : null}
     </div>

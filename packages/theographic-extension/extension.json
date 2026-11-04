@@ -28,6 +28,7 @@
       "locations": "Locations",
       "place": "Place",
       "open-in-map": "Open in map",
+      "open-map-full-screen": "Show map full screen",
       "map-of": "Map of {{place}}",
       "go-to-verse": "Go to verse",
       "verse-unavailable": "This verse couldn't be loaded.",
