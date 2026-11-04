@@ -228,6 +228,8 @@ function PlaylistStepScreenBody(props: {
               initialResponse={options.questionResponse}
               inSession={options.inSession}
               onSave={options.onSaveQuestionResponse}
+              // Without a title of its own, the question is the heading.
+              hidePrompt={!item.title?.trim()}
             />
           ) : (
             <CompareStepContent

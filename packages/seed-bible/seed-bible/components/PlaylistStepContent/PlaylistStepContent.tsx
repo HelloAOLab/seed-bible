@@ -34,8 +34,11 @@ export function QuestionStepContent(props: {
     text: string,
     visibility: QuestionResponseVisibility
   ) => Promise<void> | void;
+  /** Leaves the question out, for a screen whose heading already asks it. */
+  hidePrompt?: boolean;
 }) {
-  const { item, authorName, initialResponse, inSession, onSave } = props;
+  const { item, authorName, initialResponse, inSession, onSave, hidePrompt } =
+    props;
   const { t } = useI18n();
   const [text, setText] = useState(initialResponse?.text ?? "");
   const [visibility, setVisibility] = useState<QuestionResponseVisibility>(
@@ -90,7 +93,9 @@ export function QuestionStepContent(props: {
               defaultValue: "Question for readers",
             })}
       </p>
-      <h3 className="sb-step-question-prompt">{item.prompt}</h3>
+      {hidePrompt ? null : (
+        <h3 className="sb-step-question-prompt">{item.prompt}</h3>
+      )}
       <label className="sb-step-question-response">
         <span className="sb-step-question-response-label">
           {t("playlist-question-your-response", {

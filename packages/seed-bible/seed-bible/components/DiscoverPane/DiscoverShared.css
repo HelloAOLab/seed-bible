@@ -53,11 +53,20 @@
 /*
  * Playlist text inputs reuse the account settings' filled-box look
  * (`sb-settings-text-input`); this glue lets them flex next to the add button
- * inside `.sb-playlist-add-row`.
+ * inside `.sb-playlist-add-row`. Only there: in a column of fields, growing
+ * would stretch a one-line field down to fill the column's spare height.
  */
 .sb-playlist-input {
-  flex: 1;
   min-width: 0;
+}
+
+.sb-playlist-add-row > .sb-playlist-input {
+  flex: 1;
+}
+
+.sb-playlist-add-text-row > .sb-playlist-input,
+.sb-playlist-add-link-row > .sb-playlist-input {
+  flex: none;
 }
 
 .sb-playlist-add-error {
@@ -82,4 +91,23 @@
 
 .sb-play-playlist-content .sb-discover-section {
   margin-bottom: 0;
+}
+
+/* A step input's on/off choices ("Embed this link", "Readers can share
+   answers"): a full-size box beside its label, easy to hit. */
+.sb-playlist-embed-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.sb-playlist-embed-toggle input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--sb-primary-color);
 }

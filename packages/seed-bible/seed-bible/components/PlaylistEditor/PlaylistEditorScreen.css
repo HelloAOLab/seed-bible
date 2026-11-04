@@ -577,3 +577,9 @@
     width: 100%;
   }
 }
+
+/* The cover picker on the details screen is a thumbnail-sized choice, not
+   the page's main event. */
+.sb-playlist-details-body .sb-hero-field {
+  max-width: 18rem;
+}

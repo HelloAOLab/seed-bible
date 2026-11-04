@@ -100,6 +100,27 @@ describe("PlaylistStepScreen", () => {
     return { playing, addTab, stopPlaying };
   }
 
+  it("asks a question without a title once, as the heading", () => {
+    renderScreen([{ type: "question", prompt: "Who sees you?" }], 0);
+    expect(container.querySelector(".sb-step-screen-title")?.textContent).toBe(
+      "Who sees you?"
+    );
+    expect(container.querySelector(".sb-step-question-prompt")).toBeNull();
+  });
+
+  it("asks a titled question under its title", () => {
+    renderScreen(
+      [{ type: "question", title: "Think", prompt: "Who sees you?" }],
+      0
+    );
+    expect(container.querySelector(".sb-step-screen-title")?.textContent).toBe(
+      "Think"
+    );
+    expect(
+      container.querySelector(".sb-step-question-prompt")?.textContent
+    ).toBe("Who sees you?");
+  });
+
   it("renders nothing for a scripture step", () => {
     renderScreen(ITEMS, 1);
     expect(container.querySelector(".sb-step-screen")).toBeNull();

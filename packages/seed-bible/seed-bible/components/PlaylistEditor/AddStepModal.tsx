@@ -1,5 +1,5 @@
 import "./AddStepModal.css";
-import { useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { lazy, Suspense } from "preact/compat";
 import type { Editor } from "@tiptap/core";
 import { useI18n } from "../../i18n/I18nManager";
@@ -115,6 +115,13 @@ export function AddStepModalContent(
     const book = books.find((b) => b.id === bookId);
     return book?.name ?? book?.commonName ?? bookId;
   };
+  // On a phone the kinds are a scrolling row; keep the chosen one in view.
+  const typesRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    typesRef.current
+      ?.querySelector(".sb-add-step-type--on")
+      ?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [mode]);
 
   const scripture = mode === "scripture" || mode === "note-scripture";
   const draft: PlaylistItemData | null =
@@ -168,7 +175,7 @@ export function AddStepModalContent(
     <div className="sb-add-step">
       {position ? <p className="sb-add-step-position">{position}</p> : null}
       <div className="sb-add-step-columns">
-        <div className="sb-add-step-types" role="radiogroup">
+        <div ref={typesRef} className="sb-add-step-types" role="radiogroup">
           <p className="sb-add-step-column-head">
             {t("playlist-add-step-type", { defaultValue: "1 · Step type" })}
           </p>

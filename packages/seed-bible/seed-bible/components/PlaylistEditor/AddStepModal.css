@@ -141,15 +141,43 @@
   padding: 0 18px;
 }
 
+/* On a phone the kinds are one scrolling row of chips, so the step's own
+   fields show without scrolling past them. */
 @media (max-width: 760px) {
   .sb-add-step-columns {
     grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
   }
 
   .sb-add-step-types {
     flex-direction: row;
-    flex-wrap: wrap;
-    padding-inline-end: 0;
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0;
     border-inline-end: none;
+    scrollbar-width: none;
+  }
+
+  .sb-add-step-types .sb-add-step-column-head {
+    display: none;
+  }
+
+  .sb-add-step-type {
+    flex: none;
+    justify-content: center;
+    min-height: 44px;
+    padding: 8px 16px;
+    border-color: var(--sb-divider-color);
+    border-radius: 999px;
+  }
+
+  .sb-add-step-type-label {
+    font-size: 0.9375rem;
+    white-space: nowrap;
+  }
+
+  .sb-add-step-type-description {
+    display: none;
   }
 }

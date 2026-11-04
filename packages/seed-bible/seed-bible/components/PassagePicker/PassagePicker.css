@@ -123,3 +123,18 @@
 .sb-passage-picker-verse--selected .sb-passage-picker-verse-number {
   color: var(--sb-primary-color);
 }
+
+/* Narrow: the reference field gets a line of its own, the menus the next. */
+@media (max-width: 520px) {
+  .sb-passage-picker-row {
+    flex-wrap: wrap;
+  }
+
+  .sb-passage-picker-search {
+    flex-basis: 100%;
+  }
+
+  .sb-passage-picker-select:not(.sb-passage-picker-select--chapter) {
+    flex: 1;
+  }
+}
