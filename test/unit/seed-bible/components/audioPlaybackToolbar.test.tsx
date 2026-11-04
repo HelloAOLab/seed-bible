@@ -9,7 +9,10 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { AudioPlaybackController } from "@packages/seed-bible/seed-bible/managers/AudioPlaybackManager";
-import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
+import {
+  createTestSeedBibleState,
+  waitFor,
+} from "../testUtils/createTestSeedBibleState";
 import { TestHost } from "./TestHost";
 import {
   aabBooks,
@@ -192,6 +195,75 @@ describe("BibleReaderToolbar — audio playback", () => {
           ".sb-reader-floating-nav-play-wrap > .sb-audio-progress-ring"
         )
       ).not.toBeNull();
+    });
+  });
+
+  describe("listening to a playlist", () => {
+    beforeEach(() => setup(DESKTOP_VIEWPORT_WIDTH));
+
+    /** Narration that is already playing, with verse n starting at (n - 1) * 10. */
+    function createVerseTimedPlayback() {
+      const { playback } = createPlayback();
+      const currentTime = signal(0);
+      return {
+        currentTime,
+        playback: {
+          ...playback,
+          currentTime,
+          seek: vi.fn((position: number) => {
+            currentTime.value = position;
+          }),
+          verseAt: (position: number) => ({
+            number: Math.floor(position / 10) + 1,
+            heading: null,
+          }),
+          verseMarks: () =>
+            Array.from({ length: 10 }, (_, index) => ({
+              position: index * 10,
+              startsSection: false,
+            })),
+        } satisfies AudioPlaybackController,
+      };
+    }
+
+    it("moves on through two steps in the same chapter while narration plays on", async () => {
+      const { playback, currentTime } = createVerseTimedPlayback();
+      await showPlayback(playback);
+      const playing = state.playlists.startPlaying(
+        {
+          id: "p1",
+          title: null,
+          description: null,
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 1, verse: 2, endVerse: 3 },
+            },
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 1, verse: 4, endVerse: 5 },
+            },
+          ],
+        },
+        0,
+        { history: false }
+      )!;
+      // The toolbar follows narration in effects that run on the next frame
+      // (outside `act`, which would hold them back), so each step is waited
+      // for rather than expected at once.
+      playing.setListenAlong(true);
+      // Narration goes to where the first passage starts, verse 2.
+      await waitFor(() => currentTime.value === 10);
+
+      // Verse 4 starts: the first passage has been read.
+      currentTime.value = 31;
+      await waitFor(() => playing.currentIndex.value === 1);
+      // Still playing, narration goes to where the second passage starts.
+      await waitFor(() => currentTime.value === 30);
+
+      // Verse 6 starts: the second, last passage has been read too.
+      currentTime.value = 51;
+      await waitFor(() => !playing.listenAlong.value);
     });
   });
 });

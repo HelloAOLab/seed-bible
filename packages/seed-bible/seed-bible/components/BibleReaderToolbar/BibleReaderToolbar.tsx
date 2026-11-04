@@ -1469,16 +1469,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
     const stepKey = `${playing.currentIndex.value}:${JSON.stringify(item.ref)}`;
     const controller = audioPlayback.value;
+    // Read on every run, whichever way it returns, so narration's progress
+    // always runs this again: a step in the chapter already being read
+    // changes nothing else that would.
+    const position = controller?.currentTime.value ?? 0;
     const tool = audioPlayTool.value;
     if (narrationStepRef.current !== stepKey) {
       narrationStepRef.current = stepKey;
       narrationSeekRef.current = null;
-      if (tool && tool.visible.value && !tool.disabled.value) {
-        if (!controller || !controller.isPlaying.value) {
+      if (!controller || !controller.isPlaying.value) {
+        if (tool && tool.visible.value && !tool.disabled.value) {
           tool.onSelect();
         }
+        return;
       }
-      return;
     }
     if (!controller) {
       return;
@@ -1491,7 +1495,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       }
       return;
     }
-    const position = controller.currentTime.value;
     if (passageNarrated(controller, item.ref, position)) {
       if (playing.hasNext.value) {
         void playing.next();
