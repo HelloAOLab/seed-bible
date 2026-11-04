@@ -385,6 +385,14 @@ export type StartPlayingOptions = {
   sharedOpening?: true;
 };
 
+export interface PlaylistEditorOptions {
+  /**
+   * Runs when the editor is saved or cancelled, in place of switching the
+   * Discover pane back to its discover view (the pane closes instead).
+   */
+  onExit?: () => void;
+}
+
 export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
 export type PlayingState = ReturnType<typeof createPlayingState>;
 
@@ -1916,15 +1924,37 @@ export function createPlaylistManager(
     return PlaylistSchema.parse(result.data);
   };
 
+  // Set when the editor was opened from a screen outside the Discover pane
+  // (e.g. "Your content"), so leaving the editor goes back there instead of
+  // dropping the user on Discover.
+  let returnFromEditor: (() => void) | null = null;
+
+  const leaveEditor = (): void => {
+    editingPlaylist.value = null;
+    editingPlaylistBaseline.value = null;
+    const returnTo = returnFromEditor;
+    returnFromEditor = null;
+    // Only while the editor is still on screen: if the pane was closed under
+    // it, jumping to the origin screen later would come out of nowhere.
+    if (returnTo && view.peek() === "create_playlist") {
+      view.value = null;
+      returnTo();
+    } else {
+      view.value = "discover";
+    }
+  };
+
   /**
    * Starts creating a new playlist: opens the create view and sets
    * `editingPlaylist` to a fresh, unsaved playlist, optionally pre-filled
    * with the given title/description/items (e.g. an AI-generated playlist).
    * Persisting happens later via `saveEditingPlaylist`. No-op when not
-   * signed in.
+   * signed in. `options.onExit`, when given, runs instead of showing Discover
+   * once the editor is saved or cancelled.
    */
   const createNewPlaylist = async (
-    initial?: Pick<Playlist, "title" | "description" | "items">
+    initial?: Pick<Playlist, "title" | "description" | "items">,
+    options?: PlaylistEditorOptions
   ): Promise<Signal<Playlist | null> | null> => {
     let userId = login.userId.value;
     if (!userId) {
@@ -1950,6 +1980,7 @@ export function createPlaylistManager(
     linkPreviews.cancel();
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(draft);
+    returnFromEditor = options?.onExit ?? null;
     view.value = "create_playlist";
     draft.items.forEach(requestEditingItemPreview);
 
@@ -1959,13 +1990,18 @@ export function createPlaylistManager(
   /**
    * Opens an existing playlist for editing: sets `editingPlaylist` to a copy of
    * the given playlist and switches to the create/edit view. Persisting happens
-   * later via `saveEditingPlaylist`.
+   * later via `saveEditingPlaylist`. `options.onExit`, when given, runs
+   * instead of showing Discover once the editor is saved or cancelled.
    */
-  const editPlaylist = (playlist: Playlist): void => {
+  const editPlaylist = (
+    playlist: Playlist,
+    options?: PlaylistEditorOptions
+  ): void => {
     linkPreviews.cancel();
     const draft = clonePlaylist(playlist);
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(playlist);
+    returnFromEditor = options?.onExit ?? null;
     view.value = "create_playlist";
     // Links saved before previews existed, or whose preview missed the save
     // cutoff, get one now so the next save stores it.
@@ -1974,8 +2010,8 @@ export function createPlaylistManager(
 
   /**
    * Persists the currently-edited playlist, upserts it into `userPlaylists`,
-   * then clears the editor and returns to the discover view. No-op when there
-   * is no playlist being edited.
+   * then clears the editor and returns to the discover view (or wherever the
+   * editor was opened from). No-op when there is no playlist being edited.
    */
   const saveEditingPlaylist = async (): Promise<void> => {
     await linkPreviews.settle();
@@ -1995,9 +2031,7 @@ export function createPlaylistManager(
     userPlaylists.value = exists
       ? userPlaylists.value.map((p) => (p.id === playlist.id ? playlist : p))
       : [...userPlaylists.value, playlist];
-    editingPlaylist.value = null;
-    editingPlaylistBaseline.value = null;
-    view.value = "discover";
+    leaveEditor();
   };
 
   /**
@@ -2184,12 +2218,13 @@ export function createPlaylistManager(
     return "success";
   };
 
-  /** Discards the current edit and returns to the discover view. */
+  /**
+   * Discards the current edit and returns to the discover view (or wherever
+   * the editor was opened from).
+   */
   const cancelEditingPlaylist = (): void => {
     linkPreviews.cancel();
-    editingPlaylist.value = null;
-    editingPlaylistBaseline.value = null;
-    view.value = "discover";
+    leaveEditor();
   };
 
   /**

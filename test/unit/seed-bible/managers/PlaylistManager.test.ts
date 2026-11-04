@@ -1426,6 +1426,66 @@ describe("createPlaylistManager", () => {
     expect(recordDataMock).not.toHaveBeenCalled();
   });
 
+  describe("leaving an editor opened from another screen", () => {
+    it("saving closes Discover and hands back to that screen", async () => {
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: makePlaylist({ id: "playlist-1", title: "Old" }) }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      const onExit = vi.fn();
+
+      manager.editPlaylist(manager.userPlaylists.value[0]!, { onExit });
+      manager.updateEditingPlaylistMetadata({ title: "New" });
+      await manager.saveEditingPlaylist();
+
+      expect(manager.userPlaylists.value[0]!.title).toBe("New");
+      expect(manager.editingPlaylist.value).toBeNull();
+      expect(manager.view.value).toBeNull();
+      expect(onExit).toHaveBeenCalledTimes(1);
+    });
+
+    it("cancelling a new playlist closes Discover and hands back to that screen", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const onExit = vi.fn();
+
+      await manager.createNewPlaylist(undefined, { onExit });
+      manager.cancelEditingPlaylist();
+
+      expect(manager.editingPlaylist.value).toBeNull();
+      expect(manager.view.value).toBeNull();
+      expect(onExit).toHaveBeenCalledTimes(1);
+    });
+
+    it("only hands back once, so a later edit from Discover stays on Discover", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const onExit = vi.fn();
+
+      manager.editPlaylist(makePlaylist(), { onExit });
+      manager.cancelEditingPlaylist();
+      manager.editPlaylist(makePlaylist());
+      manager.cancelEditingPlaylist();
+
+      expect(onExit).toHaveBeenCalledTimes(1);
+      expect(manager.view.value).toBe("discover");
+    });
+
+    it("doesn't jump back once the editor's pane was already closed", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const onExit = vi.fn();
+
+      manager.editPlaylist(makePlaylist(), { onExit });
+      manager.view.value = null;
+      manager.cancelEditingPlaylist();
+
+      expect(onExit).not.toHaveBeenCalled();
+    });
+  });
+
   it("isEditingPlaylistDirty is false for an untouched new playlist", async () => {
     const manager = makeManager("user-1");
     await flush();
