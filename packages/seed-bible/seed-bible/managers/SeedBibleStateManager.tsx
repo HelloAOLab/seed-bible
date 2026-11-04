@@ -1,5 +1,6 @@
 import { createBibleSelectorState } from "../managers/BibleSelectorManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
+import type { Signal } from "@preact/signals";
 import {
   createBibleDataManager,
   type BibleDataManager,
@@ -415,6 +416,7 @@ export interface AppState {
   createSharedSession: () => Promise<BibleReadingSession>;
   /** Joins an existing shared session and opens it in a new tab. */
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
+  isJoiningSession: Signal<boolean>;
 
   /**
    * The Canonical URL for the current page.
@@ -1839,6 +1841,7 @@ export function createSeedBibleState(
   // visitor's saved tabs with a one-tab state before anything ever restored
   // them — the saved session would be destroyed by the act of loading the page.
   const tabsRestored = signal(false);
+  const isJoiningSession = signal(false);
 
   // Persist the non-ephemeral tab state (translation/book/chapter per tab, the
   // selected tab, the layout preset, and the slot arrangement) to localStorage
@@ -3171,8 +3174,10 @@ export function createSeedBibleState(
     if (typeof window === "undefined") {
       return;
     }
+
     const initialSessionId =
       navigation.currentUrl.value.searchParams.get("sessionId");
+
     if (!initialSessionId) {
       return;
     }
@@ -3181,7 +3186,9 @@ export function createSeedBibleState(
       navigation.initialUrl,
       navigation.basePath
     ).specified;
+
     const bootTab = tabs.tabs.peek()[0] ?? null;
+
     const startPosition =
       linkedPosition && bootTab
         ? getSessionStartPosition(bootTab.readingState)
@@ -3192,6 +3199,7 @@ export function createSeedBibleState(
         run();
         return;
       }
+
       const stopWaiting = tabsRestored.subscribe((restored) => {
         if (restored) {
           stopWaiting();
@@ -3200,24 +3208,31 @@ export function createSeedBibleState(
       });
     };
 
+    // Show joining modal
+    isJoiningSession.value = true;
+
     try {
       await handleJoinSharedSession(initialSessionId, startPosition);
     } catch (error) {
       console.error("Failed to join the session from the URL:", error);
-      // Destructured for the translation lint rules, which only recognise a
-      // bare `t` — see the sign-out toast below.
+
       const { t } = i18n;
+
       toast(
         t("session-join-failed", {
           defaultValue: "Couldn't join the shared session",
         })
       );
-      // Restoring saved tabs skipped the link's chapter, leaving it for the
-      // session to show. With no session, show it in a normal tab instead.
+
+      // Restore the linked chapter in a normal tab.
       if (startPosition) {
         whenTabsRestored(() => showLinkedChapter(startPosition));
       }
+
       return;
+    } finally {
+      // Hide modal whether joining succeeds or fails.
+      isJoiningSession.value = false;
     }
 
     if (!startPosition || !bootTab) {
@@ -3684,6 +3699,7 @@ export function createSeedBibleState(
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,
+      isJoiningSession,
       panelsEnabled,
       selectedTab,
       effectiveSlots,

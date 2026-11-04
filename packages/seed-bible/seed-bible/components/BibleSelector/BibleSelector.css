@@ -64,6 +64,62 @@
 .sb-selector-panel .sb-bible-reader-mobile-header-title {
   color: var(--sb-reader-toolbar-font-color);
 }
+.sb-joining-session-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  /* Prevent interaction with everything behind it */
+  pointer-events: auto;
+  cursor: wait;
+}
+
+.sb-joining-session-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(90%, 380px);
+  padding: 32px 24px;
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+.sb-joining-session-modal h3 {
+  margin: 16px 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sb-joining-session-modal p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.sb-joining-session-spinner {
+  width: 34px;
+  height: 34px;
+
+  border: 3px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+
+  animation: sb-joining-spin 0.8s linear infinite;
+}
+
+@keyframes sb-joining-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* Keep these overrides in this file, directly after the rules above, for the
    same reason as the docked-pane override in PaneLayout.css: same selectors,
