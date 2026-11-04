@@ -1,4 +1,4 @@
-import "../DiscoverPane/DiscoverPane.css";
+import "../Discover/DiscoverPane.css";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";

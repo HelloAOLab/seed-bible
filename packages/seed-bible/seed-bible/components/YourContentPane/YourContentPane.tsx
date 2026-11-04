@@ -30,8 +30,8 @@ import {
 import {
   AnnotationPreview,
   openDeleteAnnotationConfirm,
-} from "../DiscoverPane/AnnotationsSection";
-import { PlaylistRow } from "../DiscoverPane/PlaylistRow";
+} from "../Discover/AnnotationsSection";
+import { PlaylistRow } from "../Discover/PlaylistRow";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import { openSaveModalForLocation } from "../Tabs/Tabs";
 import {
