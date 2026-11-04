@@ -1,5 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { useState } from "preact/hooks";
 import { useDragReorder } from "@packages/seed-bible/seed-bible/components/useDragReorder";
 
 const ROW_HEIGHT = 40;
@@ -221,5 +222,92 @@ describe("useDragReorder", () => {
     });
 
     expect(row(1).className).not.toContain("sb-discover-item--dragging");
+  });
+
+  it("keeps the row under the pointer when the pointer moves in small steps", () => {
+    const onReorder = vi.fn();
+    act(() => {
+      render(<Harness itemCount={5} onReorder={onReorder} />, container);
+    });
+
+    act(() => {
+      handle(0).dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          pointerId: 1,
+          clientY: 0,
+        })
+      );
+      // Half a row at a time, a row and a half in all.
+      for (const clientY of [20, 40, 60]) {
+        window.dispatchEvent(
+          new PointerEvent("pointermove", { pointerId: 1, clientY })
+        );
+      }
+    });
+
+    expect(onReorder.mock.calls).toEqual([
+      [0, 1],
+      [1, 2],
+    ]);
+  });
+
+  it("moves a row with the arrow keys and keeps the focus on its handle", () => {
+    function ListHarness() {
+      const [items, setItems] = useState(["a", "b", "c"]);
+      const { getHandleProps } = useDragReorder({
+        itemCount: items.length,
+        onReorder: (from, to) =>
+          setItems((current) => {
+            const next = [...current];
+            const [moved] = next.splice(from, 1);
+            next.splice(to, 0, moved!);
+            return next;
+          }),
+      });
+      return (
+        <ul>
+          {items.map((item, index) => (
+            <li key={index}>
+              <button className="handle" {...getHandleProps(index)}>
+                {item}
+              </button>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    act(() => {
+      render(<ListHarness />, container);
+    });
+    const order = () =>
+      Array.from(container.querySelectorAll(".handle")).map(
+        (button) => button.textContent
+      );
+
+    handle(0).focus();
+    act(() => {
+      handle(0).dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })
+      );
+    });
+    expect(order()).toEqual(["b", "a", "c"]);
+    expect(document.activeElement?.textContent).toBe("a");
+
+    act(() => {
+      handle(1).dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true })
+      );
+    });
+    expect(order()).toEqual(["a", "b", "c"]);
+    expect(document.activeElement?.textContent).toBe("a");
+
+    // Already first: nothing moves.
+    act(() => {
+      handle(0).dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true })
+      );
+    });
+    expect(order()).toEqual(["a", "b", "c"]);
   });
 });
