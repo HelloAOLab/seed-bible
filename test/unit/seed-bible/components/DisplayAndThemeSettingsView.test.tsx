@@ -33,6 +33,8 @@ function makeAnonymousLogin(): LoginManager {
   return {
     userId: signal<string | null>(null),
     profile: signal(null),
+    cachedProfile: signal(null),
+    isLocalConfigHydrated: signal(false),
     localConfig: signal<Record<string, unknown>>({}),
     profilePromise: Promise.resolve(null),
     updateProfile: () => undefined,
