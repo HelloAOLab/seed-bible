@@ -1230,7 +1230,14 @@ export function createTabs(
     tabOptions?: { slotOnly?: boolean }
   ) => {
     const currentTabs = tabs.value;
-    const nextNumber = currentTabs.length + 1;
+    // Past the tabs open, and past any id still in use: once a tab has been
+    // closed, the count alone names a tab that's still open, and two tabs
+    // sharing an id are selected (and played in) as one.
+    const takenIds = new Set(currentTabs.map((tab) => tab.id));
+    let nextNumber = currentTabs.length + 1;
+    while (takenIds.has(`tab-${nextNumber}`)) {
+      nextNumber += 1;
+    }
     const sharedSession = isBibleReadingSession(source) ? source : null;
     const sharedChat = createSharedChatOrNull(chatsManager, sharedSession);
     const readingState = !isBibleReadingSession(source) ? source : null;

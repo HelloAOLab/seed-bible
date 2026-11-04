@@ -377,6 +377,27 @@ describe("createTabs", () => {
     expect(manager.selectedTabId.value).toBe(secondTab.id);
   });
 
+  it("gives a tab added after one was closed an id no open tab has", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+    const secondTab = manager.addTab();
+    const thirdTab = manager.addTab();
+    await waitForInitialLoad(thirdTab.readingState);
+
+    manager.removeTab(secondTab.id);
+    const added = manager.addTab();
+
+    const ids = manager.tabs.value.map((tab) => tab.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(manager.selectedTabId.value).toBe(added.id);
+    // Selecting the new tab doesn't select the one it would otherwise share
+    // an id with.
+    expect(
+      manager.tabs.value.filter((tab) => tab.id === manager.selectedTabId.value)
+    ).toEqual([added]);
+  });
+
   it("selectTab() sets the selected tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { tabs: manager } = createTabsManager();
