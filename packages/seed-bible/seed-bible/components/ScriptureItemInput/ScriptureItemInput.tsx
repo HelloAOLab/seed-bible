@@ -65,8 +65,9 @@ interface ScriptureItemInputProps {
   initialQuestion?: { prompt: string; shareable?: boolean };
   /**
    * "screen" is the fullscreen editor's look: the passage as a card with a
-   * Change button, the note's own toolbar with Link to verse, + Question and
-   * + Cross-reference, and the question as a card of its own.
+   * Change button, the note's own toolbar with Link to verse and
+   * + Cross-reference, and a question an earlier editor attached to the
+   * passage as a card of its own (questions are steps of their own now).
    */
   layout?: "pane" | "screen";
   /** The translation the passage will be read in, for the passage card. */
@@ -792,14 +793,6 @@ export const ScriptureItemInput = forwardRef<
         steps={steps}
         variant={layout === "screen" ? "step" : "full"}
         verses={layout === "screen" ? verseTargets : undefined}
-        onAddQuestion={
-          layout === "screen"
-            ? () =>
-                setQuestion(
-                  (current) => current ?? { prompt: "", shareable: true }
-                )
-            : undefined
-        }
         onEditor={(editor) => {
           noteEditorRef.current = editor;
           if (editor && initialNote && noteBaselineRef.current === null) {

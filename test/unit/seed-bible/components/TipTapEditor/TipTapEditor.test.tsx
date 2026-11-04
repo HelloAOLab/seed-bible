@@ -237,8 +237,7 @@ describe("TipTapEditor step links and passage embeds", () => {
     );
   });
 
-  it("the step toolbar offers Link to verse with a picker of the passage's verses, + Question and + Cross-reference", async () => {
-    const onAddQuestion = vi.fn();
+  it("the step toolbar offers Link to verse with a picker of the passage's verses, and + Cross-reference", async () => {
     let instance: Editor | null = null;
     await act(async () => {
       render(
@@ -250,7 +249,6 @@ describe("TipTapEditor step links and passage embeds", () => {
             { number: 13, text: "You are a God who sees." },
             { number: 14, text: "Beer Lahai Roi." },
           ]}
-          onAddQuestion={onAddQuestion}
           onEditor={(editor) => {
             instance = editor;
           }}
@@ -268,7 +266,6 @@ describe("TipTapEditor step links and passage embeds", () => {
       );
     expect(actions().map((b) => b.textContent)).toEqual([
       "linkLink to verse",
-      "+ Question",
       "+ Cross-reference",
     ]);
     // Only bold and italic remain of the formatting buttons.
@@ -277,9 +274,6 @@ describe("TipTapEditor step links and passage embeds", () => {
         (b) => b.getAttribute("aria-label")
       )
     ).toEqual(["Bold", "Italic"]);
-
-    act(() => actions()[1]!.click());
-    expect(onAddQuestion).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       editor.commands.setTextSelection({ from: 5, to: 10 });

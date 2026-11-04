@@ -56,8 +56,6 @@ export interface TipTapEditorProps {
    * control. Without them the control isn't offered.
    */
   verses?: VerseLinkTarget[];
-  /** Offers "+ Question" and is called when it's pressed. */
-  onAddQuestion?: () => void;
 }
 
 /** A verse a note can link to, with its text for the picker. */
@@ -91,7 +89,6 @@ export default function TipTapEditor(props: TipTapEditorProps) {
     steps,
     variant = "full",
     verses,
-    onAddQuestion,
   } = props;
   const elementRef = useRef<HTMLDivElement>(null);
   // Captured once so the mount-only effect starts the editor with this content
@@ -168,7 +165,6 @@ export default function TipTapEditor(props: TipTapEditorProps) {
         steps={steps}
         variant={variant}
         verses={verses}
-        onAddQuestion={onAddQuestion}
       />
       <div ref={elementRef} className="sb-editor-content" />
     </div>
@@ -185,14 +181,12 @@ function EditorMenuBar({
   steps,
   variant = "full",
   verses,
-  onAddQuestion,
 }: {
   editor: Editor | null;
   books?: TranslationBook[];
   steps?: StepLinkTarget[];
   variant?: "full" | "step";
   verses?: VerseLinkTarget[];
-  onAddQuestion?: () => void;
 }) {
   const { t } = useI18n();
   // Bump on each transaction to re-read `isActive` for the current selection.
@@ -319,16 +313,6 @@ function EditorMenuBar({
               {editor.isActive("verseLink")
                 ? t("editor-unlink-verse", { defaultValue: "Unlink verse" })
                 : t("editor-link-to-verse", { defaultValue: "Link to verse" })}
-            </button>
-          ) : null}
-          {onAddQuestion ? (
-            <button
-              type="button"
-              className="sb-editor-toolbar-action"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={onAddQuestion}
-            >
-              {t("editor-add-question", { defaultValue: "+ Question" })}
             </button>
           ) : null}
           {books ? (
