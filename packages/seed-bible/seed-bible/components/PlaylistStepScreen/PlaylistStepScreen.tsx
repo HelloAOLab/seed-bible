@@ -99,16 +99,25 @@ function PlaylistStepScreenBody(props: {
   });
   const totalMinutes = minutesLabel(playlistMinutes(queue), t);
 
-  const readWithOthers = () => {
-    const tab = playing.tab;
-    if (!tab || !state.modals || !state.app) {
+  // Starts a session with the playlist in it, then offers the session's
+  // invite link.
+  const readWithOthers = async () => {
+    const app = state.app;
+    if (!app || !state.modals) {
+      return;
+    }
+    const inSession = await playlists.continueInSharedSession(
+      app.createSharedSession
+    );
+    const tab = inSession?.tab;
+    if (!tab) {
       return;
     }
     openShareModal(
       {
         modals: state.modals,
-        app: state.app,
-        toast: state.app.toast,
+        app,
+        toast: app.toast,
         sharedSession: tab.sharedSession,
         embedThemes: state.theme?.themes,
         customizationLocator: state.customizations?.activeCustomizationLocator,
@@ -165,7 +174,7 @@ function PlaylistStepScreenBody(props: {
           <button
             type="button"
             className="sb-step-screen-read-with"
-            onClick={readWithOthers}
+            onClick={() => void readWithOthers()}
           >
             <MaterialIcon>group</MaterialIcon>
             {t("playlist-read-with-others", {

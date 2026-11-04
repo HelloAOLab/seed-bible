@@ -2562,6 +2562,55 @@ describe("createPlaylistManager", () => {
     expect(second.tab.readingState.isExtensionEnabled("playlist")).toBe(true);
   });
 
+  it("takes a playing playlist into a new session at the step it was on, and stops it on the tab it left", async () => {
+    const solo = makeTabWithExtensionMocks(
+      "tab-1",
+      selectTranslationAndChapterMock
+    );
+    const session = makeTabWithExtensionMocks(
+      "tab-session",
+      selectTranslationAndChapterMock
+    );
+    const tabsManager = makeTabs(solo.tab);
+    const manager = makeManager("user-1", tabsManager);
+    await flush();
+    const playlist = makePlaylist({
+      id: "p",
+      items: [
+        { type: "html", html: "<p>one</p>" },
+        { type: "html", html: "<p>two</p>" },
+        { type: "html", html: "<p>three</p>" },
+      ],
+    });
+    const playingSolo = manager.startPlaying(playlist)!;
+    await playingSolo.jumpTo(1);
+
+    // What starting a session does: a tab of its own, selected.
+    const createSession = vi.fn(async () => {
+      tabsManager.tabs.value = [solo.tab, session.tab];
+      tabsManager.selectedTabId.value = "tab-session";
+    });
+    const inSession = await manager.continueInSharedSession(createSession);
+
+    expect(createSession).toHaveBeenCalledTimes(1);
+    expect(inSession?.tab?.id).toBe("tab-session");
+    expect(inSession?.currentItem.value).toEqual({
+      type: "html",
+      html: "<p>two</p>",
+    });
+    expect(solo.tab.readingState.isExtensionEnabled("playlist")).toBe(false);
+    expect(session.tab.readingState.isExtensionEnabled("playlist")).toBe(true);
+  });
+
+  it("starts no session when nothing is playing", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    const createSession = vi.fn(async () => {});
+
+    expect(await manager.continueInSharedSession(createSession)).toBeNull();
+    expect(createSession).not.toHaveBeenCalled();
+  });
+
   it("stopPlaying only stops the active tab, leaving other tabs playing", async () => {
     const first = makeTabWithExtensionMocks(
       "tab-1",

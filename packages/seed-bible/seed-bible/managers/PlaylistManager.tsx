@@ -2669,6 +2669,44 @@ export function createPlaylistManager(
   };
 
   /**
+   * Takes the playlist playing on the active tab into a new shared session:
+   * `createSession` starts one on a tab of its own, the playlist plays there
+   * from the step it was on, and the solo playback it came from stops, so the
+   * reader isn't left with the same playlist running twice. Resolves to the
+   * session's playback, or null when nothing was playing.
+   */
+  const continueInSharedSession = async (
+    createSession: () => Promise<unknown>
+  ): Promise<PlayingState | null> => {
+    const source = playing.peek();
+    const sourceTab = activeTab.peek();
+    if (!source || !sourceTab) {
+      return null;
+    }
+    const sourcePlaylists = source.playlists.peek();
+    const sourceItem = source.currentItem.peek();
+    await createSession();
+    const next = startPlaying(sourcePlaylists, 0);
+    if (
+      sourceTab.readingState.isExtensionEnabled(PLAYLIST_READING_EXTENSION_ID)
+    ) {
+      sourceTab.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
+    }
+    if (!next) {
+      return null;
+    }
+    // By the step, not its position: a session's queue holds the leader-only
+    // steps a solo read leaves out, so positions shift.
+    const target = next.queue
+      .peek()
+      .findIndex((item) => jsonEqual(item, sourceItem));
+    if (target > 0) {
+      await next.jumpTo(target);
+    }
+    return next;
+  };
+
+  /**
    * Stops the active tab's playback and returns to the discover view. Only the
    * active reading state is disabled (disposing its live playing state, and in
    * a shared session propagating the stop to participants) — other tabs'
@@ -3496,6 +3534,7 @@ export function createPlaylistManager(
     playing,
     openingPlayback,
     startPlaying,
+    continueInSharedSession,
     stopPlaying,
     continueFromHistory,
     replayFromHistory,
