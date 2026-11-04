@@ -375,6 +375,7 @@ async function logs(seconds: number, reload: boolean): Promise<void> {
   const ws = new WebSocket(tab.webSocketDebuggerUrl);
   let opened = false;
   let nextId = 1;
+  let pendingEnables = new Set<number>();
   let reloadId: number | undefined;
   const send = (method: string, params: object = {}) => {
     const id = nextId++;
@@ -385,14 +386,16 @@ async function logs(seconds: number, reload: boolean): Promise<void> {
   ws.addEventListener("open", () => {
     opened = true;
     // Both replay what was logged before attaching, then stream new entries.
-    send("Runtime.enable");
-    send("Log.enable");
-    if (reload) reloadId = send("Page.reload");
+    pendingEnables = new Set([send("Runtime.enable"), send("Log.enable")]);
   });
 
   ws.addEventListener("message", (event) => {
     const msg = JSON.parse(String(event.data));
-    if (msg.id !== undefined && msg.id === reloadId) {
+    if (pendingEnables.delete(msg.id) && pendingEnables.size === 0) {
+      // Reload only once both replays are done, so the marker separates
+      // earlier messages from the reload's.
+      if (reload) reloadId = send("Page.reload");
+    } else if (msg.id !== undefined && msg.id === reloadId) {
       console.log(`[${time()}] --- reloaded ---`);
     } else if (msg.method === "Runtime.consoleAPICalled") {
       const { type, args, stackTrace, timestamp } = msg.params;
