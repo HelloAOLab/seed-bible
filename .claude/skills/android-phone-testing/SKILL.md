@@ -17,16 +17,20 @@ Android's wireless debugging can forward the phone's own `localhost:3002` to thi
 
 ## Commands
 
-| Command                     | What it does                                                                                                                                                                                                                                                                                |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pair <ip:port> <code>`     | One-time pairing with this computer. The address and 6-digit code come from the phone's pairing dialog (below).                                                                                                                                                                             |
-| `connect [ip:port]`         | Finds the phone on the network, connects, and forwards ports 3002 (app) and 24678 (live reload). If the network blocks discovery, pass the **IP address & Port** shown on the phone's Wireless debugging screen (not the pairing dialog's).                                                 |
-| `status`                    | Lists connected devices and active forwards.                                                                                                                                                                                                                                                |
-| `open [path]`               | Opens `http://localhost:3002/<path>` in the phone's Chrome, reusing the same tab each time, e.g. `open en/BSB/john/3`. Leave off the leading slash: Git Bash on Windows turns `/en/...` into a file path.                                                                                   |
-| `logs [seconds] [--reload]` | Prints the Seed Bible tab's console calls, uncaught errors and browser warnings for `seconds` (default 30), each with the time it happened. Recent messages from before attaching are included. `--reload` reloads the tab first to capture startup, marked with a `--- reloaded ---` line. |
-| `screenshot [file]`         | Saves a PNG of the phone's screen and prints its path (by default one `phone-screenshot.png` in the temp folder, overwritten each time). Read that file to see it.                                                                                                                          |
+| Command                     | What it does                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pair <ip:port> <code>`     | One-time pairing with this computer. The address and 6-digit code come from the phone's pairing dialog (below).                                                                                                                                                                                                                                       |
+| `connect [ip:port]`         | Finds the phone on the network, connects, and forwards ports 3002 (app) and 24678 (live reload). If the network blocks discovery, pass the **IP address & Port** shown on the phone's Wireless debugging screen (not the pairing dialog's).                                                                                                           |
+| `status`                    | Lists connected devices and active forwards.                                                                                                                                                                                                                                                                                                          |
+| `open [path]`               | Opens `http://localhost:3002/<path>` in the phone's Chrome, reusing the same tab each time, e.g. `open en/BSB/john/3`. Leave off the leading slash: Git Bash on Windows turns `/en/...` into a file path.                                                                                                                                             |
+| `logs [seconds] [--reload]` | Prints the Seed Bible tab's console calls, uncaught errors and browser warnings for `seconds` (default 30), each with the time it happened. Recent messages from before attaching are included. `--reload` reloads the tab first to capture startup, marked with a `--- reloaded ---` line. Stops early if the tab closes or leaves `localhost:3002`. |
+| `screenshot [file]`         | Saves a PNG of the phone's screen and prints its path (by default one `phone-screenshot.png` in the temp folder, overwritten each time). Read that file to see it.                                                                                                                                                                                    |
 
-The phone always uses port 3002, the only one sign-in accepts. If the dev server here runs on a different port (`PORT`), `connect` forwards the phone's 3002 to it. If several phones are connected, set `ANDROID_SERIAL` to pick one.
+The phone always uses port 3002, the only one sign-in accepts. `connect` doesn't detect the dev server's port — if it runs on a different one, pass it: `PORT=3005 bun .claude/skills/android-phone-testing/phone.ts connect`. That forwards the phone's 3002 to it, plus the same port number for pattern files, which are requested at the dev server's real port.
+
+If several phones are connected, set `ANDROID_SERIAL` to pick one, using its `adb-…._adb-tls-connect._tcp` name from `status` (an `ip:port` stops matching when the phone's port changes).
+
+Keep `logs` runs shorter than your shell tool's timeout (2 minutes by default), or run longer captures in the background, so you get the output rather than a killed command.
 
 `logs` only sees the page. The service worker (`standalone/sw.ts`) is a separate target, so its console and errors don't appear; for a caching problem, don't conclude "no errors" from `logs` alone.
 
@@ -37,7 +41,7 @@ Always start with `connect` — a phone that's already paired just needs that, e
 - **Connected**: carry on with the task.
 - **Phone not found**: wireless debugging is off (it turns itself off when the phone leaves the Wi-Fi or restarts). Ask the user to turn it back on — the Quick Settings tile, if they added it — and run `connect` again. If it's on and still not found, ask for the IP address & Port on the Wireless debugging screen and run `connect <ip:port>`.
 - **Asking whether to allow this computer**: the user taps Allow on the phone, then run `connect` again.
-- **Connection refused / not paired**: the phone was never paired with this computer, or the pairing expired. Do the setup below.
+- **Connection refused / not paired**: the phone was never paired with this computer, or the pairing expired. Do the setup below. After a manual `connect <ip:port>`, first check the address is from the Wireless debugging screen, not the pairing dialog — the message includes adb's own error.
 
 If `adb` isn't found, the script says how to install it.
 
@@ -60,12 +64,12 @@ Worth suggesting once setup works:
 
 The phone is the user's personal device:
 
-- Chrome's DevTools listing includes **every tab** open on the phone. `logs` only attaches to `localhost:3002` tabs and removes its DevTools forward when it exits — never query, print or attach to the listing yourself.
+- Chrome's DevTools listing includes **every tab** open on the phone. `logs` only attaches to `localhost:3002` tabs, stops if the tab goes to another site, and removes its DevTools forward as soon as it has attached (`connect` and `status` also sweep up any left behind) — never query, print or attach to the listing yourself.
 - A screenshot shows whatever is on screen, including notifications. Take one only when the user asks or it's needed for the task at hand, describe what's relevant in the app rather than everything visible, and delete the file when you're done with it. Don't pass a `file` outside the temp folder unless the user asks.
 
 ## Troubleshooting
 
-- **`logs` finds no tab, but the page is open**: it was opened in another browser (e.g. Samsung Internet), which doesn't expose its console. Use `open`, which uses Chrome.
+- **`logs` finds no tab, but the page is open**: it was opened in another browser (e.g. Samsung Internet), which doesn't expose its console. Use `open`, which uses Chrome. If `open` says Chrome isn't installed, `logs` can't work on that phone until the user installs Chrome.
 - **`logs` says the tab is already being inspected**: close `chrome://inspect`'s DevTools window for it on this computer.
 - **A code change doesn't show up after reloading**: probably a stale service worker on `localhost:3002`. Unregister it in Chrome (Site settings → localhost → clear data) instead of debugging the code.
 - **Page doesn't load at all**: check that `pnpm dev` is running on this computer, then `status` to confirm the forwards are there.
