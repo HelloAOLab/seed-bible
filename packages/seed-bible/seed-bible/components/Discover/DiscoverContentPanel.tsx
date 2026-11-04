@@ -481,10 +481,15 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   useSignalEffect(() => {
     const target = state.discover.scrollToVerse.value;
     if (
-      target &&
-      activeFilter.peek() !== "all" &&
-      activeFilter.peek() !== "annotations"
+      !target ||
+      !tab ||
+      target.bookId !== tab.readingState.bookId.value ||
+      target.chapterNumber !== tab.readingState.chapterNumber.value
     ) {
+      return;
+    }
+    const current = activeFilter.peek();
+    if (current !== "all" && current !== "annotations") {
       activeFilter.value = "annotations";
     }
   });

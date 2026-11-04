@@ -1291,6 +1291,80 @@ describe("DiscoverContentPanel", () => {
       }
     });
 
+    it("switches to Notes only in the panel whose tab shows the targeted chapter", () => {
+      const genesisTab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const exodusTab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      exodusTab.readingState.bookId.value = "EXO";
+      const state = createMockState({
+        tab: genesisTab,
+        annotationsForChapter: [
+          createAnnotation({
+            id: "verse-7",
+            verseNumber: 7,
+          } as Partial<Annotation>),
+        ],
+      });
+      const exodusContainer = document.createElement("div");
+      document.body.appendChild(exodusContainer);
+
+      try {
+        act(() => {
+          render(
+            <DiscoverContentPanel
+              variant="compact"
+              tab={genesisTab}
+              state={state}
+            />,
+            container
+          );
+          render(
+            <DiscoverContentPanel
+              variant="compact"
+              tab={exodusTab}
+              state={state}
+            />,
+            exodusContainer
+          );
+        });
+
+        const getChip = (root: HTMLElement, label: string) =>
+          Array.from(root.querySelectorAll(".sb-dcp-chip")).find(
+            (el) => el.textContent === label
+          ) as HTMLButtonElement;
+
+        act(() => {
+          getChip(container, "Cross Refs").dispatchEvent(
+            new MouseEvent("click", { bubbles: true })
+          );
+          getChip(exodusContainer, "Cross Refs").dispatchEvent(
+            new MouseEvent("click", { bubbles: true })
+          );
+        });
+
+        act(() => {
+          state.discover.scrollToVerse.value = {
+            bookId: "GEN",
+            chapterNumber: 1,
+            verseNumber: 7,
+          };
+        });
+
+        expect(getChip(container, "Notes").getAttribute("aria-selected")).toBe(
+          "true"
+        );
+        expect(
+          getChip(exodusContainer, "Cross Refs").getAttribute("aria-selected")
+        ).toBe("true");
+      } finally {
+        render(null, exodusContainer);
+        exodusContainer.remove();
+      }
+    });
+
     it("shows a note's author name resolved from their profile and a formatted updated time", async () => {
       const getUserProfile = vi
         .fn()
