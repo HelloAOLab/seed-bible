@@ -290,6 +290,7 @@ export function AddStepModalContent(
                 leafRef.current = instance;
               }}
               books={books}
+              loadChapter={loadChapter}
               onAdd={onAdd}
             />
           )}

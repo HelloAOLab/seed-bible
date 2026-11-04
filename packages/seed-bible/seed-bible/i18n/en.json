@@ -1378,5 +1378,7 @@
   "playlist-visibility-link-only-description": "Only people you send the link to",
   "playlist-details-heading-existing": "Playlist details",
   "playlist-visibility-summary": "Who can open it: {{who}}",
-  "playlist-review-change": "Change"
+  "playlist-review-change": "Change",
+  "playlist-compare-missing": "Choose both passages to compare",
+  "playlist-compare-passages": "Passages"
 }

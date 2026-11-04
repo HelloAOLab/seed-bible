@@ -1,9 +1,53 @@
-/* The two passages side by side, as they will play; stacked when narrow. */
-.sb-compare-refs {
+.sb-compare-input {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* One tab per passage, each saying which passage it holds. */
+.sb-compare-tabs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 8px;
+}
+
+.sb-compare-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 48px;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-compare-tab--on {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
+}
+
+.sb-compare-tab-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-compare-tab-ref {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
 }
 
 .sb-compare-description-input {

@@ -76,19 +76,33 @@ describe("CompareItemInput", () => {
     container.remove();
   });
 
-  const refInputs = () =>
+  const tabs = () =>
     Array.from(
-      container.querySelectorAll<HTMLInputElement>(".sb-compare-refs input")
+      container.querySelectorAll<HTMLButtonElement>(".sb-compare-tab")
     );
+  const tabRefs = () =>
+    tabs().map((tab) => tab.querySelector(".sb-compare-tab-ref")?.textContent);
+  const activeTab = () =>
+    tabs().findIndex((tab) => tab.getAttribute("aria-selected") === "true");
+  const reference = () =>
+    container.querySelector<HTMLInputElement>(".sb-passage-picker-input")!;
   const submit = () =>
     container.querySelector<HTMLButtonElement>(".sb-settings-save-button")!;
 
-  it("adds a comparison of two typed passages with a title and a line to look for", () => {
+  /** Types a reference into the picker of passage `index`. */
+  function pick(index: number, text: string) {
+    act(() => tabs()[index]!.click());
+    act(() => setValue(reference(), text));
+  }
+
+  it("adds a comparison of two passages picked one tab at a time, with a title and a line to look for", () => {
     const onAdd = vi.fn();
     act(() => {
       render(<CompareItemInput books={BOOKS} onAdd={onAdd} />, container);
     });
-    expect(refInputs()).toHaveLength(2);
+    expect(tabs()).toHaveLength(2);
+    expect(tabRefs()).toEqual(["No passage yet", "No passage yet"]);
+    expect(activeTab()).toBe(0);
     expect(submit().disabled).toBe(true);
 
     act(() => {
@@ -98,8 +112,6 @@ describe("CompareItemInput", () => {
         )!,
         "The angel who speaks as God"
       );
-      setValue(refInputs()[0]!, "Gen 16:7-13");
-      setValue(refInputs()[1]!, "Exodus 3:2-6");
       setValue(
         container.querySelector<HTMLTextAreaElement>(
           ".sb-compare-description-input"
@@ -107,6 +119,13 @@ describe("CompareItemInput", () => {
         "Who does each person think they met?"
       );
     });
+    pick(0, "Gen 16:7-13");
+    pick(1, "Exodus 3:2-6");
+    expect(tabRefs()).toEqual(["Genesis 16:7-13", "Exodus 3:2-6"]);
+    // Each tab keeps its own reference in the picker.
+    act(() => tabs()[0]!.click());
+    expect(reference().value).toBe("Genesis 16:7-13");
+
     expect(submit().disabled).toBe(false);
     act(() => submit().click());
 
@@ -119,22 +138,43 @@ describe("CompareItemInput", () => {
       ],
       description: "Who does each person think they met?",
     });
-    expect(refInputs().map((input) => input.value)).toEqual(["", ""]);
+    expect(tabRefs()).toEqual(["No passage yet", "No passage yet"]);
   });
 
-  it("says when a passage can't be found and adds nothing", () => {
+  it("asks for the missing passage and shows its tab instead of adding", () => {
     const onAdd = vi.fn();
+    const handleRef = createRef<CompareItemInputHandle>();
     act(() => {
-      render(<CompareItemInput books={BOOKS} onAdd={onAdd} />, container);
+      render(
+        <CompareItemInput ref={handleRef} books={BOOKS} onAdd={onAdd} />,
+        container
+      );
     });
-    act(() => {
-      setValue(refInputs()[0]!, "Gen 1");
-      setValue(refInputs()[1]!, "Hobbits 1");
-    });
-    act(() => submit().click());
+    pick(0, "Gen 1");
+    act(() => tabs()[0]!.click());
 
+    let added: boolean | undefined;
+    act(() => {
+      added = handleRef.current?.commit();
+    });
+
+    expect(added).toBe(false);
     expect(onAdd).not.toHaveBeenCalled();
-    expect(container.textContent).toContain("Couldn't find that reference");
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+      "Choose both passages to compare"
+    );
+    expect(activeTab()).toBe(1);
+  });
+
+  it("counts a reference that names no passage as missing", () => {
+    act(() => {
+      render(<CompareItemInput books={BOOKS} onAdd={vi.fn()} />, container);
+    });
+    pick(0, "Gen 1");
+    pick(1, "Hobbits 1");
+
+    expect(tabRefs()).toEqual(["Genesis 1", "No passage yet"]);
+    expect(submit().disabled).toBe(true);
   });
 
   it("seeds from an existing comparison with its passages written out, and is dirty only once something changes", () => {
@@ -156,13 +196,73 @@ describe("CompareItemInput", () => {
       );
     });
 
-    expect(refInputs().map((input) => input.value)).toEqual([
-      "Genesis 16:7-13",
-      "Exodus 3",
-    ]);
+    expect(tabRefs()).toEqual(["Genesis 16:7-13", "Exodus 3"]);
+    expect(reference().value).toBe("Genesis 16:7-13");
     expect(handleRef.current?.isDirty()).toBe(false);
 
-    act(() => setValue(refInputs()[1]!, "Exodus 4"));
+    pick(1, "Exodus 4");
     expect(handleRef.current?.isDirty()).toBe(true);
+  });
+
+  it("keeps what its fields don't show when an edit is saved, but drops the marked phrases of a passage that changed", () => {
+    const onAdd = vi.fn();
+    act(() => {
+      render(
+        <CompareItemInput
+          books={BOOKS}
+          onAdd={onAdd}
+          initialItem={{
+            title: "Two wells",
+            translationId: "BSB",
+            refs: [
+              {
+                bookId: "GEN",
+                chapter: 16,
+                verse: 7,
+                label: "Hagar",
+                phrases: ["the angel"],
+              },
+              {
+                bookId: "GEN",
+                chapter: 21,
+                verse: 17,
+                label: "Ishmael",
+                phrases: ["the boy"],
+              },
+            ],
+            terms: [{ text: "well", label: "water" }],
+            phraseLabel: "God hears",
+          }}
+        />,
+        container
+      );
+    });
+    pick(1, "Gen 21:17-19");
+    act(() => submit().click());
+
+    expect(onAdd).toHaveBeenCalledWith({
+      type: "compare",
+      title: "Two wells",
+      translationId: "BSB",
+      refs: [
+        {
+          bookId: "GEN",
+          chapter: 16,
+          verse: 7,
+          label: "Hagar",
+          phrases: ["the angel"],
+        },
+        {
+          bookId: "GEN",
+          chapter: 21,
+          verse: 17,
+          endVerse: 19,
+          label: "Ishmael",
+        },
+      ],
+      terms: [{ text: "well", label: "water" }],
+      phraseLabel: "God hears",
+      description: undefined,
+    });
   });
 });

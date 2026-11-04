@@ -295,6 +295,7 @@ export const PlaylistItemInput = forwardRef<
       <CompareItemInput
         ref={assignLeafRef}
         books={books}
+        loadChapter={loadChapter}
         onAdd={submit}
         initialItem={editItem?.type === "compare" ? editItem : undefined}
         submitLabel={submitLabel}
