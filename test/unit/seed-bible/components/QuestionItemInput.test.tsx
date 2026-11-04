@@ -107,6 +107,39 @@ describe("QuestionItemInput", () => {
     expect(handleRef.current?.isDirty()).toBe(true);
   });
 
+  it("keeps the author's own answer when one is written, and edits it", () => {
+    const answer = () =>
+      container.querySelector<HTMLTextAreaElement>(
+        ".sb-question-answer-input"
+      )!;
+    const onAdd = vi.fn();
+    const handleRef = createRef<QuestionItemInputHandle>();
+    act(() => {
+      render(
+        <QuestionItemInput
+          ref={handleRef}
+          onAdd={onAdd}
+          initialItem={{ prompt: "Who sees?", answer: "God." }}
+        />,
+        container
+      );
+    });
+    expect(answer().value).toBe("God.");
+    expect(handleRef.current?.isDirty()).toBe(false);
+
+    act(() => setValue(answer(), " El Roi, the God who sees. "));
+    expect(handleRef.current?.isDirty()).toBe(true);
+    act(() => submit().click());
+
+    expect(onAdd).toHaveBeenCalledWith({
+      type: "question",
+      title: undefined,
+      prompt: "Who sees?",
+      answer: "El Roi, the God who sees.",
+      shareable: true,
+    });
+  });
+
   it("commit() refuses an empty prompt", () => {
     const onAdd = vi.fn();
     const handleRef = createRef<QuestionItemInputHandle>();

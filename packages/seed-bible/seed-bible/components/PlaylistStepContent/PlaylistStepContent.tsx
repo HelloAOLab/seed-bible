@@ -51,8 +51,12 @@ export function QuestionStepContent(props: {
     setText(initialResponse?.text ?? "");
     setVisibility(initialResponse?.visibility ?? "private");
   }, [item.prompt, initialResponse?.text, initialResponse?.visibility]);
+  // The author's answer stays hidden until the reader asks for it, so it
+  // doesn't answer the question for them.
+  const [answerShown, setAnswerShown] = useState(false);
   useEffect(() => {
     setSaved(null);
+    setAnswerShown(false);
   }, [item.prompt]);
 
   const canShare = !!item.shareable && !!inSession;
@@ -161,6 +165,33 @@ export function QuestionStepContent(props: {
               : t("playlist-question-save", { defaultValue: "Save response" })}
           </button>
         </div>
+      ) : null}
+      {item.answer ? (
+        answerShown ? (
+          <div className="sb-step-question-answer">
+            <p className="sb-step-question-answer-label">
+              {authorName
+                ? t("playlist-question-author-answer", {
+                    defaultValue: "{{author}}'s answer",
+                    author: authorName,
+                  })
+                : t("playlist-question-the-answer", {
+                    defaultValue: "The author's answer",
+                  })}
+            </p>
+            <p className="sb-step-question-answer-text">{item.answer}</p>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="sb-step-question-show-answer"
+            onClick={() => setAnswerShown(true)}
+          >
+            {t("playlist-question-show-answer", {
+              defaultValue: "Show the author's answer",
+            })}
+          </button>
+        )
       ) : null}
     </div>
   );

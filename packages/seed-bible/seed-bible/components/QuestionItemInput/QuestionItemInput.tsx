@@ -7,7 +7,12 @@ import type { PlaylistItemData } from "../../managers/PlaylistManager";
 interface QuestionItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
   /** The question the fields start with, e.g. when editing an item. */
-  initialItem?: { title?: string; prompt: string; shareable?: boolean };
+  initialItem?: {
+    title?: string;
+    prompt: string;
+    answer?: string;
+    shareable?: boolean;
+  };
   /** Overrides the submit button label (defaults to "Add item"). */
   submitLabel?: string;
 }
@@ -27,6 +32,8 @@ export interface QuestionItemInputHandle {
 /**
  * Adds a question step: something readers are asked to respond to as the
  * playlist plays. A title is optional; the prompt is the question itself.
+ * The author's own answer is optional too: a question without one is for a
+ * group to discuss, one with it lets a reader alone compare their answer.
  * Readers in a group session can share their answers when the author allows.
  */
 export const QuestionItemInput = forwardRef<
@@ -37,6 +44,7 @@ export const QuestionItemInput = forwardRef<
   const { t } = useI18n();
   const [title, setTitle] = useState(initialItem?.title ?? "");
   const [prompt, setPrompt] = useState(initialItem?.prompt ?? "");
+  const [answer, setAnswer] = useState(initialItem?.answer ?? "");
   const [shareable, setShareable] = useState(initialItem?.shareable ?? true);
 
   const handleAdd = (): boolean => {
@@ -45,14 +53,17 @@ export const QuestionItemInput = forwardRef<
       return false;
     }
     const trimmedTitle = title.trim();
+    const trimmedAnswer = answer.trim();
     onAdd({
       type: "question",
       prompt: trimmedPrompt,
       title: trimmedTitle || undefined,
+      ...(trimmedAnswer ? { answer: trimmedAnswer } : {}),
       shareable,
     });
     setTitle("");
     setPrompt("");
+    setAnswer("");
     setShareable(true);
     return true;
   };
@@ -63,10 +74,11 @@ export const QuestionItemInput = forwardRef<
       isDirty: () =>
         title.trim() !== (initialItem?.title ?? "").trim() ||
         prompt.trim() !== (initialItem?.prompt ?? "").trim() ||
+        answer.trim() !== (initialItem?.answer ?? "").trim() ||
         shareable !== (initialItem?.shareable ?? true),
       commit: handleAdd,
     }),
-    [title, prompt, shareable, initialItem]
+    [title, prompt, answer, shareable, initialItem]
   );
 
   return (
@@ -97,6 +109,22 @@ export const QuestionItemInput = forwardRef<
           })}
           onInput={(event: Event) => {
             setPrompt((event.currentTarget as HTMLTextAreaElement).value);
+          }}
+        />
+        <textarea
+          className="sb-settings-text-input sb-playlist-input sb-question-answer-input"
+          rows={2}
+          value={answer}
+          dir="auto"
+          placeholder={t("playlist-question-answer-placeholder", {
+            defaultValue:
+              "Your answer (optional). Readers on their own can show it after answering.",
+          })}
+          aria-label={t("playlist-question-answer-label", {
+            defaultValue: "Your answer (optional)",
+          })}
+          onInput={(event: Event) => {
+            setAnswer((event.currentTarget as HTMLTextAreaElement).value);
           }}
         />
         <label className="sb-playlist-embed-toggle sb-question-shareable">

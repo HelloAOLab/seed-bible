@@ -86,6 +86,36 @@
   opacity: 0.75;
 }
 
+.sb-step-question-show-answer {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-step-question-answer {
+  padding: 0.75rem 1rem;
+  border-inline-start: 3px solid var(--sb-primary-color);
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-step-question-answer-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.sb-step-question-answer-text {
+  margin: 0;
+  white-space: pre-line;
+}
+
 .sb-step-compare {
   display: flex;
   flex-direction: column;

@@ -1368,5 +1368,10 @@
   "playlist-editor-previous-step": "Previous step",
   "playlist-editor-next-step": "Next step",
   "playlist-resume-editing-text": "You were editing {{title}}.",
-  "playlist-resume-editing": "Continue editing"
+  "playlist-resume-editing": "Continue editing",
+  "playlist-question-answer-placeholder": "Your answer (optional). Readers on their own can show it after answering.",
+  "playlist-question-answer-label": "Your answer (optional)",
+  "playlist-question-author-answer": "{{author}}'s answer",
+  "playlist-question-the-answer": "The author's answer",
+  "playlist-question-show-answer": "Show the author's answer"
 }

@@ -5742,6 +5742,7 @@ const NEW_QUESTION_STEP: PlaylistItemData = {
   type: "question",
   title: "Think",
   prompt: "Who sees you?\nWhy?",
+  answer: "The God who sees.",
   shareable: true,
   minutes: 3,
 };
@@ -5817,6 +5818,18 @@ describe("the stored playlist format", () => {
     );
     expect((stored.items as { html: string }[])[0]!.html).toBe(
       "<p>&lt;b&gt;Why&lt;/b&gt; &amp; how?</p>"
+    );
+  });
+
+  it("shows the author's answer under the question in the copy older builds show", () => {
+    const stored = encodePlaylist(
+      PlaylistSchema.parse({
+        ...PRODUCTION_PLAYLIST_RECORD,
+        items: [{ type: "question", prompt: "Who?", answer: "God." }],
+      })
+    );
+    expect((stored.items as { html: string }[])[0]!.html).toBe(
+      "<p>Who?</p><blockquote><p>God.</p></blockquote>"
     );
   });
 

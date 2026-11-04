@@ -184,6 +184,39 @@ describe("QuestionStepContent", () => {
     });
     expect(container.querySelector(".sb-settings-save-button")).toBeNull();
   });
+
+  it("keeps the author's answer hidden until the reader asks for it", () => {
+    act(() => {
+      render(
+        <QuestionStepContent
+          item={{ ...question, answer: "A messenger who speaks as God." }}
+          authorName="Craig"
+        />,
+        container
+      );
+    });
+    expect(container.textContent).not.toContain("A messenger who speaks");
+
+    act(() =>
+      container
+        .querySelector<HTMLButtonElement>(".sb-step-question-show-answer")!
+        .click()
+    );
+
+    expect(
+      container.querySelector(".sb-step-question-answer-label")?.textContent
+    ).toBe("Craig's answer");
+    expect(
+      container.querySelector(".sb-step-question-answer-text")?.textContent
+    ).toBe("A messenger who speaks as God.");
+  });
+
+  it("offers no answer to show for a question meant for discussion", () => {
+    act(() => {
+      render(<QuestionStepContent item={question} />, container);
+    });
+    expect(container.querySelector(".sb-step-question-show-answer")).toBeNull();
+  });
 });
 
 describe("CompareStepContent", () => {

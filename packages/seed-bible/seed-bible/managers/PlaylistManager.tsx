@@ -135,6 +135,11 @@ export const QuestionPlaylistItem = StepSettingsSchema.extend({
   title: z.string().optional(),
   /** What readers are asked, as plain text. */
   prompt: z.string(),
+  /**
+   * The author's own answer, as plain text, which a reader can show once
+   * they have thought about it. Without one the question is for discussion.
+   */
+  answer: z.string().optional(),
   /** Whether readers in a shared session may share their answers with the group. */
   shareable: z.boolean().optional(),
 });
@@ -201,6 +206,7 @@ const PlaylistItemUnion = z.discriminatedUnion("type", [
 
 const StoredQuestionSchema = QuestionPlaylistItem.pick({
   prompt: true,
+  answer: true,
   shareable: true,
 });
 const StoredCompareSchema = ComparePlaylistItem.pick({
@@ -274,13 +280,20 @@ export function encodePlaylistItem(
   item: PlaylistItemData
 ): Record<string, unknown> {
   if (item.type === "question") {
-    const { type: _type, title, prompt, shareable, ...settings } = item;
+    const { type: _type, title, prompt, answer, shareable, ...settings } = item;
     return {
       ...settings,
       type: "html",
       ...(title ? { title } : {}),
-      html: plainTextToHtml(prompt),
-      question: { prompt, ...(shareable ? { shareable } : {}) },
+      // Older builds show the answer under the question, set apart.
+      html:
+        plainTextToHtml(prompt) +
+        (answer ? `<blockquote>${plainTextToHtml(answer)}</blockquote>` : ""),
+      question: {
+        prompt,
+        ...(answer ? { answer } : {}),
+        ...(shareable ? { shareable } : {}),
+      },
     };
   }
   if (item.type === "compare") {
