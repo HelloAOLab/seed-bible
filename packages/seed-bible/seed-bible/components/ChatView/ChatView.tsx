@@ -631,7 +631,7 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
 }
 
 const AI_LIMITS_TITLE_ID = "sb-ai-limits-title";
-const AI_LIMITS_CHECKBOX_ID = "sb-ai-limits-confirm";
+const AI_LIMITS_CONFIRM_ID = "sb-ai-limits-confirm";
 
 function AiLimitsNotice({ onAcknowledge }: { onAcknowledge: () => void }) {
   const { t } = useI18n();
@@ -672,27 +672,17 @@ function AiLimitsNotice({ onAcknowledge }: { onAcknowledge: () => void }) {
           })}
         </li>
       </ul>
-      <label
-        className="sb-chat-ai-limits-check"
-        htmlFor={AI_LIMITS_CHECKBOX_ID}
+      <button
+        id={AI_LIMITS_CONFIRM_ID}
+        type="button"
+        className="sb-chat-ai-limits-confirm"
+        onClick={onAcknowledge}
       >
-        <input
-          id={AI_LIMITS_CHECKBOX_ID}
-          type="checkbox"
-          checked={false}
-          onChange={(event: Event) => {
-            if ((event.currentTarget as HTMLInputElement).checked) {
-              onAcknowledge();
-            }
-          }}
-        />
-        <span>
-          {t("ai-limits-confirm", {
-            defaultValue:
-              "I understand that AI can make mistakes and isn't a substitute for studying the Bible myself.",
-          })}
-        </span>
-      </label>
+        {t("ai-limits-confirm", {
+          defaultValue:
+            "I understand that AI can make mistakes and isn't a substitute for studying the Bible myself.",
+        })}
+      </button>
     </section>
   );
 }

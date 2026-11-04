@@ -101,23 +101,26 @@
   line-height: 1.45;
 }
 
-.sb-chat-ai-limits-check {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  margin: 0.125rem 0 0;
+.sb-chat-ai-limits-confirm {
+  margin: 0.25rem 0 0;
+  padding: 0.625rem 0.875rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font: inherit;
   font-size: 0.8125rem;
-  line-height: 1.45;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
   cursor: pointer;
 }
 
-.sb-chat-ai-limits-check input {
-  flex: 0 0 auto;
-  margin-top: 0.2rem;
-  accent-color: var(--sb-primary-color, currentColor);
+.sb-chat-ai-limits-confirm:hover {
+  filter: brightness(0.96);
 }
 
-.sb-chat-ai-limits-check input:focus-visible {
+.sb-chat-ai-limits-confirm:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 40%);
   outline-offset: 2px;
 }

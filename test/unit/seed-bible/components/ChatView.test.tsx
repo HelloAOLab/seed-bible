@@ -175,17 +175,14 @@ function signedInLogin(
   });
 }
 
-function tickAiLimitsAcknowledgment(root: ParentNode) {
-  const checkbox = root.querySelector<HTMLInputElement>(
-    "#sb-ai-limits-confirm"
-  );
-  if (!checkbox) {
-    throw new Error("AI limits checkbox was not rendered");
+function confirmAiLimitsAcknowledgment(root: ParentNode) {
+  const button = root.querySelector<HTMLButtonElement>("#sb-ai-limits-confirm");
+  if (!button) {
+    throw new Error("AI limits confirm button was not rendered");
   }
   act(() => {
-    checkbox.focus();
-    checkbox.checked = true;
-    checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+    button.focus();
+    button.click();
   });
 }
 
@@ -2510,32 +2507,31 @@ describe("ChatView", () => {
       ).toBe(true);
     });
 
-    it("gives the confirmation checkbox a label and puts it in the tab order", () => {
+    it("shows the confirmation as a labelled button in the tab order", () => {
       const login = signedInLogin();
       renderChat(aiChat(), login);
 
-      const checkbox = container.querySelector<HTMLInputElement>(
+      const button = container.querySelector<HTMLButtonElement>(
         "#sb-ai-limits-confirm"
       )!;
-      expect(checkbox.type).toBe("checkbox");
-      expect(checkbox.disabled).toBe(false);
-      act(() => {
-        checkbox.focus();
-      });
-      expect(document.activeElement).toBe(checkbox);
-      const label = container.querySelector(`label[for="${checkbox.id}"]`);
-      expect(label?.textContent).toContain(
+      expect(button.tagName).toBe("BUTTON");
+      expect(button.type).toBe("button");
+      expect(button.disabled).toBe(false);
+      expect(button.textContent).toBe(
         "I understand that AI can make mistakes and isn't a substitute for studying the Bible myself."
       );
-      expect(checkbox.closest("label")).toBe(label);
+      act(() => {
+        button.focus();
+      });
+      expect(document.activeElement).toBe(button);
     });
 
-    it("hides the acknowledgment and enables the message box once the box is ticked", async () => {
+    it("hides the acknowledgment and enables the message box once the button is pressed", async () => {
       const login = signedInLogin({ fontSize: "L" });
       const chat = aiChat();
       renderChat(chat, login);
 
-      tickAiLimitsAcknowledgment(container);
+      confirmAiLimitsAcknowledgment(container);
 
       expect(container.querySelector(".sb-chat-ai-limits")).toBeNull();
       expect(container.textContent).toContain("Start a conversation");
@@ -2558,7 +2554,7 @@ describe("ChatView", () => {
       });
     });
 
-    it("does not send while the acknowledgment is still unticked", async () => {
+    it("does not send while the acknowledgment is still unconfirmed", async () => {
       const login = signedInLogin();
       const chat = aiChat();
       renderChat(chat, login);
@@ -2576,7 +2572,7 @@ describe("ChatView", () => {
     it("does not show the acknowledgment again for another agent on the same account", () => {
       const login = signedInLogin();
       renderChat(aiChat({ id: "chat-1" }), login);
-      tickAiLimitsAcknowledgment(container);
+      confirmAiLimitsAcknowledgment(container);
 
       act(() => {
         render(null, container);
@@ -2610,7 +2606,7 @@ describe("ChatView", () => {
     it("remembers a signed-out acknowledgment on this device", () => {
       const login = createMockLogin();
       renderChat(aiChat(), login);
-      tickAiLimitsAcknowledgment(container);
+      confirmAiLimitsAcknowledgment(container);
 
       expect(login.profile.value).toBeNull();
       expect(login.localConfig.value[PROFILE_AI_LIMITS_ACKNOWLEDGMENT]).toEqual(
