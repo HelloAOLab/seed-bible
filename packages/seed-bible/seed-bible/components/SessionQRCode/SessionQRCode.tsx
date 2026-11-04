@@ -11,9 +11,9 @@ const QR_FILE_NAME = "seed-bible-session-qr.png";
 
 /**
  * What the code links to, which only changes the wording: a session invites
- * people to join it, a playlist just opens.
+ * people to join it, a playlist or reading plan just opens.
  */
-export type QRCodeKind = "session" | "playlist";
+export type QRCodeKind = "session" | "playlist" | "readingPlan";
 
 /**
  * Generates a PNG data URL for the given link. `dataUrl` stays null until
@@ -110,10 +110,15 @@ function QRCodeErrorMessage(props: { kind: QRCodeKind }) {
             defaultValue:
               "Couldn't generate a QR code. Copy the playlist link to share it instead.",
           })
-        : t("session-qr-error", {
-            defaultValue:
-              "Couldn't generate a QR code. Copy the session link to share it instead.",
-          })}
+        : props.kind === "readingPlan"
+          ? t("reading-plan-qr-error", {
+              defaultValue:
+                "Couldn't generate a QR code. Copy the reading plan link to share it instead.",
+            })
+          : t("session-qr-error", {
+              defaultValue:
+                "Couldn't generate a QR code. Copy the session link to share it instead.",
+            })}
     </span>
   );
 }
@@ -128,9 +133,23 @@ function useQRCodeLabels(kind: QRCodeKind) {
       alt: t("playlist-qr-alt", {
         defaultValue: "QR code to open this playlist",
       }),
-      scan: t("playlist-qr-scan-to-open", { defaultValue: "Scan to open" }),
+      scan: t("link-qr-scan-to-open", { defaultValue: "Scan to open" }),
       description: t("playlist-qr-scan-description", {
         defaultValue: "Opens this playlist on their phone.",
+      }),
+    };
+  }
+  if (kind === "readingPlan") {
+    return {
+      subtitle: t("reading-plan-qr-subtitle", {
+        defaultValue: "Let others scan to open this reading plan.",
+      }),
+      alt: t("reading-plan-qr-alt", {
+        defaultValue: "QR code to open this reading plan",
+      }),
+      scan: t("link-qr-scan-to-open", { defaultValue: "Scan to open" }),
+      description: t("reading-plan-qr-scan-description", {
+        defaultValue: "Opens this reading plan on their phone.",
       }),
     };
   }
@@ -160,9 +179,9 @@ export function openSessionQRCodeModal(
   modals.openModal({
     id: `session-qr-${url}`,
     title:
-      kind === "playlist"
-        ? { key: "playlist-qr-modal-title", defaultValue: "Scan to open" }
-        : { key: "session-qr-modal-title", defaultValue: "Scan to join" },
+      kind === "session"
+        ? { key: "session-qr-modal-title", defaultValue: "Scan to join" }
+        : { key: "link-qr-scan-to-open", defaultValue: "Scan to open" },
     content: () => <SessionQRCodeLarge url={url} kind={kind} />,
   });
 }

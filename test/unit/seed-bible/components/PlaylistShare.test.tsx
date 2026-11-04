@@ -1,4 +1,5 @@
 import { render } from "preact";
+import type { Mock } from "vitest";
 import { act } from "preact/test-utils";
 import { PlaylistRow } from "@packages/seed-bible/seed-bible/components/DiscoverPane/PlaylistRow";
 import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
@@ -27,7 +28,7 @@ describe("sharing a playlist", () => {
   let container: HTMLDivElement;
   let state: SeedBibleState;
   let writeText: ReturnType<typeof vi.fn>;
-  let onPlay: ReturnType<typeof vi.fn>;
+  let onPlay: Mock<(playlist: Playlist) => void>;
 
   beforeEach(async () => {
     writeText = vi.fn().mockResolvedValue(undefined);

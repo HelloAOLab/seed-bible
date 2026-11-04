@@ -3547,6 +3547,7 @@ export function createSeedBibleState(
       login,
       gallery,
       toast,
+      app: state.app,
     });
     showReadingPlanDetailView();
   });
@@ -3913,6 +3914,7 @@ export function createSeedBibleState(
       gallery,
       placement: "fullscreen",
       toast,
+      app: state.app,
       onBack: () => {
         panes.closePane(READING_PLANS_PANE_ID);
         reopen();

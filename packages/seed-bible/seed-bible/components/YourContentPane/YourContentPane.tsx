@@ -605,6 +605,7 @@ function ReadingPlanRow(props: {
         fullPlan={plan.status === "draft" ? null : full}
         onEdit={props.onEdit}
         modals={state.modals}
+        app={state.app}
         toast={state.app.toast}
         buttonClassName="sb-discover-item-menu"
       />
