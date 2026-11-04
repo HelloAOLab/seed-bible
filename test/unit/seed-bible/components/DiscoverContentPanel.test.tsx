@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { signal } from "@preact/signals";
+import { signal, type Signal } from "@preact/signals";
 import { DiscoverContentPanel } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverContentPanel";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
@@ -104,6 +104,9 @@ function createMockTab(
     decorateVerses?: ReturnType<typeof vi.fn>;
     showSharedSessionHint?: boolean;
     hasHiddenDiscoveredContent?: boolean;
+    showDiscoveredContent?: boolean;
+    isDiscovering?: boolean;
+    showDiscoveryLoader?: boolean;
   } = {}
 ): ReaderTab {
   const showSharedSessionHint = signal(
@@ -130,11 +133,14 @@ function createMockTab(
       hasHiddenDiscoveredContent: signal(
         overrides.hasHiddenDiscoveredContent ?? false
       ),
+      showDiscoveredContent: signal(overrides.showDiscoveredContent ?? true),
       userDismissedHiddenContentWarning: signal(false),
       showSharedSessionHint,
       dismissSharedSessionHint: () => {
         showSharedSessionHint.value = false;
       },
+      isDiscovering: signal(overrides.isDiscovering ?? false),
+      showDiscoveryLoader: signal(overrides.showDiscoveryLoader ?? false),
       selectedVerses: signal(
         (overrides.selectedVerses ?? []).map((verse) => ({
           verse: { number: verse },
@@ -624,6 +630,125 @@ describe("DiscoverContentPanel", () => {
       ).dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     expect(state.annotations.createNewAnnotation).toHaveBeenCalledTimes(1);
+  });
+
+  it("in the full panel, waits for discovery to finish before offering to create a note", () => {
+    const tab = createMockTab({ isDiscovering: true });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={createMockState({ annotationsForChapter: [] })}
+        />,
+        container
+      );
+    });
+
+    expect(container.textContent).not.toContain(
+      "You don't have any notes for this chapter."
+    );
+    expect(container.textContent).not.toContain(
+      "Pick a filter above to see more from this chapter."
+    );
+    expect(container.querySelector(".sb-dcp-discovery-loader")).toBeNull();
+
+    act(() => {
+      (tab.readingState.isDiscovering as Signal<boolean>).value = false;
+    });
+
+    expect(container.textContent).toContain(
+      "You don't have any notes for this chapter."
+    );
+  });
+
+  it("in the full panel, shows a loader after the results that have arrived while discovery continues", () => {
+    const tab = createMockTab({
+      discoveredCrossReferences: RESULTS_FIXTURE,
+      isDiscovering: true,
+      showDiscoveryLoader: true,
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={createMockState({ annotationsForChapter: [] })}
+        />,
+        container
+      );
+    });
+
+    const loader = container.querySelector(".sb-dcp-discovery-loader");
+    expect(
+      loader?.querySelector('[role="status"]')?.getAttribute("aria-label")
+    ).toBe("Loading…");
+    const crossReference = Array.from(container.querySelectorAll("*")).find(
+      (el) => el.textContent === "Exodus 5:3"
+    );
+    expect(
+      crossReference!.compareDocumentPosition(loader!) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    act(() => {
+      (tab.readingState.isDiscovering as Signal<boolean>).value = false;
+      (tab.readingState.showDiscoveryLoader as Signal<boolean>).value = false;
+    });
+
+    expect(container.querySelector(".sb-dcp-discovery-loader")).toBeNull();
+    expect(container.textContent).toContain("Exodus 5:3");
+  });
+
+  it("leaves the discovery loader out of the compact panel", () => {
+    const tab = createMockTab({
+      discoveredCrossReferences: RESULTS_FIXTURE,
+      isDiscovering: true,
+      showDiscoveryLoader: true,
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="compact"
+          tab={tab}
+          state={createMockState({ annotationsForChapter: [] })}
+        />,
+        container
+      );
+    });
+
+    expect(container.textContent).toContain("Exodus 5:3");
+    expect(container.querySelector(".sb-dcp-discovery-loader")).toBeNull();
+  });
+
+  it("with discovered content turned off, offers to create a note without waiting for discovery", () => {
+    const tab = createMockTab({
+      showDiscoveredContent: false,
+      isDiscovering: true,
+      showDiscoveryLoader: true,
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={createMockState({ annotationsForChapter: [] })}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-dcp-discovery-loader")).toBeNull();
+    expect(container.textContent).toContain(
+      "You don't have any notes for this chapter."
+    );
   });
 
   it("only shows filter chips for content that is actually available", () => {
@@ -1377,6 +1502,80 @@ describe("DiscoverContentPanel", () => {
         ).toBe(true);
       } finally {
         rafSpy.mockRestore();
+      }
+    });
+
+    it("switches to Notes only in the panel whose tab shows the targeted chapter", () => {
+      const genesisTab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      const exodusTab = createMockTab({
+        discoveredCrossReferences: RESULTS_FIXTURE,
+      });
+      exodusTab.readingState.bookId.value = "EXO";
+      const state = createMockState({
+        tab: genesisTab,
+        annotationsForChapter: [
+          createAnnotation({
+            id: "verse-7",
+            verseNumber: 7,
+          } as Partial<Annotation>),
+        ],
+      });
+      const exodusContainer = document.createElement("div");
+      document.body.appendChild(exodusContainer);
+
+      try {
+        act(() => {
+          render(
+            <DiscoverContentPanel
+              variant="compact"
+              tab={genesisTab}
+              state={state}
+            />,
+            container
+          );
+          render(
+            <DiscoverContentPanel
+              variant="compact"
+              tab={exodusTab}
+              state={state}
+            />,
+            exodusContainer
+          );
+        });
+
+        const getChip = (root: HTMLElement, label: string) =>
+          Array.from(root.querySelectorAll(".sb-dcp-chip")).find(
+            (el) => el.textContent === label
+          ) as HTMLButtonElement;
+
+        act(() => {
+          getChip(container, "Cross Refs").dispatchEvent(
+            new MouseEvent("click", { bubbles: true })
+          );
+          getChip(exodusContainer, "Cross Refs").dispatchEvent(
+            new MouseEvent("click", { bubbles: true })
+          );
+        });
+
+        act(() => {
+          state.discover.scrollToVerse.value = {
+            bookId: "GEN",
+            chapterNumber: 1,
+            verseNumber: 7,
+          };
+        });
+
+        expect(getChip(container, "Notes").getAttribute("aria-selected")).toBe(
+          "true"
+        );
+        expect(
+          getChip(exodusContainer, "Cross Refs").getAttribute("aria-selected")
+        ).toBe("true");
+      } finally {
+        render(null, exodusContainer);
+        exodusContainer.remove();
       }
     });
 

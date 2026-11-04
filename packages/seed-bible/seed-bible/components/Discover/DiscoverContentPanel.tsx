@@ -23,6 +23,7 @@ import {
   friendPlaylistGroups,
 } from "./FriendPlaylistsSection";
 import { MaterialIcon } from "../icons";
+import { Spinner } from "../Spinner/Spinner";
 import {
   ContextMenuWithButton,
   ContextMenuItem,
@@ -594,10 +595,15 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   useSignalEffect(() => {
     const target = state.discover.scrollToVerse.value;
     if (
-      target &&
-      activeFilter.peek() !== "all" &&
-      activeFilter.peek() !== "annotations"
+      !target ||
+      !tab ||
+      target.bookId !== tab.readingState.bookId.value ||
+      target.chapterNumber !== tab.readingState.chapterNumber.value
     ) {
+      return;
+    }
+    const current = activeFilter.peek();
+    if (current !== "all" && current !== "annotations") {
       activeFilter.value = "annotations";
     }
   });
@@ -719,11 +725,21 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     hasContent ||
     typesWithResults.some((definition) => !definition.hiddenByDefault);
 
+  // Results stream in after the chapter opens, so until discovery is done
+  // "nothing yet" can't be told apart from "nothing at all". With discovered
+  // content turned off (a shared session) there's nothing to wait for, since
+  // whatever arrives stays hidden.
+  const isDiscovering =
+    variant === "full" &&
+    tab.readingState.showDiscoveredContent.value &&
+    tab.readingState.isDiscovering.value;
+
   // The full panel never renders empty: when the chapter has nothing else to
   // show, not even behind a filter chip, the notes section's "Create a note"
   // prompt stands in as its empty state.
   const showNotesAsEmptyState =
     variant === "full" &&
+    !isDiscovering &&
     !hasOtherContentUnderAll &&
     typesWithResults.length === 0;
   const showNotes = showAnnotations || showNotesAsEmptyState;
@@ -732,7 +748,8 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     hasAnnotations ||
     showNotesAsEmptyState ||
     hasOtherContentUnderAll ||
-    showHiddenContentWarning;
+    showHiddenContentWarning ||
+    isDiscovering;
 
   const filters: {
     key: FilterKey;
@@ -894,6 +911,17 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             />
           ) : null
         )}
+
+        {f === "all" &&
+          isDiscovering &&
+          tab.readingState.showDiscoveryLoader.value && (
+            <div className="sb-dcp-discovery-loader">
+              <Spinner
+                size="1.25rem"
+                label={t("loading", { defaultValue: "Loading…" })}
+              />
+            </div>
+          )}
 
         {f === "all" && !hasVisibleUnderAll && (
           <DiscoverEmpty

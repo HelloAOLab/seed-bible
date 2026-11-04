@@ -198,6 +198,40 @@ describe("DiscoverPane", () => {
     expect(container.querySelector(".sb-dcp-create-btn")).toBeNull();
   });
 
+  it("shows the full Discover panel, which can be closed, when the create_annotation view has no draft", () => {
+    const closePane = vi.fn();
+    const { playlists } = createMockPlaylists({ view: "create_annotation" });
+    const { annotations } = createMockAnnotations({ editingAnnotation: null });
+    const state = createMockState({ closePane });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={createMockTabs()}
+          playlists={playlists}
+          annotations={annotations}
+          modals={createModalManager()}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".stub-create-annotation-form")).toBeNull();
+    expect(
+      container.querySelector(".sb-discover-content-panel--full")
+    ).not.toBeNull();
+
+    act(() => {
+      container
+        .querySelector(".sb-discover-panel-header-close")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(closePane).toHaveBeenCalledWith(DISCOVER_PANE_ID, "user");
+  });
+
   it("renders PlayPlaylistView when view is play_playlist", () => {
     const playlist = createPlaylist();
     const { playlists } = createMockPlaylists({

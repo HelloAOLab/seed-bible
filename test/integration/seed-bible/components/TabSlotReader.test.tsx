@@ -171,6 +171,8 @@ function createFixture(): ReaderFixture {
     discoveredContent: signal([]),
     discoveredCrossReferences,
     discoveredStudyNotes: signal([]),
+    isDiscovering: signal(false),
+    showDiscoveryLoader: signal(false),
     discoverContentPanelInline: signal(true),
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),

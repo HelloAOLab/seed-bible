@@ -53,7 +53,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
     );
   }
 
-  if (view === "create_annotation") {
+  if (view === "create_annotation" && annotations.editingAnnotation.value) {
     return (
       <CreateAnnotationForm
         annotations={annotations}

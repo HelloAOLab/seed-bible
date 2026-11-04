@@ -7,6 +7,7 @@ import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayMan
 import { PROFILE_PANE_ID } from "@packages/seed-bible/seed-bible/components/ProfilePane/ProfilePane";
 import { PLAYLIST_HISTORY_PANE_ID } from "@packages/seed-bible/seed-bible/components/PlaylistHistoryPane/PlaylistHistoryPane";
 import { EXTENSIONS_PANE_ID } from "@packages/seed-bible/seed-bible/components/ExtensionsPage/ExtensionsPage";
+import { DISCOVER_PANE_ID } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverPane";
 import {
   PlaylistPlayHistorySchema,
   PlaylistSchema,
@@ -4108,6 +4109,71 @@ describe("continuing a playlist from Profile", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(state.isProfileOpen.value).toBe(false);
+  });
+});
+
+describe("closing the Discover pane while a playlist plays", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  async function playInDiscoverPane() {
+    const state = await createState();
+    state.playlists.startPlaying(htmlPlaylist());
+    await waitFor(
+      () =>
+        state.playlists.actualView.value === "play_playlist" &&
+        state.panes.panes.value.some((pane) => pane.id === DISCOVER_PANE_ID)
+    );
+    return state;
+  }
+
+  it("stops playback when the user closes the pane from its close button", async () => {
+    const state = await playInDiscoverPane();
+    const pane = state.panes.panes.value.find(
+      (item) => item.id === DISCOVER_PANE_ID
+    );
+    const Provider = await realI18nProvider();
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: pane?.component() ?? null,
+        }),
+        container
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector(".sb-discover-panel-header-close")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => state.playlists.playing.value === null);
+    expect(
+      state.panes.panes.value.some((item) => item.id === DISCOVER_PANE_ID)
+    ).toBe(false);
+  });
+
+  it("keeps playing when the pane is closed by the app rather than the user", async () => {
+    const state = await playInDiscoverPane();
+
+    state.panes.closePane(DISCOVER_PANE_ID);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(state.playlists.playing.value).not.toBeNull();
   });
 });
 
