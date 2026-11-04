@@ -14,35 +14,7 @@ import {
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { TranslationWithLanguage } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
-import { signal } from "@preact/signals";
-
-/**
- * Minimal LoginManager stand-in. `updateProfile` optimistically updates the
- * `profile` signal the same way the real manager does, which is what
- * SettingsManager's profile-language effect and profile/localConfig fallback
- * reads subscribe to.
- */
-function makeFakeLogin(initialProfile: UserProfile | null): LoginManager {
-  const userId = signal<string | null>(initialProfile ? "user-1" : null);
-  const profile = signal<UserProfile | null>(initialProfile);
-  const localConfig = signal<Record<string, unknown>>({});
-  const isLocalConfigHydrated = signal(false);
-  return {
-    userId,
-    profile,
-    cachedProfile: signal<UserProfile | null>(null),
-    isLocalConfigHydrated,
-    hydrateLocalConfig: () => {
-      isLocalConfigHydrated.value = true;
-    },
-    localConfig,
-    profilePromise: Promise.resolve(initialProfile),
-    updateProfile: (newData: Partial<UserProfile>) => {
-      if (!profile.value) return;
-      profile.value = { ...profile.value, ...newData };
-    },
-  } as unknown as LoginManager;
-}
+import { makeFakeLogin } from "./testUtils/fakeLogin";
 
 function profileWithLang(lang: string): UserProfile {
   return { name: "Test", config: { lang } } as unknown as UserProfile;
@@ -394,6 +366,8 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.discoveredContent.showContent).toBe(false);
     expect(login.localConfig.value.discoveredContent).toEqual({
       showContent: false,
+      showInSharedSessions: false,
+      sharedSessionHintSeen: false,
     });
   });
 
@@ -409,6 +383,22 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.discoveredContent.showContent).toBe(false);
     expect((login.profile.value as any)?.config?.discoveredContent).toEqual({
       showContent: false,
+      showInSharedSessions: false,
+      sharedSessionHintSeen: false,
+    });
+  });
+
+  it("reads discoveredContent saved before the shared-session fields existed with them off", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: { discoveredContent: { showContent: false } },
+    } as unknown as UserProfile);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    expect(settings.settings.value.discoveredContent).toEqual({
+      showContent: false,
+      showInSharedSessions: false,
+      sharedSessionHintSeen: false,
     });
   });
 

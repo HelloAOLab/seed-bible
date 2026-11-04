@@ -91,6 +91,16 @@ export interface ScriptureElementsBehavior {
 
 export interface DiscoveredContentBehavior {
   showContent: boolean;
+  /**
+   * Whether discovered content shows in shared sessions too. It is personal —
+   * only the reader sees it — so sessions hide it unless this is on.
+   */
+  showInSharedSessions: boolean;
+  /**
+   * Whether the reader has acknowledged the hint that only they can see
+   * discovered content in a shared session.
+   */
+  sharedSessionHintSeen: boolean;
 }
 
 export const VERSE_LINE_HEIGHT_OPTIONS: number[] = [1.5, 1.7, 2, 2.5];
@@ -207,6 +217,8 @@ const DEFAULT_SCRIPTURE_ELEMENTS: ScriptureElementsBehavior = {
 
 const DEFAULT_DISCOVERED_CONTENT: DiscoveredContentBehavior = {
   showContent: true,
+  showInSharedSessions: false,
+  sharedSessionHintSeen: false,
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -407,6 +419,14 @@ function parseDiscoveredContent(
       typeof obj.showContent === "boolean"
         ? obj.showContent
         : fallback.showContent,
+    showInSharedSessions:
+      typeof obj.showInSharedSessions === "boolean"
+        ? obj.showInSharedSessions
+        : fallback.showInSharedSessions,
+    sharedSessionHintSeen:
+      typeof obj.sharedSessionHintSeen === "boolean"
+        ? obj.sharedSessionHintSeen
+        : fallback.sharedSessionHintSeen,
   };
 }
 
