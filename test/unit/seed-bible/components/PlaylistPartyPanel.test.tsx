@@ -312,7 +312,7 @@ describe("PlaylistPartyPanel", () => {
     expect(playing.currentIndex.value).toBe(0);
   });
 
-  it("folds to one line with Chat and I'm ready on a phone", () => {
+  it("is the same card without the list of readers where there's little room", () => {
     const onOpenChat = vi.fn();
     const sara = user("c-sara", "Sara", true);
     const { setPlaylistReady } = renderPanel(
@@ -325,8 +325,11 @@ describe("PlaylistPartyPanel", () => {
     );
 
     // The host's own readiness doesn't count: the host moves everyone on.
-    expect(container.querySelector(".sb-party-compact-line")?.textContent).toBe(
-      "Mazen moves the group on when everyone's ready0 of 2 ready"
+    expect(container.querySelector(".sb-party-ready-head")?.textContent).toBe(
+      "Ready for the next step0 of 2"
+    );
+    expect(container.querySelector(".sb-party-foot")?.textContent).toBe(
+      "Following Mazen · step 1 of 3"
     );
     expect(container.querySelector(".sb-party-people")).toBeNull();
     act(() => {
@@ -339,5 +342,28 @@ describe("PlaylistPartyPanel", () => {
         .click();
     });
     expect(setPlaylistReady).toHaveBeenCalledWith(0);
+  });
+
+  it("gives a leader the same controls where there's little room, back as well as on", async () => {
+    const mazen = user("c-mazen", "Mazen", true);
+    const { playing } = renderPanel(
+      { users: [mazen, user("c-sara", "Sara")], hostUserId: "user-c-mazen" },
+      { compact: true, isLeader: true }
+    );
+    await act(async () => {
+      await playing.jumpTo(1);
+    });
+
+    const back = container.querySelector<HTMLButtonElement>(".sb-party-back")!;
+    expect(back.disabled).toBe(false);
+    await act(async () => {
+      back.click();
+      await Promise.resolve();
+    });
+    expect(playing.currentIndex.value).toBe(0);
+    expect(container.querySelector(".sb-party-move")).not.toBeNull();
+    expect(container.querySelector(".sb-party-foot")?.textContent).toBe(
+      "Everyone in the session follows your steps"
+    );
   });
 });

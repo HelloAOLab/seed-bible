@@ -13,15 +13,6 @@
   padding: 10px 12px;
 }
 
-.sb-party-compact-line {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0;
-  font-size: 0.8125rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
-
 .sb-party-foot {
   margin: 0;
   font-size: 0.75rem;

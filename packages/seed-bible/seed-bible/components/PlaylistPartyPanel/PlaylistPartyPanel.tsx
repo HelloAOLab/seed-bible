@@ -144,6 +144,62 @@ export function PlaylistPartyPanel(props: {
     </button>
   ) : null;
 
+  const readyHead = (
+    <div className="sb-party-ready-head">
+      <span>
+        {t("party-ready-heading", {
+          defaultValue: "Ready for the next step",
+        })}
+      </span>
+      <span className="sb-party-ready-count">
+        {t("party-ready-count", {
+          defaultValue: "{{ready}} of {{total}}",
+          ready: readyCount,
+          total: readers.length,
+        })}
+      </span>
+    </div>
+  );
+  const actions = (
+    <div className="sb-party-actions">
+      {chatButton}
+      {isLeader ? (
+        <>
+          <button
+            type="button"
+            className="sb-party-back"
+            disabled={!playing.hasPrevious.value}
+            aria-label={t("party-move-back", {
+              defaultValue: "Move everyone back a step",
+            })}
+            onClick={() => void playing.previous()}
+          >
+            <MaterialIcon>arrow_back</MaterialIcon>
+          </button>
+          {moveButton}
+        </>
+      ) : (
+        readyButton
+      )}
+    </div>
+  );
+  const foot = (
+    <p className="sb-party-foot">
+      {isLeader
+        ? t("party-foot-leading", {
+            defaultValue: "Everyone in the session follows your steps",
+          })
+        : t("party-foot-following", {
+            defaultValue: "Following {{host}} · step {{step}} of {{total}}",
+            host: hostName,
+            step: step + 1,
+            total,
+          })}
+    </p>
+  );
+
+  // Where there's little room (a phone's sheet, a step's footer) the panel
+  // is the same card without the list of who's ready.
   if (compact) {
     return (
       <section
@@ -151,30 +207,11 @@ export function PlaylistPartyPanel(props: {
         aria-label={t("party-live", { defaultValue: "Live" })}
         dir="auto"
       >
-        <p className="sb-party-compact-line">
-          <span>
-            {isLeader
-              ? t("party-compact-leading", {
-                  defaultValue: "Everyone follows you",
-                })
-              : t("party-compact-following", {
-                  defaultValue:
-                    "{{host}} moves the group on when everyone's ready",
-                  host: hostName,
-                })}
-          </span>
-          <span className="sb-party-ready-count">
-            {t("party-ready-count-of", {
-              defaultValue: "{{ready}} of {{total}} ready",
-              ready: readyCount,
-              total: readers.length,
-            })}
-          </span>
-        </p>
-        <div className="sb-party-actions">
-          {chatButton}
-          {isLeader ? moveButton : readyButton}
+        <div className="sb-party-ready">
+          {readyHead}
+          {actions}
         </div>
+        {foot}
       </section>
     );
   }
@@ -186,20 +223,7 @@ export function PlaylistPartyPanel(props: {
       dir="auto"
     >
       <div className="sb-party-ready">
-        <div className="sb-party-ready-head">
-          <span>
-            {t("party-ready-heading", {
-              defaultValue: "Ready for the next step",
-            })}
-          </span>
-          <span className="sb-party-ready-count">
-            {t("party-ready-count", {
-              defaultValue: "{{ready}} of {{total}}",
-              ready: readyCount,
-              total: readers.length,
-            })}
-          </span>
-        </div>
+        {readyHead}
         <ul className="sb-party-people">
           {readers.map((user) => {
             const ready = isReady(user);
@@ -230,26 +254,7 @@ export function PlaylistPartyPanel(props: {
             );
           })}
         </ul>
-        <div className="sb-party-actions">
-          {isLeader ? (
-            <>
-              <button
-                type="button"
-                className="sb-party-back"
-                disabled={!playing.hasPrevious.value}
-                aria-label={t("party-move-back", {
-                  defaultValue: "Move everyone back a step",
-                })}
-                onClick={() => void playing.previous()}
-              >
-                <MaterialIcon>arrow_back</MaterialIcon>
-              </button>
-              {moveButton}
-            </>
-          ) : (
-            readyButton
-          )}
-        </div>
+        {actions}
       </div>
 
       {currentItem?.type === "question" ? (
@@ -292,18 +297,7 @@ export function PlaylistPartyPanel(props: {
         </div>
       ) : null}
 
-      <p className="sb-party-foot">
-        {isLeader
-          ? t("party-foot-leading", {
-              defaultValue: "Everyone in the session follows your steps",
-            })
-          : t("party-foot-following", {
-              defaultValue: "Following {{host}} · step {{step}} of {{total}}",
-              host: hostName,
-              step: step + 1,
-              total,
-            })}
-      </p>
+      {foot}
     </section>
   );
 }
