@@ -106,6 +106,7 @@ import {
 } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
+  type ApiResponseCache,
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
   type TranslationBook,
@@ -771,6 +772,11 @@ export interface CreateSeedBibleStateOptions {
    */
   translationsCache?: TranslationsCache;
   /**
+   * Process-wide cache of chapter/book-catalog requests, SSR host only —
+   * see `standalone/ssrApiResponseCache.ts`.
+   */
+  apiResponseCache?: ApiResponseCache;
+  /**
    * A `FreeUseBibleAPI.snapshotResponseCache()` snapshot to seed the new
    * `FreeUseBibleAPI` instance with, so it doesn't refetch data another
    * instance already fetched. The client uses this to seed its own API cache
@@ -831,7 +837,8 @@ export function createSeedBibleState(
   const branding = options.config?.branding;
   const brandingThemes = branding?.whiteLabelThemes;
   const api = new FreeUseBibleAPI(
-    getDefaultAPIEndpoint(navigation.currentUrl.value)
+    getDefaultAPIEndpoint(navigation.currentUrl.value),
+    options.apiResponseCache
   );
   if (options.apiResponseSnapshot) {
     api.seedResponseCache(options.apiResponseSnapshot);
@@ -1408,8 +1415,8 @@ export function createSeedBibleState(
   // The flip side is that this effect can't see a move *within* a chapter, so any
   // path that jumps to a verse and must reveal the reader has to call
   // `closeFullscreenPanes` itself rather than rely on this: verse reference links
-  // (`handleOpenVerseReference` below), the floating panels' jump actions, and
-  // sidebar search results (`SidebarSearch`) all do. Selecting a tab
+  // (`handleOpenVerseReference` below) and the floating panels' jump actions
+  // both do. Selecting a tab
   // (`handleSelectTab`) closes them too, which covers most of the remaining
   // paths incidentally.
   let lastReadingLocation: string | null = null;
@@ -1479,6 +1486,23 @@ export function createSeedBibleState(
     return true;
   });
 
+  // Dialogs that cover the reader. Pop-ups opened through `modals` are only
+  // part of the list: sign-in, Terms, Privacy, Code of Conduct, and the
+  // onboarding cards are drawn on their own in `app/main.tsx`. A new dialog
+  // that does not go through `modals` has to be added here, or the offer card
+  // can show on top of it. `onboarding.step` starts at "done" and only leaves
+  // it while an onboarding card is actually up, so a normal first visit is
+  // not held back. `?tutorial=` links use `readerVisible` alone.
+  const modalCoveringReader = computed(
+    () =>
+      modals.modals.value.length > 0 ||
+      login.isLoginOpen.value ||
+      termsOpen.value ||
+      privacyOpen.value ||
+      codeOfConductOpen.value ||
+      onboarding.step.value !== "done"
+  );
+
   // Client-only: SSR can't run the tour, and launching it there would put
   // the overlay in the served HTML.
   const tutorialLink = import.meta.env.SSR
@@ -1493,7 +1517,8 @@ export function createSeedBibleState(
     sidebar,
     openedViaContentLink,
     isMinimalEmbed,
-    tutorialLink
+    tutorialLink,
+    modalCoveringReader
   );
 
   if (!import.meta.env.SSR) {
@@ -1606,6 +1631,15 @@ export function createSeedBibleState(
   effect(() => {
     if (isMobileLandscape.value) {
       sidebar.isSidebarCollapsed.value = true;
+    }
+  });
+
+  // The tabs drawer only exists on phones. Still "open" once the window is
+  // wider than that, it would hold the desktop sidebar expanded and stop the
+  // collapse button working, so close it on the way out of mobile.
+  effect(() => {
+    if (!isMobile.value) {
+      sidebar.isMobileOpen.value = false;
     }
   });
 
@@ -3637,6 +3671,12 @@ export function createSeedBibleState(
     closeCodeOfConduct,
     features,
     dispose: () => {
+      // Aborts each tab's open chapter request. Without this an SSR render
+      // that hit its deadline leaves its fetch subscribed, so a hung request
+      // stays in the shared response cache for the next render to adopt.
+      for (const tab of tabs.tabs.value) {
+        tab.readingState.dispose();
+      }
       i18n.dispose();
       disposeReadingTicker();
     },
@@ -3771,6 +3811,7 @@ export function createSeedBibleState(
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
       onTakeTour={() => tutorial.acceptPrompt()}
+      onClose={() => today.close()}
     />
   );
   const renderTodayPaneTitle = () => <TodayPaneTitle />;
@@ -3782,6 +3823,9 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderTodayPaneTitle,
         component: renderTodayPane,
+        // Today's own close button (TodayCloseButton) stands in for the
+        // header's.
+        showHeader: false,
       });
     } else {
       panes.closePane(TODAY_PANE_ID); // no-op when already closed
@@ -4181,6 +4225,8 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderAboutPaneTitle,
         component: renderAboutPane,
+        // The page's own hero card names it.
+        showHeader: false,
       });
     } else {
       panes.closePane(ABOUT_PANE_ID); // no-op when already closed

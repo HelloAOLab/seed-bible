@@ -35,7 +35,7 @@ function PlayPlaylistTitle(props: { playlists: PlaylistManager }) {
     <div className="sb-discover-title-row">
       <button
         type="button"
-        className="sb-reading-plans-back"
+        className="sb-pane-header-button"
         aria-label={t("back", { defaultValue: "Back" })}
         onClick={() => playlists.goBackFromPlayingView()}
       >

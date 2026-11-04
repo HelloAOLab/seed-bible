@@ -32,7 +32,12 @@ function HostedModal(props: { manager: ModalManager; modal: ManagedModal }) {
   const overlayDismiss = useOverlayDismiss(dismiss);
 
   return (
-    <div className="sb-footnote-modal-overlay" {...overlayDismiss}>
+    <div
+      className={`sb-footnote-modal-overlay${
+        modal.mobileSheet ? " sb-footnote-modal-overlay-mobile-sheet" : ""
+      }`}
+      {...overlayDismiss}
+    >
       <div
         className="sb-footnote-modal"
         onClick={(event: MouseEvent) => {

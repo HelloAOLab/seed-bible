@@ -28,22 +28,18 @@
   "searching": "Pretraživanje...",
   "no-search-results": "Nema odgovarajućih stihova.",
   "open-chapter": "Otvoreno poglavlje",
-
   "uploading": "Prijenos...",
   "profile-name": "Naziv profila",
   "profile-name-placeholder": "npr. obitelj Craig",
-
   "description": "Opis",
   "optional": "(Neobavezno)",
   "description-placeholder": "Unesite opis svog profila...",
   "location": "Mjesto",
   "location-placeholder": "npr. Austin, Teksas",
-
   "copied": "Kopirano",
   "copy": "Kopirati",
   "save-changes": "Spremi promjene",
   "sign-out": "Odjava",
-
   "log-in": "Prijava",
   "tanakh": "Tanakh",
   "traditional": "Tradicionalno",
@@ -57,7 +53,6 @@
   "scripture-settings": "Postavke Svetog pisma",
   "scripture-elements": "Elementi Svetog pisma",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Prikaži naslove",
   "show-verse-numbers": "Prikaži brojeve stihova",
   "show-footnotes": "Prikaži fusnote",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Nema dostupnih proširenja.",
   "install": "Instalirati",
   "uninstall": "Deinstaliraj",
-
   "custom": "Običaj",
   "text-section-bookTitle": "Naslov knjige",
   "text-section-heading": "Tekst naslova",
@@ -92,7 +86,6 @@
   "show-selected-items": "Prikaži odabrane stavke",
   "show-highlight-colors": "Prikaži boje isticanja",
   "show-icon-text": "Prikaži tekst ikone",
-
   "extensions": "Proširenja",
   "display": "Prikaz",
   "theme-and-text": "Tema i tekst",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Povećajte veličinu fonta Svetog pisma",
   "change-line-spacing": "Promjena razmaka između redaka",
   "line-spacing_lineHeight": "Razmak između redaka: {{lineHeight}}",
-
   "italic": "Kurziv",
   "underline": "Naglasiti",
   "alignment_x": "Poravnanje: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Boja teksta",
   "follow_theme": "Prati temu",
   "reset-to-default": "Vrati na zadano",
-
   "id_highlight-text-color": "{{id}} boja istaknutog teksta",
   "id_highlight-background-color": "{{id}} istaknuta boja pozadine",
   "all-settings-description": "Prilagodite svaki dio teksta i svaku boju teme.",
@@ -141,7 +132,6 @@
   "old-testament_short": "Produžetak",
   "new-testament_short": "NT",
   "apocrypha": "Apokrifi",
-
   "custom-translations": "Prilagođeni prijevodi",
   "no-translation-results-found": "Nema pronađenih rezultata. Želite li proširiti pretraživanje i na djelomično potpune prijevode?",
   "show-all-translations": "Prikaži sve prijevode",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalma",
   "5-psalms": "5 Psalama",
   "remove-bookmark": "Ukloni oznaku",
-
   "chat": "Razgovor",
   "today": "Danas",
   "you": "Vas",
@@ -169,7 +158,6 @@
   "category-options": "Opcije mape",
   "rename": "Preimenovati",
   "delete": "Izbrisati",
-
   "bookmark-options": "Opcije oznaka",
   "new-folder-placeholder": "Naziv mape",
   "tasks": "Zadaci",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Mapa s tim nazivom već postoji.",
   "add-to-new": "Dodaj u novo",
   "save": "Uštedjeti",
-
   "apocrypha-info-text": "Nijedan od spisa u ovom odjeljku nikada nije smatran Svetim pismom od strane ranih židovskih ili kršćanskih zajednica. Biblija je specifična zbirka knjiga. Židovi i kršćani oduvijek su se slagali oko Starog zavjeta, koji potječe iz fiksnog skupa svetih spisa koje židovski narod naziva Tanakh, a kršćani Starim zavjetom. Sadržaj Tanaha i Starog zavjeta potpuno je isti, ali je obično drugačije raspoređen. Kršćani dodatno priznaju Novi zavjet, koji govori priču o Isusu, njegovim učenjima i spisima njegovih sljedbenika. Spisovi u nastavku bili su poznati i široko čitani u vrijeme kada je Biblija napisana, ali nikada nisu tretirani kao Sveto pismo. Dok su drevni autori ponekad citirali širok raspon tekstova, uključujući pjesnike, filozofe i druge spise, citiranje nečega nije isto što i tretiranje toga kao Svetog pisma. Ovi spisi su ovdje uključeni samo radi povijesne i književne reference.",
   "seed-bible": "Biblija sjemena",
   "take-photo": "Snimi fotografiju",
   "choose-from-gallery": "Odaberite iz galerije",
-
   "crop-your-photo": "Obrežite svoju fotografiju",
   "zoom": "Zum",
   "set-picture": "Postavi sliku",
@@ -211,10 +197,8 @@
   "read-the-bible": "Čitaj Bibliju",
   "seed-bible-description": "Pročitajte {{bookName}} {{chapterNumber}} u Bibliji sjemena",
   "social-title": "Pročitajte {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Navigacija po poglavljima",
   "tutorial.skip": "Preskočiti",
-
   "tutorial.back": "Nazad",
   "tutorial.done": "Gotovo",
   "tutorial.next": "Sljedeći",
@@ -327,11 +311,9 @@
   "study-notes": "Bilješke o učenju",
   "content": "Sadržaj",
   "untitled-playlist": "Popis za reprodukciju bez naslova",
-
   "discover-annotations-empty": "Nemate napomena",
   "discover-cross-references-empty": "Nema unakrsnih referenci za ovo poglavlje.",
   "discover-study-notes-empty": "Nema bilješki za učenje za ovo poglavlje.",
-
   "discover-select-tab": "Odaberite karticu za otkrivanje povezanog materijala.",
   "create-playlist": "Stvoriti",
   "playlist-title_placeholder": "Naslov popisa za reprodukciju",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "Popis za reprodukciju nije moguće izbrisati.",
   "collapsed-tab-shared-label": "{{title}} — dijeljena sesija, {{count}} prisutnih",
   "playlist-add-mode-label": "Vrsta stavke",
-
   "session-host-reconnected": "Ponovno povezan sa sesijom",
   "session-host-left": "Domaćin je otišao — uklonjeni ste iz sesije",
   "drag-to-reorder-playlist-item": "Povucite za promjenu redoslijeda",
   "saving": "Spremanje…",
-
   "unsaved-item-confirm-message": "Počeli ste dodavati stavku koja još nije dodana na popis za reprodukciju. Što želite učiniti?",
   "discard-and-save": "Odbaci i spremi",
   "add-and-save": "Dodaj i spremi",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "Pregled {{reading}}",
   "reading-plan-mark-reading-complete": "Označi čitanje kao završeno",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Označi {{passage}} kao pročitano",
   "reading-plan-read-nudge-title": "Lijepo štivo!",
   "reading-plan-read-nudge-toast": "Označi {{passage}} kao dovršen?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Čitajte, pretražujte i proučavajte Bibliju online. Besplatni prijevodi na mnoge jezike, s istaknutim dijelovima, bilješkama, oznakama i planovima čitanja.",
   "all": "Sve",
-
   "today-bookmarks": "OZNAKE",
   "today-search-verses": "Pretražite knjige, poglavlja, stihove...",
   "anonymous-greeting": "Dobrodošli!",
   "community": "ZAJEDNICA",
   "go-somewhere-new": "IDI NEGDJE NOVO",
-
   "open-bible": "Otvorena Biblija",
   "personal-greeting": "Dobrodošli, {{name}} !",
   "resume-reading": "NASTAVITE GDJE STE STALI",
   "resume-reading-loading": "Učitavanje vaše povijesti čitanja…",
   "selected-year": "Godina: {{year}}",
-
   "theme-light": "Svjetlo",
   "theme-dark": "Tamno",
   "installed-extensions": "Instalirano",
@@ -543,7 +519,6 @@
   "extension-state-installed": "Instalirano",
   "extension-state-downloaded": "Preuzeto",
   "extension-state-pending": "Instaliranje…",
-
   "tutorial.stepProgress": "Korak {{current}} od {{total}}",
   "tutorial.offlineDownloadTitle": "Dodirnite da biste ga sačuvali na uređaju",
   "tutorial.offlineDownloadBody": "Svaki prijevod s ovom ikonom može se spremiti za čitanje izvan mreže.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "U ovom izborniku rasporeda odaberite koliko odlomaka želite čitati jedan pored drugog.",
   "tutorial.addTabTitle": "Otvorite više odlomaka",
   "tutorial.addTabBody": "Dodajte novu karticu za čitanje nekoliko knjiga ili prijevoda jedan pored drugog.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % dovršeno - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % dovršeno",
   "playlist-history-continue": "Nastaviti",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "{{count}} bilješki za ovo poglavlje",
   "create-folder": "Izradi mapu",
   "edit-bookmark": "Uredi oznaku",
-
   "greeting-afternoon": "Dobar dan!",
   "greeting-afternoon-named": "Dobar dan, {{name}} !",
   "greeting-evening": "Dobra večer!",
@@ -652,32 +625,24 @@
   "ask-ai": "Pitajte umjetnu inteligenciju",
   "unread-mention": "Nepročitano spominjanje",
   "unread-messages": "Nepročitane poruke: {{count}}",
-
   "scripture-width": "Širina Svetog pisma",
   "decrease-scripture-width": "Smanji širinu Svetog pisma",
   "increase-scripture-width": "Povećajte širinu Svetog pisma",
   "annotations": "Anotacije",
   "discover-content-panel": "Otkrijte sadržaj",
   "discover-book-title": "Otkrijte {{book}}",
-
   "about-title": "O Bibliji sjemena",
   "about-meta-description": "Seed Bible je besplatna biblijska aplikacija napravljena za zajedničko čitanje Svetog pisma s vašom obitelji, prijateljima i zajednicom - besplatna zauvijek, bez oglasa ili naplate.",
-
   "about-action-open-passage": "Otvori prolaz",
   "about-action-donate": "Donirajte",
   "about-action-discord": "Pridruži se Discordu",
   "recent-uploads": "Nedavni prijenosi",
-
   "customization-not-found": "Ova prilagodba nije pronađena.",
   "customization-name": "Ime",
   "customization-primaryColor": "Primarni",
-
   "customization-secondaryColor": "Sekundarno",
-
   "customization-tertiaryColor": "Tercijarni",
-
   "customization-fonts": "Fontovi",
-
   "custom-font-option": "Običaj…",
   "custom-font-name-placeholder": "Naziv Google fonta",
   "delete-customization": "Izbrisati",
@@ -690,10 +655,8 @@
   "extension-availability-available": "Dostupno",
   "extension-availability-auto-installed": "Automatski instalirano",
   "extension-availability-hidden": "Skriven",
-
   "variants": "Teme",
   "add-variant": "Dodaj temu",
-
   "base-theme-description": "Promjene koje ova tema unaprijed postavlja vraćaju se na sve što niste prilagodili. Vaše vlastite izmjene se čuvaju.",
   "reset-to-base-theme": "Vrati na osnovnu temu",
   "low-contrast-warning": "{{label}} : kontrast je samo {{ratio}} :1 — cilj je barem {{minRatio}} :1 kako bi tekst ostao čitljiv.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "Ovdje još nema spremljenih stavki.",
   "save-options": "Spremi opcije",
   "saves": "Sprema",
-
   "hide-saves": "Sakrij spremljene datoteke",
   "show-saves": "Prikaži spremljene datoteke",
   "save-verses": "Uštedjeti",
   "new-save-folder": "Nova mapa",
   "edit-save": "Uredi spremanje",
   "remove-save-from-all-folders": "Ukloni iz svih mapa",
-
   "color-hue": "Nijansa",
   "color-saturation": "Zasićenost i svjetlina",
   "hex-color": "Heksadecimalna boja",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "Uređivač formatiranja nije se mogao učitati. Ova bilješka ima formatiranje koje bi se izgubilo, pa se ne može uređivati ​​dok se ponovno ne povežete.",
   "annotation-text": "Tekst napomene",
   "notes-for-verse": "Bilješke za stih {{verse}}",
-
   "configure-extension-defaults": "Konfiguriraj zadane nadjačavanja",
-
   "extension-settings-defaults-title": "{{name}} zadana poništavanja",
   "no-extension-settings": "Ovo proširenje nema konfigurirajućih postavki.",
   "extension-settings-save-failed": "Nije moguće spremiti vaše postavke.",
@@ -872,7 +831,6 @@
   "setting-no-default": "Nema zadanih postavki",
   "override-setting": "Nadjačaj {{name}}",
   "override-setting-label": "Nadjačaj",
-
   "discover-choose-filter-hint": "Odaberite filter iznad da biste vidjeli više iz ovog poglavlja.",
   "take-a-tour": "Krenite na obilazak",
   "share-reading-plan": "Podijeli plan",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "Moja oznaka {{number}}",
   "bookmark-move-hint": "Dodirnite oznaku da biste je premjestili u ovo poglavlje.",
   "move-bookmark-here": "Premjesti {{name}} ovdje",
-
   "play": "Igrati",
   "pause": "Pauza",
   "audio-playback-position": "Položaj reprodukcije",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "Stih {{verse}}",
   "tab-playing-audio": "Reprodukcija zvuka",
   "collapsed-tab-playing-label": "{{label}} — reprodukcija zvuka",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}}",
   "customization-theme-count_one": "{{count}} tema",
@@ -1104,7 +1060,6 @@
   "about-community-body": "Vjera se treba živjeti zajedno. Seed Bible je napravljena za čitanje Svetog pisma s vašom obitelji, najbližim prijateljima i vašom kućnom crkvom.",
   "discovered-content": "Otkriveni sadržaj",
   "show-discovered-content": "Prikaži otkriveni sadržaj",
-
   "extension-availability-default": "Zadano ( {{availability}} )",
   "customization-extensions-default": "Zadano za ostala proširenja",
   "customization-extensions-default-hint": "Primjenjuje se na svako proširenje koje niste postavili u nastavku, uključujući i nova koja su dodana kasnije",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "Natrag na popis za reprodukciju",
   "playlist-scripture-note-aria": "Napomena o {{passage}}",
   "playlist-scripture-note-progress": "{{current}} od {{total}}",
-
   "unsaved-item-edit-confirm-message": "Promijenili ste stavku, ali još niste spremili te promjene. Što želite učiniti?",
   "keep-changes-and-save": "Zadrži promjene i spremi",
   "reading-plan-edit-reading": "Uredi čitanje",
@@ -1152,7 +1106,6 @@
   "branding": "Brendiranje",
   "create-custom-branding-menu-item": "Prilagođeno brendiranje",
   "your-content-empty-branding": "Prilagođeno brendiranje koje kreirate prikazat će se ovdje.",
-
   "extension-consent-from": "Od {{host}}",
   "extension-consent-source-version": "Verzija {{version}} · od {{host}}",
   "extension-consent-uploader-unnamed": "korisnik Biblije iz sjemena",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "Pogledajte koje stihove odabirete",
   "extension-permission-reading-navigate": "Otvoreni prolazi",
   "extension-permission-network": "Poveži se s {{host}}",
-
   "extension-consent-not-now": "Ne sada",
   "extension-consent-nothing-yet": "Za sada neće imati pristup vašim podacima.",
   "extension-permission-reading-history": "Pogledajte svoju povijest čitanja",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "Otkazati",
   "extension-consent-high-risk": "Osjetljiv",
   "extension-modal-ok": "U REDU",
-
   "extension-permissions-restart-note": "Promjene stupaju na snagu odmah. {{name}} se ponovno pokreće kako bi ih primijenio.",
   "extension-permissions-saved": "Spremljeno. {{name}} ponovno pokrenut s novim dozvolama.",
   "extension-permissions-failed": "To nije spremljeno. Pokušajte ponovno.",
@@ -1276,8 +1227,53 @@
   "session-settings-verse-effects-desc-hosts": "Prikaži efekte kada domaćin odabere stih.",
   "session-settings-verse-effects-desc-everyone": "Prikaži efekte kada netko odabere stih.",
   "session-settings-verse-effects-desc-none": "Efekti odabira stihova isključeni su za sve.",
-
   "account": "Račun",
   "scroll-filters-start": "Pomaknite filtere prema početku",
-  "scroll-filters-end": "Pomaknite filtere prema kraju"
+  "scroll-filters-end": "Pomaknite filtere prema kraju",
+  "download": "Preuzmi",
+  "image-details-uploaded": "Preneseno",
+  "image-details-dimensions": "Dimenzije",
+  "image-details-dimensions-value": "{{width}} × {{height}} piksela",
+  "image-details-type": "Tip",
+  "image-details-cover-of": "Naslovnica",
+  "image-details-not-a-cover": "Ne koristi se kao pokrivač",
+  "delete-customization-confirm-title": "Izbrisati prilagođeno brendiranje?",
+  "delete-customization-confirm-message": "Izbrisati prilagođeno brendiranje \" {{name}} \"? To se ne može poništiti.",
+  "delete-customization-failed": "Nije moguće izbrisati prilagođeno brendiranje.",
+  "delete-variant-confirm-title": "Izbrisati temu?",
+  "delete-variant-confirm-message": "Izbrisati temu \" {{name}} \"? To se ne može poništiti.",
+  "delete-variant-confirm-message-unnamed": "Izbrisati ovu temu? To se ne može poništiti.",
+  "delete-variant-failed": "Nije moguće izbrisati temu.",
+  "delete-highlight-confirm-title": "Izbrisati istaknuti dio?",
+  "delete-highlight-confirm-message": "Izbrisati istaknuti dio na {{reference}} ? To se ne može poništiti.",
+  "delete-highlight-failed": "Nije moguće izbrisati istaknuti dio.",
+  "delete-annotation-on-confirm-message": "Izbrisati napomenu na {{reference}} ? To se ne može poništiti.",
+  "remove-from-folder": "Ukloni iz mape",
+  "save-folders": "U {{folders}}",
+  "delete-save-confirm-title": "Izbrisati spremljeno?",
+  "delete-save-confirm-message": "Izbrisati spremanje za {{reference}} ? To se ne može poništiti.",
+  "delete-save-confirm-message-folders": "Izbrisati spremanje za {{reference}} iz {{folders}} ? To se ne može poništiti.",
+  "delete-save-failed": "Nije moguće izbrisati spremljenu datoteku.",
+  "delete-save-folder-confirm-title": "Izbrisati mapu?",
+  "delete-save-folder-confirm-message": "Izbrisati mapu \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Spremljene datoteke {{count}} koje se nalaze samo u ovoj mapi također će biti izbrisane.",
+  "delete-save-folder-confirm-deletes_one": "Spremljena datoteka koja se nalazi samo u ovoj mapi također će biti izbrisana.",
+  "delete-save-folder-confirm-deletes_other": "Spremljene datoteke {{count}} koje se nalaze samo u ovoj mapi također će biti izbrisane.",
+  "delete-save-folder-confirm-keeps": "Spremljenih datoteka {{count}} koje se nalaze i u drugim mapama ostat će tamo.",
+  "delete-save-folder-confirm-keeps_one": "Spremljena datoteka koja se također nalazi u drugoj mapi ostat će tamo.",
+  "delete-save-folder-confirm-keeps_other": "Spremljenih datoteka {{count}} koje se nalaze i u drugim mapama ostat će tamo.",
+  "cant-be-undone": "Ovo se ne može poništiti.",
+  "delete-save-folder-failed": "Nije moguće izbrisati mapu.",
+  "download-image-failed": "Nije moguće preuzeti sliku.",
+  "session-settings-verse-effects-hosts-only": "Samo domaćini",
+  "session-settings-verse-effects-everyone": "Svi",
+  "session-settings-verse-effects-none": "Ništa",
+  "loading-books": "Učitavanje knjiga…",
+  "books-load-failed": "Knjige se nisu mogle učitati. Provjerite vezu i pokušajte ponovno.",
+  "loading-translation": "Učitavanje {{name}} …",
+  "translation-load-failed": "{{name}} nije moguće učitati.",
+  "loading-translations": "Učitavanje prijevoda…",
+  "translations-load-failed": "Nije moguće učitati cijeli popis prijevoda, pa neki možda nedostaju.",
+  "verse-of-the-day": "STIH DANA",
+  "verse-of-the-day-loading": "Učitava se stih dana…"
 }

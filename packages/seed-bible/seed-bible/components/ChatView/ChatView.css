@@ -343,7 +343,7 @@ img.sb-chat-view-message-avatar {
   right: 2.875rem;
   bottom: calc(100% + 0.5rem);
   z-index: 20;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.75rem;
   background: color-mix(in srgb, var(--sb-background, #fff), transparent 1%);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
@@ -358,8 +358,7 @@ img.sb-chat-view-message-avatar {
   text-transform: uppercase;
   font-weight: 700;
   color: color-mix(in srgb, var(--sb-font-color), transparent 36%);
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  border-bottom: 1px solid var(--sb-divider-color);
 }
 
 .sb-chat-view-mention-picker-list {
@@ -519,7 +518,7 @@ img.sb-chat-view-message-avatar {
   gap: 0.5rem;
   margin: 0.75rem 0.75rem 0;
   padding: 0.625rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.75rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
 }

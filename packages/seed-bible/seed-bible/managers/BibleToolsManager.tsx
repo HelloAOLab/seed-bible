@@ -199,6 +199,11 @@ export interface BibleToolContext {
   openSidebar: () => void;
   /** Opens the search interface. */
   openSearch: () => void;
+  /**
+   * Opens search, or closes it if it's already showing, as the toolbar's
+   * Search button does. Surfaces without it fall back to `openSearch`.
+   */
+  toggleSearch?: () => void;
   /** Opens the chat / cross-references floating panel. */
   openChat?: () => void;
   /** Opens the discover panel */
@@ -942,12 +947,7 @@ function getDefaultQuickToolbarTools(
         ) {
           return false;
         }
-        return getDiscoverPanelContent(
-          c.readingState,
-          c.annotations,
-          c.readingPlans,
-          c.features
-        ).hasAny;
+        return getDiscoverPanelContent(c.readingState, c.annotations).hasAny;
       },
       onSelect: (c) => {
         c.readingState.discoverContentPanelInline.value =
@@ -1227,7 +1227,11 @@ function getDefaultToolbarTools(
       title: { key: "search", defaultValue: "Search" },
       icon: () => <MaterialIcon>search</MaterialIcon>,
       onSelect: (context) => {
-        context.openSearch();
+        if (context.toggleSearch) {
+          context.toggleSearch();
+        } else {
+          context.openSearch();
+        }
       },
     },
     {
@@ -1257,6 +1261,12 @@ function getDefaultToolbarTools(
         context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
       onSelect: (context) => {
         if (!context.readingPlans || !context.modals) {
+          return;
+        }
+        // The button toggles the pane. Only here: the Profile screen and
+        // shared-plan links open it through the same function and must never
+        // close it.
+        if (context.panesManager.closePane(READING_PLANS_PANE_ID)) {
           return;
         }
         openReadingPlansPane({
@@ -1693,6 +1703,7 @@ export function openShareModal(
 
   const modalId = modals.openModal({
     title: { key: "share-sheet-title", defaultValue: "Share" },
+    mobileSheet: true,
     content: () => (
       <ShareModal
         app={app}

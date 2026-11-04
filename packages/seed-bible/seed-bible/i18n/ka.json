@@ -28,22 +28,18 @@
   "searching": "ძიება...",
   "no-search-results": "შესატყვისი ლექსები არ არის.",
   "open-chapter": "გახსენით თავი",
-
   "uploading": "ატვირთვა...",
   "profile-name": "პროფილის სახელი",
   "profile-name-placeholder": "მაგ. კრეიგის ოჯახი",
-
   "description": "აღწერა",
   "optional": "(არასავალდებულო)",
   "description-placeholder": "შეიყვანეთ თქვენი პროფილის აღწერა...",
   "location": "მდებარეობა",
   "location-placeholder": "მაგ. ოსტინი, ტეხასი",
-
   "copied": "კოპირებულია",
   "copy": "კოპირება",
   "save-changes": "ცვლილებების შენახვა",
   "sign-out": "გასვლა",
-
   "log-in": "შესვლა",
   "tanakh": "ტანახი",
   "traditional": "ტრადიციული",
@@ -57,7 +53,6 @@
   "scripture-settings": "წმინდა წერილის პარამეტრები",
   "scripture-elements": "წმინდა წერილის ელემენტები",
   "scripture-settings-font-size-example": "ა",
-
   "show-headings": "სათაურების ჩვენება",
   "show-verse-numbers": "ლექსის ნომრების ჩვენება",
   "show-footnotes": "სქოლიოების ჩვენება",
@@ -71,7 +66,6 @@
   "no-extensions-available": "გაფართოებები მიუწვდომელია.",
   "install": "ინსტალაცია",
   "uninstall": "დეინსტალაცია",
-
   "custom": "მორგებული",
   "text-section-bookTitle": "წიგნის სათაურის ტექსტი",
   "text-section-heading": "სათაურის ტექსტი",
@@ -92,7 +86,6 @@
   "show-selected-items": "არჩეული ერთეულების ჩვენება",
   "show-highlight-colors": "გამოკვეთილი ფერების ჩვენება",
   "show-icon-text": "ხატულას ტექსტის ჩვენება",
-
   "extensions": "გაფართოებები",
   "display": "ჩვენება",
   "theme-and-text": "თემა და ტექსტი",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "გაზარდეთ წმინდა წერილის შრიფტის ზომა",
   "change-line-spacing": "ხაზგარეშე ინტერვალის შეცვლა",
   "line-spacing_lineHeight": "ხაზოვანი ინტერვალი: {{lineHeight}}",
-
   "italic": "დახრილი",
   "underline": "ხაზგასმა",
   "alignment_x": "გასწორება: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "ტექსტის ფერი",
   "follow_theme": "თემის თვალყურის დევნება",
   "reset-to-default": "ნაგულისხმევ პარამეტრებზე დაბრუნება",
-
   "id_highlight-text-color": "{{id}} ტექსტის ფერის მონიშვნა",
   "id_highlight-background-color": "{{id}} ფონის ფერის მონიშვნა",
   "all-settings-description": "დახვეწეთ ტექსტის ყველა სექცია და მოარგეთ თემის თითოეული ფერი.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "ახალი ზელანდია",
   "apocrypha": "აპოკრიფები",
-
   "custom-translations": "ინდივიდუალური თარგმანები",
   "no-translation-results-found": "შედეგები ვერ მოიძებნა. გსურთ თქვენი ძიების გაფართოება ნაწილობრივ სრული თარგმანების ჩათვლით?",
   "show-all-translations": "ყველა თარგმანის ჩვენება",
@@ -159,7 +149,6 @@
   "4-psalms": "4 ფსალმუნები",
   "5-psalms": "5 ფსალმუნი",
   "remove-bookmark": "სანიშნეს წაშლა",
-
   "chat": "ჩატი",
   "today": "დღეს",
   "you": "შენ",
@@ -169,7 +158,6 @@
   "category-options": "საქაღალდის პარამეტრები",
   "rename": "გადარქმევა",
   "delete": "წაშლა",
-
   "bookmark-options": "სანიშნეების პარამეტრები",
   "new-folder-placeholder": "საქაღალდის სახელი",
   "tasks": "დავალებები",
@@ -180,12 +168,10 @@
   "folder-name-taken": "ამ სახელის მქონე საქაღალდე უკვე არსებობს.",
   "add-to-new": "დამატება ახალში",
   "save": "შენახვა",
-
   "apocrypha-info-text": "ამ ნაწილში მოცემული არცერთი ნაწერი ადრეული ებრაული ან ქრისტიანული თემების მიერ არასდროს არ განიხილებოდა წმინდა წერილად. ბიბლია წიგნების კონკრეტული კრებულია. ებრაელები და ქრისტიანები ყოველთვის თანხმდებოდნენ ძველ აღთქმაზე, რომელიც წმინდა ნაწერების ფიქსირებული ნაკრებიდან მომდინარეობს, რომელსაც ებრაელები თანახს უწოდებდნენ, ქრისტიანები კი - ძველ აღთქმას. თანახისა და ძველი აღთქმის შინაარსი ზუსტად იგივეა, მაგრამ, როგორც წესი, სხვადასხვაგვარად არის განლაგებული. ქრისტიანები ასევე აღიარებენ ახალ აღთქმას, რომელიც მოგვითხრობს იესოს, მისი სწავლებებისა და მისი მიმდევრების ნაწერების შესახებ. ქვემოთ მოცემული ნაწერები ცნობილი და ფართოდ წაკითხული იყო ბიბლიის დაწერის დროს, მაგრამ ისინი არასდროს განიხილებოდა წმინდა წერილად. მიუხედავად იმისა, რომ ძველი ავტორები ზოგჯერ ციტირებდნენ ტექსტების ფართო სპექტრს, მათ შორის პოეტებს, ფილოსოფოსებს და სხვა ნაწერებს, რაღაცის ციტირება არ ნიშნავს მის წმინდა წერილად მიჩნევას. ეს ნაწერები აქ მხოლოდ ისტორიული და ლიტერატურული მითითებისთვისაა შეტანილი.",
   "seed-bible": "თესლის ბიბლია",
   "take-photo": "გადაიღე ფოტო",
   "choose-from-gallery": "გალერეიდან არჩევა",
-
   "crop-your-photo": "ფოტოს ჩამოჭრა",
   "zoom": "მასშტაბირება",
   "set-picture": "სურათის დაყენება",
@@ -211,10 +197,8 @@
   "read-the-bible": "წაიკითხეთ ბიბლია",
   "seed-bible-description": "წაიკითხეთ {{bookName}} {{chapterNumber}} თესლის ბიბლიაში",
   "social-title": "წაიკითხეთ {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "თავის ნავიგაცია",
   "tutorial.skip": "გამოტოვება",
-
   "tutorial.back": "უკან",
   "tutorial.done": "დასრულებულია",
   "tutorial.next": "შემდეგი",
@@ -327,11 +311,9 @@
   "study-notes": "კვლევის ჩანაწერები",
   "content": "კონტენტი",
   "untitled-playlist": "უსათაურო დასაკრავი სია",
-
   "discover-annotations-empty": "ანოტაციები არ გაქვთ",
   "discover-cross-references-empty": "ამ თავისთვის ჯვარედინი მითითებები არ არის.",
   "discover-study-notes-empty": "ამ თავისთვის სასწავლო ჩანაწერები არ არის.",
-
   "discover-select-tab": "დაკავშირებული მასალის აღმოსაჩენად აირჩიეთ ჩანართი.",
   "create-playlist": "შექმნა",
   "playlist-title_placeholder": "დასაკრავი სიის სათაური",
@@ -380,12 +362,10 @@
   "delete-playlist-failed": "დასაკრავი სიის წაშლა ვერ მოხერხდა.",
   "collapsed-tab-shared-label": "{{title}} — გაზიარებული სესია, {{count}} აწმყო",
   "playlist-add-mode-label": "ნივთის ტიპი",
-
   "session-host-reconnected": "სესიასთან ხელახლა დაკავშირება",
   "session-host-left": "მასპინძელი წავიდა — თქვენ სესიიდან წაგშალეს",
   "drag-to-reorder-playlist-item": "გადაათრიეთ თანმიმდევრობის შესაცვლელად",
   "saving": "ინახება…",
-
   "unsaved-item-confirm-message": "თქვენ დაიწყეთ ისეთი ერთეულის დამატება, რომელიც ჯერ არ დამატებულა პლეილისტში. რა გსურთ გააკეთოთ?",
   "discard-and-save": "გაუქმება და შენახვა",
   "add-and-save": "დამატება და შენახვა",
@@ -513,7 +493,6 @@
   "reading-plan-preview-reading": "გადახედვა {{reading}}",
   "reading-plan-mark-reading-complete": "წაკითხვის დასრულებულად მონიშვნა",
   "reading-plan-link-video": "ვიდეო",
-
   "reading-plan-mark-passage-complete": "მონიშნეთ {{passage}} , როგორც წაკითხული",
   "reading-plan-read-nudge-title": "სასიამოვნო საკითხავია!",
   "reading-plan-read-nudge-toast": "{{passage}} დასრულებულად მონიშნოთ?",
@@ -521,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "წაიკითხეთ, მოძებნეთ და შეისწავლეთ ბიბლია ონლაინ. უფასო თარგმანები მრავალ ენაზე, მნიშვნელოვანი მომენტებით, შენიშვნებით, სანიშნეებითა და საკითხავი გეგმებით.",
   "all": "ყველა",
-
   "today-bookmarks": "სანიშნეები",
   "today-search-verses": "წიგნების, თავების, ლექსების ძიება....",
   "anonymous-greeting": "კეთილი იყოს თქვენი მობრძანება!",
   "community": "საზოგადოება",
   "go-somewhere-new": "წადი სადმე ახალ ადგილას",
-
   "open-bible": "ღია ბიბლია",
   "personal-greeting": "კეთილი იყოს თქვენი მობრძანება, {{name}} !",
   "resume-reading": "გააგრძელეთ იქიდან, საიდანაც წახვედით",
   "resume-reading-loading": "თქვენი კითხვის ისტორიის ჩატვირთვა…",
   "selected-year": "წელი: {{year}}",
-
   "theme-light": "სინათლე",
   "theme-dark": "მუქი",
   "installed-extensions": "დაინსტალირებული",
@@ -543,7 +519,6 @@
   "extension-state-installed": "დაინსტალირებული",
   "extension-state-downloaded": "ჩამოტვირთულია",
   "extension-state-pending": "ინსტალაცია…",
-
   "tutorial.stepProgress": "ნაბიჯი {{current}} {{total}} -დან",
   "tutorial.offlineDownloadTitle": "შეეხეთ, რომ ის თქვენს მოწყობილობაზე შეინახოთ",
   "tutorial.offlineDownloadBody": "ამ ხატულას მქონე ნებისმიერი თარგმანის შენახვა შესაძლებელია ოფლაინში წასაკითხად.",
@@ -577,7 +552,6 @@
   "tutorial.paneLayoutBody": "ამ განლაგების მენიუდან აირჩიეთ, რამდენი პასაჟი წაიკითხოთ გვერდიგვერდ.",
   "tutorial.addTabTitle": "გახსენით მეტი პასაჟი",
   "tutorial.addTabBody": "დაამატეთ ახალი ჩანართი რამდენიმე წიგნის ან თარგმანის გვერდიგვერდ წასაკითხად.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % დასრულებული - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % დასრულებულია",
   "playlist-history-continue": "გაგრძელება",
@@ -636,7 +610,6 @@
   "chapter-notes-count_other": "{{count}} შენიშვნა ამ თავისთვის",
   "create-folder": "საქაღალდის შექმნა",
   "edit-bookmark": "სანიშნეს რედაქტირება",
-
   "greeting-afternoon": "შუადღე მშვიდობისა!",
   "greeting-afternoon-named": "შუადღე მშვიდობისა, {{name}} !",
   "greeting-evening": "საღამო მშვიდობისა!",
@@ -652,32 +625,24 @@
   "ask-ai": "ჰკითხეთ ხელოვნურ ინტელექტს",
   "unread-mention": "წაუკითხავი ხსენება",
   "unread-messages": "წაუკითხავი შეტყობინებები: {{count}}",
-
   "scripture-width": "წმინდა წერილის სიგანე",
   "decrease-scripture-width": "წმინდა წერილის სიგანის შემცირება",
   "increase-scripture-width": "გაზარდეთ წმინდა წერილის სიგანე",
   "annotations": "ანოტაციები",
   "discover-content-panel": "აღმოაჩინეთ კონტენტი",
   "discover-book-title": "აღმოაჩინეთ {{book}}",
-
   "about-title": "თესლის ბიბლიის შესახებ",
   "about-meta-description": "Seed Bible არის უფასო ბიბლიის აპლიკაცია, რომელიც შექმნილია წმინდა წერილის ოჯახთან, მეგობრებთან და საზოგადოებასთან ერთად წასაკითხად — უფასო სამუდამოდ, რეკლამებისა და ფასიანი ზარების გარეშე.",
-
   "about-action-open-passage": "გახსენით პასაჟი",
   "about-action-donate": "შემოწირულობა",
   "about-action-discord": "შემოუერთდით Discord-ს",
   "recent-uploads": "ბოლო ატვირთვები",
-
   "customization-not-found": "ეს პერსონალიზაცია ვერ მოიძებნა.",
   "customization-name": "სახელი",
   "customization-primaryColor": "ძირითადი",
-
   "customization-secondaryColor": "მეორადი",
-
   "customization-tertiaryColor": "მესამეული",
-
   "customization-fonts": "შრიფტები",
-
   "custom-font-option": "მორგებული…",
   "custom-font-name-placeholder": "Google-ის შრიფტის სახელი",
   "delete-customization": "წაშლა",
@@ -690,10 +655,8 @@
   "extension-availability-available": "ხელმისაწვდომია",
   "extension-availability-auto-installed": "ავტომატურად დაინსტალირებული",
   "extension-availability-hidden": "დამალული",
-
   "variants": "თემები",
   "add-variant": "თემის დამატება",
-
   "base-theme-description": "ცვლილებები, რომლებიც ამ თემას წინასწარ აქვს დაყენებული, თქვენს მიერ არ მორგებული თემებისთვის გამოიყენება. თქვენი რედაქტირებები შენახულია.",
   "reset-to-base-theme": "საბაზისო თემაზე დაბრუნება",
   "low-contrast-warning": "{{label}} : კონტრასტი მხოლოდ {{ratio}} :1-ია — ტექსტის წასაკითხად დარჩენისთვის ეცადეთ მინიმუმ {{minRatio}} :1-ს მიაღწიოთ.",
@@ -739,14 +702,12 @@
   "save-folder-empty": "აქ ჯერ არ არის შენახული.",
   "save-options": "პარამეტრების შენახვა",
   "saves": "შენახვები",
-
   "hide-saves": "შენახული მონაცემების დამალვა",
   "show-saves": "შენახული მონაცემების ჩვენება",
   "save-verses": "შენახვა",
   "new-save-folder": "ახალი საქაღალდე",
   "edit-save": "შენახვის რედაქტირება",
   "remove-save-from-all-folders": "ყველა საქაღალდიდან წაშლა",
-
   "color-hue": "ელფერი",
   "color-saturation": "გაჯერება და სიკაშკაშე",
   "hex-color": "თექვსმეტობითი ფერი",
@@ -861,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "ფორმატირების რედაქტორის ჩატვირთვა ვერ მოხერხდა. ამ ჩანაწერის ფორმატირება დაიკარგება, ამიტომ მისი რედაქტირება შეუძლებელია ხელახლა დაკავშირებამდე.",
   "annotation-text": "ანოტაციის ტექსტი",
   "notes-for-verse": "შენიშვნები ლექსისთვის {{verse}}",
-
   "configure-extension-defaults": "ნაგულისხმევი გადაფარვების კონფიგურაცია",
-
   "extension-settings-defaults-title": "{{name}} ნაგულისხმევი გადაფარვები",
   "no-extension-settings": "ამ გაფართოებას არ აქვს კონფიგურირებადი პარამეტრები.",
   "extension-settings-save-failed": "თქვენი პარამეტრების შენახვა ვერ მოხერხდა.",
@@ -872,7 +831,6 @@
   "setting-no-default": "ნაგულისხმევი არ არის",
   "override-setting": "{{name}} -ის გადაფარვა",
   "override-setting-label": "გადაფარვა",
-
   "discover-choose-filter-hint": "ამ თავიდან მეტის სანახავად აირჩიეთ ზემოთ მოცემული ფილტრი.",
   "take-a-tour": "გაიარეთ ტური",
   "share-reading-plan": "გაზიარების გეგმა",
@@ -1056,7 +1014,6 @@
   "my-bookmark-numbered": "ჩემი სანიშნე {{number}}",
   "bookmark-move-hint": "შეეხეთ სანიშნეს, რომ გადაიტანოთ ის ამ თავში.",
   "move-bookmark-here": "გადაიტანეთ {{name}} აქ",
-
   "play": "თამაში",
   "pause": "პაუზა",
   "audio-playback-position": "დაკვრის პოზიცია",
@@ -1065,7 +1022,6 @@
   "audio-scrub-verse": "ლექსი {{verse}}",
   "tab-playing-audio": "აუდიოს დაკვრა მიმდინარეობს",
   "collapsed-tab-playing-label": "{{label}} — აუდიოს დაკვრა",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} თემა",
   "customization-theme-count_one": "{{count}} თემა",
@@ -1104,7 +1060,6 @@
   "about-community-body": "რწმენა ერთად ცხოვრებისთვისაა განკუთვნილი. Seed Bible შექმნილია იმისთვის, რომ წმინდა წერილი თქვენს ოჯახთან, უახლოეს მეგობრებთან და თქვენს საშინაო ეკლესიასთან ერთად წაიკითხოთ.",
   "discovered-content": "აღმოჩენილი კონტენტი",
   "show-discovered-content": "აღმოჩენილი კონტენტის ჩვენება",
-
   "extension-availability-default": "ნაგულისხმევი ( {{availability}} )",
   "customization-extensions-default": "ნაგულისხმევი სხვა გაფართოებებისთვის",
   "customization-extensions-default-hint": "ვრცელდება ყველა გაფართოებაზე, რომელიც ქვემოთ არ დაგიყენებიათ, მათ შორის მოგვიანებით დამატებულ ახლებებზე",
@@ -1137,7 +1092,6 @@
   "playlist-scripture-note-return": "დასაკრავ სიაში დაბრუნება",
   "playlist-scripture-note-aria": "შენიშვნა {{passage}} ზე",
   "playlist-scripture-note-progress": "{{current}} {{total}} დან",
-
   "unsaved-item-edit-confirm-message": "თქვენ შეცვალეთ ელემენტი, მაგრამ ეს ცვლილებები ჯერ არ შეგინახავთ. რა გსურთ გააკეთოთ?",
   "keep-changes-and-save": "ცვლილებების შენახვა და შენახვა",
   "reading-plan-edit-reading": "წაკითხულის რედაქტირება",
@@ -1152,7 +1106,6 @@
   "branding": "ბრენდინგი",
   "create-custom-branding-menu-item": "მორგებული ბრენდინგი",
   "your-content-empty-branding": "თქვენს მიერ შექმნილი მორგებული ბრენდინგი აქ გამოჩნდება.",
-
   "extension-consent-from": "{{host}} დან",
   "extension-consent-source-version": "ვერსია {{version}} · {{host}} დან",
   "extension-consent-uploader-unnamed": "Seed Bible-ის მომხმარებელი",
@@ -1200,7 +1153,6 @@
   "extension-permission-reading-selection": "ნახეთ, რომელ ლექსებს აირჩევთ",
   "extension-permission-reading-navigate": "ღია გასასვლელები",
   "extension-permission-network": "დაკავშირება {{host}} თან",
-
   "extension-consent-not-now": "ახლა არა",
   "extension-consent-nothing-yet": "ამ ეტაპზე, მას თქვენს ინფორმაციაზე წვდომა არ ექნება.",
   "extension-permission-reading-history": "იხილეთ თქვენი კითხვის ისტორია",
@@ -1238,7 +1190,6 @@
   "extension-capture-cancel": "გაუქმება",
   "extension-consent-high-risk": "მგრძნობიარე",
   "extension-modal-ok": "კარგი",
-
   "extension-permissions-restart-note": "ცვლილებები მყისიერად ამოქმედდება. {{name}} გადაიტვირთება მათ აღსადგენად.",
   "extension-permissions-saved": "შენახულია. {{name}} გადაიტვირთა ახალი ნებართვებით.",
   "extension-permissions-failed": "ეს არ შეინახა. სცადეთ ხელახლა.",
@@ -1276,8 +1227,53 @@
   "session-settings-verse-effects-desc-hosts": "ეფექტების ჩვენება, როდესაც წამყვანი ირჩევს ლექსს.",
   "session-settings-verse-effects-desc-everyone": "ეფექტების ჩვენება, როდესაც ვინმე ირჩევს ლექსს.",
   "session-settings-verse-effects-desc-none": "ლექსის შერჩევის ეფექტები ყველასთვის გამორთულია.",
-
   "account": "ანგარიში",
   "scroll-filters-start": "ფილტრების გადახვევა დასაწყისისკენ",
-  "scroll-filters-end": "ფილტრების გადახვევა ბოლომდე"
+  "scroll-filters-end": "ფილტრების გადახვევა ბოლომდე",
+  "download": "ჩამოტვირთვა",
+  "image-details-uploaded": "ატვირთულია",
+  "image-details-dimensions": "ზომები",
+  "image-details-dimensions-value": "{{width}} × {{height}} პიქსელი",
+  "image-details-type": "ტიპი",
+  "image-details-cover-of": "ყდა",
+  "image-details-not-a-cover": "არ გამოიყენება როგორც საფარი",
+  "delete-customization-confirm-title": "გსურთ მორგებული ბრენდინგის წაშლა?",
+  "delete-customization-confirm-message": "გსურთ მორგებული ბრენდინგის „ {{name}} “ წაშლა? ამის გაუქმება შეუძლებელია.",
+  "delete-customization-failed": "მორგებული ბრენდინგის წაშლა ვერ მოხერხდა.",
+  "delete-variant-confirm-title": "თემის წაშლა?",
+  "delete-variant-confirm-message": "წავშალო თემა „ {{name}} “? ამის გაუქმება შეუძლებელია.",
+  "delete-variant-confirm-message-unnamed": "წაიშალოს ეს თემა? ამის გაუქმება შეუძლებელია.",
+  "delete-variant-failed": "თემის წაშლა ვერ მოხერხდა.",
+  "delete-highlight-confirm-title": "წაიშალოს მონიშნული?",
+  "delete-highlight-confirm-message": "წაიშალოს {{reference}} -ზე მონიშნული? ამის გაუქმება შეუძლებელია.",
+  "delete-highlight-failed": "მონიშნული მომენტალის წაშლა ვერ მოხერხდა.",
+  "delete-annotation-on-confirm-message": "წაიშალოს {{reference}} -ზე ანოტაცია? ამის გაუქმება შეუძლებელია.",
+  "remove-from-folder": "საქაღალდიდან წაშლა",
+  "save-folders": "{{folders}}",
+  "delete-save-confirm-title": "გსურთ შენახულის წაშლა?",
+  "delete-save-confirm-message": "წაიშალოს {{reference}} -ის შენახვა? ამის გაუქმება შეუძლებელია.",
+  "delete-save-confirm-message-folders": "წავშალო {{reference}} -ის შენახვა {{folders}} -დან? ამის გაუქმება შეუძლებელია.",
+  "delete-save-failed": "შენახული ფაილის წაშლა ვერ მოხერხდა.",
+  "delete-save-folder-confirm-title": "საქაღალდის წაშლა?",
+  "delete-save-folder-confirm-message": "წავშალო საქაღალდე „ {{name}} “?",
+  "delete-save-folder-confirm-deletes": "ასევე წაიშლება {{count}} შენახული ფაილი, რომელიც მხოლოდ ამ საქაღალდეშია.",
+  "delete-save-folder-confirm-deletes_one": "მხოლოდ ამ საქაღალდეში არსებული შენახვაც წაიშლება.",
+  "delete-save-folder-confirm-deletes_other": "ასევე წაიშლება {{count}} შენახული ფაილი, რომელიც მხოლოდ ამ საქაღალდეშია.",
+  "delete-save-folder-confirm-keeps": "{{count}} შენახული ფაილი, რომელიც ასევე სხვა საქაღალდეებშია, იქ დარჩება.",
+  "delete-save-folder-confirm-keeps_one": "სხვა საქაღალდეში არსებული შენახული ფაილი იქ დარჩება.",
+  "delete-save-folder-confirm-keeps_other": "{{count}} შენახული ფაილი, რომელიც ასევე სხვა საქაღალდეებშია, იქ დარჩება.",
+  "cant-be-undone": "ამის გაუქმება შეუძლებელია.",
+  "delete-save-folder-failed": "საქაღალდის წაშლა ვერ მოხერხდა.",
+  "download-image-failed": "სურათის ჩამოტვირთვა ვერ მოხერხდა.",
+  "session-settings-verse-effects-hosts-only": "მხოლოდ მასპინძლები",
+  "session-settings-verse-effects-everyone": "ყველა",
+  "session-settings-verse-effects-none": "არცერთი",
+  "loading-books": "წიგნები იტვირთება…",
+  "books-load-failed": "წიგნების ჩატვირთვა ვერ მოხერხდა. შეამოწმეთ თქვენი კავშირი და სცადეთ ხელახლა.",
+  "loading-translation": "{{name}} იტვირთება …",
+  "translation-load-failed": "{{name}} ის ჩატვირთვა ვერ მოხერხდა.",
+  "loading-translations": "თარგმანების ჩატვირთვა…",
+  "translations-load-failed": "თარგმანების სრული სიის ჩატვირთვა ვერ მოხერხდა, ამიტომ შესაძლოა ზოგიერთი აკლდეს.",
+  "verse-of-the-day": "დღის ლექსი",
+  "verse-of-the-day-loading": "დღის ლექსის ჩატვირთვა…"
 }
