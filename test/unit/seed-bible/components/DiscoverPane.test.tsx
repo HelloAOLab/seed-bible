@@ -343,6 +343,6 @@ describe("DiscoverPane", () => {
     });
 
     expect(container.querySelector(".sb-play-playlist")).toBeNull();
-    expect(container.querySelector(".sb-reading-plans-back")).toBeNull();
+    expect(container.querySelector('button[aria-label="Back"]')).toBeNull();
   });
 });

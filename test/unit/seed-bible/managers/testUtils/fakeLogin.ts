@@ -16,9 +16,15 @@ export function makeFakeLogin(
   const userId = signal<string | null>(initialProfile ? "user-1" : null);
   const profile = signal<UserProfile | null>(initialProfile);
   const localConfig = signal<Record<string, unknown>>({});
+  const isLocalConfigHydrated = signal(false);
   return {
     userId,
     profile,
+    cachedProfile: signal<UserProfile | null>(null),
+    isLocalConfigHydrated,
+    hydrateLocalConfig: () => {
+      isLocalConfigHydrated.value = true;
+    },
     localConfig,
     profilePromise: Promise.resolve(initialProfile),
     updateProfile: (newData: Partial<UserProfile>) => {

@@ -22,22 +22,18 @@
   "clear-search": "Futa utafutaji",
   "searching": "Inatafuta...",
   "no-search-results": "Hakuna mistari inayolingana.",
-
   "uploading": "Inapakia...",
   "profile-name": "Jina la wasifu",
   "profile-name-placeholder": "mfano familia ya Craig",
-
   "description": "Maelezo",
   "optional": "(Si lazima)",
   "description-placeholder": "Ingiza maelezo ya wasifu wako...",
   "location": "Mahali",
   "location-placeholder": "mfano Austin,TX",
-
   "copied": "Imenakiliwa",
   "copy": "Nakili",
   "save-changes": "Hifadhi mabadiliko",
   "sign-out": "Toka",
-
   "log-in": "Ingia",
   "session-settings": "Mipangilio ya kipindi",
   "shared-session-click-to-join": "inashiriki — bofya ili kujiunga",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "Chagua mandhari na urekebishe jinsi Maandiko na kiolesura vinavyoonyeshwa.",
   "scripture-settings": "Mipangilio ya Maandiko",
   "scripture-settings-font-size-example": "A",
-
   "all-settings": "Mipangilio yote",
   "no-extensions-available": "Hakuna viendelezi vinavyopatikana.",
   "install": "Sakinisha",
   "uninstall": "Ondoa",
-
   "custom": "Maalum",
   "text-section-bookTitle": "Maandishi ya Kichwa cha Kitabu",
   "text-section-heading": "Maandishi ya Kichwa",
@@ -79,7 +73,6 @@
   "show-selected-items": "Onyesha vipengee vilivyochaguliwa",
   "show-highlight-colors": "Onyesha rangi zinazoangazia",
   "show-icon-text": "Onyesha maandishi ya aikoni",
-
   "extensions": "Viendelezi",
   "display": "Onyesho",
   "keep-screen-awake": "Weka skrini ikiwa imewashwa",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "Ongeza ukubwa wa fonti ya maandiko",
   "change-line-spacing": "Badilisha nafasi ya mistari",
   "line-spacing_lineHeight": "Nafasi ya mstari: {{lineHeight}}",
-
   "italic": "Italiki",
   "underline": "Piga mstari chini",
   "alignment_x": "Mpangilio: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "Rangi ya maandishi",
   "follow_theme": "Fuata mandhari",
   "reset-to-default": "Rudisha hadi chaguo-msingi",
-
   "id_highlight-text-color": "Rangi ya maandishi {{id}} inayoangazia",
   "id_highlight-background-color": "Rangi ya mandharinyuma ya {{id}} inayoangazia",
   "all-settings-description": "Rekebisha kila sehemu ya maandishi na ubadilishe kila rangi ya mandhari.",
@@ -126,7 +117,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokrifa",
-
   "custom-translations": "Tafsiri maalum",
   "no-translation-results-found": "Hakuna matokeo yaliyopatikana. Ungependa kupanua utafutaji wako ili kujumuisha tafsiri zilizokamilika kwa sehemu pia?",
   "show-all-translations": "Onyesha tafsiri zote",
@@ -138,7 +128,6 @@
   "complete-translations": "Tafsiri kamili",
   "all-translations": "Tafsiri zote",
   "popular-translations": "Tafsiri maarufu",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "Zaburi 1",
   "2-psalms": "Zaburi 2",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "Nenda kwenye mipangilio yote",
   "more": "Zaidi",
   "remove-bookmark": "Ondoa alamisho",
-
   "chat": "Gumzo",
   "today": "Leo",
   "you": "Wewe",
@@ -170,7 +158,6 @@
   "category-options": "Chaguo za folda",
   "rename": "Badilisha jina",
   "delete": "Futa",
-
   "bookmark-options": "Chaguo za alamisho",
   "new-folder-placeholder": "Jina la folda",
   "tasks": "Kazi",
@@ -182,11 +169,9 @@
   "folder-name-taken": "Folda yenye jina hilo tayari ipo.",
   "add-to-new": "Ongeza kwenye mpya",
   "save": "Hifadhi",
-
   "seed-bible": "Biblia ya Mbegu",
   "take-photo": "Piga picha",
   "choose-from-gallery": "Chagua kutoka kwenye ghala",
-
   "crop-your-photo": "Kata picha yako",
   "zoom": "Kuza",
   "set-picture": "Weka picha",
@@ -212,10 +197,8 @@
   "read-the-bible": "Soma Biblia",
   "seed-bible-description": "Soma {{bookName}} {{chapterNumber}} katika Biblia ya Mbegu",
   "social-title": "Soma {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Urambazaji wa sura",
   "tutorial.skip": "Ruka",
-
   "tutorial.back": "Rudi",
   "tutorial.done": "Imekamilika",
   "tutorial.next": "Inayofuata",
@@ -328,11 +311,9 @@
   "study-notes": "Maelezo ya utafiti",
   "content": "Maudhui",
   "untitled-playlist": "Orodha ya kucheza isiyo na kichwa",
-
   "discover-annotations-empty": "Huna maelezo yoyote",
   "discover-cross-references-empty": "Hakuna marejeleo mtambuka kwa sura hii.",
   "discover-study-notes-empty": "Hakuna maelezo ya utafiti kwa sura hii.",
-
   "discover-select-tab": "Chagua kichupo ili kugundua nyenzo zinazohusiana.",
   "create-playlist": "Unda",
   "playlist-title_placeholder": "Kichwa cha orodha ya kucheza",
@@ -381,12 +362,10 @@
   "delete-playlist-failed": "Haikuweza kufuta orodha ya kucheza.",
   "collapsed-tab-shared-label": "{{title}} — kipindi kilichoshirikiwa, {{count}} kinawasilisha",
   "playlist-add-mode-label": "Aina ya kipengee",
-
   "session-host-reconnected": "Imeunganishwa tena kwenye kipindi",
   "session-host-left": "Mwenyeji aliondoka — uliondolewa kwenye kipindi",
   "drag-to-reorder-playlist-item": "Buruta ili kupanga upya",
   "saving": "Inahifadhi…",
-
   "unsaved-item-confirm-message": "Umeanza kuongeza kipengee ambacho bado hakijaongezwa kwenye orodha ya kucheza. Ungependa kufanya nini?",
   "discard-and-save": "Ondoa na uhifadhi",
   "add-and-save": "Ongeza na uhifadhi",
@@ -514,7 +493,6 @@
   "reading-plan-preview-reading": "Hakiki {{reading}}",
   "reading-plan-mark-reading-complete": "Weka alama ya usomaji umekamilika",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Weka alama {{passage}} kama imesomwa",
   "reading-plan-read-nudge-title": "Usomaji mzuri!",
   "reading-plan-read-nudge-toast": "Weka alama kuwa {{passage}} imekamilika?",
@@ -522,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Soma, tafuta, na ujifunze Biblia mtandaoni. Tafsiri za bure katika lugha nyingi, zenye vivutio, madokezo, alamisho, na mipango ya kusoma.",
   "all": "Zote",
-
   "today-bookmarks": "Alama za Kualamisha",
   "today-search-verses": "Tafuta vitabu, sura, mistari....",
   "anonymous-greeting": "Karibu!",
   "community": "JAMII",
   "go-somewhere-new": "NENDA MAHALI PYA",
-
   "open-bible": "Biblia Iliyofunguliwa",
   "personal-greeting": "Karibu, {{name}} !",
   "resume-reading": "ENDELEA ULIPOACHA",
   "resume-reading-loading": "Inapakia historia yako ya usomaji…",
   "selected-year": "Mwaka: {{year}}",
-
   "theme-light": "Mwanga",
   "theme-dark": "Nyeusi",
   "installed-extensions": "Imesakinishwa",
@@ -544,7 +519,6 @@
   "extension-state-installed": "Imesakinishwa",
   "extension-state-downloaded": "Imepakuliwa",
   "extension-state-pending": "Inasakinisha…",
-
   "tutorial.stepProgress": "Hatua {{current}} ya {{total}}",
   "tutorial.offlineDownloadTitle": "Gusa ili uiweke kwenye kifaa chako",
   "tutorial.offlineDownloadBody": "Tafsiri yoyote yenye aikoni hii inaweza kuhifadhiwa kwa ajili ya usomaji wa nje ya mtandao.",
@@ -578,7 +552,6 @@
   "tutorial.paneLayoutBody": "Chagua vifungu vingapi vya kusoma kando kutoka kwenye menyu hii ya mpangilio.",
   "tutorial.addTabTitle": "Fungua vifungu zaidi",
   "tutorial.addTabBody": "Ongeza kichupo kipya ili kusoma vitabu au tafsiri kadhaa pamoja.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % imekamilika - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % imekamilika",
   "playlist-history-continue": "Endelea",
@@ -637,7 +610,6 @@
   "chapter-notes-count_other": "Maelezo {{count}} ya sura hii",
   "create-folder": "Unda folda",
   "edit-bookmark": "Hariri alamisho",
-
   "greeting-afternoon": "Mchana mwema!",
   "greeting-afternoon-named": "Habari za mchana, {{name}} !",
   "greeting-evening": "Jioni njema!",
@@ -653,32 +625,24 @@
   "ask-ai": "Uliza AI",
   "unread-mention": "Kutajwa ambako hakujasomwa",
   "unread-messages": "Ujumbe ambao haujasomwa: {{count}}",
-
   "scripture-width": "Upana wa Maandiko",
   "decrease-scripture-width": "Punguza upana wa maandiko",
   "increase-scripture-width": "Ongeza upana wa maandiko",
   "annotations": "Maelezo",
   "discover-content-panel": "Gundua maudhui",
   "discover-book-title": "Gundua {{book}}",
-
   "about-title": "Kuhusu Biblia ya Mbegu",
   "about-meta-description": "Biblia ya Mbegu ni programu ya Biblia ya bure iliyojengwa kwa ajili ya kusoma Maandiko Matakatifu pamoja na familia yako, marafiki, na jamii — bure milele, bila matangazo au kuta za malipo.",
-
   "about-action-open-passage": "Fungua kifungu",
   "about-action-donate": "Toa mchango",
   "about-action-discord": "Jiunge na Discord",
   "recent-uploads": "Upakiaji wa hivi karibuni",
-
   "customization-not-found": "Ubinafsishaji huu haukuweza kupatikana.",
   "customization-name": "Jina",
   "customization-primaryColor": "Msingi",
-
   "customization-secondaryColor": "Sekondari",
-
   "customization-tertiaryColor": "Kiwango cha juu",
-
   "customization-fonts": "Fonti",
-
   "custom-font-option": "Maalum…",
   "custom-font-name-placeholder": "Jina la fonti ya Google",
   "delete-customization": "Futa",
@@ -691,10 +655,8 @@
   "extension-availability-available": "Inapatikana",
   "extension-availability-auto-installed": "Imesakinishwa kiotomatiki",
   "extension-availability-hidden": "Imefichwa",
-
   "variants": "Mandhari",
   "add-variant": "Ongeza mandhari",
-
   "base-theme-description": "Mabadiliko ambayo mandhari hii imewekwa awali yanarudi kwa chochote ambacho hujabadilisha. Marekebisho yako mwenyewe yanahifadhiwa.",
   "reset-to-base-theme": "Rudisha kwenye mandhari ya msingi",
   "low-contrast-warning": "{{label}} : utofautishaji ni {{ratio}} :1 pekee — lenga angalau {{minRatio}} :1 ili maandishi yaendelee kusomeka.",
@@ -740,14 +702,12 @@
   "save-folder-empty": "Hakuna akiba hapa bado.",
   "save-options": "Hifadhi chaguo",
   "saves": "Hifadhi",
-
   "hide-saves": "Ficha hifadhi",
   "show-saves": "Onyesha akiba",
   "save-verses": "Hifadhi",
   "new-save-folder": "Folda mpya",
   "edit-save": "Hariri hifadhi",
   "remove-save-from-all-folders": "Ondoa kwenye folda zote",
-
   "color-hue": "Rangi ya hudhurungi",
   "color-saturation": "Kueneza na mwangaza",
   "hex-color": "Rangi ya heksaidi",
@@ -862,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "Kihariri cha umbizo hakikuweza kupakia. Dokezo hili lina umbizo ambalo lingepotea, kwa hivyo haliwezi kuhaririwa hadi utakapounganisha tena.",
   "annotation-text": "Maandishi ya maelezo",
   "notes-for-verse": "Maelezo ya mstari {{verse}}",
-
   "configure-extension-defaults": "Sanidi ubatilishaji chaguo-msingi",
-
   "extension-settings-defaults-title": "{{name}} mabadiliko chaguo-msingi",
   "no-extension-settings": "Kiendelezi hiki hakina mipangilio inayoweza kusanidiwa.",
   "extension-settings-save-failed": "Haikuweza kuhifadhi mipangilio yako.",
@@ -873,7 +831,6 @@
   "setting-no-default": "Hakuna chaguo-msingi",
   "override-setting": "Batilisha {{name}}",
   "override-setting-label": "Batilisha",
-
   "discover-choose-filter-hint": "Chagua kichujio hapo juu ili kuona zaidi kutoka kwa sura hii.",
   "take-a-tour": "Fanya ziara",
   "share-reading-plan": "Mpango wa kushiriki",
@@ -1057,7 +1014,6 @@
   "my-bookmark-numbered": "Alamisho yangu {{number}}",
   "bookmark-move-hint": "Gusa alamisho ili kuihamishia kwenye sura hii.",
   "move-bookmark-here": "Hamisha {{name}} hapa",
-
   "play": "Cheza",
   "pause": "Sitisha",
   "audio-playback-position": "Nafasi ya kucheza",
@@ -1066,7 +1022,6 @@
   "audio-scrub-verse": "Mstari {{verse}}",
   "tab-playing-audio": "Inacheza sauti",
   "collapsed-tab-playing-label": "{{label}} — inacheza sauti",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "Mandhari {{count}}",
   "customization-theme-count_one": "Mandhari ya {{count}}",
@@ -1105,7 +1060,6 @@
   "about-community-body": "Imani imekusudiwa kuishi pamoja. Biblia ya Mbegu imejengwa kwa ajili ya kusoma Maandiko pamoja na familia yako, marafiki zako wa karibu, na kanisa lako la nyumbani.",
   "discovered-content": "Maudhui Yaliyogunduliwa",
   "show-discovered-content": "Onyesha maudhui yaliyogunduliwa",
-
   "extension-availability-default": "Chaguo-msingi ( {{availability}} )",
   "customization-extensions-default": "Chaguo-msingi kwa viendelezi vingine",
   "customization-extensions-default-hint": "Hutumika kwa kila kiendelezi ambacho hujakiweka hapa chini, ikijumuisha vipya vilivyoongezwa baadaye",
@@ -1138,7 +1092,6 @@
   "playlist-scripture-note-return": "Rudi kwenye orodha ya kucheza",
   "playlist-scripture-note-aria": "Dokezo kwenye {{passage}}",
   "playlist-scripture-note-progress": "{{current}} kati ya {{total}}",
-
   "unsaved-item-edit-confirm-message": "Umebadilisha kipengee lakini bado hujahifadhi mabadiliko hayo. Ungependa kufanya nini?",
   "keep-changes-and-save": "Weka mabadiliko na uhifadhi",
   "reading-plan-edit-reading": "Hariri usomaji",
@@ -1153,7 +1106,6 @@
   "branding": "Chapa",
   "create-custom-branding-menu-item": "Chapa Maalum",
   "your-content-empty-branding": "Chapa Maalum unayounda itaonekana hapa.",
-
   "extension-consent-from": "Kutoka kwa {{host}}",
   "extension-consent-source-version": "Toleo {{version}} · kutoka {{host}}",
   "extension-consent-uploader-unnamed": "Mtumiaji wa Biblia ya Mbegu",
@@ -1201,7 +1153,6 @@
   "extension-permission-reading-selection": "Tazama mistari unayochagua",
   "extension-permission-reading-navigate": "Vifungu vilivyo wazi",
   "extension-permission-network": "Unganisha kwenye {{host}}",
-
   "extension-consent-not-now": "Sio sasa",
   "extension-consent-nothing-yet": "Kwa sasa, haitakuwa na ufikiaji wa taarifa zako zozote.",
   "extension-permission-reading-history": "Tazama historia yako ya usomaji",
@@ -1239,7 +1190,6 @@
   "extension-capture-cancel": "Ghairi",
   "extension-consent-high-risk": "Nyeti",
   "extension-modal-ok": "Sawa",
-
   "extension-permissions-restart-note": "Mabadiliko huanza kutumika mara moja. {{name}} huanza tena ili kuyachukua.",
   "extension-permissions-saved": "Imehifadhiwa. {{name}} imeanza tena kwa ruhusa mpya.",
   "extension-permissions-failed": "Hilo halikuokoa. Jaribu tena.",
@@ -1277,8 +1227,53 @@
   "session-settings-verse-effects-desc-hosts": "Onyesha athari wakati mwenyeji anapochagua mstari.",
   "session-settings-verse-effects-desc-everyone": "Onyesha athari wakati mtu yeyote anapochagua mstari.",
   "session-settings-verse-effects-desc-none": "Athari za uteuzi wa mistari zimezimwa kwa kila mtu.",
-
   "account": "Akaunti",
   "scroll-filters-start": "Sogeza vichujio kuelekea mwanzo",
-  "scroll-filters-end": "Vichujio vya kusogeza kuelekea mwisho"
+  "scroll-filters-end": "Vichujio vya kusogeza kuelekea mwisho",
+  "download": "Pakua",
+  "image-details-uploaded": "Imepakiwa",
+  "image-details-dimensions": "Vipimo",
+  "image-details-dimensions-value": "{{width}} × {{height}}",
+  "image-details-type": "Aina",
+  "image-details-cover-of": "Jalada la",
+  "image-details-not-a-cover": "Haitumiki kama kifuniko",
+  "delete-customization-confirm-title": "Futa Chapa Maalum?",
+  "delete-customization-confirm-message": "Futa Chapa Maalum \" {{name}} \"? Hili haliwezi kutenduliwa.",
+  "delete-customization-failed": "Haikuweza kufuta Chapa Maalum.",
+  "delete-variant-confirm-title": "Futa mandhari?",
+  "delete-variant-confirm-message": "Futa mandhari \" {{name}} \"? Hii haiwezi kutenduliwa.",
+  "delete-variant-confirm-message-unnamed": "Unataka kufuta mandhari hii? Hii haiwezi kutenduliwa.",
+  "delete-variant-failed": "Haikuweza kufuta mandhari.",
+  "delete-highlight-confirm-title": "Futa kivutio?",
+  "delete-highlight-confirm-message": "Futa kivutio kwenye {{reference}} ? Hili haliwezi kutenduliwa.",
+  "delete-highlight-failed": "Haikuweza kufuta kivutio.",
+  "delete-annotation-on-confirm-message": "Futa maelezo kwenye {{reference}} ? Hili haliwezi kutenduliwa.",
+  "remove-from-folder": "Ondoa kwenye folda",
+  "save-folders": "Katika {{folders}}",
+  "delete-save-confirm-title": "Futa hifadhi?",
+  "delete-save-confirm-message": "Futa hifadhi ya {{reference}} ? Hii haiwezi kutenduliwa.",
+  "delete-save-confirm-message-folders": "Futa hifadhi ya {{reference}} kutoka kwa {{folders}} ? Hii haiwezi kutenduliwa.",
+  "delete-save-failed": "Haikuweza kufuta hifadhi.",
+  "delete-save-folder-confirm-title": "Futa folda?",
+  "delete-save-folder-confirm-message": "Futa folda \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Hifadhi za {{count}} ambazo ziko kwenye folda hii pekee zitafutwa pia.",
+  "delete-save-folder-confirm-deletes_one": "Hifadhi iliyo kwenye folda hii pekee itafutwa pia.",
+  "delete-save-folder-confirm-deletes_other": "Hifadhi za {{count}} ambazo ziko kwenye folda hii pekee zitafutwa pia.",
+  "delete-save-folder-confirm-keeps": "Hifadhi za {{count}} ambazo pia ziko kwenye folda zingine zitabaki hapo.",
+  "delete-save-folder-confirm-keeps_one": "Hifadhi ambayo pia iko kwenye folda nyingine itabaki hapo.",
+  "delete-save-folder-confirm-keeps_other": "Hifadhi za {{count}} ambazo pia ziko kwenye folda zingine zitabaki hapo.",
+  "cant-be-undone": "Hili haliwezi kutenduliwa.",
+  "delete-save-folder-failed": "Haikuweza kufuta folda.",
+  "download-image-failed": "Haikuweza kupakua picha.",
+  "session-settings-verse-effects-hosts-only": "Wenyeji pekee",
+  "session-settings-verse-effects-everyone": "Kila mtu",
+  "session-settings-verse-effects-none": "Hakuna",
+  "loading-books": "Inapakia vitabu…",
+  "books-load-failed": "Vitabu havikuweza kupakiwa. Angalia muunganisho wako na ujaribu tena.",
+  "loading-translation": "Inapakia {{name}} …",
+  "translation-load-failed": "{{name}} haikuweza kupakiwa.",
+  "loading-translations": "Inapakia tafsiri…",
+  "translations-load-failed": "Haikuweza kupakia orodha kamili ya tafsiri, kwa hivyo baadhi zinaweza kuwa hazipo.",
+  "verse-of-the-day": "AYA YA SIKU",
+  "verse-of-the-day-loading": "Inapakia mstari wa siku..."
 }

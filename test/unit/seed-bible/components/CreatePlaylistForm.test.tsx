@@ -320,7 +320,7 @@ describe("CreatePlaylistForm", () => {
       const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
       const modals = renderForm(mock);
 
-      click(".sb-reading-plans-back[aria-label='Back']");
+      click(".sb-pane-header-button[aria-label='Back']");
 
       expect(mock.cancelEditingPlaylist).toHaveBeenCalledTimes(1);
       expect(modals.modals.value).toHaveLength(0);
@@ -331,7 +331,7 @@ describe("CreatePlaylistForm", () => {
       mock.isEditingPlaylistDirty.mockReturnValue(true);
       const modals = renderForm(mock);
 
-      click(".sb-reading-plans-back[aria-label='Back']");
+      click(".sb-pane-header-button[aria-label='Back']");
 
       expect(mock.cancelEditingPlaylist).not.toHaveBeenCalled();
       expect(modals.modals.value[0]!.title).toEqual({
@@ -345,7 +345,7 @@ describe("CreatePlaylistForm", () => {
       const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
       const modals = renderForm(mock);
 
-      click(".sb-reading-plans-back[aria-label='Back']");
+      click(".sb-pane-header-button[aria-label='Back']");
 
       expect(mock.cancelEditingPlaylist).not.toHaveBeenCalled();
       expect(modals.modals.value[0]!.title).toEqual({

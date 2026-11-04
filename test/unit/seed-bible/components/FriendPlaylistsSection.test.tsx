@@ -205,7 +205,7 @@ describe("FriendPlaylistsSection", () => {
     const items = openRowMenu();
 
     expect(items.map((el) => el.textContent)).toEqual([
-      expect.stringContaining("Share playlist"),
+      expect.stringContaining("Share"),
     ]);
     await act(async () => {
       items[0]!.click();

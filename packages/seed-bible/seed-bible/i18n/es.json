@@ -23,22 +23,18 @@
   "clear-search": "Borrar búsqueda",
   "searching": "Búsqueda...",
   "no-search-results": "No hay versículos que coincidan.",
-
   "uploading": "Subiendo...",
   "profile-name": "Nombre de perfil",
   "profile-name-placeholder": "Por ejemplo, la familia Craig",
-
   "description": "Descripción",
   "optional": "(Opcional)",
   "description-placeholder": "Introduce la descripción de tu perfil...",
   "location": "Ubicación",
   "location-placeholder": "Por ejemplo, Austin, Texas",
-
   "copied": "Copiado",
   "copy": "Copiar",
   "save-changes": "Guardar cambios",
   "sign-out": "desconectar",
-
   "log-in": "Acceso",
   "session-settings": "Configuración de la sesión",
   "shared-session-click-to-join": "está compartiendo — haz clic para unirte",
@@ -54,12 +50,10 @@
   "display-and-theme-description": "Elige un tema y ajusta cómo se muestran las Escrituras y la interfaz.",
   "scripture-settings": "Escenarios bíblicos",
   "scripture-settings-font-size-example": "A",
-
   "all-settings": "Todos los ajustes",
   "no-extensions-available": "No hay extensiones disponibles.",
   "install": "Instalar",
   "uninstall": "Desinstalar",
-
   "custom": "Costumbre",
   "text-section-bookTitle": "Título del libro (Texto)",
   "text-section-heading": "Texto del encabezado",
@@ -80,7 +74,6 @@
   "show-selected-items": "Mostrar elementos seleccionados",
   "show-highlight-colors": "Mostrar colores destacados",
   "show-icon-text": "Mostrar texto del icono",
-
   "extensions": "Extensiones",
   "display": "Mostrar",
   "keep-screen-awake": "Mantén la pantalla encendida",
@@ -102,7 +95,6 @@
   "increase-scripture-font-size": "Aumentar el tamaño de la fuente de las Escrituras",
   "change-line-spacing": "Cambiar el espaciado entre líneas",
   "line-spacing_lineHeight": "Interlineado: {{lineHeight}}",
-
   "italic": "Itálico",
   "underline": "Subrayar",
   "alignment_x": "Alineación: {{alignment}}",
@@ -111,7 +103,6 @@
   "text_color": "Color del texto",
   "follow_theme": "Sigue el tema",
   "reset-to-default": "Restablecer a valores predeterminados",
-
   "id_highlight-text-color": "{{id}} color de resaltado de texto",
   "id_highlight-background-color": "{{id}} color de fondo resaltado",
   "all-settings-description": "Ajusta con precisión cada sección de texto y personaliza el color de cada tema.",
@@ -127,7 +118,6 @@
   "old-testament_short": "Antiguo Testamento",
   "new-testament_short": "Nuevo Testamento",
   "apocrypha": "Libros apócrifos",
-
   "custom-translations": "Traducciones personalizadas",
   "no-translation-results-found": "No se encontraron resultados. ¿Desea ampliar su búsqueda para incluir también traducciones parcialmente completas?",
   "show-all-translations": "Mostrar todas las traducciones",
@@ -139,7 +129,6 @@
   "complete-translations": "Traducciones completas",
   "all-translations": "Todas las traducciones",
   "popular-translations": "Traducciones populares",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "Salmo 1",
   "2-psalms": "2 Salmos",
@@ -161,7 +150,6 @@
   "go-to-all-settings": "Ir a todas las configuraciones",
   "more": "Más",
   "remove-bookmark": "Eliminar marcador",
-
   "chat": "Charlar",
   "today": "Hoy",
   "you": "Tú",
@@ -171,7 +159,6 @@
   "category-options": "Opciones de carpeta",
   "rename": "Rebautizar",
   "delete": "Borrar",
-
   "bookmark-options": "Opciones de marcadores",
   "new-folder-placeholder": "Nombre de la carpeta",
   "tasks": "Tareas",
@@ -183,10 +170,8 @@
   "folder-name-taken": "Ya existe una carpeta con ese nombre.",
   "add-to-new": "Agregar a nuevo",
   "save": "Ahorrar",
-
   "take-photo": "Toma una foto",
   "choose-from-gallery": "Elige de la galería",
-
   "crop-your-photo": "Recorta tu foto",
   "zoom": "Zoom",
   "set-picture": "Imagen de conjunto",
@@ -212,10 +197,8 @@
   "read-the-bible": "Lee la Biblia",
   "seed-bible-description": "Lee {{bookName}} {{chapterNumber}} en la Biblia Semilla",
   "social-title": "Lee {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Navegación de capítulos",
   "tutorial.skip": "Saltar",
-
   "tutorial.back": "Atrás",
   "tutorial.done": "Hecho",
   "tutorial.next": "Próximo",
@@ -328,11 +311,9 @@
   "study-notes": "Apuntes de estudio",
   "content": "Contenido",
   "untitled-playlist": "Lista de reproducción sin título",
-
   "discover-annotations-empty": "No tienes anotaciones",
   "discover-cross-references-empty": "Este capítulo no contiene referencias cruzadas.",
   "discover-study-notes-empty": "No hay apuntes de estudio para este capítulo.",
-
   "discover-select-tab": "Seleccione una pestaña para descubrir material relacionado.",
   "create-playlist": "Crear",
   "playlist-title_placeholder": "Título de la lista de reproducción",
@@ -381,12 +362,10 @@
   "delete-playlist-failed": "No se pudo eliminar la lista de reproducción.",
   "collapsed-tab-shared-label": "{{title}} — sesión compartida, {{count}} presentes",
   "playlist-add-mode-label": "Tipo de artículo",
-
   "session-host-reconnected": "Reconectado a la sesión",
   "session-host-left": "El anfitrión se fue; usted fue expulsado de la sesión.",
   "drag-to-reorder-playlist-item": "Arrastra para reordenar",
   "saving": "Guardando…",
-
   "unsaved-item-confirm-message": "Has empezado a añadir un elemento que todavía no se ha añadido a la lista de reproducción. ¿Qué te gustaría hacer?",
   "discard-and-save": "Descartar y guardar",
   "add-and-save": "Añadir y guardar",
@@ -514,7 +493,6 @@
   "reading-plan-preview-reading": "Vista previa {{reading}}",
   "reading-plan-mark-reading-complete": "Marcar como completada la lectura",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Marcar {{passage}} como leído",
   "reading-plan-read-nudge-title": "¡Buena lectura!",
   "reading-plan-read-nudge-toast": "¿Marcar {{passage}} como completado?",
@@ -522,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Lee, busca y estudia la Biblia en línea. Traducciones gratuitas en muchos idiomas, con resaltados, notas, marcadores y planes de lectura.",
   "all": "Todo",
-
   "today-bookmarks": "MARCADORES",
   "today-search-verses": "Buscar libros, capítulos, versículos....",
   "anonymous-greeting": "¡Bienvenido!",
   "community": "COMUNIDAD",
   "go-somewhere-new": "VE A UN LUGAR NUEVO",
-
   "open-bible": "Biblia abierta",
   "personal-greeting": "¡Bienvenido/a, {{name}} !",
   "resume-reading": "CONTINÚA DONDE LO DEJASTE",
   "resume-reading-loading": "Cargando tu historial de lectura…",
   "selected-year": "Año: {{year}}",
-
   "theme-light": "Luz",
   "theme-dark": "Oscuro",
   "installed-extensions": "Instalado",
@@ -544,7 +519,6 @@
   "extension-state-installed": "Instalado",
   "extension-state-downloaded": "Descargado",
   "extension-state-pending": "Instalando…",
-
   "tutorial.stepProgress": "Paso {{current}} de {{total}}",
   "tutorial.offlineDownloadTitle": "Toca para mantenerlo en tu dispositivo.",
   "tutorial.offlineDownloadBody": "Cualquier traducción con este icono se puede guardar para leerla sin conexión.",
@@ -578,7 +552,6 @@
   "tutorial.paneLayoutBody": "Seleccione en este menú de diseño cuántos pasajes desea leer simultáneamente.",
   "tutorial.addTabTitle": "Abrir más pasajes",
   "tutorial.addTabBody": "Añade una nueva pestaña para leer varios libros o traducciones simultáneamente.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % completado - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % completado",
   "playlist-history-continue": "Continuar",
@@ -637,7 +610,6 @@
   "chapter-notes-count_other": "{{count}} notas para este capítulo",
   "create-folder": "Crear carpeta",
   "edit-bookmark": "Editar marcador",
-
   "greeting-afternoon": "¡Buenas tardes!",
   "greeting-afternoon-named": "Buenas tardes, {{name}} !",
   "greeting-evening": "¡Buenas noches!",
@@ -653,32 +625,24 @@
   "ask-ai": "Pregúntale a la IA",
   "unread-mention": "Mención no leída",
   "unread-messages": "Mensajes no leídos: {{count}}",
-
   "scripture-width": "Ancho de las Escrituras",
   "decrease-scripture-width": "Disminuir el ancho de las escrituras",
   "increase-scripture-width": "Aumentar el ancho de las escrituras",
   "annotations": "Anotaciones",
   "discover-content-panel": "Descubre el contenido",
   "discover-book-title": "Descubre {{book}}",
-
   "about-title": "Acerca de la Biblia de las Semillas",
   "about-meta-description": "Seed Bible es una aplicación bíblica gratuita diseñada para leer las Escrituras junto con tu familia, amigos y comunidad; gratuita para siempre, sin anuncios ni muros de pago.",
-
   "about-action-open-passage": "Abrir un pasaje",
   "about-action-donate": "Donar",
   "about-action-discord": "Únete a Discord",
   "recent-uploads": "Subidas recientes",
-
   "customization-not-found": "No se pudo encontrar esta personalización.",
   "customization-name": "Nombre",
   "customization-primaryColor": "Primario",
-
   "customization-secondaryColor": "Secundario",
-
   "customization-tertiaryColor": "Terciario",
-
   "customization-fonts": "Fuentes",
-
   "custom-font-option": "Costumbre…",
   "custom-font-name-placeholder": "Nombre de la fuente de Google",
   "delete-customization": "Borrar",
@@ -691,10 +655,8 @@
   "extension-availability-available": "Disponible",
   "extension-availability-auto-installed": "Instalación automática",
   "extension-availability-hidden": "Oculto",
-
   "variants": "Temas",
   "add-variant": "Agregar tema",
-
   "base-theme-description": "Cambios que este tema preconfigurado utiliza como alternativa para cualquier elemento que no hayas personalizado. Tus propias ediciones se conservan.",
   "reset-to-base-theme": "Restablecer al tema base",
   "low-contrast-warning": "{{label}} : el contraste es solo {{ratio}} :1 — intente lograr al menos {{minRatio}} :1 para que el texto siga siendo legible.",
@@ -740,14 +702,12 @@
   "save-folder-empty": "Aún no hay guardados aquí.",
   "save-options": "Guardar opciones",
   "saves": "Guarda",
-
   "hide-saves": "Ocultar guardados",
   "show-saves": "Mostrar guardados",
   "save-verses": "Ahorrar",
   "new-save-folder": "Nueva carpeta",
   "edit-save": "Editar guardar",
   "remove-save-from-all-folders": "Eliminar de todas las carpetas",
-
   "color-hue": "Matiz",
   "color-saturation": "Saturación y brillo",
   "hex-color": "Color hexadecimal",
@@ -862,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "No se pudo cargar el editor de formato. Esta nota contiene formato que se perdería, por lo que no se puede editar hasta que vuelva a conectarse.",
   "annotation-text": "Texto de anotación",
   "notes-for-verse": "Notas para el verso {{verse}}",
-
   "configure-extension-defaults": "Configurar anulaciones predeterminadas",
-
   "extension-settings-defaults-title": "{{name}} anula los valores predeterminados",
   "no-extension-settings": "Esta extensión no tiene ajustes configurables.",
   "extension-settings-save-failed": "No se pudieron guardar los ajustes.",
@@ -873,7 +831,6 @@
   "setting-no-default": "Sin valor predeterminado",
   "override-setting": "Anular {{name}}",
   "override-setting-label": "Anular",
-
   "discover-choose-filter-hint": "Selecciona un filtro arriba para ver más contenido de este capítulo.",
   "take-a-tour": "Haz una visita guiada",
   "share-reading-plan": "Plan compartido",
@@ -1057,7 +1014,6 @@
   "my-bookmark-numbered": "Mi marcador {{number}}",
   "bookmark-move-hint": "Pulsa un marcador para moverlo a este capítulo.",
   "move-bookmark-here": "Mueve {{name}} aquí",
-
   "play": "Jugar",
   "pause": "Pausa",
   "audio-playback-position": "Posición de reproducción",
@@ -1066,7 +1022,6 @@
   "audio-scrub-verse": "Verso {{verse}}",
   "tab-playing-audio": "Reproduciendo audio",
   "collapsed-tab-playing-label": "{{label}} — reproduciendo audio",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} temas",
   "customization-theme-count_one": "{{count}} tema",
@@ -1105,7 +1060,6 @@
   "about-community-body": "La fe está hecha para vivirse en comunidad. Seed Bible está diseñada para leer las Escrituras con tu familia, tus amigos más cercanos y tu grupo de oración en casa.",
   "discovered-content": "Contenido descubierto",
   "show-discovered-content": "Mostrar contenido descubierto",
-
   "extension-availability-default": "Predeterminado ( {{availability}} )",
   "customization-extensions-default": "Valor predeterminado para otras extensiones",
   "customization-extensions-default-hint": "Se aplica a todas las extensiones que no hayas configurado a continuación, incluidas las nuevas que añadas posteriormente.",
@@ -1138,7 +1092,6 @@
   "playlist-scripture-note-return": "Volver a la lista de reproducción",
   "playlist-scripture-note-aria": "Nota sobre {{passage}}",
   "playlist-scripture-note-progress": "{{current}} de {{total}}",
-
   "unsaved-item-edit-confirm-message": "Has modificado un elemento, pero aún no has guardado los cambios. ¿Qué deseas hacer?",
   "keep-changes-and-save": "Conservar cambios y guardar",
   "reading-plan-edit-reading": "Editar lectura",
@@ -1153,7 +1106,6 @@
   "branding": "Herrada",
   "create-custom-branding-menu-item": "Marca personalizada",
   "your-content-empty-branding": "La imagen de marca personalizada que crees aparecerá aquí.",
-
   "extension-consent-from": "Desde {{host}}",
   "extension-consent-source-version": "Versión {{version}} · de {{host}}",
   "extension-consent-uploader-unnamed": "un usuario de Seed Bible",
@@ -1201,7 +1153,6 @@
   "extension-permission-reading-selection": "Mira qué versículos seleccionas",
   "extension-permission-reading-navigate": "Pasajes abiertos",
   "extension-permission-network": "Conéctate a {{host}}",
-
   "extension-consent-not-now": "Ahora no",
   "extension-consent-nothing-yet": "Por ahora, no tendrá acceso a ninguna de tu información.",
   "extension-permission-reading-history": "Consulta tu historial de lectura",
@@ -1239,7 +1190,6 @@
   "extension-capture-cancel": "Cancelar",
   "extension-consent-high-risk": "Sensible",
   "extension-modal-ok": "DE ACUERDO",
-
   "extension-permissions-restart-note": "Los cambios entran en vigor inmediatamente. {{name}} se reinicia para aplicarlos.",
   "extension-permissions-saved": "Guardado. {{name}} se reinició con los nuevos permisos.",
   "extension-permissions-failed": "No se guardó. Inténtalo de nuevo.",
@@ -1277,8 +1227,53 @@
   "session-settings-verse-effects-desc-hosts": "Muestra los efectos cuando el presentador selecciona un verso.",
   "session-settings-verse-effects-desc-everyone": "Mostrar efectos cuando alguien selecciona un verso.",
   "session-settings-verse-effects-desc-none": "Los efectos de selección de versículos están desactivados para todos.",
-
   "account": "Cuenta",
   "scroll-filters-start": "Desplaza los filtros hacia el inicio",
-  "scroll-filters-end": "Desplaza los filtros hacia el final."
+  "scroll-filters-end": "Desplaza los filtros hacia el final.",
+  "download": "Descargar",
+  "image-details-uploaded": "Subido",
+  "image-details-dimensions": "Dimensiones",
+  "image-details-dimensions-value": "{{width}} × {{height}} píxeles",
+  "image-details-type": "Tipo",
+  "image-details-cover-of": "Portada de",
+  "image-details-not-a-cover": "No se utiliza como cubierta",
+  "delete-customization-confirm-title": "¿Eliminar la personalización de marca?",
+  "delete-customization-confirm-message": "¿Eliminar la marca personalizada \" {{name}} \"? Esta acción no se puede deshacer.",
+  "delete-customization-failed": "No se pudo eliminar la personalización de marca.",
+  "delete-variant-confirm-title": "¿Eliminar tema?",
+  "delete-variant-confirm-message": "¿Eliminar el tema \" {{name}} \"? Esto no se puede deshacer.",
+  "delete-variant-confirm-message-unnamed": "¿Eliminar este tema? Esta acción es irreversible.",
+  "delete-variant-failed": "No se pudo eliminar el tema.",
+  "delete-highlight-confirm-title": "¿Eliminar resaltado?",
+  "delete-highlight-confirm-message": "¿Eliminar el resaltado en {{reference}} ? Esto no se puede deshacer.",
+  "delete-highlight-failed": "No se pudo eliminar el resaltado.",
+  "delete-annotation-on-confirm-message": "¿Eliminar la anotación en {{reference}} ? Esto no se puede deshacer.",
+  "remove-from-folder": "Eliminar de la carpeta",
+  "save-folders": "En {{folders}}",
+  "delete-save-confirm-title": "¿Borrar guardado?",
+  "delete-save-confirm-message": "¿Eliminar guardado para {{reference}} ? Esto no se puede deshacer.",
+  "delete-save-confirm-message-folders": "¿Eliminar el archivo guardado para {{reference}} de {{folders}} ? Esta acción no se puede deshacer.",
+  "delete-save-failed": "No se pudo borrar la partida guardada.",
+  "delete-save-folder-confirm-title": "¿Eliminar carpeta?",
+  "delete-save-folder-confirm-message": "¿Eliminar la carpeta \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Los {{count}} guardados que se encuentran únicamente en esta carpeta también se eliminarán.",
+  "delete-save-folder-confirm-deletes_one": "La partida guardada que solo se encuentra en esta carpeta también se eliminará.",
+  "delete-save-folder-confirm-deletes_other": "Los {{count}} guardados que se encuentran únicamente en esta carpeta también se eliminarán.",
+  "delete-save-folder-confirm-keeps": "Los {{count}} guardados que también se encuentran en otras carpetas permanecerán allí.",
+  "delete-save-folder-confirm-keeps_one": "La partida guardada que también se encuentra en otra carpeta permanecerá allí.",
+  "delete-save-folder-confirm-keeps_other": "Los {{count}} guardados que también se encuentran en otras carpetas permanecerán allí.",
+  "cant-be-undone": "Esto no se puede deshacer.",
+  "delete-save-folder-failed": "No se pudo eliminar la carpeta.",
+  "download-image-failed": "No se pudo descargar la imagen.",
+  "session-settings-verse-effects-hosts-only": "Solo para anfitriones",
+  "session-settings-verse-effects-everyone": "Todos",
+  "session-settings-verse-effects-none": "Ninguno",
+  "loading-books": "Cargando libros…",
+  "books-load-failed": "No se pudieron cargar los libros. Comprueba tu conexión e inténtalo de nuevo.",
+  "loading-translation": "Cargando {{name}} …",
+  "translation-load-failed": "No se pudo cargar {{name}} .",
+  "loading-translations": "Cargando traducciones…",
+  "translations-load-failed": "No se pudo cargar la lista completa de traducciones, por lo que es posible que falten algunas.",
+  "verse-of-the-day": "VERSÍCULO DEL DÍA",
+  "verse-of-the-day-loading": "Cargando el versículo del día…"
 }

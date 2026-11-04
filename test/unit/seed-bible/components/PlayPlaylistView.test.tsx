@@ -155,7 +155,7 @@ describe("PlayPlaylistView", () => {
 
       act(() => {
         container
-          .querySelector(".sb-reading-plans-back")!
+          .querySelector(".sb-pane-header-button")!
           .dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
       expect(goBackFromPlayingView).toHaveBeenCalledTimes(1);

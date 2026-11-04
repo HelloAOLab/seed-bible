@@ -51,8 +51,6 @@ import {
   type Annotation,
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
-import type { PlanMatch, ReadingPlansManager } from "./ReadingPlansManager";
-import type { FeaturesManager } from "./FeaturesManager";
 
 export interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
@@ -1384,7 +1382,6 @@ export function hasAnyDiscoverResults(
 export interface DiscoverPanelContent {
   hasAnnotations: boolean;
   showAnnotations: boolean;
-  plans: PlanMatch[];
   hasDiscoverResults: boolean;
   hasAny: boolean;
   showHiddenContentWarning: boolean;
@@ -1397,9 +1394,7 @@ export interface DiscoverPanelContent {
  */
 export function getDiscoverPanelContent(
   readingState: BibleReadingState,
-  annotations: AnnotationsManager,
-  readingPlans: ReadingPlansManager,
-  features: FeaturesManager
+  annotations: AnnotationsManager
 ): DiscoverPanelContent {
   const bookId = readingState.bookId.value;
   const chapterNumber = readingState.chapterNumber.value;
@@ -1416,11 +1411,7 @@ export function getDiscoverPanelContent(
       ? annotations.pendingCountForChapter(bookId, chapterNumber)
       : 0;
   const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
-  const plans = readingPlans.getReadingPlansForChapter(
-    bookId,
-    chapterNumber,
-    features
-  );
+
   const hasDiscoverResults = hasAnyDiscoverResults(readingState);
   const showHiddenContentWarning =
     readingState.hasHiddenDiscoveredContent.value &&
@@ -1429,14 +1420,9 @@ export function getDiscoverPanelContent(
   return {
     hasAnnotations,
     showAnnotations,
-    plans,
     hasDiscoverResults,
     showHiddenContentWarning,
-    hasAny:
-      showAnnotations ||
-      hasDiscoverResults ||
-      plans.length > 0 ||
-      showHiddenContentWarning,
+    hasAny: showAnnotations || hasDiscoverResults || showHiddenContentWarning,
   };
 }
 
