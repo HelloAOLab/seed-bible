@@ -2611,6 +2611,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // The "You" tab. Tapping it again while the Profile screen is up closes it,
   // matching how Search and Tabs toggle.
   const openProfileScreen = () => {
+    const fromToday = props.state.today.isOpen.peek();
     if (props.state.isProfileOpen.value) {
       props.state.closeProfile();
       return;
@@ -2621,7 +2622,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
-    props.state.openProfile();
+    props.state.openProfile({ fromToday });
   };
 
   // Chat's unread/typing badges, shown on the More button while chat is
