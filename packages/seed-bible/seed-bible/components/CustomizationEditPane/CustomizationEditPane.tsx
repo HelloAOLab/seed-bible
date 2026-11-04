@@ -91,7 +91,11 @@ const LogoCropModalContent = lazy(() =>
 
 export const CUSTOMIZATION_EDIT_PANE_ID = "customization-edit-pane";
 
-type CustomizationEditView = "edit" | "edit-variant" | "edit-extensions";
+type CustomizationEditView =
+  | "edit"
+  | "edit-variant"
+  | "edit-extensions"
+  | "edit-icons";
 
 /**
  * Whether `foregroundKey` (e.g. `primaryFontColor`) has a known reading
@@ -360,6 +364,9 @@ export function CustomizationEditPaneTitle(props: {
   if (view === "edit-extensions") {
     return <>{t("customization-extensions", { defaultValue: "Extensions" })}</>;
   }
+  if (view === "edit-icons") {
+    return <>{t("customization-icons", { defaultValue: "Icons" })}</>;
+  }
   if (view === "edit-variant") {
     const variant = record.variants.find(
       (v) => v.id === props.customizations.editingVariantId.value
@@ -559,6 +566,9 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
   if (view === "edit-extensions") {
     return <CustomizationEditExtensionsView state={state} />;
   }
+  if (view === "edit-icons") {
+    return <CustomizationEditIconsView state={state} />;
+  }
   if (view === "edit-variant") {
     return <CustomizationEditVariantView state={state} />;
   }
@@ -635,6 +645,10 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
     record,
     bibleData.availableTranslations.value
   );
+
+  const customIconCount = CUSTOMIZATION_ICON_IDS.filter(
+    (iconId) => !!record.icons?.[iconId]
+  ).length;
 
   const availabilityCounts = { available: 0, "auto-installed": 0, hidden: 0 };
   for (const entry of extensions.extensions.value) {
@@ -837,7 +851,32 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           </ul>
         </div>
 
-        <CustomizationIconsGroup state={state} />
+        <button
+          type="button"
+          className="sb-cz-row sb-cz-row-tall"
+          onClick={() => {
+            customizationEditView.value = "edit-icons";
+          }}
+        >
+          <span className="material-symbols-outlined sb-cz-row-icon">
+            category
+          </span>
+          <span className="sb-cz-row-text">
+            <span className="sb-cz-row-label">
+              {t("customization-icons", { defaultValue: "Icons" })}
+            </span>
+            <span className="sb-cz-row-hint">
+              {t("customization-icons-summary", {
+                count: customIconCount,
+                total: CUSTOMIZATION_ICON_IDS.length,
+                defaultValue: "{{count}} of {{total}} customized",
+              })}
+            </span>
+          </span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
+        </button>
 
         <button
           type="button"
@@ -935,7 +974,7 @@ const DEFAULT_CUSTOMIZATION_ICONS: Record<
   discover: <MaterialIcon>explore</MaterialIcon>,
 };
 
-function CustomizationIconsGroup(props: { state: SeedBibleState }) {
+function CustomizationEditIconsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { customizations } = state;
   const { t } = useI18n();
@@ -944,7 +983,7 @@ function CustomizationIconsGroup(props: { state: SeedBibleState }) {
   const uploadingIconId = useSignal<CustomizationIconId | null>(null);
   const record = customizations.editingCustomization.value;
   if (!record) {
-    return null;
+    return <CustomizationNotFound />;
   }
 
   const iconLabels: Record<CustomizationIconId, string> = {
@@ -1006,73 +1045,74 @@ function CustomizationIconsGroup(props: { state: SeedBibleState }) {
   };
 
   return (
-    <div className="sb-cz-group" data-tutorial="customization-icons">
-      <h3 className="sb-settings-subheading">
-        {t("customization-icons", { defaultValue: "Icons" })}
-      </h3>
-      <p className="sb-cz-hint sb-cz-icons-hint">
-        {t("customization-icons-hint", {
-          defaultValue:
-            "Upload an SVG to replace any of these icons. Icons are drawn as a single shape in the theme's icon color.",
-        })}
-      </p>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".svg,image/svg+xml"
-        hidden
-        onChange={(event) => void handleFileChosen(event)}
-      />
-      <ul className="sb-cz-icon-list">
-        {CUSTOMIZATION_ICON_IDS.map((iconId) => {
-          const url = record.icons?.[iconId];
-          const isBusy = uploadingIconId.value !== null;
-          return (
-            <li key={iconId} className="sb-cz-icon-row">
-              <span className="sb-cz-icon-preview" aria-hidden="true">
-                {url ? (
-                  <CustomIconImage url={url} />
-                ) : (
-                  DEFAULT_CUSTOMIZATION_ICONS[iconId]
-                )}
-              </span>
-              <span className="sb-cz-icon-name">{iconLabels[iconId]}</span>
-              <button
-                type="button"
-                className="sb-cz-button"
-                onClick={() => pickFile(iconId)}
-                disabled={isBusy}
-                aria-label={t("upload-custom-icon-for", {
-                  name: iconLabels[iconId],
-                  defaultValue: "Upload an SVG for {{name}}",
-                })}
-              >
-                {url
-                  ? t("replace-logo", { defaultValue: "Replace" })
-                  : t("upload-custom-icon", { defaultValue: "Upload SVG" })}
-              </button>
-              {url && (
+    <div className="sb-settings-page sb-cz-page">
+      <section className="sb-settings-section sb-cz-body">
+        <p className="sb-cz-intro">
+          {t("customization-icons-hint", {
+            defaultValue:
+              "Upload an SVG to replace any of these icons. Icons are drawn as a single shape in the theme's icon color.",
+          })}
+        </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".svg,image/svg+xml"
+          hidden
+          onChange={(event) => void handleFileChosen(event)}
+        />
+        <ul className="sb-cz-icon-list">
+          {CUSTOMIZATION_ICON_IDS.map((iconId) => {
+            const url = record.icons?.[iconId];
+            const isBusy = uploadingIconId.value !== null;
+            return (
+              <li key={iconId} className="sb-cz-icon-row">
+                <span className="sb-cz-icon-preview" aria-hidden="true">
+                  {url ? (
+                    <CustomIconImage url={url} />
+                  ) : (
+                    DEFAULT_CUSTOMIZATION_ICONS[iconId]
+                  )}
+                </span>
+                <span className="sb-cz-icon-name">{iconLabels[iconId]}</span>
                 <button
                   type="button"
-                  className="sb-cz-icon-button"
-                  onClick={() => void customizations.removeEditingIcon(iconId)}
+                  className="sb-cz-button"
+                  onClick={() => pickFile(iconId)}
                   disabled={isBusy}
-                  aria-label={t("reset-custom-icon", {
+                  aria-label={t("upload-custom-icon-for", {
                     name: iconLabels[iconId],
-                    defaultValue: "Use the default {{name}} icon",
-                  })}
-                  title={t("reset-custom-icon", {
-                    name: iconLabels[iconId],
-                    defaultValue: "Use the default {{name}} icon",
+                    defaultValue: "Upload an SVG for {{name}}",
                   })}
                 >
-                  <span className="material-symbols-outlined">close</span>
+                  {url
+                    ? t("replace-logo", { defaultValue: "Replace" })
+                    : t("upload-custom-icon", { defaultValue: "Upload SVG" })}
                 </button>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+                {url && (
+                  <button
+                    type="button"
+                    className="sb-cz-icon-button"
+                    onClick={() =>
+                      void customizations.removeEditingIcon(iconId)
+                    }
+                    disabled={isBusy}
+                    aria-label={t("reset-custom-icon", {
+                      name: iconLabels[iconId],
+                      defaultValue: "Use the default {{name}} icon",
+                    })}
+                    title={t("reset-custom-icon", {
+                      name: iconLabels[iconId],
+                      defaultValue: "Use the default {{name}} icon",
+                    })}
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </div>
   );
 }

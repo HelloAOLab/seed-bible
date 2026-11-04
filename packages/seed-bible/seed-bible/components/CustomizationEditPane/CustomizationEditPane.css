@@ -516,10 +516,6 @@ button.sb-cz-logo:disabled {
 
 /* Custom icons */
 
-.sb-cz-icons-hint {
-  padding: 0 0.25rem;
-}
-
 .sb-cz-icon-list {
   display: flex;
   flex-direction: column;
