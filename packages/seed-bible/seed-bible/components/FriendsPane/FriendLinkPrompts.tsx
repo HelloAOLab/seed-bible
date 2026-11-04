@@ -6,7 +6,7 @@ import {
   type Friend,
   type FriendsManager,
 } from "../../managers/FriendsManager";
-import type { LoginManager } from "../../managers/LoginManager";
+import type { LoginManager, UserProfile } from "../../managers/LoginManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import { displayNameOf } from "../../managers/Utils";
@@ -18,6 +18,7 @@ import {
   FRIEND_REQUEST_PARAM,
   parseUserId,
 } from "./friendLinks";
+import type { FriendLinkPreviewLoader } from "../../managers/FriendLinkPreviewLoader";
 
 type Toast = (message: string) => void;
 type ProfileLookup = "found" | "no_account" | "failed";
@@ -28,6 +29,10 @@ export interface FriendLinkDeps {
   friends: FriendsManager;
   modals: Pick<ModalManager, "openModal" | "closeModal">;
   toast: Toast;
+  friendLinkPreview: Pick<
+    FriendLinkPreviewLoader,
+    "result" | "initialLoadPromise"
+  >;
 }
 
 function PromptActions(props: { children: ComponentChildren }) {
@@ -449,6 +454,23 @@ async function signInThen(
   }
 }
 
+/**
+ * The linked person's profile, from the friend link loader when it already
+ * has it (seeded by SSR, or its own load) so opening the prompt doesn't
+ * read it a second time.
+ */
+async function lookUpLinkedProfile(
+  deps: FriendLinkDeps,
+  userId: string
+): Promise<UserProfile | null> {
+  await deps.friendLinkPreview.initialLoadPromise;
+  const loaded = deps.friendLinkPreview.result.peek();
+  if (loaded?.userId === userId) {
+    return loaded.profile;
+  }
+  return deps.login.getPublicProfile(userId);
+}
+
 export async function openAddFriendLinkPrompt(
   deps: FriendLinkDeps,
   linkedUserId: string
@@ -471,7 +493,7 @@ export async function openAddFriendLinkPrompt(
     // never set them can still be befriended, so a failed lookup isn't fatal.
     lookup = "failed";
     try {
-      const profile = await deps.login.getPublicProfile(userId);
+      const profile = await lookUpLinkedProfile(deps, userId);
       person = { userId, ...toFriendProfile(profile) };
       lookup = profile ? "found" : "no_account";
     } catch (error) {

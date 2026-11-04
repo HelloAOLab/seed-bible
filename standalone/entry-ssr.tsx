@@ -680,8 +680,8 @@ async function renderState(
       "ssr.wait.chapter",
       state.app.selectedTab.value?.readingState.chapterDataPromise
     ),
-    // So the title, meta and modal describe a shared playlist or reading
-    // plan link's content. Awaited here with the chapter, not suspended on
+    // So the title, meta and modal describe a shared playlist, reading
+    // plan or friend link's content. Awaited here with the chapter, not suspended on
     // during the render, for the reason above.
     timer.wait(
       "ssr.wait.playlistPage",
@@ -690,6 +690,10 @@ async function renderState(
     timer.wait(
       "ssr.wait.readingPlanPage",
       state.readingPlans.initialReadingPlanPageLoadPromise
+    ),
+    timer.wait(
+      "ssr.wait.friendLinkPreview",
+      state.friendLinkPreview.initialLoadPromise
     ),
   ]);
   // A reload mid-playlist names only its step, not the chapter; the reader
@@ -724,6 +728,7 @@ async function renderState(
       <meta property="og:title" content={state.app.socialTitle.value} />
       <meta property="og:description" content={state.app.description.value} />
       <meta property="og:url" content={state.app.canonicalUrl.value} />
+      {state.app.noIndex.value && <meta name="robots" content="noindex" />}
       <meta property="og:site_name" content={state.app.siteName.value} />
       {/* Only emitted for a shared playlist with a cover image, or when a
           customization with an uploaded logo is active (see
@@ -822,6 +827,9 @@ async function renderState(
   const readingPlanPageSeedJson = escapeForScript(
     JSON.stringify(state.readingPlans.getReadingPlanPageSeed())
   );
+  const friendLinkSeedJson = escapeForScript(
+    JSON.stringify(state.friendLinkPreview.getSeed())
+  );
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
@@ -836,6 +844,7 @@ async function renderState(
     ["<!-- CUSTOMIZATION_JSON -->", customizationSeedJson],
     ["<!-- PLAYLIST_PAGE_JSON -->", playlistPageSeedJson],
     ["<!-- READING_PLAN_PAGE_JSON -->", readingPlanPageSeedJson],
+    ["<!-- FRIEND_LINK_JSON -->", friendLinkSeedJson],
     ["<!-- APP_HTML -->", appHtml],
   ];
 
