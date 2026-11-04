@@ -3883,3 +3883,61 @@ describe("translation suggestions", () => {
     expect(chatB.translationSuggestion.value).toBeNull();
   });
 });
+
+describe("the fullscreen playlist editor", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  /** Renders the editor's pane the way `PaneLayout` does: `<pane.component />`. */
+  function EditorPaneHost(props: { state: SeedBibleState }) {
+    const pane = props.state.panes.panes.value.find(
+      (item) => item.id === "playlist-editor-pane"
+    );
+    return pane ? h(pane.component, {}) : null;
+  }
+
+  it("keeps the title field focused while the author types", async () => {
+    const state = await createTestSeedBibleState();
+    (state.app.viewportWidth as unknown as { value: number }).value = 1200;
+    state.playlists.editPlaylist(htmlPlaylist());
+    const Provider = await realI18nProvider();
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: h(EditorPaneHost, { state }),
+        }),
+        container
+      );
+    });
+
+    const title = container.querySelector<HTMLInputElement>(
+      ".sb-playlist-editor-title"
+    );
+    expect(title).not.toBeNull();
+    title!.focus();
+    act(() => {
+      title!.value = "Morning prayer";
+      title!.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(state.playlists.editingPlaylist.value?.title).toBe("Morning prayer");
+    expect(title!.isConnected).toBe(true);
+    expect(document.activeElement).toBe(title);
+  });
+});

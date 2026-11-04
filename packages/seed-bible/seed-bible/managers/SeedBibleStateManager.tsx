@@ -3610,9 +3610,15 @@ export function createSeedBibleState(
   // above. A screen that takes its place mid-edit (Today, say) moves the
   // draft into the Discover pane rather than dropping it.
   const PLAYLIST_EDITOR_PANE_ID = "playlist-editor-pane";
+  // Whether there is a draft at all, not the draft itself: reopening the pane
+  // hands it a new component, which remounts the editor and loses its focus
+  // and open step on every keystroke.
+  const editingAPlaylist = computed(
+    () => playlists.editingPlaylist.value !== null
+  );
   effect(() => {
     if (
-      playlists.editingPlaylist.value &&
+      editingAPlaylist.value &&
       playlists.editorPlacement.value === "fullscreen"
     ) {
       panes.openPane({
