@@ -207,7 +207,7 @@
 .sb-extension-info-hero-card {
   align-items: flex-start;
   padding: 1.75rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 1.5rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 97%);
 }
@@ -305,7 +305,7 @@
 .sb-extension-info-card {
   gap: 0.75rem;
   padding: 1.125rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 1rem;
 }
 
@@ -379,6 +379,6 @@
 }
 
 .sb-extension-info-wide .sb-extension-permissions .sb-extension-consent-card {
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 1rem;
 }

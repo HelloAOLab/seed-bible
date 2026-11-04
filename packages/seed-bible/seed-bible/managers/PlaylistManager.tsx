@@ -33,7 +33,7 @@ import {
 import type { DiscoverManager } from "./DiscoverManager";
 import { emphasizeVerses } from "./BibleReadingManager";
 import {
-  BOOK_SLUGS,
+  canonicalBookIndex,
   type BookId,
   type VerseRef as ReaderVerseRef,
 } from "./BibleDataManager";
@@ -195,15 +195,6 @@ export interface PlaylistVerseSelection {
   bookId: string;
   chapter: number;
   verse?: number;
-}
-
-/** Canonical Protestant + Apocrypha order from {@link BOOK_SLUGS} insertion order. */
-const CANONICAL_BOOK_ORDER = new Map(
-  (Object.keys(BOOK_SLUGS) as BookId[]).map((id, index) => [id, index])
-);
-
-function canonicalBookIndex(bookId: string): number {
-  return CANONICAL_BOOK_ORDER.get(bookId as BookId) ?? Number.MAX_SAFE_INTEGER;
 }
 
 function comparePlaylistVerseSelections(

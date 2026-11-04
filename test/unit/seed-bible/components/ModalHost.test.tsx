@@ -100,6 +100,42 @@ describe("ModalHost", () => {
     expect(container.querySelector(".sb-footnote-modal-footer")).toBeNull();
   });
 
+  it("marks a modal opened with mobileSheet to dock as a sheet on phones", async () => {
+    const state = await createTestSeedBibleState();
+    const manager = createModalManager();
+    act(() => {
+      manager.openModal({
+        title: "Pick",
+        content: () => <p>Body</p>,
+        mobileSheet: true,
+        useCasualOSApp: false,
+      });
+    });
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <ModalHost manager={manager} />
+        </TestHost>,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-footnote-modal-overlay-mobile-sheet")
+    ).not.toBeNull();
+  });
+
+  it("stays a centered modal by default", async () => {
+    await renderWithModal();
+
+    expect(
+      container.querySelector(".sb-footnote-modal-overlay")
+    ).not.toBeNull();
+    expect(
+      container.querySelector(".sb-footnote-modal-overlay-mobile-sheet")
+    ).toBeNull();
+  });
+
   describe("onDismiss", () => {
     async function renderDismissable() {
       const state = await createTestSeedBibleState();

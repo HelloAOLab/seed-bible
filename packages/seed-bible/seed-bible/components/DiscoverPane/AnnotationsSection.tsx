@@ -420,6 +420,7 @@ function AnnotationGroupSection(props: {
                           modals,
                           annotations,
                           annotation,
+                          label,
                           toast
                         );
                       }}
@@ -643,12 +644,19 @@ export function AnnotationsSection(props: {
   );
 }
 
-/** Opens the delete-annotation confirmation modal. */
+/**
+ * Opens the delete-annotation confirmation modal, naming the verses it's on
+ * (`reference`, e.g. "Genesis 3:3-5"). `erase` replaces the plain delete, for
+ * a caller that keeps its own list of annotations to update.
+ */
 export function openDeleteAnnotationConfirm(
   modals: ModalManager,
   annotations: AnnotationsManager,
   annotation: Annotation,
-  toast: SeedBibleState["app"]["toast"]
+  reference: string,
+  toast: SeedBibleState["app"]["toast"],
+  erase: () => Promise<void> = () =>
+    annotations.deleteAnnotationAndRefresh(annotation)
 ) {
   openConfirmDeleteModal(modals, {
     id: `delete-annotation-confirm-${annotation.id}`,
@@ -657,10 +665,12 @@ export function openDeleteAnnotationConfirm(
       defaultValue: "Delete annotation?",
     },
     message: (t) =>
-      t("delete-annotation-confirm-message", {
-        defaultValue: "Delete this annotation? This can't be undone.",
+      t("delete-annotation-on-confirm-message", {
+        reference,
+        defaultValue:
+          "Delete the annotation on {{reference}}? This can't be undone.",
       }),
-    onConfirm: () => annotations.deleteAnnotationAndRefresh(annotation),
+    onConfirm: erase,
     failedMessage: (t) =>
       t("delete-annotation-failed", {
         defaultValue: "Couldn't delete the annotation.",

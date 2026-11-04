@@ -147,6 +147,34 @@ describe("createSidebar", () => {
     expect(unset.isSidebarCollapsed.value).toBe(false);
   });
 
+  it("counts only the user's own expand, collapse or settings toggle as a user resize", () => {
+    vi.useFakeTimers();
+    try {
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, "true");
+      const sidebar = createSidebar({
+        navigation,
+        chatsManager: createChatsManagerMock(),
+      });
+
+      // A saved choice applied on load isn't something the user just did.
+      sidebar.hydrateStoredCollapsed();
+      expect(sidebar.isUserResize()).toBe(false);
+
+      sidebar.toggleSidebarCollapsed();
+      expect(sidebar.isUserResize()).toBe(true);
+
+      // Long after, a change made for them (a viewport band) isn't theirs.
+      vi.advanceTimersByTime(5000);
+      sidebar.isSidebarCollapsed.value = true;
+      expect(sidebar.isUserResize()).toBe(false);
+
+      sidebar.toggleSettings();
+      expect(sidebar.isUserResize()).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("openSidebar() and closeSidebar() control mobile open state", () => {
     const sidebar = createSidebar({
       navigation,

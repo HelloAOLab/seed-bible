@@ -8,7 +8,7 @@ import { readInjectedFriendLinkSeed } from "../app/friendLinkSeed";
 import { readTrustedSharedPageSeeds } from "../app/sharedPageSeeds";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import {
-  decideHydration,
+  decideStartupHydration,
   isRenderedByThisBuild,
   type HydrationDecision,
 } from "../app/hydrationGate";
@@ -103,12 +103,12 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
     const decision: HydrationDecision =
       chapterLoads === "timed-out"
         ? { hydrate: false, reason: "chapter-load-timed-out" }
-        : decideHydration({
+        : decideStartupHydration({
             config,
-            pathname: location.pathname,
-            search: location.search,
+            navigation: state.navigation,
             container,
             clientCommit: __GIT_COMMIT__,
+            clientLanguage: state.i18n.language.peek(),
           });
 
     const app = <Main initialState={state} config={config} />;
