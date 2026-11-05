@@ -1022,7 +1022,7 @@ export interface OpenReadingPlansPaneOptions {
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
   /**
    * Where the pane opens. Defaults to "side" — docked beside the reader, which
-   * is what the toolbar's Plans tool wants. The Profile screen passes
+   * is how a shared plan link opens it. The Profile screen passes
    * "fullscreen" so tapping "All plans" replaces it rather than opening a
    * panel behind it.
    */
@@ -1031,7 +1031,8 @@ export interface OpenReadingPlansPaneOptions {
   /**
    * Returns to the screen that opened the pane, from the plans list or from a
    * plan that screen opened directly. Without it the list has no back button,
-   * which is right for the toolbar: the reader is still there beside it.
+   * which is right for a shared plan link: the reader is still there beside
+   * it.
    */
   onBack?: () => void;
 }
@@ -1039,9 +1040,9 @@ export interface OpenReadingPlansPaneOptions {
 export const READING_PLANS_PANE_ID = "reading-plans-pane";
 
 /**
- * Opens the reading plans pane. Shared by the reader toolbar's Plans tool and
- * the Profile screen's plans card so the two land on the same pane, with the
- * same chrome and the same scripture/playback wiring.
+ * Opens the reading plans pane. Shared by shared plan links and the Profile
+ * screen's plans card so the two land on the same pane, with the same chrome
+ * and the same scripture/playback wiring.
  */
 export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
   const {

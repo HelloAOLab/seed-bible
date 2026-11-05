@@ -4014,7 +4014,7 @@ export function createSeedBibleState(
     }
     closeYourContent();
     closeProfile();
-    // Fullscreen rather than the toolbar's docked "side": the user came from a
+    // Fullscreen rather than the default docked "side": the user came from a
     // fullscreen screen, so a side panel would leave them looking at the reader.
     openReadingPlansPane({
       readingPlans,
