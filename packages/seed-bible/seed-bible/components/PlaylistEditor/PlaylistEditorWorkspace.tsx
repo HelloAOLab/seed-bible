@@ -636,6 +636,49 @@ function VersePickBar(props: { state: SeedBibleState }) {
   );
 }
 
+/**
+ * Shown when the reader has moved off the open scripture step's passage (the
+ * chapter pill, the book selector): Apply points the step at the chapter on
+ * screen, Cancel takes the reader back to the step's passage.
+ */
+function ChapterChangeBar(props: { state: SeedBibleState }) {
+  const { playlists } = props.state;
+  const { t } = useI18n();
+  const resolveBookName = useResolveBookName(props.state.tabs);
+  const change = playlists.editorChapterChange.value;
+  if (!change) {
+    return null;
+  }
+  return (
+    <div className="sb-pe sb-pe-pickbar sb-pe-chapterbar" role="status">
+      <span>
+        {t("playlist-editor-use-chapter", {
+          step: playlists.editorStepIndex.value + 1,
+          passage: formatVerseRef(
+            { bookId: change.bookId, chapter: change.chapter },
+            resolveBookName
+          ),
+          defaultValue: "Use {{passage}} for step {{step}}?",
+        })}
+      </span>
+      <button
+        type="button"
+        className="sb-pe-pickbar-cancel"
+        onClick={() => playlists.cancelEditorChapterChange()}
+      >
+        {t("cancel", { defaultValue: "Cancel" })}
+      </button>
+      <button
+        type="button"
+        className="sb-pe-pickbar-apply"
+        onClick={() => playlists.applyEditorChapterChange()}
+      >
+        {t("playlist-editor-apply", { defaultValue: "Apply" })}
+      </button>
+    </div>
+  );
+}
+
 function ModeSwitch(props: { playlists: PlaylistManager }) {
   const { playlists } = props;
   const { t } = useI18n();
@@ -823,7 +866,8 @@ export function PlaylistEditorWorkspace(props: {
           card
         )}
         {/* Add and Review & publish belong to the list; a step's page keeps
-            only the verse pick bar here, while verses are being picked. */}
+            only the verse pick bar here while verses are being picked, or the
+            bar for using a chapter the reader has moved to. */}
         {onList ? (
           <div className="sb-pe sb-pe-mobile-bottom">
             <div className="sb-pe-mobile-bottom-row">
@@ -837,9 +881,11 @@ export function PlaylistEditorWorkspace(props: {
               />
             ) : null}
           </div>
-        ) : playlists.editorVersePickIndex.value !== null ? (
+        ) : playlists.editorVersePickIndex.value !== null ||
+          playlists.editorChapterChange.value ? (
           <div className="sb-pe sb-pe-mobile-bottom">
             <VersePickBar state={state} />
+            <ChapterChangeBar state={state} />
           </div>
         ) : null}
         {detailsOpen ? <PlaylistDetailsSheet state={state} /> : null}
@@ -861,6 +907,7 @@ export function PlaylistEditorWorkspace(props: {
       {card}
       <div className="sb-pe sb-pe-bottom">
         <VersePickBar state={state} />
+        <ChapterChangeBar state={state} />
         <div className="sb-pe-actionbar">
           <ModeSwitch playlists={playlists} />
           <PublishButton state={state} />

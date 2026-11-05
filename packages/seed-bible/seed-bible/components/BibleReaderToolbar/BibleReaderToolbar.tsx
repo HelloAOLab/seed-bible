@@ -10,7 +10,10 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
-import { isPlaylistEditorTab } from "../PlaylistEditor/PlaylistEditorWorkspace";
+import {
+  isPlaylistEditorTab,
+  playlistEditorScriptureStep,
+} from "../PlaylistEditor/PlaylistEditorWorkspace";
 import {
   MAX_CUSTOM_HIGHLIGHT_COLORS,
   UI_SIZE_SCALE_MAP,
@@ -3033,8 +3036,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           {isSmallScreen.value &&
             activeMobileTab.value === "bible" &&
-            // The playlist editor has its own bar where chapter nav floats.
-            !isPlaylistEditorTab(props.state, selectedTab.value) &&
+            // In the playlist editor, chapter nav floats only over a
+            // scripture step's page, where moving chapters can re-point the
+            // step; the list and the other steps' cards cover the reader.
+            (!isPlaylistEditorTab(props.state, selectedTab.value) ||
+              !!playlistEditorScriptureStep(props.state, selectedTab.value)) &&
             (() => {
               const audio =
                 audioPlayTool.value && audioPlayTool.value.visible.value

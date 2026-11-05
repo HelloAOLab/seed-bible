@@ -332,6 +332,31 @@ describe("the playlist editor", () => {
       expect(container.querySelector(".sb-pe-publish")).toBeNull();
     });
 
+    it("offers the chapter the reader moved to, and Apply gives it to the step", async () => {
+      openWorkspace(STEPS, 0, true);
+      const readingState =
+        state.app.currentReadingState.value!.tab.readingState;
+      // Let the editor's own trip to the step's chapter finish first.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      expect(container.querySelector(".sb-pe-chapterbar")).toBeNull();
+
+      act(() => {
+        readingState.bookId.value = "EXO";
+        readingState.chapterNumber.value = 2;
+      });
+
+      const bar = container.querySelector(".sb-pe-chapterbar");
+      expect(bar?.textContent).toContain("for step 1?");
+      click(bar!.querySelector(".sb-pe-pickbar-apply"));
+
+      expect(items()[0]).toEqual({
+        type: "bible-verse",
+        ref: { bookId: "EXO", chapter: 2 },
+      });
+    });
+
     it("goes back to the list when the open step is deleted", () => {
       openWorkspace(STEPS, 1, true);
 

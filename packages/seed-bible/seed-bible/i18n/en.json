@@ -1287,6 +1287,7 @@
   "playlist-editor-back-to-items": "Back to items",
   "playlist-editor-choose-step": "Choose a step from the list to edit it.",
   "playlist-editor-step-position": "Step {{step}} of {{count}} · {{kind}}",
+  "playlist-editor-use-chapter": "Use {{passage}} for step {{step}}?",
   "playlist-editor-close": "Close playlist editor",
   "playlist-editor-step-count": "{{steps}} steps · ~{{minutes}} min",
   "playlist-editor-duplicate": "Duplicate",

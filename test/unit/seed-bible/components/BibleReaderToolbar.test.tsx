@@ -351,6 +351,35 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     }
   });
 
+  it("floats the chapter pill over a playlist scripture step's page, not over the editor's list", async () => {
+    await act(async () => {
+      state.playlists.editPlaylist({
+        id: "playlist_1",
+        recordName: "user-1",
+        authorUserId: "user-1",
+        title: "Psalms",
+        description: null,
+        items: [
+          { type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } },
+          { type: "html", html: "<p>Reflect</p>" },
+        ],
+        createdAtMs: 1,
+        updatedAtMs: 1,
+      });
+    });
+    await renderToolbar();
+
+    // The list covers the reader.
+    expect(container.querySelector(".sb-reader-floating-nav")).toBeNull();
+
+    await act(async () => state.playlists.selectEditorStep(0));
+    expect(container.querySelector(".sb-reader-floating-nav")).not.toBeNull();
+
+    // A note's card covers the reader too.
+    await act(async () => state.playlists.selectEditorStep(1));
+    expect(container.querySelector(".sb-reader-floating-nav")).toBeNull();
+  });
+
   it("does not clear the verse selection when a touch tap lands in a poetry verse's blank space", async () => {
     const readingState = await selectFirstVerse();
     await renderToolbar();

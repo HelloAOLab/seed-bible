@@ -1660,6 +1660,100 @@ describe("createPlaylistManager", () => {
       expect(manager.editorVersePickIndex.value).toBeNull();
     });
 
+    describe("moving the reader off a scripture step's chapter", () => {
+      // Like the real reader, navigating moves its position.
+      const openOnStep = async () => {
+        const opened = await openEditor();
+        const { readingState } = opened.tab;
+        selectTranslationAndChapterMock.mockImplementation(
+          async (_translation: string, bookId: string, chapter: number) => {
+            readingState.bookId.value = bookId;
+            readingState.chapterNumber.value = chapter;
+          }
+        );
+        opened.manager.selectEditorStep(0);
+        await flush();
+        return opened;
+      };
+
+      it("offers the chapter moved to, and Apply points the step at that whole chapter", async () => {
+        const { manager, tab } = await openOnStep();
+        expect(manager.editorChapterChange.value).toBeNull();
+
+        tab.readingState.chapterNumber.value = 2;
+
+        expect(manager.editorChapterChange.value).toEqual({
+          bookId: "GEN",
+          chapter: 2,
+        });
+
+        manager.applyEditorChapterChange();
+        await flush();
+
+        expect(manager.editingPlaylist.value!.items[0]).toEqual({
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 2 },
+        });
+        expect(manager.editorChapterChange.value).toBeNull();
+      });
+
+      it("Cancel takes the reader back to the step's passage, leaving the step alone", async () => {
+        const { manager, tab } = await openOnStep();
+        tab.readingState.bookId.value = "EXO";
+        tab.readingState.chapterNumber.value = 3;
+
+        manager.cancelEditorChapterChange();
+        await flush();
+
+        expect(selectTranslationAndChapterMock).toHaveBeenLastCalledWith(
+          "BSB",
+          "GEN",
+          1,
+          { scrollToVerse: 2 }
+        );
+        expect(manager.editorChapterChange.value).toBeNull();
+        expect(manager.editingPlaylist.value!.items[0]).toEqual(steps[0]);
+      });
+
+      it("offers nothing while the editor itself is taking the reader to the step", async () => {
+        const { manager, tab } = await openEditor();
+        tab.readingState.bookId.value = "EXO";
+        tab.readingState.chapterNumber.value = 5;
+        let arrive!: () => void;
+        selectTranslationAndChapterMock.mockImplementation(
+          (_translation: string, bookId: string, chapter: number) =>
+            new Promise<void>((resolve) => {
+              arrive = () => {
+                tab.readingState.bookId.value = bookId;
+                tab.readingState.chapterNumber.value = chapter;
+                resolve();
+              };
+            })
+        );
+
+        manager.selectEditorStep(0);
+        await flush();
+        // Still on Exodus 5 while Genesis 1 loads: not a move by the reader.
+        expect(manager.editorChapterChange.value).toBeNull();
+
+        arrive();
+        await flush();
+        expect(manager.editorChapterChange.value).toBeNull();
+      });
+
+      it("offers nothing in preview, or while verses are being picked", async () => {
+        const { manager, tab } = await openOnStep();
+        tab.readingState.chapterNumber.value = 2;
+
+        manager.editorMode.value = "preview";
+        expect(manager.editorChapterChange.value).toBeNull();
+
+        manager.editorMode.value = "edit";
+        manager.editorVersePickIndex.value = 0;
+        expect(manager.editorChapterChange.value).toBeNull();
+      });
+    });
+
     it("gives the open scripture step the verses picked in the reader on Apply", async () => {
       const { manager, tab } = await openEditor();
       manager.selectEditorStep(0);

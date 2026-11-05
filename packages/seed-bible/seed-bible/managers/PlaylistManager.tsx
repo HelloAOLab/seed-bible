@@ -1431,6 +1431,11 @@ export function createPlaylistManager(
 
   let editorDecoration: { tab: ReaderTab; id: string } | null = null;
   let editorNavigationCount = 0;
+  /**
+   * True while the editor itself is taking the reader to the open step's
+   * passage, so that trip isn't taken for the reader moving elsewhere.
+   */
+  const editorNavigating = signal(false);
   const clearEditorDecoration = () => {
     if (editorDecoration) {
       editorDecoration.tab.readingState.removeDecoration(editorDecoration.id);
@@ -1448,16 +1453,24 @@ export function createPlaylistManager(
       const tab = activeTab.peek();
       const item = editingPlaylist.peek()?.items[editorStepIndex.peek()];
       if (!key || !tab || item?.type !== "bible-verse") {
+        editorNavigating.value = false;
         return;
       }
       const { ref } = item;
+      editorNavigating.value = true;
       void (async () => {
-        await tab.readingState.selectTranslationAndChapter(
-          item.translationId ?? tab.readingState.translationId.peek(),
-          ref.bookId,
-          ref.chapter,
-          ref.verse != null ? { scrollToVerse: ref.verse } : undefined
-        );
+        try {
+          await tab.readingState.selectTranslationAndChapter(
+            item.translationId ?? tab.readingState.translationId.peek(),
+            ref.bookId,
+            ref.chapter,
+            ref.verse != null ? { scrollToVerse: ref.verse } : undefined
+          );
+        } finally {
+          if (navigation === editorNavigationCount) {
+            editorNavigating.value = false;
+          }
+        }
         if (navigation !== editorNavigationCount || ref.verse == null) {
           return;
         }
@@ -1486,6 +1499,75 @@ export function createPlaylistManager(
       })();
     });
   });
+
+  /**
+   * The chapter the reader has moved to, by its own navigation, when it isn't
+   * the open scripture step's: the chapter Apply would give the step. Null
+   * while the reader is on the step's passage (any chapter of a range running
+   * across chapters), while verses are being picked, or in preview.
+   */
+  const editorChapterChange = computed<{
+    bookId: string;
+    chapter: number;
+  } | null>(() => {
+    if (
+      editorNavigating.value ||
+      editorVersePickIndex.value !== null ||
+      editorMode.value !== "edit"
+    ) {
+      return null;
+    }
+    const item = editingPlaylist.value?.items[editorStepIndex.value];
+    if (item?.type !== "bible-verse" || item.compare) {
+      return null;
+    }
+    const readingState = activeTab.value?.readingState;
+    const bookId = readingState?.bookId.value;
+    const chapter = readingState?.chapterNumber.value;
+    if (!bookId || !chapter) {
+      return null;
+    }
+    const { ref } = item;
+    const lastChapter = Math.max(ref.endChapter ?? ref.chapter, ref.chapter);
+    if (
+      bookId === ref.bookId &&
+      chapter >= ref.chapter &&
+      chapter <= lastChapter
+    ) {
+      return null;
+    }
+    return { bookId, chapter };
+  });
+
+  /** Points the open scripture step at the whole chapter the reader is on. */
+  const applyEditorChapterChange = (): void => {
+    const change = editorChapterChange.peek();
+    const index = editorStepIndex.peek();
+    const item = editingPlaylist.peek()?.items[index];
+    if (!change || item?.type !== "bible-verse") {
+      return;
+    }
+    updateEditingPlaylistItem(index, {
+      ...item,
+      ref: { bookId: change.bookId, chapter: change.chapter },
+    });
+  };
+
+  /** Takes the reader back to the open scripture step's passage. */
+  const cancelEditorChapterChange = (): void => {
+    const tab = activeTab.peek();
+    const item = editingPlaylist.peek()?.items[editorStepIndex.peek()];
+    if (!tab || item?.type !== "bible-verse") {
+      return;
+    }
+    const { ref } = item;
+    void tab.readingState.selectTranslationAndChapter(
+      item.translationId ?? tab.readingState.translationId.peek(),
+      ref.bookId,
+      ref.chapter,
+      ref.verse != null ? { scrollToVerse: ref.verse } : undefined
+    );
+  };
 
   /**
    * The verses picked in the reader for the step in `editorVersePickIndex`,
@@ -3621,6 +3703,9 @@ export function createPlaylistManager(
     editorAddMenu,
     editorVersePickIndex,
     editorVersePickRef,
+    editorChapterChange,
+    applyEditorChapterChange,
+    cancelEditorChapterChange,
     editorDetailsSheetOpen,
     selectEditorStep,
     addEditorStep,
