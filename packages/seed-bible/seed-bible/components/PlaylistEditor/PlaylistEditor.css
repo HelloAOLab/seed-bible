@@ -1593,7 +1593,7 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 10px 17px 9px;
+  padding: 10px 12px 9px;
   border-top: 1px solid var(--pe-border-soft);
   background: var(--pe-surface);
   filter: drop-shadow(0 -1px 7px rgba(0, 0, 0, 0.1));
@@ -1604,10 +1604,13 @@
   margin-bottom: var(--sb-reader-bottom-chrome);
 }
 
+/* Has to fit a 320px-wide phone: the Items and Add buttons take what their
+   labels need, and Review & publish takes the rest, wrapping onto a second
+   line rather than running off the screen. */
 .sb-pe-mobile-bottom-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -1615,10 +1618,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   flex: 0 0 auto;
-  width: 124px;
   height: 44px;
+  padding: 0 10px;
   border: 1px solid color-mix(in srgb, var(--pe-text) 13%, var(--pe-surface));
   border-radius: 10px;
   font-family: var(--pe-font-list);
@@ -1647,13 +1650,19 @@
 }
 
 .sb-pe-mobile-bottom .sb-pe-add-step {
-  width: 76px;
+  width: auto;
+  min-width: 64px;
   flex: 0 0 auto;
 }
 
 .sb-pe-mobile-bottom .sb-pe-publish {
   flex: 1;
+  min-width: 0;
   height: 44px;
+  padding-inline: 10px;
+  text-align: center;
+  white-space: normal;
+  line-height: 15px;
 }
 
 .sb-pe-sheet-scrim {
