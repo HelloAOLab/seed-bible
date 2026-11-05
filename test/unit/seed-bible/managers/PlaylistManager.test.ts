@@ -1532,6 +1532,26 @@ describe("createPlaylistManager", () => {
       );
     });
 
+    it("marks the open step's verses with the reader's usual diminish, not a coloured highlight", async () => {
+      const { manager, tab } = await openEditor();
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      decorateVerses.mockClear();
+
+      manager.selectEditorStep(0);
+      await flush();
+
+      expect(decorateVerses).toHaveBeenCalledTimes(1);
+      const [book, chapter, verses, decoration] = decorateVerses.mock.calls[0]!;
+      expect([book, chapter, verses]).toEqual(["GEN", 1, [2]]);
+      expect(decoration.className.split(" ")).toContain(
+        "sb-verse-decoration-diminish"
+      );
+      expect(decoration.containerClassName.split(" ")).toContain(
+        "sb-chapter-decoration-diminish"
+      );
+      expect(decoration.highlight).toBeUndefined();
+    });
+
     it("keeps the same step open when an earlier one is removed or moved", async () => {
       const { manager } = await openEditor();
       manager.selectEditorStep(2);

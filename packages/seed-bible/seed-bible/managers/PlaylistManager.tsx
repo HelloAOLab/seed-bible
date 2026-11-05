@@ -1486,13 +1486,14 @@ export function createPlaylistManager(
         }
         editorDecoration = {
           tab,
+          // The reader's usual diminish (as when playback shows a passage):
+          // the rest of the chapter fades, with no fill behind the passage.
+          // The editor's own classes ride along for its layout.
           id: tab.readingState.decorateVerses(ref.bookId, ref.chapter, verses, {
-            className: "sb-playlist-editor-step-verse",
-            containerClassName: "sb-playlist-editor-step-chapter",
-            highlight: {
-              colorId: "playlist-editor-step",
-              customColor: "var(--sb-playlist-editor-step-highlight)",
-            },
+            className:
+              "sb-verse-decoration-diminish sb-playlist-editor-step-verse",
+            containerClassName:
+              "sb-chapter-decoration-diminish sb-playlist-editor-step-chapter",
             localOnly: true,
           }),
         };

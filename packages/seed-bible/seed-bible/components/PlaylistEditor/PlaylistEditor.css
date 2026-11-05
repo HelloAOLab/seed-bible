@@ -1268,26 +1268,10 @@
 
 /* ---------- Scripture steps, in the reader ---------- */
 
+/* The dimming around the step's passage is the reader's own diminish
+   decoration; this only anchors the step's marker. */
 .sb-playlist-editor-step-chapter {
-  --sb-playlist-editor-step-highlight: color-mix(
-    in srgb,
-    #e2673a 20%,
-    var(--sb-reader-background, #fff)
-  );
   position: relative;
-
-  & .sb-verse:not(:has(.sb-playlist-editor-step-verse)),
-  & .sb-chapter-heading {
-    opacity: 0.6;
-  }
-
-  /* Decoration highlights are drawn as an outline, the look of a highlight
-     someone else in a session is pointing at; the step's passage is a plain
-     fill instead. */
-  & .sb-highlight-ribbon-broadcast {
-    fill-opacity: 1;
-    stroke-width: 0;
-  }
 }
 
 .sb-pe-step-slot {
