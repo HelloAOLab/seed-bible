@@ -11,7 +11,7 @@ import type { ModalManager } from "../../managers/ModalManager";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import { displayNameOf } from "../../managers/Utils";
 import { useI18n } from "../../i18n/I18nManager";
-import { BusyButton } from "./FriendsPane";
+import { answerFriendRequest, BusyButton } from "./friendActions";
 import { emptyProfileNote, hasEmptyProfile, PersonCard } from "./PersonCard";
 import {
   ADD_FRIEND_PARAM,
@@ -368,39 +368,9 @@ function FriendRequestLinkPrompt(props: {
   const answer = async (accept: boolean) => {
     answering.value = accept ? "accept" : "decline";
     try {
-      if (accept) {
-        const result = await friends.acceptRequest(request.id);
-        toast(
-          result.success
-            ? t("now-friends-with", {
-                name,
-                defaultValue: "You're now friends with {{name}}.",
-              })
-            : result.reason === "expired"
-              ? t("friend-request-expired", {
-                  defaultValue: "That request has expired.",
-                })
-              : t("friend-request-unavailable", {
-                  defaultValue: "That request is no longer available.",
-                })
-        );
-      } else {
-        await friends.declineRequest(request.id);
-        toast(
-          t("friend-request-declined", {
-            name,
-            defaultValue: "Declined {{name}}'s friend request.",
-          })
-        );
+      if (await answerFriendRequest(friends, toast, t, request, name, accept)) {
+        onClose();
       }
-      onClose();
-    } catch (error) {
-      console.error("Failed to answer friend request:", error);
-      toast(
-        t("friend-request-answer-failed", {
-          defaultValue: "Couldn't answer the request. Try again.",
-        })
-      );
     } finally {
       answering.value = null;
     }
