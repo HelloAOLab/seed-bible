@@ -1254,5 +1254,16 @@
   "loading-translation": "Loading {{name}}…",
   "translation-load-failed": "{{name}} couldn't be loaded.",
   "loading-translations": "Loading translations…",
-  "translations-load-failed": "Couldn't load the full list of translations, so some may be missing."
+  "translations-load-failed": "Couldn't load the full list of translations, so some may be missing.",
+  "ai-limits-title": "Before you chat with AI",
+  "ai-limits-intro": "AI can be a helpful starting point, but keep its limits in mind:",
+  "ai-limits-mistakes": "It makes mistakes, and can sound confident when it's wrong.",
+  "ai-limits-agreeable": "It tends to tell you what you want to hear, and leans toward popular answers.",
+  "ai-limits-scripture": "It isn't a reliable source. Check what it says against Scripture.",
+  "ai-limits-study": "Study the Bible for yourself, and don't let AI do your thinking for you.",
+  "ai-limits-confirm": "I understand that AI can make mistakes and isn't a substitute for studying the Bible myself.",
+  "friends-playlists-filter": "Friends' playlists",
+  "friend-link-social-title": "Add {{name}} as a friend",
+  "friend-link-meta-description": "{{name}} wants to be your friend on {{brand}}",
+  "friend-link-title": "Add {{name}} as a friend on {{brand}}"
 }
