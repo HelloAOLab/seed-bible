@@ -353,6 +353,18 @@ export function chatHasOtherPeople(chat: {
   );
 }
 
+/**
+ * True when this chat includes an AI agent, including one that is currently
+ * inactive. People-only chats are false. Reads `totalParticipants`, same as
+ * {@link chatHasOtherPeople}, so an agent who is momentarily offline still
+ * counts.
+ */
+export function chatHasAI(chat: {
+  totalParticipants?: { readonly value: readonly { isAI: boolean }[] };
+}): boolean {
+  return chat.totalParticipants?.value.some((p) => p.isAI) ?? false;
+}
+
 const sharedAIChatParticipantSchema = z.object({
   id: z.string(),
   providerId: z.string(),

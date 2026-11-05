@@ -1,4 +1,5 @@
 import { createInMemoryTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
+import { TUTORIAL_OFFER_DELAY_MS } from "@packages/seed-bible/seed-bible/managers/TutorialManager";
 import {
   createTestSeedBibleState,
   waitFor,
@@ -64,7 +65,10 @@ describe("first-run prompts in a compact embed", () => {
     const state = await createState({});
 
     expect(state.today.isOpen.value).toBe(false);
-    await waitFor(() => state.tutorial.promptVisible.value, 2000);
+    await waitFor(
+      () => state.tutorial.promptVisible.value,
+      TUTORIAL_OFFER_DELAY_MS + 1500
+    );
     expect(state.tutorial.promptVisible.value).toBe(true);
   });
 

@@ -28,22 +28,18 @@
   "searching": "Se caută...",
   "no-search-results": "Niciun verset potrivit.",
   "open-chapter": "Deschide capitolul",
-
   "uploading": "Se încarcă...",
   "profile-name": "Numele profilului",
   "profile-name-placeholder": "de exemplu, familia Craig",
-
   "description": "Descriere",
   "optional": "(Opțional)",
   "description-placeholder": "Introdu descrierea profilului tău...",
   "location": "Locaţie",
   "location-placeholder": "de exemplu, Austin, Texas",
-
   "copied": "Copiat",
   "copy": "Copie",
   "save-changes": "Salvați modificările",
   "sign-out": "Sign out",
-
   "log-in": "Log in",
   "tanakh": "Tanakh",
   "traditional": "Tradiţional",
@@ -57,7 +53,6 @@
   "scripture-settings": "Setări scripturale",
   "scripture-elements": "Elemente scripturale",
   "scripture-settings-font-size-example": "O",
-
   "show-headings": "Afișați titlurile",
   "show-verse-numbers": "Afișați numerele versetelor",
   "show-footnotes": "Afișați notele de subsol",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Nu sunt disponibile extensii.",
   "install": "Instala",
   "uninstall": "Dezinstalare",
-
   "custom": "Personalizat",
   "text-section-bookTitle": "Textul titlului cărții",
   "text-section-heading": "Textul titlului",
@@ -92,7 +86,6 @@
   "show-selected-items": "Afișați elementele selectate",
   "show-highlight-colors": "Afișează culorile de evidențiere",
   "show-icon-text": "Afișează textul pictogramei",
-
   "extensions": "Extensii",
   "display": "Afişa",
   "theme-and-text": "Temă și text",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Măriți dimensiunea fontului scripturilor",
   "change-line-spacing": "Schimbarea spațierii rândurilor",
   "line-spacing_lineHeight": "Spațiere între rânduri: {{lineHeight}}",
-
   "italic": "Cursiv",
   "underline": "Subliniere",
   "alignment_x": "Aliniere: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Culoarea textului",
   "follow_theme": "Urmărește tema",
   "reset-to-default": "Resetare la valorile implicite",
-
   "id_highlight-text-color": "culoarea textului evidențiat {{id}}",
   "id_highlight-background-color": "culoarea de fundal pentru evidențiere {{id}}",
   "all-settings-description": "Ajustați fin fiecare secțiune de text și personalizați fiecare culoare a temei.",
@@ -141,7 +132,6 @@
   "old-testament_short": "VT",
   "new-testament_short": "NT",
   "apocrypha": "Apocrife",
-
   "custom-translations": "Traduceri personalizate",
   "no-translation-results-found": "Nu s-au găsit rezultate. Doriți să extindeți căutarea pentru a include și traduceri parțial complete?",
   "show-all-translations": "Afișați toate traducerile",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalmi",
   "5-psalms": "5 Psalmi",
   "remove-bookmark": "Eliminați marcajul",
-
   "chat": "Chat",
   "today": "Astăzi",
   "you": "Tu",
@@ -169,7 +158,6 @@
   "category-options": "Opțiuni folder",
   "rename": "Redenumire",
   "delete": "Şterge",
-
   "bookmark-options": "Opțiuni pentru marcaje",
   "new-folder-placeholder": "Numele folderului",
   "tasks": "Sarcini",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Există deja un folder cu acest nume.",
   "add-to-new": "Adăugați la nou",
   "save": "Salva",
-
   "apocrypha-info-text": "Niciuna dintre scrierile din această secțiune nu a fost considerată vreodată Scriptură de către comunitățile evreiești sau creștine timpurii. Biblia este o colecție specifică de cărți. Evreii și creștinii au fost întotdeauna de acord asupra Vechiului Testament, care provine dintr-un set fix de scrieri sacre pe care evreii le numeau Tanakh, iar creștinii le numesc Vechiul Testament. Conținutul Tanakh-ului și al Vechiului Testament este exact același, dar sunt de obicei aranjate diferit. Creștinii recunosc, de asemenea, Noul Testament, care spune povestea lui Isus, învățăturile sale și scrierile urmașilor săi. Scrierile de mai jos erau cunoscute și citite pe scară largă în perioada în care a fost scrisă Biblia, dar nu au fost niciodată tratate ca Scriptură. Deși autorii antici citau uneori o gamă largă de texte, inclusiv poeți, filozofi și alte scrieri, a cita ceva nu este același lucru cu a-l trata ca Scriptură. Aceste scrieri sunt incluse aici doar pentru referințe istorice și literare.",
   "seed-bible": "Biblia Semințelor",
   "take-photo": "Fă o fotografie",
   "choose-from-gallery": "Alegeți din galerie",
-
   "crop-your-photo": "Decupează fotografia ta",
   "zoom": "Zoom",
   "set-picture": "Setați imaginea",
@@ -211,10 +197,8 @@
   "read-the-bible": "Citește Biblia",
   "seed-bible-description": "Citește {{bookName}} {{chapterNumber}} în Biblia Semințelor",
   "social-title": "Citește {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Navigare prin capitole",
   "tutorial.skip": "Sari peste",
-
   "tutorial.back": "Spate",
   "tutorial.done": "Făcut",
   "tutorial.next": "Următorul",
@@ -326,11 +310,9 @@
   "study-notes": "Note de studiu",
   "content": "Conţinut",
   "untitled-playlist": "Listă de redare fără titlu",
-
   "discover-annotations-empty": "Nu aveți adnotări",
   "discover-cross-references-empty": "Nu există referințe încrucișate pentru acest capitol.",
   "discover-study-notes-empty": "Nu există note de studiu pentru acest capitol.",
-
   "discover-select-tab": "Selectați o filă pentru a descoperi materiale relevante.",
   "create-playlist": "Crea",
   "playlist-title_placeholder": "Titlul listei de redare",
@@ -379,12 +361,10 @@
   "delete-playlist-failed": "Nu s-a putut șterge lista de redare.",
   "collapsed-tab-shared-label": "{{title}} — sesiune partajată, {{count}} prezenți",
   "playlist-add-mode-label": "Tipul articolului",
-
   "session-host-reconnected": "Reconectat la sesiune",
   "session-host-left": "Gazda a plecat — ați fost eliminat din sesiune",
   "drag-to-reorder-playlist-item": "Trageți pentru a reordona",
   "saving": "Se salvează…",
-
   "unsaved-item-confirm-message": "Ați început să adăugați un element care nu a fost încă adăugat în playlist. Ce doriți să faceți?",
   "discard-and-save": "Renunță și salvează",
   "add-and-save": "Adaugă și salvează",
@@ -512,7 +492,6 @@
   "reading-plan-preview-reading": "Previzualizare {{reading}}",
   "reading-plan-mark-reading-complete": "Marcați citirea ca finalizată",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Marcați {{passage}} ca citit",
   "reading-plan-read-nudge-title": "Lectură plăcută!",
   "reading-plan-read-nudge-toast": "Marcați {{passage}} ca finalizat?",
@@ -520,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Citește, caută și studiază Biblia online. Traduceri gratuite în multe limbi, cu evidențieri, note, marcaje și planuri de lectură.",
   "all": "Toate",
-
   "today-bookmarks": "SIGNE DE PĂR",
   "today-search-verses": "Caută cărți, capitole, versete...",
   "anonymous-greeting": "Bun venit!",
   "community": "COMUNITATE",
   "go-somewhere-new": "DU-TE ÎNTR-UN LOC NOU",
-
   "open-bible": "Biblia deschisă",
   "personal-greeting": "Bun venit, {{name}} !",
   "resume-reading": "CONTINUAȚI DE UNDE AȚI PLĂCUT",
   "resume-reading-loading": "Se încarcă istoricul de lectură…",
   "selected-year": "An: {{year}}",
-
   "theme-light": "Aprinde",
   "theme-dark": "Întuneric",
   "installed-extensions": "Instalat",
@@ -542,7 +518,6 @@
   "extension-state-installed": "Instalat",
   "extension-state-downloaded": "Descărcat",
   "extension-state-pending": "Se instalează…",
-
   "tutorial.stepProgress": "Pasul {{current}} din {{total}}",
   "tutorial.offlineDownloadTitle": "Atingeți pentru a-l păstra pe dispozitiv",
   "tutorial.offlineDownloadBody": "Orice traducere cu această pictogramă poate fi salvată pentru citire offline.",
@@ -576,7 +551,6 @@
   "tutorial.paneLayoutBody": "Alegeți câte pasaje doriți să citiți alăturat din acest meniu de aspect.",
   "tutorial.addTabTitle": "Deschideți mai multe pasaje",
   "tutorial.addTabBody": "Adaugă o filă nouă pentru a citi mai multe cărți sau traduceri una lângă alta.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % finalizat - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % finalizat",
   "playlist-history-continue": "Continua",
@@ -635,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} note pentru acest capitol",
   "create-folder": "Creați un folder",
   "edit-bookmark": "Editează marcajul",
-
   "greeting-afternoon": "Bună ziua!",
   "greeting-afternoon-named": "Bună ziua, {{name}} !",
   "greeting-evening": "Bună seara!",
@@ -651,32 +624,24 @@
   "ask-ai": "Întreabă-i pe cei din inteligența artificială",
   "unread-mention": "Mențiune necitită",
   "unread-messages": "Mesaje necitite: {{count}}",
-
   "scripture-width": "Lățimea Scripturii",
   "decrease-scripture-width": "Micșorează lățimea scripturii",
   "increase-scripture-width": "Măriți lățimea scripturii",
   "annotations": "Adnotări",
   "discover-content-panel": "Descoperă conținut",
   "discover-book-title": "Descoperă {{book}}",
-
   "about-title": "Despre Biblia Semințelor",
   "about-meta-description": "Seed Bible este o aplicație biblică gratuită, creată pentru a citi Scriptura împreună cu familia, prietenii și comunitatea — gratuită pentru totdeauna, fără reclame sau paywall-uri.",
-
   "about-action-open-passage": "Deschide un pasaj",
   "about-action-donate": "Dona",
   "about-action-discord": "Alătură-te Discordului",
   "recent-uploads": "Încărcări recente",
-
   "customization-not-found": "Această personalizare nu a putut fi găsită.",
   "customization-name": "Nume",
   "customization-primaryColor": "Primar",
-
   "customization-secondaryColor": "Secundar",
-
   "customization-tertiaryColor": "Terţiar",
-
   "customization-fonts": "Fonturi",
-
   "custom-font-option": "Personalizat…",
   "custom-font-name-placeholder": "Numele fontului Google",
   "delete-customization": "Şterge",
@@ -689,10 +654,8 @@
   "extension-availability-available": "Disponibil",
   "extension-availability-auto-installed": "Instalat automat",
   "extension-availability-hidden": "Ascuns",
-
   "variants": "Teme",
   "add-variant": "Adăugați o temă",
-
   "base-theme-description": "Modificările care presetează această temă sunt rezervate pentru orice nu ați personalizat. Modificările proprii sunt păstrate.",
   "reset-to-base-theme": "Resetare la tema de bază",
   "low-contrast-warning": "{{label}} : contrastul este doar {{ratio}} :1 — se recomandă cel puțin {{minRatio}} :1 pentru ca textul să rămână lizibil.",
@@ -738,14 +701,12 @@
   "save-folder-empty": "Încă nu există salvări aici.",
   "save-options": "Salvați opțiunile",
   "saves": "Salvează",
-
   "hide-saves": "Ascundeți salvările",
   "show-saves": "Afișează salvările",
   "save-verses": "Salva",
   "new-save-folder": "Dosar nou",
   "edit-save": "Editare salvare",
   "remove-save-from-all-folders": "Eliminați din toate folderele",
-
   "color-hue": "Nuanţă",
   "color-saturation": "Saturație și luminozitate",
   "hex-color": "Culoare hexagonală",
@@ -860,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Editorul de formatare nu s-a putut încărca. Această notă are un format care s-ar putea pierde, așa că nu poate fi editată până nu vă reconectați.",
   "annotation-text": "Text de adnotare",
   "notes-for-verse": "Note pentru versetul {{verse}}",
-
   "configure-extension-defaults": "Configurați suprascrierile implicite",
-
   "extension-settings-defaults-title": "{{name}} suprascrieri implicite",
   "no-extension-settings": "Această extensie nu are setări configurabile.",
   "extension-settings-save-failed": "Nu s-au putut salva setările.",
@@ -871,7 +830,6 @@
   "setting-no-default": "Fără implicit",
   "override-setting": "Suprascrie {{name}}",
   "override-setting-label": "Suprascriere",
-
   "discover-choose-filter-hint": "Alegeți un filtru de mai sus pentru a vedea mai multe din acest capitol.",
   "take-a-tour": "Faceți un tur",
   "share-reading-plan": "Plan de partajare",
@@ -1055,7 +1013,6 @@
   "my-bookmark-numbered": "Semnul meu de carte {{number}}",
   "bookmark-move-hint": "Atingeți un marcaj pentru a-l muta în acest capitol.",
   "move-bookmark-here": "Mută {{name}} aici",
-
   "play": "Juca",
   "pause": "Pauză",
   "audio-playback-position": "Poziția de redare",
@@ -1064,7 +1021,6 @@
   "audio-scrub-verse": "Verset {{verse}}",
   "tab-playing-audio": "Redarea sunetului",
   "collapsed-tab-playing-label": "{{label}} — redare audio",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} teme",
   "customization-theme-count_one": "temă {{count}}",
@@ -1103,7 +1059,6 @@
   "about-community-body": "Credința este menită să fie trăită împreună. Biblia Seed este concepută pentru a citi Scriptura împreună cu familia, prietenii cei mai apropiați și biserica din casă.",
   "discovered-content": "Conținut descoperit",
   "show-discovered-content": "Afișează conținutul descoperit",
-
   "extension-availability-default": "Implicit ( {{availability}} )",
   "customization-extensions-default": "Implicit pentru alte extensii",
   "customization-extensions-default-hint": "Se aplică fiecărei extensii pe care nu ați setat-o ​​mai jos, inclusiv celor noi adăugate ulterior",
@@ -1136,7 +1091,6 @@
   "playlist-scripture-note-return": "Înapoi la playlist",
   "playlist-scripture-note-aria": "Notă despre {{passage}}",
   "playlist-scripture-note-progress": "{{current}} din {{total}}",
-
   "unsaved-item-edit-confirm-message": "Ai modificat un element, dar nu ai salvat încă modificările respective. Ce dorești să faci?",
   "keep-changes-and-save": "Păstrează modificările și salvează",
   "reading-plan-edit-reading": "Editare lectură",
@@ -1151,7 +1105,6 @@
   "branding": "Branding",
   "create-custom-branding-menu-item": "Branding personalizat",
   "your-content-empty-branding": "Brandingul personalizat pe care îl creați va apărea aici.",
-
   "extension-consent-from": "De la {{host}}",
   "extension-consent-source-version": "Versiunea {{version}} · de la {{host}}",
   "extension-consent-uploader-unnamed": "un utilizator al Bibliei cu semințe",
@@ -1199,7 +1152,6 @@
   "extension-permission-reading-selection": "Vezi ce versete alegi",
   "extension-permission-reading-navigate": "Pasaje deschise",
   "extension-permission-network": "Conectați-vă la {{host}}",
-
   "extension-consent-not-now": "Nu acum",
   "extension-consent-nothing-yet": "Deocamdată, nu va avea acces la nicio informație a dumneavoastră.",
   "extension-permission-reading-history": "Vedeți istoricul dvs. de lectură",
@@ -1237,7 +1189,6 @@
   "extension-capture-cancel": "Anula",
   "extension-consent-high-risk": "Sensibil",
   "extension-modal-ok": "Bine",
-
   "extension-permissions-restart-note": "Modificările intră în vigoare imediat. {{name}} repornește pentru a le prelua.",
   "extension-permissions-saved": "Salvat. {{name}} a repornit cu noile permisiuni.",
   "extension-permissions-failed": "Asta nu a fost salvată. Încearcă din nou.",
@@ -1275,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Afișează efectele atunci când o gazdă selectează un verset.",
   "session-settings-verse-effects-desc-everyone": "Afișează efectele atunci când cineva selectează un verset.",
   "session-settings-verse-effects-desc-none": "Efectele de selecție a versurilor sunt dezactivate pentru toată lumea.",
-
   "account": "Cont",
   "scroll-filters-start": "Derulați filtrele spre început",
-  "scroll-filters-end": "Derulați filtrele spre sfârșit"
+  "scroll-filters-end": "Derulați filtrele spre sfârșit",
+  "download": "Descărcare",
+  "image-details-uploaded": "Încărcat",
+  "image-details-dimensions": "Dimensiuni",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Tip",
+  "image-details-cover-of": "Copertă a",
+  "image-details-not-a-cover": "Nu este folosit ca o husă",
+  "delete-customization-confirm-title": "Ștergeți brandingul personalizat?",
+  "delete-customization-confirm-message": "Ștergeți brandingul personalizat „ {{name}} ”? Această acțiune nu poate fi anulată.",
+  "delete-customization-failed": "Nu s-a putut șterge brandingul personalizat.",
+  "delete-variant-confirm-title": "Ștergeți tema?",
+  "delete-variant-confirm-message": "Ștergeți tema „ {{name}} ”? Această acțiune nu poate fi anulată.",
+  "delete-variant-confirm-message-unnamed": "Ștergeți această temă? Această acțiune nu poate fi anulată.",
+  "delete-variant-failed": "Nu s-a putut șterge tema.",
+  "delete-highlight-confirm-title": "Ștergeți evidențierea?",
+  "delete-highlight-confirm-message": "Ștergeți evidențierea de pe {{reference}} ? Această acțiune nu poate fi anulată.",
+  "delete-highlight-failed": "Nu s-a putut șterge evidențierea.",
+  "delete-annotation-on-confirm-message": "Ștergeți adnotarea de pe {{reference}} ? Această acțiune nu poate fi anulată.",
+  "remove-from-folder": "Eliminare din folder",
+  "save-folders": "În {{folders}}",
+  "delete-save-confirm-title": "Ștergeți salvarea?",
+  "delete-save-confirm-message": "Ștergeți salvarea pentru {{reference}} ? Această acțiune nu poate fi anulată.",
+  "delete-save-confirm-message-folders": "Ștergeți salvarea pentru {{reference}} din {{folders}} ? Această acțiune nu poate fi anulată.",
+  "delete-save-failed": "Nu s-a putut șterge salvarea.",
+  "delete-save-folder-confirm-title": "Ștergeți folderul?",
+  "delete-save-folder-confirm-message": "Ștergeți folderul „ {{name}} ”?",
+  "delete-save-folder-confirm-deletes": "Și cele {{count}} salvări care se află doar în acest folder vor fi șterse.",
+  "delete-save-folder-confirm-deletes_one": "Și salvarea care se află doar în acest folder va fi ștearsă.",
+  "delete-save-folder-confirm-deletes_other": "Și cele {{count}} salvări care se află doar în acest folder vor fi șterse.",
+  "delete-save-folder-confirm-keeps": "Cele {{count}} fișiere salvate care se află și în alte foldere vor rămâne acolo.",
+  "delete-save-folder-confirm-keeps_one": "Salvarea care se află și ea într-un alt folder va rămâne acolo.",
+  "delete-save-folder-confirm-keeps_other": "Cele {{count}} fișiere salvate care se află și în alte foldere vor rămâne acolo.",
+  "cant-be-undone": "Aceasta nu poate fi anulată.",
+  "delete-save-folder-failed": "Nu s-a putut șterge folderul.",
+  "download-image-failed": "Nu s-a putut descărca imaginea.",
+  "session-settings-verse-effects-hosts-only": "Numai pentru gazde",
+  "session-settings-verse-effects-everyone": "Toată lumea",
+  "session-settings-verse-effects-none": "Nici unul",
+  "loading-books": "Se încarcă cărțile…",
+  "books-load-failed": "Cărțile nu au putut fi încărcate. Verificați conexiunea și încercați din nou.",
+  "loading-translation": "Se încarcă {{name}} …",
+  "translation-load-failed": "{{name}} nu a putut fi încărcat.",
+  "loading-translations": "Se încarcă traducerile…",
+  "translations-load-failed": "Nu s-a putut încărca lista completă de traduceri, așadar este posibil ca unele să lipsească.",
+  "verse-of-the-day": "VERSETUL ZILEI",
+  "verse-of-the-day-loading": "Se încarcă versetul zilei…"
 }

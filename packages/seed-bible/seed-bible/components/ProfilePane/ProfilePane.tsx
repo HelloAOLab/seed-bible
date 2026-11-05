@@ -129,7 +129,7 @@ export function ProfileBackButton(props: { onBack: () => void }) {
   return (
     <button
       type="button"
-      className="sb-profile-pane-back"
+      className="sb-pane-header-button sb-profile-pane-back"
       onClick={props.onBack}
       aria-label={t("back", { defaultValue: "Back" })}
       title={t("back", { defaultValue: "Back" })}
@@ -439,12 +439,21 @@ export function ProfilePane(props: ProfileScreenProps) {
   } = props;
   const { login } = state;
   const { t } = useI18n();
-
   const userId = login.userId.value;
   const profile = login.profile.value;
   const displayName = getSelfDisplayName(state, t);
   const description = profile?.description ?? null;
+  const handleSignIn = async () => {
+    try {
+      const user = await login.login();
 
+      if (user && state.isProfileOpen.peek()) {
+        state.restoreProfileReturnTarget();
+      }
+    } catch (error) {
+      console.error("Sign-in failed:", error);
+    }
+  };
   if (!userId) {
     return (
       <div className="sb-profile-screen">
@@ -462,7 +471,7 @@ export function ProfilePane(props: ProfileScreenProps) {
             <button
               type="button"
               className="sb-profile-signin"
-              onClick={() => void login.login()}
+              onClick={() => void handleSignIn()}
             >
               {t("log-in", { defaultValue: "Log in" })}
             </button>

@@ -28,22 +28,18 @@
   "searching": "Duke kërkuar...",
   "no-search-results": "Nuk ka vargje që përputhen.",
   "open-chapter": "Hap kapitullin",
-
   "uploading": "Duke ngarkuar...",
   "profile-name": "Emri i profilit",
   "profile-name-placeholder": "p.sh. familja Craig",
-
   "description": "Përshkrimi",
   "optional": "(Opsionale)",
   "description-placeholder": "Jepni përshkrimin e profilit tuaj...",
   "location": "Vendndodhja",
   "location-placeholder": "p.sh. Austin, Teksas",
-
   "copied": "Kopjuar",
   "copy": "Kopjo",
   "save-changes": "Ruaj ndryshimet",
   "sign-out": "Dil nga llogaria",
-
   "log-in": "Kyçu",
   "tanakh": "Tanakh",
   "traditional": "Tradicionale",
@@ -57,7 +53,6 @@
   "scripture-settings": "Cilësimet e shkrimeve të shenjta",
   "scripture-elements": "Elementet e shkrimit të shenjtë",
   "scripture-settings-font-size-example": "Një",
-
   "show-headings": "Shfaq titujt",
   "show-verse-numbers": "Trego numrat e vargjeve",
   "show-footnotes": "Shfaq shënimet në fund të faqes",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Nuk ka zgjerime të disponueshme.",
   "install": "Instalo",
   "uninstall": "Çinstaloni",
-
   "custom": "Personalizuar",
   "text-section-bookTitle": "Teksti i Titullit të Librit",
   "text-section-heading": "Teksti i Titullit",
@@ -92,7 +86,6 @@
   "show-selected-items": "Shfaq artikujt e zgjedhur",
   "show-highlight-colors": "Shfaq ngjyrat e theksuara",
   "show-icon-text": "Shfaq tekstin e ikonës",
-
   "extensions": "Zgjerime",
   "display": "Shfaq",
   "theme-and-text": "Tema dhe teksti",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Rrit madhësinë e shkronjave të shkrimit të shenjtë",
   "change-line-spacing": "Ndrysho hapësirën e rreshtave",
   "line-spacing_lineHeight": "Hapësira midis rreshtave: {{lineHeight}}",
-
   "italic": "Italik",
   "underline": "Nënvizo",
   "alignment_x": "Rreshtimi: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Ngjyra e tekstit",
   "follow_theme": "Ndiq temën",
   "reset-to-default": "Rivendos në cilësimet fillestare",
-
   "id_highlight-text-color": "Ngjyra e tekstit të theksuar {{id}}",
   "id_highlight-background-color": "Ngjyra e sfondit e theksuar {{id}}",
   "all-settings-description": "Përmirësoni çdo seksion teksti dhe personalizoni çdo ngjyrë teme.",
@@ -141,7 +132,6 @@
   "old-testament_short": "ORA",
   "new-testament_short": "NT",
   "apocrypha": "Apokrifa",
-
   "custom-translations": "Përkthime të personalizuara",
   "no-translation-results-found": "Nuk u gjetën rezultate. A dëshironi ta zgjeroni kërkimin tuaj për të përfshirë edhe përkthime pjesërisht të plota?",
   "show-all-translations": "Shfaq të gjitha përkthimet",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalme",
   "5-psalms": "5 Psalme",
   "remove-bookmark": "Hiq faqeshënuesin",
-
   "chat": "Bisedë",
   "today": "Sot",
   "you": "Ti",
@@ -169,7 +158,6 @@
   "category-options": "Opsionet e dosjeve",
   "rename": "Riemërto",
   "delete": "Fshij",
-
   "bookmark-options": "Opsionet e faqeshënuesit",
   "new-folder-placeholder": "Emri i dosjes",
   "tasks": "Detyrat",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Një dosje me atë emër ekziston tashmë.",
   "add-to-new": "Shto te e reja",
   "save": "Ruaj",
-
   "apocrypha-info-text": "Asnjë nga shkrimet në këtë seksion nuk është konsideruar ndonjëherë si Shkrim i Shenjtë nga komunitetet e hershme hebraike ose të krishtera. Bibla është një koleksion specifik librash. Hebrenjtë dhe të krishterët gjithmonë kanë rënë dakord për Dhiatën e Vjetër, e cila vjen nga një grup i caktuar shkrimesh të shenjta që populli hebre e quan Tanakh dhe të krishterët e quajnë Dhiata e Vjetër. Përmbajtja e Tanakh dhe Dhiata e Vjetër janë saktësisht të njëjta, por zakonisht janë të rregulluara ndryshe. Të krishterët gjithashtu njohin Dhiatën e Re, e cila tregon historinë e Jezusit, mësimet e tij dhe shkrimet e ithtarëve të tij. Shkrimet më poshtë ishin të njohura dhe të lexuara gjerësisht në kohën kur u shkrua Bibla, por ato nuk u trajtuan kurrë si Shkrim i Shenjtë. Ndërsa autorët e lashtë ndonjëherë cituan një gamë të gjerë tekstesh, duke përfshirë poetë, filozofë dhe shkrime të tjera, citimi i diçkaje nuk është i njëjtë me trajtimin e saj si Shkrim i Shenjtë. Këto shkrime përfshihen këtu vetëm për referencë historike dhe letrare.",
   "seed-bible": "Bibla e Farave",
   "take-photo": "Bëni një foto",
   "choose-from-gallery": "Zgjidh nga galeria",
-
   "crop-your-photo": "Prit foton tënde",
   "zoom": "Zmadho",
   "set-picture": "Vendos foton",
@@ -211,10 +197,8 @@
   "read-the-bible": "Lexo Biblën",
   "seed-bible-description": "Lexo {{bookName}} {{chapterNumber}} në Biblën e Farave",
   "social-title": "Lexo {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Navigimi i kapitullit",
   "tutorial.skip": "Kapërce",
-
   "tutorial.back": "Mbrapa",
   "tutorial.done": "U krye",
   "tutorial.next": "Tjetra",
@@ -326,11 +310,9 @@
   "study-notes": "Shënime studimi",
   "content": "Përmbajtja",
   "untitled-playlist": "Listë dëgjimi pa titull",
-
   "discover-annotations-empty": "Nuk ke shënime",
   "discover-cross-references-empty": "Nuk ka referenca të kryqëzuara për këtë kapitull.",
   "discover-study-notes-empty": "Nuk ka shënime studimi për këtë kapitull.",
-
   "discover-select-tab": "Zgjidh një skedë për të zbuluar materiale të lidhura.",
   "create-playlist": "Krijo",
   "playlist-title_placeholder": "Titulli i listës për luajtje",
@@ -379,12 +361,10 @@
   "delete-playlist-failed": "Lista e luajtjes nuk mund të fshihej.",
   "collapsed-tab-shared-label": "{{title}} — seancë e ndarë, {{count}} i pranishëm",
   "playlist-add-mode-label": "Lloji i artikullit",
-
   "session-host-reconnected": "U rilidh me seancën",
   "session-host-left": "Organizatori u largua — ju u hoqët nga seanca",
   "drag-to-reorder-playlist-item": "Zvarrit për të rirenditur",
   "saving": "Duke ruajtur…",
-
   "unsaved-item-confirm-message": "Keni filluar të shtoni një artikull që nuk është shtuar ende në listën e luajtjes. Çfarë do të donit të bënit?",
   "discard-and-save": "Hidhe dhe ruaj",
   "add-and-save": "Shto dhe ruaj",
@@ -512,7 +492,6 @@
   "reading-plan-preview-reading": "Parapamje {{reading}}",
   "reading-plan-mark-reading-complete": "Shëno leximin e përfunduar",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Shëno {{passage}} si të lexuar",
   "reading-plan-read-nudge-title": "Lexim i këndshëm!",
   "reading-plan-read-nudge-toast": "Shëno {{passage}} të përfunduar?",
@@ -520,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Lexoni, kërkoni dhe studioni Biblën në internet. Përkthime falas në shumë gjuhë, me pika kryesore, shënime, faqeshënues dhe plane leximi.",
   "all": "Të gjitha",
-
   "today-bookmarks": "FAQËSHTRUESI",
   "today-search-verses": "Kërko libra, kapituj, vargje....",
   "anonymous-greeting": "Mirë se vini!",
   "community": "KOMUNITETI",
   "go-somewhere-new": "SHKO DIKU NË NJË VEND TË RI",
-
   "open-bible": "Bibla e Hapur",
   "personal-greeting": "Mirë se erdhe, {{name}} !",
   "resume-reading": "VAZHDONI ATJE KU U LËTË",
   "resume-reading-loading": "Duke ngarkuar historikun tënd të leximit…",
   "selected-year": "Viti: {{year}}",
-
   "theme-light": "Dritë",
   "theme-dark": "E errët",
   "installed-extensions": "Instaluar",
@@ -542,7 +518,6 @@
   "extension-state-installed": "Instaluar",
   "extension-state-downloaded": "Shkarkuar",
   "extension-state-pending": "Duke u instaluar…",
-
   "tutorial.stepProgress": "Hapi {{current}} nga {{total}}",
   "tutorial.offlineDownloadTitle": "Trokit për ta mbajtur në pajisjen tënde",
   "tutorial.offlineDownloadBody": "Çdo përkthim me këtë ikonë mund të ruhet për lexim jashtë linje.",
@@ -576,7 +551,6 @@
   "tutorial.paneLayoutBody": "Zgjidh sa pasazhe do të lexosh krah për krah nga kjo meny paraqitjeje.",
   "tutorial.addTabTitle": "Hap më shumë pasazhe",
   "tutorial.addTabBody": "Shto një skedë të re për të lexuar disa libra ose përkthime krah për krah.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % e përfunduar - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % e përfunduar",
   "playlist-history-continue": "Vazhdo",
@@ -635,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} shënime për këtë kapitull",
   "create-folder": "Krijo dosje",
   "edit-bookmark": "Modifiko faqeshënuesin",
-
   "greeting-afternoon": "Mirëdita!",
   "greeting-afternoon-named": "Mirëdita, {{name}} !",
   "greeting-evening": "Mirëmbrëma!",
@@ -651,32 +624,24 @@
   "ask-ai": "Pyete IA-në",
   "unread-mention": "Përmendje e palexuar",
   "unread-messages": "Mesazhe të palexuara: {{count}}",
-
   "scripture-width": "Gjerësia e Shkrimit të Shenjtë",
   "decrease-scripture-width": "Zvogëlo gjerësinë e shkrimit të shenjtë",
   "increase-scripture-width": "Rrit gjerësinë e shkrimit të shenjtë",
   "annotations": "Shënime",
   "discover-content-panel": "Zbulo përmbajtjen",
   "discover-book-title": "Zbulo {{book}}",
-
   "about-title": "Rreth Biblës së Farave",
   "about-meta-description": "Seed Bible është një aplikacion falas për Biblën i krijuar për të lexuar Shkrimin e Shenjtë së bashku me familjen, miqtë dhe komunitetin tuaj — falas përgjithmonë, pa reklama ose mure pagese.",
-
   "about-action-open-passage": "Hap një pasazh",
   "about-action-donate": "Dhuro",
   "about-action-discord": "Bashkohu me Discord",
   "recent-uploads": "Ngarkimet e fundit",
-
   "customization-not-found": "Ky personalizim nuk mund të gjendej.",
   "customization-name": "Emri",
   "customization-primaryColor": "Kryesore",
-
   "customization-secondaryColor": "Sekondar",
-
   "customization-tertiaryColor": "Terciar",
-
   "customization-fonts": "Fontet",
-
   "custom-font-option": "Me porosi…",
   "custom-font-name-placeholder": "Emri i fontit Google",
   "delete-customization": "Fshij",
@@ -689,10 +654,8 @@
   "extension-availability-available": "Në dispozicion",
   "extension-availability-auto-installed": "Instaluar automatikisht",
   "extension-availability-hidden": "I fshehur",
-
   "variants": "Temat",
   "add-variant": "Shto temë",
-
   "base-theme-description": "Ndryshimet që paracaktohen nga kjo temë kthehen në çdo gjë që nuk e keni personalizuar. Ndryshimet tuaja ruhen.",
   "reset-to-base-theme": "Rivendos në temën bazë",
   "low-contrast-warning": "{{label}} : kontrasti është vetëm {{ratio}} :1 — synoni të paktën {{minRatio}} :1 në mënyrë që teksti të mbetet i lexueshëm.",
@@ -738,14 +701,12 @@
   "save-folder-empty": "Nuk ka ende ruajtje këtu.",
   "save-options": "Ruaj opsionet",
   "saves": "Ruajtjet",
-
   "hide-saves": "Fshih ruajtjen",
   "show-saves": "Shfaq ruajtjen",
   "save-verses": "Ruaj",
   "new-save-folder": "Dosje e re",
   "edit-save": "Modifiko ruajtjen",
   "remove-save-from-all-folders": "Hiq nga të gjitha dosjet",
-
   "color-hue": "Nuancë",
   "color-saturation": "Ngopja dhe shkëlqimi",
   "hex-color": "Ngjyra heksadecimale",
@@ -860,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Redaktuesi i formatimit nuk mund të ngarkohej. Ky shënim ka formatim që do të humbiste, kështu që nuk mund të modifikohet derisa të rilidheni.",
   "annotation-text": "Teksti i shënimit",
   "notes-for-verse": "Shënime për vargun {{verse}}",
-
   "configure-extension-defaults": "Konfiguro mbivendosjet e parazgjedhura",
-
   "extension-settings-defaults-title": "{{name}} mbivendosje të parazgjedhura",
   "no-extension-settings": "Kjo shtesë nuk ka cilësime të konfigurueshme.",
   "extension-settings-save-failed": "Cilësimet nuk mund të ruheshin.",
@@ -871,7 +830,6 @@
   "setting-no-default": "Pa parazgjedhje",
   "override-setting": "Mbivendos {{name}}",
   "override-setting-label": "Mbivendos",
-
   "discover-choose-filter-hint": "Zgjidh një filtër më sipër për të parë më shumë nga ky kapitull.",
   "take-a-tour": "Bëni një turne",
   "share-reading-plan": "Plani i ndarjes",
@@ -1055,7 +1013,6 @@
   "my-bookmark-numbered": "Faqeshënuesi im {{number}}",
   "bookmark-move-hint": "Trokitni një faqeshënues për ta zhvendosur atë në këtë kapitull.",
   "move-bookmark-here": "Zhvendos {{name}} këtu",
-
   "play": "Luaj",
   "pause": "Pauzë",
   "audio-playback-position": "Pozicioni i luajtjes",
@@ -1064,7 +1021,6 @@
   "audio-scrub-verse": "Vargu {{verse}}",
   "tab-playing-audio": "Duke luajtur audion",
   "collapsed-tab-playing-label": "{{label}} — duke luajtur audio",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} tema",
   "customization-theme-count_one": "Tema {{count}}",
@@ -1103,7 +1059,6 @@
   "about-community-body": "Besimi është menduar të jetohet së bashku. Bibla Seed është ndërtuar për të lexuar Shkrimin e Shenjtë me familjen tuaj, miqtë tuaj më të ngushtë dhe kishën tuaj shtëpiake.",
   "discovered-content": "Përmbajtje e zbuluar",
   "show-discovered-content": "Shfaq përmbajtjen e zbuluar",
-
   "extension-availability-default": "Parazgjedhur ( {{availability}} )",
   "customization-extensions-default": "Parazgjedhur për zgjerimet e tjera",
   "customization-extensions-default-hint": "Vlen për çdo shtesë që nuk e keni vendosur më poshtë, duke përfshirë ato të rejat e shtuara më vonë",
@@ -1136,7 +1091,6 @@
   "playlist-scripture-note-return": "Kthehu te lista e luajtjes. ...",
   "playlist-scripture-note-aria": "Shënim mbi {{passage}}",
   "playlist-scripture-note-progress": "{{current}} nga {{total}}",
-
   "unsaved-item-edit-confirm-message": "Ke ndryshuar një artikull, por nuk i ke ruajtur ende ato ndryshime. Çfarë dëshiron të bësh?",
   "keep-changes-and-save": "Ruaj ndryshimet dhe ruaj",
   "reading-plan-edit-reading": "Redakto leximin",
@@ -1151,7 +1105,6 @@
   "branding": "Markimi",
   "create-custom-branding-menu-item": "Markë e personalizuar",
   "your-content-empty-branding": "Marka e personalizuar që krijoni do të shfaqet këtu.",
-
   "extension-consent-from": "Nga {{host}}",
   "extension-consent-source-version": "Versioni {{version}} · nga {{host}}",
   "extension-consent-uploader-unnamed": "një përdorues i Biblës së Farërave",
@@ -1199,7 +1152,6 @@
   "extension-permission-reading-selection": "Shiko cilat vargje zgjedh",
   "extension-permission-reading-navigate": "Pasazhe të hapura",
   "extension-permission-network": "Lidhu me {{host}}",
-
   "extension-consent-not-now": "Jo tani",
   "extension-consent-nothing-yet": "Për momentin, nuk do të ketë qasje në asnjë nga informacionet tuaja.",
   "extension-permission-reading-history": "Shikoni historikun tuaj të leximit",
@@ -1237,7 +1189,6 @@
   "extension-capture-cancel": "Anulo",
   "extension-consent-high-risk": "I ndjeshëm",
   "extension-modal-ok": "Në rregull",
-
   "extension-permissions-restart-note": "Ndryshimet hyjnë në fuqi menjëherë. {{name}} riniset për t'i marrë ato.",
   "extension-permissions-saved": "U ruajt. {{name}} u rifillua me lejet e reja.",
   "extension-permissions-failed": "Kjo nuk u ruajt. Provo përsëri.",
@@ -1275,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Shfaq efektet kur një prezantues zgjedh një varg.",
   "session-settings-verse-effects-desc-everyone": "Shfaq efektet kur dikush zgjedh një varg.",
   "session-settings-verse-effects-desc-none": "Efektet e përzgjedhjes së vargjeve janë çaktivizuar për të gjithë.",
-
   "account": "Llogari",
   "scroll-filters-start": "Lëvizni filtrat drejt fillimit",
-  "scroll-filters-end": "Lëviz filtrat drejt fundit"
+  "scroll-filters-end": "Lëviz filtrat drejt fundit",
+  "download": "Shkarko",
+  "image-details-uploaded": "Ngarkuar",
+  "image-details-dimensions": "Përmasat",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Lloji",
+  "image-details-cover-of": "Mbulesa e",
+  "image-details-not-a-cover": "Nuk përdoret si mbulesë",
+  "delete-customization-confirm-title": "Të fshihet marka e personalizuar?",
+  "delete-customization-confirm-message": "Të fshihet marka e personalizuar \" {{name}} \"? Kjo nuk mund të zhbëhet.",
+  "delete-customization-failed": "Marka e personalizuar nuk mund të fshihej.",
+  "delete-variant-confirm-title": "Të fshihet tema?",
+  "delete-variant-confirm-message": "Të fshihet tema \" {{name}} \"? Kjo nuk mund të zhbëhet.",
+  "delete-variant-confirm-message-unnamed": "Të fshihet kjo temë? Kjo nuk mund të zhbëhet.",
+  "delete-variant-failed": "Tema nuk mund të fshihej.",
+  "delete-highlight-confirm-title": "Të fshihet theksimi?",
+  "delete-highlight-confirm-message": "Të fshihet theksimi në {{reference}} ? Kjo nuk mund të zhbëhet.",
+  "delete-highlight-failed": "Nuk mundi ta fshinte theksimin.",
+  "delete-annotation-on-confirm-message": "Të fshihet shënimi në {{reference}} ? Kjo nuk mund të zhbëhet.",
+  "remove-from-folder": "Hiq nga dosja",
+  "save-folders": "Në {{folders}}",
+  "delete-save-confirm-title": "Të fshihet ruajtja?",
+  "delete-save-confirm-message": "Të fshihet ruajtja për {{reference}} ? Kjo nuk mund të zhbëhet.",
+  "delete-save-confirm-message-folders": "Të fshihet ruajtja për {{reference}} nga {{folders}} ? Kjo nuk mund të zhbëhet.",
+  "delete-save-failed": "Nuk mundi ta fshinte ruajtjen.",
+  "delete-save-folder-confirm-title": "Të fshihet dosja?",
+  "delete-save-folder-confirm-message": "Të fshihet dosja \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "{{count}} të ruajtura që janë vetëm në këtë dosje do të fshihen gjithashtu.",
+  "delete-save-folder-confirm-deletes_one": "Edhe ruajtja që është vetëm në këtë dosje do të fshihet.",
+  "delete-save-folder-confirm-deletes_other": "{{count}} të ruajtura që janë vetëm në këtë dosje do të fshihen gjithashtu.",
+  "delete-save-folder-confirm-keeps": "{{count}} të ruajtura që janë gjithashtu në dosje të tjera do të qëndrojnë atje.",
+  "delete-save-folder-confirm-keeps_one": "Ruajtja që është gjithashtu në një dosje tjetër do të qëndrojë atje.",
+  "delete-save-folder-confirm-keeps_other": "{{count}} të ruajtura që janë gjithashtu në dosje të tjera do të qëndrojnë atje.",
+  "cant-be-undone": "Kjo nuk mund të zhbëhet.",
+  "delete-save-folder-failed": "Nuk mundi ta fshinte dosjen.",
+  "download-image-failed": "Imazhi nuk mund të shkarkohej.",
+  "session-settings-verse-effects-hosts-only": "Vetëm pritësit",
+  "session-settings-verse-effects-everyone": "Të gjithë",
+  "session-settings-verse-effects-none": "Asnjë",
+  "loading-books": "Duke ngarkuar librat…",
+  "books-load-failed": "Librat nuk mund të ngarkoheshin. Kontrolloni lidhjen tuaj dhe provoni përsëri.",
+  "loading-translation": "Duke ngarkuar {{name}} …",
+  "translation-load-failed": "{{name}} nuk mund të ngarkohej.",
+  "loading-translations": "Duke ngarkuar përkthimet…",
+  "translations-load-failed": "Nuk mund të ngarkohej lista e plotë e përkthimeve, kështu që disa mund të mungojnë.",
+  "verse-of-the-day": "Vargu i ditës",
+  "verse-of-the-day-loading": "Duke ngarkuar vargun e ditës…"
 }

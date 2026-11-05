@@ -28,22 +28,18 @@
   "searching": "Ieškoma...",
   "no-search-results": "Nėra sutampančių eilučių.",
   "open-chapter": "Atidaryti skyrių",
-
   "uploading": "Įkeliama...",
   "profile-name": "Profilio pavadinimas",
   "profile-name-placeholder": "pvz., Craigų šeima",
-
   "description": "Aprašymas",
   "optional": "(Nebūtina)",
   "description-placeholder": "Įveskite savo profilio aprašymą...",
   "location": "Vieta",
   "location-placeholder": "pvz., Ostinas, Teksasas",
-
   "copied": "Nukopijuota",
   "copy": "Kopijuoti",
   "save-changes": "Išsaugoti pakeitimus",
   "sign-out": "Atsijungti",
-
   "log-in": "Prisijungti",
   "tanakh": "Tanachas",
   "traditional": "Tradicinis",
@@ -57,7 +53,6 @@
   "scripture-settings": "Šventojo Rašto aplinkybės",
   "scripture-elements": "Šventojo Rašto elementai",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Rodyti antraštes",
   "show-verse-numbers": "Rodyti eilučių numerius",
   "show-footnotes": "Rodyti išnašas",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Nėra galimų plėtinių.",
   "install": "Įdiegti",
   "uninstall": "Pašalinti",
-
   "custom": "Pasirinktinis",
   "text-section-bookTitle": "Knygos pavadinimo tekstas",
   "text-section-heading": "Antraštės tekstas",
@@ -92,7 +86,6 @@
   "show-selected-items": "Rodyti pasirinktus elementus",
   "show-highlight-colors": "Rodyti paryškinimo spalvas",
   "show-icon-text": "Rodyti piktogramos tekstą",
-
   "extensions": "Plėtiniai",
   "display": "Ekranas",
   "theme-and-text": "Tema ir tekstas",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Padidinti Šventojo Rašto šrifto dydį",
   "change-line-spacing": "Keisti eilučių tarpą",
   "line-spacing_lineHeight": "Eilučių tarpai: {{lineHeight}}",
-
   "italic": "Kursyvas",
   "underline": "Pabraukimas",
   "alignment_x": "Lygiavimas: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Teksto spalva",
   "follow_theme": "Sekti temą",
   "reset-to-default": "Atkurti numatytuosius nustatymus",
-
   "id_highlight-text-color": "{{id}} paryškinimo teksto spalva",
   "id_highlight-background-color": "{{id}} paryškinimo fono spalva",
   "all-settings-description": "Tiksliai derinkite kiekvieną teksto skyrių ir tinkinkite kiekvienos temos spalvą.",
@@ -141,7 +132,6 @@
   "old-testament_short": "Pratęsimas",
   "new-testament_short": "NT",
   "apocrypha": "Apokrifas",
-
   "custom-translations": "Pasirinktiniai vertimai",
   "no-translation-results-found": "Nerasta jokių rezultatų. Ar norėtumėte išplėsti paiešką, kad įtrauktumėte ir iš dalies užbaigtus vertimus?",
   "show-all-translations": "Rodyti visus vertimus",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalmės",
   "5-psalms": "5 Psalmės",
   "remove-bookmark": "Pašalinti žymę",
-
   "chat": "Pokalbis",
   "today": "Šiandien",
   "you": "Tu",
@@ -169,7 +158,6 @@
   "category-options": "Aplanko parinktys",
   "rename": "Pervardyti",
   "delete": "Ištrinti",
-
   "bookmark-options": "Žymių parinktys",
   "new-folder-placeholder": "Aplanko pavadinimas",
   "tasks": "Užduotys",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Aplankas tokiu pavadinimu jau yra.",
   "add-to-new": "Pridėti prie naujo",
   "save": "Išsaugoti",
-
   "apocrypha-info-text": "Ankstyvosios žydų ar krikščionių bendruomenės niekada nelaikė nė vieno iš šio skyriaus raštų Šventuoju Raštu. Biblija yra specifinis knygų rinkinys. Žydai ir krikščionys visada sutarė dėl Senojo Testamento, kuris yra sudarytas iš fiksuoto šventųjų raštų rinkinio, kurį žydų tauta vadino Tanachu, o krikščionys – Senuoju Testamentu. Tanachų ir Senojo Testamentų turinys yra visiškai tas pats, tačiau dažnai išdėstytas skirtingai. Krikščionys taip pat pripažįsta Naująjį Testamentą, kuriame pasakojama apie Jėzų, jo mokymus ir jo pasekėjų raštus. Žemiau pateikti raštai buvo žinomi ir plačiai skaitomi tuo metu, kai buvo rašoma Biblija, tačiau jie niekada nebuvo laikomi Šventuoju Raštu. Nors senovės autoriai kartais citavo įvairius tekstus, įskaitant poetų, filosofų ir kitų raštus, cituoti kažką nereiškia laikyti tai Šventuoju Raštu. Šie raštai čia įtraukti tik istoriniais ir literatūriniais tikslais.",
   "seed-bible": "Sėklų Biblija",
   "take-photo": "Nufotografuokite",
   "choose-from-gallery": "Pasirinkite iš galerijos",
-
   "crop-your-photo": "Apkirpkite savo nuotrauką",
   "zoom": "Mastelio keitimas",
   "set-picture": "Nustatyti paveikslėlį",
@@ -211,10 +197,8 @@
   "read-the-bible": "Skaitykite Bibliją",
   "seed-bible-description": "Perskaitykite {{bookName}} {{chapterNumber}} iš Sėklų Biblijos",
   "social-title": "Perskaitykite {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Skyriaus navigacija",
   "tutorial.skip": "Praleisti",
-
   "tutorial.back": "Atgal",
   "tutorial.done": "Atlikta",
   "tutorial.next": "Toliau",
@@ -326,11 +310,9 @@
   "study-notes": "Studijų užrašai",
   "content": "Turinys",
   "untitled-playlist": "Be pavadinimo grojaraštis",
-
   "discover-annotations-empty": "Jūs neturite jokių komentarų",
   "discover-cross-references-empty": "Šiame skyriuje nėra kryžminių nuorodų.",
   "discover-study-notes-empty": "Šiam skyriui nėra studijų užrašų.",
-
   "discover-select-tab": "Pasirinkite skirtuką, kad rastumėte susijusią medžiagą.",
   "create-playlist": "Sukurti",
   "playlist-title_placeholder": "Grojaraščio pavadinimas",
@@ -379,12 +361,10 @@
   "delete-playlist-failed": "Nepavyko ištrinti grojaraščio.",
   "collapsed-tab-shared-label": "{{title}} — bendras seansas, dalyvauja {{count}}",
   "playlist-add-mode-label": "Prekės tipas",
-
   "session-host-reconnected": "Vėl prisijungta prie sesijos",
   "session-host-left": "Šeimininkas išėjo – buvote pašalintas iš sesijos",
   "drag-to-reorder-playlist-item": "Vilkite, kad pertvarkytumėte",
   "saving": "Įrašoma…",
-
   "unsaved-item-confirm-message": "Pradėjote pridėti elementą, kuris dar nepridėtas į grojaraštį. Ką norite daryti?",
   "discard-and-save": "Atmesti ir įrašyti",
   "add-and-save": "Pridėti ir įrašyti",
@@ -512,7 +492,6 @@
   "reading-plan-preview-reading": "Peržiūrėti {{reading}}",
   "reading-plan-mark-reading-complete": "Pažymėti skaitymą kaip baigtą",
   "reading-plan-link-video": "Vaizdo įrašas",
-
   "reading-plan-mark-passage-complete": "Pažymėti {{passage}} kaip perskaitytą",
   "reading-plan-read-nudge-title": "Malonu skaityti!",
   "reading-plan-read-nudge-toast": "Pažymėti {{passage}} kaip užbaigtą?",
@@ -520,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Skaitykite, ieškokite ir studijuokite Bibliją internete. Nemokami vertimai į daugelį kalbų su paryškinimais, pastabomis, žymekliais ir skaitymo planais.",
   "all": "Visi",
-
   "today-bookmarks": "ŽYMĖS",
   "today-search-verses": "Ieškoti knygų, skyrių, eilučių...",
   "anonymous-greeting": "Sveiki atvykę!",
   "community": "BENDRUOMENĖ",
   "go-somewhere-new": "Eik į naują vietą",
-
   "open-bible": "Atvira Biblija",
   "personal-greeting": "Sveiki atvykę, {{name}} !",
   "resume-reading": "TĘSKITE TEN, KUR IŠĖJOTE",
   "resume-reading-loading": "Įkeliama jūsų skaitymo istorija…",
   "selected-year": "Metai: {{year}}",
-
   "theme-light": "Šviesa",
   "theme-dark": "Tamsu",
   "installed-extensions": "Įdiegta",
@@ -542,7 +518,6 @@
   "extension-state-installed": "Įdiegta",
   "extension-state-downloaded": "Atsisiųsta",
   "extension-state-pending": "Diegiama…",
-
   "tutorial.stepProgress": "Žingsnis {{current}} iš {{total}}",
   "tutorial.offlineDownloadTitle": "Palieskite, kad išsaugotumėte savo įrenginyje",
   "tutorial.offlineDownloadBody": "Bet kurį vertimą su šia piktograma galima išsaugoti skaitymui neprisijungus.",
@@ -576,7 +551,6 @@
   "tutorial.paneLayoutBody": "Šiame maketo meniu pasirinkite, kiek ištraukų skaityti greta.",
   "tutorial.addTabTitle": "Atidaryti daugiau ištraukų",
   "tutorial.addTabBody": "Pridėkite naują skirtuką, kad galėtumėte skaityti kelias knygas ar vertimus vienu metu.",
-
   "playlist-history-session-summary": "{{time}} – {{percent}} % užbaigta – {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} – {{percent}} % užbaigta",
   "playlist-history-continue": "Tęsti",
@@ -635,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} šio skyriaus užrašai",
   "create-folder": "Sukurti aplanką",
   "edit-bookmark": "Redaguoti žymę",
-
   "greeting-afternoon": "Laba diena!",
   "greeting-afternoon-named": "Laba diena, {{name}} !",
   "greeting-evening": "Labas vakaras!",
@@ -651,32 +624,24 @@
   "ask-ai": "Klauskite dirbtinio intelekto",
   "unread-mention": "Neskaitytas paminėjimas",
   "unread-messages": "Neskaitytų žinučių: {{count}}",
-
   "scripture-width": "Šventojo Rašto plotis",
   "decrease-scripture-width": "Sumažinti Šventojo Rašto plotį",
   "increase-scripture-width": "Padidinti Rašto plotį",
   "annotations": "Anotacijos",
   "discover-content-panel": "Atraskite turinį",
   "discover-book-title": "Atraskite {{book}}",
-
   "about-title": "Apie sėklų Bibliją",
   "about-meta-description": "„Seed Bible“ yra nemokama Biblijos programėlė, sukurta Šventojo Rašto skaitymui kartu su šeima, draugais ir bendruomene – nemokama amžinai, be jokių reklamų ar mokamų prieigų.",
-
   "about-action-open-passage": "Atidaryti ištrauką",
   "about-action-donate": "Paaukoti",
   "about-action-discord": "Prisijunkite prie „Discord“",
   "recent-uploads": "Naujausi įkėlimai",
-
   "customization-not-found": "Šio pritaikymo nerasta.",
   "customization-name": "Vardas",
   "customization-primaryColor": "Pirminis",
-
   "customization-secondaryColor": "Antrinis",
-
   "customization-tertiaryColor": "Tretinis",
-
   "customization-fonts": "Šriftai",
-
   "custom-font-option": "Pasirinktinis…",
   "custom-font-name-placeholder": "„Google“ šrifto pavadinimas",
   "delete-customization": "Ištrinti",
@@ -689,10 +654,8 @@
   "extension-availability-available": "Prieinama",
   "extension-availability-auto-installed": "Automatiškai įdiegta",
   "extension-availability-hidden": "Paslėpta",
-
   "variants": "Temos",
   "add-variant": "Pridėti temą",
-
   "base-theme-description": "Šios temos iš anksto nustatyti pakeitimai taikomi viskam, ko netinkinote. Jūsų pačių atlikti pakeitimai išsaugomi.",
   "reset-to-base-theme": "Atkurti bazinę temą",
   "low-contrast-warning": "{{label}} : kontrastas yra tik {{ratio}} :1 — siekite, kad jis būtų bent {{minRatio}} :1, kad tekstas liktų įskaitomas.",
@@ -738,14 +701,12 @@
   "save-folder-empty": "Čia dar nėra jokių išsaugotų elementų.",
   "save-options": "Išsaugojimo parinktys",
   "saves": "Įrašyta",
-
   "hide-saves": "Slėpti išsaugotus duomenis",
   "show-saves": "Rodyti išsaugojimus",
   "save-verses": "Išsaugoti",
   "new-save-folder": "Naujas aplankas",
   "edit-save": "Redaguoti išsaugoti",
   "remove-save-from-all-folders": "Pašalinti iš visų aplankų",
-
   "color-hue": "Atspalvis",
   "color-saturation": "Sodrumas ir ryškumas",
   "hex-color": "Šešioliktainė spalva",
@@ -860,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Nepavyko įkelti formatavimo redaktoriaus. Šioje pastaboje yra formatavimo elementų, kurie būtų prarasti, todėl jos negalima redaguoti, kol neprisijungsite iš naujo.",
   "annotation-text": "Anotacijos tekstas",
   "notes-for-verse": "Pastabos apie eilėraštį {{verse}}",
-
   "configure-extension-defaults": "Konfigūruoti numatytuosius pakeitimus",
-
   "extension-settings-defaults-title": "Numatytieji {{name}} pakeitimai",
   "no-extension-settings": "Šis plėtinys neturi konfigūruojamų nustatymų.",
   "extension-settings-save-failed": "Nepavyko išsaugoti nustatymų.",
@@ -871,7 +830,6 @@
   "setting-no-default": "Nėra numatytųjų",
   "override-setting": "Nepaisyti {{name}}",
   "override-setting-label": "Nepaisyti",
-
   "discover-choose-filter-hint": "Pasirinkite filtrą viršuje, kad pamatytumėte daugiau šio skyriaus turinio.",
   "take-a-tour": "Apsilankykite",
   "share-reading-plan": "Bendrinimo planas",
@@ -1055,7 +1013,6 @@
   "my-bookmark-numbered": "Mano žymė {{number}}",
   "bookmark-move-hint": "Palieskite žymę, kad perkeltumėte ją į šį skyrių.",
   "move-bookmark-here": "Perkelkite {{name}} čia",
-
   "play": "Žaisti",
   "pause": "Pauzė",
   "audio-playback-position": "Atkūrimo pozicija",
@@ -1064,7 +1021,6 @@
   "audio-scrub-verse": "Eilutė {{verse}}",
   "tab-playing-audio": "Garso įrašo grojimas",
   "collapsed-tab-playing-label": "{{label}} — grojamas garso įrašas",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} temos",
   "customization-theme-count_one": "{{count}}",
@@ -1103,7 +1059,6 @@
   "about-community-body": "Tikėjimas skirtas gyventi kartu. „Seed Bible“ skirta skaityti Šventąjį Raštą su šeima, artimiausiais draugais ir namų bažnyčia.",
   "discovered-content": "Atrastas turinys",
   "show-discovered-content": "Rodyti atrastą turinį",
-
   "extension-availability-default": "Numatytasis ( {{availability}} )",
   "customization-extensions-default": "Numatytasis nustatymas kitiems plėtiniams",
   "customization-extensions-default-hint": "Taikoma visiems plėtiniams, kurių nenustatėte žemiau, įskaitant vėliau pridėtus naujus",
@@ -1136,7 +1091,6 @@
   "playlist-scripture-note-return": "Atgal į grojaraštį",
   "playlist-scripture-note-aria": "Pastaba apie {{passage}}",
   "playlist-scripture-note-progress": "{{current}} iš {{total}}",
-
   "unsaved-item-edit-confirm-message": "Pakeitėte elementą, bet dar neišsaugojote šių pakeitimų. Ką norėtumėte daryti?",
   "keep-changes-and-save": "Išsaugoti pakeitimus ir išsaugoti",
   "reading-plan-edit-reading": "Redaguoti skaitymą",
@@ -1151,7 +1105,6 @@
   "branding": "Prekės ženklo kūrimas",
   "create-custom-branding-menu-item": "Individualus prekės ženklo kūrimas",
   "your-content-empty-branding": "Jūsų sukurtas individualus prekės ženklas bus rodomas čia.",
-
   "extension-consent-from": "Iš {{host}}",
   "extension-consent-source-version": "Versija {{version}} · iš {{host}}",
   "extension-consent-uploader-unnamed": "Sėklų Biblijos vartotojas",
@@ -1199,7 +1152,6 @@
   "extension-permission-reading-selection": "Pažiūrėkite, kurias eilutes pasirinkote",
   "extension-permission-reading-navigate": "Atviri praėjimai",
   "extension-permission-network": "Prisijungti prie {{host}}",
-
   "extension-consent-not-now": "Ne dabar",
   "extension-consent-nothing-yet": "Kol kas jis neturės prieigos prie jokios jūsų informacijos.",
   "extension-permission-reading-history": "Peržiūrėkite savo skaitymo istoriją",
@@ -1237,7 +1189,6 @@
   "extension-capture-cancel": "Atšaukti",
   "extension-consent-high-risk": "Jautrus",
   "extension-modal-ok": "Gerai",
-
   "extension-permissions-restart-note": "Pakeitimai įsigalioja iš karto. {{name}} paleidžiamas iš naujo, kad juos išsaugotų.",
   "extension-permissions-saved": "Išsaugota. {{name}} paleistas iš naujo su naujais leidimais.",
   "extension-permissions-failed": "Nepavyko išsaugoti. Bandykite dar kartą.",
@@ -1275,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Rodyti efektus, kai vedėjas pasirenka eilutę.",
   "session-settings-verse-effects-desc-everyone": "Rodyti efektus, kai kas nors pasirenka eilutę.",
   "session-settings-verse-effects-desc-none": "Eilučių pasirinkimo efektai išjungti visiems.",
-
   "account": "Paskyra",
   "scroll-filters-start": "Slinkite filtrus link pradžios",
-  "scroll-filters-end": "Slinkite filtrus link galo"
+  "scroll-filters-end": "Slinkite filtrus link galo",
+  "download": "Atsisiųsti",
+  "image-details-uploaded": "Įkelta",
+  "image-details-dimensions": "Matmenys",
+  "image-details-dimensions-value": "{{width}} × {{height}} pikselių",
+  "image-details-type": "Tipas",
+  "image-details-cover-of": "Viršelis",
+  "image-details-not-a-cover": "Nenaudojamas kaip priedanga",
+  "delete-customization-confirm-title": "Ištrinti pasirinktinį prekės ženklą?",
+  "delete-customization-confirm-message": "Ištrinti pasirinktinį prekės ženklo dizainą „ {{name}} “? Šio veiksmo negalima atšaukti.",
+  "delete-customization-failed": "Nepavyko ištrinti pasirinktinio prekės ženklo.",
+  "delete-variant-confirm-title": "Ištrinti temą?",
+  "delete-variant-confirm-message": "Ištrinti temą „ {{name}} “? Šio veiksmo negalima atšaukti.",
+  "delete-variant-confirm-message-unnamed": "Ištrinti šią temą? Šio veiksmo negalima atšaukti.",
+  "delete-variant-failed": "Nepavyko ištrinti temos.",
+  "delete-highlight-confirm-title": "Ištrinti paryškinimą?",
+  "delete-highlight-confirm-message": "Ištrinti paryškinimą {{reference}} ? Šio veiksmo negalima atšaukti.",
+  "delete-highlight-failed": "Nepavyko ištrinti paryškinimo.",
+  "delete-annotation-on-confirm-message": "Ištrinti anotaciją {{reference}} ? Šio veiksmo negalima atšaukti.",
+  "remove-from-folder": "Pašalinti iš aplanko",
+  "save-folders": "{{folders}}",
+  "delete-save-confirm-title": "Ištrinti išsaugotą?",
+  "delete-save-confirm-message": "Ištrinti {{reference}} išsaugotą failą? Šio veiksmo negalima atšaukti.",
+  "delete-save-confirm-message-folders": "Ištrinti {{reference}} išsaugotą failą iš {{folders}} ? Šio veiksmo negalima atšaukti.",
+  "delete-save-failed": "Nepavyko ištrinti išsaugojimo.",
+  "delete-save-folder-confirm-title": "Ištrinti aplanką?",
+  "delete-save-folder-confirm-message": "Ištrinti aplanką „ {{name}} “?",
+  "delete-save-folder-confirm-deletes": "Šiame aplanke esantys {{count}} išsaugoti failai taip pat bus ištrinti.",
+  "delete-save-folder-confirm-deletes_one": "Įrašas, esantis tik šiame aplanke, taip pat bus ištrintas.",
+  "delete-save-folder-confirm-deletes_other": "Šiame aplanke esantys {{count}} išsaugoti failai taip pat bus ištrinti.",
+  "delete-save-folder-confirm-keeps": "{{count}} išsaugoti failai, esantys ir kituose aplankuose, ten ir liks.",
+  "delete-save-folder-confirm-keeps_one": "Įrašas, kuris yra ir kitame aplanke, ten ir liks.",
+  "delete-save-folder-confirm-keeps_other": "{{count}} išsaugoti failai, esantys ir kituose aplankuose, ten ir liks.",
+  "cant-be-undone": "To negalima atšaukti.",
+  "delete-save-folder-failed": "Nepavyko ištrinti aplanko.",
+  "download-image-failed": "Nepavyko atsisiųsti paveikslėlio.",
+  "session-settings-verse-effects-hosts-only": "Tik šeimininkams",
+  "session-settings-verse-effects-everyone": "Visi",
+  "session-settings-verse-effects-none": "Nėra",
+  "loading-books": "Kraunamos knygos…",
+  "books-load-failed": "Knygų įkelti nepavyko. Patikrinkite ryšį ir bandykite dar kartą.",
+  "loading-translation": "Kraunama {{name}} …",
+  "translation-load-failed": "Nepavyko įkelti {{name}} .",
+  "loading-translations": "Įkeliami vertimai…",
+  "translations-load-failed": "Nepavyko įkelti viso vertimų sąrašo, todėl kai kurių gali trūkti.",
+  "verse-of-the-day": "DIENOS EILIŠĖ",
+  "verse-of-the-day-loading": "Kraunama dienos eilėraštis…"
 }

@@ -41,3 +41,77 @@ describe("CasualOSManager.getFileRecordName()", () => {
     ).toBeNull();
   });
 });
+
+describe("CasualOSManager.readFile()", () => {
+  let os: ReturnType<typeof CasualOSManager>;
+  let getFile: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    os = CasualOSManager();
+    getFile = vi.fn();
+    (os.client as unknown as { getFile: unknown }).getFile = getFile;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("reads a stored file through the server's signed request, uncached", async () => {
+    getFile.mockResolvedValue({
+      success: true,
+      requestUrl: "https://filesbucket.s3.amazonaws.com/user-1/abc.png?sig=1",
+      requestMethod: "GET",
+      requestHeaders: { "x-amz-date": "20261027", origin: "https://x" },
+    });
+    const fetchFile = vi.fn(
+      async () =>
+        new Response("png", { headers: { "content-type": "image/png" } })
+    );
+    vi.stubGlobal("fetch", fetchFile);
+
+    const blob = await os.readFile(
+      "https://filesbucket.s3.amazonaws.com/user-1/abc.png"
+    );
+
+    expect(await blob?.text()).toBe("png");
+    expect(fetchFile).toHaveBeenCalledWith(
+      "https://filesbucket.s3.amazonaws.com/user-1/abc.png?sig=1",
+      {
+        method: "GET",
+        // Headers the browser won't let a page set are dropped.
+        headers: { "x-amz-date": "20261027" },
+        cache: "no-store",
+      }
+    );
+  });
+
+  it("is null for a URL the server doesn't store", async () => {
+    getFile.mockResolvedValue({
+      success: false,
+      errorCode: "unacceptable_url",
+      errorMessage: "The URL does not match an expected format.",
+    });
+    const fetchFile = vi.fn();
+    vi.stubGlobal("fetch", fetchFile);
+
+    expect(await os.readFile("https://example.com/a.jpg")).toBeNull();
+    expect(fetchFile).not.toHaveBeenCalled();
+  });
+
+  it("fails when the file can't be read", async () => {
+    getFile.mockResolvedValue({
+      success: true,
+      requestUrl: "https://filesbucket.s3.amazonaws.com/user-1/abc.png",
+      requestMethod: "GET",
+      requestHeaders: {},
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 403 }))
+    );
+
+    await expect(
+      os.readFile("https://filesbucket.s3.amazonaws.com/user-1/abc.png")
+    ).rejects.toThrow("403");
+  });
+});

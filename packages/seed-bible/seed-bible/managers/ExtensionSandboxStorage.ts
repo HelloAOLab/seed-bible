@@ -4,7 +4,7 @@ import { safeLocalStorage } from "../app/ssrEnv";
 import type { LoginManager } from "./LoginManager";
 import type { CasualOSManager } from "./OsManager";
 import type { SandboxJsonValue } from "../extensions/protocol";
-import { SandboxBrokerError } from "./ExtensionSandboxServices";
+import { SandboxBrokerError } from "./ExtensionSandboxErrors";
 
 /** The records calls storage sync needs; `CasualOSManager` provides them. */
 export type SandboxStorageRecords = Pick<

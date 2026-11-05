@@ -6,6 +6,8 @@ import {
   previousPosition,
   resolveChapterInBook,
   NAVIGATION_COALESCE_MS,
+  DISCOVERY_IDLE_TIMEOUT_MS,
+  DISCOVERY_LOADER_DELAY_MS,
   type BibleReadingState,
   type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -3305,6 +3307,116 @@ describe("createBibleReadingState", () => {
       expect(state.discoveredContent.value).toEqual([]);
       expect(state.discoveredCrossReferences.value).toEqual([]);
       expect(state.discoveredStudyNotes.value).toEqual([]);
+    });
+
+    describe("isDiscovering and showDiscoveryLoader", () => {
+      // A provider for Genesis 1 that answers only when the test says so.
+      function deferredProvider(id: string) {
+        let answer: (results: DiscoverResult[]) => void = () => {};
+        const provider = {
+          id,
+          title: id,
+          description: id,
+          discover: () =>
+            new Promise<DiscoverResult[]>((resolve) => {
+              answer = resolve;
+            }),
+        };
+        const result: DiscoverResult = {
+          type: "content",
+          title: `From ${id}`,
+          description: "desc",
+          reference: { book: "GEN", chapter: 1, verse: 1 },
+        };
+        return { provider, answer: () => answer([result]) };
+      }
+
+      // Loads the chapter with real timers, then switches to fake ones before
+      // a provider registers, so the discovery it starts runs on them.
+      async function loadThenFakeTimers() {
+        const discoverManager = createDiscoverManager();
+        setWebResponses(createReadingManagerResponseMap());
+        const state = createRawBibleReadingState(
+          createDataManager(),
+          createHighlightsManagerMock() as any,
+          createI18nManager(createNavigationManager(), ["en"]),
+          {},
+          discoverManager
+        );
+        await waitForInitialLoad(state);
+        await waitFor(() => !state.isDiscovering.value);
+        vi.useFakeTimers();
+        return { state, discoverManager };
+      }
+
+      afterEach(() => {
+        vi.clearAllTimers();
+        vi.useRealTimers();
+      });
+
+      it("discovers until every provider has answered, showing the loader only past the delay", async () => {
+        const { state, discoverManager } = await loadThenFakeTimers();
+        const slow = deferredProvider("slow");
+
+        discoverManager.registerDiscoverProvider(slow.provider);
+
+        expect(state.isDiscovering.value).toBe(true);
+        await vi.advanceTimersByTimeAsync(DISCOVERY_LOADER_DELAY_MS - 1);
+        expect(state.showDiscoveryLoader.value).toBe(false);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(state.showDiscoveryLoader.value).toBe(true);
+
+        slow.answer();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(state.isDiscovering.value).toBe(false);
+        expect(state.showDiscoveryLoader.value).toBe(false);
+        expect(state.discoveredContent.value).toHaveLength(1);
+      });
+
+      it("never shows the loader when every provider answers within the delay", async () => {
+        const { state, discoverManager } = await loadThenFakeTimers();
+        const quick = deferredProvider("quick");
+
+        discoverManager.registerDiscoverProvider(quick.provider);
+        await vi.advanceTimersByTimeAsync(DISCOVERY_LOADER_DELAY_MS / 2);
+        quick.answer();
+        await vi.advanceTimersByTimeAsync(DISCOVERY_LOADER_DELAY_MS);
+
+        expect(state.isDiscovering.value).toBe(false);
+        expect(state.showDiscoveryLoader.value).toBe(false);
+      });
+
+      it("gives up once no provider has answered for the idle timeout, and a late answer doesn't bring the loader back", async () => {
+        const { state, discoverManager } = await loadThenFakeTimers();
+        const first = deferredProvider("first");
+        const late = deferredProvider("late");
+
+        discoverManager.registerDiscoverProvider(first.provider);
+        discoverManager.registerDiscoverProvider(late.provider);
+        await vi.advanceTimersByTimeAsync(DISCOVERY_IDLE_TIMEOUT_MS - 1000);
+        first.answer();
+        await vi.advanceTimersByTimeAsync(0);
+
+        // The answer restarted the wait.
+        await vi.advanceTimersByTimeAsync(DISCOVERY_IDLE_TIMEOUT_MS - 1);
+        expect(state.isDiscovering.value).toBe(true);
+        expect(state.showDiscoveryLoader.value).toBe(true);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(state.isDiscovering.value).toBe(false);
+        expect(state.showDiscoveryLoader.value).toBe(false);
+
+        late.answer();
+        await vi.advanceTimersByTimeAsync(DISCOVERY_IDLE_TIMEOUT_MS);
+
+        expect(
+          state.discoveredContent.value.flatMap((group) =>
+            group.results.map((result) => result.title)
+          )
+        ).toEqual(["From first", "From late"]);
+        expect(state.isDiscovering.value).toBe(false);
+        expect(state.showDiscoveryLoader.value).toBe(false);
+      });
     });
 
     it("signals reset when chapter changes", async () => {

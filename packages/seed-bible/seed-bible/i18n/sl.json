@@ -28,22 +28,18 @@
   "searching": "Iskanje ...",
   "no-search-results": "Ni ujemajočih se verzov.",
   "open-chapter": "Odprto poglavje",
-
   "uploading": "Nalaganje ...",
   "profile-name": "Ime profila",
   "profile-name-placeholder": "npr. družina Craig",
-
   "description": "Opis",
   "optional": "(Neobvezno)",
   "description-placeholder": "Vnesite opis svojega profila ...",
   "location": "Lokacija",
   "location-placeholder": "npr. Austin, Teksas",
-
   "copied": "Kopirano",
   "copy": "Kopiraj",
   "save-changes": "Shrani spremembe",
   "sign-out": "Odjava",
-
   "log-in": "Prijava",
   "tanakh": "Tanakh",
   "traditional": "Tradicionalno",
@@ -57,7 +53,6 @@
   "scripture-settings": "Svetopisemske nastavitve",
   "scripture-elements": "Svetopisemski elementi",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Prikaži naslove",
   "show-verse-numbers": "Prikaži številke verzov",
   "show-footnotes": "Prikaži opombe",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Razširitve niso na voljo.",
   "install": "Namestitev",
   "uninstall": "Odstrani",
-
   "custom": "Po meri",
   "text-section-bookTitle": "Naslov knjige",
   "text-section-heading": "Naslovno besedilo",
@@ -92,7 +86,6 @@
   "show-selected-items": "Prikaži izbrane elemente",
   "show-highlight-colors": "Prikaži barve označevanja",
   "show-icon-text": "Prikaži besedilo ikone",
-
   "extensions": "Razširitve",
   "display": "Prikaz",
   "theme-and-text": "Tema in besedilo",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Povečaj velikost pisave v svetih spisih",
   "change-line-spacing": "Spremeni razmik med vrsticami",
   "line-spacing_lineHeight": "Razmik med vrsticami: {{lineHeight}}",
-
   "italic": "Kurzivno",
   "underline": "Podčrtano",
   "alignment_x": "Poravnava: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Barva besedila",
   "follow_theme": "Sledi temi",
   "reset-to-default": "Ponastavi na privzeto",
-
   "id_highlight-text-color": "{{id}} barva označenega besedila",
   "id_highlight-background-color": "{{id}} barva ozadja za označevanje",
   "all-settings-description": "Natančno prilagodite vsak del besedila in prilagodite vsako barvo teme.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokrifi",
-
   "custom-translations": "Prevodi po meri",
   "no-translation-results-found": "Ni najdenih rezultatov. Ali želite razširiti iskanje, da bi vključevalo tudi delno popolne prevode?",
   "show-all-translations": "Prikaži vse prevode",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalmi",
   "5-psalms": "5 psalmov",
   "remove-bookmark": "Odstrani zaznamek",
-
   "chat": "Klepet",
   "today": "Danes",
   "you": "Ti",
@@ -169,7 +158,6 @@
   "category-options": "Možnosti mape",
   "rename": "Preimenuj",
   "delete": "Izbriši",
-
   "bookmark-options": "Možnosti zaznamkov",
   "new-folder-placeholder": "Ime mape",
   "tasks": "Naloge",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Mapa s tem imenom že obstaja.",
   "add-to-new": "Dodaj k novemu",
   "save": "Shrani",
-
   "apocrypha-info-text": "Nobenega od spisov v tem razdelku zgodnje judovske ali krščanske skupnosti niso nikoli štele za Sveto pismo. Biblija je specifična zbirka knjig. Judje in kristjani so se vedno strinjali glede Stare zaveze, ki izhaja iz fiksnega sklopa svetih spisov, ki jih Judje imenujejo Tanah, kristjani pa Stara zaveza. Vsebina Tanaha in Stare zaveze je popolnoma enaka, vendar sta običajno različno razporejeni. Kristjani priznavajo tudi Novo zavezo, ki pripoveduje zgodbo o Jezusu, njegovih naukih in spisih njegovih sledilcev. Spodaj navedeni spisi so bili znani in široko brani v času pisanja Biblije, vendar nikoli niso bili obravnavani kot Sveto pismo. Čeprav so starodavni avtorji včasih citirali široko paleto besedil, vključno s pesniki, filozofi in drugimi spisi, citiranje nečesa ni enako kot obravnavanje tega kot Svetega pisma. Ti spisi so tukaj vključeni le za zgodovinsko in literarno referenco.",
   "seed-bible": "Semenska Biblija",
   "take-photo": "Posnemite fotografijo",
   "choose-from-gallery": "Izberite iz galerije",
-
   "crop-your-photo": "Obrežite svojo fotografijo",
   "zoom": "Povečava",
   "set-picture": "Nastavi sliko",
@@ -211,10 +197,8 @@
   "read-the-bible": "Preberite Sveto pismo",
   "seed-bible-description": "Preberite {{bookName}} {{chapterNumber}} v Seed Bible",
   "social-title": "Preberi {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Navigacija po poglavjih",
   "tutorial.skip": "Preskoči",
-
   "tutorial.back": "Nazaj",
   "tutorial.done": "Končano",
   "tutorial.next": "Naprej",
@@ -326,11 +310,9 @@
   "study-notes": "Študijske opombe",
   "content": "Vsebina",
   "untitled-playlist": "Seznam predvajanja brez naslova",
-
   "discover-annotations-empty": "Nimate nobenih opomb",
   "discover-cross-references-empty": "Za to poglavje ni navzkrižnih sklicev.",
   "discover-study-notes-empty": "Za to poglavje ni študijskih opomb.",
-
   "discover-select-tab": "Izberite zavihek, da odkrijete povezano gradivo.",
   "create-playlist": "Ustvari",
   "playlist-title_placeholder": "Naslov seznama predvajanja",
@@ -379,12 +361,10 @@
   "delete-playlist-failed": "Seznama predvajanja ni bilo mogoče izbrisati.",
   "collapsed-tab-shared-label": "{{title}} — deljena seja, {{count}} prisotnih",
   "playlist-add-mode-label": "Vrsta elementa",
-
   "session-host-reconnected": "Ponovno povezan s sejo",
   "session-host-left": "Gostitelj je odšel – odstranjeni ste bili iz seje",
   "drag-to-reorder-playlist-item": "Povlecite za spremembo vrstnega reda",
   "saving": "Shranjevanje…",
-
   "unsaved-item-confirm-message": "Začeli ste dodajati element, ki še ni bil dodan na seznam predvajanja. Kaj želite storiti?",
   "discard-and-save": "Zavrzi in shrani",
   "add-and-save": "Dodaj in shrani",
@@ -512,7 +492,6 @@
   "reading-plan-preview-reading": "Predogled {{reading}}",
   "reading-plan-mark-reading-complete": "Označi branje kot končano",
   "reading-plan-link-video": "Videoposnetek",
-
   "reading-plan-mark-passage-complete": "Označi {{passage}} kot prebrano",
   "reading-plan-read-nudge-title": "Prijetno branje!",
   "reading-plan-read-nudge-toast": "Označi {{passage}} kot dokončan?",
@@ -520,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Berite, iščite in preučujte Sveto pismo na spletu. Brezplačni prevodi v številne jezike, z označevalci, opombami, zaznamki in bralnimi načrti.",
   "all": "Vse",
-
   "today-bookmarks": "ZAZNAMKE",
   "today-search-verses": "Išči knjige, poglavja, verze ...",
   "anonymous-greeting": "Dobrodošli!",
   "community": "SKUPNOST",
   "go-somewhere-new": "POJDI NEKAM NA NOVO",
-
   "open-bible": "Odprta Biblija",
   "personal-greeting": "Dobrodošel/dobrodošla, {{name}} !",
   "resume-reading": "NADALJUJTE, KJER STE KONČALI",
   "resume-reading-loading": "Nalaganje zgodovine branja …",
   "selected-year": "Leto: {{year}}",
-
   "theme-light": "Svetloba",
   "theme-dark": "Temno",
   "installed-extensions": "Nameščeno",
@@ -542,7 +518,6 @@
   "extension-state-installed": "Nameščeno",
   "extension-state-downloaded": "Preneseno",
   "extension-state-pending": "Nameščanje …",
-
   "tutorial.stepProgress": "Korak {{current}} od {{total}}",
   "tutorial.offlineDownloadTitle": "Dotaknite se, da ga shranite v napravi",
   "tutorial.offlineDownloadBody": "Vsak prevod s to ikono je mogoče shraniti za branje brez povezave.",
@@ -576,7 +551,6 @@
   "tutorial.paneLayoutBody": "V tem meniju postavitve izberite, koliko odlomkov želite brati drug ob drugem.",
   "tutorial.addTabTitle": "Odprite več odlomkov",
   "tutorial.addTabBody": "Dodajte nov zavihek za branje več knjig ali prevodov drugega ob drugem.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % dokončano - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % dokončano",
   "playlist-history-continue": "Nadaljuj",
@@ -635,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} zapiskov za to poglavje",
   "create-folder": "Ustvari mapo",
   "edit-bookmark": "Uredi zaznamek",
-
   "greeting-afternoon": "Dober dan!",
   "greeting-afternoon-named": "Dober dan, {{name}} !",
   "greeting-evening": "Dober večer!",
@@ -651,32 +624,24 @@
   "ask-ai": "Vprašajte umetno inteligenco",
   "unread-mention": "Neprebrana omemba",
   "unread-messages": "Neprebrana sporočila: {{count}}",
-
   "scripture-width": "Širina Svetega pisma",
   "decrease-scripture-width": "Zmanjšajte širino svetih spisov",
   "increase-scripture-width": "Povečaj širino svetih spisov",
   "annotations": "Opombe",
   "discover-content-panel": "Odkrijte vsebino",
   "discover-book-title": "Odkrijte {{book}}",
-
   "about-title": "O semenski Bibliji",
   "about-meta-description": "Seed Bible je brezplačna biblijska aplikacija, zgrajena za branje Svetega pisma skupaj z družino, prijatelji in skupnostjo – brezplačna za vedno, brez oglasov ali plačljivih zidov.",
-
   "about-action-open-passage": "Odpri prehod",
   "about-action-donate": "Donirajte",
   "about-action-discord": "Pridruži se Discordu",
   "recent-uploads": "Nedavni prenosi",
-
   "customization-not-found": "Te prilagoditve ni bilo mogoče najti.",
   "customization-name": "Ime",
   "customization-primaryColor": "Primarno",
-
   "customization-secondaryColor": "Sekundarno",
-
   "customization-tertiaryColor": "Terciarno",
-
   "customization-fonts": "Pisave",
-
   "custom-font-option": "Po meri…",
   "custom-font-name-placeholder": "Ime pisave Google",
   "delete-customization": "Izbriši",
@@ -689,10 +654,8 @@
   "extension-availability-available": "Na voljo",
   "extension-availability-auto-installed": "Samodejno nameščeno",
   "extension-availability-hidden": "Skrito",
-
   "variants": "Teme",
   "add-variant": "Dodaj temo",
-
   "base-theme-description": "Spremembe, ki jih ta tema prednastavi, se uporabijo za vse, česar niste prilagodili. Vaše lastne spremembe se ohranijo.",
   "reset-to-base-theme": "Ponastavi na osnovno temo",
   "low-contrast-warning": "{{label}} : kontrast je le {{ratio}} :1 – cilj je vsaj {{minRatio}} :1, da besedilo ostane berljivo.",
@@ -738,14 +701,12 @@
   "save-folder-empty": "Tukaj še ni shranjenih datotek.",
   "save-options": "Možnosti shranjevanja",
   "saves": "Shranjeno",
-
   "hide-saves": "Skrij shranjene datoteke",
   "show-saves": "Prikaži shranjene datoteke",
   "save-verses": "Shrani",
   "new-save-folder": "Nova mapa",
   "edit-save": "Uredi shranjevanje",
   "remove-save-from-all-folders": "Odstrani iz vseh map",
-
   "color-hue": "Odtenek",
   "color-saturation": "Nasičenost in svetlost",
   "hex-color": "Šestnajstiška barva",
@@ -860,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Urejevalnika oblikovanja ni bilo mogoče naložiti. Ta zapisek vsebuje oblikovanje, ki bi bilo izgubljeno, zato ga ni mogoče urejati, dokler se ne povežete znova.",
   "annotation-text": "Besedilo opombe",
   "notes-for-verse": "Opombe k verzu {{verse}}",
-
   "configure-extension-defaults": "Konfiguriraj privzete preglasitve",
-
   "extension-settings-defaults-title": "{{name}} privzete preglasitve",
   "no-extension-settings": "Ta razširitev nima nastavljivih nastavitev.",
   "extension-settings-save-failed": "Nastavitev ni bilo mogoče shraniti.",
@@ -871,7 +830,6 @@
   "setting-no-default": "Brez privzete nastavitve",
   "override-setting": "Preglasi {{name}}",
   "override-setting-label": "Preglasi",
-
   "discover-choose-filter-hint": "Izberite zgornji filter, da si ogledate več vsebine iz tega poglavja.",
   "take-a-tour": "Oglejte si ogled",
   "share-reading-plan": "Deli načrt",
@@ -1055,7 +1013,6 @@
   "my-bookmark-numbered": "Moj zaznamek {{number}}",
   "bookmark-move-hint": "Dotaknite se zaznamka, da ga premaknete v to poglavje.",
   "move-bookmark-here": "Premakni {{name}} sem",
-
   "play": "Predvajaj",
   "pause": "Začasno ustavi",
   "audio-playback-position": "Položaj predvajanja",
@@ -1064,7 +1021,6 @@
   "audio-scrub-verse": "Verz {{verse}}",
   "tab-playing-audio": "Predvajanje zvoka",
   "collapsed-tab-playing-label": "{{label}} — predvajanje zvoka",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}}",
   "customization-theme-count_one": "{{count}} tema",
@@ -1103,7 +1059,6 @@
   "about-community-body": "Vera je namenjena skupnemu življenju. Seed Bible je narejena za branje Svetega pisma z družino, najbližjimi prijatelji in hišno cerkvijo.",
   "discovered-content": "Odkrita vsebina",
   "show-discovered-content": "Prikaži odkrito vsebino",
-
   "extension-availability-default": "Privzeto ( {{availability}} )",
   "customization-extensions-default": "Privzeto za druge razširitve",
   "customization-extensions-default-hint": "Velja za vse razširitve, ki jih niste nastavili spodaj, vključno z novimi, ki bodo dodane pozneje",
@@ -1136,7 +1091,6 @@
   "playlist-scripture-note-return": "Nazaj na seznam predvajanja",
   "playlist-scripture-note-aria": "Opomba o {{passage}}",
   "playlist-scripture-note-progress": "{{current}} od {{total}}",
-
   "unsaved-item-edit-confirm-message": "Spremenili ste element, vendar sprememb še niste shranili. Kaj želite storiti?",
   "keep-changes-and-save": "Ohrani spremembe in shrani",
   "reading-plan-edit-reading": "Uredi branje",
@@ -1151,7 +1105,6 @@
   "branding": "Blagovna znamka",
   "create-custom-branding-menu-item": "Blagovna znamka po meri",
   "your-content-empty-branding": "Tukaj se bo prikazala blagovna znamka po meri, ki jo ustvarite.",
-
   "extension-consent-from": "Od {{host}}",
   "extension-consent-source-version": "Različica {{version}} · od {{host}}",
   "extension-consent-uploader-unnamed": "uporabnik Biblije iz semena",
@@ -1199,7 +1152,6 @@
   "extension-permission-reading-selection": "Poglejte, katere verze izberete",
   "extension-permission-reading-navigate": "Odprti prehodi",
   "extension-permission-network": "Poveži se z {{host}}",
-
   "extension-consent-not-now": "Ne zdaj",
   "extension-consent-nothing-yet": "Zaenkrat ne bo imel dostopa do nobenih vaših podatkov.",
   "extension-permission-reading-history": "Oglejte si zgodovino branja",
@@ -1237,7 +1189,6 @@
   "extension-capture-cancel": "Prekliči",
   "extension-consent-high-risk": "Občutljivo",
   "extension-modal-ok": "V redu",
-
   "extension-permissions-restart-note": "Spremembe začnejo veljati takoj. {{name}} se znova zažene, da jih prevzame.",
   "extension-permissions-saved": "Shranjeno. {{name}} je bil ponovno zagnan z novimi dovoljenji.",
   "extension-permissions-failed": "To ni shranilo. Poskusite znova.",
@@ -1275,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Prikaži učinke, ko gostitelj izbere verz.",
   "session-settings-verse-effects-desc-everyone": "Prikaži učinke, ko kdo izbere verz.",
   "session-settings-verse-effects-desc-none": "Učinki izbire verzov so izklopljeni za vse.",
-
   "account": "Račun",
   "scroll-filters-start": "Pomaknite filtre proti začetku",
-  "scroll-filters-end": "Pomaknite filtre proti koncu"
+  "scroll-filters-end": "Pomaknite filtre proti koncu",
+  "download": "Prenesi",
+  "image-details-uploaded": "Naloženo",
+  "image-details-dimensions": "Dimenzije",
+  "image-details-dimensions-value": "{{width}} × {{height}} slikovnih pik",
+  "image-details-type": "Vrsta",
+  "image-details-cover-of": "Naslovnica",
+  "image-details-not-a-cover": "Ne uporablja se kot pokrov",
+  "delete-customization-confirm-title": "Želite izbrisati blagovno znamko po meri?",
+  "delete-customization-confirm-message": "Želite izbrisati blagovno znamko po meri » {{name}} «? Tega ni mogoče razveljaviti.",
+  "delete-customization-failed": "Blagovne znamke po meri ni bilo mogoče izbrisati.",
+  "delete-variant-confirm-title": "Izbrisati temo?",
+  "delete-variant-confirm-message": "Želite izbrisati temo » {{name}} «? Tega ni mogoče razveljaviti.",
+  "delete-variant-confirm-message-unnamed": "Želite izbrisati to temo? Tega ni mogoče razveljaviti.",
+  "delete-variant-failed": "Teme ni bilo mogoče izbrisati.",
+  "delete-highlight-confirm-title": "Želite izbrisati označeno besedilo?",
+  "delete-highlight-confirm-message": "Želite izbrisati označevanje na {{reference}} ? Tega ni mogoče razveljaviti.",
+  "delete-highlight-failed": "Označenega dela ni bilo mogoče izbrisati.",
+  "delete-annotation-on-confirm-message": "Želite izbrisati opombo na {{reference}} ? Tega ni mogoče razveljaviti.",
+  "remove-from-folder": "Odstrani iz mape",
+  "save-folders": "V {{folders}}",
+  "delete-save-confirm-title": "Izbrisati shranjeno?",
+  "delete-save-confirm-message": "Izbrisati shranjevanje za {{reference}} ? Tega ni mogoče razveljaviti.",
+  "delete-save-confirm-message-folders": "Izbrisati shranjevanje za {{reference}} iz {{folders}} ? Tega ni mogoče razveljaviti.",
+  "delete-save-failed": "Shranjenega ni bilo mogoče izbrisati.",
+  "delete-save-folder-confirm-title": "Izbrisati mapo?",
+  "delete-save-folder-confirm-message": "Izbrisati mapo » {{name}} «?",
+  "delete-save-folder-confirm-deletes": "Izbrisanih bo tudi {{count}} shranjenih datotek, ki so samo v tej mapi.",
+  "delete-save-folder-confirm-deletes_one": "Shranjena datoteka, ki je samo v tej mapi, bo prav tako izbrisana.",
+  "delete-save-folder-confirm-deletes_other": "Izbrisanih bo tudi {{count}} shranjenih datotek, ki so samo v tej mapi.",
+  "delete-save-folder-confirm-keeps": "Shranjenih datotek {{count}} , ki so tudi v drugih mapah, bo tam tudi ostalo.",
+  "delete-save-folder-confirm-keeps_one": "Shranjena datoteka, ki je tudi v drugi mapi, bo tam ostala.",
+  "delete-save-folder-confirm-keeps_other": "Shranjenih datotek {{count}} , ki so tudi v drugih mapah, bo tam tudi ostalo.",
+  "cant-be-undone": "Tega ni mogoče razveljaviti.",
+  "delete-save-folder-failed": "Mape ni bilo mogoče izbrisati.",
+  "download-image-failed": "Slike ni bilo mogoče prenesti.",
+  "session-settings-verse-effects-hosts-only": "Samo gostitelji",
+  "session-settings-verse-effects-everyone": "Vsi",
+  "session-settings-verse-effects-none": "Nobena",
+  "loading-books": "Nalaganje knjig …",
+  "books-load-failed": "Knjig ni bilo mogoče naložiti. Preverite povezavo in poskusite znova.",
+  "loading-translation": "Nalaganje {{name}} …",
+  "translation-load-failed": "{{name}} ni bilo mogoče naložiti.",
+  "loading-translations": "Nalaganje prevodov …",
+  "translations-load-failed": "Celotnega seznama prevodov ni bilo mogoče naložiti, zato nekateri morda manjkajo.",
+  "verse-of-the-day": "VERZ DNEVA",
+  "verse-of-the-day-loading": "Nalaganje verza dneva ..."
 }

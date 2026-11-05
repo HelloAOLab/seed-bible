@@ -28,22 +28,18 @@
   "searching": "Hľadá sa...",
   "no-search-results": "Žiadne zodpovedajúce verše.",
   "open-chapter": "Otvorená kapitola",
-
   "uploading": "Nahráva sa...",
   "profile-name": "Názov profilu",
   "profile-name-placeholder": "napr. rodina Craigovcov",
-
   "description": "Popis",
   "optional": "(Voliteľné)",
   "description-placeholder": "Zadajte popis svojho profilu...",
   "location": "Poloha",
   "location-placeholder": "napr. Austin, TX",
-
   "copied": "Skopírované",
   "copy": "Kopírovať",
   "save-changes": "Uložiť zmeny",
   "sign-out": "Odhlásiť sa",
-
   "log-in": "Prihlásiť sa",
   "tanakh": "Tanach",
   "traditional": "Tradičné",
@@ -57,7 +53,6 @@
   "scripture-settings": "Nastavenia Písma",
   "scripture-elements": "Prvky Písma",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Zobraziť nadpisy",
   "show-verse-numbers": "Zobraziť čísla veršov",
   "show-footnotes": "Zobraziť poznámky pod čiarou",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Nie sú k dispozícii žiadne rozšírenia.",
   "install": "Inštalovať",
   "uninstall": "Odinštalovať",
-
   "custom": "Vlastné",
   "text-section-bookTitle": "Text názvu knihy",
   "text-section-heading": "Text nadpisu",
@@ -92,7 +86,6 @@
   "show-selected-items": "Zobraziť vybrané položky",
   "show-highlight-colors": "Zobraziť farby zvýraznenia",
   "show-icon-text": "Zobraziť text ikony",
-
   "extensions": "Rozšírenia",
   "display": "Displej",
   "theme-and-text": "Téma a text",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Zväčšiť veľkosť písma",
   "change-line-spacing": "Zmena riadkovania",
   "line-spacing_lineHeight": "Riadkovanie: {{lineHeight}}",
-
   "italic": "Kurzíva",
   "underline": "Podčiarknutie",
   "alignment_x": "Zarovnanie: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Farba textu",
   "follow_theme": "Sledovať tému",
   "reset-to-default": "Obnoviť na predvolené",
-
   "id_highlight-text-color": "{{id}} farba zvýraznenia textu",
   "id_highlight-background-color": "{{id}} farba pozadia zvýraznenia",
   "all-settings-description": "Dolaďte každú textovú sekciu a prispôsobte si každú farbu témy.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokryfy",
-
   "custom-translations": "Vlastné preklady",
   "no-translation-results-found": "Nenašli sa žiadne výsledky. Chcete rozšíriť vyhľadávanie aj o čiastočne kompletné preklady?",
   "show-all-translations": "Zobraziť všetky preklady",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Žalmy",
   "5-psalms": "5 Žalmov",
   "remove-bookmark": "Odstrániť záložku",
-
   "chat": "Čet",
   "today": "Dnes",
   "you": "Ty",
@@ -169,7 +158,6 @@
   "category-options": "Možnosti priečinka",
   "rename": "Premenovať",
   "delete": "Odstrániť",
-
   "bookmark-options": "Možnosti záložiek",
   "new-folder-placeholder": "Názov priečinka",
   "tasks": "Úlohy",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Priečinok s týmto názvom už existuje.",
   "add-to-new": "Pridať k novému",
   "save": "Uložiť",
-
   "apocrypha-info-text": "Žiadny zo spisov v tejto časti nebol ranými židovskými ani kresťanskými komunitami nikdy považovaný za Písmo. Biblia je špecifická zbierka kníh. Židia a kresťania sa vždy zhodovali na Starom zákone, ktorý pochádza z pevne stanoveného súboru posvätných spisov, ktoré Židia nazývajú Tanach a kresťania Starý zákon. Obsah Tanachu a Starého zákona je úplne rovnaký, ale bežne sú usporiadané odlišne. Kresťania navyše uznávajú Nový zákon, ktorý rozpráva príbeh Ježiša, jeho učenia a spisy jeho nasledovníkov. Nižšie uvedené spisy boli v čase písania Biblie známe a široko čítané, ale nikdy neboli považované za Písmo. Zatiaľ čo starovekí autori niekedy citovali širokú škálu textov vrátane básnikov, filozofov a iných spisov, citovať niečo nie je to isté ako považovať to za Písmo. Tieto spisy sú tu zahrnuté len na historické a literárne účely.",
   "seed-bible": "Biblia semien",
   "take-photo": "Odfoťte sa",
   "choose-from-gallery": "Vyberte z galérie",
-
   "crop-your-photo": "Orezanie fotografie",
   "zoom": "Priblíženie",
   "set-picture": "Nastaviť obrázok",
@@ -211,10 +197,8 @@
   "read-the-bible": "Čítajte Bibliu",
   "seed-bible-description": "Prečítajte si {{bookName}} {{chapterNumber}} v Seed Bible",
   "social-title": "Prečítajte si {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Navigácia v kapitolách",
   "tutorial.skip": "Preskočiť",
-
   "tutorial.back": "Späť",
   "tutorial.done": "Hotovo",
   "tutorial.next": "Ďalej",
@@ -326,11 +310,9 @@
   "study-notes": "Študijné poznámky",
   "content": "Obsah",
   "untitled-playlist": "Bez názvu playlistu",
-
   "discover-annotations-empty": "Nemáte žiadne anotácie",
   "discover-cross-references-empty": "V tejto kapitole nie sú žiadne krížové odkazy.",
   "discover-study-notes-empty": "K tejto kapitole nie sú žiadne študijné poznámky.",
-
   "discover-select-tab": "Vyberte kartu a objavte súvisiaci materiál.",
   "create-playlist": "Vytvoriť",
   "playlist-title_placeholder": "Názov zoznamu skladieb",
@@ -379,12 +361,10 @@
   "delete-playlist-failed": "Zoznam skladieb sa nepodarilo odstrániť.",
   "collapsed-tab-shared-label": "{{title}} — zdieľaná relácia, {{count}} prítomných",
   "playlist-add-mode-label": "Typ položky",
-
   "session-host-reconnected": "Znovu pripojený k relácii",
   "session-host-left": "Hostiteľ odišiel – boli ste odstránení z relácie",
   "drag-to-reorder-playlist-item": "Presunutím zmeníte poradie",
   "saving": "Ukladá sa…",
-
   "unsaved-item-confirm-message": "Začali ste pridávať položku, ktorá zatiaľ nebola pridaná do playlistu. Čo by ste chceli urobiť?",
   "discard-and-save": "Zahodiť a uložiť",
   "add-and-save": "Pridať a uložiť",
@@ -512,7 +492,6 @@
   "reading-plan-preview-reading": "Ukážka {{reading}}",
   "reading-plan-mark-reading-complete": "Označiť čítanie ako dokončené",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Označiť {{passage}} ako prečítané",
   "reading-plan-read-nudge-title": "Pekné čítanie!",
   "reading-plan-read-nudge-toast": "Označiť {{passage}} ako kompletný?",
@@ -520,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Čítajte, vyhľadávajte a študujte Bibliu online. Bezplatné preklady do mnohých jazykov so zvýrazneniami, poznámkami, záložkami a plánmi čítania.",
   "all": "Všetky",
-
   "today-bookmarks": "ZÁLOŽKY",
   "today-search-verses": "Vyhľadávanie kníh, kapitol, veršov...",
   "anonymous-greeting": "Vitajte!",
   "community": "KOMUNITA",
   "go-somewhere-new": "ÍSŤ NIEKAD NOVÉ",
-
   "open-bible": "Otvorená Biblia",
   "personal-greeting": "Vitaj, {{name}} !",
   "resume-reading": "POKRAČUJTE TAM, KDE STE PRESTALI",
   "resume-reading-loading": "Načítava sa vaša história čítania…",
   "selected-year": "Rok: {{year}}",
-
   "theme-light": "Svetlo",
   "theme-dark": "Tmavé",
   "installed-extensions": "Nainštalované",
@@ -542,7 +518,6 @@
   "extension-state-installed": "Nainštalované",
   "extension-state-downloaded": "Stiahnuté",
   "extension-state-pending": "Inštalácia…",
-
   "tutorial.stepProgress": "Krok {{current}} z {{total}}",
   "tutorial.offlineDownloadTitle": "Klepnutím si ho ponecháte v zariadení",
   "tutorial.offlineDownloadBody": "Akýkoľvek preklad s touto ikonou je možné uložiť na čítanie offline.",
@@ -576,7 +551,6 @@
   "tutorial.paneLayoutBody": "V tejto ponuke rozloženia si vyberte, koľko pasáží chcete čítať vedľa seba.",
   "tutorial.addTabTitle": "Otvorte ďalšie pasáže",
   "tutorial.addTabBody": "Pridajte novú kartu na čítanie viacerých kníh alebo prekladov vedľa seba.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % dokončené - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} – {{percent}} % dokončené",
   "playlist-history-continue": "Pokračovať",
@@ -635,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} poznámok k tejto kapitole",
   "create-folder": "Vytvoriť priečinok",
   "edit-bookmark": "Upraviť záložku",
-
   "greeting-afternoon": "Dobré popoludnie!",
   "greeting-afternoon-named": "Dobré popoludnie, {{name}} !",
   "greeting-evening": "Dobrý večer!",
@@ -651,32 +624,24 @@
   "ask-ai": "Opýtajte sa umelej inteligencie",
   "unread-mention": "Neprečítaná zmienka",
   "unread-messages": "Neprečítané správy: {{count}}",
-
   "scripture-width": "Šírka Písma",
   "decrease-scripture-width": "Zmenšiť šírku písma",
   "increase-scripture-width": "Zväčšiť šírku písma",
   "annotations": "Anotácie",
   "discover-content-panel": "Objavte obsah",
   "discover-book-title": "Objavte {{book}}",
-
   "about-title": "O Biblii semien",
   "about-meta-description": "Seed Bible je bezplatná biblická aplikácia vytvorená na čítanie Písma spolu s rodinou, priateľmi a komunitou – navždy zadarmo, bez reklám a platených prístupov.",
-
   "about-action-open-passage": "Otvoriť priechod",
   "about-action-donate": "Darovať",
   "about-action-discord": "Pridaj sa na Discord",
   "recent-uploads": "Nedávne nahrané súbory",
-
   "customization-not-found": "Toto prispôsobenie sa nepodarilo nájsť.",
   "customization-name": "Meno",
   "customization-primaryColor": "Primárne",
-
   "customization-secondaryColor": "Sekundárne",
-
   "customization-tertiaryColor": "Terciárne",
-
   "customization-fonts": "Fonty",
-
   "custom-font-option": "Vlastné…",
   "custom-font-name-placeholder": "Názov písma Google",
   "delete-customization": "Odstrániť",
@@ -689,10 +654,8 @@
   "extension-availability-available": "K dispozícii",
   "extension-availability-auto-installed": "Automaticky nainštalované",
   "extension-availability-hidden": "Skryté",
-
   "variants": "Témy",
   "add-variant": "Pridať tému",
-
   "base-theme-description": "Zmeny, ktoré táto téma prednastaví, sa použijú pre všetko, čo ste si neprispôsobili. Vaše vlastné úpravy sa zachovajú.",
   "reset-to-base-theme": "Obnoviť na základnú tému",
   "low-contrast-warning": "{{label}} : kontrast je iba {{ratio}} :1 – snažte sa aspoň o {{minRatio}} :1, aby text zostal čitateľný.",
@@ -738,14 +701,12 @@
   "save-folder-empty": "Zatiaľ tu nie sú žiadne uložené položky.",
   "save-options": "Možnosti uloženia",
   "saves": "Uložené",
-
   "hide-saves": "Skryť uložené položky",
   "show-saves": "Zobraziť uložené položky",
   "save-verses": "Uložiť",
   "new-save-folder": "Nový priečinok",
   "edit-save": "Upraviť uložiť",
   "remove-save-from-all-folders": "Odstrániť zo všetkých priečinkov",
-
   "color-hue": "Odtieň",
   "color-saturation": "Sýtosť a jas",
   "hex-color": "Hexadecimálna farba",
@@ -860,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Editor formátovania sa nepodarilo načítať. Táto poznámka obsahuje formátovanie, ktoré by sa stratilo, takže ju nie je možné upraviť, kým sa znova nepripojíte.",
   "annotation-text": "Text anotácie",
   "notes-for-verse": "Poznámky k veršu {{verse}}",
-
   "configure-extension-defaults": "Konfigurácia predvolených prepísaní",
-
   "extension-settings-defaults-title": "{{name}} predvolené prepísania",
   "no-extension-settings": "Toto rozšírenie nemá žiadne konfigurovateľné nastavenia.",
   "extension-settings-save-failed": "Nepodarilo sa uložiť vaše nastavenia.",
@@ -871,7 +830,6 @@
   "setting-no-default": "Žiadne predvolené",
   "override-setting": "Prepísať {{name}}",
   "override-setting-label": "Prepísať",
-
   "discover-choose-filter-hint": "Ak chcete zobraziť viac z tejto kapitoly, vyberte si filter vyššie.",
   "take-a-tour": "Vydajte sa na prehliadku",
   "share-reading-plan": "Zdieľať plán",
@@ -1055,7 +1013,6 @@
   "my-bookmark-numbered": "Moja záložka {{number}}",
   "bookmark-move-hint": "Klepnutím na záložku ju presuniete do tejto kapitoly.",
   "move-bookmark-here": "Presuň sem {{name}}",
-
   "play": "Hrať",
   "pause": "Pozastaviť",
   "audio-playback-position": "Pozícia prehrávania",
@@ -1064,7 +1021,6 @@
   "audio-scrub-verse": "Verš {{verse}}",
   "tab-playing-audio": "Prehrávanie zvuku",
   "collapsed-tab-playing-label": "{{label}} — prehrávanie zvuku",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} tém",
   "customization-theme-count_one": "{{count}} téma",
@@ -1103,7 +1059,6 @@
   "about-community-body": "Viera sa má prežívať spoločne. Seed Bible je vytvorená na čítanie Písma s vašou rodinou, najbližšími priateľmi a vaším domácim zborom.",
   "discovered-content": "Objavený obsah",
   "show-discovered-content": "Zobraziť objavený obsah",
-
   "extension-availability-default": "Predvolené ( {{availability}} )",
   "customization-extensions-default": "Predvolené pre ostatné rozšírenia",
   "customization-extensions-default-hint": "Vzťahuje sa na všetky rozšírenia, ktoré ste nenastavili nižšie, vrátane nových, ktoré budú pridané neskôr.",
@@ -1136,7 +1091,6 @@
   "playlist-scripture-note-return": "Späť na zoznam skladieb",
   "playlist-scripture-note-aria": "Poznámka k {{passage}}",
   "playlist-scripture-note-progress": "{{current}} z {{total}}",
-
   "unsaved-item-edit-confirm-message": "Zmenili ste položku, ale ešte ste tieto zmeny neuložili. Čo chcete urobiť?",
   "keep-changes-and-save": "Zachovať zmeny a uložiť",
   "reading-plan-edit-reading": "Upraviť čítanie",
@@ -1151,7 +1105,6 @@
   "branding": "Branding",
   "create-custom-branding-menu-item": "Vlastné branding",
   "your-content-empty-branding": "Vlastný branding, ktorý vytvoríte, sa zobrazí tu.",
-
   "extension-consent-from": "Od {{host}}",
   "extension-consent-source-version": "Verzia {{version}} · od {{host}}",
   "extension-consent-uploader-unnamed": "používateľ Biblie ako semena",
@@ -1199,7 +1152,6 @@
   "extension-permission-reading-selection": "Pozrite sa, ktoré verše vyberiete",
   "extension-permission-reading-navigate": "Otvorené priechody",
   "extension-permission-network": "Pripojiť sa k {{host}}",
-
   "extension-consent-not-now": "Teraz nie",
   "extension-consent-nothing-yet": "Zatiaľ nebude mať prístup k žiadnym vašim informáciám.",
   "extension-permission-reading-history": "Zobraziť históriu čítania",
@@ -1237,7 +1189,6 @@
   "extension-capture-cancel": "Zrušiť",
   "extension-consent-high-risk": "Citlivé",
   "extension-modal-ok": "V poriadku",
-
   "extension-permissions-restart-note": "Zmeny sa prejavia okamžite. {{name}} sa reštartuje, aby sa prejavili.",
   "extension-permissions-saved": "Uložené. {{name}} reštartovaný s novými povoleniami.",
   "extension-permissions-failed": "To sa nepodarilo uložiť. Skúste to znova.",
@@ -1275,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Zobraziť efekty, keď moderátor vyberie verš.",
   "session-settings-verse-effects-desc-everyone": "Zobraziť efekty, keď niekto vyberie verš.",
   "session-settings-verse-effects-desc-none": "Efekty výberu veršov sú pre všetkých vypnuté.",
-
   "account": "Účet",
   "scroll-filters-start": "Posuňte filtre smerom k začiatku",
-  "scroll-filters-end": "Posuňte filtre smerom na koniec"
+  "scroll-filters-end": "Posuňte filtre smerom na koniec",
+  "download": "Stiahnuť",
+  "image-details-uploaded": "Nahrané",
+  "image-details-dimensions": "Rozmery",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Typ",
+  "image-details-cover-of": "Obálka",
+  "image-details-not-a-cover": "Nepoužíva sa ako kryt",
+  "delete-customization-confirm-title": "Odstrániť vlastné brandingové prvky?",
+  "delete-customization-confirm-message": "Chcete odstrániť vlastné brandingové označenie „ {{name}} “? Túto akciu nie je možné vrátiť späť.",
+  "delete-customization-failed": "Vlastné branding sa nepodarilo odstrániť.",
+  "delete-variant-confirm-title": "Odstrániť tému?",
+  "delete-variant-confirm-message": "Odstrániť tému „ {{name}} “? Túto akciu nemožno vrátiť späť.",
+  "delete-variant-confirm-message-unnamed": "Chcete odstrániť túto tému? Túto akciu nemožno vrátiť späť.",
+  "delete-variant-failed": "Tému sa nepodarilo odstrániť.",
+  "delete-highlight-confirm-title": "Odstrániť zvýraznenie?",
+  "delete-highlight-confirm-message": "Odstrániť zvýraznenie na {{reference}} ? Toto sa nedá vrátiť späť.",
+  "delete-highlight-failed": "Zvýraznenie sa nepodarilo odstrániť.",
+  "delete-annotation-on-confirm-message": "Odstrániť anotáciu na {{reference}} ? Túto akciu nemožno vrátiť späť.",
+  "remove-from-folder": "Odstrániť z priečinka",
+  "save-folders": "V {{folders}}",
+  "delete-save-confirm-title": "Odstrániť uloženie?",
+  "delete-save-confirm-message": "Odstrániť uloženie pre {{reference}} ? Toto sa nedá vrátiť späť.",
+  "delete-save-confirm-message-folders": "Vymazať uloženie pre {{reference}} z {{folders}} ? Toto sa nedá vrátiť späť.",
+  "delete-save-failed": "Uloženie sa nepodarilo odstrániť.",
+  "delete-save-folder-confirm-title": "Odstrániť priečinok?",
+  "delete-save-folder-confirm-message": "Odstrániť priečinok „ {{name}} “?",
+  "delete-save-folder-confirm-deletes": "Uložené súbory {{count}} , ktoré sa nachádzajú iba v tomto priečinku, budú tiež odstránené.",
+  "delete-save-folder-confirm-deletes_one": "Uloženie, ktoré sa nachádza iba v tomto priečinku, bude tiež odstránené.",
+  "delete-save-folder-confirm-deletes_other": "Uložené súbory {{count}} , ktoré sa nachádzajú iba v tomto priečinku, budú tiež odstránené.",
+  "delete-save-folder-confirm-keeps": "Uložené súbory {{count}} , ktoré sú aj v iných priečinkoch, tam aj zostanú.",
+  "delete-save-folder-confirm-keeps_one": "Uloženie, ktoré je tiež v inom priečinku, tam aj zostane.",
+  "delete-save-folder-confirm-keeps_other": "Uložené súbory {{count}} , ktoré sú aj v iných priečinkoch, tam aj zostanú.",
+  "cant-be-undone": "Toto sa nedá vrátiť späť.",
+  "delete-save-folder-failed": "Priečinok sa nepodarilo odstrániť.",
+  "download-image-failed": "Obrázok sa nepodarilo stiahnuť.",
+  "session-settings-verse-effects-hosts-only": "Iba hostitelia",
+  "session-settings-verse-effects-everyone": "Každý",
+  "session-settings-verse-effects-none": "Žiadne",
+  "loading-books": "Načítavajú sa knihy…",
+  "books-load-failed": "Knihy sa nepodarilo načítať. Skontrolujte pripojenie a skúste to znova.",
+  "loading-translation": "Načítava sa {{name}} …",
+  "translation-load-failed": "{{name}} sa nepodarilo načítať.",
+  "loading-translations": "Načítavajú sa preklady…",
+  "translations-load-failed": "Nepodarilo sa načítať celý zoznam prekladov, takže niektoré môžu chýbať.",
+  "verse-of-the-day": "VERŠ DŇA",
+  "verse-of-the-day-loading": "Načítava sa verš dňa…"
 }

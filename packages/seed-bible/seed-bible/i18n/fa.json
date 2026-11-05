@@ -22,22 +22,18 @@
   "clear-search": "پاک کردن جستجو",
   "searching": "در حال جستجو...",
   "no-search-results": "هیچ آیه‌ی مشابهی وجود ندارد.",
-
   "uploading": "در حال آپلود...",
   "profile-name": "نام پروفایل",
   "profile-name-placeholder": "مثلاً خانواده کریگ",
-
   "description": "توضیحات",
   "optional": "(اختیاری)",
   "description-placeholder": "توضیحات پروفایل خود را وارد کنید...",
   "location": "مکان",
   "location-placeholder": "مثلاً آستین، تگزاس",
-
   "copied": "کپی شده",
   "copy": "کپی",
   "save-changes": "ذخیره تغییرات",
   "sign-out": "خروج از سیستم",
-
   "log-in": "ورود",
   "session-settings": "تنظیمات جلسه",
   "shared-session-click-to-join": "اشتراک گذاری — برای عضویت کلیک کنید",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "یک تم انتخاب کنید و نحوه نمایش کتاب مقدس و رابط کاربری را تنظیم کنید.",
   "scripture-settings": "تنظیمات کتاب مقدس",
   "scripture-settings-font-size-example": "الف",
-
   "all-settings": "همه تنظیمات",
   "no-extensions-available": "هیچ افزونه‌ای در دسترس نیست.",
   "install": "نصب",
   "uninstall": "حذف نصب",
-
   "custom": "سفارشی",
   "text-section-bookTitle": "متن عنوان کتاب",
   "text-section-heading": "متن عنوان",
@@ -79,7 +73,6 @@
   "show-selected-items": "نمایش موارد انتخاب شده",
   "show-highlight-colors": "نمایش رنگ‌های برجسته",
   "show-icon-text": "نمایش متن آیکون",
-
   "extensions": "افزونه‌ها",
   "display": "نمایش",
   "keep-screen-awake": "بیدار نگه داشتن صفحه نمایش",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "افزایش اندازه فونت کتاب مقدس",
   "change-line-spacing": "تغییر فاصله خطوط",
   "line-spacing_lineHeight": "فاصله خطوط: {{lineHeight}}",
-
   "italic": "ایتالیک",
   "underline": "زیرخط دار",
   "alignment_x": "ترازبندی: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "رنگ متن",
   "follow_theme": "دنبال کردن تم",
   "reset-to-default": "تنظیم مجدد به حالت پیش‌فرض",
-
   "id_highlight-text-color": "{{id}} رنگ متن را هایلایت کنید",
   "id_highlight-background-color": "{{id}} رنگ پس‌زمینه را برجسته کنید",
   "all-settings-description": "هر بخش متن را به طور دقیق تنظیم کنید و رنگ هر تم را سفارشی کنید.",
@@ -126,7 +117,6 @@
   "old-testament_short": "کاردرمانی",
   "new-testament_short": "ان‌تی",
   "apocrypha": "آخرالزمان",
-
   "custom-translations": "ترجمه‌های سفارشی",
   "no-translation-results-found": "نتیجه‌ای یافت نشد. آیا مایلید جستجوی خود را گسترش دهید تا ترجمه‌های نیمه‌کامل را نیز شامل شود؟",
   "show-all-translations": "نمایش همه ترجمه‌ها",
@@ -138,7 +128,6 @@
   "complete-translations": "ترجمه‌های کامل",
   "all-translations": "همه ترجمه‌ها",
   "popular-translations": "ترجمه‌های محبوب",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "مزامیر اول",
   "2-psalms": "۲ مزامیر",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "به همه تنظیمات بروید",
   "more": "بیشتر",
   "remove-bookmark": "حذف نشانک",
-
   "chat": "چت",
   "today": "امروز",
   "you": "شما",
@@ -170,7 +158,6 @@
   "category-options": "گزینه‌های پوشه",
   "rename": "تغییر نام",
   "delete": "حذف",
-
   "bookmark-options": "گزینه‌های نشانک‌گذاری",
   "new-folder-placeholder": "نام پوشه",
   "tasks": "وظایف",
@@ -182,11 +169,9 @@
   "folder-name-taken": "پوشه‌ای با این نام از قبل وجود دارد.",
   "add-to-new": "اضافه کردن به جدید",
   "save": "ذخیره",
-
   "seed-bible": "کتاب مقدس بذر",
   "take-photo": "عکس بگیرید",
   "choose-from-gallery": "از گالری انتخاب کنید",
-
   "crop-your-photo": "عکس خود را برش دهید",
   "zoom": "بزرگنمایی",
   "set-picture": "تصویر را تنظیم کنید",
@@ -212,10 +197,8 @@
   "read-the-bible": "کتاب مقدس را بخوانید",
   "seed-bible-description": "{{bookName}} {{chapterNumber}} را در کتاب مقدس بذر بخوانید",
   "social-title": "{{bookName}} {{chapterNumber}} را بخوانید",
-
   "chapter-navigation": "پیمایش فصل",
   "tutorial.skip": "پرش",
-
   "tutorial.back": "برگشت",
   "tutorial.done": "انجام شد",
   "tutorial.next": "بعدی",
@@ -327,11 +310,9 @@
   "study-notes": "یادداشت‌های مطالعه",
   "content": "محتوا",
   "untitled-playlist": "لیست پخش بدون عنوان",
-
   "discover-annotations-empty": "هیچ حاشیه نویسی ندارید",
   "discover-cross-references-empty": "هیچ ارجاع متقابلی برای این فصل وجود ندارد.",
   "discover-study-notes-empty": "هیچ یادداشت مطالعاتی برای این فصل وجود ندارد.",
-
   "discover-select-tab": "برای کشف مطالب مرتبط، یک برگه را انتخاب کنید.",
   "create-playlist": "ایجاد",
   "playlist-title_placeholder": "عنوان لیست پخش",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "نتونستم لیست پخش رو حذف کنم.",
   "collapsed-tab-shared-label": "{{title}} — جلسه مشترک، {{count}} موجود",
   "playlist-add-mode-label": "نوع کالا",
-
   "session-host-reconnected": "دوباره به جلسه وصل شد",
   "session-host-left": "میزبان رفت — شما از جلسه حذف شدید",
   "drag-to-reorder-playlist-item": "برای تغییر ترتیب بکشید",
   "saving": "در حال ذخیره…",
-
   "unsaved-item-confirm-message": "شما شروع به افزودن موردی کرده‌اید که هنوز به فهرست پخش اضافه نشده است. می‌خواهید چه کار کنید؟",
   "discard-and-save": "نادیده گرفتن و ذخیره",
   "add-and-save": "افزودن و ذخیره",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "پیش‌نمایش {{reading}}",
   "reading-plan-mark-reading-complete": "علامت گذاری به عنوان خوانده شده کامل",
   "reading-plan-link-video": "ویدئو",
-
   "reading-plan-mark-passage-complete": "علامت‌گذاری {{passage}} به عنوان خوانده شده",
   "reading-plan-read-nudge-title": "خواندن خوب!",
   "reading-plan-read-nudge-toast": "علامت گذاری {{passage}} کامل است؟",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "کتاب مقدس را آنلاین بخوانید، جستجو کنید و مطالعه کنید. ترجمه‌های رایگان به زبان‌های مختلف، به همراه هایلایت‌ها، یادداشت‌ها، بوک‌مارک‌ها و برنامه‌های مطالعه.",
   "all": "همه",
-
   "today-bookmarks": "بوکمارک‌ها",
   "today-search-verses": "جستجوی کتاب‌ها، فصل‌ها، آیات ....",
   "anonymous-greeting": "خوش آمدید!",
   "community": "جامعه",
   "go-somewhere-new": "به جای جدیدی بروید",
-
   "open-bible": "کتاب مقدس را باز کنید",
   "personal-greeting": "خوش آمدید، {{name}} !",
   "resume-reading": "از جایی که ترک کردید ادامه دهید",
   "resume-reading-loading": "در حال بارگذاری سابقه مطالعه شما…",
   "selected-year": "سال: {{year}}",
-
   "theme-light": "نور",
   "theme-dark": "تیره",
   "installed-extensions": "نصب شده",
@@ -543,7 +518,6 @@
   "extension-state-installed": "نصب شده",
   "extension-state-downloaded": "دانلود شده",
   "extension-state-pending": "نصب…",
-
   "tutorial.stepProgress": "مرحله {{current}} از {{total}}",
   "tutorial.offlineDownloadTitle": "برای نگه داشتن آن در دستگاه خود، ضربه بزنید",
   "tutorial.offlineDownloadBody": "هر ترجمه‌ای که این آیکون را داشته باشد، می‌تواند برای خواندن آفلاین ذخیره شود.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "از این منوی طرح‌بندی، تعداد متونی را که می‌خواهید کنار هم بخوانید، انتخاب کنید.",
   "tutorial.addTabTitle": "باز کردن گذرگاه‌های بیشتر",
   "tutorial.addTabBody": "برای خواندن چندین کتاب یا ترجمه در کنار هم، یک برگه جدید اضافه کنید.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} ٪ تکمیل شده - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} ٪ تکمیل شده",
   "playlist-history-continue": "ادامه",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} یادداشت برای این فصل",
   "create-folder": "ایجاد پوشه",
   "edit-bookmark": "ویرایش نشانک",
-
   "greeting-afternoon": "عصر بخیر!",
   "greeting-afternoon-named": "عصر بخیر، {{name}} !",
   "greeting-evening": "عصر بخیر!",
@@ -652,32 +624,24 @@
   "ask-ai": "از هوش مصنوعی بپرسید",
   "unread-mention": "ذکر خوانده نشده",
   "unread-messages": "پیام‌های خوانده نشده: {{count}}",
-
   "scripture-width": "عرض کتاب مقدس",
   "decrease-scripture-width": "کاهش عرض متن کتاب مقدس",
   "increase-scripture-width": "افزایش عرض متن کتاب مقدس",
   "annotations": "حاشیه‌نویسی‌ها",
   "discover-content-panel": "محتوا را کشف کنید",
   "discover-book-title": "{{book}} را کشف کنید",
-
   "about-title": "درباره کتاب مقدس بذر",
   "about-meta-description": "Seed Bible یک برنامه رایگان کتاب مقدس است که برای خواندن کتاب مقدس به همراه خانواده، دوستان و جامعه شما ساخته شده است - برای همیشه رایگان، بدون تبلیغات یا پرداخت هزینه.",
-
   "about-action-open-passage": "یک گذرگاه باز کنید",
   "about-action-donate": "اهدا کنید",
   "about-action-discord": "به دیسکورد بپیوندید",
   "recent-uploads": "آپلودهای اخیر",
-
   "customization-not-found": "این سفارشی‌سازی یافت نشد.",
   "customization-name": "نام",
   "customization-primaryColor": "اولیه",
-
   "customization-secondaryColor": "ثانویه",
-
   "customization-tertiaryColor": "دوره سوم",
-
   "customization-fonts": "فونت‌ها",
-
   "custom-font-option": "سفارشی…",
   "custom-font-name-placeholder": "نام فونت گوگل",
   "delete-customization": "حذف",
@@ -690,10 +654,8 @@
   "extension-availability-available": "موجود است",
   "extension-availability-auto-installed": "نصب خودکار",
   "extension-availability-hidden": "پنهان",
-
   "variants": "تم‌ها",
   "add-variant": "اضافه کردن تم",
-
   "base-theme-description": "تغییراتی که از پیش برای این قالب تنظیم شده‌اند، به هر چیزی که شما سفارشی نکرده‌اید، برمی‌گردند. ویرایش‌های شما حفظ می‌شوند.",
   "reset-to-base-theme": "تنظیم مجدد به قالب پایه",
   "low-contrast-warning": "{{label}} : کنتراست فقط {{ratio}} :1 است — حداقل {{minRatio}} :1 را هدف قرار دهید تا متن خوانا بماند.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "هنوز اینجا هیچ ذخیره‌ای انجام نشده است.",
   "save-options": "گزینه‌ها را ذخیره کنید",
   "saves": "ذخیره می‌کند",
-
   "hide-saves": "مخفی کردن ذخیره‌ها",
   "show-saves": "نمایش ذخیره‌ها",
   "save-verses": "ذخیره",
   "new-save-folder": "پوشه جدید",
   "edit-save": "ویرایش ذخیره",
   "remove-save-from-all-folders": "از همه پوشه‌ها حذف کنید",
-
   "color-hue": "رنگ",
   "color-saturation": "اشباع و روشنایی",
   "hex-color": "رنگ شش گوش",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "ویرایشگر قالب‌بندی نتوانست بارگیری شود. این یادداشت قالب‌بندی‌ای دارد که از بین می‌رود، بنابراین تا زمانی که دوباره متصل نشوید، قابل ویرایش نیست.",
   "annotation-text": "متن حاشیه‌نویسی",
   "notes-for-verse": "یادداشت‌هایی برای آیه {{verse}}",
-
   "configure-extension-defaults": "پیکربندی لغوهای پیش‌فرض",
-
   "extension-settings-defaults-title": "{{name}} پیش‌فرض را لغو می‌کند",
   "no-extension-settings": "این افزونه هیچ تنظیمات قابل تنظیمی ندارد.",
   "extension-settings-save-failed": "تنظیمات شما ذخیره نشد.",
@@ -872,7 +830,6 @@
   "setting-no-default": "بدون پیش‌فرض",
   "override-setting": "نادیده گرفتن {{name}}",
   "override-setting-label": "نادیده گرفتن",
-
   "discover-choose-filter-hint": "برای دیدن مطالب بیشتر از این فصل، فیلتر بالا را انتخاب کنید.",
   "take-a-tour": "گشت و گذار کنید",
   "share-reading-plan": "طرح اشتراک گذاری",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "نشانک من {{number}}",
   "bookmark-move-hint": "برای انتقال آن به این فصل، روی یک نشانک ضربه بزنید.",
   "move-bookmark-here": "{{name}} را به اینجا منتقل کنید",
-
   "play": "بازی",
   "pause": "مکث",
   "audio-playback-position": "موقعیت پخش",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "آیه {{verse}}",
   "tab-playing-audio": "پخش صدا",
   "collapsed-tab-playing-label": "{{label}} — پخش صدا",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} قالب‌ها",
   "customization-theme-count_one": "قالب {{count}}",
@@ -1104,7 +1059,6 @@
   "about-community-body": "ایمان برای زیستن در کنار هم ساخته شده است. کتاب مقدس سید برای خواندن کتاب مقدس با خانواده، نزدیکترین دوستان و کلیسای خانگی شما ساخته شده است.",
   "discovered-content": "محتوای کشف شده",
   "show-discovered-content": "نمایش محتوای کشف‌شده",
-
   "extension-availability-default": "پیش‌فرض ( {{availability}} )",
   "customization-extensions-default": "پیش‌فرض برای سایر افزونه‌ها",
   "customization-extensions-default-hint": "برای هر افزونه‌ای که در زیر تنظیم نکرده‌اید، از جمله افزونه‌های جدیدی که بعداً اضافه شده‌اند، اعمال می‌شود",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "بازگشت به لیست پخش",
   "playlist-scripture-note-aria": "یادداشتی بر {{passage}}",
   "playlist-scripture-note-progress": "{{current}} از {{total}}",
-
   "unsaved-item-edit-confirm-message": "شما یک مورد را تغییر داده‌اید اما هنوز آن تغییرات را ذخیره نکرده‌اید. چه کاری می‌خواهید انجام دهید؟",
   "keep-changes-and-save": "تغییرات را نگه دارید و ذخیره کنید",
   "reading-plan-edit-reading": "ویرایش خواندن",
@@ -1152,7 +1105,6 @@
   "branding": "برندسازی",
   "create-custom-branding-menu-item": "برندسازی سفارشی",
   "your-content-empty-branding": "برندسازی سفارشی که ایجاد می‌کنید در اینجا نمایش داده خواهد شد.",
-
   "extension-consent-from": "از {{host}}",
   "extension-consent-source-version": "نسخه {{version}} · از {{host}}",
   "extension-consent-uploader-unnamed": "یک کاربر کتاب مقدس سید",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "ببینید کدام آیات را انتخاب می‌کنید",
   "extension-permission-reading-navigate": "معابر باز",
   "extension-permission-network": "اتصال به {{host}}",
-
   "extension-consent-not-now": "الان نه",
   "extension-consent-nothing-yet": "فعلاً، به هیچ یک از اطلاعات شما دسترسی نخواهد داشت.",
   "extension-permission-reading-history": "سابقه مطالعه خود را ببینید",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "لغو",
   "extension-consent-high-risk": "حساس",
   "extension-modal-ok": "باشه",
-
   "extension-permissions-restart-note": "تغییرات بلافاصله اعمال می‌شوند. {{name}} برای اعمال آنها مجدداً راه‌اندازی می‌شود.",
   "extension-permissions-saved": "ذخیره شد. {{name}} با مجوزهای جدید مجدداً راه‌اندازی شد.",
   "extension-permissions-failed": "ذخیره نشد. دوباره امتحان کنید.",
@@ -1276,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "نمایش جلوه‌ها وقتی مجری یک آیه را انتخاب می‌کند.",
   "session-settings-verse-effects-desc-everyone": "وقتی کسی آیه‌ای را انتخاب می‌کند، جلوه‌هایی را نشان دهد.",
   "session-settings-verse-effects-desc-none": "جلوه‌های انتخاب آیه برای همه خاموش است.",
-
   "account": "حساب کاربری",
   "scroll-filters-start": "فیلترها را به سمت شروع حرکت دهید",
-  "scroll-filters-end": "فیلترها را به سمت انتها حرکت دهید"
+  "scroll-filters-end": "فیلترها را به سمت انتها حرکت دهید",
+  "download": "دانلود",
+  "image-details-uploaded": "آپلود شده",
+  "image-details-dimensions": "ابعاد",
+  "image-details-dimensions-value": "{{width}} × {{height}} پیکسل",
+  "image-details-type": "نوع",
+  "image-details-cover-of": "پوشش",
+  "image-details-not-a-cover": "به عنوان روکش استفاده نشده",
+  "delete-customization-confirm-title": "حذف برند سفارشی؟",
+  "delete-customization-confirm-message": "حذف نام تجاری سفارشی \" {{name}} \"؟ این قابل بازگشت نیست.",
+  "delete-customization-failed": "نتونستم Custom Branding رو حذف کنم.",
+  "delete-variant-confirm-title": "تم حذف شود؟",
+  "delete-variant-confirm-message": "قالب \" {{name}} \" حذف شود؟ این قابل بازگشت نیست.",
+  "delete-variant-confirm-message-unnamed": "این قالب را حذف کنید؟ این قابل بازگشت نیست.",
+  "delete-variant-failed": "نتونستم تم رو پاک کنم.",
+  "delete-highlight-confirm-title": "هایلایت را حذف کنیم؟",
+  "delete-highlight-confirm-message": "هایلایت روی {{reference}} را حذف کنید؟ این قابل بازگشت نیست.",
+  "delete-highlight-failed": "نتونستم هایلایت رو حذف کنم.",
+  "delete-annotation-on-confirm-message": "حاشیه‌نویسی روی {{reference}} را حذف کنید؟ این کار قابل بازگشت نیست.",
+  "remove-from-folder": "حذف از پوشه",
+  "save-folders": "در {{folders}}",
+  "delete-save-confirm-title": "ذخیره را حذف کنید؟",
+  "delete-save-confirm-message": "حذف ذخیره برای {{reference}} ? این قابل بازگشت نیست.",
+  "delete-save-confirm-message-folders": "ذخیره برای {{reference}} از {{folders}} حذف شود؟ این قابل بازگشت نیست.",
+  "delete-save-failed": "نتونستم ذخیره رو حذف کنم.",
+  "delete-save-folder-confirm-title": "پوشه حذف شود؟",
+  "delete-save-folder-confirm-message": "پوشه \" {{name}} \" حذف شود؟",
+  "delete-save-folder-confirm-deletes": "{{count}} ذخیره‌هایی که فقط در این پوشه هستند نیز حذف خواهند شد.",
+  "delete-save-folder-confirm-deletes_one": "ذخیره‌ای که فقط در این پوشه است نیز حذف خواهد شد.",
+  "delete-save-folder-confirm-deletes_other": "{{count}} ذخیره‌هایی که فقط در این پوشه هستند نیز حذف خواهند شد.",
+  "delete-save-folder-confirm-keeps": "تعداد {{count}} ذخیره‌هایی که در پوشه‌های دیگر نیز هستند، در آنجا باقی می‌مانند.",
+  "delete-save-folder-confirm-keeps_one": "فایل ذخیره‌ای که در پوشه‌ی دیگری است، همان‌جا می‌ماند.",
+  "delete-save-folder-confirm-keeps_other": "تعداد {{count}} ذخیره‌هایی که در پوشه‌های دیگر نیز هستند، در آنجا باقی می‌مانند.",
+  "cant-be-undone": "این قابل برگشت نیست.",
+  "delete-save-folder-failed": "نتونستم پوشه رو حذف کنم.",
+  "download-image-failed": "تصویر دانلود نشد.",
+  "session-settings-verse-effects-hosts-only": "فقط میزبان‌ها",
+  "session-settings-verse-effects-everyone": "همه",
+  "session-settings-verse-effects-none": "هیچکدام",
+  "loading-books": "در حال بارگذاری کتاب‌ها…",
+  "books-load-failed": "کتاب‌ها بارگیری نشدند. اتصال خود را بررسی کنید و دوباره امتحان کنید.",
+  "loading-translation": "در حال بارگذاری {{name}} ...",
+  "translation-load-failed": "{{name}} قابل بارگذاری نیست.",
+  "loading-translations": "در حال بارگذاری ترجمه‌ها…",
+  "translations-load-failed": "نتوانستم لیست کامل ترجمه‌ها را بارگذاری کنم، بنابراین ممکن است برخی از آنها از قلم افتاده باشند.",
+  "verse-of-the-day": "آیه روز",
+  "verse-of-the-day-loading": "در حال بارگذاری آیه روز…"
 }

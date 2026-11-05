@@ -22,22 +22,18 @@
   "clear-search": "পরিষ্কার অনুসন্ধান",
   "searching": "অনুসন্ধান করা হচ্ছে...",
   "no-search-results": "কোনো মিল থাকা শ্লোক নেই।",
-
   "uploading": "আপলোড হচ্ছে...",
   "profile-name": "প্রোফাইলের নাম",
   "profile-name-placeholder": "যেমন ক্রেইগ পরিবার",
-
   "description": "বর্ণনা",
   "optional": "(ঐচ্ছিক)",
   "description-placeholder": "আপনার প্রোফাইলের বিবরণ লিখুন...",
   "location": "অবস্থান",
   "location-placeholder": "যেমন অস্টিন, টেক্সাস",
-
   "copied": "অনুলিপি করা হয়েছে",
   "copy": "অনুলিপি",
   "save-changes": "পরিবর্তনগুলি সংরক্ষণ করুন",
   "sign-out": "সাইন আউট",
-
   "log-in": "লগ ইন করুন",
   "session-settings": "সেশন সেটিংস",
   "shared-session-click-to-join": "শেয়ার করা হচ্ছে — যোগ দিতে ক্লিক করুন",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "একটি বিষয়বস্তু বেছে নিন এবং শাস্ত্র ও ইউআই কীভাবে প্রদর্শিত হবে তা সামঞ্জস্য করুন।",
   "scripture-settings": "ধর্মগ্রন্থের প্রেক্ষাপট",
   "scripture-settings-font-size-example": "একটি",
-
   "all-settings": "সমস্ত সেটিংস",
   "no-extensions-available": "মেয়াদ বাড়ানোর কোনো সুযোগ নেই।",
   "install": "ইনস্টল করুন",
   "uninstall": "আনইনস্টল করুন",
-
   "custom": "কাস্টম",
   "text-section-bookTitle": "বইয়ের শিরোনামের লেখা",
   "text-section-heading": "শিরোনাম পাঠ্য",
@@ -79,7 +73,6 @@
   "show-selected-items": "নির্বাচিত আইটেমগুলি দেখান",
   "show-highlight-colors": "হাইলাইট রঙ দেখান",
   "show-icon-text": "আইকন টেক্সট দেখান",
-
   "extensions": "এক্সটেনশন",
   "display": "প্রদর্শন",
   "keep-screen-awake": "স্ক্রিন সজাগ রাখুন",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "ধর্মগ্রন্থের ফন্টের আকার বাড়ান",
   "change-line-spacing": "লাইন স্পেসিং পরিবর্তন করুন",
   "line-spacing_lineHeight": "লাইন স্পেসিং: {{lineHeight}}",
-
   "italic": "ইটালিক",
   "underline": "আন্ডারলাইন",
   "alignment_x": "অ্যালাইনমেন্ট: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "টেক্সটের রঙ",
   "follow_theme": "থিম অনুসরণ করুন",
   "reset-to-default": "ডিফল্টে রিসেট করুন",
-
   "id_highlight-text-color": "{{id}} টেক্সটের রঙ হাইলাইট করুন",
   "id_highlight-background-color": "{{id}} ব্যাকগ্রাউন্ড রঙ হাইলাইট করে",
   "all-settings-description": "প্রতিটি টেক্সট সেকশন সূক্ষ্মভাবে সমন্বয় করুন এবং প্রতিটি থিমের রঙ কাস্টমাইজ করুন।",
@@ -126,7 +117,6 @@
   "old-testament_short": "ওটি",
   "new-testament_short": "এনটি",
   "apocrypha": "অ্যাপোক্রিফা",
-
   "custom-translations": "কাস্টম অনুবাদ",
   "no-translation-results-found": "কোনো ফলাফল পাওয়া যায়নি। আপনি কি আপনার অনুসন্ধান প্রসারিত করে আংশিক অনুবাদগুলোও অন্তর্ভুক্ত করতে চান?",
   "show-all-translations": "সমস্ত অনুবাদ দেখান",
@@ -138,7 +128,6 @@
   "complete-translations": "সম্পূর্ণ অনুবাদ",
   "all-translations": "সমস্ত অনুবাদ",
   "popular-translations": "জনপ্রিয় অনুবাদ",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "১ গীতসংহিতা",
   "2-psalms": "২ গীতসংহিতা",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "সমস্ত সেটিংসে যান",
   "more": "আরও",
   "remove-bookmark": "বুকমার্ক সরান",
-
   "chat": "চ্যাট",
   "today": "আজ",
   "you": "তুমি",
@@ -170,7 +158,6 @@
   "category-options": "ফোল্ডার বিকল্পগুলি",
   "rename": "পুনঃনামকরণ",
   "delete": "মুছে ফেলুন",
-
   "bookmark-options": "বুকমার্ক বিকল্পগুলি",
   "new-folder-placeholder": "ফোল্ডারের নাম",
   "tasks": "কাজ",
@@ -182,11 +169,9 @@
   "folder-name-taken": "ঐ নামে একটি ফোল্ডার ইতিমধ্যেই বিদ্যমান।",
   "add-to-new": "নতুনতে যোগ করুন",
   "save": "সংরক্ষণ করুন",
-
   "seed-bible": "বীজ বাইবেল",
   "take-photo": "একটি ছবি তুলুন",
   "choose-from-gallery": "গ্যালারি থেকে বেছে নিন",
-
   "crop-your-photo": "আপনার ছবি ক্রপ করুন",
   "zoom": "জুম",
   "set-picture": "ছবি সেট করুন",
@@ -212,10 +197,8 @@
   "read-the-bible": "বাইবেল পড়ুন",
   "seed-bible-description": "সীড বাইবেল-এ {{bookName}} {{chapterNumber}} পড়ুন।",
   "social-title": "{{bookName}} {{chapterNumber}} পড়ুন",
-
   "chapter-navigation": "অধ্যায় নেভিগেশন",
   "tutorial.skip": "এড়িয়ে যান",
-
   "tutorial.back": "ফিরে যান",
   "tutorial.done": "সম্পন্ন হয়েছে",
   "tutorial.next": "পরবর্তী",
@@ -327,11 +310,9 @@
   "study-notes": "অধ্যয়ন নোট",
   "content": "বিষয়বস্তু",
   "untitled-playlist": "শিরোনামহীন প্লেলিস্ট",
-
   "discover-annotations-empty": "আপনার কোনো টীকা নেই",
   "discover-cross-references-empty": "এই অধ্যায়ের জন্য কোনো প্রাসঙ্গিক তথ্যসূত্র নেই।",
   "discover-study-notes-empty": "এই অধ্যায়ের জন্য কোনো অধ্যয়ন নোট নেই।",
-
   "discover-select-tab": "সম্পর্কিত বিষয়বস্তু খুঁজে পেতে একটি ট্যাব নির্বাচন করুন।",
   "create-playlist": "তৈরি করুন",
   "playlist-title_placeholder": "প্লেলিস্টের শিরোনাম",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "প্লেলিস্টটি মুছে ফেলা যায়নি।",
   "collapsed-tab-shared-label": "{{title}} — যৌথ অধিবেশন, {{count}} জন উপস্থিত",
   "playlist-add-mode-label": "আইটেমের ধরন",
-
   "session-host-reconnected": "সেশনে পুনরায় সংযুক্ত হলেন",
   "session-host-left": "হোস্ট চলে গেছেন — আপনাকে সেশন থেকে সরিয়ে দেওয়া হয়েছে।",
   "drag-to-reorder-playlist-item": "পুনরায় সাজাতে টেনে আনুন",
   "saving": "সংরক্ষণ করা হচ্ছে…",
-
   "unsaved-item-confirm-message": "আপনি একটি আইটেম যোগ করা শুরু করেছেন যা এখনও প্লেলিস্টে যোগ করা হয়নি। আপনি কী করতে চান?",
   "discard-and-save": "বাতিল করুন এবং সংরক্ষণ করুন",
   "add-and-save": "যোগ করুন এবং সংরক্ষণ করুন",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "পূর্বরূপ {{reading}}",
   "reading-plan-mark-reading-complete": "পড়া সম্পূর্ণ চিহ্নিত করুন।",
   "reading-plan-link-video": "ভিডিও",
-
   "reading-plan-mark-passage-complete": "{{passage}} পঠিত হিসাবে চিহ্নিত করুন।",
   "reading-plan-read-nudge-title": "পড়তে ভালো লাগলো!",
   "reading-plan-read-nudge-toast": "{{passage}} সম্পূর্ণ হয়েছে বলে চিহ্নিত করুন?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "অনলাইনে বাইবেল পড়ুন, অনুসন্ধান করুন এবং অধ্যয়ন করুন। বহু ভাষায় বিনামূল্যে অনুবাদ, সাথে হাইলাইট, নোট, বুকমার্ক এবং পাঠ পরিকল্পনা।",
   "all": "সব",
-
   "today-bookmarks": "বুকমার্ক",
   "today-search-verses": "বই, অধ্যায়, শ্লোক অনুসন্ধান করুন...",
   "anonymous-greeting": "স্বাগতম!",
   "community": "সম্প্রদায়",
   "go-somewhere-new": "নতুন কোনো জায়গায় যান",
-
   "open-bible": "বাইবেল খুলুন",
   "personal-greeting": "স্বাগতম, {{name}} !",
   "resume-reading": "যেখান থেকে ছেড়েছিলেন সেখান থেকেই চালিয়ে যান।",
   "resume-reading-loading": "আপনার পঠন ইতিহাস লোড হচ্ছে…",
   "selected-year": "বছর: {{year}}",
-
   "theme-light": "আলো",
   "theme-dark": "অন্ধকার",
   "installed-extensions": "ইনস্টল করা হয়েছে",
@@ -543,7 +518,6 @@
   "extension-state-installed": "ইনস্টল করা হয়েছে",
   "extension-state-downloaded": "ডাউনলোড করা হয়েছে",
   "extension-state-pending": "ইনস্টল করা হচ্ছে…",
-
   "tutorial.stepProgress": "{ {{total}} {{current}} } ধাপ",
   "tutorial.offlineDownloadTitle": "আপনার ডিভাইসে রাখতে ট্যাপ করুন",
   "tutorial.offlineDownloadBody": "এই আইকনযুক্ত যেকোনো অনুবাদ অফলাইনে পড়ার জন্য সংরক্ষণ করা যাবে।",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "এই লেআউট মেনু থেকে পাশাপাশি কতগুলো অনুচ্ছেদ পড়বেন তা বেছে নিন।",
   "tutorial.addTabTitle": "আরও পথ খুলুন",
   "tutorial.addTabBody": "একাধিক বই বা অনুবাদ পাশাপাশি পড়ার জন্য একটি নতুন ট্যাব যোগ করুন।",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % সম্পন্ন - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % সম্পন্ন",
   "playlist-history-continue": "চালিয়ে যান",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "এই অধ্যায়ের জন্য {{count}} টি নোট",
   "create-folder": "ফোল্ডার তৈরি করুন",
   "edit-bookmark": "বুকমার্ক সম্পাদনা করুন",
-
   "greeting-afternoon": "শুভ অপরাহ্ন!",
   "greeting-afternoon-named": "শুভ অপরাহ্ন, {{name}} !",
   "greeting-evening": "শুভ সন্ধ্যা!",
@@ -652,32 +624,24 @@
   "ask-ai": "এআইকে জিজ্ঞাসা করুন",
   "unread-mention": "অপঠিত উল্লেখ",
   "unread-messages": "অপঠিত বার্তা: {{count}}",
-
   "scripture-width": "শাস্ত্রের প্রস্থ",
   "decrease-scripture-width": "ধর্মগ্রন্থের প্রস্থ হ্রাস করুন",
   "increase-scripture-width": "ধর্মগ্রন্থের প্রস্থ বৃদ্ধি করুন",
   "annotations": "টীকা",
   "discover-content-panel": "বিষয়বস্তু আবিষ্কার করুন",
   "discover-book-title": "{{book}} আবিষ্কার করুন",
-
   "about-title": "বীজ বাইবেল সম্পর্কে",
   "about-meta-description": "সীড বাইবেল হলো আপনার পরিবার, বন্ধু এবং সম্প্রদায়ের সাথে একত্রে ধর্মগ্রন্থ পাঠ করার জন্য তৈরি একটি বিনামূল্যের বাইবেল অ্যাপ — এটি চিরকাল বিনামূল্যে, কোনো বিজ্ঞাপন বা অর্থের প্রয়োজন নেই।",
-
   "about-action-open-passage": "একটি পথ খুলুন",
   "about-action-donate": "দান করুন",
   "about-action-discord": "ডিসকর্ডে যোগ দিন",
   "recent-uploads": "সাম্প্রতিক আপলোডগুলি",
-
   "customization-not-found": "এই কাস্টমাইজেশনটি খুঁজে পাওয়া যায়নি।",
   "customization-name": "নাম",
   "customization-primaryColor": "প্রাথমিক",
-
   "customization-secondaryColor": "মাধ্যমিক",
-
   "customization-tertiaryColor": "তৃতীয়",
-
   "customization-fonts": "ফন্ট",
-
   "custom-font-option": "কাস্টম…",
   "custom-font-name-placeholder": "গুগল ফন্টের নাম",
   "delete-customization": "মুছে ফেলুন",
@@ -690,10 +654,8 @@
   "extension-availability-available": "উপলব্ধ",
   "extension-availability-auto-installed": "স্বয়ংক্রিয়ভাবে ইনস্টল করা হয়েছে",
   "extension-availability-hidden": "লুকানো",
-
   "variants": "থিম",
   "add-variant": "থিম যোগ করুন",
-
   "base-theme-description": "আপনি যা কাস্টমাইজ করেননি, তার জন্য এই থিমটি কোন প্রিসেটে ফিরে যাবে, তা পরিবর্তন করা হয়েছে। আপনার নিজের করা সম্পাদনাগুলো সংরক্ষিত থাকবে।",
   "reset-to-base-theme": "মূল থিমে রিসেট করুন",
   "low-contrast-warning": "{{label}} : কনট্রাস্ট কেবল {{ratio}} :1 — অন্তত {{minRatio}} :1 রাখার লক্ষ্য রাখুন যাতে লেখাটি পাঠযোগ্য থাকে।",
@@ -739,14 +701,12 @@
   "save-folder-empty": "এখানে এখনো কোনো সেভ নেই।",
   "save-options": "বিকল্পগুলি সংরক্ষণ করুন",
   "saves": "সংরক্ষণ করে",
-
   "hide-saves": "সংরক্ষণ লুকান",
   "show-saves": "সংরক্ষণ দেখান",
   "save-verses": "সংরক্ষণ করুন",
   "new-save-folder": "নতুন ফোল্ডার",
   "edit-save": "সম্পাদনা করুন সংরক্ষণ করুন",
   "remove-save-from-all-folders": "সমস্ত ফোল্ডার থেকে মুছে ফেলুন",
-
   "color-hue": "রঙ",
   "color-saturation": "স্যাচুরেশন এবং উজ্জ্বলতা",
   "hex-color": "হেক্স রঙ",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "ফরম্যাটিং এডিটরটি লোড করা যায়নি। এই নোটটিতে এমন ফরম্যাটিং রয়েছে যা হারিয়ে যাবে, তাই পুনরায় সংযোগ না করা পর্যন্ত এটি সম্পাদনা করা যাবে না।",
   "annotation-text": "টীকা পাঠ্য",
   "notes-for-verse": "শ্লোক {{verse}} এর জন্য টীকা",
-
   "configure-extension-defaults": "ডিফল্ট ওভাররাইডগুলি কনফিগার করুন",
-
   "extension-settings-defaults-title": "{{name}} ডিফল্ট ওভাররাইড করে",
   "no-extension-settings": "এই এক্সটেনশনটিতে কোনো কনফিগারযোগ্য সেটিংস নেই।",
   "extension-settings-save-failed": "আপনার সেটিংস সংরক্ষণ করা যায়নি।",
@@ -872,7 +830,6 @@
   "setting-no-default": "কোনো ডিফল্ট নেই",
   "override-setting": "{{name}} কে ওভাররাইড করুন",
   "override-setting-label": "ওভাররাইড",
-
   "discover-choose-filter-hint": "এই অধ্যায়ের আরও লেখা দেখতে ওপর থেকে একটি ফিল্টার বেছে নিন।",
   "take-a-tour": "ঘুরে আসুন",
   "share-reading-plan": "শেয়ার পরিকল্পনা",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "আমার বুকমার্ক {{number}}",
   "bookmark-move-hint": "বুকমার্কটিকে এই অধ্যায়ে সরাতে সেটিতে ট্যাপ করুন।",
   "move-bookmark-here": "{{name}} এখানে সরান",
-
   "play": "খেলা",
   "pause": "বিরতি",
   "audio-playback-position": "প্লেব্যাক অবস্থান",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "শ্লোক {{verse}}",
   "tab-playing-audio": "অডিও বাজানো হচ্ছে",
   "collapsed-tab-playing-label": "{{label}} — অডিও চলছে",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} টি থিম",
   "customization-theme-count_one": "{{count}} থিম",
@@ -1104,7 +1059,6 @@
   "about-community-body": "বিশ্বাসকে একত্রে যাপন করার জন্যই তৈরি করা হয়েছে। সীড বাইবেল আপনার পরিবার, আপনার সবচেয়ে কাছের বন্ধু এবং আপনার গৃহ-মণ্ডলীর সাথে ধর্মগ্রন্থ পাঠ করার জন্য তৈরি করা হয়েছে।",
   "discovered-content": "আবিষ্কৃত বিষয়বস্তু",
   "show-discovered-content": "আবিষ্কৃত বিষয়বস্তু দেখান",
-
   "extension-availability-default": "ডিফল্ট ( {{availability}} )",
   "customization-extensions-default": "অন্যান্য এক্সটেনশনের জন্য ডিফল্ট",
   "customization-extensions-default-hint": "নিচে আপনি সেট করেননি এমন প্রতিটি এক্সটেনশনের ক্ষেত্রে প্রযোজ্য, যার মধ্যে পরে যোগ করা নতুনগুলোও অন্তর্ভুক্ত।",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "প্লেলিস্টে ফিরে যান",
   "playlist-scripture-note-aria": "{{passage}} এর উপর টীকা",
   "playlist-scripture-note-progress": "{{current}} {{total}} এর",
-
   "unsaved-item-edit-confirm-message": "আপনি একটি আইটেম পরিবর্তন করেছেন কিন্তু এখনও সেই পরিবর্তনগুলো সংরক্ষণ করেননি। আপনি কী করতে চান?",
   "keep-changes-and-save": "পরিবর্তনগুলি রাখুন এবং সংরক্ষণ করুন",
   "reading-plan-edit-reading": "সম্পাদনা পাঠ",
@@ -1152,7 +1105,6 @@
   "branding": "ব্র্যান্ডিং",
   "create-custom-branding-menu-item": "কাস্টম ব্র্যান্ডিং",
   "your-content-empty-branding": "আপনার তৈরি করা কাস্টম ব্র্যান্ডিং এখানে প্রদর্শিত হবে।",
-
   "extension-consent-from": "{{host}} থেকে",
   "extension-consent-source-version": "সংস্করণ {{version}} · {{host}} থেকে",
   "extension-consent-uploader-unnamed": "একজন বীজ বাইবেল ব্যবহারকারী",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "দেখুন আপনি কোন শ্লোকগুলো নির্বাচন করেন",
   "extension-permission-reading-navigate": "খোলা পথ",
   "extension-permission-network": "{{host}} এর সাথে সংযোগ করুন",
-
   "extension-consent-not-now": "এখন নয়",
   "extension-consent-nothing-yet": "আপাতত, এটি আপনার কোনো তথ্যে প্রবেশাধিকার পাবে না।",
   "extension-permission-reading-history": "আপনার পড়ার ইতিহাস দেখুন",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "বাতিল করুন",
   "extension-consent-high-risk": "সংবেদনশীল",
   "extension-modal-ok": "ঠিক আছে",
-
   "extension-permissions-restart-note": "পরিবর্তনগুলো অবিলম্বে কার্যকর হয়। পরিবর্তনগুলো গ্রহণ করার জন্য {{name}} রিস্টার্ট হয়।",
   "extension-permissions-saved": "সংরক্ষিত হয়েছে। {{name}} নতুন অনুমতিসহ পুনরায় চালু হয়েছে।",
   "extension-permissions-failed": "এটি সংরক্ষিত হয়নি। আবার চেষ্টা করুন।",
@@ -1276,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "উপস্থাপক কোনো শ্লোক নির্বাচন করলে প্রভাব দেখান।",
   "session-settings-verse-effects-desc-everyone": "কেউ কোনো শ্লোক নির্বাচন করলে প্রভাবগুলো দেখান।",
   "session-settings-verse-effects-desc-none": "শ্লোক নির্বাচনের প্রভাব সকলের জন্য বন্ধ করা হয়েছে।",
-
   "account": "অ্যাকাউন্ট",
   "scroll-filters-start": "ফিল্টারগুলি শুরুর দিকে স্ক্রোল করুন",
-  "scroll-filters-end": "ফিল্টারগুলো শেষের দিকে স্ক্রোল করুন"
+  "scroll-filters-end": "ফিল্টারগুলো শেষের দিকে স্ক্রোল করুন",
+  "download": "ডাউনলোড করুন",
+  "image-details-uploaded": "আপলোড করা হয়েছে",
+  "image-details-dimensions": "মাত্রা",
+  "image-details-dimensions-value": "{{width}} × {{height}} পিক্সেল",
+  "image-details-type": "প্রকার",
+  "image-details-cover-of": "কভার",
+  "image-details-not-a-cover": "কভার হিসেবে ব্যবহৃত হয় না",
+  "delete-customization-confirm-title": "কাস্টম ব্র্যান্ডিং মুছে ফেলবেন?",
+  "delete-customization-confirm-message": "কাস্টম ব্র্যান্ডিং \" {{name}} \" মুছে ফেলবেন? এটি আর পূর্বাবস্থায় ফেরানো যাবে না।",
+  "delete-customization-failed": "কাস্টম ব্র্যান্ডিংটি মুছে ফেলা যায়নি।",
+  "delete-variant-confirm-title": "থিম মুছে ফেলবেন?",
+  "delete-variant-confirm-message": "থিম \" {{name}} \" মুছে ফেলবেন? এটি আর পূর্বাবস্থায় ফেরানো যাবে না।",
+  "delete-variant-confirm-message-unnamed": "এই থিমটি মুছে ফেলবেন? এটি আর পূর্বাবস্থায় ফেরানো যাবে না।",
+  "delete-variant-failed": "থিমটি মুছে ফেলা যায়নি।",
+  "delete-highlight-confirm-title": "হাইলাইট মুছে ফেলবেন?",
+  "delete-highlight-confirm-message": "{{reference}} এর উপর থেকে হাইলাইটটি মুছে ফেলবেন? এটি আর পূর্বাবস্থায় ফেরানো যাবে না।",
+  "delete-highlight-failed": "হাইলাইটটি মুছে ফেলা যায়নি।",
+  "delete-annotation-on-confirm-message": "{{reference}} এর উপর থাকা অ্যানোটেশনটি মুছে ফেলবেন? এটি আর পূর্বাবস্থায় ফেরানো যাবে না।",
+  "remove-from-folder": "ফোল্ডার থেকে সরান",
+  "save-folders": "{{folders}} এ",
+  "delete-save-confirm-title": "সংরক্ষণ মুছে ফেলবেন?",
+  "delete-save-confirm-message": "{{reference}} এর জন্য সংরক্ষণ মুছে ফেলবেন? এটি পূর্বাবস্থায় ফেরানো যাবে না।",
+  "delete-save-confirm-message-folders": "{{folders}} থেকে {{reference}} এর জন্য সেভ ডিলিট করবেন? এটি আর পূর্বাবস্থায় ফেরানো যাবে না।",
+  "delete-save-failed": "সেভটি ডিলিট করা যায়নি।",
+  "delete-save-folder-confirm-title": "ফোল্ডারটি মুছে ফেলবেন?",
+  "delete-save-folder-confirm-message": "\" {{name}} \" ফোল্ডারটি মুছে ফেলবেন?",
+  "delete-save-folder-confirm-deletes": "শুধুমাত্র এই ফোল্ডারে থাকা {{count}} টি সেভও মুছে ফেলা হবে।",
+  "delete-save-folder-confirm-deletes_one": "শুধুমাত্র এই ফোল্ডারে থাকা সেভটিও মুছে ফেলা হবে।",
+  "delete-save-folder-confirm-deletes_other": "শুধুমাত্র এই ফোল্ডারে থাকা {{count}} টি সেভও মুছে ফেলা হবে।",
+  "delete-save-folder-confirm-keeps": "{{count}} টি সেভ, যেগুলো অন্যান্য ফোল্ডারেও রয়েছে, সেগুলো সেখানেই থাকবে।",
+  "delete-save-folder-confirm-keeps_one": "যে সেভ ফাইলটি অন্য একটি ফোল্ডারেও রয়েছে, সেটি সেখানেই থাকবে।",
+  "delete-save-folder-confirm-keeps_other": "{{count}} টি সেভ, যেগুলো অন্যান্য ফোল্ডারেও রয়েছে, সেগুলো সেখানেই থাকবে।",
+  "cant-be-undone": "এটা আর পূর্বাবস্থায় ফেরানো যাবে না।",
+  "delete-save-folder-failed": "ফোল্ডারটি মুছে ফেলা যায়নি।",
+  "download-image-failed": "ছবিটি ডাউনলোড করা যায়নি।",
+  "session-settings-verse-effects-hosts-only": "শুধুমাত্র হোস্টদের জন্য",
+  "session-settings-verse-effects-everyone": "প্রত্যেকে",
+  "session-settings-verse-effects-none": "কোনোটিই না",
+  "loading-books": "বইগুলো লোড হচ্ছে…",
+  "books-load-failed": "বইগুলো লোড করা যায়নি। আপনার সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।",
+  "loading-translation": "{{name}} লোড হচ্ছে …",
+  "translation-load-failed": "{{name}} লোড করা যায়নি।",
+  "loading-translations": "অনুবাদ লোড হচ্ছে…",
+  "translations-load-failed": "অনুবাদের সম্পূর্ণ তালিকা লোড করা যায়নি, তাই কিছু অনুবাদ বাদ থাকতে পারে।",
+  "verse-of-the-day": "দিনের শ্লোক",
+  "verse-of-the-day-loading": "দিনের শ্লোকটি লোড করা হচ্ছে…"
 }

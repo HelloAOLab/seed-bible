@@ -28,22 +28,18 @@
   "searching": "Ερευνητικός...",
   "no-search-results": "Δεν υπάρχουν στίχοι που να ταιριάζουν.",
   "open-chapter": "Άνοιγμα κεφαλαίου",
-
   "uploading": "Μεταφόρτωση...",
   "profile-name": "Όνομα προφίλ",
   "profile-name-placeholder": "π.χ. οικογένεια Craig",
-
   "description": "Περιγραφή",
   "optional": "(Προαιρετικός)",
   "description-placeholder": "Εισαγάγετε την περιγραφή του προφίλ σας...",
   "location": "Τοποθεσία",
   "location-placeholder": "π.χ. Ώστιν, Τέξας",
-
   "copied": "Αντιγράφηκε",
   "copy": "Αντίγραφο",
   "save-changes": "Αποθήκευση αλλαγών",
   "sign-out": "Αποσύνδεση",
-
   "log-in": "Σύνδεση",
   "tanakh": "Τανάχ",
   "traditional": "Παραδοσιακός",
@@ -57,7 +53,6 @@
   "scripture-settings": "Ρυθμίσεις Γραφής",
   "scripture-elements": "Στοιχεία της Αγίας Γραφής",
   "scripture-settings-font-size-example": "ΕΝΑ",
-
   "show-headings": "Εμφάνιση επικεφαλίδων",
   "show-verse-numbers": "Εμφάνιση αριθμών στίχων",
   "show-footnotes": "Εμφάνιση υποσημειώσεων",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Δεν υπάρχουν διαθέσιμες επεκτάσεις.",
   "install": "Εγκαθιστώ",
   "uninstall": "Απεγκατάσταση",
-
   "custom": "Εθιμο",
   "text-section-bookTitle": "Κείμενο τίτλου βιβλίου",
   "text-section-heading": "Κείμενο Επικεφαλίδας",
@@ -92,7 +86,6 @@
   "show-selected-items": "Εμφάνιση επιλεγμένων στοιχείων",
   "show-highlight-colors": "Εμφάνιση χρωμάτων επισήμανσης",
   "show-icon-text": "Εμφάνιση κειμένου εικονιδίου",
-
   "extensions": "Επεκτάσεις",
   "display": "Επίδειξη",
   "theme-and-text": "Θέμα & κείμενο",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Αύξηση μεγέθους γραμματοσειράς γραφών",
   "change-line-spacing": "Αλλαγή απόστασης γραμμών",
   "line-spacing_lineHeight": "Διάστιχο: {{lineHeight}}",
-
   "italic": "Πλάγια γραφή",
   "underline": "Υπογραμμίζω",
   "alignment_x": "Στοίχιση: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Χρώμα κειμένου",
   "follow_theme": "Ακολουθήστε το θέμα",
   "reset-to-default": "Επαναφορά στις προεπιλογές",
-
   "id_highlight-text-color": "Χρώμα κειμένου επισήμανσης {{id}}",
   "id_highlight-background-color": "Χρώμα φόντου επισήμανσης {{id}}",
   "all-settings-description": "Βελτιστοποιήστε κάθε ενότητα κειμένου και προσαρμόστε το χρώμα κάθε θέματος.",
@@ -141,7 +132,6 @@
   "old-testament_short": "Π.Μ.",
   "new-testament_short": "NT",
   "apocrypha": "Απόκρυφα",
-
   "custom-translations": "Προσαρμοσμένες μεταφράσεις",
   "no-translation-results-found": "Δεν βρέθηκαν αποτελέσματα. Θα θέλατε να επεκτείνετε την αναζήτησή σας ώστε να συμπεριλάβει και μερικώς ολοκληρωμένες μεταφράσεις;",
   "show-all-translations": "Εμφάνιση όλων των μεταφράσεων",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Ψαλμοί",
   "5-psalms": "5 Ψαλμοί",
   "remove-bookmark": "Αφαίρεση σελιδοδείκτη",
-
   "chat": "Κουβέντα",
   "today": "Σήμερα",
   "you": "Εσείς",
@@ -169,7 +158,6 @@
   "category-options": "Επιλογές φακέλου",
   "rename": "Μετονομάζω",
   "delete": "Διαγράφω",
-
   "bookmark-options": "Επιλογές σελιδοδεικτών",
   "new-folder-placeholder": "Όνομα φακέλου",
   "tasks": "Εργασίες",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Υπάρχει ήδη ένας φάκελος με αυτό το όνομα.",
   "add-to-new": "Προσθήκη σε νέο",
   "save": "Εκτός",
-
   "apocrypha-info-text": "Κανένα από τα γραπτά σε αυτήν την ενότητα δεν θεωρήθηκε ποτέ Γραφή από τις πρώτες εβραϊκές ή χριστιανικές κοινότητες. Η Βίβλος είναι μια συγκεκριμένη συλλογή βιβλίων. Οι Εβραίοι και οι Χριστιανοί συμφωνούσαν πάντα για την Παλαιά Διαθήκη, η οποία προέρχεται από ένα σταθερό σύνολο ιερών γραπτών που οι Εβραίοι ονόμασαν Τανάκ και οι Χριστιανοί την Παλαιά Διαθήκη. Το περιεχόμενο του Τανάκ και της Παλαιάς Διαθήκης είναι ακριβώς το ίδιο, αλλά συνήθως διατάσσονται διαφορετικά. Οι Χριστιανοί αναγνωρίζουν επιπλέον την Καινή Διαθήκη, η οποία αφηγείται την ιστορία του Ιησού, τις διδασκαλίες του και τα γραπτά των οπαδών του. Τα παρακάτω γραπτά ήταν γνωστά και διαβάζονταν ευρέως την εποχή που γράφτηκε η Βίβλος, αλλά ποτέ δεν αντιμετωπίστηκαν ως Γραφή. Ενώ οι αρχαίοι συγγραφείς μερικές φορές παρέθεταν ένα ευρύ φάσμα κειμένων, συμπεριλαμβανομένων ποιητών, φιλοσόφων και άλλων γραπτών, η παράθεση κάποιου πράγματος δεν είναι το ίδιο με την αντιμετώπισή του ως Γραφής. Αυτά τα γραπτά περιλαμβάνονται εδώ μόνο για ιστορική και λογοτεχνική αναφορά.",
   "seed-bible": "Βίβλος των Σπόρων",
   "take-photo": "Τραβήξτε μια φωτογραφία",
   "choose-from-gallery": "Επιλέξτε από τη συλλογή",
-
   "crop-your-photo": "Περικοπή της φωτογραφίας σας",
   "zoom": "Ανίπταμαι διαγωνίως",
   "set-picture": "Ορισμός εικόνας",
@@ -211,10 +197,8 @@
   "read-the-bible": "Διαβάστε την Αγία Γραφή",
   "seed-bible-description": "Διαβάστε {{bookName}} {{chapterNumber}} στη Βίβλο των Σπόρων",
   "social-title": "Διαβάστε το {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Πλοήγηση κεφαλαίου",
   "tutorial.skip": "Παραλείπω",
-
   "tutorial.back": "Πίσω",
   "tutorial.done": "Γινώμενος",
   "tutorial.next": "Επόμενος",
@@ -326,11 +310,9 @@
   "study-notes": "Σημειώσεις μελέτης",
   "content": "Περιεχόμενο",
   "untitled-playlist": "Λίστα αναπαραγωγής χωρίς τίτλο",
-
   "discover-annotations-empty": "Δεν έχετε σχολιασμούς",
   "discover-cross-references-empty": "Δεν υπάρχουν παραπομπές για αυτό το κεφάλαιο.",
   "discover-study-notes-empty": "Δεν υπάρχουν σημειώσεις μελέτης για αυτό το κεφάλαιο.",
-
   "discover-select-tab": "Επιλέξτε μια καρτέλα για να ανακαλύψετε σχετικό υλικό.",
   "create-playlist": "Δημιουργώ",
   "playlist-title_placeholder": "Τίτλος λίστας αναπαραγωγής",
@@ -379,12 +361,10 @@
   "delete-playlist-failed": "Δεν ήταν δυνατή η διαγραφή της λίστας αναπαραγωγής.",
   "collapsed-tab-shared-label": "{{title}} — κοινόχρηστη συνεδρία, {{count}} παρόντες",
   "playlist-add-mode-label": "Τύπος αντικειμένου",
-
   "session-host-reconnected": "Επανασυνδέθηκε στην περίοδο λειτουργίας",
   "session-host-left": "Ο οικοδεσπότης αποχώρησε — εσείς αφαιρεθήκατε από την περίοδο σύνδεσης",
   "drag-to-reorder-playlist-item": "Σύρετε για αναδιάταξη",
   "saving": "Αποθήκευση…",
-
   "unsaved-item-confirm-message": "Έχετε ξεκινήσει να προσθέτετε ένα στοιχείο που δεν έχει προστεθεί ακόμα στη λίστα αναπαραγωγής. Τι θα θέλατε να κάνετε;",
   "discard-and-save": "Απόρριψη και αποθήκευση",
   "add-and-save": "Προσθήκη και αποθήκευση",
@@ -512,7 +492,6 @@
   "reading-plan-preview-reading": "Προεπισκόπηση {{reading}}",
   "reading-plan-mark-reading-complete": "Σήμανση ολοκλήρωσης ανάγνωσης",
   "reading-plan-link-video": "Βίντεο",
-
   "reading-plan-mark-passage-complete": "Σημειώστε {{passage}} ως αναγνωσμένο",
   "reading-plan-read-nudge-title": "Καλή ανάγνωση!",
   "reading-plan-read-nudge-toast": "Σημειώστε {{passage}} ως ολοκληρωμένο;",
@@ -520,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Διαβάστε, αναζητήστε και μελετήστε την Αγία Γραφή στο διαδίκτυο. Δωρεάν μεταφράσεις σε πολλές γλώσσες, με επισημάνσεις, σημειώσεις, σελιδοδείκτες και σχέδια ανάγνωσης.",
   "all": "Ολοι",
-
   "today-bookmarks": "ΣΕΛΙΔΟΔΕΙΚΤΕΣ",
   "today-search-verses": "Αναζήτηση βιβλίων, κεφαλαίων, στίχων....",
   "anonymous-greeting": "Καλωσόρισμα!",
   "community": "ΚΟΙΝΟΤΗΤΑ",
   "go-somewhere-new": "ΠΗΓΑΙΝΕ ΚΑΠΟΥ ΚΑΙΝΟΥΡΙΟ ΜΕΡΟΣ",
-
   "open-bible": "Ανοιχτή Βίβλος",
   "personal-greeting": "Καλώς ήρθες, {{name}} !",
   "resume-reading": "ΣΥΝΕΧΙΣΤΕ ΑΠΟ ΕΚΕΙ ΠΟΥ ΑΦΗΣΑΤΕ",
   "resume-reading-loading": "Φόρτωση του ιστορικού ανάγνωσής σας…",
   "selected-year": "Έτος: {{year}}",
-
   "theme-light": "Φως",
   "theme-dark": "Σκοτάδι",
   "installed-extensions": "Εγκατεστημένο",
@@ -542,7 +518,6 @@
   "extension-state-installed": "Εγκατεστημένο",
   "extension-state-downloaded": "Λήψη",
   "extension-state-pending": "Εγκατάσταση…",
-
   "tutorial.stepProgress": "Βήμα {{current}} από {{total}}",
   "tutorial.offlineDownloadTitle": "Πατήστε για να το διατηρήσετε στη συσκευή σας",
   "tutorial.offlineDownloadBody": "Οποιαδήποτε μετάφραση με αυτό το εικονίδιο μπορεί να αποθηκευτεί για ανάγνωση εκτός σύνδεσης.",
@@ -576,7 +551,6 @@
   "tutorial.paneLayoutBody": "Επιλέξτε πόσα αποσπάσματα θα διαβάσετε δίπλα-δίπλα από αυτό το μενού διάταξης.",
   "tutorial.addTabTitle": "Άνοιγμα περισσότερων αποσπασμάτων",
   "tutorial.addTabBody": "Προσθέστε μια νέα καρτέλα για να διαβάσετε πολλά βιβλία ή μεταφράσεις δίπλα-δίπλα.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % ολοκλήρωσης - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ολοκλήρωσης",
   "playlist-history-continue": "Συνεχίζω",
@@ -635,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} σημειώσεις για αυτό το κεφάλαιο",
   "create-folder": "Δημιουργία φακέλου",
   "edit-bookmark": "Επεξεργασία σελιδοδείκτη",
-
   "greeting-afternoon": "Καλημέρα!",
   "greeting-afternoon-named": "Καλό απόγευμα, {{name}} !",
   "greeting-evening": "Καλησπέρα!",
@@ -651,32 +624,24 @@
   "ask-ai": "Ρωτήστε την Τεχνητή Νοημοσύνη",
   "unread-mention": "Μη αναγνωσμένη αναφορά",
   "unread-messages": "Μη αναγνωσμένα μηνύματα: {{count}}",
-
   "scripture-width": "Πλάτος Γραφής",
   "decrease-scripture-width": "Μείωση πλάτους γραφής",
   "increase-scripture-width": "Αύξηση πλάτους γραφών",
   "annotations": "Σχολιασμοί",
   "discover-content-panel": "Ανακαλύψτε περιεχόμενο",
   "discover-book-title": "Ανακαλύψτε {{book}}",
-
   "about-title": "Σχετικά με τη Βίβλο των Σπόρων",
   "about-meta-description": "Το Seed Bible είναι μια δωρεάν εφαρμογή για την Αγία Γραφή, σχεδιασμένη για να διαβάζετε την Αγία Γραφή μαζί με την οικογένεια, τους φίλους και την κοινότητά σας — δωρεάν για πάντα, χωρίς διαφημίσεις ή paywalls.",
-
   "about-action-open-passage": "Άνοιγμα ενός αποσπάσματος",
   "about-action-donate": "Προσφέρω",
   "about-action-discord": "Γίνετε μέλος του Discord",
   "recent-uploads": "Πρόσφατες μεταφορτώσεις",
-
   "customization-not-found": "Δεν ήταν δυνατή η εύρεση αυτής της προσαρμογής.",
   "customization-name": "Ονομα",
   "customization-primaryColor": "Πρωταρχικός",
-
   "customization-secondaryColor": "Δευτερεύων",
-
   "customization-tertiaryColor": "Τριτογενής",
-
   "customization-fonts": "Γραμματοσειρές",
-
   "custom-font-option": "Εθιμο…",
   "custom-font-name-placeholder": "Όνομα γραμματοσειράς Google",
   "delete-customization": "Διαγράφω",
@@ -689,10 +654,8 @@
   "extension-availability-available": "Διαθέσιμος",
   "extension-availability-auto-installed": "Αυτόματη εγκατάσταση",
   "extension-availability-hidden": "Κεκρυμμένος",
-
   "variants": "Θέματα",
   "add-variant": "Προσθήκη θέματος",
-
   "base-theme-description": "Οι αλλαγές στις οποίες προκαθορίζεται αυτό το θέμα επιστρέφουν σε οτιδήποτε δεν έχετε προσαρμόσει. Οι δικές σας επεξεργασίες διατηρούνται.",
   "reset-to-base-theme": "Επαναφορά στο βασικό θέμα",
   "low-contrast-warning": "{{label}} : η αντίθεση είναι μόνο {{ratio}} :1 — στοχεύστε σε τουλάχιστον {{minRatio}} :1 ώστε το κείμενο να παραμένει ευανάγνωστο.",
@@ -738,14 +701,12 @@
   "save-folder-empty": "Δεν υπάρχουν αποθηκευμένες φωτογραφίες εδώ ακόμα.",
   "save-options": "Αποθήκευση επιλογών",
   "saves": "Αποθηκεύει",
-
   "hide-saves": "Απόκρυψη αποθηκευμένων",
   "show-saves": "Εμφάνιση αποθηκευμένων",
   "save-verses": "Εκτός",
   "new-save-folder": "Νέος φάκελος",
   "edit-save": "Επεξεργασία αποθήκευσης",
   "remove-save-from-all-folders": "Κατάργηση από όλους τους φακέλους",
-
   "color-hue": "Απόχρωση",
   "color-saturation": "Κορεσμός και φωτεινότητα",
   "hex-color": "Δεκαεξαδικό χρώμα",
@@ -860,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Δεν ήταν δυνατή η φόρτωση του προγράμματος επεξεργασίας μορφοποίησης. Αυτή η σημείωση έχει μορφοποίηση που θα χαθεί, επομένως δεν είναι δυνατή η επεξεργασία της μέχρι να συνδεθείτε ξανά.",
   "annotation-text": "Κείμενο σχολιασμού",
   "notes-for-verse": "Σημειώσεις για τον στίχο {{verse}}",
-
   "configure-extension-defaults": "Ρύθμιση παραμέτρων προεπιλεγμένων παρακάμψεων",
-
   "extension-settings-defaults-title": "{{name}} προεπιλεγμένες παρακάμψεις",
   "no-extension-settings": "Αυτή η επέκταση δεν έχει διαμορφώσιμες ρυθμίσεις.",
   "extension-settings-save-failed": "Δεν ήταν δυνατή η αποθήκευση των ρυθμίσεών σας.",
@@ -871,7 +830,6 @@
   "setting-no-default": "Χωρίς προεπιλογή",
   "override-setting": "Παράκαμψη {{name}}",
   "override-setting-label": "Καταπατώ",
-
   "discover-choose-filter-hint": "Επιλέξτε ένα φίλτρο παραπάνω για να δείτε περισσότερα από αυτό το κεφάλαιο.",
   "take-a-tour": "Κάντε μια περιήγηση",
   "share-reading-plan": "Κοινό πρόγραμμα",
@@ -1055,7 +1013,6 @@
   "my-bookmark-numbered": "Ο σελιδοδείκτης μου {{number}}",
   "bookmark-move-hint": "Πατήστε έναν σελιδοδείκτη για να τον μετακινήσετε σε αυτό το κεφάλαιο.",
   "move-bookmark-here": "Μετακινήστε {{name}} εδώ",
-
   "play": "Παιχνίδι",
   "pause": "Παύση",
   "audio-playback-position": "Θέση αναπαραγωγής",
@@ -1064,7 +1021,6 @@
   "audio-scrub-verse": "Στίχος {{verse}}",
   "tab-playing-audio": "Αναπαραγωγή ήχου",
   "collapsed-tab-playing-label": "{{label}} — αναπαραγωγή ήχου",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} θέματα",
   "customization-theme-count_one": "{{count}} θέμα",
@@ -1103,7 +1059,6 @@
   "about-community-body": "Η πίστη προορίζεται για να βιώνεται μαζί. Η Βίβλος των Σπόροι έχει δημιουργηθεί για να διαβάζετε την Αγία Γραφή με την οικογένειά σας, τους πιο στενούς σας φίλους και την κατ' οίκον εκκλησία σας.",
   "discovered-content": "Ανακαλύφθηκε περιεχόμενο",
   "show-discovered-content": "Εμφάνιση περιεχομένου που ανακαλύφθηκε",
-
   "extension-availability-default": "Προεπιλογή ( {{availability}} )",
   "customization-extensions-default": "Προεπιλογή για άλλες επεκτάσεις",
   "customization-extensions-default-hint": "Ισχύει για κάθε επέκταση που δεν έχετε ορίσει παρακάτω, συμπεριλαμβανομένων των νέων που προστέθηκαν αργότερα",
@@ -1136,7 +1091,6 @@
   "playlist-scripture-note-return": "Επιστροφή στη λίστα αναπαραγωγής",
   "playlist-scripture-note-aria": "Σημείωση για το {{passage}}",
   "playlist-scripture-note-progress": "{{current}} από {{total}}",
-
   "unsaved-item-edit-confirm-message": "Έχετε αλλάξει ένα στοιχείο αλλά δεν έχετε αποθηκεύσει ακόμη αυτές τις αλλαγές. Τι θα θέλατε να κάνετε;",
   "keep-changes-and-save": "Διατήρηση αλλαγών και αποθήκευση",
   "reading-plan-edit-reading": "Επεξεργασία ανάγνωσης",
@@ -1151,7 +1105,6 @@
   "branding": "Δημιουργία επωνυμίας",
   "create-custom-branding-menu-item": "Προσαρμοσμένη δημιουργία επωνυμίας",
   "your-content-empty-branding": "Η προσαρμοσμένη επωνυμία που δημιουργείτε θα εμφανίζεται εδώ.",
-
   "extension-consent-from": "Από {{host}}",
   "extension-consent-source-version": "Έκδοση {{version}} · από {{host}}",
   "extension-consent-uploader-unnamed": "ένας χρήστης της Βίβλου Seed",
@@ -1199,7 +1152,6 @@
   "extension-permission-reading-selection": "Δείτε ποιους στίχους επιλέγετε",
   "extension-permission-reading-navigate": "Ανοιχτά περάσματα",
   "extension-permission-network": "Σύνδεση με {{host}}",
-
   "extension-consent-not-now": "Όχι τώρα",
   "extension-consent-nothing-yet": "Προς το παρόν, δεν θα έχει πρόσβαση σε καμία από τις πληροφορίες σας.",
   "extension-permission-reading-history": "Δείτε το ιστορικό ανάγνωσής σας",
@@ -1237,7 +1189,6 @@
   "extension-capture-cancel": "Ματαίωση",
   "extension-consent-high-risk": "Ευαίσθητος",
   "extension-modal-ok": "ΕΝΤΑΞΕΙ",
-
   "extension-permissions-restart-note": "Οι αλλαγές τίθενται σε ισχύ αμέσως. {{name}} επανεκκινείται για να τις ενεργοποιήσει.",
   "extension-permissions-saved": "Αποθηκεύτηκε. {{name}} επανεκκινήθηκε με τα νέα δικαιώματα.",
   "extension-permissions-failed": "Δεν αποθηκεύτηκε. Δοκιμάστε ξανά.",
@@ -1275,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Εμφάνιση εφέ όταν ένας παρουσιαστής επιλέγει έναν στίχο.",
   "session-settings-verse-effects-desc-everyone": "Εμφάνιση εφέ όταν κάποιος επιλέγει έναν στίχο.",
   "session-settings-verse-effects-desc-none": "Τα εφέ επιλογής στίχων είναι απενεργοποιημένα για όλους.",
-
   "account": "Λογαριασμός",
   "scroll-filters-start": "Κύλιση φίλτρων προς την αρχή",
-  "scroll-filters-end": "Κύλιση φίλτρων προς το τέλος"
+  "scroll-filters-end": "Κύλιση φίλτρων προς το τέλος",
+  "download": "Λήψη",
+  "image-details-uploaded": "Μεταφορτώθηκε",
+  "image-details-dimensions": "Διαστάσεις",
+  "image-details-dimensions-value": "{{width}} × {{height}} εικονοστοιχεία",
+  "image-details-type": "Τύπος",
+  "image-details-cover-of": "Εξώφυλλο του",
+  "image-details-not-a-cover": "Δεν χρησιμοποιείται ως κάλυμμα",
+  "delete-customization-confirm-title": "Διαγραφή Προσαρμοσμένης Επωνυμίας;",
+  "delete-customization-confirm-message": "Διαγραφή προσαρμοσμένης επωνυμίας \" {{name}} \"; Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.",
+  "delete-customization-failed": "Δεν ήταν δυνατή η διαγραφή της Προσαρμοσμένης Επωνυμίας.",
+  "delete-variant-confirm-title": "Διαγραφή θέματος;",
+  "delete-variant-confirm-message": "Διαγραφή θέματος \" {{name}} \"; Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.",
+  "delete-variant-confirm-message-unnamed": "Διαγραφή αυτού του θέματος; Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.",
+  "delete-variant-failed": "Δεν ήταν δυνατή η διαγραφή του θέματος.",
+  "delete-highlight-confirm-title": "Διαγραφή επισήμανσης;",
+  "delete-highlight-confirm-message": "Διαγραφή της επισήμανσης στο {{reference}} ; Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.",
+  "delete-highlight-failed": "Δεν ήταν δυνατή η διαγραφή της επισήμανσης.",
+  "delete-annotation-on-confirm-message": "Διαγραφή της σχολίασης στο {{reference}} ; Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.",
+  "remove-from-folder": "Αφαίρεση από τον φάκελο",
+  "save-folders": "Σε {{folders}}",
+  "delete-save-confirm-title": "Διαγραφή αποθήκευσης;",
+  "delete-save-confirm-message": "Διαγραφή αποθήκευσης για {{reference}} ; Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.",
+  "delete-save-confirm-message-folders": "Διαγραφή αποθήκευσης για {{reference}} από {{folders}} ; Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.",
+  "delete-save-failed": "Δεν ήταν δυνατή η διαγραφή της αποθήκευσης.",
+  "delete-save-folder-confirm-title": "Διαγραφή φακέλου;",
+  "delete-save-folder-confirm-message": "Διαγραφή του φακέλου \" {{name}} \";",
+  "delete-save-folder-confirm-deletes": "Τα {{count}} αποθηκευμένα αρχεία που βρίσκονται μόνο σε αυτόν τον φάκελο θα διαγραφούν επίσης.",
+  "delete-save-folder-confirm-deletes_one": "Η αποθήκευση που βρίσκεται μόνο σε αυτόν τον φάκελο θα διαγραφεί επίσης.",
+  "delete-save-folder-confirm-deletes_other": "Τα {{count}} αποθηκευμένα αρχεία που βρίσκονται μόνο σε αυτόν τον φάκελο θα διαγραφούν επίσης.",
+  "delete-save-folder-confirm-keeps": "Οι {{count}} αποθηκευμένες φωτογραφίες που βρίσκονται επίσης σε άλλους φακέλους θα παραμείνουν εκεί.",
+  "delete-save-folder-confirm-keeps_one": "Η αποθήκευση που βρίσκεται επίσης σε άλλο φάκελο θα παραμείνει εκεί.",
+  "delete-save-folder-confirm-keeps_other": "Οι {{count}} αποθηκευμένες φωτογραφίες που βρίσκονται επίσης σε άλλους φακέλους θα παραμείνουν εκεί.",
+  "cant-be-undone": "Αυτό δεν μπορεί να αναιρεθεί.",
+  "delete-save-folder-failed": "Δεν ήταν δυνατή η διαγραφή του φακέλου.",
+  "download-image-failed": "Δεν ήταν δυνατή η λήψη της εικόνας.",
+  "session-settings-verse-effects-hosts-only": "Μόνο για κεντρικούς υπολογιστές",
+  "session-settings-verse-effects-everyone": "Καθένας",
+  "session-settings-verse-effects-none": "Κανένας",
+  "loading-books": "Φόρτωση βιβλίων…",
+  "books-load-failed": "Δεν ήταν δυνατή η φόρτωση των βιβλίων. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά.",
+  "loading-translation": "Φόρτωση {{name}} …",
+  "translation-load-failed": "Δεν ήταν δυνατή η φόρτωση του {{name}} .",
+  "loading-translations": "Φόρτωση μεταφράσεων…",
+  "translations-load-failed": "Δεν ήταν δυνατή η φόρτωση της πλήρους λίστας μεταφράσεων, επομένως ενδέχεται να λείπουν ορισμένες.",
+  "verse-of-the-day": "ΣΤΙΧΟΣ ΤΗΣ ΗΜΕΡΑΣ",
+  "verse-of-the-day-loading": "Φόρτωση του στίχου της ημέρας…"
 }

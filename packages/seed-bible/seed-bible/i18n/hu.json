@@ -28,22 +28,18 @@
   "searching": "Keresés...",
   "no-search-results": "Nincsenek egyező versek.",
   "open-chapter": "Fejezet megnyitása",
-
   "uploading": "Feltöltés...",
   "profile-name": "Profil neve",
   "profile-name-placeholder": "pl. Craig család",
-
   "description": "Leírás",
   "optional": "(Választható)",
   "description-placeholder": "Add meg a profilod leírását...",
   "location": "Elhelyezkedés",
   "location-placeholder": "pl. Austin, Texas",
-
   "copied": "Másolva",
   "copy": "Másolat",
   "save-changes": "Változtatások mentése",
   "sign-out": "Kijelentkezés",
-
   "log-in": "Bejelentkezés",
   "tanakh": "Tanakh",
   "traditional": "Hagyományos",
@@ -57,7 +53,6 @@
   "scripture-settings": "Szentírás-beállítások",
   "scripture-elements": "Szentírási elemek",
   "scripture-settings-font-size-example": "Egy",
-
   "show-headings": "Címsorok megjelenítése",
   "show-verse-numbers": "Versszámok megjelenítése",
   "show-footnotes": "Lábjegyzetek megjelenítése",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Nincsenek elérhető bővítmények.",
   "install": "Telepítés",
   "uninstall": "Eltávolítás",
-
   "custom": "Szokás",
   "text-section-bookTitle": "Könyv címének szövege",
   "text-section-heading": "Címsor szövege",
@@ -92,7 +86,6 @@
   "show-selected-items": "Kijelölt elemek megjelenítése",
   "show-highlight-colors": "Kiemelő színek megjelenítése",
   "show-icon-text": "Ikonszöveg megjelenítése",
-
   "extensions": "Bővítmények",
   "display": "Kijelző",
   "theme-and-text": "Téma és szöveg",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Szentírás betűméretének növelése",
   "change-line-spacing": "Sorköz módosítása",
   "line-spacing_lineHeight": "Sorköz: {{lineHeight}}",
-
   "italic": "Dőlt betűs",
   "underline": "Aláhúzás",
   "alignment_x": "Igazítás: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Szöveg színe",
   "follow_theme": "Téma követése",
   "reset-to-default": "Visszaállítás az alapértelmezettre",
-
   "id_highlight-text-color": "{{id}} kiemelő szöveg színe",
   "id_highlight-background-color": "{{id}} kiemelés háttérszíne",
   "all-settings-description": "Finomhangolj minden szövegrészt, és szabd testre az egyes témák színét.",
@@ -141,7 +132,6 @@
   "old-testament_short": "Hosszabbítás",
   "new-testament_short": "NT",
   "apocrypha": "Jelenések könyve",
-
   "custom-translations": "Egyedi fordítások",
   "no-translation-results-found": "Nincs találat. Szeretné kiterjeszteni a keresést, hogy a részben teljes fordításokat is tartalmazza?",
   "show-all-translations": "Összes fordítás megjelenítése",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Zsoltár",
   "5-psalms": "5 Zsoltár",
   "remove-bookmark": "Könyvjelző eltávolítása",
-
   "chat": "Csevegés",
   "today": "Ma",
   "you": "Te",
@@ -169,7 +158,6 @@
   "category-options": "Mappabeállítások",
   "rename": "Átnevezés",
   "delete": "Töröl",
-
   "bookmark-options": "Könyvjelző beállítások",
   "new-folder-placeholder": "Mappa neve",
   "tasks": "Feladatok",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Már létezik egy ilyen nevű mappa.",
   "add-to-new": "Hozzáadás az újhoz",
   "save": "Megtakarítás",
-
   "apocrypha-info-text": "A korai zsidó vagy keresztény közösségek soha nem tekintették Szentírásnak ebben a részben található írásokat. A Biblia egy meghatározott könyvgyűjtemény. A zsidók és a keresztények mindig is egyetértettek az Ószövetségben, amely a zsidó nép által Tanakhnak, a keresztények pedig Ószövetségnek nevezett szent írások rögzített gyűjteményéből származik. A Tanakh és az Ószövetség tartalma pontosan ugyanaz, de általában eltérően vannak elrendezve. A keresztények elismerik az Újszövetséget is, amely Jézus történetét, tanításait és követőinek írásait meséli el. Az alábbi írások ismertek és széles körben olvasottak voltak a Biblia írásakor, de soha nem tekintették őket Szentírásnak. Bár az ókori szerzők néha sokféle szöveget idéztek, beleértve költőket, filozófusokat és más írásokat, valaminek az idézése nem ugyanaz, mint Szentírásként kezelni. Ezeket az írásokat csak történelmi és irodalmi hivatkozásként szerepeltetjük itt.",
   "seed-bible": "Vetőmag Biblia",
   "take-photo": "Készítsen egy fotót",
   "choose-from-gallery": "Válasszon a galériából",
-
   "crop-your-photo": "Vágd körbe a fotódat",
   "zoom": "Zoomolás",
   "set-picture": "Kép beállítása",
@@ -211,10 +197,8 @@
   "read-the-bible": "Olvasd a Bibliát",
   "seed-bible-description": "Olvasd el {{bookName}} {{chapterNumber}} fejezetet a Mag Bibliában",
   "social-title": "Olvasd el {{bookName}} {{chapterNumber}} könyvet",
-
   "chapter-navigation": "Fejezet navigáció",
   "tutorial.skip": "Kihagyás",
-
   "tutorial.back": "Vissza",
   "tutorial.done": "Kész",
   "tutorial.next": "Következő",
@@ -326,11 +310,9 @@
   "study-notes": "Tanulmányi jegyzetek",
   "content": "Tartalom",
   "untitled-playlist": "Névtelen lejátszási lista",
-
   "discover-annotations-empty": "Nincsenek megjegyzései",
   "discover-cross-references-empty": "Ehhez a fejezethez nincsenek kereszthivatkozások.",
   "discover-study-notes-empty": "Ehhez a fejezethez nincsenek tanulmányi jegyzetek.",
-
   "discover-select-tab": "Válasszon egy fület a kapcsolódó anyagok megtekintéséhez.",
   "create-playlist": "Teremt",
   "playlist-title_placeholder": "Lejátszási lista címe",
@@ -379,12 +361,10 @@
   "delete-playlist-failed": "Nem sikerült törölni a lejátszási listát.",
   "collapsed-tab-shared-label": "{{title}} — megosztott munkamenet, {{count}} jelenlévő",
   "playlist-add-mode-label": "Elemtípus",
-
   "session-host-reconnected": "Újracsatlakozva a munkamenethez",
   "session-host-left": "A házigazda elment — téged eltávolítottak a munkamenetből",
   "drag-to-reorder-playlist-item": "Húzza az átrendezéshez",
   "saving": "Mentés…",
-
   "unsaved-item-confirm-message": "Elkezdett hozzáadni egy elemet, amelyet még nem adott hozzá a lejátszási listához. Mit szeretne tenni?",
   "discard-and-save": "Elvetés és mentés",
   "add-and-save": "Hozzáadás és mentés",
@@ -512,7 +492,6 @@
   "reading-plan-preview-reading": "Előnézet {{reading}}",
   "reading-plan-mark-reading-complete": "Olvasás megjelölése befejezettként",
   "reading-plan-link-video": "Videó",
-
   "reading-plan-mark-passage-complete": "Jelöld meg olvasottként a következőt {{passage}}",
   "reading-plan-read-nudge-title": "Jó olvasmányt!",
   "reading-plan-read-nudge-toast": "Befejezettnek jelöli {{passage}} szöveget?",
@@ -520,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Olvasd, keress és tanulmányozd a Bibliát online. Ingyenes fordítások számos nyelven, kiemelésekkel, jegyzetekkel, könyvjelzőkkel és olvasási tervekkel.",
   "all": "Minden",
-
   "today-bookmarks": "KÖNYVJELZŐK",
   "today-search-verses": "Keresés könyvek, fejezetek, versek között...",
   "anonymous-greeting": "Üdvözöljük!",
   "community": "KÖZÖSSÉG",
   "go-somewhere-new": "MENJ VALAHA ÚJ HELYRE",
-
   "open-bible": "Nyitott Biblia",
   "personal-greeting": "Üdvözlünk, {{name}} !",
   "resume-reading": "FOLYTASD ONNAN, AHOL ELHAGYTAD",
   "resume-reading-loading": "Olvasási előzmények betöltése…",
   "selected-year": "Év: {{year}}",
-
   "theme-light": "Fény",
   "theme-dark": "Sötét",
   "installed-extensions": "Telepítve",
@@ -542,7 +518,6 @@
   "extension-state-installed": "Telepítve",
   "extension-state-downloaded": "Letöltve",
   "extension-state-pending": "Telepítés…",
-
   "tutorial.stepProgress": "{{current}} {{total}} lépés",
   "tutorial.offlineDownloadTitle": "Koppintson, hogy a készülékén maradjon",
   "tutorial.offlineDownloadBody": "Az ezzel az ikonnal jelölt fordítások menthetők offline olvasáshoz.",
@@ -576,7 +551,6 @@
   "tutorial.paneLayoutBody": "Válassza ki ebből az elrendezési menüből, hogy hány szövegrészt szeretne egymás mellett olvasni.",
   "tutorial.addTabTitle": "Nyisson meg több részt",
   "tutorial.addTabBody": "Új lap hozzáadása több könyv vagy fordítás egymás melletti olvasásához.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % készültség - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % készültség",
   "playlist-history-continue": "Folytatás",
@@ -635,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} jegyzet ehhez a fejezethez",
   "create-folder": "Mappa létrehozása",
   "edit-bookmark": "Könyvjelző szerkesztése",
-
   "greeting-afternoon": "Jó napot!",
   "greeting-afternoon-named": "Jó napot kívánok, {{name}} !",
   "greeting-evening": "Jó estét!",
@@ -651,32 +624,24 @@
   "ask-ai": "Kérdezze a mesterséges intelligenciát",
   "unread-mention": "Olvasatlan említés",
   "unread-messages": "Olvasatlan üzenetek: {{count}}",
-
   "scripture-width": "Szentírás szélessége",
   "decrease-scripture-width": "Szentírás szélességének csökkentése",
   "increase-scripture-width": "Szentírás szélességének növelése",
   "annotations": "Jegyzetek",
   "discover-content-panel": "Tartalom felfedezése",
   "discover-book-title": "Fedezze fel a {{book}}",
-
   "about-title": "A Seed Bible-ről",
   "about-meta-description": "A Seed Bible egy ingyenes bibliai alkalmazás, amelyet azért hoztak létre, hogy a családoddal, barátaiddal és a közösségeddel együtt olvashasd a Szentírást – örökre ingyenes, hirdetések és fizetőfalak nélkül.",
-
   "about-action-open-passage": "Nyisson meg egy átjárót",
   "about-action-donate": "Adományoz",
   "about-action-discord": "Csatlakozz a Discordhoz",
   "recent-uploads": "Legutóbbi feltöltések",
-
   "customization-not-found": "Ez a testreszabás nem található.",
   "customization-name": "Név",
   "customization-primaryColor": "Elsődleges",
-
   "customization-secondaryColor": "Másodlagos",
-
   "customization-tertiaryColor": "Harmadlagos",
-
   "customization-fonts": "Betűtípusok",
-
   "custom-font-option": "Szokás…",
   "custom-font-name-placeholder": "Google betűtípus neve",
   "delete-customization": "Töröl",
@@ -689,10 +654,8 @@
   "extension-availability-available": "Elérhető",
   "extension-availability-auto-installed": "Automatikusan telepítve",
   "extension-availability-hidden": "Rejtett",
-
   "variants": "Témák",
   "add-variant": "Téma hozzáadása",
-
   "base-theme-description": "Az ebben a témában előre beállított változtatások minden olyan esetben érvényesek, amelyet nem szabtál testre. A saját szerkesztéseid megmaradnak.",
   "reset-to-base-theme": "Visszaállítás az alaptémára",
   "low-contrast-warning": "{{label}} : a kontraszt csak {{ratio}} :1 — törekedj legalább {{minRatio}} :1 értékre, hogy a szöveg olvasható maradjon.",
@@ -738,14 +701,12 @@
   "save-folder-empty": "Még nincsenek mentések.",
   "save-options": "Mentési beállítások",
   "saves": "Mentések",
-
   "hide-saves": "Mentések elrejtése",
   "show-saves": "Mentések megjelenítése",
   "save-verses": "Megtakarítás",
   "new-save-folder": "Új mappa",
   "edit-save": "Szerkesztés mentése",
   "remove-save-from-all-folders": "Eltávolítás az összes mappából",
-
   "color-hue": "Színárnyalat",
   "color-saturation": "Telítettség és fényerő",
   "hex-color": "Hex szín",
@@ -860,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "A formázószerkesztő nem tölthető be. Ez a jegyzet olyan formázást tartalmaz, amely elveszne, ezért csak újracsatlakozás után szerkeszthető.",
   "annotation-text": "Jegyzet szövege",
   "notes-for-verse": "Megjegyzések a {{verse}} vershez",
-
   "configure-extension-defaults": "Alapértelmezett felülbírálások konfigurálása",
-
   "extension-settings-defaults-title": "{{name}} alapértelmezett felülbírálások",
   "no-extension-settings": "Ennek a bővítménynek nincsenek konfigurálható beállításai.",
   "extension-settings-save-failed": "Nem sikerült menteni a beállításokat.",
@@ -871,7 +830,6 @@
   "setting-no-default": "Nincs alapértelmezett",
   "override-setting": "{{name}} felülírása",
   "override-setting-label": "Felülbírálás",
-
   "discover-choose-filter-hint": "Válasszon egy szűrőt a fentiekből, hogy többet láthasson ebből a fejezetből.",
   "take-a-tour": "Túra megtekintése",
   "share-reading-plan": "Megosztási terv",
@@ -1055,7 +1013,6 @@
   "my-bookmark-numbered": "Könyvjelzőm {{number}}",
   "bookmark-move-hint": "Koppintson egy könyvjelzőre, hogy áthelyezze azt erre a fejezetre.",
   "move-bookmark-here": "Helyezze át {{name}} t ide",
-
   "play": "Játék",
   "pause": "Szünet",
   "audio-playback-position": "Lejátszási pozíció",
@@ -1064,7 +1021,6 @@
   "audio-scrub-verse": "Vers {{verse}}",
   "tab-playing-audio": "Hang lejátszása",
   "collapsed-tab-playing-label": "{{label}} — hanganyag lejátszása",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} téma",
   "customization-theme-count_one": "{{count}} téma",
@@ -1103,7 +1059,6 @@
   "about-community-body": "A hitet együtt kell megélni. A Seed Bible-t azért hozták létre, hogy a családoddal, a legközelebbi barátaiddal és a házi gyülekezeteddel együtt olvashasd a Szentírást.",
   "discovered-content": "Felfedezett tartalom",
   "show-discovered-content": "Felfedezett tartalom megjelenítése",
-
   "extension-availability-default": "Alapértelmezett ( {{availability}} )",
   "customization-extensions-default": "Alapértelmezett más kiterjesztéseknél",
   "customization-extensions-default-hint": "Minden olyan bővítményre vonatkozik, amelyet alább nem állított be, beleértve a később hozzáadott újakat is.",
@@ -1136,7 +1091,6 @@
   "playlist-scripture-note-return": "Vissza a lejátszási listához",
   "playlist-scripture-note-aria": "Megjegyzés a következőhöz: {{passage}}",
   "playlist-scripture-note-progress": "{{current}} / {{total}}",
-
   "unsaved-item-edit-confirm-message": "Módosított egy elemet, de még nem mentette a módosításokat. Mit szeretne tenni?",
   "keep-changes-and-save": "Változtatások megőrzése és mentés",
   "reading-plan-edit-reading": "Olvasás szerkesztése",
@@ -1151,7 +1105,6 @@
   "branding": "Márkaépítés",
   "create-custom-branding-menu-item": "Egyedi arculattervezés",
   "your-content-empty-branding": "Az általad létrehozott egyéni arculat itt fog megjelenni.",
-
   "extension-consent-from": "{{host}} feladótól",
   "extension-consent-source-version": "{{version}} verzió · a {{host}} hosttól",
   "extension-consent-uploader-unnamed": "egy Seed Bible felhasználó",
@@ -1199,7 +1152,6 @@
   "extension-permission-reading-selection": "Nézd meg, mely verseket választottad",
   "extension-permission-reading-navigate": "Nyílt átjárók",
   "extension-permission-network": "Csatlakozás a következőhöz: {{host}}",
-
   "extension-consent-not-now": "Most nem",
   "extension-consent-nothing-yet": "Egyelőre nem fér hozzá semmilyen adatodhoz.",
   "extension-permission-reading-history": "Olvasási előzmények megtekintése",
@@ -1237,7 +1189,6 @@
   "extension-capture-cancel": "Mégsem",
   "extension-consent-high-risk": "Érzékeny",
   "extension-modal-ok": "RENDBEN",
-
   "extension-permissions-restart-note": "A változtatások azonnal érvénybe lépnek. {{name}} újraindul, hogy mentse őket.",
   "extension-permissions-saved": "Mentve. {{name}} újraindult az új engedélyekkel.",
   "extension-permissions-failed": "Nem sikerült menteni. Próbáld újra.",
@@ -1275,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Effektusok megjelenítése, amikor a házigazda kiválaszt egy verset.",
   "session-settings-verse-effects-desc-everyone": "Effektusok megjelenítése, amikor valaki kiválaszt egy versszakot.",
   "session-settings-verse-effects-desc-none": "A versszakkijelölési effektek mindenki számára ki vannak kapcsolva.",
-
   "account": "Fiók",
   "scroll-filters-start": "Görgesd a szűrőket a kezdet felé",
-  "scroll-filters-end": "Görgesd a szűrőket a vége felé"
+  "scroll-filters-end": "Görgesd a szűrőket a vége felé",
+  "download": "Letöltés",
+  "image-details-uploaded": "Feltöltve",
+  "image-details-dimensions": "Méretek",
+  "image-details-dimensions-value": "{{width}} × {{height}} képpont",
+  "image-details-type": "Típus",
+  "image-details-cover-of": "Borítója",
+  "image-details-not-a-cover": "Nem használták fedőként",
+  "delete-customization-confirm-title": "Egyéni arculat törlése?",
+  "delete-customization-confirm-message": "Törli a(z) „ {{name}} ” egyéni márkajelzést? Ez nem vonható vissza.",
+  "delete-customization-failed": "Nem sikerült törölni az egyéni arculatot.",
+  "delete-variant-confirm-title": "Téma törlése?",
+  "delete-variant-confirm-message": "Törli a(z) „ {{name}} ” témát? Ez nem vonható vissza.",
+  "delete-variant-confirm-message-unnamed": "Törli ezt a témát? Ez nem vonható vissza.",
+  "delete-variant-failed": "Nem sikerült törölni a témát.",
+  "delete-highlight-confirm-title": "Kiemelt rész törlése?",
+  "delete-highlight-confirm-message": "Törli a kiemelést a(z) {{reference}} elemről? Ez nem vonható vissza.",
+  "delete-highlight-failed": "Nem sikerült törölni a kiemelést.",
+  "delete-annotation-on-confirm-message": "Törli a {{reference}} megjegyzését? Ez nem vonható vissza.",
+  "remove-from-folder": "Eltávolítás a mappából",
+  "save-folders": "{{folders}}",
+  "delete-save-confirm-title": "Mentés törlése?",
+  "delete-save-confirm-message": "Törli {{reference}} mentését? Ez nem vonható vissza.",
+  "delete-save-confirm-message-folders": "Törli a {{reference}} mentését {{folders}} mappából? Ez nem vonható vissza.",
+  "delete-save-failed": "Nem sikerült törölni a mentést.",
+  "delete-save-folder-confirm-title": "Mappa törlése?",
+  "delete-save-folder-confirm-message": "Törli a(z) „ {{name}} ” mappát?",
+  "delete-save-folder-confirm-deletes": "A csak ebben a mappában található {{count}} mentés is törlődik.",
+  "delete-save-folder-confirm-deletes_one": "A csak ebben a mappában található mentés is törlődik.",
+  "delete-save-folder-confirm-deletes_other": "A csak ebben a mappában található {{count}} mentés is törlődik.",
+  "delete-save-folder-confirm-keeps": "A más mappákban is található {{count}} mentés ott is marad.",
+  "delete-save-folder-confirm-keeps_one": "A másik mappában lévő mentés ott is marad.",
+  "delete-save-folder-confirm-keeps_other": "A más mappákban is található {{count}} mentés ott is marad.",
+  "cant-be-undone": "Ez nem vonható vissza.",
+  "delete-save-folder-failed": "Nem sikerült törölni a mappát.",
+  "download-image-failed": "Nem sikerült letölteni a képet.",
+  "session-settings-verse-effects-hosts-only": "Csak házigazdák",
+  "session-settings-verse-effects-everyone": "Mindenki",
+  "session-settings-verse-effects-none": "Egyik sem",
+  "loading-books": "Könyvek betöltése…",
+  "books-load-failed": "A könyvek betöltése sikertelen. Ellenőrizd a kapcsolatot, és próbáld újra.",
+  "loading-translation": "{{name}} betöltése …",
+  "translation-load-failed": "{{name}} fájl betöltése sikertelen.",
+  "loading-translations": "Fordítások betöltése…",
+  "translations-load-failed": "Nem sikerült betölteni a fordítások teljes listáját, ezért előfordulhat, hogy néhány hiányzik.",
+  "verse-of-the-day": "A NAP VERSE",
+  "verse-of-the-day-loading": "A nap versének betöltése…"
 }

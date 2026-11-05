@@ -28,22 +28,18 @@
   "searching": "ກຳລັງຊອກຫາ...",
   "no-search-results": "ບໍ່ມີຂໍ້ພຣະຄຳພີທີ່ກົງກັນ.",
   "open-chapter": "ເປີດບົດ",
-
   "uploading": "ກຳລັງອັບໂຫລດ...",
   "profile-name": "ຊື່ໂປຣໄຟລ໌",
   "profile-name-placeholder": "ຕົວຢ່າງ ຄອບຄົວ Craig",
-
   "description": "ລາຍລະອຽດ",
   "optional": "(ບໍ່ຈຳເປັນ)",
   "description-placeholder": "ໃສ່ຄຳອະທິບາຍໂປຣໄຟລ໌ຂອງທ່ານ...",
   "location": "ສະຖານທີ່",
   "location-placeholder": "ຕົວຢ່າງ: ອອສຕິນ, ເທັກຊັສ",
-
   "copied": "ສຳເນົາແລ້ວ",
   "copy": "ສຳເນົາ",
   "save-changes": "ບັນທຶກການປ່ຽນແປງ",
   "sign-out": "ອອກຈາກລະບົບ",
-
   "log-in": "ເຂົ້າສູ່ລະບົບ",
   "tanakh": "ຕານາກ",
   "traditional": "ແບບດັ້ງເດີມ",
@@ -57,7 +53,6 @@
   "scripture-settings": "ການຕັ້ງຄ່າພຣະຄຳພີ",
   "scripture-elements": "ອົງປະກອບຂອງພຣະຄຳພີ",
   "scripture-settings-font-size-example": "ກ",
-
   "show-headings": "ສະແດງຫົວຂໍ້",
   "show-verse-numbers": "ສະແດງໝາຍເລກຂໍ້ພຣະຄຳພີ",
   "show-footnotes": "ສະແດງໝາຍເຫດທາງລຸ່ມ",
@@ -71,7 +66,6 @@
   "no-extensions-available": "ບໍ່ມີສ່ວນຂະຫຍາຍທີ່ສາມາດໃຊ້ໄດ້.",
   "install": "ຕິດຕັ້ງ",
   "uninstall": "ຖອນການຕິດຕັ້ງ",
-
   "custom": "ກຳນົດເອງ",
   "text-section-bookTitle": "ຂໍ້ຄວາມຫົວຂໍ້ປຶ້ມ",
   "text-section-heading": "ຂໍ້ຄວາມຫົວຂໍ້",
@@ -92,7 +86,6 @@
   "show-selected-items": "ສະແດງລາຍການທີ່ເລືອກ",
   "show-highlight-colors": "ສະແດງສີໄຮໄລ້",
   "show-icon-text": "ສະແດງຂໍ້ຄວາມໄອຄອນ",
-
   "extensions": "ສ່ວນຂະຫຍາຍ",
   "display": "ການສະແດງຜົນ",
   "theme-and-text": "ຮູບແບບ ແລະ ຂໍ້ຄວາມ",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "ເພີ່ມຂະໜາດຕົວອັກສອນຂອງພຣະຄຳພີ",
   "change-line-spacing": "ປ່ຽນໄລຍະຫ່າງລະຫວ່າງແຖວ",
   "line-spacing_lineHeight": "ໄລຍະຫ່າງລະຫວ່າງແຖວ: {{lineHeight}}",
-
   "italic": "ຕົວອຽງ",
   "underline": "ຂີດເສັ້ນໃຕ້",
   "alignment_x": "ການຈັດລຽງ: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "ສີຂໍ້ຄວາມ",
   "follow_theme": "ຕິດຕາມຫົວຂໍ້",
   "reset-to-default": "ຣີເຊັດເປັນຄ່າເລີ່ມຕົ້ນ",
-
   "id_highlight-text-color": "ສີຂໍ້ຄວາມໄຮໄລ້ {{id}}",
   "id_highlight-background-color": "ສີພື້ນຫຼັງໄຮໄລ້ {{id}}",
   "all-settings-description": "ປັບແຕ່ງແຕ່ລະພາກສ່ວນຂໍ້ຄວາມ ແລະ ປັບແຕ່ງສີຂອງຮູບແບບແຕ່ລະອັນ.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "ອະໂພຄຣີຟາ",
-
   "custom-translations": "ການແປພາສາແບບກຳນົດເອງ",
   "no-translation-results-found": "ບໍ່ພົບຜົນໄດ້ຮັບ. ທ່ານຕ້ອງການຂະຫຍາຍການຄົ້ນຫາຂອງທ່ານໃຫ້ລວມເອົາການແປພາສາທີ່ສົມບູນບາງສ່ວນນຳບໍ?",
   "show-all-translations": "ສະແດງການແປທັງໝົດ",
@@ -159,7 +149,6 @@
   "4-psalms": "4 ຄຳເພງ",
   "5-psalms": "5 ຄຳເພງ",
   "remove-bookmark": "ລຶບບຸກມາກອອກ",
-
   "chat": "ສົນທະນາ",
   "today": "ມື້ນີ້",
   "you": "ເຈົ້າ",
@@ -169,7 +158,6 @@
   "category-options": "ຕົວເລືອກໂຟນເດີ",
   "rename": "ປ່ຽນຊື່",
   "delete": "ລຶບ",
-
   "bookmark-options": "ຕົວເລືອກບຸກມາກ",
   "new-folder-placeholder": "ຊື່ໂຟນເດີ",
   "tasks": "ໜ້າວຽກ",
@@ -180,12 +168,10 @@
   "folder-name-taken": "ມີໂຟນເດີທີ່ມີຊື່ນັ້ນຢູ່ແລ້ວ.",
   "add-to-new": "ເພີ່ມໃສ່ອັນໃໝ່",
   "save": "ບັນທຶກ",
-
   "apocrypha-info-text": "ບໍ່ມີບົດຂຽນໃດໆໃນພາກນີ້ທີ່ເຄີຍຖືກຖືວ່າເປັນພຣະຄຳພີໂດຍຊຸມຊົນຊາວຢິວ ຫຼື ຄຣິສຕຽນໃນຍຸກຕົ້ນໆ. ຄຳພີໄບເບິນແມ່ນການລວບລວມປຶ້ມສະເພາະ. ຊາວຢິວ ແລະ ຄຣິສຕຽນມີຄວາມເຫັນດີເປັນເອກະພາບກັນກ່ຽວກັບພຣະສັນຍາເດີມ, ເຊິ່ງມາຈາກຊຸດບົດຂຽນສັກສິດທີ່ກຳນົດໄວ້ທີ່ຊາວຢິວເອີ້ນວ່າ Tanakh ແລະ ຄຣິສຕຽນເອີ້ນວ່າພຣະສັນຍາເດີມ. ເນື້ອໃນຂອງ Tanakh ແລະ ພຣະສັນຍາເດີມແມ່ນຄືກັນ, ແຕ່ມັກຈະຖືກຈັດລຽງແຕກຕ່າງກັນ. ຄຣິສຕຽນຍັງຮັບຮູ້ພຣະສັນຍາໃໝ່, ເຊິ່ງບອກເລື່ອງລາວຂອງພຣະເຢຊູ, ຄຳສອນຂອງພຣະອົງ, ແລະ ບົດຂຽນຂອງຜູ້ຕິດຕາມຂອງພຣະອົງ. ບົດຂຽນຂ້າງລຸ່ມນີ້ເປັນທີ່ຮູ້ຈັກ ແລະ ອ່ານຢ່າງກວ້າງຂວາງໃນເວລາທີ່ຄຳພີໄບເບິນຖືກຂຽນ, ແຕ່ພວກມັນບໍ່ເຄີຍຖືກຖືວ່າເປັນພຣະຄຳພີ. ໃນຂະນະທີ່ນັກຂຽນໃນສະໄໝບູຮານບາງຄັ້ງໄດ້ອ້າງເຖິງບົດເລື່ອງຕ່າງໆລວມທັງນັກກະວີ, ນັກປັດຊະຍາ, ແລະ ບົດຂຽນອື່ນໆ, ການອ້າງເຖິງບາງສິ່ງບາງຢ່າງບໍ່ຄືກັນກັບການຖືວ່າມັນເປັນພຣະຄຳພີ. ບົດຂຽນເຫຼົ່ານີ້ຖືກລວມຢູ່ທີ່ນີ້ເພື່ອອ້າງອີງທາງປະຫວັດສາດ ແລະ ວັນນະຄະດີເທົ່ານັ້ນ.",
   "seed-bible": "ຄຳພີໄບເບິນກ່ຽວກັບແກ່ນພັນ",
   "take-photo": "ຖ່າຍຮູບ",
   "choose-from-gallery": "ເລືອກຈາກຄັງຮູບພາບ",
-
   "crop-your-photo": "ຕັດຮູບພາບຂອງທ່ານ",
   "zoom": "ຊູມ",
   "set-picture": "ຕັ້ງຮູບພາບ",
@@ -211,10 +197,8 @@
   "read-the-bible": "ອ່ານຄຳພີໄບເບິນ",
   "seed-bible-description": "ອ່ານ {{bookName}} {{chapterNumber}} ໃນ Seed Bible",
   "social-title": "ອ່ານ {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "ການນຳທາງບົດ",
   "tutorial.skip": "ຂ້າມ",
-
   "tutorial.back": "ກັບຄືນ",
   "tutorial.done": "ສຳເລັດແລ້ວ",
   "tutorial.next": "ຕໍ່ໄປ",
@@ -326,11 +310,9 @@
   "study-notes": "ບັນທຶກການສຶກສາ",
   "content": "ເນື້ອຫາ",
   "untitled-playlist": "ລາຍການເພງທີ່ບໍ່ມີຊື່",
-
   "discover-annotations-empty": "ທ່ານບໍ່ມີຄຳອະທິບາຍປະກອບ",
   "discover-cross-references-empty": "ບໍ່ມີເອກະສານອ້າງອີງສຳລັບບົດນີ້.",
   "discover-study-notes-empty": "ບໍ່ມີບັນທຶກການສຶກສາສຳລັບບົດນີ້.",
-
   "discover-select-tab": "ເລືອກແຖບເພື່ອຄົ້ນພົບເອກະສານທີ່ກ່ຽວຂ້ອງ.",
   "create-playlist": "ສ້າງ",
   "playlist-title_placeholder": "ຊື່ລາຍການເພງ",
@@ -379,12 +361,10 @@
   "delete-playlist-failed": "ບໍ່ສາມາດລຶບລາຍການຫຼິ້ນໄດ້.",
   "collapsed-tab-shared-label": "{{title}} — ເຊດຊັນທີ່ແບ່ງປັນ, ມີຢູ່ {{count}}",
   "playlist-add-mode-label": "ປະເພດລາຍການ",
-
   "session-host-reconnected": "ເຊື່ອມຕໍ່ກັບເຊດຊັນຄືນໃໝ່ແລ້ວ",
   "session-host-left": "ຜູ້ຈັດງານໄດ້ອອກໄປແລ້ວ — ທ່ານຖືກລຶບອອກຈາກກອງປະຊຸມແລ້ວ",
   "drag-to-reorder-playlist-item": "ລາກເພື່ອຈັດລຽງໃໝ່",
   "saving": "ກຳລັງບັນທຶກ…",
-
   "unsaved-item-confirm-message": "ທ່ານໄດ້ເລີ່ມເພີ່ມລາຍການທີ່ຍັງບໍ່ໄດ້ຖືກເພີ່ມໃສ່ລາຍການຫຼິ້ນ. ທ່ານຕ້ອງການເຮັດຫຍັງ?",
   "discard-and-save": "ຍົກເລີກ ແລະ ບັນທຶກ",
   "add-and-save": "ເພີ່ມ ແລະ ບັນທຶກ",
@@ -512,7 +492,6 @@
   "reading-plan-preview-reading": "ຕົວຢ່າງ {{reading}}",
   "reading-plan-mark-reading-complete": "ໝາຍການອ່ານວ່າສຳເລັດແລ້ວ",
   "reading-plan-link-video": "ວິດີໂອ",
-
   "reading-plan-mark-passage-complete": "ໝາຍ {{passage}} ວ່າອ່ານແລ້ວ",
   "reading-plan-read-nudge-title": "ອ່ານແລ້ວດີຫຼາຍ!",
   "reading-plan-read-nudge-toast": "ໝາຍ {{passage}} ວ່າສຳເລັດແລ້ວບໍ?",
@@ -520,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "ອ່ານ, ຄົ້ນຫາ ແລະ ສຶກສາຄຳພີໄບເບິນທາງອອນລາຍ. ການແປພາສາຟຣີໃນຫຼາຍພາສາ, ພ້ອມດ້ວຍຈຸດເດັ່ນ, ບັນທຶກ, ບຸກມາກ ແລະ ແຜນການອ່ານ.",
   "all": "ທັງໝົດ",
-
   "today-bookmarks": "ບຸກມາກ",
   "today-search-verses": "ຄົ້ນຫາປຶ້ມ, ບົດ, ຂໍ້ພຣະຄຳພີ....",
   "anonymous-greeting": "ຍິນດີຕ້ອນຮັບ!",
   "community": "ຊຸມຊົນ",
   "go-somewhere-new": "ໄປບ່ອນໃໝ່",
-
   "open-bible": "ເປີດຄຳພີໄບເບິນ",
   "personal-greeting": "ຍິນດີຕ້ອນຮັບ, {{name}} !",
   "resume-reading": "ສືບຕໍ່ບ່ອນທີ່ທ່ານອອກໄປ",
   "resume-reading-loading": "ກຳລັງໂຫຼດປະຫວັດການອ່ານຂອງທ່ານ…",
   "selected-year": "ປີ: {{year}}",
-
   "theme-light": "ແສງສະຫວ່າງ",
   "theme-dark": "ມືດ",
   "installed-extensions": "ຕິດຕັ້ງແລ້ວ",
@@ -542,7 +518,6 @@
   "extension-state-installed": "ຕິດຕັ້ງແລ້ວ",
   "extension-state-downloaded": "ດາວໂຫຼດແລ້ວ",
   "extension-state-pending": "ກຳລັງຕິດຕັ້ງ…",
-
   "tutorial.stepProgress": "ຂັ້ນຕອນ {{current}} ຂອງ {{total}}",
   "tutorial.offlineDownloadTitle": "ແຕະເພື່ອຮັກສາມັນໄວ້ໃນອຸປະກອນຂອງທ່ານ",
   "tutorial.offlineDownloadBody": "ການແປພາສາໃດໆທີ່ມີໄອຄອນນີ້ສາມາດບັນທຶກໄວ້ອ່ານແບບອອບລາຍໄດ້.",
@@ -576,7 +551,6 @@
   "tutorial.paneLayoutBody": "ເລືອກຈຳນວນຂໍ້ຄວາມທີ່ຈະອ່ານຄຽງຄູ່ກັນຈາກເມນູຮູບແບບນີ້.",
   "tutorial.addTabTitle": "ເປີດບົດຄວາມເພີ່ມເຕີມ",
   "tutorial.addTabBody": "ເພີ່ມແຖບໃໝ່ເພື່ອອ່ານປຶ້ມຫຼາຍຫົວ ຫຼື ການແປພາສາຫຼາຍຫົວຄຽງຄູ່ກັນ.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % ສຳເລັດແລ້ວ - {{item}}",
   "playlist-history-session-summary-no-item": "ສຳເລັດແລ້ວ {{time}} - {{percent}} %",
   "playlist-history-continue": "ສືບຕໍ່",
@@ -635,7 +609,6 @@
   "chapter-notes-count_other": "ບັນທຶກ {{count}} ສຳລັບບົດນີ້",
   "create-folder": "ສ້າງໂຟນເດີ",
   "edit-bookmark": "ແກ້ໄຂບຸກມາກ",
-
   "greeting-afternoon": "ສະບາຍດີຕອນບ່າຍ!",
   "greeting-afternoon-named": "ສະບາຍດີຕອນບ່າຍ, {{name}} !",
   "greeting-evening": "ສະບາຍດີຕອນແລງ!",
@@ -651,32 +624,24 @@
   "ask-ai": "ຖາມ AI",
   "unread-mention": "ການກ່າວເຖິງທີ່ຍັງບໍ່ໄດ້ອ່ານ",
   "unread-messages": "ຂໍ້ຄວາມທີ່ຍັງບໍ່ໄດ້ອ່ານ: {{count}}",
-
   "scripture-width": "ຄວາມກວ້າງຂອງພຣະຄຳພີ",
   "decrease-scripture-width": "ຫຼຸດຄວາມກວ້າງຂອງພຣະຄຳພີ",
   "increase-scripture-width": "ເພີ່ມຄວາມກວ້າງຂອງພຣະຄຳພີ",
   "annotations": "ຄຳອະທິບາຍປະກອບ",
   "discover-content-panel": "ຄົ້ນພົບເນື້ອຫາ",
   "discover-book-title": "ຄົ້ນພົບ {{book}}",
-
   "about-title": "ກ່ຽວກັບ Seed Bible",
   "about-meta-description": "Seed Bible ເປັນແອັບຄຳພີໄບເບິນຟຣີທີ່ສ້າງຂຶ້ນສຳລັບການອ່ານພຣະຄຳພີຮ່ວມກັນກັບຄອບຄົວ, ໝູ່ເພື່ອນ ແລະ ຊຸມຊົນຂອງທ່ານ — ຟຣີຕະຫຼອດໄປ, ບໍ່ມີໂຄສະນາ ຫຼື paywalls.",
-
   "about-action-open-passage": "ເປີດ passage",
   "about-action-donate": "ບໍລິຈາກ",
   "about-action-discord": "ເຂົ້າຮ່ວມ Discord",
   "recent-uploads": "ອັບໂຫຼດຫຼ້າສຸດ",
-
   "customization-not-found": "ບໍ່ພົບການປັບແຕ່ງນີ້.",
   "customization-name": "ຊື່",
   "customization-primaryColor": "ຫຼັກ",
-
   "customization-secondaryColor": "ມັດທະຍົມ",
-
   "customization-tertiaryColor": "ຊັ້ນສາມ",
-
   "customization-fonts": "ຟອນຕ໌",
-
   "custom-font-option": "ກຳນົດເອງ...",
   "custom-font-name-placeholder": "ຊື່ຟອນຕ໌ Google",
   "delete-customization": "ລຶບ",
@@ -689,10 +654,8 @@
   "extension-availability-available": "ມີ",
   "extension-availability-auto-installed": "ຕິດຕັ້ງໂດຍອັດຕະໂນມັດ",
   "extension-availability-hidden": "ເຊື່ອງໄວ້",
-
   "variants": "ຫົວຂໍ້",
   "add-variant": "ເພີ່ມຮູບແບບ",
-
   "base-theme-description": "ການປ່ຽນແປງທີ່ຕັ້ງຄ່າຮູບແບບນີ້ໄວ້ລ່ວງໜ້າຈະຂຶ້ນກັບສິ່ງທີ່ທ່ານຍັງບໍ່ໄດ້ປັບແຕ່ງ. ການແກ້ໄຂຂອງທ່ານເອງຈະຖືກເກັບໄວ້.",
   "reset-to-base-theme": "ຣີເຊັດເປັນຮູບແບບຫຼັກ",
   "low-contrast-warning": "{{label}} : ຄວາມຄົມຊັດແມ່ນພຽງແຕ່ {{ratio}} :1 — ຕັ້ງເປົ້າໝາຍຢ່າງໜ້ອຍ {{minRatio}} :1 ເພື່ອໃຫ້ຂໍ້ຄວາມສາມາດອ່ານໄດ້.",
@@ -738,14 +701,12 @@
   "save-folder-empty": "ຍັງບໍ່ມີການບັນທຶກຢູ່ບ່ອນນີ້ເທື່ອ.",
   "save-options": "ບັນທຶກຕົວເລືອກ",
   "saves": "ບັນທຶກ",
-
   "hide-saves": "ເຊື່ອງບັນທຶກ",
   "show-saves": "ສະແດງການບັນທຶກ",
   "save-verses": "ບັນທຶກ",
   "new-save-folder": "ໂຟນເດີໃໝ່",
   "edit-save": "ແກ້ໄຂບັນທຶກ",
   "remove-save-from-all-folders": "ລຶບອອກຈາກໂຟນເດີທັງໝົດ",
-
   "color-hue": "ສີ",
   "color-saturation": "ຄວາມອີ່ມຕົວ ແລະ ຄວາມສະຫວ່າງ",
   "hex-color": "ສີຫົກຫຼ່ຽມ",
@@ -860,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "ບໍ່ສາມາດໂຫຼດຕົວແກ້ໄຂການຈັດຮູບແບບໄດ້. ບັນທຶກນີ້ມີການຈັດຮູບແບບທີ່ຈະສູນເສຍໄປ, ສະນັ້ນມັນບໍ່ສາມາດແກ້ໄຂໄດ້ຈົນກວ່າທ່ານຈະເຊື່ອມຕໍ່ຄືນໃໝ່.",
   "annotation-text": "ຂໍ້ຄວາມຄຳອະທິບາຍ",
   "notes-for-verse": "ໝາຍເຫດສຳລັບຂໍ້ {{verse}}",
-
   "configure-extension-defaults": "ຕັ້ງຄ່າການຍົກເລີກເລີ່ມຕົ້ນ",
-
   "extension-settings-defaults-title": "ການຍົກເລີກຄ່າເລີ່ມຕົ້ນຂອງ {{name}}",
   "no-extension-settings": "ສ່ວນຂະຫຍາຍນີ້ບໍ່ມີການຕັ້ງຄ່າທີ່ສາມາດຕັ້ງຄ່າໄດ້.",
   "extension-settings-save-failed": "ບໍ່ສາມາດບັນທຶກການຕັ້ງຄ່າຂອງທ່ານໄດ້.",
@@ -871,7 +830,6 @@
   "setting-no-default": "ບໍ່ມີຄ່າເລີ່ມຕົ້ນ",
   "override-setting": "ແທນທີ່ {{name}}",
   "override-setting-label": "ລົບລື່ນ",
-
   "discover-choose-filter-hint": "ເລືອກຕົວກອງຂ້າງເທິງເພື່ອເບິ່ງເພີ່ມເຕີມຈາກບົດນີ້.",
   "take-a-tour": "ໄປທ່ຽວຊົມ",
   "share-reading-plan": "ແບ່ງປັນແຜນການ",
@@ -1055,7 +1013,6 @@
   "my-bookmark-numbered": "ບຸກມາກຂອງຂ້ອຍ {{number}}",
   "bookmark-move-hint": "ແຕະບຸກມາກເພື່ອຍ້າຍມັນໄປຫາບົດນີ້.",
   "move-bookmark-here": "ຍ້າຍ {{name}} ມາບ່ອນນີ້",
-
   "play": "ຫຼິ້ນ",
   "pause": "ຢຸດຊົ່ວຄາວ",
   "audio-playback-position": "ຕຳແໜ່ງການຫຼິ້ນ",
@@ -1064,7 +1021,6 @@
   "audio-scrub-verse": "ບົດກະວີ {{verse}}",
   "tab-playing-audio": "ກຳລັງຫຼິ້ນສຽງ",
   "collapsed-tab-playing-label": "{{label}} — ກຳລັງຫຼິ້ນສຽງ",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "ຮູບແບບ {{count}}",
   "customization-theme-count_one": "ຫົວຂໍ້ {{count}}",
@@ -1103,7 +1059,6 @@
   "about-community-body": "ສັດທາແມ່ນມີຈຸດປະສົງເພື່ອຢູ່ຮ່ວມກັນ. ຄຳພີໄບເບິນ Seed ຖືກສ້າງຂຶ້ນເພື່ອອ່ານພຣະຄຳພີກັບຄອບຄົວ, ໝູ່ເພື່ອນທີ່ໃກ້ຊິດທີ່ສຸດຂອງທ່ານ, ແລະໂບດບ້ານຂອງທ່ານ.",
   "discovered-content": "ເນື້ອຫາທີ່ຄົ້ນພົບ",
   "show-discovered-content": "ສະແດງເນື້ອຫາທີ່ຄົ້ນພົບ",
-
   "extension-availability-default": "ຄ່າເລີ່ມຕົ້ນ ( {{availability}} )",
   "customization-extensions-default": "ຄ່າເລີ່ມຕົ້ນສຳລັບສ່ວນຂະຫຍາຍອື່ນໆ",
   "customization-extensions-default-hint": "ນຳໃຊ້ກັບທຸກໆສ່ວນຂະຫຍາຍທີ່ທ່ານຍັງບໍ່ໄດ້ຕັ້ງໄວ້ຂ້າງລຸ່ມນີ້, ລວມທັງສ່ວນຂະຫຍາຍໃໝ່ທີ່ເພີ່ມເຂົ້າໃນພາຍຫຼັງ",
@@ -1136,7 +1091,6 @@
   "playlist-scripture-note-return": "ກັບໄປທີ່ລາຍການຫຼິ້ນ",
   "playlist-scripture-note-aria": "ໝາຍເຫດກ່ຽວກັບ {{passage}}",
   "playlist-scripture-note-progress": "{{current}} ຈາກທັງໝົດ {{total}}",
-
   "unsaved-item-edit-confirm-message": "ທ່ານໄດ້ປ່ຽນແປງລາຍການໜຶ່ງແລ້ວ ແຕ່ຍັງບໍ່ທັນໄດ້ບັນທຶກການປ່ຽນແປງເຫຼົ່ານັ້ນເທື່ອ. ທ່ານຕ້ອງການເຮັດຫຍັງ?",
   "keep-changes-and-save": "ເກັບຮັກສາການປ່ຽນແປງ ແລະ ບັນທຶກໄວ້",
   "reading-plan-edit-reading": "ແກ້ໄຂການອ່ານ",
@@ -1151,7 +1105,6 @@
   "branding": "ການສ້າງຍີ່ຫໍ້",
   "create-custom-branding-menu-item": "ການສ້າງແບຣນຕາມໃຈລູກຄ້າ",
   "your-content-empty-branding": "ການສ້າງແບຣນແບບກຳນົດເອງທີ່ທ່ານສ້າງຂຶ້ນຈະປາກົດຢູ່ບ່ອນນີ້.",
-
   "extension-consent-from": "ຈາກ {{host}}",
   "extension-consent-source-version": "ເວີຊັນ {{version}} · ຈາກ {{host}}",
   "extension-consent-uploader-unnamed": "ຜູ້ໃຊ້ Seed Bible",
@@ -1199,7 +1152,6 @@
   "extension-permission-reading-selection": "ເບິ່ງວ່າເຈົ້າເລືອກຂໍ້ໃດ",
   "extension-permission-reading-navigate": "ຂໍ້ຄວາມເປີດ",
   "extension-permission-network": "ເຊື່ອມຕໍ່ກັບ {{host}}",
-
   "extension-consent-not-now": "ບໍ່ແມ່ນຕອນນີ້",
   "extension-consent-nothing-yet": "ສຳລັບດຽວນີ້, ມັນຈະບໍ່ສາມາດເຂົ້າເຖິງຂໍ້ມູນຂອງທ່ານໄດ້.",
   "extension-permission-reading-history": "ເບິ່ງປະຫວັດການອ່ານຂອງທ່ານ",
@@ -1237,7 +1189,6 @@
   "extension-capture-cancel": "ຍົກເລີກ",
   "extension-consent-high-risk": "ລະອຽດອ່ອນ",
   "extension-modal-ok": "ໂອເຄ",
-
   "extension-permissions-restart-note": "ການປ່ຽນແປງຈະມີຜົນທັນທີ. {{name}} ຈະເລີ່ມຕົ້ນໃໝ່ເພື່ອຮັບເອົາພວກມັນ.",
   "extension-permissions-saved": "ບັນທຶກແລ້ວ. {{name}} ເລີ່ມຕົ້ນໃໝ່ດ້ວຍສິດອະນຸຍາດໃໝ່.",
   "extension-permissions-failed": "ແຕ່ມັນບໍ່ໄດ້ບັນທຶກໄວ້. ລອງໃໝ່ອີກຄັ້ງ.",
@@ -1275,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "ສະແດງຜົນກະທົບເມື່ອຜູ້ດຳເນີນລາຍການເລືອກຂໍ້ພຣະຄຳພີ.",
   "session-settings-verse-effects-desc-everyone": "ສະແດງຜົນກະທົບເມື່ອຜູ້ໃດຜູ້ໜຶ່ງເລືອກຂໍ້ພຣະຄຳພີ.",
   "session-settings-verse-effects-desc-none": "ເອັບເຟັກການເລືອກບົດກະວີຖືກປິດໄວ້ສຳລັບທຸກຄົນ.",
-
   "account": "ບັນຊີ",
   "scroll-filters-start": "ເລື່ອນຕົວກອງໄປທາງເລີ່ມຕົ້ນ",
-  "scroll-filters-end": "ເລື່ອນຕົວກອງໄປທາງສຸດທ້າຍ"
+  "scroll-filters-end": "ເລື່ອນຕົວກອງໄປທາງສຸດທ້າຍ",
+  "download": "ດາວໂຫຼດ",
+  "image-details-uploaded": "ອັບໂຫຼດແລ້ວ",
+  "image-details-dimensions": "ຂະໜາດ",
+  "image-details-dimensions-value": "{{width}} × {{height}} ພິກເຊວ",
+  "image-details-type": "ປະເພດ",
+  "image-details-cover-of": "ການປົກຫຸ້ມຂອງ",
+  "image-details-not-a-cover": "ບໍ່ໄດ້ໃຊ້ເປັນໜ້າປົກ",
+  "delete-customization-confirm-title": "ລຶບການສ້າງຍີ່ຫໍ້ແບບກຳນົດເອງບໍ?",
+  "delete-customization-confirm-message": "ລຶບການສ້າງຍີ່ຫໍ້ແບບກຳນົດເອງ \" {{name}} \" ບໍ? ຂັ້ນຕອນນີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
+  "delete-customization-failed": "ບໍ່ສາມາດລຶບການສ້າງແບຣນແບບກຳນົດເອງໄດ້.",
+  "delete-variant-confirm-title": "ລຶບຮູບແບບບໍ?",
+  "delete-variant-confirm-message": "ລຶບຮູບແບບ \" {{name}} \" ບໍ? ຂັ້ນຕອນນີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
+  "delete-variant-confirm-message-unnamed": "ລຶບຮູບແບບສີສັນນີ້ບໍ? ສິ່ງນີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
+  "delete-variant-failed": "ບໍ່ສາມາດລຶບຮູບແບບສີສັນໄດ້.",
+  "delete-highlight-confirm-title": "ລຶບໄຮໄລ້ບໍ?",
+  "delete-highlight-confirm-message": "ລຶບໄຮໄລ້ໃນ {{reference}} ບໍ? ຂັ້ນຕອນນີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
+  "delete-highlight-failed": "ບໍ່ສາມາດລຶບໄຮໄລ້ໄດ້.",
+  "delete-annotation-on-confirm-message": "ລຶບຄຳອະທິບາຍປະກອບໃນ {{reference}} ບໍ? ຂັ້ນຕອນນີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
+  "remove-from-folder": "ລຶບອອກຈາກໂຟນເດີ",
+  "save-folders": "ໃນ {{folders}}",
+  "delete-save-confirm-title": "ລຶບບັນທຶກບໍ?",
+  "delete-save-confirm-message": "ລຶບບັນທຶກສຳລັບ {{reference}} ບໍ? ຂັ້ນຕອນນີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
+  "delete-save-confirm-message-folders": "ລຶບບັນທຶກສຳລັບ {{reference}} ຈາກ {{folders}} ບໍ? ຂັ້ນຕອນນີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
+  "delete-save-failed": "ບໍ່ສາມາດລຶບໄຟລ໌ທີ່ບັນທຶກໄວ້ໄດ້.",
+  "delete-save-folder-confirm-title": "ລຶບໂຟນເດີບໍ?",
+  "delete-save-folder-confirm-message": "ລຶບໂຟນເດີ \" {{name}} \" ບໍ?",
+  "delete-save-folder-confirm-deletes": "ບັນທຶກ {{count}} ທີ່ຢູ່ໃນໂຟນເດີນີ້ເທົ່ານັ້ນຈະຖືກລຶບເຊັ່ນກັນ.",
+  "delete-save-folder-confirm-deletes_one": "ບັນທຶກທີ່ຢູ່ໃນໂຟນເດີນີ້ເທົ່ານັ້ນຈະຖືກລຶບເຊັ່ນກັນ.",
+  "delete-save-folder-confirm-deletes_other": "ບັນທຶກ {{count}} ທີ່ຢູ່ໃນໂຟນເດີນີ້ເທົ່ານັ້ນຈະຖືກລຶບເຊັ່ນກັນ.",
+  "delete-save-folder-confirm-keeps": "ບັນທຶກ {{count}} ທີ່ຢູ່ໃນໂຟນເດີອື່ນໆຈະຢູ່ທີ່ນັ້ນ.",
+  "delete-save-folder-confirm-keeps_one": "ບັນທຶກທີ່ຢູ່ໃນໂຟນເດີອື່ນຈະຢູ່ທີ່ນັ້ນ.",
+  "delete-save-folder-confirm-keeps_other": "ບັນທຶກ {{count}} ທີ່ຢູ່ໃນໂຟນເດີອື່ນໆຈະຢູ່ທີ່ນັ້ນ.",
+  "cant-be-undone": "ສິ່ງນີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
+  "delete-save-folder-failed": "ບໍ່ສາມາດລຶບໂຟນເດີໄດ້.",
+  "download-image-failed": "ບໍ່ສາມາດດາວໂຫລດຮູບພາບໄດ້.",
+  "session-settings-verse-effects-hosts-only": "ສະເພາະໂຮສຕ໌ເທົ່ານັ້ນ",
+  "session-settings-verse-effects-everyone": "ທຸກໆຄົນ",
+  "session-settings-verse-effects-none": "ບໍ່ມີ",
+  "loading-books": "ກຳລັງໂຫຼດປຶ້ມ…",
+  "books-load-failed": "ບໍ່ສາມາດໂຫຼດປຶ້ມໄດ້. ກະລຸນາກວດສອບການເຊື່ອມຕໍ່ຂອງທ່ານ ແລະ ລອງໃໝ່ອີກຄັ້ງ.",
+  "loading-translation": "ກຳລັງໂຫຼດ {{name}} …",
+  "translation-load-failed": "ບໍ່ສາມາດໂຫຼດ {{name}} ໄດ້.",
+  "loading-translations": "ກຳລັງໂຫຼດການແປພາສາ…",
+  "translations-load-failed": "ບໍ່ສາມາດໂຫຼດລາຍຊື່ການແປພາສາທັງໝົດໄດ້, ດັ່ງນັ້ນບາງຄຳອາດຈະຫາຍໄປ.",
+  "verse-of-the-day": "ຂໍ້ພຣະຄຳພີປະຈຳວັນ",
+  "verse-of-the-day-loading": "ກຳລັງໂຫຼດຂໍ້ພຣະຄຳພີປະຈຳວັນ..."
 }

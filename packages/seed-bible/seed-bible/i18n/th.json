@@ -28,22 +28,18 @@
   "searching": "กำลังค้นหา...",
   "no-search-results": "ไม่มีข้อความที่ตรงกัน",
   "open-chapter": "บทเปิด",
-
   "uploading": "กำลังอัปโหลด...",
   "profile-name": "ชื่อโปรไฟล์",
   "profile-name-placeholder": "เช่น ครอบครัวเครก",
-
   "description": "คำอธิบาย",
   "optional": "(ไม่จำเป็น)",
   "description-placeholder": "กรอกคำอธิบายโปรไฟล์ของคุณ...",
   "location": "ที่ตั้ง",
   "location-placeholder": "เช่น ออสติน รัฐเท็กซัส",
-
   "copied": "คัดลอกแล้ว",
   "copy": "สำเนา",
   "save-changes": "บันทึกการเปลี่ยนแปลง",
   "sign-out": "ออกจากระบบ",
-
   "log-in": "เข้าสู่ระบบ",
   "tanakh": "ทานาค",
   "traditional": "แบบดั้งเดิม",
@@ -57,7 +53,6 @@
   "scripture-settings": "การตั้งค่าพระคัมภีร์",
   "scripture-elements": "องค์ประกอบของพระคัมภีร์",
   "scripture-settings-font-size-example": "เอ",
-
   "show-headings": "แสดงหัวข้อ",
   "show-verse-numbers": "แสดงหมายเลขข้อ",
   "show-footnotes": "แสดงเชิงอรรถ",
@@ -71,7 +66,6 @@
   "no-extensions-available": "ไม่มีบริการต่อเวลาเพิ่มเติม",
   "install": "ติดตั้ง",
   "uninstall": "ถอนการติดตั้ง",
-
   "custom": "กำหนดเอง",
   "text-section-bookTitle": "ชื่อหนังสือ ข้อความ",
   "text-section-heading": "ข้อความหัวเรื่อง",
@@ -92,7 +86,6 @@
   "show-selected-items": "แสดงรายการที่เลือก",
   "show-highlight-colors": "แสดงสีไฮไลต์",
   "show-icon-text": "แสดงไอคอนข้อความ",
-
   "extensions": "ส่วนขยาย",
   "display": "แสดง",
   "theme-and-text": "ธีมและข้อความ",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "เพิ่มขนาดตัวอักษรของข้อความในพระคัมภีร์",
   "change-line-spacing": "เปลี่ยนระยะห่างระหว่างบรรทัด",
   "line-spacing_lineHeight": "ระยะห่างระหว่างบรรทัด: {{lineHeight}}",
-
   "italic": "ตัวเอียง",
   "underline": "ขีดเส้นใต้",
   "alignment_x": "การจัดแนว: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "สีตัวอักษร",
   "follow_theme": "ติดตามธีม",
   "reset-to-default": "รีเซ็ตเป็นค่าเริ่มต้น",
-
   "id_highlight-text-color": "{{id}} เน้นสีข้อความ",
   "id_highlight-background-color": "{{id}} เน้นสีพื้นหลัง",
   "all-settings-description": "ปรับแต่งข้อความแต่ละส่วนอย่างละเอียด และปรับแต่งสีของธีมแต่ละแบบได้ตามต้องการ",
@@ -141,7 +132,6 @@
   "old-testament_short": "โอที",
   "new-testament_short": "เอ็นที",
   "apocrypha": "คัมภีร์นอกสารบบ",
-
   "custom-translations": "การแปลแบบกำหนดเอง",
   "no-translation-results-found": "ไม่พบผลลัพธ์ คุณต้องการขยายขอบเขตการค้นหาเพื่อรวมคำแปลที่แปลไม่เสร็จสมบูรณ์ด้วยหรือไม่",
   "show-all-translations": "แสดงคำแปลทั้งหมด",
@@ -159,7 +149,6 @@
   "4-psalms": "4 บทเพลงสดุดี",
   "5-psalms": "5 บทเพลงสดุดี",
   "remove-bookmark": "ลบที่คั่นหน้า",
-
   "chat": "แชท",
   "today": "วันนี้",
   "you": "คุณ",
@@ -169,7 +158,6 @@
   "category-options": "ตัวเลือกโฟลเดอร์",
   "rename": "เปลี่ยนชื่อ",
   "delete": "ลบ",
-
   "bookmark-options": "ตัวเลือกบุ๊กมาร์ก",
   "new-folder-placeholder": "ชื่อโฟลเดอร์",
   "tasks": "งานต่างๆ",
@@ -180,12 +168,10 @@
   "folder-name-taken": "มีโฟลเดอร์ชื่อนั้นอยู่แล้ว",
   "add-to-new": "เพิ่มไปยังรายการใหม่",
   "save": "บันทึก",
-
   "apocrypha-info-text": "ไม่มีงานเขียนใดในส่วนนี้ที่เคยถูกนับว่าเป็นพระคัมภีร์โดยชุมชนชาวยิวหรือคริสเตียนในยุคแรก พระคัมภีร์เป็นชุดหนังสือเฉพาะชุดหนึ่ง ชาวยิวและคริสเตียนเห็นพ้องต้องกันเสมอมาในเรื่องพันธสัญญาเดิม ซึ่งมาจากชุดงานเขียนศักดิ์สิทธิ์ที่กำหนดไว้ตายตัว ซึ่งชาวยิวเรียกว่าทานาค และคริสเตียนเรียกว่าพันธสัญญาเดิม เนื้อหาของทานาคและพันธสัญญาเดิมนั้นเหมือนกันทุกประการ แต่โดยทั่วไปแล้วจะจัดเรียงแตกต่างกัน คริสเตียนยังยอมรับพันธสัญญาใหม่ ซึ่งบอกเล่าเรื่องราวของพระเยซู คำสอนของพระองค์ และงานเขียนของเหล่าสาวกของพระองค์ งานเขียนด้านล่างนี้เป็นที่รู้จักและอ่านกันอย่างแพร่หลายในสมัยที่เขียนพระคัมภีร์ แต่ไม่เคยถูกนับว่าเป็นพระคัมภีร์ แม้ว่าผู้เขียนในสมัยโบราณบางครั้งจะอ้างอิงข้อความที่หลากหลาย รวมถึงกวี นักปรัชญา และงานเขียนอื่นๆ แต่การอ้างอิงสิ่งใดสิ่งหนึ่งนั้นไม่เหมือนกับการนับว่าเป็นพระคัมภีร์ งานเขียนเหล่านี้รวมไว้ที่นี่เพื่อเป็นข้อมูลอ้างอิงทางประวัติศาสตร์และวรรณกรรมเท่านั้น",
   "seed-bible": "พระคัมภีร์เมล็ดพันธุ์",
   "take-photo": "ถ่ายรูป",
   "choose-from-gallery": "เลือกจากแกลเลอรี",
-
   "crop-your-photo": "ครอบตัดภาพถ่ายของคุณ",
   "zoom": "ซูม",
   "set-picture": "ตั้งค่ารูปภาพ",
@@ -211,10 +197,8 @@
   "read-the-bible": "อ่านพระคัมภีร์",
   "seed-bible-description": "อ่าน {{bookName}} {{chapterNumber}} ใน Seed Bible",
   "social-title": "อ่านหนังสือ {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "การนำทางบท",
   "tutorial.skip": "ข้าม",
-
   "tutorial.back": "กลับ",
   "tutorial.done": "เสร็จแล้ว",
   "tutorial.next": "ต่อไป",
@@ -326,11 +310,9 @@
   "study-notes": "บันทึกการเรียน",
   "content": "เนื้อหา",
   "untitled-playlist": "เพลย์ลิสต์ที่ไม่มีชื่อ",
-
   "discover-annotations-empty": "คุณไม่มีคำอธิบายประกอบ",
   "discover-cross-references-empty": "บทนี้ไม่มีการอ้างอิงโยง",
   "discover-study-notes-empty": "ไม่มีเอกสารประกอบการเรียนสำหรับบทนี้",
-
   "discover-select-tab": "เลือกแท็บเพื่อค้นหาเนื้อหาที่เกี่ยวข้อง",
   "create-playlist": "สร้าง",
   "playlist-title_placeholder": "ชื่อเพลย์ลิสต์",
@@ -379,12 +361,10 @@
   "delete-playlist-failed": "ไม่สามารถลบเพลย์ลิสต์ได้",
   "collapsed-tab-shared-label": "{{title}} — เซสชันที่ใช้ร่วมกัน มีผู้เข้าร่วม {{count}} คน",
   "playlist-add-mode-label": "ประเภทสินค้า",
-
   "session-host-reconnected": "เชื่อมต่อเข้าสู่เซสชันอีกครั้ง",
   "session-host-left": "โฮสต์ออกจากระบบแล้ว — คุณถูกลบออกจากเซสชัน",
   "drag-to-reorder-playlist-item": "ลากเพื่อจัดเรียงใหม่",
   "saving": "กำลังบันทึก…",
-
   "unsaved-item-confirm-message": "คุณเริ่มเพิ่มรายการที่ยังไม่ได้เพิ่มลงในเพลย์ลิสต์ คุณต้องการทำอะไร?",
   "discard-and-save": "ละทิ้งและบันทึก",
   "add-and-save": "เพิ่มและบันทึก",
@@ -512,7 +492,6 @@
   "reading-plan-preview-reading": "ดูตัวอย่าง {{reading}}",
   "reading-plan-mark-reading-complete": "ทำเครื่องหมายว่าอ่านเสร็จแล้ว",
   "reading-plan-link-video": "วิดีโอ",
-
   "reading-plan-mark-passage-complete": "ทำเครื่องหมาย {{passage}} ว่าอ่านแล้ว",
   "reading-plan-read-nudge-title": "ขอให้สนุกกับการอ่าน!",
   "reading-plan-read-nudge-toast": "ทำเครื่องหมาย {{passage}} เสร็จสมบูรณ์แล้ว?",
@@ -520,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "อ่าน ค้นหา และศึกษาพระคัมภีร์ออนไลน์ มีคำแปลฟรีในหลายภาษา พร้อมฟังก์ชั่นไฮไลต์ บันทึกย่อ คั่นหน้า และแผนการอ่าน",
   "all": "ทั้งหมด",
-
   "today-bookmarks": "ที่คั่นหนังสือ",
   "today-search-verses": "ค้นหาหนังสือ บท ข้อ...",
   "anonymous-greeting": "ยินดีต้อนรับ!",
   "community": "ชุมชน",
   "go-somewhere-new": "ไปสู่สถานที่ใหม่",
-
   "open-bible": "เปิดพระคัมภีร์",
   "personal-greeting": "ยินดีต้อนรับ {{name}} !",
   "resume-reading": "ดำเนินการต่อจากจุดที่คุณหยุดไว้",
   "resume-reading-loading": "กำลังโหลดประวัติการอ่านของคุณ…",
   "selected-year": "ปี: {{year}}",
-
   "theme-light": "แสงสว่าง",
   "theme-dark": "มืด",
   "installed-extensions": "ติดตั้งแล้ว",
@@ -542,7 +518,6 @@
   "extension-state-installed": "ติดตั้งแล้ว",
   "extension-state-downloaded": "ดาวน์โหลดแล้ว",
   "extension-state-pending": "กำลังติดตั้ง…",
-
   "tutorial.stepProgress": "ขั้นตอนที่ {{current}} ของ {{total}}",
   "tutorial.offlineDownloadTitle": "แตะเพื่อบันทึกไว้ในอุปกรณ์ของคุณ",
   "tutorial.offlineDownloadBody": "สามารถบันทึกคำแปลใดๆ ที่มีไอคอนนี้ไว้เพื่ออ่านแบบออฟไลน์ได้",
@@ -576,7 +551,6 @@
   "tutorial.paneLayoutBody": "เลือกจำนวนข้อความที่จะอ่านควบคู่กันไปจากเมนูรูปแบบนี้",
   "tutorial.addTabTitle": "เปิดทางเดินเพิ่มเติม",
   "tutorial.addTabBody": "เพิ่มแท็บใหม่เพื่ออ่านหนังสือหรือฉบับแปลหลายเล่มพร้อมกัน",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % เสร็จสมบูรณ์ - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % เสร็จสมบูรณ์",
   "playlist-history-continue": "ดำเนินการต่อ",
@@ -635,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} บันทึกสำหรับบทนี้",
   "create-folder": "สร้างโฟลเดอร์",
   "edit-bookmark": "แก้ไขบุ๊กมาร์ก",
-
   "greeting-afternoon": "สวัสดีตอนบ่าย!",
   "greeting-afternoon-named": "สวัสดีตอนบ่ายค่ะ {{name}} !",
   "greeting-evening": "สวัสดีตอนเย็น!",
@@ -651,32 +624,24 @@
   "ask-ai": "ถาม AI",
   "unread-mention": "ข้อความที่ยังไม่ได้อ่าน",
   "unread-messages": "ข้อความที่ยังไม่ได้อ่าน: {{count}}",
-
   "scripture-width": "ความกว้างของพระคัมภีร์",
   "decrease-scripture-width": "ลดความกว้างของข้อความพระคัมภีร์",
   "increase-scripture-width": "เพิ่มความกว้างของพระคัมภีร์",
   "annotations": "คำอธิบายประกอบ",
   "discover-content-panel": "ค้นพบเนื้อหา",
   "discover-book-title": "ค้นพบ {{book}}",
-
   "about-title": "เกี่ยวกับ Seed Bible",
   "about-meta-description": "Seed Bible เป็นแอปพลิเคชันพระคัมภีร์ฟรีที่สร้างขึ้นเพื่อการอ่านพระคัมภีร์ร่วมกันกับครอบครัว เพื่อน และชุมชนของคุณ — ฟรีตลอดไป ไม่มีโฆษณาหรือการเรียกเก็บเงิน",
-
   "about-action-open-passage": "เปิดทางเดิน",
   "about-action-donate": "บริจาค",
   "about-action-discord": "เข้าร่วม Discord",
   "recent-uploads": "การอัปโหลดล่าสุด",
-
   "customization-not-found": "ไม่พบตัวเลือกการปรับแต่งนี้",
   "customization-name": "ชื่อ",
   "customization-primaryColor": "หลัก",
-
   "customization-secondaryColor": "มัธยมศึกษา",
-
   "customization-tertiaryColor": "ระดับตติยภูมิ",
-
   "customization-fonts": "แบบอักษร",
-
   "custom-font-option": "กำหนดเอง…",
   "custom-font-name-placeholder": "ชื่อฟอนต์ Google",
   "delete-customization": "ลบ",
@@ -689,10 +654,8 @@
   "extension-availability-available": "มีอยู่",
   "extension-availability-auto-installed": "ติดตั้งอัตโนมัติ",
   "extension-availability-hidden": "ที่ซ่อนอยู่",
-
   "variants": "ธีม",
   "add-variant": "เพิ่มธีม",
-
   "base-theme-description": "การเปลี่ยนแปลงที่ตั้งค่าไว้ล่วงหน้าของธีมนี้จะกลับไปใช้ค่าเริ่มต้นสำหรับสิ่งที่คุณไม่ได้ปรับแต่ง การแก้ไขของคุณเองจะยังคงอยู่",
   "reset-to-base-theme": "รีเซ็ตเป็นธีมพื้นฐาน",
   "low-contrast-warning": "{{label}} : ค่าความคอนทราสต์เพียง {{ratio}} :1 เท่านั้น — ควรตั้งเป้าให้มีค่าอย่างน้อย {{minRatio}} :1 เพื่อให้ข้อความยังคงอ่านได้",
@@ -738,14 +701,12 @@
   "save-folder-empty": "ยังไม่มีการบันทึกข้อมูลใดๆ ที่นี่",
   "save-options": "ตัวเลือกการบันทึก",
   "saves": "บันทึก",
-
   "hide-saves": "ซ่อนไฟล์บันทึก",
   "show-saves": "แสดงการบันทึก",
   "save-verses": "บันทึก",
   "new-save-folder": "โฟลเดอร์ใหม่",
   "edit-save": "แก้ไขบันทึก",
   "remove-save-from-all-folders": "ลบออกจากทุกโฟลเดอร์",
-
   "color-hue": "ฮิว",
   "color-saturation": "ความอิ่มตัวและความสว่าง",
   "hex-color": "สีเลขฐานสิบหก",
@@ -860,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "ไม่สามารถโหลดโปรแกรมแก้ไขการจัดรูปแบบได้ บันทึกนี้มีการจัดรูปแบบที่จะหายไป ดังนั้นจึงไม่สามารถแก้ไขได้จนกว่าคุณจะเชื่อมต่อใหม่",
   "annotation-text": "ข้อความอธิบาย",
   "notes-for-verse": "หมายเหตุสำหรับบทที่ {{verse}}",
-
   "configure-extension-defaults": "กำหนดค่าการแทนที่ค่าเริ่มต้น",
-
   "extension-settings-defaults-title": "{{name}} การกำหนดค่าเริ่มต้น",
   "no-extension-settings": "ส่วนขยายนี้ไม่มีการตั้งค่าใดๆ ที่สามารถกำหนดค่าได้",
   "extension-settings-save-failed": "ไม่สามารถบันทึกการตั้งค่าของคุณได้",
@@ -871,7 +830,6 @@
   "setting-no-default": "ไม่มีค่าเริ่มต้น",
   "override-setting": "แทนที่ {{name}}",
   "override-setting-label": "แทนที่",
-
   "discover-choose-filter-hint": "เลือกตัวกรองด้านบนเพื่อดูเนื้อหาเพิ่มเติมจากบทนี้",
   "take-a-tour": "ไปเที่ยวชมสถานที่ต่างๆ กันเถอะ",
   "share-reading-plan": "แผนการแบ่งปัน",
@@ -1055,7 +1013,6 @@
   "my-bookmark-numbered": "ที่คั่นหนังสือของฉัน {{number}}",
   "bookmark-move-hint": "แตะที่บุ๊กมาร์กเพื่อย้ายไปยังบทนี้",
   "move-bookmark-here": "ย้าย {{name}} มาที่นี่",
-
   "play": "เล่น",
   "pause": "หยุดชั่วคราว",
   "audio-playback-position": "ตำแหน่งการเล่น",
@@ -1064,7 +1021,6 @@
   "audio-scrub-verse": "บท {{verse}}",
   "tab-playing-audio": "กำลังเล่นเสียง",
   "collapsed-tab-playing-label": "{{label}} — กำลังเล่นเสียง",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} ธีม",
   "customization-theme-count_one": "ธีม {{count}}",
@@ -1103,7 +1059,6 @@
   "about-community-body": "ศรัทธาควรดำเนินไปพร้อมกัน พระคัมภีร์ฉบับ Seed Bible ถูกสร้างขึ้นมาเพื่อการอ่านพระคัมภีร์ร่วมกับครอบครัว เพื่อนสนิท และกลุ่มคริสตจักรในบ้านของคุณ",
   "discovered-content": "เนื้อหาที่ค้นพบ",
   "show-discovered-content": "แสดงเนื้อหาที่ค้นพบ",
-
   "extension-availability-default": "ค่าเริ่มต้น ( {{availability}} )",
   "customization-extensions-default": "ค่าเริ่มต้นสำหรับส่วนขยายอื่นๆ",
   "customization-extensions-default-hint": "ใช้ได้กับส่วนขยายทั้งหมดที่คุณไม่ได้ตั้งค่าไว้ด้านล่าง รวมถึงส่วนขยายใหม่ที่เพิ่มเข้ามาในภายหลัง",
@@ -1136,7 +1091,6 @@
   "playlist-scripture-note-return": "กลับสู่เพลย์ลิสต์",
   "playlist-scripture-note-aria": "หมายเหตุเกี่ยวกับ {{passage}}",
   "playlist-scripture-note-progress": "{{current}} ของ {{total}}",
-
   "unsaved-item-edit-confirm-message": "คุณได้แก้ไขรายการหนึ่งแล้ว แต่ยังไม่ได้บันทึกการเปลี่ยนแปลงเหล่านั้น คุณต้องการทำอะไรต่อไป?",
   "keep-changes-and-save": "บันทึกการเปลี่ยนแปลง",
   "reading-plan-edit-reading": "แก้ไขการอ่าน",
@@ -1151,7 +1105,6 @@
   "branding": "การสร้างแบรนด์",
   "create-custom-branding-menu-item": "การสร้างแบรนด์แบบกำหนดเอง",
   "your-content-empty-branding": "การสร้างแบรนด์ของคุณเองจะปรากฏที่นี่",
-
   "extension-consent-from": "จาก {{host}}",
   "extension-consent-source-version": "เวอร์ชัน {{version}} · จาก {{host}}",
   "extension-consent-uploader-unnamed": "ผู้ใช้ Seed Bible",
@@ -1199,7 +1152,6 @@
   "extension-permission-reading-selection": "ดูว่าคุณเลือกข้อความใดบ้าง",
   "extension-permission-reading-navigate": "ทางเดินเปิดโล่ง",
   "extension-permission-network": "เชื่อมต่อกับ {{host}}",
-
   "extension-consent-not-now": "ไม่ใช่ตอนนี้",
   "extension-consent-nothing-yet": "ในตอนนี้ ระบบจะไม่สามารถเข้าถึงข้อมูลใดๆ ของคุณได้",
   "extension-permission-reading-history": "ดูประวัติการอ่านของคุณ",
@@ -1237,7 +1189,6 @@
   "extension-capture-cancel": "ยกเลิก",
   "extension-consent-high-risk": "อ่อนไหว",
   "extension-modal-ok": "ตกลง",
-
   "extension-permissions-restart-note": "การเปลี่ยนแปลงจะมีผลทันที {{name}} จะรีสตาร์ทเพื่อรับการเปลี่ยนแปลงเหล่านั้น",
   "extension-permissions-saved": "บันทึกแล้ว {{name}} เริ่มทำงานใหม่ด้วยสิทธิ์ใหม่แล้ว",
   "extension-permissions-failed": "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง",
@@ -1275,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "แสดงเอฟเฟกต์เมื่อพิธีกรเลือกข้อความ",
   "session-settings-verse-effects-desc-everyone": "แสดงเอฟเฟกต์เมื่อมีคนเลือกข้อความใดข้อความหนึ่ง",
   "session-settings-verse-effects-desc-none": "เอฟเฟกต์การเลือกบทเพลงถูกปิดใช้งานสำหรับทุกคน",
-
   "account": "บัญชี",
   "scroll-filters-start": "เลื่อนตัวกรองไปทางเริ่มต้น",
-  "scroll-filters-end": "เลื่อนตัวกรองไปทางด้านท้าย"
+  "scroll-filters-end": "เลื่อนตัวกรองไปทางด้านท้าย",
+  "download": "ดาวน์โหลด",
+  "image-details-uploaded": "อัปโหลดแล้ว",
+  "image-details-dimensions": "มิติ",
+  "image-details-dimensions-value": "{{width}} × {{height}} พิกเซล",
+  "image-details-type": "พิมพ์",
+  "image-details-cover-of": "หน้าปกของ",
+  "image-details-not-a-cover": "ไม่ได้ใช้เป็นปก",
+  "delete-customization-confirm-title": "ลบการตั้งค่าแบรนด์แบบกำหนดเอง?",
+  "delete-customization-confirm-message": "ต้องการลบการสร้างแบรนด์แบบกำหนดเอง \" {{name}} \" หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+  "delete-customization-failed": "ไม่สามารถลบการตั้งค่าแบรนด์แบบกำหนดเองได้",
+  "delete-variant-confirm-title": "ลบธีม?",
+  "delete-variant-confirm-message": "ลบธีม \" {{name}} \" ไม่สามารถยกเลิกได้",
+  "delete-variant-confirm-message-unnamed": "ลบธีมนี้เหรอ? ไม่สามารถย้อนกลับได้",
+  "delete-variant-failed": "ไม่สามารถลบธีมได้",
+  "delete-highlight-confirm-title": "ลบไฮไลต์ใช่ไหม?",
+  "delete-highlight-confirm-message": "ลบไฮไลต์บน {{reference}} ? ไม่สามารถย้อนกลับได้",
+  "delete-highlight-failed": "ไม่สามารถลบส่วนที่ไฮไลต์ไว้ได้",
+  "delete-annotation-on-confirm-message": "ลบคำอธิบายประกอบบน {{reference}} ? การกระทำนี้ไม่สามารถย้อนกลับได้",
+  "remove-from-folder": "ลบออกจากโฟลเดอร์",
+  "save-folders": "ใน {{folders}}",
+  "delete-save-confirm-title": "ลบไฟล์บันทึกแล้วใช่ไหม?",
+  "delete-save-confirm-message": "ลบไฟล์บันทึกสำหรับ {{reference}} ? การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+  "delete-save-confirm-message-folders": "ลบไฟล์บันทึกสำหรับ {{reference}} จาก {{folders}} ? การกระทำนี้ไม่สามารถย้อนกลับได้",
+  "delete-save-failed": "ไม่สามารถลบไฟล์บันทึกได้",
+  "delete-save-folder-confirm-title": "ลบโฟลเดอร์?",
+  "delete-save-folder-confirm-message": "ลบโฟลเดอร์ \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "ไฟล์บันทึก {{count}} ไฟล์ที่อยู่ในโฟลเดอร์นี้เท่านั้นจะถูกลบไปด้วย",
+  "delete-save-folder-confirm-deletes_one": "ไฟล์บันทึกเกมที่อยู่ในโฟลเดอร์นี้เท่านั้นก็จะถูกลบไปด้วย",
+  "delete-save-folder-confirm-deletes_other": "ไฟล์บันทึก {{count}} ไฟล์ที่อยู่ในโฟลเดอร์นี้เท่านั้นจะถูกลบไปด้วย",
+  "delete-save-folder-confirm-keeps": "ไฟล์บันทึก {{count}} ไฟล์ที่อยู่ในโฟลเดอร์อื่น ๆ จะยังคงอยู่ในโฟลเดอร์นั้นต่อไป",
+  "delete-save-folder-confirm-keeps_one": "ไฟล์บันทึกเกมที่อยู่ในโฟลเดอร์อื่นก็จะยังคงอยู่ในโฟลเดอร์นั้นเช่นกัน",
+  "delete-save-folder-confirm-keeps_other": "ไฟล์บันทึก {{count}} ไฟล์ที่อยู่ในโฟลเดอร์อื่น ๆ จะยังคงอยู่ในโฟลเดอร์นั้นต่อไป",
+  "cant-be-undone": "เรื่องนี้แก้ไขไม่ได้แล้ว",
+  "delete-save-folder-failed": "ไม่สามารถลบโฟลเดอร์ได้",
+  "download-image-failed": "ไม่สามารถดาวน์โหลดรูปภาพได้",
+  "session-settings-verse-effects-hosts-only": "สำหรับเจ้าบ้านเท่านั้น",
+  "session-settings-verse-effects-everyone": "ทุกคน",
+  "session-settings-verse-effects-none": "ไม่มี",
+  "loading-books": "กำลังโหลดหนังสือ…",
+  "books-load-failed": "ไม่สามารถโหลดหนังสือได้ โปรดตรวจสอบการเชื่อมต่อของคุณแล้วลองใหม่อีกครั้ง",
+  "loading-translation": "กำลังโหลด {{name}} …",
+  "translation-load-failed": "ไม่สามารถโหลด {{name}} ได้",
+  "loading-translations": "กำลังโหลดคำแปล…",
+  "translations-load-failed": "ไม่สามารถโหลดรายการคำแปลทั้งหมดได้ ดังนั้นบางคำแปลอาจหายไป",
+  "verse-of-the-day": "ข้อพระคัมภีร์ประจำวัน",
+  "verse-of-the-day-loading": "กำลังโหลดข้อความประจำวัน..."
 }

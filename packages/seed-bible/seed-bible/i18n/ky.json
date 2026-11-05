@@ -28,22 +28,18 @@
   "searching": "Изделүүдө...",
   "no-search-results": "Дал келген аяттар жок.",
   "open-chapter": "Бөлүмдү ачуу",
-
   "uploading": "Жүктөлүүдө...",
   "profile-name": "Профилдин аталышы",
   "profile-name-placeholder": "мисалы, Крейгдин үй-бүлөсү",
-
   "description": "Сүрөттөмө",
   "optional": "(Милдеттүү эмес)",
   "description-placeholder": "Профилиңиздин сүрөттөмөсүн киргизиңиз...",
   "location": "Жайгашкан жери",
   "location-placeholder": "мисалы, Остин, Техас",
-
   "copied": "Көчүрүлдү",
   "copy": "Көчүрүү",
   "save-changes": "Өзгөрүүлөрдү сактоо",
   "sign-out": "Чыгуу",
-
   "log-in": "Кирүү",
   "tanakh": "Танах",
   "traditional": "Салттуу",
@@ -57,7 +53,6 @@
   "scripture-settings": "Ыйык Жазманын жөндөөлөрү",
   "scripture-elements": "Ыйык Жазманын элементтери",
   "scripture-settings-font-size-example": "А",
-
   "show-headings": "Башкы аталыштарды көрсөтүү",
   "show-verse-numbers": "Аяттардын номерлерин көрсөтүү",
   "show-footnotes": "Шилтемелерди көрсөтүү",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Кеңейтүүлөр жок.",
   "install": "Орнотуу",
   "uninstall": "Орнотуудан чыгаруу",
-
   "custom": "Ыңгайлаштырылган",
   "text-section-bookTitle": "Китептин аталышынын тексти",
   "text-section-heading": "Аталыш тексти",
@@ -92,7 +86,6 @@
   "show-selected-items": "Тандалган нерселерди көрсөтүү",
   "show-highlight-colors": "Бөлүп көрсөтүүчү түстөрдү көрсөтүү",
   "show-icon-text": "Сүрөтчөнүн текстин көрсөтүү",
-
   "extensions": "Кеңейтүүлөр",
   "display": "Дисплей",
   "theme-and-text": "Тема жана текст",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Ыйык Жазманын шрифтинин өлчөмүн чоңойтуңуз",
   "change-line-spacing": "Сап аралыгын өзгөртүү",
   "line-spacing_lineHeight": "Саптар аралык: {{lineHeight}}",
-
   "italic": "Курсив",
   "underline": "Асты сызылган",
   "alignment_x": "Тегиздөө: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Тексттин түсү",
   "follow_theme": "Теманы ээрчүү",
   "reset-to-default": "Демейки абалга кайтаруу",
-
   "id_highlight-text-color": "{{id}} тексттин түсүн белгилеп көрсөтүү",
   "id_highlight-background-color": "{{id}} фон түсүн бөлүп көрсөтүү",
   "all-settings-description": "Ар бир текст бөлүмүн так жөндөп, ар бир теманын түсүн ыңгайлаштырыңыз.",
@@ -141,7 +132,6 @@
   "old-testament_short": "ОТ",
   "new-testament_short": "NT",
   "apocrypha": "Апокриф",
-
   "custom-translations": "Ыңгайлаштырылган котормолор",
   "no-translation-results-found": "Эч кандай жыйынтык табылган жок. Жарым-жартылай толук котормолорду да камтуу үчүн издөөңүздү кеңейткиңиз келеби?",
   "show-all-translations": "Бардык котормолорду көрсөтүү",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Забур",
   "5-psalms": "5 Забур",
   "remove-bookmark": "Кыстарманы алып салуу",
-
   "chat": "Чат",
   "today": "Бүгүн",
   "you": "Сен",
@@ -169,7 +158,6 @@
   "category-options": "Папка параметрлери",
   "rename": "Атын өзгөртүү",
   "delete": "Өчүрүү",
-
   "bookmark-options": "Кыстарма параметрлери",
   "new-folder-placeholder": "Папканын аталышы",
   "tasks": "Тапшырмалар",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Мындай аталыштагы папка мурунтан эле бар.",
   "add-to-new": "Жаңысына кошуу",
   "save": "Сактоо",
-
   "apocrypha-info-text": "Бул бөлүмдөгү бир дагы жазма алгачкы жөөт же христиан коомчулугу тарабынан Ыйык Жазма деп эсептелген эмес. Ыйык Китеп – бул китептердин белгилүү бир жыйнагы. Жөөттөр менен христиандар ар дайым Байыркы Келишим боюнча макулдашып келишкен, ал жүйүт эли Танах, ал эми христиандар Байыркы Келишим деп атаган ыйык жазмалардын белгиленген жыйындысынан келип чыккан. Танах менен Байыркы Келишимдин мазмуну так бирдей, бирок көбүнчө ар кандайча жайгаштырылган. Христиандар ошондой эле Исанын окуясын, анын окууларын жана анын жолдоочуларынын жазмаларын баяндаган Жаңы Келишимди таанышат. Төмөндөгү жазмалар Ыйык Китеп жазылган учурда белгилүү жана кеңири окулган, бирок алар эч качан Ыйык Жазма катары каралган эмес. Байыркы авторлор кээде акындарды, философторду жана башка жазмаларды камтыган ар кандай тексттерди цитата кылышса да, бир нерсени цитаталоо аны Ыйык Жазма катары кароо менен бирдей эмес. Бул жазмалар бул жерде тарыхый жана адабий шилтеме үчүн гана киргизилген.",
   "seed-bible": "Үрөн Ыйык Китеби",
   "take-photo": "Сүрөткө тартыңыз",
   "choose-from-gallery": "Галереядан тандаңыз",
-
   "crop-your-photo": "Сүрөтүңүздү кыркыңыз",
   "zoom": "Чоңойтуу",
   "set-picture": "Сүрөттү коюу",
@@ -211,10 +197,8 @@
   "read-the-bible": "Ыйык Китепти окуңуз",
   "seed-bible-description": "Уруктар Ыйык Китебинен {{bookName}} {{chapterNumber}} окуңуз",
   "social-title": "{{bookName}} {{chapterNumber}} окуу",
-
   "chapter-navigation": "Бөлүмдөр боюнча навигация",
   "tutorial.skip": "Өткөрүп жиберүү",
-
   "tutorial.back": "Артка",
   "tutorial.done": "Бүттү",
   "tutorial.next": "Кийинки",
@@ -326,11 +310,9 @@
   "study-notes": "Окуу конспекттери",
   "content": "Мазмун",
   "untitled-playlist": "Аталышы жок ойнотмо тизме",
-
   "discover-annotations-empty": "Сизде аннотациялар жок",
   "discover-cross-references-empty": "Бул бөлүм үчүн кайчылаш шилтемелер жок.",
   "discover-study-notes-empty": "Бул бөлүм боюнча изилдөө жазуулары жок.",
-
   "discover-select-tab": "Окшош материалдарды табуу үчүн өтмөктү тандаңыз.",
   "create-playlist": "Түзүү",
   "playlist-title_placeholder": "Ойнотмо тизменин аталышы",
@@ -379,12 +361,10 @@
   "delete-playlist-failed": "Ойнотмо тизме өчүрүлгөн жок.",
   "collapsed-tab-shared-label": "{{title}} — бөлүшүлгөн сессия, {{count}} катышууда",
   "playlist-add-mode-label": "Буюмдун түрү",
-
   "session-host-reconnected": "Сеанска кайра туташты",
   "session-host-left": "Алып баруучу чыгып кетти — сиз сессиядан чыгарылдыңыз",
   "drag-to-reorder-playlist-item": "Кайра иреттөө үчүн сүйрөңүз",
   "saving": "Сакталууда…",
-
   "unsaved-item-confirm-message": "Сиз ойнотуу тизмесине азырынча кошулбаган нерсени кошо баштадыңыз. Эмне кылгыңыз келет?",
   "discard-and-save": "Жокко чыгаруу жана сактоо",
   "add-and-save": "Кошуу жана сактоо",
@@ -512,7 +492,6 @@
   "reading-plan-preview-reading": "Алдын ала көрүү {{reading}}",
   "reading-plan-mark-reading-complete": "Окууну аяктады деп белгилөө",
   "reading-plan-link-video": "Видео",
-
   "reading-plan-mark-passage-complete": "{{passage}} окулган деп белгилөө",
   "reading-plan-read-nudge-title": "Жакшы окудуңуз!",
   "reading-plan-read-nudge-toast": "{{passage}} аяктады деп белгиленсинби?",
@@ -520,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Ыйык Китепти онлайн окуңуз, издеңиз жана изилдеңиз. Көптөгөн тилдердеги акысыз котормолор, негизги бөлүктөрү, эскертүүлөрү, кыстармалары жана окуу пландары менен.",
   "all": "Баары",
-
   "today-bookmarks": "КЫСКАЧАЛАР",
   "today-search-verses": "Китептер, бөлүмдөр, аяттар боюнча издөө...",
   "anonymous-greeting": "Кош келдиңиз!",
   "community": "КООМЧУЛУК",
   "go-somewhere-new": "ЖАҢЫ ЖЕРГЕ БАРЫҢЫЗ",
-
   "open-bible": "Ачык Ыйык Китеп",
   "personal-greeting": "Кош келиңиз, {{name}} !",
   "resume-reading": "КАЛГАН ЖЕРИҢИЗДЕН УЛАНТУУ",
   "resume-reading-loading": "Окуу тарыхыңыз жүктөлүүдө…",
   "selected-year": "Жыл: {{year}}",
-
   "theme-light": "Жарык",
   "theme-dark": "Караңгы",
   "installed-extensions": "Орнотулган",
@@ -542,7 +518,6 @@
   "extension-state-installed": "Орнотулган",
   "extension-state-downloaded": "Жүктөлүп алынды",
   "extension-state-pending": "Орнотулууда…",
-
   "tutorial.stepProgress": "{ {{total}} кадамынын {{current}} } кадамы",
   "tutorial.offlineDownloadTitle": "Аны түзмөгүңүздө сактоо үчүн таптаңыз",
   "tutorial.offlineDownloadBody": "Бул сөлөкөт менен каалаган котормону оффлайн окуу үчүн сактоого болот.",
@@ -576,7 +551,6 @@
   "tutorial.paneLayoutBody": "Бул макет менюсунан канча үзүндүнү катар-катар окууну тандаңыз.",
   "tutorial.addTabTitle": "Көбүрөөк өтмөктөрдү ачыңыз",
   "tutorial.addTabBody": "Бир нече китепти же котормолорду катар окуу үчүн жаңы өтмөк кошуңуз.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % аткарылды - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % аткарылды",
   "playlist-history-continue": "Улантуу",
@@ -635,7 +609,6 @@
   "chapter-notes-count_other": "Бул бөлүм үчүн {{count}} эскертүү",
   "create-folder": "Папка түзүү",
   "edit-bookmark": "Кыстарманы түзөтүү",
-
   "greeting-afternoon": "Кайырдуу күн!",
   "greeting-afternoon-named": "Кутмандуу күнүңүз менен, {{name}} !",
   "greeting-evening": "Кайырдуу кеч!",
@@ -651,32 +624,24 @@
   "ask-ai": "Жасалма интеллекттен сураңыз",
   "unread-mention": "Окула элек эскерүү",
   "unread-messages": "Окула элек билдирүүлөр: {{count}}",
-
   "scripture-width": "Ыйык Жазманын туурасы",
   "decrease-scripture-width": "Жазуунун туурасын кичирейтүү",
   "increase-scripture-width": "Ыйык Жазуунун туурасын чоңойтуңуз",
   "annotations": "Аннотациялар",
   "discover-content-panel": "Мазмунду табуу",
   "discover-book-title": "{{book}} ачыңыз",
-
   "about-title": "Үрөн Ыйык Китеби жөнүндө",
   "about-meta-description": "Seed Bible - бул үй-бүлөңүз, досторуңуз жана коомчулугуңуз менен бирге Ыйык Жазманы окуу үчүн түзүлгөн акысыз Ыйык Китеп колдонмосу — түбөлүккө акысыз, жарнамалар же акы төлөнүүчү темалар жок.",
-
   "about-action-open-passage": "Өтмөктү ачуу",
   "about-action-donate": "Кайрымдуулук кылуу",
   "about-action-discord": "Discord'го кошулуңуз",
   "recent-uploads": "Акыркы жүктөөлөр",
-
   "customization-not-found": "Бул ыңгайлаштыруу табылган жок.",
   "customization-name": "Аты",
   "customization-primaryColor": "Негизги",
-
   "customization-secondaryColor": "Экинчи орунда",
-
   "customization-tertiaryColor": "Үчүнчү даражадагы",
-
   "customization-fonts": "Шрифттер",
-
   "custom-font-option": "Ыңгайлаштырылган…",
   "custom-font-name-placeholder": "Google шрифтинин аталышы",
   "delete-customization": "Өчүрүү",
@@ -689,10 +654,8 @@
   "extension-availability-available": "Жеткиликтүү",
   "extension-availability-auto-installed": "Автоматтык түрдө орнотулган",
   "extension-availability-hidden": "Жашырылган",
-
   "variants": "Темалар",
   "add-variant": "Тема кошуу",
-
   "base-theme-description": "Бул теманы алдын ала орноткон өзгөртүүлөр сиз ыңгайлаштырбаган нерселердин баарына тиешелүү. Сиздин жеке түзөтүүлөрүңүз сакталат.",
   "reset-to-base-theme": "Негизги темага кайтаруу",
   "low-contrast-warning": "{{label}} : контраст {{ratio}} :1 гана — текст окула турган бойдон калышы үчүн жок дегенде {{minRatio}} :1 болууга аракет кылыңыз.",
@@ -738,14 +701,12 @@
   "save-folder-empty": "Бул жерде азырынча эч кандай сактоолор жок.",
   "save-options": "Сактоо параметрлери",
   "saves": "Сактагандар",
-
   "hide-saves": "Сакталгандарды жашыруу",
   "show-saves": "Сактоолорду көрсөтүү",
   "save-verses": "Сактоо",
   "new-save-folder": "Жаңы папка",
   "edit-save": "Түзөтүү сактоо",
   "remove-save-from-all-folders": "Бардык папкалардан алып салуу",
-
   "color-hue": "Түс",
   "color-saturation": "Каныккандык жана жарыктык",
   "hex-color": "Он алты бурчтуу түс",
@@ -860,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Форматтоо редактору жүктөлбөй койду. Бул эскертүүдө жоголуп кете турган форматтоо бар, андыктан кайра туташмайынча аны түзөтүү мүмкүн эмес.",
   "annotation-text": "Аннотация тексти",
   "notes-for-verse": "{{verse}} аяты үчүн эскертүүлөр",
-
   "configure-extension-defaults": "Демейки өзгөртүүлөрдү конфигурациялоо",
-
   "extension-settings-defaults-title": "{{name}} демейки өзгөртүүлөр",
   "no-extension-settings": "Бул кеңейтүүнүн конфигурациялануучу жөндөөлөрү жок.",
   "extension-settings-save-failed": "Жөндөөлөрүңүз сакталган жок.",
@@ -871,7 +830,6 @@
   "setting-no-default": "Демейки жок",
   "override-setting": "{{name}} жокко чыгаруу",
   "override-setting-label": "Өзгөртүп коюу",
-
   "discover-choose-filter-hint": "Бул бөлүмдөн көбүрөөк маалымат алуу үчүн жогорудагы чыпканы тандаңыз.",
   "take-a-tour": "Экскурсияга чыгыңыз",
   "share-reading-plan": "План менен бөлүшүү",
@@ -1055,7 +1013,6 @@
   "my-bookmark-numbered": "Менин кыстармам {{number}}",
   "bookmark-move-hint": "Кыстарманы бул бөлүмгө жылдыруу үчүн аны таптаңыз.",
   "move-bookmark-here": "{{name}} ди бул жерге жылдырыңыз",
-
   "play": "Ойнотуу",
   "pause": "Тыным",
   "audio-playback-position": "Ойнотуу позициясы",
@@ -1064,7 +1021,6 @@
   "audio-scrub-verse": "Аят {{verse}}",
   "tab-playing-audio": "Аудио ойнотулууда",
   "collapsed-tab-playing-label": "{{label}} — аудио ойнотулуп жатат",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} темалар",
   "customization-theme-count_one": "{{count}} тема",
@@ -1103,7 +1059,6 @@
   "about-community-body": "Ишеним чогуу жашоо үчүн арналган. Ыйык Китеп үй-бүлөңүз, эң жакын досторуңуз жана үй чиркөөсү менен Ыйык Жазманы окуу үчүн түзүлгөн.",
   "discovered-content": "Табылган мазмун",
   "show-discovered-content": "Табылган мазмунду көрсөтүү",
-
   "extension-availability-default": "Демейки ( {{availability}} )",
   "customization-extensions-default": "Башка кеңейтүүлөр үчүн демейки",
   "customization-extensions-default-hint": "Төмөндө орнотпогон бардык кеңейтүүлөргө, анын ичинде кийинчерээк кошулган жаңы кеңейтүүлөргө да тиешелүү",
@@ -1136,7 +1091,6 @@
   "playlist-scripture-note-return": "Ойнотмо тизмеге кайтуу",
   "playlist-scripture-note-aria": "{{passage}} боюнча эскертүү",
   "playlist-scripture-note-progress": "{{current}} {{total}}",
-
   "unsaved-item-edit-confirm-message": "Сиз бир нерсени өзгөрттүңүз, бирок ал өзгөртүүлөрдү сактай элексиз. Эмне кылгыңыз келет?",
   "keep-changes-and-save": "Өзгөртүүлөрдү сактоо жана сактоо",
   "reading-plan-edit-reading": "Окууну түзөтүү",
@@ -1151,7 +1105,6 @@
   "branding": "Бренд",
   "create-custom-branding-menu-item": "Ыңгайлаштырылган брендинг",
   "your-content-empty-branding": "Сиз түзгөн брендингдин ыңгайлаштырылган варианты бул жерде көрсөтүлөт.",
-
   "extension-consent-from": "{{host}} сайтынан",
   "extension-consent-source-version": "Версия {{version}} · {{host}} сайтынан",
   "extension-consent-uploader-unnamed": "Ыйык Китептин үрөн колдонуучусу",
@@ -1199,7 +1152,6 @@
   "extension-permission-reading-selection": "Кайсы аяттарды тандаганыңызды караңыз",
   "extension-permission-reading-navigate": "Ачык өтмөктөр",
   "extension-permission-network": "{{host}} менен туташыңыз",
-
   "extension-consent-not-now": "Азыр эмес",
   "extension-consent-nothing-yet": "Азырынча ал сиздин эч кандай маалыматыңызга кире албайт.",
   "extension-permission-reading-history": "Окуу тарыхыңызды көрүңүз",
@@ -1237,7 +1189,6 @@
   "extension-capture-cancel": "Жокко чыгаруу",
   "extension-consent-high-risk": "Сезимтал",
   "extension-modal-ok": "макул",
-
   "extension-permissions-restart-note": "Өзгөртүүлөр дароо күчүнө кирет. Аларды алуу үчүн {{name}} кайра жүктөлөт.",
   "extension-permissions-saved": "Сакталды. {{name}} жаңы уруксаттар менен кайра иштетилди.",
   "extension-permissions-failed": "Ал сакталган жок. Кайра аракет кылыңыз.",
@@ -1275,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Алып баруучу аятты тандаганда эффекттерди көрсөтүү.",
   "session-settings-verse-effects-desc-everyone": "Кимдир бирөө аятты тандаганда эффекттерди көрсөтүү.",
   "session-settings-verse-effects-desc-none": "Аят тандоо эффекттери баары үчүн өчүрүлгөн.",
-
   "account": "Аккаунт",
   "scroll-filters-start": "Чыпкаларды баштоого жылдырыңыз",
-  "scroll-filters-end": "Чыпкаларды аягына карай жылдырыңыз"
+  "scroll-filters-end": "Чыпкаларды аягына карай жылдырыңыз",
+  "download": "Жүктөп алуу",
+  "image-details-uploaded": "Жүктөлгөн",
+  "image-details-dimensions": "Өлчөмдөрү",
+  "image-details-dimensions-value": "{{width}} × {{height}} пиксель",
+  "image-details-type": "Түрү",
+  "image-details-cover-of": "Мукабасы",
+  "image-details-not-a-cover": "Капкак катары колдонулбайт",
+  "delete-customization-confirm-title": "Ыңгайлаштырылган брендингди жок кылуу керекпи?",
+  "delete-customization-confirm-message": "\" {{name}} \" ыңгайлаштырылган брендингди жок кыласызбы? Муну артка кайтаруу мүмкүн эмес.",
+  "delete-customization-failed": "Ыңгайлаштырылган брендинг өчүрүлгөн жок.",
+  "delete-variant-confirm-title": "Тема өчүрүлсүнбү?",
+  "delete-variant-confirm-message": "\" {{name}} \" темасын өчүрөсүзбү? Муну артка кайтаруу мүмкүн эмес.",
+  "delete-variant-confirm-message-unnamed": "Бул теманы жок кылалыбы? Муну артка кайтаруу мүмкүн эмес.",
+  "delete-variant-failed": "Тема өчүрүлгөн жок.",
+  "delete-highlight-confirm-title": "Бөлүп көрсөтүлгөн жер өчүрүлсүнбү?",
+  "delete-highlight-confirm-message": "{{reference}} сайтындагы белгиленген жерди өчүрөсүзбү? Муну артка кайтаруу мүмкүн эмес.",
+  "delete-highlight-failed": "Бөлүнүп көрсөтүлгөн жер өчүрүлгөн жок.",
+  "delete-annotation-on-confirm-message": "{{reference}} дарегиндеги аннотацияны өчүрөсүзбү? Муну кайтаруу мүмкүн эмес.",
+  "remove-from-folder": "Папкадан алып салуу",
+  "save-folders": "{{folders}} ичинде",
+  "delete-save-confirm-title": "Сакталганды өчүрөсүзбү?",
+  "delete-save-confirm-message": "{{reference}} үчүн сактоону өчүрөсүзбү? Муну артка кайтаруу мүмкүн эмес.",
+  "delete-save-confirm-message-folders": "{{reference}} үчүн сакталган файлды {{folders}} папкасынан өчүрөсүзбү? Муну артка кайтаруу мүмкүн эмес.",
+  "delete-save-failed": "Сактоо өчүрүлгөн жок.",
+  "delete-save-folder-confirm-title": "Папка жок кылынсынбы?",
+  "delete-save-folder-confirm-message": "\" {{name}} \" папкасын өчүрөсүзбү?",
+  "delete-save-folder-confirm-deletes": "Ушул папкада гана сакталган {{count}} файлдар да өчүрүлөт.",
+  "delete-save-folder-confirm-deletes_one": "Ушул папкада гана сакталган файл да өчүрүлөт.",
+  "delete-save-folder-confirm-deletes_other": "Ушул папкада гана сакталган {{count}} файлдар да өчүрүлөт.",
+  "delete-save-folder-confirm-keeps": "Башка папкалардагы {{count}} сакталган файлдар ошол жерде калат.",
+  "delete-save-folder-confirm-keeps_one": "Башка папкадагы сактоо ошол жерде калат.",
+  "delete-save-folder-confirm-keeps_other": "Башка папкалардагы {{count}} сакталган файлдар ошол жерде калат.",
+  "cant-be-undone": "Муну кайтаруу мүмкүн эмес.",
+  "delete-save-folder-failed": "Папка өчүрүлгөн жок.",
+  "download-image-failed": "Сүрөт жүктөлүп алынган жок.",
+  "session-settings-verse-effects-hosts-only": "Хосттор гана",
+  "session-settings-verse-effects-everyone": "Баары",
+  "session-settings-verse-effects-none": "Эч ким",
+  "loading-books": "Китептер жүктөлүүдө…",
+  "books-load-failed": "Китептер жүктөлбөй койду. Туташууңузду текшерип, кайра аракет кылыңыз.",
+  "loading-translation": "{{name}} жүктөлүүдө …",
+  "translation-load-failed": "{{name}} жүктөлбөй койду.",
+  "loading-translations": "Котормолор жүктөлүүдө…",
+  "translations-load-failed": "Котормолордун толук тизмеси жүктөлбөй койду, андыктан айрымдары жок болушу мүмкүн.",
+  "verse-of-the-day": "КҮНДҮН АЯТЫ",
+  "verse-of-the-day-loading": "Күндүн аяты жүктөлүүдө…"
 }
