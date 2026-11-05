@@ -14,6 +14,7 @@ import {
   isPlaylistEditorTab,
   playlistEditorScriptureStep,
 } from "../PlaylistEditor/PlaylistEditorWorkspace";
+import { PlaylistStepNoteSheet } from "../PlaylistEditor/PlaylistStepNoteSheet";
 import {
   MAX_CUSTOM_HIGHLIGHT_COLORS,
   UI_SIZE_SCALE_MAP,
@@ -3091,6 +3092,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       resolveBookName={resolveBookName}
                     />
                   )}
+                  {!playing &&
+                    (() => {
+                      // The playlist editor's scripture step keeps its note
+                      // where playback shows one.
+                      const step = playlistEditorScriptureStep(
+                        props.state,
+                        selectedTab.value
+                      );
+                      return step ? (
+                        <PlaylistStepNoteSheet
+                          key={step.index}
+                          state={props.state}
+                          index={step.index}
+                          item={step.item}
+                          resolveBookName={resolveBookName}
+                        />
+                      ) : null;
+                    })()}
                   {!playing && audio && AudioIcon && (
                     <div className="sb-reader-floating-nav-play-wrap">
                       <button

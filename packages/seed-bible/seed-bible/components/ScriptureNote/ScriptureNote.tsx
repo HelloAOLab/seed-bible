@@ -34,7 +34,7 @@ export function currentScriptureNoteItem(
  * A note's heading: its title, with the passage it's about as a small line
  * above, or just the passage when the note has no title.
  */
-function NoteHeading(props: {
+export function NoteHeading(props: {
   title: string | undefined;
   passage: string;
   as: "h3" | "span";

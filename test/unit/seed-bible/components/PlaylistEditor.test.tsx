@@ -2,6 +2,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { PlaylistEditorPanel } from "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistEditorPanel";
 import { PlaylistEditorWorkspace } from "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistEditorWorkspace";
+import { PlaylistStepNoteSheet } from "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistStepNoteSheet";
 import { PlaylistHtmlContent } from "@packages/seed-bible/seed-bible/components/PlaylistHtmlContent/PlaylistHtmlContent";
 import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
 import {
@@ -287,14 +288,14 @@ describe("the playlist editor", () => {
       expect(header().textContent).toContain("Step 2 of 3 · Video");
     });
 
-    it("puts Delete and Add in a step's title bar, with no Duplicate, Review or bottom bar", () => {
+    it("puts Add and a menu in a step's title bar, with no Duplicate, Review or bottom bar", () => {
       openWorkspace(STEPS, 0, true);
 
       expect(
         [
           ...header().querySelectorAll(".sb-pe-mobile-header-actions button"),
         ].map((b) => b.getAttribute("aria-label"))
-      ).toEqual(["Delete", "Add a step"]);
+      ).toEqual(["Add a step", "More"]);
       expect(container.querySelector(".sb-pe-publish")).toBeNull();
       expect(container.querySelector(".sb-pe-mobile-bottom")).toBeNull();
     });
@@ -384,10 +385,43 @@ describe("the playlist editor", () => {
       });
     });
 
-    it("goes back to the list when the open step is deleted", () => {
+    it("opens the step's settings in a sheet from its menu", () => {
+      openWorkspace(STEPS, 0, true);
+
+      click(header().querySelector('[aria-label="More"]'));
+      expect(
+        [...document.querySelectorAll(".sb-context-menu-item")].map((item) =>
+          item.textContent?.trim()
+        )
+      ).toEqual(["Item settings", "Delete"]);
+      click(byText(document.body, ".sb-context-menu-item", "Item settings"));
+
+      const sheet = container.querySelector(".sb-pe-settings-sheet")!;
+      expect(sheet.textContent).toContain("Item settings");
+      click(byText(sheet, '[role="switch"]', "Pause for group"));
+      expect(items()[0]).toMatchObject({ pauseForGroup: true });
+
+      click(sheet.querySelector('[aria-label="Close"]'));
+      expect(container.querySelector(".sb-pe-settings-sheet")).toBeNull();
+    });
+
+    it("has no inline note or step settings on a phone", () => {
+      openWorkspace(STEPS, 0, true);
+      expect(container.querySelector(".sb-pe-add-note")).toBeNull();
+      expect(container.querySelector(".sb-pe-step-settings")).toBeNull();
+
+      // Nor on a card step.
+      act(() => state.playlists.selectEditorStep(2));
+      expect(container.querySelector(".sb-pe-card")).not.toBeNull();
+      expect(container.querySelector(".sb-pe-step-settings")).toBeNull();
+    });
+
+    it("goes back to the list when the open step is deleted from its menu", () => {
       openWorkspace(STEPS, 1, true);
 
-      click(header().querySelector('[aria-label="Delete"]'));
+      click(header().querySelector('[aria-label="More"]'));
+      // The menu is portaled to <body>.
+      click(byText(document.body, ".sb-context-menu-item", "Delete"));
 
       expect(items()).toHaveLength(2);
       expect(state.playlists.editorStepIndex.value).toBe(-1);
@@ -730,6 +764,94 @@ describe("the playlist editor", () => {
       );
       expect(state.playlists.editingPlaylist.value).not.toBeNull();
     });
+  });
+});
+
+describe("a scripture step's note sheet (phone)", () => {
+  let container: HTMLDivElement;
+  let state: SeedBibleState;
+
+  beforeEach(async () => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    jsdom.reconfigure({
+      url: "https://example.com/en/bible/BSB/GEN/1?useFreeBibleAPI=true",
+    });
+    state = await createTestSeedBibleState();
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  const openSheet = (item: Playlist["items"][number]) => {
+    act(() => {
+      state.playlists.editPlaylist(makePlaylist([item]));
+      state.playlists.selectEditorStep(0);
+    });
+    const Sheet = () => {
+      const current = state.playlists.editingPlaylist.value?.items[0];
+      return current?.type === "bible-verse" ? (
+        <PlaylistStepNoteSheet
+          state={state}
+          index={0}
+          item={current}
+          resolveBookName={(bookId) => (bookId === "GEN" ? "Genesis" : bookId)}
+        />
+      ) : null;
+    };
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sheet />
+        </TestHost>,
+        container
+      );
+    });
+  };
+  const header = () =>
+    container.querySelector(".sb-scripture-note-sheet-header")!;
+  const item = () => state.playlists.editingPlaylist.value!.items[0]!;
+
+  it("offers to add a note when there's none, and opens to write one", () => {
+    openSheet({ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } });
+
+    expect(header().textContent).toContain("Add note");
+    expect(container.querySelector(".sb-pe-note-sheet-body")).toBeNull();
+
+    click(header());
+
+    const title = container.querySelector<HTMLInputElement>(
+      "#sb-pe-note-sheet-title"
+    );
+    expect(title).not.toBeNull();
+    type(title, "In the beginning");
+    expect(item()).toMatchObject({ noteTitle: "In the beginning" });
+    // Nothing to remove until there's a note.
+    expect(header().textContent).toContain("In the beginning");
+  });
+
+  it("shows a note the way playback does, and Remove note clears it", () => {
+    openSheet({
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1 },
+      noteTitle: "Light",
+      note: "<p>God speaks.</p>",
+    });
+
+    expect(header().textContent).toContain("Genesis 1");
+    expect(header().textContent).toContain("Light");
+
+    click(header());
+    click(container.querySelector(".sb-pe-note-remove"));
+
+    expect(item()).toEqual({
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1 },
+    });
+    expect(header().textContent).toContain("Add note");
+    expect(container.querySelector(".sb-pe-note-sheet-body")).toBeNull();
   });
 });
 

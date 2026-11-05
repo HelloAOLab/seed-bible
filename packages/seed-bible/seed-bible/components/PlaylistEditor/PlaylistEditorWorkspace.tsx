@@ -13,6 +13,11 @@ import { HeroImageField } from "../HeroImageField/HeroImageField";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { PeIcon, StepSettings } from "./editorControls";
+import { MaterialIcon } from "../icons";
+import {
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "../ContextMenu/ContextMenu";
 import {
   AddStepButton,
   AddStepMenu,
@@ -84,7 +89,7 @@ function useChapterLoader(state: SeedBibleState): ScriptureChapterLoader {
   };
 }
 
-function useOtherSteps(state: SeedBibleState, openIndex: number) {
+export function useOtherSteps(state: SeedBibleState, openIndex: number) {
   const { t } = useI18n();
   const resolveBookName = useResolveBookName(state.tabs);
   const items = state.playlists.editingPlaylist.value?.items ?? [];
@@ -96,8 +101,9 @@ function useOtherSteps(state: SeedBibleState, openIndex: number) {
 }
 
 /**
- * Duplicate and Delete for the open step; on a phone (`square`), Delete and
- * an Add button that inserts a new step after it.
+ * Duplicate and Delete for the open step. On a phone (`square`), its title
+ * bar's Add button, which inserts a new step after it, and a menu with the
+ * step's settings and Delete.
  */
 function StepActions(props: {
   playlists: PlaylistManager;
@@ -115,16 +121,9 @@ function StepActions(props: {
     const add = t("playlist-editor-add-step-title", {
       defaultValue: "Add a step",
     });
+    const more = t("more", { defaultValue: "More" });
     return (
       <div className="sb-pe-mobile-header-actions">
-        <button
-          type="button"
-          className="sb-pe-square-button sb-pe-step-action--danger"
-          aria-label={remove}
-          onClick={() => playlists.removeEditingPlaylistItem(index)}
-        >
-          <PeIcon name="trash" />
-        </button>
         <button
           type="button"
           className="sb-pe-square-button sb-pe-add-toggle"
@@ -143,6 +142,28 @@ function StepActions(props: {
             +
           </span>
         </button>
+        <ContextMenuWithButton
+          buttonClassName="sb-pe-square-button sb-pe-step-menu"
+          aria-label={more}
+          title={more}
+          icon={<MaterialIcon>more_horiz</MaterialIcon>}
+        >
+          <ContextMenuItem
+            onClick={() => (playlists.editorStepSettingsOpen.value = true)}
+          >
+            <PeIcon name="settings" />
+            {t("playlist-editor-item-settings", {
+              defaultValue: "Item settings",
+            })}
+          </ContextMenuItem>
+          <ContextMenuItem
+            className="sb-pe-step-menu-delete"
+            onClick={() => playlists.removeEditingPlaylistItem(index)}
+          >
+            <PeIcon name="trash" />
+            {remove}
+          </ContextMenuItem>
+        </ContextMenuWithButton>
       </div>
     );
   }
@@ -168,42 +189,11 @@ function StepActions(props: {
   );
 }
 
-/** The phone's collapsible home for the step's settings. */
-function MobileStepSettings(props: {
-  playlists: PlaylistManager;
-  index: number;
-  item: PlaylistItemData;
-}) {
-  const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="sb-pe sb-pe-step-settings" data-open={open}>
-      <button
-        type="button"
-        className="sb-pe-step-settings-toggle"
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-      >
-        <span className="sb-pe-step-settings-toggle-label">
-          <PeIcon name="settings" />
-          {t("playlist-editor-step-settings", {
-            defaultValue: "Step Settings",
-          })}
-        </span>
-        <PeIcon name="chevron-down" />
-      </button>
-      {open ? (
-        <div className="sb-pe-step-settings-body">
-          <StepSettings {...props} />
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 /**
  * Shown in the reader right after the open scripture step's verses: its note,
- * or a button to add one, plus the step's number beside the passage.
+ * or a button to add one, plus the step's number beside the passage. On a
+ * phone it's just the number: the note is in a sheet on the chapter pill
+ * (`PlaylistStepNoteSheet`), and the step's settings in its title bar's menu.
  */
 export function PlaylistScriptureStepSlot(props: {
   state: SeedBibleState;
@@ -257,7 +247,7 @@ export function PlaylistScriptureStepSlot(props: {
           })}
         </span>
       ) : null}
-      {preview ? (
+      {compact ? null : preview ? (
         hasNote ? (
           <div className="sb-pe-note-preview">
             {item.noteTitle ? <strong>{item.noteTitle}</strong> : null}
@@ -306,9 +296,6 @@ export function PlaylistScriptureStepSlot(props: {
           })}
         </button>
       )}
-      {compact && !preview ? (
-        <MobileStepSettings playlists={playlists} index={index} item={item} />
-      ) : null}
     </div>
   );
 }
@@ -459,6 +446,48 @@ function PlaylistDetailsSheet(props: { state: SeedBibleState }) {
         </div>
         <div className="sb-pe-details-sheet-body">
           <PlaylistDetailsFields state={state} idPrefix="sb-pe-details" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+/** Phone only: the open step's settings, from its title bar's menu. */
+function PlaylistStepSettingsSheet(props: {
+  state: SeedBibleState;
+  index: number;
+  item: PlaylistItemData;
+}) {
+  const { state, index, item } = props;
+  const { playlists } = state;
+  const { t } = useI18n();
+  const close = () => (playlists.editorStepSettingsOpen.value = false);
+  const heading = t("playlist-editor-item-settings", {
+    defaultValue: "Item settings",
+  });
+
+  return (
+    <>
+      <div className="sb-pe-sheet-scrim" onClick={close} />
+      <div
+        className="sb-pe sb-pe-sheet sb-pe-details-sheet sb-pe-settings-sheet"
+        role="dialog"
+        aria-label={heading}
+      >
+        <div className="sb-pe-sheet-handle" />
+        <div className="sb-pe-details-sheet-header">
+          <h3 className="sb-pe-details-sheet-title">{heading}</h3>
+          <button
+            type="button"
+            className="sb-pe-panel-close"
+            aria-label={t("close", { defaultValue: "Close" })}
+            onClick={close}
+          >
+            <PeIcon name="close" />
+          </button>
+        </div>
+        <div className="sb-pe-details-sheet-body">
+          <StepSettings playlists={playlists} index={index} item={item} />
         </div>
       </div>
     </>
@@ -745,9 +774,6 @@ export function PlaylistEditorWorkspace(props: {
           item={item}
           preview={preview}
         />
-        {compact && !preview ? (
-          <MobileStepSettings playlists={playlists} index={index} item={item} />
-        ) : null}
       </div>
     ) : !item && !compact ? (
       // Desktop's list is in the side pane, so beside it this says what to do.
@@ -872,6 +898,9 @@ export function PlaylistEditorWorkspace(props: {
           </div>
         ) : null}
         {detailsOpen ? <PlaylistDetailsSheet state={state} /> : null}
+        {item && playlists.editorStepSettingsOpen.value ? (
+          <PlaylistStepSettingsSheet state={state} index={index} item={item} />
+        ) : null}
       </div>
     );
   }
