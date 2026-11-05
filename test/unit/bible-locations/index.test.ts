@@ -1,3 +1,4 @@
+import type { FeatureCollection } from "geojson";
 import {
   findLocation,
   getPlaceAttribution,
@@ -218,9 +219,7 @@ describe("toMapGeoJson", () => {
         ],
       };
 
-      const drawn = toMapGeoJson(CRETE, file) as {
-        features: { geometry: unknown; properties: { mapShade?: unknown } }[];
-      };
+      const drawn = toMapGeoJson(CRETE, file) as FeatureCollection;
 
       expect(drawn.features.map((band) => band.geometry)).toEqual([
         { type: "Polygon", coordinates: square(3) },
@@ -228,8 +227,8 @@ describe("toMapGeoJson", () => {
         { type: "Polygon", coordinates: square(1) },
       ]);
       for (const band of drawn.features) {
-        expect(band.properties.mapShade).toBeGreaterThan(0);
-        expect(band.properties.mapShade).toBeLessThan(0.2);
+        expect(band.properties?.mapShade).toBeGreaterThan(0);
+        expect(band.properties?.mapShade).toBeLessThan(0.2);
       }
     });
 

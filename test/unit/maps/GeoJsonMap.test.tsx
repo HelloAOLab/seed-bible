@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import type { GeoJsonObject } from "geojson";
+import type { Feature, GeoJsonObject } from "geojson";
 import {
   createLeafletLoader,
   GeoJsonMap,
@@ -276,10 +276,10 @@ describe("GeoJsonMap", () => {
   });
 
   it("shades a band at its own strength, with no outline", async () => {
-    const band = {
-      ...(CRETE_OUTLINE as object),
+    const band: Feature = {
+      ...(CRETE_OUTLINE as Feature),
       properties: { mapShade: 0.07 },
-    } as GeoJsonObject;
+    };
 
     await show(<GeoJsonMap data={band} />);
 
