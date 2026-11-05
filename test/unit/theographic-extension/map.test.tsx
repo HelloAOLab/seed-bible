@@ -16,10 +16,7 @@ import {
   type PlaceLocations,
 } from "@packages/theographic-extension/ext_theographic/map";
 import type { TheographicPlaceEntry } from "@packages/theographic-extension/ext_theographic/provider";
-import {
-  getPlaceAttribution,
-  toStandardGeoJson,
-} from "@packages/bible-locations";
+import { getPlaceAttribution, toMapGeoJson } from "@packages/bible-locations";
 import { waitFor } from "../seed-bible/testUtils/createTestSeedBibleState";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -76,7 +73,7 @@ function fakeLocations(): PlaceLocations & {
   return {
     findLocation: vi.fn((name: string) => table[name.toLowerCase()] ?? null),
     getPlaceGeoJsonUrl: (entry) => `https://files.test/${entry.geojson}.json`,
-    toStandardGeoJson,
+    toMapGeoJson,
     getPlaceAttribution,
   };
 }

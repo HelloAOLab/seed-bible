@@ -32,15 +32,16 @@
   font-family: inherit;
 }
 
-/* The base map's tiles have no dark version; the theme dims them instead. */
-.sb-geojson-map .leaflet-tile-pane {
-  filter: var(--sb-map-tile-filter);
-}
+/* The base map's tiles have no dark version; the theme dims them instead.
 
-/* The verse toolbar inverts every image inside it in dark themes, meant for
-   extensions' raster icons. On a tile that would undo the dimming above. */
-.sb-geojson-map .leaflet-tile {
-  filter: none;
+   Each tile rather than the pane they sit in: Leaflet hides Chrome's hairline
+   gaps between tiles by blending them additively, which only works when each
+   tile is already dimmed as it blends; dimming the whole pane afterwards
+   showed the gaps as lines one tile apart. This also out-ranks the verse
+   toolbar's dark-theme inversion of every image inside it (meant for
+   extensions' raster icons), which would undo the dimming. */
+.sb-geojson-map .leaflet-container img.leaflet-tile {
+  filter: var(--sb-map-tile-filter);
 }
 
 .sb-geojson-map-shape {
@@ -48,6 +49,30 @@
   stroke-width: 2;
   fill: var(--sb-primary-color);
   fill-opacity: 0.2;
+}
+
+/* A river or road: a path has no inside, and a fill would close it into a
+   wedge between its ends. */
+.sb-geojson-map-line {
+  stroke: var(--sb-primary-color);
+  stroke-width: 3;
+  fill: none;
+}
+
+/* Seen on zooming in, such as a town's ancient remains: lighter than the
+   place itself. */
+.sb-geojson-map-detail {
+  stroke: var(--sb-primary-color);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  fill: var(--sb-primary-color);
+  fill-opacity: 0.12;
+}
+
+/* Strength comes from each feature's `mapShade`, which Leaflet sets as the
+   path's `fill-opacity`; setting it here would override that. */
+.sb-geojson-map-shade {
+  fill: var(--sb-primary-color);
 }
 
 .sb-geojson-map-point {

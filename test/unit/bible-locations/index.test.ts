@@ -3,7 +3,7 @@ import {
   getPlaceAttribution,
   getPlaceGeoJsonUrl,
   OPENBIBLE_ATTRIBUTION,
-  toStandardGeoJson,
+  toMapGeoJson,
 } from "@packages/bible-locations";
 
 describe("findLocation", () => {
@@ -33,7 +33,7 @@ describe("getPlaceGeoJsonUrl", () => {
   });
 });
 
-describe("toStandardGeoJson", () => {
+describe("toMapGeoJson", () => {
   const ACCO = { place: "Acco", geojson: "Acco" };
   const JERUSALEM = { place: "Jerusalem", geojson: "m66c5b8" };
 
@@ -48,7 +48,7 @@ describe("toStandardGeoJson", () => {
       type: "Feature",
     };
 
-    expect(toStandardGeoJson(ACCO, file)).toEqual({
+    expect(toMapGeoJson(ACCO, file)).toEqual({
       geometry: {
         coordinates: [35.087499999999999, 32.921300000000002],
         type: "Point",
@@ -65,7 +65,7 @@ describe("toStandardGeoJson", () => {
       properties: {},
     };
 
-    expect(toStandardGeoJson(ACCO, file)).toEqual(file);
+    expect(toMapGeoJson(ACCO, file)).toEqual(file);
   });
 
   it("leaves the fetched file itself untouched", () => {
@@ -75,7 +75,7 @@ describe("toStandardGeoJson", () => {
       properties: {},
     };
 
-    toStandardGeoJson(ACCO, file);
+    toMapGeoJson(ACCO, file);
 
     expect(file.geometry.coordinates).toEqual(["32.9213", "35.0875"]);
   });
@@ -109,7 +109,7 @@ describe("toStandardGeoJson", () => {
       ],
     };
 
-    expect(toStandardGeoJson(ACCO, file)).toEqual({
+    expect(toMapGeoJson(ACCO, file)).toEqual({
       type: "FeatureCollection",
       features: [
         {
@@ -138,7 +138,7 @@ describe("toStandardGeoJson", () => {
     });
   });
 
-  it("passes OpenBible's files through as they are", () => {
+  it("passes an OpenBible file without roles through as it is", () => {
     const file = {
       type: "FeatureCollection",
       features: [
@@ -150,13 +150,130 @@ describe("toStandardGeoJson", () => {
       ],
     };
 
-    expect(toStandardGeoJson(JERUSALEM, file)).toBe(file);
+    expect(toMapGeoJson(JERUSALEM, file)).toBe(file);
+  });
+
+  describe("an OpenBible file, which holds several versions of a place", () => {
+    const CRETE = { place: "Crete", geojson: "mf93341" };
+
+    function feature(role: string, type: string, coordinates: unknown) {
+      return {
+        type: "Feature",
+        geometry: { type, coordinates },
+        properties: { id: `x.${role}`, role },
+      };
+    }
+
+    const square = (size: number) => [
+      [
+        [0, 0],
+        [size, 0],
+        [size, size],
+        [0, 0],
+      ],
+    ];
+
+    it("draws one outline for a place with one, OpenStreetMap's first", () => {
+      const precise = feature("precise", "Polygon", square(3));
+      const file = {
+        type: "FeatureCollection",
+        features: [
+          feature("representative_point", "Point", [1, 1]),
+          feature("geometry", "Polygon", square(2)),
+          feature("simplified_geometry", "Polygon", square(2)),
+          precise,
+          feature("simplified_precise", "Polygon", square(3)),
+        ],
+      };
+
+      expect(toMapGeoJson(CRETE, file)).toEqual({
+        type: "FeatureCollection",
+        features: [precise],
+      });
+    });
+
+    it("falls back to OpenBible's own outline", () => {
+      const geometry = feature("geometry", "Polygon", square(2));
+      const file = {
+        type: "FeatureCollection",
+        features: [feature("representative_point", "Point", [1, 1]), geometry],
+      };
+
+      expect(toMapGeoJson(CRETE, file)).toEqual({
+        type: "FeatureCollection",
+        features: [geometry],
+      });
+    });
+
+    it("shades a region's confidence bands, without its labelling point", () => {
+      const file = {
+        type: "FeatureCollection",
+        features: [
+          feature("representative_point", "Point", [1, 1]),
+          feature("isobands", "MultiPolygon", [
+            square(3),
+            square(2),
+            square(1),
+          ]),
+        ],
+      };
+
+      const drawn = toMapGeoJson(CRETE, file) as {
+        features: { geometry: unknown; properties: { mapShade?: unknown } }[];
+      };
+
+      expect(drawn.features.map((band) => band.geometry)).toEqual([
+        { type: "Polygon", coordinates: square(3) },
+        { type: "Polygon", coordinates: square(2) },
+        { type: "Polygon", coordinates: square(1) },
+      ]);
+      for (const band of drawn.features) {
+        expect(band.properties.mapShade).toBeGreaterThan(0);
+        expect(band.properties.mapShade).toBeLessThan(0.2);
+      }
+    });
+
+    it("draws a settlement's point, with its remains as a detail and without its precision circle", () => {
+      const point = feature("point", "Point", [1, 1]);
+      const local = feature("local", "Polygon", square(1));
+      const file = {
+        type: "FeatureCollection",
+        features: [
+          point,
+          local,
+          feature("simplified_local", "Polygon", square(1)),
+          feature("precision_radius", "Polygon", square(2)),
+        ],
+      };
+
+      expect(toMapGeoJson(JERUSALEM, file)).toEqual({
+        type: "FeatureCollection",
+        features: [
+          point,
+          { ...local, properties: { ...local.properties, mapDetail: true } },
+        ],
+      });
+    });
+
+    it("draws a settlement with no remains as its point alone", () => {
+      const point = feature("point", "Point", [1, 1]);
+      const file = {
+        type: "FeatureCollection",
+        features: [point, feature("precision_radius", "Polygon", square(2))],
+      };
+
+      expect(toMapGeoJson(JERUSALEM, file)).toEqual({
+        type: "FeatureCollection",
+        features: [point],
+      });
+    });
   });
 
   it("copes with a hand-built file that has no geometry", () => {
-    expect(
-      toStandardGeoJson(ACCO, { type: "Feature", geometry: null })
-    ).toEqual({ type: "Feature", geometry: null });
+    expect(toMapGeoJson(ACCO, { type: "Feature", geometry: null })).toEqual({
+      type: "Feature",
+      geometry: null,
+    });
   });
 });
 

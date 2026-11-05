@@ -10,7 +10,7 @@ import {
   findLocation,
   getPlaceAttribution,
   getPlaceGeoJsonUrl,
-  toStandardGeoJson,
+  toMapGeoJson,
 } from "@seed-bible/bible-locations";
 import {
   createIndexedDbTheographicStore,
@@ -105,7 +105,7 @@ export default function initTheographicExtension() {
           locations: {
             findLocation,
             getPlaceGeoJsonUrl,
-            toStandardGeoJson,
+            toMapGeoJson,
             getPlaceAttribution,
           },
           isMobile: context.app.isMobile,

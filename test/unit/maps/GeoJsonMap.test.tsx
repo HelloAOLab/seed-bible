@@ -251,6 +251,64 @@ describe("GeoJsonMap", () => {
     expect(zooms()).toEqual(["14"]);
   });
 
+  it("opens a town at a lone point's zoom, drawing its remains without framing them", async () => {
+    const town = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [35.2316, 31.778] },
+          properties: {},
+        },
+        {
+          ...(JERUSALEM_OUTLINE as object),
+          properties: { mapDetail: true },
+        },
+      ],
+    } as GeoJsonObject;
+
+    await showSized(<GeoJsonMap data={town} label="Jerusalem" />);
+
+    expect(container.querySelector(".sb-geojson-map-detail")).toBeTruthy();
+    expect(container.querySelector(".sb-geojson-map-point")).toBeTruthy();
+    // The remains alone would frame at zoom 14.
+    expect(zooms()).toEqual(["10"]);
+  });
+
+  it("shades a band at its own strength, with no outline", async () => {
+    const band = {
+      ...(CRETE_OUTLINE as object),
+      properties: { mapShade: 0.07 },
+    } as GeoJsonObject;
+
+    await show(<GeoJsonMap data={band} />);
+
+    const path = container.querySelector(".sb-geojson-map-shade");
+    expect(path?.getAttribute("fill-opacity")).toBe("0.07");
+    expect(path?.getAttribute("stroke")).toBe("none");
+    expect(container.querySelector(".sb-geojson-map-shape")).toBeNull();
+  });
+
+  it("draws a river as a line, not a filled shape", async () => {
+    const river = {
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          [35.58, 32.7],
+          [35.55, 32.3],
+          [35.55, 31.8],
+        ],
+      },
+      properties: {},
+    } as GeoJsonObject;
+
+    await show(<GeoJsonMap data={river} />);
+
+    expect(container.querySelector(".sb-geojson-map-line")).toBeTruthy();
+    expect(container.querySelector(".sb-geojson-map-shape")).toBeNull();
+  });
+
   it("keeps points close together at a lone point's zoom", async () => {
     const twoPoints = {
       type: "Feature",

@@ -27,10 +27,7 @@ import {
   placeMapId,
   type PlaceLocations,
 } from "@packages/theographic-extension/ext_theographic/map";
-import {
-  getPlaceAttribution,
-  toStandardGeoJson,
-} from "@packages/bible-locations";
+import { getPlaceAttribution, toMapGeoJson } from "@packages/bible-locations";
 import { waitFor } from "../seed-bible/testUtils/createTestSeedBibleState";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -947,7 +944,7 @@ describe("the redesigned card", () => {
           ? { place: "Erech", geojson: "Erech" }
           : null,
       getPlaceGeoJsonUrl: () => ERECH_FILE,
-      toStandardGeoJson,
+      toMapGeoJson,
       getPlaceAttribution,
     };
     const ABANA: TheographicPlaceEntry = {

@@ -27,15 +27,28 @@ export const POINT_ZOOM = 10;
 const DEFAULT_VIEW = { center: [31.5, 35] as [number, number], zoom: 6 };
 
 const POINT_TYPES = new Set(["Point", "MultiPoint"]);
+const LINE_TYPES = new Set(["LineString", "MultiLineString"]);
 
-/** Whether the data holds anything besides points: an outline or a line. */
+/** A feature drawn for a closer look, which the opening view doesn't frame. */
+function isDetail(feature: Feature | undefined): boolean {
+  return feature?.properties?.mapDetail === true;
+}
+
+/**
+ * Whether the data holds anything besides points that the view frames: an
+ * outline or a line.
+ */
 function hasShape(data: GeoJsonObject): boolean {
   switch (data.type) {
     case "FeatureCollection":
       return (data as FeatureCollection).features.some(hasShape);
     case "Feature": {
-      const { geometry } = data as Feature;
-      return geometry !== null && hasShape(geometry);
+      const feature = data as Feature;
+      return (
+        feature.geometry !== null &&
+        !isDetail(feature) &&
+        hasShape(feature.geometry)
+      );
     }
     case "GeometryCollection":
       return (data as GeometryCollection).geometries.some(hasShape);
@@ -114,17 +127,40 @@ function drawMap(
       map.attributionControl.addAttribution(credit);
     }
 
+    // What the opening view frames: everything but the details.
+    const framed = L.featureGroup();
     const layer = L.geoJSON(data, {
       // Applied to the point circles too, overriding any class they're made with.
-      style: (feature) => ({
-        className: POINT_TYPES.has(feature?.geometry?.type ?? "")
-          ? "sb-geojson-map-point"
-          : "sb-geojson-map-shape",
-      }),
+      style: (feature) => {
+        const shade: unknown = feature?.properties?.mapShade;
+        if (typeof shade === "number") {
+          return {
+            className: "sb-geojson-map-shade",
+            stroke: false,
+            fillOpacity: shade,
+          };
+        }
+        const type = feature?.geometry?.type ?? "";
+        return {
+          className: POINT_TYPES.has(type)
+            ? "sb-geojson-map-point"
+            : LINE_TYPES.has(type)
+              ? "sb-geojson-map-line"
+              : isDetail(feature)
+                ? "sb-geojson-map-detail"
+                : "sb-geojson-map-shape",
+        };
+      },
       pointToLayer: (_feature, latlng) => L.circleMarker(latlng, { radius: 7 }),
+      onEachFeature: (feature, featureLayer) => {
+        if (!isDetail(feature)) {
+          framed.addLayer(featureLayer);
+        }
+      },
     }).addTo(map);
 
-    const bounds = layer.getBounds();
+    const framedBounds = framed.getBounds();
+    const bounds = framedBounds.isValid() ? framedBounds : layer.getBounds();
     // An outline fills the view, however small. Points alone stop at a town
     // and the country around it, so there's something to place them by.
     const maxZoom = hasShape(data) ? tileSource.maxZoom : POINT_ZOOM;

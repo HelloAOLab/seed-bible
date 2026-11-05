@@ -7,7 +7,7 @@ import type {
   getPlaceAttribution,
   getPlaceGeoJsonUrl,
   PlaceData,
-  toStandardGeoJson,
+  toMapGeoJson,
 } from "@seed-bible/bible-locations";
 import { GeoJsonMap, isMapOpen, openMap, type MapHost } from "@seed-bible/maps";
 import { withoutQualifier } from "./names";
@@ -74,7 +74,7 @@ export function createIsPlaceOpen(
 export interface PlaceLocations {
   findLocation: typeof findLocation;
   getPlaceGeoJsonUrl: typeof getPlaceGeoJsonUrl;
-  toStandardGeoJson: typeof toStandardGeoJson;
+  toMapGeoJson: typeof toMapGeoJson;
   getPlaceAttribution: typeof getPlaceAttribution;
 }
 
@@ -143,7 +143,7 @@ export async function resolvePlaceMapData(
         locations.getPlaceGeoJsonUrl(known)
       );
       return {
-        data: locations.toStandardGeoJson(known, geojson),
+        data: locations.toMapGeoJson(known, geojson),
         attribution: locations.getPlaceAttribution(known),
       };
     } catch {
