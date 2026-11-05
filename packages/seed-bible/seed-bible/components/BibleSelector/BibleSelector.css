@@ -1170,7 +1170,7 @@
 .footer {
   padding: 0.625rem;
   text-align: center;
-  color: #ff5722;
+  color: var(--sb-primary-color);
   font-weight: 500;
   cursor: pointer;
   border-top: 1px solid var(--sb-divider-color);

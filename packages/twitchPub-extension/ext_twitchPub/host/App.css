@@ -117,7 +117,7 @@
   box-sizing: border-box;
   border-radius: 999px;
   background: var(--sb-secondary-color, #e6e6e6);
-  color: #fff;
+  color: var(--sb-secondary-font-color, #333);
   font-size: 13px;
   font-weight: 600;
   text-align: center;
