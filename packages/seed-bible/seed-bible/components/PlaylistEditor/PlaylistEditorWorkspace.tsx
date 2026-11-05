@@ -16,6 +16,7 @@ import { PeIcon, StepSettings } from "./editorControls";
 import {
   AddStepButton,
   AddStepMenu,
+  openAddStepMenu,
   PlaylistEditorBackButton,
   PlaylistStepsSummary,
   usePlaylistDraftStatus,
@@ -94,7 +95,10 @@ function useOtherSteps(state: SeedBibleState, openIndex: number) {
   );
 }
 
-/** Duplicate and Delete for the open step. */
+/**
+ * Duplicate and Delete for the open step; on a phone (`square`), Delete and
+ * an Add button that inserts a new step after it.
+ */
 function StepActions(props: {
   playlists: PlaylistManager;
   index: number;
@@ -107,16 +111,12 @@ function StepActions(props: {
   });
   const remove = t("playlist-editor-delete", { defaultValue: "Delete" });
   if (square) {
+    const menuOpen = playlists.editorAddMenu.value !== null;
+    const add = t("playlist-editor-add-step-title", {
+      defaultValue: "Add a step",
+    });
     return (
       <div className="sb-pe-mobile-header-actions">
-        <button
-          type="button"
-          className="sb-pe-square-button"
-          aria-label={duplicate}
-          onClick={() => playlists.duplicateEditingPlaylistItem(index)}
-        >
-          <PeIcon name="copy" />
-        </button>
         <button
           type="button"
           className="sb-pe-square-button sb-pe-step-action--danger"
@@ -124,6 +124,24 @@ function StepActions(props: {
           onClick={() => playlists.removeEditingPlaylistItem(index)}
         >
           <PeIcon name="trash" />
+        </button>
+        <button
+          type="button"
+          className="sb-pe-square-button sb-pe-add-toggle"
+          aria-label={add}
+          title={add}
+          aria-expanded={menuOpen}
+          onClick={() => {
+            if (menuOpen) {
+              playlists.editorAddMenu.value = null;
+            } else {
+              openAddStepMenu(playlists);
+            }
+          }}
+        >
+          <span className="sb-pe-add-toggle-plus" aria-hidden="true">
+            +
+          </span>
         </button>
       </div>
     );
@@ -788,6 +806,13 @@ export function PlaylistEditorWorkspace(props: {
           {item ? (
             <StepActions playlists={playlists} index={index} square />
           ) : null}
+          {/* A step's page opens the menu from its title bar's Add button. */}
+          {item && addMenu ? (
+            <AddStepMenu
+              playlists={playlists}
+              afterIndex={addMenu.afterIndex}
+            />
+          ) : null}
         </header>
         {children}
         {onList ? (
@@ -797,19 +822,26 @@ export function PlaylistEditorWorkspace(props: {
         ) : (
           card
         )}
-        <div className="sb-pe sb-pe-mobile-bottom">
-          <VersePickBar state={state} />
-          <div className="sb-pe-mobile-bottom-row">
-            <AddStepButton playlists={playlists} short />
-            <PublishButton state={state} />
+        {/* Add and Review & publish belong to the list; a step's page keeps
+            only the verse pick bar here, while verses are being picked. */}
+        {onList ? (
+          <div className="sb-pe sb-pe-mobile-bottom">
+            <div className="sb-pe-mobile-bottom-row">
+              <AddStepButton playlists={playlists} short />
+              <PublishButton state={state} />
+            </div>
+            {addMenu ? (
+              <AddStepMenu
+                playlists={playlists}
+                afterIndex={addMenu.afterIndex}
+              />
+            ) : null}
           </div>
-          {addMenu ? (
-            <AddStepMenu
-              playlists={playlists}
-              afterIndex={addMenu.afterIndex}
-            />
-          ) : null}
-        </div>
+        ) : playlists.editorVersePickIndex.value !== null ? (
+          <div className="sb-pe sb-pe-mobile-bottom">
+            <VersePickBar state={state} />
+          </div>
+        ) : null}
         {detailsOpen ? <PlaylistDetailsSheet state={state} /> : null}
       </div>
     );

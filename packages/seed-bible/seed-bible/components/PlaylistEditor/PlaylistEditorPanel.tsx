@@ -395,7 +395,7 @@ export function AddStepMenu(props: {
         close();
       }
     };
-    // The button that opened the menu toggles it itself, so a press on it
+    // The buttons that open the menu toggle it themselves, so a press on one
     // isn't treated as a click outside (which would close the menu only for
     // the button to open it again).
     const onPointerDown = (event: PointerEvent) => {
@@ -403,7 +403,7 @@ export function AddStepMenu(props: {
       if (
         target &&
         !menuRef.current?.contains(target) &&
-        !target.closest(".sb-pe-add-step")
+        !target.closest(".sb-pe-add-step, .sb-pe-add-toggle")
       ) {
         close();
       }

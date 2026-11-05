@@ -1511,6 +1511,8 @@
 /* ---------- Phone ---------- */
 
 .sb-pe-mobile-header {
+  position: relative;
+  z-index: 4;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1585,6 +1587,28 @@
 
 .sb-pe-square-button.sb-pe-step-action--danger {
   color: var(--pe-danger);
+}
+
+/* A step's page: Add a step, from the title bar. */
+.sb-pe-add-toggle {
+  border-color: var(--pe-add);
+  color: var(--pe-add);
+}
+
+.sb-pe-add-toggle[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--pe-add) 10%, transparent);
+}
+
+.sb-pe-add-toggle-plus {
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* ...and its menu drops down from the title bar rather than rising from the
+   bottom bar, which a step's page doesn't have. */
+.sb-pe-mobile-header .sb-pe-add-menu {
+  top: calc(100% + 8px);
+  bottom: auto;
 }
 
 /* The phone's list of steps: a page of its own, in the reader's place. */

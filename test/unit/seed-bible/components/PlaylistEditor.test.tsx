@@ -287,6 +287,51 @@ describe("the playlist editor", () => {
       expect(header().textContent).toContain("Step 2 of 3 · Video");
     });
 
+    it("puts Delete and Add in a step's title bar, with no Duplicate, Review or bottom bar", () => {
+      openWorkspace(STEPS, 0, true);
+
+      expect(
+        [
+          ...header().querySelectorAll(".sb-pe-mobile-header-actions button"),
+        ].map((b) => b.getAttribute("aria-label"))
+      ).toEqual(["Delete", "Add a step"]);
+      expect(container.querySelector(".sb-pe-publish")).toBeNull();
+      expect(container.querySelector(".sb-pe-mobile-bottom")).toBeNull();
+    });
+
+    it("keeps Add and Review & publish at the bottom of the list", () => {
+      openWorkspace(STEPS, -1, true);
+
+      const bottom = container.querySelector(".sb-pe-mobile-bottom")!;
+      expect(bottom.querySelector(".sb-pe-add-step")).not.toBeNull();
+      expect(bottom.querySelector(".sb-pe-publish")).not.toBeNull();
+    });
+
+    it("adds a step after the open one from the title bar's Add", () => {
+      openWorkspace(STEPS, 0, true);
+
+      click(header().querySelector('[aria-label="Add a step"]'));
+      expect(header().textContent).toContain("Inserted after step 1");
+      click(byText(header(), ".sb-pe-add-option", "Note"));
+
+      expect(items()).toHaveLength(4);
+      expect(items()[1]).toEqual({ type: "html", html: "" });
+      expect(state.playlists.editorStepIndex.value).toBe(1);
+      expect(container.querySelector(".sb-pe-add-menu")).toBeNull();
+    });
+
+    it("shows the verse pick bar at the bottom of a step's page while picking", () => {
+      openWorkspace(STEPS, 0, true);
+      act(() => {
+        state.playlists.editorVersePickIndex.value = 0;
+      });
+
+      expect(
+        container.querySelector(".sb-pe-mobile-bottom .sb-pe-pickbar")
+      ).not.toBeNull();
+      expect(container.querySelector(".sb-pe-publish")).toBeNull();
+    });
+
     it("goes back to the list when the open step is deleted", () => {
       openWorkspace(STEPS, 1, true);
 
