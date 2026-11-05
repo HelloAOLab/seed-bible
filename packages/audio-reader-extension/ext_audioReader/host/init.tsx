@@ -17,6 +17,7 @@ import {
   type PlaybackVerseMark,
   type BibleReadingSession,
   type BibleReadingState,
+  isSessionHost,
   type ChapterVerse,
   type QuickToolContext,
   type SharedAudioPlayback,
@@ -118,6 +119,12 @@ let removeListenAlongPrompt: (() => void) | null = null;
 
 /** Sessions whose dispose already publishes a stop. Wrapping twice would stop twice. */
 const sharedDisposeWrapped = new WeakSet<BibleReadingSession>();
+
+/**
+ * Sessions where a host was present at least once. A joiner can hear the
+ * stored command before presence arrives; that is not the host leaving.
+ */
+const sharedLeadersSeen = new Set<string>();
 
 /**
  * How far a follower may be from the host, in seconds, before it seeks.
@@ -952,6 +959,28 @@ function seekFollowerTo(
   ) {
     listening.controller.seek(target);
   }
+}
+
+/**
+ * Stops this tab following shared audio. The play command can still say
+ * "playing" — the host's stop often lands later than the news that they
+ * left — so this does not wait for that command to clear.
+ */
+function stopSharedListening(
+  sessionId: string,
+  readingState: BibleReadingState,
+  options: { onlyIfFollowing?: boolean } = {}
+): void {
+  const following = sharedAudioFollowed.has(sessionId);
+  if (options.onlyIfFollowing && !following) return;
+  const listening = sessions.get(readingState);
+  if (!listening && !following) return;
+  sharedAudioAwaitingGesture.delete(sessionId);
+  clearListenAlongPrompt();
+  sharedAudioFollowed.delete(sessionId);
+  sharedAudioApplied.delete(sessionId);
+  sharedAudioAligned.delete(sessionId);
+  if (listening) endSession(listening);
 }
 
 /**
@@ -1877,6 +1906,7 @@ export default function initAudioReaderExtension() {
         sharedAudioApplied.clear();
         sharedAudioAligned.clear();
         sharedAudioAwaitingGesture.clear();
+        sharedLeadersSeen.clear();
         clearListenAlongPrompt();
         applyingSharedAudio = false;
         publishingSharedAudio = false;
@@ -1888,15 +1918,35 @@ export default function initAudioReaderExtension() {
       sharedAudioApplied.clear();
       sharedAudioAligned.clear();
       sharedAudioAwaitingGesture.clear();
+      sharedLeadersSeen.clear();
       clearListenAlongPrompt();
 
       // Host play/pause is written into the session; everyone else follows
       // it. The host's own write is ignored here (see `publishingSharedAudio`)
       // so pressing play doesn't start a second copy.
+      //
+      // The guest's tab stays up for a while after the host leaves, in case
+      // the host is only signing back in. The play command stays too, so
+      // follow that absence itself — otherwise the chapter keeps going until
+      // the tab finally closes.
       yield effect(() => {
         const pending = context.tabs.tabs.value.flatMap((tab) => {
           const shared = tab.sharedSession;
           if (!shared) return [];
+          const options = shared.options.value;
+          const users = shared.connectedUsers.value;
+          const leaderConnected =
+            options.hostUserId == null ||
+            users.some(
+              (user) =>
+                isSessionHost(options, user.userId) ||
+                isSessionHost(options, user.connectionId)
+            );
+          // An empty list, or one that doesn't include us, means our own
+          // presence channel is stale. "The host isn't here" is only
+          // meaningful once we can see ourselves.
+          const presenceTrustworthy =
+            shared.isSynced.value && users.some((user) => user.isSelf);
           return [
             {
               readingState: tab.readingState,
@@ -1904,11 +1954,35 @@ export default function initAudioReaderExtension() {
               playback: shared.sharedAudio.value,
               chapter: tab.readingState.chapterData.value,
               translationId: tab.readingState.translationId.value,
+              ended: options.endedAt !== null,
+              leaderConnected,
+              presenceTrustworthy,
             },
           ];
         });
         untracked(() => {
+          const live = new Set(pending.map((item) => item.sessionId));
+          for (const sessionId of sharedLeadersSeen) {
+            if (!live.has(sessionId)) sharedLeadersSeen.delete(sessionId);
+          }
           for (const item of pending) {
+            if (item.leaderConnected) sharedLeadersSeen.add(item.sessionId);
+            const leaderLeft =
+              item.presenceTrustworthy &&
+              sharedLeadersSeen.has(item.sessionId) &&
+              !item.leaderConnected;
+            if (item.ended) {
+              stopSharedListening(item.sessionId, item.readingState);
+              continue;
+            }
+            if (leaderLeft) {
+              // Only silence audio we started from the host. A guest's own
+              // Listen is theirs until the session itself ends.
+              stopSharedListening(item.sessionId, item.readingState, {
+                onlyIfFollowing: true,
+              });
+              continue;
+            }
             applySharedPlayback(
               context,
               item.readingState,

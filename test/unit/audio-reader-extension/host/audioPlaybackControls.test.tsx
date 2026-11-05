@@ -527,6 +527,19 @@ describe("audio-reader playback controls", () => {
         sharedAudio.value = next;
         return next;
       });
+      const options = signal({
+        allowedNavigators: null,
+        allowedDecorators: null,
+        hostUserId: null as string | null,
+        highlightDurationSeconds: 16,
+        endedAt: null as number | null,
+        shareTranslation: false,
+        coHostUserIds: [] as string[],
+        verseSelectionEffectVisibility: "hosts-only" as const,
+      });
+      const connectedUsers = signal<
+        { userId: string | null; connectionId: string; isSelf: boolean }[]
+      >([]);
       const session = {
         id: "session-shared-audio",
         document: {},
@@ -534,23 +547,14 @@ describe("audio-reader playback controls", () => {
         sharedAudio,
         publishAudioPlayback: publish,
         dispose: vi.fn(),
-        options: signal({
-          allowedNavigators: null,
-          allowedDecorators: null,
-          hostUserId: null,
-          highlightDurationSeconds: 16,
-          endedAt: null,
-          shareTranslation: false,
-          coHostUserIds: [],
-          verseSelectionEffectVisibility: "hosts-only" as const,
-        }),
-        connectedUsers: signal([]),
+        options,
+        connectedUsers,
         isSynced: signal(true),
       } as unknown as BibleReadingSession;
       const tab = state.tabs.tabs.peek()[0]!;
       tab.sharedSession = session;
       state.tabs.tabs.value = [...state.tabs.tabs.peek()];
-      return { publish, sharedAudio, readingState };
+      return { publish, sharedAudio, readingState, options, connectedUsers };
     }
 
     function hostCommand(
@@ -694,6 +698,68 @@ describe("audio-reader playback controls", () => {
 
       expect(playSpy).toHaveBeenCalled();
       expect(audio.current!.currentTime).toBeCloseTo(4, 0);
+    });
+
+    it("stops a guest when the host leaves, even though the play command is still set", () => {
+      const { sharedAudio, readingState, options, connectedUsers } =
+        attachSession(false);
+      options.value = { ...options.value, hostUserId: "host-user" };
+      connectedUsers.value = [
+        { userId: "guest", connectionId: "guest-conn", isSelf: true },
+        { userId: "host-user", connectionId: "host-conn", isSelf: false },
+      ];
+
+      sharedAudio.value = hostCommand(readingState, { position: 5 });
+      expect(
+        state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+      ).toBe(true);
+
+      connectedUsers.value = connectedUsers.value.filter((user) => user.isSelf);
+
+      expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
+      expect(audio.current!.paused).toBe(true);
+      expect(sharedAudio.value?.playing).toBe(true);
+    });
+
+    it("starts the guest again when the host comes back", () => {
+      const { sharedAudio, readingState, options, connectedUsers } =
+        attachSession(false);
+      options.value = { ...options.value, hostUserId: "host-user" };
+      connectedUsers.value = [
+        { userId: "guest", connectionId: "guest-conn", isSelf: true },
+        { userId: "host-user", connectionId: "host-conn", isSelf: false },
+      ];
+      sharedAudio.value = hostCommand(readingState, { position: 5 });
+      connectedUsers.value = connectedUsers.value.filter((user) => user.isSelf);
+      expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
+
+      playSpy.mockClear();
+      connectedUsers.value = [
+        { userId: "guest", connectionId: "guest-conn", isSelf: true },
+        { userId: "host-user", connectionId: "host-conn", isSelf: false },
+      ];
+
+      expect(playSpy).toHaveBeenCalled();
+      expect(
+        state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+      ).toBe(true);
+    });
+
+    it("stops a guest when the session is ended, even though the play command is still set", () => {
+      const { sharedAudio, readingState, options, connectedUsers } =
+        attachSession(false);
+      options.value = { ...options.value, hostUserId: "host-user" };
+      connectedUsers.value = [
+        { userId: "guest", connectionId: "guest-conn", isSelf: true },
+        { userId: "host-user", connectionId: "host-conn", isSelf: false },
+      ];
+      sharedAudio.value = hostCommand(readingState, { position: 5 });
+
+      options.value = { ...options.value, endedAt: Date.now() };
+
+      expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
+      expect(audio.current!.paused).toBe(true);
+      expect(sharedAudio.value?.playing).toBe(true);
     });
 
     it("stops a participant when the host stops", () => {
