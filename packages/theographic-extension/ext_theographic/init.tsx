@@ -99,6 +99,7 @@ export default function initTheographicExtension() {
           panes: context.panes,
           locations: { findLocation, getPlaceGeoJsonUrl },
           isMobile: context.app.isMobile,
+          modals: context.modals,
         })
       );
     },

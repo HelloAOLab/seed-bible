@@ -4,6 +4,12 @@
 
 ### ✨ Added
 
+- In a shared session, see where people reading ahead of or behind you are: their picture stays at the top or bottom edge of the screen with an arrow pointing their way. ([#1961](https://github.com/HelloAOLab/seed-bible/issues/1961))
+- Extensions can read much more of the Free Use Bible API through `sb.bible`: list translations and their books, search for verses, and read commentaries and datasets such as cross-references.
+  - A chapter now comes with its headings, paragraph breaks, footnotes, and the chapters before and after it, as well as its plain-text verses.
+  - Translations the user has downloaded keep working with no connection, and the translation list marks which ones are downloaded.
+  - Extension tests that answer `bible.chapter` with `createTestHost` need to return the fuller chapter.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

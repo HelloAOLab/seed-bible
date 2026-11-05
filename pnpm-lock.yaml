@@ -448,11 +448,7 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
-  packages/bible-locations:
-    dependencies:
-      seed-bible:
-        specifier: workspace:*
-        version: link:../seed-bible
+  packages/bible-locations: {}
 
   packages/bible-stack:
     dependencies:
@@ -496,15 +492,6 @@ importers:
 
   packages/house-of-the-lord:
     dependencies:
-      seed-bible:
-        specifier: workspace:*
-        version: link:../seed-bible
-
-  packages/locations-extension:
-    dependencies:
-      '@seed-bible/bible-locations':
-        specifier: workspace:*
-        version: link:../bible-locations
       seed-bible:
         specifier: workspace:*
         version: link:../seed-bible

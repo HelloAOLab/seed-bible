@@ -4,7 +4,7 @@ import { forwardRef } from "preact/compat";
 import { useI18n } from "../../i18n/I18nManager";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
+import { DiscoverSection } from "../Discover/DiscoverSection";
 import {
   ScriptureItemInput,
   type ScriptureItemInputHandle,
