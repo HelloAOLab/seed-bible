@@ -55,8 +55,10 @@
 
   /* `:where` keeps this reset at one class's weight: enough to override the
      app's global `button` styles, while any editor class declared below
-     still wins. */
-  & :where(button) {
+     still wins. The cover image field is a shared component styled by its own
+     stylesheet, at that same weight, so it's left out: the reset would
+     otherwise strip its "Add cover image" button bare and invisible. */
+  & :where(button:not(.sb-hero-field *)) {
     font: inherit;
     color: inherit;
     background: none;
@@ -1533,9 +1535,31 @@
   margin: 0;
   font-weight: 700;
   font-size: 14px;
+  min-width: 0;
+}
+
+/* Opens the details sheet; the pencil, as beside the desktop panel's title,
+   says it can be edited. */
+.sb-pe-mobile-title-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  font-weight: inherit;
+}
+
+.sb-pe-mobile-title-text {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.sb-pe-mobile-title-button .sb-pe-icon {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  opacity: 0.6;
 }
 
 .sb-pe-mobile-status {
@@ -1763,6 +1787,39 @@
 }
 
 /* ---------- Review & publish ---------- */
+
+/* The phone's sheet for the playlist's title, description and cover. Its
+   fields scroll under the header when the cover or keyboard makes them tall. */
+/* Taller than the steps sheet, up to just short of the top of the editor:
+   it starts above the editor's bottom bar and the app's tabs (see
+   `.sb-pe-sheet`'s `bottom`). */
+.sb-pe-details-sheet {
+  max-height: calc(100% - var(--sb-reader-bottom-chrome) - 64px - 24px);
+}
+
+.sb-pe-details-sheet-title {
+  margin: 0;
+  font-family: var(--pe-font-ui);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* The cover at the size the shared playlist page shows it, so the sheet
+   needn't scroll far to reach it. */
+.sb-pe-details-sheet-body .sb-hero-field {
+  width: min(100%, 15rem);
+}
+
+.sb-pe-details-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 8px 4px;
+  font-family: var(--pe-font-ui);
+}
 
 .sb-pe-review {
   display: flex;

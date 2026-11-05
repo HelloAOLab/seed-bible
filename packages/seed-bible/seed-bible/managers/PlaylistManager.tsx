@@ -1349,6 +1349,11 @@ export function createPlaylistManager(
   const editorVersePickIndex = signal<number | null>(null);
   /** Phone only: whether the sheet listing every step is open. */
   const editorStepsSheetOpen = signal(false);
+  /**
+   * Phone only: whether the sheet for the playlist's title, description and
+   * cover is open.
+   */
+  const editorDetailsSheetOpen = signal(false);
 
   const resetEditorUi = (itemCount: number) => {
     batch(() => {
@@ -1357,6 +1362,7 @@ export function createPlaylistManager(
       editorAddMenu.value = null;
       editorVersePickIndex.value = null;
       editorStepsSheetOpen.value = false;
+      editorDetailsSheetOpen.value = false;
     });
   };
 
@@ -2582,6 +2588,7 @@ export function createPlaylistManager(
       editorAddMenu.value = null;
       editorVersePickIndex.value = null;
       editorStepsSheetOpen.value = false;
+      editorDetailsSheetOpen.value = false;
     });
   };
 
@@ -3620,6 +3627,7 @@ export function createPlaylistManager(
     editorVersePickIndex,
     editorVersePickRef,
     editorStepsSheetOpen,
+    editorDetailsSheetOpen,
     selectEditorStep,
     addEditorStep,
     applyEditorVersePick,

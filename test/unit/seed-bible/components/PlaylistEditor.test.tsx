@@ -217,6 +217,61 @@ describe("the playlist editor", () => {
     });
   });
 
+  describe("details sheet (phone)", () => {
+    const openDetails = () => {
+      openWorkspace(STEPS, 0, true);
+      click(container.querySelector(".sb-pe-mobile-title-button"));
+      return container.querySelector(".sb-pe-details-sheet");
+    };
+
+    it("opens from the playlist's title, with its title, description and cover fields", () => {
+      const sheet = openDetails();
+
+      expect(sheet).not.toBeNull();
+      expect(sheet!.querySelector("#sb-pe-details-title")).not.toBeNull();
+      expect(sheet!.querySelector("#sb-pe-details-description")).not.toBeNull();
+      expect(sheet!.textContent).toContain("Cover image");
+    });
+
+    it("saves the title and description to the draft as they're typed", () => {
+      const sheet = openDetails()!;
+
+      type(sheet.querySelector("#sb-pe-details-title"), "Evening Psalms");
+      type(
+        sheet.querySelector("#sb-pe-details-description"),
+        "Read one before bed."
+      );
+
+      expect(state.playlists.editingPlaylist.value).toMatchObject({
+        title: "Evening Psalms",
+        description: "Read one before bed.",
+      });
+      expect(
+        container.querySelector(".sb-pe-mobile-title-text")?.textContent
+      ).toBe("Evening Psalms");
+    });
+
+    it("closes from its close button and its backdrop, leaving the editor open", () => {
+      const sheet = openDetails()!;
+      click(sheet.querySelector('[aria-label="Close"]'));
+      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+
+      click(container.querySelector(".sb-pe-mobile-title-button"));
+      click(container.querySelector(".sb-pe-sheet-scrim"));
+      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+      expect(state.playlists.editingPlaylist.value).not.toBeNull();
+    });
+
+    it("is closed again when the editor next opens", () => {
+      openDetails();
+      act(() => state.playlists.cancelEditingPlaylist());
+
+      openWorkspace(STEPS, 0, true);
+
+      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+    });
+  });
+
   describe("closing", () => {
     it("is a back arrow at the start of the side panel's title bar, in place of a close button", () => {
       openPanel();

@@ -1282,6 +1282,8 @@
   "playlist-editor-add-short": "Add",
   "playlist-editor-add-step": "Add new step",
   "playlist-editor-rename": "Rename playlist",
+  "playlist-editor-details": "Playlist details",
+  "playlist-editor-edit-details": "Edit title, description and cover",
   "playlist-editor-close": "Close playlist editor",
   "playlist-editor-step-count": "{{steps}} steps · ~{{minutes}} min",
   "playlist-editor-duplicate": "Duplicate",

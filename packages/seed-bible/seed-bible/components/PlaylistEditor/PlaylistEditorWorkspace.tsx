@@ -308,30 +308,32 @@ export function PlaylistReaderHint() {
   );
 }
 
-const REVIEW_MODAL_ID = "playlist-review-publish";
-
-function PlaylistReviewContent(props: { state: SeedBibleState }) {
-  const { state } = props;
+/**
+ * The playlist's title, description and cover image, edited in place: in the
+ * Review & publish dialog, and in the phone's details sheet.
+ */
+function PlaylistDetailsFields(props: {
+  state: SeedBibleState;
+  /** Keeps the fields' ids unique when two sets could be on screen. */
+  idPrefix: string;
+}) {
+  const { state, idPrefix } = props;
   const { playlists, modals } = state;
   const { t } = useI18n();
-  const resolveBookName = useResolveBookName(state.tabs);
-  const [publishing, setPublishing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const editing = playlists.editingPlaylist.value;
   if (!editing) {
     return null;
   }
-  const invalid = playlists.editingPlaylistInvalidSteps();
   const gallery = state.gallery;
 
   return (
-    <div className="sb-pe sb-pe-review">
+    <>
       <div className="sb-pe-field">
-        <label className="sb-pe-field-label" htmlFor="sb-pe-review-title">
+        <label className="sb-pe-field-label" htmlFor={`${idPrefix}-title`}>
           {t("playlist-editor-title", { defaultValue: "Title" })}
         </label>
         <input
-          id="sb-pe-review-title"
+          id={`${idPrefix}-title`}
           className="sb-pe-input"
           type="text"
           dir="auto"
@@ -348,11 +350,14 @@ function PlaylistReviewContent(props: { state: SeedBibleState }) {
         />
       </div>
       <div className="sb-pe-field">
-        <label className="sb-pe-field-label" htmlFor="sb-pe-review-description">
+        <label
+          className="sb-pe-field-label"
+          htmlFor={`${idPrefix}-description`}
+        >
           {t("description", { defaultValue: "Description" })}
         </label>
         <textarea
-          id="sb-pe-review-description"
+          id={`${idPrefix}-description`}
           className="sb-pe-textarea"
           dir="auto"
           rows={3}
@@ -396,6 +401,69 @@ function PlaylistReviewContent(props: { state: SeedBibleState }) {
           }
         />
       </div>
+    </>
+  );
+}
+
+/**
+ * Phone only: the sheet the playlist's title opens, for its title,
+ * description and cover image.
+ */
+function PlaylistDetailsSheet(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { playlists } = state;
+  const { t } = useI18n();
+  const close = () => (playlists.editorDetailsSheetOpen.value = false);
+  const heading = t("playlist-editor-details", {
+    defaultValue: "Playlist details",
+  });
+
+  return (
+    <>
+      <div className="sb-pe-sheet-scrim" onClick={close} />
+      <div
+        className="sb-pe sb-pe-sheet sb-pe-details-sheet"
+        role="dialog"
+        aria-label={heading}
+      >
+        <div className="sb-pe-sheet-handle" />
+        <div className="sb-pe-panel-header">
+          <h3 className="sb-pe-details-sheet-title">{heading}</h3>
+          <button
+            type="button"
+            className="sb-pe-panel-close"
+            aria-label={t("close", { defaultValue: "Close" })}
+            onClick={close}
+          >
+            <PeIcon name="close" />
+          </button>
+        </div>
+        <div className="sb-pe-details-sheet-body">
+          <PlaylistDetailsFields state={state} idPrefix="sb-pe-details" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+const REVIEW_MODAL_ID = "playlist-review-publish";
+
+function PlaylistReviewContent(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { playlists, modals } = state;
+  const { t } = useI18n();
+  const resolveBookName = useResolveBookName(state.tabs);
+  const [publishing, setPublishing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const editing = playlists.editingPlaylist.value;
+  if (!editing) {
+    return null;
+  }
+  const invalid = playlists.editingPlaylistInvalidSteps();
+
+  return (
+    <div className="sb-pe sb-pe-review">
+      <PlaylistDetailsFields state={state} idPrefix="sb-pe-review" />
       <p className="sb-pe-step-count">
         {t("playlist-editor-step-count", {
           steps: editing.items.length,
@@ -605,6 +673,7 @@ export function PlaylistEditorWorkspace(props: {
   const preview = playlists.editorMode.value === "preview";
   const addMenu = playlists.editorAddMenu.value;
   const sheetOpen = playlists.editorStepsSheetOpen.value;
+  const detailsOpen = playlists.editorDetailsSheetOpen.value;
   if (!editing) {
     return <>{children}</>;
   }
@@ -660,8 +729,25 @@ export function PlaylistEditorWorkspace(props: {
         <header className="sb-pe sb-pe-mobile-header">
           <PlaylistEditorBackButton playlists={playlists} modals={modals} />
           <div className="sb-pe-mobile-heading">
-            <h2 className="sb-pe-mobile-title" dir="auto">
-              {title}
+            <h2 className="sb-pe-mobile-title">
+              <button
+                type="button"
+                className="sb-pe-mobile-title-button"
+                aria-haspopup="dialog"
+                aria-expanded={detailsOpen}
+                title={t("playlist-editor-edit-details", {
+                  defaultValue: "Edit title, description and cover",
+                })}
+                onClick={() => {
+                  playlists.editorStepsSheetOpen.value = false;
+                  playlists.editorDetailsSheetOpen.value = true;
+                }}
+              >
+                <span className="sb-pe-mobile-title-text" dir="auto">
+                  {title}
+                </span>
+                <PeIcon name="pencil" />
+              </button>
             </h2>
             <p className="sb-pe-mobile-status">
               {t("playlist-editor-mobile-status", {
@@ -730,6 +816,7 @@ export function PlaylistEditorWorkspace(props: {
             </div>
           </>
         ) : null}
+        {detailsOpen ? <PlaylistDetailsSheet state={state} /> : null}
       </div>
     );
   }
