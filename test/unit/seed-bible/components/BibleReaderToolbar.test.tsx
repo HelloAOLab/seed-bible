@@ -5880,6 +5880,76 @@ describe("BibleReaderToolbar — compact embed", () => {
     }
   });
 
+  it("measures the phone's tab bar apart from the chapter pill above it", async () => {
+    // Scrolling the reader down slides only the tab bar off the screen, so
+    // chrome riding on the pill (the playlist editor's bars) needs its height
+    // alone. jsdom does no layout: the pill is 50px, the tab bar 70px.
+    const originalResizeObserver = globalThis.ResizeObserver;
+    const originalOffsetHeight = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetHeight"
+    );
+    const resizeCallbacks: (() => void)[] = [];
+    globalThis.ResizeObserver = class {
+      constructor(callback: () => void) {
+        resizeCallbacks.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        if (this.classList.contains("sb-reader-floating-nav")) return 50;
+        if (this.classList.contains("sb-reader-toolbar")) return 70;
+        return 0;
+      },
+    });
+    const value = (name: string) =>
+      document.documentElement.style.getPropertyValue(name);
+
+    try {
+      await renderToolbar({ width: MOBILE_VIEWPORT_WIDTH });
+      expect(container.querySelector(".sb-reader-floating-nav")).not.toBeNull();
+      expect(container.querySelector(".sb-reader-toolbar")).not.toBeNull();
+
+      const deadline = Date.now() + 2000;
+      while (
+        value("--sb-reader-bottom-tabs") !== "70px" &&
+        Date.now() < deadline
+      ) {
+        await act(async () => {
+          resizeCallbacks.forEach((callback) => callback());
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        });
+      }
+      expect(value("--sb-reader-bottom-chrome")).toBe("120px");
+      expect(value("--sb-reader-bottom-tabs")).toBe("70px");
+    } finally {
+      if (originalResizeObserver) {
+        globalThis.ResizeObserver = originalResizeObserver;
+      } else {
+        // @ts-expect-error -- restore absence; jsdom has no ResizeObserver
+        delete globalThis.ResizeObserver;
+      }
+      if (originalOffsetHeight) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          "offsetHeight",
+          originalOffsetHeight
+        );
+      }
+      for (const name of [
+        "--sb-reader-bottom-inset",
+        "--sb-reader-bottom-chrome",
+        "--sb-reader-bottom-tabs",
+      ]) {
+        document.documentElement.style.removeProperty(name);
+      }
+    }
+  });
+
   it("reuses the compact chapter nav on a wide viewport too", async () => {
     await renderToolbar({ width: 1000, embed: true });
 

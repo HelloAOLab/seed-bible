@@ -1674,9 +1674,19 @@
   filter: drop-shadow(0 -1px 7px rgba(0, 0, 0, 0.1));
 }
 
-/* Clears the app's bottom tabs, which stay fixed below the editor. */
+/* Clears the app's bottom chrome (the chapter pill and tabs), which stays
+   fixed below the editor. Scrolling the reader down slides the tabs off the
+   screen and the pill down into their place, so the bar follows the pill
+   down, at the toolbar's own pace. */
 .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
   margin-bottom: var(--sb-reader-bottom-chrome);
+  transition: margin-bottom 0.3s ease;
+}
+
+body.sb-scroll-hide-bars .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
+  margin-bottom: calc(
+    var(--sb-reader-bottom-chrome) - var(--sb-reader-bottom-tabs, 0px)
+  );
 }
 
 /* Has to fit a 320px-wide phone: the Items and Add buttons take what their

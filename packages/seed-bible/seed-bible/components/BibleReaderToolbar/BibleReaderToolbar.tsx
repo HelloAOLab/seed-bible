@@ -2356,12 +2356,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     // observer's initial callback), so only write on a real change.
     // `--sb-reader-bottom-chrome` is the same without the gap, for things that
     // sit right against the toolbar (the off-screen highlight notices).
-    const write = (chromePx: number) => {
-      const next = `${chromePx + BOTTOM_CHROME_GAP_PX}px`;
+    // `--sb-reader-bottom-tabs` is the part of it that slides off the screen
+    // when the reader is scrolled down (`body.sb-scroll-hide-bars`): the
+    // phone's tab bar, under the chapter pill. Chrome riding on the pill (the
+    // playlist editor's bars) drops by this much with it.
+    const write = (chromePx: number, tabsPx = 0) => {
+      const next = `${chromePx + BOTTOM_CHROME_GAP_PX}px/${tabsPx}px`;
       if (next === lastValue) return;
       lastValue = next;
-      root.style.setProperty("--sb-reader-bottom-inset", next);
+      root.style.setProperty(
+        "--sb-reader-bottom-inset",
+        `${chromePx + BOTTOM_CHROME_GAP_PX}px`
+      );
       root.style.setProperty("--sb-reader-bottom-chrome", `${chromePx}px`);
+      root.style.setProperty("--sb-reader-bottom-tabs", `${tabsPx}px`);
     };
 
     // A playing passage's note sheet rides on top of the floating nav, outside
@@ -2394,11 +2402,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       let insetPx = toolbar.offsetHeight;
       if (nav instanceof HTMLElement) {
         insetPx += navHeight(nav);
-      } else {
-        // Desktop: toolbar floats above the viewport bottom.
-        const bottom = parseFloat(getComputedStyle(toolbar).bottom);
-        if (!Number.isNaN(bottom)) insetPx += bottom;
+        write(insetPx, toolbar.offsetHeight);
+        return;
       }
+      // Desktop: toolbar floats above the viewport bottom.
+      const bottom = parseFloat(getComputedStyle(toolbar).bottom);
+      if (!Number.isNaN(bottom)) insetPx += bottom;
 
       write(insetPx);
     };
@@ -2453,6 +2462,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       // Drop the runtime override so the CSS fallback in base.css takes over.
       root.style.removeProperty("--sb-reader-bottom-inset");
       root.style.removeProperty("--sb-reader-bottom-chrome");
+      root.style.removeProperty("--sb-reader-bottom-tabs");
     };
   }, []);
 

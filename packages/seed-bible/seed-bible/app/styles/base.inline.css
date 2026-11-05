@@ -211,6 +211,10 @@
    * things that sit right against it (the off-screen highlight notices). */
   --sb-reader-bottom-chrome: 7.375rem;
 
+  /* The phone tab bar's part of that, which slides off the screen when the
+   * reader is scrolled down. Measured at runtime like the two above. */
+  --sb-reader-bottom-tabs: 4.375rem;
+
   /* Full-width floating chapter-nav bar. Composed from theme-injected vars so
    * the bar, arrow circles, and peach play button adapt across themes. */
   --sb-reader-floating-nav-background: color-mix(
