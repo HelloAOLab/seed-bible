@@ -61,7 +61,8 @@ function ExtensionCard(props: {
   const extension = entry.extension;
   const url = extension && "url" in extension ? extension.url : null;
   const uploader = useExtensionUploader(state.extensions, entry.id, url);
-  const review = useExtensionReview(state.extensionReviews, entry.id);
+  const builtIn = catalog.isBuiltIn(entry);
+  const review = useExtensionReview(state.extensionReviews, entry.id, builtIn);
   let sourceHost: string | null = null;
   try {
     sourceHost = url ? new URL(url).host : null;
@@ -90,7 +91,7 @@ function ExtensionCard(props: {
           <span className="sb-extensions-card-titles">
             <span className="sb-extensions-card-name">
               {name}
-              <ExtensionReviewBadges review={review} />
+              <ExtensionReviewBadges review={review} builtIn={builtIn} />
             </span>
             <span className="sb-extensions-card-source">
               {sourceHost

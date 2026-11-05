@@ -162,7 +162,7 @@ describe("ExtensionsPage", () => {
         title: section.querySelector("h2")?.textContent,
         cards: [...section.querySelectorAll(".sb-extensions-card")].map(
           (card) =>
-            `${card.querySelector(".sb-extensions-card-name")?.textContent} · ${card.querySelector(".sb-extensions-card-source")?.textContent}`
+            `${card.querySelector(".sb-extensions-card-name")?.firstChild?.textContent} · ${card.querySelector(".sb-extensions-card-source")?.textContent}`
         ),
       })
     );
@@ -480,33 +480,67 @@ describe("ExtensionsPage", () => {
       }
     };
 
-    it("marks the cards of verified extensions", async () => {
-      const { reviews } = createReviews({
-        "verse-art": { verified: true, verifiedAtMs: VERIFIED_AT },
-        maps: { verified: false },
-      });
-      renderPage(
-        [
-          linked("verse-art", false),
-          builtIn("maps", false),
-          linked("other", false),
-        ],
-        reviews
-      );
-      await flush();
-
-      const cardBadges = Object.fromEntries(
+    const cardBadges = () =>
+      Object.fromEntries(
         [...container.querySelectorAll(".sb-extensions-card")].map((card) => [
           card.querySelector(".sb-extensions-card-name")?.firstChild
             ?.textContent,
           badges(card),
         ])
       );
-      expect(cardBadges).toEqual({
+    const hover = (badge: Element) =>
+      act(() => {
+        badge.dispatchEvent(new Event("pointerenter"));
+      });
+    const tooltip = () =>
+      document.body.querySelector(".sb-extension-review-tooltip");
+
+    it("marks the cards of verified extensions", async () => {
+      const { reviews } = createReviews({
+        "verse-art": { verified: true, verifiedAtMs: VERIFIED_AT },
+      });
+      renderPage([linked("verse-art", false), linked("other", false)], reviews);
+      await flush();
+
+      expect(cardBadges()).toEqual({
         "verse-art": ["verifiedextension-review-verified"],
-        maps: [],
         other: [],
       });
+    });
+
+    it("marks every built-in extension verified, even with no reviews record", async () => {
+      renderPage([builtIn("audio", true), builtIn("maps", false)]);
+      await flush();
+
+      expect(cardBadges()).toEqual({
+        audio: ["verifiedextension-review-verified"],
+        maps: ["verifiedextension-review-verified"],
+      });
+      hover(container.querySelector(".sb-extension-review-badge")!);
+      expect(tooltip()?.textContent).toBe("extension-review-verified-built-in");
+    });
+
+    it("keeps a built-in extension verified whatever the record says", async () => {
+      const { os, reviews } = createReviews({ maps: { verified: false } });
+      renderPage([builtIn("maps", false)], reviews);
+      await flush();
+
+      expect(cardBadges()).toEqual({
+        maps: ["verifiedextension-review-verified"],
+      });
+      expect(os.getData).not.toHaveBeenCalled();
+    });
+
+    it("gives admins nothing to change on a built-in extension's page", async () => {
+      const { reviews } = createReviews({}, { admin: true });
+      const state = renderPage([builtIn("maps", false)], reviews);
+      act(() => state.openExtensions("maps"));
+      await flush();
+
+      expect(badges(container)).toEqual(["verifiedextension-review-verified"]);
+      expect(
+        container.querySelector(".sb-extension-review-controls")
+      ).toBeNull();
     });
 
     it("shows when it was verified and the public notes on hovering over the mark", async () => {

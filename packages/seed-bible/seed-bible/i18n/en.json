@@ -1072,6 +1072,7 @@
   "extension-review-verified": "Verified",
   "extension-review-verified-on": "Verified by Seed Bible on {{date}}",
   "extension-review-verified-undated": "Verified by Seed Bible",
+  "extension-review-verified-built-in": "Built into Seed Bible and reviewed along with the app's own code",
   "extension-review-admin-title": "Verification",
   "extension-review-admin-not-verified": "Not verified yet.",
   "extension-review-admin-verified-on": "Verified on {{date}}.",

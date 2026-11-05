@@ -118,7 +118,8 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
   const url = extension && "url" in extension ? extension.url : null;
   const summary = extensions.sandboxPermissions.value[entry.id];
   const uploader = useExtensionUploader(extensions, entry.id, url);
-  const review = useExtensionReview(props.reviews, entry.id);
+  const builtIn = extension !== null && !url;
+  const review = useExtensionReview(props.reviews, entry.id, builtIn);
   const installed =
     installState === "installed" || installState === "downloaded";
 
@@ -194,7 +195,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
 
   const unreviewed = url && <ExtensionReviewNotice review={review} />;
 
-  const reviewControls = props.reviews && props.modals && (
+  const reviewControls = !builtIn && props.reviews && props.modals && (
     <ExtensionReviewControls
       reviews={props.reviews}
       modals={props.modals}
@@ -318,7 +319,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
               {statusLabel}
             </span>
           )}
-          <ExtensionReviewBadges review={review} />
+          <ExtensionReviewBadges review={review} builtIn={builtIn} />
         </div>
         <p className="sb-extension-consent-source">
           {sourceHost

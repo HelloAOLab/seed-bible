@@ -9,14 +9,29 @@ import type {
 import type { ModalManager } from "../../managers/ModalManager";
 import { Tooltip, type TooltipAnchor } from "../Tooltip/Tooltip";
 
-/** What the reviews record says about an extension, once it's been read. */
+/**
+ * Extensions built into the app are reviewed with the app's own code, so
+ * they're always verified, whatever the reviews record says.
+ */
+const BUILT_IN_VERIFICATION: ExtensionVerification = { verified: true };
+
+/**
+ * Whether an extension is verified: always for one built into the app, and
+ * otherwise what the reviews record says, once it's been read.
+ */
 export function useExtensionReview(
   reviews: ExtensionReviewsManager | undefined,
-  extensionId: string
+  extensionId: string,
+  builtIn = false
 ): ExtensionVerification | null {
   useEffect(() => {
-    void reviews?.load(extensionId);
-  }, [reviews, extensionId]);
+    if (!builtIn) {
+      void reviews?.load(extensionId);
+    }
+  }, [reviews, extensionId, builtIn]);
+  if (builtIn) {
+    return BUILT_IN_VERIFICATION;
+  }
   return reviews?.reviews.value[extensionId] ?? null;
 }
 
@@ -37,6 +52,7 @@ function toDateTimeInputValue(ms: number): string {
  */
 export function ExtensionReviewBadges(props: {
   review: ExtensionVerification | null;
+  builtIn?: boolean;
 }) {
   const { t, language } = useI18n();
   const anchor = useSignal<TooltipAnchor | null>(null);
@@ -70,11 +86,13 @@ export function ExtensionReviewBadges(props: {
         <Tooltip anchor={anchor.value} offsetY={6}>
           <span className="sb-extension-review-tooltip">
             <span className="sb-extension-review-tooltip-date">
-              {review.verifiedAtMs !== undefined
-                ? t("extension-review-verified-on", {
-                    date: formatDate(review.verifiedAtMs, language),
-                  })
-                : t("extension-review-verified-undated")}
+              {props.builtIn
+                ? t("extension-review-verified-built-in")
+                : review.verifiedAtMs !== undefined
+                  ? t("extension-review-verified-on", {
+                      date: formatDate(review.verifiedAtMs, language),
+                    })
+                  : t("extension-review-verified-undated")}
             </span>
             {review.publicNotes && (
               <span className="sb-extension-review-tooltip-notes">
