@@ -1697,24 +1697,6 @@ describe("createPlaylistManager", () => {
         expect(manager.editorChapterChange.value).toBeNull();
       });
 
-      it("Cancel takes the reader back to the step's passage, leaving the step alone", async () => {
-        const { manager, tab } = await openOnStep();
-        tab.readingState.bookId.value = "EXO";
-        tab.readingState.chapterNumber.value = 3;
-
-        manager.cancelEditorChapterChange();
-        await flush();
-
-        expect(selectTranslationAndChapterMock).toHaveBeenLastCalledWith(
-          "BSB",
-          "GEN",
-          1,
-          { scrollToVerse: 2 }
-        );
-        expect(manager.editorChapterChange.value).toBeNull();
-        expect(manager.editingPlaylist.value!.items[0]).toEqual(steps[0]);
-      });
-
       it("offers nothing while the editor itself is taking the reader to the step", async () => {
         const { manager, tab } = await openEditor();
         tab.readingState.bookId.value = "EXO";

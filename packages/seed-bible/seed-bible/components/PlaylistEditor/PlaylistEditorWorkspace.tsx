@@ -639,7 +639,7 @@ function VersePickBar(props: { state: SeedBibleState }) {
 /**
  * Shown when the reader has moved off the open scripture step's passage (the
  * chapter pill, the book selector): Apply points the step at the chapter on
- * screen, Cancel takes the reader back to the step's passage.
+ * screen.
  */
 function ChapterChangeBar(props: { state: SeedBibleState }) {
   const { playlists } = props.state;
@@ -661,13 +661,6 @@ function ChapterChangeBar(props: { state: SeedBibleState }) {
           defaultValue: "Use {{passage}} for step {{step}}?",
         })}
       </span>
-      <button
-        type="button"
-        className="sb-pe-pickbar-cancel"
-        onClick={() => playlists.cancelEditorChapterChange()}
-      >
-        {t("cancel", { defaultValue: "Cancel" })}
-      </button>
       <button
         type="button"
         className="sb-pe-pickbar-apply"

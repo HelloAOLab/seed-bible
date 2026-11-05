@@ -349,6 +349,9 @@ describe("the playlist editor", () => {
 
       const bar = container.querySelector(".sb-pe-chapterbar");
       expect(bar?.textContent).toContain("for step 1?");
+      expect(
+        [...bar!.querySelectorAll("button")].map((b) => b.textContent)
+      ).toEqual(["Apply"]);
       click(bar!.querySelector(".sb-pe-pickbar-apply"));
 
       expect(items()[0]).toEqual({

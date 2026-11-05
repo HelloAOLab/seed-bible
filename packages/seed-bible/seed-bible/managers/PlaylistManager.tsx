@@ -1553,22 +1553,6 @@ export function createPlaylistManager(
     });
   };
 
-  /** Takes the reader back to the open scripture step's passage. */
-  const cancelEditorChapterChange = (): void => {
-    const tab = activeTab.peek();
-    const item = editingPlaylist.peek()?.items[editorStepIndex.peek()];
-    if (!tab || item?.type !== "bible-verse") {
-      return;
-    }
-    const { ref } = item;
-    void tab.readingState.selectTranslationAndChapter(
-      item.translationId ?? tab.readingState.translationId.peek(),
-      ref.bookId,
-      ref.chapter,
-      ref.verse != null ? { scrollToVerse: ref.verse } : undefined
-    );
-  };
-
   /**
    * The verses picked in the reader for the step in `editorVersePickIndex`,
    * as the reference Apply would give it, or null before any are picked.
@@ -3705,7 +3689,6 @@ export function createPlaylistManager(
     editorVersePickRef,
     editorChapterChange,
     applyEditorChapterChange,
-    cancelEditorChapterChange,
     editorDetailsSheetOpen,
     selectEditorStep,
     addEditorStep,
