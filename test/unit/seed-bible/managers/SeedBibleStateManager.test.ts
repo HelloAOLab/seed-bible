@@ -8,6 +8,7 @@ import { PROFILE_PANE_ID } from "@packages/seed-bible/seed-bible/components/Prof
 import { PLAYLIST_HISTORY_PANE_ID } from "@packages/seed-bible/seed-bible/components/PlaylistHistoryPane/PlaylistHistoryPane";
 import { EXTENSIONS_PANE_ID } from "@packages/seed-bible/seed-bible/components/ExtensionsPage/ExtensionsPage";
 import { DISCOVER_PANE_ID } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverPane";
+import { READING_PLANS_PANE_ID } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import {
   PlaylistPlayHistorySchema,
   PlaylistSchema,
@@ -4569,6 +4570,90 @@ describe("continuing a playlist from Profile", () => {
     });
     await new Promise((resolve) => setTimeout(resolve, 0));
 
+    expect(state.isProfileOpen.value).toBe(false);
+  });
+});
+
+describe("opening reading plans from Profile", () => {
+  let container: HTMLDivElement;
+  let active: SeedBibleState | null = null;
+
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    if (active) {
+      active.os.sessionKey.value = null;
+      active = null;
+    }
+    render(null, container);
+    container.remove();
+    localStorage.removeItem("sessionKey");
+    vi.restoreAllMocks();
+  });
+
+  // Docked rather than fullscreen, so a plan being built can take verses
+  // picked in the reader, the way the playlist editor can.
+  it("docks the plans pane beside the reader on desktop", async () => {
+    const state = await createState();
+    active = state;
+    (state.app.viewportWidth as unknown as { value: number }).value = 1200;
+    vi.spyOn(state.os, "listAllDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "listDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    } as never);
+    vi.spyOn(state.os, "recordData").mockResolvedValue({
+      success: true,
+    } as never);
+    vi.spyOn(state.os, "eraseData").mockResolvedValue({
+      success: true,
+    } as never);
+    state.os.sessionKey.value = formatV1SessionKey(
+      PLAYLIST_USER_ID,
+      "session-1",
+      "secret-1",
+      Date.now() + 60 * 60 * 1000
+    );
+    await waitFor(() => state.login.userId.value === PLAYLIST_USER_ID);
+    state.openProfile();
+    await Promise.resolve();
+    const profilePane = state.panes.panes.value.find(
+      (item) => item.id === PROFILE_PANE_ID
+    );
+    const Provider = await realI18nProvider();
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: profilePane?.component() ?? null,
+        }),
+        container
+      );
+    });
+
+    act(() => {
+      (
+        container.querySelector(".sb-profile-plans") as HTMLButtonElement
+      ).click();
+    });
+
+    const plansPane = state.app.effectivePanes.value.find(
+      (pane) => pane.id === READING_PLANS_PANE_ID
+    );
+    expect(plansPane?.placement).toBe("side");
     expect(state.isProfileOpen.value).toBe(false);
   });
 });
