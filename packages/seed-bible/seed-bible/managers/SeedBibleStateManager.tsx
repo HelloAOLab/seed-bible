@@ -745,9 +745,8 @@ import {
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
-  DiscoverPaneHeader,
-  DiscoverPaneTitle,
-} from "../components/DiscoverPane/DiscoverPane";
+  DISCOVER_PANE_ID,
+} from "../components/Discover/DiscoverPane";
 import {
   AIBibleVerseRefSchema,
   convertToPlaylistItem,
@@ -3859,7 +3858,6 @@ export function createSeedBibleState(
   // `view` stays the source of truth for both whether Discover is open and
   // which sub-view shows inside it; DiscoverPane routes discover/create/play
   // internally off the same signal.
-  const DISCOVER_PANE_ID = "discover-pane";
 
   // view -> pane: open (or refresh, by reusing the id) while a view is set,
   // close when it clears. The pane commands read pane state via peek()
@@ -3874,19 +3872,9 @@ export function createSeedBibleState(
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
-        // The playlist editor draws its own header, as a floating card.
-        showHeader: !editingPlaylist,
+        // Never shown: each Discover view renders its own header.
+        title: "Discover",
         shellClassName: editingPlaylist ? "sb-pe-pane-shell" : undefined,
-        title: () => (
-          <DiscoverPaneTitle
-            playlists={playlists}
-            annotations={annotations}
-            tabs={tabs}
-          />
-        ),
-        header: () => (
-          <DiscoverPaneHeader playlists={playlists} annotations={annotations} />
-        ),
         onClose: (reason) => {
           if (reason !== "user") {
             return;
@@ -3906,6 +3894,7 @@ export function createSeedBibleState(
             toast={state.app.toast}
           />
         ),
+        showHeader: false,
       });
     } else if (view === "create_playlist") {
       // On a phone the editor takes over the reader, with its steps in a

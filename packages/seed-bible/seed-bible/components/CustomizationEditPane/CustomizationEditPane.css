@@ -1031,3 +1031,18 @@ button.sb-cz-tile-swatch:focus-visible {
 .sb-cz-list-row + .sb-cz-list-row {
   border-top: 1px solid var(--sb-divider-color);
 }
+.sb-unsaved-changes-discard {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border: none;
+  background: transparent;
+  color: #dc2626;
+}
+.sb-unsaved-changes-discard:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+}

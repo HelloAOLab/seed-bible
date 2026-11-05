@@ -111,6 +111,7 @@ describe("CreateAnnotationForm retrying the rich text editor", () => {
     await act(async () => {
       render(
         <CreateAnnotationForm
+          onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
           toast={vi.fn()}
