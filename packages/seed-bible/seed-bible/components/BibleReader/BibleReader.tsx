@@ -46,6 +46,7 @@ import type {
   ChapterHighlights,
 } from "../../managers/HighlightsManager";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
+import { CURRENT_PLAYLIST_TOOL_ID } from "../../managers/BibleToolsManager";
 import type { TabSlot } from "../../managers/TabsLayoutManager";
 import type { VerseSelectionEffects } from "../../managers/SettingsManager";
 import { getReadableWordsOfJesusColor } from "../../managers/CustomizationsManager";
@@ -3800,6 +3801,23 @@ export function BibleReader(props: BibleReaderProps) {
                 </MaterialIcon>
               </button>
             ) : null}
+            {!isMinimalEmbed && (
+              <QuickToolbar
+                toolsManager={state.tools}
+                readingState={readingState}
+                playlists={state.playlists}
+                annotations={state.annotations}
+                features={state.features}
+                settings={state.settings}
+                sharedSession={sharedSession ?? null}
+                toast={state.app.toast}
+                modals={state.modals}
+                app={state.app}
+                readingPlans={state.readingPlans}
+                className="sb-quick-toolbar-mobile-header-leading"
+                toolFilter={(id) => id === CURRENT_PLAYLIST_TOOL_ID}
+              />
+            )}
             <div className="sb-bible-reader-mobile-header-text">
               <h1 className="sb-bible-reader-mobile-header-title">
                 {!isMinimalEmbed && (
@@ -3896,6 +3914,7 @@ export function BibleReader(props: BibleReaderProps) {
                     }
                     readingPlans={state.readingPlans}
                     className="sb-quick-toolbar-mobile-header"
+                    toolFilter={(id) => id !== CURRENT_PLAYLIST_TOOL_ID}
                   />
                   {/*
                    * No account avatar here: "You" is a bottom-bar tab again

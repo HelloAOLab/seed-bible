@@ -5923,6 +5923,21 @@ describe("BibleReader", () => {
       expect(stopPlaying).toHaveBeenCalledTimes(1);
     });
 
+    it("is followed by the playing playlist's info, not grouped with the other tools", () => {
+      const { back } = renderPlaying(true);
+
+      const info = back?.nextElementSibling;
+      expect(
+        info?.querySelector(".sb-quick-toolbar-current-playlist")
+      ).not.toBeNull();
+      expect(info?.textContent).toContain("The Love of Jesus");
+      expect(
+        container.querySelector(
+          ".sb-bible-reader-mobile-header-actions .sb-quick-toolbar-current-playlist"
+        )
+      ).toBeNull();
+    });
+
     // The row is mirrored in RTL, putting the arrow on the right, so it
     // points right.
     it("points the other way in RTL languages", () => {
