@@ -320,16 +320,40 @@ describe("the playlist editor", () => {
       expect(container.querySelector(".sb-pe-add-menu")).toBeNull();
     });
 
-    it("shows the verse pick bar at the bottom of a step's page while picking", () => {
+    it("names the verses picked, offers only Apply, and hides once they're deselected", async () => {
       openWorkspace(STEPS, 0, true);
-      act(() => {
-        state.playlists.editorVersePickIndex.value = 0;
+      const readingState =
+        state.app.currentReadingState.value!.tab.readingState;
+      const verse = (number: number) => ({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: { type: "verse" as const, number, content: [] },
+        translationId: "BSB",
       });
+      const bar = () =>
+        container.querySelector(".sb-pe-mobile-bottom .sb-pe-pickbar");
 
+      act(() => {
+        readingState.selectedVerses.value = [verse(5), verse(3)];
+      });
+      expect(bar()?.textContent).toContain("Highlight verses 3-5");
       expect(
-        container.querySelector(".sb-pe-mobile-bottom .sb-pe-pickbar")
-      ).not.toBeNull();
+        [...bar()!.querySelectorAll("button")].map((b) => b.textContent)
+      ).toEqual(["Apply"]);
       expect(container.querySelector(".sb-pe-publish")).toBeNull();
+
+      act(() => {
+        readingState.selectedVerses.value = [verse(7)];
+      });
+      expect(bar()?.textContent).toContain("Highlight verse 7");
+
+      // Deselecting every verse ends the pick: no banner, step unchanged.
+      act(() => {
+        readingState.selectedVerses.value = [];
+      });
+      expect(bar()).toBeNull();
+      expect(state.playlists.editorVersePickIndex.value).toBeNull();
+      expect(items()[0]).toEqual(STEPS[0]);
     });
 
     it("offers the chapter the reader moved to, and Apply gives it to the step", async () => {

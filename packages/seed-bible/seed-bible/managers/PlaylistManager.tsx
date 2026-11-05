@@ -1584,12 +1584,18 @@ export function createPlaylistManager(
   });
 
   // Picking verses in the reader while a scripture step is open is how its
-  // passage is changed: the first verse picked starts it, and Apply or Cancel
-  // in the pick bar ends it.
+  // passage is changed: the first verse picked starts it, and Apply in the
+  // pick bar ends it, as does deselecting every verse.
   effect(() => {
     const selected =
       activeTab.value?.readingState.selectedVerses.value.length ?? 0;
     untracked(() => {
+      if (selected === 0) {
+        if (editorVersePickIndex.peek() !== null) {
+          editorVersePickIndex.value = null;
+        }
+        return;
+      }
       const index = editorStepIndex.peek();
       const item = editingPlaylist.peek()?.items[index];
       if (
@@ -2627,7 +2633,10 @@ export function createPlaylistManager(
     activeTab.peek()?.readingState.clearSelectedVerses();
   };
 
-  /** Ends a verse pick, leaving the step's passage as it was. */
+  /**
+   * Ends a verse pick, leaving the step's passage as it was (switching to
+   * preview, say).
+   */
   const cancelEditorVersePick = (): void => {
     editorVersePickIndex.value = null;
     activeTab.peek()?.readingState.clearSelectedVerses();

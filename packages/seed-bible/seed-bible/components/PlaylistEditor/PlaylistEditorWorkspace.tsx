@@ -592,42 +592,32 @@ function PublishButton(props: { state: SeedBibleState }) {
   );
 }
 
+/**
+ * While verses are picked in the reader for the open scripture step: which
+ * ones, and Apply to give them to the step. Deselecting them hides it.
+ */
 function VersePickBar(props: { state: SeedBibleState }) {
   const { playlists } = props.state;
   const { t } = useI18n();
-  const resolveBookName = useResolveBookName(props.state.tabs);
   const index = playlists.editorVersePickIndex.value;
   const ref = playlists.editorVersePickRef.value;
-  if (index === null) {
+  if (index === null || !ref || ref.verse == null) {
     return null;
   }
+  const endVerse = ref.endVerse ?? ref.verse;
   return (
     <div className="sb-pe sb-pe-pickbar" role="status">
       <span>
-        {t("playlist-editor-tap-verses", {
-          step: index + 1,
-          defaultValue: "Tap verses for step {{step}}",
+        {t("playlist-editor-highlight-verses", {
+          count: endVerse - ref.verse + 1,
+          verses:
+            endVerse > ref.verse ? `${ref.verse}-${endVerse}` : `${ref.verse}`,
+          defaultValue: "Highlight verses {{verses}}",
         })}
-        {ref ? (
-          <>
-            {" · "}
-            <span className="sb-pe-pickbar-ref">
-              {formatVerseRef(ref, resolveBookName)}
-            </span>
-          </>
-        ) : null}
       </span>
       <button
         type="button"
-        className="sb-pe-pickbar-cancel"
-        onClick={() => playlists.cancelEditorVersePick()}
-      >
-        {t("cancel", { defaultValue: "Cancel" })}
-      </button>
-      <button
-        type="button"
         className="sb-pe-pickbar-apply"
-        disabled={!ref}
         onClick={() => playlists.applyEditorVersePick()}
       >
         {t("playlist-editor-apply", { defaultValue: "Apply" })}

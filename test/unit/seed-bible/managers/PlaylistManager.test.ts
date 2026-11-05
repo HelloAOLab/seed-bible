@@ -1759,14 +1759,29 @@ describe("createPlaylistManager", () => {
       expect(tab.readingState.selectedVerses.value).toEqual([]);
     });
 
-    it("leaves the step's passage alone when the verse pick is cancelled", async () => {
+    it("ends the verse pick, leaving the step's passage alone, once every verse is deselected", async () => {
       const { manager, tab } = await openEditor();
+      manager.selectEditorStep(0);
 
       tab.readingState.selectedVerses.value = [pickVerse(7)];
+      expect(manager.editorVersePickIndex.value).toBe(0);
+
+      tab.readingState.selectedVerses.value = [];
+
+      expect(manager.editorVersePickIndex.value).toBeNull();
+      expect(manager.editorVersePickRef.value).toBeNull();
+      expect(manager.editingPlaylist.value!.items[0]).toEqual(steps[0]);
+    });
+
+    it("ends the verse pick when switching to preview", async () => {
+      const { manager, tab } = await openEditor();
+      manager.selectEditorStep(0);
+      tab.readingState.selectedVerses.value = [pickVerse(7)];
+
       manager.cancelEditorVersePick();
 
-      expect(manager.editingPlaylist.value!.items[0]).toEqual(steps[0]);
       expect(manager.editorVersePickIndex.value).toBeNull();
+      expect(manager.editingPlaylist.value!.items[0]).toEqual(steps[0]);
     });
 
     it("doesn't start a verse pick while previewing", async () => {
