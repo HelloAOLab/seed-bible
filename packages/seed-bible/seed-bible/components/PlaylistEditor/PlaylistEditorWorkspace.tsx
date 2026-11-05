@@ -89,7 +89,7 @@ function useChapterLoader(state: SeedBibleState): ScriptureChapterLoader {
   };
 }
 
-export function useOtherSteps(state: SeedBibleState, openIndex: number) {
+function useOtherSteps(state: SeedBibleState, openIndex: number) {
   const { t } = useI18n();
   const resolveBookName = useResolveBookName(state.tabs);
   const items = state.playlists.editingPlaylist.value?.items ?? [];

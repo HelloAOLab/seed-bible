@@ -1256,6 +1256,19 @@
   position: relative;
 }
 
+/* With the formatting toolbar showing, the text starts under it. */
+.sb-pe-rich-field-inner--formatting {
+  & .sb-pe-rich .sb-editor-toolbar {
+    display: flex;
+  }
+
+  & .sb-pe-rich-placeholder {
+    /* The toolbar's height: its 28px buttons, 6px padding and 6px margin
+       below them, and its 1px rule (see TipTapEditor.css). */
+    top: 41px;
+  }
+}
+
 .sb-pe-rich-placeholder {
   position: absolute;
   inset: 0 0 auto;

@@ -11,7 +11,6 @@ import { MaterialIcon } from "../icons";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { NoteHeading } from "../ScriptureNote/ScriptureNote";
 import { PlaylistNoteComposer } from "./PlaylistNoteComposer";
-import { useOtherSteps } from "./PlaylistEditorWorkspace";
 
 type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
@@ -31,7 +30,6 @@ export function PlaylistStepNoteSheet(props: {
   const { playlists } = state;
   const { t, isRtl } = useI18n();
   const [open, setOpen] = useState(false);
-  const otherSteps = useOtherSteps(state, index);
   const hasNote = hasScriptureNote(item);
   const label = playlistItemLabel(item, t, resolveBookName);
 
@@ -107,11 +105,12 @@ export function PlaylistStepNoteSheet(props: {
             initialHtml={item.note ?? ""}
             autofocus={!hasNote}
             boxed
+            formatting
             placeholder={t("playlist-editor-scripture-note-placeholder", {
               defaultValue:
                 "Add a note readers see with this passage (optional)",
             })}
-            steps={otherSteps}
+            steps={[]}
             onChange={(html) => update({ note: html || undefined })}
           />
           {hasNote ? (

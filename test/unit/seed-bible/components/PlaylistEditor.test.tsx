@@ -832,6 +832,34 @@ describe("a scripture step's note sheet (phone)", () => {
     expect(header().textContent).toContain("In the beginning");
   });
 
+  it("writes the note in TipTap with its formatting toolbar, and no Insert row", async () => {
+    openSheet({ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } });
+    click(header());
+
+    // TipTap loads lazily.
+    await act(async () => {
+      await waitFor(
+        () => !!container.querySelector(".sb-editor-toolbar"),
+        2000
+      );
+    });
+
+    expect(
+      [...container.querySelectorAll(".sb-editor-toolbar button")].map((b) =>
+        b.getAttribute("aria-label")
+      )
+    ).toEqual([
+      "Bold",
+      "Italic",
+      "Underline",
+      "Align left",
+      "Align center",
+      "Align right",
+      "Justify",
+    ]);
+    expect(container.querySelector(".sb-pe-insert")).toBeNull();
+  });
+
   it("shows a note the way playback does, and Remove note clears it", () => {
     openSheet({
       type: "bible-verse",

@@ -39,9 +39,22 @@ export function PlaylistNoteComposer(props: {
   autofocus?: boolean;
   /** Puts the field in a bordered box, as in a step card. */
   boxed?: boolean;
+  /**
+   * Shows TipTap's formatting toolbar (bold, italic, underline, alignment),
+   * as the annotation note editor does, in place of the INSERT row.
+   */
+  formatting?: boolean;
 }) {
-  const { initialHtml, placeholder, steps, tall, footer, autofocus, boxed } =
-    props;
+  const {
+    initialHtml,
+    placeholder,
+    steps,
+    tall,
+    footer,
+    autofocus,
+    boxed,
+    formatting,
+  } = props;
   const { t } = useI18n();
   const editorRef = useRef<Editor | null>(null);
   const [empty, setEmpty] = useState(!initialHtml);
@@ -78,7 +91,9 @@ export function PlaylistNoteComposer(props: {
 
   const field = (
     <div
-      className={`sb-pe-rich-field-inner${tall ? " sb-pe-rich-field--tall" : ""}`}
+      className={`sb-pe-rich-field-inner${tall ? " sb-pe-rich-field--tall" : ""}${
+        formatting ? " sb-pe-rich-field-inner--formatting" : ""
+      }`}
     >
       {empty ? (
         <span className="sb-pe-rich-placeholder" aria-hidden="true">
@@ -125,138 +140,150 @@ export function PlaylistNoteComposer(props: {
       {footerText !== null ? (
         <span className="sb-pe-count">{footerText}</span>
       ) : null}
-      <div className="sb-pe-insert">
-        <span className="sb-pe-insert-label">
-          {t("playlist-editor-insert", { defaultValue: "INSERT" })}
-        </span>
-        <div className="sb-pe-insert-actions">
-          <button
-            type="button"
-            className="sb-pe-insert-action"
-            aria-expanded={inserting === "step"}
-            disabled={steps.length === 0}
-            onClick={() => setInserting(inserting === "step" ? null : "step")}
-          >
-            <PeIcon name="arrow-right" />
-            {t("playlist-editor-link-item", { defaultValue: "Link item" })}
-          </button>
-          <button
-            type="button"
-            className="sb-pe-insert-action"
-            aria-expanded={inserting === "verse"}
-            onClick={() => setInserting(inserting === "verse" ? null : "verse")}
-          >
-            <PeIcon name="book-open" />
-            {t("playlist-editor-embed-verse", { defaultValue: "Embed verse" })}
-          </button>
-          <button
-            type="button"
-            className="sb-pe-insert-action"
-            aria-expanded={inserting === "link"}
-            onClick={() => setInserting(inserting === "link" ? null : "link")}
-          >
-            <PeIcon name="link" />
-            {t("playlist-editor-link", { defaultValue: "Link" })}
-          </button>
-        </div>
-      </div>
-      {inserting === "step" ? (
-        <div className="sb-pe-insert-picker">
-          <ul className="sb-pe-insert-picker-list">
-            {steps.map((step) => (
-              <li key={step.index}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    insertHtml(
-                      `<a href="${playlistStepHref(step.index)}">${escapeHtml(
-                        t("playlist-editor-step-link-text", {
-                          step: step.index + 1,
-                          label: step.label,
-                          defaultValue: "Step {{step}}: {{label}}",
-                        })
-                      )}</a> `
-                    )
-                  }
-                >
-                  {t("playlist-editor-step-link-text", {
-                    step: step.index + 1,
-                    label: step.label,
-                    defaultValue: "Step {{step}}: {{label}}",
-                  })}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      {inserting === "verse" ? (
-        <form
-          className="sb-pe-insert-picker sb-pe-insert-picker-row"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (parsedVerse) {
-              // Typed as plain text: the editor links references on its own.
-              insertHtml(`${escapeHtml(verseText.trim())} `);
-              setVerseText("");
-            }
-          }}
-        >
-          <input
-            className="sb-pe-input"
-            type="text"
-            value={verseText}
-            autoFocus
-            aria-label={t("playlist-editor-embed-verse", {
-              defaultValue: "Embed verse",
-            })}
-            placeholder={t("playlist-editor-verse-placeholder", {
-              defaultValue: "e.g. John 3:16",
-            })}
-            onInput={(event) => setVerseText(event.currentTarget.value)}
-          />
-          <button
-            type="submit"
-            className="sb-pe-insert-picker-go"
-            disabled={!parsedVerse}
-          >
-            {t("playlist-editor-insert-button", { defaultValue: "Insert" })}
-          </button>
-        </form>
-      ) : null}
-      {inserting === "link" ? (
-        <form
-          className="sb-pe-insert-picker sb-pe-insert-picker-row"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (validUrl) {
-              insertHtml(
-                `<a href="${escapeHtml(validUrl)}">${escapeHtml(validUrl)}</a> `
-              );
-              setLinkUrl("");
-            }
-          }}
-        >
-          <input
-            className="sb-pe-input"
-            type="url"
-            value={linkUrl}
-            autoFocus
-            aria-label={t("playlist-editor-link", { defaultValue: "Link" })}
-            placeholder={t("playlist-editor-link-placeholder", {
-              defaultValue: "https://",
-            })}
-            onInput={(event) => setLinkUrl(event.currentTarget.value)}
-          />
-          <button
-            type="submit"
-            className="sb-pe-insert-picker-go"
-            disabled={!validUrl}
-          >
-            {t("playlist-editor-insert-button", { defaultValue: "Insert" })}
-          </button>
-        </form>
-      ) : null}
+      {formatting ? null : (
+        <>
+          <div className="sb-pe-insert">
+            <span className="sb-pe-insert-label">
+              {t("playlist-editor-insert", { defaultValue: "INSERT" })}
+            </span>
+            <div className="sb-pe-insert-actions">
+              <button
+                type="button"
+                className="sb-pe-insert-action"
+                aria-expanded={inserting === "step"}
+                disabled={steps.length === 0}
+                onClick={() =>
+                  setInserting(inserting === "step" ? null : "step")
+                }
+              >
+                <PeIcon name="arrow-right" />
+                {t("playlist-editor-link-item", { defaultValue: "Link item" })}
+              </button>
+              <button
+                type="button"
+                className="sb-pe-insert-action"
+                aria-expanded={inserting === "verse"}
+                onClick={() =>
+                  setInserting(inserting === "verse" ? null : "verse")
+                }
+              >
+                <PeIcon name="book-open" />
+                {t("playlist-editor-embed-verse", {
+                  defaultValue: "Embed verse",
+                })}
+              </button>
+              <button
+                type="button"
+                className="sb-pe-insert-action"
+                aria-expanded={inserting === "link"}
+                onClick={() =>
+                  setInserting(inserting === "link" ? null : "link")
+                }
+              >
+                <PeIcon name="link" />
+                {t("playlist-editor-link", { defaultValue: "Link" })}
+              </button>
+            </div>
+          </div>
+          {inserting === "step" ? (
+            <div className="sb-pe-insert-picker">
+              <ul className="sb-pe-insert-picker-list">
+                {steps.map((step) => (
+                  <li key={step.index}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        insertHtml(
+                          `<a href="${playlistStepHref(step.index)}">${escapeHtml(
+                            t("playlist-editor-step-link-text", {
+                              step: step.index + 1,
+                              label: step.label,
+                              defaultValue: "Step {{step}}: {{label}}",
+                            })
+                          )}</a> `
+                        )
+                      }
+                    >
+                      {t("playlist-editor-step-link-text", {
+                        step: step.index + 1,
+                        label: step.label,
+                        defaultValue: "Step {{step}}: {{label}}",
+                      })}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {inserting === "verse" ? (
+            <form
+              className="sb-pe-insert-picker sb-pe-insert-picker-row"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (parsedVerse) {
+                  // Typed as plain text: the editor links references on its own.
+                  insertHtml(`${escapeHtml(verseText.trim())} `);
+                  setVerseText("");
+                }
+              }}
+            >
+              <input
+                className="sb-pe-input"
+                type="text"
+                value={verseText}
+                autoFocus
+                aria-label={t("playlist-editor-embed-verse", {
+                  defaultValue: "Embed verse",
+                })}
+                placeholder={t("playlist-editor-verse-placeholder", {
+                  defaultValue: "e.g. John 3:16",
+                })}
+                onInput={(event) => setVerseText(event.currentTarget.value)}
+              />
+              <button
+                type="submit"
+                className="sb-pe-insert-picker-go"
+                disabled={!parsedVerse}
+              >
+                {t("playlist-editor-insert-button", { defaultValue: "Insert" })}
+              </button>
+            </form>
+          ) : null}
+          {inserting === "link" ? (
+            <form
+              className="sb-pe-insert-picker sb-pe-insert-picker-row"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (validUrl) {
+                  insertHtml(
+                    `<a href="${escapeHtml(validUrl)}">${escapeHtml(validUrl)}</a> `
+                  );
+                  setLinkUrl("");
+                }
+              }}
+            >
+              <input
+                className="sb-pe-input"
+                type="url"
+                value={linkUrl}
+                autoFocus
+                aria-label={t("playlist-editor-link", { defaultValue: "Link" })}
+                placeholder={t("playlist-editor-link-placeholder", {
+                  defaultValue: "https://",
+                })}
+                onInput={(event) => setLinkUrl(event.currentTarget.value)}
+              />
+              <button
+                type="submit"
+                className="sb-pe-insert-picker-go"
+                disabled={!validUrl}
+              >
+                {t("playlist-editor-insert-button", { defaultValue: "Insert" })}
+              </button>
+            </form>
+          ) : null}
+        </>
+      )}
     </>
   );
 }
