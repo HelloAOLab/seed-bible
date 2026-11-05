@@ -10,7 +10,9 @@
 
 - Maps of Bible places now open in about a second instead of 5–10, drawn on an OpenStreetMap street map. ([#2054](https://github.com/HelloAOLab/seed-bible/issues/2054))
   - Applies to Theographic Data's place maps: in the card, the floating window and the phone sheet.
-  - The map shows where its place data comes from, and dims to match the dark theme.
+  - Islands, lakes and provinces show one clean outline that fills the view; regions without a fixed border show as soft shading.
+  - On a phone, a card's map is a still preview: tap it to open the full map.
+  - The map credits where its place data comes from, and dims to match the dark theme.
 
 ### 🐛 Fixed
 
