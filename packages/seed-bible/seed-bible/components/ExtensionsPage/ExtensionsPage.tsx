@@ -15,6 +15,10 @@ import {
   useExtensionUploader,
 } from "../SettingsPage/ExtensionInfoPage";
 import { useExtensionCatalog } from "../SettingsPage/useExtensionCatalog";
+import {
+  ExtensionReviewBadges,
+  useExtensionReview,
+} from "../ExtensionReview/ExtensionReview";
 import { UnusedSensitiveSettingsList } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 
 export const EXTENSIONS_PANE_ID = "extensions-pane";
@@ -57,6 +61,8 @@ function ExtensionCard(props: {
   const extension = entry.extension;
   const url = extension && "url" in extension ? extension.url : null;
   const uploader = useExtensionUploader(state.extensions, entry.id, url);
+  const builtIn = catalog.isBuiltIn(entry);
+  const review = useExtensionReview(state.extensionReviews, entry.id, builtIn);
   let sourceHost: string | null = null;
   try {
     sourceHost = url ? new URL(url).host : null;
@@ -83,7 +89,10 @@ function ExtensionCard(props: {
             }}
           />
           <span className="sb-extensions-card-titles">
-            <span className="sb-extensions-card-name">{name}</span>
+            <span className="sb-extensions-card-name">
+              {name}
+              <ExtensionReviewBadges review={review} builtIn={builtIn} />
+            </span>
             <span className="sb-extensions-card-source">
               {sourceHost
                 ? withSource(
@@ -147,6 +156,8 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
           installState={catalog.installStateOf(openEntry)}
           extensions={state.extensions}
           people={catalog.people}
+          reviews={state.extensionReviews}
+          modals={state.modals}
           onInstall={() => void catalog.install(openEntry.id)}
           onUninstall={() => catalog.uninstall(openEntry.id)}
           settings={catalog.renderSettings(openEntry)}

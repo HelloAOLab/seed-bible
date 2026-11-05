@@ -86,6 +86,7 @@ jobs:
           DEPLOY_BUILD_ID: ${{ steps.ids.outputs.build_id }}
           PATTERN_SESSION_KEY: ${{ secrets.SESSION_KEY }}
           PATTERN_RECORD_KEY: ${{ secrets.RECORD_KEY }}
+          EXTENSION_REVIEWS_RECORD_NAME: ${{ vars.EXTENSION_REVIEWS_RECORD_NAME }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: pnpm build

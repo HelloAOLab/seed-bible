@@ -815,6 +815,21 @@ export function CasualOSManager(
     },
 
     /**
+     * Whether the signed-in user administers `recordName`: its owner, an
+     * admin of its studio, or someone given its admin role. Only they may
+     * list a record's permissions, so a listing that succeeds says so
+     * without changing anything.
+     */
+    isRecordAdmin: async (recordName: string): Promise<boolean> => {
+      try {
+        const result = await client.listPermissions({ recordName });
+        return result.success;
+      } catch {
+        return false;
+      }
+    },
+
+    /**
      * Reads a file stored on the records server through the signed request
      * the server hands out for it, or null for a URL it doesn't store.
      */

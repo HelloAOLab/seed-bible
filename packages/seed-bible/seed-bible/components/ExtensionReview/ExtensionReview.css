@@ -1,0 +1,138 @@
+.sb-extension-review-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-extension-review-badge .material-symbols-outlined {
+  font-size: 0.875rem;
+}
+
+.sb-extension-review-badge-verified {
+  color: #1d4f91;
+  background: #e1ecfa;
+}
+
+.sb-extension-review-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: max-content;
+  max-width: 18rem;
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+}
+
+.sb-extension-review-tooltip-date {
+  font-weight: 600;
+}
+
+.sb-extension-review-tooltip-notes {
+  white-space: pre-wrap;
+}
+
+.sb-extension-review-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-extension-review-controls-note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-extension-review-controls-actions,
+.sb-extension-review-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sb-extension-review-modal-actions {
+  justify-content: flex-end;
+}
+
+.sb-extension-review-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-extension-review-button .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-extension-review-button-primary {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
+  color: #ffffff;
+}
+
+.sb-extension-review-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sb-extension-review-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sb-extension-review-modal-intro {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.sb-extension-review-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sb-extension-review-field-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-extension-review-field-hint {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-extension-review-field input,
+.sb-extension-review-field textarea {
+  padding: 0.5rem 0.625rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.875rem;
+  resize: vertical;
+}
+
+.sb-extension-review-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #b3261e;
+}
