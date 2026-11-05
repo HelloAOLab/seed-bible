@@ -1423,7 +1423,21 @@ export function createSeedBibleState(
     discover,
     chats,
     options.initialPlaylistPageSeed,
-    { friendReads }
+    {
+      friendReads,
+      pickChapter: (onPick) => {
+        const slot = tabsLayout.slots
+          .peek()
+          .find(
+            (candidate) => candidate.id === tabsLayout.selectedSlotId.peek()
+          );
+        if (!slot) {
+          return;
+        }
+        selector.selectingTranslation.value = false;
+        void selector.setOpen(true, slot, { onChapterPick: onPick });
+      },
+    }
   );
   // True only while `hydrateFromStorage` below is applying the saved tab state.
   // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits

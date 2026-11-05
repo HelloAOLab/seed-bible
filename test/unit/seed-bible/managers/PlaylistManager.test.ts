@@ -451,7 +451,8 @@ describe("createPlaylistManager", () => {
     id: string | null = "user-1",
     tabsManager?: TabsArg,
     initialHref?: string,
-    initialPlaylistPageSeed?: PlaylistPageSeed
+    initialPlaylistPageSeed?: PlaylistPageSeed,
+    pickChapter?: (onPick: (bookId: string, chapter: number) => void) => void
   ) => {
     userId = signal<string | null>(id);
     const os = CasualOSManager();
@@ -506,7 +507,8 @@ describe("createPlaylistManager", () => {
       readingExtensionManager,
       discover,
       chats,
-      initialPlaylistPageSeed
+      initialPlaylistPageSeed,
+      { pickChapter }
     );
   };
 
@@ -1432,9 +1434,17 @@ describe("createPlaylistManager", () => {
       translationId: "BSB",
     });
 
-    const openEditor = async () => {
+    const openEditor = async (
+      pickChapter?: (onPick: (bookId: string, chapter: number) => void) => void
+    ) => {
       const tab = makeTab("tab-1", selectTranslationAndChapterMock);
-      const manager = makeManager("user-1", makeTabs(tab));
+      const manager = makeManager(
+        "user-1",
+        makeTabs(tab),
+        undefined,
+        undefined,
+        pickChapter
+      );
       await flush();
       manager.editPlaylist(makePlaylist({ items: steps }));
       await flush();
@@ -1527,7 +1537,54 @@ describe("createPlaylistManager", () => {
       expect(added[1]).toMatchObject({ question: {} });
     });
 
-    it("starts a new scripture step on the chapter being read, waiting for its verses", async () => {
+    it("asks for a chapter before adding a scripture step, then adds that whole chapter", async () => {
+      let onPick: ((bookId: string, chapter: number) => void) | undefined;
+      const { manager } = await openEditor((pick) => {
+        onPick = pick;
+      });
+      manager.editorAddMenu.value = { afterIndex: 2 };
+
+      manager.addEditorStep("scripture", 2);
+
+      // Nothing is added until a chapter is picked.
+      expect(onPick).toBeDefined();
+      expect(manager.editingPlaylist.value!.items).toHaveLength(steps.length);
+      expect(manager.editorAddMenu.value).toBeNull();
+
+      onPick!("PSA", 104);
+
+      expect(manager.editingPlaylist.value!.items).toHaveLength(
+        steps.length + 1
+      );
+      expect(manager.editingPlaylist.value!.items[3]).toEqual({
+        type: "bible-verse",
+        ref: { bookId: "PSA", chapter: 104 },
+      });
+      expect(manager.editorStepIndex.value).toBe(3);
+      expect(manager.editorVersePickIndex.value).toBeNull();
+      await flush();
+      expect(selectTranslationAndChapterMock).toHaveBeenLastCalledWith(
+        "BSB",
+        "PSA",
+        104,
+        undefined
+      );
+    });
+
+    it("adds nothing when the chapter is picked after the editor has closed", async () => {
+      let onPick: ((bookId: string, chapter: number) => void) | undefined;
+      const { manager } = await openEditor((pick) => {
+        onPick = pick;
+      });
+
+      manager.addEditorStep("scripture", 0);
+      manager.cancelEditingPlaylist();
+      onPick!("PSA", 104);
+
+      expect(manager.editingPlaylist.value).toBeNull();
+    });
+
+    it("starts a new scripture step on the chapter being read when there's no chapter picker", async () => {
       const { manager, tab } = await openEditor();
       tab.readingState.chapterData.value = {
         book: { id: "PSA" },
@@ -1540,7 +1597,7 @@ describe("createPlaylistManager", () => {
         type: "bible-verse",
         ref: { bookId: "PSA", chapter: 104 },
       });
-      expect(manager.editorVersePickIndex.value).toBe(3);
+      expect(manager.editorVersePickIndex.value).toBeNull();
     });
 
     it("gives the open scripture step the verses picked in the reader on Apply", async () => {

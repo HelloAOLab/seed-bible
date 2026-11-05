@@ -1302,6 +1302,12 @@ export function createPlaylistManager(
      * Omitted means a limit of this manager's own.
      */
     friendReads?: FriendReadLimiter;
+    /**
+     * Asks the user for a chapter (the reader's book selector), calling
+     * `onPick` with the one they choose. Nothing is called if they back out.
+     * Omitted means new scripture steps start on the chapter being read.
+     */
+    pickChapter?: (onPick: (bookId: string, chapter: number) => void) => void;
   } = {}
 ) {
   const initialPlaybackRequest = playbackRequestFromUrl(
@@ -2461,36 +2467,12 @@ export function createPlaylistManager(
     });
   };
 
-  /**
-   * Adds a new step of the given kind after `afterIndex` and opens it. A
-   * scripture step starts on the chapter being read, with the reader waiting
-   * for its verses to be picked.
-   */
-  const addEditorStep = (kind: NewPlaylistStepKind, afterIndex: number) => {
-    const tab = activeTab.peek();
-    const chapter = tab?.readingState.chapterData.peek();
-    const bookId = chapter?.book.id ?? "GEN";
-    const chapterNumber = chapter?.chapter.number ?? 1;
+  /** Inserts a new step after `afterIndex` and opens it. */
+  const insertEditorStep = (item: PlaylistItemData, afterIndex: number) => {
     const index = Math.max(
       0,
       Math.min(afterIndex + 1, editingPlaylist.peek()?.items.length ?? 0)
     );
-    const item: PlaylistItemData =
-      kind === "scripture"
-        ? { type: "bible-verse", ref: { bookId, chapter: chapterNumber } }
-        : kind === "compare"
-          ? {
-              type: "bible-verse",
-              ref: { bookId, chapter: chapterNumber },
-              compare: { ref: { bookId, chapter: chapterNumber } },
-            }
-          : kind === "question"
-            ? { type: "html", html: "", question: {} }
-            : kind === "video"
-              ? // An empty link isn't a valid step; the card asks for one and
-                // saving refuses until it has it.
-                { type: "link", url: "", embed: true }
-              : { type: "html", html: "" };
     batch(() => {
       if (insertEditingPlaylistItem(index, item) !== "success") {
         return;
@@ -2498,11 +2480,53 @@ export function createPlaylistManager(
       editorAddMenu.value = null;
       editorMode.value = "edit";
       selectEditorStep(index);
-      if (kind === "scripture") {
-        tab?.readingState.clearSelectedVerses();
-        editorVersePickIndex.value = index;
-      }
     });
+  };
+
+  /**
+   * Adds a new step of the given kind after `afterIndex` and opens it. A
+   * scripture step covers a whole chapter, which the user picks in the book
+   * selector first; no step is added if they back out of it.
+   */
+  const addEditorStep = (kind: NewPlaylistStepKind, afterIndex: number) => {
+    const chapter = activeTab.peek()?.readingState.chapterData.peek();
+    const bookId = chapter?.book.id ?? "GEN";
+    const chapterNumber = chapter?.chapter.number ?? 1;
+    if (kind === "scripture") {
+      const addChapter = (pickedBookId: string, pickedChapter: number) =>
+        insertEditorStep(
+          {
+            type: "bible-verse",
+            ref: { bookId: pickedBookId, chapter: pickedChapter },
+          },
+          afterIndex
+        );
+      if (!options.pickChapter) {
+        addChapter(bookId, chapterNumber);
+        return;
+      }
+      batch(() => {
+        editorAddMenu.value = null;
+        editorStepsSheetOpen.value = false;
+      });
+      options.pickChapter(addChapter);
+      return;
+    }
+    const item: PlaylistItemData =
+      kind === "compare"
+        ? {
+            type: "bible-verse",
+            ref: { bookId, chapter: chapterNumber },
+            compare: { ref: { bookId, chapter: chapterNumber } },
+          }
+        : kind === "question"
+          ? { type: "html", html: "", question: {} }
+          : kind === "video"
+            ? // An empty link isn't a valid step; the card asks for one and
+              // saving refuses until it has it.
+              { type: "link", url: "", embed: true }
+            : { type: "html", html: "" };
+    insertEditorStep(item, afterIndex);
   };
 
   /** Gives the step being picked the verses picked in the reader. */
