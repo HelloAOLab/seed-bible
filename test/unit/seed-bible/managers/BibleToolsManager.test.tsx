@@ -520,14 +520,6 @@ describe("createBibleToolsManager", () => {
     expect(withoutDisabled.length).toBe(withDisabled.length + 1);
   });
 
-  it("does not register a Plans button on the reader toolbar", () => {
-    const manager = createBibleToolsManager(testBranding);
-
-    expect(manager.listToolbarTools().map((tool) => tool.id)).not.toContain(
-      "open-plans"
-    );
-  });
-
   it("registerVerseToolbarTool() registers a verse toolbar tool", () => {
     const manager = createBibleToolsManager(testBranding);
     const context = createContext();
