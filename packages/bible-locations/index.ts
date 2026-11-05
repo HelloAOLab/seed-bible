@@ -30,7 +30,7 @@ export function getPlaceGeoJsonUrl(place: PlaceData): string {
 
 /** The credit OpenBible.info's Bible Geocoding Data asks for (CC BY 4.0). */
 export const OPENBIBLE_ATTRIBUTION =
-  'Places: <a href="https://www.openbible.info/geo/">OpenBible.info</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>)';
+  'Places: <a href="https://www.openbible.info/geo/" target="_blank" rel="noopener noreferrer">OpenBible.info</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>)';
 
 /**
  * The credits a map of this place has to show, as HTML. The hand-built files

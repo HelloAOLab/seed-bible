@@ -1007,9 +1007,6 @@ describe("the redesigned card", () => {
       // Zoom 10's tile over Uruk, in southern Iraq: the file's numbers flipped.
       expect(map.tile).toBe("https://tile.openstreetmap.org/10/641/418.png");
       expect(map.credits).not.toContain("Theographic");
-      expect(
-        container.querySelector(".sb-theographic-map-coords")?.textContent
-      ).toBe("31.3222, 45.6361");
     });
 
     it("holds the map's space while the file loads", async () => {
@@ -1067,8 +1064,6 @@ describe("the redesigned card", () => {
 
       const map = await drawnMap();
       expect(map.tile).toBe("https://tile.openstreetmap.org/10/641/418.png");
-      // No coordinates to label the map with.
-      expect(container.querySelector(".sb-theographic-map-coords")).toBeNull();
     });
 
     it("leaves no empty map behind when the file fails and there are no coordinates", async () => {

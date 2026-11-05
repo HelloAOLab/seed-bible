@@ -1,6 +1,6 @@
 import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
-import type { Feature, GeoJsonObject, Point } from "geojson";
+import type { Feature, Point } from "geojson";
 import { MaterialIcon, Skeleton } from "seed-bible/components";
 import type {
   findLocation,
@@ -9,13 +9,19 @@ import type {
   PlaceData,
   toMapGeoJson,
 } from "@seed-bible/bible-locations";
-import { GeoJsonMap, isMapOpen, openMap, type MapHost } from "@seed-bible/maps";
+import {
+  GeoJsonMap,
+  isMapOpen,
+  openMap,
+  type MapData,
+  type MapHost,
+} from "@seed-bible/maps";
 import { withoutQualifier } from "./names";
 import type { TheographicClient, TheographicPlaceEntry } from "./provider";
 
 /** The credit the Theographic dataset's own coordinates need on a map. */
 export const THEOGRAPHIC_ATTRIBUTION =
-  'Places: <a href="https://github.com/robertrouse/theographic-bible-metadata">Theographic Bible Metadata</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>)';
+  'Places: <a href="https://github.com/robertrouse/theographic-bible-metadata" target="_blank" rel="noopener noreferrer">Theographic Bible Metadata</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>)';
 
 /** A place as a GeoJSON point, `[longitude, latitude]` like all GeoJSON. */
 export type PlaceGeoJsonFeature = Feature<
@@ -117,12 +123,6 @@ export function canMapPlace(
   );
 }
 
-/** What a place's map draws, and the credits that data needs. */
-export interface PlaceMapData {
-  data: GeoJsonObject;
-  attribution: string[];
-}
-
 /**
  * What to draw for a place.
  *
@@ -134,7 +134,7 @@ export interface PlaceMapData {
 export async function resolvePlaceMapData(
   place: TheographicPlaceEntry,
   sources: PlaceMapSources
-): Promise<PlaceMapData | null> {
+): Promise<MapData | null> {
   const { client, locations } = sources;
   const known = findKnownLocation(place.name, locations);
   if (known && client && locations) {
@@ -155,7 +155,7 @@ export async function resolvePlaceMapData(
   return point ? { data: point, attribution: [THEOGRAPHIC_ATTRIBUTION] } : null;
 }
 
-type MapDataState = PlaceMapData | null | "loading";
+type MapDataState = MapData | null | "loading";
 
 /**
  * Loads a place's map data, again whenever the place changes.
@@ -165,18 +165,26 @@ type MapDataState = PlaceMapData | null | "loading";
  */
 function useMapData(
   key: string,
-  load: () => Promise<PlaceMapData | null>
+  load: () => Promise<MapData | null>
 ): MapDataState {
   const mapData = useSignal<MapDataState>("loading");
 
   useEffect(() => {
     let isCurrent = true;
     mapData.value = "loading";
-    void load().then((loaded) => {
-      if (isCurrent) {
-        mapData.value = loaded;
+    load().then(
+      (loaded) => {
+        if (isCurrent) {
+          mapData.value = loaded;
+        }
+      },
+      (error: unknown) => {
+        console.error("Failed to load map data for", key, error);
+        if (isCurrent) {
+          mapData.value = null;
+        }
       }
-    });
+    );
     return () => {
       isCurrent = false;
     };
@@ -212,17 +220,6 @@ export function createOpenPlace(
   };
 }
 
-/** "33.0920, 44.1292" — the position shown on the inline map. */
-export function formatCoordinates(
-  latitude?: number,
-  longitude?: number
-): string | null {
-  if (latitude == null || longitude == null) {
-    return null;
-  }
-  return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-}
-
 /**
  * A place's map, inline in its card.
  *
@@ -251,8 +248,6 @@ export function PlaceMap(props: {
     return null;
   }
 
-  const coordinates = formatCoordinates(place.latitude, place.longitude);
-
   return (
     // A group rather than an image: it holds a real control as well.
     <div className="sb-theographic-map" role="group" aria-label={label}>
@@ -268,7 +263,7 @@ export function PlaceMap(props: {
           data={mapData.data}
           // The card credits the dataset just below the map; the floating
           // pane has no card, so it keeps the credit.
-          attribution={mapData.attribution.filter(
+          attribution={(mapData.attribution ?? []).filter(
             (credit) => credit !== THEOGRAPHIC_ATTRIBUTION
           )}
           label={place.name}
@@ -289,9 +284,6 @@ export function PlaceMap(props: {
           }
         />
       )}
-      {coordinates ? (
-        <span className="sb-theographic-map-coords">{coordinates}</span>
-      ) : null}
     </div>
   );
 }

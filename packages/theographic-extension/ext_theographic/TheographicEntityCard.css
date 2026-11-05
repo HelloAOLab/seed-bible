@@ -175,9 +175,9 @@
 /* ── Inline map ── */
 
 /* The map fills its parent, so it needs a positioned box with a real height.
-   Isolated so the coordinates and open button only rise above the map, not
-   out of the card: in the phone verse sheet they otherwise scroll over its
-   pinned buttons, which sit at the same z-index. */
+   Isolated so the open button only rises above the map, not out of the card:
+   in the phone verse sheet it otherwise scrolls over the sheet's pinned
+   buttons, which sit at the same z-index. */
 .sb-theographic-map {
   position: relative;
   isolation: isolate;
@@ -185,19 +185,6 @@
   overflow: hidden;
   border-radius: 6px;
   border: 1px solid var(--sb-divider-color);
-}
-
-.sb-theographic-map-coords {
-  position: absolute;
-  inset-inline-start: 6px;
-  inset-block-end: 6px;
-  z-index: 1;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--sb-reader-background), transparent 10%);
-  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
-  font-size: 0.6875rem;
-  pointer-events: none;
 }
 
 /* Holds the map's space while its data loads, edge to edge like the map. */

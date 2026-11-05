@@ -157,8 +157,11 @@
   cursor: pointer;
 }
 
-.sb-geojson-map-control:hover {
-  background: var(--sb-reader-background);
+/* Only where there's a real pointer, like the zoom buttons' hover. */
+@media (hover: hover) {
+  .sb-geojson-map-control:hover {
+    background: var(--sb-reader-background);
+  }
 }
 
 .sb-geojson-map-overlay {

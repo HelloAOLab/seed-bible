@@ -7,6 +7,7 @@ import {
   leafletLoader,
   type LeafletModule,
 } from "@packages/maps";
+import { OPENBIBLE_ATTRIBUTION } from "@packages/bible-locations";
 import { waitFor } from "../seed-bible/testUtils/createTestSeedBibleState";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -218,6 +219,22 @@ describe("GeoJsonMap", () => {
     // Only the credits that are owed, not a link to the map library.
     expect(credits?.textContent).not.toContain("Leaflet");
     expect(credits?.querySelector("svg")).toBeNull();
+  });
+
+  it("opens every credit link in a new tab, leaving the reader where they were", async () => {
+    await show(
+      <GeoJsonMap data={ACCO} attribution={[OPENBIBLE_ATTRIBUTION]} />
+    );
+
+    const links = Array.from(
+      container.querySelectorAll(".leaflet-control-attribution a")
+    );
+    // OpenStreetMap's, OpenBible.info's and its license's.
+    expect(links).toHaveLength(3);
+    for (const link of links) {
+      expect(link.getAttribute("target")).toBe("_blank");
+      expect(link.getAttribute("rel")).toContain("noopener");
+    }
   });
 
   it("labels the place, as text", async () => {
