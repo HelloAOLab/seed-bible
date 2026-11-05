@@ -1,0 +1,132 @@
+/* Header and Start button stay put; only the body between them scrolls. */
+.sb-playlist-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
+  color: var(--sb-font-color);
+}
+
+.sb-playlist-page-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0.75rem 0.5rem;
+}
+
+.sb-playlist-page-back {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-playlist-page-back:hover,
+.sb-playlist-page-back:focus-visible {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+/* The title sits beside the back button in the page's direction, and a long
+   one is cut at the end of its own script's line (the inner span's). */
+.sb-playlist-page-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.sb-playlist-page-title > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sb-playlist-page-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.25rem 1rem 1rem;
+}
+
+/* The cover keeps its size however long the list is; the body scrolls. */
+.sb-playlist-page-body > .sb-hero-banner {
+  flex-shrink: 0;
+}
+
+.sb-playlist-page-about {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sb-playlist-page-author {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-playlist-page-description {
+  margin: 0;
+  font-size: 0.9375rem;
+  white-space: pre-line;
+}
+
+.sb-playlist-page-count {
+  margin: 0;
+  font-size: 0.8125rem;
+  opacity: 0.7;
+}
+
+.sb-playlist-page-footer {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+.sb-playlist-page-start {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-playlist-page-start:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Wider than a phone, the pane runs under the app's floating navigation bar
+   (a phone's pane stops above its bottom bar instead), so the Start button is
+   lifted clear of it. A compact embed has no such bar. */
+@media (min-width: 481px) {
+  .sb-playlist-page-footer {
+    padding-bottom: 5.5rem;
+  }
+
+  .sb-embed-minimal .sb-playlist-page-footer {
+    padding-bottom: 0.75rem;
+  }
+}

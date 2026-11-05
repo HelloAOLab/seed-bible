@@ -1817,7 +1817,7 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
     });
 
-    it("renders the playlist modal with Start and Close", async () => {
+    it("renders the playlist's page, with its items, Start and Back", async () => {
       mockRecords({
         "owner/playlist_shared": PLAYLIST,
         "author-1/profile": { name: "Ruth" },
@@ -1825,7 +1825,9 @@ describe("render() server-rendered meta tags", () => {
 
       const { html } = await renderResult(PAGE_PATH);
 
-      expect(html).toContain("sb-shared-page-modal");
+      expect(html).toContain("sb-playlist-page");
+      expect(html).not.toContain("sb-shared-page-modal");
+      expect(html).toContain('aria-label="Back"');
       expect(html).toContain("By Ruth");
       expect(html).toContain("Start Playlist");
       expect(html).toContain("1 item");

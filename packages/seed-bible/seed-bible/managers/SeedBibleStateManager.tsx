@@ -30,6 +30,7 @@ import {
   SharedPageNotFoundModalContent,
   type SharedPageModalAction,
 } from "../components/SharedPageModal/SharedPageModal";
+import { PlaylistPagePane } from "../components/PlaylistPagePane/PlaylistPagePane";
 import {
   buildSharedPagePath,
   parseSharedPagePath,
@@ -287,6 +288,8 @@ const APP_META_DESCRIPTION =
 /** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
 export const ABOUT_PANE_ID = "about-page-pane";
 export const SHARED_PAGE_MODAL_ID = "shared-page";
+/** The fullscreen pane a shared playlist link opens on. */
+export const PLAYLIST_PAGE_PANE_ID = "playlist-page-pane";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -4442,7 +4445,29 @@ export function createSeedBibleState(
     }
   }
 
-  // A shared playlist or reading plan link opens on a modal describing it.
+  const renderPlaylistPagePane = () => {
+    const page = playlists.playlistPage.value;
+    if (!page) {
+      return null;
+    }
+    const books =
+      selectedTab.value?.readingState.translationBooks.value?.books ?? [];
+    return (
+      <PlaylistPagePane
+        playlist={page.item}
+        authorName={page.authorName}
+        resolveBookName={(bookId) => {
+          const book = books.find((b) => b.id === bookId);
+          return book?.name ?? book?.commonName ?? bookId;
+        }}
+        onStart={startSharedPage}
+        onBack={() => panes.closePane(PLAYLIST_PAGE_PANE_ID, "user")}
+      />
+    );
+  };
+
+  // A shared playlist link opens on a fullscreen page describing it, and a
+  // reading plan link on a modal.
   // Start begins it; closing it any other way (Close, the header's X, the
   // backdrop) leaves for the home screen. A link to one that doesn't exist
   // opens a "not found" modal in the same place, and one that failed to load
@@ -4522,107 +4547,109 @@ export function createSeedBibleState(
       ) {
         modals.closeModal(SHARED_PAGE_MODAL_ID);
       }
+      panes.closePane(PLAYLIST_PAGE_PANE_ID); // no-op when already closed
       return;
     }
     const { t } = i18n;
     const playlistPage = playlists.playlistPage.value;
+    // A playlist opens on its own fullscreen page rather than the modal.
+    if (playlistPage) {
+      if (
+        modals.modals.peek().some((modal) => modal.id === SHARED_PAGE_MODAL_ID)
+      ) {
+        modals.closeModal(SHARED_PAGE_MODAL_ID);
+      }
+      panes.openPane({
+        id: PLAYLIST_PAGE_PANE_ID,
+        placement: "fullscreen",
+        title: name,
+        showHeader: false,
+        component: renderPlaylistPagePane,
+      });
+      return;
+    }
     const planPage = readingPlans.readingPlanPage.value;
     let lengthLabel: string;
     let status: string | null = null;
     let actions: SharedPageModalAction[];
-    if (playlistPage) {
-      lengthLabel = t("playlist-page-item-count", {
-        count: playlistPage.item.items.length,
-        defaultValue: "{{count}} items",
+    const plan = planPage?.item;
+    const sessionCount = t("reading-plan-session-count-sessions", {
+      count: plan?.sessions.length ?? 0,
+      defaultValue: "{{count}} sessions",
+    });
+    // Estimated at the loaded translation's own chapter lengths when its
+    // catalog is there, else at a typical chapter length.
+    const books =
+      selectedTab.value?.readingState.translationBooks.value?.books ?? [];
+    const minutes = plan
+      ? averageSessionMinutes(plan, (bookId) =>
+          books.find((book) => book.id === bookId)
+        )
+      : null;
+    lengthLabel =
+      minutes != null
+        ? `${sessionCount} · ${t("reading-plan-page-minutes-per-session", {
+            count: minutes,
+            defaultValue: "About {{count}} min per session",
+          })}`
+        : sessionCount;
+
+    const startFresh = {
+      label: t("reading-plan-page-start", {
+        defaultValue: "Start Reading Plan",
+      }),
+      primary: true,
+      disabled: minutes == null,
+      onClick: startSharedPage,
+    };
+    const place = readingPlans.readingPlanPageProgress.value;
+    if (!place) {
+      actions = [startFresh];
+    } else if (place.resumeAt == null) {
+      status = t("reading-plan-page-finished", {
+        defaultValue: "You've finished this plan.",
       });
       actions = [
         {
-          label: t("playlist-page-start", { defaultValue: "Start Playlist" }),
-          primary: true,
-          disabled: playlistPage.item.items.length === 0,
-          onClick: startSharedPage,
+          ...startFresh,
+          label: t("reading-plan-page-start-over", {
+            defaultValue: "Start from beginning",
+          }),
         },
       ];
     } else {
-      const plan = planPage?.item;
-      const sessionCount = t("reading-plan-session-count-sessions", {
-        count: plan?.sessions.length ?? 0,
-        defaultValue: "{{count}} sessions",
-      });
-      // Estimated at the loaded translation's own chapter lengths when its
-      // catalog is there, else at a typical chapter length.
-      const books =
-        selectedTab.value?.readingState.translationBooks.value?.books ?? [];
-      const minutes = plan
-        ? averageSessionMinutes(plan, (bookId) =>
-            books.find((book) => book.id === bookId)
-          )
-        : null;
-      lengthLabel =
-        minutes != null
-          ? `${sessionCount} · ${t("reading-plan-page-minutes-per-session", {
-              count: minutes,
-              defaultValue: "About {{count}} min per session",
-            })}`
-          : sessionCount;
-
-      const startFresh = {
-        label: t("reading-plan-page-start", {
-          defaultValue: "Start Reading Plan",
-        }),
-        primary: true,
-        disabled: minutes == null,
-        onClick: startSharedPage,
-      };
-      const place = readingPlans.readingPlanPageProgress.value;
-      if (!place) {
-        actions = [startFresh];
-      } else if (place.resumeAt == null) {
-        status = t("reading-plan-page-finished", {
-          defaultValue: "You've finished this plan.",
-        });
-        actions = [
-          {
-            ...startFresh,
-            label: t("reading-plan-page-start-over", {
-              defaultValue: "Start from beginning",
-            }),
-          },
-        ];
-      } else {
-        const isDay = place.unit === "day";
-        status = isDay
-          ? t("reading-plan-page-on-day", {
-              day: place.resumeAt,
-              defaultValue: "You're on day {{day}}",
-            })
-          : t("reading-plan-page-on-session", {
-              session: place.resumeAt,
-              defaultValue: "You're on session {{session}}",
-            });
-        actions = [
-          {
-            ...startFresh,
-            primary: false,
-            label: t("reading-plan-page-start-over", {
-              defaultValue: "Start from beginning",
-            }),
-          },
-          {
-            label: isDay
-              ? t("reading-plan-page-resume-day", {
-                  day: place.resumeAt,
-                  defaultValue: "Resume day {{day}}",
-                })
-              : t("reading-plan-page-resume-session", {
-                  session: place.resumeAt,
-                  defaultValue: "Resume session {{session}}",
-                }),
-            primary: true,
-            onClick: resumeSharedPage,
-          },
-        ];
-      }
+      const isDay = place.unit === "day";
+      status = isDay
+        ? t("reading-plan-page-on-day", {
+            day: place.resumeAt,
+            defaultValue: "You're on day {{day}}",
+          })
+        : t("reading-plan-page-on-session", {
+            session: place.resumeAt,
+            defaultValue: "You're on session {{session}}",
+          });
+      actions = [
+        {
+          ...startFresh,
+          primary: false,
+          label: t("reading-plan-page-start-over", {
+            defaultValue: "Start from beginning",
+          }),
+        },
+        {
+          label: isDay
+            ? t("reading-plan-page-resume-day", {
+                day: place.resumeAt,
+                defaultValue: "Resume day {{day}}",
+              })
+            : t("reading-plan-page-resume-session", {
+                session: place.resumeAt,
+                defaultValue: "Resume session {{session}}",
+              }),
+          primary: true,
+          onClick: resumeSharedPage,
+        },
+      ];
     }
     modals.openModal({
       id: SHARED_PAGE_MODAL_ID,
@@ -4648,7 +4675,9 @@ export function createSeedBibleState(
   const closedSharedPageForHome = signal(false);
 
   // Starting leaves the shared page (a playlist for its first step's path)
-  // before the modal closes, so this only sees a close that should go home.
+  // before its pane or modal closes, so this only sees a close that should go
+  // home: the page's back button, the modal's Close, or another fullscreen
+  // pane displacing the playlist page.
   // Going home is what a fresh visit to "/"
   // would do: the reader takes the address bar back, Today opens over it
   // when a visit to "/" would open it, and a visit that began on this page
@@ -4657,9 +4686,13 @@ export function createSeedBibleState(
     const modalOpen = modals.modals.value.some(
       (modal) => modal.id === SHARED_PAGE_MODAL_ID
     );
+    const pageOpen = panes.panes.value.some(
+      (pane) => pane.id === PLAYLIST_PAGE_PANE_ID
+    );
     const onSharedPage = !!sharedPage.peek() && sharedPageStep.peek() == null;
     if (
       modalOpen ||
+      pageOpen ||
       !(
         onSharedPage ||
         sharedPageNotFoundKind.peek() ||
