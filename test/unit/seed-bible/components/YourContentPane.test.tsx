@@ -171,8 +171,6 @@ interface StateOptions {
   readingPlanProgresses?: ReadingPlanProgress[];
   /** Plans whose contents have loaded; defaults to every plan in `readingPlans`. */
   fullReadingPlans?: ReadingPlan[];
-  /** The reading-plans feature flag. On unless a test turns it off. */
-  plansEnabled?: boolean;
   /** Makes deleting a plan fail, so the screen has to say so. */
   deleteReadingPlanError?: Error;
   /** Makes deleting a customization fail, so the screen has to say so. */
@@ -324,9 +322,6 @@ function createState(options: StateOptions = {}) {
     modals: { openModal, closeModal: vi.fn() },
     app: { toast },
     annotations: { deleteAnnotationAndRefresh },
-    features: {
-      isFeatureEnabled: () => signal(options.plansEnabled ?? true),
-    },
     readingPlans: {
       userReadingPlans: signal(options.readingPlans ?? []),
       fullReadingPlans: signal(
@@ -1810,22 +1805,6 @@ describe("YourContentPane", () => {
       expect(
         container.querySelector(".sb-content-status")?.textContent
       ).toContain("Reading plans you create will show up here.");
-    });
-
-    // With the flag off nobody can make a plan, so a chip and a section for
-    // them would only ever be empty.
-    it("leaves reading plans out entirely while the feature is off", () => {
-      const { state } = createState({
-        readingPlans: [readingPlan("plan-1", "Genesis")],
-        plansEnabled: false,
-      });
-      renderPane(state);
-
-      const chips = Array.from(
-        container.querySelectorAll(".sb-content-chip")
-      ).map((chip) => chip.textContent);
-      expect(chips).not.toContain("Reading plans");
-      expect(sectionTitles()).toEqual([]);
     });
   });
 });

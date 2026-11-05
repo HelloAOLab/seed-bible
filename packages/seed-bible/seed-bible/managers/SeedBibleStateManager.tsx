@@ -4007,15 +4007,13 @@ export function createSeedBibleState(
    * `reopen` brings back the screen it came from, which this closes, so the
    * pane's back button can return there instead of dropping to the reader.
    */
-  const openReadingPlansFullscreen = (reopen: () => void): boolean => {
+  const openReadingPlansFromScreen = (reopen: () => void): boolean => {
     const readingState = selectedTab.peek()?.readingState;
     if (!readingState) {
       return false;
     }
     closeYourContent();
     closeProfile();
-    // Fullscreen rather than the toolbar's docked "side": the user came from a
-    // fullscreen screen, so a side panel would leave them looking at the reader.
     openReadingPlansPane({
       readingPlans,
       readingState,
@@ -4027,7 +4025,6 @@ export function createSeedBibleState(
       os,
       login,
       gallery,
-      placement: "fullscreen",
       toast,
       onBack: () => {
         panes.closePane(READING_PLANS_PANE_ID);
@@ -4037,7 +4034,7 @@ export function createSeedBibleState(
     return true;
   };
   const openReadingPlansFromProfile = () => {
-    openReadingPlansFullscreen(openProfile);
+    openReadingPlansFromScreen(openProfile);
   };
   const continuePlaylistFromProfile = (
     entry: PlaylistPlayHistory
@@ -4141,7 +4138,7 @@ export function createSeedBibleState(
     // `editPlaylist` only sets the Discover pane's view, and that pane docks
     // beside the reader — so the fullscreen screens above it have to close
     // first, or the editor opens behind them.
-    playlists.editPlaylist(playlist);
+    playlists.editPlaylist(playlist, { onBack: openYourContent });
   };
   const editAnnotationFromContent = (annotation: Annotation) => {
     closeYourContent();
@@ -4153,7 +4150,7 @@ export function createSeedBibleState(
   const createPlaylistFromContent = () => {
     closeYourContent();
     closeProfile();
-    void playlists.createNewPlaylist();
+    void playlists.createNewPlaylist(undefined, { onBack: openYourContent });
   };
   // The customization editor is a side pane beside the reader, so the
   // fullscreen screens above it close first, as for the playlist editor.
@@ -4188,11 +4185,11 @@ export function createSeedBibleState(
       buildCustomizationTutorialSteps(state, created.defaultVariantId)
     );
   };
-  // Both land in the plans pane, opened fullscreen the way the Profile card
-  // opens it, and then drill straight into the plan so the user doesn't have
+  // Both land in the plans pane, opened the way the Profile card opens it,
+  // and then drill straight into the plan so the user doesn't have
   // to find it in the list a second time.
   const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
-    if (!openReadingPlansFullscreen(openYourContent)) {
+    if (!openReadingPlansFromScreen(openYourContent)) {
       return;
     }
     // A draft has nothing to read yet, so it picks up where the author left
@@ -4208,7 +4205,7 @@ export function createSeedBibleState(
     }
   };
   const editReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
-    if (!openReadingPlansFullscreen(openYourContent)) {
+    if (!openReadingPlansFromScreen(openYourContent)) {
       return;
     }
     void openReadingPlanEditor(readingPlans, plan, { fromAnotherScreen: true });
