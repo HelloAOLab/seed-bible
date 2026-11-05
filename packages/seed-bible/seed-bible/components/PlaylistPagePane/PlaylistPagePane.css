@@ -65,9 +65,12 @@
   padding: 0.25rem 1rem 1rem;
 }
 
-/* The cover keeps its size however long the list is; the body scrolls. */
+/* A modest cover, still 4:3 so the image is cropped the way its author saw
+   it, that keeps its size however long the list is; the body scrolls. */
 .sb-playlist-page-body > .sb-hero-banner {
   flex-shrink: 0;
+  width: min(100%, 15rem);
+  margin-inline: auto;
 }
 
 .sb-playlist-page-about {
