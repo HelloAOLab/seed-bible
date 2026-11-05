@@ -3112,7 +3112,7 @@ export function BibleReader(props: BibleReaderProps) {
     isContentStale && (chapterData.value === null || isWaitLong);
   const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
-  const { t, language } = useI18n();
+  const { t, language, isRtl } = useI18n();
 
   // Outside a session a decoration comes from an extension or a link, which
   // nobody in particular made. In a session every decoration has an owner,
@@ -3785,6 +3785,21 @@ export function BibleReader(props: BibleReaderProps) {
                 : ""
             }`}
           >
+            {!isMinimalEmbed && state.playlists.playing.value ? (
+              <button
+                type="button"
+                className="sb-bible-reader-mobile-header-back"
+                aria-label={t("close-playlist", {
+                  defaultValue: "Close playlist",
+                })}
+                title={t("close-playlist", { defaultValue: "Close playlist" })}
+                onClick={() => state.playlists.stopPlaying()}
+              >
+                <MaterialIcon>
+                  {isRtl ? "arrow_forward" : "arrow_back"}
+                </MaterialIcon>
+              </button>
+            ) : null}
             <div className="sb-bible-reader-mobile-header-text">
               <h1 className="sb-bible-reader-mobile-header-title">
                 {!isMinimalEmbed && (
