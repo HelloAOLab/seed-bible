@@ -16,6 +16,7 @@ import { PeIcon, StepSettings } from "./editorControls";
 import {
   AddStepButton,
   AddStepMenu,
+  PlaylistEditorBackButton,
   PlaylistEditorPanel,
   usePlaylistDraftStatus,
   useResolveBookName,
@@ -657,6 +658,7 @@ export function PlaylistEditorWorkspace(props: {
     return (
       <div className={workspaceClass}>
         <header className="sb-pe sb-pe-mobile-header">
+          <PlaylistEditorBackButton playlists={playlists} modals={modals} />
           <div className="sb-pe-mobile-heading">
             <h2 className="sb-pe-mobile-title" dir="auto">
               {title}

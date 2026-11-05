@@ -195,7 +195,37 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
+  flex: 1;
   min-width: 0;
+}
+
+/* The back arrow that leaves the editor, at the start of the side panel's
+   and the phone header's title bar. */
+.sb-pe-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-inline-start: -8px;
+  border-radius: 50%;
+  color: var(--pe-text);
+}
+
+.sb-pe-back:hover,
+.sb-pe-back:focus-visible {
+  background: color-mix(in srgb, var(--pe-text) 8%, transparent);
+}
+
+.sb-pe-back .sb-pe-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* The icon is a right arrow; left-to-right, back points left. */
+.sb-pe-back-icon--flipped {
+  transform: scaleX(-1);
 }
 
 .sb-pe-panel-title-row {
@@ -1484,7 +1514,8 @@
   justify-content: space-between;
   gap: 12px;
   flex-shrink: 0;
-  padding: 11px 24px;
+  padding-block: 11px;
+  padding-inline: 16px 24px;
   border-bottom: 1px solid var(--pe-border-soft);
   background: var(--pe-surface);
   font-family: var(--pe-font-list);
@@ -1494,6 +1525,7 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
+  flex: 1;
   min-width: 0;
 }
 

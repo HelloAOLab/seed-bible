@@ -101,7 +101,11 @@ describe("the playlist editor", () => {
     });
   };
 
-  const openWorkspace = (items: Playlist["items"] = STEPS, step = 0) => {
+  const openWorkspace = (
+    items: Playlist["items"] = STEPS,
+    step = 0,
+    compact = false
+  ) => {
     act(() => {
       state.playlists.editPlaylist(makePlaylist(items));
       state.playlists.selectEditorStep(step);
@@ -109,7 +113,7 @@ describe("the playlist editor", () => {
     act(() => {
       render(
         <TestHost state={state}>
-          <PlaylistEditorWorkspace state={state} compact={false}>
+          <PlaylistEditorWorkspace state={state} compact={compact}>
             <div className="sb-pane-reader">reader</div>
           </PlaylistEditorWorkspace>
           <ModalHost manager={state.modals} />
@@ -214,6 +218,28 @@ describe("the playlist editor", () => {
   });
 
   describe("closing", () => {
+    it("is a back arrow at the start of the side panel's title bar, in place of a close button", () => {
+      openPanel();
+
+      const header = container.querySelector(".sb-pe-panel-header")!;
+      expect(header.firstElementChild?.getAttribute("aria-label")).toBe(
+        "Close playlist editor"
+      );
+      expect(header.querySelector(".sb-pe-panel-close")).toBeNull();
+    });
+
+    it("is a back arrow at the start of the phone's title bar, and closes the editor", () => {
+      openWorkspace(STEPS, 0, true);
+
+      const header = container.querySelector(".sb-pe-mobile-header")!;
+      const back = header.firstElementChild;
+      expect(back?.getAttribute("aria-label")).toBe("Close playlist editor");
+
+      click(back);
+
+      expect(state.playlists.editingPlaylist.value).toBeNull();
+    });
+
     it("closes straight away when nothing changed", () => {
       openPanel();
 

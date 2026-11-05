@@ -64,6 +64,36 @@ function UnsavedChangesConfirmModalContent(props: {
 }
 
 /**
+ * The back arrow at the start of the editor's title bar (the side panel's on
+ * desktop, the editor's own header on a phone): leaves the editor, asking
+ * first if there are unsaved changes. Points left, or right in RTL languages,
+ * where the title bar is mirrored.
+ */
+export function PlaylistEditorBackButton(props: {
+  playlists: PlaylistManager;
+  modals: ModalManager;
+}) {
+  const { t, isRtl } = useI18n();
+  const label = t("playlist-editor-close", {
+    defaultValue: "Close playlist editor",
+  });
+  return (
+    <button
+      type="button"
+      className="sb-pe-back"
+      aria-label={label}
+      title={label}
+      onClick={() => requestCancelPlaylistEditor(props.playlists, props.modals)}
+    >
+      <PeIcon
+        name="arrow-right"
+        className={isRtl ? undefined : "sb-pe-back-icon--flipped"}
+      />
+    </button>
+  );
+}
+
+/**
  * Leaves the playlist editor. If the draft changed since it opened, asks first
  * instead of discarding it.
  */
@@ -552,32 +582,26 @@ export function PlaylistEditorPanel(props: {
   return (
     <div className="sb-pe sb-pe-panel">
       <div className="sb-pe-panel-header">
+        {inSheet ? null : (
+          <PlaylistEditorBackButton playlists={playlists} modals={modals} />
+        )}
         <div className="sb-pe-panel-heading">
           <PlaylistTitle playlists={playlists} />
           <p className="sb-pe-panel-status">{status.label}</p>
         </div>
         <div className="sb-pe-panel-header-actions">
           {headerActions}
-          <button
-            type="button"
-            className="sb-pe-panel-close"
-            aria-label={
-              inSheet
-                ? t("close", { defaultValue: "Close" })
-                : t("playlist-editor-close", {
-                    defaultValue: "Close playlist editor",
-                  })
-            }
-            onClick={() => {
-              if (inSheet) {
-                playlists.editorStepsSheetOpen.value = false;
-              } else {
-                requestCancelPlaylistEditor(playlists, modals);
-              }
-            }}
-          >
-            <PeIcon name="close" />
-          </button>
+          {/* In the phone's sheet, closing hides the sheet, not the editor. */}
+          {inSheet ? (
+            <button
+              type="button"
+              className="sb-pe-panel-close"
+              aria-label={t("close", { defaultValue: "Close" })}
+              onClick={() => (playlists.editorStepsSheetOpen.value = false)}
+            >
+              <PeIcon name="close" />
+            </button>
+          ) : null}
         </div>
       </div>
       <div className="sb-pe-panel-body">
