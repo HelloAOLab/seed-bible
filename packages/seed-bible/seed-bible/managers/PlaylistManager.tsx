@@ -1972,7 +1972,22 @@ export function createPlaylistManager(
         os.listDataByMarker(recordName, "publicRead:playlists", lastAddress),
       onPage
     );
-    return records.items.map((record) => PlaylistSchema.parse(record.data));
+    // One record that doesn't fit the schema (an older or newer app's, or a
+    // damaged one) is skipped, so it can't keep every other playlist from
+    // loading.
+    const playlists: Playlist[] = [];
+    for (const record of records.items) {
+      const parsed = PlaylistSchema.safeParse(record.data);
+      if (!parsed.success) {
+        console.warn(
+          `Skipping invalid playlist record ${recordName}/${record.address}:`,
+          parsed.error
+        );
+        continue;
+      }
+      playlists.push(parsed.data);
+    }
+    return playlists;
   };
 
   // Cached playlists for an explicitly-named account, keyed by userId. Only

@@ -564,6 +564,65 @@ describe("createPlaylistManager", () => {
     expect(manager.userPlaylists.value).toEqual([playlist]);
   });
 
+  describe("a playlist record that doesn't match the schema", () => {
+    // Missing its items, so it can't be read as a playlist.
+    const invalid = { id: "playlist_bad", recordName: "user-1", title: "Bad" };
+
+    it("is skipped, and the user's other playlists still load", async () => {
+      const first = makePlaylist({ id: "playlist_a" });
+      const second = makePlaylist({ id: "playlist_b" });
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [
+          { address: "playlist_a", data: first },
+          { address: "playlist_bad", data: invalid },
+          { address: "playlist_b", data: second },
+        ],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.userPlaylists.value).toEqual([first, second]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("user-1/playlist_bad"),
+        expect.anything()
+      );
+    });
+
+    it("is skipped, and a friend's other playlists still load", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const friendPlaylist = makePlaylist({
+        id: "playlist_friend",
+        recordName: "friend-user",
+      });
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [
+          { address: "playlist_bad", data: invalid },
+          { address: "playlist_friend", data: friendPlaylist },
+        ],
+      });
+
+      const view = manager.getUserPlaylists("friend-user");
+
+      await vi.waitFor(() => expect(view.value).toEqual([friendPlaylist]));
+    });
+
+    it("leaves an empty list when none of them match", async () => {
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ address: "playlist_bad", data: invalid }],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.userPlaylists.value).toEqual([]);
+    });
+  });
+
   describe("clearHeroImage", () => {
     const COVER = "https://example.com/cover.jpg";
     const OTHER_COVER = "https://example.com/other.jpg";
