@@ -5861,6 +5861,24 @@ describe("BibleReader", () => {
     ).toBeNull();
   });
 
+  // The row follows the app's text direction, so the end is the right in
+  // LTR languages and the left in RTL ones.
+  it("puts the mobile header's translation button at the end of the row, after settings", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createMobileState();
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const header = container.querySelector(".sb-bible-reader-mobile-header")!;
+    const buttons = Array.from(header.querySelectorAll("button"));
+    expect(buttons.at(-1)?.className).toBe(
+      "sb-bible-reader-mobile-header-translation"
+    );
+    expect(buttons.at(-2)?.className).toBe(
+      "sb-bible-reader-mobile-header-settings"
+    );
+  });
+
   it("opens the translation picker from the mobile header's translation button", async () => {
     const { slot, selectorState, readingState, setOpen } = createFixture();
     const state = createMobileState(selectorState);

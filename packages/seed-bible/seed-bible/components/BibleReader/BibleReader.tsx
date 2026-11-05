@@ -3796,17 +3796,6 @@ export function BibleReader(props: BibleReaderProps) {
                     {chapterNumber.value}
                   </span>
                 )}
-                <button
-                  type="button"
-                  className="sb-bible-reader-mobile-header-translation"
-                  aria-label={changeTranslationLabel}
-                  onClick={(e: MouseEvent) => {
-                    e.stopPropagation();
-                    void openTranslationSelector();
-                  }}
-                >
-                  {translationLabel}
-                </button>
               </h1>
             </div>
             {playlistOpeningHere ? (
@@ -3915,6 +3904,18 @@ export function BibleReader(props: BibleReaderProps) {
                   </button>
                 </>
               )}
+              {/* At the end of the row: the right on LTR, the left on RTL. */}
+              <button
+                type="button"
+                className="sb-bible-reader-mobile-header-translation"
+                aria-label={changeTranslationLabel}
+                onClick={(e: MouseEvent) => {
+                  e.stopPropagation();
+                  void openTranslationSelector();
+                }}
+              >
+                {translationLabel}
+              </button>
             </div>
           </div>
 
