@@ -1291,7 +1291,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     () =>
       hasVerseSelection.value &&
       !isFullscreenPaneVisible.value &&
-      !props.state.annotations?.isDraftingNewAnnotation.value
+      !props.state.annotations?.isDraftingNewAnnotation.value &&
+      // In the playlist editor, picked verses are a step's passage, applied
+      // from the editor's own pick bar; as on desktop (where this whole
+      // toolbar steps aside), no verse toolbar opens over it. Its "tap
+      // outside clears the selection" would also empty the pick the moment
+      // Apply is touched.
+      !isPlaylistEditorTab(props.state, selectedTab.value)
   );
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && isVerseToolbarVisible.value

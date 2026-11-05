@@ -306,6 +306,51 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     }
   });
 
+  it("opens no verse sheet over the playlist editor, so tapping its Apply keeps the picked verses", async () => {
+    const readingState = state.app.currentReadingState.value!.tab.readingState;
+    await act(async () => {
+      state.playlists.editPlaylist({
+        id: "playlist_1",
+        recordName: "user-1",
+        authorUserId: "user-1",
+        title: "Psalms",
+        description: null,
+        items: [{ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } }],
+        createdAtMs: 1,
+        updatedAtMs: 1,
+      });
+      state.playlists.selectEditorStep(0);
+    });
+    await selectFirstVerse();
+    await renderToolbar();
+
+    // Picking verses for the step: the editor's pick bar is the way to use
+    // them, and the verse sheet stays closed, as on desktop.
+    expect(state.playlists.editorVersePickIndex.value).toBe(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+
+    // A finger landing on the pick bar's Apply is outside the verses; it
+    // must not clear them before Apply's click can use them.
+    const apply = document.createElement("button");
+    apply.className = "sb-pe-pickbar-apply";
+    document.body.appendChild(apply);
+    try {
+      await act(async () => {
+        apply.dispatchEvent(
+          new window.PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerType: "touch",
+          })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+      expect(state.playlists.editorVersePickRef.value).not.toBeNull();
+    } finally {
+      apply.remove();
+    }
+  });
+
   it("does not clear the verse selection when a touch tap lands in a poetry verse's blank space", async () => {
     const readingState = await selectFirstVerse();
     await renderToolbar();
