@@ -4,6 +4,7 @@ import {
   sharedPageQueryRedirect,
   render,
   stripDefaultOgImageMeta,
+  todayPageRedirect,
 } from "../../../standalone/entry-ssr";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import {
@@ -380,6 +381,59 @@ describe("acceptLanguageRedirect", () => {
   });
 });
 
+describe("todayPageRedirect", () => {
+  it("sends a bare root to the Today page in the visitor's language", () => {
+    expect(todayPageRedirect("/", "", ["es-ES"])).toBe("/es/today");
+  });
+
+  it("falls back to English when no Accept-Language preference is supported", () => {
+    expect(todayPageRedirect("/", "", [])).toBe("/en/today");
+    expect(todayPageRedirect("/", "", ["xx-YY"])).toBe("/en/today");
+  });
+
+  it("keeps the deployment's base path", () => {
+    expect(todayPageRedirect("/b/some-branch/", "/b/some-branch", [])).toBe(
+      "/b/some-branch/en/today"
+    );
+  });
+
+  it("sends ?today=open on a reading path to the Today page in that path's language", () => {
+    expect(
+      todayPageRedirect("/es/spa_onbv/john/3?today=open", "", ["fr-FR"])
+    ).toBe("/es/today");
+  });
+
+  it("drops reading-only params but keeps the rest of the query", () => {
+    expect(
+      todayPageRedirect(
+        "/en/AAB/john/3?today=open&verse=16&customization=owner.theme",
+        "",
+        []
+      )
+    ).toBe("/en/today?customization=owner.theme");
+  });
+
+  it("sends ?today=open on a static page to the Today page", () => {
+    expect(todayPageRedirect("/fr/about?today=open", "", [])).toBe("/fr/today");
+  });
+
+  it.each([
+    ["a reading path", "/en/AAB/john/3"],
+    ["a static page", "/en/about"],
+    ["a shared playlist page", "/en/playlist/owner.playlist_shared"],
+    ["a shared-session invite", "/?sessionId=abc"],
+    ["a legacy ?book= link", "/?book=GEN&chapter=1"],
+    ["?today=closed on a bare root", "/?today=closed"],
+    ["any other ?today= value", "/?today=maybe"],
+    ["a compact embed", "/?embed=minimal"],
+    ["a compact embed asking for Today", "/?embed=true&today=open"],
+    ["the Today page itself", "/en/today"],
+    ["the Today page with a stray ?today=open", "/en/today?today=open"],
+  ])("leaves %s alone", (_, path) => {
+    expect(todayPageRedirect(path, "", ["es-ES"])).toBeNull();
+  });
+});
+
 describe("stripDefaultOgImageMeta", () => {
   const DEFAULT_OG_IMAGE_BLOCK = [
     '<meta property="og:type" content="website" />',
@@ -545,6 +599,34 @@ describe("render() redirect wiring", () => {
 
     expect(result).toEqual({
       redirectTo: "/en/AAB/genesis/1",
+      redirectStatus: 302,
+      vary: "Accept-Language",
+    });
+  });
+
+  it("returns a 302 with Vary: Accept-Language from a bare root to the Today page", async () => {
+    const result = await render({
+      path: "/",
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: ["es-ES"] },
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/es/today",
+      redirectStatus: 302,
+      vary: "Accept-Language",
+    });
+  });
+
+  it("returns a 302 from a legacy ?today=open link to the Today page", async () => {
+    const result = await render({
+      path: "/en/AAB/john/3?today=open",
+      config: DEFAULT_APP_CONFIG,
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/en/today",
       redirectStatus: 302,
       vary: "Accept-Language",
     });
@@ -1224,9 +1306,9 @@ describe("render() server-rendered meta tags", () => {
     expect(html).not.toContain('<link rel="canonical" href="/"');
   });
 
-  it("renders the bare root directly, with no redirect and no notFound", async () => {
+  it("renders the bare root directly when ?today=closed keeps it on the reader, with no notFound", async () => {
     const result = (await render({
-      path: "/?useFreeBibleAPI=true",
+      path: "/?today=closed&useFreeBibleAPI=true",
       config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
       html: TEMPLATE,
     })) as { html: string; notFound?: true; redirectTo?: string };
@@ -1290,6 +1372,26 @@ describe("render() server-rendered meta tags", () => {
       '<meta property="og:url" content="/en/about"'
     );
     expect(result.html).not.toContain('<link rel="canonical" href="/"');
+  });
+
+  it("renders the Today screen itself on the Today page, with its own title and canonical URL", async () => {
+    const result = (await render({
+      path: "/en/today?useFreeBibleAPI=true",
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
+      html: TEMPLATE,
+    })) as { html: string; notFound?: true; redirectTo?: string };
+
+    if ("redirectTo" in result) {
+      throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
+    }
+    expect(result.notFound).toBeFalsy();
+    // The server can't see a session, so it renders the signed-out Welcome.
+    expect(result.html).toContain("sb-today-welcome-screen");
+    expect(result.html).toContain("<title>Today | Seed Bible</title>");
+    expect(result.html).toContain('<link rel="canonical" href="/en/today"');
+    expect(result.html).toContain(
+      '<meta property="og:url" content="/en/today"'
+    );
   });
 
   // Regression: every `render()` used to build a brand-new, empty-cache
