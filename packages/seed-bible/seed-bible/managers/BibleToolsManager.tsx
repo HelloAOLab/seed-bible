@@ -1113,6 +1113,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
           );
         }}
         toast={toast}
+        onBack={options.onBack}
       />
     ),
   });

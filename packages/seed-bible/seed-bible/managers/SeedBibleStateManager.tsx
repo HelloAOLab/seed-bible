@@ -4138,7 +4138,7 @@ export function createSeedBibleState(
     // `editPlaylist` only sets the Discover pane's view, and that pane docks
     // beside the reader — so the fullscreen screens above it have to close
     // first, or the editor opens behind them.
-    playlists.editPlaylist(playlist);
+    playlists.editPlaylist(playlist, { onBack: openYourContent });
   };
   const editAnnotationFromContent = (annotation: Annotation) => {
     closeYourContent();
@@ -4150,7 +4150,7 @@ export function createSeedBibleState(
   const createPlaylistFromContent = () => {
     closeYourContent();
     closeProfile();
-    void playlists.createNewPlaylist();
+    void playlists.createNewPlaylist(undefined, { onBack: openYourContent });
   };
   // The customization editor is a side pane beside the reader, so the
   // fullscreen screens above it close first, as for the playlist editor.
