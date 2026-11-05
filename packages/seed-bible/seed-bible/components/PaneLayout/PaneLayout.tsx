@@ -427,7 +427,9 @@ export function SidePane(props: SidePaneProps) {
 
   return (
     <div
-      className={`sb-pane-side-shell${isEntering.value ? " sb-pane-side-shell-entering" : ""}`}
+      className={`sb-pane-side-shell${isEntering.value ? " sb-pane-side-shell-entering" : ""}${
+        pane.shellClassName ? ` ${pane.shellClassName}` : ""
+      }`}
       data-placement="side"
       style={{
         width: `${pane.width}px`,

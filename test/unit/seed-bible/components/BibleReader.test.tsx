@@ -62,9 +62,15 @@ import {
   type WebResponse,
 } from "../managers/testUtils/mockBibleApiData";
 
+const i18nDirection = vi.hoisted(() => ({ isRtl: false }));
+
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
-  return mockI18nManager();
+  return mockI18nManager({
+    get isRtl() {
+      return i18nDirection.isRtl;
+    },
+  });
 });
 const testBranding: BrandingConfig = {
   appName: "Test App",
@@ -581,6 +587,7 @@ beforeEach(() => {
   setupRerender();
   resetLastVersePointerTypeForTests();
   resetMockI18n();
+  i18nDirection.isRtl = false;
 });
 
 afterEach(() => {
@@ -5859,6 +5866,109 @@ describe("BibleReader", () => {
     expect(
       container.querySelector(".sb-bible-reader-mobile-header-account")
     ).toBeNull();
+  });
+
+  // The row follows the app's text direction, so the end is the right in
+  // LTR languages and the left in RTL ones.
+  describe("the mobile header's back arrow during playlist playback", () => {
+    const renderPlaying = (playing: boolean) => {
+      const { slot, selectorState, readingState } = createFixture();
+      const state = createMobileState(selectorState);
+      const stopPlaying = vi.fn();
+      Object.assign(state.playlists, {
+        playing: signal(
+          playing
+            ? createPlayingState(
+                [
+                  {
+                    id: "playlist-1",
+                    recordName: "user-1",
+                    title: "The Love of Jesus",
+                    description: null,
+                    items: [{ type: "html", html: "a" }],
+                  } as SimplePlaylist,
+                ],
+                null,
+                () => {}
+              )
+            : null
+        ),
+        isMobile: signal(true),
+        stopPlaying,
+      });
+      renderMobileReader(
+        { slot, selectorState, readingState },
+        state,
+        container
+      );
+      const back = container.querySelector<HTMLButtonElement>(
+        "button.sb-bible-reader-mobile-header-back"
+      );
+      return { back, stopPlaying };
+    };
+
+    it("starts the header row and closes the playlist when tapped", () => {
+      const { back, stopPlaying } = renderPlaying(true);
+
+      expect(back).not.toBeNull();
+      expect(back?.getAttribute("aria-label")).toBe("Close playlist");
+      expect(back?.textContent).toBe("arrow_back");
+      const header = container.querySelector(".sb-bible-reader-mobile-header")!;
+      expect(header.firstElementChild).toBe(back);
+
+      act(() => {
+        back!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(stopPlaying).toHaveBeenCalledTimes(1);
+    });
+
+    it("is followed by the playing playlist's info, not grouped with the other tools", () => {
+      const { back } = renderPlaying(true);
+
+      const info = back?.nextElementSibling;
+      expect(
+        info?.querySelector(".sb-quick-toolbar-current-playlist")
+      ).not.toBeNull();
+      expect(info?.textContent).toContain("The Love of Jesus");
+      expect(
+        container.querySelector(
+          ".sb-bible-reader-mobile-header-actions .sb-quick-toolbar-current-playlist"
+        )
+      ).toBeNull();
+    });
+
+    // The row is mirrored in RTL, putting the arrow on the right, so it
+    // points right.
+    it("points the other way in RTL languages", () => {
+      i18nDirection.isRtl = true;
+
+      const { back } = renderPlaying(true);
+
+      expect(back?.textContent).toBe("arrow_forward");
+    });
+
+    it("isn't shown when no playlist is playing", () => {
+      const { back } = renderPlaying(false);
+
+      expect(back).toBeNull();
+    });
+  });
+
+  it("puts the mobile header's translation button at the end of the row, after settings", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createMobileState();
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const header = container.querySelector(".sb-bible-reader-mobile-header")!;
+    const buttons = Array.from(header.querySelectorAll("button"));
+    expect(buttons.at(-1)?.className).toBe(
+      "sb-bible-reader-mobile-header-translation"
+    );
+    expect(buttons.at(-2)?.className).toBe(
+      "sb-bible-reader-mobile-header-settings"
+    );
   });
 
   it("opens the translation picker from the mobile header's translation button", async () => {

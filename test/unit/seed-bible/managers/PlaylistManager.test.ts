@@ -38,6 +38,7 @@ import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import type { BibleSelectedVerse } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
@@ -310,7 +311,12 @@ function makeReadingState(
     // fragment's real end verse; defaults to null (unloaded), settable per
     // test via `tab.readingState.chapterData.value = {...}`.
     chapterData: signal<TranslationBookChapter | null>(null),
-    decorateVerses: vi.fn(),
+    // The playlist editor picks a scripture step's verses from these.
+    selectedVerses: signal<BibleSelectedVerse[]>([]),
+    clearSelectedVerses: vi.fn(() => {
+      self.selectedVerses.value = [];
+    }),
+    decorateVerses: vi.fn(() => "decoration-1"),
     removeDecoration: vi.fn(),
     requestUrlUpdate: vi.fn(),
     enabledExtensions: computed(() => Array.from(runtimes.value.values())),
@@ -445,7 +451,8 @@ describe("createPlaylistManager", () => {
     id: string | null = "user-1",
     tabsManager?: TabsArg,
     initialHref?: string,
-    initialPlaylistPageSeed?: PlaylistPageSeed
+    initialPlaylistPageSeed?: PlaylistPageSeed,
+    pickChapter?: (onPick: (bookId: string, chapter: number) => void) => void
   ) => {
     userId = signal<string | null>(id);
     const os = CasualOSManager();
@@ -500,7 +507,8 @@ describe("createPlaylistManager", () => {
       readingExtensionManager,
       discover,
       chats,
-      initialPlaylistPageSeed
+      initialPlaylistPageSeed,
+      { pickChapter }
     );
   };
 
@@ -554,6 +562,65 @@ describe("createPlaylistManager", () => {
       undefined
     );
     expect(manager.userPlaylists.value).toEqual([playlist]);
+  });
+
+  describe("a playlist record that doesn't match the schema", () => {
+    // Missing its items, so it can't be read as a playlist.
+    const invalid = { id: "playlist_bad", recordName: "user-1", title: "Bad" };
+
+    it("is skipped, and the user's other playlists still load", async () => {
+      const first = makePlaylist({ id: "playlist_a" });
+      const second = makePlaylist({ id: "playlist_b" });
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [
+          { address: "playlist_a", data: first },
+          { address: "playlist_bad", data: invalid },
+          { address: "playlist_b", data: second },
+        ],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.userPlaylists.value).toEqual([first, second]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("user-1/playlist_bad"),
+        expect.anything()
+      );
+    });
+
+    it("is skipped, and a friend's other playlists still load", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const friendPlaylist = makePlaylist({
+        id: "playlist_friend",
+        recordName: "friend-user",
+      });
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [
+          { address: "playlist_bad", data: invalid },
+          { address: "playlist_friend", data: friendPlaylist },
+        ],
+      });
+
+      const view = manager.getUserPlaylists("friend-user");
+
+      await vi.waitFor(() => expect(view.value).toEqual([friendPlaylist]));
+    });
+
+    it("leaves an empty list when none of them match", async () => {
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ address: "playlist_bad", data: invalid }],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.userPlaylists.value).toEqual([]);
+    });
   });
 
   describe("clearHeroImage", () => {
@@ -1410,6 +1477,259 @@ describe("createPlaylistManager", () => {
     manager.reorderEditingPlaylistItem(0, 1);
 
     expect(manager.editingPlaylist.value).toBeNull();
+  });
+
+  describe("the playlist editor's steps", () => {
+    const steps: Playlist["items"] = [
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 1, verse: 2 } },
+      { type: "html", html: "<p>Between</p>" },
+      { type: "link", url: "https://example.com/talk" },
+    ];
+
+    const pickVerse = (number: number): BibleSelectedVerse => ({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verse: { type: "verse", number, content: [] },
+      translationId: "BSB",
+    });
+
+    const openEditor = async (
+      pickChapter?: (onPick: (bookId: string, chapter: number) => void) => void
+    ) => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      const manager = makeManager(
+        "user-1",
+        makeTabs(tab),
+        undefined,
+        undefined,
+        pickChapter
+      );
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: steps }));
+      await flush();
+      return { manager, tab };
+    };
+
+    it("opens on the first step, or on none when the playlist is empty", async () => {
+      const { manager } = await openEditor();
+      expect(manager.editorStepIndex.value).toBe(0);
+
+      manager.editPlaylist(makePlaylist({ items: [] }));
+      expect(manager.editorStepIndex.value).toBe(-1);
+    });
+
+    it("opens the open scripture step's chapter in the reader", async () => {
+      await openEditor();
+
+      expect(selectTranslationAndChapterMock).toHaveBeenLastCalledWith(
+        "BSB",
+        "GEN",
+        1,
+        { scrollToVerse: 2 }
+      );
+    });
+
+    it("keeps the same step open when an earlier one is removed or moved", async () => {
+      const { manager } = await openEditor();
+      manager.selectEditorStep(2);
+
+      manager.removeEditingPlaylistItem(0);
+      expect(manager.editorStepIndex.value).toBe(1);
+      expect(manager.editingPlaylist.value!.items[1]!.type).toBe("link");
+
+      manager.reorderEditingPlaylistItem(1, 0);
+      expect(manager.editorStepIndex.value).toBe(0);
+      expect(manager.editingPlaylist.value!.items[0]!.type).toBe("link");
+    });
+
+    it("opens the step that takes the place of a removed open step", async () => {
+      const { manager } = await openEditor();
+      manager.selectEditorStep(1);
+
+      manager.removeEditingPlaylistItem(1);
+      expect(manager.editorStepIndex.value).toBe(1);
+      expect(manager.editingPlaylist.value!.items[1]!.type).toBe("link");
+
+      // Removing the last step opens the new last one.
+      manager.removeEditingPlaylistItem(1);
+      expect(manager.editorStepIndex.value).toBe(0);
+      manager.removeEditingPlaylistItem(0);
+      expect(manager.editorStepIndex.value).toBe(-1);
+    });
+
+    it("duplicates a step right after itself and opens the copy", async () => {
+      const { manager } = await openEditor();
+
+      manager.duplicateEditingPlaylistItem(1);
+
+      const items = manager.editingPlaylist.value!.items;
+      expect(items).toHaveLength(4);
+      expect(items[2]).toEqual(items[1]);
+      expect(items[2]).not.toBe(items[1]);
+      expect(manager.editorStepIndex.value).toBe(2);
+    });
+
+    it("adds every kind of step as an item type the saved format already has", async () => {
+      const { manager } = await openEditor();
+
+      for (const kind of [
+        "scripture",
+        "note",
+        "video",
+        "question",
+        "compare",
+      ] as const) {
+        manager.addEditorStep(kind, 0);
+        expect(manager.editorStepIndex.value).toBe(1);
+      }
+
+      const added = manager.editingPlaylist.value!.items.slice(1, 6);
+      // Newest first, since each went in right after step 1.
+      expect(added.map((item) => item.type)).toEqual([
+        "bible-verse",
+        "html",
+        "link",
+        "html",
+        "bible-verse",
+      ]);
+      expect(added[0]).toMatchObject({ compare: { ref: { bookId: "GEN" } } });
+      expect(added[1]).toMatchObject({ question: {} });
+    });
+
+    it("asks for a chapter before adding a scripture step, then adds that whole chapter", async () => {
+      let onPick: ((bookId: string, chapter: number) => void) | undefined;
+      const { manager } = await openEditor((pick) => {
+        onPick = pick;
+      });
+      manager.editorAddMenu.value = { afterIndex: 2 };
+
+      manager.addEditorStep("scripture", 2);
+
+      // Nothing is added until a chapter is picked.
+      expect(onPick).toBeDefined();
+      expect(manager.editingPlaylist.value!.items).toHaveLength(steps.length);
+      expect(manager.editorAddMenu.value).toBeNull();
+
+      onPick!("PSA", 104);
+
+      expect(manager.editingPlaylist.value!.items).toHaveLength(
+        steps.length + 1
+      );
+      expect(manager.editingPlaylist.value!.items[3]).toEqual({
+        type: "bible-verse",
+        ref: { bookId: "PSA", chapter: 104 },
+      });
+      expect(manager.editorStepIndex.value).toBe(3);
+      expect(manager.editorVersePickIndex.value).toBeNull();
+      await flush();
+      expect(selectTranslationAndChapterMock).toHaveBeenLastCalledWith(
+        "BSB",
+        "PSA",
+        104,
+        undefined
+      );
+    });
+
+    it("adds nothing when the chapter is picked after the editor has closed", async () => {
+      let onPick: ((bookId: string, chapter: number) => void) | undefined;
+      const { manager } = await openEditor((pick) => {
+        onPick = pick;
+      });
+
+      manager.addEditorStep("scripture", 0);
+      manager.cancelEditingPlaylist();
+      onPick!("PSA", 104);
+
+      expect(manager.editingPlaylist.value).toBeNull();
+    });
+
+    it("starts a new scripture step on the chapter being read when there's no chapter picker", async () => {
+      const { manager, tab } = await openEditor();
+      tab.readingState.chapterData.value = {
+        book: { id: "PSA" },
+        chapter: { number: 104 },
+      } as unknown as TranslationBookChapter;
+
+      manager.addEditorStep("scripture", 2);
+
+      expect(manager.editingPlaylist.value!.items[3]).toEqual({
+        type: "bible-verse",
+        ref: { bookId: "PSA", chapter: 104 },
+      });
+      expect(manager.editorVersePickIndex.value).toBeNull();
+    });
+
+    it("gives the open scripture step the verses picked in the reader on Apply", async () => {
+      const { manager, tab } = await openEditor();
+
+      tab.readingState.selectedVerses.value = [pickVerse(5), pickVerse(3)];
+      expect(manager.editorVersePickIndex.value).toBe(0);
+      expect(manager.editorVersePickRef.value).toEqual({
+        bookId: "GEN",
+        chapter: 1,
+        verse: 3,
+        endVerse: 5,
+      });
+
+      manager.applyEditorVersePick();
+
+      expect(manager.editingPlaylist.value!.items[0]).toEqual({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 1, verse: 3, endVerse: 5 },
+      });
+      expect(manager.editorVersePickIndex.value).toBeNull();
+      expect(tab.readingState.selectedVerses.value).toEqual([]);
+    });
+
+    it("leaves the step's passage alone when the verse pick is cancelled", async () => {
+      const { manager, tab } = await openEditor();
+
+      tab.readingState.selectedVerses.value = [pickVerse(7)];
+      manager.cancelEditorVersePick();
+
+      expect(manager.editingPlaylist.value!.items[0]).toEqual(steps[0]);
+      expect(manager.editorVersePickIndex.value).toBeNull();
+    });
+
+    it("doesn't start a verse pick while previewing", async () => {
+      const { manager, tab } = await openEditor();
+      manager.editorMode.value = "preview";
+
+      tab.readingState.selectedVerses.value = [pickVerse(7)];
+
+      expect(manager.editorVersePickIndex.value).toBeNull();
+    });
+
+    it("refuses to save a step that would make the playlist fail to load", async () => {
+      const { manager } = await openEditor();
+      manager.addEditorStep("video", 2);
+
+      expect(manager.editingPlaylistInvalidSteps()).toEqual([3]);
+      await expect(manager.saveEditingPlaylist()).rejects.toThrow(/Step 4/);
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(manager.editingPlaylist.value).not.toBeNull();
+    });
+
+    it("saves step settings alongside the steps", async () => {
+      const { manager } = await openEditor();
+      manager.updateEditingPlaylistItem(1, {
+        type: "html",
+        html: "<p>Between</p>",
+        minutes: 3,
+        pauseForGroup: true,
+      });
+
+      await manager.saveEditingPlaylist();
+
+      const saved = recordDataMock.mock.calls.at(-1)![2] as Playlist;
+      expect(saved.items[1]).toEqual({
+        type: "html",
+        html: "<p>Between</p>",
+        minutes: 3,
+        pauseForGroup: true,
+      });
+      expect(PlaylistSchema.parse(saved).items[1]).toEqual(saved.items[1]);
+    });
   });
 
   it("cancelEditingPlaylist discards the draft and returns to discover", async () => {
