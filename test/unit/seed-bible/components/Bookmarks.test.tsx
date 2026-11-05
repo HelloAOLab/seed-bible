@@ -108,14 +108,7 @@ describe("bookmarks", () => {
     return target;
   }
 
-  /** Opens the modal the way the reader button does and renders its body. */
-  async function openModal(location = AAB_GEN_1): Promise<HTMLDivElement> {
-    const openModalSpy = vi.spyOn(state.modals, "openModal");
-    await act(async () => {
-      await openBookmarkModal(state, location);
-    });
-    expect(openModalSpy).toHaveBeenCalledTimes(1);
-    const modal: ModalRegistration = openModalSpy.mock.calls[0]![0];
+  function renderModal(modal: ModalRegistration): HTMLDivElement {
     const content =
       typeof modal.content === "function"
         ? modal.content({
@@ -124,6 +117,31 @@ describe("bookmarks", () => {
           })
         : modal.content;
     return renderInto(content);
+  }
+
+  /** Opens the modal the way the reader button does and renders its body. */
+  async function openModal(location = AAB_GEN_1): Promise<HTMLDivElement> {
+    const openModalSpy = vi.spyOn(state.modals, "openModal");
+    await act(async () => {
+      await openBookmarkModal(state, location);
+    });
+    expect(openModalSpy).toHaveBeenCalledTimes(1);
+    return renderModal(openModalSpy.mock.calls[0]![0]);
+  }
+
+  /** Opens a row's options menu and picks the item labeled `label`. */
+  async function pickFromMenu(row: HTMLElement, label: string) {
+    await click(
+      row.querySelector<HTMLElement>(".sb-bookmark-picker-menu-anchor button")!
+    );
+    // The menu is portaled to <body>, outside the modal.
+    const item = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        ".sb-bookmark-picker-menu .sb-context-menu-item"
+      )
+    ).find((menuItem) => menuItem.textContent?.includes(label));
+    if (!item) throw new Error(`"${label}" was not in the menu.`);
+    await click(item);
   }
 
   const rows = (root: ParentNode) =>
@@ -229,14 +247,17 @@ describe("bookmarks", () => {
       );
     });
 
-    it("opens a bookmark's chapter from its arrow, leaving the bookmark where it is", async () => {
+    it("opens a bookmark's chapter from its options menu, leaving the bookmark where it is", async () => {
       await signIn([aBookmark({ name: "Reading plan", ...AAB_EXO_3 })]);
       const closeModal = vi.spyOn(state.modals, "closeModal");
       const modal = await openModal(AAB_GEN_1);
 
-      const open = button(modal, ".sb-bookmark-picker-open");
-      expect(open.getAttribute("aria-label")).toBe("Open Reading plan");
-      await click(open);
+      expect(
+        button(modal, ".sb-bookmark-picker-menu-anchor button").getAttribute(
+          "aria-label"
+        )
+      ).toBe("Options for Reading plan");
+      await pickFromMenu(rows(modal)[0]!, "Open chapter");
 
       const selected = () =>
         state.tabs.tabs.value.find(
@@ -310,17 +331,67 @@ describe("bookmarks", () => {
       );
     });
 
-    it("deletes a bookmark from its row, and offers the premade one again once none are left", async () => {
-      await signIn([aBookmark()]);
+    describe("deleting from a row's options menu", () => {
+      /** Picks Delete and renders the question it asks. */
+      async function askToDelete(modal: HTMLElement) {
+        // The same spy that saw the bookmark modal open.
+        const openModalSpy = vi.spyOn(state.modals, "openModal");
+        const before = openModalSpy.mock.calls.length;
+        await pickFromMenu(rows(modal)[0]!, "Delete bookmark");
+        expect(openModalSpy).toHaveBeenCalledTimes(before + 1);
+        return renderModal(openModalSpy.mock.calls[before]![0]);
+      }
+
+      it("asks first, and deletes only once confirmed", async () => {
+        await signIn([aBookmark({ name: "Reading plan" })]);
+        const modal = await openModal();
+
+        const question = await askToDelete(modal);
+        expect(
+          question.querySelector(".sb-confirm-delete-message")!.textContent
+        ).toBe(`Delete "Reading plan"? This can't be undone.`);
+        expect(state.bookmarks.bookmarks.value).toHaveLength(1);
+        expect(recordData).not.toHaveBeenCalled();
+
+        await click(button(question, ".sb-delete-button"));
+
+        expect(state.bookmarks.bookmarks.value).toEqual([]);
+        // The sheet stays open, offering the premade bookmark again.
+        expect(rows(modal)).toHaveLength(1);
+        expect(
+          modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+        ).toBe("My bookmark");
+      });
+
+      it("keeps the bookmark when the question is canceled", async () => {
+        await signIn([aBookmark()]);
+        const modal = await openModal();
+
+        const question = await askToDelete(modal);
+        await click(button(question, ".sb-session-settings-cancel"));
+
+        expect(state.bookmarks.bookmarks.value).toHaveLength(1);
+        expect(recordData).not.toHaveBeenCalled();
+      });
+    });
+
+    it("disables a row's options while a move is being saved", async () => {
+      await signIn([aBookmark({ id: "a" }), aBookmark({ id: "b" })]);
       const modal = await openModal();
+      // The record write never settles, so the move stays in progress.
+      recordData.mockReturnValue(new Promise(() => {}));
 
-      await click(button(modal, ".sb-bookmark-picker-remove"));
+      await click(
+        rows(modal)[0]!.querySelector<HTMLElement>(
+          ".sb-bookmark-picker-choice"
+        )!
+      );
 
-      expect(state.bookmarks.bookmarks.value).toEqual([]);
-      expect(rows(modal)).toHaveLength(1);
-      expect(
-        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
-      ).toBe("My bookmark");
+      for (const row of rows(modal)) {
+        expect(
+          button(row, ".sb-bookmark-picker-menu-anchor button").disabled
+        ).toBe(true);
+      }
     });
 
     it("asks a signed-out visitor to sign in first", async () => {
@@ -403,25 +474,35 @@ describe("bookmarks", () => {
       expect(front!.getAttribute("mask")).toBeNull();
     });
 
-    it("keeps the bookmarks' colors unless asked for an outline", () => {
+    it("outlines or fills every ribbon in the text color when asked", () => {
       const bookmarks = [
         aBookmark({ id: "a", colorId: "red" }),
         aBookmark({ id: "b", colorId: "green" }),
       ];
-      expect(fills(icon(bookmarks))).not.toContain("none");
       expect(
-        fills(renderInto(<BookmarkStackIcon bookmarks={bookmarks} outline />))
+        fills(
+          renderInto(
+            <BookmarkStackIcon bookmarks={bookmarks} paint="outline" />
+          )
+        )
       ).toEqual(["none", "none"]);
+      expect(
+        fills(
+          renderInto(
+            <BookmarkStackIcon bookmarks={bookmarks} paint="current" />
+          )
+        )
+      ).toEqual(["currentColor", "currentColor"]);
     });
 
     it("draws stacked outlines as heavy as a lone one", () => {
       const lone = renderInto(
-        <BookmarkStackIcon bookmarks={[aBookmark()]} outline />
+        <BookmarkStackIcon bookmarks={[aBookmark()]} paint="outline" />
       ).querySelector("path")!;
       const stacked = renderInto(
         <BookmarkStackIcon
           bookmarks={[aBookmark({ id: "a" }), aBookmark({ id: "b" })]}
-          outline
+          paint="outline"
         />
       ).querySelector(".sb-bookmark-stack-ribbon")!;
       // Each stacked ribbon is scaled down, which thins its stroke with it.
@@ -534,17 +615,14 @@ describe("bookmarks", () => {
         ).toBe(false);
       });
 
-      it("fills the same ribbons in the bookmarks' own colors while the panel is open", async () => {
+      it("fills the same ribbons in the active color while the panel is open", async () => {
         await act(async () => {
           state.bookmarks.isPanelOpen.value = true;
         });
         await renderSidebar();
 
-        // Back to front: the most recently moved is painted last, on top.
-        expect(toggleRibbons()).toEqual([
-          { fill: "var(--sb-bookmark-red-color)", stroke: null },
-          { fill: "var(--sb-bookmark-green-color)", stroke: null },
-        ]);
+        const filled = { fill: "currentColor", stroke: null };
+        expect(toggleRibbons()).toEqual([filled, filled]);
         expect(
           toggle().classList.contains(
             "sb-sidebar-tabs-header-bookmarks-button-active"
@@ -584,9 +662,22 @@ describe("bookmarks", () => {
       )!;
       const ribbons = toggle.querySelectorAll("path");
       expect(ribbons).toHaveLength(1);
-      expect(toggle.querySelector("svg")!.getAttribute("fill")).toBe("none");
-      expect(ribbons[0]!.getAttribute("fill")).toBeNull();
+      expect(ribbons[0]!.getAttribute("fill")).toBe("none");
       expect(ribbons[0]!.getAttribute("stroke")).toBe("currentColor");
+    });
+
+    it("fills the bookmarks toggle's single ribbon in the active color while the panel is open", async () => {
+      await signIn([aBookmark({ colorId: "red" })]);
+      await act(async () => {
+        state.bookmarks.isPanelOpen.value = true;
+      });
+      await renderSidebar();
+
+      const ribbons = container.querySelectorAll(
+        ".sb-sidebar-tabs-header-bookmarks-button path"
+      );
+      expect(ribbons).toHaveLength(1);
+      expect(ribbons[0]!.getAttribute("fill")).toBe("currentColor");
     });
 
     it("shows no marker for a bookmark in another translation", async () => {
