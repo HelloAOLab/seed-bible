@@ -418,17 +418,9 @@ describe("GeoJsonMap", () => {
     }
   });
 
-  describe("inline on a phone", () => {
-    beforeEach(() => {
-      setMobile(true);
-    });
-
-    afterEach(() => {
-      setMobile(false);
-    });
-
-    it("is a still preview, without zoom or recenter buttons", async () => {
-      await show(<GeoJsonMap data={ACCO} inline />);
+  describe("as a still preview", () => {
+    it("has no zoom or recenter buttons", async () => {
+      await show(<GeoJsonMap data={ACCO} inline still />);
 
       expect(container.querySelector(".leaflet-control-zoom")).toBeNull();
       expect(container.querySelector(".sb-geojson-map-recenter")).toBeNull();
@@ -436,24 +428,15 @@ describe("GeoJsonMap", () => {
 
     it("calls onTap when tapped", async () => {
       const onTap = vi.fn();
-      await show(<GeoJsonMap data={ACCO} inline onTap={onTap} />);
+      await show(<GeoJsonMap data={ACCO} inline still onTap={onTap} />);
 
       tap();
 
       expect(onTap).toHaveBeenCalledTimes(1);
     });
-
-    it("keeps its zoom buttons as a full map", async () => {
-      const onTap = vi.fn();
-      await show(<GeoJsonMap data={ACCO} onTap={onTap} />);
-
-      expect(container.querySelector(".leaflet-control-zoom")).not.toBeNull();
-      tap();
-      expect(onTap).not.toHaveBeenCalled();
-    });
   });
 
-  it("can still be moved inline on a computer, so a click doesn't call onTap", async () => {
+  it("can be moved otherwise, so a click doesn't call onTap", async () => {
     const onTap = vi.fn();
     await show(<GeoJsonMap data={ACCO} inline onTap={onTap} />);
 
@@ -462,14 +445,6 @@ describe("GeoJsonMap", () => {
     expect(onTap).not.toHaveBeenCalled();
   });
 });
-
-/** Makes Leaflet take the device for a phone, or not. */
-function setMobile(isMobile: boolean) {
-  Object.defineProperty(leaflet.Browser, "mobile", {
-    value: isMobile,
-    configurable: true,
-  });
-}
 
 /** A tap (or click) in the middle of the map. */
 function tap() {

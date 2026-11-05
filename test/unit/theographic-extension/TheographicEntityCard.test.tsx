@@ -291,27 +291,49 @@ describe("TheographicEntityCard", () => {
       expect(openPlace).toHaveBeenCalledWith(EGYPT);
     });
 
+    /** Expands Egypt's card at a screen width, and waits for its map. */
+    async function expandEgyptAt(isMobile: boolean) {
+      const rendered = renderCard({
+        contentType: "place_profile",
+        entry: EGYPT,
+        getEntity: () => Promise.resolve(EGYPT_DETAIL),
+        isMobile: signal(isMobile),
+      });
+      click(expandButton());
+      await flush();
+      await waitFor(() => cardMap() !== null);
+      return rendered;
+    }
+
+    const cardMap = () =>
+      container.querySelector(".sb-theographic-map .leaflet-container");
+
     it("opens the place when the map itself is tapped on a phone", async () => {
+      const { openPlace } = await expandEgyptAt(true);
+
+      expect(container.querySelector(".leaflet-control-zoom")).toBeNull();
+      cardMap()?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, clientX: 50, clientY: 50 })
+      );
+
+      expect(openPlace).toHaveBeenCalledWith(EGYPT);
+    });
+
+    it("decides it's a phone by screen width, as where the map opens does, not by browser", async () => {
+      // A phone browser in a wide window: the map opens in a floating pane
+      // there, so the card's map stays one that can be moved.
       Object.defineProperty(leaflet.Browser, "mobile", {
         value: true,
         configurable: true,
       });
       try {
-        const { openPlace } = await expandEgypt();
-        await waitFor(
-          () =>
-            container.querySelector(
-              ".sb-theographic-map .leaflet-container"
-            ) !== null
+        const { openPlace } = await expandEgyptAt(false);
+
+        expect(container.querySelector(".leaflet-control-zoom")).not.toBeNull();
+        cardMap()?.dispatchEvent(
+          new MouseEvent("click", { bubbles: true, clientX: 50, clientY: 50 })
         );
-
-        container
-          .querySelector(".sb-theographic-map .leaflet-container")
-          ?.dispatchEvent(
-            new MouseEvent("click", { bubbles: true, clientX: 50, clientY: 50 })
-          );
-
-        expect(openPlace).toHaveBeenCalledWith(EGYPT);
+        expect(openPlace).not.toHaveBeenCalled();
       } finally {
         Object.defineProperty(leaflet.Browser, "mobile", {
           value: false,

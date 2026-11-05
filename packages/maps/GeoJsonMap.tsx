@@ -63,6 +63,7 @@ interface DrawOptions {
   label?: string;
   attribution?: readonly string[];
   inline: boolean;
+  still: boolean;
 }
 
 function hasArea(size: { x: number; y: number }): boolean {
@@ -101,12 +102,15 @@ function drawMap(
   container: HTMLElement,
   options: DrawOptions
 ): DrawnMap {
-  const { tileSource, data, label, attribution = [], inline } = options;
-  // An inline map sits in scrolling content: the wheel, or a finger on a
-  // phone, should scroll past it, not get caught panning it. On a phone it's
-  // a still preview: a pinch only half works there (the page takes the first
-  // finger), so it doesn't zoom either.
-  const isStill = inline && L.Browser.mobile;
+  const {
+    tileSource,
+    data,
+    label,
+    attribution = [],
+    inline,
+    still: isStill,
+  } = options;
+  // An inline map sits in scrolling content, so the wheel scrolls past it.
   const map = L.map(container, {
     scrollWheelZoom: !inline,
     dragging: !isStill,
@@ -217,9 +221,12 @@ export function GeoJsonMap(props: {
    */
   inline?: boolean;
   /**
-   * Called when an inline map on a phone is tapped. It can't be moved there,
-   * so a tap can open a full map instead.
+   * A still preview: no dragging, zooming or zoom buttons. For an inline map
+   * on a phone, where a finger on it should scroll the page, and a pinch only
+   * half works (the page takes the first finger).
    */
+  still?: boolean;
+  /** Called when a still map is tapped, such as to open a full map. */
   onTap?: () => void;
   /** Buttons for the map's top corner, stacked above its recenter button. */
   controls?: ComponentChildren;
@@ -232,6 +239,7 @@ export function GeoJsonMap(props: {
     label,
     attribution,
     inline = false,
+    still = false,
     onTap,
     controls,
     className,
@@ -271,6 +279,7 @@ export function GeoJsonMap(props: {
         label,
         attribution: credits ? credits.split("\n") : [],
         inline,
+        still,
       });
       isInvalid.value = false;
       if (drawn.isStill) {
@@ -307,7 +316,7 @@ export function GeoJsonMap(props: {
       recenter.value = null;
       removeMap(drawn.map);
     };
-  }, [L, data, label, credits, inline]);
+  }, [L, data, label, credits, inline, still]);
 
   const classes = ["sb-geojson-map", className].filter(Boolean).join(" ");
   // An inline map sits in something that already names it (a card), and a

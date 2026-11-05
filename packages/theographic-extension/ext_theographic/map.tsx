@@ -232,14 +232,16 @@ export function PlaceMap(props: {
   label: string;
   sources: PlaceMapSources;
   /**
-   * Opens this map in its own pane or sheet: from its corner control, or on
-   * a phone, a tap on the map. Omit and neither is offered.
+   * Opens this map in its own pane or sheet: from its corner control, or
+   * when `still`, a tap on the map. Omit and neither is offered.
    */
   onOpen?: () => void;
   /** The control's accessible name, already translated. */
   openLabel?: string;
+  /** A still preview, for a phone: a tap opens the full map instead. */
+  still?: boolean;
 }) {
-  const { place, label, sources, onOpen, openLabel } = props;
+  const { place, label, sources, onOpen, openLabel, still } = props;
   const mapData = useMapData(place.id, () =>
     resolvePlaceMapData(place, sources)
   );
@@ -268,6 +270,7 @@ export function PlaceMap(props: {
           )}
           label={place.name}
           inline
+          still={still}
           onTap={onOpen}
           controls={
             onOpen ? (
