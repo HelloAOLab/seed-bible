@@ -1336,7 +1336,11 @@ export function createPlaylistManager(
   /** Copy of the draft when the editor opened, for unsaved-change detection. */
   const editingPlaylistBaseline = signal<Playlist | null>(null);
 
-  /** The step open in the editor, as an index into the draft; -1 for none. */
+  /**
+   * The step open in the editor, as an index into the draft; -1 for none,
+   * which is the editor's list of steps. The editor opens on that list, and a
+   * step opened from it is a page of its own that Back returns from.
+   */
   const editorStepIndex = signal(-1);
   /** Whether the editor shows steps for editing or as readers will see them. */
   const editorMode = signal<"edit" | "preview">("edit");
@@ -1347,21 +1351,18 @@ export function createPlaylistManager(
   const editorAddMenu = signal<{ afterIndex: number } | null>(null);
   /** The scripture step whose verses are being re-picked in the reader. */
   const editorVersePickIndex = signal<number | null>(null);
-  /** Phone only: whether the sheet listing every step is open. */
-  const editorStepsSheetOpen = signal(false);
   /**
    * Phone only: whether the sheet for the playlist's title, description and
    * cover is open.
    */
   const editorDetailsSheetOpen = signal(false);
 
-  const resetEditorUi = (itemCount: number) => {
+  const resetEditorUi = () => {
     batch(() => {
-      editorStepIndex.value = itemCount > 0 ? 0 : -1;
+      editorStepIndex.value = -1;
       editorMode.value = "edit";
       editorAddMenu.value = null;
       editorVersePickIndex.value = null;
-      editorStepsSheetOpen.value = false;
       editorDetailsSheetOpen.value = false;
     });
   };
@@ -2185,7 +2186,7 @@ export function createPlaylistManager(
     linkPreviews.cancel();
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(draft);
-    resetEditorUi(draft.items.length);
+    resetEditorUi();
     view.value = "create_playlist";
     draft.items.forEach(requestEditingItemPreview);
 
@@ -2202,7 +2203,7 @@ export function createPlaylistManager(
     const draft = clonePlaylist(playlist);
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(playlist);
-    resetEditorUi(draft.items.length);
+    resetEditorUi();
     view.value = "create_playlist";
     // Links saved before previews existed, or whose preview missed the save
     // cutoff, get one now so the next save stores it.
@@ -2401,12 +2402,11 @@ export function createPlaylistManager(
         ...current,
         items: current.items.filter((_, i) => i !== index),
       };
-      // Removing the open step opens the one that took its place (or the new
-      // last step); any other open step keeps pointing at the same step.
+      // Removing the open step goes back to the list, since the page it was
+      // on is gone; any other open step keeps pointing at the same step.
       const open = editorStepIndex.peek();
-      const remaining = current.items.length - 1;
       if (open === index) {
-        editorStepIndex.value = Math.min(index, remaining - 1);
+        editorStepIndex.value = -1;
       } else if (open > index) {
         editorStepIndex.value = open - 1;
       }
@@ -2484,7 +2484,6 @@ export function createPlaylistManager(
     batch(() => {
       editorStepIndex.value = index;
       editorVersePickIndex.value = null;
-      editorStepsSheetOpen.value = false;
     });
   };
 
@@ -2526,10 +2525,7 @@ export function createPlaylistManager(
         addChapter(bookId, chapterNumber);
         return;
       }
-      batch(() => {
-        editorAddMenu.value = null;
-        editorStepsSheetOpen.value = false;
-      });
+      editorAddMenu.value = null;
       options.pickChapter(addChapter);
       return;
     }
@@ -2587,7 +2583,6 @@ export function createPlaylistManager(
       editorStepIndex.value = -1;
       editorAddMenu.value = null;
       editorVersePickIndex.value = null;
-      editorStepsSheetOpen.value = false;
       editorDetailsSheetOpen.value = false;
     });
   };
@@ -3626,7 +3621,6 @@ export function createPlaylistManager(
     editorAddMenu,
     editorVersePickIndex,
     editorVersePickRef,
-    editorStepsSheetOpen,
     editorDetailsSheetOpen,
     selectEditorStep,
     addEditorStep,

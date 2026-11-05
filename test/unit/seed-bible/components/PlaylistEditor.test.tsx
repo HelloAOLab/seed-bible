@@ -158,6 +158,7 @@ describe("the playlist editor", () => {
 
     it("duplicates and deletes the open step from its row", () => {
       openPanel();
+      act(() => state.playlists.selectEditorStep(0));
 
       click(container.querySelector('[aria-label="Duplicate step"]'));
       expect(items()).toHaveLength(4);
@@ -205,6 +206,7 @@ describe("the playlist editor", () => {
 
     it("says whether the draft has unsaved changes", () => {
       openPanel();
+      act(() => state.playlists.selectEditorStep(0));
       expect(container.querySelector(".sb-pe-panel-status")!.textContent).toBe(
         "Draft"
       );
@@ -217,9 +219,88 @@ describe("the playlist editor", () => {
     });
   });
 
+  describe("pages (phone)", () => {
+    const header = () => container.querySelector(".sb-pe-mobile-header")!;
+    const back = () => header().querySelector(".sb-pe-back")!;
+
+    it("opens on the list of steps, with every step there to drag", () => {
+      act(() => state.playlists.editPlaylist(makePlaylist(STEPS)));
+      act(() => {
+        render(
+          <TestHost state={state}>
+            <PlaylistEditorWorkspace state={state} compact>
+              <div className="sb-pane-reader">reader</div>
+            </PlaylistEditorWorkspace>
+          </TestHost>,
+          container
+        );
+      });
+
+      expect(state.playlists.editorStepIndex.value).toBe(-1);
+      const rows = container.querySelectorAll(".sb-pe-list-page .sb-pe-step");
+      expect(rows).toHaveLength(3);
+      expect(
+        container.querySelectorAll(".sb-pe-list-page .sb-pe-step-handle")
+      ).toHaveLength(3);
+    });
+
+    it("goes from the empty list to a new step, back to the list, and out", () => {
+      openWorkspace([], -1, true);
+      expect(container.textContent).toContain("No steps yet");
+
+      click(byText(container, ".sb-pe-add-step", "Add"));
+      click(byText(container, ".sb-pe-add-option", "Note"));
+
+      // The step is a page of its own: the list is gone, its place shown.
+      expect(container.querySelector(".sb-pe-list-page")).toBeNull();
+      expect(header().textContent).toContain("Step 1 of 1 · Note");
+      expect(back().getAttribute("aria-label")).toBe("Back to items");
+
+      click(back());
+
+      expect(state.playlists.editorStepIndex.value).toBe(-1);
+      expect(
+        container.querySelectorAll(".sb-pe-list-page .sb-pe-step")
+      ).toHaveLength(1);
+      expect(back().getAttribute("aria-label")).toBe("Close playlist editor");
+
+      click(back());
+
+      // A step was added, so leaving asks first.
+      expect(document.body.textContent).toContain(
+        "You have unsaved changes. What would you like to do?"
+      );
+    });
+
+    it("opens a step from the list", () => {
+      openWorkspace(STEPS, -1, true);
+
+      click(
+        byText(
+          container.querySelector(".sb-pe-list-page")!,
+          ".sb-pe-step-open",
+          "Genesis 1 overview"
+        )
+      );
+
+      expect(state.playlists.editorStepIndex.value).toBe(1);
+      expect(header().textContent).toContain("Step 2 of 3 · Video");
+    });
+
+    it("goes back to the list when the open step is deleted", () => {
+      openWorkspace(STEPS, 1, true);
+
+      click(header().querySelector('[aria-label="Delete"]'));
+
+      expect(items()).toHaveLength(2);
+      expect(state.playlists.editorStepIndex.value).toBe(-1);
+      expect(container.querySelector(".sb-pe-list-page")).not.toBeNull();
+    });
+  });
+
   describe("details sheet (phone)", () => {
     const openDetails = () => {
-      openWorkspace(STEPS, 0, true);
+      openWorkspace(STEPS, -1, true);
       click(container.querySelector(".sb-pe-mobile-title-button"));
       return container.querySelector(".sb-pe-details-sheet");
     };
@@ -266,7 +347,7 @@ describe("the playlist editor", () => {
       openDetails();
       act(() => state.playlists.cancelEditingPlaylist());
 
-      openWorkspace(STEPS, 0, true);
+      openWorkspace(STEPS, -1, true);
 
       expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
     });
@@ -283,8 +364,8 @@ describe("the playlist editor", () => {
       expect(header.querySelector(".sb-pe-panel-close")).toBeNull();
     });
 
-    it("is a back arrow at the start of the phone's title bar, and closes the editor", () => {
-      openWorkspace(STEPS, 0, true);
+    it("is a back arrow at the start of the phone's title bar, and closes the editor from the list", () => {
+      openWorkspace(STEPS, -1, true);
 
       const header = container.querySelector(".sb-pe-mobile-header")!;
       const back = header.firstElementChild;
@@ -293,6 +374,19 @@ describe("the playlist editor", () => {
       click(back);
 
       expect(state.playlists.editingPlaylist.value).toBeNull();
+    });
+
+    it("goes back from an open step to the list first, in the side panel too", () => {
+      openPanel();
+      act(() => state.playlists.selectEditorStep(1));
+
+      click(container.querySelector('[aria-label="Back to items"]'));
+
+      expect(state.playlists.editorStepIndex.value).toBe(-1);
+      expect(state.playlists.editingPlaylist.value).not.toBeNull();
+      expect(
+        container.querySelector('[aria-label="Close playlist editor"]')
+      ).not.toBeNull();
     });
 
     it("closes straight away when nothing changed", () => {
@@ -305,6 +399,7 @@ describe("the playlist editor", () => {
 
     it("asks before throwing away unsaved changes", () => {
       openPanel();
+      act(() => state.playlists.selectEditorStep(0));
       click(container.querySelector('[aria-label="Delete step"]'));
 
       click(container.querySelector('[aria-label="Close playlist editor"]'));
@@ -319,6 +414,7 @@ describe("the playlist editor", () => {
   describe("adding a step", () => {
     it("inserts the chosen kind after the open step and opens it", () => {
       openPanel();
+      act(() => state.playlists.selectEditorStep(0));
 
       click(byText(container, ".sb-pe-add-step", "Add new step"));
       expect(container.textContent).toContain("Inserted after step 1");

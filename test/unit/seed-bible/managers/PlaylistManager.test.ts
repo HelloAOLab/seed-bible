@@ -1510,16 +1510,19 @@ describe("createPlaylistManager", () => {
       return { manager, tab };
     };
 
-    it("opens on the first step, or on none when the playlist is empty", async () => {
+    it("opens on its list of steps, with no step open", async () => {
       const { manager } = await openEditor();
-      expect(manager.editorStepIndex.value).toBe(0);
+      expect(manager.editorStepIndex.value).toBe(-1);
 
+      manager.selectEditorStep(1);
       manager.editPlaylist(makePlaylist({ items: [] }));
       expect(manager.editorStepIndex.value).toBe(-1);
     });
 
     it("opens the open scripture step's chapter in the reader", async () => {
-      await openEditor();
+      const { manager } = await openEditor();
+      manager.selectEditorStep(0);
+      await flush();
 
       expect(selectTranslationAndChapterMock).toHaveBeenLastCalledWith(
         "BSB",
@@ -1542,19 +1545,17 @@ describe("createPlaylistManager", () => {
       expect(manager.editingPlaylist.value!.items[0]!.type).toBe("link");
     });
 
-    it("opens the step that takes the place of a removed open step", async () => {
+    it("goes back to the list when the open step is removed", async () => {
       const { manager } = await openEditor();
       manager.selectEditorStep(1);
 
       manager.removeEditingPlaylistItem(1);
-      expect(manager.editorStepIndex.value).toBe(1);
-      expect(manager.editingPlaylist.value!.items[1]!.type).toBe("link");
 
-      // Removing the last step opens the new last one.
-      manager.removeEditingPlaylistItem(1);
-      expect(manager.editorStepIndex.value).toBe(0);
-      manager.removeEditingPlaylistItem(0);
       expect(manager.editorStepIndex.value).toBe(-1);
+      expect(manager.editingPlaylist.value!.items.map((i) => i.type)).toEqual([
+        "bible-verse",
+        "link",
+      ]);
     });
 
     it("duplicates a step right after itself and opens the copy", async () => {
@@ -1661,6 +1662,7 @@ describe("createPlaylistManager", () => {
 
     it("gives the open scripture step the verses picked in the reader on Apply", async () => {
       const { manager, tab } = await openEditor();
+      manager.selectEditorStep(0);
 
       tab.readingState.selectedVerses.value = [pickVerse(5), pickVerse(3)];
       expect(manager.editorVersePickIndex.value).toBe(0);

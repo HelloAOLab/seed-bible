@@ -65,25 +65,35 @@ function UnsavedChangesConfirmModalContent(props: {
 
 /**
  * The back arrow at the start of the editor's title bar (the side panel's on
- * desktop, the editor's own header on a phone): leaves the editor, asking
- * first if there are unsaved changes. Points left, or right in RTL languages,
- * where the title bar is mirrored.
+ * desktop, the editor's own header on a phone). The editor's list of steps
+ * and each step opened from it are pages: from a step, Back returns to the
+ * list; from the list, it leaves the editor, asking first if there are
+ * unsaved changes. Points left, or right in RTL languages, where the title
+ * bar is mirrored.
  */
 export function PlaylistEditorBackButton(props: {
   playlists: PlaylistManager;
   modals: ModalManager;
 }) {
+  const { playlists, modals } = props;
   const { t, isRtl } = useI18n();
-  const label = t("playlist-editor-close", {
-    defaultValue: "Close playlist editor",
-  });
+  const onStep = playlists.editorStepIndex.value >= 0;
+  const label = onStep
+    ? t("playlist-editor-back-to-items", { defaultValue: "Back to items" })
+    : t("playlist-editor-close", { defaultValue: "Close playlist editor" });
   return (
     <button
       type="button"
       className="sb-pe-back"
       aria-label={label}
       title={label}
-      onClick={() => requestCancelPlaylistEditor(props.playlists, props.modals)}
+      onClick={() => {
+        if (onStep) {
+          playlists.selectEditorStep(-1);
+        } else {
+          requestCancelPlaylistEditor(playlists, modals);
+        }
+      }}
     >
       <PeIcon
         name="arrow-right"
@@ -217,6 +227,8 @@ export function PlaylistStepList(props: {
       {items.map((item, index) => {
         const kind = playlistStepKind(item);
         const active = index === openIndex;
+        // On the list page no step is open, so every step can be dragged.
+        const draggable = active || openIndex < 0;
         const label = playlistStepLabel(item, t, resolveBookName);
         return (
           <li
@@ -226,7 +238,7 @@ export function PlaylistStepList(props: {
             }${getRowClassName(index) ? " sb-pe-step--dragging" : ""}`}
           >
             <div className="sb-pe-step-main">
-              {active ? (
+              {draggable ? (
                 <button
                   type="button"
                   className="sb-pe-step-handle"
@@ -560,71 +572,64 @@ function PlaylistTitle(props: { playlists: PlaylistManager }) {
   );
 }
 
+/** The steps of the open draft and how long they take. */
+export function PlaylistStepsSummary(props: {
+  playlists: PlaylistManager;
+  tabs: TabsManager;
+}) {
+  const { playlists, tabs } = props;
+  const { t } = useI18n();
+  const items = playlists.editingPlaylist.value?.items ?? [];
+  return (
+    <>
+      <p className="sb-pe-step-count">
+        {t("playlist-editor-step-count", {
+          steps: items.length,
+          minutes: playlistTotalMinutes(items),
+          defaultValue: "{{steps}} steps · ~{{minutes}} min",
+        })}
+      </p>
+      <PlaylistStepList playlists={playlists} tabs={tabs} />
+    </>
+  );
+}
+
 /**
- * The editor's step list with the playlist's name above it: the side pane on
- * desktop and, on a phone, the sheet the "Items" button opens.
+ * The desktop editor's side pane: the playlist's name above its list of
+ * steps, with Add new step below.
  */
 export function PlaylistEditorPanel(props: {
   playlists: PlaylistManager;
   tabs: TabsManager;
   modals: ModalManager;
-  /** Inside the phone's sheet: closing hides the sheet, not the editor. */
-  inSheet?: boolean;
-  /** Extra buttons beside the close button. */
+  /** Extra buttons at the end of the title bar. */
   headerActions?: ComponentChildren;
 }) {
-  const { playlists, tabs, modals, inSheet, headerActions } = props;
-  const { t } = useI18n();
-  const items = playlists.editingPlaylist.value?.items ?? [];
+  const { playlists, tabs, modals, headerActions } = props;
   const status = usePlaylistDraftStatus(playlists);
   const addMenu = playlists.editorAddMenu.value;
 
   return (
     <div className="sb-pe sb-pe-panel">
       <div className="sb-pe-panel-header">
-        {inSheet ? null : (
-          <PlaylistEditorBackButton playlists={playlists} modals={modals} />
-        )}
+        <PlaylistEditorBackButton playlists={playlists} modals={modals} />
         <div className="sb-pe-panel-heading">
           <PlaylistTitle playlists={playlists} />
           <p className="sb-pe-panel-status">{status.label}</p>
         </div>
-        <div className="sb-pe-panel-header-actions">
-          {headerActions}
-          {/* In the phone's sheet, closing hides the sheet, not the editor. */}
-          {inSheet ? (
-            <button
-              type="button"
-              className="sb-pe-panel-close"
-              aria-label={t("close", { defaultValue: "Close" })}
-              onClick={() => (playlists.editorStepsSheetOpen.value = false)}
-            >
-              <PeIcon name="close" />
-            </button>
-          ) : null}
-        </div>
+        {headerActions ? (
+          <div className="sb-pe-panel-header-actions">{headerActions}</div>
+        ) : null}
       </div>
       <div className="sb-pe-panel-body">
-        <p className="sb-pe-step-count">
-          {t("playlist-editor-step-count", {
-            steps: items.length,
-            minutes: playlistTotalMinutes(items),
-            defaultValue: "{{steps}} steps · ~{{minutes}} min",
-          })}
-        </p>
-        <PlaylistStepList playlists={playlists} tabs={tabs} />
+        <PlaylistStepsSummary playlists={playlists} tabs={tabs} />
       </div>
-      {inSheet ? null : (
-        <div className="sb-pe-panel-footer">
-          {addMenu ? (
-            <AddStepMenu
-              playlists={playlists}
-              afterIndex={addMenu.afterIndex}
-            />
-          ) : null}
-          <AddStepButton playlists={playlists} />
-        </div>
-      )}
+      <div className="sb-pe-panel-footer">
+        {addMenu ? (
+          <AddStepMenu playlists={playlists} afterIndex={addMenu.afterIndex} />
+        ) : null}
+        <AddStepButton playlists={playlists} />
+      </div>
     </div>
   );
 }

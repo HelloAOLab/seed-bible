@@ -17,7 +17,7 @@ import {
   AddStepButton,
   AddStepMenu,
   PlaylistEditorBackButton,
-  PlaylistEditorPanel,
+  PlaylistStepsSummary,
   usePlaylistDraftStatus,
   useResolveBookName,
 } from "./PlaylistEditorPanel";
@@ -26,6 +26,7 @@ import { PlaylistStepCard, type StepCardContext } from "./PlaylistStepCard";
 import {
   formatVerseRef,
   playlistStepKind,
+  playlistStepKindName,
   playlistStepLabel,
   playlistTotalMinutes,
 } from "./playlistSteps";
@@ -427,7 +428,7 @@ function PlaylistDetailsSheet(props: { state: SeedBibleState }) {
         aria-label={heading}
       >
         <div className="sb-pe-sheet-handle" />
-        <div className="sb-pe-panel-header">
+        <div className="sb-pe-details-sheet-header">
           <h3 className="sb-pe-details-sheet-title">{heading}</h3>
           <button
             type="button"
@@ -672,7 +673,6 @@ export function PlaylistEditorWorkspace(props: {
   const status = usePlaylistDraftStatus(playlists);
   const preview = playlists.editorMode.value === "preview";
   const addMenu = playlists.editorAddMenu.value;
-  const sheetOpen = playlists.editorStepsSheetOpen.value;
   const detailsOpen = playlists.editorDetailsSheetOpen.value;
   if (!editing) {
     return <>{children}</>;
@@ -705,86 +705,101 @@ export function PlaylistEditorWorkspace(props: {
           <MobileStepSettings playlists={playlists} index={index} item={item} />
         ) : null}
       </div>
-    ) : !item ? (
+    ) : !item && !compact ? (
+      // Desktop's list is in the side pane, so beside it this says what to do.
       <div className="sb-pe sb-pe-card-scroll">
         <div className="sb-pe-card">
           <p className="sb-pe-step-empty">
-            {t("playlist-editor-no-steps", {
-              defaultValue: "No steps yet. Add one to get started.",
-            })}
+            {editing.items.length === 0
+              ? t("playlist-editor-no-steps", {
+                  defaultValue: "No steps yet. Add one to get started.",
+                })
+              : t("playlist-editor-choose-step", {
+                  defaultValue: "Choose a step from the list to edit it.",
+                })}
           </p>
         </div>
       </div>
     ) : null;
+  // On a phone, the list of steps is a page of its own in the reader's place.
+  const onList = compact && !item;
   const workspaceClass = `sb-pane-reader-outer sb-pe-workspace${
     compact ? " sb-pe-workspace--mobile" : ""
-  }${card ? " sb-pe-workspace--card" : ""}`;
+  }${card || onList ? " sb-pe-workspace--card" : ""}`;
 
   if (compact) {
-    const title =
+    const playlistTitle =
       editing.title?.trim() ||
       t("untitled-playlist", { defaultValue: "Untitled playlist" });
     return (
       <div className={workspaceClass}>
         <header className="sb-pe sb-pe-mobile-header">
           <PlaylistEditorBackButton playlists={playlists} modals={modals} />
-          <div className="sb-pe-mobile-heading">
-            <h2 className="sb-pe-mobile-title">
-              <button
-                type="button"
-                className="sb-pe-mobile-title-button"
-                aria-haspopup="dialog"
-                aria-expanded={detailsOpen}
-                title={t("playlist-editor-edit-details", {
-                  defaultValue: "Edit title, description and cover",
-                })}
-                onClick={() => {
-                  playlists.editorStepsSheetOpen.value = false;
-                  playlists.editorDetailsSheetOpen.value = true;
-                }}
-              >
+          {item && kind ? (
+            <div className="sb-pe-mobile-heading">
+              <h2 className="sb-pe-mobile-title">
                 <span className="sb-pe-mobile-title-text" dir="auto">
-                  {title}
+                  {playlistStepLabel(item, t, resolveBookName)}
                 </span>
-                <PeIcon name="pencil" />
-              </button>
-            </h2>
-            <p className="sb-pe-mobile-status">
-              {t("playlist-editor-mobile-status", {
-                steps: editing.items.length,
-                minutes: playlistTotalMinutes(editing.items),
-                status: status.saved
-                  ? status.label
-                  : t("playlist-editor-draft", { defaultValue: "Draft" }),
-                defaultValue: "{{steps}} items · {{minutes}} min · {{status}}",
-              })}
-            </p>
-          </div>
+              </h2>
+              <p className="sb-pe-mobile-status">
+                {t("playlist-editor-step-position", {
+                  step: index + 1,
+                  count: editing.items.length,
+                  kind: playlistStepKindName(kind, t),
+                  defaultValue: "Step {{step}} of {{count}} · {{kind}}",
+                })}
+              </p>
+            </div>
+          ) : (
+            <div className="sb-pe-mobile-heading">
+              <h2 className="sb-pe-mobile-title">
+                <button
+                  type="button"
+                  className="sb-pe-mobile-title-button"
+                  aria-haspopup="dialog"
+                  aria-expanded={detailsOpen}
+                  title={t("playlist-editor-edit-details", {
+                    defaultValue: "Edit title, description and cover",
+                  })}
+                  onClick={() =>
+                    (playlists.editorDetailsSheetOpen.value = true)
+                  }
+                >
+                  <span className="sb-pe-mobile-title-text" dir="auto">
+                    {playlistTitle}
+                  </span>
+                  <PeIcon name="pencil" />
+                </button>
+              </h2>
+              <p className="sb-pe-mobile-status">
+                {t("playlist-editor-mobile-status", {
+                  steps: editing.items.length,
+                  minutes: playlistTotalMinutes(editing.items),
+                  status: status.saved
+                    ? status.label
+                    : t("playlist-editor-draft", { defaultValue: "Draft" }),
+                  defaultValue:
+                    "{{steps}} items · {{minutes}} min · {{status}}",
+                })}
+              </p>
+            </div>
+          )}
           {item ? (
             <StepActions playlists={playlists} index={index} square />
           ) : null}
         </header>
         {children}
-        {card}
+        {onList ? (
+          <div className="sb-pe sb-pe-list-page">
+            <PlaylistStepsSummary playlists={playlists} tabs={tabs} />
+          </div>
+        ) : (
+          card
+        )}
         <div className="sb-pe sb-pe-mobile-bottom">
           <VersePickBar state={state} />
           <div className="sb-pe-mobile-bottom-row">
-            <button
-              type="button"
-              className="sb-pe-items-button"
-              aria-expanded={sheetOpen}
-              onClick={() => (playlists.editorStepsSheetOpen.value = true)}
-            >
-              <PeIcon name="items-list" />
-              {t("playlist-editor-items", { defaultValue: "Items" })}
-              <span className="sb-pe-items-badge">
-                {t("playlist-editor-step-of", {
-                  step: Math.max(index + 1, 0),
-                  count: editing.items.length,
-                  defaultValue: "{{step}}/{{count}}",
-                })}
-              </span>
-            </button>
             <AddStepButton playlists={playlists} short />
             <PublishButton state={state} />
           </div>
@@ -795,27 +810,6 @@ export function PlaylistEditorWorkspace(props: {
             />
           ) : null}
         </div>
-        {sheetOpen ? (
-          <>
-            <div
-              className="sb-pe-sheet-scrim"
-              onClick={() => (playlists.editorStepsSheetOpen.value = false)}
-            />
-            <div
-              className="sb-pe sb-pe-sheet"
-              role="dialog"
-              aria-label={t("playlist-editor-items", { defaultValue: "Items" })}
-            >
-              <div className="sb-pe-sheet-handle" />
-              <PlaylistEditorPanel
-                playlists={playlists}
-                tabs={tabs}
-                modals={modals}
-                inSheet
-              />
-            </div>
-          </>
-        ) : null}
         {detailsOpen ? <PlaylistDetailsSheet state={state} /> : null}
       </div>
     );
