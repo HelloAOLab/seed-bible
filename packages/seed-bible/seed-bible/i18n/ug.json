@@ -22,22 +22,18 @@
   "clear-search": "ئىزدەشنى تازىلاش",
   "searching": "ئىزدەۋاتىدۇ...",
   "no-search-results": "ماس كېلىدىغان ئايەتلەر يوق.",
-
   "uploading": "يۈكلەنمەكتە...",
   "profile-name": "پروفىل نامى",
   "profile-name-placeholder": "مەسىلەن، كرەيگ ئائىلىسى",
-
   "description": "چۈشەندۈرۈش",
   "optional": "(تاللاشچان)",
   "description-placeholder": "پروفىلىڭىزنىڭ چۈشەندۈرۈشىنى كىرگۈزۈڭ...",
   "location": "ئورنى",
   "location-placeholder": "مەسىلەن، ئاۋستىن، تېكساس",
-
   "copied": "كۆچۈرۈلدى",
   "copy": "كۆچۈرۈش",
   "save-changes": "ئۆزگەرتىشلەرنى ساقلاڭ",
   "sign-out": "چىقىش",
-
   "log-in": "كىرىش",
   "session-settings": "يىغىن تەڭشەكلىرى",
   "shared-session-click-to-join": "ھەمبەھىرلەۋاتىدۇ — قوشۇلۇش ئۈچۈن چېكىڭ",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "بىر تېما تاللاڭ ۋە مۇقەددەس كىتاب ھەم ئىشلەتكۈچى ئارايۈزىنىڭ كۆرسىتىلىش ئۇسۇلىنى تەڭشەڭ.",
   "scripture-settings": "مۇقەددەس يازمىلارنىڭ تەڭشىكى",
   "scripture-settings-font-size-example": "A",
-
   "all-settings": "بارلىق تەڭشەكلەر",
   "no-extensions-available": "كېڭەيتىلمىلەر يوق.",
   "install": "ئورنىتىش",
   "uninstall": "ئۆچۈرۈش",
-
   "custom": "خاسلاشتۇرۇلغان",
   "text-section-bookTitle": "كىتاب ماۋزۇسى تېكىستى",
   "text-section-heading": "ماۋزۇ تېكىستى",
@@ -79,7 +73,6 @@
   "show-selected-items": "تاللانغان تۈرلەرنى كۆرسىتىش",
   "show-highlight-colors": "يورۇتۇلغان رەڭلەرنى كۆرسىتىش",
   "show-icon-text": "سىنبەلگە تېكىستىنى كۆرسىتىش",
-
   "extensions": "كېڭەيتىلمىلەر",
   "display": "كۆرسىتىش",
   "keep-screen-awake": "ئېكراننى ئويغاق تۇتۇش",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "مۇقەددەس كىتابنىڭ خەت نۇسخىسىنى چوڭايتىش",
   "change-line-spacing": "قۇر ئارىلىقىنى ئۆزگەرتىش",
   "line-spacing_lineHeight": "قۇر ئارىلىقى: {{lineHeight}}",
-
   "italic": "قىيسىق خەت",
   "underline": "ئاستىغا سىزىق سىزىش",
   "alignment_x": "ماسلاشتۇرۇش: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "تېكىست رەڭگى",
   "follow_theme": "تېمىغا ئەگىشىڭ",
   "reset-to-default": "سۈكۈتتىكى ھالەتكە قايتۇرۇش",
-
   "id_highlight-text-color": "{{id}} يورۇتۇش تېكىست رەڭگى",
   "id_highlight-background-color": "{{id}} يورۇتۇش ئارقا رەڭگى",
   "all-settings-description": "ھەر بىر تېكىست بۆلىكىنى ئىنچىكە تەڭشەڭ ۋە ھەر بىر تېما رەڭگىنى خاسلاشتۇرۇڭ.",
@@ -126,7 +117,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "ئاپوكرىپا",
-
   "custom-translations": "خاسلاشتۇرۇلغان تەرجىمە",
   "no-translation-results-found": "ھېچقانداق نەتىجە تېپىلمىدى. ئىزدەش دائىرىسىنى كېڭەيتىپ، قىسمەن تولۇق تەرجىمە قىلىشلارنىمۇ ئۆز ئىچىگە ئالماقچىمۇ؟",
   "show-all-translations": "بارلىق تەرجىمىلەرنى كۆرسىتىش",
@@ -138,7 +128,6 @@
   "complete-translations": "تولۇق تەرجىمە",
   "all-translations": "بارلىق تەرجىمىلەر",
   "popular-translations": "ئالقىشقا ئېرىشكەن تەرجىمىلەر",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 زەبۇر",
   "2-psalms": "2 زەبۇر",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "بارلىق تەڭشەكلەرگە كىرىڭ",
   "more": "تېخىمۇ كۆپ",
   "remove-bookmark": "خەتكۈچنى ئۆچۈرۈڭ",
-
   "chat": "پاراڭلىشىش",
   "today": "بۈگۈن",
   "you": "سىز",
@@ -170,7 +158,6 @@
   "category-options": "قىسقۇچ تاللانمىلىرى",
   "rename": "قايتا ئىسىم قويۇش",
   "delete": "ئۆچۈرۈش",
-
   "bookmark-options": "خەتكۈچ تاللانمىلىرى",
   "new-folder-placeholder": "قىسقۇچ نامى",
   "tasks": "ۋەزىپىلەر",
@@ -182,11 +169,9 @@
   "folder-name-taken": "بۇنداق ئىسىمدىكى بىر قىسقۇچ مەۋجۇت.",
   "add-to-new": "يېڭىسىغا قوشۇش",
   "save": "ساقلاش",
-
   "seed-bible": "ئۇرۇق ئىنجىل",
   "take-photo": "رەسىمگە تارتىڭ",
   "choose-from-gallery": "رەسىملەر توپلىمىدىن تاللاڭ",
-
   "crop-your-photo": "رەسىمىڭىزنى كېسىڭ",
   "zoom": "چوڭايتىش",
   "set-picture": "رەسىم قويۇش",
@@ -212,10 +197,8 @@
   "read-the-bible": "ئىنجىلنى ئوقۇڭ",
   "seed-bible-description": "ئۇرۇق ئىنجىلدىكى {{bookName}} {{chapterNumber}} نى ئوقۇڭ",
   "social-title": "{{bookName}} {{chapterNumber}} نى ئوقۇڭ",
-
   "chapter-navigation": "باب يول باشلاش",
   "tutorial.skip": "ئاتلاپ ئۆتۈش",
-
   "tutorial.back": "ئارقىغا",
   "tutorial.done": "تاماملاندى",
   "tutorial.next": "كېيىنكىسى",
@@ -328,11 +311,9 @@
   "study-notes": "ئۆگىنىش خاتىرىلىرى",
   "content": "مەزمۇن",
   "untitled-playlist": "ماۋزۇسىز قويۇش تىزىملىكى",
-
   "discover-annotations-empty": "سىزدە ھېچقانداق ئىزاھات يوق",
   "discover-cross-references-empty": "بۇ باب ئۈچۈن ھېچقانداق كېسىشمە پايدىلىنىش ماتېرىيالى يوق.",
   "discover-study-notes-empty": "بۇ باب ئۈچۈن ھېچقانداق تەتقىقات خاتىرىسى يوق.",
-
   "discover-select-tab": "مۇناسىۋەتلىك ماتېرىياللارنى بايقاش ئۈچۈن بىر بەتكۈچ تاللاڭ.",
   "create-playlist": "يارىتىش",
   "playlist-title_placeholder": "ناخشا تىزىملىكى نامى",
@@ -381,12 +362,10 @@
   "delete-playlist-failed": "قويغۇچ تىزىملىكىنى ئۆچۈرگىلى بولمىدى.",
   "collapsed-tab-shared-label": "{{title}} — ئورتاقلاشقان سۆھبەت، {{count}} ھازىر",
   "playlist-add-mode-label": "بۇيۇم تىپى",
-
   "session-host-reconnected": "يىغىنغا قايتا ئۇلاندى",
   "session-host-left": "رىياسەتچى كەتتى — سىز يىغىندىن چىقىرىۋېتىلدىڭىز",
   "drag-to-reorder-playlist-item": "قايتا تەرتىپلەش ئۈچۈن سۆرەڭ",
   "saving": "ساقلاۋاتىدۇ…",
-
   "unsaved-item-confirm-message": "سىز تېخى قويۇش تىزىملىكىگە قوشۇلمىغان بىر تۈرنى قوشۇشنى باشلىدىڭىز. نېمە قىلماقچىسىز؟",
   "discard-and-save": "تاشلىۋېتىش ۋە ساقلاش",
   "add-and-save": "قوشۇش ۋە ساقلاش",
@@ -514,7 +493,6 @@
   "reading-plan-preview-reading": "{{reading}} نى ئالدىن كۆرۈش",
   "reading-plan-mark-reading-complete": "ئوقۇش تاماملانغان دەپ بەلگىلەڭ",
   "reading-plan-link-video": "سىن",
-
   "reading-plan-mark-passage-complete": "{{passage}} نى ئوقۇلغان دەپ بەلگىلەڭ",
   "reading-plan-read-nudge-title": "ياخشى ئوقۇش!",
   "reading-plan-read-nudge-toast": "{{passage}} تاماملاندى دەپ بەلگىلەمسىز؟",
@@ -522,19 +500,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "ئىنجىلنى توردا ئوقۇڭ، ئىزدەڭ ۋە تەتقىق قىلىڭ. نۇرغۇن تىللاردىكى ھەقسىز تەرجىمە، مۇھىم نۇقتىلار، خاتىرىلەر، خەتكۈچلەر ۋە ئوقۇش پىلانلىرى.",
   "all": "ھەممىسى",
-
   "today-bookmarks": "خەتكۈچلەر",
   "today-search-verses": "كىتابلار، بابلار، ئايەتلەرنى ئىزدەڭ...",
   "anonymous-greeting": "خۇش كەپسىز!",
   "community": "جەمئىيەت",
   "go-somewhere-new": "يېڭى بىر يەرگە بېرىڭ",
-
   "open-bible": "ئوچۇق ئىنجىل",
   "personal-greeting": "خۇش كەپسىز، {{name}} !",
   "resume-reading": "سىز كەتكەن يەردىن داۋاملاشتۇرۇڭ",
   "resume-reading-loading": "ئوقۇش تارىخىڭىز يۈكلەنمەكتە…",
   "selected-year": "يىل: {{year}}",
-
   "theme-light": "يورۇق",
   "theme-dark": "قاراڭغۇ",
   "installed-extensions": "ئورنىتىلدى",
@@ -544,7 +519,6 @@
   "extension-state-installed": "ئورنىتىلدى",
   "extension-state-downloaded": "چۈشۈرۈلدى",
   "extension-state-pending": "ئورنىتىلىۋاتىدۇ…",
-
   "tutorial.stepProgress": "{ {{total}} قەدەمنىڭ {{current}} } قەدەملىرى",
   "tutorial.offlineDownloadTitle": "ئۇنى ئۈسكۈنىڭىزدە ساقلاش ئۈچۈن چېكىڭ",
   "tutorial.offlineDownloadBody": "بۇ بەلگە بار ھەر قانداق تەرجىمە تورسىز ئوقۇش ئۈچۈن ساقلانسا بولىدۇ.",
@@ -578,7 +552,6 @@
   "tutorial.paneLayoutBody": "بۇ ئورۇنلاشتۇرۇش تىزىملىكىدىن قانچە پارچىنى يانمۇ-يان ئوقۇشنى تاللاڭ.",
   "tutorial.addTabTitle": "كۆپرەك يوللارنى ئېچىڭ",
   "tutorial.addTabBody": "بىر قانچە كىتاب ياكى تەرجىمىلەرنى يانمۇيان ئوقۇش ئۈچۈن يېڭى بەتكۈچ قوشۇڭ.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % تاماملاندى - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % تاماملاندى",
   "playlist-history-continue": "داۋاملاشتۇرۇش",
@@ -637,7 +610,6 @@
   "chapter-notes-count_other": "بۇ باب ئۈچۈن {{count}} ئىزاھات",
   "create-folder": "قىسقۇچ قۇرۇش",
   "edit-bookmark": "خەتكۈچنى تەھرىرلەش",
-
   "greeting-afternoon": "خەيرلىك چۈشتىن كېيىن!",
   "greeting-afternoon-named": "خەيرلىك چۈشتىن كېيىن، {{name}} !",
   "greeting-evening": "خەيرلىك كەچ!",
@@ -653,32 +625,24 @@
   "ask-ai": "سۈنئىي ئەقىلدىن سوراڭ",
   "unread-mention": "ئوقۇلمىغان تىلغا ئېلىش",
   "unread-messages": "ئوقۇلمىغان ئۇچۇرلار: {{count}}",
-
   "scripture-width": "مۇقەددەس كىتابنىڭ كەڭلىكى",
   "decrease-scripture-width": "مۇقەددەس كىتابنىڭ كەڭلىكىنى كىچىكلىتىش",
   "increase-scripture-width": "مۇقەددەس كىتابنىڭ كەڭلىكىنى چوڭايتىڭ",
   "annotations": "ئىزاھاتلار",
   "discover-content-panel": "مەزمۇننى بايقاش",
   "discover-book-title": "{{book}} نى بايقاڭ",
-
   "about-title": "ئۇرۇق ئىنجىل ھەققىدە",
   "about-meta-description": "Seed Bible ئائىلىڭىز، دوستلىرىڭىز ۋە مەھەللىڭىز بىلەن بىرلىكتە مۇقەددەس كىتابنى ئوقۇش ئۈچۈن لايىھەلەنگەن ھەقسىز ئىنجىل ئەپ دېتالى بولۇپ، مەڭگۈ ھەقسىز، ئېلان ياكى ھەقلىق تام يوق.",
-
   "about-action-open-passage": "بىر يول ئېچىڭ",
   "about-action-donate": "ئىئانە قىلىڭ",
   "about-action-discord": "Discord غا قوشۇلۇڭ",
   "recent-uploads": "يېقىنقى يۈكلەنگەنلەر",
-
   "customization-not-found": "بۇ خاسلاشتۇرۇش تېپىلمىدى.",
   "customization-name": "ئىسىم",
   "customization-primaryColor": "باشلانغۇچ",
-
   "customization-secondaryColor": "ئىككىنچى دەرىجىلىك",
-
   "customization-tertiaryColor": "ئۈچىنچى دەرىجىلىك",
-
   "customization-fonts": "خەت نۇسخىسى",
-
   "custom-font-option": "خاسلاشتۇرۇلغان…",
   "custom-font-name-placeholder": "Google خەت نۇسخىسىنىڭ نامى",
   "delete-customization": "ئۆچۈرۈش",
@@ -691,10 +655,8 @@
   "extension-availability-available": "بار",
   "extension-availability-auto-installed": "ئاپتوماتىك ئورنىتىلغان",
   "extension-availability-hidden": "يوشۇرۇنغان",
-
   "variants": "تېمىلار",
   "add-variant": "تېما قوشۇش",
-
   "base-theme-description": "بۇ تېمىنى ئالدىن تەڭشىگەن ئۆزگەرتىشلەر سىز خاسلاشتۇرمىغان نەرسىلەرگە تەۋە. ئۆزىڭىزنىڭ تەھرىرلىرىڭىز ساقلىنىدۇ.",
   "reset-to-base-theme": "ئاساسىي تېمىغا قايتا تەڭشەش",
   "low-contrast-warning": "{{label}} : سېلىشتۇرما پەقەت {{ratio}} :1 — تېكىستنى ئوقۇشقا بولىدىغان قىلىپ قويۇش ئۈچۈن كەم دېگەندە {{minRatio}} :1 نى نىشان قىلىڭ.",
@@ -740,14 +702,12 @@
   "save-folder-empty": "بۇ يەردە ھازىرغىچە ساقلانغان ئۇچۇرلار يوق.",
   "save-options": "تاللاشلارنى ساقلاش",
   "saves": "ساقلىغانلار",
-
   "hide-saves": "ساقلانغانلارنى يوشۇرۇش",
   "show-saves": "ساقلانغانلارنى كۆرسىتىش",
   "save-verses": "ساقلاش",
   "new-save-folder": "يېڭى قىسقۇچ",
   "edit-save": "تەھرىرلەش ساقلاش",
   "remove-save-from-all-folders": "بارلىق قىسقۇچلاردىن ئۆچۈرۈڭ",
-
   "color-hue": "رەڭ",
   "color-saturation": "تويۇنۇش ۋە يورۇقلۇق",
   "hex-color": "ئالتە تەرەپلىك رەڭ",
@@ -862,9 +822,7 @@
   "annotation-editor-unavailable-read-only": "فورمات تەھرىرلىگۈچنى يۈكلىيەلمىدى. بۇ خاتىرىنىڭ فورماتى يوقاپ كېتىدىغان بولغاچقا، قايتا ئۇلانمىغۇچە تەھرىرلىيەلمەيسىز.",
   "annotation-text": "ئىزاھات تېكىستى",
   "notes-for-verse": "{{verse}} مىسراسىغا ئىزاھات",
-
   "configure-extension-defaults": "سۈكۈتتىكى قايتا بەلگىلەشلەرنى تەڭشەڭ",
-
   "extension-settings-defaults-title": "{{name}} ئۆزلۈكىدىن قايتا بەلگىلەش",
   "no-extension-settings": "بۇ كېڭەيتىلمىنىڭ تەڭشىگىلى بولىدىغان تەڭشەكلىرى يوق.",
   "extension-settings-save-failed": "تەڭشەكلىرىڭىزنى ساقلىيالمايسىز.",
@@ -873,7 +831,6 @@
   "setting-no-default": "ئۆزلۈكىدىن بەلگىلەنگەن ئەمەس",
   "override-setting": "{{name}} نى قايتا بەلگىلەش",
   "override-setting-label": "بىكار قىلىش",
-
   "discover-choose-filter-hint": "بۇ بابتىن كۆپرەك مەزمۇنلارنى كۆرۈش ئۈچۈن يۇقىرىدىكى بىر سۈزگۈچنى تاللاڭ.",
   "take-a-tour": "ساياھەتكە چىقىڭ",
   "share-reading-plan": "پىلاننى ئورتاقلىشىش",
@@ -1057,7 +1014,6 @@
   "my-bookmark-numbered": "مېنىڭ خەتكۈچۈم {{number}}",
   "bookmark-move-hint": "بۇ بابقا يۆتكەش ئۈچۈن خەتكۈچنى چېكىڭ.",
   "move-bookmark-here": "{{name}} بۇ يەرگە يۆتكەڭ",
-
   "play": "ئويناش",
   "pause": "توختاپ قېلىش",
   "audio-playback-position": "قويۇش ئورنى",
@@ -1066,7 +1022,6 @@
   "audio-scrub-verse": "ئايەت {{verse}}",
   "tab-playing-audio": "ئاۋاز قويۇۋاتىدۇ",
   "collapsed-tab-playing-label": "{{label}} — ئاۋاز قويۇش",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} تېما",
   "customization-theme-count_one": "{{count}} تېما",
@@ -1105,7 +1060,6 @@
   "about-community-body": "ئىمان بىرلىكتە ياشاش ئۈچۈندۇر. ئۇرۇقلۇق ئىنجىل ئائىلىڭىز، ئەڭ يېقىن دوستلىرىڭىز ۋە ئۆي چېركاۋىڭىز بىلەن بىرلىكتە ئىنجىلنى ئوقۇش ئۈچۈن لايىھەلەنگەن.",
   "discovered-content": "بايقالغان مەزمۇنلار",
   "show-discovered-content": "بايقالغان مەزمۇنلارنى كۆرسىتىش",
-
   "extension-availability-default": "سۈكۈتتىكى ( {{availability}} )",
   "customization-extensions-default": "باشقا كېڭەيتىلمىلەر ئۈچۈن سۈكۈتتىكى",
   "customization-extensions-default-hint": "كېيىن قوشۇلغان يېڭى كېڭەيتىلمىلەرنى ئۆز ئىچىگە ئالغان ھالدا، تۆۋەندە تەڭشىمىگەن بارلىق كېڭەيتىلمىلەرگە ماس كېلىدۇ",
@@ -1138,7 +1092,6 @@
   "playlist-scripture-note-return": "قويۇش تىزىملىكىگە قايتىش",
   "playlist-scripture-note-aria": "{{passage}} ھەققىدىكى ئەسكەرتىش",
   "playlist-scripture-note-progress": "{{current}} نىڭ {{total}}",
-
   "unsaved-item-edit-confirm-message": "سىز بىر تۈرنى ئۆزگەرتتىڭىز، ئەمما بۇ ئۆزگەرتىشلەرنى ساقلىمىدىڭىز. نېمە قىلماقچىسىز؟",
   "keep-changes-and-save": "ئۆزگەرتىشلەرنى ساقلاپ قويۇڭ",
   "reading-plan-edit-reading": "ئوقۇشنى تەھرىرلەش",
@@ -1153,7 +1106,6 @@
   "branding": "ماركا يارىتىش",
   "create-custom-branding-menu-item": "خاسلاشتۇرۇلغان ماركا",
   "your-content-empty-branding": "سىز ياراتقان خاسلاشتۇرۇلغان ماركا بۇ يەردە كۆرسىتىلىدۇ.",
-
   "extension-consent-from": "{{host}}",
   "extension-consent-source-version": "نەشرى {{version}} · {{host}}",
   "extension-consent-uploader-unnamed": "ئۇرۇق ئىنجىل ئىشلەتكۈچىسى",
@@ -1201,7 +1153,6 @@
   "extension-permission-reading-selection": "قايسى ئايەتلەرنى تاللىغانلىقىڭىزنى كۆرۈڭ",
   "extension-permission-reading-navigate": "ئوچۇق يوللار",
   "extension-permission-network": "{{host}} غا ئۇلىنىڭ",
-
   "extension-consent-not-now": "ھازىر ئەمەس",
   "extension-consent-nothing-yet": "ھازىرچە، ئۇ سىزنىڭ ھېچقانداق ئۇچۇرىڭىزغا ئېرىشەلمەيدۇ.",
   "extension-permission-reading-history": "ئوقۇش تارىخىڭىزنى كۆرۈڭ",
@@ -1239,7 +1190,6 @@
   "extension-capture-cancel": "بىكار قىلىش",
   "extension-consent-high-risk": "سەزگۈر",
   "extension-modal-ok": "ماقۇل",
-
   "extension-permissions-restart-note": "ئۆزگەرتىشلەر دەرھال كۈچكە ئىگە بولىدۇ. {{name}} ئۆزگەرتىشلەرنى ئىجرا قىلىش ئۈچۈن قايتا قوزغىتىلىدۇ.",
   "extension-permissions-saved": "ساقلاندى. {{name}} يېڭى ئىجازەتلەر بىلەن قايتا قوزغىتىلدى.",
   "extension-permissions-failed": "بۇ ساقلانمىدى. قايتا سىناپ بېقىڭ.",
@@ -1277,8 +1227,53 @@
   "session-settings-verse-effects-desc-hosts": "ساھىبجامال بىر ئايەتنى تاللىغاندا ئۈنۈملەرنى كۆرسىتىدۇ.",
   "session-settings-verse-effects-desc-everyone": "بىرەر كىشى بىر ئايەتنى تاللىغاندا ئۈنۈملەرنى كۆرسىتىڭ.",
   "session-settings-verse-effects-desc-none": "شېئىر تاللاش ئۈنۈمى ھەممەيلەن ئۈچۈن ئېتىۋېتىلگەن.",
-
   "account": "ھېسابات",
   "scroll-filters-start": "سۈزگۈچلەرنى باشلىنىش نۇقتىسىغا قاراپ سىيرىتىڭ",
-  "scroll-filters-end": "فىلتىرلارنى ئاخىرىغا قاراپ سىيرىتىڭ"
+  "scroll-filters-end": "فىلتىرلارنى ئاخىرىغا قاراپ سىيرىتىڭ",
+  "download": "چۈشۈرۈش",
+  "image-details-uploaded": "يۈكلەندى",
+  "image-details-dimensions": "ئۆلچەملىرى",
+  "image-details-dimensions-value": "{{width}} × {{height}} پىكسېل",
+  "image-details-type": "تىپى",
+  "image-details-cover-of": "نىڭ مۇقاۋىسى",
+  "image-details-not-a-cover": "قاپاق سۈپىتىدە ئىشلىتىلمەيدۇ",
+  "delete-customization-confirm-title": "خاسلاشتۇرۇلغان ماركىنى ئۆچۈرۈۋېتىش كېرەكمۇ؟",
+  "delete-customization-confirm-message": "خاسلاشتۇرۇلغان ماركا « {{name}} » نى ئۆچۈرۈۋېتەمسىز؟ بۇنى ئەسلىگە كەلتۈرگىلى بولمايدۇ.",
+  "delete-customization-failed": "خاسلاشتۇرۇلغان ماركىنى ئۆچۈرگىلى بولمىدى.",
+  "delete-variant-confirm-title": "تېما ئۆچۈرۈلسۇنمۇ؟",
+  "delete-variant-confirm-message": "« {{name}} » تېمىسىنى ئۆچۈرۈۋېتەمسىز؟ بۇنى ئەسلىگە كەلتۈرگىلى بولمايدۇ.",
+  "delete-variant-confirm-message-unnamed": "بۇ تېمىنى ئۆچۈرۈۋېتەمسىز؟ بۇنى ئەسلىگە كەلتۈرگىلى بولمايدۇ.",
+  "delete-variant-failed": "تېمىنى ئۆچۈرگىلى بولمىدى.",
+  "delete-highlight-confirm-title": "مۇھىم نۇقتىلارنى ئۆچۈرۈۋېتەمسىز؟",
+  "delete-highlight-confirm-message": "{{reference}} دىكى يورۇتۇلغان نۇقتىنى ئۆچۈرۈۋېتەمسىز؟ بۇنى ئەسلىگە كەلتۈرگىلى بولمايدۇ.",
+  "delete-highlight-failed": "يورۇتۇلغان نۇقتىنى ئۆچۈرگىلى بولمىدى.",
+  "delete-annotation-on-confirm-message": "{{reference}} دىكى ئىزاھاتنى ئۆچۈرۈۋېتەمسىز؟ بۇنى ئەسلىگە كەلتۈرگىلى بولمايدۇ.",
+  "remove-from-folder": "قىسقۇچتىن چىقىرىۋېتىش",
+  "save-folders": "{{folders}} ئىچىدە",
+  "delete-save-confirm-title": "ساقلانغان نەرسىلەرنى ئۆچۈرۈۋېتەمسىز؟",
+  "delete-save-confirm-message": "{{reference}} ئۈچۈن ساقلانغاننى ئۆچۈرۈۋېتەمسىز؟ بۇنى ئەسلىگە كەلتۈرگىلى بولمايدۇ.",
+  "delete-save-confirm-message-folders": "{{reference}} نىڭ ساقلانغانلىرىنى {{folders}} دىن ئۆچۈرۈۋېتەمسىز؟ بۇنى ئەسلىگە كەلتۈرگىلى بولمايدۇ.",
+  "delete-save-failed": "ساقلانغان مەزمۇننى ئۆچۈرگىلى بولمىدى.",
+  "delete-save-folder-confirm-title": "قىسقۇچ ئۆچۈرۈلسۇنمۇ؟",
+  "delete-save-folder-confirm-message": "« {{name}} » قىسقۇچىنى ئۆچۈرۈۋېتەمسىز؟",
+  "delete-save-folder-confirm-deletes": "پەقەت بۇ قىسقۇچتىكى {{count}} ساقلانغان ھۆججەتلەرمۇ ئۆچۈرۈلىدۇ.",
+  "delete-save-folder-confirm-deletes_one": "پەقەت بۇ قىسقۇچتىكى ساقلانغان ھۆججەتلەرمۇ ئۆچۈرۈلىدۇ.",
+  "delete-save-folder-confirm-deletes_other": "پەقەت بۇ قىسقۇچتىكى {{count}} ساقلانغان ھۆججەتلەرمۇ ئۆچۈرۈلىدۇ.",
+  "delete-save-folder-confirm-keeps": "باشقا قىسقۇچلاردىمۇ ساقلانغان {{count}} ھۆججەت شۇ يەردە ساقلىنىدۇ.",
+  "delete-save-folder-confirm-keeps_one": "باشقا قىسقۇچتىكى ساقلانغان ھۆججەت شۇ يەردە تۇرىدۇ.",
+  "delete-save-folder-confirm-keeps_other": "باشقا قىسقۇچلاردىمۇ ساقلانغان {{count}} ھۆججەت شۇ يەردە ساقلىنىدۇ.",
+  "cant-be-undone": "بۇنى ئەسلىگە كەلتۈرگىلى بولمايدۇ.",
+  "delete-save-folder-failed": "بۇ قىسقۇچنى ئۆچۈرگىلى بولمىدى.",
+  "download-image-failed": "رەسىمنى چۈشۈرگىلى بولمىدى.",
+  "session-settings-verse-effects-hosts-only": "پەقەت ساھىبلار",
+  "session-settings-verse-effects-everyone": "ھەممەيلەن",
+  "session-settings-verse-effects-none": "يوق",
+  "loading-books": "كىتابلار يۈكلەنمەكتە…",
+  "books-load-failed": "كىتابلارنى يۈكلىگىلى بولمىدى. تور ئۇلىنىشىڭىزنى تەكشۈرۈپ قايتا سىناپ بېقىڭ.",
+  "loading-translation": "{{name}} يۈكلەنمەكتە …",
+  "translation-load-failed": "{{name}} نى يۈكلىگىلى بولمىدى.",
+  "loading-translations": "تەرجىمىلەر يۈكلەنمەكتە…",
+  "translations-load-failed": "تەرجىمىلەرنىڭ تولۇق تىزىملىكىنى يۈكلىيەلمىدى، شۇڭا بەزىلىرى يوقاپ كەتكەن بولۇشى مۇمكىن.",
+  "verse-of-the-day": "كۈننىڭ ئايىتى",
+  "verse-of-the-day-loading": "كۈننىڭ ئايىتى يۈكلەنمەكتە…"
 }

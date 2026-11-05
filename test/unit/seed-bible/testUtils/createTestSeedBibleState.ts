@@ -165,7 +165,7 @@ function installFreeUseBibleApiMock(
  * read reading history: callers get an empty document that keeps whatever is
  * written into it, keyed the way the real client keys them.
  */
-function installSharedDocumentMock(state: SeedBibleState): void {
+export function installSharedDocumentMock(state: SeedBibleState): void {
   const documents = new Map<string, SharedDocument>();
 
   vi.spyOn(state.os, "getSharedDocument").mockImplementation(

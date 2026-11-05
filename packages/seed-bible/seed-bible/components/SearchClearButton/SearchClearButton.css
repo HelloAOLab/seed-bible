@@ -1,0 +1,26 @@
+.sb-search-clear-button {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  padding: 0;
+  border: none;
+  border-radius: 62.4375rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-search-clear-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  color: var(--sb-font-color);
+}
+
+.sb-search-clear-button .material-symbols-outlined {
+  font-size: 1.125rem;
+}

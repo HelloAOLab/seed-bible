@@ -1,4 +1,5 @@
 import { createInMemoryTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
+import { TUTORIAL_OFFER_DELAY_MS } from "@packages/seed-bible/seed-bible/managers/TutorialManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   createTestSeedBibleState,
@@ -53,7 +54,10 @@ async function createState() {
 }
 
 async function offerCard(state: SeedBibleState) {
-  await waitFor(() => state.tutorial.promptVisible.value, 2000);
+  await waitFor(
+    () => state.tutorial.promptVisible.value,
+    TUTORIAL_OFFER_DELAY_MS + 1500
+  );
 }
 
 function finishTour(state: SeedBibleState) {

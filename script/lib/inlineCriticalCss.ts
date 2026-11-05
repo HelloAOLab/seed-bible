@@ -17,6 +17,7 @@
 export const CRITICAL_STYLE_PLACEHOLDER = "<!-- CRITICAL_STYLE_TAG -->";
 
 const LINK_TAG_RE = /<link\b[^>]*>/gi;
+const NOSCRIPT_BLOCK_RE = /(<noscript\b[\s\S]*?<\/noscript>)/gi;
 const CSS_FILE_ID_RE = /\.css$/;
 
 /**
@@ -76,6 +77,15 @@ export function injectCriticalStyles(
  * the meta-asset carriers, ...) are left untouched.
  */
 export function makeStylesheetsNonBlocking(html: string): string {
+  // `<noscript>` blocks are already the blocking fallback for a hand-written
+  // non-blocking link; rewriting the link inside would defeat its purpose.
+  return html
+    .split(NOSCRIPT_BLOCK_RE)
+    .map((part, i) => (i % 2 === 1 ? part : rewriteStylesheetLinks(part)))
+    .join("");
+}
+
+function rewriteStylesheetLinks(html: string): string {
   return html.replace(LINK_TAG_RE, (tag) => {
     if (readAttr(tag, "rel")?.toLowerCase() !== "stylesheet") return tag;
 
