@@ -188,6 +188,19 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
           </ul>
         </DiscoverSection>
       </div>
+      {/* Only a phone needs this: the list fills its screen, hiding the
+          reader. Wider screens show the step beside the list already. */}
+      {playlists.isMobile.value && queue.length > 0 ? (
+        <div className="sb-play-playlist-footer">
+          <button
+            type="button"
+            className="sb-play-playlist-start"
+            onClick={() => playlists.openQueueItem(Math.max(currentIndex, 0))}
+          >
+            {t("start-reading", { defaultValue: "Start Reading" })}
+          </button>
+        </div>
+      ) : null}
     </DiscoverPanelLayout>
   );
 }

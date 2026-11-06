@@ -37,6 +37,26 @@
   white-space: pre-line;
 }
 
+/* Pinned under the scrolling list. A phone's pane already stops above the
+   bottom navigation bar (see PaneLayout.css), so this sits right on top of it. */
+.sb-play-playlist-footer {
+  flex-shrink: 0;
+  padding-block: 12px;
+}
+
+.sb-play-playlist-start {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .sb-play-playlist-item-button {
   flex: 1;
   min-width: 0;

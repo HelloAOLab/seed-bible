@@ -48,7 +48,8 @@ function verseItem(
 function createMockPlaylists(
   playing: ReturnType<typeof createPlayingState> | null,
   authorName: string | null = null,
-  openingPlayback = false
+  openingPlayback = false,
+  isMobile = false
 ): {
   playlists: PlaylistManager;
   goBackFromPlayingView: ReturnType<typeof vi.fn>;
@@ -61,6 +62,7 @@ function createMockPlaylists(
       playing: signal(playing),
       playingAuthorName: signal(authorName),
       openingPlayback: signal(openingPlayback),
+      isMobile: signal(isMobile),
       goBackFromPlayingView,
       openQueueItem,
     } as unknown as PlaylistManager,
@@ -651,6 +653,79 @@ describe("PlayPlaylistView", () => {
       });
 
       expect(openQueueItem).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe("Start Reading button", () => {
+    function renderView(playlists: PlaylistManager) {
+      act(() => {
+        render(
+          <PlayPlaylistView
+            playlists={playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+            state={state}
+          />,
+          container
+        );
+      });
+    }
+
+    function startButton(): HTMLButtonElement | null {
+      return container.querySelector<HTMLButtonElement>(
+        ".sb-play-playlist-start"
+      );
+    }
+
+    const twoSteps = () =>
+      createPlaylist({
+        items: [
+          verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+          verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+        ],
+      });
+
+    it("on a phone, sits below the list and opens the current step", () => {
+      const playing = createPlayingState([twoSteps()]);
+      playing.currentIndex.value = 1;
+      const { playlists, openQueueItem } = createMockPlaylists(
+        playing,
+        null,
+        false,
+        true
+      );
+      renderView(playlists);
+
+      const button = startButton();
+      expect(button?.textContent).toBe("Start Reading");
+      // Outside the scrolling list, so it stays put while the list scrolls.
+      expect(button?.closest(".sb-play-playlist-body")).toBeNull();
+
+      act(() => {
+        button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(openQueueItem).toHaveBeenCalledWith(1);
+    });
+
+    it("is not shown on wider screens, where the step is already beside the list", () => {
+      const { playlists } = createMockPlaylists(
+        createPlayingState([twoSteps()])
+      );
+      renderView(playlists);
+
+      expect(startButton()).toBeNull();
+    });
+
+    it("is not shown when the playlist has no steps", () => {
+      const { playlists } = createMockPlaylists(
+        createPlayingState([createPlaylist({ items: [] })]),
+        null,
+        false,
+        true
+      );
+      renderView(playlists);
+
+      expect(startButton()).toBeNull();
     });
   });
 });
