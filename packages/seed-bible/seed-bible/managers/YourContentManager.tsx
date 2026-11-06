@@ -21,8 +21,8 @@ export type ContentFilter =
   | "all"
   | "annotations"
   | "highlights"
-  | "saves"
   | "bookmarks"
+  | "saves"
   | "playlists"
   | "reading-plans"
   | "branding"
@@ -32,8 +32,8 @@ export const CONTENT_FILTERS: ContentFilter[] = [
   "all",
   "annotations",
   "highlights",
-  "saves",
   "bookmarks",
+  "saves",
   "playlists",
   "reading-plans",
   "branding",

@@ -548,8 +548,8 @@ describe("YourContentPane", () => {
     expect(sectionTitles()).toEqual([
       "Annotations",
       "Highlights",
-      "Saves",
       "Bookmarks",
+      "Saves",
       "Playlists",
       "Reading plans",
       "Branding",

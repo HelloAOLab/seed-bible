@@ -1154,25 +1154,6 @@ export function YourContentPane(props: YourContentScreenProps) {
           </section>
         ) : null}
 
-        {showing("saves") && visibleSaves.length > 0 ? (
-          <section className="sb-content-section">
-            <SectionHeader
-              title={t("saves", { defaultValue: "Saves" })}
-              onSeeAll={seeAll("saves", visibleSaves)}
-            />
-            <div className="sb-content-saves">
-              {visibleSaves.slice(0, limit(visibleSaves)).map((b) => (
-                <SavePill
-                  key={b.id}
-                  state={state}
-                  save={b}
-                  onOpenPassage={onOpenPassage}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
         {showing("bookmarks") && visibleBookmarks.length > 0 ? (
           <section className="sb-content-section">
             <SectionHeader
@@ -1190,6 +1171,25 @@ export function YourContentPane(props: YourContentScreenProps) {
                     onOpenPassage={onOpenPassage}
                   />
                 ))}
+            </div>
+          </section>
+        ) : null}
+
+        {showing("saves") && visibleSaves.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("saves", { defaultValue: "Saves" })}
+              onSeeAll={seeAll("saves", visibleSaves)}
+            />
+            <div className="sb-content-saves">
+              {visibleSaves.slice(0, limit(visibleSaves)).map((b) => (
+                <SavePill
+                  key={b.id}
+                  state={state}
+                  save={b}
+                  onOpenPassage={onOpenPassage}
+                />
+              ))}
             </div>
           </section>
         ) : null}
