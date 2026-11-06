@@ -719,31 +719,96 @@ describe("bookmarks", () => {
       ).toBe("AAB");
     });
 
-    it("renames and recolors a bookmark from the panel with the shared form", async () => {
+    it("renames and recolors a bookmark from the panel in the edit modal", async () => {
       await signIn([aBookmark()]);
       await act(async () => {
         state.bookmarks.isPanelOpen.value = true;
       });
       await renderSidebar();
+      const openModalSpy = vi.spyOn(state.modals, "openModal");
+      const closeModal = vi.spyOn(state.modals, "closeModal");
 
-      const panel = container.querySelector<HTMLElement>(
-        ".sb-bookmarks-panel"
-      )!;
       await chooseOption("Reading plan", "Edit bookmark");
-      await type(
-        panel.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
-        "Sermon prep"
-      );
+      expect(openModalSpy).toHaveBeenCalledTimes(1);
+      expect(
+        container.querySelector(".sb-bookmarks-panel .sb-bookmark-form")
+      ).toBeNull();
+      const modal = renderModal(openModalSpy.mock.calls[0]![0]);
+      const nameInput = modal.querySelector<HTMLInputElement>(
+        ".sb-bookmark-form-name"
+      )!;
+      expect(nameInput.value).toBe("Reading plan");
+
+      await type(nameInput, "Sermon prep");
       await click(
-        panel.querySelector<HTMLElement>(
+        modal.querySelector<HTMLElement>(
           ".sb-bookmark-form-color[aria-label='Purple']"
         )!
       );
-      await click(button(panel, ".sb-bookmark-picker-save"));
+      await click(button(modal, ".sb-bookmark-picker-save"));
 
       expect(state.bookmarks.bookmarks.value).toEqual([
         aBookmark({ name: "Sermon prep", colorId: "purple" }),
       ]);
+      // Closes once the write has gone through.
+      await vi.waitFor(() =>
+        expect(closeModal).toHaveBeenCalledWith(
+          openModalSpy.mock.calls[0]![0].id
+        )
+      );
+    });
+
+    it("can't be dismissed mid-save, so a failed save keeps the typed name", async () => {
+      await signIn([aBookmark()]);
+      await act(async () => {
+        state.bookmarks.isPanelOpen.value = true;
+      });
+      await renderSidebar();
+      const openModalSpy = vi.spyOn(state.modals, "openModal");
+      const toast = vi.spyOn(state.app, "toast");
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      let failWrite!: (error: Error) => void;
+      recordData.mockReturnValue(
+        new Promise((_resolve, reject) => {
+          failWrite = reject;
+        })
+      );
+
+      await chooseOption("Reading plan", "Edit bookmark");
+      const modal = renderModal(openModalSpy.mock.calls[0]![0]);
+      const modalId = openModalSpy.mock.results[0]!.value as string;
+      const isOpen = () =>
+        state.modals.modals.value.some((m) => m.id === modalId);
+      await type(
+        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
+        "Sermon prep"
+      );
+      await click(button(modal, ".sb-bookmark-picker-save"));
+
+      // The X button and the backdrop both go through dismissModal.
+      await act(async () => {
+        state.modals.dismissModal(modalId);
+      });
+      expect(isOpen()).toBe(true);
+
+      await act(async () => {
+        failWrite(new Error("offline"));
+      });
+
+      await vi.waitFor(() =>
+        expect(toast).toHaveBeenCalledWith(
+          "Couldn't save your bookmark. Please try again."
+        )
+      );
+      expect(isOpen()).toBe(true);
+      expect(
+        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+      ).toBe("Sermon prep");
+      // Once the save has settled, it can be closed again.
+      await act(async () => {
+        state.modals.dismissModal(modalId);
+      });
+      expect(isOpen()).toBe(false);
     });
 
     describe("deleting from the panel", () => {

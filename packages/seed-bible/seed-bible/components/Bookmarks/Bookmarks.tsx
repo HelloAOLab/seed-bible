@@ -1,5 +1,5 @@
 import "./Bookmarks.css";
-import { useSignal } from "@preact/signals";
+import { signal, useSignal, type Signal } from "@preact/signals";
 import { useId } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -373,7 +373,7 @@ function nextBookmarkDraft(
  * name in the bookmark's own translation, and falling back to the raw book id
  * until that translation's book list has loaded.
  */
-function useBookmarkLocationText(state: SeedBibleState) {
+export function useBookmarkLocationText(state: SeedBibleState) {
   const { bibleData } = state;
   // Read here so a translation finishing its load re-renders the caller.
   const translationBooks = bibleData.translationBooks.value;
@@ -643,7 +643,10 @@ function BookmarkPickerContent(props: {
  * other items in a bookmark's options menu. Whatever the menu was in stays
  * open behind the question, showing the bookmarks that are left.
  */
-function confirmDeleteBookmark(state: SeedBibleState, bookmark: Bookmark) {
+export function confirmDeleteBookmark(
+  state: SeedBibleState,
+  bookmark: Bookmark
+) {
   openConfirmDeleteModal(state.modals, {
     id: `delete-bookmark-confirm-${bookmark.id}`,
     title: {
@@ -717,34 +720,33 @@ export async function openBookmarkModal(
 }
 
 /**
- * The sidebar's bookmarks panel: every bookmark, most recently moved first.
- * Tapping one opens its chapter; its options menu renames, recolors, or
- * deletes it. Bookmarks are only placed from a chapter (the reader's button),
- * so there is no "new bookmark" here.
+ * Renames or recolors one bookmark: its name and color fields with Cancel and
+ * Save. `onDone` runs on Cancel and after a successful save; a failed save
+ * stays open with a toast so nothing typed is lost.
  */
-export function BookmarksPanel(props: {
+function BookmarkEditor(props: {
   state: SeedBibleState;
-  closeLayoutMenu: () => void;
+  bookmark: Bookmark;
+  /**
+   * True while a save is in flight. Owned by the caller so the modal around
+   * the editor can refuse to close mid-save.
+   */
+  isSaving: Signal<boolean>;
+  onDone: () => void;
 }) {
-  const { state, closeLayoutMenu } = props;
-  const { bookmarks: manager } = state;
+  const { state, bookmark, isSaving, onDone } = props;
   const { t } = useI18n();
-  const locationText = useBookmarkLocationText(state);
-
-  const bookmarks = manager.bookmarks.value;
-  const editingId = useSignal<string | null>(null);
-  const editValue = useSignal<BookmarkDetails>({
-    name: "",
-    colorId: DEFAULT_BOOKMARK_COLOR_ID,
+  const value = useSignal<BookmarkDetails>({
+    name: bookmark.name,
+    colorId: bookmark.colorId,
   });
-  const isSaving = useSignal(false);
 
-  const run = async (action: () => Promise<unknown>) => {
-    if (isSaving.value) return;
+  const submit = async () => {
+    if (isSaving.value || value.value.name.trim() === "") return;
     isSaving.value = true;
     try {
-      await action();
-      editingId.value = null;
+      await state.bookmarks.updateBookmark(bookmark.id, value.value);
+      onDone();
     } catch (err) {
       console.warn("Failed to update bookmarks:", err);
       state.app.toast(
@@ -757,12 +759,86 @@ export function BookmarksPanel(props: {
     }
   };
 
-  const submitEdit = () => {
-    const id = editingId.value;
-    const value = editValue.value;
-    if (!id || value.name.trim() === "") return;
-    void run(() => manager.updateBookmark(id, value));
-  };
+  return (
+    <div className="sb-bookmark-edit">
+      <BookmarkForm
+        value={value.value}
+        autoFocus
+        disabled={isSaving.value}
+        onChange={(next) => {
+          value.value = next;
+        }}
+        onSubmit={() => void submit()}
+      />
+      <div className="sb-bookmark-edit-actions">
+        <button
+          type="button"
+          className="sb-bookmark-edit-cancel"
+          disabled={isSaving.value}
+          onClick={onDone}
+        >
+          {t("cancel", { defaultValue: "Cancel" })}
+        </button>
+        <button
+          type="button"
+          className="sb-bookmark-picker-save"
+          disabled={isSaving.value || value.value.name.trim() === ""}
+          onClick={() => void submit()}
+        >
+          {isSaving.value
+            ? t("saving", { defaultValue: "Saving…" })
+            : t("save", { defaultValue: "Save" })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Opens {@link BookmarkEditor} in a modal. The one place a bookmark is renamed
+ * or recolored, from the sidebar panel and from Your content alike.
+ */
+export function openEditBookmarkModal(
+  state: SeedBibleState,
+  bookmark: Bookmark
+): void {
+  const modalId = `edit-bookmark-${bookmark.id}`;
+  const isSaving = signal(false);
+  const close = () => state.modals.closeModal(modalId);
+  state.modals.openModal({
+    id: modalId,
+    title: { key: "edit-bookmark", defaultValue: "Edit bookmark" },
+    mobileSheet: true,
+    // Like Cancel: once Save is pressed, the modal stays until it settles, so
+    // a failed save still has the typed name to retry with.
+    canDismiss: () => !isSaving.value,
+    content: () => (
+      <BookmarkEditor
+        state={state}
+        bookmark={bookmark}
+        isSaving={isSaving}
+        onDone={close}
+      />
+    ),
+  });
+}
+
+/**
+ * The sidebar's bookmarks panel: every bookmark, most recently moved first.
+ * Tapping one opens its chapter; its options menu renames and recolors it (in
+ * the edit modal) or deletes it. Bookmarks are only placed from a chapter (the
+ * reader's button), so there is no "new bookmark" here.
+ */
+export function BookmarksPanel(props: {
+  state: SeedBibleState;
+  closeLayoutMenu: () => void;
+}) {
+  const { state, closeLayoutMenu } = props;
+  const { bookmarks: manager } = state;
+  const { t } = useI18n();
+  const locationText = useBookmarkLocationText(state);
+
+  const bookmarks = manager.bookmarks.value;
 
   return (
     <div className="sb-bookmarks-panel">
@@ -775,110 +851,70 @@ export function BookmarksPanel(props: {
         </p>
       )}
 
-      {bookmarks.map((bookmark) =>
-        editingId.value === bookmark.id ? (
-          <div key={bookmark.id} className="sb-bookmarks-panel-editor">
-            <BookmarkForm
-              value={editValue.value}
-              autoFocus
-              disabled={isSaving.value}
-              onChange={(next) => {
-                editValue.value = next;
-              }}
-              onSubmit={submitEdit}
+      {bookmarks.map((bookmark) => (
+        <div key={bookmark.id} className="sb-bookmarks-panel-row">
+          <button
+            type="button"
+            className="sb-bookmarks-panel-open"
+            onClick={() => {
+              openReaderLocation(state, bookmark, closeLayoutMenu);
+            }}
+          >
+            <BookmarkGlyph colorId={bookmark.colorId} size={16} />
+            <BookmarkLabel
+              name={bookmark.name}
+              chapterText={locationText(bookmark)}
+              translationId={bookmark.translationId}
             />
-            <div className="sb-bookmarks-panel-edit-actions">
-              <button
-                type="button"
-                className="sb-bookmarks-panel-cancel"
-                disabled={isSaving.value}
-                onClick={() => {
-                  editingId.value = null;
-                }}
-              >
-                {t("cancel", { defaultValue: "Cancel" })}
-              </button>
-              <button
-                type="button"
-                className="sb-bookmark-picker-save"
-                disabled={isSaving.value || editValue.value.name.trim() === ""}
-                onClick={submitEdit}
-              >
-                {isSaving.value
-                  ? t("saving", { defaultValue: "Saving…" })
-                  : t("save", { defaultValue: "Save" })}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div key={bookmark.id} className="sb-bookmarks-panel-row">
-            <button
-              type="button"
-              className="sb-bookmarks-panel-open"
+          </button>
+          <ContextMenuWithButton
+            anchorClassName="sb-tab-menu-anchor"
+            buttonClassName="sb-tab-menu-button"
+            menuClassName="sb-tab-menu"
+            iconClassName="sb-tab-more-icon"
+            aria-label={t("bookmark-options-named", {
+              defaultValue: "Options for {{name}}",
+              name: bookmark.name,
+            })}
+            title={t("bookmark-options", {
+              defaultValue: "Bookmark options",
+            })}
+          >
+            <ContextMenuItem
+              className="sb-tab-menu-item"
               onClick={() => {
-                openReaderLocation(state, bookmark, closeLayoutMenu);
+                openEditBookmarkModal(state, bookmark);
               }}
             >
-              <BookmarkGlyph colorId={bookmark.colorId} size={16} />
-              <BookmarkLabel
-                name={bookmark.name}
-                chapterText={locationText(bookmark)}
-                translationId={bookmark.translationId}
-              />
-            </button>
-            <ContextMenuWithButton
-              anchorClassName="sb-tab-menu-anchor"
-              buttonClassName="sb-tab-menu-button"
-              menuClassName="sb-tab-menu"
-              iconClassName="sb-tab-more-icon"
-              aria-label={t("bookmark-options-named", {
-                defaultValue: "Options for {{name}}",
-                name: bookmark.name,
-              })}
-              title={t("bookmark-options", {
-                defaultValue: "Bookmark options",
-              })}
+              <MaterialIcon
+                className="sb-context-menu-item-icon"
+                aria-hidden="true"
+              >
+                edit
+              </MaterialIcon>
+              <span>
+                {t("edit-bookmark", { defaultValue: "Edit bookmark" })}
+              </span>
+            </ContextMenuItem>
+            <ContextMenuItem
+              className="sb-tab-menu-item"
+              onClick={() => {
+                confirmDeleteBookmark(state, bookmark);
+              }}
             >
-              <ContextMenuItem
-                className="sb-tab-menu-item"
-                onClick={() => {
-                  editingId.value = bookmark.id;
-                  editValue.value = {
-                    name: bookmark.name,
-                    colorId: bookmark.colorId,
-                  };
-                }}
+              <MaterialIcon
+                className="sb-context-menu-item-icon"
+                aria-hidden="true"
               >
-                <MaterialIcon
-                  className="sb-context-menu-item-icon"
-                  aria-hidden="true"
-                >
-                  edit
-                </MaterialIcon>
-                <span>
-                  {t("edit-bookmark", { defaultValue: "Edit bookmark" })}
-                </span>
-              </ContextMenuItem>
-              <ContextMenuItem
-                className="sb-tab-menu-item"
-                onClick={() => {
-                  confirmDeleteBookmark(state, bookmark);
-                }}
-              >
-                <MaterialIcon
-                  className="sb-context-menu-item-icon"
-                  aria-hidden="true"
-                >
-                  delete
-                </MaterialIcon>
-                <span>
-                  {t("delete-bookmark", { defaultValue: "Delete bookmark" })}
-                </span>
-              </ContextMenuItem>
-            </ContextMenuWithButton>
-          </div>
-        )
-      )}
+                delete
+              </MaterialIcon>
+              <span>
+                {t("delete-bookmark", { defaultValue: "Delete bookmark" })}
+              </span>
+            </ContextMenuItem>
+          </ContextMenuWithButton>
+        </div>
+      ))}
     </div>
   );
 }
