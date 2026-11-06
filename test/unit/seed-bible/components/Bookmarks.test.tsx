@@ -746,16 +746,41 @@ describe("bookmarks", () => {
       ]);
     });
 
-    it("deletes a bookmark from the panel", async () => {
-      await signIn([aBookmark()]);
-      await act(async () => {
-        state.bookmarks.isPanelOpen.value = true;
+    describe("deleting from the panel", () => {
+      /** Opens the panel, picks Delete, and renders the question it asks. */
+      async function askToDelete() {
+        await signIn([aBookmark()]);
+        await act(async () => {
+          state.bookmarks.isPanelOpen.value = true;
+        });
+        await renderSidebar();
+        const openModalSpy = vi.spyOn(state.modals, "openModal");
+        await chooseOption("Reading plan", "Delete bookmark");
+        expect(openModalSpy).toHaveBeenCalledTimes(1);
+        return renderModal(openModalSpy.mock.calls[0]![0]);
+      }
+
+      it("asks first, and deletes only once confirmed", async () => {
+        const question = await askToDelete();
+        expect(
+          question.querySelector(".sb-confirm-delete-message")!.textContent
+        ).toBe(`Delete "Reading plan"? This can't be undone.`);
+        expect(state.bookmarks.bookmarks.value).toHaveLength(1);
+        expect(recordData).not.toHaveBeenCalled();
+
+        await click(button(question, ".sb-delete-button"));
+
+        expect(state.bookmarks.bookmarks.value).toEqual([]);
+        expect(container.querySelector(".sb-bookmarks-panel-row")).toBeNull();
       });
-      await renderSidebar();
 
-      await chooseOption("Reading plan", "Delete bookmark");
+      it("keeps the bookmark when the question is canceled", async () => {
+        const question = await askToDelete();
+        await click(button(question, ".sb-session-settings-cancel"));
 
-      expect(state.bookmarks.bookmarks.value).toEqual([]);
+        expect(state.bookmarks.bookmarks.value).toHaveLength(1);
+        expect(recordData).not.toHaveBeenCalled();
+      });
     });
 
     // Bookmarks are placed from a chapter, with the reader's button.

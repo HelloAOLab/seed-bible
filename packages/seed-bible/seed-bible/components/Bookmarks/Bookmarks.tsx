@@ -485,28 +485,6 @@ function BookmarkPickerContent(props: {
     }, saveFailed);
   };
 
-  // Asked first: Delete sits in the same menu as Open chapter, one slip away.
-  // The sheet stays open behind the question, for the bookmarks that are left.
-  const confirmRemove = (bookmark: Bookmark) =>
-    openConfirmDeleteModal(state.modals, {
-      id: `delete-bookmark-confirm-${bookmark.id}`,
-      title: {
-        key: "delete-bookmark-confirm-title",
-        defaultValue: "Delete bookmark?",
-      },
-      message: (t) =>
-        `${t("delete-bookmark-confirm-message", {
-          name: bookmark.name,
-          defaultValue: 'Delete "{{name}}"?',
-        })} ${t("cant-be-undone", { defaultValue: "This can't be undone." })}`,
-      onConfirm: () => manager.removeBookmark(bookmark.id),
-      failedMessage: (t) =>
-        t("bookmark-remove-failed", {
-          defaultValue: "Couldn't remove that bookmark. Please try again.",
-        }),
-      toast: state.app.toast,
-    });
-
   return (
     <div className="sb-bookmark-picker">
       {bookmarks.length > 0 && (
@@ -571,7 +549,7 @@ function BookmarkPickerContent(props: {
               <ContextMenuItem
                 className="sb-tab-menu-item"
                 onClick={() => {
-                  confirmRemove(bookmark);
+                  confirmDeleteBookmark(state, bookmark);
                 }}
               >
                 <MaterialIcon
@@ -658,6 +636,32 @@ function BookmarkPickerContent(props: {
       )}
     </div>
   );
+}
+
+/**
+ * Asks before deleting a bookmark, since Delete sits one slip away from the
+ * other items in a bookmark's options menu. Whatever the menu was in stays
+ * open behind the question, showing the bookmarks that are left.
+ */
+function confirmDeleteBookmark(state: SeedBibleState, bookmark: Bookmark) {
+  openConfirmDeleteModal(state.modals, {
+    id: `delete-bookmark-confirm-${bookmark.id}`,
+    title: {
+      key: "delete-bookmark-confirm-title",
+      defaultValue: "Delete bookmark?",
+    },
+    message: (t) =>
+      `${t("delete-bookmark-confirm-message", {
+        name: bookmark.name,
+        defaultValue: 'Delete "{{name}}"?',
+      })} ${t("cant-be-undone", { defaultValue: "This can't be undone." })}`,
+    onConfirm: () => state.bookmarks.removeBookmark(bookmark.id),
+    failedMessage: (t) =>
+      t("bookmark-remove-failed", {
+        defaultValue: "Couldn't remove that bookmark. Please try again.",
+      }),
+    toast: state.app.toast,
+  });
 }
 
 /** Why "New bookmark" is disabled at the cap. */
@@ -858,7 +862,7 @@ export function BookmarksPanel(props: {
               <ContextMenuItem
                 className="sb-tab-menu-item"
                 onClick={() => {
-                  void run(() => manager.removeBookmark(bookmark.id));
+                  confirmDeleteBookmark(state, bookmark);
                 }}
               >
                 <MaterialIcon

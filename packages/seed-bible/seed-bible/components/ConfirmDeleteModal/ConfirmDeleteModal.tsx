@@ -1,6 +1,7 @@
 import { signal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
+import { Spinner } from "../Spinner/Spinner";
 import type {
   ModalContentProps,
   ModalManager,
@@ -80,8 +81,13 @@ function ConfirmDeleteModalContent(
           className="sb-session-settings-end sb-delete-button"
           onClick={() => void confirm()}
           disabled={isDeleting}
+          aria-busy={isDeleting}
         >
-          <MaterialIcon aria-hidden="true">delete</MaterialIcon>
+          {isDeleting ? (
+            <Spinner size="1.125rem" />
+          ) : (
+            <MaterialIcon aria-hidden="true">delete</MaterialIcon>
+          )}
           {t("delete")}
         </button>
       </div>
