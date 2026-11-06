@@ -815,24 +815,29 @@
 }
 
 .sb-verse-toolbar {
-  position: fixed;
-  transform: translate(-50%, -100%);
   display: flex;
-  background: var(--sb-reader-toolbar-background);
-  color: var(--sb-reader-toolbar-font-color);
   /* The toolbar's buttons, labels and tints are all derived from
      --sb-font-color, so re-pointing it here makes the whole subtree follow the
      reader toolbar's text color instead of the page's. */
   --sb-font-color: var(--sb-reader-toolbar-font-color);
   gap: var(--sb-verse-toolbar-gap);
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Desktop: a box floating over the selection. On phones the same content sits
+   in a BottomSheet instead (.sb-verse-toolbar-mobile). */
+.sb-verse-toolbar-floating {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  background: var(--sb-reader-toolbar-background);
+  color: var(--sb-reader-toolbar-font-color);
   padding: var(--sb-verse-toolbar-padding);
   border-radius: var(--sb-verse-toolbar-border-radius);
   border: var(--sb-verse-toolbar-border);
   box-shadow: var(--sb-verse-toolbar-box-shadow);
   z-index: var(--sb-verse-toolbar-z-index);
   min-height: var(--sb-verse-toolbar-min-height);
-  flex-direction: column;
-  align-items: stretch;
 }
 
 .sb-verse-toolbar-draggable {
@@ -1054,7 +1059,7 @@
 }
 
 @media (max-width: 300px) {
-  .sb-verse-toolbar {
+  .sb-verse-toolbar-floating {
     padding-left: 0;
     padding-right: 0;
   }
@@ -1119,64 +1124,12 @@
   line-height: 1;
 }
 
+/* Phone verse sheet: the shell is components/BottomSheet; this only tunes it. */
 .sb-verse-toolbar-mobile {
-  left: 0;
-  right: 0;
-  bottom: 0;
-  transform: none;
-  width: 100%;
-  max-width: 100%;
-  align-items: stretch;
-  padding: 0.5rem 1rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-  border-top-left-radius: 1.25rem;
-  border-top-right-radius: 1.25rem;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  box-shadow: 0 -8px 24px var(--sb-shadow-color);
-  /* Stay on screen even before the overflow height is measured. The handle
-     lives at the top of this box, so a note taller than the viewport can't
-     push it away. */
-  max-height: calc(100dvh - env(safe-area-inset-top, 0px));
-  /* The whole panel is a drag surface for the expand/collapse/dismiss
-     gesture (see the pointer handlers on this element), not just the handle
-     below. Without this, the browser can win the race against our handler
-     on the first pointermove or two and start a native scroll instead,
-     which it then follows up with a `pointercancel` — the drag looks like
-     it starts, then snaps back to where it began. The color-swatch strip
-     opts back into horizontal panning below since it needs its own native
-     scroll. Dropped while the notes scroll (`.sb-verse-sheet-scrollable`):
-     an ancestor `none` would block that scroller. */
-  touch-action: none;
-
-  transition: transform 0.2s ease;
-}
-
-/* Drag target around the grab handle. The pill is only 4px tall, so the
-   pointer gesture lives on this taller strip. `touch-action: none` stops the
-   browser turning an upward drag into a page scroll before our handler sees
-   it. */
-.sb-verse-toolbar-handle-area {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 1.5rem;
-  margin: -0.25rem 0 0.25rem;
-  flex: none;
-  touch-action: none;
-  cursor: grab;
-}
-
-.sb-verse-toolbar-handle-area:active {
-  cursor: grabbing;
-}
-
-.sb-verse-toolbar-handle-area:focus-visible {
-  outline: 2px solid var(--sb-primary-color);
-  outline-offset: 2px;
-  border-radius: 0.5rem;
+  --sb-bottom-sheet-background: var(--sb-reader-toolbar-background);
+  --sb-bottom-sheet-color: var(--sb-reader-toolbar-font-color);
+  --sb-bottom-sheet-padding-bottom: 0.875rem;
+  --sb-bottom-sheet-border-top: var(--sb-verse-toolbar-border);
 }
 
 /* The overflow row of actions, revealed by dragging the handle up. Its height is
@@ -1218,13 +1171,12 @@
   touch-action: auto;
 }
 
-.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable
-  .sb-verse-toolbar-handle-area,
+.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable .sb-bottom-sheet-handle-area,
 .sb-verse-toolbar-mobile.sb-verse-sheet-scrollable .sb-verse-toolbar-ref,
 .sb-verse-toolbar-mobile.sb-verse-sheet-scrollable
   .sb-verse-toolbar-cards
   > .sb-verse-toolbar-action-item,
-.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable .sb-verse-toolbar-close {
+.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable .sb-bottom-sheet-close {
   touch-action: none;
 }
 
@@ -1316,58 +1268,17 @@
   cursor: default;
 }
 
-/* While dragging, height and transform follow the pointer directly; easing
-   towards the finger would feel like lag. The animations come back on release,
-   which is what carries the sheet the rest of the way to its resting position. */
-.sb-verse-toolbar-mobile.sb-verse-sheet-dragging,
+/* While dragging, the overflow height follows the pointer directly; easing
+   towards the finger would feel like lag. The animation comes back on release,
+   which is what carries the row the rest of the way to its resting height. */
 .sb-verse-toolbar-mobile.sb-verse-sheet-dragging .sb-verse-toolbar-overflow {
   transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sb-verse-toolbar-mobile,
   .sb-verse-toolbar-cards .sb-verse-toolbar-overflow {
     transition: none;
   }
-}
-
-/* Grab-handle pill at the top of the mobile verse sheet. */
-.sb-verse-toolbar-handle {
-  width: 2.25rem;
-  height: 0.25rem;
-  border-radius: 62.4375rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
-  margin: 0 auto;
-  flex: none;
-}
-
-/* Small dismiss button pinned to the top-right corner of the mobile sheet. */
-.sb-verse-toolbar-close {
-  position: absolute;
-  top: 0.625rem;
-  right: 0.75rem;
-  width: 1.875rem;
-  height: 1.875rem;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-  color: var(--sb-font-color);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.15s ease;
-  z-index: 1;
-}
-
-.sb-verse-toolbar-close:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
-}
-
-.sb-verse-toolbar-close .material-symbols-outlined {
-  font-size: 1.25rem;
-  line-height: 1;
 }
 
 /* "Swipe up to see more" at the foot of the sheet — the affordance that replaced

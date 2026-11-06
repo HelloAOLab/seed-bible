@@ -1,6 +1,5 @@
 import "./SessionParticipants.css";
 import { useSignal } from "@preact/signals";
-import { createPortal } from "preact/compat";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
@@ -17,6 +16,7 @@ import {
   openShareSessionModal,
 } from "../Tabs/Tabs";
 import { MaterialIcon } from "../icons";
+import { BottomSheet } from "../BottomSheet/BottomSheet";
 import {
   ParticipantFriendButton,
   rowsWithFriendButton,
@@ -100,86 +100,17 @@ export function MobileSessionParticipants({
         )}
       </button>
 
-      {/* Portal to <body>: the mobile reader header is its own stacking context
-       * (z-index + overflow:hidden), so a sheet rendered inside it would sit
-       * behind the bottom nav. Rendering to body lets it cover the whole
-       * screen. The portal only runs on click, so SSR is unaffected. */}
-      {isSheetOpen.value &&
-        createPortal(
-          <>
-            <div
-              className="sb-mobile-settings-sheet-overlay"
-              onClick={() => {
-                isSheetOpen.value = false;
-              }}
-              aria-hidden="true"
-            />
-            <div
-              className="sb-mobile-settings-sheet sb-session-participants-sheet"
-              role="dialog"
-              aria-modal="true"
-              aria-label={t("participants", { defaultValue: "Participants" })}
-            >
-              <div className="sb-mobile-settings-sheet-header">
-                <div className="sb-mobile-settings-sheet-title">
-                  <span
-                    className="material-symbols-outlined"
-                    aria-hidden="true"
-                    style={{ fontSize: 22 }}
-                  >
-                    group
-                  </span>
-                  <span>
-                    {t("participants", { defaultValue: "Participants" })}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  className="sb-mobile-settings-sheet-close"
-                  onClick={() => {
-                    isSheetOpen.value = false;
-                  }}
-                  aria-label={t("close", { defaultValue: "Close" })}
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-              </div>
-              <div className="sb-mobile-settings-sheet-body">
-                <ul className="sb-session-participants-list">
-                  {sortedUsers.map((user) => {
-                    const role = getUserSessionRole(options, user);
-                    const roleLabel =
-                      role === "host"
-                        ? t("host", { defaultValue: "Host" })
-                        : role === "co-host"
-                          ? t("co-host", { defaultValue: "Co-host" })
-                          : undefined;
-                    return (
-                      <li
-                        key={user.connectionId}
-                        className="sb-session-participants-list-item"
-                      >
-                        <SessionUserAvatar
-                          user={user}
-                          role={role}
-                          roleLabel={roleLabel}
-                        />
-                        <span className="sb-session-participants-list-name">
-                          {getUserDisplayName(user)}
-                        </span>
-                        {friendButtonRows.has(user.connectionId) && (
-                          <ParticipantFriendButton
-                            state={state}
-                            userId={user.userId}
-                            displayName={getUserDisplayName(user)}
-                          />
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
+      {isSheetOpen.value && (
+        <BottomSheet
+          className="sb-session-participants-sheet"
+          label={t("participants", { defaultValue: "Participants" })}
+          title={t("participants", { defaultValue: "Participants" })}
+          titleIcon="group"
+          onClose={() => {
+            isSheetOpen.value = false;
+          }}
+          footer={
+            <>
               <div className="sb-mobile-settings-sheet-divider" />
               {isHost && (
                 <button
@@ -233,10 +164,44 @@ export function MobileSessionParticipants({
                   chevron_right
                 </MaterialIcon>
               </button>
-            </div>
-          </>,
-          document.body
-        )}
+            </>
+          }
+        >
+          <ul className="sb-session-participants-list">
+            {sortedUsers.map((user) => {
+              const role = getUserSessionRole(options, user);
+              const roleLabel =
+                role === "host"
+                  ? t("host", { defaultValue: "Host" })
+                  : role === "co-host"
+                    ? t("co-host", { defaultValue: "Co-host" })
+                    : undefined;
+              return (
+                <li
+                  key={user.connectionId}
+                  className="sb-session-participants-list-item"
+                >
+                  <SessionUserAvatar
+                    user={user}
+                    role={role}
+                    roleLabel={roleLabel}
+                  />
+                  <span className="sb-session-participants-list-name">
+                    {getUserDisplayName(user)}
+                  </span>
+                  {friendButtonRows.has(user.connectionId) && (
+                    <ParticipantFriendButton
+                      state={state}
+                      userId={user.userId}
+                      displayName={getUserDisplayName(user)}
+                    />
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </BottomSheet>
+      )}
     </>
   );
 }

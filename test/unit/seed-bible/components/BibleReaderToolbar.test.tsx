@@ -2544,7 +2544,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     });
 
     const handle = container.querySelector<HTMLElement>(
-      ".sb-verse-toolbar-handle-area"
+      ".sb-bottom-sheet-handle-area"
     );
     if (!options?.desktop && !handle) {
       throw new Error("The verse sheet handle did not render.");
@@ -2893,7 +2893,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   it("does not start the sheet drag when pressing down on a toolbar button", async () => {
     await renderSheet();
     const closeButton = container.querySelector<HTMLElement>(
-      ".sb-verse-toolbar-close"
+      ".sb-bottom-sheet-close"
     );
     if (!closeButton) throw new Error("The close button did not render.");
 
@@ -3657,7 +3657,7 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     });
 
     const handle = container.querySelector<HTMLElement>(
-      ".sb-verse-toolbar-handle-area"
+      ".sb-bottom-sheet-handle-area"
     );
     if (!handle) throw new Error("The verse sheet handle did not render.");
     return { handle, chapter, firstVerse };
@@ -4469,7 +4469,7 @@ describe("BibleReaderToolbar — mobile verse sheet discovered content", () => {
       );
     });
     const handle = container.querySelector<HTMLElement>(
-      ".sb-verse-toolbar-handle-area"
+      ".sb-bottom-sheet-handle-area"
     );
     if (!handle) throw new Error("The verse sheet handle did not render.");
     return handle;
