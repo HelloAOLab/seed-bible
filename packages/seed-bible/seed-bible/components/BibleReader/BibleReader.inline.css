@@ -1267,6 +1267,11 @@
   justify-content: center;
 }
 
+.sb-footnote-modal-close:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .sb-footnote-modal-content {
   margin-top: 1rem;
   font-family: var(--sb-font-family);

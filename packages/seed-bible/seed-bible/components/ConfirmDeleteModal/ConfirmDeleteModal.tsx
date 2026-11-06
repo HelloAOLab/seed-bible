@@ -107,6 +107,8 @@ export function openConfirmDeleteModal(
   modals.openModal({
     id,
     title,
+    // Like Cancel: once Delete is pressed, the modal stays until it settles.
+    canDismiss: () => !deletingIds.value.has(id),
     content: () => (
       <ConfirmDeleteModalContent
         id={id}

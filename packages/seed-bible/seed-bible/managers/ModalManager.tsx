@@ -13,6 +13,8 @@ export interface ManagedModal {
    * treated as the user backing out of it.
    */
   onDismiss: (() => void) | null;
+  /** Whether the user may close it right now. See {@link ModalRegistration}. */
+  canDismiss: () => boolean;
   useCasualOSApp: boolean;
   mobileSheet: boolean;
 }
@@ -40,6 +42,15 @@ export interface ModalRegistration {
   onDismiss?: () => void;
 
   /**
+   * Whether the user may close the modal right now, with its X button or the
+   * backdrop — false while it is in the middle of something it shouldn't be
+   * closed out of. Read on every render, so reading a signal here keeps the X
+   * button's disabled state current. `closeModal` ignores it.
+   * Defaults to always true.
+   */
+  canDismiss?: () => boolean;
+
+  /**
    * Whether to render the modal as a CasualOS app. This can be useful if the modal content needs to render over the grid or map portals.
    * Defaults to true.
    */
@@ -58,7 +69,10 @@ export interface ModalManager {
   modals: ReadonlySignal<ManagedModal[]>;
   openModal: (modal: ModalRegistration) => string;
   closeModal: (id: string) => void;
-  /** Closes the modal and runs its `onDismiss`, if it had one. */
+  /**
+   * Closes the modal and runs its `onDismiss`, if it had one — unless its
+   * `canDismiss` says it can't be closed right now.
+   */
   dismissModal: (id: string) => void;
   closeAllModals: () => void;
 }
@@ -91,6 +105,7 @@ export function createModalManager(): ModalManager {
         footer:
           modal.footer === undefined ? null : toContentRenderer(modal.footer),
         onDismiss: modal.onDismiss ?? null,
+        canDismiss: modal.canDismiss ?? (() => true),
         useCasualOSApp: modal.useCasualOSApp ?? true,
         mobileSheet: modal.mobileSheet ?? false,
       },
@@ -105,6 +120,7 @@ export function createModalManager(): ModalManager {
 
   const dismissModal = (id: string) => {
     const modal = modals.peek().find((m) => m.id === id);
+    if (modal && !modal.canDismiss()) return;
     closeModal(id);
     modal?.onDismiss?.();
   };

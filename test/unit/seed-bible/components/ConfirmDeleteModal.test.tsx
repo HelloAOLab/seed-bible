@@ -126,6 +126,24 @@ describe("openConfirmDeleteModal", () => {
     expect(modals.modals.value.some((m) => m.id === MODAL_ID)).toBe(false);
   });
 
+  it("can't be closed with its X or backdrop while the delete is running", async () => {
+    const { deleteButton } = openAndRender();
+    const isOpen = () => modals.modals.value.some((m) => m.id === MODAL_ID);
+
+    act(() => {
+      click(deleteButton);
+    });
+    // What the X button and the backdrop do.
+    act(() => {
+      modals.dismissModal(MODAL_ID);
+    });
+    expect(isOpen()).toBe(true);
+
+    await finishTheDelete();
+
+    expect(isOpen()).toBe(false);
+  });
+
   it("goes back to the trash can when the delete fails", async () => {
     onConfirm = vi.fn(() => Promise.reject(new Error("offline")));
     const { deleteButton } = openAndRender();
