@@ -740,7 +740,6 @@ export function PlaylistEditorWorkspace(props: {
   const loadChapter = useChapterLoader(state);
   const editing = playlists.editingPlaylist.value;
   const index = playlists.editorStepIndex.value;
-  const otherSteps = useOtherSteps(state, index);
   const status = usePlaylistDraftStatus(playlists);
   const preview = playlists.editorMode.value === "preview";
   const addMenu = playlists.editorAddMenu.value;
@@ -761,8 +760,6 @@ export function PlaylistEditorWorkspace(props: {
     loadChapter,
     books,
     resolveBookName,
-    otherSteps,
-    compact,
   };
   const card =
     showsCard && item ? (

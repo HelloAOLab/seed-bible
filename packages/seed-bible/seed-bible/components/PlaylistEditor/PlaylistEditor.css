@@ -1638,9 +1638,9 @@
   max-width: 354px;
 }
 
-/* A phone's note or video step: its fields straight on the page, no card
-   around them. */
-.sb-pe-workspace--mobile .sb-pe-card--plain {
+/* A note or video step: its fields straight on the page, no card around
+   them. */
+.sb-pe-card--plain {
   padding: 0;
   border: none;
   background: none;

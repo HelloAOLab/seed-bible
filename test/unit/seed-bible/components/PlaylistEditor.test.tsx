@@ -416,37 +416,38 @@ describe("the playlist editor", () => {
       expect(container.querySelector(".sb-pe-step-settings")).toBeNull();
     });
 
-    it("writes a note step on the page, with the formatting toolbar and no Insert row", async () => {
-      openWorkspace([{ type: "html", html: "<p>Pray</p>" }], 0, true);
+    it.each([
+      ["a phone", true],
+      ["desktop", false],
+    ])(
+      "writes a note step on the page on %s, with the formatting toolbar and no Insert row",
+      async (_layout, compact) => {
+        openWorkspace([{ type: "html", html: "<p>Pray</p>" }], 0, compact);
 
-      const card = () => container.querySelector(".sb-pe-card")!;
-      expect(card().classList.contains("sb-pe-card--plain")).toBe(true);
-      // TipTap loads lazily; let each poll render what has arrived.
-      const deadline = Date.now() + 3000;
-      while (
-        !card().querySelector(".sb-editor-toolbar") &&
-        Date.now() < deadline
-      ) {
-        await act(async () => {
-          await new Promise((resolve) => setTimeout(resolve, 20));
-        });
+        const card = () => container.querySelector(".sb-pe-card")!;
+        expect(card().classList.contains("sb-pe-card--plain")).toBe(true);
+        // TipTap loads lazily; let each poll render what has arrived.
+        const deadline = Date.now() + 3000;
+        while (
+          !card().querySelector(".sb-editor-toolbar") &&
+          Date.now() < deadline
+        ) {
+          await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+          });
+        }
+        expect(card().querySelector(".sb-editor-toolbar")).not.toBeNull();
+        expect(
+          card().querySelector(".sb-pe-rich-field-inner--formatting")
+        ).not.toBeNull();
+        expect(card().querySelector(".sb-pe-insert")).toBeNull();
       }
-      expect(card().querySelector(".sb-editor-toolbar")).not.toBeNull();
-      expect(
-        card().querySelector(".sb-pe-rich-field-inner--formatting")
-      ).not.toBeNull();
-      expect(card().querySelector(".sb-pe-insert")).toBeNull();
-    });
+    );
 
-    it("keeps a desktop note step's card and its Insert row", () => {
-      openWorkspace([{ type: "html", html: "<p>Pray</p>" }], 0, false);
-
-      const card = container.querySelector(".sb-pe-card")!;
-      expect(card.classList.contains("sb-pe-card--plain")).toBe(false);
-      expect(card.querySelector(".sb-pe-insert")).not.toBeNull();
-    });
-
-    describe("a video step", () => {
+    describe.each([
+      ["a phone", true],
+      ["desktop", false],
+    ])("a video step on %s", (_layout, compact) => {
       const VIDEO: Playlist["items"][number] = {
         type: "link",
         url: "https://youtu.be/abc",
@@ -460,7 +461,7 @@ describe("the playlist editor", () => {
       };
 
       it("has one title, its placeholder the video's own, and no card or transcript", () => {
-        openWorkspace([VIDEO], 0, true);
+        openWorkspace([VIDEO], 0, compact);
 
         const card = container.querySelector(".sb-pe-card")!;
         expect(card.classList.contains("sb-pe-card--plain")).toBe(true);
@@ -473,7 +474,7 @@ describe("the playlist editor", () => {
       });
 
       it("shows the video's title and uploader in its preview", () => {
-        openWorkspace([VIDEO], 0, true);
+        openWorkspace([VIDEO], 0, compact);
 
         const check = container.querySelector(".sb-pe-link-check")!;
         expect(check.textContent).toContain("The Best Catan Strategy");
@@ -482,16 +483,20 @@ describe("the playlist editor", () => {
       });
 
       it("uses the author's title while there is one, and the video's again once it's cleared", () => {
-        openWorkspace([VIDEO], 0, true);
+        openWorkspace([VIDEO], 0, compact);
         const title = container.querySelector("#sb-pe-title-0");
 
         type(title, "Catan, by the numbers");
         expect(items()[0]).toMatchObject({ title: "Catan, by the numbers" });
-        expect(header().textContent).toContain("Catan, by the numbers");
+        if (compact) {
+          expect(header().textContent).toContain("Catan, by the numbers");
+        }
 
         type(title, "");
         expect((items()[0] as { title?: string }).title).toBeUndefined();
-        expect(header().textContent).toContain("The Best Catan Strategy");
+        if (compact) {
+          expect(header().textContent).toContain("The Best Catan Strategy");
+        }
       });
     });
 
@@ -683,22 +688,14 @@ describe("the playlist editor", () => {
         container.querySelector("#sb-pe-link-1"),
         "https://youtube.com/watch?v=xyz"
       );
-      expect(container.textContent).toContain("Link looks good");
+      expect(
+        container.querySelector(".sb-pe-link-check")?.textContent
+      ).toContain("https://youtube.com/watch?v=xyz");
       await waitFor(
         () =>
           (items()[1] as { url: string }).url ===
           "https://youtube.com/watch?v=xyz"
       );
-    });
-
-    it("turns the transcript on and off", () => {
-      openWorkspace(STEPS, 1);
-
-      const toggle = byText(container, ".sb-pe-toggle-row", "Show transcript");
-      click(toggle);
-      expect(items()[1]).toMatchObject({ transcript: true });
-      click(toggle);
-      expect(items()[1]).not.toHaveProperty("transcript", true);
     });
 
     it("compares the typed second passage, in the chosen layout", () => {

@@ -40,14 +40,6 @@ export interface StepCardContext {
   loadChapter?: ScriptureChapterLoader;
   books: TranslationBook[];
   resolveBookName: (bookId: string) => string;
-  /** The playlist's other steps, for a note's "Link item". */
-  otherSteps: { index: number; label: string }[];
-  /**
-   * On a phone a note step is written in place, with no card around it, and
-   * with the formatting toolbar (as a scripture step's note is) in place of
-   * the INSERT row.
-   */
-  compact?: boolean;
 }
 
 function Field(props: {
@@ -141,12 +133,12 @@ function NoteCard(props: { ctx: StepCardContext; item: HtmlItem }) {
         <PlaylistNoteComposer
           boxed
           tall
-          formatting={ctx.compact}
+          formatting
           initialHtml={item.html}
           placeholder={t("playlist-editor-note-placeholder", {
             defaultValue: "Write what readers see between steps",
           })}
-          steps={ctx.otherSteps}
+          steps={[]}
           footer={(text) =>
             t("playlist-editor-characters", {
               characters: text.length,
@@ -308,19 +300,16 @@ function LinkCard(props: { ctx: StepCardContext; item: LinkItem }) {
     (kind !== "video" || media?.kind === "embed" || media?.kind === "video");
   const thumb = safeImageUrl(item.preview?.imageUrl);
   const linkId = `sb-pe-link-${ctx.index}`;
-  const headingId = `sb-pe-video-title-${ctx.index}`;
-  // On a phone the step has one title: the playlist author's, or else the
-  // page's own, shown as the field's placeholder (and the step's label)
-  // whenever theirs is empty.
-  const compact = !!ctx.compact;
 
   return (
     <>
+      {/* One title: the playlist author's, or else the page's own, shown as
+          the placeholder (and the step's label) whenever theirs is empty. */}
       <TitleField
         id={`sb-pe-title-${ctx.index}`}
         value={item.title ?? ""}
         t={t}
-        placeholder={compact ? item.preview?.title : undefined}
+        placeholder={item.preview?.title}
         onInput={(value) => update({ title: value || undefined })}
       />
       <Field
@@ -369,29 +358,18 @@ function LinkCard(props: { ctx: StepCardContext; item: LinkItem }) {
             >
               <PeIcon name="play" />
             </span>
-            {compact ? (
-              // What the link is: its title and who made it, once the
-              // preview is in; until then, the link itself.
-              <span className="sb-pe-link-check-text">
-                <span className="sb-pe-link-check-title" dir="auto">
-                  {(isVideo && item.preview?.title) || trimmed}
-                </span>
-                {isVideo && item.preview?.author ? (
-                  <span className="sb-pe-link-check-url" dir="auto">
-                    {item.preview.author}
-                  </span>
-                ) : null}
+            {/* What the link is: its title and who made it, once the preview
+                is in; until then, the link itself. */}
+            <span className="sb-pe-link-check-text">
+              <span className="sb-pe-link-check-title" dir="auto">
+                {(isVideo && item.preview?.title) || trimmed}
               </span>
-            ) : (
-              <span className="sb-pe-link-check-text">
-                <span className="sb-pe-link-check-title">
-                  {t("playlist-editor-link-ok", {
-                    defaultValue: "Link looks good",
-                  })}
+              {isVideo && item.preview?.author ? (
+                <span className="sb-pe-link-check-url" dir="auto">
+                  {item.preview.author}
                 </span>
-                <span className="sb-pe-link-check-url">{trimmed}</span>
-              </span>
-            )}
+              ) : null}
+            </span>
           </div>
         ) : trimmed ? (
           <p className="sb-pe-error" role="alert">
@@ -405,65 +383,6 @@ function LinkCard(props: { ctx: StepCardContext; item: LinkItem }) {
           </p>
         ) : null}
       </Field>
-      {kind === "video" && !compact ? (
-        <>
-          <Field
-            label={t("playlist-editor-title", { defaultValue: "Title" })}
-            hint={t("playlist-editor-video-title-hint", {
-              defaultValue: "Shown above the video",
-            })}
-            htmlFor={headingId}
-          >
-            <input
-              id={headingId}
-              className="sb-pe-input"
-              type="text"
-              dir="auto"
-              value={item.preview?.title ?? ""}
-              disabled={!isVideo}
-              placeholder={t("playlist-editor-video-title-placeholder", {
-                defaultValue: "The video's own title, once the link is in",
-              })}
-              onInput={(event) =>
-                update({
-                  preview: {
-                    ...item.preview,
-                    title: event.currentTarget.value || undefined,
-                  },
-                })
-              }
-            />
-          </Field>
-          <div className="sb-pe-field">
-            <span className="sb-pe-field-label">
-              {t("playlist-editor-transcript", { defaultValue: "Transcript" })}
-            </span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={!!item.transcript}
-              className="sb-pe-toggle-row sb-pe-switch"
-              onClick={() =>
-                update({ transcript: item.transcript ? undefined : true })
-              }
-            >
-              <span className="sb-pe-toggle-row-text">
-                <span className="sb-pe-toggle-row-name">
-                  {t("playlist-editor-show-transcript", {
-                    defaultValue: "Show transcript",
-                  })}
-                </span>
-                <span className="sb-pe-toggle-row-desc">
-                  {t("playlist-editor-show-transcript-desc", {
-                    defaultValue: "Displayed below the video",
-                  })}
-                </span>
-              </span>
-              <span className="sb-pe-switch-track" />
-            </button>
-          </div>
-        </>
-      ) : null}
     </>
   );
 }
@@ -873,7 +792,7 @@ export function PlaylistStepCard(props: {
   return (
     <section
       className={`sb-pe-card${
-        ctx.compact && (kind === "note" || kind === "video") && !preview
+        (kind === "note" || kind === "video") && !preview
           ? " sb-pe-card--plain"
           : ""
       }`}
