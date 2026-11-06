@@ -604,8 +604,10 @@ export function PlaylistEditorPanel(props: {
   modals: ModalManager;
   /** Extra buttons at the end of the title bar. */
   headerActions?: ComponentChildren;
+  /** Beside Add new step, such as Review & publish. */
+  footerActions?: ComponentChildren;
 }) {
-  const { playlists, tabs, modals, headerActions } = props;
+  const { playlists, tabs, modals, headerActions, footerActions } = props;
   const status = usePlaylistDraftStatus(playlists);
   const addMenu = playlists.editorAddMenu.value;
 
@@ -628,7 +630,10 @@ export function PlaylistEditorPanel(props: {
         {addMenu ? (
           <AddStepMenu playlists={playlists} afterIndex={addMenu.afterIndex} />
         ) : null}
-        <AddStepButton playlists={playlists} />
+        <div className="sb-pe-panel-footer-row">
+          <AddStepButton playlists={playlists} />
+          {footerActions}
+        </div>
       </div>
     </div>
   );

@@ -447,6 +447,22 @@
   padding: 8px 16px 22px;
 }
 
+/* Add new step, with Review & publish beside it. */
+.sb-pe-panel-footer-row {
+  display: flex;
+  gap: 8px;
+
+  & .sb-pe-add-step {
+    flex: 1;
+    width: auto;
+  }
+
+  & .sb-pe-publish {
+    flex: 1;
+    height: 42px;
+  }
+}
+
 .sb-pe-add-step {
   display: flex;
   align-items: center;
@@ -1033,81 +1049,6 @@
   border-radius: 2px;
 }
 
-/* Compare, as readers see it */
-.sb-pe-compare-preview {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 20px;
-}
-
-.sb-pe-compare-preview--stacked {
-  grid-template-columns: 1fr;
-  gap: 24px;
-}
-
-.sb-pe-compare-preview-column {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-.sb-pe-compare-preview:not(.sb-pe-compare-preview--stacked)
-  .sb-pe-compare-preview-column
-  + .sb-pe-compare-preview-column {
-  border-inline-start: 1px solid var(--pe-border-soft);
-  padding-inline-start: 20px;
-}
-
-.sb-pe-compare-preview-ref {
-  margin: 0;
-  padding: 8px 12px;
-  border: 1px solid var(--pe-border);
-  border-radius: 6px;
-  font-family: var(--pe-font-passage);
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.sb-pe-compare-preview-text {
-  margin: 0;
-  font-family: var(--pe-font-passage);
-  font-size: 16px;
-  line-height: 29px;
-}
-
-/* A note or question as readers see it */
-.sb-pe-preview-title {
-  margin: 0;
-  font-family: var(--pe-font-title);
-  font-weight: 700;
-  font-size: 24px;
-  line-height: 30px;
-}
-
-.sb-pe-preview-body {
-  font-family: var(--pe-font-list);
-  font-size: 16px;
-  line-height: 26px;
-}
-
-.sb-pe-preview-answer {
-  min-height: 96px;
-}
-
-.sb-pe-preview-note {
-  margin: 0;
-  text-align: start;
-}
-
-.sb-pe-video-frame {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border: none;
-  border-radius: 10px;
-  background: #1f1b18;
-}
-
 /* INSERT row under a note */
 .sb-pe-insert {
   display: flex;
@@ -1345,45 +1286,6 @@
   pointer-events: none;
 }
 
-.sb-pe-add-note {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 42px;
-  padding: 0 12px;
-  border: 1px dashed var(--pe-border);
-  border-radius: 6px;
-  font-family: var(--pe-font-list);
-  font-size: 13px;
-  color: color-mix(in srgb, var(--pe-text) 85%, var(--pe-surface));
-}
-
-.sb-pe-add-note-plus {
-  font-size: 16px;
-  line-height: 1;
-}
-
-.sb-pe-note-composer {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  max-width: 680px;
-  padding: 16px 17px 15px;
-  border: 1px solid var(--pe-accent-line);
-  border-radius: 12px;
-  background: var(--pe-surface);
-  font-family: var(--pe-font-ui);
-}
-
-.sb-pe-note-preview {
-  max-width: 680px;
-  padding: 16px 17px;
-  border-inline-start: 3px solid var(--pe-accent-line);
-  font-family: var(--pe-font-list);
-  font-size: 15px;
-  line-height: 24px;
-}
-
 .sb-pe-reader-hint {
   display: flex;
   align-items: center;
@@ -1399,59 +1301,6 @@
 .sb-pe-reader-hint .sb-pe-icon {
   width: 14px;
   height: 14px;
-}
-
-/* ---------- Bottom of the reader ---------- */
-
-.sb-pe-bottom {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 17px;
-  z-index: 40;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 25px;
-  pointer-events: none;
-
-  & > * {
-    pointer-events: auto;
-  }
-}
-
-.sb-pe-actionbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 12px 10px;
-  border: 1px solid var(--pe-border-soft);
-  border-radius: 16px;
-  background: var(--pe-surface);
-  filter: drop-shadow(0 2px 9px rgba(0, 0, 0, 0.08));
-  font-family: var(--pe-font-ui);
-  font-size: 13px;
-  line-height: 16px;
-}
-
-.sb-pe-mode {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid color-mix(in srgb, var(--pe-text) 13%, var(--pe-surface));
-  border-radius: 10px;
-}
-
-.sb-pe-mode-option {
-  padding: 7px 14px;
-  border-radius: 7px;
-}
-
-.sb-pe-mode-option[aria-pressed="true"] {
-  background: var(--pe-accent-soft);
-  color: var(--pe-accent-text);
-  font-weight: 500;
 }
 
 .sb-pe-publish {
@@ -1675,6 +1524,29 @@
    playback shows there. Opened, it's an editor, so it may stand taller. */
 .sb-pe-note-sheet--open {
   max-height: 70vh;
+}
+
+/* Desktop: the scripture step's banners and note, stacked above the reader's
+   toolbar (8px above it: PE_TOOLBAR_STACK_GAP_PX in BibleReaderToolbar).
+   PlaylistEditorToolbarStack narrows it to fit the reader. */
+.sb-pe-toolbar-stack {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(480px, calc(100vw - 32px));
+
+  & .sb-pe-note-sheet {
+    position: static;
+    align-self: stretch;
+    max-height: 60vh;
+    border: 1px solid var(--sb-divider-color);
+    border-radius: 1rem;
+  }
 }
 
 .sb-pe-note-sheet-body {

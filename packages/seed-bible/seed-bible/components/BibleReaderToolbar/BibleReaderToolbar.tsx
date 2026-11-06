@@ -14,6 +14,7 @@ import {
   isPlaylistEditorTab,
   playlistEditorScriptureStep,
 } from "../PlaylistEditor/PlaylistEditorWorkspace";
+import { PlaylistEditorToolbarStack } from "../PlaylistEditor/PlaylistEditorToolbarStack";
 import { PlaylistStepNoteSheet } from "../PlaylistEditor/PlaylistStepNoteSheet";
 import {
   MAX_CUSTOM_HIGHLIGHT_COLORS,
@@ -157,6 +158,8 @@ function indexOrEnd(index: number, list: readonly unknown[]): number {
  * "Powered by" row) ends flush against the toolbar's top edge.
  */
 const BOTTOM_CHROME_GAP_PX = 48;
+/** Space between the desktop toolbar and the playlist editor's stack above it (CSS too). */
+const PE_TOOLBAR_STACK_GAP_PX = 8;
 
 /**
  * Spawns a Material-style ripple inside the pressed button: a circle centered on
@@ -1012,10 +1015,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return null;
   }
 
-  // On desktop the playlist editor floats its own bar where this one goes.
+  // On desktop the playlist editor keeps this toolbar only over a scripture
+  // step's page, where moving chapters can re-point the step; its list and
+  // other steps' cards cover the reader.
   if (
     !props.state.app.isMobile.value &&
-    isPlaylistEditorTab(props.state, selectedTab.value)
+    isPlaylistEditorTab(props.state, selectedTab.value) &&
+    !playlistEditorScriptureStep(props.state, selectedTab.value)
   ) {
     return null;
   }
@@ -2409,6 +2415,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       // Desktop: toolbar floats above the viewport bottom.
       const bottom = parseFloat(getComputedStyle(toolbar).bottom);
       if (!Number.isNaN(bottom)) insetPx += bottom;
+      // The playlist editor's banners and note, stacked above it.
+      const stack = toolbar.querySelector(".sb-pe-toolbar-stack");
+      if (stack instanceof HTMLElement) {
+        insetPx += stack.offsetHeight + PE_TOOLBAR_STACK_GAP_PX;
+      }
 
       write(insetPx);
     };
@@ -2437,7 +2448,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         observer.observe(wrap);
         const toolbar = wrap.querySelector(".sb-reader-toolbar");
         const nav = wrap.querySelector(".sb-reader-floating-nav");
-        if (toolbar instanceof HTMLElement) observer.observe(toolbar);
+        if (toolbar instanceof HTMLElement) {
+          observer.observe(toolbar);
+          const stack = toolbar.querySelector(".sb-pe-toolbar-stack");
+          if (stack instanceof HTMLElement) observer.observe(stack);
+          // The stack comes and goes with the playlist editor's step.
+          mutationObserver?.observe(toolbar, { childList: true });
+        }
         if (nav instanceof HTMLElement) {
           observer.observe(nav);
           // The note sheet comes and goes with the playing step, and resizes
@@ -3246,6 +3263,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   : ""
               }`}
             >
+              {!isSmallScreen.value &&
+                (() => {
+                  // Desktop: the playlist editor's scripture step stacks its
+                  // banners and its note above this toolbar, as a phone
+                  // stacks them above the chapter pill.
+                  const step = playlistEditorScriptureStep(
+                    props.state,
+                    selectedTab.value
+                  );
+                  return step ? (
+                    <PlaylistEditorToolbarStack
+                      state={props.state}
+                      index={step.index}
+                      item={step.item}
+                      resolveBookName={resolveBookName}
+                    />
+                  ) : null;
+                })()}
               {isSmallScreen.value ? (
                 <>
                   <MobileBottomTab

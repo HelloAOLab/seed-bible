@@ -10,7 +10,6 @@ import type {
 } from "../../managers/PlaylistManager";
 import { uploadPhotoToGallery } from "../../managers/UserGalleryManager";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
-import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { PeIcon, StepSettings } from "./editorControls";
 import {
@@ -26,7 +25,6 @@ import {
   usePlaylistDraftStatus,
   useResolveBookName,
 } from "./PlaylistEditorPanel";
-import { PlaylistNoteComposer } from "./PlaylistNoteComposer";
 import { PlaylistStepCard, type StepCardContext } from "./PlaylistStepCard";
 import {
   formatVerseRef,
@@ -86,17 +84,6 @@ function useChapterLoader(state: SeedBibleState): ScriptureChapterLoader {
       chapter
     );
   };
-}
-
-function useOtherSteps(state: SeedBibleState, openIndex: number) {
-  const { t } = useI18n();
-  const resolveBookName = useResolveBookName(state.tabs);
-  const items = state.playlists.editingPlaylist.value?.items ?? [];
-  return items.flatMap((item, index) =>
-    index === openIndex
-      ? []
-      : [{ index, label: playlistStepLabel(item, t, resolveBookName) }]
-  );
 }
 
 /**
@@ -188,26 +175,18 @@ function StepActions(props: {
 }
 
 /**
- * Shown in the reader right after the open scripture step's verses: its note,
- * or a button to add one, plus the step's number beside the passage. On a
- * phone it's just the number: the note is in a sheet on the chapter pill
- * (`PlaylistStepNoteSheet`), and the step's settings in its title bar's menu.
+ * Shown in the reader right after the open scripture step's verses: the
+ * step's number beside the passage. Its note is in a sheet on the reader's
+ * toolbar (`PlaylistStepNoteSheet`).
  */
 export function PlaylistScriptureStepSlot(props: {
   state: SeedBibleState;
   index: number;
-  item: ScriptureItem;
   firstVerse: number;
-  compact: boolean;
 }) {
-  const { state, index, item, firstVerse, compact } = props;
-  const { playlists } = state;
+  const { state, index, firstVerse } = props;
   const { t } = useI18n();
-  const resolveBookName = useResolveBookName(state.tabs);
-  const preview = playlists.editorMode.value === "preview";
-  const count = playlists.editingPlaylist.value?.items.length ?? 0;
-  const otherSteps = useOtherSteps(state, index);
-  const [composing, setComposing] = useState(false);
+  const count = state.playlists.editingPlaylist.value?.items.length ?? 0;
   const slotRef = useRef<HTMLDivElement>(null);
   const [markerTop, setMarkerTop] = useState<number | null>(null);
 
@@ -231,9 +210,6 @@ export function PlaylistScriptureStepSlot(props: {
     return () => window.removeEventListener("resize", measure);
   });
 
-  const passage = formatVerseRef(item.ref, resolveBookName);
-  const hasNote = !!item.note;
-
   return (
     <div ref={slotRef} className="sb-pe sb-pe-step-slot">
       {markerTop !== null ? (
@@ -245,55 +221,6 @@ export function PlaylistScriptureStepSlot(props: {
           })}
         </span>
       ) : null}
-      {compact ? null : preview ? (
-        hasNote ? (
-          <div className="sb-pe-note-preview">
-            {item.noteTitle ? <strong>{item.noteTitle}</strong> : null}
-            <PlaylistHtmlContent html={item.note!} />
-          </div>
-        ) : null
-      ) : hasNote || composing ? (
-        <div className="sb-pe-note-composer">
-          <p className="sb-pe-eyebrow">
-            {t("playlist-editor-your-note", {
-              passage,
-              defaultValue: "Your note · shown with {{passage}}",
-            })}
-          </p>
-          <PlaylistNoteComposer
-            key={index}
-            initialHtml={item.note ?? ""}
-            autofocus={composing && !hasNote}
-            placeholder={t("playlist-editor-scripture-note-placeholder", {
-              defaultValue:
-                "Add a note readers see with this passage (optional)",
-            })}
-            steps={otherSteps}
-            onChange={(html) => {
-              const current = playlists.editingPlaylist.peek()?.items[index];
-              if (current?.type === "bible-verse") {
-                playlists.updateEditingPlaylistItem(index, {
-                  ...current,
-                  note: html || undefined,
-                });
-              }
-            }}
-          />
-        </div>
-      ) : (
-        <button
-          type="button"
-          className="sb-pe-add-note"
-          onClick={() => setComposing(true)}
-        >
-          <span className="sb-pe-add-note-plus" aria-hidden="true">
-            +
-          </span>
-          {t("playlist-editor-add-note", {
-            defaultValue: "Add a note to this item",
-          })}
-        </button>
-      )}
     </div>
   );
 }
@@ -604,7 +531,7 @@ export function openPlaylistReview(state: SeedBibleState) {
   });
 }
 
-function PublishButton(props: { state: SeedBibleState }) {
+export function PublishButton(props: { state: SeedBibleState }) {
   const { t } = useI18n();
   return (
     <button
@@ -623,7 +550,7 @@ function PublishButton(props: { state: SeedBibleState }) {
  * While verses are picked in the reader for the open scripture step: which
  * ones, and Apply to give them to the step. Deselecting them hides it.
  */
-function VersePickBar(props: { state: SeedBibleState }) {
+export function VersePickBar(props: { state: SeedBibleState }) {
   const { playlists } = props.state;
   const { t } = useI18n();
   const index = playlists.editorVersePickIndex.value;
@@ -658,7 +585,7 @@ function VersePickBar(props: { state: SeedBibleState }) {
  * chapter pill, the book selector): Apply points the step at the chapter on
  * screen.
  */
-function ChapterChangeBar(props: { state: SeedBibleState }) {
+export function ChapterChangeBar(props: { state: SeedBibleState }) {
   const { playlists } = props.state;
   const { t } = useI18n();
   const resolveBookName = useResolveBookName(props.state.tabs);
@@ -689,39 +616,6 @@ function ChapterChangeBar(props: { state: SeedBibleState }) {
   );
 }
 
-function ModeSwitch(props: { playlists: PlaylistManager }) {
-  const { playlists } = props;
-  const { t } = useI18n();
-  const mode = playlists.editorMode.value;
-  return (
-    <div
-      className="sb-pe-mode"
-      role="group"
-      aria-label={t("playlist-editor-mode", { defaultValue: "Editor view" })}
-    >
-      <button
-        type="button"
-        className="sb-pe-mode-option"
-        aria-pressed={mode === "edit"}
-        onClick={() => (playlists.editorMode.value = "edit")}
-      >
-        {t("playlist-editor-edit", { defaultValue: "Edit" })}
-      </button>
-      <button
-        type="button"
-        className="sb-pe-mode-option"
-        aria-pressed={mode === "preview"}
-        onClick={() => {
-          playlists.cancelEditorVersePick();
-          playlists.editorMode.value = "preview";
-        }}
-      >
-        {t("playlist-editor-preview", { defaultValue: "Preview" })}
-      </button>
-    </div>
-  );
-}
-
 /**
  * The playlist editor over a reader tab: the open step's toolbar along the
  * top, its card (or the reader itself, for scripture) in the middle, and the
@@ -741,7 +635,6 @@ export function PlaylistEditorWorkspace(props: {
   const editing = playlists.editingPlaylist.value;
   const index = playlists.editorStepIndex.value;
   const status = usePlaylistDraftStatus(playlists);
-  const preview = playlists.editorMode.value === "preview";
   const addMenu = playlists.editorAddMenu.value;
   const detailsOpen = playlists.editorDetailsSheetOpen.value;
   if (!editing) {
@@ -764,12 +657,7 @@ export function PlaylistEditorWorkspace(props: {
   const card =
     showsCard && item ? (
       <div className="sb-pe sb-pe-card-scroll">
-        <PlaylistStepCard
-          key={`${index}-${kind}`}
-          ctx={ctx}
-          item={item}
-          preview={preview}
-        />
+        <PlaylistStepCard key={`${index}-${kind}`} ctx={ctx} item={item} />
       </div>
     ) : !item && !compact ? (
       // Desktop's list is in the side pane, so beside it this says what to do.
@@ -903,7 +791,7 @@ export function PlaylistEditorWorkspace(props: {
 
   return (
     <div className={workspaceClass}>
-      {item && !preview ? (
+      {item ? (
         <div className="sb-pe sb-pe-toolbar">
           <div className="sb-pe-toolbar-settings">
             <StepSettings playlists={playlists} index={index} item={item} />
@@ -913,14 +801,6 @@ export function PlaylistEditorWorkspace(props: {
       ) : null}
       {children}
       {card}
-      <div className="sb-pe sb-pe-bottom">
-        <VersePickBar state={state} />
-        <ChapterChangeBar state={state} />
-        <div className="sb-pe-actionbar">
-          <ModeSwitch playlists={playlists} />
-          <PublishButton state={state} />
-        </div>
-      </div>
     </div>
   );
 }

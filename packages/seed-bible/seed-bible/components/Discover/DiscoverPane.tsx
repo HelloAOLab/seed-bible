@@ -6,6 +6,7 @@ import type { ModalManager } from "../../managers/ModalManager";
 import type { AnnotationsManager } from "../../managers/AnnotationsManager";
 import type { ChatsManager } from "../../managers/ChatsManager";
 import { PlaylistEditorPanel } from "../PlaylistEditor/PlaylistEditorPanel";
+import { PublishButton } from "../PlaylistEditor/PlaylistEditorWorkspace";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -57,6 +58,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
             openChatPanel={state.sidebar.openChatPanel}
           />
         }
+        footerActions={<PublishButton state={state} />}
       />
     );
   }

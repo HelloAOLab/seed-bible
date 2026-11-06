@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { PlaylistEditorPanel } from "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistEditorPanel";
+import { DiscoverPane } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverPane";
 import { PlaylistEditorWorkspace } from "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistEditorWorkspace";
 import { PlaylistStepNoteSheet } from "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistStepNoteSheet";
 import { PlaylistHtmlContent } from "@packages/seed-bible/seed-bible/components/PlaylistHtmlContent/PlaylistHtmlContent";
@@ -117,6 +118,34 @@ describe("the playlist editor", () => {
           <PlaylistEditorWorkspace state={state} compact={compact}>
             <div className="sb-pane-reader">reader</div>
           </PlaylistEditorWorkspace>
+          <ModalHost manager={state.modals} />
+        </TestHost>,
+        container
+      );
+    });
+  };
+
+  // The desktop editor as the app lays it out: the reader workspace beside
+  // the Discover pane's side panel, whose footer holds Review & publish.
+  const openDesktopEditor = (items: Playlist["items"] = STEPS, step = 0) => {
+    act(() => {
+      state.playlists.editPlaylist(makePlaylist(items));
+      state.playlists.selectEditorStep(step);
+    });
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <PlaylistEditorWorkspace state={state} compact={false}>
+            <div className="sb-pane-reader">reader</div>
+          </PlaylistEditorWorkspace>
+          <DiscoverPane
+            tabs={state.tabs}
+            playlists={state.playlists}
+            annotations={state.annotations}
+            modals={state.modals}
+            state={state}
+            toast={state.app.toast}
+          />
           <ModalHost manager={state.modals} />
         </TestHost>,
         container
@@ -775,21 +804,21 @@ describe("the playlist editor", () => {
         ).disabled
       ).toBe(true);
     });
+  });
 
-    it("hides the step's settings while previewing", () => {
-      openWorkspace(STEPS, 0);
+  it("has no Edit/Preview switch or note box over a desktop scripture step, leaving the note to the toolbar", () => {
+    openDesktopEditor(STEPS, 0);
 
-      click(byText(container, ".sb-pe-mode-option", "Preview"));
-
-      expect(state.playlists.editorMode.value).toBe("preview");
-      expect(container.querySelector(".sb-pe-toolbar")).toBeNull();
-    });
+    expect(container.querySelector(".sb-pe-workspace")).not.toBeNull();
+    expect(container.textContent).not.toContain("Preview");
+    expect(container.querySelector(".sb-pe-workspace .tiptap")).toBeNull();
+    expect(container.querySelector("[contenteditable]")).toBeNull();
   });
 
   describe("review & publish", () => {
     it("won't publish while a step is incomplete, and links to it", () => {
       const recordData = vi.spyOn(state.os, "recordData");
-      openWorkspace(STEPS, 0);
+      openDesktopEditor(STEPS, 0);
       // A new video step has no link until one is typed in.
       act(() => state.playlists.addEditorStep("video", 2));
       act(() => state.playlists.selectEditorStep(0));
@@ -812,7 +841,7 @@ describe("the playlist editor", () => {
       const recordData = vi
         .spyOn(state.os, "recordData")
         .mockResolvedValue(undefined as never);
-      openWorkspace(STEPS, 0);
+      openDesktopEditor(STEPS, 0);
 
       click(byText(container, ".sb-pe-publish", "Review & publish"));
       type(document.body.querySelector("#sb-pe-review-title"), "Light");
@@ -827,7 +856,7 @@ describe("the playlist editor", () => {
     it("says so and keeps the draft when publishing fails", async () => {
       vi.spyOn(state.os, "recordData").mockRejectedValue(new Error("offline"));
       vi.spyOn(console, "error").mockImplementation(() => {});
-      openWorkspace(STEPS, 0);
+      openDesktopEditor(STEPS, 0);
 
       click(byText(container, ".sb-pe-publish", "Review & publish"));
       click(byText(document.body, ".sb-pe-review .sb-pe-publish", "Publish"));

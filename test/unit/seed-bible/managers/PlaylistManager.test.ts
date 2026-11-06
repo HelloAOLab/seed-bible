@@ -1743,14 +1743,10 @@ describe("createPlaylistManager", () => {
         expect(manager.editorChapterChange.value).toBeNull();
       });
 
-      it("offers nothing in preview, or while verses are being picked", async () => {
+      it("offers nothing while verses are being picked", async () => {
         const { manager, tab } = await openOnStep();
         tab.readingState.chapterNumber.value = 2;
 
-        manager.editorMode.value = "preview";
-        expect(manager.editorChapterChange.value).toBeNull();
-
-        manager.editorMode.value = "edit";
         manager.editorVersePickIndex.value = 0;
         expect(manager.editorChapterChange.value).toBeNull();
       });
@@ -1791,26 +1787,6 @@ describe("createPlaylistManager", () => {
       expect(manager.editorVersePickIndex.value).toBeNull();
       expect(manager.editorVersePickRef.value).toBeNull();
       expect(manager.editingPlaylist.value!.items[0]).toEqual(steps[0]);
-    });
-
-    it("ends the verse pick when switching to preview", async () => {
-      const { manager, tab } = await openEditor();
-      manager.selectEditorStep(0);
-      tab.readingState.selectedVerses.value = [pickVerse(7)];
-
-      manager.cancelEditorVersePick();
-
-      expect(manager.editorVersePickIndex.value).toBeNull();
-      expect(manager.editingPlaylist.value!.items[0]).toEqual(steps[0]);
-    });
-
-    it("doesn't start a verse pick while previewing", async () => {
-      const { manager, tab } = await openEditor();
-      manager.editorMode.value = "preview";
-
-      tab.readingState.selectedVerses.value = [pickVerse(7)];
-
-      expect(manager.editorVersePickIndex.value).toBeNull();
     });
 
     it("refuses to save a step that would make the playlist fail to load", async () => {

@@ -3733,9 +3733,7 @@ export function BibleReader(props: BibleReaderProps) {
           key="playlist-editor-step"
           state={state}
           index={editorStep.index}
-          item={editorStep.item}
           firstVerse={ref.verse ?? 1}
-          compact={isCompactReader}
         />
       ),
     };

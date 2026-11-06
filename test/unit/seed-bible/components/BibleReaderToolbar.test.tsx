@@ -6073,4 +6073,78 @@ describe("BibleReaderToolbar — a playing passage's hidden note on desktop", ()
     expect(playing.noteExpanded.value).toBe(true);
     expect(showNote()).toBeNull();
   });
+
+  it("carries a playlist scripture step's note and bars on the toolbar, and hides on the editor's other pages", async () => {
+    const state = await createTestSeedBibleState();
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(state.app.isMobile.value).toBe(false);
+    await act(async () => {
+      state.playlists.editPlaylist({
+        id: "playlist_1",
+        recordName: "user-1",
+        authorUserId: "user-1",
+        title: "Psalms",
+        description: null,
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 1 },
+            noteTitle: "Beginnings",
+            note: "<p>A note</p>",
+          },
+          { type: "html", html: "<p>Reflect</p>" },
+        ],
+        createdAtMs: 1,
+        updatedAtMs: 1,
+      });
+    });
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    const toolbar = () => container.querySelector(".sb-reader-toolbar");
+
+    // The step list covers the reader.
+    expect(toolbar()).toBeNull();
+
+    await act(async () => state.playlists.selectEditorStep(0));
+    const stack = toolbar()?.querySelector(".sb-pe-toolbar-stack");
+    expect(
+      stack?.querySelector(".sb-scripture-note-sheet-header")?.textContent
+    ).toContain("Beginnings");
+
+    // Picking verses puts the highlight bar above the note.
+    const readingState = state.app.currentReadingState.value!.tab.readingState;
+    await act(async () => {
+      readingState.selectedVerses.value = [
+        {
+          bookId: "GEN",
+          chapterNumber: 1,
+          verse: { type: "verse", number: 2, content: [] },
+          translationId: "BSB",
+        },
+      ];
+    });
+    const children = Array.from(
+      toolbar()!.querySelector(".sb-pe-toolbar-stack")!.children
+    );
+    const pickBar = children.findIndex((el) =>
+      el.textContent?.includes("Highlight verse 2")
+    );
+    const note = children.findIndex((el) =>
+      el.classList.contains("sb-pe-note-sheet")
+    );
+    expect(pickBar).toBeGreaterThanOrEqual(0);
+    expect(pickBar).toBeLessThan(note);
+
+    // A note step's card covers the reader.
+    await act(async () => state.playlists.selectEditorStep(1));
+    expect(toolbar()).toBeNull();
+  });
 });

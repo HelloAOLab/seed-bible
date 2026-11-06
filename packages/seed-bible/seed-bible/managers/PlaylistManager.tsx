@@ -1342,8 +1342,6 @@ export function createPlaylistManager(
    * step opened from it is a page of its own that Back returns from.
    */
   const editorStepIndex = signal(-1);
-  /** Whether the editor shows steps for editing or as readers will see them. */
-  const editorMode = signal<"edit" | "preview">("edit");
   /**
    * The open "Add a step" menu and the step new ones go after (-1 puts them
    * first), or null while it's closed.
@@ -1362,7 +1360,6 @@ export function createPlaylistManager(
   const resetEditorUi = () => {
     batch(() => {
       editorStepIndex.value = -1;
-      editorMode.value = "edit";
       editorAddMenu.value = null;
       editorVersePickIndex.value = null;
       editorDetailsSheetOpen.value = false;
@@ -1508,17 +1505,13 @@ export function createPlaylistManager(
    * The chapter the reader has moved to, by its own navigation, when it isn't
    * the open scripture step's: the chapter Apply would give the step. Null
    * while the reader is on the step's passage (any chapter of a range running
-   * across chapters), while verses are being picked, or in preview.
+   * across chapters), or while verses are being picked.
    */
   const editorChapterChange = computed<{
     bookId: string;
     chapter: number;
   } | null>(() => {
-    if (
-      editorNavigating.value ||
-      editorVersePickIndex.value !== null ||
-      editorMode.value !== "edit"
-    ) {
+    if (editorNavigating.value || editorVersePickIndex.value !== null) {
       return null;
     }
     const item = editingPlaylist.value?.items[editorStepIndex.value];
@@ -1606,7 +1599,6 @@ export function createPlaylistManager(
         selected > 0 &&
         item?.type === "bible-verse" &&
         !item.compare &&
-        editorMode.peek() === "edit" &&
         editorVersePickIndex.peek() === null
       ) {
         editorVersePickIndex.value = index;
@@ -2575,7 +2567,6 @@ export function createPlaylistManager(
         return;
       }
       editorAddMenu.value = null;
-      editorMode.value = "edit";
       selectEditorStep(index);
     });
   };
@@ -2635,15 +2626,6 @@ export function createPlaylistManager(
       }
       editorVersePickIndex.value = null;
     });
-    activeTab.peek()?.readingState.clearSelectedVerses();
-  };
-
-  /**
-   * Ends a verse pick, leaving the step's passage as it was (switching to
-   * preview, say).
-   */
-  const cancelEditorVersePick = (): void => {
-    editorVersePickIndex.value = null;
     activeTab.peek()?.readingState.clearSelectedVerses();
   };
 
@@ -3698,7 +3680,6 @@ export function createPlaylistManager(
     isEditingPlaylistDirty,
     editingPlaylistInvalidSteps,
     editorStepIndex,
-    editorMode,
     editorAddMenu,
     editorVersePickIndex,
     editorVersePickRef,
@@ -3709,7 +3690,6 @@ export function createPlaylistManager(
     selectEditorStep,
     addEditorStep,
     applyEditorVersePick,
-    cancelEditorVersePick,
     listPlaylists,
     getUserPlaylists,
     loadPlaylist,

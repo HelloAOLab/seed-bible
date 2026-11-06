@@ -14,7 +14,6 @@ import type {
 } from "../../managers/PlaylistManager";
 import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
 import { safeImageUrl } from "../../managers/linkPreview";
-import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { passageVerses } from "../scripturePassage";
 import { PeIcon } from "./editorControls";
@@ -615,168 +614,20 @@ function CompareCard(props: { ctx: StepCardContext; item: ScriptureItem }) {
   );
 }
 
-function ComparePreview(props: { ctx: StepCardContext; item: ScriptureItem }) {
-  const { ctx, item } = props;
-  const layout = item.compare?.layout ?? "side-by-side";
-  const refs = [item.ref, item.compare?.ref ?? item.ref];
-  return (
-    <>
-      {item.noteTitle ? (
-        <h3 className="sb-pe-preview-title" dir="auto">
-          {item.noteTitle}
-        </h3>
-      ) : null}
-      <div
-        className={`sb-pe-compare-preview${
-          layout === "stacked" ? " sb-pe-compare-preview--stacked" : ""
-        }`}
-      >
-        {refs.map((ref, i) => (
-          <ComparePreviewColumn
-            key={i}
-            ctx={ctx}
-            reference={ref}
-            translationId={item.translationId}
-          />
-        ))}
-      </div>
-      {item.note ? (
-        <div className="sb-pe-preview-body">
-          <PlaylistHtmlContent html={item.note} />
-        </div>
-      ) : null}
-    </>
-  );
-}
-
-function ComparePreviewColumn(props: {
-  ctx: StepCardContext;
-  reference: VerseRef;
-  translationId?: string;
-}) {
-  const { ctx, reference } = props;
-  const passage = usePassageText(
-    reference,
-    props.translationId,
-    ctx.loadChapter
-  );
-  return (
-    <div className="sb-pe-compare-preview-column">
-      <p className="sb-pe-compare-preview-ref">
-        {formatVerseRef(reference, ctx.resolveBookName)}
-      </p>
-      <p className="sb-pe-compare-preview-text" dir="auto">
-        {passage === "error" ? "" : (passage ?? "…")}
-      </p>
-    </div>
-  );
-}
-
-function NotePreview(props: { item: HtmlItem }) {
-  const { item } = props;
-  return (
-    <>
-      {item.title ? (
-        <h3 className="sb-pe-preview-title" dir="auto">
-          {item.title}
-        </h3>
-      ) : null}
-      <div className="sb-pe-preview-body">
-        <PlaylistHtmlContent html={item.html} />
-      </div>
-    </>
-  );
-}
-
-function QuestionPreview(props: { item: HtmlItem }) {
-  const { item } = props;
-  const { t } = useI18n();
-  return (
-    <>
-      <h3 className="sb-pe-preview-title" dir="auto">
-        {questionFromHtml(item.html)}
-      </h3>
-      <textarea
-        className="sb-pe-textarea sb-pe-preview-answer"
-        aria-label={t("playlist-editor-answer", {
-          defaultValue: "Your answer",
-        })}
-        placeholder={
-          item.question?.hint ||
-          t("playlist-editor-answer", { defaultValue: "Your answer" })
-        }
-      />
-      <p className="sb-pe-field-hint sb-pe-preview-note">
-        {item.question?.responses === "shared"
-          ? t("playlist-editor-shared-with-group-desc", {
-              defaultValue: "Group members can read it",
-            })
-          : t("playlist-editor-private-reflection-desc", {
-              defaultValue: "Only the reader sees it",
-            })}
-      </p>
-    </>
-  );
-}
-
-function LinkPreview(props: { item: LinkItem }) {
-  const { item } = props;
-  const media = item.url ? resolveLinkMedia(item.url) : null;
-  const heading = item.preview?.title || item.title;
-  return (
-    <>
-      {heading ? (
-        <h3 className="sb-pe-preview-title" dir="auto">
-          {heading}
-        </h3>
-      ) : null}
-      {media?.kind === "embed" ? (
-        <iframe
-          className="sb-pe-video-frame"
-          src={media.url}
-          title={heading ?? item.url}
-          allow="encrypted-media; picture-in-picture; fullscreen"
-          sandbox="allow-scripts allow-same-origin allow-presentation"
-        />
-      ) : media?.kind === "video" ? (
-        <video className="sb-pe-video-frame" src={media.url} controls />
-      ) : item.url ? (
-        <a href={item.url} target="_blank" rel="noopener noreferrer">
-          {item.url}
-        </a>
-      ) : null}
-    </>
-  );
-}
-
 /**
  * The open step when it isn't plain scripture: a card of its fields where the
- * chapter would be, or — in preview — the step as readers will see it.
+ * chapter would be.
  */
 export function PlaylistStepCard(props: {
   ctx: StepCardContext;
   item: PlaylistItemData;
-  preview: boolean;
 }) {
-  const { ctx, item, preview } = props;
+  const { ctx, item } = props;
   const { t } = useI18n();
   const kind = playlistStepKind(item);
 
   let body: ComponentChildren = null;
-  if (preview) {
-    body =
-      item.type === "html" ? (
-        kind === "question" ? (
-          <QuestionPreview item={item} />
-        ) : (
-          <NotePreview item={item} />
-        )
-      ) : item.type === "link" ? (
-        <LinkPreview item={item} />
-      ) : (
-        <ComparePreview ctx={ctx} item={item} />
-      );
-  } else if (item.type === "html") {
+  if (item.type === "html") {
     body =
       kind === "question" ? (
         <QuestionCard ctx={ctx} item={item} />
@@ -792,9 +643,7 @@ export function PlaylistStepCard(props: {
   return (
     <section
       className={`sb-pe-card${
-        (kind === "note" || kind === "video") && !preview
-          ? " sb-pe-card--plain"
-          : ""
+        kind === "note" || kind === "video" ? " sb-pe-card--plain" : ""
       }`}
       aria-label={t("playlist-editor-step-number", {
         step: ctx.index + 1,
