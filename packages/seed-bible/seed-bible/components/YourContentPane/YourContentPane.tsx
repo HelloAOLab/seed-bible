@@ -881,10 +881,17 @@ export function YourContentPane(props: YourContentScreenProps) {
       )
     )
     .sort(compareSaves);
-  // Most recently moved first, as in the sidebar and on Today.
-  const visibleBookmarks = bookmarks.bookmarks.value.filter((b) =>
-    matches(b.name, bookmarkLocationText(b), b.bookId)
-  );
+  // Most recently moved first, as in the sidebar and on Today. The chapter
+  // text is worked out once here and handed to the card, since each lookup
+  // of a translation not yet loaded also starts a request for it.
+  const visibleBookmarks = bookmarks.bookmarks.value
+    .map((bookmark) => ({
+      bookmark,
+      chapterText: bookmarkLocationText(bookmark),
+    }))
+    .filter(({ bookmark, chapterText }) =>
+      matches(bookmark.name, chapterText, bookmark.bookId)
+    );
   const visiblePlaylists = playlists.userPlaylists.value.filter((p) =>
     matches(p.title, p.description)
   );
@@ -1215,12 +1222,12 @@ export function YourContentPane(props: YourContentScreenProps) {
             <div className="sb-content-bookmarks">
               {visibleBookmarks
                 .slice(0, limit(visibleBookmarks))
-                .map((bookmark) => (
+                .map(({ bookmark, chapterText }) => (
                   <BookmarkRow
                     key={bookmark.id}
                     state={state}
                     bookmark={bookmark}
-                    chapterText={bookmarkLocationText(bookmark)}
+                    chapterText={chapterText}
                     onOpenPassage={onOpenPassage}
                   />
                 ))}
