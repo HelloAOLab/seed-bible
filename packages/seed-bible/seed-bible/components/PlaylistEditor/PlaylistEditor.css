@@ -1547,7 +1547,10 @@
   font-weight: inherit;
 }
 
+/* A block, so a long title is cut short rather than running under the title
+   bar's buttons. */
 .sb-pe-mobile-title-text {
+  display: block;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -1568,6 +1571,7 @@
 }
 
 .sb-pe-mobile-header-actions {
+  flex-shrink: 0;
   display: flex;
   gap: 16px;
 }
@@ -1634,7 +1638,8 @@
   max-width: 354px;
 }
 
-/* A phone's note step: its fields straight on the page, no card around them. */
+/* A phone's note or video step: its fields straight on the page, no card
+   around them. */
 .sb-pe-workspace--mobile .sb-pe-card--plain {
   padding: 0;
   border: none;

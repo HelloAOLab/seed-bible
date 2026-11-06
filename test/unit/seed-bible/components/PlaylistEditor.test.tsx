@@ -446,6 +446,55 @@ describe("the playlist editor", () => {
       expect(card.querySelector(".sb-pe-insert")).not.toBeNull();
     });
 
+    describe("a video step", () => {
+      const VIDEO: Playlist["items"][number] = {
+        type: "link",
+        url: "https://youtu.be/abc",
+        embed: true,
+        preview: {
+          title: "The Best Catan Strategy",
+          author: "Board Game Lab",
+          imageUrl: "https://example.com/thumb.jpg",
+        },
+        transcript: true,
+      };
+
+      it("has one title, its placeholder the video's own, and no card or transcript", () => {
+        openWorkspace([VIDEO], 0, true);
+
+        const card = container.querySelector(".sb-pe-card")!;
+        expect(card.classList.contains("sb-pe-card--plain")).toBe(true);
+        const titles =
+          card.querySelectorAll<HTMLInputElement>('input[type="text"]');
+        expect(titles).toHaveLength(1);
+        expect(titles[0]!.value).toBe("");
+        expect(titles[0]!.placeholder).toBe("The Best Catan Strategy");
+        expect(card.textContent).not.toContain("Transcript");
+      });
+
+      it("shows the video's title and uploader in its preview", () => {
+        openWorkspace([VIDEO], 0, true);
+
+        const check = container.querySelector(".sb-pe-link-check")!;
+        expect(check.textContent).toContain("The Best Catan Strategy");
+        expect(check.textContent).toContain("Board Game Lab");
+        expect(check.textContent).not.toContain("Link looks good");
+      });
+
+      it("uses the author's title while there is one, and the video's again once it's cleared", () => {
+        openWorkspace([VIDEO], 0, true);
+        const title = container.querySelector("#sb-pe-title-0");
+
+        type(title, "Catan, by the numbers");
+        expect(items()[0]).toMatchObject({ title: "Catan, by the numbers" });
+        expect(header().textContent).toContain("Catan, by the numbers");
+
+        type(title, "");
+        expect((items()[0] as { title?: string }).title).toBeUndefined();
+        expect(header().textContent).toContain("The Best Catan Strategy");
+      });
+    });
+
     it("goes back to the list when the open step is deleted from its menu", () => {
       openWorkspace(STEPS, 1, true);
 

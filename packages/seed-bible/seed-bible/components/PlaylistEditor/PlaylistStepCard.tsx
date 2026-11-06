@@ -76,6 +76,8 @@ function TitleField(props: {
   value: string;
   onInput: (value: string) => void;
   t: Translate;
+  /** Shown while the title is empty, in place of the usual example. */
+  placeholder?: string;
 }) {
   const { t } = props;
   return (
@@ -92,9 +94,12 @@ function TitleField(props: {
         type="text"
         dir="auto"
         value={props.value}
-        placeholder={t("playlist-editor-title-placeholder", {
-          defaultValue: "e.g. Before we begin",
-        })}
+        placeholder={
+          props.placeholder ||
+          t("playlist-editor-title-placeholder", {
+            defaultValue: "e.g. Before we begin",
+          })
+        }
         onInput={(event) => props.onInput(event.currentTarget.value)}
       />
     </Field>
@@ -304,6 +309,10 @@ function LinkCard(props: { ctx: StepCardContext; item: LinkItem }) {
   const thumb = safeImageUrl(item.preview?.imageUrl);
   const linkId = `sb-pe-link-${ctx.index}`;
   const headingId = `sb-pe-video-title-${ctx.index}`;
+  // On a phone the step has one title: the playlist author's, or else the
+  // page's own, shown as the field's placeholder (and the step's label)
+  // whenever theirs is empty.
+  const compact = !!ctx.compact;
 
   return (
     <>
@@ -311,6 +320,7 @@ function LinkCard(props: { ctx: StepCardContext; item: LinkItem }) {
         id={`sb-pe-title-${ctx.index}`}
         value={item.title ?? ""}
         t={t}
+        placeholder={compact ? item.preview?.title : undefined}
         onInput={(value) => update({ title: value || undefined })}
       />
       <Field
@@ -359,14 +369,29 @@ function LinkCard(props: { ctx: StepCardContext; item: LinkItem }) {
             >
               <PeIcon name="play" />
             </span>
-            <span className="sb-pe-link-check-text">
-              <span className="sb-pe-link-check-title">
-                {t("playlist-editor-link-ok", {
-                  defaultValue: "Link looks good",
-                })}
+            {compact ? (
+              // What the link is: its title and who made it, once the
+              // preview is in; until then, the link itself.
+              <span className="sb-pe-link-check-text">
+                <span className="sb-pe-link-check-title" dir="auto">
+                  {(isVideo && item.preview?.title) || trimmed}
+                </span>
+                {isVideo && item.preview?.author ? (
+                  <span className="sb-pe-link-check-url" dir="auto">
+                    {item.preview.author}
+                  </span>
+                ) : null}
               </span>
-              <span className="sb-pe-link-check-url">{trimmed}</span>
-            </span>
+            ) : (
+              <span className="sb-pe-link-check-text">
+                <span className="sb-pe-link-check-title">
+                  {t("playlist-editor-link-ok", {
+                    defaultValue: "Link looks good",
+                  })}
+                </span>
+                <span className="sb-pe-link-check-url">{trimmed}</span>
+              </span>
+            )}
           </div>
         ) : trimmed ? (
           <p className="sb-pe-error" role="alert">
@@ -380,7 +405,7 @@ function LinkCard(props: { ctx: StepCardContext; item: LinkItem }) {
           </p>
         ) : null}
       </Field>
-      {kind === "video" ? (
+      {kind === "video" && !compact ? (
         <>
           <Field
             label={t("playlist-editor-title", { defaultValue: "Title" })}
@@ -848,7 +873,9 @@ export function PlaylistStepCard(props: {
   return (
     <section
       className={`sb-pe-card${
-        ctx.compact && kind === "note" && !preview ? " sb-pe-card--plain" : ""
+        ctx.compact && (kind === "note" || kind === "video") && !preview
+          ? " sb-pe-card--plain"
+          : ""
       }`}
       aria-label={t("playlist-editor-step-number", {
         step: ctx.index + 1,
