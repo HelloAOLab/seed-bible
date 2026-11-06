@@ -21,6 +21,7 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { openReaderLocation } from "../Tabs/openReaderLocation";
+import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 
 type Translate = ReturnType<typeof useI18n>["t"];
 
@@ -89,23 +90,45 @@ export function BookmarkGlyph(props: {
 }
 
 /**
- * The reader's bookmark icon for the bookmarks on the current chapter (most
- * recently moved first): an outline when there are none, a filled ribbon in
- * the bookmark's color for one, and a fan of up to three ribbons — the most
- * recently moved in front — for more.
+ * An unfilled ribbon in the text color. `scale` is the size the ribbon is
+ * drawn at; the stroke is widened to undo it, so a shrunk ribbon in a stack
+ * is outlined as heavily as a lone one.
+ */
+function outlinePaint(scale = 1) {
+  return {
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": 1.5 / scale,
+    "stroke-linejoin": "round",
+  } as const;
+}
+
+/**
+ * A bookmark icon for a list of bookmarks, most recently moved first: an
+ * outline when there are none, a filled ribbon for one, and a fan of up to
+ * three ribbons — the most recently moved in front — for more.
+ *
+ * Each ribbon is filled in its bookmark's color unless `paint` says
+ * otherwise: "outline" draws every ribbon as an unfilled outline in the text
+ * color (so one bookmark looks the same as none), and "current" fills every
+ * ribbon in the text color.
  */
 export function BookmarkStackIcon(props: {
   bookmarks: readonly Bookmark[];
   size?: number;
-  /** Paints every ribbon in this CSS color instead of each bookmark's own. */
-  color?: string;
+  /** For a toggle: "outline" while it is off, "current" while it is on. */
+  paint?: "outline" | "current";
 }) {
   const size = props.size ?? 22;
   const shown = props.bookmarks.slice(0, MAX_STACKED_GLYPHS);
   // Mask ids must be unique on the page, and usable inside `url(#…)`.
   const maskPrefix = `sb-bookmark-stack-${useId().replace(/[^\w-]/g, "")}`;
+  const fillColor = (bookmark: Bookmark) =>
+    props.paint === "current"
+      ? "currentColor"
+      : bookmarkColorValue(bookmark.colorId);
 
-  if (shown.length === 0) {
+  if (shown.length === 0 || (props.paint === "outline" && shown.length === 1)) {
     return (
       <svg
         width={size}
@@ -114,12 +137,7 @@ export function BookmarkStackIcon(props: {
         fill="none"
         aria-hidden="true"
       >
-        <path
-          d={BOOKMARK_PATH}
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linejoin="round"
-        />
+        <path d={BOOKMARK_PATH} {...outlinePaint()} />
       </svg>
     );
   }
@@ -129,7 +147,7 @@ export function BookmarkStackIcon(props: {
       <BookmarkGlyph
         colorId={shown[0]!.colorId}
         size={size}
-        color={props.color}
+        color={fillColor(shown[0]!)}
       />
     );
   }
@@ -199,7 +217,9 @@ export function BookmarkStackIcon(props: {
             className="sb-bookmark-stack-ribbon"
             d={BOOKMARK_PATH}
             transform={ribbon.transform}
-            fill={props.color ?? bookmarkColorValue(ribbon.bookmark.colorId)}
+            {...(props.paint === "outline"
+              ? outlinePaint(STACK_SCALE)
+              : { fill: fillColor(ribbon.bookmark) })}
           />
         </g>
       ))}
@@ -402,7 +422,8 @@ export function BookmarkLabel(props: {
 
 /**
  * The bookmark modal. Tapping one of your bookmarks moves it to `location`
- * and closes the modal.
+ * and closes the modal; its options menu opens the chapter it is on now, or
+ * deletes it.
  *
  * Below them, while one is being created, sits the create form with its own
  * Save. A user with no bookmarks gets that same form already open, prefilled
@@ -433,16 +454,12 @@ function BookmarkPickerContent(props: {
   const canAddNew = manager.canCreate.value && !effectiveDraft;
 
   /** Runs a write, closing on success and toasting `failure` otherwise. */
-  const run = async (
-    action: () => Promise<unknown>,
-    failure: string,
-    closeAfter: boolean
-  ) => {
+  const run = async (action: () => Promise<unknown>, failure: string) => {
     if (isSaving.value) return;
     isSaving.value = true;
     try {
       await action();
-      if (closeAfter) onClose();
+      onClose();
     } catch (err) {
       console.warn("Failed to update bookmarks:", err);
       state.app.toast(failure);
@@ -456,30 +473,17 @@ function BookmarkPickerContent(props: {
   });
 
   const moveHere = (id: string) =>
-    run(() => manager.moveBookmark(id, location), saveFailed, true);
+    run(() => manager.moveBookmark(id, location), saveFailed);
 
   const createHere = () => {
     if (!canCreate || !effectiveDraft) return;
-    void run(
-      async () => {
-        const created = await manager.createBookmark(effectiveDraft, location);
-        if (!created) {
-          throw new Error("The bookmark was not created.");
-        }
-      },
-      saveFailed,
-      true
-    );
+    void run(async () => {
+      const created = await manager.createBookmark(effectiveDraft, location);
+      if (!created) {
+        throw new Error("The bookmark was not created.");
+      }
+    }, saveFailed);
   };
-
-  const remove = (id: string) =>
-    run(
-      () => manager.removeBookmark(id),
-      t("bookmark-remove-failed", {
-        defaultValue: "Couldn't remove that bookmark. Please try again.",
-      }),
-      false
-    );
 
   return (
     <div className="sb-bookmark-picker">
@@ -512,23 +516,53 @@ function BookmarkPickerContent(props: {
                 translationId={bookmark.translationId}
               />
             </button>
-            <button
-              type="button"
-              className="sb-bookmark-picker-remove"
+            <ContextMenuWithButton
+              anchorClassName="sb-tab-menu-anchor sb-bookmark-picker-menu-anchor"
+              buttonClassName="sb-tab-menu-button"
+              menuClassName="sb-tab-menu sb-bookmark-picker-menu"
+              iconClassName="sb-tab-more-icon"
               disabled={isSaving.value}
-              aria-label={t("remove-bookmark-named", {
-                defaultValue: "Remove {{name}}",
+              aria-label={t("bookmark-options-named", {
+                defaultValue: "Options for {{name}}",
                 name: bookmark.name,
               })}
-              title={t("remove-bookmark", {
-                defaultValue: "Remove bookmark",
+              title={t("bookmark-options", {
+                defaultValue: "Bookmark options",
               })}
-              onClick={() => {
-                void remove(bookmark.id);
-              }}
             >
-              <MaterialIcon aria-hidden="true">delete</MaterialIcon>
-            </button>
+              <ContextMenuItem
+                className="sb-tab-menu-item"
+                onClick={() => {
+                  openReaderLocation(state, bookmark, onClose);
+                }}
+              >
+                <MaterialIcon
+                  className="sb-context-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  menu_book
+                </MaterialIcon>
+                <span>
+                  {t("open-chapter", { defaultValue: "Open chapter" })}
+                </span>
+              </ContextMenuItem>
+              <ContextMenuItem
+                className="sb-tab-menu-item"
+                onClick={() => {
+                  confirmDeleteBookmark(state, bookmark);
+                }}
+              >
+                <MaterialIcon
+                  className="sb-context-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  delete
+                </MaterialIcon>
+                <span>
+                  {t("delete-bookmark", { defaultValue: "Delete bookmark" })}
+                </span>
+              </ContextMenuItem>
+            </ContextMenuWithButton>
           </div>
         ))}
 
@@ -602,6 +636,32 @@ function BookmarkPickerContent(props: {
       )}
     </div>
   );
+}
+
+/**
+ * Asks before deleting a bookmark, since Delete sits one slip away from the
+ * other items in a bookmark's options menu. Whatever the menu was in stays
+ * open behind the question, showing the bookmarks that are left.
+ */
+function confirmDeleteBookmark(state: SeedBibleState, bookmark: Bookmark) {
+  openConfirmDeleteModal(state.modals, {
+    id: `delete-bookmark-confirm-${bookmark.id}`,
+    title: {
+      key: "delete-bookmark-confirm-title",
+      defaultValue: "Delete bookmark?",
+    },
+    message: (t) =>
+      `${t("delete-bookmark-confirm-message", {
+        name: bookmark.name,
+        defaultValue: 'Delete "{{name}}"?',
+      })} ${t("cant-be-undone", { defaultValue: "This can't be undone." })}`,
+    onConfirm: () => state.bookmarks.removeBookmark(bookmark.id),
+    failedMessage: (t) =>
+      t("bookmark-remove-failed", {
+        defaultValue: "Couldn't remove that bookmark. Please try again.",
+      }),
+    toast: state.app.toast,
+  });
 }
 
 /** Why "New bookmark" is disabled at the cap. */
@@ -802,7 +862,7 @@ export function BookmarksPanel(props: {
               <ContextMenuItem
                 className="sb-tab-menu-item"
                 onClick={() => {
-                  void run(() => manager.removeBookmark(bookmark.id));
+                  confirmDeleteBookmark(state, bookmark);
                 }}
               >
                 <MaterialIcon
