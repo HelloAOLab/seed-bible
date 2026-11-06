@@ -26,3 +26,39 @@
   font-size: 1em;
   line-height: inherit;
 }
+
+/* A question's hint and answer, each behind its own button. */
+.sb-playlist-question-reveal {
+  margin-top: 1.25rem;
+}
+
+.sb-playlist-question-reveal-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-family: var(--sb-font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.sb-playlist-question-reveal-button:hover,
+.sb-playlist-question-reveal-button:focus-visible {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-playlist-question-reveal-content {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-inline-start: 3px solid var(--sb-primary-color);
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+}
+
+.sb-playlist-question-reveal-content .sb-play-playlist-content-html {
+  font-size: 1em;
+  line-height: inherit;
+}

@@ -39,7 +39,9 @@ export function playlistItemLabel(
     case "html":
       return (
         item.title?.trim() ||
-        t("playlist-item-html", { defaultValue: "HTML snippet" })
+        (item.question
+          ? t("playlist-step-question", { defaultValue: "Question" })
+          : t("playlist-item-html", { defaultValue: "HTML snippet" }))
       );
   }
 }

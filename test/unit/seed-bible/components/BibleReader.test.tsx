@@ -7134,6 +7134,89 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
     ).toBe("A talk on John");
   });
 
+  describe("a question step", () => {
+    const QUESTION = {
+      type: "html" as const,
+      html: "<p>What does light reveal?</p>",
+      question: {
+        hint: "<p>Think about this week.</p>",
+        answer: "<p>What was hidden.</p>",
+      },
+    };
+    const button = (label: string) =>
+      [...(page()?.querySelectorAll("button") ?? [])].find(
+        (b) => b.textContent === label
+      );
+    const click = (label: string) =>
+      act(() => {
+        button(label)!.click();
+      });
+
+    it("shows the question like a note, with its answer hidden until asked for", async () => {
+      renderStep([QUESTION], { compact: true });
+
+      await vi.waitFor(() =>
+        expect(page()?.textContent).toContain("What does light reveal?")
+      );
+      expect(page()?.textContent).not.toContain("What was hidden.");
+      expect(button("Show answer")?.getAttribute("aria-expanded")).toBe(
+        "false"
+      );
+
+      click("Show answer");
+      await vi.waitFor(() =>
+        expect(page()?.textContent).toContain("What was hidden.")
+      );
+      expect(button("Hide answer")?.getAttribute("aria-expanded")).toBe("true");
+
+      click("Hide answer");
+      expect(page()?.textContent).not.toContain("What was hidden.");
+    });
+
+    it("hides its hint behind a button of its own", async () => {
+      renderStep([QUESTION], { compact: true });
+
+      click("Show hint");
+      await vi.waitFor(() =>
+        expect(page()?.textContent).toContain("Think about this week.")
+      );
+      // The answer stays hidden.
+      expect(page()?.textContent).not.toContain("What was hidden.");
+    });
+
+    it("offers nothing to reveal when its author gave no hint or answer", async () => {
+      renderStep([{ type: "html", html: "<p>Q?</p>", question: {} }], {
+        compact: true,
+      });
+
+      await vi.waitFor(() => expect(page()?.textContent).toContain("Q?"));
+      expect(page()?.querySelector("button")).toBeNull();
+    });
+
+    it("starts the next question with its answer hidden again", async () => {
+      const playing = renderStep(
+        [
+          QUESTION,
+          {
+            ...QUESTION,
+            html: "<p>Second?</p>",
+            question: { answer: "<p>Second answer.</p>" },
+          },
+        ],
+        { compact: true }
+      );
+      click("Show answer");
+
+      await act(async () => {
+        await playing.next();
+      });
+      await vi.waitFor(() => expect(page()?.textContent).toContain("Second?"));
+
+      expect(page()?.textContent).not.toContain("Second answer.");
+      expect(button("Show answer")).toBeDefined();
+    });
+  });
+
   it("shows the chapter on a scripture step", () => {
     renderStep([{ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } }], {
       compact: true,

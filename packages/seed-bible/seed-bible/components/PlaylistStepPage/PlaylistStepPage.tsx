@@ -1,5 +1,6 @@
 import "./PlaylistStepPage.css";
-import { useLayoutEffect, useRef } from "preact/hooks";
+import { useLayoutEffect, useRef, useState } from "preact/hooks";
+import { useI18n } from "../../i18n/I18nManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
@@ -54,11 +55,19 @@ export function PlaylistStepPage(props: {
       ) : null}
       <div className="sb-playlist-step-page-body">
         {item.type === "html" ? (
-          <PlaylistHtmlContent
-            html={item.html}
-            onReferenceClick={props.onReferenceClick}
-            onStepClick={props.onStepClick}
-          />
+          <>
+            <PlaylistHtmlContent
+              html={item.html}
+              onReferenceClick={props.onReferenceClick}
+              onStepClick={props.onStepClick}
+            />
+            {item.question?.hint?.trim() ? (
+              <QuestionReveal kind="hint" html={item.question.hint} />
+            ) : null}
+            {item.question?.answer?.trim() ? (
+              <QuestionReveal kind="answer" html={item.question.answer} />
+            ) : null}
+          </>
         ) : (
           <PlaylistLinkContent
             url={item.url}
@@ -69,5 +78,41 @@ export function PlaylistStepPage(props: {
         )}
       </div>
     </article>
+  );
+}
+
+/**
+ * A question step's hint or answer, hidden behind a button so the reader can
+ * think about the question first. The page is rebuilt for each step, so the
+ * next question starts hidden again.
+ */
+function QuestionReveal(props: { kind: "hint" | "answer"; html: string }) {
+  const { kind, html } = props;
+  const { t } = useI18n();
+  const [shown, setShown] = useState(false);
+  const label =
+    kind === "hint"
+      ? shown
+        ? t("playlist-question-hide-hint", { defaultValue: "Hide hint" })
+        : t("playlist-question-show-hint", { defaultValue: "Show hint" })
+      : shown
+        ? t("playlist-question-hide-answer", { defaultValue: "Hide answer" })
+        : t("playlist-question-show-answer", { defaultValue: "Show answer" });
+  return (
+    <section className={`sb-playlist-question-reveal is-${kind}`}>
+      <button
+        type="button"
+        className="sb-playlist-question-reveal-button"
+        aria-expanded={shown}
+        onClick={() => setShown(!shown)}
+      >
+        {label}
+      </button>
+      {shown ? (
+        <div className="sb-playlist-question-reveal-content">
+          <PlaylistHtmlContent html={html} />
+        </div>
+      ) : null}
+    </section>
   );
 }

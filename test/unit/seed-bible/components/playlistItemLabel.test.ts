@@ -102,4 +102,24 @@ describe("playlistItemLabel", () => {
       url
     );
   });
+
+  it("labels an untitled question as a question, not an HTML snippet", () => {
+    expect(
+      playlistItemLabel(
+        { type: "html", html: "<p>Why?</p>", question: {} },
+        t,
+        resolveBookName
+      )
+    ).toBe("Question");
+  });
+
+  it("labels a question by its title when it has one", () => {
+    expect(
+      playlistItemLabel(
+        { type: "html", title: "Light", html: "<p>Why?</p>", question: {} },
+        t,
+        resolveBookName
+      )
+    ).toBe("Light");
+  });
 });
