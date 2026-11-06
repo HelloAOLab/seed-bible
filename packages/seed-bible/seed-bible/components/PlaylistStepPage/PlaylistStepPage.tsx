@@ -1,4 +1,5 @@
 import "./PlaylistStepPage.css";
+import type { RefObject } from "preact";
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
@@ -7,6 +8,22 @@ import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent"
 import { PlaylistLinkContent } from "../PlaylistLinkContent/PlaylistLinkContent";
 
 type PageItem = Exclude<PlaylistItemData, { type: "bible-verse" }>;
+
+/**
+ * Scrolls whatever scrolls `ref`'s element back to the top when it mounts, so
+ * a step opens at its top wherever the reader had scrolled the step before.
+ */
+export function useScrollToTopOnMount(ref: RefObject<HTMLElement>): void {
+  useLayoutEffect(() => {
+    for (let el = ref.current?.parentElement; el; el = el.parentElement) {
+      const { overflowY } = getComputedStyle(el);
+      if (overflowY === "auto" || overflowY === "scroll") {
+        el.scrollTop = 0;
+        return;
+      }
+    }
+  }, []);
+}
 
 /**
  * The title a note, question or video step shows at the top of its page, or
@@ -36,16 +53,7 @@ export function PlaylistStepPage(props: {
   const { item, showTitle } = props;
   const title = showTitle ? playlistStepPageTitle(item) : null;
   const ref = useRef<HTMLElement>(null);
-  // A step opens at its top, wherever the reader had scrolled the step before.
-  useLayoutEffect(() => {
-    for (let el = ref.current?.parentElement; el; el = el.parentElement) {
-      const { overflowY } = getComputedStyle(el);
-      if (overflowY === "auto" || overflowY === "scroll") {
-        el.scrollTop = 0;
-        return;
-      }
-    }
-  }, []);
+  useScrollToTopOnMount(ref);
   return (
     <article ref={ref} className="sb-playlist-step-page">
       {title ? (

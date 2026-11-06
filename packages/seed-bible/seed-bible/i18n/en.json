@@ -1321,6 +1321,7 @@
   "playlist-editor-note-placeholder": "Write what readers see between steps",
   "playlist-editor-characters": "{{characters}} characters",
   "playlist-step-question": "Question",
+  "playlist-compare-label": "Compare {{first}} to {{second}}",
   "playlist-question-show-hint": "Show hint",
   "playlist-question-hide-hint": "Hide hint",
   "playlist-question-show-answer": "Show answer",

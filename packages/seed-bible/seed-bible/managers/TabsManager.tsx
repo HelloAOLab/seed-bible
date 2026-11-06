@@ -369,6 +369,16 @@ export interface TabsManager {
   ) => ReaderTab;
 
   /**
+   * Creates a reading state that belongs to no tab, for showing a second
+   * passage beside a tab's own (a playing playlist's compare step). It shows
+   * the user's highlights and notes like any tab, but nothing about it is
+   * saved or put in the URL. Whoever creates it disposes it.
+   */
+  createDetachedReadingState: (
+    initialReadingOptions?: InitialBibleReadingOptions
+  ) => BibleReadingState;
+
+  /**
    * Removes a tab by ID.
    *
    * If the tab is associated with a shared session, the session is disposed.
@@ -1312,11 +1322,25 @@ export function createTabs(
     });
   };
 
+  const createDetachedReadingState = (
+    initialReadingOptions?: InitialBibleReadingOptions
+  ): BibleReadingState =>
+    createBibleReadingState(
+      dataManager,
+      highlightsManager,
+      i18nManager,
+      initialReadingOptions,
+      undefined,
+      undefined,
+      getAnnotationsManager
+    );
+
   return {
     defaultTranslation,
     tabs,
     selectedTabId,
     addTab,
+    createDetachedReadingState,
     removeTab,
     selectTab,
     leaveStaticPage,

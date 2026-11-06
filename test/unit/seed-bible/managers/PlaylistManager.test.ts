@@ -17,6 +17,7 @@ import {
   createPlaylistManager,
   type StartPlayingOptions,
   createPlayingState,
+  expandCrossChapterItem,
   groupVersesIntoPlaylistItems,
   formatPlaylistPlayDurationMs,
   groupPlaylistPlayHistoryByDay,
@@ -6127,5 +6128,119 @@ describe("createPlayingState", () => {
         expect.any(Object)
       );
     });
+  });
+});
+
+describe("playing a compare step", () => {
+  const compareStep = (
+    first: VerseRefLike,
+    second: VerseRefLike,
+    translationId?: string
+  ): PlaylistItemData => ({
+    type: "bible-verse",
+    ref: first,
+    compare: { ref: second },
+    ...(translationId ? { translationId } : {}),
+  });
+  type VerseRefLike = { bookId: string; chapter: number; verse?: number };
+
+  function play(items: PlaylistItemData[]) {
+    const tabNavigate = vi.fn(async () => undefined);
+    const tab = makeTab("tab-1", tabNavigate);
+    const secondNavigate = vi.fn(async () => undefined);
+    const second = {
+      ...makeReadingState(secondNavigate),
+      dispose: vi.fn(),
+    };
+    const createCompareReadingState = vi.fn(() => second);
+    const playing = createPlayingState(
+      [makePlaylist({ items })],
+      tab as any,
+      undefined,
+      createCompareReadingState as any
+    );
+    return {
+      playing,
+      tab,
+      tabNavigate,
+      second,
+      secondNavigate,
+      createCompareReadingState,
+    };
+  }
+
+  it("opens the first passage in the tab and the second beside it, in the step's translation", async () => {
+    const { playing, tabNavigate, second, createCompareReadingState } = play([
+      compareStep(
+        { bookId: "JHN", chapter: 1, verse: 1 },
+        { bookId: "GEN", chapter: 1, verse: 1 },
+        "KJV"
+      ),
+    ]);
+
+    await playing.jumpTo(0);
+
+    // Not scrolled to: the reader shows just the passage, from its top.
+    expect(tabNavigate).toHaveBeenCalledWith("KJV", "JHN", 1);
+    expect(createCompareReadingState).toHaveBeenCalledWith({
+      initialTranslationId: "KJV",
+      initialBookId: "GEN",
+      initialChapterNumber: 1,
+    });
+    expect(playing.compareReadingState.value).toBe(second);
+  });
+
+  it("reuses the second passage's reading state for the next compare step", async () => {
+    const { playing, secondNavigate, createCompareReadingState } = play([
+      compareStep({ bookId: "JHN", chapter: 1 }, { bookId: "GEN", chapter: 1 }),
+      compareStep({ bookId: "MAT", chapter: 5 }, { bookId: "LUK", chapter: 6 }),
+    ]);
+
+    await playing.jumpTo(0);
+    await playing.next();
+
+    expect(createCompareReadingState).toHaveBeenCalledTimes(1);
+    expect(secondNavigate).toHaveBeenCalledWith("BSB", "LUK", 6);
+  });
+
+  it("highlights neither passage, since only the passages are shown", async () => {
+    const { playing, tab, second } = play([
+      compareStep(
+        { bookId: "JHN", chapter: 1, verse: 1 },
+        { bookId: "GEN", chapter: 1, verse: 1 }
+      ),
+    ]);
+
+    await playing.jumpTo(0);
+
+    expect(tab.readingState.decorateVerses).not.toHaveBeenCalled();
+    expect(second.decorateVerses).not.toHaveBeenCalled();
+  });
+
+  it("lets go of the second passage's reading state when playback ends", async () => {
+    const { playing, second } = play([
+      compareStep({ bookId: "JHN", chapter: 1 }, { bookId: "GEN", chapter: 1 }),
+    ]);
+    await playing.jumpTo(0);
+
+    playing.dispose();
+
+    expect(second.dispose).toHaveBeenCalled();
+    expect(playing.compareReadingState.value).toBeNull();
+  });
+
+  it("keeps a compare step whose first passage spans chapters as one step", () => {
+    const item = compareStep(
+      {
+        bookId: "JHN",
+        chapter: 1,
+        verse: 1,
+        endChapter: 2,
+        endVerse: 5,
+      } as any,
+      { bookId: "GEN", chapter: 1 }
+    );
+
+    expect(expandCrossChapterItem(item)).toEqual([item]);
   });
 });

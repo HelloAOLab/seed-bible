@@ -30,7 +30,11 @@ import {
   type GeneratedPlaylist,
 } from "./AIManager";
 import type { DiscoverManager } from "./DiscoverManager";
-import { emphasizeVerses } from "./BibleReadingManager";
+import {
+  emphasizeVerses,
+  type BibleReadingState,
+  type InitialBibleReadingOptions,
+} from "./BibleReadingManager";
 import {
   canonicalBookIndex,
   type BookId,
@@ -654,6 +658,11 @@ export function expandCrossChapterItem(
     return [item];
   }
 
+  // A compare step stays one step: splitting it would lose its second passage.
+  if (item.compare) {
+    return [item];
+  }
+
   const { ref, translationId, note, noteTitle } = item;
   const endChapter = ref.endChapter;
   if (
@@ -744,7 +753,18 @@ export function scriptureStepVerses(
   if (item?.type !== "bible-verse" || item.compare) {
     return null;
   }
-  const { ref } = item;
+  return passageVerses(item.ref, chapter);
+}
+
+/**
+ * The verses a passage covers within one chapter, first to last, or null when
+ * it isn't in that chapter or is the whole chapter. `numberOfVerses` settles
+ * a range that runs to the chapter's end.
+ */
+export function passageVerses(
+  ref: VerseRef,
+  chapter: { bookId: string; chapter: number; numberOfVerses: number }
+): { start: number; end: number } | null {
   if (
     ref.bookId !== chapter.bookId ||
     ref.chapter !== chapter.chapter ||
@@ -762,7 +782,11 @@ export function scriptureStepVerses(
 export function createPlayingState(
   sourcePlaylists: SimplePlaylist[],
   tab: ReaderTab | null = null,
-  onFinish?: () => void
+  onFinish?: () => void,
+  /** Makes the reading state a compare step's second passage is shown in. */
+  createCompareReadingState?: (
+    options: InitialBibleReadingOptions
+  ) => BibleReadingState
 ) {
   const playlists = signal<SimplePlaylist[]>(sourcePlaylists);
   const queue = signal<PlaylistItemData[]>(
@@ -871,7 +895,13 @@ export function createPlayingState(
    * fades on its own after a few seconds.
    */
   const emphasizeItem = (item: PlaylistItemData | null) => {
-    if (!tab || item?.type !== "bible-verse" || item.ref.verse == null) {
+    // A compare step shows only its passages, so there's nothing to pick out.
+    if (
+      !tab ||
+      item?.type !== "bible-verse" ||
+      item.ref.verse == null ||
+      item.compare
+    ) {
       return;
     }
     disposeDecoration();
@@ -942,6 +972,54 @@ export function createPlayingState(
     }
   };
 
+  /**
+   * The reading state a compare step's second passage is shown in, beside the
+   * tab's own. Made on the first compare step and kept for later ones.
+   */
+  const compareReadingState = signal<BibleReadingState | null>(null);
+
+  /**
+   * Opens both of a compare step's passages: the first in the tab, the second
+   * in {@link compareReadingState}. The reader shows just the two passages
+   * from the top, so neither is scrolled to or highlighted.
+   */
+  const openComparePassages = async (
+    item: Extract<PlaylistItemData, { type: "bible-verse" }>,
+    compare: NonNullable<typeof item.compare>
+  ): Promise<void> => {
+    if (!tab) {
+      return;
+    }
+    const translation =
+      item.translationId ?? tab.readingState.translationId.peek();
+    const second = compareReadingState.peek();
+    const openSecond = (): Promise<void> => {
+      if (second) {
+        return second.selectTranslationAndChapter(
+          translation,
+          compare.ref.bookId,
+          compare.ref.chapter
+        );
+      }
+      if (createCompareReadingState) {
+        compareReadingState.value = createCompareReadingState({
+          initialTranslationId: translation,
+          initialBookId: compare.ref.bookId,
+          initialChapterNumber: compare.ref.chapter,
+        });
+      }
+      return Promise.resolve();
+    };
+    await Promise.all([
+      tab.readingState.selectTranslationAndChapter(
+        translation,
+        item.ref.bookId,
+        item.ref.chapter
+      ),
+      openSecond(),
+    ]);
+  };
+
   const navigateToCurrentItem = async () => {
     const navigation = ++navigationCount;
     const item = currentItem.value;
@@ -953,6 +1031,10 @@ export function createPlayingState(
       return;
     }
     hasShownStep = true;
+    if (item.compare) {
+      await openComparePassages(item, item.compare);
+      return;
+    }
     const { ref, translationId } = item;
 
     // `translationId` is optional on the item; fall back to the tab's current
@@ -1205,6 +1287,8 @@ export function createPlayingState(
   const dispose = (): void => {
     disposeRearm();
     disposeDecoration();
+    compareReadingState.peek()?.dispose();
+    compareReadingState.value = null;
   };
 
   return {
@@ -1220,6 +1304,8 @@ export function createPlayingState(
     noteExpanded: noteExpanded as ReadonlySignal<boolean>,
     setNoteExpanded,
     awayFromStep: awayFromStep as ReadonlySignal<boolean>,
+    compareReadingState:
+      compareReadingState as ReadonlySignal<BibleReadingState | null>,
     detour: detour as ReadonlySignal<ReaderVerseRef | null>,
     visitReference,
     returnToStep,
@@ -2957,12 +3043,17 @@ export function createPlaylistManager(
       const tab =
         tabs.tabs.value.find((t) => t.readingState === readingState) ?? null;
 
-      const playingState = createPlayingState(initial.playlists, tab, () => {
-        const playlist = playingState.playlists.peek()[0];
-        if (playlist && isRecordedPlaylist(playlist)) {
-          openPlaylistFinishedModal(playlist);
-        }
-      });
+      const playingState = createPlayingState(
+        initial.playlists,
+        tab,
+        () => {
+          const playlist = playingState.playlists.peek()[0];
+          if (playlist && isRecordedPlaylist(playlist)) {
+            openPlaylistFinishedModal(playlist);
+          }
+        },
+        (options) => tabs.createDetachedReadingState(options)
+      );
       // Apply the synced queue + position (a peer's queue may differ from the
       // raw playlist items after add/remove/reorder).
       playingState.setState(initial);

@@ -1,3 +1,4 @@
+import { currentScriptureNoteItem } from "@packages/seed-bible/seed-bible/components/ScriptureNote/ScriptureNote";
 import { render } from "preact";
 import { act, setupRerender, teardown } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
@@ -7045,16 +7046,23 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
 
   function renderStep(
     items: SimplePlaylist["items"],
-    options: { compact: boolean }
+    options: {
+      compact: boolean;
+      /** Where a compare step's second passage is shown. */
+      compareReadingState?: BibleReadingState;
+    }
   ) {
     const { selectorState, readingState } = createFixture();
     const slot: TabSlot = {
       id: "slot-1",
       tab: { id: "tab-1", readingState } as any,
     };
+    const second = options.compareReadingState;
     const playing = createPlayingState(
       [{ id: "p", title: "P", description: null, items } as SimplePlaylist],
-      slot.tab as any
+      slot.tab as any,
+      undefined,
+      second ? () => second : undefined
     );
     const base = createMobileState(selectorState);
     const state = {
@@ -7132,6 +7140,116 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
     expect(
       page()?.querySelector(".sb-playlist-step-page-title")?.textContent
     ).toBe("A talk on John");
+  });
+
+  describe("a compare step", () => {
+    const COMPARE = {
+      type: "bible-verse" as const,
+      ref: { bookId: "GEN", chapter: 1, verse: 1 },
+      compare: { ref: { bookId: "GEN", chapter: 1, verse: 2 } },
+      noteTitle: "Look closer",
+      note: "<p>Notice the poetry.</p>",
+    };
+
+    async function renderCompare(options: { compact: boolean }) {
+      const second = createFixture();
+      const playing = renderStep([COMPARE], {
+        ...options,
+        compareReadingState: second.readingState,
+      });
+      await act(async () => {
+        await playing.jumpTo(0);
+      });
+      return { second, playing };
+    }
+
+    const compare = () => container.querySelector(".sb-playlist-compare");
+    const columns = () => [
+      ...container.querySelectorAll(".sb-playlist-compare-column"),
+    ];
+
+    it("shows each passage in its own column, cut to its verses, and titles it Compare … to …", async () => {
+      await renderCompare({ compact: true });
+
+      expect(
+        compare()?.querySelector(".sb-playlist-step-page-title")?.textContent
+      ).toBe("Compare Genesis 1:1 to Genesis 1:2");
+      expect(
+        columns().map(
+          (column) =>
+            column.querySelector(".sb-playlist-compare-passage")?.textContent
+        )
+      ).toEqual(["Genesis 1:1", "Genesis 1:2"]);
+      const [first, secondColumn] = columns();
+      expect(first?.textContent).toContain("In the beginning");
+      expect(first?.textContent).not.toContain("Poetry A");
+      // The heading right above the first verse comes along with it.
+      expect(first?.textContent).toContain("Creation");
+      expect(secondColumn?.textContent).toContain("Poetry A");
+      expect(secondColumn?.textContent).not.toContain("In the beginning");
+      expect(chapterText()).toBe(true);
+    });
+
+    it("draws the second passage with its own highlights, as the reader does", async () => {
+      const second = createFixture();
+      second.highlights.value = {
+        highlights: [{ verse: 2, colorId: "yellow" }],
+      };
+      const playing = renderStep([COMPARE], {
+        compact: true,
+        compareReadingState: second.readingState,
+      });
+      await act(async () => {
+        await playing.jumpTo(0);
+      });
+
+      const [first, secondColumn] = columns();
+      expect(
+        secondColumn?.querySelector(".sb-highlight-yellow")
+      ).not.toBeNull();
+      expect(first?.querySelector(".sb-highlight-yellow")).toBeNull();
+    });
+
+    it.each([true, false])(
+      "shows its note once, below both passages (compact: %s)",
+      async (compact) => {
+        await renderCompare({ compact });
+
+        const note = compare()?.querySelector(".sb-playlist-compare-note");
+        expect(
+          note?.querySelector(".sb-playlist-compare-note-title")?.textContent
+        ).toBe("Look closer");
+        await vi.waitFor(() =>
+          expect(note?.textContent).toContain("Notice the poetry.")
+        );
+        // After the columns, not beside them.
+        expect(
+          compare()?.lastElementChild?.classList.contains(
+            "sb-playlist-compare-note"
+          )
+        ).toBe(true);
+        expect(container.textContent?.split("Notice the poetry.").length).toBe(
+          2
+        );
+      }
+    );
+
+    it("leaves its note out of the usual note pop-up and sheet, which would repeat it", async () => {
+      const { playing } = await renderCompare({ compact: false });
+
+      expect(currentScriptureNoteItem(playing)).toBeNull();
+    });
+
+    it("puts its title in the reader's heading on desktop", async () => {
+      await renderCompare({ compact: false });
+
+      expect(
+        container.querySelector(".sb-bible-reader-heading")?.textContent
+      ).toBe("Compare Genesis 1:1 to Genesis 1:2");
+      expect(
+        compare()?.querySelector(".sb-playlist-step-page-title")
+      ).toBeNull();
+    });
   });
 
   describe("a question step", () => {

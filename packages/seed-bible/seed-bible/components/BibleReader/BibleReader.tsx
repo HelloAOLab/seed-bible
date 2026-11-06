@@ -23,6 +23,7 @@ import {
   computed,
   effect,
   signal,
+  useComputed,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
@@ -95,6 +96,14 @@ import {
   PlaylistStepPage,
   playlistStepPageTitle,
 } from "../PlaylistStepPage/PlaylistStepPage";
+import { PlaylistCompareStep } from "../PlaylistCompareStep/PlaylistCompareStep";
+import { passageChapter } from "../PlaylistCompareStep/passageChapter";
+import { passageLabel, playlistItemLabel } from "../playlistItemLabel";
+import {
+  hasScriptureNote,
+  type PlaylistItemData,
+  type VerseRef as PlaylistVerseRef,
+} from "../../managers/PlaylistManager";
 import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
 import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
@@ -2134,7 +2143,7 @@ function PresenceGutter({
 }
 
 interface ChapterContentProps {
-  chapterData: Signal<TranslationBookChapter | null>;
+  chapterData: ReadonlySignal<TranslationBookChapter | null>;
   chapterDataPromise: Promise<void>;
   initialChapterLoadSettled: ReadonlySignal<boolean>;
   selectedVerses: Signal<BibleSelectedVerse[]>;
@@ -2198,6 +2207,22 @@ interface ChapterContentProps {
   hideHighlights?: boolean;
   /** Shown in the chapter's flow right after one of its verses. */
   afterVerse?: ChapterAfterVerse | null;
+}
+
+/**
+ * One of a compare step's passages: a chapter cut down to `passage`, drawn as
+ * the reader draws any chapter so its highlights and notes show.
+ */
+function PassageContent(
+  props: ChapterContentProps & { passage: PlaylistVerseRef }
+) {
+  const { passage, chapterData, ...rest } = props;
+  // The page is rebuilt for each step, so `passage` is fixed for its life.
+  const passageData = useComputed(() => {
+    const chapter = chapterData.value;
+    return chapter ? passageChapter(chapter, passage) : null;
+  });
+  return <ChapterContent {...rest} chapterData={passageData} />;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -3480,9 +3505,121 @@ export function BibleReader(props: BibleReaderProps) {
     playingStep && playingStep.type !== "bible-verse" ? playingStep : null;
   const stepPage =
     pageStep && !playbackHere?.awayFromStep.value ? pageStep : null;
+  // A compare step shows its two passages side by side instead, once its
+  // second passage has somewhere to load.
+  const compareStep =
+    playingStep?.type === "bible-verse" && playingStep.compare
+      ? playingStep
+      : null;
+  const compareReadingState = playbackHere?.compareReadingState.value ?? null;
+  const comparePage =
+    compareStep && compareReadingState && !playbackHere?.awayFromStep.value
+      ? compareStep
+      : null;
+  const resolveBookName = (id: string): string => {
+    const book = translationBooks.value?.books.find((b) => b.id === id);
+    return book?.name ?? book?.commonName ?? id;
+  };
+  const comparePageTitle = comparePage
+    ? playlistItemLabel(comparePage, t, resolveBookName)
+    : null;
+
+  const renderComparePage = (
+    item: Extract<PlaylistItemData, { type: "bible-verse" }>,
+    second: BibleReadingState
+  ) => {
+    const compare = item.compare!;
+    const noop = () => {};
+    const shared = {
+      annotations: state?.annotations,
+      friends: state?.friends,
+      scriptureElements,
+      isMobile: isCompactReader,
+      hideHighlights: isMinimalEmbed,
+      verseSelectionEffects:
+        state?.settings.settings.value.verseSelectionEffects ?? "default",
+      prefersReducedMotionValue,
+      highlightAuthors,
+    };
+    return (
+      <PlaylistCompareStep
+        key={playbackHere?.currentIndex.value}
+        title={isCompactReader ? comparePageTitle : null}
+        passages={[
+          {
+            label: passageLabel(item.ref, resolveBookName),
+            content: (
+              <Suspense fallback={null}>
+                <PassageContent
+                  {...shared}
+                  passage={item.ref}
+                  chapterData={chapterData}
+                  chapterDataPromise={readingState.chapterDataPromise}
+                  initialChapterLoadSettled={
+                    readingState.initialChapterLoadSettled
+                  }
+                  selectedVerses={selectedVerses}
+                  highlights={highlights}
+                  decorations={decorations}
+                  selectVerse={selectVerse}
+                  selectFootnote={selectFootnote}
+                  selectVersesFromTextSelection={selectVersesFromTextSelection}
+                  justConvertedSelectionRef={justConvertedSelectionRef}
+                  onAnnotationVerseClick={handleAnnotationVerseClick}
+                  sharedSession={sharedSession}
+                  onHostVerseClick={handleHostVerseClick}
+                />
+              </Suspense>
+            ),
+          },
+          {
+            label: passageLabel(compare.ref, resolveBookName),
+            // Shown, not interactive: the verse toolbar and notes work on
+            // the tab's own passage, not this one.
+            content: (
+              <Suspense fallback={null}>
+                <PassageContent
+                  {...shared}
+                  passage={compare.ref}
+                  chapterData={second.chapterData}
+                  chapterDataPromise={second.chapterDataPromise}
+                  initialChapterLoadSettled={second.initialChapterLoadSettled}
+                  selectedVerses={second.selectedVerses}
+                  highlights={second.highlights}
+                  decorations={second.decorations}
+                  selectVerse={noop}
+                  selectFootnote={noop}
+                  selectVersesFromTextSelection={noop}
+                  justConvertedSelectionRef={{ current: false }}
+                  onAnnotationVerseClick={noop}
+                  sharedSession={null}
+                  onHostVerseClick={noop}
+                />
+              </Suspense>
+            ),
+          },
+        ]}
+        note={
+          hasScriptureNote(item)
+            ? {
+                title: item.noteTitle?.trim() || null,
+                html: item.note?.trim() ? item.note : null,
+              }
+            : null
+        }
+        onReferenceClick={(ref) => void playbackHere?.visitReference(ref)}
+        onStepClick={(index) => void playbackHere?.jumpTo(index)}
+      />
+    );
+  };
 
   const renderMainContent = () =>
-    stepPage ? (
+    comparePage && compareReadingState ? (
+      <>
+        {renderComparePage(comparePage, compareReadingState)}
+        {mobileChrome?.belowContent}
+      </>
+    ) : stepPage ? (
       <>
         <PlaylistStepPage
           key={playbackHere?.currentIndex.value}
@@ -3495,7 +3632,8 @@ export function BibleReader(props: BibleReaderProps) {
       </>
     ) : (
       <>
-        {pageStep && playbackHere ? (
+        {(pageStep || (compareStep && playbackHere?.awayFromStep.value)) &&
+        playbackHere ? (
           <ReturnToStepButton playing={playbackHere} />
         ) : null}
         {isCompactReader &&
@@ -4056,12 +4194,14 @@ export function BibleReader(props: BibleReaderProps) {
         <Fragment key="desktop">
           <div className="sb-bible-reader-header">
             <div className="sb-bible-reader-heading">
-              {stepPage ? (
+              {stepPage || comparePageTitle ? (
                 <h2
                   className="sb-bible-reader-title sb-playlist-step-page-heading"
                   dir="auto"
                 >
-                  {playlistStepPageTitle(stepPage)}
+                  {stepPage
+                    ? playlistStepPageTitle(stepPage)
+                    : comparePageTitle}
                 </h2>
               ) : (
                 <>

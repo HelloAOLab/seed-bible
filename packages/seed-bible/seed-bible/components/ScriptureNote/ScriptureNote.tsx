@@ -21,13 +21,14 @@ type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
 /**
  * The playing step's scripture item when it carries a note — a body, a title,
- * or both — else null.
+ * or both — else null. A compare step's note is shown below its passages
+ * instead, so it never counts.
  */
 export function currentScriptureNoteItem(
   playing: PlayingState | null
 ): ScriptureItem | null {
   const item = playing?.currentItem.value ?? null;
-  return hasScriptureNote(item) ? item : null;
+  return hasScriptureNote(item) && !item.compare ? item : null;
 }
 
 /**
