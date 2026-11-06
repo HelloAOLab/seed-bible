@@ -1,3 +1,4 @@
+import { createAttachedReadingStates } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
@@ -266,7 +267,7 @@ function createMobileState(): SeedBibleState {
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
     bookmarks: createBookmarksStub(),
-    tabs: {} as any,
+    tabs: createAttachedReadingStates() as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
@@ -328,7 +329,7 @@ function createDesktopState(): SeedBibleState {
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
     bookmarks: createBookmarksStub(),
-    tabs: {} as any,
+    tabs: createAttachedReadingStates() as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,

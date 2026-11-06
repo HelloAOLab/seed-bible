@@ -1003,6 +1003,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const readingState = useComputed(
     () => selectedTab.value?.readingState ?? null
   );
+  // What the verse toolbar acts on: the tab's own reading state, or the one
+  // shown beside it (a compare step's second passage) when the user is
+  // working there. Chapter navigation stays with the tab's own.
+  const selectionState = useComputed(() =>
+    selectedTab.value ? tabs.activeReadingState(selectedTab.value) : null
+  );
   const sessionState = useComputed(
     () => selectedTab.value?.sharedSession ?? null
   );
@@ -1219,7 +1225,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const verseToolbarTools = useComputed(() => {
     const resolved = toolsManager.getVerseToolbarTools({
-      readingState: readingState.value!,
+      readingState: selectionState.value!,
       sharedSession: sessionState.value,
       selectorState: selector,
       tabs: tabs,
@@ -1262,14 +1268,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   });
 
   const hasVerseSelection = useComputed(
-    () => readingState.value!.selectedVerses.value.length > 0
+    () => selectionState.value!.selectedVerses.value.length > 0
   );
   const isMinimalEmbed = useComputed(
     () => props.state.app.isMinimalEmbed?.value ?? false
   );
 
   const selectionDiscoveredContent = useComputed(() => {
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (
       !rs ||
       !props.state.app.isMobile.value ||
@@ -1394,7 +1400,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       await action();
 
       if (!preserveSelection) {
-        readingState.value?.clearSelectedVerses();
+        selectionState.value?.clearSelectedVerses();
       }
     } catch (error) {
       console.error("Verse toolbar action failed:", error);
@@ -1434,7 +1440,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       (showHighlightCard.value ? 1 : 0) +
       (showSaveCard.value ? 1 : 0);
     const annotationCount =
-      readingState.value?.selectionAnnotations.value.length ?? 0;
+      selectionState.value?.selectionAnnotations.value.length ?? 0;
     return (
       cardCount > VERSE_SHEET_COLLAPSED_COUNT ||
       annotationCount > 0 ||
@@ -1646,7 +1652,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   );
 
   const floatingAnchor = useComputed(() =>
-    readingState.value!.selectedVerses.value.reduce<{
+    selectionState.value!.selectedVerses.value.reduce<{
       x: number;
       y: number;
       selectedAt: number;
@@ -2046,7 +2052,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
 
     if (dismissOffset >= VERSE_SHEET_DISMISS_THRESHOLD) {
-      readingState.value?.clearSelectedVerses();
+      selectionState.value?.clearSelectedVerses();
       return;
     }
 
@@ -2124,7 +2130,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const applyCustomColor = (color: string) => {
     settings.addCustomHighlightColor(color);
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return;
 
     // Confirming a colour is not navigation. Applying the highlight still
@@ -2152,7 +2158,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // session meant the button greyed itself out the moment the session's
   // highlight timer expired, with the saved highlight still on screen.
   const hasAnyHighlighted = useComputed(() => {
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return false;
 
     const hasSavedHighlight = rs.selectedVerses.value.some((verse) =>
@@ -2187,7 +2193,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   });
 
   const selectedVersesReference = useComputed(() => {
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return "";
     const verses = rs.selectedVerses.value;
     const firstVerse = verses[0];
@@ -2218,12 +2224,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // reading state itself (see `BibleReadingManager.tsx`), which already
   // tracks both the active chapter's annotations and the live selection.
   const selectionAnnotations = useComputed(
-    () => readingState.value?.selectionAnnotations.value ?? []
+    () => selectionState.value?.selectionAnnotations.value ?? []
   );
   // Friends' notes are in the sheet too, so only these get the edit/delete
   // menu. Decided by which list a note came from, as in Discover's list.
   const ownSelectionAnnotations = useComputed(() => {
-    const verse = readingState.value?.selectedVerses.value[0];
+    const verse = selectionState.value?.selectedVerses.value[0];
     return new Set<Annotation>(
       verse
         ? props.state.annotations.getAnnotationsForChapter(
@@ -2252,7 +2258,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // to a specific note (below) opts that selection out of the rewind: in a
   // browser the rewind can run after the jump has already placed the note.
   const verseSheetSelectionKey = useComputed(() => {
-    const verses = readingState.value?.selectedVerses.value ?? [];
+    const verses = selectionState.value?.selectedVerses.value ?? [];
     return verses
       .map(
         (verse) =>
@@ -2289,7 +2295,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // expand the sheet and scroll to that verse's annotation group, then clear
   // it. Mirrors `readingState.scrollToVerse`'s consumer in TabsLayout.tsx.
   useEffect(() => {
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return;
 
     let frame = 0;
@@ -2331,7 +2337,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       cancelAnimationFrame(frame);
       dispose();
     };
-  }, [readingState.value]);
+  }, [selectionState.value]);
 
   // Keep `--sb-reader-bottom-inset` in sync with the open bottom chrome so
   // chapter content / end-of-chapter controls clear it when the toolbar grows
@@ -2570,7 +2576,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       // as "outside" and clear the selection out from under the picker.
       if (target.closest(".sb-color-picker-layer, #sb-color-picker-host"))
         return;
-      readingState.value?.clearSelectedVerses();
+      selectionState.value?.clearSelectedVerses();
     };
 
     document.addEventListener("pointerdown", handleDocumentPointerDown);
@@ -3533,7 +3539,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     isHighlightPickerOpen.value = false;
                     return;
                   }
-                  readingState.value?.clearSelectedVerses();
+                  selectionState.value?.clearSelectedVerses();
                 }}
                 aria-label={
                   isHighlightPickerOpen.value
@@ -3632,7 +3638,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     type="button"
                     className="sb-verse-toolbar-color-button"
                     onClick={() => {
-                      const rs = readingState.value;
+                      const rs = selectionState.value;
                       if (!rs) return;
                       applyHighlightWithSession(
                         rs,
@@ -3683,7 +3689,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         type="button"
                         className="sb-verse-toolbar-color-button"
                         onClick={() => {
-                          const rs = readingState.value;
+                          const rs = selectionState.value;
                           if (!rs) return;
                           applyHighlightWithSession(
                             rs,
@@ -3779,7 +3785,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   className="sb-verse-toolbar-clear"
                   disabled={!hasAnyHighlighted.value}
                   onClick={() => {
-                    const rs = readingState.value;
+                    const rs = selectionState.value;
                     if (!rs) return;
                     const session = sessionState.value;
                     if (
@@ -3943,7 +3949,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const highlightLabel = t("highlight", {
                   defaultValue: "Highlight",
                 });
-                const rs = readingState.value;
+                const rs = selectionState.value;
                 const selectedVerseNumbers =
                   rs?.selectedVerses.value.map((v) => v.verse.number) ?? [];
                 const verseTarget =

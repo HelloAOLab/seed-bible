@@ -2961,11 +2961,15 @@ export function BibleReader(props: BibleReaderProps) {
     error,
     failedTranslationId,
     selectVerse,
-    clearSelectedVerses,
     selectedFootnote,
     selectFootnote,
   } = readingState;
-  const footnoteOverlayDismiss = useOverlayDismiss(() => selectFootnote(null));
+  // Set below, once a compare step's second passage (which can have a
+  // footnote open too) is known.
+  const closeFootnoteRef = useRef(() => selectFootnote(null));
+  const footnoteOverlayDismiss = useOverlayDismiss(() =>
+    closeFootnoteRef.current()
+  );
   const readerRootRef = useRef<HTMLDivElement>(null);
 
   if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
@@ -3074,23 +3078,39 @@ export function BibleReader(props: BibleReaderProps) {
   // where that toolbar isn't used, it leaves the verse selection alone and
   // just forces the compact discover panel beside the scripture text and
   // scrolls/highlights the note there.
-  const handleAnnotationVerseClick = (
-    verse: BibleSelectedVerse,
-    verseNumber: number,
-    event: MouseEvent
-  ) => {
-    // The <sup> sits inside the verse's own clickable <span>; stop the tap
-    // here so selectVerse (a toggle) doesn't run twice and immediately undo
-    // itself.
-    event.stopPropagation();
-    if (!state) {
-      return;
-    }
+  /**
+   * A tap on a verse's note marker in `target`: the tab's own passage, or in
+   * a compare step the one shown beside it.
+   */
+  const annotationVerseClickIn =
+    (target: BibleReadingState) =>
+    (verse: BibleSelectedVerse, verseNumber: number, event: MouseEvent) => {
+      // The <sup> sits inside the verse's own clickable <span>; stop the tap
+      // here so selectVerse (a toggle) doesn't run twice and immediately undo
+      // itself.
+      event.stopPropagation();
+      if (!state) {
+        return;
+      }
+      if (currentSlot.tab) {
+        state.tabs.focusReadingState(currentSlot.tab, target);
+      }
 
-    if (isCompactReader) {
-      selectVerse(verse, event.clientX, event.clientY);
-      handleHostVerseClick(verse);
-      readingState.pendingAnnotationScrollVerse.value = verseNumber;
+      if (isCompactReader) {
+        target.selectVerse(verse, event.clientX, event.clientY);
+        if (target === readingState) {
+          handleHostVerseClick(verse);
+        }
+        target.pendingAnnotationScrollVerse.value = verseNumber;
+        return;
+      }
+
+      showVerseNotes(verse, verseNumber);
+    };
+
+  /** Opens Discover's notes at `verse`, which is in the passage in focus. */
+  const showVerseNotes = (verse: BibleSelectedVerse, verseNumber: number) => {
+    if (!state) {
       return;
     }
 
@@ -3109,6 +3129,7 @@ export function BibleReader(props: BibleReaderProps) {
       verseNumber,
     };
   };
+  const handleAnnotationVerseClick = annotationVerseClickIn(readingState);
 
   // Reader glyph size is its own knob, independent of the UI-scale (`rem`)
   // system. Anchoring `.sb-font-size-*` here (rather than on the chrome root)
@@ -3222,12 +3243,16 @@ export function BibleReader(props: BibleReaderProps) {
   // touches — exactly as if the user had clicked each of them — which opens
   // the verse toolbar. No-op for a collapsed/empty selection, so plain taps
   // keep their single-verse toggle behaviour.
-  const selectVersesFromTextSelection = () => {
+  /**
+   * Turns a text selection in `target`'s passage into a verse selection: the
+   * tab's own, or in a compare step the one shown beside it.
+   */
+  const selectVersesFromTextSelectionIn = (target: BibleReadingState) => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
       return;
     }
-    const data = chapterData.value;
+    const data = target.chapterData.value;
     if (!data) return;
 
     const range = selection.getRangeAt(0);
@@ -3267,8 +3292,7 @@ export function BibleReader(props: BibleReaderProps) {
     justConvertedSelectionRef.current = true;
 
     // Mirror clicking each covered verse: deselect everything, then reselect.
-    // Mirror clicking each covered verse: deselect everything, then reselect.
-    clearSelectedVerses();
+    target.clearSelectedVerses();
 
     let firstSelectedVerse: BibleSelectedVerse | null = null;
     for (const el of verseEls) {
@@ -3281,13 +3305,16 @@ export function BibleReader(props: BibleReaderProps) {
         translationId: data.translation.id,
       };
       firstSelectedVerse ??= verse;
-      selectVerse(verse, anchorX, anchorY);
+      target.selectVerse(verse, anchorX, anchorY);
     }
-    // Broadcast only the first verse in the drag selection.
-    if (firstSelectedVerse) {
+    // Broadcast only the first verse in the drag selection, and only of the
+    // passage the session is on.
+    if (firstSelectedVerse && target === readingState) {
       handleHostVerseClick(firstSelectedVerse);
     }
   };
+  const selectVersesFromTextSelection = () =>
+    selectVersesFromTextSelectionIn(readingState);
   // Flares this reader started, so they can fade out early once their verse
   // is deselected rather than lingering for the full duration.
   const activeVerseFlaresRef = useRef(new Map<string, BroadcastVerseFlare>());
@@ -3529,7 +3556,13 @@ export function BibleReader(props: BibleReaderProps) {
     second: BibleReadingState
   ) => {
     const compare = item.compare!;
-    const noop = () => {};
+    // Using either passage points the verse toolbar, the note editor and
+    // Discover at it (see `TabsManager.activeReadingState`).
+    const focus = (target: BibleReadingState) => {
+      if (currentSlot.tab && state) {
+        state.tabs.focusReadingState(currentSlot.tab, target);
+      }
+    };
     const shared = {
       annotations: state?.annotations,
       friends: state?.friends,
@@ -3561,8 +3594,14 @@ export function BibleReader(props: BibleReaderProps) {
                   selectedVerses={selectedVerses}
                   highlights={highlights}
                   decorations={decorations}
-                  selectVerse={selectVerse}
-                  selectFootnote={selectFootnote}
+                  selectVerse={(verse, x, y) => {
+                    focus(readingState);
+                    selectVerse(verse, x, y);
+                  }}
+                  selectFootnote={(noteId) => {
+                    focus(readingState);
+                    selectFootnote(noteId);
+                  }}
                   selectVersesFromTextSelection={selectVersesFromTextSelection}
                   justConvertedSelectionRef={justConvertedSelectionRef}
                   onAnnotationVerseClick={handleAnnotationVerseClick}
@@ -3574,8 +3613,9 @@ export function BibleReader(props: BibleReaderProps) {
           },
           {
             label: passageLabel(compare.ref, resolveBookName),
-            // Shown, not interactive: the verse toolbar and notes work on
-            // the tab's own passage, not this one.
+            // Works as the first does: selecting verses here points the verse
+            // toolbar, the note editor and Discover at this passage (see
+            // `TabsManager.activeReadingState`).
             content: (
               <Suspense fallback={null}>
                 <PassageContent
@@ -3587,13 +3627,22 @@ export function BibleReader(props: BibleReaderProps) {
                   selectedVerses={second.selectedVerses}
                   highlights={second.highlights}
                   decorations={second.decorations}
-                  selectVerse={noop}
-                  selectFootnote={noop}
-                  selectVersesFromTextSelection={noop}
-                  justConvertedSelectionRef={{ current: false }}
-                  onAnnotationVerseClick={noop}
+                  selectVerse={(verse, x, y) => {
+                    focus(second);
+                    second.selectVerse(verse, x, y);
+                  }}
+                  selectFootnote={(noteId) => {
+                    focus(second);
+                    second.selectFootnote(noteId);
+                  }}
+                  selectVersesFromTextSelection={() =>
+                    selectVersesFromTextSelectionIn(second)
+                  }
+                  justConvertedSelectionRef={justConvertedSelectionRef}
+                  onAnnotationVerseClick={annotationVerseClickIn(second)}
+                  // A shared session follows the tab's own passage only.
                   sharedSession={null}
-                  onHostVerseClick={noop}
+                  onHostVerseClick={() => {}}
                 />
               </Suspense>
             ),
@@ -3612,6 +3661,17 @@ export function BibleReader(props: BibleReaderProps) {
       />
     );
   };
+
+  // The footnote open in the tab's own passage, or in a compare step's second.
+  const openFootnote =
+    selectedFootnote.value ??
+    compareReadingState?.selectedFootnote.value ??
+    null;
+  const closeFootnote = () => {
+    selectFootnote(null);
+    compareReadingState?.selectFootnote(null);
+  };
+  closeFootnoteRef.current = closeFootnote;
 
   const renderMainContent = () =>
     comparePage && compareReadingState ? (
@@ -4296,7 +4356,7 @@ export function BibleReader(props: BibleReaderProps) {
         </Fragment>
       )}
 
-      {scriptureElements.showFootnotes && selectedFootnote.value !== null && (
+      {scriptureElements.showFootnotes && openFootnote && (
         <div className="sb-footnote-modal-overlay" {...footnoteOverlayDismiss}>
           <div
             className="sb-footnote-modal"
@@ -4306,11 +4366,9 @@ export function BibleReader(props: BibleReaderProps) {
           >
             <div className="sb-footnote-modal-header">
               <h3 className="sb-footnote-modal-title">
-                {selectedFootnote.value.chapter.book.name}{" "}
-                {selectedFootnote.value.chapter.chapter.number}
-                {selectedFootnote.value.verse
-                  ? ":" + selectedFootnote.value.verse.number
-                  : ""}
+                {openFootnote.chapter.book.name}{" "}
+                {openFootnote.chapter.chapter.number}
+                {openFootnote.verse ? ":" + openFootnote.verse.number : ""}
               </h3>
               <button
                 className="sb-footnote-modal-close"
@@ -4318,7 +4376,7 @@ export function BibleReader(props: BibleReaderProps) {
                   defaultValue: "Close footnote",
                 })}
                 onClick={() => {
-                  selectFootnote(null);
+                  closeFootnote();
                 }}
               >
                 <span className="material-symbols-outlined">close</span>
@@ -4327,10 +4385,10 @@ export function BibleReader(props: BibleReaderProps) {
 
             <div className="sb-footnote-modal-content">
               <VerseReferenceText
-                text={selectedFootnote.value.note.text}
+                text={openFootnote.note.text}
                 books={translationBooks.value?.books}
                 onReferenceClick={(ref) => {
-                  selectFootnote(null);
+                  closeFootnote();
                   void state?.app.openVerseReference(ref);
                 }}
               />

@@ -6152,7 +6152,10 @@ describe("playing a compare step", () => {
       ...makeReadingState(secondNavigate),
       dispose: vi.fn(),
     };
-    const createCompareReadingState = vi.fn(() => second);
+    const createCompareReadingState = vi.fn(() => ({
+      readingState: second,
+      dispose: second.dispose,
+    }));
     const playing = createPlayingState(
       [makePlaylist({ items })],
       tab as any,

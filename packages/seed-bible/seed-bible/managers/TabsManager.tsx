@@ -379,6 +379,28 @@ export interface TabsManager {
   ) => BibleReadingState;
 
   /**
+   * Shows `readingState` inside `tab`, beside the tab's own (a compare step's
+   * second passage), so the user can work in either. Selecting verses in one
+   * clears the other's selection, so only one is ever selected. Returns a
+   * function that ends this.
+   */
+  attachReadingState: (
+    tab: ReaderTab,
+    readingState: BibleReadingState
+  ) => () => void;
+
+  /**
+   * The reading state in `tab` the user is working in: the one shown beside
+   * the tab's own when they last selected verses or opened a footnote or note
+   * there, else the tab's own. What the verse toolbar, the note editor and
+   * Discover act on; chapter navigation stays with the tab's own.
+   */
+  activeReadingState: (tab: ReaderTab) => BibleReadingState;
+
+  /** Marks one of `tab`'s reading states as the one the user is working in. */
+  focusReadingState: (tab: ReaderTab, readingState: BibleReadingState) => void;
+
+  /**
    * Removes a tab by ID.
    *
    * If the tab is associated with a shared session, the session is disposed.
@@ -1330,10 +1352,14 @@ export function createTabs(
       highlightsManager,
       i18nManager,
       initialReadingOptions,
-      undefined,
+      // So its notes and other discovered content show for its passage.
+      discoverManager,
       undefined,
       getAnnotationsManager
     );
+
+  const { attachReadingState, activeReadingState, focusReadingState } =
+    createAttachedReadingStates();
 
   return {
     defaultTranslation,
@@ -1341,10 +1367,88 @@ export function createTabs(
     selectedTabId,
     addTab,
     createDetachedReadingState,
+    attachReadingState,
+    activeReadingState,
+    focusReadingState,
     removeTab,
     selectTab,
     leaveStaticPage,
     hydrateStoredTabs,
     isRestoringProfileTranslation: () => restoringProfileTranslation,
   };
+}
+
+/**
+ * Tracks reading states shown inside a tab beside its own (a compare step's
+ * second passage) and which of a tab's reading states the user is working in.
+ * The {@link TabsManager} methods of the same names.
+ */
+export function createAttachedReadingStates(): Pick<
+  TabsManager,
+  "attachReadingState" | "activeReadingState" | "focusReadingState"
+> {
+  /** Reading states shown inside a tab beside its own, by tab id. */
+  const attachedReadingStates = signal<
+    ReadonlyMap<
+      string,
+      { readingState: BibleReadingState; active: Signal<boolean> }
+    >
+  >(new Map());
+
+  const attachReadingState = (
+    tab: ReaderTab,
+    readingState: BibleReadingState
+  ): (() => void) => {
+    const active = signal(false);
+    attachedReadingStates.value = new Map(attachedReadingStates.peek()).set(
+      tab.id,
+      { readingState, active }
+    );
+    const stopAttached = effect(() => {
+      if (readingState.selectedVerses.value.length > 0) {
+        untracked(() => {
+          active.value = true;
+          if (tab.readingState.selectedVerses.peek().length > 0) {
+            tab.readingState.clearSelectedVerses();
+          }
+        });
+      }
+    });
+    const stopOwn = effect(() => {
+      if (tab.readingState.selectedVerses.value.length > 0) {
+        untracked(() => {
+          active.value = false;
+          if (readingState.selectedVerses.peek().length > 0) {
+            readingState.clearSelectedVerses();
+          }
+        });
+      }
+    });
+    return () => {
+      stopAttached();
+      stopOwn();
+      const next = new Map(attachedReadingStates.peek());
+      if (next.get(tab.id)?.readingState === readingState) {
+        next.delete(tab.id);
+        attachedReadingStates.value = next;
+      }
+    };
+  };
+
+  const activeReadingState = (tab: ReaderTab): BibleReadingState => {
+    const attached = attachedReadingStates.value.get(tab.id);
+    return attached?.active.value ? attached.readingState : tab.readingState;
+  };
+
+  const focusReadingState = (
+    tab: ReaderTab,
+    readingState: BibleReadingState
+  ): void => {
+    const attached = attachedReadingStates.peek().get(tab.id);
+    if (attached) {
+      attached.active.value = attached.readingState === readingState;
+    }
+  };
+
+  return { attachReadingState, activeReadingState, focusReadingState };
 }

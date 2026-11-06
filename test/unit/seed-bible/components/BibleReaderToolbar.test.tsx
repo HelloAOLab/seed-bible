@@ -116,6 +116,58 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     });
   }
 
+  it("acts on a compare step's second passage while its verses are selected", async () => {
+    const tab = state.app.currentReadingState.value!.tab;
+    const chapter = tab.readingState.chapterData.value!;
+    const second = state.tabs.createDetachedReadingState({
+      initialTranslationId: chapter.translation.id,
+      initialBookId: chapter.book.id,
+      initialChapterNumber: chapter.chapter.number,
+    });
+    const detach = state.tabs.attachReadingState(tab, second);
+    try {
+      await waitFor(() => second.chapterData.value !== null, 2000);
+      await selectFirstVerse();
+      await renderToolbar();
+      const verses = second.chapterData.value!.chapter.content.filter(
+        (entry): entry is ChapterVerse => entry.type === "verse"
+      );
+      const verse = verses[1]!;
+
+      await act(async () => {
+        second.selectVerse(
+          {
+            bookId: chapter.book.id,
+            chapterNumber: chapter.chapter.number,
+            verse,
+            translationId: chapter.translation.id,
+          },
+          10,
+          10
+        );
+      });
+
+      // The toolbar names the second passage's verse, and the tab's own
+      // selection made way for it.
+      expect(
+        container.querySelector(".sb-verse-toolbar-ref-text")?.textContent
+      ).toBe(`${chapter.book.name} ${chapter.chapter.number}:${verse.number}`);
+      expect(tab.readingState.selectedVerses.value).toEqual([]);
+
+      // Selecting in the tab's own passage takes the toolbar back.
+      await selectFirstVerse();
+      expect(
+        container.querySelector(".sb-verse-toolbar-ref-text")?.textContent
+      ).toBe(
+        `${chapter.book.name} ${chapter.chapter.number}:${verses[0]!.number}`
+      );
+      expect(second.selectedVerses.value).toEqual([]);
+    } finally {
+      detach();
+      second.dispose();
+    }
+  });
+
   it("keeps an open pane open when the verse selection is cleared", async () => {
     expect(state.app.isMobile.value).toBe(true);
 

@@ -1,3 +1,7 @@
+import {
+  createAttachedReadingStates,
+  type ReaderTab,
+} from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { currentScriptureNoteItem } from "@packages/seed-bible/seed-bible/components/ScriptureNote/ScriptureNote";
 import { render } from "preact";
 import { act, setupRerender, teardown } from "preact/test-utils";
@@ -473,7 +477,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       connectionId: "test-connection",
     },
     tools: createBibleToolsManager(testBranding),
-    tabs: { selectedTabId: signal("") },
+    tabs: { selectedTabId: signal(""), ...createAttachedReadingStates() },
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover: { scrollToVerse: signal(null), view: signal(null) },
@@ -5623,7 +5627,7 @@ describe("BibleReader", () => {
         openVerseReference,
       },
       tools: createBibleToolsManager(testBranding),
-      tabs: { selectedTabId: signal("") },
+      tabs: { selectedTabId: signal(""), ...createAttachedReadingStates() },
       discover: { scrollToVerse: signal(null) },
       playlists: {
         playing: signal(null),
@@ -7058,13 +7062,20 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
       tab: { id: "tab-1", readingState } as any,
     };
     const second = options.compareReadingState;
+    const base = createMobileState(selectorState);
+    // Linked to the tab as playback links it, so the reader's handlers can
+    // point the verse toolbar at it.
     const playing = createPlayingState(
       [{ id: "p", title: "P", description: null, items } as SimplePlaylist],
       slot.tab as any,
       undefined,
-      second ? () => second : undefined
+      second
+        ? () => ({
+            readingState: second,
+            dispose: base.tabs.attachReadingState(slot.tab!, second),
+          })
+        : undefined
     );
-    const base = createMobileState(selectorState);
     const state = {
       ...base,
       app: {
@@ -7078,6 +7089,8 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
         isMobile: signal(options.compact),
       },
     } as any as SeedBibleState;
+    stepState = state;
+    stepTab = slot.tab!;
     act(() => {
       render(
         <BibleReader
@@ -7091,6 +7104,9 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
     });
     return playing;
   }
+  /** The app state and tab the last `renderStep` played in. */
+  let stepState: SeedBibleState;
+  let stepTab: ReaderTab;
 
   const page = () => container.querySelector(".sb-playlist-step-page");
   const chapterText = () =>
@@ -7238,6 +7254,88 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
       const { playing } = await renderCompare({ compact: false });
 
       expect(currentScriptureNoteItem(playing)).toBeNull();
+    });
+
+    describe("its second passage", () => {
+      const secondColumn = () => columns()[1]!;
+      const click = (element: Element | null | undefined) =>
+        act(() => {
+          element?.dispatchEvent(
+            new MouseEvent("click", { bubbles: true, clientX: 5, clientY: 6 })
+          );
+        });
+
+      it("selects a tapped verse in its own reading state, not the tab's", async () => {
+        const { second } = await renderCompare({ compact: true });
+
+        // On its words: a poetry verse takes a mouse click only there.
+        click(secondColumn().querySelector(".sb-verse-decorator"));
+
+        expect(second.readingState.selectVerse).toHaveBeenCalledWith(
+          expect.objectContaining({
+            verse: expect.objectContaining({ number: 2 }),
+          }),
+          5,
+          6
+        );
+      });
+
+      it("opens its footnotes, and points the verse toolbar and notes at it", async () => {
+        // Its second passage is verse 1 here, which has a footnote.
+        const second = createFixture();
+        const playing = renderStep(
+          [
+            {
+              ...COMPARE,
+              compare: { ref: { bookId: "GEN", chapter: 1, verse: 1 } },
+            },
+          ],
+          { compact: true, compareReadingState: second.readingState }
+        );
+        await act(async () => {
+          await playing.jumpTo(0);
+        });
+
+        click(
+          secondColumn().querySelector(
+            '.sb-inline-footnote-button[aria-label="Open footnote 7"]'
+          )
+        );
+
+        expect(second.readingState.selectFootnote).toHaveBeenCalledWith(7);
+        expect(stepState.tabs.activeReadingState(stepTab)).toBe(
+          second.readingState
+        );
+
+        // Once open, it shows in the same footnote box as the tab's own.
+        const chapter = second.chapterData.value!;
+        act(() => {
+          second.selectedFootnote.value = {
+            note: chapter.chapter.footnotes[0]!,
+            verse: null,
+            chapter,
+          };
+        });
+        expect(
+          container.querySelector(".sb-footnote-modal-content")?.textContent
+        ).toContain("Footnote text");
+        click(container.querySelector(".sb-footnote-modal-close"));
+        expect(second.readingState.selectFootnote).toHaveBeenCalledWith(null);
+      });
+
+      it("hands the verse toolbar back to the tab's own passage when it's used", async () => {
+        const { second } = await renderCompare({ compact: true });
+        click(secondColumn().querySelector(".sb-verse-decorator"));
+        expect(stepState.tabs.activeReadingState(stepTab)).toBe(
+          second.readingState
+        );
+
+        click(columns()[0]!.querySelector(".sb-inline-footnote-button"));
+
+        expect(stepState.tabs.activeReadingState(stepTab)).toBe(
+          stepTab.readingState
+        );
+      });
     });
 
     it("puts its title in the reader's heading on desktop", async () => {

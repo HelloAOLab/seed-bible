@@ -783,10 +783,14 @@ export function createPlayingState(
   sourcePlaylists: SimplePlaylist[],
   tab: ReaderTab | null = null,
   onFinish?: () => void,
-  /** Makes the reading state a compare step's second passage is shown in. */
-  createCompareReadingState?: (
-    options: InitialBibleReadingOptions
-  ) => BibleReadingState
+  /**
+   * Makes the reading state a compare step's second passage is shown in, with
+   * what to call to be done with it.
+   */
+  createCompareReadingState?: (options: InitialBibleReadingOptions) => {
+    readingState: BibleReadingState;
+    dispose: () => void;
+  }
 ) {
   const playlists = signal<SimplePlaylist[]>(sourcePlaylists);
   const queue = signal<PlaylistItemData[]>(
@@ -977,6 +981,7 @@ export function createPlayingState(
    * tab's own. Made on the first compare step and kept for later ones.
    */
   const compareReadingState = signal<BibleReadingState | null>(null);
+  let disposeCompareReadingState: (() => void) | null = null;
 
   /**
    * Opens both of a compare step's passages: the first in the tab, the second
@@ -1002,11 +1007,13 @@ export function createPlayingState(
         );
       }
       if (createCompareReadingState) {
-        compareReadingState.value = createCompareReadingState({
+        const created = createCompareReadingState({
           initialTranslationId: translation,
           initialBookId: compare.ref.bookId,
           initialChapterNumber: compare.ref.chapter,
         });
+        disposeCompareReadingState = created.dispose;
+        compareReadingState.value = created.readingState;
       }
       return Promise.resolve();
     };
@@ -1287,7 +1294,8 @@ export function createPlayingState(
   const dispose = (): void => {
     disposeRearm();
     disposeDecoration();
-    compareReadingState.peek()?.dispose();
+    disposeCompareReadingState?.();
+    disposeCompareReadingState = null;
     compareReadingState.value = null;
   };
 
@@ -3052,7 +3060,17 @@ export function createPlaylistManager(
             openPlaylistFinishedModal(playlist);
           }
         },
-        (options) => tabs.createDetachedReadingState(options)
+        (options) => {
+          const second = tabs.createDetachedReadingState(options);
+          const detach = tab ? tabs.attachReadingState(tab, second) : () => {};
+          return {
+            readingState: second,
+            dispose: () => {
+              detach();
+              second.dispose();
+            },
+          };
+        }
       );
       // Apply the synced queue + position (a peer's queue may differ from the
       // raw playlist items after add/remove/reorder).
