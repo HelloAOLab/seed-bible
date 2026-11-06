@@ -134,8 +134,9 @@ export const PlaylistItem = z.discriminatedUnion("type", [
      */
     question: z
       .object({
+        /** HTML, like the question. */
         hint: z.string().optional(),
-        /** The author's own answer to the question. */
+        /** The author's own answer to the question, as HTML. */
         answer: z.string().optional(),
       })
       .optional(),

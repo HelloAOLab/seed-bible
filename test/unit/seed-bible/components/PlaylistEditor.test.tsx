@@ -1,5 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import type { Editor } from "@tiptap/core";
 import { PlaylistEditorPanel } from "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistEditorPanel";
 import { DiscoverPane } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverPane";
 import { PlaylistEditorWorkspace } from "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistEditorWorkspace";
@@ -704,34 +705,71 @@ describe("the playlist editor", () => {
       }
     );
 
-    it("edits a question's text, hint, and answer, with no choice of who sees responses", () => {
+    it("edits a question's title as plain text, and its question, hint, and answer in TipTap", async () => {
       openWorkspace(STEPS, 2);
 
       expect(container.querySelector(".sb-pe-eyebrow")!.textContent).toBe(
         "Step 3 · Question"
       );
-      type(container.querySelector("#sb-pe-question-2"), "Where is <God>?");
-      type(container.querySelector("#sb-pe-question-hint-2"), "Look back");
-      type(container.querySelector("#sb-pe-question-answer-2"), "Everywhere");
-
       expect(container.textContent).not.toContain("Who sees responses");
-      const hints = Array.from(
+      const labels = Array.from(
         container.querySelectorAll(".sb-pe-field-head"),
         (head) => [
           head.querySelector(".sb-pe-field-label")!.textContent,
           head.querySelector(".sb-pe-field-hint")?.textContent ?? null,
         ]
       );
-      expect(hints).toEqual([
+      expect(labels).toEqual([
+        ["Title", "Optional"],
         ["Question", null],
         ["Hint for readers", "Optional"],
         ["Answer", "Optional"],
       ]);
 
+      type(container.querySelector("#sb-pe-title-2"), "Light");
+
+      // TipTap loads lazily, and keeps its editor on the element it edits.
+      const editors = () =>
+        Array.from(
+          container.querySelectorAll<HTMLElement & { editor?: Editor }>(
+            ".ProseMirror"
+          ),
+          (el) => el.editor
+        ).filter((editor): editor is Editor => !!editor);
+      const deadline = Date.now() + 3000;
+      while (editors().length < 3 && Date.now() < deadline) {
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        });
+      }
+      expect(
+        container.querySelectorAll(".sb-pe-card .sb-editor-toolbar")
+      ).toHaveLength(3);
+      const [question, hint, answer] = editors();
+      // Each edit is sanitized before it's saved, so wait for it to land.
+      const step = () =>
+        items()[2] as Extract<Playlist["items"][number], { type: "html" }>;
+      act(() => {
+        question!.commands.setContent("<p>Where is <strong>God</strong>?</p>");
+      });
+      await waitFor(() => step().html.includes("strong"));
+      act(() => {
+        hint!.commands.setContent("<p>Look <em>back</em></p>");
+      });
+      await waitFor(() => !!step().question?.hint);
+      act(() => {
+        answer!.commands.setContent("<p>Everywhere</p>");
+      });
+      await waitFor(() => !!step().question?.answer);
+
       expect(items()[2]).toEqual({
         type: "html",
-        html: "<p>Where is &lt;God&gt;?</p>",
-        question: { hint: "Look back", answer: "Everywhere" },
+        title: "Light",
+        html: "<p>Where is <strong>God</strong>?</p>",
+        question: {
+          hint: "<p>Look <em>back</em></p>",
+          answer: "<p>Everywhere</p>",
+        },
         minutes: 4,
       });
     });

@@ -69,14 +69,18 @@ function TitleField(props: {
   t: Translate;
   /** Shown while the title is empty, in place of the usual example. */
   placeholder?: string;
+  hint?: string;
 }) {
   const { t } = props;
   return (
     <Field
       label={t("playlist-editor-title", { defaultValue: "Title" })}
-      hint={t("playlist-editor-title-hint", {
-        defaultValue: "Optional — a short heading",
-      })}
+      hint={
+        props.hint ??
+        t("playlist-editor-title-hint", {
+          defaultValue: "Optional — a short heading",
+        })
+      }
       htmlFor={props.id}
     >
       <input
@@ -154,82 +158,68 @@ function NoteCard(props: { ctx: StepCardContext; item: HtmlItem }) {
 function QuestionCard(props: { ctx: StepCardContext; item: HtmlItem }) {
   const { ctx, item } = props;
   const { t } = useI18n();
-  // Kept as typed, so a trailing space survives until the next word.
-  const [question, setQuestion] = useState(() => questionFromHtml(item.html));
   const update = (changes: Partial<HtmlItem>) =>
     ctx.playlists.updateEditingPlaylistItem(ctx.index, { ...item, ...changes });
-  const questionId = `sb-pe-question-${ctx.index}`;
-  const hintId = `sb-pe-question-hint-${ctx.index}`;
-  const answerId = `sb-pe-question-answer-${ctx.index}`;
+  const optional = t("playlist-editor-optional", { defaultValue: "Optional" });
 
   return (
     <>
-      <Field
-        label={t("playlist-step-question", { defaultValue: "Question" })}
-        htmlFor={questionId}
-      >
-        <textarea
-          id={questionId}
-          className="sb-pe-textarea"
-          dir="auto"
-          rows={3}
-          value={question}
+      <TitleField
+        id={`sb-pe-title-${ctx.index}`}
+        value={item.title ?? ""}
+        t={t}
+        hint={optional}
+        placeholder={t("playlist-editor-question-title-placeholder", {
+          defaultValue: "e.g. Light in the dark",
+        })}
+        onInput={(value) => update({ title: value || undefined })}
+      />
+      <Field label={t("playlist-step-question", { defaultValue: "Question" })}>
+        <PlaylistNoteComposer
+          boxed
+          formatting
+          initialHtml={item.html}
           placeholder={t("playlist-editor-question-placeholder", {
             defaultValue: "e.g. What does light reveal in your life this week?",
           })}
-          onInput={(event) => {
-            const value = event.currentTarget.value;
-            setQuestion(value);
-            update({ html: questionToHtml(value) });
-          }}
+          steps={[]}
+          onChange={(html) => update({ html })}
         />
       </Field>
       <Field
         label={t("playlist-editor-reader-hint", {
           defaultValue: "Hint for readers",
         })}
-        hint={t("playlist-editor-optional", { defaultValue: "Optional" })}
-        htmlFor={hintId}
+        hint={optional}
       >
-        <input
-          id={hintId}
-          className="sb-pe-input"
-          type="text"
-          dir="auto"
-          value={item.question?.hint ?? ""}
+        <PlaylistNoteComposer
+          boxed
+          formatting
+          initialHtml={item.question?.hint ?? ""}
           placeholder={t("playlist-editor-reader-hint-placeholder", {
             defaultValue: "e.g. Think about a moment this week",
           })}
-          onInput={(event) =>
-            update({
-              question: {
-                ...item.question,
-                hint: event.currentTarget.value || undefined,
-              },
-            })
+          steps={[]}
+          onChange={(html) =>
+            update({ question: { ...item.question, hint: html || undefined } })
           }
         />
       </Field>
       <Field
         label={t("playlist-editor-answer", { defaultValue: "Answer" })}
-        hint={t("playlist-editor-optional", { defaultValue: "Optional" })}
-        htmlFor={answerId}
+        hint={optional}
       >
-        <textarea
-          id={answerId}
-          className="sb-pe-textarea"
-          dir="auto"
-          rows={3}
-          value={item.question?.answer ?? ""}
+        <PlaylistNoteComposer
+          boxed
+          formatting
+          initialHtml={item.question?.answer ?? ""}
           placeholder={t("playlist-editor-answer-placeholder", {
             defaultValue: "e.g. In the way He provides, even in small things",
           })}
-          onInput={(event) =>
+          steps={[]}
+          onChange={(html) =>
             update({
-              question: {
-                ...item.question,
-                answer: event.currentTarget.value || undefined,
-              },
+              question: { ...item.question, answer: html || undefined },
             })
           }
         />
