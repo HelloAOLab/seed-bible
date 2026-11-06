@@ -603,7 +603,7 @@ function BookmarkRow(props: {
         <span className="sb-content-bookmark-text">
           <span className="sb-content-bookmark-name">{bookmark.name}</span>
           <span className="sb-content-bookmark-meta">
-            <span className="sb-content-bookmark-chapter">
+            <span className="sb-content-bookmark-chapter" dir="auto">
               {props.chapterText}
             </span>
             <MetaSeparator />
