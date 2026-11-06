@@ -1128,7 +1128,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
             startIndex,
             // Reading plans reuse the playlist player but keep their own
             // progress records — don't also write playlist play history.
-            { history: false }
+            { history: false, openItem: true }
           );
         }}
         toast={toast}

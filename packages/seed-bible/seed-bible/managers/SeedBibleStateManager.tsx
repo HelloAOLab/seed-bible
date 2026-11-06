@@ -1493,6 +1493,16 @@ export function createSeedBibleState(
     if (restoringStoredState || tabs.isRestoringProfileTranslation()) {
       return;
     }
+    // A phone starts a playlist on its list of steps, which fills the screen,
+    // while the reader moves to the first step behind it. Only the playlist
+    // can move the reader then: opening a step puts the list away first.
+    if (
+      isMobile.peek() &&
+      playlists.view.peek() === "play_playlist" &&
+      playlists.playing.peek()
+    ) {
+      return;
+    }
     panes.closeFullscreenPanes();
   });
 

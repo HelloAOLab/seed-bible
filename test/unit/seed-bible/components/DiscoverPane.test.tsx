@@ -312,7 +312,7 @@ describe("DiscoverPane", () => {
     expect(closePane).toHaveBeenCalledWith(DISCOVER_PANE_ID, "user");
   });
 
-  it("closes the pane as the user from a sub-view's close button", () => {
+  it("has no close button on the playing playlist's view", () => {
     const closePane = vi.fn();
     const { playlists } = createMockPlaylists({
       view: "play_playlist",
@@ -335,15 +335,10 @@ describe("DiscoverPane", () => {
       );
     });
 
-    act(() => {
-      container
-        .querySelector(".sb-discover-panel-header-close")!
-        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    // "user" (not "programmatic") is what makes the pane's onClose stop the
-    // playing playlist.
-    expect(closePane).toHaveBeenCalledWith(DISCOVER_PANE_ID, "user");
+    expect(container.querySelector(".sb-play-playlist")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-discover-panel-header-close")
+    ).toBeNull();
   });
 
   it("leaves the play view when playback stops without `view` being reset (tab switch)", () => {

@@ -3788,11 +3788,13 @@ export function BibleReader(props: BibleReaderProps) {
               <button
                 type="button"
                 className="sb-bible-reader-mobile-header-back"
-                aria-label={t("close-playlist", {
-                  defaultValue: "Close playlist",
+                aria-label={t("playlist-show-steps", {
+                  defaultValue: "Back to the playlist",
                 })}
-                title={t("close-playlist", { defaultValue: "Close playlist" })}
-                onClick={() => state.playlists.stopPlaying()}
+                title={t("playlist-show-steps", {
+                  defaultValue: "Back to the playlist",
+                })}
+                onClick={() => (state.playlists.view.value = "play_playlist")}
               >
                 <MaterialIcon>
                   {isRtl ? "arrow_forward" : "arrow_back"}

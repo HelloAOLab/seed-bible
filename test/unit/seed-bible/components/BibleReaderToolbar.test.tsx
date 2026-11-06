@@ -5846,7 +5846,7 @@ describe("BibleReaderToolbar — compact embed", () => {
             ],
           },
           0,
-          { history: false }
+          { history: false, openItem: true }
         );
       });
       expect(

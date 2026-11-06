@@ -5875,7 +5875,9 @@ describe("BibleReader", () => {
       const { slot, selectorState, readingState } = createFixture();
       const state = createMobileState(selectorState);
       const stopPlaying = vi.fn();
+      const view = signal<string | null>(null);
       Object.assign(state.playlists, {
+        view,
         playing: signal(
           playing
             ? createPlayingState(
@@ -5904,14 +5906,14 @@ describe("BibleReader", () => {
       const back = container.querySelector<HTMLButtonElement>(
         "button.sb-bible-reader-mobile-header-back"
       );
-      return { back, stopPlaying };
+      return { back, stopPlaying, view };
     };
 
-    it("starts the header row and closes the playlist when tapped", () => {
-      const { back, stopPlaying } = renderPlaying(true);
+    it("starts the header row and goes back to the playlist's steps, still playing, when tapped", () => {
+      const { back, stopPlaying, view } = renderPlaying(true);
 
       expect(back).not.toBeNull();
-      expect(back?.getAttribute("aria-label")).toBe("Close playlist");
+      expect(back?.getAttribute("aria-label")).toBe("Back to the playlist");
       expect(back?.textContent).toBe("arrow_back");
       const header = container.querySelector(".sb-bible-reader-mobile-header")!;
       expect(header.firstElementChild).toBe(back);
@@ -5920,7 +5922,8 @@ describe("BibleReader", () => {
         back!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
 
-      expect(stopPlaying).toHaveBeenCalledTimes(1);
+      expect(view.value).toBe("play_playlist");
+      expect(stopPlaying).not.toHaveBeenCalled();
     });
 
     it("is followed by the playing playlist's info, not grouped with the other tools", () => {

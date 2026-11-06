@@ -81,7 +81,6 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         playlists={playlists}
         tabs={tabs}
         modals={modals}
-        onClose={close}
       />
     );
   }

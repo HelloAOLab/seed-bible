@@ -52,16 +52,20 @@ function createMockPlaylists(
 ): {
   playlists: PlaylistManager;
   goBackFromPlayingView: ReturnType<typeof vi.fn>;
+  openQueueItem: ReturnType<typeof vi.fn>;
 } {
   const goBackFromPlayingView = vi.fn();
+  const openQueueItem = vi.fn();
   return {
     playlists: {
       playing: signal(playing),
       playingAuthorName: signal(authorName),
       openingPlayback: signal(openingPlayback),
       goBackFromPlayingView,
+      openQueueItem,
     } as unknown as PlaylistManager,
     goBackFromPlayingView,
+    openQueueItem,
   };
 }
 
@@ -110,7 +114,6 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
-          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -124,14 +127,10 @@ describe("PlayPlaylistView", () => {
   });
 
   describe("header", () => {
-    function renderView(
-      playlists: PlaylistManager,
-      onClose: () => void = vi.fn()
-    ) {
+    function renderView(playlists: PlaylistManager) {
       act(() => {
         render(
           <PlayPlaylistView
-            onClose={onClose}
             playlists={playlists}
             tabs={createMockTabs()}
             modals={modals}
@@ -142,7 +141,7 @@ describe("PlayPlaylistView", () => {
       });
     }
 
-    it("shows the playing playlist's title, and goes back from the back button", () => {
+    it("shows the playing playlist's title, and leaves the playlist from the back button", () => {
       const { playlists, goBackFromPlayingView } = createMockPlaylists(
         createPlayingState([createPlaylist({ title: "Evening Reading" })])
       );
@@ -185,19 +184,19 @@ describe("PlayPlaylistView", () => {
       ).not.toBeNull();
     });
 
-    it("closes the pane from the close button", () => {
-      const onClose = vi.fn();
+    it("has no close button; the back button is the way out", () => {
       renderView(
-        createMockPlaylists(createPlayingState([createPlaylist()])).playlists,
-        onClose
+        createMockPlaylists(createPlayingState([createPlaylist()])).playlists
       );
 
-      act(() => {
+      expect(
+        container.querySelector(".sb-discover-panel-header-close")
+      ).toBeNull();
+      expect(
         container
-          .querySelector(".sb-discover-panel-header-close")!
-          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      });
-      expect(onClose).toHaveBeenCalledTimes(1);
+          .querySelector(".sb-pane-header-button")
+          ?.getAttribute("aria-label")
+      ).toBe("Close playlist");
     });
   });
 
@@ -215,7 +214,6 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
-          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -254,7 +252,6 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
-          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -286,7 +283,6 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
-          onClose={vi.fn()}
           playlists={playlists}
           tabs={createMockTabs()}
           modals={modals}
@@ -311,7 +307,6 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
-          onClose={vi.fn()}
           playlists={playlists}
           tabs={createMockTabs()}
           modals={modals}
@@ -333,7 +328,6 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
-          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -360,7 +354,6 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
-          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -394,7 +387,6 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
-          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -412,24 +404,22 @@ describe("PlayPlaylistView", () => {
     expect(labels).toEqual(["Genesis 1:1 · In the beginning", "Genesis 1:2"]);
   });
 
-  it("clicking a queue item jumps playback to that item", () => {
+  it("opens the clicked queue item, including the one already playing", () => {
     const playlist = createPlaylist({
       items: [
-        verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+        { type: "html", title: "Intro", html: "<p>Intro</p>" },
         verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
         verseItem({ ref: { bookId: "GEN", chapter: 3 } }),
       ],
     });
     const playing = createPlayingState([playlist]);
-    const { playlists } = createMockPlaylists(playing);
-    const tabs = createMockTabs();
+    const { playlists, openQueueItem } = createMockPlaylists(playing);
 
     act(() => {
       render(
         <PlayPlaylistView
-          onClose={vi.fn()}
           playlists={playlists}
-          tabs={tabs}
+          tabs={createMockTabs()}
           modals={modals}
           state={state}
         />,
@@ -440,46 +430,10 @@ describe("PlayPlaylistView", () => {
     const buttons = container.querySelectorAll(".sb-play-playlist-item-button");
     act(() => {
       buttons[2]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(playing.currentIndex.value).toBe(2);
-  });
-
-  it("clicking the current queue item reopens it", () => {
-    const playlist = createPlaylist({
-      items: [
-        { type: "html", title: "Intro", html: "<p>Intro</p>" },
-        verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
-      ],
-    });
-    const playing = createPlayingState([playlist]);
-    const showCurrentItem = vi.fn();
-    const jumpTo = vi.spyOn(playing, "jumpTo");
-    const { playlists } = createMockPlaylists(playing);
-    playlists.showCurrentItem = showCurrentItem;
-    const tabs = createMockTabs();
-
-    act(() => {
-      render(
-        <PlayPlaylistView
-          onClose={vi.fn()}
-          playlists={playlists}
-          tabs={tabs}
-          modals={modals}
-          state={state}
-        />,
-        container
-      );
-    });
-
-    const buttons = container.querySelectorAll(".sb-play-playlist-item-button");
-    act(() => {
       buttons[0]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    expect(showCurrentItem).toHaveBeenCalledTimes(1);
-    expect(jumpTo).not.toHaveBeenCalled();
-    expect(playing.currentIndex.value).toBe(0);
+    expect(openQueueItem.mock.calls).toEqual([[2], [0]]);
   });
 
   it("shows a leading icon per item type", () => {
@@ -497,7 +451,6 @@ describe("PlayPlaylistView", () => {
     act(() => {
       render(
         <PlayPlaylistView
-          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -540,7 +493,6 @@ describe("PlayPlaylistView", () => {
       act(() => {
         render(
           <PlayPlaylistView
-            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -572,7 +524,6 @@ describe("PlayPlaylistView", () => {
       act(() => {
         render(
           <PlayPlaylistView
-            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -614,7 +565,7 @@ describe("PlayPlaylistView", () => {
       ).toBe(true);
     });
 
-    it("clicking a queue item still jumps playback with the drag handle present", () => {
+    it("clicking a queue item still opens it with the drag handle present", () => {
       const playlist = createPlaylist({
         items: [
           verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
@@ -622,13 +573,12 @@ describe("PlayPlaylistView", () => {
         ],
       });
       const playing = createPlayingState([playlist]);
-      const { playlists } = createMockPlaylists(playing);
+      const { playlists, openQueueItem } = createMockPlaylists(playing);
       const tabs = createMockTabs();
 
       act(() => {
         render(
           <PlayPlaylistView
-            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -645,7 +595,7 @@ describe("PlayPlaylistView", () => {
         buttons[1]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
 
-      expect(playing.currentIndex.value).toBe(1);
+      expect(openQueueItem).toHaveBeenCalledWith(1);
     });
   });
 });

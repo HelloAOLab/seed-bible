@@ -437,6 +437,11 @@ export type PlaylistPlayHistory = z.infer<typeof PlaylistPlayHistorySchema>;
 export type StartPlayingOptions = {
   history?: false;
   sharedOpening?: true;
+  /**
+   * On a phone, goes straight to the starting step rather than to the list
+   * of steps (which a shared opening skips too: its page already showed it).
+   */
+  openItem?: true;
 };
 
 export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
@@ -1701,6 +1706,25 @@ export function createPlaylistManager(
     }
   };
 
+  /**
+   * Opens a step from the list of steps. On a phone the list fills the
+   * screen, so it is put away to show the step.
+   */
+  const openQueueItem = (index: number): void => {
+    const state = playing.peek();
+    if (!state) {
+      return;
+    }
+    if (isMobile.peek()) {
+      view.value = null;
+    }
+    if (index === state.currentIndex.peek()) {
+      showItemInModal(state);
+    } else {
+      void state.jumpTo(index);
+    }
+  };
+
   const savePlaylist = async (playlist: Playlist) => {
     await os.recordData(playlist.recordName, playlist.id, playlist, {
       marker: "publicRead:playlists",
@@ -2738,6 +2762,13 @@ export function createPlaylistManager(
     }
     capturePlaylistEvent("playlist_played", playlists);
 
+    // Set before playback starts, so the step's pop-up knows whether the
+    // phone's list of steps is about to cover the reader.
+    view.value =
+      isMobile.value && (options?.sharedOpening || options?.openItem)
+        ? null
+        : "play_playlist";
+
     targetTab?.readingState.enableExtension(PLAYLIST_READING_EXTENSION_ID, {
       playlists,
       queue,
@@ -2753,12 +2784,6 @@ export function createPlaylistManager(
     void (opened?.whenSettled() ?? Promise.resolve()).finally(() => {
       finishOpeningPlayback(generation);
     });
-    view.value = "play_playlist";
-
-    if (isMobile.value) {
-      // on mobile, close the discover pane so the reader is visible while playing
-      view.value = null;
-    }
 
     const trackHistory = options?.history !== false;
     const firstPlaylist = playlists[0];
@@ -2847,11 +2872,12 @@ export function createPlaylistManager(
       navigation.currentUrl.value
     ).toString();
 
+  /** The list of steps' back button: leaves the playlist. */
   const goBackFromPlayingView = () => {
-    if (isMobile.value) {
+    stopPlaying();
+    // A phone goes back to the reader, not to Discover filling the screen.
+    if (isMobile.peek()) {
       view.value = null;
-    } else {
-      stopPlaying();
     }
   };
 
@@ -2901,7 +2927,7 @@ export function createPlaylistManager(
         entry.playlistId
       );
       const step = Math.max(0, entry.currentStep);
-      const playingState = startPlaying(playlist, step);
+      const playingState = startPlaying(playlist, step, { openItem: true });
       if (!playingState) {
         throw new Error("Cannot play a playlist without an open tab.");
       }
@@ -2983,11 +3009,18 @@ export function createPlaylistManager(
   });
 
   effect(() => {
-    if (!playing.value) {
+    const state = playing.value;
+    if (!state) {
       return;
     }
-
-    showItemInModal(playing.value);
+    // Read here so a new step reruns this even while it's skipped below.
+    void state.currentItem.value;
+    // On a phone the list of steps comes first; a step's pop-up waits until
+    // one is opened from it (see `openQueueItem`).
+    if (isMobile.peek() && view.peek() === "play_playlist") {
+      return;
+    }
+    showItemInModal(state);
   });
 
   // Mirror queue position into the active history row whenever it changes.
@@ -3700,6 +3733,7 @@ export function createPlaylistManager(
     playing,
     openingPlayback,
     showCurrentItem,
+    openQueueItem,
     startPlaying,
     stopPlaying,
     continueFromHistory,

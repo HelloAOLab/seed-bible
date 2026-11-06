@@ -1607,6 +1607,33 @@ describe("createSeedBibleState", () => {
     expect(state.panes.panes.value).toHaveLength(0);
   });
 
+  it("keeps a phone's playlist list open while the reader moves to the playlist's first passage", async () => {
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    const state = await createState();
+    (state.app.viewportWidth as unknown as { value: number }).value =
+      MOBILE_BREAKPOINT;
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await waitFor(() => readingState.chapterData.value !== null);
+
+    state.playlists.startPlaying(
+      {
+        id: "p",
+        title: "Exodus",
+        description: null,
+        items: [{ type: "bible-verse", ref: { bookId: "EXO", chapter: 2 } }],
+      },
+      0,
+      { history: false }
+    );
+    await waitFor(() => readingState.bookId.value === "EXO");
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(state.playlists.view.value).toBe("play_playlist");
+    expect(
+      state.panes.panes.value.some((pane) => pane.id === DISCOVER_PANE_ID)
+    ).toBe(true);
+  });
+
   describe("viewport seeding and applyViewport()", () => {
     it("seeds the desktop viewport size when renderedAsMobile is false, ignoring the real window size", async () => {
       const state = await createTestSeedBibleState({
@@ -4600,7 +4627,7 @@ describe("closing the Discover pane while a playlist plays", () => {
     return state;
   }
 
-  it("stops playback when the user closes the pane from its close button", async () => {
+  it("has no close button, and stops playback from its back button, back to Discover", async () => {
     const state = await playInDiscoverPane();
     const pane = state.panes.panes.value.find(
       (item) => item.id === DISCOVER_PANE_ID
@@ -4616,16 +4643,17 @@ describe("closing the Discover pane while a playlist plays", () => {
       );
     });
 
+    expect(
+      container.querySelector(".sb-discover-panel-header-close")
+    ).toBeNull();
     act(() => {
       container
-        .querySelector(".sb-discover-panel-header-close")!
+        .querySelector('[aria-label="Close playlist"]')!
         .dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
     await waitFor(() => state.playlists.playing.value === null);
-    expect(
-      state.panes.panes.value.some((item) => item.id === DISCOVER_PANE_ID)
-    ).toBe(false);
+    expect(state.playlists.view.value).toBe("discover");
   });
 
   it("keeps playing when the pane is closed by the app rather than the user", async () => {

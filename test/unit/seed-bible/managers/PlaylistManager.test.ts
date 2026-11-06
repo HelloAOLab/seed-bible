@@ -15,6 +15,7 @@ import {
   PlaylistSchema,
   PlaylistPlayHistorySchema,
   createPlaylistManager,
+  type StartPlayingOptions,
   createPlayingState,
   groupVersesIntoPlaylistItems,
   formatPlaylistPlayDurationMs,
@@ -452,6 +453,8 @@ describe("createPlaylistManager", () => {
   /** The fake `ChatsManager`'s `addContext`/`removeContext` spies from the most recent `makeManager()` call. */
   /** The `ModalManager` from the most recent `makeManager()` call. */
   let lastModals: ReturnType<typeof createModalManager>;
+  /** The phone/desktop switch from the most recent `makeManager()` call. */
+  let lastIsMobile: ReturnType<typeof signal<boolean>>;
   let lastI18n: ReturnType<typeof createI18nManager>;
   let lastChatsAddContext: Mock;
   let lastChatsRemoveContext: Mock;
@@ -492,6 +495,7 @@ describe("createPlaylistManager", () => {
       initialHref ? { initialHref } : undefined
     );
     const isMobile = signal(false);
+    lastIsMobile = isMobile;
     const modals = createModalManager();
     lastModals = modals;
     const i18n = createI18nManager(navigation, ["en"]);
@@ -4887,6 +4891,83 @@ describe("createPlaylistManager", () => {
         }
       }
     );
+  });
+
+  describe("moving between a playing playlist's steps and its list", () => {
+    const items = (): Playlist["items"] => [
+      { type: "html", title: "Welcome", html: "<p>Welcome</p>" },
+      { type: "bible-verse", ref: { bookId: "JHN", chapter: 3, verse: 16 } },
+      { type: "html", title: "Reflect", html: "<p>Reflect</p>" },
+    ];
+    const itemOpen = () =>
+      lastModals.modals.value.some((m) => m.id === "playlist-item-content");
+
+    const playOnPhone = async (options?: StartPlayingOptions) => {
+      const manager = makeManager("user-1");
+      await flush();
+      lastIsMobile.value = true;
+      manager.startPlaying(makePlaylist({ items: items() }), 0, options);
+      return manager;
+    };
+
+    it("starts on a phone at the list of steps, with no step open over it", async () => {
+      const manager = await playOnPhone();
+
+      expect(manager.view.value).toBe("play_playlist");
+      expect(manager.playing.value?.currentIndex.value).toBe(0);
+      expect(itemOpen()).toBe(false);
+    });
+
+    it("puts the list away on a phone to open the tapped step", async () => {
+      const manager = await playOnPhone();
+
+      // The step playback is already on, a text step: it opens.
+      manager.openQueueItem(0);
+      expect(manager.view.value).toBeNull();
+      expect(itemOpen()).toBe(true);
+
+      // Back to the list, then another step.
+      manager.view.value = "play_playlist";
+      manager.openQueueItem(1);
+      await flush();
+      expect(manager.view.value).toBeNull();
+      expect(manager.playing.value?.currentIndex.value).toBe(1);
+      expect(itemOpen()).toBe(false);
+      expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+        "BSB",
+        "JHN",
+        3,
+        { scrollToVerse: 16 }
+      );
+    });
+
+    it("goes straight to the step on a phone when asked to, as resuming does", async () => {
+      const manager = await playOnPhone({ openItem: true });
+
+      expect(manager.view.value).toBeNull();
+      expect(itemOpen()).toBe(true);
+    });
+
+    it("leaves the playlist from the list's back button, back to the reader on a phone", async () => {
+      const manager = await playOnPhone();
+
+      manager.goBackFromPlayingView();
+
+      expect(manager.playing.value).toBeNull();
+      expect(manager.view.value).toBeNull();
+    });
+
+    it("leaves the playlist from the list's back button on desktop, back to Discover", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(makePlaylist({ items: items() }));
+      expect(manager.view.value).toBe("play_playlist");
+
+      manager.goBackFromPlayingView();
+
+      expect(manager.playing.value).toBeNull();
+      expect(manager.view.value).toBe("discover");
+    });
   });
 
   describe("playlist finished modal", () => {

@@ -20,13 +20,15 @@ interface PlayPlaylistViewProps {
   tabs: TabsManager;
   modals: ModalManager;
   state: SeedBibleState;
-  onClose: () => void;
 }
 
-/** Back button plus the playing playlist's title, for the view's header. */
+/**
+ * Back button, which leaves the playlist, plus the playing playlist's title,
+ * for the view's header.
+ */
 function PlayPlaylistTitle(props: { playlists: PlaylistManager }) {
   const { playlists } = props;
-  const { t } = useI18n();
+  const { t, isRtl } = useI18n();
   const title =
     playlists.playing.value?.playlists.value[0]?.title ??
     t("untitled-playlist", { defaultValue: "Untitled playlist" });
@@ -36,10 +38,11 @@ function PlayPlaylistTitle(props: { playlists: PlaylistManager }) {
       <button
         type="button"
         className="sb-pane-header-button"
-        aria-label={t("back", { defaultValue: "Back" })}
+        aria-label={t("close-playlist", { defaultValue: "Close playlist" })}
+        title={t("close-playlist", { defaultValue: "Close playlist" })}
         onClick={() => playlists.goBackFromPlayingView()}
       >
-        <MaterialIcon>arrow_back</MaterialIcon>
+        <MaterialIcon>{isRtl ? "arrow_forward" : "arrow_back"}</MaterialIcon>
       </button>
       <span className="sb-discover-title" dir="auto">
         {title}
@@ -56,7 +59,7 @@ function PlayPlaylistTitle(props: { playlists: PlaylistManager }) {
  * (html) items open in the app's generic modal rather than rendering inline.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
-  const { playlists, tabs, onClose } = props;
+  const { playlists, tabs } = props;
   const { t } = useI18n();
 
   // Reading `.value` during render subscribes the component to updates.
@@ -93,7 +96,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   return (
     <DiscoverPanelLayout
       title={<PlayPlaylistTitle playlists={playlists} />}
-      onClose={onClose}
       bodyClassName="sb-play-playlist"
     >
       <div className="sb-play-playlist-body">
@@ -155,13 +157,7 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                   type="button"
                   className="sb-play-playlist-item-button"
                   aria-current={index === currentIndex}
-                  onClick={() => {
-                    if (index === currentIndex) {
-                      playlists.showCurrentItem();
-                      return;
-                    }
-                    playing.jumpTo(index);
-                  }}
+                  onClick={() => playlists.openQueueItem(index)}
                 >
                   <MaterialIcon className="sb-discover-item-icon">
                     {playlistItemIcon(item)}
