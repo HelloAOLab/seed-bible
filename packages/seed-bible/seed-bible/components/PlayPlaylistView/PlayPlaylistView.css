@@ -58,6 +58,14 @@
   margin-inline: -10px;
 }
 
+/* The author's time estimate, after the label. */
+.sb-play-playlist-item-minutes {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  white-space: nowrap;
+}
+
 .sb-play-playlist-item--current {
   border-radius: 6px;
   background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);

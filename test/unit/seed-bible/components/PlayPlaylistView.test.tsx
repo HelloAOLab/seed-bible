@@ -267,6 +267,34 @@ describe("PlayPlaylistView", () => {
     ).toBe("Queue · 3 steps · ~6 min");
   });
 
+  it("shows a step's time estimate only when its author gave one", () => {
+    const playlist = createPlaylist({
+      items: [
+        verseItem({ ref: { bookId: "GEN", chapter: 1 }, minutes: 4 }),
+        verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+      ],
+    });
+    const { playlists } = createMockPlaylists(createPlayingState([playlist]));
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={createMockTabs()}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const rows = container.querySelectorAll(".sb-play-playlist-item");
+    expect(
+      rows[0]?.querySelector(".sb-play-playlist-item-minutes")?.textContent
+    ).toBe("4 min");
+    expect(rows[1]?.querySelector(".sb-play-playlist-item-minutes")).toBeNull();
+  });
+
   it("shows a cover banner when the playing playlist has a hero image", () => {
     const playlist = createPlaylist({
       heroImageUrl: "https://example.com/cover.jpg",

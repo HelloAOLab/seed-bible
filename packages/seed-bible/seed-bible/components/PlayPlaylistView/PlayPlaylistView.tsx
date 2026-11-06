@@ -174,6 +174,14 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                     {playlistItemLabel(item, t, resolveBookName)}
                     <PlaylistItemNoteTag item={item} />
                   </span>
+                  {item.minutes != null ? (
+                    <span className="sb-play-playlist-item-minutes">
+                      {t("playlist-editor-minutes", {
+                        minutes: item.minutes,
+                        defaultValue: "{{minutes}} min",
+                      })}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             ))}
