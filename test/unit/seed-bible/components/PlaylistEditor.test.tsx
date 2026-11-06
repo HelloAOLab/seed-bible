@@ -684,6 +684,26 @@ describe("the playlist editor", () => {
   });
 
   describe("step cards", () => {
+    it.each([
+      ["question", "a phone", 2, true],
+      ["question", "desktop", 2, false],
+      ["compare", "a phone", 0, true],
+      ["compare", "desktop", 0, false],
+    ] as const)(
+      "puts a %s step's fields on the page with no card on %s",
+      (kind, _layout, step, compact) => {
+        const compare: Playlist["items"][number] = {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 1 },
+          compare: { ref: { bookId: "JHN", chapter: 1 } },
+        };
+        openWorkspace(kind === "compare" ? [compare] : STEPS, step, compact);
+
+        const card = container.querySelector(".sb-pe-card")!;
+        expect(card.classList.contains("sb-pe-card--plain")).toBe(true);
+      }
+    );
+
     it("edits a question's text, hint, and who sees the answers", () => {
       openWorkspace(STEPS, 2);
 

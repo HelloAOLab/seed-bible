@@ -1487,8 +1487,7 @@
   max-width: 354px;
 }
 
-/* A note or video step: its fields straight on the page, no card around
-   them. */
+/* A step's fields sit straight on the page, with no card around them. */
 .sb-pe-card--plain {
   padding: 0;
   border: none;

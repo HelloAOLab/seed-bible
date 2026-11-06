@@ -642,9 +642,7 @@ export function PlaylistStepCard(props: {
 
   return (
     <section
-      className={`sb-pe-card${
-        kind === "note" || kind === "video" ? " sb-pe-card--plain" : ""
-      }`}
+      className="sb-pe-card sb-pe-card--plain"
       aria-label={t("playlist-editor-step-number", {
         step: ctx.index + 1,
         defaultValue: "Step {{step}}",
