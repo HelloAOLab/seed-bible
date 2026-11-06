@@ -416,6 +416,36 @@ describe("the playlist editor", () => {
       expect(container.querySelector(".sb-pe-step-settings")).toBeNull();
     });
 
+    it("writes a note step on the page, with the formatting toolbar and no Insert row", async () => {
+      openWorkspace([{ type: "html", html: "<p>Pray</p>" }], 0, true);
+
+      const card = () => container.querySelector(".sb-pe-card")!;
+      expect(card().classList.contains("sb-pe-card--plain")).toBe(true);
+      // TipTap loads lazily; let each poll render what has arrived.
+      const deadline = Date.now() + 3000;
+      while (
+        !card().querySelector(".sb-editor-toolbar") &&
+        Date.now() < deadline
+      ) {
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        });
+      }
+      expect(card().querySelector(".sb-editor-toolbar")).not.toBeNull();
+      expect(
+        card().querySelector(".sb-pe-rich-field-inner--formatting")
+      ).not.toBeNull();
+      expect(card().querySelector(".sb-pe-insert")).toBeNull();
+    });
+
+    it("keeps a desktop note step's card and its Insert row", () => {
+      openWorkspace([{ type: "html", html: "<p>Pray</p>" }], 0, false);
+
+      const card = container.querySelector(".sb-pe-card")!;
+      expect(card.classList.contains("sb-pe-card--plain")).toBe(false);
+      expect(card.querySelector(".sb-pe-insert")).not.toBeNull();
+    });
+
     it("goes back to the list when the open step is deleted from its menu", () => {
       openWorkspace(STEPS, 1, true);
 

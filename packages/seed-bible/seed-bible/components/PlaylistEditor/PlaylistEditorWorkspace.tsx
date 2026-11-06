@@ -762,6 +762,7 @@ export function PlaylistEditorWorkspace(props: {
     books,
     resolveBookName,
     otherSteps,
+    compact,
   };
   const card =
     showsCard && item ? (

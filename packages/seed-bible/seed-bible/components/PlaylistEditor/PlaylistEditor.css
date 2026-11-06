@@ -1634,6 +1634,14 @@
   max-width: 354px;
 }
 
+/* A phone's note step: its fields straight on the page, no card around them. */
+.sb-pe-workspace--mobile .sb-pe-card--plain {
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+
 .sb-pe-workspace--mobile .sb-pe-insert {
   flex-direction: column;
   align-items: flex-start;

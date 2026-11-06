@@ -42,6 +42,12 @@ export interface StepCardContext {
   resolveBookName: (bookId: string) => string;
   /** The playlist's other steps, for a note's "Link item". */
   otherSteps: { index: number; label: string }[];
+  /**
+   * On a phone a note step is written in place, with no card around it, and
+   * with the formatting toolbar (as a scripture step's note is) in place of
+   * the INSERT row.
+   */
+  compact?: boolean;
 }
 
 function Field(props: {
@@ -130,6 +136,7 @@ function NoteCard(props: { ctx: StepCardContext; item: HtmlItem }) {
         <PlaylistNoteComposer
           boxed
           tall
+          formatting={ctx.compact}
           initialHtml={item.html}
           placeholder={t("playlist-editor-note-placeholder", {
             defaultValue: "Write what readers see between steps",
@@ -840,7 +847,9 @@ export function PlaylistStepCard(props: {
 
   return (
     <section
-      className="sb-pe-card"
+      className={`sb-pe-card${
+        ctx.compact && kind === "note" && !preview ? " sb-pe-card--plain" : ""
+      }`}
       aria-label={t("playlist-editor-step-number", {
         step: ctx.index + 1,
         defaultValue: "Step {{step}}",
