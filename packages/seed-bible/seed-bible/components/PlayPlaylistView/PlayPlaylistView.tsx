@@ -54,9 +54,10 @@ function PlayPlaylistTitle(props: { playlists: PlaylistManager }) {
 }
 
 /**
- * Playback screen shown inside the discover pane while a playlist is playing:
- * its cover, description and list of steps. Pressing play opens this as the
- * playlist's introduction, and its Start Reading button opens the first step.
+ * Playback screen shown inside the discover pane while a playlist is playing.
+ * Displays the playlist title, the queue of items, and a bottom-anchored bar
+ * with the current item and previous/next controls. Video, link, and text
+ * (html) items open in the app's generic modal rather than rendering inline.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   const { playlists, tabs } = props;
@@ -77,9 +78,7 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
     return null;
   }
 
-  const started = playing.started.value;
-  // Before the first step is opened, no step is "current" yet.
-  const currentIndex = started ? playing.currentIndex.value : -1;
+  const currentIndex = playing.currentIndex.value;
   const playlist = playing.playlists.value[0];
   const heroImageUrl = playlist?.heroImageUrl ?? null;
   const authorName = playlists.playingAuthorName.value;
@@ -189,16 +188,14 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
           </ul>
         </DiscoverSection>
       </div>
-      {/* Once started, only a phone needs this: there the list fills the
-          screen, hiding the reader. Wider screens show the step beside it. */}
-      {(!started || playlists.isMobile.value) && queue.length > 0 ? (
+      {/* Only a phone needs this: the list fills its screen, hiding the
+          reader. Wider screens show the step beside the list already. */}
+      {playlists.isMobile.value && queue.length > 0 ? (
         <div className="sb-play-playlist-footer">
           <button
             type="button"
             className="sb-play-playlist-start"
-            onClick={() =>
-              playlists.openQueueItem(Math.max(playing.currentIndex.value, 0))
-            }
+            onClick={() => playlists.openQueueItem(Math.max(currentIndex, 0))}
           >
             {t("start-reading", { defaultValue: "Start Reading" })}
           </button>

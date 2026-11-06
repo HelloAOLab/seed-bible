@@ -94,7 +94,7 @@ export function PlaylistPagePane(props: {
           disabled={items.length === 0}
           onClick={props.onStart}
         >
-          {t("playlist-page-start", { defaultValue: "Start Playlist" })}
+          {t("start-reading", { defaultValue: "Start Reading" })}
         </button>
       </div>
     </div>

@@ -62,6 +62,12 @@ export interface SharedPageLoader<T> {
    * merely timed out would hide a record that exists.
    */
   getSeed: () => SharedPageSeed<T> | null;
+  /**
+   * Shows `item` on its page without loading it again, for an in-app
+   * navigation to the page of a record that's already loaded. Takes effect
+   * once the URL is on that page; the author's name is looked up meanwhile.
+   */
+  show: (locator: string, item: T) => void;
 }
 
 interface Schema<T> {
@@ -280,6 +286,18 @@ export function createSharedPageLoader<T>(options: {
     }
   });
 
+  const show = (locator: string, item: T): void => {
+    requestedLocator = locator;
+    failedLocator.value = null;
+    result.value = { locator, item, authorName: null };
+    void loadSharedPageAuthorName(os, authorUserId(item)).then((authorName) => {
+      const current = result.peek();
+      if (authorName && current?.locator === locator && current.item === item) {
+        result.value = { ...current, authorName };
+      }
+    });
+  };
+
   const getSeed = (): SharedPageSeed<T> | null => {
     if (!initialLocator || !initialLoadCompleted) {
       return null;
@@ -296,5 +314,6 @@ export function createSharedPageLoader<T>(options: {
     retry,
     initialLoadPromise,
     getSeed,
+    show,
   };
 }

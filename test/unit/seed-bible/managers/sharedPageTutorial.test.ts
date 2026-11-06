@@ -12,6 +12,7 @@ import {
 import { TUTORIAL_OFFER_DELAY_MS } from "@packages/seed-bible/seed-bible/managers/TutorialManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
+  MOBILE_BREAKPOINT,
   PLAYLIST_PAGE_PANE_ID,
   SHARED_PAGE_MODAL_ID,
 } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
@@ -701,5 +702,61 @@ describe("a shared playlist, playing at its own path", () => {
 
     expect(pathname()).toBe("/en/AAB/exodus/2");
     expect(state.playlists.playing.value).toBeNull();
+  });
+});
+
+describe("pressing play on a playlist inside the app", () => {
+  const PLAYLIST = PAGES[0]!.seed.initialPlaylistPageSeed!.item!;
+  const PAGE_PATH = "/en/playlist/owner.playlist_shared/exodus-stories";
+  const pageOpen = (state: SeedBibleState) =>
+    state.panes.panes.value.some((pane) => pane.id === PLAYLIST_PAGE_PANE_ID);
+  const pathname = () => new URL(window.location.href).pathname;
+  /** Long enough for any effect that would close the page to have run. */
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 50));
+
+  async function createApp(options: { phone?: boolean } = {}) {
+    window.history.replaceState(null, "", "/");
+    const state = await createTestSeedBibleState({ responses: responses() });
+    if (options.phone) {
+      (state.app.viewportWidth as unknown as { value: number }).value =
+        MOBILE_BREAKPOINT;
+    }
+    return state;
+  }
+
+  for (const phone of [false, true]) {
+    it(`goes to the playlist's own page, as its link does, on ${
+      phone ? "a phone" : "desktop"
+    }; Start Reading then plays it`, async () => {
+      const state = await createApp({ phone });
+      state.app.openDiscover();
+
+      state.playlists.openPlaylistPage(PLAYLIST);
+      await waitFor(() => pageOpen(state), 2000);
+      await settle();
+
+      expect(pageOpen(state)).toBe(true);
+      expect(pathname()).toBe(PAGE_PATH);
+      expect(state.playlists.playing.value).toBeNull();
+
+      state.app.startSharedPage();
+      await waitFor(() => pathname() === `${PAGE_PATH}/1`, 2000);
+      expect(state.playlists.playing.value?.currentIndex.value).toBe(0);
+    });
+  }
+
+  it("keeps the page open when playlist history closes behind it, as replaying from history does", async () => {
+    const state = await createApp({ phone: true });
+    state.openProfile();
+    state.openPlaylistHistory();
+
+    state.playlists.openPlaylistPage(PLAYLIST);
+    state.closePlaylistHistory();
+    state.closeProfile();
+    await waitFor(() => pageOpen(state), 2000);
+    await settle();
+
+    expect(pageOpen(state)).toBe(true);
+    expect(pathname()).toBe(PAGE_PATH);
   });
 });

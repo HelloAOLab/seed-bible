@@ -41,7 +41,7 @@ export function PlaylistRow(props: {
   const { playlist, playlists, modals, toast } = props;
   const { t } = useI18n();
   const play =
-    props.onPlay ?? ((target: Playlist) => playlists.startPlaying(target));
+    props.onPlay ?? ((target: Playlist) => playlists.openPlaylistPage(target));
   const edit =
     props.onEdit ?? ((target: Playlist) => playlists.editPlaylist(target));
   const copyLink = async () => {

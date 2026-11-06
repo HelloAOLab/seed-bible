@@ -195,13 +195,6 @@ function setup() {
   };
 }
 
-/**
- * The options the reading plans pane's Read button passes to `startPlaying`
- * (see `onPlayReadings` in BibleToolsManager): straight to the reading, no
- * playlist introduction, no playlist history.
- */
-const READ_BUTTON = { history: false, openItem: true } as const;
-
 function chapterItem(bookId: string, chapter: number) {
   return { type: "bible-verse" as const, ref: { bookId, chapter } };
 }
@@ -233,11 +226,7 @@ describe("reading a plan session via the Read button", () => {
     const { readingState, playlists, planId } = setup();
     await settle(readingState);
 
-    playlists.startPlaying(
-      planPlaylist(planId, [rangeItem("GEN", 1, 3)]),
-      0,
-      READ_BUTTON
-    );
+    playlists.startPlaying(planPlaylist(planId, [rangeItem("GEN", 1, 3)]), 0);
     await settle(readingState);
     expect(position(readingState)).toBe("GEN 1");
 
@@ -260,8 +249,7 @@ describe("reading a plan session via the Read button", () => {
         chapterItem("EXO", 2),
         chapterItem("MAT", 3),
       ]),
-      0,
-      READ_BUTTON
+      0
     );
     await settle(readingState);
     expect(position(readingState)).toBe("GEN 1");
@@ -285,8 +273,7 @@ describe("reading a plan session via the Read button", () => {
         chapterItem("EXO", 2),
         chapterItem("MAT", 3),
       ]),
-      2,
-      READ_BUTTON
+      2
     );
     await settle(readingState);
     expect(position(readingState)).toBe("MAT 3");
@@ -296,11 +283,7 @@ describe("reading a plan session via the Read button", () => {
     const { readingState, playlists, planId } = setup();
     await settle(readingState);
 
-    playlists.startPlaying(
-      planPlaylist(planId, [rangeItem("GEN", 1, 2)]),
-      0,
-      READ_BUTTON
-    );
+    playlists.startPlaying(planPlaylist(planId, [rangeItem("GEN", 1, 2)]), 0);
     await settle(readingState);
     await readingState.loadNextChapter();
     await settle(readingState);
@@ -321,8 +304,7 @@ describe("reading a plan session via the Read button", () => {
         chapterItem("EXO", 2),
         chapterItem("MAT", 3),
       ]),
-      0,
-      READ_BUTTON
+      0
     );
     await settle(readingState);
 
@@ -353,8 +335,7 @@ describe("reading a plan session via the Read button", () => {
         chapterItem("GEN", 2),
         { type: "html", html: "<p>Reflect on this.</p>" },
       ]),
-      0,
-      READ_BUTTON
+      0
     );
     await settle(readingState);
     expect(position(readingState)).toBe("GEN 1");
@@ -388,8 +369,7 @@ describe("reading a plan session via the Read button", () => {
         { type: "html", html: "<p>Reflect.</p>" },
         chapterItem("MAT", 3),
       ]),
-      0,
-      READ_BUTTON
+      0
     );
     await settle(readingState);
     expect(position(readingState)).toBe("GEN 1");
@@ -424,8 +404,7 @@ describe("reading a plan session via the Read button", () => {
           },
         },
       ]),
-      0,
-      READ_BUTTON
+      0
     );
     await settle(readingState);
     expect(position(readingState)).toBe("GEN 1");
@@ -449,8 +428,7 @@ describe("reading a plan session via the Read button", () => {
         chapterItem("EXO", 2),
         chapterItem("MAT", 3),
       ]),
-      0,
-      READ_BUTTON
+      0
     );
     await settle(readingState);
     expect(position(readingState)).toBe("GEN 1");
@@ -478,11 +456,7 @@ describe("reading a plan session via the Read button", () => {
     const { readingState, playlists, planId } = setup();
     await settle(readingState);
 
-    playlists.startPlaying(
-      planPlaylist(planId, [rangeItem("GEN", 1, 4)]),
-      0,
-      READ_BUTTON
-    );
+    playlists.startPlaying(planPlaylist(planId, [rangeItem("GEN", 1, 4)]), 0);
     await settle(readingState);
 
     // No settle between them: the user tapping/swiping twice quickly.

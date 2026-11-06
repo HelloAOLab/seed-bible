@@ -4173,7 +4173,7 @@ export function createSeedBibleState(
   const playPlaylistFromContent = (playlist: Playlist) => {
     closeYourContent();
     closeProfile();
-    playlists.startPlaying(playlist, 0);
+    playlists.openPlaylistPage(playlist);
   };
   const editPlaylistFromContent = (playlist: Playlist) => {
     closeYourContent();

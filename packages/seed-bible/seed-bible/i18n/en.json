@@ -876,7 +876,6 @@
   "playlist-page-item-count": "{{count}} items",
   "playlist-page-item-count_one": "{{count}} item",
   "playlist-page-item-count_other": "{{count}} items",
-  "playlist-page-start": "Start Playlist",
   "reading-plan-page-meta-description": "A Bible reading plan on Seed Bible.",
   "reading-plan-page-start": "Start Reading Plan",
   "reading-plan-page-minutes-per-session": "About {{count}} min per session",

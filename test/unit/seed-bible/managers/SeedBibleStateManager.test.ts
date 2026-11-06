@@ -1607,7 +1607,7 @@ describe("createSeedBibleState", () => {
     expect(state.panes.panes.value).toHaveLength(0);
   });
 
-  it("keeps a phone's playlist list open, and the reader in place, until the playlist starts; then the reader moves without closing the list", async () => {
+  it("keeps a phone's playlist list open while the reader moves to the playlist's first passage", async () => {
     jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
     const state = await createState();
     (state.app.viewportWidth as unknown as { value: number }).value =
@@ -1625,13 +1625,6 @@ describe("createSeedBibleState", () => {
       0,
       { history: false }
     );
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    // The introduction: the reader hasn't left its chapter.
-    expect(readingState.bookId.value).not.toBe("EXO");
-    expect(state.playlists.view.value).toBe("play_playlist");
-
-    await state.playlists.playing.value!.start();
     await waitFor(() => readingState.bookId.value === "EXO");
     await new Promise((resolve) => setTimeout(resolve, 0));
 

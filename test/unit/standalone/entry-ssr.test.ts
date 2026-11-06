@@ -1763,7 +1763,7 @@ describe("render() server-rendered meta tags", () => {
       );
 
       expect(notFound).toBeUndefined();
-      expect(html).toContain("Start Playlist");
+      expect(html).toContain("Start Reading");
       expect(html).toContain(
         '<link rel="canonical" href="/en/playlist/owner.playlist_shared/psalms-for-hard-days"'
       );
@@ -1829,7 +1829,7 @@ describe("render() server-rendered meta tags", () => {
       expect(html).not.toContain("sb-shared-page-modal");
       expect(html).toContain('aria-label="Back"');
       expect(html).toContain("By Ruth");
-      expect(html).toContain("Start Playlist");
+      expect(html).toContain("Start Reading");
       expect(html).toContain("1 item");
     });
 
@@ -1867,7 +1867,7 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain("<title>Playlist not found | Seed Bible</title>");
       expect(html).toContain("sb-shared-page-modal--not-found");
       expect(html).toContain("This playlist doesn't exist");
-      expect(html).not.toContain("Start Playlist");
+      expect(html).not.toContain("Start Reading");
       expect(readEmbeddedPlaylistSeed(html)).toEqual({
         locator: "owner.playlist_shared",
         item: null,

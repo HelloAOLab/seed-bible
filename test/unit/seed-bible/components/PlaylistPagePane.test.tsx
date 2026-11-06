@@ -102,7 +102,7 @@ describe("PlaylistPagePane", () => {
     renderPane(makePlaylist());
 
     const start = container.querySelector(".sb-playlist-page-start");
-    expect(start?.textContent).toBe("Start Playlist");
+    expect(start?.textContent).toBe("Start Reading");
     expect(start?.closest(".sb-playlist-page-body")).toBeNull();
     expect(
       container.querySelector(".sb-playlist-page-body .sb-playlist-page-item")
