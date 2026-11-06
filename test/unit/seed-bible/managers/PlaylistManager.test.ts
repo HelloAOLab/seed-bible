@@ -106,6 +106,15 @@ describe("Playlist schemas", () => {
     ).not.toThrow();
   });
 
+  it("keeps a question step's hint and answer when it's saved and loaded", () => {
+    const question = {
+      type: "html",
+      html: "<p>Where is God?</p>",
+      question: { hint: "Look back", answer: "Everywhere" },
+    };
+    expect(PlaylistItem.parse(question)).toEqual(question);
+  });
+
   it("rejects an unknown item type and a malformed link", () => {
     expect(() => PlaylistItem.parse({ type: "nope" })).toThrow();
     expect(() =>

@@ -156,11 +156,11 @@ function QuestionCard(props: { ctx: StepCardContext; item: HtmlItem }) {
   const { t } = useI18n();
   // Kept as typed, so a trailing space survives until the next word.
   const [question, setQuestion] = useState(() => questionFromHtml(item.html));
-  const responses = item.question?.responses ?? "private";
   const update = (changes: Partial<HtmlItem>) =>
     ctx.playlists.updateEditingPlaylistItem(ctx.index, { ...item, ...changes });
   const questionId = `sb-pe-question-${ctx.index}`;
   const hintId = `sb-pe-question-hint-${ctx.index}`;
+  const answerId = `sb-pe-question-answer-${ctx.index}`;
 
   return (
     <>
@@ -215,59 +215,30 @@ function QuestionCard(props: { ctx: StepCardContext; item: HtmlItem }) {
           }
         />
       </Field>
-      <div className="sb-pe-field">
-        <span className="sb-pe-field-label" id={`sb-pe-responses-${ctx.index}`}>
-          {t("playlist-editor-who-sees", {
-            defaultValue: "Who sees responses",
+      <Field
+        label={t("playlist-editor-answer", { defaultValue: "Answer" })}
+        hint={t("playlist-editor-answer-hint", { defaultValue: "Optional" })}
+        htmlFor={answerId}
+      >
+        <textarea
+          id={answerId}
+          className="sb-pe-textarea"
+          dir="auto"
+          rows={3}
+          value={item.question?.answer ?? ""}
+          placeholder={t("playlist-editor-answer-placeholder", {
+            defaultValue: "e.g. In the way He provides, even in small things",
           })}
-        </span>
-        <div
-          className="sb-pe-options"
-          role="radiogroup"
-          aria-labelledby={`sb-pe-responses-${ctx.index}`}
-        >
-          <button
-            type="button"
-            role="radio"
-            aria-checked={responses === "private"}
-            className="sb-pe-option"
-            onClick={() =>
-              update({ question: { ...item.question, responses: "private" } })
-            }
-          >
-            <span className="sb-pe-option-name">
-              {t("playlist-editor-private-reflection", {
-                defaultValue: "Private reflection",
-              })}
-            </span>
-            <span className="sb-pe-option-desc">
-              {t("playlist-editor-private-reflection-desc", {
-                defaultValue: "Only the reader sees it",
-              })}
-            </span>
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={responses === "shared"}
-            className="sb-pe-option"
-            onClick={() =>
-              update({ question: { ...item.question, responses: "shared" } })
-            }
-          >
-            <span className="sb-pe-option-name">
-              {t("playlist-editor-shared-with-group", {
-                defaultValue: "Shared with group",
-              })}
-            </span>
-            <span className="sb-pe-option-desc">
-              {t("playlist-editor-shared-with-group-desc", {
-                defaultValue: "Group members can read it",
-              })}
-            </span>
-          </button>
-        </div>
-      </div>
+          onInput={(event) =>
+            update({
+              question: {
+                ...item.question,
+                answer: event.currentTarget.value || undefined,
+              },
+            })
+          }
+        />
+      </Field>
     </>
   );
 }

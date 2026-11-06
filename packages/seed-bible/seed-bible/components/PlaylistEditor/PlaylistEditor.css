@@ -872,40 +872,6 @@
   color: var(--pe-danger);
 }
 
-.sb-pe-options {
-  display: flex;
-  gap: 8px;
-}
-
-.sb-pe-option {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1 0 0;
-  min-width: 0;
-  padding: 12px 14px;
-  border: 1px solid var(--pe-border);
-  border-radius: 10px;
-  text-align: start;
-}
-
-.sb-pe-option[aria-checked="true"] {
-  background: var(--pe-accent-soft);
-  border-color: var(--pe-accent-strong);
-}
-
-.sb-pe-option-name {
-  font-weight: 500;
-  font-size: 13px;
-  line-height: 16px;
-}
-
-.sb-pe-option-desc {
-  font-size: 11px;
-  line-height: 14px;
-  color: var(--pe-muted);
-}
-
 /* Video link check */
 .sb-pe-link-check {
   display: flex;

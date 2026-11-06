@@ -704,7 +704,7 @@ describe("the playlist editor", () => {
       }
     );
 
-    it("edits a question's text, hint, and who sees the answers", () => {
+    it("edits a question's text, hint, and answer, with no choice of who sees responses", () => {
       openWorkspace(STEPS, 2);
 
       expect(container.querySelector(".sb-pe-eyebrow")!.textContent).toBe(
@@ -712,12 +712,14 @@ describe("the playlist editor", () => {
       );
       type(container.querySelector("#sb-pe-question-2"), "Where is <God>?");
       type(container.querySelector("#sb-pe-question-hint-2"), "Look back");
-      click(byText(container, ".sb-pe-option", "Shared with group"));
+      type(container.querySelector("#sb-pe-question-answer-2"), "Everywhere");
+
+      expect(container.textContent).not.toContain("Who sees responses");
 
       expect(items()[2]).toEqual({
         type: "html",
         html: "<p>Where is &lt;God&gt;?</p>",
-        question: { hint: "Look back", responses: "shared" },
+        question: { hint: "Look back", answer: "Everywhere" },
         minutes: 4,
       });
     });

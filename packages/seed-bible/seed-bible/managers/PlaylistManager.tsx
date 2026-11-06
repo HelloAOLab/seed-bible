@@ -97,10 +97,6 @@ const PlaylistStepSettings = {
 export const CompareLayoutSchema = z.enum(["side-by-side", "stacked"]);
 export type CompareLayout = z.infer<typeof CompareLayoutSchema>;
 
-/** Who can read the answers to a question step. */
-export const QuestionResponsesSchema = z.enum(["private", "shared"]);
-export type QuestionResponses = z.infer<typeof QuestionResponsesSchema>;
-
 export const BibleVersePlaylistItem = z.object({
   type: z.literal("bible-verse"),
   ref: VerseRefSchema,
@@ -139,7 +135,8 @@ export const PlaylistItem = z.discriminatedUnion("type", [
     question: z
       .object({
         hint: z.string().optional(),
-        responses: QuestionResponsesSchema.optional(),
+        /** The author's own answer to the question. */
+        answer: z.string().optional(),
       })
       .optional(),
     ...PlaylistStepSettings,
