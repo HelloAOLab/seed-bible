@@ -8,7 +8,12 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { StoredHighlight } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
 import type { Save } from "@packages/seed-bible/seed-bible/managers/SavesManager";
-import type { Bookmark } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
+import {
+  createBookmarksManager,
+  type Bookmark,
+} from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
+import type { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { Playlist } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { ContentLoadStatus } from "@packages/seed-bible/seed-bible/managers/YourContentManager";
 import type { GalleryPhoto } from "@packages/seed-bible/seed-bible/managers/UserGalleryManager";
@@ -173,10 +178,12 @@ interface StateOptions {
   annotations?: Annotation[];
   highlights?: StoredHighlight[];
   saves?: Save[];
-  /** In the order the manager gives them: most recently moved first. */
+  /** The bookmarks the records server holds when the screen's user signs in. */
   bookmarks?: Bookmark[];
-  /** Makes renaming or recoloring a bookmark fail, so the editor has to say so. */
-  updateBookmarkError?: Error;
+  /** How many reads of the bookmarks record fail with a server error first. */
+  bookmarkReadFailures?: number;
+  /** Makes every write of the bookmarks record fail. */
+  bookmarkWriteError?: Error;
   playlists?: Playlist[];
   photos?: GalleryPhoto[];
   customizations?: SeedBibleCustomization[];
@@ -232,21 +239,49 @@ function createState(options: StateOptions = {}) {
   const removeAnnotation = vi.fn(() => {});
   const restoreAnnotation = vi.fn(() => {});
   const removeSave = vi.fn(async (_id: string) => {});
-  const bookmarks = signal(options.bookmarks ?? []);
-  const ensureBookmarksLoaded = vi.fn(async () => true);
-  // Like the manager: the list changes only once the write has gone through.
-  const removeBookmark = vi.fn(async (id: string) => {
-    bookmarks.value = bookmarks.value.filter((b) => b.id !== id);
-  });
-  const updateBookmark = vi.fn(
-    async (id: string, details: { name: string; colorId: string }) => {
-      if (options.updateBookmarkError) {
-        throw options.updateBookmarkError;
-      }
-      bookmarks.value = bookmarks.value.map((b) =>
-        b.id === id ? { ...b, ...details } : b
-      );
+  const login = {
+    userId: signal(options.userId === undefined ? "user-1" : options.userId),
+  };
+  // Bookmarks run on the real manager; the records server under it is the
+  // one boundary faked.
+  let savedBookmarks: Bookmark[] | null = options.bookmarks ?? null;
+  let bookmarkReadFailures = options.bookmarkReadFailures ?? 0;
+  const getBookmarksRecord = vi.fn(async () => {
+    if (bookmarkReadFailures > 0) {
+      bookmarkReadFailures--;
+      return {
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "Server error",
+      };
     }
+    return savedBookmarks
+      ? { success: true, data: { bookmarks: savedBookmarks } }
+      : {
+          success: false,
+          errorCode: "data_not_found",
+          errorMessage: "Data not found",
+        };
+  });
+  const writeBookmarksRecord = vi.fn(
+    async (
+      _userId: string,
+      _address: string,
+      data: { bookmarks: Bookmark[] }
+    ) => {
+      if (options.bookmarkWriteError) {
+        throw options.bookmarkWriteError;
+      }
+      savedBookmarks = data.bookmarks;
+      return { success: true };
+    }
+  );
+  const bookmarks = createBookmarksManager(
+    {
+      getData: getBookmarksRecord,
+      recordData: writeBookmarksRecord,
+    } as unknown as CasualOSManager,
+    login as unknown as LoginManager
   );
   const closeModal = vi.fn();
   const removeHighlight = vi.fn((_highlight: StoredHighlight) => {});
@@ -335,9 +370,7 @@ function createState(options: StateOptions = {}) {
       readHighlightVerseText,
     },
     highlights: { unhighlightVerse },
-    login: {
-      userId: signal(options.userId === undefined ? "user-1" : options.userId),
-    },
+    login,
     gallery: { photos: signal(options.photos ?? []), syncPhotos },
     customizations: {
       customizations: signal(options.customizations ?? []),
@@ -359,12 +392,7 @@ function createState(options: StateOptions = {}) {
       expandedCategories: signal([]),
       removeSave: removeSave,
     },
-    bookmarks: {
-      bookmarks,
-      ensureLoaded: ensureBookmarksLoaded,
-      removeBookmark,
-      updateBookmark,
-    },
+    bookmarks,
     playlists: {
       userPlaylists: signal(options.playlists ?? []),
       startPlaying: vi.fn(),
@@ -403,10 +431,9 @@ function createState(options: StateOptions = {}) {
     state,
     closePane,
     removeSave,
-    bookmarks,
-    ensureBookmarksLoaded,
-    removeBookmark,
-    updateBookmark,
+    getBookmarksRecord,
+    /** What the records server holds now: the last list written, or the first. */
+    savedBookmarks: () => savedBookmarks,
     closeModal,
     readHighlightVerseText,
     highlightVerseText,
@@ -502,6 +529,17 @@ describe("YourContentPane", () => {
     });
   }
 
+  /**
+   * Renders once the bookmarks manager has finished its sign-in load, so the
+   * stored bookmarks are on screen from the first frame.
+   */
+  async function renderWithBookmarks(state: SeedBibleState) {
+    await act(async () => {
+      await state.bookmarks.ensureLoaded();
+    });
+    renderPane(state);
+  }
+
   const sectionTitles = () =>
     Array.from(container.querySelectorAll(".sb-content-section-title")).map(
       (el) => el.textContent
@@ -539,7 +577,7 @@ describe("YourContentPane", () => {
     );
   });
 
-  it("shows every section that has something in it", () => {
+  it("shows every section that has something in it", async () => {
     const { state } = createState({
       annotations: [annotation("a", "<p>note</p>")],
       highlights: [highlight("JHN")],
@@ -550,7 +588,7 @@ describe("YourContentPane", () => {
       customizations: [customization("c1", "Grace Church")],
       photos: [photo("i1")],
     });
-    renderPane(state);
+    await renderWithBookmarks(state);
 
     expect(sectionTitles()).toEqual([
       "Annotations",
@@ -805,7 +843,7 @@ describe("YourContentPane", () => {
       });
     };
 
-    it("shows each bookmark's name, chapter and translation", () => {
+    it("shows each bookmark's name, chapter and translation", async () => {
       const { state } = createState({
         bookmarks: [bookmark("bm1", "Sermon prep")],
         translations: [
@@ -813,7 +851,7 @@ describe("YourContentPane", () => {
         ],
         bookNamesByTranslation: { BSB: { JHN: "John" } },
       });
-      renderPane(state);
+      await renderWithBookmarks(state);
 
       const row = rows()[0]!;
       expect(row.querySelector(".sb-content-bookmark-name")?.textContent).toBe(
@@ -827,10 +865,22 @@ describe("YourContentPane", () => {
       ).toBe("BSB");
     });
 
+    it("lists the most recently moved bookmark first", async () => {
+      const { state } = createState({
+        bookmarks: [
+          bookmark("old", "Older", { updatedAt: 1000 }),
+          bookmark("new", "Newer", { updatedAt: 2000 }),
+        ],
+      });
+      await renderWithBookmarks(state);
+
+      expect(names()).toEqual(["Newer", "Older"]);
+    });
+
     // The reader is on an English translation (today's book names say
     // "John"), but the bookmark was placed in a Spanish one. The sidebar and
     // Today both call it "Juan 3", so this screen must too.
-    it("names the book in the bookmark's own translation, not the reader's", () => {
+    it("names the book in the bookmark's own translation, not the reader's", async () => {
       const { state, query } = createState({
         bookmarks: [bookmark("bm1", "Estudio", { translationId: "RVR" })],
         translations: [
@@ -838,7 +888,7 @@ describe("YourContentPane", () => {
         ],
         bookNamesByTranslation: { RVR: { JHN: "Juan" } },
       });
-      renderPane(state);
+      await renderWithBookmarks(state);
 
       expect(
         rows()[0]!.querySelector(".sb-content-bookmark-chapter")?.textContent
@@ -858,7 +908,7 @@ describe("YourContentPane", () => {
         ],
         bookNamesByTranslation: { RVR: { JHN: "Juan" } },
       });
-      renderPane(state);
+      await renderWithBookmarks(state);
 
       expect(getTranslationBooks).toHaveBeenCalledWith("RVR");
       await vi.waitFor(() =>
@@ -868,11 +918,11 @@ describe("YourContentPane", () => {
       );
     });
 
-    it("opens the bookmarked chapter, in the bookmark's translation", () => {
+    it("opens the bookmarked chapter, in the bookmark's translation", async () => {
       const { state } = createState({
         bookmarks: [bookmark("bm1", "Sermon prep", { translationId: "KJV" })],
       });
-      renderPane(state);
+      await renderWithBookmarks(state);
 
       act(() => {
         rows()[0]!
@@ -887,7 +937,7 @@ describe("YourContentPane", () => {
       });
     });
 
-    it("finds a bookmark by its name or by its chapter", () => {
+    it("finds a bookmark by its name or by its chapter", async () => {
       const { state, query } = createState({
         bookmarks: [
           bookmark("bm1", "Sermon prep"),
@@ -898,7 +948,7 @@ describe("YourContentPane", () => {
         ],
         bookNamesByTranslation: { BSB: { JHN: "John", PSA: "Psalm" } },
       });
-      renderPane(state);
+      await renderWithBookmarks(state);
 
       act(() => {
         query.value = "sermon";
@@ -911,11 +961,13 @@ describe("YourContentPane", () => {
       expect(names()).toEqual(["Morning"]);
     });
 
-    it("previews the first few bookmarks until See all", () => {
+    it("previews the first few bookmarks until See all", async () => {
       const { state, filter } = createState({
-        bookmarks: ["A", "B", "C", "D"].map((name) => bookmark(name, name)),
+        bookmarks: ["A", "B", "C", "D"].map((name, i) =>
+          bookmark(name, name, { updatedAt: 4000 - i })
+        ),
       });
-      renderPane(state);
+      await renderWithBookmarks(state);
       expect(names()).toEqual(["A", "B", "C"]);
 
       act(() => {
@@ -928,10 +980,10 @@ describe("YourContentPane", () => {
       expect(names()).toEqual(["A", "B", "C", "D"]);
     });
 
-    it("says how to place one when the Bookmarks chip has none", () => {
+    it("says how to place one when the Bookmarks chip has none", async () => {
       const { state, filter } = createState({ saves: [save("s1")] });
       filter.value = "bookmarks";
-      renderPane(state);
+      await renderWithBookmarks(state);
 
       expect(container.querySelector(".sb-content-status")?.textContent).toBe(
         "No bookmarks yet. Use the bookmark button above a chapter to place one."
@@ -940,40 +992,61 @@ describe("YourContentPane", () => {
 
     // Bookmarks load on sign-in; a load that failed then would otherwise
     // leave this section empty for the rest of the session.
-    it("retries loading bookmarks when it opens, only when signed in", () => {
-      const signedIn = createState();
-      renderPane(signedIn.state);
-      expect(signedIn.ensureBookmarksLoaded).toHaveBeenCalledTimes(1);
-
-      const signedOut = createState({ userId: null });
-      renderPane(signedOut.state);
-      expect(signedOut.ensureBookmarksLoaded).not.toHaveBeenCalled();
-    });
-
-    it("asks before deleting a bookmark, then deletes it", async () => {
-      const { state, openModal, removeBookmark } = createState({
+    it("shows bookmarks whose load failed at sign-in, by loading them again on open", async () => {
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const { state, getBookmarksRecord } = createState({
         bookmarks: [bookmark("bm1", "Sermon prep")],
+        bookmarkReadFailures: 1,
       });
+      // The sign-in load fails, so there is nothing to show yet.
+      await vi.waitFor(() =>
+        expect(getBookmarksRecord).toHaveBeenCalledTimes(1)
+      );
+      expect(state.bookmarks.bookmarks.value).toEqual([]);
+
       renderPane(state);
 
-      choose(rows()[0]!, "Delete");
-      const dialog = renderOpenedModal(openModal);
-      expect(removeBookmark).not.toHaveBeenCalled();
-      expect(dialog.textContent).toContain(
-        'Delete "Sermon prep"? This can\'t be undone.'
-      );
+      await vi.waitFor(() => expect(names()).toEqual(["Sermon prep"]));
+    });
 
-      await confirmDelete(dialog);
+    it("doesn't ask for bookmarks when signed out", async () => {
+      const { state, getBookmarksRecord } = createState({
+        userId: null,
+        bookmarks: [bookmark("bm1", "Sermon prep")],
+      });
+      await renderWithBookmarks(state);
 
-      expect(removeBookmark).toHaveBeenCalledWith("bm1");
+      expect(getBookmarksRecord).not.toHaveBeenCalled();
       expect(rows()).toHaveLength(0);
     });
 
-    it("does not open the chapter when the options menu is used", () => {
+    it("asks before deleting a bookmark, then deletes it", async () => {
+      const { state, openModal, savedBookmarks } = createState({
+        bookmarks: [
+          bookmark("bm1", "Sermon prep"),
+          bookmark("bm2", "Morning", { updatedAt: 0 }),
+        ],
+      });
+      await renderWithBookmarks(state);
+
+      choose(rows()[0]!, "Delete");
+      const dialog = renderOpenedModal(openModal);
+      expect(dialog.textContent).toContain(
+        'Delete "Sermon prep"? This can\'t be undone.'
+      );
+      expect(names()).toEqual(["Sermon prep", "Morning"]);
+
+      await confirmDelete(dialog);
+
+      expect(names()).toEqual(["Morning"]);
+      expect(savedBookmarks()!.map((b) => b.name)).toEqual(["Morning"]);
+    });
+
+    it("does not open the chapter when the options menu is used", async () => {
       const { state } = createState({
         bookmarks: [bookmark("bm1", "Sermon prep")],
       });
-      renderPane(state);
+      await renderWithBookmarks(state);
 
       choose(rows()[0]!, "Edit");
 
@@ -981,10 +1054,10 @@ describe("YourContentPane", () => {
     });
 
     it("renames and recolors a bookmark from Edit, then closes", async () => {
-      const { state, openModal, closeModal, updateBookmark } = createState({
+      const { state, openModal, closeModal, savedBookmarks } = createState({
         bookmarks: [bookmark("bm1", "Sermon prep")],
       });
-      renderPane(state);
+      await renderWithBookmarks(state);
 
       choose(rows()[0]!, "Edit");
       const dialog = renderOpenedModal(openModal);
@@ -1007,21 +1080,23 @@ describe("YourContentPane", () => {
           .click();
       });
 
-      expect(updateBookmark).toHaveBeenCalledWith("bm1", {
-        name: "Advent",
-        colorId: "purple",
-      });
-      expect(closeModal).toHaveBeenCalledWith("edit-bookmark-bm1");
+      await vi.waitFor(() =>
+        expect(closeModal).toHaveBeenCalledWith("edit-bookmark-bm1")
+      );
       expect(names()).toEqual(["Advent"]);
+      expect(savedBookmarks()).toEqual([
+        bookmark("bm1", "Advent", { colorId: "purple" }),
+      ]);
     });
 
     it("keeps the editor open and says so when an edit can't be saved", async () => {
-      const { state, openModal, closeModal, toast } = createState({
-        bookmarks: [bookmark("bm1", "Sermon prep")],
-        updateBookmarkError: new Error("offline"),
-      });
+      const { state, openModal, closeModal, toast, savedBookmarks } =
+        createState({
+          bookmarks: [bookmark("bm1", "Sermon prep")],
+          bookmarkWriteError: new Error("offline"),
+        });
       vi.spyOn(console, "warn").mockImplementation(() => {});
-      renderPane(state);
+      await renderWithBookmarks(state);
 
       choose(rows()[0]!, "Edit");
       const dialog = renderOpenedModal(openModal);
@@ -1035,14 +1110,18 @@ describe("YourContentPane", () => {
           .click();
       });
 
-      expect(toast).toHaveBeenCalledWith(
-        "Couldn't save your bookmark. Please try again."
+      await vi.waitFor(() =>
+        expect(toast).toHaveBeenCalledWith(
+          "Couldn't save your bookmark. Please try again."
+        )
       );
       expect(closeModal).not.toHaveBeenCalled();
       expect(
         dialog.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
       ).toBe("Advent");
+      // The manager put the old name back when the write failed.
       expect(names()).toEqual(["Sermon prep"]);
+      expect(savedBookmarks()!.map((b) => b.name)).toEqual(["Sermon prep"]);
     });
   });
 
