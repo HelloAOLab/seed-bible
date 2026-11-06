@@ -8,6 +8,7 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { StoredHighlight } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
 import type { Save } from "@packages/seed-bible/seed-bible/managers/SavesManager";
+import type { Bookmark } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import type { Playlist } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { ContentLoadStatus } from "@packages/seed-bible/seed-bible/managers/YourContentManager";
 import type { GalleryPhoto } from "@packages/seed-bible/seed-bible/managers/UserGalleryManager";
@@ -150,10 +151,32 @@ function progressWithSessionsDone(
   };
 }
 
+function bookmark(
+  id: string,
+  name: string,
+  overrides: Partial<Bookmark> = {}
+): Bookmark {
+  return {
+    id,
+    name,
+    colorId: "blue",
+    translationId: "BSB",
+    bookId: "JHN",
+    chapterNumber: 3,
+    createdAt: 1761955200000,
+    updatedAt: 1761955200000,
+    ...overrides,
+  };
+}
+
 interface StateOptions {
   annotations?: Annotation[];
   highlights?: StoredHighlight[];
   saves?: Save[];
+  /** In the order the manager gives them: most recently moved first. */
+  bookmarks?: Bookmark[];
+  /** Makes renaming or recoloring a bookmark fail, so the editor has to say so. */
+  updateBookmarkError?: Error;
   playlists?: Playlist[];
   photos?: GalleryPhoto[];
   customizations?: SeedBibleCustomization[];
@@ -207,6 +230,23 @@ function createState(options: StateOptions = {}) {
   const removeAnnotation = vi.fn(() => {});
   const restoreAnnotation = vi.fn(() => {});
   const removeSave = vi.fn(async (_id: string) => {});
+  const bookmarks = signal(options.bookmarks ?? []);
+  const ensureBookmarksLoaded = vi.fn(async () => true);
+  // Like the manager: the list changes only once the write has gone through.
+  const removeBookmark = vi.fn(async (id: string) => {
+    bookmarks.value = bookmarks.value.filter((b) => b.id !== id);
+  });
+  const updateBookmark = vi.fn(
+    async (id: string, details: { name: string; colorId: string }) => {
+      if (options.updateBookmarkError) {
+        throw options.updateBookmarkError;
+      }
+      bookmarks.value = bookmarks.value.map((b) =>
+        b.id === id ? { ...b, ...details } : b
+      );
+    }
+  );
+  const closeModal = vi.fn();
   const removeHighlight = vi.fn((_highlight: StoredHighlight) => {});
   const highlightVerseText = signal<ReadonlyMap<string, string>>(
     new Map(Object.entries(options.highlightVerseText ?? {}))
@@ -312,6 +352,12 @@ function createState(options: StateOptions = {}) {
       expandedCategories: signal([]),
       removeSave: removeSave,
     },
+    bookmarks: {
+      bookmarks,
+      ensureLoaded: ensureBookmarksLoaded,
+      removeBookmark,
+      updateBookmark,
+    },
     playlists: {
       userPlaylists: signal(options.playlists ?? []),
       startPlaying: vi.fn(),
@@ -319,7 +365,7 @@ function createState(options: StateOptions = {}) {
       getPlaylistUrl: vi.fn(() => "https://example.com/playlist"),
       deletePlaylist: vi.fn(async () => {}),
     },
-    modals: { openModal, closeModal: vi.fn() },
+    modals: { openModal, closeModal },
     app: { toast },
     annotations: { deleteAnnotationAndRefresh },
     readingPlans: {
@@ -350,6 +396,11 @@ function createState(options: StateOptions = {}) {
     state,
     closePane,
     removeSave,
+    bookmarks,
+    ensureBookmarksLoaded,
+    removeBookmark,
+    updateBookmark,
+    closeModal,
     readHighlightVerseText,
     highlightVerseText,
     removeHighlight,
@@ -486,6 +537,7 @@ describe("YourContentPane", () => {
       annotations: [annotation("a", "<p>note</p>")],
       highlights: [highlight("JHN")],
       saves: [save("b1")],
+      bookmarks: [bookmark("bm1", "Reading plan")],
       playlists: [playlist("p1", "Morning devotions")],
       readingPlans: [readingPlan("plan-1", "Psalms in a month")],
       customizations: [customization("c1", "Grace Church")],
@@ -497,6 +549,7 @@ describe("YourContentPane", () => {
       "Annotations",
       "Highlights",
       "Saves",
+      "Bookmarks",
       "Playlists",
       "Reading plans",
       "Branding",
@@ -700,6 +753,243 @@ describe("YourContentPane", () => {
       expect(
         container.querySelector(".sb-content-status")?.textContent
       ).toContain("Custom Branding you create");
+    });
+  });
+
+  describe("bookmarks", () => {
+    afterEach(() => {
+      // Menus portal into the body, outside the pane's container.
+      document.body.innerHTML = "";
+    });
+
+    const rows = () =>
+      Array.from(
+        container.querySelectorAll<HTMLElement>(".sb-content-bookmark-row")
+      );
+    const names = () =>
+      rows().map(
+        (row) => row.querySelector(".sb-bookmark-label-name")?.textContent
+      );
+
+    /** Opens a bookmark's options menu and picks the item labelled `label`. */
+    const choose = (row: HTMLElement, label: string) => {
+      act(() => {
+        row
+          .querySelector<HTMLButtonElement>(".sb-content-save-menu")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      const item = Array.from(
+        document.body.querySelectorAll<HTMLElement>(".sb-context-menu-item")
+      ).find(
+        (el) =>
+          el.querySelector(":scope > span:not(.sb-context-menu-item-icon)")
+            ?.textContent === label
+      );
+      if (!item) throw new Error(`${label} was not in the menu.`);
+      act(() => {
+        item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    };
+
+    const type = (input: HTMLInputElement, value: string) => {
+      act(() => {
+        input.value = value;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    };
+
+    it("shows each bookmark's name, chapter and translation", () => {
+      const { state } = createState({
+        bookmarks: [bookmark("bm1", "Sermon prep")],
+        translations: [
+          { id: "BSB", shortName: "BSB" } as unknown as Translation,
+        ],
+      });
+      renderPane(state);
+
+      const row = rows()[0]!;
+      expect(row.querySelector(".sb-bookmark-label-name")?.textContent).toBe(
+        "Sermon prep"
+      );
+      expect(row.querySelector(".sb-bookmark-label-chapter")?.textContent).toBe(
+        "John 3"
+      );
+      expect(
+        row.querySelector(".sb-bookmark-label-translation")?.textContent
+      ).toBe("BSB");
+    });
+
+    it("opens the bookmarked chapter, in the bookmark's translation", () => {
+      const { state } = createState({
+        bookmarks: [bookmark("bm1", "Sermon prep", { translationId: "KJV" })],
+      });
+      renderPane(state);
+
+      act(() => {
+        rows()[0]!
+          .querySelector<HTMLButtonElement>(".sb-content-bookmark")!
+          .click();
+      });
+
+      expect(onOpenPassage).toHaveBeenCalledWith({
+        bookId: "JHN",
+        chapter: 3,
+        translationId: "KJV",
+      });
+    });
+
+    it("finds a bookmark by its name or by its chapter", () => {
+      const { state, query } = createState({
+        bookmarks: [
+          bookmark("bm1", "Sermon prep"),
+          bookmark("bm2", "Morning", { bookId: "PSA", chapterNumber: 23 }),
+        ],
+      });
+      renderPane(state);
+
+      act(() => {
+        query.value = "sermon";
+      });
+      expect(names()).toEqual(["Sermon prep"]);
+
+      act(() => {
+        query.value = "psalm 23";
+      });
+      expect(names()).toEqual(["Morning"]);
+    });
+
+    it("previews the first few bookmarks until See all", () => {
+      const { state, filter } = createState({
+        bookmarks: ["A", "B", "C", "D"].map((name) => bookmark(name, name)),
+      });
+      renderPane(state);
+      expect(names()).toEqual(["A", "B", "C"]);
+
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-content-see-all")!
+          .click();
+      });
+
+      expect(filter.value).toBe("bookmarks");
+      expect(names()).toEqual(["A", "B", "C", "D"]);
+    });
+
+    it("says how to place one when the Bookmarks chip has none", () => {
+      const { state, filter } = createState({ saves: [save("s1")] });
+      filter.value = "bookmarks";
+      renderPane(state);
+
+      expect(container.querySelector(".sb-content-status")?.textContent).toBe(
+        "No bookmarks yet. Use the bookmark button above a chapter to place one."
+      );
+    });
+
+    // Bookmarks load on sign-in; a load that failed then would otherwise
+    // leave this section empty for the rest of the session.
+    it("retries loading bookmarks when it opens, only when signed in", () => {
+      const signedIn = createState();
+      renderPane(signedIn.state);
+      expect(signedIn.ensureBookmarksLoaded).toHaveBeenCalledTimes(1);
+
+      const signedOut = createState({ userId: null });
+      renderPane(signedOut.state);
+      expect(signedOut.ensureBookmarksLoaded).not.toHaveBeenCalled();
+    });
+
+    it("asks before deleting a bookmark, then deletes it", async () => {
+      const { state, openModal, removeBookmark } = createState({
+        bookmarks: [bookmark("bm1", "Sermon prep")],
+      });
+      renderPane(state);
+
+      choose(rows()[0]!, "Delete");
+      const dialog = renderOpenedModal(openModal);
+      expect(removeBookmark).not.toHaveBeenCalled();
+      expect(dialog.textContent).toContain(
+        'Delete "Sermon prep"? This can\'t be undone.'
+      );
+
+      await confirmDelete(dialog);
+
+      expect(removeBookmark).toHaveBeenCalledWith("bm1");
+      expect(rows()).toHaveLength(0);
+    });
+
+    it("does not open the chapter when the options menu is used", () => {
+      const { state } = createState({
+        bookmarks: [bookmark("bm1", "Sermon prep")],
+      });
+      renderPane(state);
+
+      choose(rows()[0]!, "Edit");
+
+      expect(onOpenPassage).not.toHaveBeenCalled();
+    });
+
+    it("renames and recolors a bookmark from Edit, then closes", async () => {
+      const { state, openModal, closeModal, updateBookmark } = createState({
+        bookmarks: [bookmark("bm1", "Sermon prep")],
+      });
+      renderPane(state);
+
+      choose(rows()[0]!, "Edit");
+      const dialog = renderOpenedModal(openModal);
+      const nameInput = dialog.querySelector<HTMLInputElement>(
+        ".sb-bookmark-form-name"
+      )!;
+      expect(nameInput.value).toBe("Sermon prep");
+
+      type(nameInput, "Advent");
+      act(() => {
+        dialog
+          .querySelector<HTMLButtonElement>(
+            ".sb-bookmark-form-color[aria-label='Purple']"
+          )!
+          .click();
+      });
+      await act(async () => {
+        dialog
+          .querySelector<HTMLButtonElement>(".sb-bookmark-picker-save")!
+          .click();
+      });
+
+      expect(updateBookmark).toHaveBeenCalledWith("bm1", {
+        name: "Advent",
+        colorId: "purple",
+      });
+      expect(closeModal).toHaveBeenCalledWith("edit-bookmark-bm1");
+      expect(names()).toEqual(["Advent"]);
+    });
+
+    it("keeps the editor open and says so when an edit can't be saved", async () => {
+      const { state, openModal, closeModal, toast } = createState({
+        bookmarks: [bookmark("bm1", "Sermon prep")],
+        updateBookmarkError: new Error("offline"),
+      });
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      renderPane(state);
+
+      choose(rows()[0]!, "Edit");
+      const dialog = renderOpenedModal(openModal);
+      type(
+        dialog.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
+        "Advent"
+      );
+      await act(async () => {
+        dialog
+          .querySelector<HTMLButtonElement>(".sb-bookmark-picker-save")!
+          .click();
+      });
+
+      expect(toast).toHaveBeenCalledWith(
+        "Couldn't save your bookmark. Please try again."
+      );
+      expect(closeModal).not.toHaveBeenCalled();
+      expect(
+        dialog.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+      ).toBe("Advent");
+      expect(names()).toEqual(["Sermon prep"]);
     });
   });
 

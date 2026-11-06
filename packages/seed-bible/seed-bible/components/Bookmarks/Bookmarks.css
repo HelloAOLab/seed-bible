@@ -369,10 +369,14 @@
   cursor: pointer;
 }
 
-.sb-bookmarks-panel-editor {
+.sb-bookmarks-panel-editor,
+.sb-bookmark-edit-modal {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+}
+
+.sb-bookmarks-panel-editor {
   padding: 0.625rem;
   border: 1px solid var(--sb-divider-color);
   border-radius: 0.625rem;

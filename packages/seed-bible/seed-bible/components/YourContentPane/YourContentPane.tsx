@@ -32,7 +32,14 @@ import {
 } from "../Discover/AnnotationsSection";
 import { PlaylistRow } from "../Discover/PlaylistRow";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
+import type { Bookmark } from "../../managers/BookmarksManager";
 import { openSaveModalForLocation } from "../Tabs/Tabs";
+import {
+  BookmarkGlyph,
+  BookmarkLabel,
+  confirmDeleteBookmark,
+  openEditBookmarkModal,
+} from "../Bookmarks/Bookmarks";
 import {
   ContextMenuItem,
   ContextMenuWithButton,
@@ -566,6 +573,72 @@ function SavePill(props: {
   );
 }
 
+function BookmarkRow(props: {
+  state: SeedBibleState;
+  bookmark: Bookmark;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) {
+  const { state, bookmark } = props;
+  const { t } = useI18n();
+  const bookNames = state.today.bookNames.value;
+  const translation = useTranslationShortName(state, bookmark.translationId);
+
+  return (
+    <div className="sb-content-bookmark-row">
+      <button
+        type="button"
+        className="sb-content-bookmark"
+        onClick={() =>
+          props.onOpenPassage({
+            bookId: bookmark.bookId,
+            chapter: bookmark.chapterNumber,
+            translationId: bookmark.translationId,
+          })
+        }
+      >
+        <BookmarkGlyph colorId={bookmark.colorId} size={16} />
+        <BookmarkLabel
+          name={bookmark.name}
+          chapterText={formatReference(
+            bookNames,
+            bookmark.bookId,
+            bookmark.chapterNumber,
+            []
+          )}
+          translationId={translation}
+        />
+      </button>
+      <ContextMenuWithButton
+        buttonClassName="sb-content-save-menu"
+        aria-label={t("bookmark-options-named", {
+          defaultValue: "Options for {{name}}",
+          name: bookmark.name,
+        })}
+        title={t("bookmark-options", { defaultValue: "Bookmark options" })}
+      >
+        <ContextMenuItem onClick={() => openEditBookmarkModal(state, bookmark)}>
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            edit
+          </MaterialIcon>
+          <span>{t("edit", { defaultValue: "Edit" })}</span>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => confirmDeleteBookmark(state, bookmark)}>
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            delete
+          </MaterialIcon>
+          <span>{t("delete", { defaultValue: "Delete" })}</span>
+        </ContextMenuItem>
+      </ContextMenuWithButton>
+    </div>
+  );
+}
+
 function ReadingPlanRow(props: {
   state: SeedBibleState;
   plan: ReadingPlanMetadata;
@@ -669,7 +742,7 @@ function readingPlanStatusLabel(
 
 /**
  * The "Your content" screen (issue #1553): everything the reader has made —
- * annotations, highlights, saves, playlists, reading plans, branding
+ * annotations, highlights, saves, bookmarks, playlists, reading plans, branding
  * customizations and uploaded images — in one place, filtered by a search box and a row of chips.
  *
  * "All" shows the first few of each section with a "See all" that switches
@@ -680,6 +753,7 @@ export function YourContentPane(props: YourContentScreenProps) {
   const {
     yourContent,
     saves,
+    bookmarks,
     playlists,
     annotations,
     readingPlans,
@@ -701,12 +775,14 @@ export function YourContentPane(props: YourContentScreenProps) {
     void yourContent.load({ force: true });
   }, []);
 
-  // Uploaded images and customizations each have their own store, not what
-  // `load` reads.
+  // Uploaded images, customizations and bookmarks each have their own store,
+  // not what `load` reads. Bookmarks load on sign-in by themselves; this
+  // retries one that failed then.
   useEffect(() => {
     if (userId) {
       void gallery.syncPhotos();
       void customizations.load();
+      void bookmarks.ensureLoaded();
     }
   }, [userId]);
 
@@ -781,6 +857,10 @@ export function YourContentPane(props: YourContentScreenProps) {
       )
     )
     .sort(compareSaves);
+  // Most recently moved first, as in the sidebar and on Today.
+  const visibleBookmarks = bookmarks.bookmarks.value.filter((b) =>
+    matches(b.name, ...referenceFields(b.bookId, b.chapterNumber, []))
+  );
   const visiblePlaylists = playlists.userPlaylists.value.filter((p) =>
     matches(p.title, p.description)
   );
@@ -818,6 +898,8 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("highlights", { defaultValue: "Highlights" });
       case "saves":
         return t("saves", { defaultValue: "Saves" });
+      case "bookmarks":
+        return t("bookmarks", { defaultValue: "Bookmarks" });
       case "playlists":
         return t("playlists", { defaultValue: "Playlists" });
       case "reading-plans":
@@ -833,6 +915,7 @@ export function YourContentPane(props: YourContentScreenProps) {
     annotations: visibleAnnotations.length,
     highlights: visibleHighlights.length,
     saves: visibleSaves.length,
+    bookmarks: visibleBookmarks.length,
     playlists: visiblePlaylists.length,
     "reading-plans": visibleReadingPlans.length,
     branding: visibleCustomizations.length,
@@ -872,6 +955,11 @@ export function YourContentPane(props: YourContentScreenProps) {
       case "saves":
         return t("your-content-empty-saves", {
           defaultValue: "Passages you save will show up here.",
+        });
+      case "bookmarks":
+        return t("bookmarks-empty", {
+          defaultValue:
+            "No bookmarks yet. Use the bookmark button above a chapter to place one.",
         });
       case "playlists":
         return t("your-content-empty-playlists", {
@@ -1081,6 +1169,27 @@ export function YourContentPane(props: YourContentScreenProps) {
                   onOpenPassage={onOpenPassage}
                 />
               ))}
+            </div>
+          </section>
+        ) : null}
+
+        {showing("bookmarks") && visibleBookmarks.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("bookmarks", { defaultValue: "Bookmarks" })}
+              onSeeAll={seeAll("bookmarks", visibleBookmarks)}
+            />
+            <div className="sb-content-bookmarks">
+              {visibleBookmarks
+                .slice(0, limit(visibleBookmarks))
+                .map((bookmark) => (
+                  <BookmarkRow
+                    key={bookmark.id}
+                    state={state}
+                    bookmark={bookmark}
+                    onOpenPassage={onOpenPassage}
+                  />
+                ))}
             </div>
           </section>
         ) : null}

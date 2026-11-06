@@ -643,7 +643,10 @@ function BookmarkPickerContent(props: {
  * other items in a bookmark's options menu. Whatever the menu was in stays
  * open behind the question, showing the bookmarks that are left.
  */
-function confirmDeleteBookmark(state: SeedBibleState, bookmark: Bookmark) {
+export function confirmDeleteBookmark(
+  state: SeedBibleState,
+  bookmark: Bookmark
+) {
   openConfirmDeleteModal(state.modals, {
     id: `delete-bookmark-confirm-${bookmark.id}`,
     title: {
@@ -717,6 +720,100 @@ export async function openBookmarkModal(
 }
 
 /**
+ * Renames or recolors one bookmark: its name and color fields with Cancel and
+ * Save. `onDone` runs on Cancel and after a successful save; a failed save
+ * stays open with a toast so nothing typed is lost.
+ */
+function BookmarkEditor(props: {
+  state: SeedBibleState;
+  bookmark: Bookmark;
+  onDone: () => void;
+  className?: string;
+}) {
+  const { state, bookmark, onDone } = props;
+  const { t } = useI18n();
+  const value = useSignal<BookmarkDetails>({
+    name: bookmark.name,
+    colorId: bookmark.colorId,
+  });
+  const isSaving = useSignal(false);
+
+  const submit = async () => {
+    if (isSaving.value || value.value.name.trim() === "") return;
+    isSaving.value = true;
+    try {
+      await state.bookmarks.updateBookmark(bookmark.id, value.value);
+      onDone();
+    } catch (err) {
+      console.warn("Failed to update bookmarks:", err);
+      state.app.toast(
+        t("bookmark-save-failed", {
+          defaultValue: "Couldn't save your bookmark. Please try again.",
+        })
+      );
+    } finally {
+      isSaving.value = false;
+    }
+  };
+
+  return (
+    <div className={props.className}>
+      <BookmarkForm
+        value={value.value}
+        autoFocus
+        disabled={isSaving.value}
+        onChange={(next) => {
+          value.value = next;
+        }}
+        onSubmit={() => void submit()}
+      />
+      <div className="sb-bookmarks-panel-edit-actions">
+        <button
+          type="button"
+          className="sb-bookmarks-panel-cancel"
+          disabled={isSaving.value}
+          onClick={onDone}
+        >
+          {t("cancel", { defaultValue: "Cancel" })}
+        </button>
+        <button
+          type="button"
+          className="sb-bookmark-picker-save"
+          disabled={isSaving.value || value.value.name.trim() === ""}
+          onClick={() => void submit()}
+        >
+          {isSaving.value
+            ? t("saving", { defaultValue: "Saving…" })
+            : t("save", { defaultValue: "Save" })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Opens {@link BookmarkEditor} in a modal, for lists with no room to edit in place. */
+export function openEditBookmarkModal(
+  state: SeedBibleState,
+  bookmark: Bookmark
+): void {
+  const modalId = `edit-bookmark-${bookmark.id}`;
+  const close = () => state.modals.closeModal(modalId);
+  state.modals.openModal({
+    id: modalId,
+    title: { key: "edit-bookmark", defaultValue: "Edit bookmark" },
+    mobileSheet: true,
+    content: () => (
+      <BookmarkEditor
+        state={state}
+        bookmark={bookmark}
+        onDone={close}
+        className="sb-bookmark-edit-modal"
+      />
+    ),
+  });
+}
+
+/**
  * The sidebar's bookmarks panel: every bookmark, most recently moved first.
  * Tapping one opens its chapter; its options menu renames, recolors, or
  * deletes it. Bookmarks are only placed from a chapter (the reader's button),
@@ -733,36 +830,6 @@ export function BookmarksPanel(props: {
 
   const bookmarks = manager.bookmarks.value;
   const editingId = useSignal<string | null>(null);
-  const editValue = useSignal<BookmarkDetails>({
-    name: "",
-    colorId: DEFAULT_BOOKMARK_COLOR_ID,
-  });
-  const isSaving = useSignal(false);
-
-  const run = async (action: () => Promise<unknown>) => {
-    if (isSaving.value) return;
-    isSaving.value = true;
-    try {
-      await action();
-      editingId.value = null;
-    } catch (err) {
-      console.warn("Failed to update bookmarks:", err);
-      state.app.toast(
-        t("bookmark-save-failed", {
-          defaultValue: "Couldn't save your bookmark. Please try again.",
-        })
-      );
-    } finally {
-      isSaving.value = false;
-    }
-  };
-
-  const submitEdit = () => {
-    const id = editingId.value;
-    const value = editValue.value;
-    if (!id || value.name.trim() === "") return;
-    void run(() => manager.updateBookmark(id, value));
-  };
 
   return (
     <div className="sb-bookmarks-panel">
@@ -777,39 +844,15 @@ export function BookmarksPanel(props: {
 
       {bookmarks.map((bookmark) =>
         editingId.value === bookmark.id ? (
-          <div key={bookmark.id} className="sb-bookmarks-panel-editor">
-            <BookmarkForm
-              value={editValue.value}
-              autoFocus
-              disabled={isSaving.value}
-              onChange={(next) => {
-                editValue.value = next;
-              }}
-              onSubmit={submitEdit}
-            />
-            <div className="sb-bookmarks-panel-edit-actions">
-              <button
-                type="button"
-                className="sb-bookmarks-panel-cancel"
-                disabled={isSaving.value}
-                onClick={() => {
-                  editingId.value = null;
-                }}
-              >
-                {t("cancel", { defaultValue: "Cancel" })}
-              </button>
-              <button
-                type="button"
-                className="sb-bookmark-picker-save"
-                disabled={isSaving.value || editValue.value.name.trim() === ""}
-                onClick={submitEdit}
-              >
-                {isSaving.value
-                  ? t("saving", { defaultValue: "Saving…" })
-                  : t("save", { defaultValue: "Save" })}
-              </button>
-            </div>
-          </div>
+          <BookmarkEditor
+            key={bookmark.id}
+            state={state}
+            bookmark={bookmark}
+            className="sb-bookmarks-panel-editor"
+            onDone={() => {
+              editingId.value = null;
+            }}
+          />
         ) : (
           <div key={bookmark.id} className="sb-bookmarks-panel-row">
             <button
@@ -843,10 +886,6 @@ export function BookmarksPanel(props: {
                 className="sb-tab-menu-item"
                 onClick={() => {
                   editingId.value = bookmark.id;
-                  editValue.value = {
-                    name: bookmark.name,
-                    colorId: bookmark.colorId,
-                  };
                 }}
               >
                 <MaterialIcon
