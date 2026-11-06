@@ -768,7 +768,7 @@ describe("YourContentPane", () => {
       );
     const names = () =>
       rows().map(
-        (row) => row.querySelector(".sb-bookmark-label-name")?.textContent
+        (row) => row.querySelector(".sb-content-bookmark-name")?.textContent
       );
 
     /** Opens a bookmark's options menu and picks the item labelled `label`. */
@@ -808,14 +808,14 @@ describe("YourContentPane", () => {
       renderPane(state);
 
       const row = rows()[0]!;
-      expect(row.querySelector(".sb-bookmark-label-name")?.textContent).toBe(
+      expect(row.querySelector(".sb-content-bookmark-name")?.textContent).toBe(
         "Sermon prep"
       );
-      expect(row.querySelector(".sb-bookmark-label-chapter")?.textContent).toBe(
-        "John 3"
-      );
       expect(
-        row.querySelector(".sb-bookmark-label-translation")?.textContent
+        row.querySelector(".sb-content-bookmark-chapter")?.textContent
+      ).toBe("John 3");
+      expect(
+        row.querySelector(".sb-content-bookmark-translation")?.textContent
       ).toBe("BSB");
     });
 

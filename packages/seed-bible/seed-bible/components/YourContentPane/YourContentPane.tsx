@@ -36,7 +36,6 @@ import type { Bookmark } from "../../managers/BookmarksManager";
 import { openSaveModalForLocation } from "../Tabs/Tabs";
 import {
   BookmarkGlyph,
-  BookmarkLabel,
   confirmDeleteBookmark,
   openEditBookmarkModal,
 } from "../Bookmarks/Bookmarks";
@@ -597,16 +596,25 @@ function BookmarkRow(props: {
         }
       >
         <BookmarkGlyph colorId={bookmark.colorId} size={16} />
-        <BookmarkLabel
-          name={bookmark.name}
-          chapterText={formatReference(
-            bookNames,
-            bookmark.bookId,
-            bookmark.chapterNumber,
-            []
-          )}
-          translationId={translation}
-        />
+        {/* The save card's name and details styles, not BookmarkLabel's, so
+            the two kinds of card read alike on this screen. */}
+        <span className="sb-content-bookmark-text">
+          <span className="sb-content-bookmark-name">{bookmark.name}</span>
+          <span className="sb-content-bookmark-meta">
+            <span className="sb-content-bookmark-chapter">
+              {formatReference(
+                bookNames,
+                bookmark.bookId,
+                bookmark.chapterNumber,
+                []
+              )}
+            </span>
+            <MetaSeparator />
+            <span className="sb-content-bookmark-translation">
+              {translation}
+            </span>
+          </span>
+        </span>
       </button>
       <ContextMenuWithButton
         buttonClassName="sb-content-save-menu"
