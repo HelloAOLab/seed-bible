@@ -617,6 +617,13 @@ export interface PlaylistReadingData {
    * follows the detour together and anyone can bring everyone back.
    */
   detour?: ReaderVerseRef | null;
+  /**
+   * False while the playlist's introduction (its cover, description and list
+   * of steps) is showing and no step has been opened yet. The reader stays on
+   * whatever it was showing until then. Absent means started, so data saved or
+   * synced before this field existed still opens on its step.
+   */
+  started?: boolean;
 }
 
 /**
@@ -771,10 +778,15 @@ export function createPlayingState(
     )
   );
   const currentIndex = signal<number>(queue.value.length > 0 ? 0 : -1);
+  /** See `PlaylistReadingData.started`. */
+  const started = signal(true);
 
-  /** The item at `currentIndex`, or null when the queue is empty. */
-  const currentItem = computed<PlaylistItemData | null>(
-    () => queue.value[currentIndex.value] ?? null
+  /**
+   * The item at `currentIndex`, or null when the queue is empty or no step
+   * has been opened yet, so nothing in the reader shows a step before then.
+   */
+  const currentItem = computed<PlaylistItemData | null>(() =>
+    started.value ? (queue.value[currentIndex.value] ?? null) : null
   );
   const hasNext = computed(() => currentIndex.value < queue.value.length - 1);
   const hasPrevious = computed(() => currentIndex.value > 0);
@@ -980,6 +992,7 @@ export function createPlayingState(
   const moveToStep = (index: number): void => {
     batch(() => {
       currentIndex.value = index;
+      started.value = true;
       detour.value = null;
       // Even onto an identical item, which the rearm effect can't tell apart.
       noteExpanded.value = true;
@@ -1034,7 +1047,9 @@ export function createPlayingState(
    * `canFinish` allows, and is otherwise a no-op.
    */
   const next = async (): Promise<void> => {
-    if (hasNext.value) {
+    if (!started.value) {
+      await start();
+    } else if (hasNext.value) {
       moveToStep(currentIndex.value + 1);
       await navigateToCurrentItem();
     } else if (canFinish.value) {
@@ -1045,8 +1060,16 @@ export function createPlayingState(
 
   /** Goes back to the previous step. No-op at the start of the queue. */
   const previous = async (): Promise<void> => {
-    if (hasPrevious.value) {
+    if (started.value && hasPrevious.value) {
       moveToStep(currentIndex.value - 1);
+      await navigateToCurrentItem();
+    }
+  };
+
+  /** Leaves the introduction for the current step. */
+  const start = async (): Promise<void> => {
+    if (currentIndex.value >= 0) {
+      moveToStep(currentIndex.value);
       await navigateToCurrentItem();
     }
   };
@@ -1161,24 +1184,29 @@ export function createPlayingState(
         ? Math.min(Math.max(Math.floor(state.step), 0), state.queue.length - 1)
         : -1;
     const nextDetour = state.detour ?? null;
+    const nextStarted = state.started !== false;
+    const startedChanged = started.peek() !== nextStarted;
     const stepChanged = currentIndex.peek() !== clampedStep;
     const detourChanged = !jsonEqual(detour.peek(), nextDetour);
     // Together, so the outbound sync never sees the new step without its
     // detour and publishes the detour as cleared.
     batch(() => {
       currentIndex.value = clampedStep;
+      started.value = nextStarted;
       if (detourChanged) {
         detour.value = nextDetour;
       }
     });
     let navigation: Promise<void> | null = null;
-    if (nextDetour) {
+    if (!nextStarted) {
+      // The introduction is showing: the reader stays where it is.
+    } else if (nextDetour) {
       // Following a peer to a passage a note links to — or our own detour
       // coming back around, in which case the reader is already there.
       if (stepChanged || detourChanged) {
         navigation = visitReference(nextDetour);
       }
-    } else if (stepChanged || detourChanged) {
+    } else if (stepChanged || detourChanged || startedChanged) {
       navigation = navigateToCurrentItem();
     } else {
       // Check if navigation is needed to display the current reference
@@ -1211,6 +1239,7 @@ export function createPlayingState(
     playlists,
     queue,
     currentIndex,
+    started: started as ReadonlySignal<boolean>,
     currentItem,
     hasNext,
     hasPrevious,
@@ -1226,6 +1255,7 @@ export function createPlayingState(
     tab,
     next,
     previous,
+    start,
     jumpTo,
     addToQueue,
     removeFromQueue,
@@ -1657,7 +1687,7 @@ export function createPlaylistManager(
     if (isMobile.peek()) {
       view.value = null;
     }
-    if (index !== state.currentIndex.peek()) {
+    if (index !== state.currentIndex.peek() || !state.started.peek()) {
       void state.jumpTo(index);
     }
   };
@@ -2683,16 +2713,18 @@ export function createPlaylistManager(
     }
     capturePlaylistEvent("playlist_played", playlists);
 
-    // On a phone the list of steps comes first, filling the screen.
-    view.value =
-      isMobile.value && (options?.sharedOpening || options?.openItem)
-        ? null
-        : "play_playlist";
+    // Pressing play opens the playlist's introduction (its list of steps and
+    // a start button) rather than its first step. Continuing where the user
+    // left off, or starting from a shared page that already introduced it,
+    // goes straight to the step.
+    const opensStep = !!(options?.sharedOpening || options?.openItem);
+    view.value = isMobile.value && opensStep ? null : "play_playlist";
 
     targetTab?.readingState.enableExtension(PLAYLIST_READING_EXTENSION_ID, {
       playlists,
       queue,
       step,
+      started: opensStep,
     } satisfies PlaylistReadingData);
     const generation = beginOpeningPlayback();
     const opened = playing.peek();
@@ -2985,6 +3017,7 @@ export function createPlaylistManager(
           queue: playingState.queue.value,
           step: playingState.currentIndex.value,
           detour: playingState.detour.value,
+          started: playingState.started.value,
         };
         if (!jsonEqual(data.peek(), snapshot)) {
           data.value = snapshot;
@@ -3099,11 +3132,13 @@ export function createPlaylistManager(
         transformUrlPath: ({ pathname }) => {
           const current = data.value;
           const firstPlaylist = current?.playlists[0];
+          // The introduction keeps the chapter's path: no step is open yet.
           if (
             !current ||
             !firstPlaylist ||
             !isRecordedPlaylist(firstPlaylist) ||
-            current.queue.length === 0
+            current.queue.length === 0 ||
+            current.started === false
           ) {
             return pathname;
           }
@@ -3153,6 +3188,12 @@ export function createPlaylistManager(
           if (playingState.queue.value.length === 0) {
             return { type: "default" };
           }
+          // From the introduction, "next" is the first step.
+          if (!playingState.started.value) {
+            return playingState
+              .start()
+              .then(() => ({ type: "prevent" }) as const);
+          }
           if (!playingState.hasNext.value) {
             if (
               !playingState.canFinish.value ||
@@ -3169,6 +3210,7 @@ export function createPlaylistManager(
         navigatePrevious: () => {
           if (
             playingState.queue.value.length === 0 ||
+            !playingState.started.value ||
             !playingState.hasPrevious.value
           ) {
             return { type: "default" };
@@ -3187,8 +3229,13 @@ export function createPlaylistManager(
           if (queue.length === 0) {
             return undefined; // nothing playing — the reader's own neighbour
           }
+          if (!playingState.started.value && direction === "previous") {
+            return undefined;
+          }
+          // From the introduction, the next step is the current one.
           const stepIndex =
-            playingState.currentIndex.value + (direction === "next" ? 1 : -1);
+            playingState.currentIndex.value +
+            (!playingState.started.value ? 0 : direction === "next" ? 1 : -1);
           const step = queue[stepIndex];
           if (!step) {
             if (

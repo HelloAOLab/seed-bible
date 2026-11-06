@@ -6124,6 +6124,7 @@ describe("BibleReaderToolbar — a playing passage's hidden note on desktop", ()
         0,
         { history: false }
       );
+      await state.playlists.playing.value!.start();
     });
     const playing = state.playlists.playing.value!;
     const showNote = () =>

@@ -2661,6 +2661,7 @@ describe("createPlaylistManager", () => {
         ],
       })
     );
+    await manager.playing.value!.start();
     await flush();
 
     expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
@@ -2762,6 +2763,7 @@ describe("createPlaylistManager", () => {
       playlists: [playlist],
       queue: playlist.items,
       step: 0,
+      started: false,
     });
     expect(disableExtension).not.toHaveBeenCalled();
 
@@ -2790,6 +2792,7 @@ describe("createPlaylistManager", () => {
       playlists: [a],
       queue: a.items,
       step: 0,
+      started: false,
     });
 
     tabsManager.selectedTabId.value = "tab-2";
@@ -2803,6 +2806,7 @@ describe("createPlaylistManager", () => {
       playlists: [b],
       queue: b.items,
       step: 0,
+      started: false,
     });
     expect(first.tab.readingState.isExtensionEnabled("playlist")).toBe(true);
     expect(second.tab.readingState.isExtensionEnabled("playlist")).toBe(true);
@@ -2973,6 +2977,7 @@ describe("createPlaylistManager", () => {
         ],
       });
       manager.startPlaying(playlist);
+      await manager.playing.value!.start();
       await flush();
 
       await manager.playing.value!.next();
@@ -3713,6 +3718,7 @@ describe("createPlaylistManager", () => {
         const manager = makeManager("user-1", makeTabs(tab));
         await flush();
         manager.startPlaying(makePlaylist({ items }));
+        await manager.playing.value!.start();
         await flush();
         const data = playlistData(tab);
         selectTranslationAndChapterMock.mockClear();
@@ -3736,6 +3742,24 @@ describe("createPlaylistManager", () => {
         expect(playing.awayFromStep.value).toBe(true);
         expect(selectTranslationAndChapterMock).toHaveBeenCalledTimes(1);
         expect(lastChapterShown()).toEqual(["ROM", 5]);
+      });
+
+      it("opens the step for everyone when one participant leaves the introduction", async () => {
+        const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+        const manager = makeManager("user-1", makeTabs(tab));
+        await flush();
+        manager.startPlaying(makePlaylist({ items: [noted] }));
+        await flush();
+        const data = playlistData(tab);
+        expect(data.value.started).toBe(false);
+        expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+
+        // What a peer pressing Start looks like on arrival.
+        data.value = { ...data.value, started: true };
+        await flush();
+
+        expect(manager.playing.value?.started.value).toBe(true);
+        expect(lastChapterShown()).toEqual(["JHN", 3]);
       });
 
       it("follows a peer to the passage, and back when anyone returns", async () => {
@@ -3919,7 +3943,9 @@ describe("createPlaylistManager", () => {
             ref: { bookId: "JHN", chapter: 3, verse: 16 },
           },
         ],
-      })
+      }),
+      0,
+      { openItem: true }
     );
 
     expect(manager.openingPlayback.value).toBe(true);
@@ -3949,7 +3975,9 @@ describe("createPlaylistManager", () => {
       ref: { bookId: "JHN", chapter: 3, verse: 16 },
     };
 
-    manager.startPlaying(makePlaylist({ id: "a", items: [verse] }));
+    manager.startPlaying(makePlaylist({ id: "a", items: [verse] }), 0, {
+      openItem: true,
+    });
     await flush();
     const firstBatch = resolvers.length;
     expect(firstBatch).toBeGreaterThan(0);
@@ -3959,7 +3987,9 @@ describe("createPlaylistManager", () => {
       makePlaylist({
         id: "b",
         items: [{ ...verse, ref: { bookId: "GEN", chapter: 1, verse: 1 } }],
-      })
+      }),
+      0,
+      { openItem: true }
     );
     await flush();
     expect(manager.openingPlayback.value).toBe(true);
@@ -3992,7 +4022,9 @@ describe("createPlaylistManager", () => {
       ref: { bookId: "JHN", chapter: 3, verse: 16 },
     };
 
-    manager.startPlaying(makePlaylist({ id: "a", items: [verse] }));
+    manager.startPlaying(makePlaylist({ id: "a", items: [verse] }), 0, {
+      openItem: true,
+    });
     await flush();
     const stoppedBatch = resolvers.length;
     expect(stoppedBatch).toBeGreaterThan(0);
@@ -4005,7 +4037,9 @@ describe("createPlaylistManager", () => {
       makePlaylist({
         id: "b",
         items: [{ ...verse, ref: { bookId: "GEN", chapter: 1, verse: 1 } }],
-      })
+      }),
+      0,
+      { openItem: true }
     );
     await flush();
     expect(manager.openingPlayback.value).toBe(true);
@@ -4060,13 +4094,7 @@ describe("createPlaylistManager", () => {
     expect(manager.openingPlayback.value).toBe(false);
   });
 
-  it("replayFromHistory waits on the chapter and starts at the beginning", async () => {
-    let resolveChapter: () => void = () => {};
-    selectTranslationAndChapterMock.mockReturnValue(
-      new Promise<void>((resolve) => {
-        resolveChapter = resolve;
-      })
-    );
+  it("replayFromHistory opens the playlist's introduction at the beginning, leaving the reader where it is", async () => {
     const playlist = makePlaylist({
       items: [
         {
@@ -4080,20 +4108,15 @@ describe("createPlaylistManager", () => {
     const manager = makeManager("user-1");
     await flush();
 
-    let settled = false;
-    const pending = manager.replayFromHistory(
+    await manager.replayFromHistory(
       makeHistory({ currentStep: 1, totalSteps: 2 })
     );
-    void pending.then(() => {
-      settled = true;
-    });
-    await flush();
-    expect(settled).toBe(false);
-    expect(manager.playing.value?.currentIndex.value).toBe(0);
 
-    resolveChapter();
-    await pending;
-    expect(settled).toBe(true);
+    expect(manager.view.value).toBe("play_playlist");
+    expect(manager.playing.value?.currentIndex.value).toBe(0);
+    expect(manager.playing.value?.started.value).toBe(false);
+    expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+    expect(manager.openingPlayback.value).toBe(false);
   });
 
   it("playFromHistory replays a finished session and continues an unfinished one", async () => {
@@ -4187,6 +4210,55 @@ describe("createPlaylistManager", () => {
       );
     });
 
+    it("opens the introduction on desktop when play is pressed, leaving the reader where it is until Start", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "JHN", chapter: 3, verse: 16 },
+            },
+            { type: "html", html: "b" },
+          ],
+        })
+      );
+      await flush();
+      const playing = manager.playing.value!;
+
+      expect(manager.view.value).toBe("play_playlist");
+      expect(playing.started.value).toBe(false);
+      expect(playing.currentItem.value).toBeNull();
+      expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+
+      // Start Reading opens the first step; the list stays beside it.
+      manager.openQueueItem(0);
+      await flush();
+
+      expect(manager.view.value).toBe("play_playlist");
+      expect(playing.started.value).toBe(true);
+      expect(playing.currentIndex.value).toBe(0);
+      expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+        "BSB",
+        "JHN",
+        3,
+        { scrollToVerse: 16 }
+      );
+    });
+
+    it("opens the first step, not the second, when the reader's next is pressed from the introduction", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(makePlaylist({ items: items() }));
+      const playing = manager.playing.value!;
+
+      await playing.next();
+
+      expect(playing.started.value).toBe(true);
+      expect(playing.currentIndex.value).toBe(0);
+    });
+
     it("goes straight to the step on a phone when asked to, as resuming does", async () => {
       const manager = await playOnPhone({ openItem: true });
 
@@ -4206,6 +4278,7 @@ describe("createPlaylistManager", () => {
           ],
         })
       );
+      await manager.playing.value!.start();
       const playing = manager.playing.value!;
 
       await playing.next();
@@ -4253,6 +4326,7 @@ describe("createPlaylistManager", () => {
       });
 
       manager.startPlaying(playlist);
+      await manager.playing.value!.start();
       const playing = manager.playing.value!;
       expect(playing.canFinish.value).toBe(false);
 
@@ -4280,6 +4354,7 @@ describe("createPlaylistManager", () => {
         ],
       });
       manager.startPlaying(playlist);
+      await manager.playing.value!.start();
       await manager.playing.value!.next();
       await manager.playing.value!.next();
       return manager;
@@ -4958,6 +5033,7 @@ describe("createPlaylistManager", () => {
       });
 
       manager.startPlaying(playlist);
+      await manager.playing.value!.start();
       mockPosthogCapture.mockClear(); // drop the "played" capture from startPlaying
 
       await manager.playing.value!.next();
@@ -5034,6 +5110,7 @@ describe("createPlaylistManager", () => {
       });
 
       manager.startPlaying(playlist);
+      await manager.playing.value!.start();
       mockPosthogCapture.mockClear(); // drop the "played" capture from startPlaying
       await manager.playing.value!.next();
       await manager.playing.value!.next();

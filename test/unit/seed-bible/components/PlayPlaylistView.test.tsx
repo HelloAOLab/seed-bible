@@ -707,7 +707,42 @@ describe("PlayPlaylistView", () => {
       expect(openQueueItem).toHaveBeenCalledWith(1);
     });
 
-    it("is not shown on wider screens, where the step is already beside the list", () => {
+    /** Playback that hasn't left the playlist's introduction yet. */
+    const atIntroduction = () => {
+      const playlist = twoSteps();
+      const playing = createPlayingState([playlist]);
+      void playing.setState({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 0,
+        started: false,
+      });
+      return playing;
+    };
+
+    it("on a wider screen, shows on the introduction and opens the first step", () => {
+      const { playlists, openQueueItem } =
+        createMockPlaylists(atIntroduction());
+      renderView(playlists);
+
+      act(() => {
+        startButton()?.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+      expect(openQueueItem).toHaveBeenCalledWith(0);
+    });
+
+    it("marks no step as current on the introduction", () => {
+      const { playlists } = createMockPlaylists(atIntroduction());
+      renderView(playlists);
+
+      expect(
+        container.querySelector(".sb-play-playlist-item--current")
+      ).toBeNull();
+    });
+
+    it("is not shown on wider screens once started, where the step is beside the list", () => {
       const { playlists } = createMockPlaylists(
         createPlayingState([twoSteps()])
       );

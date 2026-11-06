@@ -102,6 +102,7 @@ function createMockPlaylists(
     editingPlaylist,
     playing: signal(overrides.playing ?? null),
     openingPlayback: signal(false),
+    isMobile: signal(false),
     playingAuthorName: signal(null),
     isEditingPlaylistDirty: vi.fn(() => false),
     cancelEditingPlaylist: vi.fn(),

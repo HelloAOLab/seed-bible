@@ -57,6 +57,19 @@
   cursor: pointer;
 }
 
+/* Wider than a phone, the pane runs under the app's floating navigation bar,
+   so the button is lifted clear of it (as on PlaylistPagePane). A compact
+   embed has no such bar. */
+@media (min-width: 481px) {
+  .sb-play-playlist-footer {
+    padding-bottom: 5.5rem;
+  }
+
+  .sb-embed-minimal .sb-play-playlist-footer {
+    padding-bottom: 12px;
+  }
+}
+
 .sb-play-playlist-item-button {
   flex: 1;
   min-width: 0;
