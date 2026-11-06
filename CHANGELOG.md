@@ -17,8 +17,13 @@
   - Islands, lakes and provinces show one clean outline that fills the view; regions without a fixed border show as soft shading.
   - On a phone, a card's map is a still preview: tap it to open the full map.
   - The map credits where its place data comes from, and dims to match the dark theme.
+- On phones, the verse actions, Theme & text and Participants sheets now look and behave the same.
+  - Drag any of them down by its handle to close it, or press Escape. Dragging the verse actions sheet up still shows more actions.
+  - Theme & text and Participants also close when you tap outside them, and keep keyboard focus inside while open.
 
 ### 🐛 Fixed
+
+- In right-to-left languages such as Arabic, the Participants sheet now reads right to left, and the verse actions sheet's close button sits on the correct side.
 
 ### 🗑️ Removed
 

@@ -1,0 +1,182 @@
+/* Shared mobile bottom sheet. A sheet restyles itself through the
+ * --sb-bottom-sheet-* variables rather than by overriding these rules, so the
+ * result doesn't depend on which stylesheet loads last. */
+.sb-bottom-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  /* Same layer as the sheet; the sheet comes later in the DOM, so it is on top.
+   * Both sit above the mobile toolbar (z-index 101). */
+  z-index: var(--sb-bottom-sheet-z-index, 102);
+  touch-action: none;
+}
+
+.sb-bottom-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--sb-bottom-sheet-z-index, 102);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  /* Cap to the screen below the notch. The handle and header stay put and the
+   * body scrolls, so a tall sheet can always reach its bottom content. */
+  max-height: var(
+    --sb-bottom-sheet-max-height,
+    calc(100dvh - env(safe-area-inset-top, 0px))
+  );
+  padding: var(--sb-bottom-sheet-padding-top, 0.5rem)
+    var(--sb-bottom-sheet-padding-inline, 1rem)
+    calc(
+      var(--sb-bottom-sheet-padding-bottom, 1rem) +
+        env(safe-area-inset-bottom, 0px)
+    );
+  background: var(--sb-bottom-sheet-background, var(--sb-reader-background));
+  color: var(--sb-bottom-sheet-color, var(--sb-font-color));
+  border: none;
+  border-top: var(--sb-bottom-sheet-border-top, none);
+  border-top-left-radius: 1.25rem;
+  border-top-right-radius: 1.25rem;
+  box-shadow: 0 -8px 24px var(--sb-shadow-color);
+  font-family: var(--sb-reader-font-family);
+  /* Carries a drag that is let go short of dismissing back into place. */
+  transition: transform 0.2s ease;
+}
+
+.sb-bottom-sheet:focus {
+  outline: none;
+}
+
+/* A sheet that drags from anywhere must stop the browser turning the gesture
+ * into a page scroll, or it answers our first pointermove or two with a
+ * `pointercancel` and the drag snaps back. */
+.sb-bottom-sheet-drag-anywhere {
+  touch-action: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sb-bottom-sheet {
+    animation: sb-bottom-sheet-rise 0.25s ease-out;
+  }
+}
+
+@keyframes sb-bottom-sheet-rise {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* While dragging, the sheet follows the finger exactly; easing towards it
+ * would feel like lag. */
+.sb-bottom-sheet-dragging {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-bottom-sheet {
+    transition: none;
+  }
+}
+
+/* Drag target around the grab handle. The pill is only 4px tall, so the
+ * gesture lives on this taller strip. */
+.sb-bottom-sheet-handle-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.5rem;
+  margin: -0.25rem 0 0.25rem;
+  flex: none;
+  touch-action: none;
+  cursor: grab;
+}
+
+.sb-bottom-sheet-handle-area:active {
+  cursor: grabbing;
+}
+
+.sb-bottom-sheet-handle-area:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+.sb-bottom-sheet-handle {
+  width: 2.25rem;
+  height: 0.25rem;
+  border-radius: 62.4375rem;
+  background: color-mix(in srgb, currentColor, transparent 70%);
+  flex: none;
+}
+
+.sb-bottom-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  touch-action: none;
+}
+
+.sb-bottom-sheet-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.sb-bottom-sheet-title-icon {
+  font-size: 1.375rem;
+}
+
+.sb-bottom-sheet-close {
+  flex: none;
+  width: 1.875rem;
+  height: 1.875rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor, transparent 92%);
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.sb-bottom-sheet-close:hover {
+  background: color-mix(in srgb, currentColor, transparent 84%);
+}
+
+.sb-bottom-sheet-close .material-symbols-outlined {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* No title row: the close button sits in the top corner on the reading side's
+ * end, so it follows the layout in right-to-left languages. */
+.sb-bottom-sheet-close-corner {
+  position: absolute;
+  top: 0.625rem;
+  inset-inline-end: 0.75rem;
+  z-index: 1;
+}
+
+.sb-bottom-sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
