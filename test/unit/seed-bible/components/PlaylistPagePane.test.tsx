@@ -98,6 +98,33 @@ describe("PlaylistPagePane", () => {
     ).toEqual(["Exodus 2", "HTML snippet", "Exodus 3:1-6"]);
   });
 
+  it("shows the total time beside the item count, and each item's time when its author gave one", () => {
+    renderPane(
+      makePlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "EXO", chapter: 2 },
+            minutes: 5,
+          },
+          { type: "html", html: "<p>Reflect</p>" },
+        ],
+      })
+    );
+
+    // A step with no estimate counts as a minute.
+    expect(
+      container.querySelector(".sb-playlist-page-count")?.textContent
+    ).toBe("2 items · ~6 min");
+    expect(
+      [...container.querySelectorAll(".sb-playlist-page-item")].map(
+        (item) =>
+          item.querySelector(".sb-playlist-page-item-minutes")?.textContent ??
+          null
+      )
+    ).toEqual(["5 min", null]);
+  });
+
   it("keeps the Start button outside the scrolling item list", () => {
     renderPane(makePlaylist());
 

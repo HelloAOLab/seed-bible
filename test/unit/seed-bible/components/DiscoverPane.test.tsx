@@ -381,9 +381,9 @@ describe("DiscoverPane", () => {
         container
       );
     });
-    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
-      "Evening Reading"
-    );
+    expect(
+      container.querySelector(".sb-playlist-page-title")?.textContent
+    ).toBe("Evening Reading");
 
     // Simulate switching to a non-playlist tab: `playing` clears, but nothing
     // ever resets the raw `view` signal away from "play_playlist".

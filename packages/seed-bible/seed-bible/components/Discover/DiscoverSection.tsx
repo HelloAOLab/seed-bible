@@ -7,12 +7,9 @@ export function DiscoverSection(props: {
   className?: string;
   /** Shown beside the title, for sections whose length is worth knowing up front. */
   count?: number;
-  /** Follows the title after a middle dot, such as how long the section takes. */
-  detail?: string;
 }) {
-  const title =
+  const label =
     props.count == null ? props.title : `${props.title} (${props.count})`;
-  const label = props.detail ? `${title} · ${props.detail}` : title;
 
   return (
     <section className={`sb-discover-section ${props.className ?? ""}`}>

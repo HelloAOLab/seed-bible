@@ -1,4 +1,5 @@
-/* Header and Start button stay put; only the body between them scrolls. */
+/* The playlist overview (PlaylistOverview): header and button stay put; only
+   the body between them scrolls. */
 .sb-playlist-page {
   display: flex;
   flex-direction: column;
@@ -132,4 +133,22 @@
   .sb-embed-minimal .sb-playlist-page-footer {
     padding-bottom: 0.75rem;
   }
+
+  /* With no button below (the playing list on a wider screen), the steps
+     themselves need to scroll clear of that bar. */
+  .sb-playlist-page-body:last-child {
+    padding-bottom: 5.5rem;
+  }
+
+  .sb-embed-minimal .sb-playlist-page-body:last-child {
+    padding-bottom: 1rem;
+  }
+}
+
+/* The author's time estimate for a step, after its name. */
+.sb-playlist-page-item-minutes {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  white-space: nowrap;
 }
