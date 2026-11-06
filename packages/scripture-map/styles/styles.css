@@ -200,9 +200,9 @@
 }
 
 .selection-mode-toggle > span:nth-of-type(1).checked {
-  background-color: #d36433;
-  border-color: #d36433;
-  color: white;
+  background-color: var(--sb-primary-color, #d36433);
+  border-color: var(--sb-primary-color, #d36433);
+  color: var(--sb-primary-font-color, white);
 }
 
 .selection-mode-toggle > span:nth-of-type(2) {
@@ -235,7 +235,7 @@
 }
 
 .selection-options > button:nth-of-type(2) {
-  color: #d36433;
+  color: var(--sb-primary-color, #d36433);
 }
 
 .selection-options > button > span {

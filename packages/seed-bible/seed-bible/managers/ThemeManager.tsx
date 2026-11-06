@@ -783,16 +783,16 @@ export const DARK_THEME: BibleTheme = {
   id: "dark",
   name: "Dark",
   variables: {
-    primaryColor: "#e07b4c",
+    primaryColor: "#f5f5f5",
     primaryFontColor: "#111111",
 
-    secondaryColor: "#433228",
+    secondaryColor: "#2a2a2a",
     secondaryFontColor: "#f5f5f5",
 
     tertiaryColor: "#1c1c1c",
 
-    linkColor: "#e07b4c",
-    linkVisitedColor: "#d99bb0",
+    linkColor: "#f5f5f5",
+    linkVisitedColor: "#a3a3a3",
 
     background: "#0a0a0a",
 
