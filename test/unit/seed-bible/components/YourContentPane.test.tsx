@@ -182,6 +182,8 @@ interface StateOptions {
   bookmarks?: Bookmark[];
   /** How many reads of the bookmarks record fail with a server error first. */
   bookmarkReadFailures?: number;
+  /** Holds every read of the bookmarks record until `releaseBookmarkReads`. */
+  holdBookmarkReads?: boolean;
   /** Makes every write of the bookmarks record fail. */
   bookmarkWriteError?: Error;
   playlists?: Playlist[];
@@ -246,7 +248,14 @@ function createState(options: StateOptions = {}) {
   // one boundary faked.
   let savedBookmarks: Bookmark[] | null = options.bookmarks ?? null;
   let bookmarkReadFailures = options.bookmarkReadFailures ?? 0;
+  let releaseBookmarkReads = () => {};
+  const bookmarkReadsReleased = options.holdBookmarkReads
+    ? new Promise<void>((resolve) => {
+        releaseBookmarkReads = resolve;
+      })
+    : Promise.resolve();
   const getBookmarksRecord = vi.fn(async () => {
+    await bookmarkReadsReleased;
     if (bookmarkReadFailures > 0) {
       bookmarkReadFailures--;
       return {
@@ -432,6 +441,7 @@ function createState(options: StateOptions = {}) {
     closePane,
     removeSave,
     getBookmarksRecord,
+    releaseBookmarkReads: () => releaseBookmarkReads(),
     /** What the records server holds now: the last list written, or the first. */
     savedBookmarks: () => savedBookmarks,
     closeModal,
@@ -980,14 +990,67 @@ describe("YourContentPane", () => {
       expect(names()).toEqual(["A", "B", "C", "D"]);
     });
 
+    const statusText = () =>
+      Array.from(container.querySelectorAll(".sb-content-status"))
+        .map((el) => el.textContent)
+        .join(" | ");
+
     it("says how to place one when the Bookmarks chip has none", async () => {
       const { state, filter } = createState({ saves: [save("s1")] });
       filter.value = "bookmarks";
       await renderWithBookmarks(state);
 
-      expect(container.querySelector(".sb-content-status")?.textContent).toBe(
-        "No bookmarks yet. Use the bookmark button above a chapter to place one."
+      await vi.waitFor(() =>
+        expect(statusText()).toBe(
+          "No bookmarks yet. Use the bookmark button above a chapter to place one."
+        )
       );
+    });
+
+    it("says it's still loading, not that there are none, while bookmarks load", async () => {
+      const { state, filter, releaseBookmarkReads } = createState({
+        bookmarks: [bookmark("bm1", "Sermon prep")],
+        holdBookmarkReads: true,
+      });
+      filter.value = "bookmarks";
+      renderPane(state);
+
+      expect(statusText()).toContain("Gathering your content…");
+      expect(statusText()).not.toContain("No bookmarks yet");
+
+      await act(async () => {
+        releaseBookmarkReads();
+      });
+
+      await vi.waitFor(() => expect(names()).toEqual(["Sermon prep"]));
+      expect(statusText()).toBe("");
+    });
+
+    it("says bookmarks couldn't load, and loads them on Try again", async () => {
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const { state, filter } = createState({
+        bookmarks: [bookmark("bm1", "Sermon prep")],
+        // The sign-in load and the screen's own retry both fail.
+        bookmarkReadFailures: 2,
+      });
+      filter.value = "bookmarks";
+      renderPane(state);
+
+      await vi.waitFor(() =>
+        expect(statusText()).toBe(
+          "Couldn't load your bookmarks. Please try again.Try again"
+        )
+      );
+      expect(statusText()).not.toContain("No bookmarks yet");
+
+      act(() => {
+        container
+          .querySelector<HTMLButtonElement>(".sb-content-retry")!
+          .click();
+      });
+
+      await vi.waitFor(() => expect(names()).toEqual(["Sermon prep"]));
+      expect(statusText()).toBe("");
     });
 
     // Bookmarks load on sign-in; a load that failed then would otherwise

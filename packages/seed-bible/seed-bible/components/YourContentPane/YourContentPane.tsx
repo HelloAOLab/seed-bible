@@ -780,14 +780,29 @@ export function YourContentPane(props: YourContentScreenProps) {
     void yourContent.load({ force: true });
   }, []);
 
+  // Bookmarks load on sign-in by themselves; asking again here retries one
+  // that failed then. Tracked so the Bookmarks chip can tell "none yet" from
+  // "still loading" and "couldn't load" — the list is empty in all three.
+  const bookmarksLoad = useSignal<"loading" | "loaded" | "failed">("loading");
+  const loadBookmarks = () => {
+    bookmarksLoad.value = "loading";
+    bookmarks.ensureLoaded().then(
+      (loaded) => {
+        bookmarksLoad.value = loaded ? "loaded" : "failed";
+      },
+      () => {
+        bookmarksLoad.value = "failed";
+      }
+    );
+  };
+
   // Uploaded images, customizations and bookmarks each have their own store,
-  // not what `load` reads. Bookmarks load on sign-in by themselves; this
-  // retries one that failed then.
+  // not what `load` reads.
   useEffect(() => {
     if (userId) {
       void gallery.syncPhotos();
       void customizations.load();
-      void bookmarks.ensureLoaded();
+      loadBookmarks();
     }
   }, [userId]);
 
@@ -939,9 +954,20 @@ export function YourContentPane(props: YourContentScreenProps) {
   const stillSearching =
     needle.length > 0 && yourContent.isReadingHighlightVerseText.value;
 
+  // Only the Bookmarks chip waits on bookmarks: under "all" they are one
+  // section among many, and simply appear when they arrive.
+  const onBookmarksChip = filter === "bookmarks" && !!userId;
+  const bookmarksPending = onBookmarksChip && bookmarksLoad.value === "loading";
+  const bookmarksFailed =
+    onBookmarksChip &&
+    bookmarksLoad.value === "failed" &&
+    sectionCounts.bookmarks === 0;
+
   const nothingToShow =
     status === "ready" &&
     !stillSearching &&
+    !bookmarksPending &&
+    !bookmarksFailed &&
     (filter === "all"
       ? Object.values(sectionCounts).every((count) => count === 0)
       : sectionCounts[filter] === 0);
@@ -1057,7 +1083,7 @@ export function YourContentPane(props: YourContentScreenProps) {
           </div>
         </div>
 
-        {status === "loading" || stillSearching ? (
+        {status === "loading" || stillSearching || bookmarksPending ? (
           <p className="sb-content-status sb-content-status--loading">
             <Spinner />
             {t("loading-your-content", {
@@ -1077,6 +1103,23 @@ export function YourContentPane(props: YourContentScreenProps) {
               type="button"
               className="sb-content-retry"
               onClick={() => void yourContent.load({ force: true })}
+            >
+              {t("try-again", { defaultValue: "Try again" })}
+            </button>
+          </div>
+        ) : null}
+
+        {bookmarksFailed ? (
+          <div className="sb-content-status">
+            <p>
+              {t("bookmarks-load-failed", {
+                defaultValue: "Couldn't load your bookmarks. Please try again.",
+              })}
+            </p>
+            <button
+              type="button"
+              className="sb-content-retry"
+              onClick={loadBookmarks}
             >
               {t("try-again", { defaultValue: "Try again" })}
             </button>
