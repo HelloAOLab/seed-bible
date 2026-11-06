@@ -1,0 +1,122 @@
+/*
+ * SeedBibleIcon `animated`, in two stages (~1s): the seed sprouts into the
+ * trunk (visually full height by ~0.3s), then the branches unfold as pages.
+ * `--sb-seed-icon-elapsed` resumes an intro already in progress when the icon
+ * remounts mid-animation, by shifting every delay back by that much.
+ */
+.sb-seed-icon-seed {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sb-seed-icon-seed 0.18s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(0s - var(--sb-seed-icon-elapsed, 0s));
+}
+
+.sb-seed-icon-trunk-reveal {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: sb-seed-icon-trunk 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation-delay: calc(0.12s - var(--sb-seed-icon-elapsed, 0s));
+}
+
+.sb-seed-icon-page,
+.sb-seed-icon-page-edge {
+  transform-box: view-box;
+  animation-duration: 0.42s;
+  animation-fill-mode: both;
+}
+
+.sb-seed-icon-page {
+  animation-name: sb-seed-icon-page;
+  animation-timing-function: cubic-bezier(0.25, 0.8, 0.4, 1);
+}
+
+.sb-seed-icon-page-edge-left {
+  animation-name: sb-seed-icon-page-edge-left;
+}
+
+.sb-seed-icon-page-edge-right {
+  animation-name: sb-seed-icon-page-edge-right;
+}
+
+.sb-seed-icon-whole {
+  animation: sb-seed-icon-whole 0.9s step-end both;
+  animation-delay: calc(0s - var(--sb-seed-icon-elapsed, 0s));
+}
+
+@keyframes sb-seed-icon-seed {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes sb-seed-icon-trunk {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes sb-seed-icon-page {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  10% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes sb-seed-icon-page-edge-left {
+  0%,
+  25% {
+    transform: scaleX(0.2) skewY(20deg);
+  }
+  75% {
+    transform: scaleX(1.06) skewY(-4deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes sb-seed-icon-page-edge-right {
+  0%,
+  25% {
+    transform: scaleX(0.2) skewY(-20deg);
+  }
+  75% {
+    transform: scaleX(1.06) skewY(4deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes sb-seed-icon-whole {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-seed-icon-seed,
+  .sb-seed-icon-trunk-reveal,
+  .sb-seed-icon-page,
+  .sb-seed-icon-page-edge,
+  .sb-seed-icon-whole {
+    animation: none;
+  }
+}

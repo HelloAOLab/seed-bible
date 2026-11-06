@@ -14,6 +14,7 @@ import { Suspense } from "preact/compat";
 import { useEffect } from "preact/hooks";
 import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu/ContextMenu";
+import type { BibleTheme } from "../managers/ThemeManager";
 import { ModalHost } from "../components/ModalHost/ModalHost";
 import { ToastHost } from "../components/ToastHost/ToastHost";
 import { LoginModal } from "../components/LoginModal/LoginModal";
@@ -45,6 +46,7 @@ import { TutorialSkipPrompt } from "../components/TutorialSkipPrompt/TutorialSki
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
 import { OfflineRecoveryToast } from "../components/OfflineDownloadPrompt/OfflineRecoveryToast";
+import { customFontStylesheet } from "./fontStylesheets";
 
 /**
  * Font `<link>`s, plus the CSS for the active Customization layered on top
@@ -54,9 +56,17 @@ import { OfflineRecoveryToast } from "../components/OfflineDownloadPrompt/Offlin
  * `createTheme`) — that target is never diffed by Preact, so it carries no
  * hydration-mismatch risk the way an in-tree `<style>` would; this one still
  * needs to be in-tree so a shared `?customization=` link's colors are part of
- * the SSR'd HTML. `dangerouslySetInnerHTML` (rather than a plain text child)
- * is what keeps it safe: raw CSS can contain `&` (e.g. the highlight classes'
- * `&.sb-words-of-jesus`), which a plain JSX text child would HTML-escape on
+ * the SSR'd HTML.
+ *
+ * With no Customization active the tags stay empty. Their `body` rule sits
+ * later in the document than `#sb-theme-styles`, so it wins — and the server
+ * can only render the Light default. Filled in, it would paint over the
+ * device's saved or System theme that `index.html`'s pre-hydration script
+ * put in `#sb-theme-styles`, and the page would show Light until the first
+ * post-mount theme change. The empty tags still render so the SSR'd and
+ * client trees keep the same shape. `dangerouslySetInnerHTML` (rather than a plain text child)
+ * is what keeps it safe: raw CSS can contain characters like `&` or quotes
+ * (e.g. in font-family values), which a plain JSX text child would HTML-escape on
  * the server but not on the client, causing a hydration mismatch; Preact also
  * never diffs `dangerouslySetInnerHTML` during hydration, so this stays
  * inert even if the two sides' CSS text does legitimately differ.
@@ -69,12 +79,14 @@ import { OfflineRecoveryToast } from "../components/OfflineDownloadPrompt/Offlin
  * `?customization=` link in play.
  */
 export function ExternalResourceDependencies({
+  activeCustomizationTheme,
   themeCssVariables,
   themeCssClasses,
   googleFontFamilies,
   initialCustomizationLoadPromise,
   initialCustomizationLoadSettled,
 }: {
+  activeCustomizationTheme: ReadonlySignal<BibleTheme | null>;
   themeCssVariables: ReadonlySignal<string>;
   themeCssClasses: ReadonlySignal<string>;
   googleFontFamilies: ReadonlySignal<string[]>;
@@ -85,34 +97,31 @@ export function ExternalResourceDependencies({
     throw initialCustomizationLoadPromise;
   }
 
+  const hasCustomization = activeCustomizationTheme.value !== null;
+
   return (
     <>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Roboto&family=Open+Sans&family=Playfair+Display&family=Cormorant+Garamond&display=swap"
-        rel="stylesheet"
-      />
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
-      />
       {googleFontFamilies.value.length > 0 && (
         // A customization variant can name any Google Font by typing its
         // exact name — this loads whatever isn't already covered by the
-        // static presets above. See CustomizationsManager.buildCustomFontValue
-        // for why the name is already restricted to safe characters.
+        // static presets, which `index.html` links without blocking paint.
         <link
           rel="stylesheet"
-          href={`https://fonts.googleapis.com/css2?${googleFontFamilies.value
-            .map((name) => `family=${name.replace(/ /g, "+")}`)
-            .join("&")}&display=swap`}
+          href={customFontStylesheet(googleFontFamilies.value)!}
         />
       )}
       <style
         dangerouslySetInnerHTML={{
-          __html: `body {\n${themeCssVariables.value}\n}`,
+          __html: hasCustomization
+            ? `body {\n${themeCssVariables.value}\n}`
+            : "",
         }}
       />
-      <style dangerouslySetInnerHTML={{ __html: themeCssClasses.value }} />
+      <style
+        dangerouslySetInnerHTML={{
+          __html: hasCustomization ? themeCssClasses.value : "",
+        }}
+      />
     </>
   );
 }
@@ -280,6 +289,7 @@ function MainContent(props: {
         }}
       >
         <ExternalResourceDependencies
+          activeCustomizationTheme={state.customizations.activeResolvedTheme}
           themeCssVariables={theme.themeCssVariables}
           themeCssClasses={theme.themeCssClasses}
           googleFontFamilies={theme.googleFontFamiliesToLoad}
@@ -297,6 +307,7 @@ function MainContent(props: {
             <TabsLayout state={state} />
           </main>
           {sidePane && <SidePane state={state} pane={sidePane} />}
+          <div className="sb-pane-side-ghost-host" />
           {fullscreenPane && (
             <FullscreenPane state={state} pane={fullscreenPane} />
           )}

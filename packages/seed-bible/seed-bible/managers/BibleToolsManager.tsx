@@ -25,7 +25,7 @@ import { extractContentText } from "../managers/ChapterText";
 import type { NavigationManager } from "../managers/NavigationManager";
 import type { BibleDataManager, BookId } from "../managers/BibleDataManager";
 import { readInjectedConfig, type BrandingConfig } from "../app/appConfig";
-import type { PanePlacement, PanesManager } from "../managers/PanesManager";
+import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
   formatVerseSelection,
@@ -36,12 +36,14 @@ import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
+import type { EmbedThemeChoice } from "./EmbedMode";
 import type { AppState } from "./SeedBibleStateManager";
 import type {
   ReadingPlan,
   ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
 import {
+  forgetReadingPlansPaneOpener,
   ReadingPlansPane,
   ReadingPlansPaneActions,
   ReadingPlansPaneIcon,
@@ -59,13 +61,11 @@ import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
 import type { UserGalleryManager } from "./UserGalleryManager";
 import { i18n, useI18n } from "../i18n";
-import {
-  FEATURE_KEY_READING_PLANS,
-  type FeaturesManager,
-} from "./FeaturesManager";
+import type { FeaturesManager } from "./FeaturesManager";
 import type { FriendsManager } from "./FriendsManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
+import type { SettingsManager } from "./SettingsManager";
 import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
@@ -196,6 +196,11 @@ export interface BibleToolContext {
   openSidebar: () => void;
   /** Opens the search interface. */
   openSearch: () => void;
+  /**
+   * Opens search, or closes it if it's already showing, as the toolbar's
+   * Search button does. Surfaces without it fall back to `openSearch`.
+   */
+  toggleSearch?: () => void;
   /** Opens the chat / cross-references floating panel. */
   openChat?: () => void;
   /** Opens the discover panel */
@@ -228,6 +233,13 @@ export interface BibleToolContext {
    * shared-session actions (create/share the live session) should guard on it.
    */
   app?: AppState;
+
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 
   /**
    * Navigation manager, for tools that build their own links. Only
@@ -434,6 +446,7 @@ export interface QuickToolContext {
 
   features: FeaturesManager;
 
+  settings: SettingsManager;
   readingPlans: ReadingPlansManager;
 
   /** Optional window metrics for responsive tool behavior. */
@@ -460,6 +473,13 @@ export interface QuickToolContext {
    * toolbar tool.
    */
   app?: AppState;
+
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
@@ -710,7 +730,7 @@ function ChevronLeftIcon() {
 }
 
 function OpenSelectorIcon() {
-  return <SeedBibleIcon size={28} className="sb-open-selector-icon" />;
+  return <SeedBibleIcon size={28} animated className="sb-open-selector-icon" />;
 }
 
 function ChevronRightIcon() {
@@ -917,15 +937,14 @@ function getDefaultQuickToolbarTools(
         </MaterialIcon>
       ),
       isVisible: (c) => {
-        if (c.app?.isMobile?.value || c.app?.isDiscoverOpen?.value) {
+        if (
+          c.app?.isMobile?.value ||
+          c.app?.isDiscoverOpen?.value ||
+          !c.settings.settings.value.discoveredContent.showContent
+        ) {
           return false;
         }
-        return getDiscoverPanelContent(
-          c.readingState,
-          c.annotations,
-          c.readingPlans,
-          c.features
-        ).hasAny;
+        return getDiscoverPanelContent(c.readingState, c.annotations).hasAny;
       },
       onSelect: (c) => {
         c.readingState.discoverContentPanelInline.value =
@@ -987,7 +1006,7 @@ export interface OpenReadingPlansPaneOptions {
   readingPlans: ReadingPlansManager;
   readingState: BibleReadingState;
   panesManager: PanesManager;
-  modals?: ModalManager;
+  modals: ModalManager;
   playlists?: PlaylistManager;
   /** Loads chapter text for the plan editor's inline scripture previews. */
   bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
@@ -1001,20 +1020,22 @@ export interface OpenReadingPlansPaneOptions {
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
-  /**
-   * Where the pane opens. Defaults to "side" — docked beside the reader, which
-   * is what the toolbar's Plans tool wants. The Profile screen passes
-   * "fullscreen" so tapping "All plans" replaces it rather than opening a
-   * panel behind it.
-   */
-  placement?: PanePlacement;
   toast?: (message: string) => void;
+  /**
+   * Returns to the screen that opened the pane, from the plans list or from a
+   * plan that screen opened directly. Without it the list has no back button,
+   * which is right for a shared plan link: there's no screen to go back to.
+   */
+  onBack?: () => void;
 }
 
+export const READING_PLANS_PANE_ID = "reading-plans-pane";
+
 /**
- * Opens the reading plans pane. Shared by the reader toolbar's Plans tool and
- * the Profile screen's plans card so the two land on the same pane, with the
- * same chrome and the same scripture/playback wiring.
+ * Opens the reading plans pane. Shared by shared plan links and the Profile and
+ * Your content screens so they all land on the same pane, with the same chrome
+ * and the same scripture/playback wiring. It docks beside the reader, like the
+ * playlist editor, so a plan being built can take verses picked in the reader.
  */
 export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
   const {
@@ -1041,16 +1062,22 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
         )
     : undefined;
 
+  forgetReadingPlansPaneOpener();
   panesManager.openPane({
-    id: "reading-plans-pane",
-    placement: options.placement ?? "side",
+    id: READING_PLANS_PANE_ID,
+    placement: "side",
 
     // The pane's own header carries the plans chrome: a back button when
-    // the user has drilled into a plan or the create wizard, the plan's
-    // name as the title, and the new-plan button.
+    // the user has drilled into a plan or the create wizard (or came from
+    // another screen), the plan's name as the title, and the new-plan button.
     title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
     icon: () => <ReadingPlansPaneIcon />,
-    leading: () => <ReadingPlansPaneLeading readingPlans={readingPlans} />,
+    leading: () => (
+      <ReadingPlansPaneLeading
+        readingPlans={readingPlans}
+        onBack={options.onBack}
+      />
+    ),
     header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
     component: () => (
       <ReadingPlansPane
@@ -1086,6 +1113,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
           );
         }}
         toast={toast}
+        onBack={options.onBack}
       />
     ),
   });
@@ -1191,7 +1219,11 @@ function getDefaultToolbarTools(
       title: { key: "search", defaultValue: "Search" },
       icon: () => <MaterialIcon>search</MaterialIcon>,
       onSelect: (context) => {
-        context.openSearch();
+        if (context.toggleSearch) {
+          context.toggleSearch();
+        } else {
+          context.openSearch();
+        }
       },
     },
     {
@@ -1208,33 +1240,6 @@ function getDefaultToolbarTools(
       },
       onSelect: (context) => {
         context.openChat?.();
-      },
-    },
-    {
-      id: "open-plans",
-      priority: 115,
-      title: { key: "plans", defaultValue: "Plans" },
-      icon: () => <MaterialIcon>menu_book</MaterialIcon>,
-      isVisible: (context) =>
-        !!context.readingPlans &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
-      onSelect: (context) => {
-        if (!context.readingPlans) {
-          return;
-        }
-        openReadingPlansPane({
-          readingPlans: context.readingPlans,
-          readingState: context.readingState,
-          panesManager: context.panesManager,
-          modals: context.modals,
-          playlists: context.playlists,
-          bibleData: context.data,
-          os: context.os,
-          login: context.login,
-          gallery: context.gallery,
-          toast: context.toast,
-          friends: context.friends,
-        });
       },
     },
     {
@@ -1345,7 +1350,6 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       // how "Add to Playlist" follows `editingPlaylist`.
       isVisible: (context) =>
         !!context.readingPlans?.editingReadingPlan.value &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value &&
         context.readingState.selectedVerses.value.length > 0,
       onSelect: async (context) => {
         const readingPlans = context.readingPlans;
@@ -1627,6 +1631,12 @@ type ShareSheetContext = {
   app?: AppState;
   toast?: (message: string) => void;
   sharedSession?: BibleReadingSession | null;
+  /** Theme presets the Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 };
 
 /**
@@ -1650,11 +1660,15 @@ export function openShareModal(
 
   const modalId = modals.openModal({
     title: { key: "share-sheet-title", defaultValue: "Share" },
+    mobileSheet: true,
     content: () => (
       <ShareModal
         app={app}
         modals={modals}
         session={context.sharedSession ?? null}
+        shareUrl={shareUrl}
+        themes={context.embedThemes}
+        customizationLocator={context.customizationLocator}
         onClose={() => modals.closeModal(modalId)}
         onShareLink={() => {
           navigator.clipboard.writeText(shareUrl.toString());

@@ -301,6 +301,17 @@ export interface HighlightsManager {
   ) => ReadonlySignal<ChapterHighlights>;
 
   /**
+   * Resolves to one chapter's highlights for the current account, once they
+   * have loaded — for callers that need the answer now rather than a view
+   * that fills in later.
+   */
+  readChapterHighlights: (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number
+  ) => Promise<ChapterHighlights>;
+
+  /**
    * Gets a reactive view of one chapter's highlights for a named account.
    *
    * Unlike {@link HighlightsManager.getChapterHighlights}, this view is pinned
@@ -827,6 +838,22 @@ export function createHighlightsManager(
     return view;
   };
 
+  const readChapterHighlights = async (
+    translationId: string,
+    bookId: string,
+    chapterNumber: number
+  ): Promise<ChapterHighlights> => {
+    const address = createChapterHighlightsAddress(
+      translationId,
+      bookId,
+      chapterNumber
+    );
+    const view = getOrCreateView(address);
+    const owner = peekOwner();
+    await ensureLoaded(owner, address, getOrCreateEntry(owner, address));
+    return view.peek();
+  };
+
   const getUserChapterHighlights = (
     userId: string,
     translationId: string,
@@ -1104,6 +1131,7 @@ export function createHighlightsManager(
 
   return {
     getChapterHighlights,
+    readChapterHighlights,
     getUserChapterHighlights,
     saveChapterHighlights,
     highlightVerse,

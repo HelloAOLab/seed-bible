@@ -1,9 +1,5 @@
 .sb-language-english-name {
-  color: color-mix(
-    in srgb,
-    var(--sb-book-selector-font-color),
-    transparent 50%
-  );
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
 .sb-settings-page {
@@ -38,7 +34,7 @@
 
 .sb-settings-empty-state {
   padding: 0.625rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.5rem;
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
@@ -66,48 +62,6 @@
 
 .sb-extensions-list-disabled {
   opacity: 0.5;
-}
-
-.sb-extensions-tabs {
-  display: flex;
-  gap: 0.375rem;
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 85%);
-}
-
-.sb-extensions-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.25rem;
-  margin-bottom: -1px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extensions-tab-active {
-  border-bottom-color: var(--sb-primary-color);
-  color: var(--sb-selected-tab-font-color);
-}
-
-.sb-extensions-tab-count {
-  min-width: 1.25rem;
-  padding: 0.0625rem 0.3125rem;
-  border-radius: 62.4375rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-  color: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.sb-extensions-tab-active .sb-extensions-tab-count {
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
 }
 
 .sb-extension-row {
@@ -161,6 +115,11 @@
   font-size: 1.125rem;
 }
 
+.sb-extension-state-icon {
+  font-size: 1.125rem;
+  flex: 0 0 auto;
+}
+
 .sb-extension-row-content {
   display: flex;
   flex-direction: column;
@@ -179,27 +138,6 @@
   font-size: 0.75rem;
   opacity: 0.78;
   line-height: 1.25;
-}
-
-.sb-extension-state-icon {
-  font-size: 1.125rem;
-  flex: 0 0 auto;
-}
-
-.sb-extension-state-none {
-  opacity: 0.7;
-}
-
-.sb-extension-state-pending {
-  color: color-mix(in srgb, var(--sb-primary-color), black 6%);
-}
-
-.sb-extension-state-downloaded {
-  color: color-mix(in srgb, var(--sb-primary-color), black 18%);
-}
-
-.sb-extension-state-installed {
-  color: color-mix(in srgb, #2e7d32, var(--sb-primary-color) 35%);
 }
 
 .sb-pill-toggle {
@@ -232,6 +170,58 @@
 
 .sb-pill-toggle.is-on::before {
   left: 1.375rem;
+  background-color: var(--sb-primary-font-color);
+}
+
+.sb-extension-add-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.sb-extensions-add-link-button {
+  align-self: flex-start;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-extensions-add-link-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-extensions-add-link-button .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-extension-add-link-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sb-extension-add-link-row .sb-settings-text-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-extension-add-link-row .sb-settings-action-button {
+  width: auto;
+}
+
+.sb-extension-add-link-status {
+  margin: 0;
+  font-size: 0.8125rem;
+  opacity: 0.75;
 }
 
 .sb-extension-footer-actions {
@@ -288,17 +278,6 @@
   padding: 0.25rem 0.25rem;
 }
 
-.sb-settings-field-row-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.sb-settings-field-row-controls > *:not(.sb-theme-color-reset) {
-  flex: 1;
-  min-width: 0;
-}
-
 .sb-settings-field-label {
   font-size: 0.8125rem;
   font-weight: 500;
@@ -322,7 +301,7 @@
   gap: 0.75rem;
   margin: 1rem 0 0;
   padding: 0.75rem 1rem 1rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.5rem;
 }
 
@@ -478,7 +457,7 @@
   overflow-y: auto;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border: 1px solid var(--sb-divider-color);
   border-radius: 0.625rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   padding: 0.25rem;
@@ -493,8 +472,7 @@
   padding: 0.375rem 0.5rem;
   margin-bottom: 0.25rem;
   background: var(--sb-menu-background);
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  border-bottom: 1px solid var(--sb-divider-color);
   z-index: 1;
 }
 
@@ -1126,305 +1104,6 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
-/* Text settings per-section block */
-.sb-text-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-  padding: 1rem 0.25rem;
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 90%);
-}
-
-.sb-text-section:last-child {
-  border-bottom: none;
-}
-
-.sb-text-section-title {
-  margin: 0 0 0.375rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--sb-font-color);
-}
-
-/* Formatting toolbar (B / I / U / alignment / color) */
-.sb-text-format-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  border-radius: 0.625rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
-  flex-wrap: wrap;
-}
-
-.sb-text-format-btn {
-  width: 2.125rem;
-  height: 2.125rem;
-  border: none;
-  background: transparent;
-  color: var(--sb-font-color);
-  border-radius: 0.5rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: background-color 0.15s ease;
-}
-
-.sb-text-format-btn:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
-}
-
-.sb-text-format-btn-active {
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-}
-
-.sb-text-format-btn-active:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), black 6%);
-}
-
-.sb-text-format-btn .material-symbols-outlined {
-  font-size: 1.125rem;
-}
-
-.sb-text-format-divider {
-  width: 1px;
-  height: 1.375rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  margin: 0 0.25rem;
-}
-
-.sb-text-format-color-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.sb-text-format-color-button {
-  width: 2.125rem;
-  height: 2.125rem;
-  border: none;
-  background: transparent;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: background-color 0.15s ease;
-}
-
-.sb-text-format-color-button:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
-}
-
-.sb-text-format-color-swatch {
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, black, transparent 80%);
-}
-
-.sb-text-format-palette {
-  position: absolute;
-  top: calc(100% + 0.375rem);
-  right: 0;
-  display: grid;
-  grid-template-columns: repeat(7, 1.375rem);
-  gap: 0.375rem;
-  padding: 0.625rem;
-  background: var(--sb-reader-background, #fff);
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 0.625rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-  z-index: 50;
-}
-
-.sb-text-format-palette-swatch {
-  width: 1.375rem;
-  height: 1.375rem;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, black, transparent 80%);
-  padding: 0;
-  cursor: pointer;
-}
-
-.sb-text-format-palette-swatch-selected {
-  outline: 2px solid var(--sb-primary-color);
-  outline-offset: 2px;
-}
-
-.sb-text-format-palette-custom {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  padding-top: 0.375rem;
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 88%);
-}
-
-.sb-text-format-palette-custom-swatch {
-  width: 1.75rem;
-  height: 1.75rem;
-  padding: 0.125rem;
-}
-
-/* Toolbar customization list */
-.sb-toolbar-config-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.sb-toolbar-config-row {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.5rem 0.625rem;
-  border-radius: 0.625rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-  transition:
-    background-color 0.2s ease,
-    opacity 0.2s ease;
-}
-
-.sb-toolbar-config-row:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-}
-
-.sb-toolbar-config-row-hidden {
-  opacity: 0.55;
-}
-
-.sb-toolbar-config-reorder {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  flex-shrink: 0;
-}
-
-.sb-toolbar-config-move-button {
-  width: 1.375rem;
-  height: 1.125rem;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  border-radius: 0.25rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.sb-toolbar-config-move-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  color: var(--sb-font-color);
-}
-
-.sb-toolbar-config-move-button:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.sb-toolbar-config-move-button .material-symbols-outlined {
-  font-size: 1rem;
-}
-
-.sb-toolbar-config-title {
-  flex: 1;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--sb-font-color);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sb-toolbar-config-toggle {
-  padding: 0;
-  flex-shrink: 0;
-}
-
-.sb-theme-colors-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.sb-theme-colors-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.sb-theme-color-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.625rem 0.5rem;
-  border-radius: 0.5rem;
-  transition: background-color 0.2s ease;
-}
-
-.sb-theme-color-row:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-}
-
-.sb-theme-color-row-main {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  min-width: 0;
-  flex: 1;
-}
-
-.sb-theme-color-label-row {
-  display: flex;
-  align-items: center;
-  gap: 0.3125rem;
-  min-width: 0;
-}
-
-.sb-theme-color-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--sb-font-color);
-}
-
-.sb-theme-contrast-warning {
-  flex-shrink: 0;
-  font-size: 1rem;
-  color: var(--sb-error-color, #d64545);
-  cursor: help;
-}
-
-.sb-theme-color-value {
-  font-size: 0.6875rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
 .sb-settings-version {
   align-self: center;
   margin-top: 0.5rem;
@@ -1441,18 +1120,6 @@
   .sb-settings-version:hover {
     color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
   }
-}
-
-.sb-theme-color-row-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  flex-shrink: 0;
-}
-
-.sb-theme-color-input {
-  width: 2.25rem;
-  height: 2.25rem;
 }
 
 .sb-theme-color-reset {
@@ -1492,176 +1159,6 @@
   color: var(--sb-font-color);
 }
 
-.sb-account-settings-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.sb-account-settings-intro {
-  margin: 0;
-  line-height: 1.45;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-  max-width: 13.75rem;
-}
-
-.sb-account-picture-row {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-}
-
-.sb-account-picture-preview,
-.sb-account-picture-placeholder {
-  width: 3.875rem;
-  height: 3.875rem !important;
-  border-radius: 62.4375rem;
-  flex-shrink: 0;
-}
-
-.sb-account-picture-preview {
-  object-fit: cover;
-  border: 2px solid color-mix(in srgb, var(--sb-primary-color), transparent 60%);
-}
-
-.sb-account-picture-placeholder {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--sb-primary-color), #000 26%);
-  color: var(--sb-primary-font-color);
-}
-
-.sb-account-picture-placeholder .material-symbols-outlined {
-  font-size: 1.875rem;
-}
-
-.sb-account-picture-button {
-  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  border-radius: 0.25rem;
-  padding: 0.625rem 1.125rem;
-  background: transparent;
-  color: var(--sb-primary-color);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.sb-account-picture-button:disabled {
-  opacity: 0.65;
-  cursor: default;
-}
-
-.sb-account-text-input,
-.sb-account-textarea,
-.sb-account-uid-row {
-  border-radius: 0.625rem;
-  background: color-mix(in srgb, var(--sb-secondary-color), #9fa5ad 28%);
-}
-
-.sb-account-text-input,
-.sb-account-textarea {
-  border-color: transparent;
-  padding: 0.875rem 1rem;
-}
-
-.sb-account-textarea {
-  min-height: 6.25rem;
-  resize: vertical;
-}
-
-.sb-account-field-helper {
-  margin: 0;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 24%);
-}
-
-.sb-account-label-optional {
-  font-weight: 400;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 28%);
-}
-
-.sb-account-uid-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.625rem 0.625rem 0.625rem 0.875rem;
-}
-
-.sb-account-uid-value {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-}
-
-.sb-account-copy-uid-button {
-  border: none;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 34%);
-  width: 2.125rem;
-  height: 2.125rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.sb-account-copy-uid-button:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), #000 8%);
-}
-
-.sb-account-save-button {
-  width: 100%;
-  border-radius: 0.375rem;
-  padding: 0.875rem 1.125rem;
-  font-weight: 700;
-}
-
-.sb-account-save-button:disabled {
-  opacity: 0.75;
-  cursor: default;
-}
-
-.sb-account-save-saving {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.sb-account-signout-section {
-  margin-top: 0.625rem;
-  border-top: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  padding-top: 1rem;
-}
-
-.sb-account-signout-button {
-  width: 100%;
-  border: 2px solid #db1c1c;
-  border-radius: 0.375rem;
-  padding: 0.75rem 1rem;
-  background: transparent;
-  color: #db1c1c;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.sb-account-signout-button:hover {
-  background: color-mix(in srgb, #db1c1c, transparent 92%);
-}
-
-/* Account-page loading skeleton — the generic shimmer primitives and shape
-   classes now live in components/Skeleton/Skeleton.css (see <Skeleton> /
-   <SkeletonContainer>); AccountSettingsSkeleton composes them with the
-   sb-account-settings-layout / sb-settings-field-row layout classes above. */
-
 /* This can be added at main css too but that is not being used by setting bar to so avoid whole css load use here */
 @media screen and (max-width: 480px) {
   .hide-on-mobile {
@@ -1669,63 +1166,11 @@
   }
 }
 
-/* Customizations list rows */
-.sb-customization-row {
-  gap: 0.625rem;
-}
-
-.sb-customization-swatches {
-  display: inline-flex;
-  flex-shrink: 0;
-}
-
-.sb-customization-swatch {
-  width: 1.125rem;
-  height: 1.125rem;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, black, transparent 80%);
-  margin-left: -0.375rem;
-}
-
-.sb-customization-swatch:first-child {
-  margin-left: 0;
-}
-
-.sb-customization-active-badge {
-  flex-shrink: 0;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.1875rem 0.5rem;
-  border-radius: 1rem;
-  color: var(--sb-primary-font-color);
-  background: var(--sb-primary-color);
-}
-
-/*
- * The "Default translation" nav row is a `ContextMenuWithButton` trigger,
- * so it picks up `.sb-context-menu-button`'s icon-button sizing
- * (`ContextMenu.css`) alongside `.sb-settings-nav-item`'s own full-width row
- * styling. Both are single-class selectors, so which one wins depends on
- * CSS load order — this compound selector outranks either on specificity
- * alone, regardless of order.
- */
-.sb-context-menu-button.sb-settings-nav-item {
-  width: 100%;
-  height: auto;
-  border-radius: 0;
-}
-
-.sb-context-menu-button.sb-settings-nav-item:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-}
-
 /*
  * `.sb-context-menu`'s default size (`ContextMenu.css`) is sized for short
  * menu item lists, too narrow/short for a searchable, scrollable
- * translation list. Compound selector for the same load-order-independence
- * reason as above.
+ * translation list. Compound selector so it outranks that rule on specificity
+ * alone, regardless of CSS load order.
  */
 .sb-context-menu.sb-customization-translation-picker-menu {
   width: 22rem;
@@ -1734,46 +1179,120 @@
   overflow-y: auto;
 }
 
-/*
- * `.searchbar` (`BibleSelector.css`) is 80% width there because that page's
- * search field sits next to a separate filter icon in the same row. Here
- * the filter button is nested inside `.searchbar` itself, so 80% leaves a
- * dead gap down the right side of this narrower popover — scoped to this
- * picker rather than changing the shared rule, which the reader's own
- * layout still depends on.
- */
-.sb-customization-translation-picker .searchbar {
-  width: 100%;
+/* The search takes the row; its filter button sits beside it, as in the
+   Compare extension's picker. The bar is the button's height (`.filters-icon`),
+   like the book selector's compact translation search. */
+.sb-customization-translation-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  > .sb-search-bar {
+    flex: 1;
+    min-width: 0;
+    min-height: 1.875rem;
+    height: 1.875rem;
+  }
 }
 
-/* Customization logo upload (editor page) */
-.sb-customization-logo-row {
+.sb-extensions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-extensions-section-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-extensions-group {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.sb-extensions-group > li + li {
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+.sb-extensions-item {
+  width: 100%;
+  min-height: 4.5rem;
   display: flex;
   align-items: center;
   gap: 0.875rem;
+  padding: 0.75rem 0.875rem;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
 }
 
-.sb-customization-logo-preview,
-.sb-customization-logo-placeholder {
-  width: 3.875rem;
-  height: 3.875rem !important;
-  border-radius: 0.5rem;
-  flex-shrink: 0;
+.sb-extensions-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 95%);
 }
 
-.sb-customization-logo-preview {
-  object-fit: cover;
-  border: 2px solid color-mix(in srgb, var(--sb-primary-color), transparent 60%);
+.sb-extensions-item:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: -2px;
 }
 
-.sb-customization-logo-placeholder {
-  display: inline-flex;
+.sb-extensions-item .sb-extension-consent-tile {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+}
+
+.sb-extensions-item-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sb-extensions-item-title {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--sb-primary-color), #000 26%);
-  color: var(--sb-primary-font-color);
+  flex-wrap: wrap;
+  gap: 0.375rem;
 }
 
-.sb-customization-logo-placeholder .material-symbols-outlined {
-  font-size: 1.875rem;
+.sb-extensions-item-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.sb-extensions-item-description {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-extensions-item-tag {
+  padding: 0.0625rem 0.4375rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-extensions-item-chevron {
+  flex: none;
+  opacity: 0.5;
 }

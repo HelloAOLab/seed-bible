@@ -3,20 +3,50 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager } from "../../managers/TabsManager";
 import type { PlaylistManager } from "../../managers/PlaylistManager";
 import type { ModalManager } from "../../managers/ModalManager";
-import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
+import { DiscoverSection } from "../Discover/DiscoverSection";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { playlistItemIcon } from "../playlistItemIcon";
+import { PlaylistItemNoteTag } from "../PlaylistItemNoteTag/PlaylistItemNoteTag";
 import { useDragReorder } from "../useDragReorder";
 import { MaterialIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { HeroImageBanner } from "../HeroImageField/HeroImageField";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
+import { DiscoverPanelLayout } from "../Discover/DiscoverPanelHeader";
+import { Spinner } from "../Spinner/Spinner";
 
 interface PlayPlaylistViewProps {
   playlists: PlaylistManager;
   tabs: TabsManager;
   modals: ModalManager;
   state: SeedBibleState;
+  onClose: () => void;
+}
+
+/** Back button plus the playing playlist's title, for the view's header. */
+function PlayPlaylistTitle(props: { playlists: PlaylistManager }) {
+  const { playlists } = props;
+  const { t } = useI18n();
+  const title =
+    playlists.playing.value?.playlists.value[0]?.title ??
+    t("untitled-playlist", { defaultValue: "Untitled playlist" });
+
+  return (
+    <div className="sb-discover-title-row">
+      <button
+        type="button"
+        className="sb-pane-header-button"
+        aria-label={t("back", { defaultValue: "Back" })}
+        onClick={() => playlists.goBackFromPlayingView()}
+      >
+        <MaterialIcon>arrow_back</MaterialIcon>
+      </button>
+      <span className="sb-discover-title" dir="auto">
+        {title}
+      </span>
+      {playlists.openingPlayback.value ? <Spinner size="1rem" /> : null}
+    </div>
+  );
 }
 
 /**
@@ -26,7 +56,7 @@ interface PlayPlaylistViewProps {
  * (html) items open in the app's generic modal rather than rendering inline.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
-  const { playlists, tabs } = props;
+  const { playlists, tabs, onClose } = props;
   const { t } = useI18n();
 
   // Reading `.value` during render subscribes the component to updates.
@@ -61,7 +91,11 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   };
 
   return (
-    <div className="sb-discover-pane sb-play-playlist">
+    <DiscoverPanelLayout
+      title={<PlayPlaylistTitle playlists={playlists} />}
+      onClose={onClose}
+      bodyClassName="sb-play-playlist"
+    >
       <div className="sb-play-playlist-body">
         {heroImageUrl ? (
           <HeroImageBanner
@@ -122,6 +156,10 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                   className="sb-play-playlist-item-button"
                   aria-current={index === currentIndex}
                   onClick={() => {
+                    if (index === currentIndex) {
+                      playlists.showCurrentItem();
+                      return;
+                    }
                     playing.jumpTo(index);
                   }}
                 >
@@ -130,6 +168,7 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                   </MaterialIcon>
                   <span className="sb-discover-item-title">
                     {playlistItemLabel(item, t, resolveBookName)}
+                    <PlaylistItemNoteTag item={item} />
                   </span>
                 </button>
               </li>
@@ -137,6 +176,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
           </ul>
         </DiscoverSection>
       </div>
-    </div>
+    </DiscoverPanelLayout>
   );
 }

@@ -6,7 +6,9 @@ import {
   CUSTOMIZATION_CONTRAST_PAIRS,
   CUSTOMIZATION_MARKER,
   getContrastRatio,
+  getExtensionAvailability,
   getFontPresetsForField,
+  getReadableWordsOfJesusColor,
   lightenColor,
   MIN_READABLE_CONTRAST_RATIO,
   SECONDARY_LIGHTEN_AMOUNT,
@@ -33,7 +35,7 @@ import {
   createNavigationManager,
   type NavigationManager,
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
-import { signal } from "@preact/signals";
+import { signal, type Signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
 import { stubColorScheme } from "../testUtils/stubColorScheme";
 
@@ -64,10 +66,10 @@ describe("CustomizationsManager", () => {
     navigation = createNavigationManager({ initialHref: "http://localhost/" });
     recordDataMock = vi
       .spyOn(os, "recordData")
-      .mockResolvedValue(undefined as never);
+      .mockResolvedValue({ success: true } as never);
     eraseDataMock = vi
       .spyOn(os, "eraseData")
-      .mockResolvedValue(undefined as never);
+      .mockResolvedValue({ success: true } as never);
     listAllDataByMarkerMock = vi
       .spyOn(os, "listAllDataByMarker")
       .mockResolvedValue({ success: true, items: [] });
@@ -105,32 +107,20 @@ describe("CustomizationsManager", () => {
         userInfo: { id: "user-1", email: "test@example.com" },
       }),
       hydrateLocalConfig: vi.fn(),
+      isLocalConfigHydrated: signal(false),
     };
 
     type MinimalSettingsValue = {
       themeId: string;
-      customTheme: Record<string, string>;
-      customHighlights: Record<string, unknown>;
     };
     const settingsValue = signal<MinimalSettingsValue>({
       themeId: "light",
-      customTheme: {},
-      customHighlights: {},
     });
     settings = {
       settings: settingsValue,
       setThemeId: vi.fn((themeId: string) => {
         settingsValue.value = { ...settingsValue.value, themeId };
       }),
-      setCustomTheme: vi.fn((customTheme: Record<string, string>) => {
-        settingsValue.value = { ...settingsValue.value, customTheme };
-      }),
-      setCustomHighlights: vi.fn(
-        (customHighlights: Record<string, unknown>) => {
-          settingsValue.value = { ...settingsValue.value, customHighlights };
-        }
-      ),
-      resetTextColors: vi.fn(),
     } as unknown as Mocked<SettingsManager>;
   });
 
@@ -140,7 +130,8 @@ describe("CustomizationsManager", () => {
 
   function createManager(
     nav: NavigationManager = navigation,
-    initialCustomizationSeed?: InitialCustomizationSeed
+    initialCustomizationSeed?: InitialCustomizationSeed,
+    revalidateInitialCustomizationSeed?: boolean
   ) {
     const theme = createTheme(settings);
     // Mirrors the real app's post-mount read of the device's color scheme.
@@ -160,7 +151,8 @@ describe("CustomizationsManager", () => {
       nav,
       variantSelections,
       extensionPreferences,
-      initialCustomizationSeed
+      initialCustomizationSeed,
+      revalidateInitialCustomizationSeed
     );
     return { theme, variantSelections, extensionPreferences, manager };
   }
@@ -306,6 +298,12 @@ describe("CustomizationsManager", () => {
 
     expect(manager.customizations.value).toHaveLength(1);
     expect(manager.customizations.value[0]?.extensionSettings).toEqual({});
+    expect(
+      getExtensionAvailability(
+        manager.customizations.value[0] ?? null,
+        "ext.any"
+      )
+    ).toBe("available");
   });
 
   it("load() defaults a variant's highlightColors to {} for a record persisted before the field existed", async () => {
@@ -424,7 +422,6 @@ describe("CustomizationsManager", () => {
     });
     expect(manager.customizations.value).toEqual([created]);
     expect(manager.activeThemeOverrides.value).toEqual({});
-    expect(theme.customOverrides.value).toEqual({});
   });
 
   it("lightenColor() moves a color's lightness toward white by the given amount", () => {
@@ -450,6 +447,35 @@ describe("CustomizationsManager", () => {
     expect(getContrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 1);
     expect(getContrastRatio("#ffffff", "#000000")).toBeCloseTo(21, 1);
     expect(getContrastRatio("#808080", "#808080")).toBeCloseTo(1, 5);
+  });
+
+  it("getReadableWordsOfJesusColor() keeps the standard red on a light background", () => {
+    expect(getReadableWordsOfJesusColor("#fff59d")).toBe("#c00");
+  });
+
+  it("getReadableWordsOfJesusColor() returns a readable red on light and dark backgrounds", () => {
+    for (const background of ["#ea80fc", "#ef9a9a", "#6b3434", "#1e3a8a"]) {
+      const red = getReadableWordsOfJesusColor(background);
+      expect(red).toBeDefined();
+      expect(getContrastRatio(red!, background)).toBeGreaterThanOrEqual(
+        MIN_READABLE_CONTRAST_RATIO
+      );
+    }
+  });
+
+  it("getReadableWordsOfJesusColor() falls back to the highest-contrast red on a mid-tone background", () => {
+    // No red reaches the AA minimum on this mid-tone red.
+    const red = getReadableWordsOfJesusColor("#c04040");
+    expect(getContrastRatio(red!, "#c04040")).toBeGreaterThan(
+      getContrastRatio("#c00", "#c04040")
+    );
+    expect(getContrastRatio(red!, "#c04040")).toBeGreaterThanOrEqual(
+      getContrastRatio("#ffc0c0", "#c04040")
+    );
+  });
+
+  it("getReadableWordsOfJesusColor() returns undefined for a non-hex color", () => {
+    expect(getReadableWordsOfJesusColor("rebeccapurple")).toBeUndefined();
   });
 
   it("getContrastRatio() is symmetric regardless of argument order", () => {
@@ -772,6 +798,7 @@ describe("CustomizationsManager", () => {
       { name: "Open Sans", value: "Open Sans, sans-serif" },
       { name: "Playfair Display", value: "Playfair Display, serif" },
       { name: "Cormorant Garamond", value: "Cormorant Garamond, serif" },
+      { name: "Plus Jakarta Sans", value: "Plus Jakarta Sans, sans-serif" },
     ]);
 
     // Different fields have different Light-theme defaults.
@@ -1020,7 +1047,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("updateEditingName() updates the draft's name without persisting or touching the live theme", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
 
@@ -1028,7 +1055,6 @@ describe("CustomizationsManager", () => {
 
     expect(manager.editingCustomization.value?.name).toBe("My colors");
     expect(manager.customizations.value[0]?.name).toBe(created.name);
-    expect(theme.customOverrides.value).toEqual({});
   });
 
   it("updateEditingDefaultTranslationId() sets the draft's default translation without persisting, then persists it on save", async () => {
@@ -1114,15 +1140,71 @@ describe("CustomizationsManager", () => {
     expect(recordDataMock).not.toHaveBeenCalled();
   });
 
-  it('setEditingExtensionAvailability() removes the entry when set back to "available" (the default)', async () => {
+  it("setEditingExtensionAvailability() removes the entry when set to null, so the extension follows the default again", async () => {
     const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
     manager.setEditingExtensionAvailability("ext.example", "hidden");
 
-    manager.setEditingExtensionAvailability("ext.example", "available");
+    manager.setEditingExtensionAvailability("ext.example", null);
 
     expect(manager.editingCustomization.value?.extensionSettings).toEqual({});
+  });
+
+  it('setEditingExtensionAvailability() keeps an explicit "available" so it survives the default changing to hidden', async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.setEditingExtensionAvailability("ext.kept", "available");
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+
+    expect(manager.getActiveExtensionAvailability("ext.kept")).toBe(
+      "available"
+    );
+    expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "hidden"
+    );
+  });
+
+  it("getActiveExtensionAvailability() falls back to the customization's default for an extension with no entry, including one it has never seen", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    await manager.saveEditingCustomization();
+
+    expect(manager.getActiveExtensionAvailability("ext.new")).toBe("available");
+
+    manager.startEditing(created.id);
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+
+    expect(manager.getActiveExtensionAvailability("ext.new")).toBe("hidden");
+  });
+
+  it("setEditingDefaultExtensionAvailability() is saved with the customization", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      created.id,
+      expect.objectContaining({ defaultExtensionAvailability: "hidden" }),
+      expect.anything()
+    );
+  });
+
+  it("setEditingDefaultExtensionAvailability() no-ops when there is no open draft", async () => {
+    const { manager } = createManager();
+
+    manager.setEditingDefaultExtensionAvailability("hidden");
+
+    expect(manager.editingCustomization.value).toBeNull();
   });
 
   it("setEditingExtensionAvailability() no-ops when there is no open draft", async () => {
@@ -1418,7 +1500,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("startEditing() immediately previews the draft's unsaved colors on the live theme without persisting them to the user's theme settings", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     const variantId = created.variants[0]!.id;
     manager.startEditing(created.id);
@@ -1433,14 +1515,10 @@ describe("CustomizationsManager", () => {
     expect(manager.activeThemeOverrides.value.secondaryColor).toBe(
       lightenColor("#111111", SECONDARY_LIGHTEN_AMOUNT)
     );
-    // Regression check: none of this may ever write into the user's
-    // persisted, settings-backed theme overrides — only this in-memory
-    // signal.
-    expect(theme.customOverrides.value).toEqual({});
   });
 
   it("activeHighlightOverrides reflects the active variant's highlight colors, and resets to {} once editing stops", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     const variantId = created.variants[0]!.id;
     manager.startEditing(created.id);
@@ -1456,9 +1534,6 @@ describe("CustomizationsManager", () => {
     expect(manager.activeHighlightOverrides.value.yellow?.color).toBe(
       "#123456"
     );
-    // Regression check: same as activeThemeOverrides, this must never write
-    // into the user's persisted, settings-backed highlight overrides.
-    expect(theme.customHighlightOverrides.value).toEqual({});
 
     manager.stopEditing();
 
@@ -1478,7 +1553,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("stopEditing() resets the live theme's overrides", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
     manager.setEditingVariantColor(
@@ -1492,11 +1567,10 @@ describe("CustomizationsManager", () => {
 
     expect(manager.activeCustomization.value).toBeNull();
     expect(manager.activeThemeOverrides.value).toEqual({});
-    expect(theme.customOverrides.value).toEqual({});
   });
 
   it("remove() erases the record and resets the live theme if it was being edited", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
 
@@ -1505,7 +1579,6 @@ describe("CustomizationsManager", () => {
     expect(eraseDataMock).toHaveBeenCalledWith("user-1", created.id);
     expect(manager.customizations.value).toEqual([]);
     expect(manager.activeThemeOverrides.value).toEqual({});
-    expect(theme.customOverrides.value).toEqual({});
   });
 
   it("remove() clears editingCustomization only when the removed id matches", async () => {
@@ -1519,6 +1592,34 @@ describe("CustomizationsManager", () => {
 
     await manager.remove(editing.id);
     expect(manager.editingCustomization.value).toBeNull();
+  });
+
+  it("remove() rejects and keeps the customization when its record can't be erased", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    eraseDataMock.mockResolvedValue({
+      success: false,
+      errorCode: "server_error",
+      errorMessage: "",
+    } as never);
+
+    await expect(manager.remove(created.id)).rejects.toThrow("server_error");
+
+    expect(manager.customizations.value.map((c) => c.id)).toEqual([created.id]);
+  });
+
+  it("remove() treats a record that's already gone as deleted", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    eraseDataMock.mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "",
+    } as never);
+
+    await manager.remove(created.id);
+
+    expect(manager.customizations.value).toEqual([]);
   });
 
   describe("a customization's sensitive proxies", () => {
@@ -1719,9 +1820,8 @@ describe("CustomizationsManager", () => {
       expect(manager.customizations.value).toEqual([]);
     });
 
-    it("remove() keeps the customization when a proxy can't be erased", async () => {
+    it("remove() rejects and keeps the customization when a proxy can't be erased", async () => {
       recordDataMock.mockResolvedValue({ success: true });
-      vi.spyOn(console, "error").mockImplementation(() => undefined);
       vi.spyOn(os, "eraseProxy").mockResolvedValue({
         success: false,
         errorCode: "server_error",
@@ -1736,7 +1836,7 @@ describe("CustomizationsManager", () => {
         pointer
       );
 
-      await manager.remove(created.id);
+      await expect(manager.remove(created.id)).rejects.toThrow("server_error");
 
       expect(eraseDataMock).not.toHaveBeenCalled();
       expect(manager.customizations.value.map((c) => c.id)).toEqual([
@@ -2053,7 +2153,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("selectActiveVariant() persists the viewer's own choice, separate from the customization record and the user's default theme settings", async () => {
-    const { manager, theme } = createManager();
+    const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
     const second = manager.addEditingVariant();
@@ -2079,9 +2179,7 @@ describe("CustomizationsManager", () => {
       expect.anything()
     );
     // ...and never to the user's regular, persisted theme settings.
-    expect(theme.customOverrides.value).toEqual({});
     expect(settings.setThemeId).not.toHaveBeenCalled();
-    expect(settings.setCustomTheme).not.toHaveBeenCalled();
   });
 
   it("activeExtensionIds is empty when no customization is active", async () => {
@@ -2128,6 +2226,34 @@ describe("CustomizationsManager", () => {
     expect(manager.activeExtensionIds.value).toEqual([]);
   });
 
+  it("activeExtensionIds drops an extra the viewer added once the default becomes hidden, unless the owner set that extension to available", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    await manager.saveEditingCustomization();
+    await manager.addExtensionToActiveCustomization("ext.follows-default");
+    await manager.addExtensionToActiveCustomization("ext.kept-available");
+
+    manager.startEditing(created.id);
+    manager.setEditingExtensionAvailability("ext.kept-available", "available");
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+
+    expect(manager.activeExtensionIds.value).toEqual(["ext.kept-available"]);
+  });
+
+  it("addExtensionToActiveCustomization() no-ops for an extension the active customization's default hides", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+
+    await manager.addExtensionToActiveCustomization("ext.unreviewed");
+
+    expect(manager.activeExtensionIds.value).toEqual([]);
+  });
+
   it("addExtensionToActiveCustomization() no-ops for an extension the active customization marks hidden", async () => {
     const { manager } = createManager();
     const created = await manager.create();
@@ -2158,7 +2284,10 @@ describe("CustomizationsManager", () => {
     expect(recordDataMock).toHaveBeenCalledWith(
       "user-1",
       EXTENSION_PREFERENCES_ADDRESS,
-      { extraExtensionIds: { [`user-1.${created.id}`]: ["ext.extra"] } },
+      {
+        extraExtensionIds: { [`user-1.${created.id}`]: ["ext.extra"] },
+        removedExtensionIds: {},
+      },
       { marker: "publicRead" }
     );
     expect(recordDataMock).not.toHaveBeenCalledWith(
@@ -2173,7 +2302,10 @@ describe("CustomizationsManager", () => {
     expect(recordDataMock).toHaveBeenCalledWith(
       "user-1",
       EXTENSION_PREFERENCES_ADDRESS,
-      { extraExtensionIds: { [`user-1.${created.id}`]: [] } },
+      {
+        extraExtensionIds: { [`user-1.${created.id}`]: [] },
+        removedExtensionIds: {},
+      },
       { marker: "publicRead" }
     );
   });
@@ -2186,6 +2318,146 @@ describe("CustomizationsManager", () => {
     await manager.removeExtensionFromActiveCustomization("ext.extra");
 
     expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("lets a signed-out visitor to a shared customization install an extra extension", async () => {
+    (login.userId as Signal<string | null>).value = null;
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        id: "customization_shared",
+        name: "Shared",
+        variants: [
+          {
+            id: "variant_shared",
+            name: "Shared variant",
+            themes: {},
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        ],
+        defaultVariantId: "variant_shared",
+        logoUrl: null,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    });
+    const linkedNavigation = createNavigationManager({
+      initialHref:
+        "http://localhost/?customization=other-user.customization_shared",
+    });
+    const { manager } = createManager(linkedNavigation);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(manager.activeCustomization.value?.id).toBe("customization_shared");
+
+    await manager.addExtensionToActiveCustomization("ext.extra");
+
+    expect(manager.activeExtensionIds.value).toEqual(["ext.extra"]);
+  });
+
+  describe("removing extensions from a shared customization", () => {
+    const sharedRecord = {
+      id: "customization_shared",
+      name: "Shared",
+      variants: [
+        {
+          id: "variant_shared",
+          name: "Shared variant",
+          themes: {},
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      defaultVariantId: "variant_shared",
+      logoUrl: null,
+      createdAt: 1,
+      updatedAt: 1,
+      extensionSettings: { "ext.base": "auto-installed" },
+    };
+
+    async function openShared() {
+      getDataMock.mockImplementation(async (_recordName, address) =>
+        address === "customization_shared"
+          ? { success: true, data: sharedRecord }
+          : {
+              success: false,
+              errorCode: "data_not_found",
+              errorMessage: "Data not found",
+            }
+      );
+      const { manager } = createManager(
+        createNavigationManager({
+          initialHref:
+            "http://localhost/?customization=other-user.customization_shared",
+        })
+      );
+      await vi.waitFor(() =>
+        expect(manager.activeCustomization.value?.id).toBe(
+          "customization_shared"
+        )
+      );
+      return manager;
+    }
+
+    for (const signedIn of [true, false]) {
+      describe(signedIn ? "signed in" : "signed out", () => {
+        beforeEach(() => {
+          if (!signedIn) {
+            (login.userId as Signal<string | null>).value = null;
+          }
+        });
+
+        it("removes an auto-installed extension, and can put it back", async () => {
+          const manager = await openShared();
+          expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+
+          await manager.removeExtensionFromActiveCustomization("ext.base");
+          expect(manager.activeExtensionIds.value).toEqual([]);
+
+          await manager.addExtensionToActiveCustomization("ext.base");
+          expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+        });
+
+        it("removes an extension the viewer installed", async () => {
+          const manager = await openShared();
+          await manager.addExtensionToActiveCustomization("ext.extra");
+          expect(manager.activeExtensionIds.value.sort()).toEqual([
+            "ext.base",
+            "ext.extra",
+          ]);
+
+          await manager.removeExtensionFromActiveCustomization("ext.extra");
+          expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+        });
+      });
+    }
+
+    it("saves a removed auto-installed extension to the viewer's own record", async () => {
+      const manager = await openShared();
+      await vi.waitFor(() =>
+        expect(getDataMock).toHaveBeenCalledWith(
+          "user-1",
+          EXTENSION_PREFERENCES_ADDRESS
+        )
+      );
+      await Promise.resolve();
+      recordDataMock.mockClear();
+
+      await manager.removeExtensionFromActiveCustomization("ext.base");
+
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "user-1",
+        EXTENSION_PREFERENCES_ADDRESS,
+        {
+          extraExtensionIds: {},
+          removedExtensionIds: {
+            "other-user.customization_shared": ["ext.base"],
+          },
+        },
+        { marker: "publicRead" }
+      );
+    });
   });
 
   it("auto-loads a customization from the ?customization= query param on construction", async () => {
@@ -2388,6 +2660,18 @@ describe("CustomizationsManager", () => {
       expect(manager.activeCustomization.value?.id).toBe(created.id);
       expect(posthogMock.register_for_session).not.toHaveBeenCalled();
     });
+
+    it("exposes a locator for the customization on screen", async () => {
+      const { manager } = createManager();
+      expect(manager.activeCustomizationLocator.value).toBeNull();
+
+      const created = await manager.create();
+      manager.startEditing(created.id);
+
+      expect(manager.activeCustomizationLocator.value).toBe(
+        `user-1.${created.id}`
+      );
+    });
   });
 
   it("initialCustomizationLoadSettled is true immediately with no ?customization= param", () => {
@@ -2434,6 +2718,9 @@ describe("CustomizationsManager", () => {
 
     expect(manager.initialCustomizationLoadSettled.value).toBe(true);
     expect(manager.linkedCustomization.value?.id).toBe("customization_shared");
+    expect(manager.activeCustomizationLocator.value).toBe(
+      "other-user.customization_shared"
+    );
   });
 
   it("initialCustomizationLoadPromise settles promptly for a malformed locator", async () => {
@@ -2591,6 +2878,92 @@ describe("CustomizationsManager", () => {
       );
       expect(manager.linkedCustomization.value).toBeNull();
       expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+    });
+
+    it("with revalidation, applies the seed first, then replaces it with the downloaded record", async () => {
+      // A server on an older build drops fields it doesn't know, like the
+      // default availability, from the record it embeds.
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { ...sharedRecord, defaultExtensionAvailability: "hidden" },
+      });
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(
+        linkedNavigation,
+        { locator: LOCATOR, customization: sharedRecord },
+        true
+      );
+
+      expect(manager.linkedCustomization.value).toEqual(sharedRecord);
+      expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+      await vi.waitFor(() =>
+        expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+          "hidden"
+        )
+      );
+      expect(getDataMock).toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+    });
+
+    it("with revalidation, a seed that resolved as not found is downloaded again too", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(
+        linkedNavigation,
+        { locator: LOCATOR, customization: null },
+        true
+      );
+
+      await vi.waitFor(() =>
+        expect(manager.linkedCustomization.value?.id).toBe(
+          "customization_shared"
+        )
+      );
+    });
+
+    it("with revalidation, keeps the seed when downloading the record again fails", async () => {
+      // Only the customization's own download fails; the viewer's other
+      // records (variant and extension picks) still read as not found.
+      getDataMock.mockImplementation(async (_recordName, address) => {
+        if (address === "customization_shared") {
+          throw new Error("network down");
+        }
+        return {
+          success: false,
+          errorCode: "data_not_found",
+          errorMessage: "Data not found",
+        };
+      });
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(
+        linkedNavigation,
+        { locator: LOCATOR, customization: sharedRecord },
+        true
+      );
+
+      await vi.waitFor(() =>
+        expect(errorSpy).toHaveBeenCalledWith(
+          "Failed to load customization from locator:",
+          LOCATOR,
+          expect.any(Error)
+        )
+      );
+      expect(manager.linkedCustomization.value).toEqual(sharedRecord);
+      errorSpy.mockRestore();
     });
 
     // Regression guard for the asymmetry flagged in review: a fetched record
@@ -2752,6 +3125,133 @@ describe("CustomizationsManager", () => {
     expect(manager.activeCustomization.value?.id).toBe(ownCustomization.id);
   });
 
+  it("an owner's saved edits still apply after closing the editor on their own customization opened from its share link", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    getDataMock.mockResolvedValue({ success: true, data: created });
+    await manager.loadByLocator(`user-1.${created.id}`);
+    expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "available"
+    );
+
+    manager.startEditing(created.id);
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+    manager.stopEditing();
+
+    expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "hidden"
+    );
+  });
+
+  it("saveEditingCustomization() rejects when the server refuses the record, leaving the saved list, the share-link copy and the draft's unsaved state as they were", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    getDataMock.mockResolvedValue({ success: true, data: created });
+    await manager.loadByLocator(`user-1.${created.id}`);
+    manager.startEditing(created.id);
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    recordDataMock.mockResolvedValue({
+      success: false,
+      errorCode: "not_authorized",
+      errorMessage: "Not authorized",
+    });
+
+    await expect(manager.saveEditingCustomization()).rejects.toThrow(
+      "not_authorized"
+    );
+
+    expect(manager.hasUnsavedChanges.value).toBe(true);
+    expect(
+      manager.customizations.value[0]?.defaultExtensionAvailability
+    ).toBeUndefined();
+    manager.stopEditing();
+    expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "available"
+    );
+  });
+
+  it("a refused auto-save is logged, not thrown, and leaves the draft unsaved", async () => {
+    vi.useFakeTimers();
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    try {
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "subscription_limit_reached",
+        errorMessage: "Limit reached",
+      });
+
+      manager.setEditingDefaultExtensionAvailability("hidden");
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        "Failed to auto-save customization:",
+        expect.any(Error)
+      );
+      expect(manager.hasUnsavedChanges.value).toBe(true);
+    } finally {
+      errorSpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it("saving one customization leaves a different share-link customization as it was", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const other = { ...created, id: "customization_other" };
+    getDataMock.mockResolvedValue({ success: true, data: other });
+    await manager.loadByLocator(`someone-else.${other.id}`);
+
+    manager.startEditing(created.id);
+    manager.setEditingDefaultExtensionAvailability("hidden");
+    await manager.saveEditingCustomization();
+    manager.stopEditing();
+
+    expect(manager.linkedCustomization.value?.id).toBe(other.id);
+    expect(manager.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "available"
+    );
+  });
+
+  it("a signed-out viewer opening a share link gets the saved default availability, from a fresh fetch and from the server-rendered seed", async () => {
+    const { manager: owner } = createManager();
+    const created = await owner.create();
+    owner.startEditing(created.id);
+    owner.setEditingDefaultExtensionAvailability("hidden");
+    recordDataMock.mockClear();
+    await owner.saveEditingCustomization();
+    const [, , savedRecord] = recordDataMock.mock.calls.find(
+      ([, address]) => address === created.id
+    )!;
+
+    login.userId.value = null;
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: JSON.parse(JSON.stringify(savedRecord)),
+    });
+    const linkedNavigation = createNavigationManager({
+      initialHref: `http://localhost/?customization=user-1.${created.id}`,
+    });
+    const { manager: server } = createManager(linkedNavigation);
+    await server.initialCustomizationLoadPromise;
+    const seed = JSON.parse(
+      JSON.stringify(server.getInitialCustomizationSeed())
+    ) as InitialCustomizationSeed;
+    const { manager: client } = createManager(linkedNavigation, seed);
+
+    expect(server.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "hidden"
+    );
+    expect(client.getActiveExtensionAvailability("ext.unreviewed")).toBe(
+      "hidden"
+    );
+  });
+
   it("loadByLocator() ignores a malformed locator", async () => {
     const { manager } = createManager();
     getDataMock.mockClear();
@@ -2792,6 +3292,43 @@ describe("CustomizationsManager", () => {
       manager.applyPresetToEditingVariant(dark.id, "dark");
       return { lightVariantId: light.id, darkVariantId: dark.id };
     }
+
+    it("uses the customization default when the embed theme matches no variant", async () => {
+      const { manager } = createManager(
+        createNavigationManager({
+          initialHref: "http://localhost/?embed=minimal&app.themeId=dark",
+        })
+      );
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      const light = created.variants[0]!;
+      manager.applyPresetToEditingVariant(light.id, "light");
+      const saved = manager.addEditingVariant()!;
+      manager.applyPresetToEditingVariant(saved.id, "light");
+      manager.setEditingDefaultVariant(light.id);
+      await manager.selectActiveVariant(saved.id);
+      settings.setThemeId("dark");
+
+      expect(manager.activeVariant.value?.id).toBe(light.id);
+    });
+
+    it("follows the embed link's theme instead of a saved variant", async () => {
+      const { manager } = createManager(
+        createNavigationManager({
+          initialHref: "http://localhost/?embed=minimal&app.themeId=dark",
+        })
+      );
+      const { lightVariantId, darkVariantId } =
+        await createLightAndDarkCustomization(manager);
+      await manager.selectActiveVariant(lightVariantId);
+      settings.setThemeId("dark");
+
+      expect(manager.activeVariant.value?.id).toBe(darkVariantId);
+
+      settings.setThemeId("light");
+
+      expect(manager.activeVariant.value?.id).toBe(lightVariantId);
+    });
 
     it("follows the device between a customization's light and dark variants once the viewer picks System", async () => {
       const emitChange = stubColorScheme(false);

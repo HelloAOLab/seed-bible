@@ -2575,6 +2575,5 @@
       "Working": "Iyasebenza…",
       "Transcribe": "Bhala"
     }
-  },
-  "dependencies": ["ext_AI_Transcript"]
+  }
 }

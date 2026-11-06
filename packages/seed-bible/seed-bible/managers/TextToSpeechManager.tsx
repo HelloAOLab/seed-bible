@@ -16,6 +16,12 @@ export interface SpeakOptions {
 
   /** Called once the queue finishes on its own. Never called by `stop()`. */
   onFinished?: () => void;
+
+  /**
+   * Called once if the run ends any other way: `stop()`, a failed utterance,
+   * or another `speak` replacing it.
+   */
+  onStopped?: () => void;
 }
 
 export interface TextToSpeechManager {
@@ -261,6 +267,9 @@ export function createTextToSpeechManager(): TextToSpeechManager {
    */
   let runToken = 0;
 
+  /** The current run's `onStopped`, until it ends one way or the other. */
+  let notifyStopped: (() => void) | null = null;
+
   let silenceCheck: ReturnType<typeof setInterval> | null = null;
 
   const clearSilenceCheck = () => {
@@ -315,6 +324,9 @@ export function createTextToSpeechManager(): TextToSpeechManager {
   const stop = () => {
     runToken++;
     reset();
+    const stopped = notifyStopped;
+    notifyStopped = null;
+    stopped?.();
     if (!speech) return;
     speech.cancel();
     enforceSilence();
@@ -339,6 +351,7 @@ export function createTextToSpeechManager(): TextToSpeechManager {
 
     const token = ++runToken;
     const voice = options.lang ? pickVoice(options.lang) : null;
+    notifyStopped = options.onStopped ?? null;
 
     isSpeaking.value = true;
     // A new run supersedes any stop still being enforced from a previous one.
@@ -374,6 +387,7 @@ export function createTextToSpeechManager(): TextToSpeechManager {
       if (index === parts.length - 1) {
         utterance.onend = () => {
           if (token !== runToken) return;
+          notifyStopped = null;
           reset();
           options.onFinished?.();
         };

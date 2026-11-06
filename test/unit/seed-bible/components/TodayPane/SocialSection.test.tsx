@@ -2,13 +2,17 @@ import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
-import { SocialSection } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSection";
+import {
+  SocialSection,
+  formatFeedTime,
+} from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSection";
+import { TimeProvider } from "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
 import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
-import type { FilteredReading } from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
+import type { CommunityFeedItem } from "@packages/seed-bible/seed-bible/managers/TodayCommunityFeed";
 import type { Friend } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
 import { todayStub, loginStub } from "../../testUtils/todayStubs";
-import { mockI18nState } from "../../testUtils/mockI18n";
+import { mockI18nState, mockTranslate } from "../../testUtils/mockI18n";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
@@ -29,18 +33,36 @@ vi.mock(
   })
 );
 
-/** The day a timeline click selects. Noon UTC, so no timezone lands it on a
- *  different date than the one the assertion formats. */
+/** The clock every test runs at: a Sunday evening, local time. */
+const NOW = vi.hoisted(() => new Date(2026, 4, 17, 18, 0, 0));
+const NOW_SECONDS = vi.hoisted(() => Math.floor(NOW.getTime() / 1000));
+const HOUR = 60 * 60;
+const DAY = 24 * HOUR;
+
+const localMidnight = (year: number, month: number, day: number) =>
+  Math.floor(new Date(year, month, day).getTime() / 1000);
+/** Where the recent rows start: local midnight two days before `NOW`. */
+const RECENT_FROM = localMidnight(2026, 4, 15);
+/** Where each older year "See more" reaches into starts. */
+const YEAR_1_FROM = localMidnight(2025, 4, 15);
+const YEAR_2_FROM = localMidnight(2024, 4, 15);
+const YEAR_3_FROM = localMidnight(2023, 4, 15);
+
+/** The day a timeline click selects: the day before `NOW`. */
 const SELECTED_DAY = vi.hoisted(() => {
-  const to = Math.floor(Date.UTC(2026, 6, 21, 12) / 1000);
-  return { from: to - 86399, to };
+  const day = new Date(NOW);
+  day.setDate(day.getDate() - 1);
+  day.setHours(0, 0, 0, 0);
+  const from = Math.floor(day.getTime() / 1000);
+  return { from, to: from + 24 * 60 * 60 - 1 };
 });
 
-// Clicking a day inside the timeline is the *only* thing that sets a window
-// while "all" is selected, so the stub exposes that one interaction rather than
-// rendering an inert element. Its second button stands in for a click that
-// clears the selection, which the real timeline does on `handleItemClick(null)`.
-// Everything else about the timeline belongs to its own suite.
+// Clicking a day inside the timeline is the *only* thing that narrows the
+// window while "all" is selected, so the stub exposes that one interaction
+// rather than rendering an inert element. Its second button stands in for a
+// click that clears the selection, which the real timeline does on
+// `handleItemClick(null)`. Everything else about the timeline belongs to its
+// own suite.
 vi.mock(
   "@packages/seed-bible/seed-bible/components/ReadingHistoryTimeline/ReadingHistoryTimeline",
   async () => {
@@ -78,12 +100,59 @@ vi.mock(
   })
 );
 
-const CURRENT_USER_ID = "user-1";
+const ME = "user-1";
+const JONAH = "user-2";
+const RUTH = "user-3";
+
+function noteItem(
+  overrides: Partial<Extract<CommunityFeedItem, { type: "note" }>> = {}
+): CommunityFeedItem {
+  return {
+    type: "note",
+    id: "note:1",
+    userId: ME,
+    bookId: "COL",
+    chapter: 3,
+    verses: [12],
+    html: "<p>Compassion is listed first, before patience.</p>",
+    isReply: false,
+    time: NOW_SECONDS - HOUR,
+    ...overrides,
+  };
+}
+
+function crossedPathsItem(
+  overrides: Partial<Extract<CommunityFeedItem, { type: "crossed-paths" }>> = {}
+): CommunityFeedItem {
+  return {
+    type: "crossed-paths",
+    id: "crossed:1",
+    bookId: "COL",
+    chapters: [3],
+    userIds: [JONAH, ME],
+    time: NOW_SECONDS - 2 * HOUR,
+    ...overrides,
+  };
+}
+
+function readingItem(
+  overrides: Partial<Extract<CommunityFeedItem, { type: "reading" }>> = {}
+): CommunityFeedItem {
+  return {
+    type: "reading",
+    id: "reading:1",
+    userId: JONAH,
+    bookId: "EXO",
+    chapters: [14, 15, 16],
+    time: NOW_SECONDS - DAY,
+    ...overrides,
+  };
+}
 
 function friend(overrides: Partial<Friend> = {}): Friend {
   return {
-    userId: "friend-1",
-    name: "Friend",
+    userId: JONAH,
+    name: "Jonah",
     pictureUrl: null,
     ...overrides,
   };
@@ -91,62 +160,74 @@ function friend(overrides: Partial<Friend> = {}): Friend {
 
 describe("SocialSection", () => {
   let container: HTMLDivElement;
-  let getCommunityReading: Mock;
+  let getCommunityFeed: Mock<
+    (
+      span: { from: number; to: number },
+      options: { crossedPaths: boolean }
+    ) => Promise<CommunityFeedItem[]>
+  >;
+  let communityMembers: Signal<string[]>;
+  let friendReaders: Signal<Friend[]>;
   let onOpenPassage: Mock;
   let bookNames: Signal<Map<string, string>>;
-  let translationBooksMap: Signal<Map<string, { numberOfChapters: number }>>;
-  let friendReaders: Signal<Friend[]>;
 
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
     container = document.createElement("div");
     document.body.appendChild(container);
     mockI18nState.language = "en";
-    getCommunityReading = vi.fn(async () => ({}) as FilteredReading);
+    getCommunityFeed = vi.fn(async () => []);
+    communityMembers = signal([ME]);
+    friendReaders = signal([friend(), friend({ userId: RUTH, name: "Ruth" })]);
     onOpenPassage = vi.fn();
-    bookNames = signal(new Map([["GEN", "Genesis"]]));
-    translationBooksMap = signal(new Map([["GEN", { numberOfChapters: 3 }]]));
-    friendReaders = signal([]);
+    bookNames = signal(
+      new Map([
+        ["COL", "Colossians"],
+        ["EXO", "Exodus"],
+      ])
+    );
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   function setup(
     options: {
       signedIn?: boolean;
-      pictureUrl?: string;
       profileName?: string;
     } = {}
   ) {
     const signedIn = options.signedIn ?? true;
+    if (!signedIn) {
+      communityMembers.value = [];
+    }
     const today = todayStub({
-      getCommunityReading,
+      getCommunityFeed,
+      communityMembers,
       friendReaders,
       bookNames,
-      translationBooksMap: translationBooksMap as never,
     });
     const login = loginStub({
-      userId: signal(signedIn ? CURRENT_USER_ID : null),
+      userId: signal(signedIn ? ME : null),
       profile: signal(
-        signedIn
-          ? ({
-              name: options.profileName ?? "Me",
-              pictureUrl: options.pictureUrl,
-            } as UserProfile)
-          : null
+        signedIn ? ({ name: options.profileName ?? "Me" } as UserProfile) : null
       ),
     });
     act(() =>
       render(
-        <SocialSection
-          today={today}
-          login={login}
-          theme={signal({ variables: {} } as unknown as BibleTheme)}
-          onOpenPassage={onOpenPassage}
-        />,
+        <TimeProvider>
+          <SocialSection
+            today={today}
+            login={login}
+            theme={signal({ variables: {} } as unknown as BibleTheme)}
+            onOpenPassage={onOpenPassage}
+          />
+        </TimeProvider>,
         container
       )
     );
@@ -156,608 +237,719 @@ describe("SocialSection", () => {
     container.querySelector<T>(sel);
   const qa = (sel: string) => Array.from(container.querySelectorAll(sel));
   const heading = () => q(".sb-today-titled-section-header > h5")!.textContent;
-  const filterLabel = () => q(".sb-today-user-filter-label")!.textContent;
-  const filterChevron = () =>
-    q(".sb-today-user-filter-container > .material-symbols-outlined")!
-      .textContent;
-  const filterContainer = () =>
-    q<HTMLDivElement>(".sb-today-user-filter-container")!;
-  const filterOptions = () => qa(".sb-today-user-filter-option");
-  const timespanButtons = () =>
-    qa(".sb-today-timespan-filter-option") as HTMLButtonElement[];
-  const selectedTimespan = () =>
-    q(".sb-today-timespan-filter-option-selected")!.textContent;
-  const bookRows = () => qa(".sb-today-filtered-reading-book");
-  const chapterCells = () => qa(".sb-today-filtered-reading-chapter");
+  const historyButton = () =>
+    q<HTMLButtonElement>(".sb-today-feed-history-button")!;
+  const seeMoreLink = () => q<HTMLButtonElement>(".sb-today-feed-see-more");
+  const kindButtons = () =>
+    qa(".sb-today-feed-kind-option") as HTMLButtonElement[];
+  const selectedKind = () =>
+    q(".sb-today-feed-kind-option-selected")!.textContent;
+  const rows = () => qa(".sb-today-feed-row");
+  const sentences = () =>
+    qa(".sb-today-feed-sentence").map((el) => el.textContent);
+  const emptyText = () => q(".sb-today-feed-empty")?.textContent ?? null;
 
-  /** Opens the reader-filter dropdown. */
-  function openUserFilter() {
-    act(() => filterContainer().click());
+  function selectKind(label: string) {
+    const button = kindButtons().find((b) => b.textContent === label)!;
+    act(() => button.click());
   }
 
-  /** Picks a timespan filter by its visible label. */
-  function selectTimespanByLabel(label: string) {
-    const button = timespanButtons().find((b) => b.textContent === label)!;
-    act(() => button.click());
+  async function toggleHistory() {
+    act(() => historyButton().click());
+    await flush();
+  }
+
+  async function seeMore() {
+    act(() => seeMoreLink()!.click());
+    await flush();
+  }
+
+  async function pickDay() {
+    act(() => q<HTMLButtonElement>("[data-testid='pick-day']")!.click());
+    await flush();
   }
 
   async function flush() {
     await act(async () => {
-      await Promise.resolve();
-      await Promise.resolve();
+      for (let i = 0; i < 10; i++) {
+        await Promise.resolve();
+      }
     });
   }
+
+  /** Answers the recent window and each older year from the given rows. */
+  function feedBySpan(feeds: {
+    recent?: CommunityFeedItem[];
+    years?: CommunityFeedItem[][];
+  }) {
+    const years = [YEAR_1_FROM, YEAR_2_FROM, YEAR_3_FROM];
+    getCommunityFeed.mockImplementation(async (span) => {
+      if (span.from === RECENT_FROM) return feeds.recent ?? [];
+      const index = years.indexOf(span.from);
+      return index >= 0 ? (feeds.years?.[index] ?? []) : [];
+    });
+  }
+
+  /** `count` reading rows from an older year, newest first. */
+  function olderRows(prefix: string, count: number, time: number) {
+    return Array.from({ length: count }, (_, i) =>
+      readingItem({ id: `${prefix}:${i}`, time: time - i * HOUR })
+    );
+  }
+
+  const recentCalls = () =>
+    getCommunityFeed.mock.calls.filter(([span]) => span.from === RECENT_FROM);
 
   // ─── the section itself ────────────────────────────────────────────────────
 
   describe("the section", () => {
-    it("renders the community heading around the history card", () => {
+    it("renders the community heading and a closed history button", () => {
       setup();
       expect(heading()).toBe("COMMUNITY");
-      expect(
-        q(".sb-today-titled-section .sb-today-history-card")
-      ).not.toBeNull();
+      expect(historyButton().getAttribute("aria-label")).toBe("History");
+      expect(historyButton().getAttribute("aria-pressed")).toBe("false");
+    });
+
+    it("has no 'see all' link or time-frame dropdown", () => {
+      setup();
+      expect(q(".sb-today-titled-section-header > button")).toBeNull();
+      expect(q(".sb-today-feed-timeframe-button")).toBeNull();
     });
   });
 
-  // ─── reader filters ───────────────────────────────────────────────────────
+  // ─── kind filter ───────────────────────────────────────────────────────────
 
-  describe("reader filters", () => {
-    it("starts closed, with a down chevron", () => {
+  describe("kind filter", () => {
+    it("renders All, Notes and Reading, with All selected", () => {
       setup();
-      expect(filterOptions()).toHaveLength(0);
-      expect(filterChevron()).toBe("keyboard_arrow_down");
-    });
-
-    it("opens on click, showing an up chevron", () => {
-      setup();
-      openUserFilter();
-      expect(filterChevron()).toBe("keyboard_arrow_up");
-      expect(filterOptions().length).toBeGreaterThan(0);
-    });
-
-    it("closes when a click lands outside the filter", () => {
-      setup();
-      openUserFilter();
-
-      const outside = document.createElement("div");
-      document.body.appendChild(outside);
-      act(() => {
-        outside.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
-      });
-
-      expect(filterOptions()).toHaveLength(0);
-      outside.remove();
-    });
-
-    it("does not close when the options list itself is clicked", () => {
-      setup();
-      openUserFilter();
-
-      act(() => q<HTMLDivElement>(".sb-today-user-filter-options")!.click());
-
-      expect(filterOptions().length).toBeGreaterThan(0);
-    });
-
-    it("lists the signed-in reader alone, selected, with their colour", () => {
-      // No friends, so "community" is a party of one.
-      setup();
-      openUserFilter();
-
-      const options = filterOptions();
-      expect(options).toHaveLength(1);
-      expect(options[0]!.textContent).toBe("Me");
-      expect(options[0]!.className).toContain(
-        "sb-today-user-filter-option-selected"
-      );
-    });
-
-    // A profile can carry an empty name. `??` let it through, leaving a reader
-    // row with a colour swatch and no label at all.
-    it("labels a reader with an empty profile name as anonymous", () => {
-      setup({ profileName: "" });
-      openUserFilter();
-
-      const options = filterOptions();
-      expect(options).toHaveLength(1);
-      expect(options[0]!.textContent).toBe("Anonymous");
-    });
-
-    it("labels a reader with a whitespace-only profile name as anonymous", () => {
-      setup({ profileName: "   " });
-      openUserFilter();
-
-      expect(filterOptions()[0]!.textContent).toBe("Anonymous");
-    });
-
-    it("lists the user's friends after the user, all selected", () => {
-      friendReaders.value = [
-        friend({ userId: "ada", name: "Ada" }),
-        friend({ userId: "bob", name: "Bob" }),
-      ];
-      setup();
-      openUserFilter();
-
-      const options = filterOptions();
-      expect(options.map((o) => o.textContent)).toEqual(["Me", "Ada", "Bob"]);
-      for (const option of options) {
-        expect(option.className).toContain(
-          "sb-today-user-filter-option-selected"
-        );
-      }
-    });
-
-    it("labels a friend with no name by a short id", () => {
-      friendReaders.value = [friend({ userId: "abcdef123456", name: null })];
-      setup();
-      openUserFilter();
-
-      expect(filterOptions()[1]!.textContent).toBe("User abcdef12");
-    });
-
-    it("adds and drops friends as the friends list changes", () => {
-      setup();
-      openUserFilter();
-      expect(filterOptions()).toHaveLength(1);
-
-      act(() => {
-        friendReaders.value = [friend({ userId: "ada", name: "Ada" })];
-      });
-      expect(filterOptions().map((o) => o.textContent)).toEqual(["Me", "Ada"]);
-
-      act(() => {
-        friendReaders.value = [];
-      });
-      expect(filterOptions().map((o) => o.textContent)).toEqual(["Me"]);
-    });
-
-    it("keeps a reader deselected when someone else becomes a friend", () => {
-      friendReaders.value = [friend({ userId: "ada", name: "Ada" })];
-      setup();
-      openUserFilter();
-      act(() => (filterOptions()[1] as HTMLButtonElement).click());
-
-      act(() => {
-        friendReaders.value = [
-          friend({ userId: "ada", name: "Ada" }),
-          friend({ userId: "bob", name: "Bob" }),
-        ];
-      });
-
-      const [me, ada, bob] = filterOptions();
-      expect(me!.className).toContain("sb-today-user-filter-option-selected");
-      expect(ada!.className).not.toContain(
-        "sb-today-user-filter-option-selected"
-      );
-      expect(bob!.className).toContain("sb-today-user-filter-option-selected");
-    });
-
-    it("lists nobody when signed out", () => {
-      setup({ signedIn: false });
-      openUserFilter();
-      expect(filterOptions()).toHaveLength(0);
-    });
-
-    it("reads 'everyone' when every reader is selected", () => {
-      setup();
-      expect(filterLabel()).toBe("Everyone");
-    });
-
-    it("reads 'none' once the only reader is deselected", () => {
-      setup();
-      openUserFilter();
-
-      act(() => (filterOptions()[0] as HTMLButtonElement).click());
-
-      expect(filterLabel()).toBe("None");
-      expect(filterOptions()[0]!.className).not.toContain(
-        "sb-today-user-filter-option-selected"
-      );
-    });
-
-    it("toggles a reader back on", () => {
-      setup();
-      openUserFilter();
-
-      act(() => (filterOptions()[0] as HTMLButtonElement).click());
-      act(() => (filterOptions()[0] as HTMLButtonElement).click());
-
-      expect(filterLabel()).toBe("Everyone");
-    });
-  });
-
-  // ─── timespan filters ─────────────────────────────────────────────────────
-
-  describe("timespan filters", () => {
-    it("renders the four windows in order, with 'last 48 hours' selected", () => {
-      setup();
-      expect(timespanButtons().map((b) => b.textContent)).toEqual([
-        "Last 48 hours",
-        "This week",
-        "This month",
+      expect(kindButtons().map((b) => b.textContent)).toEqual([
         "All",
+        "Notes",
+        "Reading",
       ]);
-      expect(selectedTimespan()).toBe("Last 48 hours");
+      expect(selectedKind()).toBe("All");
+      expect(kindButtons()[0]!.getAttribute("aria-pressed")).toBe("true");
     });
 
-    it("moves the selection when another window is picked", () => {
-      setup();
-      selectTimespanByLabel("This week");
-      expect(selectedTimespan()).toBe("This week");
-    });
-
-    it("scrolls the window row horizontally with the wheel", () => {
+    it("scrolls the pill row horizontally with the wheel", () => {
       setup();
       expect(useHorizontalScroll).toHaveBeenCalled();
     });
-  });
 
-  // ─── community reading ────────────────────────────────────────────────────
-
-  describe("community reading", () => {
-    it("fetches the initial two-day window on mount", () => {
-      setup();
-      expect(getCommunityReading).toHaveBeenCalledTimes(1);
-      const span = getCommunityReading.mock.calls[0]![0];
-      expect(span.to - span.from).toBe(2 * 24 * 60 * 60);
-    });
-
-    it("refetches for a newly selected window", () => {
-      setup();
-      getCommunityReading.mockClear();
-
-      selectTimespanByLabel("This month");
-
-      expect(getCommunityReading).toHaveBeenCalledTimes(1);
-      const span = getCommunityReading.mock.calls[0]![0];
-      expect(span.to - span.from).toBe(30 * 24 * 60 * 60);
-    });
-
-    it("clears the reading without fetching when 'all' is selected", async () => {
-      getCommunityReading.mockResolvedValue({
-        GEN: { 1: [CURRENT_USER_ID] },
-      } as FilteredReading);
-      setup();
-      await flush();
-      expect(bookRows()).toHaveLength(1);
-
-      getCommunityReading.mockClear();
-      selectTimespanByLabel("All");
-      await flush();
-
-      // "all" means the whole year, which the timeline renders instead.
-      expect(getCommunityReading).not.toHaveBeenCalled();
-      expect(bookRows()).toHaveLength(0);
-    });
-
-    it("ignores a stale fetch result after the window changes", async () => {
-      let resolveStale!: (value: FilteredReading) => void;
-      getCommunityReading
-        .mockReturnValueOnce(
-          new Promise<FilteredReading>((r) => {
-            resolveStale = r;
-          })
-        )
-        .mockResolvedValueOnce({
-          EXO: { 1: [CURRENT_USER_ID] },
-        } as FilteredReading);
-      bookNames.value = new Map([
-        ["GEN", "Genesis"],
-        ["EXO", "Exodus"],
+    it("shows only notes under Notes", async () => {
+      getCommunityFeed.mockResolvedValue([
+        noteItem(),
+        crossedPathsItem(),
+        readingItem(),
       ]);
       setup();
-
-      selectTimespanByLabel("This week");
-      await flush();
-      // The superseded fetch settles last, which is the case worth pinning:
-      // resolving both in one flush would let ordering alone decide the winner,
-      // so the guard against a stale response would pass either way.
-      resolveStale({ GEN: { 1: [CURRENT_USER_ID] } } as FilteredReading);
       await flush();
 
-      expect(
-        bookRows().map((row) => row.querySelector("span")!.textContent)
-      ).toEqual(["Exodus"]);
+      selectKind("Notes");
+
+      expect(selectedKind()).toBe("Notes");
+      expect(rows()).toHaveLength(1);
+      expect(q(".sb-today-feed-row-note")).not.toBeNull();
+    });
+
+    it("shows crossed paths and reading, but not notes, under Reading", async () => {
+      getCommunityFeed.mockResolvedValue([
+        noteItem(),
+        crossedPathsItem(),
+        readingItem(),
+      ]);
+      setup();
+      await flush();
+
+      selectKind("Reading");
+
+      expect(rows()).toHaveLength(2);
+      expect(q(".sb-today-feed-row-note")).toBeNull();
+    });
+
+    it("filters without asking the manager again", async () => {
+      getCommunityFeed.mockResolvedValue([noteItem(), readingItem()]);
+      setup();
+      await flush();
+      const callsBefore = getCommunityFeed.mock.calls.length;
+
+      selectKind("Notes");
+      selectKind("Reading");
+
+      expect(getCommunityFeed).toHaveBeenCalledTimes(callsBefore);
     });
   });
 
-  // ─── the timeline ─────────────────────────────────────────────────────────
+  // ─── recent activity ───────────────────────────────────────────────────────
 
-  describe("the timeline", () => {
-    it("is hidden for a windowed selection", () => {
+  describe("recent activity", () => {
+    it("asks for everything since midnight two days back, grouping crossed paths", () => {
+      setup();
+      expect(getCommunityFeed).toHaveBeenCalledWith(
+        { from: RECENT_FROM, to: NOW_SECONDS },
+        { crossedPaths: true }
+      );
+    });
+
+    it("shows only the recent rows until asked for more", async () => {
+      feedBySpan({
+        recent: [readingItem({ id: "recent" })],
+        years: [olderRows("older", 3, YEAR_1_FROM + DAY)],
+      });
+      setup();
+      await flush();
+
+      expect(rows()).toHaveLength(1);
+    });
+
+    it("refetches when the member list changes", async () => {
+      setup();
+      await flush();
+
+      act(() => {
+        communityMembers.value = [ME, JONAH];
+      });
+      await flush();
+
+      expect(recentCalls()).toHaveLength(2);
+    });
+
+    it("shows the empty state once the recent rows come back empty", async () => {
+      setup();
+      expect(emptyText()).toBeNull();
+      await flush();
+      expect(emptyText()).toBe("No activity in this time frame yet.");
+    });
+
+    it("words the empty state for the selected kind", async () => {
+      setup();
+      await flush();
+      selectKind("Notes");
+      expect(emptyText()).toBe("No notes in this time frame yet.");
+      selectKind("Reading");
+      expect(emptyText()).toBe("No reading in this time frame yet.");
+    });
+
+    it("shows the empty state, not a crash, when the fetch fails", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      getCommunityFeed.mockRejectedValue(new Error("offline"));
+      setup();
+      await flush();
+
+      expect(emptyText()).toBe("No activity in this time frame yet.");
+      expect(consoleError).toHaveBeenCalled();
+      consoleError.mockRestore();
+    });
+  });
+
+  // ─── see more ──────────────────────────────────────────────────────────────
+
+  describe("'See more'", () => {
+    it("is hidden when there is no older activity", async () => {
+      feedBySpan({ recent: [readingItem()] });
+      setup();
+      await flush();
+
+      expect(seeMoreLink()).toBeNull();
+    });
+
+    it("reveals eight older rows per click until there are no more", async () => {
+      feedBySpan({
+        recent: [readingItem({ id: "recent" })],
+        years: [olderRows("older", 12, YEAR_1_FROM + 100 * DAY)],
+      });
+      setup();
+      await flush();
+      expect(seeMoreLink()!.textContent).toBe("See more");
+
+      await seeMore();
+      expect(rows()).toHaveLength(1 + 8);
+      expect(seeMoreLink()).not.toBeNull();
+
+      await seeMore();
+      expect(rows()).toHaveLength(1 + 12);
+      expect(seeMoreLink()).toBeNull();
+    });
+
+    it("keeps reaching further back as long as there is more activity", async () => {
+      feedBySpan({
+        recent: [readingItem({ id: "recent" })],
+        years: [
+          olderRows("year1", 3, YEAR_1_FROM + 100 * DAY),
+          olderRows("year2", 8, YEAR_2_FROM + 100 * DAY),
+        ],
+      });
+      setup();
+      await flush();
+
+      await seeMore();
+      expect(rows()).toHaveLength(1 + 8);
+
+      await seeMore();
+      expect(rows()).toHaveLength(1 + 11);
+      expect(seeMoreLink()).toBeNull();
+      expect(getCommunityFeed).toHaveBeenCalledWith(
+        expect.objectContaining({ from: YEAR_3_FROM }),
+        { crossedPaths: false }
+      );
+    });
+
+    it("can bring older rows into an empty recent view", async () => {
+      feedBySpan({ years: [olderRows("older", 2, YEAR_1_FROM + DAY)] });
+      setup();
+      await flush();
+      expect(emptyText()).toBe("No activity in this time frame yet.");
+
+      await seeMore();
+
+      expect(rows()).toHaveLength(2);
+      expect(emptyText()).toBeNull();
+    });
+
+    it("counts the rows of the selected kind", async () => {
+      feedBySpan({
+        recent: [noteItem({ id: "note:recent" })],
+        years: [
+          [
+            ...olderRows("older", 10, YEAR_1_FROM + 100 * DAY),
+            noteItem({ id: "note:older", time: YEAR_1_FROM + DAY }),
+          ],
+        ],
+      });
+      setup();
+      await flush();
+      selectKind("Notes");
+
+      await seeMore();
+
+      expect(rows()).toHaveLength(2);
+      expect(qa(".sb-today-feed-row-note")).toHaveLength(2);
+      expect(seeMoreLink()).toBeNull();
+    });
+
+    it("starts over from the recent rows when the kind changes", async () => {
+      feedBySpan({
+        recent: [readingItem({ id: "recent" })],
+        years: [olderRows("older", 12, YEAR_1_FROM + 100 * DAY)],
+      });
+      setup();
+      await flush();
+      await seeMore();
+
+      selectKind("Reading");
+
+      expect(rows()).toHaveLength(1);
+    });
+  });
+
+  // ─── history ───────────────────────────────────────────────────────────────
+
+  describe("history", () => {
+    const yearSpan = () => {
+      const yearStart = new Date(NOW);
+      yearStart.setFullYear(NOW.getFullYear() - 1);
+      yearStart.setHours(0, 0, 0, 0);
+      const yearEnd = new Date(NOW);
+      yearEnd.setHours(23, 59, 59, 999);
+      return {
+        from: Math.floor(yearStart.getTime() / 1000),
+        to: Math.floor(yearEnd.getTime() / 1000),
+      };
+    };
+
+    it("is closed to begin with, with no activity grid", () => {
       setup();
       expect(q("[data-testid='timeline']")).toBeNull();
       expect(q(".sb-today-date-label")).toBeNull();
     });
 
-    it("appears when 'all' is selected, without a date label", () => {
+    it("opens the activity grid on the whole timeline year, without crossed paths", async () => {
       setup();
-      selectTimespanByLabel("All");
+      await toggleHistory();
 
+      expect(historyButton().getAttribute("aria-pressed")).toBe("true");
       expect(q("[data-testid='timeline']")).not.toBeNull();
-      // Picking "all" clears the window, and the date label only renders while
-      // one is set — so it stays absent until a day is picked in the timeline.
       expect(q(".sb-today-date-label")).toBeNull();
-    });
-  });
-
-  // ─── the selected-day label ───────────────────────────────────────────────
-
-  /** Selects "all", then clicks a day inside the timeline. */
-  function pickTimelineDay() {
-    selectTimespanByLabel("All");
-    act(() => q<HTMLButtonElement>("[data-testid='pick-day']")!.click());
-  }
-
-  const dateLabel = () => q(".sb-today-date-label")?.textContent ?? null;
-
-  const formatSelectedDay = (lang: string) =>
-    new Intl.DateTimeFormat(lang, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }).format(new Date(SELECTED_DAY.to * 1000));
-
-  describe("the selected-day label", () => {
-    it("names the day picked in the timeline", () => {
-      setup();
-      pickTimelineDay();
-      expect(dateLabel()).toBe(formatSelectedDay("en"));
+      expect(getCommunityFeed).toHaveBeenLastCalledWith(yearSpan(), {
+        crossedPaths: false,
+      });
     });
 
-    it("goes away when the day selection is cleared", () => {
+    it("has no 'See more' link", async () => {
+      feedBySpan({
+        recent: [readingItem()],
+        years: [olderRows("older", 3, YEAR_1_FROM + DAY)],
+      });
       setup();
-      pickTimelineDay();
-      expect(dateLabel()).not.toBeNull();
+      await flush();
+      expect(seeMoreLink()).not.toBeNull();
+
+      await toggleHistory();
+
+      expect(seeMoreLink()).toBeNull();
+    });
+
+    it("narrows the feed to a picked day and labels it", async () => {
+      setup();
+      await toggleHistory();
+
+      await pickDay();
+
+      expect(getCommunityFeed).toHaveBeenLastCalledWith(SELECTED_DAY, {
+        crossedPaths: false,
+      });
+      expect(q(".sb-today-date-label")!.textContent).toBe("May 16, 2026");
+    });
+
+    it("widens back to the year when the day is cleared", async () => {
+      setup();
+      await toggleHistory();
+      await pickDay();
 
       act(() => q<HTMLButtonElement>("[data-testid='clear-day']")!.click());
-      expect(dateLabel()).toBeNull();
+      await flush();
+
+      expect(getCommunityFeed).toHaveBeenLastCalledWith(yearSpan(), {
+        crossedPaths: false,
+      });
+      expect(q(".sb-today-date-label")).toBeNull();
     });
 
-    it("is scoped to the timeline view, not to having a window at all", () => {
-      setup();
-      pickTimelineDay();
-      expect(dateLabel()).not.toBeNull();
-
-      // "This week" sets a window too, so the label would still have something
-      // to show — it is the timeline view it belongs to, not the window.
-      selectTimespanByLabel("This week");
-      expect(q("[data-testid='timeline']")).toBeNull();
-      expect(dateLabel()).toBeNull();
-    });
-
-    it("formats the date in the active language", () => {
+    it("formats the day label in the active language", async () => {
       mockI18nState.language = "fr";
       setup();
-      pickTimelineDay();
+      await toggleHistory();
 
-      // Guards against a vacuous assertion if the two ever agreed.
-      expect(formatSelectedDay("en")).not.toBe(formatSelectedDay("fr"));
-      expect(dateLabel()).toBe(formatSelectedDay("fr"));
+      await pickDay();
+
+      expect(q(".sb-today-date-label")!.textContent).toBe("16 mai 2026");
     });
-  });
 
-  // ─── book rows ────────────────────────────────────────────────────────────
-
-  describe("book rows", () => {
-    async function setupWithReading(
-      reading: FilteredReading,
-      options: Parameters<typeof setup>[0] = {}
-    ) {
-      getCommunityReading.mockResolvedValue(reading);
-      setup(options);
+    it("keeps the current rows up while the next day loads", async () => {
+      setup();
       await flush();
-    }
+      getCommunityFeed.mockResolvedValueOnce([readingItem()]);
+      await toggleHistory();
+      getCommunityFeed.mockImplementationOnce(() => new Promise(() => {}));
 
-    it("renders nothing when nobody has read anything", async () => {
-      await setupWithReading({});
-      expect(q(".sb-today-filtered-reading-container")).toBeNull();
+      await pickDay();
+
+      expect(rows()).toHaveLength(1);
+      expect(emptyText()).toBeNull();
     });
 
-    it("renders one row per book, named from the translation", async () => {
-      bookNames.value = new Map([
-        ["GEN", "Genesis"],
-        ["EXO", "Exodus"],
-      ]);
-      await setupWithReading({
-        GEN: { 1: [CURRENT_USER_ID] },
-        EXO: { 2: [CURRENT_USER_ID] },
-      });
-
-      expect(
-        bookRows().map((row) => row.querySelector("span")!.textContent)
-      ).toEqual(["Genesis", "Exodus"]);
-    });
-
-    it("falls back to the bookId when the name is unknown", async () => {
-      bookNames.value = new Map();
-      await setupWithReading({ GEN: { 1: [CURRENT_USER_ID] } });
-
-      expect(bookRows()[0]!.querySelector("span")!.textContent).toBe("GEN");
-    });
-
-    it("omits a book whose only readers are deselected", async () => {
-      await setupWithReading({ GEN: { 1: [CURRENT_USER_ID] } });
-      expect(bookRows()).toHaveLength(1);
-
-      openUserFilter();
-      act(() => (filterOptions()[0] as HTMLButtonElement).click());
-
-      expect(bookRows()).toHaveLength(0);
-    });
-
-    it("omits a book whose reader is absent from the filter map", async () => {
-      await setupWithReading({ GEN: { 1: ["a-stranger"] } });
-      expect(bookRows()).toHaveLength(0);
-    });
-
-    it("renders one avatar per reader, deduplicated across chapters", async () => {
-      await setupWithReading({
-        GEN: { 1: [CURRENT_USER_ID], 2: [CURRENT_USER_ID] },
-      });
-
-      expect(
-        bookRows()[0]!.querySelectorAll(".sb-today-filtered-reading-book-icon")
-      ).toHaveLength(1);
-    });
-
-    it("shows no '+N' badge at or below the avatar cap", async () => {
-      await setupWithReading({ GEN: { 1: [CURRENT_USER_ID] } });
-      expect(q(".sb-today-filtered-reading-book-extra")).toBeNull();
-    });
-
-    it("uses the reader's picture as their avatar when they have one", async () => {
-      await setupWithReading(
-        { GEN: { 1: [CURRENT_USER_ID] } },
-        {
-          pictureUrl: "https://example.test/me.png",
-        }
+    it("ignores a stale result after the day changes", async () => {
+      setup();
+      await flush();
+      let resolveYear!: (items: CommunityFeedItem[]) => void;
+      getCommunityFeed.mockImplementationOnce(
+        () =>
+          new Promise<CommunityFeedItem[]>((resolve) => {
+            resolveYear = resolve;
+          })
       );
+      getCommunityFeed.mockResolvedValue([readingItem()]);
+      await toggleHistory();
 
-      const avatar = q<HTMLImageElement>(
-        "img.sb-today-filtered-reading-book-icon"
-      )!;
-      expect(avatar.src).toBe("https://example.test/me.png");
-      expect(
-        q(".sb-today-filtered-reading-book-icon .material-symbols-outlined")
-      ).toBeNull();
+      await pickDay();
+      await act(async () => {
+        resolveYear([noteItem(), noteItem({ id: "note:2" })]);
+        await Promise.resolve();
+      });
+
+      expect(rows()).toHaveLength(1);
+      expect(q(".sb-today-feed-row-reading")).not.toBeNull();
+    });
+
+    it("returns to recent activity when closed, and reopens on the whole year", async () => {
+      setup();
+      await toggleHistory();
+      await pickDay();
+
+      await toggleHistory();
+      expect(historyButton().getAttribute("aria-pressed")).toBe("false");
+      expect(q("[data-testid='timeline']")).toBeNull();
+      expect(recentCalls()).toHaveLength(2);
+
+      await toggleHistory();
+      expect(getCommunityFeed).toHaveBeenLastCalledWith(yearSpan(), {
+        crossedPaths: false,
+      });
     });
   });
 
-  // ─── chapter cells ────────────────────────────────────────────────────────
+  // ─── rows ──────────────────────────────────────────────────────────────────
 
-  describe("chapter cells", () => {
-    async function setupExpanded(
-      reading: FilteredReading,
-      options: Parameters<typeof setup>[0] = {}
-    ) {
-      getCommunityReading.mockResolvedValue(reading);
-      setup(options);
-      await flush();
-      act(() => (bookRows()[0] as HTMLDivElement).click());
-    }
-
-    it("stay hidden until the book row is sb-today-expanded", async () => {
-      getCommunityReading.mockResolvedValue({
-        GEN: { 1: [CURRENT_USER_ID] },
-      } as FilteredReading);
+  describe("note rows", () => {
+    it("say who noted on which verse, and quote the note", async () => {
+      getCommunityFeed.mockResolvedValue([noteItem()]);
       setup();
       await flush();
 
-      expect(bookRows()[0]!.className).not.toContain("sb-today-expanded");
-      expect(chapterCells()).toHaveLength(0);
+      expect(sentences()).toEqual(["You noted on Colossians 3:12"]);
+      expect(q(".sb-today-feed-name")!.textContent).toBe("You");
+      expect(q(".sb-today-feed-reference")!.textContent).toBe(
+        "Colossians 3:12"
+      );
+      expect(q(".sb-today-feed-note-text")!.textContent).toBe(
+        "Compassion is listed first, before patience."
+      );
     });
 
-    it("render one cell per chapter in the translation, once sb-today-expanded", async () => {
-      await setupExpanded({ GEN: { 1: [CURRENT_USER_ID] } });
+    it("name a friend by their profile name, not 'You'", async () => {
+      communityMembers.value = [ME, JONAH];
+      getCommunityFeed.mockResolvedValue([noteItem({ userId: JONAH })]);
+      setup();
+      await flush();
 
-      expect(bookRows()[0]!.className).toContain("sb-today-expanded");
-      expect(chapterCells().map((c) => c.textContent![0])).toEqual([
-        "1",
-        "2",
-        "3",
+      expect(sentences()).toEqual(["Jonah noted on Colossians 3:12"]);
+    });
+
+    it("name a friend with no profile name by a short id", async () => {
+      const unnamed = "abcdef123456";
+      communityMembers.value = [ME, unnamed];
+      friendReaders.value = [friend({ userId: unnamed, name: null })];
+      getCommunityFeed.mockResolvedValue([noteItem({ userId: unnamed })]);
+      setup();
+      await flush();
+
+      expect(sentences()).toEqual(["User abcdef12 noted on Colossians 3:12"]);
+    });
+
+    it("say 'replied' for a reply", async () => {
+      getCommunityFeed.mockResolvedValue([noteItem({ isReply: true })]);
+      setup();
+      await flush();
+
+      expect(sentences()).toEqual(["You replied on Colossians 3:12"]);
+    });
+
+    it("show a verse range and a chapter-only note", async () => {
+      getCommunityFeed.mockResolvedValue([
+        noteItem({ id: "a", verses: [3, 4, 5, 7] }),
+        noteItem({ id: "b", verses: [] }),
       ]);
+      setup();
+      await flush();
+
+      expect(
+        qa(".sb-today-feed-reference").map((el) => el.textContent)
+      ).toEqual(["Colossians 3:3-5,7", "Colossians 3"]);
     });
 
-    it("render no cells when the book is missing from the books map", async () => {
-      translationBooksMap.value = new Map();
-      await setupExpanded({ GEN: { 1: [CURRENT_USER_ID] } });
+    it("leave out the quote when the note has no text", async () => {
+      getCommunityFeed.mockResolvedValue([noteItem({ html: "<p></p>" })]);
+      setup();
+      await flush();
 
-      expect(chapterCells()).toHaveLength(0);
+      expect(q(".sb-today-feed-note-text")).toBeNull();
     });
 
-    it("highlight only the chapters that were read", async () => {
-      await setupExpanded({ GEN: { 2: [CURRENT_USER_ID] } });
+    it("open the noted verse when the reference is clicked", async () => {
+      getCommunityFeed.mockResolvedValue([noteItem()]);
+      setup();
+      await flush();
 
-      const highlighted = chapterCells().map((c) =>
-        c.className.includes("sb-today-filtered-reading-chapter-highlighted")
-      );
-      expect(highlighted).toEqual([false, true, false]);
-    });
-
-    it("show the reader's animal icon on the chapter they read", async () => {
-      await setupExpanded({ GEN: { 2: [CURRENT_USER_ID] } });
-
-      const cell = chapterCells()[1]!;
-      expect(cell.querySelector(".material-symbols-outlined")).not.toBeNull();
-      expect(cell.querySelector("img")).toBeNull();
-    });
-
-    it("show the reader's picture instead, when they have one", async () => {
-      await setupExpanded(
-        { GEN: { 2: [CURRENT_USER_ID] } },
-        {
-          pictureUrl: "https://example.test/me.png",
-        }
-      );
-
-      const cell = chapterCells()[1]!;
-      expect(cell.querySelector<HTMLImageElement>("img")!.src).toBe(
-        "https://example.test/me.png"
-      );
-      expect(cell.querySelector(".material-symbols-outlined")).toBeNull();
-    });
-
-    it("collapse again on a second click, and ignore clicks inside the grid", async () => {
-      await setupExpanded({ GEN: { 1: [CURRENT_USER_ID] } });
-      expect(chapterCells()).toHaveLength(3);
-
-      // A click inside the grid must not bubble up and collapse the row.
-      act(() => q<HTMLDivElement>(".sb-today-chapters-container")!.click());
-      expect(chapterCells()).toHaveLength(3);
-
-      act(() => (bookRows()[0] as HTMLDivElement).click());
-      expect(chapterCells()).toHaveLength(0);
-    });
-
-    it("opens the clicked chapter, letting the default translation apply", async () => {
-      await setupExpanded({ GEN: { 1: [CURRENT_USER_ID] } });
-
-      act(() => (chapterCells()[2] as HTMLDivElement).click());
+      act(() => q<HTMLButtonElement>(".sb-today-feed-reference")!.click());
 
       expect(onOpenPassage).toHaveBeenCalledWith({
-        bookId: "GEN",
+        bookId: "COL",
         chapter: 3,
+        verse: 12,
+      });
+    });
+
+    it("show the clock time for something from today", async () => {
+      getCommunityFeed.mockResolvedValue([noteItem()]);
+      setup();
+      await flush();
+
+      expect(q(".sb-today-feed-time")!.textContent).toBe("5:00 PM");
+    });
+
+    it("put the time at the end of the row, like the other rows", async () => {
+      getCommunityFeed.mockResolvedValue([noteItem(), readingItem()]);
+      setup();
+      await flush();
+
+      const timeParent = (row: string) =>
+        q(`${row} .sb-today-feed-time`)!.parentElement;
+      expect(timeParent(".sb-today-feed-row-note")).toBe(
+        q(".sb-today-feed-row-note")
+      );
+      expect(timeParent(".sb-today-feed-row-reading")).toBe(
+        q(".sb-today-feed-row-reading")
+      );
+    });
+  });
+
+  describe("crossed-paths rows", () => {
+    it("put 'You' first and say 'both read'", async () => {
+      communityMembers.value = [ME, JONAH];
+      getCommunityFeed.mockResolvedValue([crossedPathsItem()]);
+      setup();
+      await flush();
+
+      expect(sentences()).toEqual(["You and Jonah both read Colossians 3"]);
+      expect(qa(".sb-today-feed-avatar")).toHaveLength(2);
+    });
+
+    it("say 'all read' for three or more", async () => {
+      communityMembers.value = [ME, JONAH, RUTH];
+      getCommunityFeed.mockResolvedValue([
+        crossedPathsItem({ userIds: [JONAH, ME, RUTH] }),
+      ]);
+      setup();
+      await flush();
+
+      expect(sentences()).toEqual([
+        "You, Jonah, and Ruth all read Colossians 3",
+      ]);
+    });
+
+    it("show a chapter range", async () => {
+      communityMembers.value = [ME, JONAH];
+      getCommunityFeed.mockResolvedValue([
+        crossedPathsItem({ chapters: [3, 4] }),
+      ]);
+      setup();
+      await flush();
+
+      expect(q(".sb-today-feed-reference")!.textContent).toBe("Colossians 3-4");
+    });
+
+    it("open the first shared chapter when the reference is clicked", async () => {
+      communityMembers.value = [ME, JONAH];
+      getCommunityFeed.mockResolvedValue([
+        crossedPathsItem({ chapters: [3, 4] }),
+      ]);
+      setup();
+      await flush();
+
+      act(() => q<HTMLButtonElement>(".sb-today-feed-reference")!.click());
+
+      expect(onOpenPassage).toHaveBeenCalledWith({ bookId: "COL", chapter: 3 });
+    });
+
+    it("still draw an avatar for a reader whose profile is unknown", async () => {
+      // `communityMembers` is just me, but the feed names a second reader.
+      getCommunityFeed.mockResolvedValue([crossedPathsItem()]);
+      setup();
+      await flush();
+
+      expect(qa(".sb-today-feed-avatar")).toHaveLength(2);
+    });
+  });
+
+  describe("reading rows", () => {
+    it("say who read what", async () => {
+      communityMembers.value = [ME, JONAH];
+      getCommunityFeed.mockResolvedValue([readingItem()]);
+      setup();
+      await flush();
+
+      expect(sentences()).toEqual(["Jonah read Exodus 14-16"]);
+    });
+
+    it("fall back to the book id when the name is unknown", async () => {
+      getCommunityFeed.mockResolvedValue([
+        readingItem({ userId: ME, bookId: "PHM", chapters: [1] }),
+      ]);
+      setup();
+      await flush();
+
+      expect(sentences()).toEqual(["You read PHM 1"]);
+    });
+
+    it("relabel when the translation's book names arrive", async () => {
+      getCommunityFeed.mockResolvedValue([
+        readingItem({ userId: ME, bookId: "PHM", chapters: [1] }),
+      ]);
+      setup();
+      await flush();
+
+      act(() => {
+        bookNames.value = new Map([...bookNames.value, ["PHM", "Philemon"]]);
+      });
+
+      expect(sentences()).toEqual(["You read Philemon 1"]);
+    });
+
+    it("say 'Yesterday' for something from yesterday", async () => {
+      getCommunityFeed.mockResolvedValue([readingItem({ userId: ME })]);
+      setup();
+      await flush();
+
+      expect(q(".sb-today-feed-time")!.textContent).toBe("Yesterday");
+    });
+
+    it("open the first chapter when the reference is clicked", async () => {
+      getCommunityFeed.mockResolvedValue([readingItem({ userId: ME })]);
+      setup();
+      await flush();
+
+      act(() => q<HTMLButtonElement>(".sb-today-feed-reference")!.click());
+
+      expect(onOpenPassage).toHaveBeenCalledWith({
+        bookId: "EXO",
+        chapter: 14,
       });
     });
   });
 
-  // ─── reactivity that the merge could have broken ──────────────────────────
-
-  describe("reactivity", () => {
-    it("relabels a book row when the translation's book names arrive", async () => {
-      bookNames.value = new Map();
-      getCommunityReading.mockResolvedValue({
-        GEN: { 1: [CURRENT_USER_ID] },
-      } as FilteredReading);
+  describe("row order", () => {
+    it("keeps the manager's order", async () => {
+      getCommunityFeed.mockResolvedValue([
+        noteItem(),
+        crossedPathsItem(),
+        readingItem(),
+      ]);
       setup();
       await flush();
-      expect(bookRows()[0]!.querySelector("span")!.textContent).toBe("GEN");
 
-      act(() => {
-        bookNames.value = new Map([["GEN", "Genesis"]]);
-      });
-
-      expect(bookRows()[0]!.querySelector("span")!.textContent).toBe("Genesis");
+      expect(
+        rows().map((row) =>
+          row.className.includes("sb-today-feed-row-note")
+            ? "note"
+            : row.className.includes("sb-today-feed-row-crossed-paths")
+              ? "crossed-paths"
+              : "reading"
+        )
+      ).toEqual(["note", "crossed-paths", "reading"]);
     });
+  });
+});
 
-    // The memo this replaced depended on the reader list alone, so a late
-    // `translationBooksMap` never refilled the chapter grid.
-    it("fills the chapter grid when the translation's books arrive late", async () => {
-      translationBooksMap.value = new Map();
-      getCommunityReading.mockResolvedValue({
-        GEN: { 1: [CURRENT_USER_ID] },
-      } as FilteredReading);
-      setup();
-      await flush();
-      act(() => (bookRows()[0] as HTMLDivElement).click());
-      expect(chapterCells()).toHaveLength(0);
+describe("formatFeedTime", () => {
+  const t = mockTranslate;
+  const nowMs = NOW.getTime();
 
-      act(() => {
-        translationBooksMap.value = new Map([["GEN", { numberOfChapters: 3 }]]);
-      });
+  it("gives the clock time for today", () => {
+    expect(formatFeedTime(nowMs - 2 * HOUR * 1000, "en", t, nowMs)).toBe(
+      "4:00 PM"
+    );
+  });
 
-      expect(chapterCells()).toHaveLength(3);
-    });
+  it("says 'Yesterday' for yesterday, however late in the day", () => {
+    const lateYesterday = new Date(NOW);
+    lateYesterday.setDate(lateYesterday.getDate() - 1);
+    lateYesterday.setHours(23, 59);
+    expect(formatFeedTime(lateYesterday.getTime(), "en", t, nowMs)).toBe(
+      "Yesterday"
+    );
+  });
+
+  it("gives the date for anything older this year", () => {
+    expect(formatFeedTime(nowMs - 10 * DAY * 1000, "en", t, nowMs)).toBe(
+      "May 7"
+    );
+  });
+
+  it("adds the year for another year", () => {
+    expect(formatFeedTime(nowMs - 400 * DAY * 1000, "en", t, nowMs)).toBe(
+      "Apr 12, 2025"
+    );
   });
 });

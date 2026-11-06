@@ -289,6 +289,32 @@ describe("TextToSpeechManager", () => {
     expect(manager.isSpeaking.value).toBe(false);
   });
 
+  it("tells a run it was stopped, however it was stopped, and only once", () => {
+    const speech = installSpeech();
+    const manager = createTextToSpeechManager();
+    const stoppedByCall = vi.fn();
+    const replaced = vi.fn();
+    const failed = vi.fn();
+    const finished = vi.fn();
+
+    manager.speak(GENESIS, { lang: "en", onStopped: stoppedByCall });
+    manager.stop();
+    manager.stop();
+
+    manager.speak(GENESIS, { lang: "en", onStopped: replaced });
+    manager.speak(GENESIS, { lang: "en", onStopped: failed });
+    speech.queued.at(-1)!.onerror?.();
+
+    manager.speak(GENESIS, { lang: "en", onStopped: finished });
+    speech.queued.at(-1)!.onend?.();
+    manager.stop();
+
+    expect(stoppedByCall).toHaveBeenCalledTimes(1);
+    expect(replaced).toHaveBeenCalledTimes(1);
+    expect(failed).toHaveBeenCalledTimes(1);
+    expect(finished).not.toHaveBeenCalled();
+  });
+
   it("silences a stopped run that the engine starts speaking anyway", () => {
     const speech = installSpeech();
     const manager = createTextToSpeechManager();

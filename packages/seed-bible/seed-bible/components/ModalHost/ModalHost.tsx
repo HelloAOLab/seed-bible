@@ -26,13 +26,18 @@ function HostedModal(props: { manager: ModalManager; modal: ManagedModal }) {
   const { manager, modal } = props;
 
   const { t } = useI18n();
-  const close = () => {
-    manager.closeModal(modal.id);
+  const dismiss = () => {
+    manager.dismissModal(modal.id);
   };
-  const overlayDismiss = useOverlayDismiss(close);
+  const overlayDismiss = useOverlayDismiss(dismiss);
 
   return (
-    <div className="sb-footnote-modal-overlay" {...overlayDismiss}>
+    <div
+      className={`sb-footnote-modal-overlay${
+        modal.mobileSheet ? " sb-footnote-modal-overlay-mobile-sheet" : ""
+      }`}
+      {...overlayDismiss}
+    >
       <div
         className="sb-footnote-modal"
         onClick={(event: MouseEvent) => {
@@ -46,13 +51,17 @@ function HostedModal(props: { manager: ModalManager; modal: ManagedModal }) {
           <button
             className="sb-footnote-modal-close"
             aria-label={t("close", { defaultValue: "Close" })}
-            onClick={close}
+            disabled={!modal.canDismiss()}
+            onClick={dismiss}
           >
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
         <div className="sb-footnote-modal-content">{modal.content({ t })}</div>
+        {modal.footer ? (
+          <div className="sb-footnote-modal-footer">{modal.footer({ t })}</div>
+        ) : null}
       </div>
     </div>
   );

@@ -53,10 +53,34 @@ export interface ExtensionMetaFile {
   sensitive?: Record<string, ExtensionSensitiveProxyDefinitionFile>;
 }
 
-/** An extension package discovered under `packages/`, with its parsed meta. */
+/**
+ * An extension package discovered either under `packages/` or, for local
+ * development of an out-of-tree extension (see `seed-bible-extension-scripts
+ * dev`), in an external directory named by `SEED_BIBLE_EXTRA_EXTENSION_DIRS`.
+ */
 export interface DiscoveredExtension {
-  /** The directory name under `packages/`, used to build import specifiers. */
-  folder: string;
+  /**
+   * Absolute filesystem path to the extension's root directory (the one
+   * containing its `extension.json`). Used for reading and file-watching, not
+   * for import specifiers — see `importBase`.
+   */
+  dir: string;
+  /**
+   * Import-specifier prefix for this extension's code and full translations:
+   * `` `${importBase}/extension.json` `` and `` `${importBase}/${entryFile}` ``.
+   * Bundled extensions use the `@packages/<folder>` alias; external ones use a
+   * Vite `/@fs/<absolute-path>` URL, since the `@packages` alias can't reach
+   * outside `packages/`. Resolving which convention applies is the plugin's
+   * job (see `vite-plugin-extensions.ts`) — this module stays Vite-agnostic.
+   */
+  importBase: string;
+  /**
+   * File name of the code entry under `importBase`. Defaults to `index`, which
+   * the `@packages` alias resolves by trying extensions. A `/@fs/` URL gets no
+   * such resolution, so external extensions pass the real file name (e.g.
+   * `index.ts`).
+   */
+  entryFile?: string;
   meta: ExtensionMetaFile;
 }
 
@@ -196,15 +220,15 @@ export function generateEntryModuleSource(
     `() => Promise.reject(new Error(${toJsLiteral(message)}))`;
 
   const entries = extensions
-    .map(({ folder, meta }) => {
+    .map(({ importBase, entryFile = "index", meta }) => {
       const loadFullTranslations = serverBuild
         ? unavailable(
             `${meta.id}'s translations are not available in the SSR bundle`
           )
-        : `() => import("@packages/${folder}/extension.json").then((m) => m.default.translations)`;
+        : `() => import(${toJsLiteral(`${importBase}/extension.json`)}).then((m) => m.default.translations)`;
       const load = serverBuild
         ? unavailable(`${meta.id} is not available in the SSR bundle`)
-        : `() => import("@packages/${folder}/index")`;
+        : `() => import(${toJsLiteral(`${importBase}/${entryFile}`)})`;
       return `  {
     meta: ${toJsLiteral(trimMeta(meta))},
     loadFullTranslations: ${loadFullTranslations},

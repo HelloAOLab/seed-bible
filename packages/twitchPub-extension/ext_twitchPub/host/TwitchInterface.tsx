@@ -1,7 +1,7 @@
 import QRCodeComponent from "./QRCode";
 import { type TwitchPubState } from "./interface";
 import { getBrandedAppText, useI18n } from "seed-bible/i18n";
-import { fmtRef } from "@seed-bible/ai-transcript-extension/highlight";
+import { fmtRef } from "@seed-bible/transcription/highlight";
 import { useEffect, useRef } from "preact/hooks";
 import { useAppConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 

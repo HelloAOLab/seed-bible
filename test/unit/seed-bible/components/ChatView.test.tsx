@@ -5,6 +5,7 @@ import { ChatView } from "@packages/seed-bible/seed-bible/components/ChatView/Ch
 import type {
   AIChatParticipant,
   ChatMessage,
+  ChatParticipant,
   ChatSession,
   ParsedChatTextMessage,
   TranslationSuggestion,
@@ -12,6 +13,14 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BookId } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import type {
+  LoginManager,
+  UserProfile,
+} from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import {
+  AI_LIMITS_ACKNOWLEDGMENT_VERSION,
+  PROFILE_AI_LIMITS_ACKNOWLEDGMENT,
+} from "@packages/seed-bible/seed-bible/managers/AiLimitsAcknowledgment";
 import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -96,7 +105,9 @@ function createMockChatSession(
   };
 }
 
-function createMockState(options: { isMobile?: boolean } = {}): SeedBibleState {
+function createMockState(
+  options: { isMobile?: boolean; login?: LoginManager } = {}
+): SeedBibleState {
   return {
     app: {
       openVerseReference: vi.fn().mockResolvedValue(undefined),
@@ -105,7 +116,74 @@ function createMockState(options: { isMobile?: boolean } = {}): SeedBibleState {
     chats: {
       composerDraft: signal(""),
     },
+    login: options.login,
   } as unknown as SeedBibleState;
+}
+
+function createMockLogin(initial?: {
+  userId?: string | null;
+  profile?: UserProfile | null;
+  localConfig?: Record<string, unknown>;
+}): LoginManager {
+  const userId = signal<string | null>(initial?.userId ?? null);
+  const profile = signal<UserProfile | null>(initial?.profile ?? null);
+  const localConfig = signal<Record<string, unknown>>(
+    initial?.localConfig ?? {}
+  );
+  const updateProfile = (newData: Partial<UserProfile>) => {
+    if (!userId.value || !profile.value) {
+      return;
+    }
+    profile.value = { ...profile.value, ...newData };
+  };
+  return {
+    userId,
+    profile,
+    localConfig,
+    profilePromise: null,
+    updateProfile,
+  } as unknown as LoginManager;
+}
+
+function createAiParticipant(
+  overrides: Partial<AIChatParticipant> = {}
+): AIChatParticipant {
+  return {
+    id: "ai-1",
+    name: "Helper",
+    isSelf: false,
+    isAI: true,
+    isRemote: false,
+    isActive: true,
+    joinTimeMs: 0,
+    userId: null,
+    connectionId: null,
+    ownerParticipantId: "self",
+    providerId: "provider-1",
+    ...overrides,
+  };
+}
+
+function signedInLogin(
+  config: Record<string, unknown> = {},
+  localConfig: Record<string, unknown> = {}
+): LoginManager {
+  return createMockLogin({
+    userId: "user-1",
+    profile: { name: "Me", config },
+    localConfig,
+  });
+}
+
+function confirmAiLimitsAcknowledgment(root: ParentNode) {
+  const button = root.querySelector<HTMLButtonElement>("#sb-ai-limits-confirm");
+  if (!button) {
+    throw new Error("AI limits confirm button was not rendered");
+  }
+  act(() => {
+    button.focus();
+    button.click();
+  });
 }
 
 function typeIntoInput(input: HTMLTextAreaElement, text: string) {
@@ -409,13 +487,106 @@ describe("ChatView", () => {
     });
 
     const image = container.querySelector(
-      ".sb-tab-user-icon-has-image"
-    ) as HTMLElement | null;
-    expect(image?.style.backgroundImage).toContain(
-      "https://example.com/me.png"
-    );
+      ".sb-tab-user-icon-has-image img"
+    ) as HTMLImageElement | null;
+    expect(image?.getAttribute("src")).toBe("https://example.com/me.png");
     expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
     expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows an AI participant's icon when it is an inline SVG data URL", () => {
+    // The shape Vite gives small imported SVGs, like the default Apologist icon.
+    const svgIconUrl =
+      "data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3e%3crect%20width='10'%20height='10'/%3e%3c/svg%3e";
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const ai: AIChatParticipant = {
+      id: "ai-1",
+      name: "Helper",
+      isSelf: false,
+      isAI: true,
+      isRemote: false,
+      isActive: true,
+      joinTimeMs: 0,
+      userId: null,
+      connectionId: null,
+      ownerParticipantId: "self",
+      providerId: "provider-1",
+      iconUrl: svgIconUrl,
+    };
+    const message = createMockMessage({
+      id: "msg-ai",
+      authors: ["ai-1"],
+      text: "Hello",
+      parts: ["Hello"],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      participants: signal([self, ai]),
+      totalParticipants: signal([self, ai]),
+      getMessageAuthors: vi.fn().mockReturnValue([ai]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const image = container.querySelector(
+      ".sb-tab-user-icon-has-image img"
+    ) as HTMLImageElement | null;
+    expect(image?.getAttribute("src")).toBe(svgIconUrl);
+  });
+
+  it("falls back to the animal icon when an AI participant's icon fails to load", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const ai: AIChatParticipant = {
+      id: "ai-1",
+      name: "Helper",
+      isSelf: false,
+      isAI: true,
+      isRemote: false,
+      isActive: true,
+      joinTimeMs: 0,
+      userId: null,
+      connectionId: null,
+      ownerParticipantId: "self",
+      providerId: "provider-1",
+      iconUrl: "https://example.com/missing.png",
+    };
+    const message = createMockMessage({
+      id: "msg-ai",
+      authors: ["ai-1"],
+      text: "Hello",
+      parts: ["Hello"],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      participants: signal([self, ai]),
+      totalParticipants: signal([self, ai]),
+      getMessageAuthors: vi.fn().mockReturnValue([ai]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    act(() => {
+      container
+        .querySelectorAll(".sb-tab-user-icon-has-image img")
+        .forEach((img) => img.dispatchEvent(new Event("error")));
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-has-image")).toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
   });
 
   it("shows the animal fallback for another person's messages even when you have no profile picture", () => {
@@ -2271,5 +2442,332 @@ describe("ChatView", () => {
     expect(
       container.querySelector(".sb-chat-view-translation-banner")
     ).toBeNull();
+  });
+
+  describe("AI limits acknowledgment", () => {
+    function renderChat(chat: ChatSession, login?: LoginManager) {
+      act(() => {
+        render(
+          <ChatView chat={chat} state={createMockState({ login })} />,
+          container
+        );
+      });
+    }
+
+    function aiChat(
+      options: {
+        messages?: ParsedChatTextMessage[];
+        id?: string;
+      } = {}
+    ) {
+      const self = createMockParticipant({
+        id: "self",
+        name: "Me",
+        isSelf: true,
+      });
+      const ai = createAiParticipant();
+      const participants = [self, ai];
+      return createMockChatSession({
+        id: options.id ?? "chat-1",
+        parsedMessages: signal(options.messages ?? []),
+        participants: signal(participants),
+        totalParticipants: signal(participants),
+        sendMessage: vi.fn().mockResolvedValue(undefined),
+      });
+    }
+
+    function composeInput() {
+      return container.querySelector<HTMLTextAreaElement>(
+        ".sb-chat-view-input"
+      )!;
+    }
+
+    it("replaces the empty state in a first AI chat and disables the message box", () => {
+      const login = signedInLogin();
+      renderChat(aiChat(), login);
+
+      const notice = container.querySelector(".sb-chat-ai-limits");
+      expect(notice).not.toBeNull();
+      expect(
+        container.querySelector(".sb-chat-view-messages")?.contains(notice)
+      ).toBe(true);
+      expect(
+        container.querySelector(
+          ".sb-chat-view-compose-shell .sb-chat-ai-limits"
+        )
+      ).toBeNull();
+      expect(container.querySelector(".sb-chat-view-empty")).toBeNull();
+      expect(container.textContent).not.toContain("Start a conversation");
+      expect(notice?.textContent).toContain("Before you chat with AI");
+      expect(notice?.querySelectorAll("li")).toHaveLength(4);
+      expect(composeInput().disabled).toBe(true);
+      expect(
+        container.querySelector<HTMLButtonElement>(".sb-chat-view-send")!
+          .disabled
+      ).toBe(true);
+    });
+
+    it("shows the confirmation as a labelled button in the tab order", () => {
+      const login = signedInLogin();
+      renderChat(aiChat(), login);
+
+      const button = container.querySelector<HTMLButtonElement>(
+        "#sb-ai-limits-confirm"
+      )!;
+      expect(button.tagName).toBe("BUTTON");
+      expect(button.type).toBe("button");
+      expect(button.disabled).toBe(false);
+      expect(button.textContent).toBe(
+        "I understand that AI can make mistakes and isn't a substitute for studying the Bible myself."
+      );
+      act(() => {
+        button.focus();
+      });
+      expect(document.activeElement).toBe(button);
+    });
+
+    it("hides the acknowledgment and enables the message box once the button is pressed", async () => {
+      const login = signedInLogin({ fontSize: "L" });
+      const chat = aiChat();
+      renderChat(chat, login);
+
+      confirmAiLimitsAcknowledgment(container);
+
+      expect(container.querySelector(".sb-chat-ai-limits")).toBeNull();
+      expect(container.textContent).toContain("Start a conversation");
+      expect(composeInput().disabled).toBe(false);
+      expect(login.profile.value?.config).toEqual({
+        fontSize: "L",
+        [PROFILE_AI_LIMITS_ACKNOWLEDGMENT]: {
+          version: AI_LIMITS_ACKNOWLEDGMENT_VERSION,
+        },
+      });
+
+      typeIntoInput(composeInput(), "What does this verse mean?");
+      await act(async () => {
+        submitForm(container);
+        await Promise.resolve();
+      });
+      expect(chat.sendMessage).toHaveBeenCalledWith({
+        type: "text",
+        text: "What does this verse mean?",
+      });
+    });
+
+    it("does not send while the acknowledgment is still unconfirmed", async () => {
+      const login = signedInLogin();
+      const chat = aiChat();
+      renderChat(chat, login);
+
+      typeIntoInput(composeInput(), "Hello");
+      pressKey(composeInput(), "Enter");
+      await act(async () => {
+        submitForm(container);
+        await Promise.resolve();
+      });
+
+      expect(chat.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it("does not show the acknowledgment again for another agent on the same account", () => {
+      const login = signedInLogin();
+      renderChat(aiChat({ id: "chat-1" }), login);
+      confirmAiLimitsAcknowledgment(container);
+
+      act(() => {
+        render(null, container);
+      });
+
+      const self = createMockParticipant({
+        id: "self",
+        name: "Me",
+        isSelf: true,
+      });
+      const otherAgent = createAiParticipant({
+        id: "ai-2",
+        name: "Scholar",
+        providerId: "provider-2",
+      });
+      renderChat(
+        createMockChatSession({
+          id: "chat-2",
+          parsedMessages: signal([]),
+          participants: signal([self, otherAgent]),
+          totalParticipants: signal([self, otherAgent]),
+        }),
+        login
+      );
+
+      expect(container.querySelector(".sb-chat-ai-limits")).toBeNull();
+      expect(composeInput().disabled).toBe(false);
+      expect(container.textContent).toContain("Start a conversation");
+    });
+
+    it("remembers a signed-out acknowledgment on this device", () => {
+      const login = createMockLogin();
+      renderChat(aiChat(), login);
+      confirmAiLimitsAcknowledgment(container);
+
+      expect(login.profile.value).toBeNull();
+      expect(login.localConfig.value[PROFILE_AI_LIMITS_ACKNOWLEDGMENT]).toEqual(
+        {
+          version: AI_LIMITS_ACKNOWLEDGMENT_VERSION,
+        }
+      );
+
+      act(() => {
+        render(null, container);
+      });
+      renderChat(aiChat({ id: "chat-2" }), login);
+
+      expect(container.querySelector(".sb-chat-ai-limits")).toBeNull();
+      expect(composeInput().disabled).toBe(false);
+    });
+
+    it("does not treat a device-local acknowledgment as acceptance for a signed-in account", () => {
+      const login = signedInLogin(
+        {},
+        {
+          [PROFILE_AI_LIMITS_ACKNOWLEDGMENT]: {
+            version: AI_LIMITS_ACKNOWLEDGMENT_VERSION,
+          },
+        }
+      );
+      renderChat(aiChat(), login);
+
+      expect(container.querySelector(".sb-chat-ai-limits")).not.toBeNull();
+      expect(composeInput().disabled).toBe(true);
+    });
+
+    it("never shows the acknowledgment in a chat with only people", () => {
+      const login = signedInLogin();
+      const self = createMockParticipant({
+        id: "self",
+        name: "Me",
+        isSelf: true,
+      });
+      const alice = createMockParticipant({
+        id: "alice",
+        name: "Alice",
+        isSelf: false,
+      });
+      renderChat(
+        createMockChatSession({
+          parsedMessages: signal([]),
+          participants: signal([self, alice]),
+          totalParticipants: signal([self, alice]),
+        }),
+        login
+      );
+
+      expect(container.querySelector(".sb-chat-ai-limits")).toBeNull();
+      expect(container.textContent).toContain("Start a conversation");
+      expect(composeInput().disabled).toBe(false);
+    });
+
+    it("shows the acknowledgment above the message box when the chat already has messages", () => {
+      const login = signedInLogin();
+      const message = createMockMessage({
+        text: "Hello from earlier",
+        parts: ["Hello from earlier"],
+      });
+      renderChat(aiChat({ messages: [message] }), login);
+
+      const notice = container.querySelector(".sb-chat-ai-limits");
+      const compose = container.querySelector(".sb-chat-view-compose")!;
+      expect(notice).not.toBeNull();
+      expect(
+        container.querySelector(".sb-chat-view-messages")?.contains(notice)
+      ).toBe(false);
+      expect(
+        container.querySelector(".sb-chat-view-compose-shell")?.contains(notice)
+      ).toBe(true);
+      expect(
+        notice!.compareDocumentPosition(compose) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).not.toBe(0);
+      expect(container.textContent).toContain("Hello from earlier");
+      expect(container.querySelector(".sb-chat-view-empty")).toBeNull();
+      expect(composeInput().disabled).toBe(true);
+    });
+
+    it("shows the acknowledgment above the message box when an AI joins an existing conversation", () => {
+      const login = signedInLogin();
+      const self = createMockParticipant({
+        id: "self",
+        name: "Me",
+        isSelf: true,
+      });
+      const alice = createMockParticipant({
+        id: "alice",
+        name: "Alice",
+        isSelf: false,
+      });
+      const message = createMockMessage({
+        authors: ["alice"],
+        text: "Hello everyone",
+        parts: ["Hello everyone"],
+      });
+      const totalParticipants = signal<ChatParticipant[]>([self, alice]);
+      const chat = createMockChatSession({
+        parsedMessages: signal([message]),
+        participants: signal([self, alice]),
+        totalParticipants,
+        getMessageAuthors: vi.fn().mockReturnValue([alice]),
+      });
+      renderChat(chat, login);
+
+      expect(container.querySelector(".sb-chat-ai-limits")).toBeNull();
+      expect(composeInput().disabled).toBe(false);
+
+      act(() => {
+        totalParticipants.value = [
+          self,
+          alice,
+          createAiParticipant({ isActive: false }),
+        ];
+      });
+
+      const notice = container.querySelector(".sb-chat-ai-limits");
+      expect(notice).not.toBeNull();
+      expect(
+        container.querySelector(".sb-chat-view-messages")?.contains(notice)
+      ).toBe(false);
+      expect(container.textContent).toContain("Hello everyone");
+      expect(composeInput().disabled).toBe(true);
+    });
+
+    it("stays hidden when this account already accepted the current version", () => {
+      const login = signedInLogin({
+        [PROFILE_AI_LIMITS_ACKNOWLEDGMENT]: {
+          version: AI_LIMITS_ACKNOWLEDGMENT_VERSION,
+        },
+      });
+      renderChat(aiChat(), login);
+
+      expect(container.querySelector(".sb-chat-ai-limits")).toBeNull();
+      expect(container.textContent).toContain("Start a conversation");
+      expect(composeInput().disabled).toBe(false);
+    });
+
+    it("shows the acknowledgment again when the saved version is older than the current one", () => {
+      const login = signedInLogin({
+        [PROFILE_AI_LIMITS_ACKNOWLEDGMENT]: {
+          version: AI_LIMITS_ACKNOWLEDGMENT_VERSION - 1,
+        },
+      });
+      renderChat(aiChat(), login);
+
+      expect(container.querySelector(".sb-chat-ai-limits")).not.toBeNull();
+      expect(composeInput().disabled).toBe(true);
+    });
+
+    it("keeps the message box disabled until the profile has loaded for a signed-in account", () => {
+      const login = createMockLogin({ userId: "user-1", profile: null });
+      renderChat(aiChat(), login);
+
+      expect(container.querySelector(".sb-chat-ai-limits")).not.toBeNull();
+      expect(composeInput().disabled).toBe(true);
+    });
   });
 });

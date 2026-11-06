@@ -37,6 +37,7 @@ import {
   ExtensionInitalizer,
   mergeInstalledExtensionIds,
   registerExtension,
+  type ExtensionManager,
   type ExtensionSet,
   type InstalledExtensionsMeta,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
@@ -391,6 +392,59 @@ describe("ExtensionInitalizer", () => {
       initializer.getExtensionExports<{ version: number }>("ext.re-register")
     ).toEqual({ version: 2 });
   });
+
+  it("runAsExtension() rejects a registration under another extension's id without replacing that extension", () => {
+    initializer.setupExtensionContext(context);
+    initializer.registerExtension({
+      id: "ext.victim",
+      init: () => ({ owner: "victim" }),
+    });
+
+    expect(() =>
+      initializer.runAsExtension("ext.impostor", () => {
+        initializer.registerExtension({
+          id: "ext.victim",
+          init: () => ({ owner: "impostor" }),
+        });
+      })
+    ).toThrow(
+      "Extension 'ext.impostor' tried to register as 'ext.victim'. Check the id passed to registerExtension()."
+    );
+
+    expect(initializer.getExtensionExports("ext.victim")).toEqual({
+      owner: "victim",
+    });
+  });
+
+  it("undoes what a failed init already set up, so each retry starts clean", () => {
+    let liveSubscriptions = 0;
+    let shouldFail = true;
+
+    initializer.registerExtension({
+      id: "ext.fails-partway",
+      init: function* () {
+        liveSubscriptions++;
+        yield () => {
+          liveSubscriptions--;
+        };
+        if (shouldFail) {
+          throw new Error("setup failed after subscribing");
+        }
+      },
+    });
+
+    initializer.setupExtensionContext(context);
+    expect(initializer.getExtensionExports("ext.fails-partway")).toBeNull();
+    expect(liveSubscriptions).toBe(0);
+
+    shouldFail = false;
+    initializer.setupExtensionContext(context);
+    expect(initializer.getExtensionExports("ext.fails-partway")).toEqual({});
+    expect(liveSubscriptions).toBe(1);
+
+    initializer.unregisterExtension("ext.fails-partway");
+    expect(liveSubscriptions).toBe(0);
+  });
 });
 
 describe("createExtensionManager", () => {
@@ -403,15 +457,41 @@ describe("createExtensionManager", () => {
    * recorded in `loadedModules` when the module is evaluated, which happens
    * when the ExtensionManager dynamically imports the extension.
    */
+  /**
+   * The `import` of a first-party extension whose module is `url`, as mocked
+   * by `mockExtensionModule`. (URL-loaded extensions run sandboxed instead;
+   * see `ExtensionSandbox.test.tsx`.)
+   */
+  const importModule = (url: string) => () => import(/* @vite-ignore */ url);
+
   function mockExtensionModule(
     url: string,
     moduleFactory?: () => Promise<object> | object
   ) {
     vi.doMock(url, async () => {
       loadedModules.push(url);
-      return moduleFactory ? await moduleFactory() : { default: vi.fn() };
+      // By default, registers `ext.<name>` for `pkg://<name>`, like a real
+      // first-party extension module's default export does.
+      return moduleFactory
+        ? await moduleFactory()
+        : {
+            default: vi.fn(() => {
+              registerExtension({
+                id: `ext.${url.slice("pkg://".length)}`,
+                init: () => ({}),
+              });
+            }),
+          };
     });
   }
+
+  afterEach(() => {
+    // Registrations live in a process-wide singleton; don't let one test's
+    // installs leak into the next.
+    for (const registration of ExtensionInitalizer.getInstance().listRegisteredExtensions()) {
+      ExtensionInitalizer.getInstance().unregisterExtension(registration.id);
+    }
+  });
 
   beforeEach(async () => {
     loadedModules = [];
@@ -436,7 +516,7 @@ describe("createExtensionManager", () => {
       id: "set.dependencies",
       extensions: [
         {
-          url: "pkg://dependent",
+          import: importModule("pkg://dependent"),
           meta: {
             id: "ext.dependent",
             translations: {
@@ -449,7 +529,7 @@ describe("createExtensionManager", () => {
           },
         },
         {
-          url: "pkg://dependency",
+          import: importModule("pkg://dependency"),
           meta: {
             id: "ext.dependency",
             translations: {
@@ -477,7 +557,7 @@ describe("createExtensionManager", () => {
       id: "set.catalog",
       extensions: [
         {
-          url: "pkg://catalog-dependency",
+          import: importModule("pkg://catalog-dependency"),
           meta: {
             id: "ext.catalog-dependency",
             translations: {
@@ -494,7 +574,7 @@ describe("createExtensionManager", () => {
     loadedModules.length = 0;
 
     const loaded = await manager.loadExtension({
-      url: "pkg://catalog-dependent",
+      import: importModule("pkg://catalog-dependent"),
       meta: {
         id: "ext.catalog-dependent",
         translations: {
@@ -517,7 +597,7 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://missing-dependent");
 
     const loaded = await manager.loadExtension({
-      url: "pkg://missing-dependent",
+      import: importModule("pkg://missing-dependent"),
       meta: {
         id: "ext.missing-dependent",
         translations: {
@@ -545,7 +625,7 @@ describe("createExtensionManager", () => {
 
     try {
       const loaded = await manager.loadExtension({
-        url: "pkg://registered-dependent",
+        import: importModule("pkg://registered-dependent"),
         meta: {
           id: "ext.registered-dependent",
           translations: {
@@ -572,7 +652,7 @@ describe("createExtensionManager", () => {
       id: "set.reinstall",
       extensions: [
         {
-          url: "pkg://single",
+          import: importModule("pkg://single"),
           meta: {
             id: "ext.single",
             translations: {
@@ -610,14 +690,14 @@ describe("createExtensionManager", () => {
       id: "set.translations",
       extensions: [
         {
-          url: "pkg://translation-a",
+          import: importModule("pkg://translation-a"),
           meta: {
             id: "ext.translation-a",
             translations: translationsA,
           },
         },
         {
-          url: "pkg://translation-b",
+          import: importModule("pkg://translation-b"),
           meta: {
             id: "ext.translation-b",
             translations: translationsB,
@@ -638,6 +718,144 @@ describe("createExtensionManager", () => {
     );
   });
 
+  describe("discoverExtensionSet()", () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("fetches, validates, and tracks a published ExtensionSet without installing it", async () => {
+      const manager = createExtensionManager(login);
+      const published: ExtensionSet = {
+        id: "discovered-set",
+        extensions: [
+          {
+            url: "https://files.example.com/discovered.js",
+            meta: {
+              id: "ext.discovered",
+              translations: {
+                en: {
+                  title: "Discovered",
+                  description: "A discovered extension",
+                },
+              },
+            },
+          },
+        ],
+      };
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(published),
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await manager.discoverExtensionSet(
+        "https://files.example.com/discovered-set.json"
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://files.example.com/discovered-set.json",
+        { credentials: "omit" }
+      );
+      // Known by its declared id prefixed with where it's hosted.
+      const id = "https://files.example.com/#ext.discovered";
+      expect(result).toEqual({
+        ...published,
+        extensions: [
+          {
+            ...published.extensions[0],
+            meta: { ...published.extensions[0]!.meta, id },
+          },
+        ],
+      });
+      // Tracked (listed), not installed — no module was ever imported.
+      expect(loadedModules).toEqual([]);
+      expect(
+        manager.getExtensions().find((entry) => entry.id === id)
+      ).toMatchObject({ id, installed: false });
+      expect(addTranslationsMock).toHaveBeenCalledWith(
+        id,
+        published.extensions[0]!.meta.translations
+      );
+    });
+
+    it("returns null and logs, without throwing, when the URL responds with a non-2xx status", async () => {
+      const manager = createExtensionManager(login);
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 404,
+          statusText: "Not Found",
+        })
+      );
+
+      const result = await manager.discoverExtensionSet(
+        "https://files.example.com/missing.json"
+      );
+
+      expect(result).toBeNull();
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("returns null and logs, without throwing, when the response isn't valid JSON", async () => {
+      const manager = createExtensionManager(login);
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.reject(new Error("not json")),
+        })
+      );
+
+      const result = await manager.discoverExtensionSet(
+        "https://files.example.com/not-json"
+      );
+
+      expect(result).toBeNull();
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("returns null and tracks nothing when the fetched JSON isn't a valid ExtensionSet", async () => {
+      const manager = createExtensionManager(login);
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      // Shaped like an `ImportExtension` (a function-valued `import`), which
+      // can never survive a real JSON.parse — the fetched value below is
+      // what that would actually look like once it did.
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: "bad-set",
+              extensions: [{ meta: { id: "ext.bad" } }],
+            }),
+        })
+      );
+
+      const result = await manager.discoverExtensionSet(
+        "https://files.example.com/bad-set.json"
+      );
+
+      expect(result).toBeNull();
+      expect(errorSpy).toHaveBeenCalled();
+      expect(
+        manager.getExtensions().find((entry) => entry.id === "ext.bad")
+      ).toBeUndefined();
+      errorSpy.mockRestore();
+    });
+  });
+
   it("loadExtensionSet() fetches only the active language's list translations", async () => {
     const manager = createExtensionManager(login);
     const loadEn = vi.fn().mockResolvedValue({
@@ -653,7 +871,7 @@ describe("createExtensionManager", () => {
       id: "set.list-translations",
       extensions: [
         {
-          url: "pkg://listed",
+          import: importModule("pkg://listed"),
           meta: {
             id: "ext.listed",
             // The bundled set inlines English and defers the rest.
@@ -683,7 +901,7 @@ describe("createExtensionManager", () => {
       id: "set.language-change",
       extensions: [
         {
-          url: "pkg://listed",
+          import: importModule("pkg://listed"),
           meta: {
             id: "ext.listed",
             // The bundled set inlines English and defers the rest.
@@ -721,7 +939,7 @@ describe("createExtensionManager", () => {
       id: "set.ssr",
       extensions: [
         {
-          url: "pkg://listed",
+          import: importModule("pkg://listed"),
           meta: {
             id: "ext.listed",
             translations: { en: { title: "Listed", description: "" } },
@@ -757,7 +975,10 @@ describe("createExtensionManager", () => {
     const set: ExtensionSet = {
       id: "set.inline",
       extensions: [
-        { url: "pkg://inline", meta: { id: "ext.inline", translations } },
+        {
+          import: importModule("pkg://inline"),
+          meta: { id: "ext.inline", translations },
+        },
       ],
     };
 
@@ -779,7 +1000,7 @@ describe("createExtensionManager", () => {
       id: "set.broken-chunk",
       extensions: [
         {
-          url: "pkg://listed",
+          import: importModule("pkg://listed"),
           meta: {
             id: "ext.listed",
             // The bundled set inlines English and defers the rest.
@@ -818,7 +1039,7 @@ describe("createExtensionManager", () => {
     const loadFullTranslations = vi.fn().mockResolvedValue(fullTranslations);
 
     const loaded = await manager.loadExtension({
-      url: "pkg://full-translations",
+      import: importModule("pkg://full-translations"),
       meta: {
         id: "ext.full-translations",
         translations: trimmedTranslations,
@@ -843,7 +1064,7 @@ describe("createExtensionManager", () => {
       id: "set.autoinstall",
       extensions: [
         {
-          url: "pkg://autoinstall",
+          import: importModule("pkg://autoinstall"),
           meta: {
             id: "ext.autoinstall",
             translations: {
@@ -875,7 +1096,7 @@ describe("createExtensionManager", () => {
       id: "set.autoinstall-uninstall",
       extensions: [
         {
-          url: "pkg://autoinstall-uninstall",
+          import: importModule("pkg://autoinstall-uninstall"),
           meta: {
             id: "ext.autoinstall-uninstall",
             translations: {
@@ -917,7 +1138,7 @@ describe("createExtensionManager", () => {
       id: "set.autoinstall-dependency",
       extensions: [
         {
-          url: "pkg://autoinstall-dependent",
+          import: importModule("pkg://autoinstall-dependent"),
           meta: {
             id: "ext.autoinstall-dependent",
             translations: {
@@ -928,11 +1149,10 @@ describe("createExtensionManager", () => {
           },
         },
         {
-          url: "pkg://autoinstall-dependency",
+          import: importModule("pkg://autoinstall-dependency"),
           meta: {
             id: "ext.autoinstall-dependency",
-            // No autoinstall flag - only force-installed as a dependency,
-            // mirroring seed-bible-utils/scripture-map in production.
+            // No autoinstall flag - only force-installed as a dependency.
             translations: {
               en: {
                 title: "Dependency",
@@ -980,7 +1200,7 @@ describe("createExtensionManager", () => {
       id: "set.url-override-handled",
       extensions: [
         {
-          url: "pkg://url-override-handled",
+          import: importModule("pkg://url-override-handled"),
           meta: {
             id: "ext.url-override-handled",
             translations: {
@@ -1016,7 +1236,7 @@ describe("createExtensionManager", () => {
       extensions: [
         {
           // recordName: "record",
-          url: "pkg://known-only",
+          import: importModule("pkg://known-only"),
           meta: {
             id: "ext.known-only",
             translations: {
@@ -1051,7 +1271,7 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://direct");
     const extension = {
       // recordName: "record",
-      url: "pkg://direct",
+      import: importModule("pkg://direct"),
       meta: {
         id: "ext.direct",
         translations: {
@@ -1073,7 +1293,7 @@ describe("createExtensionManager", () => {
         extensionSet: null,
         installed: true,
         pendingInstallation: false,
-        registration: null,
+        registration: expect.objectContaining({ id: "ext.direct" }),
       },
     ]);
   });
@@ -1088,12 +1308,16 @@ describe("createExtensionManager", () => {
 
     mockExtensionModule("pkg://slow", async () => {
       await installGate;
-      return { default: vi.fn() };
+      return {
+        default: vi.fn(() => {
+          registerExtension({ id: "ext.slow", init: () => ({}) });
+        }),
+      };
     });
 
     const extension = {
       // recordName: "record",
-      url: "pkg://slow",
+      import: importModule("pkg://slow"),
       meta: {
         id: "ext.slow",
         translations: {
@@ -1130,7 +1354,7 @@ describe("createExtensionManager", () => {
         extensionSet: null,
         installed: true,
         pendingInstallation: false,
-        registration: null,
+        registration: expect.objectContaining({ id: "ext.slow" }),
       },
     ]);
   });
@@ -1139,7 +1363,7 @@ describe("createExtensionManager", () => {
     const manager = createExtensionManager(login);
     const packageOnlyExtension = {
       // recordName: "record",
-      url: "pkg://package-only",
+      import: importModule("pkg://package-only"),
       meta: {
         id: "ext.package-only",
         translations: {
@@ -1205,7 +1429,7 @@ describe("createExtensionManager", () => {
     const manager = createExtensionManager(login);
     mockExtensionModule("pkg://unload-me");
     const extension = {
-      url: "pkg://unload-me",
+      import: importModule("pkg://unload-me"),
       meta: {
         id: "ext.unload-me",
         translations: {
@@ -1230,7 +1454,7 @@ describe("createExtensionManager", () => {
     const manager = createExtensionManager(login);
     mockExtensionModule("pkg://unload-reg");
     const extension = {
-      url: "pkg://unload-reg",
+      import: importModule("pkg://unload-reg"),
       meta: {
         id: "ext.unload-reg",
         translations: {
@@ -1261,7 +1485,7 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://unload-known");
     const extension = {
       // recordName: "record",
-      url: "pkg://unload-known",
+      import: importModule("pkg://unload-known"),
       meta: {
         id: "ext.unload-known",
         translations: {
@@ -1291,7 +1515,7 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://reinstall", () => ({ default: defaultFn }));
 
     const extension = {
-      url: "pkg://reinstall",
+      import: importModule("pkg://reinstall"),
       meta: {
         id: "ext.reinstall",
         translations: {
@@ -1373,7 +1597,7 @@ describe("createExtensionManager", () => {
       .mockImplementation(() => undefined);
 
     const loaded = await manager.loadExtension({
-      url: "pkg://no-default",
+      import: importModule("pkg://no-default"),
       meta: {
         id: "ext.no-default",
         translations: { en: { title: "No default", description: "x" } },
@@ -1410,6 +1634,76 @@ describe("createExtensionManager", () => {
     ).toBe(false);
   });
 
+  it("loadExtension() fails, without replacing the other extension or saving the install, when an extension registers under another extension's id", async () => {
+    const manager = createExtensionManager(login);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const victimRegistration = { id: "ext.victim", init: () => ({}) };
+    registerExtension(victimRegistration);
+
+    const loaded = await manager.loadExtension({
+      import: () =>
+        Promise.resolve({
+          default: () => {
+            registerExtension({ id: "ext.impostor", init: () => ({}) });
+            registerExtension({ id: "ext.victim", init: () => ({}) });
+          },
+        }),
+      meta: {
+        id: "ext.impostor",
+        translations: { en: { title: "Impostor", description: "x" } },
+      },
+    });
+
+    expect(loaded).toBe(false);
+    const entries = manager.getExtensions();
+    expect(entries.find((e) => e.id === "ext.victim")?.registration).toBe(
+      victimRegistration
+    );
+    expect(entries.find((e) => e.id === "ext.impostor")?.installed).toBe(false);
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual([]);
+    expect(errorSpy).toHaveBeenCalledWith(
+      "Failed to install extension:",
+      "ext.impostor",
+      expect.objectContaining({
+        message:
+          "Extension 'ext.impostor' tried to register as 'ext.victim'. Check the id passed to registerExtension().",
+      })
+    );
+  });
+
+  it("loadExtension() fails, without saving the install, when an extension finishes without registering", async () => {
+    const manager = createExtensionManager(login);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    const loaded = await manager.loadExtension({
+      import: () => Promise.resolve({ default: () => undefined }),
+      meta: {
+        id: "ext.never-registers",
+        translations: { en: { title: "Never registers", description: "x" } },
+      },
+    });
+
+    expect(loaded).toBe(false);
+    expect(
+      manager.getExtensions().find((e) => e.id === "ext.never-registers")
+        ?.installed
+    ).toBe(false);
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual([]);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Failed to install extension 'ext.never-registers': it finished without registering."
+      )
+    );
+  });
+
   it("getAllExtensionsAsSet() returns undefined and warns when there are no extension packages", () => {
     const manager = createExtensionManager(login);
     const warnSpy = vi
@@ -1431,7 +1725,7 @@ describe("createExtensionManager", () => {
   it("getAllExtensionsAsSet() returns a sorted extension set with a hash-based id", async () => {
     const manager = createExtensionManager(login);
     const extensionB = {
-      url: "pkg://b",
+      import: importModule("pkg://b"),
       meta: {
         id: "ext.b",
         translations: {
@@ -1443,7 +1737,7 @@ describe("createExtensionManager", () => {
       },
     };
     const extensionA = {
-      url: "pkg://a",
+      import: importModule("pkg://a"),
       meta: {
         id: "ext.a",
         translations: {
@@ -1489,7 +1783,7 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://persisted");
 
     await manager.loadExtension({
-      url: "pkg://persisted",
+      import: importModule("pkg://persisted"),
       meta: {
         id: "ext.persisted",
         translations: {
@@ -1508,7 +1802,7 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://forget");
 
     await manager.loadExtension({
-      url: "pkg://forget",
+      import: importModule("pkg://forget"),
       meta: {
         id: "ext.forget",
         translations: {
@@ -1525,7 +1819,7 @@ describe("createExtensionManager", () => {
   });
 
   it("unloadExtension() records the extension in the autoinstall-handled set even when it never had autoinstall:true", async () => {
-    // Mirrors seed-bible-utils in production: an extension that's only ever
+    // An extension that's only ever
     // force-installed as another extension's dependency, never carrying
     // autoinstall:true itself, so loadDefaultExtensions's batch marking never
     // touches it - this is the only path that records its uninstall.
@@ -1533,7 +1827,7 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://handled-on-uninstall");
 
     await manager.loadExtension({
-      url: "pkg://handled-on-uninstall",
+      import: importModule("pkg://handled-on-uninstall"),
       meta: {
         id: "ext.handled-on-uninstall",
         translations: {
@@ -1561,7 +1855,7 @@ describe("createExtensionManager", () => {
       id: "set.saved",
       extensions: [
         {
-          url: "pkg://saved",
+          import: importModule("pkg://saved"),
           meta: {
             id: "ext.saved",
             // Not flagged for autoinstall — only restored because it was saved.
@@ -1617,9 +1911,10 @@ describe("createExtensionManager", () => {
    * Builds an `import()`-style extension module whose resolution is
    * controlled by the caller via `resolve()`, instead of resolving as soon
    * as it's awaited. Useful for deterministically interleaving an
-   * extension's install with other async work in a test.
+   * extension's install with other async work in a test. Its default export
+   * registers `id`, like a real extension's does.
    */
-  function createDeferredExtensionModule(): {
+  function createDeferredExtensionModule(id: string): {
     promise: Promise<unknown>;
     resolve: () => void;
   } {
@@ -1629,7 +1924,12 @@ describe("createExtensionManager", () => {
     });
     return {
       promise,
-      resolve: () => resolvePromise({ default: vi.fn() }),
+      resolve: () =>
+        resolvePromise({
+          default: vi.fn(() => {
+            registerExtension({ id, init: () => ({}) });
+          }),
+        }),
     };
   }
 
@@ -1672,7 +1972,7 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://acct");
 
     await manager.loadExtension({
-      url: "pkg://acct",
+      import: importModule("pkg://acct"),
       meta: {
         id: "ext.acct",
         translations: {
@@ -1697,7 +1997,7 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://acct-forget");
 
     await manager.loadExtension({
-      url: "pkg://acct-forget",
+      import: importModule("pkg://acct-forget"),
       meta: {
         id: "ext.acct-forget",
         translations: {
@@ -1718,7 +2018,7 @@ describe("createExtensionManager", () => {
       id: "set.profile-saved",
       extensions: [
         {
-          url: "pkg://profile-saved",
+          import: importModule("pkg://profile-saved"),
           meta: {
             id: "ext.profile-saved",
             translations: {
@@ -1763,7 +2063,7 @@ describe("createExtensionManager", () => {
       id: "set.local-only",
       extensions: [
         {
-          url: "pkg://local-only",
+          import: importModule("pkg://local-only"),
           meta: {
             id: "ext.local-only",
             translations: {
@@ -1830,7 +2130,7 @@ describe("createExtensionManager", () => {
 
   it("does not reinstall an extension that was uninstalled on another device, and propagates the uninstall to a stale local cache (regression for #1454)", async () => {
     const crossDeviceExtension = {
-      url: "pkg://cross-device",
+      import: importModule("pkg://cross-device"),
       meta: {
         id: "ext.cross-device",
         translations: {
@@ -1917,7 +2217,7 @@ describe("createExtensionManager", () => {
       id: "set.race",
       extensions: [
         {
-          url: "pkg://race",
+          import: importModule("pkg://race"),
           meta: {
             id: "ext.race",
             translations: {
@@ -1978,8 +2278,8 @@ describe("createExtensionManager", () => {
     // deferred promise, so each one's install resolves under direct,
     // synchronous test control instead of racing real
     // dynamic-import/module-mock timing.
-    const moduleA = createDeferredExtensionModule();
-    const moduleB = createDeferredExtensionModule();
+    const moduleA = createDeferredExtensionModule("ext.spam-a");
+    const moduleB = createDeferredExtensionModule("ext.spam-b");
     const extensionA = {
       import: () => moduleA.promise,
       meta: {
@@ -2059,7 +2359,7 @@ describe("createExtensionManager", () => {
 
     const loaded = await manager.loadExtension(
       {
-        url: "pkg://scoped-install",
+        import: importModule("pkg://scoped-install"),
         meta: {
           id: "ext.scoped-install",
           translations: {
@@ -2085,7 +2385,7 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://scoped-dependency");
 
     const dependency = {
-      url: "pkg://scoped-dependency",
+      import: importModule("pkg://scoped-dependency"),
       meta: {
         id: "ext.scoped-dependency",
         translations: {
@@ -2103,7 +2403,7 @@ describe("createExtensionManager", () => {
 
     const loaded = await manager.loadExtension(
       {
-        url: "pkg://scoped-dependent",
+        import: importModule("pkg://scoped-dependent"),
         meta: {
           id: "ext.scoped-dependent",
           translations: {
@@ -2135,7 +2435,7 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://scoped-uninstall");
 
     await manager.loadExtension({
-      url: "pkg://scoped-uninstall",
+      import: importModule("pkg://scoped-uninstall"),
       meta: {
         id: "ext.scoped-uninstall",
         translations: {
@@ -2161,7 +2461,7 @@ describe("createExtensionManager", () => {
       id: "set.reconcile",
       extensions: [
         {
-          url: "pkg://reconcile-default",
+          import: importModule("pkg://reconcile-default"),
           meta: {
             id: "ext.reconcile-default",
             translations: {
@@ -2170,7 +2470,7 @@ describe("createExtensionManager", () => {
           },
         },
         {
-          url: "pkg://reconcile-target",
+          import: importModule("pkg://reconcile-target"),
           meta: {
             id: "ext.reconcile-target",
             translations: { en: { title: "Target", description: "Target" } },
@@ -2212,7 +2512,7 @@ describe("createExtensionManager", () => {
       id: "set.reconcile-null",
       extensions: [
         {
-          url: "pkg://reconcile-null-default",
+          import: importModule("pkg://reconcile-null-default"),
           meta: {
             id: "ext.reconcile-null-default",
             translations: { en: { title: "Default", description: "Default" } },
@@ -2238,6 +2538,164 @@ describe("createExtensionManager", () => {
     expect(
       JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
     ).toEqual(["ext.reconcile-null-default"]);
+  });
+
+  describe("a customization that's active before the extension catalog loads", () => {
+    const makeSet = (): ExtensionSet => ({
+      id: "set.early-customization",
+      extensions: [
+        {
+          import: importModule("pkg://early-autoinstall"),
+          meta: {
+            id: "ext.early-autoinstall",
+            translations: { en: { title: "Auto", description: "Auto" } },
+            autoinstall: true,
+          },
+        },
+        {
+          import: importModule("pkg://early-saved"),
+          meta: {
+            id: "ext.early-saved",
+            translations: { en: { title: "Saved", description: "Saved" } },
+          },
+        },
+        {
+          import: importModule("pkg://early-target"),
+          meta: {
+            id: "ext.early-target",
+            translations: { en: { title: "Target", description: "Target" } },
+          },
+        },
+      ],
+    });
+    // Only this set's ids: earlier tests leave registrations behind in the
+    // shared `ExtensionInitalizer`.
+    const installedIds = (manager: ExtensionManager) =>
+      manager
+        .getExtensions()
+        .filter((e) => e.installed && e.id.startsWith("ext.early-"))
+        .map((e) => e.id);
+
+    beforeEach(() => {
+      localStorage.setItem(
+        "sb-installed-extensions",
+        JSON.stringify(["ext.early-saved"])
+      );
+      mockExtensionModule("pkg://early-autoinstall");
+      mockExtensionModule("pkg://early-saved");
+      mockExtensionModule("pkg://early-target");
+    });
+
+    it("installs the customization's extensions, and not the viewer's own, once the default set loads", async () => {
+      const manager = createExtensionManager(login, {
+        defaultExtensions: makeSet(),
+      });
+
+      await manager.reconcileInstalledExtensions(["ext.early-target"]);
+      await manager.loadDefaultExtensions();
+
+      expect(installedIds(manager)).toEqual(["ext.early-target"]);
+      // The viewer's own saved set is untouched for when they leave.
+      expect(
+        JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+      ).toEqual(["ext.early-saved"]);
+    });
+
+    it("doesn't add the viewer's saved extensions to an active customization when they're re-synced (e.g. on sign-in)", async () => {
+      const manager = createExtensionManager(login, {
+        defaultExtensions: makeSet(),
+      });
+      await manager.reconcileInstalledExtensions(["ext.early-target"]);
+      await manager.loadDefaultExtensions();
+
+      await manager.loadSavedExtensions();
+
+      expect(installedIds(manager)).toEqual(["ext.early-target"]);
+    });
+
+    it("gives the viewer their own extensions, auto-installs included, when the customization is left", async () => {
+      const manager = createExtensionManager(login, {
+        defaultExtensions: makeSet(),
+      });
+      await manager.reconcileInstalledExtensions(["ext.early-target"]);
+      await manager.loadDefaultExtensions();
+
+      await manager.reconcileInstalledExtensions(null);
+
+      expect(installedIds(manager).sort()).toEqual([
+        "ext.early-autoinstall",
+        "ext.early-saved",
+      ]);
+    });
+  });
+
+  describe("reconcileInstalledExtensions() with bundled (import-based) extensions", () => {
+    const bundled = (id: string, dependencies?: string[]) => ({
+      import: () =>
+        Promise.resolve({
+          default: () => registerExtension({ id, init: () => ({}) }),
+        }),
+      meta: {
+        id,
+        translations: { en: { title: id, description: id } },
+        dependencies,
+      },
+    });
+    const isRegistered = (id: string) =>
+      ExtensionInitalizer.getInstance().isExtensionRegistered(id);
+
+    afterEach(() => {
+      for (const id of ["ext.bundled-a", "ext.bundled-b", "ext.bundled-dep"]) {
+        ExtensionInitalizer.getInstance().unregisterExtension(id);
+      }
+    });
+
+    it("uninstalls a bundled extension that's no longer wanted", async () => {
+      const set: ExtensionSet = {
+        id: "set.bundled",
+        extensions: [bundled("ext.bundled-a"), bundled("ext.bundled-b")],
+      };
+      const manager = createExtensionManager(login, {
+        defaultExtensions: set,
+      });
+      await manager.loadExtensionSet(set, () => false);
+
+      await manager.reconcileInstalledExtensions([
+        "ext.bundled-a",
+        "ext.bundled-b",
+      ]);
+      expect(isRegistered("ext.bundled-a")).toBe(true);
+      expect(isRegistered("ext.bundled-b")).toBe(true);
+
+      await manager.reconcileInstalledExtensions(["ext.bundled-b"]);
+
+      expect(isRegistered("ext.bundled-a")).toBe(false);
+      expect(isRegistered("ext.bundled-b")).toBe(true);
+    });
+
+    it("keeps what a wanted extension depends on", async () => {
+      const set: ExtensionSet = {
+        id: "set.bundled-dep",
+        extensions: [
+          bundled("ext.bundled-a", ["ext.bundled-dep"]),
+          bundled("ext.bundled-dep"),
+        ],
+      };
+      const manager = createExtensionManager(login, {
+        defaultExtensions: set,
+      });
+      await manager.loadExtensionSet(set, () => false);
+
+      await manager.reconcileInstalledExtensions(["ext.bundled-a"]);
+      expect(isRegistered("ext.bundled-dep")).toBe(true);
+
+      // A later swap (e.g. the viewer adding another extension) mustn't
+      // drop the dependency out from under the extension still using it.
+      await manager.reconcileInstalledExtensions(["ext.bundled-a"]);
+
+      expect(isRegistered("ext.bundled-a")).toBe(true);
+      expect(isRegistered("ext.bundled-dep")).toBe(true);
+    });
   });
 
   it("reconcileInstalledExtensions() warns and skips an id with no matching known extension", async () => {

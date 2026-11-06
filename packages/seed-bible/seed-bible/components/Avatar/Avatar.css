@@ -54,9 +54,14 @@
 } */
 
 .sb-tab-user-icon-has-image {
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
+  overflow: hidden;
+}
+
+.sb-tab-user-icon-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .sb-tab-user-icon-animal {

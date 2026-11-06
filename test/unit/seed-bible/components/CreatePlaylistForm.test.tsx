@@ -18,6 +18,11 @@ import type {
   TranslationBook,
   TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import {
+  createMockChats,
+  createMockProvider,
+  type MockChatsResult,
+} from "../testUtils/mockChats";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -60,7 +65,19 @@ vi.mock(
     ) {
       useImperativeHandle(ref, () => ({
         isDirty: () => stubItemInputControl.isDirty,
-        commit: () => stubItemInputControl.commitResult,
+        // Like the real input: a successful commit hands the item to the
+        // parent, as a save of the item open for editing or as a new one.
+        commit: async () => {
+          const committed = await stubItemInputControl.commitResult;
+          if (committed) {
+            if (props.editItem) {
+              props.onUpdate?.(STUB_UPDATED_ITEM);
+            } else {
+              props.onAdd(STUB_ADDED_ITEM);
+            }
+          }
+          return committed;
+        },
       }));
       return (
         <div className="stub-playlist-item-input">
@@ -125,7 +142,10 @@ interface MockPlaylistsResult {
   reorderEditingPlaylistItem: ReturnType<typeof vi.fn>;
 }
 
-function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
+function createMockPlaylists(
+  editing: Playlist | null,
+  onBack: (() => void) | null = null
+): MockPlaylistsResult {
   const editingPlaylist = signal(editing);
   const cancelEditingPlaylist = vi.fn();
   const saveEditingPlaylist = vi.fn().mockResolvedValue(undefined);
@@ -164,6 +184,7 @@ function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
   const isEditingPlaylistDirty = vi.fn(() => false);
   const playlists = {
     editingPlaylist,
+    editingPlaylistOnBack: signal(onBack),
     cancelEditingPlaylist,
     saveEditingPlaylist,
     isEditingPlaylistDirty,
@@ -227,8 +248,210 @@ describe("CreatePlaylistForm", () => {
     vi.restoreAllMocks();
   });
 
-  // The title input and the header back button now live in the pane header
-  // (`DiscoverPaneTitle`), covered by the DiscoverPane test suite.
+  describe("header", () => {
+    let chatsFixture: MockChatsResult;
+    let openChatPanel: ReturnType<typeof vi.fn<() => void>>;
+    let onClose: ReturnType<typeof vi.fn<() => void>>;
+
+    beforeEach(() => {
+      chatsFixture = createMockChats();
+      openChatPanel = vi.fn<() => void>();
+      onClose = vi.fn<() => void>();
+    });
+
+    function renderForm(
+      mock: MockPlaylistsResult,
+      modals = createModalManager()
+    ) {
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            chats={chatsFixture.chats}
+            openChatPanel={openChatPanel}
+            onClose={onClose}
+            playlists={mock.playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+          />,
+          container
+        );
+      });
+      return modals;
+    }
+
+    function click(selector: string, root: ParentNode = container) {
+      act(() => {
+        (root.querySelector(selector) as HTMLElement).dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+    }
+
+    it("shows the playlist title in an input and writes edits back to the draft", () => {
+      const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
+      renderForm(mock);
+
+      const input = container.querySelector(
+        ".sb-discover-panel-header .sb-playlist-input"
+      ) as HTMLInputElement;
+      expect(input.value).toBe("Draft");
+
+      act(() => {
+        input.value = "Morning Devotion";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      expect(mock.playlists.editingPlaylist.value?.title).toBe(
+        "Morning Devotion"
+      );
+    });
+
+    it("stores a whitespace-only title as null", () => {
+      const mock = createMockPlaylists(createPlaylist({ title: "Something" }));
+      renderForm(mock);
+
+      const input = container.querySelector(
+        ".sb-discover-panel-header .sb-playlist-input"
+      ) as HTMLInputElement;
+      act(() => {
+        input.value = "   ";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+
+      expect(mock.playlists.editingPlaylist.value?.title).toBeNull();
+    });
+
+    it("leaves the editor from Back when nothing changed", () => {
+      const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
+      const modals = renderForm(mock);
+
+      click(".sb-pane-header-button[aria-label='Back']");
+
+      expect(mock.cancelEditingPlaylist).toHaveBeenCalledTimes(1);
+      expect(modals.modals.value).toHaveLength(0);
+    });
+
+    it("asks before leaving the editor from Back when the playlist is dirty", () => {
+      const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
+      mock.isEditingPlaylistDirty.mockReturnValue(true);
+      const modals = renderForm(mock);
+
+      click(".sb-pane-header-button[aria-label='Back']");
+
+      expect(mock.cancelEditingPlaylist).not.toHaveBeenCalled();
+      expect(modals.modals.value[0]!.title).toEqual({
+        key: "unsaved-changes",
+        defaultValue: "Unsaved changes",
+      });
+    });
+
+    it("asks before leaving the editor from Back when an item draft is unsaved", () => {
+      stubItemInputControl.isDirty = true;
+      const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
+      const modals = renderForm(mock);
+
+      click(".sb-pane-header-button[aria-label='Back']");
+
+      expect(mock.cancelEditingPlaylist).not.toHaveBeenCalled();
+      expect(modals.modals.value[0]!.title).toEqual({
+        key: "unsaved-changes",
+        defaultValue: "Unsaved changes",
+      });
+    });
+
+    it("closes the pane from the close button", () => {
+      renderForm(createMockPlaylists(createPlaylist()));
+
+      click(".sb-discover-panel-header-close");
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides the AI button when no agent can edit playlists", () => {
+      const mock = createMockPlaylists(createPlaylist({ title: "Draft" }));
+      renderForm(mock);
+      expect(container.querySelector(".sb-discover-title-ai")).toBeNull();
+
+      // An installed agent that cannot call tools (e.g. Bonfire) still cannot
+      // edit the playlist, so the button stays hidden.
+      act(() => {
+        chatsFixture.providers.value = [
+          createMockProvider("bonfire", "Bonfire", false),
+        ];
+      });
+      expect(container.querySelector(".sb-discover-title-ai")).toBeNull();
+      expect(chatsFixture.createLocalSession).not.toHaveBeenCalled();
+      expect(openChatPanel).not.toHaveBeenCalled();
+    });
+
+    it("with exactly one AI provider, the AI button adds it automatically without showing a menu", () => {
+      chatsFixture = createMockChats([createMockProvider("provider-1")]);
+      renderForm(createMockPlaylists(createPlaylist({ title: "Draft" })));
+
+      click(".sb-discover-title-ai");
+
+      expect(document.querySelector('[role="menu"]')).toBeNull();
+      expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+      const history = chatsFixture.createLocalSession.mock.calls[0]![0];
+      expect(history.messages).toHaveLength(1);
+      expect(history.messages[0]).toMatchObject({
+        authors: ["provider-1"],
+        type: "text",
+        text: "What do you want to add/change?",
+      });
+      expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-1");
+      expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+      expect(openChatPanel).toHaveBeenCalledTimes(1);
+    });
+
+    it("with multiple AI providers, the AI button shows a menu and starts the chat with the selected provider", () => {
+      chatsFixture = createMockChats([
+        createMockProvider("provider-1", "Provider One"),
+        createMockProvider("provider-2", "Provider Two"),
+      ]);
+      renderForm(createMockPlaylists(createPlaylist({ title: "Draft" })));
+
+      click(".sb-discover-title-ai");
+      // Opening the menu doesn't start a chat by itself.
+      expect(chatsFixture.createLocalSession).not.toHaveBeenCalled();
+
+      // The menu is portaled to <body>, outside the render container.
+      const menuItems = Array.from(
+        document.querySelectorAll('[role="menuitem"]')
+      ) as HTMLButtonElement[];
+      expect(menuItems.map((item) => item.textContent)).toEqual([
+        "Provider One",
+        "Provider Two",
+      ]);
+
+      act(() => {
+        menuItems[1]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+      expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-2");
+      expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+      expect(openChatPanel).toHaveBeenCalledTimes(1);
+    });
+
+    it("leaves AI providers that can't call tools out of the AI button", () => {
+      chatsFixture = createMockChats([
+        createMockProvider("provider-1", "Provider One"),
+        createMockProvider("provider-2", "No Tools", false),
+      ]);
+      renderForm(createMockPlaylists(createPlaylist({ title: "Draft" })));
+
+      // Only one tool-calling provider remains, so it's added straight away,
+      // same as the single-provider case.
+      click(".sb-discover-title-ai");
+
+      expect(document.querySelector('[role="menu"]')).toBeNull();
+      expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+      expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-1");
+      expect(chatsFixture.addParticipant).not.toHaveBeenCalledWith(
+        "provider-2"
+      );
+    });
+  });
 
   it("shows the current description and writes edits back to the draft", () => {
     const { playlists, updateEditingPlaylistMetadata } = createMockPlaylists(
@@ -240,6 +463,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -277,6 +503,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -304,6 +533,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -358,6 +590,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -404,6 +639,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -436,6 +674,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -465,6 +706,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -487,6 +731,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -514,6 +761,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -576,6 +826,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -625,6 +878,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -664,6 +920,138 @@ describe("CreatePlaylistForm", () => {
     modalContainer.remove();
   });
 
+  describe("when another screen opened the editor", () => {
+    let modalContainer: HTMLDivElement;
+
+    beforeEach(() => {
+      modalContainer = document.createElement("div");
+      document.body.appendChild(modalContainer);
+    });
+
+    afterEach(() => {
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
+
+    function leaveDirtyEditor(onBack: () => void, choice: string) {
+      const { playlists } = createMockPlaylists(
+        createPlaylist({ title: "Draft" }),
+        onBack
+      );
+      playlists.isEditingPlaylistDirty = vi.fn(() => true);
+      const modals = createModalManager();
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
+            playlists={playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+          />,
+          container
+        );
+      });
+      act(() => {
+        (
+          container.querySelector(
+            '.sb-discover-title-row button[aria-label="Back"]'
+          ) as HTMLButtonElement
+        ).click();
+      });
+      act(() => {
+        render(
+          modals.modals.value[0]!.content({
+            t: (key, options) => (options?.defaultValue as string) ?? key,
+          }),
+          modalContainer
+        );
+      });
+      act(() => {
+        (
+          Array.from(modalContainer.querySelectorAll("button")).find(
+            (button) => button.textContent === choice
+          ) as HTMLButtonElement
+        ).click();
+      });
+    }
+
+    it("returns there after discarding unsaved changes", () => {
+      const onBack = vi.fn();
+
+      leaveDirtyEditor(onBack, "Confirm");
+
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it("returns there once Save & exit has saved", async () => {
+      const onBack = vi.fn();
+
+      leaveDirtyEditor(onBack, "Save & exit");
+      await act(async () => {});
+
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it("stays put when the user goes back to editing", () => {
+      const onBack = vi.fn();
+
+      leaveDirtyEditor(onBack, "Go back");
+
+      expect(onBack).not.toHaveBeenCalled();
+    });
+
+    async function saveEditor(onBack: () => void, saveFails = false) {
+      const mock = createMockPlaylists(
+        createPlaylist({ title: "Draft" }),
+        onBack
+      );
+      if (saveFails) {
+        vi.spyOn(console, "error").mockImplementation(() => {});
+        mock.saveEditingPlaylist.mockRejectedValue(new Error("offline"));
+      }
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
+            playlists={mock.playlists}
+            tabs={createMockTabs()}
+            modals={createModalManager()}
+          />,
+          container
+        );
+      });
+      await act(async () => {
+        (
+          container.querySelector(
+            ".sb-settings-save-button"
+          ) as HTMLButtonElement
+        ).click();
+      });
+      return mock;
+    }
+
+    it("returns there once Save has saved", async () => {
+      const onBack = vi.fn();
+
+      const { saveEditingPlaylist } = await saveEditor(onBack);
+
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it("stays in the editor when Save fails", async () => {
+      const onBack = vi.fn();
+
+      await saveEditor(onBack, true);
+
+      expect(onBack).not.toHaveBeenCalled();
+    });
+  });
+
   it("lists items using their resolved label and falls back to the raw book id", () => {
     const { playlists } = createMockPlaylists(
       createPlaylist({ items: [verseItem("GEN", 1)] })
@@ -674,6 +1062,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -687,6 +1078,48 @@ describe("CreatePlaylistForm", () => {
     ).toBe("GEN 1");
   });
 
+  it("follows a noted passage's label with its note title, or Note when it has none", () => {
+    const { playlists } = createMockPlaylists(
+      createPlaylist({
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 1 },
+            note: "<p>Body</p>",
+            noteTitle: "In the beginning",
+          },
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 2 },
+            note: "<p>Body only</p>",
+          },
+          verseItem("GEN", 3),
+        ],
+      })
+    );
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
+          playlists={playlists}
+          tabs={createMockTabs()}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    expect(
+      Array.from(container.querySelectorAll(".sb-discover-item-title")).map(
+        (title) => title.textContent
+      )
+    ).toEqual(["GEN 1 · In the beginning", "GEN 2 · Note", "GEN 3"]);
+  });
+
   it("resolves book names from the selected tab's translation", () => {
     const { playlists } = createMockPlaylists(
       createPlaylist({ items: [verseItem("GEN", 1)] })
@@ -698,6 +1131,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -724,6 +1160,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -776,6 +1215,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={createMockTabs(tab)}
             modals={createModalManager()}
@@ -839,6 +1281,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -865,6 +1310,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -911,6 +1359,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -949,6 +1400,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -988,6 +1442,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -1040,6 +1497,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -1088,6 +1548,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -1129,6 +1592,9 @@ describe("CreatePlaylistForm", () => {
     act(() => {
       render(
         <CreatePlaylistForm
+          chats={createMockChats().chats}
+          openChatPanel={vi.fn()}
+          onClose={vi.fn()}
           playlists={playlists}
           tabs={tabs}
           modals={modals}
@@ -1168,6 +1634,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1199,6 +1668,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1263,6 +1735,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1298,6 +1773,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1327,6 +1805,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1349,41 +1830,126 @@ describe("CreatePlaylistForm", () => {
       expect(modal).not.toBeUndefined();
     });
 
-    it("does not warn about a dirty draft while mid-edit of an existing item", () => {
+    it("asks before saving when an item opened for editing has unsaved changes", () => {
       const { playlists, saveEditingPlaylist } = createMockPlaylists(
         createPlaylist({ items: [verseItem("GEN", 1)] })
       );
-      const tabs = createMockTabs();
       const modals = createModalManager();
       stubItemInputControl.isDirty = true;
-
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
-            tabs={tabs}
+            tabs={createMockTabs()}
             modals={modals}
           />,
           container
         );
       });
+      openFirstItemForEditing();
 
       act(() => {
-        container
-          .querySelector(".sb-discover-item-button")
-          ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        (
+          container.querySelector(".sb-settings-save-button") as HTMLElement
+        ).click();
       });
 
-      const saveButton = container.querySelector(
-        ".sb-settings-save-button"
-      ) as HTMLButtonElement;
-      act(() => {
-        saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      expect(saveEditingPlaylist).not.toHaveBeenCalled();
+      const modal = modals.modals.value.find(
+        (m) => m.id === "playlist-unsaved-item-confirm"
+      );
+      expect(modal?.title).toEqual({
+        key: "unsaved-item-edit-confirm-title",
+        defaultValue: "Unsaved item changes",
       });
-
-      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
-      expect(modals.modals.value).toHaveLength(0);
     });
+
+    it("'Keep changes and save' saves the edited item, then the playlist", async () => {
+      const { playlists, saveEditingPlaylist, updateEditingPlaylistItem } =
+        createMockPlaylists(createPlaylist({ items: [verseItem("GEN", 1)] }));
+      const modals = createModalManager();
+      stubItemInputControl.isDirty = true;
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
+            playlists={playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+          />,
+          container
+        );
+      });
+      openFirstItemForEditing();
+
+      const modalContainer = openConfirmDialog(container, modals);
+      const keepButton = Array.from(
+        modalContainer.querySelectorAll("button")
+      ).find((el) => el.textContent === "Keep changes and save")!;
+      await act(async () => {
+        keepButton.click();
+        await Promise.resolve();
+      });
+
+      expect(updateEditingPlaylistItem).toHaveBeenCalledWith(
+        0,
+        STUB_UPDATED_ITEM
+      );
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+      expect(
+        updateEditingPlaylistItem.mock.invocationCallOrder[0]!
+      ).toBeLessThan(saveEditingPlaylist.mock.invocationCallOrder[0]!);
+
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
+
+    it("'Discard and save' saves the playlist with the edited item as it was", () => {
+      const { playlists, saveEditingPlaylist, updateEditingPlaylistItem } =
+        createMockPlaylists(createPlaylist({ items: [verseItem("GEN", 1)] }));
+      const modals = createModalManager();
+      stubItemInputControl.isDirty = true;
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
+            playlists={playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+          />,
+          container
+        );
+      });
+      openFirstItemForEditing();
+
+      const modalContainer = openConfirmDialog(container, modals);
+      const discardButton = Array.from(
+        modalContainer.querySelectorAll("button")
+      ).find((el) => el.textContent === "Discard and save")!;
+      act(() => discardButton.click());
+
+      expect(updateEditingPlaylistItem).not.toHaveBeenCalled();
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
+
+    /** Opens the first item in the list in the item input for editing. */
+    function openFirstItemForEditing() {
+      act(() => {
+        (
+          container.querySelector(".sb-discover-item-button") as HTMLElement
+        ).click();
+      });
+    }
 
     /** Opens the confirm dialog and renders its content into a side container. */
     function openConfirmDialog(
@@ -1423,6 +1989,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1461,6 +2030,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1498,6 +2070,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}
@@ -1536,6 +2111,9 @@ describe("CreatePlaylistForm", () => {
       act(() => {
         render(
           <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
             playlists={playlists}
             tabs={tabs}
             modals={modals}

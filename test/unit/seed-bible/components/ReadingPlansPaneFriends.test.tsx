@@ -1,5 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { computed, signal, type Signal } from "@preact/signals";
 import { ReadingPlansPane } from "@packages/seed-bible/seed-bible/components/ReadingPlansPane/ReadingPlansPane";
 import {
@@ -134,6 +135,7 @@ describe("ReadingPlansPane — reading plans from your friends", () => {
           readingPlans={readingPlans}
           friends={friendsWithAda()}
           books={[]}
+          modals={createModalManager()}
         />,
         container
       );
@@ -155,6 +157,7 @@ describe("ReadingPlansPane — reading plans from your friends", () => {
           readingPlans={readingPlans}
           friends={friendsWithAda()}
           books={[]}
+          modals={createModalManager()}
         />,
         container
       );
@@ -203,6 +206,7 @@ describe("ReadingPlansPane — reading plans from your friends", () => {
           readingPlans={readingPlans}
           friends={friends}
           books={[]}
+          modals={createModalManager()}
         />,
         container
       );

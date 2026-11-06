@@ -154,6 +154,16 @@ describe("PlaylistItemInlinePreview", () => {
     expect(text()).toContain("Couldn't load");
   });
 
+  it("shows no note for a passage whose note title is only spaces", () => {
+    // Playback shows no note for it either, so neither should the editor.
+    renderPreview({
+      type: "bible-verse",
+      ref: { bookId: "JHN", chapter: 3 },
+      noteTitle: "   ",
+    });
+    expect(container.querySelector(".sb-item-inline-preview-note")).toBeNull();
+  });
+
   it("shows the title and URL of a link item", () => {
     renderPreview({
       type: "link",

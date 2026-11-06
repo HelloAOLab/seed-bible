@@ -12,15 +12,14 @@ import {
   type UserGalleryManager,
 } from "../../managers/UserGalleryManager";
 import { MaterialIcon } from "../icons";
-import {
-  DiscoverSection,
-  DiscoverEmpty,
-} from "../DiscoverPane/DiscoverSection";
+import { DiscoverSection, DiscoverEmpty } from "../Discover/DiscoverSection";
 import {
   PlaylistItemInput,
   type PlaylistItemInputHandle,
 } from "../PlaylistItemInput/PlaylistItemInput";
+import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
 import { playlistItemLabel } from "../playlistItemLabel";
+import { PlaylistItemNoteTag } from "../PlaylistItemNoteTag/PlaylistItemNoteTag";
 import { playlistItemIcon } from "../playlistItemIcon";
 import { useDragReorder } from "../useDragReorder";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
@@ -29,11 +28,22 @@ import {
   type ScriptureChapterLoader,
 } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import type { BibleDataManager } from "../../managers/BibleDataManager";
+import type { ChatsManager } from "../../managers/ChatsManager";
+import { translateTitle } from "../../app/utils";
+import { v4 as uuid } from "uuid";
+import {
+  ContextMenuWithButton,
+  ContextMenuItem,
+} from "../ContextMenu/ContextMenu";
+import { DiscoverPanelLayout } from "../Discover/DiscoverPanelHeader";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
   tabs: TabsManager;
   modals: ModalManager;
+  chats: ChatsManager;
+  openChatPanel: () => void;
+  onClose: () => void;
   /** Loads chapter text for the inline scripture previews. */
   bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
@@ -41,83 +51,7 @@ interface CreatePlaylistFormProps {
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
 }
 
-const UNSAVED_ITEM_CONFIRM_MODAL_ID = "playlist-unsaved-item-confirm";
 const UNSAVED_CHANGES_CONFIRM_MODAL_ID = "playlist-unsaved-changes-confirm";
-
-/**
- * Confirmation body shown when Save is clicked while the "Add item" section
- * has in-progress, un-added content, so it isn't silently discarded.
- */
-function UnsavedItemConfirmModalContent(props: {
-  onGoBack: () => void;
-  onDiscardAndSave: () => void;
-  onAddAndSave: () => void;
-}) {
-  const { onGoBack, onDiscardAndSave, onAddAndSave } = props;
-  const { t } = useI18n();
-
-  return (
-    <div className="sb-confirm-delete">
-      <p className="sb-confirm-delete-message">
-        {t("unsaved-item-confirm-message", {
-          defaultValue:
-            "You've started adding an item that hasn't been added to the playlist yet. What would you like to do?",
-        })}
-      </p>
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onGoBack}
-        >
-          {t("back", { defaultValue: "Back" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onDiscardAndSave}
-        >
-          {t("discard-and-save", { defaultValue: "Discard and save" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={onAddAndSave}
-        >
-          {t("add-and-save", { defaultValue: "Add and save" })}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/** Opens the unsaved-item confirmation modal. */
-function openUnsavedItemConfirm(
-  modals: ModalManager,
-  onDiscardAndSave: () => void,
-  onAddAndSave: () => void
-) {
-  modals.openModal({
-    id: UNSAVED_ITEM_CONFIRM_MODAL_ID,
-    title: {
-      key: "unsaved-item-confirm-title",
-      defaultValue: "Unsaved item",
-    },
-    content: () => (
-      <UnsavedItemConfirmModalContent
-        onGoBack={() => modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID)}
-        onDiscardAndSave={() => {
-          modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID);
-          onDiscardAndSave();
-        }}
-        onAddAndSave={() => {
-          modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID);
-          onAddAndSave();
-        }}
-      />
-    ),
-  });
-}
 
 function UnsavedChangesConfirmModalContent(props: {
   onConfirm: () => void;
@@ -162,16 +96,20 @@ function UnsavedChangesConfirmModalContent(props: {
 }
 
 /**
- * Leaves the playlist editor. If the name, description, cover, items, or an
- * in-progress add-item draft changed, asks first instead of discarding.
+ * Leaves the playlist editor, returning to the screen that opened it if
+ * another one did. If the name, description, cover, items, or an in-progress
+ * add-item draft changed, asks first instead of discarding.
  */
 export function requestCancelPlaylistEditor(
   playlists: PlaylistManager,
   modals: ModalManager,
   extraDirty = false
 ): void {
+  // Read before leaving: cancelling or saving the draft forgets it.
+  const onBack = playlists.editingPlaylistOnBack.peek();
   if (!playlists.isEditingPlaylistDirty() && !extraDirty) {
     playlists.cancelEditingPlaylist();
+    onBack?.();
     return;
   }
   modals.openModal({
@@ -185,20 +123,148 @@ export function requestCancelPlaylistEditor(
         onConfirm={() => {
           modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
           playlists.cancelEditingPlaylist();
+          onBack?.();
         }}
         onGoBack={() => modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID)}
         onSaveAndExit={() => {
           modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
-          void playlists.saveEditingPlaylist();
+          void playlists.saveEditingPlaylist().then(() => onBack?.());
         }}
       />
     ),
   });
 }
 
+/**
+ * The form's header title: a back button, the playlist title as an editable
+ * input, and an AI button when an agent that can call tools is installed.
+ */
+function CreatePlaylistTitle(props: {
+  playlists: PlaylistManager;
+  modals: ModalManager;
+  chats: ChatsManager;
+  openChatPanel: () => void;
+  isItemDraftDirty: () => boolean;
+}) {
+  const { playlists, modals, chats, openChatPanel, isItemDraftDirty } = props;
+  const { t } = useI18n();
+  const editing = playlists.editingPlaylist.value;
+  const providers = chats.providers.value.filter((p) => p.supportsToolCalling);
+  const singleProvider = providers.length === 1 ? providers[0] : undefined;
+
+  // Opens the chat panel on a fresh local chat, seeded with a prompt
+  // message inviting the user to describe what they want changed, with
+  // the given AI provider already added as a participant.
+  // `PlaylistManager` already exposes the playlist-editing tools to every
+  // chat while a playlist is being edited, so replying here lets the AI
+  // add/update/remove items and edit the title/description.
+  const startAiChat = (providerId: string) => {
+    let chat = chats.chats.value.find(
+      (c) =>
+        c.participants.value.every((p) => !p.isRemote) &&
+        c.participants.value.some((p) => p.isAI && p.providerId === providerId)
+    );
+    if (!chat) {
+      chat = chats.createLocalSession({
+        messages: [
+          {
+            id: uuid(),
+            authors: [providerId],
+            timeMs: Date.now(),
+            targets: [],
+            type: "text",
+            text: t("ai-playlist-chat-prompt", {
+              defaultValue: "What do you want to add/change?",
+            }),
+          },
+        ],
+        providerIds: [],
+      });
+    }
+    chat.addParticipant(providerId);
+    chats.selectChat(chat.id);
+    openChatPanel();
+  };
+  const aiButtonLabel = t("ai", { defaultValue: "AI" });
+  const aiButtonAriaLabel = t("ai-edit-playlist", {
+    defaultValue: "Edit playlist with AI",
+  });
+
+  return (
+    <div className="sb-discover-title-row">
+      <button
+        type="button"
+        className="sb-pane-header-button"
+        aria-label={t("back", { defaultValue: "Back" })}
+        onClick={() =>
+          requestCancelPlaylistEditor(playlists, modals, isItemDraftDirty())
+        }
+      >
+        <MaterialIcon>arrow_back</MaterialIcon>
+      </button>
+      <input
+        className="sb-settings-text-input sb-playlist-input"
+        type="text"
+        value={editing?.title ?? ""}
+        dir="auto"
+        onInput={(event: Event) => {
+          const value = (event.currentTarget as HTMLInputElement).value;
+          playlists.updateEditingPlaylistMetadata({
+            title: value.trim() ? value : null,
+          });
+        }}
+        placeholder={t("playlist-title_placeholder", {
+          defaultValue: "Playlist title",
+        })}
+      />
+      {providers.length > 1 ? (
+        // Multiple providers: let the user pick which one starts the chat.
+        <ContextMenuWithButton
+          buttonClassName="sb-discover-title-ai"
+          aria-label={aiButtonAriaLabel}
+          title={aiButtonLabel}
+          icon={<MaterialIcon>auto_awesome</MaterialIcon>}
+        >
+          {providers.map((provider) => (
+            <ContextMenuItem
+              key={provider.id}
+              onClick={() => startAiChat(provider.id)}
+            >
+              {translateTitle(t, provider.name)}
+            </ContextMenuItem>
+          ))}
+        </ContextMenuWithButton>
+      ) : (
+        singleProvider && (
+          <button
+            type="button"
+            className="sb-discover-title-ai"
+            aria-label={aiButtonAriaLabel}
+            title={aiButtonLabel}
+            onClick={() => startAiChat(singleProvider.id)}
+          >
+            <MaterialIcon>auto_awesome</MaterialIcon>
+          </button>
+        )
+      )}
+    </div>
+  );
+}
+
 /** Create-playlist screen shown inside the discover pane. */
 export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
-  const { playlists, tabs, modals, bibleData, os, login, gallery } = props;
+  const {
+    playlists,
+    tabs,
+    modals,
+    chats,
+    openChatPanel,
+    onClose,
+    bibleData,
+    os,
+    login,
+    gallery,
+  } = props;
   const { t } = useI18n();
   const [saving, setSaving] = useState(false);
   // Index of the item currently open for editing in the input section below, or
@@ -273,23 +339,28 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
 
   const doSave = async () => {
     setSaving(true);
+    // Read before saving, which forgets it.
+    const onBack = playlists.editingPlaylistOnBack.peek();
     try {
       await playlists.saveEditingPlaylist();
     } catch (error) {
       console.error("Failed to save playlist:", error);
       setSaving(false);
+      return;
     }
+    onBack?.();
   };
 
   const handleSave = () => {
     if (saving) {
       return;
     }
-    // Only guards the "add new item" flow, not being mid-edit of an existing
-    // item — the Add Item section is what silently loses content today.
-    if (editingIndex === null && inputRef.current?.isDirty()) {
+    // Covers both a new item not yet added and changes to an item opened for
+    // editing but not yet saved — either would otherwise be silently lost.
+    if (inputRef.current?.isDirty()) {
       openUnsavedItemConfirm(
         modals,
+        editingIndex !== null,
         () => void doSave(),
         () => {
           void (async () => {
@@ -308,7 +379,18 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
   };
 
   return (
-    <div className="sb-discover-pane">
+    <DiscoverPanelLayout
+      title={
+        <CreatePlaylistTitle
+          playlists={playlists}
+          modals={modals}
+          chats={chats}
+          openChatPanel={openChatPanel}
+          isItemDraftDirty={() => inputRef.current?.isDirty() ?? false}
+        />
+      }
+      onClose={onClose}
+    >
       <DiscoverSection title={t("hero-image", { defaultValue: "Cover image" })}>
         <HeroImageField
           imageUrl={editing?.heroImageUrl}
@@ -402,6 +484,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                   </MaterialIcon>
                   <span className="sb-discover-item-title" dir="auto">
                     {playlistItemLabel(item, t, resolveBookName)}
+                    <PlaylistItemNoteTag item={item} showUntitled />
                   </span>
                 </button>
                 <button
@@ -483,6 +566,6 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
             : t("save", { defaultValue: "Save" })}
         </button>
       </div>
-    </div>
+    </DiscoverPanelLayout>
   );
 }

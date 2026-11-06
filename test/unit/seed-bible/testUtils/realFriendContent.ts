@@ -62,6 +62,7 @@ export async function createRealFriendContent(options: {
 
   const login = {
     userId: signal<string | null>(ME),
+    profile: signal(null),
     login: vi.fn().mockResolvedValue(null),
     getPublicProfile: vi.fn(async (id: string) => ({
       name: names[id] ?? "",

@@ -167,6 +167,7 @@ export function openPhotoChooser(
       key: "recent-uploads",
       defaultValue: "Recent uploads",
     },
+    mobileSheet: true,
     content: () => (
       <PhotoChooserContent
         photos={options.photos}

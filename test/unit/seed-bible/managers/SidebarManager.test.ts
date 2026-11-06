@@ -147,6 +147,34 @@ describe("createSidebar", () => {
     expect(unset.isSidebarCollapsed.value).toBe(false);
   });
 
+  it("counts only the user's own expand, collapse or settings toggle as a user resize", () => {
+    vi.useFakeTimers();
+    try {
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, "true");
+      const sidebar = createSidebar({
+        navigation,
+        chatsManager: createChatsManagerMock(),
+      });
+
+      // A saved choice applied on load isn't something the user just did.
+      sidebar.hydrateStoredCollapsed();
+      expect(sidebar.isUserResize()).toBe(false);
+
+      sidebar.toggleSidebarCollapsed();
+      expect(sidebar.isUserResize()).toBe(true);
+
+      // Long after, a change made for them (a viewport band) isn't theirs.
+      vi.advanceTimersByTime(5000);
+      sidebar.isSidebarCollapsed.value = true;
+      expect(sidebar.isUserResize()).toBe(false);
+
+      sidebar.toggleSettings();
+      expect(sidebar.isUserResize()).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("openSidebar() and closeSidebar() control mobile open state", () => {
     const sidebar = createSidebar({
       navigation,
@@ -284,33 +312,7 @@ describe("createSidebar", () => {
     expect(sidebar.isSearchPanelOpen.value).toBe(true);
   });
 
-  it.each(["customizations"] as const)(
-    "isCustomizationViewOpen is true while requestedSettingsView is %s",
-    (view) => {
-      const sidebar = createSidebar({
-        navigation,
-        chatsManager: createChatsManagerMock(),
-      });
-
-      sidebar.requestedSettingsView.value = view;
-
-      expect(sidebar.isCustomizationViewOpen.value).toBe(true);
-    }
-  );
-
-  it("isCustomizationViewOpen is false for other settings views, including when closed", () => {
-    const sidebar = createSidebar({
-      navigation,
-      chatsManager: createChatsManagerMock(),
-    });
-
-    expect(sidebar.isCustomizationViewOpen.value).toBe(false);
-
-    sidebar.requestedSettingsView.value = "display-and-theme";
-    expect(sidebar.isCustomizationViewOpen.value).toBe(false);
-  });
-
-  it("collapseSidebarOverlay() closes settings and collapses the sidebar when the Customization Center isn't open", () => {
+  it("collapseSidebarOverlay() closes settings and collapses the sidebar", () => {
     window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, "false");
     const sidebar = createSidebar({
       navigation,
@@ -330,24 +332,6 @@ describe("createSidebar", () => {
       "false"
     );
   });
-
-  it.each(["customizations"] as const)(
-    "collapseSidebarOverlay() no-ops while requestedSettingsView is %s, so a click on the reader can't close it",
-    (view) => {
-      const sidebar = createSidebar({
-        navigation,
-        chatsManager: createChatsManagerMock(),
-      });
-      sidebar.openSettingsToView(view);
-      sidebar.openSidebar();
-
-      sidebar.collapseSidebarOverlay();
-
-      expect(sidebar.requestedSettingsView.value).toBe(view);
-      expect(sidebar.isMobileOpen.value).toBe(true);
-      expect(sidebar.isSidebarCollapsed.value).toBe(false);
-    }
-  );
 
   it("openChatPanel() calls onOpenChatPanel callback", () => {
     const onOpenChatPanel = vi.fn();

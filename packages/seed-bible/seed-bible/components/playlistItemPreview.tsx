@@ -1,8 +1,12 @@
 import type { useI18n } from "../i18n/I18nManager";
 import type { ModalManager } from "../managers/ModalManager";
-import type { PlaylistItemData } from "../managers/PlaylistManager";
+import type {
+  PlayingState,
+  PlaylistItemData,
+} from "../managers/PlaylistManager";
 import { PlaylistHtmlContent } from "./PlaylistHtmlContent/PlaylistHtmlContent";
 import { PlaylistLinkContent } from "./PlaylistLinkContent/PlaylistLinkContent";
+import { PlaylistItemNav } from "./PlaylistItemNav/PlaylistItemNav";
 
 /**
  * Whether an item has content of its own to preview. Scripture is read in the
@@ -20,6 +24,11 @@ export function canPreviewPlaylistItem(item: PlaylistItemData): boolean {
  *
  * `modalId` is the caller's own, so a reading-plan preview can't close the
  * playlist playback modal (or the reverse) out from under the user.
+ * `onDismiss` runs only when the user closes the modal, not when playback
+ * replaces or removes it.
+ *
+ * Pass `playing` when the item is a step of a playing playlist: the modal then
+ * gets Previous / Next buttons that move through the queue.
  *
  * Shared by playlist playback, the reading-plan wizard, and the plan detail
  * view so an item looks the same wherever it is previewed.
@@ -28,7 +37,9 @@ export function openPlaylistItemPreview(
   modals: ModalManager,
   item: PlaylistItemData,
   modalId: string,
-  t: ReturnType<typeof useI18n>["t"]
+  t: ReturnType<typeof useI18n>["t"],
+  onDismiss?: () => void,
+  playing?: PlayingState
 ): void {
   if (item.type === "bible-verse") {
     return;
@@ -50,5 +61,7 @@ export function openPlaylistItemPreview(
           preview={item.preview}
         />
       ),
+    footer: playing ? () => <PlaylistItemNav playing={playing} /> : undefined,
+    onDismiss,
   });
 }

@@ -1,3 +1,4 @@
+import { signal } from "@preact/signals";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
@@ -66,5 +67,175 @@ describe("ModalHost", () => {
     pressAndRelease(input, input);
 
     expect(manager.modals.value).toHaveLength(1);
+  });
+
+  it("shows the footer under the content alongside the close button", async () => {
+    const state = await createTestSeedBibleState();
+    const manager = createModalManager();
+    act(() => {
+      manager.openModal({
+        title: "Step",
+        content: () => <p>Body</p>,
+        footer: () => <button className="test-footer">Next</button>,
+        useCasualOSApp: false,
+      });
+    });
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <ModalHost manager={manager} />
+        </TestHost>,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-footnote-modal-close")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-footnote-modal-footer .test-footer")
+    ).not.toBeNull();
+  });
+
+  it("has no footer by default", async () => {
+    await renderWithModal();
+
+    expect(container.querySelector(".sb-footnote-modal-footer")).toBeNull();
+  });
+
+  it("marks a modal opened with mobileSheet to dock as a sheet on phones", async () => {
+    const state = await createTestSeedBibleState();
+    const manager = createModalManager();
+    act(() => {
+      manager.openModal({
+        title: "Pick",
+        content: () => <p>Body</p>,
+        mobileSheet: true,
+        useCasualOSApp: false,
+      });
+    });
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <ModalHost manager={manager} />
+        </TestHost>,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-footnote-modal-overlay-mobile-sheet")
+    ).not.toBeNull();
+  });
+
+  it("stays a centered modal by default", async () => {
+    await renderWithModal();
+
+    expect(
+      container.querySelector(".sb-footnote-modal-overlay")
+    ).not.toBeNull();
+    expect(
+      container.querySelector(".sb-footnote-modal-overlay-mobile-sheet")
+    ).toBeNull();
+  });
+
+  describe("onDismiss", () => {
+    async function renderDismissable() {
+      const state = await createTestSeedBibleState();
+      const manager = createModalManager();
+      const onDismiss = vi.fn();
+      act(() => {
+        manager.openModal({
+          id: "dismissable",
+          title: "Step",
+          content: () => <p className="test-body">Body</p>,
+          onDismiss,
+          useCasualOSApp: false,
+        });
+      });
+      act(() => {
+        render(
+          <TestHost state={state}>
+            <ModalHost manager={manager} />
+          </TestHost>,
+          container
+        );
+      });
+      return { manager, onDismiss };
+    }
+
+    it("runs when the X button closes the modal", async () => {
+      const { manager, onDismiss } = await renderDismissable();
+      const close = container.querySelector(
+        ".sb-footnote-modal-close"
+      ) as HTMLButtonElement;
+
+      act(() => close.click());
+
+      expect(manager.modals.value).toHaveLength(0);
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
+
+    it("runs when the backdrop closes the modal", async () => {
+      const { manager, onDismiss } = await renderDismissable();
+      const overlay = container.querySelector(
+        ".sb-footnote-modal-overlay"
+      ) as HTMLElement;
+
+      pressAndRelease(overlay, overlay);
+
+      expect(manager.modals.value).toHaveLength(0);
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
+
+    it("can't be closed with the X or the backdrop while canDismiss is false", async () => {
+      const state = await createTestSeedBibleState();
+      const manager = createModalManager();
+      const busy = signal(true);
+      act(() => {
+        manager.openModal({
+          id: "busy",
+          title: "Step",
+          content: () => <p>Body</p>,
+          canDismiss: () => !busy.value,
+          useCasualOSApp: false,
+        });
+      });
+      act(() => {
+        render(
+          <TestHost state={state}>
+            <ModalHost manager={manager} />
+          </TestHost>,
+          container
+        );
+      });
+      const close = () =>
+        container.querySelector(
+          ".sb-footnote-modal-close"
+        ) as HTMLButtonElement;
+      const overlay = container.querySelector(
+        ".sb-footnote-modal-overlay"
+      ) as HTMLElement;
+
+      expect(close().disabled).toBe(true);
+      pressAndRelease(overlay, overlay);
+      expect(manager.modals.value).toHaveLength(1);
+
+      act(() => {
+        busy.value = false;
+      });
+      expect(close().disabled).toBe(false);
+      act(() => close().click());
+      expect(manager.modals.value).toHaveLength(0);
+    });
+
+    it("does not run when code closes the modal or the body is clicked", async () => {
+      const { manager, onDismiss } = await renderDismissable();
+      const body = container.querySelector(".test-body") as HTMLElement;
+
+      pressAndRelease(body, body);
+      act(() => manager.closeModal("dismissable"));
+
+      expect(manager.modals.value).toHaveLength(0);
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
   });
 });

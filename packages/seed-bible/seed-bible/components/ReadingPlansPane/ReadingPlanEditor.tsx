@@ -1,5 +1,6 @@
 import "./ReadingPlanEditor.css";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
+import type { RefObject } from "preact";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -20,7 +21,11 @@ import {
   uploadPhotoToGallery,
   type UserGalleryManager,
 } from "../../managers/UserGalleryManager";
-import { PlaylistItemInput } from "../PlaylistItemInput/PlaylistItemInput";
+import {
+  PlaylistItemInput,
+  type PlaylistItemInputHandle,
+} from "../PlaylistItemInput/PlaylistItemInput";
+import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
 import {
   PlaylistItemInlinePreview,
@@ -28,6 +33,7 @@ import {
 } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { cadenceOptionLabel } from "./cadenceLabels";
 import { readingLabel } from "./readingLabel";
+import { playlistItemLabel } from "../playlistItemLabel";
 import { readingItemIcon, readingPreviewText } from "./readingPreview";
 
 interface ReadingPlanEditorProps {
@@ -92,6 +98,10 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
   const [submitError, setSubmitError] = useState(false);
   // Discarding a new plan erases it for good, so the button asks once first.
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+  // The reading open in the selected session's item input, or null when that
+  // input is adding a new reading.
+  const [editingReadingId, setEditingReadingId] = useState<string | null>(null);
+  const itemInputRef = useRef<PlaylistItemInputHandle>(null);
 
   // Reading `.value` during render subscribes the component to edits, including
   // ones made from the reader's verse toolbar.
@@ -119,10 +129,7 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
   const hasTitle = (draft.plan.title ?? "").trim().length > 0;
   const canSave = hasTitle && totalReadings > 0;
 
-  const handleSave = async () => {
-    if (saving || !canSave) {
-      return;
-    }
+  const save = async () => {
     setSaving(true);
     setSubmitError(false);
     try {
@@ -133,6 +140,32 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
       setSubmitError(true);
       setSaving(false);
     }
+  };
+
+  const handleSave = () => {
+    if (saving || !canSave) {
+      return;
+    }
+    // A reading opened for editing with changes not yet saved would otherwise
+    // be silently dropped by saving the plan.
+    if (modals && editingReadingId && itemInputRef.current?.isDirty()) {
+      openUnsavedItemConfirm(
+        modals,
+        true,
+        () => void save(),
+        () => {
+          void (async () => {
+            if (await itemInputRef.current?.commit()) {
+              await save();
+            }
+            // If the edit didn't commit (e.g. an unknown reference), the
+            // input stays open with its inline error.
+          })();
+        }
+      );
+      return;
+    }
+    void save();
   };
 
   const handleDiscard = async () => {
@@ -264,16 +297,31 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
             books={books}
             loadChapter={loadChapter}
             draft={draft}
-            onSelectSession={(index) =>
-              readingPlans.selectEditingPlanSession(index)
-            }
+            onSelectSession={(index) => {
+              // The reading input only edits within the selected session.
+              if (index !== draft.selectedSessionIndex) {
+                setEditingReadingId(null);
+              }
+              readingPlans.selectEditingPlanSession(index);
+            }}
             onAddSession={() => readingPlans.addSessionToEditingPlan()}
-            onRemoveSession={(index) =>
-              readingPlans.removeSessionFromEditingPlan(index)
-            }
+            onRemoveSession={(index) => {
+              setEditingReadingId(null);
+              readingPlans.removeSessionFromEditingPlan(index);
+            }}
             onAddReading={(item) => readingPlans.addReadingToEditingPlan(item)}
             onRemoveReading={(sessionIndex, readingId) =>
               readingPlans.removeReadingFromEditingPlan(sessionIndex, readingId)
+            }
+            editingReadingId={editingReadingId}
+            onEditingReadingChange={setEditingReadingId}
+            itemInputRef={itemInputRef}
+            onUpdateReading={(sessionIndex, readingId, item) =>
+              readingPlans.updateReadingInEditingPlan(
+                sessionIndex,
+                readingId,
+                item
+              )
             }
           />
         </section>
@@ -346,7 +394,7 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
           <button
             type="button"
             className="sb-rp-button sb-rp-button-primary"
-            onClick={() => void handleSave()}
+            onClick={handleSave}
             disabled={!canSave || saving}
           >
             {draft.isNew
@@ -443,13 +491,24 @@ interface SessionsSectionProps {
   onRemoveSession: (index: number) => void;
   onAddReading: (item: PlaylistItemData) => void;
   onRemoveReading: (sessionIndex: number, readingId: string) => void;
+  onUpdateReading: (
+    sessionIndex: number,
+    readingId: string,
+    item: PlaylistItemData
+  ) => void;
+  /** The reading open in the item input, or null when it's adding one. */
+  editingReadingId: string | null;
+  onEditingReadingChange: (readingId: string | null) => void;
+  /** Handle on the selected session's item input, for unsaved-edit checks. */
+  itemInputRef: RefObject<PlaylistItemInputHandle>;
 }
 
 /**
  * The plan's content: a vertical list of reading sessions, each holding one
  * sitting's worth of reading. Selecting a session opens the same add-item
  * control the playlist editor uses (scripture, text, or link) inside it, and is
- * also where the reader's "Add to plan" verse action puts a passage.
+ * also where the reader's "Add to plan" verse action puts a passage. Editing a
+ * reading selects its session and opens that same control on the reading.
  */
 function SessionsSection(props: SessionsSectionProps) {
   const {
@@ -461,6 +520,10 @@ function SessionsSection(props: SessionsSectionProps) {
     onRemoveSession,
     onAddReading,
     onRemoveReading,
+    onUpdateReading,
+    editingReadingId,
+    onEditingReadingChange: setEditingReadingId,
+    itemInputRef,
   } = props;
   const { t } = useI18n();
   // Only one reading is expanded at a time, across all sessions.
@@ -584,8 +647,27 @@ function SessionsSection(props: SessionsSectionProps) {
                         </button>
                         <button
                           type="button"
+                          className="sb-rp-icon-button sb-rp-reading-edit"
+                          aria-pressed={editingReadingId === reading.id}
+                          onClick={() => {
+                            onSelectSession(index);
+                            setEditingReadingId(reading.id);
+                          }}
+                          aria-label={t("reading-plan-edit-reading", {
+                            defaultValue: "Edit reading",
+                          })}
+                        >
+                          <MaterialIcon>edit</MaterialIcon>
+                        </button>
+                        <button
+                          type="button"
                           className="sb-rp-icon-button sb-rp-reading-remove"
-                          onClick={() => onRemoveReading(index, reading.id)}
+                          onClick={() => {
+                            onRemoveReading(index, reading.id);
+                            if (editingReadingId === reading.id) {
+                              setEditingReadingId(null);
+                            }
+                          }}
                           aria-label={t("reading-plan-scripture-remove", {
                             defaultValue: "Remove reading",
                           })}
@@ -614,9 +696,39 @@ function SessionsSection(props: SessionsSectionProps) {
               {/* Only the selected session takes new readings — including the
                   ones sent over from the reader's "Add to plan" action, which
                   has no way to name a session. */}
-              {isSelected ? (
-                <PlaylistItemInput books={books} onAdd={onAddReading} />
-              ) : null}
+              {isSelected
+                ? (() => {
+                    const editingReading =
+                      session.readings.find((r) => r.id === editingReadingId) ??
+                      null;
+                    const editItem = editingReading?.item;
+                    return (
+                      <PlaylistItemInput
+                        ref={itemInputRef}
+                        // Remount when the edit target changes so the inputs
+                        // seed from the newly chosen reading (or reset).
+                        key={
+                          editingReading ? `edit-${editingReading.id}` : "add"
+                        }
+                        books={books}
+                        onAdd={onAddReading}
+                        editItem={editItem}
+                        editScriptureText={
+                          editItem?.type === "bible-verse"
+                            ? playlistItemLabel(editItem, t, resolveBookName)
+                            : undefined
+                        }
+                        onUpdate={(item) => {
+                          if (editingReading) {
+                            onUpdateReading(index, editingReading.id, item);
+                          }
+                          setEditingReadingId(null);
+                        }}
+                        onCancelEdit={() => setEditingReadingId(null)}
+                      />
+                    );
+                  })()
+                : null}
             </li>
           );
         })}

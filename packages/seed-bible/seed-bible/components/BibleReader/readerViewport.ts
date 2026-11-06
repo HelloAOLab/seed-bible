@@ -14,13 +14,23 @@ export function findScrollContainer(element: HTMLElement): HTMLElement | null {
 }
 
 /**
- * How much of the bottom of the reader the fixed bottom chrome covers, read
- * from the variable BibleReaderToolbar keeps up to date. Written in px at
- * runtime; the stylesheet fallback is in rem.
+ * How much room to leave at the bottom of the reader for the fixed bottom
+ * chrome, read from the variable BibleReaderToolbar keeps up to date: the
+ * chrome itself plus a gap so the last content doesn't end flush against it.
+ * Written in px at runtime; the stylesheet fallback is in rem.
  */
 export function readBottomChromeInset(): number {
+  return readRootLength("--sb-reader-bottom-inset");
+}
+
+/** Just the part of the reader the bottom chrome covers, without that gap. */
+export function readBottomChromeCover(): number {
+  return readRootLength("--sb-reader-bottom-chrome");
+}
+
+function readRootLength(name: string): number {
   const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue("--sb-reader-bottom-inset")
+    .getPropertyValue(name)
     .trim();
   const value = parseFloat(raw);
   if (!Number.isFinite(value)) return 0;
@@ -49,10 +59,15 @@ function findMobileHeader(within: HTMLElement): Element | null {
  *
  * `within` is any element inside the reader, used to find that reader's
  * header.
+ *
+ * By default the bottom edge also leaves the gap kept above the toolbar. With
+ * `toToolbar` it ends at the toolbar itself, for things that should sit right
+ * against it.
  */
 export function measureVisibleReaderBounds(
   within: HTMLElement,
-  scroller: HTMLElement | null
+  scroller: HTMLElement | null,
+  { toToolbar = false }: { toToolbar?: boolean } = {}
 ): { top: number; bottom: number } {
   let top = 0;
   let bottom = window.innerHeight;
@@ -65,7 +80,32 @@ export function measureVisibleReaderBounds(
   if (header) {
     top = Math.max(top, header.getBoundingClientRect().bottom);
   }
-  return { top, bottom: bottom - readBottomChromeInset() };
+  const cover = toToolbar ? readBottomChromeCover() : readBottomChromeInset();
+  return { top, bottom: bottom - cover };
+}
+
+/** The part of the chapter content box that is on screen, in content px. */
+export interface ReaderViewport {
+  top: number;
+  bottom: number;
+}
+
+/**
+ * Where the screen is over the chapter content, in the content's own
+ * coordinates. See `measureVisibleReaderBounds` for what counts as on screen.
+ */
+export function measureReaderViewport(
+  content: HTMLElement,
+  scroller: HTMLElement | null,
+  options?: { toToolbar?: boolean }
+): ReaderViewport {
+  const contentRect = content.getBoundingClientRect();
+  const { top, bottom } = measureVisibleReaderBounds(
+    content,
+    scroller,
+    options
+  );
+  return { top: top - contentRect.top, bottom: bottom - contentRect.top };
 }
 
 /** Breathing room left above a verse scrolled to the top of the reader. */

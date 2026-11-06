@@ -120,6 +120,117 @@ describe("createBibleDataManager", () => {
     expect(mergedById.get("ESV")?.id).toBe("ESV");
   });
 
+  it("keeps a custom source's translation when the default catalog arrives after it", async () => {
+    const altNiv = createAltNivTranslation();
+    const defaultCatalogUrl = makeEndpointUrl(
+      EXAMPLE_API_ENDPOINT,
+      "api/available_translations.json"
+    );
+    let resolveDefaultCatalog!: () => void;
+    webGetMock.mockImplementation((url: string) => {
+      if (url === defaultCatalogUrl) {
+        return new Promise((resolve) => {
+          resolveDefaultCatalog = () => resolve(createResponse(translations));
+        });
+      }
+      if (
+        url === makeEndpointUrl(ALT_ENDPOINT, "api/available_translations.json")
+      ) {
+        return Promise.resolve(createResponse({ translations: [altNiv] }));
+      }
+      throw new Error(`No mocked response for ${url}`);
+    });
+    const manager = createManager();
+
+    // The default catalog is still downloading when the custom source is added.
+    const defaultCatalog = manager.getTranslations();
+    await manager.getTranslations(ALT_ENDPOINT);
+    resolveDefaultCatalog();
+    await defaultCatalog;
+
+    const niv = manager.availableTranslations.value.find(
+      (translation) => translation.id === "NIV"
+    );
+    expect(niv?.englishName).toBe("NIV Alternate");
+    expect(manager.getTranslationEndpointInfo("NIV").isDefault).toBe(false);
+    // The rest of the default catalog still arrives.
+    expect(
+      manager.availableTranslations.value.some(
+        (translation) => translation.id === "AAB"
+      )
+    ).toBe(true);
+  });
+
+  describe("catalogStatus", () => {
+    const defaultCatalogUrl = makeEndpointUrl(
+      EXAMPLE_API_ENDPOINT,
+      "api/available_translations.json"
+    );
+
+    it("goes from idle to loading to loaded as the default catalog downloads", async () => {
+      let resolveCatalog!: () => void;
+      webGetMock.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveCatalog = () => resolve(createResponse(translations));
+          })
+      );
+      const manager = createManager();
+      expect(manager.catalogStatus.value).toBe("idle");
+
+      const loading = manager.getTranslations();
+      expect(manager.catalogStatus.value).toBe("loading");
+
+      resolveCatalog();
+      await loading;
+      expect(manager.catalogStatus.value).toBe("loaded");
+    });
+
+    it("reports a failed download, and recovers when it is retried", async () => {
+      let fail = true;
+      webGetMock.mockImplementation(() =>
+        fail
+          ? Promise.reject(new Error("Network error"))
+          : Promise.resolve(createResponse(translations))
+      );
+      const manager = createManager();
+
+      await expect(manager.getTranslations()).rejects.toThrow();
+      expect(manager.catalogStatus.value).toBe("failed");
+
+      fail = false;
+      await manager.getTranslations();
+      expect(manager.catalogStatus.value).toBe("loaded");
+    });
+
+    it("stays loaded when a later refresh fails", async () => {
+      setWebResponses({ [defaultCatalogUrl]: createResponse(translations) });
+      const manager = createManager();
+      await manager.getTranslations();
+
+      webGetMock.mockImplementation(() =>
+        Promise.reject(new Error("Network error"))
+      );
+      await expect(
+        manager.getTranslations(undefined, { refresh: true })
+      ).rejects.toThrow();
+
+      expect(manager.catalogStatus.value).toBe("loaded");
+    });
+
+    it("ignores custom sources, which don't make the default catalog complete", async () => {
+      setWebResponses({
+        [makeEndpointUrl(ALT_ENDPOINT, "api/available_translations.json")]:
+          createResponse({ translations: [createAltNivTranslation()] }),
+      });
+      const manager = createManager();
+
+      await manager.getTranslations(ALT_ENDPOINT);
+
+      expect(manager.catalogStatus.value).toBe("idle");
+    });
+  });
+
   it("getTranslationBooks() fetches from the translation endpoint and caches by translation ID", async () => {
     const altNiv = createAltNivTranslation();
     const altNivBooks = {
@@ -297,6 +408,104 @@ describe("createBibleDataManager", () => {
     expect(manager.buildTranslationId("NIV")).toBe(
       makeEndpointUrl(ALT_ENDPOINT, "api/NIV/books.json")
     );
+  });
+
+  describe("getTranslationCatalog()", () => {
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    it("returns the fetched catalog", async () => {
+      setWebResponses({
+        [makeEndpointUrl(
+          EXAMPLE_API_ENDPOINT,
+          "api/available_translations.json"
+        )]: createResponse(translations),
+      });
+      const manager = createManager();
+
+      expect((await manager.getTranslationCatalog()).map((t) => t.id)).toEqual([
+        "AAB",
+        "NIV",
+      ]);
+    });
+
+    it("answers from the known catalog without fetching or re-saving it", async () => {
+      setWebResponses({
+        [makeEndpointUrl(
+          EXAMPLE_API_ENDPOINT,
+          "api/available_translations.json"
+        )]: createResponse(translations),
+      });
+      const manager = createManager();
+      await manager.getTranslationCatalog();
+      const catalog = manager.availableTranslations.value;
+      const requests = webGetMock.mock.calls.length;
+      const saves = vi.spyOn(Storage.prototype, "setItem");
+
+      await manager.getTranslationCatalog();
+      await manager.getTranslationCatalog();
+
+      expect(webGetMock.mock.calls.length).toBe(requests);
+      // A new list would rewrite the saved catalog and re-render pickers.
+      expect(manager.availableTranslations.value).toBe(catalog);
+      expect(saves).not.toHaveBeenCalledWith(
+        "availableTranslations",
+        expect.anything()
+      );
+      saves.mockRestore();
+    });
+
+    it("falls back to the previous visit's catalog when the fetch fails", async () => {
+      localStorage.setItem(
+        "availableTranslations",
+        JSON.stringify(translations.translations)
+      );
+      webGetMock.mockRejectedValue(new TypeError("Failed to fetch"));
+      const manager = createManager();
+      manager.hydrateCachedCatalog();
+
+      expect((await manager.getTranslationCatalog()).map((t) => t.id)).toEqual([
+        "AAB",
+        "NIV",
+      ]);
+    });
+
+    it("rejects when the fetch fails and nothing is known", async () => {
+      webGetMock.mockRejectedValue(new TypeError("Failed to fetch"));
+      const manager = createManager();
+
+      await expect(manager.getTranslationCatalog()).rejects.toThrow(
+        "Failed to fetch"
+      );
+    });
+  });
+
+  it("reads commentaries and datasets from the default endpoint", async () => {
+    setWebResponses({
+      [makeEndpointUrl(
+        EXAMPLE_API_ENDPOINT,
+        "api/available_commentaries.json"
+      )]: createResponse({ commentaries: [{ id: "adam-clarke" }] }),
+      [makeEndpointUrl(EXAMPLE_API_ENDPOINT, "api/available_datasets.json")]:
+        createResponse({ datasets: [{ id: "open-cross-ref" }] }),
+      [makeEndpointUrl(
+        EXAMPLE_API_ENDPOINT,
+        "api/d/open-cross-ref/JHN/3.json"
+      )]: createResponse({ chapter: { number: 3, content: [] } }),
+    });
+    const manager = createManager();
+
+    expect((await manager.getCommentaries()).map((c) => c.id)).toEqual([
+      "adam-clarke",
+    ]);
+    expect((await manager.getDatasets()).map((d) => d.id)).toEqual([
+      "open-cross-ref",
+    ]);
+    expect(
+      (await manager.getDatasetBookChapter("open-cross-ref", "JHN", 3)).chapter
+        .number
+    ).toBe(3);
   });
 
   describe("translationsCache option", () => {

@@ -97,7 +97,7 @@ function SensitiveProxyGroup(props: {
         {visibility === "public" && scope === "customization"
           ? t("sensitive-settings-destination-customization", {
               defaultValue:
-                "Only sent to {{host}}. Everyone using this customization sends requests with these values, unless they set their own, but nobody can see them.",
+                "Only sent to {{host}}. Everyone using this Custom Branding sends requests with these values, unless they set their own, but nobody can see them.",
               host,
             })
           : visibility === "public"
@@ -177,7 +177,7 @@ function SensitiveProxyGroup(props: {
           <option value="public">
             {scope === "customization"
               ? t("sensitive-settings-visibility-customization", {
-                  defaultValue: "Everyone using this customization",
+                  defaultValue: "Everyone using this Custom Branding",
                 })
               : t("sensitive-settings-visibility-public", {
                   defaultValue: "Anyone with the proxy's address",
@@ -209,7 +209,7 @@ function SensitiveProxyGroup(props: {
                 ? t("sensitive-setting-set", { defaultValue: "Set" })
                 : isProvided?.(key)
                   ? t("sensitive-setting-provided-by-customization", {
-                      defaultValue: "Provided by the customization",
+                      defaultValue: "Provided by the Custom Branding",
                     })
                   : t("sensitive-setting-not-set", { defaultValue: "Not set" })}
             </p>

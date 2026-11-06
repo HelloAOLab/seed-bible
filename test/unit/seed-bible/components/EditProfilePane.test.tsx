@@ -109,7 +109,7 @@ describe("EditProfilePane", () => {
     const { state } = createState();
     renderPane(state);
 
-    expect(container.querySelector(".sb-profile-email")?.textContent).toBe(
+    expect(container.querySelector(".sb-profile-email")?.textContent).toContain(
       "craig@example.org"
     );
 

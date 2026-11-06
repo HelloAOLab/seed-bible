@@ -28,8 +28,14 @@
       "default": "warm",
       "enum": ["plain", "warm", "bold"]
     },
-    "exampleClientId": { "type": "string", "sensitive": "exampleService" },
-    "exampleApiKey": { "type": "string", "sensitive": "exampleService" }
+    "exampleClientId": {
+      "type": "string",
+      "sensitive": "exampleService"
+    },
+    "exampleApiKey": {
+      "type": "string",
+      "sensitive": "exampleService"
+    }
   },
   "sensitive": {
     "exampleService": {
@@ -99,7 +105,13 @@
       "setting-tone-option-plain": "Plano",
       "setting-tone-option-warm": "Cálido",
       "setting-tone-option-bold": "Atrevido",
-      "example-banner": "Este es un ejemplo de banner. Desactívalo en la configuración de esta extensión."
+      "example-banner": "Este es un ejemplo de banner. Desactívalo en la configuración de esta extensión.",
+      "setting-exampleClientId-title": "Ejemplo de ID de cliente",
+      "setting-exampleClientId-description": "Se envía en el cuerpo de las solicitudes al servicio de ejemplo.",
+      "setting-exampleApiKey-title": "Ejemplo de clave API",
+      "setting-exampleApiKey-description": "Enviado como token de portador al servicio de ejemplo.",
+      "sensitive-exampleService-title": "Servicio de ejemplo",
+      "send-sensitive-request": "Enviar una solicitud con la configuración confidencial"
     },
     "am": {
       "title": "የምሳሌ ቅጥያ",
@@ -126,7 +138,13 @@
       "setting-tone-option-plain": "ሜዳ",
       "setting-tone-option-warm": "ሞቅ ያለ",
       "setting-tone-option-bold": "ደማቅ",
-      "example-banner": "ይህ የምሳሌው ባነር ነው። በዚህ ቅጥያ ቅንብሮች ውስጥ ያጥፉት።"
+      "example-banner": "ይህ የምሳሌው ባነር ነው። በዚህ ቅጥያ ቅንብሮች ውስጥ ያጥፉት።",
+      "setting-exampleClientId-title": "የደንበኛ መታወቂያ ምሳሌ",
+      "setting-exampleClientId-description": "በጥያቄዎች አካል ውስጥ ወደ ምሳሌው አገልግሎት ተልኳል።",
+      "setting-exampleApiKey-title": "የኤ.ፒ.አይ ቁልፍ ምሳሌ",
+      "setting-exampleApiKey-description": "እንደ ተሸካሚ ቶከን ወደ ምሳሌው አገልግሎት ተልኳል።",
+      "sensitive-exampleService-title": "የምሳሌ አገልግሎት",
+      "send-sensitive-request": "ከስሱ ቅንብሮች ጋር ጥያቄ ይላኩ"
     },
     "ar": {
       "title": "مثال على الامتداد",
@@ -153,7 +171,13 @@
       "setting-tone-option-plain": "سهل",
       "setting-tone-option-warm": "دافيء",
       "setting-tone-option-bold": "عريض",
-      "example-banner": "هذا مثال على الشعار. قم بإيقاف تشغيله من إعدادات هذه الإضافة."
+      "example-banner": "هذا مثال على الشعار. قم بإيقاف تشغيله من إعدادات هذه الإضافة.",
+      "setting-exampleClientId-title": "مثال على معرف العميل",
+      "setting-exampleClientId-description": "يتم إرسالها في نص الطلبات إلى خدمة المثال.",
+      "setting-exampleApiKey-title": "مثال على مفتاح API",
+      "setting-exampleApiKey-description": "تم إرسالها كرمز حامل إلى خدمة المثال.",
+      "sensitive-exampleService-title": "مثال على الخدمة",
+      "send-sensitive-request": "أرسل طلبًا يتضمن الإعدادات الحساسة"
     },
     "bn": {
       "title": "উদাহরণ সম্প্রসারণ",
@@ -180,7 +204,13 @@
       "setting-tone-option-plain": "সমতল",
       "setting-tone-option-warm": "উষ্ণ",
       "setting-tone-option-bold": "সাহসী",
-      "example-banner": "এটি একটি নমুনা ব্যানার। এই এক্সটেনশনের সেটিংসে এটি বন্ধ করুন।"
+      "example-banner": "এটি একটি নমুনা ব্যানার। এই এক্সটেনশনের সেটিংসে এটি বন্ধ করুন।",
+      "setting-exampleClientId-title": "উদাহরণ ক্লায়েন্ট আইডি",
+      "setting-exampleClientId-description": "উদাহরণ পরিষেবাতে পাঠানো অনুরোধের মূল অংশে পাঠানো হয়েছে।",
+      "setting-exampleApiKey-title": "উদাহরণ এপিআই কী",
+      "setting-exampleApiKey-description": "উদাহরণ পরিষেবাটিতে একটি বিয়ারার টোকেন হিসেবে পাঠানো হয়েছে।",
+      "sensitive-exampleService-title": "উদাহরণ পরিষেবা",
+      "send-sensitive-request": "সংবেদনশীল সেটিংস সহ একটি অনুরোধ পাঠান"
     },
     "fa": {
       "title": "مثال افزونه",
@@ -207,7 +237,13 @@
       "setting-tone-option-plain": "دشت",
       "setting-tone-option-warm": "گرم",
       "setting-tone-option-bold": "پررنگ",
-      "example-banner": "این بنر نمونه است. آن را در تنظیمات این افزونه غیرفعال کنید."
+      "example-banner": "این بنر نمونه است. آن را در تنظیمات این افزونه غیرفعال کنید.",
+      "setting-exampleClientId-title": "مثال شناسه مشتری",
+      "setting-exampleClientId-description": "در بدنه درخواست‌ها به سرویس نمونه ارسال شد.",
+      "setting-exampleApiKey-title": "مثال کلید API",
+      "setting-exampleApiKey-description": "به عنوان یک توکن حامل به سرویس نمونه ارسال شد.",
+      "sensitive-exampleService-title": "خدمات نمونه",
+      "send-sensitive-request": "ارسال درخواست با تنظیمات حساس"
     },
     "fr": {
       "title": "Exemple d&#39;extension",
@@ -234,7 +270,13 @@
       "setting-tone-option-plain": "Plaine",
       "setting-tone-option-warm": "Chaud",
       "setting-tone-option-bold": "Audacieux",
-      "example-banner": "Voici un exemple de bannière. Désactivez-la dans les paramètres de cette extension."
+      "example-banner": "Voici un exemple de bannière. Désactivez-la dans les paramètres de cette extension.",
+      "setting-exampleClientId-title": "Exemple d'identifiant client",
+      "setting-exampleClientId-description": "Envoyé dans le corps des requêtes au service d'exemple.",
+      "setting-exampleApiKey-title": "Exemple de clé API",
+      "setting-exampleApiKey-description": "Envoyé sous forme de jeton porteur au service d'exemple.",
+      "sensitive-exampleService-title": "Exemple de service",
+      "send-sensitive-request": "Envoyer une requête avec les paramètres sensibles"
     },
     "hi": {
       "title": "उदाहरण विस्तार",
@@ -261,7 +303,13 @@
       "setting-tone-option-plain": "मैदान",
       "setting-tone-option-warm": "गरम",
       "setting-tone-option-bold": "बोल्ड",
-      "example-banner": "यह एक उदाहरण बैनर है। इसे इस एक्सटेंशन की सेटिंग्स में बंद कर दें।"
+      "example-banner": "यह एक उदाहरण बैनर है। इसे इस एक्सटेंशन की सेटिंग्स में बंद कर दें।",
+      "setting-exampleClientId-title": "उदाहरण क्लाइंट आईडी",
+      "setting-exampleClientId-description": "उदाहरण सेवा को भेजे गए अनुरोधों के मुख्य भाग में।",
+      "setting-exampleApiKey-title": "उदाहरण एपीआई कुंजी",
+      "setting-exampleApiKey-description": "इसे बियरर टोकन के रूप में उदाहरण सेवा को भेजा गया।",
+      "sensitive-exampleService-title": "उदाहरण सेवा",
+      "send-sensitive-request": "संवेदनशील सेटिंग्स के साथ अनुरोध भेजें"
     },
     "id": {
       "title": "Contoh Perluasan",
@@ -288,7 +336,13 @@
       "setting-tone-option-plain": "Polos",
       "setting-tone-option-warm": "Hangat",
       "setting-tone-option-bold": "Berani",
-      "example-banner": "Ini adalah contoh banner. Matikan banner ini di pengaturan ekstensi ini."
+      "example-banner": "Ini adalah contoh banner. Matikan banner ini di pengaturan ekstensi ini.",
+      "setting-exampleClientId-title": "Contoh ID klien",
+      "setting-exampleClientId-description": "Dikirim dalam isi permintaan ke layanan contoh.",
+      "setting-exampleApiKey-title": "Contoh kunci API",
+      "setting-exampleApiKey-description": "Dikirim sebagai token pembawa ke layanan contoh.",
+      "sensitive-exampleService-title": "Contoh layanan",
+      "send-sensitive-request": "Kirim permintaan dengan pengaturan sensitif."
     },
     "ja": {
       "title": "拡張機能の例",
@@ -315,7 +369,13 @@
       "setting-tone-option-plain": "無地",
       "setting-tone-option-warm": "暖かい",
       "setting-tone-option-bold": "大胆な",
-      "example-banner": "これはサンプルバナーです。この拡張機能の設定でオフにできます。"
+      "example-banner": "これはサンプルバナーです。この拡張機能の設定でオフにできます。",
+      "setting-exampleClientId-title": "クライアントIDの例",
+      "setting-exampleClientId-description": "例のサービスへのリクエスト本文に含めて送信します。",
+      "setting-exampleApiKey-title": "APIキーの例",
+      "setting-exampleApiKey-description": "ベアラートークンとしてサンプルサービスに送信されました。",
+      "sensitive-exampleService-title": "サービス例",
+      "send-sensitive-request": "機密設定を含むリクエストを送信します"
     },
     "ko": {
       "title": "예제 확장",
@@ -342,7 +402,13 @@
       "setting-tone-option-plain": "솔직한",
       "setting-tone-option-warm": "따뜻한",
       "setting-tone-option-bold": "용감한",
-      "example-banner": "이것은 예시 배너입니다. 이 확장 프로그램 설정에서 배너를 끄세요."
+      "example-banner": "이것은 예시 배너입니다. 이 확장 프로그램 설정에서 배너를 끄세요.",
+      "setting-exampleClientId-title": "예시 클라이언트 ID",
+      "setting-exampleClientId-description": "예시 서비스로 전송되는 요청 본문에 포함되어 있습니다.",
+      "setting-exampleApiKey-title": "API 키 예시",
+      "setting-exampleApiKey-description": "예시 서비스로 베어러 토큰으로 전송되었습니다.",
+      "sensitive-exampleService-title": "예시 서비스",
+      "send-sensitive-request": "민감한 설정으로 요청을 보내세요"
     },
     "mn": {
       "title": "Жишээ өргөтгөл",
@@ -369,7 +435,13 @@
       "setting-tone-option-plain": "Энгийн",
       "setting-tone-option-warm": "Дулаан",
       "setting-tone-option-bold": "Тод",
-      "example-banner": "Энэ бол жишээ баннер юм. Үүнийг энэ өргөтгөлийн тохиргооноос унтраана уу."
+      "example-banner": "Энэ бол жишээ баннер юм. Үүнийг энэ өргөтгөлийн тохиргооноос унтраана уу.",
+      "setting-exampleClientId-title": "Жишээ үйлчлүүлэгчийн ID",
+      "setting-exampleClientId-description": "Жишээ үйлчилгээ рүү хүсэлтийн биед илгээсэн.",
+      "setting-exampleApiKey-title": "API түлхүүрийн жишээ",
+      "setting-exampleApiKey-description": "Жишээ үйлчилгээнд зөөгч токен болгон илгээсэн.",
+      "sensitive-exampleService-title": "Жишээ үйлчилгээ",
+      "send-sensitive-request": "Мэдрэмтгий тохиргоотой хүсэлт илгээх"
     },
     "ne": {
       "title": "उदाहरण विस्तार",
@@ -396,7 +468,13 @@
       "setting-tone-option-plain": "सादा",
       "setting-tone-option-warm": "न्यानो",
       "setting-tone-option-bold": "बोल्ड",
-      "example-banner": "यो उदाहरण ब्यानर हो। यो एक्सटेन्सनको सेटिङहरूमा गई यसलाई बन्द गर्नुहोस्।"
+      "example-banner": "यो उदाहरण ब्यानर हो। यो एक्सटेन्सनको सेटिङहरूमा गई यसलाई बन्द गर्नुहोस्।",
+      "setting-exampleClientId-title": "उदाहरण क्लाइन्ट आईडी",
+      "setting-exampleClientId-description": "अनुरोधहरूको मुख्य भागमा उदाहरण सेवामा पठाइयो।",
+      "setting-exampleApiKey-title": "उदाहरण API कुञ्जी",
+      "setting-exampleApiKey-description": "उदाहरण सेवाको वाहक टोकनको रूपमा पठाइयो।",
+      "sensitive-exampleService-title": "उदाहरण सेवा",
+      "send-sensitive-request": "संवेदनशील सेटिङहरू सहित अनुरोध पठाउनुहोस्"
     },
     "ps": {
       "title": "د مثال توسیع",
@@ -423,7 +501,13 @@
       "setting-tone-option-plain": "ساده",
       "setting-tone-option-warm": "ګرم",
       "setting-tone-option-bold": "بولډ",
-      "example-banner": "دا د مثال بینر دی. دا د دې توسیع په ترتیباتو کې بند کړئ."
+      "example-banner": "دا د مثال بینر دی. دا د دې توسیع په ترتیباتو کې بند کړئ.",
+      "setting-exampleClientId-title": "د مراجعینو د ID مثال",
+      "setting-exampleClientId-description": "د غوښتنو په بدن کې د مثال خدمت ته لیږل شوی.",
+      "setting-exampleApiKey-title": "د API کیلي مثال",
+      "setting-exampleApiKey-description": "د مثال خدمت ته د وړونکي نښې په توګه لیږل شوی.",
+      "sensitive-exampleService-title": "د خدمت مثال",
+      "send-sensitive-request": "د حساسو ترتیباتو سره غوښتنه واستوئ"
     },
     "pt": {
       "title": "Exemplo de extensão",
@@ -450,7 +534,13 @@
       "setting-tone-option-plain": "Simples",
       "setting-tone-option-warm": "Esquentar",
       "setting-tone-option-bold": "Audacioso",
-      "example-banner": "Este é um banner de exemplo. Desative-o nas configurações desta extensão."
+      "example-banner": "Este é um banner de exemplo. Desative-o nas configurações desta extensão.",
+      "setting-exampleClientId-title": "Exemplo de ID do cliente",
+      "setting-exampleClientId-description": "Enviado no corpo das solicitações ao serviço de exemplo.",
+      "setting-exampleApiKey-title": "Exemplo de chave de API",
+      "setting-exampleApiKey-description": "Enviado como um token de portador para o serviço de exemplo.",
+      "sensitive-exampleService-title": "Exemplo de serviço",
+      "send-sensitive-request": "Enviar uma solicitação com as configurações confidenciais"
     },
     "ru": {
       "title": "Пример расширения",
@@ -477,7 +567,13 @@
       "setting-tone-option-plain": "Простой",
       "setting-tone-option-warm": "Теплый",
       "setting-tone-option-bold": "Смелый",
-      "example-banner": "Это пример баннера. Отключите его в настройках расширения."
+      "example-banner": "Это пример баннера. Отключите его в настройках расширения.",
+      "setting-exampleClientId-title": "Пример идентификатора клиента",
+      "setting-exampleClientId-description": "Отправляется в теле запросов к примеру сервиса.",
+      "setting-exampleApiKey-title": "Пример ключа API",
+      "setting-exampleApiKey-description": "Отправлено в качестве токена носителя в пример сервиса.",
+      "sensitive-exampleService-title": "Пример услуги",
+      "send-sensitive-request": "Отправьте запрос с конфиденциальными настройками."
     },
     "sw": {
       "title": "Mfano wa Upanuzi",
@@ -504,7 +600,13 @@
       "setting-tone-option-plain": "Tambarare",
       "setting-tone-option-warm": "Joto",
       "setting-tone-option-bold": "Herufi nzito",
-      "example-banner": "Hii ndiyo bango la mfano. Lizime katika mipangilio ya kiendelezi hiki."
+      "example-banner": "Hii ndiyo bango la mfano. Lizime katika mipangilio ya kiendelezi hiki.",
+      "setting-exampleClientId-title": "Mfano wa kitambulisho cha mteja",
+      "setting-exampleClientId-description": "Imetumwa katika mwili wa maombi kwa huduma ya mfano.",
+      "setting-exampleApiKey-title": "Mfano wa ufunguo wa API",
+      "setting-exampleApiKey-description": "Imetumwa kama tokeni ya kubeba kwa huduma ya mfano.",
+      "sensitive-exampleService-title": "Huduma ya mfano",
+      "send-sensitive-request": "Tuma ombi lenye mipangilio nyeti"
     },
     "ti": {
       "title": "ኣብነት ኤክስቴንሽን",
@@ -531,7 +633,13 @@
       "setting-tone-option-plain": "ጎልጎል",
       "setting-tone-option-warm": "ውዑይ",
       "setting-tone-option-bold": "ድሙቅ",
-      "example-banner": "እዚ ኣብነት ባነር እዩ። ኣብ ቅጥዕታት ናይዚ ኤክስቴንሽን ኣጥፍእዎ።"
+      "example-banner": "እዚ ኣብነት ባነር እዩ። ኣብ ቅጥዕታት ናይዚ ኤክስቴንሽን ኣጥፍእዎ።",
+      "setting-exampleClientId-title": "ኣብነት መታወቅያ ዓሚል",
+      "setting-exampleClientId-description": "ኣብ ኣካል ሕቶታት ናብቲ ኣብነት ኣገልግሎት ዝለኣኽ።",
+      "setting-exampleApiKey-title": "ኣብነት ኤፒኣይ መፍትሕ",
+      "setting-exampleApiKey-description": "ከም ተሰካሚ ምልክት ናብቲ ኣብነት ኣገልግሎት ዝተላእከ።",
+      "sensitive-exampleService-title": "ኣብነት ኣገልግሎት",
+      "send-sensitive-request": "ምስቲ ስሱዕ ቅጥዕታት ሕቶ ስደድ"
     },
     "tr": {
       "title": "Örnek Uzantı",
@@ -558,7 +666,13 @@
       "setting-tone-option-plain": "Ova",
       "setting-tone-option-warm": "Ilık",
       "setting-tone-option-bold": "Gözü pek",
-      "example-banner": "Bu örnek bir banner'dır. Bu eklentinin ayarlarından kapatabilirsiniz."
+      "example-banner": "Bu örnek bir banner'dır. Bu eklentinin ayarlarından kapatabilirsiniz.",
+      "setting-exampleClientId-title": "Örnek istemci kimliği",
+      "setting-exampleClientId-description": "Örnek servise gönderilen isteklerin gövdesinde yer alır.",
+      "setting-exampleApiKey-title": "Örnek API anahtarı",
+      "setting-exampleApiKey-description": "Örnek servise taşıyıcı belirteç olarak gönderildi.",
+      "sensitive-exampleService-title": "Örnek hizmet",
+      "send-sensitive-request": "Hassas ayarları içeren bir istek gönderin."
     },
     "ug": {
       "title": "مىسال كېڭەيتىلمىسى",
@@ -585,7 +699,13 @@
       "setting-tone-option-plain": "تۈزلەڭلىك",
       "setting-tone-option-warm": "ئىللىق",
       "setting-tone-option-bold": "قېلىن",
-      "example-banner": "بۇ ئۈلگە لېنتا. بۇ كېڭەيتىلمىنىڭ تەڭشەكلىرىدىن ئۇنى ئېتىۋېتىڭ."
+      "example-banner": "بۇ ئۈلگە لېنتا. بۇ كېڭەيتىلمىنىڭ تەڭشەكلىرىدىن ئۇنى ئېتىۋېتىڭ.",
+      "setting-exampleClientId-title": "مىسال خېرىدار كىملىكى",
+      "setting-exampleClientId-description": "تەلەپلەرنىڭ ئاساسىي قىسمى ئۈلگە مۇلازىمىتىگە ئەۋەتىلدى.",
+      "setting-exampleApiKey-title": "API ئاچقۇچ مىسالى",
+      "setting-exampleApiKey-description": "ئۈلگە مۇلازىمىتىگە ئېلىپ يۈرۈش بەلگىسى سۈپىتىدە ئەۋەتىلدى.",
+      "sensitive-exampleService-title": "ئۈلگە مۇلازىمەت",
+      "send-sensitive-request": "سەزگۈر تەڭشەكلەر بىلەن تەلەپ ئەۋەتىڭ"
     },
     "uk": {
       "title": "Приклад розширення",
@@ -612,7 +732,13 @@
       "setting-tone-option-plain": "Рівнина",
       "setting-tone-option-warm": "Теплий",
       "setting-tone-option-bold": "Жирний шрифт",
-      "example-banner": "Це приклад банера. Вимкніть його в налаштуваннях цього розширення."
+      "example-banner": "Це приклад банера. Вимкніть його в налаштуваннях цього розширення.",
+      "setting-exampleClientId-title": "Приклад ідентифікатора клієнта",
+      "setting-exampleClientId-description": "Надіслано в тілі запитів до сервісу-прикладу.",
+      "setting-exampleApiKey-title": "Приклад ключа API",
+      "setting-exampleApiKey-description": "Надіслано як токен-носій до сервісу-прикладу.",
+      "sensitive-exampleService-title": "Приклад послуги",
+      "send-sensitive-request": "Надіслати запит із конфіденційними налаштуваннями"
     },
     "ur": {
       "title": "ایکسٹینشن کی مثال",
@@ -639,7 +765,13 @@
       "setting-tone-option-plain": "سادہ",
       "setting-tone-option-warm": "گرم",
       "setting-tone-option-bold": "بولڈ",
-      "example-banner": "یہ مثال بینر ہے۔ اس ایکسٹینشن کی سیٹنگز میں اسے آف کریں۔"
+      "example-banner": "یہ مثال بینر ہے۔ اس ایکسٹینشن کی سیٹنگز میں اسے آف کریں۔",
+      "setting-exampleClientId-title": "کلائنٹ ID کی مثال",
+      "setting-exampleClientId-description": "مثال کی خدمت میں درخواستوں کے باڈی میں بھیجا گیا۔",
+      "setting-exampleApiKey-title": "مثال API کلید",
+      "setting-exampleApiKey-description": "مثال کی خدمت میں بطور بیئرر ٹوکن بھیجا گیا۔",
+      "sensitive-exampleService-title": "مثال کی خدمت",
+      "send-sensitive-request": "حساس ترتیبات کے ساتھ درخواست بھیجیں۔"
     },
     "vi": {
       "title": "Ví dụ về phần mở rộng",
@@ -666,7 +798,13 @@
       "setting-tone-option-plain": "Đơn giản",
       "setting-tone-option-warm": "Ấm",
       "setting-tone-option-bold": "In đậm",
-      "example-banner": "Đây là ví dụ về banner. Hãy tắt nó trong phần cài đặt của tiện ích mở rộng này."
+      "example-banner": "Đây là ví dụ về banner. Hãy tắt nó trong phần cài đặt của tiện ích mở rộng này.",
+      "setting-exampleClientId-title": "Ví dụ ID khách hàng",
+      "setting-exampleClientId-description": "Được gửi trong phần nội dung của các yêu cầu đến dịch vụ ví dụ.",
+      "setting-exampleApiKey-title": "Ví dụ về khóa API",
+      "setting-exampleApiKey-description": "Được gửi dưới dạng mã thông báo bearer đến dịch vụ ví dụ.",
+      "sensitive-exampleService-title": "Ví dụ về dịch vụ",
+      "send-sensitive-request": "Gửi yêu cầu với các cài đặt nhạy cảm"
     },
     "zh": {
       "title": "示例扩展",
@@ -693,7 +831,13 @@
       "setting-tone-option-plain": "清楚的",
       "setting-tone-option-warm": "温暖的",
       "setting-tone-option-bold": "大胆的",
-      "example-banner": "这是示例横幅。请在扩展程序的设置中将其关闭。"
+      "example-banner": "这是示例横幅。请在扩展程序的设置中将其关闭。",
+      "setting-exampleClientId-title": "示例客户 ID",
+      "setting-exampleClientId-description": "在发送给示例服务的请求正文中发送。",
+      "setting-exampleApiKey-title": "示例 API 密钥",
+      "setting-exampleApiKey-description": "以持有者令牌的形式发送到示例服务。",
+      "sensitive-exampleService-title": "示例服务",
+      "send-sensitive-request": "发送包含敏感设置的请求"
     },
     "ind": {
       "title": "Contoh Perluasan",
@@ -720,7 +864,13 @@
       "setting-tone-option-plain": "Polos",
       "setting-tone-option-warm": "Hangat",
       "setting-tone-option-bold": "Berani",
-      "example-banner": "Ini adalah contoh banner. Matikan banner ini di pengaturan ekstensi ini."
+      "example-banner": "Ini adalah contoh banner. Matikan banner ini di pengaturan ekstensi ini.",
+      "setting-exampleClientId-title": "Contoh ID klien",
+      "setting-exampleClientId-description": "Dikirim dalam isi permintaan ke layanan contoh.",
+      "setting-exampleApiKey-title": "Contoh kunci API",
+      "setting-exampleApiKey-description": "Dikirim sebagai token pembawa ke layanan contoh.",
+      "sensitive-exampleService-title": "Contoh layanan",
+      "send-sensitive-request": "Kirim permintaan dengan pengaturan sensitif."
     },
     "af": {
       "title": "Voorbeeld Uitbreiding",
@@ -747,7 +897,13 @@
       "setting-tone-option-plain": "Gewone",
       "setting-tone-option-warm": "Warm",
       "setting-tone-option-bold": "Vet",
-      "example-banner": "Hierdie is die voorbeeldbanier. Skakel dit af in hierdie uitbreiding se instellings."
+      "example-banner": "Hierdie is die voorbeeldbanier. Skakel dit af in hierdie uitbreiding se instellings.",
+      "setting-exampleClientId-title": "Voorbeeld kliënt-ID",
+      "setting-exampleClientId-description": "Gestuur in die liggaam van versoeke na die voorbeelddiens.",
+      "setting-exampleApiKey-title": "Voorbeeld API-sleutel",
+      "setting-exampleApiKey-description": "Gestuur as 'n draertoken na die voorbeelddiens.",
+      "sensitive-exampleService-title": "Voorbeelddiens",
+      "send-sensitive-request": "Stuur 'n versoek met die sensitiewe instellings"
     },
     "az": {
       "title": "Nümunə Genişləndirmə",
@@ -774,7 +930,13 @@
       "setting-tone-option-plain": "Düzənlik",
       "setting-tone-option-warm": "İsti",
       "setting-tone-option-bold": "Qalın",
-      "example-banner": "Bu nümunə bannerdir. Bu genişləndirmənin parametrlərində onu söndürün."
+      "example-banner": "Bu nümunə bannerdir. Bu genişləndirmənin parametrlərində onu söndürün.",
+      "setting-exampleClientId-title": "Nümunə müştəri ID-si",
+      "setting-exampleClientId-description": "Nümunə xidmətinə sorğuların əsas hissəsi göndərildi.",
+      "setting-exampleApiKey-title": "Nümunə API açarı",
+      "setting-exampleApiKey-description": "Nümunə xidmətinə daşıyıcı token kimi göndərildi.",
+      "sensitive-exampleService-title": "Nümunə xidmət",
+      "send-sensitive-request": "Həssas parametrlərlə sorğu göndərin"
     },
     "be": {
       "title": "Прыклад пашырэння",
@@ -801,7 +963,13 @@
       "setting-tone-option-plain": "Звычайны",
       "setting-tone-option-warm": "Цёплы",
       "setting-tone-option-bold": "Тлусты шрыфт",
-      "example-banner": "Гэта прыклад банера. Выключыце яго ў наладах гэтага пашырэння."
+      "example-banner": "Гэта прыклад банера. Выключыце яго ў наладах гэтага пашырэння.",
+      "setting-exampleClientId-title": "Прыклад ідэнтыфікатара кліента",
+      "setting-exampleClientId-description": "Адпраўляецца ў целе запытаў да прыкладу службы.",
+      "setting-exampleApiKey-title": "Прыклад ключа API",
+      "setting-exampleApiKey-description": "Адпраўлены ў якасці токена-носьбіта ў прыклад сэрвісу.",
+      "sensitive-exampleService-title": "Прыклад паслугі",
+      "send-sensitive-request": "Адправіць запыт з канфідэнцыйнымі наладамі"
     },
     "bg": {
       "title": "Примерно разширение",
@@ -828,7 +996,13 @@
       "setting-tone-option-plain": "Обикновен",
       "setting-tone-option-warm": "Топло",
       "setting-tone-option-bold": "Удебелен шрифт",
-      "example-banner": "Това е примерният банер. Изключете го в настройките на това разширение."
+      "example-banner": "Това е примерният банер. Изключете го в настройките на това разширение.",
+      "setting-exampleClientId-title": "Примерен клиентски идентификатор",
+      "setting-exampleClientId-description": "Изпратено в тялото на заявките към примерната услуга.",
+      "setting-exampleApiKey-title": "Примерен API ключ",
+      "setting-exampleApiKey-description": "Изпратено като токен на приносител до примерната услуга.",
+      "sensitive-exampleService-title": "Примерна услуга",
+      "send-sensitive-request": "Изпратете заявка с чувствителни настройки"
     },
     "bs": {
       "title": "Primjer proširenja",
@@ -855,7 +1029,13 @@
       "setting-tone-option-plain": "Običan",
       "setting-tone-option-warm": "Toplo",
       "setting-tone-option-bold": "Podebljano",
-      "example-banner": "Ovo je primjer banera. Isključite ga u postavkama ove ekstenzije."
+      "example-banner": "Ovo je primjer banera. Isključite ga u postavkama ove ekstenzije.",
+      "setting-exampleClientId-title": "Primjer ID-a klijenta",
+      "setting-exampleClientId-description": "Poslano u tijelu zahtjeva primjernoj usluzi.",
+      "setting-exampleApiKey-title": "Primjer API ključa",
+      "setting-exampleApiKey-description": "Poslano kao token nosioca primjernoj usluzi.",
+      "sensitive-exampleService-title": "Primjer usluge",
+      "send-sensitive-request": "Pošaljite zahtjev s osjetljivim postavkama"
     },
     "ca": {
       "title": "Exemple d'extensió",
@@ -882,7 +1062,13 @@
       "setting-tone-option-plain": "Llis",
       "setting-tone-option-warm": "Càlid",
       "setting-tone-option-bold": "Negreta",
-      "example-banner": "Aquest és el bàner d'exemple. Desactiveu-lo a la configuració d'aquesta extensió."
+      "example-banner": "Aquest és el bàner d'exemple. Desactiveu-lo a la configuració d'aquesta extensió.",
+      "setting-exampleClientId-title": "Exemple d'ID de client",
+      "setting-exampleClientId-description": "Enviat al cos de les sol·licituds al servei d'exemple.",
+      "setting-exampleApiKey-title": "Exemple de clau API",
+      "setting-exampleApiKey-description": "Enviat com a testimoni de portador al servei d'exemple.",
+      "sensitive-exampleService-title": "Servei d'exemple",
+      "send-sensitive-request": "Envia una sol·licitud amb la configuració sensible"
     },
     "cs": {
       "title": "Příklad rozšíření",
@@ -909,7 +1095,13 @@
       "setting-tone-option-plain": "Prostý",
       "setting-tone-option-warm": "Teplý",
       "setting-tone-option-bold": "Tučné písmo",
-      "example-banner": "Toto je ukázkový banner. Vypněte ho v nastavení tohoto rozšíření."
+      "example-banner": "Toto je ukázkový banner. Vypněte ho v nastavení tohoto rozšíření.",
+      "setting-exampleClientId-title": "Příklad ID klienta",
+      "setting-exampleClientId-description": "Odesláno v těle požadavků do vzorové služby.",
+      "setting-exampleApiKey-title": "Příklad klíče API",
+      "setting-exampleApiKey-description": "Odesláno jako nositelský token do vzorové služby.",
+      "sensitive-exampleService-title": "Příklad služby",
+      "send-sensitive-request": "Odeslat požadavek s citlivým nastavením"
     },
     "cy": {
       "title": "Estyniad Enghraifft",
@@ -936,7 +1128,13 @@
       "setting-tone-option-plain": "Plaen",
       "setting-tone-option-warm": "Cynnes",
       "setting-tone-option-bold": "Beiddgar",
-      "example-banner": "Dyma'r baner enghreifftiol. Diffoddwch hi yng ngosodiadau'r estyniad hwn."
+      "example-banner": "Dyma'r baner enghreifftiol. Diffoddwch hi yng ngosodiadau'r estyniad hwn.",
+      "setting-exampleClientId-title": "ID cleient enghreifftiol",
+      "setting-exampleClientId-description": "Wedi'i anfon yng nghorff y ceisiadau i'r gwasanaeth enghreifftiol.",
+      "setting-exampleApiKey-title": "Allwedd API enghreifftiol",
+      "setting-exampleApiKey-description": "Wedi'i anfon fel tocyn cludwr i'r gwasanaeth enghreifftiol.",
+      "sensitive-exampleService-title": "Gwasanaeth enghreifftiol",
+      "send-sensitive-request": "Anfon cais gyda'r gosodiadau sensitif"
     },
     "da": {
       "title": "Eksempeludvidelse",
@@ -963,7 +1161,13 @@
       "setting-tone-option-plain": "Almindelig",
       "setting-tone-option-warm": "Varm",
       "setting-tone-option-bold": "Dristig",
-      "example-banner": "Dette er et eksempel på et banner. Slå det fra i indstillingerne for denne udvidelse."
+      "example-banner": "Dette er et eksempel på et banner. Slå det fra i indstillingerne for denne udvidelse.",
+      "setting-exampleClientId-title": "Eksempel på klient-ID",
+      "setting-exampleClientId-description": "Sendt i brødteksten af ​​anmodninger til eksempeltjenesten.",
+      "setting-exampleApiKey-title": "Eksempel på API-nøgle",
+      "setting-exampleApiKey-description": "Sendt som et bærertoken til eksempeltjenesten.",
+      "sensitive-exampleService-title": "Eksempel på tjeneste",
+      "send-sensitive-request": "Send en anmodning med de følsomme indstillinger"
     },
     "de": {
       "title": "Beispielerweiterung",
@@ -990,7 +1194,13 @@
       "setting-tone-option-plain": "Schmucklos",
       "setting-tone-option-warm": "Warm",
       "setting-tone-option-bold": "Deutlich",
-      "example-banner": "Dies ist ein Beispielbanner. Sie können es in den Einstellungen dieser Erweiterung deaktivieren."
+      "example-banner": "Dies ist ein Beispielbanner. Sie können es in den Einstellungen dieser Erweiterung deaktivieren.",
+      "setting-exampleClientId-title": "Beispiel-Client-ID",
+      "setting-exampleClientId-description": "Wird im Anfragetext an den Beispieldienst gesendet.",
+      "setting-exampleApiKey-title": "Beispiel-API-Schlüssel",
+      "setting-exampleApiKey-description": "Als Bearer-Token an den Beispieldienst gesendet.",
+      "sensitive-exampleService-title": "Beispielservice",
+      "send-sensitive-request": "Senden Sie eine Anfrage mit den sensiblen Einstellungen"
     },
     "el": {
       "title": "Παράδειγμα επέκτασης",
@@ -1017,7 +1227,13 @@
       "setting-tone-option-plain": "Πεδιάδα",
       "setting-tone-option-warm": "Ζεστός",
       "setting-tone-option-bold": "Τολμηρός",
-      "example-banner": "Αυτό είναι το παράδειγμα banner. Απενεργοποιήστε το στις ρυθμίσεις αυτής της επέκτασης."
+      "example-banner": "Αυτό είναι το παράδειγμα banner. Απενεργοποιήστε το στις ρυθμίσεις αυτής της επέκτασης.",
+      "setting-exampleClientId-title": "Παράδειγμα αναγνωριστικού πελάτη",
+      "setting-exampleClientId-description": "Αποστέλλεται το σώμα των αιτημάτων στην υπηρεσία-παράδειγμα.",
+      "setting-exampleApiKey-title": "Παράδειγμα κλειδιού API",
+      "setting-exampleApiKey-description": "Αποστέλλεται ως διακριτικό κομιστή στην υπηρεσία-παράδειγμα.",
+      "sensitive-exampleService-title": "Παράδειγμα υπηρεσίας",
+      "send-sensitive-request": "Αποστολή αιτήματος με τις ευαίσθητες ρυθμίσεις"
     },
     "et": {
       "title": "Näidislaiend",
@@ -1044,7 +1260,13 @@
       "setting-tone-option-plain": "Lihtne",
       "setting-tone-option-warm": "Soe",
       "setting-tone-option-bold": "Paks kiri",
-      "example-banner": "See on näidisbänner. Lülitage see laienduse seadetes välja."
+      "example-banner": "See on näidisbänner. Lülitage see laienduse seadetes välja.",
+      "setting-exampleClientId-title": "Näidiskliendi ID",
+      "setting-exampleClientId-description": "Saadetakse näidisteenusele suunatud päringute sisus.",
+      "setting-exampleApiKey-title": "Näidis API-võti",
+      "setting-exampleApiKey-description": "Saadeti näidisteenusele kandja tunnusena.",
+      "sensitive-exampleService-title": "Näidisteenus",
+      "send-sensitive-request": "Saatke päring tundlike sätetega"
     },
     "fi": {
       "title": "Esimerkkilaajennus",
@@ -1071,7 +1293,13 @@
       "setting-tone-option-plain": "Tavallinen",
       "setting-tone-option-warm": "Lämmin",
       "setting-tone-option-bold": "Lihavoitu",
-      "example-banner": "Tämä on esimerkkibanneri. Poista se käytöstä tämän laajennuksen asetuksista."
+      "example-banner": "Tämä on esimerkkibanneri. Poista se käytöstä tämän laajennuksen asetuksista.",
+      "setting-exampleClientId-title": "Esimerkki asiakastunnuksesta",
+      "setting-exampleClientId-description": "Lähetetään esimerkkipalveluun lähetettyjen pyyntöjen rungossa.",
+      "setting-exampleApiKey-title": "Esimerkki API-avaimesta",
+      "setting-exampleApiKey-description": "Lähetetty haltijan tunnuksena esimerkkipalveluun.",
+      "sensitive-exampleService-title": "Esimerkkipalvelu",
+      "send-sensitive-request": "Lähetä pyyntö arkaluontoisilla asetuksilla"
     },
     "fil": {
       "title": "Halimbawang Pagpapalawig",
@@ -1098,7 +1326,13 @@
       "setting-tone-option-plain": "Payak",
       "setting-tone-option-warm": "Mainit",
       "setting-tone-option-bold": "Naka-bold",
-      "example-banner": "Ito ang halimbawang banner. I-off ito sa mga setting ng extension na ito."
+      "example-banner": "Ito ang halimbawang banner. I-off ito sa mga setting ng extension na ito.",
+      "setting-exampleClientId-title": "Halimbawang ID ng kliyente",
+      "setting-exampleClientId-description": "Ipinadala sa katawan ng mga kahilingan sa halimbawang serbisyo.",
+      "setting-exampleApiKey-title": "Halimbawang API key",
+      "setting-exampleApiKey-description": "Ipinadala bilang bearer token sa halimbawang serbisyo.",
+      "sensitive-exampleService-title": "Halimbawang serbisyo",
+      "send-sensitive-request": "Magpadala ng kahilingan gamit ang mga sensitibong setting"
     },
     "fy": {
       "title": "Foarbyldútwreiding",
@@ -1125,7 +1359,13 @@
       "setting-tone-option-plain": "Gewoan",
       "setting-tone-option-warm": "Waarm",
       "setting-tone-option-bold": "Fet",
-      "example-banner": "Dit is de foarbyldbanner. Skeakelje it út yn 'e ynstellings fan dizze útwreiding."
+      "example-banner": "Dit is de foarbyldbanner. Skeakelje it út yn 'e ynstellings fan dizze útwreiding.",
+      "setting-exampleClientId-title": "Foarbyld kliïnt-ID",
+      "setting-exampleClientId-description": "Ferstjoerd yn 'e lichem fan oanfragen nei de foarbyldtsjinst.",
+      "setting-exampleApiKey-title": "Foarbyld API-kaai",
+      "setting-exampleApiKey-description": "Ferstjoerd as in bearer-token nei de foarbyldtsjinst.",
+      "sensitive-exampleService-title": "Foarbyldtsjinst",
+      "send-sensitive-request": "Stjoer in fersyk mei de gefoelige ynstellings"
     },
     "gl": {
       "title": "Extensión de exemplo",
@@ -1152,7 +1392,13 @@
       "setting-tone-option-plain": "Simple",
       "setting-tone-option-warm": "Cálido",
       "setting-tone-option-bold": "Negriña",
-      "example-banner": "Este é o banner de exemplo. Desactívao na configuración desta extensión."
+      "example-banner": "Este é o banner de exemplo. Desactívao na configuración desta extensión.",
+      "setting-exampleClientId-title": "Exemplo de ID de cliente",
+      "setting-exampleClientId-description": "Enviado no corpo das solicitudes ao servizo de exemplo.",
+      "setting-exampleApiKey-title": "Exemplo de clave API",
+      "setting-exampleApiKey-description": "Enviado como un token de portador ao servizo de exemplo.",
+      "sensitive-exampleService-title": "Servizo de exemplo",
+      "send-sensitive-request": "Enviar unha solicitude coa configuración confidencial"
     },
     "gn": {
       "title": "Techapyrã Extensión rehegua",
@@ -1179,7 +1425,13 @@
       "setting-tone-option-plain": "Ñupyso",
       "setting-tone-option-warm": "Haku",
       "setting-tone-option-bold": "Iñakuã",
-      "example-banner": "Péva ha’e pe pancarta techapyrã. Embogue ko extensión ñembohekorãme."
+      "example-banner": "Péva ha’e pe pancarta techapyrã. Embogue ko extensión ñembohekorãme.",
+      "setting-exampleClientId-title": "Techapyrã ID cliente rehegua",
+      "setting-exampleClientId-description": "Oñemondóva cuerpo de pedido-pe servicio techapyrãme.",
+      "setting-exampleApiKey-title": "Techapyrã API clave rehegua",
+      "setting-exampleApiKey-description": "Oñemondóva token portador ramo servicio techapyrãme.",
+      "sensitive-exampleService-title": "Servicio techapyrã",
+      "send-sensitive-request": "Emondo peteĩ mba’ejerure umi ñemboheko sensitivo reheve"
     },
     "gu": {
       "title": "ઉદાહરણ એક્સટેન્શન",
@@ -1206,7 +1458,13 @@
       "setting-tone-option-plain": "સાદો",
       "setting-tone-option-warm": "ગરમ",
       "setting-tone-option-bold": "બોલ્ડ",
-      "example-banner": "આ ઉદાહરણ બેનર છે. આ એક્સટેન્શનની સેટિંગ્સમાં તેને બંધ કરો."
+      "example-banner": "આ ઉદાહરણ બેનર છે. આ એક્સટેન્શનની સેટિંગ્સમાં તેને બંધ કરો.",
+      "setting-exampleClientId-title": "ઉદાહરણ ક્લાયન્ટ ID",
+      "setting-exampleClientId-description": "વિનંતીઓના મુખ્ય ભાગમાં ઉદાહરણ સેવાને મોકલવામાં આવી છે.",
+      "setting-exampleApiKey-title": "ઉદાહરણ API કી",
+      "setting-exampleApiKey-description": "ઉદાહરણ સેવાના બેરર ટોકન તરીકે મોકલવામાં આવ્યું.",
+      "sensitive-exampleService-title": "ઉદાહરણ સેવા",
+      "send-sensitive-request": "સંવેદનશીલ સેટિંગ્સ સાથે વિનંતી મોકલો"
     },
     "he": {
       "title": "הרחבה לדוגמה",
@@ -1233,7 +1491,13 @@
       "setting-tone-option-plain": "מִישׁוֹר",
       "setting-tone-option-warm": "חַם",
       "setting-tone-option-bold": "נוֹעָז",
-      "example-banner": "זוהי דוגמה לבאנר. כבה אותו בהגדרות של התוסף הזה."
+      "example-banner": "זוהי דוגמה לבאנר. כבה אותו בהגדרות של התוסף הזה.",
+      "setting-exampleClientId-title": "מזהה לקוח לדוגמה",
+      "setting-exampleClientId-description": "נשלח בגוף הבקשות לשירות הדוגמה.",
+      "setting-exampleApiKey-title": "מפתח API לדוגמה",
+      "setting-exampleApiKey-description": "נשלח כאסימון נושא לשירות הדוגמה.",
+      "sensitive-exampleService-title": "שירות לדוגמה",
+      "send-sensitive-request": "שלח בקשה עם ההגדרות הרגישות"
     },
     "hr": {
       "title": "Primjer proširenja",
@@ -1260,7 +1524,13 @@
       "setting-tone-option-plain": "Običan",
       "setting-tone-option-warm": "Toplo",
       "setting-tone-option-bold": "Podebljano",
-      "example-banner": "Ovo je primjer bannera. Isključite ga u postavkama ovog proširenja."
+      "example-banner": "Ovo je primjer bannera. Isključite ga u postavkama ovog proširenja.",
+      "setting-exampleClientId-title": "Primjer ID-a klijenta",
+      "setting-exampleClientId-description": "Poslano u tijelu zahtjeva primjernoj usluzi.",
+      "setting-exampleApiKey-title": "Primjer API ključa",
+      "setting-exampleApiKey-description": "Poslano kao token nositelja primjernoj usluzi.",
+      "sensitive-exampleService-title": "Primjer usluge",
+      "send-sensitive-request": "Pošaljite zahtjev s osjetljivim postavkama"
     },
     "hu": {
       "title": "Példa kiterjesztés",
@@ -1287,7 +1557,13 @@
       "setting-tone-option-plain": "Egyszerű",
       "setting-tone-option-warm": "Meleg",
       "setting-tone-option-bold": "Bátor",
-      "example-banner": "Ez a példa banner. Kapcsold ki a bővítmény beállításaiban."
+      "example-banner": "Ez a példa banner. Kapcsold ki a bővítmény beállításaiban.",
+      "setting-exampleClientId-title": "Példa ügyfél-azonosítóra",
+      "setting-exampleClientId-description": "A kérések törzsében elküldve a példa szolgáltatásnak.",
+      "setting-exampleApiKey-title": "Példa API-kulcsra",
+      "setting-exampleApiKey-description": "Tulajdonosi tokenként elküldve a példa szolgáltatásnak.",
+      "sensitive-exampleService-title": "Példa szolgáltatás",
+      "send-sensitive-request": "Küldjön egy kérést a bizalmas beállításokkal"
     },
     "is": {
       "title": "Dæmi um viðbót",
@@ -1314,7 +1590,13 @@
       "setting-tone-option-plain": "Einfalt",
       "setting-tone-option-warm": "Hlýtt",
       "setting-tone-option-bold": "Feitletrað",
-      "example-banner": "Þetta er dæmi um borða. Slökktu á því í stillingum þessarar viðbótar."
+      "example-banner": "Þetta er dæmi um borða. Slökktu á því í stillingum þessarar viðbótar.",
+      "setting-exampleClientId-title": "Dæmi um viðskiptavinaauðkenni",
+      "setting-exampleClientId-description": "Sent í meginmáli beiðna til dæmaþjónustunnar.",
+      "setting-exampleApiKey-title": "Dæmi um API-lykil",
+      "setting-exampleApiKey-description": "Sent sem flutningstákn til dæmaþjónustunnar.",
+      "sensitive-exampleService-title": "Dæmi um þjónustu",
+      "send-sensitive-request": "Senda beiðni með viðkvæmum stillingum"
     },
     "it": {
       "title": "Esempio di estensione",
@@ -1341,7 +1623,13 @@
       "setting-tone-option-plain": "Pianura",
       "setting-tone-option-warm": "Caldo",
       "setting-tone-option-bold": "Grassetto",
-      "example-banner": "Questo è il banner di esempio. Disattivalo nelle impostazioni di questa estensione."
+      "example-banner": "Questo è il banner di esempio. Disattivalo nelle impostazioni di questa estensione.",
+      "setting-exampleClientId-title": "Esempio di ID client",
+      "setting-exampleClientId-description": "Inviato nel corpo delle richieste al servizio di esempio.",
+      "setting-exampleApiKey-title": "Esempio di chiave API",
+      "setting-exampleApiKey-description": "Inviato come token di invio al servizio di esempio.",
+      "sensitive-exampleService-title": "Esempio di servizio",
+      "send-sensitive-request": "Invia una richiesta con le impostazioni sensibili"
     },
     "iw": {
       "title": "הרחבה לדוגמה",
@@ -1368,7 +1656,13 @@
       "setting-tone-option-plain": "מִישׁוֹר",
       "setting-tone-option-warm": "חַם",
       "setting-tone-option-bold": "נוֹעָז",
-      "example-banner": "זוהי דוגמה לבאנר. כבה אותו בהגדרות של התוסף הזה."
+      "example-banner": "זוהי דוגמה לבאנר. כבה אותו בהגדרות של התוסף הזה.",
+      "setting-exampleClientId-title": "מזהה לקוח לדוגמה",
+      "setting-exampleClientId-description": "נשלח בגוף הבקשות לשירות הדוגמה.",
+      "setting-exampleApiKey-title": "מפתח API לדוגמה",
+      "setting-exampleApiKey-description": "נשלח כאסימון נושא לשירות הדוגמה.",
+      "sensitive-exampleService-title": "שירות לדוגמה",
+      "send-sensitive-request": "שלח בקשה עם ההגדרות הרגישות"
     },
     "ka": {
       "title": "გაფართოების მაგალითი",
@@ -1395,7 +1689,13 @@
       "setting-tone-option-plain": "უბრალო",
       "setting-tone-option-warm": "თბილი",
       "setting-tone-option-bold": "თამამი",
-      "example-banner": "ეს არის ბანერის მაგალითი. გამორთეთ ის ამ გაფართოების პარამეტრებში."
+      "example-banner": "ეს არის ბანერის მაგალითი. გამორთეთ ის ამ გაფართოების პარამეტრებში.",
+      "setting-exampleClientId-title": "კლიენტის ID-ის მაგალითი",
+      "setting-exampleClientId-description": "მოთხოვნების ძირითადი ნაწილი იგზავნება სამაგალითო სერვისზე.",
+      "setting-exampleApiKey-title": "API გასაღების მაგალითი",
+      "setting-exampleApiKey-description": "იგზავნება სამაგალითო სერვისზე, როგორც მატარებელი ტოკენი.",
+      "sensitive-exampleService-title": "მაგალითის სერვისი",
+      "send-sensitive-request": "გაგზავნეთ მოთხოვნა მგრძნობიარე პარამეტრებით"
     },
     "km": {
       "title": "ឧទាហរណ៍ផ្នែកបន្ថែម",
@@ -1422,7 +1722,13 @@
       "setting-tone-option-plain": "ធម្មតា",
       "setting-tone-option-warm": "ក្តៅ",
       "setting-tone-option-bold": "ដិត",
-      "example-banner": "នេះ​ជា​បដា​ឧទាហរណ៍។ បិទ​វា​នៅ​ក្នុង​ការ​កំណត់​របស់​ផ្នែក​បន្ថែម​នេះ។"
+      "example-banner": "នេះ​ជា​បដា​ឧទាហរណ៍។ បិទ​វា​នៅ​ក្នុង​ការ​កំណត់​របស់​ផ្នែក​បន្ថែម​នេះ។",
+      "setting-exampleClientId-title": "ឧទាហរណ៍លេខសម្គាល់អតិថិជន",
+      "setting-exampleClientId-description": "បានផ្ញើសំណើជាផ្នែកៗទៅកាន់សេវាកម្មឧទាហរណ៍។",
+      "setting-exampleApiKey-title": "ឧទាហរណ៍​សោ API",
+      "setting-exampleApiKey-description": "បានផ្ញើជាថូខឹនអ្នកកាន់ទៅកាន់សេវាកម្មឧទាហរណ៍។",
+      "sensitive-exampleService-title": "សេវាកម្មឧទាហរណ៍",
+      "send-sensitive-request": "ផ្ញើសំណើជាមួយការកំណត់រសើប"
     },
     "kn": {
       "title": "ಉದಾಹರಣೆ ವಿಸ್ತರಣೆ",
@@ -1449,7 +1755,13 @@
       "setting-tone-option-plain": "ಸರಳ",
       "setting-tone-option-warm": "ಬೆಚ್ಚಗಿನ",
       "setting-tone-option-bold": "ದಪ್ಪ",
-      "example-banner": "ಇದು ಉದಾಹರಣೆ ಬ್ಯಾನರ್. ಈ ವಿಸ್ತರಣೆಯ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅದನ್ನು ಆಫ್ ಮಾಡಿ."
+      "example-banner": "ಇದು ಉದಾಹರಣೆ ಬ್ಯಾನರ್. ಈ ವಿಸ್ತರಣೆಯ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅದನ್ನು ಆಫ್ ಮಾಡಿ.",
+      "setting-exampleClientId-title": "ಉದಾಹರಣೆ ಕ್ಲೈಂಟ್ ಐಡಿ",
+      "setting-exampleClientId-description": "ವಿನಂತಿಗಳ ಮುಖ್ಯ ಭಾಗವನ್ನು ಉದಾಹರಣೆ ಸೇವೆಗೆ ಕಳುಹಿಸಲಾಗಿದೆ.",
+      "setting-exampleApiKey-title": "ಉದಾಹರಣೆ API ಕೀ",
+      "setting-exampleApiKey-description": "ಉದಾಹರಣೆ ಸೇವೆಗೆ ಬೇರರ್ ಟೋಕನ್ ಆಗಿ ಕಳುಹಿಸಲಾಗಿದೆ.",
+      "sensitive-exampleService-title": "ಉದಾಹರಣೆ ಸೇವೆ",
+      "send-sensitive-request": "ಸೂಕ್ಷ್ಮ ಸೆಟ್ಟಿಂಗ್‌ಗಳೊಂದಿಗೆ ವಿನಂತಿಯನ್ನು ಕಳುಹಿಸಿ"
     },
     "ky": {
       "title": "Мисал кеңейтүүсү",
@@ -1476,7 +1788,13 @@
       "setting-tone-option-plain": "Жөнөкөй",
       "setting-tone-option-warm": "Жылуу",
       "setting-tone-option-bold": "Калың",
-      "example-banner": "Бул үлгү баннер. Аны бул кеңейтүүнүн жөндөөлөрүнөн өчүрүңүз."
+      "example-banner": "Бул үлгү баннер. Аны бул кеңейтүүнүн жөндөөлөрүнөн өчүрүңүз.",
+      "setting-exampleClientId-title": "Кардардын ID үлгүсү",
+      "setting-exampleClientId-description": "Суроо-талаптардын негизги бөлүгү үлгү кызматына жөнөтүлдү.",
+      "setting-exampleApiKey-title": "API ачкычынын үлгүсү",
+      "setting-exampleApiKey-description": "Мисал кызматына алып жүрүүчү токен катары жөнөтүлдү.",
+      "sensitive-exampleService-title": "Мисал кызмат",
+      "send-sensitive-request": "Сезимтал жөндөөлөр менен суроо-талап жөнөтүңүз"
     },
     "ln": {
       "title": "Ndakisa Bobakisi",
@@ -1503,7 +1821,13 @@
       "setting-tone-option-plain": "Pete",
       "setting-tone-option-warm": "Molunge",
       "setting-tone-option-bold": "Molende",
-      "example-banner": "Oyo ezali ndakisa ya bendele. Boma yango na ba paramètres ya extension oyo."
+      "example-banner": "Oyo ezali ndakisa ya bendele. Boma yango na ba paramètres ya extension oyo.",
+      "setting-exampleClientId-title": "Ndakisa ID ya client",
+      "setting-exampleClientId-description": "Etindami na nzoto ya masengi na service ya ndakisa.",
+      "setting-exampleApiKey-title": "Ndakisa ya fungola ya API",
+      "setting-exampleApiKey-description": "Etindamaki lokola elembo ya mokumbi na mosala ya ndakisa.",
+      "sensitive-exampleService-title": "Ndakisa ya mosala",
+      "send-sensitive-request": "Tinda demande na ba paramètres sensibles"
     },
     "lo": {
       "title": "ຕົວຢ່າງສ່ວນຂະຫຍາຍ",
@@ -1530,7 +1854,13 @@
       "setting-tone-option-plain": "ທົ່ງພຽງ",
       "setting-tone-option-warm": "ອຸ່ນ",
       "setting-tone-option-bold": "ຕົວໜາ",
-      "example-banner": "ນີ້ແມ່ນຕົວຢ່າງປ້າຍໂຄສະນາ. ປິດມັນໃນການຕັ້ງຄ່າຂອງສ່ວນຂະຫຍາຍນີ້."
+      "example-banner": "ນີ້ແມ່ນຕົວຢ່າງປ້າຍໂຄສະນາ. ປິດມັນໃນການຕັ້ງຄ່າຂອງສ່ວນຂະຫຍາຍນີ້.",
+      "setting-exampleClientId-title": "ຕົວຢ່າງ ID ລູກຄ້າ",
+      "setting-exampleClientId-description": "ສົ່ງໃນເນື້ອໃນຂອງການຮ້ອງຂໍໄປຫາບໍລິການຕົວຢ່າງແລ້ວ.",
+      "setting-exampleApiKey-title": "ຕົວຢ່າງລະຫັດ API",
+      "setting-exampleApiKey-description": "ສົ່ງເປັນໂທເຄັນຜູ້ຖືໄປຫາບໍລິການຕົວຢ່າງ.",
+      "sensitive-exampleService-title": "ຕົວຢ່າງການບໍລິການ",
+      "send-sensitive-request": "ສົ່ງຄຳຮ້ອງຂໍດ້ວຍການຕັ້ງຄ່າທີ່ລະອຽດອ່ອນ"
     },
     "lt": {
       "title": "Plėtinio pavyzdys",
@@ -1557,7 +1887,13 @@
       "setting-tone-option-plain": "Paprastas",
       "setting-tone-option-warm": "Šilta",
       "setting-tone-option-bold": "Paryškintas",
-      "example-banner": "Tai yra reklamjuostės pavyzdys. Išjunkite ją šio plėtinio nustatymuose."
+      "example-banner": "Tai yra reklamjuostės pavyzdys. Išjunkite ją šio plėtinio nustatymuose.",
+      "setting-exampleClientId-title": "Kliento ID pavyzdys",
+      "setting-exampleClientId-description": "Siunčiama užklausų tekste pavyzdinei paslaugai.",
+      "setting-exampleApiKey-title": "API rakto pavyzdys",
+      "setting-exampleApiKey-description": "Išsiųsta kaip pavyzdinė paslauga kaip turėtojo žetonas.",
+      "sensitive-exampleService-title": "Pavyzdinė paslauga",
+      "send-sensitive-request": "Siųskite užklausą su slaptais nustatymais"
     },
     "lv": {
       "title": "Piemēra paplašinājums",
@@ -1584,7 +1920,13 @@
       "setting-tone-option-plain": "Vienkāršs",
       "setting-tone-option-warm": "Silts",
       "setting-tone-option-bold": "Treknraksts",
-      "example-banner": "Šis ir reklāmkaroga piemērs. Izslēdziet to šī paplašinājuma iestatījumos."
+      "example-banner": "Šis ir reklāmkaroga piemērs. Izslēdziet to šī paplašinājuma iestatījumos.",
+      "setting-exampleClientId-title": "Klienta ID piemērs",
+      "setting-exampleClientId-description": "Nosūtīts pieprasījumu pamattekstā uz piemēra pakalpojumu.",
+      "setting-exampleApiKey-title": "API atslēgas piemērs",
+      "setting-exampleApiKey-description": "Nosūtīts kā nesēja marķieris uz piemēra pakalpojumu.",
+      "sensitive-exampleService-title": "Pakalpojuma piemērs",
+      "send-sensitive-request": "Nosūtiet pieprasījumu ar sensitīvajiem iestatījumiem"
     },
     "mk": {
       "title": "Пример за проширување",
@@ -1611,7 +1953,13 @@
       "setting-tone-option-plain": "Обичен",
       "setting-tone-option-warm": "Топло",
       "setting-tone-option-bold": "Задебелено",
-      "example-banner": "Ова е примерниот банер. Исклучете го во поставките на оваа екстензија."
+      "example-banner": "Ова е примерниот банер. Исклучете го во поставките на оваа екстензија.",
+      "setting-exampleClientId-title": "Пример за ID на клиент",
+      "setting-exampleClientId-description": "Испратено во телото на барањата до примерната услуга.",
+      "setting-exampleApiKey-title": "Пример за API клуч",
+      "setting-exampleApiKey-description": "Испратено како токен за носител до примерната услуга.",
+      "sensitive-exampleService-title": "Пример услуга",
+      "send-sensitive-request": "Испратете барање со чувствителните поставки"
     },
     "ml": {
       "title": "ഉദാഹരണ വിപുലീകരണം",
@@ -1638,7 +1986,13 @@
       "setting-tone-option-plain": "സമതലം",
       "setting-tone-option-warm": "ചൂട്",
       "setting-tone-option-bold": "ബോൾഡ്",
-      "example-banner": "ഇതാണ് ഉദാഹരണ ബാനർ. ഈ വിപുലീകരണത്തിന്റെ ക്രമീകരണങ്ങളിൽ ഇത് ഓഫാക്കുക."
+      "example-banner": "ഇതാണ് ഉദാഹരണ ബാനർ. ഈ വിപുലീകരണത്തിന്റെ ക്രമീകരണങ്ങളിൽ ഇത് ഓഫാക്കുക.",
+      "setting-exampleClientId-title": "ക്ലയന്റ് ഐഡിയുടെ ഉദാഹരണം",
+      "setting-exampleClientId-description": "ഉദാഹരണ സേവനത്തിലേക്ക് അഭ്യർത്ഥനകളുടെ ബോഡി അയച്ചു.",
+      "setting-exampleApiKey-title": "API കീയുടെ ഉദാഹരണം",
+      "setting-exampleApiKey-description": "ഉദാഹരണ സേവനത്തിലേക്ക് ഒരു ബെയറർ ടോക്കണായി അയച്ചു.",
+      "sensitive-exampleService-title": "ഉദാഹരണ സേവനം",
+      "send-sensitive-request": "സെൻസിറ്റീവ് ക്രമീകരണങ്ങൾ ഉപയോഗിച്ച് ഒരു അഭ്യർത്ഥന അയയ്ക്കുക"
     },
     "mr": {
       "title": "उदाहरण विस्तार",
@@ -1665,7 +2019,13 @@
       "setting-tone-option-plain": "साधा",
       "setting-tone-option-warm": "उबदार",
       "setting-tone-option-bold": "ठळक",
-      "example-banner": "हे उदाहरणादाखल दिलेले बॅनर आहे. या एक्सटेन्शनच्या सेटिंग्जमध्ये जाऊन ते बंद करा."
+      "example-banner": "हे उदाहरणादाखल दिलेले बॅनर आहे. या एक्सटेन्शनच्या सेटिंग्जमध्ये जाऊन ते बंद करा.",
+      "setting-exampleClientId-title": "उदाहरण क्लायंट आयडी",
+      "setting-exampleClientId-description": "उदाहरण सेवेला केलेल्या विनंत्यांच्या मुख्य भागामध्ये पाठवले.",
+      "setting-exampleApiKey-title": "उदाहरण API की",
+      "setting-exampleApiKey-description": "उदाहरण सेवेला बेअरर टोकन म्हणून पाठवले.",
+      "sensitive-exampleService-title": "उदाहरण सेवा",
+      "send-sensitive-request": "संवेदनशील सेटिंग्जसह विनंती पाठवा"
     },
     "ms": {
       "title": "Contoh Pelanjutan",
@@ -1692,7 +2052,13 @@
       "setting-tone-option-plain": "Biasa",
       "setting-tone-option-warm": "Hangat",
       "setting-tone-option-bold": "Tebal",
-      "example-banner": "Ini ialah contoh sepanduk. Matikannya dalam tetapan sambungan ini."
+      "example-banner": "Ini ialah contoh sepanduk. Matikannya dalam tetapan sambungan ini.",
+      "setting-exampleClientId-title": "Contoh ID pelanggan",
+      "setting-exampleClientId-description": "Dihantar dalam isi permintaan kepada perkhidmatan contoh.",
+      "setting-exampleApiKey-title": "Contoh kunci API",
+      "setting-exampleApiKey-description": "Dihantar sebagai token pembawa kepada perkhidmatan contoh.",
+      "sensitive-exampleService-title": "Perkhidmatan contoh",
+      "send-sensitive-request": "Hantar permintaan dengan tetapan sensitif"
     },
     "my": {
       "title": "ဥပမာ တိုးချဲ့မှု",
@@ -1719,7 +2085,13 @@
       "setting-tone-option-plain": "ရိုးရှင်းသော",
       "setting-tone-option-warm": "နွေးနွေး",
       "setting-tone-option-bold": "ရဲရင့်သော",
-      "example-banner": "ဒါက နမူနာ ဘန်နာပါ။ ဒီ extension ရဲ့ setting မှာ ပိတ်ပါ။"
+      "example-banner": "ဒါက နမူနာ ဘန်နာပါ။ ဒီ extension ရဲ့ setting မှာ ပိတ်ပါ။",
+      "setting-exampleClientId-title": "ဥပမာ ကလိုင်းယင့် ID",
+      "setting-exampleClientId-description": "နမူနာဝန်ဆောင်မှုသို့ တောင်းဆိုချက်များ၏ အစိတ်အပိုင်းတစ်ခုအဖြစ် ပေးပို့ထားသည်။",
+      "setting-exampleApiKey-title": "API သော့ ဥပမာ",
+      "setting-exampleApiKey-description": "နမူနာဝန်ဆောင်မှုသို့ ကိုင်ဆောင်သူတိုကင်အဖြစ် ပို့လိုက်သည်။",
+      "sensitive-exampleService-title": "နမူနာဝန်ဆောင်မှု",
+      "send-sensitive-request": "သိမ်မွေ့သောဆက်တင်များဖြင့် တောင်းဆိုချက်တစ်ခုပေးပို့ပါ"
     },
     "nb": {
       "title": "Eksempelutvidelse",
@@ -1746,7 +2118,13 @@
       "setting-tone-option-plain": "Vanlig",
       "setting-tone-option-warm": "Varm",
       "setting-tone-option-bold": "Fet",
-      "example-banner": "Dette er et eksempel på en banner. Slå den av i innstillingene for denne utvidelsen."
+      "example-banner": "Dette er et eksempel på en banner. Slå den av i innstillingene for denne utvidelsen.",
+      "setting-exampleClientId-title": "Eksempel på klient-ID",
+      "setting-exampleClientId-description": "Sendt i forespørselsteksten til eksempeltjenesten.",
+      "setting-exampleApiKey-title": "Eksempel på API-nøkkel",
+      "setting-exampleApiKey-description": "Sendt som et bærertoken til eksempeltjenesten.",
+      "sensitive-exampleService-title": "Eksempeltjeneste",
+      "send-sensitive-request": "Send en forespørsel med de sensitive innstillingene"
     },
     "nl": {
       "title": "Voorbeelduitbreiding",
@@ -1773,7 +2151,13 @@
       "setting-tone-option-plain": "Vlak",
       "setting-tone-option-warm": "Warm",
       "setting-tone-option-bold": "Vetgedrukt",
-      "example-banner": "Dit is de voorbeeldbanner. Schakel deze uit in de instellingen van deze extensie."
+      "example-banner": "Dit is de voorbeeldbanner. Schakel deze uit in de instellingen van deze extensie.",
+      "setting-exampleClientId-title": "Voorbeeld client-ID",
+      "setting-exampleClientId-description": "Verzonden in de body van verzoeken aan de voorbeeldservice.",
+      "setting-exampleApiKey-title": "Voorbeeld API-sleutel",
+      "setting-exampleApiKey-description": "Verzonden als een bearer-token naar de voorbeeldservice.",
+      "sensitive-exampleService-title": "Voorbeeldservice",
+      "send-sensitive-request": "Verzend een verzoek met de gevoelige instellingen."
     },
     "no": {
       "title": "Eksempelutvidelse",
@@ -1800,7 +2184,13 @@
       "setting-tone-option-plain": "Vanlig",
       "setting-tone-option-warm": "Varm",
       "setting-tone-option-bold": "Fet",
-      "example-banner": "Dette er et eksempel på en banner. Slå den av i innstillingene for denne utvidelsen."
+      "example-banner": "Dette er et eksempel på en banner. Slå den av i innstillingene for denne utvidelsen.",
+      "setting-exampleClientId-title": "Eksempel på klient-ID",
+      "setting-exampleClientId-description": "Sendt i forespørselsteksten til eksempeltjenesten.",
+      "setting-exampleApiKey-title": "Eksempel på API-nøkkel",
+      "setting-exampleApiKey-description": "Sendt som et bærertoken til eksempeltjenesten.",
+      "sensitive-exampleService-title": "Eksempeltjeneste",
+      "send-sensitive-request": "Send en forespørsel med de sensitive innstillingene"
     },
     "pa": {
       "title": "ਉਦਾਹਰਨ ਐਕਸਟੈਂਸ਼ਨ",
@@ -1827,7 +2217,13 @@
       "setting-tone-option-plain": "ਸਾਦਾ",
       "setting-tone-option-warm": "ਗਰਮ",
       "setting-tone-option-bold": "ਬੋਲਡ",
-      "example-banner": "ਇਹ ਉਦਾਹਰਣ ਬੈਨਰ ਹੈ। ਇਸਨੂੰ ਇਸ ਐਕਸਟੈਂਸ਼ਨ ਦੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਬੰਦ ਕਰੋ।"
+      "example-banner": "ਇਹ ਉਦਾਹਰਣ ਬੈਨਰ ਹੈ। ਇਸਨੂੰ ਇਸ ਐਕਸਟੈਂਸ਼ਨ ਦੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਬੰਦ ਕਰੋ।",
+      "setting-exampleClientId-title": "ਉਦਾਹਰਨ ਕਲਾਇੰਟ ਆਈਡੀ",
+      "setting-exampleClientId-description": "ਬੇਨਤੀਆਂ ਦੇ ਮੁੱਖ ਭਾਗ ਵਿੱਚ ਉਦਾਹਰਣ ਸੇਵਾ ਨੂੰ ਭੇਜਿਆ ਗਿਆ।",
+      "setting-exampleApiKey-title": "ਉਦਾਹਰਨ API ਕੁੰਜੀ",
+      "setting-exampleApiKey-description": "ਉਦਾਹਰਨ ਸੇਵਾ ਲਈ ਇੱਕ ਬੇਅਰਰ ਟੋਕਨ ਵਜੋਂ ਭੇਜਿਆ ਗਿਆ।",
+      "sensitive-exampleService-title": "ਉਦਾਹਰਨ ਸੇਵਾ",
+      "send-sensitive-request": "ਸੰਵੇਦਨਸ਼ੀਲ ਸੈਟਿੰਗਾਂ ਨਾਲ ਇੱਕ ਬੇਨਤੀ ਭੇਜੋ"
     },
     "pl": {
       "title": "Przykładowe rozszerzenie",
@@ -1854,7 +2250,13 @@
       "setting-tone-option-plain": "Zwykły",
       "setting-tone-option-warm": "Ciepły",
       "setting-tone-option-bold": "Pogrubiony",
-      "example-banner": "To jest przykładowy baner. Wyłącz go w ustawieniach tego rozszerzenia."
+      "example-banner": "To jest przykładowy baner. Wyłącz go w ustawieniach tego rozszerzenia.",
+      "setting-exampleClientId-title": "Przykładowy identyfikator klienta",
+      "setting-exampleClientId-description": "Wysyłane w treści żądania do przykładowej usługi.",
+      "setting-exampleApiKey-title": "Przykładowy klucz API",
+      "setting-exampleApiKey-description": "Wysłano jako token okaziciela do przykładowej usługi.",
+      "sensitive-exampleService-title": "Przykładowa usługa",
+      "send-sensitive-request": "Wyślij prośbę z ustawieniami poufnymi"
     },
     "ro": {
       "title": "Exemplu de extensie",
@@ -1881,7 +2283,13 @@
       "setting-tone-option-plain": "Simplu",
       "setting-tone-option-warm": "Cald",
       "setting-tone-option-bold": "Îndrăzneţ",
-      "example-banner": "Acesta este exemplul de banner. Dezactivați-l din setările acestei extensii."
+      "example-banner": "Acesta este exemplul de banner. Dezactivați-l din setările acestei extensii.",
+      "setting-exampleClientId-title": "Exemplu de ID client",
+      "setting-exampleClientId-description": "Trimis în corpul cererilor către serviciul exemplu.",
+      "setting-exampleApiKey-title": "Exemplu de cheie API",
+      "setting-exampleApiKey-description": "Trimis ca token la purtător către serviciul exemplu.",
+      "sensitive-exampleService-title": "Serviciu exemplu",
+      "send-sensitive-request": "Trimiteți o solicitare cu setările sensibile"
     },
     "sk": {
       "title": "Príklad rozšírenia",
@@ -1908,7 +2316,13 @@
       "setting-tone-option-plain": "Obyčajný",
       "setting-tone-option-warm": "Teplé",
       "setting-tone-option-bold": "Tučné písmo",
-      "example-banner": "Toto je vzorový banner. Vypnite ho v nastaveniach tohto rozšírenia."
+      "example-banner": "Toto je vzorový banner. Vypnite ho v nastaveniach tohto rozšírenia.",
+      "setting-exampleClientId-title": "Príklad ID klienta",
+      "setting-exampleClientId-description": "Odoslané v tele požiadaviek do vzorovej služby.",
+      "setting-exampleApiKey-title": "Príklad kľúča API",
+      "setting-exampleApiKey-description": "Odoslané ako token na doručiteľa do vzorovej služby.",
+      "sensitive-exampleService-title": "Príklad služby",
+      "send-sensitive-request": "Odoslať požiadavku s citlivými nastaveniami"
     },
     "sl": {
       "title": "Primer razširitve",
@@ -1935,7 +2349,13 @@
       "setting-tone-option-plain": "Navaden",
       "setting-tone-option-warm": "Toplo",
       "setting-tone-option-bold": "Krepko",
-      "example-banner": "To je primer pasice. Izklopite jo v nastavitvah te razširitve."
+      "example-banner": "To je primer pasice. Izklopite jo v nastavitvah te razširitve.",
+      "setting-exampleClientId-title": "Primer ID-ja stranke",
+      "setting-exampleClientId-description": "Poslano v telesu zahtev vzorčni storitvi.",
+      "setting-exampleApiKey-title": "Primer ključa API",
+      "setting-exampleApiKey-description": "Poslano kot žeton nosilca vzorčni storitvi.",
+      "sensitive-exampleService-title": "Primer storitve",
+      "send-sensitive-request": "Pošljite zahtevo z občutljivimi nastavitvami"
     },
     "sq": {
       "title": "Shembull Zgjerimi",
@@ -1962,7 +2382,13 @@
       "setting-tone-option-plain": "I thjeshtë",
       "setting-tone-option-warm": "I ngrohtë",
       "setting-tone-option-bold": "Trashë",
-      "example-banner": "Ky është shembulli i banderolës. Çaktivizojeni në cilësimet e kësaj shtese."
+      "example-banner": "Ky është shembulli i banderolës. Çaktivizojeni në cilësimet e kësaj shtese.",
+      "setting-exampleClientId-title": "Shembull i ID-së së klientit",
+      "setting-exampleClientId-description": "Dërguar në trupin e kërkesave te shërbimi shembull.",
+      "setting-exampleApiKey-title": "Shembull çelësi API",
+      "setting-exampleApiKey-description": "U dërgua si një shenjë bartëse te shërbimi shembull.",
+      "sensitive-exampleService-title": "Shembull shërbimi",
+      "send-sensitive-request": "Dërgoni një kërkesë me cilësimet e ndjeshme"
     },
     "sv": {
       "title": "Exempelförlängning",
@@ -1989,7 +2415,13 @@
       "setting-tone-option-plain": "Vanlig",
       "setting-tone-option-warm": "Värma",
       "setting-tone-option-bold": "Djärv",
-      "example-banner": "Detta är exempelbannern. Stäng av den i inställningarna för den här tillägget."
+      "example-banner": "Detta är exempelbannern. Stäng av den i inställningarna för den här tillägget.",
+      "setting-exampleClientId-title": "Exempel på klient-ID",
+      "setting-exampleClientId-description": "Skickas i brödtexten av förfrågningar till exempeltjänsten.",
+      "setting-exampleApiKey-title": "Exempel på API-nyckel",
+      "setting-exampleApiKey-description": "Skickas som en bärartoken till exempeltjänsten.",
+      "sensitive-exampleService-title": "Exempeltjänst",
+      "send-sensitive-request": "Skicka en begäran med de känsliga inställningarna"
     },
     "ta": {
       "title": "எடுத்துக்காட்டு நீட்டிப்பு",
@@ -2016,7 +2448,13 @@
       "setting-tone-option-plain": "சாதாரண",
       "setting-tone-option-warm": "சூடான",
       "setting-tone-option-bold": "தைரியமான",
-      "example-banner": "இது மாதிரி பேனர். இந்த நீட்டிப்பின் அமைப்புகளில் இதை அணைத்துவிடவும்."
+      "example-banner": "இது மாதிரி பேனர். இந்த நீட்டிப்பின் அமைப்புகளில் இதை அணைத்துவிடவும்.",
+      "setting-exampleClientId-title": "எடுத்துக்காட்டு கிளையன்ட் ஐடி",
+      "setting-exampleClientId-description": "எடுத்துக்காட்டு சேவைக்கான கோரிக்கைகளின் உள்ளடக்கத்தில் அனுப்பப்பட்டது.",
+      "setting-exampleApiKey-title": "எடுத்துக்காட்டு API விசை",
+      "setting-exampleApiKey-description": "எடுத்துக்காட்டு சேவைக்கு பியரர் டோக்கனாக அனுப்பப்பட்டது.",
+      "sensitive-exampleService-title": "எடுத்துக்காட்டு சேவை",
+      "send-sensitive-request": "முக்கியமான அமைப்புகளுடன் ஒரு கோரிக்கையை அனுப்பவும்"
     },
     "te": {
       "title": "ఉదాహరణ పొడిగింపు",
@@ -2043,7 +2481,13 @@
       "setting-tone-option-plain": "సాదా",
       "setting-tone-option-warm": "వెచ్చని",
       "setting-tone-option-bold": "బోల్డ్",
-      "example-banner": "ఇది ఉదాహరణ బ్యానర్. ఈ ఎక్స్టెన్షన్ సెట్టింగ్స్‌లో దీన్ని ఆఫ్ చేయండి."
+      "example-banner": "ఇది ఉదాహరణ బ్యానర్. ఈ ఎక్స్టెన్షన్ సెట్టింగ్స్‌లో దీన్ని ఆఫ్ చేయండి.",
+      "setting-exampleClientId-title": "ఉదాహరణ క్లయింట్ ID",
+      "setting-exampleClientId-description": "ఉదాహరణ సేవకు చేసిన అభ్యర్థనల బాడీలో పంపబడింది.",
+      "setting-exampleApiKey-title": "ఉదాహరణ API కీ",
+      "setting-exampleApiKey-description": "ఉదాహరణ సేవకు బేరర్ టోకెన్‌గా పంపబడింది.",
+      "sensitive-exampleService-title": "ఉదాహరణ సేవ",
+      "send-sensitive-request": "సున్నితమైన సెట్టింగ్‌లతో అభ్యర్థనను పంపండి"
     },
     "th": {
       "title": "ตัวอย่างส่วนขยาย",
@@ -2070,7 +2514,13 @@
       "setting-tone-option-plain": "ธรรมดา",
       "setting-tone-option-warm": "อบอุ่น",
       "setting-tone-option-bold": "ตัวหนา",
-      "example-banner": "นี่คือแบนเนอร์ตัวอย่าง คุณสามารถปิดใช้งานได้ในการตั้งค่าของส่วนขยายนี้"
+      "example-banner": "นี่คือแบนเนอร์ตัวอย่าง คุณสามารถปิดใช้งานได้ในการตั้งค่าของส่วนขยายนี้",
+      "setting-exampleClientId-title": "ตัวอย่างรหัสลูกค้า",
+      "setting-exampleClientId-description": "ส่งไปในส่วนเนื้อหาของคำขอไปยังบริการตัวอย่าง",
+      "setting-exampleApiKey-title": "ตัวอย่างคีย์ API",
+      "setting-exampleApiKey-description": "ส่งเป็นโทเค็นแบบ Bearer ไปยังบริการตัวอย่าง",
+      "sensitive-exampleService-title": "ตัวอย่างบริการ",
+      "send-sensitive-request": "ส่งคำขอโดยใช้การตั้งค่าที่ละเอียดอ่อน"
     },
     "tl": {
       "title": "Halimbawang Pagpapalawig",
@@ -2097,7 +2547,13 @@
       "setting-tone-option-plain": "Payak",
       "setting-tone-option-warm": "Mainit",
       "setting-tone-option-bold": "Naka-bold",
-      "example-banner": "Ito ang halimbawang banner. I-off ito sa mga setting ng extension na ito."
+      "example-banner": "Ito ang halimbawang banner. I-off ito sa mga setting ng extension na ito.",
+      "setting-exampleClientId-title": "Halimbawang ID ng kliyente",
+      "setting-exampleClientId-description": "Ipinadala sa katawan ng mga kahilingan sa halimbawang serbisyo.",
+      "setting-exampleApiKey-title": "Halimbawang API key",
+      "setting-exampleApiKey-description": "Ipinadala bilang bearer token sa halimbawang serbisyo.",
+      "sensitive-exampleService-title": "Halimbawang serbisyo",
+      "send-sensitive-request": "Magpadala ng kahilingan gamit ang mga sensitibong setting"
     },
     "uz": {
       "title": "Namuna kengaytmasi",
@@ -2124,7 +2580,13 @@
       "setting-tone-option-plain": "Tekislik",
       "setting-tone-option-warm": "Issiq",
       "setting-tone-option-bold": "Qalin",
-      "example-banner": "Bu namunaviy banner. Uni ushbu kengaytma sozlamalarida o'chirib qo'ying."
+      "example-banner": "Bu namunaviy banner. Uni ushbu kengaytma sozlamalarida o'chirib qo'ying.",
+      "setting-exampleClientId-title": "Mijoz identifikatoriga misol",
+      "setting-exampleClientId-description": "So'rovlar matni namunaviy xizmatga yuborildi.",
+      "setting-exampleApiKey-title": "API kalitiga misol",
+      "setting-exampleApiKey-description": "Namunaviy xizmatga tashuvchi token sifatida yuborildi.",
+      "sensitive-exampleService-title": "Namunaviy xizmat",
+      "send-sensitive-request": "Maxfiy sozlamalar bilan so'rov yuboring"
     },
     "zu": {
       "title": "Isibonelo Sokwandiswa",
@@ -2151,7 +2613,13 @@
       "setting-tone-option-plain": "Okungacacile",
       "setting-tone-option-warm": "Kufudumele",
       "setting-tone-option-bold": "Okugqamile",
-      "example-banner": "Lesi yisibonelo sesibhengezo. Sicime kuzilungiselelo zalesi sandiso."
+      "example-banner": "Lesi yisibonelo sesibhengezo. Sicime kuzilungiselelo zalesi sandiso.",
+      "setting-exampleClientId-title": "Isibonelo se-ID yeklayenti",
+      "setting-exampleClientId-description": "Kuthunyelwe emzimbeni wezicelo kusevisi yesibonelo.",
+      "setting-exampleApiKey-title": "Ukhiye we-API oyisibonelo",
+      "setting-exampleApiKey-description": "Kuthunyelwe njengethokheni yomphathi kusevisi yesibonelo.",
+      "sensitive-exampleService-title": "Isevisi yesibonelo",
+      "send-sensitive-request": "Thumela isicelo ngezilungiselelo ezibucayi"
     }
   }
 }

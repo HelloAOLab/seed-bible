@@ -24,6 +24,17 @@
 .sb-reader-toolbar-wrap {
   position: static;
   transition: transform 0.3s ease;
+  /* Both mobile rows (chapter nav + tabs) derive their text, icons and tints
+     from --sb-font-color, so re-pointing it here makes them follow the reader
+     toolbar's text color instead of the page's. The pill border is re-declared
+     because a var() inside a :root custom property resolves at :root, against
+     the page's --sb-font-color, not this override. */
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
+  --sb-reader-floating-nav-group-border: color-mix(
+    in srgb,
+    var(--sb-reader-toolbar-font-color) 30%,
+    transparent
+  );
 }
 
 .sb-reader-toolbar-item {
@@ -174,7 +185,7 @@
  * visible on dark surfaces. SVG icons are unaffected — they already use
  * `currentColor` and follow the toolbar font color. */
 .sb-reader-toolbar-button img,
-.sb-reader-toolbar-more-item img,
+.sb-more-menu-icon img,
 .sb-tool-context-menu-item img,
 .sb-verse-toolbar-draggable button img,
 .sb-verse-toolbar img {
@@ -189,39 +200,6 @@
   position: relative;
 }
 
-.sb-reader-toolbar-more-menu {
-  position: absolute;
-  /* Inline end, not physical right, so an RTL anchor on the left grows
-     the menu into the screen. */
-  inset-inline-end: 0;
-  bottom: calc(100% + 0.625rem);
-  min-width: 11.25rem;
-  border-radius: var(--sb-reader-toolbar-border-radius);
-  border: var(--sb-reader-toolbar-border);
-  background: var(--sb-reader-toolbar-background);
-  box-shadow: var(--sb-reader-toolbar-box-shadow);
-  padding: 0.375rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.sb-reader-toolbar-more-item {
-  border: none;
-  background: transparent;
-  text-align: start;
-  padding: 0.5rem 0.625rem;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-
-.sb-reader-toolbar-more-item:hover {
-  background: var(--sb-secondary-color);
-}
-
 .sb-tool-context-menu {
   position: absolute;
   inset-inline-end: 0;
@@ -232,11 +210,29 @@
   background: var(--sb-reader-toolbar-background);
   box-shadow: var(--sb-reader-toolbar-box-shadow);
   z-index: 2;
+  /* The corner by its button, for the opening animation below. */
+  transform-origin: bottom right;
+}
+
+.sb-tool-context-menu:dir(rtl) {
+  transform-origin: bottom left;
 }
 
 .sb-tool-context-menu-below {
   bottom: auto;
   top: calc(100% + 0.5rem);
+  transform-origin: top right;
+}
+
+.sb-tool-context-menu-below:dir(rtl) {
+  transform-origin: top left;
+}
+
+/* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-tool-context-menu {
+    animation: sb-context-menu-open 0.15s ease-out;
+  }
 }
 
 /* Submenu opened from a card inside the drag-to-reveal row. That row clips
@@ -493,8 +489,11 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--sb-book-title-font-color);
-  font-family: var(--text-bookTitle-font);
+  font-family: var(
+    --sb-scripture-font-override,
+    var(--sb-book-title-font-family)
+  );
+  color: var(--sb-font-color);
   font-size: min(1.2rem, 22px);
   font-weight: 700;
   display: flex;
@@ -544,17 +543,123 @@
   }
 }
 
+/* More popover anchored above the More button (the last mobile tab, or the
+   end of the desktop toolbar). Inline end so RTL (More on the left) grows the
+   menu into the screen instead of off the left edge. */
+.sb-more-menu {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: calc(100% + 0.5rem);
+  min-width: 12.5rem;
+  padding: 0.625rem;
+  background: var(--sb-reader-toolbar-background);
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.875rem;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  z-index: 100;
+  /* The corner by the More button, for the opening animation below. */
+  transform-origin: bottom right;
+}
+
+.sb-more-menu:dir(rtl) {
+  transform-origin: bottom left;
+}
+
+/* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-more-menu {
+    animation: sb-context-menu-open 0.15s ease-out;
+  }
+}
+
+.sb-more-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.9375rem;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  text-align: start;
+  transition: background-color 0.15s ease;
+}
+
+.sb-more-menu-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+.sb-more-menu-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.375rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  flex-shrink: 0;
+}
+
+.sb-more-menu-group-title {
+  padding: 0.25rem 0.75rem 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-more-menu-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-more-menu-unread-indicator {
+  flex-shrink: 0;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 62.4375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  pointer-events: none;
+}
+
+.sb-more-menu-typing-indicator {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+  pointer-events: none;
+  animation: sb-reader-toolbar-typing-pulse 1.4s ease-out infinite;
+}
+
 @media (max-width: 480px) {
   .sb-reader-toolbar-wrap {
     position: fixed;
-    left: 50%;
+    /* Pinned to both edges rather than centered with translateX(-50%): at
+     * fractional device-pixel widths (e.g. 125% display scaling) the
+     * translated bar snaps half a pixel off and the page shows through as a
+     * hairline along one edge. */
+    left: 0;
+    right: 0;
     bottom: 0;
-    transform: translateX(-50%);
     /* Sit above the mobile sidebar/settings overlay (z-index: 100) so the
      * bottom bar of options stays visible while the account panel is open.
      * The overlay already reserves `padding-bottom: 68px` for it. */
     z-index: 101;
-    width: 100vw;
   }
 
   .sb-action-btns {
@@ -653,138 +758,6 @@
     color: inherit;
   }
 
-  /* More popover anchored above the More tab. Inline end so RTL (More tab
-     on the left) grows the menu into the screen instead of off the left edge. */
-  .sb-mobile-more-menu {
-    position: absolute;
-    inset-inline-end: 0;
-    bottom: calc(100% + 0.5rem);
-    min-width: 12.5rem;
-    padding: 0.625rem;
-    background: var(--sb-reader-toolbar-background);
-    border: 1px solid var(--sb-divider-color);
-    border-radius: 0.875rem;
-    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
-    display: flex;
-    flex-direction: column-reverse;
-    gap: 0.375rem;
-    z-index: 100;
-  }
-
-  .sb-mobile-more-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.625rem 0.75rem;
-    border: none;
-    background: transparent;
-    color: var(--sb-font-color);
-    font: inherit;
-    font-size: 0.9375rem;
-    border-radius: 0.625rem;
-    cursor: pointer;
-    text-align: start;
-    transition: background-color 0.15s ease;
-  }
-
-  .sb-mobile-more-menu-item:hover {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-  }
-
-  .sb-mobile-more-menu-icon {
-    width: 1.375rem;
-    height: 1.375rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.375rem;
-    color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
-    flex-shrink: 0;
-  }
-
-  .sb-mobile-more-menu-label {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .sb-mobile-more-menu-unread-indicator {
-    flex-shrink: 0;
-    min-width: 1rem;
-    height: 1rem;
-    padding: 0 0.25rem;
-    border-radius: 62.4375rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.625rem;
-    font-weight: 700;
-    line-height: 1;
-    background: var(--sb-primary-color);
-    color: var(--sb-primary-font-color);
-    pointer-events: none;
-  }
-
-  .sb-mobile-more-menu-typing-indicator {
-    flex-shrink: 0;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: #22c55e;
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
-    pointer-events: none;
-    animation: sb-reader-toolbar-typing-pulse 1.4s ease-out infinite;
-  }
-
-  .sb-mobile-more-menu-social {
-    cursor: default;
-  }
-
-  .sb-mobile-more-menu-social:hover {
-    background: transparent;
-  }
-
-  .sb-mobile-more-menu-social-avatar {
-    background: radial-gradient(
-      circle at 30% 30%,
-      var(--sb-primary-color),
-      color-mix(in srgb, var(--sb-primary-color), #000 40%)
-    );
-    border-radius: 62.4375rem;
-  }
-
-  .sb-mobile-more-menu-toggle {
-    flex-shrink: 0;
-    width: 2.375rem;
-    height: 1.375rem;
-    border-radius: 62.4375rem;
-    border: none;
-    background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
-    position: relative;
-    cursor: pointer;
-    padding: 0;
-    transition: background-color 0.2s ease;
-  }
-
-  .sb-mobile-more-menu-toggle-on {
-    background: var(--sb-primary-color);
-  }
-
-  .sb-mobile-more-menu-toggle-thumb {
-    position: absolute;
-    top: 0.125rem;
-    left: 0.125rem;
-    width: 1.125rem;
-    height: 1.125rem;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    transition: left 0.2s ease;
-  }
-
-  .sb-mobile-more-menu-toggle-on .sb-mobile-more-menu-toggle-thumb {
-    left: 1.125rem;
-  }
-
   .sb-reader-toolbar-floating-button {
     position: absolute;
     top: var(--sb-reader-toolbar-floating-button-top);
@@ -818,7 +791,7 @@
    * flush at the bottom and stays visible, taking the toolbar's place.
    * Scrolling back up removes the body class and both slide back. */
   body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
-    transform: translateX(-50%) translateY(100%);
+    transform: translateY(100%);
   }
 }
 
@@ -845,7 +818,12 @@
   position: fixed;
   transform: translate(-50%, -100%);
   display: flex;
-  background: var(--sb-verse-toolbar-background);
+  background: var(--sb-reader-toolbar-background);
+  color: var(--sb-reader-toolbar-font-color);
+  /* The toolbar's buttons, labels and tints are all derived from
+     --sb-font-color, so re-pointing it here makes the whole subtree follow the
+     reader toolbar's text color instead of the page's. */
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
   gap: var(--sb-verse-toolbar-gap);
   padding: var(--sb-verse-toolbar-padding);
   border-radius: var(--sb-verse-toolbar-border-radius);
@@ -855,7 +833,6 @@
   min-height: var(--sb-verse-toolbar-min-height);
   flex-direction: column;
   align-items: stretch;
-  background-color: var(--sb-reader-background);
 }
 
 .sb-verse-toolbar-draggable {
@@ -1287,7 +1264,7 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   width: 100%;
-  background: var(--sb-reader-background);
+  background: var(--sb-reader-toolbar-background);
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
   margin-bottom: -0.5rem;
@@ -1324,6 +1301,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.sb-verse-toolbar-discovered {
+  flex: 0 0 100%;
+  min-width: 0;
 }
 
 /* No click-to-navigate here (unlike DiscoverPane's row, which jumps to the

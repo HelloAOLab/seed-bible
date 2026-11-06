@@ -8,7 +8,7 @@ import { ScriptureMap } from "../components/ScriptureMap";
 import { ScriptureMapModes } from "../models/scriptureMap";
 // import { getCustomStyles } from "../styles/adapter";
 import { LayoutConfigProvider } from "../config/LayoutConfigProvider";
-import type { UtilsAPI } from "../../seed-bible-utils/infrastructure/models/seedBible";
+import { acquireSeedBibleUtils } from "@seed-bible/seed-bible-utils";
 import { useI18n } from "../../seed-bible/seed-bible/i18n/I18nManager";
 import type { ScriptureMapEvents } from "../models/events";
 
@@ -29,21 +29,14 @@ const SettingsHeaderSlot = ({ node }: { node: Signal<HTMLElement | null> }) => (
 
 // const customCSS = getCustomStyles();
 
-const bibleVizUtilsId = "seed-bible-utils";
-
-interface DependenciesMap {
-  [bibleVizUtilsId]: UtilsAPI;
-}
-
 const extensionId = "scripture-map";
-
-const dependencies: (keyof DependenciesMap)[] = [bibleVizUtilsId];
 
 export const bootstrapExtension = () => {
   registerExtension({
-    dependencies,
     id: extensionId,
-    init: function* (context: SeedBibleState, dependenciesMap) {
+    init: function* (context: SeedBibleState) {
+      const utils = acquireSeedBibleUtils(context);
+      yield utils.release;
       const {
         dataRepository,
         scriptureService,
@@ -73,9 +66,7 @@ export const bootstrapExtension = () => {
         sessionProvider,
         bookNames,
         ReadingHistoryTimeline,
-      } = dependenciesMap[
-        bibleVizUtilsId
-      ] as DependenciesMap[typeof bibleVizUtilsId];
+      } = utils.api;
 
       const scriptureMapEventManager = createEventManager<ScriptureMapEvents>();
       const layoutConfigProvider = new LayoutConfigProvider();

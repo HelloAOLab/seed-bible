@@ -92,7 +92,7 @@ describe("FriendsManager", () => {
       server.requestFrom("ada", { status: "rejected" });
       server.requestFrom("bob", { expireTimeMs: Date.now() - 1 });
       server.requestFrom("cal", {
-        permission: { ...FRIENDS_PERMISSION, marker: "somethingElse" },
+        permissions: [{ ...FRIENDS_PERMISSION, marker: "somethingElse" }],
       });
 
       const friends = create();
@@ -100,6 +100,25 @@ describe("FriendsManager", () => {
       await loaded(friends, () => {
         expect(server.spies.listRequested).toHaveBeenCalled();
         expect(friends.incomingRequests.value).toEqual([]);
+      });
+    });
+
+    it("ignores shares and requests that bundle other permissions with the friends one", async () => {
+      const other = { ...FRIENDS_PERMISSION, marker: "somethingElse" };
+      server.friendsWith("ada");
+      server.friendsWith("bob", ME, {
+        permissions: [other, FRIENDS_PERMISSION],
+      });
+      server.requestFrom("cal");
+      server.requestFrom("dan", { permissions: [FRIENDS_PERMISSION, other] });
+
+      const friends = create();
+
+      await loaded(friends, () => {
+        expect(friends.friends.value.map((f) => f.userId)).toEqual(["ada"]);
+        expect(friends.incomingRequests.value.map((r) => r.userId)).toEqual([
+          "cal",
+        ]);
       });
     });
 
@@ -345,7 +364,7 @@ describe("FriendsManager", () => {
 
       expect(result).toMatchObject({ status: "sent" });
       const sent = server.rows.find((r) => r.targetUserId === "ada")!;
-      expect(sent.permission).toEqual(FRIENDS_PERMISSION);
+      expect(sent.permissions).toEqual([FRIENDS_PERMISSION]);
       expect(sent.expireTimeMs! - Date.now()).toBeGreaterThan(
         FRIEND_REQUEST_LIFETIME_MS - 60_000
       );

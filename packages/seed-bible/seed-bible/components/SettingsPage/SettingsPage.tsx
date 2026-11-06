@@ -1,57 +1,29 @@
 import "./SettingsPage.css";
-import { useComputed, useSignal } from "@preact/signals";
+import { localizedThemeName } from "./localizedThemeName";
+import { useSignal } from "@preact/signals";
 import { ScriptureLineHeightIcon } from "../icons";
+import { SearchBar } from "../SearchBar/SearchBar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
-  TEXT_FONT_OPTIONS,
-  TEXT_SECTION_THEME_COLOR_VAR,
-  TEXT_WEIGHT_OPTIONS,
   UI_SIZE_OPTIONS,
   VERSE_LINE_HEIGHT_OPTIONS,
-  DEFAULT_VERSE_LINE_HEIGHT,
   type BookOrientation,
-  type TextAlignment,
-  type TextSectionConfig,
-  type TextSectionId,
   type TextSize,
   type UISize,
+  type VerseSelectionEffects,
 } from "../../managers/SettingsManager";
 import {
   DARK_THEME,
-  DEFAULT_HIGHLIGHT_IDS,
   LIGHT_THEME,
   SYSTEM_THEME_ID,
-  THEME_COLOR_GROUPS,
-  type ThemeColorKey,
 } from "../../managers/ThemeManager";
-import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
 import {
-  buildCustomizationTutorialSteps,
-  openCustomizationEditPane,
-} from "../CustomizationEditPane/CustomizationEditPane";
-import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
-import {
-  SensitiveSettingsForm,
-  UnusedSensitiveSettingsList,
-} from "../ExtensionSettingsForm/SensitiveSettingsForm";
-import { ExpandableText } from "../ExpandableText/ExpandableText";
-import { download, translateTitle } from "../../app/utils";
-import { openProfilePictureModal } from "../../components/ProfilePictureModal/openProfilePictureModal";
-import {
-  Skeleton,
-  SkeletonContainer,
-} from "../../components/Skeleton/Skeleton";
-import { Spinner } from "../Spinner/Spinner";
-import {
-  ExtensionInitalizer,
-  nonSensitiveSettings,
-  type ExtensionListEntry,
-} from "../../managers/ExtensionManager";
-import {
-  getBrandedAppText,
-  useI18n,
-  type I18nHook,
-} from "../../i18n/I18nManager";
+  CUSTOMIZATION_FONT_PRESETS,
+  type SeedBibleCustomization,
+} from "../../managers/CustomizationsManager";
+import { UnusedSensitiveSettingsList } from "../ExtensionSettingsForm/SensitiveSettingsForm";
+import type { ExtensionListEntry } from "../../managers/ExtensionManager";
+import { useI18n } from "../../i18n/I18nManager";
 import {
   ExtensionsIcon,
   InstallAppsIcon,
@@ -61,44 +33,16 @@ import {
 } from "../../components/icons";
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
 import { handleGridKeyNav } from "../../app/keyboardNav";
-import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
-import { normalizeHex } from "../ColorPicker/color";
 import { buildStaticPagePath } from "../../managers/StaticPagePath";
-import { useEffect } from "preact/hooks";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
-import {
-  ContextMenuItem,
-  ContextMenuWithButton,
-} from "../ContextMenu/ContextMenu";
-
-const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
-
-const ALIGNMENT_CYCLE: Record<TextAlignment, TextAlignment> = {
-  unset: "left",
-  left: "center",
-  center: "right",
-  right: "left",
-};
-
-const TEXT_COLOR_PALETTE = [
-  "#000000",
-  "#4B5563",
-  "#9CA3AF",
-  "#D1D5DB",
-  "#FFFFFF",
-  "#DC2626",
-  "#F97316",
-  "#FACC15",
-  "#16A34A",
-  "#0EA5E9",
-  "#6366F1",
-  "#8B5CF6",
-  "#EC4899",
-  "#F43F5E",
-];
 
 import { LANG_META } from "../../i18n/languageMeta";
 import { useAppConfig } from "../../app/appConfig";
+import { ExtensionInfoPage } from "./ExtensionInfoPage";
+import { useExtensionCatalog } from "./useExtensionCatalog";
+
+export { AddExtensionFromLink } from "./useExtensionCatalog";
+import { ExtensionTile } from "../ExtensionConsentModal/ExtensionConsentModal";
 
 function FlagImg({ cc }: { cc: string }) {
   return (
@@ -115,8 +59,6 @@ function FlagImg({ cc }: { cc: string }) {
     />
   );
 }
-
-type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
 
 const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -177,367 +119,6 @@ function SettingsHero(props: {
   );
 }
 
-/**
- * Placeholder shown while the user's profile is still being fetched. It mirrors
- * the real form's layout (avatar, three fields, the ID row and the save button)
- * with shimmering blocks, so on a slow connection the user can see the page is
- * still loading instead of a deceptively empty, editable form.
- */
-function AccountSettingsSkeleton() {
-  const { t } = useI18n();
-  return (
-    <SkeletonContainer
-      label={t("loading-profile", { defaultValue: "Loading your profile…" })}
-      className="sb-account-settings-layout"
-    >
-      <div className="sb-account-picture-row" aria-hidden="true">
-        <Skeleton shape="circle" width="3.875rem" height="3.875rem" />
-        <Skeleton shape="button" width="8.5rem" height="2.75rem" />
-      </div>
-
-      {[0, 1, 2].map((row) => (
-        <div key={row} className="sb-settings-field-row" aria-hidden="true">
-          <Skeleton shape="line" width="40%" />
-          <Skeleton
-            width="100%"
-            height={row === 1 ? "6.25rem" : "3rem"}
-            radius="0.625rem"
-          />
-        </div>
-      ))}
-
-      <div className="sb-settings-field-row" aria-hidden="true">
-        <Skeleton shape="line" width="40%" />
-        <Skeleton width="100%" height="3rem" radius="0.625rem" />
-      </div>
-
-      <div className="sb-settings-actions" aria-hidden="true">
-        <Skeleton width="100%" height="3.25rem" radius="0.375rem" />
-      </div>
-    </SkeletonContainer>
-  );
-}
-
-function AccountSettingsView(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { login } = state;
-  const { t } = useI18n();
-  const isLoggedIn = useComputed(() => login.userId.value !== null);
-  const profile = useComputed(
-    () => login.profile.value ?? login.cachedProfile.value
-  );
-  // `profile` above can be showing a cached value while `login.profile` (the
-  // network-confirmed one `updateProfile` actually writes against) is still
-  // null — Save must not let the user believe an edit was saved in that
-  // window.
-  const isProfileLoaded = useComputed(() => login.profile.value !== null);
-  // Show the loading skeleton only while a fetch is in flight *and* we have
-  // no profile (cached or confirmed) to display yet. If we already hold a
-  // profile — from the localStorage cache, or a background re-fetch — keep
-  // showing the real form rather than flashing a skeleton over data the user
-  // can already read and edit.
-  const isProfileLoading = useComputed(
-    () => login.isProfileLoading.value && profile.value === null
-  );
-
-  const newName = useSignal<string | null>(null);
-  const name = useComputed(() => newName.value ?? profile.value?.name ?? "");
-  const newLocation = useSignal<string | null>(null);
-  const location = useComputed(
-    () => newLocation.value ?? profile.value?.location ?? ""
-  );
-  const newDescription = useSignal<string | null>(null);
-  const description = useComputed(
-    () => newDescription.value ?? profile.value?.description ?? ""
-  );
-  const pictureUrl = useComputed(() => profile.value?.pictureUrl ?? "");
-  const isUploadingPicture = useSignal(false);
-  const isSaving = useComputed(() => login.isSavingProfile.value);
-  const uidCopied = useSignal(false);
-
-  const handleSave = () => {
-    if (!isProfileLoaded.value) {
-      // `updateProfile` would silently no-op here (profile not confirmed
-      // yet) — refuse instead of clearing the user's in-progress edits below.
-      return;
-    }
-    login.updateProfile({
-      name: name.value,
-      location: location.value || null,
-      description: description.value || null,
-      pictureUrl: pictureUrl.value || null,
-    });
-    newName.value = null;
-    newLocation.value = null;
-    newDescription.value = null;
-  };
-
-  const handleUploadPicture = () => {
-    openProfilePictureModal({
-      modals: state.modals,
-      login,
-      t,
-      onUploadingChange: (uploading) => {
-        isUploadingPicture.value = uploading;
-      },
-    });
-  };
-
-  const handleCopyUserId = async () => {
-    const id = login.userId.value;
-    if (!id) {
-      return;
-    }
-
-    try {
-      navigator.clipboard.writeText(id);
-      uidCopied.value = true;
-      setTimeout(() => {
-        uidCopied.value = false;
-      }, 1200);
-    } catch (error) {
-      console.error("Failed to copy user ID.", error);
-    }
-  };
-
-  return (
-    <div className="sb-settings-page">
-      <SettingsBreadcrumbs
-        onBack={() => (state.sidebar.requestedSettingsView.value = "main")}
-        trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
-          t("account-settings", { defaultValue: "Account settings" }),
-        ]}
-      />
-      <section className="sb-settings-section">
-        {isLoggedIn.value && isProfileLoading.value ? (
-          <AccountSettingsSkeleton />
-        ) : isLoggedIn.value ? (
-          <div className="sb-account-settings-layout">
-            <p className="sb-account-settings-intro">
-              {t("account-settings-intro", {
-                defaultValue: "Manage your profile information here",
-              })}
-            </p>
-
-            <div className="sb-account-picture-row">
-              {pictureUrl.value ? (
-                <img
-                  className="sb-account-picture-preview"
-                  src={pictureUrl.value}
-                  alt={t("profile-picture", {
-                    defaultValue: "Profile picture",
-                  })}
-                />
-              ) : (
-                <div
-                  className="sb-account-picture-placeholder"
-                  aria-hidden="true"
-                >
-                  <span className="material-symbols-outlined">person</span>
-                </div>
-              )}
-              <button
-                className="sb-account-picture-button"
-                onClick={() => void handleUploadPicture()}
-                disabled={isUploadingPicture.value}
-              >
-                {isUploadingPicture.value
-                  ? t("uploading", { defaultValue: "Uploading..." })
-                  : t("update-picture", { defaultValue: "Update picture" })}
-              </button>
-            </div>
-
-            <div className="sb-settings-field-row">
-              <label
-                className="sb-settings-field-label"
-                htmlFor="sb-profile-name"
-              >
-                {t("profile-name", { defaultValue: "Profile name" })}
-              </label>
-              <input
-                id="sb-profile-name"
-                className="sb-settings-text-input sb-account-text-input"
-                type="text"
-                value={name.value}
-                onInput={(event: Event) => {
-                  newName.value = (
-                    event.currentTarget as HTMLInputElement
-                  ).value;
-                }}
-                placeholder={t("profile-name-placeholder", {
-                  defaultValue: "e.g Craig family",
-                })}
-              />
-              <p className="sb-account-field-helper">
-                {t("profile-name-helper", {
-                  defaultValue: "You can change this later",
-                })}
-              </p>
-            </div>
-            <div className="sb-settings-field-row">
-              <label
-                className="sb-settings-field-label"
-                htmlFor="sb-profile-description"
-              >
-                {t("description", { defaultValue: "Description" })}{" "}
-                <span className="sb-account-label-optional">
-                  {t("optional", { defaultValue: "(Optional)" })}
-                </span>
-              </label>
-              <textarea
-                id="sb-profile-description"
-                className="sb-settings-text-input sb-settings-textarea sb-account-textarea"
-                value={description.value ?? ""}
-                maxLength={300}
-                onInput={(event: Event) => {
-                  newDescription.value = (
-                    event.currentTarget as HTMLTextAreaElement
-                  ).value;
-                }}
-                placeholder={t("description-placeholder", {
-                  defaultValue: "Enter your profile description...",
-                })}
-              />
-            </div>
-            <div className="sb-settings-field-row">
-              <label
-                className="sb-settings-field-label"
-                htmlFor="sb-profile-location"
-              >
-                {t("location", { defaultValue: "Location" })}{" "}
-                <span className="sb-account-label-optional">
-                  {t("optional", { defaultValue: "(Optional)" })}
-                </span>
-              </label>
-              <input
-                id="sb-profile-location"
-                className="sb-settings-text-input sb-account-text-input"
-                type="text"
-                value={location.value ?? ""}
-                onInput={(event: Event) => {
-                  newLocation.value = (
-                    event.currentTarget as HTMLInputElement
-                  ).value;
-                }}
-                placeholder={t("location-placeholder", {
-                  defaultValue: "e.g Austin,TX",
-                })}
-              />
-            </div>
-
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">
-                {t("your-id-is", { defaultValue: "Your ID is:" })}
-              </label>
-              <div className="sb-account-uid-row">
-                <span
-                  className="sb-account-uid-value"
-                  title={login.userId.value ?? ""}
-                >
-                  {login.userId.value}
-                </span>
-                <button
-                  type="button"
-                  className="sb-account-copy-uid-button"
-                  onClick={() => void handleCopyUserId()}
-                  aria-label={t("copy-user-id", {
-                    defaultValue: "Copy user ID",
-                  })}
-                  title={
-                    uidCopied.value
-                      ? t("copied", { defaultValue: "Copied" })
-                      : t("copy", { defaultValue: "Copy" })
-                  }
-                >
-                  <span className="material-symbols-outlined">
-                    {uidCopied.value ? "check" : "content_copy"}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <div className="sb-settings-actions">
-              <button
-                className="sb-settings-save-button sb-account-save-button"
-                onClick={handleSave}
-                disabled={!isProfileLoaded.value || isSaving.value}
-                aria-busy={isSaving.value}
-              >
-                {!isProfileLoaded.value ? (
-                  t("loading-profile", {
-                    defaultValue: "Loading your profile…",
-                  })
-                ) : isSaving.value ? (
-                  <span className="sb-account-save-saving">
-                    <Spinner size="1.125rem" />
-                    {t("saving", { defaultValue: "Saving…" })}
-                  </span>
-                ) : (
-                  t("save-changes", { defaultValue: "Save changes" })
-                )}
-              </button>
-            </div>
-
-            <div className="sb-account-signout-section">
-              <button
-                className="sb-account-signout-button"
-                onClick={() => void login.logout()}
-              >
-                <span className="material-symbols-outlined">logout</span>
-                {t("sign-out", { defaultValue: "Sign out" })}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="sb-settings-login-prompt">
-            <p>
-              {t("login-required-message", {
-                defaultValue: "Please log in to view and edit your profile.",
-              })}
-            </p>
-            <button
-              className="sb-settings-action-button"
-              onClick={() => void login.login()}
-            >
-              {t("log-in", { defaultValue: "Log in" })}
-            </button>
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
-
-/**
- * Built-in theme names are authored in English on the theme object, so they'd
- * otherwise render untranslated. Spelled out as separate `t()` calls (rather
- * than a computed `theme-${id}` key) so the i18n lint rules can see them.
- * User-supplied themes keep whatever name they were given.
- *
- * Exported for tests.
- */
-export function localizedThemeName(
-  t: I18nHook["t"],
-  theme: { id: string; name: string }
-): string {
-  if (theme.id === LIGHT_THEME.id) {
-    return t("theme-light", { defaultValue: theme.name });
-  }
-  if (theme.id === DARK_THEME.id) {
-    return t("theme-dark", { defaultValue: theme.name });
-  }
-  if (theme.id === SYSTEM_THEME_ID) {
-    return t("theme-system", { defaultValue: theme.name });
-  }
-  return theme.name;
-}
-
-/**
- * A theme card's footer: the theme name, plus a check mark when it's the
- * selected theme. The check is hidden rather than unmounted when unselected, so
- * the name sits in the same place on every card.
- */
 function ThemeCardLabel(props: { name: string; isSelected: boolean }) {
   const { t } = useI18n();
   return (
@@ -682,6 +263,10 @@ export function CustomizationVariantGallery(props: {
           const isSelected =
             !customizations.isFollowingSystemScheme.value &&
             variant.id === customizations.activeVariant.value?.id;
+          // `variant.themes` holds only the fields this theme overrides;
+          // everything else comes from the preset it's based on.
+          const colors =
+            customizations.resolveEditingVariantTheme(variant).variables;
           return (
             <button
               key={variant.id}
@@ -695,19 +280,19 @@ export function CustomizationVariantGallery(props: {
             >
               <div
                 className="sb-theme-ready-preview"
-                style={{ background: variant.themes.tertiaryColor }}
+                style={{ background: colors.tertiaryColor }}
               >
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
-                  style={{ background: variant.themes.primaryColor }}
+                  style={{ background: colors.primaryColor }}
                 />
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
-                  style={{ background: variant.themes.secondaryColor }}
+                  style={{ background: colors.secondaryColor }}
                 />
                 <div
                   className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
-                  style={{ background: variant.themes.fontColor }}
+                  style={{ background: colors.fontColor }}
                 />
               </div>
               <ThemeCardLabel name={variant.name} isSelected={isSelected} />
@@ -737,10 +322,17 @@ function CustomizationSystemCard(props: {
   const { customizations } = props.state;
   const { t } = useI18n();
   const isSelected = customizations.isFollowingSystemScheme.value;
-  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => ({
-    presetId,
-    variant: props.customization.variants.find((v) => v.baseTheme === presetId),
-  }));
+  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => {
+    const variant = props.customization.variants.find(
+      (v) => v.baseTheme === presetId
+    );
+    return {
+      presetId,
+      colors: variant
+        ? customizations.resolveEditingVariantTheme(variant).variables
+        : undefined,
+    };
+  });
 
   return (
     <button
@@ -751,15 +343,15 @@ function CustomizationSystemCard(props: {
       onClick={() => void customizations.selectActiveVariant(SYSTEM_THEME_ID)}
     >
       <div className="sb-theme-ready-preview sb-theme-ready-preview-system">
-        {halves.map(({ presetId, variant }) => (
+        {halves.map(({ presetId, colors }) => (
           <div
             key={presetId}
             className="sb-theme-ready-system-half"
-            style={{ background: variant?.themes.tertiaryColor }}
+            style={{ background: colors?.tertiaryColor }}
           >
             <div
               className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
-              style={{ background: variant?.themes.primaryColor }}
+              style={{ background: colors?.primaryColor }}
             />
           </div>
         ))}
@@ -780,23 +372,16 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const selectedFontSize = current.fontSize;
   const isMobile = state.app.isMobile.value;
 
-  const verseConfig = settings.settings.value.textConfig.verse;
   const currentScriptureWidth = settings.settings.value.scriptureWidth;
-  const currentLineHeight = verseConfig.lineHeight ?? DEFAULT_VERSE_LINE_HEIGHT;
+  const currentLineHeight = settings.settings.value.verseLineHeight;
   const lineHeightIndex = (() => {
     const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLineHeight);
     return idx === -1 ? 0 : idx;
   })();
-
   const fontSizeIndex = FONT_SIZE_OPTIONS.indexOf(selectedFontSize);
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "main";
-  };
-
-  const onOpenAllSettings = () => {
-    state.sidebar.requestedSettingsView.value =
-      "display-and-theme-all-settings";
   };
 
   const handleDecreaseFontSize = () => {
@@ -814,10 +399,9 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleCycleLineHeight = () => {
-    const currentLh =
-      settings.settings.value.textConfig.verse.lineHeight ??
-      DEFAULT_VERSE_LINE_HEIGHT;
-    const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLh);
+    const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(
+      settings.settings.value.verseLineHeight
+    );
     const currentIdx = idx === -1 ? 0 : idx;
     const nextIndex = (currentIdx + 1) % VERSE_LINE_HEIGHT_OPTIONS.length;
     const next = VERSE_LINE_HEIGHT_OPTIONS[nextIndex];
@@ -950,6 +534,37 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           </>
         )}
 
+        <div className="sb-settings-field-row">
+          <label className="sb-settings-field-label" htmlFor="sb-font-select">
+            {t("scripture-font", { defaultValue: "Scripture Font" })}
+          </label>
+          <select
+            id="sb-font-select"
+            className="sb-settings-language-select"
+            value={current.fontOverride ?? "default"}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+              if (target.value === "default") {
+                settings.setFontOverride(undefined);
+              } else {
+                settings.setFontOverride(target.value);
+              }
+            }}
+          >
+            {[
+              {
+                value: "default",
+                name: t("default", { defaultValue: "Default" }),
+              },
+              ...CUSTOMIZATION_FONT_PRESETS,
+            ].map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <h3 className="sb-settings-subheading">
           {t("scripture-elements", { defaultValue: "Scripture elements" })}
         </h3>
@@ -1054,6 +669,66 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         </div>
 
         <h3 className="sb-settings-subheading">
+          {t("discovered-content", { defaultValue: "Discovered Content" })}
+        </h3>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-show-discovered-content"
+          >
+            {t("show-discovered-content", {
+              defaultValue: "Show discovered content",
+            })}
+          </label>
+          <input
+            id="sb-show-discovered-content"
+            type="checkbox"
+            checked={current.discoveredContent.showContent}
+            onChange={(event: Event) => {
+              settings.setDiscoveredContent({
+                showContent: (event.currentTarget as HTMLInputElement).checked,
+              });
+            }}
+          />
+        </div>
+        <h3 className="sb-settings-subheading">
+          {t("session", { defaultValue: "Session" })}
+        </h3>
+        <div className="sb-settings-field-row">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-verse-selection-effects"
+          >
+            {t("verse-selection-effects", {
+              defaultValue: "Verse Selection Effects",
+            })}
+          </label>
+
+          <select
+            id="sb-verse-selection-effects"
+            className="sb-settings-language-select"
+            value={current.verseSelectionEffects ?? "default"}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+
+              settings.setVerseSelectionEffects(
+                target.value as VerseSelectionEffects
+              );
+            }}
+          >
+            <option value="default">
+              {t("default", { defaultValue: "Default" })}
+            </option>
+            <option value="enabled">
+              {t("enabled", { defaultValue: "Enabled" })}
+            </option>
+            <option value="disabled">
+              {t("disabled", { defaultValue: "Disabled" })}
+            </option>
+          </select>
+        </div>
+        <h3 className="sb-settings-subheading">
           {t("display", { defaultValue: "Display" })}
         </h3>
 
@@ -1105,7 +780,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             </option>
           </select>
         </div>
-
         <div className="sb-settings-toggle-row">
           <label
             className="sb-settings-toggle-label"
@@ -1210,422 +884,152 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             }}
           />
         </div>
-
-        <button
-          type="button"
-          className="sb-settings-nav-item"
-          onClick={onOpenAllSettings}
-        >
-          <span>{t("all-settings", { defaultValue: "All settings" })}</span>
-          <span className="material-symbols-outlined rtl-mirror">
-            chevron_right
-          </span>
-        </button>
       </section>
     </div>
   );
 }
 
-function getExtensionInstallState(
-  installed: boolean,
-  pendingInstallation: boolean,
-  isRegistered: boolean
-): ExtensionInstallState {
-  if (pendingInstallation) {
-    return "pending";
-  }
-  if (installed && isRegistered) {
-    return "installed";
-  }
-  if (installed && !isRegistered) {
-    return "downloaded";
-  }
-  return "none";
-}
-
-type ExtensionsTab = "installed" | "available";
-
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { extensions, customizations, extensionSettings, login } = state;
-  const extensionsList = extensions.extensions.value;
-  const installingIds = useSignal<Set<string>>(new Set());
-  const isDownloadingSet = useSignal(false);
-  const isUploadingSet = useSignal(false);
-  const activeCustomization = customizations.activeCustomization.value;
-  // An extension the active customization marks "hidden" is never offered
-  // for install, but one that's still installed (e.g. pulled in as another
-  // extension's dependency) is listed so it can be seen and removed.
-  const visibleExtensionsList = extensionsList.filter(
-    (entry) =>
-      entry.installed ||
-      customizations.getActiveExtensionAvailability(entry.id) !== "hidden"
-  );
-  const activeTab = useSignal<ExtensionsTab>("installed");
+  const { extensions, extensionSettings } = state;
+  const { t } = useI18n();
+  const catalog = useExtensionCatalog(state);
+  const { activeCustomization, nameOf, descriptionOf } = catalog;
+  const searchQuery = useSignal("");
+  // The extension whose page is open, in place of the list.
+  const openExtensionId = useSignal<string | null>(null);
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "main";
   };
 
-  const handleInstall = async (extensionId: string) => {
-    // While a customization is active, installs are customization-scoped:
-    // the actual install happens automatically via the reconcile effect in
-    // SeedBibleStateManager reacting to activeExtensionIds, not as a direct
-    // result of this click.
-    if (activeCustomization) {
-      await customizations.addExtensionToActiveCustomization(extensionId);
-      return;
-    }
-
-    const extensionData = extensionsList.find(
-      (e) => e.extension?.meta.id === extensionId
-    );
-    if (!extensionData || !extensionData.extension) return;
-
-    installingIds.value = new Set(installingIds.value).add(extensionId);
-    await extensions.loadExtension(extensionData.extension);
-    installingIds.value = new Set(
-      [...installingIds.value].filter((id) => id !== extensionId)
-    );
-  };
-
-  const handleUninstall = (extensionId: string) => {
-    if (activeCustomization) {
-      // A hidden extension is never one of the viewer's picks for the
-      // customization, so dropping the pick wouldn't remove it. Unload it for
-      // this session instead, the same way the customization's own swap does,
-      // so the viewer's default profile keeps it.
-      if (
-        customizations.getActiveExtensionAvailability(extensionId) === "hidden"
-      ) {
-        extensions.unloadExtension(extensionId, { persist: false });
-        return;
-      }
-      void customizations.removeExtensionFromActiveCustomization(extensionId);
-      return;
-    }
-    extensions.unloadExtension(extensionId);
-  };
-
-  const handleConfigureExtension = (extensionEntry: ExtensionListEntry) => {
-    const allSettings = extensionEntry.extension?.meta.settings ?? {};
-    const settings = nonSensitiveSettings(allSettings);
-    const sensitive = extensionEntry.extension?.meta.sensitive ?? {};
-    const hasSensitive =
-      Object.keys(settings).length < Object.keys(allSettings).length;
-    const customPanel = extensions.settingsPanels.value[extensionEntry.id];
-    state.modals.openModal({
-      title: {
-        key: "extension-settings-title",
-        defaultValue: "{{name}} settings",
-        options: {
-          name:
-            // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
-            t("title", {
-              ns: extensionEntry.id,
-              defaultValue: extensionEntry.id,
-            }),
-        },
-      },
-      // Values are saved to the viewer's account, so a signed-out viewer is
-      // asked to log in first. The body re-renders on sign-in, swapping this
-      // prompt for the form without reopening the modal.
-      // TODO: Support offline / signed-out extension settings so this prompt isn't needed.
-      content: () =>
-        login.userId.value === null ? (
-          <div className="sb-settings-login-prompt">
-            <p>
-              {t("extension-settings-login-required", {
-                defaultValue: "Please log in to configure this extension.",
-              })}
-            </p>
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={() => void login.login()}
-            >
-              {t("log-in", { defaultValue: "Log in" })}
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* A custom panel stands in for the generic form only: sensitive
-                values can't go through an extension's own UI, so they keep
-                their own section either way. */}
-            {customPanel
-              ? customPanel()
-              : (!hasSensitive || Object.keys(settings).length > 0) && (
-                  <ExtensionSettingsForm
-                    extensionId={extensionEntry.id}
-                    settings={settings}
-                    getValue={(key) =>
-                      extensionSettings.getValue(extensionEntry.id, key)
-                    }
-                    onChange={(key, value) =>
-                      void extensionSettings.setValue(
-                        extensionEntry.id,
-                        key,
-                        value
-                      )
-                    }
-                    resetting={{
-                      hasOwnValue: (key) =>
-                        extensionSettings.valuesByExtensionId.value[
-                          extensionEntry.id
-                        ]?.[key] !== undefined,
-                      onReset: (key) =>
-                        void extensionSettings.clearValue(
-                          extensionEntry.id,
-                          key
-                        ),
-                    }}
-                    t={t}
-                  />
-                )}
-            {hasSensitive && (
-              <SensitiveSettingsForm
-                extensionId={extensionEntry.id}
-                settings={allSettings}
-                sensitive={sensitive}
-                isSet={(key) =>
-                  extensionSettings.isSensitiveValueSet(extensionEntry.id, key)
-                }
-                isProvided={(key) =>
-                  extensionSettings.getSensitiveValueSource(
-                    extensionEntry.id,
-                    key
-                  ) === "customization"
-                }
-                hasStored={(proxyId) =>
-                  extensionSettings.hasStoredSensitiveValues(
-                    extensionEntry.id,
-                    proxyId
-                  )
-                }
-                getDestination={(proxyId) =>
-                  extensionSettings.getSensitiveDestination(
-                    extensionEntry.id,
-                    proxyId
-                  )
-                }
-                onSave={(proxyId, values, options) =>
-                  extensionSettings.setSensitiveValues(
-                    extensionEntry.id,
-                    proxyId,
-                    values,
-                    options
-                  )
-                }
-                onClear={(proxyId) =>
-                  extensionSettings.clearSensitiveValues(
-                    extensionEntry.id,
-                    proxyId
-                  )
-                }
-                t={t}
-              />
-            )}
-            {extensionSettings.hasSaveError(extensionEntry.id) && (
-              <p className="sb-settings-save-error" role="alert">
-                {t("extension-settings-save-failed", {
-                  defaultValue: "Couldn't save your settings.",
-                })}
-              </p>
-            )}
-          </>
-        ),
-    });
-  };
-
-  const handleDownloadExtensions = async () => {
-    if (isDownloadingSet.value) {
-      return;
-    }
-
-    isDownloadingSet.value = true;
-    try {
-      const set = extensions.getAllExtensionsAsSet();
-      if (!set) {
-        return;
-      }
-
-      const json = JSON.stringify(set, null, 2);
-      download(
-        new Blob([json], { type: "application/json" }),
-        `${set.id}.json`
-      );
-    } finally {
-      isDownloadingSet.value = false;
-    }
-  };
-
-  const handleUploadExtensions = async () => {
-    if (isUploadingSet.value) {
-      return;
-    }
-
-    isUploadingSet.value = true;
-    try {
-      // TODO: Fix this
-      // const files = await os.showUploadFiles();
-      // const firstFile = files?.[0];
-      // if (!firstFile) {
-      //   return;
-      // }
-      // const text =
-      //   typeof firstFile.data === "string"
-      //     ? firstFile.data
-      //     : new TextDecoder().decode(firstFile.data);
-      // const parsed = JSON.parse(text) as Partial<{
-      //   id: unknown;
-      //   recordName: unknown;
-      //   extensions: unknown;
-      // }>;
-      // if (
-      //   typeof parsed.id !== "string" ||
-      //   typeof parsed.recordName !== "string" ||
-      //   !Array.isArray(parsed.extensions)
-      // ) {
-      //   console.error("Uploaded file is not a valid extension set.");
-      //   return;
-      // }
-      // await extensions.loadExtensionSet(parsed as ExtensionSet, () => false);
-    } catch (error) {
-      console.error("Failed to upload extension set.", error);
-    } finally {
-      isUploadingSet.value = false;
-    }
-  };
-
-  const { t } = useI18n();
-  const { branding } = useAppConfig();
-
   const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
-    const { id, installed, pendingInstallation } = extensionEntry;
-    const isBaseExtension =
-      customizations.getActiveExtensionAvailability(id) === "auto-installed";
-    const isRegistered =
-      ExtensionInitalizer.getInstance().isExtensionRegistered(id);
-    const installState = getExtensionInstallState(
-      installed,
-      pendingInstallation,
-      isRegistered
-    );
-
-    const stateIcon =
-      installState === "installed"
-        ? "check_circle"
-        : installState === "downloaded"
-          ? "download_done"
-          : installState === "pending"
-            ? "downloading"
-            : "extension";
-
-    const stateLabel =
-      installState === "installed"
-        ? t("extension-state-installed", { defaultValue: "Installed" })
-        : installState === "downloaded"
-          ? t("extension-state-downloaded", { defaultValue: "Downloaded" })
-          : installState === "pending"
-            ? t("extension-state-pending", { defaultValue: "Installing…" })
-            : t("extension-state-none", { defaultValue: "Not installed" });
-
+    const { id } = extensionEntry;
+    const name = nameOf(id);
+    const description = descriptionOf(id);
     return (
-      <li key={id} className="sb-extension-row">
-        <div className="sb-extension-row-body">
-          <span
-            className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
-            title={stateLabel}
-          >
-            {stateIcon}
-          </span>
-          <div className="sb-extension-row-content">
-            <span className="sb-extension-name">
-              {getBrandedAppText(
-                // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
-                t("title", { ns: id, defaultValue: id }),
-                t,
-                branding,
-                customizations.activeCustomization.value?.name
+      <li key={id}>
+        <button
+          type="button"
+          className="sb-extensions-item"
+          onClick={() => (openExtensionId.value = id)}
+        >
+          <ExtensionTile
+            request={{
+              extensionId: id,
+              title: name,
+              icon: extensionEntry.extension?.meta.icon,
+            }}
+          />
+          <span className="sb-extensions-item-content">
+            <span className="sb-extensions-item-title">
+              <span className="sb-extensions-item-name">{name}</span>
+              {catalog.isBuiltIn(extensionEntry) && (
+                <span className="sb-extensions-item-tag">
+                  {t("extension-info-built-in-tag")}
+                </span>
+              )}
+              {catalog.installStateOf(extensionEntry) === "pending" && (
+                <span className="sb-extensions-item-tag">
+                  {t("extension-state-pending", {
+                    defaultValue: "Installing…",
+                  })}
+                </span>
               )}
             </span>
-            <ExpandableText
-              className="sb-extension-description"
-              lines={2}
-              readMoreLabel={t("read-more", { defaultValue: "Read more" })}
-              readLessLabel={t("read-less", { defaultValue: "Read less" })}
-            >
-              {getBrandedAppText(
-                t("description", { ns: id, defaultValue: "" }),
-                t,
-                branding,
-                customizations.activeCustomization.value?.name
-              )}
-            </ExpandableText>
-          </div>
-          <div className="sb-extension-row-actions">
-            {installState === "installed" &&
-              ((extensionEntry.extension?.meta.settings &&
-                Object.keys(extensionEntry.extension.meta.settings).length >
-                  0) ||
-                extensions.settingsPanels.value[id]) && (
-                <button
-                  type="button"
-                  className="sb-extension-row-action-button"
-                  onClick={() => handleConfigureExtension(extensionEntry)}
-                  aria-label={t("configure-extension", {
-                    defaultValue: "Configure",
-                  })}
-                  title={t("configure-extension", {
-                    defaultValue: "Configure",
-                  })}
-                >
-                  <span className="material-symbols-outlined">tune</span>
-                </button>
-              )}
-            {installState === "none" && (
-              <button
-                type="button"
-                className="sb-extension-row-action-button"
-                onClick={() => void handleInstall(id)}
-                aria-label={t("install", { defaultValue: "Install" })}
-                title={t("install", { defaultValue: "Install" })}
-              >
-                <span className="material-symbols-outlined">download</span>
-              </button>
+            {description && (
+              <span className="sb-extensions-item-description">
+                {description}
+              </span>
             )}
-            {(installState === "installed" || installState === "downloaded") &&
-              !isBaseExtension && (
-                <button
-                  type="button"
-                  className="sb-extension-row-action-button"
-                  onClick={() => handleUninstall(id)}
-                  aria-label={t("uninstall", {
-                    defaultValue: "Uninstall",
-                  })}
-                  title={t("uninstall", { defaultValue: "Uninstall" })}
-                >
-                  <span className="material-symbols-outlined">delete</span>
-                </button>
-              )}
-          </div>
-        </div>
+          </span>
+          <span
+            className="material-symbols-outlined sb-extensions-item-chevron rtl-mirror"
+            aria-hidden="true"
+          >
+            chevron_right
+          </span>
+        </button>
       </li>
     );
   };
 
-  const installedExtensions = visibleExtensionsList.filter((e) => e.installed);
-  const availableExtensions = visibleExtensionsList.filter((e) => !e.installed);
-  const activeExtensions =
-    activeTab.value === "installed" ? installedExtensions : availableExtensions;
-  const activeEmptyMessage =
-    activeTab.value === "installed"
-      ? t("no-installed-extensions", {
-          defaultValue: "You haven't installed any extensions yet.",
-        })
-      : t("no-available-extensions", {
-          defaultValue: "There are no more extensions available to install.",
-        });
+  const query = searchQuery.value.trim();
+  const shownExtensions = catalog.entries.filter((entry) =>
+    catalog.matches(entry, query)
+  );
+  const installedExtensions = shownExtensions.filter((e) => e.installed);
+  const availableExtensions = shownExtensions.filter((e) => !e.installed);
+
+  const renderSection = (
+    key: "installed" | "available",
+    title: string,
+    entries: ExtensionListEntry[],
+    emptyMessage: string
+  ) => {
+    // While searching, a section with no matches is left out.
+    if (query && entries.length === 0) {
+      return null;
+    }
+    return (
+      <section
+        className="sb-extensions-section"
+        aria-labelledby={`sb-extensions-${key}-title`}
+      >
+        <h2
+          id={`sb-extensions-${key}-title`}
+          className="sb-extensions-section-title"
+        >
+          {title}
+        </h2>
+        {entries.length === 0 ? (
+          <div className="sb-settings-empty-state">
+            <p>{emptyMessage}</p>
+          </div>
+        ) : (
+          <ul className="sb-extensions-group">
+            {entries.map(renderExtensionRow)}
+          </ul>
+        )}
+      </section>
+    );
+  };
+
+  const openAddFromLink = () =>
+    catalog.openAddFromLink((extensionId) => {
+      searchQuery.value = "";
+      openExtensionId.value = extensionId;
+    });
+
+  const openEntry = catalog.entries.find(
+    (entry) => entry.id === openExtensionId.value
+  );
+  if (openEntry) {
+    const name = nameOf(openEntry.id);
+    return (
+      <ExtensionInfoPage
+        entry={openEntry}
+        name={name}
+        description={descriptionOf(openEntry.id)}
+        installState={catalog.installStateOf(openEntry)}
+        extensions={extensions}
+        people={catalog.people}
+        breadcrumbs={
+          <SettingsBreadcrumbs
+            onBack={() => (openExtensionId.value = null)}
+            trail={[
+              t("page-settings", { defaultValue: "Page settings" }),
+              t("extensions", { defaultValue: "Extensions" }),
+              name,
+            ]}
+          />
+        }
+        onInstall={() => void catalog.install(openEntry.id)}
+        onUninstall={() => catalog.uninstall(openEntry.id)}
+        settings={catalog.renderSettings(openEntry)}
+      />
+    );
+  }
 
   return (
     <div className="sb-settings-page">
@@ -1639,14 +1043,14 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       <section className="sb-settings-section">
         {activeCustomization && (
           <p className="sb-settings-field-description">
-            {t("extensions-for-active-customization", {
+            {t("extensions-for-active-customization-scoped", {
               defaultValue:
-                "Showing extensions for {{name}}. Extensions this customization includes can't be removed here.",
+                "Showing extensions for {{name}}. Changes you make here only apply while you're using it.",
               name: activeCustomization.name,
             })}
           </p>
         )}
-        {visibleExtensionsList.length === 0 ? (
+        {catalog.entries.length === 0 ? (
           <div className="sb-settings-empty-state">
             <p>
               {t("no-extensions-available", {
@@ -1656,64 +1060,42 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </div>
         ) : (
           <>
-            <div
-              className="sb-extensions-tabs"
-              role="tablist"
-              aria-label={t("extensions", { defaultValue: "Extensions" })}
-            >
-              <button
-                type="button"
-                role="tab"
-                id="sb-extensions-tab-installed"
-                aria-selected={activeTab.value === "installed"}
-                aria-controls="sb-extensions-tabpanel"
-                className={`sb-extensions-tab${
-                  activeTab.value === "installed"
-                    ? " sb-extensions-tab-active"
-                    : ""
-                }`}
-                onClick={() => (activeTab.value = "installed")}
-              >
-                {t("installed-extensions", { defaultValue: "Installed" })}
-                <span className="sb-extensions-tab-count">
-                  {installedExtensions.length}
-                </span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id="sb-extensions-tab-available"
-                aria-selected={activeTab.value === "available"}
-                aria-controls="sb-extensions-tabpanel"
-                className={`sb-extensions-tab${
-                  activeTab.value === "available"
-                    ? " sb-extensions-tab-active"
-                    : ""
-                }`}
-                onClick={() => (activeTab.value = "available")}
-              >
-                {t("available-extensions", { defaultValue: "Available" })}
-                <span className="sb-extensions-tab-count">
-                  {availableExtensions.length}
-                </span>
-              </button>
-            </div>
-
-            <div
-              id="sb-extensions-tabpanel"
-              role="tabpanel"
-              aria-labelledby={`sb-extensions-tab-${activeTab.value}`}
-            >
-              {activeExtensions.length === 0 ? (
-                <div className="sb-settings-empty-state">
-                  <p>{activeEmptyMessage}</p>
-                </div>
-              ) : (
-                <ul className="sb-extensions-list">
-                  {activeExtensions.map(renderExtensionRow)}
-                </ul>
-              )}
-            </div>
+            <SearchBar
+              value={searchQuery.value}
+              onInput={(value) => {
+                searchQuery.value = value;
+              }}
+              placeholder={t("extensions-search")}
+            />
+            {query && shownExtensions.length === 0 ? (
+              <div className="sb-settings-empty-state" role="status">
+                <p>
+                  {t("extensions-search-no-matches", {
+                    query: searchQuery.value.trim(),
+                  })}
+                </p>
+              </div>
+            ) : (
+              <>
+                {renderSection(
+                  "installed",
+                  t("installed-extensions", { defaultValue: "Installed" }),
+                  installedExtensions,
+                  t("no-installed-extensions", {
+                    defaultValue: "You haven't installed any extensions yet.",
+                  })
+                )}
+                {renderSection(
+                  "available",
+                  t("available-extensions", { defaultValue: "Available" }),
+                  availableExtensions,
+                  t("no-available-extensions", {
+                    defaultValue:
+                      "There are no more extensions available to install.",
+                  })
+                )}
+              </>
+            )}
           </>
         )}
 
@@ -1729,725 +1111,17 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           t={t}
         />
 
-        <div className="sb-extension-footer-actions">
-          <button
-            className="sb-settings-action-button"
-            onClick={() => void handleDownloadExtensions()}
-            disabled={isDownloadingSet.value}
-          >
-            {isDownloadingSet.value
-              ? "Downloading Extensions..."
-              : "Download Extensions"}
-          </button>
-          <button
-            className="sb-settings-action-button"
-            onClick={() => void handleUploadExtensions()}
-            disabled={isUploadingSet.value}
-          >
-            {isUploadingSet.value
-              ? "Uploading Extensions..."
-              : "Upload Extensions"}
-          </button>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function ToolbarSettingsView(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { tools: toolsManager, settings } = state;
-  const { t } = useI18n();
-
-  const onBack = () => {
-    state.sidebar.requestedSettingsView.value = "main";
-  };
-
-  const available = toolsManager.listToolbarTools();
-  const toolbarConfig = settings.settings.value.toolbar;
-  const hiddenSet = new Set(toolbarConfig.hidden);
-
-  const allIds = available.map((tool) => tool.id);
-  const orderedIds = [
-    // Ignore the order for now as pr Issue #1384
-    // ...toolbarConfig.order.filter((id) => allIds.includes(id)),
-    ...allIds.filter((id) => !toolbarConfig.order.includes(id)),
-  ];
-
-  const toggleVisible = (id: string) => {
-    settings.setToolbarHidden(id, !hiddenSet.has(id));
-  };
-
-  const isCustomized =
-    toolbarConfig.hidden.length > 0 || toolbarConfig.order.length > 0;
-
-  return (
-    <div className="sb-settings-page">
-      <SettingsBreadcrumbs
-        onBack={onBack}
-        trail={["Page settings", "Toolbar"]}
-      />
-      <SettingsHero
-        icon="tune"
-        title={t("toolbar", { defaultValue: "Toolbar" })}
-        description={t("toolbar_description", {
-          defaultValue:
-            "Choose which reader toolbar tools appear and in what order.",
-        })}
-      />
-
-      <section className="sb-settings-section">
-        <ul className="sb-toolbar-config-list">
-          {orderedIds.map((id) => {
-            const tool = available.find((entry) => entry.id === id);
-            if (!tool || !tool.isControllable) return null;
-            const title = translateTitle(t, tool.title);
-            const isHidden = hiddenSet.has(id);
-
-            return (
-              <li
-                key={id}
-                className={`sb-toolbar-config-row${
-                  isHidden ? " sb-toolbar-config-row-hidden" : ""
-                }`}
-              >
-                <span className="sb-toolbar-config-title">{title}</span>
-                <div className="sb-settings-toggle-row sb-toolbar-config-toggle">
-                  <input
-                    type="checkbox"
-                    checked={!isHidden}
-                    aria-label={`${title} visibility`}
-                    onChange={(event: Event) => {
-                      const target = event.currentTarget as HTMLInputElement;
-                      settings.setToolbarHidden(id, !target.checked);
-                    }}
-                    onClick={(event: Event) => {
-                      event.stopPropagation();
-                      toggleVisible(id);
-                    }}
-                  />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-
-        {isCustomized && (
-          <div className="sb-settings-actions">
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={() => settings.resetToolbarConfig()}
-            >
-              {t("reset-toolbar", { defaultValue: "Reset toolbar" })}
-            </button>
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
-
-function TextFormattingToolbar(props: {
-  sectionId: TextSectionId;
-  section: TextSectionConfig;
-  onChange: (patch: Partial<TextSectionConfig>) => void;
-}) {
-  const { sectionId, section, onChange } = props;
-  const paletteOpen = useSignal(false);
-  const themeFallback = `var(${TEXT_SECTION_THEME_COLOR_VAR[sectionId]})`;
-  const swatchBackground = section.color || themeFallback;
-  const { t, isRtl } = useI18n();
-
-  const toggle = (key: "bold" | "italic" | "underline") => {
-    onChange({ [key]: !section[key] } as Partial<TextSectionConfig>);
-  };
-
-  const cycleAlignment = () => {
-    onChange({ alignment: ALIGNMENT_CYCLE[section.alignment] });
-  };
-
-  const alignmentIcons: Record<TextAlignment, string> = {
-    unset: isRtl ? "format_align_right" : "format_align_left",
-    left: "format_align_left",
-    center: "format_align_center",
-    right: "format_align_right",
-  };
-
-  return (
-    <div className="sb-text-format-toolbar">
-      <button
-        type="button"
-        className={`sb-text-format-btn${section.bold ? " sb-text-format-btn-active" : ""}`}
-        onClick={() => toggle("bold")}
-        aria-label={t("bold", { defaultValue: "Bold" })}
-        title={t("bold")}
-        aria-pressed={section.bold}
-      >
-        <span className="material-symbols-outlined">format_bold</span>
-      </button>
-      <button
-        type="button"
-        className={`sb-text-format-btn${section.italic ? " sb-text-format-btn-active" : ""}`}
-        onClick={() => toggle("italic")}
-        aria-label={t("italic", { defaultValue: "Italic" })}
-        title={t("italic")}
-        aria-pressed={section.italic}
-      >
-        <span className="material-symbols-outlined">format_italic</span>
-      </button>
-      <button
-        type="button"
-        className={`sb-text-format-btn${section.underline ? " sb-text-format-btn-active" : ""}`}
-        onClick={() => toggle("underline")}
-        aria-label={t("underline", { defaultValue: "Underline" })}
-        title={t("underline")}
-        aria-pressed={section.underline}
-      >
-        <span className="material-symbols-outlined">format_underlined</span>
-      </button>
-
-      <div className="sb-text-format-divider" aria-hidden="true" />
-
-      <button
-        type="button"
-        className="sb-text-format-btn"
-        onClick={cycleAlignment}
-        aria-label={t("alignment_x", {
-          defaultValue: `Alignment: ${section.alignment}`,
-        })}
-        title={t("change_alignment", { defaultValue: "Change alignment" })}
-      >
-        <span className="material-symbols-outlined">
-          {alignmentIcons[section.alignment]}
-        </span>
-      </button>
-
-      <div className="sb-text-format-divider" aria-hidden="true" />
-
-      <div className="sb-text-format-color-wrap">
         <button
           type="button"
-          className="sb-text-format-color-button"
-          onClick={() => {
-            paletteOpen.value = !paletteOpen.value;
-          }}
-          aria-label={t("pick_text_color", { defaultValue: "Pick text color" })}
-          title={t("text_color", { defaultValue: "Text color" })}
+          className="sb-extensions-add-link-button"
+          onClick={openAddFromLink}
         >
-          <span
-            className="sb-text-format-color-swatch"
-            style={{ background: swatchBackground }}
-          />
+          <span className="material-symbols-outlined" aria-hidden="true">
+            link
+          </span>
+          {t("extension-add-link-label")}
         </button>
-        {paletteOpen.value && (
-          <div
-            className="sb-text-format-palette"
-            role="menu"
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                paletteOpen.value = false;
-                return;
-              }
-              handleGridKeyNav(event, event.currentTarget);
-            }}
-          >
-            <button
-              type="button"
-              className={`sb-text-format-palette-swatch${
-                section.color === ""
-                  ? " sb-text-format-palette-swatch-selected"
-                  : ""
-              }`}
-              style={{ background: themeFallback }}
-              aria-label={t("follow_theme", { defaultValue: "Follow theme" })}
-              title={t("follow_theme", { defaultValue: "Follow theme" })}
-              onClick={() => {
-                onChange({ color: "" });
-                paletteOpen.value = false;
-              }}
-            />
-            {TEXT_COLOR_PALETTE.map((color) => (
-              <button
-                key={color}
-                type="button"
-                className={`sb-text-format-palette-swatch${
-                  color.toLowerCase() === section.color.toLowerCase()
-                    ? " sb-text-format-palette-swatch-selected"
-                    : ""
-                }`}
-                style={{ background: color }}
-                aria-label={color}
-                onClick={() => {
-                  onChange({ color });
-                  paletteOpen.value = false;
-                }}
-              />
-            ))}
-            <div className="sb-text-format-palette-custom">
-              <span>{t("custom", { defaultValue: "Custom" })}</span>
-              <LazyColorPicker
-                value={normalizeHex(section.color)}
-                className="sb-text-format-palette-custom-swatch"
-                ariaLabel={t("custom", { defaultValue: "Custom" })}
-                onChange={(color) => {
-                  onChange({ color });
-                  paletteOpen.value = false;
-                }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TextSettingsContent(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { settings } = state;
-  const textConfig = settings.settings.value.textConfig;
-  const { t } = useI18n();
-
-  return (
-    <section className="sb-settings-section">
-      {TEXT_SECTION_ORDER.map((section) => {
-        const config = textConfig[section];
-        const handleChange = (patch: Partial<TextSectionConfig>) =>
-          settings.updateTextSection(section, patch);
-
-        return (
-          <div key={section} className="sb-text-section">
-            <h3 className="sb-text-section-title">
-              {t(`text-section-${section}`, { defaultValue: section })}
-            </h3>
-
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">
-                {t("font", { defaultValue: "Font" })}
-              </label>
-              <select
-                className="sb-settings-language-select"
-                value={config.font}
-                onChange={(event: Event) => {
-                  const target = event.currentTarget as HTMLSelectElement;
-                  handleChange({ font: target.value });
-                }}
-              >
-                {TEXT_FONT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(option.label, { defaultValue: option.label })}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">
-                {t("weight", { defaultValue: "Weight" })}
-              </label>
-              <select
-                className="sb-settings-language-select"
-                value={config.weight}
-                onChange={(event: Event) => {
-                  const target = event.currentTarget as HTMLSelectElement;
-                  handleChange({ weight: target.value });
-                }}
-              >
-                {TEXT_WEIGHT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(option.label, { defaultValue: option.label })}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">
-                {t("margin-vertical", {
-                  defaultValue: "Margin (vertical, px)",
-                })}
-              </label>
-              <input
-                type="number"
-                className="sb-settings-text-input"
-                value={config.marginVertical}
-                onInput={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  const parsed = Number(target.value);
-                  if (Number.isFinite(parsed)) {
-                    handleChange({ marginVertical: parsed });
-                  }
-                }}
-                placeholder="10"
-              />
-            </div>
-
-            <div className="sb-settings-field-row">
-              <label className="sb-settings-field-label">
-                {t("margin-horizontal", {
-                  defaultValue: "Margin (horizontal, px)",
-                })}
-              </label>
-              <input
-                type="number"
-                className="sb-settings-text-input"
-                value={config.marginHorizontal}
-                onInput={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  const parsed = Number(target.value);
-                  if (Number.isFinite(parsed)) {
-                    handleChange({ marginHorizontal: parsed });
-                  }
-                }}
-                placeholder="10"
-              />
-            </div>
-
-            <TextFormattingToolbar
-              sectionId={section}
-              section={config}
-              onChange={handleChange}
-            />
-          </div>
-        );
-      })}
-
-      <div className="sb-settings-actions">
-        <button
-          type="button"
-          className="sb-settings-action-button"
-          onClick={() => settings.resetTextConfig()}
-        >
-          {t("reset-text-settings", { defaultValue: "Reset text settings" })}
-        </button>
-      </div>
-    </section>
-  );
-}
-
-function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { theme } = state;
-  const { t } = useI18n();
-
-  const effectiveTheme = useComputed(() => theme.currentTheme.value);
-  const overrides = useComputed(() => theme.customOverrides.value);
-  const hasOverrides = useComputed(
-    () => Object.keys(theme.customOverrides.value).length > 0
-  );
-
-  return (
-    <section className="sb-settings-section">
-      <h3 className="sb-settings-subheading">
-        {t("customize-colors", { defaultValue: "Customize colors" })}
-      </h3>
-      {THEME_COLOR_GROUPS.map((group) => (
-        <div key={group.id} className="sb-theme-colors-group">
-          <h3 className="sb-settings-subheading">{group.title}</h3>
-          <ul className="sb-theme-colors-list">
-            {group.fields.map((field) => {
-              const currentValue =
-                effectiveTheme.value.variables[field.key] ?? "";
-              const hexValue = normalizeHex(
-                typeof currentValue === "string" ? currentValue : ""
-              );
-              const isOverridden =
-                overrides.value[field.key as ThemeColorKey] !== undefined;
-
-              return (
-                <li key={field.key} className="sb-theme-color-row">
-                  <div className="sb-theme-color-row-main">
-                    <span className="sb-theme-color-label">{field.label}</span>
-                    <span className="sb-theme-color-value">
-                      {typeof currentValue === "string" && currentValue
-                        ? currentValue
-                        : "—"}
-                    </span>
-                  </div>
-                  <div className="sb-theme-color-row-controls">
-                    <LazyColorPicker
-                      value={hexValue}
-                      className="sb-theme-color-input"
-                      ariaLabel={field.label}
-                      onChange={(color) => {
-                        theme.setCustomColor(field.key, color);
-                      }}
-                      onPreview={(color) => {
-                        theme.previewCustomColor(field.key, color);
-                      }}
-                      onCancel={() => {
-                        theme.clearPreviewCustomColor(field.key);
-                      }}
-                    />
-                    {isOverridden && (
-                      <button
-                        type="button"
-                        className="sb-theme-color-reset"
-                        title={t("reset-to-default", {
-                          defaultValue: "Reset to default",
-                        })}
-                        aria-label={`Reset ${field.label}`}
-                        onClick={() => theme.resetCustomColor(field.key)}
-                      >
-                        <span className="material-symbols-outlined">
-                          restart_alt
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
-
-      <h3 className="sb-settings-subheading">
-        {t("highlight-colors", { defaultValue: "Highlight colors" })}
-      </h3>
-      <ul className="sb-theme-colors-list">
-        {DEFAULT_HIGHLIGHT_IDS.map((id) => {
-          const effective = effectiveTheme.value.highlightColors[id];
-          const bg = effective?.color ?? "";
-          const fg = effective?.fontColor ?? "";
-          const isOverridden =
-            theme.customHighlightOverrides.value[id] !== undefined;
-
-          return (
-            <li key={id} className="sb-theme-color-row">
-              <div className="sb-theme-color-row-main">
-                <span
-                  className="sb-highlight-preview-pill"
-                  style={{ background: bg, color: fg }}
-                  aria-hidden="true"
-                >
-                  {id.charAt(0).toUpperCase() + id.slice(1)}
-                </span>
-                <span className="sb-theme-color-value">{bg || "—"}</span>
-              </div>
-              <div className="sb-theme-color-row-controls">
-                <LazyColorPicker
-                  value={normalizeHex(bg)}
-                  className="sb-theme-color-input"
-                  ariaLabel={t("id_highlight-background-color", { id })}
-                  onChange={(color) => {
-                    theme.setHighlightColor(id, { color });
-                  }}
-                  onPreview={(color) => {
-                    theme.previewHighlightColor(id, { color });
-                  }}
-                  onCancel={() => {
-                    theme.clearPreviewHighlightField(id, "color");
-                  }}
-                />
-                <LazyColorPicker
-                  value={normalizeHex(fg)}
-                  className="sb-theme-color-input"
-                  ariaLabel={t("id_highlight-text-color", { id })}
-                  onChange={(color) => {
-                    theme.setHighlightColor(id, { fontColor: color });
-                  }}
-                  onPreview={(color) => {
-                    theme.previewHighlightColor(id, { fontColor: color });
-                  }}
-                  onCancel={() => {
-                    theme.clearPreviewHighlightField(id, "fontColor");
-                  }}
-                />
-                {isOverridden && (
-                  <button
-                    type="button"
-                    className="sb-theme-color-reset"
-                    title={t("reset-to-default", {
-                      defaultValue: "Reset to default",
-                    })}
-                    aria-label={t("reset-to-default", {
-                      defaultValue: "Reset to default",
-                    })}
-                    onClick={() => theme.resetHighlightColor(id)}
-                  >
-                    <span className="material-symbols-outlined">
-                      restart_alt
-                    </span>
-                  </button>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-
-      {(hasOverrides.value ||
-        Object.keys(theme.customHighlightOverrides.value).length > 0) && (
-        <div className="sb-settings-actions">
-          <button
-            type="button"
-            className="sb-settings-action-button"
-            onClick={() => {
-              theme.resetAllCustomColors();
-              theme.resetAllHighlightColors();
-            }}
-          >
-            {t("reset-all-custom-colors", {
-              defaultValue: "Reset all custom colors",
-            })}
-          </button>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function AllSettingsView(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { t } = useI18n();
-  const isDownloadingSettings = useSignal(false);
-  const isUploadingSettings = useSignal(false);
-  const uploadErrorMessage = useSignal<string>("");
-
-  const onBack = () => {
-    state.sidebar.requestedSettingsView.value = "display-and-theme";
-  };
-
-  const handleDownloadSettings = async () => {
-    if (isDownloadingSettings.value) {
-      return;
-    }
-
-    isDownloadingSettings.value = true;
-    try {
-      download(
-        new Blob([JSON.stringify(state.settings.settings.value, null, 2)], {
-          type: "application/json",
-        }),
-        "seed-bible-app-settings.json"
-      );
-    } finally {
-      isDownloadingSettings.value = false;
-    }
-  };
-
-  const handleUploadSettings = async () => {
-    if (isUploadingSettings.value) {
-      return;
-    }
-
-    isUploadingSettings.value = true;
-    uploadErrorMessage.value = "";
-    try {
-      // TODO: Fix this
-      // const files = await os.showUploadFiles();
-      // const firstFile = files?.[0];
-      // if (!firstFile) {
-      //   return;
-      // }
-      // const text =
-      //   typeof firstFile.data === "string"
-      //     ? firstFile.data
-      //     : new TextDecoder().decode(firstFile.data);
-      // let jsonData: unknown;
-      // try {
-      //   jsonData = JSON.parse(text);
-      // } catch (parseError) {
-      //   uploadErrorMessage.value = `Invalid JSON: ${parseError instanceof Error ? parseError.message : "Unknown error"}`;
-      //   return;
-      // }
-      // const parsed = AppSettingsSchema.safeParse(jsonData);
-      // if (!parsed.success) {
-      //   uploadErrorMessage.value = `Invalid app settings: ${z.prettifyError(parsed.error)}`;
-      //   console.error("Uploaded file is not valid app settings.", parsed.error);
-      //   return;
-      // }
-      // state.settings.setAllSettings(parsed.data);
-    } catch (error) {
-      uploadErrorMessage.value = `Failed to upload app settings: ${error instanceof Error ? error.message : "Unknown error"}`;
-      console.error("Failed to upload app settings.", error);
-    } finally {
-      isUploadingSettings.value = false;
-    }
-  };
-
-  return (
-    <div className="sb-settings-page">
-      <SettingsBreadcrumbs
-        onBack={onBack}
-        trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
-          t("display-and-theme", { defaultValue: "Display & Theme" }),
-          t("all-settings", { defaultValue: "All settings" }),
-        ]}
-      />
-      <SettingsHero
-        icon="tune"
-        title={t("all-settings", { defaultValue: "All settings" })}
-        description={t("all-settings-description", {
-          defaultValue:
-            "Fine-tune every text section and customize each theme color.",
-        })}
-      />
-      <TextSettingsContent state={state} />
-      {state.customizations.activeCustomization.value ? (
-        <section className="sb-settings-section">
-          <div className="sb-settings-empty-state">
-            <p>
-              {t("colors-controlled-by-customization", {
-                defaultValue:
-                  "Colors are controlled by the active Customization. Change which theme you're using from Display & Theme.",
-              })}
-            </p>
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={() => {
-                state.sidebar.requestedSettingsView.value = "display-and-theme";
-              }}
-            >
-              {t("go-to-display-and-theme", {
-                defaultValue: "Go to Display & Theme",
-              })}
-            </button>
-          </div>
-        </section>
-      ) : (
-        <ThemeCustomColorsContent state={state} />
-      )}
-      <div className="sb-extension-footer-actions">
-        <button
-          className="sb-settings-action-button"
-          onClick={() => void handleDownloadSettings()}
-          disabled={isDownloadingSettings.value}
-        >
-          {isDownloadingSettings.value
-            ? t("downloading-settings", {
-                defaultValue: "Downloading settings...",
-              })
-            : t("download-settings", { defaultValue: "Download settings" })}
-        </button>
-        <button
-          className="sb-settings-action-button"
-          onClick={() => void handleUploadSettings()}
-          disabled={isUploadingSettings.value}
-        >
-          {isUploadingSettings.value
-            ? t("uploading-settings", { defaultValue: "Uploading settings..." })
-            : t("upload-settings", { defaultValue: "Upload settings" })}
-        </button>
-        {uploadErrorMessage.value && (
-          <div
-            className="sb-upload-settings-error"
-            style={{
-              color: "var(--sb-error-color, #dc2626)",
-              fontSize: "0.8125rem",
-              marginTop: "0.5rem",
-              wordBreak: "break-word",
-            }}
-          >
-            {uploadErrorMessage.value}
-          </div>
-        )}
-      </div>
+      </section>
     </div>
   );
 }
@@ -2489,154 +1163,10 @@ function SettingsVersionFooter() {
   );
 }
 
-function CustomizationsSettingsView(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { customizations } = state;
-  const { t } = useI18n();
-
-  useEffect(() => {
-    void customizations.load();
-  }, []);
-
-  const onBack = () => {
-    state.sidebar.requestedSettingsView.value = "main";
-  };
-
-  const openCustomization = (id: string) => {
-    openCustomizationEditPane(state, id);
-  };
-
-  const handleCreate = async () => {
-    const created = await customizations.create();
-    openCustomizationEditPane(state, created.id);
-    // First-time-only overview: the customization name and logo, then a
-    // deep-linked tour of the new theme's editor sections.
-    state.tutorial.startContextual(
-      "customization-created",
-      buildCustomizationTutorialSteps(state, created.defaultVariantId)
-    );
-  };
-
-  const list = customizations.customizations.value;
-  const isEmpty = list.length === 0;
-
-  return (
-    <div className="sb-settings-page">
-      <SettingsBreadcrumbs
-        onBack={onBack}
-        trail={[
-          t("page-settings", { defaultValue: "Page settings" }),
-          t("customize", { defaultValue: "Customize" }),
-        ]}
-      />
-      <section className="sb-settings-section">
-        {isEmpty ? (
-          <div className="sb-settings-empty-state">
-            <p>
-              {customizations.isLoading.value
-                ? t("loading", { defaultValue: "Loading…" })
-                : t("no-customizations", {
-                    defaultValue:
-                      "You don't have any customizations yet. Create one to get started.",
-                  })}
-            </p>
-          </div>
-        ) : (
-          <ul className="sb-settings-list">
-            {list.map((customization) => {
-              const previewVariant =
-                customization.variants.find(
-                  (v) => v.id === customization.defaultVariantId
-                ) ?? customization.variants[0];
-              return (
-                <li
-                  key={customization.id}
-                  className="sb-settings-nav-item sb-customization-row"
-                  onClick={() => openCustomization(customization.id)}
-                >
-                  <span
-                    className="sb-customization-swatches"
-                    aria-hidden="true"
-                  >
-                    <span
-                      className="sb-customization-swatch"
-                      style={{
-                        background: previewVariant?.themes.primaryColor,
-                      }}
-                    />
-                    <span
-                      className="sb-customization-swatch"
-                      style={{
-                        background: previewVariant?.themes.secondaryColor,
-                      }}
-                    />
-                    <span
-                      className="sb-customization-swatch"
-                      style={{
-                        background: previewVariant?.themes.tertiaryColor,
-                      }}
-                    />
-                  </span>
-                  <span className="sb-settings-nav-label">
-                    {customization.name}
-                  </span>
-                  <ContextMenuWithButton
-                    buttonClassName="sb-extension-row-action-button"
-                    aria-label={t("customization-options", {
-                      defaultValue: "Customization options",
-                    })}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <ContextMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigator.clipboard.writeText(
-                          customizations.getShareLink(customization)
-                        );
-                        state.app.toast(
-                          t("customization-link-copied", {
-                            defaultValue:
-                              "Customization link copied to clipboard",
-                          })
-                        );
-                      }}
-                    >
-                      <MaterialIcon className="sb-context-menu-item-icon">
-                        share
-                      </MaterialIcon>
-                      <span>{t("share", { defaultValue: "Share" })}</span>
-                    </ContextMenuItem>
-                  </ContextMenuWithButton>
-                  <span className="material-symbols-outlined rtl-mirror">
-                    chevron_right
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        <div className="sb-settings-actions">
-          <button
-            type="button"
-            className="sb-settings-save-button"
-            onClick={() => void handleCreate()}
-          >
-            {t("create-customization", {
-              defaultValue: "Create Customization",
-            })}
-          </button>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { branding } = useAppConfig();
   const { t, language, availableLanguages, setLanguage } = useI18n();
-  const isLoggedIn = useComputed(() => state.login.userId.value !== null);
 
   const onNavigate = (view: RequestedSettingsView) => {
     state.sidebar.requestedSettingsView.value = view;
@@ -2655,13 +1185,25 @@ function SettingsMainView(props: { state: SeedBibleState }) {
           <li>
             <button
               className="sb-settings-nav-item"
-              onClick={() => onNavigate("account")}
+              onClick={() => {
+                // Beside the sidebar, Settings stays open, as for Extensions.
+                if (!state.app.isMobile.value) {
+                  state.openProfile();
+                  return;
+                }
+                // On a phone Settings covers the screen, so it closes — in one
+                // history entry, so Back from Profile returns to Settings.
+                state.navigation.batchWrites(() => {
+                  state.sidebar.closeSettings();
+                  state.openProfile();
+                });
+              }}
             >
               <span className="sb-settings-nav-icon">
                 <MaterialIcon>person</MaterialIcon>
               </span>
               <span className="sb-settings-nav-label">
-                {t("account-settings", { defaultValue: "Account settings" })}
+                {t("account", { defaultValue: "Account" })}
               </span>
               <span className="material-symbols-outlined rtl-mirror">
                 chevron_right
@@ -2686,24 +1228,13 @@ function SettingsMainView(props: { state: SeedBibleState }) {
           </li>
           <li>
             <button
-              className="sb-settings-nav-item hide-on-mobile"
-              onClick={() => onNavigate("toolbar")}
-            >
-              <span className="sb-settings-nav-icon">
-                <MaterialIcon>tune</MaterialIcon>
-              </span>
-              <span className="sb-settings-nav-label">
-                {t("toolbar", { defaultValue: "Toolbar" })}
-              </span>
-              <span className="material-symbols-outlined rtl-mirror">
-                chevron_right
-              </span>
-            </button>
-          </li>
-          <li>
-            <button
               className="sb-settings-nav-item"
-              onClick={() => onNavigate("extensions")}
+              onClick={() =>
+                // A phone has no room beside the sidebar for the full page.
+                state.app.isMobile.value
+                  ? onNavigate("extensions")
+                  : state.openExtensions()
+              }
             >
               <span className="sb-settings-nav-icon">
                 <ExtensionsIcon />
@@ -2756,35 +1287,31 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </span>
             </button>
           </li>
-          {isLoggedIn.value && (
-            <li>
-              <button
-                className="sb-settings-nav-item"
-                onClick={() => onNavigate("customizations")}
-              >
-                <span className="sb-settings-nav-icon">
-                  <MaterialIcon>palette</MaterialIcon>
-                </span>
-                <span className="sb-settings-nav-label">
-                  {t("customize", { defaultValue: "Customize" })}
-                </span>
-                <span className="material-symbols-outlined rtl-mirror">
-                  chevron_right
-                </span>
-              </button>
-            </li>
-          )}
           {!isSettingDisabled("about-seed-bible") && (
             <li>
               <button
                 className="sb-settings-nav-item"
                 onClick={() => {
-                  state.sidebar.closeSettings();
+                  const path = buildStaticPagePath({
+                    language: state.i18n.language.value,
+                    page: "about",
+                  });
+                  // On a phone Settings covers the screen, so it closes.
+                  if (state.app.isMobile.value) {
+                    state.sidebar.closeSettings();
+                    state.navigation.push(path);
+                    return;
+                  }
+                  // Beside the sidebar Settings stays open, as for Extensions.
+                  // Which Settings screen is showing lives in the URL, so it
+                  // has to come along or the new page would close Settings.
+                  const settingsView = state.navigation.currentUrl
+                    .peek()
+                    .searchParams.get("settingsView");
                   state.navigation.push(
-                    buildStaticPagePath({
-                      language: state.i18n.language.value,
-                      page: "about",
-                    })
+                    settingsView
+                      ? `${path}?${new URLSearchParams({ settingsView })}`
+                      : path
                   );
                 }}
               >
@@ -2856,33 +1383,15 @@ function SettingsMainView(props: { state: SeedBibleState }) {
 
 export function SettingsPage(props: { state: SeedBibleState }) {
   const { state } = props;
-  // Honor a deep-link requested by the sidebar (e.g. clicking the
-  // bottom-right avatar opens Account settings directly). Consumed once and
-  // cleared so subsequent opens start at the main list.
+  // Honor a deep-link requested by the sidebar (e.g. `?settingsView=extensions`).
   const currentView = state.sidebar.requestedSettingsView;
-
-  if (currentView.value === "account") {
-    return <AccountSettingsView state={state} />;
-  }
 
   if (currentView.value === "display-and-theme") {
     return <DisplayAndThemeSettingsView state={state} />;
   }
 
-  if (currentView.value === "display-and-theme-all-settings") {
-    return <AllSettingsView state={state} />;
-  }
-
-  if (currentView.value === "toolbar") {
-    return <ToolbarSettingsView state={state} />;
-  }
-
   if (currentView.value === "extensions") {
     return <ExtensionsSettingsView state={state} />;
-  }
-
-  if (currentView.value === "customizations") {
-    return <CustomizationsSettingsView state={state} />;
   }
 
   return <SettingsMainView state={state} />;

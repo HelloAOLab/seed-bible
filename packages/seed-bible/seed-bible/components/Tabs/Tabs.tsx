@@ -2,10 +2,13 @@ import "./Tabs.inline.css";
 import "./Tabs.css";
 import { useSignal } from "@preact/signals";
 import {
+  compareSaves,
   DEFAULT_SAVE_CATEGORY,
+  formatSaveVerse,
   saveBelongsToCategory,
   type SaveVerse,
 } from "../../managers/SavesManager";
+import { translationShortName } from "../../managers/BibleDataManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import {
   TAB_SLOT_LAYOUT_OPTIONS,
@@ -30,7 +33,6 @@ import {
 } from "../../managers/SessionsManager";
 import { safeLocalStorage } from "../../app/ssrEnv";
 import { useI18n } from "../../i18n/I18nManager";
-import { SidebarSearch } from "../../components/SidebarSearch/SidebarSearch";
 import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
@@ -42,6 +44,7 @@ import {
   getUserSessionRole,
   sessionRoleRank,
 } from "../Avatar/Avatar";
+import type { ComponentChildren } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
 import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
@@ -51,6 +54,15 @@ import {
   ParticipantFriendButton,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
+import { openReaderLocation } from "./openReaderLocation";
+import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
+import { useScrollEdgeFadeRef } from "../useScrollEdgeFade";
+import {
+  BookmarkGlyph,
+  BookmarkStackIcon,
+  BookmarksPanel,
+  bookmarkButtonLabel,
+} from "../Bookmarks/Bookmarks";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -375,6 +387,77 @@ function SessionSettingsModalContent(props: {
               })}
             </div>
           </div>
+
+          <div className="sb-session-settings-section">
+            <div className="sb-session-settings-label">
+              {t("session-settings-verse-effects", {
+                defaultValue: "Verse selection effects",
+              })}
+            </div>
+
+            <div
+              className="sb-session-settings-duration-options"
+              role="group"
+              aria-label={t("session-settings-verse-effects", {
+                defaultValue: "Verse selection effects",
+              })}
+            >
+              {(
+                [
+                  {
+                    value: "hosts-only",
+                    label: t("session-settings-verse-effects-hosts-only"),
+                  },
+                  {
+                    value: "everyone",
+                    label: t("session-settings-verse-effects-everyone"),
+                  },
+                  {
+                    value: "none",
+                    label: t("session-settings-verse-effects-none"),
+                  },
+                ] as const
+              ).map((option) => {
+                const selected =
+                  options.verseSelectionEffectVisibility === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`sb-session-settings-duration-option${
+                      selected
+                        ? " sb-session-settings-duration-option-selected"
+                        : ""
+                    }`}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      session.updateOptions({
+                        verseSelectionEffectVisibility: option.value,
+                      });
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="sb-session-settings-description">
+              {options.verseSelectionEffectVisibility === "hosts-only"
+                ? t("session-settings-verse-effects-desc-hosts", {
+                    defaultValue: "Show effects when a host selects a verse.",
+                  })
+                : options.verseSelectionEffectVisibility === "everyone"
+                  ? t("session-settings-verse-effects-desc-everyone", {
+                      defaultValue: "Show effects when anyone selects a verse.",
+                    })
+                  : t("session-settings-verse-effects-desc-none", {
+                      defaultValue:
+                        "Verse selection effects are turned off for everyone.",
+                    })}
+            </p>
+          </div>
         </div>
 
         <div className="sb-session-settings-section">
@@ -665,6 +748,7 @@ export function openSessionSettingsModal(
       key: "session-settings",
       defaultValue: "Session settings",
     },
+    mobileSheet: true,
     content: () => (
       <SessionSettingsModalContent
         state={state}
@@ -692,6 +776,7 @@ export function openShareSessionModal(
   state.modals.openModal({
     id: modalId,
     title: { key: "share-sheet-title", defaultValue: "Share" },
+    mobileSheet: true,
     content: () => (
       <ShareModal
         app={state.app}
@@ -725,6 +810,8 @@ function openShareSheetForCurrentTab(state: SeedBibleState) {
       app: state.app,
       toast: state.app.toast,
       sharedSession: tab.sharedSession,
+      embedThemes: state.theme.themes,
+      customizationLocator: state.customizations.activeCustomizationLocator,
     },
     getShareUrl(tab.readingState)
   );
@@ -809,8 +896,9 @@ export function TabsHeader(props: TabsHeaderProps) {
           }
           title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <span className="material-symbols-outlined">
-            {effectivelyCollapsed ? "menu" : "menu_open"}
+          {/* Mirrored in RTL, where the sidebar is on the right. */}
+          <span className="material-symbols-outlined rtl-mirror">
+            {effectivelyCollapsed ? "left_panel_open" : "left_panel_close"}
           </span>
         </button>
 
@@ -992,7 +1080,7 @@ export function Settings(props: SettingsProps) {
         <h3 className="sb-sidebar-tabs-title">{t("settings")}</h3>
         <button
           onClick={sidebar.closeSettings}
-          className="sb-sidebar-settings-close-button"
+          className="sb-sidebar-tabs-header-icon-button"
           aria-label={t("close-settings", { defaultValue: "Close Settings" })}
           title={t("close-settings", { defaultValue: "Close Settings" })}
         >
@@ -1116,8 +1204,17 @@ function TabRow(props: TabRowProps) {
     throw tab.readingState.chapterDataPromise;
   }
 
-  const { app, saves } = state;
+  const { app, saves, bookmarks } = state;
   const { t } = useI18n();
+
+  // One small ribbon in the color of the most recently moved bookmark here;
+  // several colors at this size would be unreadable.
+  const bookmarksHere = bookmarks.getBookmarksForLocation(
+    tab.readingState.translationId.value,
+    tab.readingState.bookId.value,
+    tab.readingState.chapterNumber.value
+  );
+  const frontBookmark = bookmarksHere[0];
 
   const shortSubTitle = tab.readingState.shortSubTitle.value;
   const title = tab.readingState.title.value;
@@ -1161,6 +1258,16 @@ function TabRow(props: TabRowProps) {
             •
           </span>
           <span className="sb-tab-main-translation">{shortSubTitle}</span>
+          {frontBookmark && (
+            <span
+              className="sb-tab-bookmark-marker"
+              role="img"
+              aria-label={bookmarkButtonLabel(t, bookmarksHere)}
+              title={bookmarkButtonLabel(t, bookmarksHere)}
+            >
+              <BookmarkGlyph colorId={frontBookmark.colorId} size={12} />
+            </span>
+          )}
           {isPlayingAudio && (
             <MaterialIcon
               className="sb-tab-audio-icon"
@@ -1704,6 +1811,7 @@ function openSaveCategoryModal(
             key: "add-save-modal",
             defaultValue: "Add save",
           },
+    mobileSheet: true,
     content: () => (
       <SaveCategoryPickerContent
         state={state}
@@ -1713,6 +1821,63 @@ function openSaveCategoryModal(
         onClose={() => state.modals.closeModal(modalId)}
       />
     ),
+  });
+}
+
+/**
+ * Asks before deleting a saves folder, saying what happens to the saves in it:
+ * the ones only in this folder are deleted with it, and the rest stay in
+ * their other folders.
+ */
+function confirmDeleteSaveFolder(state: SeedBibleState, folderName: string) {
+  const inFolder = state.saves.saves
+    .peek()
+    .filter((save) => saveBelongsToCategory(save, folderName));
+  const onlyHere = inFolder.filter(
+    (save) => save.categories.length === 1
+  ).length;
+  const alsoElsewhere = inFolder.length - onlyHere;
+
+  openConfirmDeleteModal(state.modals, {
+    id: `delete-save-folder-confirm-${folderName}`,
+    title: {
+      key: "delete-save-folder-confirm-title",
+      defaultValue: "Delete folder?",
+    },
+    message: (t) =>
+      [
+        t("delete-save-folder-confirm-message", {
+          name: folderName,
+          defaultValue: 'Delete folder "{{name}}"?',
+        }),
+        onlyHere > 0
+          ? t("delete-save-folder-confirm-deletes", {
+              count: onlyHere,
+              defaultValue_one:
+                "The save that's only in this folder will be deleted too.",
+              defaultValue_other:
+                "The {{count}} saves that are only in this folder will be deleted too.",
+            })
+          : null,
+        alsoElsewhere > 0
+          ? t("delete-save-folder-confirm-keeps", {
+              count: alsoElsewhere,
+              defaultValue_one:
+                "The save that's also in another folder will stay there.",
+              defaultValue_other:
+                "The {{count}} saves that are also in other folders will stay there.",
+            })
+          : null,
+        t("cant-be-undone", { defaultValue: "This can't be undone." }),
+      ]
+        .filter(Boolean)
+        .join(" "),
+    onConfirm: () => state.saves.deleteCategory(folderName),
+    failedMessage: (t) =>
+      t("delete-save-folder-failed", {
+        defaultValue: "Couldn't delete the folder.",
+      }),
+    toast: state.app.toast,
   });
 }
 
@@ -1735,11 +1900,12 @@ interface SavesSectionProps {
  */
 function SavesSection(props: SavesSectionProps) {
   const { state, closeLayoutMenu } = props;
-  const { app, saves, tabs: tabsManager, bibleData } = state;
+  const { saves, bibleData } = state;
   const { t } = useI18n();
 
   const categories = saves.categories.value;
-  const allSaves = saves.saves.value;
+  // In Bible order. The list itself is in the order the saves were made.
+  const allSaves = [...saves.saves.value].sort(compareSaves);
   const expanded = saves.expandedCategories.value;
   // Subscribe to the translation books cache so book-name lookups re-render
   // when a previously unloaded translation finishes loading.
@@ -1772,63 +1938,14 @@ function SavesSection(props: SavesSectionProps) {
     chapterNumber: number,
     verse?: number | [number, number]
   ) => {
-    // Everything below changes some piece of state that mirrors to the URL:
-    // the reading position of the tab the save opens, and — on mobile —
-    // the dismissal of the sidebar it was tapped in. Batched, they cost one
-    // history entry for the save; unbatched, the position write lands on
-    // the entry that opened the sidebar and the dismissal adds a second entry
-    // for the same destination, which leaves the back button looking dead.
-    state.navigation.batchWrites(() => {
-      closeContextMenus();
-      closeLayoutMenu();
-      const scrollVerse = Array.isArray(verse) ? verse[0] : verse;
-      const existing = tabsManager.tabs.value.find(
-        (tab) =>
-          tab.readingState.translationId.value === translationId &&
-          tab.readingState.bookId.value === bookId &&
-          tab.readingState.chapterNumber.value === chapterNumber
-      );
-      if (existing) {
-        app.selectTab(existing.id);
-        if (scrollVerse !== undefined) {
-          void existing.readingState.selectTranslationAndChapter(
-            translationId,
-            bookId,
-            chapterNumber,
-            { scrollToVerse: scrollVerse }
-          );
-        }
-        return;
+    openReaderLocation(
+      state,
+      { translationId, bookId, chapterNumber, verse },
+      () => {
+        closeContextMenus();
+        closeLayoutMenu();
       }
-      // Pass the save's location as the new tab's initial reading state so
-      // `loadInitialData()` lands directly on it. Calling `addTab()` and then
-      // `selectTranslationAndChapter()` would race the default GEN 1 load and
-      // sometimes lose, leaving the user on Genesis 1 instead of the save.
-      const newTab = tabsManager.addTab(undefined, {
-        initialTranslationId: translationId,
-        initialBookId: bookId,
-        initialChapterNumber: chapterNumber,
-      });
-      if (scrollVerse !== undefined) {
-        // Queue the scroll-to-verse against the freshly created tab so when
-        // initial chapter data lands the reader scrolls to the saved verse.
-        newTab.readingState.scrollToVerse.value = scrollVerse;
-      }
-      // `addTab()` only marks the tab selected inside TabsManager — it doesn't
-      // place it in a layout slot or dismiss the sidebar. Without this the mobile
-      // saves screen stays on top of the reader, and the save's location
-      // is written over the history entry that opened the sidebar instead of
-      // getting an entry of its own.
-      app.selectTab(newTab.id);
-    });
-  };
-
-  const formatVerseRef = (
-    verse: number | [number, number] | undefined
-  ): string => {
-    if (verse === undefined) return "";
-    if (typeof verse === "number") return `:${verse}`;
-    return verse[0] === verse[1] ? `:${verse[0]}` : `:${verse[0]}-${verse[1]}`;
+    );
   };
 
   const commitRename = (oldName: string) => {
@@ -1927,16 +2044,28 @@ function SavesSection(props: SavesSectionProps) {
                     closeContextMenus();
                   }}
                 >
-                  {t("rename", { defaultValue: "Rename" })}
+                  <MaterialIcon
+                    className="sb-context-menu-item-icon"
+                    aria-hidden="true"
+                  >
+                    edit
+                  </MaterialIcon>
+                  <span>{t("rename", { defaultValue: "Rename" })}</span>
                 </ContextMenuItem>
                 {category.name !== DEFAULT_SAVE_CATEGORY && (
                   <ContextMenuItem
                     className="sb-tab-menu-item"
                     onClick={() => {
-                      void saves.deleteCategory(category.name);
+                      confirmDeleteSaveFolder(state, category.name);
                     }}
                   >
-                    {t("delete", { defaultValue: "Delete" })}
+                    <MaterialIcon
+                      className="sb-context-menu-item-icon"
+                      aria-hidden="true"
+                    >
+                      delete
+                    </MaterialIcon>
+                    <span>{t("delete", { defaultValue: "Delete" })}</span>
                   </ContextMenuItem>
                 )}
               </ContextMenuWithButton>
@@ -1961,7 +2090,7 @@ function SavesSection(props: SavesSectionProps) {
                     const bookName =
                       lookupBookName(save.translationId, save.bookId) ??
                       save.bookId;
-                    const verseSuffix = formatVerseRef(save.verse);
+                    const verseSuffix = formatSaveVerse(save.verse);
                     return (
                       <div
                         key={save.id}
@@ -1989,7 +2118,10 @@ function SavesSection(props: SavesSectionProps) {
                             •
                           </span>
                           <span className="sb-tab-main-translation">
-                            {save.translationId}
+                            {translationShortName(
+                              translationBooksMap,
+                              save.translationId
+                            )}
                           </span>
                         </button>
                         <ContextMenuWithButton
@@ -2024,9 +2156,17 @@ function SavesSection(props: SavesSectionProps) {
                               );
                             }}
                           >
-                            {t("edit-save", {
-                              defaultValue: "Edit save",
-                            })}
+                            <MaterialIcon
+                              className="sb-context-menu-item-icon"
+                              aria-hidden="true"
+                            >
+                              edit
+                            </MaterialIcon>
+                            <span>
+                              {t("edit-save", {
+                                defaultValue: "Edit save",
+                              })}
+                            </span>
                           </ContextMenuItem>
                           <ContextMenuItem
                             className="sb-tab-menu-item"
@@ -2037,9 +2177,36 @@ function SavesSection(props: SavesSectionProps) {
                               );
                             }}
                           >
-                            {t("remove-save", {
-                              defaultValue: "Remove save",
-                            })}
+                            {/* Only this folder's copy goes. That deletes the
+                                save when this is its only folder, but leaves
+                                it in any others, so the label says which. */}
+                            {save.categories.length > 1 ? (
+                              <>
+                                <MaterialIcon
+                                  className="sb-context-menu-item-icon"
+                                  aria-hidden="true"
+                                >
+                                  folder_delete
+                                </MaterialIcon>
+                                <span>
+                                  {t("remove-from-folder", {
+                                    defaultValue: "Remove from folder",
+                                  })}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <MaterialIcon
+                                  className="sb-context-menu-item-icon"
+                                  aria-hidden="true"
+                                >
+                                  delete
+                                </MaterialIcon>
+                                <span>
+                                  {t("delete", { defaultValue: "Delete" })}
+                                </span>
+                              </>
+                            )}
                           </ContextMenuItem>
                         </ContextMenuWithButton>
                       </div>
@@ -2055,34 +2222,92 @@ function SavesSection(props: SavesSectionProps) {
   );
 }
 
+/**
+ * Layout shared by the mobile drawer's Tabs, Bookmarks and Saves screens: a
+ * fixed top bar (Close (X) or Back arrow, a start-aligned title, then
+ * optional trailing actions) over a body that scrolls on its own. Close when
+ * the screen was opened straight from the bottom toolbar; Back when it was
+ * opened from another drawer screen.
+ */
+function MobileScreen(props: {
+  title: string;
+  isClose: boolean;
+  onClose: () => void;
+  actions?: ComponentChildren;
+  children: ComponentChildren;
+}) {
+  const { title, isClose, onClose, actions, children } = props;
+  const { t } = useI18n();
+  const closeLabel = isClose
+    ? t("close", { defaultValue: "Close" })
+    : t("back", { defaultValue: "Back" });
+
+  return (
+    <div className="sb-mobile-screen">
+      <div className="sb-mobile-screen-header">
+        <button
+          type="button"
+          className="sb-mobile-screen-header-button"
+          onClick={onClose}
+          aria-label={closeLabel}
+          title={closeLabel}
+        >
+          <span className="material-symbols-outlined">
+            {isClose ? "close" : "arrow_back"}
+          </span>
+        </button>
+        <h2 className="sb-mobile-screen-title">{title}</h2>
+        {actions}
+      </div>
+      <div className="sb-mobile-screen-body">{children}</div>
+    </div>
+  );
+}
+
 export function Tabs(props: TabsProps) {
   const { state, closeLayoutMenu, effectivelyCollapsed } = props;
-  const { app, tabs: tabsManager, saves } = state;
+  const { app, tabs: tabsManager, saves, bookmarks } = state;
   // Slot-only tabs back an "open in new panel" clone and are intentionally
   // hidden from the tab strip.
   const tabs = tabsManager.tabs.value.filter((tab) => !tab.slotOnly);
   const selectedTabId = tabsManager.selectedTabId.value;
-  const panelsEnabled = app.panelsEnabled.value;
+  // Mobile shows one reader at a time, so a tab has no other panel to open in.
+  const panelsEnabled = app.panelsEnabled.value && !app.isMobile.value;
   const isSavesFilterActive = saves.isFilterActive.value;
+  const isBookmarksPanelOpen = bookmarks.isPanelOpen.value;
   const { t } = useI18n();
+
+  const bookmarksToggleLabel = isBookmarksPanelOpen
+    ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
+    : t("show-bookmarks", { defaultValue: "Show bookmarks" });
+  // The toggle draws the same stack as the reader's button, but for all of
+  // the user's bookmarks: most recently moved in front, at most three shown.
+  // Like the saves star beside it, it is an outline while off and filled in
+  // the active color while on; the bookmarks' own colors would make it look
+  // on when it is off.
+  const allBookmarks = bookmarks.bookmarks.value;
+  // Desktop hides the tab lists' scrollbars, so fade an edge that has tabs
+  // scrolled past it to show there's more.
+  const tabListFadeRef = useScrollEdgeFadeRef("y");
 
   if (effectivelyCollapsed) {
     return (
-      <div className="sb-sidebar-collapsed-tab-list">
+      <div className="sb-sidebar-collapsed-tab-list" ref={tabListFadeRef}>
         {tabs.map((tab) => {
           const isSelected = tab.id === selectedTabId;
           const shortTitle = tab.readingState.shortTitle.value;
+          const fullTitle = tab.readingState.title.value || shortTitle;
           const session = tab.sharedSession;
           const sessionUsers = session?.connectedUsers.value ?? [];
           const isPlayingAudio = isTabPlayingAudio(state, tab);
           const label =
             session && sessionUsers.length > 0
               ? t("collapsed-tab-shared-label", {
-                  title: shortTitle,
+                  title: fullTitle,
                   count: sessionUsers.length,
                   defaultValue: "{{title}} — shared session, {{count}} present",
                 })
-              : shortTitle;
+              : fullTitle;
 
           return (
             <button
@@ -2094,7 +2319,7 @@ export function Tabs(props: TabsProps) {
               }}
               className={`sb-collapsed-tab-tile${
                 isSelected ? " sb-collapsed-tab-tile-selected" : ""
-              }${session ? " sb-collapsed-tab-tile-shared" : ""}`}
+              }`}
               aria-label={
                 isPlayingAudio
                   ? t("collapsed-tab-playing-label", {
@@ -2103,13 +2328,8 @@ export function Tabs(props: TabsProps) {
                     })
                   : label
               }
-              title={shortTitle}
+              title={fullTitle}
             >
-              {session && (
-                <span className="sb-collapsed-tab-tag">
-                  {t("shared", { defaultValue: "Shared" })}
-                </span>
-              )}
               <span className="sb-collapsed-tab-title">{shortTitle}</span>
               {isPlayingAudio && (
                 <MaterialIcon
@@ -2170,6 +2390,28 @@ export function Tabs(props: TabsProps) {
     );
   }
 
+  // Mobile counterpart of the saves screen below, for the bookmarks panel.
+  if (app.isMobile.value && isBookmarksPanelOpen) {
+    return (
+      <MobileScreen
+        title={t("bookmarks", { defaultValue: "Bookmarks" })}
+        isClose={bookmarks.openedFromToolbar.value}
+        onClose={() => {
+          // From the More menu, Close dismisses the drawer; from the Tabs
+          // header, Back returns to the Tabs list.
+          if (bookmarks.openedFromToolbar.value) {
+            bookmarks.closePanel();
+            state.sidebar.closeSidebar();
+          } else {
+            bookmarks.closePanel();
+          }
+        }}
+      >
+        <BookmarksPanel state={state} closeLayoutMenu={closeLayoutMenu} />
+      </MobileScreen>
+    );
+  }
+
   // On mobile, the Saves bottom-tab opens this drawer with the saves
   // filter active. Rather than show the tabs list + search, present a focused
   // full-screen Saves view: a dedicated header (close / title / new
@@ -2187,46 +2429,27 @@ export function Tabs(props: TabsProps) {
     };
 
     return (
-      <div className="sb-saves-mobile-screen">
-        <div className="sb-saves-mobile-header">
+      <MobileScreen
+        title={t("saves", { defaultValue: "Saves" })}
+        isClose={saves.openedFromToolbar.value}
+        onClose={() => {
+          // Opened from the bottom toolbar → Close (X) dismisses the whole
+          // drawer. Opened from the Tabs header → Back arrow turns the
+          // filter off, returning to the Tabs list it came from.
+          if (saves.openedFromToolbar.value) {
+            // Reset the view (filter + source flag) so the next time the
+            // tabs drawer opens it starts on the Tabs list, not a stale
+            // saves screen.
+            saves.closeView();
+            state.sidebar.closeSidebar();
+          } else if (saves.isFilterActive.value) {
+            saves.toggleFilter();
+          }
+        }}
+        actions={
           <button
             type="button"
-            className="sb-saves-mobile-header-button sb-saves-mobile-header-close"
-            onClick={() => {
-              // Opened from the bottom toolbar → Close (X) dismisses the whole
-              // drawer. Opened from the Tabs header → Back arrow turns the
-              // filter off, returning to the Tabs list it came from.
-              if (saves.openedFromToolbar.value) {
-                // Reset the view (filter + source flag) so the next time the
-                // tabs drawer opens it starts on the Tabs list, not a stale
-                // saves screen.
-                saves.closeView();
-                state.sidebar.closeSidebar();
-              } else if (saves.isFilterActive.value) {
-                saves.toggleFilter();
-              }
-            }}
-            aria-label={
-              saves.openedFromToolbar.value
-                ? t("close", { defaultValue: "Close" })
-                : t("back", { defaultValue: "Back" })
-            }
-            title={
-              saves.openedFromToolbar.value
-                ? t("close", { defaultValue: "Close" })
-                : t("back", { defaultValue: "Back" })
-            }
-          >
-            <span className="material-symbols-outlined">
-              {saves.openedFromToolbar.value ? "close" : "arrow_back"}
-            </span>
-          </button>
-          <h2 className="sb-saves-mobile-title">
-            {t("saves", { defaultValue: "Saves" })}
-          </h2>
-          <button
-            type="button"
-            className="sb-saves-mobile-header-button sb-saves-mobile-header-add"
+            className="sb-mobile-screen-header-button"
             onClick={createNewCategory}
             aria-label={t("new-save-folder", {
               defaultValue: "New folder",
@@ -2235,146 +2458,77 @@ export function Tabs(props: TabsProps) {
           >
             <span className="material-symbols-outlined">create_new_folder</span>
           </button>
-        </div>
-        <div className="sb-saves-mobile-body">
-          <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
-        </div>
-      </div>
+        }
+      >
+        <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
+      </MobileScreen>
     );
   }
 
-  return (
-    <>
-      <div className="sb-sidebar-tabs-header">
-        {!app.isMobile.value && (
-          <>
-            <h3 className="sb-sidebar-tabs-title">
-              {t("tabs", { defaultValue: "Tabs" })}
-            </h3>
-            <div className="sb-sidebar-tabs-header-actions">
-              <button
-                type="button"
-                className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
-                aria-label={t("tasks", { defaultValue: "Tasks" })}
-                title={t("tasks", { defaultValue: "Tasks" })}
-                onClick={() => {
-                  state.today.open();
-                }}
-              >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                  <path
-                    d="M9 18H11"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                  <path
-                    d="M15 19L17 21L21 17"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </button>
+  const tabList = (
+    <div className="sb-sidebar-tab-list" ref={tabListFadeRef}>
+      {isBookmarksPanelOpen && (
+        <>
+          <BookmarksPanel state={state} closeLayoutMenu={closeLayoutMenu} />
+          <div className="sb-sidebar-tabs-divider" role="separator" />
+        </>
+      )}
+      {isSavesFilterActive && (
+        <>
+          <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
+          <div className="sb-sidebar-tabs-divider" role="separator" />
+        </>
+      )}
+      {tabs.map((tab) => {
+        const isSelected = tab.id === selectedTabId;
+        return (
+          <TabRow
+            key={tab.id}
+            state={state}
+            tab={tab}
+            isSelected={isSelected}
+            closeLayoutMenu={closeLayoutMenu}
+            panelsEnabled={panelsEnabled}
+          />
+        );
+      })}
+    </div>
+  );
 
-              <button
-                type="button"
-                className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button${
-                  isSavesFilterActive
-                    ? " sb-sidebar-tabs-header-saves-button-active"
-                    : ""
-                }`}
-                aria-label={t("saves", { defaultValue: "Saves" })}
-                aria-pressed={isSavesFilterActive}
-                title={
-                  isSavesFilterActive
-                    ? t("hide-saves", { defaultValue: "Hide saves" })
-                    : t("show-saves", { defaultValue: "Show saves" })
-                }
-                onClick={() => {
-                  saves.toggleFilter();
-                }}
-              >
-                <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
-              </button>
-              <button
-                type="button"
-                className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
-                onClick={state.sidebar.closeSidebar}
-                aria-label={t("close", { defaultValue: "Close" })}
-                title={t("close", { defaultValue: "Close" })}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-              <button
-                onClick={() => {
-                  app.addTab();
-                }}
-                className="sb-tab-add-button"
-                aria-label={t("create-new-tab", {
-                  defaultValue: "Create new tab",
-                })}
-                title={t("new-tab", { defaultValue: "New tab" })}
-              >
-                <span className="material-symbols-outlined">add</span>
-              </button>
-            </div>
-          </>
-        )}
-        {app.isMobile.value && (
+  if (app.isMobile.value) {
+    return (
+      <MobileScreen
+        title={t("tabs", { defaultValue: "Tabs" })}
+        isClose={state.sidebar.tabsOpenedFromToolbar.value}
+        onClose={() => {
+          state.sidebar.closeSidebar();
+          if (!state.sidebar.tabsOpenedFromToolbar.value) {
+            state.selector.setOpen(true);
+          }
+        }}
+        actions={
           <>
             <button
               type="button"
-              className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
+              className="sb-mobile-screen-header-button sb-sidebar-tabs-header-bookmarks-button"
+              aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
+              aria-pressed={isBookmarksPanelOpen}
+              title={bookmarksToggleLabel}
               onClick={() => {
-                state.sidebar.closeSidebar();
-                if (!state.sidebar.tabsOpenedFromToolbar.value) {
-                  state.selector.setOpen(true);
-                }
+                // Opened from the Tabs header, so it gets a Back arrow.
+                bookmarks.openedFromToolbar.value = false;
+                bookmarks.togglePanel();
               }}
-              aria-label={
-                state.sidebar.tabsOpenedFromToolbar.value
-                  ? t("close", { defaultValue: "Close" })
-                  : t("back", { defaultValue: "Back" })
-              }
-              title={
-                state.sidebar.tabsOpenedFromToolbar.value
-                  ? t("close", { defaultValue: "Close" })
-                  : t("back", { defaultValue: "Back" })
-              }
             >
-              <span className="material-symbols-outlined">
-                {state.sidebar.tabsOpenedFromToolbar.value
-                  ? "close"
-                  : "arrow_back"}
-              </span>
+              <BookmarkStackIcon
+                bookmarks={allBookmarks}
+                size={24}
+                paint={isBookmarksPanelOpen ? "current" : "outline"}
+              />
             </button>
-            <h3 className="sb-sidebar-tabs-title">
-              {t("tabs", { defaultValue: "Tabs" })}
-            </h3>
             <button
               type="button"
-              className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button${
-                isSavesFilterActive
-                  ? " sb-sidebar-tabs-header-saves-button-active"
-                  : ""
-              }`}
+              className="sb-mobile-screen-header-button sb-sidebar-tabs-header-saves-button"
               aria-label={t("saves", { defaultValue: "Saves" })}
               aria-pressed={isSavesFilterActive}
               title={
@@ -2393,7 +2547,7 @@ export function Tabs(props: TabsProps) {
             </button>
             <button
               type="button"
-              className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-share-button"
+              className="sb-mobile-screen-header-button sb-sidebar-tabs-header-share-button"
               aria-label={t("share", {
                 defaultValue: "Share",
               })}
@@ -2406,48 +2560,100 @@ export function Tabs(props: TabsProps) {
             >
               <MaterialIcon aria-hidden="true">share</MaterialIcon>
             </button>
+            <button
+              type="button"
+              className="sb-mobile-screen-header-button sb-tab-add-button"
+              onClick={() => {
+                app.addTab();
+              }}
+              aria-label={t("create-new-tab", {
+                defaultValue: "Create new tab",
+              })}
+              title={t("new-tab", { defaultValue: "New tab" })}
+            >
+              <span className="material-symbols-outlined">add</span>
+            </button>
           </>
-        )}
-      </div>
-
-      <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
-
-      <div className="sb-sidebar-tab-list">
-        {isSavesFilterActive && (
-          <>
-            <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
-            <div className="sb-sidebar-tabs-divider" role="separator" />
-          </>
-        )}
-        {tabs.map((tab) => {
-          const isSelected = tab.id === selectedTabId;
-          return (
-            <TabRow
-              key={tab.id}
-              state={state}
-              tab={tab}
-              isSelected={isSelected}
-              closeLayoutMenu={closeLayoutMenu}
-              panelsEnabled={panelsEnabled}
-            />
-          );
-        })}
-      </div>
-
-      <button
-        onClick={() => {
-          app.addTab();
-        }}
-        className="sb-tab-mobile-add-inline sb-tab-row"
-        aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
+        }
       >
-        <span className="sb-tab-mobile-add-inline-label">
-          {t("add-new-tab", { defaultValue: "Add new tab" })}
-        </span>
-        <span className="sb-tab-mobile-add-inline-icon" aria-hidden="true">
-          <span className="material-symbols-outlined">add</span>
-        </span>
-      </button>
+        {tabList}
+      </MobileScreen>
+    );
+  }
+
+  return (
+    <>
+      <div className="sb-sidebar-tabs-header">
+        <h3 className="sb-sidebar-tabs-title">
+          {t("tabs", { defaultValue: "Tabs" })}
+        </h3>
+        <div className="sb-sidebar-tabs-header-actions">
+          <button
+            type="button"
+            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
+              isBookmarksPanelOpen
+                ? " sb-sidebar-tabs-header-bookmarks-button-active"
+                : ""
+            }`}
+            aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
+            aria-pressed={isBookmarksPanelOpen}
+            title={bookmarksToggleLabel}
+            onClick={() => {
+              bookmarks.openedFromToolbar.value = false;
+              bookmarks.togglePanel();
+            }}
+          >
+            <BookmarkStackIcon
+              bookmarks={allBookmarks}
+              size={24}
+              paint={isBookmarksPanelOpen ? "current" : "outline"}
+            />
+          </button>
+          <button
+            type="button"
+            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button${
+              isSavesFilterActive
+                ? " sb-sidebar-tabs-header-saves-button-active"
+                : ""
+            }`}
+            aria-label={t("saves", { defaultValue: "Saves" })}
+            aria-pressed={isSavesFilterActive}
+            title={
+              isSavesFilterActive
+                ? t("hide-saves", { defaultValue: "Hide saves" })
+                : t("show-saves", { defaultValue: "Show saves" })
+            }
+            onClick={() => {
+              saves.toggleFilter();
+            }}
+          >
+            <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
+          </button>
+          <button
+            type="button"
+            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
+            onClick={state.sidebar.closeSidebar}
+            aria-label={t("close", { defaultValue: "Close" })}
+            title={t("close", { defaultValue: "Close" })}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+          <button
+            onClick={() => {
+              app.addTab();
+            }}
+            className="sb-sidebar-tabs-header-icon-button sb-tab-add-button"
+            aria-label={t("create-new-tab", {
+              defaultValue: "Create new tab",
+            })}
+            title={t("new-tab", { defaultValue: "New tab" })}
+          >
+            <span className="material-symbols-outlined">add</span>
+          </button>
+        </div>
+      </div>
+
+      {tabList}
     </>
   );
 }
@@ -2636,6 +2842,9 @@ function SelfAvatarButton(props: { state: SeedBibleState }) {
   );
 }
 
+/** How long the sidebar's width transition runs; matches Tabs.css. */
+const SIDEBAR_RESIZE_MS = 250;
+
 export function Sidebar(props: SidebarProps) {
   const { state } = props;
   const { app, tabsLayout, sidebar } = state;
@@ -2649,20 +2858,37 @@ export function Sidebar(props: SidebarProps) {
   const effectivelyCollapsed = isCollapsed && !isMobileOpen && !isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
 
+  // Only an expand or collapse the user asked for animates (see
+  // `isUserResize`); the rest snap. While it animates the sidebar clips its
+  // contents (see Tabs.css), and only then: the pane-layout menu hangs out
+  // over the reader the rest of the time. A timer rather than
+  // `transitionend`, which never fires when there's no transition (mobile,
+  // reduced motion) and would leave it clipped. `animateToggle` covers the
+  // render that flips it, so the very first frame is already clipped; an
+  // effect alone lands a frame late, after the expanded list has been painted
+  // squeezed into the rail.
+  const isResizing = useSignal(false);
+  const previousCollapsed = useRef(effectivelyCollapsed);
+  const animateToggle =
+    previousCollapsed.current !== effectivelyCollapsed &&
+    sidebar.isUserResize();
+  useEffect(() => {
+    if (previousCollapsed.current === effectivelyCollapsed) return;
+    previousCollapsed.current = effectivelyCollapsed;
+    if (!animateToggle) return;
+    isResizing.value = true;
+    const timer = setTimeout(() => {
+      isResizing.value = false;
+    }, SIDEBAR_RESIZE_MS);
+    return () => clearTimeout(timer);
+  }, [effectivelyCollapsed]);
+  const resizing = animateToggle || isResizing.value;
+
   // In the compact-desktop band an expanded sidebar floats over the reader as
   // an overlay (see Tabs.css). When it does, we render a scrim behind it so
   // that (a) input to the reader below is blocked while the overlay is up and
   // (b) clicking anywhere outside the sidebar collapses it back to the rail.
-  //
-  // Neither is wanted while the Customization Center is open: previewing a
-  // customization means clicking around and selecting verses in the reader
-  // with the editor still open, so the scrim itself is skipped there rather
-  // than just no-op'ing its onClick — a still-present scrim would keep
-  // blocking those clicks from ever reaching the reader.
-  const isOverlay =
-    app.isCompactDesktop.value &&
-    !effectivelyCollapsed &&
-    !sidebar.isCustomizationViewOpen.value;
+  const isOverlay = app.isCompactDesktop.value && !effectivelyCollapsed;
 
   // The guided tour opens the pane-layout menu while its step is active so the
   // layout options are visible behind the coachmark.
@@ -2686,7 +2912,7 @@ export function Sidebar(props: SidebarProps) {
         />
       )}
       <aside
-        className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}`}
+        className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}${resizing ? " sb-tabs-sidebar-resizing" : ""}`}
       >
         {!isSettingsOpen && (
           <TabsHeader

@@ -167,6 +167,17 @@ describe("renderAndRespond", () => {
     expect(bodyText(calls.end[0])).toBe("<html>rendered</html>");
   });
 
+  it("reports the render's duration in a Server-Timing header", async () => {
+    const render: RenderFn = async () => ({ html: "<html>rendered</html>" });
+    const { res, calls } = makeRes();
+
+    await renderAndRespond(makeReq(), res, render, ROUTE, html);
+
+    expect(calls.writeHead[0]![1]).toMatchObject({
+      "server-timing": expect.stringMatching(/^render;dur=\d+\.\d$/),
+    });
+  });
+
   it("falls back to the unrendered pre-rendered HTML at 200 when render() throws", async () => {
     const render: RenderFn = async () => {
       throw new Error("boom");

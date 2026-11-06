@@ -50,6 +50,28 @@ describe("LinkItemInput", () => {
       expect(handleRef.current?.isDirty()).toBe(true);
     });
 
+    it("isDirty is false for an untouched item being edited, true once it changes", () => {
+      const handleRef = createRef<LinkItemInputHandle>();
+      act(() => {
+        render(
+          <LinkItemInput
+            ref={handleRef}
+            onAdd={vi.fn()}
+            initialItem={{ url: "https://example.com", title: "Example" }}
+          />,
+          container
+        );
+      });
+
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => {
+        setValue(urlInput(), "https://example.org");
+      });
+
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+
     it("commit() adds a valid URL and returns true", () => {
       const onAdd = vi.fn();
       const handleRef = createRef<LinkItemInputHandle>();

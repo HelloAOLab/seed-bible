@@ -40,7 +40,7 @@ describe("CasualOSManager shared permissions", () => {
 
       const result = await os.requestSharedPermission(
         "user-1",
-        FRIENDS_READ,
+        [FRIENDS_READ],
         { userId: "user-2" },
         { expireTimeMs: 1234 }
       );
@@ -48,7 +48,7 @@ describe("CasualOSManager shared permissions", () => {
       expect(result).toEqual({ success: true, sharedPermissionId: "sp-1" });
       expect(request).toHaveBeenCalledWith({
         recordName: "user-1",
-        permission: FRIENDS_READ,
+        permissions: [FRIENDS_READ],
         targetUserId: "user-2",
         targetUserEmail: undefined,
         expireTimeMs: 1234,
@@ -61,13 +61,13 @@ describe("CasualOSManager shared permissions", () => {
         sharedPermissionId: "sp-1",
       }));
 
-      await os.requestSharedPermission("user-1", FRIENDS_READ, {
+      await os.requestSharedPermission("user-1", [FRIENDS_READ], {
         email: "ben@example.com",
       });
 
       expect(request).toHaveBeenCalledWith({
         recordName: "user-1",
-        permission: FRIENDS_READ,
+        permissions: [FRIENDS_READ],
         targetUserId: undefined,
         targetUserEmail: "ben@example.com",
         expireTimeMs: undefined,
@@ -82,9 +82,13 @@ describe("CasualOSManager shared permissions", () => {
           "The user with the given email address could not be found.",
       }));
 
-      const result = await os.requestSharedPermission("user-1", FRIENDS_READ, {
-        email: "nobody@example.com",
-      });
+      const result = await os.requestSharedPermission(
+        "user-1",
+        [FRIENDS_READ],
+        {
+          email: "nobody@example.com",
+        }
+      );
 
       expect(result).toMatchObject({
         success: false,
@@ -144,7 +148,7 @@ describe("CasualOSManager shared permissions", () => {
       recordName: `owner-${id}`,
       ownerUserId: `owner-${id}`,
       sharedPermissionId: id,
-      permission: FRIENDS_READ,
+      permissions: [FRIENDS_READ],
     });
 
     it("collects every page of shared records", async () => {
@@ -280,7 +284,7 @@ describe("CasualOSManager shared permissions", () => {
         recordName: "user-1",
         requestingUserId: "user-1",
         targetUserId: "user-2",
-        permission: FRIENDS_READ,
+        permissions: [FRIENDS_READ],
         status: "requested",
       });
       stubProcedure("listSentSharedPermissions", () => ({

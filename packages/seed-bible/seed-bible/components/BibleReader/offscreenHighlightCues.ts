@@ -1,0 +1,311 @@
+import type { VerseDecoration } from "../../managers/BibleReadingManager";
+import type { ChapterHighlight } from "../../managers/HighlightsManager";
+import type { ConnectionSessionUserVisual } from "../../managers/SessionsManager";
+import type { ReaderViewport } from "./readerViewport";
+
+/** The person who made a highlight, drawn as an avatar on its bubble. */
+export interface HighlightCueAuthor {
+  /** Stable identity. Runs by different people never share a bubble. */
+  key: string;
+  displayName: string;
+  imageUrl: string | null;
+  visual: ConnectionSessionUserVisual;
+  /** Show a generic account icon instead of the animal when there is no picture. */
+  genericFallback?: boolean;
+}
+
+/**
+ * One highlighted verse, ready to be placed against the reader viewport.
+ * `styleKey` and the author are what consecutive verses must share to collapse
+ * into one bubble.
+ */
+export interface HighlightCueMark {
+  verse: number;
+  styleKey: string;
+  background: string;
+  textColor: string;
+  /** Null when nobody in particular made it, such as an extension's highlight. */
+  author: HighlightCueAuthor | null;
+}
+
+/** One highlighted verse as one particular person painted it. */
+export function highlightCueMarkId(mark: HighlightCueMark): string {
+  return `${mark.verse}|${mark.styleKey}|${mark.author?.key ?? ""}`;
+}
+
+/** A verse whose box has been measured in chapter-content coordinates. */
+export interface MeasuredHighlightMark extends HighlightCueMark {
+  top: number;
+  bottom: number;
+}
+
+/** One bubble for a run of off-screen highlighted verses. */
+export interface OffscreenHighlightCue {
+  key: string;
+  direction: "up" | "down";
+  /** First verse of the run. A click scrolls here. */
+  verse: number;
+  /** Shown on the bubble: a single number, or a range when several verses share it. */
+  label: string;
+  background: string;
+  textColor: string;
+  author: HighlightCueAuthor | null;
+}
+
+/** How a highlight is painted on a bubble, matching the ribbon's own colour. */
+export function highlightCueStyle(highlight: {
+  colorId: string;
+  customColor?: string;
+  customFontColor?: string;
+}): Pick<HighlightCueMark, "styleKey" | "background" | "textColor"> {
+  if (highlight.customColor) {
+    return {
+      styleKey: `custom:${highlight.customColor}:${highlight.customFontColor ?? ""}`,
+      background: highlight.customColor,
+      textColor:
+        highlight.customFontColor ?? contrastText(highlight.customColor),
+    };
+  }
+  return {
+    styleKey: `preset:${highlight.colorId}`,
+    background: `var(--sb-highlight-${highlight.colorId}-color, transparent)`,
+    textColor: `var(--sb-highlight-${highlight.colorId}-font-color, #333333)`,
+  };
+}
+
+function contrastText(color: string): string {
+  const match = color
+    .trim()
+    .replace("#", "")
+    .match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (!match) return "#333333";
+  const r = parseInt(match[1] ?? "00", 16);
+  const g = parseInt(match[2] ?? "00", 16);
+  const b = parseInt(match[3] ?? "00", 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 160 ? "#333333" : "#ffffff";
+}
+
+/**
+ * True when a decoration paints a slice of the verse text rather than the
+ * whole verse. The ribbon and the off-screen bubbles both skip these: they
+ * work per verse, so a fragment would look like the whole verse was highlighted.
+ */
+export function hasContentTargeting(decoration: VerseDecoration): boolean {
+  const hasTargetContent =
+    typeof decoration.targetContent === "string" &&
+    decoration.targetContent.trim().length > 0;
+  const hasIndexRange =
+    typeof decoration.startIndex === "number" ||
+    typeof decoration.endIndex === "number";
+  return hasTargetContent || hasIndexRange;
+}
+
+/**
+ * Decoration highlights for this chapter, one entry per verse. Later
+ * decorations win. Verses that aren't a whole verse number are dropped so a
+ * bubble and the ribbon always agree on what is highlighted.
+ */
+export function decorationHighlightsByVerse(
+  decorations: readonly VerseDecoration[],
+  chapter: {
+    translationId: string;
+    bookId: string;
+    chapterNumber: number;
+  }
+): Map<number, ChapterHighlight> {
+  const byVerse = new Map<number, ChapterHighlight>();
+  for (const [verse, { highlight }] of decorationsByVerse(
+    decorations,
+    chapter
+  )) {
+    byVerse.set(verse, highlight);
+  }
+  return byVerse;
+}
+
+function decorationsByVerse(
+  decorations: readonly VerseDecoration[],
+  chapter: {
+    translationId: string;
+    bookId: string;
+    chapterNumber: number;
+  }
+): Map<number, { highlight: ChapterHighlight; decorationId: string }> {
+  const byVerse = new Map<
+    number,
+    { highlight: ChapterHighlight; decorationId: string }
+  >();
+  for (const decoration of decorations) {
+    if (!decoration.highlight || hasContentTargeting(decoration)) continue;
+    if (
+      (decoration.translationId &&
+        decoration.translationId !== chapter.translationId) ||
+      decoration.bookId !== chapter.bookId ||
+      decoration.chapterNumber !== chapter.chapterNumber
+    ) {
+      continue;
+    }
+    for (const verseNumber of decoration.verses) {
+      if (!Number.isInteger(verseNumber) || verseNumber < 1) continue;
+      byVerse.set(verseNumber, {
+        highlight: { ...decoration.highlight, verse: verseNumber },
+        decorationId: decoration.id,
+      });
+    }
+  }
+  return byVerse;
+}
+
+/**
+ * Every verse in this chapter highlighted by someone else, one mark per verse:
+ * a session peer, or an extension or link that nobody in particular made.
+ * The reader's own highlights never notify them of anything, so their saved
+ * highlights aren't considered at all, and decorations `isOwnDecoration`
+ * claims are dropped before picking which decoration a verse shows, so a
+ * peer's highlight on the same verse still counts. Content-targeted
+ * decorations are skipped: the ribbon can't paint a text fragment, so a bubble
+ * for one would point at a verse that isn't actually highlighted.
+ *
+ * A decoration's author comes from `decorationAuthor`, which answers null when
+ * nobody in particular made it.
+ */
+export function collectHighlightCueMarks(options: {
+  decorations: readonly VerseDecoration[];
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+  isOwnDecoration?: (decorationId: string) => boolean;
+  decorationAuthor?: (decorationId: string) => HighlightCueAuthor | null;
+}): HighlightCueMark[] {
+  const byVerse = new Map<number, HighlightCueMark>();
+  const isOwn = options.isOwnDecoration;
+  const others = isOwn
+    ? options.decorations.filter((decoration) => !isOwn(decoration.id))
+    : options.decorations;
+
+  for (const [verse, { highlight, decorationId }] of decorationsByVerse(
+    others,
+    options
+  )) {
+    byVerse.set(verse, {
+      verse,
+      ...highlightCueStyle(highlight),
+      author: options.decorationAuthor?.(decorationId) ?? null,
+    });
+  }
+
+  return [...byVerse.values()].sort((a, b) => a.verse - b.verse);
+}
+
+/**
+ * A verse this close to the viewport edge (in px) counts as on screen, so a
+ * highlight that is only a hair past the fold doesn't flicker a bubble.
+ */
+const VIEWPORT_SLACK_PX = 2;
+
+type Side = "up" | "down";
+
+/** Which way a measured highlight lies off screen, or null when it doesn't. */
+export function offscreenSide(
+  mark: MeasuredHighlightMark,
+  viewport: ReaderViewport
+): Side | null {
+  // No box means the verse hasn't been laid out yet. It isn't off-screen.
+  if (mark.bottom <= mark.top) return null;
+  if (mark.bottom <= viewport.top + VIEWPORT_SLACK_PX) return "up";
+  if (mark.top >= viewport.bottom - VIEWPORT_SLACK_PX) return "down";
+  return null;
+}
+
+function cueLabel(start: number, end: number): string {
+  return start === end ? String(start) : `${start}–${end}`;
+}
+
+/**
+ * Bubbles for highlighted verses that sit entirely above or below the visible
+ * reader. Consecutive verses of the same colour by the same person on the same
+ * side collapse into one bubble labelled with their range, so a highlight of verses 1–2 is one
+ * arrow rather than two identical ones.
+ */
+export function placeOffscreenHighlightCues(
+  marks: readonly MeasuredHighlightMark[],
+  viewport: ReaderViewport
+): { up: OffscreenHighlightCue[]; down: OffscreenHighlightCue[] } {
+  if (viewport.bottom <= viewport.top) return { up: [], down: [] };
+
+  const sorted = [...marks].sort((a, b) => a.verse - b.verse);
+  const up: OffscreenHighlightCue[] = [];
+  const down: OffscreenHighlightCue[] = [];
+
+  let run: {
+    side: Side;
+    styleKey: string;
+    verse: number;
+    end: number;
+    background: string;
+    textColor: string;
+    author: HighlightCueAuthor | null;
+  } | null = null;
+
+  const flush = () => {
+    if (!run) return;
+    const cue: OffscreenHighlightCue = {
+      key: `${run.side}:${run.styleKey}:${run.author?.key ?? ""}:${run.verse}`,
+      direction: run.side,
+      verse: run.verse,
+      label: cueLabel(run.verse, run.end),
+      background: run.background,
+      textColor: run.textColor,
+      author: run.author,
+    };
+    (run.side === "up" ? up : down).push(cue);
+    run = null;
+  };
+
+  for (const mark of sorted) {
+    const side = offscreenSide(mark, viewport);
+    if (
+      run &&
+      side === run.side &&
+      mark.styleKey === run.styleKey &&
+      mark.author?.key === run.author?.key &&
+      mark.verse === run.end + 1
+    ) {
+      run.end = mark.verse;
+      continue;
+    }
+    flush();
+    if (!side) continue;
+    run = {
+      side,
+      styleKey: mark.styleKey,
+      verse: mark.verse,
+      end: mark.verse,
+      background: mark.background,
+      textColor: mark.textColor,
+      author: mark.author,
+    };
+  }
+  flush();
+
+  return { up, down };
+}
+
+/**
+ * A row that fits shows no arrows. Otherwise an arrow appears only on a side
+ * that still has bubbles past the edge: none on the left at the start of the
+ * row, none on the right once the end is in view.
+ */
+export function horizontalScrollEdges(
+  scrollLeft: number,
+  scrollWidth: number,
+  clientWidth: number
+): { left: boolean; right: boolean } {
+  const max = scrollWidth - clientWidth;
+  if (max <= 1) return { left: false, right: false };
+  return {
+    left: scrollLeft > 1,
+    right: scrollLeft < max - 1,
+  };
+}

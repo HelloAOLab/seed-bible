@@ -4,12 +4,26 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { TodayPane } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
 import type { ReadingHistoryState } from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
-import { todayScreenPropsStub, todayStub } from "../../testUtils/todayStubs";
+import {
+  loginWithName,
+  todayScreenPropsStub,
+  todayStub,
+} from "../../testUtils/todayStubs";
 import { Welcome } from "@packages/seed-bible/seed-bible/components/TodayPane/Welcome";
 import { Header } from "@packages/seed-bible/seed-bible/components/TodayPane/Header";
 import { ResumeReadingSection } from "@packages/seed-bible/seed-bible/components/TodayPane/ResumeReadingSection";
+import {
+  BookmarksSection,
+  type BookmarkStripItem,
+} from "@packages/seed-bible/seed-bible/components/TodayPane/BookmarksSection";
 import { SearchSection } from "@packages/seed-bible/seed-bible/components/TodayPane/SearchSection";
 import { SocialSection } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSection";
+import { VerseOfTheDaySection } from "@packages/seed-bible/seed-bible/components/TodayPane/VerseOfTheDaySection";
+
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext",
@@ -59,6 +73,24 @@ vi.mock(
   })
 );
 
+vi.mock(
+  "@packages/seed-bible/seed-bible/components/TodayPane/VerseOfTheDaySection",
+  () => ({
+    VerseOfTheDaySection: vi.fn(() => (
+      <div data-testid="section-verse-of-the-day" />
+    )),
+  })
+);
+
+const aBookmark: BookmarkStripItem = {
+  id: "b1",
+  name: "My bookmark",
+  colorId: "orange",
+  translationId: "BSB",
+  bookId: "GEN",
+  chapterNumber: 10,
+};
+
 describe("TodayPane", () => {
   let container: HTMLDivElement;
 
@@ -76,6 +108,8 @@ describe("TodayPane", () => {
   function setup(
     options: {
       status?: ReadingHistoryState["status"];
+      bookmarks?: BookmarkStripItem[];
+      signedIn?: boolean;
     } = {}
   ) {
     const status = options.status ?? "ready";
@@ -88,6 +122,8 @@ describe("TodayPane", () => {
         : signal<ReadingHistoryState>({ status });
     const props = todayScreenPropsStub({
       today: todayStub({ readingHistory }),
+      bookmarks: signal(options.bookmarks ?? []),
+      login: loginWithName(options.signedIn === false ? undefined : "Tester"),
     });
     act(() => render(<TodayPane {...props} />, container));
     return props;
@@ -149,11 +185,27 @@ describe("TodayPane", () => {
       expect(q("[data-testid='section-resume']")).not.toBeNull();
     });
 
-    // Saves moved off Today in #1657 and bookmarks take the slot in #1658, so
-    // nothing renders between the resume card and search in the meantime.
-    it("renders no strip between the resume card and search", () => {
-      setup();
+    it("renders the bookmarks strip when there is at least one bookmark", () => {
+      setup({ bookmarks: [aBookmark] });
+      expect(q("[data-testid='section-bookmarks']")).not.toBeNull();
+    });
+
+    it("omits the bookmarks strip when there are none", () => {
+      setup({ bookmarks: [] });
       expect(q("[data-testid='section-bookmarks']")).toBeNull();
+    });
+
+    it("renders the verse of the day for a signed-in user", () => {
+      setup({ signedIn: true });
+      expect(q("[data-testid='section-verse-of-the-day']")).not.toBeNull();
+    });
+
+    // Signed out, history is always `empty` and Welcome shows instead, so the
+    // personalized layout is only reachable here by forcing the status.
+    it("omits the verse of the day when nobody is signed in", () => {
+      setup({ signedIn: false, status: "ready" });
+      expect(q(".sb-today-content")).not.toBeNull();
+      expect(q("[data-testid='section-verse-of-the-day']")).toBeNull();
     });
 
     it("renders search and social with exactly one sb-today-divider between them", () => {
@@ -166,6 +218,7 @@ describe("TodayPane", () => {
 
       expect(order).toEqual([
         "section-resume",
+        "section-verse-of-the-day",
         "section-search",
         "sb-today-divider",
         "section-social",
@@ -191,12 +244,31 @@ describe("TodayPane", () => {
       });
     });
 
-    it("hands each personalized section the props it needs", () => {
-      const props = setup();
+    // Only the personalized layout's header row has a close button.
+    it("shows Welcome without a close button", () => {
+      setup({ status: "empty" });
 
-      expect(propsOf(Header)).toMatchObject({ login: props.login });
+      expect(container.querySelector(".sb-today-close-button")).toBeNull();
+    });
+
+    it("hands each personalized section the props it needs", () => {
+      const props = setup({ bookmarks: [aBookmark] });
+
+      expect(propsOf(Header)).toMatchObject({
+        login: props.login,
+        onClose: props.onClose,
+      });
       expect(propsOf(ResumeReadingSection)).toMatchObject({
         today: props.today,
+        onOpenPassage: props.onOpenPassage,
+      });
+      expect(propsOf(VerseOfTheDaySection)).toMatchObject({
+        today: props.today,
+        onOpenPassage: props.onOpenPassage,
+      });
+      expect(propsOf(BookmarksSection)).toMatchObject({
+        today: props.today,
+        bookmarks: props.bookmarks,
         onOpenPassage: props.onOpenPassage,
       });
       expect(propsOf(SearchSection)).toMatchObject({

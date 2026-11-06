@@ -1,9 +1,11 @@
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import {
+  batch,
   computed,
   effect,
   signal,
+  untracked,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
@@ -30,7 +32,11 @@ import {
 } from "./AIManager";
 import type { DiscoverManager } from "./DiscoverManager";
 import { emphasizeVerses } from "./BibleReadingManager";
-import { BOOK_SLUGS, type BookId } from "./BibleDataManager";
+import {
+  canonicalBookIndex,
+  type BookId,
+  type VerseRef as ReaderVerseRef,
+} from "./BibleDataManager";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 import { savePhotoToGallery } from "./UserGalleryManager";
 import {
@@ -77,6 +83,13 @@ export const BibleVersePlaylistItem = z.object({
   type: z.literal("bible-verse"),
   ref: VerseRefSchema,
   translationId: z.string().optional(),
+  /**
+   * The author's formatted note on the passage (sanitized HTML, like an `html`
+   * item). Shown alongside the passage while it plays rather than in a modal.
+   */
+  note: z.string().optional(),
+  /** Optional plain-text heading for the note, shown above it. */
+  noteTitle: z.string().optional(),
 });
 
 export const PlaylistItem = z.discriminatedUnion("type", [
@@ -182,15 +195,6 @@ export interface PlaylistVerseSelection {
   bookId: string;
   chapter: number;
   verse?: number;
-}
-
-/** Canonical Protestant + Apocrypha order from {@link BOOK_SLUGS} insertion order. */
-const CANONICAL_BOOK_ORDER = new Map(
-  (Object.keys(BOOK_SLUGS) as BookId[]).map((id, index) => [id, index])
-);
-
-function canonicalBookIndex(bookId: string): number {
-  return CANONICAL_BOOK_ORDER.get(bookId as BookId) ?? Number.MAX_SAFE_INTEGER;
 }
 
 function comparePlaylistVerseSelections(
@@ -372,10 +376,21 @@ export type PlaylistPlayHistory = z.infer<typeof PlaylistPlayHistorySchema>;
 /**
  * Options for {@link createPlaylistManager}'s `startPlaying`. Pass
  * `history: false` to skip tracking (e.g. reading plans that reuse the
- * playlist player).
+ * playlist player). Pass `sharedOpening: true` when the play came from a
+ * shared link, a reload of a playing URL, or the playlist page's Start
+ * button; closing the opening text or link then walks into the playlist.
  */
 export type StartPlayingOptions = {
   history?: false;
+  sharedOpening?: true;
+};
+
+export type PlaylistEditorOptions = {
+  /**
+   * Another screen opened the editor; backing out of it returns there instead
+   * of to the Discover list.
+   */
+  onBack?: () => void;
 };
 
 export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
@@ -545,6 +560,13 @@ export interface PlaylistReadingData {
   playlists: SimplePlaylist[];
   queue: PlaylistItemData[];
   step: number;
+  /**
+   * A passage the current step's note links to that the reader has been taken
+   * to, or null when the reader is on the step (see
+   * `PlayingState.visitReference`). Synced like the step, so a shared session
+   * follows the detour together and anyone can bring everyone back.
+   */
+  detour?: ReaderVerseRef | null;
 }
 
 /**
@@ -582,7 +604,7 @@ export function expandCrossChapterItem(
     return [item];
   }
 
-  const { ref, translationId } = item;
+  const { ref, translationId, note, noteTitle } = item;
   const endChapter = ref.endChapter;
   if (
     endChapter == null ||
@@ -599,6 +621,10 @@ export function expandCrossChapterItem(
       items.push({
         type: "bible-verse",
         translationId,
+        // The note is about the whole passage, so it shows once, where the
+        // passage starts, rather than again on every chapter of it.
+        ...(note != null ? { note } : {}),
+        ...(noteTitle != null ? { noteTitle } : {}),
         ref:
           ref.verse != null
             ? {
@@ -629,6 +655,29 @@ export function expandCrossChapterItem(
   }
 
   return items;
+}
+
+/**
+ * How playback arrived at the current step. Closing a text or link modal
+ * continues in that direction. A direct landing — pressing play, jumping to
+ * an item, or opening a link to that step — stays on the item, except the
+ * first item, which always steps forward.
+ */
+export type PlaylistStepArrival = "forward" | "backward" | "direct";
+/**
+ * How long a passage stays highlighted after its note is closed, before the
+ * highlight fades.
+ */
+export const NOTE_CLOSED_HIGHLIGHT_MS = 1500;
+
+/** Whether a queue item is scripture carrying a note (a body, a title, or both). */
+export function hasScriptureNote(
+  item: PlaylistItemData | null
+): item is Extract<PlaylistItemData, { type: "bible-verse" }> {
+  return (
+    item?.type === "bible-verse" &&
+    !!(item.note?.trim() || item.noteTitle?.trim())
+  );
 }
 
 /**
@@ -684,30 +733,158 @@ export function createPlayingState(
    * other item re-arms it.
    */
   const finishPromptShown = signal(false);
+  /**
+   * Whether the current step's note is open: the desktop popover shown, or the
+   * mobile sheet expanded. Every step starts with it open. While it is, the
+   * passage stays highlighted; see `setNoteExpanded`.
+   */
+  const noteExpanded = signal(true);
+  /**
+   * The passage a note's link took the reader to, while it's showing that
+   * rather than the step's own (see `visitReference`), else null. Playback
+   * carries on meanwhile; `returnToStep` or moving to any step brings the
+   * reader back.
+   */
+  const detour = signal<ReaderVerseRef | null>(null);
+  const awayFromStep = computed(() => detour.value !== null);
   let lastIndex = currentIndex.peek();
+  let lastItem = currentItem.peek();
   const disposeRearm = effect(() => {
     const index = currentIndex.value;
+    const item = currentItem.value;
     if (index !== lastIndex) {
       lastIndex = index;
       finishPromptShown.value = false;
     }
+    // By the item, not its index: a queue edit can shift the step's index
+    // without changing the step, or put a different item at the same index.
+    // Compared by content, since a shared session delivers the same queue as
+    // new objects.
+    if (!jsonEqual(item, lastItem)) {
+      lastItem = item;
+      noteExpanded.value = true;
+    }
   });
 
   let decorationId: string | null = null;
+  /** See {@link PlaylistStepArrival}. Starts direct: playback opens on a step the user chose, it doesn't step there. */
+  let stepArrival: PlaylistStepArrival = "direct";
+  /**
+   * Whether any step has been shown in the reader yet. Until one has, the
+   * current step is shown even when the reader already sits on its chapter —
+   * starting a playlist from the chapter its first passage is in must still
+   * scroll to and highlight that passage.
+   */
+  let hasShownStep = false;
+  /**
+   * Counts navigations (to a step, or to a passage a note links to), so one
+   * that finishes loading its chapter after a newer one started leaves the
+   * highlight alone rather than putting back a passage that's been left.
+   */
+  let navigationCount = 0;
+
+  /** Pending removal of a noted passage's highlight after its note closed. */
+  let noteClosedTimer: ReturnType<typeof setTimeout> | null = null;
 
   const disposeDecoration = () => {
+    if (noteClosedTimer) {
+      clearTimeout(noteClosedTimer);
+      noteClosedTimer = null;
+    }
     if (tab && decorationId) {
       tab.readingState.removeDecoration(decorationId);
       decorationId = null;
     }
   };
 
-  const navigateToCurrentItem = async () => {
-    const item = currentItem.value;
-    if (!tab || item?.type !== "bible-verse") {
+  /**
+   * Highlights `item`'s verses in the reader. A passage with a note stays
+   * highlighted for as long as its note is open; any other passage's highlight
+   * fades on its own after a few seconds.
+   */
+  const emphasizeItem = (item: PlaylistItemData | null) => {
+    if (!tab || item?.type !== "bible-verse" || item.ref.verse == null) {
       return;
     }
     disposeDecoration();
+    const { ref } = item;
+    const loadedChapter = tab.readingState.chapterData.value;
+    const chapterDataMatches =
+      loadedChapter?.book.id === ref.bookId &&
+      loadedChapter?.chapter.number === ref.chapter;
+    const endVerse = ref.toEndOfChapter
+      ? chapterDataMatches
+        ? loadedChapter.numberOfVerses
+        : undefined
+      : ref.endVerse;
+
+    decorationId = emphasizeVerses(
+      tab.readingState,
+      {
+        book: ref.bookId as BookId,
+        chapter: ref.chapter,
+        verse: ref.verse,
+        endChapter: ref.endChapter,
+        endVerse: endVerse,
+      },
+      undefined,
+      {
+        // Every participant in a shared session highlights the step for
+        // themselves, and each one's highlight follows their own note.
+        localOnly: true,
+        ...(hasScriptureNote(item)
+          ? {
+              removeAfterMs: noteExpanded.peek()
+                ? null
+                : NOTE_CLOSED_HIGHLIGHT_MS,
+            }
+          : {}),
+      }
+    );
+  };
+
+  /**
+   * Opens or closes the current step's note. Closing it lets the passage's
+   * highlight fade after {@link NOTE_CLOSED_HIGHLIGHT_MS}; opening it again
+   * brings the highlight back.
+   */
+  const setNoteExpanded = (expanded: boolean): void => {
+    if (noteExpanded.peek() === expanded) {
+      return;
+    }
+    noteExpanded.value = expanded;
+    const item = currentItem.peek();
+    if (!hasScriptureNote(item)) {
+      return;
+    }
+    if (expanded) {
+      // While away at a linked passage the step's verses aren't on screen;
+      // they're highlighted again on the way back.
+      if (!awayFromStep.peek()) {
+        emphasizeItem(item);
+      }
+    } else if (decorationId && !noteClosedTimer) {
+      const closing = decorationId;
+      noteClosedTimer = setTimeout(() => {
+        noteClosedTimer = null;
+        if (decorationId === closing) {
+          disposeDecoration();
+        }
+      }, NOTE_CLOSED_HIGHLIGHT_MS);
+    }
+  };
+
+  const navigateToCurrentItem = async () => {
+    const navigation = ++navigationCount;
+    const item = currentItem.value;
+    detour.value = null;
+    // Cleared even when the new step isn't scripture: a noted passage's
+    // highlight has no timer of its own and would otherwise outlast its step.
+    disposeDecoration();
+    if (!tab || item?.type !== "bible-verse") {
+      return;
+    }
+    hasShownStep = true;
     const { ref, translationId } = item;
 
     // `translationId` is optional on the item; fall back to the tab's current
@@ -721,29 +898,68 @@ export function createPlayingState(
       ref.chapter,
       ref.verse != null ? { scrollToVerse: ref.verse } : undefined
     );
-
-    if (ref.verse == null) {
+    if (navigation !== navigationCount) {
       return;
     }
+    emphasizeItem(item);
+  };
 
-    const loadedChapter = tab.readingState.chapterData.value;
-    const chapterDataMatches =
-      loadedChapter?.book.id === ref.bookId &&
-      loadedChapter?.chapter.number === ref.chapter;
-    const endVerse = ref.toEndOfChapter
-      ? chapterDataMatches
-        ? loadedChapter.numberOfVerses
-        : undefined
-      : ref.endVerse;
-
-    decorationId = emphasizeVerses(tab.readingState, {
-      book: ref.bookId as BookId,
-      chapter: ref.chapter,
-      verse: ref.verse,
-      endChapter: ref.endChapter,
-      endVerse: endVerse,
+  /**
+   * Moves to a step, ending any detour in the same update, so a shared
+   * session never sees the new step paired with the old detour (which would
+   * send everyone to that passage before the step's).
+   */
+  const moveToStep = (index: number): void => {
+    batch(() => {
+      currentIndex.value = index;
+      detour.value = null;
+      // Even onto an identical item, which the rearm effect can't tell apart.
+      noteExpanded.value = true;
     });
   };
+
+  /**
+   * Takes the reader to a passage the current step's note links to, without
+   * leaving the playlist: the step, its note and the queue stay as they are,
+   * and `returnToStep` brings the reader back. The linked passage gets the
+   * usual brief highlight.
+   */
+  const visitReference = async (ref: ReaderVerseRef): Promise<void> => {
+    if (!tab) {
+      return;
+    }
+    const navigation = ++navigationCount;
+    // Only what locates the passage, so it syncs as plain, comparable JSON.
+    const target: ReaderVerseRef = {
+      book: ref.book,
+      chapter: ref.chapter,
+      ...(ref.verse != null ? { verse: ref.verse } : {}),
+      ...(ref.endChapter != null ? { endChapter: ref.endChapter } : {}),
+      ...(ref.endVerse != null ? { endVerse: ref.endVerse } : {}),
+    };
+    if (!jsonEqual(detour.peek(), target)) {
+      detour.value = target;
+    }
+    disposeDecoration();
+    await tab.readingState.selectTranslationAndChapter(
+      tab.readingState.translationId.peek(),
+      ref.book,
+      ref.chapter,
+      ref.verse != null ? { scrollToVerse: ref.verse } : undefined
+    );
+    // Gone elsewhere while the chapter was loading: to another passage or
+    // step, or back from this one.
+    if (navigation !== navigationCount || !awayFromStep.peek()) {
+      return;
+    }
+    disposeDecoration();
+    decorationId = emphasizeVerses(tab.readingState, target, undefined, {
+      localOnly: true,
+    });
+  };
+
+  /** Brings the reader back from a linked passage to the current step. */
+  const returnToStep = (): Promise<void> => navigateToCurrentItem();
 
   /**
    * Advances to the next step. On the last item it calls `onFinish` when
@@ -751,7 +967,8 @@ export function createPlayingState(
    */
   const next = async (): Promise<void> => {
     if (hasNext.value) {
-      currentIndex.value = currentIndex.value + 1;
+      stepArrival = "forward";
+      moveToStep(currentIndex.value + 1);
       await navigateToCurrentItem();
     } else if (canFinish.value) {
       finishPromptShown.value = true;
@@ -762,7 +979,8 @@ export function createPlayingState(
   /** Goes back to the previous step. No-op at the start of the queue. */
   const previous = async (): Promise<void> => {
     if (hasPrevious.value) {
-      currentIndex.value = currentIndex.value - 1;
+      stepArrival = "backward";
+      moveToStep(currentIndex.value - 1);
       await navigateToCurrentItem();
     }
   };
@@ -770,7 +988,13 @@ export function createPlayingState(
   /** Jumps to the given index. No-op when the index is out of range. */
   const jumpTo = async (index: number): Promise<void> => {
     if (index >= 0 && index < queue.value.length) {
-      currentIndex.value = index;
+      // Landing on the step already showing isn't a new arrival. Callers
+      // re-jump the current step to make the reader catch up (a shared link
+      // does this), and that must not forget a forward opening.
+      if (currentIndex.peek() !== index) {
+        stepArrival = "direct";
+      }
+      moveToStep(index);
       await navigateToCurrentItem();
     }
   };
@@ -791,18 +1015,26 @@ export function createPlayingState(
     if (index < 0 || index >= queue.value.length) {
       return;
     }
-    const nextQueue = queue.value.filter((_, i) => i !== index);
-    queue.value = nextQueue;
-    if (nextQueue.length === 0) {
-      currentIndex.value = -1;
-      return;
+    if (index === currentIndex.value) {
+      // The step being shown is going away, so its highlight goes with it, as
+      // does any detour its note's link started.
+      disposeDecoration();
+      detour.value = null;
     }
+    const nextQueue = queue.value.filter((_, i) => i !== index);
     let nextIndex = currentIndex.value;
     if (index < nextIndex) {
       // A step before the current one was removed; shift to compensate.
       nextIndex -= 1;
     }
-    currentIndex.value = Math.max(0, Math.min(nextIndex, nextQueue.length - 1));
+    // Together, so the step never briefly points at the wrong item.
+    batch(() => {
+      queue.value = nextQueue;
+      currentIndex.value =
+        nextQueue.length === 0
+          ? -1
+          : Math.max(0, Math.min(nextIndex, nextQueue.length - 1));
+    });
   };
 
   /**
@@ -821,21 +1053,27 @@ export function createPlayingState(
       return;
     }
     nextQueue.splice(to, 0, moved);
-    queue.value = nextQueue;
 
     const current = currentIndex.value;
+    let nextIndex = current;
     if (current === from) {
-      currentIndex.value = to;
+      nextIndex = to;
     } else if (from < current && to >= current) {
-      currentIndex.value = current - 1;
+      nextIndex = current - 1;
     } else if (from > current && to <= current) {
-      currentIndex.value = current + 1;
+      nextIndex = current + 1;
     }
+    // Together, so the step never briefly points at the wrong item.
+    batch(() => {
+      queue.value = nextQueue;
+      currentIndex.value = nextIndex;
+    });
   };
 
   /** Restarts playback from the first item. */
   const reset = async (): Promise<void> => {
-    currentIndex.value = queue.value.length > 0 ? 0 : -1;
+    stepArrival = "direct";
+    moveToStep(queue.value.length > 0 ? 0 : -1);
     await navigateToCurrentItem();
   };
 
@@ -855,22 +1093,49 @@ export function createPlayingState(
     if (!jsonEqual(playlists.peek(), state.playlists)) {
       playlists.value = state.playlists;
     }
-    if (!jsonEqual(queue.peek(), state.queue)) {
+    const queueChanged = !jsonEqual(queue.peek(), state.queue);
+    if (queueChanged) {
       queue.value = state.queue;
     }
     const clampedStep =
       state.queue.length > 0
         ? Math.min(Math.max(Math.floor(state.step), 0), state.queue.length - 1)
         : -1;
-    let navigation: Promise<void> | null = null;
-    if (currentIndex.peek() !== clampedStep) {
+    const nextDetour = state.detour ?? null;
+    const stepChanged = currentIndex.peek() !== clampedStep;
+    const detourChanged = !jsonEqual(detour.peek(), nextDetour);
+    // A snapshot (a peer, a URL, or a new playlist handed to the extension
+    // already running) placed us on this step. The step number staying the
+    // same is not enough to keep the old direction: the item here may be a
+    // different one. Closing it stays put. An echo of this client's own queue
+    // edit never lands here, because that edit updates `queue` before the
+    // snapshot is written back.
+    if (stepChanged || queueChanged) {
+      stepArrival = "direct";
+    }
+    // Together, so the outbound sync never sees the new step without its
+    // detour and publishes the detour as cleared.
+    batch(() => {
       currentIndex.value = clampedStep;
+      if (detourChanged) {
+        detour.value = nextDetour;
+      }
+    });
+    let navigation: Promise<void> | null = null;
+    if (nextDetour) {
+      // Following a peer to a passage a note links to — or our own detour
+      // coming back around, in which case the reader is already there.
+      if (stepChanged || detourChanged) {
+        navigation = visitReference(nextDetour);
+      }
+    } else if (stepChanged || detourChanged) {
       navigation = navigateToCurrentItem();
     } else {
       // Check if navigation is needed to display the current reference
       const current = currentItem.peek();
       if (current?.type === "bible-verse" && tab?.readingState) {
         if (
+          !hasShownStep ||
           current.ref.bookId !== tab.readingState.bookId.peek() ||
           current.ref.chapter !== tab.readingState.chapterNumber.peek()
         ) {
@@ -902,6 +1167,12 @@ export function createPlayingState(
     canFinish,
     canPressNext,
     finishPromptShown: finishPromptShown as ReadonlySignal<boolean>,
+    noteExpanded: noteExpanded as ReadonlySignal<boolean>,
+    setNoteExpanded,
+    awayFromStep: awayFromStep as ReadonlySignal<boolean>,
+    detour: detour as ReadonlySignal<ReaderVerseRef | null>,
+    visitReference,
+    returnToStep,
     tab,
     next,
     previous,
@@ -911,6 +1182,10 @@ export function createPlayingState(
     reorderQueue,
     reset,
     setState,
+    getStepArrival: () => stepArrival,
+    setStepArrival: (arrival: PlaylistStepArrival) => {
+      stepArrival = arrival;
+    },
     whenSettled,
     dispose,
   };
@@ -1006,6 +1281,11 @@ export function createPlaylistManager(
   const editingPlaylist = signal<Playlist | null>(null);
   /** Copy of the draft when the editor opened, for unsaved-change detection. */
   const editingPlaylistBaseline = signal<Playlist | null>(null);
+  /**
+   * Returns to the screen that opened the editor, once the user backs out of
+   * it. Null when the editor was opened from the Discover pane itself.
+   */
+  const editingPlaylistOnBack = signal<(() => void) | null>(null);
 
   const linkPreviews = createLinkPreviewLoader((url) =>
     os.getLinkPreview(url, i18n.language.peek())
@@ -1094,16 +1374,57 @@ export function createPlaylistManager(
     return userPlaylists;
   });
 
-  // Opens the content modal for a non-verse item (video/link/text), or closes it
-  // for verse items which are shown in the reader instead. Called both when the
-  // current item changes and when the user taps a queue item directly.
-  const showItemInModal = (item: PlaylistItemData | null) => {
+  // Opens the content modal for a non-verse item (video/link/text), or closes
+  // it for verse items, which are shown in the reader. The effect below calls
+  // this when the current item changes. Tapping the queue item you're already
+  // on doesn't change the index, so that tap calls `showCurrentItem` instead.
+  const showItemInModal = (playingState: PlayingState) => {
+    const item = playingState.currentItem.value;
     if (!item || item.type === "bible-verse") {
       modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
       return;
     }
 
-    openPlaylistItemPreview(modals, item, PLAYLIST_ITEM_MODAL_ID, i18n.t);
+    const moveAfterClose = (move: Promise<void>) => {
+      move.catch((err) =>
+        console.error("Failed to move playlist after closing an item:", err)
+      );
+    };
+
+    openPlaylistItemPreview(
+      modals,
+      item,
+      PLAYLIST_ITEM_MODAL_ID,
+      i18n.t,
+      () => {
+        // Tied to the playback that opened this pop-up. Closing continues
+        // the direction they were already moving. There is no next or
+        // previous step at the ends, and closing must not finish the
+        // playlist — that only happens when they press next themselves.
+        const arrival = playingState.getStepArrival();
+        const onFirstItem = playingState.currentIndex.peek() === 0;
+        // The first item has nowhere to go back to, so closing it steps
+        // forward. That includes pressing Play on your own playlist, which
+        // opens the intro directly rather than by Next.
+        if (
+          playingState.hasNext.peek() &&
+          (arrival === "forward" || onFirstItem)
+        ) {
+          moveAfterClose(playingState.next());
+        } else if (arrival === "backward" && playingState.hasPrevious.peek()) {
+          moveAfterClose(playingState.previous());
+        }
+      },
+      playingState
+    );
+  };
+
+  /** Reopens the pop-up for the item playback is already on. */
+  const showCurrentItem = (): void => {
+    const state = playing.peek();
+    if (state) {
+      showItemInModal(state);
+    }
   };
 
   const savePlaylist = async (playlist: Playlist) => {
@@ -1616,7 +1937,8 @@ export function createPlaylistManager(
    * signed in.
    */
   const createNewPlaylist = async (
-    initial?: Pick<Playlist, "title" | "description" | "items">
+    initial?: Pick<Playlist, "title" | "description" | "items">,
+    options?: PlaylistEditorOptions
   ): Promise<Signal<Playlist | null> | null> => {
     let userId = login.userId.value;
     if (!userId) {
@@ -1642,6 +1964,7 @@ export function createPlaylistManager(
     linkPreviews.cancel();
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(draft);
+    editingPlaylistOnBack.value = options?.onBack ?? null;
     view.value = "create_playlist";
     draft.items.forEach(requestEditingItemPreview);
 
@@ -1653,11 +1976,15 @@ export function createPlaylistManager(
    * the given playlist and switches to the create/edit view. Persisting happens
    * later via `saveEditingPlaylist`.
    */
-  const editPlaylist = (playlist: Playlist): void => {
+  const editPlaylist = (
+    playlist: Playlist,
+    options?: PlaylistEditorOptions
+  ): void => {
     linkPreviews.cancel();
     const draft = clonePlaylist(playlist);
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(playlist);
+    editingPlaylistOnBack.value = options?.onBack ?? null;
     view.value = "create_playlist";
     // Links saved before previews existed, or whose preview missed the save
     // cutoff, get one now so the next save stores it.
@@ -1689,6 +2016,7 @@ export function createPlaylistManager(
       : [...userPlaylists.value, playlist];
     editingPlaylist.value = null;
     editingPlaylistBaseline.value = null;
+    editingPlaylistOnBack.value = null;
     view.value = "discover";
   };
 
@@ -1881,6 +2209,7 @@ export function createPlaylistManager(
     linkPreviews.cancel();
     editingPlaylist.value = null;
     editingPlaylistBaseline.value = null;
+    editingPlaylistOnBack.value = null;
     view.value = "discover";
   };
 
@@ -1941,6 +2270,22 @@ export function createPlaylistManager(
         ? Math.min(Math.max(Math.floor(initialStep), 0), queue.length - 1)
         : -1;
 
+    const openingItem = queue[0];
+    // A shared opening on text or a link records that first close as forward.
+    // In-app play records a direct landing; closing the first item still
+    // steps forward. A shared opening on any later step is a direct landing.
+    //
+    // Reloads, restored tabs, and URL sync all come through
+    // `startPlayingLocator`, which passes `sharedOpening`. The address bar
+    // can't tell a link someone shared from a reload of your own playlist, so
+    // a step-1 URL always walks the intro. Closing the first text item after
+    // that reload moves on.
+    const walkOpeningText =
+      options?.sharedOpening === true &&
+      step === 0 &&
+      !!openingItem &&
+      openingItem.type !== "bible-verse";
+
     // Ending an existing tracked session before opening the next one keeps
     // duration/endedAt accurate when the user starts another playlist without
     // an explicit stop.
@@ -1954,6 +2299,11 @@ export function createPlaylistManager(
       queue,
       step,
     } satisfies PlaylistReadingData);
+    // Enabling an extension that is already running hands it this data via
+    // `setState`, which only resets the direction when the step or the queue
+    // changes. Always set it here so a second playlist that starts on the
+    // same step doesn't keep the first playlist's direction.
+    playing.peek()?.setStepArrival(walkOpeningText ? "forward" : "direct");
     const generation = beginOpeningPlayback();
     const opened = playing.peek();
     void (opened?.whenSettled() ?? Promise.resolve()).finally(() => {
@@ -2001,7 +2351,9 @@ export function createPlaylistManager(
         loaded?.locator === locator
           ? loaded.item
           : await loadPlaylist(recordName, id);
-      const state = startPlaying(playlist, stepIndex ?? 0);
+      const state = startPlaying(playlist, stepIndex ?? 0, {
+        sharedOpening: true,
+      });
       if (state) {
         await state.jumpTo(state.currentIndex.peek());
       }
@@ -2013,6 +2365,7 @@ export function createPlaylistManager(
   const openPlaylistFinishedModal = (
     playlist: Pick<Playlist, "id" | "recordName" | "title">
   ): void => {
+    modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     modals.openModal({
       id: PLAYLIST_FINISHED_MODAL_ID,
       title: { key: "playlist-finished", defaultValue: "Playlist finished" },
@@ -2190,7 +2543,7 @@ export function createPlaylistManager(
       return;
     }
 
-    showItemInModal(playing.value.currentItem.value);
+    showItemInModal(playing.value);
   });
 
   // Mirror queue position into the active history row whenever it changes.
@@ -2256,6 +2609,7 @@ export function createPlaylistManager(
           playlists: playingState.playlists.value,
           queue: playingState.queue.value,
           step: playingState.currentIndex.value,
+          detour: playingState.detour.value,
         };
         if (!jsonEqual(data.peek(), snapshot)) {
           data.value = snapshot;
@@ -2268,7 +2622,10 @@ export function createPlaylistManager(
       const disposeIn = effect(() => {
         const next = data.value;
         if (next) {
-          playingState.setState(next);
+          // Untracked: applying the state reads the playing state's own
+          // signals, and depending on them would re-apply this (by then
+          // stale) data whenever playback moved, undoing the move.
+          untracked(() => void playingState.setState(next));
         }
       });
 
@@ -2573,7 +2930,7 @@ export function createPlaylistManager(
     // the page's own entry into the first step's path (enabling playback
     // replaces the current URL), leaving nothing to go back to.
     tabs.leaveStaticPage({ push: true });
-    startPlaying(page.item, 0);
+    startPlaying(page.item, 0, { sharedOpening: true });
   };
 
   /**
@@ -2883,8 +3240,12 @@ export function createPlaylistManager(
     view,
     actualView,
     editingPlaylist,
+    editingPlaylistOnBack: editingPlaylistOnBack as ReadonlySignal<
+      (() => void) | null
+    >,
     playing,
     openingPlayback,
+    showCurrentItem,
     startPlaying,
     stopPlaying,
     continueFromHistory,

@@ -4,14 +4,22 @@ import { render } from "preact";
 import { readInjectedConfig } from "../app/appConfig";
 import { readInjectedApiResponseSnapshot } from "../app/apiResponseSeed";
 import { readInjectedCustomizationSeed } from "../app/customizationSeed";
-import {
-  readInjectedPlaylistPageSeed,
-  readInjectedReadingPlanPageSeed,
-} from "../app/sharedPageSeeds";
+import { readInjectedFriendLinkSeed } from "../app/friendLinkSeed";
+import { readTrustedSharedPageSeeds } from "../app/sharedPageSeeds";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
-import { decideHydration, type HydrationDecision } from "../app/hydrationGate";
+import {
+  decideStartupHydration,
+  isRenderedByThisBuild,
+  type HydrationDecision,
+} from "../app/hydrationGate";
 import { hydrateWithFallback } from "../app/hydrateWithFallback";
 import { waitForInitialChapterLoads } from "../app/initialChapterLoadWait";
+import {
+  recordPageLoadOutcome,
+  startWebVitalsBreakdownReporting,
+} from "../app/webVitalsBreakdown";
+
+startWebVitalsBreakdownReporting();
 
 // Config (base path + asset host, plus SSR-verification metadata) injected
 // by the host server. Reading it on the client is what lets the hydration
@@ -28,10 +36,24 @@ const apiResponseSnapshot = readInjectedApiResponseSnapshot();
 // seeding the client's own CustomizationsManager with it means the manager
 // creation below doesn't re-fetch a record the page already reflects.
 const initialCustomizationSeed = readInjectedCustomizationSeed();
+// A server running a different build parsed that record with its own code,
+// which drops any field it doesn't know, so the seed only stands in for the
+// first paint and the client downloads the record again.
+const revalidateInitialCustomizationSeed = !isRenderedByThisBuild(
+  config,
+  __GIT_COMMIT__
+);
 
-// Same, for the playlist or reading plan a shared link opens on.
-const initialPlaylistPageSeed = readInjectedPlaylistPageSeed();
-const initialReadingPlanPageSeed = readInjectedReadingPlanPageSeed();
+// Same, for the playlist or reading plan a shared link opens on — but only
+// when this build rendered the page, since another build's schema may have
+// dropped fields this one shows (see `readTrustedSharedPageSeeds`).
+const {
+  playlist: initialPlaylistPageSeed,
+  readingPlan: initialReadingPlanPageSeed,
+} = readTrustedSharedPageSeeds(config, __GIT_COMMIT__);
+
+// Same, for the profile an `?addFriend=` link opens on.
+const initialFriendLinkSeed = readInjectedFriendLinkSeed();
 
 const container = document.getElementById("app") ?? document.body;
 
@@ -46,8 +68,10 @@ const state = createSeedBibleState({
   config,
   apiResponseSnapshot,
   initialCustomizationSeed,
+  revalidateInitialCustomizationSeed,
   initialPlaylistPageSeed,
   initialReadingPlanPageSeed,
+  initialFriendLinkSeed,
 });
 
 /**
@@ -79,18 +103,25 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
     const decision: HydrationDecision =
       chapterLoads === "timed-out"
         ? { hydrate: false, reason: "chapter-load-timed-out" }
-        : decideHydration({
+        : decideStartupHydration({
             config,
-            pathname: location.pathname,
-            search: location.search,
+            navigation: state.navigation,
             container,
             clientCommit: __GIT_COMMIT__,
+            clientLanguage: state.i18n.language.peek(),
           });
 
     const app = <Main initialState={state} config={config} />;
 
     if (decision.hydrate) {
       const result = hydrateWithFallback(app, container);
+      recordPageLoadOutcome(
+        result.outcome === "hydrated"
+          ? "hydrated"
+          : result.outcome === "fell-back"
+            ? "hydration-fell-back"
+            : "hydration-failed"
+      );
       if (result.outcome !== "hydrated") {
         console.error(
           "Hydration failed; falling back to a full render():",
@@ -124,6 +155,7 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
       console.warn(
         `Hydration skipped (${decision.reason}); falling back to render().`
       );
+      recordPageLoadOutcome(`rendered:${decision.reason}`);
       render(app, container);
     }
   }

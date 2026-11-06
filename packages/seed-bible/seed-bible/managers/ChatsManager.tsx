@@ -353,6 +353,18 @@ export function chatHasOtherPeople(chat: {
   );
 }
 
+/**
+ * True when this chat includes an AI agent, including one that is currently
+ * inactive. People-only chats are false. Reads `totalParticipants`, same as
+ * {@link chatHasOtherPeople}, so an agent who is momentarily offline still
+ * counts.
+ */
+export function chatHasAI(chat: {
+  totalParticipants?: { readonly value: readonly { isAI: boolean }[] };
+}): boolean {
+  return chat.totalParticipants?.value.some((p) => p.isAI) ?? false;
+}
+
 const sharedAIChatParticipantSchema = z.object({
   id: z.string(),
   providerId: z.string(),
@@ -1205,6 +1217,25 @@ function getMostRecentProviderParticipant(
   );
 }
 
+/**
+ * The icon to show for an AI participant that someone else added to a shared
+ * chat. A site-relative icon (like a bundled asset in dev,
+ * `/packages/.../icon.svg`) only loads on the adder's own server, and an
+ * adder on an older build shares no icon at all, so in both cases the
+ * viewer's own copy of the same provider supplies it.
+ */
+function getSharedProviderIconUrl(
+  sharedIconUrl: string | undefined,
+  localIconUrl: string | undefined
+): string | null {
+  const isPortable =
+    !!sharedIconUrl && /^[a-z][a-z0-9+.-]*:/i.test(sharedIconUrl);
+  if (isPortable) {
+    return sharedIconUrl;
+  }
+  return localIconUrl ?? sharedIconUrl ?? null;
+}
+
 function createSharedChatSession(
   session: BibleReadingSession,
   chatProviders: Signal<ChatProvider[]>,
@@ -1437,6 +1468,11 @@ function createSharedChatSession(
 
         providerParticipants.push({
           ...p,
+          iconUrl: getSharedProviderIconUrl(
+            p.iconUrl,
+            chatProviders.value.find((provider) => provider.id === p.providerId)
+              ?.iconUrl
+          ),
           ownerParticipantId,
           userId: owner.userId,
           connectionId: owner.connectionId,
@@ -1573,6 +1609,7 @@ function createSharedChatSession(
             providerId: p.providerId,
             name: p.name ? translateTitle(i18n.t, p.name) : null,
             isAI: p.isAI,
+            ...(p.iconUrl ? { iconUrl: p.iconUrl } : {}),
           })
         )
       );

@@ -23,7 +23,6 @@ interface StateOptions {
   email?: string | null;
   location?: string | null;
   description?: string | null;
-  plansEnabled?: boolean;
   friendIds?: string[];
   /** How many friend requests are waiting for an answer. */
   incomingRequestCount?: number;
@@ -151,7 +150,6 @@ function createState(options: StateOptions = {}) {
     email = "craig@example.org",
     location = null,
     description = null,
-    plansEnabled = true,
   } = options;
 
   const logout = vi.fn(async () => {});
@@ -168,9 +166,6 @@ function createState(options: StateOptions = {}) {
       userInfo: signal(email == null ? null : { id: userId, email }),
       logout,
       login,
-    },
-    features: {
-      isFeatureEnabled: () => signal(plansEnabled),
     },
     // By default the user has no plans, so the card falls back to its prompt.
     readingPlans: {
@@ -252,19 +247,13 @@ describe("ProfilePane", () => {
     );
   });
 
-  it("shows the user's email above their name", () => {
+  it("shows the user's email", () => {
     const { state } = createState({ email: "craig@example.org" });
     renderPane(state);
 
-    expect(container.querySelector(".sb-profile-email")?.textContent).toBe(
+    expect(container.querySelector(".sb-profile-email")?.textContent).toContain(
       "craig@example.org"
     );
-    // Order matters: the email is small print introducing the name below it.
-    const contact = container.querySelector(".sb-profile-contact")!;
-    const name = container.querySelector(".sb-profile-name")!;
-    expect(
-      contact.compareDocumentPosition(name) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
   });
 
   it("shows the location beside the email when the user has set one", () => {
@@ -788,20 +777,5 @@ describe("ProfilePane", () => {
         container.querySelector(".sb-profile-plans")?.textContent
       ).toContain("You haven't started a plan yet.");
     });
-  });
-
-  it("hides the plans card when the reading plans feature is off", () => {
-    const { state } = createState({
-      plansEnabled: false,
-      playlistHistory: [historyEntry()],
-    });
-    renderPane(state);
-
-    expect(container.querySelector(".sb-profile-plans")).toBeNull();
-    expect(
-      container.querySelector(".sb-profile-playlist-history")
-    ).not.toBeNull();
-    // The rest of the screen is unaffected.
-    expect(container.querySelector(".sb-profile-name")).not.toBeNull();
   });
 });

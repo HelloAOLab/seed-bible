@@ -233,7 +233,7 @@ function getInitialHighlightedVerses(url: URL): number[] {
  * "/en/AAB/john/3") is the modern form; the legacy `?translation=&book=&chapter=`
  * query params are still honored for links made before the path scheme.
  */
-function readInitialReadingParams(
+export function readInitialReadingParams(
   url: URL,
   basePath: string
 ): QueryReadingParams {
@@ -249,6 +249,7 @@ function readInitialReadingParams(
     bookId: parsed.bookId ?? parsed.rawBookSegment,
     chapter: parsed.chapter,
     specified: true,
+    languageOnly: false,
   };
 }
 
@@ -467,12 +468,14 @@ export function createTabs(
   // translationId path segment (even for the app's own default), so re-parsing
   // the *current* URL later can no longer tell "the visitor's own link named a
   // translation" apart from "the app defaulted it." Used by the profile-restore
-  // effect to avoid overriding an explicit deep link.
+  // effect to avoid overriding an explicit deep link. A non-empty `?lang=`
+  // counts too: it asks for that language's Bible (see `readQueryReadingParams`).
   const hadExplicitInitialUrlTranslation =
     parseReadingPath(navigation.initialUrl.pathname, navigation.basePath) !==
       null ||
     navigation.initialUrl.searchParams.has("translationId") ||
-    navigation.initialUrl.searchParams.has("translation");
+    navigation.initialUrl.searchParams.has("translation") ||
+    !!navigation.initialUrl.searchParams.get("lang");
   selfHealNonCanonicalPath(navigation);
 
   // Every startup read below comes from `initialUrl` — the frozen snapshot of the
@@ -608,10 +611,17 @@ export function createTabs(
     // the live `currentUrl`: by the time this runs the reader has echoed its own
     // position into the address bar in canonical form, which would make "the
     // visitor linked here" indistinguishable from "the app wrote this itself".
-    const query = readInitialReadingParams(
-      navigation.initialUrl,
-      navigation.basePath
-    );
+    const query: QueryReadingParams = navigation.initialUrl.searchParams.has(
+      "sessionId"
+    )
+      ? {
+          translationId: null,
+          bookId: null,
+          chapter: null,
+          specified: false,
+          languageOnly: false,
+        }
+      : readInitialReadingParams(navigation.initialUrl, navigation.basePath);
     const { tabs: descriptors, selectedTabId: restoredSelectedTabId } =
       reconcileStoredTabs(storedState, query, defaultTranslation.id);
 
@@ -1230,7 +1240,10 @@ export function createTabs(
     tabOptions?: { slotOnly?: boolean }
   ) => {
     const currentTabs = tabs.value;
-    const nextNumber = currentTabs.length + 1;
+    let nextNumber = currentTabs.length + 1;
+    while (currentTabs.some((tab) => tab.id === `tab-${nextNumber}`)) {
+      nextNumber++;
+    }
     const sharedSession = isBibleReadingSession(source) ? source : null;
     const sharedChat = createSharedChatOrNull(chatsManager, sharedSession);
     const readingState = !isBibleReadingSession(source) ? source : null;
