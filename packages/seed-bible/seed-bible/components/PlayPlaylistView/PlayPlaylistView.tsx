@@ -14,6 +14,7 @@ import { HeroImageBanner } from "../HeroImageField/HeroImageField";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { DiscoverPanelLayout } from "../Discover/DiscoverPanelHeader";
 import { Spinner } from "../Spinner/Spinner";
+import { playlistTotalMinutes } from "../PlaylistEditor/playlistSteps";
 
 interface PlayPlaylistViewProps {
   playlists: PlaylistManager;
@@ -129,7 +130,14 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
             ) : null}
           </div>
         ) : null}
-        <DiscoverSection title={t("queue", { defaultValue: "Queue" })}>
+        <DiscoverSection
+          title={t("queue", { defaultValue: "Queue" })}
+          detail={t("playlist-editor-step-count", {
+            steps: queue.length,
+            minutes: playlistTotalMinutes(queue),
+            defaultValue: "{{steps}} steps · ~{{minutes}} min",
+          })}
+        >
           <ul className="sb-discover-list">
             {queue.map((item, index) => (
               <li

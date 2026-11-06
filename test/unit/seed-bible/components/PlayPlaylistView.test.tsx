@@ -240,6 +240,33 @@ describe("PlayPlaylistView", () => {
     ).toBe("true");
   });
 
+  it("heads the queue with how many steps it has and about how long they take", () => {
+    const playlist = createPlaylist({
+      items: [
+        verseItem({ ref: { bookId: "GEN", chapter: 1 }, minutes: 4 }),
+        verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+        { type: "html", html: "<p>Pray</p>" },
+      ],
+    });
+    const { playlists } = createMockPlaylists(createPlayingState([playlist]));
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={createMockTabs()}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-discover-section-title")?.textContent
+    ).toBe("Queue · 3 steps · ~6 min");
+  });
+
   it("shows a cover banner when the playing playlist has a hero image", () => {
     const playlist = createPlaylist({
       heroImageUrl: "https://example.com/cover.jpg",
