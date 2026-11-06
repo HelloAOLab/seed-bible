@@ -133,11 +133,7 @@ function applyChatFirstDesktopTools(
 }
 
 /** Navigation tools that sit before Today at the start of the desktop toolbar. */
-const LEADING_NAV_TOOL_IDS = new Set([
-  "stop-playing",
-  "previous-chapter",
-  "previous-item",
-]);
+const LEADING_NAV_TOOL_IDS = new Set(["previous-chapter", "previous-item"]);
 
 /** Places in the desktop toolbar's primary group, the More button included. */
 const DESKTOP_PRIMARY_SLOTS = 4;
@@ -1648,10 +1644,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       ? props.state.audioPlayback.controllerFor(readingState.value)
       : null
   );
-  // A playing playlist owns the toolbar's transport controls.
-  const desktopPlayback = useComputed(() =>
-    playingPlaylist.value ? null : audioPlayback.value
-  );
 
   const floatingAnchor = useComputed(() =>
     readingState.value!.selectedVerses.value.reduce<{
@@ -3087,7 +3079,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               const PrevIcon = prev?.icon;
               const NextIcon = next?.icon;
 
-              const playback = playing ? null : audioPlayback.value;
+              const playback = audioPlayback.value;
               // While playing, progress runs above the chapter pill where it
               // can be scrubbed; paused, it shrinks to a ring around the play
               // button so the pill area goes back to plain navigation.
@@ -3127,7 +3119,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         />
                       ) : null;
                     })()}
-                  {!playing && audio && AudioIcon && (
+                  {audio && AudioIcon && (
                     <div className="sb-reader-floating-nav-play-wrap">
                       <button
                         type="button"
@@ -3142,16 +3134,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         <AudioProgressRing playback={playback} />
                       )}
                     </div>
-                  )}
-                  {playing && (
-                    <button
-                      type="button"
-                      onClick={() => props.state.playlists.stopPlaying()}
-                      className="sb-reader-floating-nav-play"
-                      aria-label={t("stop", { defaultValue: "Stop" })}
-                    >
-                      <StopIcon />
-                    </button>
                   )}
 
                   {(prev || next || selector || playing) && (
@@ -3258,7 +3240,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           {!isMinimalEmbed.value && (
             <div
               className={`sb-reader-toolbar${isSmallScreen.value ? " sb-reader-toolbar-mobile-layout" : " sb-reader-toolbar-labeled"}${
-                !isSmallScreen.value && desktopPlayback.value
+                !isSmallScreen.value && audioPlayback.value
                   ? " sb-reader-toolbar-has-audio"
                   : ""
               }`}
@@ -3426,8 +3408,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   {playingPlaylist.value && (
                     <ScriptureNoteShowTab playing={playingPlaylist.value} />
                   )}
-                  {desktopPlayback.value &&
-                    renderDesktopAudioControls(desktopPlayback.value)}
+                  {audioPlayback.value &&
+                    renderDesktopAudioControls(audioPlayback.value)}
                   {(() => {
                     const bar = desktopBarTools.value;
                     // Today leads the primary group, right after the leading

@@ -5796,6 +5796,32 @@ describe("BibleReaderToolbar — compact embed", () => {
     }
   );
 
+  it("has no stop button for a playing playlist on a phone", async () => {
+    const state = await renderToolbar({ width: MOBILE_VIEWPORT_WIDTH });
+    await act(async () => {
+      state.playlists.startPlaying(
+        {
+          id: "p",
+          title: "P",
+          description: null,
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 1, verse: 1 },
+            },
+          ],
+        },
+        0,
+        { history: false, openItem: true }
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-reader-floating-nav-label")?.textContent
+    ).toContain("1:1");
+    expect(container.querySelector('[aria-label="Stop"]')).toBeNull();
+  });
+
   it("reserves room below the chapter for a playing passage's note sheet", async () => {
     // jsdom does no layout and has no ResizeObserver: stand in for both, with
     // the nav 50px tall and the note sheet above it 300px.
@@ -6025,6 +6051,46 @@ describe("BibleReaderToolbar — a playing passage's hidden note on desktop", ()
     render(null, container);
     container.remove();
     window.innerWidth = originalInnerWidth;
+  });
+
+  it("has no stop button for a playing playlist", async () => {
+    const state = await createTestSeedBibleState();
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    await act(async () => {
+      state.playlists.startPlaying(
+        {
+          id: "p",
+          title: "P",
+          description: null,
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 1, verse: 1 },
+            },
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 1, verse: 2 },
+            },
+          ],
+        },
+        0,
+        { history: false }
+      );
+    });
+
+    expect(container.querySelector(".sb-reader-toolbar")).not.toBeNull();
+    expect(container.querySelector('[aria-label="Next"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Stop"]')).toBeNull();
   });
 
   it("offers Show note on the toolbar itself once the note is hidden", async () => {

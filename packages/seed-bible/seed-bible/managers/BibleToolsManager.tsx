@@ -1,9 +1,4 @@
-import {
-  AskIcon,
-  MaterialIcon,
-  SeedBibleIcon,
-  StopIcon,
-} from "../components/icons";
+import { AskIcon, MaterialIcon, SeedBibleIcon } from "../components/icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
@@ -1141,18 +1136,6 @@ function getDefaultToolbarTools(
   branding?: BrandingConfig
 ): ManagedBibleToolbarTool[] {
   const tools: ManagedBibleToolbarTool[] = [
-    {
-      id: "stop-playing",
-      priority: -1,
-      hideLabel: true,
-      title: { key: "stop", defaultValue: "Stop" },
-      icon: () => <StopIcon />,
-      isVisible: (context) => !!context.playlists?.playing?.value,
-      onSelect: (context) => {
-        context.playlists?.stopPlaying();
-      },
-      isControllable: false,
-    },
     {
       id: "previous-chapter",
       priority: 0,

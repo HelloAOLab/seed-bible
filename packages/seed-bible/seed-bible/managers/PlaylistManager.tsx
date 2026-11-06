@@ -740,6 +740,33 @@ export function hasScriptureNote(
  * tab's reader to the verse. The tab is the one saved when playback started, so
  * navigation keeps targeting it even if the user later switches tabs.
  */
+/**
+ * The verses a playlist step covers within one chapter, first to last, or
+ * null when the step isn't scripture in that chapter or is the whole chapter.
+ * `numberOfVerses` settles a range that runs to the chapter's end.
+ */
+export function scriptureStepVerses(
+  item: PlaylistItemData | null | undefined,
+  chapter: { bookId: string; chapter: number; numberOfVerses: number }
+): { start: number; end: number } | null {
+  if (item?.type !== "bible-verse" || item.compare) {
+    return null;
+  }
+  const { ref } = item;
+  if (
+    ref.bookId !== chapter.bookId ||
+    ref.chapter !== chapter.chapter ||
+    ref.verse == null
+  ) {
+    return null;
+  }
+  const runsToEnd =
+    ref.toEndOfChapter ||
+    (ref.endChapter != null && ref.endChapter > ref.chapter);
+  const end = runsToEnd ? chapter.numberOfVerses : (ref.endVerse ?? ref.verse);
+  return { start: ref.verse, end: Math.max(ref.verse, end) };
+}
+
 export function createPlayingState(
   sourcePlaylists: SimplePlaylist[],
   tab: ReaderTab | null = null,
