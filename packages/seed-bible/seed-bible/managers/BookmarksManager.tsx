@@ -173,6 +173,14 @@ export function createBookmarksManager(
    * overwritten when the load lands.
    */
   let loadPromise: Promise<void> | null = null;
+  /**
+   * The last list the server is known to hold: what was loaded, or what a
+   * write since then succeeded with. `stored` runs ahead of it while writes
+   * are in flight.
+   */
+  let saved: Bookmark[] = [];
+  /** The lists being written right now, cleared at sign-out. */
+  const pendingWrites = new Set<Bookmark[]>();
 
   const bookmarks = computed(() =>
     [...stored.value].sort(compareByMostRecentlyMoved)
@@ -195,6 +203,7 @@ export function createBookmarksManager(
       return;
     }
     stored.value = read.status === "found" ? read.value.bookmarks : [];
+    saved = stored.value;
     loadedUserId.value = userId;
   };
 
@@ -225,6 +234,8 @@ export function createBookmarksManager(
     const userId = login.userId.value;
     if (!userId) {
       stored.value = [];
+      saved = [];
+      pendingWrites.clear();
       loadedUserId.value = null;
       loadPromise = null;
       isPanelOpen.value = false;
@@ -238,15 +249,16 @@ export function createBookmarksManager(
   });
 
   /**
-   * Applies `next` locally and writes it, putting the old list back if the
-   * write fails. Callers have already passed {@link ensureLoaded}, so what is
-   * in memory is this user's real list.
+   * Applies `next` locally and writes it, undoing it on screen if the write
+   * fails. Callers have already passed {@link ensureLoaded}, so what is in
+   * memory is this user's real list.
    */
   const commit = async (next: Bookmark[]): Promise<void> => {
     const userId = login.userId.value;
     if (!userId) return;
     const previous = stored.value;
     stored.value = next;
+    pendingWrites.add(next);
     try {
       const payload = bookmarksPayloadSchema.parse({ bookmarks: next });
       const result = await os.recordData(userId, STORAGE_ADDRESS, payload, {
@@ -257,13 +269,22 @@ export function createBookmarksManager(
       if (result && result.success === false) {
         throw new Error(`Failed to write bookmarks: ${result.errorCode}`);
       }
+      // Unless a sign-out has cleared it since: then it's no longer this list.
+      if (pendingWrites.has(next)) {
+        saved = next;
+      }
     } catch (err) {
-      // Only while the list is still this write's. A later change was written
-      // with this one included, and a sign-out has already emptied the list.
+      pendingWrites.delete(next);
+      // Skip if the list has changed since: a later change was sent with this
+      // one included, so its write decides, or a sign-out emptied it.
       if (stored.peek() === next) {
-        stored.value = previous;
+        // `previous` may itself be an unsaved change. Another write still out
+        // will settle it; with none left, only the server's list is known.
+        stored.value = pendingWrites.size > 0 ? previous : saved;
       }
       throw err;
+    } finally {
+      pendingWrites.delete(next);
     }
   };
 

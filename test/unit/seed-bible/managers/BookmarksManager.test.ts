@@ -418,6 +418,72 @@ describe("BookmarksManager", () => {
       ]);
     });
 
+    describe("with two writes out at once", () => {
+      type Outcome = "saves" | "fails";
+      /** Writes that wait to be settled by the test, in the order sent. */
+      let settle: ((outcome: Outcome) => void)[];
+
+      beforeEach(() => {
+        settle = [];
+        recordDataMock.mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              settle.push((outcome) =>
+                resolve(
+                  outcome === "saves"
+                    ? { success: true }
+                    : { success: false, errorCode: "server_error" }
+                )
+              );
+            })
+        );
+      });
+
+      const a = aBookmark({ id: "a", updatedAt: 200 });
+      const b = aBookmark({ id: "b", updatedAt: 100 });
+      const renamedB = { ...b, name: "Renamed" };
+
+      // Deleting "a" sends [b]; renaming "b" while that is out sends [b′].
+      it.each([
+        ["the delete", "fails", "the rename", "fails", [a, b]],
+        ["the rename", "fails", "the delete", "fails", [a, b]],
+        ["the delete", "saves", "the rename", "fails", [b]],
+        ["the rename", "fails", "the delete", "saves", [b]],
+        ["the delete", "fails", "the rename", "saves", [renamedB]],
+        ["the rename", "saves", "the delete", "fails", [renamedB]],
+      ] as const)(
+        "when %s %s and then %s %s, shows what the server holds",
+        async (firstName, firstOutcome, _secondName, secondOutcome, shown) => {
+          records = { readingBookmarks: { bookmarks: [a, b] } };
+          const manager = createBookmarksManager(os, login);
+          await flushPromises();
+
+          const deleting = manager.removeBookmark("a").catch(() => undefined);
+          await flushPromises();
+          const renaming = manager
+            .updateBookmark("b", { name: "Renamed", colorId: b.colorId })
+            .catch(() => undefined);
+          await flushPromises();
+          expect(settle).toHaveLength(2);
+
+          const [settleDelete, settleRename] = settle as [
+            (outcome: Outcome) => void,
+            (outcome: Outcome) => void,
+          ];
+          const [settleFirst, settleSecond] =
+            firstName === "the delete"
+              ? [settleDelete, settleRename]
+              : [settleRename, settleDelete];
+          settleFirst(firstOutcome);
+          await flushPromises();
+          settleSecond(secondOutcome);
+          await Promise.all([deleting, renaming]);
+
+          expect(manager.bookmarks.value).toEqual(shown);
+        }
+      );
+    });
+
     it("doesn't bring bookmarks back after a sign-out", async () => {
       records = { readingBookmarks: { bookmarks: [aBookmark()] } };
       const manager = createBookmarksManager(os, login);
