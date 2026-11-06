@@ -1,5 +1,5 @@
 import "./Bookmarks.css";
-import { useSignal } from "@preact/signals";
+import { signal, useSignal, type Signal } from "@preact/signals";
 import { useId } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -727,15 +727,19 @@ export async function openBookmarkModal(
 function BookmarkEditor(props: {
   state: SeedBibleState;
   bookmark: Bookmark;
+  /**
+   * True while a save is in flight. Owned by the caller so the modal around
+   * the editor can refuse to close mid-save.
+   */
+  isSaving: Signal<boolean>;
   onDone: () => void;
 }) {
-  const { state, bookmark, onDone } = props;
+  const { state, bookmark, isSaving, onDone } = props;
   const { t } = useI18n();
   const value = useSignal<BookmarkDetails>({
     name: bookmark.name,
     colorId: bookmark.colorId,
   });
-  const isSaving = useSignal(false);
 
   const submit = async () => {
     if (isSaving.value || value.value.name.trim() === "") return;
@@ -799,13 +803,22 @@ export function openEditBookmarkModal(
   bookmark: Bookmark
 ): void {
   const modalId = `edit-bookmark-${bookmark.id}`;
+  const isSaving = signal(false);
   const close = () => state.modals.closeModal(modalId);
   state.modals.openModal({
     id: modalId,
     title: { key: "edit-bookmark", defaultValue: "Edit bookmark" },
     mobileSheet: true,
+    // Like Cancel: once Save is pressed, the modal stays until it settles, so
+    // a failed save still has the typed name to retry with.
+    canDismiss: () => !isSaving.value,
     content: () => (
-      <BookmarkEditor state={state} bookmark={bookmark} onDone={close} />
+      <BookmarkEditor
+        state={state}
+        bookmark={bookmark}
+        isSaving={isSaving}
+        onDone={close}
+      />
     ),
   });
 }

@@ -758,6 +758,59 @@ describe("bookmarks", () => {
       );
     });
 
+    it("can't be dismissed mid-save, so a failed save keeps the typed name", async () => {
+      await signIn([aBookmark()]);
+      await act(async () => {
+        state.bookmarks.isPanelOpen.value = true;
+      });
+      await renderSidebar();
+      const openModalSpy = vi.spyOn(state.modals, "openModal");
+      const toast = vi.spyOn(state.app, "toast");
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      let failWrite!: (error: Error) => void;
+      recordData.mockReturnValue(
+        new Promise((_resolve, reject) => {
+          failWrite = reject;
+        })
+      );
+
+      await chooseOption("Reading plan", "Edit bookmark");
+      const modal = renderModal(openModalSpy.mock.calls[0]![0]);
+      const modalId = openModalSpy.mock.results[0]!.value as string;
+      const isOpen = () =>
+        state.modals.modals.value.some((m) => m.id === modalId);
+      await type(
+        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
+        "Sermon prep"
+      );
+      await click(button(modal, ".sb-bookmark-picker-save"));
+
+      // The X button and the backdrop both go through dismissModal.
+      await act(async () => {
+        state.modals.dismissModal(modalId);
+      });
+      expect(isOpen()).toBe(true);
+
+      await act(async () => {
+        failWrite(new Error("offline"));
+      });
+
+      await vi.waitFor(() =>
+        expect(toast).toHaveBeenCalledWith(
+          "Couldn't save your bookmark. Please try again."
+        )
+      );
+      expect(isOpen()).toBe(true);
+      expect(
+        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+      ).toBe("Sermon prep");
+      // Once the save has settled, it can be closed again.
+      await act(async () => {
+        state.modals.dismissModal(modalId);
+      });
+      expect(isOpen()).toBe(false);
+    });
+
     describe("deleting from the panel", () => {
       /** Opens the panel, picks Delete, and renders the question it asks. */
       async function askToDelete() {
