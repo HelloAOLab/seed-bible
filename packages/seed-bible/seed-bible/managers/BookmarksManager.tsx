@@ -238,21 +238,32 @@ export function createBookmarksManager(
   });
 
   /**
-   * Applies `next` locally and writes it. Callers have already passed
-   * {@link ensureLoaded}, so what is in memory is this user's real list.
+   * Applies `next` locally and writes it, putting the old list back if the
+   * write fails. Callers have already passed {@link ensureLoaded}, so what is
+   * in memory is this user's real list.
    */
   const commit = async (next: Bookmark[]): Promise<void> => {
     const userId = login.userId.value;
     if (!userId) return;
+    const previous = stored.value;
     stored.value = next;
-    const payload = bookmarksPayloadSchema.parse({ bookmarks: next });
-    const result = await os.recordData(userId, STORAGE_ADDRESS, payload, {
-      marker: "publicRead",
-    });
-    // A rejected write resolves with `success: false` rather than throwing,
-    // so it has to be checked to be noticed at all.
-    if (result && result.success === false) {
-      throw new Error(`Failed to write bookmarks: ${result.errorCode}`);
+    try {
+      const payload = bookmarksPayloadSchema.parse({ bookmarks: next });
+      const result = await os.recordData(userId, STORAGE_ADDRESS, payload, {
+        marker: "publicRead",
+      });
+      // A rejected write resolves with `success: false` rather than throwing,
+      // so it has to be checked to be noticed at all.
+      if (result && result.success === false) {
+        throw new Error(`Failed to write bookmarks: ${result.errorCode}`);
+      }
+    } catch (err) {
+      // Only while the list is still this write's. A later change was written
+      // with this one included, and a sign-out has already emptied the list.
+      if (stored.peek() === next) {
+        stored.value = previous;
+      }
+      throw err;
     }
   };
 
