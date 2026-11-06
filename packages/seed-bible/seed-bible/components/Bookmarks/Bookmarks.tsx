@@ -728,7 +728,6 @@ function BookmarkEditor(props: {
   state: SeedBibleState;
   bookmark: Bookmark;
   onDone: () => void;
-  className?: string;
 }) {
   const { state, bookmark, onDone } = props;
   const { t } = useI18n();
@@ -757,7 +756,7 @@ function BookmarkEditor(props: {
   };
 
   return (
-    <div className={props.className}>
+    <div className="sb-bookmark-edit">
       <BookmarkForm
         value={value.value}
         autoFocus
@@ -767,10 +766,10 @@ function BookmarkEditor(props: {
         }}
         onSubmit={() => void submit()}
       />
-      <div className="sb-bookmarks-panel-edit-actions">
+      <div className="sb-bookmark-edit-actions">
         <button
           type="button"
-          className="sb-bookmarks-panel-cancel"
+          className="sb-bookmark-edit-cancel"
           disabled={isSaving.value}
           onClick={onDone}
         >
@@ -791,7 +790,10 @@ function BookmarkEditor(props: {
   );
 }
 
-/** Opens {@link BookmarkEditor} in a modal, for lists with no room to edit in place. */
+/**
+ * Opens {@link BookmarkEditor} in a modal. The one place a bookmark is renamed
+ * or recolored, from the sidebar panel and from Your content alike.
+ */
 export function openEditBookmarkModal(
   state: SeedBibleState,
   bookmark: Bookmark
@@ -803,21 +805,16 @@ export function openEditBookmarkModal(
     title: { key: "edit-bookmark", defaultValue: "Edit bookmark" },
     mobileSheet: true,
     content: () => (
-      <BookmarkEditor
-        state={state}
-        bookmark={bookmark}
-        onDone={close}
-        className="sb-bookmark-edit-modal"
-      />
+      <BookmarkEditor state={state} bookmark={bookmark} onDone={close} />
     ),
   });
 }
 
 /**
  * The sidebar's bookmarks panel: every bookmark, most recently moved first.
- * Tapping one opens its chapter; its options menu renames, recolors, or
- * deletes it. Bookmarks are only placed from a chapter (the reader's button),
- * so there is no "new bookmark" here.
+ * Tapping one opens its chapter; its options menu renames and recolors it (in
+ * the edit modal) or deletes it. Bookmarks are only placed from a chapter (the
+ * reader's button), so there is no "new bookmark" here.
  */
 export function BookmarksPanel(props: {
   state: SeedBibleState;
@@ -829,7 +826,6 @@ export function BookmarksPanel(props: {
   const locationText = useBookmarkLocationText(state);
 
   const bookmarks = manager.bookmarks.value;
-  const editingId = useSignal<string | null>(null);
 
   return (
     <div className="sb-bookmarks-panel">
@@ -842,82 +838,70 @@ export function BookmarksPanel(props: {
         </p>
       )}
 
-      {bookmarks.map((bookmark) =>
-        editingId.value === bookmark.id ? (
-          <BookmarkEditor
-            key={bookmark.id}
-            state={state}
-            bookmark={bookmark}
-            className="sb-bookmarks-panel-editor"
-            onDone={() => {
-              editingId.value = null;
+      {bookmarks.map((bookmark) => (
+        <div key={bookmark.id} className="sb-bookmarks-panel-row">
+          <button
+            type="button"
+            className="sb-bookmarks-panel-open"
+            onClick={() => {
+              openReaderLocation(state, bookmark, closeLayoutMenu);
             }}
-          />
-        ) : (
-          <div key={bookmark.id} className="sb-bookmarks-panel-row">
-            <button
-              type="button"
-              className="sb-bookmarks-panel-open"
+          >
+            <BookmarkGlyph colorId={bookmark.colorId} size={16} />
+            <BookmarkLabel
+              name={bookmark.name}
+              chapterText={locationText(bookmark)}
+              translationId={bookmark.translationId}
+            />
+          </button>
+          <ContextMenuWithButton
+            anchorClassName="sb-tab-menu-anchor"
+            buttonClassName="sb-tab-menu-button"
+            menuClassName="sb-tab-menu"
+            iconClassName="sb-tab-more-icon"
+            aria-label={t("bookmark-options-named", {
+              defaultValue: "Options for {{name}}",
+              name: bookmark.name,
+            })}
+            title={t("bookmark-options", {
+              defaultValue: "Bookmark options",
+            })}
+          >
+            <ContextMenuItem
+              className="sb-tab-menu-item"
               onClick={() => {
-                openReaderLocation(state, bookmark, closeLayoutMenu);
+                openEditBookmarkModal(state, bookmark);
               }}
             >
-              <BookmarkGlyph colorId={bookmark.colorId} size={16} />
-              <BookmarkLabel
-                name={bookmark.name}
-                chapterText={locationText(bookmark)}
-                translationId={bookmark.translationId}
-              />
-            </button>
-            <ContextMenuWithButton
-              anchorClassName="sb-tab-menu-anchor"
-              buttonClassName="sb-tab-menu-button"
-              menuClassName="sb-tab-menu"
-              iconClassName="sb-tab-more-icon"
-              aria-label={t("bookmark-options-named", {
-                defaultValue: "Options for {{name}}",
-                name: bookmark.name,
-              })}
-              title={t("bookmark-options", {
-                defaultValue: "Bookmark options",
-              })}
+              <MaterialIcon
+                className="sb-context-menu-item-icon"
+                aria-hidden="true"
+              >
+                edit
+              </MaterialIcon>
+              <span>
+                {t("edit-bookmark", { defaultValue: "Edit bookmark" })}
+              </span>
+            </ContextMenuItem>
+            <ContextMenuItem
+              className="sb-tab-menu-item"
+              onClick={() => {
+                confirmDeleteBookmark(state, bookmark);
+              }}
             >
-              <ContextMenuItem
-                className="sb-tab-menu-item"
-                onClick={() => {
-                  editingId.value = bookmark.id;
-                }}
+              <MaterialIcon
+                className="sb-context-menu-item-icon"
+                aria-hidden="true"
               >
-                <MaterialIcon
-                  className="sb-context-menu-item-icon"
-                  aria-hidden="true"
-                >
-                  edit
-                </MaterialIcon>
-                <span>
-                  {t("edit-bookmark", { defaultValue: "Edit bookmark" })}
-                </span>
-              </ContextMenuItem>
-              <ContextMenuItem
-                className="sb-tab-menu-item"
-                onClick={() => {
-                  confirmDeleteBookmark(state, bookmark);
-                }}
-              >
-                <MaterialIcon
-                  className="sb-context-menu-item-icon"
-                  aria-hidden="true"
-                >
-                  delete
-                </MaterialIcon>
-                <span>
-                  {t("delete-bookmark", { defaultValue: "Delete bookmark" })}
-                </span>
-              </ContextMenuItem>
-            </ContextMenuWithButton>
-          </div>
-        )
-      )}
+                delete
+              </MaterialIcon>
+              <span>
+                {t("delete-bookmark", { defaultValue: "Delete bookmark" })}
+              </span>
+            </ContextMenuItem>
+          </ContextMenuWithButton>
+        </div>
+      ))}
     </div>
   );
 }
