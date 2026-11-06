@@ -38,6 +38,7 @@ import {
   BookmarkGlyph,
   confirmDeleteBookmark,
   openEditBookmarkModal,
+  useBookmarkLocationText,
 } from "../Bookmarks/Bookmarks";
 import {
   ContextMenuItem,
@@ -575,11 +576,12 @@ function SavePill(props: {
 function BookmarkRow(props: {
   state: SeedBibleState;
   bookmark: Bookmark;
+  /** "John 3", named in the bookmark's own translation. */
+  chapterText: string;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) {
   const { state, bookmark } = props;
   const { t } = useI18n();
-  const bookNames = state.today.bookNames.value;
   const translation = useTranslationShortName(state, bookmark.translationId);
 
   return (
@@ -602,12 +604,7 @@ function BookmarkRow(props: {
           <span className="sb-content-bookmark-name">{bookmark.name}</span>
           <span className="sb-content-bookmark-meta">
             <span className="sb-content-bookmark-chapter">
-              {formatReference(
-                bookNames,
-                bookmark.bookId,
-                bookmark.chapterNumber,
-                []
-              )}
+              {props.chapterText}
             </span>
             <MetaSeparator />
             <span className="sb-content-bookmark-translation">
@@ -816,6 +813,10 @@ export function YourContentPane(props: YourContentScreenProps) {
     fields.some((field) => field?.toLowerCase().includes(needle));
 
   const bookNames = state.today.bookNames.value;
+  // A bookmark is named in its own translation, as in the sidebar and on
+  // Today, rather than in the reader's like the rest of this screen: the same
+  // bookmark should read the same wherever it shows.
+  const bookmarkLocationText = useBookmarkLocationText(state);
 
   /**
    * What a reference is searchable by: the reference exactly as its own row
@@ -867,7 +868,7 @@ export function YourContentPane(props: YourContentScreenProps) {
     .sort(compareSaves);
   // Most recently moved first, as in the sidebar and on Today.
   const visibleBookmarks = bookmarks.bookmarks.value.filter((b) =>
-    matches(b.name, ...referenceFields(b.bookId, b.chapterNumber, []))
+    matches(b.name, bookmarkLocationText(b), b.bookId)
   );
   const visiblePlaylists = playlists.userPlaylists.value.filter((p) =>
     matches(p.title, p.description)
@@ -1176,6 +1177,7 @@ export function YourContentPane(props: YourContentScreenProps) {
                     key={bookmark.id}
                     state={state}
                     bookmark={bookmark}
+                    chapterText={bookmarkLocationText(bookmark)}
                     onOpenPassage={onOpenPassage}
                   />
                 ))}

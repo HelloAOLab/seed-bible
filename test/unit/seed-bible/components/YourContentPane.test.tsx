@@ -204,6 +204,8 @@ interface StateOptions {
   translations?: Translation[];
   /** Translations the server has, whose book lists load when asked for. */
   serverTranslations?: Translation[];
+  /** Book names in a translation's own language, by translation id then book id. */
+  bookNamesByTranslation?: Record<string, Record<string, string>>;
 }
 
 /** Renders the modal the screen last asked to open, as the modal host would. */
@@ -277,7 +279,12 @@ function createState(options: StateOptions = {}) {
   const filter = signal("all");
   const syncPhotos = vi.fn(async () => {});
   const loadCustomizations = vi.fn(async () => {});
-  const booksOf = (translation: Translation) => ({ translation, books: [] });
+  const booksOf = (translation: Translation) => ({
+    translation,
+    books: Object.entries(
+      options.bookNamesByTranslation?.[translation.id] ?? {}
+    ).map(([id, name]) => ({ id, name })),
+  });
   const translationBooks = signal(
     new Map(
       (options.translations ?? []).map((translation) => [
@@ -804,6 +811,7 @@ describe("YourContentPane", () => {
         translations: [
           { id: "BSB", shortName: "BSB" } as unknown as Translation,
         ],
+        bookNamesByTranslation: { BSB: { JHN: "John" } },
       });
       renderPane(state);
 
@@ -817,6 +825,47 @@ describe("YourContentPane", () => {
       expect(
         row.querySelector(".sb-content-bookmark-translation")?.textContent
       ).toBe("BSB");
+    });
+
+    // The reader is on an English translation (today's book names say
+    // "John"), but the bookmark was placed in a Spanish one. The sidebar and
+    // Today both call it "Juan 3", so this screen must too.
+    it("names the book in the bookmark's own translation, not the reader's", () => {
+      const { state, query } = createState({
+        bookmarks: [bookmark("bm1", "Estudio", { translationId: "RVR" })],
+        translations: [
+          { id: "RVR", shortName: "RVR" } as unknown as Translation,
+        ],
+        bookNamesByTranslation: { RVR: { JHN: "Juan" } },
+      });
+      renderPane(state);
+
+      expect(
+        rows()[0]!.querySelector(".sb-content-bookmark-chapter")?.textContent
+      ).toBe("Juan 3");
+
+      act(() => {
+        query.value = "juan 3";
+      });
+      expect(names()).toEqual(["Estudio"]);
+    });
+
+    it("loads a translation it doesn't have yet to name a bookmark's book", async () => {
+      const { state, getTranslationBooks } = createState({
+        bookmarks: [bookmark("bm1", "Estudio", { translationId: "RVR" })],
+        serverTranslations: [
+          { id: "RVR", shortName: "RVR" } as unknown as Translation,
+        ],
+        bookNamesByTranslation: { RVR: { JHN: "Juan" } },
+      });
+      renderPane(state);
+
+      expect(getTranslationBooks).toHaveBeenCalledWith("RVR");
+      await vi.waitFor(() =>
+        expect(
+          rows()[0]!.querySelector(".sb-content-bookmark-chapter")?.textContent
+        ).toBe("Juan 3")
+      );
     });
 
     it("opens the bookmarked chapter, in the bookmark's translation", () => {
@@ -844,6 +893,10 @@ describe("YourContentPane", () => {
           bookmark("bm1", "Sermon prep"),
           bookmark("bm2", "Morning", { bookId: "PSA", chapterNumber: 23 }),
         ],
+        translations: [
+          { id: "BSB", shortName: "BSB" } as unknown as Translation,
+        ],
+        bookNamesByTranslation: { BSB: { JHN: "John", PSA: "Psalm" } },
       });
       renderPane(state);
 

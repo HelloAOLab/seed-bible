@@ -373,7 +373,7 @@ function nextBookmarkDraft(
  * name in the bookmark's own translation, and falling back to the raw book id
  * until that translation's book list has loaded.
  */
-function useBookmarkLocationText(state: SeedBibleState) {
+export function useBookmarkLocationText(state: SeedBibleState) {
   const { bibleData } = state;
   // Read here so a translation finishing its load re-renders the caller.
   const translationBooks = bibleData.translationBooks.value;
