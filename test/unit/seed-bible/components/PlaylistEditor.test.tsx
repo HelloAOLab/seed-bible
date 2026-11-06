@@ -715,6 +715,18 @@ describe("the playlist editor", () => {
       type(container.querySelector("#sb-pe-question-answer-2"), "Everywhere");
 
       expect(container.textContent).not.toContain("Who sees responses");
+      const hints = Array.from(
+        container.querySelectorAll(".sb-pe-field-head"),
+        (head) => [
+          head.querySelector(".sb-pe-field-label")!.textContent,
+          head.querySelector(".sb-pe-field-hint")?.textContent ?? null,
+        ]
+      );
+      expect(hints).toEqual([
+        ["Question", null],
+        ["Hint for readers", "Optional"],
+        ["Answer", "Optional"],
+      ]);
 
       expect(items()[2]).toEqual({
         type: "html",

@@ -166,9 +166,6 @@ function QuestionCard(props: { ctx: StepCardContext; item: HtmlItem }) {
     <>
       <Field
         label={t("playlist-step-question", { defaultValue: "Question" })}
-        hint={t("playlist-editor-question-hint", {
-          defaultValue: "Keep it open-ended",
-        })}
         htmlFor={questionId}
       >
         <textarea
@@ -191,9 +188,7 @@ function QuestionCard(props: { ctx: StepCardContext; item: HtmlItem }) {
         label={t("playlist-editor-reader-hint", {
           defaultValue: "Hint for readers",
         })}
-        hint={t("playlist-editor-reader-hint-hint", {
-          defaultValue: "Optional — helps them get started",
-        })}
+        hint={t("playlist-editor-optional", { defaultValue: "Optional" })}
         htmlFor={hintId}
       >
         <input
@@ -217,7 +212,7 @@ function QuestionCard(props: { ctx: StepCardContext; item: HtmlItem }) {
       </Field>
       <Field
         label={t("playlist-editor-answer", { defaultValue: "Answer" })}
-        hint={t("playlist-editor-answer-hint", { defaultValue: "Optional" })}
+        hint={t("playlist-editor-optional", { defaultValue: "Optional" })}
         htmlFor={answerId}
       >
         <textarea
