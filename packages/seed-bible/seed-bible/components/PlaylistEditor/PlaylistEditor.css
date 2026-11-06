@@ -1586,14 +1586,21 @@
   color: var(--pe-danger);
 }
 
-/* A step's page: Add a step, from the title bar. */
+/* A step's title bar: plain icon buttons, Add a step in the accent colour. */
+.sb-pe-mobile-header-actions .sb-pe-square-button {
+  border: none;
+}
+
 .sb-pe-add-toggle {
-  border-color: var(--pe-add);
   color: var(--pe-add);
 }
 
 .sb-pe-add-toggle[aria-expanded="true"] {
   background: color-mix(in srgb, var(--pe-add) 10%, transparent);
+}
+
+.sb-pe-step-menu[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--pe-text) 8%, transparent);
 }
 
 .sb-pe-add-toggle-plus {
@@ -1640,9 +1647,10 @@
   line-height: 16px;
 }
 
-/* The menu in a step's title bar: Item settings, and Delete. */
+/* The menu in a step's title bar (Item settings, and Delete): a vertical
+   ellipsis, as on a tab's row. */
 .sb-pe-step-menu .material-symbols-outlined {
-  font-size: 22px;
+  font-size: 24px;
 }
 
 /* The menu is portaled out of the editor, past its `--pe-*` colours. */
@@ -1729,27 +1737,29 @@ body.sb-scroll-hide-bars .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
   line-height: 15px;
 }
 
+/* The editor's sheets (the playlist's details, a step's settings) rise from
+   the bottom of the screen like the reader's verse sheet, covering the
+   chapter pill, its note and the app's tabs (the toolbar's layer is 101). */
 .sb-pe-sheet-scrim {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: 102;
   background: rgba(0, 0, 0, 0.32);
 }
 
 .sb-pe-sheet {
-  position: absolute;
+  position: fixed;
   left: 0;
   right: 0;
-  /* Sits on the editor's bottom bar: its 44px buttons, 19px of padding and
-     its border, above the app's own bottom tabs. */
-  bottom: calc(var(--sb-reader-bottom-chrome) + 64px);
-  z-index: 2;
+  bottom: 0;
+  z-index: 103;
   display: flex;
   flex-direction: column;
-  max-height: min(422px, 80%);
-  padding: 12px 14px 23px;
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 24px);
+  padding: 12px 14px calc(23px + env(safe-area-inset-bottom, 0px));
   border-radius: 28px 28px 0 0;
   background: var(--pe-surface);
+  box-shadow: 0 -8px 24px var(--sb-shadow-color, rgba(0, 0, 0, 0.16));
 }
 
 .sb-pe-sheet-handle {
@@ -1771,12 +1781,6 @@ body.sb-scroll-hide-bars .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
 
 /* The phone's sheet for the playlist's title, description and cover. Its
    fields scroll under the header when the cover or keyboard makes them tall. */
-/* Taller than the steps sheet, up to just short of the top of the editor:
-   it starts above the editor's bottom bar and the app's tabs (see
-   `.sb-pe-sheet`'s `bottom`). */
-.sb-pe-details-sheet {
-  max-height: calc(100% - var(--sb-reader-bottom-chrome) - 64px - 24px);
-}
 
 .sb-pe-details-sheet-header {
   display: flex;

@@ -13,7 +13,6 @@ import { HeroImageField } from "../HeroImageField/HeroImageField";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { PeIcon, StepSettings } from "./editorControls";
-import { MaterialIcon } from "../icons";
 import {
   ContextMenuItem,
   ContextMenuWithButton,
@@ -146,7 +145,6 @@ function StepActions(props: {
           buttonClassName="sb-pe-square-button sb-pe-step-menu"
           aria-label={more}
           title={more}
-          icon={<MaterialIcon>more_horiz</MaterialIcon>}
         >
           <ContextMenuItem
             onClick={() => (playlists.editorStepSettingsOpen.value = true)}
