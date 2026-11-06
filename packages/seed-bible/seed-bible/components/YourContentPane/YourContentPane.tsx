@@ -1016,7 +1016,7 @@ export function YourContentPane(props: YourContentScreenProps) {
       case "all":
         return t("your-content-empty", {
           defaultValue:
-            "Notes, highlights, saves, playlists and reading plans you make will show up here.",
+            "Notes, highlights, bookmarks, saves, playlists and reading plans you make will show up here.",
         });
     }
   };
