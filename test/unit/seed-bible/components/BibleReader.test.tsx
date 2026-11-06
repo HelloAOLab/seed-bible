@@ -7023,3 +7023,123 @@ describe("BibleReader — ways out of a failed chapter load", () => {
     expect(offline.recoveryPrompt.value).toBeNull();
   });
 });
+
+describe("BibleReader — a playing playlist's text and link steps", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  const NOTE = {
+    type: "html" as const,
+    title: "Before we begin",
+    html: "<p>Take a moment with this.</p>",
+  };
+
+  function renderStep(
+    items: SimplePlaylist["items"],
+    options: { compact: boolean }
+  ) {
+    const { selectorState, readingState } = createFixture();
+    const slot: TabSlot = {
+      id: "slot-1",
+      tab: { id: "tab-1", readingState } as any,
+    };
+    const playing = createPlayingState(
+      [{ id: "p", title: "P", description: null, items } as SimplePlaylist],
+      slot.tab as any
+    );
+    const base = createMobileState(selectorState);
+    const state = {
+      ...base,
+      app: {
+        ...base.app,
+        isMobile: signal(options.compact),
+        isCompactReader: signal(options.compact),
+      },
+      playlists: {
+        ...base.playlists,
+        playing: signal(playing),
+        isMobile: signal(options.compact),
+      },
+    } as any as SeedBibleState;
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+    return playing;
+  }
+
+  const page = () => container.querySelector(".sb-playlist-step-page");
+  const chapterText = () =>
+    container.textContent?.includes("In the beginning") ?? false;
+
+  it("shows a note step's title and text where the chapter goes, on a phone", async () => {
+    renderStep([NOTE], { compact: true });
+
+    expect(
+      page()?.querySelector(".sb-playlist-step-page-title")?.textContent
+    ).toBe("Before we begin");
+    // Set once it's been sanitized.
+    await vi.waitFor(() =>
+      expect(page()?.textContent).toContain("Take a moment with this.")
+    );
+    expect(chapterText()).toBe(false);
+    // Nothing of its own to close it or move on: the chapter pill does that.
+    expect(page()?.querySelector("button")).toBeNull();
+  });
+
+  it("puts a step's title in the reader's heading on desktop, in place of the chapter's", async () => {
+    renderStep([NOTE], { compact: false });
+
+    expect(
+      container.querySelector(".sb-bible-reader-heading")?.textContent
+    ).toBe("Before we begin");
+    expect(container.querySelector(".sb-bible-reader-translation")).toBeNull();
+    // Set once it's been sanitized.
+    await vi.waitFor(() =>
+      expect(page()?.textContent).toContain("Take a moment with this.")
+    );
+    expect(chapterText()).toBe(false);
+  });
+
+  it("titles a link step with its page's title when it has none of its own", () => {
+    renderStep(
+      [
+        {
+          type: "link",
+          url: "https://example.com/talk",
+          preview: { title: "A talk on John" },
+        },
+      ],
+      { compact: true }
+    );
+
+    expect(
+      page()?.querySelector(".sb-playlist-step-page-title")?.textContent
+    ).toBe("A talk on John");
+  });
+
+  it("shows the chapter on a scripture step", () => {
+    renderStep([{ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } }], {
+      compact: true,
+    });
+
+    expect(page()).toBeNull();
+    expect(chapterText()).toBe(true);
+  });
+});

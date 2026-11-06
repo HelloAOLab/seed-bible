@@ -16,7 +16,6 @@ import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
 import type { ChatsManager } from "./ChatsManager";
-import { openPlaylistItemPreview } from "../components/playlistItemPreview";
 import { PlaylistFinishedModalContent } from "../components/PlaylistFinishedModal/PlaylistFinishedModal";
 import type { I18nManager } from "../i18n";
 import type {
@@ -709,13 +708,6 @@ export function expandCrossChapterItem(
 }
 
 /**
- * How playback arrived at the current step. Closing a text or link modal
- * continues in that direction. A direct landing — pressing play, jumping to
- * an item, or opening a link to that step — stays on the item, except the
- * first item, which always steps forward.
- */
-export type PlaylistStepArrival = "forward" | "backward" | "direct";
-/**
  * How long a passage stays highlighted after its note is closed, before the
  * highlight fades.
  */
@@ -845,8 +837,6 @@ export function createPlayingState(
   });
 
   let decorationId: string | null = null;
-  /** See {@link PlaylistStepArrival}. Starts direct: playback opens on a step the user chose, it doesn't step there. */
-  let stepArrival: PlaylistStepArrival = "direct";
   /**
    * Whether any step has been shown in the reader yet. Until one has, the
    * current step is shown even when the reader already sits on its chapter —
@@ -1045,7 +1035,6 @@ export function createPlayingState(
    */
   const next = async (): Promise<void> => {
     if (hasNext.value) {
-      stepArrival = "forward";
       moveToStep(currentIndex.value + 1);
       await navigateToCurrentItem();
     } else if (canFinish.value) {
@@ -1057,7 +1046,6 @@ export function createPlayingState(
   /** Goes back to the previous step. No-op at the start of the queue. */
   const previous = async (): Promise<void> => {
     if (hasPrevious.value) {
-      stepArrival = "backward";
       moveToStep(currentIndex.value - 1);
       await navigateToCurrentItem();
     }
@@ -1066,12 +1054,6 @@ export function createPlayingState(
   /** Jumps to the given index. No-op when the index is out of range. */
   const jumpTo = async (index: number): Promise<void> => {
     if (index >= 0 && index < queue.value.length) {
-      // Landing on the step already showing isn't a new arrival. Callers
-      // re-jump the current step to make the reader catch up (a shared link
-      // does this), and that must not forget a forward opening.
-      if (currentIndex.peek() !== index) {
-        stepArrival = "direct";
-      }
       moveToStep(index);
       await navigateToCurrentItem();
     }
@@ -1150,7 +1132,6 @@ export function createPlayingState(
 
   /** Restarts playback from the first item. */
   const reset = async (): Promise<void> => {
-    stepArrival = "direct";
     moveToStep(queue.value.length > 0 ? 0 : -1);
     await navigateToCurrentItem();
   };
@@ -1182,15 +1163,6 @@ export function createPlayingState(
     const nextDetour = state.detour ?? null;
     const stepChanged = currentIndex.peek() !== clampedStep;
     const detourChanged = !jsonEqual(detour.peek(), nextDetour);
-    // A snapshot (a peer, a URL, or a new playlist handed to the extension
-    // already running) placed us on this step. The step number staying the
-    // same is not enough to keep the old direction: the item here may be a
-    // different one. Closing it stays put. An echo of this client's own queue
-    // edit never lands here, because that edit updates `queue` before the
-    // snapshot is written back.
-    if (stepChanged || queueChanged) {
-      stepArrival = "direct";
-    }
     // Together, so the outbound sync never sees the new step without its
     // detour and publishes the detour as cleared.
     batch(() => {
@@ -1260,10 +1232,6 @@ export function createPlayingState(
     reorderQueue,
     reset,
     setState,
-    getStepArrival: () => stepArrival,
-    setStepArrival: (arrival: PlaylistStepArrival) => {
-      stepArrival = arrival;
-    },
     whenSettled,
     dispose,
   };
@@ -1299,9 +1267,6 @@ export function playbackRequestFromUrl(
 }
 
 const PLAYLIST_FINISHED_MODAL_ID = "playlist-finished";
-
-/** Stable id so navigating between non-verse items updates the same modal instead of closing/reopening it. */
-const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
 
 /**
  * Id of the reading extension that lets a reading state's own next/previous-
@@ -1680,59 +1645,6 @@ export function createPlaylistManager(
     return userPlaylists;
   });
 
-  // Opens the content modal for a non-verse item (video/link/text), or closes
-  // it for verse items, which are shown in the reader. The effect below calls
-  // this when the current item changes. Tapping the queue item you're already
-  // on doesn't change the index, so that tap calls `showCurrentItem` instead.
-  const showItemInModal = (playingState: PlayingState) => {
-    const item = playingState.currentItem.value;
-    if (!item || item.type === "bible-verse") {
-      modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
-      return;
-    }
-
-    const moveAfterClose = (move: Promise<void>) => {
-      move.catch((err) =>
-        console.error("Failed to move playlist after closing an item:", err)
-      );
-    };
-
-    openPlaylistItemPreview(
-      modals,
-      item,
-      PLAYLIST_ITEM_MODAL_ID,
-      i18n.t,
-      () => {
-        // Tied to the playback that opened this pop-up. Closing continues
-        // the direction they were already moving. There is no next or
-        // previous step at the ends, and closing must not finish the
-        // playlist — that only happens when they press next themselves.
-        const arrival = playingState.getStepArrival();
-        const onFirstItem = playingState.currentIndex.peek() === 0;
-        // The first item has nowhere to go back to, so closing it steps
-        // forward. That includes pressing Play on your own playlist, which
-        // opens the intro directly rather than by Next.
-        if (
-          playingState.hasNext.peek() &&
-          (arrival === "forward" || onFirstItem)
-        ) {
-          moveAfterClose(playingState.next());
-        } else if (arrival === "backward" && playingState.hasPrevious.peek()) {
-          moveAfterClose(playingState.previous());
-        }
-      },
-      playingState
-    );
-  };
-
-  /** Reopens the pop-up for the item playback is already on. */
-  const showCurrentItem = (): void => {
-    const state = playing.peek();
-    if (state) {
-      showItemInModal(state);
-    }
-  };
-
   /**
    * Opens a step from the list of steps. On a phone the list fills the
    * screen, so it is put away to show the step.
@@ -1745,9 +1657,7 @@ export function createPlaylistManager(
     if (isMobile.peek()) {
       view.value = null;
     }
-    if (index === state.currentIndex.peek()) {
-      showItemInModal(state);
-    } else {
+    if (index !== state.currentIndex.peek()) {
       void state.jumpTo(index);
     }
   };
@@ -2765,22 +2675,6 @@ export function createPlaylistManager(
         ? Math.min(Math.max(Math.floor(initialStep), 0), queue.length - 1)
         : -1;
 
-    const openingItem = queue[0];
-    // A shared opening on text or a link records that first close as forward.
-    // In-app play records a direct landing; closing the first item still
-    // steps forward. A shared opening on any later step is a direct landing.
-    //
-    // Reloads, restored tabs, and URL sync all come through
-    // `startPlayingLocator`, which passes `sharedOpening`. The address bar
-    // can't tell a link someone shared from a reload of your own playlist, so
-    // a step-1 URL always walks the intro. Closing the first text item after
-    // that reload moves on.
-    const walkOpeningText =
-      options?.sharedOpening === true &&
-      step === 0 &&
-      !!openingItem &&
-      openingItem.type !== "bible-verse";
-
     // Ending an existing tracked session before opening the next one keeps
     // duration/endedAt accurate when the user starts another playlist without
     // an explicit stop.
@@ -2789,8 +2683,7 @@ export function createPlaylistManager(
     }
     capturePlaylistEvent("playlist_played", playlists);
 
-    // Set before playback starts, so the step's pop-up knows whether the
-    // phone's list of steps is about to cover the reader.
+    // On a phone the list of steps comes first, filling the screen.
     view.value =
       isMobile.value && (options?.sharedOpening || options?.openItem)
         ? null
@@ -2801,11 +2694,6 @@ export function createPlaylistManager(
       queue,
       step,
     } satisfies PlaylistReadingData);
-    // Enabling an extension that is already running hands it this data via
-    // `setState`, which only resets the direction when the step or the queue
-    // changes. Always set it here so a second playlist that starts on the
-    // same step doesn't keep the first playlist's direction.
-    playing.peek()?.setStepArrival(walkOpeningText ? "forward" : "direct");
     const generation = beginOpeningPlayback();
     const opened = playing.peek();
     void (opened?.whenSettled() ?? Promise.resolve()).finally(() => {
@@ -2861,7 +2749,6 @@ export function createPlaylistManager(
   const openPlaylistFinishedModal = (
     playlist: Pick<Playlist, "id" | "recordName" | "title">
   ): void => {
-    modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     modals.openModal({
       id: PLAYLIST_FINISHED_MODAL_ID,
       title: { key: "playlist-finished", defaultValue: "Playlist finished" },
@@ -2934,7 +2821,6 @@ export function createPlaylistManager(
     ) {
       tabs.leaveStaticPage();
     }
-    modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     if (view.peek()) {
       view.value = "discover";
     }
@@ -3033,21 +2919,6 @@ export function createPlaylistManager(
 
   effect(() => {
     void syncPlayHistory();
-  });
-
-  effect(() => {
-    const state = playing.value;
-    if (!state) {
-      return;
-    }
-    // Read here so a new step reruns this even while it's skipped below.
-    void state.currentItem.value;
-    // On a phone the list of steps comes first; a step's pop-up waits until
-    // one is opened from it (see `openQueueItem`).
-    if (isMobile.peek() && view.peek() === "play_playlist") {
-      return;
-    }
-    showItemInModal(state);
   });
 
   // Mirror queue position into the active history row whenever it changes.
@@ -3759,7 +3630,6 @@ export function createPlaylistManager(
     editingPlaylist,
     playing,
     openingPlayback,
-    showCurrentItem,
     openQueueItem,
     startPlaying,
     stopPlaying,

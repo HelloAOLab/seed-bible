@@ -270,7 +270,7 @@ function placePopover(
  * Shown on a note while the reader is at a passage the note links to, to
  * bring it back to the step's own passage.
  */
-function ReturnToStepButton(props: { playing: PlayingState }) {
+export function ReturnToStepButton(props: { playing: PlayingState }) {
   const { t } = useI18n();
   return (
     <button

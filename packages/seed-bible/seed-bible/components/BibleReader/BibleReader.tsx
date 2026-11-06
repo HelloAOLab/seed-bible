@@ -87,7 +87,14 @@ import {
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../Discover/DiscoverContentPanel";
-import { ScriptureNotePopover } from "../ScriptureNote/ScriptureNote";
+import {
+  ReturnToStepButton,
+  ScriptureNotePopover,
+} from "../ScriptureNote/ScriptureNote";
+import {
+  PlaylistStepPage,
+  playlistStepPageTitle,
+} from "../PlaylistStepPage/PlaylistStepPage";
 import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
 import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
@@ -3459,226 +3466,260 @@ export function BibleReader(props: BibleReaderProps) {
     );
   };
 
-  const renderMainContent = () => (
-    <>
-      {isCompactReader &&
-        renderMobileChapterTitle(
-          currentBookName.value ?? bookId.value ?? "",
-          chapterNumber.value ?? "",
-          true
-        )}
+  // A playing playlist's note, question or video step fills the reader in
+  // place of the chapter, unless a link in it has taken the reader to a
+  // passage for now.
+  const playbackHere =
+    state &&
+    currentSlot.tab != null &&
+    state.playlists.playing.value?.tab?.id === currentSlot.tab.id
+      ? state.playlists.playing.value
+      : null;
+  const playingStep = playbackHere?.currentItem.value ?? null;
+  const pageStep =
+    playingStep && playingStep.type !== "bible-verse" ? playingStep : null;
+  const stepPage =
+    pageStep && !playbackHere?.awayFromStep.value ? pageStep : null;
 
-      {bookNotFound.value && (
-        <div className="sb-reader-not-found">
-          <span
-            className="material-symbols-outlined sb-reader-not-found-icon"
-            aria-hidden="true"
-          >
-            search_off
-          </span>
-          <p className="sb-reader-not-found-title">
-            {t("book-not-found-title", { defaultValue: "Book not found" })}
-          </p>
-          <p className="sb-reader-not-found-body">
-            {t("book-not-found-message", {
-              defaultValue:
-                "We couldn't find that book in {{translationName}}.",
-              translationName:
-                translation.value?.name ?? translationId.value ?? "",
-            })}
-          </p>
-          {translationBooks.value?.books[0] && (
-            <button
-              type="button"
-              className="sb-reader-not-found-action"
-              onClick={() => {
-                const firstBook = translationBooks.value!.books[0]!;
-                void readingState.selectChapter(
-                  firstBook.id,
-                  firstBook.firstChapterNumber ?? 1
-                );
-              }}
-            >
-              {t("book-not-found-action", {
-                defaultValue: "Go to {{bookName}} {{chapterNumber}}",
-                bookName: translationBooks.value.books[0].name,
-                chapterNumber:
-                  translationBooks.value.books[0].firstChapterNumber ?? 1,
-              })}
-            </button>
+  const renderMainContent = () =>
+    stepPage ? (
+      <>
+        <PlaylistStepPage
+          key={playbackHere?.currentIndex.value}
+          item={stepPage}
+          showTitle={isCompactReader}
+          onReferenceClick={(ref) => void playbackHere?.visitReference(ref)}
+          onStepClick={(index) => void playbackHere?.jumpTo(index)}
+        />
+        {mobileChrome?.belowContent}
+      </>
+    ) : (
+      <>
+        {pageStep && playbackHere ? (
+          <ReturnToStepButton playing={playbackHere} />
+        ) : null}
+        {isCompactReader &&
+          renderMobileChapterTitle(
+            currentBookName.value ?? bookId.value ?? "",
+            chapterNumber.value ?? "",
+            true
           )}
-        </div>
-      )}
 
-      {showLoadError && (
-        <div className="sb-reader-error" role="alert">
-          <span
-            className="material-symbols-outlined sb-reader-error-icon"
-            aria-hidden="true"
-          >
-            cloud_off
-          </span>
-          <h2 className="sb-reader-error-title">
-            {t("chapter-unavailable", { defaultValue: "Chapter unavailable" })}
-          </h2>
-          <p className="sb-reader-error-message">
-            {t("chapter-unavailable-description", {
-              defaultValue:
-                "We were unable to load the data for this chapter. Please check your internet connection and try again.",
-            })}
-          </p>
-          {offlineFallbackTranslations.length > 0 && (
-            <p className="sb-reader-error-offline">
-              {t("chapter-unavailable-offline-switch", {
-                count: offlineFallbackTranslations.length,
-                bookName: currentBookName.value ?? bookId.value ?? "",
-                chapterNumber: chapterNumber.value ?? 1,
-                defaultValue_one:
-                  "You have a translation saved on your device that contains {{bookName}} {{chapterNumber}}.",
-                defaultValue_other:
-                  "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
+        {bookNotFound.value && (
+          <div className="sb-reader-not-found">
+            <span
+              className="material-symbols-outlined sb-reader-not-found-icon"
+              aria-hidden="true"
+            >
+              search_off
+            </span>
+            <p className="sb-reader-not-found-title">
+              {t("book-not-found-title", { defaultValue: "Book not found" })}
+            </p>
+            <p className="sb-reader-not-found-body">
+              {t("book-not-found-message", {
+                defaultValue:
+                  "We couldn't find that book in {{translationName}}.",
+                translationName:
+                  translation.value?.name ?? translationId.value ?? "",
               })}
             </p>
-          )}
-          <div className="sb-reader-error-actions">
-            <button
-              type="button"
-              className="sb-reader-error-retry"
-              onClick={() => void retryChapterLoad()}
-              disabled={retrying}
-              aria-busy={retrying}
-            >
-              {retrying && <Spinner size="1.125rem" />}
-              {t("reload", { defaultValue: "Reload" })}
-            </button>
-            {offlineFallbackTranslations.length > 0 && (
-              <OfflineFallbackSwitch
-                translations={offlineFallbackTranslations}
-                onSwitch={switchToOfflineTranslation}
-              />
+            {translationBooks.value?.books[0] && (
+              <button
+                type="button"
+                className="sb-reader-not-found-action"
+                onClick={() => {
+                  const firstBook = translationBooks.value!.books[0]!;
+                  void readingState.selectChapter(
+                    firstBook.id,
+                    firstBook.firstChapterNumber ?? 1
+                  );
+                }}
+              >
+                {t("book-not-found-action", {
+                  defaultValue: "Go to {{bookName}} {{chapterNumber}}",
+                  bookName: translationBooks.value.books[0].name,
+                  chapterNumber:
+                    translationBooks.value.books[0].firstChapterNumber ?? 1,
+                })}
+              </button>
             )}
           </div>
+        )}
 
-          {failedTranslationNotSaved && !offline.isOnline.value && (
-            <p className="sb-reader-error-hint">
-              {t("chapter-unavailable-download-offline-hint", {
-                abbreviation: failedTranslation.shortName,
+        {showLoadError && (
+          <div className="sb-reader-error" role="alert">
+            <span
+              className="material-symbols-outlined sb-reader-error-icon"
+              aria-hidden="true"
+            >
+              cloud_off
+            </span>
+            <h2 className="sb-reader-error-title">
+              {t("chapter-unavailable", {
+                defaultValue: "Chapter unavailable",
+              })}
+            </h2>
+            <p className="sb-reader-error-message">
+              {t("chapter-unavailable-description", {
                 defaultValue:
-                  "Once you're back online, download {{abbreviation}} so this doesn't happen again.",
+                  "We were unable to load the data for this chapter. Please check your internet connection and try again.",
               })}
             </p>
-          )}
-
-          {hasOtherSavedTranslation &&
-            offlineFallbackTranslations.length === 0 && (
-              <div className="sb-reader-error-alternatives">
-                <p className="sb-reader-error-hint">
-                  {t("chapter-unavailable-switch-heading", {
-                    defaultValue:
-                      "Or keep reading in a translation saved on this device:",
-                  })}
-                </p>
-                <button
-                  type="button"
-                  className="sb-reader-error-action"
-                  onClick={() =>
-                    void selectorState.openDownloadedTranslations(currentSlot)
-                  }
-                >
-                  <span
-                    className="material-symbols-outlined"
-                    aria-hidden="true"
-                  >
-                    translate
-                  </span>
-                  {t("chapter-unavailable-choose-saved", {
-                    defaultValue: "Choose a saved translation",
-                  })}
-                </button>
-              </div>
-            )}
-        </div>
-      )}
-
-      {!showLoadError &&
-        !bookNotFound.value &&
-        (showChapterSkeleton ? (
-          renderChapterSkeleton()
-        ) : (
-          <Suspense
-            fallback={
-              <p>
-                {t("no-chapter-content-found", {
-                  defaultValue: "No chapter content found.",
+            {offlineFallbackTranslations.length > 0 && (
+              <p className="sb-reader-error-offline">
+                {t("chapter-unavailable-offline-switch", {
+                  count: offlineFallbackTranslations.length,
+                  bookName: currentBookName.value ?? bookId.value ?? "",
+                  chapterNumber: chapterNumber.value ?? 1,
+                  defaultValue_one:
+                    "You have a translation saved on your device that contains {{bookName}} {{chapterNumber}}.",
+                  defaultValue_other:
+                    "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
                 })}
               </p>
-            }
-          >
-            <ChapterContent
-              isStale={dimStaleChapter}
-              chapterData={chapterData}
-              chapterDataPromise={readingState.chapterDataPromise}
-              initialChapterLoadSettled={readingState.initialChapterLoadSettled}
-              selectedVerses={selectedVerses}
-              selectVersesFromTextSelection={selectVersesFromTextSelection}
-              justConvertedSelectionRef={justConvertedSelectionRef}
-              highlights={highlights}
-              decorations={decorations}
-              annotations={state?.annotations}
-              hideHighlights={isMinimalEmbed}
-              friends={state?.friends}
-              selectVerse={selectVerse}
-              selectFootnote={selectFootnote}
-              scriptureElements={scriptureElements}
-              onAnnotationVerseClick={handleAnnotationVerseClick}
-              isMobile={isCompactReader}
-              presence={sharedSession ? presence : undefined}
-              onVisibleVersesChange={reportVisibleVerses}
-              sharedSession={sharedSession}
-              onHostVerseClick={handleHostVerseClick}
-              verseSelectionEffects={
-                state?.settings.settings.value.verseSelectionEffects ??
-                "default"
-              }
-              prefersReducedMotionValue={prefersReducedMotionValue}
-              highlightAuthors={highlightAuthors}
-              afterVerse={editorAfterVerse}
-            />
-          </Suspense>
-        ))}
-
-      {!availableTranslations.value && !showLoadError && (
-        <p>
-          {t("no-translations-available", {
-            defaultValue: "No translations available.",
-          })}
-        </p>
-      )}
-
-      {!showLoadError && translationLicenseNotice.value.length > 0 && (
-        <>
-          <p className="sb-translation-license-notice">
-            {translationLicenseNotice.value}
-          </p>
-          {translationWebsite.value.length > 0 && (
-            <p className="sb-translation-website">
-              <a
-                href={translationWebsite.value}
-                target="_blank"
-                rel="noopener noreferrer"
+            )}
+            <div className="sb-reader-error-actions">
+              <button
+                type="button"
+                className="sb-reader-error-retry"
+                onClick={() => void retryChapterLoad()}
+                disabled={retrying}
+                aria-busy={retrying}
               >
-                {translationWebsite.value}
-              </a>
-            </p>
-          )}
-        </>
-      )}
+                {retrying && <Spinner size="1.125rem" />}
+                {t("reload", { defaultValue: "Reload" })}
+              </button>
+              {offlineFallbackTranslations.length > 0 && (
+                <OfflineFallbackSwitch
+                  translations={offlineFallbackTranslations}
+                  onSwitch={switchToOfflineTranslation}
+                />
+              )}
+            </div>
 
-      {/* Undefined on desktop, where the caller renders this itself below the
+            {failedTranslationNotSaved && !offline.isOnline.value && (
+              <p className="sb-reader-error-hint">
+                {t("chapter-unavailable-download-offline-hint", {
+                  abbreviation: failedTranslation.shortName,
+                  defaultValue:
+                    "Once you're back online, download {{abbreviation}} so this doesn't happen again.",
+                })}
+              </p>
+            )}
+
+            {hasOtherSavedTranslation &&
+              offlineFallbackTranslations.length === 0 && (
+                <div className="sb-reader-error-alternatives">
+                  <p className="sb-reader-error-hint">
+                    {t("chapter-unavailable-switch-heading", {
+                      defaultValue:
+                        "Or keep reading in a translation saved on this device:",
+                    })}
+                  </p>
+                  <button
+                    type="button"
+                    className="sb-reader-error-action"
+                    onClick={() =>
+                      void selectorState.openDownloadedTranslations(currentSlot)
+                    }
+                  >
+                    <span
+                      className="material-symbols-outlined"
+                      aria-hidden="true"
+                    >
+                      translate
+                    </span>
+                    {t("chapter-unavailable-choose-saved", {
+                      defaultValue: "Choose a saved translation",
+                    })}
+                  </button>
+                </div>
+              )}
+          </div>
+        )}
+
+        {!showLoadError &&
+          !bookNotFound.value &&
+          (showChapterSkeleton ? (
+            renderChapterSkeleton()
+          ) : (
+            <Suspense
+              fallback={
+                <p>
+                  {t("no-chapter-content-found", {
+                    defaultValue: "No chapter content found.",
+                  })}
+                </p>
+              }
+            >
+              <ChapterContent
+                isStale={dimStaleChapter}
+                chapterData={chapterData}
+                chapterDataPromise={readingState.chapterDataPromise}
+                initialChapterLoadSettled={
+                  readingState.initialChapterLoadSettled
+                }
+                selectedVerses={selectedVerses}
+                selectVersesFromTextSelection={selectVersesFromTextSelection}
+                justConvertedSelectionRef={justConvertedSelectionRef}
+                highlights={highlights}
+                decorations={decorations}
+                annotations={state?.annotations}
+                hideHighlights={isMinimalEmbed}
+                friends={state?.friends}
+                selectVerse={selectVerse}
+                selectFootnote={selectFootnote}
+                scriptureElements={scriptureElements}
+                onAnnotationVerseClick={handleAnnotationVerseClick}
+                isMobile={isCompactReader}
+                presence={sharedSession ? presence : undefined}
+                onVisibleVersesChange={reportVisibleVerses}
+                sharedSession={sharedSession}
+                onHostVerseClick={handleHostVerseClick}
+                verseSelectionEffects={
+                  state?.settings.settings.value.verseSelectionEffects ??
+                  "default"
+                }
+                prefersReducedMotionValue={prefersReducedMotionValue}
+                highlightAuthors={highlightAuthors}
+                afterVerse={editorAfterVerse}
+              />
+            </Suspense>
+          ))}
+
+        {!availableTranslations.value && !showLoadError && (
+          <p>
+            {t("no-translations-available", {
+              defaultValue: "No translations available.",
+            })}
+          </p>
+        )}
+
+        {!showLoadError && translationLicenseNotice.value.length > 0 && (
+          <>
+            <p className="sb-translation-license-notice">
+              {translationLicenseNotice.value}
+            </p>
+            {translationWebsite.value.length > 0 && (
+              <p className="sb-translation-website">
+                <a
+                  href={translationWebsite.value}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {translationWebsite.value}
+                </a>
+              </p>
+            )}
+          </>
+        )}
+
+        {/* Undefined on desktop, where the caller renders this itself below the
           reader — the desktop pane is its own scroll container. */}
-      {mobileChrome?.belowContent}
-    </>
-  );
+        {mobileChrome?.belowContent}
+      </>
+    );
 
   // const extraContent = discoverPanel ? (
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
@@ -4015,30 +4056,44 @@ export function BibleReader(props: BibleReaderProps) {
         <Fragment key="desktop">
           <div className="sb-bible-reader-header">
             <div className="sb-bible-reader-heading">
-              <h2
-                {...flingSafeTapHandlers(openBookSelector)}
-                className="sb-bible-reader-title"
-              >
-                <span className="sb-bible-reader-book">
-                  {currentBookName.value ?? bookId.value ?? "Select a book"}
-                </span>
-                <span className="sb-bible-reader-title-sep" aria-hidden="true">
-                  {" "}
-                </span>
-                <span className="sb-bible-reader-chapter">
-                  {chapterNumber.value}
-                </span>
-              </h2>
-              <button
-                type="button"
-                className="sb-bible-reader-translation"
-                aria-label={changeTranslationLabel}
-                onClick={() => {
-                  void openTranslationSelector();
-                }}
-              >
-                {translationLabel}
-              </button>
+              {stepPage ? (
+                <h2
+                  className="sb-bible-reader-title sb-playlist-step-page-heading"
+                  dir="auto"
+                >
+                  {playlistStepPageTitle(stepPage)}
+                </h2>
+              ) : (
+                <>
+                  <h2
+                    {...flingSafeTapHandlers(openBookSelector)}
+                    className="sb-bible-reader-title"
+                  >
+                    <span className="sb-bible-reader-book">
+                      {currentBookName.value ?? bookId.value ?? "Select a book"}
+                    </span>
+                    <span
+                      className="sb-bible-reader-title-sep"
+                      aria-hidden="true"
+                    >
+                      {" "}
+                    </span>
+                    <span className="sb-bible-reader-chapter">
+                      {chapterNumber.value}
+                    </span>
+                  </h2>
+                  <button
+                    type="button"
+                    className="sb-bible-reader-translation"
+                    aria-label={changeTranslationLabel}
+                    onClick={() => {
+                      void openTranslationSelector();
+                    }}
+                  >
+                    {translationLabel}
+                  </button>
+                </>
+              )}
             </div>
             {editingPlaylistHere ? (
               <PlaylistReaderHint />
