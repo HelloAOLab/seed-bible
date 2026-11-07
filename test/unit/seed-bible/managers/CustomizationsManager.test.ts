@@ -3287,6 +3287,10 @@ describe("CustomizationsManager", () => {
   });
 
   describe("light and dark defaults", () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
     /** A stored record with one variant per `[id, baseTheme]` pair. */
     function makeRecord(
       id: string,
@@ -3385,13 +3389,15 @@ describe("CustomizationsManager", () => {
       });
     });
 
-    it("shows a linked legacy record's old default to a dark-mode viewer, not its first dark variant", async () => {
+    it("shows a linked legacy record's old default to a System viewer on a dark device, not its first dark variant", async () => {
+      stubColorScheme(true);
       getDataMock.mockResolvedValue({ success: true, data: legacyRecord });
-      const { manager } = createManager();
-      settings.setThemeId("dark");
+      const { manager, theme } = createManager();
+      theme.setTheme(SYSTEM_THEME_ID);
 
       await manager.loadByLocator("owner.customization_legacy");
 
+      expect(manager.isFollowingSystemScheme.value).toBe(true);
       expect(manager.activeVariant.value?.id).toBe("midnight");
     });
 
