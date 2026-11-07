@@ -1497,12 +1497,15 @@ export function createCustomizationsManager(
     // The embed link names the theme. A saved variant pick would leave the
     // preview on one look no matter which theme the link asked for.
     if (isMinimalEmbed.value) {
+      const linkThemeId = appSchemeThemeId.value;
+      const fallbackDefault = byId(customization.defaultVariantId);
       const linked =
-        byId(
-          getSchemeDefaultVariantId(customization, appSchemeThemeId.value)
-        ) ??
+        byId(getSchemeDefaultVariantId(customization, linkThemeId)) ??
+        (fallbackDefault?.baseTheme === linkThemeId
+          ? fallbackDefault
+          : undefined) ??
         customization.variants.find(
-          (variant) => variant.baseTheme === appSchemeThemeId.value
+          (variant) => variant.baseTheme === linkThemeId
         );
       if (linked) {
         return linked;
@@ -1520,14 +1523,10 @@ export function createCustomizationsManager(
     const schemeThemeId = isFollowingSystemScheme.value
       ? deviceSchemeThemeId.value
       : appSchemeThemeId.value;
-    const schemeMatch = customization.variants.find(
-      (v) => v.baseTheme === schemeThemeId
-    );
 
     return (
       byId(selectedVariantId.value) ??
       byId(getSchemeDefaultVariantId(customization, schemeThemeId)) ??
-      schemeMatch ??
       byId(customization.defaultVariantId) ??
       customization.variants[0] ??
       null

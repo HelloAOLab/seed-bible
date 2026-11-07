@@ -3437,6 +3437,33 @@ describe("CustomizationsManager", () => {
       expect(draft?.defaultLightVariantId).toBeUndefined();
       expect(draft?.defaultDarkVariantId).toBeUndefined();
     });
+
+    it("shows the fallback default, not the first variant based on it, to a viewer on a brand app theme", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: whiteLabelRecord });
+      const { manager } = createManager();
+      settings.setThemeId("brand");
+
+      await manager.loadByLocator("owner.customization_white_label");
+
+      expect(manager.activeVariant.value?.id).toBe("brand_b");
+      expect(
+        manager.getPreviewVariant(manager.activeCustomization.value!)?.id
+      ).toBe("brand_b");
+    });
+
+    it("shows the fallback default, not the first variant based on it, when an embed link names its brand theme", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: whiteLabelRecord });
+      const { manager } = createManager(
+        createNavigationManager({
+          initialHref: "http://localhost/?embed=minimal&app.themeId=brand",
+        })
+      );
+      settings.setThemeId("brand");
+
+      await manager.loadByLocator("owner.customization_white_label");
+
+      expect(manager.activeVariant.value?.id).toBe("brand_b");
+    });
   });
 
   describe("system color scheme", () => {
