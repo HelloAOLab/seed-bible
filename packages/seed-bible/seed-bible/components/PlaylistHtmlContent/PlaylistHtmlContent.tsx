@@ -71,6 +71,9 @@ export function PlaylistHtmlContent(props: {
       ref={ref}
       className="sb-play-playlist-content-html"
       dir="auto"
+      // Its paragraphs are what a shared session's presence counts (see
+      // PresenceArea in BibleReader.tsx).
+      data-presence-units
       onClick={handleClick}
     />
   );

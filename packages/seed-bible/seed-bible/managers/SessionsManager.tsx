@@ -11,6 +11,7 @@ import {
   type InitialBibleReadingOptions,
   type VerseDecoration,
   type VerseDecorationInput,
+  type VisibleVerseRange,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
 import type { BibleReadingExtensionManager } from "../managers/BibleReadingExtensionManager";
@@ -241,6 +242,28 @@ export interface ParticipantReadingPosition {
    */
   firstVerse?: number;
   lastVerse?: number;
+  /**
+   * What else that participant has on screen, by area (see
+   * `BibleReadingState.visibleAreas`): the first and last unit of each.
+   * Absent when there's nothing else, and in entries from older clients.
+   */
+  areas?: Record<string, { first: number; last: number }>;
+}
+
+function parseAreas(
+  value: unknown
+): Record<string, { first: number; last: number }> | null {
+  if (!value || typeof value !== "object") return null;
+  const areas: Record<string, { first: number; last: number }> = {};
+  for (const [key, range] of Object.entries(value)) {
+    if (!range || typeof range !== "object") continue;
+    const first = toPositiveIntOrNull((range as Record<string, unknown>).first);
+    const last = toPositiveIntOrNull((range as Record<string, unknown>).last);
+    if (first !== null && last !== null && last >= first) {
+      areas[key] = { first, last };
+    }
+  }
+  return Object.keys(areas).length > 0 ? areas : null;
 }
 
 function parseParticipantReadingPosition(
@@ -255,10 +278,12 @@ function parseParticipantReadingPosition(
   const lastVerse = toPositiveIntOrNull(record.lastVerse);
   // A half-written range says nothing, so both ends have to be there and in
   // order before it is reported.
+  const areas = parseAreas(record.areas);
+  const withAreas = areas ? { areas } : {};
   if (firstVerse === null || lastVerse === null || lastVerse < firstVerse) {
-    return { bookId, chapterNumber };
+    return { bookId, chapterNumber, ...withAreas };
   }
-  return { bookId, chapterNumber, firstVerse, lastVerse };
+  return { bookId, chapterNumber, firstVerse, lastVerse, ...withAreas };
 }
 
 /**
@@ -1246,14 +1271,29 @@ async function createBibleReadingSession(
     const range = tabVisible.value
       ? readingState.visibleVerseRange.value
       : null;
+    const visibleAreas = tabVisible.value
+      ? readingState.visibleAreas.value
+      : new Map<string, VisibleVerseRange>();
+    const areas =
+      visibleAreas.size > 0
+        ? {
+            areas: Object.fromEntries(
+              Array.from(visibleAreas, ([key, area]) => [
+                key,
+                { first: area.first, last: area.last },
+              ])
+            ),
+          }
+        : {};
     const next: ParticipantReadingPosition = range
       ? {
           bookId,
           chapterNumber,
           firstVerse: range.first,
           lastVerse: range.last,
+          ...areas,
         }
-      : { bookId, chapterNumber };
+      : { bookId, chapterNumber, ...areas };
     const currentEntry = parseParticipantReadingPosition(
       readingPositionsMap.get(localConnectionId)
     );
@@ -1262,7 +1302,9 @@ async function createBibleReadingSession(
       currentEntry.bookId === next.bookId &&
       currentEntry.chapterNumber === next.chapterNumber &&
       currentEntry.firstVerse === next.firstVerse &&
-      currentEntry.lastVerse === next.lastVerse
+      currentEntry.lastVerse === next.lastVerse &&
+      JSON.stringify(currentEntry.areas ?? {}) ===
+        JSON.stringify(next.areas ?? {})
     ) {
       return;
     }
@@ -1288,6 +1330,7 @@ async function createBibleReadingSession(
     const chapterNumber = readingState.chapterNumber.value;
     const visible = tabVisible.value;
     void readingState.visibleVerseRange.value;
+    void readingState.visibleAreas.value;
 
     // A navigation is always chased by range changes — the old chapter's
     // verses leave the screen and the new one's are measured — so whether this

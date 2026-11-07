@@ -19,8 +19,10 @@ export function PlaylistCompareStep(props: {
   /** A note's links to passages and to other steps. */
   onReferenceClick?: (ref: VerseRef) => void;
   onStepClick?: (index: number) => void;
+  /** Wraps the note's content (the reader's presence gutter). */
+  wrapNote?: (note: ComponentChild) => ComponentChild;
 }) {
-  const { title, passages, note } = props;
+  const { title, passages, note, wrapNote = (content) => content } = props;
   const ref = useRef<HTMLElement>(null);
   useScrollToTopOnMount(ref);
   return (
@@ -47,13 +49,15 @@ export function PlaylistCompareStep(props: {
               {note.title}
             </h3>
           ) : null}
-          {note.html ? (
-            <PlaylistHtmlContent
-              html={note.html}
-              onReferenceClick={props.onReferenceClick}
-              onStepClick={props.onStepClick}
-            />
-          ) : null}
+          {note.html
+            ? wrapNote(
+                <PlaylistHtmlContent
+                  html={note.html}
+                  onReferenceClick={props.onReferenceClick}
+                  onStepClick={props.onStepClick}
+                />
+              )
+            : null}
         </section>
       ) : null}
     </article>

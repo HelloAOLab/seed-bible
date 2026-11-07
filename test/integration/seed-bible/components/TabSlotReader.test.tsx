@@ -192,6 +192,7 @@ function createFixture(): ReaderFixture {
     selectionAnnotations: signal([]),
     pendingAnnotationScrollVerse: signal<number | null>(null),
     visibleVerseRange: signal<VisibleVerseRange | null>(null),
+    visibleAreas: signal<ReadonlyMap<string, VisibleVerseRange>>(new Map()),
   } as BibleReadingState;
 
   const selectorState = {

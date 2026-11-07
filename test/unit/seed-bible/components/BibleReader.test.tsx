@@ -334,6 +334,7 @@ function createFixture(): ReaderFixture {
     selectionAnnotations: signal([]),
     pendingAnnotationScrollVerse: signal<number | null>(null),
     visibleVerseRange: signal<VisibleVerseRange | null>(null),
+    visibleAreas: signal<ReadonlyMap<string, VisibleVerseRange>>(new Map()),
   } as BibleReadingState;
 
   const selectorState = {
@@ -7054,6 +7055,7 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
       compact: boolean;
       /** Where a compare step's second passage is shown. */
       compareReadingState?: BibleReadingState;
+      sharedSession?: unknown;
     }
   ) {
     const { selectorState, readingState } = createFixture();
@@ -7098,6 +7100,7 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
           selectorState={selectorState}
           readingState={readingState}
           state={state}
+          sharedSession={options.sharedSession as any}
         />,
         container
       );
@@ -7156,6 +7159,256 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
     expect(
       page()?.querySelector(".sb-playlist-step-page-title")?.textContent
     ).toBe("A talk on John");
+  });
+
+  describe("where others in a shared session are", () => {
+    const visual = { color: "rgb(10, 20, 30)", animal: "fox" };
+    function session(
+      peerAreas: Record<string, { first: number; last: number }>
+    ) {
+      return {
+        connectedUsers: signal([
+          {
+            connectionId: "me",
+            userId: "me",
+            isSelf: true,
+            isActive: true,
+            joinedAtMs: 0,
+            profile: { name: "Me" },
+            visual,
+          },
+          {
+            connectionId: "peer",
+            userId: "peer",
+            isSelf: false,
+            isActive: true,
+            joinedAtMs: 0,
+            profile: { name: "Mary", pictureUrl: null },
+            visual,
+          },
+        ]),
+        participantPositions: signal(
+          new Map([
+            ["peer", { bookId: "EXO", chapterNumber: 9, areas: peerAreas }],
+          ])
+        ),
+        options: signal({ hostUserId: null, allowedNavigators: [] }),
+      };
+    }
+    const THREE_PARAGRAPHS = {
+      type: "html" as const,
+      title: "Pray",
+      html: "<p>First.</p><p>Second.</p><p>Third.</p>",
+    };
+    const paragraphs = () => [
+      ...container.querySelectorAll(".sb-play-playlist-content-html > p"),
+    ];
+
+    /** Lays the note's paragraphs out 30px apart, each 20px tall. */
+    function stubParagraphBoxes() {
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+        function (this: Element) {
+          const index = paragraphs().indexOf(this);
+          const top = index >= 0 ? index * 30 : 0;
+          return {
+            top,
+            bottom: index >= 0 ? top + 20 : 0,
+            left: 0,
+            right: 100,
+            width: 100,
+            height: index >= 0 ? 20 : 0,
+            x: 0,
+            y: top,
+            toJSON: () => ({}),
+          } as DOMRect;
+        }
+      );
+    }
+
+    /**
+     * Catches what each observer watches, and reports any of it on screen to
+     * the observer watching it.
+     */
+    function stubIntersections() {
+      const observed: Element[] = [];
+      const watcher = new Map<Element, (entries: unknown[]) => void>();
+      vi.stubGlobal(
+        "IntersectionObserver",
+        class {
+          fire: (entries: unknown[]) => void;
+          mine: Element[] = [];
+          constructor(callback: IntersectionObserverCallback) {
+            this.fire = (entries) =>
+              callback(
+                entries as IntersectionObserverEntry[],
+                this as unknown as IntersectionObserver
+              );
+          }
+          observe(el: Element) {
+            observed.push(el);
+            this.mine.push(el);
+            watcher.set(el, this.fire);
+          }
+          unobserve() {}
+          disconnect() {
+            for (const el of this.mine) {
+              observed.splice(observed.indexOf(el), 1);
+              watcher.delete(el);
+            }
+            this.mine = [];
+          }
+          takeRecords() {
+            return [];
+          }
+        }
+      );
+      return {
+        observed,
+        show: (...elements: Element[]) =>
+          act(() => {
+            for (const target of elements) {
+              watcher.get(target)?.([{ target, isIntersecting: true }]);
+            }
+          }),
+      };
+    }
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+    });
+
+    it("draws a bar beside the paragraphs of a note another participant on the same step can see", async () => {
+      stubParagraphBoxes();
+      renderStep([THREE_PARAGRAPHS], {
+        compact: true,
+        sharedSession: session({ "step-0": { first: 2, last: 3 } }),
+      });
+      await vi.waitFor(() => expect(paragraphs()).toHaveLength(3));
+
+      // Renders wait for `act` here (see `setupRerender`), so each check
+      // flushes the one the measured bar asked for.
+      await vi.waitFor(async () => {
+        await act(async () => {});
+        expect(container.querySelectorAll(".sb-presence-marker")).toHaveLength(
+          1
+        );
+      });
+      const marker = container.querySelector(
+        ".sb-presence-marker"
+      ) as HTMLElement;
+      // From the top of the second paragraph to the bottom of the third.
+      expect(marker.style.top).toBe("30px");
+      expect(marker.style.height).toBe("50px");
+    });
+
+    it("draws no bar for a participant on another step", async () => {
+      stubParagraphBoxes();
+      renderStep([THREE_PARAGRAPHS], {
+        compact: true,
+        sharedSession: session({ "step-4": { first: 1, last: 3 } }),
+      });
+      await vi.waitFor(() => expect(paragraphs()).toHaveLength(3));
+
+      expect(container.querySelector(".sb-presence-marker")).toBeNull();
+      // The gutter is still open, so the text doesn't shift as people come.
+      expect(container.querySelector(".sb-presence-area-open")).not.toBeNull();
+    });
+
+    it("tells the session which of a note's paragraphs are on screen", async () => {
+      const { observed, show } = stubIntersections();
+      const playing = renderStep([THREE_PARAGRAPHS], {
+        compact: true,
+        sharedSession: session({}),
+      });
+      await vi.waitFor(() => expect(paragraphs()).toHaveLength(3));
+      await vi.waitFor(() => expect(observed).toContain(paragraphs()[2]));
+
+      show(paragraphs()[1]!, paragraphs()[2]!);
+
+      expect(
+        playing.tab!.readingState.visibleAreas.value.get("step-0")
+      ).toEqual({ first: 2, last: 3 });
+    });
+
+    it("counts a question's answer as one block, revealed or not", async () => {
+      const { observed } = stubIntersections();
+      renderStep(
+        [
+          {
+            type: "html",
+            html: "<p>Why?</p>",
+            question: { answer: "<p>Because.</p><p>And more.</p>" },
+          },
+        ],
+        { compact: true, sharedSession: session({}) }
+      );
+      const blocks = () =>
+        observed.filter((el) => el.closest(".sb-playlist-step-page"));
+      await vi.waitFor(() => expect(blocks()).toHaveLength(2));
+
+      act(() => {
+        (
+          [...container.querySelectorAll("button")].find(
+            (b) => b.textContent === "Show answer"
+          ) as HTMLButtonElement
+        ).click();
+      });
+      await vi.waitFor(() =>
+        expect(container.textContent).toContain("And more.")
+      );
+
+      // Still the question and the answer, so peers who haven't opened it
+      // count the same blocks.
+      expect(blocks()).toHaveLength(2);
+    });
+
+    it("gives a compare step's second passage and its note their own areas", async () => {
+      const { observed, show } = stubIntersections();
+      const second = createFixture();
+      const playing = renderStep(
+        [
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 1, verse: 1 },
+            compare: { ref: { bookId: "GEN", chapter: 1, verse: 2 } },
+            note: "<p>Notice.</p>",
+          },
+        ],
+        {
+          compact: true,
+          compareReadingState: second.readingState,
+          sharedSession: session({}),
+        }
+      );
+      await act(async () => {
+        await playing.jumpTo(0);
+      });
+      await vi.waitFor(() =>
+        expect(container.textContent).toContain("Notice.")
+      );
+
+      const secondVerse = container
+        .querySelectorAll(".sb-playlist-compare-column")[1]!
+        .querySelector(".sb-verse")!;
+      const note = container.querySelector(
+        ".sb-playlist-compare-note .sb-play-playlist-content-html > p"
+      )!;
+      await vi.waitFor(() => expect(observed).toContain(note));
+      show(secondVerse, note);
+
+      const areas = playing.tab!.readingState.visibleAreas.value;
+      expect(areas.get("step-0-second")).toEqual({ first: 2, last: 2 });
+      expect(areas.get("step-0-note")).toEqual({ first: 1, last: 1 });
+    });
+
+    it("draws no gutter outside a shared session", async () => {
+      renderStep([THREE_PARAGRAPHS], { compact: true });
+      await vi.waitFor(() => expect(paragraphs()).toHaveLength(3));
+
+      expect(container.querySelector(".sb-presence-area-open")).toBeNull();
+      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+    });
   });
 
   describe("a compare step", () => {

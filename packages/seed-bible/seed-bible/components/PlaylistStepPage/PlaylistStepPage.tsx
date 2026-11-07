@@ -1,5 +1,5 @@
 import "./PlaylistStepPage.css";
-import type { RefObject } from "preact";
+import type { ComponentChild, RefObject } from "preact";
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
@@ -49,8 +49,10 @@ export function PlaylistStepPage(props: {
   /** A note's links to passages and to other steps. */
   onReferenceClick?: (ref: VerseRef) => void;
   onStepClick?: (index: number) => void;
+  /** Wraps the page's content below its title (the reader's presence gutter). */
+  wrapBody?: (body: ComponentChild) => ComponentChild;
 }) {
-  const { item, showTitle } = props;
+  const { item, showTitle, wrapBody = (body) => body } = props;
   const title = showTitle ? playlistStepPageTitle(item) : null;
   const ref = useRef<HTMLElement>(null);
   useScrollToTopOnMount(ref);
@@ -61,30 +63,34 @@ export function PlaylistStepPage(props: {
           {title}
         </h2>
       ) : null}
-      <div className="sb-playlist-step-page-body">
-        {item.type === "html" ? (
-          <>
-            <PlaylistHtmlContent
-              html={item.html}
-              onReferenceClick={props.onReferenceClick}
-              onStepClick={props.onStepClick}
-            />
-            {item.question?.hint?.trim() ? (
-              <QuestionReveal kind="hint" html={item.question.hint} />
-            ) : null}
-            {item.question?.answer?.trim() ? (
-              <QuestionReveal kind="answer" html={item.question.answer} />
-            ) : null}
-          </>
-        ) : (
-          <PlaylistLinkContent
-            url={item.url}
-            title={item.title}
-            embed={item.embed}
-            preview={item.preview}
-          />
-        )}
-      </div>
+      {wrapBody(
+        <div className="sb-playlist-step-page-body">
+          {item.type === "html" ? (
+            <>
+              <PlaylistHtmlContent
+                html={item.html}
+                onReferenceClick={props.onReferenceClick}
+                onStepClick={props.onStepClick}
+              />
+              {item.question?.hint?.trim() ? (
+                <QuestionReveal kind="hint" html={item.question.hint} />
+              ) : null}
+              {item.question?.answer?.trim() ? (
+                <QuestionReveal kind="answer" html={item.question.answer} />
+              ) : null}
+            </>
+          ) : (
+            <div data-presence-unit>
+              <PlaylistLinkContent
+                url={item.url}
+                title={item.title}
+                embed={item.embed}
+                preview={item.preview}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </article>
   );
 }
@@ -107,7 +113,12 @@ function QuestionReveal(props: { kind: "hint" | "answer"; html: string }) {
         ? t("playlist-question-hide-answer", { defaultValue: "Hide answer" })
         : t("playlist-question-show-answer", { defaultValue: "Show answer" });
   return (
-    <section className={`sb-playlist-question-reveal is-${kind}`}>
+    // One block for a shared session's presence, open or not, so revealing it
+    // doesn't renumber the page for everyone else.
+    <section
+      className={`sb-playlist-question-reveal is-${kind}`}
+      data-presence-unit
+    >
       <button
         type="button"
         className="sb-playlist-question-reveal-button"

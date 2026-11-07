@@ -140,6 +140,9 @@ function createMockReadingState() {
   const chapterNumber = signal<number>(1);
   const scrollToVerse = signal<number | null>(null);
   const visibleVerseRange = signal<VisibleVerseRange | null>(null);
+  const visibleAreas = signal<ReadonlyMap<string, VisibleVerseRange>>(
+    new Map()
+  );
   const chapterData = signal<any>(null);
   const decorations = signal<VerseDecoration[]>([]);
 
@@ -202,6 +205,7 @@ function createMockReadingState() {
     chapterNumber,
     scrollToVerse,
     visibleVerseRange,
+    visibleAreas,
     chapterData,
     decorations,
     translationBooks: signal<any>(null),
@@ -2299,6 +2303,70 @@ describe("SessionsManager", () => {
       chapterNumber: 1,
       firstVerse: 3,
       lastVerse: 9,
+    });
+  });
+
+  it("publishes what else is on screen, like a playlist note's paragraphs, alongside the chapter", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await flushPublishDebounce();
+    mockReadingPositionsMap.set.mockClear();
+
+    session.readingState.visibleAreas.value = new Map([
+      ["step-2", { first: 1, last: 3 }],
+    ]);
+    await flushRangePublishDebounce();
+
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "GEN",
+      chapterNumber: 1,
+      areas: { "step-2": { first: 1, last: 3 } },
+    });
+  });
+
+  it("reads where a participant is in what else they have on screen, skipping anything malformed", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+    mockRemoteClients.emit({
+      type: "client_connected",
+      isSelf: false,
+      client: { connectionId: "conn-1", userId: "user-1" },
+    });
+    await waitFor(() => session.connectedUsers.value.length === 1);
+
+    mockReadingPositionsMap.set("conn-1", {
+      bookId: "GEN",
+      chapterNumber: 1,
+      firstVerse: 2,
+      lastVerse: 4,
+      areas: {
+        "step-2": { first: 2, last: 5 },
+        "step-2-second": { first: 9, last: 3 },
+        "step-2-note": "nonsense",
+      },
+    });
+    mockReadingPositionsMap.emitChange();
+    await waitFor(() => session.participantPositions.value.has("conn-1"));
+
+    expect(session.participantPositions.value.get("conn-1")).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      firstVerse: 2,
+      lastVerse: 4,
+      areas: { "step-2": { first: 2, last: 5 } },
     });
   });
 

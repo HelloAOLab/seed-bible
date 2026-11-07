@@ -7,6 +7,7 @@ import {
 } from "../../managers/FreeUseBibleAPI";
 import {
   Fragment,
+  type ComponentChild,
   type ComponentChildren,
   type JSX,
   type RefObject,
@@ -64,6 +65,7 @@ import {
   isSessionHost,
   getConnectedUserVisualKey,
   type BibleReadingSession,
+  type ParticipantReadingPosition,
   type ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
 import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
@@ -1742,6 +1744,42 @@ interface PresenceMarker {
 }
 
 /**
+ * Deals presence bars into lanes so people reading the same verses stand
+ * beside each other instead of hiding one another. Taking them top-down and
+ * putting each in the first lane whose previous occupant has already ended
+ * uses no more lanes than there are people genuinely overlapping at once, so
+ * a session spread through a chapter keeps everyone on the centre line. Ties
+ * break on connection id to keep a lane from changing hands between two bars
+ * that start on the same line. Sorts `markers` in place.
+ */
+function assignPresenceLanes(markers: PresenceMarker[]): void {
+  markers.sort(
+    (a, b) => a.top - b.top || a.connectionId.localeCompare(b.connectionId)
+  );
+  const laneBottoms: number[] = [];
+  for (const marker of markers) {
+    const bottom = marker.top + marker.height;
+    const free = laneBottoms.findIndex((end) => marker.top >= end);
+    const lane = free === -1 ? laneBottoms.length : free;
+    laneBottoms[lane] = Math.max(laneBottoms[lane] ?? 0, bottom);
+    marker.lane = lane;
+  }
+}
+
+/**
+ * What a set of placed bars looks like, so the measure -> setState ->
+ * re-render -> measure cycle can settle instead of looping.
+ */
+function presenceSignature(markers: PresenceMarker[]): string {
+  return markers
+    .map(
+      (m) =>
+        `${m.connectionId}:${Math.round(m.top)}:${Math.round(m.height)}:${m.lane}:${m.imageUrl ?? ""}`
+    )
+    .join("|");
+}
+
+/**
  * How many bars fit side by side in the presence gutter. The gutter is a fixed
  * width so the text never shifts as people come and go, which leaves a fourth
  * person on the same verses nowhere to draw a bar: they keep their place in
@@ -2210,6 +2248,165 @@ interface ChapterContentProps {
 }
 
 /**
+ * The blocks of a presence area, in reading order: each child of an element
+ * marked `data-presence-units` (a note's paragraphs, say), and each element
+ * marked `data-presence-unit` as one whole (a question's hidden answer, a
+ * video). Every participant renders a step the same way, so a block's place
+ * in this list names the same text for all of them; a block inside one that
+ * counts as a whole is part of it, so an answer only one person has revealed
+ * doesn't shift everyone else's count.
+ */
+function presenceUnits(area: HTMLElement): HTMLElement[] {
+  return Array.from(
+    area.querySelectorAll<HTMLElement>(
+      "[data-presence-units] > *, [data-presence-unit]"
+    )
+  ).filter((el) => {
+    const whole = el.parentElement?.closest("[data-presence-unit]");
+    return !whole || !area.contains(whole);
+  });
+}
+
+/**
+ * Content other than a chapter's verses (a playing playlist's note,
+ * question or video) with the same presence gutter a chapter has in a shared
+ * session (#1692): it reports which of its blocks are on screen, numbered from
+ * 1 (see `presenceUnits`), and draws a bar beside the blocks each other
+ * participant on the same area can see. Outside a session (`presence`
+ * undefined) it's just its children, with no gutter.
+ */
+export function PresenceArea(props: {
+  areaKey: string;
+  presence: ParticipantPresence[] | undefined;
+  onVisibleChange: (range: VisibleVerseRange | null) => void;
+  children: ComponentChildren;
+}) {
+  const { areaKey, presence, onVisibleChange } = props;
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [markers, setMarkers] = useState<PresenceMarker[]>([]);
+  const signatureRef = useRef("");
+  const inSession = presence !== undefined;
+
+  const measure = () => {
+    const area = contentRef.current;
+    if (!area) return;
+    const units = presenceUnits(area);
+    const box = area.getBoundingClientRect();
+    const next: PresenceMarker[] = [];
+    for (const participant of presence ?? []) {
+      // Blocks past this reader's last (an answer they've revealed shows
+      // more of it) end at this reader's last block.
+      const first = units[participant.firstVerse - 1];
+      const last = units[Math.min(participant.lastVerse, units.length) - 1];
+      if (!first || !last) continue;
+      const top = first.getBoundingClientRect().top - box.top;
+      const bottom = last.getBoundingClientRect().bottom - box.top;
+      if (bottom <= top) continue;
+      next.push({
+        connectionId: participant.connectionId,
+        displayName: participant.displayName,
+        imageUrl: participant.imageUrl,
+        visual: participant.visual,
+        top,
+        height: bottom - top,
+        lane: 0,
+      });
+    }
+    assignPresenceLanes(next);
+    const signature = presenceSignature(next);
+    if (signature === signatureRef.current) return;
+    signatureRef.current = signature;
+    setMarkers(next);
+  };
+  const measureRef = useRef(measure);
+  measureRef.current = measure;
+  useLayoutEffect(() => {
+    measureRef.current();
+  });
+
+  // The blocks are re-found whenever they change (a note's text arrives
+  // after it's sanitized, and revealing an answer adds to it), and the bars
+  // re-measured against them. Which are on screen is watched where the
+  // browser can say.
+  useEffect(() => {
+    const area = contentRef.current;
+    if (!area || !inSession) {
+      return;
+    }
+    let units: HTMLElement[] = [];
+    const visible = new Set<HTMLElement>();
+    const report = () => {
+      let first = Infinity;
+      let last = -Infinity;
+      units.forEach((unit, index) => {
+        if (!visible.has(unit)) return;
+        first = Math.min(first, index + 1);
+        last = Math.max(last, index + 1);
+      });
+      onVisibleChange(first === Infinity ? null : { first, last });
+    };
+    const intersections =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+              const el = entry.target as HTMLElement;
+              if (entry.isIntersecting && el.isConnected) {
+                visible.add(el);
+              } else {
+                visible.delete(el);
+              }
+            }
+            report();
+          });
+    const sync = () => {
+      units = presenceUnits(area);
+      if (intersections) {
+        intersections.disconnect();
+        visible.clear();
+        for (const unit of units) {
+          intersections.observe(unit);
+        }
+      }
+      measureRef.current();
+    };
+    const mutations =
+      typeof MutationObserver === "undefined"
+        ? null
+        : new MutationObserver(sync);
+    mutations?.observe(area, { childList: true, subtree: true });
+    const resizes =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => measureRef.current());
+    resizes?.observe(area);
+    sync();
+    return () => {
+      mutations?.disconnect();
+      intersections?.disconnect();
+      resizes?.disconnect();
+      onVisibleChange(null);
+    };
+  }, [inSession, onVisibleChange]);
+
+  return (
+    <div
+      ref={contentRef}
+      className={`sb-presence-area${inSession ? " sb-presence-area-open" : ""}`}
+    >
+      {props.children}
+      {inSession ? (
+        <PresenceGutter
+          markers={markers}
+          chapterKey={areaKey}
+          contentRef={contentRef}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+/**
  * One of a compare step's passages: a chapter cut down to `passage`, drawn as
  * the reader draws any chapter so its highlights and notes show.
  */
@@ -2598,31 +2795,8 @@ function ChapterContent(props: ChapterContentProps) {
       }
     }
 
-    // Deal the bars into lanes so people reading the same verses stand beside
-    // each other instead of hiding one another. Taking them top-down and
-    // putting each in the first lane whose previous occupant has already ended
-    // uses no more lanes than there are people genuinely overlapping at once,
-    // so a session spread through a chapter keeps everyone on the centre line.
-    // Ties break on connection id to keep a lane from changing hands between
-    // two bars that start on the same line.
-    next.sort(
-      (a, b) => a.top - b.top || a.connectionId.localeCompare(b.connectionId)
-    );
-    const laneBottoms: number[] = [];
-    for (const marker of next) {
-      const bottom = marker.top + marker.height;
-      const free = laneBottoms.findIndex((end) => marker.top >= end);
-      const lane = free === -1 ? laneBottoms.length : free;
-      laneBottoms[lane] = Math.max(laneBottoms[lane] ?? 0, bottom);
-      marker.lane = lane;
-    }
-
-    const signature = next
-      .map(
-        (m) =>
-          `${m.connectionId}:${Math.round(m.top)}:${Math.round(m.height)}:${m.lane}:${m.imageUrl ?? ""}`
-      )
-      .join("|");
+    assignPresenceLanes(next);
+    const signature = presenceSignature(next);
     if (signature === presenceSignatureRef.current) return;
     presenceSignatureRef.current = signature;
     setPresenceMarkers(next);
@@ -3031,33 +3205,52 @@ export function BibleReader(props: BibleReaderProps) {
   // would keep answering "nobody" for the rest of its life. Reading the signals
   // here subscribes this component to them directly, which survives that prop
   // change.
-  const presence: ParticipantPresence[] = [];
-  const presenceBookId = bookId.value;
-  const presenceChapterNumber = chapterNumber.value;
-  if (sharedSession && presenceBookId && presenceChapterNumber > 0) {
+  /** The other participants `rangeOf` places, each with that range. */
+  const participantsWhere = (
+    rangeOf: (
+      position: ParticipantReadingPosition
+    ) => { first: number; last: number } | null
+  ): ParticipantPresence[] => {
+    const found: ParticipantPresence[] = [];
+    if (!sharedSession) return found;
     const positions = sharedSession.participantPositions.value;
     for (const user of sharedSession.connectedUsers.value) {
       if (user.isSelf) continue;
       const position = positions.get(user.connectionId);
-      if (
-        !position ||
-        position.bookId !== presenceBookId ||
-        position.chapterNumber !== presenceChapterNumber ||
-        position.firstVerse === undefined ||
-        position.lastVerse === undefined
-      ) {
-        continue;
-      }
-      presence.push({
+      const range = position ? rangeOf(position) : null;
+      if (!range) continue;
+      found.push({
         connectionId: user.connectionId,
         displayName: getUserDisplayName(user),
         imageUrl: user.profile?.pictureUrl ?? null,
         visual: user.visual,
-        firstVerse: position.firstVerse,
-        lastVerse: position.lastVerse,
+        firstVerse: range.first,
+        lastVerse: range.last,
       });
     }
-  }
+    return found;
+  };
+  const presenceBookId = bookId.value;
+  const presenceChapterNumber = chapterNumber.value;
+  const presence: ParticipantPresence[] =
+    presenceBookId && presenceChapterNumber > 0
+      ? participantsWhere((position) =>
+          position.bookId === presenceBookId &&
+          position.chapterNumber === presenceChapterNumber &&
+          position.firstVerse !== undefined &&
+          position.lastVerse !== undefined
+            ? { first: position.firstVerse, last: position.lastVerse }
+            : null
+        )
+      : [];
+  /**
+   * The other participants looking at `area` (see `visibleAreas`), or
+   * undefined outside a session, where no gutter is drawn.
+   */
+  const areaPresence = (area: string): ParticipantPresence[] | undefined =>
+    sharedSession
+      ? participantsWhere((position) => position.areas?.[area] ?? null)
+      : undefined;
 
   // Stable identity so the observer in ChapterContent isn't torn down and
   // rebuilt on every render of the reader.
@@ -3070,6 +3263,51 @@ export function BibleReader(props: BibleReaderProps) {
       readingState.visibleVerseRange.value = range;
     },
     [readingState]
+  );
+
+  // One reporter per area, kept for the reading state's life, so the
+  // observers that call them aren't torn down on every render.
+  const areaReportersRef = useRef<{
+    readingState: BibleReadingState;
+    byArea: Map<string, (range: VisibleVerseRange | null) => void>;
+  } | null>(null);
+  const reportVisibleArea = (area: string) => {
+    if (areaReportersRef.current?.readingState !== readingState) {
+      areaReportersRef.current = { readingState, byArea: new Map() };
+    }
+    const { byArea } = areaReportersRef.current;
+    let reporter = byArea.get(area);
+    if (!reporter) {
+      reporter = (range) => {
+        const current = readingState.visibleAreas.peek();
+        const existing = current.get(area);
+        if (
+          existing?.first === range?.first &&
+          existing?.last === range?.last
+        ) {
+          return;
+        }
+        const next = new Map(current);
+        if (range) {
+          next.set(area, range);
+        } else {
+          next.delete(area);
+        }
+        readingState.visibleAreas.value = next;
+      };
+      byArea.set(area, reporter);
+    }
+    return reporter;
+  };
+  /** Wraps a playing step's content in the presence gutter for `area`. */
+  const withAreaPresence = (area: string) => (content: ComponentChild) => (
+    <PresenceArea
+      areaKey={area}
+      presence={areaPresence(area)}
+      onVisibleChange={reportVisibleArea(area)}
+    >
+      {content}
+    </PresenceArea>
   );
 
   // Clicking an annotated verse number jumps straight to its note: on
@@ -3543,6 +3781,9 @@ export function BibleReader(props: BibleReaderProps) {
     compareStep && compareReadingState && !playbackHere?.awayFromStep.value
       ? compareStep
       : null;
+  // Everyone in a session plays the same queue, so a step's position in it
+  // names the same page for all of them.
+  const stepArea = `step-${playbackHere?.currentIndex.value ?? -1}`;
   const resolveBookName = (id: string): string => {
     const book = translationBooks.value?.books.find((b) => b.id === id);
     return book?.name ?? book?.commonName ?? id;
@@ -3607,6 +3848,9 @@ export function BibleReader(props: BibleReaderProps) {
                   onAnnotationVerseClick={handleAnnotationVerseClick}
                   sharedSession={sharedSession}
                   onHostVerseClick={handleHostVerseClick}
+                  // The tab's own chapter, so its presence is the chapter's.
+                  presence={sharedSession ? presence : undefined}
+                  onVisibleVersesChange={reportVisibleVerses}
                 />
               </Suspense>
             ),
@@ -3643,6 +3887,10 @@ export function BibleReader(props: BibleReaderProps) {
                   // A shared session follows the tab's own passage only.
                   sharedSession={null}
                   onHostVerseClick={() => {}}
+                  presence={areaPresence(`${stepArea}-second`)}
+                  onVisibleVersesChange={reportVisibleArea(
+                    `${stepArea}-second`
+                  )}
                 />
               </Suspense>
             ),
@@ -3658,6 +3906,7 @@ export function BibleReader(props: BibleReaderProps) {
         }
         onReferenceClick={(ref) => void playbackHere?.visitReference(ref)}
         onStepClick={(index) => void playbackHere?.jumpTo(index)}
+        wrapNote={withAreaPresence(`${stepArea}-note`)}
       />
     );
   };
@@ -3687,6 +3936,7 @@ export function BibleReader(props: BibleReaderProps) {
           showTitle={isCompactReader}
           onReferenceClick={(ref) => void playbackHere?.visitReference(ref)}
           onStepClick={(index) => void playbackHere?.jumpTo(index)}
+          wrapBody={withAreaPresence(stepArea)}
         />
         {mobileChrome?.belowContent}
       </>

@@ -11,13 +11,24 @@
  * The indent that makes room for it is shared with the note gutter and set in
  * BibleReader.inline.css (`--sb-reader-gutter-width`).
  */
-.sb-chapter-content.sb-chapter-content-presence {
+.sb-chapter-content.sb-chapter-content-presence,
+.sb-presence-area-open {
   /* Mirrored by PRESENCE_AVATAR_PX / PRESENCE_STACK_STEP_PX in BibleReader.tsx,
      which places the avatar stacks against measured verse positions. */
   --sb-presence-avatar-size: 20px;
   --sb-presence-stack-step: 12px;
   /* One bar's width plus the gap to the next. Three fit, centred. */
   --sb-presence-lane-pitch: 6px;
+}
+
+/* The same gutter beside a playing playlist's note, question or video (see
+   PresenceArea in BibleReader.tsx). */
+.sb-presence-area {
+  position: relative;
+}
+
+.sb-presence-area-open {
+  padding-inline: var(--sb-reader-gutter-inset);
 }
 
 .sb-presence-gutter {
