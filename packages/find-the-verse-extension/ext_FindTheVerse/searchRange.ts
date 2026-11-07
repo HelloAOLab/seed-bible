@@ -7,11 +7,14 @@ import {
   chapterOutOfRange,
   openSearchWindow,
   rangeHighlightCss,
+  ROUND_SCOPE_CLASS,
   versesOutOfRange,
 } from "./gameLogic";
+import { isRoundTabSelected, roundReading } from "./roundTab";
 import type { GameSignals } from "./types";
 
 const RANGE_CLASS = "ftv-out-of-range";
+const SCOPE_DECORATION_ID = "find-the-verse-round-scope";
 
 function verseNumbers(content: unknown): number[] {
   if (!Array.isArray(content)) return [];
@@ -27,8 +30,9 @@ function verseNumbers(content: unknown): number[] {
 }
 
 /**
- * Greys books, chapters, and verses outside the current guess window, and
- * takes that grey back off when the round ends.
+ * Greys books, chapters, and verses outside the current guess window in the
+ * round's tab, and takes that grey back off when the round ends. All of it is
+ * `localOnly`, though the round's tab is never a shared session anyway.
  */
 export function watchSearchRange(
   state: SeedBibleState,
@@ -41,6 +45,8 @@ export function watchSearchRange(
   }
 
   let painted: { reading: BibleReadingState; id: string } | null = null;
+  let scoped: BibleReadingState | null = null;
+  let scopeKey = "";
   let paintKey = "";
   let styleText = "";
   const clearPaint = () => {
@@ -48,11 +54,18 @@ export function watchSearchRange(
     painted.reading.removeDecoration(painted.id);
     painted = null;
   };
+  const clearScope = () => {
+    scoped?.removeDecoration(SCOPE_DECORATION_ID);
+    scoped = null;
+    scopeKey = "";
+  };
 
   const dispose = effect(() => {
-    const playing = game.phase.value === "playing";
+    const reading = roundReading(state, game) ?? undefined;
+    const playing = game.phase.value === "playing" && !!reading;
     const window = playing ? game.searchWindow.value : openSearchWindow();
-    const reading = state.app.selectedTab.value?.readingState;
+    // The selector greys for whichever tab is on screen, so only the round's.
+    const selectorIsRound = playing && isRoundTabSelected(state, game);
     const bookId = reading?.bookId.value ?? null;
     const chapterNumber = reading?.chapterNumber.value ?? null;
     const content = reading?.chapterData?.value?.chapter?.content;
@@ -69,7 +82,7 @@ export function watchSearchRange(
     }
 
     const eliminatedBooks: string[] = [];
-    if (playing) {
+    if (selectorIsRound) {
       for (const id of orderedBookIds()) {
         const index = bookOrderIndex(id);
         const count = chapterCount.get(id) ?? 150;
@@ -78,7 +91,7 @@ export function watchSearchRange(
     }
 
     const eliminatedChapters: number[] = [];
-    if (playing && openBook?.id) {
+    if (selectorIsRound && openBook?.id) {
       const index = bookOrderIndex(openBook.id);
       const total =
         openBook.numberOfChapters || chapterCount.get(openBook.id) || 0;
@@ -99,13 +112,32 @@ export function watchSearchRange(
       }
     }
 
-    if (
-      !playing ||
-      !reading ||
-      !bookId ||
-      chapterNumber == null ||
-      contentStale
-    ) {
+    if (!playing || !reading || !bookId || chapterNumber == null) {
+      clearScope();
+      clearPaint();
+      paintKey = "";
+      return;
+    }
+
+    const nextScopeKey = `${bookId}\0${chapterNumber}`;
+    if (scoped !== reading || scopeKey !== nextScopeKey) {
+      clearScope();
+      reading.decorateVerses(
+        bookId,
+        chapterNumber,
+        1,
+        {
+          containerClassName: ROUND_SCOPE_CLASS,
+          preserveOnChapterChange: true,
+          localOnly: true,
+        },
+        SCOPE_DECORATION_ID
+      );
+      scoped = reading;
+      scopeKey = nextScopeKey;
+    }
+
+    if (contentStale) {
       clearPaint();
       paintKey = "";
       return;
@@ -127,12 +159,14 @@ export function watchSearchRange(
     if (outside.length === 0) return;
     const id = reading.decorateVerses(bookId, chapterNumber, outside, {
       className: RANGE_CLASS,
+      localOnly: true,
     });
     painted = { reading, id };
   });
 
   return () => {
     dispose();
+    clearScope();
     clearPaint();
     styleEl?.remove();
     styleEl = null;

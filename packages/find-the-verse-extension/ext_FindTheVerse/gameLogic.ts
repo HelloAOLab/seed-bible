@@ -219,11 +219,10 @@ export function versesOutOfRange(
   );
 }
 
-/** How many chances have a hint the player can open. */
-export function countFilledHints(steps: readonly { hint: string }[]): number {
-  return steps.reduce(
-    (count, step) => count + (step.hint.trim().length > 0 ? 1 : 0),
-    0
+/** Indexes of chances with no hint. A game can't be saved or started with any. */
+export function emptyHintIndexes(steps: readonly { hint: string }[]): number[] {
+  return steps.flatMap((step, index) =>
+    step.hint.trim().length === 0 ? [index] : []
   );
 }
 
@@ -231,20 +230,30 @@ const GREY =
   "color-mix(in srgb, var(--sb-font-color) 42%, var(--sb-book-selector-background, var(--sb-background, transparent)))";
 
 /**
+ * Put on the round tab's chapter (as a decoration's `containerClassName`), so
+ * the rules below only reach the reader the round is played in.
+ */
+export const ROUND_SCOPE_CLASS = "ftv-round";
+
+/**
  * Theme-mixed grey for books and chapters the current window has ruled out.
- * Also hides the reader's highlights and the tap underline for the whole
- * round. The sheet is removed when the round ends, so both come back.
+ * Pass no books or chapters while another tab is selected: the selector
+ * belongs to whichever tab is on screen.
+ *
+ * Also hides the reader's highlights and the tap underline in the round's
+ * reader. The sheet is removed when the round ends, so both come back.
  */
 export function rangeHighlightCss(
   bookIds: readonly string[],
   chapters: readonly number[]
 ): string {
+  const scope = `.${ROUND_SCOPE_CLASS}`;
   const rules = [
-    ".sb-verse:has(.ftv-out-of-range) { opacity: 0.35; }",
-    ".sb-verse:has(.sb-verse-decoration-diminish) { opacity: 1; }",
-    ".sb-bible-reader .sb-highlight-layer { display: none !important; }",
-    ".sb-bible-reader .sb-highlight { color: inherit !important; }",
-    ".sb-bible-reader .sb-verse-selected .sb-verse-decorator { border-bottom: none !important; text-decoration: none !important; }",
+    `${scope} .sb-verse:has(.ftv-out-of-range) { opacity: 0.35; }`,
+    `${scope} .sb-verse:has(.sb-verse-decoration-diminish) { opacity: 1; }`,
+    `${scope} .sb-highlight-layer { display: none !important; }`,
+    `${scope} .sb-highlight { color: inherit !important; }`,
+    `${scope} .sb-verse-selected .sb-verse-decorator { border-bottom: none !important; text-decoration: none !important; }`,
   ];
   for (const id of bookIds) {
     if (!/^[A-Za-z0-9]+$/.test(id)) continue;

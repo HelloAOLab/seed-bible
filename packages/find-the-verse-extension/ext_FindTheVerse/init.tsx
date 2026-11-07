@@ -1,4 +1,4 @@
-import { effect, signal } from "@preact/signals";
+import { batch, effect, signal, untracked } from "@preact/signals";
 import { render } from "preact";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { extractContentText } from "seed-bible/managers";
@@ -21,11 +21,27 @@ import {
 import { GameCreator } from "./GameCreator";
 import { GamePlayer } from "./GamePlayer";
 import { FindTheVerseReaderBanner } from "./PlayBanner";
+import {
+  closeRoundTab,
+  openRoundTab,
+  roundTab,
+  trackRoundDecoration,
+} from "./roundTab";
 import { SavedGamesList } from "./SavedGamesList";
-import type { GameDraft, GameSignals, SavedGame } from "./types";
+import type { GameDraft, GameSignals, SavedGame, TargetVerse } from "./types";
+import { playWinSound } from "./winSound";
+import "./findTheVerse.css";
 
 const PANE_ID = "find-the-verse-pane";
 const NS = "find-the-verse-extension";
+const FOUND_VERSE_CLASS = "ftv-found-verse";
+
+interface RoundDraft {
+  id: string | null;
+  name: string;
+  targetVerse: TargetVerse;
+  steps: GameDraft["steps"];
+}
 
 function FindTheVersePaneTitle() {
   const { t } = useI18n("find-the-verse-extension");
@@ -38,12 +54,14 @@ function GamePane({
   onSaveGame,
   onDeleteGame,
   onEditGame,
+  onStartRound,
 }: {
   game: GameSignals;
   state: SeedBibleState;
   onSaveGame: (draft: GameDraft) => Promise<void>;
   onDeleteGame: (id: string) => Promise<void>;
   onEditGame: (saved: SavedGame) => void;
+  onStartRound: (draft: RoundDraft) => void;
 }) {
   const phase = game.phase.value;
   const savedGames = game.savedGames.value;
@@ -55,36 +73,15 @@ function GamePane({
 
   if (phase === "idle") {
     return (
-      <div
-        style={{
-          padding: "24px 16px",
-          display: "flex",
-          flexDirection: "column" as const,
-          gap: "24px",
-          color: "var(--sb-font-color, #333)",
-        }}
-      >
-        {/* Hero */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column" as const,
-            alignItems: "center",
-            gap: "12px",
-          }}
-        >
-          <span style={{ fontSize: "2.5rem" }}>🔍</span>
-          <p style={{ margin: 0, fontWeight: 600, fontSize: "1.1rem" }}>
+      <div className="ftv-home">
+        <div className="ftv-home-hero">
+          <span className="ftv-home-icon" aria-hidden="true">
+            🔍
+          </span>
+          <p className="ftv-home-title">
             {t("find-the-verse", { defaultValue: "Find the Verse" })}
           </p>
-          <p
-            style={{
-              margin: 0,
-              opacity: 0.6,
-              textAlign: "center" as const,
-              fontSize: "0.9rem",
-            }}
-          >
+          <p className="ftv-home-intro">
             {t("intro", {
               defaultValue:
                 "A creator picks a secret verse. Players guess where it is using book, chapter, and verse feedback. Saved games stay on your account.",
@@ -92,16 +89,7 @@ function GamePane({
           </p>
           <button
             type="button"
-            style={{
-              padding: "10px 20px",
-              borderRadius: "6px",
-              border: "none",
-              cursor: "pointer",
-              background: "var(--sb-primary-color, #4a6cf7)",
-              color: "var(--sb-primary-font-color, #fff)",
-              fontWeight: 600,
-              fontSize: "0.95rem",
-            }}
+            className="ftv-btn ftv-btn--primary ftv-btn--large"
             onClick={() => {
               // A leftover id from Edit would make the next Save overwrite
               // that game. Start from a blank draft.
@@ -113,23 +101,19 @@ function GamePane({
           </button>
         </div>
 
-        {game.notice.value && (
-          <p
-            style={{
-              margin: 0,
-              color: "#e63946",
-              fontSize: "0.9rem",
-            }}
-          >
-            {game.notice.value}
-          </p>
-        )}
+        {game.notice.value && <p className="ftv-notice">{game.notice.value}</p>}
 
-        {/* Saved games */}
         <SavedGamesList
           games={savedGames}
-          game={game}
           state={state}
+          onPlay={(saved) =>
+            onStartRound({
+              id: saved.id,
+              name: saved.name,
+              targetVerse: saved.targetVerse,
+              steps: saved.steps,
+            })
+          }
           onDelete={(id) => {
             game.notice.value = null;
             return onDeleteGame(id).catch((error: unknown) => {
@@ -137,7 +121,6 @@ function GamePane({
             });
           }}
           onEdit={onEditGame}
-          onRoundStarted={() => state.panes.closePane(PANE_ID)}
         />
       </div>
     );
@@ -160,12 +143,7 @@ function GamePane({
           );
         }}
         onPlay={(draft) => {
-          beginRound(
-            game,
-            { id: game.currentGameId.peek(), ...draft },
-            state.app.selectedTab.value?.readingState
-          );
-          state.panes.closePane(PANE_ID);
+          onStartRound({ id: game.currentGameId.peek(), ...draft });
         }}
         onCancel={() => {
           resetDraft(game);
@@ -204,6 +182,8 @@ export default function initFindTheVerseExtension() {
         hintOpenFor: signal(null),
         playRound: signal(0),
         draftEpoch: signal(0),
+        roundTabId: signal(null),
+        roundDecorations: signal([]),
       };
 
       const savedGames = createSavedGamesController(
@@ -268,6 +248,42 @@ export default function initFindTheVerseExtension() {
         game.phase.value = "creating";
       }
 
+      // The tab the player was on when the round started. Closing the
+      // round's tab goes back to it.
+      let returnTabId: string | null = null;
+
+      // Every round gets its own new tab. A shared session or a playing
+      // playlist in the tab the player was on is left alone.
+      function startRound(draft: RoundDraft) {
+        batch(() => {
+          const previous = game.roundTabId.peek();
+          if (previous) {
+            closeRoundTab(state, game, previous, null);
+            game.roundTabId.value = null;
+          }
+          returnTabId = state.app.selectedTab.peek()?.id ?? null;
+          beginRound(game, draft, openRoundTab(state));
+          state.panes.closePane(PANE_ID);
+        });
+      }
+
+      // The round's tab closes when the round ends. If the player closes the
+      // tab first, that ends the round, the same as End game.
+      const disposeRoundTab = effect(() => {
+        const tabId = game.roundTabId.value;
+        if (!tabId) return;
+        const playing = game.phase.value === "playing";
+        const open = state.tabs.tabs.value.some((tab) => tab.id === tabId);
+        if (playing && open) return;
+        untracked(() => {
+          batch(() => {
+            if (playing) resetPlay(game);
+            closeRoundTab(state, game, tabId, returnTabId);
+            game.roundTabId.value = null;
+          });
+        });
+      });
+
       function openGamePane() {
         state.panes.openPane({
           id: PANE_ID,
@@ -280,19 +296,11 @@ export default function initFindTheVerseExtension() {
               onSaveGame={saveGame}
               onDeleteGame={deleteGame}
               onEditGame={editGame}
+              onStartRound={startRound}
             />
           ),
         });
       }
-
-      // On a phone the panel covers the reader. A win puts it back so the
-      // verse, confetti, and the rest of the win screen are on screen.
-      const disposeWinPane = effect(() => {
-        if (!game.won.value || game.phase.value !== "playing") return;
-        if (typeof window.matchMedia !== "function") return;
-        if (!window.matchMedia("(max-width: 480px)").matches) return;
-        openGamePane();
-      });
 
       // Open / re-open the pane when the toolbar button is clicked.
       // Closing it does not end a round: on a phone the pane covers the
@@ -362,8 +370,9 @@ export default function initFindTheVerseExtension() {
         },
       });
 
-      // During play: intercept every verse tap, register it as a guess, and
-      // immediately clear the selection so the normal toolbar never appears.
+      // During play: intercept every verse tap in the round's tab, register
+      // it as a guess, and clear the selection so the verse toolbar never
+      // appears there. Every other tab keeps its normal toolbar.
       const playGuesses = new PlayGuesses();
       const disposeGuessEffect = effect(() => {
         const playing = game.phase.value === "playing" && !game.won.value;
@@ -372,7 +381,7 @@ export default function initFindTheVerseExtension() {
           return;
         }
 
-        const tab = state.app.selectedTab.value;
+        const tab = roundTab(state, game);
         if (!tab) return;
 
         const selected = tab.readingState.selectedVerses.value;
@@ -407,6 +416,23 @@ export default function initFindTheVerseExtension() {
         game.lastResult.value = result;
         if (result.kind === "correct") {
           game.won.value = true;
+          const { bookId, chapterNumber, verseNumber } = decision.guess;
+          trackRoundDecoration(
+            game,
+            tab.readingState,
+            tab.readingState.decorateVerses(
+              bookId,
+              chapterNumber,
+              verseNumber,
+              {
+                className: FOUND_VERSE_CLASS,
+                preserveOnChapterChange: true,
+                localOnly: true,
+              }
+            )
+          );
+          // Still inside the winning tap, which is what lets audio start.
+          playWinSound();
         } else {
           game.searchWindow.value = tightenWindow(
             game.searchWindow.peek(),
@@ -418,23 +444,26 @@ export default function initFindTheVerseExtension() {
 
       yield disposeLoadEffect;
       yield disposeGuessEffect;
-      yield disposeWinPane;
+      yield disposeRoundTab;
       yield watchSearchRange(state, game);
       yield () => {
         state.panes.closePane(PANE_ID);
+        const tabId = game.roundTabId.peek();
+        if (tabId) closeRoundTab(state, game, tabId, returnTabId);
       };
       if (typeof document !== "undefined") {
         const bannerRoot = document.createElement("div");
         document.body.appendChild(bannerRoot);
+        const endRound = () => {
+          resetPlay(game);
+          openGamePane();
+        };
         render(
           <FindTheVerseReaderBanner
             game={game}
             state={state}
             paneId={PANE_ID}
-            onEnd={() => {
-              resetPlay(game);
-              openGamePane();
-            }}
+            onEnd={endRound}
             onCancelSelect={() => {
               game.selectingViaToolbar.value = false;
               openGamePane();

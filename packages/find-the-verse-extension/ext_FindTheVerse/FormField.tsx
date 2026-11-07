@@ -12,7 +12,7 @@ interface FormFieldProps {
   children: ComponentChildren;
 }
 
-const ZOOM = "ftv-error-zoom 0.72s ease";
+const ZOOM_CLASS = "ftv-field-error--zoom";
 
 /**
  * Outer wrapper for one form control. The error message lives here, not on
@@ -28,52 +28,21 @@ export function FormField({ error, pulse = 0, children }: FormFieldProps) {
     const popup = popupRef.current;
     if (!error || !field || !popup) return;
     field.scrollIntoView({ behavior: "smooth", block: "center" });
-    popup.style.animation = "none";
+    // Restarting a CSS animation needs a reflow between removing and adding it.
+    popup.classList.remove(ZOOM_CLASS);
     void popup.offsetWidth;
-    popup.style.animation = ZOOM;
+    popup.classList.add(ZOOM_CLASS);
   }, [error, pulse]);
 
   return (
     <div
       ref={fieldRef}
       aria-invalid={error ? "true" : "false"}
-      style={
-        error
-          ? {
-              borderRadius: "8px",
-              outline: "2px solid #e63946",
-              outlineOffset: "4px",
-            }
-          : undefined
-      }
+      className={error ? "ftv-field--error" : undefined}
     >
-      <style>{`
-        @keyframes ftv-error-zoom {
-          0% { transform: scale(0.6); opacity: 0; }
-          15% { transform: scale(1.12); opacity: 1; }
-          30% { transform: scale(1); opacity: 1; }
-          55% { transform: scale(1.12); opacity: 1; }
-          75% { transform: scale(1); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
       {children}
       {error ? (
-        <p
-          ref={popupRef}
-          role="alert"
-          style={{
-            margin: "8px 0 0",
-            padding: "8px 10px",
-            borderRadius: "8px",
-            background: "var(--sb-background, #fff)",
-            color: "#e63946",
-            border: "1px solid #e63946",
-            fontSize: "0.85rem",
-            transformOrigin: "center top",
-            boxShadow: "0 8px 20px var(--sb-shadow-color, rgba(0, 0, 0, 0.15))",
-          }}
-        >
+        <p ref={popupRef} role="alert" className="ftv-field-error">
           {error}
         </p>
       ) : null}

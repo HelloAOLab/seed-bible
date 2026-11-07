@@ -10,11 +10,12 @@ import {
   buildPartialReveal,
   chapterOutOfRange,
   evaluateGuess,
-  countFilledHints,
+  emptyHintIndexes,
   openSearchWindow,
   PlayGuesses,
   revealThreshold,
   rangeHighlightCss,
+  ROUND_SCOPE_CLASS,
   tightenWindow,
   versesOutOfRange,
 } from "@packages/find-the-verse-extension/ext_FindTheVerse/gameLogic";
@@ -281,16 +282,17 @@ describe("search window", () => {
   });
 });
 
-describe("countFilledHints", () => {
-  it("counts only chances that have a hint", () => {
+describe("emptyHintIndexes", () => {
+  it("lists the chances whose hint is blank or only spaces", () => {
     expect(
-      countFilledHints([
+      emptyHintIndexes([
         { hint: "a" },
         { hint: "  " },
         { hint: "b" },
         { hint: "" },
       ])
-    ).toBe(2);
+    ).toEqual([1, 3]);
+    expect(emptyHintIndexes([{ hint: "a" }])).toEqual([]);
   });
 });
 
@@ -299,5 +301,19 @@ describe("rangeHighlightCss", () => {
     const css = rangeHighlightCss([], []);
     expect(css).toContain(".sb-highlight-layer");
     expect(css).toContain(".sb-verse-decoration-diminish");
+  });
+
+  it("only reaches the round's reader, not every tab and panel", () => {
+    const css = rangeHighlightCss([], []);
+    for (const rule of css.split("\n")) {
+      expect(rule.startsWith(`.${ROUND_SCOPE_CLASS} `)).toBe(true);
+    }
+  });
+
+  it("greys only the books and chapters it is given", () => {
+    const css = rangeHighlightCss(["GEN"], [3]);
+    expect(css).toContain("#booktab-GEN");
+    expect(css).toContain("#chapter-btn-3");
+    expect(rangeHighlightCss([], [])).not.toContain("#booktab-");
   });
 });

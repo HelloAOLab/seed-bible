@@ -40,7 +40,7 @@ describe("FormField", () => {
 
     const popup = root.querySelector("[role='alert']");
     expect(popup?.textContent).toBe("Give this game a name.");
-    expect(popup?.getAttribute("style")).toContain("ftv-error-zoom");
+    expect(popup?.classList.contains("ftv-field-error--zoom")).toBe(true);
     expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalled();
 
     act(() => {

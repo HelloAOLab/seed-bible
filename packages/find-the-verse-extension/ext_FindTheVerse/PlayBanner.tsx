@@ -1,8 +1,12 @@
-import { useEffect, useState } from "preact/hooks";
+import type { ComponentChildren } from "preact";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import type { SeedBibleState } from "seed-bible";
-import { resultMessage } from "./gameLogic";
+import { resultMessage, revealThreshold } from "./gameLogic";
 import { chanceView, GameName, HintControl } from "./PlayStatus";
+import { revealHint, revealVerse } from "./roundActions";
+import { isRoundTabSelected, roundReading } from "./roundTab";
 import type { GameSignals } from "./types";
+import type WinCelebrationComponent from "./WinCelebration";
 
 const NS = "find-the-verse-extension";
 
@@ -20,26 +24,10 @@ interface ToolbarAnchor {
   follow: boolean;
 }
 
-const strip = {
-  position: "fixed" as const,
-  zIndex: 90,
-  left: "12px",
-  right: "12px",
-  bottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)",
-  maxWidth: "28rem",
-  margin: "0 auto",
-  padding: "10px 12px",
-  background: "var(--sb-reader-toolbar-background, #fff)",
-  color: "var(--sb-reader-toolbar-font-color, #333)",
-  border: "var(--sb-reader-toolbar-border, 1px solid rgba(0, 0, 0, 0.14))",
-  boxShadow:
-    "var(--sb-reader-toolbar-box-shadow, 0 8px 32px rgba(0, 0, 0, 0.12))",
-  borderRadius: "1.25rem",
-  display: "flex",
-  flexDirection: "column" as const,
-  gap: "8px",
-  transition: "transform 0.3s ease",
-};
+interface ReaderChrome {
+  anchor: ToolbarAnchor | null;
+  moreMenuOpen: boolean;
+}
 
 /** Same slide the reader toolbar uses when a phone scrolls the chapter. */
 function readTranslateY(el: HTMLElement): number {
@@ -52,227 +40,172 @@ function readTranslateY(el: HTMLElement): number {
   }
 }
 
+function sameAnchor(a: ToolbarAnchor | null, b: ToolbarAnchor | null) {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.bottom === b.bottom && a.slide === b.slide && a.follow === b.follow;
+}
+
 /**
+ * Watches the reader's toolbar for the bar, and only while the bar is up.
+ *
  * On a phone the chapter bar and the tab bar are one piece. Scrolling the
- * chapter slides that piece down by the tab bar's height, and the chapter
- * bar stays. This reports where to pin the banner so it rides along above
- * the chapter bar instead of being covered by it.
+ * chapter slides that piece down by the tab bar's height, and the chapter bar
+ * stays. `anchor` is where to pin the bar so it rides along above the chapter
+ * bar instead of being covered by it.
+ *
+ * The phone More menu opens upward from the tab bar and would be covered by
+ * the bar, so `moreMenuOpen` hides it while the menu is up.
+ *
+ * The toolbar can be replaced at any depth, so this watches all of `<body>`
+ * and re-attaches its size watcher to whichever toolbar is there now.
  */
-function useToolbarAnchor(): ToolbarAnchor | null {
-  const [anchor, setAnchor] = useState<ToolbarAnchor | null>(null);
+function useReaderChrome(): ReaderChrome {
+  const [chrome, setChrome] = useState<ReaderChrome>({
+    anchor: null,
+    moreMenuOpen: false,
+  });
 
   useEffect(() => {
-    const measure = () => {
-      const wrap = document.querySelector(".sb-reader-toolbar-wrap");
-      if (!(wrap instanceof HTMLElement)) {
-        setAnchor(null);
-        return;
-      }
-      if (getComputedStyle(wrap).position !== "fixed") {
-        setAnchor(null);
-        return;
-      }
-      const nav = wrap.querySelector(".sb-reader-floating-nav");
-      const target = nav instanceof HTMLElement ? nav : wrap;
+    let watchedWrap: HTMLElement | null = null;
+    let watchedNav: HTMLElement | null = null;
+    const sizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => update())
+        : null;
+
+    const watchSize = (wrap: HTMLElement | null, nav: HTMLElement | null) => {
+      if (wrap === watchedWrap && nav === watchedNav) return;
+      sizeObserver?.disconnect();
+      watchedWrap = wrap;
+      watchedNav = nav;
+      if (wrap) sizeObserver?.observe(wrap);
+      if (nav) sizeObserver?.observe(nav);
+    };
+
+    const measure = (
+      wrap: HTMLElement | null,
+      nav: HTMLElement | null,
+      current: ToolbarAnchor | null
+    ): ToolbarAnchor | null => {
+      if (!wrap || getComputedStyle(wrap).position !== "fixed") return null;
+      const target = nav ?? wrap;
       const slide = wrap.offsetHeight;
       const translateY = readTranslateY(wrap);
       const settled = translateY < 1 || Math.abs(translateY - slide) < 1;
       const follow = document.body.classList.contains("sb-scroll-hide-bars");
-      if (!settled) {
-        setAnchor((current) => (current ? { ...current, follow } : current));
-        return;
-      }
+      // Mid-slide the position is in motion. Keep the last one.
+      if (!settled) return current ? { ...current, follow } : current;
       const restingTop = target.getBoundingClientRect().top - translateY;
       const bottom = Math.max(8, window.innerHeight - restingTop + 8);
-      setAnchor((current) => {
+      return { bottom, slide, follow };
+    };
+
+    function update() {
+      const found = document.querySelector(".sb-reader-toolbar-wrap");
+      const wrap = found instanceof HTMLElement ? found : null;
+      const foundNav = wrap?.querySelector(".sb-reader-floating-nav");
+      const nav = foundNav instanceof HTMLElement ? foundNav : null;
+      watchSize(wrap, nav);
+      const moreMenuOpen =
+        document.querySelector(".sb-mobile-more-menu") !== null;
+      setChrome((current) => {
+        const anchor = measure(wrap, nav, current.anchor);
         if (
-          current &&
-          current.bottom === bottom &&
-          current.slide === slide &&
-          current.follow === follow
+          current.moreMenuOpen === moreMenuOpen &&
+          sameAnchor(current.anchor, anchor)
         ) {
           return current;
         }
-        return { bottom, slide, follow };
+        return { anchor, moreMenuOpen };
       });
-    };
-
-    measure();
-    const wrap = document.querySelector(".sb-reader-toolbar-wrap");
-    const observer =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(measure)
-        : null;
-    if (wrap instanceof HTMLElement) {
-      observer?.observe(wrap);
-      const nav = wrap.querySelector(".sb-reader-floating-nav");
-      if (nav instanceof HTMLElement) observer?.observe(nav);
     }
-    const classObserver = new MutationObserver(measure);
-    classObserver.observe(document.body, {
+
+    update();
+    const bodyObserver = new MutationObserver(update);
+    bodyObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
       attributes: true,
       attributeFilter: ["class"],
     });
-    window.addEventListener("resize", measure);
+    window.addEventListener("resize", update);
     return () => {
-      observer?.disconnect();
-      classObserver.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, []);
-
-  return anchor;
-}
-
-/**
- * The phone More menu opens upward from the tab bar, and this strip sits
- * above that bar, so it covers the menu. Hide it while the menu is up.
- * Closing the menu puts the strip back; the round keeps going.
- */
-function useMoreMenuOpen(): boolean {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    let menuObserver: MutationObserver | null = null;
-    let watched: HTMLElement | null = null;
-
-    const sync = () => {
-      const next = document.querySelector(".sb-mobile-more-menu") !== null;
-      setOpen((current) => (current === next ? current : next));
-    };
-
-    const watchWrap = () => {
-      const wrap = document.querySelector(".sb-reader-toolbar-wrap");
-      if (!(wrap instanceof HTMLElement)) {
-        if (watched) {
-          menuObserver?.disconnect();
-          watched = null;
-          setOpen(false);
-        }
-        return;
-      }
-      if (wrap === watched) return;
-      menuObserver?.disconnect();
-      watched = wrap;
-      menuObserver = new MutationObserver(sync);
-      menuObserver.observe(wrap, { childList: true, subtree: true });
-      sync();
-    };
-
-    watchWrap();
-    const bodyObserver = new MutationObserver(watchWrap);
-    bodyObserver.observe(document.body, { childList: true });
-    return () => {
-      menuObserver?.disconnect();
+      sizeObserver?.disconnect();
       bodyObserver.disconnect();
+      window.removeEventListener("resize", update);
     };
   }, []);
 
-  return open;
+  return chrome;
 }
 
-const row = {
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-};
-
-const actionButton = {
-  border:
-    "1px solid color-mix(in srgb, var(--sb-font-color, #333) 16%, transparent)",
-  background: "var(--sb-secondary-color, #f3f3f3)",
-  color: "var(--sb-font-color, #333)",
-  cursor: "pointer",
-  fontWeight: 600,
-  fontSize: "0.85rem",
-  lineHeight: 1.2,
-  padding: "8px 14px",
-  borderRadius: "0.75rem",
-  flexShrink: 0,
-};
-
-/**
- * Shown over the reader while a round is running and the side pane is closed.
- * On a phone the pane covers the reader, so leaving it has to keep the round
- * going. This strip is what tells the player a game is still on.
- */
-export function FindTheVerseReaderBanner({
-  game,
-  state,
-  paneId,
-  onEnd,
-  onCancelSelect,
-}: PlayBannerProps) {
-  const hintOpenFor = game.hintOpenFor.value;
-  const phase = game.phase.value;
-  const selecting = game.selectingViaToolbar.value;
-  const paneOpen = state.panes.panes.value.some((pane) => pane.id === paneId);
-  const moreMenuOpen = useMoreMenuOpen();
-  const anchor = useToolbarAnchor();
-  const translate = (key: string, options?: Record<string, unknown>) =>
-    state.i18n.t(key, { ...options, ns: NS });
-  const placed = anchor
+/** Only mounted while there is something to show, so its watchers are too. */
+function PlacedBar({ children }: { children: ComponentChildren }) {
+  const { anchor, moreMenuOpen } = useReaderChrome();
+  if (moreMenuOpen) return null;
+  const style = anchor
     ? {
-        ...strip,
         zIndex: 102,
         bottom: `${anchor.bottom}px`,
         transform: anchor.follow
           ? `translateY(${anchor.slide}px)`
           : "translateY(0)",
       }
-    : strip;
+    : undefined;
+  return (
+    <div className="ftv-bar" style={style}>
+      {children}
+    </div>
+  );
+}
 
-  if (paneOpen || moreMenuOpen) return null;
-
-  if (phase === "creating" && selecting) {
-    return (
-      <div style={placed}>
-        <p style={{ margin: 0, fontSize: "0.9rem" }}>
-          {translate("select-verse-banner", {
-            defaultValue:
-              "Tap any verse in the reader, then choose Set as target in the toolbar.",
-          })}
-        </p>
-        <button type="button" style={actionButton} onClick={onCancelSelect}>
-          {translate("cancel", { defaultValue: "Cancel" })}
-        </button>
-      </div>
-    );
-  }
-
-  if (phase !== "playing") return null;
-
+function RoundBar({
+  game,
+  state,
+  onEnd,
+  translate,
+}: {
+  game: GameSignals;
+  state: SeedBibleState;
+  onEnd: () => void;
+  translate: (key: string, options?: Record<string, unknown>) => string;
+}) {
   const steps = game.steps.value;
   const guessCount = game.guessCount.value;
   const won = game.won.value;
   const revealed = game.revealed.value;
   const lastResult = game.lastResult.value;
+  const partialRevealText = game.partialRevealText.value;
+  const notice = game.notice.value;
+  const hintOpenFor = game.hintOpenFor.value;
+  const target = game.targetVerse.value;
+  const roundTabId = game.roundTabId.value;
+  const onRoundTab = isRoundTabSelected(state, game);
   const { chancesLeft, chanceIndex, currentHint, outOfChances } = chanceView(
     steps,
     guessCount
   );
-  const gameName = game.name.value;
+  const revealReady = !won && guessCount >= revealThreshold(steps.length);
 
   if (won) {
     return (
-      <div style={placed}>
-        <div style={row}>
-          <p style={{ margin: 0, fontWeight: 700, flex: 1 }}>
-            {translate("you-found-it", { defaultValue: "You found it!" })}
-          </p>
-          <button type="button" style={actionButton} onClick={onEnd}>
-            {translate("back-to-menu", { defaultValue: "Back to main menu" })}
-          </button>
-        </div>
+      <div className="ftv-bar-row">
+        <p className="ftv-bar-title">
+          {translate("you-found-it", { defaultValue: "You found it!" })}
+        </p>
+        <button type="button" className="ftv-bar-button" onClick={onEnd}>
+          {translate("back-to-menu", { defaultValue: "Back to games" })}
+        </button>
       </div>
     );
   }
 
   return (
-    <div style={placed}>
-      <GameName name={gameName} fontSize="0.95rem" />
-      <div style={row}>
-        <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>
+    <>
+      <GameName name={game.name.value} />
+      <div className="ftv-bar-row">
+        <span className="ftv-bar-chances">
           {outOfChances
             ? translate("out-of-chances", { defaultValue: "Out of chances" })
             : translate("chances-left", {
@@ -288,29 +221,186 @@ export function FindTheVerseReaderBanner({
             game.hintOpenFor.value = chanceIndex;
           }}
           t={translate}
-          buttonBackground="var(--sb-secondary-color, #f3f3f3)"
         />
         <button
           type="button"
-          style={{ ...actionButton, marginLeft: "auto" }}
+          className="ftv-bar-button ftv-bar-button--end"
           onClick={onEnd}
         >
           {translate("end-game", { defaultValue: "End game" })}
         </button>
       </div>
-      {revealed ? (
-        <p style={{ margin: 0, fontSize: "0.85rem" }}>
+      {!onRoundTab && roundTabId ? (
+        <div className="ftv-bar-row">
+          <p className="ftv-bar-text">
+            {translate("game-in-other-tab", {
+              defaultValue: "Your game is in another tab.",
+            })}
+          </p>
+          <button
+            type="button"
+            className="ftv-bar-button"
+            onClick={() => state.app.selectTab(roundTabId)}
+          >
+            {translate("return-to-game", { defaultValue: "Return to game" })}
+          </button>
+        </div>
+      ) : revealed ? (
+        <p className="ftv-bar-text">
           {translate("keep-going", {
             defaultValue: "Better luck next time — keep going!",
           })}
         </p>
       ) : (
         lastResult && (
-          <p style={{ margin: 0, fontSize: "0.85rem" }}>
-            {resultMessage(lastResult, translate)}
-          </p>
+          <p className="ftv-bar-text">{resultMessage(lastResult, translate)}</p>
         )
       )}
-    </div>
+      {partialRevealText && !revealed && (
+        <p className="ftv-bar-text ftv-bar-text--italic">{partialRevealText}</p>
+      )}
+      {revealReady && !revealed && (
+        <div className="ftv-bar-row">
+          {!partialRevealText && target?.verseText.trim() ? (
+            <button
+              type="button"
+              className="ftv-bar-button"
+              onClick={() => revealHint(game)}
+            >
+              {translate("reveal-hint", { defaultValue: "Reveal hint" })}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="ftv-bar-button"
+            onClick={() =>
+              void revealVerse(
+                state,
+                game,
+                translate("open-verse-failed", {
+                  defaultValue: "Couldn't open that verse.",
+                })
+              )
+            }
+          >
+            {translate("reveal-verse", { defaultValue: "Reveal verse" })}
+          </button>
+        </div>
+      )}
+      {notice && <p className="ftv-bar-text ftv-notice">{notice}</p>}
+    </>
+  );
+}
+
+type Celebration = typeof WinCelebrationComponent;
+
+/**
+ * The full-screen win moment. Its code and styles are fetched on the first
+ * win, not when the extension starts.
+ */
+function WinMoment({
+  game,
+  state,
+  onEnd,
+  translate,
+}: {
+  game: GameSignals;
+  state: SeedBibleState;
+  onEnd: () => void;
+  translate: (key: string, options?: Record<string, unknown>) => string;
+}) {
+  const won = game.won.value && game.phase.value === "playing";
+  const round = game.playRound.value;
+  const target = game.targetVerse.value;
+  const [View, setView] = useState<Celebration | null>(null);
+  const [dismissedRound, setDismissedRound] = useState<number | null>(null);
+  const dismiss = useCallback(() => setDismissedRound(round), [round]);
+
+  useEffect(() => {
+    if (!won || View) return;
+    let cancelled = false;
+    void import("./WinCelebration").then((module) => {
+      if (!cancelled) setView(() => module.default);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [won, View]);
+
+  if (!won || !target || !View || dismissedRound === round) return null;
+  return (
+    <View
+      target={target}
+      guessCount={game.guessCount.value}
+      translationBooks={
+        roundReading(state, game)?.translationBooks.value?.books ?? undefined
+      }
+      t={translate}
+      onBack={onEnd}
+      onDismiss={dismiss}
+    />
+  );
+}
+
+/**
+ * Shown over the reader while a round is running and the side pane is closed.
+ * On a phone the pane covers the reader, so leaving it has to keep the round
+ * going. This strip is what tells the player a game is still on.
+ */
+export function FindTheVerseReaderBanner({
+  game,
+  state,
+  paneId,
+  onEnd,
+  onCancelSelect,
+}: PlayBannerProps) {
+  const phase = game.phase.value;
+  const selecting = game.selectingViaToolbar.value;
+  const paneOpen = state.panes.panes.value.some((pane) => pane.id === paneId);
+  const translate = (key: string, options?: Record<string, unknown>) =>
+    state.i18n.t(key, { ...options, ns: NS });
+
+  let bar: ComponentChildren = null;
+  if (!paneOpen && phase === "creating" && selecting) {
+    bar = (
+      <PlacedBar>
+        <p className="ftv-bar-text">
+          {translate("select-verse-banner", {
+            defaultValue:
+              "Tap any verse in the reader, then choose Set as target in the toolbar.",
+          })}
+        </p>
+        <button
+          type="button"
+          className="ftv-bar-button"
+          onClick={onCancelSelect}
+        >
+          {translate("cancel", { defaultValue: "Cancel" })}
+        </button>
+      </PlacedBar>
+    );
+  } else if (!paneOpen && phase === "playing") {
+    bar = (
+      <PlacedBar>
+        <RoundBar
+          game={game}
+          state={state}
+          onEnd={onEnd}
+          translate={translate}
+        />
+      </PlacedBar>
+    );
+  }
+
+  return (
+    <>
+      {bar}
+      <WinMoment
+        game={game}
+        state={state}
+        onEnd={onEnd}
+        translate={translate}
+      />
+    </>
   );
 }

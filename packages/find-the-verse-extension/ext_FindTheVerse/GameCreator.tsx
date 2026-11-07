@@ -5,7 +5,7 @@ import { extractContentText, parseVerseReference } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
 import { formatReference, isKnownBookId } from "./books";
 import { FormField } from "./FormField";
-import { countFilledHints } from "./gameLogic";
+import { emptyHintIndexes } from "./gameLogic";
 import { MIN_HINTS } from "./gameSession";
 import type { GameDraft, GameSignals } from "./types";
 
@@ -18,104 +18,15 @@ interface GameCreatorProps {
   onCancel: () => void;
 }
 
-const s = {
-  root: {
-    padding: "16px",
-    color: "var(--sb-font-color, #333)",
-    display: "flex" as const,
-    flexDirection: "column" as const,
-    gap: "20px",
-  },
-  heading: {
-    fontSize: "1.1rem",
-    fontWeight: 600,
-    margin: 0,
-  },
-  label: {
-    fontSize: "0.8rem",
-    fontWeight: 600,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
-    opacity: 0.6,
-    marginBottom: "6px",
-  },
-  input: {
-    width: "100%",
-    boxSizing: "border-box" as const,
-    padding: "8px 10px",
-    borderRadius: "6px",
-    border: "1px solid var(--sb-divider-color, rgba(0, 0, 0, 0.12))",
-    background: "var(--sb-background, #fff)",
-    color: "var(--sb-font-color, #333)",
-    fontSize: "0.95rem",
-  },
-  btn: {
-    padding: "8px 14px",
-    borderRadius: "6px",
-    border: "none",
-    cursor: "pointer",
-    fontSize: "0.9rem",
-    fontWeight: 500,
-  },
-  primaryBtn: {
-    background: "var(--sb-primary-color, #4a6cf7)",
-    color: "var(--sb-primary-font-color, #fff)",
-  },
-  secondaryBtn: {
-    background: "var(--sb-tertiary-color, #f0f0f0)",
-    color: "var(--sb-font-color, #333)",
-  },
-  versePreview: {
-    padding: "10px 12px",
-    borderRadius: "8px",
-    background: "var(--sb-tertiary-color, #f0f0f0)",
-    fontSize: "0.9rem",
-  },
-  stepRow: {
-    display: "flex" as const,
-    gap: "8px",
-    alignItems: "flex-start" as const,
-  },
-  stepNum: {
-    minWidth: "24px",
-    fontWeight: 600,
-    opacity: 0.5,
-    fontSize: "0.85rem",
-    paddingTop: "8px",
-  },
-  removeBtn: {
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    color: "#e63946",
-    padding: "4px",
-    marginTop: "4px",
-    fontSize: "1rem",
-    lineHeight: 1,
-  },
-  hintBox: {
-    flex: 1,
-    resize: "none" as const,
-    overflow: "hidden",
-    fontFamily: "inherit",
-    lineHeight: 1.4,
-  },
-  selectingBanner: {
-    padding: "10px 12px",
-    borderRadius: "8px",
-    background: "var(--sb-primary-color, #4a6cf7)",
-    color: "var(--sb-primary-font-color, #fff)",
-    fontSize: "0.9rem",
-  },
-};
-
 function GrowingHint({
   value,
   placeholder,
+  invalid,
   onChange,
 }: {
   value: string;
   placeholder: string;
+  invalid: boolean;
   onChange: (value: string) => void;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -136,7 +47,8 @@ function GrowingHint({
     <textarea
       ref={ref}
       rows={1}
-      style={{ ...s.input, ...s.hintBox }}
+      className={`ftv-input ftv-hint-box${invalid ? " ftv-input--invalid" : ""}`}
+      aria-invalid={invalid ? "true" : "false"}
       placeholder={placeholder}
       value={value}
       onInput={(event) => onChange((event.target as HTMLTextAreaElement).value)}
@@ -225,7 +137,8 @@ export function GameCreator({
         verseNumber: parsed.verse,
         verseText,
       };
-      if (tab) {
+      // A shared session would show everyone in it the secret verse.
+      if (tab && !tab.sharedSession) {
         void tab.readingState.selectTranslationAndChapter(
           translationId,
           parsed.book,
@@ -266,18 +179,19 @@ export function GameCreator({
         defaultValue: "Pick the secret verse before saving.",
       });
 
-  const hintsShort = countFilledHints(steps) < MIN_HINTS;
+  const emptyHints = emptyHintIndexes(steps);
+  const hintsIncomplete = emptyHints.length > 0;
   const hintErrorMessage = t("hints-needed", {
-    defaultValue: "At least 3 hints are needed.",
+    defaultValue: "Fill in every hint, or remove the empty chances.",
   });
 
   // One field at a time. A name missed on Save or Start wins, then the verse,
-  // then too few hints. Fixing the current one lets the next message take its place.
+  // then an empty hint. Fixing the current one lets the next message take its place.
   let activeError: "name" | "verse" | "chances" | null = null;
   if (saveAttempted.value && nameMissing) activeError = "name";
   else if (refError.value || (saveAttempted.value && target === null)) {
     activeError = "verse";
-  } else if (saveAttempted.value && hintsShort) activeError = "chances";
+  } else if (saveAttempted.value && hintsIncomplete) activeError = "chances";
 
   const nameError = activeError === "name" ? nameErrorMessage : null;
   const verseError = activeError === "verse" ? verseErrorMessage : null;
@@ -295,7 +209,7 @@ export function GameCreator({
       !name ||
       !verse ||
       game.steps.peek().length < MIN_HINTS ||
-      countFilledHints(game.steps.peek()) < MIN_HINTS
+      emptyHintIndexes(game.steps.peek()).length > 0
     ) {
       rejectSave();
       return null;
@@ -357,20 +271,20 @@ export function GameCreator({
   }
 
   return (
-    <div style={s.root}>
-      <p style={s.heading}>
+    <div className="ftv-creator">
+      <p className="ftv-creator-heading">
         {editing
           ? t("edit-game", { defaultValue: "Edit game" })
           : t("create-game", { defaultValue: "Create a game" })}
       </p>
 
       <FormField error={nameError} pulse={errorPulse.value}>
-        <div style={s.label}>
+        <div className="ftv-label">
           {t("game-name", { defaultValue: "Game name" })}
           <span aria-hidden="true"> *</span>
         </div>
         <input
-          style={s.input}
+          className="ftv-input"
           type="text"
           required
           aria-required="true"
@@ -385,25 +299,20 @@ export function GameCreator({
       </FormField>
 
       <FormField error={verseError} pulse={errorPulse.value}>
-        <div style={s.label}>
+        <div className="ftv-label">
           {t("secret-verse", { defaultValue: "Secret verse" })}
           <span aria-hidden="true"> *</span>
         </div>
 
         {selecting ? (
-          <div style={s.selectingBanner}>
+          <div className="ftv-selecting-banner">
             {t("select-verse-banner", {
               defaultValue:
                 "Tap any verse in the reader, then choose Set as target in the toolbar.",
             })}
             <button
               type="button"
-              style={{
-                ...s.btn,
-                ...s.secondaryBtn,
-                marginTop: "8px",
-                display: "block",
-              }}
+              className="ftv-btn"
               onClick={() => {
                 game.selectingViaToolbar.value = false;
               }}
@@ -414,7 +323,7 @@ export function GameCreator({
         ) : (
           <>
             {target && (
-              <div style={{ ...s.versePreview, marginBottom: "8px" }}>
+              <div className="ftv-verse-preview">
                 <strong>
                   {formatReference(
                     target.bookId,
@@ -424,22 +333,15 @@ export function GameCreator({
                   )}
                 </strong>
                 {target.verseText && (
-                  <p
-                    style={{
-                      margin: "6px 0 0",
-                      fontStyle: "italic",
-                      opacity: 0.85,
-                      fontSize: "0.9rem",
-                    }}
-                  >
+                  <p className="ftv-verse-preview-text">
                     &ldquo;{target.verseText}&rdquo;
                   </p>
                 )}
               </div>
             )}
-            <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+            <div className="ftv-reference-row">
               <input
-                style={{ ...s.input, flex: 1 }}
+                className="ftv-input"
                 type="text"
                 placeholder={t("reference-placeholder", {
                   defaultValue: "e.g. John 1:1",
@@ -455,7 +357,7 @@ export function GameCreator({
               />
               <button
                 type="button"
-                style={{ ...s.btn, ...s.primaryBtn }}
+                className="ftv-btn ftv-btn--primary"
                 onClick={() => void handleRefGo()}
               >
                 {t("go", { defaultValue: "Go" })}
@@ -463,7 +365,7 @@ export function GameCreator({
             </div>
             <button
               type="button"
-              style={{ ...s.btn, ...s.secondaryBtn }}
+              className="ftv-btn"
               onClick={() => {
                 game.selectingViaToolbar.value = true;
               }}
@@ -475,33 +377,34 @@ export function GameCreator({
       </FormField>
 
       <FormField error={chanceError} pulse={errorPulse.value}>
-        <div style={s.label}>
+        <div className="ftv-label">
           {t("chances-label", {
             total: steps.length,
             defaultValue: "Chances ({{total}})",
           })}
         </div>
-        <p style={{ margin: "0 0 8px", opacity: 0.6, fontSize: "0.85rem" }}>
+        <p className="ftv-chances-help">
           {t("chances-start", {
             defaultValue:
-              "Start with 7. You can add more or remove down to 3. At least 3 hints are needed.",
+              "Start with 7. You can add more or remove down to 3. Every chance needs a hint.",
           })}
         </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+        <div className="ftv-steps">
           {steps.map((step, i) => (
-            <div key={i} style={s.stepRow}>
-              <span style={s.stepNum}>#{i + 1}</span>
+            <div key={i} className="ftv-step-row">
+              <span className="ftv-step-num">#{i + 1}</span>
               <GrowingHint
                 placeholder={t("hint-placeholder", {
                   defaultValue: "Hint…",
                 })}
+                invalid={chanceError !== null && emptyHints.includes(i)}
                 value={step.hint}
                 onChange={(hint) => handleStepHintChange(i, hint)}
               />
               {steps.length > MIN_HINTS && (
                 <button
                   type="button"
-                  style={s.removeBtn}
+                  className="ftv-step-remove"
                   title={t("remove-chance", {
                     defaultValue: "Remove this chance",
                   })}
@@ -515,35 +418,19 @@ export function GameCreator({
         </div>
         <button
           type="button"
-          style={{ ...s.btn, ...s.secondaryBtn, marginTop: "8px" }}
+          className="ftv-btn ftv-add-step"
           onClick={addStep}
         >
           {t("add-chance", { defaultValue: "+ Add chance" })}
         </button>
       </FormField>
 
-      {notice && (
-        <p
-          style={{
-            margin: 0,
-            color: "#e63946",
-            fontSize: "0.9rem",
-          }}
-        >
-          {notice}
-        </p>
-      )}
+      {notice && <p className="ftv-notice">{notice}</p>}
 
-      {/* Actions */}
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+      <div className="ftv-creator-actions">
         <button
           type="button"
-          style={{
-            ...s.btn,
-            ...s.primaryBtn,
-            flex: "1 1 8rem",
-            opacity: saving.value ? 0.45 : 1,
-          }}
+          className="ftv-btn ftv-btn--primary ftv-btn--grow"
           disabled={saving.value}
           onClick={() => void handlePlay()}
         >
@@ -553,12 +440,7 @@ export function GameCreator({
         </button>
         <button
           type="button"
-          style={{
-            ...s.btn,
-            ...s.secondaryBtn,
-            flex: "1 1 8rem",
-            opacity: saving.value ? 0.45 : 1,
-          }}
+          className="ftv-btn ftv-btn--grow"
           disabled={saving.value}
           onClick={handleSave}
         >
@@ -566,11 +448,7 @@ export function GameCreator({
             ? t("save-game", { defaultValue: "Save game" })
             : t("sign-in-to-save", { defaultValue: "Sign in to save games" })}
         </button>
-        <button
-          type="button"
-          style={{ ...s.btn, ...s.secondaryBtn }}
-          onClick={onCancel}
-        >
+        <button type="button" className="ftv-btn" onClick={onCancel}>
           {t("cancel", { defaultValue: "Cancel" })}
         </button>
       </div>

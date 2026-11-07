@@ -1,10 +1,11 @@
+import { batch } from "@preact/signals";
 import { openSearchWindow } from "./gameLogic";
 import type { GameSignals, GameStep, TargetVerse } from "./types";
 
 /** A starting suggestion. Creators can remove rows down to {@link MIN_HINTS}. */
 export const SUGGESTED_CHANCES = 7;
 
-/** A game cannot start or be saved with fewer filled hints than this. */
+/** The fewest chances a game can have. Every chance needs a hint. */
 export const MIN_HINTS = 3;
 
 export function blankSteps(): GameStep[] {
@@ -24,25 +25,29 @@ export function resetDraft(game: GameSignals) {
 
 /**
  * Ends the round and the draft together. The guess effect treats every verse
- * tap as a guess while `phase` is `"playing"`, including after the pane closes.
+ * tap in the round's tab as a guess while `phase` is `"playing"`, including
+ * after the pane closes. The round's tab itself is closed by `init`, which
+ * watches `phase`.
  */
 export function resetPlay(game: GameSignals) {
-  resetDraft(game);
-  game.phase.value = "idle";
-  game.guessCount.value = 0;
-  game.lastResult.value = null;
-  game.won.value = false;
-  game.searchWindow.value = openSearchWindow();
-  game.revealed.value = false;
-  game.partialRevealText.value = "";
-  game.hintOpenFor.value = null;
-  game.playRound.value += 1;
+  batch(() => {
+    resetDraft(game);
+    game.phase.value = "idle";
+    game.guessCount.value = 0;
+    game.lastResult.value = null;
+    game.won.value = false;
+    game.searchWindow.value = openSearchWindow();
+    game.revealed.value = false;
+    game.partialRevealText.value = "";
+    game.hintOpenFor.value = null;
+    game.playRound.value += 1;
+  });
 }
 
 /**
- * Starts a round from a draft or a saved game. `resetPlay` runs first so a
- * guess already sitting in the reader is not scored, and so a save that is
- * still finishing does not clear this round when it completes.
+ * Starts a round from a draft or a saved game, played in `tabId`. `resetPlay`
+ * runs first so a save that is still finishing does not clear this round when
+ * it completes.
  */
 export function beginRound(
   game: GameSignals,
@@ -52,20 +57,15 @@ export function beginRound(
     targetVerse: TargetVerse;
     steps: readonly GameStep[];
   },
-  reading:
-    | {
-        clearSelectedVerses: () => void;
-        selectChapter: (bookId: string, chapter: number) => unknown;
-      }
-    | null
-    | undefined
+  tabId: string
 ) {
-  reading?.clearSelectedVerses();
-  resetPlay(game);
-  game.currentGameId.value = draft.id;
-  game.name.value = draft.name;
-  game.targetVerse.value = draft.targetVerse;
-  game.steps.value = draft.steps.map((step) => ({ hint: step.hint }));
-  game.phase.value = "playing";
-  void reading?.selectChapter("GEN", 1);
+  batch(() => {
+    resetPlay(game);
+    game.currentGameId.value = draft.id;
+    game.name.value = draft.name;
+    game.targetVerse.value = draft.targetVerse;
+    game.steps.value = draft.steps.map((step) => ({ hint: step.hint }));
+    game.roundTabId.value = tabId;
+    game.phase.value = "playing";
+  });
 }

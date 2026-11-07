@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import {
   createSavedGamesController,
-  GAMES_ADDRESS,
+  gameAddress,
   GAMES_MARKER,
   loadGames,
   savedGamesErrorMessage,
@@ -40,105 +40,151 @@ function draftOf(game: SavedGame) {
   return { name: game.name, targetVerse: game.targetVerse, steps: game.steps };
 }
 
-function setup(userId: string | null = "user-1") {
+/**
+ * A records server for one user: data items by address, each with markers.
+ * Lists one page of `pageSize` items at a time, like the real server.
+ */
+function fakeRecords(pageSize = 50) {
+  const items = new Map<string, { data: unknown; markers: string[] }>();
+  const os = {
+    listDataByMarker: vi.fn(
+      async (_record: string, marker: string, lastAddress?: string) => {
+        const matching = [...items.entries()]
+          .filter(([, item]) => item.markers.includes(marker))
+          .sort(([a], [b]) => a.localeCompare(b));
+        const after = lastAddress
+          ? matching.filter(([address]) => address > lastAddress)
+          : matching;
+        return {
+          success: true as const,
+          items: after
+            .slice(0, pageSize)
+            .map(([address, item]) => ({ address, data: item.data })),
+          totalCount: matching.length,
+        };
+      }
+    ),
+    getData: vi.fn(async (_record: string, address: string) => {
+      const item = items.get(address);
+      return item
+        ? { success: true as const, data: item.data }
+        : { success: false as const, errorCode: "data_not_found" };
+    }),
+    recordData: vi.fn(
+      async (
+        _record: string,
+        address: string,
+        data: unknown,
+        options: { marker?: string }
+      ) => {
+        items.set(address, {
+          data,
+          markers: options.marker ? [options.marker] : [],
+        });
+        return { success: true as const };
+      }
+    ),
+    eraseData: vi.fn(async (_record: string, address: string) => {
+      if (!items.delete(address)) {
+        return { success: false as const, errorCode: "data_not_found" };
+      }
+      return { success: true as const };
+    }),
+  };
+  const put = (address: string, data: unknown) =>
+    items.set(address, { data, markers: [GAMES_MARKER] });
+  return {
+    os,
+    items,
+    put,
+    putGame: (game: SavedGame) => put(gameAddress(game.id), game),
+    asOs: os as unknown as CasualOSManager,
+  };
+}
+
+function setup(userId: string | null = "user-1", pageSize?: number) {
   const savedGames = signal<SavedGame[]>([]);
   const currentUser = signal(userId);
-  const os = {
-    getData: vi.fn(),
-    recordData: vi.fn().mockResolvedValue({ success: true }),
-  };
+  const records = fakeRecords(pageSize);
   const controller = createSavedGamesController(
     savedGames,
     () => currentUser.value,
-    os as unknown as CasualOSManager
+    records.asOs
   );
-  return { savedGames, currentUser, os, controller };
+  return { savedGames, currentUser, records, controller };
 }
 
 describe("loadGames", () => {
-  it("treats a missing record as an empty list and any other failure as an error", async () => {
-    const os = {
-      getData: vi.fn(),
-    } as unknown as CasualOSManager & { getData: ReturnType<typeof vi.fn> };
+  it("treats a user with no record yet as an empty list, and any other failure as an error", async () => {
+    const { os, asOs } = fakeRecords();
 
-    os.getData.mockResolvedValueOnce({
+    os.listDataByMarker.mockResolvedValueOnce({
       success: false,
-      errorCode: "data_not_found",
-    });
-    await expect(loadGames("user-1", os)).resolves.toEqual({
+      errorCode: "record_not_found",
+    } as never);
+    await expect(loadGames("user-1", asOs)).resolves.toEqual({
       status: "ok",
       games: [],
-      preserved: [],
     });
 
-    os.getData.mockResolvedValueOnce({ success: true, data: null });
-    await expect(loadGames("user-1", os)).resolves.toEqual({
-      status: "ok",
-      games: [],
-      preserved: [],
-    });
-
-    os.getData.mockResolvedValueOnce({
+    os.listDataByMarker.mockResolvedValueOnce({
       success: false,
       errorCode: "server_error",
-    });
-    await expect(loadGames("user-1", os)).resolves.toEqual({
+    } as never);
+    await expect(loadGames("user-1", asOs)).resolves.toEqual({
       status: "error",
     });
 
-    os.getData.mockRejectedValueOnce(new Error("offline"));
-    await expect(loadGames("user-1", os)).resolves.toEqual({ status: "error" });
-
-    os.getData.mockResolvedValueOnce({
-      success: true,
-      data: { games: { not: "a list" } },
-    });
-    await expect(loadGames("user-1", os)).resolves.toEqual({ status: "error" });
-  });
-
-  it("drops entries that are not saved games and keeps them to write back", async () => {
-    const broken = [
-      { id: 1 },
-      null,
-      { ...makeGame({ id: "empty-steps" }), steps: [] },
-      { ...makeGame({ id: "null-step" }), steps: [null] },
-      {
-        ...makeGame({ id: "no-text" }),
-        targetVerse: {
-          bookId: "JHN",
-          chapterNumber: 1,
-          verseNumber: 1,
-        },
-      },
-    ];
-    const os = {
-      getData: vi.fn().mockResolvedValue({
-        success: true,
-        data: { games: [makeGame(), ...broken] },
-      }),
-    } as unknown as CasualOSManager;
-
-    await expect(loadGames("user-1", os)).resolves.toEqual({
-      status: "ok",
-      games: [makeGame()],
-      preserved: broken,
+    os.listDataByMarker.mockRejectedValueOnce(new Error("offline"));
+    await expect(loadGames("user-1", asOs)).resolves.toEqual({
+      status: "error",
     });
   });
 
-  it("keeps a game saved before names existed, with a blank name", async () => {
-    const { name: _name, ...legacy } = makeGame({ id: "legacy" });
-    const os = {
-      getData: vi.fn().mockResolvedValue({
-        success: true,
-        data: { games: [legacy] },
-      }),
-    } as unknown as CasualOSManager;
+  it("skips records that are not saved games, newest game first", async () => {
+    const { put, putGame, asOs } = fakeRecords();
+    putGame(makeGame({ id: "older", createdAtMs: 1 }));
+    putGame(makeGame({ id: "newer", createdAtMs: 2 }));
+    put(gameAddress("broken"), { id: "broken", steps: [] });
+    put(gameAddress("not-a-list"), { games: { not: "a list" } });
+    // A valid game stored under another game's address is not that game.
+    put(gameAddress("elsewhere"), makeGame({ id: "someone-else" }));
 
-    await expect(loadGames("user-1", os)).resolves.toEqual({
+    const result = await loadGames("user-1", asOs);
+
+    expect(result).toEqual({
       status: "ok",
-      games: [makeGame({ id: "legacy", name: "" })],
-      preserved: [],
+      games: [
+        makeGame({ id: "newer", createdAtMs: 2 }),
+        makeGame({ id: "older", createdAtMs: 1 }),
+      ],
     });
+  });
+
+  it("keeps a game without a name, with a blank name", async () => {
+    const { put, asOs } = fakeRecords();
+    const { name: _name, ...unnamed } = makeGame({ id: "unnamed" });
+    put(gameAddress("unnamed"), unnamed);
+
+    await expect(loadGames("user-1", asOs)).resolves.toEqual({
+      status: "ok",
+      games: [makeGame({ id: "unnamed", name: "" })],
+    });
+  });
+
+  it("reads every page when there are more games than one page holds", async () => {
+    const { os, putGame, asOs } = fakeRecords(2);
+    for (let i = 0; i < 5; i++) {
+      putGame(makeGame({ id: `g${i}`, createdAtMs: i }));
+    }
+
+    const result = await loadGames("user-1", asOs);
+
+    expect(result.status).toBe("ok");
+    expect(
+      result.status === "ok" && result.games.map((game) => game.id)
+    ).toEqual(["g4", "g3", "g2", "g1", "g0"]);
+    expect(os.listDataByMarker).toHaveBeenCalledTimes(3);
   });
 });
 
@@ -180,107 +226,109 @@ describe("toSavedGame", () => {
 });
 
 describe("saved games controller", () => {
-  it("refuses to write when the load failed, so earlier games stay on the server", async () => {
-    const { controller, os, savedGames } = setup();
-    os.getData.mockResolvedValue({
-      success: false,
-      errorCode: "server_error",
-    });
-
-    await expect(controller.syncUser("user-1")).resolves.toBe("error");
-    await expect(
-      controller.save(draftOf(makeGame({ id: "new" })), null)
-    ).rejects.toMatchObject({ code: "not_loaded" });
-
-    expect(os.recordData).not.toHaveBeenCalled();
-    expect(savedGames.value).toEqual([]);
-    expect(
-      savedGamesErrorMessage(new SavedGamesWriteError("not_loaded"), "save")
-    ).toBe("Couldn't load your saved games, so nothing was changed.");
-  });
-
-  it("keeps games that were still loading when a new one is saved", async () => {
-    const { controller, os, savedGames } = setup();
-    const pending = deferred<{
-      success: boolean;
-      data: { games: SavedGame[] };
-    }>();
-    os.getData.mockReturnValue(pending.promise);
-
-    const syncing = controller.syncUser("user-1");
-    const saving = controller.save(draftOf(makeGame({ id: "new" })), null);
-    pending.resolve({
-      success: true,
-      data: { games: [makeGame({ id: "old" })] },
-    });
-
-    await Promise.all([syncing, saving]);
-
-    expect(savedGames.value).toHaveLength(2);
-    expect(savedGames.value[1]?.id).toBe("old");
-    expect(savedGames.value[0]?.id).not.toBe("old");
-    expect(os.recordData).toHaveBeenCalledTimes(1);
-    const written = os.recordData.mock.calls[0]?.[2] as {
-      games: SavedGame[];
-    };
-    expect(written.games[1]).toMatchObject({ id: "old" });
-    expect(written.games[0]?.id).not.toBe("old");
-    expect(os.recordData).toHaveBeenCalledWith(
-      "user-1",
-      GAMES_ADDRESS,
-      { games: written.games },
-      { marker: GAMES_MARKER }
-    );
-    expect(GAMES_MARKER).toBe("private");
-  });
-
-  it("replaces a game when it is saved again with the same id", async () => {
-    const { controller, os, savedGames } = setup();
-    const original = makeGame({
-      id: "g1",
-      steps: [{ hint: "" }, { hint: "" }],
-    });
-    os.getData.mockResolvedValue({
-      success: true,
-      data: { games: [original] },
-    });
+  it("stores each game in its own private record", async () => {
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "old" }));
     await controller.syncUser("user-1");
+
+    await controller.save(draftOf(makeGame({ name: "New" })), null);
+
+    expect(records.os.recordData).toHaveBeenCalledTimes(1);
+    const [record, address, data, options] =
+      records.os.recordData.mock.calls[0]!;
+    const saved = data as SavedGame;
+    expect(record).toBe("user-1");
+    expect(address).toBe(gameAddress(saved.id));
+    expect(saved.name).toBe("New");
+    expect(options).toEqual({ marker: GAMES_MARKER });
+    expect(GAMES_MARKER.split(":")[0]).toBe("private");
+    expect(savedGames.value.map((game) => game.name)).toEqual([
+      "New",
+      "Youth group",
+    ]);
+    // The other game's record was never rewritten.
+    expect(records.items.get(gameAddress("old"))?.data).toEqual(
+      makeGame({ id: "old" })
+    );
+  });
+
+  it("still saves when another record can't be read", async () => {
+    const { controller, records, savedGames } = setup();
+    const broken = { id: "legacy", games: { not: "a list" } };
+    records.put(gameAddress("legacy"), broken);
+    await expect(controller.syncUser("user-1")).resolves.toBe("ok");
+
+    await controller.save(draftOf(makeGame({ name: "Fresh" })), null);
+
+    expect(savedGames.value.map((game) => game.name)).toEqual(["Fresh"]);
+    expect(records.items.get(gameAddress("legacy"))?.data).toEqual(broken);
+  });
+
+  it("keeps the creation date of an edited game, even before the list has loaded", async () => {
+    const { controller, records, savedGames } = setup();
+    const original = makeGame({ id: "keep", createdAtMs: 50 });
+    records.putGame(original);
 
     await controller.save(
       {
-        name: original.name,
-        targetVerse: original.targetVerse,
-        steps: [{ hint: "" }, { hint: "" }, { hint: "x" }],
+        name: "Kept",
+        targetVerse: { ...original.targetVerse, verseNumber: 16 },
+        steps: [{ hint: "later" }],
       },
-      "g1"
+      "keep"
     );
 
-    expect(savedGames.value).toHaveLength(1);
-    expect(savedGames.value[0]?.id).toBe("g1");
-    expect(savedGames.value[0]?.steps).toHaveLength(3);
-    expect(savedGames.value[0]?.createdAtMs).toBe(original.createdAtMs);
-    const written = os.recordData.mock.calls[0]?.[2] as {
-      games: SavedGame[];
-    };
-    expect(written.games).toHaveLength(1);
+    const stored = records.items.get(gameAddress("keep"))?.data as SavedGame;
+    expect(stored.id).toBe("keep");
+    expect(stored.createdAtMs).toBe(50);
+    expect(stored.targetVerse.verseNumber).toBe(16);
+    expect(records.items.size).toBe(1);
+    expect(savedGames.value.map((game) => game.id)).toEqual(["keep"]);
+  });
+
+  it("replaces an edited game in place in the list", async () => {
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "a", createdAtMs: 3 }));
+    records.putGame(makeGame({ id: "b", createdAtMs: 2 }));
+    await controller.syncUser("user-1");
+
+    await controller.save(
+      { ...draftOf(makeGame()), steps: [{ hint: "x" }, { hint: "y" }] },
+      "b"
+    );
+
+    expect(savedGames.value.map((game) => game.id)).toEqual(["a", "b"]);
+    expect(savedGames.value[1]?.steps).toHaveLength(2);
+  });
+
+  it("refuses to save an edit when the game can't be loaded", async () => {
+    const { controller, records } = setup();
+    records.os.getData.mockResolvedValueOnce({
+      success: false,
+      errorCode: "server_error",
+    } as never);
+
+    await expect(
+      controller.save(draftOf(makeGame()), "game-1")
+    ).rejects.toMatchObject({ code: "not_loaded" });
+    expect(records.os.recordData).not.toHaveBeenCalled();
+    expect(
+      savedGamesErrorMessage(new SavedGamesWriteError("not_loaded"), "save")
+    ).toBe("Couldn't load that game, so nothing was changed.");
   });
 
   it("puts the list back and reports it when the save does not stick", async () => {
-    const { controller, os, savedGames } = setup();
-    const original = makeGame({ id: "old" });
-    os.getData.mockResolvedValue({
-      success: true,
-      data: { games: [original] },
-    });
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "old" }));
     await controller.syncUser("user-1");
-    os.recordData.mockResolvedValueOnce({
+    records.os.recordData.mockResolvedValueOnce({
       success: false,
       errorCode: "server_error",
-    });
+    } as never);
 
     await expect(
       controller.save(draftOf(makeGame({ id: "new" })), null)
-    ).rejects.toBeInstanceOf(SavedGamesWriteError);
+    ).rejects.toMatchObject({ code: "persist_failed" });
 
     expect(savedGames.value.map((game) => game.id)).toEqual(["old"]);
     expect(
@@ -288,18 +336,41 @@ describe("saved games controller", () => {
     ).toBe("Couldn't save that game. Try again.");
   });
 
-  it("puts a deleted game back when the delete does not stick", async () => {
-    const { controller, os, savedGames } = setup();
-    const original = makeGame({ id: "old" });
-    os.getData.mockResolvedValue({
-      success: true,
-      data: { games: [original] },
-    });
+  it("deletes only that game's record", async () => {
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "keep", createdAtMs: 2 }));
+    records.putGame(makeGame({ id: "drop", createdAtMs: 1 }));
     await controller.syncUser("user-1");
-    os.recordData.mockResolvedValueOnce({
+
+    await controller.remove("drop");
+
+    expect(records.os.eraseData).toHaveBeenCalledWith(
+      "user-1",
+      gameAddress("drop")
+    );
+    expect(records.items.has(gameAddress("keep"))).toBe(true);
+    expect(savedGames.value.map((game) => game.id)).toEqual(["keep"]);
+  });
+
+  it("drops a card when that game was already deleted on the server", async () => {
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "gone" }));
+    await controller.syncUser("user-1");
+    records.items.clear();
+
+    await controller.remove("gone");
+
+    expect(savedGames.value).toEqual([]);
+  });
+
+  it("puts a deleted game back when the delete does not stick", async () => {
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "old" }));
+    await controller.syncUser("user-1");
+    records.os.eraseData.mockResolvedValueOnce({
       success: false,
       errorCode: "server_error",
-    });
+    } as never);
 
     await expect(controller.remove("old")).rejects.toMatchObject({
       code: "persist_failed",
@@ -314,204 +385,61 @@ describe("saved games controller", () => {
   });
 
   it("does not write when nobody is signed in", async () => {
-    const { controller, os } = setup(null);
+    const { controller, records } = setup(null);
     await expect(
       controller.save(draftOf(makeGame()), null)
     ).rejects.toMatchObject({
       code: "signed_out",
     });
-    expect(os.recordData).not.toHaveBeenCalled();
+    await expect(controller.remove("game-1")).rejects.toMatchObject({
+      code: "signed_out",
+    });
+    expect(records.os.recordData).not.toHaveBeenCalled();
+    expect(records.os.eraseData).not.toHaveBeenCalled();
     expect(
       savedGamesErrorMessage(new SavedGamesWriteError("signed_out"), "save")
     ).toBe("Sign in to save games");
   });
 
-  it("applies a second save on top of the first instead of dropping it", async () => {
-    const { controller, os, savedGames } = setup();
-    let stored: SavedGame[] = [makeGame({ id: "old" })];
-    os.getData.mockImplementation(async () => ({
-      success: true,
-      data: { games: stored },
-    }));
+  it("does not show another account's games", async () => {
+    const { controller, records, savedGames, currentUser } = setup();
+    records.putGame(makeGame({ id: "mine" }));
     await controller.syncUser("user-1");
-
-    const resolvers: Array<() => void> = [];
-    os.recordData.mockImplementation(
-      (_user: unknown, _address: unknown, data: { games: SavedGame[] }) =>
-        new Promise((resolve) => {
-          resolvers.push(() => {
-            stored = data.games;
-            resolve({ success: true });
-          });
-        })
-    );
-
-    const first = controller.save(draftOf(makeGame({ id: "a" })), null);
-    const second = controller.save(draftOf(makeGame({ id: "b" })), null);
-    await vi.waitFor(() => {
-      expect(resolvers).toHaveLength(1);
-    });
-    resolvers[0]!();
-    await vi.waitFor(() => {
-      expect(resolvers).toHaveLength(2);
-    });
-    resolvers[1]!();
-    await Promise.all([first, second]);
-
-    expect(savedGames.value).toHaveLength(3);
-    expect(savedGames.value[2]?.id).toBe("old");
-    expect(savedGames.value[0]?.id).not.toBe(savedGames.value[1]?.id);
-    expect(savedGames.value[0]?.id).not.toBe("old");
-    expect(savedGames.value[1]?.id).not.toBe("old");
-  });
-
-  it("keeps a game another device saved after this device loaded its list", async () => {
-    const { controller, os, savedGames } = setup();
-    os.getData.mockResolvedValueOnce({
-      success: true,
-      data: { games: [] },
-    });
-    await controller.syncUser("user-1");
-
-    const other = makeGame({ id: "one", name: "One" });
-    os.getData.mockResolvedValueOnce({
-      success: true,
-      data: { games: [other] },
-    });
-    await controller.save(draftOf(makeGame({ name: "Two" })), null);
-
-    expect(savedGames.value.map((game) => game.id)).toContain("one");
-    const written = os.recordData.mock.calls[0]?.[2] as {
-      games: SavedGame[];
-    };
-    expect(written.games).toHaveLength(2);
-    expect(written.games[1]?.id).toBe("one");
-    expect(written.games[0]?.name).toBe("Two");
-  });
-
-  it("replaces the edited game after the list loads, even if it was empty at click time", async () => {
-    const { controller, os, savedGames } = setup();
-    const pending = deferred<{
-      success: boolean;
-      data: { games: SavedGame[] };
-    }>();
-    os.getData.mockReturnValue(pending.promise);
-    const original = makeGame({ id: "keep", createdAtMs: 50 });
-
-    const saving = controller.save(
-      {
-        name: "Kept",
-        targetVerse: { ...original.targetVerse, verseNumber: 16 },
-        steps: [{ hint: "later" }],
-      },
-      "keep"
-    );
-    pending.resolve({ success: true, data: { games: [original] } });
-    await saving;
-
     expect(savedGames.value).toHaveLength(1);
-    expect(savedGames.value[0]?.id).toBe("keep");
-    expect(savedGames.value[0]?.createdAtMs).toBe(50);
-    expect(savedGames.value[0]?.targetVerse.verseNumber).toBe(16);
-    const written = os.recordData.mock.calls[0]?.[2] as {
-      games: SavedGame[];
-    };
-    expect(written.games).toHaveLength(1);
-    expect(written.games[0]?.id).toBe("keep");
-  });
 
-  it("writes unreadable entries back unchanged", async () => {
-    const { controller, os, savedGames } = setup();
-    const broken = { id: "legacy", steps: [] };
-    const original = makeGame({ id: "old" });
-    os.getData.mockResolvedValue({
-      success: true,
-      data: { games: [original, broken] },
-    });
-    await controller.syncUser("user-1");
-
-    await controller.save(draftOf(makeGame()), null);
-
-    expect(savedGames.value.map((game) => game.id)).not.toContain("legacy");
-    const written = os.recordData.mock.calls[0]?.[2] as { games: unknown[] };
-    expect(written.games.at(-1)).toEqual(broken);
-    expect(written.games.some((game) => (game as SavedGame).id === "old")).toBe(
-      true
-    );
-  });
-
-  it("drops a card when that game was already deleted on the server", async () => {
-    const { controller, os, savedGames } = setup();
-    os.getData.mockResolvedValueOnce({
-      success: true,
-      data: { games: [makeGame({ id: "gone" })] },
-    });
-    await controller.syncUser("user-1");
-
-    os.getData.mockResolvedValueOnce({
-      success: true,
-      data: { games: [] },
-    });
-    await controller.remove("gone");
+    currentUser.value = "user-2";
+    records.items.clear();
+    await controller.syncUser("user-2");
 
     expect(savedGames.value).toEqual([]);
-    expect(os.recordData).not.toHaveBeenCalled();
   });
 
-  it("keeps a game that is still being saved when the panel reloads, and the next save keeps it too", async () => {
-    const { controller, os, savedGames } = setup();
-    let stored: SavedGame[] = [];
-    const loads: Array<() => void> = [];
-    os.getData.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          const snapshot = stored.map((game) => ({ ...game }));
-          loads.push(() =>
-            resolve({ success: true, data: { games: snapshot } })
-          );
-        })
-    );
+  it("keeps a game that is still being saved when the panel reloads", async () => {
+    const { controller, records, savedGames } = setup();
+    const listed = deferred<void>();
+    const list = records.os.listDataByMarker.getMockImplementation()!;
+    records.os.listDataByMarker.mockImplementationOnce(async (...args) => {
+      const page = await list(...args);
+      await listed.promise;
+      return page;
+    });
+    const write = deferred<void>();
+    const record = records.os.recordData.getMockImplementation()!;
+    records.os.recordData.mockImplementationOnce(async (...args) => {
+      await write.promise;
+      return record(...args);
+    });
 
-    let finishFirst: (() => void) | undefined;
-    os.recordData.mockImplementation(
-      (_user: unknown, _address: unknown, data: { games: SavedGame[] }) => {
-        const apply = () => {
-          stored = data.games;
-          return { success: true as const };
-        };
-        if (!finishFirst) {
-          return new Promise((resolve) => {
-            finishFirst = () => resolve(apply());
-          });
-        }
-        return Promise.resolve(apply());
-      }
-    );
-
-    const first = controller.save(draftOf(makeGame({ name: "One" })), null);
-    await vi.waitFor(() => expect(loads).toHaveLength(1));
-    loads[0]!();
-    await vi.waitFor(() => expect(finishFirst).toBeTypeOf("function"));
-    expect(savedGames.value.map((game) => game.name)).toEqual(["One"]);
-
+    const saving = controller.save(draftOf(makeGame({ name: "One" })), null);
+    await vi.waitFor(() => expect(savedGames.value).toHaveLength(1));
     const syncing = controller.syncUser("user-1");
-    const second = controller.save(draftOf(makeGame({ name: "Two" })), null);
-    // The reload must not blank the card while the first save is still writing.
+    // The reload must not blank the card while the save is still writing.
     expect(savedGames.value.map((game) => game.name)).toEqual(["One"]);
-    await Promise.resolve();
 
-    const raced = loads.length;
-    for (let i = 1; i < raced; i++) loads[i]!();
-    finishFirst!();
+    write.resolve();
+    listed.resolve();
+    await Promise.all([saving, syncing]);
 
-    await vi.waitFor(() => expect(loads.length).toBeGreaterThan(raced));
-    for (let i = raced; i < loads.length; i++) loads[i]!();
-    await Promise.all([first, syncing, second]);
-
-    expect(savedGames.value.map((game) => game.name)).toEqual(["Two", "One"]);
-    const written = os.recordData.mock.calls.at(-1)?.[2] as {
-      games: SavedGame[];
-    };
-    expect(written.games.map((game) => game.name)).toEqual(["Two", "One"]);
+    expect(savedGames.value.map((game) => game.name)).toEqual(["One"]);
   });
 });

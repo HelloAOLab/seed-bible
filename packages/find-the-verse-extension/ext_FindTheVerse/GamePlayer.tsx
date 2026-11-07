@@ -1,102 +1,18 @@
 import type { SeedBibleState } from "seed-bible";
-import { emphasizeVerses, type BookId } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
 import { formatReference } from "./books";
-import {
-  buildPartialReveal,
-  resultMessage,
-  revealThreshold,
-} from "./gameLogic";
+import { resultMessage, revealThreshold } from "./gameLogic";
+import { revealHint, revealVerse } from "./roundActions";
+import { roundReading } from "./roundTab";
 import type { GameSignals } from "./types";
 import { chanceView, GameName, HintControl } from "./PlayStatus";
+import { SoundToggle } from "./SoundToggle";
 
 interface GamePlayerProps {
   game: GameSignals;
   state: SeedBibleState;
   onReset: () => void;
 }
-
-function Confetti() {
-  const colors = [
-    "#e63946",
-    "#f1a208",
-    "#2a9d8f",
-    "#264653",
-    "#e9c46a",
-    "#a8dadc",
-  ];
-  const pieces = Array.from({ length: 48 }, (_, i) => i);
-  return (
-    <div
-      style={{
-        position: "relative",
-        height: "80px",
-        overflow: "hidden",
-        pointerEvents: "none",
-      }}
-    >
-      <style>{`
-        @keyframes ftv-fall {
-          0%   { transform: translateY(-10px) rotate(0deg);   opacity: 1; }
-          100% { transform: translateY(90px)  rotate(540deg); opacity: 0; }
-        }
-      `}</style>
-      {pieces.map((i) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            left: `${(i / 48) * 100}%`,
-            top: 0,
-            width: `${6 + (i % 4)}px`,
-            height: `${6 + (i % 3)}px`,
-            borderRadius: i % 3 === 0 ? "50%" : "2px",
-            background: colors[i % colors.length],
-            animation: `ftv-fall ${1.2 + (i % 5) * 0.15}s ${(i % 7) * 0.1}s ease-in both`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-const s = {
-  root: {
-    padding: "16px",
-    color: "var(--sb-font-color, #333)",
-    display: "flex" as const,
-    flexDirection: "column" as const,
-    gap: "16px",
-  },
-  pill: (color: string) => ({
-    display: "inline-block",
-    padding: "2px 10px",
-    borderRadius: "99px",
-    background: color,
-    color: "#fff",
-    fontSize: "0.8rem",
-    fontWeight: 600,
-  }),
-  card: {
-    padding: "12px 14px",
-    borderRadius: "8px",
-    background: "var(--sb-tertiary-color, #f0f0f0)",
-  },
-  btn: (primary = false) => ({
-    padding: "9px 16px",
-    borderRadius: "6px",
-    border: "none",
-    cursor: "pointer",
-    fontSize: "0.9rem",
-    fontWeight: 500,
-    background: primary
-      ? "var(--sb-primary-color, #4a6cf7)"
-      : "var(--sb-tertiary-color, #f0f0f0)",
-    color: primary
-      ? "var(--sb-primary-font-color, #fff)"
-      : "var(--sb-font-color, #333)",
-  }),
-};
 
 export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
   const target = game.targetVerse.value;
@@ -109,8 +25,9 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
   const notice = game.notice.value;
   const hintOpenFor = game.hintOpenFor.value;
   const { t } = useI18n("find-the-verse-extension");
-  const translationBooks =
-    state.app.selectedTab.value?.readingState.translationBooks.value?.books;
+  const translationBooks = (
+    roundReading(state, game) ?? state.app.selectedTab.value?.readingState
+  )?.translationBooks.value?.books;
 
   const totalChances = steps.length;
   const { chancesLeft, chanceIndex, currentHint, outOfChances } = chanceView(
@@ -123,40 +40,29 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
 
   if (!target) return null;
 
-  // Win screen
+  const reference = formatReference(
+    target.bookId,
+    target.chapterNumber,
+    target.verseNumber,
+    translationBooks
+  );
+
   if (won) {
     return (
-      <div style={s.root}>
-        <Confetti />
-        <div style={{ textAlign: "center" as const }}>
-          <div style={{ fontSize: "2rem" }}>🎉</div>
-          <p
-            style={{ fontWeight: 700, fontSize: "1.1rem", margin: "8px 0 4px" }}
-          >
+      <div className="ftv-player">
+        <div className="ftv-win">
+          <div className="ftv-win-emoji" aria-hidden="true">
+            🎉
+          </div>
+          <p className="ftv-win-title">
             {t("you-found-it", { defaultValue: "You found it!" })}
           </p>
-          <p style={{ opacity: 0.7, margin: 0 }}>
-            {formatReference(
-              target.bookId,
-              target.chapterNumber,
-              target.verseNumber,
-              translationBooks
-            )}
-          </p>
+          <p className="ftv-win-reference">{reference}</p>
           {target.verseText && (
-            <p
-              style={{
-                fontStyle: "italic",
-                opacity: 0.8,
-                fontSize: "0.9rem",
-                margin: "8px 0 0",
-              }}
-            >
-              &ldquo;{target.verseText}&rdquo;
-            </p>
+            <p className="ftv-win-verse">&ldquo;{target.verseText}&rdquo;</p>
           )}
           {guessCount > 0 && (
-            <p style={{ opacity: 0.6, fontSize: "0.85rem", margin: "4px 0 0" }}>
+            <p className="ftv-win-guesses">
               {t("guess-count", {
                 count: guessCount,
                 defaultValue:
@@ -167,63 +73,26 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
         </div>
         <button
           type="button"
-          style={{ ...s.btn(true), width: "100%" }}
+          className="ftv-btn ftv-btn--primary ftv-btn--block"
           onClick={onReset}
         >
-          {t("back-to-menu", { defaultValue: "Back to main menu" })}
+          {t("back-to-menu", { defaultValue: "Back to games" })}
         </button>
+        <SoundToggle t={t} className="ftv-btn ftv-sound-toggle" />
       </div>
     );
   }
 
-  async function handleRevealVerse() {
-    if (!target) return;
-    const reading = state.app.selectedTab.value?.readingState;
-    if (!reading) return;
-    const translationId = reading.translationId.peek();
-    const round = game.playRound.peek();
-    game.notice.value = null;
-    await reading.selectTranslationAndChapter(
-      translationId,
-      target.bookId,
-      target.chapterNumber,
-      { scrollToVerse: target.verseNumber }
-    );
-    // End game and Play both bump the round. A chapter that arrives after
-    // that belongs to the round that asked for it.
-    if (round !== game.playRound.peek()) return;
-    const opened =
-      reading.bookId.peek() === target.bookId &&
-      reading.chapterNumber.peek() === target.chapterNumber;
-    if (!opened || game.phase.peek() !== "playing") {
-      if (game.phase.peek() === "playing") {
-        game.notice.value = t("open-verse-failed", {
-          defaultValue: "Couldn't open that verse.",
-        });
-      }
-      return;
-    }
-    game.revealed.value = true;
-    // Scroll alone doesn't show which verse it is. This is the reader's usual
-    // treatment: the verse stays lit and the rest of the chapter dims.
-    emphasizeVerses(reading, {
-      book: target.bookId as BookId,
-      chapter: target.chapterNumber,
-      verse: target.verseNumber,
-    });
-  }
-
   return (
-    <div style={s.root}>
-      <GameName name={gameName} fontSize="1rem" />
-      {/* Chance counter */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+    <div className="ftv-player">
+      <GameName name={gameName} />
+      <div className="ftv-chance-row">
         {showOutOfChances ? (
-          <span style={s.pill("#e63946")}>
+          <span className="ftv-pill ftv-pill--spent">
             {t("out-of-chances", { defaultValue: "Out of chances" })}
           </span>
         ) : (
-          <span style={s.pill("var(--sb-primary-color, #4a6cf7)")}>
+          <span className="ftv-pill">
             {t("chances-left", {
               left: chancesLeft,
               total: totalChances,
@@ -238,14 +107,12 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
             game.hintOpenFor.value = chanceIndex;
           }}
           t={t}
-          buttonBackground="var(--sb-tertiary-color, #f0f0f0)"
         />
       </div>
 
-      {/* Out-of-chances encouragement */}
       {showOutOfChances && (
-        <div style={s.card}>
-          <p style={{ margin: 0, fontSize: "0.9rem" }}>
+        <div className="ftv-card">
+          <p className="ftv-card-text">
             {t("keep-guessing", {
               defaultValue:
                 "You've used all your chances, but you can keep guessing — good luck!",
@@ -254,78 +121,37 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
         </div>
       )}
 
-      {/* Last guess feedback */}
       {lastResult && (
-        <div
-          style={{
-            ...s.card,
-            borderLeft: "3px solid var(--sb-primary-color, #4a6cf7)",
-          }}
-        >
-          <p style={{ margin: 0, fontSize: "0.9rem" }}>
-            {resultMessage(lastResult, t)}
-          </p>
+        <div className="ftv-card ftv-card--result">
+          <p className="ftv-card-text">{resultMessage(lastResult, t)}</p>
         </div>
       )}
 
-      {/* Partial reveal */}
       {partialRevealText && !revealed && (
-        <div style={s.card}>
-          <div
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              opacity: 0.55,
-              marginBottom: "4px",
-            }}
-          >
+        <div className="ftv-card">
+          <div className="ftv-card-label">
             {t("partial-hint", { defaultValue: "PARTIAL HINT" })}
           </div>
-          <p style={{ margin: 0, fontSize: "0.9rem", fontStyle: "italic" }}>
+          <p className="ftv-card-text ftv-card-text--italic">
             {partialRevealText}
           </p>
         </div>
       )}
 
-      {/* Full reveal */}
       {revealed && (
-        <div
-          style={{
-            ...s.card,
-            borderLeft: "3px solid #f1a208",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              opacity: 0.55,
-              marginBottom: "4px",
-            }}
-          >
-            {formatReference(
-              target.bookId,
-              target.chapterNumber,
-              target.verseNumber,
-              translationBooks
-            )}
-          </div>
+        <div className="ftv-card ftv-card--revealed">
+          <div className="ftv-card-label">{reference}</div>
           {target.verseText ? (
-            <p style={{ margin: 0, fontSize: "0.9rem" }}>{target.verseText}</p>
+            <p className="ftv-card-text">{target.verseText}</p>
           ) : (
-            <p style={{ margin: 0, opacity: 0.6, fontSize: "0.9rem" }}>
+            <p className="ftv-card-text ftv-card-text--faint">
               {t("navigate-to-verse", {
-                reference: formatReference(
-                  target.bookId,
-                  target.chapterNumber,
-                  target.verseNumber,
-                  translationBooks
-                ),
+                reference,
                 defaultValue: "Navigate to {{reference}} to read it.",
               })}
             </p>
           )}
-          <p style={{ margin: "8px 0 0", fontSize: "0.85rem", opacity: 0.65 }}>
+          <p className="ftv-card-footnote">
             {t("keep-going", {
               defaultValue: "Better luck next time — keep going!",
             })}
@@ -333,46 +159,39 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
         </div>
       )}
 
-      {/* Reveal controls */}
       {revealReady && !revealed && (
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div className="ftv-reveal-row">
           {!partialRevealText && target.verseText.trim() ? (
             <button
               type="button"
-              style={s.btn(false)}
-              onClick={() => {
-                game.partialRevealText.value = buildPartialReveal(
-                  target.verseText
-                );
-              }}
+              className="ftv-btn"
+              onClick={() => revealHint(game)}
             >
               {t("reveal-hint", { defaultValue: "Reveal hint" })}
             </button>
           ) : null}
           <button
             type="button"
-            style={s.btn(false)}
-            onClick={() => void handleRevealVerse()}
+            className="ftv-btn"
+            onClick={() =>
+              void revealVerse(
+                state,
+                game,
+                t("open-verse-failed", {
+                  defaultValue: "Couldn't open that verse.",
+                })
+              )
+            }
           >
             {t("reveal-verse", { defaultValue: "Reveal verse" })}
           </button>
         </div>
       )}
 
-      {notice && (
-        <p
-          style={{
-            margin: 0,
-            color: "#e63946",
-            fontSize: "0.9rem",
-          }}
-        >
-          {notice}
-        </p>
-      )}
+      {notice && <p className="ftv-notice">{notice}</p>}
 
       {!revealed && (
-        <p style={{ margin: 0, opacity: 0.5, fontSize: "0.8rem" }}>
+        <p className="ftv-tap-hint">
           {t("tap-to-guess", {
             defaultValue: "Tap any verse in the reader to guess.",
           })}
@@ -381,11 +200,12 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
 
       <button
         type="button"
-        style={{ ...s.btn(false), alignSelf: "flex-start" }}
+        className="ftv-btn ftv-btn--start"
         onClick={onReset}
       >
         {t("end-game", { defaultValue: "End game" })}
       </button>
+      <SoundToggle t={t} className="ftv-btn ftv-btn--start ftv-sound-toggle" />
     </div>
   );
 }

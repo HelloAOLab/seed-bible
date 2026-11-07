@@ -2,6 +2,7 @@ import { signal } from "@preact/signals";
 import { describe, expect, it } from "vitest";
 import { openSearchWindow } from "@packages/find-the-verse-extension/ext_FindTheVerse/gameLogic";
 import {
+  beginRound,
   blankSteps,
   resetPlay,
 } from "@packages/find-the-verse-extension/ext_FindTheVerse/gameSession";
@@ -35,8 +36,39 @@ function playingGame(): GameSignals {
     hintOpenFor: signal(0),
     playRound: signal(3),
     draftEpoch: signal(0),
+    roundTabId: signal("tab-2"),
+    roundDecorations: signal([]),
   };
 }
+
+describe("beginRound", () => {
+  it("starts a fresh round tied to the tab it is played in", () => {
+    const game = playingGame();
+
+    beginRound(
+      game,
+      {
+        id: "game-2",
+        name: "Evening",
+        targetVerse: {
+          bookId: "ROM",
+          chapterNumber: 8,
+          verseNumber: 28,
+          verseText: "And we know",
+        },
+        steps: [{ hint: "x" }, { hint: "y" }, { hint: "z" }],
+      },
+      "tab-7"
+    );
+
+    expect(game.phase.value).toBe("playing");
+    expect(game.roundTabId.value).toBe("tab-7");
+    expect(game.currentGameId.value).toBe("game-2");
+    expect(game.targetVerse.value?.bookId).toBe("ROM");
+    expect(game.guessCount.value).toBe(0);
+    expect(game.revealed.value).toBe(false);
+  });
+});
 
 describe("resetPlay", () => {
   it("ends the round so a closed panel stops taking verse taps", () => {

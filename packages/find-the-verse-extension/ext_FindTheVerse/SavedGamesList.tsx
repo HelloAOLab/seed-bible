@@ -3,103 +3,15 @@ import { useSignal } from "@preact/signals";
 import { ContextMenuItem, ContextMenuWithButton } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { formatReference } from "./books";
-import { beginRound } from "./gameSession";
-import type { GameSignals, SavedGame } from "./types";
+import type { SavedGame } from "./types";
 
 interface SavedGamesListProps {
   games: SavedGame[];
-  game: GameSignals;
   state: SeedBibleState;
+  onPlay: (saved: SavedGame) => void;
   onDelete: (id: string) => Promise<void>;
   onEdit: (saved: SavedGame) => void;
-  onRoundStarted: () => void;
 }
-
-const s = {
-  section: {
-    display: "flex" as const,
-    flexDirection: "column" as const,
-    gap: "8px",
-  },
-  heading: {
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
-    opacity: 0.5,
-    margin: 0,
-  },
-  card: {
-    padding: "10px 12px",
-    borderRadius: "8px",
-    background: "var(--sb-tertiary-color, #f0f0f0)",
-    display: "flex" as const,
-    gap: "10px",
-    alignItems: "center" as const,
-  },
-  info: {
-    flex: 1,
-    minWidth: 0,
-    display: "flex" as const,
-    flexDirection: "column" as const,
-    gap: "2px",
-  },
-  ref: {
-    fontWeight: 600,
-    fontSize: "0.9rem",
-    whiteSpace: "nowrap" as const,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  meta: {
-    fontSize: "0.75rem",
-    opacity: 0.55,
-  },
-  playBtn: {
-    padding: "6px 12px",
-    borderRadius: "6px",
-    border: "none",
-    cursor: "pointer",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    background: "var(--sb-primary-color, #4a6cf7)",
-    color: "var(--sb-primary-font-color, #fff)",
-    flexShrink: 0,
-  },
-  quietBtn: {
-    padding: "6px 12px",
-    borderRadius: "6px",
-    border: "none",
-    cursor: "pointer",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    background: "transparent",
-    color: "var(--sb-font-color, #333)",
-    flexShrink: 0,
-  },
-  revealRef: {
-    padding: 0,
-    border: "none",
-    background: "transparent",
-    color: "var(--sb-font-color, #333)",
-    fontWeight: 600,
-    fontSize: "0.9rem",
-    textAlign: "left" as const,
-    cursor: "pointer",
-  },
-  revealLink: {
-    padding: 0,
-    border: "none",
-    background: "transparent",
-    color: "var(--sb-font-color, #333)",
-    fontWeight: 500,
-    fontSize: "0.8rem",
-    opacity: 0.7,
-    textAlign: "left" as const,
-    cursor: "pointer",
-    width: "fit-content",
-  },
-};
 
 function SavedGameCard({
   saved,
@@ -133,21 +45,22 @@ function SavedGameCard({
     translationBooks
   );
   const gameName = saved.name.trim();
+  const showReference = () => {
+    referenceShown.value = true;
+  };
 
   return (
-    <div style={s.card}>
-      <div style={s.info}>
+    <div className="ftv-saved-card">
+      <div className="ftv-saved-info">
         {referenceShown.value ? (
-          <span style={s.ref}>{reference}</span>
+          <span className="ftv-saved-ref">{reference}</span>
         ) : gameName ? (
           <>
-            <span style={s.ref}>{gameName}</span>
+            <span className="ftv-saved-ref">{gameName}</span>
             <button
               type="button"
-              style={s.revealLink}
-              onClick={() => {
-                referenceShown.value = true;
-              }}
+              className="ftv-show-reference ftv-show-reference--link"
+              onClick={showReference}
             >
               {t("show-reference", { defaultValue: "Show reference" })}
             </button>
@@ -155,15 +68,13 @@ function SavedGameCard({
         ) : (
           <button
             type="button"
-            style={s.revealRef}
-            onClick={() => {
-              referenceShown.value = true;
-            }}
+            className="ftv-show-reference"
+            onClick={showReference}
           >
             {t("show-reference", { defaultValue: "Show reference" })}
           </button>
         )}
-        <span style={s.meta}>
+        <span className="ftv-saved-meta">
           {t("saved-game", { defaultValue: "Saved game" })}
           {" · "}
           {t("chance-count", {
@@ -174,7 +85,7 @@ function SavedGameCard({
           &middot; {formatDate(saved.createdAtMs)}
         </span>
         {confirming && (
-          <span style={s.meta}>
+          <span className="ftv-saved-meta">
             {t("delete-confirm", { defaultValue: "Delete this game?" })}
           </span>
         )}
@@ -182,16 +93,28 @@ function SavedGameCard({
 
       {confirming ? (
         <>
-          <button type="button" style={s.playBtn} onClick={onConfirmDelete}>
+          <button
+            type="button"
+            className="ftv-saved-action ftv-saved-action--primary"
+            onClick={onConfirmDelete}
+          >
             {t("delete", { defaultValue: "Delete" })}
           </button>
-          <button type="button" style={s.quietBtn} onClick={onCancelDelete}>
+          <button
+            type="button"
+            className="ftv-saved-action"
+            onClick={onCancelDelete}
+          >
             {t("cancel", { defaultValue: "Cancel" })}
           </button>
         </>
       ) : (
         <>
-          <button type="button" style={s.playBtn} onClick={onPlay}>
+          <button
+            type="button"
+            className="ftv-saved-action ftv-saved-action--primary"
+            onClick={onPlay}
+          >
             {t("play", { defaultValue: "Play" })}
           </button>
           <ContextMenuWithButton>
@@ -227,36 +150,21 @@ function formatDate(ms: number): string {
 
 export function SavedGamesList({
   games,
-  game,
   state,
+  onPlay,
   onDelete,
   onEdit,
-  onRoundStarted,
 }: SavedGamesListProps) {
   const { t } = useI18n("find-the-verse-extension");
   const confirmingId = useSignal<string | null>(null);
   if (games.length === 0) return null;
 
-  function loadGame(saved: SavedGame) {
-    beginRound(
-      game,
-      {
-        id: saved.id,
-        name: saved.name,
-        targetVerse: saved.targetVerse,
-        steps: saved.steps,
-      },
-      state.app.selectedTab.value?.readingState
-    );
-    onRoundStarted();
-  }
-
   const translationBooks =
     state.app.selectedTab.value?.readingState.translationBooks.value?.books;
 
   return (
-    <div style={s.section}>
-      <p style={s.heading}>
+    <div className="ftv-saved">
+      <p className="ftv-saved-heading">
         {t("my-saved-games", { defaultValue: "My saved games" })}
       </p>
       {games.map((saved) => (
@@ -265,7 +173,7 @@ export function SavedGamesList({
           saved={saved}
           translationBooks={translationBooks}
           confirming={confirmingId.value === saved.id}
-          onPlay={() => loadGame(saved)}
+          onPlay={() => onPlay(saved)}
           onEdit={() => onEdit(saved)}
           onAskDelete={() => {
             confirmingId.value = saved.id;

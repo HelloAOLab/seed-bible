@@ -2,17 +2,26 @@ import type { Signal } from "@preact/signals";
 import type { CasualOSManager } from "seed-bible/managers";
 import type { GameDraft, SavedGame } from "./types";
 
-export const GAMES_ADDRESS = "find-the-verse-games";
+/**
+ * Each game is its own record at `find-the-verse/games/<id>`, so a game can
+ * later be shared on its own without opening up every other game's answer.
+ */
+export const GAME_ADDRESS_PREFIX = "find-the-verse/games/";
 
 /**
  * The record holds the secret verse. `private` keeps it off the public
  * records API; `publicRead` would let anyone who knows the creator's user id
- * read every answer. There is no sharing flow that needs the public marker.
+ * read every answer. The path after the colon lets the list ask for these
+ * records alone.
  */
-export const GAMES_MARKER = "private";
+export const GAMES_MARKER = "private:findTheVerseGames";
+
+export function gameAddress(id: string): string {
+  return `${GAME_ADDRESS_PREFIX}${id}`;
+}
 
 export type LoadGamesResult =
-  | { status: "ok"; games: SavedGame[]; preserved: unknown[] }
+  | { status: "ok"; games: SavedGame[] }
   | { status: "error" };
 
 export type SavedGamesWriteCode =
@@ -35,7 +44,7 @@ function isGameStep(value: unknown): boolean {
   return typeof (value as { hint?: unknown }).hint === "string";
 }
 
-function readSavedGame(value: unknown): SavedGame | null {
+export function readSavedGame(value: unknown): SavedGame | null {
   if (!value || typeof value !== "object") return null;
   const game = value as Record<string, unknown>;
   const target = game.targetVerse as Record<string, unknown> | null;
@@ -57,8 +66,8 @@ function readSavedGame(value: unknown): SavedGame | null {
   }
   return {
     id: game.id,
-    // Games saved before names existed still load; the card falls back to
-    // the Show reference button when this is blank.
+    // A game without a name still loads; the card falls back to the Show
+    // reference button when this is blank.
     name: typeof game.name === "string" ? game.name : "",
     createdAtMs: game.createdAtMs,
     steps: steps.map((step) => ({
@@ -73,52 +82,92 @@ function readSavedGame(value: unknown): SavedGame | null {
   };
 }
 
+/** A record the user hasn't written to yet. Not a failure. */
+function isMissing(errorCode: unknown): boolean {
+  return errorCode === "data_not_found" || errorCode === "record_not_found";
+}
+
+/** Newest first. */
+function byNewest(a: SavedGame, b: SavedGame): number {
+  return b.createdAtMs - a.createdAtMs;
+}
+
 /**
- * `ok` with an empty list only means the server answered and there is no
- * record yet. A network or server failure is `error`, so a later save can
- * refuse to write instead of replacing every saved game with the new one.
+ * Every saved game of `userId`. A record that can't be read as a game is
+ * skipped: it only affects itself, and saving never writes over it.
+ *
+ * `ok` with an empty list only means the server answered and there are no
+ * games yet. A network or server failure is `error`.
  */
 export async function loadGames(
   userId: string,
   os: CasualOSManager
 ): Promise<LoadGamesResult> {
+  const games: SavedGame[] = [];
+  let lastAddress: string | undefined;
+  let listed = 0;
   try {
-    const result = await os.getData(userId, GAMES_ADDRESS);
+    while (true) {
+      const page = await os.listDataByMarker(userId, GAMES_MARKER, lastAddress);
+      if (!page || page.success === false) {
+        if (page && isMissing(page.errorCode)) break;
+        return { status: "error" };
+      }
+      if (page.items.length === 0) break;
+      for (const item of page.items) {
+        if (!item.address.startsWith(GAME_ADDRESS_PREFIX)) continue;
+        const saved = readSavedGame(item.data);
+        if (saved && gameAddress(saved.id) === item.address) games.push(saved);
+      }
+      listed += page.items.length;
+      if (listed >= page.totalCount) break;
+      lastAddress = page.items[page.items.length - 1]?.address;
+    }
+  } catch {
+    return { status: "error" };
+  }
+  return { status: "ok", games: games.sort(byNewest) };
+}
+
+/** One game, or null when it isn't on the server (or isn't readable). */
+async function loadGame(
+  userId: string,
+  id: string,
+  os: CasualOSManager
+): Promise<{ status: "ok"; game: SavedGame | null } | { status: "error" }> {
+  try {
+    const result = await os.getData(userId, gameAddress(id));
     if (!result || result.success === false) {
-      return result && result.errorCode === "data_not_found"
-        ? { status: "ok", games: [], preserved: [] }
+      return result && isMissing(result.errorCode)
+        ? { status: "ok", game: null }
         : { status: "error" };
     }
-    if (result.data == null) return { status: "ok", games: [], preserved: [] };
-    const data = result.data as { games?: unknown };
-    if (!Array.isArray(data.games)) return { status: "error" };
-    const games: SavedGame[] = [];
-    const preserved: unknown[] = [];
-    for (const entry of data.games) {
-      const saved = readSavedGame(entry);
-      if (saved) games.push(saved);
-      else preserved.push(entry);
-    }
-    return { status: "ok", games, preserved };
+    return { status: "ok", game: readSavedGame(result.data) };
   } catch {
     return { status: "error" };
   }
 }
 
-export async function persistGames(
+export async function persistGame(
   userId: string,
-  games: readonly unknown[],
+  game: SavedGame,
   os: CasualOSManager
 ): Promise<void> {
-  const result = await os.recordData(
-    userId,
-    GAMES_ADDRESS,
-    { games },
-    {
-      marker: GAMES_MARKER,
-    }
-  );
+  const result = await os.recordData(userId, gameAddress(game.id), game, {
+    marker: GAMES_MARKER,
+  });
   if (result && result.success === false) {
+    throw new SavedGamesWriteError("persist_failed");
+  }
+}
+
+export async function eraseGame(
+  userId: string,
+  id: string,
+  os: CasualOSManager
+): Promise<void> {
+  const result = await os.eraseData(userId, gameAddress(id));
+  if (result && result.success === false && !isMissing(result.errorCode)) {
     throw new SavedGamesWriteError("persist_failed");
   }
 }
@@ -139,15 +188,17 @@ function newGameId(): string {
 
 /**
  * Keeps the id and original creation date when `existing` is the game being
- * edited, so an edit replaces the game instead of adding a copy.
+ * edited, so an edit replaces the game instead of adding a copy. `id` keeps
+ * an edited game's id when its record is already gone.
  */
 export function toSavedGame(
   draft: GameDraft,
   existing: SavedGame | undefined,
-  nowMs: number = Date.now()
+  nowMs: number = Date.now(),
+  id?: string
 ): SavedGame {
   return {
-    id: existing?.id ?? newGameId(),
+    id: existing?.id ?? id ?? newGameId(),
     name: draft.name.trim(),
     targetVerse: { ...draft.targetVerse },
     steps: draft.steps.map((step) => ({ hint: step.hint })),
@@ -176,7 +227,7 @@ export function savedGamesErrorMessage(
   if (error instanceof SavedGamesWriteError) {
     if (error.code === "signed_out") return "Sign in to save games";
     if (error.code === "not_loaded") {
-      return "Couldn't load your saved games, so nothing was changed.";
+      return "Couldn't load that game, so nothing was changed.";
     }
   }
   return action === "save"
@@ -187,23 +238,21 @@ export function savedGamesErrorMessage(
 export interface SavedGamesController {
   syncUser(userId: string | null): Promise<SyncUserResult>;
   /**
-   * `editingId` is the game being edited. The match happens inside the write,
-   * after the saved list has loaded, so a list that was empty at click time
-   * still replaces that game instead of inserting a second copy.
+   * `editingId` is the game being edited. Its creation date is read from the
+   * server inside the write, so it is kept even if the list hasn't loaded.
    */
   save(draft: GameDraft, editingId: string | null): Promise<void>;
   remove(id: string): Promise<void>;
 }
 
 /**
- * Loads and writes the whole saved-game list.
+ * Loads the saved-game list and writes single games.
  *
- * The in-memory list starts empty. Each save and delete loads the server list
- * on its own, so it never builds on a panel reload that started earlier.
- * A reload waits until those writes finish, then fetches. For the same user
- * it leaves the list on screen while that fetch is in flight.
- * `writeEpoch` is bumped when a write publishes a list, so a load that
- * started earlier cannot apply its snapshot on top.
+ * A save or delete only writes its own game's record, so it can't lose a game
+ * another device saved. Writes run one at a time. A reload waits until they
+ * finish, then fetches; for the same user it leaves the list on screen while
+ * that fetch is in flight. `writeEpoch` is bumped when a write changes the
+ * list, so a load that started earlier cannot paint its older list on top.
  */
 export function createSavedGamesController(
   savedGames: Signal<SavedGame[]>,
@@ -214,7 +263,6 @@ export function createSavedGamesController(
   let writeEpoch = 0;
   let writeQueue: Promise<void> = Promise.resolve();
   let listUser: string | null = null;
-  let preserved: unknown[] = [];
   let inflight: {
     userId: string;
     promise: Promise<LoadGamesResult>;
@@ -245,49 +293,29 @@ export function createSavedGamesController(
     return run;
   }
 
-  function publish(
-    userId: string,
-    games: SavedGame[],
-    nextPreserved: unknown[]
-  ) {
-    // A load that started before this publish must not paint its older list
-    // over the one we are storing.
+  function currentList(userId: string): SavedGame[] {
+    return listUser === userId ? savedGames.peek() : [];
+  }
+
+  function publish(userId: string, games: SavedGame[]) {
     writeEpoch += 1;
-    preserved = nextPreserved;
     listUser = userId;
     savedGames.value = games;
   }
 
+  /** Shows `next` right away and puts `previous` back if the write fails. */
   async function write(
-    build: (current: SavedGame[]) => SavedGame[]
-  ): Promise<void> {
-    const userId = getUserId();
-    if (!userId) throw new SavedGamesWriteError("signed_out");
-
-    // Own request, not the panel's. A reload that is already in flight may
-    // have read the server before this save, and building on that copy would
-    // delete the game when it is written back.
-    const result = await loadGames(userId, os);
-    if (getUserId() !== userId) throw new SavedGamesWriteError("signed_out");
-    if (result.status !== "ok") throw new SavedGamesWriteError("not_loaded");
-
-    const previous = result.games;
-    const next = build(previous);
-    if (getUserId() !== userId) throw new SavedGamesWriteError("signed_out");
-    // The game is already gone on the server. Still show that list, or the
-    // card stays and Delete looks like it did nothing.
-    if (next === previous) {
-      publish(userId, previous, result.preserved);
-      return;
-    }
-
-    publish(userId, next, result.preserved);
+    userId: string,
+    previous: SavedGame[],
+    next: SavedGame[],
+    run: () => Promise<void>
+  ) {
+    publish(userId, next);
     try {
-      await persistGames(userId, [...next, ...preserved], os);
+      await run();
     } catch (error) {
       if (getUserId() === userId) {
-        listUser = userId;
-        savedGames.value = previous;
+        publish(userId, previous);
       } else {
         listUser = null;
         savedGames.value = [];
@@ -302,7 +330,6 @@ export function createSavedGamesController(
       const token = ++loadToken;
       if (!userId) {
         listUser = null;
-        preserved = [];
         savedGames.value = [];
         return Promise.resolve("signed_out");
       }
@@ -310,54 +337,72 @@ export function createSavedGamesController(
       // A different account must not see the previous list.
       if (listUser !== userId) {
         listUser = null;
-        preserved = [];
         savedGames.value = [];
       }
 
-      // Nothing is being saved: start the fetch now. Waiting on an idle queue
-      // would put the list a turn behind the panel opening.
       const startLoad = (): Promise<SyncUserResult> => {
         if (token !== loadToken || getUserId() !== userId) {
           return Promise.resolve("stale");
         }
-        // After the writes that were already running. A save that starts
-        // during the fetch below bumps the counter and this result is dropped.
         const writesAtStart = writeEpoch;
         return requestLoad(userId).then((result) => {
           if (token !== loadToken || getUserId() !== userId) return "stale";
           if (writesAtStart !== writeEpoch) return "stale";
           if (result.status !== "ok") return "error";
           listUser = userId;
-          preserved = result.preserved;
           savedGames.value = result.games;
           return "ok";
         });
       };
+      // Nothing is being saved: start the fetch now. Waiting on an idle queue
+      // would put the list a turn behind the panel opening.
       if (activeWrites === 0) return startLoad();
       return writeQueue.then(startLoad);
     },
 
     save(draft, editingId) {
-      return enqueue(() =>
-        write((current) => {
-          const saved = toSavedGame(
-            draft,
-            editingId
-              ? current.find((game) => game.id === editingId)
-              : undefined
-          );
-          return [saved, ...current.filter((game) => game.id !== saved.id)];
-        })
-      );
+      return enqueue(async () => {
+        const userId = getUserId();
+        if (!userId) throw new SavedGamesWriteError("signed_out");
+
+        let existing: SavedGame | undefined;
+        if (editingId) {
+          const loaded = await loadGame(userId, editingId, os);
+          if (getUserId() !== userId) {
+            throw new SavedGamesWriteError("signed_out");
+          }
+          if (loaded.status !== "ok") {
+            throw new SavedGamesWriteError("not_loaded");
+          }
+          existing = loaded.game ?? undefined;
+        }
+
+        const saved = toSavedGame(
+          draft,
+          existing,
+          Date.now(),
+          editingId ?? undefined
+        );
+        const previous = currentList(userId);
+        const index = previous.findIndex((game) => game.id === saved.id);
+        const next =
+          index >= 0
+            ? previous.map((game, i) => (i === index ? saved : game))
+            : [saved, ...previous];
+        await write(userId, previous, next, () =>
+          persistGame(userId, saved, os)
+        );
+      });
     },
 
     remove(id) {
-      return enqueue(() =>
-        write((current) => {
-          if (!current.some((game) => game.id === id)) return current;
-          return current.filter((game) => game.id !== id);
-        })
-      );
+      return enqueue(async () => {
+        const userId = getUserId();
+        if (!userId) throw new SavedGamesWriteError("signed_out");
+        const previous = currentList(userId);
+        const next = previous.filter((game) => game.id !== id);
+        await write(userId, previous, next, () => eraseGame(userId, id, os));
+      });
     },
   };
 }

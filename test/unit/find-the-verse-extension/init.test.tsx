@@ -1,4 +1,4 @@
-import { signal, type Signal } from "@preact/signals";
+import { computed, signal, type Signal } from "@preact/signals";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import type { ComponentChild } from "preact";
@@ -8,6 +8,7 @@ import {
   unregisterExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import { mockTranslate } from "../seed-bible/testUtils/mockI18n";
+import { gameAddress } from "@packages/find-the-verse-extension/ext_FindTheVerse/gamesStore";
 import type { SavedGame } from "@packages/find-the-verse-extension/ext_FindTheVerse/types";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -27,6 +28,14 @@ interface SelectedVerse {
   translationId: string;
 }
 
+interface Decoration {
+  id: string;
+  bookId: string;
+  chapterNumber: number;
+  verses: number | number[];
+  options: Record<string, unknown>;
+}
+
 interface Reading {
   selectedVerses: Signal<SelectedVerse[]>;
   clearSelectedVerses: () => void;
@@ -34,13 +43,24 @@ interface Reading {
   translationId: Signal<string>;
   bookId: Signal<string>;
   chapterNumber: Signal<number>;
+  chapterData: Signal<null>;
+  isChapterContentStale: Signal<boolean>;
   selectChapter: ReturnType<typeof vi.fn>;
   selectTranslationAndChapter: (
     translationId: string,
     book: string,
     chapter: number
   ) => Promise<void>;
+  /** Live decorations, as the reader would draw them. */
+  decorations: Signal<Decoration[]>;
   decorateVerses: ReturnType<typeof vi.fn>;
+  removeDecoration: (id: string) => void;
+}
+
+interface Tab {
+  id: string;
+  readingState: Reading;
+  sharedSession: object | null;
 }
 
 function selectedVerse(
@@ -57,10 +77,13 @@ function selectedVerse(
   };
 }
 
+let decorationCount = 0;
+
 function createReading(
   selectTranslationAndChapter?: Reading["selectTranslationAndChapter"]
 ): Reading {
   const selectedVerses = signal<SelectedVerse[]>([]);
+  const decorations = signal<Decoration[]>([]);
   const reading: Reading = {
     selectedVerses,
     clearSelectedVerses: () => {
@@ -70,6 +93,8 @@ function createReading(
     translationId: signal("BSB"),
     bookId: signal("GEN"),
     chapterNumber: signal(1),
+    chapterData: signal(null),
+    isChapterContentStale: signal(false),
     selectChapter: vi.fn(async () => undefined),
     selectTranslationAndChapter:
       selectTranslationAndChapter ??
@@ -77,7 +102,25 @@ function createReading(
         reading.bookId.value = book;
         reading.chapterNumber.value = chapter;
       }),
-    decorateVerses: vi.fn(),
+    decorations,
+    decorateVerses: vi.fn(
+      (
+        bookId: string,
+        chapterNumber: number,
+        verses: number | number[],
+        options: Record<string, unknown>,
+        id = `decoration-${++decorationCount}`
+      ) => {
+        decorations.value = [
+          ...decorations.peek().filter((d) => d.id !== id),
+          { id, bookId, chapterNumber, verses, options },
+        ];
+        return id;
+      }
+    ),
+    removeDecoration: (id: string) => {
+      decorations.value = decorations.peek().filter((d) => d.id !== id);
+    },
   };
   return reading;
 }
@@ -114,6 +157,10 @@ function clickButton(root: ParentNode, name: string, index = 0) {
   button.click();
 }
 
+function bar(): HTMLElement | null {
+  return document.body.querySelector(".ftv-bar");
+}
+
 describe("Find the Verse", () => {
   let container: HTMLDivElement;
   let panes: Signal<{ id: string }[]>;
@@ -123,23 +170,74 @@ describe("Find the Verse", () => {
     onSelect?: (context: { readingState: Reading }) => void;
   } | null;
   let reading: Reading;
-  let selectedTab: Signal<{ readingState: Reading } | null>;
+  let tabs: Signal<Tab[]>;
+  let selectedTabId: Signal<string>;
+  let newTabReading: () => Reading;
   let recordData: ReturnType<typeof vi.fn>;
 
   function install(games: SavedGame[] = [], active: Reading = reading) {
     recordData = vi.fn(async () => ({ success: true }));
-    selectedTab = signal({ readingState: active });
+    tabs = signal<Tab[]>([
+      { id: "tab-1", readingState: active, sharedSession: null },
+    ]);
+    selectedTabId = signal("tab-1");
+    let tabCount = 1;
+    const selectedTab = computed(
+      () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
+    );
     const state = {
       i18n: { t: mockTranslate },
       login: { userId: signal(games.length > 0 ? "user-1" : null) },
       os: {
-        getData: vi.fn(async () => ({
+        listDataByMarker: vi.fn(async () => ({
           success: true,
-          data: { games },
+          items: games.map((game) => ({
+            address: gameAddress(game.id),
+            data: game,
+          })),
+          totalCount: games.length,
         })),
+        getData: vi.fn(async (_record: string, address: string) => {
+          const game = games.find((g) => gameAddress(g.id) === address);
+          return game
+            ? { success: true, data: game }
+            : { success: false, errorCode: "data_not_found" };
+        }),
         recordData,
       },
-      app: { selectedTab },
+      app: {
+        selectedTab,
+        selectTab: (id: string) => {
+          selectedTabId.value = id;
+        },
+      },
+      tabs: {
+        tabs,
+        addTab: (
+          _source: unknown,
+          options?: { initialBookId?: string; initialChapterNumber?: number }
+        ) => {
+          const tabReading = newTabReading();
+          tabReading.bookId.value = options?.initialBookId ?? "GEN";
+          tabReading.chapterNumber.value = options?.initialChapterNumber ?? 1;
+          tabCount += 1;
+          const tab = {
+            id: `tab-${tabCount}`,
+            readingState: tabReading,
+            sharedSession: null,
+          };
+          tabs.value = [...tabs.peek(), tab];
+          selectedTabId.value = tab.id;
+          return tab;
+        },
+        removeTab: (id: string) => {
+          const next = tabs.peek().filter((tab) => tab.id !== id);
+          tabs.value = next;
+          if (selectedTabId.peek() === id) {
+            selectedTabId.value = next[0]?.id ?? "";
+          }
+        },
+      },
       panes: {
         panes,
         openPane: (options: {
@@ -173,6 +271,12 @@ describe("Find the Verse", () => {
     initFindTheVerse();
   }
 
+  function roundTab(): Tab {
+    const tab = tabs.value.find((t) => t.id !== "tab-1");
+    if (!tab) throw new Error("No round tab");
+    return tab;
+  }
+
   async function showPane() {
     await act(async () => {
       render(paneView ? paneView() : null, container);
@@ -193,6 +297,24 @@ describe("Find the Verse", () => {
     });
   }
 
+  async function tap(target: Reading, verse: SelectedVerse) {
+    await act(async () => {
+      target.selectedVerses.value = [verse];
+      await Promise.resolve();
+    });
+  }
+
+  async function installAndPlay(games: SavedGame[], index = 0) {
+    await act(async () => {
+      install(games);
+      await Promise.resolve();
+    });
+    await openPane();
+    await act(async () => {
+      clickButton(container, "Play", index);
+    });
+  }
+
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -201,12 +323,14 @@ describe("Find the Verse", () => {
     toolbar = null;
     verseTool = null;
     reading = createReading();
+    newTabReading = () => createReading();
   });
 
   afterEach(() => {
     unregisterExtension("find-the-verse-extension");
     render(null, container);
     container.remove();
+    vi.restoreAllMocks();
   });
 
   it("reopens the panel when Set as target cannot use the verse", async () => {
@@ -274,22 +398,91 @@ describe("Find the Verse", () => {
     expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(false);
   });
 
+  it("plays in a new tab and leaves the tab the player was on alone", async () => {
+    await installAndPlay([
+      savedGame("one", "JHN", "In the beginning was the Word", "a hint"),
+    ]);
+
+    expect(tabs.value).toHaveLength(2);
+    const round = roundTab();
+    expect(selectedTabId.value).toBe(round.id);
+    expect(round.readingState.bookId.value).toBe("GEN");
+    // The original tab (a shared session, say) is not moved to Genesis 1.
+    expect(reading.selectChapter).not.toHaveBeenCalled();
+
+    // A tap in the original tab is not a guess, and keeps its toolbar.
+    await act(async () => {
+      selectedTabId.value = "tab-1";
+    });
+    await tap(reading, selectedVerse("GEN", 1, 2, "And the earth"));
+    expect(reading.selectedVerses.value).toHaveLength(1);
+    expect(reading.decorateVerses).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain("Return to game");
+    expect(document.body.textContent).toContain("1 / 1 left");
+
+    // A tap in the round's tab is.
+    await tap(round.readingState, selectedVerse("GEN", 1, 2, "And the earth"));
+    expect(round.readingState.selectedVerses.value).toHaveLength(0);
+    expect(document.body.textContent).toContain("Out of chances");
+  });
+
+  it("keeps everything the round draws local to this device", async () => {
+    await installAndPlay([
+      savedGame("one", "JHN", "In the beginning was the Word", "a hint"),
+    ]);
+    const round = roundTab().readingState;
+    await tap(round, selectedVerse("EXO", 1, 1, "Now these are"));
+
+    expect(round.decorations.value.length).toBeGreaterThan(0);
+    for (const decoration of round.decorations.value) {
+      expect(decoration.options.localOnly).toBe(true);
+    }
+  });
+
+  it("closes the round's tab when the game ends, and returns to the first tab", async () => {
+    await installAndPlay([
+      savedGame("one", "JHN", "In the beginning was the Word", "alpha hint"),
+    ]);
+    await closePane();
+    expect(tabs.value).toHaveLength(2);
+
+    await act(async () => {
+      clickButton(document.body, "End game");
+    });
+
+    expect(tabs.value.map((tab) => tab.id)).toEqual(["tab-1"]);
+    expect(selectedTabId.value).toBe("tab-1");
+    expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(true);
+    await showPane();
+    expect(container.textContent).toContain("Create a game");
+    expect(container.textContent).not.toContain("End game");
+  });
+
+  it("ends the round when the player closes its tab", async () => {
+    await installAndPlay([
+      savedGame("one", "JHN", "In the beginning was the Word", "alpha hint"),
+    ]);
+    await closePane();
+    expect(bar()).not.toBeNull();
+
+    await act(async () => {
+      tabs.value = tabs.peek().filter((tab) => tab.id === "tab-1");
+      selectedTabId.value = "tab-1";
+    });
+
+    expect(bar()).toBeNull();
+    await openPane();
+    expect(container.textContent).toContain("Create a game");
+  });
+
   it("hides the reader bar while the More menu is open, then brings it back", async () => {
     const wrap = document.createElement("div");
     wrap.className = "sb-reader-toolbar-wrap";
     document.body.appendChild(wrap);
-    const games = [
-      savedGame("one", "JHN", "In the beginning was the Word", "alpha hint"),
-    ];
     try {
-      await act(async () => {
-        install(games);
-        await Promise.resolve();
-      });
-      await openPane();
-      await act(async () => {
-        clickButton(container, "Play", 0);
-      });
+      await installAndPlay([
+        savedGame("one", "JHN", "In the beginning was the Word", "alpha hint"),
+      ]);
       await closePane();
       expect(document.body.textContent).toContain("End game");
 
@@ -309,29 +502,43 @@ describe("Find the Verse", () => {
     }
   });
 
-  it("returns to the game panel when End game is tapped on the reader bar", async () => {
-    const games = [
-      savedGame("one", "JHN", "In the beginning was the Word", "alpha hint"),
-    ];
-    await act(async () => {
-      install(games);
-      await Promise.resolve();
-    });
-    await openPane();
-    await act(async () => {
-      clickButton(container, "Play", 0);
-    });
-    await closePane();
-    expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(false);
+  it("finds the More menu in a toolbar that replaced the first one", async () => {
+    const first = document.createElement("div");
+    first.className = "sb-reader-toolbar-wrap";
+    const shell = document.createElement("div");
+    shell.appendChild(first);
+    document.body.appendChild(shell);
+    try {
+      await installAndPlay([
+        savedGame("one", "JHN", "In the beginning was the Word", "alpha hint"),
+      ]);
+      await closePane();
 
+      const second = document.createElement("div");
+      second.className = "sb-reader-toolbar-wrap";
+      await act(async () => {
+        first.replaceWith(second);
+      });
+      const menu = document.createElement("div");
+      menu.className = "sb-mobile-more-menu";
+      await act(async () => {
+        second.appendChild(menu);
+      });
+
+      expect(document.body.textContent).not.toContain("End game");
+    } finally {
+      shell.remove();
+    }
+  });
+
+  it("does not watch the page while no game is on", async () => {
+    const observe = vi.spyOn(MutationObserver.prototype, "observe");
     await act(async () => {
-      clickButton(document.body, "End game");
+      install();
     });
 
-    expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(true);
-    await showPane();
-    expect(container.textContent).toContain("Create a game");
-    expect(container.textContent).not.toContain("End game");
+    expect(bar()).toBeNull();
+    expect(observe).not.toHaveBeenCalled();
   });
 
   function playableGame(): SavedGame {
@@ -416,12 +623,52 @@ describe("Find the Verse", () => {
     });
 
     expect(recordData).toHaveBeenCalled();
-    const stored = recordData.mock.calls[0]?.[2] as {
-      games: Array<{ id: string; name: string }>;
-    };
-    expect(stored.games[0]).toMatchObject({ id: "one", name: "Revised name" });
+    expect(recordData.mock.calls[0]?.[1]).toBe(gameAddress("one"));
+    expect(recordData.mock.calls[0]?.[2]).toMatchObject({
+      id: "one",
+      name: "Revised name",
+      createdAtMs: 1,
+    });
     expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(false);
     expect(document.body.textContent).toContain("End game");
+  });
+
+  it("won't save or start while a chance has an empty hint", async () => {
+    await openEditor(playableGame());
+    await act(async () => {
+      clickButton(container, "+ Add chance");
+    });
+
+    for (const name of ["Save game", "Save & Start"]) {
+      await act(async () => {
+        clickButton(container, name);
+        await flushSave();
+      });
+      expect(container.textContent).toContain(
+        "Fill in every hint, or remove the empty chances."
+      );
+    }
+    expect(recordData).not.toHaveBeenCalled();
+    expect(tabs.value).toHaveLength(1);
+    const hints = [...container.querySelectorAll("textarea")];
+    expect(hints.map((hint) => hint.getAttribute("aria-invalid"))).toEqual([
+      "false",
+      "false",
+      "false",
+      "true",
+    ]);
+
+    await act(async () => {
+      buttonsNamed(container, "×")[3]!.click();
+    });
+    expect(container.textContent).not.toContain(
+      "Fill in every hint, or remove the empty chances."
+    );
+    await act(async () => {
+      clickButton(container, "Save game");
+      await flushSave();
+    });
+    expect(recordData).toHaveBeenCalledTimes(1);
   });
 
   it("stays on the editor when saving an edit fails", async () => {
@@ -439,6 +686,7 @@ describe("Find the Verse", () => {
     );
     expect(container.textContent).toContain("Save & Start");
     expect(document.body.textContent).not.toContain("End game");
+    expect(tabs.value).toHaveLength(1);
   });
 
   it("does not carry an open hint into the next game", async () => {
@@ -446,16 +694,7 @@ describe("Find the Verse", () => {
       savedGame("one", "JHN", "In the beginning was the Word", "alpha hint"),
       savedGame("two", "GEN", "In the beginning God created", "beta hint"),
     ];
-    await act(async () => {
-      install(games);
-      await Promise.resolve();
-    });
-    await openPane();
-    expect(container.textContent).toContain("Play");
-
-    await act(async () => {
-      clickButton(container, "Play", 0);
-    });
+    await installAndPlay(games, 0);
     await showPane();
     await act(async () => {
       clickButton(container, "?");
@@ -480,27 +719,52 @@ describe("Find the Verse", () => {
     ).not.toBeNull();
   });
 
-  it("does not count a tap on the revealed verse as a win", async () => {
-    const games = [
+  it("puts Reveal verse on the reader bar once it unlocks", async () => {
+    await installAndPlay([
       savedGame("one", "JHN", "In the beginning was the Word", "a hint"),
-    ];
+    ]);
+    await closePane();
+    expect(buttonsNamed(document.body, "Reveal verse")).toHaveLength(0);
+
+    await tap(roundTab().readingState, selectedVerse("GEN", 1, 2, "x"));
+
+    expect(buttonsNamed(document.body, "Reveal hint")).toHaveLength(1);
+    expect(buttonsNamed(document.body, "Reveal verse")).toHaveLength(1);
+  });
+
+  it("keeps the revealed verse lit until the round ends", async () => {
+    await installAndPlay([
+      savedGame("one", "JHN", "In the beginning was the Word", "a hint"),
+    ]);
+    await closePane();
+    const round = roundTab().readingState;
+    await tap(round, selectedVerse("GEN", 1, 2, "And the earth"));
+
     await act(async () => {
-      install(games);
+      clickButton(document.body, "Reveal verse");
       await Promise.resolve();
     });
-    await openPane();
-    await act(async () => {
-      clickButton(container, "Play", 0);
-    });
+
+    const reveal = round.decorations.value.find(
+      (d) => d.options.className === "sb-verse-decoration-diminish"
+    );
+    expect(reveal).toMatchObject({ bookId: "JHN", chapterNumber: 1 });
+    expect(reveal?.options.removeAfterMs).toBeUndefined();
+    expect(reveal?.options.localOnly).toBe(true);
+    expect(document.body.textContent).toContain(
+      "Better luck next time — keep going!"
+    );
+  });
+
+  it("does not count a tap on the revealed verse as a win", async () => {
+    await installAndPlay([
+      savedGame("one", "JHN", "In the beginning was the Word", "a hint"),
+    ]);
     await showPane();
+    const round = roundTab().readingState;
 
     // One chance reveals after one guess. Spend it on the wrong verse.
-    await act(async () => {
-      reading.selectedVerses.value = [
-        selectedVerse("GEN", 1, 2, "And the earth"),
-      ];
-      await Promise.resolve();
-    });
+    await tap(round, selectedVerse("GEN", 1, 2, "And the earth"));
     await showPane();
     await act(async () => {
       clickButton(container, "Reveal verse");
@@ -510,12 +774,10 @@ describe("Find the Verse", () => {
       "Better luck next time — keep going!"
     );
 
-    await act(async () => {
-      reading.selectedVerses.value = [
-        selectedVerse("JHN", 1, 1, "In the beginning was the Word"),
-      ];
-      await Promise.resolve();
-    });
+    await tap(
+      round,
+      selectedVerse("JHN", 1, 1, "In the beginning was the Word")
+    );
     await showPane();
 
     expect(container.textContent).not.toContain("You found it!");
@@ -526,35 +788,27 @@ describe("Find the Verse", () => {
 
   it("drops a reveal that finishes after the next game has started", async () => {
     let releaseReveal: (() => void) | undefined;
-    reading = createReading(
-      (_translationId, book, chapter) =>
-        new Promise<void>((resolve) => {
-          releaseReveal = () => {
-            reading.bookId.value = book;
-            reading.chapterNumber.value = chapter;
-            resolve();
-          };
-        })
-    );
+    newTabReading = () => {
+      const slow: Reading = createReading(
+        (_translationId, book, chapter) =>
+          new Promise<void>((resolve) => {
+            releaseReveal = () => {
+              slow.bookId.value = book;
+              slow.chapterNumber.value = chapter;
+              resolve();
+            };
+          })
+      );
+      return slow;
+    };
     const games = [
       savedGame("one", "JHN", "In the beginning was the Word", "alpha hint"),
       savedGame("two", "GEN", "In the beginning God created", "beta hint"),
     ];
-    await act(async () => {
-      install(games, reading);
-      await Promise.resolve();
-    });
-    await openPane();
-    await act(async () => {
-      clickButton(container, "Play", 0);
-    });
+    await installAndPlay(games, 0);
     await showPane();
-    await act(async () => {
-      reading.selectedVerses.value = [
-        selectedVerse("GEN", 1, 2, "And the earth"),
-      ];
-      await Promise.resolve();
-    });
+    const firstRound = roundTab().readingState;
+    await tap(firstRound, selectedVerse("GEN", 1, 2, "And the earth"));
     await showPane();
     await act(async () => {
       clickButton(container, "Reveal verse");
@@ -576,12 +830,57 @@ describe("Find the Verse", () => {
     });
     await showPane();
 
-    expect(reading.decorateVerses).not.toHaveBeenCalled();
+    expect(
+      firstRound.decorations.value.some(
+        (d) => d.options.className === "sb-verse-decoration-diminish"
+      )
+    ).toBe(false);
     expect(container.textContent).not.toContain(
       "Better luck next time — keep going!"
     );
     expect(container.textContent).toContain(
       "Tap any verse in the reader to guess."
     );
+  });
+
+  it("celebrates a win over the reader with the panel closed, and marks the verse", async () => {
+    await installAndPlay([
+      savedGame("one", "JHN", "In the beginning was the Word", "a hint"),
+    ]);
+    await closePane();
+    const round = roundTab().readingState;
+
+    await tap(
+      round,
+      selectedVerse("JHN", 1, 1, "In the beginning was the Word")
+    );
+    await act(async () => {
+      await vi.dynamicImportSettled();
+    });
+    await vi.waitFor(() => {
+      expect(document.body.querySelector(".ftv-celebration")).not.toBeNull();
+    });
+
+    expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(false);
+    const celebration = document.body.querySelector(".ftv-celebration");
+    expect(celebration?.textContent).toContain("You found it!");
+    expect(celebration?.textContent).toContain("John 1:1");
+    const found = round.decorations.value.find(
+      (d) => d.options.className === "ftv-found-verse"
+    );
+    expect(found).toMatchObject({ bookId: "JHN", chapterNumber: 1, verses: 1 });
+    expect(found?.options.localOnly).toBe(true);
+
+    await act(async () => {
+      clickButton(celebration!, "Keep reading");
+    });
+    expect(document.body.querySelector(".ftv-celebration")).toBeNull();
+    expect(bar()?.textContent).toContain("You found it!");
+
+    await act(async () => {
+      clickButton(document.body, "Back to games");
+    });
+    expect(tabs.value).toHaveLength(1);
+    expect(round.decorations.value).toEqual([]);
   });
 });

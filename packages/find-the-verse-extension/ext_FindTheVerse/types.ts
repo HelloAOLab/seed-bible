@@ -1,4 +1,5 @@
 import type { Signal } from "@preact/signals";
+import type { BibleReadingState } from "seed-bible/managers";
 
 export interface GameStep {
   hint: string;
@@ -104,4 +105,16 @@ export interface GameSignals {
    * later compares against this and does not clear whatever is on screen now.
    */
   draftEpoch: Signal<number>;
+  /**
+   * The tab the round is played in. Each round opens its own tab, so guesses,
+   * greying, and Reveal never touch a shared session or a playlist's tab.
+   */
+  roundTabId: Signal<string | null>;
+  /** Reveal and found-verse marks, taken off when the round ends. */
+  roundDecorations: Signal<RoundDecoration[]>;
+}
+
+export interface RoundDecoration {
+  reading: BibleReadingState;
+  id: string;
 }
