@@ -3470,6 +3470,29 @@ describe("CustomizationsManager", () => {
       expect(manager.editingCustomization.value?.defaultVariantId).toBe("dusk");
     });
 
+    it("removeEditingVariant() moves a removed fallback default to a remaining variant of the same kind", async () => {
+      listRecords(
+        makeRecord(
+          "customization_mixed_brand",
+          [
+            ["day", "light"],
+            ["acme_a", "acme"],
+            ["acme_b", "acme"],
+          ],
+          { defaultVariantId: "acme_b" }
+        )
+      );
+      const { manager } = createManager();
+      await manager.load();
+      manager.startEditing("customization_mixed_brand");
+
+      manager.removeEditingVariant("acme_b");
+
+      expect(manager.editingCustomization.value?.defaultVariantId).toBe(
+        "acme_a"
+      );
+    });
+
     it("shows the fallback default, not the first variant based on it, to a viewer on a brand app theme", async () => {
       getDataMock.mockResolvedValue({ success: true, data: whiteLabelRecord });
       const { manager } = createManager();

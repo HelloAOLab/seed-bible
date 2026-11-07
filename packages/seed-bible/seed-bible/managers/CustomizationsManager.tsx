@@ -2183,14 +2183,19 @@ export function createCustomizationsManager(
     if (!current || current.variants.length <= 1) {
       return;
     }
-    if (!current.variants.some((v) => v.id === variantId)) {
+    const removed = current.variants.find((v) => v.id === variantId);
+    if (!removed) {
       return;
     }
 
     const remaining = current.variants.filter((v) => v.id !== variantId);
+    const removedRole = getVariantDefaultRole(removed);
     const nextDefaultVariantId =
       current.defaultVariantId === variantId
-        ? remaining[0]!.id
+        ? (
+            remaining.find((v) => getVariantDefaultRole(v) === removedRole) ??
+            remaining[0]!
+          ).id
         : current.defaultVariantId;
 
     editingCustomization.value = fillSchemeDefaults({
