@@ -107,8 +107,7 @@ function useReaderChrome(): ReaderChrome {
       const foundNav = wrap?.querySelector(".sb-reader-floating-nav");
       const nav = foundNav instanceof HTMLElement ? foundNav : null;
       watchSize(wrap, nav);
-      const moreMenuOpen =
-        document.querySelector(".sb-mobile-more-menu") !== null;
+      const moreMenuOpen = document.querySelector(".sb-more-menu") !== null;
       setChrome((current) => {
         const anchor = measure(wrap, nav, current.anchor);
         if (

@@ -442,4 +442,31 @@ describe("saved games controller", () => {
 
     expect(savedGames.value.map((game) => game.name)).toEqual(["One"]);
   });
+
+  it("lists every game when a save lands while the list is still loading", async () => {
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "a", name: "A", createdAtMs: 2 }));
+    records.putGame(makeGame({ id: "b", name: "B", createdAtMs: 1 }));
+    const listed = deferred<void>();
+    const list = records.os.listDataByMarker.getMockImplementation()!;
+    records.os.listDataByMarker.mockImplementationOnce(async (...args) => {
+      const page = await list(...args);
+      await listed.promise;
+      return page;
+    });
+
+    const syncing = controller.syncUser("user-1");
+    await controller.save(
+      draftOf(makeGame({ name: "New", createdAtMs: 3 })),
+      null
+    );
+    listed.resolve();
+
+    await expect(syncing).resolves.toBe("ok");
+    expect(savedGames.value.map((game) => game.name)).toEqual([
+      "New",
+      "A",
+      "B",
+    ]);
+  });
 });

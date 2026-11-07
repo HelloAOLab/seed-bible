@@ -487,7 +487,7 @@ describe("Find the Verse", () => {
       expect(document.body.textContent).toContain("End game");
 
       const menu = document.createElement("div");
-      menu.className = "sb-mobile-more-menu";
+      menu.className = "sb-more-menu";
       await act(async () => {
         wrap.appendChild(menu);
       });
@@ -520,7 +520,7 @@ describe("Find the Verse", () => {
         first.replaceWith(second);
       });
       const menu = document.createElement("div");
-      menu.className = "sb-mobile-more-menu";
+      menu.className = "sb-more-menu";
       await act(async () => {
         second.appendChild(menu);
       });

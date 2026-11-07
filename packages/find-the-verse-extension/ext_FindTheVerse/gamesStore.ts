@@ -347,7 +347,10 @@ export function createSavedGamesController(
         const writesAtStart = writeEpoch;
         return requestLoad(userId).then((result) => {
           if (token !== loadToken || getUserId() !== userId) return "stale";
-          if (writesAtStart !== writeEpoch) return "stale";
+          // A write landed mid-load, so this result may be missing it. Fetch
+          // again once writes finish; until then the list on screen may be
+          // only what was written.
+          if (writesAtStart !== writeEpoch) return writeQueue.then(startLoad);
           if (result.status !== "ok") return "error";
           listUser = userId;
           savedGames.value = result.games;
