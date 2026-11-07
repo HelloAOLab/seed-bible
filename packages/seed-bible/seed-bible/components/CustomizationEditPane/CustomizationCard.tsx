@@ -67,10 +67,7 @@ export function CustomizationCard(props: {
   const { state, customization } = props;
   const { customizations } = state;
   const { t } = useI18n();
-  const previewVariant =
-    customization.variants.find(
-      (v) => v.id === customization.defaultVariantId
-    ) ?? customization.variants[0];
+  const previewVariant = customizations.getPreviewVariant(customization);
 
   return (
     <li className="sb-cz-card">

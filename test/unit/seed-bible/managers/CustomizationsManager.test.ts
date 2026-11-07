@@ -28,6 +28,7 @@ import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsMana
 import {
   createTheme,
   DARK_THEME,
+  LIGHT_THEME,
   SYSTEM_THEME_ID,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { SettingsManager } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
@@ -2082,21 +2083,30 @@ describe("CustomizationsManager", () => {
     expect(record.variants[0]?.name).toBe(created.variants[0]!.name);
   });
 
-  it("setEditingDefaultVariant() updates the draft's default variant id, and no-ops for an unknown id", async () => {
+  it("setEditingDefaultVariant() sets the default for the variant's own base scheme, and no-ops for an unknown id", async () => {
     const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
-    const second = manager.addEditingVariant();
+    const firstLight = created.variants[0]!;
+    manager.applyPresetToEditingVariant(firstLight.id, LIGHT_THEME.id);
+    const secondLight = manager.addEditingVariant()!;
+    manager.applyPresetToEditingVariant(secondLight.id, LIGHT_THEME.id);
+    const firstDark = manager.addEditingVariant()!;
+    manager.applyPresetToEditingVariant(firstDark.id, DARK_THEME.id);
+    const secondDark = manager.addEditingVariant()!;
+    manager.applyPresetToEditingVariant(secondDark.id, DARK_THEME.id);
 
-    manager.setEditingDefaultVariant(second!.id);
-    expect(manager.editingCustomization.value?.defaultVariantId).toBe(
-      second!.id
-    );
+    manager.setEditingDefaultVariant(secondLight.id);
+    manager.setEditingDefaultVariant(secondDark.id);
+    const expected = {
+      defaultLightVariantId: secondLight.id,
+      defaultDarkVariantId: secondDark.id,
+      defaultVariantId: firstLight.id,
+    };
+    expect(manager.editingCustomization.value).toMatchObject(expected);
 
     manager.setEditingDefaultVariant("variant_does_not_exist");
-    expect(manager.editingCustomization.value?.defaultVariantId).toBe(
-      second!.id
-    );
+    expect(manager.editingCustomization.value).toMatchObject(expected);
   });
 
   it("removeEditingVariant() removes a non-default variant and leaves defaultVariantId untouched", async () => {
@@ -2831,6 +2841,7 @@ describe("CustomizationsManager", () => {
           updatedAt: 1,
         },
       ],
+      defaultLightVariantId: "variant_shared",
       defaultVariantId: "variant_shared",
       logoUrl: null,
       createdAt: 1,
@@ -3275,6 +3286,159 @@ describe("CustomizationsManager", () => {
     expect(manager.linkedCustomization.value).toBeNull();
   });
 
+  describe("light and dark defaults", () => {
+    /** A stored record with one variant per `[id, baseTheme]` pair. */
+    function makeRecord(
+      id: string,
+      variants: [string, string][],
+      defaults: {
+        defaultVariantId: string;
+        defaultLightVariantId?: string;
+        defaultDarkVariantId?: string;
+      }
+    ) {
+      return {
+        id,
+        name: id,
+        variants: variants.map(([variantId, baseTheme]) => ({
+          id: variantId,
+          name: variantId,
+          baseTheme,
+          themes: {},
+          highlightColors: {},
+          createdAt: 1,
+          updatedAt: 1,
+        })),
+        ...defaults,
+        logoUrl: null,
+        createdAt: 1,
+        updatedAt: 1,
+      };
+    }
+
+    const legacyRecord = makeRecord(
+      "customization_legacy",
+      [
+        ["day", "light"],
+        ["night", "dark"],
+        ["midnight", "dark"],
+      ],
+      { defaultVariantId: "midnight" }
+    );
+
+    const whiteLabelRecord = makeRecord(
+      "customization_white_label",
+      [
+        ["brand_a", "brand"],
+        ["brand_b", "brand"],
+      ],
+      { defaultVariantId: "brand_b" }
+    );
+
+    function listRecords(...records: ReturnType<typeof makeRecord>[]) {
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: records.map((data) => ({ address: data.id, data })),
+      });
+    }
+
+    it("load() fills in a legacy record's light and dark defaults from its old default, else the first variant of each kind", async () => {
+      listRecords(legacyRecord, whiteLabelRecord);
+      const { manager } = createManager();
+
+      await manager.load();
+
+      const [legacy, whiteLabel] = manager.customizations.value;
+      expect(legacy).toMatchObject({
+        defaultLightVariantId: "day",
+        defaultDarkVariantId: "midnight",
+        defaultVariantId: "midnight",
+      });
+      expect(whiteLabel?.defaultLightVariantId).toBeUndefined();
+      expect(whiteLabel?.defaultDarkVariantId).toBeUndefined();
+      expect(whiteLabel?.defaultVariantId).toBe("brand_b");
+    });
+
+    it("load() keeps a stored default of the right kind and replaces one that points at a variant of the other kind", async () => {
+      listRecords(
+        makeRecord(
+          "customization_mixed",
+          [
+            ["day", "light"],
+            ["dusk", "light"],
+            ["night", "dark"],
+          ],
+          {
+            defaultVariantId: "day",
+            defaultLightVariantId: "dusk",
+            defaultDarkVariantId: "day",
+          }
+        )
+      );
+      const { manager } = createManager();
+
+      await manager.load();
+
+      expect(manager.customizations.value[0]).toMatchObject({
+        defaultLightVariantId: "dusk",
+        defaultDarkVariantId: "night",
+      });
+    });
+
+    it("shows a linked legacy record's old default to a dark-mode viewer, not its first dark variant", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: legacyRecord });
+      const { manager } = createManager();
+      settings.setThemeId("dark");
+
+      await manager.loadByLocator("owner.customization_legacy");
+
+      expect(manager.activeVariant.value?.id).toBe("midnight");
+    });
+
+    it("getPreviewVariant() uses the default for the app theme's scheme, else the fallback default", async () => {
+      const schemed = makeRecord(
+        "customization_schemed",
+        [
+          ["day", "light"],
+          ["dusk", "light"],
+          ["night", "dark"],
+          ["midnight", "dark"],
+        ],
+        {
+          defaultVariantId: "day",
+          defaultLightVariantId: "dusk",
+          defaultDarkVariantId: "midnight",
+        }
+      );
+      listRecords(schemed, whiteLabelRecord);
+      const { manager } = createManager();
+      await manager.load();
+      const [loadedSchemed, loadedWhiteLabel] = manager.customizations.value;
+
+      expect(manager.getPreviewVariant(loadedSchemed!)?.id).toBe("dusk");
+      expect(manager.getPreviewVariant(loadedWhiteLabel!)?.id).toBe("brand_b");
+
+      settings.setThemeId("dark");
+
+      expect(manager.getPreviewVariant(loadedSchemed!)?.id).toBe("midnight");
+      expect(manager.getPreviewVariant(loadedWhiteLabel!)?.id).toBe("brand_b");
+    });
+
+    it("setEditingDefaultVariant() on a brand-based variant sets the fallback default, not a light or dark one", async () => {
+      listRecords(whiteLabelRecord);
+      const { manager } = createManager();
+      await manager.load();
+      manager.startEditing(whiteLabelRecord.id);
+
+      manager.setEditingDefaultVariant("brand_a");
+
+      const draft = manager.editingCustomization.value;
+      expect(draft?.defaultVariantId).toBe("brand_a");
+      expect(draft?.defaultLightVariantId).toBeUndefined();
+      expect(draft?.defaultDarkVariantId).toBeUndefined();
+    });
+  });
+
   describe("system color scheme", () => {
     afterEach(() => {
       vi.unstubAllGlobals();
@@ -3328,6 +3492,75 @@ describe("CustomizationsManager", () => {
       settings.setThemeId("light");
 
       expect(manager.activeVariant.value?.id).toBe(lightVariantId);
+    });
+
+    it("uses the default for the embed link's theme, not the first variant based on it", async () => {
+      const { manager } = createManager(
+        createNavigationManager({
+          initialHref: "http://localhost/?embed=minimal&app.themeId=dark",
+        })
+      );
+      await createLightAndDarkCustomization(manager);
+      const defaultDark = manager.addEditingVariant()!;
+      manager.applyPresetToEditingVariant(defaultDark.id, "dark");
+      manager.setEditingDefaultVariant(defaultDark.id);
+      settings.setThemeId("dark");
+
+      expect(manager.activeVariant.value?.id).toBe(defaultDark.id);
+    });
+
+    it("moves the dark default to the first remaining dark variant when it's removed, and clears it when none is left", async () => {
+      const { manager } = createManager();
+      const { darkVariantId } = await createLightAndDarkCustomization(manager);
+      const defaultDark = manager.addEditingVariant()!;
+      manager.applyPresetToEditingVariant(defaultDark.id, "dark");
+      manager.setEditingDefaultVariant(defaultDark.id);
+
+      manager.removeEditingVariant(defaultDark.id);
+
+      expect(manager.editingCustomization.value?.defaultDarkVariantId).toBe(
+        darkVariantId
+      );
+
+      manager.removeEditingVariant(darkVariantId);
+
+      expect(
+        manager.editingCustomization.value?.defaultDarkVariantId
+      ).toBeUndefined();
+    });
+
+    it("moves the dark default to the first remaining dark variant when its base changes to light, leaving the light default alone", async () => {
+      const { manager } = createManager();
+      const { lightVariantId, darkVariantId } =
+        await createLightAndDarkCustomization(manager);
+      const defaultDark = manager.addEditingVariant()!;
+      manager.applyPresetToEditingVariant(defaultDark.id, "dark");
+      manager.setEditingDefaultVariant(defaultDark.id);
+
+      manager.applyPresetToEditingVariant(defaultDark.id, "light");
+
+      expect(manager.editingCustomization.value).toMatchObject({
+        defaultLightVariantId: lightVariantId,
+        defaultDarkVariantId: darkVariantId,
+      });
+    });
+
+    it("makes the first dark variant added to a light-only customization its dark default", async () => {
+      const { manager } = createManager();
+      const created = await manager.create();
+      manager.startEditing(created.id);
+      manager.applyPresetToEditingVariant(created.variants[0]!.id, "light");
+      expect(
+        manager.editingCustomization.value?.defaultDarkVariantId
+      ).toBeUndefined();
+
+      settings.setThemeId("dark");
+      const dark = manager.addEditingVariant()!;
+
+      expect(dark.baseTheme).toBe("dark");
+      expect(manager.editingCustomization.value?.defaultDarkVariantId).toBe(
+        dark.id
+      );
     });
 
     it("follows the device between a customization's light and dark variants once the viewer picks System", async () => {
