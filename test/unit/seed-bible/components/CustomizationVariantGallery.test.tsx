@@ -59,6 +59,10 @@ function makeCustomization(
     id: "customization_1",
     name: "Branded",
     variants,
+    defaultLightVariantId: variants.find((v) => v.baseTheme === LIGHT_THEME.id)
+      ?.id,
+    defaultDarkVariantId: variants.find((v) => v.baseTheme === DARK_THEME.id)
+      ?.id,
     defaultVariantId: variants[0]!.id,
     logoUrl: null,
     createdAt: 1,

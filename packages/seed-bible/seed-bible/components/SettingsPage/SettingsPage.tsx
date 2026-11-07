@@ -322,9 +322,19 @@ function CustomizationSystemCard(props: {
   const { customizations } = props.state;
   const { t } = useI18n();
   const isSelected = customizations.isFollowingSystemScheme.value;
-  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => {
+
+  const halves = [
+    {
+      presetId: LIGHT_THEME.id,
+      variantId: props.customization.defaultLightVariantId,
+    },
+    {
+      presetId: DARK_THEME.id,
+      variantId: props.customization.defaultDarkVariantId,
+    },
+  ].map(({ presetId, variantId }) => {
     const variant = props.customization.variants.find(
-      (v) => v.baseTheme === presetId
+      (v) => v.id === variantId
     );
     return {
       presetId,
