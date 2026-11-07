@@ -22,7 +22,7 @@ import {
   getExtensionSettingDefault,
   getFontPresetsForField,
   getVariantDefaultRole,
-  isDefaultVariantForRole,
+  isDefaultVariant,
   type CustomizationThemeVariant,
   type CustomizationsManager,
   type DefaultExtensionAvailability,
@@ -779,11 +779,7 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           <ul className="sb-cz-theme-grid">
             {record.variants.map((variant) => {
               const defaultRole = getVariantDefaultRole(variant);
-              const isDefault = isDefaultVariantForRole(
-                record,
-                variant,
-                defaultRole
-              );
+              const isDefault = isDefaultVariant(record, variant);
               const basePreset =
                 customizations.resolveVariantBaseTheme(variant);
               return (
@@ -1517,7 +1513,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
   }
 
   const defaultRole = getVariantDefaultRole(variant);
-  const isDefault = isDefaultVariantForRole(record, variant, defaultRole);
+  const isDefault = isDefaultVariant(record, variant);
   const canDelete = record.variants.length > 1;
   const resolvedTheme = customizations.resolveEditingVariantTheme(variant);
 

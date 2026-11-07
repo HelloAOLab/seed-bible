@@ -397,19 +397,6 @@ function fillSchemeDefaults<
   };
 }
 
-function getSchemeDefaultVariantId(
-  customization: SeedBibleCustomization,
-  schemeThemeId: string
-): string | undefined {
-  if (schemeThemeId === DARK_THEME.id) {
-    return customization.defaultDarkVariantId;
-  }
-  if (schemeThemeId === LIGHT_THEME.id) {
-    return customization.defaultLightVariantId;
-  }
-  return undefined;
-}
-
 const customizationSchema = z
   .object({
     id: z.string().min(1),
@@ -567,31 +554,45 @@ const DEFAULT_ROLE_FIELD_MAP: Record<
   fallback: "defaultVariantId",
 };
 
-export function getVariantDefaultRole(
-  variant: CustomizationThemeVariant
-): VariantDefaultRole {
-  if (variant.baseTheme === LIGHT_THEME.id) {
+function getThemeDefaultRole(themeId: string): VariantDefaultRole {
+  if (themeId === LIGHT_THEME.id) {
     return "light";
   }
-  if (variant.baseTheme === DARK_THEME.id) {
+  if (themeId === DARK_THEME.id) {
     return "dark";
   }
   return "fallback";
 }
 
-export function isDefaultVariantForRole(
+export function getVariantDefaultRole(
+  variant: CustomizationThemeVariant
+): VariantDefaultRole {
+  return getThemeDefaultRole(variant.baseTheme);
+}
+
+export function isDefaultVariant(
   record: SeedBibleCustomization,
-  variant: CustomizationThemeVariant,
-  role: VariantDefaultRole
+  variant: CustomizationThemeVariant
 ): boolean {
-  switch (role) {
-    case "light":
-      return record.defaultLightVariantId === variant.id;
-    case "dark":
-      return record.defaultDarkVariantId === variant.id;
-    case "fallback":
-      return record.defaultVariantId === variant.id;
-  }
+  return (
+    record[DEFAULT_ROLE_FIELD_MAP[getVariantDefaultRole(variant)]] ===
+    variant.id
+  );
+}
+
+/**
+ * The Light or Dark default for `schemeThemeId`. `undefined` for any other
+ * theme: the fallback `defaultVariantId` is a separate, later step in
+ * `activeVariant`, not a scheme default.
+ */
+function getSchemeDefaultVariantId(
+  customization: SeedBibleCustomization,
+  schemeThemeId: string
+): string | undefined {
+  const role = getThemeDefaultRole(schemeThemeId);
+  return role === "fallback"
+    ? undefined
+    : customization[DEFAULT_ROLE_FIELD_MAP[role]];
 }
 
 function withExtensionSensitiveProxy(
@@ -866,7 +867,15 @@ export interface CustomizationsManager {
    * no record name to build a share link from).
    */
   activeCustomizationLocator: ReadonlySignal<string | null>;
-  /** The variant of the active customization currently in effect (the device's color scheme when `isFollowingSystemScheme`, else the viewer's own pick, else the customization's default, else its first variant). */
+  /**
+   * The variant of the active customization currently in effect: the
+   * viewer's own pick, else the default for the scheme in effect (the
+   * device's when `isFollowingSystemScheme` or the app theme is System,
+   * else the app theme's), else `defaultVariantId`, else the first variant.
+   * In a minimal embed the link's theme wins over the viewer's pick: its
+   * scheme's default, else `defaultVariantId` if based on that theme, else
+   * the first variant based on it, else `defaultVariantId`, else the first.
+   */
   activeVariant: ReadonlySignal<CustomizationThemeVariant | null>;
   /** Whether the active customization has both a Light-based and a Dark-based variant, and so can follow the device the way the app-wide System theme does. False when nothing is active. */
   canFollowSystemScheme: ReadonlySignal<boolean>;
