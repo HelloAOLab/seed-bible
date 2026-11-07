@@ -2101,7 +2101,7 @@ describe("CustomizationsManager", () => {
     const expected = {
       defaultLightVariantId: secondLight.id,
       defaultDarkVariantId: secondDark.id,
-      defaultVariantId: firstLight.id,
+      defaultVariantId: secondLight.id,
     };
     expect(manager.editingCustomization.value).toMatchObject(expected);
 
@@ -3436,6 +3436,32 @@ describe("CustomizationsManager", () => {
       expect(draft?.defaultVariantId).toBe("brand_a");
       expect(draft?.defaultLightVariantId).toBeUndefined();
       expect(draft?.defaultDarkVariantId).toBeUndefined();
+    });
+
+    it("setEditingDefaultVariant() moves the fallback default along with the light or dark default of its own kind only", async () => {
+      listRecords(
+        makeRecord(
+          "customization_sync",
+          [
+            ["day", "light"],
+            ["dusk", "light"],
+            ["night", "dark"],
+            ["midnight", "dark"],
+          ],
+          { defaultVariantId: "day" }
+        )
+      );
+      const { manager } = createManager();
+      await manager.load();
+      manager.startEditing("customization_sync");
+
+      manager.setEditingDefaultVariant("midnight");
+
+      expect(manager.editingCustomization.value?.defaultVariantId).toBe("day");
+
+      manager.setEditingDefaultVariant("dusk");
+
+      expect(manager.editingCustomization.value?.defaultVariantId).toBe("dusk");
     });
 
     it("shows the fallback default, not the first variant based on it, to a viewer on a brand app theme", async () => {

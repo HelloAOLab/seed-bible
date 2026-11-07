@@ -518,9 +518,11 @@ export interface SeedBibleCustomization {
   /**
    * Fallback default, used when the scheme in effect has no per-scheme
    * default (e.g. white-label customizations whose variants are all
-   * brand-based). The editor doesn't expose it; the app fills it in on save.
-   * Must reference an existing variant: older builds require it and skip any
-   * customization without it.
+   * brand-based). Set directly from the editor for brand-based variants;
+   * otherwise kept in step with the light or dark default of the kind it
+   * already points at, so older builds, which read only this field, follow
+   * the author's latest choice. Must reference an existing variant: older
+   * builds require it and skip any customization without it.
    */
   defaultVariantId: string;
 
@@ -2158,9 +2160,18 @@ export function createCustomizationsManager(
       return;
     }
 
+    const role = getVariantDefaultRole(variant);
+    const fallbackDefault = current.variants.find(
+      (v) => v.id === current.defaultVariantId
+    );
+    const fallbackRole = fallbackDefault
+      ? getVariantDefaultRole(fallbackDefault)
+      : role;
+
     editingCustomization.value = {
       ...current,
-      [DEFAULT_ROLE_FIELD_MAP[getVariantDefaultRole(variant)]]: variantId,
+      [DEFAULT_ROLE_FIELD_MAP[role]]: variantId,
+      ...(fallbackRole === role ? { defaultVariantId: variantId } : {}),
       updatedAt: Date.now(),
     };
 
