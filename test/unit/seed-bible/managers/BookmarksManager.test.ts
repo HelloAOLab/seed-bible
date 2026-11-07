@@ -325,6 +325,187 @@ describe("BookmarksManager", () => {
     ).rejects.toThrow("not_authorized");
   });
 
+  describe("when a write fails", () => {
+    const failures = [
+      [
+        "is rejected",
+        () =>
+          recordDataMock.mockResolvedValue({
+            success: false,
+            errorCode: "not_authorized",
+          }),
+      ],
+      [
+        "throws",
+        () => recordDataMock.mockRejectedValue(new Error("Network error")),
+      ],
+    ] as const;
+
+    describe.each(failures)("because it %s", (_label, failWrites) => {
+      let manager: ReturnType<typeof createBookmarksManager>;
+
+      beforeEach(async () => {
+        records = {
+          readingBookmarks: {
+            bookmarks: [
+              aBookmark({ id: "a", updatedAt: 200 }),
+              aBookmark({ id: "b", name: "Sermon prep", updatedAt: 100 }),
+            ],
+          },
+        };
+        manager = createBookmarksManager(os, login);
+        await flushPromises();
+        failWrites();
+      });
+
+      const before = () => [
+        aBookmark({ id: "a", updatedAt: 200 }),
+        aBookmark({ id: "b", name: "Sermon prep", updatedAt: 100 }),
+      ];
+
+      it("puts a deleted bookmark back", async () => {
+        await expect(manager.removeBookmark("a")).rejects.toThrow();
+        expect(manager.bookmarks.value).toEqual(before());
+      });
+
+      it("takes a created bookmark away again", async () => {
+        await expect(
+          manager.createBookmark({ name: "New", colorId: "red" }, EXO_3)
+        ).rejects.toThrow();
+        expect(manager.bookmarks.value).toEqual(before());
+      });
+
+      it("moves a bookmark back to where it was", async () => {
+        await expect(manager.moveBookmark("b", EXO_3)).rejects.toThrow();
+        expect(manager.bookmarks.value).toEqual(before());
+      });
+
+      it("puts back a bookmark's old name and color", async () => {
+        await expect(
+          manager.updateBookmark("a", { name: "Renamed", colorId: "purple" })
+        ).rejects.toThrow();
+        expect(manager.bookmarks.value).toEqual(before());
+      });
+    });
+
+    it("keeps a later change that was saved while the failed write was out", async () => {
+      records = {
+        readingBookmarks: {
+          bookmarks: [aBookmark({ id: "a" }), aBookmark({ id: "b" })],
+        },
+      };
+      const manager = createBookmarksManager(os, login);
+      await flushPromises();
+      let failFirstWrite: () => void = () => {};
+      recordDataMock.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            failFirstWrite = () =>
+              resolve({ success: false, errorCode: "server_error" });
+          })
+      );
+
+      const removing = manager.removeBookmark("a");
+      await flushPromises();
+      await manager.updateBookmark("b", { name: "Renamed", colorId: "red" });
+      failFirstWrite();
+      await expect(removing).rejects.toThrow("server_error");
+
+      // The rename's write sent the list without "a", and it was saved.
+      expect(lastWritten().map((b) => b.id)).toEqual(["b"]);
+      expect(manager.bookmarks.value).toEqual([
+        aBookmark({ id: "b", name: "Renamed", colorId: "red" }),
+      ]);
+    });
+
+    describe("with two writes out at once", () => {
+      type Outcome = "saves" | "fails";
+      /** Writes that wait to be settled by the test, in the order sent. */
+      let settle: ((outcome: Outcome) => void)[];
+
+      beforeEach(() => {
+        settle = [];
+        recordDataMock.mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              settle.push((outcome) =>
+                resolve(
+                  outcome === "saves"
+                    ? { success: true }
+                    : { success: false, errorCode: "server_error" }
+                )
+              );
+            })
+        );
+      });
+
+      const a = aBookmark({ id: "a", updatedAt: 200 });
+      const b = aBookmark({ id: "b", updatedAt: 100 });
+      const renamedB = { ...b, name: "Renamed" };
+
+      // Deleting "a" sends [b]; renaming "b" while that is out sends [b′].
+      it.each([
+        ["the delete", "fails", "the rename", "fails", [a, b]],
+        ["the rename", "fails", "the delete", "fails", [a, b]],
+        ["the delete", "saves", "the rename", "fails", [b]],
+        ["the rename", "fails", "the delete", "saves", [b]],
+        ["the delete", "fails", "the rename", "saves", [renamedB]],
+        ["the rename", "saves", "the delete", "fails", [renamedB]],
+      ] as const)(
+        "when %s %s and then %s %s, shows what the server holds",
+        async (firstName, firstOutcome, _secondName, secondOutcome, shown) => {
+          records = { readingBookmarks: { bookmarks: [a, b] } };
+          const manager = createBookmarksManager(os, login);
+          await flushPromises();
+
+          const deleting = manager.removeBookmark("a").catch(() => undefined);
+          await flushPromises();
+          const renaming = manager
+            .updateBookmark("b", { name: "Renamed", colorId: b.colorId })
+            .catch(() => undefined);
+          await flushPromises();
+          expect(settle).toHaveLength(2);
+
+          const [settleDelete, settleRename] = settle as [
+            (outcome: Outcome) => void,
+            (outcome: Outcome) => void,
+          ];
+          const [settleFirst, settleSecond] =
+            firstName === "the delete"
+              ? [settleDelete, settleRename]
+              : [settleRename, settleDelete];
+          settleFirst(firstOutcome);
+          await flushPromises();
+          settleSecond(secondOutcome);
+          await Promise.all([deleting, renaming]);
+
+          expect(manager.bookmarks.value).toEqual(shown);
+        }
+      );
+    });
+
+    it("doesn't bring bookmarks back after a sign-out", async () => {
+      records = { readingBookmarks: { bookmarks: [aBookmark()] } };
+      const manager = createBookmarksManager(os, login);
+      await flushPromises();
+      let failWrite: () => void = () => {};
+      recordDataMock.mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            failWrite = () => reject(new Error("Network error"));
+          })
+      );
+
+      const removing = manager.removeBookmark("bm-1");
+      await flushPromises();
+      login.userId.value = null;
+      failWrite();
+      await expect(removing).rejects.toThrow();
+
+      expect(manager.bookmarks.value).toEqual([]);
+    });
+  });
+
   it("clears bookmarks and closes the panel on sign-out", async () => {
     records = { readingBookmarks: { bookmarks: [aBookmark()] } };
     const manager = createBookmarksManager(os, login);

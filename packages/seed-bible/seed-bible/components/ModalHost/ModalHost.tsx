@@ -51,6 +51,7 @@ function HostedModal(props: { manager: ModalManager; modal: ManagedModal }) {
           <button
             className="sb-footnote-modal-close"
             aria-label={t("close", { defaultValue: "Close" })}
+            disabled={!modal.canDismiss()}
             onClick={dismiss}
           >
             <span className="material-symbols-outlined">close</span>

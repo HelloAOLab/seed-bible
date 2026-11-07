@@ -391,6 +391,9 @@ export function TheographicEntityCard(props: TheographicEntityCardProps) {
                     openLabel={t("open-in-map", {
                       defaultValue: "Open in map",
                     })}
+                    // The same test as where the map opens: a sheet on a
+                    // phone-sized screen, a floating pane otherwise.
+                    still={isMobile?.value ?? false}
                   />
                 )
               }

@@ -453,11 +453,12 @@
   background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
 }
 
-/* Darkened so white text on the brand orange stays readable (4.5:1). */
+/* Darkened so the Light theme's white text on orange passes 4.5:1. Dark's
+   near-black text on its near-white accent still clears that after darkening. */
 .sb-extension-consent-allow {
   padding: 0 1.5rem;
   background: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
-  color: #ffffff;
+  color: var(--sb-primary-font-color);
 }
 
 .sb-extension-consent-allow:hover {

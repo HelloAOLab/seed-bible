@@ -96,16 +96,20 @@ function UnsavedChangesConfirmModalContent(props: {
 }
 
 /**
- * Leaves the playlist editor. If the name, description, cover, items, or an
- * in-progress add-item draft changed, asks first instead of discarding.
+ * Leaves the playlist editor, returning to the screen that opened it if
+ * another one did. If the name, description, cover, items, or an in-progress
+ * add-item draft changed, asks first instead of discarding.
  */
 export function requestCancelPlaylistEditor(
   playlists: PlaylistManager,
   modals: ModalManager,
   extraDirty = false
 ): void {
+  // Read before leaving: cancelling or saving the draft forgets it.
+  const onBack = playlists.editingPlaylistOnBack.peek();
   if (!playlists.isEditingPlaylistDirty() && !extraDirty) {
     playlists.cancelEditingPlaylist();
+    onBack?.();
     return;
   }
   modals.openModal({
@@ -119,11 +123,12 @@ export function requestCancelPlaylistEditor(
         onConfirm={() => {
           modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
           playlists.cancelEditingPlaylist();
+          onBack?.();
         }}
         onGoBack={() => modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID)}
         onSaveAndExit={() => {
           modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
-          void playlists.saveEditingPlaylist();
+          void playlists.saveEditingPlaylist().then(() => onBack?.());
         }}
       />
     ),
@@ -334,12 +339,16 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
 
   const doSave = async () => {
     setSaving(true);
+    // Read before saving, which forgets it.
+    const onBack = playlists.editingPlaylistOnBack.peek();
     try {
       await playlists.saveEditingPlaylist();
     } catch (error) {
       console.error("Failed to save playlist:", error);
       setSaving(false);
+      return;
     }
+    onBack?.();
   };
 
   const handleSave = () => {

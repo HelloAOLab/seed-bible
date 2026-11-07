@@ -7,7 +7,6 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
-import { READING_PLANS_PANE_ID } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import {
   createTestSeedBibleState,
   waitFor,
@@ -1921,22 +1920,6 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     expect(container.querySelector(".sb-more-menu")).not.toBeNull();
   }
 
-  it("shows Today, Books and Search, with Discover moved into More", async () => {
-    await renderToolbar();
-
-    expect(barLabels()).toEqual([
-      "Previous Chapter",
-      "Today",
-      "Books",
-      "Search",
-      "More",
-      "Next Chapter",
-    ]);
-
-    await openMenu();
-    expect(menuLabels()).toContain("Discover");
-  });
-
   it("puts extension tools in the More menu instead of the toolbar", async () => {
     const state = await renderToolbar();
 
@@ -1965,7 +1948,6 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
 
     await act(async () => {
       state.tools.unregisterToolbarTool("open-discover");
-      state.tools.unregisterToolbarTool("open-plans");
     });
 
     expect(moreButton()).toBeNull();
@@ -1999,30 +1981,11 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     expect(container.querySelector(".sb-more-menu")).toBeNull();
   });
 
-  it("closes the reading plans pane when Plans is picked again", async () => {
-    const state = await renderToolbar();
-    const pickPlans = async () => {
-      await openMenu();
-      const item = Array.from(
-        container.querySelectorAll<HTMLButtonElement>(".sb-more-menu-item")
-      ).find((el) => el.textContent?.includes("Plans"));
-      if (!item) throw new Error("Plans is missing from More.");
-      await act(async () => {
-        item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      });
-    };
-    const plansPaneOpen = () =>
-      state.panes.panes.value.some((pane) => pane.id === READING_PLANS_PANE_ID);
-
-    await pickPlans();
-    expect(plansPaneOpen()).toBe(true);
-
-    await pickPlans();
-    expect(plansPaneOpen()).toBe(false);
-  });
-
   it("closes the More menu on Escape and returns focus to the More button", async () => {
-    await renderToolbar();
+    const state = await renderToolbar();
+    await act(async () => {
+      registerExtensionTool(state, "ext-one", "Extension One");
+    });
     await openMenu();
 
     await act(async () => {
@@ -2132,11 +2095,7 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
   });
 
   it("shows the fourth tool itself instead of More when only four fit", async () => {
-    const state = await renderToolbar();
-
-    await act(async () => {
-      state.tools.unregisterToolbarTool("open-plans");
-    });
+    await renderToolbar();
 
     expect(moreButton()).toBeNull();
     expect(barLabels()).toEqual([
@@ -2153,7 +2112,6 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     const state = await renderToolbar();
 
     await act(async () => {
-      state.tools.unregisterToolbarTool("open-plans");
       registerExtensionTool(state, "ext-one", "Extension One");
     });
 
@@ -2175,7 +2133,6 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     const state = await renderToolbar();
     await act(async () => {
       state.tools.unregisterToolbarTool("open-discover");
-      state.tools.unregisterToolbarTool("open-plans");
       const chat = state.chats.createLocalSession();
       chat.appendMessage({ type: "text", text: "Hello" }, ["someone-else"]);
     });
@@ -2195,7 +2152,6 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
     const state = await renderToolbar();
     await act(async () => {
       state.tools.unregisterToolbarTool("open-discover");
-      state.tools.unregisterToolbarTool("open-plans");
       state.tools.registerToolbarTool({
         id: "ext-menu",
         priority: 1,
@@ -2237,7 +2193,6 @@ describe("BibleReaderToolbar — desktop toolbar and More menu", () => {
   it("does not reopen the More menu by itself after its tools fit on the bar again", async () => {
     const state = await renderToolbar();
     await act(async () => {
-      state.tools.unregisterToolbarTool("open-plans");
       registerExtensionTool(state, "ext-one", "Extension One");
     });
     await openMenu();
@@ -5315,14 +5270,13 @@ describe("BibleReaderToolbar — chat-first desktop / laptop toolbar", () => {
       Array.from(container.querySelectorAll(".sb-more-menu-label")).map(
         (el) => el.textContent
       )
-    ).toEqual(expect.arrayContaining(["Search", "Discover", "Plans"]));
+    ).toEqual(expect.arrayContaining(["Search", "Discover"]));
   });
 
   it("shows both Chat and Search, with no More, when they fit", async () => {
     const { state } = await renderToolbar({ chatFirst: true });
     await act(async () => {
       state.tools.unregisterToolbarTool("open-discover");
-      state.tools.unregisterToolbarTool("open-plans");
     });
 
     expect(barLabels()).toEqual([
