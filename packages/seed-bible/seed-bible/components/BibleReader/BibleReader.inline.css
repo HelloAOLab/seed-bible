@@ -887,11 +887,17 @@
  * (`-note-gutter`). Whichever is open, both edges reserve the same width, so
  * the text stays centred on the page with either gutter, both, or neither.
  */
+:root {
+  --sb-reader-gutter-width: 1.75rem;
+  /* How far the text sits in from each edge while a gutter is open. Global so
+     things drawn beside a chapter (a compare step's passage labels) can line
+     up with its text. */
+  --sb-reader-gutter-inset: calc(var(--sb-reader-gutter-width) + 0.25rem);
+}
+
 .sb-chapter-content.sb-chapter-content-presence,
 .sb-chapter-content.sb-chapter-content-note-gutter {
-  --sb-reader-gutter-width: 1.75rem;
-
-  padding-inline: calc(var(--sb-reader-gutter-width) + 0.25rem);
+  padding-inline: var(--sb-reader-gutter-inset);
 }
 
 /* With a marker in the gutter, the inline one (shown when verse numbers are

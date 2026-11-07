@@ -11,6 +11,15 @@
   min-width: 0;
 }
 
+/* In line with the passage's text, which a gutter beside it (note markers on
+   phones, people in a shared session) moves in from the column's edges. */
+.sb-playlist-compare-passage:has(
+  + .sb-chapter-content-note-gutter,
+  + .sb-chapter-content-presence
+) {
+  padding-inline: var(--sb-reader-gutter-inset);
+}
+
 .sb-playlist-compare-passage,
 .sb-playlist-compare-note-title {
   margin: 0 0 0.5rem;
