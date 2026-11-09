@@ -120,7 +120,7 @@ export interface PersonProfileDeps {
 }
 
 type ProfileLookup = "loading" | "found" | "no_account" | "failed";
-type FriendAction = "send" | "accept" | "decline" | "cancel";
+type FriendAction = "send" | "accept" | "decline" | "cancel" | "remove";
 
 /**
  * What the signed-in user can do about their connection with `person`. Read
@@ -175,17 +175,24 @@ function FriendshipActions(props: {
       name,
       defaultValue: "You're friends with {{name}}.",
     });
+    // The friendship drops out of the lists as soon as removal starts, so the
+    // card has already moved on by the time it would spin. Tracking it keeps
+    // Add friend disabled until it's done: a request sent meanwhile would be
+    // ended along with the friendship.
     actions = (
       <button
         type="button"
         className="sb-session-settings-cancel"
-        disabled={busy.value !== null}
         aria-label={t("remove-friend-user", {
           name,
           defaultValue: "Remove {{name}} as a friend",
         })}
         onClick={() =>
-          openRemoveFriendConfirm({ friends, modals, toast }, person)
+          openRemoveFriendConfirm(
+            { friends, modals, toast },
+            person,
+            (remove) => run("remove", remove)
+          )
         }
       >
         {t("remove", { defaultValue: "Remove" })}
@@ -283,6 +290,7 @@ function FriendshipActions(props: {
       <BusyButton
         className="sb-session-settings-end"
         busy={busy.value === "send"}
+        disabled={busy.value !== null}
         ariaLabel={t("add-friend-user", {
           name,
           defaultValue: "Add {{name}} as a friend",

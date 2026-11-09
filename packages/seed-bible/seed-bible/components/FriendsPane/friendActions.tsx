@@ -262,17 +262,20 @@ export async function sendFriendRequestTo(
   }
 }
 
+/** Runs a confirmed removal, for a caller that shows it in progress. */
+type TrackRemoval = (remove: () => Promise<void>) => Promise<void>;
+
 function ConfirmRemoveFriend(props: {
   friend: Friend;
   friends: FriendsManager;
   toast: Toast;
+  track?: TrackRemoval;
   onClose: () => void;
 }) {
-  const { friend, friends, toast, onClose } = props;
+  const { friend, friends, toast, track, onClose } = props;
   const { t } = useI18n();
 
-  const confirm = async () => {
-    onClose();
+  const remove = async () => {
     try {
       await friends.unfriend(friend.userId);
     } catch (error) {
@@ -283,6 +286,10 @@ function ConfirmRemoveFriend(props: {
         })
       );
     }
+  };
+  const confirm = () => {
+    onClose();
+    void (track ? track(remove) : remove());
   };
 
   return (
@@ -305,7 +312,7 @@ function ConfirmRemoveFriend(props: {
         <button
           type="button"
           className="sb-session-settings-end"
-          onClick={() => void confirm()}
+          onClick={confirm}
         >
           {t("remove", { defaultValue: "Remove" })}
         </button>
@@ -314,14 +321,19 @@ function ConfirmRemoveFriend(props: {
   );
 }
 
-/** Asks before ending the friendship with `friend`, then ends it. */
+/**
+ * Asks before ending the friendship with `friend`, then ends it. The
+ * confirmation closes straight away, so `track` is how the button that opened
+ * it can show the removal in progress.
+ */
 export function openRemoveFriendConfirm(
   deps: {
     friends: FriendsManager;
     modals: Pick<ModalManager, "openModal" | "closeModal">;
     toast: Toast;
   },
-  friend: Friend
+  friend: Friend,
+  track?: TrackRemoval
 ): void {
   const modalId = `remove-friend-${friend.userId}`;
   deps.modals.openModal({
@@ -335,6 +347,7 @@ export function openRemoveFriendConfirm(
         friend={friend}
         friends={deps.friends}
         toast={deps.toast}
+        track={track}
         onClose={() => deps.modals.closeModal(modalId)}
       />
     ),

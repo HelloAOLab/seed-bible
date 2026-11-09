@@ -411,6 +411,34 @@ describe("person profile card", () => {
       expect(buttonLabels()).toEqual(["Add friend"]);
     });
 
+    // The card shows them as a stranger as soon as removal starts, but a
+    // request sent before it finishes would be ended along with it.
+    it("holds off Add friend until the removal is done", async () => {
+      server.friendsWith(ADA_ID);
+      await openCard(ADA_ID);
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const revoke = server.spies.revoke.getMockImplementation()!;
+      server.spies.revoke.mockImplementationOnce((async (
+        ...args: Parameters<typeof revoke>
+      ) => {
+        await gate;
+        return revoke(...args);
+      }) as never);
+
+      await click(button("Remove"));
+      const dialog = document.createElement("div");
+      act(() => render(modal(`remove-friend-${ADA_ID}`)!.content(), dialog));
+      await act(async () => button("Remove", dialog)!.click());
+
+      expect(buttonLabels()).toEqual(["Add friend"]);
+      expect(button("Add friend")!.disabled).toBe(true);
+
+      release();
+      await settle();
+      expect(button("Add friend")!.disabled).toBe(false);
+    });
+
     it("says so when removing fails, and keeps them", async () => {
       const consoleError = vi
         .spyOn(console, "error")
