@@ -249,6 +249,8 @@ function createMockSharedSession(
     allUsers: signal([]),
     connectedUsers: signal([]),
     participantPositions: signal(new Map()),
+    questionAnswers: signal([]),
+    setQuestionAnswer: vi.fn(),
     localSessionId: signal(id),
     userCanDecorate: vi.fn().mockReturnValue(true),
     userCanNavigate: vi.fn().mockReturnValue(true),

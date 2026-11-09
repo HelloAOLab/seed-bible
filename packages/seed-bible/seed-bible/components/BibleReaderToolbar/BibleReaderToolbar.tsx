@@ -16,6 +16,7 @@ import {
 } from "../PlaylistEditor/PlaylistEditorWorkspace";
 import { PlaylistEditorToolbarStack } from "../PlaylistEditor/PlaylistEditorToolbarStack";
 import { PlaylistStepNoteSheet } from "../PlaylistEditor/PlaylistStepNoteSheet";
+import { QuestionAnswersSheet } from "../QuestionAnswers/QuestionAnswersSheet";
 import {
   MAX_CUSTOM_HIGHLIGHT_COLORS,
   UI_SIZE_SCALE_MAP,
@@ -3107,6 +3108,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       resolveBookName={resolveBookName}
                     />
                   )}
+                  {playing && sessionState.value && (
+                    <QuestionAnswersSheet
+                      session={sessionState.value}
+                      playing={playing}
+                    />
+                  )}
                   {!playing &&
                     (() => {
                       // The playlist editor's scripture step keeps its note
@@ -3251,6 +3258,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   : ""
               }`}
             >
+              {!isSmallScreen.value &&
+                (() => {
+                  // Desktop: a shared session's answers to the playing
+                  // question stack above this toolbar.
+                  const playing = playingPlaylist.value;
+                  const step = playing?.currentItem.value;
+                  return playing &&
+                    sessionState.value &&
+                    step?.type === "html" &&
+                    step.question ? (
+                    <div className="sb-pe-toolbar-stack sb-question-answers-dock">
+                      <QuestionAnswersSheet
+                        session={sessionState.value}
+                        playing={playing}
+                        docked
+                      />
+                    </div>
+                  ) : null;
+                })()}
               {!isSmallScreen.value &&
                 (() => {
                   // Desktop: the playlist editor's scripture step stacks its

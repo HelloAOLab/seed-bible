@@ -6266,3 +6266,128 @@ describe("BibleReaderToolbar — a playing passage's hidden note on desktop", ()
     expect(toolbar()).toBeNull();
   });
 });
+
+describe("BibleReaderToolbar — answers to a playing question in a shared session", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function playQuestion(options: { width: number; shared: boolean }) {
+    window.innerWidth = options.width;
+    const state = await createTestSeedBibleState();
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    const tab = state.app.currentReadingState.value!.tab;
+    if (options.shared) {
+      tab.sharedSession = {
+        id: "group-abc",
+        options: signal({
+          allowedNavigators: null,
+          allowedDecorators: null,
+          hostUserId: null,
+          coHostUserIds: null,
+          highlightDurationSeconds: 16,
+          shareTranslation: true,
+          endedAt: null,
+        }),
+        localSessionId: signal("user-me"),
+        userCanDecorate: () => true,
+        userCanNavigate: () => true,
+        isHost: () => false,
+        readingState: tab.readingState,
+        allUsers: signal([]),
+        connectedUsers: signal([]),
+        currentUser: signal(null),
+        participantPositions: signal(new Map()),
+        questionAnswers: signal([
+          {
+            stepKey: "p#0",
+            authorId: "user-maria",
+            text: "In the waiting room.",
+            updatedAtMs: 1,
+            name: "Maria",
+            pictureUrl: null,
+            visual: {
+              color: "#3b6fb6",
+              defaultIcon: "pets",
+              colorName: "blue",
+            },
+          },
+        ]),
+        setQuestionAnswer: vi.fn(),
+        document: {} as never,
+        updateOptions: vi.fn(),
+        dispose: vi.fn(),
+      } as unknown as NonNullable<typeof tab.sharedSession>;
+    }
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    await act(async () => {
+      state.playlists.startPlaying(
+        {
+          id: "p",
+          title: "P",
+          description: null,
+          items: [
+            { type: "html", html: "<p>Where?</p>", question: {} },
+            { type: "html", html: "<p>Pray</p>" },
+          ],
+        },
+        0,
+        { history: false, openItem: true }
+      );
+    });
+    return state;
+  }
+
+  const sheet = () => container.querySelector(".sb-question-answers");
+
+  it("rides on a phone's chapter pill", async () => {
+    await playQuestion({ width: MOBILE_VIEWPORT_WIDTH, shared: true });
+
+    expect(
+      container.querySelector(".sb-reader-floating-nav .sb-question-answers")
+        ?.textContent
+    ).toContain("1 answer");
+  });
+
+  it("stacks above the toolbar on desktop", async () => {
+    await playQuestion({ width: 1200, shared: true });
+
+    expect(
+      container.querySelector(".sb-reader-toolbar .sb-pe-toolbar-stack")
+        ?.textContent
+    ).toContain("1 answer");
+  });
+
+  it("isn't offered outside a shared session, or on a step that isn't a question", async () => {
+    await playQuestion({ width: MOBILE_VIEWPORT_WIDTH, shared: false });
+    expect(sheet()).toBeNull();
+
+    render(null, container);
+    const shared = await playQuestion({
+      width: MOBILE_VIEWPORT_WIDTH,
+      shared: true,
+    });
+    await act(async () => shared.playlists.playing.value!.next());
+    expect(sheet()).toBeNull();
+  });
+});

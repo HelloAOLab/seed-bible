@@ -286,6 +286,76 @@ function parseParticipantReadingPosition(
   return { bookId, chapterNumber, firstVerse, lastVerse, ...withAreas };
 }
 
+/** The longest answer to a question step the session keeps, in characters. */
+export const MAX_QUESTION_ANSWER_LENGTH = 4000;
+
+/**
+ * One participant's answer to a playlist's question step, as kept in the
+ * session's `question_answers` map. Who wrote it is copied in when it's
+ * written, so it still reads right after they leave.
+ */
+export interface SessionQuestionAnswer {
+  /** Which question, as the caller names it (see `questionAnswerStepKey`). */
+  stepKey: string;
+  /** The author's user id, or their connection id when signed out. */
+  authorId: string;
+  text: string;
+  updatedAtMs: number;
+  name: string;
+  pictureUrl: string | null;
+  visual: ConnectionSessionUserVisual;
+}
+
+/**
+ * Names a playlist's question step for its answers: everyone in a session
+ * plays the same queue, so its place there (with the playlist, in case the
+ * session plays another) means the same question for all of them.
+ */
+export function questionAnswerStepKey(
+  playlistId: string | null | undefined,
+  index: number
+): string {
+  return `${playlistId ?? "queue"}#${index}`;
+}
+
+function parseQuestionAnswer(value: unknown): SessionQuestionAnswer | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const stepKey = toStringOrNull(record.stepKey);
+  const authorId = toStringOrNull(record.authorId);
+  const text =
+    typeof record.text === "string"
+      ? record.text.slice(0, MAX_QUESTION_ANSWER_LENGTH)
+      : null;
+  const name = toStringOrNull(record.name);
+  const visual = record.visual as Record<string, unknown> | undefined;
+  const color = toStringOrNull(visual?.color);
+  const defaultIcon = toStringOrNull(visual?.defaultIcon);
+  if (!stepKey || !authorId || !text?.trim() || !name || !color) return null;
+  if (!defaultIcon) return null;
+  const pictureUrl = toStringOrNull(record.pictureUrl);
+  return {
+    stepKey,
+    authorId,
+    text,
+    updatedAtMs:
+      typeof record.updatedAtMs === "number" ? record.updatedAtMs : 0,
+    name,
+    // Shown as an <img>, so only a web address is taken from a peer.
+    pictureUrl:
+      pictureUrl && /^https?:\/\//.test(pictureUrl) ? pictureUrl : null,
+    visual: {
+      color,
+      defaultIcon,
+      colorName: toStringOrNull(visual?.colorName) ?? "",
+    },
+  };
+}
+
+function questionAnswerKey(stepKey: string, authorId: string): string {
+  return `${stepKey}|${authorId}`;
+}
+
 /**
  * How long to wait after a local navigation before publishing it to peers.
  *
@@ -648,6 +718,18 @@ export interface BibleReadingSession {
   >;
 
   /**
+   * Everyone's answers to the playlist's question steps, oldest first. Kept
+   * for as long as the session is, so someone joining late sees them too.
+   */
+  questionAnswers: ReadonlySignal<readonly SessionQuestionAnswer[]>;
+
+  /**
+   * Shares this participant's answer to a question step, replacing the one
+   * they shared before. Blank text takes their answer back.
+   */
+  setQuestionAnswer: (stepKey: string, text: string) => void;
+
+  /**
    * Whether this client's own connection to the shared document is
    * currently synced. False while resyncing (e.g. right after a mobile
    * device resumes from the background) — during that window, this
@@ -776,6 +858,12 @@ async function createBibleReadingSession(
   // in for this.
   const readingPositionsMap =
     document.getMap<ParticipantReadingPosition>("reading_positions");
+  // Answers to playlist question steps, keyed by question and author. Unlike
+  // positions they outlive their author's connection, so a late joiner reads
+  // the whole discussion.
+  const questionAnswersMap =
+    document.getMap<SessionQuestionAnswer>("question_answers");
+  const questionAnswers = signal<readonly SessionQuestionAnswer[]>([]);
   const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
   const allUsers = signal<ConnectedSessionUser[]>([]);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
@@ -1368,6 +1456,51 @@ async function createBibleReadingSession(
     }
   );
 
+  const syncQuestionAnswers = () => {
+    const answers: SessionQuestionAnswer[] = [];
+    questionAnswersMap.forEach((value, key) => {
+      const answer = parseQuestionAnswer(value);
+      // An entry only counts under its own key, so nobody can write one in
+      // someone else's name.
+      if (
+        answer &&
+        key === questionAnswerKey(answer.stepKey, answer.authorId)
+      ) {
+        answers.push(answer);
+      }
+    });
+    answers.sort((a, b) => a.updatedAtMs - b.updatedAtMs);
+    questionAnswers.value = answers;
+  };
+  syncQuestionAnswers();
+  const questionAnswersSubscription = questionAnswersMap.changes.subscribe(
+    () => {
+      syncQuestionAnswers();
+    }
+  );
+
+  const setQuestionAnswer = (stepKey: string, text: string) => {
+    const authorId = localSessionId.peek();
+    const key = questionAnswerKey(stepKey, authorId);
+    const trimmed = text.trim();
+    if (!trimmed) {
+      questionAnswersMap.delete(key);
+      return;
+    }
+    const self = currentUser.peek();
+    const visual = self?.visual ?? getUserAnimalVisual(authorId);
+    const answer: SessionQuestionAnswer = {
+      stepKey,
+      authorId,
+      text: trimmed.slice(0, MAX_QUESTION_ANSWER_LENGTH),
+      updatedAtMs: Date.now(),
+      name: self?.profile?.name ?? `User ${authorId.slice(0, 8)}`,
+      pictureUrl: self?.profile?.pictureUrl ?? null,
+      visual,
+    };
+    questionAnswersMap.set(key, answer);
+  };
+
   const subscribeToRemoteClients = () =>
     document.remoteClients.subscribe((event) => {
       if (event.type === "client_connected") {
@@ -1879,6 +2012,7 @@ async function createBibleReadingSession(
     extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     readingPositionsSubscription.unsubscribe();
+    questionAnswersSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
     statusUpdatedSubscription.unsubscribe();
     stopSync();
@@ -1925,6 +2059,8 @@ async function createBibleReadingSession(
     connectedUsers,
     currentUser,
     participantPositions,
+    questionAnswers,
+    setQuestionAnswer,
     isSynced,
     removeSharedDecoration,
     decorationOwner: (decorationId) =>
