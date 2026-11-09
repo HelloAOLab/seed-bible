@@ -1083,13 +1083,13 @@
   border: none;
   outline: none;
   font-size: 1rem;
-  width: 1.25rem;
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
   padding: 0;
-  text-align: right;
   -moz-appearance: textfield;
+  width: 3ch;
+  text-align: center;
 }
 
 .sb-scripture-margins-input::-webkit-outer-spin-button,
