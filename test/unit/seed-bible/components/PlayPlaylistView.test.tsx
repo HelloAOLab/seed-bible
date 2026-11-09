@@ -229,15 +229,15 @@ describe("PlayPlaylistView", () => {
       container.querySelectorAll(".sb-play-playlist-item")
     );
     expect(items).toHaveLength(2);
-    expect(items[0]?.classList.contains("sb-play-playlist-item--current")).toBe(
+    expect(items[0]?.classList.contains("sb-playlist-step-row--current")).toBe(
       true
     );
-    expect(items[1]?.classList.contains("sb-play-playlist-item--current")).toBe(
+    expect(items[1]?.classList.contains("sb-playlist-step-row--current")).toBe(
       false
     );
     expect(
       items[0]
-        ?.querySelector(".sb-play-playlist-item-button")
+        ?.querySelector(".sb-playlist-step-row-button")
         ?.getAttribute("aria-current")
     ).toBe("true");
   });
@@ -331,7 +331,7 @@ describe("PlayPlaylistView", () => {
     expect(page.count).toBe("2 items · ~4 min");
   });
 
-  it("shows a step's time estimate only when its author gave one", () => {
+  it("ends each step's row with its time estimate, a minute where its author gave none", () => {
     const playlist = createPlaylist({
       items: [
         verseItem({ ref: { bookId: "GEN", chapter: 1 }, minutes: 4 }),
@@ -356,7 +356,11 @@ describe("PlayPlaylistView", () => {
     expect(
       rows[0]?.querySelector(".sb-playlist-page-item-minutes")?.textContent
     ).toBe("4 min");
-    expect(rows[1]?.querySelector(".sb-playlist-page-item-minutes")).toBeNull();
+    expect(
+      rows[1]?.querySelector(".sb-playlist-page-item-minutes")?.textContent
+    ).toBe("1 min");
+    // Never what kind of step it is.
+    expect(rows[0]?.textContent).toBe("drag_indicatorGEN 14 min");
   });
 
   it("shows a cover banner when the playing playlist has a hero image", () => {
@@ -485,7 +489,7 @@ describe("PlayPlaylistView", () => {
 
     expect(
       container.querySelector(
-        ".sb-play-playlist-item-button .sb-discover-item-title"
+        ".sb-playlist-step-row-button .sb-discover-item-title"
       )?.textContent
     ).toBe("Genesis 1:1");
   });
@@ -518,7 +522,7 @@ describe("PlayPlaylistView", () => {
 
     const labels = Array.from(
       container.querySelectorAll(
-        ".sb-play-playlist-item-button .sb-discover-item-title"
+        ".sb-playlist-step-row-button .sb-discover-item-title"
       )
     ).map((label) => label.textContent);
     expect(labels).toEqual(["Genesis 1:1 · In the beginning", "Genesis 1:2"]);
@@ -547,7 +551,7 @@ describe("PlayPlaylistView", () => {
       );
     });
 
-    const buttons = container.querySelectorAll(".sb-play-playlist-item-button");
+    const buttons = container.querySelectorAll(".sb-playlist-step-row-button");
     act(() => {
       buttons[2]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       buttons[0]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -556,12 +560,18 @@ describe("PlayPlaylistView", () => {
     expect(openQueueItem.mock.calls).toEqual([[2], [0]]);
   });
 
-  it("shows a leading icon per item type", () => {
+  it("shows a leading icon per kind of step", () => {
     const playlist = createPlaylist({
       items: [
         verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+        verseItem({
+          ref: { bookId: "GEN", chapter: 1 },
+          compare: { ref: { bookId: "JHN", chapter: 1 } },
+        }),
+        { type: "link", url: "https://youtu.be/abc" },
         { type: "link", url: "https://example.com" },
         { type: "html", html: "<p>hi</p>" },
+        { type: "html", html: "<p>Why?</p>", question: {} },
       ],
     });
     const playing = createPlayingState([playlist]);
@@ -580,10 +590,22 @@ describe("PlayPlaylistView", () => {
       );
     });
 
+    // Scripture and compare steps have the app's own icon.
     const icons = Array.from(
       container.querySelectorAll(".sb-discover-item-icon")
-    ).map((el) => el.textContent);
-    expect(icons).toEqual(["menu_book", "link", "notes"]);
+    ).map((el) =>
+      el.classList.contains("sb-playlist-step-icon-scripture")
+        ? "seed-bible"
+        : el.textContent
+    );
+    expect(icons).toEqual([
+      "seed-bible",
+      "seed-bible",
+      "videocam",
+      "link",
+      "description",
+      "help",
+    ]);
   });
 
   describe("drag to reorder", () => {
@@ -681,7 +703,7 @@ describe("PlayPlaylistView", () => {
         container.querySelectorAll(".sb-play-playlist-item")
       );
       expect(
-        items[1]?.classList.contains("sb-play-playlist-item--current")
+        items[1]?.classList.contains("sb-playlist-step-row--current")
       ).toBe(true);
     });
 
@@ -709,7 +731,7 @@ describe("PlayPlaylistView", () => {
       });
 
       const buttons = container.querySelectorAll(
-        ".sb-play-playlist-item-button"
+        ".sb-playlist-step-row-button"
       );
       act(() => {
         buttons[1]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));

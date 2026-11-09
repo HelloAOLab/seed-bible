@@ -314,15 +314,6 @@
   color: var(--pe-muted);
 }
 
-.sb-pe-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
 .sb-pe-step-empty {
   margin: 0;
   font-size: 13px;
@@ -373,96 +364,10 @@
   cursor: pointer;
 }
 
-.sb-pe-step {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  height: 44px;
-  padding: 0 12px 0 14px;
-  border: 1px solid var(--pe-border);
-  border-radius: 6px;
-  background: var(--pe-surface);
-}
-
-.sb-pe-step--active {
-  background: rgba(211, 100, 51, 0.05);
-  border-color: rgba(211, 100, 51, 0.3);
-}
-
-.sb-pe-step--dragging {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-}
-
+/* The steps are the same rows as the playing list's (`PlaylistStepRow`);
+   one that can't be published yet is outlined. */
 .sb-pe-step--invalid {
   border-color: var(--pe-danger);
-}
-
-.sb-pe-step-main {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  min-width: 0;
-  flex: 1;
-}
-
-.sb-pe-step-handle {
-  display: flex;
-  touch-action: none;
-  cursor: grab;
-  color: #7b8791;
-}
-
-.sb-pe-step-handle .sb-pe-icon {
-  width: 12px;
-  height: 17px;
-}
-
-.sb-pe-step-open {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  flex: 1;
-  height: 42px;
-  text-align: start;
-  color: var(--pe-text);
-}
-
-.sb-pe-step-open .sb-pe-icon {
-  width: 18px;
-  height: 14.04px;
-  color: #69737c;
-}
-
-.sb-pe-step-open .sb-pe-icon--note {
-  width: 14px;
-  height: 14px;
-}
-
-.sb-pe-step--active .sb-pe-step-open,
-.sb-pe-step--active .sb-pe-step-open .sb-pe-icon {
-  color: var(--pe-accent);
-}
-
-.sb-pe-step-label {
-  font-weight: 500;
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
-.sb-pe-step-meta {
-  flex-shrink: 0;
-  font-family: var(--pe-font-label);
-  font-weight: 600;
-  font-size: 9px;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--pe-muted);
 }
 
 .sb-pe-step-actions {

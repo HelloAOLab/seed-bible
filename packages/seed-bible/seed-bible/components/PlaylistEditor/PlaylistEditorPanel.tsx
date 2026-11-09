@@ -9,14 +9,12 @@ import type {
 import type { ModalManager } from "../../managers/ModalManager";
 import type { TabsManager } from "../../managers/TabsManager";
 import { useDragReorder } from "../useDragReorder";
-import { PeIcon, type PeIconName } from "./editorControls";
+import { PlaylistStepRow } from "../PlaylistOverview/PlaylistOverview";
+import { PeIcon } from "./editorControls";
 import {
-  playlistStepKind,
   playlistStepKindName,
   playlistStepLabel,
-  playlistStepMinutes,
   playlistTotalMinutes,
-  type PlaylistStepKind,
 } from "./playlistSteps";
 
 const UNSAVED_CHANGES_CONFIRM_MODAL_ID = "playlist-unsaved-changes-confirm";
@@ -179,16 +177,6 @@ export function usePlaylistDraftStatus(playlists: PlaylistManager): {
   };
 }
 
-const STEP_ICON: Record<PlaylistStepKind, PeIconName> = {
-  scripture: "scripture",
-  compare: "scripture",
-  question: "scripture",
-  note: "note",
-  video: "video",
-  audio: "audio",
-  link: "link",
-};
-
 /** The steps of the open draft, each opening in the editor when clicked. */
 export function PlaylistStepList(props: {
   playlists: PlaylistManager;
@@ -240,92 +228,73 @@ export function PlaylistStepList(props: {
   }
 
   return (
-    <ul className="sb-pe-steps">
+    <ul className="sb-discover-list sb-playlist-page-items sb-pe-steps">
       {items.map((item, index) => {
-        const kind = playlistStepKind(item);
         const active = index === openIndex;
         // On the list page no step is open, so every step can be dragged.
         const draggable = active || openIndex < 0;
-        const label = playlistStepLabel(item, t, resolveBookName);
         return (
-          <li
+          <PlaylistStepRow
             key={index}
+            item={item}
+            resolveBookName={resolveBookName}
+            label={playlistStepLabel(item, t, resolveBookName)}
+            current={active}
+            ariaCurrent={active ? "step" : undefined}
             className={`sb-pe-step${active ? " sb-pe-step--active" : ""}${
               invalid.has(index) ? " sb-pe-step--invalid" : ""
-            }${getRowClassName(index) ? " sb-pe-step--dragging" : ""}`}
-          >
-            <div className="sb-pe-step-main">
-              {draggable ? (
-                <button
-                  type="button"
-                  className="sb-pe-step-handle"
-                  aria-label={t("drag-to-reorder-playlist-item", {
-                    defaultValue: "Drag to reorder",
-                  })}
-                  {...getHandleProps(index)}
-                >
-                  <PeIcon name="drag-handle" />
-                </button>
-              ) : null}
-              <button
-                type="button"
-                className="sb-pe-step-open"
-                aria-current={active ? "step" : undefined}
-                onClick={() => playlists.selectEditorStep(index)}
-              >
-                <PeIcon name={STEP_ICON[kind]} />
-                <span className="sb-pe-step-label" dir="auto">
-                  {label}
-                </span>
-                <span className="sb-pe-step-meta">
-                  {t("playlist-editor-step-meta", {
-                    kind: playlistStepKindName(kind, t),
-                    minutes: playlistStepMinutes(item),
-                    defaultValue: "{{kind}} · {{minutes}} min",
-                  })}
-                </span>
-              </button>
-            </div>
-            {active ? (
-              <div className="sb-pe-step-actions">
-                {pickIndex === index ? (
-                  <span
-                    className="sb-pe-step-action"
-                    title={t("playlist-editor-picking-verses", {
-                      defaultValue: "Picking verses",
-                    })}
-                  >
-                    <PeIcon name="pencil" />
-                  </span>
-                ) : (
-                  <>
-                    <button
-                      type="button"
+            }${getRowClassName(index)}`}
+            dragHandleProps={draggable ? getHandleProps(index) : undefined}
+            dragLabel={t("drag-to-reorder-playlist-item", {
+              defaultValue: "Drag to reorder",
+            })}
+            handleClassName="sb-pe-step-handle"
+            openClassName="sb-pe-step-open"
+            onOpen={() => playlists.selectEditorStep(index)}
+            trailing={
+              active ? (
+                <div className="sb-pe-step-actions">
+                  {pickIndex === index ? (
+                    <span
                       className="sb-pe-step-action"
-                      aria-label={t("playlist-editor-duplicate-step", {
-                        defaultValue: "Duplicate step",
+                      title={t("playlist-editor-picking-verses", {
+                        defaultValue: "Picking verses",
                       })}
-                      onClick={() =>
-                        playlists.duplicateEditingPlaylistItem(index)
-                      }
                     >
-                      <PeIcon name="copy" />
-                    </button>
-                    <button
-                      type="button"
-                      className="sb-pe-step-action sb-pe-step-action--danger"
-                      aria-label={t("playlist-editor-delete-step", {
-                        defaultValue: "Delete step",
-                      })}
-                      onClick={() => playlists.removeEditingPlaylistItem(index)}
-                    >
-                      <PeIcon name="trash" />
-                    </button>
-                  </>
-                )}
-              </div>
-            ) : null}
-          </li>
+                      <PeIcon name="pencil" />
+                    </span>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="sb-pe-step-action"
+                        aria-label={t("playlist-editor-duplicate-step", {
+                          defaultValue: "Duplicate step",
+                        })}
+                        onClick={() =>
+                          playlists.duplicateEditingPlaylistItem(index)
+                        }
+                      >
+                        <PeIcon name="copy" />
+                      </button>
+                      <button
+                        type="button"
+                        className="sb-pe-step-action sb-pe-step-action--danger"
+                        aria-label={t("playlist-editor-delete-step", {
+                          defaultValue: "Delete step",
+                        })}
+                        onClick={() =>
+                          playlists.removeEditingPlaylistItem(index)
+                        }
+                      >
+                        <PeIcon name="trash" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : null
+            }
+          />
         );
       })}
     </ul>

@@ -4,11 +4,15 @@ import type { ComponentChild, ComponentChildren } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import { HeroImageBanner } from "../HeroImageField/HeroImageField";
-import { MaterialIcon } from "../icons";
-import { playlistItemIcon } from "../playlistItemIcon";
+import { MaterialIcon, SeedBibleIcon } from "../icons";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { PlaylistItemNoteTag } from "../PlaylistItemNoteTag/PlaylistItemNoteTag";
-import { playlistTotalMinutes } from "../PlaylistEditor/playlistSteps";
+import {
+  playlistStepKind,
+  playlistStepMinutes,
+  playlistTotalMinutes,
+  type PlaylistStepKind,
+} from "../PlaylistEditor/playlistSteps";
 
 /**
  * A playlist's cover, author, description and steps, with a back button and
@@ -110,33 +114,135 @@ export function PlaylistOverview(props: {
   );
 }
 
+/** The icon for each kind of step other than scripture, which has the app's. */
+const STEP_ICON: Record<
+  Exclude<PlaylistStepKind, "scripture" | "compare">,
+  string
+> = {
+  video: "videocam",
+  audio: "headphones",
+  link: "link",
+  note: "description",
+  question: "help",
+};
+
 /**
- * What a row of {@link PlaylistOverview} shows for a step: its icon, name,
- * note tag, and the author's time estimate when they gave one.
+ * A step's icon in a list of steps: the app's own for scripture and compare
+ * steps, and one for each other kind (a video and a plain link told apart).
+ */
+export function PlaylistStepIcon(props: { item: PlaylistItemData }) {
+  const kind = playlistStepKind(props.item);
+  if (kind === "scripture" || kind === "compare") {
+    return (
+      <SeedBibleIcon
+        size={20}
+        className="sb-discover-item-icon sb-playlist-step-icon-scripture"
+        role={undefined}
+        aria-label={undefined}
+        aria-hidden="true"
+      />
+    );
+  }
+  return (
+    <MaterialIcon className="sb-discover-item-icon">
+      {STEP_ICON[kind]}
+    </MaterialIcon>
+  );
+}
+
+/**
+ * What a row of steps shows for one: its icon, name (with any note's title),
+ * and its time estimate at the row's end.
  */
 export function PlaylistOverviewItemContent(props: {
   item: PlaylistItemData;
   resolveBookName: (bookId: string) => string;
+  /** In place of the step's usual name, as the editor names a draft's. */
+  label?: string;
 }) {
   const { item } = props;
   const { t } = useI18n();
   return (
     <>
-      <MaterialIcon className="sb-discover-item-icon">
-        {playlistItemIcon(item)}
-      </MaterialIcon>
+      <PlaylistStepIcon item={item} />
       <span className="sb-discover-item-title" dir="auto">
-        {playlistItemLabel(item, t, props.resolveBookName)}
+        {props.label ?? playlistItemLabel(item, t, props.resolveBookName)}
         <PlaylistItemNoteTag item={item} />
       </span>
-      {item.minutes != null ? (
-        <span className="sb-playlist-page-item-minutes">
-          {t("playlist-editor-minutes", {
-            minutes: item.minutes,
-            defaultValue: "{{minutes}} min",
-          })}
-        </span>
-      ) : null}
+      <span className="sb-playlist-page-item-minutes">
+        {t("playlist-editor-minutes", {
+          minutes: playlistStepMinutes(item),
+          defaultValue: "{{minutes}} min",
+        })}
+      </span>
     </>
+  );
+}
+
+/**
+ * One step in a list of steps, as the playing list, a playlist's page and
+ * the editor all show them: a drag handle when it can be moved, the step's
+ * {@link PlaylistOverviewItemContent} (a button when it opens the step), and
+ * anything else at its end, such as the editor's Duplicate and Delete.
+ */
+export function PlaylistStepRow(props: {
+  item: PlaylistItemData;
+  resolveBookName: (bookId: string) => string;
+  label?: string;
+  /** Highlighted as the step that's playing, or open in the editor. */
+  current?: boolean;
+  ariaCurrent?: boolean | "step";
+  onOpen?: () => void;
+  /** Pointer handlers for dragging it, from `useDragReorder`. */
+  dragHandleProps?: Record<string, unknown>;
+  dragLabel?: string;
+  className?: string;
+  openClassName?: string;
+  handleClassName?: string;
+  trailing?: ComponentChildren;
+}) {
+  const { item, resolveBookName, current } = props;
+  const content = (
+    <PlaylistOverviewItemContent
+      item={item}
+      resolveBookName={resolveBookName}
+      label={props.label}
+    />
+  );
+  return (
+    <li
+      className={`sb-discover-item sb-discover-item--row sb-playlist-page-item${
+        current ? " sb-playlist-step-row--current" : ""
+      }${props.className ? ` ${props.className}` : ""}`}
+      dir="auto"
+    >
+      {props.dragHandleProps ? (
+        <button
+          type="button"
+          className={`sb-discover-item-drag-handle${
+            props.handleClassName ? ` ${props.handleClassName}` : ""
+          }`}
+          aria-label={props.dragLabel}
+          {...props.dragHandleProps}
+        >
+          <MaterialIcon>drag_indicator</MaterialIcon>
+        </button>
+      ) : null}
+      {props.onOpen ? (
+        <button
+          type="button"
+          className={`sb-playlist-step-row-button${
+            props.openClassName ? ` ${props.openClassName}` : ""
+          }`}
+          aria-current={props.ariaCurrent}
+          onClick={props.onOpen}
+        >
+          {content}
+        </button>
+      ) : (
+        content
+      )}
+      {props.trailing}
+    </li>
   );
 }

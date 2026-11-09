@@ -157,20 +157,26 @@ describe("the playlist editor", () => {
   const items = () => state.playlists.editingPlaylist.value!.items;
 
   describe("step list", () => {
-    it("lists each step with its kind and time, and the playlist's total", () => {
+    it("lists each step as the playing list does: its icon, name and time, and no kind", () => {
       openPanel();
 
       const rows = Array.from(container.querySelectorAll(".sb-pe-step")).map(
         (row) => [
-          row.querySelector(".sb-pe-step-label")!.textContent,
-          row.querySelector(".sb-pe-step-meta")!.textContent,
+          row
+            .querySelector(".sb-discover-item-icon")!
+            .classList.contains("sb-playlist-step-icon-scripture")
+            ? "seed-bible"
+            : row.querySelector(".sb-discover-item-icon")!.textContent,
+          row.querySelector(".sb-discover-item-title")!.textContent,
+          row.querySelector(".sb-playlist-page-item-minutes")!.textContent,
         ]
       );
       expect(rows).toEqual([
-        ["Genesis 1:2", "Scripture · 1 min"],
-        ["Genesis 1 overview", "Video · 1 min"],
-        ["What does light reveal?", "Question · 4 min"],
+        ["seed-bible", "Genesis 1:2", "1 min"],
+        ["videocam", "Genesis 1 overview", "1 min"],
+        ["help", "What does light reveal?", "4 min"],
       ]);
+      expect(container.textContent).not.toMatch(/Scripture|Video ·|Question ·/);
       expect(container.querySelector(".sb-pe-step-count")!.textContent).toBe(
         "3 steps · ~6 min"
       );

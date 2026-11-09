@@ -1285,7 +1285,6 @@
   "playlist-editor-no-steps": "No steps yet. Add one to get started.",
   "playlist-editor-empty-title": "This playlist is empty",
   "playlist-editor-empty-text": "Add scripture, notes, questions or videos to get started.",
-  "playlist-editor-step-meta": "{{kind}} · {{minutes}} min",
   "playlist-editor-picking-verses": "Picking verses",
   "playlist-editor-duplicate-step": "Duplicate step",
   "playlist-editor-delete-step": "Delete step",

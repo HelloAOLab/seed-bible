@@ -7,7 +7,7 @@ import {
 import { MaterialIcon } from "../icons";
 import {
   PlaylistOverview,
-  PlaylistOverviewItemContent,
+  PlaylistStepRow,
 } from "../PlaylistOverview/PlaylistOverview";
 
 /**
@@ -90,15 +90,11 @@ export function PlaylistPagePane(props: {
       }}
     >
       {playlist.items.map((item, index) => (
-        <li
+        <PlaylistStepRow
           key={index}
-          className="sb-discover-item sb-discover-item--row sb-playlist-page-item"
-        >
-          <PlaylistOverviewItemContent
-            item={item}
-            resolveBookName={resolveBookName}
-          />
-        </li>
+          item={item}
+          resolveBookName={resolveBookName}
+        />
       ))}
     </PlaylistOverview>
   );

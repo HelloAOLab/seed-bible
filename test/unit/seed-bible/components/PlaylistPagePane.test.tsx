@@ -144,7 +144,7 @@ describe("PlaylistPagePane", () => {
     ).toEqual(["Exodus 2", "HTML snippet", "Exodus 3:1-6"]);
   });
 
-  it("shows the total time beside the item count, and each item's time when its author gave one", () => {
+  it("shows the total time beside the item count, and each item's time", () => {
     renderPane(
       makePlaylist({
         items: [
@@ -168,7 +168,7 @@ describe("PlaylistPagePane", () => {
           item.querySelector(".sb-playlist-page-item-minutes")?.textContent ??
           null
       )
-    ).toEqual(["5 min", null]);
+    ).toEqual(["5 min", "1 min"]);
   });
 
   it("keeps the Start button outside the scrolling item list", () => {

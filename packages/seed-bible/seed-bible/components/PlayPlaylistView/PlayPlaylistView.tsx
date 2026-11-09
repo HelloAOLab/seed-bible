@@ -1,15 +1,13 @@
-import "./PlayPlaylistView.css";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager } from "../../managers/TabsManager";
 import type { PlaylistManager } from "../../managers/PlaylistManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import { useDragReorder } from "../useDragReorder";
-import { MaterialIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { Spinner } from "../Spinner/Spinner";
 import {
   PlaylistOverview,
-  PlaylistOverviewItemContent,
+  PlaylistStepRow,
 } from "../PlaylistOverview/PlaylistOverview";
 
 interface PlayPlaylistViewProps {
@@ -87,37 +85,19 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
       }
     >
       {queue.map((item, index) => (
-        <li
+        <PlaylistStepRow
           key={index}
-          className={
-            "sb-discover-item sb-discover-item--row sb-playlist-page-item sb-play-playlist-item" +
-            (index === currentIndex ? " sb-play-playlist-item--current" : "") +
-            getRowClassName(index)
-          }
-          dir="auto"
-        >
-          <button
-            type="button"
-            className="sb-discover-item-drag-handle"
-            aria-label={t("drag-to-reorder-playlist-item", {
-              defaultValue: "Drag to reorder",
-            })}
-            {...getHandleProps(index)}
-          >
-            <MaterialIcon>drag_indicator</MaterialIcon>
-          </button>
-          <button
-            type="button"
-            className="sb-play-playlist-item-button"
-            aria-current={index === currentIndex}
-            onClick={() => playlists.openQueueItem(index)}
-          >
-            <PlaylistOverviewItemContent
-              item={item}
-              resolveBookName={resolveBookName}
-            />
-          </button>
-        </li>
+          item={item}
+          resolveBookName={resolveBookName}
+          current={index === currentIndex}
+          ariaCurrent={index === currentIndex}
+          className={`sb-play-playlist-item${getRowClassName(index)}`}
+          dragHandleProps={getHandleProps(index)}
+          dragLabel={t("drag-to-reorder-playlist-item", {
+            defaultValue: "Drag to reorder",
+          })}
+          onOpen={() => playlists.openQueueItem(index)}
+        />
       ))}
     </PlaylistOverview>
   );
