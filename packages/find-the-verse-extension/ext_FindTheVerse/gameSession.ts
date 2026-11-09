@@ -5,7 +5,7 @@ import type { GameSignals, GameStep, TargetVerse } from "./types";
 /** A starting suggestion. Creators can remove rows down to {@link MIN_HINTS}. */
 export const SUGGESTED_CHANCES = 7;
 
-/** The fewest chances a game can have. Every chance needs a hint. */
+/** The fewest chances a game can have, and the fewest hints it can be saved or started with. */
 export const MIN_HINTS = 3;
 
 export function blankSteps(): GameStep[] {

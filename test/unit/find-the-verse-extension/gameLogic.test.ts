@@ -10,6 +10,7 @@ import {
   buildPartialReveal,
   chapterOutOfRange,
   evaluateGuess,
+  countFilledHints,
   emptyHintIndexes,
   openSearchWindow,
   PlayGuesses,
@@ -293,6 +294,20 @@ describe("emptyHintIndexes", () => {
       ])
     ).toEqual([1, 3]);
     expect(emptyHintIndexes([{ hint: "a" }])).toEqual([]);
+  });
+});
+
+describe("countFilledHints", () => {
+  it("counts only hints with text other than spaces", () => {
+    expect(
+      countFilledHints([
+        { hint: "a" },
+        { hint: "  " },
+        { hint: "b" },
+        { hint: "" },
+      ])
+    ).toBe(2);
+    expect(countFilledHints([])).toBe(0);
   });
 });
 

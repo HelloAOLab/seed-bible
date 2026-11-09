@@ -219,11 +219,15 @@ export function versesOutOfRange(
   );
 }
 
-/** Indexes of chances with no hint. A game can't be saved or started with any. */
+/** Indexes of chances with no hint. Those chances play without a ? button. */
 export function emptyHintIndexes(steps: readonly { hint: string }[]): number[] {
   return steps.flatMap((step, index) =>
     step.hint.trim().length === 0 ? [index] : []
   );
+}
+
+export function countFilledHints(steps: readonly { hint: string }[]): number {
+  return steps.length - emptyHintIndexes(steps).length;
 }
 
 const GREY =

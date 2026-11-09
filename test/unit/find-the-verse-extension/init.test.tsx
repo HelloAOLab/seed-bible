@@ -633,37 +633,73 @@ describe("Find the Verse", () => {
     expect(document.body.textContent).toContain("End game");
   });
 
-  it("won't save or start while a chance has an empty hint", async () => {
+  async function typeHint(index: number, text: string) {
+    const hint = container.querySelectorAll("textarea")[index];
+    if (!(hint instanceof HTMLTextAreaElement)) {
+      throw new Error(`No hint box ${index + 1}`);
+    }
+    await act(async () => {
+      hint.value = text;
+      hint.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    });
+  }
+
+  // The help text under Chances repeats the error's wording, so read the popup.
+  function formErrors(): string[] {
+    return [...container.querySelectorAll('[role="alert"]')].map(
+      (alert) => alert.textContent ?? ""
+    );
+  }
+
+  it("saves a game with blank chances once 3 hints are filled in", async () => {
     await openEditor(playableGame());
     await act(async () => {
       clickButton(container, "+ Add chance");
     });
+
+    await act(async () => {
+      clickButton(container, "Save game");
+      await flushSave();
+    });
+
+    expect(formErrors()).toEqual([]);
+    expect(recordData).toHaveBeenCalledTimes(1);
+    expect(recordData.mock.calls[0]?.[2]).toMatchObject({
+      steps: [
+        { hint: "alpha hint" },
+        { hint: "beta hint" },
+        { hint: "gamma hint" },
+        { hint: "" },
+      ],
+    });
+  });
+
+  it("won't save or start with fewer than 3 hints filled in", async () => {
+    await openEditor(playableGame());
+    await act(async () => {
+      clickButton(container, "+ Add chance");
+    });
+    await typeHint(1, "   ");
 
     for (const name of ["Save game", "Save & Start"]) {
       await act(async () => {
         clickButton(container, name);
         await flushSave();
       });
-      expect(container.textContent).toContain(
-        "Fill in every hint, or remove the empty chances."
-      );
+      expect(formErrors()).toEqual(["Fill in at least 3 hints."]);
     }
     expect(recordData).not.toHaveBeenCalled();
     expect(tabs.value).toHaveLength(1);
     const hints = [...container.querySelectorAll("textarea")];
     expect(hints.map((hint) => hint.getAttribute("aria-invalid"))).toEqual([
       "false",
-      "false",
+      "true",
       "false",
       "true",
     ]);
 
-    await act(async () => {
-      buttonsNamed(container, "×")[3]!.click();
-    });
-    expect(container.textContent).not.toContain(
-      "Fill in every hint, or remove the empty chances."
-    );
+    await typeHint(3, "delta hint");
+    expect(formErrors()).toEqual([]);
     await act(async () => {
       clickButton(container, "Save game");
       await flushSave();

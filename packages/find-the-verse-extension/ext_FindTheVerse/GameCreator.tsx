@@ -5,7 +5,7 @@ import { extractContentText, parseVerseReference } from "seed-bible/managers";
 import { useI18n } from "seed-bible/i18n";
 import { formatReference, isKnownBookId } from "./books";
 import { FormField } from "./FormField";
-import { emptyHintIndexes } from "./gameLogic";
+import { countFilledHints, emptyHintIndexes } from "./gameLogic";
 import { MIN_HINTS } from "./gameSession";
 import type { GameDraft, GameSignals } from "./types";
 
@@ -180,18 +180,18 @@ export function GameCreator({
       });
 
   const emptyHints = emptyHintIndexes(steps);
-  const hintsIncomplete = emptyHints.length > 0;
+  const hintsShort = countFilledHints(steps) < MIN_HINTS;
   const hintErrorMessage = t("hints-needed", {
-    defaultValue: "Fill in every hint, or remove the empty chances.",
+    defaultValue: "Fill in at least 3 hints.",
   });
 
   // One field at a time. A name missed on Save or Start wins, then the verse,
-  // then an empty hint. Fixing the current one lets the next message take its place.
+  // then too few hints. Fixing the current one lets the next message take its place.
   let activeError: "name" | "verse" | "chances" | null = null;
   if (saveAttempted.value && nameMissing) activeError = "name";
   else if (refError.value || (saveAttempted.value && target === null)) {
     activeError = "verse";
-  } else if (saveAttempted.value && hintsIncomplete) activeError = "chances";
+  } else if (saveAttempted.value && hintsShort) activeError = "chances";
 
   const nameError = activeError === "name" ? nameErrorMessage : null;
   const verseError = activeError === "verse" ? verseErrorMessage : null;
@@ -205,12 +205,7 @@ export function GameCreator({
   function readyDraft(): GameDraft | null {
     const verse = game.targetVerse.peek();
     const name = game.name.peek().trim();
-    if (
-      !name ||
-      !verse ||
-      game.steps.peek().length < MIN_HINTS ||
-      emptyHintIndexes(game.steps.peek()).length > 0
-    ) {
+    if (!name || !verse || countFilledHints(game.steps.peek()) < MIN_HINTS) {
       rejectSave();
       return null;
     }
@@ -386,7 +381,7 @@ export function GameCreator({
         <p className="ftv-chances-help">
           {t("chances-start", {
             defaultValue:
-              "Start with 7. You can add more or remove down to 3. Every chance needs a hint.",
+              "Start with 7. You can add more or remove down to 3. Fill in at least 3 hints. The rest can stay blank.",
           })}
         </p>
         <div className="ftv-steps">
