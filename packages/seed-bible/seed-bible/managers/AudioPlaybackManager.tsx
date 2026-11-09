@@ -30,7 +30,14 @@ export interface AudioPlaybackController {
   /** The total length, in `unit`s, or null until the audio has reported it. */
   duration: ReadonlySignal<number | null>;
 
-  play: () => void;
+  /**
+   * Starts or resumes playback.
+   *
+   * May return the media element's play promise. A rejection named
+   * `NotAllowedError` means the browser blocked autoplay; the caller can
+   * retry after a user gesture.
+   */
+  play: () => void | Promise<void>;
   pause: () => void;
 
   /** Moves playback to `position`, without changing whether it is playing. */
