@@ -156,6 +156,27 @@ describe("ParticipantFriendButton", () => {
     expect(toast).toHaveBeenCalledWith("Friend request sent to Ada.");
   });
 
+  it("sends the request without waiting for their profile", async () => {
+    await renderButton(ADA_ID, "Pastor John");
+    let answer!: (profile: { name: string }) => void;
+    vi.mocked(state.login.getPublicProfile).mockReturnValueOnce(
+      new Promise((resolve) => (answer = resolve))
+    );
+
+    act(() => button("Add friend")!.click());
+    for (let i = 0; i < 5; i++) {
+      await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+    }
+    expect(server.rows).toMatchObject([
+      { requestingUserId: ME, targetUserId: ADA_ID, status: "requested" },
+    ]);
+    expect(toast).not.toHaveBeenCalled();
+
+    await act(async () => answer({ name: "Ada" }));
+    await settle();
+    expect(toast).toHaveBeenCalledWith("Friend request sent to Ada.");
+  });
+
   it("still sends the request when their profile can't be read", async () => {
     const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
     await renderButton(ADA_ID, "Pastor John");

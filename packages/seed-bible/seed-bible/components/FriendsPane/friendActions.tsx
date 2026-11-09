@@ -202,16 +202,20 @@ export async function cancelFriendRequest(
  * Asks `userId` to be friends, or accepts their request if they already asked.
  * Resolves false when it failed outright (and the toast said so), true
  * otherwise, including finding they're already a friend or already asked.
+ *
+ * `name` can be a promise, for a caller still reading their profile, so the
+ * request doesn't wait on it. It must not reject.
  */
 export async function sendFriendRequestTo(
   friends: FriendsManager,
   toast: Toast,
   t: T,
   userId: string,
-  name: string
+  nameOrPending: string | Promise<string>
 ): Promise<boolean> {
   try {
     const result = await friends.sendRequest({ userId });
+    const name = await nameOrPending;
     switch (result.status) {
       case "sent":
         toast(

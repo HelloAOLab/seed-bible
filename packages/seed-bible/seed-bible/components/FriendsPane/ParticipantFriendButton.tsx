@@ -131,18 +131,16 @@ export function ParticipantFriendButton(props: {
         );
         return;
       }
-      // Not in the friends lists, so their profile is read here for the name.
-      const profile = await login.getPublicProfile(userId).catch((error) => {
-        console.warn(`Could not load the profile for ${userId}:`, error);
-        return null;
-      });
-      await sendFriendRequestTo(
-        friends,
-        toast,
-        t,
-        userId,
-        displayNameOf({ userId, name: profile?.name }, t)
+      // Not in the friends lists, so their profile is read here for the name,
+      // alongside sending rather than before it.
+      const name = login.getPublicProfile(userId).then(
+        (profile) => displayNameOf({ userId, name: profile?.name }, t),
+        (error) => {
+          console.warn(`Could not load the profile for ${userId}:`, error);
+          return displayNameOf({ userId }, t);
+        }
       );
+      await sendFriendRequestTo(friends, toast, t, userId, name);
     } finally {
       busy.value = false;
     }
