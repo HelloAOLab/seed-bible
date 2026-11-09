@@ -183,6 +183,19 @@ describe("person profile card", () => {
       consoleError.mockRestore();
     });
 
+    // Nothing was copied here, so the message mustn't blame a copying mistake.
+    it("says so when their account is gone by the time the request is sent", async () => {
+      await openCard(ADA_ID);
+      server.spies.request.mockResolvedValueOnce(
+        fail("user_not_found") as never
+      );
+
+      await click(button("Add friend"));
+
+      expect(toast).toHaveBeenCalledWith("We couldn't find this account.");
+      expect(server.rows).toEqual([]);
+    });
+
     it("waits for the profile before offering to add them", async () => {
       let answer!: (profile: UserProfile) => void;
       vi.mocked(login.getPublicProfile).mockReturnValueOnce(

@@ -246,10 +246,11 @@ export async function sendFriendRequestTo(
         );
         break;
       case "user_not_found":
+        // Callers send to someone they're looking at, not an ID typed in, so
+        // it's likely a deleted account rather than a copying mistake.
         toast(
-          t("person-profile-no-account", {
-            defaultValue:
-              "We couldn't find anyone with this user ID. It may have been copied incorrectly.",
+          t("friend-request-account-not-found", {
+            defaultValue: "We couldn't find this account.",
           })
         );
         break;
