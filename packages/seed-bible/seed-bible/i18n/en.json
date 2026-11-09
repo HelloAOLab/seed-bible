@@ -905,6 +905,7 @@
   "reading-plan-not-found-message": "This reading plan doesn't exist, or it has been deleted. Check the link, or ask the person who shared it for a new one.",
   "playlist-url-copy-failed": "Couldn't copy the playlist link",
   "playlist-finished": "Playlist finished",
+  "done": "Done",
   "playlist-finished-message": "You've reached the end of {{title}}.",
   "chapter-unavailable-offline-switch": "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
   "chapter-unavailable-offline-switch_one": "You have a translation saved on your device that contains {{bookName}} {{chapterNumber}}.",

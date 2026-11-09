@@ -16,7 +16,6 @@ import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
 import type { ChatsManager } from "./ChatsManager";
-import { PlaylistFinishedModalContent } from "../components/PlaylistFinishedModal/PlaylistFinishedModal";
 import type { I18nManager } from "../i18n";
 import type {
   BibleReadingExtensionManager,
@@ -228,6 +227,9 @@ export type PlaylistPageSeed = SharedPageSeed<Playlist>;
  * it later by `{recordName, id}`. Ad-hoc queues (a reading plan's day, say)
  * carry no record name and so can't be resumed from history.
  */
+/** A saved playlist, the only kind that finishes (see `canFinish`). */
+export type FinishedPlaylist = SimplePlaylist & Pick<Playlist, "recordName">;
+
 function isRecordedPlaylist(
   playlist: SimplePlaylist
 ): playlist is SimplePlaylist & Pick<Playlist, "recordName"> {
@@ -1396,8 +1398,6 @@ export function playbackRequestFromUrl(
     stepIndex: step === null ? null : Math.floor(parseNumber(step, 0)),
   };
 }
-
-const PLAYLIST_FINISHED_MODAL_ID = "playlist-finished";
 
 /**
  * Id of the reading extension that lets a reading state's own next/previous-
@@ -2877,26 +2877,25 @@ export function createPlaylistManager(
     }
   };
 
-  const openPlaylistFinishedModal = (
-    playlist: Pick<Playlist, "id" | "recordName" | "title">
-  ): void => {
-    modals.openModal({
-      id: PLAYLIST_FINISHED_MODAL_ID,
-      title: { key: "playlist-finished", defaultValue: "Playlist finished" },
-      content: () => (
-        <PlaylistFinishedModalContent
-          playlistTitle={
-            playlist.title ??
-            i18n.t("untitled-playlist", { defaultValue: "Untitled playlist" })
-          }
-          shareUrl={getPlaylistUrl(playlist)}
-          onClose={() => {
-            stopPlaying();
-            modals.closeModal(PLAYLIST_FINISHED_MODAL_ID);
-          }}
-        />
-      ),
-    });
+  /**
+   * The playlist the listener just played to the end of, shown on its own
+   * fullscreen page (see `SeedBibleStateManager`), or null.
+   */
+  const finishedPlaylist = signal<FinishedPlaylist | null>(null);
+
+  const showFinishedPlaylist = (playlist: FinishedPlaylist): void => {
+    finishedPlaylist.value = playlist;
+  };
+
+  /** The finished page's Done: leaves the page and the playlist. */
+  const closeFinishedPlaylist = (): void => {
+    finishedPlaylist.value = null;
+    stopPlaying();
+  };
+
+  /** Takes the finished page away without stopping the playlist. */
+  const dismissFinishedPlaylist = (): void => {
+    finishedPlaylist.value = null;
   };
 
   /**
@@ -3096,7 +3095,7 @@ export function createPlaylistManager(
         () => {
           const playlist = playingState.playlists.peek()[0];
           if (playlist && isRecordedPlaylist(playlist)) {
-            openPlaylistFinishedModal(playlist);
+            showFinishedPlaylist(playlist);
           }
         },
         (options) => {
@@ -3288,7 +3287,7 @@ export function createPlaylistManager(
         // `prevent`, so the reader keeps navigating chapter by chapter once the
         // queue is exhausted instead of going dead (see `hasNext` above). The
         // one exception is the first step past a saved playlist's last item,
-        // which shows the finished modal instead.
+        // which shows the finished page instead.
         navigateNext: () => {
           if (playingState.queue.value.length === 0) {
             return { type: "default" };
@@ -3336,7 +3335,7 @@ export function createPlaylistManager(
               playingState.canFinish.value &&
               !playingState.finishPromptShown.value
             ) {
-              // This step shows the finished modal and stays put.
+              // This step shows the finished page and stays put.
               return null;
             }
             // Past the queue's edge, navigation falls through to the reader's
@@ -3359,9 +3358,9 @@ export function createPlaylistManager(
           disposeIn();
           disposeStepUrl();
           playingState.dispose();
-          // Its Close stops this playback; with the playback gone some other
+          // Its Done stops this playback; with the playback gone some other
           // way (stopped, or by a session peer) it would stop the wrong one.
-          modals.closeModal(PLAYLIST_FINISHED_MODAL_ID);
+          dismissFinishedPlaylist();
         },
       };
       // The registry erases `TData` to `unknown`; the extra `playingState`
@@ -3812,6 +3811,10 @@ export function createPlaylistManager(
     getPlaylistPageSeed: playlistPageLoader.getSeed,
     startPlaylistPage,
     openPlaylistPage,
+    finishedPlaylist:
+      finishedPlaylist as ReadonlySignal<FinishedPlaylist | null>,
+    closeFinishedPlaylist,
+    dismissFinishedPlaylist,
     isDiscoverOpen,
     goBackFromPlayingView,
     isMobile,

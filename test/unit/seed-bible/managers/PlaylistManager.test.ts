@@ -1,6 +1,5 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 import { FRIEND_READ_TIMEOUT_MS } from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
-import { I18nProvider } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import {
   CasualOSManager,
   createModalManager,
@@ -42,8 +41,6 @@ import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDat
 import type { BibleSelectedVerse } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, effect, signal, type Signal } from "@preact/signals";
-import { h, render, type ComponentChildren } from "preact";
-import { act } from "preact/test-utils";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
 import type { Mock } from "vitest";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
@@ -452,9 +449,10 @@ describe("createPlaylistManager", () => {
   /** The fake `ChatsManager`'s `addContext`/`removeContext` spies from the most recent `makeManager()` call. */
   /** The `ModalManager` from the most recent `makeManager()` call. */
   let lastModals: ReturnType<typeof createModalManager>;
+  /** The manager the most recent `makeManager()` call made. */
+  let lastManager: ReturnType<typeof createPlaylistManager>;
   /** The phone/desktop switch from the most recent `makeManager()` call. */
   let lastIsMobile: ReturnType<typeof signal<boolean>>;
-  let lastI18n: ReturnType<typeof createI18nManager>;
   let lastChatsAddContext: Mock;
   let lastChatsRemoveContext: Mock;
 
@@ -498,7 +496,6 @@ describe("createPlaylistManager", () => {
     const modals = createModalManager();
     lastModals = modals;
     const i18n = createI18nManager(navigation, ["en"]);
-    lastI18n = i18n;
     // Reuse the registry the fake reading states share, so the extension the
     // manager registers is the one those tabs can enable.
     const readingExtensionManager = sharedReadingExtensionManager!;
@@ -508,7 +505,7 @@ describe("createPlaylistManager", () => {
     const discover = createDiscoverManager();
     lastChatsAddContext = addContext;
     lastChatsRemoveContext = removeContext;
-    return createPlaylistManager(
+    lastManager = createPlaylistManager(
       os,
       login,
       tabs,
@@ -522,6 +519,7 @@ describe("createPlaylistManager", () => {
       initialPlaylistPageSeed,
       { pickChapter }
     );
+    return lastManager;
   };
 
   beforeEach(() => {
@@ -3395,7 +3393,7 @@ describe("createPlaylistManager", () => {
     /**
      * A queue no record backs, like a reading plan's day. It has no link to
      * share, so reaching its end hands straight back to chapter navigation
-     * without a finished modal.
+     * without a finished page.
      */
     const makeAdHocPlaylist = (
       overrides: Partial<Playlist> = {}
@@ -3404,8 +3402,7 @@ describe("createPlaylistManager", () => {
       return rest;
     };
 
-    const isFinishedModalOpen = () =>
-      lastModals.modals.value.some((m) => m.id === "playlist-finished");
+    const isFinishedPageUp = () => lastManager.finishedPlaylist.value !== null;
 
     it("navigateNext/navigatePrevious advance the queue and hand back over at the bounds", async () => {
       makeManager("user-1");
@@ -3440,10 +3437,10 @@ describe("createPlaylistManager", () => {
         type: "default",
       });
       expect(instance.playingState.currentIndex.value).toBe(1);
-      expect(isFinishedModalOpen()).toBe(false);
+      expect(isFinishedPageUp()).toBe(false);
     });
 
-    it("navigateNext past a saved playlist's last item shows the finished modal once, then hands back to chapter navigation", async () => {
+    it("navigateNext past a saved playlist's last item shows the finished page once, then hands back to chapter navigation", async () => {
       makeManager("user-1");
       await flush();
       const playlist = makePlaylist({
@@ -3462,27 +3459,27 @@ describe("createPlaylistManager", () => {
       expect(await instance.navigateNext!({} as any)).toEqual({
         type: "prevent",
       });
-      expect(isFinishedModalOpen()).toBe(true);
+      expect(isFinishedPageUp()).toBe(true);
       expect(instance.playingState.currentIndex.value).toBe(1);
 
-      // Pressing on doesn't trap the reader on the modal.
-      lastModals.closeModal("playlist-finished");
+      // Pressing on doesn't trap the reader on the page.
+      lastManager.dismissFinishedPlaylist();
       expect(await instance.navigateNext!({} as any)).toEqual({
         type: "default",
       });
-      expect(isFinishedModalOpen()).toBe(false);
+      expect(isFinishedPageUp()).toBe(false);
 
-      // Stepping off the last item and back re-arms the modal.
+      // Stepping off the last item and back re-arms the page.
       await instance.navigatePrevious!({} as any);
       await instance.navigateNext!({} as any);
-      expect(isFinishedModalOpen()).toBe(false);
+      expect(isFinishedPageUp()).toBe(false);
       expect(await instance.navigateNext!({} as any)).toEqual({
         type: "prevent",
       });
-      expect(isFinishedModalOpen()).toBe(true);
+      expect(isFinishedPageUp()).toBe(true);
     });
 
-    it("does not preview a chapter for the swipe that shows the finished modal", async () => {
+    it("does not preview a chapter for the swipe that shows the finished page", async () => {
       makeManager("user-1");
       await flush();
       const playlist = makePlaylist({ items: [{ type: "html", html: "a" }] });
@@ -3505,7 +3502,7 @@ describe("createPlaylistManager", () => {
       ).toBeUndefined();
     });
 
-    it("turns next off on the Bible's last chapter once the finished modal has been shown", async () => {
+    it("turns next off on the Bible's last chapter once the finished page has been shown", async () => {
       makeManager("user-1");
       await flush();
       const readingState = makeReadingState(vi.fn());
@@ -3523,7 +3520,7 @@ describe("createPlaylistManager", () => {
 
       expect(instance.hasNext!.value).toBe(true);
       await instance.navigateNext!({} as any);
-      expect(isFinishedModalOpen()).toBe(true);
+      expect(isFinishedPageUp()).toBe(true);
       expect(instance.hasNext!.value).toBe(false);
     });
 
@@ -4395,11 +4392,8 @@ describe("createPlaylistManager", () => {
     });
   });
 
-  describe("playlist finished modal", () => {
-    const finishedModal = () =>
-      lastModals.modals.value.find((m) => m.id === "playlist-finished");
-
-    it("opens when next is pressed on a saved playlist's last item, and not before", async () => {
+  describe("a finished playlist's page", () => {
+    it("comes up when next is pressed on a saved playlist's last item, and not before", async () => {
       const manager = makeManager("user-1");
       await flush();
       const playlist = makePlaylist({
@@ -4415,18 +4409,17 @@ describe("createPlaylistManager", () => {
 
       await playing.next();
       expect(playing.currentIndex.value).toBe(1);
-      expect(finishedModal()).toBeUndefined();
+      expect(manager.finishedPlaylist.value).toBeNull();
       expect(playing.canFinish.value).toBe(true);
 
       await playing.next();
       expect(playing.currentIndex.value).toBe(1);
-      expect(finishedModal()?.title).toEqual({
-        key: "playlist-finished",
-        defaultValue: "Playlist finished",
-      });
+      expect(manager.finishedPlaylist.value?.id).toBe(playlist.id);
+      // Nothing pops up over it: the app shows it as a page of its own.
+      expect(lastModals.modals.value).toEqual([]);
     });
 
-    /** Plays a two-item saved playlist through to its finished modal. */
+    /** Plays a two-item saved playlist through to its finished page. */
     const finishPlaylist = async () => {
       const manager = makeManager("user-1");
       await flush();
@@ -4442,56 +4435,35 @@ describe("createPlaylistManager", () => {
       return manager;
     };
 
-    it("stops playback when its Close button is pressed", async () => {
+    it("stops playback from its Done", async () => {
       const manager = await finishPlaylist();
-      const container = document.createElement("div");
-      document.body.appendChild(container);
-      try {
-        act(() => {
-          render(
-            h(I18nProvider, {
-              i18n: lastI18n,
-              children: finishedModal()!.content({
-                t: (key) => key,
-              }) as ComponentChildren,
-            }),
-            container
-          );
-        });
-        const close = Array.from(container.querySelectorAll("button")).find(
-          (b) => b.textContent === "Close"
-        )!;
 
-        act(() => close.click());
+      manager.closeFinishedPlaylist();
 
-        expect(manager.playing.value).toBeNull();
-        expect(finishedModal()).toBeUndefined();
-      } finally {
-        render(null, container);
-        container.remove();
-      }
+      expect(manager.playing.value).toBeNull();
+      expect(manager.finishedPlaylist.value).toBeNull();
     });
 
-    it("keeps playing when the modal is just dismissed (its X or the backdrop)", async () => {
+    it("keeps playing when the page is only put away", async () => {
       const manager = await finishPlaylist();
-      expect(finishedModal()).toBeDefined();
+      expect(manager.finishedPlaylist.value).not.toBeNull();
 
-      lastModals.closeModal("playlist-finished");
+      manager.dismissFinishedPlaylist();
 
-      expect(manager.playing.value).not.toBeNull();
+      expect(manager.finishedPlaylist.value).toBeNull();
       expect(manager.playing.value!.currentIndex.value).toBe(1);
     });
 
-    it("closes when playback ends some other way, so its Close can't stop a later playback", async () => {
+    it("goes away when playback ends some other way, so its Done can't stop a later playback", async () => {
       const manager = await finishPlaylist();
-      expect(finishedModal()).toBeDefined();
+      expect(manager.finishedPlaylist.value).not.toBeNull();
 
       manager.stopPlaying();
 
-      expect(finishedModal()).toBeUndefined();
+      expect(manager.finishedPlaylist.value).toBeNull();
     });
 
-    it("never opens for a queue with no saved playlist behind it, like a reading plan's day", async () => {
+    it("never comes up for a queue with no saved playlist behind it, like a reading plan's day", async () => {
       const manager = makeManager("user-1");
       await flush();
       const { recordName: _recordName, ...adHoc } = makePlaylist({
@@ -4503,10 +4475,10 @@ describe("createPlaylistManager", () => {
       expect(playing.canFinish.value).toBe(false);
 
       await playing.next();
-      expect(finishedModal()).toBeUndefined();
+      expect(manager.finishedPlaylist.value).toBeNull();
     });
 
-    it("does not open for a session peer whose position reaches the end via sync", async () => {
+    it("does not come up for a session peer whose position reaches the end via sync", async () => {
       const manager = makeManager("user-1");
       await flush();
       const playlist = makePlaylist({
@@ -4525,12 +4497,12 @@ describe("createPlaylistManager", () => {
       });
 
       expect(playing.currentIndex.value).toBe(1);
-      expect(finishedModal()).toBeUndefined();
+      expect(manager.finishedPlaylist.value).toBeNull();
 
       // The same position does finish the playlist once this client presses
       // next itself, so it was the sync that didn't.
       await playing.next();
-      expect(finishedModal()).toBeDefined();
+      expect(manager.finishedPlaylist.value).not.toBeNull();
     });
   });
 

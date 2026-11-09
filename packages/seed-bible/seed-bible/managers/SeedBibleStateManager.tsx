@@ -31,6 +31,7 @@ import {
   type SharedPageModalAction,
 } from "../components/SharedPageModal/SharedPageModal";
 import { PlaylistPagePane } from "../components/PlaylistPagePane/PlaylistPagePane";
+import { PlaylistFinishedPane } from "../components/PlaylistFinishedPane/PlaylistFinishedPane";
 import { openDeletePlaylistConfirm } from "../components/Discover/PlaylistRow";
 import {
   buildSharedPagePath,
@@ -292,6 +293,9 @@ export const ABOUT_PANE_ID = "about-page-pane";
 export const SHARED_PAGE_MODAL_ID = "shared-page";
 /** The fullscreen pane a shared playlist link opens on. */
 export const PLAYLIST_PAGE_PANE_ID = "playlist-page-pane";
+
+/** The fullscreen page a playlist ends on. */
+export const PLAYLIST_FINISHED_PANE_ID = "playlist-finished-pane";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -4478,20 +4482,7 @@ export function createSeedBibleState(
         }}
         onStart={startSharedPage}
         onBack={leave}
-        onShare={() =>
-          openShareModal(
-            {
-              modals,
-              app: state.app,
-              toast: state.app.toast,
-              sharedSession: selectedTab.peek()?.sharedSession ?? null,
-              embedThemes: state.theme.themes,
-              customizationLocator:
-                state.customizations.activeCustomizationLocator,
-            },
-            new URL(playlists.getPlaylistUrl(playlist))
-          )
-        }
+        onShare={() => sharePlaylist(playlist)}
         {...(isOwner
           ? {
               // As Start Reading does, so Back from the editor returns here.
@@ -4512,6 +4503,56 @@ export function createSeedBibleState(
       />
     );
   };
+
+  const sharePlaylist = (
+    playlist: Parameters<typeof playlists.getPlaylistUrl>[0]
+  ) =>
+    openShareModal(
+      {
+        modals,
+        app: state.app,
+        toast: state.app.toast,
+        sharedSession: selectedTab.peek()?.sharedSession ?? null,
+        embedThemes: state.theme.themes,
+        customizationLocator: state.customizations.activeCustomizationLocator,
+      },
+      new URL(playlists.getPlaylistUrl(playlist))
+    );
+
+  const renderPlaylistFinishedPane = () => {
+    const playlist = playlists.finishedPlaylist.value;
+    if (!playlist) {
+      return null;
+    }
+    return (
+      <PlaylistFinishedPane
+        playlist={playlist}
+        authorName={playlists.playingAuthorName.value}
+        onDone={() => playlists.closeFinishedPlaylist()}
+        onShare={() => sharePlaylist(playlist)}
+      />
+    );
+  };
+
+  // A finished playlist ends on its own fullscreen page. Done (or its back
+  // button) leaves the playlist; anything else taking the page away, such as
+  // another pane on a phone, only puts it away.
+  effect(() => {
+    if (playlists.finishedPlaylist.value) {
+      panes.openPane({
+        id: PLAYLIST_FINISHED_PANE_ID,
+        placement: "fullscreen",
+        title: i18n.t("playlist-finished", {
+          defaultValue: "Playlist finished",
+        }),
+        showHeader: false,
+        component: renderPlaylistFinishedPane,
+        onClose: () => playlists.dismissFinishedPlaylist(),
+      });
+    } else {
+      panes.closePane(PLAYLIST_FINISHED_PANE_ID);
+    }
+  });
 
   // A shared playlist link opens on a fullscreen page describing it, and a
   // reading plan link on a modal.
