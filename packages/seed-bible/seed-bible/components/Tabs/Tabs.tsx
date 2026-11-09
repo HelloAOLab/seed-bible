@@ -23,6 +23,10 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { MaterialIcon, SettingsIcon, StarIcon } from "../../components/icons";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
+import {
+  AskToComeBackButton,
+  getParticipantLocation,
+} from "../SessionParticipants/participantLocations";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
 import {
   isSessionHost,
@@ -514,6 +518,7 @@ function SessionSettingsModalContent(props: {
                 const isCoHost = role === "co-host";
                 const visual = getUserAnimalVisual(coHostKey);
                 const imageUrl = user.profile?.pictureUrl ?? null;
+                const location = getParticipantLocation(session, user);
                 return (
                   <li
                     key={user.connectionId}
@@ -550,7 +555,19 @@ function SessionSettingsModalContent(props: {
                           {t("co-host", { defaultValue: "Co-host" })}
                         </span>
                       )}
+                      {location.isElsewhere && location.passage && (
+                        <span className="sb-session-participant-location">
+                          {location.passage}
+                        </span>
+                      )}
                     </span>
+                    {isHost &&
+                      location.isElsewhere &&
+                      !isHostUser &&
+                      !isCoHost &&
+                      !user.isSelf && (
+                        <AskToComeBackButton session={session} user={user} />
+                      )}
                     {friendButtonRows.has(user.connectionId) && (
                       <ParticipantFriendButton
                         state={state}
@@ -1285,7 +1302,8 @@ function TabRow(props: TabRowProps) {
           <div className="sb-tab-users-section">
             <div className="sb-tab-users-list">
               {(() => {
-                const sessionOptions = tab.sharedSession.options.value;
+                const session = tab.sharedSession;
+                const sessionOptions = session.options.value;
                 // Host first, then co-hosts, then everyone else — Array.sort
                 // is stable so peers keep their existing order within a rank.
                 const sortedUsers = [...connectedUsers].sort(
@@ -1301,12 +1319,18 @@ function TabRow(props: TabRowProps) {
                       : role === "co-host"
                         ? t("co-host", { defaultValue: "Co-host" })
                         : undefined;
+                  const location = getParticipantLocation(session, user);
                   return (
                     <SessionUserAvatar
                       key={user.connectionId}
                       user={user}
                       role={role}
                       roleLabel={roleLabel}
+                      elsewherePassage={
+                        location.isElsewhere
+                          ? (location.passage ?? undefined)
+                          : undefined
+                      }
                     />
                   );
                 });

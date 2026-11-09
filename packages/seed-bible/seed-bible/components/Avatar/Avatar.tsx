@@ -123,23 +123,32 @@ export function SessionUserAvatar({
   user,
   role,
   roleLabel,
+  elsewherePassage,
 }: {
   user: ConnectedSessionUser;
   role?: SessionRole | null;
   roleLabel?: string;
+  /** Set when they're reading away from the group: where they are instead. */
+  elsewherePassage?: string;
 }) {
+  const title = [getUserDisplayName(user), roleLabel, elsewherePassage]
+    .filter(Boolean)
+    .join(" · ");
   return (
-    <span className="sb-tab-user">
+    <span
+      className={`sb-tab-user${elsewherePassage ? " sb-tab-user-away" : ""}`}
+    >
       <Avatar
         imageUrl={user.profile?.pictureUrl ?? null}
         visual={user.visual}
-        title={
-          roleLabel
-            ? `${getUserDisplayName(user)} · ${roleLabel}`
-            : getUserDisplayName(user)
-        }
+        title={title}
         isSelf={user.isSelf}
       />
+      {elsewherePassage && (
+        <span className="sb-tab-user-away-badge" aria-hidden="true">
+          <span className="material-symbols-outlined">arrow_forward</span>
+        </span>
+      )}
       {role && roleLabel && (
         <span
           className={`sb-tab-user-role sb-tab-user-role-${role === "co-host" ? "cohost" : "host"}`}

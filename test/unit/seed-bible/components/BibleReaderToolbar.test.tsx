@@ -5907,7 +5907,11 @@ describe("BibleReaderToolbar — away from the session group", () => {
    * a connected peer; `isAwayFromGroup` stands in for the session's own
    * comparison, which `SessionsManager.test.ts` covers.
    */
-  async function renderInSession(viewportWidth: number, away: boolean) {
+  async function renderInSession(
+    viewportWidth: number,
+    away: boolean,
+    { askedToComeBack = false } = {}
+  ) {
     window.innerWidth = viewportWidth;
     const state = await createTestSeedBibleState({
       responses: createPrivateEndpointResponses(),
@@ -5919,8 +5923,22 @@ describe("BibleReaderToolbar — away from the session group", () => {
     const tab = state.app.currentReadingState.value!.tab;
     await waitFor(() => !!tab.readingState.translationBooks.value);
     const isAwayFromGroup = signal(away);
+    const incomingComeBackRequest = signal(
+      askedToComeBack
+        ? {
+            id: "request-1",
+            fromConnectionId: "conn-host",
+            fromUserId: "host-user",
+            sentAtMs: Date.now(),
+          }
+        : null
+    );
     const rejoinGroup = vi.fn(async () => {
       isAwayFromGroup.value = false;
+      incomingComeBackRequest.value = null;
+    });
+    const dismissComeBackRequest = vi.fn(() => {
+      incomingComeBackRequest.value = null;
     });
     tab.sharedSession = {
       id: "group-abc",
@@ -5963,6 +5981,8 @@ describe("BibleReaderToolbar — away from the session group", () => {
       }),
       isAwayFromGroup,
       rejoinGroup,
+      incomingComeBackRequest,
+      dismissComeBackRequest,
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),
@@ -5977,7 +5997,7 @@ describe("BibleReaderToolbar — away from the session group", () => {
       );
     });
 
-    return { state, rejoinGroup };
+    return { state, rejoinGroup, dismissComeBackRequest };
   }
 
   const groupBar = () =>
@@ -6018,6 +6038,48 @@ describe("BibleReaderToolbar — away from the session group", () => {
     expect(toolbar.classList).toContain("sb-reader-toolbar");
     expect(toolbar.classList).toContain("sb-reader-toolbar-has-group-bar");
     expect(bar!.textContent).toContain("Group is on Exodus 2");
+  });
+
+  it("shows a host's request to come back and answers it with Not now", async () => {
+    const { dismissComeBackRequest } = await renderInSession(
+      MOBILE_VIEWPORT_WIDTH,
+      true,
+      { askedToComeBack: true }
+    );
+
+    const bar = groupBar()!;
+    expect(bar.getAttribute("role")).toBe("alert");
+    expect(bar.textContent).toContain("Grace asked you to come back");
+    expect(bar.textContent).toContain("The group is reading Exodus 2");
+
+    const notNow = Array.from(bar.querySelectorAll("button")).find(
+      (button) => button.textContent === "Not now"
+    )!;
+    await act(async () => {
+      notNow.click();
+    });
+
+    expect(dismissComeBackRequest).toHaveBeenCalledTimes(1);
+    // Back to the plain bar, which still offers the way back.
+    expect(groupBar()!.textContent).toContain("Group is on Exodus 2");
+    expect(groupBar()!.textContent).not.toContain("asked you to come back");
+  });
+
+  it("rejoins the group from a host's request on desktop", async () => {
+    const { rejoinGroup } = await renderInSession(1200, true, {
+      askedToComeBack: true,
+    });
+
+    const rejoin = groupBar()!.querySelector<HTMLButtonElement>(
+      ".sb-session-group-bar-rejoin"
+    )!;
+    expect(rejoin.textContent).toContain("Rejoin group");
+    await act(async () => {
+      rejoin.click();
+    });
+
+    expect(rejoinGroup).toHaveBeenCalledTimes(1);
+    expect(groupBar()).toBeNull();
   });
 
   it("shows nothing while the reader is with the group", async () => {

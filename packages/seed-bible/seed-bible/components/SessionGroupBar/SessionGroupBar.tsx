@@ -15,7 +15,9 @@ const MAX_LEADER_AVATARS = 2;
 /**
  * Row along the top of the reader toolbar, shown to someone who may not move
  * the group and has wandered off to another chapter: says where the group is
- * and takes them back there. Renders nothing while they're with the group.
+ * and takes them back there. When a host has asked them to come back, it
+ * grows into that request until they answer it. Renders nothing while they're
+ * with the group.
  */
 export function SessionGroupBar({
   session,
@@ -49,6 +51,84 @@ export function SessionGroupBar({
         sessionRoleRank(getUserSessionRole(options, b))
     )
     .slice(0, MAX_LEADER_AVATARS);
+
+  const rejoinIcon = (
+    <MaterialIcon
+      className="sb-session-group-bar-rejoin-icon rtl-mirror"
+      aria-hidden="true"
+    >
+      undo
+    </MaterialIcon>
+  );
+
+  const request = session.incomingComeBackRequest.value;
+  if (request) {
+    const sender = session.connectedUsers.value.find(
+      (user) => user.connectionId === request.fromConnectionId
+    );
+    const senderName = sender
+      ? getUserDisplayName(sender)
+      : t("host", { defaultValue: "Host" });
+    return (
+      <div
+        className={`sb-session-group-bar sb-session-group-bar-${layout} sb-session-group-bar-request`}
+        dir={isRtl ? "rtl" : "ltr"}
+        role="alert"
+      >
+        <span className="sb-session-group-bar-request-info">
+          {sender && (
+            <span
+              className="sb-session-group-bar-leader sb-session-group-bar-sender"
+              aria-hidden="true"
+            >
+              <Avatar
+                imageUrl={sender.profile?.pictureUrl ?? null}
+                visual={sender.visual}
+                title={senderName}
+              />
+            </span>
+          )}
+          <span className="sb-session-group-bar-request-text">
+            <span className="sb-session-group-bar-request-title">
+              {t("session-asked-you-to-come-back", {
+                defaultValue: "{{name}} asked you to come back",
+                name: senderName,
+              })}
+            </span>
+            <span className="sb-session-group-bar-request-subtitle">
+              {t("session-group-is-reading", {
+                defaultValue: "The group is reading {{passage}}",
+                passage,
+              })}
+            </span>
+          </span>
+        </span>
+        <span className="sb-session-group-bar-request-actions">
+          <button
+            type="button"
+            className="sb-session-group-bar-not-now"
+            onClick={() => session.dismissComeBackRequest()}
+          >
+            {t("not-now", { defaultValue: "Not now" })}
+          </button>
+          <button
+            type="button"
+            className="sb-session-group-bar-rejoin sb-session-group-bar-rejoin-primary"
+            aria-label={t("session-rejoin-group-label", {
+              defaultValue: "Rejoin the group at {{passage}}",
+              passage,
+            })}
+            onClick={() => {
+              void session.rejoinGroup();
+            }}
+          >
+            {rejoinIcon}
+            {t("session-rejoin-the-group", { defaultValue: "Rejoin group" })}
+          </button>
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -88,12 +168,7 @@ export function SessionGroupBar({
           void session.rejoinGroup();
         }}
       >
-        <MaterialIcon
-          className="sb-session-group-bar-rejoin-icon rtl-mirror"
-          aria-hidden="true"
-        >
-          undo
-        </MaterialIcon>
+        {rejoinIcon}
         {t("session-rejoin-group", { defaultValue: "Rejoin" })}
       </button>
     </div>

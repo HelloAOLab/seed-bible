@@ -80,6 +80,56 @@ interface SessionData {
 
 export type SessionGroupPosition = Readonly<SessionData>;
 
+/** A host asking one participant to come back to where the group is reading. */
+export interface ComeBackRequest {
+  /** Fresh per request, so asking the same person again reads as new. */
+  id: string;
+  fromConnectionId: string;
+  fromUserId: string | null;
+  sentAtMs: number;
+}
+
+/** How long after asking someone to come back a host can ask them again. */
+export const COME_BACK_REQUEST_COOLDOWN_MS = 30_000;
+
+/**
+ * How long until `request`'s sender may ask again, as of `nowMs`. Measured
+ * from the sender's clock, so a recipient or co-host whose clock runs ahead or
+ * behind sees the same window rather than one stretched by the difference.
+ */
+export function comeBackRequestCooldownRemainingMs(
+  request: ComeBackRequest | undefined,
+  nowMs: number
+): number {
+  if (!request) {
+    return 0;
+  }
+  const elapsed = Math.abs(nowMs - request.sentAtMs);
+  return Math.max(0, COME_BACK_REQUEST_COOLDOWN_MS - elapsed);
+}
+
+function parseComeBackRequest(value: unknown): ComeBackRequest | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.id !== "string" ||
+    typeof record.fromConnectionId !== "string" ||
+    typeof record.sentAtMs !== "number" ||
+    !Number.isFinite(record.sentAtMs)
+  ) {
+    return null;
+  }
+  return {
+    id: record.id,
+    fromConnectionId: record.fromConnectionId,
+    fromUserId:
+      typeof record.fromUserId === "string" ? record.fromUserId : null,
+    sentAtMs: record.sentAtMs,
+  };
+}
+
 /**
  * Where a new session should begin reading.
  *
@@ -642,6 +692,29 @@ export interface BibleReadingSession {
   rejoinGroup: () => Promise<void>;
 
   /**
+   * The latest request to come back sent to each participant, keyed by the
+   * connectionId asked. Kept after it's answered, so hosts can tell when they
+   * last asked someone (see `COME_BACK_REQUEST_COOLDOWN_MS`).
+   */
+  comeBackRequests: ReadonlySignal<ReadonlyMap<string, ComeBackRequest>>;
+
+  /**
+   * A host's request for this reader to come back, while it's still waiting
+   * for an answer: they're away from the group and haven't dismissed it or
+   * rejoined. Requests from anyone who isn't a host are ignored.
+   */
+  incomingComeBackRequest: ReadonlySignal<ComeBackRequest | null>;
+
+  /**
+   * Asks the participant on `connectionId` to come back to the group. Does
+   * nothing unless this reader is a host or co-host.
+   */
+  askToComeBack: (connectionId: string) => void;
+
+  /** Answers the incoming request with "not now". */
+  dismissComeBackRequest: () => void;
+
+  /**
    * Whether this client's own connection to the shared document is
    * currently synced. False while resyncing (e.g. right after a mobile
    * device resumes from the background) — during that window, this
@@ -770,6 +843,10 @@ async function createBibleReadingSession(
   // in for this.
   const readingPositionsMap =
     document.getMap<ParticipantReadingPosition>("reading_positions");
+  // Keyed by the connection being asked, so asking someone again replaces the
+  // previous request instead of piling them up.
+  const comeBackRequestsMap =
+    document.getMap<ComeBackRequest>("come_back_requests");
   const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
   const allUsers = signal<ConnectedSessionUser[]>([]);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
@@ -1870,6 +1947,8 @@ async function createBibleReadingSession(
     extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     readingPositionsSubscription.unsubscribe();
+    comeBackRequestsSubscription.unsubscribe();
+    stopSettlingComeBackRequests();
     remoteClientsSubscription.unsubscribe();
     statusUpdatedSubscription.unsubscribe();
     stopSync();
@@ -1890,6 +1969,7 @@ async function createBibleReadingSession(
       document.transact(() => {
         userProfilesMap.delete(localConnectionId);
         readingPositionsMap.delete(localConnectionId);
+        comeBackRequestsMap.delete(localConnectionId);
       });
     } catch {
       // Best-effort — the entry will simply linger in the CRDT.
@@ -1897,10 +1977,9 @@ async function createBibleReadingSession(
     document.unsubscribe();
   };
 
-  const isAwayFromGroup = computed(() => {
-    if (userCanNavigate(localSessionId.value) || isRemoteSyncRunning.value) {
-      return false;
-    }
+  // Off the group's chapter right now, including mid-way through a load
+  // toward it — unlike `isAwayFromGroup`, which hides that window.
+  const isOffGroupChapter = computed(() => {
     const group = groupPosition.value;
     if (!group.bookId || !group.chapterNumber) {
       return false;
@@ -1911,9 +1990,96 @@ async function createBibleReadingSession(
     );
   });
 
+  const isAwayFromGroup = computed(
+    () =>
+      !userCanNavigate(localSessionId.value) &&
+      !isRemoteSyncRunning.value &&
+      isOffGroupChapter.value
+  );
+
+  const comeBackRequests = signal<ReadonlyMap<string, ComeBackRequest>>(
+    new Map()
+  );
+  const syncComeBackRequests = () => {
+    const next = new Map<string, ComeBackRequest>();
+    comeBackRequestsMap.forEach((value, connectionId) => {
+      const request = parseComeBackRequest(value);
+      if (request) {
+        next.set(connectionId, request);
+      }
+    });
+    comeBackRequests.value = next;
+  };
+  syncComeBackRequests();
+  const comeBackRequestsSubscription =
+    comeBackRequestsMap.changes.subscribe(syncComeBackRequests);
+
+  // The id of the last request to this connection that has been answered, or
+  // that arrived when there was nothing to answer. Seeded with whatever was
+  // already addressed here, which was sent before this reader joined.
+  const handledComeBackRequestId = signal<string | null>(
+    comeBackRequests.peek().get(localConnectionId)?.id ?? null
+  );
+
+  const isFromHost = (request: ComeBackRequest) =>
+    isSessionHost(options.value, request.fromUserId) ||
+    isSessionHost(options.value, request.fromConnectionId);
+
+  // A request that reaches a reader who is already with the group has nothing
+  // to ask, so it's settled then — not left to pop up the next time they
+  // wander off.
+  const stopSettlingComeBackRequests = effect(() => {
+    const request = comeBackRequests.value.get(localConnectionId);
+    if (
+      request &&
+      request.id !== handledComeBackRequestId.peek() &&
+      !isOffGroupChapter.value
+    ) {
+      handledComeBackRequestId.value = request.id;
+    }
+  });
+
+  const incomingComeBackRequest = computed(() => {
+    const request = comeBackRequests.value.get(localConnectionId);
+    if (
+      !request ||
+      request.id === handledComeBackRequestId.value ||
+      !isAwayFromGroup.value ||
+      !isFromHost(request)
+    ) {
+      return null;
+    }
+    return request;
+  });
+
+  const dismissComeBackRequest = () => {
+    const request = comeBackRequests.peek().get(localConnectionId);
+    if (request) {
+      handledComeBackRequestId.value = request.id;
+    }
+  };
+
+  const askToComeBack = (connectionId: string) => {
+    const isLocalHost =
+      isSessionHost(options.value, localSessionId.value) ||
+      isSessionHost(options.value, localConnectionId);
+    if (!isLocalHost || connectionId === localConnectionId) {
+      return;
+    }
+    comeBackRequestsMap.set(connectionId, {
+      id: uuid(),
+      fromConnectionId: localConnectionId,
+      fromUserId: loginManager.userId.value ?? null,
+      sentAtMs: Date.now(),
+    });
+  };
+
   // A plain `queueRemoteSync`, so a rejoin and a host's move arriving at the
   // same moment coalesce into one load toward the newest position.
-  const rejoinGroup = () => queueRemoteSync(getSessionDataFromMap(stateMap));
+  const rejoinGroup = () => {
+    dismissComeBackRequest();
+    return queueRemoteSync(getSessionDataFromMap(stateMap));
+  };
 
   const isHost = (user: ConnectedSessionUser | null): boolean => {
     if (!user) return false;
@@ -1937,6 +2103,10 @@ async function createBibleReadingSession(
     groupPosition,
     isAwayFromGroup,
     rejoinGroup,
+    comeBackRequests,
+    incomingComeBackRequest,
+    askToComeBack,
+    dismissComeBackRequest,
     isSynced,
     removeSharedDecoration,
     decorationOwner: (decorationId) =>

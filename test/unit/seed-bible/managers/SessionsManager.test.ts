@@ -355,6 +355,7 @@ describe("SessionsManager", () => {
   let mockUserProfilesMap: ReturnType<typeof createMockSharedMap>;
   let mockReadingPositionsMap: ReturnType<typeof createMockSharedMap>;
   let mockExtensionsMap: ReturnType<typeof createMockSharedMap>;
+  let mockComeBackRequestsMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
     getChapterHighlights: Mock;
   };
@@ -393,6 +394,7 @@ describe("SessionsManager", () => {
     mockUserProfilesMap = createMockSharedMap();
     mockReadingPositionsMap = createMockSharedMap();
     mockExtensionsMap = createMockSharedMap();
+    mockComeBackRequestsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockStatusUpdated = createMockStatusUpdatedObservable();
     mockDocument = {
@@ -415,6 +417,10 @@ describe("SessionsManager", () => {
 
         if (name === "reading_extensions") {
           return mockExtensionsMap;
+        }
+
+        if (name === "come_back_requests") {
+          return mockComeBackRequestsMap;
         }
 
         return mockMap;
@@ -1022,12 +1028,121 @@ describe("SessionsManager", () => {
       );
       const session = await manager.joinSession("group-abc");
       mockOptionsMap.setEmitOnSet(true);
-      session.updateOptions({ allowedNavigators: ["conn-allowed"] });
+      session.updateOptions({
+        allowedNavigators: ["conn-allowed"],
+        hostUserId: "host-user",
+      });
       await waitFor(
         () => session.options.value.allowedNavigators?.[0] === "conn-allowed"
       );
       return session;
     }
+
+    /** A request addressed to this reader arriving from `fromUserId`. */
+    function receiveComeBackRequest(id: string, fromUserId = "host-user") {
+      mockComeBackRequestsMap.set(os.connectionId, {
+        id,
+        fromConnectionId: "conn-host",
+        fromUserId,
+        sentAtMs: Date.now(),
+      });
+      mockComeBackRequestsMap.emitChange();
+    }
+
+    function wanderOff(session: BibleReadingSession) {
+      session.readingState.bookId.value = "ROM";
+      session.readingState.chapterNumber.value = 8;
+    }
+
+    it("shows a host's request to a follower who is away until they say not now", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+
+      receiveComeBackRequest("request-1");
+      expect(session.incomingComeBackRequest.value).toMatchObject({
+        id: "request-1",
+        fromUserId: "host-user",
+      });
+
+      session.dismissComeBackRequest();
+      expect(session.incomingComeBackRequest.value).toBeNull();
+
+      // Asking again is a new request, so it shows again.
+      receiveComeBackRequest("request-2");
+      expect(session.incomingComeBackRequest.value?.id).toBe("request-2");
+    });
+
+    it("answers the request by rejoining the group", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+      receiveComeBackRequest("request-1");
+
+      await session.rejoinGroup();
+
+      expect(session.readingState.bookId.value).toBe("JHN");
+      expect(session.incomingComeBackRequest.value).toBeNull();
+      // Wandering off again doesn't bring the answered request back.
+      wanderOff(session);
+      expect(session.incomingComeBackRequest.value).toBeNull();
+    });
+
+    it("ignores a request from someone who isn't a host", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+
+      receiveComeBackRequest("request-1", "someone-else");
+
+      expect(session.incomingComeBackRequest.value).toBeNull();
+    });
+
+    it("drops a request that arrives while the follower is with the group", async () => {
+      const session = await joinAsFollower();
+
+      receiveComeBackRequest("request-1");
+      wanderOff(session);
+
+      expect(session.incomingComeBackRequest.value).toBeNull();
+    });
+
+    it("ignores a request that was waiting before the follower joined", async () => {
+      mockComeBackRequestsMap = createMockSharedMap({
+        [os.connectionId]: {
+          id: "old-request",
+          fromConnectionId: "conn-host",
+          fromUserId: "host-user",
+          sentAtMs: Date.now() - 60_000,
+        },
+      });
+      const session = await joinAsFollower();
+      wanderOff(session);
+
+      expect(session.incomingComeBackRequest.value).toBeNull();
+    });
+
+    it("lets a host ask a participant to come back", async () => {
+      const session = await joinAsFollower();
+      session.updateOptions({ hostUserId: os.connectionId });
+      await waitFor(() => session.options.value.hostUserId === os.connectionId);
+
+      session.askToComeBack("conn-peer");
+
+      expect(mockComeBackRequestsMap.set).toHaveBeenCalledWith(
+        "conn-peer",
+        expect.objectContaining({
+          fromConnectionId: os.connectionId,
+          id: expect.any(String),
+          sentAtMs: expect.any(Number),
+        })
+      );
+    });
+
+    it("doesn't let someone who isn't a host ask anyone to come back", async () => {
+      const session = await joinAsFollower();
+
+      session.askToComeBack("conn-peer");
+
+      expect(mockComeBackRequestsMap.set).not.toHaveBeenCalled();
+    });
 
     it("reports a follower who reads another chapter as away, and rejoin takes them back", async () => {
       const session = await joinAsFollower();

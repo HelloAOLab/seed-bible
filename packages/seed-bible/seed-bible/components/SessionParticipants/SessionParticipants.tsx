@@ -1,7 +1,10 @@
 import "./SessionParticipants.css";
 import { useSignal } from "@preact/signals";
 import { createPortal } from "preact/compat";
-import type { BibleReadingSession } from "../../managers/SessionsManager";
+import type {
+  BibleReadingSession,
+  ConnectedSessionUser,
+} from "../../managers/SessionsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -17,6 +20,11 @@ import {
   openShareSessionModal,
 } from "../Tabs/Tabs";
 import { MaterialIcon } from "../icons";
+import {
+  AskToComeBackButton,
+  getParticipantLocation,
+  sessionGroupPassage,
+} from "./participantLocations";
 import {
   ParticipantFriendButton,
   rowsWithFriendButton,
@@ -59,6 +67,57 @@ export function MobileSessionParticipants({
   );
 
   const friendButtonRows = rowsWithFriendButton(sortedUsers);
+  // Only while the sheet is open, so the closed stack doesn't re-render every
+  // time someone turns a page.
+  const groupPassage = isSheetOpen.value ? sessionGroupPassage(session) : null;
+  const locations = new Map(
+    isSheetOpen.value
+      ? sortedUsers.map((user) => [
+          user.connectionId,
+          getParticipantLocation(session, user),
+        ])
+      : []
+  );
+  const elsewhereUsers = sortedUsers.filter(
+    (user) => locations.get(user.connectionId)?.isElsewhere
+  );
+  const withGroupUsers = sortedUsers.filter(
+    (user) => !locations.get(user.connectionId)?.isElsewhere
+  );
+
+  const renderParticipant = (user: ConnectedSessionUser) => {
+    const role = getUserSessionRole(options, user);
+    const roleLabel =
+      role === "host"
+        ? t("host", { defaultValue: "Host" })
+        : role === "co-host"
+          ? t("co-host", { defaultValue: "Co-host" })
+          : undefined;
+    const location = locations.get(user.connectionId);
+    return (
+      <li key={user.connectionId} className="sb-session-participants-list-item">
+        <SessionUserAvatar user={user} role={role} roleLabel={roleLabel} />
+        <span className="sb-session-participants-list-name">
+          <span>{getUserDisplayName(user)}</span>
+          {location?.isElsewhere && location.passage && (
+            <span className="sb-session-participants-list-location">
+              {location.passage}
+            </span>
+          )}
+        </span>
+        {isHost && location?.isElsewhere && !role && !user.isSelf && (
+          <AskToComeBackButton session={session} user={user} />
+        )}
+        {friendButtonRows.has(user.connectionId) && (
+          <ParticipantFriendButton
+            state={state}
+            userId={user.userId}
+            displayName={getUserDisplayName(user)}
+          />
+        )}
+      </li>
+    );
+  };
   const stackUsers = sortedUsers.slice(0, MAX_STACK_AVATARS);
   const overflowCount = sortedUsers.length - stackUsers.length;
 
@@ -146,39 +205,35 @@ export function MobileSessionParticipants({
                 </button>
               </div>
               <div className="sb-mobile-settings-sheet-body">
-                <ul className="sb-session-participants-list">
-                  {sortedUsers.map((user) => {
-                    const role = getUserSessionRole(options, user);
-                    const roleLabel =
-                      role === "host"
-                        ? t("host", { defaultValue: "Host" })
-                        : role === "co-host"
-                          ? t("co-host", { defaultValue: "Co-host" })
-                          : undefined;
-                    return (
-                      <li
-                        key={user.connectionId}
-                        className="sb-session-participants-list-item"
-                      >
-                        <SessionUserAvatar
-                          user={user}
-                          role={role}
-                          roleLabel={roleLabel}
-                        />
-                        <span className="sb-session-participants-list-name">
-                          {getUserDisplayName(user)}
-                        </span>
-                        {friendButtonRows.has(user.connectionId) && (
-                          <ParticipantFriendButton
-                            state={state}
-                            userId={user.userId}
-                            displayName={getUserDisplayName(user)}
-                          />
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
+                {elsewhereUsers.length === 0 ? (
+                  <ul className="sb-session-participants-list">
+                    {sortedUsers.map(renderParticipant)}
+                  </ul>
+                ) : (
+                  <>
+                    <h3 className="sb-session-participants-section-title">
+                      {groupPassage
+                        ? t("session-with-the-group-at", {
+                            defaultValue: "With the group · {{passage}}",
+                            passage: groupPassage,
+                          })
+                        : t("session-with-the-group", {
+                            defaultValue: "With the group",
+                          })}
+                    </h3>
+                    <ul className="sb-session-participants-list">
+                      {withGroupUsers.map(renderParticipant)}
+                    </ul>
+                    <h3 className="sb-session-participants-section-title">
+                      {t("session-reading-elsewhere", {
+                        defaultValue: "Reading elsewhere",
+                      })}
+                    </h3>
+                    <ul className="sb-session-participants-list">
+                      {elsewhereUsers.map(renderParticipant)}
+                    </ul>
+                  </>
+                )}
               </div>
               <div className="sb-mobile-settings-sheet-divider" />
               {isHost && (

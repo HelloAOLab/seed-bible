@@ -93,11 +93,34 @@
   /* Takes the row's spare width so Add friend sits at the far end. */
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
   font-size: 0.9375rem;
   color: var(--sb-font-color);
+}
+
+.sb-session-participants-list-name > span {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.sb-session-participants-list-location {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-session-participants-section-title {
+  margin: 0.75rem 0.5rem 0.125rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-session-participants-section-title:first-child {
+  margin-top: 0.25rem;
 }
 
 /* Host-only shortcut into the full session settings dialog, pinned below the
@@ -210,8 +233,9 @@
   flex: 1;
   min-width: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0 0.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -251,4 +275,13 @@
   border-color: transparent;
   background: color-mix(in srgb, var(--sb-primary-color), transparent 86%);
   color: var(--sb-primary-color);
+}
+
+/* Wraps onto its own line under the name and badge. */
+.sb-session-participant-location {
+  flex-basis: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
