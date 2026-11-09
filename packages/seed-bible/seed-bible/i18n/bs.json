@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Link za dijeljenje prijevoda je kopiran",
   "less": "Manje",
   "swipe-up-more": "Prevucite prstom prema gore da biste vidjeli više",
-  "plans": "Planovi",
   "reading-plans": "Planovi čitanja",
   "create-reading-plan": "Napravite plan čitanja",
   "reading-plans-empty": "Još nemate planove čitanja. Napravite jedan da biste započeli.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Učitavanje prijevoda…",
   "translations-load-failed": "Nije moguće učitati cijelu listu prijevoda, tako da neki možda nedostaju.",
   "verse-of-the-day": "STIH DANA",
-  "verse-of-the-day-loading": "Učitava se stih dana…"
+  "verse-of-the-day-loading": "Učitava se stih dana…",
+  "delete-bookmark-confirm-title": "Izbrisati obeleživač?",
+  "delete-bookmark-confirm-message": "Izbrisati \" {{name}} \"?",
+  "scripture-font": "Font Svetog pisma",
+  "ai-limits-title": "Prije nego što razgovarate s umjetnom inteligencijom",
+  "ai-limits-intro": "Umjetna inteligencija može biti korisna početna tačka, ali imajte na umu njena ograničenja:",
+  "ai-limits-mistakes": "Pravi greške i može zvučati samouvjereno kada nije u pravu.",
+  "ai-limits-agreeable": "Obično vam govori ono što želite čuti i naginje popularnim odgovorima.",
+  "ai-limits-scripture": "To nije pouzdan izvor. Provjerite šta piše u odnosu na Sveto pismo.",
+  "ai-limits-study": "Proučavajte Bibliju sami i ne dozvolite da vještačka inteligencija razmišlja umjesto vas.",
+  "ai-limits-confirm": "Razumijem da vještačka inteligencija može griješiti i da nije zamjena za samostalno proučavanje Biblije.",
+  "friends-playlists-filter": "Plejliste prijatelja",
+  "friend-link-social-title": "Dodajte {{name}} kao prijatelja",
+  "friend-link-meta-description": "{{name}} želi biti tvoj prijatelj na {{brand}}",
+  "friend-link-title": "Dodajte {{name}} kao prijatelja na {{brand}}"
 }

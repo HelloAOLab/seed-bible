@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Skopiowano tłumaczenie, udostępnij link",
   "less": "Mniej",
   "swipe-up-more": "Przesuń w górę, aby zobaczyć więcej",
-  "plans": "Plany",
   "reading-plans": "Plany czytelnicze",
   "create-reading-plan": "Utwórz plan czytania",
   "reading-plans-empty": "Nie masz jeszcze żadnych planów czytania. Utwórz jeden, aby zacząć.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Ładowanie tłumaczeń…",
   "translations-load-failed": "Nie udało się załadować pełnej listy tłumaczeń, więc niektóre mogą być niedostępne.",
   "verse-of-the-day": "WERSET DNIA",
-  "verse-of-the-day-loading": "Ładowanie wersetu dnia…"
+  "verse-of-the-day-loading": "Ładowanie wersetu dnia…",
+  "delete-bookmark-confirm-title": "Usunąć zakładkę?",
+  "delete-bookmark-confirm-message": "Usunąć „ {{name}} ”?",
+  "scripture-font": "Czcionka Pisma Świętego",
+  "ai-limits-title": "Zanim porozmawiasz ze sztuczną inteligencją",
+  "ai-limits-intro": "Sztuczna inteligencja może być pomocnym punktem wyjścia, ale należy pamiętać o jej ograniczeniach:",
+  "ai-limits-mistakes": "Popełnia błędy i potrafi sprawiać wrażenie pewnego siebie, gdy się myli.",
+  "ai-limits-agreeable": "Zwykle mówi ci to, co chcesz usłyszeć i skłania się ku popularnym odpowiedziom.",
+  "ai-limits-scripture": "To nie jest wiarygodne źródło. Sprawdź, co jest tam napisane, porównując je z Pismem Świętym.",
+  "ai-limits-study": "Studiuj Biblię samodzielnie i nie pozwól, aby sztuczna inteligencja myślała za ciebie.",
+  "ai-limits-confirm": "Rozumiem, że sztuczna inteligencja może popełniać błędy i nie zastąpi osobistego studiowania Biblii.",
+  "friends-playlists-filter": "Listy odtwarzania znajomych",
+  "friend-link-social-title": "Dodaj {{name}} jako znajomego",
+  "friend-link-meta-description": "{{name}} chce zostać Twoim znajomym w {{brand}}",
+  "friend-link-title": "Dodaj {{name}} jako znajomego w {{brand}}"
 }
