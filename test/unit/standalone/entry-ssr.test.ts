@@ -1889,7 +1889,7 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain(
         '<link rel="canonical" href="/en/playlist/owner.playlist_shared/psalms-for-hard-days"'
       );
-      expect(html).not.toContain(`/en/today?addFriend=${friendId}`);
+      expect(html).not.toMatch(/<(meta|link)\b[^>]*addFriend/);
       expect(html).not.toContain('name="robots"');
     });
 
@@ -2249,6 +2249,37 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain('<meta name="robots" content="noindex"');
     });
 
+    it("previews a friend link added to a reading page, pointing at the Today page's friend link", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(
+        `/en/AAB/genesis/1?addFriend=${USER_ID}&useFreeBibleAPI=true`
+      );
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain(
+        `<link rel="canonical" href="/en/today?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain('<meta name="robots" content="noindex"');
+    });
+
+    it("names the Today page in the page's language", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(
+        `/es/today?addFriend=${USER_ID}&useFreeBibleAPI=true`
+      );
+
+      expect(html).toContain(
+        `<meta property="og:url" content="/es/today?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain(
+        `<link rel="canonical" href="/es/today?addFriend=${USER_ID}"`
+      );
+    });
+
     it("titles the page after the linked person", async () => {
       mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
 
@@ -2421,7 +2452,7 @@ describe("render() server-rendered meta tags", () => {
       expect(html).not.toMatch(/<title>[^<]*Ana/);
       expect(html).not.toMatch(/<meta [^>]*Ana/);
       expect(html).toContain('<link rel="canonical" href="/en/about"');
-      expect(html).not.toContain(`/en/today?addFriend=${USER_ID}`);
+      expect(html).not.toMatch(/<(meta|link)\b[^>]*addFriend/);
       expect(html).not.toContain('name="robots"');
     });
 
@@ -2435,7 +2466,7 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain("<title>Playlist not found");
       expect(html).not.toMatch(/<title>[^<]*Ana/);
       expect(html).not.toMatch(/<meta [^>]*Ana/);
-      expect(html).not.toContain(`/en/today?addFriend=${USER_ID}`);
+      expect(html).not.toMatch(/<(meta|link)\b[^>]*addFriend/);
       expect(html).not.toContain('name="robots"');
     });
   });
