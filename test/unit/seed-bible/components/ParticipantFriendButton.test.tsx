@@ -147,6 +147,46 @@ describe("ParticipantFriendButton", () => {
     expect(toast).toHaveBeenCalledWith("You're now friends with Ada.");
   });
 
+  it("names the person it sends a request to by their profile, not their name in the session", async () => {
+    await renderButton(ADA_ID, "Pastor John");
+
+    act(() => button("Add friend")!.click());
+    await settle();
+
+    expect(toast).toHaveBeenCalledWith("Friend request sent to Ada.");
+  });
+
+  it("still sends the request when their profile can't be read", async () => {
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await renderButton(ADA_ID, "Pastor John");
+    vi.mocked(state.login.getPublicProfile).mockRejectedValueOnce(
+      new Error("offline")
+    );
+
+    act(() => button("Add friend")!.click());
+    await settle();
+
+    expect(server.rows).toMatchObject([
+      { requestingUserId: ME, targetUserId: ADA_ID, status: "requested" },
+    ]);
+    expect(toast).toHaveBeenCalledWith(
+      `Friend request sent to User ${ADA_ID.slice(0, 8)}.`
+    );
+    consoleWarn.mockRestore();
+  });
+
+  // Same wording as answering from the Friends screen or the profile card.
+  it("says when a request expired before it was accepted", async () => {
+    const request = server.requestFrom(ADA_ID);
+    await renderButton(ADA_ID);
+    request.expireTimeMs = Date.now() - 1;
+
+    act(() => button("Accept")!.click());
+    await settle();
+
+    expect(toast).toHaveBeenCalledWith("That request has expired.");
+  });
+
   it("says so when sending fails, and can be pressed again", async () => {
     const consoleError = vi
       .spyOn(console, "error")

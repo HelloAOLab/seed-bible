@@ -3,7 +3,11 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { SessionConnectionInfo } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { displayNameOf } from "../../managers/Utils";
-import { BusyButton } from "./friendActions";
+import {
+  answerFriendRequest,
+  BusyButton,
+  sendFriendRequestTo,
+} from "./friendActions";
 import { openPersonProfile } from "./PersonCard";
 
 /**
@@ -115,41 +119,27 @@ export function ParticipantFriendButton(props: {
     busy.value = true;
     try {
       if (theirRequest) {
-        const result = await friends.acceptRequest(theirRequest.id);
-        toast(
-          result.success
-            ? t("now-friends-with", {
-                name: requesterName,
-                defaultValue: "You're now friends with {{name}}.",
-              })
-            : t("friend-request-unavailable", {
-                defaultValue: "That request is no longer available.",
-              })
+        await answerFriendRequest(
+          friends,
+          toast,
+          t,
+          theirRequest,
+          displayNameOf(theirRequest, t),
+          true
         );
         return;
       }
-      const result = await friends.sendRequest({ userId });
-      if (result.status === "sent") {
-        toast(
-          t("friend-request-sent-to", {
-            name: displayName,
-            defaultValue: "Friend request sent to {{name}}.",
-          })
-        );
-      } else if (result.status === "accepted") {
-        toast(
-          t("now-friends-with", {
-            name: displayName,
-            defaultValue: "You're now friends with {{name}}.",
-          })
-        );
-      }
-    } catch (error) {
-      console.error("Failed to add friend from session:", error);
-      toast(
-        t("friend-request-failed", {
-          defaultValue: "Couldn't send the request. Try again.",
-        })
+      // Not in the friends lists, so their profile is read here for the name.
+      const profile = await login.getPublicProfile(userId).catch((error) => {
+        console.warn(`Could not load the profile for ${userId}:`, error);
+        return null;
+      });
+      await sendFriendRequestTo(
+        friends,
+        toast,
+        t,
+        userId,
+        displayNameOf({ userId, name: profile?.name }, t)
       );
     } finally {
       busy.value = false;
