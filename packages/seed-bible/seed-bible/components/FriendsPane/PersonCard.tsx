@@ -398,12 +398,17 @@ function PersonProfile(props: { userId: string; deps: PersonProfileDeps }) {
  */
 export function openPersonProfile(
   deps: PersonProfileDeps,
-  userId: string
+  userId: string,
+  options?: {
+    /** Runs when the user closes the profile, to go back where they were. */
+    onDismiss?: () => void;
+  }
 ): void {
   deps.modals.openModal({
     id: PERSON_PROFILE_MODAL_ID,
     title: { key: "profile", defaultValue: "Profile" },
     content: () => <PersonProfile key={userId} userId={userId} deps={deps} />,
+    onDismiss: options?.onDismiss,
   });
 }
 

@@ -40,8 +40,10 @@ export function ParticipantName(props: {
   displayName: string;
   /** Runs first, for a list that has to get out of the profile's way. */
   onOpenProfile?: () => void;
+  /** Runs when the user closes the profile, for that list to come back. */
+  onCloseProfile?: () => void;
 }) {
-  const { state, userId, displayName, onOpenProfile } = props;
+  const { state, userId, displayName, onOpenProfile, onCloseProfile } = props;
   const { t } = useI18n();
   if (!userId) {
     return <>{displayName}</>;
@@ -56,7 +58,7 @@ export function ParticipantName(props: {
       })}
       onClick={() => {
         onOpenProfile?.();
-        openPersonProfile(state, userId);
+        openPersonProfile(state, userId, { onDismiss: onCloseProfile });
       }}
     >
       {displayName}

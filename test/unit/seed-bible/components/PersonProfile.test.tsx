@@ -42,7 +42,7 @@ describe("person profile card", () => {
   let friends: FriendsManager;
   let toast: ReturnType<typeof vi.fn>;
   /** Every modal opened, by ID, most recent last. */
-  let opened: { id: string; content: () => VNode }[];
+  let opened: { id: string; content: () => VNode; onDismiss?: () => void }[];
   let state: SeedBibleState;
   let writeText: ReturnType<typeof vi.fn>;
 
@@ -127,7 +127,7 @@ describe("person profile card", () => {
       app: { toast },
       tabs: { tabs: signal([]), removeTab: vi.fn() },
       modals: {
-        openModal: vi.fn((m: { id: string; content: () => VNode }) => {
+        openModal: vi.fn((m: (typeof opened)[number]) => {
           opened.push(m);
         }),
         closeModal: vi.fn(),
@@ -601,7 +601,7 @@ describe("person profile card", () => {
       render(null, card);
     });
 
-    it("opens from a name in the mobile participants sheet, closing the sheet", async () => {
+    it("opens from a name in the mobile participants sheet, which comes back when the profile closes", async () => {
       await friends.refresh();
       act(() =>
         render(
@@ -622,6 +622,10 @@ describe("person profile card", () => {
       // The sheet sits above every modal, so it has to go for the profile
       // to be seen.
       expect(nameButton(document.body, "Ada")).toBeUndefined();
+
+      // Closing the profile goes back to the list it was opened from.
+      act(() => modal("person-profile")!.onDismiss!());
+      expect(nameButton(document.body, "Ada")).toBeDefined();
     });
   });
 });

@@ -172,9 +172,12 @@ export function MobileSessionParticipants({
                             userId={user.userId}
                             displayName={getUserDisplayName(user)}
                             // The sheet sits above every modal, so it closes
-                            // to let the profile show.
+                            // to let the profile show, and comes back after.
                             onOpenProfile={() => {
                               isSheetOpen.value = false;
+                            }}
+                            onCloseProfile={() => {
+                              isSheetOpen.value = true;
                             }}
                           />
                         </span>
