@@ -17,6 +17,13 @@ import {
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
 import { TestHost } from "./TestHost";
+import {
+  aabBooks,
+  createDefaultManagerResponseMap,
+  createResponse,
+  makeChapter,
+  makeUrl,
+} from "../managers/testUtils/mockBibleApiData";
 
 function makePlaylist(items: Playlist["items"]): Playlist {
   return PlaylistSchema.parse({
@@ -732,19 +739,12 @@ describe("the playlist editor", () => {
 
   describe("step cards", () => {
     it.each([
-      ["question", "a phone", 2, true],
-      ["question", "desktop", 2, false],
-      ["compare", "a phone", 0, true],
-      ["compare", "desktop", 0, false],
+      ["a phone", true],
+      ["desktop", false],
     ] as const)(
-      "puts a %s step's fields on the page with no card on %s",
-      (kind, _layout, step, compact) => {
-        const compare: Playlist["items"][number] = {
-          type: "bible-verse",
-          ref: { bookId: "GEN", chapter: 1 },
-          compare: { ref: { bookId: "JHN", chapter: 1 } },
-        };
-        openWorkspace(kind === "compare" ? [compare] : STEPS, step, compact);
+      "puts a question step's fields on the page with no card on %s",
+      (_layout, compact) => {
+        openWorkspace(STEPS, 2, compact);
 
         const card = container.querySelector(".sb-pe-card")!;
         expect(card.classList.contains("sb-pe-card--plain")).toBe(true);
@@ -844,51 +844,193 @@ describe("the playlist editor", () => {
           "https://youtube.com/watch?v=xyz"
       );
     });
+  });
 
-    it("compares the typed second passage, in the chosen layout", () => {
-      openWorkspace(
-        [
-          {
-            type: "bible-verse",
-            ref: { bookId: "GEN", chapter: 1, verse: 1, endVerse: 3 },
-            compare: { ref: { bookId: "GEN", chapter: 1 } },
-          },
-        ],
-        0
-      );
+  describe("compare steps", () => {
+    const verses = (count: number, prefix: string) =>
+      Array.from({ length: count }, (_, i) => ({
+        type: "verse" as const,
+        number: i + 1,
+        content: [`${prefix} ${i + 1}.`],
+      }));
 
-      type(container.querySelector("#sb-pe-passage-b-0"), "John 1:1-5");
-      click(byText(container, ".sb-pe-layout", "Stacked"));
-      type(container.querySelector("#sb-pe-notice-0"), "Both begin the same");
-
-      expect(items()[0]).toEqual({
-        type: "bible-verse",
-        ref: { bookId: "GEN", chapter: 1, verse: 1, endVerse: 3 },
-        compare: {
-          ref: { bookId: "JHN", chapter: 1, verse: 1, endVerse: 5 },
-          layout: "stacked",
+    // Chapters long enough to have verses around a passage.
+    beforeEach(async () => {
+      state = await createTestSeedBibleState({
+        responses: {
+          ...createDefaultManagerResponseMap(),
+          [makeUrl("/api/AAB/GEN/1.json")]: createResponse(
+            makeChapter(aabBooks, "GEN", 1, verses(10, "Genesis"))
+          ),
+          [makeUrl("/api/AAB/EXO/2.json")]: createResponse(
+            makeChapter(aabBooks, "EXO", 2, verses(8, "Exodus"))
+          ),
         },
-        note: "<p>Both begin the same</p>",
       });
     });
 
-    it("leaves the passage as it was while the typed reference doesn't parse", () => {
+    const COMPARE: Playlist["items"][number] = {
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1, verse: 5 },
+      compare: { ref: { bookId: "EXO", chapter: 2, verse: 2, endVerse: 3 } },
+    };
+
+    const columns = () =>
+      Array.from(container.querySelectorAll(".sb-playlist-compare-column"));
+    const verse = (column: number, number: number) =>
+      Array.from(
+        columns()[column]!.querySelectorAll(".sb-pe-compare-verse")
+      ).find(
+        (el) =>
+          el.querySelector(".sb-pe-compare-verse-number")?.textContent ===
+          String(number)
+      );
+    const loaded = () =>
+      waitFor(() =>
+        columns().every((c) => !!c.querySelector(".sb-pe-compare-verse"))
+      );
+
+    it.each([
+      ["a phone", true],
+      ["desktop", false],
+    ] as const)(
+      "is edited on %s as the page it plays as: its title, then each passage under its reference",
+      async (_layout, compact) => {
+        openWorkspace([COMPARE], 0, compact);
+        await loaded();
+
+        expect(
+          container.querySelector(".sb-playlist-step-page-title")?.textContent
+        ).toBe("Compare Genesis 1:5 to Exodus 2:2-3");
+        expect(
+          columns().map(
+            (c) => c.querySelector(".sb-pe-compare-reference")?.textContent
+          )
+        ).toEqual(["Genesis 1:5expand_more", "Exodus 2:2-3expand_more"]);
+        // The passage, with two verses either side faded to extend it into.
+        const shown = (column: number) =>
+          Array.from(
+            columns()[column]!.querySelectorAll(".sb-pe-compare-verse"),
+            (el) =>
+              `${el.textContent!.trim()}${
+                el.classList.contains("sb-pe-compare-verse--outside")
+                  ? " (faded)"
+                  : ""
+              }`
+          );
+        expect(shown(0)).toEqual([
+          "3Genesis 3. (faded)",
+          "4Genesis 4. (faded)",
+          "5Genesis 5.",
+          "6Genesis 6. (faded)",
+          "7Genesis 7. (faded)",
+        ]);
+        expect(shown(1)).toEqual([
+          "1Exodus 1. (faded)",
+          "2Exodus 2.",
+          "3Exodus 3.",
+          "4Exodus 4. (faded)",
+          "5Exodus 5. (faded)",
+        ]);
+        expect(container.querySelector(".sb-pe-card")).toBeNull();
+      }
+    );
+
+    it("sets a passage to the verses between the first and last tapped", async () => {
+      openWorkspace([COMPARE], 0);
+      await loaded();
+
+      click(verse(0, 7));
+      expect(
+        container.querySelector(".sb-pe-compare-dock .sb-pe-pickbar")
+          ?.textContent
+      ).toContain("Now tap the last verse");
+      click(verse(0, 3));
+
+      expect(items()[0]).toEqual({
+        ...COMPARE,
+        ref: { bookId: "GEN", chapter: 1, verse: 3, endVerse: 7 },
+      });
+      expect(container.querySelector(".sb-pe-pickbar")).toBeNull();
+    });
+
+    it("can make a passage just the first verse tapped, or be left as it was", async () => {
+      openWorkspace([COMPARE], 0);
+      await loaded();
+
+      click(verse(1, 5));
+      click(byText(container, ".sb-pe-pickbar button", "Cancel"));
+      expect(items()[0]).toEqual(COMPARE);
+
+      click(verse(1, 5));
+      click(byText(container, ".sb-pe-pickbar button", "Just Exodus 2:5"));
+      expect(items()[0]).toEqual({
+        ...COMPARE,
+        compare: { ref: { bookId: "EXO", chapter: 2, verse: 5 } },
+      });
+    });
+
+    it("shows more verses around a passage on request", async () => {
+      openWorkspace([COMPARE], 0);
+      await loaded();
+
+      click(byText(columns()[0]!, ".sb-pe-compare-more", "Later verses"));
+
+      expect(verse(0, 10)).toBeDefined();
+      expect(
+        byText(columns()[0]!, ".sb-pe-compare-more", "Later verses")
+      ).toBeUndefined();
+    });
+
+    it("gives a passage the chapter picked in the book selector, which opens on its book", async () => {
+      openWorkspace([COMPARE], 0);
+      await loaded();
+
+      click(columns()[1]!.querySelector(".sb-pe-compare-reference"));
+      await waitFor(() => state.selector.isOpen.value);
+      expect(state.selector.expandedBookId.value).toBe("EXO");
+
+      await act(async () => {
+        await state.selector.selectChapter("GEN", 1);
+      });
+      await waitFor(() => !state.selector.isOpen.value);
+
+      expect(items()[0]).toEqual({
+        ...COMPARE,
+        compare: { ref: { bookId: "GEN", chapter: 1 } },
+      });
+    });
+
+    it("leaves the passage as it was when the book selector is closed without a pick", async () => {
+      openWorkspace([COMPARE], 0);
+      await loaded();
+
+      click(columns()[0]!.querySelector(".sb-pe-compare-reference"));
+      await waitFor(() => state.selector.isOpen.value);
+      await act(async () => {
+        await state.selector.setOpen(false);
+      });
+
+      expect(items()[0]).toEqual(COMPARE);
+    });
+
+    it("says when a passage's chapter can't be loaded", async () => {
       openWorkspace(
         [
           {
-            type: "bible-verse",
-            ref: { bookId: "GEN", chapter: 1 },
-            compare: { ref: { bookId: "GEN", chapter: 2 } },
+            ...COMPARE,
+            // No chapter is served for this one.
+            compare: { ref: { bookId: "EXO", chapter: 9, verse: 1 } },
           },
         ],
         0
       );
 
-      type(container.querySelector("#sb-pe-passage-b-0"), "Nowhere 99");
-
-      expect(items()[0]).toMatchObject({
-        compare: { ref: { bookId: "GEN", chapter: 2 } },
-      });
+      await waitFor(
+        () =>
+          !!container.textContent?.includes("This passage couldn't be loaded.")
+      );
+      expect(verse(0, 5)).toBeDefined();
     });
   });
 

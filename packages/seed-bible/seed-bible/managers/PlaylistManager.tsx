@@ -1433,7 +1433,11 @@ export function createPlaylistManager(
      * `onPick` with the one they choose. Nothing is called if they back out.
      * Omitted means new scripture steps start on the chapter being read.
      */
-    pickChapter?: (onPick: (bookId: string, chapter: number) => void) => void;
+    pickChapter?: (
+      onPick: (bookId: string, chapter: number) => void,
+      /** The book to start in, when it isn't the one being read. */
+      bookId?: string
+    ) => void;
   } = {}
 ) {
   const initialPlaybackRequest = playbackRequestFromUrl(
@@ -1548,7 +1552,7 @@ export function createPlaylistManager(
   const editorScriptureKey = computed<string | null>(() => {
     const tab = activeTab.value;
     const item = editingPlaylist.value?.items[editorStepIndex.value];
-    // A compare step is edited in its own card, not over the reader.
+    // A compare step is edited in its own editor, not over the reader.
     if (!tab || item?.type !== "bible-verse" || item.compare) {
       return null;
     }
@@ -2704,6 +2708,35 @@ export function createPlaylistManager(
     insertEditorStep(item, afterIndex);
   };
 
+  /**
+   * Asks for a new chapter for one of the compare step at `index`'s passages
+   * (the reader's book selector), pointing that passage at the whole chapter
+   * picked. Nothing changes if the user backs out.
+   */
+  const pickEditorComparePassage = (
+    index: number,
+    passage: "first" | "second"
+  ): void => {
+    const current = editingPlaylist.peek()?.items[index];
+    if (current?.type !== "bible-verse" || !current.compare) {
+      return;
+    }
+    const from = passage === "first" ? current.ref : current.compare.ref;
+    options.pickChapter?.((bookId, chapter) => {
+      const item = editingPlaylist.peek()?.items[index];
+      if (item?.type !== "bible-verse" || !item.compare) {
+        return;
+      }
+      const ref = { bookId, chapter };
+      updateEditingPlaylistItem(
+        index,
+        passage === "first"
+          ? { ...item, ref }
+          : { ...item, compare: { ...item.compare, ref } }
+      );
+    }, from.bookId);
+  };
+
   /** Gives the step being picked the verses picked in the reader. */
   const applyEditorVersePick = (): void => {
     const index = editorVersePickIndex.peek();
@@ -3779,6 +3812,7 @@ export function createPlaylistManager(
     selectEditorStep,
     addEditorStep,
     applyEditorVersePick,
+    pickEditorComparePassage,
     listPlaylists,
     getUserPlaylists,
     loadPlaylist,

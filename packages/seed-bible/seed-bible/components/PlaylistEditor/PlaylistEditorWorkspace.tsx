@@ -24,6 +24,7 @@ import {
   usePlaylistDraftStatus,
   useResolveBookName,
 } from "./PlaylistEditorPanel";
+import { PlaylistCompareEditor } from "./PlaylistCompareEditor";
 import { PlaylistStepCard, type StepCardContext } from "./PlaylistStepCard";
 import {
   formatVerseRef,
@@ -51,7 +52,7 @@ export function isPlaylistEditorTab(
 
 /**
  * The open step when it's plain scripture shown over this tab's reader, with
- * its index, or null. Compare steps have their own card instead.
+ * its index, or null. Compare steps have their own editor instead.
  */
 export function playlistEditorScriptureStep(
   state: SeedBibleState,
@@ -582,7 +583,17 @@ export function PlaylistEditorWorkspace(props: {
     resolveBookName,
   };
   const card =
-    showsCard && item ? (
+    kind === "compare" && item?.type === "bible-verse" ? (
+      <PlaylistCompareEditor
+        key={index}
+        state={state}
+        index={index}
+        item={item}
+        loadChapter={loadChapter}
+        resolveBookName={resolveBookName}
+        compact={compact}
+      />
+    ) : showsCard && item ? (
       <div className="sb-pe sb-pe-card-scroll">
         <PlaylistStepCard key={`${index}-${kind}`} ctx={ctx} item={item} />
       </div>

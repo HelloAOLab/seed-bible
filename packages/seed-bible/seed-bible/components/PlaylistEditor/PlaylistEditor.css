@@ -866,73 +866,151 @@
   color: var(--pe-muted);
 }
 
-/* Compare */
-.sb-pe-passage {
-  margin: 0;
-  padding: 11px 13px 12px;
-  border: 1px solid var(--pe-border-faint);
-  border-radius: 10px;
-  background: var(--pe-surface-subtle);
-  font-family: var(--pe-font-passage);
-  font-size: 13px;
-  line-height: 20.8px;
-  color: color-mix(in srgb, var(--pe-text) 75%, #8a6a52);
-}
-
-.sb-pe-layouts {
+/* Compare: the page a compare step plays as, made editable
+   (PlaylistCompareEditor). It isn't inside `.sb-pe`, so it draws on the
+   reader's colors; the bars and buttons that are carry that class. */
+.sb-pe-compare-editor {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.sb-pe-layout {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 13px;
-  border: 1px solid var(--pe-border);
-  border-radius: 10px;
-  font-size: 13px;
-  line-height: 16px;
-}
-
-.sb-pe-layout--side {
-  width: 159px;
-}
-
-.sb-pe-layout--stacked {
-  width: 184px;
-}
-
-.sb-pe-layout[aria-checked="true"] {
-  background: var(--pe-accent-tint);
-  border-color: var(--pe-accent-strong);
-}
-
-.sb-pe-layout-glyph {
-  display: flex;
-  gap: 3px;
-  width: 31px;
-}
-
-.sb-pe-layout-glyph span {
-  background: var(--pe-accent-line);
-}
-
-.sb-pe-layout--side .sb-pe-layout-glyph span {
-  width: 14px;
-  height: 20px;
-  border-radius: 3px;
-}
-
-.sb-pe-layout--stacked .sb-pe-layout-glyph {
   flex-direction: column;
 }
 
-.sb-pe-layout--stacked .sb-pe-layout-glyph span {
-  width: 100%;
-  height: 8px;
-  border-radius: 2px;
+.sb-pe-compare-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 24px;
+}
+
+.sb-pe-compare-page {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+/* Desktop: the title as the reader's header shows a playing step's, ruled off
+   above the passages. */
+.sb-pe-compare-editor:not(.sb-pe-compare-editor--mobile)
+  .sb-playlist-step-page-title {
+  margin: 2rem 0 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--sb-divider-color);
+  text-align: start;
+}
+
+.sb-pe-compare-hint {
+  margin: 0.75rem 0 1.25rem;
+  font-family: var(--pe-font-ui);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-compare-editor--mobile .sb-pe-compare-hint {
+  margin-top: -1rem;
+  text-align: center;
+}
+
+.sb-pe-compare-reference {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: -6px;
+  padding: 2px 4px 2px 6px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--sb-font-color) 7%, transparent);
+  }
+}
+
+.sb-pe-compare-reference-icon {
+  font-size: 18px;
+  color: #e2673a;
+}
+
+.sb-pe-compare-text {
+  margin: 0;
+}
+
+.sb-pe-compare-verse {
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid #e2673a;
+    outline-offset: 2px;
+  }
+}
+
+/* The verses either side of the passage, there to extend it into. */
+.sb-pe-compare-verse--outside {
+  color: color-mix(in srgb, var(--sb-font-color) 38%, transparent);
+}
+
+/* The first verse tapped, until the last one is. */
+.sb-pe-compare-verse--picked {
+  background: color-mix(in srgb, #e2673a 22%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, #e2673a 22%, transparent);
+  color: var(--sb-font-color);
+}
+
+.sb-pe-compare-verse-number {
+  margin-inline-end: 0.25em;
+  font-family: var(--sb-font-family);
+  font-size: 0.6em;
+  color: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
+}
+
+.sb-pe-compare-more {
+  display: block;
+  margin: 2px 0;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  font-family: var(--pe-font-ui);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pe-accent-text);
+}
+
+.sb-pe-compare-status {
+  margin: 0;
+  color: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
+}
+
+/* The pick bar and the note, under the page: as the toolbar stack holds them
+   over a scripture step on desktop. */
+.sb-pe-compare-dock {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(480px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 8px 0 16px;
+
+  & .sb-pe-note-sheet {
+    position: static;
+    align-self: stretch;
+    max-height: 60vh;
+    border: 1px solid var(--sb-divider-color);
+    border-radius: 1rem;
+  }
+}
+
+.sb-pe-compare-editor--mobile .sb-pe-compare-dock {
+  width: auto;
+  margin: 0 12px var(--sb-reader-bottom-chrome);
+  padding: 8px 0 10px;
 }
 
 /* INSERT row under a note */

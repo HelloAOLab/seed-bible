@@ -1434,7 +1434,7 @@ export function createSeedBibleState(
     options.initialPlaylistPageSeed,
     {
       friendReads,
-      pickChapter: (onPick) => {
+      pickChapter: (onPick, bookId) => {
         const slot = tabsLayout.slots
           .peek()
           .find(
@@ -1444,7 +1444,7 @@ export function createSeedBibleState(
           return;
         }
         selector.selectingTranslation.value = false;
-        void selector.setOpen(true, slot, { onChapterPick: onPick });
+        void selector.setOpen(true, slot, { onChapterPick: onPick, bookId });
       },
     }
   );

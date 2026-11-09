@@ -163,14 +163,3 @@ export function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
-
-/** A question step's text as stored: its own paragraph of HTML. */
-export function questionToHtml(question: string): string {
-  const trimmed = question.trim();
-  return trimmed ? `<p>${escapeHtml(trimmed)}</p>` : "";
-}
-
-/** The question a question step asks, as plain text. */
-export function questionFromHtml(html: string): string {
-  return htmlToText(html);
-}

@@ -1,33 +1,19 @@
 import type { ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
-import {
-  canonicalBookIndex,
-  parseVerseReference,
-} from "../../managers/BibleDataManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type {
-  CompareLayout,
   PlaylistItemData,
   PlaylistManager,
-  VerseRef,
 } from "../../managers/PlaylistManager";
 import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
 import { safeImageUrl } from "../../managers/linkPreview";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
-import { passageVerses } from "../scripturePassage";
 import { PeIcon } from "./editorControls";
 import { PlaylistNoteComposer } from "./PlaylistNoteComposer";
-import {
-  formatVerseRef,
-  playlistStepKind,
-  playlistStepKindName,
-  questionFromHtml,
-  questionToHtml,
-} from "./playlistSteps";
+import { playlistStepKind, playlistStepKindName } from "./playlistSteps";
 
 type Translate = ReturnType<typeof useI18n>["t"];
-type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 type HtmlItem = Extract<PlaylistItemData, { type: "html" }>;
 type LinkItem = Extract<PlaylistItemData, { type: "link" }>;
 
@@ -342,234 +328,6 @@ function LinkCard(props: { ctx: StepCardContext; item: LinkItem }) {
   );
 }
 
-/** A passage's text, loaded from the Bible, or null while it loads. */
-function usePassageText(
-  ref: VerseRef | null,
-  translationId: string | undefined,
-  loadChapter: ScriptureChapterLoader | undefined
-): string | null | "error" {
-  const [text, setText] = useState<string | null | "error">(null);
-  const key = ref ? JSON.stringify([ref, translationId ?? null]) : null;
-  useEffect(() => {
-    if (!ref || !loadChapter) {
-      setText(null);
-      return;
-    }
-    let cancelled = false;
-    setText(null);
-    loadChapter(translationId, ref.bookId, ref.chapter)
-      .then((chapter) => {
-        if (!cancelled) {
-          setText(
-            passageVerses(chapter, ref)
-              .map((verse) => verse.text)
-              .join(" ")
-          );
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setText("error");
-      });
-    return () => {
-      cancelled = true;
-    };
-    // `key` stands for `ref` and `translationId`, which are new objects on
-    // every render.
-  }, [key, loadChapter]);
-  return text;
-}
-
-/**
- * The reference typed, when it names a real book. The parser takes any word
- * for a book ("Nowhere 99"), and a step can't point at a book that isn't
- * there. Any book of the Bible counts — the step may be read in another
- * translation — as does one only the current translation has.
- */
-function parsePassage(
-  text: string,
-  books: TranslationBook[]
-): ReturnType<typeof parseVerseReference> {
-  const ref = text.trim() ? parseVerseReference(text, books) : null;
-  if (!ref) {
-    return null;
-  }
-  const known =
-    canonicalBookIndex(ref.book) !== Number.MAX_SAFE_INTEGER ||
-    books.some((book) => book.id === ref.book);
-  return known ? ref : null;
-}
-
-function PassageField(props: {
-  ctx: StepCardContext;
-  id: string;
-  label: string;
-  value: VerseRef;
-  translationId?: string;
-  onChange: (ref: VerseRef) => void;
-}) {
-  const { ctx, value } = props;
-  const { t } = useI18n();
-  const [text, setText] = useState(() =>
-    formatVerseRef(value, ctx.resolveBookName)
-  );
-  const parsed = parsePassage(text, ctx.books);
-  const passage = usePassageText(value, props.translationId, ctx.loadChapter);
-
-  return (
-    <Field
-      label={props.label}
-      hint={t("playlist-editor-type-reference", {
-        defaultValue: "Type a reference",
-      })}
-      htmlFor={props.id}
-    >
-      <input
-        id={props.id}
-        className={`sb-pe-input${text.trim() && !parsed ? " sb-pe-input--invalid" : ""}`}
-        type="text"
-        dir="auto"
-        value={text}
-        placeholder={t("playlist-editor-verse-placeholder", {
-          defaultValue: "e.g. John 3:16",
-        })}
-        onInput={(event) => {
-          const next = event.currentTarget.value;
-          setText(next);
-          const ref = parsePassage(next, ctx.books);
-          if (ref) {
-            props.onChange({
-              bookId: ref.book,
-              chapter: ref.chapter,
-              ...(ref.verse != null ? { verse: ref.verse } : {}),
-              ...(ref.endChapter != null && ref.endChapter !== ref.chapter
-                ? { endChapter: ref.endChapter }
-                : {}),
-              ...(ref.endVerse != null ? { endVerse: ref.endVerse } : {}),
-            });
-          }
-        }}
-      />
-      <p className="sb-pe-passage" dir="auto">
-        {passage === "error"
-          ? t("playlist-editor-passage-failed", {
-              defaultValue: "This passage couldn't be loaded.",
-            })
-          : (passage ??
-            t("playlist-editor-passage-loading", {
-              reference: formatVerseRef(value, ctx.resolveBookName),
-              defaultValue: "Text for {{reference}} loads from the Bible.",
-            }))}
-      </p>
-    </Field>
-  );
-}
-
-function CompareCard(props: { ctx: StepCardContext; item: ScriptureItem }) {
-  const { ctx, item } = props;
-  const { t } = useI18n();
-  const compare = item.compare ?? { ref: item.ref };
-  const layout: CompareLayout = compare.layout ?? "side-by-side";
-  const [notice, setNotice] = useState(() => questionFromHtml(item.note ?? ""));
-  const update = (changes: Partial<ScriptureItem>) =>
-    ctx.playlists.updateEditingPlaylistItem(ctx.index, { ...item, ...changes });
-  const noticeId = `sb-pe-notice-${ctx.index}`;
-
-  return (
-    <>
-      <TitleField
-        id={`sb-pe-title-${ctx.index}`}
-        value={item.noteTitle ?? ""}
-        t={t}
-        onInput={(value) => update({ noteTitle: value || undefined })}
-      />
-      <PassageField
-        ctx={ctx}
-        id={`sb-pe-passage-a-${ctx.index}`}
-        label={t("playlist-editor-passage-a", { defaultValue: "Passage A" })}
-        value={item.ref}
-        translationId={item.translationId}
-        onChange={(ref) => update({ ref })}
-      />
-      <PassageField
-        ctx={ctx}
-        id={`sb-pe-passage-b-${ctx.index}`}
-        label={t("playlist-editor-passage-b", { defaultValue: "Passage B" })}
-        value={compare.ref}
-        translationId={item.translationId}
-        onChange={(ref) => update({ compare: { ...compare, ref } })}
-      />
-      <Field
-        label={t("playlist-editor-what-to-notice", {
-          defaultValue: "What to notice",
-        })}
-        hint={t("playlist-editor-what-to-notice-hint", {
-          defaultValue: "Optional — guides the comparison",
-        })}
-        htmlFor={noticeId}
-      >
-        <textarea
-          id={noticeId}
-          className="sb-pe-textarea"
-          dir="auto"
-          rows={3}
-          value={notice}
-          placeholder={t("playlist-editor-what-to-notice-placeholder", {
-            defaultValue: "e.g. Both begin “In the beginning” — what changes?",
-          })}
-          onInput={(event) => {
-            const value = event.currentTarget.value;
-            setNotice(value);
-            update({ note: questionToHtml(value) || undefined });
-          }}
-        />
-      </Field>
-      <div className="sb-pe-field">
-        <span className="sb-pe-field-label" id={`sb-pe-layout-${ctx.index}`}>
-          {t("playlist-editor-layout", { defaultValue: "Layout for readers" })}
-        </span>
-        <div
-          className="sb-pe-layouts"
-          role="radiogroup"
-          aria-labelledby={`sb-pe-layout-${ctx.index}`}
-        >
-          <button
-            type="button"
-            role="radio"
-            aria-checked={layout === "side-by-side"}
-            className="sb-pe-layout sb-pe-layout--side"
-            onClick={() =>
-              update({ compare: { ...compare, layout: "side-by-side" } })
-            }
-          >
-            <span className="sb-pe-layout-glyph" aria-hidden="true">
-              <span />
-              <span />
-            </span>
-            {t("playlist-editor-side-by-side", {
-              defaultValue: "Side by side",
-            })}
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={layout === "stacked"}
-            className="sb-pe-layout sb-pe-layout--stacked"
-            onClick={() =>
-              update({ compare: { ...compare, layout: "stacked" } })
-            }
-          >
-            <span className="sb-pe-layout-glyph" aria-hidden="true">
-              <span />
-              <span />
-            </span>
-            {t("playlist-editor-stacked", { defaultValue: "Stacked" })}
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
-
 /**
  * The open step when it isn't plain scripture: a card of its fields where the
  * chapter would be.
@@ -592,8 +350,6 @@ export function PlaylistStepCard(props: {
       );
   } else if (item.type === "link") {
     body = <LinkCard ctx={ctx} item={item} />;
-  } else {
-    body = <CompareCard ctx={ctx} item={item} />;
   }
 
   return (
