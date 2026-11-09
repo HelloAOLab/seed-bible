@@ -17,7 +17,6 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import {
-  AddStepButton,
   AddStepMenu,
   openAddStepMenu,
   PlaylistEditorBackButton,
@@ -103,31 +102,10 @@ function StepActions(props: {
   });
   const remove = t("playlist-editor-delete", { defaultValue: "Delete" });
   if (square) {
-    const menuOpen = playlists.editorAddMenu.value !== null;
-    const add = t("playlist-editor-add-step-title", {
-      defaultValue: "Add a step",
-    });
     const more = t("more", { defaultValue: "More" });
     return (
       <div className="sb-pe-mobile-header-actions">
-        <button
-          type="button"
-          className="sb-pe-square-button sb-pe-add-toggle"
-          aria-label={add}
-          title={add}
-          aria-expanded={menuOpen}
-          onClick={() => {
-            if (menuOpen) {
-              playlists.editorAddMenu.value = null;
-            } else {
-              openAddStepMenu(playlists);
-            }
-          }}
-        >
-          <span className="sb-pe-add-toggle-plus" aria-hidden="true">
-            +
-          </span>
-        </button>
+        <AddStepToggle playlists={playlists} />
         <ContextMenuWithButton
           buttonClassName="sb-pe-square-button sb-pe-step-menu"
           aria-label={more}
@@ -171,6 +149,39 @@ function StepActions(props: {
         {remove}
       </button>
     </div>
+  );
+}
+
+/**
+ * A phone title bar's Add button, which opens the "Add a step" menu below the
+ * bar: after the open step on its page, at the end on the list.
+ */
+function AddStepToggle(props: { playlists: PlaylistManager }) {
+  const { playlists } = props;
+  const { t } = useI18n();
+  const menuOpen = playlists.editorAddMenu.value !== null;
+  const add = t("playlist-editor-add-step-title", {
+    defaultValue: "Add a step",
+  });
+  return (
+    <button
+      type="button"
+      className="sb-pe-square-button sb-pe-add-toggle"
+      aria-label={add}
+      title={add}
+      aria-expanded={menuOpen}
+      onClick={() => {
+        if (menuOpen) {
+          playlists.editorAddMenu.value = null;
+        } else {
+          openAddStepMenu(playlists);
+        }
+      }}
+    >
+      <span className="sb-pe-add-toggle-plus" aria-hidden="true">
+        +
+      </span>
+    </button>
   );
 }
 
@@ -741,9 +752,14 @@ export function PlaylistEditorWorkspace(props: {
           )}
           {item ? (
             <StepActions playlists={playlists} index={index} square />
-          ) : null}
-          {/* A step's page opens the menu from its title bar's Add button. */}
-          {item && addMenu ? (
+          ) : (
+            <div className="sb-pe-mobile-header-actions">
+              <AddStepToggle playlists={playlists} />
+            </div>
+          )}
+          {/* The title bar's Add button opens the menu, on a step's page and
+              on the list. */}
+          {addMenu ? (
             <AddStepMenu
               playlists={playlists}
               afterIndex={addMenu.afterIndex}
@@ -758,21 +774,14 @@ export function PlaylistEditorWorkspace(props: {
         ) : (
           card
         )}
-        {/* Add and Review & publish belong to the list; a step's page keeps
-            only the verse pick bar here while verses are being picked, or the
-            bar for using a chapter the reader has moved to. */}
+        {/* Review & publish belongs to the list; a step's page keeps only the
+            verse pick bar here while verses are being picked, or the bar for
+            using a chapter the reader has moved to. */}
         {onList ? (
           <div className="sb-pe sb-pe-mobile-bottom">
             <div className="sb-pe-mobile-bottom-row">
-              <AddStepButton playlists={playlists} short />
               <PublishButton state={state} />
             </div>
-            {addMenu ? (
-              <AddStepMenu
-                playlists={playlists}
-                afterIndex={addMenu.afterIndex}
-              />
-            ) : null}
           </div>
         ) : playlists.editorVersePickIndex.value !== null ||
           playlists.editorChapterChange.value ? (

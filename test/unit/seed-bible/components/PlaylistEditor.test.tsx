@@ -211,12 +211,17 @@ describe("the playlist editor", () => {
       expect(invalid).toEqual([false, false, false, true]);
     });
 
-    it("says so when there are no steps", () => {
+    it("says so when there are no steps, with a button that adds the first", () => {
       openPanel([]);
 
-      expect(container.textContent).toContain(
-        "No steps yet. Add one to get started."
-      );
+      const empty = container.querySelector(".sb-pe-empty-list")!;
+      expect(empty.textContent).toContain("This playlist is empty");
+      expect(container.querySelector(".sb-pe-step-count")).toBeNull();
+
+      click(byText(empty, "button", "Add a step"));
+      click(byText(container, ".sb-pe-add-option", "Note"));
+
+      expect(items()).toEqual([{ type: "html", html: "" }]);
     });
   });
 
@@ -277,9 +282,15 @@ describe("the playlist editor", () => {
 
     it("goes from the empty list to a new step, back to the list, and out", () => {
       openWorkspace([], -1, true);
-      expect(container.textContent).toContain("No steps yet");
+      expect(container.textContent).toContain("This playlist is empty");
 
-      click(byText(container, ".sb-pe-add-step", "Add"));
+      click(
+        byText(
+          container.querySelector(".sb-pe-empty-list")!,
+          "button",
+          "Add a step"
+        )
+      );
       click(byText(container, ".sb-pe-add-option", "Note"));
 
       // The step is a page of its own: the list is gone, its place shown.
@@ -330,12 +341,27 @@ describe("the playlist editor", () => {
       expect(container.querySelector(".sb-pe-mobile-bottom")).toBeNull();
     });
 
-    it("keeps Add and Review & publish at the bottom of the list", () => {
+    it("puts Add in the list's title bar and keeps Review & publish at the bottom", () => {
       openWorkspace(STEPS, -1, true);
 
+      expect(
+        [
+          ...header().querySelectorAll(".sb-pe-mobile-header-actions button"),
+        ].map((b) => b.getAttribute("aria-label"))
+      ).toEqual(["Add a step"]);
       const bottom = container.querySelector(".sb-pe-mobile-bottom")!;
-      expect(bottom.querySelector(".sb-pe-add-step")).not.toBeNull();
+      expect(bottom.querySelector(".sb-pe-add-step")).toBeNull();
       expect(bottom.querySelector(".sb-pe-publish")).not.toBeNull();
+    });
+
+    it("adds a step at the end of the list from its title bar's Add", () => {
+      openWorkspace(STEPS, -1, true);
+
+      click(header().querySelector('[aria-label="Add a step"]'));
+      click(byText(header(), ".sb-pe-add-option", "Note"));
+
+      expect(items()).toHaveLength(4);
+      expect(items()[3]).toEqual({ type: "html", html: "" });
     });
 
     it("adds a step after the open one from the title bar's Add", () => {

@@ -214,11 +214,28 @@ export function PlaylistStepList(props: {
 
   if (items.length === 0) {
     return (
-      <p className="sb-pe-step-empty">
-        {t("playlist-editor-no-steps", {
-          defaultValue: "No steps yet. Add one to get started.",
-        })}
-      </p>
+      <div className="sb-pe-empty-list">
+        <PeIcon name="items-list" />
+        <p className="sb-pe-empty-list-title">
+          {t("playlist-editor-empty-title", {
+            defaultValue: "This playlist is empty",
+          })}
+        </p>
+        <p className="sb-pe-empty-list-text">
+          {t("playlist-editor-empty-text", {
+            defaultValue:
+              "Add scripture, notes, questions or videos to get started.",
+          })}
+        </p>
+        <button
+          type="button"
+          className="sb-pe-empty-list-add"
+          onClick={() => openAddStepMenu(playlists)}
+        >
+          <span aria-hidden="true">+</span>
+          {t("playlist-editor-add-step-title", { defaultValue: "Add a step" })}
+        </button>
+      </div>
     );
   }
 
@@ -480,12 +497,9 @@ export function openAddStepMenu(playlists: PlaylistManager) {
   };
 }
 
-/** The "+ Add new step" button (or "+ Add" on a phone). */
-export function AddStepButton(props: {
-  playlists: PlaylistManager;
-  short?: boolean;
-}) {
-  const { playlists, short } = props;
+/** The "+ Add new step" button, at the foot of the desktop list. */
+export function AddStepButton(props: { playlists: PlaylistManager }) {
+  const { playlists } = props;
   const { t } = useI18n();
   const menuOpen = playlists.editorAddMenu.value !== null;
   return (
@@ -505,9 +519,7 @@ export function AddStepButton(props: {
         +
       </span>
       <span className="sb-pe-add-step-text">
-        {short
-          ? t("playlist-editor-add-short", { defaultValue: "Add" })
-          : t("playlist-editor-add-step", { defaultValue: "Add new step" })}
+        {t("playlist-editor-add-step", { defaultValue: "Add new step" })}
       </span>
     </button>
   );
@@ -582,13 +594,15 @@ export function PlaylistStepsSummary(props: {
   const items = playlists.editingPlaylist.value?.items ?? [];
   return (
     <>
-      <p className="sb-pe-step-count">
-        {t("playlist-editor-step-count", {
-          steps: items.length,
-          minutes: playlistTotalMinutes(items),
-          defaultValue: "{{steps}} steps · ~{{minutes}} min",
-        })}
-      </p>
+      {items.length > 0 ? (
+        <p className="sb-pe-step-count">
+          {t("playlist-editor-step-count", {
+            steps: items.length,
+            minutes: playlistTotalMinutes(items),
+            defaultValue: "{{steps}} steps · ~{{minutes}} min",
+          })}
+        </p>
+      ) : null}
       <PlaylistStepList playlists={playlists} tabs={tabs} />
     </>
   );

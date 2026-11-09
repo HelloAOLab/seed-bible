@@ -328,6 +328,50 @@
   color: var(--pe-muted);
 }
 
+/* A playlist with no steps yet: says so, with a way to add the first. */
+.sb-pe-empty-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 40px 16px;
+  text-align: center;
+
+  & > .sb-pe-icon {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 6px;
+    color: var(--pe-muted);
+  }
+}
+
+.sb-pe-empty-list-title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.sb-pe-empty-list-text {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-empty-list-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--pe-add);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pe-add);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .sb-pe-step {
   display: flex;
   align-items: center;
