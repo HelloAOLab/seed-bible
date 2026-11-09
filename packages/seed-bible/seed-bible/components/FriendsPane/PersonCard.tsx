@@ -141,8 +141,15 @@ function FriendshipActions(props: {
 
   const me = login.userId.value;
   const { userId } = person;
-  if (!me || userId === me) {
+  if (!me) {
     return null;
+  }
+  if (userId === me) {
+    return (
+      <p className="sb-confirm-delete-message">
+        {t("person-profile-you", { defaultValue: "This is you." })}
+      </p>
+    );
   }
 
   const name = displayNameOf(person, t);
@@ -269,6 +276,9 @@ function FriendshipActions(props: {
     // may be no one to ask. A failed lookup can't tell, so it lets them try.
     // Nor while the lists are first loading, when a friend or someone who
     // already asked would look like a stranger.
+    message = t("person-profile-not-friends", {
+      defaultValue: "You're not friends yet.",
+    });
     actions = (
       <BusyButton
         className="sb-session-settings-end"

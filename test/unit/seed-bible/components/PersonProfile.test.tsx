@@ -147,6 +147,7 @@ describe("person profile card", () => {
     it("sends a request, then offers to take it back", async () => {
       await openCard(ADA_ID);
       expect(text()).toContain("London");
+      expect(text()).toContain("You're not friends yet.");
 
       await click(button("Add friend"));
 
@@ -380,11 +381,11 @@ describe("person profile card", () => {
     });
   });
 
-  it("offers nothing on your own profile", async () => {
+  it("says it's you on your own profile, and offers nothing", async () => {
     profiles[ME] = { name: "Me" };
     await openCard(ME);
 
-    expect(text()).toContain("Me");
+    expect(text()).toContain("This is you.");
     expect(buttonLabels()).toEqual([]);
   });
 
@@ -393,6 +394,7 @@ describe("person profile card", () => {
     await openCard(NOBODY_ID);
 
     expect(text()).toContain("We couldn't find anyone with this user ID.");
+    expect(text()).not.toContain("You're not friends yet.");
     expect(buttonLabels()).toEqual([]);
   });
 
