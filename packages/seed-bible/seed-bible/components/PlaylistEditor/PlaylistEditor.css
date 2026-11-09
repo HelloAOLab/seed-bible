@@ -1203,18 +1203,6 @@
 
 /* ---------- Scripture steps, in the reader ---------- */
 
-/* The dimming around the step's passage is the reader's own diminish
-   decoration; this only anchors the step's marker. */
-.sb-playlist-editor-step-chapter {
-  position: relative;
-}
-
-.sb-pe-step-slot {
-  display: block;
-  margin: 26px 0;
-  font-size: 1rem;
-}
-
 /* On desktop the step's passage is also set larger than the chapter around
    it; a phone keeps one size and only dims the rest. The reader's header
    takes the editor's size, with the hint on the right. */
@@ -1254,17 +1242,6 @@
     font-size: 13px;
     line-height: 1.3;
   }
-}
-
-.sb-pe-step-marker {
-  position: absolute;
-  left: -33px;
-  font-family: var(--pe-font-label);
-  font-weight: 600;
-  font-size: 12px;
-  line-height: 15px;
-  color: #e94f1a;
-  pointer-events: none;
 }
 
 .sb-pe-reader-hint {

@@ -1312,7 +1312,6 @@
   "playlist-editor-note-add": "Add note",
   "playlist-editor-note-title": "Note title",
   "playlist-editor-note-remove": "Remove note",
-  "playlist-editor-step-of": "{{step}}/{{count}}",
   "playlist-editor-scripture-note-placeholder": "Add a note readers see with this passage (optional)",
   "playlist-editor-reader-hint-text": "Tap the first word, then the last, to highlight or comment.",
   "playlist-editor-title": "Title",

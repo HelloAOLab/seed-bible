@@ -1,6 +1,6 @@
 import "./PlaylistEditor.css";
 import type { ComponentChildren } from "preact";
-import { useLayoutEffect, useRef, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ReaderTab } from "../../managers/TabsManager";
@@ -148,57 +148,6 @@ function StepActions(props: {
         <PeIcon name="trash" />
         {remove}
       </button>
-    </div>
-  );
-}
-
-/**
- * Shown in the reader right after the open scripture step's verses: the
- * step's number beside the passage. Its note is in a sheet on the reader's
- * toolbar (`PlaylistStepNoteSheet`).
- */
-export function PlaylistScriptureStepSlot(props: {
-  state: SeedBibleState;
-  index: number;
-  firstVerse: number;
-}) {
-  const { state, index, firstVerse } = props;
-  const { t } = useI18n();
-  const count = state.playlists.editingPlaylist.value?.items.length ?? 0;
-  const slotRef = useRef<HTMLDivElement>(null);
-  const [markerTop, setMarkerTop] = useState<number | null>(null);
-
-  // The step number sits in the margin beside the passage's first line.
-  useLayoutEffect(() => {
-    const measure = () => {
-      const content = slotRef.current?.closest(".sb-chapter-content");
-      const verse = content?.querySelector<HTMLElement>(
-        `.sb-verse[data-verse-number="${firstVerse}"]`
-      );
-      if (!content || !verse) {
-        setMarkerTop(null);
-        return;
-      }
-      const top =
-        verse.getBoundingClientRect().top - content.getBoundingClientRect().top;
-      setMarkerTop(Math.round(top) + 5);
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  });
-
-  return (
-    <div ref={slotRef} className="sb-pe sb-pe-step-slot">
-      {markerTop !== null ? (
-        <span className="sb-pe-step-marker" style={{ top: `${markerTop}px` }}>
-          {t("playlist-editor-step-of", {
-            step: index + 1,
-            count,
-            defaultValue: "{{step}}/{{count}}",
-          })}
-        </span>
-      ) : null}
     </div>
   );
 }
