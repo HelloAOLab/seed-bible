@@ -2198,6 +2198,19 @@ export function createSeedBibleState(
         return `${t("about-title", { defaultValue: "About Seed Bible" })} | ${seedBibleTitle}`;
       }
 
+      // Server only: in the browser the friend link prompt is a one-off over
+      // the page, so the tab is titled after the page from the start. Ahead
+      // of Today because a friend link lands there (`/?addFriend=` redirects
+      // to the Today page).
+      const person = friendLinkPerson.value;
+      if (import.meta.env.SSR && person) {
+        return t("friend-link-title", {
+          name: person.name,
+          brand: seedBibleTitle,
+          defaultValue: "Add {{name}} as a friend on {{brand}}",
+        });
+      }
+
       if (isTodayPage.value) {
         return `${t("today", { defaultValue: "Today" })} | ${seedBibleTitle}`;
       }
@@ -2216,17 +2229,6 @@ export function createSeedBibleState(
         return `${sharedPageLoadFailedTitle.value} | ${seedBibleTitle}`;
       }
 
-      // Server only: in the browser the friend link prompt is a one-off over
-      // the reader, so the tab follows the chapter from the start.
-      const person = friendLinkPerson.value;
-      if (import.meta.env.SSR && person) {
-        return t("friend-link-title", {
-          name: person.name,
-          brand: seedBibleTitle,
-          defaultValue: "Add {{name}} as a friend on {{brand}}",
-        });
-      }
-
       if (!selectedTab.value) {
         return seedBibleTitle;
       }
@@ -2240,6 +2242,19 @@ export function createSeedBibleState(
   const description = computed(() => {
     void i18n.language.value;
     const { t } = i18n;
+
+    // Ahead of Today, which is where a friend link lands.
+    const person = friendLinkPerson.value;
+    if (person) {
+      return truncateForMeta(
+        t("friend-link-meta-description", {
+          name: person.name,
+          brand: siteName.value,
+          defaultValue: "{{name}} wants to be your friend on {{brand}}",
+        }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
 
     if (isAboutPage.value || isTodayPage.value) {
       return truncateForMeta(
@@ -2262,18 +2277,6 @@ export function createSeedBibleState(
             : t("reading-plan-page-meta-description", {
                 defaultValue: "A Bible reading plan on Seed Bible.",
               })),
-        META_DESCRIPTION_MAX_GRAPHEMES
-      );
-    }
-
-    const person = friendLinkPerson.value;
-    if (person) {
-      return truncateForMeta(
-        t("friend-link-meta-description", {
-          name: person.name,
-          brand: siteName.value,
-          defaultValue: "{{name}} wants to be your friend on {{brand}}",
-        }),
         META_DESCRIPTION_MAX_GRAPHEMES
       );
     }
@@ -2395,20 +2398,21 @@ export function createSeedBibleState(
       return t("about-title", { defaultValue: "About Seed Bible" });
     }
 
-    if (isTodayPage.value) {
-      return t("today", { defaultValue: "Today" });
-    }
-
-    if (sharedPageTitle.value) {
-      return sharedPageTitle.value;
-    }
-
+    // Ahead of Today, which is where a friend link lands.
     const person = friendLinkPerson.value;
     if (person) {
       return t("friend-link-social-title", {
         name: person.name,
         defaultValue: "Add {{name}} as a friend",
       });
+    }
+
+    if (isTodayPage.value) {
+      return t("today", { defaultValue: "Today" });
+    }
+
+    if (sharedPageTitle.value) {
+      return sharedPageTitle.value;
     }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
@@ -2425,14 +2429,21 @@ export function createSeedBibleState(
     });
   });
 
-  /** The friend link's own address, when the page previews as one. */
+  /**
+   * The friend link's address, when the page previews as one: the Today page
+   * it lands on, not the shared `/?addFriend=` form, which redirects there
+   * (see `canonicalUrl` on why a canonical mustn't name a redirect).
+   */
   const friendLinkPageUrl = computed<string | null>(() => {
     const userId = friendLinkPreview.result.value?.userId;
     if (!friendLinkPerson.value || !userId) {
       return null;
     }
     const query = new URLSearchParams({ [ADD_FRIEND_PARAM]: userId });
-    return `${navigation.basePath || "/"}?${query}`;
+    return `${navigation.basePath}${buildStaticPagePath({
+      language: i18n.language.value,
+      page: "today",
+    })}?${query}`;
   });
 
   /**
@@ -2462,6 +2473,10 @@ export function createSeedBibleState(
    * would point every canonical at a URL that redirects.
    */
   const canonicalUrl = computed(() => {
+    if (friendLinkPageUrl.value) {
+      return friendLinkPageUrl.value;
+    }
+
     if (isAboutPage.value || isTodayPage.value) {
       // Uses the *resolved* i18n language, not the raw URL segment, so a
       // garbage/unsupported language in the URL still canonicalizes to a
@@ -2480,10 +2495,6 @@ export function createSeedBibleState(
         locator: page.locator,
         title: page.title,
       })}`;
-    }
-
-    if (friendLinkPageUrl.value) {
-      return friendLinkPageUrl.value;
     }
 
     const readingState = selectedTab.value?.readingState;
