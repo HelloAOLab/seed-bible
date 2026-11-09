@@ -270,11 +270,11 @@ function FriendshipActions(props: {
     );
   } else if (
     (lookup === "found" || lookup === "failed") &&
-    !(friends.isLoading.value && friends.friendIds.value.length === 0)
+    friends.hasLoaded.value
   ) {
     // Not offered while the lookup runs, nor once it finds no account: there
     // may be no one to ask. A failed lookup can't tell, so it lets them try.
-    // Nor while the lists are first loading, when a friend or someone who
+    // Nor before the lists have been read, when a friend or someone who
     // already asked would look like a stranger.
     message = t("person-profile-not-friends", {
       defaultValue: "You're not friends yet.",

@@ -89,6 +89,13 @@ describe("person profile card", () => {
     await settle();
   };
 
+  /** Signs in afresh, so the friends lists have to be read again. */
+  const signInAgain = () =>
+    act(() => {
+      userId.value = null;
+      userId.value = ME;
+    });
+
   /** Renders the remove confirmation the card opened, and confirms it. */
   const confirmRemove = async () => {
     const dialog = document.createElement("div");
@@ -200,7 +207,7 @@ describe("person profile card", () => {
         await gate;
         return listRecords();
       });
-      const loading = friends.refresh();
+      signInAgain();
       openPersonProfile(state, ADA_ID);
       act(() => render(modal("person-profile")!.content(), container));
       for (let i = 0; i < 5; i++) {
@@ -212,9 +219,51 @@ describe("person profile card", () => {
       expect(button("Add friend")).toBeUndefined();
 
       release();
-      await act(() => loading);
       await settle();
       expect(buttonLabels()).toEqual(["Remove"]);
+    });
+
+    // Read as "not friends", empty lists would offer Add friend to a friend.
+    it("offers nothing until the friends lists have been read", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      server.friendsWith(ADA_ID);
+      const listRecords = server.spies.listRecords.getMockImplementation()!;
+      server.spies.listRecords.mockRejectedValue(new Error("offline"));
+      signInAgain();
+      await openCard(ADA_ID);
+
+      expect(text()).toContain("London");
+      expect(text()).not.toContain("You're not friends yet.");
+      expect(buttonLabels()).toEqual([]);
+
+      server.spies.listRecords.mockImplementation(listRecords);
+      await act(() => friends.refresh());
+      await settle();
+      expect(buttonLabels()).toEqual(["Remove"]);
+      consoleError.mockRestore();
+    });
+
+    it("keeps offering to add them while the lists refresh", async () => {
+      await openCard(ADA_ID);
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const listRecords = server.spies.listRecords.getMockImplementation()!;
+      server.spies.listRecords.mockImplementationOnce(async () => {
+        await gate;
+        return listRecords();
+      });
+
+      const refreshing = friends.refresh();
+      await act(async () => {});
+      expect(friends.isLoading.value).toBe(true);
+      expect(buttonLabels()).toEqual(["Add friend"]);
+
+      release();
+      await act(() => refreshing);
+      await settle();
+      expect(buttonLabels()).toEqual(["Add friend"]);
     });
 
     it("still offers to add them when the profile can't be read", async () => {
