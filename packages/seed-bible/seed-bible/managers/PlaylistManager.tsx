@@ -879,6 +879,8 @@ export function createPlayingState(
    * scroll to and highlight that passage.
    */
   let hasShownStep = false;
+  /** See `disposeTabWatch`. */
+  let showWhenTabFound = false;
   /**
    * Counts navigations (to a step, or to a passage a note links to), so one
    * that finishes loading its chapter after a newer one started leaves the
@@ -1045,7 +1047,11 @@ export function createPlayingState(
     // Cleared even when the new step isn't scripture: a noted passage's
     // highlight has no timer of its own and would otherwise outlast its step.
     disposeDecoration();
-    if (!tab || item?.type !== "bible-verse") {
+    if (!tab) {
+      showWhenTabFound = item?.type === "bible-verse";
+      return;
+    }
+    if (item?.type !== "bible-verse") {
       return;
     }
     hasShownStep = true;
@@ -1095,6 +1101,7 @@ export function createPlayingState(
   const visitReference = async (ref: ReaderVerseRef): Promise<void> => {
     const tab = resolveTab();
     if (!tab) {
+      showWhenTabFound = true;
       return;
     }
     const navigation = ++navigationCount;
@@ -1301,11 +1308,25 @@ export function createPlayingState(
     }
   };
 
+  // A step (or a passage a note links to) asked for before the tab could be
+  // found is shown once it can: a session's tab is set up after its playback
+  // starts, and a compare step's second passage needs the tab to open in.
+  const disposeTabWatch = effect(() => {
+    if (findTab() && showWhenTabFound) {
+      showWhenTabFound = false;
+      untracked(() => {
+        const away = detour.peek();
+        void (away ? visitReference(away) : navigateToCurrentItem());
+      });
+    }
+  });
+
   const whenSettled = (): Promise<void> => settled;
 
   /** Tears down the navigation effect. Call when playback ends or is replaced. */
   const dispose = (): void => {
     disposeRearm();
+    disposeTabWatch();
     disposeDecoration();
     disposeCompareReadingState?.();
     disposeCompareReadingState = null;

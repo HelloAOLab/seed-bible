@@ -3333,6 +3333,51 @@ describe("createPlaylistManager", () => {
       );
     });
 
+    it("opens a compare step's passages once a joined session's tab opens", async () => {
+      // As after a reload in a session: playback lands on a compare step
+      // before the session's tab is among the open tabs.
+      const tabsList = signal<NonNullable<TabArg>[]>([]);
+      const second = makeReadingState(vi.fn());
+      makeManager("user-1", {
+        tabs: tabsList,
+        selectedTabId: signal(null),
+        leaveStaticPage: vi.fn(),
+        createDetachedReadingState: vi.fn(() => second),
+        attachReadingState: vi.fn(() => () => {}),
+      } as unknown as TabsArg);
+      await flush();
+      const tab = makeTab("session-tab", selectTranslationAndChapterMock);
+      const instance = activateExtension(
+        {
+          playlists: [makePlaylist()],
+          queue: [
+            { type: "html", html: "<p>Intro</p>" },
+            {
+              type: "bible-verse",
+              ref: { bookId: "EXO", chapter: 3, verse: 14 },
+              compare: { ref: { bookId: "JHN", chapter: 10, verse: 30 } },
+            },
+          ],
+          step: 1,
+        },
+        true,
+        tab.readingState
+      );
+      const playing = instance.playingState;
+      await flush();
+      expect(playing.compareReadingState.value).toBeNull();
+
+      tabsList.value = [tab];
+      await flush();
+
+      expect(playing.compareReadingState.value).toBe(second);
+      expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+        "BSB",
+        "EXO",
+        3
+      );
+    });
+
     it("navigateNext/navigatePrevious default when nothing is playing", async () => {
       makeManager("user-1");
       await flush();
