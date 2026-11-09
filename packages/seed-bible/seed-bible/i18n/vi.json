@@ -1274,5 +1274,19 @@
   "loading-translations": "Đang tải bản dịch…",
   "translations-load-failed": "Không thể tải toàn bộ danh sách bản dịch, vì vậy một số bản dịch có thể bị thiếu.",
   "verse-of-the-day": "CÂU THƠ TRONG NGÀY",
-  "verse-of-the-day-loading": "Đang tải câu Kinh Thánh của ngày hôm nay…"
+  "verse-of-the-day-loading": "Đang tải câu Kinh Thánh của ngày hôm nay…",
+  "delete-bookmark-confirm-title": "Xóa dấu trang?",
+  "delete-bookmark-confirm-message": "Xóa \" {{name}} \"?",
+  "scripture-font": "Phông chữ Kinh Thánh",
+  "ai-limits-title": "Trước khi bạn trò chuyện với AI",
+  "ai-limits-intro": "Trí tuệ nhân tạo có thể là một điểm khởi đầu hữu ích, nhưng hãy luôn ghi nhớ những hạn chế của nó:",
+  "ai-limits-mistakes": "Nó mắc lỗi, và có thể tỏ ra tự tin ngay cả khi sai.",
+  "ai-limits-agreeable": "Nó thường có xu hướng nói những điều bạn muốn nghe và nghiêng về những câu trả lời phổ biến.",
+  "ai-limits-scripture": "Đây không phải là nguồn đáng tin cậy. Hãy kiểm tra xem nó nói gì và so sánh với Kinh Thánh như thế nào.",
+  "ai-limits-study": "Hãy tự mình nghiên cứu Kinh Thánh, đừng để trí tuệ nhân tạo suy nghĩ thay bạn.",
+  "ai-limits-confirm": "Tôi hiểu rằng trí tuệ nhân tạo có thể mắc sai lầm và không thể thay thế việc tự mình nghiên cứu Kinh Thánh.",
+  "friends-playlists-filter": "Danh sách phát của bạn bè",
+  "friend-link-social-title": "Thêm {{name}} làm bạn",
+  "friend-link-meta-description": "{{name}} muốn kết bạn với bạn trên {{brand}}",
+  "friend-link-title": "Thêm {{name}} làm bạn trên {{brand}}"
 }

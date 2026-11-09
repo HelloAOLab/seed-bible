@@ -1274,5 +1274,19 @@
   "loading-translations": "Tarjimalar yuklanmoqda…",
   "translations-load-failed": "Tarjimalarning to'liq ro'yxatini yuklab bo'lmadi, shuning uchun ba'zilari yo'q bo'lishi mumkin.",
   "verse-of-the-day": "KUN OYATI",
-  "verse-of-the-day-loading": "Kun oyati yuklanmoqda…"
+  "verse-of-the-day-loading": "Kun oyati yuklanmoqda…",
+  "delete-bookmark-confirm-title": "Xatcho'p o'chirilsinmi?",
+  "delete-bookmark-confirm-message": "\" {{name}} \" o'chirilsinmi?",
+  "scripture-font": "Muqaddas Kitob shrifti",
+  "ai-limits-title": "Sun'iy intellekt bilan suhbatlashishdan oldin",
+  "ai-limits-intro": "Sun'iy intellekt foydali boshlang'ich nuqta bo'lishi mumkin, ammo uning chegaralarini yodda tuting:",
+  "ai-limits-mistakes": "U xato qiladi va noto'g'ri bo'lganda ham o'ziga ishongandek tuyulishi mumkin.",
+  "ai-limits-agreeable": "Bu sizga nimani eshitishni xohlayotganingizni aytishga moyil bo'ladi va mashhur javoblarga moyil bo'ladi.",
+  "ai-limits-scripture": "Bu ishonchli manba emas. Muqaddas Kitobga qarshi nima deyilganini tekshiring.",
+  "ai-limits-study": "Muqaddas Kitobni o'zingiz o'rganing va sun'iy intellekt siz uchun fikrlashiga yo'l qo'ymang.",
+  "ai-limits-confirm": "Men sun'iy intellekt xatolarga yo'l qo'yishi mumkinligini va Muqaddas Kitobni o'zim o'rganishning o'rnini bosa olmasligini tushunaman.",
+  "friends-playlists-filter": "Do'stlar pleylistlari",
+  "friend-link-social-title": "{{name}} ni do'stlar qatoriga qo'shing",
+  "friend-link-meta-description": "{{name}} {{brand}} da sizning do'stingiz bo'lishni xohlaydi",
+  "friend-link-title": "{{name}} ni {{brand}} saytida do'stlaringizga qo'shing"
 }

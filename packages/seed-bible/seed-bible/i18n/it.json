@@ -1274,5 +1274,19 @@
   "loading-translations": "Caricamento delle traduzioni…",
   "translations-load-failed": "Impossibile caricare l'elenco completo delle traduzioni, pertanto alcune potrebbero mancare.",
   "verse-of-the-day": "VERSO DEL GIORNO",
-  "verse-of-the-day-loading": "Caricamento del versetto del giorno…"
+  "verse-of-the-day-loading": "Caricamento del versetto del giorno…",
+  "delete-bookmark-confirm-title": "Eliminare il segnalibro?",
+  "delete-bookmark-confirm-message": "Eliminare \" {{name}} \"?",
+  "scripture-font": "Fonte delle Scritture",
+  "ai-limits-title": "Prima di chattare con l'IA",
+  "ai-limits-intro": "L'intelligenza artificiale può essere un utile punto di partenza, ma è importante tenere presenti i suoi limiti:",
+  "ai-limits-mistakes": "Commette errori e può sembrare sicuro di sé anche quando ha torto.",
+  "ai-limits-agreeable": "Tende a dirti ciò che vuoi sentirti dire e a privilegiare le risposte più popolari.",
+  "ai-limits-scripture": "Non è una fonte attendibile. Confronta ciò che afferma con le Scritture.",
+  "ai-limits-study": "Studia la Bibbia per conto tuo e non lasciare che l'intelligenza artificiale pensi al posto tuo.",
+  "ai-limits-confirm": "Comprendo che l'intelligenza artificiale può commettere errori e non può sostituire lo studio personale della Bibbia.",
+  "friends-playlists-filter": "Playlist degli amici",
+  "friend-link-social-title": "Aggiungi {{name}} come amico",
+  "friend-link-meta-description": "{{name}} vuole diventare tuo amico su {{brand}}",
+  "friend-link-title": "Aggiungi {{name}} come amico su {{brand}}"
 }
