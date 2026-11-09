@@ -18,7 +18,7 @@ import {
 } from "../ContextMenu/ContextMenu";
 import {
   AddStepMenu,
-  openAddStepMenu,
+  AddStepToggle,
   PlaylistEditorBackButton,
   PlaylistStepsSummary,
   usePlaylistDraftStatus,
@@ -149,45 +149,6 @@ function StepActions(props: {
         {remove}
       </button>
     </div>
-  );
-}
-
-/**
- * A phone title bar's Add button, which opens the "Add a step" menu below the
- * bar: after the open step on its page, at the end on the list.
- */
-function AddStepToggle(props: { playlists: PlaylistManager }) {
-  const { playlists } = props;
-  const { t } = useI18n();
-  const menuOpen = playlists.editorAddMenu.value !== null;
-  const add = t("playlist-editor-add-step-title", {
-    defaultValue: "Add a step",
-  });
-  return (
-    <button
-      type="button"
-      className="sb-pe-square-button sb-pe-add-toggle"
-      aria-label={add}
-      title={add}
-      aria-expanded={menuOpen}
-      onClick={() => {
-        if (menuOpen) {
-          playlists.editorAddMenu.value = null;
-        } else {
-          openAddStepMenu(playlists);
-        }
-      }}
-    >
-      {/* Drawn rather than typed: a "+" sits on the text line, below the
-          button's middle. */}
-      <svg
-        className="sb-pe-add-toggle-plus"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path d="M12 5v14M5 12h14" />
-      </svg>
-    </button>
   );
 }
 

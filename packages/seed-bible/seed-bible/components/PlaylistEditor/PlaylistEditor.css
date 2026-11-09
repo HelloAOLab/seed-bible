@@ -185,6 +185,7 @@
 }
 
 .sb-pe-panel-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -491,45 +492,15 @@
   padding: 8px 16px 22px;
 }
 
-/* Add new step, with Review & publish beside it. */
+/* Review & publish, across the foot of the panel. */
 .sb-pe-panel-footer-row {
   display: flex;
   gap: 8px;
-
-  & .sb-pe-add-step {
-    flex: 1;
-    width: auto;
-  }
 
   & .sb-pe-publish {
     flex: 1;
     height: 42px;
   }
-}
-
-.sb-pe-add-step {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  height: 42px;
-  padding: 0 12px;
-  border: 1px solid var(--pe-add);
-  border-radius: 10px;
-  color: var(--pe-add);
-  font-family: var(--pe-font-label);
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.sb-pe-add-step-plus {
-  font-size: 18px;
-}
-
-.sb-pe-add-step-text {
-  font-weight: 500;
-  font-size: 13px;
 }
 
 /* "Add a step" menu */
@@ -1449,8 +1420,9 @@
   color: var(--pe-danger);
 }
 
-/* A step's title bar: plain icon buttons, Add a step in the accent colour. */
-.sb-pe-mobile-header-actions .sb-pe-square-button {
+/* A title bar's plain icon buttons, Add a step in the accent colour. */
+.sb-pe-mobile-header-actions .sb-pe-square-button,
+.sb-pe-panel-header-actions .sb-pe-square-button {
   border: none;
 }
 
@@ -1478,7 +1450,8 @@
 
 /* ...and its menu drops down from the title bar rather than rising from the
    bottom bar, which a step's page doesn't have. */
-.sb-pe-mobile-header .sb-pe-add-menu {
+.sb-pe-mobile-header .sb-pe-add-menu,
+.sb-pe-panel-header .sb-pe-add-menu {
   top: calc(100% + 8px);
   bottom: auto;
 }
@@ -1618,12 +1591,6 @@ body.sb-scroll-hide-bars .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
   align-items: center;
   gap: 8px;
   width: 100%;
-}
-
-.sb-pe-mobile-bottom .sb-pe-add-step {
-  width: auto;
-  min-width: 64px;
-  flex: 0 0 auto;
 }
 
 .sb-pe-mobile-bottom .sb-pe-publish {

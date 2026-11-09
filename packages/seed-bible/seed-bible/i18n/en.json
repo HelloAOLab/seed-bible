@@ -1297,7 +1297,6 @@
   "playlist-editor-add-step-title": "Add a step",
   "playlist-editor-inserted-first": "Inserted as the first step",
   "playlist-editor-inserted-after": "Inserted after step {{step}}",
-  "playlist-editor-add-step": "Add new step",
   "playlist-editor-rename": "Rename playlist",
   "playlist-editor-details": "Playlist details",
   "playlist-editor-edit-details": "Edit title, description and cover",

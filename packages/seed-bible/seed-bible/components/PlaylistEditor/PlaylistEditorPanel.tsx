@@ -391,7 +391,7 @@ function AddOptionIcon(props: { kind: NewPlaylistStepKind }) {
   );
 }
 
-/** The "Add a step" menu, opened from "Add new step". */
+/** The "Add a step" menu, opened from a title bar's Add button. */
 export function AddStepMenu(props: {
   playlists: PlaylistManager;
   afterIndex: number;
@@ -420,7 +420,7 @@ export function AddStepMenu(props: {
       if (
         target &&
         !menuRef.current?.contains(target) &&
-        !target.closest(".sb-pe-add-step, .sb-pe-add-toggle")
+        !target.closest(".sb-pe-add-toggle, .sb-pe-empty-list-add")
       ) {
         close();
       }
@@ -497,15 +497,23 @@ export function openAddStepMenu(playlists: PlaylistManager) {
   };
 }
 
-/** The "+ Add new step" button, at the foot of the desktop list. */
-export function AddStepButton(props: { playlists: PlaylistManager }) {
+/**
+ * A title bar's Add button, which opens the "Add a step" menu below the bar:
+ * after the open step on a phone's step page, at the end on the list.
+ */
+export function AddStepToggle(props: { playlists: PlaylistManager }) {
   const { playlists } = props;
   const { t } = useI18n();
   const menuOpen = playlists.editorAddMenu.value !== null;
+  const add = t("playlist-editor-add-step-title", {
+    defaultValue: "Add a step",
+  });
   return (
     <button
       type="button"
-      className="sb-pe-add-step"
+      className="sb-pe-square-button sb-pe-add-toggle"
+      aria-label={add}
+      title={add}
       aria-expanded={menuOpen}
       onClick={() => {
         if (menuOpen) {
@@ -515,12 +523,15 @@ export function AddStepButton(props: { playlists: PlaylistManager }) {
         }
       }}
     >
-      <span className="sb-pe-add-step-plus" aria-hidden="true">
-        +
-      </span>
-      <span className="sb-pe-add-step-text">
-        {t("playlist-editor-add-step", { defaultValue: "Add new step" })}
-      </span>
+      {/* Drawn rather than typed: a "+" sits on the text line, below the
+          button's middle. */}
+      <svg
+        className="sb-pe-add-toggle-plus"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14" />
+      </svg>
     </button>
   );
 }
@@ -609,8 +620,8 @@ export function PlaylistStepsSummary(props: {
 }
 
 /**
- * The desktop editor's side pane: the playlist's name above its list of
- * steps, with Add new step below.
+ * The desktop editor's side pane: the playlist's name, with Add in its title
+ * bar as on a phone, above its list of steps.
  */
 export function PlaylistEditorPanel(props: {
   playlists: PlaylistManager;
@@ -618,7 +629,7 @@ export function PlaylistEditorPanel(props: {
   modals: ModalManager;
   /** Extra buttons at the end of the title bar. */
   headerActions?: ComponentChildren;
-  /** Beside Add new step, such as Review & publish. */
+  /** At the foot of the panel, such as Review & publish. */
   footerActions?: ComponentChildren;
 }) {
   const { playlists, tabs, modals, headerActions, footerActions } = props;
@@ -633,22 +644,22 @@ export function PlaylistEditorPanel(props: {
           <PlaylistTitle playlists={playlists} />
           <p className="sb-pe-panel-status">{status.label}</p>
         </div>
-        {headerActions ? (
-          <div className="sb-pe-panel-header-actions">{headerActions}</div>
+        <div className="sb-pe-panel-header-actions">
+          <AddStepToggle playlists={playlists} />
+          {headerActions}
+        </div>
+        {addMenu ? (
+          <AddStepMenu playlists={playlists} afterIndex={addMenu.afterIndex} />
         ) : null}
       </div>
       <div className="sb-pe-panel-body">
         <PlaylistStepsSummary playlists={playlists} tabs={tabs} />
       </div>
-      <div className="sb-pe-panel-footer">
-        {addMenu ? (
-          <AddStepMenu playlists={playlists} afterIndex={addMenu.afterIndex} />
-        ) : null}
-        <div className="sb-pe-panel-footer-row">
-          <AddStepButton playlists={playlists} />
-          {footerActions}
+      {footerActions ? (
+        <div className="sb-pe-panel-footer">
+          <div className="sb-pe-panel-footer-row">{footerActions}</div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

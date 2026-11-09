@@ -683,11 +683,23 @@ describe("the playlist editor", () => {
   });
 
   describe("adding a step", () => {
+    it("has Add in the panel's title bar, not at its foot", () => {
+      openPanel();
+
+      expect(
+        container.querySelector('.sb-pe-panel-header [aria-label="Add a step"]')
+      ).not.toBeNull();
+      expect(container.textContent).not.toContain("Add new step");
+    });
+
     it("inserts the chosen kind after the open step and opens it", () => {
       openPanel();
       act(() => state.playlists.selectEditorStep(0));
 
-      click(byText(container, ".sb-pe-add-step", "Add new step"));
+      // From the title bar's Add, as on a phone.
+      click(
+        container.querySelector('.sb-pe-panel-header [aria-label="Add a step"]')
+      );
       expect(container.textContent).toContain("Inserted after step 1");
       click(byText(container, ".sb-pe-add-option", "Note"));
 
@@ -699,7 +711,9 @@ describe("the playlist editor", () => {
 
     it("closes the menu with Escape without adding anything", () => {
       openPanel();
-      click(byText(container, ".sb-pe-add-step", "Add new step"));
+      click(
+        container.querySelector('.sb-pe-panel-header [aria-label="Add a step"]')
+      );
 
       act(() => {
         window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
