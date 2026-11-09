@@ -465,6 +465,24 @@ describe("person profile card", () => {
     expect(buttonLabels()).toEqual([]);
   });
 
+  it("takes their name from the friends lists when their profile can't be read", async () => {
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.mocked(login.getPublicProfile).mockRejectedValueOnce(
+      new Error("offline")
+    );
+    await openCard(ADA_ID);
+    expect(text()).toContain(`User ${ADA_ID.slice(0, 8)}`);
+
+    // Their request brings their profile into the lists.
+    server.requestFrom(ADA_ID);
+    await act(() => friends.refresh());
+    await settle();
+
+    expect(text()).toContain("Ada wants to be friends.");
+    expect(text()).not.toContain(`User ${ADA_ID.slice(0, 8)}`);
+    consoleWarn.mockRestore();
+  });
+
   it("follows a request that arrives while it's open", async () => {
     await openCard(ADA_ID);
     expect(buttonLabels()).toEqual(["Add friend"]);

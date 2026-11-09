@@ -309,12 +309,12 @@ function FriendshipActions(props: {
   );
 }
 
-/** Whatever the friends lists already know about `userId`'s profile. */
+/** Whatever the friends lists know about `userId`'s profile right now. */
 function knownProfile(friends: FriendsManager, userId: string): Friend {
   const known = [
-    ...friends.friends.peek(),
-    ...friends.incomingRequests.peek(),
-    ...friends.outgoingRequests.peek(),
+    ...friends.friends.value,
+    ...friends.incomingRequests.value,
+    ...friends.outgoingRequests.value,
   ].find((person) => person.userId === userId);
   return {
     userId,
@@ -326,16 +326,18 @@ function knownProfile(friends: FriendsManager, userId: string): Friend {
 }
 
 /**
- * The profile popup. It starts from what the friends lists already know,
- * then reads the profile afresh: their copy may be old, and only a fresh read
- * can tell an account with no profile from no account at all.
+ * The profile popup. It reads the profile afresh: the friends lists' copy may
+ * be old, and only a fresh read can tell an account with no profile from no
+ * account at all. Until that read lands, or if it fails, it shows what the
+ * lists know, following them as they load.
  */
 function PersonProfile(props: { userId: string; deps: PersonProfileDeps }) {
   const { userId, deps } = props;
   const { login } = deps;
   const { t } = useI18n();
-  const shown = useSignal<Friend>(knownProfile(deps.friends, userId));
+  const fetched = useSignal<Friend | null>(null);
   const lookup = useSignal<ProfileLookup>("loading");
+  const shown = fetched.value ?? knownProfile(deps.friends, userId);
 
   useEffect(() => {
     let cancelled = false;
@@ -345,7 +347,7 @@ function PersonProfile(props: { userId: string; deps: PersonProfileDeps }) {
           return;
         }
         if (profile) {
-          shown.value = { userId, ...toFriendProfile(profile) };
+          fetched.value = { userId, ...toFriendProfile(profile) };
           lookup.value = "found";
         } else {
           lookup.value = "no_account";
@@ -369,18 +371,14 @@ function PersonProfile(props: { userId: string; deps: PersonProfileDeps }) {
       defaultValue:
         "We couldn't find anyone with this user ID. It may have been copied incorrectly.",
     });
-  } else if (lookup.value === "found" && hasEmptyProfile(shown.value)) {
+  } else if (lookup.value === "found" && hasEmptyProfile(shown)) {
     note = emptyProfileNote(t);
   }
 
   return (
     <div className="sb-confirm-delete" aria-busy={lookup.value === "loading"}>
-      <PersonCard person={shown.value} note={note} />
-      <FriendshipActions
-        person={shown.value}
-        lookup={lookup.value}
-        deps={deps}
-      />
+      <PersonCard person={shown} note={note} />
+      <FriendshipActions person={shown} lookup={lookup.value} deps={deps} />
     </div>
   );
 }
