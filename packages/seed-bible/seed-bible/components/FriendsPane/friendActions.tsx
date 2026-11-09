@@ -198,14 +198,18 @@ export async function cancelFriendRequest(
   }
 }
 
-/** Asks `userId` to be friends, or accepts their request if they already asked. */
+/**
+ * Asks `userId` to be friends, or accepts their request if they already asked.
+ * Resolves false when it failed outright (and the toast said so), true
+ * otherwise, including finding they're already a friend or already asked.
+ */
 export async function sendFriendRequestTo(
   friends: FriendsManager,
   toast: Toast,
   t: T,
   userId: string,
   name: string
-): Promise<void> {
+): Promise<boolean> {
   try {
     const result = await friends.sendRequest({ userId });
     switch (result.status) {
@@ -252,6 +256,7 @@ export async function sendFriendRequestTo(
       // "self" isn't offered, and "not_signed_in" means they closed the
       // sign-in dialog, which needs no telling.
     }
+    return true;
   } catch (error) {
     console.error("Failed to send friend request:", error);
     toast(
@@ -259,6 +264,7 @@ export async function sendFriendRequestTo(
         defaultValue: "Couldn't send the request. Try again.",
       })
     );
+    return false;
   }
 }
 

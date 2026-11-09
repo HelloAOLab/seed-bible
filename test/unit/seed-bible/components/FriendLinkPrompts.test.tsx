@@ -401,6 +401,35 @@ describe("friend links", () => {
       expect(toast).toHaveBeenCalledWith("You're now friends with Ada.");
     });
 
+    // Same wording as answering from the Friends screen or the profile card.
+    it("says when their request expired before it was accepted", async () => {
+      const request = server.requestFrom(ADA_ID);
+      await openWith(`?addFriend=${ADA_ID}`);
+      request.expireTimeMs = Date.now() - 1;
+
+      await click("Accept");
+
+      expect(toast).toHaveBeenCalledWith("That request has expired.");
+    });
+
+    it("says so when accepting fails, and stays open to try again", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      server.requestFrom(ADA_ID);
+      await openWith(`?addFriend=${ADA_ID}`);
+      server.spies.accept.mockResolvedValueOnce(fail("server_error") as never);
+
+      await click("Accept");
+
+      expect(toast).toHaveBeenCalledWith(
+        "Couldn't answer the request. Try again."
+      );
+      expect(openModalId).not.toBeNull();
+      expect(button("Accept")!.disabled).toBe(false);
+      consoleError.mockRestore();
+    });
+
     it("signs a signed-out visitor in first, then carries on", async () => {
       userId.value = null;
       await openWith(`?addFriend=${ADA_ID}`);

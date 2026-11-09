@@ -11,7 +11,11 @@ import type { ModalManager } from "../../managers/ModalManager";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import { displayNameOf } from "../../managers/Utils";
 import { useI18n } from "../../i18n/I18nManager";
-import { answerFriendRequest, BusyButton } from "./friendActions";
+import {
+  answerFriendRequest,
+  BusyButton,
+  sendFriendRequestTo,
+} from "./friendActions";
 import { emptyProfileNote, hasEmptyProfile, PersonCard } from "./PersonCard";
 import {
   ADD_FRIEND_PARAM,
@@ -141,7 +145,9 @@ function AddFriendLinkPrompt(props: {
     (r) => r.userId === person.userId
   );
   let message: string;
-  let action: { label: string; run: () => Promise<void> } | null = null;
+  // `run` resolves false when the action failed (its toast says so), which
+  // keeps the prompt open to try again.
+  let action: { label: string; run: () => Promise<boolean> } | null = null;
 
   if (person.userId === login.userId.value) {
     message = t("add-friend-link-own", {
@@ -171,19 +177,8 @@ function AddFriendLinkPrompt(props: {
     });
     action = {
       label: t("accept", { defaultValue: "Accept" }),
-      run: async () => {
-        const result = await friends.acceptRequest(theirRequest.id);
-        toast(
-          result.success
-            ? t("now-friends-with", {
-                name,
-                defaultValue: "You're now friends with {{name}}.",
-              })
-            : t("friend-request-unavailable", {
-                defaultValue: "That request is no longer available.",
-              })
-        );
-      },
+      run: () =>
+        answerFriendRequest(friends, toast, t, theirRequest, name, true),
     };
   } else {
     message = t("add-friend-link-confirm", {
@@ -192,40 +187,7 @@ function AddFriendLinkPrompt(props: {
     });
     action = {
       label: t("send-friend-request", { defaultValue: "Send request" }),
-      run: async () => {
-        const result = await friends.sendRequest({ userId: person.userId });
-        if (result.status === "sent") {
-          toast(
-            t("friend-request-sent-to", {
-              name,
-              defaultValue: "Friend request sent to {{name}}.",
-            })
-          );
-        } else if (result.status === "accepted") {
-          toast(
-            t("now-friends-with", {
-              name,
-              defaultValue: "You're now friends with {{name}}.",
-            })
-          );
-        } else if (result.status === "already_friends") {
-          toast(
-            t("add-friend-link-already-friends", {
-              name,
-              defaultValue: "You're already friends with {{name}}.",
-            })
-          );
-        } else if (result.status === "already_requested") {
-          toast(
-            t("add-friend-link-already-sent", {
-              name,
-              defaultValue: "You've already sent {{name}} a friend request.",
-            })
-          );
-        }
-        // The rest can't come from this prompt: your own link is caught
-        // above, a user ID is never "not found", and sending needs sign-in.
-      },
+      run: () => sendFriendRequestTo(friends, toast, t, person.userId, name),
     };
   }
 
@@ -240,15 +202,9 @@ function AddFriendLinkPrompt(props: {
     shownWhileBusy.current = { message, action };
     busy.value = true;
     try {
-      await action.run();
-      onClose();
-    } catch (error) {
-      console.error("Friend link action failed:", error);
-      toast(
-        t("friend-request-failed", {
-          defaultValue: "Couldn't send the request. Try again.",
-        })
-      );
+      if (await action.run()) {
+        onClose();
+      }
     } finally {
       busy.value = false;
       shownWhileBusy.current = null;
