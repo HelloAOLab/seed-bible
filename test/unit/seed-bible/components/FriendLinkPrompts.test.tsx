@@ -598,7 +598,7 @@ describe("friend links", () => {
       expect(button("Accept")).toBeUndefined();
     });
 
-    it("says when the requests couldn't be loaded, then shows the request once they are", async () => {
+    it("says when the requests couldn't be loaded, and tries again on request", async () => {
       const consoleError = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -612,9 +612,12 @@ describe("friend links", () => {
       expect(text()).toContain("Couldn't load your friend requests.");
       expect(text()).not.toContain("isn't available");
 
+      // Still offline: it says so again, and can be tried once more.
+      await click("Try again");
+      expect(text()).toContain("Couldn't load your friend requests.");
+
       server.spies.listRecords.mockImplementation(listRecords);
-      await act(() => friends.refresh());
-      await settle();
+      await click("Try again");
       expect(text()).toContain("Ada wants to be friends.");
       consoleError.mockRestore();
     });

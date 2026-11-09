@@ -305,23 +305,39 @@ function FriendRequestLinkPrompt(props: {
   }
 
   if (!request) {
+    // The link is already gone from the address, so reloading wouldn't bring
+    // this prompt back: a failed read gets its own way to try again.
+    const loadFailed = !friends.hasLoaded.value && !friends.isLoading.value;
     return (
       <div className="sb-confirm-delete">
         <p className="sb-confirm-delete-message">
-          {!friends.hasLoaded.value
-            ? friends.isLoading.value
-              ? t("loading", { defaultValue: "Loading…" })
-              : t("friend-request-link-load-failed", {
-                  defaultValue:
-                    "Couldn't load your friend requests. Check your connection and try again.",
-                })
-            : t("friend-request-link-unavailable", {
+          {loadFailed
+            ? t("friend-request-link-load-failed", {
                 defaultValue:
-                  "This friend request isn't available. It may have been sent to a different account, already been answered, or expired.",
-              })}
+                  "Couldn't load your friend requests. Check your connection and try again.",
+              })
+            : !friends.hasLoaded.value
+              ? t("loading", { defaultValue: "Loading…" })
+              : t("friend-request-link-unavailable", {
+                  defaultValue:
+                    "This friend request isn't available. It may have been sent to a different account, already been answered, or expired.",
+                })}
         </p>
         <PromptActions>
-          <CloseButton onClose={onClose} primary />
+          {loadFailed ? (
+            <>
+              <CloseButton onClose={onClose} />
+              <button
+                type="button"
+                className="sb-session-settings-end"
+                onClick={() => void friends.refresh()}
+              >
+                {t("try-again", { defaultValue: "Try again" })}
+              </button>
+            </>
+          ) : (
+            <CloseButton onClose={onClose} primary />
+          )}
         </PromptActions>
       </div>
     );
