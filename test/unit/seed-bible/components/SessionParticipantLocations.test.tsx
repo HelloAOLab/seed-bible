@@ -1,7 +1,12 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { MobileSessionParticipants } from "@packages/seed-bible/seed-bible/components/SessionParticipants/SessionParticipants";
+import {
+  MobileSessionParticipants,
+  TAB_PARTICIPANTS_EXPANDED_STORAGE_KEY,
+  TabSessionParticipants,
+  isTabParticipantsListExpanded,
+} from "@packages/seed-bible/seed-bible/components/SessionParticipants/SessionParticipants";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   COME_BACK_REQUEST_COOLDOWN_MS,
@@ -43,9 +48,11 @@ function user(
 function createSession({
   localIsHost,
   positions,
+  localIsAway = false,
 }: {
   localIsHost: boolean;
   positions: Record<string, ParticipantReadingPosition>;
+  localIsAway?: boolean;
 }) {
   const comeBackRequests = signal<ReadonlyMap<string, ComeBackRequest>>(
     new Map()
@@ -100,6 +107,8 @@ function createSession({
     participantPositions: signal(new Map(Object.entries(positions))),
     comeBackRequests,
     askToComeBack,
+    isAwayFromGroup: signal(localIsAway),
+    rejoinGroup: vi.fn(async () => undefined),
   } as unknown as BibleReadingSession;
   return { session, askToComeBack };
 }
@@ -246,5 +255,103 @@ describe("Session participants — where everyone is", () => {
 
     expect(sectionTitles(sheet)).toEqual([]);
     expect(sheet.querySelector(".sb-ask-come-back")).toBeNull();
+  });
+});
+
+describe("Session participants — inside the desktop session tab", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    window.localStorage.clear();
+    isTabParticipantsListExpanded.value = false;
+  });
+
+  afterEach(() => {
+    act(() => render(null, container));
+    container.remove();
+  });
+
+  const awayPositions = {
+    "conn-ana": { bookId: "JHN", chapterNumber: 3 },
+    "conn-priya": { bookId: "PSA", chapterNumber: 23 },
+  };
+
+  function renderTab(session: BibleReadingSession) {
+    act(() =>
+      render(
+        <TabSessionParticipants state={createState()} session={session} />,
+        container
+      )
+    );
+  }
+
+  const button = (label: string) =>
+    Array.from(container.querySelectorAll("button")).find(
+      (el) =>
+        el.textContent?.includes(label) ||
+        el.getAttribute("aria-label") === label
+    );
+
+  it("opens from a toggle that counts who is away, and remembers it on this device", () => {
+    const { session } = createSession({
+      localIsHost: true,
+      positions: awayPositions,
+    });
+    renderTab(session);
+
+    const toggle = button("Show participants")!;
+    expect(toggle.textContent).toContain("1 away");
+    expect(container.querySelector(".sb-tab-participants")).toBeNull();
+
+    act(() => toggle.click());
+
+    expect(container.textContent).toContain("Participants · 3");
+    expect(container.textContent).toContain("Reading elsewhere");
+    expect(
+      window.localStorage.getItem(TAB_PARTICIPANTS_EXPANDED_STORAGE_KEY)
+    ).toBe("true");
+
+    act(() => button("Hide participants")!.click());
+
+    expect(container.querySelector(".sb-tab-participants")).toBeNull();
+    expect(
+      window.localStorage.getItem(TAB_PARTICIPANTS_EXPANDED_STORAGE_KEY)
+    ).toBe("false");
+  });
+
+  it("offers session settings to hosts only", () => {
+    isTabParticipantsListExpanded.value = true;
+    const host = createSession({ localIsHost: true, positions: {} });
+    renderTab(host.session);
+    expect(button("Session settings")).toBeDefined();
+    expect(button("Share session")).toBeDefined();
+
+    const participant = createSession({ localIsHost: false, positions: {} });
+    renderTab(participant.session);
+    expect(button("Session settings")).toBeUndefined();
+    expect(button("Share session")).toBeDefined();
+  });
+
+  it("gives a reader who is away a Rejoin button on their own row", () => {
+    isTabParticipantsListExpanded.value = true;
+    const { session } = createSession({
+      localIsHost: false,
+      positions: awayPositions,
+      localIsAway: true,
+    });
+    renderTab(session);
+
+    const ownRow = Array.from(
+      container.querySelectorAll(".sb-session-participants-list-item")
+    ).find((row) => row.textContent?.includes("Grace (you)"))!;
+    const rejoin = Array.from(ownRow.querySelectorAll("button")).find((el) =>
+      el.textContent?.includes("Rejoin")
+    )!;
+
+    act(() => rejoin.click());
+
+    expect(session.rejoinGroup).toHaveBeenCalledTimes(1);
   });
 });

@@ -7,6 +7,7 @@
 - In a shared session, see where people reading ahead of or behind you are: their picture stays at the top or bottom edge of the screen with an arrow pointing their way. ([#1961](https://github.com/HelloAOLab/seed-bible/issues/1961))
 - In a shared session where only hosts can navigate, reading a different chapter from the group now shows where the group is above the toolbar, with a Rejoin button to go back.
 - In a shared session, see who is reading elsewhere and which passage they're on: in the participants list, and on their faded avatar on the session's tab.
+  - On desktop, open the participant list right inside the session's tab. It stays open or closed the way you left it on that device.
   - Hosts can ask someone reading elsewhere to come back. They get a request above the toolbar with Not now and Rejoin group, and the host can ask again after 30 seconds.
 - Extensions can read much more of the Free Use Bible API through `sb.bible`: list translations and their books, search for verses, and read commentaries and datasets such as cross-references.
   - A chapter now comes with its headings, paragraph breaks, footnotes, and the chapters before and after it, as well as its plain-text verses.
