@@ -303,6 +303,8 @@ function createFixture(): ReaderFixture {
     discoveredContent: signal([]),
     discoveredCrossReferences: signal([]),
     discoveredStudyNotes: signal([]),
+    isDiscovering: signal(false),
+    showDiscoveryLoader: signal(false),
     discoverContentPanelInline: signal(true),
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
@@ -5614,6 +5616,7 @@ describe("BibleReader", () => {
       },
       tools: createBibleToolsManager(testBranding),
       tabs: { selectedTabId: signal("") },
+      discover: { scrollToVerse: signal(null) },
       playlists: {
         playing: signal(null),
         openingPlayback: signal(false),

@@ -65,11 +65,11 @@ import {
   AnnotationCommentMeta,
   annotationLocationLabel,
   openDeleteAnnotationConfirm,
-} from "../DiscoverPane/AnnotationsSection";
+} from "../Discover/AnnotationsSection";
 import {
   VerseTaggedResultsSections,
   verseTaggedResultsFor,
-} from "../DiscoverPane/DiscoveredResultsSections";
+} from "../Discover/DiscoveredResultsSections";
 import {
   ContextMenuWithButton,
   ContextMenuItem,

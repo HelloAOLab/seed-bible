@@ -7,6 +7,9 @@ import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayMan
 import { PROFILE_PANE_ID } from "@packages/seed-bible/seed-bible/components/ProfilePane/ProfilePane";
 import { PLAYLIST_HISTORY_PANE_ID } from "@packages/seed-bible/seed-bible/components/PlaylistHistoryPane/PlaylistHistoryPane";
 import { EXTENSIONS_PANE_ID } from "@packages/seed-bible/seed-bible/components/ExtensionsPage/ExtensionsPage";
+import { DISCOVER_PANE_ID } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverPane";
+import { READING_PLANS_PANE_ID } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import { YOUR_CONTENT_PANE_ID } from "@packages/seed-bible/seed-bible/components/YourContentPane/YourContentPane";
 import {
   PlaylistPlayHistorySchema,
   PlaylistSchema,
@@ -4569,6 +4572,208 @@ describe("continuing a playlist from Profile", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(state.isProfileOpen.value).toBe(false);
+  });
+});
+
+describe("editors opened from Profile and Your content", () => {
+  let container: HTMLDivElement;
+  let active: SeedBibleState | null = null;
+
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    if (active) {
+      active.os.sessionKey.value = null;
+      active = null;
+    }
+    render(null, container);
+    container.remove();
+    localStorage.removeItem("sessionKey");
+    vi.restoreAllMocks();
+  });
+
+  async function signedInDesktopState() {
+    const state = await createState();
+    active = state;
+    (state.app.viewportWidth as unknown as { value: number }).value = 1200;
+    vi.spyOn(state.os, "listAllData").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "listAllDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "listDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    } as never);
+    vi.spyOn(state.os, "recordData").mockResolvedValue({
+      success: true,
+    } as never);
+    vi.spyOn(state.os, "eraseData").mockResolvedValue({
+      success: true,
+    } as never);
+    state.os.sessionKey.value = formatV1SessionKey(
+      PLAYLIST_USER_ID,
+      "session-1",
+      "secret-1",
+      Date.now() + 60 * 60 * 1000
+    );
+    await waitFor(() => state.login.userId.value === PLAYLIST_USER_ID);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return state;
+  }
+
+  async function renderPane(state: SeedBibleState, paneId: string) {
+    await waitFor(() => state.panes.panes.value.some((p) => p.id === paneId));
+    const pane = state.panes.panes.value.find((p) => p.id === paneId);
+    const Provider = await realI18nProvider();
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: pane?.component() ?? null,
+        }),
+        container
+      );
+    });
+  }
+
+  function click(element: Element | null | undefined) {
+    if (!element) throw new Error("Nothing to click.");
+    act(() => {
+      element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  }
+
+  function playlistEditorBack() {
+    return container.querySelector(
+      '.sb-discover-title-row button[aria-label="Back"]'
+    );
+  }
+
+  // Docked rather than fullscreen, so a plan being built can take verses
+  // picked in the reader, the way the playlist editor can.
+  it("docks the plans pane beside the reader on desktop", async () => {
+    const state = await signedInDesktopState();
+    state.openProfile();
+    await renderPane(state, PROFILE_PANE_ID);
+
+    click(container.querySelector(".sb-profile-plans"));
+
+    const plansPane = state.app.effectivePanes.value.find(
+      (pane) => pane.id === READING_PLANS_PANE_ID
+    );
+    expect(plansPane?.placement).toBe("side");
+    expect(state.isProfileOpen.value).toBe(false);
+  });
+
+  it("returns to Your content when backing out of a playlist edited from there", async () => {
+    const state = await signedInDesktopState();
+    state.playlists.userPlaylists.value = [htmlPlaylist()];
+    state.openYourContent();
+    await renderPane(state, YOUR_CONTENT_PANE_ID);
+
+    click(container.querySelector(".sb-discover-item-menu"));
+    click(
+      Array.from(document.body.querySelectorAll(".sb-context-menu-item")).find(
+        (item) => item.textContent?.includes("Edit")
+      )
+    );
+    expect(state.isYourContentOpen.value).toBe(false);
+
+    await renderPane(state, DISCOVER_PANE_ID);
+    click(playlistEditorBack());
+
+    expect(state.playlists.editingPlaylist.value).toBeNull();
+    expect(state.isYourContentOpen.value).toBe(true);
+  });
+
+  it("stays in Discover when backing out of a playlist edited from Discover", async () => {
+    const state = await signedInDesktopState();
+    state.playlists.editPlaylist(htmlPlaylist());
+    await renderPane(state, DISCOVER_PANE_ID);
+
+    click(playlistEditorBack());
+
+    expect(state.playlists.editingPlaylist.value).toBeNull();
+    expect(state.isYourContentOpen.value).toBe(false);
+  });
+});
+
+describe("closing the Discover pane while a playlist plays", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  async function playInDiscoverPane() {
+    const state = await createState();
+    state.playlists.startPlaying(htmlPlaylist());
+    await waitFor(
+      () =>
+        state.playlists.actualView.value === "play_playlist" &&
+        state.panes.panes.value.some((pane) => pane.id === DISCOVER_PANE_ID)
+    );
+    return state;
+  }
+
+  it("stops playback when the user closes the pane from its close button", async () => {
+    const state = await playInDiscoverPane();
+    const pane = state.panes.panes.value.find(
+      (item) => item.id === DISCOVER_PANE_ID
+    );
+    const Provider = await realI18nProvider();
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: pane?.component() ?? null,
+        }),
+        container
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector(".sb-discover-panel-header-close")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => state.playlists.playing.value === null);
+    expect(
+      state.panes.panes.value.some((item) => item.id === DISCOVER_PANE_ID)
+    ).toBe(false);
+  });
+
+  it("keeps playing when the pane is closed by the app rather than the user", async () => {
+    const state = await playInDiscoverPane();
+
+    state.panes.closePane(DISCOVER_PANE_ID);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(state.playlists.playing.value).not.toBeNull();
   });
 });
 

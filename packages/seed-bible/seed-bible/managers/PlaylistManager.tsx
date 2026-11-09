@@ -385,6 +385,14 @@ export type StartPlayingOptions = {
   sharedOpening?: true;
 };
 
+export type PlaylistEditorOptions = {
+  /**
+   * Another screen opened the editor; backing out of it returns there instead
+   * of to the Discover list.
+   */
+  onBack?: () => void;
+};
+
 export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
 export type PlayingState = ReturnType<typeof createPlayingState>;
 
@@ -1273,6 +1281,11 @@ export function createPlaylistManager(
   const editingPlaylist = signal<Playlist | null>(null);
   /** Copy of the draft when the editor opened, for unsaved-change detection. */
   const editingPlaylistBaseline = signal<Playlist | null>(null);
+  /**
+   * Returns to the screen that opened the editor, once the user backs out of
+   * it. Null when the editor was opened from the Discover pane itself.
+   */
+  const editingPlaylistOnBack = signal<(() => void) | null>(null);
 
   const linkPreviews = createLinkPreviewLoader((url) =>
     os.getLinkPreview(url, i18n.language.peek())
@@ -1924,7 +1937,8 @@ export function createPlaylistManager(
    * signed in.
    */
   const createNewPlaylist = async (
-    initial?: Pick<Playlist, "title" | "description" | "items">
+    initial?: Pick<Playlist, "title" | "description" | "items">,
+    options?: PlaylistEditorOptions
   ): Promise<Signal<Playlist | null> | null> => {
     let userId = login.userId.value;
     if (!userId) {
@@ -1950,6 +1964,7 @@ export function createPlaylistManager(
     linkPreviews.cancel();
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(draft);
+    editingPlaylistOnBack.value = options?.onBack ?? null;
     view.value = "create_playlist";
     draft.items.forEach(requestEditingItemPreview);
 
@@ -1961,11 +1976,15 @@ export function createPlaylistManager(
    * the given playlist and switches to the create/edit view. Persisting happens
    * later via `saveEditingPlaylist`.
    */
-  const editPlaylist = (playlist: Playlist): void => {
+  const editPlaylist = (
+    playlist: Playlist,
+    options?: PlaylistEditorOptions
+  ): void => {
     linkPreviews.cancel();
     const draft = clonePlaylist(playlist);
     editingPlaylist.value = draft;
     editingPlaylistBaseline.value = clonePlaylist(playlist);
+    editingPlaylistOnBack.value = options?.onBack ?? null;
     view.value = "create_playlist";
     // Links saved before previews existed, or whose preview missed the save
     // cutoff, get one now so the next save stores it.
@@ -1997,6 +2016,7 @@ export function createPlaylistManager(
       : [...userPlaylists.value, playlist];
     editingPlaylist.value = null;
     editingPlaylistBaseline.value = null;
+    editingPlaylistOnBack.value = null;
     view.value = "discover";
   };
 
@@ -2189,6 +2209,7 @@ export function createPlaylistManager(
     linkPreviews.cancel();
     editingPlaylist.value = null;
     editingPlaylistBaseline.value = null;
+    editingPlaylistOnBack.value = null;
     view.value = "discover";
   };
 
@@ -3219,6 +3240,9 @@ export function createPlaylistManager(
     view,
     actualView,
     editingPlaylist,
+    editingPlaylistOnBack: editingPlaylistOnBack as ReadonlySignal<
+      (() => void) | null
+    >,
     playing,
     openingPlayback,
     showCurrentItem,

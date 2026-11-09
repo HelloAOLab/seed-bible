@@ -403,16 +403,20 @@ export function createBibleSelectorState(
         return;
       }
 
+      // With no tab open, the reader's saved or default translation.
+      const preferredTranslationId = slotTranslationId
+        ? null
+        : tabsManager.preferredTranslationId();
       const nextTranslationId =
         slotTranslationId ??
-        // Fall back to default translation or first available translation
+        // Fall back to the preferred translation or first available translation
         dataManager.availableTranslations.value.find(
-          (t) => t.id === tabsManager.defaultTranslation.id
+          (t) => t.id === preferredTranslationId
         )?.id ??
         dataManager.availableTranslations.value[0]?.id ??
-        // Without the catalog the default translation's ID is still known, so
-        // try it rather than give up.
-        (catalogFailed ? tabsManager.defaultTranslation.id : null);
+        // Without the catalog the preferred translation's ID is still known,
+        // so try it rather than give up.
+        (catalogFailed ? preferredTranslationId : null);
 
       if (!nextTranslationId) {
         throw new Error("No available translations found.");

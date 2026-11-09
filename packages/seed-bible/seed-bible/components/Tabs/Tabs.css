@@ -1240,7 +1240,7 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
-.sb-session-settings-cancel:hover {
+.sb-session-settings-cancel:hover:not(:disabled) {
   background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
   color: var(--sb-font-color);
 }
@@ -1250,8 +1250,13 @@
   color: #ffffff;
 }
 
-.sb-session-settings-end:hover {
+.sb-session-settings-end:hover:not(:disabled) {
   background: #dc2626;
+}
+
+.sb-session-settings-cancel:disabled,
+.sb-session-settings-end:disabled {
+  cursor: default;
 }
 
 /* A red Delete button, led by a trash can. */

@@ -1158,13 +1158,14 @@ describe("createBibleSelectorState", () => {
     function createManagersWithTablessSlot() {
       const dataManager = createDataManager();
       const navigation = createNavigationManager();
+      const login = createLoginManagerMock();
       const tabsManager = createTabs(
         navigation,
         dataManager,
         createHighlightsManagerMock() as any,
         {} as any,
         createI18nManager(navigation, ["en"]),
-        createLoginManagerMock() as any
+        login as any
       );
       const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
 
@@ -1174,8 +1175,36 @@ describe("createBibleSelectorState", () => {
       );
       const tablessSlot = tabsLayoutManager.slots.value[0]!;
 
-      return { dataManager, tabsManager, tabsLayoutManager, tablessSlot };
+      return {
+        dataManager,
+        login,
+        tabsManager,
+        tabsLayoutManager,
+        tablessSlot,
+      };
     }
+
+    it("setOpen() selects the reader's saved translation when no slot has a tab", async () => {
+      setWebResponses(createExampleManagerResponseMap());
+      const {
+        dataManager,
+        login,
+        tabsManager,
+        tabsLayoutManager,
+        tablessSlot,
+      } = createManagersWithTablessSlot();
+      login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+      const selector = createSelectorState(
+        dataManager,
+        tabsManager,
+        tabsLayoutManager
+      );
+      await selector.setOpen(true, tablessSlot);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.selectedTranslationId.value).toBe("NIV");
+    });
 
     it("setOpen() selects DEFAULT_TRANSLATION_ID (AAB) when no slot has a tab but AAB is in available translations", async () => {
       setWebResponses(createExampleManagerResponseMap());
