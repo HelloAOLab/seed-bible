@@ -22,22 +22,18 @@
   "clear-search": "لټون پاک کړئ",
   "searching": "لټون...",
   "no-search-results": "هیڅ ورته آیتونه نشته.",
-
   "uploading": "پورته کول...",
   "profile-name": "د پروفایل نوم",
   "profile-name-placeholder": "د مثال په توګه د کریګ کورنۍ",
-
   "description": "تفصیل",
   "optional": "(اختیاري)",
   "description-placeholder": "د خپل پروفایل توضیحات دننه کړئ...",
   "location": "ځای",
   "location-placeholder": "د مثال په توګه آسټین، ټیکساس",
-
   "copied": "کاپي شوی",
   "copy": "کاپي",
   "save-changes": "بدلونونه خوندي کړئ",
   "sign-out": "وتون",
-
   "log-in": "په يادښت کې",
   "session-settings": "د غونډې تنظیمات",
   "shared-session-click-to-join": "شریکول کیږي — د یوځای کیدو لپاره کلیک وکړئ",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "یوه موضوع غوره کړئ او د کلام پاک او کارن انټرفیس د ښودلو طریقه تنظیم کړئ.",
   "scripture-settings": "د کلام پاک ترتیبات",
   "scripture-settings-font-size-example": "الف",
-
   "all-settings": "ټول ترتیبات",
   "no-extensions-available": "هیڅ توسیع شتون نلري.",
   "install": "ولګوه",
   "uninstall": "غیر نصب کړئ",
-
   "custom": "دود",
   "text-section-bookTitle": "د کتاب سرلیک متن",
   "text-section-heading": "د سرلیک متن",
@@ -79,7 +73,6 @@
   "show-selected-items": "غوره شوي توکي وښایاست",
   "show-highlight-colors": "د روښانه کولو رنګونه وښایاست",
   "show-icon-text": "د آیکون متن ښکاره کړئ",
-
   "extensions": "پراخونې",
   "display": "ښودل",
   "keep-screen-awake": "سکرین ویښ وساتئ",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "د متن فونټ اندازه زیاته کړئ",
   "change-line-spacing": "د کرښې واټن بدل کړئ",
   "line-spacing_lineHeight": "د کرښې واټن: {{lineHeight}}",
-
   "italic": "ایټالیک",
   "underline": "لاندې کرښه",
   "alignment_x": "سمون: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "د متن رنګ",
   "follow_theme": "موضوع تعقیب کړئ",
   "reset-to-default": "په ډیفالټ بیا تنظیم کړئ",
-
   "id_highlight-text-color": "{{id}} د متن رنګ روښانه کړئ",
   "id_highlight-background-color": "{{id}} د شاليد رنګ روښانه کول",
   "all-settings-description": "د متن هره برخه ښه تنظیم کړئ او د هرې موضوع رنګ تنظیم کړئ.",
@@ -126,7 +117,6 @@
   "old-testament_short": "د OT",
   "new-testament_short": "NT د",
   "apocrypha": "اپوکریفا",
-
   "custom-translations": "دودیزې ژباړې",
   "no-translation-results-found": "هیڅ پایله ونه موندل شوه. ایا تاسو غواړئ خپل لټون پراخ کړئ ترڅو جزوي بشپړ ژباړې هم پکې شاملې کړئ؟",
   "show-all-translations": "ټولې ژباړې وښایاست",
@@ -138,7 +128,6 @@
   "complete-translations": "بشپړې ژباړې",
   "all-translations": "ټولې ژباړې",
   "popular-translations": "مشهورې ژباړې",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "۱ زبور",
   "2-psalms": "۲ زبورونه",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "ټولو ترتیباتو ته لاړ شئ",
   "more": "نور",
   "remove-bookmark": "بک مارک لرې کړئ",
-
   "chat": "چیٹ",
   "today": "نن",
   "you": "ته",
@@ -170,7 +158,6 @@
   "category-options": "د فولډر انتخابونه",
   "rename": "نوم بدل کړئ",
   "delete": "ړنګول",
-
   "bookmark-options": "د بک مارک اختیارونه",
   "new-folder-placeholder": "د فولډر نوم",
   "tasks": "دندې",
@@ -182,11 +169,9 @@
   "folder-name-taken": "د دې نوم سره یو فولډر دمخه شتون لري.",
   "add-to-new": "نوي ته اضافه کړئ",
   "save": "خوندي کړئ",
-
   "seed-bible": "د تخم بائبل",
   "take-photo": "عکس واخله",
   "choose-from-gallery": "له ګالري څخه غوره کړئ",
-
   "crop-your-photo": "خپل عکس پرې کړئ",
   "zoom": "لوډ کړئ",
   "set-picture": "انځور تنظیم کړئ",
@@ -212,10 +197,8 @@
   "read-the-bible": "بائبل ولولئ",
   "seed-bible-description": "په سیډ بائبل کې {{bookName}} {{chapterNumber}} ولولئ",
   "social-title": "{{bookName}} {{chapterNumber}} ولولئ",
-
   "chapter-navigation": "د فصل نیویګیشن",
   "tutorial.skip": "پریږدئ",
-
   "tutorial.back": "شاته",
   "tutorial.done": "وشو",
   "tutorial.next": "بل",
@@ -239,7 +222,6 @@
   "copied-translation-share-link": "کاپي شوی ژباړه شریکول لینک",
   "less": "لږ",
   "swipe-up-more": "د نورو لیدلو لپاره پورته سوائپ کړئ",
-  "plans": "پلانونه",
   "reading-plans": "د لوستلو پلانونه",
   "create-reading-plan": "د لوستلو پلان جوړ کړئ",
   "reading-plans-empty": "تاسو لا تر اوسه د لوستلو کوم پلان نلرئ. د پیل کولو لپاره یو جوړ کړئ.",
@@ -328,11 +310,9 @@
   "study-notes": "د مطالعې یادښتونه",
   "content": "منځپانګې",
   "untitled-playlist": "بې سرلیکه پلې لیست",
-
   "discover-annotations-empty": "تاسو هیڅ تشریحات نلرئ",
   "discover-cross-references-empty": "د دې فصل لپاره هیڅ متقابل حوالې نشته.",
   "discover-study-notes-empty": "د دې فصل لپاره د مطالعې یادښتونه نشته.",
-
   "discover-select-tab": "د اړونده موادو موندلو لپاره یو ټب غوره کړئ.",
   "create-playlist": "جوړول",
   "playlist-title_placeholder": "د پلې لیست سرلیک",
@@ -381,12 +361,10 @@
   "delete-playlist-failed": "پلې لیست ړنګ نشو.",
   "collapsed-tab-shared-label": "{{title}} — شریکه غونډه، {{count}} حاضر",
   "playlist-add-mode-label": "د توکي ډول",
-
   "session-host-reconnected": "له غونډې سره بیا وصل شو",
   "session-host-left": "کوربه لاړ — ته له غونډې څخه لرې کړای شوې یې",
   "drag-to-reorder-playlist-item": "د ترتیب بدلولو لپاره کش کړئ",
   "saving": "خوندي کول…",
-
   "unsaved-item-confirm-message": "تاسو د یو داسې توکي زیاتولو پیل کړی چې لا تر اوسه پلی لست ته نه دی زیات شوی. تاسو څه غواړئ وکړئ؟",
   "discard-and-save": "لغوه کول او خوندي کول",
   "add-and-save": "زیاتول او خوندي کول",
@@ -514,7 +492,6 @@
   "reading-plan-preview-reading": "مخکتنه {{reading}}",
   "reading-plan-mark-reading-complete": "لوستل بشپړ شوي په نښه کړئ",
   "reading-plan-link-video": "ویډیو",
-
   "reading-plan-mark-passage-complete": "{{passage}} د لوستل شوي په توګه په نښه کړئ",
   "reading-plan-read-nudge-title": "ښه لوستل!",
   "reading-plan-read-nudge-toast": "{{passage}} بشپړ په نښه کړئ؟",
@@ -522,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "انجیل آنلاین ولولئ، وپلټئ او مطالعه یې کړئ. په ډیری ژبو کې وړیا ژباړې، د مهمو ټکو، یادښتونو، بک مارکونو، او د لوستلو پلانونو سره.",
   "all": "ټول",
-
   "today-bookmarks": "د کتابونو نښې",
   "today-search-verses": "کتابونه، فصلونه، آیتونه ولټوئ....",
   "anonymous-greeting": "ښه راغلاست!",
   "community": "ټولنه",
   "go-somewhere-new": "یو نوی ځای ته لاړ شه",
-
   "open-bible": "خلاص بائبل",
   "personal-greeting": "ښه راغلاست، {{name}} !",
   "resume-reading": "هلته ادامه ورکړئ چیرته چې تاسو پریښودل",
   "resume-reading-loading": "ستاسو د لوستلو تاریخ پورته کیږي…",
   "selected-year": "کال: {{year}}",
-
   "theme-light": "رڼا",
   "theme-dark": "تیاره",
   "installed-extensions": "نصب شوی",
@@ -544,7 +518,6 @@
   "extension-state-installed": "نصب شوی",
   "extension-state-downloaded": "ډاونلوډ شوی",
   "extension-state-pending": "لګول…",
-
   "tutorial.stepProgress": "د { {{total}} څخه {{ {{current}} }} ګام",
   "tutorial.offlineDownloadTitle": "په خپل وسیله کې د ساتلو لپاره یې ټایپ کړئ",
   "tutorial.offlineDownloadBody": "د دې آیکون سره هره ژباړه د آفلاین لوستلو لپاره خوندي کیدی شي.",
@@ -578,7 +551,6 @@
   "tutorial.paneLayoutBody": "د دې ترتیب مینو څخه د څو برخو څنګ په څنګ لوستلو لپاره غوره کړئ.",
   "tutorial.addTabTitle": "نورې برخې خلاصې کړئ",
   "tutorial.addTabBody": "یو نوی ټب اضافه کړئ ترڅو څو کتابونه یا ژباړې څنګ په څنګ ولولئ.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % بشپړ - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % بشپړ شوی",
   "playlist-history-continue": "دوام ورکړئ",
@@ -637,7 +609,6 @@
   "chapter-notes-count_other": "د دې فصل لپاره {{count}} یادښتونه",
   "create-folder": "فولډر جوړ کړئ",
   "edit-bookmark": "بک مارک سم کړئ",
-
   "greeting-afternoon": "بعد له غرمه مو پخیر!",
   "greeting-afternoon-named": "ماسپښین مو پخیر، {{name}} !",
   "greeting-evening": "ماښام مو پخیر!",
@@ -653,32 +624,24 @@
   "ask-ai": "له AI څخه پوښتنه وکړئ",
   "unread-mention": "نه لوستل شوی یادونه",
   "unread-messages": "نه لوستل شوي پیغامونه: {{count}}",
-
   "scripture-width": "د متن پلنوالی",
   "decrease-scripture-width": "د متن پراخوالی کم کړئ",
   "increase-scripture-width": "د متن پراخوالی زیات کړئ",
   "annotations": "یادښتونه",
   "discover-content-panel": "منځپانګه کشف کړئ",
   "discover-book-title": "کشف کړئ {{book}}",
-
   "about-title": "د تخم بائبل په اړه",
   "about-meta-description": "سیډ بایبل یو وړیا بایبل اپلیکیشن دی چې ستاسو د کورنۍ، ملګرو او ټولنې سره یوځای د انجیل لوستلو لپاره جوړ شوی دی - د تل لپاره وړیا، هیڅ اعلانونه یا تادیه والونه نشته.",
-
   "about-action-open-passage": "یوه لاره پرانیزئ",
   "about-action-donate": "مرسته وکړئ",
   "about-action-discord": "د ډیسکارډ سره یوځای شئ",
   "recent-uploads": "وروستي اپلوډونه",
-
   "customization-not-found": "دا اصلاح کول ونه موندل شول.",
   "customization-name": "نوم",
   "customization-primaryColor": "لومړني",
-
   "customization-secondaryColor": "ثانوي",
-
   "customization-tertiaryColor": "دریمه درجه",
-
   "customization-fonts": "فونټونه",
-
   "custom-font-option": "دودیز…",
   "custom-font-name-placeholder": "د ګوګل فونټ نوم",
   "delete-customization": "ړنګول",
@@ -691,10 +654,8 @@
   "extension-availability-available": "شتون لري",
   "extension-availability-auto-installed": "په اتومات ډول نصب شوی",
   "extension-availability-hidden": "پټ شوی",
-
   "variants": "موضوعات",
   "add-variant": "موضوع اضافه کړئ",
-
   "base-theme-description": "هغه بدلونونه چې دا موضوع مخکې له مخکې ټاکل شوې وي د هر هغه څه لپاره بیرته راځي چې تاسو یې تنظیم نه وي کړی. ستاسو خپل سمونونه ساتل کیږي.",
   "reset-to-base-theme": "اساس موضوع ته بیا تنظیم کړئ",
   "low-contrast-warning": "{{label}} : برعکس یوازې {{ratio}} :1 دی — لږترلږه {{minRatio}} :1 هدف ولرئ ترڅو متن د لوستلو وړ پاتې شي.",
@@ -740,14 +701,12 @@
   "save-folder-empty": "دلته تر اوسه هیڅ خوندي نه دي.",
   "save-options": "د خوندي کولو اختیارونه",
   "saves": "خوندي کوي",
-
   "hide-saves": "خوندي شوي توکي پټ کړئ",
   "show-saves": "خوندي شوي توکي ښکاره کړئ",
   "save-verses": "خوندي کړئ",
   "new-save-folder": "نوی فولډر",
   "edit-save": "خوندي کول سمول",
   "remove-save-from-all-folders": "له ټولو فولډرونو څخه لرې کړئ",
-
   "color-hue": "رنګ",
   "color-saturation": "اشباع او روښانتیا",
   "hex-color": "هیکس رنګ",
@@ -862,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "د فارمیټ کولو مدیر نشي پورته کیدی. دا یادښت داسې فارمیټ لري چې ورک شي، نو دا تر هغه وخته پورې نشي سمیدلی تر څو چې تاسو بیا وصل نه شئ.",
   "annotation-text": "د تشریح متن",
   "notes-for-verse": "د آیت {{verse}} لپاره یادښتونه",
-
   "configure-extension-defaults": "د ډیفالټ اووررایډونه تنظیم کړئ",
-
   "extension-settings-defaults-title": "{{name}} ډیفالټ اووررایډز",
   "no-extension-settings": "دا توسیع د تنظیم وړ ترتیبات نلري.",
   "extension-settings-save-failed": "ستاسو تنظیمات خوندي نشول.",
@@ -873,7 +830,6 @@
   "setting-no-default": "هیڅ ډیفالټ نشته",
   "override-setting": "{{name}} له سره ولیکئ",
   "override-setting-label": "له سره غور کول",
-
   "discover-choose-filter-hint": "د دې فصل څخه د نورو معلوماتو لیدلو لپاره پورته فلټر غوره کړئ.",
   "take-a-tour": "سفر وکړئ",
   "share-reading-plan": "پلان شریک کړئ",
@@ -1057,7 +1013,6 @@
   "my-bookmark-numbered": "زما بک مارک {{number}}",
   "bookmark-move-hint": "دې فصل ته د لیږدولو لپاره په بک مارک باندې کلیک وکړئ.",
   "move-bookmark-here": "دلته {{name}} ولېږئ",
-
   "play": "لوبه وکړئ",
   "pause": "وقفه",
   "audio-playback-position": "د پلې بیک موقعیت",
@@ -1066,7 +1021,6 @@
   "audio-scrub-verse": "آیت {{verse}}",
   "tab-playing-audio": "غږول",
   "collapsed-tab-playing-label": "{{label}} — غږ غږول",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} موضوعات",
   "customization-theme-count_one": "{{count}} موضوع",
@@ -1105,7 +1059,6 @@
   "about-community-body": "ایمان د یوځای ژوند کولو لپاره دی. د تخم بائبل ستاسو د کورنۍ، ستاسو نږدې ملګرو او ستاسو د کور کلیسا سره د انجیل لوستلو لپاره جوړ شوی دی.",
   "discovered-content": "کشف شوی مواد",
   "show-discovered-content": "کشف شوي مواد ښکاره کړئ",
-
   "extension-availability-default": "ډیفالټ ( {{availability}} )",
   "customization-extensions-default": "د نورو توسیعونو لپاره ډیفالټ",
   "customization-extensions-default-hint": "په هر هغه توسیع باندې تطبیق کیږي چې تاسو یې لاندې نه دی ټاکلی، په شمول د هغو نویو توسیعونو چې وروسته اضافه شوي دي.",
@@ -1138,7 +1091,6 @@
   "playlist-scripture-note-return": "بیرته پلې لیست ته",
   "playlist-scripture-note-aria": "{{passage}} په اړه یادښت",
   "playlist-scripture-note-progress": "{{current}} د {{total}} څخه",
-
   "unsaved-item-edit-confirm-message": "تاسو یو شی بدل کړی دی مګر تر اوسه یې هغه بدلونونه نه دي خوندي کړي. تاسو څه کول غواړئ؟",
   "keep-changes-and-save": "بدلونونه وساتئ او خوندي کړئ",
   "reading-plan-edit-reading": "لوستل سم کړئ",
@@ -1153,7 +1105,6 @@
   "branding": "برانډینګ",
   "create-custom-branding-menu-item": "دودیز برانډینګ",
   "your-content-empty-branding": "ستاسو د خوښې وړ برانډینګ به دلته ښکاره شي.",
-
   "extension-consent-from": "له {{host}} څخه",
   "extension-consent-source-version": "نسخه {{version}} · له {{host}} څخه",
   "extension-consent-uploader-unnamed": "د تخم بائبل کاروونکی",
@@ -1201,7 +1152,6 @@
   "extension-permission-reading-selection": "وګورئ چې کوم آیتونه تاسو غوره کوئ",
   "extension-permission-reading-navigate": "خلاصې برخې",
   "extension-permission-network": "د {{host}} سره وصل شئ",
-
   "extension-consent-not-now": "اوس نه",
   "extension-consent-nothing-yet": "د اوس لپاره، دا به ستاسو هیڅ معلوماتو ته لاسرسی ونلري.",
   "extension-permission-reading-history": "د لوستلو تاریخ وګورئ",
@@ -1239,7 +1189,6 @@
   "extension-capture-cancel": "لغوه کول",
   "extension-consent-high-risk": "حساس",
   "extension-modal-ok": "سمه ده",
-
   "extension-permissions-restart-note": "بدلونونه سمدلاسه اغیزمن کیږي. {{name}} د دوی د پورته کولو لپاره بیا پیل کیږي.",
   "extension-permissions-saved": "خوندي شو. {{name}} د نوي اجازې سره بیا پیل شو.",
   "extension-permissions-failed": "هغه خوندي نه شو. بیا هڅه وکړه.",
@@ -1277,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "کله چې کوربه یو آیت غوره کوي، اغیزې ښکاره کړئ.",
   "session-settings-verse-effects-desc-everyone": "کله چې څوک یو آیت غوره کوي نو اغیزې ښکاره کړئ.",
   "session-settings-verse-effects-desc-none": "د شعر د انتخاب اغیزې د هرچا لپاره بندې دي.",
-
   "account": "حساب",
   "scroll-filters-start": "فلټرونه د پیل په لور سکرول کړئ",
-  "scroll-filters-end": "فلټرونه د پای په لور سکرول کړئ"
+  "scroll-filters-end": "فلټرونه د پای په لور سکرول کړئ",
+  "download": "ډاونلوډ کړئ",
+  "image-details-uploaded": "پورته شوی",
+  "image-details-dimensions": "ابعاد",
+  "image-details-dimensions-value": "{{width}} × {{height}} پېکسل",
+  "image-details-type": "ډول",
+  "image-details-cover-of": "د پوښ",
+  "image-details-not-a-cover": "د پوښ په توګه نه کارول کیږي",
+  "delete-customization-confirm-title": "دودیز برانډینګ حذف کړئ؟",
+  "delete-customization-confirm-message": "د \" {{name}} \" دودیز برانډینګ ړنګ کړئ؟ دا بیرته نشي راوستلی.",
+  "delete-customization-failed": "د ګمرک برانډینګ حذف نشو کولی.",
+  "delete-variant-confirm-title": "موضوع ړنګ کړئ؟",
+  "delete-variant-confirm-message": "د \" {{name}} \" موضوع ړنګول؟ دا بیرته نه شي راوستلی.",
+  "delete-variant-confirm-message-unnamed": "دا موضوع ړنګه کړئ؟ دا بیرته نه شي راوستلی.",
+  "delete-variant-failed": "موضوع ړنګ نشوه.",
+  "delete-highlight-confirm-title": "روښانه شوی حذف کړئ؟",
+  "delete-highlight-confirm-message": "په {{reference}} کې روښانه نښه ړنګه کړئ؟ دا بیرته نه شي راوستلی.",
+  "delete-highlight-failed": "روښانه نښه ړنګ نشوه.",
+  "delete-annotation-on-confirm-message": "په {{reference}} کې تشریح ړنګ کړئ؟ دا بیرته نشي راوستلی.",
+  "remove-from-folder": "له فولډر څخه لرې کړئ",
+  "save-folders": "په {{folders}} کې",
+  "delete-save-confirm-title": "خوندي کول حذف کړئ؟",
+  "delete-save-confirm-message": "{{reference}} لپاره خوندي کول حذف کړئ؟ دا بیرته نشي راوستلی.",
+  "delete-save-confirm-message-folders": "د {{reference}} لپاره خوندي کول له {{folders}} څخه حذف کړئ؟ دا بیرته نشي راوستل کیدی.",
+  "delete-save-failed": "خوندي شوی حذف نشو.",
+  "delete-save-folder-confirm-title": "فولډر ړنګ کړئ؟",
+  "delete-save-folder-confirm-message": "\" {{name}} \" فولډر ړنګ کړئ؟",
+  "delete-save-folder-confirm-deletes": "هغه {{count}} خوندي شوي فایلونه چې یوازې پدې فولډر کې دي هم به حذف شي.",
+  "delete-save-folder-confirm-deletes_one": "هغه خوندي شوي توکي چې یوازې پدې فولډر کې دي هم به حذف شي.",
+  "delete-save-folder-confirm-deletes_other": "هغه {{count}} خوندي شوي فایلونه چې یوازې پدې فولډر کې دي هم به حذف شي.",
+  "delete-save-folder-confirm-keeps": "هغه {{count}} خوندي شوي فایلونه چې په نورو فولډرونو کې هم دي هلته به پاتې شي.",
+  "delete-save-folder-confirm-keeps_one": "هغه خوندي کول چې په بل فولډر کې هم دي هلته به پاتې شي.",
+  "delete-save-folder-confirm-keeps_other": "هغه {{count}} خوندي شوي فایلونه چې په نورو فولډرونو کې هم دي هلته به پاتې شي.",
+  "cant-be-undone": "دا بیرته نه شي راګرځیدلی.",
+  "delete-save-folder-failed": "فولډر ړنګ نشو.",
+  "download-image-failed": "انځور ډاونلوډ نشو کولی.",
+  "session-settings-verse-effects-hosts-only": "یوازې کوربه",
+  "session-settings-verse-effects-everyone": "هرڅوک",
+  "session-settings-verse-effects-none": "هیڅ نه",
+  "loading-books": "کتابونه بارول…",
+  "books-load-failed": "کتابونه نه شي پورته کېدای. خپل اړیکه وګورئ او بیا هڅه وکړئ.",
+  "loading-translation": "{{name}} بارول کیږي …",
+  "translation-load-failed": "{{name}} پورته نشو.",
+  "loading-translations": "ژباړې بارېږي…",
+  "translations-load-failed": "د ژباړو بشپړ لیست نه شو پورته کولی، نو ممکن ځینې یې ورک وي.",
+  "verse-of-the-day": "د ورځې آیت",
+  "verse-of-the-day-loading": "د ورځې آیت پورته کول…"
 }

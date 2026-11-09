@@ -28,22 +28,18 @@
   "searching": "Soek tans...",
   "no-search-results": "Geen ooreenstemmende verse nie.",
   "open-chapter": "Maak hoofstuk oop",
-
   "uploading": "Laai tans op...",
   "profile-name": "Profielnaam",
   "profile-name-placeholder": "bv. Craig-familie",
-
   "description": "Beskrywing",
   "optional": "(Opsioneel)",
   "description-placeholder": "Voer jou profielbeskrywing in...",
   "location": "Ligging",
   "location-placeholder": "bv. Austin, TX",
-
   "copied": "Gekopieer",
   "copy": "Kopieer",
   "save-changes": "Stoor veranderinge",
   "sign-out": "Teken uit",
-
   "log-in": "Teken aan",
   "tanakh": "Tanakh",
   "traditional": "Tradisioneel",
@@ -57,7 +53,6 @@
   "scripture-settings": "Skrifinstellings",
   "scripture-elements": "Skrifelemente",
   "scripture-settings-font-size-example": "'n",
-
   "show-headings": "Wys opskrifte",
   "show-verse-numbers": "Wys versnommers",
   "show-footnotes": "Wys voetnotas",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Geen uitbreidings beskikbaar nie.",
   "install": "Installeer",
   "uninstall": "Deïnstalleer",
-
   "custom": "Pasgemaak",
   "text-section-bookTitle": "Boektitelteks",
   "text-section-heading": "Opskrifteks",
@@ -92,7 +86,6 @@
   "show-selected-items": "Wys geselekteerde items",
   "show-highlight-colors": "Wys kleure vir die uitlig",
   "show-icon-text": "Wys ikoonteks",
-
   "extensions": "Uitbreidings",
   "display": "Vertoon",
   "theme-and-text": "Tema en teks",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Vergroot die lettergrootte van die Skrif",
   "change-line-spacing": "Verander reëlafstand",
   "line-spacing_lineHeight": "Lynafstand: {{lineHeight}}",
-
   "italic": "Skuinsdruk",
   "underline": "Onderstreep",
   "alignment_x": "Belyning: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Tekskleur",
   "follow_theme": "Volg tema",
   "reset-to-default": "Stel terug na verstekwaarde",
-
   "id_highlight-text-color": "{{id}} kleur van die uitligteks",
   "id_highlight-background-color": "{{id}} agtergrondkleur van die uitlig",
   "all-settings-description": "Verfyn elke teksafdeling en pas elke temakleur aan.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokriewe",
-
   "custom-translations": "Pasgemaakte vertalings",
   "no-translation-results-found": "Geen resultate gevind nie. Wil jy jou soektog uitbrei om ook gedeeltelik volledige vertalings in te sluit?",
   "show-all-translations": "Wys alle vertalings",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalms",
   "5-psalms": "5 Psalms",
   "remove-bookmark": "Verwyder boekmerk",
-
   "chat": "Klets",
   "today": "Vandag",
   "you": "Jy",
@@ -169,7 +158,6 @@
   "category-options": "Voueropsies",
   "rename": "Hernoem",
   "delete": "Vee uit",
-
   "bookmark-options": "Boekmerkopsies",
   "new-folder-placeholder": "Lêernaam",
   "tasks": "Take",
@@ -180,12 +168,10 @@
   "folder-name-taken": "'n Vouer met daardie naam bestaan ​​reeds.",
   "add-to-new": "Voeg by nuut",
   "save": "Stoor",
-
   "apocrypha-info-text": "Geen van die geskrifte in hierdie afdeling is ooit deur vroeë Joodse of Christelike gemeenskappe as die Skrif beskou nie. Die Bybel is 'n spesifieke versameling boeke. Jode en Christene het nog altyd saamgestem oor die Ou Testament, wat afkomstig is van 'n vaste stel heilige geskrifte wat die Joodse volk die Tanakh genoem het en Christene die Ou Testament. Die inhoud van die Tanakh en die Ou Testament is presies dieselfde, maar word gewoonlik anders gerangskik. Christene erken ook die Nuwe Testament, wat die verhaal van Jesus, sy leringe en die geskrifte van sy volgelinge vertel. Die geskrifte hieronder was bekend en wyd gelees ten tye van die Bybel se skryf, maar hulle is nooit as die Skrif behandel nie. Terwyl antieke outeurs soms 'n wye reeks tekste aangehaal het, insluitend digters, filosowe en ander geskrifte, is die aanhaling van iets nie dieselfde as om dit as die Skrif te behandel nie. Hierdie geskrifte word hier slegs vir historiese en literêre verwysing ingesluit.",
   "seed-bible": "Saad Bybel",
   "take-photo": "Neem 'n foto",
   "choose-from-gallery": "Kies uit galery",
-
   "crop-your-photo": "Sny jou foto",
   "zoom": "Zoem",
   "set-picture": "Stel prent",
@@ -211,10 +197,8 @@
   "read-the-bible": "Lees die Bybel",
   "seed-bible-description": "Lees {{bookName}} {{chapterNumber}} in die Saadbybel",
   "social-title": "Lees {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Hoofstuk navigasie",
   "tutorial.skip": "Slaan oor",
-
   "tutorial.back": "Terug",
   "tutorial.done": "Klaar",
   "tutorial.next": "Volgende",
@@ -238,7 +222,6 @@
   "copied-translation-share-link": "Gekopieerde vertalingdeelskakel",
   "less": "Minder",
   "swipe-up-more": "Swiep op om meer te sien",
-  "plans": "Planne",
   "reading-plans": "Leesplanne",
   "create-reading-plan": "Skep leesplan",
   "reading-plans-empty": "Jy het nog geen leesplanne nie. Skep een om te begin.",
@@ -327,11 +310,9 @@
   "study-notes": "Studienotas",
   "content": "Inhoud",
   "untitled-playlist": "Naamlose snitlys",
-
   "discover-annotations-empty": "Jy het geen aantekeninge nie",
   "discover-cross-references-empty": "Geen kruisverwysings vir hierdie hoofstuk nie.",
   "discover-study-notes-empty": "Geen studienotas vir hierdie hoofstuk nie.",
-
   "discover-select-tab": "Kies 'n oortjie om verwante materiaal te ontdek.",
   "create-playlist": "Skep",
   "playlist-title_placeholder": "Titel van die snitlys",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "Kon nie die snitlys uitvee nie.",
   "collapsed-tab-shared-label": "{{title}} — gedeelde sessie, {{count}} teenwoordig",
   "playlist-add-mode-label": "Itemtipe",
-
   "session-host-reconnected": "Herverbind met die sessie",
   "session-host-left": "Die gasheer het vertrek — jy is van die sessie verwyder",
   "drag-to-reorder-playlist-item": "Sleep om te herrangskik",
   "saving": "Stoor…",
-
   "unsaved-item-confirm-message": "Jy het begin om 'n item by te voeg wat nog nie by die speellys gevoeg is nie. Wat wil jy doen?",
   "discard-and-save": "Verwerp en stoor",
   "add-and-save": "Voeg by en stoor",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "Voorskou {{reading}}",
   "reading-plan-mark-reading-complete": "Merk lees voltooi",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Merk {{passage}} as gelees",
   "reading-plan-read-nudge-title": "Lekker leesstof!",
   "reading-plan-read-nudge-toast": "Merk {{passage}} as voltooid?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Lees, soek en bestudeer die Bybel aanlyn. Gratis vertalings in baie tale, met hoogtepunte, notas, boekmerke en leesplanne.",
   "all": "Alles",
-
   "today-bookmarks": "BOEKEMERKE",
   "today-search-verses": "Soek boeke, hoofstukke, verse....",
   "anonymous-greeting": "Welkom!",
   "community": "GEMEENSKAP",
   "go-somewhere-new": "GAAN IEWERS NUUT",
-
   "open-bible": "Oop Bybel",
   "personal-greeting": "Welkom, {{name}} !",
   "resume-reading": "GAAN VOORT WAAR JY OPGEHOU HET",
   "resume-reading-loading": "Laai jou leesgeskiedenis…",
   "selected-year": "Jaar: {{year}}",
-
   "theme-light": "Lig",
   "theme-dark": "Donker",
   "installed-extensions": "Geïnstalleer",
@@ -543,7 +518,6 @@
   "extension-state-installed": "Geïnstalleer",
   "extension-state-downloaded": "Afgelaai",
   "extension-state-pending": "Installeer…",
-
   "tutorial.stepProgress": "Stap {{current}} van {{total}}",
   "tutorial.offlineDownloadTitle": "Tik om dit op jou toestel te hou",
   "tutorial.offlineDownloadBody": "Enige vertaling met hierdie ikoon kan gestoor word vir vanlyn lees.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "Kies hoeveel gedeeltes langs mekaar gelees moet word vanaf hierdie uitlegkieslys.",
   "tutorial.addTabTitle": "Maak meer gedeeltes oop",
   "tutorial.addTabBody": "Voeg 'n nuwe oortjie by om verskeie boeke of vertalings langs mekaar te lees.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % voltooi - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % voltooi",
   "playlist-history-continue": "Gaan voort",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} notas vir hierdie hoofstuk",
   "create-folder": "Skep vouer",
   "edit-bookmark": "Wysig boekmerk",
-
   "greeting-afternoon": "Goeiemiddag!",
   "greeting-afternoon-named": "Goeiemiddag, {{name}} !",
   "greeting-evening": "Goeienaand!",
@@ -652,32 +624,24 @@
   "ask-ai": "Vra KI",
   "unread-mention": "Ongeleesde vermelding",
   "unread-messages": "Ongeleesde boodskappe: {{count}}",
-
   "scripture-width": "Skrifbreedte",
   "decrease-scripture-width": "Verklein die breedte van die Skrifgedeelte",
   "increase-scripture-width": "Vergroot die breedte van die Skrif",
   "annotations": "Aantekeninge",
   "discover-content-panel": "Ontdek inhoud",
   "discover-book-title": "Ontdek {{book}}",
-
   "about-title": "Oor Saad Bybel",
   "about-meta-description": "Seed Bible is 'n gratis Bybel-app wat gebou is om die Skrif saam met jou familie, vriende en gemeenskap te lees — vir altyd gratis, geen advertensies of betaalmure nie.",
-
   "about-action-open-passage": "Maak 'n gedeelte oop",
   "about-action-donate": "Skenk",
   "about-action-discord": "Sluit aan by Discord",
   "recent-uploads": "Onlangse oplaaie",
-
   "customization-not-found": "Hierdie aanpassing kon nie gevind word nie.",
   "customization-name": "Naam",
   "customization-primaryColor": "Primêr",
-
   "customization-secondaryColor": "Sekondêr",
-
   "customization-tertiaryColor": "Tersiêre",
-
   "customization-fonts": "Lettertipes",
-
   "custom-font-option": "Pasgemaak…",
   "custom-font-name-placeholder": "Google Font naam",
   "delete-customization": "Vee uit",
@@ -690,10 +654,8 @@
   "extension-availability-available": "Beskikbaar",
   "extension-availability-auto-installed": "Outomaties geïnstalleer",
   "extension-availability-hidden": "Versteek",
-
   "variants": "Temas",
   "add-variant": "Voeg tema by",
-
   "base-theme-description": "Veranderinge waarop hierdie tema vooraf ingestel is, val terug vir enigiets wat jy nie aangepas het nie. Jou eie wysigings word behou.",
   "reset-to-base-theme": "Stel terug na basistema",
   "low-contrast-warning": "{{label}} : kontras is slegs {{ratio}} :1 — mik vir ten minste {{minRatio}} :1 sodat teks leesbaar bly.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "Geen stoorplekke hier nog nie.",
   "save-options": "Stoor opsies",
   "saves": "Stoor",
-
   "hide-saves": "Versteek stoorplekke",
   "show-saves": "Wys gestoorde",
   "save-verses": "Stoor",
   "new-save-folder": "Nuwe vouer",
   "edit-save": "Wysig stoor",
   "remove-save-from-all-folders": "Verwyder uit alle vouers",
-
   "color-hue": "Kleurtoon",
   "color-saturation": "Versadiging en helderheid",
   "hex-color": "Heksadesimum kleur",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Die formateringsredigeerder kon nie laai nie. Hierdie nota het formatering wat verlore sou gaan, so dit kan nie geredigeer word totdat jy weer verbind nie.",
   "annotation-text": "Annotasieteks",
   "notes-for-verse": "Notas vir vers {{verse}}",
-
   "configure-extension-defaults": "Konfigureer standaardoorskrywings",
-
   "extension-settings-defaults-title": "{{name}} standaard oorskrywings",
   "no-extension-settings": "Hierdie uitbreiding het geen konfigureerbare instellings nie.",
   "extension-settings-save-failed": "Kon nie jou instellings stoor nie.",
@@ -872,7 +830,6 @@
   "setting-no-default": "Geen standaard nie",
   "override-setting": "Oorskryf {{name}}",
   "override-setting-label": "Oorskryf",
-
   "discover-choose-filter-hint": "Kies 'n filter hierbo om meer van hierdie hoofstuk te sien.",
   "take-a-tour": "Neem 'n toer",
   "share-reading-plan": "Deelplan",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "My boekmerk {{number}}",
   "bookmark-move-hint": "Tik op 'n boekmerk om dit na hierdie hoofstuk te skuif.",
   "move-bookmark-here": "Skuif {{name}} hierheen",
-
   "play": "Speel",
   "pause": "Pouseer",
   "audio-playback-position": "Terugspeelposisie",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "Vers {{verse}}",
   "tab-playing-audio": "Speel klank",
   "collapsed-tab-playing-label": "{{label}} — speel klank",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} temas",
   "customization-theme-count_one": "{{count}} tema",
@@ -1104,7 +1059,6 @@
   "about-community-body": "Geloof is bedoel om saam geleef te word. Seed Bible is gebou om die Skrif saam met jou familie, jou naaste vriende en jou huiskerk te lees.",
   "discovered-content": "Ontdekte inhoud",
   "show-discovered-content": "Wys ontdekte inhoud",
-
   "extension-availability-default": "Standaard ( {{availability}} )",
   "customization-extensions-default": "Standaard vir ander uitbreidings",
   "customization-extensions-default-hint": "Geld vir elke uitbreiding wat jy nie hieronder gestel het nie, insluitend nuwes wat later bygevoeg word",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "Terug na snitlys",
   "playlist-scripture-note-aria": "Nota oor {{passage}}",
   "playlist-scripture-note-progress": "{{current}} van {{total}}",
-
   "unsaved-item-edit-confirm-message": "Jy het 'n item verander, maar het nog nie daardie veranderinge gestoor nie. Wat wil jy doen?",
   "keep-changes-and-save": "Behou veranderinge en stoor",
   "reading-plan-edit-reading": "Wysig leeswerk",
@@ -1152,7 +1105,6 @@
   "branding": "Handelsmerk",
   "create-custom-branding-menu-item": "Pasgemaakte handelsmerk",
   "your-content-empty-branding": "Pasgemaakte handelsmerk wat jy skep, sal hier verskyn.",
-
   "extension-consent-from": "Van {{host}}",
   "extension-consent-source-version": "Weergawe {{version}} · van {{host}}",
   "extension-consent-uploader-unnamed": "'n Saad Bybel Gebruiker",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "Kyk watter verse jy kies",
   "extension-permission-reading-navigate": "Oop gange",
   "extension-permission-network": "Koppel aan {{host}}",
-
   "extension-consent-not-now": "Nie nou nie",
   "extension-consent-nothing-yet": "Vir nou sal dit nie toegang tot enige van jou inligting hê nie.",
   "extension-permission-reading-history": "Sien jou leesgeskiedenis",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "Kanselleer",
   "extension-consent-high-risk": "Sensitief",
   "extension-modal-ok": "Goed",
-
   "extension-permissions-restart-note": "Veranderinge tree dadelik in werking. {{name}} herbegin om hulle te implementeer.",
   "extension-permissions-saved": "Gestoor. {{name}} het herbegin met die nuwe toestemmings.",
   "extension-permissions-failed": "Dit het nie gestoor nie. Probeer weer.",
@@ -1276,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Wys effekte wanneer 'n aanbieder 'n vers kies.",
   "session-settings-verse-effects-desc-everyone": "Wys effekte wanneer iemand 'n vers kies.",
   "session-settings-verse-effects-desc-none": "Versseleksie-effekte is vir almal afgeskakel.",
-
   "account": "Rekening",
   "scroll-filters-start": "Blaai filters na begin",
-  "scroll-filters-end": "Blaai filters na die einde"
+  "scroll-filters-end": "Blaai filters na die einde",
+  "download": "Laai af",
+  "image-details-uploaded": "Opgelaai",
+  "image-details-dimensions": "Afmetings",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Tipe",
+  "image-details-cover-of": "Omslag van",
+  "image-details-not-a-cover": "Nie as 'n omslag gebruik nie",
+  "delete-customization-confirm-title": "Vee persoonlike handelsmerk uit?",
+  "delete-customization-confirm-message": "Vee die persoonlike handelsmerk \" {{name}} \" uit? Dit kan nie ongedaan gemaak word nie.",
+  "delete-customization-failed": "Kon nie die persoonlike handelsmerk verwyder nie.",
+  "delete-variant-confirm-title": "Vee tema uit?",
+  "delete-variant-confirm-message": "Vee tema \" {{name}} \" uit? Dit kan nie ongedaan gemaak word nie.",
+  "delete-variant-confirm-message-unnamed": "Vee hierdie tema uit? Dit kan nie ongedaan gemaak word nie.",
+  "delete-variant-failed": "Kon nie die tema verwyder nie.",
+  "delete-highlight-confirm-title": "Vee hoogtepunt uit?",
+  "delete-highlight-confirm-message": "Vee die merk op {{reference}} uit? Dit kan nie ongedaan gemaak word nie.",
+  "delete-highlight-failed": "Kon nie die hoogtepunt verwyder nie.",
+  "delete-annotation-on-confirm-message": "Vee die aantekening op {{reference}} uit? Dit kan nie ongedaan gemaak word nie.",
+  "remove-from-folder": "Verwyder uit vouer",
+  "save-folders": "In {{folders}}",
+  "delete-save-confirm-title": "Vee stoorplek uit?",
+  "delete-save-confirm-message": "Vee stoor vir {{reference}} uit? Dit kan nie ongedaan gemaak word nie.",
+  "delete-save-confirm-message-folders": "Vee stoor vir {{reference}} uit {{folders}} uit? Dit kan nie ongedaan gemaak word nie.",
+  "delete-save-failed": "Kon nie die stoorplek verwyder nie.",
+  "delete-save-folder-confirm-title": "Vee die vouer uit?",
+  "delete-save-folder-confirm-message": "Vee vouer \" {{name}} \" uit?",
+  "delete-save-folder-confirm-deletes": "Die {{count}} gestoorde items wat slegs in hierdie vouer is, sal ook uitgevee word.",
+  "delete-save-folder-confirm-deletes_one": "Die gestoorde lêer wat slegs in hierdie vouer is, sal ook uitgevee word.",
+  "delete-save-folder-confirm-deletes_other": "Die {{count}} gestoorde items wat slegs in hierdie vouer is, sal ook uitgevee word.",
+  "delete-save-folder-confirm-keeps": "Die {{count}} gestoorde items wat ook in ander vouers is, sal daar bly.",
+  "delete-save-folder-confirm-keeps_one": "Die gestoorde lêer wat ook in 'n ander vouer is, sal daar bly.",
+  "delete-save-folder-confirm-keeps_other": "Die {{count}} gestoorde items wat ook in ander vouers is, sal daar bly.",
+  "cant-be-undone": "Dit kan nie ongedaan gemaak word nie.",
+  "delete-save-folder-failed": "Kon nie die vouer verwyder nie.",
+  "download-image-failed": "Kon nie die beeld aflaai nie.",
+  "session-settings-verse-effects-hosts-only": "Slegs gashere",
+  "session-settings-verse-effects-everyone": "Almal",
+  "session-settings-verse-effects-none": "Geen",
+  "loading-books": "Laai boeke…",
+  "books-load-failed": "Die boeke kon nie gelaai word nie. Gaan jou verbinding na en probeer weer.",
+  "loading-translation": "Laai {{name}} …",
+  "translation-load-failed": "{{name}} kon nie gelaai word nie.",
+  "loading-translations": "Laai vertalings…",
+  "translations-load-failed": "Kon nie die volledige lys vertalings laai nie, so sommige mag dalk ontbreek.",
+  "verse-of-the-day": "VERS VAN DIE DAG",
+  "verse-of-the-day-loading": "Laai tans die vers van die dag…"
 }

@@ -238,8 +238,6 @@ function createState(customization: SeedBibleCustomization): SeedBibleState {
   const settings = {
     settings: signal({
       themeId: "light",
-      customTheme: {},
-      customHighlights: {},
     }),
   } as unknown as SettingsManager;
 

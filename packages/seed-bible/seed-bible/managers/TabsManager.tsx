@@ -249,6 +249,7 @@ export function readInitialReadingParams(
     bookId: parsed.bookId ?? parsed.rawBookSegment,
     chapter: parsed.chapter,
     specified: true,
+    languageOnly: false,
   };
 }
 
@@ -337,6 +338,15 @@ function createSharedChatOrNull(
  */
 export interface TabsManager {
   defaultTranslation: TranslationWithLanguage;
+
+  /**
+   * The translation a reader would be on with nothing else to go by, for code
+   * that needs one while no tab is open: the profile's saved translation, then
+   * the active Customization's default, then the branding default, then the
+   * default for the current UI language. A deep link's translation only ever
+   * applies to the tab it opened, so it isn't considered.
+   */
+  preferredTranslationId: () => string;
 
   /** Ordered tab list used by the tabs UI. */
   tabs: Signal<ReaderTab[]>;
@@ -467,12 +477,14 @@ export function createTabs(
   // translationId path segment (even for the app's own default), so re-parsing
   // the *current* URL later can no longer tell "the visitor's own link named a
   // translation" apart from "the app defaulted it." Used by the profile-restore
-  // effect to avoid overriding an explicit deep link.
+  // effect to avoid overriding an explicit deep link. A non-empty `?lang=`
+  // counts too: it asks for that language's Bible (see `readQueryReadingParams`).
   const hadExplicitInitialUrlTranslation =
     parseReadingPath(navigation.initialUrl.pathname, navigation.basePath) !==
       null ||
     navigation.initialUrl.searchParams.has("translationId") ||
-    navigation.initialUrl.searchParams.has("translation");
+    navigation.initialUrl.searchParams.has("translation") ||
+    !!navigation.initialUrl.searchParams.get("lang");
   selfHealNonCanonicalPath(navigation);
 
   // Every startup read below comes from `initialUrl` — the frozen snapshot of the
@@ -611,7 +623,13 @@ export function createTabs(
     const query: QueryReadingParams = navigation.initialUrl.searchParams.has(
       "sessionId"
     )
-      ? { translationId: null, bookId: null, chapter: null, specified: false }
+      ? {
+          translationId: null,
+          bookId: null,
+          chapter: null,
+          specified: false,
+          languageOnly: false,
+        }
       : readInitialReadingParams(navigation.initialUrl, navigation.basePath);
     const { tabs: descriptors, selectedTabId: restoredSelectedTabId } =
       reconcileStoredTabs(storedState, query, defaultTranslation.id);
@@ -1303,8 +1321,24 @@ export function createTabs(
     });
   };
 
+  const preferredTranslationId = (): string => {
+    const savedTranslationId = getProfileConfigValue(
+      login.profile.peek(),
+      PROFILE_TRANSLATION_ID
+    );
+    if (typeof savedTranslationId === "string" && savedTranslationId) {
+      return savedTranslationId;
+    }
+    return (
+      activeCustomizationDefaultTranslationId?.peek() ||
+      branding?.defaultTranslationId ||
+      getDefaultTranslationForLanguage(i18nManager.language.peek()).id
+    );
+  };
+
   return {
     defaultTranslation,
+    preferredTranslationId,
     tabs,
     selectedTabId,
     addTab,

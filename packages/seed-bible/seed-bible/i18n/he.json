@@ -28,22 +28,18 @@
   "searching": "מחפש...",
   "no-search-results": "אין פסוקים תואמים.",
   "open-chapter": "פתח פרק",
-
   "uploading": "מעלה...",
   "profile-name": "שם הפרופיל",
   "profile-name-placeholder": "למשל משפחת קרייג",
-
   "description": "תֵאוּר",
   "optional": "(אופציונלי)",
   "description-placeholder": "הזן את תיאור הפרופיל שלך...",
   "location": "מִקוּם",
   "location-placeholder": "לדוגמה, אוסטין, טקסס",
-
   "copied": "מוּעֲתָק",
   "copy": "לְהַעְתִיק",
   "save-changes": "שמירת שינויים",
   "sign-out": "יציאה",
-
   "log-in": "התחברות",
   "tanakh": "תנ\"ך",
   "traditional": "מָסוֹרתִי",
@@ -57,7 +53,6 @@
   "scripture-settings": "הגדרות כתבי הקודש",
   "scripture-elements": "אלמנטים של כתבי הקודש",
   "scripture-settings-font-size-example": "א",
-
   "show-headings": "הצג כותרות",
   "show-verse-numbers": "הצג מספרי פסוקים",
   "show-footnotes": "הצג הערות שוליים",
@@ -71,7 +66,6 @@
   "no-extensions-available": "אין הרחבות זמינות.",
   "install": "לְהַתְקִין",
   "uninstall": "הסרת ההתקנה",
-
   "custom": "מִנְהָג",
   "text-section-bookTitle": "טקסט כותרת הספר",
   "text-section-heading": "טקסט כותרת",
@@ -92,7 +86,6 @@
   "show-selected-items": "הצג פריטים שנבחרו",
   "show-highlight-colors": "הצג צבעי סימון",
   "show-icon-text": "הצג טקסט סמל",
-
   "extensions": "הרחבות",
   "display": "לְהַצִיג",
   "theme-and-text": "נושא וטקסט",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "הגדלת גודל גופן של כתבי הקודש",
   "change-line-spacing": "שינוי ריווח שורות",
   "line-spacing_lineHeight": "ריווח שורות: {{lineHeight}}",
-
   "italic": "נטוי",
   "underline": "לָשִׂים דָגֵשׁ",
   "alignment_x": "יישור: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "צבע הטקסט",
   "follow_theme": "עקוב אחר הנושא",
   "reset-to-default": "איפוס לברירת מחדל",
-
   "id_highlight-text-color": "צבע הטקסט המודגש של {{id}}",
   "id_highlight-background-color": "צבע רקע הדגשה של {{id}}",
   "all-settings-description": "כוונן כל מקטע טקסט והתאם אישית כל צבע של ערכת נושא.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "אפוקריפ",
-
   "custom-translations": "תרגומים מותאמים אישית",
   "no-translation-results-found": "לא נמצאו תוצאות. האם תרצה להרחיב את החיפוש שלך כך שיכלול גם תרגומים חלקיים?",
   "show-all-translations": "הצג את כל התרגומים",
@@ -159,7 +149,6 @@
   "4-psalms": "4 תהילים",
   "5-psalms": "5 תהילים",
   "remove-bookmark": "הסר סימניה",
-
   "chat": "לְשׂוֹחֵחַ",
   "today": "הַיוֹם",
   "you": "אַתָה",
@@ -169,7 +158,6 @@
   "category-options": "אפשרויות תיקייה",
   "rename": "שינוי שם",
   "delete": "לִמְחוֹק",
-
   "bookmark-options": "אפשרויות סימניות",
   "new-folder-placeholder": "שם התיקייה",
   "tasks": "משימות",
@@ -180,12 +168,10 @@
   "folder-name-taken": "תיקייה בשם זה כבר קיימת.",
   "add-to-new": "הוסף לחדש",
   "save": "לְהַצִיל",
-
   "apocrypha-info-text": "אף אחד מהכתבים בסעיף זה לא נחשב מעולם לכתבי קודש על ידי קהילות יהודיות או נוצריות מוקדמות. התנ\"ך הוא אוסף ספציפי של ספרים. יהודים ונוצרים תמיד הסכימו על הברית הישנה, ​​שמקורה במערכת קבועה של כתבי קודש שהעם היהודי מכנה תנ\"ך והנוצרים מכנים הברית הישנה. תוכן התנ\"ך והברית הישנה זהה לחלוטין, אך בדרך כלל מסודרים בצורה שונה. נוצרים מכירים בנוסף בברית החדשה, המספרת את סיפורו של ישוע, תורתו וכתבי חסידיו. הכתבים שלהלן היו ידועים ונקראו באופן נרחב בזמן כתיבת התנ\"ך, אך הם מעולם לא טופלו ככתבי קודש. בעוד שסופרים קדומים ציטטו לעיתים מגוון רחב של טקסטים, כולל משוררים, פילוסופים וכתבים אחרים, ציטוט של משהו אינו זהה להתייחסות אליו ככתבי קודש. כתבים אלה כלולים כאן לצורך עיון היסטורי וספרותי בלבד.",
   "seed-bible": "תנ\"ך הזרעים",
   "take-photo": "צלם תמונה",
   "choose-from-gallery": "בחר מהגלריה",
-
   "crop-your-photo": "חתוך את התמונה שלך",
   "zoom": "זום",
   "set-picture": "הגדר תמונה",
@@ -211,10 +197,8 @@
   "read-the-bible": "קרא את התנ\"ך",
   "seed-bible-description": "קרא {{bookName}} {{chapterNumber}} בתנ\"ך הזרעים",
   "social-title": "קרא {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "ניווט פרקים",
   "tutorial.skip": "לְדַלֵג",
-
   "tutorial.back": "בְּחֲזָרָה",
   "tutorial.done": "נַעֲשָׂה",
   "tutorial.next": "הַבָּא",
@@ -238,7 +222,6 @@
   "copied-translation-share-link": "קישור שיתוף התרגום הועתק",
   "less": "פָּחוֹת",
   "swipe-up-more": "החליקו למעלה כדי לראות עוד",
-  "plans": "תוכניות",
   "reading-plans": "תוכניות קריאה",
   "create-reading-plan": "צור תוכנית קריאה",
   "reading-plans-empty": "אין לך עדיין תוכניות קריאה. צור אחת כדי להתחיל.",
@@ -327,11 +310,9 @@
   "study-notes": "הערות לימוד",
   "content": "תוֹכֶן",
   "untitled-playlist": "רשימת השמעה ללא שם",
-
   "discover-annotations-empty": "אין לך הערות",
   "discover-cross-references-empty": "אין הפניות צולבות לפרק זה.",
   "discover-study-notes-empty": "אין הערות לימוד לפרק זה.",
-
   "discover-select-tab": "בחר כרטיסייה כדי לגלות חומר קשור.",
   "create-playlist": "לִיצוֹר",
   "playlist-title_placeholder": "כותרת רשימת ההשמעה",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "לא ניתן היה למחוק את רשימת ההשמעה.",
   "collapsed-tab-shared-label": "{{title}} — סשן משותף, {{count}} נוכחים",
   "playlist-add-mode-label": "סוג הפריט",
-
   "session-host-reconnected": "התחבר מחדש לסשן",
   "session-host-left": "המארח עזב - הוסרת מהסשן",
   "drag-to-reorder-playlist-item": "גרור כדי לסדר מחדש",
   "saving": "שומר…",
-
   "unsaved-item-confirm-message": "התחלת להוסיף פריט שעדיין לא נוסף לרשימת ההשמעה. מה תרצה לעשות?",
   "discard-and-save": "בטל ושמור",
   "add-and-save": "הוסף ושמור",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "תצוגה מקדימה {{reading}}",
   "reading-plan-mark-reading-complete": "סמן קריאה הושלמה",
   "reading-plan-link-video": "וִידֵאוֹ",
-
   "reading-plan-mark-passage-complete": "סמן {{passage}} כנקרא",
   "reading-plan-read-nudge-title": "קריאה נעימה!",
   "reading-plan-read-nudge-toast": "לסמן {{passage}} כשלם?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "קרא, חפש ולמד את התנ\"ך באינטרנט. תרגומים בחינם בשפות רבות, עם הדגשות, הערות, סימניות ותוכניות קריאה.",
   "all": "כֹּל",
-
   "today-bookmarks": "סימניות",
   "today-search-verses": "חיפוש ספרים, פרקים, פסוקים....",
   "anonymous-greeting": "קַבָּלַת פָּנִים!",
   "community": "קהילה",
   "go-somewhere-new": "לך למקום חדש",
-
   "open-bible": "תנ\"ך פתוח",
   "personal-greeting": "ברוך הבא, {{name}} !",
   "resume-reading": "המשך מאיפה שהפסקת",
   "resume-reading-loading": "טוען את היסטוריית הקריאה שלך…",
   "selected-year": "שנה: {{year}}",
-
   "theme-light": "אוֹר",
   "theme-dark": "כֵּהֶה",
   "installed-extensions": "מוּתקָן",
@@ -543,7 +518,6 @@
   "extension-state-installed": "מוּתקָן",
   "extension-state-downloaded": "הורד",
   "extension-state-pending": "מתקין...",
-
   "tutorial.stepProgress": "שלב {{current}} מתוך {{total}}",
   "tutorial.offlineDownloadTitle": "הקש כדי לשמור אותו במכשיר שלך",
   "tutorial.offlineDownloadBody": "כל תרגום עם סמל זה ניתן לשמור לקריאה במצב לא מקוון.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "בחר כמה קטעים לקרוא זה לצד זה מתפריט פריסה זה.",
   "tutorial.addTabTitle": "פתחו עוד קטעים",
   "tutorial.addTabBody": "הוסף כרטיסייה חדשה כדי לקרוא מספר ספרים או תרגומים זה לצד זה.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % השלמה - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % הושלמו",
   "playlist-history-continue": "לְהַמשִׁיך",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} הערות לפרק זה",
   "create-folder": "צור תיקייה",
   "edit-bookmark": "עריכת סימניה",
-
   "greeting-afternoon": "אחר צהריים טובים!",
   "greeting-afternoon-named": "אחר צהריים טובים, {{name}} !",
   "greeting-evening": "ערב טוב!",
@@ -652,32 +624,24 @@
   "ask-ai": "שאל את הבינה המלאכותית",
   "unread-mention": "אזכור שלא נקרא",
   "unread-messages": "הודעות שלא נקראו: {{count}}",
-
   "scripture-width": "רוחב כתבי הקודש",
   "decrease-scripture-width": "הקטנת רוחב כתבי הקודש",
   "increase-scripture-width": "הגדלת רוחב כתבי הקודש",
   "annotations": "הערות",
   "discover-content-panel": "גלה תוכן",
   "discover-book-title": "גלה את {{book}}",
-
   "about-title": "אודות תנ\"ך הזרעים",
   "about-meta-description": "Seed Bible היא אפליקציית תנ\"ך חינמית שנבנתה לקריאת כתבי הקודש יחד עם המשפחה, החברים והקהילה - בחינם לנצח, ללא פרסומות או חומות תשלום.",
-
   "about-action-open-passage": "פתח קטע",
   "about-action-donate": "לִתְרוֹם",
   "about-action-discord": "הצטרף לדיסקורד",
   "recent-uploads": "העלאות אחרונות",
-
   "customization-not-found": "לא ניתן היה למצוא התאמה אישית זו.",
   "customization-name": "שֵׁם",
   "customization-primaryColor": "יְסוֹדִי",
-
   "customization-secondaryColor": "מִשׁנִי",
-
   "customization-tertiaryColor": "שְׁלִישׁוֹנִי",
-
   "customization-fonts": "גופנים",
-
   "custom-font-option": "מִנְהָג…",
   "custom-font-name-placeholder": "שם גופן גוגל",
   "delete-customization": "לִמְחוֹק",
@@ -690,10 +654,8 @@
   "extension-availability-available": "זָמִין",
   "extension-availability-auto-installed": "התקנה אוטומטית",
   "extension-availability-hidden": "מוּסתָר",
-
   "variants": "ערכות נושא",
   "add-variant": "הוסף ערכת נושא",
-
   "base-theme-description": "שינויים שהגדרת מראש של ערכת נושא זו משמשים כבסיס לכל דבר שלא התאמת אישית. העריכות שלך נשמרות.",
   "reset-to-base-theme": "איפוס לערכת הנושא הבסיסית",
   "low-contrast-warning": "{{label}} : הניגודיות היא רק {{ratio}} :1 — שאפו ל- {{minRatio}} :1 לפחות כדי שהטקסט יישאר קריא.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "אין כאן עדיין שמירות.",
   "save-options": "אפשרויות שמירה",
   "saves": "שומר",
-
   "hide-saves": "הסתר שמירות",
   "show-saves": "הצג שמירות",
   "save-verses": "לְהַצִיל",
   "new-save-folder": "תיקייה חדשה",
   "edit-save": "עריכת שמירה",
   "remove-save-from-all-folders": "הסר מכל התיקיות",
-
   "color-hue": "צֶבַע",
   "color-saturation": "רוויה ובהירות",
   "hex-color": "צבע הקסדצימלי",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "לא ניתן היה לטעון את עורך העיצוב. הערה זו מכילה עיצוב שיאבד, לכן לא ניתן לערוך אותה עד שתתחבר מחדש.",
   "annotation-text": "טקסט ביאור",
   "notes-for-verse": "הערות לפסוק {{verse}}",
-
   "configure-extension-defaults": "הגדר עקיפות ברירת מחדל",
-
   "extension-settings-defaults-title": "עקיפות ברירת מחדל {{name}}",
   "no-extension-settings": "להרחבה זו אין הגדרות הניתנות להגדרה.",
   "extension-settings-save-failed": "לא ניתן היה לשמור את ההגדרות שלך.",
@@ -872,7 +830,6 @@
   "setting-no-default": "אין ברירת מחדל",
   "override-setting": "עקיפת {{name}}",
   "override-setting-label": "עקיפה",
-
   "discover-choose-filter-hint": "בחר מסנן למעלה כדי לראות עוד מהפרק הזה.",
   "take-a-tour": "צא לסיור",
   "share-reading-plan": "תוכנית שיתוף",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "הסימנייה שלי {{number}}",
   "bookmark-move-hint": "הקש על סימניה כדי להעביר אותה לפרק זה.",
   "move-bookmark-here": "העבר {{name}} לכאן",
-
   "play": "לְשַׂחֵק",
   "pause": "הַפסָקָה",
   "audio-playback-position": "מיקום השמעה",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "פסוק {{verse}}",
   "tab-playing-audio": "השמעת אודיו",
   "collapsed-tab-playing-label": "{{label}} — השמעת אודיו",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} נושא",
   "customization-theme-count_one": "ערכת נושא {{count}}",
@@ -1104,7 +1059,6 @@
   "about-community-body": "אמונה נועדה לחיות אותה יחד. ספר Seed Bible בנוי לקריאת כתבי הקודש עם המשפחה, החברים הקרובים ביותר ועם קהילת הבית.",
   "discovered-content": "תוכן שהתגלה",
   "show-discovered-content": "הצג תוכן שהתגלה",
-
   "extension-availability-default": "ברירת מחדל ( {{availability}} )",
   "customization-extensions-default": "ברירת מחדל עבור הרחבות אחרות",
   "customization-extensions-default-hint": "חל על כל תוסף שלא הגדרת למטה, כולל תוסף חדש שנוסף מאוחר יותר",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "חזרה לרשימת ההשמעה",
   "playlist-scripture-note-aria": "הערה על {{passage}}",
   "playlist-scripture-note-progress": "{{current}} מתוך {{total}}",
-
   "unsaved-item-edit-confirm-message": "שינית פריט אך עדיין לא שמרת את השינויים. מה תרצה לעשות?",
   "keep-changes-and-save": "שמור שינויים ושמור",
   "reading-plan-edit-reading": "עריכת קריאה",
@@ -1152,7 +1105,6 @@
   "branding": "מיתוג",
   "create-custom-branding-menu-item": "מיתוג מותאם אישית",
   "your-content-empty-branding": "מיתוג מותאם אישית שתיצור יופיע כאן.",
-
   "extension-consent-from": "מאת {{host}}",
   "extension-consent-source-version": "גרסה {{version}} · מאת {{host}}",
   "extension-consent-uploader-unnamed": "משתמש בתנ\"ך זרעים",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "ראה אילו פסוקים תבחר",
   "extension-permission-reading-navigate": "מעברים פתוחים",
   "extension-permission-network": "התחבר אל {{host}}",
-
   "extension-consent-not-now": "לא עכשיו",
   "extension-consent-nothing-yet": "לעת עתה, לא תהיה לו גישה לשום מידע שלך.",
   "extension-permission-reading-history": "ראה את היסטוריית הקריאה שלך",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "לְבַטֵל",
   "extension-consent-high-risk": "רָגִישׁ",
   "extension-modal-ok": "בְּסֵדֶר",
-
   "extension-permissions-restart-note": "השינויים נכנסים לתוקף באופן מיידי. {{name}} יופעל מחדש כדי לאסוף אותם.",
   "extension-permissions-saved": "נשמר. {{name}} הפעיל מחדש עם ההרשאות החדשות.",
   "extension-permissions-failed": "זה לא נשמר. נסה שוב.",
@@ -1276,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "הצג אפקטים כאשר מנחה בוחר בית.",
   "session-settings-verse-effects-desc-everyone": "הצג אפקטים כאשר מישהו בוחר פסוק.",
   "session-settings-verse-effects-desc-none": "אפקטי בחירת פסוקים כבויים עבור כולם.",
-
   "account": "חֶשְׁבּוֹן",
   "scroll-filters-start": "גלילה של המסננים לכיוון ההתחלה",
-  "scroll-filters-end": "גלילה של המסננים לכיוון הסוף"
+  "scroll-filters-end": "גלילה של המסננים לכיוון הסוף",
+  "download": "הורדה",
+  "image-details-uploaded": "הועלה",
+  "image-details-dimensions": "מידות",
+  "image-details-dimensions-value": "{{width}} × {{height}}",
+  "image-details-type": "סוּג",
+  "image-details-cover-of": "כריכה של",
+  "image-details-not-a-cover": "לא משמש ככיסוי",
+  "delete-customization-confirm-title": "למחוק מיתוג מותאם אישית?",
+  "delete-customization-confirm-message": "למחוק את המיתוג המותאם אישית \" {{name}} \"? לא ניתן לבטל פעולה זו.",
+  "delete-customization-failed": "לא ניתן היה למחוק את המיתוג המותאם אישית.",
+  "delete-variant-confirm-title": "למחוק את ערכת הנושא?",
+  "delete-variant-confirm-message": "למחוק את ערכת הנושא \" {{name}} \"? לא ניתן לבטל פעולה זו.",
+  "delete-variant-confirm-message-unnamed": "למחוק את העיצוב הזה? לא ניתן לבטל את הפעולה הזו.",
+  "delete-variant-failed": "לא ניתן היה למחוק את ערכת הנושא.",
+  "delete-highlight-confirm-title": "למחוק את ההדגשה?",
+  "delete-highlight-confirm-message": "למחוק את ההדגשה ב {{reference}} ? לא ניתן לבטל פעולה זו.",
+  "delete-highlight-failed": "לא ניתן היה למחוק את ההדגשה.",
+  "delete-annotation-on-confirm-message": "למחוק את ההערה על {{reference}} ? לא ניתן לבטל פעולה זו.",
+  "remove-from-folder": "הסר מהתיקייה",
+  "save-folders": "ב {{folders}}",
+  "delete-save-confirm-title": "למחוק את השמירה?",
+  "delete-save-confirm-message": "מחיקת שמירה עבור {{reference}} ? לא ניתן לבטל פעולה זו.",
+  "delete-save-confirm-message-folders": "מחיקת שמירה עבור {{reference}} מתוך {{folders}} ? לא ניתן לבטל פעולה זו.",
+  "delete-save-failed": "לא ניתן היה למחוק את השמירה.",
+  "delete-save-folder-confirm-title": "למחוק תיקייה?",
+  "delete-save-folder-confirm-message": "למחוק את התיקייה \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "גם ה {{count}} שמירות שנמצאות רק בתיקייה זו יימחקו.",
+  "delete-save-folder-confirm-deletes_one": "גם השמירה שנמצאת רק בתיקייה זו תימחק.",
+  "delete-save-folder-confirm-deletes_other": "גם ה {{count}} שמירות שנמצאות רק בתיקייה זו יימחקו.",
+  "delete-save-folder-confirm-keeps": "ה {{count}} שמירות שנמצאות גם בתיקיות אחרות יישארו שם.",
+  "delete-save-folder-confirm-keeps_one": "השמירה שנמצאת גם בתיקייה אחרת תישאר שם.",
+  "delete-save-folder-confirm-keeps_other": "ה {{count}} שמירות שנמצאות גם בתיקיות אחרות יישארו שם.",
+  "cant-be-undone": "לא ניתן לבטל את זה.",
+  "delete-save-folder-failed": "לא ניתן היה למחוק את התיקייה.",
+  "download-image-failed": "לא ניתן היה להוריד את התמונה.",
+  "session-settings-verse-effects-hosts-only": "מארחים בלבד",
+  "session-settings-verse-effects-everyone": "כֹּל אֶחָד",
+  "session-settings-verse-effects-none": "אַף לֹא אֶחָד",
+  "loading-books": "טוען ספרים…",
+  "books-load-failed": "לא ניתן היה לטעון את הספרים. בדוק את החיבור ונסה שוב.",
+  "loading-translation": "טוען את {{name}} …",
+  "translation-load-failed": "לא ניתן היה לטעון את {{name}} .",
+  "loading-translations": "טוען תרגומים…",
+  "translations-load-failed": "לא ניתן היה לטעון את רשימת התרגומים המלאה, לכן ייתכן שחלקם חסרים.",
+  "verse-of-the-day": "פסוק היום",
+  "verse-of-the-day-loading": "טוען את פסוק היום..."
 }

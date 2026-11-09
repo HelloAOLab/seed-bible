@@ -28,22 +28,18 @@
   "searching": "Koluka...",
   "no-search-results": "Bavɛrsɛ oyo ekokani na yango te.",
   "open-chapter": "Fungola mokapo",
-
   "uploading": "Nazali ko uploader...",
   "profile-name": "Kombo ya profil",
   "profile-name-placeholder": "ndakisa libota ya Craig",
-
   "description": "Ndimbola",
   "optional": "(Soki olingi)",
   "description-placeholder": "Tyá description ya profil na yo...",
   "location": "Esika",
   "location-placeholder": "na ndakisa Austin,TX",
-
   "copied": "Esalemi kopi",
   "copy": "Kopi na yango",
   "save-changes": "Bomba mbongwana",
   "sign-out": "Bima na maboko",
-
   "log-in": "Kota na kati",
   "tanakh": "Tanakh",
   "traditional": "Ya mboka",
@@ -57,7 +53,6 @@
   "scripture-settings": "Ba paramètres ya makomi",
   "scripture-elements": "Biloko ya makomi",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Lakisa mitó ya makambo",
   "show-verse-numbers": "Lakisa mituya ya bavɛrsɛ",
   "show-footnotes": "Monisá maloba na nse ya lokasa",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Ba extensions ezali te.",
   "install": "Ko installer",
   "uninstall": "Kolongola yango",
-
   "custom": "Momeseno",
   "text-section-bookTitle": "Mokanda ya motó ya likambo ya buku",
   "text-section-heading": "Mokanda ya motó ya likambo",
@@ -92,7 +86,6 @@
   "show-selected-items": "Lakisa biloko oyo oponi",
   "show-highlight-colors": "Lakisa balangi ya kosala makambo mingi",
   "show-icon-text": "Lakisa makomi ya elembo",
-
   "extensions": "Ba extensions",
   "display": "Kolakisa",
   "theme-and-text": "Motó ya likambo & makomi",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Bobakisa bonene ya makomi ya makomi",
   "change-line-spacing": "Bobongola esika ya milɔngɔ",
   "line-spacing_lineHeight": "Espacement ya ligne: {{lineHeight}}",
-
   "italic": "Na itac",
   "underline": "Tyá elembo na nse",
   "alignment_x": "Bobongisi: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Langi ya makomi",
   "follow_theme": "Landa motó ya likambo",
   "reset-to-default": "Bozongisi na esika ya liboso",
-
   "id_highlight-text-color": "{{id}} ko souligner langi ya makomi",
   "id_highlight-background-color": "{{id}} ko souligner couleur ya fond",
   "all-settings-description": "Bongisá malamu eteni nyonso ya makomi mpe bongisá langi mokomoko ya motó ya likambo.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokrifa, oyo ezali",
-
   "custom-translations": "Mabongoli oyo esalemi na kolanda bamposa ya bato",
   "no-translation-results-found": "Ba résultats ezwami te. Olingi kokómisa bolukiluki na yo monene mpo na kokɔtisa mpe mabongoli oyo ezali ndambo mobimba?",
   "show-all-translations": "Lakisa mabongoli nyonso",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Nzembo",
   "5-psalms": "5 Nzembo",
   "remove-bookmark": "Longola elembo ya elembo",
-
   "chat": "Kosolola",
   "today": "Lelo",
   "you": "Yo",
@@ -169,7 +158,6 @@
   "category-options": "Ba options ya dossier",
   "rename": "Bobongola nkombo",
   "delete": "Boma",
-
   "bookmark-options": "Ba options ya marque-page",
   "new-folder-placeholder": "Nkombo ya dossier",
   "tasks": "Misala",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Dossier moko oyo ezali na kombo wana ezali déjà.",
   "add-to-new": "Bakisa na ya sika",
   "save": "Kobikisa",
-
   "apocrypha-info-text": "Moko te kati na makomi oyo ezali na eteni oyo etalelamaki ata mokolo moko te lokola Makomami na masanga ya Bayuda to ya boklisto ya liboso. Biblia ezali liboke ya mikanda ya sikisiki. Bayuda mpe baklisto bayokanaki ntango nyonso na Kondimana ya Kala, oyo euti na ensemble fixe ya makomi mosantu oyo bato ya Bayuda bazalaki kobenga Tanakh mpe bakristu babengaka Kondimana ya Kala. Makambo oyo ezali na kati ya Tanakh mpe Kondimana ya Kala ezali mpenza ndenge moko, kasi mbala mingi ebongisami ndenge mosusu. Baklisto bayebi lisusu Kondimana ya Sika, oyo elobeli lisolo ya Yesu, mateya na ye, mpe makomi ya balandi na ye. Mikanda oyo ezali awa na nse eyebanaki mpe etángamaki mingi na ntango oyo Biblia ekomamaki, kasi bazalaki kotalela yango ata mokolo moko te lokola Makomami. Atako bakomi ya kala bazalaki ntango mosusu kozongela makomi ndenge na ndenge bakisa mpe bapowɛti, bato ya filozofi, mpe mikanda mosusu, kozongela likambo moko ezali ndenge moko te na kotalela yango lokola Makomami. Mikanda yango ekotisami awa mpo na kolobela makambo ya kala mpe ya mikanda.",
   "seed-bible": "Biblia ya mboto",
   "take-photo": "Zwá fɔtɔ́",
   "choose-from-gallery": "Pona na kati ya galerie",
-
   "crop-your-photo": "Kata fɔtɔ́ na yo",
   "zoom": "Zoom na yango",
   "set-picture": "Set elilingi",
@@ -211,10 +197,8 @@
   "read-the-bible": "Tángá Biblia",
   "seed-bible-description": "Tanga {{bookName}} {{chapterNumber}} na Biblia ya Momboto",
   "social-title": "Tanga {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Botamboli ya mokapo",
   "tutorial.skip": "Kokipe te",
-
   "tutorial.back": "Mukongo",
   "tutorial.done": "Esalemi",
   "tutorial.next": "Oyo elandi",
@@ -238,7 +222,6 @@
   "copied-translation-share-link": "Lien ya kokabola libongoli oyo esalemi kopi",
   "less": "Moke",
   "swipe-up-more": "Swipe likolo mpo na komona makambo mosusu",
-  "plans": "Miango",
   "reading-plans": "Miango ya kotánga",
   "create-reading-plan": "Salá mwango ya kotánga",
   "reading-plans-empty": "Ozali naino na ba plans ya kotanga te. Salá moko mpo na kobanda.",
@@ -327,11 +310,9 @@
   "study-notes": "Banote ya boyekoli",
   "content": "Makambo eza na kati",
   "untitled-playlist": "Liste ya ba nzembo oyo ezali na titre te",
-
   "discover-annotations-empty": "Ozali na ba annotations te",
   "discover-cross-references-empty": "Ba références croisées te mpo na mokapo oyo.",
   "discover-study-notes-empty": "Banote ya boyekoli te mpo na mokapo oyo.",
-
   "discover-select-tab": "Pona tab moko mpo na kozwa makambo oyo etali yango.",
   "create-playlist": "Kosala",
   "playlist-title_placeholder": "Titre ya liste ya ba nzembo",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "Ekokaki te ko effacer liste ya ba playlist.",
   "collapsed-tab-shared-label": "{{title}} — session ya kokabola, {{count}} ezali",
   "playlist-add-mode-label": "Lolenge ya eloko",
-
   "session-host-reconnected": "Reconnecté na session",
   "session-host-left": "Moyambi alongwaki — balongolaki yo na session",
   "drag-to-reorder-playlist-item": "Benda mpo na kobongisa lisusu molɔngɔ",
   "saving": "Ezali kobombama…",
-
   "unsaved-item-confirm-message": "Obandaki kobakisa eloko oyo ebakisami naino te na playlist. Olingi kosala nini?",
   "discard-and-save": "Bwaka mpe bomba",
   "add-and-save": "Bakisa mpe bomba",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "Botali liboso {{reading}}",
   "reading-plan-mark-reading-complete": "Mark botangi esili",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Tyá elembo na {{passage}} lokola etángi",
   "reading-plan-read-nudge-title": "Botangi kitoko!",
   "reading-plan-read-nudge-toast": "Mark {{passage}} esili?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Tángá, luká mpe koyekola Biblia na Internet. Mabongoli ya ofele na minɔkɔ mingi, na makambo ya ntina, banɔti, bilembo ya bilembo, mpe myango ya kotánga.",
   "all": "Nyonso",
-
   "today-bookmarks": "BILOKO YA LIBOSO",
   "today-search-verses": "Boluka mikanda, mokapo, bavɛrsɛ....",
   "anonymous-greeting": "Boyei malamu!",
   "community": "ESIKA BOFANDI",
   "go-somewhere-new": "KENDE ESIKA YA SIKA",
-
   "open-bible": "Fungola Biblia",
   "personal-greeting": "Boyei malamu, {{name}} !",
   "resume-reading": "CONTINUER ESIKA OLOKI",
   "resume-reading-loading": "Ko charger histoire ya botangi na yo...",
   "selected-year": "Mobu: {{year}}",
-
   "theme-light": "Pole",
   "theme-dark": "Molili",
   "installed-extensions": "Esili kotyama",
@@ -543,7 +518,6 @@
   "extension-state-installed": "Esili kotyama",
   "extension-state-downloaded": "Ba téléchargé",
   "extension-state-pending": "Ko installer...",
-
   "tutorial.stepProgress": "Etape {{current}} ya {{total}}",
   "tutorial.offlineDownloadTitle": "Finá mpo na kobatela yango na aparɛyi na yo",
   "tutorial.offlineDownloadBody": "Libongoli nyonso oyo ezali na elembo oyo ekoki kobombama mpo na kotánga yango na nzela ya Internet te.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "Pona mikapo boni okotanga pembenipembeni na menu oyo ya layout.",
   "tutorial.addTabTitle": "Fungola mikapo mosusu",
   "tutorial.addTabBody": "Bakisa tab ya sika mpo na kotánga mikanda to mabongoli mingi pembenipembeni.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % esili - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % esili",
   "playlist-history-continue": "Kokoba",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} banote mpo na mokapo oyo",
   "create-folder": "Bosala dossier",
   "edit-bookmark": "Bobongisi elembo ya elembo",
-
   "greeting-afternoon": "Nsima ya nzanga malamu!",
   "greeting-afternoon-named": "Nsima ya midi malamu, {{name}} !",
   "greeting-evening": "Mpokwa malamu!",
@@ -652,32 +624,24 @@
   "ask-ai": "Tuna AI",
   "unread-mention": "Balobeli oyo etangami te",
   "unread-messages": "Ba messages oyo etangami te: {{count}}",
-
   "scripture-width": "Bolai ya Makomi",
   "decrease-scripture-width": "Bokitisa bonene ya makomi",
   "increase-scripture-width": "Bobakisa bonene ya makomi",
   "annotations": "Ba annotations oyo esalemi",
   "discover-content-panel": "Boyeba makambo oyo ezali na kati",
   "discover-book-title": "Boyeba {{book}}",
-
   "about-title": "Na ntina na Biblia ya Mboto",
   "about-meta-description": "Seed Bible ezali appli ya ofele ya Biblia oyo etongami mpo na kotanga Makomi elongo na libota na yo, baninga, mpe lisanga na yo — ofele libela, ba piblisite to paywalls te.",
-
   "about-action-open-passage": "Fungola mokapo moko",
   "about-action-donate": "Kopesa libonza",
   "about-action-discord": "Bokota na Discord",
   "recent-uploads": "Ba uploads ya sika",
-
   "customization-not-found": "Personnalisation oyo ekokaki kozwama te.",
   "customization-name": "Nkombo",
   "customization-primaryColor": "Ya liboso",
-
   "customization-secondaryColor": "Eteyelo ya mibale",
-
   "customization-tertiaryColor": "Eteyelo ya misato",
-
   "customization-fonts": "Ba fonts",
-
   "custom-font-option": "Momeseno…",
   "custom-font-name-placeholder": "Nkombo ya Font ya Google",
   "delete-customization": "Boma",
@@ -690,10 +654,8 @@
   "extension-availability-available": "Ezali",
   "extension-availability-auto-installed": "Auto-installé na yango",
   "extension-availability-hidden": "Ya kobombana",
-
   "variants": "Mitó ya makambo",
   "add-variant": "Bakisa motó ya likambo",
-
   "base-theme-description": "Mbongwana oyo pré-réglé thème oyo ekweyi sima na pona eloko nionso oyo o personnalisé te. Ba éditions na yo moko ebombami.",
   "reset-to-base-theme": "Réinitialiser na thème ya base",
   "low-contrast-warning": "{{label}} : bokeseni ezali kaka {{ratio}} :1 — koluka ata {{minRatio}} :1 mpo ete makomi etikala kotangama.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "Pas de sauves awa nanu.",
   "save-options": "Bomba ba options",
   "saves": "Ebombaka",
-
   "hide-saves": "Bomba ba sauves",
   "show-saves": "Lakisa ba saves",
   "save-verses": "Kobikisa",
   "new-save-folder": "Dossier ya sika",
   "edit-save": "Bobongisi kobomba",
   "remove-save-from-all-folders": "Longola na ba dossiers nionso",
-
   "color-hue": "Hue",
   "color-saturation": "Saturation mpe kongenga",
   "hex-color": "Langi ya hex",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Editeur ya formatage ekokaki ko charger te. Note oyo ezali na formatage oyo elingaki ebunga, yango wana ekoki ko éditer te tii tango oko reconnecter.",
   "annotation-text": "Mokanda ya annotation",
   "notes-for-verse": "Maloba mpo na vɛrsɛ {{verse}}",
-
   "configure-extension-defaults": "Configurer ba overrides par défaut",
-
   "extension-settings-defaults-title": "{{name}} elongolami na ndenge ya liboso",
   "no-extension-settings": "Extension oyo ezali na ba paramètres configurables te.",
   "extension-settings-save-failed": "Ekoki te kobomba ba paramètres na yo.",
@@ -872,7 +830,6 @@
   "setting-no-default": "Par défaut te",
   "override-setting": "Bolongola {{name}}",
   "override-setting-label": "Kolongolama na nse",
-
   "discover-choose-filter-hint": "Poná filtre moko oyo ezali likoló mpo na komona makambo mosusu na mokapo oyo.",
   "take-a-tour": "Salá mobembo moko",
   "share-reading-plan": "Plan ya kokabola",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "Marque-page na ngai {{number}}",
   "bookmark-move-hint": "Finá elembo moko mpo na kokende na mokapo oyo.",
   "move-bookmark-here": "Bokende na {{name}} awa",
-
   "play": "Kobeta",
   "pause": "Kopema",
   "audio-playback-position": "Position ya lecture",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "Vɛrsɛ {{verse}}",
   "tab-playing-audio": "Kobɛta audio",
   "collapsed-tab-playing-label": "{{label}} — kobɛta mongongo",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} mitó ya makambo",
   "customization-theme-count_one": "{{count}} motó ya likambo",
@@ -1104,7 +1059,6 @@
   "about-community-body": "Kondima ezali mpo na kozala na bomoi elongo. Biblia ya mboto etongami mpo na kotanga Makomi elongo na libota na yo, baninga na yo ya penepene, mpe lingomba na yo ya ndako.",
   "discovered-content": "Contenu oyo ba découvert",
   "show-discovered-content": "Lakisa makambo oyo ezwami",
-
   "extension-availability-default": "Par défaut ( {{availability}} ) .",
   "customization-extensions-default": "Par défaut mpo na ba extensions mosusu",
   "customization-extensions-default-hint": "Esaleli na bobakisi nyonso oyo otye te awa na nse, bakisa mpe oyo ya sika oyo ebakisami na nsima",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "Zongela na liste ya ba playlist",
   "playlist-scripture-note-aria": "Liyebisi na ntina ya {{passage}}",
   "playlist-scripture-note-progress": "{{current}} ya {{total}}",
-
   "unsaved-item-edit-confirm-message": "Obongoli eloko moko kasi obombi naino mbongwana wana te. Okolinga kosala nini?",
   "keep-changes-and-save": "Bomba mbongwana mpe bomba",
   "reading-plan-edit-reading": "Bobongisi botangi",
@@ -1152,7 +1105,6 @@
   "branding": "Kosala ba marques",
   "create-custom-branding-menu-item": "Marque personnalisée",
   "your-content-empty-branding": "Custom Branding oyo osali ekolakisama awa.",
-
   "extension-consent-from": "Kowuta na {{host}}",
   "extension-consent-source-version": "Version {{version}} · uta na {{host}}",
   "extension-consent-uploader-unnamed": "Mosaleli ya Biblia ya Momboto",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "Talá bavɛrsɛ nini oponi",
   "extension-permission-reading-navigate": "Ba passages ya polele",
   "extension-permission-network": "Bozala na boyokani na {{host}}",
-
   "extension-consent-not-now": "Sikoyo te",
   "extension-consent-nothing-yet": "Mpo na sikoyo, ekozala na nzela ya kozwa ata nsango moko te na yo.",
   "extension-permission-reading-history": "Talá lisolo na yo ya kotánga",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "Kolongola",
   "extension-consent-high-risk": "Ya ntina",
   "extension-modal-ok": "OK",
-
   "extension-permissions-restart-note": "Mbongwana ebandi kosala mbala moko. {{name}} ebandi lisusu mpo na kozwa bango.",
   "extension-permissions-saved": "Ebombami. {{name}} ebandaki lisusu na ndingisa ya sika.",
   "extension-permissions-failed": "Yango ebikisaki te. Meká lisusu.",
@@ -1276,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Lakisa ba effets tango moyambi aponi verset.",
   "session-settings-verse-effects-desc-everyone": "Lakisa ba effets tango mutu nionso aponi verset.",
   "session-settings-verse-effects-desc-none": "Ba effets ya sélection ya verset ekangami pona mutu nionso.",
-
   "account": "Konte",
   "scroll-filters-start": "Défiler ba filtres epai ya ebandeli",
-  "scroll-filters-end": "Défiler ba filtres epai ya suka"
+  "scroll-filters-end": "Défiler ba filtres epai ya suka",
+  "download": "Kozwa",
+  "image-details-uploaded": "Ezali ko uploader",
+  "image-details-dimensions": "Dimensions na yango",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Lolenge",
+  "image-details-cover-of": "Couverture ya",
+  "image-details-not-a-cover": "Basalelaka yango te lokola ezipeli",
+  "delete-customization-confirm-title": "Bolongola Marque Personnalisée?",
+  "delete-customization-confirm-message": "Bolongola Marque Personnalisée \" {{name}} \"? Oyo ekoki kozongisama sima te.",
+  "delete-customization-failed": "Ekokaki te ko effacer Marque Personnalisée.",
+  "delete-variant-confirm-title": "Kolongola motó ya likambo?",
+  "delete-variant-confirm-message": "Bolongola motó ya likambo \" {{name}} \"? Oyo ekoki kozongisama sima te.",
+  "delete-variant-confirm-message-unnamed": "Bolongola motó ya likambo oyo? Oyo ekoki kozongisama sima te.",
+  "delete-variant-failed": "Ekokaki te ko effacer thème.",
+  "delete-highlight-confirm-title": "Kolongola elembo ya ntina?",
+  "delete-highlight-confirm-message": "Bolongola esika ya ntina na {{reference}} ? Oyo ekoki kozongisama sima te.",
+  "delete-highlight-failed": "Ekokaki te ko effacer highlight.",
+  "delete-annotation-on-confirm-message": "Bolongola annotation na {{reference}} ? Oyo ekoki kozongisama sima te.",
+  "remove-from-folder": "Longola na dossier",
+  "save-folders": "Na {{folders}}",
+  "delete-save-confirm-title": "Bolongola bomba?",
+  "delete-save-confirm-message": "Bolongola kobomba mpo na {{reference}} ? Oyo ekoki kozongisama sima te.",
+  "delete-save-confirm-message-folders": "Bolongola bomba mpo na {{reference}} uta na {{folders}} ? Oyo ekoki kozongisama sima te.",
+  "delete-save-failed": "Ekokaki te kosilisa kobomba.",
+  "delete-save-folder-confirm-title": "Kolongola dossier?",
+  "delete-save-folder-confirm-message": "Bolongola dossier \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Ba {{count}} ba saves oyo ezali kaka na dossier oyo ekolongolama pe.",
+  "delete-save-folder-confirm-deletes_one": "Save oyo ezali kaka na dossier oyo eko effacer pe.",
+  "delete-save-folder-confirm-deletes_other": "Ba {{count}} ba saves oyo ezali kaka na dossier oyo ekolongolama pe.",
+  "delete-save-folder-confirm-keeps": "Ba {{count}} ba saves oyo ezali pe na ba dossiers misusu eko tikala wana.",
+  "delete-save-folder-confirm-keeps_one": "Save oyo pe eza na dossier mususu eko tikala wana.",
+  "delete-save-folder-confirm-keeps_other": "Ba {{count}} ba saves oyo ezali pe na ba dossiers misusu eko tikala wana.",
+  "cant-be-undone": "Oyo ekoki kozongisama sima te.",
+  "delete-save-folder-failed": "Ekokaki te ko effacer dossier.",
+  "download-image-failed": "Ekokaki te kozwa elilingi yango.",
+  "session-settings-verse-effects-hosts-only": "Ba hôtes kaka",
+  "session-settings-verse-effects-everyone": "Bato nyonso",
+  "session-settings-verse-effects-none": "Moko te",
+  "loading-books": "Ko charger ba livres...",
+  "books-load-failed": "Mikanda yango ekokaki kozala na chargement te. Tala connexion na yo pe meka lisusu.",
+  "loading-translation": "Kokɔtisa {{name}} ...",
+  "translation-load-failed": "{{name}} ekokaki kozala te.",
+  "loading-translations": "Chargement ya mabongoli...",
+  "translations-load-failed": "Ekokaki te ko charger liste mobimba ya mabongoli, yango wana misusu ekoki kozanga.",
+  "verse-of-the-day": "VERSER YA MOKOLO",
+  "verse-of-the-day-loading": "Chargement ya verset ya mokolo..."
 }

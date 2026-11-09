@@ -28,22 +28,18 @@
   "searching": "Meklēšana...",
   "no-search-results": "Nav atbilstošu pantu.",
   "open-chapter": "Atvērt nodaļu",
-
   "uploading": "Augšupielādē...",
   "profile-name": "Profila nosaukums",
   "profile-name-placeholder": "piemēram, Kreigu ģimene",
-
   "description": "Apraksts",
   "optional": "(Pēc izvēles)",
   "description-placeholder": "Ievadiet sava profila aprakstu...",
   "location": "Atrašanās vieta",
   "location-placeholder": "piemēram, Ostina, Teksasa",
-
   "copied": "Nokopēts",
   "copy": "Kopēt",
   "save-changes": "Saglabāt izmaiņas",
   "sign-out": "Izrakstīties",
-
   "log-in": "Pieslēgties",
   "tanakh": "Tanahs",
   "traditional": "Tradicionāls",
@@ -57,7 +53,6 @@
   "scripture-settings": "Svēto Rakstu iestatījumi",
   "scripture-elements": "Svēto Rakstu elementi",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Rādīt virsrakstus",
   "show-verse-numbers": "Rādīt pantu numurus",
   "show-footnotes": "Rādīt zemsvītras piezīmes",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Nav pieejamu paplašinājumu.",
   "install": "Instalēt",
   "uninstall": "Atinstalēt",
-
   "custom": "Pielāgots",
   "text-section-bookTitle": "Grāmatas nosaukuma teksts",
   "text-section-heading": "Virsraksta teksts",
@@ -92,7 +86,6 @@
   "show-selected-items": "Rādīt atlasītos vienumus",
   "show-highlight-colors": "Rādīt iezīmēšanas krāsas",
   "show-icon-text": "Rādīt ikonas tekstu",
-
   "extensions": "Paplašinājumi",
   "display": "Reklāmas displejs",
   "theme-and-text": "Tēma un teksts",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Palielināt Svēto Rakstu fonta lielumu",
   "change-line-spacing": "Mainīt rindstarpu",
   "line-spacing_lineHeight": "Rindu atstarpe: {{lineHeight}}",
-
   "italic": "slīpraksts",
   "underline": "Pasvītrojums",
   "alignment_x": "Izlīdzinājums: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Teksta krāsa",
   "follow_theme": "Sekot tēmai",
   "reset-to-default": "Atiestatīt uz noklusējuma iestatījumiem",
-
   "id_highlight-text-color": "{{id}} iezīmēšanas teksta krāsa",
   "id_highlight-background-color": "{{id}} iezīmēšanas fona krāsa",
   "all-settings-description": "Precīzi pielāgojiet katru teksta sadaļu un katras tēmas krāsu.",
@@ -141,7 +132,6 @@
   "old-testament_short": "Pagarinājums",
   "new-testament_short": "NT",
   "apocrypha": "Apokrifi",
-
   "custom-translations": "Pielāgoti tulkojumi",
   "no-translation-results-found": "Nav atrasts neviens rezultāts. Vai vēlaties paplašināt meklēšanu, iekļaujot arī daļēji pabeigtus tulkojumus?",
   "show-all-translations": "Rādīt visus tulkojumus",
@@ -159,7 +149,6 @@
   "4-psalms": "4. psalmi",
   "5-psalms": "5 Psalmi",
   "remove-bookmark": "Noņemt grāmatzīmi",
-
   "chat": "Tērzēšana",
   "today": "Šodien",
   "you": "Tu",
@@ -169,7 +158,6 @@
   "category-options": "Mapes opcijas",
   "rename": "Pārdēvēt",
   "delete": "Dzēst",
-
   "bookmark-options": "Grāmatzīmju opcijas",
   "new-folder-placeholder": "Mapes nosaukums",
   "tasks": "Uzdevumi",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Mape ar šādu nosaukumu jau pastāv.",
   "add-to-new": "Pievienot jaunam",
   "save": "Saglabāt",
-
   "apocrypha-info-text": "Neviens no šajā sadaļā iekļautajiem rakstiem agrīnajās ebreju vai kristiešu kopienās nekad nav uzskatīts par Svētajiem Rakstiem. Bībele ir īpaša grāmatu kolekcija. Ebreji un kristieši vienmēr ir bijuši vienisprātis par Veco Derību, kas ir veidota no fiksēta svēto rakstu kopuma, ko ebreju tauta sauca par Tanah, bet kristieši - par Veco Derību. Tanah un Vecās Derības saturs ir pilnīgi vienāds, taču tie parasti ir sakārtoti atšķirīgi. Kristieši atzīst arī Jauno Derību, kas stāsta par Jēzu, viņa mācībām un viņa sekotāju rakstiem. Zemāk minētie raksti bija zināmi un plaši lasīti Bībeles rakstīšanas laikā, taču tie nekad netika uzskatīti par Svētajiem Rakstiem. Lai gan senie autori dažreiz citēja plašu tekstu klāstu, tostarp dzejnieku, filozofu un citu rakstu darbus, kaut kā citēšana nav tas pats, kas tā uzskatīšana par Svētajiem Rakstiem. Šie raksti šeit ir iekļauti tikai vēsturiskai un literārai uzziņai.",
   "seed-bible": "Sēklu Bībele",
   "take-photo": "Uzņemiet fotoattēlu",
   "choose-from-gallery": "Izvēlieties no galerijas",
-
   "crop-your-photo": "Apgrieziet savu fotoattēlu",
   "zoom": "Tālummaiņa",
   "set-picture": "Iestatīt attēlu",
@@ -211,10 +197,8 @@
   "read-the-bible": "Lasiet Bībeli",
   "seed-bible-description": "Izlasiet {{bookName}} {{chapterNumber}} Sēklu Bībelē",
   "social-title": "Izlasiet grāmatu {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Nodaļu navigācija",
   "tutorial.skip": "Izlaist",
-
   "tutorial.back": "Atpakaļ",
   "tutorial.done": "Pabeigts",
   "tutorial.next": "Nākamais",
@@ -238,7 +222,6 @@
   "copied-translation-share-link": "Kopēta tulkojuma kopīgošanas saite",
   "less": "Mazāk",
   "swipe-up-more": "Pavelciet uz augšu, lai skatītu vairāk",
-  "plans": "Plāni",
   "reading-plans": "Lasīšanas plāni",
   "create-reading-plan": "Izveidojiet lasīšanas plānu",
   "reading-plans-empty": "Jums vēl nav lasīšanas plānu. Izveidojiet savu, lai sāktu.",
@@ -327,11 +310,9 @@
   "study-notes": "Studiju piezīmes",
   "content": "Saturs",
   "untitled-playlist": "Bez nosaukuma atskaņošanas saraksts",
-
   "discover-annotations-empty": "Jums nav anotāciju",
   "discover-cross-references-empty": "Šajā nodaļā nav savstarpēju atsauču.",
   "discover-study-notes-empty": "Šai nodaļai nav mācību piezīmju.",
-
   "discover-select-tab": "Atlasiet cilni, lai atrastu saistītu materiālu.",
   "create-playlist": "Izveidot",
   "playlist-title_placeholder": "Atskaņošanas saraksta nosaukums",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "Nevarēja izdzēst atskaņošanas sarakstu.",
   "collapsed-tab-shared-label": "{{title}} — koplietota sesija, klātesoši ir {{count}}",
   "playlist-add-mode-label": "Preces veids",
-
   "session-host-reconnected": "Atkārtoti izveidots savienojums ar sesiju",
   "session-host-left": "Saimnieks aizgāja — jūs tikāt izslēgts no sesijas.",
   "drag-to-reorder-playlist-item": "Velciet, lai mainītu secību",
   "saving": "Saglabā…",
-
   "unsaved-item-confirm-message": "Jūs sākāt pievienot vienumu, kas vēl nav pievienots atskaņošanas sarakstam. Ko vēlaties darīt?",
   "discard-and-save": "Atmest un saglabāt",
   "add-and-save": "Pievienot un saglabāt",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "Priekšskatījums {{reading}}",
   "reading-plan-mark-reading-complete": "Atzīmēt lasīšanu kā pabeigtu",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Atzīmēt {{passage}} kā izlasītu",
   "reading-plan-read-nudge-title": "Jauka lasīšana!",
   "reading-plan-read-nudge-toast": "Atzīmēt {{passage}} pabeigtu?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Lasiet, meklējiet un studējiet Bībeli tiešsaistē. Bezmaksas tulkojumi daudzās valodās ar izcēlumiem, piezīmēm, grāmatzīmēm un lasīšanas plāniem.",
   "all": "Visi",
-
   "today-bookmarks": "GRĀMATZĪMES",
   "today-search-verses": "Meklēt grāmatas, nodaļas, pantus...",
   "anonymous-greeting": "Laipni lūgti!",
   "community": "KOPIENA",
   "go-somewhere-new": "Dodieties kaut kur jaunā vietā",
-
   "open-bible": "Atvērtā Bībele",
   "personal-greeting": "Sveicināti, {{name}} !",
   "resume-reading": "TURPINIET TUR, KUR APSTĀJĀT",
   "resume-reading-loading": "Notiek lasīšanas vēstures ielāde…",
   "selected-year": "Gads: {{year}}",
-
   "theme-light": "Gaisma",
   "theme-dark": "Tumšs",
   "installed-extensions": "Uzstādīts",
@@ -543,7 +518,6 @@
   "extension-state-installed": "Uzstādīts",
   "extension-state-downloaded": "Lejupielādēts",
   "extension-state-pending": "Notiek instalēšana…",
-
   "tutorial.stepProgress": "{{current}} solis no {{total}}",
   "tutorial.offlineDownloadTitle": "Pieskarieties, lai saglabātu to savā ierīcē",
   "tutorial.offlineDownloadBody": "Jebkuru tulkojumu ar šo ikonu var saglabāt lasīšanai bezsaistē.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "Šajā izkārtojuma izvēlnē izvēlieties, cik fragmentu lasīt blakus.",
   "tutorial.addTabTitle": "Atvērt vairāk fragmentu",
   "tutorial.addTabBody": "Pievienojiet jaunu cilni, lai lasītu vairākas grāmatas vai tulkojumus vienlaikus.",
-
   "playlist-history-session-summary": "{{time}} — {{percent}} % pabeigts — {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} — {{percent}} % pabeigts",
   "playlist-history-continue": "Turpināt",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} piezīmes šai nodaļai",
   "create-folder": "Izveidot mapi",
   "edit-bookmark": "Rediģēt grāmatzīmi",
-
   "greeting-afternoon": "Labdien!",
   "greeting-afternoon-named": "Labdien, {{name}} !",
   "greeting-evening": "Labvakar!",
@@ -652,32 +624,24 @@
   "ask-ai": "Jautājiet mākslīgajam intelektam",
   "unread-mention": "Nelasīts pieminējums",
   "unread-messages": "Nelasītie ziņojumi: {{count}}",
-
   "scripture-width": "Rakstu platums",
   "decrease-scripture-width": "Samazināt Svēto Rakstu platumu",
   "increase-scripture-width": "Palielināt Svēto Rakstu platumu",
   "annotations": "Anotācijas",
   "discover-content-panel": "Atklājiet saturu",
   "discover-book-title": "Atklājiet {{book}}",
-
   "about-title": "Par sēklu Bībeli",
   "about-meta-description": "Seed Bible ir bezmaksas Bībeles lietotne, kas izveidota, lai lasītu Svētos Rakstus kopā ar ģimeni, draugiem un kopienu — bez maksas uz visiem laikiem, bez reklāmām vai maksas sienām.",
-
   "about-action-open-passage": "Atvērt fragmentu",
   "about-action-donate": "Ziedot",
   "about-action-discord": "Pievienojieties Discord",
   "recent-uploads": "Jaunākie augšupielādējumi",
-
   "customization-not-found": "Šo pielāgojumu nevarēja atrast.",
   "customization-name": "Vārds",
   "customization-primaryColor": "Primārā",
-
   "customization-secondaryColor": "Sekundārā",
-
   "customization-tertiaryColor": "Terciārais",
-
   "customization-fonts": "Fonti",
-
   "custom-font-option": "Pielāgots…",
   "custom-font-name-placeholder": "Google fonta nosaukums",
   "delete-customization": "Dzēst",
@@ -690,10 +654,8 @@
   "extension-availability-available": "Pieejams",
   "extension-availability-auto-installed": "Automātiski instalēts",
   "extension-availability-hidden": "Slēpts",
-
   "variants": "Tēmas",
   "add-variant": "Pievienot tēmu",
-
   "base-theme-description": "Izmaiņas, kas iepriekš iestatīja šo tēmu, attiecas uz visu, ko neesat pielāgojis. Jūsu pašu rediģētie dati tiek saglabāti.",
   "reset-to-base-theme": "Atiestatīt uz pamata tēmu",
   "low-contrast-warning": "{{label}} : kontrasts ir tikai {{ratio}} :1 — tiecieties uz vismaz {{minRatio}} :1, lai teksts paliktu lasāms.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "Šeit vēl nav saglabāto failu.",
   "save-options": "Saglabāšanas opcijas",
   "saves": "Saglabājumi",
-
   "hide-saves": "Slēpt saglabātos datus",
   "show-saves": "Rādīt saglabātos",
   "save-verses": "Saglabāt",
   "new-save-folder": "Jauna mape",
   "edit-save": "Rediģēt saglabāt",
   "remove-save-from-all-folders": "Noņemt no visām mapēm",
-
   "color-hue": "Nokrāsa",
   "color-saturation": "Piesātinājums un spilgtums",
   "hex-color": "Sešpadsmitdaļīga krāsa",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Formatēšanas redaktoru nevarēja ielādēt. Šīs piezīmes formatējums tiktu zaudēts, tāpēc to nevarēs rediģēt, kamēr neatkārtoti neizveidosiet savienojumu.",
   "annotation-text": "Anotācijas teksts",
   "notes-for-verse": "Piezīmes pantam {{verse}}",
-
   "configure-extension-defaults": "Noklusējuma ignorēšanas konfigurēšana",
-
   "extension-settings-defaults-title": "{{name}} noklusējuma ignorēšanas",
   "no-extension-settings": "Šim paplašinājumam nav konfigurējamu iestatījumu.",
   "extension-settings-save-failed": "Nevarēja saglabāt jūsu iestatījumus.",
@@ -872,7 +830,6 @@
   "setting-no-default": "Nav noklusējuma",
   "override-setting": "Ignorēt {{name}}",
   "override-setting-label": "Ignorēt",
-
   "discover-choose-filter-hint": "Izvēlieties filtru, lai skatītu vairāk no šīs nodaļas.",
   "take-a-tour": "Dodieties ekskursijā",
   "share-reading-plan": "Kopīgošanas plāns",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "Mana grāmatzīme {{number}}",
   "bookmark-move-hint": "Pieskarieties grāmatzīmei, lai to pārvietotu uz šo nodaļu.",
   "move-bookmark-here": "Pārvietot {{name}} šeit",
-
   "play": "Spēlēt",
   "pause": "Pauze",
   "audio-playback-position": "Atskaņošanas pozīcija",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "Pants {{verse}}",
   "tab-playing-audio": "Audio atskaņošana",
   "collapsed-tab-playing-label": "{{label}} — atskaņo audio",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} tēmas",
   "customization-theme-count_one": "{{count}}",
@@ -1104,7 +1059,6 @@
   "about-community-body": "Ticība ir paredzēta, lai to dzīvotu kopā. \"Seed Bible\" ir veidota, lai lasītu Svētos Rakstus kopā ar ģimeni, tuvākajiem draugiem un mājas draudzi.",
   "discovered-content": "Atklāts saturs",
   "show-discovered-content": "Rādīt atklāto saturu",
-
   "extension-availability-default": "Noklusējuma ( {{availability}} )",
   "customization-extensions-default": "Noklusējums citiem paplašinājumiem",
   "customization-extensions-default-hint": "Attiecas uz visiem paplašinājumiem, ko neesat iestatījis tālāk, tostarp jaunajiem, vēlāk pievienotajiem paplašinājumiem",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "Atpakaļ uz atskaņošanas sarakstu",
   "playlist-scripture-note-aria": "Piezīme par {{passage}}",
   "playlist-scripture-note-progress": "{{current}} no {{total}}",
-
   "unsaved-item-edit-confirm-message": "Jūs esat mainījis vienumu, bet vēl neesat saglabājis šīs izmaiņas. Ko vēlaties darīt?",
   "keep-changes-and-save": "Saglabāt izmaiņas un saglabāt",
   "reading-plan-edit-reading": "Rediģēt lasīšanu",
@@ -1152,7 +1105,6 @@
   "branding": "Zīmola veidošana",
   "create-custom-branding-menu-item": "Pielāgots zīmols",
   "your-content-empty-branding": "Šeit tiks parādīts jūsu izveidotais pielāgotais zīmols.",
-
   "extension-consent-from": "No {{host}}",
   "extension-consent-source-version": "Versija {{version}} · no {{host}}",
   "extension-consent-uploader-unnamed": "Sēklu Bībeles lietotājs",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "Skatiet, kurus pantus esat atlasījis",
   "extension-permission-reading-navigate": "Atvērtas ejas",
   "extension-permission-network": "Izveidot savienojumu ar {{host}}",
-
   "extension-consent-not-now": "Ne tagad",
   "extension-consent-nothing-yet": "Pagaidām tam nebūs piekļuves nekādai jūsu informācijai.",
   "extension-permission-reading-history": "Skatiet savu lasīšanas vēsturi",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "Atcelt",
   "extension-consent-high-risk": "Jūtīga",
   "extension-modal-ok": "Labi",
-
   "extension-permissions-restart-note": "Izmaiņas stājas spēkā nekavējoties. {{name}} restartējas, lai tās ieviestu.",
   "extension-permissions-saved": "Saglabāts. {{name}} restartēts ar jaunajām atļaujām.",
   "extension-permissions-failed": "Tas netika saglabāts. Mēģiniet vēlreiz.",
@@ -1276,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Rādīt efektus, kad vadītājs izvēlas pantu.",
   "session-settings-verse-effects-desc-everyone": "Rādīt efektus, kad kāds atlasa pantu.",
   "session-settings-verse-effects-desc-none": "Pantiņu atlases efekti ir izslēgti visiem.",
-
   "account": "Konts",
   "scroll-filters-start": "Ritināt filtrus uz sākumu",
-  "scroll-filters-end": "Ritināt filtrus uz beigām"
+  "scroll-filters-end": "Ritināt filtrus uz beigām",
+  "download": "Lejupielādēt",
+  "image-details-uploaded": "Augšupielādēts",
+  "image-details-dimensions": "Izmēri",
+  "image-details-dimensions-value": "{{width}} × {{height}} pikseļi",
+  "image-details-type": "Tips",
+  "image-details-cover-of": "Vāks no",
+  "image-details-not-a-cover": "Netiek izmantots kā pārsegs",
+  "delete-customization-confirm-title": "Vai dzēst pielāgoto zīmolu?",
+  "delete-customization-confirm-message": "Vai dzēst pielāgoto zīmolu \" {{name}} \"? Šo darbību nevar atsaukt.",
+  "delete-customization-failed": "Nevarēja izdzēst pielāgoto zīmolu.",
+  "delete-variant-confirm-title": "Dzēst tēmu?",
+  "delete-variant-confirm-message": "Dzēst tēmu \" {{name}} \"? Šo darbību nevar atsaukt.",
+  "delete-variant-confirm-message-unnamed": "Vai dzēst šo tēmu? To nevar atsaukt.",
+  "delete-variant-failed": "Nevarēja izdzēst tēmu.",
+  "delete-highlight-confirm-title": "Vai dzēst iezīmēto fragmentu?",
+  "delete-highlight-confirm-message": "Vai dzēst iezīmējumu {{reference}} ? Šo darbību nevar atsaukt.",
+  "delete-highlight-failed": "Nevarēja izdzēst iezīmēto ierakstu.",
+  "delete-annotation-on-confirm-message": "Vai dzēst anotāciju uz {{reference}} ? Šo darbību nevar atsaukt.",
+  "remove-from-folder": "Noņemt no mapes",
+  "save-folders": "{{folders}}",
+  "delete-save-confirm-title": "Dzēst saglabāto?",
+  "delete-save-confirm-message": "Vai dzēst saglabāto ierakstu no {{reference}} ? Šo darbību nevar atsaukt.",
+  "delete-save-confirm-message-folders": "Vai dzēst saglabāto failu {{reference}} no {{folders}} ? Šo darbību nevar atsaukt.",
+  "delete-save-failed": "Nevarēja izdzēst saglabāšanu.",
+  "delete-save-folder-confirm-title": "Vai dzēst mapi?",
+  "delete-save-folder-confirm-message": "Vai dzēst mapi \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Tiks dzēsti arī {{count}} saglabātie faili, kas atrodas tikai šajā mapē.",
+  "delete-save-folder-confirm-deletes_one": "Saglabātais fails, kas atrodas tikai šajā mapē, tiks dzēsts.",
+  "delete-save-folder-confirm-deletes_other": "Tiks dzēsti arī {{count}} saglabātie faili, kas atrodas tikai šajā mapē.",
+  "delete-save-folder-confirm-keeps": "{{count}} saglabātie faili, kas atrodas arī citās mapēs, tur paliks.",
+  "delete-save-folder-confirm-keeps_one": "Saglabātais fails, kas atrodas arī citā mapē, tur arī paliks.",
+  "delete-save-folder-confirm-keeps_other": "{{count}} saglabātie faili, kas atrodas arī citās mapēs, tur paliks.",
+  "cant-be-undone": "To nevar atsaukt.",
+  "delete-save-folder-failed": "Nevarēja izdzēst mapi.",
+  "download-image-failed": "Nevarēja lejupielādēt attēlu.",
+  "session-settings-verse-effects-hosts-only": "Tikai saimniekiem",
+  "session-settings-verse-effects-everyone": "Ikviens",
+  "session-settings-verse-effects-none": "Neviens",
+  "loading-books": "Notiek grāmatu ielāde…",
+  "books-load-failed": "Grāmatas nevarēja ielādēt. Pārbaudiet savienojumu un mēģiniet vēlreiz.",
+  "loading-translation": "Notiek {{name}} ielāde…",
+  "translation-load-failed": "Nevarēja ielādēt {{name}} .",
+  "loading-translations": "Notiek tulkojumu ielāde…",
+  "translations-load-failed": "Nevarēja ielādēt pilnu tulkojumu sarakstu, tāpēc daži var trūkt.",
+  "verse-of-the-day": "DIENAS PANTS",
+  "verse-of-the-day-loading": "Notiek dienas panta ielāde…"
 }

@@ -21,6 +21,7 @@ import {
 } from "preact/compat";
 import {
   computed,
+  effect,
   signal,
   type ReadonlySignal,
   type Signal,
@@ -37,6 +38,7 @@ import type {
   BibleReadingState,
   BibleSelectedVerse,
   VerseDecoration,
+  VerseDecorationInput,
   VisibleVerseRange,
 } from "../../managers/BibleReadingManager";
 import type {
@@ -83,7 +85,7 @@ import {
 } from "../Bookmarks/Bookmarks";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
-import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
+import { DiscoverContentPanel } from "../Discover/DiscoverContentPanel";
 import { ScriptureNotePopover } from "../ScriptureNote/ScriptureNote";
 import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
@@ -423,17 +425,46 @@ function getInlineText(part: ChapterVerse["content"][0]): string {
 function getVersePlainText(content: ChapterVerse["content"]): string {
   return content.map((part) => getInlineText(part)).join("");
 }
+/** Keep in sync with the `sb-verse-number-flare` animation duration. */
+const VERSE_FLARE_DURATION_MS = 8000;
+/** Keep in sync with the `sb-verse-number-flare-ending` animation duration. */
+const VERSE_FLARE_ENDING_MS = 600;
+
+/** A verse-selection flare this reader started and may need to end early. */
+interface BroadcastVerseFlare {
+  decorationId: string;
+  bookId: string;
+  chapterNumber: number;
+  verseNumber: number;
+  color: string;
+}
+
+function verseFlareDecoration(
+  color: string,
+  ending: boolean
+): VerseDecorationInput {
+  return {
+    className: ending
+      ? "sb-verse-number-flare sb-verse-number-flare-ending"
+      : "sb-verse-number-flare",
+    style: {
+      "--sb-selection-flare-color": color,
+    } as JSX.CSSProperties,
+    removeAfterMs: ending ? VERSE_FLARE_ENDING_MS : VERSE_FLARE_DURATION_MS,
+  };
+}
+
 function broadcastSelectedVerse(
   session: BibleReadingSession,
   bookId: string,
   chapterNumber: number,
   verseNumber: number
-) {
+): BroadcastVerseFlare | null {
   const user = session.currentUser.value;
-  if (!user) return;
+  if (!user) return null;
   const options = session.options.value;
   const visibility = options.verseSelectionEffectVisibility ?? "hosts-only";
-  if (visibility === "none") return;
+  if (visibility === "none") return null;
   if (
     visibility === "hosts-only" &&
     !(
@@ -441,7 +472,7 @@ function broadcastSelectedVerse(
       isSessionHost(options, user.connectionId)
     )
   ) {
-    return;
+    return null;
   }
   const connectionId = user.connectionId ?? user.userId ?? "anonymous";
 
@@ -452,14 +483,33 @@ function broadcastSelectedVerse(
     bookId,
     chapterNumber,
     [verseNumber],
-    {
-      className: "sb-verse-number-flare",
-      style: {
-        "--sb-selection-flare-color": user.visual.color,
-      } as JSX.CSSProperties,
-      removeAfterMs: 1200,
-    },
+    verseFlareDecoration(user.visual.color, false),
     decorationId
+  );
+
+  return {
+    decorationId,
+    bookId,
+    chapterNumber,
+    verseNumber,
+    color: user.visual.color,
+  };
+}
+
+/**
+ * Swaps a still-running flare for a short fade-out. Re-decorating under the
+ * same id replaces it (and its removal timer) for every session peer.
+ */
+function endVerseFlare(
+  session: BibleReadingSession,
+  flare: BroadcastVerseFlare
+) {
+  session.readingState.decorateVerses(
+    flare.bookId,
+    flare.chapterNumber,
+    [flare.verseNumber],
+    verseFlareDecoration(flare.color, true),
+    flare.decorationId
   );
 }
 
@@ -844,7 +894,9 @@ function renderChapterContent(
         decoration.verses.includes(verseNumber)
     );
   };
-  const getVerseFlareColor = (verseNumber: number): string | undefined => {
+  const getVerseFlare = (
+    verseNumber: number
+  ): { color: string; ending: boolean } | undefined => {
     if (
       !shouldShowVerseSelectionEffects(
         verseSelectionEffects,
@@ -903,7 +955,15 @@ function renderChapterContent(
 
     const color = flare?.style?.["--sb-selection-flare-color"];
 
-    return typeof color === "string" ? color : undefined;
+    return typeof color === "string"
+      ? {
+          color,
+          ending:
+            flare?.className
+              ?.split(/\s+/)
+              .includes("sb-verse-number-flare-ending") ?? false,
+        }
+      : undefined;
   };
 
   const decorationHighlights = decorationHighlightsByVerse(decorations, {
@@ -1072,13 +1132,17 @@ function renderChapterContent(
   const renderVerseNumberOrIcon = (
     verseNumber: number,
     verse: BibleSelectedVerse,
-    flareColor?: string
+    flare?: { color: string; ending: boolean }
   ) => {
     const hasAnnotation = getVerseAnnotations(verseNumber).length > 0;
 
-    const flareClass = flareColor ? "sb-verse-number-flare" : "";
-    const flareStyle = flareColor
-      ? ({ "--sb-selection-flare-color": flareColor } as JSX.CSSProperties)
+    const flareClass = flare
+      ? flare.ending
+        ? "sb-verse-number-flare sb-verse-number-flare-ending"
+        : "sb-verse-number-flare"
+      : "";
+    const flareStyle = flare
+      ? ({ "--sb-selection-flare-color": flare.color } as JSX.CSSProperties)
       : undefined;
 
     const handleAnnotationClick = (event: MouseEvent) =>
@@ -1133,7 +1197,7 @@ function renderChapterContent(
       verse: value,
       translationId: chapterData.translation.id,
     };
-    const verseFlareColor = getVerseFlareColor(value.number);
+    const verseFlare = getVerseFlare(value.number);
     const isSelected = selectedVerses.some(
       (v) =>
         v.verse.number === value.number &&
@@ -1221,11 +1285,7 @@ function renderChapterContent(
                   style={verseDecoratorStyle}
                 >
                   {segIndex === 0 &&
-                    renderVerseNumberOrIcon(
-                      value.number,
-                      verse,
-                      verseFlareColor
-                    )}
+                    renderVerseNumberOrIcon(value.number, verse, verseFlare)}
                   {segment.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -1259,11 +1319,7 @@ function renderChapterContent(
                 >
                   {segIndex === 0 &&
                     lineIndex === 0 &&
-                    renderVerseNumberOrIcon(
-                      value.number,
-                      verse,
-                      verseFlareColor
-                    )}
+                    renderVerseNumberOrIcon(value.number, verse, verseFlare)}
                   {line.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -1300,7 +1356,7 @@ function renderChapterContent(
         tabIndex={0}
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-          {renderVerseNumberOrIcon(value.number, verse, verseFlareColor)}
+          {renderVerseNumberOrIcon(value.number, verse, verseFlare)}
           {content.map((part, index) =>
             renderInlineContent(
               part,
@@ -1693,12 +1749,38 @@ interface PresenceArrow {
   color: string;
 }
 
+/** Height of a stack of `count` avatars, counting its "+N" chip. */
+function presenceStackHeight(count: number): number {
+  const shown = Math.min(count, PRESENCE_MAX_STACK_AVATARS);
+  const rows = shown + (count > shown ? 1 : 0);
+  return PRESENCE_AVATAR_PX + (rows - 1) * PRESENCE_STACK_STEP_PX;
+}
+
+/**
+ * Which side of the screen a bar lies wholly beyond, or null while any of it
+ * is on screen.
+ */
+function presenceOffscreenSide(
+  marker: PresenceMarker,
+  viewport: ReaderViewport | null
+): "above" | "below" | null {
+  if (!viewport) return null;
+  if (marker.top + marker.height <= viewport.top) return "above";
+  if (marker.top >= viewport.bottom) return "below";
+  return null;
+}
+
 /**
  * Anchors each participant's avatar to the top of their bar, then holds it at
  * the top of the screen once that has scrolled out of view, so the avatar
  * follows the reader down the page for as long as its owner's verses do. It
  * lets go at the bottom of the bar rather than leaving the verses it belongs
  * to. Avatars that end up overlapping are merged into one stack.
+ *
+ * Someone whose verses are entirely off the screen would otherwise have no
+ * avatar in view at all, so theirs is held at the edge they are beyond (#1961)
+ * — just inside the top for someone behind the reader, just inside the bottom
+ * for someone ahead — beside an arrow pointing their way.
  */
 function stackPresenceAvatars(
   markers: PresenceMarker[],
@@ -1706,18 +1788,25 @@ function stackPresenceAvatars(
 ): PresenceAvatarStack[] {
   const anchored = markers.map((marker) => {
     const lowest = marker.top + marker.height - PRESENCE_AVATAR_PX;
+    const side = presenceOffscreenSide(marker, viewport);
     let top = marker.top;
     let pinned = false;
     if (viewport) {
       const pinTop = viewport.top + PRESENCE_PIN_INSET_PX;
-      if (pinTop > marker.top && pinTop <= lowest) {
+      if (side === "above") {
+        top = pinTop;
+        pinned = true;
+      } else if (side === "below") {
+        top = viewport.bottom - PRESENCE_PIN_INSET_PX - PRESENCE_AVATAR_PX;
+        pinned = true;
+      } else if (pinTop > marker.top && pinTop <= lowest) {
         top = pinTop;
         pinned = true;
       } else if (pinTop > lowest && lowest > marker.top) {
         top = lowest;
       }
     }
-    return { marker, top, pinned };
+    return { marker, top, pinned, below: side === "below" };
   });
   anchored.sort(
     (a, b) =>
@@ -1729,17 +1818,14 @@ function stackPresenceAvatars(
   // Bottom edge of the stack being built, below which the next avatar is on
   // its own again.
   let reach = -Infinity;
+  // Index of the stack holding the people below the screen, if any.
+  let belowIndex = -1;
   for (const entry of anchored) {
     const current = stacks[stacks.length - 1];
     if (current && entry.top < reach) {
       current.markers.push(entry.marker);
-      const shown = Math.min(
-        current.markers.length,
-        PRESENCE_MAX_STACK_AVATARS
-      );
-      const rows = shown + (current.markers.length > shown ? 1 : 0);
-      reach =
-        current.top + PRESENCE_AVATAR_PX + (rows - 1) * PRESENCE_STACK_STEP_PX;
+      if (entry.below) belowIndex = stacks.length - 1;
+      reach = current.top + presenceStackHeight(current.markers.length);
       continue;
     }
     stacks.push({
@@ -1748,8 +1834,45 @@ function stackPresenceAvatars(
       pinned: entry.pinned,
       markers: [entry.marker],
     });
+    if (entry.below) belowIndex = stacks.length - 1;
     reach = entry.top + PRESENCE_AVATAR_PX;
   }
+
+  // A stack grows downward, which at the bottom edge would run it over the
+  // arrow and off the screen, so the one held there is lifted by its own
+  // height instead. Anything still lower (a bar starting in the last few
+  // pixels of the screen) joins it, and so does any stack the lift runs into.
+  const edge = stacks[belowIndex];
+  if (viewport && edge) {
+    const floor = viewport.bottom - PRESENCE_PIN_INSET_PX;
+    for (const later of stacks.splice(belowIndex + 1)) {
+      edge.markers.push(...later.markers);
+    }
+    edge.pinned = true;
+    edge.top = Math.min(
+      edge.top,
+      floor - presenceStackHeight(edge.markers.length)
+    );
+    for (
+      let previous = stacks[stacks.length - 2];
+      previous;
+      previous = stacks[stacks.length - 2]
+    ) {
+      if (
+        previous.top + presenceStackHeight(previous.markers.length) <=
+        edge.top
+      ) {
+        break;
+      }
+      stacks.splice(stacks.length - 2, 1);
+      edge.markers.unshift(...previous.markers);
+      edge.top = Math.min(
+        previous.top,
+        floor - presenceStackHeight(edge.markers.length)
+      );
+    }
+  }
+
   for (const stack of stacks) {
     stack.key = stack.markers.map((m) => m.connectionId).join("+");
   }
@@ -1761,6 +1884,11 @@ function stackPresenceAvatars(
  * carries on past it, so the reader can tell that a participant sees more than
  * the part of their bar on this screen. Only bars with a lane to draw in get
  * one, since there is nothing on screen for the arrow to continue.
+ *
+ * People entirely off the screen get one arrow per edge instead, on the
+ * centre line beside the avatars held there, in the colour of whoever is
+ * nearest. It is left out where a bar on the centre line already has an arrow
+ * at that edge, since the two would be drawn on the same spot.
  */
 function placePresenceArrows(
   markers: PresenceMarker[],
@@ -1768,12 +1896,30 @@ function placePresenceArrows(
 ): PresenceArrow[] {
   if (!viewport) return [];
   const arrows: PresenceArrow[] = [];
+  let nearestAbove: PresenceMarker | null = null;
+  let nearestBelow: PresenceMarker | null = null;
   for (const marker of markers) {
+    const side = presenceOffscreenSide(marker, viewport);
+    if (side === "above") {
+      if (
+        !nearestAbove ||
+        marker.top + marker.height > nearestAbove.top + nearestAbove.height
+      ) {
+        nearestAbove = marker;
+      }
+      continue;
+    }
+    if (side === "below") {
+      if (!nearestBelow || marker.top < nearestBelow.top) {
+        nearestBelow = marker;
+      }
+      continue;
+    }
     if (marker.lane >= PRESENCE_MAX_LANES) continue;
     const bottom = marker.top + marker.height;
     if (marker.top < viewport.top && bottom > viewport.top) {
       arrows.push({
-        key: `${marker.connectionId}:up`,
+        key: `${marker.connectionId}:up:${marker.lane}`,
         direction: "up",
         top: viewport.top + PRESENCE_EDGE_INSET_PX,
         lane: marker.lane,
@@ -1782,13 +1928,38 @@ function placePresenceArrows(
     }
     if (bottom > viewport.bottom && marker.top < viewport.bottom) {
       arrows.push({
-        key: `${marker.connectionId}:down`,
+        key: `${marker.connectionId}:down:${marker.lane}`,
         direction: "down",
         top: viewport.bottom - PRESENCE_EDGE_INSET_PX - PRESENCE_ARROW_PX,
         lane: marker.lane,
         color: marker.visual.color,
       });
     }
+  }
+  const centreArrow = (direction: PresenceArrow["direction"]) =>
+    arrows.some((arrow) => arrow.direction === direction && arrow.lane === 0);
+  // Keyed like the arrow a centre-line bar has while it runs off that edge, so
+  // when the last of that person's verses leaves the screen the arrow stays
+  // put instead of fading out and back in. An arrow in a side lane has a
+  // different key, so it fades out while this one fades in on the centre
+  // line rather than sliding across.
+  if (nearestAbove && !centreArrow("up")) {
+    arrows.push({
+      key: `${nearestAbove.connectionId}:up:0`,
+      direction: "up",
+      top: viewport.top + PRESENCE_EDGE_INSET_PX,
+      lane: 0,
+      color: nearestAbove.visual.color,
+    });
+  }
+  if (nearestBelow && !centreArrow("down")) {
+    arrows.push({
+      key: `${nearestBelow.connectionId}:down:0`,
+      direction: "down",
+      top: viewport.bottom - PRESENCE_EDGE_INSET_PX - PRESENCE_ARROW_PX,
+      lane: 0,
+      color: nearestBelow.visual.color,
+    });
   }
   return arrows;
 }
@@ -1797,7 +1968,9 @@ function placePresenceArrows(
  * The gutter down the start edge of the chapter showing where the other
  * participants are (#1692): a bar per person spanning the verses they can
  * see, their avatar at the top of it (held on screen as the reader scrolls
- * past), and arrows where a bar runs off the screen.
+ * past), and arrows where a bar runs off the screen. Someone reading well
+ * ahead of or behind the reader has their avatar held at that edge of the
+ * screen with an arrow pointing their way (#1961).
  *
  * Its own component so that following the scroll only re-renders the gutter.
  * The viewport is re-measured on every scroll frame, and doing that in
@@ -2957,8 +3130,11 @@ export function BibleReader(props: BibleReaderProps) {
     void selectorState.setOpen(true, currentSlot);
   };
   const openTranslationSelector = async () => {
-    await selectorState.setOpen(true, currentSlot);
+    // Set after `setOpen` starts but before its load finishes, so the list is
+    // on screen straight away instead of after the books arrive.
+    const opening = selectorState.setOpen(true, currentSlot);
     selectorState.selectingTranslation.value = true;
+    await opening;
   };
 
   // The translation chip, in both the desktop and the mobile header: the short
@@ -3046,19 +3222,57 @@ export function BibleReader(props: BibleReaderProps) {
       handleHostVerseClick(firstSelectedVerse);
     }
   };
+  // Flares this reader started, so they can fade out early once their verse
+  // is deselected rather than lingering for the full duration.
+  const activeVerseFlaresRef = useRef(new Map<string, BroadcastVerseFlare>());
   const handleHostVerseClick = useCallback(
     (verse: BibleSelectedVerse) => {
       if (!sharedSession) return;
 
-      broadcastSelectedVerse(
+      const flare = broadcastSelectedVerse(
         sharedSession,
         verse.bookId,
         verse.chapterNumber,
         verse.verse.number
       );
+      if (flare) {
+        activeVerseFlaresRef.current.set(flare.decorationId, flare);
+      }
     },
     [sharedSession]
   );
+
+  useEffect(() => {
+    if (!sharedSession) return;
+    const activeFlares = activeVerseFlaresRef.current;
+
+    return effect(() => {
+      const selected = selectedVerses.value;
+      if (activeFlares.size === 0) return;
+
+      const liveDecorationIds = new Set(
+        sharedSession.readingState.decorations.peek().map(({ id }) => id)
+      );
+
+      for (const [id, flare] of activeFlares) {
+        if (!liveDecorationIds.has(id)) {
+          activeFlares.delete(id);
+          continue;
+        }
+
+        const stillSelected = selected.some(
+          (verse) =>
+            verse.bookId === flare.bookId &&
+            verse.chapterNumber === flare.chapterNumber &&
+            verse.verse.number === flare.verseNumber
+        );
+        if (!stillSelected) {
+          activeFlares.delete(id);
+          endVerseFlare(sharedSession, flare);
+        }
+      }
+    });
+  }, [sharedSession, selectedVerses]);
 
   // Only the current panel's title opens the selector; the side panels are
   // non-interactive previews for the swipe transition.
@@ -3439,7 +3653,11 @@ export function BibleReader(props: BibleReaderProps) {
     !isMinimalEmbed &&
     !state.app.isDiscoverOpen.value &&
     state.settings.settings.value.discoveredContent.showContent ? (
-      <DiscoverContentPanel tab={currentSlot.tab} state={state} />
+      <DiscoverContentPanel
+        variant="compact"
+        tab={currentSlot.tab}
+        state={state}
+      />
     ) : null;
 
   // Playback opens on the selected tab only. Other slots in a split view

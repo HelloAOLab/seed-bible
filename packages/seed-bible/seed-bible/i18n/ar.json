@@ -22,22 +22,18 @@
   "clear-search": "مسح البحث",
   "searching": "جارٍ البحث...",
   "no-search-results": "لا توجد آيات متطابقة.",
-
   "uploading": "جارٍ التحميل...",
   "profile-name": "اسم الملف الشخصي",
   "profile-name-placeholder": "مثال: عائلة كريج",
-
   "description": "وصف",
   "optional": "(خياري)",
   "description-placeholder": "أدخل وصف ملفك الشخصي...",
   "location": "موقع",
   "location-placeholder": "مثال: أوستن، تكساس",
-
   "copied": "تم النسخ",
   "copy": "ينسخ",
   "save-changes": "حفظ التغييرات",
   "sign-out": "تسجيل الخروج",
-
   "log-in": "تسجيل الدخول",
   "session-settings": "إعدادات الجلسة",
   "shared-session-click-to-join": "المشاركة متاحة — انقر للانضمام",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "اختر موضوعًا واضبط طريقة عرض الكتاب المقدس وواجهة المستخدم.",
   "scripture-settings": "إعدادات الكتاب المقدس",
   "scripture-settings-font-size-example": "أ",
-
   "all-settings": "جميع الإعدادات",
   "no-extensions-available": "لا توجد تمديدات متاحة.",
   "install": "ثَبَّتَ",
   "uninstall": "إلغاء التثبيت",
-
   "custom": "مخصص",
   "text-section-bookTitle": "نص عنوان الكتاب",
   "text-section-heading": "نص العنوان",
@@ -79,7 +73,6 @@
   "show-selected-items": "عرض العناصر المختارة",
   "show-highlight-colors": "إظهار ألوان التمييز",
   "show-icon-text": "عرض نص الأيقونة",
-
   "extensions": "الإضافات",
   "display": "عرض",
   "keep-screen-awake": "أبقِ الشاشة مفتوحة",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "قم بزيادة حجم خط الكتاب المقدس",
   "change-line-spacing": "تغيير تباعد الأسطر",
   "line-spacing_lineHeight": "تباعد الأسطر: {{lineHeight}}",
-
   "italic": "مائل",
   "underline": "ضع خطاً تحته",
   "alignment_x": "المحاذاة: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "لون النص",
   "follow_theme": "اتبع الموضوع",
   "reset-to-default": "إعادة الضبط إلى الوضع الافتراضي",
-
   "id_highlight-text-color": "{{id}} لون تمييز النص",
   "id_highlight-background-color": "{{id}} لون خلفية التمييز",
   "all-settings-description": "قم بضبط كل قسم من أقسام النص بدقة وخصص لون كل سمة.",
@@ -126,7 +117,6 @@
   "old-testament_short": "العلاج الوظيفي",
   "new-testament_short": "العهد الجديد",
   "apocrypha": "الأبوكريفا",
-
   "custom-translations": "ترجمات مخصصة",
   "no-translation-results-found": "لم يتم العثور على نتائج. هل ترغب في توسيع نطاق بحثك ليشمل الترجمات غير المكتملة أيضاً؟",
   "show-all-translations": "عرض جميع الترجمات",
@@ -138,7 +128,6 @@
   "complete-translations": "ترجمات كاملة",
   "all-translations": "جميع الترجمات",
   "popular-translations": "الترجمات الشائعة",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "المزامير 1",
   "2-psalms": "المزمور الثاني",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "انتقل إلى جميع الإعدادات",
   "more": "أكثر",
   "remove-bookmark": "إزالة الإشارة المرجعية",
-
   "chat": "محادثة",
   "today": "اليوم",
   "you": "أنت",
@@ -170,7 +158,6 @@
   "category-options": "خيارات المجلد",
   "rename": "إعادة تسمية",
   "delete": "يمسح",
-
   "bookmark-options": "خيارات الإشارة المرجعية",
   "new-folder-placeholder": "اسم المجلد",
   "tasks": "المهام",
@@ -182,11 +169,9 @@
   "folder-name-taken": "يوجد مجلد بهذا الاسم بالفعل.",
   "add-to-new": "أضف إلى جديد",
   "save": "يحفظ",
-
   "seed-bible": "الكتاب المقدس للبذور",
   "take-photo": "التقط صورة",
   "choose-from-gallery": "اختر من المعرض",
-
   "crop-your-photo": "قص صورتك",
   "zoom": "تكبير",
   "set-picture": "صورة المجموعة",
@@ -212,10 +197,8 @@
   "read-the-bible": "اقرأ الكتاب المقدس",
   "seed-bible-description": "اقرأ {{bookName}} {{chapterNumber}} في كتاب البذور المقدس",
   "social-title": "اقرأ {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "التنقل بين الفصول",
   "tutorial.skip": "يتخطى",
-
   "tutorial.back": "خلف",
   "tutorial.done": "منتهي",
   "tutorial.next": "التالي",
@@ -239,7 +222,6 @@
   "copied-translation-share-link": "تم نسخ رابط مشاركة الترجمة",
   "less": "أقل",
   "swipe-up-more": "اسحب لأعلى لعرض المزيد",
-  "plans": "الخطط",
   "reading-plans": "خطط القراءة",
   "create-reading-plan": "وضع خطة قراءة",
   "reading-plans-empty": "ليس لديك أي خطط قراءة حتى الآن. أنشئ واحدة لتبدأ.",
@@ -328,11 +310,9 @@
   "study-notes": "ملاحظات دراسية",
   "content": "محتوى",
   "untitled-playlist": "قائمة تشغيل بدون عنوان",
-
   "discover-annotations-empty": "ليس لديك أي تعليقات توضيحية",
   "discover-cross-references-empty": "لا توجد مراجع متقاطعة لهذا الفصل.",
   "discover-study-notes-empty": "لا توجد ملاحظات دراسية لهذا الفصل.",
-
   "discover-select-tab": "اختر علامة تبويب لاكتشاف المواد ذات الصلة.",
   "create-playlist": "يخلق",
   "playlist-title_placeholder": "عنوان قائمة التشغيل",
@@ -381,12 +361,10 @@
   "delete-playlist-failed": "تعذر حذف قائمة التشغيل.",
   "collapsed-tab-shared-label": "{{title}} — جلسة مشتركة، {{count}} موجودون",
   "playlist-add-mode-label": "نوع العنصر",
-
   "session-host-reconnected": "تمت إعادة الاتصال بالجلسة",
   "session-host-left": "غادر المضيف - لقد تم إخراجك من الجلسة",
   "drag-to-reorder-playlist-item": "اسحب لإعادة الترتيب",
   "saving": "جارٍ الحفظ…",
-
   "unsaved-item-confirm-message": "لقد بدأت في إضافة عنصر لم تتم إضافته بعد إلى قائمة التشغيل. ماذا تريد أن تفعل؟",
   "discard-and-save": "تجاهل وحفظ",
   "add-and-save": "إضافة وحفظ",
@@ -514,7 +492,6 @@
   "reading-plan-preview-reading": "معاينة {{reading}}",
   "reading-plan-mark-reading-complete": "أكمل مارك القراءة",
   "reading-plan-link-video": "فيديو",
-
   "reading-plan-mark-passage-complete": "ضع علامة على {{passage}} كمقروء",
   "reading-plan-read-nudge-title": "قراءة ممتعة!",
   "reading-plan-read-nudge-toast": "هل تم إكمال {{passage}} ؟",
@@ -522,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "اقرأ الكتاب المقدس وابحث فيه وادرسه عبر الإنترنت. ترجمات مجانية بلغات عديدة، مع تمييز النصوص، وملاحظات، وإشارات مرجعية، وخطط قراءة.",
   "all": "الجميع",
-
   "today-bookmarks": "الإشارات المرجعية",
   "today-search-verses": "ابحث في الكتب، الفصول، الآيات...",
   "anonymous-greeting": "مرحباً!",
   "community": "مجتمع",
   "go-somewhere-new": "اذهب إلى مكان جديد",
-
   "open-bible": "الكتاب المقدس المفتوح",
   "personal-greeting": "أهلاً وسهلاً، {{name}} !",
   "resume-reading": "تابع من حيث توقفت",
   "resume-reading-loading": "جارٍ تحميل سجل القراءة الخاص بك…",
   "selected-year": "السنة: {{year}}",
-
   "theme-light": "الوضع الفاتح",
   "theme-dark": "الوضع الداكن",
   "tutorial.selectorBooksTitle": "اختر الأسفار والإصحاحات",
@@ -569,7 +543,6 @@
   "extension-state-installed": "تم التثبيت",
   "extension-state-downloaded": "تم التنزيل",
   "extension-state-pending": "جارٍ التثبيت…",
-
   "tutorial.stepProgress": "الخطوة {{current}} من {{total}}",
   "tutorial.offlineDownloadTitle": "انقر للاحتفاظ به على جهازك",
   "tutorial.offlineDownloadBody": "يمكن حفظ أي ترجمة تحمل هذه الأيقونة للقراءة دون اتصال بالإنترنت.",
@@ -578,7 +551,6 @@
   "offlinePrompt.bodyNoSize": "احتفظ بـ {{name}} على جهازك حتى تتمكن من قراءته بدون اتصال بالإنترنت.",
   "offlinePrompt.save": "احفظ الملف دون اتصال بالإنترنت",
   "offlinePrompt.notNow": "ليس الآن",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % مكتمل - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % مكتمل",
   "playlist-history-continue": "يكمل",
@@ -637,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} ملاحظات لهذا الفصل",
   "create-folder": "إنشاء مجلد",
   "edit-bookmark": "تعديل الإشارة المرجعية",
-
   "greeting-afternoon": "مساء الخير!",
   "greeting-afternoon-named": "مساء الخير، {{name}} !",
   "greeting-evening": "مساء الخير!",
@@ -653,32 +624,24 @@
   "ask-ai": "اسأل الذكاء الاصطناعي",
   "unread-mention": "إشارة غير مقروءة",
   "unread-messages": "الرسائل غير المقروءة: {{count}}",
-
   "scripture-width": "عرض الكتاب المقدس",
   "decrease-scripture-width": "تقليل عرض الكتاب المقدس",
   "increase-scripture-width": "زيادة عرض الكتاب المقدس",
   "annotations": "التعليقات التوضيحية",
   "discover-content-panel": "اكتشف المحتوى",
   "discover-book-title": "اكتشف {{book}}",
-
   "about-title": "عن كتاب البذور المقدس",
   "about-meta-description": "تطبيق Seed Bible هو تطبيق مجاني للكتاب المقدس مصمم لقراءة الكتاب المقدس مع عائلتك وأصدقائك ومجتمعك - مجاني للأبد، بدون إعلانات أو جدران دفع.",
-
   "about-action-open-passage": "افتح ممرًا",
   "about-action-donate": "يتبرع",
   "about-action-discord": "انضم إلى ديسكورد",
   "recent-uploads": "التحميلات الأخيرة",
-
   "customization-not-found": "لم يتم العثور على هذا التخصيص.",
   "customization-name": "اسم",
   "customization-primaryColor": "أساسي",
-
   "customization-secondaryColor": "المرحلة الثانوية",
-
   "customization-tertiaryColor": "التعليم العالي",
-
   "customization-fonts": "الخطوط",
-
   "custom-font-option": "مخصص…",
   "custom-font-name-placeholder": "اسم خط جوجل",
   "delete-customization": "يمسح",
@@ -691,10 +654,8 @@
   "extension-availability-available": "متاح",
   "extension-availability-auto-installed": "مثبت تلقائيًا",
   "extension-availability-hidden": "مختفي",
-
   "variants": "المواضيع",
   "add-variant": "أضف قالبًا",
-
   "base-theme-description": "يتم الاحتفاظ بالتغييرات التي تم ضبطها مسبقًا لهذا القالب في حال لم تقم بتخصيص أي شيء. أما تعديلاتك الخاصة فسيتم الاحتفاظ بها.",
   "reset-to-base-theme": "إعادة ضبط المظهر الأساسي",
   "low-contrast-warning": "{{label}} : التباين هو {{ratio}} :1 فقط — استهدف على الأقل {{minRatio}} :1 حتى يظل النص قابلاً للقراءة.",
@@ -740,14 +701,12 @@
   "save-folder-empty": "لم يتم حفظ أي ملفات هنا حتى الآن.",
   "save-options": "خيارات الحفظ",
   "saves": "حفظ",
-
   "hide-saves": "إخفاء عمليات الحفظ",
   "show-saves": "عرض عمليات الحفظ",
   "save-verses": "يحفظ",
   "new-save-folder": "مجلد جديد",
   "edit-save": "تعديل حفظ",
   "remove-save-from-all-folders": "قم بإزالة جميع المجلدات",
-
   "color-hue": "لون",
   "color-saturation": "التشبع والسطوع",
   "hex-color": "لون سداسي",
@@ -862,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "لم يتم تحميل محرر التنسيق. تحتوي هذه الملاحظة على تنسيق سيُفقد، لذا لا يمكن تعديلها حتى إعادة الاتصال.",
   "annotation-text": "نص الشرح",
   "notes-for-verse": "ملاحظات للبيت {{verse}}",
-
   "configure-extension-defaults": "ضبط الإعدادات الافتراضية",
-
   "extension-settings-defaults-title": "{{name}} تجاوزات افتراضية",
   "no-extension-settings": "لا يحتوي هذا الملحق على أي إعدادات قابلة للتكوين.",
   "extension-settings-save-failed": "تعذر حفظ إعداداتك.",
@@ -873,7 +830,6 @@
   "setting-no-default": "لا يوجد افتراضي",
   "override-setting": "تجاوز {{name}}",
   "override-setting-label": "تجاوز",
-
   "discover-choose-filter-hint": "اختر فلترًا من الأعلى للاطلاع على المزيد من هذا الفصل.",
   "take-a-tour": "قم بجولة",
   "share-reading-plan": "خطة مشاركة",
@@ -1057,7 +1013,6 @@
   "my-bookmark-numbered": "إشارة مرجعية {{number}}",
   "bookmark-move-hint": "انقر على الإشارة المرجعية لنقلها إلى هذا الفصل.",
   "move-bookmark-here": "انقل {{name}} إلى هنا",
-
   "play": "يلعب",
   "pause": "يوقف",
   "audio-playback-position": "موضع التشغيل",
@@ -1066,7 +1021,6 @@
   "audio-scrub-verse": "الآية {{verse}}",
   "tab-playing-audio": "تشغيل الصوت",
   "collapsed-tab-playing-label": "{{label}} — تشغيل الصوت",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} سمة",
   "customization-theme-count_one": "{{count}} theme",
@@ -1105,7 +1059,6 @@
   "about-community-body": "الإيمان يُفترض أن يُعاش معًا. صُمم تطبيق Seed Bible لقراءة الكتاب المقدس مع عائلتك وأقرب أصدقائك وكنيستك المنزلية.",
   "discovered-content": "المحتوى المكتشف",
   "show-discovered-content": "عرض المحتوى المكتشف",
-
   "extension-availability-default": "الافتراضي ( {{availability}} )",
   "customization-extensions-default": "الوضع الافتراضي للإضافات الأخرى",
   "customization-extensions-default-hint": "ينطبق هذا على جميع الإضافات التي لم تقم بتعيينها أدناه، بما في ذلك الإضافات الجديدة التي تمت إضافتها لاحقًا.",
@@ -1138,7 +1091,6 @@
   "playlist-scripture-note-return": "العودة إلى قائمة التشغيل",
   "playlist-scripture-note-aria": "ملاحظة حول {{passage}}",
   "playlist-scripture-note-progress": "{{current}} من {{total}}",
-
   "unsaved-item-edit-confirm-message": "لقد قمت بتغيير عنصر ما ولكنك لم تحفظ هذه التغييرات بعد. ماذا تريد أن تفعل؟",
   "keep-changes-and-save": "احتفظ بالتغييرات واحفظها",
   "reading-plan-edit-reading": "قراءة التحرير",
@@ -1153,7 +1105,6 @@
   "branding": "العلامة التجارية",
   "create-custom-branding-menu-item": "تصميم العلامة التجارية حسب الطلب",
   "your-content-empty-branding": "ستظهر هنا العلامة التجارية المخصصة التي تقوم بإنشائها.",
-
   "extension-consent-from": "من {{host}}",
   "extension-consent-source-version": "الإصدار {{version}} · من {{host}}",
   "extension-consent-uploader-unnamed": "مستخدم كتاب البذور المقدس",
@@ -1201,7 +1152,6 @@
   "extension-permission-reading-selection": "انظر إلى الآيات التي تختارها",
   "extension-permission-reading-navigate": "ممرات مفتوحة",
   "extension-permission-network": "اتصل بـ {{host}}",
-
   "extension-consent-not-now": "ليس الآن",
   "extension-consent-nothing-yet": "في الوقت الحالي، لن يتمكن من الوصول إلى أي من معلوماتك.",
   "extension-permission-reading-history": "اطلع على سجل قراءاتك",
@@ -1239,7 +1189,6 @@
   "extension-capture-cancel": "يلغي",
   "extension-consent-high-risk": "حساس",
   "extension-modal-ok": "نعم",
-
   "extension-permissions-restart-note": "تُطبَّق التغييرات فورًا. يُعاد تشغيل {{name}} لتطبيقها.",
   "extension-permissions-saved": "تم الحفظ. تم إعادة تشغيل {{name}} بالأذونات الجديدة.",
   "extension-permissions-failed": "لم يتم الحفظ. حاول مرة أخرى.",
@@ -1277,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "عرض التأثيرات عندما يختار المضيف مقطعًا شعريًا.",
   "session-settings-verse-effects-desc-everyone": "عرض التأثيرات عند اختيار أي شخص لبيت شعري.",
   "session-settings-verse-effects-desc-none": "تم إيقاف تأثيرات اختيار الآيات للجميع.",
-
   "account": "حساب",
   "scroll-filters-start": "قم بتمرير الفلاتر نحو البداية",
-  "scroll-filters-end": "قم بتمرير الفلاتر نحو النهاية"
+  "scroll-filters-end": "قم بتمرير الفلاتر نحو النهاية",
+  "download": "تحميل",
+  "image-details-uploaded": "تم التحميل",
+  "image-details-dimensions": "أبعاد",
+  "image-details-dimensions-value": "{{width}} × {{height}} بكسل",
+  "image-details-type": "يكتب",
+  "image-details-cover-of": "غلاف",
+  "image-details-not-a-cover": "لا يُستخدم كغطاء",
+  "delete-customization-confirm-title": "حذف العلامة التجارية المخصصة؟",
+  "delete-customization-confirm-message": "حذف العلامة التجارية المخصصة \" {{name}} \"؟ لا يمكن التراجع عن هذا الإجراء.",
+  "delete-customization-failed": "تعذر حذف العلامة التجارية المخصصة.",
+  "delete-variant-confirm-title": "هل تريد حذف القالب؟",
+  "delete-variant-confirm-message": "حذف القالب \" {{name}} \"؟ لا يمكن التراجع عن هذا الإجراء.",
+  "delete-variant-confirm-message-unnamed": "هل تريد حذف هذا القالب؟ لا يمكن التراجع عن هذا الإجراء.",
+  "delete-variant-failed": "تعذر حذف القالب.",
+  "delete-highlight-confirm-title": "حذف التمييز؟",
+  "delete-highlight-confirm-message": "هل تريد حذف التمييز على {{reference}} ؟ لا يمكن التراجع عن هذا الإجراء.",
+  "delete-highlight-failed": "لم أتمكن من حذف التمييز.",
+  "delete-annotation-on-confirm-message": "حذف التعليق التوضيحي على {{reference}} ؟ لا يمكن التراجع عن هذا الإجراء.",
+  "remove-from-folder": "قم بإزالة الملف",
+  "save-folders": "في {{folders}}",
+  "delete-save-confirm-title": "حذف الحفظ؟",
+  "delete-save-confirm-message": "حذف الحفظ لـ {{reference}} ؟ لا يمكن التراجع عن هذا الإجراء.",
+  "delete-save-confirm-message-folders": "حذف ملف الحفظ الخاص بـ {{reference}} من {{folders}} ؟ لا يمكن التراجع عن هذا الإجراء.",
+  "delete-save-failed": "تعذر حذف ملف الحفظ.",
+  "delete-save-folder-confirm-title": "هل تريد حذف المجلد؟",
+  "delete-save-folder-confirm-message": "حذف المجلد \" {{name}} \"؟",
+  "delete-save-folder-confirm-deletes": "سيتم حذف ملفات الحفظ {{count}} الموجودة في هذا المجلد فقط أيضًا.",
+  "delete-save-folder-confirm-deletes_one": "سيتم حذف ملف الحفظ الموجود في هذا المجلد فقط أيضاً.",
+  "delete-save-folder-confirm-deletes_other": "سيتم حذف ملفات الحفظ {{count}} الموجودة في هذا المجلد فقط أيضًا.",
+  "delete-save-folder-confirm-keeps": "ستبقى عمليات الحفظ {{count}} الموجودة أيضًا في مجلدات أخرى هناك.",
+  "delete-save-folder-confirm-keeps_one": "سيبقى الملف المحفوظ الموجود في مجلد آخر هناك.",
+  "delete-save-folder-confirm-keeps_other": "ستبقى عمليات الحفظ {{count}} الموجودة أيضًا في مجلدات أخرى هناك.",
+  "cant-be-undone": "لا يمكن التراجع عن هذا.",
+  "delete-save-folder-failed": "تعذر حذف المجلد.",
+  "download-image-failed": "تعذر تنزيل الصورة.",
+  "session-settings-verse-effects-hosts-only": "للمضيفين فقط",
+  "session-settings-verse-effects-everyone": "الجميع",
+  "session-settings-verse-effects-none": "لا أحد",
+  "loading-books": "جارٍ تحميل الكتب…",
+  "books-load-failed": "تعذر تحميل الكتب. تحقق من اتصالك وحاول مرة أخرى.",
+  "loading-translation": "جارٍ تحميل {{name}} …",
+  "translation-load-failed": "تعذر تحميل {{name}} .",
+  "loading-translations": "جارٍ تحميل الترجمات…",
+  "translations-load-failed": "تعذر تحميل القائمة الكاملة للترجمات، لذا قد تكون بعضها مفقودة.",
+  "verse-of-the-day": "آية اليوم",
+  "verse-of-the-day-loading": "جارٍ تحميل آية اليوم..."
 }

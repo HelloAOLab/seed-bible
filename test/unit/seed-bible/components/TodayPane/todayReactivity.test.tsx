@@ -126,6 +126,7 @@ describe("Today screen reactivity", () => {
       translationBooksMap: signal(new Map()),
       getDefaultTranslation: () => "KJV",
       getVerseText: async () => "In the beginning",
+      getVerseOfTheDay: async () => null,
       getTranslationBooks: async () => ({ books: [] }) as never,
       searchVerses: async () => [],
       communityMembers: signal(["u1"]),
@@ -146,6 +147,7 @@ describe("Today screen reactivity", () => {
           onOpenPassage={vi.fn()}
           onOpenBookSelector={vi.fn()}
           onTakeTour={vi.fn()}
+          onClose={vi.fn()}
         />,
         container
       )

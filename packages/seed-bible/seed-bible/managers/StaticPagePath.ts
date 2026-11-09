@@ -7,9 +7,9 @@ import { parseSharedPagePath } from "./SharedPagePath";
  * book/chapter/translation and none of the legacy-redirect concerns a reading
  * path carries.
  */
-export type StaticPageId = "about";
+export type StaticPageId = "about" | "today";
 
-const STATIC_PAGE_IDS: readonly StaticPageId[] = ["about"];
+const STATIC_PAGE_IDS: readonly StaticPageId[] = ["about", "today"];
 
 export interface ParsedStaticPagePath {
   language: string;
@@ -47,7 +47,7 @@ export function buildStaticPagePath(params: {
 /**
  * Whether `pathname` is a page of its own rather than a reading position —
  * a static page, or a shared playlist or reading plan. The reader must not
- * write its position over such a URL, and Today must not open over it.
+ * write its position over such a URL.
  */
 export function isNonReadingPagePath(
   pathname: string,

@@ -28,22 +28,18 @@
   "searching": "Chwilio...",
   "no-search-results": "Dim penillion cyfatebol.",
   "open-chapter": "Agor pennod",
-
   "uploading": "Wrthi'n llwytho i fyny...",
   "profile-name": "Enw proffil",
   "profile-name-placeholder": "e.e. teulu Craig",
-
   "description": "Disgrifiad",
   "optional": "(Dewisol)",
   "description-placeholder": "Rhowch ddisgrifiad eich proffil...",
   "location": "Lleoliad",
   "location-placeholder": "e.e. Austin, TX",
-
   "copied": "Wedi'i gopïo",
   "copy": "Copïo",
   "save-changes": "Cadw newidiadau",
   "sign-out": "Allgofnodi",
-
   "log-in": "Mewngofnodi",
   "tanakh": "Tanakh",
   "traditional": "Traddodiadol",
@@ -57,7 +53,6 @@
   "scripture-settings": "Gosodiadau'r Ysgrythur",
   "scripture-elements": "Elfennau'r Ysgrythur",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Dangos penawdau",
   "show-verse-numbers": "Dangos rhifau pennill",
   "show-footnotes": "Dangos troednodiadau",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Dim estyniadau ar gael.",
   "install": "Gosod",
   "uninstall": "Dadosod",
-
   "custom": "Personol",
   "text-section-bookTitle": "Testun Teitl y Llyfr",
   "text-section-heading": "Testun y Pennawd",
@@ -92,7 +86,6 @@
   "show-selected-items": "Dangos eitemau a ddewiswyd",
   "show-highlight-colors": "Dangos lliwiau uchafbwynt",
   "show-icon-text": "Dangos testun eicon",
-
   "extensions": "Estyniadau",
   "display": "Arddangosfa",
   "theme-and-text": "Thema a thestun",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Cynyddu maint ffont yr ysgrythur",
   "change-line-spacing": "Newid bylchau llinell",
   "line-spacing_lineHeight": "Bylchau llinell: {{lineHeight}}",
-
   "italic": "Italig",
   "underline": "Tanlinellu",
   "alignment_x": "Aliniad: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Lliw testun",
   "follow_theme": "Dilynwch y thema",
   "reset-to-default": "Ailosod i'r rhagosodiad",
-
   "id_highlight-text-color": "lliw testun uchafbwynt {{id}}",
   "id_highlight-background-color": "lliw cefndir uchafbwynt {{id}}",
   "all-settings-description": "Mireinio pob adran destun ac addasu pob lliw thema.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apocryffa",
-
   "custom-translations": "Cyfieithiadau personol",
   "no-translation-results-found": "Ni chanfuwyd unrhyw ganlyniadau. A hoffech chi ehangu eich chwiliad i gynnwys cyfieithiadau rhannol gyflawn hefyd?",
   "show-all-translations": "Dangos pob cyfieithiad",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Salm",
   "5-psalms": "5 Salm",
   "remove-bookmark": "Dileu nod tudalen",
-
   "chat": "Sgwrs",
   "today": "Heddiw",
   "you": "Chi",
@@ -169,7 +158,6 @@
   "category-options": "Dewisiadau ffolder",
   "rename": "Ailenwi",
   "delete": "Dileu",
-
   "bookmark-options": "Dewisiadau nod tudalen",
   "new-folder-placeholder": "Enw'r ffolder",
   "tasks": "Tasgau",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Mae ffolder gyda'r enw hwnnw eisoes yn bodoli.",
   "add-to-new": "Ychwanegu at newydd",
   "save": "Cadw",
-
   "apocrypha-info-text": "Ni chafodd yr un o'r ysgrifau yn yr adran hon eu hystyried yn Ysgrythur gan gymunedau Iddewig na Christnogol cynnar. Mae'r Beibl yn gasgliad penodol o lyfrau. Mae Iddewon a Christnogion bob amser wedi cytuno ar yr Hen Destament, sy'n dod o set sefydlog o ysgrifau cysegredig y mae'r bobl Iddewig yn eu galw'n Tanakh a Christnogion yn ei alw'n Hen Destament. Mae cynnwys y Tanakh a'r Hen Destament yn union yr un fath, ond maent fel arfer wedi'u trefnu'n wahanol. Mae Cristnogion hefyd yn cydnabod y Testament Newydd, sy'n adrodd hanes Iesu, ei ddysgeidiaeth, ac ysgrifau ei ddilynwyr. Roedd yr ysgrifau isod yn hysbys ac yn cael eu darllen yn eang ar yr adeg ysgrifennwyd y Beibl, ond ni chawsant eu trin erioed fel Ysgrythur. Er bod awduron hynafol weithiau'n dyfynnu ystod eang o destunau gan gynnwys beirdd, athronwyr, ac ysgrifau eraill, nid yw dyfynnu rhywbeth yr un peth â'i drin fel Ysgrythur. Mae'r ysgrifau hyn wedi'u cynnwys yma at ddibenion hanesyddol a llenyddol yn unig.",
   "seed-bible": "Beibl Hadau",
   "take-photo": "Tynnwch lun",
   "choose-from-gallery": "Dewiswch o'r oriel",
-
   "crop-your-photo": "Cnoi eich llun",
   "zoom": "Chwyddo",
   "set-picture": "Gosod llun",
@@ -211,10 +197,8 @@
   "read-the-bible": "Darllenwch y Beibl",
   "seed-bible-description": "Darllenwch {{bookName}} {{chapterNumber}} yn y Beibl Hadau",
   "social-title": "Darllenwch {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Mordwyo penodau",
   "tutorial.skip": "Hepgor",
-
   "tutorial.back": "Yn ôl",
   "tutorial.done": "Wedi'i wneud",
   "tutorial.next": "Nesaf",
@@ -238,7 +222,6 @@
   "copied-translation-share-link": "Copïwyd dolen rhannu cyfieithiad",
   "less": "Llai",
   "swipe-up-more": "Sweipiwch i fyny i weld mwy",
-  "plans": "Cynlluniau",
   "reading-plans": "Cynlluniau darllen",
   "create-reading-plan": "Creu cynllun darllen",
   "reading-plans-empty": "Nid oes gennych unrhyw gynlluniau darllen eto. Crëwch un i ddechrau.",
@@ -327,11 +310,9 @@
   "study-notes": "Nodiadau astudio",
   "content": "Cynnwys",
   "untitled-playlist": "Rhestr chwarae ddi-deitl",
-
   "discover-annotations-empty": "Nid oes gennych unrhyw anodiadau",
   "discover-cross-references-empty": "Dim croesgyfeiriadau ar gyfer y bennod hon.",
   "discover-study-notes-empty": "Dim nodiadau astudio ar gyfer y bennod hon.",
-
   "discover-select-tab": "Dewiswch dab i ddarganfod deunydd cysylltiedig.",
   "create-playlist": "Creu",
   "playlist-title_placeholder": "Teitl y rhestr chwarae",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "Methwyd dileu'r rhestr chwarae.",
   "collapsed-tab-shared-label": "{{title}} — sesiwn a rennir, {{count}} yn bresennol",
   "playlist-add-mode-label": "Math o eitem",
-
   "session-host-reconnected": "Ailgysylltwyd â'r sesiwn",
   "session-host-left": "Gadawodd y gwesteiwr — cawsoch eich tynnu o'r sesiwn",
   "drag-to-reorder-playlist-item": "Llusgwch i ad-drefnu",
   "saving": "Yn cadw…",
-
   "unsaved-item-confirm-message": "Rydych wedi dechrau ychwanegu eitem nad yw wedi'i hychwanegu at y rhestr chwarae eto. Beth hoffech chi ei wneud?",
   "discard-and-save": "Dileu a chadw",
   "add-and-save": "Ychwanegu a chadw",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "Rhagolwg {{reading}}",
   "reading-plan-mark-reading-complete": "Marcio darllen wedi'i gwblhau",
   "reading-plan-link-video": "Fideo",
-
   "reading-plan-mark-passage-complete": "Marciwch {{passage}} fel wedi'i ddarllen",
   "reading-plan-read-nudge-title": "Darlleniad braf!",
   "reading-plan-read-nudge-toast": "Marcio {{passage}} yn gyflawn?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Darllenwch, chwiliwch ac astudiwch y Beibl ar-lein. Cyfieithiadau am ddim mewn sawl iaith, gydag uchafbwyntiau, nodiadau, nodau tudalen a chynlluniau darllen.",
   "all": "Pawb",
-
   "today-bookmarks": "NODAU TUDALEN",
   "today-search-verses": "Chwiliwch am lyfrau, penodau, penillion....",
   "anonymous-greeting": "Croeso!",
   "community": "CYMUNED",
   "go-somewhere-new": "EWCH I RYWLE NEWYDD",
-
   "open-bible": "Beibl Agored",
   "personal-greeting": "Croeso, {{name}} !",
   "resume-reading": "PARHAU LLE GADAWOCH CHI",
   "resume-reading-loading": "Wrthi'n llwytho eich hanes darllen…",
   "selected-year": "Blwyddyn: {{year}}",
-
   "theme-light": "Golau",
   "theme-dark": "Tywyll",
   "installed-extensions": "Wedi'i osod",
@@ -543,7 +518,6 @@
   "extension-state-installed": "Wedi'i osod",
   "extension-state-downloaded": "Lawrlwythwyd",
   "extension-state-pending": "Yn gosod…",
-
   "tutorial.stepProgress": "Cam {{current}} o {{total}}",
   "tutorial.offlineDownloadTitle": "Tapiwch i'w gadw ar eich dyfais",
   "tutorial.offlineDownloadBody": "Gellir cadw unrhyw gyfieithiad gyda'r eicon hwn i'w ddarllen all-lein.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "Dewiswch faint o ddarnodau i'w darllen ochr yn ochr o'r ddewislen cynllun hon.",
   "tutorial.addTabTitle": "Agor mwy o ddarnau",
   "tutorial.addTabBody": "Ychwanegu tab newydd i ddarllen sawl llyfr neu gyfieithiad ochr yn ochr.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % wedi'i gwblhau - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % wedi'i gwblhau",
   "playlist-history-continue": "Parhau",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} nodiadau ar gyfer y bennod hon",
   "create-folder": "Creu ffolder",
   "edit-bookmark": "Golygu nod tudalen",
-
   "greeting-afternoon": "Prynhawn da!",
   "greeting-afternoon-named": "Prynhawn da, {{name}} !",
   "greeting-evening": "Noswaith dda!",
@@ -652,32 +624,24 @@
   "ask-ai": "Gofynnwch i AI",
   "unread-mention": "Crybwylliad heb ei ddarllen",
   "unread-messages": "Negeseuon heb eu darllen: {{count}}",
-
   "scripture-width": "Lled yr Ysgrythur",
   "decrease-scripture-width": "Lleihau lled yr ysgrythur",
   "increase-scripture-width": "Cynyddu lled yr ysgrythur",
   "annotations": "Anodiadau",
   "discover-content-panel": "Darganfod cynnwys",
   "discover-book-title": "Darganfyddwch {{book}}",
-
   "about-title": "Ynglŷn â'r Beibl Hadau",
   "about-meta-description": "Mae Seed Bible yn ap Beibl am ddim sydd wedi'i adeiladu ar gyfer darllen yr Ysgrythur ynghyd â'ch teulu, ffrindiau a'ch cymuned - am ddim am byth, dim hysbysebion na waliau talu.",
-
   "about-action-open-passage": "Agor darn",
   "about-action-donate": "Rhoddwch",
   "about-action-discord": "Ymunwch â Discord",
   "recent-uploads": "Llwythiadau diweddar",
-
   "customization-not-found": "Ni ellid dod o hyd i'r addasiad hwn.",
   "customization-name": "Enw",
   "customization-primaryColor": "Cynradd",
-
   "customization-secondaryColor": "Uwchradd",
-
   "customization-tertiaryColor": "Trydyddol",
-
   "customization-fonts": "Ffontiau",
-
   "custom-font-option": "Personol…",
   "custom-font-name-placeholder": "Enw Ffont Google",
   "delete-customization": "Dileu",
@@ -690,10 +654,8 @@
   "extension-availability-available": "Ar gael",
   "extension-availability-auto-installed": "Wedi'i osod yn awtomatig",
   "extension-availability-hidden": "Cudd",
-
   "variants": "Themâu",
   "add-variant": "Ychwanegu thema",
-
   "base-theme-description": "Newidiadau y mae'r thema hon wedi'i rhagosod yn defnyddio ar gyfer unrhyw beth nad ydych wedi'i addasu. Cedwir eich golygiadau eich hun.",
   "reset-to-base-theme": "Ailosod i'r thema sylfaenol",
   "low-contrast-warning": "{{label}} : dim ond {{ratio}} :1 yw'r cyferbyniad — anela at o leiaf {{minRatio}} :1 fel bod y testun yn parhau i fod yn ddarllenadwy.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "Dim arbedion yma eto.",
   "save-options": "Dewisiadau cadw",
   "saves": "Arbedion",
-
   "hide-saves": "Cuddio arbedion",
   "show-saves": "Dangos arbedion",
   "save-verses": "Cadw",
   "new-save-folder": "Ffolder newydd",
   "edit-save": "Golygu arbed",
   "remove-save-from-all-folders": "Dileu o bob ffolder",
-
   "color-hue": "Hue",
   "color-saturation": "Dirlawnder a disgleirdeb",
   "hex-color": "Lliw hecsagon",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Ni ellid llwytho'r golygydd fformatio. Mae gan y nodyn hwn fformatio a fyddai'n cael ei golli, felly ni ellir ei olygu nes i chi ailgysylltu.",
   "annotation-text": "Testun anodiadau",
   "notes-for-verse": "Nodiadau ar gyfer pennill {{verse}}",
-
   "configure-extension-defaults": "Ffurfweddu gor-reoliadau diofyn",
-
   "extension-settings-defaults-title": "Gor-reoliadau diofyn {{name}}",
   "no-extension-settings": "Nid oes gan yr estyniad hwn unrhyw osodiadau y gellir eu ffurfweddu.",
   "extension-settings-save-failed": "Methwyd cadw eich gosodiadau.",
@@ -872,7 +830,6 @@
   "setting-no-default": "Dim rhagosodiad",
   "override-setting": "Diystyru {{name}}",
   "override-setting-label": "Diystyru",
-
   "discover-choose-filter-hint": "Dewiswch hidlydd uchod i weld mwy o'r bennod hon.",
   "take-a-tour": "Ewch ar daith",
   "share-reading-plan": "Cynllun rhannu",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "Fy nod tudalen {{number}}",
   "bookmark-move-hint": "Tapiwch nod tudalen i'w symud i'r bennod hon.",
   "move-bookmark-here": "Symudwch {{name}} yma",
-
   "play": "Chwarae",
   "pause": "Oedi",
   "audio-playback-position": "Safle chwarae",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "Pennill {{verse}}",
   "tab-playing-audio": "Chwarae sain",
   "collapsed-tab-playing-label": "{{label}} — chwarae sain",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} themâu",
   "customization-theme-count_one": "thema {{count}}",
@@ -1104,7 +1059,6 @@
   "about-community-body": "Mae ffydd i fod i gael ei byw gyda'n gilydd. Mae Beibl Seed wedi'i adeiladu ar gyfer darllen yr Ysgrythur gyda'ch teulu, eich ffrindiau agosaf, a'ch eglwys dŷ.",
   "discovered-content": "Cynnwys a Ddarganfuwyd",
   "show-discovered-content": "Dangos cynnwys a ddarganfuwyd",
-
   "extension-availability-default": "Diofyn ( {{availability}} )",
   "customization-extensions-default": "Rhagosodedig ar gyfer estyniadau eraill",
   "customization-extensions-default-hint": "Yn berthnasol i bob estyniad nad ydych wedi'i osod isod, gan gynnwys rhai newydd a ychwanegir yn ddiweddarach",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "Yn ôl i'r rhestr chwarae",
   "playlist-scripture-note-aria": "Nodyn ar {{passage}}",
   "playlist-scripture-note-progress": "{{current}} o {{total}}",
-
   "unsaved-item-edit-confirm-message": "Rydych chi wedi newid eitem ond dydych chi ddim wedi cadw'r newidiadau hynny eto. Beth hoffech chi ei wneud?",
   "keep-changes-and-save": "Cadw newidiadau a chadw",
   "reading-plan-edit-reading": "Golygu darlleniad",
@@ -1152,7 +1105,6 @@
   "branding": "Brandio",
   "create-custom-branding-menu-item": "Brandio Personol",
   "your-content-empty-branding": "Bydd Brandio Personol rydych chi'n ei greu yn ymddangos yma.",
-
   "extension-consent-from": "Oddi wrth {{host}}",
   "extension-consent-source-version": "Fersiwn {{version}} · o {{host}}",
   "extension-consent-uploader-unnamed": "Defnyddiwr Beibl Hadau",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "Gweld pa adnodau rydych chi'n eu dewis",
   "extension-permission-reading-navigate": "Darnau agored",
   "extension-permission-network": "Cysylltu â {{host}}",
-
   "extension-consent-not-now": "Nid nawr",
   "extension-consent-nothing-yet": "Am y tro, ni fydd ganddo fynediad at unrhyw un o'ch gwybodaeth.",
   "extension-permission-reading-history": "Gweld eich hanes darllen",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "Canslo",
   "extension-consent-high-risk": "Sensitif",
   "extension-modal-ok": "Iawn",
-
   "extension-permissions-restart-note": "Mae newidiadau'n dod i rym ar unwaith. Mae {{name}} yn ailgychwyn i'w codi.",
   "extension-permissions-saved": "Wedi'i gadw. Ailgychwynnodd {{name}} gyda'r caniatâd newydd.",
   "extension-permissions-failed": "Wnaeth hynny ddim ei gadw. Rhowch gynnig arall arni.",
@@ -1276,8 +1226,53 @@
   "session-settings-verse-effects-desc-hosts": "Dangos effeithiau pan fydd gwesteiwr yn dewis pennill.",
   "session-settings-verse-effects-desc-everyone": "Dangos effeithiau pan fydd unrhyw un yn dewis pennill.",
   "session-settings-verse-effects-desc-none": "Mae effeithiau dewis penillion wedi'u diffodd i bawb.",
-
   "account": "Cyfrif",
   "scroll-filters-start": "Sgroliwch hidlwyr tuag at y dechrau",
-  "scroll-filters-end": "Sgrolio hidlwyr tuag at y diwedd"
+  "scroll-filters-end": "Sgrolio hidlwyr tuag at y diwedd",
+  "download": "Lawrlwytho",
+  "image-details-uploaded": "Wedi'i uwchlwytho",
+  "image-details-dimensions": "Dimensiynau",
+  "image-details-dimensions-value": "{{width}} × {{height}} picsel",
+  "image-details-type": "Math",
+  "image-details-cover-of": "Clawr",
+  "image-details-not-a-cover": "Heb ei ddefnyddio fel gorchudd",
+  "delete-customization-confirm-title": "Dileu Brandio Personol?",
+  "delete-customization-confirm-message": "Dileu Brandio Personol \" {{name}} \"? Ni ellir dadwneud hyn.",
+  "delete-customization-failed": "Methu dileu'r Brandio Personol.",
+  "delete-variant-confirm-title": "Dileu thema?",
+  "delete-variant-confirm-message": "Dileu thema \" {{name}} \"? Ni ellir dadwneud hyn.",
+  "delete-variant-confirm-message-unnamed": "Dileu'r thema hon? Ni ellir dadwneud hyn.",
+  "delete-variant-failed": "Methwyd dileu'r thema.",
+  "delete-highlight-confirm-title": "Dileu'r uchafbwynt?",
+  "delete-highlight-confirm-message": "Dileu'r uchafbwynt ar {{reference}} ? Ni ellir dadwneud hyn.",
+  "delete-highlight-failed": "Methwyd dileu'r uchafbwynt.",
+  "delete-annotation-on-confirm-message": "Dileu'r anodiad ar {{reference}} ? Ni ellir dadwneud hyn.",
+  "remove-from-folder": "Dileu o'r ffolder",
+  "save-folders": "Mewn {{folders}}",
+  "delete-save-confirm-title": "Dileu'r arbediad?",
+  "delete-save-confirm-message": "Dileu'r hyn a arbedwyd ar gyfer {{reference}} ? Ni ellir dadwneud hyn.",
+  "delete-save-confirm-message-folders": "Dileu'r hyn a arbedwyd ar gyfer {{reference}} o {{folders}} ? Ni ellir dadwneud hyn.",
+  "delete-save-failed": "Methwyd dileu'r arbediad.",
+  "delete-save-folder-confirm-title": "Dileu ffolder?",
+  "delete-save-folder-confirm-message": "Dileu ffolder \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Bydd y {{count}} arbedion sydd yn y ffolder hon yn unig yn cael eu dileu hefyd.",
+  "delete-save-folder-confirm-deletes_one": "Bydd y ffeil sydd wedi'i chadw yn y ffolder hon yn unig yn cael ei dileu hefyd.",
+  "delete-save-folder-confirm-deletes_other": "Bydd y {{count}} arbedion sydd yn y ffolder hon yn unig yn cael eu dileu hefyd.",
+  "delete-save-folder-confirm-keeps": "Bydd y {{count}} arbedion sydd hefyd mewn ffolderi eraill yn aros yno.",
+  "delete-save-folder-confirm-keeps_one": "Bydd y ffeil sydd mewn ffolder arall hefyd yn aros yno.",
+  "delete-save-folder-confirm-keeps_other": "Bydd y {{count}} arbedion sydd hefyd mewn ffolderi eraill yn aros yno.",
+  "cant-be-undone": "Ni ellir dadwneud hyn.",
+  "delete-save-folder-failed": "Methwyd dileu'r ffolder.",
+  "download-image-failed": "Methwyd lawrlwytho'r ddelwedd.",
+  "session-settings-verse-effects-hosts-only": "Gwesteiwyr yn unig",
+  "session-settings-verse-effects-everyone": "Pawb",
+  "session-settings-verse-effects-none": "Dim",
+  "loading-books": "Yn llwytho llyfrau…",
+  "books-load-failed": "Ni ellid llwytho'r llyfrau. Gwiriwch eich cysylltiad a cheisiwch eto.",
+  "loading-translation": "Yn llwytho {{name}} …",
+  "translation-load-failed": "Ni ellid llwytho {{name}} .",
+  "loading-translations": "Wrthi'n llwytho cyfieithiadau…",
+  "translations-load-failed": "Methwyd llwytho'r rhestr lawn o gyfieithiadau, felly efallai bod rhai ar goll.",
+  "verse-of-the-day": "ADNOD Y DYDD",
+  "verse-of-the-day-loading": "Wrthi'n llwytho pennill y dydd…"
 }

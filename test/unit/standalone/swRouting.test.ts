@@ -1,7 +1,13 @@
 import {
+  blankAppContainer,
+  chooseNavigationStrategy,
   getAppShellCacheKey,
+  getHtmlCacheName,
   isAppShellNavigation,
   isCacheableStaticAsset,
+  pickShellSource,
+  staleHtmlCacheNames,
+  translationIdFromPath,
 } from "../../../standalone/swRouting";
 
 const ORIGIN = "https://seedbible.org";
@@ -143,39 +149,212 @@ describe("getAppShellCacheKey()", () => {
     return getAppShellCacheKey(ORIGIN, new URL(href));
   }
 
-  it("keys an ordinary navigation under a fixed synthetic path, scoped to the origin", () => {
-    // The literal is intentionally hardcoded rather than built from
-    // `APP_SHELL_CACHE_PATH` — this needs to fail if that constant's value
-    // ever changes, not just mirror it.
-    expect(keyFor(`${ORIGIN}/`)).toBe(`${ORIGIN}/__app-shell`);
-    expect(keyFor(`${ORIGIN}/en/AAB/genesis/1`)).toBe(`${ORIGIN}/__app-shell`);
+  it("gives every chapter its own key so a hit is the page that was asked for", () => {
+    expect(keyFor(`${ORIGIN}/en/AAB/genesis/1`)).not.toBe(
+      keyFor(`${ORIGIN}/en/AAB/genesis/2`)
+    );
+    expect(keyFor(`${ORIGIN}/en/AAB/genesis/1`)).toBe(
+      `${ORIGIN}/en/AAB/genesis/1`
+    );
+  });
+
+  it("never reuses the old shared entry's key", () => {
+    expect(keyFor(`${ORIGIN}/`)).not.toBe(`${ORIGIN}/__app-shell`);
+    expect(keyFor(`${ORIGIN}/en/AAB/genesis/1`)).not.toBe(
+      `${ORIGIN}/__app-shell`
+    );
+  });
+
+  it("keeps the query string, so a customization link has its own entry", () => {
+    expect(keyFor(`${ORIGIN}/en/AAB/genesis/1?customization=owner.a`)).not.toBe(
+      keyFor(`${ORIGIN}/en/AAB/genesis/1`)
+    );
+    expect(keyFor(`${ORIGIN}/?customization=owner.a`)).not.toBe(
+      keyFor(`${ORIGIN}/?customization=owner.b`)
+    );
+  });
+
+  it("ignores the fragment", () => {
+    expect(keyFor(`${ORIGIN}/en/AAB/genesis/1#v3`)).toBe(
+      keyFor(`${ORIGIN}/en/AAB/genesis/1`)
+    );
   });
 
   it("scopes the key to the given origin", () => {
-    expect(keyFor(`${ORIGIN}/`)).toContain(ORIGIN);
     expect(keyFor(`${ORIGIN}/`)).not.toBe(
       getAppShellCacheKey("https://alpha.seedbible.org", new URL(`${ORIGIN}/`))
     );
   });
+});
 
-  it("keys a customization link separately from the plain shell", () => {
-    const key = keyFor(
-      `${ORIGIN}/en/AAB/genesis/1?customization=owner.customization_a`
-    );
-    expect(key).not.toBe(`${ORIGIN}/__app-shell`);
-  });
-
-  it("shares one key across every path carrying the same customization locator", () => {
+describe("chooseNavigationStrategy()", () => {
+  it("serves a downloader the cached page for the URL and refreshes it", () => {
     expect(
-      keyFor(`${ORIGIN}/en/AAB/genesis/1?customization=owner.customization_a`)
-    ).toBe(
-      keyFor(`${ORIGIN}/es/spa_onbv/john/3?customization=owner.customization_a`)
-    );
+      chooseNavigationStrategy({
+        hasCachedPage: true,
+        hasShellSource: true,
+        hasDownloadedTranslation: true,
+      })
+    ).toBe("cached-with-revalidate");
   });
 
-  it("keys two different customization locators apart from each other", () => {
-    expect(keyFor(`${ORIGIN}/?customization=owner.customization_a`)).not.toBe(
-      keyFor(`${ORIGIN}/?customization=owner.customization_b`)
+  it("serves a downloader a content-free shell on a cache miss", () => {
+    expect(
+      chooseNavigationStrategy({
+        hasCachedPage: false,
+        hasShellSource: true,
+        hasDownloadedTranslation: true,
+      })
+    ).toBe("blank-shell");
+  });
+
+  it("goes to the network for a downloader with nothing cached at all", () => {
+    expect(
+      chooseNavigationStrategy({
+        hasCachedPage: false,
+        hasShellSource: false,
+        hasDownloadedTranslation: true,
+      })
+    ).toBe("network-first");
+  });
+
+  it("goes to the network first for someone who has not downloaded a translation", () => {
+    for (const hasCachedPage of [true, false]) {
+      expect(
+        chooseNavigationStrategy({
+          hasCachedPage,
+          hasShellSource: true,
+          hasDownloadedTranslation: false,
+        })
+      ).toBe("network-first");
+    }
+  });
+});
+
+describe("pickShellSource()", () => {
+  const plain = `${ORIGIN}/en/AAB/genesis/1`;
+  const custom = `${ORIGIN}/en/AAB/john/1?customization=owner.a`;
+
+  it("uses a plain page for a plain request", () => {
+    expect(
+      pickShellSource(new URL(`${ORIGIN}/en/AAB/exodus/1`), [custom, plain])
+    ).toBe(plain);
+  });
+
+  it("never builds a plain request's shell from a customization page", () => {
+    expect(
+      pickShellSource(new URL(`${ORIGIN}/en/AAB/exodus/1`), [custom])
+    ).toBeUndefined();
+  });
+
+  it("only borrows from the same customization", () => {
+    expect(
+      pickShellSource(new URL(`${ORIGIN}/x?customization=owner.b`), [
+        plain,
+        custom,
+      ])
+    ).toBeUndefined();
+    expect(
+      pickShellSource(new URL(`${ORIGIN}/x?customization=owner.a`), [
+        plain,
+        custom,
+      ])
+    ).toBe(custom);
+  });
+});
+
+describe("blankAppContainer()", () => {
+  const page = (inner: string) =>
+    `<html><head><title>t</title></head><body><div id="app">${inner}</div><script>var a="</div>";</script></body></html>`;
+
+  it("removes the rendered chapter, including nested divs", () => {
+    const blank = blankAppContainer(
+      page('<div class="x"><div>In the beginning</div></div><p>v2</p>')
     );
+    expect(blank).not.toContain("In the beginning");
+    expect(blank).not.toContain("v2");
+    expect(blank).toContain('<div id="app"><!-- APP_HTML --></div><script>');
+    expect(blank).toContain("<title>t</title>");
+  });
+
+  it("leaves an element-free container, which the hydration gate treats as no SSR content", () => {
+    const blank = blankAppContainer(page("<main>Genesis 1</main>"));
+    const doc = new DOMParser().parseFromString(blank!, "text/html");
+    expect(doc.getElementById("app")!.firstElementChild).toBeNull();
+  });
+
+  it("returns null when there is no app container", () => {
+    expect(blankAppContainer("<html><body>hi</body></html>")).toBeNull();
+  });
+});
+
+describe("getAppShellCacheKey() tracking params", () => {
+  const key = (href: string) => getAppShellCacheKey(ORIGIN, new URL(href));
+
+  it("shares one entry between a page and its campaign-tagged links", () => {
+    const plain = key(`${ORIGIN}/en/AAB/genesis/1`);
+    expect(key(`${ORIGIN}/en/AAB/genesis/1?utm_source=x&utm_medium=y`)).toBe(
+      plain
+    );
+    expect(key(`${ORIGIN}/en/AAB/genesis/1?fbclid=1&gclid=2`)).toBe(plain);
+  });
+
+  it("keeps params that change the page", () => {
+    expect(
+      key(`${ORIGIN}/en/AAB/genesis/1?customization=o.a&utm_source=x`)
+    ).toBe(key(`${ORIGIN}/en/AAB/genesis/1?customization=o.a`));
+    expect(key(`${ORIGIN}/?book=GEN&chapter=1`)).not.toBe(key(`${ORIGIN}/`));
+  });
+});
+
+describe("pickShellSource() recency", () => {
+  it("builds from the newest saved page, not the oldest", () => {
+    const keys = [`${ORIGIN}/en/AAB/a/1`, `${ORIGIN}/en/AAB/b/1`];
+    expect(pickShellSource(new URL(`${ORIGIN}/en/AAB/c/1`), keys)).toBe(
+      keys[1]
+    );
+  });
+});
+
+describe("HTML cache versioning", () => {
+  const current = getHtmlCacheName("build-2");
+
+  it("names the cache after the build", () => {
+    expect(getHtmlCacheName("build-1")).not.toBe(getHtmlCacheName("build-2"));
+  });
+
+  it("deletes every other build's pages and the old unversioned caches", () => {
+    expect(
+      staleHtmlCacheNames(
+        [
+          "seed-bible-html",
+          "seed-bible-html-v2",
+          getHtmlCacheName("build-1"),
+          current,
+          "seed-bible-assets",
+          "workbox-precache-v2",
+        ],
+        current
+      )
+    ).toEqual([
+      "seed-bible-html",
+      "seed-bible-html-v2",
+      getHtmlCacheName("build-1"),
+    ]);
+  });
+});
+
+describe("translationIdFromPath()", () => {
+  it("reads the translation from reading URLs, with or without a language", () => {
+    expect(translationIdFromPath("/BSB/john/3")).toBe("BSB");
+    expect(translationIdFromPath("/es/spa_onbv/genesis/1")).toBe("spa_onbv");
+  });
+
+  it("is null where no translation is named", () => {
+    expect(translationIdFromPath("/")).toBeNull();
+    expect(translationIdFromPath("/en/playlist/my-list/3")).toBeNull();
+    expect(translationIdFromPath("/en/reading-plan/plan/2")).toBeNull();
+    expect(translationIdFromPath("/BSB/john/notanumber")).toBeNull();
+    expect(translationIdFromPath("/BSB/john/0")).toBeNull();
   });
 });
