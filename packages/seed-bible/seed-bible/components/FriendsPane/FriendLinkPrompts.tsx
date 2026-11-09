@@ -27,6 +27,12 @@ import type { FriendLinkPreviewLoader } from "../../managers/FriendLinkPreviewLo
 type Toast = (message: string) => void;
 type ProfileLookup = "found" | "no_account" | "failed";
 
+/**
+ * What the add-friend prompt's button does. `run` resolves false when it
+ * failed (its toast says so), which keeps the prompt open to try again.
+ */
+type LinkAction = { label: string; run: () => Promise<boolean> };
+
 export interface FriendLinkDeps {
   navigation: Pick<NavigationManager, "currentUrl" | "updateQueryParams">;
   login: Pick<LoginManager, "userId" | "login" | "getPublicProfile">;
@@ -103,10 +109,10 @@ function AddFriendLinkPrompt(props: {
   const busy = useSignal(false);
   // What the prompt showed when its button was pressed. The action refreshes
   // the friends lists, and redrawing from them mid-action would flash
-  // "Loading…" (or "already sent") just before the prompt closes.
+  // "already sent" just before the prompt closes.
   const shownWhileBusy = useRef<{
     message: string;
-    action: { label: string; run: () => Promise<void> } | null;
+    action: LinkAction | null;
   } | null>(null);
   const name = displayNameOf(person, t);
 
@@ -145,9 +151,7 @@ function AddFriendLinkPrompt(props: {
     (r) => r.userId === person.userId
   );
   let message: string;
-  // `run` resolves false when the action failed (its toast says so), which
-  // keeps the prompt open to try again.
-  let action: { label: string; run: () => Promise<boolean> } | null = null;
+  let action: LinkAction | null = null;
 
   if (person.userId === login.userId.value) {
     message = t("add-friend-link-own", {
