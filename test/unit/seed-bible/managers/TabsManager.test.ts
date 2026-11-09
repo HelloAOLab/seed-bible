@@ -1291,6 +1291,28 @@ describe("createTabs", () => {
     expect(firstTab.readingState.translationId.value).toBe("NIV");
   });
 
+  it("names the translation a reader with no tab open would get: the saved one, then the customization's, then the language default", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const activeCustomizationDefaultTranslationId = signal<string | undefined>(
+      undefined
+    );
+    const { tabs: manager, login } = createTabsManager({
+      activeCustomizationDefaultTranslationId,
+    });
+
+    expect(manager.preferredTranslationId()).toBe(
+      manager.defaultTranslation.id
+    );
+
+    activeCustomizationDefaultTranslationId.value = "NIV";
+    expect(manager.preferredTranslationId()).toBe("NIV");
+
+    login.profile.value = { name: "", config: { translationId: "AAB" } };
+    expect(manager.preferredTranslationId()).toBe("AAB");
+
+    await waitForInitialLoad(manager.tabs.value[0]!.readingState);
+  });
+
   it("applies the active customization's default translation once it becomes known, overriding Seed Bible's own default", async () => {
     // No `?translation=` in the URL and no signed-in profile, so this
     // mirrors following a `?customization=...` share link: the customization
