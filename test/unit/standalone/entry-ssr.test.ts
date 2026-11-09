@@ -1889,7 +1889,7 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain(
         '<link rel="canonical" href="/en/playlist/owner.playlist_shared/psalms-for-hard-days"'
       );
-      expect(html).not.toContain(`/?addFriend=${friendId}`);
+      expect(html).not.toMatch(/<(meta|link)\b[^>]*addFriend/);
       expect(html).not.toContain('name="robots"');
     });
 
@@ -2143,7 +2143,9 @@ describe("render() server-rendered meta tags", () => {
     const CALL_PROCEDURE_URL =
       "https://auth.seedbible.org/api/v3/callProcedure";
     const USER_ID = "35160ebe-fcea-4883-8b6c-7e8ae6035aff";
-    const LINK_PATH = `/?addFriend=${USER_ID}&useFreeBibleAPI=true`;
+    // The link people share, and the Today page it redirects to.
+    const SHARED_LINK_PATH = `/?addFriend=${USER_ID}&useFreeBibleAPI=true`;
+    const LINK_PATH = `/en/today?addFriend=${USER_ID}&useFreeBibleAPI=true`;
     const PICTURE_URL = "https://files.example/ana.png";
 
     /**
@@ -2193,6 +2195,20 @@ describe("render() server-rendered meta tags", () => {
       return JSON.parse(match[1]!);
     }
 
+    it("redirects the shared link to the Today page, keeping the friend param", async () => {
+      const result = await render({
+        path: SHARED_LINK_PATH,
+        config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
+        html: TEMPLATE,
+      });
+
+      expect(result).toEqual({
+        redirectTo: `/en/today?addFriend=${USER_ID}&useFreeBibleAPI=true`,
+        redirectStatus: 302,
+        vary: "Accept-Language",
+      });
+    });
+
     it("titles, describes and illustrates the preview after the linked person", async () => {
       mockProfiles({
         [`${USER_ID}/profile`]: { name: "Ana", pictureUrl: PICTURE_URL },
@@ -2219,18 +2235,49 @@ describe("render() server-rendered meta tags", () => {
       expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
     });
 
-    it("points og:url and the canonical link at the friend link itself, and keeps it out of search results", async () => {
+    it("points og:url and the canonical link at the Today page's friend link, and keeps it out of search results", async () => {
       mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
 
       const html = await renderHtml(LINK_PATH);
 
       expect(html).toContain(
-        `<meta property="og:url" content="/?addFriend=${USER_ID}"`
+        `<meta property="og:url" content="/en/today?addFriend=${USER_ID}"`
       );
       expect(html).toContain(
-        `<link rel="canonical" href="/?addFriend=${USER_ID}"`
+        `<link rel="canonical" href="/en/today?addFriend=${USER_ID}"`
       );
       expect(html).toContain('<meta name="robots" content="noindex"');
+    });
+
+    it("previews a friend link added to a reading page, pointing at the Today page's friend link", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(
+        `/en/AAB/genesis/1?addFriend=${USER_ID}&useFreeBibleAPI=true`
+      );
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain(
+        `<link rel="canonical" href="/en/today?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain('<meta name="robots" content="noindex"');
+    });
+
+    it("names the Today page in the page's language", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(
+        `/es/today?addFriend=${USER_ID}&useFreeBibleAPI=true`
+      );
+
+      expect(html).toContain(
+        `<meta property="og:url" content="/es/today?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain(
+        `<link rel="canonical" href="/es/today?addFriend=${USER_ID}"`
+      );
     });
 
     it("titles the page after the linked person", async () => {
@@ -2322,7 +2369,7 @@ describe("render() server-rendered meta tags", () => {
       });
 
       it("doesn't use the brand's logo outside a friend link", async () => {
-        const html = await renderHtml("/?useFreeBibleAPI=true", {
+        const html = await renderHtml("/en/today?useFreeBibleAPI=true", {
           branding: BRANDING,
         });
 
@@ -2364,27 +2411,23 @@ describe("render() server-rendered meta tags", () => {
       });
     });
 
-    it("falls back to the chapter preview for an account that never saved a profile", async () => {
+    it("falls back to the Today page preview for an account that never saved a profile", async () => {
       mockProfiles({});
 
       const html = await renderHtml(LINK_PATH);
 
-      expect(html).toContain(
-        '<meta property="og:title" content="Read Genesis 1"'
-      );
-      expect(html).toContain('<link rel="canonical" href="/en/AAB/genesis/1"');
+      expect(html).toContain('<meta property="og:title" content="Today"');
+      expect(html).toContain('<link rel="canonical" href="/en/today"');
       expect(html).not.toContain('name="robots"');
     });
 
-    it("falls back to the chapter preview and seeds a missing account when no one has that ID", async () => {
+    it("falls back to the Today page preview and seeds a missing account when no one has that ID", async () => {
       mockProfiles({}, [USER_ID]);
 
       const html = await renderHtml(LINK_PATH);
 
-      expect(html).toContain(
-        '<meta property="og:title" content="Read Genesis 1"'
-      );
-      expect(html).toContain('<link rel="canonical" href="/en/AAB/genesis/1"');
+      expect(html).toContain('<meta property="og:title" content="Today"');
+      expect(html).toContain('<link rel="canonical" href="/en/today"');
       expect(html).not.toContain('name="robots"');
       expect(readEmbeddedFriendLinkSeed(html)).toEqual({
         userId: USER_ID,
@@ -2393,7 +2436,7 @@ describe("render() server-rendered meta tags", () => {
     });
 
     it("leaves a page without a friend link indexable and unseeded", async () => {
-      const html = await renderHtml("/?useFreeBibleAPI=true");
+      const html = await renderHtml("/en/today?useFreeBibleAPI=true");
 
       expect(html).not.toContain('name="robots"');
       expect(readEmbeddedFriendLinkSeed(html)).toBeNull();
@@ -2409,7 +2452,7 @@ describe("render() server-rendered meta tags", () => {
       expect(html).not.toMatch(/<title>[^<]*Ana/);
       expect(html).not.toMatch(/<meta [^>]*Ana/);
       expect(html).toContain('<link rel="canonical" href="/en/about"');
-      expect(html).not.toContain(`/?addFriend=${USER_ID}`);
+      expect(html).not.toMatch(/<(meta|link)\b[^>]*addFriend/);
       expect(html).not.toContain('name="robots"');
     });
 
@@ -2423,7 +2466,7 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain("<title>Playlist not found");
       expect(html).not.toMatch(/<title>[^<]*Ana/);
       expect(html).not.toMatch(/<meta [^>]*Ana/);
-      expect(html).not.toContain(`/?addFriend=${USER_ID}`);
+      expect(html).not.toMatch(/<(meta|link)\b[^>]*addFriend/);
       expect(html).not.toContain('name="robots"');
     });
   });
