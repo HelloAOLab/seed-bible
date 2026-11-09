@@ -53,9 +53,14 @@ describe("PlaylistPagePane", () => {
     container.remove();
   });
 
-  function renderPane(playlist: Playlist, authorName: string | null = null) {
+  function renderPane(
+    playlist: Playlist,
+    authorName: string | null = null,
+    owner?: { onEdit: () => void; onDelete: () => void }
+  ) {
     const onStart = vi.fn();
     const onBack = vi.fn();
+    const onShare = vi.fn();
     act(() => {
       render(
         <PlaylistPagePane
@@ -64,6 +69,8 @@ describe("PlaylistPagePane", () => {
           resolveBookName={(bookId) => (bookId === "EXO" ? "Exodus" : bookId)}
           onStart={onStart}
           onBack={onBack}
+          onShare={onShare}
+          {...owner}
         />,
         container
       );
@@ -74,8 +81,47 @@ describe("PlaylistPagePane", () => {
           .querySelector(selector)!
           .dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
-    return { onStart, onBack, click };
+    return { onStart, onBack, onShare, click };
   }
+
+  describe("its header's actions", () => {
+    const menuButton = () =>
+      container.querySelector<HTMLButtonElement>(
+        '.sb-playlist-page-header [aria-label="Playlist options"]'
+      );
+    const menuItem = (label: string) =>
+      Array.from(
+        document.querySelectorAll<HTMLElement>(".sb-context-menu-item")
+      ).find((item) => item.textContent?.includes(label));
+
+    it("offers Share, which opens the playlist's share sheet", () => {
+      const { onShare, click } = renderPane(makePlaylist());
+
+      click('.sb-playlist-page-header [aria-label="Share"]');
+
+      expect(onShare).toHaveBeenCalledTimes(1);
+    });
+
+    it("has no menu for someone who doesn't own the playlist", () => {
+      renderPane(makePlaylist());
+
+      expect(menuButton()).toBeNull();
+    });
+
+    it("gives the playlist's owner a menu to edit or delete it", () => {
+      const onEdit = vi.fn();
+      const onDelete = vi.fn();
+      renderPane(makePlaylist(), null, { onEdit, onDelete });
+
+      act(() => menuButton()!.click());
+      act(() => menuItem("Edit")!.click());
+      expect(onEdit).toHaveBeenCalledTimes(1);
+
+      act(() => menuButton()!.click());
+      act(() => menuItem("Delete")!.click());
+      expect(onDelete).toHaveBeenCalledTimes(1);
+    });
+  });
 
   it("shows the playlist's title, cover, author, description and items", () => {
     renderPane(makePlaylist(), "Ruth");

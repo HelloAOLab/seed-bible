@@ -33,6 +33,33 @@
   cursor: pointer;
 }
 
+.sb-playlist-page-header-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  /* The menu's own button matches the back button. */
+  & .sb-playlist-page-menu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  & .sb-playlist-page-menu:hover,
+  & .sb-playlist-page-menu:focus-visible {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  }
+}
+
 .sb-playlist-page-back:hover,
 .sb-playlist-page-back:focus-visible {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);

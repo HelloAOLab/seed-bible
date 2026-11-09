@@ -22,6 +22,8 @@ export function PlaylistOverview(props: {
   onBack: () => void;
   /** Shown after the title, e.g. a spinner while playback opens. */
   titleAccessory?: ComponentChild;
+  /** Buttons at the header's end, e.g. Share and a menu. */
+  headerActions?: ComponentChild;
   heroImageUrl: string | null;
   authorName: string | null;
   description: string | null;
@@ -62,6 +64,11 @@ export function PlaylistOverview(props: {
           <span dir="auto">{title}</span>
         </h1>
         {props.titleAccessory}
+        {props.headerActions ? (
+          <div className="sb-playlist-page-header-actions">
+            {props.headerActions}
+          </div>
+        ) : null}
       </div>
       <div className="sb-playlist-page-body">
         {props.heroImageUrl ? (

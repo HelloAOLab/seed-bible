@@ -157,12 +157,16 @@ export function PlaylistRow(props: {
   );
 }
 
-/** Opens the delete-playlist confirmation modal. */
-function openDeletePlaylistConfirm(
+/**
+ * Opens the delete-playlist confirmation modal. `onDeleted` runs once it's
+ * gone, for a caller showing the playlist itself.
+ */
+export function openDeletePlaylistConfirm(
   modals: ModalManager,
   playlists: PlaylistManager,
   playlist: Playlist,
-  toast: SeedBibleState["app"]["toast"]
+  toast: SeedBibleState["app"]["toast"],
+  onDeleted?: () => void
 ) {
   openConfirmDeleteModal(modals, {
     id: `delete-playlist-confirm-${playlist.id}`,
@@ -177,7 +181,10 @@ function openDeletePlaylistConfirm(
           t("untitled-playlist", { defaultValue: "Untitled playlist" }),
         defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
       }),
-    onConfirm: () => playlists.deletePlaylist(playlist),
+    onConfirm: async () => {
+      await playlists.deletePlaylist(playlist);
+      onDeleted?.();
+    },
     failedMessage: (t) =>
       t("delete-playlist-failed", {
         defaultValue: "Couldn't delete the playlist.",

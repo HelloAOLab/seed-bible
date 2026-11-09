@@ -1,13 +1,19 @@
 import { useI18n } from "../../i18n/I18nManager";
 import type { Playlist } from "../../managers/PlaylistManager";
 import {
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "../ContextMenu/ContextMenu";
+import { MaterialIcon } from "../icons";
+import {
   PlaylistOverview,
   PlaylistOverviewItemContent,
 } from "../PlaylistOverview/PlaylistOverview";
 
 /**
  * What a playlist's link (or its play button) opens on, filling the screen:
- * the playlist's overview, with a Start Reading button that starts it.
+ * the playlist's overview, with a Start Reading button that starts it, Share
+ * at the top, and for its owner a menu to edit or delete it.
  */
 export function PlaylistPagePane(props: {
   playlist: Playlist;
@@ -16,6 +22,10 @@ export function PlaylistPagePane(props: {
   resolveBookName: (bookId: string) => string;
   onStart: () => void;
   onBack: () => void;
+  onShare: () => void;
+  /** Given only to the playlist's owner. */
+  onEdit?: () => void;
+  onDelete?: () => void;
 }) {
   const { playlist, resolveBookName } = props;
   const { t } = useI18n();
@@ -28,6 +38,47 @@ export function PlaylistPagePane(props: {
       }
       backLabel={t("back", { defaultValue: "Back" })}
       onBack={props.onBack}
+      headerActions={
+        <>
+          <button
+            type="button"
+            className="sb-playlist-page-back sb-playlist-page-share"
+            aria-label={t("share", { defaultValue: "Share" })}
+            title={t("share", { defaultValue: "Share" })}
+            onClick={props.onShare}
+          >
+            <MaterialIcon>share</MaterialIcon>
+          </button>
+          {props.onEdit || props.onDelete ? (
+            <ContextMenuWithButton
+              buttonClassName="sb-playlist-page-menu"
+              aria-label={t("playlist-options", {
+                defaultValue: "Playlist options",
+              })}
+            >
+              {props.onEdit ? (
+                <ContextMenuItem onClick={props.onEdit}>
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    edit
+                  </MaterialIcon>
+                  {t("edit", { defaultValue: "Edit" })}
+                </ContextMenuItem>
+              ) : null}
+              {props.onDelete ? (
+                <ContextMenuItem
+                  className="sb-context-menu-item--danger"
+                  onClick={props.onDelete}
+                >
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    delete
+                  </MaterialIcon>
+                  {t("delete-playlist", { defaultValue: "Delete" })}
+                </ContextMenuItem>
+              ) : null}
+            </ContextMenuWithButton>
+          ) : null}
+        </>
+      }
       heroImageUrl={playlist.heroImageUrl ?? null}
       authorName={props.authorName}
       description={playlist.description?.trim() || null}

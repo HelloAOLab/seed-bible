@@ -31,6 +31,7 @@ import {
   type SharedPageModalAction,
 } from "../components/SharedPageModal/SharedPageModal";
 import { PlaylistPagePane } from "../components/PlaylistPagePane/PlaylistPagePane";
+import { openDeletePlaylistConfirm } from "../components/Discover/PlaylistRow";
 import {
   buildSharedPagePath,
   parseSharedPagePath,
@@ -102,6 +103,7 @@ import {
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import {
   createBibleToolsManager,
+  openShareModal,
   openReadingPlansPane,
   READING_PLANS_PANE_ID,
 } from "../managers/BibleToolsManager";
@@ -4462,16 +4464,51 @@ export function createSeedBibleState(
     }
     const books =
       selectedTab.value?.readingState.translationBooks.value?.books ?? [];
+    const playlist = page.item;
+    const leave = () => panes.closePane(PLAYLIST_PAGE_PANE_ID, "user");
+    const isOwner =
+      !!login.userId.value && playlist.authorUserId === login.userId.value;
     return (
       <PlaylistPagePane
-        playlist={page.item}
+        playlist={playlist}
         authorName={page.authorName}
         resolveBookName={(bookId) => {
           const book = books.find((b) => b.id === bookId);
           return book?.name ?? book?.commonName ?? bookId;
         }}
         onStart={startSharedPage}
-        onBack={() => panes.closePane(PLAYLIST_PAGE_PANE_ID, "user")}
+        onBack={leave}
+        onShare={() =>
+          openShareModal(
+            {
+              modals,
+              app: state.app,
+              toast: state.app.toast,
+              sharedSession: selectedTab.peek()?.sharedSession ?? null,
+              embedThemes: state.theme.themes,
+              customizationLocator:
+                state.customizations.activeCustomizationLocator,
+            },
+            new URL(playlists.getPlaylistUrl(playlist))
+          )
+        }
+        {...(isOwner
+          ? {
+              // As Start Reading does, so Back from the editor returns here.
+              onEdit: () => {
+                tabs.leaveStaticPage({ push: true });
+                playlists.editPlaylist(playlist);
+              },
+              onDelete: () =>
+                openDeletePlaylistConfirm(
+                  modals,
+                  playlists,
+                  playlist,
+                  state.app.toast,
+                  leave
+                ),
+            }
+          : {})}
       />
     );
   };

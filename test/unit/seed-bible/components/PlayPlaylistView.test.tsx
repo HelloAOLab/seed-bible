@@ -305,6 +305,7 @@ describe("PlayPlaylistView", () => {
           resolveBookName={(bookId) => bookId}
           onStart={() => {}}
           onBack={() => {}}
+          onShare={() => {}}
         />,
         container
       );
