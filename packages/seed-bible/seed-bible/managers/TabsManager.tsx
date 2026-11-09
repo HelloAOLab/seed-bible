@@ -26,6 +26,7 @@ import {
   resolveChapterInBook,
   uiLocaleForDefaultTranslation,
   type BibleReadingState,
+  type VerseDecoration,
   type InitialBibleReadingOptions,
   type ReadingNavigationOptions,
   type TranslationWithLanguage,
@@ -1383,6 +1384,74 @@ export function createTabs(
  * second passage) and which of a tab's reading states the user is working in.
  * The {@link TabsManager} methods of the same names.
  */
+/**
+ * Copies `from`'s shareable decorations (those `include` lets through) into
+ * `to`, keeping them there as they change, and taking one out of `to` once
+ * it's gone from `from`. Decorations kept to this device (`localOnly`) stay
+ * where they are.
+ */
+function copyDecorations(
+  from: BibleReadingState,
+  to: BibleReadingState,
+  include: (decoration: VerseDecoration) => boolean
+): () => void {
+  // Copied from `from` as of the last pass.
+  const copied = new Set<string>();
+  const sameDecoration = (x: VerseDecoration, y: VerseDecoration) =>
+    JSON.stringify(x) === JSON.stringify(y);
+  return effect(() => {
+    const source = from.decorations.value.filter(
+      (d) => !d.localOnly && include(d)
+    );
+    untracked(() => {
+      const target = new Map(to.decorations.peek().map((d) => [d.id, d]));
+      for (const decoration of source) {
+        copied.add(decoration.id);
+        const existing = target.get(decoration.id);
+        if (existing && sameDecoration(existing, decoration)) {
+          continue;
+        }
+        const { id, bookId, chapterNumber, verses, ...input } = decoration;
+        to.decorateVerses(bookId, chapterNumber, verses, input, id);
+      }
+      const present = new Set(source.map((d) => d.id));
+      for (const id of [...copied]) {
+        if (!present.has(id)) {
+          copied.delete(id);
+          if (target.has(id)) {
+            to.removeDecoration(id);
+          }
+        }
+      }
+    });
+  });
+}
+
+/**
+ * Shares a reader shown beside a tab's own (a compare step's second passage)
+ * through the tab's shared session, which publishes only the tab's own
+ * decorations: everything decorated beside goes into the tab's own to be
+ * published, and what comes in for the chapter beside is copied out to it.
+ * Each reader draws only those for the chapter it shows.
+ */
+export function shareDecorationsWithTab(
+  own: BibleReadingState,
+  beside: BibleReadingState
+): () => void {
+  const stopOut = copyDecorations(beside, own, () => true);
+  const stopIn = copyDecorations(
+    own,
+    beside,
+    (d) =>
+      d.bookId === beside.bookId.value &&
+      d.chapterNumber === beside.chapterNumber.value
+  );
+  return () => {
+    stopOut();
+    stopIn();
+  };
+}
+
 export function createAttachedReadingStates(): Pick<
   TabsManager,
   "attachReadingState" | "activeReadingState" | "focusReadingState"
@@ -1414,6 +1483,11 @@ export function createAttachedReadingStates(): Pick<
         });
       }
     });
+    // A shared session publishes its tab's decorations, so the other reader's
+    // go out through it and peers' come back in to it.
+    const stopMirror = tab.sharedSession
+      ? shareDecorationsWithTab(tab.readingState, readingState)
+      : () => {};
     const stopOwn = effect(() => {
       if (tab.readingState.selectedVerses.value.length > 0) {
         untracked(() => {
@@ -1427,6 +1501,7 @@ export function createAttachedReadingStates(): Pick<
     return () => {
       stopAttached();
       stopOwn();
+      stopMirror();
       const next = new Map(attachedReadingStates.peek());
       if (next.get(tab.id)?.readingState === readingState) {
         next.delete(tab.id);
