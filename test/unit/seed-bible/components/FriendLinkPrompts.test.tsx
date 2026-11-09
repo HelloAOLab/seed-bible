@@ -188,6 +188,28 @@ describe("friend links", () => {
       expect(openModalId).toBeNull();
     });
 
+    // Coming back to the app re-reads the lists; someone with no friends
+    // shouldn't see the question swapped for "Loading…" each time.
+    it("keeps showing the question while the lists refresh in the background", async () => {
+      await openWith(`?addFriend=${ADA_ID}`);
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const listRecords = server.spies.listRecords.getMockImplementation()!;
+      server.spies.listRecords.mockImplementationOnce(async () => {
+        await gate;
+        return listRecords();
+      });
+
+      const refreshing = friends.refresh();
+      await act(async () => {});
+      expect(friends.isLoading.value).toBe(true);
+      expect(text()).toContain("Send Ada a friend request?");
+      expect(button("Send request")).toBeDefined();
+
+      release();
+      await act(() => refreshing);
+    });
+
     it("shows where they are and what they wrote about themselves", async () => {
       profiles[ADA_ID] = {
         name: "Ada",
@@ -457,6 +479,47 @@ describe("friend links", () => {
 
       expect(text()).toContain("This friend request isn't available.");
       expect(button("Accept")).toBeUndefined();
+    });
+
+    it("says when the requests couldn't be loaded, then shows the request once they are", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      userId.value = null;
+      const request = server.requestFrom(ADA_ID);
+      const listRecords = server.spies.listRecords.getMockImplementation()!;
+      server.spies.listRecords.mockRejectedValue(new Error("offline"));
+      await openWith(`?friendRequest=${request.id}`);
+      await click("Log in");
+
+      expect(text()).toContain("Couldn't load your friend requests.");
+      expect(text()).not.toContain("isn't available");
+
+      server.spies.listRecords.mockImplementation(listRecords);
+      await act(() => friends.refresh());
+      await settle();
+      expect(text()).toContain("Ada wants to be friends.");
+      consoleError.mockRestore();
+    });
+
+    it("keeps saying a request isn't available while the lists refresh", async () => {
+      const request = server.requestFrom(ADA_ID, { status: "rejected" });
+      await openWith(`?friendRequest=${request.id}`);
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const listRecords = server.spies.listRecords.getMockImplementation()!;
+      server.spies.listRecords.mockImplementationOnce(async () => {
+        await gate;
+        return listRecords();
+      });
+
+      const refreshing = friends.refresh();
+      await act(async () => {});
+      expect(friends.isLoading.value).toBe(true);
+      expect(text()).toContain("This friend request isn't available.");
+
+      release();
+      await act(() => refreshing);
     });
 
     it("tells the sender the link is for the person they asked", async () => {

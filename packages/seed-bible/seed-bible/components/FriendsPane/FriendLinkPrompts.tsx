@@ -141,7 +141,9 @@ function AddFriendLinkPrompt(props: {
       defaultValue:
         "This is your own friend link. Share it so people can send you a friend request.",
     });
-  } else if (friends.isLoading.value && friends.friendIds.value.length === 0) {
+  } else if (!friends.hasLoaded.value && friends.isLoading.value) {
+    // Only the first read: a later one keeps what's known. If the first read
+    // fails, Send is still offered, and sending reads the lists again first.
     message = t("loading", { defaultValue: "Loading…" });
   } else if (friends.friendIds.value.includes(person.userId)) {
     message = t("add-friend-link-already-friends", {
@@ -343,8 +345,13 @@ function FriendRequestLinkPrompt(props: {
     return (
       <div className="sb-confirm-delete">
         <p className="sb-confirm-delete-message">
-          {friends.isLoading.value
-            ? t("loading", { defaultValue: "Loading…" })
+          {!friends.hasLoaded.value
+            ? friends.isLoading.value
+              ? t("loading", { defaultValue: "Loading…" })
+              : t("friend-request-link-load-failed", {
+                  defaultValue:
+                    "Couldn't load your friend requests. Check your connection and try again.",
+                })
             : t("friend-request-link-unavailable", {
                 defaultValue:
                   "This friend request isn't available. It may have been sent to a different account, already been answered, or expired.",
