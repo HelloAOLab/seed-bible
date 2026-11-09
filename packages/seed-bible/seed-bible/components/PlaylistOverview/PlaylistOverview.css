@@ -225,3 +225,28 @@
   width: 1.5rem;
   height: 1.375rem;
 }
+
+/* Desktop shows a step's drag handle only while its row is hovered, focused
+   from the keyboard or being dragged, as the sidebar tab rows' ⋮ does (see
+   Tabs.css); touch and phone widths, with no hover to reveal it, always show
+   it. Hidden rather than removed, so titles don't shift as it comes and goes. */
+@media (hover: hover) and (min-width: 481px) {
+  .sb-playlist-page-item > .sb-discover-item-drag-handle {
+    transition:
+      opacity 0.15s ease,
+      visibility 0s;
+  }
+
+  .sb-playlist-page-item:not(
+      :hover,
+      :has(:focus-visible),
+      .sb-discover-item--dragging
+    )
+    > .sb-discover-item-drag-handle {
+    visibility: hidden;
+    opacity: 0;
+    transition:
+      opacity 0.15s ease,
+      visibility 0s 0.15s;
+  }
+}
