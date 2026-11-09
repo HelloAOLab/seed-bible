@@ -1467,8 +1467,13 @@
 }
 
 .sb-pe-add-toggle-plus {
-  font-size: 22px;
-  line-height: 1;
+  display: block;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 
 /* ...and its menu drops down from the title bar rather than rising from the
