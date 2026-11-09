@@ -781,7 +781,11 @@ export function passageVerses(
 
 export function createPlayingState(
   sourcePlaylists: SimplePlaylist[],
-  tab: ReaderTab | null = null,
+  /**
+   * The tab playback is in, or how to find it. A session's tab is still being
+   * set up when a joiner's playback starts, so it can only be found later.
+   */
+  tabSource: ReaderTab | null | (() => ReaderTab | null) = null,
   onFinish?: () => void,
   /**
    * Makes the reading state a compare step's second passage is shown in, with
@@ -792,6 +796,9 @@ export function createPlayingState(
     dispose: () => void;
   }
 ) {
+  const findTab = typeof tabSource === "function" ? tabSource : () => tabSource;
+  // Untracked, so the effects that call it don't rerun as tabs come and go.
+  const resolveTab = () => untracked(findTab);
   const playlists = signal<SimplePlaylist[]>(sourcePlaylists);
   const queue = signal<PlaylistItemData[]>(
     sourcePlaylists.flatMap((playlist) =>
@@ -883,6 +890,7 @@ export function createPlayingState(
   let noteClosedTimer: ReturnType<typeof setTimeout> | null = null;
 
   const disposeDecoration = () => {
+    const tab = resolveTab();
     if (noteClosedTimer) {
       clearTimeout(noteClosedTimer);
       noteClosedTimer = null;
@@ -899,6 +907,7 @@ export function createPlayingState(
    * fades on its own after a few seconds.
    */
   const emphasizeItem = (item: PlaylistItemData | null) => {
+    const tab = resolveTab();
     // A compare step shows only its passages, so there's nothing to pick out.
     if (
       !tab ||
@@ -992,6 +1001,7 @@ export function createPlayingState(
     item: Extract<PlaylistItemData, { type: "bible-verse" }>,
     compare: NonNullable<typeof item.compare>
   ): Promise<void> => {
+    const tab = resolveTab();
     if (!tab) {
       return;
     }
@@ -1028,6 +1038,7 @@ export function createPlayingState(
   };
 
   const navigateToCurrentItem = async () => {
+    const tab = resolveTab();
     const navigation = ++navigationCount;
     const item = currentItem.value;
     detour.value = null;
@@ -1082,6 +1093,7 @@ export function createPlayingState(
    * usual brief highlight.
    */
   const visitReference = async (ref: ReaderVerseRef): Promise<void> => {
+    const tab = resolveTab();
     if (!tab) {
       return;
     }
@@ -1238,6 +1250,7 @@ export function createPlayingState(
   let settled: Promise<void> = Promise.resolve();
 
   const setState = async (state: PlaylistReadingData): Promise<void> => {
+    const tab = resolveTab();
     if (!jsonEqual(playlists.peek(), state.playlists)) {
       playlists.value = state.playlists;
     }
@@ -1317,7 +1330,10 @@ export function createPlayingState(
     detour: detour as ReadonlySignal<ReaderVerseRef | null>,
     visitReference,
     returnToStep,
-    tab,
+    /** The tab playback is in, once it can be found (see `tabSource`). */
+    get tab() {
+      return findTab();
+    },
     next,
     previous,
     jumpTo,
@@ -3047,13 +3063,15 @@ export function createPlaylistManager(
         step: 0,
       };
 
-      // The tab this reading state belongs to, so bible-verse items navigate it.
-      const tab =
+      // The tab this reading state belongs to, so bible-verse items navigate
+      // it. Looked up when needed: a session's tab joins `tabs` only after
+      // its reading state, and with it this extension, has started.
+      const findTab = () =>
         tabs.tabs.value.find((t) => t.readingState === readingState) ?? null;
 
       const playingState = createPlayingState(
         initial.playlists,
-        tab,
+        findTab,
         () => {
           const playlist = playingState.playlists.peek()[0];
           if (playlist && isRecordedPlaylist(playlist)) {
@@ -3062,6 +3080,7 @@ export function createPlaylistManager(
         },
         (options) => {
           const second = tabs.createDetachedReadingState(options);
+          const tab = untracked(findTab);
           const detach = tab ? tabs.attachReadingState(tab, second) : () => {};
           return {
             readingState: second,

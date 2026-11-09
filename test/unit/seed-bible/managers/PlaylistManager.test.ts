@@ -46,6 +46,7 @@ import { h, render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
 import type { Mock } from "vitest";
+import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
 const MARKER = "publicRead:playlists";
@@ -273,7 +274,7 @@ describe("playlist play history helpers", () => {
 type LoginArg = Parameters<typeof createPlaylistManager>[1];
 type TabsArg = Parameters<typeof createPlaylistManager>[2];
 type ChatsArg = Parameters<typeof createPlaylistManager>[9];
-type TabArg = Parameters<typeof createPlayingState>[1];
+type TabArg = ReaderTab | null;
 
 /** A minimal `ChatsManager` fake exposing just the context registration surface. */
 function makeChats(): {
@@ -3293,6 +3294,44 @@ describe("createPlaylistManager", () => {
         isShared: signal(isShared),
       }) as unknown as PlaylistReadingExtensionInstance;
     };
+
+    it("finds a joined session's tab once it opens, though playback started in it first", async () => {
+      // A session's tab is built around its reading state, and the session's
+      // playback starts in that reading state before the tab is in `tabs`.
+      const tabsList = signal<NonNullable<TabArg>[]>([]);
+      makeManager("user-1", {
+        tabs: tabsList,
+        selectedTabId: signal(null),
+        leaveStaticPage: vi.fn(),
+      } as unknown as TabsArg);
+      await flush();
+      const tab = makeTab("session-tab", selectTranslationAndChapterMock);
+      const instance = activateExtension(
+        {
+          playlists: [makePlaylist()],
+          queue: [
+            { type: "html", html: "<p>Where?</p>", question: {} },
+            { type: "bible-verse", ref: { bookId: "JHN", chapter: 3 } },
+          ],
+          step: 0,
+        },
+        true,
+        tab.readingState
+      );
+      const playing = instance.playingState;
+      expect(playing.tab).toBeNull();
+
+      tabsList.value = [tab];
+
+      expect(playing.tab).toBe(tab);
+      await playing.next();
+      expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+        "BSB",
+        "JHN",
+        3,
+        undefined
+      );
+    });
 
     it("navigateNext/navigatePrevious default when nothing is playing", async () => {
       makeManager("user-1");
