@@ -364,6 +364,7 @@ export default function initFindTheVerseExtension() {
             chapterNumber: v.chapterNumber,
             verseNumber: v.verse.number,
             verseText,
+            translationId: toolContext.readingState.translationId.peek(),
           };
           game.selectingViaToolbar.value = false;
           openGamePane();

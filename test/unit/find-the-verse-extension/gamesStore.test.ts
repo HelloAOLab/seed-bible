@@ -23,6 +23,7 @@ function makeGame(overrides: Partial<SavedGame> = {}): SavedGame {
       chapterNumber: 1,
       verseNumber: 1,
       verseText: "In the beginning",
+      translationId: "BSB",
     },
     ...overrides,
   };
@@ -170,6 +171,23 @@ describe("loadGames", () => {
       status: "ok",
       games: [makeGame({ id: "unnamed", name: "" })],
     });
+  });
+
+  it("reads the translation a game's verse text came from, and skips a game without one", async () => {
+    const { put, putGame, asOs } = fakeRecords();
+    const kjv = makeGame({ id: "kjv" });
+    kjv.targetVerse.translationId = "KJV";
+    putGame(kjv);
+    const { translationId: _translationId, ...noTranslation } =
+      makeGame().targetVerse;
+    put(
+      gameAddress("no-translation"),
+      makeGame({ id: "no-translation", targetVerse: noTranslation as never })
+    );
+
+    const result = await loadGames("user-1", asOs);
+
+    expect(result).toEqual({ status: "ok", games: [kjv] });
   });
 
   it("reads every page when there are more games than one page holds", async () => {

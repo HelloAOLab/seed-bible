@@ -60,7 +60,9 @@ export function readSavedGame(value: unknown): SavedGame | null {
     typeof target.bookId !== "string" ||
     typeof target.chapterNumber !== "number" ||
     typeof target.verseNumber !== "number" ||
-    typeof target.verseText !== "string"
+    typeof target.verseText !== "string" ||
+    typeof target.translationId !== "string" ||
+    !target.translationId
   ) {
     return null;
   }
@@ -78,6 +80,7 @@ export function readSavedGame(value: unknown): SavedGame | null {
       chapterNumber: target.chapterNumber,
       verseNumber: target.verseNumber,
       verseText: target.verseText,
+      translationId: target.translationId,
     },
   };
 }

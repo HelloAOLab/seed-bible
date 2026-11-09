@@ -11,6 +11,8 @@ export interface TargetVerse {
   verseNumber: number;
   /** The verse text, if available at selection time. Empty string when not available. */
   verseText: string;
+  /** The translation `verseText` was taken from, which the creator was reading. */
+  translationId: string;
 }
 
 export interface SavedGame {

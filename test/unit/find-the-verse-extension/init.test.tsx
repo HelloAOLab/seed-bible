@@ -139,6 +139,7 @@ function savedGame(
       chapterNumber: 1,
       verseNumber: 1,
       verseText,
+      translationId: "BSB",
     },
     steps: [{ hint }],
     createdAtMs: 1,
@@ -174,6 +175,7 @@ describe("Find the Verse", () => {
   let selectedTabId: Signal<string>;
   let newTabReading: () => Reading;
   let recordData: ReturnType<typeof vi.fn>;
+  let preferredTranslation: string;
 
   function install(games: SavedGame[] = [], active: Reading = reading) {
     recordData = vi.fn(async () => ({ success: true }));
@@ -205,6 +207,17 @@ describe("Find the Verse", () => {
         }),
         recordData,
       },
+      bibleData: {
+        getTranslationBookChapter: vi.fn(async () => ({
+          chapter: {
+            content: Array.from({ length: 40 }, (_, i) => ({
+              type: "verse",
+              number: i + 1,
+              content: [`Verse ${i + 1} text`],
+            })),
+          },
+        })),
+      },
       app: {
         selectedTab,
         selectTab: (id: string) => {
@@ -213,6 +226,7 @@ describe("Find the Verse", () => {
       },
       tabs: {
         tabs,
+        preferredTranslationId: () => preferredTranslation,
         addTab: (
           _source: unknown,
           options?: { initialBookId?: string; initialChapterNumber?: number }
@@ -324,6 +338,7 @@ describe("Find the Verse", () => {
     verseTool = null;
     reading = createReading();
     newTabReading = () => createReading();
+    preferredTranslation = "WEB";
   });
 
   afterEach(() => {
@@ -705,6 +720,100 @@ describe("Find the Verse", () => {
       await flushSave();
     });
     expect(recordData).toHaveBeenCalledTimes(1);
+  });
+
+  async function fillAndSave(name: string) {
+    const nameInput = container.querySelector("input");
+    if (!(nameInput instanceof HTMLInputElement)) {
+      throw new Error("No name field");
+    }
+    await act(async () => {
+      nameInput.value = name;
+      nameInput.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    });
+    for (const i of [0, 1, 2]) await typeHint(i, `hint ${i + 1}`);
+    await act(async () => {
+      clickButton(container, "Save game");
+      await flushSave();
+    });
+  }
+
+  async function goToReference(reference: string) {
+    const box = container.querySelector('input[placeholder="e.g. John 1:1"]');
+    if (!(box instanceof HTMLInputElement)) {
+      throw new Error("No reference box");
+    }
+    await act(async () => {
+      box.value = reference;
+      box.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    });
+    await act(async () => {
+      clickButton(container, "Go");
+      await flushSave();
+    });
+  }
+
+  function lastSavedTarget(): SavedGame["targetVerse"] | undefined {
+    return (recordData.mock.calls.at(-1)?.[2] as SavedGame | undefined)
+      ?.targetVerse;
+  }
+
+  it("saves the translation of the tab a Set as target verse was tapped in", async () => {
+    await act(async () => {
+      install([playableGame()]);
+      await Promise.resolve();
+    });
+    reading.translationId.value = "KJV";
+    reading.selectedVerses.value = [selectedVerse("ROM", 8, 28, "And we know")];
+    await act(async () => {
+      verseTool?.onSelect?.({ readingState: reading });
+    });
+    await showPane();
+
+    await fillAndSave("Good purpose");
+
+    expect(lastSavedTarget()).toEqual({
+      bookId: "ROM",
+      chapterNumber: 8,
+      verseNumber: 28,
+      verseText: "And we know",
+      translationId: "KJV",
+    });
+  });
+
+  it("looks a typed reference up in the open tab's translation, or the reader's preferred one when no tab is open", async () => {
+    await act(async () => {
+      install([playableGame()]);
+      await Promise.resolve();
+    });
+    reading.translationId.value = "KJV";
+    await openPane();
+
+    await act(async () => {
+      clickButton(container, "Create a game");
+    });
+    await goToReference("John 3:16");
+    await fillAndSave("With a tab");
+    expect(lastSavedTarget()).toMatchObject({
+      bookId: "JHN",
+      verseNumber: 16,
+      verseText: "Verse 16 text",
+      translationId: "KJV",
+    });
+
+    await act(async () => {
+      selectedTabId.value = "";
+    });
+    await act(async () => {
+      clickButton(container, "Create a game");
+    });
+    await goToReference("John 3:16");
+    await fillAndSave("No tab");
+    expect(lastSavedTarget()).toMatchObject({
+      bookId: "JHN",
+      verseNumber: 16,
+      translationId: "WEB",
+    });
   });
 
   it("stays on the editor when saving an edit fails", async () => {

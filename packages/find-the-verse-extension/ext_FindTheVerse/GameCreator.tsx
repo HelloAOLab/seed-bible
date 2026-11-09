@@ -107,7 +107,9 @@ export function GameCreator({
       return;
     }
 
-    const translationId = tab?.readingState.translationId.value ?? "BSB";
+    const translationId =
+      tab?.readingState.translationId.value ??
+      state.tabs.preferredTranslationId();
     const stillCurrent = () =>
       token === game.verseLookup.peek() && game.phase.peek() === "creating";
 
@@ -136,6 +138,7 @@ export function GameCreator({
         chapterNumber: parsed.chapter,
         verseNumber: parsed.verse,
         verseText,
+        translationId,
       };
       // A shared session would show everyone in it the secret verse.
       if (tab && !tab.sharedSession) {
