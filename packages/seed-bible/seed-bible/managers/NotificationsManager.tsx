@@ -182,6 +182,25 @@ function writeLocalJson(key: string, value: unknown): void {
   }
 }
 
+/** The whole notification as one sentence, as a toast or a label says it. */
+export function describeNotification(
+  notification: AppNotification,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  switch (notification.kind) {
+    case "friendRequest":
+      return t("notification-friend-request", {
+        name: displayNameOf(notification.request, t),
+        defaultValue: "{{name}} sent you a friend request",
+      });
+    case "appUpdate":
+      return t("notification-app-updated", {
+        version: notification.version,
+        defaultValue: "Seed Bible was updated to version {{version}}",
+      });
+  }
+}
+
 export function createNotificationsManager(
   options: CreateNotificationsManagerOptions
 ): NotificationsManager {
@@ -485,22 +504,6 @@ export function createNotificationsManager(
 
   // ─── Toasts ────────────────────────────────────────────────────────────────
 
-  const describe = (notification: AppNotification): string => {
-    const { t } = i18n;
-    switch (notification.kind) {
-      case "friendRequest":
-        return t("notification-friend-request", {
-          name: displayNameOf(notification.request, t),
-          defaultValue: "{{name}} sent you a friend request",
-        });
-      case "appUpdate":
-        return t("notification-app-updated", {
-          version: notification.version,
-          defaultValue: "Seed Bible was updated to version {{version}}",
-        });
-    }
-  };
-
   // Each device announces a notification once: on the phone when it arrives,
   // and on the laptop the next time it's opened. Waits for everything to load,
   // so it doesn't announce what another device already marked as seen, or
@@ -535,7 +538,7 @@ export function createNotificationsManager(
     const { t } = i18n;
     toast(
       fresh.length === 1
-        ? describe(fresh[0]!.notification)
+        ? describeNotification(fresh[0]!.notification, t)
         : t("notifications-new", {
             count: fresh.length,
             defaultValue_one: "You have {{count}} new notification",

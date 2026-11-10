@@ -1,13 +1,13 @@
 import "./NotificationsFeed.css";
 import { useEffect } from "preact/hooks";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import type {
-  AppNotification,
-  AppUpdateNotification,
-  FriendRequestNotification,
-  NotificationItem,
+import {
+  describeNotification,
+  type AppNotification,
+  type AppUpdateNotification,
+  type FriendRequestNotification,
+  type NotificationItem,
 } from "../../managers/NotificationsManager";
-import { displayNameOf } from "../../managers/Utils";
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
 import { FriendRequestActions } from "../FriendsPane/FriendsPane";
@@ -15,8 +15,6 @@ import { PersonButton } from "../FriendsPane/PersonCard";
 import { formatFeedTime } from "../TodayPane/SocialSection";
 
 export const NOTIFICATIONS_MODAL_ID = "notifications";
-
-type T = ReturnType<typeof useI18n>["t"];
 
 /**
  * The notifications list, opened from the bell on Today and shown in a modal
@@ -93,22 +91,6 @@ export function NotificationsFeed(props: { state: SeedBibleState }) {
       )}
     </div>
   );
-}
-
-/** The whole notification as one sentence, for the dismiss button's label. */
-function describeNotification(notification: AppNotification, t: T): string {
-  switch (notification.kind) {
-    case "friendRequest":
-      return t("notification-friend-request", {
-        name: displayNameOf(notification.request, t),
-        defaultValue: "{{name}} sent you a friend request",
-      });
-    case "appUpdate":
-      return t("notification-app-updated", {
-        version: notification.version,
-        defaultValue: "Seed Bible was updated to version {{version}}",
-      });
-  }
 }
 
 function NotificationRow(props: {
@@ -219,10 +201,7 @@ function AppUpdateBody(props: { notification: AppUpdateNotification }) {
         </MaterialIcon>
         <span className="sb-notifications-text">
           <span className="sb-notifications-title">
-            {t("notification-app-updated", {
-              version: notification.version,
-              defaultValue: "Seed Bible was updated to version {{version}}",
-            })}
+            {describeNotification(notification, t)}
           </span>
           <NotificationTime
             className="sb-notifications-time"
