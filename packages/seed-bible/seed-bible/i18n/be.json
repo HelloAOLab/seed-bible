@@ -28,22 +28,18 @@
   "searching": "Пошук...",
   "no-search-results": "Няма адпаведных вершаў.",
   "open-chapter": "Адкрыць раздзел",
-
   "uploading": "Загрузка...",
   "profile-name": "Назва профілю",
   "profile-name-placeholder": "напрыклад, сям'я Крэйгаў",
-
   "description": "Апісанне",
   "optional": "(Неабавязкова)",
   "description-placeholder": "Увядзіце апісанне вашага профілю...",
   "location": "Месцазнаходжанне",
   "location-placeholder": "напрыклад, Осцін, Тэхас",
-
   "copied": "Скапіравана",
   "copy": "Капіраваць",
   "save-changes": "Захаваць змены",
   "sign-out": "Выйсці",
-
   "log-in": "Увайсці",
   "tanakh": "Танах",
   "traditional": "Традыцыйны",
@@ -57,7 +53,6 @@
   "scripture-settings": "Асяроддзе Святога Пісання",
   "scripture-elements": "Элементы Святога Пісання",
   "scripture-settings-font-size-example": "А",
-
   "show-headings": "Паказаць загалоўкі",
   "show-verse-numbers": "Паказаць нумары вершаў",
   "show-footnotes": "Паказаць зноскі",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Няма даступных пашырэнняў.",
   "install": "Усталяваць",
   "uninstall": "Выдаліць",
-
   "custom": "Карыстальніцкі",
   "text-section-bookTitle": "Тэкст назвы кнігі",
   "text-section-heading": "Тэкст загалоўка",
@@ -92,7 +86,6 @@
   "show-selected-items": "Паказаць выбраныя элементы",
   "show-highlight-colors": "Паказаць колеры вылучэння",
   "show-icon-text": "Паказаць тэкст значка",
-
   "extensions": "Пашырэнні",
   "display": "Дысплей",
   "theme-and-text": "Тэма і тэкст",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Павялічыць памер шрыфта Святога Пісання",
   "change-line-spacing": "Змяніць міжрадковы інтэрвал",
   "line-spacing_lineHeight": "Міжрадковы інтэрвал: {{lineHeight}}",
-
   "italic": "Курсіў",
   "underline": "Падкрэсліванне",
   "alignment_x": "Выраўноўванне: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Колер тэксту",
   "follow_theme": "Сачыць за тэмай",
   "reset-to-default": "Скінуць да значэнняў па змаўчанні",
-
   "id_highlight-text-color": "колер падсветкі тэксту {{id}}",
   "id_highlight-background-color": "колер фону падсветкі {{id}}",
   "all-settings-description": "Дакладна наладзьце кожны раздзел тэксту і наладзьце кожны колер тэмы.",
@@ -141,7 +132,6 @@
   "old-testament_short": "АД",
   "new-testament_short": "НТ",
   "apocrypha": "Апокрыфы",
-
   "custom-translations": "Карыстальніцкія пераклады",
   "no-translation-results-found": "Нічога не знойдзена. Хочаце пашырыць пошук, уключыўшы таксама і часткова поўныя пераклады?",
   "show-all-translations": "Паказаць усе пераклады",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Псалмы",
   "5-psalms": "5 Псалмоў",
   "remove-bookmark": "Выдаліць закладку",
-
   "chat": "Чат",
   "today": "Сёння",
   "you": "Ты",
@@ -169,7 +158,6 @@
   "category-options": "Параметры тэчкі",
   "rename": "Перайменаваць",
   "delete": "Выдаліць",
-
   "bookmark-options": "Параметры закладак",
   "new-folder-placeholder": "Назва папкі",
   "tasks": "Задачы",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Папка з такой назвай ужо існуе.",
   "add-to-new": "Дадаць да новага",
   "save": "Захаваць",
-
   "apocrypha-info-text": "Ніводны з твораў у гэтым раздзеле ніколі не лічыўся Святым Пісаннем раннімі яўрэйскімі або хрысціянскімі абшчынамі. Біблія — гэта пэўны збор кніг. Яўрэі і хрысціяне заўсёды пагаджаліся наконт Старога Запавету, які паходзіць з фіксаванага набору святых пісанняў, якія яўрэі называюць Танахам, а хрысціяне — Старым Запаветам. Змест Танаха і Старога Запавету цалкам аднолькавы, але звычайна размешчаны па-рознаму. Хрысціяне таксама прызнаюць Новы Запавет, які распавядае гісторыю Ісуса, яго вучэння і творы яго паслядоўнікаў. Ніжэйпрыведзеныя творы былі вядомыя і шырока чытаныя ў той час, калі была напісана Біблія, але яны ніколі не лічыліся Святым Пісаннем. Хоць старажытныя аўтары часам цытавалі шырокі спектр тэкстаў, у тым ліку паэтаў, філосафаў і іншыя творы, цытаванне чаго-небудзь не тое ж самае, што ўспрыманне гэтага як Святога Пісання. Гэтыя творы ўключаны сюды толькі для гістарычнай і літаратурнай даведкі.",
   "seed-bible": "Біблія насення",
   "take-photo": "Зрабіце фота",
   "choose-from-gallery": "Выберыце з галерэі",
-
   "crop-your-photo": "Абрэжце сваё фота",
   "zoom": "Маштаб",
   "set-picture": "Устанавіць малюнак",
@@ -211,10 +197,8 @@
   "read-the-bible": "Чытайце Біблію",
   "seed-bible-description": "Прачытайце {{bookName}} {{chapterNumber}} у Бібліі Насення",
   "social-title": "Прачытайце {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Навігацыя па раздзелах",
   "tutorial.skip": "Прапусціць",
-
   "tutorial.back": "Назад",
   "tutorial.done": "Гатова",
   "tutorial.next": "Далей",
@@ -238,7 +222,6 @@
   "copied-translation-share-link": "Спасылка для абмену перакладам скапіравана",
   "less": "Менш",
   "swipe-up-more": "Правядзіце пальцам уверх, каб убачыць больш",
-  "plans": "Планы",
   "reading-plans": "Планы чытання",
   "create-reading-plan": "Стварыць план чытання",
   "reading-plans-empty": "У вас пакуль няма планаў чытання. Стварыце яго, каб пачаць.",
@@ -327,11 +310,9 @@
   "study-notes": "Нататкі да вучобы",
   "content": "Змест",
   "untitled-playlist": "Плэйліст без назвы",
-
   "discover-annotations-empty": "У вас няма анатацый",
   "discover-cross-references-empty": "Няма перакрыжаваных спасылак для гэтага раздзела.",
   "discover-study-notes-empty": "Няма нататак для вывучэння гэтага раздзела.",
-
   "discover-select-tab": "Выберыце ўкладку, каб знайсці адпаведны матэрыял.",
   "create-playlist": "Стварыць",
   "playlist-title_placeholder": "Назва плэйліста",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "Не атрымалася выдаліць плэйліст.",
   "collapsed-tab-shared-label": "{{title}} — агульная сесія, {{count}} прысутных",
   "playlist-add-mode-label": "Тып элемента",
-
   "session-host-reconnected": "Зноў падключаны да сесіі",
   "session-host-left": "Вядучы сышоў — вас выдалілі з сесіі",
   "drag-to-reorder-playlist-item": "Перацягніце, каб змяніць парадак",
   "saving": "Захаванне…",
-
   "unsaved-item-confirm-message": "Вы пачалі дадаваць элемент, які яшчэ не быў дададзены ў плэйліст. Што вы хочаце зрабіць?",
   "discard-and-save": "Адхіліць і захаваць",
   "add-and-save": "Дадаць і захаваць",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "Папярэдні прагляд {{reading}}",
   "reading-plan-mark-reading-complete": "Адзначыць прачытанае як завершанае",
   "reading-plan-link-video": "Відэа",
-
   "reading-plan-mark-passage-complete": "Адзначыць {{passage}} як прачытаны",
   "reading-plan-read-nudge-title": "Прыемнага чытання!",
   "reading-plan-read-nudge-toast": "Пазначыць {{passage}} як завершаны?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Чытайце, шукайце і вывучайце Біблію онлайн. Бясплатныя пераклады на многія мовы, з вылучэннямі, нататкамі, закладкамі і планамі чытання.",
   "all": "Усе",
-
   "today-bookmarks": "ЗАКЛАДКІ",
   "today-search-verses": "Пошук кніг, раздзелаў, вершаў...",
   "anonymous-greeting": "Вітаем!",
   "community": "СУПОЛЬНАСЦЬ",
   "go-somewhere-new": "АДПРАЎЛЯЙЦЕСЯ Ў НОВАЕ МЕСЦА",
-
   "open-bible": "Адкрытая Біблія",
   "personal-greeting": "Вітаем, {{name}} !",
   "resume-reading": "ПРАЦЯГВАЙЦЕ З МЕСЦА, ДЗЕ ВЫ СПЫНІЛІСЯ",
   "resume-reading-loading": "Загрузка гісторыі чытання…",
   "selected-year": "Год: {{year}}",
-
   "theme-light": "Святло",
   "theme-dark": "Цёмны",
   "installed-extensions": "Усталявана",
@@ -543,7 +518,6 @@
   "extension-state-installed": "Усталявана",
   "extension-state-downloaded": "Спампавана",
   "extension-state-pending": "Усталёўваецца…",
-
   "tutorial.stepProgress": "Крок {{current}} з {{total}}",
   "tutorial.offlineDownloadTitle": "Націсніце, каб захаваць на прыладзе",
   "tutorial.offlineDownloadBody": "Любы пераклад з гэтым значком можна захаваць для чытання ў аўтаномным рэжыме.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "Выберыце, колькі ўрыўкаў чытаць побач, з дапамогай гэтага меню макета.",
   "tutorial.addTabTitle": "Адкрыйце больш праходаў",
   "tutorial.addTabBody": "Дадайце новую ўкладку, каб чытаць некалькі кніг або перакладаў побач.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % выканана - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % выканана",
   "playlist-history-continue": "Працягнуць",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} заўваг да гэтага раздзела",
   "create-folder": "Стварыць папку",
   "edit-bookmark": "Рэдагаваць закладку",
-
   "greeting-afternoon": "Добры дзень!",
   "greeting-afternoon-named": "Добры дзень, {{name}} !",
   "greeting-evening": "Добры вечар!",
@@ -652,32 +624,24 @@
   "ask-ai": "Спытайце ў штучнага інтэлекту",
   "unread-mention": "Непрачытаная згадка",
   "unread-messages": "Непрачытаныя паведамленні: {{count}}",
-
   "scripture-width": "Шырыня Пісання",
   "decrease-scripture-width": "Паменшыць шырыню Пісання",
   "increase-scripture-width": "Павялічыць шырыню Пісання",
   "annotations": "Анатацыі",
   "discover-content-panel": "Адкрыйце для сябе кантэнт",
   "discover-book-title": "Адкрыйце для сябе {{book}}",
-
   "about-title": "Пра Біблію насення",
   "about-meta-description": "Seed Bible — гэта бясплатнае біблейскае прыкладанне, створанае для сумеснага чытання Святога Пісання з сям'ёй, сябрамі і супольнасцю — бясплатна назаўжды, без рэкламы і платных карыстальніцкіх рэсурсаў.",
-
   "about-action-open-passage": "Адкрыйце праход",
   "about-action-donate": "Ахвяраваць",
   "about-action-discord": "Далучайцеся да Discord",
   "recent-uploads": "Нядаўнія загрузкі",
-
   "customization-not-found": "Гэтая налада не знойдзена.",
   "customization-name": "Імя",
   "customization-primaryColor": "Пачатковая",
-
   "customization-secondaryColor": "Другасны",
-
   "customization-tertiaryColor": "Трэцічны",
-
   "customization-fonts": "Шрыфты",
-
   "custom-font-option": "Карыстальніцкі…",
   "custom-font-name-placeholder": "Назва шрыфта Google",
   "delete-customization": "Выдаліць",
@@ -690,10 +654,8 @@
   "extension-availability-available": "Даступна",
   "extension-availability-auto-installed": "Аўтаматычная ўстаноўка",
   "extension-availability-hidden": "Схаваны",
-
   "variants": "Тэмы",
   "add-variant": "Дадаць тэму",
-
   "base-theme-description": "Змены, якія былі ўстаноўлены ў гэтай тэме, выкарыстоўваюцца для ўсяго, што вы не наладзілі. Вашы ўласныя змены захоўваюцца.",
   "reset-to-base-theme": "Скінуць да базавай тэмы",
   "low-contrast-warning": "{{label}} : кантраснасць складае толькі {{ratio}} :1 — імкніцеся да хаця б {{minRatio}} :1, каб тэкст заставаўся чытэльным.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "Захаванняў тут пакуль няма.",
   "save-options": "Захаваць параметры",
   "saves": "Захоўвае",
-
   "hide-saves": "Схаваць захаваныя файлы",
   "show-saves": "Паказаць захаваныя файлы",
   "save-verses": "Захаваць",
   "new-save-folder": "Новая папка",
   "edit-save": "Рэдагаваць захаванне",
   "remove-save-from-all-folders": "Выдаліць з усіх папак",
-
   "color-hue": "Адценне",
   "color-saturation": "Насычанасць і яркасць",
   "hex-color": "Шаснаццатковы колер",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Рэдактар ​​фарматавання не ўдалося загрузіць. Гэтая нататка мае фарматаванне, якое будзе страчана, таму яе нельга будзе рэдагаваць, пакуль вы не падключыцеся зноў.",
   "annotation-text": "Тэкст анатацыі",
   "notes-for-verse": "Нататкі да верша {{verse}}",
-
   "configure-extension-defaults": "Наладзіць перавызначэнні па змаўчанні",
-
   "extension-settings-defaults-title": "{{name}} перавызначэнняў па змаўчанні",
   "no-extension-settings": "Гэта пашырэнне не мае наладжвальных параметраў.",
   "extension-settings-save-failed": "Не атрымалася захаваць вашы налады.",
@@ -872,7 +830,6 @@
   "setting-no-default": "Няма па змаўчанні",
   "override-setting": "Перавызначыць {{name}}",
   "override-setting-label": "Перавызначыць",
-
   "discover-choose-filter-hint": "Выберыце фільтр вышэй, каб убачыць больш матэрыялаў з гэтага раздзела.",
   "take-a-tour": "Здзейсніце экскурсію",
   "share-reading-plan": "Падзяліцца планам",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "Мая закладка {{number}}",
   "bookmark-move-hint": "Націсніце на закладку, каб перамясціць яе ў гэты раздзел.",
   "move-bookmark-here": "Перамясціць сюды {{name}}",
-
   "play": "Гуляць",
   "pause": "Паўза",
   "audio-playback-position": "Пазіцыя прайгравання",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "Верш {{verse}}",
   "tab-playing-audio": "Прайграванне аўдыё",
   "collapsed-tab-playing-label": "{{label}} — прайграванне аўдыё",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "тэмы {{count}}",
   "customization-theme-count_one": "тэма {{count}}",
@@ -1104,7 +1059,6 @@
   "about-community-body": "Вера павінна быць пражытая разам. «Seed Bible» створана для чытання Святога Пісання з вашай сям'ёй, вашымі найбліжэйшымі сябрамі і вашай хатняй царквой.",
   "discovered-content": "Знойдзены кантэнт",
   "show-discovered-content": "Паказаць знойдзены кантэнт",
-
   "extension-availability-default": "Па змаўчанні ( {{availability}} )",
   "customization-extensions-default": "Па змаўчанні для іншых пашырэнняў",
   "customization-extensions-default-hint": "Дзейнічае для ўсіх пашырэнняў, якія вы не наладзілі ніжэй, у тым ліку новых, дададзеных пазней",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "Назад да плэйліста",
   "playlist-scripture-note-aria": "Заўвага да {{passage}}",
   "playlist-scripture-note-progress": "{{current}} з {{total}}",
-
   "unsaved-item-edit-confirm-message": "Вы змянілі элемент, але яшчэ не захавалі гэтыя змены. Што вы хочаце зрабіць?",
   "keep-changes-and-save": "Захаваць змены і захаваць",
   "reading-plan-edit-reading": "Рэдагаваць чытанне",
@@ -1152,7 +1105,6 @@
   "branding": "Брэндынг",
   "create-custom-branding-menu-item": "брэндынг на заказ",
   "your-content-empty-branding": "Тут будзе адлюстроўвацца створаны вамі карыстальніцкі брэндынг.",
-
   "extension-consent-from": "Ад {{host}}",
   "extension-consent-source-version": "Версія {{version}} · ад {{host}}",
   "extension-consent-uploader-unnamed": "карыстальнік Бібліі-насення",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "Глядзіце, якія вершы вы выбіраеце",
   "extension-permission-reading-navigate": "Адкрытыя праходы",
   "extension-permission-network": "Падключэнне да {{host}}",
-
   "extension-consent-not-now": "Не зараз",
   "extension-consent-nothing-yet": "Пакуль што ў яго не будзе доступу да вашай інфармацыі.",
   "extension-permission-reading-history": "Глядзіце гісторыю чытання",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "Адмена",
   "extension-consent-high-risk": "Адчувальны",
   "extension-modal-ok": "Добра",
-
   "extension-permissions-restart-note": "Змены ўступаюць у сілу адразу. {{name}} перазапускаецца, каб яны былі захаваны.",
   "extension-permissions-saved": "Захавана. {{name}} перазапушчаны з новымі дазволамі.",
   "extension-permissions-failed": "Не ўдалося захаваць. Паспрабуйце яшчэ раз.",
@@ -1276,8 +1226,67 @@
   "session-settings-verse-effects-desc-hosts": "Паказваць эфекты, калі вядучы выбірае верш.",
   "session-settings-verse-effects-desc-everyone": "Паказваць эфекты, калі хтосьці выбірае верш.",
   "session-settings-verse-effects-desc-none": "Эфекты выбару верша адключаны для ўсіх.",
-
   "account": "Рахунак",
   "scroll-filters-start": "Пракруціце фільтры да пачатку",
-  "scroll-filters-end": "Пракруціце фільтры да канца"
+  "scroll-filters-end": "Пракруціце фільтры да канца",
+  "download": "Спампаваць",
+  "image-details-uploaded": "Загружана",
+  "image-details-dimensions": "Памеры",
+  "image-details-dimensions-value": "{{width}} × {{height}} пікселяў",
+  "image-details-type": "Тып",
+  "image-details-cover-of": "Вокладка",
+  "image-details-not-a-cover": "Не выкарыстоўваецца ў якасці вокладкі",
+  "delete-customization-confirm-title": "Выдаліць карыстальніцкі брэндынг?",
+  "delete-customization-confirm-message": "Выдаліць карыстальніцкі брэндынг « {{name}} »? Гэта нельга адмяніць.",
+  "delete-customization-failed": "Не атрымалася выдаліць карыстальніцкі брэндынг.",
+  "delete-variant-confirm-title": "Выдаліць тэму?",
+  "delete-variant-confirm-message": "Выдаліць тэму « {{name}} »? Гэта нельга адмяніць.",
+  "delete-variant-confirm-message-unnamed": "Выдаліць гэтую тэму? Гэта нельга адмяніць.",
+  "delete-variant-failed": "Не атрымалася выдаліць тэму.",
+  "delete-highlight-confirm-title": "Выдаліць вылучэнне?",
+  "delete-highlight-confirm-message": "Выдаліць падсветку на {{reference}} ? Гэта нельга адмяніць.",
+  "delete-highlight-failed": "Не атрымалася выдаліць вылучэнне.",
+  "delete-annotation-on-confirm-message": "Выдаліць анатацыю на {{reference}} ? Гэта нельга адмяніць.",
+  "remove-from-folder": "Выдаліць з папкі",
+  "save-folders": "У {{folders}}",
+  "delete-save-confirm-title": "Выдаліць захаванае?",
+  "delete-save-confirm-message": "Выдаліць захаванне для {{reference}} ? Гэта нельга адмяніць.",
+  "delete-save-confirm-message-folders": "Выдаліць захаваны файл {{reference}} з {{folders}} ? Гэта нельга адмяніць.",
+  "delete-save-failed": "Не атрымалася выдаліць захаванне.",
+  "delete-save-folder-confirm-title": "Выдаліць папку?",
+  "delete-save-folder-confirm-message": "Выдаліць тэчку « {{name}} »?",
+  "delete-save-folder-confirm-deletes": "Захаваныя файлы {{count}} , якія знаходзяцца толькі ў гэтай тэчцы, таксама будуць выдалены.",
+  "delete-save-folder-confirm-deletes_one": "Захаванне, якое знаходзіцца толькі ў гэтай тэчцы, таксама будзе выдаленае.",
+  "delete-save-folder-confirm-deletes_other": "Захаваныя файлы {{count}} , якія знаходзяцца толькі ў гэтай тэчцы, таксама будуць выдалены.",
+  "delete-save-folder-confirm-keeps": "Захаваныя файлы {{count}} , якія таксама знаходзяцца ў іншых папках, там і застануцца.",
+  "delete-save-folder-confirm-keeps_one": "Захаванне, якое таксама знаходзіцца ў іншай тэчцы, там і застанецца.",
+  "delete-save-folder-confirm-keeps_other": "Захаваныя файлы {{count}} , якія таксама знаходзяцца ў іншых папках, там і застануцца.",
+  "cant-be-undone": "Гэта нельга адмяніць.",
+  "delete-save-folder-failed": "Не атрымалася выдаліць папку.",
+  "download-image-failed": "Не атрымалася спампаваць выяву.",
+  "session-settings-verse-effects-hosts-only": "Толькі для гаспадароў",
+  "session-settings-verse-effects-everyone": "Усе",
+  "session-settings-verse-effects-none": "Няма",
+  "loading-books": "Загрузка кніг…",
+  "books-load-failed": "Не ўдалося загрузіць кнігі. Праверце падключэнне і паспрабуйце яшчэ раз.",
+  "loading-translation": "Загрузка {{name}} …",
+  "translation-load-failed": "Не ўдалося загрузіць {{name}} .",
+  "loading-translations": "Загрузка перакладаў…",
+  "translations-load-failed": "Не атрымалася загрузіць поўны спіс перакладаў, таму некаторыя могуць адсутнічаць.",
+  "verse-of-the-day": "ВЕРШ ДНЯ",
+  "verse-of-the-day-loading": "Загрузка верша дня…",
+  "delete-bookmark-confirm-title": "Выдаліць закладку?",
+  "delete-bookmark-confirm-message": "Выдаліць \" {{name}} \"?",
+  "scripture-font": "Шрыфт Святога Пісання",
+  "ai-limits-title": "Перш чым пагаварыць са штучным інтэлектам",
+  "ai-limits-intro": "Штучны інтэлект можа быць карысным пачаткам, але майце на ўвазе яго абмежаванні:",
+  "ai-limits-mistakes": "Яно робіць памылкі і можа гучаць упэўнена, калі памыляецца.",
+  "ai-limits-agreeable": "Яно, як правіла, кажа вам тое, што вы хочаце пачуць, і схіляецца да папулярных адказаў.",
+  "ai-limits-scripture": "Гэта ненадзейная крыніца. Праверце, што там напісана, у параўнанні з Пісаннем.",
+  "ai-limits-study": "Вывучайце Біблію самастойна і не дазваляйце штучнаму інтэлекту думаць за вас.",
+  "ai-limits-confirm": "Я разумею, што штучны інтэлект можа рабіць памылкі і не з'яўляецца заменай вывучэння Бібліі самастойна.",
+  "friends-playlists-filter": "Плэйлісты сяброў",
+  "friend-link-social-title": "Дадаць {{name}} у сябры",
+  "friend-link-meta-description": "{{name}} хоча стаць вашым сябрам на {{brand}}",
+  "friend-link-title": "Дадаць {{name}} у сябры на {{brand}}"
 }

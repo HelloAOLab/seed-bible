@@ -86,8 +86,13 @@ export interface QueryReadingParams {
   bookId: string | null;
   /** Explicit chapter number, or null when absent/invalid. */
   chapter: number | null;
-  /** True when the URL carried any of translation/book/chapter. */
+  /** True when the URL carried any of translation/book/chapter/lang. */
   specified: boolean;
+  /**
+   * True when a non-empty `?lang=` is the only reading param. Such a link asks
+   * for that language's Bible, not a position, so the reader keeps its place.
+   */
+  languageOnly: boolean;
 }
 
 /**
@@ -181,13 +186,22 @@ export function readQueryReadingParams(url: URL): QueryReadingParams {
       ? Math.floor(chapterValue)
       : null;
 
-  const specified =
+  const namesPosition =
     url.searchParams.has("translationId") ||
     url.searchParams.has("translation") ||
     url.searchParams.has("book") ||
     url.searchParams.has("chapter");
+  // Same rule as `getUrlLanguage`: an empty `?lang=` changes no language, so
+  // it must not count as a reading link either.
+  const namesLanguage = !!url.searchParams.get("lang");
 
-  return { translationId, bookId, chapter, specified };
+  return {
+    translationId,
+    bookId,
+    chapter,
+    specified: namesPosition || namesLanguage,
+    languageOnly: namesLanguage && !namesPosition,
+  };
 }
 
 /**
@@ -209,7 +223,9 @@ export function readQueryReadingParams(url: URL): QueryReadingParams {
  *   there is exactly one, otherwise append a new tab for the query and select it.
  *
  * Missing `book`/`chapter` default to `GEN`/`1`, matching how the app already
- * interprets a deep link.
+ * interprets a deep link — except for a language-only link (`?lang=es`), which
+ * keeps the matched tab's book/chapter (or, for a new tab, the selected tab's)
+ * and only switches the translation.
  */
 export function reconcileStoredTabs(
   state: PersistedTabsState,
@@ -232,12 +248,15 @@ export function reconcileStoredTabs(
   const targetBook = query.bookId ?? DEFAULT_BOOK_ID;
   const targetChapter = query.chapter ?? DEFAULT_CHAPTER_NUMBER;
 
-  const applyQuery = (tab: PersistedTab): PersistedTab => ({
-    ...tab,
-    translationId: targetTranslation,
-    bookId: targetBook,
-    chapterNumber: targetChapter,
-  });
+  const applyQuery = (tab: PersistedTab): PersistedTab =>
+    query.languageOnly
+      ? { ...tab, translationId: targetTranslation }
+      : {
+          ...tab,
+          translationId: targetTranslation,
+          bookId: targetBook,
+          chapterNumber: targetChapter,
+        };
 
   const isVisible = (tab: PersistedTab) => !tab.slotOnly;
 
@@ -268,11 +287,15 @@ export function reconcileStoredTabs(
     return { tabs, selectedTabId: tabs[index]!.id };
   }
 
+  const placeSource =
+    query.languageOnly && selectedTab && isVisible(selectedTab)
+      ? selectedTab
+      : null;
   const newTab: PersistedTab = {
     id: `tab-${tabs.length + 1}`,
     translationId: targetTranslation,
-    bookId: targetBook,
-    chapterNumber: targetChapter,
+    bookId: placeSource?.bookId ?? targetBook,
+    chapterNumber: placeSource?.chapterNumber ?? targetChapter,
   };
   tabs.push(newTab);
   return { tabs, selectedTabId: newTab.id };

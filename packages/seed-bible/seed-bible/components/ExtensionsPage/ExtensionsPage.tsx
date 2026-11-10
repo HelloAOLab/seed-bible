@@ -4,6 +4,7 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ExtensionListEntry } from "../../managers/ExtensionManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
+import { SearchBar } from "../SearchBar/SearchBar";
 import {
   ExtensionTile,
   SourceLabel,
@@ -36,7 +37,7 @@ export function ExtensionsPaneBackButton(props: { state: SeedBibleState }) {
   return (
     <button
       type="button"
-      className="sb-extensions-page-back"
+      className="sb-pane-header-button sb-extensions-page-back"
       onClick={() => props.state.openExtensions()}
       aria-label={t("extensions-page-back")}
       title={t("extensions-page-back")}
@@ -235,18 +236,14 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
   return (
     <div className="sb-extensions-page">
       <div className="sb-extensions-page-toolbar">
-        <label className="sb-extensions-page-search">
-          <span className="material-symbols-outlined" aria-hidden="true">
-            search
-          </span>
-          <input
-            type="search"
-            value={searchQuery.value}
-            onInput={(event) => (searchQuery.value = event.currentTarget.value)}
-            placeholder={t("extensions-search")}
-            aria-label={t("extensions-search")}
-          />
-        </label>
+        <SearchBar
+          className="sb-extensions-page-search"
+          value={searchQuery.value}
+          onInput={(value) => {
+            searchQuery.value = value;
+          }}
+          placeholder={t("extensions-search")}
+        />
         <button
           type="button"
           className="sb-extensions-page-add-link"

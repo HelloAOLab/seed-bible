@@ -1,8 +1,8 @@
 import "../SettingsPage/SettingsPage.css";
 import "./CustomizationEditPane.css";
-// `.searchbar`/`.search-icon`/`.filters-icon` are defined here rather than in
-// a shared stylesheet — imported explicitly rather than relying on
-// `BibleSelector.tsx` happening to already be in the bundle.
+// `.filters-icon` is defined here rather than in a shared stylesheet —
+// imported explicitly rather than relying on `BibleSelector.tsx` happening to
+// already be in the bundle.
 import "../BibleSelector/BibleSelector.css";
 import { signal, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
@@ -25,6 +25,7 @@ import {
   getExtensionSettingDefault,
   getFontPresetsForField,
   type CustomizationIconId,
+  type CustomizationThemeVariant,
   type CustomizationsManager,
   type DefaultExtensionAvailability,
   type ExtensionAvailability,
@@ -58,6 +59,12 @@ import {
 import { CustomIconImage } from "../CustomizableIcon/CustomizableIcon";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
+import { SearchBar } from "../SearchBar/SearchBar";
+import {
+  CUSTOMIZATION_EDIT_PANE_ID,
+  confirmDeleteCustomization,
+} from "./CustomizationCard";
+import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import {
   firstAcceptableSettingValue,
   nonSensitiveSettings,
@@ -88,8 +95,6 @@ const LogoCropModalContent = lazy(() =>
     default: m.LogoCropModalContent,
   }))
 );
-
-export const CUSTOMIZATION_EDIT_PANE_ID = "customization-edit-pane";
 
 type CustomizationEditView =
   | "edit"
@@ -385,7 +390,7 @@ export function CustomizationEditPaneLeading() {
   return (
     <button
       type="button"
-      className="sb-settings-breadcrumbs-back"
+      className="sb-pane-header-button"
       onClick={() => {
         customizationEditView.value = "edit";
       }}
@@ -434,14 +439,14 @@ function UnsavedChangesConfirmModalContent(props: {
         </button>
         <button
           type="button"
-          className="sb-session-settings-cancel"
+          className="sb-unsaved-changes-discard"
           onClick={onDiscard}
         >
           {t("discard-changes", { defaultValue: "Discard changes" })}
         </button>
         <button
           type="button"
-          className="sb-session-settings-end"
+          className="sb-friends-button sb-friends-button--primary"
           onClick={onSaveAndLeave}
         >
           {t("save-and-leave", { defaultValue: "Save and leave" })}
@@ -478,6 +483,40 @@ function openUnsavedChangesConfirm(
         }}
       />
     ),
+  });
+}
+
+/** Asks before deleting one of the open draft's themes, then deletes it and calls `onDeleted`. */
+function confirmDeleteVariant(
+  state: SeedBibleState,
+  variant: CustomizationThemeVariant,
+  onDeleted?: () => void
+) {
+  const name = variant.name.trim();
+  openConfirmDeleteModal(state.modals, {
+    id: `delete-variant-confirm-${variant.id}`,
+    title: {
+      key: "delete-variant-confirm-title",
+      defaultValue: "Delete theme?",
+    },
+    message: (t) =>
+      name
+        ? t("delete-variant-confirm-message", {
+            name,
+            defaultValue: 'Delete theme "{{name}}"? This can\'t be undone.',
+          })
+        : t("delete-variant-confirm-message-unnamed", {
+            defaultValue: "Delete this theme? This can't be undone.",
+          }),
+    onConfirm: async () => {
+      state.customizations.removeEditingVariant(variant.id);
+      onDeleted?.();
+    },
+    failedMessage: (t) =>
+      t("delete-variant-failed", {
+        defaultValue: "Couldn't delete the theme.",
+      }),
+    toast: state.app.toast,
   });
 }
 
@@ -579,7 +618,6 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { customizations, bibleData, extensions } = state;
   const { t } = useI18n();
-  const confirmingDelete = useSignal(false);
   const isUploadingLogo = useSignal(false);
 
   const record = customizations.editingCustomization.value;
@@ -821,9 +859,7 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                       )}
                       {record.variants.length > 1 && (
                         <ContextMenuItem
-                          onClick={() =>
-                            customizations.removeEditingVariant(variant.id)
-                          }
+                          onClick={() => confirmDeleteVariant(state, variant)}
                         >
                           <MaterialIcon className="sb-context-menu-item-icon">
                             delete
@@ -909,32 +945,14 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
       </section>
 
       <footer className="sb-cz-footer">
-        {confirmingDelete.value ? (
-          <button
-            type="button"
-            className="sb-cz-button sb-cz-button-danger"
-            onClick={() => {
-              void customizations.remove(record.id);
-              state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID);
-            }}
-          >
-            <span className="material-symbols-outlined">delete</span>
-            {t("confirm-delete-customization", {
-              defaultValue: "Confirm delete",
-            })}
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
-            onClick={() => {
-              confirmingDelete.value = true;
-            }}
-          >
-            <span className="material-symbols-outlined">delete</span>
-            {t("delete-customization", { defaultValue: "Delete" })}
-          </button>
-        )}
+        <button
+          type="button"
+          className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
+          onClick={() => confirmDeleteCustomization(state, record)}
+        >
+          <span className="material-symbols-outlined">delete</span>
+          {t("delete-customization", { defaultValue: "Delete" })}
+        </button>
         <span className="sb-cz-footer-spacer" />
         <button
           type="button"
@@ -1591,22 +1609,16 @@ function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
         }
       }}
     >
-      <div className="searchbar flex-align-center">
-        <span className="material-symbols-outlined search-icon">search</span>
-        <input
-          type="search"
-          className="flex-1"
-          value={query.value}
+      <div className="sb-customization-translation-search-row">
+        <SearchBar
           dir="auto"
+          value={query.value}
+          onInput={(value) => {
+            query.value = value;
+          }}
           placeholder={t("search-translation", {
             defaultValue: "Search translations...",
           })}
-          aria-label={t("search-translation", {
-            defaultValue: "Search translations...",
-          })}
-          onInput={(event: Event) => {
-            query.value = (event.currentTarget as HTMLInputElement).value;
-          }}
         />
         <button
           type="button"
@@ -1689,7 +1701,6 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { customizations, theme } = state;
   const { t } = useI18n();
-  const confirmingDelete = useSignal(false);
   const previewHighlightId = useSignal<HighlightId>("yellow");
 
   const record = customizations.editingCustomization.value;
@@ -1990,33 +2001,20 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
       </section>
 
       <footer className="sb-cz-footer">
-        {canDelete &&
-          (confirmingDelete.value ? (
-            <button
-              type="button"
-              className="sb-cz-button sb-cz-button-danger"
-              onClick={() => {
-                customizations.removeEditingVariant(variant.id);
+        {canDelete && (
+          <button
+            type="button"
+            className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
+            onClick={() =>
+              confirmDeleteVariant(state, variant, () => {
                 customizationEditView.value = "edit";
-              }}
-            >
-              <span className="material-symbols-outlined">delete</span>
-              {t("confirm-delete-variant", {
-                defaultValue: "Confirm delete",
-              })}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
-              onClick={() => {
-                confirmingDelete.value = true;
-              }}
-            >
-              <span className="material-symbols-outlined">delete</span>
-              {t("delete-variant", { defaultValue: "Delete" })}
-            </button>
-          ))}
+              })
+            }
+          >
+            <span className="material-symbols-outlined">delete</span>
+            {t("delete-variant", { defaultValue: "Delete" })}
+          </button>
+        )}
         <span className="sb-cz-footer-spacer" />
         {!isDefault && (
           <button

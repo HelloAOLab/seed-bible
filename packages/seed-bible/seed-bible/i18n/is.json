@@ -28,22 +28,18 @@
   "searching": "Leitar...",
   "no-search-results": "Engar samsvarandi vers.",
   "open-chapter": "Opna kafla",
-
   "uploading": "Hleður upp...",
   "profile-name": "Prófílnafn",
   "profile-name-placeholder": "t.d. Craig fjölskyldan",
-
   "description": "Lýsing",
   "optional": "(Valfrjálst)",
   "description-placeholder": "Sláðu inn lýsingu á prófílnum þínum...",
   "location": "Staðsetning",
   "location-placeholder": "t.d. Austin, Texas",
-
   "copied": "Afritað",
   "copy": "Afrita",
   "save-changes": "Vista breytingar",
   "sign-out": "Skrá út",
-
   "log-in": "Innskráning",
   "tanakh": "Tanakh",
   "traditional": "Hefðbundið",
@@ -57,7 +53,6 @@
   "scripture-settings": "Ritningarstaðsetningar",
   "scripture-elements": "Ritningaþættir",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Sýna fyrirsagnir",
   "show-verse-numbers": "Sýna versnúmer",
   "show-footnotes": "Sýna neðanmálsgreinar",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Engar viðbætur í boði.",
   "install": "Setja upp",
   "uninstall": "Fjarlægja",
-
   "custom": "Sérsniðin",
   "text-section-bookTitle": "Texti bókartitils",
   "text-section-heading": "Fyrirsagnartexti",
@@ -92,7 +86,6 @@
   "show-selected-items": "Sýna valin atriði",
   "show-highlight-colors": "Sýna liti með áherslumerkjum",
   "show-icon-text": "Sýna tákntexta",
-
   "extensions": "Viðbætur",
   "display": "Sýna",
   "theme-and-text": "Þema og texti",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Auka leturstærð ritningarversa",
   "change-line-spacing": "Breyta línubili",
   "line-spacing_lineHeight": "Línubil: {{lineHeight}}",
-
   "italic": "Skáletrun",
   "underline": "Undirstrika",
   "alignment_x": "Röðun: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Litur textans",
   "follow_theme": "Fylgja þema",
   "reset-to-default": "Endurstilla í sjálfgefið ástand",
-
   "id_highlight-text-color": "Litur á auðkenningartexta {{id}}",
   "id_highlight-background-color": "Bakgrunnslitur á auðkenningu {{id}}",
   "all-settings-description": "Fínstilltu alla textahluta og sérsníddu hvern þemalit.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apókrýfur texti",
-
   "custom-translations": "Sérsniðnar þýðingar",
   "no-translation-results-found": "Engar niðurstöður fundust. Viltu víkka leitina þína til að innihalda einnig þýðingar sem eru að hluta til ófullkomnar?",
   "show-all-translations": "Sýna allar þýðingar",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Sálmar",
   "5-psalms": "5 Sálmar",
   "remove-bookmark": "Fjarlægja bókamerki",
-
   "chat": "Spjall",
   "today": "Í dag",
   "you": "Þú",
@@ -169,7 +158,6 @@
   "category-options": "Möppuvalkostir",
   "rename": "Endurnefna",
   "delete": "Eyða",
-
   "bookmark-options": "Bókamerkjavalkostir",
   "new-folder-placeholder": "Möppunafn",
   "tasks": "Verkefni",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Mappa með þessu nafni er þegar til.",
   "add-to-new": "Bæta við nýtt",
   "save": "Vista",
-
   "apocrypha-info-text": "Engin ritin í þessum hluta voru nokkurn tíma talin vera Ritning af fyrstu gyðinga- eða kristnum samfélögum. Biblían er sérstakt safn bóka. Gyðingar og kristnir menn hafa alltaf verið sammála um Gamla testamentið, sem kemur úr föstu safni helgra rita sem gyðingar kölluðu Tanakh og kristnir menn kalla Gamla testamentið. Efni Tanakh og Gamla testamentisins er nákvæmlega það sama en er almennt raðað öðruvísi. Kristnir menn viðurkenna einnig Nýja testamentið, sem segir sögu Jesú, kenninga hans og rita fylgjenda hans. Ritin hér að neðan voru þekkt og víða lesin þegar Biblían var skrifuð, en þau voru aldrei meðhöndluð sem Ritning. Þó að fornir höfundar hafi stundum vitnað í fjölbreytt úrval texta, þar á meðal skáld, heimspekinga og annarra rita, er það ekki það sama að vitna í eitthvað og meðhöndla það sem Ritning. Þessi rit eru hér eingöngu tekin með til sögulegrar og bókmenntalegrar tilvísunar.",
   "seed-bible": "Fræbiblían",
   "take-photo": "Taka mynd",
   "choose-from-gallery": "Veldu úr myndasafni",
-
   "crop-your-photo": "Skerið myndina ykkar",
   "zoom": "Aðdráttur",
   "set-picture": "Setja mynd",
@@ -211,10 +197,8 @@
   "read-the-bible": "Lestu Biblíuna",
   "seed-bible-description": "Lestu {{bookName}} {{chapterNumber}} í Seed Bible",
   "social-title": "Lesið {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Kaflaflakk",
   "tutorial.skip": "Sleppa",
-
   "tutorial.back": "Til baka",
   "tutorial.done": "Lokið",
   "tutorial.next": "Næst",
@@ -238,7 +222,6 @@
   "copied-translation-share-link": "Afritaði tengil til að deila þýðingu",
   "less": "Minna",
   "swipe-up-more": "Strjúktu upp til að sjá meira",
-  "plans": "Áætlanir",
   "reading-plans": "Lestraráætlanir",
   "create-reading-plan": "Búa til lestraráætlun",
   "reading-plans-empty": "Þú ert ekki með neinar lestraráætlanir ennþá. Búðu til eina til að byrja.",
@@ -327,11 +310,9 @@
   "study-notes": "Námsgögn",
   "content": "Efni",
   "untitled-playlist": "Ónefndur spilunarlisti",
-
   "discover-annotations-empty": "Þú ert ekki með neinar skýringar",
   "discover-cross-references-empty": "Engar krossvísanir fyrir þennan kafla.",
   "discover-study-notes-empty": "Engar námsgögn fyrir þennan kafla.",
-
   "discover-select-tab": "Veldu flipa til að uppgötva tengt efni.",
   "create-playlist": "Búa til",
   "playlist-title_placeholder": "Titill spilunarlista",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "Gat ekki eytt spilunarlistanum.",
   "collapsed-tab-shared-label": "{{title}} — sameiginleg lota, {{count}} viðstaddir",
   "playlist-add-mode-label": "Tegund hlutar",
-
   "session-host-reconnected": "Tengdist aftur við fundinn",
   "session-host-left": "Gestgjafinn fór — þú varst fjarlægður úr fundinum",
   "drag-to-reorder-playlist-item": "Dragðu til að endurraða",
   "saving": "Vistar…",
-
   "unsaved-item-confirm-message": "Þú ert byrjaður að bæta við atriði sem hefur ekki enn verið bætt við spilunarlistann. Hvað viltu gera?",
   "discard-and-save": "Henda og vista",
   "add-and-save": "Bæta við og vista",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "Forskoðun {{reading}}",
   "reading-plan-mark-reading-complete": "Merkingarlestur lokið",
   "reading-plan-link-video": "Myndband",
-
   "reading-plan-mark-passage-complete": "Merkja {{passage}} sem lesið",
   "reading-plan-read-nudge-title": "Fín lesning!",
   "reading-plan-read-nudge-toast": "Merkja {{passage}} sem lokið?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Lestu, leitaðu að og lærðu Biblíuna á netinu. Ókeypis þýðingar á mörgum tungumálum, með áherslum, athugasemdum, bókamerkjum og lestraráætlunum.",
   "all": "Allt",
-
   "today-bookmarks": "BÓKAMERKI",
   "today-search-verses": "Leita að bókum, köflum, versum ....",
   "anonymous-greeting": "Velkomin(n)!",
   "community": "SAMFÉLAG",
   "go-somewhere-new": "FARA EINHVERT NÝTT STAÐ",
-
   "open-bible": "Opna Biblíuna",
   "personal-greeting": "Velkomin(n), {{name}} !",
   "resume-reading": "HALDU ÁFRAM ÞAR SEM ÞÚ HÆTTIR",
   "resume-reading-loading": "Hleður lestrarsöguna þína…",
   "selected-year": "Ár: {{year}}",
-
   "theme-light": "Ljós",
   "theme-dark": "Dökkt",
   "installed-extensions": "Uppsett",
@@ -543,7 +518,6 @@
   "extension-state-installed": "Uppsett",
   "extension-state-downloaded": "Niðurhalað",
   "extension-state-pending": "Setja upp…",
-
   "tutorial.stepProgress": "Skref {{current}} af {{total}}",
   "tutorial.offlineDownloadTitle": "Ýttu til að geyma það á tækinu þínu",
   "tutorial.offlineDownloadBody": "Hægt er að vista allar þýðingar með þessu tákni til lesturs án nettengingar.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "Veldu hversu marga kafla á að lesa hlið við hlið úr þessari uppsetningarvalmynd.",
   "tutorial.addTabTitle": "Opna fleiri kafla",
   "tutorial.addTabBody": "Bættu við nýjum flipa til að lesa nokkrar bækur eða þýðingar hlið við hlið.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % lokið - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % lokið",
   "playlist-history-continue": "Halda áfram",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} athugasemdir fyrir þennan kafla",
   "create-folder": "Búa til möppu",
   "edit-bookmark": "Breyta bókamerki",
-
   "greeting-afternoon": "Góðan daginn!",
   "greeting-afternoon-named": "Góðan daginn, {{name}} !",
   "greeting-evening": "Gott kvöld!",
@@ -652,32 +624,24 @@
   "ask-ai": "Spyrðu gervigreind",
   "unread-mention": "Ólesin umfjöllun",
   "unread-messages": "Ólesin skilaboð: {{count}}",
-
   "scripture-width": "Breidd ritningarverssins",
   "decrease-scripture-width": "Minnka breidd ritningarverssins",
   "increase-scripture-width": "Auka breidd ritningarvers",
   "annotations": "Skýringar",
   "discover-content-panel": "Uppgötvaðu efni",
   "discover-book-title": "Uppgötvaðu {{book}}",
-
   "about-title": "Um Seed Bible",
   "about-meta-description": "Seed Bible er ókeypis biblíuapp sem er hannað til að lesa Ritninguna með fjölskyldu, vinum og samfélagi — ókeypis að eilífu, engar auglýsingar eða greiðsluveggir.",
-
   "about-action-open-passage": "Opna kafla",
   "about-action-donate": "Gefa",
   "about-action-discord": "Skráðu þig í Discord",
   "recent-uploads": "Nýlegar upphleðslur",
-
   "customization-not-found": "Þessi sérstilling fannst ekki.",
   "customization-name": "Nafn",
   "customization-primaryColor": "Aðal",
-
   "customization-secondaryColor": "Aukahluti",
-
   "customization-tertiaryColor": "Tertíer",
-
   "customization-fonts": "Leturgerðir",
-
   "custom-font-option": "Sérsniðin…",
   "custom-font-name-placeholder": "Nafn Google leturs",
   "delete-customization": "Eyða",
@@ -690,10 +654,8 @@
   "extension-availability-available": "Fáanlegt",
   "extension-availability-auto-installed": "Sjálfvirkt uppsett",
   "extension-availability-hidden": "Falið",
-
   "variants": "Þemu",
   "add-variant": "Bæta við þema",
-
   "base-theme-description": "Breytingar sem þetta þema notar til að nota allt sem þú hefur ekki sérsniðið. Þínar eigin breytingar eru geymdar.",
   "reset-to-base-theme": "Endurstilla í grunnþema",
   "low-contrast-warning": "{{label}} : andstæðan er aðeins {{ratio}} :1 — miðið við að minnsta kosti {{minRatio}} :1 svo textinn haldist læsilegur.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "Engar vistanir hér ennþá.",
   "save-options": "Vista valkosti",
   "saves": "Vistar",
-
   "hide-saves": "Fela vistanir",
   "show-saves": "Sýna vistanir",
   "save-verses": "Vista",
   "new-save-folder": "Ný mappa",
   "edit-save": "Breyta vistun",
   "remove-save-from-all-folders": "Fjarlægja úr öllum möppum",
-
   "color-hue": "Litbrigði",
   "color-saturation": "Mettun og birta",
   "hex-color": "Sexhyrningslitur",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Ekki tókst að hlaða sniðsritlinum. Snið þessarar athugasemdar myndi glatast, þannig að ekki er hægt að breyta henni fyrr en þú tengist aftur.",
   "annotation-text": "Skýringartexti",
   "notes-for-verse": "Skýringar fyrir vers {{verse}}",
-
   "configure-extension-defaults": "Stilla sjálfgefnar yfirskriftir",
-
   "extension-settings-defaults-title": "Sjálfgefnar yfirskriftir fyrir {{name}}",
   "no-extension-settings": "Þessi viðbót hefur engar stillanlegar stillingar.",
   "extension-settings-save-failed": "Gat ekki vistað stillingarnar þínar.",
@@ -872,7 +830,6 @@
   "setting-no-default": "Engin sjálfgefið",
   "override-setting": "Yfirskrifa {{name}}",
   "override-setting-label": "Yfirskrifa",
-
   "discover-choose-filter-hint": "Veldu síu hér að ofan til að sjá meira úr þessum kafla.",
   "take-a-tour": "Taktu skoðunarferð",
   "share-reading-plan": "Deilingaráætlun",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "Bókamerkið mitt {{number}}",
   "bookmark-move-hint": "Ýttu á bókamerki til að færa það í þennan kafla.",
   "move-bookmark-here": "Færa {{name}} hingað",
-
   "play": "Spila",
   "pause": "Gera hlé",
   "audio-playback-position": "Spilunarstaða",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "Vers {{verse}}",
   "tab-playing-audio": "Spila hljóð",
   "collapsed-tab-playing-label": "{{label}} — spilar hljóð",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} þemu",
   "customization-theme-count_one": "Þema {{count}}",
@@ -1104,7 +1059,6 @@
   "about-community-body": "Trú er ætluð til að lifa saman. Seed Bible er gerð til að lesa Ritninguna með fjölskyldu þinni, nánustu vinum þínum og heimiliskirkju þinni.",
   "discovered-content": "Uppgötvað efni",
   "show-discovered-content": "Sýna uppgötvað efni",
-
   "extension-availability-default": "Sjálfgefið ( {{availability}} )",
   "customization-extensions-default": "Sjálfgefið fyrir aðrar viðbætur",
   "customization-extensions-default-hint": "Á við um allar viðbætur sem þú hefur ekki stillt hér að neðan, þar á meðal nýjar sem bætt er við síðar.",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "Til baka á spilunarlista",
   "playlist-scripture-note-aria": "Athugasemd um {{passage}}",
   "playlist-scripture-note-progress": "{{current}} af {{total}}",
-
   "unsaved-item-edit-confirm-message": "Þú hefur breytt atriði en hefur ekki vistað breytingarnar ennþá. Hvað viltu gera?",
   "keep-changes-and-save": "Geyma breytingar og vista",
   "reading-plan-edit-reading": "Breyta lestri",
@@ -1152,7 +1105,6 @@
   "branding": "Vörumerkjagerð",
   "create-custom-branding-menu-item": "Sérsniðin vörumerki",
   "your-content-empty-branding": "Sérsniðin vörumerki sem þú býrð til mun birtast hér.",
-
   "extension-consent-from": "Frá {{host}}",
   "extension-consent-source-version": "Útgáfa {{version}} · frá {{host}}",
   "extension-consent-uploader-unnamed": "Notandi Seed Bible",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "Sjáðu hvaða vers þú velur",
   "extension-permission-reading-navigate": "Opnir göng",
   "extension-permission-network": "Tengjast við {{host}}",
-
   "extension-consent-not-now": "Ekki núna",
   "extension-consent-nothing-yet": "Í bili mun það ekki hafa aðgang að neinum upplýsingum þínum.",
   "extension-permission-reading-history": "Sjá lestrarferil þinn",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "Hætta við",
   "extension-consent-high-risk": "Viðkvæm",
   "extension-modal-ok": "Í lagi",
-
   "extension-permissions-restart-note": "Breytingar taka gildi strax. {{name}} endurræsir til að taka þær upp.",
   "extension-permissions-saved": "Vistað. {{name}} endurræsti með nýju heimildunum.",
   "extension-permissions-failed": "Þetta vistaðist ekki. Reyndu aftur.",
@@ -1276,8 +1226,67 @@
   "session-settings-verse-effects-desc-hosts": "Sýna áhrif þegar kynnir velur erindi.",
   "session-settings-verse-effects-desc-everyone": "Sýna áhrif þegar einhver velur vers.",
   "session-settings-verse-effects-desc-none": "Áhrif á versval eru slökkt fyrir alla.",
-
   "account": "Reikningur",
   "scroll-filters-start": "Skrunaðu síurnar að byrjuninni",
-  "scroll-filters-end": "Skrunaðu síurnar að endanum"
+  "scroll-filters-end": "Skrunaðu síurnar að endanum",
+  "download": "Sækja",
+  "image-details-uploaded": "Hlaðið upp",
+  "image-details-dimensions": "Stærðir",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Tegund",
+  "image-details-cover-of": "Kápa af",
+  "image-details-not-a-cover": "Ekki notað sem hulstur",
+  "delete-customization-confirm-title": "Eyða sérsniðinni vörumerkjauppbyggingu?",
+  "delete-customization-confirm-message": "Eyða sérsniðnu vörumerkjauppsetningu „ {{name}} “? Þetta er ekki hægt að afturkalla.",
+  "delete-customization-failed": "Ekki tókst að eyða sérsniðnu vörumerkjunum.",
+  "delete-variant-confirm-title": "Eyða þema?",
+  "delete-variant-confirm-message": "Eyða þemanu „ {{name}} “? Þetta er ekki hægt að afturkalla.",
+  "delete-variant-confirm-message-unnamed": "Eyða þessu þema? Þetta er ekki hægt að afturkalla.",
+  "delete-variant-failed": "Gat ekki eytt þemanu.",
+  "delete-highlight-confirm-title": "Eyða hápunkti?",
+  "delete-highlight-confirm-message": "Eyða auðkenningunni á {{reference}} ? Þetta er ekki hægt að afturkalla.",
+  "delete-highlight-failed": "Gat ekki eytt auðkenningunni.",
+  "delete-annotation-on-confirm-message": "Eyða skýringunni á {{reference}} ? Þetta er ekki hægt að afturkalla.",
+  "remove-from-folder": "Fjarlægja úr möppu",
+  "save-folders": "Í {{folders}}",
+  "delete-save-confirm-title": "Eyða vistun?",
+  "delete-save-confirm-message": "Eyða vistun fyrir {{reference}} ? Þetta er ekki hægt að afturkalla.",
+  "delete-save-confirm-message-folders": "Eyða vistun fyrir {{reference}} úr {{folders}} ? Þetta er ekki hægt að afturkalla.",
+  "delete-save-failed": "Gat ekki eytt vistaðri skrá.",
+  "delete-save-folder-confirm-title": "Eyða möppu?",
+  "delete-save-folder-confirm-message": "Eyða möppunni \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Þeim {{count}} vistuðum skrám sem eru aðeins í þessari möppu verður einnig eytt.",
+  "delete-save-folder-confirm-deletes_one": "Vistað skrá sem er aðeins í þessari möppu verður einnig eytt.",
+  "delete-save-folder-confirm-deletes_other": "Þeim {{count}} vistuðum skrám sem eru aðeins í þessari möppu verður einnig eytt.",
+  "delete-save-folder-confirm-keeps": "Þær {{count}} vistanir sem eru einnig í öðrum möppum verða þar áfram.",
+  "delete-save-folder-confirm-keeps_one": "Vistað skrá sem er líka í annarri möppu verður þar.",
+  "delete-save-folder-confirm-keeps_other": "Þær {{count}} vistanir sem eru einnig í öðrum möppum verða þar áfram.",
+  "cant-be-undone": "Þetta er ekki hægt að afturkalla.",
+  "delete-save-folder-failed": "Gat ekki eytt möppunni.",
+  "download-image-failed": "Gat ekki sótt myndina.",
+  "session-settings-verse-effects-hosts-only": "Aðeins gestgjafar",
+  "session-settings-verse-effects-everyone": "Allir",
+  "session-settings-verse-effects-none": "Enginn",
+  "loading-books": "Hleður inn bókum…",
+  "books-load-failed": "Ekki var hægt að hlaða bókunum. Athugaðu nettenginguna og reyndu aftur.",
+  "loading-translation": "Hleður inn {{name}} …",
+  "translation-load-failed": "Ekki var hægt að hlaða {{name}} .",
+  "loading-translations": "Hleður inn þýðingum…",
+  "translations-load-failed": "Ekki tókst að hlaða inn öllum þýðingunum, svo sumar gætu vantað.",
+  "verse-of-the-day": "VERS DAGSINS",
+  "verse-of-the-day-loading": "Hleður inn vers dagsins…",
+  "delete-bookmark-confirm-title": "Eyða bókamerki?",
+  "delete-bookmark-confirm-message": "Eyða „ {{name}} “?",
+  "scripture-font": "Leturgerð ritningarinnar",
+  "ai-limits-title": "Áður en þú spjallar við gervigreind",
+  "ai-limits-intro": "Gervigreind getur verið gagnlegur upphafspunktur, en hafðu takmörk hennar í huga:",
+  "ai-limits-mistakes": "Það gerir mistök og getur hljómað sjálfstraust þegar það hefur rangt fyrir sér.",
+  "ai-limits-agreeable": "Það hefur tilhneigingu til að segja þér það sem þú vilt heyra og hallar sér að vinsælum svörum.",
+  "ai-limits-scripture": "Þetta er ekki áreiðanleg heimild. Athugaðu hvað þar stendur gagnvart Ritningunni.",
+  "ai-limits-study": "Lærðu Biblíuna sjálfur og láttu ekki gervigreind hugsa fyrir þig.",
+  "ai-limits-confirm": "Ég skil að gervigreind getur gert mistök og kemur ekki í staðinn fyrir að læra Biblíuna sjálfur.",
+  "friends-playlists-filter": "Lagalistar vina",
+  "friend-link-social-title": "Bæta við {{name}} sem vini",
+  "friend-link-meta-description": "{{name}} vill vera vinur þinn á {{brand}}",
+  "friend-link-title": "Bæta við {{name}} sem vini á {{brand}}"
 }

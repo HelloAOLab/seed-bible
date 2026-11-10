@@ -22,22 +22,18 @@
   "clear-search": "Xóa tìm kiếm",
   "searching": "Đang tìm kiếm...",
   "no-search-results": "Không có câu thơ nào trùng khớp.",
-
   "uploading": "Đang tải lên...",
   "profile-name": "Tên hồ sơ",
   "profile-name-placeholder": "ví dụ gia đình Craig",
-
   "description": "Sự miêu tả",
   "optional": "(Không bắt buộc)",
   "description-placeholder": "Nhập mô tả hồ sơ của bạn...",
   "location": "Vị trí",
   "location-placeholder": "ví dụ Austin, TX",
-
   "copied": "Đã sao chép",
   "copy": "Sao chép",
   "save-changes": "Lưu thay đổi",
   "sign-out": "Đăng xuất",
-
   "log-in": "Đăng nhập",
   "session-settings": "Cài đặt phiên",
   "shared-session-click-to-join": "đang chia sẻ — nhấp để tham gia",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "Hãy chọn một chủ đề và điều chỉnh cách hiển thị Kinh Thánh và giao diện.",
   "scripture-settings": "Các bối cảnh Kinh Thánh",
   "scripture-settings-font-size-example": "MỘT",
-
   "all-settings": "Tất cả cài đặt",
   "no-extensions-available": "Không có tiện ích mở rộng nào.",
   "install": "Cài đặt",
   "uninstall": "Gỡ cài đặt",
-
   "custom": "Phong tục",
   "text-section-bookTitle": "Tên sách Văn bản",
   "text-section-heading": "Văn bản tiêu đề",
@@ -79,7 +73,6 @@
   "show-selected-items": "Hiển thị các mục đã chọn",
   "show-highlight-colors": "Hiển thị màu sắc nổi bật",
   "show-icon-text": "Hiển thị văn bản biểu tượng",
-
   "extensions": "Phần mở rộng",
   "display": "Trưng bày",
   "keep-screen-awake": "Giữ màn hình luôn bật",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "Tăng kích thước phông chữ kinh thánh",
   "change-line-spacing": "Thay đổi khoảng cách dòng",
   "line-spacing_lineHeight": "Khoảng cách dòng: {{lineHeight}}",
-
   "italic": "Chữ nghiêng",
   "underline": "Gạch chân",
   "alignment_x": "Căn chỉnh: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "Màu chữ",
   "follow_theme": "Theo chủ đề",
   "reset-to-default": "Khôi phục về mặc định",
-
   "id_highlight-text-color": "{{id}} tô sáng màu chữ",
   "id_highlight-background-color": "{{id}} màu nền nổi bật",
   "all-settings-description": "Tinh chỉnh từng phần văn bản và tùy chỉnh màu sắc chủ đề.",
@@ -126,7 +117,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Sách Ngoại Kinh",
-
   "custom-translations": "Bản dịch theo yêu cầu",
   "no-translation-results-found": "Không tìm thấy kết quả nào. Bạn có muốn mở rộng phạm vi tìm kiếm để bao gồm cả các bản dịch chưa hoàn chỉnh không?",
   "show-all-translations": "Hiển thị tất cả các bản dịch",
@@ -138,7 +128,6 @@
   "complete-translations": "Bản dịch hoàn chỉnh",
   "all-translations": "Tất cả các bản dịch",
   "popular-translations": "Các bản dịch phổ biến",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Thi Thiên",
   "2-psalms": "2 Thi Thiên",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "Vào tất cả cài đặt",
   "more": "Hơn",
   "remove-bookmark": "Xóa dấu trang",
-
   "chat": "Trò chuyện",
   "today": "Hôm nay",
   "you": "Bạn",
@@ -170,7 +158,6 @@
   "category-options": "Tùy chọn thư mục",
   "rename": "Đổi tên",
   "delete": "Xóa bỏ",
-
   "bookmark-options": "Tùy chọn đánh dấu trang",
   "new-folder-placeholder": "Tên thư mục",
   "tasks": "Nhiệm vụ",
@@ -182,11 +169,9 @@
   "folder-name-taken": "Thư mục có tên đó đã tồn tại.",
   "add-to-new": "Thêm vào mục mới",
   "save": "Cứu",
-
   "seed-bible": "Kinh Thánh Hạt Giống",
   "take-photo": "Chụp ảnh",
   "choose-from-gallery": "Chọn từ bộ sưu tập",
-
   "crop-your-photo": "Cắt ảnh của bạn",
   "zoom": "Phóng",
   "set-picture": "Đặt hình ảnh",
@@ -212,10 +197,8 @@
   "read-the-bible": "Hãy đọc Kinh Thánh",
   "seed-bible-description": "Đọc cuốn {{bookName}} {{chapterNumber}} trong Kinh Thánh Hạt Giống",
   "social-title": "Đọc {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Điều hướng chương",
   "tutorial.skip": "Nhảy",
-
   "tutorial.back": "Mặt sau",
   "tutorial.done": "Xong",
   "tutorial.next": "Kế tiếp",
@@ -239,7 +222,6 @@
   "copied-translation-share-link": "Đã sao chép liên kết chia sẻ bản dịch",
   "less": "Ít hơn",
   "swipe-up-more": "Vuốt lên để xem thêm",
-  "plans": "Kế hoạch",
   "reading-plans": "Kế hoạch đọc",
   "create-reading-plan": "Lập kế hoạch đọc sách",
   "reading-plans-empty": "Bạn chưa có kế hoạch đọc sách nào cả. Hãy lập một kế hoạch để bắt đầu.",
@@ -328,11 +310,9 @@
   "study-notes": "Ghi chú học tập",
   "content": "Nội dung",
   "untitled-playlist": "Danh sách phát không có tiêu đề",
-
   "discover-annotations-empty": "Bạn không có chú thích nào.",
   "discover-cross-references-empty": "Không có liên kết tham chiếu chéo nào cho chương này.",
   "discover-study-notes-empty": "Không có ghi chú học tập nào cho chương này.",
-
   "discover-select-tab": "Chọn một tab để tìm hiểu các nội dung liên quan.",
   "create-playlist": "Tạo nên",
   "playlist-title_placeholder": "Tiêu đề danh sách phát",
@@ -381,12 +361,10 @@
   "delete-playlist-failed": "Không thể xóa danh sách phát.",
   "collapsed-tab-shared-label": "{{title}} — phiên họp chung, {{count}} người tham dự",
   "playlist-add-mode-label": "Loại mặt hàng",
-
   "session-host-reconnected": "Đã kết nối lại với phiên",
   "session-host-left": "Người chủ trì đã rời đi — bạn đã bị loại khỏi phiên họp.",
   "drag-to-reorder-playlist-item": "Kéo để sắp xếp lại",
   "saving": "Đang lưu…",
-
   "unsaved-item-confirm-message": "Bạn đã bắt đầu thêm một mục chưa được thêm vào danh sách phát. Bạn muốn làm gì?",
   "discard-and-save": "Bỏ qua và lưu",
   "add-and-save": "Thêm và lưu",
@@ -514,7 +492,6 @@
   "reading-plan-preview-reading": "Xem trước {{reading}}",
   "reading-plan-mark-reading-complete": "Đánh dấu việc đọc đã hoàn tất",
   "reading-plan-link-video": "Băng hình",
-
   "reading-plan-mark-passage-complete": "Đánh dấu {{passage}} là đã đọc",
   "reading-plan-read-nudge-title": "Chúc bạn đọc vui vẻ!",
   "reading-plan-read-nudge-toast": "Đánh dấu {{passage}} đã hoàn thành?",
@@ -522,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Đọc, tìm kiếm và nghiên cứu Kinh Thánh trực tuyến. Bản dịch miễn phí bằng nhiều ngôn ngữ, với các tính năng nổi bật, ghi chú, đánh dấu trang và kế hoạch đọc.",
   "all": "Tất cả",
-
   "today-bookmarks": "DẤU TRANG",
   "today-search-verses": "Tìm kiếm sách, chương, câu...",
   "anonymous-greeting": "Chào mừng!",
   "community": "CỘNG ĐỒNG",
   "go-somewhere-new": "HÃY ĐI ĐẾN MỘT NƠI MỚI",
-
   "open-bible": "Kinh Thánh Mở",
   "personal-greeting": "Chào mừng, {{name}} !",
   "resume-reading": "TIẾP TỤC TỪ CHỖ BẠN ĐÃ DỪNG",
   "resume-reading-loading": "Đang tải lịch sử đọc của bạn…",
   "selected-year": "Năm: {{year}}",
-
   "theme-light": "Ánh sáng",
   "theme-dark": "Tối tăm",
   "installed-extensions": "Đã cài đặt",
@@ -544,7 +518,6 @@
   "extension-state-installed": "Đã cài đặt",
   "extension-state-downloaded": "Đã tải xuống",
   "extension-state-pending": "Đang cài đặt…",
-
   "tutorial.stepProgress": "Bước {{current}} của {{total}}",
   "tutorial.offlineDownloadTitle": "Chạm để giữ nó trên thiết bị của bạn",
   "tutorial.offlineDownloadBody": "Bất kỳ bản dịch nào có biểu tượng này đều có thể được lưu để đọc ngoại tuyến.",
@@ -578,7 +551,6 @@
   "tutorial.paneLayoutBody": "Chọn số lượng đoạn văn bạn muốn đọc cạnh nhau từ menu bố cục này.",
   "tutorial.addTabTitle": "Mở thêm đoạn văn",
   "tutorial.addTabBody": "Thêm một tab mới để đọc nhiều sách hoặc bản dịch cùng lúc.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % hoàn thành - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % hoàn thành",
   "playlist-history-continue": "Tiếp tục",
@@ -637,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} ghi chú cho chương này",
   "create-folder": "Tạo thư mục",
   "edit-bookmark": "Chỉnh sửa dấu trang",
-
   "greeting-afternoon": "Chào buổi chiều!",
   "greeting-afternoon-named": "Chào buổi chiều, {{name}} !",
   "greeting-evening": "Buổi tối vui vẻ!",
@@ -653,32 +624,24 @@
   "ask-ai": "Hỏi AI",
   "unread-mention": "Đề cập chưa đọc",
   "unread-messages": "Tin nhắn chưa đọc: {{count}}",
-
   "scripture-width": "Chiều rộng Kinh thánh",
   "decrease-scripture-width": "Giảm độ rộng của đoạn Kinh thánh",
   "increase-scripture-width": "Tăng chiều rộng của đoạn Kinh Thánh",
   "annotations": "Chú thích",
   "discover-content-panel": "Khám phá nội dung",
   "discover-book-title": "Khám phá {{book}}",
-
   "about-title": "Giới thiệu về Seed Bible",
   "about-meta-description": "Seed Bible là một ứng dụng Kinh Thánh miễn phí được thiết kế để bạn cùng gia đình, bạn bè và cộng đồng đọc Kinh Thánh — hoàn toàn miễn phí, không quảng cáo hay yêu cầu trả phí.",
-
   "about-action-open-passage": "Mở một lối đi",
   "about-action-donate": "Quyên tặng",
   "about-action-discord": "Tham gia Discord",
   "recent-uploads": "Các bài đăng gần đây",
-
   "customization-not-found": "Không tìm thấy tùy chỉnh này.",
   "customization-name": "Tên",
   "customization-primaryColor": "Sơ đẳng",
-
   "customization-secondaryColor": "Sơ trung",
-
   "customization-tertiaryColor": "Bậc ba",
-
   "customization-fonts": "Phông chữ",
-
   "custom-font-option": "Phong tục…",
   "custom-font-name-placeholder": "Tên phông chữ Google",
   "delete-customization": "Xóa bỏ",
@@ -691,10 +654,8 @@
   "extension-availability-available": "Có sẵn",
   "extension-availability-auto-installed": "Tự động cài đặt",
   "extension-availability-hidden": "Ẩn giấu",
-
   "variants": "Chủ đề",
   "add-variant": "Thêm chủ đề",
-
   "base-theme-description": "Các thay đổi mặc định của chủ đề này sẽ tự động quay lại giao diện gốc nếu bạn chưa tùy chỉnh bất cứ điều gì. Các chỉnh sửa của riêng bạn sẽ được giữ nguyên.",
   "reset-to-base-theme": "Khôi phục về chủ đề gốc",
   "low-contrast-warning": "{{label}} : Độ tương phản chỉ là {{ratio}} :1 — hãy hướng đến mức ít nhất {{minRatio}} :1 để văn bản vẫn dễ đọc.",
@@ -740,14 +701,12 @@
   "save-folder-empty": "Chưa có bản lưu nào ở đây.",
   "save-options": "Lưu tùy chọn",
   "saves": "Lưu",
-
   "hide-saves": "Ẩn các bản lưu",
   "show-saves": "Hiển thị các lần lưu",
   "save-verses": "Cứu",
   "new-save-folder": "Thư mục mới",
   "edit-save": "Chỉnh sửa lưu",
   "remove-save-from-all-folders": "Xóa khỏi tất cả các thư mục",
-
   "color-hue": "Màu sắc",
   "color-saturation": "Độ bão hòa và độ sáng",
   "hex-color": "Màu Hex",
@@ -862,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Không thể tải trình chỉnh sửa định dạng. Ghi chú này có định dạng sẽ bị mất nếu chỉnh sửa, vì vậy không thể chỉnh sửa cho đến khi bạn kết nối lại.",
   "annotation-text": "Văn bản chú thích",
   "notes-for-verse": "Ghi chú cho câu thơ {{verse}}",
-
   "configure-extension-defaults": "Cấu hình các thiết lập ghi đè mặc định",
-
   "extension-settings-defaults-title": "{{name}} ghi đè mặc định",
   "no-extension-settings": "Tiện ích mở rộng này không có cài đặt cấu hình nào.",
   "extension-settings-save-failed": "Không thể lưu cài đặt của bạn.",
@@ -873,7 +830,6 @@
   "setting-no-default": "Không có mặc định",
   "override-setting": "Ghi đè {{name}}",
   "override-setting-label": "Ghi đè",
-
   "discover-choose-filter-hint": "Chọn bộ lọc ở trên để xem thêm nội dung từ chương này.",
   "take-a-tour": "Hãy tham quan",
   "share-reading-plan": "Kế hoạch chia sẻ",
@@ -1057,7 +1013,6 @@
   "my-bookmark-numbered": "Dấu trang của tôi {{number}}",
   "bookmark-move-hint": "Nhấn vào dấu trang để di chuyển nó đến chương này.",
   "move-bookmark-here": "Di chuyển {{name}} đến đây",
-
   "play": "Chơi",
   "pause": "Tạm dừng",
   "audio-playback-position": "Vị trí phát lại",
@@ -1066,7 +1021,6 @@
   "audio-scrub-verse": "Câu thơ {{verse}}",
   "tab-playing-audio": "Đang phát âm thanh",
   "collapsed-tab-playing-label": "{{label}} — đang phát âm thanh",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} chủ đề",
   "customization-theme-count_one": "Chủ đề {{count}}",
@@ -1105,7 +1059,6 @@
   "about-community-body": "Đức tin cần được sống cùng nhau. Kinh Thánh Seed được thiết kế để bạn đọc Kinh Thánh cùng gia đình, bạn bè thân thiết và nhóm sinh hoạt tại gia của mình.",
   "discovered-content": "Nội dung được tìm thấy",
   "show-discovered-content": "Hiển thị nội dung đã tìm thấy",
-
   "extension-availability-default": "Mặc định ( {{availability}} )",
   "customization-extensions-default": "Mặc định cho các tiện ích mở rộng khác",
   "customization-extensions-default-hint": "Áp dụng cho mọi tiện ích mở rộng mà bạn chưa thiết lập bên dưới, bao gồm cả những tiện ích mới được thêm vào sau này.",
@@ -1138,7 +1091,6 @@
   "playlist-scripture-note-return": "Quay lại danh sách phát",
   "playlist-scripture-note-aria": "Ghi chú về {{passage}}",
   "playlist-scripture-note-progress": "{{current}} của {{total}}",
-
   "unsaved-item-edit-confirm-message": "Bạn đã thay đổi một mục nhưng chưa lưu lại những thay đổi đó. Bạn muốn làm gì?",
   "keep-changes-and-save": "Lưu các thay đổi và lưu lại.",
   "reading-plan-edit-reading": "Chỉnh sửa bài đọc",
@@ -1153,7 +1105,6 @@
   "branding": "Xây dựng thương hiệu",
   "create-custom-branding-menu-item": "Thương hiệu tùy chỉnh",
   "your-content-empty-branding": "Thương hiệu tùy chỉnh mà bạn tạo sẽ hiển thị ở đây.",
-
   "extension-consent-from": "Từ {{host}}",
   "extension-consent-source-version": "Phiên bản {{version}} · từ {{host}}",
   "extension-consent-uploader-unnamed": "Người dùng Seed Bible",
@@ -1201,7 +1152,6 @@
   "extension-permission-reading-selection": "Hãy xem bạn chọn những câu thơ nào.",
   "extension-permission-reading-navigate": "Lối đi mở",
   "extension-permission-network": "Kết nối với {{host}}",
-
   "extension-consent-not-now": "Không phải bây giờ",
   "extension-consent-nothing-yet": "Hiện tại, nó sẽ không có quyền truy cập vào bất kỳ thông tin nào của bạn.",
   "extension-permission-reading-history": "Xem lịch sử đọc của bạn",
@@ -1239,7 +1189,6 @@
   "extension-capture-cancel": "Hủy bỏ",
   "extension-consent-high-risk": "Nhạy cảm",
   "extension-modal-ok": "ĐƯỢC RỒI",
-
   "extension-permissions-restart-note": "Các thay đổi có hiệu lực ngay lập tức. {{name}} sẽ khởi động lại để cập nhật.",
   "extension-permissions-saved": "Đã lưu. {{name}} đã khởi động lại với các quyền mới.",
   "extension-permissions-failed": "Thao tác đó không thành công. Hãy thử lại.",
@@ -1277,8 +1226,67 @@
   "session-settings-verse-effects-desc-hosts": "Hiển thị hiệu ứng khi người dẫn chương trình chọn một đoạn thơ.",
   "session-settings-verse-effects-desc-everyone": "Hiển thị hiệu ứng khi bất kỳ ai chọn một đoạn thơ.",
   "session-settings-verse-effects-desc-none": "Hiệu ứng chọn đoạn thơ đã bị tắt cho tất cả mọi người.",
-
   "account": "Tài khoản",
   "scroll-filters-start": "Cuộn các bộ lọc về phía đầu",
-  "scroll-filters-end": "Cuộn các bộ lọc về cuối"
+  "scroll-filters-end": "Cuộn các bộ lọc về cuối",
+  "download": "Tải xuống",
+  "image-details-uploaded": "Đã tải lên",
+  "image-details-dimensions": "Kích thước",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Kiểu",
+  "image-details-cover-of": "Bìa của",
+  "image-details-not-a-cover": "Không dùng làm vỏ bọc",
+  "delete-customization-confirm-title": "Xóa thương hiệu tùy chỉnh?",
+  "delete-customization-confirm-message": "Xóa thương hiệu tùy chỉnh \" {{name}} \"? Không thể hoàn tác.",
+  "delete-customization-failed": "Không thể xóa phần Tùy chỉnh thương hiệu.",
+  "delete-variant-confirm-title": "Xóa giao diện?",
+  "delete-variant-confirm-message": "Xóa chủ đề \" {{name}} \"? Không thể hoàn tác.",
+  "delete-variant-confirm-message-unnamed": "Xóa chủ đề này? Không thể hoàn tác.",
+  "delete-variant-failed": "Không thể xóa chủ đề.",
+  "delete-highlight-confirm-title": "Xóa vùng chọn?",
+  "delete-highlight-confirm-message": "Xóa phần đánh dấu nổi bật trên {{reference}} ? Thao tác này không thể hoàn tác.",
+  "delete-highlight-failed": "Không thể xóa phần đã được đánh dấu.",
+  "delete-annotation-on-confirm-message": "Xóa chú thích trên {{reference}} ? Thao tác này không thể hoàn tác.",
+  "remove-from-folder": "Xóa khỏi thư mục",
+  "save-folders": "Trong {{folders}}",
+  "delete-save-confirm-title": "Xóa tệp lưu?",
+  "delete-save-confirm-message": "Xóa bản lưu cho {{reference}} ? Thao tác này không thể hoàn tác.",
+  "delete-save-confirm-message-folders": "Xóa tệp lưu cho {{reference}} khỏi {{folders}} ? Thao tác này không thể hoàn tác.",
+  "delete-save-failed": "Không thể xóa file lưu.",
+  "delete-save-folder-confirm-title": "Xóa thư mục?",
+  "delete-save-folder-confirm-message": "Xóa thư mục \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Các bản lưu {{count}} chỉ có trong thư mục này cũng sẽ bị xóa.",
+  "delete-save-folder-confirm-deletes_one": "Tệp lưu chỉ có trong thư mục này cũng sẽ bị xóa.",
+  "delete-save-folder-confirm-deletes_other": "Các bản lưu {{count}} chỉ có trong thư mục này cũng sẽ bị xóa.",
+  "delete-save-folder-confirm-keeps": "Các bản lưu {{count}} nằm trong các thư mục khác cũng sẽ vẫn ở đó.",
+  "delete-save-folder-confirm-keeps_one": "Tệp lưu game nằm trong thư mục khác cũng sẽ vẫn ở đó.",
+  "delete-save-folder-confirm-keeps_other": "Các bản lưu {{count}} nằm trong các thư mục khác cũng sẽ vẫn ở đó.",
+  "cant-be-undone": "Việc này không thể đảo ngược được nữa.",
+  "delete-save-folder-failed": "Không thể xóa thư mục.",
+  "download-image-failed": "Không thể tải xuống hình ảnh.",
+  "session-settings-verse-effects-hosts-only": "Chỉ dành cho chủ nhà",
+  "session-settings-verse-effects-everyone": "Mọi người",
+  "session-settings-verse-effects-none": "Không có",
+  "loading-books": "Đang tải sách…",
+  "books-load-failed": "Không thể tải sách. Vui lòng kiểm tra kết nối và thử lại.",
+  "loading-translation": "Đang tải {{name}} …",
+  "translation-load-failed": "Không thể tải {{name}} .",
+  "loading-translations": "Đang tải bản dịch…",
+  "translations-load-failed": "Không thể tải toàn bộ danh sách bản dịch, vì vậy một số bản dịch có thể bị thiếu.",
+  "verse-of-the-day": "CÂU THƠ TRONG NGÀY",
+  "verse-of-the-day-loading": "Đang tải câu Kinh Thánh của ngày hôm nay…",
+  "delete-bookmark-confirm-title": "Xóa dấu trang?",
+  "delete-bookmark-confirm-message": "Xóa \" {{name}} \"?",
+  "scripture-font": "Phông chữ Kinh Thánh",
+  "ai-limits-title": "Trước khi bạn trò chuyện với AI",
+  "ai-limits-intro": "Trí tuệ nhân tạo có thể là một điểm khởi đầu hữu ích, nhưng hãy luôn ghi nhớ những hạn chế của nó:",
+  "ai-limits-mistakes": "Nó mắc lỗi, và có thể tỏ ra tự tin ngay cả khi sai.",
+  "ai-limits-agreeable": "Nó thường có xu hướng nói những điều bạn muốn nghe và nghiêng về những câu trả lời phổ biến.",
+  "ai-limits-scripture": "Đây không phải là nguồn đáng tin cậy. Hãy kiểm tra xem nó nói gì và so sánh với Kinh Thánh như thế nào.",
+  "ai-limits-study": "Hãy tự mình nghiên cứu Kinh Thánh, đừng để trí tuệ nhân tạo suy nghĩ thay bạn.",
+  "ai-limits-confirm": "Tôi hiểu rằng trí tuệ nhân tạo có thể mắc sai lầm và không thể thay thế việc tự mình nghiên cứu Kinh Thánh.",
+  "friends-playlists-filter": "Danh sách phát của bạn bè",
+  "friend-link-social-title": "Thêm {{name}} làm bạn",
+  "friend-link-meta-description": "{{name}} muốn kết bạn với bạn trên {{brand}}",
+  "friend-link-title": "Thêm {{name}} làm bạn trên {{brand}}"
 }

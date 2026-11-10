@@ -60,7 +60,9 @@
 
 /* A bar that carries on past the top or bottom of the screen gets a small
    arrow at that edge, in its own lane and colour, so the reader knows the
-   participant sees more than what is on this screen. */
+   participant sees more than what is on this screen. People whose verses are
+   entirely off the screen get one on the centre line instead, pointing the
+   way to them. */
 .sb-presence-arrow {
   position: absolute;
   inset-inline-start: calc(
@@ -87,8 +89,10 @@
    the screen while those bars extend above it, so the avatar keeps the reader
    company for as long as its owner's verses do, and merged into a single stack
    whenever several would land on the same spot (the mobile participants list
-   collapses the same way). Glides with its bar like the bar does, except while
-   pinned, when it is re-placed every scroll frame and must not lag behind. */
+   collapses the same way). Someone whose verses are entirely above or below
+   the screen is held just inside that edge. Glides with its bar like the bar
+   does, except while pinned, when it is re-placed every scroll frame and must
+   not lag behind. */
 .sb-presence-avatars {
   position: absolute;
   inset-inline-start: 50%;

@@ -12,10 +12,13 @@ import { ResumeReadingSection } from "./ResumeReadingSection";
 import { BookmarksSection, type BookmarkStripItem } from "./BookmarksSection";
 import { SearchSection } from "./SearchSection";
 import { SocialSection } from "./SocialSection";
+import { VerseOfTheDaySection } from "./VerseOfTheDaySection";
 import { useI18n } from "../../i18n";
 import "./TodayPane.css";
 
 import { memo } from "preact/compat";
+import { useLayoutEffect } from "preact/hooks";
+import { useSignal } from "@preact/signals";
 
 /**
  * What the Today screen needs from the rest of the app: the managers its cards
@@ -37,6 +40,8 @@ export interface TodayScreenProps {
   onOpenBookSelector: () => void;
   /** Closes Today and starts the onboarding tour. */
   onTakeTour: () => void;
+  /** Closes Today, back to the reader. */
+  onClose: () => void;
 }
 
 export const TodayPane = memo<(props: TodayScreenProps) => preact.JSX.Element>(
@@ -60,26 +65,39 @@ export function TodayPaneTitle() {
  * reading history (`empty`). `loading` and `ready` both render the personalized
  * layout (`loading` shows placeholders), so a returning user never flashes
  * Welcome while their history loads.
+ *
+ * The first render always shows Welcome. The server can't see the session
+ * (it lives in `localStorage`), so it renders the signed-out state, and the
+ * client's first pass has to match it: `hydrate()` keeps the server's
+ * attributes, so the personalized layout would otherwise inherit Welcome's.
+ * The layout effect swaps in the real state before the browser paints.
  */
 function TodayContainer(props: TodayScreenProps) {
-  const showWelcome = props.today.readingHistory.value.status === "empty";
+  const mounted = useSignal(false);
+  useLayoutEffect(() => {
+    mounted.value = true;
+  }, []);
+  const showWelcome =
+    !mounted.value || props.today.readingHistory.value.status === "empty";
 
   return (
-    <div
-      className="sb-today-container"
-      style={{ alignItems: showWelcome ? "safe center" : "flex-start" }}
-    >
-      {showWelcome ? (
-        <Welcome
-          today={props.today}
-          login={props.login}
-          onOpenBookSelector={props.onOpenBookSelector}
-          onOpenPassage={props.onOpenPassage}
-          onTakeTour={props.onTakeTour}
-        />
-      ) : (
-        <TodayContent {...props} />
-      )}
+    <div className="sb-today-pane">
+      <div
+        className="sb-today-container"
+        style={{ alignItems: showWelcome ? "safe center" : "flex-start" }}
+      >
+        {showWelcome ? (
+          <Welcome
+            today={props.today}
+            login={props.login}
+            onOpenBookSelector={props.onOpenBookSelector}
+            onOpenPassage={props.onOpenPassage}
+            onTakeTour={props.onTakeTour}
+          />
+        ) : (
+          <TodayContent {...props} />
+        )}
+      </div>
     </div>
   );
 }
@@ -87,7 +105,7 @@ function TodayContainer(props: TodayScreenProps) {
 function TodayContent(props: TodayScreenProps) {
   return (
     <div className="sb-today-content">
-      <Header login={props.login} />
+      <Header login={props.login} onClose={props.onClose} />
       {/* Unconditional: `TodayContainer` only reaches here while history is
           loading or ready, and the resume card renders a placeholder for the
           former. The `empty` case rendered Welcome instead. */}
@@ -95,6 +113,12 @@ function TodayContent(props: TodayScreenProps) {
         today={props.today}
         onOpenPassage={props.onOpenPassage}
       />
+      {props.login.userId.value && (
+        <VerseOfTheDaySection
+          today={props.today}
+          onOpenPassage={props.onOpenPassage}
+        />
+      )}
       {props.bookmarks.value.length > 0 && (
         <BookmarksSection
           today={props.today}
