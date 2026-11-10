@@ -153,6 +153,8 @@ function fakeNetwork() {
     } as unknown,
     /** Set to make reading the relay's config fail. */
     configFailure: null as "http" | "offline" | null,
+    /** How many times the relay's config was asked for. */
+    configReads: 0,
     relayAnswer: (): Response | Promise<Response> =>
       Response.json({ sent: true }),
     procedures: () => calls.map((c) => c.procedure),
@@ -161,6 +163,7 @@ function fakeNetwork() {
   const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (url === "/api/notifications/config") {
+      network.configReads++;
       if (network.configFailure === "offline") {
         throw new TypeError("Failed to fetch");
       }
@@ -398,23 +401,70 @@ describe("PushNotificationsManager", () => {
       await expect(settled(push)).resolves.toBe("unconfigured");
     });
 
-    it.each(["http", "offline"] as const)(
-      "is unconfigured when the relay's config can't be read (%s)",
-      async (failure) => {
+    describe("when the relay's config can't be read", () => {
+      it.each(["http", "offline", "malformed"] as const)(
+        "keeps checking, rather than say push is off on the server (%s)",
+        async (failure) => {
+          const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+          if (failure === "malformed") {
+            network.config = { push: { notifierUserId: 5 } };
+          } else {
+            network.configFailure = failure;
+          }
+          const push = start();
+
+          await vi.waitFor(() =>
+            expect(warn).toHaveBeenCalledWith(
+              "Could not read the push notification config:",
+              expect.anything()
+            )
+          );
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          expect(push.status.value).toBe("checking");
+        }
+      );
+
+      it("reads it again when the app comes back into view, and offers push once it can", async () => {
         vi.spyOn(console, "warn").mockImplementation(() => {});
-        network.configFailure = failure;
-        const push = start();
+        const page = stubPageVisibility();
+        try {
+          network.configFailure = "offline";
+          const push = start();
+          await vi.waitFor(() => expect(network.configReads).toBe(1));
 
-        await expect(settled(push)).resolves.toBe("unconfigured");
-      }
-    );
+          network.configFailure = null;
+          clock += 30_000;
+          page.leaveAndReturn();
 
-    it("is unconfigured when the relay's config is malformed", async () => {
-      vi.spyOn(console, "warn").mockImplementation(() => {});
-      network.config = { push: { notifierUserId: 5 } };
-      const push = start();
+          await vi.waitFor(() => expect(push.status.value).toBe("off"));
+          expect(network.configReads).toBe(2);
+        } finally {
+          page.restore();
+        }
+      });
 
-      await expect(settled(push)).resolves.toBe("unconfigured");
+      it("reads it again at most every 30 seconds", async () => {
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        const page = stubPageVisibility();
+        try {
+          network.configFailure = "offline";
+          const push = start();
+          await vi.waitFor(() => expect(network.configReads).toBe(1));
+          await new Promise((resolve) => setTimeout(resolve, 0));
+
+          clock += 29_000;
+          page.leaveAndReturn();
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          expect(network.configReads).toBe(1);
+
+          clock += 1_000;
+          page.leaveAndReturn();
+          await vi.waitFor(() => expect(network.configReads).toBe(2));
+          expect(push.status.value).toBe("checking");
+        } finally {
+          page.restore();
+        }
+      });
     });
 
     it("is signed-out with nobody signed in", async () => {

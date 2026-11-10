@@ -21,7 +21,8 @@ import { captureEvent } from "./Utils";
 /**
  * Where push stands on this device, for the signed-in account.
  *
- * - `checking`: still finding out; nothing to show yet.
+ * - `checking`: still finding out, or the relay's config couldn't be read
+ *   yet; nothing to show.
  * - `unsupported`: this browser can't receive pushes, or there's no service
  *   worker (`pnpm dev` and branch previews have none).
  * - `unconfigured`: the server has no push relay, or CasualOS can't send.
@@ -138,6 +139,12 @@ const CONFIG_SCHEMA = z.object({
  */
 const REREGISTER_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * A relay config that couldn't be read is asked for again when the app comes
+ * back into view, at most this often.
+ */
+const CONFIG_RETRY_INTERVAL_MS = 30 * 1000;
+
 /** Keeps turning push on, off and checking it from overlapping, across tabs too. */
 const PUSH_LOCK = "seed-bible:push-subscription";
 
@@ -197,7 +204,10 @@ export function createPushNotificationsManager(
 
   const hydrated = signal(false);
   const environment = signal<Environment>({ kind: "checking" });
-  /** Undefined until the relay answers; null when it's off or didn't answer. */
+  /**
+   * Undefined until the relay has answered, which keeps the status at
+   * `checking` while it can't be reached; null when push is off there.
+   */
   const relay = signal<PushRelayConfig | null | undefined>(undefined);
   const casualosUnsupported = signal(false);
   const permission = signal<NotificationPermission>("default");
@@ -285,9 +295,12 @@ export function createPushNotificationsManager(
   // ─── The relay's config ────────────────────────────────────────────────────
 
   let configRequest: Promise<PushRelayConfig | null | "unknown"> | null = null;
+  /** When reading the config last failed; null unless that was the last try. */
+  let configFailedAtMs: number | null = null;
   /**
    * The relay's config, read once per page load. "unknown" when it couldn't
-   * be read, which is tried again next time.
+   * be read, which is tried again the next time it's needed and when the app
+   * comes back into view ({@link retryConfig}).
    */
   const loadConfig = () => {
     configRequest ??= fetch(CONFIG_URL, {
@@ -306,13 +319,32 @@ export function createPushNotificationsManager(
           configError
         );
         configRequest = null;
+        configFailedAtMs = now();
         return "unknown" as const;
       })
       .then((config) => {
-        relay.value = config === "unknown" ? null : config;
+        if (config !== "unknown") {
+          configFailedAtMs = null;
+          relay.value = config;
+        }
         return config;
       });
     return configRequest;
+  };
+
+  // After a failed read, nothing else asks again for someone who hasn't
+  // turned push on (`reconcile` only reads the config for a device that has
+  // it on), so the offer wouldn't come back until a reload, and an installed
+  // app can stay open for days.
+  const retryConfig = () => {
+    const env = environment.peek().kind;
+    if (
+      configFailedAtMs !== null &&
+      (env === "ready" || env === "needs-install") &&
+      now() - configFailedAtMs >= CONFIG_RETRY_INTERVAL_MS
+    ) {
+      void loadConfig();
+    }
   };
 
   // ─── This device ───────────────────────────────────────────────────────────
@@ -714,6 +746,7 @@ export function createPushNotificationsManager(
     // can drop a subscription, while the app is in the background.
     listen(document, "visibilitychange", () => {
       if (document.visibilityState === "visible") {
+        retryConfig();
         scheduleReconcile();
       }
     });
