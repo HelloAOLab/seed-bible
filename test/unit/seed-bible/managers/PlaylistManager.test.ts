@@ -42,6 +42,8 @@ import type { BibleSelectedVerse } from "@packages/seed-bible/seed-bible/manager
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
+import { forgetPlaylistDrafts } from "../testUtils/createTestSeedBibleState";
+import { readPlaylistDraft } from "@packages/seed-bible/seed-bible/managers/PlaylistDrafts";
 import type { Mock } from "vitest";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 
@@ -566,6 +568,7 @@ describe("createPlaylistManager", () => {
     // path, playback params) so they don't leak into the next test's initial
     // navigation state.
     window.history.replaceState(null, "", "/");
+    forgetPlaylistDrafts();
   });
 
   it("syncs the user's playlists on creation", async () => {
@@ -4985,6 +4988,107 @@ describe("createPlaylistManager", () => {
         expect(manager.playlistPageLoadFailed.value).toBe(false);
         expect(manager.getPlaylistPageSeed()).toBeNull();
       });
+    });
+  });
+
+  describe("unsaved drafts", () => {
+    const STEPS = [
+      { type: "html" as const, html: "<p>Think</p>" },
+      { type: "html" as const, html: "<p>Ask</p>", question: {} },
+    ];
+    /** A fresh page load at `pathname`, with the last one's manager gone. */
+    const reloadAt = (pathname: string) => {
+      lastNavigation.dispose();
+      window.history.replaceState(null, "", pathname);
+      return makeManager("user-1", undefined, window.location.href);
+    };
+
+    it("keeps a saved playlist's unsaved edits through a reload", async () => {
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: makePlaylist({ items: STEPS }),
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Not saved yet" });
+      manager.selectEditorStep(1);
+
+      const reloaded = reloadAt(window.location.pathname);
+
+      await vi.waitFor(() =>
+        expect(reloaded.editingPlaylist.value?.title).toBe("Not saved yet")
+      );
+      expect(reloaded.isEditingPlaylistDirty()).toBe(true);
+      expect(reloaded.editorStepIndex.value).toBe(1);
+    });
+
+    it("keeps a playlist that was never saved through a reload", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      manager.updateEditingPlaylistMetadata({ title: "Brand new" });
+      manager.insertEditingPlaylistItem(0, STEPS[0]!);
+      const id = manager.editingPlaylist.value!.id;
+
+      const reloaded = reloadAt(window.location.pathname);
+
+      await vi.waitFor(() =>
+        expect(reloaded.editingPlaylist.value?.title).toBe("Brand new")
+      );
+      expect(reloaded.editingPlaylist.value).toMatchObject({
+        id,
+        items: [STEPS[0]],
+      });
+    });
+
+    it("forgets the draft once it's saved, or discarded", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Saving this" });
+      expect(readPlaylistDraft("user-1.playlist-1")?.draft.title).toBe(
+        "Saving this"
+      );
+
+      await manager.saveEditingPlaylist();
+      expect(readPlaylistDraft("user-1.playlist-1")).toBeNull();
+
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Not this" });
+      manager.cancelEditingPlaylist();
+      expect(readPlaylistDraft("user-1.playlist-1")).toBeNull();
+    });
+
+    it("keeps nothing while nothing's changed", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Changed" });
+      manager.updateEditingPlaylistMetadata({ title: "My Playlist" });
+
+      expect(readPlaylistDraft("user-1.playlist-1")).toBeNull();
+    });
+
+    it("drops a draft made to an older version of the playlist", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Stale edit" });
+      expect(readPlaylistDraft("user-1.playlist-1")).not.toBeNull();
+
+      // Saved since, somewhere else.
+      manager.editPlaylist(
+        makePlaylist({ items: STEPS, updatedAtMs: START_MS + 1 })
+      );
+
+      expect(manager.editingPlaylist.value?.title).toBe("My Playlist");
+      expect(manager.isEditingPlaylistDirty()).toBe(false);
+      expect(readPlaylistDraft("user-1.playlist-1")).toBeNull();
     });
   });
 

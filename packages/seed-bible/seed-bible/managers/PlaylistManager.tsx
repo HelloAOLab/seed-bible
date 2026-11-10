@@ -42,6 +42,11 @@ import {
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 import { savePhotoToGallery } from "./UserGalleryManager";
 import {
+  clearPlaylistDraft,
+  readPlaylistDraft,
+  writePlaylistDraft,
+} from "./PlaylistDrafts";
+import {
   createFriendContentFreshness,
   isFriendContentStale,
   SkippedFriendRead,
@@ -2364,8 +2369,7 @@ export function createPlaylistManager(
       createdAtMs: now,
       updatedAtMs: now,
     });
-    openDraft(draft, clonePlaylist(draft));
-    editingSaved = false;
+    openDraft(draft, clonePlaylist(draft), false);
 
     return editingPlaylist;
   };
@@ -2376,8 +2380,18 @@ export function createPlaylistManager(
    * later via `saveEditingPlaylist`.
    */
   const editPlaylist = (playlist: Playlist): void => {
-    openDraft(clonePlaylist(playlist), clonePlaylist(playlist));
-    editingSaved = true;
+    // Unsaved edits a refresh (or closing the tab) left behind, as long as
+    // they were made to the playlist as it's saved now.
+    const locator = getPlaylistLocator(playlist);
+    const kept = readPlaylistDraft(locator);
+    if (kept && kept.baseline.updatedAtMs === playlist.updatedAtMs) {
+      openDraft(kept.draft, kept.baseline, true);
+    } else {
+      if (kept) {
+        clearPlaylistDraft(locator);
+      }
+      openDraft(clonePlaylist(playlist), clonePlaylist(playlist), true);
+    }
   };
 
   /**
@@ -2426,8 +2440,17 @@ export function createPlaylistManager(
     return viewBeforeEditor ?? "discover";
   };
 
-  /** Opens `draft` in the editor, measuring changes against `baseline`. */
-  const openDraft = (draft: Playlist, baseline: Playlist): void => {
+  /**
+   * Opens `draft` in the editor, measuring changes against `baseline`; `saved`
+   * is whether the playlist has been saved before.
+   */
+  const openDraft = (
+    draft: Playlist,
+    baseline: Playlist,
+    saved: boolean
+  ): void => {
+    keepDraftNow();
+    editingSaved = saved;
     linkPreviews.cancel();
     if (view.peek() !== "create_playlist") {
       viewBeforeEditor = view.peek();
@@ -2472,6 +2495,7 @@ export function createPlaylistManager(
     userPlaylists.value = exists
       ? userPlaylists.value.map((p) => (p.id === playlist.id ? playlist : p))
       : [...userPlaylists.value, playlist];
+    forgetDraft(getPlaylistLocator(playlist));
     closeEditor(playlist);
   };
 
@@ -2855,6 +2879,10 @@ export function createPlaylistManager(
    */
   const cancelEditingPlaylist = (): void => {
     linkPreviews.cancel();
+    const draft = editingPlaylist.peek();
+    if (draft) {
+      forgetDraft(getPlaylistLocator(draft));
+    }
     closeEditor(editingSaved ? editingPlaylistBaseline.peek() : null);
   };
 
@@ -3777,6 +3805,40 @@ export function createPlaylistManager(
     void startPlayingLocator(request.locator, request.stepIndex);
   };
 
+  // Unsaved edits are kept in this browser (see `PlaylistDrafts`) as they're
+  // made, so a refresh or a closed tab doesn't lose them. Saving or
+  // discarding forgets them. Playlists are small, so writing on every change
+  // costs little, and leaves nothing unwritten when the page goes.
+
+  /** Keeps the open draft, or forgets it when nothing's changed. */
+  function keepDraftNow(): void {
+    const draft = editingPlaylist.peek();
+    const baseline = editingPlaylistBaseline.peek();
+    if (!draft || !baseline) {
+      return;
+    }
+    const locator = getPlaylistLocator(draft);
+    if (isEditingPlaylistDirty()) {
+      writePlaylistDraft(locator, { draft, baseline, saved: editingSaved });
+    } else {
+      clearPlaylistDraft(locator);
+    }
+  }
+
+  function forgetDraft(locator: string): void {
+    clearPlaylistDraft(locator);
+  }
+
+  if (!import.meta.env.SSR) {
+    effect(() => {
+      if (!editingPlaylist.value) {
+        return;
+      }
+      void editingPlaylistBaseline.value;
+      untracked(keepDraftNow);
+    });
+  }
+
   // The editor's place in the URL, under the playlist's own path:
   // `/{lang}/playlist/{locator}/{slug}/edit` for its list of steps, then
   // `…/edit/details`, `…/edit/step/{step}` and `…/edit/step/{step}/settings`
@@ -3865,6 +3927,7 @@ export function createPlaylistManager(
 
   /** Leaves the editor for the browser's Back, keeping its draft for Forward. */
   const leaveEditorForUrl = () => {
+    keepDraftNow();
     urlBeforeEditor = null;
     const draft = editingPlaylist.peek();
     leftDraft = draft
@@ -3890,8 +3953,19 @@ export function createPlaylistManager(
     const left = leftDraft;
     if (left && getPlaylistLocator(left.draft) === route.locator) {
       leftDraft = null;
-      openDraft(left.draft, left.baseline ?? clonePlaylist(left.draft));
-      editingSaved = left.saved;
+      openDraft(
+        left.draft,
+        left.baseline ?? clonePlaylist(left.draft),
+        left.saved
+      );
+      showEditorRoute(route);
+      return;
+    }
+    // A playlist never saved has nothing to load, but may have a draft kept.
+    // (A saved one's is restored by `editPlaylist`, once it's known current.)
+    const kept = readPlaylistDraft(route.locator);
+    if (kept && !kept.saved) {
+      openDraft(kept.draft, kept.baseline, false);
       showEditorRoute(route);
       return;
     }
@@ -3930,8 +4004,7 @@ export function createPlaylistManager(
               createdAtMs: now,
               updatedAtMs: now,
             });
-            openDraft(blank, clonePlaylist(blank));
-            editingSaved = false;
+            openDraft(blank, clonePlaylist(blank), false);
           }
           showEditorRoute(pending);
         });
