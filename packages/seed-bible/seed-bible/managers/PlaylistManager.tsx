@@ -3592,6 +3592,29 @@ export function createPlaylistManager(
       playlistPageLoader.show(getPlaylistLocator(playlist), parsed.data);
     }
     navigation.push(getPlaylistUrl(playlist));
+    playlistPageOpenedHere = navigation.currentUrl.peek().href;
+  };
+
+  /**
+   * The playlist page's address when it was opened from within the app (My
+   * content, Discover), so that its Back can return there; null when it was
+   * opened from its link.
+   */
+  let playlistPageOpenedHere: string | null = null;
+
+  /**
+   * The playlist page's Back: goes back to where in the app it was opened
+   * from, as the browser's Back would. False, and nothing done, when it wasn't
+   * opened from within the app, or the address has moved on since.
+   */
+  const backFromPlaylistPage = (): boolean => {
+    const openedHere = playlistPageOpenedHere;
+    playlistPageOpenedHere = null;
+    if (!openedHere || navigation.currentUrl.peek().href !== openedHere) {
+      return false;
+    }
+    navigation.go(-1);
+    return true;
   };
 
   /**
@@ -4161,6 +4184,7 @@ export function createPlaylistManager(
     pickEditorComparePassage,
     playbackToCarry,
     carryPlaybackToActiveTab,
+    backFromPlaylistPage,
     listPlaylists,
     getUserPlaylists,
     loadPlaylist,

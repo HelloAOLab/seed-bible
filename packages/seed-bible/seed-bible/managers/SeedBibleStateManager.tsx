@@ -4494,7 +4494,13 @@ export function createSeedBibleState(
     const books =
       selectedTab.value?.readingState.translationBooks.value?.books ?? [];
     const playlist = page.item;
-    const leave = () => panes.closePane(PLAYLIST_PAGE_PANE_ID, "user");
+    // Back where it was opened from in the app (My content, say), whose
+    // address it replaced; else closing it leaves for the reader.
+    const leave = () => {
+      if (!playlists.backFromPlaylistPage()) {
+        panes.closePane(PLAYLIST_PAGE_PANE_ID, "user");
+      }
+    };
     const isOwner =
       !!login.userId.value && playlist.authorUserId === login.userId.value;
     return (

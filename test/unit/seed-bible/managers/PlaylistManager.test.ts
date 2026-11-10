@@ -4988,6 +4988,41 @@ describe("createPlaylistManager", () => {
     });
   });
 
+  describe("the playlist page's Back", () => {
+    it("goes back to where in the app the page was opened from", async () => {
+      window.history.replaceState(null, "", "/en/AAB/exodus/2?content=open");
+      const manager = makeManager("user-1", undefined, window.location.href);
+      await flush();
+      manager.openPlaylistPage(makePlaylist());
+      expect(window.location.pathname).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist"
+      );
+
+      expect(manager.backFromPlaylistPage()).toBe(true);
+
+      await vi.waitFor(() =>
+        expect(window.location.pathname + window.location.search).toBe(
+          "/en/AAB/exodus/2?content=open"
+        )
+      );
+    });
+
+    it("leaves a page opened from its link to close as before", async () => {
+      window.history.replaceState(
+        null,
+        "",
+        "/en/playlist/user-1.playlist-1/my-playlist"
+      );
+      const manager = makeManager("user-1", undefined, window.location.href);
+      await flush();
+
+      expect(manager.backFromPlaylistPage()).toBe(false);
+      expect(window.location.pathname).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist"
+      );
+    });
+  });
+
   describe("the editor's place in the URL", () => {
     const STEPS = [
       { type: "bible-verse" as const, ref: { bookId: "GEN", chapter: 1 } },
