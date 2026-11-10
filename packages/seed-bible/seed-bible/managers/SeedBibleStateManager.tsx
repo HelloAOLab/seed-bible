@@ -4201,19 +4201,23 @@ export function createSeedBibleState(
     closeProfile();
     openTodayPassage(state, today, target);
   };
-  const playPlaylistFromContent = (playlist: Playlist) => {
-    closeYourContent();
-    closeProfile();
-    playlists.openPlaylistPage(playlist);
-  };
-  const editPlaylistFromContent = (playlist: Playlist) => {
-    closeYourContent();
-    closeProfile();
-    // `editPlaylist` only sets the Discover pane's view, and that pane docks
-    // beside the reader — so the fullscreen screens above it have to close
-    // first, or the editor opens behind them.
-    playlists.editPlaylist(playlist);
-  };
+  // One history entry for closing these screens and opening the playlist, so
+  // Back returns straight to them.
+  const playPlaylistFromContent = (playlist: Playlist) =>
+    navigation.batchWrites(() => {
+      closeYourContent();
+      closeProfile();
+      playlists.openPlaylistPage(playlist);
+    });
+  const editPlaylistFromContent = (playlist: Playlist) =>
+    navigation.batchWrites(() => {
+      closeYourContent();
+      closeProfile();
+      // `editPlaylist` only sets the Discover pane's view, and that pane docks
+      // beside the reader — so the fullscreen screens above it have to close
+      // first, or the editor opens behind them.
+      playlists.editPlaylist(playlist);
+    });
   const editAnnotationFromContent = (annotation: Annotation) => {
     closeYourContent();
     closeProfile();
