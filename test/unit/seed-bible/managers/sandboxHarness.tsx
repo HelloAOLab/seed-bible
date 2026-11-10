@@ -542,6 +542,11 @@ function createHost() {
   };
   setupExtensionContext(context as unknown as SeedBibleState);
   return {
+    /**
+     * The managers extensions reach. Replace one (such as `bibleData`)
+     * before installing an extension to run it against a real manager.
+     */
+    context: context as unknown as Record<string, unknown>,
     surfaces,
     panes,
     modals,

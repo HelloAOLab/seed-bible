@@ -115,8 +115,7 @@
   border: none;
   border-radius: 999px;
   background: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
-  /* stylelint-disable-next-line seed-bible/theme-color-pair -- the background is darkened brand orange chosen for white text; the dark theme's primary font color (#111) would be unreadable on it. */
-  color: #ffffff;
+  color: var(--sb-primary-font-color);
   font-family: inherit;
   font-size: 1rem;
   font-weight: 600;

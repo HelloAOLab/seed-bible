@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Tərcümə paylaşma linki kopyalandı",
   "less": "Daha az",
   "swipe-up-more": "Daha çoxunu görmək üçün yuxarı sürüşdürün",
-  "plans": "Planlar",
   "reading-plans": "Oxu planları",
   "create-reading-plan": "Oxu planı yaradın",
   "reading-plans-empty": "Hələlik heç bir oxu planınız yoxdur. Başlamaq üçün birini yaradın.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Tərcümələr yüklənir…",
   "translations-load-failed": "Tərcümələrin tam siyahısını yükləmək mümkün olmadı, ona görə də bəziləri çatışmamış ola bilər.",
   "verse-of-the-day": "GÜNÜN AYƏSİ",
-  "verse-of-the-day-loading": "Günün ayəsi yüklənir..."
+  "verse-of-the-day-loading": "Günün ayəsi yüklənir...",
+  "delete-bookmark-confirm-title": "Əlfəcin silinsin?",
+  "delete-bookmark-confirm-message": "\" {{name}} \" silinsin?",
+  "scripture-font": "Müqəddəs Yazı Şrifti",
+  "ai-limits-title": "Süni intellektlə söhbət etməzdən əvvəl",
+  "ai-limits-intro": "Süni intellekt faydalı bir başlanğıc nöqtəsi ola bilər, ancaq onun məhdudiyyətlərini nəzərə alın:",
+  "ai-limits-mistakes": "Səhv edir və səhv etdiyi zaman özünəinamlı səslənə bilər.",
+  "ai-limits-agreeable": "Bu, eşitmək istədiyinizi deməyə meyllidir və populyar cavablara meyllidir.",
+  "ai-limits-scripture": "Bu, etibarlı mənbə deyil. Müqəddəs Yazılarla müqayisəsində nə deyildiyini yoxlayın.",
+  "ai-limits-study": "Müqəddəs Kitabı özünüz öyrənin və süni intellekt sizin yerinizə düşünməsinə imkan verməyin.",
+  "ai-limits-confirm": "Mən başa düşürəm ki, süni intellekt səhv edə bilər və Müqəddəs Kitabı özüm öyrənməyin əvəzi deyil.",
+  "friends-playlists-filter": "Dostların pleylistləri",
+  "friend-link-social-title": "{{name}} istifadəçisini dost kimi əlavə edin",
+  "friend-link-meta-description": "{{name}} {{brand}} də sizinlə dost olmaq istəyir",
+  "friend-link-title": "{{name}} istifadəçisini {{brand}} platformasında dost kimi əlavə edin"
 }

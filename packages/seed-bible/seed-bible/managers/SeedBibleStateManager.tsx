@@ -15,8 +15,10 @@ import { buildReadingPath, parseReadingPath } from "../managers/ReadingUrlPath";
 import {
   TODAY_PANE_ID,
   createTodayManager,
+  getTodayPageRedirect,
+  isTodayPagePath,
   openTodayPassage,
-  todayWillAutoOpenForUrl,
+  shouldRedirectToTodayPage,
   type TodayManager,
   type TodayPassageTarget,
 } from "../managers/TodayManager";
@@ -226,6 +228,8 @@ import { type AppConfig } from "../app/appConfig";
 import {
   createI18nManager,
   getBrandedAppText,
+  getInitialLanguage,
+  getUrlLanguage,
   type I18nManager,
 } from "../i18n";
 import {
@@ -500,6 +504,12 @@ export interface AppState {
 
   /** Closes the Discover panel. */
   closeDiscover: () => void;
+
+  /**
+   * Whether crawlers should be told not to index this page: true only when
+   * it previews as a friend link (see `canonicalUrl`).
+   */
+  noIndex: ReadonlySignal<boolean>;
 }
 
 /**
@@ -556,6 +566,8 @@ export interface SeedBibleState {
    * highlights, notes, playlists, reading plans and reading history are shown.
    */
   friends: FriendsManager;
+  /** The profile behind the `?addFriend=` link the app was opened with, for its link preview. */
+  friendLinkPreview: FriendLinkPreviewLoader;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
   /** Chat session manager for in-app chat state. */
@@ -661,10 +673,11 @@ export interface SeedBibleState {
   /** True when the Profile screen is showing. */
   isProfileOpen: ReadonlySignal<boolean>;
   /** Opens the Profile screen (reflected in the URL as `?profile=open`). */
-  openProfile: () => void;
+  openProfile: (options?: { fromToday?: boolean }) => void;
   /** Closes the Profile screen (clears `profile` from the URL). */
   closeProfile: () => void;
-
+  /** Restores the screen the user was viewing before opening the profile after a successful sign-in. */
+  restoreProfileReturnTarget: () => void;
   /** True when the "Edit profile" screen is showing. */
   isEditProfileOpen: ReadonlySignal<boolean>;
   /** Opens "Edit profile" (reflected in the URL as `?edit-profile=open`). */
@@ -736,9 +749,8 @@ import {
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
-  DiscoverPaneHeader,
-  DiscoverPaneTitle,
-} from "../components/DiscoverPane/DiscoverPane";
+  DISCOVER_PANE_ID,
+} from "../components/Discover/DiscoverPane";
 import {
   AIBibleVerseRefSchema,
   convertToPlaylistItem,
@@ -748,6 +760,12 @@ import {
 import { z } from "zod";
 import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 import { captureEvent } from "./Utils";
+import {
+  createFriendLinkPreviewLoader,
+  type FriendLinkPreviewLoader,
+  type FriendLinkSeed,
+} from "./FriendLinkPreviewLoader";
+import { ADD_FRIEND_PARAM } from "../components/FriendsPane/friendLinks";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -811,6 +829,9 @@ export interface CreateSeedBibleStateOptions {
 
   /** Same as `initialPlaylistPageSeed`, for a shared reading plan page. */
   initialReadingPlanPageSeed?: ReadingPlanPageSeed;
+
+  /** Same as `initialPlaylistPageSeed`, for an `?addFriend=` link's profile. */
+  initialFriendLinkSeed?: FriendLinkSeed;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -831,6 +852,29 @@ export function createSeedBibleState(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const features = createFeaturesManager((globalThis as any).posthog ?? null);
+
+  // The server answers a URL that should show Today with a redirect to the
+  // Today page, but a page the service worker served from its cache never
+  // reached the server, so the same redirect is applied here, before anything
+  // reads the URL.
+  if (
+    !import.meta.env.SSR &&
+    options.initialHref === undefined &&
+    typeof window !== "undefined"
+  ) {
+    const basePath = options.config?.basePath ?? "";
+    const url = new URL(window.location.href);
+    const todayPage = getTodayPageRedirect(
+      url,
+      basePath,
+      getUrlLanguage(url, basePath) ??
+        getInitialLanguage(options.config?.acceptedLanguages ?? [])
+    );
+    if (todayPage) {
+      window.history.replaceState(window.history.state, "", todayPage);
+    }
+  }
+
   const navigation = createNavigationManager({
     initialHref: options.initialHref,
     basePath: options.config?.basePath,
@@ -879,6 +923,11 @@ export function createSeedBibleState(
     }
   });
   const friends = createFriendsManager(os, login);
+  const friendLinkPreview = createFriendLinkPreviewLoader({
+    login,
+    navigation,
+    initialSeed: options.initialFriendLinkSeed,
+  });
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
@@ -1167,8 +1216,7 @@ export function createSeedBibleState(
     extensionsOpen.value ? extensionsPageEntry.value : null
   );
   const openExtensions = (extensionId: string | null = null) => {
-    // Today's URL binding would otherwise turn it straight back on over this
-    // page; see `openProfile` below.
+    // Leave the Today page first; see `openProfile` below.
     if (today.isOpen.peek()) {
       today.close();
     }
@@ -1196,13 +1244,25 @@ export function createSeedBibleState(
       : navigation.currentUrl.value.searchParams.get("profile") === "open"
   );
   const isProfileOpen = computed(() => profileOpen.value);
-  const openProfile = () => {
-    // Close Today before the profile flag flips. Opening the profile pane
-    // displaces Today's pane, but Today's URL binding is still `?today=open`
-    // until its own effect runs — and that binding turns Today straight back
-    // on, which removes the profile pane and closes the profile again. Closing
-    // first drops `?today=` before `?profile=open` is written, so the profile
-    // screen stays up (including over the welcome screen).
+  let returnToToday = false;
+  const restoreProfileReturnTarget = () => {
+    const shouldReturnToToday = returnToToday;
+    returnToToday = false;
+    navigation.batchWrites(() => {
+      profileOpen.value = false;
+      if (shouldReturnToToday) {
+        today.open();
+      }
+    });
+  };
+  const openProfile = (options?: { fromToday?: boolean }) => {
+    if (!profileOpen.value || options?.fromToday !== undefined) {
+      returnToToday = options?.fromToday ?? today.isOpen.peek();
+    }
+    // Leave the Today page before the profile flag flips, so `?profile=open`
+    // lands on the reader's URL. Left to the displaced-pane effect instead,
+    // it would be written onto "/{lang}/today" first, and Back would then
+    // return to a URL that opens Today and the profile together.
     if (today.isOpen.peek()) {
       today.close();
     }
@@ -1406,7 +1466,7 @@ export function createSeedBibleState(
   // so navigating reveals the reader (every navigation path writes this
   // position into the path — see `commitSelectedTabToUrl` in TabsManager).
   // The first location only sets a baseline, so load-time init doesn't close a
-  // pane auto-opened for the same load (e.g. Today via `?today=open`).
+  // pane auto-opened for the same load.
   //
   // `?verse` is deliberately NOT part of the location: TabsManager mirrors the
   // verse *selection* into that param, so counting it here made selecting (or
@@ -1448,27 +1508,10 @@ export function createSeedBibleState(
     panes.closeFullscreenPanes();
   });
 
-  // Today opens only after mount (`hydrateAutoOpen`, so the client's first
-  // render matches the server's), but the chapter can already be loaded from
-  // the server's API snapshot and the tutorial offer armed before then. For
-  // that gap the reader would read as visible with Welcome about to cover it,
-  // so until Today's pane has opened once on a load where it will auto-open,
-  // the reader doesn't count as visible.
-  const todayWillAutoOpen = todayWillAutoOpenForUrl(
-    navigation.initialUrl,
-    navigation.basePath
-  );
-  const todayHasOpened = signal(false);
-  effect(() => {
-    if (panes.panes.value.some((pane) => pane.id === TODAY_PANE_ID)) {
-      todayHasOpened.value = true;
-    }
-  });
-
-  // The reader is visible when a chapter is loaded, no fullscreen pane covers
-  // it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on mobile
-  // any open pane covers the reader), and Today isn't about to auto-open over
-  // it. `todayCoversReader.test.ts` guards both orderings.
+  // The reader is visible when a chapter is loaded and no fullscreen pane
+  // covers it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on
+  // mobile any open pane covers the reader). `todayCoversReader.test.ts`
+  // guards that Today counts.
   const readerVisible = computed<boolean>(() => {
     const chapterLoaded =
       selectedTab.value?.readingState.chapterData.value != null;
@@ -1478,13 +1521,7 @@ export function createSeedBibleState(
     const coveredByPane = panes.panes.value.some(
       (pane) => pane.placement === "fullscreen" || isMobile.value
     );
-    if (coveredByPane) {
-      return false;
-    }
-    if (todayWillAutoOpen && !todayHasOpened.value) {
-      return false;
-    }
-    return true;
+    return !coveredByPane;
   });
 
   // Dialogs that cover the reader. Pop-ups opened through `modals` are only
@@ -1925,6 +1962,32 @@ export function createSeedBibleState(
       )?.page === "about"
   );
 
+  /** Whether the current URL is the Today page, "/{lang}/today". */
+  const isTodayPage = computed(() =>
+    isTodayPagePath(navigation.currentUrl.value.pathname, navigation.basePath)
+  );
+
+  // A static page names the UI language in its path ("/es/today"), so a
+  // language change made on one moves the page to the new language's path.
+  // Otherwise a reload would bring the old language back. The reader keeps
+  // its own paths in step the same way (see `commitSelectedTabToUrl`).
+  if (!import.meta.env.SSR) {
+    effect(() => {
+      const language = i18n.language.value;
+      const staticPage = parseStaticPagePath(
+        navigation.currentUrl.peek().pathname,
+        navigation.basePath
+      );
+      if (staticPage && staticPage.language !== language) {
+        navigation.updatePathAndQueryParams(
+          buildStaticPagePath({ language, page: staticPage.page }),
+          {},
+          true
+        );
+      }
+    });
+  }
+
   /**
    * One-time correction of every `localStorage`-derived value that feeds the
    * first render. See `AppState.hydrateFromStorage`.
@@ -2090,6 +2153,32 @@ export function createSeedBibleState(
       : name;
   });
 
+  /**
+   * The person an `?addFriend=` link names, when their profile has a name.
+   * Null on the about page and on any shared page's path, found or not: the
+   * page previews as itself there, so a friend link added to it never takes
+   * over part of its title, description, image or canonical link.
+   */
+  const friendLinkPerson = computed<{
+    name: string;
+    pictureUrl: string | null;
+  } | null>(() => {
+    if (
+      isAboutPage.value ||
+      parseSharedPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )
+    ) {
+      return null;
+    }
+    const profile = friendLinkPreview.result.value?.profile;
+    const name = profile?.name.trim();
+    return profile && name
+      ? { name, pictureUrl: profile.pictureUrl ?? null }
+      : null;
+  });
+
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
     void i18n.language.value;
@@ -2107,6 +2196,23 @@ export function createSeedBibleState(
     const getTitle = () => {
       if (isAboutPage.value) {
         return `${t("about-title", { defaultValue: "About Seed Bible" })} | ${seedBibleTitle}`;
+      }
+
+      // Server only: in the browser the friend link prompt is a one-off over
+      // the page, so the tab is titled after the page from the start. Ahead
+      // of Today because a friend link lands there (`/?addFriend=` redirects
+      // to the Today page).
+      const person = friendLinkPerson.value;
+      if (import.meta.env.SSR && person) {
+        return t("friend-link-title", {
+          name: person.name,
+          brand: seedBibleTitle,
+          defaultValue: "Add {{name}} as a friend on {{brand}}",
+        });
+      }
+
+      if (isTodayPage.value) {
+        return `${t("today", { defaultValue: "Today" })} | ${seedBibleTitle}`;
       }
 
       // Only on the shared page itself: while a playlist plays at its own
@@ -2137,7 +2243,20 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
-    if (isAboutPage.value) {
+    // Ahead of Today, which is where a friend link lands.
+    const person = friendLinkPerson.value;
+    if (person) {
+      return truncateForMeta(
+        t("friend-link-meta-description", {
+          name: person.name,
+          brand: siteName.value,
+          defaultValue: "{{name}} wants to be your friend on {{brand}}",
+        }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
+
+    if (isAboutPage.value || isTodayPage.value) {
       return truncateForMeta(
         t("about-meta-description", {
           defaultValue:
@@ -2238,8 +2357,21 @@ export function createSeedBibleState(
     if (heroImageUrl) {
       return { url: heroImageUrl, alt: sharedPageTitle.value ?? "" };
     }
+    const person = friendLinkPerson.value;
+    if (person?.pictureUrl) {
+      return { url: person.pictureUrl, alt: person.name };
+    }
     const logoUrl = customizationLogoUrl.value;
-    return logoUrl ? { url: logoUrl, alt: siteName.value } : null;
+    if (logoUrl) {
+      return { url: logoUrl, alt: siteName.value };
+    }
+    // Only a friend link falls back to the white-label logo so far, and only
+    // when it's absolute: crawlers don't resolve a relative og:image.
+    const brandingLogo = branding?.logo;
+    if (person && brandingLogo && /^https?:\/\//i.test(brandingLogo)) {
+      return { url: brandingLogo, alt: siteName.value };
+    }
+    return null;
   });
 
   /**
@@ -2266,6 +2398,19 @@ export function createSeedBibleState(
       return t("about-title", { defaultValue: "About Seed Bible" });
     }
 
+    // Ahead of Today, which is where a friend link lands.
+    const person = friendLinkPerson.value;
+    if (person) {
+      return t("friend-link-social-title", {
+        name: person.name,
+        defaultValue: "Add {{name}} as a friend",
+      });
+    }
+
+    if (isTodayPage.value) {
+      return t("today", { defaultValue: "Today" });
+    }
+
     if (sharedPageTitle.value) {
       return sharedPageTitle.value;
     }
@@ -2282,6 +2427,23 @@ export function createSeedBibleState(
       bookName: chapter.book.name,
       chapterNumber: chapter.chapter.number,
     });
+  });
+
+  /**
+   * The friend link's address, when the page previews as one: the Today page
+   * it lands on, not the shared `/?addFriend=` form, which redirects there
+   * (see `canonicalUrl` on why a canonical mustn't name a redirect).
+   */
+  const friendLinkPageUrl = computed<string | null>(() => {
+    const userId = friendLinkPreview.result.value?.userId;
+    if (!friendLinkPerson.value || !userId) {
+      return null;
+    }
+    const query = new URLSearchParams({ [ADD_FRIEND_PARAM]: userId });
+    return `${navigation.basePath}${buildStaticPagePath({
+      language: i18n.language.value,
+      page: "today",
+    })}?${query}`;
   });
 
   /**
@@ -2311,13 +2473,17 @@ export function createSeedBibleState(
    * would point every canonical at a URL that redirects.
    */
   const canonicalUrl = computed(() => {
-    if (isAboutPage.value) {
+    if (friendLinkPageUrl.value) {
+      return friendLinkPageUrl.value;
+    }
+
+    if (isAboutPage.value || isTodayPage.value) {
       // Uses the *resolved* i18n language, not the raw URL segment, so a
       // garbage/unsupported language in the URL still canonicalizes to a
       // real page instead of echoing back something that doesn't exist.
       return `${navigation.basePath}${buildStaticPagePath({
         language: i18n.language.value,
-        page: "about",
+        page: isAboutPage.value ? "about" : "today",
       })}`;
     }
 
@@ -3518,7 +3684,14 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
-  void setupFriendLinks({ navigation, login, friends, modals, toast });
+  void setupFriendLinks({
+    navigation,
+    login,
+    friends,
+    modals,
+    toast,
+    friendLinkPreview,
+  });
 
   // A shared `?readingPlan=` link loads the plan, then opens the pane once a
   // reading tab is actually there. The tab is usually ready after the network
@@ -3595,8 +3768,12 @@ export function createSeedBibleState(
     bibleData: data,
     annotations,
     defaultLanguage: i18n.defaultLanguage,
+    language: i18n.language,
+    leaveTodayPage: () => tabs.leaveStaticPage({ push: true }),
     currentReadingState,
   });
+
+  const noIndex = computed(() => friendLinkPageUrl.value !== null);
 
   const state: SeedBibleState = {
     os,
@@ -3620,6 +3797,7 @@ export function createSeedBibleState(
     saves,
     bookmarks,
     friends,
+    friendLinkPreview,
     annotations,
     chats,
     sessions,
@@ -3658,6 +3836,7 @@ export function createSeedBibleState(
     isProfileOpen,
     openProfile,
     closeProfile,
+    restoreProfileReturnTarget,
     isEditProfileOpen,
     openEditProfile,
     closeEditProfile,
@@ -3722,6 +3901,7 @@ export function createSeedBibleState(
       isDiscoverOpen: playlists.isDiscoverOpen,
       openDiscover: handleOpenDiscover,
       closeDiscover: handleCloseDiscover,
+      noIndex,
     },
   };
 
@@ -3731,7 +3911,6 @@ export function createSeedBibleState(
   // `view` stays the source of truth for both whether Discover is open and
   // which sub-view shows inside it; DiscoverPane routes discover/create/play
   // internally off the same signal.
-  const DISCOVER_PANE_ID = "discover-pane";
 
   // view -> pane: open (or refresh, by reusing the id) while a view is set,
   // close when it clears. The pane commands read pane state via peek()
@@ -3744,19 +3923,8 @@ export function createSeedBibleState(
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
-        title: () => (
-          <DiscoverPaneTitle
-            playlists={playlists}
-            annotations={annotations}
-            tabs={tabs}
-            chats={chats}
-            openChatPanel={sidebar.openChatPanel}
-            modals={modals}
-          />
-        ),
-        header: () => (
-          <DiscoverPaneHeader playlists={playlists} annotations={annotations} />
-        ),
+        // Never shown: each Discover view renders its own header.
+        title: "Discover",
         onClose: (reason) => {
           if (reason !== "user") {
             return;
@@ -3776,6 +3944,7 @@ export function createSeedBibleState(
             toast={state.app.toast}
           />
         ),
+        showHeader: false,
       });
     } else {
       panes.closePane(DISCOVER_PANE_ID); // no-op when already closed
@@ -3795,10 +3964,10 @@ export function createSeedBibleState(
     }
   });
 
-  // Today is the app's fullscreen "home" pane, mirrored from `today.isOpen`
-  // (which is itself bound to `?today=`). Same reconciling-effect pair as
-  // Discover above, and here too the pane -> state direction must `peek()` so
-  // closing the pane can't retrigger the opening effect.
+  // Today is the app's fullscreen "home" pane, shown while the URL is the
+  // Today page ("/{lang}/today" — see `today.isOpen`). Same reconciling-effect
+  // pair as Discover above, and here too the pane -> state direction must
+  // `peek()` so closing the pane can't retrigger the opening effect.
   //
   // The thunks are hoisted out of the effect so their identity is stable —
   // rebuilding them on every reopen would remount the whole Today tree.
@@ -3891,15 +4060,13 @@ export function createSeedBibleState(
    * `reopen` brings back the screen it came from, which this closes, so the
    * pane's back button can return there instead of dropping to the reader.
    */
-  const openReadingPlansFullscreen = (reopen: () => void): boolean => {
+  const openReadingPlansFromScreen = (reopen: () => void): boolean => {
     const readingState = selectedTab.peek()?.readingState;
     if (!readingState) {
       return false;
     }
     closeYourContent();
     closeProfile();
-    // Fullscreen rather than the toolbar's docked "side": the user came from a
-    // fullscreen screen, so a side panel would leave them looking at the reader.
     openReadingPlansPane({
       readingPlans,
       readingState,
@@ -3911,7 +4078,6 @@ export function createSeedBibleState(
       os,
       login,
       gallery,
-      placement: "fullscreen",
       toast,
       onBack: () => {
         panes.closePane(READING_PLANS_PANE_ID);
@@ -3921,7 +4087,7 @@ export function createSeedBibleState(
     return true;
   };
   const openReadingPlansFromProfile = () => {
-    openReadingPlansFullscreen(openProfile);
+    openReadingPlansFromScreen(openProfile);
   };
   const continuePlaylistFromProfile = (
     entry: PlaylistPlayHistory
@@ -4025,7 +4191,7 @@ export function createSeedBibleState(
     // `editPlaylist` only sets the Discover pane's view, and that pane docks
     // beside the reader — so the fullscreen screens above it have to close
     // first, or the editor opens behind them.
-    playlists.editPlaylist(playlist);
+    playlists.editPlaylist(playlist, { onBack: openYourContent });
   };
   const editAnnotationFromContent = (annotation: Annotation) => {
     closeYourContent();
@@ -4037,7 +4203,7 @@ export function createSeedBibleState(
   const createPlaylistFromContent = () => {
     closeYourContent();
     closeProfile();
-    void playlists.createNewPlaylist();
+    void playlists.createNewPlaylist(undefined, { onBack: openYourContent });
   };
   // The customization editor is a side pane beside the reader, so the
   // fullscreen screens above it close first, as for the playlist editor.
@@ -4072,11 +4238,11 @@ export function createSeedBibleState(
       buildCustomizationTutorialSteps(state, created.defaultVariantId)
     );
   };
-  // Both land in the plans pane, opened fullscreen the way the Profile card
-  // opens it, and then drill straight into the plan so the user doesn't have
+  // Both land in the plans pane, opened the way the Profile card opens it,
+  // and then drill straight into the plan so the user doesn't have
   // to find it in the list a second time.
   const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
-    if (!openReadingPlansFullscreen(openYourContent)) {
+    if (!openReadingPlansFromScreen(openYourContent)) {
       return;
     }
     // A draft has nothing to read yet, so it picks up where the author left
@@ -4092,7 +4258,7 @@ export function createSeedBibleState(
     }
   };
   const editReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
-    if (!openReadingPlansFullscreen(openYourContent)) {
+    if (!openReadingPlansFromScreen(openYourContent)) {
       return;
     }
     void openReadingPlanEditor(readingPlans, plan, { fromAnotherScreen: true });
@@ -4245,9 +4411,8 @@ export function createSeedBibleState(
     }
   });
 
-  // Unlike Today's `isOpen` (a plain writable boolean), `isAboutPage` is a
-  // read-only computed derived from the URL — closing the pane can't just
-  // flip a signal back. Instead, leave "/about" for the current tab's
+  // `isAboutPage` is a read-only computed derived from the URL — closing the
+  // pane can't just flip a signal back. Instead, leave "/about" for the current tab's
   // reading position, mirroring how a genuine tab-focus change already does
   // (see TabsManager.leaveStaticPage). This fires whether the pane was
   // closed via its header's close button, `closeFullscreenPanes()` (e.g.
@@ -4528,7 +4693,7 @@ export function createSeedBibleState(
     const home = new URL(navigation.initialUrl.href);
     home.pathname = `${navigation.basePath}/`;
     tabs.leaveStaticPage();
-    if (todayWillAutoOpenForUrl(home, navigation.basePath)) {
+    if (shouldRedirectToTodayPage(home, navigation.basePath)) {
       today.open();
     }
     if (openedViaSharedPage) {

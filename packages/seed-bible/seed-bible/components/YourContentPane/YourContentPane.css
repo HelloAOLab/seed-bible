@@ -340,7 +340,8 @@
 
 /* Equal-width cards in columns: as many as fit at 10rem or wider, which is
    two on a phone and three in the desktop column. */
-.sb-content-saves {
+.sb-content-saves,
+.sb-content-bookmarks {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
   gap: 8px;
@@ -351,7 +352,8 @@
  * one rounded background and highlight together, rather than looking like
  * two separate controls that happen to sit side by side.
  */
-.sb-content-save-row {
+.sb-content-save-row,
+.sb-content-bookmark-row {
   display: flex;
   min-width: 0;
   align-items: center;
@@ -359,13 +361,15 @@
   background: var(--sb-content-surface);
 }
 
-.sb-content-save-row:hover {
+.sb-content-save-row:hover,
+.sb-content-bookmark-row:hover {
   background: var(--sb-content-surface-strong);
 }
 
 /* The name has a line to itself, so a long book name isn't cut short; the
    translation, date and folder count go on the line under it. */
-.sb-content-save {
+.sb-content-save,
+.sb-content-bookmark {
   flex: 1;
   min-width: 0;
   align-self: stretch;
@@ -382,6 +386,28 @@
   font-family: inherit;
   color: inherit;
   cursor: pointer;
+}
+
+/* The ribbon beside the name and chapter, as in the sidebar's bookmarks. */
+.sb-content-bookmark {
+  flex-direction: row;
+  gap: 8px;
+}
+
+.sb-content-bookmark > .sb-bookmark-glyph {
+  margin-top: 0.125rem;
+}
+
+.sb-content-bookmark-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sb-content-bookmark-chapter {
+  overflow-wrap: anywhere;
 }
 
 .sb-content-save-menu {
@@ -402,7 +428,8 @@
 
 /* Wraps onto a second line rather than ending in an ellipsis when even its
    own line is too narrow, as on a small phone. */
-.sb-content-save-name {
+.sb-content-save-name,
+.sb-content-bookmark-name {
   overflow-wrap: anywhere;
   font-size: 0.9375rem;
   font-weight: 700;
@@ -410,6 +437,7 @@
 
 /* Matches the translation on the sidebar's save and tab rows. */
 .sb-content-save-translation,
+.sb-content-bookmark-translation,
 .sb-content-highlight-translation {
   color: var(--sb-content-muted);
   font-size: 0.75rem;
@@ -418,8 +446,10 @@
   text-transform: uppercase;
 }
 
-/* The second line: the translation, the date, then the folder count. */
-.sb-content-save-meta {
+/* The second line: the translation, the date, then the folder count (for a
+   bookmark, the chapter then the translation). */
+.sb-content-save-meta,
+.sb-content-bookmark-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
