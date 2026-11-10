@@ -22,7 +22,11 @@ import {
   splitPathSegments,
   stripBasePath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
-import { getPreferredSupportedLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import {
+  getPreferredSupportedLanguage,
+  getUrlLanguage,
+} from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import { getTodayPageRedirect } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import {
   composeThemeStyleText,
   THEME_PRESET_STYLE_TEXT,
@@ -547,6 +551,29 @@ export function acceptLanguageRedirect(
 }
 
 /**
+ * Redirects a URL that should show the Today screen — a bare "/", or any URL
+ * carrying the legacy `?today=open` — to the Today page, "/{lang}/today", so
+ * the server renders Today itself rather than the reader for the client to
+ * cover a moment later. The language comes from the URL when it names one,
+ * else from `Accept-Language`, which is why the answer is a 302 that varies
+ * on it. See `shouldRedirectToTodayPage` for the URLs that stay put.
+ */
+export function todayPageRedirect(
+  path: string,
+  basePath: string,
+  acceptedLanguages: string[]
+): string | null {
+  const url = new URL(path, "http://ssr.local");
+  return getTodayPageRedirect(
+    url,
+    basePath,
+    getUrlLanguage(url, basePath) ??
+      getPreferredSupportedLanguage(acceptedLanguages) ??
+      DEFAULT_UI_LANGUAGE
+  );
+}
+
+/**
  * Server-side renders the app to a complete HTML document.
  *
  * Verse content is part of that document, not filled in later: the reader
@@ -590,6 +617,21 @@ export async function render(
   if (languageRedirectTo) {
     return {
       redirectTo: languageRedirectTo,
+      redirectStatus: 302,
+      vary: "Accept-Language",
+    };
+  }
+
+  // After the reading-path redirects, which fold a legacy `?book=` (or a
+  // path missing its language) into a full reading path first.
+  const todayRedirectTo = todayPageRedirect(
+    options.path,
+    injectedConfig.basePath,
+    injectedConfig.acceptedLanguages
+  );
+  if (todayRedirectTo) {
+    return {
+      redirectTo: todayRedirectTo,
       redirectStatus: 302,
       vary: "Accept-Language",
     };

@@ -229,7 +229,7 @@
 
 .sb-references-row.is-expanded .sb-references-row-chevron {
   background: var(--sb-primary-color);
-  color: #fff;
+  color: var(--sb-primary-font-color);
   display: flex;
   transform: rotate(180deg);
 }
