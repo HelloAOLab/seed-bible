@@ -167,14 +167,34 @@ type AccountStatus =
   /** Signed out: this device's copy is the only copy. */
   | "local";
 
-function readLocalJson(key: string): unknown {
+function parseJson(raw: string | null): unknown {
   try {
-    const raw = safeLocalStorage.getItem(key);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
+
+function readLocalJson(key: string): unknown {
+  try {
+    return parseJson(safeLocalStorage.getItem(key));
+  } catch {
+    return null;
+  }
+}
+
+const parseState = (value: unknown): NotificationState | null => {
+  const parsed = NOTIFICATION_STATE_SCHEMA.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
+/** Notification id → when it was announced, from a saved copy. */
+const parseAnnounced = (value: unknown): Record<string, number> =>
+  value && typeof value === "object"
+    ? Object.fromEntries(
+        Object.entries(value).filter(([, ms]) => typeof ms === "number")
+      )
+    : {};
 
 function writeLocalJson(key: string, value: unknown): void {
   try {
@@ -315,6 +335,25 @@ export function createNotificationsManager(
   // ─── Saving ────────────────────────────────────────────────────────────────
 
   /**
+   * Saves this device's copy merged with what's saved there already, and
+   * returns what was saved. Every tab keeps its own copy in memory, so one
+   * that hasn't heard about another tab's dismissal yet would otherwise undo
+   * it, for good when the account copy can't be reached.
+   */
+  const saveLocalState = (
+    key: string,
+    next: NotificationState
+  ): NotificationState => {
+    const stored = parseState(readLocalJson(stateStorageKey(key)));
+    const merged = pruneNotificationState(
+      stored ? mergeNotificationStates(stored, next) : next,
+      now()
+    );
+    writeLocalJson(stateStorageKey(key), merged);
+    return merged;
+  };
+
+  /**
    * Reads the account copy, merges it with ours, and writes the result back
    * if ours added anything. Never writes without a successful read first:
    * writing blind would replace another device's reads and dismissals.
@@ -355,14 +394,14 @@ export function createNotificationsManager(
       ),
       now()
     );
+    const saved = saveLocalState(userId, merged);
     batch(() => {
-      state.value = merged;
+      state.value = saved;
       status.value = "loaded";
     });
-    writeLocalJson(stateStorageKey(userId), merged);
-    if (read.status === "absent" || notificationStateChanged(remote, merged)) {
+    if (read.status === "absent" || notificationStateChanged(remote, saved)) {
       const result = await os
-        .recordData(userId, NOTIFICATION_STATE_ADDRESS, merged, {
+        .recordData(userId, NOTIFICATION_STATE_ADDRESS, saved, {
           marker: "private",
         })
         .catch((error: unknown) => ({ success: false as const, error }));
@@ -395,8 +434,7 @@ export function createNotificationsManager(
     if (!notificationStateChanged(state.peek(), next)) {
       return;
     }
-    state.value = next;
-    writeLocalJson(stateStorageKey(key), next);
+    state.value = saveLocalState(key, next);
     if (key !== SIGNED_OUT_KEY) {
       scheduleSave();
     }
@@ -413,10 +451,9 @@ export function createNotificationsManager(
       clearTimeout(saveTimer);
       saveTimer = null;
     }
-    const parsed = NOTIFICATION_STATE_SCHEMA.safeParse(
-      readLocalJson(stateStorageKey(key))
-    );
-    let local = parsed.success ? parsed.data : emptyNotificationState();
+    let local =
+      parseState(readLocalJson(stateStorageKey(key))) ??
+      emptyNotificationState();
     if (key === SIGNED_OUT_KEY) {
       // Signed out, this device's copy is the only one, so it's checked now;
       // signed in, the check waits for the account copy (`syncWithAccount`).
@@ -426,14 +463,10 @@ export function createNotificationsManager(
       }
       local = noted;
     }
-    const storedAnnounced = readLocalJson(announcedStorageKey(key));
     batch(() => {
       accountKey.value = key;
       state.value = local;
-      announced.value =
-        storedAnnounced && typeof storedAnnounced === "object"
-          ? (storedAnnounced as Record<string, number>)
-          : {};
+      announced.value = parseAnnounced(readLocalJson(announcedStorageKey(key)));
       newWhileOpen.value = new Set();
       status.value = key === SIGNED_OUT_KEY ? "local" : "loading";
     });
@@ -516,11 +549,21 @@ export function createNotificationsManager(
       return;
     }
     const key = accountKey.value;
-    const done = announced.value;
+    if (!key) {
+      return;
+    }
+    // Read again here rather than trusting the copy loaded with the account:
+    // another tab on this device may have announced the same notification
+    // since, and this way it isn't toasted twice. Two tabs deciding at the
+    // very same moment can still both toast.
+    const done = {
+      ...parseAnnounced(readLocalJson(announcedStorageKey(key))),
+      ...announced.value,
+    };
     const fresh = items.value.filter(
       (item) => item.isUnread && !(item.notification.id in done)
     );
-    if (!key || fresh.length === 0) {
+    if (fresh.length === 0) {
       return;
     }
     const atMs = now();
@@ -595,9 +638,26 @@ export function createNotificationsManager(
       void syncWithAccount();
     }
   };
+
+  // Another tab on this device saved its copy: what it marked as seen or
+  // dismissed counts here too. (What it announced is read when this tab is
+  // about to announce something; see `stopAnnouncing`.)
+  const followOtherTabs = (event: StorageEvent) => {
+    const key = accountKey.peek();
+    if (!key || event.key !== stateStorageKey(key)) {
+      return;
+    }
+    const theirs = parseState(parseJson(event.newValue));
+    const merged = theirs && mergeNotificationStates(state.peek(), theirs);
+    if (merged && notificationStateChanged(state.peek(), merged)) {
+      state.value = merged;
+    }
+  };
+
   if (typeof window !== "undefined") {
     window.addEventListener("focus", refreshOnReturn);
     document.addEventListener("visibilitychange", refreshOnReturn);
+    window.addEventListener("storage", followOtherTabs);
   }
 
   const dispose = () => {
@@ -612,6 +672,7 @@ export function createNotificationsManager(
     if (typeof window !== "undefined") {
       window.removeEventListener("focus", refreshOnReturn);
       document.removeEventListener("visibilitychange", refreshOnReturn);
+      window.removeEventListener("storage", followOtherTabs);
     }
   };
 

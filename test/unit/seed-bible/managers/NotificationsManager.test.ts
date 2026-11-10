@@ -456,6 +456,105 @@ describe("NotificationsManager", () => {
     });
   });
 
+  describe("two tabs on one device", () => {
+    /**
+     * Another tab saving its copy: the value lands in `localStorage`, and the
+     * browser tells every other tab with a `storage` event, unless this tab
+     * hasn't heard yet.
+     */
+    const otherTabSaves = (
+      key: string,
+      value: unknown,
+      { heard = true } = {}
+    ) => {
+      const newValue = JSON.stringify(value);
+      localStorage.setItem(key, newValue);
+      if (heard) {
+        window.dispatchEvent(
+          new StorageEvent("storage", {
+            key,
+            newValue,
+            storageArea: localStorage,
+          })
+        );
+      }
+    };
+
+    it("drops a notification another tab dismissed", async () => {
+      const request = server.requestFrom("bob");
+      const notifications = start();
+      await vi.waitFor(() => expect(ids(notifications)).toHaveLength(1));
+
+      otherTabSaves(`sb-notifications:${ME}`, {
+        seen: {},
+        dismissed: { [`friend-request:${request.id}`]: Date.now() },
+        appVersion: null,
+      });
+
+      expect(ids(notifications)).toEqual([]);
+    });
+
+    it("keeps another tab's dismissal when saving its own, even with the account out of reach", async () => {
+      failReads = true;
+      const fromBob = server.requestFrom("bob");
+      const fromAda = server.requestFrom("ada");
+      const notifications = start();
+      await vi.waitFor(() => expect(ids(notifications)).toHaveLength(2));
+      // The other tab dismissed Bob's, and this one hasn't heard yet.
+      otherTabSaves(
+        `sb-notifications:${ME}`,
+        {
+          seen: {},
+          dismissed: { [`friend-request:${fromBob.id}`]: Date.now() },
+          appVersion: null,
+        },
+        { heard: false }
+      );
+
+      notifications.dismiss(`friend-request:${fromAda.id}`);
+
+      // The app opened again later: this device's copy is all there is.
+      const reopened = start();
+      await vi.waitFor(() => expect(reopened.isReady.value).toBe(true));
+      expect(ids(reopened)).toEqual([]);
+    });
+
+    it.each([
+      ["after hearing about it", true],
+      ["before hearing about it", false],
+    ])(
+      "doesn't toast what another tab has just announced (%s)",
+      async (_label, heard) => {
+        const request = server.requestFrom("bob");
+        let releaseLists!: () => void;
+        const listsHeld = new Promise<void>((resolve) => {
+          releaseLists = resolve;
+        });
+        const listRequested =
+          server.spies.listRequested.getMockImplementation()!;
+        server.spies.listRequested.mockImplementation(async () => {
+          await listsHeld;
+          return listRequested();
+        });
+        const notifications = start();
+        await flush();
+
+        otherTabSaves(
+          `sb-notifications-announced:${ME}`,
+          { [`friend-request:${request.id}`]: Date.now() },
+          { heard }
+        );
+        releaseLists();
+
+        await vi.waitFor(() => expect(notifications.isReady.value).toBe(true));
+        await flush();
+        expect(toast).not.toHaveBeenCalled();
+        // Still listed, and still new: only the toast is skipped.
+        expect(notifications.unreadCount.value).toBe(1);
+      }
+    );
+  });
+
   describe("app updates", () => {
     it("lists an update notice when the account last ran an older version", async () => {
       accounts.set(ME, {
