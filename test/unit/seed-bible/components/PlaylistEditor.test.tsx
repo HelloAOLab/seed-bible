@@ -467,8 +467,8 @@ describe("the playlist editor", () => {
 
       const sheet = container.querySelector(".sb-pe-settings-sheet")!;
       expect(sheet.textContent).toContain("Item settings");
-      click(byText(sheet, '[role="switch"]', "Pause for group"));
-      expect(items()[0]).toMatchObject({ pauseForGroup: true });
+      click(sheet.querySelector('[aria-label="More time"]'));
+      expect(items()[0]).toMatchObject({ minutes: 2 });
 
       click(sheet.querySelector('[aria-label="Close"]'));
       expect(container.querySelector(".sb-pe-settings-sheet")).toBeNull();
@@ -1035,23 +1035,39 @@ describe("the playlist editor", () => {
   });
 
   describe("toolbar", () => {
-    it("sets the open step's reading time and group settings", () => {
+    it("sets the open step's reading time", () => {
       openWorkspace(STEPS, 0);
 
       click(container.querySelector('[aria-label="More time"]'));
       click(container.querySelector('[aria-label="More time"]'));
-      click(byText(container, ".sb-pe-switch", "Pause for group"));
-      click(byText(container, ".sb-pe-switch", "Leader only"));
 
-      expect(items()[0]).toMatchObject({
-        minutes: 3,
-        pauseForGroup: true,
-        leaderOnly: true,
-      });
+      expect(items()[0]).toMatchObject({ minutes: 3 });
 
       click(container.querySelector('[aria-label="Less time"]'));
       expect(items()[0]).toMatchObject({ minutes: 2 });
     });
+
+    // Neither does anything yet, so neither is offered.
+    it.each([
+      ["a phone", true],
+      ["desktop", false],
+    ] as const)(
+      "doesn't offer Pause for group or Leader only on %s",
+      (_layout, compact) => {
+        openWorkspace(STEPS, 0, compact);
+        if (compact) {
+          act(() => {
+            state.playlists.editorStepSettingsOpen.value = true;
+          });
+        }
+
+        expect(
+          container.querySelector('[aria-label="More time"]')
+        ).not.toBeNull();
+        expect(container.textContent).not.toContain("Pause for group");
+        expect(container.textContent).not.toContain("Leader only");
+      }
+    );
 
     it("won't go below one minute", () => {
       openWorkspace(STEPS, 0);

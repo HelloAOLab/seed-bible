@@ -37,30 +37,9 @@ export function PeIcon(props: { name: PeIconName; className?: string }) {
   );
 }
 
-/** A labelled on/off switch. */
-export function PeSwitch(props: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={props.checked}
-      className="sb-pe-switch"
-      onClick={() => props.onChange(!props.checked)}
-    >
-      <span className="sb-pe-switch-track" />
-      <span>{props.label}</span>
-    </button>
-  );
-}
-
 /**
- * The settings every step has — reading time, pausing for the group, and
- * leader-only — for the open step. The desktop toolbar shows them in a row;
- * the phone tucks them into a "Step Settings" section under the step.
+ * The settings every step has (for now, just its reading time) for the open
+ * step: in the desktop toolbar, and the phone's "Item settings" sheet.
  */
 export function StepSettings(props: {
   playlists: PlaylistManager;
@@ -117,24 +96,6 @@ export function StepSettings(props: {
           </button>
         </div>
       </div>
-      <PeSwitch
-        label={t("playlist-editor-pause-for-group", {
-          defaultValue: "Pause for group",
-        })}
-        checked={!!item.pauseForGroup}
-        onChange={(checked) =>
-          update({ pauseForGroup: checked ? true : undefined })
-        }
-      />
-      <PeSwitch
-        label={t("playlist-editor-leader-only", {
-          defaultValue: "Leader only",
-        })}
-        checked={!!item.leaderOnly}
-        onChange={(checked) =>
-          update({ leaderOnly: checked ? true : undefined })
-        }
-      />
     </>
   );
 }
