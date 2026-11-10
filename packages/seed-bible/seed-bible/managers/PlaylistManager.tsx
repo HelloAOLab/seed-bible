@@ -2953,6 +2953,42 @@ export function createPlaylistManager(
   };
 
   /**
+   * What the active tab is playing, as it stands (its queue as reordered and
+   * the step it's on), to carry over to another tab; null when nothing is.
+   */
+  const playbackToCarry = (): PlaylistReadingData | null => {
+    const state = playing.peek();
+    if (!state || state.queue.peek().length === 0) {
+      return null;
+    }
+    return {
+      playlists: state.playlists.peek(),
+      queue: state.queue.peek(),
+      step: state.currentIndex.peek(),
+    };
+  };
+
+  /**
+   * Plays what {@link playbackToCarry} took on the active tab, from the same
+   * step: the same reading carried on, so not a new play to count.
+   */
+  const carryPlaybackToActiveTab = (carried: PlaylistReadingData): void => {
+    const tab = activeTab.peek();
+    if (!tab) {
+      return;
+    }
+    // On a phone, straight on with the step rather than back to the list.
+    view.value = isMobile.peek() ? null : "play_playlist";
+    tab.readingState.enableExtension(PLAYLIST_READING_EXTENSION_ID, {
+      ...carried,
+    } satisfies PlaylistReadingData);
+    const generation = beginOpeningPlayback();
+    void (playing.peek()?.whenSettled() ?? Promise.resolve()).finally(() => {
+      finishOpeningPlayback(generation);
+    });
+  };
+
+  /**
    * Loads a playlist by locator and plays it at `stepIndex` (0-based). Reuses
    * the playlist a playlist page already loaded for the same locator. Resolves
    * once the reader has moved to that step, so the server can render it.
@@ -4123,6 +4159,8 @@ export function createPlaylistManager(
     addEditorStep,
     applyEditorVersePick,
     pickEditorComparePassage,
+    playbackToCarry,
+    carryPlaybackToActiveTab,
     listPlaylists,
     getUserPlaylists,
     loadPlaylist,

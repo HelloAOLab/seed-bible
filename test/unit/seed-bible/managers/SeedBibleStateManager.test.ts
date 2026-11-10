@@ -578,6 +578,53 @@ describe("createSeedBibleState", () => {
     });
   });
 
+  it("createSharedSession() carries on with the playlist being played, from the same step", async () => {
+    const state = await createState();
+    const items = [
+      { type: "html" as const, html: "<p>One</p>" },
+      { type: "html" as const, html: "<p>Two</p>" },
+      { type: "html" as const, html: "<p>Three</p>" },
+    ];
+    const playlist = {
+      id: "p1",
+      title: "Evening",
+      description: null,
+      items,
+    };
+    const playing = state.playlists.startPlaying(playlist, 0, {
+      history: false,
+    })!;
+    await playing.jumpTo(1);
+    // Moved within the queue, as a reorder would.
+    playing.reorderQueue(2, 0);
+    const session = createMockSharedSession("session-playing");
+    mockSessionsManager.createSession.mockResolvedValue(session);
+
+    await state.app.createSharedSession();
+
+    expect(session.readingState.enableExtension).toHaveBeenCalledWith(
+      "playlist",
+      {
+        playlists: [playlist],
+        queue: [items[2], items[0], items[1]],
+        step: 2,
+      }
+    );
+  });
+
+  it("createSharedSession() plays nothing on the new tab when nothing was playing", async () => {
+    const state = await createState();
+    const session = createMockSharedSession("session-idle");
+    mockSessionsManager.createSession.mockResolvedValue(session);
+
+    await state.app.createSharedSession();
+
+    expect(session.readingState.enableExtension).not.toHaveBeenCalledWith(
+      "playlist",
+      expect.anything()
+    );
+  });
+
   it("createSharedSession() captures a create_session posthog event", async () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {

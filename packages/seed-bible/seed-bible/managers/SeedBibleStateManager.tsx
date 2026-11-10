@@ -3239,8 +3239,10 @@ export function createSeedBibleState(
 
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
-    // Start the session where the user is reading, not at the default book.
+    // Start the session where the user is reading, not at the default book,
+    // and carry on with the playlist they're playing, from the same step.
     const activeReadingState = selectedTab.value?.readingState ?? null;
+    const carriedPlayback = playlists.playbackToCarry();
     const session = await sessions.createSession(
       activeReadingState
         ? getSessionStartPosition(activeReadingState)
@@ -3257,6 +3259,9 @@ export function createSeedBibleState(
     void invitations.publishSession(session);
     const tab = tabs.addTab(session);
     tabsLayout.setSelectedSlotTab(tab.id);
+    if (carriedPlayback) {
+      playlists.carryPlaybackToActiveTab(carriedPlayback);
+    }
     return session;
   };
 
