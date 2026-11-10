@@ -80,6 +80,15 @@ export interface AppConfig {
   renderedForPath?: string;
 
   /**
+   * The UI language the server rendered this page in. On a bare `/` the
+   * server picks it from `Accept-Language` while the client picks it from
+   * `navigator.languages`, so the gate compares the two. Absent on pages from
+   * a server that predates this field, which means "can't tell" and is never
+   * treated as a mismatch.
+   */
+  renderedLanguage?: string;
+
+  /**
    * The commit whose SSR bundle actually produced this HTML — that bundle's
    * own `__GIT_COMMIT__` build constant, not anything derived from the
    * request URL.

@@ -51,8 +51,6 @@ import {
   type Annotation,
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
-import type { PlanMatch, ReadingPlansManager } from "./ReadingPlansManager";
-import type { FeaturesManager } from "./FeaturesManager";
 
 export interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
@@ -512,6 +510,18 @@ export interface BibleReadingState {
   discoveredStudyNotes: ReadonlySignal<
     DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
   >;
+  /**
+   * True from when the current chapter's discovery starts until every
+   * provider has answered, or until none has answered for
+   * `DISCOVERY_IDLE_TIMEOUT_MS`. Once that wait gives up it stays false for
+   * the chapter, even if a late answer still arrives.
+   */
+  isDiscovering: ReadonlySignal<boolean>;
+  /**
+   * `isDiscovering`, once discovery has run for `DISCOVERY_LOADER_DELAY_MS`,
+   * so a quick lookup doesn't flash a loader.
+   */
+  showDiscoveryLoader: ReadonlySignal<boolean>;
   /**
    * Placement toggle for the compact discover content panel (cross
    * references/study notes/content), which is otherwise always shown when
@@ -985,6 +995,16 @@ export const DEFAULT_CHAPTER_NUMBER = 1;
  */
 export const NAVIGATION_COALESCE_MS = 400;
 
+/**
+ * How long a chapter's discovery may go without any provider answering before
+ * its loader gives up. Each answer restarts the wait, so a slow provider
+ * doesn't keep the loader up forever while the others have long finished.
+ */
+export const DISCOVERY_IDLE_TIMEOUT_MS = 4000;
+
+/** How long discovery has to run before its loader shows. */
+export const DISCOVERY_LOADER_DELAY_MS = 200;
+
 export interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
@@ -1369,7 +1389,6 @@ export function hasAnyDiscoverResults(
 export interface DiscoverPanelContent {
   hasAnnotations: boolean;
   showAnnotations: boolean;
-  plans: PlanMatch[];
   hasDiscoverResults: boolean;
   hasAny: boolean;
 }
@@ -1381,9 +1400,7 @@ export interface DiscoverPanelContent {
  */
 export function getDiscoverPanelContent(
   readingState: BibleReadingState,
-  annotations: AnnotationsManager,
-  readingPlans: ReadingPlansManager,
-  features: FeaturesManager
+  annotations: AnnotationsManager
 ): DiscoverPanelContent {
   const bookId = readingState.bookId.value;
   const chapterNumber = readingState.chapterNumber.value;
@@ -1400,19 +1417,14 @@ export function getDiscoverPanelContent(
       ? annotations.pendingCountForChapter(bookId, chapterNumber)
       : 0;
   const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
-  const plans = readingPlans.getReadingPlansForChapter(
-    bookId,
-    chapterNumber,
-    features
-  );
+
   const hasDiscoverResults = hasAnyDiscoverResults(readingState);
 
   return {
     hasAnnotations,
     showAnnotations,
-    plans,
     hasDiscoverResults,
-    hasAny: showAnnotations || hasDiscoverResults || plans.length > 0,
+    hasAny: showAnnotations || hasDiscoverResults,
   };
 }
 
@@ -3294,8 +3306,21 @@ export function createBibleReadingState(
     );
   }
 
+  const isDiscovering = signal(false);
+  const showDiscoveryLoader = signal(false);
+
   if (discoverManager) {
     let discoverGeneration = 0;
+    let loaderDelayTimer: ReturnType<typeof setTimeout> | undefined;
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const settleDiscovery = () => {
+      clearTimeout(loaderDelayTimer);
+      clearTimeout(idleTimer);
+      isDiscovering.value = false;
+      showDiscoveryLoader.value = false;
+    };
+    effectDisposers.push(settleDiscovery);
 
     const stopDiscoverEffect = effect(() => {
       const chapter = chapterData.value;
@@ -3312,6 +3337,7 @@ export function createBibleReadingState(
       discoverManager.setUiLanguage(uiLanguage);
       if (!chapter) {
         discoveredResults.value = [];
+        settleDiscovery();
         return;
       }
 
@@ -3371,23 +3397,42 @@ export function createBibleReadingState(
         })
       );
 
+      settleDiscovery();
+      isDiscovering.value = true;
+      loaderDelayTimer = setTimeout(() => {
+        showDiscoveryLoader.value = true;
+      }, DISCOVERY_LOADER_DELAY_MS);
+      // Nothing to restart once the wait has given up: a late answer still
+      // shows its results, but the loader stays gone.
+      const restartIdleTimer = () => {
+        if (!isDiscovering.peek()) return;
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(settleDiscovery, DISCOVERY_IDLE_TIMEOUT_MS);
+      };
+      restartIdleTimer();
+
       void (async () => {
-        for await (const result of discoverManager.discover(context)) {
-          if (generation !== discoverGeneration) return;
-          if (alreadyFetched.has(result.providerId)) continue;
+        try {
+          for await (const result of discoverManager.discover(context)) {
+            if (generation !== discoverGeneration) return;
+            restartIdleTimer();
+            if (alreadyFetched.has(result.providerId)) continue;
 
-          const enrichedResults = untracked(() => enrich(result));
+            const enrichedResults = untracked(() => enrich(result));
 
-          if (generation !== discoverGeneration) return;
-          if (enrichedResults.length > 0) {
-            discoveredResults.value = [
-              ...discoveredResults.value,
-              {
-                providerId: result.providerId,
-                results: enrichedResults,
-              },
-            ];
+            if (generation !== discoverGeneration) return;
+            if (enrichedResults.length > 0) {
+              discoveredResults.value = [
+                ...discoveredResults.value,
+                {
+                  providerId: result.providerId,
+                  results: enrichedResults,
+                },
+              ];
+            }
           }
+        } finally {
+          if (generation === discoverGeneration) settleDiscovery();
         }
       })();
     });
@@ -3679,6 +3724,8 @@ export function createBibleReadingState(
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,
+    isDiscovering: computed(() => isDiscovering.value),
+    showDiscoveryLoader: computed(() => showDiscoveryLoader.value),
     discoverContentPanelInline,
     title,
     shortTitle,

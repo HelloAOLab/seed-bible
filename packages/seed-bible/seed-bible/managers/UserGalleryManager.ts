@@ -28,11 +28,16 @@ export const GalleryPhotoSchema = z.object({
   // strings are the only thing we cannot show.
   url: z.string().min(1).max(2048),
   createdAtMs: z.coerce.number().positive(),
+  lastUsedAtMs: z.coerce.number().positive().optional(),
 });
 
 export type GalleryPhoto = z.infer<typeof GalleryPhotoSchema>;
 
 export type UserGalleryManager = ReturnType<typeof createUserGalleryManager>;
+
+function photoLastUsedAtMs(photo: GalleryPhoto) {
+  return photo.lastUsedAtMs ?? photo.createdAtMs;
+}
 
 function prependPhoto(
   list: readonly GalleryPhoto[],
@@ -41,7 +46,7 @@ function prependPhoto(
   return [photo, ...list.filter((item) => item.id !== photo.id)];
 }
 
-/** Newest-first, one row per URL. */
+/** Most recently used first, one row per URL. */
 export function mergeGalleryPhotos(
   ...groups: readonly (readonly GalleryPhoto[])[]
 ): GalleryPhoto[] {
@@ -49,12 +54,17 @@ export function mergeGalleryPhotos(
   for (const group of groups) {
     for (const photo of group) {
       const existing = byUrl.get(photo.url);
-      if (!existing || photo.createdAtMs >= existing.createdAtMs) {
+      if (
+        !existing ||
+        photoLastUsedAtMs(photo) >= photoLastUsedAtMs(existing)
+      ) {
         byUrl.set(photo.url, photo);
       }
     }
   }
-  return [...byUrl.values()].sort((a, b) => b.createdAtMs - a.createdAtMs);
+  return [...byUrl.values()].sort(
+    (a, b) => photoLastUsedAtMs(b) - photoLastUsedAtMs(a)
+  );
 }
 
 function readCachedGallery(userId: string): GalleryPhoto[] {
@@ -94,8 +104,9 @@ function commitPhotos(userId: string, next: GalleryPhoto[]): GalleryPhoto[] {
 }
 
 /**
- * Records a photo URL in the gallery, or moves it to the front when it was
- * already saved (reuse counts as a recent upload).
+ * Records a photo URL in the gallery, or, when it was already saved, marks it
+ * as just used so it moves to the front of Recent uploads. Its upload date
+ * (`createdAtMs`) never changes on reuse.
  */
 export async function rememberPhotoInGallery(
   os: Pick<CasualOSManager, "recordData">,
@@ -108,12 +119,14 @@ export async function rememberPhotoInGallery(
     throw new Error("Cannot save an empty photo URL to gallery");
   }
   const found = existing.find((photo) => photo.url === trimmed);
+  const now = Date.now();
   const photo: GalleryPhoto = found
-    ? { ...found, createdAtMs: Date.now() }
+    ? { ...found, lastUsedAtMs: now }
     : {
         id: `photo_${uuid()}`,
         url: trimmed,
-        createdAtMs: Date.now(),
+        createdAtMs: now,
+        lastUsedAtMs: now,
       };
   const result = await os.recordData(userId, photo.id, photo, {
     marker: USER_GALLERY_MARKER,
@@ -231,11 +244,11 @@ export function createUserGalleryManager(
       const listed = await listPhotos(userId);
       // The server list is the source of truth: a photo the cache remembers
       // but the list no longer has was deleted (maybe on another device) and
-      // must not come back. The exception is anything saved in the last few
-      // minutes — the listing can lag a fresh write, and a photo saved while
-      // this list was in flight is newer than the request itself.
+      // must not come back. The exception is anything saved or reused in the
+      // last few minutes — the listing can lag a fresh write, and a photo
+      // written while this list was in flight is newer than the request itself.
       const recentLocal = mergeGalleryPhotos(photos.peek(), cached).filter(
-        (photo) => photo.createdAtMs >= startedAtMs - LIST_LAG_GRACE_MS
+        (photo) => photoLastUsedAtMs(photo) >= startedAtMs - LIST_LAG_GRACE_MS
       );
       photos.value = commitPhotos(
         userId,

@@ -1,6 +1,6 @@
 import {
   TODAY_PANE_ID,
-  todayWillAutoOpenForUrl,
+  openTodayPassage,
 } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import {
   createTestSeedBibleState,
@@ -11,111 +11,13 @@ import { act } from "preact/test-utils";
 import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
-
-describe("todayWillAutoOpenForUrl", () => {
-  describe("with no explicit ?today param", () => {
-    it("opens on a bare URL, which is a visitor with nowhere else to be", () => {
-      expect(
-        todayWillAutoOpenForUrl(new URL("http://localhost:3000/"), "/")
-      ).toBe(true);
-    });
-
-    it("stays closed for a canonical reading path", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/en/BSB/genesis/1"),
-          "/"
-        )
-      ).toBe(false);
-    });
-
-    // A static page carries no reading position, so it used to read as
-    // "nowhere in particular" and Today opened over it. Today's pane is
-    // fullscreen, so it displaced the About pane and sent the reader back to
-    // the selected tab's chapter.
-    it("stays closed on a static page such as /en/about", () => {
-      expect(
-        todayWillAutoOpenForUrl(new URL("http://localhost:3000/en/about"), "/")
-      ).toBe(false);
-    });
-
-    it("stays closed for a shared-session invite", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/?sessionId=abc"),
-          "/"
-        )
-      ).toBe(false);
-    });
-  });
-
-  describe("with an explicit ?today param", () => {
-    it("opens on ?today=open even over a reading path", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/en/BSB/genesis/1?today=open"),
-          "/"
-        )
-      ).toBe(true);
-    });
-
-    it("opens on ?today=open even over a static page", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/en/about?today=open"),
-          "/"
-        )
-      ).toBe(true);
-    });
-
-    it("stays closed on ?today=closed even on a bare URL", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/?today=closed"),
-          "/"
-        )
-      ).toBe(false);
-    });
-
-    it("treats any other value as closed rather than guessing", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/?today=maybe"),
-          "/"
-        )
-      ).toBe(false);
-    });
-  });
-
-  describe("when the page is a compact embed", () => {
-    it("stays closed on a bare URL with ?embed=true", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/?embed=true"),
-          "/"
-        )
-      ).toBe(false);
-    });
-
-    it("stays closed on ?embed=minimal even without a reading path", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/?embed=minimal"),
-          "/"
-        )
-      ).toBe(false);
-    });
-
-    it("stays closed even when ?today=open is also set", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/?embed=true&today=open"),
-          "/"
-        )
-      ).toBe(false);
-    });
-  });
-});
+import {
+  aabBooks,
+  createDefaultManagerResponseMap,
+  createResponse,
+  makeChapter,
+  makeUrl,
+} from "./testUtils/mockBibleApiData";
 
 describe("Today pane wiring", () => {
   const paneIsOpen = (
@@ -128,19 +30,24 @@ describe("Today pane wiring", () => {
     expect(paneIsOpen(state)).toBe(false);
   });
 
-  it("opens the fullscreen pane when the screen is opened", async () => {
+  it("navigates to the Today page and opens its fullscreen pane", async () => {
+    window.history.replaceState(null, "", "/en/AAB/genesis/1");
     const state = await createTestSeedBibleState();
 
     state.today.open();
     await waitFor(() => paneIsOpen(state));
 
+    expect(window.location.pathname).toBe("/en/today");
     const pane = state.panes.panes.value.find(
       (candidate) => candidate.id === TODAY_PANE_ID
     );
     expect(pane?.placement).toBe("fullscreen");
+    // Today draws its own close button instead of the pane header's.
+    expect(pane?.showHeader).toBe(false);
   });
 
-  it("closes the pane again when the screen is closed", async () => {
+  it("returns to the reader's position when the screen is closed", async () => {
+    window.history.replaceState(null, "", "/en/AAB/genesis/1");
     const state = await createTestSeedBibleState();
 
     state.today.open();
@@ -149,11 +56,45 @@ describe("Today pane wiring", () => {
     state.today.close();
     await waitFor(() => !paneIsOpen(state));
     expect(state.today.isOpen.value).toBe(false);
+    expect(window.location.pathname).toBe("/en/AAB/genesis/1");
   });
 
-  // The pane header's close button removes the pane directly, so the open state
-  // has to follow it or the toolbar toggle would need two clicks to reopen.
-  it("clears the open state when the pane is closed from its header", async () => {
+  it("comes back to Today when Back is pressed after leaving it", async () => {
+    window.history.replaceState(null, "", "/en/AAB/genesis/1");
+    const state = await createTestSeedBibleState();
+
+    state.today.open();
+    await waitFor(() => paneIsOpen(state));
+    state.today.close();
+    await waitFor(() => !paneIsOpen(state));
+
+    window.history.back();
+    await waitFor(() => paneIsOpen(state));
+    expect(window.location.pathname).toBe("/en/today");
+  });
+
+  it("keeps Today in the history when a card opens a passage", async () => {
+    window.history.replaceState(null, "", "/en/AAB/genesis/1");
+    const state = await createTestSeedBibleState();
+
+    state.today.open();
+    await waitFor(() => paneIsOpen(state));
+    openTodayPassage(state, state.today, {
+      bookId: "GEN",
+      chapter: 1,
+      translationId: "AAB",
+    });
+    await waitFor(() => !paneIsOpen(state));
+    expect(window.location.pathname).toBe("/en/AAB/genesis/1");
+
+    window.history.back();
+    await waitFor(() => paneIsOpen(state));
+    expect(window.location.pathname).toBe("/en/today");
+  });
+
+  // Removing the pane directly has to clear the open state too, or the toolbar
+  // toggle would need two clicks to reopen it.
+  it("clears the open state when the pane is closed directly", async () => {
     const state = await createTestSeedBibleState();
 
     state.today.open();
@@ -164,16 +105,29 @@ describe("Today pane wiring", () => {
     expect(paneIsOpen(state)).toBe(false);
   });
 
-  // `todayOpen: "fromUrl"` leaves the `?today` param off, which is what lets
-  // these two reach the boot heuristic at all: an explicit param short-circuits
-  // it before the URL is ever looked at.
-  it("auto-opens over the reader when the boot URL has no reading position", async () => {
+  // `todayOpen: "fromUrl"` leaves the URL as the test set it, so these reach
+  // the redirect the app applies to a page the server never saw (one the
+  // service worker served from its cache).
+  it("moves a boot URL with no reading position to the Today page", async () => {
     window.history.replaceState(null, "", "/");
 
     const state = await createTestSeedBibleState({ todayOpen: "fromUrl" });
 
-    await waitFor(() => paneIsOpen(state));
+    expect(window.location.pathname).toBe("/en/today");
     expect(state.today.isOpen.value).toBe(true);
+    expect(paneIsOpen(state)).toBe(true);
+  });
+
+  it("moves a legacy ?today=open boot URL to the Today page", async () => {
+    window.history.replaceState(null, "", "/en/AAB/exodus/2?today=open");
+
+    const state = await createTestSeedBibleState({ todayOpen: "fromUrl" });
+
+    expect(`${window.location.pathname}${window.location.search}`).toBe(
+      "/en/today"
+    );
+    expect(state.today.isOpen.value).toBe(true);
+    expect(paneIsOpen(state)).toBe(true);
   });
 
   it("stays out of the way when the boot URL already points at a chapter", async () => {
@@ -185,28 +139,28 @@ describe("Today pane wiring", () => {
     expect(paneIsOpen(state)).toBe(false);
   });
 
-  // The fix's core invariant: `isOpen` must stay `false` -- matching what SSR
-  // always renders -- until `hydrateAutoOpen` runs, even on a boot URL that
-  // will end up auto-opening Today. `skipHydrateAutoOpen` holds the fixture
-  // in that pre-hydrate window so this can be asserted directly, rather than
-  // only observing the already-corrected value every other test sees. Fails
-  // on the old construction-time seeding, which computed the real value
-  // immediately with no pre-hydrate window to observe.
-  it("seeds isOpen closed regardless of the URL, until hydrateAutoOpen runs", async () => {
-    window.history.replaceState(null, "", "/");
+  // Open from construction, with nothing deferred to after mount: the server
+  // renders the same URL with Today open, so the client's first render
+  // already agrees with it.
+  it("is open from construction on the Today page", async () => {
+    window.history.replaceState(null, "", "/en/today");
 
-    const state = await createTestSeedBibleState({
-      todayOpen: "fromUrl",
-      skipHydrateAutoOpen: true,
-    });
-
-    expect(state.today.isOpen.value).toBe(false);
-    expect(paneIsOpen(state)).toBe(false);
-
-    state.today.hydrateAutoOpen();
+    const state = await createTestSeedBibleState({ todayOpen: "fromUrl" });
 
     expect(state.today.isOpen.value).toBe(true);
-    await waitFor(() => paneIsOpen(state));
+    expect(paneIsOpen(state)).toBe(true);
+  });
+
+  // Otherwise a reload would bring the old language back.
+  it("moves to the new language's Today page when the UI language changes", async () => {
+    const state = await createTestSeedBibleState({ todayOpen: true });
+    expect(window.location.pathname).toBe("/en/today");
+
+    await state.i18n.changeLanguage("es");
+
+    await waitFor(() => window.location.pathname === "/es/today");
+    expect(paneIsOpen(state)).toBe(true);
+    await state.i18n.changeLanguage("en");
   });
 
   // Reopening must reuse the same component thunk: a fresh one would remount
@@ -472,5 +426,108 @@ describe("Today's Community section", () => {
       expect(await feedTypes()).toEqual(["reading"]);
       expect((await feedTypes()).sort()).toEqual(["note", "reading"]);
     });
+  });
+});
+
+describe("Today's verse of the day", () => {
+  const VERSES_URL = makeUrl("/api/d/verse-of-the-day/verses.json");
+
+  // Points the app at the endpoint the mocked responses are keyed by.
+  beforeEach(() => {
+    window.history.replaceState(null, "", "/?useFreeBibleAPI");
+  });
+
+  /** The dataset with a single entry, so whichever day is asked, it's picked. */
+  const datasetWith = (verse: {
+    book: string;
+    chapter: number;
+    verse: number;
+    endVerse?: number;
+  }) =>
+    createResponse({
+      dataset: { id: "verse-of-the-day" },
+      verses: [{ ...verse, categories: ["hope"] }],
+    });
+
+  it("returns the day's verse with its text in the requested translation", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: datasetWith({ book: "GEN", chapter: 1, verse: 2 }),
+      },
+    });
+
+    const verse = await state.today.getVerseOfTheDay("2026-10-30", "AAB");
+
+    expect(verse).toEqual({
+      bookId: "GEN",
+      chapter: 1,
+      verse: 2,
+      translationId: "AAB",
+      translationShortName: "AAB",
+      text: "Verse 2",
+    });
+  });
+
+  // A short name that differs from the id, so reading the id back can't pass.
+  it("names the translation by its short name", async () => {
+    const chapter = makeChapter(aabBooks, "GEN", 1);
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [makeUrl("/api/AAB/GEN/1.json")]: createResponse({
+          ...chapter,
+          translation: { ...chapter.translation, shortName: "AncAB" },
+        }),
+        [VERSES_URL]: datasetWith({ book: "GEN", chapter: 1, verse: 1 }),
+      },
+    });
+
+    const verse = await state.today.getVerseOfTheDay("2026-10-30", "AAB");
+
+    expect(verse?.translationShortName).toBe("AncAB");
+  });
+
+  it("joins the text of every verse in a passage", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: datasetWith({
+          book: "GEN",
+          chapter: 1,
+          verse: 1,
+          endVerse: 2,
+        }),
+      },
+    });
+
+    const verse = await state.today.getVerseOfTheDay("2026-10-30", "AAB");
+
+    expect(verse?.endVerse).toBe(2);
+    expect(verse?.text).toBe("Verse 1 Verse 2");
+  });
+
+  it("returns null when the translation doesn't have the verse", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: datasetWith({ book: "GEN", chapter: 1, verse: 31 }),
+      },
+    });
+
+    expect(await state.today.getVerseOfTheDay("2026-10-30", "AAB")).toBeNull();
+  });
+
+  it("rejects when the dataset can't be fetched", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: createResponse({}, 500, "Internal Server Error"),
+      },
+    });
+
+    await expect(
+      state.today.getVerseOfTheDay("2026-10-30", "AAB")
+    ).rejects.toThrow("Status: 500");
   });
 });

@@ -20,9 +20,7 @@ function createSheetState(isMinimalEmbed: boolean): SeedBibleState {
         fontSize: "M",
         uiSize: "M",
         keepScreenAwake: false,
-        textConfig: {
-          verse: { lineHeight: DEFAULT_VERSE_LINE_HEIGHT },
-        },
+        verseLineHeight: DEFAULT_VERSE_LINE_HEIGHT,
       }),
       setFontSize: vi.fn(),
       setUISize: vi.fn(),

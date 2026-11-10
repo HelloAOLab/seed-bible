@@ -2,7 +2,8 @@ import { useSignal, type ReadonlySignal } from "@preact/signals";
 import { useRef, useEffect } from "preact/hooks";
 import { TitledSection } from "./TitledSection";
 import { useClickOutside } from "../useClickOutside";
-import { MaterialIcon, SeedBibleIcon } from "../icons";
+import { SeedBibleIcon } from "../icons";
+import { SearchBar } from "../SearchBar/SearchBar";
 import { useI18n } from "../../i18n";
 import type {
   TodayManager,
@@ -42,7 +43,7 @@ export const SearchSection = (props: {
           />
           {t("books", { defaultValue: "Books" })}
         </button>
-        <SearchBar today={props.today} onOpenPassage={props.onOpenPassage} />
+        <VerseSearch today={props.today} onOpenPassage={props.onOpenPassage} />
       </div>
     </TitledSection>
   );
@@ -50,7 +51,7 @@ export const SearchSection = (props: {
 
 const DEBOUNCE_MS = 180;
 
-function SearchBar(props: {
+function VerseSearch(props: {
   today: TodayManager;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) {
@@ -137,17 +138,15 @@ function SearchBar(props: {
 
   return (
     <div className="sb-today-searchbar" ref={containerRef}>
-      <MaterialIcon>search</MaterialIcon>
-      <input
-        type="text"
-        placeholder={t("today-search-verses", {
-          defaultValue: "Search books, chapters, verses...",
-        })}
+      <SearchBar
         value={query.value}
-        onInput={(e) => runSearch((e.target as HTMLInputElement).value)}
+        onInput={runSearch}
         onFocus={() => {
           isOpen.value = true;
         }}
+        placeholder={t("today-search-verses", {
+          defaultValue: "Search books, chapters, verses...",
+        })}
       />
       {showDropdown && (
         <div className="sb-today-searchbar-dropdown">

@@ -63,6 +63,7 @@ describe("HighlightsManager", () => {
       cachedProfile: signal(null),
       localConfig: signal({}),
       hydrateLocalConfig: vi.fn(),
+      isLocalConfigHydrated: signal(false),
       profilePromise: null,
       isProfileLoading: signal(false),
       isSavingProfile: signal(false),

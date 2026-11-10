@@ -1,5 +1,7 @@
 import { signal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
+import { MaterialIcon } from "../icons";
+import { Spinner } from "../Spinner/Spinner";
 import type {
   ModalContentProps,
   ModalManager,
@@ -76,10 +78,16 @@ function ConfirmDeleteModalContent(
         </button>
         <button
           type="button"
-          className="sb-session-settings-end"
+          className="sb-session-settings-end sb-delete-button"
           onClick={() => void confirm()}
           disabled={isDeleting}
+          aria-busy={isDeleting}
         >
+          {isDeleting ? (
+            <Spinner size="1.125rem" />
+          ) : (
+            <MaterialIcon aria-hidden="true">delete</MaterialIcon>
+          )}
           {t("delete")}
         </button>
       </div>
@@ -99,6 +107,8 @@ export function openConfirmDeleteModal(
   modals.openModal({
     id,
     title,
+    // Like Cancel: once Delete is pressed, the modal stays until it settles.
+    canDismiss: () => !deletingIds.value.has(id),
     content: () => (
       <ConfirmDeleteModalContent
         id={id}

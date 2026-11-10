@@ -22,22 +22,18 @@
   "clear-search": "Hapus pencarian",
   "searching": "Sedang mencari...",
   "no-search-results": "Tidak ada ayat yang cocok.",
-
   "uploading": "Sedang mengunggah...",
   "profile-name": "Nama profil",
   "profile-name-placeholder": "misalnya keluarga Craig",
-
   "description": "Keterangan",
   "optional": "(Opsional)",
   "description-placeholder": "Masukkan deskripsi profil Anda...",
   "location": "Lokasi",
   "location-placeholder": "misalnya Austin, TX",
-
   "copied": "Disalin",
   "copy": "Menyalin",
   "save-changes": "Simpan perubahan",
   "sign-out": "Keluar",
-
   "log-in": "Masuk",
   "session-settings": "Pengaturan sesi",
   "shared-session-click-to-join": "sedang berbagi — klik untuk bergabung",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "Pilih tema dan sesuaikan cara Kitab Suci dan antarmuka ditampilkan.",
   "scripture-settings": "Pengaturan Kitab Suci",
   "scripture-settings-font-size-example": "A",
-
   "all-settings": "Semua pengaturan",
   "no-extensions-available": "Tidak ada ekstensi yang tersedia.",
   "install": "Memasang",
   "uninstall": "Hapus instalasi",
-
   "custom": "Kebiasaan",
   "text-section-bookTitle": "Judul Buku Teks",
   "text-section-heading": "Teks Judul",
@@ -79,7 +73,6 @@
   "show-selected-items": "Tampilkan item yang dipilih",
   "show-highlight-colors": "Tampilkan warna-warna unggulan",
   "show-icon-text": "Tampilkan teks ikon",
-
   "extensions": "Ekstensi",
   "display": "Menampilkan",
   "keep-screen-awake": "Jaga agar layar tetap menyala.",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "Perbesar ukuran font ayat suci",
   "change-line-spacing": "Ubah spasi antar baris",
   "line-spacing_lineHeight": "Jarak antar baris: {{lineHeight}}",
-
   "italic": "Miring",
   "underline": "Menggarisbawahi",
   "alignment_x": "Penyelarasan: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "Warna teks",
   "follow_theme": "Ikuti tema",
   "reset-to-default": "Atur ulang ke pengaturan default",
-
   "id_highlight-text-color": "{{id}} sorot warna teks",
   "id_highlight-background-color": "{{id}} sorot warna latar belakang",
   "all-settings-description": "Sempurnakan setiap bagian teks dan sesuaikan setiap warna tema.",
@@ -126,7 +117,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "Perjanjian Baru",
   "apocrypha": "Tulisan yg diragukan pengarangnya",
-
   "custom-translations": "Terjemahan khusus",
   "no-translation-results-found": "Tidak ada hasil yang ditemukan. Apakah Anda ingin memperluas pencarian Anda untuk menyertakan terjemahan yang sebagian lengkap juga?",
   "show-all-translations": "Tampilkan semua terjemahan",
@@ -138,7 +128,6 @@
   "complete-translations": "Terjemahan lengkap",
   "all-translations": "Semua terjemahan",
   "popular-translations": "Terjemahan populer",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Mazmur",
   "2-psalms": "2 Mazmur",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "Buka semua pengaturan",
   "more": "Lagi",
   "remove-bookmark": "Hapus bookmark",
-
   "chat": "Mengobrol",
   "today": "Hari ini",
   "you": "Anda",
@@ -170,7 +158,6 @@
   "category-options": "Opsi folder",
   "rename": "Ganti nama",
   "delete": "Menghapus",
-
   "bookmark-options": "Opsi bookmark",
   "new-folder-placeholder": "Nama folder",
   "tasks": "Tugas",
@@ -182,11 +169,9 @@
   "folder-name-taken": "Folder dengan nama tersebut sudah ada.",
   "add-to-new": "Tambahkan ke yang baru",
   "save": "Menyimpan",
-
   "seed-bible": "Alkitab Benih",
   "take-photo": "Ambil foto",
   "choose-from-gallery": "Pilih dari galeri",
-
   "crop-your-photo": "Pangkas foto Anda",
   "zoom": "Zoom",
   "set-picture": "Atur gambar",
@@ -212,10 +197,8 @@
   "read-the-bible": "Bacalah Alkitab",
   "seed-bible-description": "Baca {{bookName}} {{chapterNumber}} di dalam Alkitab Benih.",
   "social-title": "Baca {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Navigasi bab",
   "tutorial.skip": "Melewati",
-
   "tutorial.back": "Kembali",
   "tutorial.done": "Selesai",
   "tutorial.next": "Berikutnya",
@@ -239,7 +222,6 @@
   "copied-translation-share-link": "Tautan berbagi terjemahan yang disalin",
   "less": "Lebih sedikit",
   "swipe-up-more": "Geser ke atas untuk melihat selengkapnya",
-  "plans": "Rencana",
   "reading-plans": "Rencana membaca",
   "create-reading-plan": "Buat rencana membaca",
   "reading-plans-empty": "Anda belum memiliki rencana membaca. Buatlah satu untuk memulai.",
@@ -328,11 +310,9 @@
   "study-notes": "Catatan belajar",
   "content": "Isi",
   "untitled-playlist": "Daftar putar tanpa judul",
-
   "discover-annotations-empty": "Anda tidak memiliki anotasi",
   "discover-cross-references-empty": "Tidak ada referensi silang untuk bab ini.",
   "discover-study-notes-empty": "Tidak ada catatan studi untuk bab ini.",
-
   "discover-select-tab": "Pilih tab untuk menemukan materi terkait.",
   "create-playlist": "Membuat",
   "playlist-title_placeholder": "Judul daftar putar",
@@ -381,12 +361,10 @@
   "delete-playlist-failed": "Tidak dapat menghapus daftar putar.",
   "collapsed-tab-shared-label": "{{title}} — sesi bersama, {{count}} hadir",
   "playlist-add-mode-label": "Jenis barang",
-
   "session-host-reconnected": "Terhubung kembali ke sesi",
   "session-host-left": "Host telah pergi — Anda telah dikeluarkan dari sesi.",
   "drag-to-reorder-playlist-item": "Seret untuk mengurutkan ulang",
   "saving": "Menyimpan…",
-
   "unsaved-item-confirm-message": "Anda mulai menambahkan item yang belum ditambahkan ke daftar putar. Apa yang ingin Anda lakukan?",
   "discard-and-save": "Buang dan simpan",
   "add-and-save": "Tambah dan simpan",
@@ -514,7 +492,6 @@
   "reading-plan-preview-reading": "Pratinjau {{reading}}",
   "reading-plan-mark-reading-complete": "Tandai bacaan selesai",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Tandai {{passage}} sebagai sudah dibaca",
   "reading-plan-read-nudge-title": "Bacaan yang menyenangkan!",
   "reading-plan-read-nudge-toast": "Apakah {{passage}} sudah selesai?",
@@ -522,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Baca, cari, dan pelajari Alkitab secara online. Terjemahan gratis dalam banyak bahasa, dengan sorotan, catatan, pembatas buku, dan rencana bacaan.",
   "all": "Semua",
-
   "today-bookmarks": "PENANDA BUKU",
   "today-search-verses": "Cari buku, bab, ayat....",
   "anonymous-greeting": "Selamat datang!",
   "community": "MASYARAKAT",
   "go-somewhere-new": "PERGI KE TEMPAT BARU",
-
   "open-bible": "Alkitab Terbuka",
   "personal-greeting": "Selamat datang, {{name}} !",
   "resume-reading": "LANJUTKAN DARI TEMPAT ANDA BERHENTI",
   "resume-reading-loading": "Memuat riwayat bacaan Anda…",
   "selected-year": "Tahun: {{year}}",
-
   "theme-light": "Lampu",
   "theme-dark": "Gelap",
   "installed-extensions": "Terpasang",
@@ -544,7 +518,6 @@
   "extension-state-installed": "Terpasang",
   "extension-state-downloaded": "Diunduh",
   "extension-state-pending": "Sedang memasang…",
-
   "tutorial.stepProgress": "Langkah {{current}} dari {{total}}",
   "tutorial.offlineDownloadTitle": "Ketuk untuk menyimpannya di perangkat Anda",
   "tutorial.offlineDownloadBody": "Terjemahan apa pun yang memiliki ikon ini dapat disimpan untuk dibaca secara offline.",
@@ -578,7 +551,6 @@
   "tutorial.paneLayoutBody": "Pilih berapa banyak bagian yang ingin dibaca berdampingan dari menu tata letak ini.",
   "tutorial.addTabTitle": "Buka lebih banyak bagian",
   "tutorial.addTabBody": "Tambahkan tab baru untuk membaca beberapa buku atau terjemahan secara berdampingan.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % selesai - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % selesai",
   "playlist-history-continue": "Melanjutkan",
@@ -637,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} catatan untuk bab ini",
   "create-folder": "Buat folder",
   "edit-bookmark": "Edit bookmark",
-
   "greeting-afternoon": "Selamat siang!",
   "greeting-afternoon-named": "Selamat siang, {{name}} !",
   "greeting-evening": "Selamat malam!",
@@ -653,32 +624,24 @@
   "ask-ai": "Tanyakan pada AI",
   "unread-mention": "Sebutan yang belum dibaca",
   "unread-messages": "Pesan yang belum dibaca: {{count}}",
-
   "scripture-width": "Lebar Kitab Suci",
   "decrease-scripture-width": "Kurangi lebar tulisan suci",
   "increase-scripture-width": "Memperlebar tulisan suci",
   "annotations": "Catatan",
   "discover-content-panel": "Temukan konten",
   "discover-book-title": "Temukan {{book}}",
-
   "about-title": "Tentang Seed Bible",
   "about-meta-description": "Seed Bible adalah aplikasi Alkitab gratis yang dibuat untuk membaca Kitab Suci bersama keluarga, teman, dan komunitas Anda — gratis selamanya, tanpa iklan atau biaya tambahan.",
-
   "about-action-open-passage": "Buka sebuah lorong",
   "about-action-donate": "Menyumbangkan",
   "about-action-discord": "Gabung ke Discord",
   "recent-uploads": "Unggahan terbaru",
-
   "customization-not-found": "Kustomisasi ini tidak ditemukan.",
   "customization-name": "Nama",
   "customization-primaryColor": "Utama",
-
   "customization-secondaryColor": "Sekunder",
-
   "customization-tertiaryColor": "Tersier",
-
   "customization-fonts": "Font",
-
   "custom-font-option": "Kebiasaan…",
   "custom-font-name-placeholder": "Nama Font Google",
   "delete-customization": "Menghapus",
@@ -691,10 +654,8 @@
   "extension-availability-available": "Tersedia",
   "extension-availability-auto-installed": "Terinstal secara otomatis",
   "extension-availability-hidden": "Tersembunyi",
-
   "variants": "Tema",
   "add-variant": "Tambahkan tema",
-
   "base-theme-description": "Perubahan yang akan digunakan tema ini sebagai pengaturan default untuk hal-hal yang belum Anda sesuaikan. Perubahan yang Anda buat sendiri akan tetap tersimpan.",
   "reset-to-base-theme": "Kembali ke tema dasar",
   "low-contrast-warning": "{{label}} : kontrasnya hanya {{ratio}} :1 — usahakan minimal {{minRatio}} :1 agar teks tetap mudah dibaca.",
@@ -740,14 +701,12 @@
   "save-folder-empty": "Belum ada penyimpanan di sini.",
   "save-options": "Simpan opsi",
   "saves": "Simpanan",
-
   "hide-saves": "Sembunyikan simpanan",
   "show-saves": "Tampilkan penyelamatan",
   "save-verses": "Menyimpan",
   "new-save-folder": "Folder baru",
   "edit-save": "Edit simpan",
   "remove-save-from-all-folders": "Hapus dari semua folder",
-
   "color-hue": "Warna",
   "color-saturation": "Kejenuhan dan kecerahan",
   "hex-color": "Warna heksadesimal",
@@ -862,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Editor pemformatan tidak dapat dimuat. Catatan ini memiliki pemformatan yang akan hilang, jadi catatan ini tidak dapat diedit sampai Anda terhubung kembali.",
   "annotation-text": "Teks anotasi",
   "notes-for-verse": "Catatan untuk ayat {{verse}}",
-
   "configure-extension-defaults": "Konfigurasi penggantian default",
-
   "extension-settings-defaults-title": "{{name}} penggantian default",
   "no-extension-settings": "Ekstensi ini tidak memiliki pengaturan yang dapat dikonfigurasi.",
   "extension-settings-save-failed": "Pengaturan Anda tidak dapat disimpan.",
@@ -873,7 +830,6 @@
   "setting-no-default": "Tidak ada nilai default",
   "override-setting": "Ganti {{name}}",
   "override-setting-label": "Mengesampingkan",
-
   "discover-choose-filter-hint": "Pilih filter di atas untuk melihat lebih banyak dari bab ini.",
   "take-a-tour": "Ikuti tur",
   "share-reading-plan": "Rencana berbagi",
@@ -1057,7 +1013,6 @@
   "my-bookmark-numbered": "Bookmark saya {{number}}",
   "bookmark-move-hint": "Ketuk penanda buku untuk memindahkannya ke bab ini.",
   "move-bookmark-here": "Pindahkan {{name}} ke sini",
-
   "play": "Bermain",
   "pause": "Berhenti sebentar",
   "audio-playback-position": "Posisi pemutaran",
@@ -1066,7 +1021,6 @@
   "audio-scrub-verse": "Ayat {{verse}}",
   "tab-playing-audio": "Memutar audio",
   "collapsed-tab-playing-label": "{{label}} — memutar audio",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} tema",
   "customization-theme-count_one": "tema {{count}}",
@@ -1105,7 +1059,6 @@
   "about-community-body": "Iman dimaksudkan untuk dijalani bersama. Seed Bible dirancang untuk membaca Kitab Suci bersama keluarga, teman-teman terdekat, dan jemaat gereja rumah Anda.",
   "discovered-content": "Konten yang Ditemukan",
   "show-discovered-content": "Tampilkan konten yang ditemukan",
-
   "extension-availability-default": "Default ( {{availability}} )",
   "customization-extensions-default": "Pengaturan default untuk ekstensi lainnya",
   "customization-extensions-default-hint": "Berlaku untuk setiap ekstensi yang belum Anda atur di bawah ini, termasuk ekstensi baru yang ditambahkan kemudian.",
@@ -1138,7 +1091,6 @@
   "playlist-scripture-note-return": "Kembali ke daftar putar",
   "playlist-scripture-note-aria": "Catatan pada {{passage}}",
   "playlist-scripture-note-progress": "{{current}} dari {{total}}",
-
   "unsaved-item-edit-confirm-message": "Anda telah mengubah suatu item tetapi belum menyimpan perubahan tersebut. Apa yang ingin Anda lakukan?",
   "keep-changes-and-save": "Simpan perubahan dan terapkan.",
   "reading-plan-edit-reading": "Mengedit bacaan",
@@ -1153,7 +1105,6 @@
   "branding": "Merek",
   "create-custom-branding-menu-item": "Branding Kustom",
   "your-content-empty-branding": "Branding kustom yang Anda buat akan muncul di sini.",
-
   "extension-consent-from": "Dari {{host}}",
   "extension-consent-source-version": "Versi {{version}} · dari {{host}}",
   "extension-consent-uploader-unnamed": "Pengguna Seed Bible",
@@ -1201,7 +1152,6 @@
   "extension-permission-reading-selection": "Lihat ayat mana yang Anda pilih",
   "extension-permission-reading-navigate": "Lorong terbuka",
   "extension-permission-network": "Terhubung ke {{host}}",
-
   "extension-consent-not-now": "Tidak sekarang",
   "extension-consent-nothing-yet": "Untuk saat ini, sistem tersebut tidak akan memiliki akses ke informasi Anda.",
   "extension-permission-reading-history": "Lihat riwayat bacaan Anda",
@@ -1239,7 +1189,6 @@
   "extension-capture-cancel": "Membatalkan",
   "extension-consent-high-risk": "Peka",
   "extension-modal-ok": "OKE",
-
   "extension-permissions-restart-note": "Perubahan berlaku segera. {{name}} akan memulai ulang untuk menerapkan perubahan tersebut.",
   "extension-permissions-saved": "Tersimpan. {{name}} dimulai ulang dengan izin baru.",
   "extension-permissions-failed": "Itu tidak tersimpan. Coba lagi.",
@@ -1277,8 +1226,67 @@
   "session-settings-verse-effects-desc-hosts": "Tampilkan efek saat pembawa acara memilih sebuah ayat.",
   "session-settings-verse-effects-desc-everyone": "Tampilkan efek saat siapa pun memilih sebuah ayat.",
   "session-settings-verse-effects-desc-none": "Efek pemilihan ayat dimatikan untuk semua orang.",
-
   "account": "Akun",
   "scroll-filters-start": "Gulir filter ke arah awal",
-  "scroll-filters-end": "Geser filter ke arah akhir"
+  "scroll-filters-end": "Geser filter ke arah akhir",
+  "download": "Unduh",
+  "image-details-uploaded": "Diunggah",
+  "image-details-dimensions": "Ukuran",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Jenis",
+  "image-details-cover-of": "Sampul",
+  "image-details-not-a-cover": "Tidak digunakan sebagai penutup",
+  "delete-customization-confirm-title": "Hapus Merek Kustom?",
+  "delete-customization-confirm-message": "Hapus Branding Kustom \" {{name}} \"? Ini tidak dapat dibatalkan.",
+  "delete-customization-failed": "Tidak dapat menghapus Branding Kustom.",
+  "delete-variant-confirm-title": "Hapus tema?",
+  "delete-variant-confirm-message": "Menghapus tema \" {{name}} ?> Tindakan ini tidak dapat dibatalkan.",
+  "delete-variant-confirm-message-unnamed": "Menghapus tema ini? Tindakan ini tidak dapat dibatalkan.",
+  "delete-variant-failed": "Tema tidak dapat dihapus.",
+  "delete-highlight-confirm-title": "Hapus sorotan?",
+  "delete-highlight-confirm-message": "Hapus penyorotan pada {{reference}} ? Ini tidak dapat dibatalkan.",
+  "delete-highlight-failed": "Tidak bisa menghapus sorotan.",
+  "delete-annotation-on-confirm-message": "Hapus anotasi pada {{reference}} ? Ini tidak dapat dibatalkan.",
+  "remove-from-folder": "Hapus dari folder",
+  "save-folders": "Di dalam {{folders}}",
+  "delete-save-confirm-title": "Hapus simpanan?",
+  "delete-save-confirm-message": "Hapus simpan untuk {{reference}} ? Ini tidak dapat dibatalkan.",
+  "delete-save-confirm-message-folders": "Hapus penyimpanan untuk {{reference}} dari {{folders}} ? Ini tidak dapat dibatalkan.",
+  "delete-save-failed": "Tidak dapat menghapus data simpanan.",
+  "delete-save-folder-confirm-title": "Hapus folder?",
+  "delete-save-folder-confirm-message": "Hapus folder \" {{name}} </?",
+  "delete-save-folder-confirm-deletes": "Sebanyak {{count}} penyimpanan yang hanya ada di folder ini juga akan dihapus.",
+  "delete-save-folder-confirm-deletes_one": "File penyimpanan yang hanya ada di folder ini juga akan dihapus.",
+  "delete-save-folder-confirm-deletes_other": "Sebanyak {{count}} penyimpanan yang hanya ada di folder ini juga akan dihapus.",
+  "delete-save-folder-confirm-keeps": "Sebanyak {{count}} penyimpanan yang juga berada di folder lain akan tetap berada di sana.",
+  "delete-save-folder-confirm-keeps_one": "File simpanan yang juga berada di folder lain akan tetap berada di sana.",
+  "delete-save-folder-confirm-keeps_other": "Sebanyak {{count}} penyimpanan yang juga berada di folder lain akan tetap berada di sana.",
+  "cant-be-undone": "Ini tidak bisa dibatalkan.",
+  "delete-save-folder-failed": "Folder tersebut tidak dapat dihapus.",
+  "download-image-failed": "Gambar tidak dapat diunduh.",
+  "session-settings-verse-effects-hosts-only": "Hanya untuk tuan rumah",
+  "session-settings-verse-effects-everyone": "Setiap orang",
+  "session-settings-verse-effects-none": "Tidak ada",
+  "loading-books": "Memuat buku…",
+  "books-load-failed": "Buku-buku tidak dapat dimuat. Periksa koneksi Anda dan coba lagi.",
+  "loading-translation": "Memuat {{name}} …",
+  "translation-load-failed": "{{name}} tidak dapat dimuat.",
+  "loading-translations": "Sedang memuat terjemahan…",
+  "translations-load-failed": "Daftar terjemahan lengkap tidak dapat dimuat, jadi beberapa mungkin hilang.",
+  "verse-of-the-day": "AYAT HARI INI",
+  "verse-of-the-day-loading": "Memuat ayat hari ini…",
+  "delete-bookmark-confirm-title": "Hapus bookmark?",
+  "delete-bookmark-confirm-message": "Hapus \" {{name}} \"?",
+  "scripture-font": "Font Kitab Suci",
+  "ai-limits-title": "Sebelum Anda mengobrol dengan AI",
+  "ai-limits-intro": "AI dapat menjadi titik awal yang bermanfaat, tetapi ingatlah keterbatasannya:",
+  "ai-limits-mistakes": "Ia membuat kesalahan, dan bisa terdengar percaya diri ketika sedang salah.",
+  "ai-limits-agreeable": "Informasi tersebut cenderung memberi tahu Anda apa yang ingin Anda dengar, dan condong ke jawaban yang populer.",
+  "ai-limits-scripture": "Ini bukan sumber yang dapat diandalkan. Periksa apa yang tertulis di dalamnya dengan membandingkannya dengan Kitab Suci.",
+  "ai-limits-study": "Pelajari Alkitab sendiri, dan jangan biarkan AI yang berpikir untuk Anda.",
+  "ai-limits-confirm": "Saya mengerti bahwa AI dapat membuat kesalahan dan bukanlah pengganti untuk mempelajari Alkitab sendiri.",
+  "friends-playlists-filter": "Daftar putar teman",
+  "friend-link-social-title": "Tambahkan {{name}} sebagai teman",
+  "friend-link-meta-description": "{{name}} ingin berteman denganmu di {{brand}}",
+  "friend-link-title": "Tambahkan {{name}} sebagai teman di {{brand}}"
 }

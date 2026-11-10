@@ -9,6 +9,7 @@ import { readInjectedConfig } from "../../../../packages/seed-bible/seed-bible/a
 import { readInjectedApiResponseSnapshot } from "../../../../packages/seed-bible/seed-bible/app/apiResponseSeed";
 import { readInjectedCustomizationSeed } from "../../../../packages/seed-bible/seed-bible/app/customizationSeed";
 import { decideHydration } from "../../../../packages/seed-bible/seed-bible/app/hydrationGate";
+import { readInjectedFriendLinkSeed } from "../../../../packages/seed-bible/seed-bible/app/friendLinkSeed";
 
 const TEMPLATE = readFileSync(
   path.resolve(__dirname, "../../../../index.html"),
@@ -65,6 +66,7 @@ describe("fillNativeShellPlaceholders", () => {
     ).toEqual({ hydrate: false, reason: "no-ssr-content" });
     expect(readInjectedApiResponseSnapshot()).toEqual({});
     expect(readInjectedCustomizationSeed()).toBeUndefined();
+    expect(readInjectedFriendLinkSeed()).toBeUndefined();
     expect(document.documentElement.getAttribute("lang")).toBe("en");
   });
 

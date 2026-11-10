@@ -52,6 +52,7 @@ export function fillNativeShellPlaceholders(
     CUSTOMIZATION_JSON: "null",
     PLAYLIST_PAGE_JSON: "null",
     READING_PLAN_PAGE_JSON: "null",
+    FRIEND_LINK_JSON: "null",
     APP_HTML: "",
   };
   return html.replace(

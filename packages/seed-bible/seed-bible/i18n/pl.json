@@ -28,22 +28,18 @@
   "searching": "Badawczy...",
   "no-search-results": "Brak pasujących wersetów.",
   "open-chapter": "Otwórz rozdział",
-
   "uploading": "Przesyłanie...",
   "profile-name": "Nazwa profilu",
   "profile-name-placeholder": "np. rodzina Craigów",
-
   "description": "Opis",
   "optional": "(Fakultatywny)",
   "description-placeholder": "Wprowadź opis swojego profilu...",
   "location": "Lokalizacja",
   "location-placeholder": "np. Austin, TX",
-
   "copied": "Skopiowano",
   "copy": "Kopia",
   "save-changes": "Zapisz zmiany",
   "sign-out": "Wyloguj się",
-
   "log-in": "Zaloguj się",
   "tanakh": "Tanach",
   "traditional": "Tradycyjny",
@@ -57,7 +53,6 @@
   "scripture-settings": "Ustawienia Pisma Świętego",
   "scripture-elements": "Elementy Pisma Świętego",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Pokaż nagłówki",
   "show-verse-numbers": "Pokaż numery wersetów",
   "show-footnotes": "Pokaż przypisy",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Brak dostępnych rozszerzeń.",
   "install": "Zainstalować",
   "uninstall": "Odinstaluj",
-
   "custom": "Zwyczaj",
   "text-section-bookTitle": "Tytuł książki Tekst",
   "text-section-heading": "Tekst nagłówka",
@@ -92,7 +86,6 @@
   "show-selected-items": "Pokaż wybrane elementy",
   "show-highlight-colors": "Pokaż kolory wyróżnień",
   "show-icon-text": "Pokaż tekst ikony",
-
   "extensions": "Rozszerzenia",
   "display": "Wyświetlacz",
   "theme-and-text": "Motyw i tekst",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Zwiększ rozmiar czcionki pisma świętego",
   "change-line-spacing": "Zmień odstępy między wierszami",
   "line-spacing_lineHeight": "Odstępy między wierszami: {{lineHeight}}",
-
   "italic": "italski",
   "underline": "Podkreślać",
   "alignment_x": "Wyrównanie: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Kolor tekstu",
   "follow_theme": "Śledź motyw",
   "reset-to-default": "Przywróć ustawienia domyślne",
-
   "id_highlight-text-color": "{{id}} kolor podświetlenia tekstu",
   "id_highlight-background-color": "{{id}} podświetl kolor tła",
   "all-settings-description": "Dopracuj każdą sekcję tekstu i dostosuj każdy kolor motywu.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokryfy",
-
   "custom-translations": "Tłumaczenia niestandardowe",
   "no-translation-results-found": "Nie znaleziono wyników. Czy chcesz rozszerzyć wyszukiwanie o tłumaczenia częściowo kompletne?",
   "show-all-translations": "Pokaż wszystkie tłumaczenia",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalmy",
   "5-psalms": "5 Psalmów",
   "remove-bookmark": "Usuń zakładkę",
-
   "chat": "Pogawędzić",
   "today": "Dzisiaj",
   "you": "Ty",
@@ -169,7 +158,6 @@
   "category-options": "Opcje folderów",
   "rename": "Przemianować",
   "delete": "Usuwać",
-
   "bookmark-options": "Opcje zakładek",
   "new-folder-placeholder": "Nazwa folderu",
   "tasks": "Zadania",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Folder o takiej nazwie już istnieje.",
   "add-to-new": "Dodaj do nowego",
   "save": "Ratować",
-
   "apocrypha-info-text": "Żadne z pism w tej sekcji nigdy nie zostało uznane za Pismo Święte przez wczesne społeczności żydowskie lub chrześcijańskie. Biblia jest specyficznym zbiorem ksiąg. Żydzi i chrześcijanie zawsze zgadzali się co do Starego Testamentu, który pochodzi z ustalonego zbioru pism świętych, które Żydzi nazywali Tanachem, a chrześcijanie Starym Testamentem. Treść Tanachu i Starego Testamentu jest dokładnie taka sama, ale zazwyczaj jest inaczej ułożona. Chrześcijanie dodatkowo uznają Nowy Testament, który opowiada historię Jezusa, jego nauki i pisma jego naśladowców. Poniższe pisma były znane i powszechnie czytane w czasach, gdy pisano Biblię, ale nigdy nie były traktowane jako Pismo Święte. Chociaż starożytni autorzy czasami cytowali szeroki zakres tekstów, w tym poetów, filozofów i inne pisma, cytowanie czegoś nie jest równoznaczne z traktowaniem tego jako Pisma Świętego. Pisma te zostały tutaj zamieszczone wyłącznie w celach historycznych i literackich.",
   "seed-bible": "Biblia nasion",
   "take-photo": "Zrób zdjęcie",
   "choose-from-gallery": "Wybierz z galerii",
-
   "crop-your-photo": "Przytnij swoje zdjęcie",
   "zoom": "Brzęczenie",
   "set-picture": "Ustaw obraz",
@@ -211,10 +197,8 @@
   "read-the-bible": "Przeczytaj Biblię",
   "seed-bible-description": "Przeczytaj {{bookName}} {{chapterNumber}} w Biblii Nasion",
   "social-title": "Przeczytaj {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Nawigacja po rozdziałach",
   "tutorial.skip": "Pominąć",
-
   "tutorial.back": "Z powrotem",
   "tutorial.done": "Zrobione",
   "tutorial.next": "Następny",
@@ -238,7 +222,6 @@
   "copied-translation-share-link": "Skopiowano tłumaczenie, udostępnij link",
   "less": "Mniej",
   "swipe-up-more": "Przesuń w górę, aby zobaczyć więcej",
-  "plans": "Plany",
   "reading-plans": "Plany czytelnicze",
   "create-reading-plan": "Utwórz plan czytania",
   "reading-plans-empty": "Nie masz jeszcze żadnych planów czytania. Utwórz jeden, aby zacząć.",
@@ -327,11 +310,9 @@
   "study-notes": "Notatki do nauki",
   "content": "Treść",
   "untitled-playlist": "Lista odtwarzania bez tytułu",
-
   "discover-annotations-empty": "Nie masz żadnych adnotacji",
   "discover-cross-references-empty": "Brak odnośników do tego rozdziału.",
   "discover-study-notes-empty": "Brak notatek do nauki do tego rozdziału.",
-
   "discover-select-tab": "Wybierz kartę, aby odkryć powiązane materiały.",
   "create-playlist": "Tworzyć",
   "playlist-title_placeholder": "Tytuł playlisty",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "Nie udało się usunąć listy odtwarzania.",
   "collapsed-tab-shared-label": "{{title}} — sesja współdzielona, ​​obecnych jest {{count}}",
   "playlist-add-mode-label": "Typ przedmiotu",
-
   "session-host-reconnected": "Ponownie połączony z sesją",
   "session-host-left": "Gospodarz opuścił sesję — zostałeś usunięty z sesji",
   "drag-to-reorder-playlist-item": "Przeciągnij, aby zmienić kolejność",
   "saving": "Zapisywanie…",
-
   "unsaved-item-confirm-message": "Zacząłeś dodawać element, który nie został jeszcze dodany do playlisty. Co chcesz zrobić?",
   "discard-and-save": "Odrzuć i zapisz",
   "add-and-save": "Dodaj i zapisz",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "Podgląd {{reading}}",
   "reading-plan-mark-reading-complete": "Zaznacz odczyt zakończony",
   "reading-plan-link-video": "Wideo",
-
   "reading-plan-mark-passage-complete": "Oznacz {{passage}} jako przeczytany",
   "reading-plan-read-nudge-title": "Miłej lektury!",
   "reading-plan-read-nudge-toast": "Czy oznaczyć {{passage}} jako ukończony?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Czytaj, przeszukuj i studiuj Biblię online. Darmowe tłumaczenia w wielu językach, z zaznaczeniami, notatkami, zakładkami i planami czytania.",
   "all": "Wszystko",
-
   "today-bookmarks": "ZAKŁADKI",
   "today-search-verses": "Szukaj ksiąg, rozdziałów, wersetów....",
   "anonymous-greeting": "Powitanie!",
   "community": "WSPÓLNOTA",
   "go-somewhere-new": "IDŹ GDZIEŚ NOWEGO",
-
   "open-bible": "Otwarta Biblia",
   "personal-greeting": "Witaj, {{name}} !",
   "resume-reading": "KONTYNUUJ TAM, GDZIE ZAKOŃCZYŁEŚ",
   "resume-reading-loading": "Ładowanie historii odczytów…",
   "selected-year": "Rok: {{year}}",
-
   "theme-light": "Światło",
   "theme-dark": "Ciemny",
   "installed-extensions": "Zainstalowano",
@@ -543,7 +518,6 @@
   "extension-state-installed": "Zainstalowano",
   "extension-state-downloaded": "Pobrano",
   "extension-state-pending": "Instalowanie…",
-
   "tutorial.stepProgress": "Krok {{current}} z {{total}}",
   "tutorial.offlineDownloadTitle": "Kliknij, aby zachować na swoim urządzeniu",
   "tutorial.offlineDownloadBody": "Każde tłumaczenie oznaczone tą ikoną można zapisać do czytania w trybie offline.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "Wybierz z menu układu, ile fragmentów chcesz czytać obok siebie.",
   "tutorial.addTabTitle": "Otwórz więcej przejść",
   "tutorial.addTabBody": "Dodaj nową kartę, aby czytać kilka książek lub tłumaczeń obok siebie.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % ukończono - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ukończono",
   "playlist-history-continue": "Kontynuować",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} notatek do tego rozdziału",
   "create-folder": "Utwórz folder",
   "edit-bookmark": "Edytuj zakładkę",
-
   "greeting-afternoon": "Dzień dobry!",
   "greeting-afternoon-named": "Dzień dobry, {{name}} !",
   "greeting-evening": "Dobry wieczór!",
@@ -652,32 +624,24 @@
   "ask-ai": "Zapytaj AI",
   "unread-mention": "Nieprzeczytana wzmianka",
   "unread-messages": "Nieprzeczytane wiadomości: {{count}}",
-
   "scripture-width": "Szerokość Pisma Świętego",
   "decrease-scripture-width": "Zmniejsz szerokość fragmentu Pisma Świętego",
   "increase-scripture-width": "Zwiększ szerokość pisma",
   "annotations": "Adnotacje",
   "discover-content-panel": "Odkryj zawartość",
   "discover-book-title": "Odkryj {{book}}",
-
   "about-title": "O Biblii Nasion",
   "about-meta-description": "Seed Bible to bezpłatna aplikacja biblijna stworzona do wspólnego czytania Pisma Świętego z rodziną, przyjaciółmi i społecznością — bezpłatna na zawsze, bez reklam i opłat.",
-
   "about-action-open-passage": "Otwórz przejście",
   "about-action-donate": "Podarować",
   "about-action-discord": "Dołącz do Discorda",
   "recent-uploads": "Ostatnio przesłane",
-
   "customization-not-found": "Nie znaleziono tej personalizacji.",
   "customization-name": "Nazwa",
   "customization-primaryColor": "Podstawowy",
-
   "customization-secondaryColor": "Wtórny",
-
   "customization-tertiaryColor": "Trzeciorzędowy",
-
   "customization-fonts": "Czcionki",
-
   "custom-font-option": "Zwyczaj…",
   "custom-font-name-placeholder": "Nazwa czcionki Google",
   "delete-customization": "Usuwać",
@@ -690,10 +654,8 @@
   "extension-availability-available": "Dostępny",
   "extension-availability-auto-installed": "Automatycznie zainstalowany",
   "extension-availability-hidden": "Ukryty",
-
   "variants": "Tematy",
   "add-variant": "Dodaj motyw",
-
   "base-theme-description": "Zmiany, do których ten motyw się odwołuje, dotyczą wszystkiego, czego nie zmieniłeś. Twoje własne zmiany zostaną zachowane.",
   "reset-to-base-theme": "Przywróć motyw bazowy",
   "low-contrast-warning": "{{label}} : kontrast wynosi tylko {{ratio}} :1 — staraj się uzyskać co najmniej {{minRatio}} :1, aby tekst pozostał czytelny.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "Nie ma tu jeszcze żadnych zapisów.",
   "save-options": "Zapisz opcje",
   "saves": "Zapisuje",
-
   "hide-saves": "Ukryj zapisy",
   "show-saves": "Pokaż zapisy",
   "save-verses": "Ratować",
   "new-save-folder": "Nowy folder",
   "edit-save": "Edytuj zapisz",
   "remove-save-from-all-folders": "Usuń ze wszystkich folderów",
-
   "color-hue": "Odcień",
   "color-saturation": "Nasycenie i jasność",
   "hex-color": "Kolor szesnastkowy",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Edytor formatowania nie mógł się załadować. Ta notatka zawiera formatowanie, które zostałoby utracone, więc nie można jej edytować do czasu ponownego połączenia.",
   "annotation-text": "Tekst adnotacji",
   "notes-for-verse": "Notatki do wersetu {{verse}}",
-
   "configure-extension-defaults": "Konfiguruj domyślne nadpisania",
-
   "extension-settings-defaults-title": "{{name}} domyślne zastąpienia",
   "no-extension-settings": "To rozszerzenie nie ma konfigurowalnych ustawień.",
   "extension-settings-save-failed": "Nie udało się zapisać ustawień.",
@@ -872,7 +830,6 @@
   "setting-no-default": "Brak wartości domyślnej",
   "override-setting": "Nadpisz {{name}}",
   "override-setting-label": "Prześcigać",
-
   "discover-choose-filter-hint": "Aby zobaczyć więcej treści z tego rozdziału, wybierz filtr powyżej.",
   "take-a-tour": "Wybierz się na wycieczkę",
   "share-reading-plan": "Udostępnij plan",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "Moja zakładka {{number}}",
   "bookmark-move-hint": "Kliknij zakładkę, aby przenieść ją do tego rozdziału.",
   "move-bookmark-here": "Przenieś {{name}} tutaj",
-
   "play": "Grać",
   "pause": "Pauza",
   "audio-playback-position": "Pozycja odtwarzania",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "Wiersz {{verse}}",
   "tab-playing-audio": "Odtwarzanie dźwięku",
   "collapsed-tab-playing-label": "{{label}} — odtwarzanie dźwięku",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} motywów",
   "customization-theme-count_one": "{{count}} motyw",
@@ -1104,7 +1059,6 @@
   "about-community-body": "Wiara jest po to, by żyć razem. Seed Bible została stworzona do czytania Pisma Świętego z rodziną, najbliższymi przyjaciółmi i kościołem domowym.",
   "discovered-content": "Odkryta treść",
   "show-discovered-content": "Pokaż odkrytą treść",
-
   "extension-availability-default": "Domyślne ( {{availability}} )",
   "customization-extensions-default": "Domyślne dla innych rozszerzeń",
   "customization-extensions-default-hint": "Dotyczy każdego rozszerzenia, którego nie ustawiłeś poniżej, w tym nowych rozszerzeń dodanych później",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "Powrót do listy odtwarzania",
   "playlist-scripture-note-aria": "Notatka na temat {{passage}}",
   "playlist-scripture-note-progress": "{{current}} z {{total}}",
-
   "unsaved-item-edit-confirm-message": "Zmieniłeś element, ale jeszcze nie zapisałeś zmian. Co chcesz zrobić?",
   "keep-changes-and-save": "Zachowaj zmiany i zapisz",
   "reading-plan-edit-reading": "Edytuj czytanie",
@@ -1152,7 +1105,6 @@
   "branding": "Branding",
   "create-custom-branding-menu-item": "Branding niestandardowy",
   "your-content-empty-branding": "Tutaj będzie wyświetlana Twoja niestandardowa marka.",
-
   "extension-consent-from": "Od {{host}}",
   "extension-consent-source-version": "Wersja {{version}} · z {{host}}",
   "extension-consent-uploader-unnamed": "Użytkownik Biblii Nasion",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "Zobacz, które wersety wybierzesz",
   "extension-permission-reading-navigate": "Otwarte przejścia",
   "extension-permission-network": "Połącz się z {{host}}",
-
   "extension-consent-not-now": "Nie teraz",
   "extension-consent-nothing-yet": "Na razie nie będzie miał dostępu do żadnych Twoich informacji.",
   "extension-permission-reading-history": "Zobacz historię swoich lektur",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "Anulować",
   "extension-consent-high-risk": "Wrażliwy",
   "extension-modal-ok": "OK",
-
   "extension-permissions-restart-note": "Zmiany wchodzą w życie natychmiast. {{name}} uruchamia się ponownie, aby je uwzględnić.",
   "extension-permissions-saved": "Zapisano. {{name}} został uruchomiony ponownie z nowymi uprawnieniami.",
   "extension-permissions-failed": "Nie zapisano. Spróbuj ponownie.",
@@ -1276,8 +1226,67 @@
   "session-settings-verse-effects-desc-hosts": "Pokaż efekty, gdy gospodarz wybierze werset.",
   "session-settings-verse-effects-desc-everyone": "Pokaż efekty, gdy ktoś zaznaczy werset.",
   "session-settings-verse-effects-desc-none": "Efekty wyboru wersetów są wyłączone dla wszystkich.",
-
   "account": "Konto",
   "scroll-filters-start": "Przewiń filtry w stronę początku",
-  "scroll-filters-end": "Przewiń filtry do końca"
+  "scroll-filters-end": "Przewiń filtry do końca",
+  "download": "Pobierać",
+  "image-details-uploaded": "Załadowany",
+  "image-details-dimensions": "Wymiary",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Typ",
+  "image-details-cover-of": "Okładka",
+  "image-details-not-a-cover": "Nie używany jako okładka",
+  "delete-customization-confirm-title": "Usunąć niestandardową markę?",
+  "delete-customization-confirm-message": "Usunąć niestandardową markę „ {{name}} ”? Tego nie można cofnąć.",
+  "delete-customization-failed": "Nie można usunąć niestandardowej marki.",
+  "delete-variant-confirm-title": "Usunąć motyw?",
+  "delete-variant-confirm-message": "Usunąć motyw „ {{name}} ”? Tego nie da się cofnąć.",
+  "delete-variant-confirm-message-unnamed": "Usunąć ten motyw? Tego nie da się cofnąć.",
+  "delete-variant-failed": "Nie udało się usunąć motywu.",
+  "delete-highlight-confirm-title": "Usunąć wyróżnienie?",
+  "delete-highlight-confirm-message": "Usunąć wyróżnienie w {{reference}} ? Tego nie da się cofnąć.",
+  "delete-highlight-failed": "Nie udało się usunąć wyróżnienia.",
+  "delete-annotation-on-confirm-message": "Usunąć adnotację z {{reference}} ? Tego nie da się cofnąć.",
+  "remove-from-folder": "Usuń z folderu",
+  "save-folders": "W {{folders}}",
+  "delete-save-confirm-title": "Usunąć zapis?",
+  "delete-save-confirm-message": "Usunąć zapis dla {{reference}} ? Tego nie można cofnąć.",
+  "delete-save-confirm-message-folders": "Usunąć zapis dla {{reference}} z {{folders}} ? Tego nie można cofnąć.",
+  "delete-save-failed": "Nie udało się usunąć zapisu.",
+  "delete-save-folder-confirm-title": "Usunąć folder?",
+  "delete-save-folder-confirm-message": "Usunąć folder „ {{name}} ”?",
+  "delete-save-folder-confirm-deletes": "{{count}} zapisów znajdujących się wyłącznie w tym folderze również zostanie usuniętych.",
+  "delete-save-folder-confirm-deletes_one": "Zapis znajdujący się wyłącznie w tym folderze również zostanie usunięty.",
+  "delete-save-folder-confirm-deletes_other": "{{count}} zapisów znajdujących się wyłącznie w tym folderze również zostanie usuniętych.",
+  "delete-save-folder-confirm-keeps": "{{count}} zapisów znajdujących się również w innych folderach pozostanie w nich.",
+  "delete-save-folder-confirm-keeps_one": "Zapisany plik znajdujący się w innym folderze pozostanie tam.",
+  "delete-save-folder-confirm-keeps_other": "{{count}} zapisów znajdujących się również w innych folderach pozostanie w nich.",
+  "cant-be-undone": "Tego nie da się cofnąć.",
+  "delete-save-folder-failed": "Nie udało się usunąć folderu.",
+  "download-image-failed": "Nie udało się pobrać obrazu.",
+  "session-settings-verse-effects-hosts-only": "Tylko dla gospodarzy",
+  "session-settings-verse-effects-everyone": "Wszyscy",
+  "session-settings-verse-effects-none": "Nic",
+  "loading-books": "Ładowanie książek…",
+  "books-load-failed": "Nie udało się załadować książek. Sprawdź połączenie i spróbuj ponownie.",
+  "loading-translation": "Ładowanie {{name}} …",
+  "translation-load-failed": "Nie udało się załadować {{name}} .",
+  "loading-translations": "Ładowanie tłumaczeń…",
+  "translations-load-failed": "Nie udało się załadować pełnej listy tłumaczeń, więc niektóre mogą być niedostępne.",
+  "verse-of-the-day": "WERSET DNIA",
+  "verse-of-the-day-loading": "Ładowanie wersetu dnia…",
+  "delete-bookmark-confirm-title": "Usunąć zakładkę?",
+  "delete-bookmark-confirm-message": "Usunąć „ {{name}} ”?",
+  "scripture-font": "Czcionka Pisma Świętego",
+  "ai-limits-title": "Zanim porozmawiasz ze sztuczną inteligencją",
+  "ai-limits-intro": "Sztuczna inteligencja może być pomocnym punktem wyjścia, ale należy pamiętać o jej ograniczeniach:",
+  "ai-limits-mistakes": "Popełnia błędy i potrafi sprawiać wrażenie pewnego siebie, gdy się myli.",
+  "ai-limits-agreeable": "Zwykle mówi ci to, co chcesz usłyszeć i skłania się ku popularnym odpowiedziom.",
+  "ai-limits-scripture": "To nie jest wiarygodne źródło. Sprawdź, co jest tam napisane, porównując je z Pismem Świętym.",
+  "ai-limits-study": "Studiuj Biblię samodzielnie i nie pozwól, aby sztuczna inteligencja myślała za ciebie.",
+  "ai-limits-confirm": "Rozumiem, że sztuczna inteligencja może popełniać błędy i nie zastąpi osobistego studiowania Biblii.",
+  "friends-playlists-filter": "Listy odtwarzania znajomych",
+  "friend-link-social-title": "Dodaj {{name}} jako znajomego",
+  "friend-link-meta-description": "{{name}} chce zostać Twoim znajomym w {{brand}}",
+  "friend-link-title": "Dodaj {{name}} jako znajomego w {{brand}}"
 }

@@ -68,9 +68,10 @@ const Card = ({
 /**
  * The "/{lang}/about" page — a static, crawlable primer on what the Seed
  * Bible is, why it's being built, and what it can do. Rendered as a real
- * fullscreen pane (see `SeedBibleStateManager.tsx`'s About pane wiring),
- * which supplies its own header/close button, so this component owns only
- * the letter content and its actions — not a page-level title bar.
+ * fullscreen pane (see `SeedBibleStateManager.tsx`'s About pane wiring) with
+ * its header hidden — the hero card names the page — so there is no close
+ * button: it's left by picking a tab. This component owns only the letter
+ * content and its actions.
  */
 export function AboutPage({
   state,

@@ -76,7 +76,7 @@ export interface TestHostOptions {
    *
    * @example
    * answers: {
-   *   "bible.chapter": () => ({ verses: [{ number: 1, text: "In the beginning…" }] }),
+   *   "bible.translations": () => [],
    * }
    */
   answers?: { [M in SandboxMethod]?: TestAnswer<M> };

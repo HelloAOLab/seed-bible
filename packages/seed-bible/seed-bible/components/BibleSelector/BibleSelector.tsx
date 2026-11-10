@@ -42,10 +42,12 @@ import {
 } from "../../managers/OfflineTranslationsManager";
 import { downloadTranslationWithToast } from "../OfflineDownloadPrompt/downloadTranslationWithToast";
 import type { TutorialManager } from "../../managers/TutorialManager";
+import { Spinner } from "../Spinner/Spinner";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
 import { toShareableUrl } from "../../app/publicLinks";
+import { SearchBar as SearchField } from "../SearchBar/SearchBar";
 
 /**
  * CSS-only spotlight: the huge translucent box-shadow dims everything around
@@ -181,7 +183,7 @@ export function BibleSelector(props: BibleSelectorProps) {
           className ? ` ${className}` : ""
         }`}
         dir={isRtl ? "rtl" : "ltr"}
-        // Dim the app behind the panel only while a spotlight tour step is up.
+        // A spotlight tour step dims the app behind the panel further.
         style={
           tourStepId && !glowing ? { background: "rgba(0,0,0,0.6)" } : undefined
         }
@@ -273,6 +275,7 @@ const SearchBar = (props: {
     selectedTranslationBooks,
     selectedTranslation,
     openTabs,
+    booksStatus,
   } = bibleSelectorState;
 
   const selectedTestament = bibleSelectorState.selectedTestament;
@@ -316,29 +319,22 @@ const SearchBar = (props: {
               </div>
 
               <div
-                className="searchbar flex-align-center"
+                className="sb-selector-book-search"
                 style={
                   tourStepId === "selector-search" ? SPOTLIGHT_STYLE : undefined
                 }
               >
-                <span className="search-icon material-symbols-outlined">
-                  Search
-                </span>
-                <input
-                  type="text"
-                  placeholder={t("search-books", {
-                    defaultValue: "Search books...",
-                  })}
+                <SearchField
                   value={search.value}
-                  className="flex-1"
-                  onInput={(e) => {
-                    setSearch((e.target as HTMLInputElement).value);
-                  }}
+                  onInput={setSearch}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.keyCode === 13) {
                       handleEnter();
                     }
                   }}
+                  placeholder={t("search-books", {
+                    defaultValue: "Search books...",
+                  })}
                 />
               </div>
               <div
@@ -410,11 +406,15 @@ const SearchBar = (props: {
         style={tourStepId === "selector-books" ? SPOTLIGHT_STYLE : undefined}
       >
         {(!selectingTranslation.value || !isMobile.value) &&
-          selectedTranslationBooks.value?.books &&
-          selectedTestamentData.value &&
-          selectedTranslation.value && (
-            <SideBarBooks app={app} bibleSelectorState={bibleSelectorState} />
-          )}
+          (booksStatus.value === "ready" ? (
+            selectedTranslationBooks.value?.books &&
+            selectedTestamentData.value &&
+            selectedTranslation.value && (
+              <SideBarBooks app={app} bibleSelectorState={bibleSelectorState} />
+            )
+          ) : (
+            <BooksStatusMessage bibleSelectorState={bibleSelectorState} />
+          ))}
         {selectingTranslation.value && (
           <TranslationModal
             app={app}
@@ -427,6 +427,135 @@ const SearchBar = (props: {
       </div>
     </>
   );
+};
+
+/** Stands in for the book grid while its books load, or after they failed to. */
+const BooksStatusMessage = (props: {
+  bibleSelectorState: BibleSelectorState;
+}) => {
+  const { booksStatus, retryBooks } = props.bibleSelectorState;
+  const { t } = useI18n();
+
+  if (booksStatus.value === "loading") {
+    return (
+      <p className="sb-selector-status sb-selector-status--loading">
+        <Spinner />
+        {t("loading-books", { defaultValue: "Loading books…" })}
+      </p>
+    );
+  }
+
+  return (
+    <div className="sb-selector-status" role="alert">
+      <p>
+        {t("books-load-failed", {
+          defaultValue:
+            "The books couldn't be loaded. Check your connection and try again.",
+        })}
+      </p>
+      <button
+        type="button"
+        className="sb-selector-retry"
+        onClick={() => void retryBooks()}
+      >
+        {t("try-again", { defaultValue: "Try again" })}
+      </button>
+    </div>
+  );
+};
+
+/**
+ * Shown above the translation list while it can't be trusted to be complete:
+ * the full catalog is still downloading or failed to, or a translation the
+ * user picked is loading or failed to load.
+ */
+const TranslationListStatus = (props: {
+  bibleSelectorState: BibleSelectorState;
+}) => {
+  const {
+    catalogStatus,
+    retryCatalog,
+    translationLoad,
+    selectTranslation,
+    availableTranslations,
+    downloadedOnly,
+  } = props.bibleSelectorState;
+  const { t } = useI18n();
+
+  const load = translationLoad.value;
+  if (load) {
+    const translation = availableTranslations.value.find(
+      (candidate) => candidate.id === load.translationId
+    );
+    const name = translation?.shortName ?? load.translationId;
+    if (load.status === "loading") {
+      return (
+        <p className="sb-selector-status sb-selector-status--loading">
+          <Spinner />
+          {t("loading-translation", {
+            defaultValue: "Loading {{name}}…",
+            name,
+          })}
+        </p>
+      );
+    }
+    return (
+      <div className="sb-selector-status" role="alert">
+        <p>
+          {t("translation-load-failed", {
+            defaultValue: "{{name}} couldn't be loaded.",
+            name,
+          })}
+        </p>
+        <button
+          type="button"
+          className="sb-selector-retry"
+          onClick={() => void selectTranslation(load.translationId)}
+        >
+          {t("try-again", { defaultValue: "Try again" })}
+        </button>
+      </div>
+    );
+  }
+
+  // The saved-on-device list comes from the device itself, so it is complete
+  // without the catalog.
+  if (downloadedOnly.value) {
+    return null;
+  }
+
+  if (catalogStatus.value === "loading") {
+    return (
+      <p className="sb-selector-status sb-selector-status--loading">
+        <Spinner />
+        {t("loading-translations", {
+          defaultValue: "Loading translations…",
+        })}
+      </p>
+    );
+  }
+
+  if (catalogStatus.value === "failed") {
+    return (
+      <div className="sb-selector-status" role="alert">
+        <p>
+          {t("translations-load-failed", {
+            defaultValue:
+              "Couldn't load the full list of translations, so some may be missing.",
+          })}
+        </p>
+        <button
+          type="button"
+          className="sb-selector-retry"
+          onClick={() => retryCatalog()}
+        >
+          {t("try-again", { defaultValue: "Try again" })}
+        </button>
+      </div>
+    );
+  }
+
+  return null;
 };
 
 const SideBarBooks = (props: {
@@ -556,6 +685,7 @@ const SideBarBooks = (props: {
               aria-current={isSelected ? "true" : undefined}
               aria-expanded={isSelected}
               onClick={() => handleClick({ book })}
+              // find-the-verse-extension greys ruled-out books with #booktab-${id}.sidebar-itm. Renaming this id or class stops that grey with no type error.
               id={`booktab-${book.id}`}
               style={itemGridStyle}
             >
@@ -873,7 +1003,7 @@ const SideBarChapters = (props: {
       // Don't yank focus off the search field while the user is typing.
       // openBookId also changes when search narrows to a single book.
       const active = document.activeElement as HTMLElement | null;
-      if (!active?.closest(".searchbar")) {
+      if (!active?.closest(".sb-search-bar")) {
         bookTab.focus({ preventScroll: true });
       }
 
@@ -991,6 +1121,7 @@ const SideBarChapters = (props: {
       }, 1000);
       return (
         <button
+          // find-the-verse-extension greys ruled-out chapters with #chapter-btn-${n}.chapter-btn.
           id={`chapter-btn-${chapterNumber}`}
           style={
             isVisible === undefined
@@ -1504,26 +1635,17 @@ const TranslationModal = (props: {
                 close
               </span>
             )}
-            <div
-              className="searchbar flex-align-center"
-              style={{ width: "100%", height: "1.875rem" }}
-            >
-              <span className="search-icon material-symbols-outlined">
-                Search
-              </span>
-              <input
-                type="text"
-                placeholder={t("search-translation", {
-                  defaultValue: "Search Translation",
-                })}
-                value={languageQuery.value}
-                onChange={(e) => {
-                  languageQuery.value = (e.target as HTMLInputElement).value;
-                }}
-                id="translation-search-input"
-                className="flex-1"
-              />
-            </div>
+            <SearchField
+              id="translation-search-input"
+              className="sb-selector-translation-search"
+              value={languageQuery.value}
+              onInput={(value) => {
+                languageQuery.value = value;
+              }}
+              placeholder={t("search-translation", {
+                defaultValue: "Search Translation",
+              })}
+            />
             <span
               onClick={(e) => {
                 e.stopPropagation();
@@ -1571,6 +1693,7 @@ const TranslationModal = (props: {
               </button>
             </div>
           )}
+          <TranslationListStatus bibleSelectorState={bibleSelectorState} />
           {LanguageList}
           <div className="footer">
             <div

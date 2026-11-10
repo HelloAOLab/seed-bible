@@ -62,6 +62,7 @@ import {
   recordError,
   recordHttpRequest,
   recordRender,
+  recordRenderTimings,
   requestSpanAttributes,
   routeLabel,
   setResponseStatus,
@@ -495,8 +496,8 @@ export async function renderAndRespond(
           "seedbible.rendered_as_mobile": renderedAsMobile,
         },
       },
-      () =>
-        render({
+      async () => {
+        const rendered = await render({
           path: route.appUrl,
           config: {
             basePath: route.basePath,
@@ -506,7 +507,10 @@ export async function renderAndRespond(
             acceptedLanguages,
           },
           html: preRenderedHtml,
-        })
+        });
+        recordRenderTimings(rendered);
+        return rendered;
+      }
     );
   } catch (err) {
     renderFailed = true;
@@ -1099,8 +1103,8 @@ async function startDevServer(): Promise<void> {
               "seedbible.rendered_as_mobile": renderedAsMobile,
             },
           },
-          () =>
-            render({
+          async () => {
+            const rendered = await render({
               path: req.originalUrl,
               config: {
                 basePath: "",
@@ -1110,7 +1114,10 @@ async function startDevServer(): Promise<void> {
                 acceptedLanguages,
               },
               html: transformed,
-            })
+            });
+            recordRenderTimings(rendered);
+            return rendered;
+          }
         );
       } catch (e) {
         recordRender(renderStart, ROOT_BRANCH, true);
