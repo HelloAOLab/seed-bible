@@ -7,6 +7,9 @@ import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayMan
 import { PROFILE_PANE_ID } from "@packages/seed-bible/seed-bible/components/ProfilePane/ProfilePane";
 import { PLAYLIST_HISTORY_PANE_ID } from "@packages/seed-bible/seed-bible/components/PlaylistHistoryPane/PlaylistHistoryPane";
 import { EXTENSIONS_PANE_ID } from "@packages/seed-bible/seed-bible/components/ExtensionsPage/ExtensionsPage";
+import { DISCOVER_PANE_ID } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverPane";
+import { READING_PLANS_PANE_ID } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import { YOUR_CONTENT_PANE_ID } from "@packages/seed-bible/seed-bible/components/YourContentPane/YourContentPane";
 import {
   PlaylistPlayHistorySchema,
   PlaylistSchema,
@@ -37,10 +40,16 @@ import {
 import { batch, signal } from "@preact/signals";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
+import { BibleReaderToolbar } from "@packages/seed-bible/seed-bible/components/BibleReaderToolbar/BibleReaderToolbar";
+import type { UserInfo } from "@packages/seed-bible/seed-bible/managers";
+import { waitForCondition } from "../../references-extension/referencesTestState";
 
 // App defaults to the private API; shared mock maps target the free-use host.
 const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org";
-
+const testUser: UserInfo = {
+  id: "test-user",
+  email: "test@example.com",
+};
 const SPA_TRANSLATION: Translation = {
   id: "spa_onbv",
   name: "Open Nueva Biblia Viva",
@@ -3658,6 +3667,293 @@ describe("createSeedBibleState", () => {
     });
   });
 });
+describe("Profile return navigation", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const paneIds = (state: SeedBibleState) =>
+    state.panes.panes.value.map((pane) => pane.id);
+
+  it("remembers Today as the return target when Profile opens over Today", async () => {
+    const state = await createState();
+    state.today.open();
+    await Promise.resolve();
+
+    expect(state.today.isOpen.value).toBe(true);
+
+    state.openProfile();
+    await Promise.resolve();
+
+    expect(state.isProfileOpen.value).toBe(true);
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
+
+    state.restoreProfileReturnTarget();
+    await Promise.resolve();
+
+    expect(state.isProfileOpen.value).toBe(false);
+    expect(state.today.isOpen.value).toBe(true);
+    expect(paneIds(state)).toEqual([TODAY_PANE_ID]);
+  });
+
+  it("returns to the reader when Profile opens while Today is closed", async () => {
+    const state = await createState();
+
+    const selectedTabId = state.tabs.selectedTabId.value;
+    const readingState = state.tabs.tabs.value.find(
+      (tab) => tab.id === selectedTabId
+    )!.readingState;
+
+    const originalBookId = readingState.bookId.value;
+    const originalChapter = readingState.chapterNumber.value;
+
+    state.openProfile();
+    await Promise.resolve();
+
+    expect(state.isProfileOpen.value).toBe(true);
+
+    state.restoreProfileReturnTarget();
+    await Promise.resolve();
+
+    expect(state.isProfileOpen.value).toBe(false);
+    expect(state.today.isOpen.value).toBe(false);
+    expect(state.tabs.selectedTabId.value).toBe(selectedTabId);
+    expect(readingState.bookId.value).toBe(originalBookId);
+    expect(readingState.chapterNumber.value).toBe(originalChapter);
+    expect(paneIds(state)).not.toContain(PROFILE_PANE_ID);
+  });
+
+  it("defaults to the reader when Profile is opened directly from the URL", async () => {
+    jsdom.reconfigure({
+      url: "https://example.com/?profile=open",
+    });
+
+    const state = await createState();
+    await Promise.resolve();
+
+    expect(state.isProfileOpen.value).toBe(true);
+    expect(paneIds(state)).toContain(PROFILE_PANE_ID);
+
+    state.restoreProfileReturnTarget();
+    await Promise.resolve();
+
+    expect(state.isProfileOpen.value).toBe(false);
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIds(state)).not.toContain(PROFILE_PANE_ID);
+  });
+
+  it("preserves Today as the return target when Profile is opened again", async () => {
+    const state = await createState();
+
+    state.today.open();
+    await Promise.resolve();
+
+    state.openProfile();
+    await Promise.resolve();
+
+    expect(state.isProfileOpen.value).toBe(true);
+    expect(state.today.isOpen.value).toBe(false);
+
+    // Opening Profile again must not overwrite the original target.
+    state.openProfile();
+
+    state.restoreProfileReturnTarget();
+    await Promise.resolve();
+
+    expect(state.isProfileOpen.value).toBe(false);
+    expect(state.today.isOpen.value).toBe(true);
+    expect(paneIds(state)).toEqual([TODAY_PANE_ID]);
+  });
+
+  it("keeps Profile open and closes Today when sign-in is cancelled", async () => {
+    const state = await createState();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    try {
+      state.today.open();
+      await waitForCondition(() => state.today.isOpen.value);
+
+      state.openProfile({ fromToday: true });
+      await waitForCondition(() => state.isProfileOpen.value);
+
+      const pane = state.panes.panes.value.find(
+        (item) => item.id === PROFILE_PANE_ID
+      );
+      expect(pane).toBeDefined();
+
+      const Provider = await realI18nProvider();
+
+      act(() => {
+        render(
+          h(Provider, {
+            i18n: state.i18n,
+            children: pane!.component(),
+          }),
+          container
+        );
+      });
+
+      const loginButton =
+        container.querySelector<HTMLButtonElement>(".sb-profile-signin");
+      expect(loginButton).not.toBeNull();
+
+      await act(async () => {
+        loginButton!.click();
+      });
+
+      await act(async () => {
+        state.login.cancelLogin();
+
+        await waitForCondition(
+          () =>
+            state.isProfileOpen.value &&
+            !state.today.isOpen.value &&
+            state.panes.panes.value.some((item) => item.id === PROFILE_PANE_ID)
+        );
+      });
+
+      expect(state.isProfileOpen.value).toBe(true);
+      expect(state.today.isOpen.value).toBe(false);
+      expect(state.panes.panes.value.map((item) => item.id)).toContain(
+        PROFILE_PANE_ID
+      );
+    } finally {
+      render(null, container);
+      container.remove();
+    }
+  });
+
+  it("keeps Profile open when sign-in fails", async () => {
+    const state = await createState();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    const loginSpy = vi
+      .spyOn(state.login, "login")
+      .mockRejectedValue(new Error("Sign-in failed"));
+
+    const restoreSpy = vi.spyOn(state, "restoreProfileReturnTarget");
+
+    try {
+      state.openProfile();
+      await waitFor(() => state.isProfileOpen.value);
+
+      const pane = state.panes.panes.value.find(
+        (item) => item.id === PROFILE_PANE_ID
+      );
+
+      expect(pane).toBeDefined();
+      expect(state.isProfileOpen.value).toBe(true);
+
+      // Render the actual Profile pane.
+      const Provider = await realI18nProvider();
+
+      act(() => {
+        render(
+          h(Provider, {
+            i18n: state.i18n,
+            children: pane!.component(),
+          }),
+          container
+        );
+      });
+
+      const loginButton =
+        container.querySelector<HTMLButtonElement>(".sb-profile-signin");
+
+      expect(loginButton).not.toBeNull();
+
+      // Trigger the real sign-in button handler.
+      await act(async () => {
+        loginButton!.click();
+      });
+
+      expect(loginSpy).toHaveBeenCalledTimes(1);
+
+      // A failed sign-in must not restore the return target or close Profile.
+      expect(restoreSpy).not.toHaveBeenCalled();
+      expect(state.isProfileOpen.value).toBe(true);
+    } finally {
+      render(null, container);
+      container.remove();
+      loginSpy.mockRestore();
+      restoreSpy.mockRestore();
+    }
+  });
+  it("closes Profile and restores the return target after successful sign-in", async () => {
+    const state = await createState();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    const loginSpy = vi.spyOn(state.login, "login").mockResolvedValue(testUser);
+
+    try {
+      // Open Today first so it becomes Profile's return target.
+      state.today.open();
+      await waitFor(() => state.today.isOpen.value);
+
+      expect(state.today.isOpen.value).toBe(true);
+
+      state.openProfile({ fromToday: true });
+      await waitFor(() => state.isProfileOpen.value);
+
+      expect(state.isProfileOpen.value).toBe(true);
+
+      const pane = state.panes.panes.value.find(
+        (item) => item.id === PROFILE_PANE_ID
+      );
+      expect(pane).toBeDefined();
+
+      // Render the actual Profile pane so we can click its Log in button.
+      const Provider = await realI18nProvider();
+
+      act(() => {
+        render(
+          h(Provider, {
+            i18n: state.i18n,
+            children: pane!.component(),
+          }),
+          container
+        );
+      });
+
+      const loginButton =
+        container.querySelector<HTMLButtonElement>(".sb-profile-signin");
+
+      expect(loginButton).not.toBeNull();
+
+      // Exercise the real button handler.
+      await act(async () => {
+        loginButton!.click();
+
+        await waitFor(
+          () =>
+            !state.isProfileOpen.value &&
+            state.today.isOpen.value &&
+            state.panes.panes.value.some((item) => item.id === TODAY_PANE_ID)
+        );
+      });
+
+      expect(loginSpy).toHaveBeenCalledTimes(1);
+      expect(state.isProfileOpen.value).toBe(false);
+      expect(state.today.isOpen.value).toBe(true);
+      expect(state.panes.panes.value.map((item) => item.id)).toEqual([
+        TODAY_PANE_ID,
+      ]);
+    } finally {
+      render(null, container);
+      container.remove();
+      loginSpy.mockRestore();
+    }
+  });
+});
 
 /**
  * Today is a fullscreen pane, and `PanesManager` gives fullscreen panes the
@@ -3704,33 +4000,201 @@ describe("opening another screen while Today is up", () => {
     expect(paneIds(state)).toEqual(["test-fullscreen-pane"]);
     expect(state.today.isOpen.value).toBe(false);
   });
-
-  it("closes Today when a side pane opens, rather than hiding behind it", async () => {
+  it("restores Today after opening Profile from the phone toolbar and signing in", async () => {
     const state = await createState();
-    await openToday(state);
 
-    state.panes.openPane({
-      id: "test-side-pane",
-      placement: "side",
-      title: () => null,
-      component: () => null,
-    });
-    await Promise.resolve();
+    // Use the same responsive-state approach as the existing tests.
+    (state.app.viewportWidth as unknown as { value: number }).value =
+      MOBILE_BREAKPOINT - 1;
 
-    expect(paneIds(state)).toEqual(["test-side-pane"]);
-    expect(state.today.isOpen.value).toBe(false);
+    const toolbarContainer = document.createElement("div");
+    const profileContainer = document.createElement("div");
+
+    document.body.append(toolbarContainer, profileContainer);
+
+    const loginSpy = vi.spyOn(state.login, "login").mockResolvedValue(testUser);
+
+    try {
+      expect(state.app.isMobile.value).toBe(true);
+
+      // Open Today first.
+      await act(async () => {
+        state.today.open();
+        await waitFor(() => state.today.isOpen.value);
+      });
+
+      expect(state.today.isOpen.value).toBe(true);
+
+      const Provider = await realI18nProvider();
+
+      // Render the actual toolbar.
+      await act(async () => {
+        render(
+          h(Provider, {
+            i18n: state.i18n,
+            children: h(BibleReaderToolbar, { state }),
+          }),
+          toolbarContainer
+        );
+      });
+
+      // Find and click the mobile You tab.
+      const youButton = toolbarContainer.querySelector<HTMLButtonElement>(
+        '.sb-reader-toolbar-mobile-tab-button[aria-label="You"]'
+      );
+
+      expect(youButton).not.toBeNull();
+
+      await act(async () => {
+        youButton!.click();
+
+        await waitFor(
+          () => state.isProfileOpen.value && !state.today.isOpen.value
+        );
+      });
+
+      expect(state.isProfileOpen.value).toBe(true);
+      expect(state.today.isOpen.value).toBe(false);
+
+      // Render the Profile pane.
+      const profilePane = state.panes.panes.value.find(
+        (item) => item.id === PROFILE_PANE_ID
+      );
+
+      expect(profilePane).toBeDefined();
+
+      await act(async () => {
+        render(
+          h(Provider, {
+            i18n: state.i18n,
+            children: profilePane!.component(),
+          }),
+          profileContainer
+        );
+      });
+
+      // Click the actual sign-in button.
+      const loginButton =
+        profileContainer.querySelector<HTMLButtonElement>(".sb-profile-signin");
+
+      expect(loginButton).not.toBeNull();
+
+      await act(async () => {
+        loginButton!.click();
+
+        await waitFor(
+          () =>
+            !state.isProfileOpen.value &&
+            state.today.isOpen.value &&
+            state.panes.panes.value.length === 1 &&
+            state.panes.panes.value[0]!.id === TODAY_PANE_ID
+        );
+      });
+
+      // Profile closes and Today is restored after successful sign-in.
+      expect(loginSpy).toHaveBeenCalledTimes(1);
+      expect(state.isProfileOpen.value).toBe(false);
+      expect(state.today.isOpen.value).toBe(true);
+
+      expect(state.panes.panes.value.map((item) => item.id)).toEqual([
+        TODAY_PANE_ID,
+      ]);
+    } finally {
+      render(null, toolbarContainer);
+      render(null, profileContainer);
+
+      toolbarContainer.remove();
+      profileContainer.remove();
+
+      loginSpy.mockRestore();
+    }
   });
 
-  it("keeps the Profile screen up when it is opened over Today", async () => {
+  it("does not restore Today if Profile is closed before sign-in completes", async () => {
     const state = await createState();
-    await openToday(state);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
 
-    state.openProfile();
-    await Promise.resolve();
+    let resolveLogin!: (user: UserInfo | null) => void;
 
-    expect(state.isProfileOpen.value).toBe(true);
-    expect(state.today.isOpen.value).toBe(false);
-    expect(paneIds(state)).toEqual([PROFILE_PANE_ID]);
+    const loginPromise = new Promise<UserInfo | null>((resolve) => {
+      resolveLogin = resolve;
+    });
+
+    const loginSpy = vi
+      .spyOn(state.login, "login")
+      .mockReturnValue(loginPromise);
+
+    try {
+      // Today is the return target for Profile.
+      state.today.open();
+      await waitFor(() => state.today.isOpen.value);
+
+      expect(state.today.isOpen.value).toBe(true);
+
+      state.openProfile({ fromToday: true });
+      await waitFor(() => state.isProfileOpen.value);
+
+      expect(state.isProfileOpen.value).toBe(true);
+      expect(state.today.isOpen.value).toBe(false);
+
+      const pane = state.panes.panes.value.find(
+        (item) => item.id === PROFILE_PANE_ID
+      );
+      expect(pane).toBeDefined();
+
+      const Provider = await realI18nProvider();
+
+      act(() => {
+        render(
+          h(Provider, {
+            i18n: state.i18n,
+            children: pane!.component(),
+          }),
+          container
+        );
+      });
+
+      const loginButton =
+        container.querySelector<HTMLButtonElement>(".sb-profile-signin");
+
+      expect(loginButton).not.toBeNull();
+
+      // Start sign-in and leave its promise unresolved.
+      await act(async () => {
+        loginButton!.click();
+        await waitFor(() => loginSpy.mock.calls.length === 1);
+      });
+
+      expect(loginSpy).toHaveBeenCalledTimes(1);
+
+      // Close Profile while sign-in is still pending.
+      await act(async () => {
+        state.closeProfile();
+        await waitFor(() => !state.isProfileOpen.value);
+      });
+
+      expect(state.isProfileOpen.value).toBe(false);
+      expect(state.today.isOpen.value).toBe(false);
+
+      // Resolve sign-in after Profile has already closed.
+      await act(async () => {
+        resolveLogin(testUser);
+        await loginPromise;
+
+        await waitFor(
+          () => !state.isProfileOpen.value && !state.today.isOpen.value
+        );
+      });
+
+      // A late login result must not restore the previous return target.
+      expect(state.isProfileOpen.value).toBe(false);
+      expect(state.today.isOpen.value).toBe(false);
+    } finally {
+      render(null, container);
+      container.remove();
+      loginSpy.mockRestore();
+    }
   });
 
   it("opens playlist history as its own screen", async () => {
@@ -4108,6 +4572,208 @@ describe("continuing a playlist from Profile", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(state.isProfileOpen.value).toBe(false);
+  });
+});
+
+describe("editors opened from Profile and Your content", () => {
+  let container: HTMLDivElement;
+  let active: SeedBibleState | null = null;
+
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    if (active) {
+      active.os.sessionKey.value = null;
+      active = null;
+    }
+    render(null, container);
+    container.remove();
+    localStorage.removeItem("sessionKey");
+    vi.restoreAllMocks();
+  });
+
+  async function signedInDesktopState() {
+    const state = await createState();
+    active = state;
+    (state.app.viewportWidth as unknown as { value: number }).value = 1200;
+    vi.spyOn(state.os, "listAllData").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "listAllDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "listDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    } as never);
+    vi.spyOn(state.os, "recordData").mockResolvedValue({
+      success: true,
+    } as never);
+    vi.spyOn(state.os, "eraseData").mockResolvedValue({
+      success: true,
+    } as never);
+    state.os.sessionKey.value = formatV1SessionKey(
+      PLAYLIST_USER_ID,
+      "session-1",
+      "secret-1",
+      Date.now() + 60 * 60 * 1000
+    );
+    await waitFor(() => state.login.userId.value === PLAYLIST_USER_ID);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return state;
+  }
+
+  async function renderPane(state: SeedBibleState, paneId: string) {
+    await waitFor(() => state.panes.panes.value.some((p) => p.id === paneId));
+    const pane = state.panes.panes.value.find((p) => p.id === paneId);
+    const Provider = await realI18nProvider();
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: pane?.component() ?? null,
+        }),
+        container
+      );
+    });
+  }
+
+  function click(element: Element | null | undefined) {
+    if (!element) throw new Error("Nothing to click.");
+    act(() => {
+      element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  }
+
+  function playlistEditorBack() {
+    return container.querySelector(
+      '.sb-discover-title-row button[aria-label="Back"]'
+    );
+  }
+
+  // Docked rather than fullscreen, so a plan being built can take verses
+  // picked in the reader, the way the playlist editor can.
+  it("docks the plans pane beside the reader on desktop", async () => {
+    const state = await signedInDesktopState();
+    state.openProfile();
+    await renderPane(state, PROFILE_PANE_ID);
+
+    click(container.querySelector(".sb-profile-plans"));
+
+    const plansPane = state.app.effectivePanes.value.find(
+      (pane) => pane.id === READING_PLANS_PANE_ID
+    );
+    expect(plansPane?.placement).toBe("side");
+    expect(state.isProfileOpen.value).toBe(false);
+  });
+
+  it("returns to Your content when backing out of a playlist edited from there", async () => {
+    const state = await signedInDesktopState();
+    state.playlists.userPlaylists.value = [htmlPlaylist()];
+    state.openYourContent();
+    await renderPane(state, YOUR_CONTENT_PANE_ID);
+
+    click(container.querySelector(".sb-discover-item-menu"));
+    click(
+      Array.from(document.body.querySelectorAll(".sb-context-menu-item")).find(
+        (item) => item.textContent?.includes("Edit")
+      )
+    );
+    expect(state.isYourContentOpen.value).toBe(false);
+
+    await renderPane(state, DISCOVER_PANE_ID);
+    click(playlistEditorBack());
+
+    expect(state.playlists.editingPlaylist.value).toBeNull();
+    expect(state.isYourContentOpen.value).toBe(true);
+  });
+
+  it("stays in Discover when backing out of a playlist edited from Discover", async () => {
+    const state = await signedInDesktopState();
+    state.playlists.editPlaylist(htmlPlaylist());
+    await renderPane(state, DISCOVER_PANE_ID);
+
+    click(playlistEditorBack());
+
+    expect(state.playlists.editingPlaylist.value).toBeNull();
+    expect(state.isYourContentOpen.value).toBe(false);
+  });
+});
+
+describe("closing the Discover pane while a playlist plays", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  async function playInDiscoverPane() {
+    const state = await createState();
+    state.playlists.startPlaying(htmlPlaylist());
+    await waitFor(
+      () =>
+        state.playlists.actualView.value === "play_playlist" &&
+        state.panes.panes.value.some((pane) => pane.id === DISCOVER_PANE_ID)
+    );
+    return state;
+  }
+
+  it("stops playback when the user closes the pane from its close button", async () => {
+    const state = await playInDiscoverPane();
+    const pane = state.panes.panes.value.find(
+      (item) => item.id === DISCOVER_PANE_ID
+    );
+    const Provider = await realI18nProvider();
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: pane?.component() ?? null,
+        }),
+        container
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector(".sb-discover-panel-header-close")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => state.playlists.playing.value === null);
+    expect(
+      state.panes.panes.value.some((item) => item.id === DISCOVER_PANE_ID)
+    ).toBe(false);
+  });
+
+  it("keeps playing when the pane is closed by the app rather than the user", async () => {
+    const state = await playInDiscoverPane();
+
+    state.panes.closePane(DISCOVER_PANE_ID);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(state.playlists.playing.value).not.toBeNull();
   });
 });
 

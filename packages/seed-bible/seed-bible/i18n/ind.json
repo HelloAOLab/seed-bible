@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Tautan berbagi terjemahan yang disalin",
   "less": "Lebih sedikit",
   "swipe-up-more": "Geser ke atas untuk melihat selengkapnya",
-  "plans": "Rencana",
   "reading-plans": "Rencana membaca",
   "create-reading-plan": "Buat rencana membaca",
   "reading-plans-empty": "Anda belum memiliki rencana membaca. Buatlah satu untuk memulai.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Sedang memuat terjemahan…",
   "translations-load-failed": "Daftar terjemahan lengkap tidak dapat dimuat, jadi beberapa mungkin hilang.",
   "verse-of-the-day": "AYAT HARI INI",
-  "verse-of-the-day-loading": "Memuat ayat hari ini…"
+  "verse-of-the-day-loading": "Memuat ayat hari ini…",
+  "delete-bookmark-confirm-title": "Hapus bookmark?",
+  "delete-bookmark-confirm-message": "Hapus \" {{name}} \"?",
+  "scripture-font": "Font Kitab Suci",
+  "ai-limits-title": "Sebelum Anda mengobrol dengan AI",
+  "ai-limits-intro": "AI dapat menjadi titik awal yang bermanfaat, tetapi ingatlah keterbatasannya:",
+  "ai-limits-mistakes": "Ia membuat kesalahan, dan bisa terdengar percaya diri ketika sedang salah.",
+  "ai-limits-agreeable": "Informasi tersebut cenderung memberi tahu Anda apa yang ingin Anda dengar, dan condong ke jawaban yang populer.",
+  "ai-limits-scripture": "Ini bukan sumber yang dapat diandalkan. Periksa apa yang tertulis di dalamnya dengan membandingkannya dengan Kitab Suci.",
+  "ai-limits-study": "Pelajari Alkitab sendiri, dan jangan biarkan AI yang berpikir untuk Anda.",
+  "ai-limits-confirm": "Saya mengerti bahwa AI dapat membuat kesalahan dan bukanlah pengganti untuk mempelajari Alkitab sendiri.",
+  "friends-playlists-filter": "Daftar putar teman",
+  "friend-link-social-title": "Tambahkan {{name}} sebagai teman",
+  "friend-link-meta-description": "{{name}} ingin berteman denganmu di {{brand}}",
+  "friend-link-title": "Tambahkan {{name}} sebagai teman di {{brand}}"
 }

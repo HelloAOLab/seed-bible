@@ -31,7 +31,7 @@
 
 .sb-split-panel-warning-button-primary {
   background: var(--sb-primary-color);
-  color: #fff;
+  color: var(--sb-primary-font-color);
   border-color: var(--sb-primary-color);
 }
 
