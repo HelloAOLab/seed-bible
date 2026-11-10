@@ -17,6 +17,7 @@ import {
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
 import { TestHost } from "./TestHost";
+import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import {
   aabBooks,
   createDefaultManagerResponseMap,
@@ -1034,6 +1035,56 @@ describe("the playlist editor", () => {
           !!container.textContent?.includes("This passage couldn't be loaded.")
       );
       expect(verse(0, 5)).toBeDefined();
+    });
+  });
+
+  describe("on a phone", () => {
+    const originalWidth = window.innerWidth;
+    afterEach(() => {
+      window.innerWidth = originalWidth;
+      document.body.classList.remove("sb-scroll-hide-bars");
+    });
+
+    // The reader hides the bottom bars while it's scrolled down; the list of
+    // steps covers it, so nothing would scroll it back to show them.
+    it("brings back the bottom bars a scripture step's chapter scrolled away, on returning to the list", async () => {
+      window.innerWidth = 390;
+      act(() => state.app.applyViewport());
+      act(() => {
+        state.playlists.editPlaylist(makePlaylist(STEPS));
+        state.playlists.selectEditorStep(0);
+      });
+      const tab = state.tabs.tabs.value[0]!;
+      const slot = state.tabsLayout.slots.value[0]!;
+      act(() => {
+        render(
+          <TestHost state={state}>
+            <TabSlotReader tab={tab} state={state} slot={slot} />
+          </TestHost>,
+          container
+        );
+      });
+      const scroller = await (async () => {
+        await waitFor(
+          () => !!container.querySelector(".sb-reader-swipe-panel-current")
+        );
+        return container.querySelector<HTMLElement>(
+          ".sb-reader-swipe-panel-current"
+        )!;
+      })();
+      act(() => {
+        scroller.scrollTop = 200;
+        scroller.dispatchEvent(new Event("scroll"));
+      });
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        true
+      );
+
+      act(() => state.playlists.selectEditorStep(-1));
+
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        false
+      );
     });
   });
 

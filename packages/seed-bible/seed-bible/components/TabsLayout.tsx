@@ -20,6 +20,7 @@ import { revealReadAlongVerse } from "./BibleReader/readerViewport";
 import {
   isPlaylistEditorTab,
   PlaylistEditorWorkspace,
+  playlistEditorScriptureStep,
 } from "./PlaylistEditor/PlaylistEditorWorkspace";
 
 interface TabSlotReaderProps {
@@ -141,17 +142,22 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   // bottom toolbar there), the verse sheet yields and the default bottom
   // toolbar comes back. Clear scroll-hide so that bar isn't left translated
   // off-screen — e.g. after Compare opens its pane, or Ask AI opens the chat,
-  // from a verse selection while the user had scrolled down.
+  // from a verse selection while the user had scrolled down. The same goes for
+  // the playlist editor covering the reader with its list of steps or a
+  // step's card, where nothing scrolls the reader to bring the bars back.
   useEffect(() => {
     if (!isCompactReader) return;
     return effect(() => {
       const hasPane = (state.panes?.panes?.value?.length ?? 0) > 0;
       const isChatOpen = state.sidebar?.isChatPanelOpen?.value ?? false;
-      if (hasPane || isChatOpen) {
+      const editorCoversReader =
+        isPlaylistEditorTab(state, tab) &&
+        !playlistEditorScriptureStep(state, tab);
+      if (hasPane || isChatOpen || editorCoversReader) {
         setIsScrolled(false);
       }
     });
-  }, [isCompactReader, state]);
+  }, [isCompactReader, state, tab]);
 
   // The element the reader actually scrolls in: the slot itself on desktop, the
   // centre swipe panel on mobile. Held as state rather than a ref so the
