@@ -1487,6 +1487,19 @@ export function createPlaylistManager(
   /** Phone only: whether the sheet for the open step's settings is open. */
   const editorStepSettingsOpen = signal(false);
 
+  /**
+   * Set for the editor's next URL write when it shouldn't cost a Back entry:
+   * the open step moving because steps were added or removed around it, or the
+   * URL being brought in line with what it already asked for.
+   */
+  let replaceEditorUrlWrite = false;
+  const replaceNextEditorUrlWrite = () => {
+    replaceEditorUrlWrite = true;
+    queueMicrotask(() => {
+      replaceEditorUrlWrite = false;
+    });
+  };
+
   const resetEditorUi = () => {
     batch(() => {
       editorStepIndex.value = -1;
@@ -1594,7 +1607,12 @@ export function createPlaylistManager(
             item.translationId ?? tab.readingState.translationId.peek(),
             ref.bookId,
             ref.chapter,
-            ref.verse != null ? { scrollToVerse: ref.verse } : undefined
+            {
+              ...(ref.verse != null ? { scrollToVerse: ref.verse } : {}),
+              // Opening the step already made its history entry (its place
+              // in the URL); the reader moving to it belongs to that entry.
+              replace: true,
+            }
           );
         } finally {
           if (navigation === editorNavigationCount) {
@@ -2345,12 +2363,7 @@ export function createPlaylistManager(
       createdAtMs: now,
       updatedAtMs: now,
     });
-    linkPreviews.cancel();
-    editingPlaylist.value = draft;
-    editingPlaylistBaseline.value = clonePlaylist(draft);
-    resetEditorUi();
-    view.value = "create_playlist";
-    draft.items.forEach(requestEditingItemPreview);
+    openDraft(draft, clonePlaylist(draft));
 
     return editingPlaylist;
   };
@@ -2361,12 +2374,27 @@ export function createPlaylistManager(
    * later via `saveEditingPlaylist`.
    */
   const editPlaylist = (playlist: Playlist): void => {
+    openDraft(clonePlaylist(playlist), clonePlaylist(playlist));
+  };
+
+  /**
+   * What the pane showed before the editor opened, for leaving it by the
+   * browser's Back to return to.
+   */
+  let viewBeforeEditor: typeof view.value = null;
+
+  /** Opens `draft` in the editor, measuring changes against `baseline`. */
+  const openDraft = (draft: Playlist, baseline: Playlist): void => {
     linkPreviews.cancel();
-    const draft = clonePlaylist(playlist);
-    editingPlaylist.value = draft;
-    editingPlaylistBaseline.value = clonePlaylist(playlist);
-    resetEditorUi();
-    view.value = "create_playlist";
+    if (view.peek() !== "create_playlist") {
+      viewBeforeEditor = view.peek();
+    }
+    batch(() => {
+      editingPlaylist.value = draft;
+      editingPlaylistBaseline.value = baseline;
+      resetEditorUi();
+      view.value = "create_playlist";
+    });
     // Links saved before previews existed, or whose preview missed the save
     // cutoff, get one now so the next save stores it.
     draft.items.forEach(requestEditingItemPreview);
@@ -2515,6 +2543,7 @@ export function createPlaylistManager(
       };
       // The open step keeps pointing at the same step.
       if (editorStepIndex.peek() >= index) {
+        replaceNextEditorUrlWrite();
         editorStepIndex.value += 1;
       }
     });
@@ -2567,6 +2596,9 @@ export function createPlaylistManager(
       // Removing the open step goes back to the list, since the page it was
       // on is gone; any other open step keeps pointing at the same step.
       const open = editorStepIndex.peek();
+      if (open >= index) {
+        replaceNextEditorUrlWrite();
+      }
       if (open === index) {
         editorStepIndex.value = -1;
       } else if (open > index) {
@@ -2617,6 +2649,8 @@ export function createPlaylistManager(
     };
     batch(() => {
       editingPlaylist.value = { ...current, items: nextItems };
+      // The open step moving isn't a place to go back to.
+      replaceNextEditorUrlWrite();
       editorStepIndex.value = follow(editorStepIndex.peek()) ?? -1;
       editorVersePickIndex.value = follow(editorVersePickIndex.peek());
     });
@@ -3641,6 +3675,190 @@ export function createPlaylistManager(
     }
     void startPlayingLocator(request.locator, request.stepIndex);
   };
+
+  // The editor's place in the URL: `?editPlaylist={locator}` while it's open,
+  // with `editStep` (1-based) for the open step and `editDetails` /
+  // `editStepSettings` for the phone's sheets. Each move pushes a history
+  // entry, so Back and Forward step through the editor, and a reload reopens
+  // it where it was. The draft itself isn't kept across a reload: a saved
+  // playlist reopens as saved, and one never saved reopens empty.
+
+  interface EditorRoute {
+    locator: string;
+    step: number | null;
+    details: boolean;
+    settings: boolean;
+  }
+
+  const editorRouteFromUrl = (url: URL): EditorRoute | null => {
+    const locator = url.searchParams.get("editPlaylist");
+    if (!locator) {
+      return null;
+    }
+    const step = url.searchParams.get("editStep");
+    return {
+      locator,
+      step: step && /^[1-9]\d*$/.test(step) ? Number(step) : null,
+      details: url.searchParams.get("editDetails") === "open",
+      settings: url.searchParams.get("editStepSettings") === "open",
+    };
+  };
+
+  /** The editor the URL asks for, while its playlist is still loading. */
+  const pendingEditorRoute = signal<EditorRoute | null>(null);
+  /**
+   * The draft the browser's Back took the editor away from, so Forward can
+   * bring it back with its unsaved changes.
+   */
+  let leftDraft: { draft: Playlist; baseline: Playlist | null } | null = null;
+
+  /** The open draft, while the editor is showing. */
+  const openEditorDraft = () =>
+    view.peek() === "create_playlist" ? editingPlaylist.peek() : null;
+
+  /** Puts the open editor on the step and sheets `route` names. */
+  const showEditorRoute = (route: EditorRoute) => {
+    const count = editingPlaylist.peek()?.items.length ?? 0;
+    // A step that's no longer there (the list changed) is the list.
+    const index =
+      route.step != null && route.step <= count ? route.step - 1 : -1;
+    if (index !== (route.step ?? 0) - 1 || (route.settings && index < 0)) {
+      // Writing what's really open corrects the URL rather than moving on.
+      replaceNextEditorUrlWrite();
+    }
+    batch(() => {
+      if (editorStepIndex.peek() !== index) {
+        selectEditorStep(index);
+      }
+      editorDetailsSheetOpen.value = route.details;
+      editorStepSettingsOpen.value = index >= 0 && route.settings;
+    });
+  };
+
+  /** Leaves the editor for the browser's Back, keeping its draft for Forward. */
+  const leaveEditorForUrl = () => {
+    const draft = editingPlaylist.peek();
+    leftDraft = draft
+      ? { draft, baseline: editingPlaylistBaseline.peek() }
+      : null;
+    linkPreviews.cancel();
+    closeEditorUi();
+    batch(() => {
+      editingPlaylist.value = null;
+      editingPlaylistBaseline.value = null;
+      view.value = viewBeforeEditor;
+    });
+  };
+
+  const openEditorForUrl = (route: EditorRoute) => {
+    const parsed = parseRecordLocator(route.locator);
+    if (!parsed) {
+      // Dropping it corrects the URL rather than moving on.
+      replaceNextEditorUrlWrite();
+      pendingEditorRoute.value = null;
+      return;
+    }
+    const left = leftDraft;
+    if (left && getPlaylistLocator(left.draft) === route.locator) {
+      leftDraft = null;
+      openDraft(left.draft, left.baseline ?? clonePlaylist(left.draft));
+      showEditorRoute(route);
+      return;
+    }
+    const saved = userPlaylists
+      .peek()
+      .find((playlist) => getPlaylistLocator(playlist) === route.locator);
+    if (saved) {
+      editPlaylist(saved);
+      showEditorRoute(route);
+      return;
+    }
+    pendingEditorRoute.value = route;
+    void loadPlaylist(parsed.recordName, parsed.address)
+      .catch(() => null)
+      .then((loaded) => {
+        const pending = pendingEditorRoute.peek();
+        if (pending?.locator !== route.locator) {
+          return; // The URL has moved on.
+        }
+        // Opening it fills in the URL that was already asked for.
+        replaceNextEditorUrlWrite();
+        batch(() => {
+          pendingEditorRoute.value = null;
+          if (loaded) {
+            editPlaylist(loaded);
+          } else {
+            const now = Date.now();
+            const blank = PlaylistSchema.parse({
+              id: parsed.address,
+              recordName: parsed.recordName,
+              authorUserId: parsed.recordName,
+              title: null,
+              description: null,
+              heroImageUrl: null,
+              items: [],
+              createdAtMs: now,
+              updatedAtMs: now,
+            });
+            openDraft(blank, clonePlaylist(blank));
+          }
+          showEditorRoute(pending);
+        });
+      });
+  };
+
+  const applyEditorRoute = (route: EditorRoute | null) => {
+    const open = openEditorDraft();
+    if (!route) {
+      pendingEditorRoute.value = null;
+      if (open) {
+        leaveEditorForUrl();
+      }
+      return;
+    }
+    if (open && getPlaylistLocator(open) === route.locator) {
+      showEditorRoute(route);
+      return;
+    }
+    if (pendingEditorRoute.peek()?.locator === route.locator) {
+      pendingEditorRoute.value = route;
+      return;
+    }
+    openEditorForUrl(route);
+  };
+
+  if (!import.meta.env.SSR) {
+    // URL -> editor first, so a reload's route is waiting before the editor
+    // -> URL effect below first runs; otherwise that run would clear it.
+    effect(() => {
+      const url = navigation.currentUrl.value;
+      untracked(() => applyEditorRoute(editorRouteFromUrl(url)));
+    });
+
+    effect(() => {
+      const draft =
+        view.value === "create_playlist" ? editingPlaylist.value : null;
+      const pending = pendingEditorRoute.value;
+      const step = editorStepIndex.value;
+      const update: Record<string, string | null> = draft
+        ? {
+            editPlaylist: getPlaylistLocator(draft),
+            editStep: step >= 0 ? String(step + 1) : null,
+            editDetails: editorDetailsSheetOpen.value ? "open" : null,
+            editStepSettings:
+              step >= 0 && editorStepSettingsOpen.value ? "open" : null,
+          }
+        : {
+            editPlaylist: pending?.locator ?? null,
+            editStep: pending?.step != null ? String(pending.step) : null,
+            editDetails: pending?.details ? "open" : null,
+            editStepSettings: pending?.settings ? "open" : null,
+          };
+      untracked(() =>
+        navigation.updateQueryParams(update, replaceEditorUrlWrite)
+      );
+    });
+  }
 
   /**
    * Builds the AI tools that let a provider edit whatever playlist is

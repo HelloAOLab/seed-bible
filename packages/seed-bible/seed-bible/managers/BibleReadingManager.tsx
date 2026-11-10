@@ -1053,6 +1053,12 @@ export interface SelectTranslationAndChapterOptions {
    * heading — scroll is restored for browser history alone.
    */
   scrollPosition?: number;
+
+  /**
+   * Replace the current history entry instead of pushing a new one, for a
+   * navigation that belongs to an entry something else has just made.
+   */
+  replace?: boolean;
 }
 
 /** Options describing how a reading-state navigation should affect the URL. */
@@ -2980,6 +2986,7 @@ export function createBibleReadingState(
         scrollToVerse: options?.scrollToVerse ?? null,
         updateUrl: options?.updateUrl,
         scrollPosition: options?.scrollPosition,
+        replace: options?.replace,
       });
       await whenContentSettled(target);
     } catch (err) {

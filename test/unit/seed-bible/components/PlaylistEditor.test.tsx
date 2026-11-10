@@ -856,6 +856,9 @@ describe("the playlist editor", () => {
 
     // Chapters long enough to have verses around a passage.
     beforeEach(async () => {
+      // The outer setup's state would otherwise go on following the URL this
+      // one writes, and answer it with an editor of its own.
+      state.navigation.dispose();
       state = await createTestSeedBibleState({
         responses: {
           ...createDefaultManagerResponseMap(),

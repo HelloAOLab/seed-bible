@@ -443,6 +443,12 @@ describe("createPlaylistManager", () => {
    * or the registered extension without changing every existing call site.
    */
   let lastNavigation: ReturnType<typeof createNavigationManager>;
+  /**
+   * Every navigation a test made, torn down after it. Each one's manager
+   * follows the URL (the editor's place is kept there), so one left over from
+   * an earlier test would answer this test's URL with its own.
+   */
+  const liveNavigations: ReturnType<typeof createNavigationManager>[] = [];
   let lastReadingExtensionManager: ReturnType<
     typeof createBibleReadingExtensionManager
   >;
@@ -491,6 +497,7 @@ describe("createPlaylistManager", () => {
     const navigation = createNavigationManager(
       initialHref ? { initialHref } : undefined
     );
+    liveNavigations.push(navigation);
     const isMobile = signal(false);
     lastIsMobile = isMobile;
     const modals = createModalManager();
@@ -551,6 +558,10 @@ describe("createPlaylistManager", () => {
   afterEach(() => {
     warnSpy.mockRestore();
     errorSpy.mockRestore();
+    // Newest first: each wraps the history methods of the one before it.
+    for (const navigation of liveNavigations.splice(0).reverse()) {
+      navigation.dispose();
+    }
     // Clear the path and query params written by URL sync (a playlist's page
     // path, playback params) so they don't leak into the next test's initial
     // navigation state.
@@ -1539,7 +1550,7 @@ describe("createPlaylistManager", () => {
         "BSB",
         "GEN",
         1,
-        { scrollToVerse: 2 }
+        { scrollToVerse: 2, replace: true }
       );
     });
 
@@ -1658,7 +1669,7 @@ describe("createPlaylistManager", () => {
         "BSB",
         "PSA",
         104,
-        undefined
+        { replace: true }
       );
     });
 
@@ -4969,6 +4980,137 @@ describe("createPlaylistManager", () => {
         expect(manager.playlistPageLoadFailed.value).toBe(false);
         expect(manager.getPlaylistPageSeed()).toBeNull();
       });
+    });
+  });
+
+  describe("the editor's place in the URL", () => {
+    const STEPS = [
+      { type: "bible-verse" as const, ref: { bookId: "GEN", chapter: 1 } },
+      { type: "html" as const, html: "<p>Think</p>" },
+      { type: "html" as const, html: "<p>Ask</p>", question: {} },
+    ];
+    const param = (key: string) =>
+      new URL(window.location.href).searchParams.get(key);
+    const reloadAt = (query: string) => {
+      window.history.replaceState(null, "", `/${query}`);
+      return makeManager(
+        "user-1",
+        undefined,
+        new URL(`/${query}`, window.location.href).href
+      );
+    };
+
+    it("names the open playlist, step and sheets", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      expect(param("editPlaylist")).toBe("user-1.playlist-1");
+      expect(param("editStep")).toBeNull();
+
+      manager.selectEditorStep(2);
+      manager.editorStepSettingsOpen.value = true;
+      expect(param("editStep")).toBe("3");
+      expect(param("editStepSettings")).toBe("open");
+
+      manager.selectEditorStep(-1);
+      manager.editorDetailsSheetOpen.value = true;
+      expect(param("editStep")).toBeNull();
+      expect(param("editStepSettings")).toBeNull();
+      expect(param("editDetails")).toBe("open");
+
+      manager.cancelEditingPlaylist();
+      expect(param("editPlaylist")).toBeNull();
+      expect(param("editDetails")).toBeNull();
+    });
+
+    it("reopens a saved playlist on the step a reload left it on", async () => {
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: makePlaylist({ items: STEPS }),
+      });
+
+      const manager = reloadAt("?editPlaylist=user-1.playlist-1&editStep=2");
+
+      await vi.waitFor(() =>
+        expect(manager.editingPlaylist.value?.items).toHaveLength(3)
+      );
+      expect(getDataMock).toHaveBeenCalledWith("user-1", "playlist-1");
+      expect(manager.view.value).toBe("create_playlist");
+      expect(manager.editorStepIndex.value).toBe(1);
+      expect(param("editPlaylist")).toBe("user-1.playlist-1");
+      expect(param("editStep")).toBe("2");
+    });
+
+    it("reopens a draft that was never saved, empty, on its list", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+      });
+
+      const manager = reloadAt("?editPlaylist=user-1.playlist_new&editStep=2");
+
+      await vi.waitFor(() =>
+        expect(manager.editingPlaylist.value?.id).toBe("playlist_new")
+      );
+      expect(manager.editingPlaylist.value).toMatchObject({
+        recordName: "user-1",
+        items: [],
+      });
+      // Its steps went with it, so the step it was on is gone too.
+      expect(manager.editorStepIndex.value).toBe(-1);
+      await vi.waitFor(() => expect(param("editStep")).toBeNull());
+      expect(param("editPlaylist")).toBe("user-1.playlist_new");
+    });
+
+    it("leaves a URL that names no playlist it can read alone", async () => {
+      const manager = reloadAt("?editPlaylist=nonsense");
+      await flush();
+
+      expect(manager.editingPlaylist.value).toBeNull();
+      expect(param("editPlaylist")).toBeNull();
+    });
+
+    it("goes back through the editor's screens, and forward to the same unsaved draft", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Not saved yet" });
+      manager.selectEditorStep(2);
+
+      window.history.back();
+      await vi.waitFor(() => expect(manager.editorStepIndex.value).toBe(-1));
+      expect(manager.view.value).toBe("create_playlist");
+
+      window.history.back();
+      await vi.waitFor(() => expect(manager.editingPlaylist.value).toBeNull());
+      expect(manager.view.value).not.toBe("create_playlist");
+
+      window.history.forward();
+      await vi.waitFor(() =>
+        expect(manager.editingPlaylist.value?.title).toBe("Not saved yet")
+      );
+      expect(manager.isEditingPlaylistDirty()).toBe(true);
+
+      window.history.forward();
+      await vi.waitFor(() => expect(manager.editorStepIndex.value).toBe(2));
+    });
+
+    it("doesn't add a history entry when steps move around the open one", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.selectEditorStep(2);
+      const push = vi.spyOn(window.history, "pushState");
+
+      manager.removeEditingPlaylistItem(0);
+      await flush();
+      manager.reorderEditingPlaylistItem(1, 0);
+      await flush();
+
+      expect(param("editStep")).toBe("1");
+      expect(push).not.toHaveBeenCalled();
+      push.mockRestore();
     });
   });
 
