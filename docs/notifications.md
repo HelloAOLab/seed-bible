@@ -306,14 +306,16 @@ device was set up for, the app grants the new one.
 2. The relay asks CasualOS, as Ada, for Ada's sent requests and checks this one
    is there: still waiting, made in the last 15 minutes, for the friends
    permission only.
-3. It limits how often it sends: once per request, a handful per hour per
-   sender and per recipient.
+3. It limits how often it sends (the numbers are below): once per request,
+   once a day from one person to another, and a few an hour per sender and
+   per recipient.
 4. It writes the text itself from Ada's public profile name. Ada's app can't
    choose what Ben's phone shows or where tapping it goes.
-5. It sends as the notifier to Ben's `inbox`. If Ben never turned push on,
-   CasualOS says the notification doesn't exist and nothing is sent. Ada's app
-   gets the same answer either way, so it can't find out whether Ben has push
-   on.
+5. It answers Ada's app straight away, then sends as the notifier to Ben's
+   `inbox` in the background. If Ben never turned push on, CasualOS says the
+   notification doesn't exist and nothing is sent. Answering before sending
+   means Ada's app gets the same answer, just as fast, whether or not Ben has
+   push on, so it can't find out.
 
 Why a relay rather than letting friends' apps send directly: the request
 arrives _before_ the two are friends, so there's no permission to send with;
@@ -335,25 +337,50 @@ can't be sent is only logged.
 `Authorization: Bearer <the sender's session key>` (bodies over 4 KB are
 refused unread):
 
-| Answer                                                                                               | When                                                                                                                                  |
-| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 200 `{ "accepted": true }`                                                                           | CasualOS took the push, or the recipient never turned push on — answered the same, so a sender can't tell whether someone has push on |
-| 400 `invalid_request`                                                                                | The body isn't JSON with a `requestId` string                                                                                         |
-| 401 `not_signed_in` / `invalid_session`                                                              | No bearer key, or one that isn't a live CasualOS session                                                                              |
-| 404 `request_not_found`                                                                              | The request isn't among the sender's sent requests                                                                                    |
-| 409 `request_not_pending`, `not_a_friend_request`, `no_recipient`, `request_too_old`, `already_sent` | The request doesn't qualify, or was already pushed                                                                                    |
-| 413 `body_too_large`                                                                                 | Over 4 KB                                                                                                                             |
-| 429 `rate_limited` (with `Retry-After`)                                                              | Over 10 an hour for this sender, or for this recipient                                                                                |
-| 502 `upstream_error`                                                                                 | CasualOS couldn't be reached or failed; the detail is only in the server log                                                          |
-| 503 `push_relay_off`                                                                                 | No notifier configured, or its key has expired                                                                                        |
+| Answer                                                                                               | When                                                                                                                                                                                                |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 200 `{ "accepted": true }`                                                                           | The request qualifies; the push is sent in the background. Answered the same whether CasualOS takes it, the recipient never turned push on, or the send fails later (that's only in the server log) |
+| 400 `invalid_request`                                                                                | The body isn't JSON with a `requestId` string                                                                                                                                                       |
+| 401 `not_signed_in` / `invalid_session`                                                              | No bearer key, or one that isn't a live CasualOS session (a key CasualOS turned down in the last 5 minutes is refused without asking again)                                                         |
+| 404 `request_not_found`                                                                              | The request isn't among the sender's sent requests                                                                                                                                                  |
+| 409 `request_not_pending`, `not_a_friend_request`, `no_recipient`, `request_too_old`, `already_sent` | The request doesn't qualify, or was already pushed                                                                                                                                                  |
+| 413 `body_too_large`                                                                                 | Over 4 KB                                                                                                                                                                                           |
+| 429 `rate_limited` (with `Retry-After`)                                                              | Over a limit: see "Limits" below                                                                                                                                                                    |
+| 502 `upstream_error`                                                                                 | CasualOS couldn't be reached or failed while checking the sender's request; the detail is only in the server log                                                                                    |
+| 503 `busy` (with `Retry-After: 1`)                                                                   | 8 checks are already waiting on CasualOS                                                                                                                                                            |
+| 503 `push_relay_off`                                                                                 | No notifier configured, or its key has expired                                                                                                                                                      |
 
 Errors are `{ "error": "<code>" }`. What CasualOS said is never passed on.
 
-The sender's limit counts every lookup their key gets through, found or not,
-and is checked before CasualOS is asked, so a sender over it costs nothing. A
-forged key naming someone else never counts against them: it's only counted
-once CasualOS accepts it. A request id is remembered for 30 minutes after its
-push; a push that failed on the way (a 502) can be asked for again.
+**Limits.** All of them live in the server's memory (`DEFAULT_RELAY_LIMITS`
+in `server/notifications.ts`):
+
+| Limit                                     | Value                              | Why                                                                                                                                                      |
+| ----------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pushes from one person to the same person | 1 a day                            | Cancelling and re-sending a request makes a new request; without this, one person could buzz someone's phone all day and spend their CasualOS push quota |
+| Pushes to one recipient                   | 5 an hour                          | Caps the buzzing when several people friend someone at once                                                                                              |
+| Checks per sender                         | 10 an hour                         | Counts every check of a sender's key that CasualOS accepts, found or not                                                                                 |
+| Checks waiting on CasualOS at once        | 8                                  | Beyond that the relay answers 503 `busy` without asking CasualOS                                                                                         |
+| Session keys CasualOS turns down          | 30 a minute, for everyone together | Stops made-up keys from making our server call CasualOS without end (see below)                                                                          |
+
+A made-up key that merely looks like a session key would otherwise reach
+CasualOS every time, and every such call leaves from our server's one address,
+which CasualOS may rate-limit. So keys CasualOS turns down share one budget.
+While it's spent, only senders whose key CasualOS accepted in the last hour
+are checked; anyone else gets 429 until the flood passes (their friend request
+itself still goes through, only its push is skipped). A turned-down key is
+remembered for 5 minutes and refused without asking again. Keys are only ever
+remembered as SHA-256 hashes. There's deliberately no limit per IP address:
+the server sits behind a CDN or load balancer, so every request would share
+one address.
+
+Slots are taken before CasualOS is asked, so requests sent at the same moment
+can't all slip under a limit. A forged key naming someone else only holds
+their slot while CasualOS is asked, and gives it back when CasualOS turns the
+key down. A send that fails on the way gives back the recipient's and the
+pair's slots, and the request can be pushed again; a send to someone without
+push on still counts, or the limits would show who has push on. A request id
+is remembered for 30 minutes after its push.
 
 The push itself:
 
@@ -362,7 +389,7 @@ The push itself:
   "title": "New friend request",
   "body": "Ada wants to be your friend on Seed Bible.",
   "icon": "https://favicon.ao.bot/pwa/pwa-192x192.png",
-  "tag": "friend-request",
+  "tag": "friend-request:sp-123",
   "timestamp": 1762750000000,
   "action": {
     "type": "open_url",
@@ -370,6 +397,10 @@ The push itself:
   }
 }
 ```
+
+Each request's push has its own `tag`. Phones replace a notification that has
+the same tag, silently, so a shared tag would let a second request wipe out
+the first on the lock screen.
 
 The name comes from the sender's public profile, on one line and cut to 60
 characters; with no name it's "Someone". No `topic` is sent: CasualOS passes
@@ -482,8 +513,11 @@ For "a new Seed Bible update was released", sent to everyone with push on:
   sender's app.
 - A push shows the sender's name on the lock screen, the way most apps show
   "Ada sent you a friend request".
-- The relay's answer doesn't say whether the recipient has push on, so a
-  stranger can't use friend requests to find out.
+- The relay's answer doesn't say whether the recipient has push on, and comes
+  back before the push is sent, so neither its content nor its timing lets a
+  stranger use friend requests to find out.
+- One person can push another at most once a day, however many times they
+  cancel and re-send a request.
 - The relay keeps nothing on disk. Its once-per-request and per-hour limits
   live in memory, so a server restart resets them. That's acceptable here:
   every push still needs a real friend request made in the last 15 minutes.
