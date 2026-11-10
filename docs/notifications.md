@@ -110,7 +110,10 @@ the laptop too:
 - **On the device:** a copy in `localStorage` under
   `sb-notifications:<user id>`, so the badge is right as soon as the page loads,
   before the account copy arrives. Signed out, the device copy is the only
-  copy (`sb-notifications:signed-out`).
+  copy (`sb-notifications:signed-out`). Several tabs share it: each save
+  merges with what's already there rather than replacing it, and each tab
+  picks up the others' saves (the browser's `storage` event), so a tab opened
+  earlier can't bring back what another tab dismissed.
 
 ```ts
 interface NotificationState {
@@ -192,6 +195,10 @@ No toast while the list is open: the person is already looking at it. Opening
 the list, from the bell or the toast, also takes away a toast still on screen
 announcing new notifications.
 
+With two tabs open, a tab checks what the other has already announced before
+toasting, so the same notification isn't toasted twice. Two tabs deciding at
+the very same moment can still both toast.
+
 ## 7. Push notifications
 
 ### 7.1 What the person does
@@ -235,6 +242,17 @@ On a first visit the service worker only registers once the page has finished
 loading. The manager waits up to 10 seconds for it before saying
 `unsupported`, and looks again if it turns up later, so a slow first load
 still gets the offer.
+
+If `/api/notifications/config` can't be read (offline, say), the status stays
+`checking` rather than `unconfigured`, and it's read again when the app comes
+back into view, so an installed app left open for days doesn't lose the offer
+over one failed request.
+
+Turning push on won't go ahead if the browser refuses to end a subscription
+it already had: browsers hand back the existing subscription, so the new
+account would be linked to the old account's endpoint and receive both
+accounts' pushes. An error only lasts while the status it happened in does,
+so the card never shows "couldn't turn on" next to "Turn off".
 
 **Which account a device belongs to** is remembered on the device, under
 `sb-push-user` in `localStorage`: the user id, the push endpoint, the notifier
@@ -424,11 +442,17 @@ worker turns into text with its own translations.
   `PushNotificationsManager` answers that with `notifications.refresh()`.
   Only an `open_url` action is used; a `webhook` action (which would have the
   device call a URL) and extra action buttons are ignored.
-- **`notificationclick`:** focuses an open Seed Bible window and takes it to
-  the notification's link, or opens a new window when there's none, or when
-  the open one can't be navigated (a window the worker doesn't control).
-  Only links to Seed Bible's own site are followed; anything else opens the
-  home page. A branch preview window (`/b/...`) is never taken over.
+- **`notificationclick`:** focuses an open Seed Bible window and asks it to
+  open the notifications list where it is (`postMessage({ type:
+"sb-open-notifications" })` with a `MessageChannel` port). A window running
+  this build opens the list, a modal over whatever it shows, and answers
+  `{ opened: true }`, so nothing in progress there (a note being typed, a live
+  shared session) is lost to a reload. A window that doesn't answer within a
+  second (an older build) is taken to the notification's link instead, and a
+  new window opens when there's none or the open one can't be navigated.
+  Only links to the list (`/?notifications=open`) are opened in place; only
+  links to Seed Bible's own site are followed at all, and anything else opens
+  the home page. A branch preview window (`/b/...`) is never taken over.
 
 "Seed Bible's own site" is the origin the service worker runs on, so
 `NOTIFICATIONS_SITE_ORIGIN` (below) must be exactly that origin — with or
