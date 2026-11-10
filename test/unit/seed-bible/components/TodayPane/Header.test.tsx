@@ -5,12 +5,17 @@ import {
   TICK_INTERVAL_MS,
   TimeProvider,
 } from "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
+import type { NotificationsManager } from "@packages/seed-bible/seed-bible/managers/NotificationsManager";
 import { loginWithName } from "../../testUtils/todayStubs";
 import {
   mockI18nState,
   mockI18nTranslations,
   resetMockI18n,
 } from "../../testUtils/mockI18n";
+import {
+  notificationsHarness,
+  type NotificationsHarness,
+} from "../../testUtils/notificationsHarness";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
@@ -19,6 +24,8 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
 
 describe("Header", () => {
   let container: HTMLDivElement;
+  let harness: NotificationsHarness;
+  let notifications: NotificationsManager;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -27,11 +34,17 @@ describe("Header", () => {
     // Per-key translation overrides are module-level, so without this a test
     // that sets one leaks it into every test that follows.
     resetMockI18n();
+    localStorage.clear();
+    // Signed out, so the bell has nothing to load.
+    harness = notificationsHarness();
+    harness.userId.value = null;
+    ({ notifications } = harness.start());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
+    harness.dispose();
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -50,6 +63,7 @@ describe("Header", () => {
         <TimeProvider>
           <Header
             login={loginWithName(options.username)}
+            notifications={notifications}
             onClose={options.onClose ?? vi.fn()}
           />
         </TimeProvider>,
@@ -218,5 +232,39 @@ describe("Header", () => {
     act(() => close!.click());
 
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  describe("notifications bell", () => {
+    const bell = () =>
+      header().querySelector<HTMLButtonElement>(
+        ".sb-today-notifications-button"
+      );
+
+    // The header's grid places its buttons by order, with the close button
+    // always last, so the bell has to come before it to sit beside it.
+    it("sits just before the close button", () => {
+      setup();
+
+      const buttons = Array.from(header().querySelectorAll(":scope > button"));
+      expect(buttons.map((button) => button.className)).toEqual([
+        "sb-today-notifications-button",
+        "sb-today-close-button",
+      ]);
+    });
+
+    // Update notices reach signed-out visitors too.
+    it("is there for a signed-out visitor", () => {
+      setup({ username: undefined });
+
+      expect(bell()).not.toBeNull();
+    });
+
+    it("opens the notifications list", () => {
+      setup();
+
+      act(() => bell()!.click());
+
+      expect(notifications.isFeedOpen.value).toBe(true);
+    });
   });
 });

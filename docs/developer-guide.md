@@ -419,6 +419,7 @@ A built-in extension's `context` is the app's own state. Its functionality lives
 - **Chat.** An in-app chat panel. Chat "providers" (registered by the app or by extensions) can act as an AI participant in a chat — see [§8.3](#83-what-built-in-extensions-can-plug-into) for a real example that wires in an external chatbot.
 - **Discover.** A contextual side panel that shows extra content for whatever chapter you're currently reading — cross-references, study notes, or arbitrary custom content. What shows up there comes from "Discover providers," which (again) extensions can register.
 - **Playlists and reading plans.** Playlists are ordered, shareable queues of Bible content (and other media) that can be played back sequentially. Reading plans are structured, calendar-driven reading schedules with progress tracking.
+- **Friends and notifications.** Friend requests and friendships, and the notifications list on Today: friend requests, update notices, and push notifications to the user's devices. `context.notifications` lists what's unread and dismissed; [`docs/notifications.md`](notifications.md) explains the design and how to add a new kind of notification.
 - **Search.** Full-text Bible search, backed by Typesense.
 - **Themes.** Light/dark mode plus configurable color schemes, applied via CSS variables.
 - **Internationalization.** The UI is translated into 24 languages (`i18n/` — see `CLAUDE.md` for the translation workflow), with layout that adapts to right-to-left languages.

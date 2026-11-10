@@ -45,6 +45,13 @@ describe("routeLabel", () => {
     expect(routeLabel("/__invalidate")).toBe("/__invalidate");
     expect(routeLabel("/b/main")).toBe("/b/:branch");
     expect(routeLabel("/b/main/20240101-abc")).toBe("/b/:branch/:buildId");
+    expect(routeLabel("/api/notifications/config")).toBe(
+      "/api/notifications/config"
+    );
+    expect(routeLabel("/api/notifications/friend-request")).toBe(
+      "/api/notifications/friend-request"
+    );
+    expect(routeLabel("/api/notifications/anything-else")).toBe("/");
   });
 
   it("never lets a branch name or build id leak into the label", () => {

@@ -12,6 +12,7 @@
  *      - GET /?pattern=<name>...          → 302 to ao.bot (legacy deep links)
  *      - GET /healthz                     → liveness probe
  *      - POST /__invalidate?branch=       → drop the cached pointer for a branch
+ *      - /api/notifications/*             → the push relay (`notifications.ts`)
  *    Per request it resolves the branch's live build. Only branches in the
  *    `ALLOWED_SSR_BRANCHES` whitelist are server-side rendered by their own
  *    bundle: for those, the branch's latest SSR bundle is lazily loaded into
@@ -49,6 +50,12 @@ import { BuildCache } from "./buildCache";
 import { startBuildWorker, type RenderFn } from "./buildWorker";
 import Bowser from "bowser";
 import { parseAcceptLanguages } from "./lang.js";
+import {
+  createNotificationsRelay,
+  readNotificationsConfig,
+  serveNotificationsApi,
+  type NotificationsRelay,
+} from "./notifications";
 import { SpanKind, type Span } from "@opentelemetry/api";
 import {
   expressSpanMiddleware,
@@ -291,6 +298,9 @@ function sendHtml(
 
 // Instantiated by startProdServer(); never created in dev mode.
 let store!: ArtifactStore;
+
+// The push relay (`/api/notifications/*`). Created by whichever server starts.
+let notificationsRelay: NotificationsRelay | null = null;
 
 // ─── Pointer cache (branch → live buildId), short TTL ────────────────────────
 interface PointerEntry {
@@ -712,7 +722,11 @@ async function handle(
   // actual routing — deriving it twice risks the two copies drifting apart.
   const route = resolveRoute(url);
   const metricBranch =
-    isAssetRequest || routeName === "/__invalidate" ? "" : route.branch;
+    isAssetRequest ||
+    routeName === "/__invalidate" ||
+    routeName.startsWith("/api/")
+      ? ""
+      : route.branch;
   const start = performance.now();
   recordRequestTiming(req, { start });
 
@@ -764,6 +778,18 @@ async function dispatch(
   isAssetRequest: boolean,
   span: Span
 ): Promise<void> {
+  if (
+    notificationsRelay &&
+    (await serveNotificationsApi(
+      notificationsRelay,
+      req,
+      res,
+      parsedUrl.pathname
+    ))
+  ) {
+    return;
+  }
+
   // Legacy CasualOS deep links used a `?pattern=` query param. Redirect those
   // to the ao.bot host, preserving the full query string.
   if (parsedUrl.searchParams.has("pattern")) {
@@ -980,12 +1006,15 @@ export function startProdServer(port: number = PORT): Server {
     rootBranch: ROOT_BRANCH,
   });
   store = instrumentStore(createStore(), storeBackend);
+  const relay = (notificationsRelay = createNotificationsRelay({
+    config: readNotificationsConfig(),
+  }));
 
   const server = createServer((req, res) => {
     void handle(req, res);
   }).listen(port, () => {
     console.log(
-      `Seed Bible host server listening on :${port} (root branch: ${ROOT_BRANCH}, store: ${storeBackend}, SSR branches: ${[...ALLOWED_SSR_BRANCHES].join(", ") || "(none)"}, default SSR branch: ${DEFAULT_SSR_BRANCH || "(none)"}, telemetry: ${telemetry.enabled ? "on" : "off"})`
+      `Seed Bible host server listening on :${port} (root branch: ${ROOT_BRANCH}, store: ${storeBackend}, SSR branches: ${[...ALLOWED_SSR_BRANCHES].join(", ") || "(none)"}, default SSR branch: ${DEFAULT_SSR_BRANCH || "(none)"}, telemetry: ${telemetry.enabled ? "on" : "off"}, push relay: ${relay.isEnabled() ? "on" : "off"})`
     );
   });
 
@@ -1018,6 +1047,21 @@ async function startDevServer(): Promise<void> {
   // Registered ahead of Vite's middleware so it wraps the whole chain. No-op
   // unless an OTLP endpoint is configured.
   app.use(expressSpanMiddleware(ROOT_BRANCH));
+
+  // Ahead of Vite and the SSR catch-all, which would otherwise answer these
+  // paths with a page.
+  const relay = (notificationsRelay = createNotificationsRelay({
+    config: readNotificationsConfig(),
+  }));
+  app.use((req, res, next) => {
+    const { pathname } = new URL(req.originalUrl, "http://localhost");
+    serveNotificationsApi(relay, req, res, pathname).then(
+      (handled) => {
+        if (!handled) next();
+      },
+      (error: unknown) => next(error)
+    );
+  });
 
   // Create Vite server in middleware mode and configure the app type as
   // 'custom', disabling Vite's own HTML serving logic so the parent server
@@ -1147,7 +1191,7 @@ async function startDevServer(): Promise<void> {
 
   const server = app.listen(PORT, () => {
     console.log(
-      `Seed Bible dev server running at http://localhost:${PORT} (telemetry: ${telemetry.enabled ? "on" : "off"})`
+      `Seed Bible dev server running at http://localhost:${PORT} (telemetry: ${telemetry.enabled ? "on" : "off"}, push relay: ${relay.isEnabled() ? "on" : "off"})`
     );
   });
 

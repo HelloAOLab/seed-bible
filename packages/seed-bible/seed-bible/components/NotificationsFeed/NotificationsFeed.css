@@ -1,0 +1,205 @@
+/*
+ * The notifications list, in a modal (a sheet from the bottom on phones).
+ * Colours come from the `--sb-*` theme variables, so it follows the theme
+ * ThemeManager injects on `body`.
+ */
+.sb-notifications-feed {
+  /* A friend request's row reuses the Friends screen's person button and
+     Accept/Decline buttons, which read these from that screen. */
+  --sb-friends-radius: 12px;
+  --sb-friends-surface: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 95%
+  );
+  --sb-friends-border: var(--sb-divider-color);
+  --sb-friends-muted: color-mix(in srgb, var(--sb-font-color), transparent 42%);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  line-height: 1.4;
+}
+
+.sb-notifications-feed-actions {
+  display: flex;
+  justify-content: flex-end;
+  /* Pulled up into the gap above the list, so it reads as the list's own
+     action rather than a row of its own. */
+  margin-bottom: -8px;
+}
+
+.sb-notifications-text-button {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-notifications-text-button:hover {
+    background: var(--sb-friends-surface);
+  }
+}
+
+.sb-notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Starts with room for the unread dot; the dismiss button at the end brings
+   its own. */
+.sb-notifications-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding-block: 8px;
+  padding-inline: 20px 4px;
+  border-radius: var(--sb-friends-radius);
+}
+
+.sb-notifications-row--unread {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+}
+
+/* Level with the middle of the row's first line (a name over a subtitle). */
+.sb-notifications-row--unread::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  inset-inline-start: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sb-primary-color);
+}
+
+/* What it's about, then its buttons on a line of their own, so a long sentence
+   gets the row's whole width instead of being squeezed beside them. */
+.sb-notifications-row-body {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Indented by a picture's width and gap, so they line up with the text. */
+.sb-notifications-row-body > .sb-friends-row-actions {
+  justify-self: start;
+  margin-inline-start: calc(1.375rem + 12px);
+}
+
+.sb-notifications-dismiss {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-top: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--sb-friends-muted);
+  cursor: pointer;
+}
+
+/* Scoped so it outranks the global `body .material-symbols-outlined` size. */
+.sb-notifications-dismiss .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+@media (hover: hover) {
+  .sb-notifications-dismiss:hover {
+    background: var(--sb-friends-surface);
+    color: var(--sb-font-color);
+  }
+}
+
+/* An update notice's icon and text, laid out like a friend request's picture
+   and name so the two kinds of row line up. */
+.sb-notifications-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sb-notifications-summary .sb-notifications-icon {
+  flex-shrink: 0;
+  /* The size of a picture in a friend request's row. */
+  width: 1.375rem;
+  font-size: 1.375rem;
+  color: var(--sb-primary-color);
+}
+
+.sb-notifications-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sb-notifications-title {
+  overflow-wrap: anywhere;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.sb-notifications-time {
+  color: var(--sb-friends-muted);
+  font-size: 0.8125rem;
+}
+
+.sb-notifications-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+}
+
+.sb-notifications-link .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.sb-notifications-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 24px 16px;
+  color: var(--sb-friends-muted);
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+.sb-notifications-empty .material-symbols-outlined {
+  font-size: 2rem;
+}
+
+.sb-notifications-sign-in {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px;
+  border-radius: var(--sb-friends-radius);
+  background: var(--sb-friends-surface);
+  font-size: 0.875rem;
+}
+
+.sb-notifications-sign-in > p {
+  flex: 1 1 12rem;
+  margin: 0;
+}

@@ -5,7 +5,11 @@ import { TodayPane } from "@packages/seed-bible/seed-bible/components/TodayPane/
 import type { ReadingHistoryState } from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
 import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
-import { todayStub, loginStub } from "../../testUtils/todayStubs";
+import {
+  todayStub,
+  loginStub,
+  notificationsStub,
+} from "../../testUtils/todayStubs";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
@@ -141,6 +145,7 @@ describe("Today screen reactivity", () => {
         <TodayPane
           today={today}
           login={login}
+          notifications={notificationsStub()}
           theme={theme}
           isMobile={isMobile}
           bookmarks={signal([])}

@@ -304,7 +304,8 @@
 }
 
 .sb-today-header > button,
-.sb-today-close-button {
+.sb-today-close-button,
+.sb-today-notifications-button {
   border: none;
   display: flex;
   justify-content: center;
@@ -319,9 +320,57 @@
 }
 
 @media (hover: hover) {
-  .sb-today-close-button:hover {
+  .sb-today-close-button:hover,
+  .sb-today-notifications-button:hover {
     background-color: color-mix(in srgb, var(--sb-font-color), transparent 84%);
   }
+}
+
+/* The unread badge hangs off the bell's top corner. */
+.sb-today-notifications-button {
+  position: relative;
+}
+
+/* Looks like the reader toolbar's unread badge
+   (`.sb-reader-toolbar-unread-indicator`). Scoped under the button so it
+   outranks the header's `button > span` icon size. */
+.sb-today-notifications-button > .sb-today-notifications-badge {
+  position: absolute;
+  top: -0.125rem;
+  inset-inline-end: -0.125rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 62.4375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  pointer-events: none;
+}
+
+/* Welcome has no header row, so its bell sits where the header's buttons
+   would: at the end of the same centred column, the same distance down. */
+.sb-today-welcome-corner {
+  position: absolute;
+  top: 2.25rem;
+  inset-inline: 0;
+  width: 90%;
+  max-width: 51.25rem;
+  margin-inline: auto;
+  display: flex;
+  justify-content: flex-end;
+  /* Only the bell takes taps; the rest of the strip lets them through to the
+     welcome underneath. */
+  pointer-events: none;
+}
+
+.sb-today-welcome-corner > .sb-today-notifications-button {
+  pointer-events: auto;
 }
 
 .sb-today-header > button {
@@ -344,7 +393,8 @@
 }
 
 .sb-today-header > button > span,
-.sb-today-close-button > span {
+.sb-today-close-button > span,
+.sb-today-notifications-button > .material-symbols-outlined {
   font-size: 1.25rem;
 }
 

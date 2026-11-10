@@ -69,6 +69,12 @@ describe("bookmarks", () => {
       .mockResolvedValue(undefined as never) as unknown as Mock;
   });
 
+  /** Writes of the bookmarks themselves; other managers keep their own records. */
+  const bookmarkWrites = () =>
+    recordData.mock.calls.filter(
+      ([, address]) => address === "readingBookmarks"
+    );
+
   afterEach(() => {
     for (const extra of extraContainers) {
       render(null, extra);
@@ -184,7 +190,7 @@ describe("bookmarks", () => {
         modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
       ).toBe("My bookmark");
       // Nothing is stored until Save.
-      expect(recordData).not.toHaveBeenCalled();
+      expect(bookmarkWrites()).toEqual([]);
 
       await click(button(modal, ".sb-bookmark-picker-save"));
 
@@ -272,7 +278,7 @@ describe("bookmarks", () => {
       );
       expect(closeModal).toHaveBeenCalledWith("bookmark-AAB-GEN-1");
       expect(state.bookmarks.bookmarks.value[0]).toMatchObject(AAB_EXO_3);
-      expect(recordData).not.toHaveBeenCalled();
+      expect(bookmarkWrites()).toEqual([]);
     });
 
     it("keeps numbering new bookmarks as My bookmark 2, 3, …", async () => {
@@ -351,7 +357,7 @@ describe("bookmarks", () => {
           question.querySelector(".sb-confirm-delete-message")!.textContent
         ).toBe(`Delete "Reading plan"? This can't be undone.`);
         expect(state.bookmarks.bookmarks.value).toHaveLength(1);
-        expect(recordData).not.toHaveBeenCalled();
+        expect(bookmarkWrites()).toEqual([]);
 
         await click(button(question, ".sb-delete-button"));
 
@@ -371,7 +377,7 @@ describe("bookmarks", () => {
         await click(button(question, ".sb-session-settings-cancel"));
 
         expect(state.bookmarks.bookmarks.value).toHaveLength(1);
-        expect(recordData).not.toHaveBeenCalled();
+        expect(bookmarkWrites()).toEqual([]);
       });
     });
 
@@ -831,7 +837,7 @@ describe("bookmarks", () => {
           question.querySelector(".sb-confirm-delete-message")!.textContent
         ).toBe(`Delete "Reading plan"? This can't be undone.`);
         expect(state.bookmarks.bookmarks.value).toHaveLength(1);
-        expect(recordData).not.toHaveBeenCalled();
+        expect(bookmarkWrites()).toEqual([]);
 
         await click(button(question, ".sb-delete-button"));
 
@@ -844,7 +850,7 @@ describe("bookmarks", () => {
         await click(button(question, ".sb-session-settings-cancel"));
 
         expect(state.bookmarks.bookmarks.value).toHaveLength(1);
-        expect(recordData).not.toHaveBeenCalled();
+        expect(bookmarkWrites()).toEqual([]);
       });
     });
 

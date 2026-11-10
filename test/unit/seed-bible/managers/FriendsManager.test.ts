@@ -539,6 +539,110 @@ describe("FriendsManager", () => {
     });
   });
 
+  describe("onRequestSent", () => {
+    let onRequestSent: ReturnType<typeof vi.fn<(requestId: string) => void>>;
+    const createWithHook = async () => {
+      const friends = createFriendsManager(os, login, { onRequestSent });
+      created.push(friends);
+      await loaded(friends, () => {});
+      return friends;
+    };
+
+    beforeEach(() => {
+      onRequestSent = vi.fn();
+    });
+
+    it("is told about a new request, by its id", async () => {
+      const friends = await createWithHook();
+
+      const result = await friends.sendRequest({ userId: "ada" });
+
+      const sent = server.rows.find((r) => r.targetUserId === "ada")!;
+      expect(result).toEqual({ status: "sent", requestId: sent.id });
+      expect(onRequestSent).toHaveBeenCalledExactlyOnceWith(sent.id);
+    });
+
+    it("is told about a new request by email", async () => {
+      server.emails.set("ada@example.com", "ada");
+      const friends = await createWithHook();
+
+      await friends.sendRequest({ email: "ada@example.com" });
+
+      expect(onRequestSent).toHaveBeenCalledExactlyOnceWith(server.rows[0]!.id);
+    });
+
+    it("is told once when the same request is asked for twice at once", async () => {
+      const friends = await createWithHook();
+
+      await Promise.all([
+        friends.sendRequest({ userId: "ada" }),
+        friends.sendRequest({ userId: "ada" }),
+      ]);
+
+      expect(onRequestSent).toHaveBeenCalledTimes(1);
+    });
+
+    it("isn't told when nothing new went out", async () => {
+      server.friendsWith("ada");
+      server.requestFrom("bob");
+      server.requestTo("cal");
+      server.emails.set("ada@example.com", "ada");
+      const friends = await createWithHook();
+
+      await expect(friends.sendRequest({ userId: "ada" })).resolves.toEqual({
+        status: "already_friends",
+      });
+      await expect(friends.sendRequest({ userId: "bob" })).resolves.toEqual({
+        status: "accepted",
+      });
+      await expect(
+        friends.sendRequest({ userId: "cal" })
+      ).resolves.toMatchObject({ status: "already_requested" });
+      await expect(friends.sendRequest({ userId: ME })).resolves.toEqual({
+        status: "self",
+      });
+      await expect(
+        friends.sendRequest({ email: "ada@example.com" })
+      ).resolves.toEqual({ status: "already_friends" });
+      await expect(
+        friends.sendRequest({ email: "nobody@example.com" })
+      ).resolves.toEqual({ status: "user_not_found" });
+
+      expect(onRequestSent).not.toHaveBeenCalled();
+    });
+
+    it("isn't told when the account changed while the request went out", async () => {
+      const friends = await createWithHook();
+      server.spies.request.mockImplementationOnce((async () => {
+        userId.value = "someone-else";
+        return { success: true, sharedPermissionId: "sp-switched" };
+      }) as never);
+
+      await friends.sendRequest({ userId: "ada" });
+
+      expect(onRequestSent).not.toHaveBeenCalled();
+    });
+
+    it("still sends when the hook throws", async () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      onRequestSent.mockImplementation(() => {
+        throw new Error("boom");
+      });
+      const friends = await createWithHook();
+
+      try {
+        await expect(
+          friends.sendRequest({ userId: "ada" })
+        ).resolves.toMatchObject({ status: "sent" });
+        expect(friends.outgoingRequests.value).toMatchObject([
+          { userId: "ada" },
+        ]);
+      } finally {
+        warn.mockRestore();
+      }
+    });
+  });
+
   describe("answering requests", () => {
     it("accepting makes them a friend", async () => {
       const request = server.requestFrom("ada");

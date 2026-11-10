@@ -24,6 +24,10 @@ import {
 } from "../managers/TodayManager";
 import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
+import {
+  NOTIFICATIONS_MODAL_ID,
+  NotificationsFeed,
+} from "../components/NotificationsFeed/NotificationsFeed";
 import { openExtensionConsentModal } from "../components/ExtensionConsentModal/ExtensionConsentModal";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
 import {
@@ -187,6 +191,15 @@ import {
   type FriendsManager,
 } from "../managers/FriendsManager";
 import { createFriendReadLimiter } from "./friendContentFreshness";
+import {
+  createNotificationsManager,
+  NEW_NOTIFICATIONS_TOAST_KEY,
+  type NotificationsManager,
+} from "./NotificationsManager";
+import {
+  createPushNotificationsManager,
+  type PushNotificationsManager,
+} from "./PushNotificationsManager";
 import {
   createChatsManager,
   type ChatSession,
@@ -599,6 +612,16 @@ export interface SeedBibleState {
   /** The Today screen: its open state and the data its cards read. */
   today: TodayManager;
   /**
+   * Friend requests, update notices and the like: what's unread, what's been
+   * dismissed, and whether the list is open. See docs/notifications.md.
+   */
+  notifications: NotificationsManager;
+  /**
+   * Push notifications on this device: whether they can work here, and
+   * turning them on or off. See docs/notifications.md §7.
+   */
+  pushNotifications: PushNotificationsManager;
+  /**
    * Registry of reading extensions that can be enabled per reading state to
    * enhance navigation, discovered content, and session-synced custom data.
    */
@@ -922,7 +945,19 @@ export function createSeedBibleState(
       bookmarks.isPanelOpen.value = false;
     }
   });
-  const friends = createFriendsManager(os, login);
+  // Before friends, which tells it about each request sent. A push arriving
+  // while the app is open re-reads the notifications, and tapping one opens
+  // the list in this window (both created further down).
+  const pushNotifications = createPushNotificationsManager({
+    os,
+    login,
+    onPushReceived: () => void notifications.refresh(),
+    onOpenRequested: () => notifications.openFeed(),
+  });
+  const friends = createFriendsManager(os, login, {
+    onRequestSent: (requestId) =>
+      void pushNotifications.notifyFriendRequestSent(requestId),
+  });
   const friendLinkPreview = createFriendLinkPreviewLoader({
     login,
     navigation,
@@ -2006,6 +2041,8 @@ export function createSeedBibleState(
         selector.hydrateStoredViewMode();
         tutorial.hydrateStoredFlags();
         onboarding.hydrateStoredFlags();
+        notifications.hydrateStoredState();
+        pushNotifications.hydrate();
         // Unblocks the persistence effect above, which now sees the restored tab
         // list rather than the URL-only seed.
         tabsRestored.value = true;
@@ -2835,6 +2872,49 @@ export function createSeedBibleState(
     toastTimer = setTimeout(() => {
       toastQueue.value = toastQueue.value.slice(1);
     }, remaining);
+  });
+
+  const notifications = createNotificationsManager({
+    os,
+    login,
+    friends,
+    toast,
+    i18n,
+  });
+  // A toast saying there's something new has nothing left to say once the
+  // list is open, even if it was opened from the bell rather than the toast.
+  effect(() => {
+    if (notifications.isFeedOpen.value) {
+      toastQueue.value = toastQueue
+        .peek()
+        .filter((queued) => queued.key !== NEW_NOTIFICATIONS_TOAST_KEY);
+    }
+  });
+  // Bound to `?notifications=open`, so a tapped push notification can open the
+  // list (its link is `/?notifications=open`, which lands on Today).
+  //
+  // Opened from the URL first, the way the other screens' flags are seeded:
+  // `syncSignalsToUrl` writes the current value to the URL before it reads the
+  // URL, so a list still closed at that point would wipe the param.
+  if (
+    !import.meta.env.SSR &&
+    navigation.currentUrl.peek().searchParams.get("notifications") === "open"
+  ) {
+    notifications.openFeed();
+  }
+  navigation.syncSignalsToUrl({
+    notifications: {
+      get value() {
+        return notifications.isFeedOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        if (newValue === "open") {
+          notifications.openFeed();
+        } else {
+          notifications.closeFeed();
+        }
+      },
+    },
   });
 
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
@@ -3809,6 +3889,8 @@ export function createSeedBibleState(
     i18n,
     discover,
     today,
+    notifications,
+    pushNotifications,
     readingExtensions,
     extensions,
     extensionSettings,
@@ -3986,6 +4068,7 @@ export function createSeedBibleState(
     <TodayPane
       today={today}
       login={login}
+      notifications={notifications}
       theme={themeManager.currentTheme}
       isMobile={isMobile}
       bookmarks={bookmarks.bookmarks}
@@ -4010,6 +4093,32 @@ export function createSeedBibleState(
       });
     } else {
       panes.closePane(TODAY_PANE_ID); // no-op when already closed
+    }
+  });
+
+  // The notifications list, opened from Today's bell, is a modal over whatever
+  // is showing, mirrored from `notifications.isFeedOpen` (and so from
+  // `?notifications=open`). It waits for the first render (`tabsRestored`):
+  // the server never shows the list, so a client whose first render did would
+  // no longer match the server's HTML.
+  effect(() => {
+    const open = tabsRestored.value && notifications.isFeedOpen.value;
+    const shown = modals.modals
+      .peek()
+      .some((modal) => modal.id === NOTIFICATIONS_MODAL_ID);
+    if (open && !shown) {
+      modals.openModal({
+        id: NOTIFICATIONS_MODAL_ID,
+        title: { key: "notifications", defaultValue: "Notifications" },
+        content: () => <NotificationsFeed state={state} />,
+        mobileSheet: true,
+        useCasualOSApp: false,
+        // The X and the backdrop. Escape and Back reach `closeFeed` by other
+        // routes: the list listens for Escape, and Back drops the URL param.
+        onDismiss: () => notifications.closeFeed(),
+      });
+    } else if (!open && shown) {
+      modals.closeModal(NOTIFICATIONS_MODAL_ID);
     }
   });
 

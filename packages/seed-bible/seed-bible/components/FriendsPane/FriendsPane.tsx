@@ -382,6 +382,24 @@ function IncomingRequestRow(props: {
   toast: Toast;
 }) {
   const { request, friends, profiles, toast } = props;
+  return (
+    <li className="sb-friends-row">
+      <PersonButton deps={profiles} person={request} />
+      <FriendRequestActions request={request} friends={friends} toast={toast} />
+    </li>
+  );
+}
+
+/**
+ * Accept and Decline for a request someone sent, each saying how it went in a
+ * toast. Used by the Friends screen and the notifications list.
+ */
+export function FriendRequestActions(props: {
+  request: FriendRequest;
+  friends: FriendsManager;
+  toast: Toast;
+}) {
+  const { request, friends, toast } = props;
   const { t } = useI18n();
   // Which answer is in flight, so only that button spins while both are
   // disabled.
@@ -430,35 +448,32 @@ function IncomingRequestRow(props: {
   };
 
   return (
-    <li className="sb-friends-row">
-      <PersonButton deps={profiles} person={request} />
-      <span className="sb-friends-row-actions">
-        <BusyButton
-          className="sb-friends-button sb-friends-button--primary"
-          busy={answering.value === "accept"}
-          disabled={answering.value !== null}
-          ariaLabel={t("accept-friend-user", {
-            name,
-            defaultValue: "Accept {{name}}'s friend request",
-          })}
-          onClick={() => void answer(true)}
-        >
-          {t("accept", { defaultValue: "Accept" })}
-        </BusyButton>
-        <BusyButton
-          className="sb-friends-button"
-          busy={answering.value === "decline"}
-          disabled={answering.value !== null}
-          ariaLabel={t("decline-friend-user", {
-            name,
-            defaultValue: "Decline {{name}}'s friend request",
-          })}
-          onClick={() => void answer(false)}
-        >
-          {t("decline", { defaultValue: "Decline" })}
-        </BusyButton>
-      </span>
-    </li>
+    <span className="sb-friends-row-actions">
+      <BusyButton
+        className="sb-friends-button sb-friends-button--primary"
+        busy={answering.value === "accept"}
+        disabled={answering.value !== null}
+        ariaLabel={t("accept-friend-user", {
+          name,
+          defaultValue: "Accept {{name}}'s friend request",
+        })}
+        onClick={() => void answer(true)}
+      >
+        {t("accept", { defaultValue: "Accept" })}
+      </BusyButton>
+      <BusyButton
+        className="sb-friends-button"
+        busy={answering.value === "decline"}
+        disabled={answering.value !== null}
+        ariaLabel={t("decline-friend-user", {
+          name,
+          defaultValue: "Decline {{name}}'s friend request",
+        })}
+        onClick={() => void answer(false)}
+      >
+        {t("decline", { defaultValue: "Decline" })}
+      </BusyButton>
+    </span>
   );
 }
 
