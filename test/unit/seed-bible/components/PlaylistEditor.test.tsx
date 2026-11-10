@@ -240,18 +240,38 @@ describe("the playlist editor", () => {
   });
 
   describe("playlist name", () => {
-    it("renames the playlist, keeping a blank name as untitled", () => {
-      openPanel();
-      expect(container.querySelector(".sb-pe-panel-title")!.textContent).toBe(
-        "Untitled playlist"
+    it("opens the playlist's details from its title, to rename it, keeping a blank name as untitled", () => {
+      openDesktopEditor();
+      const titleButton = () =>
+        container.querySelector<HTMLButtonElement>(
+          ".sb-pe-panel-title-button"
+        )!;
+      expect(titleButton().textContent).toBe("Untitled playlist");
+
+      click(titleButton());
+
+      // The same fields as a phone's details sheet: title, description, cover.
+      const titleField = document.body.querySelector(
+        "#sb-pe-details-modal-title"
       );
-
-      click(container.querySelector('[aria-label="Rename playlist"]'));
-      type(container.querySelector(".sb-pe-panel-title-input"), "Morning");
+      expect(titleField).not.toBeNull();
+      expect(
+        document.body.querySelector("#sb-pe-details-modal-description")
+      ).not.toBeNull();
+      expect(document.body.textContent).toContain("Cover image");
+      type(titleField, "Morning");
       expect(state.playlists.editingPlaylist.value!.title).toBe("Morning");
-
-      type(container.querySelector(".sb-pe-panel-title-input"), "   ");
+      expect(titleButton().textContent).toBe("Morning");
+      type(titleField, "   ");
       expect(state.playlists.editingPlaylist.value!.title).toBeNull();
+
+      click(
+        byText(document.body, ".sb-pe-details-modal-footer button", "Done")
+      );
+      expect(
+        document.body.querySelector("#sb-pe-details-modal-title")
+      ).toBeNull();
+      expect(state.playlists.editorDetailsSheetOpen.value).toBe(false);
     });
 
     it("says whether the draft has unsaved changes", () => {
@@ -1182,22 +1202,15 @@ describe("the playlist editor", () => {
     expect(container.querySelector("[contenteditable]")).toBeNull();
   });
 
-  describe("review & publish", () => {
-    it("won't publish while a step is incomplete, and links to it", () => {
+  describe("saving", () => {
+    it("won't save while a step is unfinished, and links to it", () => {
       const recordData = vi.spyOn(state.os, "recordData");
       openDesktopEditor(STEPS, 0);
       // A new video step has no link until one is typed in.
       act(() => state.playlists.addEditorStep("video", 2));
       act(() => state.playlists.selectEditorStep(0));
 
-      click(byText(container, ".sb-pe-publish", "Review & publish"));
-
-      const publish = byText(
-        document.body,
-        ".sb-pe-review .sb-pe-publish",
-        "Publish"
-      ) as HTMLButtonElement;
-      expect(publish.disabled).toBe(true);
+      click(byText(container, ".sb-pe-publish", "Save"));
       click(byText(document.body, ".sb-pe-review-problems button", "Step 4"));
 
       expect(state.playlists.editorStepIndex.value).toBe(3);
@@ -1209,10 +1222,11 @@ describe("the playlist editor", () => {
         .spyOn(state.os, "recordData")
         .mockResolvedValue(undefined as never);
       openDesktopEditor(STEPS, 0);
+      act(() => {
+        state.playlists.updateEditingPlaylistMetadata({ title: "Light" });
+      });
 
-      click(byText(container, ".sb-pe-publish", "Review & publish"));
-      type(document.body.querySelector("#sb-pe-review-title"), "Light");
-      click(byText(document.body, ".sb-pe-review .sb-pe-publish", "Publish"));
+      click(byText(container, ".sb-pe-publish", "Save"));
 
       await waitFor(() => state.playlists.editingPlaylist.value === null);
       const saved = recordData.mock.calls[0]![2] as Playlist;
@@ -1220,19 +1234,17 @@ describe("the playlist editor", () => {
       expect(saved.items).toEqual(STEPS);
     });
 
-    it("says so and keeps the draft when publishing fails", async () => {
+    it("says so and keeps the draft when saving fails", async () => {
       vi.spyOn(state.os, "recordData").mockRejectedValue(new Error("offline"));
       vi.spyOn(console, "error").mockImplementation(() => {});
+      const toast = vi.spyOn(state.app, "toast");
       openDesktopEditor(STEPS, 0);
 
-      click(byText(container, ".sb-pe-publish", "Review & publish"));
-      click(byText(document.body, ".sb-pe-review .sb-pe-publish", "Publish"));
+      click(byText(container, ".sb-pe-publish", "Save"));
 
-      await waitFor(
-        () =>
-          !!document.body.textContent?.includes(
-            "The playlist couldn't be published. Try again."
-          )
+      await waitFor(() => toast.mock.calls.length > 0);
+      expect(toast).toHaveBeenCalledWith(
+        "The playlist couldn't be saved. Try again."
       );
       expect(state.playlists.editingPlaylist.value).not.toBeNull();
     });

@@ -239,39 +239,36 @@
 }
 
 .sb-pe-panel-title {
+  min-width: 0;
   margin: 0;
   font-family: var(--pe-font-title);
   font-weight: 700;
   font-size: 20px;
   line-height: 26px;
+}
+
+.sb-pe-panel-title-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  font-weight: inherit;
+
+  & .sb-pe-icon {
+    flex-shrink: 0;
+    width: 11px;
+    height: 11px;
+    color: var(--pe-muted);
+  }
+}
+
+/* A block, so a long title is cut short rather than pushing the pencil out. */
+.sb-pe-panel-title-text {
+  display: block;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.sb-pe-panel-title-input {
-  width: 100%;
-  min-width: 0;
-  padding: 0;
-  border: none;
-  border-bottom: 1px solid var(--pe-accent-line);
-  background: transparent;
-  color: inherit;
-  font-family: var(--pe-font-title);
-  font-weight: 700;
-  font-size: 20px;
-  line-height: 26px;
-}
-
-.sb-pe-panel-title-input:focus {
-  outline: none;
-  border-bottom-color: var(--pe-accent-strong);
-}
-
-.sb-pe-panel-rename .sb-pe-icon {
-  width: 11px;
-  height: 11px;
-  color: var(--pe-muted);
 }
 
 .sb-pe-panel-status {
@@ -1637,6 +1634,28 @@ body.sb-scroll-hide-bars .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
 
 /* The cover at the size the shared playlist page shows it, so the sheet
    needn't scroll far to reach it. */
+/* Desktop: the playlist's details in a dialog, opened from its title. */
+.sb-pe-details-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: var(--pe-font-ui);
+
+  & .sb-hero-field {
+    width: min(100%, 15rem);
+  }
+}
+
+.sb-pe-details-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+
+  & .sb-pe-publish {
+    width: auto;
+    padding-inline: 28px;
+  }
+}
+
 .sb-pe-details-sheet-body .sb-hero-field {
   width: min(100%, 15rem);
 }

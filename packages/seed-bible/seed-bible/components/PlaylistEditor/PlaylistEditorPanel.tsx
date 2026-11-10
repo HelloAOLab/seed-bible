@@ -1,6 +1,6 @@
 import "./PlaylistEditor.css";
 import type { ComponentChildren } from "preact";
-import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type {
   NewPlaylistStepKind,
@@ -505,11 +505,13 @@ export function AddStepToggle(props: { playlists: PlaylistManager }) {
   );
 }
 
-/** The playlist's name, which turns into a text field to rename it. */
+/**
+ * The playlist's name, which opens its details (name, description and cover)
+ * to edit, as a phone's title bar does.
+ */
 function PlaylistTitle(props: { playlists: PlaylistManager }) {
   const { playlists } = props;
   const { t } = useI18n();
-  const [renaming, setRenaming] = useState(false);
   const title = playlists.editingPlaylist.value?.title ?? "";
   const shown =
     title.trim() ||
@@ -517,49 +519,23 @@ function PlaylistTitle(props: { playlists: PlaylistManager }) {
 
   return (
     <div className="sb-pe-panel-title-row">
-      {renaming ? (
-        <input
-          className="sb-pe-panel-title-input"
-          type="text"
-          value={title}
-          dir="auto"
-          autoFocus
-          aria-label={t("playlist-title_placeholder", {
-            defaultValue: "Playlist title",
+      <h2 className="sb-pe-panel-title">
+        <button
+          type="button"
+          className="sb-pe-panel-title-button"
+          aria-haspopup="dialog"
+          aria-expanded={playlists.editorDetailsSheetOpen.value}
+          title={t("playlist-editor-edit-details", {
+            defaultValue: "Edit title, description and cover",
           })}
-          placeholder={t("untitled-playlist", {
-            defaultValue: "Untitled playlist",
-          })}
-          onInput={(event: Event) => {
-            const value = (event.currentTarget as HTMLInputElement).value;
-            playlists.updateEditingPlaylistMetadata({
-              title: value.trim() ? value : null,
-            });
-          }}
-          onBlur={() => setRenaming(false)}
-          onKeyDown={(event: KeyboardEvent) => {
-            if (event.key === "Enter" || event.key === "Escape") {
-              setRenaming(false);
-            }
-          }}
-        />
-      ) : (
-        <>
-          <h2 className="sb-pe-panel-title" dir="auto">
+          onClick={() => (playlists.editorDetailsSheetOpen.value = true)}
+        >
+          <span className="sb-pe-panel-title-text" dir="auto">
             {shown}
-          </h2>
-          <button
-            type="button"
-            className="sb-pe-panel-rename"
-            aria-label={t("playlist-editor-rename", {
-              defaultValue: "Rename playlist",
-            })}
-            onClick={() => setRenaming(true)}
-          >
-            <PeIcon name="pencil" />
-          </button>
-        </>
-      )}
+          </span>
+          <PeIcon name="pencil" />
+        </button>
+      </h2>
     </div>
   );
 }
@@ -598,7 +574,7 @@ export function PlaylistEditorPanel(props: {
   modals: ModalManager;
   /** Extra buttons at the end of the title bar. */
   headerActions?: ComponentChildren;
-  /** At the foot of the panel, such as Review & publish. */
+  /** At the foot of the panel, such as Save. */
   footerActions?: ComponentChildren;
 }) {
   const { playlists, tabs, modals, headerActions, footerActions } = props;

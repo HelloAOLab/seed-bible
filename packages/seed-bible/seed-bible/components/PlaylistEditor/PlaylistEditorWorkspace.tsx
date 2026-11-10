@@ -1,6 +1,6 @@
 import "./PlaylistEditor.css";
 import type { ComponentChildren } from "preact";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ReaderTab } from "../../managers/TabsManager";
@@ -169,7 +169,7 @@ export function PlaylistReaderHint() {
 
 /**
  * The playlist's title, description and cover image, edited in place: in the
- * Review & publish dialog, and in the phone's details sheet.
+ * phone's details sheet, and the desktop's details dialog.
  */
 function PlaylistDetailsFields(props: {
   state: SeedBibleState;
@@ -347,131 +347,149 @@ function PlaylistStepSettingsSheet(props: {
   );
 }
 
-const REVIEW_MODAL_ID = "playlist-review-publish";
+const UNFINISHED_STEPS_MODAL_ID = "playlist-unfinished-steps";
 
-function PlaylistReviewContent(props: { state: SeedBibleState }) {
+/** Why the playlist can't be saved yet: the steps that need finishing. */
+function UnfinishedStepsContent(props: { state: SeedBibleState }) {
   const { state } = props;
   const { playlists, modals } = state;
   const { t } = useI18n();
   const resolveBookName = useResolveBookName(state.tabs);
-  const [publishing, setPublishing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const editing = playlists.editingPlaylist.value;
   if (!editing) {
     return null;
   }
   const invalid = playlists.editingPlaylistInvalidSteps();
+  const close = () => modals.closeModal(UNFINISHED_STEPS_MODAL_ID);
 
   return (
     <div className="sb-pe sb-pe-review">
-      <PlaylistDetailsFields state={state} idPrefix="sb-pe-review" />
-      <p className="sb-pe-step-count">
-        {t("playlist-editor-step-count", {
-          steps: editing.items.length,
-          minutes: playlistTotalMinutes(editing.items),
-          defaultValue: "{{steps}} steps · ~{{minutes}} min",
+      <div className="sb-pe-review-problems" role="alert">
+        {t("playlist-editor-incomplete-steps-save", {
+          defaultValue: "These steps need finishing before you save:",
         })}
-      </p>
-      {invalid.length > 0 ? (
-        <div className="sb-pe-review-problems" role="alert">
-          {t("playlist-editor-incomplete-steps", {
-            defaultValue: "These steps need finishing before you publish:",
-          })}
-          <ul>
-            {invalid.map((index) => (
-              <li key={index}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    modals.closeModal(REVIEW_MODAL_ID);
-                    playlists.selectEditorStep(index);
-                  }}
-                >
-                  {t("playlist-editor-step-link-text", {
-                    step: index + 1,
-                    label: playlistStepLabel(
-                      editing.items[index]!,
-                      t,
-                      resolveBookName
-                    ),
-                    defaultValue: "Step {{step}}: {{label}}",
-                  })}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      {error ? (
-        <p className="sb-pe-error" role="alert">
-          {error}
-        </p>
-      ) : null}
+        <ul>
+          {invalid.map((index) => (
+            <li key={index}>
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  playlists.selectEditorStep(index);
+                }}
+              >
+                {t("playlist-editor-step-link-text", {
+                  step: index + 1,
+                  label: playlistStepLabel(
+                    editing.items[index]!,
+                    t,
+                    resolveBookName
+                  ),
+                  defaultValue: "Step {{step}}: {{label}}",
+                })}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
       <div className="sb-pe-review-actions">
-        <button
-          type="button"
-          className="sb-pe-review-back"
-          onClick={() => modals.closeModal(REVIEW_MODAL_ID)}
-        >
+        <button type="button" className="sb-pe-review-back" onClick={close}>
           {t("playlist-editor-keep-editing", { defaultValue: "Keep editing" })}
-        </button>
-        <button
-          type="button"
-          className="sb-pe-publish"
-          disabled={publishing || invalid.length > 0}
-          onClick={() => {
-            setPublishing(true);
-            setError(null);
-            playlists
-              .saveEditingPlaylist()
-              .then(() => modals.closeModal(REVIEW_MODAL_ID))
-              .catch((cause: unknown) => {
-                console.error("Failed to save playlist:", cause);
-                setError(
-                  t("playlist-editor-publish-failed", {
-                    defaultValue:
-                      "The playlist couldn't be published. Try again.",
-                  })
-                );
-                setPublishing(false);
-              });
-          }}
-        >
-          {publishing
-            ? t("saving", { defaultValue: "Saving…" })
-            : t("playlist-editor-publish", { defaultValue: "Publish" })}
         </button>
       </div>
     </div>
   );
 }
 
-/** Opens the last check before publishing: name, description, cover. */
-export function openPlaylistReview(state: SeedBibleState) {
-  state.modals.openModal({
-    id: REVIEW_MODAL_ID,
-    title: {
-      key: "playlist-editor-review-and-publish",
-      defaultValue: "Review & publish",
-    },
-    mobileSheet: true,
-    content: () => <PlaylistReviewContent state={state} />,
-  });
-}
-
+/**
+ * Saves the playlist; or, while a step is unfinished (a video step with no
+ * link, say), says which, as a playlist saved with one would fail to load.
+ */
 export function PublishButton(props: { state: SeedBibleState }) {
+  const { state } = props;
   const { t } = useI18n();
+  const [saving, setSaving] = useState(false);
+  const save = () => {
+    if (state.playlists.editingPlaylistInvalidSteps().length > 0) {
+      state.modals.openModal({
+        id: UNFINISHED_STEPS_MODAL_ID,
+        title: {
+          key: "playlist-editor-unfinished-steps",
+          defaultValue: "Some steps aren't finished",
+        },
+        mobileSheet: true,
+        content: () => <UnfinishedStepsContent state={state} />,
+      });
+      return;
+    }
+    setSaving(true);
+    state.playlists
+      .saveEditingPlaylist()
+      .catch((cause: unknown) => {
+        console.error("Failed to save playlist:", cause);
+        state.app.toast(
+          t("playlist-editor-save-failed", {
+            defaultValue: "The playlist couldn't be saved. Try again.",
+          })
+        );
+      })
+      .finally(() => setSaving(false));
+  };
   return (
     <button
       type="button"
       className="sb-pe-publish"
-      onClick={() => openPlaylistReview(props.state)}
+      disabled={saving}
+      onClick={save}
     >
-      {t("playlist-editor-review-and-publish", {
-        defaultValue: "Review & publish",
-      })}
+      {saving
+        ? t("saving", { defaultValue: "Saving…" })
+        : t("save", { defaultValue: "Save" })}
     </button>
   );
+}
+
+const DETAILS_MODAL_ID = "playlist-editor-details";
+
+/**
+ * Desktop: the playlist's details (its title, description and cover) in a
+ * dialog, opened from its title, as a phone opens them in a sheet.
+ */
+function PlaylistDetailsModal(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { playlists, modals } = state;
+  const open = playlists.editorDetailsSheetOpen.value;
+  useEffect(() => {
+    if (!open) {
+      modals.closeModal(DETAILS_MODAL_ID);
+      return;
+    }
+    const close = () => (playlists.editorDetailsSheetOpen.value = false);
+    modals.openModal({
+      id: DETAILS_MODAL_ID,
+      title: {
+        key: "playlist-editor-details",
+        defaultValue: "Playlist details",
+      },
+      mobileSheet: true,
+      content: () => (
+        <div className="sb-pe sb-pe-details-modal">
+          <PlaylistDetailsFields state={state} idPrefix="sb-pe-details-modal" />
+        </div>
+      ),
+      footer: ({ t }) => (
+        <div className="sb-pe sb-pe-details-modal-footer">
+          <button type="button" className="sb-pe-publish" onClick={close}>
+            {t("done", { defaultValue: "Done" })}
+          </button>
+        </div>
+      ),
+      onDismiss: close,
+    });
+  }, [open]);
+  // Gone with the editor.
+  useEffect(() => () => modals.closeModal(DETAILS_MODAL_ID), []);
+  return null;
 }
 
 /**
@@ -703,7 +721,7 @@ export function PlaylistEditorWorkspace(props: {
         ) : (
           card
         )}
-        {/* Review & publish belongs to the list; a step's page keeps only the
+        {/* Save belongs to the list; a step's page keeps only the
             verse pick bar here while verses are being picked, or the bar for
             using a chapter the reader has moved to. */}
         {onList ? (
@@ -742,6 +760,7 @@ export function PlaylistEditorWorkspace(props: {
       ) : null}
       {children}
       {card}
+      <PlaylistDetailsModal state={state} />
     </div>
   );
 }
