@@ -4,7 +4,7 @@
 
 ### ✨ Added
 
-- Get notifications in Seed Bible: a bell at the top of Today opens a list of friend requests and update notices, each of which can be dismissed.
+- Get notifications in Seed Bible: a bell at the top of Today opens a list of friend requests and update notices, each of which can be dismissed. ([#2156](https://github.com/HelloAOLab/seed-bible/pull/2156))
   - Accept or decline a friend request straight from the list.
   - A toast says when something new arrives, including right after signing in on another device.
   - When Seed Bible is updated, a notice links to what's new in that version.
