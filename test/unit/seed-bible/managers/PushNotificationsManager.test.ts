@@ -743,6 +743,35 @@ describe("PushNotificationsManager", () => {
       expect(network.procedures()).not.toContain("recordNotification");
     });
 
+    it("drops a failure to turn on once another tab has turned it on", async () => {
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      browser.state.subscribeError = new DOMException(
+        "Registration failed - push service error",
+        "AbortError"
+      );
+      const push = start();
+      await settled(push);
+      await push.enable();
+      expect(push.error.value).toBe("failed");
+
+      // Another tab on this device turned push on.
+      const subscription = browser.subscribed();
+      storeDevice({
+        userId: ME,
+        endpoint: subscription.endpoint,
+        notifierUserId: NOTIFIER,
+        registeredAtMs: clock,
+      });
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: PUSH_DEVICE_STORAGE_KEY })
+      );
+
+      await vi.waitFor(() => expect(push.status.value).toBe("on"));
+      // The card now offers "Turn off"; "couldn't turn on" no longer applies,
+      // and shown there it would read as a failure to turn off.
+      expect(push.error.value).toBeNull();
+    });
+
     it("can be tried again after a failure", async () => {
       vi.spyOn(console, "warn").mockImplementation(() => {});
       network.answers.grantPermission = () => ({

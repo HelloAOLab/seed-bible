@@ -269,6 +269,21 @@ export function createPushNotificationsManager(
       : "off";
   });
 
+  // An error belongs to the action that failed, and the card only offers that
+  // action in the status it failed in. Once the status moves on (another tab
+  // turned push on, say), it no longer applies, and shown next to the other
+  // action it would say the wrong thing.
+  let errorStatus = status.peek();
+  cleanups.push(
+    effect(() => {
+      const current = status.value;
+      if (current !== errorStatus) {
+        errorStatus = current;
+        error.value = null;
+      }
+    })
+  );
+
   const writeDevice = (record: DeviceRecord | null) => {
     device.value = record;
     try {
