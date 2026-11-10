@@ -333,7 +333,7 @@ function FriendRequestLinkPrompt(props: {
               <CloseButton onClose={onClose} />
               <button
                 type="button"
-                className="sb-session-settings-end"
+                className="sb-friends-button sb-friends-button--primary"
                 onClick={() => void friends.refresh()}
               >
                 {t("try-again", { defaultValue: "Try again" })}

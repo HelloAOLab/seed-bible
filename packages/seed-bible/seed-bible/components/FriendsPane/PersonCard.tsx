@@ -222,7 +222,7 @@ function FriendshipActions(props: {
           {t("decline", { defaultValue: "Decline" })}
         </BusyButton>
         <BusyButton
-          className="sb-session-settings-end"
+          className="sb-friends-button sb-friends-button--primary"
           busy={busy.value === "accept"}
           disabled={busy.value !== null}
           ariaLabel={t("accept-friend-user", {
@@ -288,7 +288,7 @@ function FriendshipActions(props: {
     });
     actions = (
       <BusyButton
-        className="sb-session-settings-end"
+        className="sb-friends-button sb-friends-button--primary"
         busy={busy.value === "send"}
         disabled={busy.value !== null}
         ariaLabel={t("add-friend-user", {
