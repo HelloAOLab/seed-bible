@@ -102,10 +102,16 @@ function createMockTab(
     translationId?: string;
     selectTranslationAndChapter?: ReturnType<typeof vi.fn>;
     decorateVerses?: ReturnType<typeof vi.fn>;
+    showSharedSessionHint?: boolean;
+    hasHiddenDiscoveredContent?: boolean;
+    showDiscoveredContent?: boolean;
     isDiscovering?: boolean;
     showDiscoveryLoader?: boolean;
   } = {}
 ): ReaderTab {
+  const showSharedSessionHint = signal(
+    overrides.showSharedSessionHint ?? false
+  );
   return {
     id: "tab-1",
     readingState: {
@@ -124,6 +130,15 @@ function createMockTab(
       ),
       discoveredStudyNotes: signal([]),
       discoveredContent: signal(overrides.discoveredContent ?? []),
+      hasHiddenDiscoveredContent: signal(
+        overrides.hasHiddenDiscoveredContent ?? false
+      ),
+      showDiscoveredContent: signal(overrides.showDiscoveredContent ?? true),
+      userDismissedHiddenContentWarning: signal(false),
+      showSharedSessionHint,
+      dismissSharedSessionHint: () => {
+        showSharedSessionHint.value = false;
+      },
       isDiscovering: signal(overrides.isDiscovering ?? false),
       showDiscoveryLoader: signal(overrides.showDiscoveryLoader ?? false),
       selectedVerses: signal(
@@ -340,6 +355,39 @@ describe("DiscoverContentPanel", () => {
     expect(container.textContent).toContain("Exodus 5:3");
   });
 
+  it("shows the shared-session hint above the content until Got it is pressed", () => {
+    const tab = createMockTab({
+      discoveredCrossReferences: RESULTS_FIXTURE,
+      showSharedSessionHint: true,
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="compact"
+          tab={tab}
+          state={createMockState()}
+        />,
+        container
+      );
+    });
+
+    const hint = container.querySelector(".sb-dcp-session-hint");
+    expect(hint?.textContent).toContain(
+      "Only you can see discovered content. Everything else in the session is shared."
+    );
+    expect(container.textContent).toContain("Exodus 5:3");
+
+    act(() => {
+      (
+        hint?.querySelector(".sb-dcp-session-hint-dismiss") as HTMLButtonElement
+      ).click();
+    });
+
+    expect(container.querySelector(".sb-dcp-session-hint")).toBeNull();
+    expect(container.textContent).toContain("Exodus 5:3");
+  });
+
   it("hides the notes section when the chapter has no notes", () => {
     const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
     const state = createMockState({ annotationsForChapter: [] });
@@ -389,6 +437,49 @@ describe("DiscoverContentPanel", () => {
       container.querySelectorAll(".sb-dcp-chip")
     ).map((el) => el.textContent);
     expect(chipLabels).toEqual(["All", "Notes", "Cross Refs"]);
+  });
+
+  it("shows the full hidden-content warning when nothing else is showing", () => {
+    const tab = createMockTab({ hasHiddenDiscoveredContent: true });
+    const state = createMockState({ annotationsForChapter: [] });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-dcp-hidden-notice")).not.toBeNull();
+    expect(container.querySelector(".sb-dcp-hidden-banner")).toBeNull();
+  });
+
+  it("shows the hidden-content warning inline when a note deletion is still waiting to sync", () => {
+    const tab = createMockTab({ hasHiddenDiscoveredContent: true });
+    const state = createMockState({
+      annotationsForChapter: [],
+      pendingCountForChapter: 1,
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-dcp-hidden-banner")).not.toBeNull();
+    expect(container.querySelector(".sb-dcp-hidden-notice")).toBeNull();
   });
 
   it("renders the tab's notes (annotations) even when there are no other discovered results", () => {
@@ -628,6 +719,31 @@ describe("DiscoverContentPanel", () => {
 
     expect(container.textContent).toContain("Exodus 5:3");
     expect(container.querySelector(".sb-dcp-discovery-loader")).toBeNull();
+  });
+
+  it("with discovered content turned off, offers to create a note without waiting for discovery", () => {
+    const tab = createMockTab({
+      showDiscoveredContent: false,
+      isDiscovering: true,
+      showDiscoveryLoader: true,
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel
+          variant="full"
+          onClose={vi.fn()}
+          tab={tab}
+          state={createMockState({ annotationsForChapter: [] })}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-dcp-discovery-loader")).toBeNull();
+    expect(container.textContent).toContain(
+      "You don't have any notes for this chapter."
+    );
   });
 
   it("only shows filter chips for content that is actually available", () => {
@@ -2943,6 +3059,19 @@ describe("DiscoverContentPanel", () => {
 
       expect(chipLabels()).not.toContain("Friends' playlists");
       expect(sectionTitles()).not.toContain("Playlists from your friends");
+    });
+
+    it("shows the hidden-content warning inline when they are showing", () => {
+      renderFull(
+        createMockTab({ hasHiddenDiscoveredContent: true }),
+        createMockState({
+          annotationsForChapter: [],
+          friendPlaylists: [{ friend: ada, playlists: [psalms] }],
+        })
+      );
+
+      expect(container.querySelector(".sb-dcp-hidden-banner")).not.toBeNull();
+      expect(container.querySelector(".sb-dcp-hidden-notice")).toBeNull();
     });
 
     it("leaves them out of the compact panel", () => {

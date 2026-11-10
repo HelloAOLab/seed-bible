@@ -309,6 +309,13 @@ function createFixture(): ReaderFixture {
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
     isShared: signal(false),
+    showDiscoveredContent: signal(true),
+    userDismissedHiddenContentWarning: signal(false),
+    turnOnDiscoveredContent: vi.fn(),
+    hasHiddenDiscoveredContent: signal(false),
+    dismissHiddenContentWarning: vi.fn(),
+    showSharedSessionHint: signal(false),
+    dismissSharedSessionHint: vi.fn(),
     dispose: vi.fn(async () => undefined),
     enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
     isExtensionEnabled: vi.fn(() => false),
@@ -3013,7 +3020,10 @@ describe("BibleReader", () => {
     const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
     state.settings.settings.value = {
       ...state.settings.settings.value,
-      discoveredContent: { showContent: false },
+      discoveredContent: {
+        ...state.settings.settings.value.discoveredContent,
+        showContent: false,
+      },
     };
 
     act(() => {
@@ -3240,7 +3250,10 @@ describe("BibleReader", () => {
     const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
     state.settings.settings.value = {
       ...state.settings.settings.value,
-      discoveredContent: { showContent: false },
+      discoveredContent: {
+        ...state.settings.settings.value.discoveredContent,
+        showContent: false,
+      },
     };
 
     act(() => {
