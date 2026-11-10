@@ -12,6 +12,7 @@
  * written against injected `fetch`/`now` so it can be tested without a
  * network.
  */
+import { createHash } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
 export const NOTIFICATIONS_CONFIG_PATH = "/api/notifications/config";
@@ -26,10 +27,27 @@ export const FRIEND_REQUEST_PUSH_WINDOW_MS = 15 * 60 * 1000;
 /** Request bodies are a request id; anything bigger is refused unread. */
 export const MAX_BODY_BYTES = 4 * 1024;
 
-const HOUR_MS = 60 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
 
 /** A sent request answered with a push is remembered at least this long. */
 const SENT_REQUEST_TTL_MS = 2 * FRIEND_REQUEST_PUSH_WINDOW_MS;
+
+/**
+ * A key CasualOS accepted skips the rejected-keys budget for this long, so
+ * people who use push keep getting through while forged keys flood in.
+ */
+const ACCEPTED_KEY_TTL_MS = HOUR_MS;
+
+/** A key CasualOS turned down is refused without asking again for this long. */
+const REJECTED_KEY_TTL_MS = 5 * MINUTE_MS;
+
+/** The most entries (key hashes, request ids) any one memory holds. */
+const MAX_REMEMBERED = 10_000;
+
+/** How often a limiter drops keys it no longer needs. */
+const SWEEP_INTERVAL_MS = MINUTE_MS;
 
 /**
  * A request made in the last 15 minutes is on the first page of the sender's
@@ -54,12 +72,35 @@ export interface NotificationsRelayConfig {
   siteOrigin: string;
 }
 
+export interface RelayLimits {
+  /** Lookups one sender's key may get through in an hour, found or not. */
+  senderPerHour: number;
+  /** Pushes one person may be sent in an hour, by anyone. */
+  recipientPerHour: number;
+  /** Pushes from one sender to one recipient in a day. */
+  pairPerDay: number;
+  /** Lookups of senders' requests that may wait on CasualOS at once. */
+  lookupsAtOnce: number;
+  /**
+   * Keys CasualOS may turn down in a minute. Past that, a key it hasn't
+   * accepted in the last hour is refused without asking it.
+   */
+  rejectedKeysPerMinute: number;
+}
+
+export const DEFAULT_RELAY_LIMITS: Readonly<RelayLimits> = {
+  senderPerHour: 10,
+  recipientPerHour: 5,
+  pairPerDay: 1,
+  lookupsAtOnce: 8,
+  rejectedKeysPerMinute: 30,
+};
+
 export interface NotificationsRelayOptions {
   config: NotificationsRelayConfig;
   fetch?: typeof fetch;
   now?: () => number;
-  /** Pushes allowed per sender, and per recipient, in any hour. */
-  hourlyLimit?: number;
+  limits?: Partial<RelayLimits>;
   log?: Pick<Console, "info" | "warn" | "error">;
 }
 
@@ -84,6 +125,12 @@ export interface NotificationsRelay {
   /** Whether `pathname` is one of the relay's routes. */
   handles: (pathname: string) => boolean;
   handle: (request: RelayRequest) => Promise<RelayResponse>;
+  /**
+   * Resolves once every push accepted so far has been sent or has failed.
+   * A push is sent after its request is answered, so the answer can't hint
+   * at whether the recipient has push on.
+   */
+  idle: () => Promise<void>;
 }
 
 export interface ParsedSessionKey {
@@ -255,11 +302,45 @@ function cleanName(name: unknown): string | null {
     : cleaned;
 }
 
-/** Counts events per key over the last hour. */
-function createHourlyLimiter(limit: number, now: () => number) {
+export interface WindowLimiter {
+  /** How long until `key` may go again, or 0 when it may go now. */
+  waitMs: (key: string) => number;
+  /** Counts one event for `key` now; calling the result takes it back. */
+  record: (key: string) => () => void;
+  /** How many keys it's holding events for. */
+  readonly size: number;
+}
+
+/**
+ * Counts events per key over a sliding window. Once a minute at most, it
+ * drops every key whose events have all aged out, so it holds only the keys
+ * seen lately rather than everyone it has ever seen.
+ */
+export function createWindowLimiter(options: {
+  limit: number;
+  windowMs: number;
+  now: () => number;
+}): WindowLimiter {
+  const { limit, windowMs, now } = options;
   const events = new Map<string, number[]>();
+  let sweptAtMs = -Infinity;
+
+  const sweep = () => {
+    const nowMs = now();
+    if (nowMs - sweptAtMs < SWEEP_INTERVAL_MS) {
+      return;
+    }
+    sweptAtMs = nowMs;
+    for (const [key, times] of events) {
+      if (times[times.length - 1]! <= nowMs - windowMs) {
+        events.delete(key);
+      }
+    }
+  };
+
   const recent = (key: string) => {
-    const cutoff = now() - HOUR_MS;
+    sweep();
+    const cutoff = now() - windowMs;
     const kept = (events.get(key) ?? []).filter((ms) => ms > cutoff);
     if (kept.length > 0) {
       events.set(key, kept);
@@ -268,17 +349,87 @@ function createHourlyLimiter(limit: number, now: () => number) {
     }
     return kept;
   };
+
   return {
-    /** How long until `key` may go again, or 0 when it may go now. */
-    waitMs: (key: string): number => {
+    waitMs: (key) => {
       const kept = recent(key);
-      return kept.length < limit ? 0 : kept[0]! + HOUR_MS - now();
+      return kept.length < limit
+        ? 0
+        : kept[kept.length - limit]! + windowMs - now();
     },
-    record: (key: string) => {
-      events.set(key, [...recent(key), now()]);
+    record: (key) => {
+      const at = now();
+      events.set(key, [...recent(key), at]);
+      let released = false;
+      return () => {
+        if (released) {
+          return;
+        }
+        released = true;
+        const times = events.get(key);
+        const index = times?.lastIndexOf(at) ?? -1;
+        if (!times || index < 0) {
+          return;
+        }
+        times.splice(index, 1);
+        if (times.length === 0) {
+          events.delete(key);
+        }
+      };
+    },
+    get size() {
+      return events.size;
     },
   };
 }
+
+/**
+ * Remembers keys for `ttlMs`, holding at most `maxSize` (the oldest go
+ * first when it's full).
+ */
+function createExpiringSet(options: {
+  ttlMs: number;
+  maxSize: number;
+  now: () => number;
+}) {
+  const { ttlMs, maxSize, now } = options;
+  // Every key lives `ttlMs` from when it was last added, and re-adding moves
+  // it to the end, so the Map's order is expiry order.
+  const expiresAt = new Map<string, number>();
+  const prune = () => {
+    const nowMs = now();
+    for (const [key, untilMs] of expiresAt) {
+      if (untilMs > nowMs) {
+        break;
+      }
+      expiresAt.delete(key);
+    }
+  };
+  return {
+    has: (key: string) => {
+      prune();
+      return expiresAt.has(key);
+    },
+    add: (key: string) => {
+      prune();
+      expiresAt.delete(key);
+      expiresAt.set(key, now() + ttlMs);
+      for (const oldest of expiresAt.keys()) {
+        if (expiresAt.size <= maxSize) {
+          break;
+        }
+        expiresAt.delete(oldest);
+      }
+    },
+    delete: (key: string) => {
+      expiresAt.delete(key);
+    },
+  };
+}
+
+/** What's remembered about a key: a hash, so no key is held in memory. */
+const keyHash = (key: string) =>
+  createHash("sha256").update(key).digest("base64url");
 
 const json = (
   status: number,
@@ -297,6 +448,11 @@ const rateLimited = (waitMs: number) =>
     "retry-after": String(Math.max(1, Math.ceil(waitMs / 1000))),
   });
 
+const busy = () => refusal(503, "busy", { "retry-after": "1" });
+
+/** The one key of the rejected-keys budget, which is shared by everyone. */
+const ALL_KEYS = "all";
+
 export function createNotificationsRelay(
   options: NotificationsRelayOptions
 ): NotificationsRelay {
@@ -304,16 +460,52 @@ export function createNotificationsRelay(
   const fetchImpl = options.fetch ?? fetch;
   const now = options.now ?? Date.now;
   const log = options.log ?? console;
-  const hourlyLimit = options.hourlyLimit ?? 10;
+  const limits = { ...DEFAULT_RELAY_LIMITS, ...options.limits };
 
   const notifier = config.notifierSessionKey
     ? parseSessionKey(config.notifierSessionKey)
     : null;
 
-  const senders = createHourlyLimiter(hourlyLimit, now);
-  const recipients = createHourlyLimiter(hourlyLimit, now);
-  /** Request id → when it stops counting as already pushed. */
-  const pushed = new Map<string, number>();
+  const senders = createWindowLimiter({
+    limit: limits.senderPerHour,
+    windowMs: HOUR_MS,
+    now,
+  });
+  const recipients = createWindowLimiter({
+    limit: limits.recipientPerHour,
+    windowMs: HOUR_MS,
+    now,
+  });
+  /** Keyed by sender and recipient together. */
+  const pairs = createWindowLimiter({
+    limit: limits.pairPerDay,
+    windowMs: DAY_MS,
+    now,
+  });
+  const rejections = createWindowLimiter({
+    limit: limits.rejectedKeysPerMinute,
+    windowMs: MINUTE_MS,
+    now,
+  });
+  const acceptedKeys = createExpiringSet({
+    ttlMs: ACCEPTED_KEY_TTL_MS,
+    maxSize: MAX_REMEMBERED,
+    now,
+  });
+  const rejectedKeys = createExpiringSet({
+    ttlMs: REJECTED_KEY_TTL_MS,
+    maxSize: MAX_REMEMBERED,
+    now,
+  });
+  /** Request ids already pushed. */
+  const pushed = createExpiringSet({
+    ttlMs: SENT_REQUEST_TTL_MS,
+    maxSize: MAX_REMEMBERED,
+    now,
+  });
+  let lookupsInFlight = 0;
+  let floodWarnedAtMs = -Infinity;
+  const deliveries = new Set<Promise<void>>();
 
   const isEnabled = () =>
     !!notifier &&
@@ -434,13 +626,76 @@ export function createNotificationsRelay(
     return cleanName(data?.name) ?? FALLBACK_SENDER_NAME;
   };
 
-  const forgetOldPushes = () => {
-    const nowMs = now();
-    for (const [id, untilMs] of pushed) {
-      if (untilMs <= nowMs) {
-        pushed.delete(id);
-      }
+  /**
+   * Sends the push. `giveBack` undoes what was recorded for it, for a send
+   * that failed on the way, so a retry may still push it and an outage
+   * doesn't use up the recipient's allowance.
+   */
+  const deliver = async (
+    senderId: string,
+    recipientId: string,
+    requestId: string,
+    giveBack: () => void
+  ): Promise<void> => {
+    const name = await senderName(senderId);
+    const result = await callProcedure(
+      "sendNotification",
+      {
+        recordName: recipientId,
+        address: INBOX_ADDRESS,
+        payload: {
+          title: "New friend request",
+          body: `${name} wants to be your friend on Seed Bible.`,
+          icon: PUSH_ICON,
+          // A browser silently replaces a shown notification that has the
+          // same tag, so each request gets its own.
+          tag: `friend-request:${requestId}`,
+          timestamp: now(),
+          action: {
+            type: "open_url",
+            url: `${config.siteOrigin}/?notifications=open`,
+          },
+        },
+      },
+      config.notifierSessionKey
+    );
+    if (result.success) {
+      return;
     }
+    if (NOT_SUBSCRIBED_CODES.has(result.errorCode)) {
+      // A real attempt: it still counts against the limits, or giving it
+      // back would show whether the recipient has push on.
+      log.info(
+        `[notifications] ${recipientId} hasn't turned push on (${result.errorCode}).`
+      );
+      return;
+    }
+    giveBack();
+    log.error(
+      SESSION_ERROR_CODES.has(result.errorCode)
+        ? `[notifications] CasualOS refused the notifier's session (${result.errorCode}); check NOTIFIER_SESSION_KEY.`
+        : `[notifications] Couldn't send a friend request push to ${recipientId}: ${result.errorCode}`
+    );
+  };
+
+  const deliverInBackground = (
+    senderId: string,
+    recipientId: string,
+    requestId: string,
+    giveBack: () => void
+  ) => {
+    const delivery = deliver(senderId, recipientId, requestId, giveBack)
+      .catch((error: unknown) => {
+        giveBack();
+        log.error(
+          `[notifications] Sending a friend request push to ${recipientId} failed:`,
+          error
+        );
+      })
+      .finally(() => {
+        deliveries.delete(delivery);
+      });
+    deliveries.add(delivery);
   };
 
   const sendFriendRequestPush = async (
@@ -477,25 +732,66 @@ export function createNotificationsRelay(
       return refusal(401, "invalid_session");
     }
 
-    // Checked before asking CasualOS, so a sender over the limit costs
-    // nothing. Recorded only after CasualOS accepts the key, so a forged key
-    // naming someone else can't use up their allowance.
+    const hash = keyHash(bearer);
+    if (rejectedKeys.has(hash)) {
+      return refusal(401, "invalid_session");
+    }
+
+    // Everything up to the lookup is checked before asking CasualOS, so a
+    // request refused here costs nothing.
     const senderWait = senders.waitMs(sender.userId);
     if (senderWait > 0) {
       return rateLimited(senderWait);
     }
+    const knownKey = acceptedKeys.has(hash);
+    if (!knownKey) {
+      const floodWait = rejections.waitMs(ALL_KEYS);
+      if (floodWait > 0) {
+        if (now() - floodWarnedAtMs >= MINUTE_MS) {
+          floodWarnedAtMs = now();
+          log.warn(
+            "[notifications] CasualOS turned down many session keys in the last minute; refusing keys it hasn't accepted lately."
+          );
+        }
+        return rateLimited(floodWait);
+      }
+    }
+    if (lookupsInFlight >= limits.lookupsAtOnce) {
+      return busy();
+    }
 
-    const lookup = await findSentRequest(bearer, requestId);
+    // Taken before the lookup, so requests made at the same time can't all
+    // pass the checks above. The sender's slot is kept only if CasualOS
+    // accepts the key, so a forged key naming someone holds their slot just
+    // while it's checked; the budget's slot is kept only if CasualOS turns
+    // the key down.
+    const giveBackSender = senders.record(sender.userId);
+    const giveBackRejection = knownKey ? null : rejections.record(ALL_KEYS);
+    let lookup: Awaited<ReturnType<typeof findSentRequest>>;
+    lookupsInFlight++;
+    try {
+      lookup = await findSentRequest(bearer, requestId);
+    } finally {
+      lookupsInFlight--;
+    }
     if ("failure" in lookup) {
+      giveBackSender();
       if (SESSION_ERROR_CODES.has(lookup.failure.errorCode)) {
+        if (knownKey) {
+          rejections.record(ALL_KEYS);
+        }
+        acceptedKeys.delete(hash);
+        rejectedKeys.add(hash);
         return refusal(401, "invalid_session");
       }
+      giveBackRejection?.();
       log.warn(
         `[notifications] Couldn't list ${sender.userId}'s sent requests: ${lookup.failure.errorCode}`
       );
       return refusal(502, "upstream_error");
     }
-    senders.record(sender.userId);
+    giveBackRejection?.();
+    acceptedKeys.add(hash);
 
     const sent = lookup.found;
     if (!sent) {
@@ -506,60 +802,30 @@ export function createNotificationsRelay(
       return refusal(409, reason);
     }
 
-    forgetOldPushes();
     if (pushed.has(requestId)) {
       return refusal(409, "already_sent");
     }
     const recipientId = sent.targetUserId!;
-    const recipientWait = recipients.waitMs(recipientId);
-    if (recipientWait > 0) {
-      return rateLimited(recipientWait);
+    const pair = JSON.stringify([sender.userId, recipientId]);
+    const wait = Math.max(pairs.waitMs(pair), recipients.waitMs(recipientId));
+    if (wait > 0) {
+      return rateLimited(wait);
     }
-    // Marked before the first await below, so the same request sent twice
-    // at once is pushed once.
-    pushed.set(requestId, now() + SENT_REQUEST_TTL_MS);
-    recipients.record(recipientId);
+    // Recorded with no await since the checks above, so requests made at the
+    // same time can't all pass them.
+    pushed.add(requestId);
+    const giveBackRecipient = recipients.record(recipientId);
+    const giveBackPair = pairs.record(pair);
 
-    const name = await senderName(sender.userId);
-    const result = await callProcedure(
-      "sendNotification",
-      {
-        recordName: recipientId,
-        address: INBOX_ADDRESS,
-        payload: {
-          title: "New friend request",
-          body: `${name} wants to be your friend on Seed Bible.`,
-          icon: PUSH_ICON,
-          tag: "friend-request",
-          timestamp: now(),
-          action: {
-            type: "open_url",
-            url: `${config.siteOrigin}/?notifications=open`,
-          },
-        },
-      },
-      config.notifierSessionKey
-    );
-    // Answered the same either way: whether someone has push turned on is
-    // theirs to know, not the sender's.
-    if (result.success) {
-      return json(200, { accepted: true });
-    }
-    if (NOT_SUBSCRIBED_CODES.has(result.errorCode)) {
-      log.info(
-        `[notifications] ${recipientId} hasn't turned push on (${result.errorCode}).`
-      );
-      return json(200, { accepted: true });
-    }
-    // Something went wrong on the way rather than with the request, so a
-    // retry may still push it.
-    pushed.delete(requestId);
-    log.error(
-      SESSION_ERROR_CODES.has(result.errorCode)
-        ? `[notifications] CasualOS refused the notifier's session (${result.errorCode}); check NOTIFIER_SESSION_KEY.`
-        : `[notifications] Couldn't send a friend request push to ${recipientId}: ${result.errorCode}`
-    );
-    return refusal(502, "upstream_error");
+    // Answered before sending, and the same whatever happens next: how long
+    // the send takes, or whether it fails, would show whether the recipient
+    // has push on, which is theirs to know, not the sender's.
+    deliverInBackground(sender.userId, recipientId, requestId, () => {
+      pushed.delete(requestId);
+      giveBackRecipient();
+      giveBackPair();
+    });
+    return json(200, { accepted: true });
   };
 
   const handle = async (request: RelayRequest): Promise<RelayResponse> => {
@@ -588,6 +854,11 @@ export function createNotificationsRelay(
       pathname === NOTIFICATIONS_CONFIG_PATH ||
       pathname === FRIEND_REQUEST_PUSH_PATH,
     handle,
+    idle: async () => {
+      while (deliveries.size > 0) {
+        await Promise.all(deliveries);
+      }
+    },
   };
 }
 

@@ -3,6 +3,7 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import {
   createNotificationsRelay,
+  createWindowLimiter,
   FRIEND_REQUEST_PUSH_PATH,
   FRIEND_REQUEST_PUSH_WINDOW_MS,
   MAX_BODY_BYTES,
@@ -47,6 +48,7 @@ interface Call {
 }
 
 type ProcedureResult = Record<string, unknown> & { success: boolean };
+type Procedure = (call: Call) => ProcedureResult | Promise<ProcedureResult>;
 
 const FRIENDS = { marker: "friends", resourceKind: "data", action: "read" };
 
@@ -70,7 +72,7 @@ function fakeCasualOS(clock: { now: number }) {
   const pushes: { recordName: string; address: string; payload: unknown }[] =
     [];
   const calls: Call[] = [];
-  const overrides = new Map<string, (input: Call) => ProcedureResult>();
+  const overrides = new Map<string, Procedure>();
   let pageSize = 50;
   let nextId = 1;
 
@@ -134,7 +136,7 @@ function fakeCasualOS(clock: { now: number }) {
     };
     calls.push(call);
     const handler = overrides.get(procedure) ?? procedures[procedure];
-    const result = handler ? handler(call) : failure("not_supported");
+    const result = handler ? await handler(call) : failure("not_supported");
     return new Response(JSON.stringify(result), {
       status: result.success ? 200 : 400,
       headers: { "content-type": "application/json" },
@@ -151,11 +153,32 @@ function fakeCasualOS(clock: { now: number }) {
     setPageSize: (size: number) => {
       pageSize = size;
     },
+    /**
+     * Holds every call to `procedure` unanswered until the returned function
+     * is called, then answers them as usual.
+     */
+    hold: (procedure: string) => {
+      let release!: () => void;
+      const released = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      overrides.set(procedure, async (call) => {
+        await released;
+        return procedures[procedure]!(call);
+      });
+      return release;
+    },
+    /** How many times `procedure` was called. */
+    count: (procedure: string) =>
+      calls.filter((c) => c.procedure === procedure).length,
     /** A signed-in user, as the relay will see their key. */
     signIn: (userId: string) => {
       const key = sessionKey(userId, clock.now + 30 * 24 * 60 * 60 * 1000);
       sessions.add(key);
       return key;
+    },
+    signOut: (key: string) => {
+      sessions.delete(key);
     },
     /** `userId` turned push on, allowing the notifier to send to them. */
     turnOnPush: (userId: string, notifier = NOTIFIER) => {
@@ -200,6 +223,46 @@ describe("parseSessionKey", () => {
     expect(parseSessionKey(`vSK2.${b64(ADA)}.a.b.c`)).toBeNull();
     expect(parseSessionKey(`vSK1.${b64(ADA)}.a.b`)).toBeNull();
     expect(parseSessionKey(`vSK1.${b64(ADA)}.a.b.${b64("soon")}`)).toBeNull();
+  });
+});
+
+describe("createWindowLimiter", () => {
+  const HOUR = 60 * 60 * 1000;
+
+  it("forgets keys once all their events are older than the window", () => {
+    let nowMs = START;
+    const limiter = createWindowLimiter({
+      limit: 1,
+      windowMs: HOUR,
+      now: () => nowMs,
+    });
+    for (let n = 0; n < 100; n++) {
+      limiter.record(`user-${n}`);
+    }
+    expect(limiter.size).toBe(100);
+
+    nowMs += HOUR;
+    limiter.waitMs("someone-new");
+
+    expect(limiter.size).toBe(0);
+  });
+
+  it("takes back only the event it was asked to, once", () => {
+    let nowMs = START;
+    const limiter = createWindowLimiter({
+      limit: 1,
+      windowMs: HOUR,
+      now: () => nowMs,
+    });
+    limiter.record("ada");
+    nowMs += HOUR / 2;
+    const takeBack = limiter.record("ada");
+
+    takeBack();
+    takeBack();
+
+    // Only the first event is left, and it ages out in half an hour.
+    expect(limiter.waitMs("ada")).toBe(HOUR / 2);
   });
 });
 
@@ -362,20 +425,22 @@ describe("notifications relay", () => {
         body: { accepted: true },
       });
 
-      expect(casualos.pushes).toEqual([
-        {
-          recordName: BEN,
-          address: "inbox",
-          payload: {
-            title: "New friend request",
-            body: "Ada wants to be your friend on Seed Bible.",
-            icon: "https://favicon.ao.bot/pwa/pwa-192x192.png",
-            tag: "friend-request",
-            timestamp: START,
-            action: { type: "open_url", url: `${SITE}/?notifications=open` },
+      await vi.waitFor(() =>
+        expect(casualos.pushes).toEqual([
+          {
+            recordName: BEN,
+            address: "inbox",
+            payload: {
+              title: "New friend request",
+              body: "Ada wants to be your friend on Seed Bible.",
+              icon: "https://favicon.ao.bot/pwa/pwa-192x192.png",
+              tag: `friend-request:${request.id}`,
+              timestamp: START,
+              action: { type: "open_url", url: `${SITE}/?notifications=open` },
+            },
           },
-        },
-      ]);
+        ])
+      );
       const send = casualos.calls.find(
         (c) => c.procedure === "sendNotification"
       )!;
@@ -384,10 +449,28 @@ describe("notifications relay", () => {
       expect(send.input).not.toHaveProperty("topic");
     });
 
+    it("gives each request's push its own tag, so a second doesn't replace the first", async () => {
+      const target = relay();
+      const cyKey = casualos.signIn("cy");
+      const first = casualos.request(ADA, BEN);
+      const second = casualos.request("cy", BEN);
+
+      await push(target, { requestId: first.id });
+      await push(target, { requestId: second.id }, `Bearer ${cyKey}`);
+
+      await vi.waitFor(() => expect(casualos.pushes).toHaveLength(2));
+      const tags = casualos.pushes.map(
+        (p) => (p.payload as { tag: string }).tag
+      );
+      expect(new Set(tags).size).toBe(2);
+    });
+
     it("asks CasualOS as the sender, and sends the site's Origin on every call", async () => {
       const request = casualos.request(ADA, BEN);
+      const target = relay();
 
-      await push(relay(), { requestId: request.id });
+      await push(target, { requestId: request.id });
+      await target.idle();
 
       const listing = casualos.calls.find(
         (c) => c.procedure === "listSentSharedPermissions"
@@ -421,24 +504,49 @@ describe("notifications relay", () => {
     });
 
     it("doesn't tell the sender that the recipient never turned push on", async () => {
+      const target = relay();
       const request = casualos.request(ADA, "no-push-user");
 
-      await expect(push(relay(), { requestId: request.id })).resolves.toEqual({
+      await expect(push(target, { requestId: request.id })).resolves.toEqual({
         status: 200,
         body: { accepted: true },
       });
+      await target.idle();
+      expect(casualos.count("sendNotification")).toBe(1);
       expect(casualos.pushes).toEqual([]);
     });
 
     it("doesn't tell the sender that the recipient's inbox won't take the notifier's push", async () => {
+      const target = relay();
       casualos.turnOnPush(BEN, "some-other-notifier");
       const request = casualos.request(ADA, BEN);
 
-      await expect(push(relay(), { requestId: request.id })).resolves.toEqual({
+      await expect(push(target, { requestId: request.id })).resolves.toEqual({
         status: 200,
         body: { accepted: true },
       });
+      await target.idle();
+      expect(casualos.count("sendNotification")).toBe(1);
       expect(casualos.pushes).toEqual([]);
+    });
+
+    it("answers before sending, so how long it takes says nothing about the recipient", async () => {
+      const target = relay();
+      const release = casualos.hold("sendNotification");
+      const request = casualos.request(ADA, BEN);
+
+      let answer: RelayResponse | undefined;
+      void push(target, { requestId: request.id }).then((response) => {
+        answer = response;
+      });
+
+      await vi.waitFor(() =>
+        expect(answer).toEqual({ status: 200, body: { accepted: true } })
+      );
+      expect(casualos.pushes).toEqual([]);
+
+      release();
+      await vi.waitFor(() => expect(casualos.pushes).toHaveLength(1));
     });
 
     describe("the sender's name", () => {
@@ -450,7 +558,8 @@ describe("notifications relay", () => {
         }
         const request = casualos.request(ADA, BEN);
         await push(relay(), { requestId: request.id });
-        return (casualos.pushes[0]?.payload as { body: string }).body;
+        await vi.waitFor(() => expect(casualos.pushes).toHaveLength(1));
+        return (casualos.pushes[0]!.payload as { body: string }).body;
       };
 
       it("is 'Someone' when they have no profile", async () => {
@@ -471,7 +580,8 @@ describe("notifications relay", () => {
         );
         const request = casualos.request(ADA, BEN);
         await push(relay(), { requestId: request.id });
-        expect((casualos.pushes[0]?.payload as { body: string }).body).toBe(
+        await vi.waitFor(() => expect(casualos.pushes).toHaveLength(1));
+        expect((casualos.pushes[0]!.payload as { body: string }).body).toBe(
           "Someone wants to be your friend on Seed Bible."
         );
       });
@@ -618,6 +728,7 @@ describe("notifications relay", () => {
 
       expect([first.status, second.status].sort()).toEqual([200, 409]);
       expect(third).toEqual({ status: 409, body: { error: "already_sent" } });
+      await target.idle();
       expect(casualos.pushes).toHaveLength(1);
     });
 
@@ -628,19 +739,63 @@ describe("notifications relay", () => {
         casualos.failure("server_error")
       );
 
+      // Answered like any other: a failure only someone with push on can
+      // have would tell the sender they have it on.
       await expect(push(target, { requestId: request.id })).resolves.toEqual({
-        status: 502,
-        body: { error: "upstream_error" },
+        status: 200,
+        body: { accepted: true },
       });
+      await target.idle();
+      expect(log.error).toHaveBeenCalledWith(
+        expect.stringContaining("server_error")
+      );
 
       casualos.overrides.delete("sendNotification");
       await expect(
         push(target, { requestId: request.id })
       ).resolves.toMatchObject({ status: 200, body: { accepted: true } });
+      await vi.waitFor(() => expect(casualos.pushes).toHaveLength(1));
+    });
+
+    it("gives back the recipient's allowance when a send fails on the way", async () => {
+      const target = relay({ limits: { recipientPerHour: 1 } });
+      casualos.overrides.set("sendNotification", () =>
+        casualos.failure("server_error")
+      );
+      await push(target, { requestId: casualos.request(ADA, BEN).id });
+      await target.idle();
+      casualos.overrides.delete("sendNotification");
+
+      // Neither Ben's one push an hour nor Ada's one push a day to him was
+      // used up by the push that never went.
+      await expect(
+        push(target, { requestId: casualos.request(ADA, BEN).id })
+      ).resolves.toMatchObject({ status: 200, body: { accepted: true } });
+      await vi.waitFor(() => expect(casualos.pushes).toHaveLength(1));
+    });
+
+    it("counts a push to someone without push on like any other, so the limits don't show who has it on", async () => {
+      const target = relay({ limits: { recipientPerHour: 1 } });
+      const cyKey = casualos.signIn("cy");
+      await push(target, {
+        requestId: casualos.request(ADA, "no-push-user").id,
+      });
+      await target.idle();
+
+      await expect(
+        push(
+          target,
+          { requestId: casualos.request("cy", "no-push-user").id },
+          `Bearer ${cyKey}`
+        )
+      ).resolves.toMatchObject({
+        status: 429,
+        body: { error: "rate_limited" },
+      });
     });
 
     it("limits how many pushes one sender can trigger in an hour", async () => {
-      const target = relay({ hourlyLimit: 3 });
+      const target = relay({ limits: { senderPerHour: 3 } });
       const requests = [1, 2, 3, 4].map((n) => {
         const recipient = `friend-${n}`;
         casualos.turnOnPush(recipient);
@@ -652,6 +807,7 @@ describe("notifications relay", () => {
           push(target, { requestId: request.id })
         ).resolves.toMatchObject({ status: 200 });
       }
+      await target.idle();
       const callsBefore = casualos.calls.length;
       const limited = await push(target, { requestId: requests[3]!.id });
 
@@ -670,8 +826,23 @@ describe("notifications relay", () => {
       ).resolves.toMatchObject({ status: 200, body: { accepted: true } });
     });
 
+    it("holds the sender's limit for requests made at the same time", async () => {
+      const target = relay({ limits: { senderPerHour: 3 } });
+
+      const responses = await Promise.all(
+        [1, 2, 3, 4, 5, 6].map((n) =>
+          push(target, { requestId: `made-up-${n}` })
+        )
+      );
+
+      expect(responses.map((r) => r.status).sort()).toEqual([
+        404, 404, 404, 429, 429, 429,
+      ]);
+      expect(casualos.count("listSentSharedPermissions")).toBe(3);
+    });
+
     it("counts lookups of requests that turn out not to exist", async () => {
-      const target = relay({ hourlyLimit: 2 });
+      const target = relay({ limits: { senderPerHour: 2 } });
       await push(target, { requestId: "made-up-1" });
       await push(target, { requestId: "made-up-2" });
 
@@ -681,7 +852,7 @@ describe("notifications relay", () => {
     });
 
     it("doesn't count a forged key against the person it names", async () => {
-      const target = relay({ hourlyLimit: 1 });
+      const target = relay({ limits: { senderPerHour: 1 } });
       const forged = `Bearer ${sessionKey(ADA, START + 60_000)}`;
       await push(target, { requestId: "sp-x" }, forged);
       await push(target, { requestId: "sp-y" }, forged);
@@ -693,8 +864,8 @@ describe("notifications relay", () => {
     });
 
     it("limits how many pushes one recipient can get in an hour", async () => {
-      const target = relay({ hourlyLimit: 2 });
-      const senders = ["s1", "s2", "s3"].map((id) => ({
+      const target = relay();
+      const senders = ["s1", "s2", "s3", "s4", "s5", "s6"].map((id) => ({
         key: casualos.signIn(id),
         request: casualos.request(id, BEN),
       }));
@@ -707,8 +878,203 @@ describe("notifications relay", () => {
         );
       }
 
-      expect(statuses).toEqual([200, 200, 429]);
-      expect(casualos.pushes).toHaveLength(2);
+      expect(statuses).toEqual([200, 200, 200, 200, 200, 429]);
+      await target.idle();
+      expect(casualos.pushes).toHaveLength(5);
+    });
+
+    it("pushes one sender's requests to the same person once a day", async () => {
+      const target = relay();
+      casualos.turnOnPush("cy");
+      const first = casualos.request(ADA, BEN);
+      await expect(
+        push(target, { requestId: first.id })
+      ).resolves.toMatchObject({ status: 200 });
+
+      // Cancelling and asking again makes a new request, but not a new push.
+      first.status = "revoked";
+      clock.now += 60_000;
+      const limited = await push(target, {
+        requestId: casualos.request(ADA, BEN).id,
+      });
+      expect(limited).toMatchObject({
+        status: 429,
+        body: { error: "rate_limited" },
+      });
+      expect(Number(limited.headers?.["retry-after"])).toBeGreaterThan(
+        23 * 60 * 60
+      );
+
+      await expect(
+        push(target, { requestId: casualos.request(ADA, "cy").id })
+      ).resolves.toMatchObject({ status: 200 });
+
+      clock.now = START + 24 * 60 * 60 * 1000;
+      await expect(
+        push(target, { requestId: casualos.request(ADA, BEN).id })
+      ).resolves.toMatchObject({ status: 200 });
+      await target.idle();
+      expect(casualos.pushes.map((p) => p.recordName)).toEqual([
+        BEN,
+        "cy",
+        BEN,
+      ]);
+    });
+
+    it("holds the once-a-day limit for requests made at the same time", async () => {
+      const target = relay();
+      const requests = [casualos.request(ADA, BEN), casualos.request(ADA, BEN)];
+
+      const responses = await Promise.all(
+        requests.map((request) => push(target, { requestId: request.id }))
+      );
+
+      expect(responses.map((r) => r.status).sort()).toEqual([200, 429]);
+      await target.idle();
+      expect(casualos.pushes).toHaveLength(1);
+    });
+
+    it("asks CasualOS about only so many senders at once", async () => {
+      const target = relay({ limits: { lookupsAtOnce: 2 } });
+      const release = casualos.hold("listSentSharedPermissions");
+      const keys = ["u1", "u2", "u3", "u4"].map((id) => casualos.signIn(id));
+
+      const answered: RelayResponse[] = [];
+      const responses = keys.map((key) =>
+        push(target, { requestId: "sp-x" }, `Bearer ${key}`).then(
+          (response) => {
+            answered.push(response);
+            return response;
+          }
+        )
+      );
+
+      // The two past the cap are answered straight away, without CasualOS.
+      const busy = {
+        status: 503,
+        body: { error: "busy" },
+        headers: { "retry-after": "1" },
+      };
+      await vi.waitFor(() => expect(answered).toEqual([busy, busy]));
+      expect(casualos.count("listSentSharedPermissions")).toBe(2);
+
+      release();
+      expect((await Promise.all(responses)).map((r) => r.status)).toEqual([
+        404, 404, 503, 503,
+      ]);
+      await expect(
+        push(target, { requestId: "sp-x" }, `Bearer ${keys[3]}`)
+      ).resolves.toMatchObject({ status: 404 });
+    });
+
+    describe("a flood of forged keys", () => {
+      const forgedKey = (n: number) =>
+        `Bearer ${sessionKey(`forger-${n}`, START + 60 * 60 * 1000)}`;
+      const flood = (target: NotificationsRelay, count: number, from = 0) =>
+        Promise.all(
+          Array.from({ length: count }, (_, i) =>
+            push(target, { requestId: "sp-x" }, forgedKey(from + i))
+          )
+        );
+
+      it("asks CasualOS about only so many of them a minute", async () => {
+        const target = relay({ limits: { rejectedKeysPerMinute: 5 } });
+
+        const responses = await flood(target, 20);
+
+        expect(casualos.count("listSentSharedPermissions")).toBe(5);
+        expect(responses.filter((r) => r.status === 401)).toHaveLength(5);
+        expect(
+          responses.filter(
+            (r) =>
+              r.status === 429 &&
+              (r.body as { error: string }).error === "rate_limited"
+          )
+        ).toHaveLength(15);
+        await flood(target, 5, 20);
+        expect(casualos.count("listSentSharedPermissions")).toBe(5);
+        expect(log.warn).toHaveBeenCalledWith(
+          expect.stringContaining("many session keys")
+        );
+
+        clock.now += 60 * 1000;
+        await expect(
+          push(target, { requestId: "sp-x" }, forgedKey(99))
+        ).resolves.toEqual({ status: 401, body: { error: "invalid_session" } });
+        expect(casualos.count("listSentSharedPermissions")).toBe(6);
+      });
+
+      it("keeps letting through people whose keys CasualOS accepted lately", async () => {
+        const target = relay({ limits: { rejectedKeysPerMinute: 5 } });
+        casualos.turnOnPush("cy");
+        await push(target, { requestId: casualos.request(ADA, BEN).id });
+
+        await flood(target, 20);
+
+        await expect(
+          push(target, { requestId: casualos.request(ADA, "cy").id })
+        ).resolves.toMatchObject({ status: 200, body: { accepted: true } });
+        await target.idle();
+        expect(casualos.pushes.map((p) => p.recordName)).toEqual([BEN, "cy"]);
+
+        // Someone the relay hasn't seen waits for the flood to pass, and
+        // costs CasualOS nothing meanwhile.
+        const deeKey = casualos.signIn("dee");
+        const deeRequest = casualos.request("dee", BEN);
+        const callsBefore = casualos.calls.length;
+        await expect(
+          push(target, { requestId: deeRequest.id }, `Bearer ${deeKey}`)
+        ).resolves.toMatchObject({
+          status: 429,
+          body: { error: "rate_limited" },
+        });
+        expect(casualos.calls).toHaveLength(callsBefore);
+
+        clock.now += 60 * 1000;
+        await expect(
+          push(target, { requestId: deeRequest.id }, `Bearer ${deeKey}`)
+        ).resolves.toMatchObject({ status: 200, body: { accepted: true } });
+      });
+
+      it("doesn't ask CasualOS about the same forged key again for a few minutes", async () => {
+        const target = relay();
+
+        for (let i = 0; i < 5; i++) {
+          await expect(
+            push(target, { requestId: `sp-${i}` }, forgedKey(0))
+          ).resolves.toEqual({
+            status: 401,
+            body: { error: "invalid_session" },
+          });
+        }
+        expect(casualos.count("listSentSharedPermissions")).toBe(1);
+
+        clock.now += 5 * 60 * 1000;
+        await push(target, { requestId: "sp-x" }, forgedKey(0));
+        expect(casualos.count("listSentSharedPermissions")).toBe(2);
+      });
+
+      it("stops trusting a key once CasualOS turns it down", async () => {
+        const target = relay();
+        await push(target, { requestId: casualos.request(ADA, BEN).id });
+        await target.idle();
+        casualos.signOut(adaKey);
+        const callsBefore = casualos.calls.length;
+
+        for (let i = 0; i < 3; i++) {
+          await expect(push(target, { requestId: `sp-${i}` })).resolves.toEqual(
+            {
+              status: 401,
+              body: { error: "invalid_session" },
+            }
+          );
+        }
+        expect(
+          casualos.calls
+            .slice(callsBefore)
+            .filter((c) => c.procedure === "listSentSharedPermissions")
+        ).toHaveLength(1);
+      });
     });
 
     it("answers a failed lookup without passing on what CasualOS said", async () => {
@@ -729,20 +1095,37 @@ describe("notifications relay", () => {
       );
     });
 
-    it("logs, and says it failed, when CasualOS refuses the notifier", async () => {
+    it("logs when CasualOS refuses the notifier", async () => {
+      const target = relay();
       casualos.overrides.set("sendNotification", () =>
         casualos.failure("session_expired")
       );
       const request = casualos.request(ADA, BEN);
 
-      const response = await push(relay(), { requestId: request.id });
-
-      expect(response).toEqual({
-        status: 502,
-        body: { error: "upstream_error" },
+      await expect(push(target, { requestId: request.id })).resolves.toEqual({
+        status: 200,
+        body: { accepted: true },
       });
+      await target.idle();
       expect(log.error).toHaveBeenCalledWith(
         expect.stringContaining("NOTIFIER_SESSION_KEY")
+      );
+    });
+
+    it("logs when CasualOS can't be reached for the send", async () => {
+      const target = relay();
+      casualos.overrides.set("sendNotification", () => {
+        throw new TypeError("fetch failed");
+      });
+      const request = casualos.request(ADA, BEN);
+
+      await expect(push(target, { requestId: request.id })).resolves.toEqual({
+        status: 200,
+        body: { accepted: true },
+      });
+      await target.idle();
+      expect(log.error).toHaveBeenCalledWith(
+        expect.stringContaining("network_error")
       );
     });
 
