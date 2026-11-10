@@ -19,6 +19,7 @@ import {
 import { MaterialIcon } from "../icons";
 import {
   ParticipantFriendButton,
+  ParticipantName,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
 
@@ -166,7 +167,19 @@ export function MobileSessionParticipants({
                           roleLabel={roleLabel}
                         />
                         <span className="sb-session-participants-list-name">
-                          {getUserDisplayName(user)}
+                          <ParticipantName
+                            state={state}
+                            userId={user.userId}
+                            displayName={getUserDisplayName(user)}
+                            // The sheet sits above every modal, so it closes
+                            // to let the profile show, and comes back after.
+                            onOpenProfile={() => {
+                              isSheetOpen.value = false;
+                            }}
+                            onCloseProfile={() => {
+                              isSheetOpen.value = true;
+                            }}
+                          />
                         </span>
                         {friendButtonRows.has(user.connectionId) && (
                           <ParticipantFriendButton
