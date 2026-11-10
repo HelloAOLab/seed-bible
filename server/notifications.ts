@@ -540,11 +540,16 @@ export function createNotificationsRelay(
       },
       config.notifierSessionKey
     );
+    // Answered the same either way: whether someone has push turned on is
+    // theirs to know, not the sender's.
     if (result.success) {
-      return json(200, { sent: true });
+      return json(200, { accepted: true });
     }
     if (NOT_SUBSCRIBED_CODES.has(result.errorCode)) {
-      return json(200, { sent: false, reason: "recipient_not_subscribed" });
+      log.info(
+        `[notifications] ${recipientId} hasn't turned push on (${result.errorCode}).`
+      );
+      return json(200, { accepted: true });
     }
     // Something went wrong on the way rather than with the request, so a
     // retry may still push it.

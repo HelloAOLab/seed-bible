@@ -359,7 +359,7 @@ describe("notifications relay", () => {
 
       await expect(push(relay(), { requestId: request.id })).resolves.toEqual({
         status: 200,
-        body: { sent: true },
+        body: { accepted: true },
       });
 
       expect(casualos.pushes).toEqual([
@@ -412,7 +412,7 @@ describe("notifications relay", () => {
 
       await expect(
         push(relay(), { requestId: request.id })
-      ).resolves.toMatchObject({ status: 200, body: { sent: true } });
+      ).resolves.toMatchObject({ status: 200, body: { accepted: true } });
       expect(
         casualos.calls
           .filter((c) => c.procedure === "listSentSharedPermissions")
@@ -420,24 +420,25 @@ describe("notifications relay", () => {
       ).toEqual([0, 1]);
     });
 
-    it("says so when the recipient never turned push on", async () => {
+    it("doesn't tell the sender that the recipient never turned push on", async () => {
       const request = casualos.request(ADA, "no-push-user");
 
       await expect(push(relay(), { requestId: request.id })).resolves.toEqual({
         status: 200,
-        body: { sent: false, reason: "recipient_not_subscribed" },
+        body: { accepted: true },
       });
       expect(casualos.pushes).toEqual([]);
     });
 
-    it("says so when the recipient's inbox doesn't let the notifier send", async () => {
+    it("doesn't tell the sender that the recipient's inbox won't take the notifier's push", async () => {
       casualos.turnOnPush(BEN, "some-other-notifier");
       const request = casualos.request(ADA, BEN);
 
       await expect(push(relay(), { requestId: request.id })).resolves.toEqual({
         status: 200,
-        body: { sent: false, reason: "recipient_not_subscribed" },
+        body: { accepted: true },
       });
+      expect(casualos.pushes).toEqual([]);
     });
 
     describe("the sender's name", () => {
@@ -635,7 +636,7 @@ describe("notifications relay", () => {
       casualos.overrides.delete("sendNotification");
       await expect(
         push(target, { requestId: request.id })
-      ).resolves.toMatchObject({ status: 200, body: { sent: true } });
+      ).resolves.toMatchObject({ status: 200, body: { accepted: true } });
     });
 
     it("limits how many pushes one sender can trigger in an hour", async () => {
@@ -666,7 +667,7 @@ describe("notifications relay", () => {
       requests[3]!.createdAtMs = clock.now - 1000;
       await expect(
         push(target, { requestId: requests[3]!.id })
-      ).resolves.toMatchObject({ status: 200, body: { sent: true } });
+      ).resolves.toMatchObject({ status: 200, body: { accepted: true } });
     });
 
     it("counts lookups of requests that turn out not to exist", async () => {
@@ -688,7 +689,7 @@ describe("notifications relay", () => {
 
       await expect(
         push(target, { requestId: request.id })
-      ).resolves.toMatchObject({ status: 200, body: { sent: true } });
+      ).resolves.toMatchObject({ status: 200, body: { accepted: true } });
     });
 
     it("limits how many pushes one recipient can get in an hour", async () => {

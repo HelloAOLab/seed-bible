@@ -326,18 +326,17 @@ can't be sent is only logged.
 `Authorization: Bearer <the sender's session key>` (bodies over 4 KB are
 refused unread):
 
-| Answer                                                                                               | When                                                                         |
-| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| 200 `{ "sent": true }`                                                                               | CasualOS took the push (it may have no devices to deliver it to)             |
-| 200 `{ "sent": false, "reason": "recipient_not_subscribed" }`                                        | The recipient has no `inbox`, or it doesn't let this notifier send           |
-| 400 `invalid_request`                                                                                | The body isn't JSON with a `requestId` string                                |
-| 401 `not_signed_in` / `invalid_session`                                                              | No bearer key, or one that isn't a live CasualOS session                     |
-| 404 `request_not_found`                                                                              | The request isn't among the sender's sent requests                           |
-| 409 `request_not_pending`, `not_a_friend_request`, `no_recipient`, `request_too_old`, `already_sent` | The request doesn't qualify, or was already pushed                           |
-| 413 `body_too_large`                                                                                 | Over 4 KB                                                                    |
-| 429 `rate_limited` (with `Retry-After`)                                                              | Over 10 an hour for this sender, or for this recipient                       |
-| 502 `upstream_error`                                                                                 | CasualOS couldn't be reached or failed; the detail is only in the server log |
-| 503 `push_relay_off`                                                                                 | No notifier configured, or its key has expired                               |
+| Answer                                                                                               | When                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 200 `{ "accepted": true }`                                                                           | CasualOS took the push, or the recipient never turned push on — answered the same, so a sender can't tell whether someone has push on |
+| 400 `invalid_request`                                                                                | The body isn't JSON with a `requestId` string                                                                                         |
+| 401 `not_signed_in` / `invalid_session`                                                              | No bearer key, or one that isn't a live CasualOS session                                                                              |
+| 404 `request_not_found`                                                                              | The request isn't among the sender's sent requests                                                                                    |
+| 409 `request_not_pending`, `not_a_friend_request`, `no_recipient`, `request_too_old`, `already_sent` | The request doesn't qualify, or was already pushed                                                                                    |
+| 413 `body_too_large`                                                                                 | Over 4 KB                                                                                                                             |
+| 429 `rate_limited` (with `Retry-After`)                                                              | Over 10 an hour for this sender, or for this recipient                                                                                |
+| 502 `upstream_error`                                                                                 | CasualOS couldn't be reached or failed; the detail is only in the server log                                                          |
+| 503 `push_relay_off`                                                                                 | No notifier configured, or its key has expired                                                                                        |
 
 Errors are `{ "error": "<code>" }`. What CasualOS said is never passed on.
 
