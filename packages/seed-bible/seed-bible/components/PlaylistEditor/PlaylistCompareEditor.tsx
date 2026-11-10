@@ -1,6 +1,6 @@
 import "../PlaylistStepPage/PlaylistStepPage.css";
 import "../PlaylistCompareStep/PlaylistCompareStep.css";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import { extractContentText } from "../../managers/ChapterText";
 import type { TranslationBookChapter } from "../../managers/FreeUseBibleAPI";
@@ -152,32 +152,13 @@ export function PlaylistCompareEditor(props: {
       </div>
       <div className="sb-pe-compare-dock">
         {picking ? (
-          <div className="sb-pe sb-pe-pickbar" role="status">
-            <span>
-              {t("playlist-editor-compare-pick-last", {
-                defaultValue: "Now tap the last verse",
-              })}
-            </span>
-            <button
-              type="button"
-              className="sb-pe-pickbar-cancel"
-              onClick={() => setPick(null)}
-            >
-              {t("cancel", { defaultValue: "Cancel" })}
-            </button>
-            <button
-              type="button"
-              className="sb-pe-pickbar-apply"
-              onClick={() =>
-                choose(picking.which, picking.verse, picking.verse)
-              }
-            >
-              {t("playlist-editor-compare-just", {
-                reference: picking.reference,
-                defaultValue: "Just {{reference}}",
-              })}
-            </button>
-          </div>
+          <ComparePickBar
+            reference={picking.reference}
+            onCancel={() => setPick(null)}
+            onJustThis={() =>
+              choose(picking.which, picking.verse, picking.verse)
+            }
+          />
         ) : null}
         <PlaylistStepNoteSheet
           key={index}
@@ -190,6 +171,76 @@ export function PlaylistCompareEditor(props: {
     </div>
   );
 }
+
+/**
+ * Asks for the last verse of the passage being picked. On one line where it
+ * fits; where it doesn't (a long reference, a narrow phone), the instruction
+ * centred over its two buttons, side by side.
+ */
+function ComparePickBar(props: {
+  reference: string;
+  onCancel: () => void;
+  onJustThis: () => void;
+}) {
+  const { t } = useI18n();
+  const ref = useRef<HTMLDivElement>(null);
+  const [stacked, setStacked] = useState(false);
+
+  // Whether it fits on one line can only be measured, by laying it out on one.
+  useLayoutEffect(() => {
+    const bar = ref.current;
+    if (!bar || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const measure = () => {
+      bar.classList.remove(STACKED_PICKBAR);
+      const overflows = bar.scrollWidth > bar.clientWidth;
+      // Set here as well as by the render, which only writes it on a change.
+      bar.classList.toggle(STACKED_PICKBAR, overflows);
+      setStacked(overflows);
+    };
+    measure();
+    // The dock, not the bar, whose own height changes with its layout.
+    const observer = new ResizeObserver(measure);
+    observer.observe(bar.parentElement ?? bar);
+    return () => observer.disconnect();
+  }, [props.reference]);
+
+  return (
+    <div
+      ref={ref}
+      className={`sb-pe sb-pe-pickbar sb-pe-compare-pickbar${
+        stacked ? ` ${STACKED_PICKBAR}` : ""
+      }`}
+      role="status"
+    >
+      <span>
+        {t("playlist-editor-compare-pick-last", {
+          defaultValue: "Now tap the last verse",
+        })}
+      </span>
+      <button
+        type="button"
+        className="sb-pe-pickbar-cancel"
+        onClick={props.onCancel}
+      >
+        {t("cancel", { defaultValue: "Cancel" })}
+      </button>
+      <button
+        type="button"
+        className="sb-pe-pickbar-apply"
+        onClick={props.onJustThis}
+      >
+        {t("playlist-editor-compare-just", {
+          reference: props.reference,
+          defaultValue: "Just {{reference}}",
+        })}
+      </button>
+    </div>
+  );
+}
+
+const STACKED_PICKBAR = "sb-pe-compare-pickbar--stacked";
 
 /**
  * A passage's verses, with a few either side of it faded: tapping any of them

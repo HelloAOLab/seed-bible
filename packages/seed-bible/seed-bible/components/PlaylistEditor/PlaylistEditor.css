@@ -967,24 +967,45 @@
     border: 1px solid var(--sb-divider-color);
     border-radius: 1rem;
   }
+}
 
-  /* Its "Just {reference}" can be long, so on a narrow phone the buttons
-     wrap under the instruction rather than run off the screen. */
-  & .sb-pe-pickbar {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    row-gap: 8px;
-    max-width: 100%;
-    border-radius: 20px;
+/* One line, as long as it fits (PlaylistCompareEditor measures). Paired with
+   `.sb-pe-pickbar` to outrank its rules, which come later. */
+.sb-pe-pickbar.sb-pe-compare-pickbar {
+  max-width: 100%;
+  overflow: hidden;
+
+  & > span {
+    flex: 1 1 auto;
+  }
+}
+
+/* Too long for one line: the instruction centred over its two buttons,
+   side by side in equal columns. */
+.sb-pe-pickbar.sb-pe-compare-pickbar--stacked {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 8px;
+  padding: 12px;
+  border-radius: 20px;
+
+  & > span {
+    grid-column: 1 / -1;
+    text-align: center;
     white-space: normal;
+  }
 
-    & > span {
-      flex: 1 1 auto;
-    }
+  /* A long reference takes two lines rather than lose its end. */
+  & > button {
+    border-radius: 18px;
+    white-space: normal;
+    text-align: center;
+  }
 
-    & > button {
-      white-space: nowrap;
-    }
+  & > .sb-pe-pickbar-cancel {
+    padding: 7px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
   }
 }
 
