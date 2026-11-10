@@ -571,6 +571,27 @@ describe("PushNotificationsManager", () => {
       expect(push.status.value).toBe("on");
     });
 
+    it("stops, rather than link the previous subscription to this account, when the browser won't end it", async () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      browser.state.refuseUnsubscribe = true;
+      const leftover = browser.subscribed();
+      const push = start();
+      await settled(push);
+
+      await push.enable();
+
+      expect(push.status.value).toBe("off");
+      expect(push.error.value).toBe("failed");
+      expect(browser.pushManager.subscribe).not.toHaveBeenCalled();
+      expect(network.procedures()).not.toContain("subscribeToNotification");
+      expect(browser.state.subscription).toBe(leftover);
+      expect(storedDevice()).toBeNull();
+      expect(warn).toHaveBeenCalledWith(
+        expect.any(String),
+        "the browser kept the previous subscription"
+      );
+    });
+
     it("stays off when the person blocks notifications at the prompt", async () => {
       browser.state.answer = "denied";
       const push = start();

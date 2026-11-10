@@ -509,9 +509,11 @@ export function createPushNotificationsManager(
 
       // Always a new subscription: one this browser already has may still be
       // linked to another account, which CasualOS would keep pushing to it.
+      // While it's still there, `subscribe` hands that same one back, which
+      // would link it to this account as well.
       const existing = await registration.pushManager.getSubscription();
-      if (existing) {
-        await existing.unsubscribe();
+      if (existing && !(await existing.unsubscribe())) {
+        return fail("failed", "the browser kept the previous subscription");
       }
       writeDevice(null);
       subscription = await registration.pushManager.subscribe({
