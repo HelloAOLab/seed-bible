@@ -4873,3 +4873,36 @@ describe("translation suggestions", () => {
     expect(chatB.translationSuggestion.value).toBeNull();
   });
 });
+
+describe("tapping a push while the app is open", () => {
+  it("opens the notifications list in this window, and tells the service worker so it doesn't reload it", async () => {
+    // What `navigator.serviceWorker` is in the production build.
+    const worker = Object.assign(new EventTarget(), {
+      getRegistration: async () => undefined,
+      ready: new Promise(() => {}),
+      startMessages: () => {},
+    });
+    Object.defineProperty(navigator, "serviceWorker", {
+      value: worker,
+      configurable: true,
+    });
+    const state = await createState();
+    try {
+      state.app.hydrateFromStorage();
+      const answers: unknown[] = [];
+
+      worker.dispatchEvent(
+        Object.assign(new Event("message"), {
+          data: { type: "sb-open-notifications" },
+          ports: [{ postMessage: (answer: unknown) => answers.push(answer) }],
+        })
+      );
+
+      expect(state.notifications.isFeedOpen.value).toBe(true);
+      expect(answers).toEqual([{ opened: true }]);
+    } finally {
+      state.dispose();
+      delete (navigator as { serviceWorker?: unknown }).serviceWorker;
+    }
+  });
+});

@@ -85,6 +85,12 @@ export interface CreatePushNotificationsManagerOptions {
   login: LoginManager;
   /** Called when a push arrives while the app is open. */
   onPushReceived?: () => void;
+  /**
+   * Called when a push is tapped while this window is open, to open the
+   * notifications list here rather than have the tap reload the window.
+   * Without it, the tap reloads the window at the push's link.
+   */
+  onOpenRequested?: () => void;
   now?: () => number;
   /**
    * How long to wait for a service worker that hasn't registered yet (it
@@ -106,6 +112,8 @@ const FRIEND_REQUEST_PUSH_URL = "/api/notifications/friend-request";
 
 /** Matches `PUSH_RECEIVED_MESSAGE` in `standalone/swPush.ts`. */
 const PUSH_RECEIVED_MESSAGE = "sb-push-received";
+/** Matches `OPEN_NOTIFICATIONS_MESSAGE` in `standalone/swPush.ts`. */
+const OPEN_NOTIFICATIONS_MESSAGE = "sb-open-notifications";
 
 /**
  * Which account this browser's push subscription was set up for. CasualOS
@@ -198,7 +206,7 @@ type CasualOSResult = { success: boolean; errorCode?: string };
 export function createPushNotificationsManager(
   options: CreatePushNotificationsManagerOptions
 ): PushNotificationsManager {
-  const { os, login, onPushReceived } = options;
+  const { os, login, onPushReceived, onOpenRequested } = options;
   const now = options.now ?? Date.now;
   const serviceWorkerTimeoutMs = options.serviceWorkerTimeoutMs ?? 10_000;
 
@@ -735,9 +743,17 @@ export function createPushNotificationsManager(
 
     if ("serviceWorker" in navigator) {
       listen(navigator.serviceWorker, "message", (event) => {
-        const data = (event as MessageEvent).data as { type?: unknown } | null;
+        const message = event as MessageEvent;
+        const data = message.data as { type?: unknown } | null;
         if (data?.type === PUSH_RECEIVED_MESSAGE) {
           onPushReceived?.();
+        } else if (
+          data?.type === OPEN_NOTIFICATIONS_MESSAGE &&
+          onOpenRequested
+        ) {
+          onOpenRequested();
+          // Without this answer, the worker reloads the window at the link.
+          message.ports[0]?.postMessage({ opened: true });
         }
       });
       navigator.serviceWorker.startMessages?.();

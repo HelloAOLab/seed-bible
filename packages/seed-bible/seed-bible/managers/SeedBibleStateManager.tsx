@@ -946,11 +946,13 @@ export function createSeedBibleState(
     }
   });
   // Before friends, which tells it about each request sent. A push arriving
-  // while the app is open re-reads the notifications (created further down).
+  // while the app is open re-reads the notifications, and tapping one opens
+  // the list in this window (both created further down).
   const pushNotifications = createPushNotificationsManager({
     os,
     login,
     onPushReceived: () => void notifications.refresh(),
+    onOpenRequested: () => notifications.openFeed(),
   });
   const friends = createFriendsManager(os, login, {
     onRequestSent: (requestId) =>

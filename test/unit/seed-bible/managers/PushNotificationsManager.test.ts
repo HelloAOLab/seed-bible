@@ -1021,6 +1021,50 @@ describe("PushNotificationsManager", () => {
     });
   });
 
+  describe("a push tapped while the app is open", () => {
+    /** What the worker sends: the question, and a port for the answer. */
+    const askToOpen = () => {
+      const answers: unknown[] = [];
+      const port = { postMessage: vi.fn((answer) => answers.push(answer)) };
+      browser.container.dispatchEvent(
+        Object.assign(new Event("message"), {
+          data: { type: "sb-open-notifications" },
+          ports: [port],
+        })
+      );
+      return answers;
+    };
+
+    it("opens the list here and tells the worker, so it doesn't reload the window", async () => {
+      const onOpenRequested = vi.fn();
+      const push = start({ onOpenRequested });
+      await settled(push);
+
+      const answers = askToOpen();
+
+      expect(onOpenRequested).toHaveBeenCalledTimes(1);
+      expect(answers).toEqual([{ opened: true }]);
+    });
+
+    it("doesn't answer when there's nothing to open the list with, so the worker reloads the window", async () => {
+      const push = start();
+      await settled(push);
+
+      expect(askToOpen()).toEqual([]);
+    });
+
+    it("doesn't answer once disposed", async () => {
+      const onOpenRequested = vi.fn();
+      const push = start({ onOpenRequested });
+      await settled(push);
+
+      push.dispose();
+
+      expect(askToOpen()).toEqual([]);
+      expect(onOpenRequested).not.toHaveBeenCalled();
+    });
+  });
+
   describe("notifyFriendRequestSent()", () => {
     it("asks the relay to push the request, as the signed-in user", async () => {
       const push = start();

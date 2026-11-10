@@ -1,7 +1,9 @@
 import {
   FALLBACK_PUSH_BODY,
   FALLBACK_PUSH_TITLE,
+  isNotificationsListUrl,
   notificationClickUrl,
+  OPEN_NOTIFICATIONS_MESSAGE,
   openNotificationUrl,
   pushDisplay,
   readPushData,
@@ -162,16 +164,46 @@ describe("sameOriginUrl / notificationClickUrl", () => {
   });
 });
 
+describe("isNotificationsListUrl", () => {
+  it("is true for Today with the list open, the link every push carries", () => {
+    expect(isNotificationsListUrl(`${ORIGIN}/?notifications=open`)).toBe(true);
+  });
+
+  it.each([
+    ["the home page", HOME],
+    ["another page", `${ORIGIN}/en/genesis/1?notifications=open`],
+    ["the list closed", `${ORIGIN}/?notifications=closed`],
+  ])("is false for %s", (_label, url) => {
+    expect(isNotificationsListUrl(url)).toBe(false);
+  });
+});
+
 describe("openNotificationUrl", () => {
   const TARGET = `${ORIGIN}/?notifications=open`;
+  /** Short, so a window that never answers doesn't hold each test up. */
+  const ANSWER_TIMEOUT_MS = 20;
 
+  /**
+   * An open window. `answer` is what it replies when asked to open the
+   * notifications list; without one it never replies, like a window
+   * running a build from before the question existed.
+   */
   const windowAt = (
     url: string,
-    navigate?: WindowClientLike["navigate"]
-  ): WindowClientLike & { focus: ReturnType<typeof vi.fn> } => ({
+    navigate?: WindowClientLike["navigate"],
+    answer?: unknown
+  ) => ({
     url,
-    focus: vi.fn(async () => undefined),
+    focus: vi.fn(async (): Promise<unknown> => undefined),
     navigate,
+    postMessage: vi.fn((message: unknown, transfer: MessagePort[]) => {
+      if (
+        answer !== undefined &&
+        (message as { type?: unknown }).type === OPEN_NOTIFICATIONS_MESSAGE
+      ) {
+        transfer[0]!.postMessage(answer);
+      }
+    }),
   });
 
   const clientsWith = (...windows: WindowClientLike[]) => ({
@@ -179,33 +211,74 @@ describe("openNotificationUrl", () => {
     openWindow: vi.fn(async () => null),
   });
 
-  it("focuses an open window and takes it to the link", async () => {
-    const navigate = vi.fn(async () => ({}));
-    const open = windowAt(`${ORIGIN}/en/genesis/1`, navigate);
-    const clients = clientsWith(open);
+  const open = (url: string, clients: ReturnType<typeof clientsWith>) =>
+    openNotificationUrl(url, clients, { answerTimeoutMs: ANSWER_TIMEOUT_MS });
 
+  it("opens the list in place in a window that can, without reloading it", async () => {
+    const navigate = vi.fn(async () => ({}));
+    const window = windowAt(`${ORIGIN}/en/genesis/1`, navigate, {
+      opened: true,
+    });
+    const clients = clientsWith(window);
+
+    // The default wait, as the worker uses it.
     await openNotificationUrl(TARGET, clients);
 
-    expect(open.focus).toHaveBeenCalled();
+    expect(window.focus).toHaveBeenCalled();
+    expect(window.postMessage).toHaveBeenCalledWith(
+      { type: OPEN_NOTIFICATIONS_MESSAGE },
+      [expect.anything()]
+    );
+    expect(navigate).not.toHaveBeenCalled();
+    expect(clients.openWindow).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["doesn't answer in time (an older build)", undefined],
+    ["says it couldn't open the list", { opened: false }],
+  ])("takes a window to the link when it %s", async (_label, answer) => {
+    const navigate = vi.fn(async () => ({}));
+    const window = windowAt(`${ORIGIN}/en/genesis/1`, navigate, answer);
+    const clients = clientsWith(window);
+
+    await open(TARGET, clients);
+
+    expect(window.focus).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(TARGET);
     expect(clients.openWindow).not.toHaveBeenCalled();
+  });
+
+  it("takes the window to a link that isn't the list, without asking", async () => {
+    const navigate = vi.fn(async () => ({}));
+    const window = windowAt(`${ORIGIN}/en/genesis/1`, navigate, {
+      opened: true,
+    });
+    const clients = clientsWith(window);
+
+    await open(HOME, clients);
+
+    expect(window.postMessage).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(HOME);
   });
 
   it("opens a window when none is open", async () => {
     const clients = clientsWith();
 
-    await openNotificationUrl(TARGET, clients);
+    await open(TARGET, clients);
 
     expect(clients.openWindow).toHaveBeenCalledWith(TARGET);
   });
 
   it("leaves branch previews alone", async () => {
     const navigate = vi.fn(async () => ({}));
-    const preview = windowAt(`${ORIGIN}/b/feature/123/en/today`, navigate);
+    const preview = windowAt(`${ORIGIN}/b/feature/123/en/today`, navigate, {
+      opened: true,
+    });
     const clients = clientsWith(preview);
 
-    await openNotificationUrl(TARGET, clients);
+    await open(TARGET, clients);
 
+    expect(preview.postMessage).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
     expect(clients.openWindow).toHaveBeenCalledWith(TARGET);
   });
@@ -225,22 +298,22 @@ describe("openNotificationUrl", () => {
       vi.fn(async () => null)
     );
 
-    for (const open of [noNavigate, refuses, goesNowhere]) {
-      const clients = clientsWith(open);
-      await openNotificationUrl(TARGET, clients);
+    for (const window of [noNavigate, refuses, goesNowhere]) {
+      const clients = clientsWith(window);
+      await open(TARGET, clients);
       expect(clients.openWindow).toHaveBeenCalledWith(TARGET);
     }
   });
 
   it("opens a window when focusing the open one fails", async () => {
-    const open = windowAt(
+    const window = windowAt(
       `${ORIGIN}/en/today`,
       vi.fn(async () => ({}))
     );
-    open.focus.mockRejectedValue(new Error("Not allowed to focus"));
-    const clients = clientsWith(open);
+    window.focus.mockRejectedValue(new Error("Not allowed to focus"));
+    const clients = clientsWith(window);
 
-    await openNotificationUrl(TARGET, clients);
+    await open(TARGET, clients);
 
     expect(clients.openWindow).toHaveBeenCalledWith(TARGET);
   });

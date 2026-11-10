@@ -14,6 +14,20 @@
  */
 export const PUSH_RECEIVED_MESSAGE = "sb-push-received";
 
+/**
+ * Posted, with a port to answer on, to an open Seed Bible window when a push
+ * that leads to the notifications list is tapped. A window that opened the
+ * list answers `{ opened: true }` (`PushNotificationsManager` listens for the
+ * same string); one running an older build never answers.
+ */
+export const OPEN_NOTIFICATIONS_MESSAGE = "sb-open-notifications";
+
+/**
+ * How long a tap waits for an open window to answer before taking it to the
+ * link instead, which reloads it.
+ */
+export const OPEN_IN_PLACE_TIMEOUT_MS = 1000;
+
 /** Shown for a push whose data can't be read, which still has to show something. */
 export const FALLBACK_PUSH_TITLE = "Seed Bible";
 export const FALLBACK_PUSH_BODY = "You have a new notification";
@@ -115,6 +129,7 @@ export interface WindowClientLike {
   url: string;
   focus(): Promise<unknown>;
   navigate?(url: string): Promise<unknown>;
+  postMessage(message: unknown, transfer: MessagePort[]): void;
 }
 
 export interface ClientsLike {
@@ -123,12 +138,55 @@ export interface ClientsLike {
 }
 
 /**
- * Takes an open Seed Bible window to `url`, or opens one. Branch previews
- * (`/b/...`) are a different build, so a tap never takes one over.
+ * Whether `url` is Today with the notifications list open (the link every
+ * push carries today), which an open window can show without reloading: the
+ * list is a modal over whatever the window is showing.
+ */
+export function isNotificationsListUrl(url: string): boolean {
+  const parsed = new URL(url);
+  return (
+    parsed.pathname === "/" &&
+    parsed.searchParams.get("notifications") === "open"
+  );
+}
+
+/**
+ * Asks an open window to open the notifications list where it is. True once
+ * it says it did; false when it doesn't answer within `timeoutMs`.
+ */
+export function askToOpenNotifications(
+  client: WindowClientLike,
+  timeoutMs = OPEN_IN_PLACE_TIMEOUT_MS
+): Promise<boolean> {
+  const channel = new MessageChannel();
+  return new Promise<boolean>((resolve) => {
+    const finish = (opened: boolean) => {
+      clearTimeout(timer);
+      channel.port1.close();
+      resolve(opened);
+    };
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    channel.port1.onmessage = (event) =>
+      finish((event.data as { opened?: unknown } | null)?.opened === true);
+    try {
+      client.postMessage({ type: OPEN_NOTIFICATIONS_MESSAGE }, [channel.port2]);
+    } catch {
+      finish(false);
+    }
+  });
+}
+
+/**
+ * Shows `url` in an open Seed Bible window, or opens one. A window that can
+ * open the notifications list in place does, keeping whatever was in
+ * progress there (a note being typed, a live shared session); any other is
+ * taken to `url`, which reloads it. Branch previews (`/b/...`) are a
+ * different build, so a tap never takes one over.
  */
 export async function openNotificationUrl(
   url: string,
-  clients: ClientsLike
+  clients: ClientsLike,
+  options: { answerTimeoutMs?: number } = {}
 ): Promise<void> {
   const windows = await clients.matchAll();
   const existing = windows.find(
@@ -136,7 +194,14 @@ export async function openNotificationUrl(
   );
   if (existing) {
     try {
+      // Focused first: browsers only allow it shortly after the tap.
       await existing.focus();
+      if (
+        isNotificationsListUrl(url) &&
+        (await askToOpenNotifications(existing, options.answerTimeoutMs))
+      ) {
+        return;
+      }
       // `navigate` is missing in some browsers and refuses a window this
       // worker doesn't control; resolving null means it went nowhere.
       if (existing.navigate && (await existing.navigate(url)) !== null) {
