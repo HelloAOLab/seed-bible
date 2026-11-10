@@ -7531,6 +7531,7 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
           second.decorations.value = [
             {
               id: "selected-verse-flare-peer",
+              translationId: "BSB",
               bookId: "GEN",
               chapterNumber: 1,
               verses: [2],
