@@ -617,7 +617,9 @@ export function PlaylistEditorWorkspace(props: {
   const onList = compact && !item;
   const workspaceClass = `sb-pane-reader-outer sb-pe-workspace${
     compact ? " sb-pe-workspace--mobile" : ""
-  }${card || onList ? " sb-pe-workspace--card" : ""}`;
+  }${compact && !state.app.isCompactReader.value ? " sb-pe-workspace--tablet" : ""}${
+    card || onList ? " sb-pe-workspace--card" : ""
+  }`;
 
   if (compact) {
     const playlistTitle =
@@ -710,8 +712,11 @@ export function PlaylistEditorWorkspace(props: {
               <PublishButton state={state} />
             </div>
           </div>
-        ) : playlists.editorVersePickIndex.value !== null ||
-          playlists.editorChapterChange.value ? (
+        ) : // Wider than a phone, the reader's own toolbar is the desktop one,
+        // whose stack above it already shows these bars.
+        state.app.isCompactReader.value &&
+          (playlists.editorVersePickIndex.value !== null ||
+            playlists.editorChapterChange.value) ? (
           <div className="sb-pe sb-pe-mobile-bottom">
             <VersePickBar state={state} />
             <ChapterChangeBar state={state} />

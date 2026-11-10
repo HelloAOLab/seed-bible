@@ -1534,6 +1534,13 @@
    fixed below the editor. Scrolling the reader down slides the tabs off the
    screen and the pill down into their place, so the bar follows the pill
    down, at the toolbar's own pace. */
+/* The phone layout on a screen wider than a phone (up to 768px): there's no
+   tab bar along the bottom to keep clear of. */
+.sb-pe-workspace--tablet {
+  --sb-reader-bottom-chrome: 0px;
+  --sb-reader-bottom-tabs: 0px;
+}
+
 .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
   margin-bottom: var(--sb-reader-bottom-chrome);
   transition: margin-bottom 0.3s ease;

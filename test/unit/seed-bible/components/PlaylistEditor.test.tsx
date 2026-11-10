@@ -270,6 +270,16 @@ describe("the playlist editor", () => {
   });
 
   describe("pages (phone)", () => {
+    // A phone's width, so the rest of the app is in its phone layout too.
+    const originalWidth = window.innerWidth;
+    beforeEach(() => {
+      window.innerWidth = 390;
+      act(() => state.app.applyViewport());
+    });
+    afterEach(() => {
+      window.innerWidth = originalWidth;
+    });
+
     const header = () => container.querySelector(".sb-pe-mobile-header")!;
     const back = () => header().querySelector(".sb-pe-back")!;
 
@@ -1085,6 +1095,33 @@ describe("the playlist editor", () => {
       expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
         false
       );
+    });
+  });
+
+  describe("the phone layout's reach", () => {
+    const originalWidth = window.innerWidth;
+    afterEach(() => {
+      window.innerWidth = originalWidth;
+      act(() => state.app.applyViewport());
+    });
+
+    it.each([
+      [600, true],
+      [768, true],
+      [769, false],
+    ])("at %ipx wide, uses the phone layout: %s", (width, phoneLayout) => {
+      window.innerWidth = width;
+      act(() => state.app.applyViewport());
+
+      openWorkspace(STEPS, -1, state.app.isCompactPlaylistEditor.value);
+
+      expect(state.app.isCompactPlaylistEditor.value).toBe(phoneLayout);
+      // The phone layout lists the steps in the reader's place, with no
+      // side pane beside it.
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === "discover-pane")
+      ).toBe(!phoneLayout);
+      expect(!!container.querySelector(".sb-pe-list-page")).toBe(phoneLayout);
     });
   });
 

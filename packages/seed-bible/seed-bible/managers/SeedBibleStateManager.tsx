@@ -270,6 +270,9 @@ type SearchManager = ReturnType<typeof createSearchManager>;
  */
 export const MOBILE_BREAKPOINT = 480;
 
+/** Widest viewport (CSS px) the playlist editor uses its phone layout on. */
+export const PLAYLIST_EDITOR_COMPACT_BREAKPOINT = 768;
+
 /**
  * Upper bound of the "compact desktop" band. For viewports above
  * {@link MOBILE_BREAKPOINT} but at or below this width the screen is too narrow
@@ -384,6 +387,13 @@ export interface AppState {
    * header, and floating chapter nav — not pane placement or the sidebar.
    */
   isCompactReader: ReadonlySignal<boolean>;
+  /**
+   * Whether the playlist editor uses its phone layout (its list of steps in
+   * the reader's place, no side pane): wherever the reader is compact, and
+   * on screens up to {@link PLAYLIST_EDITOR_COMPACT_BREAKPOINT} wide, too
+   * narrow for the side pane beside a step.
+   */
+  isCompactPlaylistEditor: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
   /**
@@ -1414,6 +1424,11 @@ export function createSeedBibleState(
   );
   const isCompactReader = computed(
     () => isMobile.value || isMinimalEmbed.value
+  );
+  const isCompactPlaylistEditor = computed(
+    () =>
+      isCompactReader.value ||
+      viewportWidth.value <= PLAYLIST_EDITOR_COMPACT_BREAKPOINT
   );
 
   // Created after `isMobile` so panes can enforce a single fullscreen pane:
@@ -3855,6 +3870,7 @@ export function createSeedBibleState(
       isMobile,
       isMinimalEmbed,
       isCompactReader,
+      isCompactPlaylistEditor,
       isMobileLandscape,
       isCompactDesktop,
       currentReadingState,
@@ -3900,7 +3916,10 @@ export function createSeedBibleState(
   // "Cycle detected". The pane -> view effect below clears `view` on close.
   effect(() => {
     const view = playlists.view.value;
-    if (view && !(view === "create_playlist" && isMobile.value)) {
+    if (
+      view &&
+      !(view === "create_playlist" && isCompactPlaylistEditor.value)
+    ) {
       const editingPlaylist = view === "create_playlist";
       panes.openPane({
         id: DISCOVER_PANE_ID,
@@ -3930,8 +3949,8 @@ export function createSeedBibleState(
         showHeader: false,
       });
     } else if (view === "create_playlist") {
-      // On a phone the editor takes over the reader, with its steps in a
-      // sheet, rather than filling the screen as a pane — so every pane is
+      // On a phone (or a narrow tablet) the editor takes over the reader, with
+      // its steps in its place, rather than filling the screen as a pane — so every pane is
       // closed, or one already on screen (Today, say) would cover the editor.
       for (const pane of panes.panes.peek()) {
         panes.closePane(pane.id, "displaced");
@@ -3950,8 +3969,9 @@ export function createSeedBibleState(
       (pane) => pane.id === DISCOVER_PANE_ID
     );
     const view = playlists.view.peek();
-    // On a phone the editor deliberately runs without the pane.
-    const editingOnPhone = view === "create_playlist" && isMobile.peek();
+    // On a phone (or a narrow tablet) the editor runs without the pane.
+    const editingOnPhone =
+      view === "create_playlist" && isCompactPlaylistEditor.peek();
     if (!paneOpen && view && !editingOnPhone) {
       playlists.view.value = null;
     }

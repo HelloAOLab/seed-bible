@@ -888,7 +888,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
   if (editingPlaylistHere) {
     return (
-      <PlaylistEditorWorkspace state={state} compact={isCompactReader}>
+      <PlaylistEditorWorkspace
+        state={state}
+        compact={state.app.isCompactPlaylistEditor.value}
+      >
         {reader}
       </PlaylistEditorWorkspace>
     );
