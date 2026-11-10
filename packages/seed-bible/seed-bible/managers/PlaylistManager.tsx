@@ -2382,6 +2382,18 @@ export function createPlaylistManager(
    * browser's Back to return to.
    */
   let viewBeforeEditor: typeof view.value = null;
+  /**
+   * What closing the editor shows: what it opened over, or Discover when it
+   * opened straight onto its path (a reload). Opened from a playlist's page,
+   * nothing but that page: a pane over it would close it.
+   */
+  const viewAfterEditor = (): typeof view.value => {
+    const before = urlBeforeEditor ? new URL(urlBeforeEditor) : null;
+    if (before && parsePlaylistPagePath(before.pathname, navigation.basePath)) {
+      return null;
+    }
+    return viewBeforeEditor ?? "discover";
+  };
 
   /** Opens `draft` in the editor, measuring changes against `baseline`. */
   const openDraft = (draft: Playlist, baseline: Playlist): void => {
@@ -2429,10 +2441,14 @@ export function createPlaylistManager(
     userPlaylists.value = exists
       ? userPlaylists.value.map((p) => (p.id === playlist.id ? playlist : p))
       : [...userPlaylists.value, playlist];
+    // Worked out first: closing the editor forgets where it opened from.
+    const next = viewAfterEditor();
     closeEditorUi();
-    editingPlaylist.value = null;
-    editingPlaylistBaseline.value = null;
-    view.value = "discover";
+    batch(() => {
+      editingPlaylist.value = null;
+      editingPlaylistBaseline.value = null;
+      view.value = next;
+    });
   };
 
   /**
@@ -2810,10 +2826,14 @@ export function createPlaylistManager(
   /** Discards the current edit and returns to the discover view. */
   const cancelEditingPlaylist = (): void => {
     linkPreviews.cancel();
+    // Worked out first: closing the editor forgets where it opened from.
+    const next = viewAfterEditor();
     closeEditorUi();
-    editingPlaylist.value = null;
-    editingPlaylistBaseline.value = null;
-    view.value = "discover";
+    batch(() => {
+      editingPlaylist.value = null;
+      editingPlaylistBaseline.value = null;
+      view.value = next;
+    });
   };
 
   /**
@@ -3676,12 +3696,13 @@ export function createPlaylistManager(
     void startPlayingLocator(request.locator, request.stepIndex);
   };
 
-  // The editor's place in the URL: `?editPlaylist={locator}` while it's open,
-  // with `editStep` (1-based) for the open step and `editDetails` /
-  // `editStepSettings` for the phone's sheets. Each move pushes a history
-  // entry, so Back and Forward step through the editor, and a reload reopens
-  // it where it was. The draft itself isn't kept across a reload: a saved
-  // playlist reopens as saved, and one never saved reopens empty.
+  // The editor's place in the URL, under the playlist's own path:
+  // `/{lang}/playlist/{locator}/{slug}/edit` for its list of steps, then
+  // `…/edit/details`, `…/edit/step/{step}` and `…/edit/step/{step}/settings`
+  // (see `SharedPageEditScreen`). Each move pushes a history entry, so Back
+  // and Forward step through the editor, and a reload reopens it where it
+  // was. The draft itself isn't kept across a reload: a saved playlist
+  // reopens as saved, and one never saved reopens empty.
 
   interface EditorRoute {
     locator: string;
@@ -3691,18 +3712,40 @@ export function createPlaylistManager(
   }
 
   const editorRouteFromUrl = (url: URL): EditorRoute | null => {
-    const locator = url.searchParams.get("editPlaylist");
-    if (!locator) {
+    const page = parsePlaylistPagePath(url.pathname, navigation.basePath);
+    const edit = page?.edit;
+    if (!page || !edit) {
       return null;
     }
-    const step = url.searchParams.get("editStep");
     return {
-      locator,
-      step: step && /^[1-9]\d*$/.test(step) ? Number(step) : null,
-      details: url.searchParams.get("editDetails") === "open",
-      settings: url.searchParams.get("editStepSettings") === "open",
+      locator: page.locator,
+      step: edit.screen === "step" ? edit.step : null,
+      details: edit.screen === "details",
+      settings: edit.screen === "step" && edit.settings,
     };
   };
+
+  /** The path of the editor screen `route` names. */
+  const editorPath = (route: EditorRoute, title: string | null): string =>
+    buildSharedPagePath({
+      kind: "playlist",
+      language: i18n.language.peek(),
+      locator: route.locator,
+      title,
+      edit:
+        route.step != null
+          ? { screen: "step", step: route.step, settings: route.settings }
+          : route.details
+            ? { screen: "details" }
+            : { screen: "steps" },
+    });
+
+  /**
+   * Where the URL was when the editor opened (the reader, or the playlist's
+   * page), for closing the editor with its own buttons to return to. Null
+   * when it opened straight onto its path (a reload, or Forward).
+   */
+  let urlBeforeEditor: string | null = null;
 
   /** The editor the URL asks for, while its playlist is still loading. */
   const pendingEditorRoute = signal<EditorRoute | null>(null);
@@ -3737,6 +3780,7 @@ export function createPlaylistManager(
 
   /** Leaves the editor for the browser's Back, keeping its draft for Forward. */
   const leaveEditorForUrl = () => {
+    urlBeforeEditor = null;
     const draft = editingPlaylist.peek();
     leftDraft = draft
       ? { draft, baseline: editingPlaylistBaseline.peek() }
@@ -3840,23 +3884,39 @@ export function createPlaylistManager(
         view.value === "create_playlist" ? editingPlaylist.value : null;
       const pending = pendingEditorRoute.value;
       const step = editorStepIndex.value;
-      const update: Record<string, string | null> = draft
-        ? {
-            editPlaylist: getPlaylistLocator(draft),
-            editStep: step >= 0 ? String(step + 1) : null,
-            editDetails: editorDetailsSheetOpen.value ? "open" : null,
-            editStepSettings:
-              step >= 0 && editorStepSettingsOpen.value ? "open" : null,
+      const details = editorDetailsSheetOpen.value;
+      const settings = editorStepSettingsOpen.value;
+      // The saved title, not the draft's: the slug shouldn't change, and cost
+      // history entries, with every letter typed into the title.
+      const title = editingPlaylistBaseline.value?.title ?? null;
+      untracked(() => {
+        const url = navigation.currentUrl.peek();
+        const onEditorPath = !!editorRouteFromUrl(url);
+        if (draft) {
+          if (!onEditorPath) {
+            urlBeforeEditor = url.href;
           }
-        : {
-            editPlaylist: pending?.locator ?? null,
-            editStep: pending?.step != null ? String(pending.step) : null,
-            editDetails: pending?.details ? "open" : null,
-            editStepSettings: pending?.settings ? "open" : null,
-          };
-      untracked(() =>
-        navigation.updateQueryParams(update, replaceEditorUrlWrite)
-      );
+          const path = editorPath(
+            {
+              locator: getPlaylistLocator(draft),
+              step: step >= 0 ? step + 1 : null,
+              details,
+              settings: step >= 0 && settings,
+            },
+            title
+          );
+          navigation.updatePathAndQueryParams(path, {}, replaceEditorUrlWrite);
+        } else if (!pending && onEditorPath) {
+          // Closed with its own buttons (or saved): back where it opened from.
+          const before = urlBeforeEditor;
+          urlBeforeEditor = null;
+          if (before) {
+            navigation.push(before);
+          } else {
+            tabs.leaveStaticPage({ push: true });
+          }
+        }
+      });
     });
   }
 

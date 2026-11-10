@@ -4989,39 +4989,86 @@ describe("createPlaylistManager", () => {
       { type: "html" as const, html: "<p>Think</p>" },
       { type: "html" as const, html: "<p>Ask</p>", question: {} },
     ];
-    const param = (key: string) =>
-      new URL(window.location.href).searchParams.get(key);
-    const reloadAt = (query: string) => {
-      window.history.replaceState(null, "", `/${query}`);
-      return makeManager(
-        "user-1",
-        undefined,
-        new URL(`/${query}`, window.location.href).href
-      );
+    const path = () => window.location.pathname;
+    const reloadAt = (pathname: string) => {
+      window.history.replaceState(null, "", pathname);
+      return makeManager("user-1", undefined, window.location.href);
     };
 
-    it("names the open playlist, step and sheets", async () => {
+    it("puts each screen at its own path under the playlist's", async () => {
       const manager = makeManager("user-1");
       await flush();
 
       manager.editPlaylist(makePlaylist({ items: STEPS }));
-      expect(param("editPlaylist")).toBe("user-1.playlist-1");
-      expect(param("editStep")).toBeNull();
+      expect(path()).toBe("/en/playlist/user-1.playlist-1/my-playlist/edit");
 
       manager.selectEditorStep(2);
+      expect(path()).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/step/3"
+      );
       manager.editorStepSettingsOpen.value = true;
-      expect(param("editStep")).toBe("3");
-      expect(param("editStepSettings")).toBe("open");
+      expect(path()).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/step/3/settings"
+      );
 
       manager.selectEditorStep(-1);
       manager.editorDetailsSheetOpen.value = true;
-      expect(param("editStep")).toBeNull();
-      expect(param("editStepSettings")).toBeNull();
-      expect(param("editDetails")).toBe("open");
+      expect(path()).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/details"
+      );
+    });
+
+    it("keeps the slug of the saved title while the title is edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      const push = vi.spyOn(window.history, "pushState");
+
+      manager.updateEditingPlaylistMetadata({ title: "Something else" });
+
+      expect(path()).toBe("/en/playlist/user-1.playlist-1/my-playlist/edit");
+      expect(push).not.toHaveBeenCalled();
+      push.mockRestore();
+    });
+
+    it("gives a new, untitled draft a placeholder slug", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      await manager.createNewPlaylist();
+      const id = manager.editingPlaylist.value!.id;
+
+      expect(path()).toBe(`/en/playlist/user-1.${id}/-/edit`);
+    });
+
+    it("returns to where it opened from when it's closed", async () => {
+      window.history.replaceState(null, "", "/en/AAB/exodus/2");
+      const manager = makeManager("user-1", undefined, window.location.href);
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.selectEditorStep(1);
 
       manager.cancelEditingPlaylist();
-      expect(param("editPlaylist")).toBeNull();
-      expect(param("editDetails")).toBeNull();
+
+      expect(path()).toBe("/en/AAB/exodus/2");
+    });
+
+    it("returns to the playlist's page, with nothing over it, when it was opened from there", async () => {
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: makePlaylist({ items: STEPS }),
+      });
+      const manager = reloadAt("/en/playlist/user-1.playlist-1/my-playlist");
+      await vi.waitFor(() => expect(manager.playlistPage.value).not.toBeNull());
+      manager.view.value = "discover";
+
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      expect(manager.playlistPage.value).toBeNull();
+      manager.cancelEditingPlaylist();
+
+      expect(path()).toBe("/en/playlist/user-1.playlist-1/my-playlist");
+      expect(manager.view.value).toBeNull();
+      expect(manager.playlistPage.value).not.toBeNull();
     });
 
     it("reopens a saved playlist on the step a reload left it on", async () => {
@@ -5030,7 +5077,9 @@ describe("createPlaylistManager", () => {
         data: makePlaylist({ items: STEPS }),
       });
 
-      const manager = reloadAt("?editPlaylist=user-1.playlist-1&editStep=2");
+      const manager = reloadAt(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/step/2"
+      );
 
       await vi.waitFor(() =>
         expect(manager.editingPlaylist.value?.items).toHaveLength(3)
@@ -5038,8 +5087,10 @@ describe("createPlaylistManager", () => {
       expect(getDataMock).toHaveBeenCalledWith("user-1", "playlist-1");
       expect(manager.view.value).toBe("create_playlist");
       expect(manager.editorStepIndex.value).toBe(1);
-      expect(param("editPlaylist")).toBe("user-1.playlist-1");
-      expect(param("editStep")).toBe("2");
+      expect(manager.playlistPage.value).toBeNull();
+      expect(path()).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/step/2"
+      );
     });
 
     it("reopens a draft that was never saved, empty, on its list", async () => {
@@ -5048,7 +5099,9 @@ describe("createPlaylistManager", () => {
         errorCode: "data_not_found",
       });
 
-      const manager = reloadAt("?editPlaylist=user-1.playlist_new&editStep=2");
+      const manager = reloadAt(
+        "/en/playlist/user-1.playlist_new/-/edit/step/2"
+      );
 
       await vi.waitFor(() =>
         expect(manager.editingPlaylist.value?.id).toBe("playlist_new")
@@ -5057,18 +5110,13 @@ describe("createPlaylistManager", () => {
         recordName: "user-1",
         items: [],
       });
+      // An unsaved draft isn't a missing playlist.
+      expect(manager.playlistPageNotFound.value).toBe(false);
       // Its steps went with it, so the step it was on is gone too.
       expect(manager.editorStepIndex.value).toBe(-1);
-      await vi.waitFor(() => expect(param("editStep")).toBeNull());
-      expect(param("editPlaylist")).toBe("user-1.playlist_new");
-    });
-
-    it("leaves a URL that names no playlist it can read alone", async () => {
-      const manager = reloadAt("?editPlaylist=nonsense");
-      await flush();
-
-      expect(manager.editingPlaylist.value).toBeNull();
-      expect(param("editPlaylist")).toBeNull();
+      await vi.waitFor(() =>
+        expect(path()).toBe("/en/playlist/user-1.playlist_new/-/edit")
+      );
     });
 
     it("goes back through the editor's screens, and forward to the same unsaved draft", async () => {
@@ -5108,7 +5156,9 @@ describe("createPlaylistManager", () => {
       manager.reorderEditingPlaylistItem(1, 0);
       await flush();
 
-      expect(param("editStep")).toBe("1");
+      expect(path()).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/step/1"
+      );
       expect(push).not.toHaveBeenCalled();
       push.mockRestore();
     });

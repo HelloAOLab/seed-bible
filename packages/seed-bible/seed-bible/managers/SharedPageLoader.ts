@@ -117,7 +117,9 @@ export function createSharedPageLoader<T>(options: {
 
   const locatorFor = (url: URL): string | null => {
     const parsed = parseSharedPagePath(url.pathname, navigation.basePath);
-    return parsed?.kind === kind ? parsed.locator : null;
+    // The editor loads what it edits itself, and a draft that was never saved
+    // isn't missing, so an edit path isn't the page.
+    return parsed?.kind === kind && !parsed.edit ? parsed.locator : null;
   };
 
   const pageLocator = computed(() => locatorFor(navigation.currentUrl.value));
