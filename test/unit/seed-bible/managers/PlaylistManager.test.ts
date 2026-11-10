@@ -1263,7 +1263,12 @@ describe("createPlaylistManager", () => {
     expect(manager.userPlaylists.value).toHaveLength(1);
     expect(manager.userPlaylists.value[0]!.id).toBe(draftId);
     expect(manager.editingPlaylist.value).toBeNull();
-    expect(manager.view.value).toBe("discover");
+    // On to the new playlist's page, with nothing over it.
+    expect(manager.view.value).toBeNull();
+    expect(window.location.pathname).toBe(
+      `/en/playlist/user-1.${draftId}/favorites`
+    );
+    expect(manager.playlistPage.value?.item.title).toBe("Favorites");
   });
 
   it("saveEditingPlaylist updates an existing playlist in place", async () => {
@@ -5041,12 +5046,27 @@ describe("createPlaylistManager", () => {
       expect(path()).toBe(`/en/playlist/user-1.${id}/-/edit`);
     });
 
-    it("returns to where it opened from when it's closed", async () => {
+    it("closes to the playlist's page, as it was saved", async () => {
       window.history.replaceState(null, "", "/en/AAB/exodus/2");
       const manager = makeManager("user-1", undefined, window.location.href);
       await flush();
+      manager.view.value = "discover";
       manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Not kept" });
       manager.selectEditorStep(1);
+
+      manager.cancelEditingPlaylist();
+
+      expect(path()).toBe("/en/playlist/user-1.playlist-1/my-playlist");
+      expect(manager.view.value).toBeNull();
+      expect(manager.playlistPage.value?.item.title).toBe("My Playlist");
+    });
+
+    it("closes a playlist that was never saved back to where it opened from", async () => {
+      window.history.replaceState(null, "", "/en/AAB/exodus/2");
+      const manager = makeManager("user-1", undefined, window.location.href);
+      await flush();
+      await manager.createNewPlaylist();
 
       manager.cancelEditingPlaylist();
 

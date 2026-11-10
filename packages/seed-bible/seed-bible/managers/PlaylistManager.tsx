@@ -2364,6 +2364,7 @@ export function createPlaylistManager(
       updatedAtMs: now,
     });
     openDraft(draft, clonePlaylist(draft));
+    editingSaved = false;
 
     return editingPlaylist;
   };
@@ -2375,6 +2376,35 @@ export function createPlaylistManager(
    */
   const editPlaylist = (playlist: Playlist): void => {
     openDraft(clonePlaylist(playlist), clonePlaylist(playlist));
+    editingSaved = true;
+  };
+
+  /**
+   * Whether the open draft is of a playlist that has been saved, and so has a
+   * page of its own for closing the editor to show.
+   */
+  let editingSaved = false;
+  /** The playlist whose page the editor is closing to, while it closes. */
+  let closingToPage: Playlist | null = null;
+
+  /**
+   * Leaves the editor: for `page`'s page when given (its playlist as saved),
+   * else back where the editor opened from.
+   */
+  const closeEditor = (page: Playlist | null): void => {
+    // Worked out first: closing the editor forgets where it opened from.
+    const next = page ? null : viewAfterEditor();
+    closeEditorUi();
+    closingToPage = page;
+    try {
+      batch(() => {
+        editingPlaylist.value = null;
+        editingPlaylistBaseline.value = null;
+        view.value = next;
+      });
+    } finally {
+      closingToPage = null;
+    }
   };
 
   /**
@@ -2441,14 +2471,7 @@ export function createPlaylistManager(
     userPlaylists.value = exists
       ? userPlaylists.value.map((p) => (p.id === playlist.id ? playlist : p))
       : [...userPlaylists.value, playlist];
-    // Worked out first: closing the editor forgets where it opened from.
-    const next = viewAfterEditor();
-    closeEditorUi();
-    batch(() => {
-      editingPlaylist.value = null;
-      editingPlaylistBaseline.value = null;
-      view.value = next;
-    });
+    closeEditor(playlist);
   };
 
   /**
@@ -2823,17 +2846,14 @@ export function createPlaylistManager(
     });
   };
 
-  /** Discards the current edit and returns to the discover view. */
+  /**
+   * Discards the current edit and leaves the editor for the playlist's page,
+   * as it was last saved; a playlist never saved has none, so that goes back
+   * to where the editor opened from.
+   */
   const cancelEditingPlaylist = (): void => {
     linkPreviews.cancel();
-    // Worked out first: closing the editor forgets where it opened from.
-    const next = viewAfterEditor();
-    closeEditorUi();
-    batch(() => {
-      editingPlaylist.value = null;
-      editingPlaylistBaseline.value = null;
-      view.value = next;
-    });
+    closeEditor(editingSaved ? editingPlaylistBaseline.peek() : null);
   };
 
   /**
@@ -3753,7 +3773,11 @@ export function createPlaylistManager(
    * The draft the browser's Back took the editor away from, so Forward can
    * bring it back with its unsaved changes.
    */
-  let leftDraft: { draft: Playlist; baseline: Playlist | null } | null = null;
+  let leftDraft: {
+    draft: Playlist;
+    baseline: Playlist | null;
+    saved: boolean;
+  } | null = null;
 
   /** The open draft, while the editor is showing. */
   const openEditorDraft = () =>
@@ -3783,7 +3807,7 @@ export function createPlaylistManager(
     urlBeforeEditor = null;
     const draft = editingPlaylist.peek();
     leftDraft = draft
-      ? { draft, baseline: editingPlaylistBaseline.peek() }
+      ? { draft, baseline: editingPlaylistBaseline.peek(), saved: editingSaved }
       : null;
     linkPreviews.cancel();
     closeEditorUi();
@@ -3806,6 +3830,7 @@ export function createPlaylistManager(
     if (left && getPlaylistLocator(left.draft) === route.locator) {
       leftDraft = null;
       openDraft(left.draft, left.baseline ?? clonePlaylist(left.draft));
+      editingSaved = left.saved;
       showEditorRoute(route);
       return;
     }
@@ -3845,6 +3870,7 @@ export function createPlaylistManager(
               updatedAtMs: now,
             });
             openDraft(blank, clonePlaylist(blank));
+            editingSaved = false;
           }
           showEditorRoute(pending);
         });
@@ -3907,10 +3933,16 @@ export function createPlaylistManager(
           );
           navigation.updatePathAndQueryParams(path, {}, replaceEditorUrlWrite);
         } else if (!pending && onEditorPath) {
-          // Closed with its own buttons (or saved): back where it opened from.
+          // Closed with its own buttons, or saved: to the playlist's page, or
+          // back where it opened from.
           const before = urlBeforeEditor;
           urlBeforeEditor = null;
-          if (before) {
+          const page = closingToPage;
+          if (page) {
+            // Shown as it now stands rather than as any earlier load had it.
+            playlistPageLoader.show(getPlaylistLocator(page), page);
+            navigation.push(getPlaylistUrl(page));
+          } else if (before) {
             navigation.push(before);
           } else {
             tabs.leaveStaticPage({ push: true });
