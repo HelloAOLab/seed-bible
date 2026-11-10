@@ -165,6 +165,15 @@ export interface FriendsManager {
   dispose: () => void;
 }
 
+export interface FriendsManagerOptions {
+  /**
+   * Called when a brand-new request has gone out: not when one was already
+   * waiting, they were already friends, or their request was accepted
+   * instead. Push notifications use it to tell the recipient.
+   */
+  onRequestSent?: (requestId: string) => void;
+}
+
 type FriendLink = { userId: string; sharedPermissionIds: string[] };
 type Profile = Required<FriendProfile>;
 
@@ -218,7 +227,8 @@ const sameLinks = (a: FriendLink[], b: FriendLink[]): boolean =>
 
 export function createFriendsManager(
   os: CasualOSManager,
-  login: LoginManager
+  login: LoginManager,
+  { onRequestSent }: FriendsManagerOptions = {}
 ): FriendsManager {
   const links = signal<FriendLink[]>(EMPTY_LINKS);
   const incoming = signal<SharedPermission[]>(EMPTY_REQUESTS);
@@ -419,8 +429,9 @@ export function createFriendsManager(
     }
   });
 
-  // Requests arrive while the app sits in the background, and there's no
-  // push channel yet, so coming back to the app is when to look again.
+  // Requests arrive while the app sits in the background, and only devices
+  // with push turned on hear about them, so coming back to the app is when to
+  // look again.
   const refreshOnReturn = () => {
     if (
       document.visibilityState === "visible" &&
@@ -703,6 +714,15 @@ export function createFriendsManager(
       }
     }
 
+    // Told before the lists are read again, so a push reaches them sooner.
+    // Not after an account switch: the hook acts as whoever is signed in.
+    if (login.userId.peek() === me) {
+      try {
+        onRequestSent?.(requestId);
+      } catch (error) {
+        console.warn("onRequestSent failed:", error);
+      }
+    }
     await refresh();
     return { status: "sent", requestId };
   };

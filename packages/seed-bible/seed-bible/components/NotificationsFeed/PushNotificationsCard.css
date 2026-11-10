@@ -1,0 +1,67 @@
+/*
+ * The push notifications card at the top of the notifications list. Colours
+ * come from the `--sb-*` theme variables, so it follows the theme
+ * ThemeManager injects on `body`. Its buttons are the Friends screen's.
+ */
+.sb-push-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 95%);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+}
+
+/* Scoped so it outranks the global `body .material-symbols-outlined` size. */
+.sb-push-card .sb-push-card-icon {
+  flex-shrink: 0;
+  color: var(--sb-primary-color);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.sb-push-card-text {
+  display: flex;
+  flex: 1 1 200px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sb-push-card-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.sb-push-card-body {
+  margin: 0;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.sb-push-card .sb-push-card-inline-icon {
+  font-size: 1.1em;
+  line-height: 1;
+  vertical-align: -0.15em;
+}
+
+.sb-push-card-error {
+  margin: 0;
+  color: var(--sb-error-color, #d64545);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+/* Beside the text when there's room, under it when there isn't. */
+.sb-push-card-action {
+  display: flex;
+  align-self: center;
+  margin-inline-start: auto;
+}

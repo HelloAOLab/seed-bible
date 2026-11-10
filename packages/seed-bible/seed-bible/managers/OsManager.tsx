@@ -37,6 +37,13 @@ export interface UserInfo {
   email: string;
 }
 
+/** A browser's push subscription, as `PushSubscription.toJSON()` gives it. */
+export interface PushSubscriptionInfo {
+  endpoint: string;
+  expirationTime?: number | null;
+  keys: Record<string, string>;
+}
+
 /**
  * The `beforeinstallprompt` event fired by Chromium browsers when the app is
  * eligible for installation. Not part of the standard TS DOM lib, so we declare
@@ -766,6 +773,69 @@ export function CasualOSManager(
               totalCount: result.totalCount,
             }
           : result;
+      }),
+
+    /** The records server's VAPID public key, for subscribing to push. */
+    getPushApplicationServerKey: () =>
+      client.getNotificationsApplicationServerKey(),
+
+    /**
+     * Creates or replaces a notification devices can subscribe to. Its marker
+     * decides who may subscribe: `private` means only the record's owner.
+     */
+    recordNotification: (
+      recordName: string,
+      address: string,
+      options: { description: string; marker: string }
+    ) =>
+      client.recordNotification({
+        recordName,
+        item: {
+          address,
+          description: options.description,
+          markers: [options.marker],
+        },
+      }),
+
+    /**
+     * Subscribes the signed-in user to a notification and links this device
+     * to them; every device linked to the user receives it. Subscribing again
+     * just links the device.
+     */
+    subscribeToNotification: (
+      recordName: string,
+      address: string,
+      pushSubscription: PushSubscriptionInfo
+    ) =>
+      client.subscribeToNotification({
+        recordName,
+        address,
+        pushSubscription,
+      }),
+
+    /** Links this device's push subscription to the signed-in user. */
+    registerPushSubscription: (pushSubscription: PushSubscriptionInfo) =>
+      client.registerPushSubscription({ pushSubscription }),
+
+    /**
+     * Lets `userId` send the notification at `address` in `recordName` (the
+     * signed-in user's own record), and do nothing else there.
+     */
+    grantNotificationSendPermission: (
+      recordName: string,
+      address: string,
+      userId: string
+    ) =>
+      client.grantPermission({
+        recordName,
+        permission: {
+          subjectType: "user",
+          subjectId: userId,
+          resourceKind: "notification",
+          resourceId: address,
+          action: "send",
+          expireTimeMs: null,
+        },
       }),
 
     /**

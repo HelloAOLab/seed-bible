@@ -1281,5 +1281,20 @@
   "notification-new": "New",
   "dismiss-notification": "Dismiss notification: {{notification}}",
   "notification-friend-request-subtitle": "Sent you a friend request",
-  "notification-see-whats-new": "See what's new"
+  "notification-see-whats-new": "See what's new",
+  "push-notifications-offer-title": "Get notifications on this device",
+  "push-notifications-offer-body": "Hear about friend requests straight away, even when Seed Bible is closed.",
+  "push-notifications-turn-on": "Turn on",
+  "push-notifications-dismissed": "Notifications weren't turned on. Tap Turn on to try again.",
+  "push-notifications-enable-failed": "Couldn't turn on notifications. Try again.",
+  "push-notifications-on-title": "Notifications are on for this device",
+  "push-notifications-on-body": "Friend requests reach you here even when Seed Bible is closed.",
+  "push-notifications-turn-off": "Turn off",
+  "push-notifications-disable-failed": "Couldn't turn off notifications. Try again.",
+  "push-notifications-install-body": "On iPhone and iPad, notifications work once Seed Bible is on your Home Screen.",
+  "push-notifications-share-button": "Share",
+  "push-notifications-install-then": "Then open Seed Bible from your Home Screen and turn notifications on here.",
+  "push-notifications-blocked-title": "Notifications are blocked",
+  "push-notifications-blocked-body": "To get them on this device, allow notifications for this site in your browser's settings.",
+  "push-notifications-unavailable": "Notifications aren't available right now."
 }

@@ -24,6 +24,7 @@ export * from "./NavigationManager";
 export * from "./OnboardingManager";
 export * from "./OsManager";
 export * from "./PanesManager";
+export * from "./PushNotificationsManager";
 export * from "./ProfileConfigSync";
 export * from "./ReadingHistoryManager";
 export * from "./SearchManager";

@@ -54,15 +54,16 @@ _source_ (section 3) plus a row in the feed.
 
 ## 2. Where it lives in the code
 
-| Piece                                                    | File                                                   |
-| -------------------------------------------------------- | ------------------------------------------------------ |
-| Types, sources, read/dismiss state, toast rules          | `managers/NotificationsManager.tsx`                    |
-| Stored state format and merging                          | `managers/NotificationState.ts`                        |
-| Push on this device: permission, subscription, sending   | `managers/PushNotificationsManager.tsx`                |
-| Bell and unread badge on Today                           | `components/TodayPane/NotificationsButton.tsx`         |
-| The list itself                                          | `components/NotificationsFeed/`                        |
-| Push relay on our server                                 | `server/notifications.ts`                              |
-| Showing a push and handling a tap, in the service worker | `standalone/swPush.ts`, wired up in `standalone/sw.ts` |
+| Piece                                                    | File                                                     |
+| -------------------------------------------------------- | -------------------------------------------------------- |
+| Types, sources, read/dismiss state, toast rules          | `managers/NotificationsManager.tsx`                      |
+| Stored state format and merging                          | `managers/NotificationState.ts`                          |
+| Push on this device: permission, subscription, sending   | `managers/PushNotificationsManager.tsx`                  |
+| Bell and unread badge on Today                           | `components/TodayPane/NotificationsButton.tsx`           |
+| The list itself                                          | `components/NotificationsFeed/`                          |
+| The "get notifications on this device" card in the list  | `components/NotificationsFeed/PushNotificationsCard.tsx` |
+| Push relay on our server                                 | `server/notifications.ts`                                |
+| Showing a push and handling a tap, in the service worker | `standalone/swPush.ts`, wired up in `standalone/sw.ts`   |
 
 (Paths under `managers/` and `components/` are inside
 `packages/seed-bible/seed-bible/`.)
@@ -211,6 +212,37 @@ Turning it on is per device. Signing out turns it off for that device, because
 otherwise the device would keep receiving the previous person's notifications
 (CasualOS links a device to every account that signed in on it).
 
+**In the code** this is `state.pushNotifications`. Its `status` decides what
+the card shows:
+
+| `status`        | Meaning                                                                          | The card                                 |
+| --------------- | -------------------------------------------------------------------------------- | ---------------------------------------- |
+| `checking`      | Still finding out (and always, on the server and before the first render)        | Nothing                                  |
+| `unsupported`   | No push in this browser, or no service worker (`pnpm dev`, most branch previews) | Nothing                                  |
+| `unconfigured`  | The server's relay is off, or CasualOS answered that it can't send pushes        | Nothing (or "not available" after a tap) |
+| `signed-out`    | Nobody is signed in, so there's no account to send to                            | Nothing                                  |
+| `needs-install` | iPhone or iPad, in Safari rather than the Home Screen app                        | How to add it to the Home Screen         |
+| `denied`        | Notifications are blocked for the site                                           | Where to unblock them                    |
+| `off`           | Signed in, could be turned on                                                    | "Turn on"                                |
+| `on`            | This browser receives the signed-in account's pushes                             | "Turn off"                               |
+
+`isBusy` and `error` (`dismissed`, `unavailable`, `failed`) are for the card's
+button and message. `enable()` must be called straight from a tap.
+
+**Which account a device belongs to** is remembered on the device, under
+`sb-push-user` in `localStorage`: the user id, the push endpoint, the notifier
+it was set up for, and when it last registered with CasualOS. `on` means that
+record names the signed-in user and this browser's current subscription. Any
+subscription the record doesn't vouch for — left by an account that signed
+out, by another account on a shared computer, or by a setup that failed
+halfway — is ended as soon as the app sees it (on start, on a sign-in change,
+when the app comes back into view, and when another tab changes the record).
+
+**Turning it off** only ends this browser's subscription. It doesn't
+unsubscribe the account from its `inbox` (that would turn push off on all its
+devices at once) and doesn't take the notifier's permission away (the other
+devices still need it).
+
 ### 7.2 How a push travels
 
 CasualOS already stores push subscriptions and sends web pushes (its
@@ -233,17 +265,32 @@ before anything is sent.
 
 **Setting up a device (Ben's app, when Ben turns push on):**
 
-1. Ask the browser for permission and subscribe it to push with CasualOS's
-   VAPID key (`getNotificationsApplicationServerKey`).
-2. Create a notification called `inbox` in Ben's own record, with the default
-   `private` marker (`recordNotification`). Strangers can't subscribe to it or
-   read it.
-3. Subscribe Ben to it with this device (`subscribeToNotification`). CasualOS
+1. Ask the browser for permission. This comes first, before any network
+   request, because browsers only show the prompt while it still counts as
+   part of the tap.
+2. Subscribe the browser to push with CasualOS's VAPID key
+   (`getNotificationsApplicationServerKey`, converted from URL-safe base64 to
+   bytes). It's always a new subscription: any the browser already had is
+   ended first, since CasualOS may still have it linked to someone else.
+3. Create (or re-create) a notification called `inbox` in Ben's own record,
+   with the `private` marker (`recordNotification`). Strangers can't subscribe
+   to it or read it.
+4. Subscribe Ben to it with this device (`subscribeToNotification`). CasualOS
    links the subscription to Ben's account, so every device Ben turns push on
    for receives it.
-4. Allow one account, the **notifier**, to send to that one notification
+5. Allow one account, the **notifier**, to send to that one notification
    (`grantPermission`, `action: "send"`, on resource `inbox` only). The
    notifier gets no access to any of Ben's data.
+
+If any step fails, the new browser subscription is ended again, the card says
+it didn't work, and the status stays `off`; trying again starts over.
+
+**Keeping it working.** Once a day, on start, the app registers the
+subscription with CasualOS again (`registerPushSubscription`), in case
+CasualOS dropped it: it does when a push to the device ever fails. A browser
+that renewed its subscription (a new endpoint) is registered straight away.
+If `/api/notifications/config` names a different notifier than the one the
+device was set up for, the app grants the new one.
 
 **Sending (the relay, `server/notifications.ts`):**
 
@@ -264,17 +311,89 @@ arrives _before_ the two are friends, so there's no permission to send with;
 and anyone able to send to Ben's inbox also spends Ben's push quota on the
 CasualOS server.
 
+Ada's app asks for the push only for a brand-new request: `FriendsManager`
+calls its `onRequestSent` option when `sendRequest` really sent one, not when
+the two were already friends, a request was already waiting, or Ben's own
+request was accepted instead. The app doesn't wait for the answer; a push that
+can't be sent is only logged.
+
+**The relay's API.** Both routes answer JSON with `Cache-Control: no-store`.
+
+`GET /api/notifications/config` → `{ "push": { "notifierUserId": "…",
+"inboxAddress": "inbox" } }`, or `{ "push": null }` when the relay is off.
+
+`POST /api/notifications/friend-request` with `{ "requestId": "…" }` and
+`Authorization: Bearer <the sender's session key>` (bodies over 4 KB are
+refused unread):
+
+| Answer                                                                                               | When                                                                         |
+| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| 200 `{ "sent": true }`                                                                               | CasualOS took the push (it may have no devices to deliver it to)             |
+| 200 `{ "sent": false, "reason": "recipient_not_subscribed" }`                                        | The recipient has no `inbox`, or it doesn't let this notifier send           |
+| 400 `invalid_request`                                                                                | The body isn't JSON with a `requestId` string                                |
+| 401 `not_signed_in` / `invalid_session`                                                              | No bearer key, or one that isn't a live CasualOS session                     |
+| 404 `request_not_found`                                                                              | The request isn't among the sender's sent requests                           |
+| 409 `request_not_pending`, `not_a_friend_request`, `no_recipient`, `request_too_old`, `already_sent` | The request doesn't qualify, or was already pushed                           |
+| 413 `body_too_large`                                                                                 | Over 4 KB                                                                    |
+| 429 `rate_limited` (with `Retry-After`)                                                              | Over 10 an hour for this sender, or for this recipient                       |
+| 502 `upstream_error`                                                                                 | CasualOS couldn't be reached or failed; the detail is only in the server log |
+| 503 `push_relay_off`                                                                                 | No notifier configured, or its key has expired                               |
+
+Errors are `{ "error": "<code>" }`. What CasualOS said is never passed on.
+
+The sender's limit counts every lookup their key gets through, found or not,
+and is checked before CasualOS is asked, so a sender over it costs nothing. A
+forged key naming someone else never counts against them: it's only counted
+once CasualOS accepts it. A request id is remembered for 30 minutes after its
+push; a push that failed on the way (a 502) can be asked for again.
+
+The push itself:
+
+```json
+{
+  "title": "New friend request",
+  "body": "Ada wants to be your friend on Seed Bible.",
+  "icon": "https://favicon.ao.bot/pwa/pwa-192x192.png",
+  "tag": "friend-request",
+  "timestamp": 1762750000000,
+  "action": {
+    "type": "open_url",
+    "url": "https://seedbible.org/?notifications=open"
+  }
+}
+```
+
+The name comes from the sender's public profile, on one line and cut to 60
+characters; with no name it's "Someone". No `topic` is sent: CasualOS passes
+it to the push service, which rejects anything but up to 32 letters, digits,
+`-` and `_` — and then the push silently never arrives while the call still
+reports success.
+
+The text is English for now: the relay doesn't know the recipient's
+language. Writing it in their language means storing it somewhere the relay
+can read (their public profile, say), or sending a short code the service
+worker turns into text with its own translations.
+
 ### 7.3 The service worker
 
 `standalone/sw.ts` gains two handlers (logic in `standalone/swPush.ts`):
 
 - **`push`:** shows the notification. Browsers require every push to show
   something, so a push that can't be read still shows a plain "Seed Bible —
-  you have a new notification". It also tells any open Seed Bible window, so it
-  can refresh its lists.
+  you have a new notification". It also tells every open Seed Bible window
+  (`postMessage({ type: "sb-push-received", tag })`), and
+  `PushNotificationsManager` answers that with `notifications.refresh()`.
+  Only an `open_url` action is used; a `webhook` action (which would have the
+  device call a URL) and extra action buttons are ignored.
 - **`notificationclick`:** focuses an open Seed Bible window and takes it to
-  the notification's link, or opens a new window. Only links to Seed Bible's
-  own site are followed; anything else opens the home page.
+  the notification's link, or opens a new window when there's none, or when
+  the open one can't be navigated (a window the worker doesn't control).
+  Only links to Seed Bible's own site are followed; anything else opens the
+  home page. A branch preview window (`/b/...`) is never taken over.
+
+"Seed Bible's own site" is the origin the service worker runs on, so
+`NOTIFICATIONS_SITE_ORIGIN` (below) must be exactly that origin — with or
+without `www.` as the site is served — or every tap opens the home page.
 
 Only the production (`main`) build has a service worker, so push can't be
 tried in `pnpm dev` or on a branch preview. Everything else — the bell, the
@@ -294,6 +413,11 @@ The relay is off until it's given a notifier account:
 which account to allow as the notifier. When the relay is off, the app doesn't
 offer push at all.
 
+A value that can't be used (a key that isn't a session key, an origin that
+isn't a URL) turns the relay off with an error in the log rather than stopping
+the server. So does a notifier key that has expired: CasualOS session keys
+carry their expiry, and the relay reads it.
+
 **Before turning it on in production**, someone with access to
 `auth.seedbible.org` should check that:
 
@@ -303,7 +427,26 @@ offer push at all.
   `maxSentPushNotificationsPerPeriod` limits;
 - `https://seedbible.org` is an allowed API origin;
 - a dedicated notifier account exists, and its session key is stored as a
-  server secret (not in the repository).
+  server secret (not in the repository). Session keys expire, so either use
+  a long-lived session or plan to replace the key; the startup log says
+  `push relay: on` or `off`.
+
+None of this could be tried against the real server while it was built (the
+build sandbox can't reach `auth.seedbible.org`), so on a first deploy also
+check, with two test accounts on two devices:
+
+- turning push on succeeds, and the `grantPermission` call for the notifier
+  (a per-resource grant with no `options`) is accepted;
+- turning it on a second time, on the same or another device, works (the
+  grant and `recordNotification` are repeated each time);
+- a friend request reaches the other device's lock screen, and tapping it
+  opens Today with the list open;
+- after signing out on a device, a new request no longer reaches it.
+
+**Known limits.** The relay's limits live in each server process's memory, so
+with several instances each keeps its own count. Signing out ends the
+browser's subscription, but CasualOS only forgets the device the next time a
+push to it fails.
 
 ### 7.5 Team announcements (planned)
 

@@ -197,6 +197,10 @@ import {
   type NotificationsManager,
 } from "./NotificationsManager";
 import {
+  createPushNotificationsManager,
+  type PushNotificationsManager,
+} from "./PushNotificationsManager";
+import {
   createChatsManager,
   type ChatSession,
   type ChatsManager,
@@ -613,6 +617,11 @@ export interface SeedBibleState {
    */
   notifications: NotificationsManager;
   /**
+   * Push notifications on this device: whether they can work here, and
+   * turning them on or off. See docs/notifications.md §7.
+   */
+  pushNotifications: PushNotificationsManager;
+  /**
    * Registry of reading extensions that can be enabled per reading state to
    * enhance navigation, discovered content, and session-synced custom data.
    */
@@ -936,7 +945,17 @@ export function createSeedBibleState(
       bookmarks.isPanelOpen.value = false;
     }
   });
-  const friends = createFriendsManager(os, login);
+  // Before friends, which tells it about each request sent. A push arriving
+  // while the app is open re-reads the notifications (created further down).
+  const pushNotifications = createPushNotificationsManager({
+    os,
+    login,
+    onPushReceived: () => void notifications.refresh(),
+  });
+  const friends = createFriendsManager(os, login, {
+    onRequestSent: (requestId) =>
+      void pushNotifications.notifyFriendRequestSent(requestId),
+  });
   const friendLinkPreview = createFriendLinkPreviewLoader({
     login,
     navigation,
@@ -2021,6 +2040,7 @@ export function createSeedBibleState(
         tutorial.hydrateStoredFlags();
         onboarding.hydrateStoredFlags();
         notifications.hydrateStoredState();
+        pushNotifications.hydrate();
         // Unblocks the persistence effect above, which now sees the restored tab
         // list rather than the URL-only seed.
         tabsRestored.value = true;
@@ -3868,6 +3888,7 @@ export function createSeedBibleState(
     discover,
     today,
     notifications,
+    pushNotifications,
     readingExtensions,
     extensions,
     extensionSettings,
