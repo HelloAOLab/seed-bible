@@ -43,7 +43,7 @@ These fit the same model without changes to the manager; each is a new
 _source_ (section 3) plus a row in the feed.
 
 - **Friend request accepted** — "Ada accepted your friend request". The relay
-  (section 6) can push it the same way as a request; the in-app version needs
+  (section 7.2) can push it the same way as a request; the in-app version needs
   the friends list to say when each friendship started.
 - **Shared session invite** — today's live session cards (`SharedSessionsToasts`
   in `Tabs.tsx`) could also land in the list, so an invite missed while away is
@@ -159,7 +159,7 @@ shows up straight away.
 ### 5.2 App updates
 
 When the account first runs a newer version of Seed Bible than it last ran,
-an "Seed Bible was updated to 1.18.0 — see what's new" notification appears,
+a "Seed Bible was updated to version 1.18.0 — see what's new" notification appears,
 linking to that version's GitHub release notes. It stays for 30 days or until
 dismissed, and only the newest update is ever listed.
 
@@ -188,7 +188,9 @@ copy of the state has loaded (or failed to). Otherwise it would announce
 notifications that another device has already marked as seen, or announce
 "1 new" and then "2 new" a moment later.
 
-No toast while the list is open: the person is already looking at it.
+No toast while the list is open: the person is already looking at it. Opening
+the list, from the bell or the toast, also takes away a toast still on screen
+announcing new notifications.
 
 ## 7. Push notifications
 
@@ -228,6 +230,11 @@ the card shows:
 
 `isBusy` and `error` (`dismissed`, `unavailable`, `failed`) are for the card's
 button and message. `enable()` must be called straight from a tap.
+
+On a first visit the service worker only registers once the page has finished
+loading. The manager waits up to 10 seconds for it before saying
+`unsupported`, and looks again if it turns up later, so a slow first load
+still gets the offer.
 
 **Which account a device belongs to** is remembered on the device, under
 `sb-push-user` in `localStorage`: the user id, the push endpoint, the notifier
@@ -304,7 +311,9 @@ device was set up for, the app grants the new one.
 4. It writes the text itself from Ada's public profile name. Ada's app can't
    choose what Ben's phone shows or where tapping it goes.
 5. It sends as the notifier to Ben's `inbox`. If Ben never turned push on,
-   CasualOS says the notification doesn't exist and nothing is sent.
+   CasualOS says the notification doesn't exist and nothing is sent. Ada's app
+   gets the same answer either way, so it can't find out whether Ben has push
+   on.
 
 Why a relay rather than letting friends' apps send directly: the request
 arrives _before_ the two are friends, so there's no permission to send with;
@@ -440,7 +449,11 @@ check, with two test accounts on two devices:
   grant and `recordNotification` are repeated each time);
 - a friend request reaches the other device's lock screen, and tapping it
   opens Today with the list open;
-- after signing out on a device, a new request no longer reaches it.
+- after signing out on a device, a new request no longer reaches it;
+- CasualOS lists a person's sent requests newest first. The relay only looks
+  through the first 5 pages, which is plenty for requests made in the last 15
+  minutes if they come first (the in-memory store used in CasualOS's own tests
+  sorts that way; the production store couldn't be checked from here).
 
 **Known limits.** The relay's limits live in each server process's memory, so
 with several instances each keeps its own count. Signing out ends the
@@ -469,6 +482,8 @@ For "a new Seed Bible update was released", sent to everyone with push on:
   sender's app.
 - A push shows the sender's name on the lock screen, the way most apps show
   "Ada sent you a friend request".
+- The relay's answer doesn't say whether the recipient has push on, so a
+  stranger can't use friend requests to find out.
 - The relay keeps nothing on disk. Its once-per-request and per-hour limits
-  live in memory, so a server restart resets them — acceptable for friend
-  requests, which CasualOS limits separately.
+  live in memory, so a server restart resets them. That's acceptable here:
+  every push still needs a real friend request made in the last 15 minutes.
