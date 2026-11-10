@@ -967,6 +967,25 @@
     border: 1px solid var(--sb-divider-color);
     border-radius: 1rem;
   }
+
+  /* Its "Just {reference}" can be long, so on a narrow phone the buttons
+     wrap under the instruction rather than run off the screen. */
+  & .sb-pe-pickbar {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 8px;
+    max-width: 100%;
+    border-radius: 20px;
+    white-space: normal;
+
+    & > span {
+      flex: 1 1 auto;
+    }
+
+    & > button {
+      white-space: nowrap;
+    }
+  }
 }
 
 .sb-pe-compare-editor--mobile .sb-pe-compare-dock {
