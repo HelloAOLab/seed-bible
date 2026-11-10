@@ -7437,6 +7437,114 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
       ...container.querySelectorAll(".sb-playlist-compare-column"),
     ];
 
+    describe("in a shared session, the second passage's verse flares", () => {
+      async function renderInSession(
+        flareSession: ReturnType<typeof createVerseFlareSession>["session"]
+      ) {
+        const second = createFixture();
+        const playing = renderStep([COMPARE], {
+          compact: true,
+          compareReadingState: second.readingState,
+          sharedSession: flareSession,
+        });
+        await act(async () => {
+          await playing.jumpTo(0);
+        });
+        const secondVerse = () =>
+          columns()[1]!.querySelector<HTMLElement>(
+            '.sb-verse[data-verse-number="2"]'
+          )!;
+        const tapSecondVerse = () =>
+          act(() => {
+            // On its words: a poetry verse takes a mouse click only there.
+            secondVerse()
+              .querySelector(".sb-verse-decorator")!
+              .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+          });
+        await vi.waitFor(() => expect(secondVerse()).not.toBeNull());
+        return { second, secondVerse, tapSecondVerse };
+      }
+
+      it("go out to the session when a verse there is selected", async () => {
+        const { session, decorateVerses } = createVerseFlareSession({
+          userId: "host",
+          connectionId: "connection-host",
+          hostUserId: "host",
+        });
+        const { tapSecondVerse } = await renderInSession(session);
+
+        tapSecondVerse();
+
+        expect(decorateVerses).toHaveBeenCalledWith(
+          "GEN",
+          1,
+          [2],
+          expect.objectContaining({ className: "sb-verse-number-flare" }),
+          expect.stringMatching(/^selected-verse-flare-connection-host-\d+$/)
+        );
+      });
+
+      it("keep running while the verse stays selected there", async () => {
+        const { session, decorations } = createVerseFlareSession({
+          userId: "host",
+          connectionId: "connection-host",
+          hostUserId: "host",
+        });
+        const { second, tapSecondVerse } = await renderInSession(session);
+        tapSecondVerse();
+        const verse = second.chapterData.value!.chapter.content.find(
+          (entry): entry is ChapterVerse =>
+            entry.type === "verse" && entry.number === 2
+        )!;
+
+        // Selecting in one passage clears the other's selection.
+        act(() => {
+          second.selectedVerses.value = [
+            { bookId: "GEN", chapterNumber: 1, translationId: "BSB", verse },
+          ];
+        });
+        act(() => {
+          (
+            stepTab.readingState.selectedVerses as typeof second.selectedVerses
+          ).value = [];
+        });
+
+        expect(decorations.value).toEqual([
+          expect.objectContaining({
+            verses: [2],
+            className: "sb-verse-number-flare",
+          }),
+        ]);
+      });
+
+      it("show a peer's flare there", async () => {
+        const { session } = createVerseFlareSession({
+          userId: "me",
+          connectionId: "connection-me",
+          visibility: "everyone",
+          ownerByDecoration: { "selected-verse-flare-peer": "connection-peer" },
+        });
+        const { second, secondVerse } = await renderInSession(session);
+
+        // As a peer's flare reaches it from the session's tab.
+        act(() => {
+          second.decorations.value = [
+            {
+              id: "selected-verse-flare-peer",
+              bookId: "GEN",
+              chapterNumber: 1,
+              verses: [2],
+              className: "sb-verse-number-flare",
+              style: { "--sb-selection-flare-color": "#ff0000" },
+            } as VerseDecoration,
+          ];
+        });
+
+        const number = secondVerse().querySelector(".sb-verse-number");
+        expect(number?.classList.contains("sb-verse-number-flare")).toBe(true);
+      });
+    });
+
     it("shows each passage in its own column, cut to its verses, and titles it Compare … to …", async () => {
       await renderCompare({ compact: true });
 

@@ -3516,9 +3516,8 @@ export function BibleReader(props: BibleReaderProps) {
       firstSelectedVerse ??= verse;
       target.selectVerse(verse, anchorX, anchorY);
     }
-    // Broadcast only the first verse in the drag selection, and only of the
-    // passage the session is on.
-    if (firstSelectedVerse && target === readingState) {
+    // Broadcast only the first verse in the drag selection.
+    if (firstSelectedVerse) {
       handleHostVerseClick(firstSelectedVerse);
     }
   };
@@ -3549,7 +3548,12 @@ export function BibleReader(props: BibleReaderProps) {
     const activeFlares = activeVerseFlaresRef.current;
 
     return effect(() => {
-      const selected = selectedVerses.value;
+      // Either passage of a compare step, which a flare can come from.
+      const selected = [
+        ...selectedVerses.value,
+        ...(state?.playlists.playing.value?.compareReadingState.value
+          ?.selectedVerses.value ?? []),
+      ];
       if (activeFlares.size === 0) return;
 
       const liveDecorationIds = new Set(
@@ -3574,7 +3578,7 @@ export function BibleReader(props: BibleReaderProps) {
         }
       }
     });
-  }, [sharedSession, selectedVerses]);
+  }, [sharedSession, selectedVerses, state]);
 
   // Only the current panel's title opens the selector; the side panels are
   // non-interactive previews for the swipe transition.
@@ -3855,9 +3859,11 @@ export function BibleReader(props: BibleReaderProps) {
                   }
                   justConvertedSelectionRef={justConvertedSelectionRef}
                   onAnnotationVerseClick={annotationVerseClickIn(second)}
-                  // A shared session follows the tab's own passage only.
-                  sharedSession={null}
-                  onHostVerseClick={() => {}}
+                  // The session's verse flares show and go out from here as
+                  // from the first: they reach this passage the way its
+                  // highlights do (see `shareDecorationsWithTab`).
+                  sharedSession={sharedSession}
+                  onHostVerseClick={handleHostVerseClick}
                   presence={areaPresence(`${stepArea}-second`)}
                   onVisibleVersesChange={reportVisibleArea(
                     `${stepArea}-second`
