@@ -310,6 +310,23 @@ describe("PushNotificationsManager", () => {
       await expect(settled(push)).resolves.toBe("unsupported");
     });
 
+    it("notices a worker that registers after it stopped waiting, as on a slow first visit", async () => {
+      let workerReady!: () => void;
+      Object.assign(browser.container, {
+        ready: new Promise<void>((resolve) => {
+          workerReady = resolve;
+        }),
+      });
+      browser.state.registered = false;
+      const push = start();
+      await expect(settled(push)).resolves.toBe("unsupported");
+
+      browser.state.registered = true;
+      workerReady();
+
+      await vi.waitFor(() => expect(push.status.value).toBe("off"));
+    });
+
     it("is unsupported in a browser without the push APIs", async () => {
       browser.state.hasPushApis = false;
       const push = start();

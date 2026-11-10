@@ -721,19 +721,33 @@ export function createPushNotificationsManager(
       }
     });
 
-    void detectEnvironment().then((found) => {
-      if (disposed) {
-        return;
-      }
-      if (found.kind !== "unsupported") {
-        void loadConfig();
-      }
-      batch(() => {
-        if (found.kind === "ready") {
-          permission.value = Notification.permission;
+    const detect = () =>
+      detectEnvironment().then((found) => {
+        if (disposed) {
+          return found;
         }
-        environment.value = found;
+        if (found.kind !== "unsupported") {
+          void loadConfig();
+        }
+        batch(() => {
+          if (found.kind === "ready") {
+            permission.value = Notification.permission;
+          }
+          environment.value = found;
+        });
+        return found;
       });
+    void detect().then((found) => {
+      // On a first visit the worker only registers once the page has loaded,
+      // which on a slow connection can be after `detectEnvironment` stopped
+      // waiting. When it does turn up, look again.
+      if (found.kind === "unsupported" && "serviceWorker" in navigator) {
+        void navigator.serviceWorker.ready.then(() => {
+          if (!disposed && environment.peek().kind === "unsupported") {
+            void detect();
+          }
+        });
+      }
     });
   };
 
