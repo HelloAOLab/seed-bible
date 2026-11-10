@@ -10,6 +10,7 @@ import {
   releaseNotesUrl,
   type NotificationsManager,
 } from "@packages/seed-bible/seed-bible/managers/NotificationsManager";
+import { createPushNotificationsManager } from "@packages/seed-bible/seed-bible/managers/PushNotificationsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { ME } from "../../testUtils/fakeSharedPermissions";
 import {
@@ -68,6 +69,11 @@ describe("NotificationsFeed", () => {
     const state = {
       notifications,
       friends,
+      // A browser without push here, so it shows no card.
+      pushNotifications: createPushNotificationsManager({
+        os: harness.os,
+        login: harness.login,
+      }),
       login: harness.login,
       modals,
       app: { toast: harness.toast },

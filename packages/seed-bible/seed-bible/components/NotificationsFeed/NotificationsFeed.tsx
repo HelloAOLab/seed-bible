@@ -13,6 +13,7 @@ import { MaterialIcon } from "../icons";
 import { FriendRequestActions } from "../FriendsPane/FriendsPane";
 import { PersonButton } from "../FriendsPane/PersonCard";
 import { formatFeedTime } from "../TodayPane/SocialSection";
+import { PushNotificationsCard } from "./PushNotificationsCard";
 
 export const NOTIFICATIONS_MODAL_ID = "notifications";
 
@@ -46,6 +47,7 @@ export function NotificationsFeed(props: { state: SeedBibleState }) {
 
   return (
     <div className="sb-notifications-feed">
+      <PushNotificationsCard push={state.pushNotifications} />
       {items.length > 1 ? (
         <div className="sb-notifications-feed-actions">
           <button
