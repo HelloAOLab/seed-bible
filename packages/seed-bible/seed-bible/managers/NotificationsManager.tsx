@@ -344,7 +344,7 @@ export function createNotificationsManager(
           marker: "private",
         })
         .catch((error: unknown) => ({ success: false as const, error }));
-      if (!result.success) {
+      if (result && result.success === false) {
         // The device copy has it, and the next change or refresh tries again.
         console.warn("Could not save notification state:", result);
       }
