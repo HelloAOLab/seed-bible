@@ -497,7 +497,7 @@
   "session-with-the-group": "With the group",
   "session-with-the-group-at": "With the group · {{passage}}",
   "session-reading-elsewhere": "Reading elsewhere",
-  "session-participant-you": "{{name}} (you)",
+  "session-participant-you": "(you)",
   "session-participants-count": "Participants · {{count}}",
   "session-away-count": "{{count}} away",
   "show-participants": "Show participants",
@@ -1281,5 +1281,10 @@
   "friends-playlists-filter": "Friends' playlists",
   "friend-link-social-title": "Add {{name}} as a friend",
   "friend-link-meta-description": "{{name}} wants to be your friend on {{brand}}",
-  "friend-link-title": "Add {{name}} as a friend on {{brand}}"
+  "friend-link-title": "Add {{name}} as a friend on {{brand}}",
+  "person-profile-friends": "You're friends with {{name}}.",
+  "person-profile-not-friends": "You're not friends yet.",
+  "friend-request-account-not-found": "We couldn't find this account.",
+  "person-profile-you": "This is you.",
+  "friend-request-link-load-failed": "Couldn't load your friend requests. Check your connection and try again."
 }

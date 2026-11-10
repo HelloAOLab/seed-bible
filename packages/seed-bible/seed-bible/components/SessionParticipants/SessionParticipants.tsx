@@ -27,6 +27,7 @@ import {
 } from "./participantLocations";
 import {
   ParticipantFriendButton,
+  ParticipantName,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
 
@@ -153,7 +154,18 @@ export function MobileSessionParticipants({
                 </button>
               </div>
               <div className="sb-mobile-settings-sheet-body">
-                <SessionParticipantList state={state} session={session} />
+                <SessionParticipantList
+                  state={state}
+                  session={session}
+                  // The sheet sits above every modal, so it closes to let a
+                  // participant's profile show, and comes back after.
+                  onOpenProfile={() => {
+                    isSheetOpen.value = false;
+                  }}
+                  onCloseProfile={() => {
+                    isSheetOpen.value = true;
+                  }}
+                />
               </div>
               <div className="sb-mobile-settings-sheet-divider" />
               {isHost && (
@@ -226,9 +238,15 @@ export function MobileSessionParticipants({
 export function SessionParticipantList({
   state,
   session,
+  onOpenProfile,
+  onCloseProfile,
 }: {
   state: SeedBibleState;
   session: BibleReadingSession;
+  /** For a list that has to get out of the way of a participant's profile. */
+  onOpenProfile?: () => void;
+  /** Runs when that profile closes, for the list to come back. */
+  onCloseProfile?: () => void;
 }) {
   const { t } = useI18n();
   const options = session.options.value;
@@ -265,17 +283,21 @@ export function SessionParticipantList({
           ? t("co-host", { defaultValue: "Co-host" })
           : undefined;
     const location = locations.get(user.connectionId);
-    const name = user.isSelf
-      ? t("session-participant-you", {
-          defaultValue: "{{name}} (you)",
-          name: getUserDisplayName(user),
-        })
-      : getUserDisplayName(user);
     return (
       <li key={user.connectionId} className="sb-session-participants-list-item">
         <SessionUserAvatar user={user} role={role} roleLabel={roleLabel} />
         <span className="sb-session-participants-list-name">
-          <span>{name}</span>
+          <span>
+            <ParticipantName
+              state={state}
+              userId={user.userId}
+              displayName={getUserDisplayName(user)}
+              onOpenProfile={onOpenProfile}
+              onCloseProfile={onCloseProfile}
+            />
+            {user.isSelf &&
+              ` ${t("session-participant-you", { defaultValue: "(you)" })}`}
+          </span>
           {location?.isElsewhere && location.passage && (
             <span className="sb-session-participants-list-location">
               {location.passage}

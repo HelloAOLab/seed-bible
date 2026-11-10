@@ -1274,5 +1274,19 @@
   "loading-translations": "翻訳を読み込んでいます…",
   "translations-load-failed": "翻訳リスト全体を読み込むことができなかったため、一部が欠落している可能性があります。",
   "verse-of-the-day": "今日の聖句",
-  "verse-of-the-day-loading": "今日の聖句を読み込んでいます…"
+  "verse-of-the-day-loading": "今日の聖句を読み込んでいます…",
+  "delete-bookmark-confirm-title": "ブックマークを削除しますか？",
+  "delete-bookmark-confirm-message": "「 {{name}}を削除しますか？",
+  "scripture-font": "聖書フォント",
+  "ai-limits-title": "AIとチャットする前に",
+  "ai-limits-intro": "AIは有益な出発点となり得るが、その限界を念頭に置いておく必要がある。",
+  "ai-limits-mistakes": "間違いを犯すこともあるし、間違っている時でも自信満々に聞こえることがある。",
+  "ai-limits-agreeable": "それは、あなたが聞きたいことを言ってくれる傾向があり、一般的な回答に偏りがちです。",
+  "ai-limits-scripture": "それは信頼できる情報源ではありません。そこに書かれていることを聖書と照らし合わせて確認してください。",
+  "ai-limits-study": "聖書は自分で研究し、AIに思考を任せてはいけません。",
+  "ai-limits-confirm": "AIは間違いを犯す可能性があり、聖書を自分で研究することの代わりにはならないことは理解しています。",
+  "friends-playlists-filter": "友達のプレイリスト",
+  "friend-link-social-title": "{{name}}友達に追加する",
+  "friend-link-meta-description": "{{name}} {{brand}}であなたの友達になりたいと思っています",
+  "friend-link-title": "{{name}} {{brand}}の友達に追加する"
 }
