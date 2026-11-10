@@ -305,6 +305,7 @@ const ADD_OPTIONS: NewPlaylistStepKind[] = [
   "scripture",
   "note",
   "video",
+  "link",
   "question",
   "compare",
 ];
@@ -326,6 +327,10 @@ function addOptionDescription(
       return t("playlist-editor-add-video-desc", {
         defaultValue: "A YouTube or Vimeo link",
       });
+    case "link":
+      return t("playlist-editor-add-link-desc", {
+        defaultValue: "Any web page, videos included",
+      });
     case "question":
       return t("playlist-editor-add-question-desc", {
         defaultValue: "Ask readers to reflect",
@@ -345,6 +350,8 @@ function AddOptionIcon(props: { kind: NewPlaylistStepKind }) {
       <PeIcon name="pencil" />
     ) : props.kind === "video" ? (
       "▷"
+    ) : props.kind === "link" ? (
+      <PeIcon name="link" />
     ) : props.kind === "question" ? (
       "?"
     ) : (

@@ -753,6 +753,32 @@ describe("the playlist editor", () => {
       expect(container.querySelector(".sb-pe-add-menu")).toBeNull();
     });
 
+    // Video and Link are the same step, under the two names people look for.
+    it("offers Link beside Video, adding the same step", () => {
+      openPanel();
+      const add = () =>
+        click(
+          container.querySelector(
+            '.sb-pe-panel-header [aria-label="Add a step"]'
+          )
+        );
+      add();
+      expect(
+        Array.from(
+          container.querySelectorAll(".sb-pe-add-option-name"),
+          (name) => name.textContent
+        )
+      ).toEqual(["Scripture", "Note", "Video", "Link", "Question", "Compare"]);
+
+      click(byText(container, ".sb-pe-add-option", "Video"));
+      add();
+      click(byText(container, ".sb-pe-add-option", "Link"));
+
+      expect(items()).toHaveLength(5);
+      expect(items()[3]).toEqual(items()[4]);
+      expect(items()[4]).toEqual({ type: "link", url: "", embed: true });
+    });
+
     it("closes the menu with Escape without adding anything", () => {
       openPanel();
       click(

@@ -494,6 +494,10 @@
   background: color-mix(in srgb, #4d74c4 13%, var(--pe-surface));
   color: color-mix(in srgb, #3d5fa8 65%, var(--pe-text));
 }
+.sb-pe-add-option-icon--link {
+  background: color-mix(in srgb, #4d74c4 13%, var(--pe-surface));
+  color: color-mix(in srgb, #3d5fa8 65%, var(--pe-text));
+}
 .sb-pe-add-option-icon--question {
   background: color-mix(in srgb, #8a9a4c 14%, var(--pe-surface));
   color: color-mix(in srgb, #5d6a2c 65%, var(--pe-text));

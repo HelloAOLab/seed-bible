@@ -243,6 +243,7 @@ export type NewPlaylistStepKind =
   | "scripture"
   | "note"
   | "video"
+  | "link"
   | "question"
   | "compare";
 
@@ -2773,9 +2774,10 @@ export function createPlaylistManager(
           }
         : kind === "question"
           ? { type: "html", html: "", question: {} }
-          : kind === "video"
-            ? // An empty link isn't a valid step; the card asks for one and
-              // saving refuses until it has it.
+          : kind === "video" || kind === "link"
+            ? // The same step, offered under both names: a link to a video
+              // plays, any other opens. An empty link isn't a valid step; the
+              // card asks for one and saving refuses until it has it.
               { type: "link", url: "", embed: true }
             : { type: "html", html: "" };
     insertEditorStep(item, afterIndex);
