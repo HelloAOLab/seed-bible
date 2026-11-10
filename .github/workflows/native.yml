@@ -7,9 +7,9 @@
 # - Check builds (pull requests that touch the apps): an installable debug
 #   APK for Android, and an iOS Simulator build. Neither needs any signing
 #   secrets, so they also run on forks. They catch native project breakage.
-# - Signed test builds (every push to `develop`): a signed Android APK, which
-#   installs over a store install and can be shared with testers. iOS still
-#   makes a Simulator build here.
+# - Test releases (every push to `develop`): a signed Android App Bundle and
+#   APK, with the bundle published to Google Play's Internal testing track.
+#   iOS still makes a Simulator build here.
 # - Release builds (every push to `main`, or a manual run with "release"
 #   ticked): a signed Android App Bundle (.aab) and APK, and a signed iOS
 #   App Store .ipa, ready to upload to Google Play and App Store Connect.
@@ -34,6 +34,14 @@
 #     ANDROID_KEYSTORE_PASSWORD   keystore password
 #     ANDROID_KEY_ALIAS           key alias inside the keystore
 #     ANDROID_KEY_PASSWORD        key password
+#
+#   Google Play publishing (develop → Internal testing):
+#     GOOGLE_PLAY_SERVICE_ACCOUNT_JSON   the JSON key of a Google Cloud service
+#                                        account invited to the Play Console
+#                                        with "Release to testing tracks"
+#   Optional repository variable:
+#     PLAY_INTERNAL_STATUS        "draft" until the app's first Play release,
+#                                 then unset (defaults to "completed")
 #
 #   iOS release signing:
 #     IOS_DISTRIBUTION_CERTIFICATE_BASE64   base64 of the "Apple Distribution"
@@ -147,14 +155,15 @@ jobs:
         run: pnpm exec cap sync android
 
       # release: signed App Bundle + APK (main, or a manual release run)
-      # signed:  signed APK only (develop; nothing from it goes to Play)
+      # signed:  the same, then the bundle goes to Play's Internal testing (develop)
       # debug:   unsigned debug APK (pull requests, or no keystore yet)
       - name: Decide build type
         id: mode
         env:
           RELEASE: ${{ needs.web.outputs.release }}
-          SIGNED_BRANCH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+          SIGNED_BRANCH: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/develop' }}
           HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+          HAS_PLAY_ACCOUNT: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
         run: |
           if [ "$RELEASE" = "true" ]; then
             WANTED=release
@@ -168,13 +177,20 @@ jobs:
             WANTED=debug
           fi
           echo "mode=$WANTED" >> "$GITHUB_OUTPUT"
+          if [ "$WANTED" = "signed" ]; then
+            if [ "$HAS_PLAY_ACCOUNT" = "true" ]; then
+              echo "upload=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "::warning title=Google Play upload skipped::GOOGLE_PLAY_SERVICE_ACCOUNT_JSON isn't set, so this build wasn't sent to Internal testing. See mobile/README.md."
+            fi
+          fi
 
       - name: Build debug APK
         if: steps.mode.outputs.mode == 'debug'
         working-directory: mobile/android
         run: ./gradlew assembleDebug -PversionCode="$BUILD_NUMBER" -PversionName="$VERSION"
 
-      - name: Build signed ${{ steps.mode.outputs.mode == 'release' && 'App Bundle and APK' || 'APK' }}
+      - name: Build signed App Bundle and APK
         if: steps.mode.outputs.mode != 'debug'
         working-directory: mobile/android
         env:
@@ -185,12 +201,7 @@ jobs:
         run: |
           export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/upload.jks"
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
-          if [ "${{ steps.mode.outputs.mode }}" = "release" ]; then
-            TASKS="bundleRelease assembleRelease"
-          else
-            TASKS="assembleRelease"
-          fi
-          ./gradlew $TASKS -PversionCode="$BUILD_NUMBER" -PversionName="$VERSION"
+          ./gradlew bundleRelease assembleRelease -PversionCode="$BUILD_NUMBER" -PversionName="$VERSION"
           rm -f "$ANDROID_KEYSTORE_PATH"
 
       - uses: actions/upload-artifact@v7
@@ -200,6 +211,37 @@ jobs:
             mobile/android/app/build/outputs/apk/**/*.apk
             mobile/android/app/build/outputs/bundle/**/*.aab
           if-no-files-found: error
+
+      # After the artifact upload, so a failed Play upload still leaves the
+      # build downloadable from the run.
+      - name: Write release notes for testers
+        if: steps.mode.outputs.upload == 'true'
+        env:
+          COMMIT_SUBJECT: ${{ github.event.head_commit.message }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/whatsnew"
+          # The commit's first line; Google Play allows 500 characters per language.
+          # Manual runs have no pushed commit, so read it from the checkout.
+          MESSAGE="${COMMIT_SUBJECT:-$(git log -1 --format=%s)}"
+          NOTES="develop ${GITHUB_SHA::7}: ${MESSAGE%%$'\n'*}"
+          printf '%s' "${NOTES:0:500}" > "$RUNNER_TEMP/whatsnew/whatsnew-en-US"
+
+      - name: Publish to Google Play Internal testing
+        if: steps.mode.outputs.upload == 'true'
+        # Pinned to a commit, not a tag: this step holds the Play publishing
+        # credential, so a retagged release mustn't be able to change it.
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: org.seedbible.app
+          releaseFiles: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          # Google only accepts "draft" until the app has been published once
+          # (on any track); set the PLAY_INTERNAL_STATUS variable to "draft"
+          # until then, and testers get each build once it's rolled out by hand.
+          status: ${{ vars.PLAY_INTERNAL_STATUS || 'completed' }}
+          releaseName: ${{ env.VERSION }} (${{ env.BUILD_NUMBER }}) develop
+          whatsNewDirectory: ${{ runner.temp }}/whatsnew
 
   ios:
     name: iOS

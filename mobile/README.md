@@ -64,12 +64,9 @@ pnpm run:ios
 - Android: a debug APK that installs on any phone with "install unknown apps" allowed.
 - iOS: a Simulator build (`SeedBible-simulator.zip`). Unzip it and drag `App.app` onto a running Simulator. It can't go on a real iPhone, because that needs signing.
 
-**Every push to `develop`** gets the same iOS Simulator build, and a signed Android APK instead of the debug one. It's signed with the upload key, the same as the APKs from `main`, so:
+**Every push to `develop`** is published to **Google Play's Internal testing** track, so testers get it as an ordinary Play Store update. The run also keeps the signed App Bundle and APK as artifacts, and makes the same iOS Simulator build as pull requests. See [Publishing develop to Internal testing](#publishing-develop-to-internal-testing) for the one-time setup.
 
-- testers can install each new one over the last without uninstalling, and keep their data;
-- seedbible.org links open in it once the upload key's fingerprint is in `ANDROID_CERT_FINGERPRINTS` (see [Links](#links)).
-
-It can't replace a copy installed from Google Play. With Play App Signing, Google re-signs store copies with its own key, and Android refuses an update signed with a different key. Testers who have the store version need to uninstall it first.
+The signed APK from the artifacts is signed with the upload key, and copies from Google Play with Google's key, so one can't update the other: switching between them means uninstalling first.
 
 **Every push to `main`, or a manual run with "release" ticked** (Actions → Native Apps → Run workflow) gets signed store builds:
 
@@ -88,6 +85,24 @@ The builds are attached to the workflow run as artifacts; uploading them to the 
 **Version numbers:** the version people see is `packages/seed-bible/package.json`'s version. The build number is the workflow's run number. Both stores refuse an upload whose build number isn't higher than the last one. If the run number ever starts over (for example, the workflow file is renamed), set the `NATIVE_BUILD_NUMBER_OFFSET` repository variable to push the numbers back up.
 
 **iOS signing detail:** a release run doesn't pass the signing settings to `xcodebuild` directly. Settings given that way reach Capacitor's Swift packages too, and those fail the build when handed a provisioning profile. Instead, `scripts/configureIosRelease.mjs` switches only the App target's Release settings to manual signing, inside the CI checkout.
+
+### Publishing develop to Internal testing
+
+After each push to `develop`, the workflow uploads the App Bundle to the Internal testing track, with the commit's first line as the release notes. One-time setup:
+
+1. **Create the app in the Play Console** (package `org.seedbible.app`), and **upload the first App Bundle by hand**: Google's API can't upload to an app that has never had a build. Take the `.aab` from any signed run's artifacts. This is also when you accept Play App Signing.
+2. **Make a service account for CI:**
+   - In Google Cloud (any project), enable the **Google Play Android Developer API**.
+   - Under IAM & Admin → Service Accounts, create an account and add a JSON key. The key downloads as a file.
+3. **Let it publish:** in the Play Console, go to Users and permissions → Invite new users, and enter the service account's email address. Give it the Seed Bible app with the **Release apps to testing tracks** permission.
+4. **Add the key to GitHub** as the secret `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`, pasting the JSON file's contents as they are. It doesn't need converting to base64.
+5. **Add testers:** in the Play Console, go to Testing → Internal testing → Testers. Add their Google accounts, and send them the opt-in link shown there.
+
+Until the app has been published once, on any track, Google only accepts uploads saved as drafts. Until then, set the repository variable `PLAY_INTERNAL_STATUS` to `draft`, and roll each build out by hand in the Play Console. Once it's published, delete the variable, and every `develop` push reaches testers automatically.
+
+Without the secret, `develop` runs still build and sign, and show a warning that nothing was uploaded.
+
+**Re-running a run** that already uploaded fails at the Play step, because Google never accepts the same build number twice. Push a new commit instead, or start a fresh run with Actions → Native Apps → Run workflow on `develop`.
 
 ## Links
 
