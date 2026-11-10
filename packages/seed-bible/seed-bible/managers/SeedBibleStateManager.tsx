@@ -188,6 +188,10 @@ import {
 } from "../managers/FriendsManager";
 import { createFriendReadLimiter } from "./friendContentFreshness";
 import {
+  createNotificationsManager,
+  type NotificationsManager,
+} from "./NotificationsManager";
+import {
   createChatsManager,
   type ChatSession,
   type ChatsManager,
@@ -598,6 +602,11 @@ export interface SeedBibleState {
   discover: DiscoverManager;
   /** The Today screen: its open state and the data its cards read. */
   today: TodayManager;
+  /**
+   * Friend requests, update notices and the like: what's unread, what's been
+   * dismissed, and whether the list is open. See docs/notifications.md.
+   */
+  notifications: NotificationsManager;
   /**
    * Registry of reading extensions that can be enabled per reading state to
    * enhance navigation, discovered content, and session-synced custom data.
@@ -2006,6 +2015,7 @@ export function createSeedBibleState(
         selector.hydrateStoredViewMode();
         tutorial.hydrateStoredFlags();
         onboarding.hydrateStoredFlags();
+        notifications.hydrateStoredState();
         // Unblocks the persistence effect above, which now sees the restored tab
         // list rather than the URL-only seed.
         tabsRestored.value = true;
@@ -2835,6 +2845,30 @@ export function createSeedBibleState(
     toastTimer = setTimeout(() => {
       toastQueue.value = toastQueue.value.slice(1);
     }, remaining);
+  });
+
+  const notifications = createNotificationsManager({
+    os,
+    login,
+    friends,
+    toast,
+    i18n,
+  });
+  // Bound to `?notifications=open`, so a tapped push notification can open the
+  // list (its link is `/?notifications=open`, which lands on Today).
+  navigation.syncSignalsToUrl({
+    notifications: {
+      get value() {
+        return notifications.isFeedOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        if (newValue === "open") {
+          notifications.openFeed();
+        } else {
+          notifications.closeFeed();
+        }
+      },
+    },
   });
 
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
@@ -3809,6 +3843,7 @@ export function createSeedBibleState(
     i18n,
     discover,
     today,
+    notifications,
     readingExtensions,
     extensions,
     extensionSettings,

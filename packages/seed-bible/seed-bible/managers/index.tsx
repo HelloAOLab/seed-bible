@@ -15,6 +15,7 @@ export * from "./ChapterText";
 export * from "./DiscoverManager";
 export * from "./ExtensionManager";
 export * from "./FriendsManager";
+export * from "./NotificationsManager";
 export * from "./FreeUseBibleAPI";
 export * from "./InvitationsManager";
 export * from "./LoginManager";

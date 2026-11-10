@@ -1264,5 +1264,11 @@
   "friends-playlists-filter": "Friends' playlists",
   "friend-link-social-title": "Add {{name}} as a friend",
   "friend-link-meta-description": "{{name}} wants to be your friend on {{brand}}",
-  "friend-link-title": "Add {{name}} as a friend on {{brand}}"
+  "friend-link-title": "Add {{name}} as a friend on {{brand}}",
+  "notification-friend-request": "{{name}} sent you a friend request",
+  "notification-app-updated": "Seed Bible was updated to version {{version}}",
+  "notifications-new": "You have {{count}} new notifications",
+  "notifications-new_one": "You have {{count}} new notification",
+  "notifications-new_other": "You have {{count}} new notifications",
+  "notifications-toast-hint": "Tap to see your notifications"
 }

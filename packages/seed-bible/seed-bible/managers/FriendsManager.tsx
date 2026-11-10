@@ -117,6 +117,18 @@ export interface FriendsManager {
   isLoading: ReadonlySignal<boolean>;
 
   /**
+   * True while names and pictures for people in the lists are still loading,
+   * so something that names them can wait instead of showing a placeholder.
+   */
+  isLoadingProfiles: ReadonlySignal<boolean>;
+
+  /**
+   * True once the lists have been read for the signed-in account, so an empty
+   * list means "none" rather than "not loaded yet". False when signed out.
+   */
+  isLoaded: ReadonlySignal<boolean>;
+
+  /**
    * Re-reads friends and requests from the server. Profiles are only fetched
    * for people not seen yet unless `reloadProfiles` is set.
    */
@@ -221,6 +233,7 @@ export function createFriendsManager(
   let refreshVersion = 0;
   let lastRefreshStartedMs = 0;
   const profilesInFlight = new Set<string>();
+  const profilesPending = signal(0);
 
   const profileFor = (userId: string): Profile =>
     profiles.value.get(userId) ?? {
@@ -282,6 +295,9 @@ export function createFriendsManager(
     toRequests(outgoing.value, (request) => request.targetUserId)
   );
   const isLoading = computed(() => loading.value);
+  const isLoaded = computed(
+    () => !!login.userId.value && loadedUserId.value === login.userId.value
+  );
 
   const loadProfiles = async (userIds: string[], reload: boolean) => {
     const wanted = userIds.filter(
@@ -290,6 +306,7 @@ export function createFriendsManager(
     await Promise.all(
       wanted.map(async (userId) => {
         profilesInFlight.add(userId);
+        profilesPending.value++;
         try {
           const profile = await login.getPublicProfile(userId);
           const next = new Map(profiles.peek());
@@ -301,6 +318,7 @@ export function createFriendsManager(
           console.warn(`Could not load the profile for ${userId}:`, error);
         } finally {
           profilesInFlight.delete(userId);
+          profilesPending.value--;
         }
       })
     );
@@ -363,14 +381,16 @@ export function createFriendsManager(
           (r) => isPendingFriendRequest(r, nowMs) && r.targetUserId !== userId
         );
         loadedUserId.value = userId;
-      });
 
-      const people = new Set<string>(byUser.keys());
-      for (const r of incoming.peek()) people.add(r.requestingUserId);
-      for (const r of outgoing.peek()) {
-        if (r.targetUserId) people.add(r.targetUserId);
-      }
-      void loadProfiles([...people], options?.reloadProfiles ?? false);
+        // Started inside the batch, so nothing sees the new lists without
+        // also seeing that their names are on the way.
+        const people = new Set<string>(byUser.keys());
+        for (const r of incoming.peek()) people.add(r.requestingUserId);
+        for (const r of outgoing.peek()) {
+          if (r.targetUserId) people.add(r.targetUserId);
+        }
+        void loadProfiles([...people], options?.reloadProfiles ?? false);
+      });
     } catch (error) {
       // Keeps whatever was shown before rather than blanking the lists over a
       // dropped request; the next refresh tries again.
@@ -728,6 +748,8 @@ export function createFriendsManager(
     incomingRequests,
     outgoingRequests,
     isLoading,
+    isLoaded,
+    isLoadingProfiles: computed(() => profilesPending.value > 0),
     refresh,
     sendRequest,
     acceptRequest,
