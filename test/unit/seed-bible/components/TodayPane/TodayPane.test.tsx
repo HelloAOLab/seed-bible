@@ -279,11 +279,32 @@ describe("TodayPane", () => {
       expect(container.querySelector(".sb-today-close-button")).toBeNull();
     });
 
+    // Welcome has no header, and brand-new accounts — who see it — may well
+    // have a friend request waiting from the link that brought them here.
+    it("gives Welcome a bell of its own that opens the notifications", () => {
+      const props = setup({ status: "empty" });
+
+      const bell = container.querySelector<HTMLButtonElement>(
+        ".sb-today-welcome-corner .sb-today-notifications-button"
+      );
+      act(() => bell!.click());
+
+      expect(props.notifications.openFeed).toHaveBeenCalledTimes(1);
+    });
+
+    // The header has the bell there; a second one in the corner would double it.
+    it("leaves the corner bell out of the personalized layout", () => {
+      setup({ status: "ready" });
+
+      expect(container.querySelector(".sb-today-welcome-corner")).toBeNull();
+    });
+
     it("hands each personalized section the props it needs", () => {
       const props = setup({ bookmarks: [aBookmark] });
 
       expect(propsOf(Header)).toMatchObject({
         login: props.login,
+        notifications: props.notifications,
         onClose: props.onClose,
       });
       expect(propsOf(ResumeReadingSection)).toMatchObject({

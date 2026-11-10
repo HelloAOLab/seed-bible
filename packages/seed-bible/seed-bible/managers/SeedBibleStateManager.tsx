@@ -24,6 +24,10 @@ import {
 } from "../managers/TodayManager";
 import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
+import {
+  NOTIFICATIONS_MODAL_ID,
+  NotificationsFeed,
+} from "../components/NotificationsFeed/NotificationsFeed";
 import { openExtensionConsentModal } from "../components/ExtensionConsentModal/ExtensionConsentModal";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
 import {
@@ -2856,6 +2860,16 @@ export function createSeedBibleState(
   });
   // Bound to `?notifications=open`, so a tapped push notification can open the
   // list (its link is `/?notifications=open`, which lands on Today).
+  //
+  // Opened from the URL first, the way the other screens' flags are seeded:
+  // `syncSignalsToUrl` writes the current value to the URL before it reads the
+  // URL, so a list still closed at that point would wipe the param.
+  if (
+    !import.meta.env.SSR &&
+    navigation.currentUrl.peek().searchParams.get("notifications") === "open"
+  ) {
+    notifications.openFeed();
+  }
   navigation.syncSignalsToUrl({
     notifications: {
       get value() {
@@ -4021,6 +4035,7 @@ export function createSeedBibleState(
     <TodayPane
       today={today}
       login={login}
+      notifications={notifications}
       theme={themeManager.currentTheme}
       isMobile={isMobile}
       bookmarks={bookmarks.bookmarks}
@@ -4045,6 +4060,32 @@ export function createSeedBibleState(
       });
     } else {
       panes.closePane(TODAY_PANE_ID); // no-op when already closed
+    }
+  });
+
+  // The notifications list, opened from Today's bell, is a modal over whatever
+  // is showing, mirrored from `notifications.isFeedOpen` (and so from
+  // `?notifications=open`). It waits for the first render (`tabsRestored`):
+  // the server never shows the list, so a client whose first render did would
+  // no longer match the server's HTML.
+  effect(() => {
+    const open = tabsRestored.value && notifications.isFeedOpen.value;
+    const shown = modals.modals
+      .peek()
+      .some((modal) => modal.id === NOTIFICATIONS_MODAL_ID);
+    if (open && !shown) {
+      modals.openModal({
+        id: NOTIFICATIONS_MODAL_ID,
+        title: { key: "notifications", defaultValue: "Notifications" },
+        content: () => <NotificationsFeed state={state} />,
+        mobileSheet: true,
+        useCasualOSApp: false,
+        // The X and the backdrop. Escape and Back reach `closeFeed` by other
+        // routes: the list listens for Escape, and Back drops the URL param.
+        onDismiss: () => notifications.closeFeed(),
+      });
+    } else if (!open && shown) {
+      modals.closeModal(NOTIFICATIONS_MODAL_ID);
     }
   });
 

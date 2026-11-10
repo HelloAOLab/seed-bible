@@ -1270,5 +1270,16 @@
   "notifications-new": "You have {{count}} new notifications",
   "notifications-new_one": "You have {{count}} new notification",
   "notifications-new_other": "You have {{count}} new notifications",
-  "notifications-toast-hint": "Tap to see your notifications"
+  "notifications-toast-hint": "Tap to see your notifications",
+  "notifications": "Notifications",
+  "notifications-unread": "Notifications, {{count}} unread",
+  "notifications-unread_one": "Notifications, {{count}} unread",
+  "notifications-unread_other": "Notifications, {{count}} unread",
+  "notifications-dismiss-all": "Dismiss all",
+  "notifications-empty": "You're all caught up.",
+  "notifications-signed-out": "Sign in to see friend requests here.",
+  "notification-new": "New",
+  "dismiss-notification": "Dismiss notification: {{notification}}",
+  "notification-friend-request-subtitle": "Sent you a friend request",
+  "notification-see-whats-new": "See what's new"
 }
