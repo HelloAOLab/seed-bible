@@ -2,6 +2,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
 import { NOTIFICATIONS_MODAL_ID } from "@packages/seed-bible/seed-bible/components/NotificationsFeed/NotificationsFeed";
+import { NEW_NOTIFICATIONS_TOAST_KEY } from "@packages/seed-bible/seed-bible/managers/NotificationsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   createTestSeedBibleState,
@@ -73,6 +74,23 @@ describe("the notifications modal", () => {
     expect(
       container.querySelector(".sb-notifications-feed")?.textContent
     ).toContain("You're all caught up.");
+  });
+
+  it("takes away the toast announcing new notifications once the list is open", async () => {
+    const state = await createTestSeedBibleState({ todayOpen: true });
+    act(() =>
+      state.app.toast("You have 2 new notifications", {
+        key: NEW_NOTIFICATIONS_TOAST_KEY,
+        onClick: () => {},
+      })
+    );
+    act(() => state.app.toast("Something else"));
+    expect(state.app.currentToast.value?.key).toBe(NEW_NOTIFICATIONS_TOAST_KEY);
+
+    // From the bell, not by tapping the toast.
+    await openList(state);
+
+    expect(state.app.currentToast.value?.message).toBe("Something else");
   });
 
   it("opens only once, however often it's asked to", async () => {

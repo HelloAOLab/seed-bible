@@ -134,6 +134,9 @@ export interface CreateNotificationsManagerOptions {
   saveDelayMs?: number;
 }
 
+/** Marks the toast that announces new notifications. */
+export const NEW_NOTIFICATIONS_TOAST_KEY = "notifications-new";
+
 /** An update notice stays listed this long after the update. */
 export const APP_UPDATE_NOTICE_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -545,7 +548,7 @@ export function createNotificationsManager(
             defaultValue_other: "You have {{count}} new notifications",
           }),
       {
-        key: "notifications-new",
+        key: NEW_NOTIFICATIONS_TOAST_KEY,
         hint: t("notifications-toast-hint", {
           defaultValue: "Tap to see your notifications",
         }),

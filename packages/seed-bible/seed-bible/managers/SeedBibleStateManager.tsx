@@ -193,6 +193,7 @@ import {
 import { createFriendReadLimiter } from "./friendContentFreshness";
 import {
   createNotificationsManager,
+  NEW_NOTIFICATIONS_TOAST_KEY,
   type NotificationsManager,
 } from "./NotificationsManager";
 import {
@@ -2857,6 +2858,15 @@ export function createSeedBibleState(
     friends,
     toast,
     i18n,
+  });
+  // A toast saying there's something new has nothing left to say once the
+  // list is open, even if it was opened from the bell rather than the toast.
+  effect(() => {
+    if (notifications.isFeedOpen.value) {
+      toastQueue.value = toastQueue
+        .peek()
+        .filter((queued) => queued.key !== NEW_NOTIFICATIONS_TOAST_KEY);
+    }
   });
   // Bound to `?notifications=open`, so a tapped push notification can open the
   // list (its link is `/?notifications=open`, which lands on Today).
