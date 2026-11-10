@@ -285,6 +285,33 @@ describe("NotificationsManager", () => {
       await vi.waitFor(() => expect(toast).toHaveBeenCalledTimes(1));
     });
 
+    it.each([
+      [["bob"], "Bob sent you a friend request"],
+      [["ada", "bob"], "You have 2 new notifications"],
+    ])(
+      "announces requests from %j that were waiting when the person signs in",
+      async (senders, expected) => {
+        for (const sender of senders) {
+          server.requestFrom(sender);
+        }
+        userId.value = null;
+        const notifications = start();
+        await vi.waitFor(() => expect(notifications.isReady.value).toBe(true));
+        await flush();
+        expect(toast).not.toHaveBeenCalled();
+
+        userId.value = ME;
+
+        await vi.waitFor(() => expect(toast).toHaveBeenCalled());
+        await flush();
+        expect(toast).toHaveBeenCalledTimes(1);
+        const [message, options] = toast.mock.calls[0]!;
+        expect(message).toBe(expected);
+        options?.onClick?.();
+        expect(notifications.isFeedOpen.value).toBe(true);
+      }
+    );
+
     it("doesn't toast while the list is open", async () => {
       server.requestFrom("bob");
       const notifications = start();
@@ -550,5 +577,60 @@ describe("NotificationsManager", () => {
       );
       expect(accounts.get("someone-else")?.dismissed).toEqual({});
     });
+
+    it.each([
+      ["after", ["someone-else", ME]],
+      ["before", [ME, "someone-else"]],
+    ])(
+      "keeps each account's state apart when the first account's copy arrives %s the switch's",
+      async (_label, answerOrder) => {
+        // ME dismissed the update notice on another device; someone-else
+        // hasn't seen it yet and dismissed something of their own.
+        const atMs = Date.now();
+        accounts.set(ME, {
+          seen: {},
+          dismissed: { "app-update:1.18.0": atMs },
+          appVersion: {
+            version: "1.18.0",
+            previousVersion: "1.17.0",
+            sinceMs: 5,
+          },
+        });
+        accounts.set("someone-else", {
+          seen: {},
+          dismissed: { "friend-request:theirs": atMs },
+          appVersion: { version: "1.17.0", previousVersion: null, sinceMs: 1 },
+        });
+        const held = new Map<string, () => void>();
+        const getData = vi.mocked(os.getData);
+        const answer = getData.getMockImplementation()!;
+        getData.mockImplementation(async (recordName, address) => {
+          await new Promise<void>((resolve) => held.set(recordName, resolve));
+          return answer(recordName, address);
+        });
+
+        const notifications = start();
+        await vi.waitFor(() => expect(held.has(ME)).toBe(true));
+        userId.value = "someone-else";
+        await vi.waitFor(() => expect(held.has("someone-else")).toBe(true));
+        for (const recordName of answerOrder) {
+          held.get(recordName)!();
+          await flush();
+        }
+
+        await vi.waitFor(() => expect(notifications.isReady.value).toBe(true));
+        await flush();
+        expect(ids(notifications)).toEqual(["app-update:1.18.0"]);
+        expect(accounts.get(ME)!.dismissed).toEqual({
+          "app-update:1.18.0": atMs,
+        });
+        expect(accounts.get("someone-else")!.dismissed).toEqual({
+          "friend-request:theirs": atMs,
+        });
+        expect(
+          JSON.parse(localStorage.getItem(`sb-notifications:${ME}`) ?? "null")
+        ).toBeNull();
+      }
+    );
   });
 });

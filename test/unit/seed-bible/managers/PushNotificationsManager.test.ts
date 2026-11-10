@@ -895,6 +895,27 @@ describe("PushNotificationsManager", () => {
       );
       expect(storedDevice()).toMatchObject({ notifierUserId: NOTIFIER });
     });
+
+    it("stops for an account that signs out while re-registering, rather than carry on as the next one", async () => {
+      const subscription = pushWasOnFor(ME, {
+        registeredAtMs: START - DAY_MS,
+        notifierUserId: "old-notifier",
+      });
+      network.answers.registerPushSubscription = () => {
+        userId.value = OTHER_USER;
+        return { success: true };
+      };
+      const push = start();
+
+      await vi.waitFor(() =>
+        expect(subscription.unsubscribe).toHaveBeenCalled()
+      );
+      await expect(settled(push)).resolves.toBe("off");
+      // Granting would have asked CasualOS, with the new account's session,
+      // to change the previous account's permissions.
+      expect(network.procedures()).toEqual(["registerPushSubscription"]);
+      expect(storedDevice()).toBeNull();
+    });
   });
 
   describe("pushes arriving while the app is open", () => {
