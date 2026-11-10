@@ -62,3 +62,13 @@
   font-size: 1em;
   line-height: inherit;
 }
+
+/* A video step's player, across the page at a video's shape. Its iframe and
+   video only fill their box (see PlaylistLinkContent.css), which has no
+   height of its own here, so without one they shrink to the browser's
+   default 300×150. Narrowed on a short screen to stay in view whole. */
+.sb-playlist-step-page .sb-play-playlist-content-embed {
+  width: min(100%, calc(70vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  margin-inline: auto;
+}
