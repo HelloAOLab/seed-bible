@@ -139,9 +139,21 @@
   transition: border-color 0.15s ease;
 }
 
-/* Tapping a bookmark moves it, so hovering one previews that choice. */
-.sb-bookmark-picker-row:not(.sb-bookmark-picker-row-new):hover {
+/* Tapping a bookmark moves it, so hovering one previews that choice. Only the
+   bookmark itself: its options button doesn't move it. */
+.sb-bookmark-picker-row:has(> .sb-bookmark-picker-choice:hover) {
   border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-menu-anchor {
+  flex-shrink: 0;
+  margin-inline-end: 0.5rem;
+}
+
+/* The menu is portaled to <body>, so without this it opens under the modal
+   overlay (z-index 1000) it was opened from. */
+.sb-context-menu.sb-bookmark-picker-menu {
+  z-index: 1001;
 }
 
 .sb-bookmark-picker-hint {
@@ -260,8 +272,15 @@
   font-size: 0.75rem;
 }
 
+/* The edit modal: the form over its Cancel and Save. */
+.sb-bookmark-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
 .sb-bookmark-picker-actions,
-.sb-bookmarks-panel-edit-actions {
+.sb-bookmark-edit-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -269,7 +288,7 @@
 }
 
 .sb-bookmark-picker-save,
-.sb-bookmarks-panel-cancel {
+.sb-bookmark-edit-cancel {
   min-width: 5.25rem;
   height: 2.25rem;
   padding: 0 1rem;
@@ -294,18 +313,18 @@
   background: color-mix(in srgb, var(--sb-primary-color), #000 8%);
 }
 
-.sb-bookmarks-panel-cancel {
+.sb-bookmark-edit-cancel {
   background: transparent;
   color: var(--sb-font-color);
   border-color: color-mix(in srgb, var(--sb-font-color), transparent 75%);
 }
 
-.sb-bookmarks-panel-cancel:hover:not(:disabled) {
+.sb-bookmark-edit-cancel:hover:not(:disabled) {
   background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
 }
 
 .sb-bookmark-picker-save:disabled,
-.sb-bookmarks-panel-cancel:disabled {
+.sb-bookmark-edit-cancel:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -355,13 +374,4 @@
   font-size: 0.8125rem;
   text-align: start;
   cursor: pointer;
-}
-
-.sb-bookmarks-panel-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-  padding: 0.625rem;
-  border: 1px solid var(--sb-divider-color);
-  border-radius: 0.625rem;
 }

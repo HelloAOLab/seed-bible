@@ -142,7 +142,10 @@ interface MockPlaylistsResult {
   reorderEditingPlaylistItem: ReturnType<typeof vi.fn>;
 }
 
-function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
+function createMockPlaylists(
+  editing: Playlist | null,
+  onBack: (() => void) | null = null
+): MockPlaylistsResult {
   const editingPlaylist = signal(editing);
   const cancelEditingPlaylist = vi.fn();
   const saveEditingPlaylist = vi.fn().mockResolvedValue(undefined);
@@ -181,6 +184,7 @@ function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
   const isEditingPlaylistDirty = vi.fn(() => false);
   const playlists = {
     editingPlaylist,
+    editingPlaylistOnBack: signal(onBack),
     cancelEditingPlaylist,
     saveEditingPlaylist,
     isEditingPlaylistDirty,
@@ -914,6 +918,138 @@ describe("CreatePlaylistForm", () => {
     expect(modals.modals.value).toHaveLength(0);
     render(null, modalContainer);
     modalContainer.remove();
+  });
+
+  describe("when another screen opened the editor", () => {
+    let modalContainer: HTMLDivElement;
+
+    beforeEach(() => {
+      modalContainer = document.createElement("div");
+      document.body.appendChild(modalContainer);
+    });
+
+    afterEach(() => {
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
+
+    function leaveDirtyEditor(onBack: () => void, choice: string) {
+      const { playlists } = createMockPlaylists(
+        createPlaylist({ title: "Draft" }),
+        onBack
+      );
+      playlists.isEditingPlaylistDirty = vi.fn(() => true);
+      const modals = createModalManager();
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
+            playlists={playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+          />,
+          container
+        );
+      });
+      act(() => {
+        (
+          container.querySelector(
+            '.sb-discover-title-row button[aria-label="Back"]'
+          ) as HTMLButtonElement
+        ).click();
+      });
+      act(() => {
+        render(
+          modals.modals.value[0]!.content({
+            t: (key, options) => (options?.defaultValue as string) ?? key,
+          }),
+          modalContainer
+        );
+      });
+      act(() => {
+        (
+          Array.from(modalContainer.querySelectorAll("button")).find(
+            (button) => button.textContent === choice
+          ) as HTMLButtonElement
+        ).click();
+      });
+    }
+
+    it("returns there after discarding unsaved changes", () => {
+      const onBack = vi.fn();
+
+      leaveDirtyEditor(onBack, "Confirm");
+
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it("returns there once Save & exit has saved", async () => {
+      const onBack = vi.fn();
+
+      leaveDirtyEditor(onBack, "Save & exit");
+      await act(async () => {});
+
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it("stays put when the user goes back to editing", () => {
+      const onBack = vi.fn();
+
+      leaveDirtyEditor(onBack, "Go back");
+
+      expect(onBack).not.toHaveBeenCalled();
+    });
+
+    async function saveEditor(onBack: () => void, saveFails = false) {
+      const mock = createMockPlaylists(
+        createPlaylist({ title: "Draft" }),
+        onBack
+      );
+      if (saveFails) {
+        vi.spyOn(console, "error").mockImplementation(() => {});
+        mock.saveEditingPlaylist.mockRejectedValue(new Error("offline"));
+      }
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            chats={createMockChats().chats}
+            openChatPanel={vi.fn()}
+            onClose={vi.fn()}
+            playlists={mock.playlists}
+            tabs={createMockTabs()}
+            modals={createModalManager()}
+          />,
+          container
+        );
+      });
+      await act(async () => {
+        (
+          container.querySelector(
+            ".sb-settings-save-button"
+          ) as HTMLButtonElement
+        ).click();
+      });
+      return mock;
+    }
+
+    it("returns there once Save has saved", async () => {
+      const onBack = vi.fn();
+
+      const { saveEditingPlaylist } = await saveEditor(onBack);
+
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it("stays in the editor when Save fails", async () => {
+      const onBack = vi.fn();
+
+      await saveEditor(onBack, true);
+
+      expect(onBack).not.toHaveBeenCalled();
+    });
   });
 
   it("lists items using their resolved label and falls back to the raw book id", () => {

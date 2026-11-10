@@ -73,6 +73,11 @@ interface ReadingPlansPaneProps {
   ) => void;
   /** Shown after a plan share URL is copied. Optional — copy still works without it. */
   toast?: (message: string) => void;
+  /**
+   * Returns to the screen that opened the pane, when leaving a plan that screen
+   * opened directly. The same callback the header's back button gets.
+   */
+  onBack?: () => void;
 }
 
 type ReadingPlansView = "list" | "edit" | "detail";
@@ -261,6 +266,19 @@ function backToPlansList(readingPlans: ReadingPlansManager) {
 }
 
 /**
+ * Leaves a plan or the editor through `leave`, which shows the list. When
+ * another screen opened the pane straight onto that plan, the user never saw
+ * the list, so `onBack` then takes them back to that screen instead.
+ */
+function leavePlan(onBack: (() => void) | undefined, leave: () => void) {
+  const leavesPane = !!onBack && planBackLeavesPane.peek();
+  leave();
+  if (leavesPane) {
+    onBack();
+  }
+}
+
+/**
  * Icon shown in the pane header. Deliberately the same book glyph the plan
  * cards in the list use, so a plan looks like itself wherever it appears.
  */
@@ -322,11 +340,10 @@ export function ReadingPlansPaneLeading(props: {
       type="button"
       className="sb-pane-header-button sb-rp-pane-back"
       onClick={() => {
-        if (!onList) {
-          backToPlansList(readingPlans);
-        }
-        if (leavesPane) {
-          onBack();
+        if (onList) {
+          onBack?.();
+        } else {
+          leavePlan(onBack, () => backToPlansList(readingPlans));
         }
       }}
       aria-label={t("back", { defaultValue: "Back" })}
@@ -379,6 +396,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     onOpenScripture,
     onPlayReadings,
     toast,
+    onBack,
   } = props;
   // The view outlives this component, so closing the pane to go read and add a
   // passage brings the user back to the editor they were in, not to the list.
@@ -416,8 +434,8 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
         os={os}
         login={login}
         gallery={gallery}
-        onCancel={() => backToPlansList(readingPlans)}
-        onSaved={closeEditor}
+        onCancel={() => leavePlan(onBack, () => backToPlansList(readingPlans))}
+        onSaved={() => leavePlan(onBack, closeEditor)}
       />
     );
   }

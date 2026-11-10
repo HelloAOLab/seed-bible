@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Link para compartilhamento da tradução copiada",
   "less": "Menos",
   "swipe-up-more": "Deslize para cima para ver mais",
-  "plans": "Planos",
   "reading-plans": "Planos de leitura",
   "create-reading-plan": "Criar um plano de leitura",
   "reading-plans-empty": "Você ainda não tem nenhum plano de leitura. Crie um para começar.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Carregando traduções…",
   "translations-load-failed": "Não foi possível carregar a lista completa de traduções, portanto algumas podem estar faltando.",
   "verse-of-the-day": "VERSÍCULO DO DIA",
-  "verse-of-the-day-loading": "Carregando o versículo do dia…"
+  "verse-of-the-day-loading": "Carregando o versículo do dia…",
+  "delete-bookmark-confirm-title": "Excluir marcador?",
+  "delete-bookmark-confirm-message": "Apagar \" {{name}} \"?",
+  "scripture-font": "Fonte das Escrituras",
+  "ai-limits-title": "Antes de conversar com a IA",
+  "ai-limits-intro": "A IA pode ser um ponto de partida útil, mas tenha em mente suas limitações:",
+  "ai-limits-mistakes": "Comete erros e pode parecer confiante mesmo quando está errado.",
+  "ai-limits-agreeable": "Geralmente diz o que você quer ouvir e tende a dar respostas populares.",
+  "ai-limits-scripture": "Não é uma fonte confiável. Compare o que diz com as Escrituras.",
+  "ai-limits-study": "Estude a Bíblia por si mesmo e não deixe que a IA pense por você.",
+  "ai-limits-confirm": "Entendo que a IA pode cometer erros e não substitui o estudo da Bíblia por conta própria.",
+  "friends-playlists-filter": "Listas de reprodução de amigos",
+  "friend-link-social-title": "Adicione {{name}} como amigo",
+  "friend-link-meta-description": "{{name}} quer ser seu amigo(a) no {{brand}}",
+  "friend-link-title": "Adicione {{name}} como amigo(a) em {{brand}}"
 }

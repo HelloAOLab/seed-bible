@@ -147,50 +147,20 @@ describe("createTheographicClient", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  describe("a body past maxLength", () => {
+  it("fetches again a file an older version only noted as too large", async () => {
     const url = "https://raw.githubusercontent.com/o/r/main/Crete.geojson";
     const crete = { type: "FeatureCollection", features: ["x".repeat(500)] };
+    fetchMock.mockResolvedValue(ok(crete));
+    const store = createInMemoryTheographicStore();
+    // What the old map's size cap left behind: the fact, not the file.
+    await store.put(url, { outcome: "too-large", fetchedAtMs: Date.now() });
 
-    it("rejects as 'too large'", async () => {
-      fetchMock.mockResolvedValue(ok(crete));
-      const client = createTheographicClient(ENDPOINT, null);
+    await expect(
+      createTheographicClient(ENDPOINT, store).getResource(url)
+    ).resolves.toEqual(crete);
 
-      await expect(
-        rejection(client.getResource(url, { maxLength: 100 }))
-      ).resolves.toMatchObject({ reason: "too-large" });
-    });
-
-    it("is remembered as too large, without keeping the body", async () => {
-      fetchMock.mockResolvedValue(ok(crete));
-      const store = createInMemoryTheographicStore();
-
-      await rejection(
-        createTheographicClient(ENDPOINT, store).getResource(url, {
-          maxLength: 100,
-        })
-      );
-      const afterReload = createTheographicClient(ENDPOINT, store);
-      await expect(
-        rejection(afterReload.getResource(url, { maxLength: 100 }))
-      ).resolves.toMatchObject({ reason: "too-large" });
-
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(store.records.get(url)).not.toHaveProperty("value");
-    });
-
-    it("is fetched again for a caller that allows more", async () => {
-      fetchMock.mockResolvedValue(ok(crete));
-      const store = createInMemoryTheographicStore();
-
-      await rejection(
-        createTheographicClient(ENDPOINT, store).getResource(url, {
-          maxLength: 100,
-        })
-      );
-      await expect(
-        createTheographicClient(ENDPOINT, store).getResource(url)
-      ).resolves.toEqual(crete);
-    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(store.records.get(url)).toMatchObject({ value: crete });
   });
 
   describe("with a store", () => {

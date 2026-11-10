@@ -5,8 +5,6 @@ export interface PostHog {
   onFeatureFlags: (callback: (flags: string[]) => void) => void;
 }
 
-export const FEATURE_KEY_READING_PLANS = "reading-plans";
-
 export function createFeaturesManager(posthog: PostHog | null) {
   const flags = signal<string[]>([]);
   const signals = new Map<string, Signal<boolean>>();

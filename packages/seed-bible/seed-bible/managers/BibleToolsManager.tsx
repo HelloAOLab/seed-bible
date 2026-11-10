@@ -25,7 +25,7 @@ import { extractContentText } from "../managers/ChapterText";
 import type { NavigationManager } from "../managers/NavigationManager";
 import type { BibleDataManager, BookId } from "../managers/BibleDataManager";
 import { readInjectedConfig, type BrandingConfig } from "../app/appConfig";
-import type { PanePlacement, PanesManager } from "../managers/PanesManager";
+import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
   formatVerseSelection,
@@ -61,10 +61,7 @@ import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
 import type { UserGalleryManager } from "./UserGalleryManager";
 import { i18n, useI18n } from "../i18n";
-import {
-  FEATURE_KEY_READING_PLANS,
-  type FeaturesManager,
-} from "./FeaturesManager";
+import type { FeaturesManager } from "./FeaturesManager";
 import type { FriendsManager } from "./FriendsManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
@@ -1023,17 +1020,11 @@ export interface OpenReadingPlansPaneOptions {
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
-  /**
-   * Where the pane opens. Defaults to "side" — docked beside the reader. The
-   * Profile and "Your content" screens pass "fullscreen" so the pane replaces
-   * them rather than opening a panel behind them.
-   */
-  placement?: PanePlacement;
   toast?: (message: string) => void;
   /**
    * Returns to the screen that opened the pane, from the plans list or from a
    * plan that screen opened directly. Without it the list has no back button,
-   * which is right for a docked pane: the reader is still there beside it.
+   * which is right for a shared plan link: there's no screen to go back to.
    */
   onBack?: () => void;
 }
@@ -1041,9 +1032,10 @@ export interface OpenReadingPlansPaneOptions {
 export const READING_PLANS_PANE_ID = "reading-plans-pane";
 
 /**
- * Opens the reading plans pane. Shared by the Profile screen's plans card and
- * the "Your content" screen so both land on the same pane, with the same
- * chrome and the same scripture/playback wiring.
+ * Opens the reading plans pane. Shared by shared plan links and the Profile and
+ * Your content screens so they all land on the same pane, with the same chrome
+ * and the same scripture/playback wiring. It docks beside the reader, like the
+ * playlist editor, so a plan being built can take verses picked in the reader.
  */
 export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
   const {
@@ -1073,7 +1065,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
   forgetReadingPlansPaneOpener();
   panesManager.openPane({
     id: READING_PLANS_PANE_ID,
-    placement: options.placement ?? "side",
+    placement: "side",
 
     // The pane's own header carries the plans chrome: a back button when
     // the user has drilled into a plan or the create wizard (or came from
@@ -1121,6 +1113,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
           );
         }}
         toast={toast}
+        onBack={options.onBack}
       />
     ),
   });
@@ -1357,7 +1350,6 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       // how "Add to Playlist" follows `editingPlaylist`.
       isVisible: (context) =>
         !!context.readingPlans?.editingReadingPlan.value &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value &&
         context.readingState.selectedVerses.value.length > 0,
       onSelect: async (context) => {
         const readingPlans = context.readingPlans;
