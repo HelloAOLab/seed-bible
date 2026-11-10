@@ -59,10 +59,17 @@ pnpm run:ios
 
 `.github/workflows/native.yml` builds both apps. The full list of secrets is at the top of that file.
 
-**Pull requests that touch the apps, and every push to `develop`** get check builds, which need no secrets:
+**Pull requests that touch the apps** get check builds, which need no secrets:
 
 - Android: a debug APK that installs on any phone with "install unknown apps" allowed.
 - iOS: a Simulator build (`SeedBible-simulator.zip`). Unzip it and drag `App.app` onto a running Simulator. It can't go on a real iPhone, because that needs signing.
+
+**Every push to `develop`** gets the same iOS Simulator build, and a signed Android APK instead of the debug one. It's signed with the upload key, the same as the APKs from `main`, so:
+
+- testers can install each new one over the last without uninstalling, and keep their data;
+- seedbible.org links open in it once the upload key's fingerprint is in `ANDROID_CERT_FINGERPRINTS` (see [Links](#links)).
+
+It can't replace a copy installed from Google Play. With Play App Signing, Google re-signs store copies with its own key, and Android refuses an update signed with a different key. Testers who have the store version need to uninstall it first.
 
 **Every push to `main`, or a manual run with "release" ticked** (Actions → Native Apps → Run workflow) gets signed store builds:
 
@@ -74,7 +81,7 @@ Each platform needs its signing secrets for this:
 - **Android:** `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
 - **iOS:** `IOS_DISTRIBUTION_CERTIFICATE_BASE64`, `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD`, `IOS_PROVISIONING_PROFILE_BASE64`. The profile must be an App Store profile for `org.seedbible.app` with Associated Domains turned on.
 
-Until a platform's secrets are set, its release run makes a check build instead and shows a warning. The run still passes.
+Until a platform's secrets are set, its signed builds come out as check builds instead, with a warning. The run still passes.
 
 The builds are attached to the workflow run as artifacts; uploading them to the stores is still manual.
 

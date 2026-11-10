@@ -2,17 +2,20 @@
 #
 # Builds the Capacitor iOS and Android apps in `mobile/` (see mobile/README.md).
 #
-# Two kinds of build:
+# Three kinds of build:
 #
-# - Check builds (pull requests that touch the apps, every push to `develop`):
-#   an installable debug APK for Android, and an iOS Simulator build. Neither
-#   needs any signing secrets, so they also run on forks. They catch native
-#   project breakage and give testers something to install.
+# - Check builds (pull requests that touch the apps): an installable debug
+#   APK for Android, and an iOS Simulator build. Neither needs any signing
+#   secrets, so they also run on forks. They catch native project breakage.
+# - Signed test builds (every push to `develop`): a signed Android APK, which
+#   installs over a store install and can be shared with testers. iOS still
+#   makes a Simulator build here.
 # - Release builds (every push to `main`, or a manual run with "release"
 #   ticked): a signed Android App Bundle (.aab) and APK, and a signed iOS
 #   App Store .ipa, ready to upload to Google Play and App Store Connect.
-#   Each platform falls back to a check build, with a warning, if its signing
-#   secrets aren't configured yet.
+#
+# A signed build falls back to a check build, with a warning, if that
+# platform's signing secrets aren't configured yet.
 #
 # The web app is built once (`pnpm build:native`) and shared with both
 # platform jobs, so the expensive macOS runner only does the iOS part.
@@ -143,28 +146,36 @@ jobs:
         working-directory: mobile
         run: pnpm exec cap sync android
 
+      # release: signed App Bundle + APK (main, or a manual release run)
+      # signed:  signed APK only (develop; nothing from it goes to Play)
+      # debug:   unsigned debug APK (pull requests, or no keystore yet)
       - name: Decide build type
         id: mode
         env:
           RELEASE: ${{ needs.web.outputs.release }}
+          SIGNED_BRANCH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
           HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
         run: |
-          if [ "$RELEASE" = "true" ] && [ "$HAS_KEYSTORE" = "true" ]; then
-            echo "mode=release" >> "$GITHUB_OUTPUT"
+          if [ "$RELEASE" = "true" ]; then
+            WANTED=release
+          elif [ "$SIGNED_BRANCH" = "true" ]; then
+            WANTED=signed
           else
-            if [ "$RELEASE" = "true" ]; then
-              echo "::warning title=Android release skipped::ANDROID_KEYSTORE_BASE64 isn't set, so this is an unsigned debug build. See .github/workflows/native.yml."
-            fi
-            echo "mode=debug" >> "$GITHUB_OUTPUT"
+            WANTED=debug
           fi
+          if [ "$WANTED" != "debug" ] && [ "$HAS_KEYSTORE" != "true" ]; then
+            echo "::warning title=Android signing skipped::ANDROID_KEYSTORE_BASE64 isn't set, so this is an unsigned debug build. See .github/workflows/native.yml."
+            WANTED=debug
+          fi
+          echo "mode=$WANTED" >> "$GITHUB_OUTPUT"
 
       - name: Build debug APK
         if: steps.mode.outputs.mode == 'debug'
         working-directory: mobile/android
         run: ./gradlew assembleDebug -PversionCode="$BUILD_NUMBER" -PversionName="$VERSION"
 
-      - name: Build signed App Bundle and APK
-        if: steps.mode.outputs.mode == 'release'
+      - name: Build signed ${{ steps.mode.outputs.mode == 'release' && 'App Bundle and APK' || 'APK' }}
+        if: steps.mode.outputs.mode != 'debug'
         working-directory: mobile/android
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -174,7 +185,12 @@ jobs:
         run: |
           export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/upload.jks"
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
-          ./gradlew bundleRelease assembleRelease -PversionCode="$BUILD_NUMBER" -PversionName="$VERSION"
+          if [ "${{ steps.mode.outputs.mode }}" = "release" ]; then
+            TASKS="bundleRelease assembleRelease"
+          else
+            TASKS="assembleRelease"
+          fi
+          ./gradlew $TASKS -PversionCode="$BUILD_NUMBER" -PversionName="$VERSION"
           rm -f "$ANDROID_KEYSTORE_PATH"
 
       - uses: actions/upload-artifact@v7
