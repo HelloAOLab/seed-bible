@@ -34,6 +34,13 @@ NODE_ENV=production bun run server/dist/index.js
 | `GET /healthz`                                    | Liveness probe (returns `ok`).                    |
 | `POST /__invalidate?branch=<branch>`              | Drops the cached pointer + builds for one branch. |
 | `POST /__invalidate`                              | Drops every cached pointer.                       |
+| `GET /api/notifications/config`                   | Whether push is on, and the notifier account.     |
+| `POST /api/notifications/friend-request`          | Pushes a just-sent friend request to its target.  |
+
+The two `/api/notifications/*` routes are the push relay
+([notifications.ts](notifications.ts)); the dev server answers them too. What
+they take and answer is in
+[docs/notifications.md §7.2](../docs/notifications.md#72-how-a-push-travels).
 
 Hashed assets are **not** served here. Each deployment's chunks are namespaced
 per branch/build (`branches/<name>/<buildId>/assets/...`) and referenced at the
@@ -62,6 +69,21 @@ All configuration is via environment variables. Defaults are applied at startup.
 | `SSR_LOAD_FAILURE_TTL_MS` | `30000`   | How long a build that failed to load is remembered. Until then, requests for it fail fast instead of each starting a new worker. `POST /__invalidate` clears it. |
 | `INVALIDATION_SECRET`     | `""`      | Shared secret required in the `x-invalidation-secret` header on `POST /__invalidate`. **When empty the endpoint is unauthenticated.**                            |
 | `SHUTDOWN_GRACE_MS`       | `5000`    | How long to wait for in-flight requests on `SIGTERM`/`SIGINT` before flushing telemetry and exiting.                                                             |
+
+### Push notification relay
+
+Off until `NOTIFIER_SESSION_KEY` is set. Both modes read these.
+
+| Variable                    | Default                      | Description                                                                                                                                                         |
+| --------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NOTIFIER_SESSION_KEY`      | _(unset — relay off)_        | CasualOS session key of the account that sends pushes. Its user id is read from the key. A secret: keep it out of the repository. Once it expires the relay is off. |
+| `CASUALOS_AUTH_ENDPOINT`    | `https://auth.seedbible.org` | The CasualOS records server the relay calls.                                                                                                                        |
+| `NOTIFICATIONS_SITE_ORIGIN` | `https://seedbible.org`      | Where tapping a push goes (`<origin>/?notifications=open`), and the `Origin` sent to CasualOS, which must allow it. Must be the origin the service worker runs on.  |
+
+A value that can't be used turns the relay off with an error in the log; the
+startup line ends with `push relay: on` or `off`. What has to be set up on the
+CasualOS side first is in
+[docs/notifications.md §7.4](../docs/notifications.md#74-server-configuration).
 
 ### SSR workers
 
@@ -173,7 +195,8 @@ registered and no spans are allocated, so local development is unaffected.
 
 **Spans.** Each request produces a `SERVER` span named `<METHOD> <route>`, where
 the route is a bounded label (`/`, `/healthz`, `/__invalidate`, `/b/:branch`,
-`/b/:branch/:buildId`, `asset-proxy`). Nested under it, as applicable:
+`/b/:branch/:buildId`, `asset-proxy`, and the two `/api/notifications/*`
+paths). Nested under it, as applicable:
 `store.readPointer`, `store.fetchArtifacts`, `store.fetchHtml`, `build.import`
 (evaluating a branch's SSR bundle — the cold-start cost), `ssr.render`, and
 `asset.proxy`. Inside `ssr.render`, each thing the render waits on before it
