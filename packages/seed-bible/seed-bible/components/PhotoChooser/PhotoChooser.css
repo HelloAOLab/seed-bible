@@ -29,7 +29,7 @@
   width: 100%;
   padding: 0;
   border: 2px solid transparent;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   overflow: hidden;
   background: var(--sb-divider-color);
   cursor: pointer;

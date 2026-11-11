@@ -138,7 +138,7 @@
   align-items: center;
   background-color: var(--sb-background);
   color: var(--sb-reader-font-color);
-  border-radius: 4px;
+  border-radius: var(--sb-radius-xs);
   border: solid 1px var(--sb-divider-color);
   padding: 4px;
   gap: 4px;

@@ -12,7 +12,7 @@
 .sb-annotation-editor-offline-notice {
   margin: 0 0 8px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
   font-size: 0.8125rem;
@@ -42,7 +42,7 @@
   margin-bottom: 8px;
   padding: 0.5rem 0.625rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
 }
 
 .sb-annotation-verse-quote-reference {

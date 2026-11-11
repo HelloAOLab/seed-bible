@@ -163,7 +163,7 @@
   min-width: var(--sb-presence-avatar-size);
   height: var(--sb-presence-avatar-size);
   padding: 0 0.1875rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: color-mix(
     in srgb,
     var(--sb-font-color) 16%,
@@ -239,7 +239,7 @@
 
 .sb-offscreen-cues-stack::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--sb-font-color) 35%, transparent);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
 }
 
 .sb-offscreen-cues-stack::-webkit-scrollbar-track {
@@ -308,7 +308,7 @@
   /* The toolbar's own outline, which each theme sets so it shows against
      that theme's page (a light line in the dark theme). */
   border: var(--sb-reader-toolbar-border);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   box-shadow: 0 1px 2px #0000001f;
   font-family: var(--sb-font-family);
   font-size: 0.8125rem;
@@ -368,7 +368,7 @@
   padding-block: 0;
   padding-inline: 0.4375rem 0.25rem;
   border: var(--sb-reader-toolbar-border);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-reader-background, #fff);
   color: var(--sb-font-color);
   box-shadow: 0 1px 3px #0000002e;

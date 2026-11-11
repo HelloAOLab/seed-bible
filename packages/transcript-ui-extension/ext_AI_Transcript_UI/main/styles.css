@@ -79,7 +79,7 @@
 .ts_results {
   background: var(--sb-background);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   padding: 16px;
   margin-bottom: 16px;
 }
@@ -87,7 +87,7 @@
 /* Banners */
 .ts_banner {
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   margin-bottom: 16px;
 }
 .ts_banner--error {
@@ -148,7 +148,7 @@ input[type="range"] {
   background: var(--sb-menu-background);
   color: var(--sb-font-color);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   padding: 6px 8px;
   font-size: 0.9rem;
 }
@@ -157,7 +157,7 @@ input[type="range"] {
 /* Drag-and-drop file zone */
 .ts_dropzone {
   border: 2px dashed var(--sb-divider-color);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   padding: 40px 20px;
   text-align: center;
   cursor: pointer;
@@ -227,7 +227,7 @@ input[type="range"] {
   background: var(--sb-menu-background);
   color: var(--sb-font-color);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   padding: 8px 14px;
   font-size: 0.9rem;
   cursor: pointer;
@@ -271,7 +271,7 @@ input[type="range"] {
 .ts_progress {
   height: 6px;
   background: var(--sb-menu-background);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   overflow: hidden;
   margin-top: 10px;
 }
@@ -309,7 +309,7 @@ input[type="range"] {
 .ts_queue__item {
   background: var(--sb-menu-background);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   padding: 10px 12px;
 }
 .ts_queue__item--error {
@@ -361,7 +361,7 @@ input[type="range"] {
 .ts_result {
   background: var(--sb-menu-background);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   margin-bottom: 10px;
   overflow: hidden;
 }
@@ -409,7 +409,7 @@ input[type="range"] {
   padding: 6px 8px;
   background: var(--sb-background);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   font-size: 0.85rem;
 }
 .ts_refrow--inferred {
@@ -436,7 +436,7 @@ input[type="range"] {
 .ts_tag {
   font-size: 0.72rem;
   padding: 1px 7px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   border: 1px solid var(--sb-divider-color);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   text-transform: uppercase;
@@ -457,7 +457,7 @@ input[type="range"] {
   border: 1px solid var(--sb-primary-color);
   color: var(--sb-primary-color);
   padding: 1px 6px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   margin-left: 4px;
   height: fit-content;
   width: 100%;
@@ -477,7 +477,7 @@ input[type="range"] {
   display: flex;
   gap: 10px;
   padding: 6px 8px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   font-size: 0.88rem;
   cursor: pointer;
 }
@@ -516,7 +516,7 @@ input[type="range"] {
   width: 100%;
   margin: 12px 0;
   display: block;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
 }
 
 .ts_media--audio {
@@ -531,7 +531,7 @@ input[type="range"] {
   max-height: calc(100dvh - 320px);
   overflow-y: auto;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   padding: 6px;
   margin-top: 0;
 }

@@ -12,7 +12,7 @@
 
 .qr-container {
   box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
 }
 
 .twitchBtn {
@@ -66,7 +66,7 @@
 
 #clientId {
   height: 48px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   border: 1px solid var(--sb-reader-toolbar-border);
   padding: 8px;
   font-size: 14px;
@@ -109,7 +109,7 @@
   position: absolute;
   inset: 0;
   background: #ccc;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   transition: background 0.25s;
 }
 
@@ -171,7 +171,7 @@
 .session-btn {
   padding: 3px 6px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--sb-radius-xs);
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -217,7 +217,7 @@
   font-weight: normal;
   line-height: 1.4;
   text-align: left;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   z-index: 20;
   visibility: hidden;

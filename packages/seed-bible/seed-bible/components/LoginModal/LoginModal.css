@@ -177,7 +177,7 @@
 
 .sb-login-submit {
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.75rem 1rem;
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
@@ -202,7 +202,7 @@
 
 .sb-login-secondary {
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.625rem 1rem;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);

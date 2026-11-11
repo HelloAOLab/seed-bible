@@ -48,7 +48,7 @@
   gap: 4px;
   padding: 6px 10px;
   border: 1px solid var(--sb-primary-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-primary-color);
   font-size: 0.8125rem;
@@ -87,7 +87,7 @@
   gap: 2px;
   padding: 8px 10px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
 }
 
 .sb-discover-item--row {
@@ -113,7 +113,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
 }
 
 /* Briefly flashed on the group a clicked annotated verse number just jumped
@@ -145,7 +145,7 @@
   flex-direction: row;
   align-items: center;
   gap: 8px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   cursor: pointer;
 }
 
@@ -211,7 +211,7 @@
   padding: 4px;
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   cursor: pointer;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
@@ -242,7 +242,7 @@
   width: 100%;
   max-height: 160px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
 }
 
 /* Leading type icon in a row (e.g. playlist item type). */
@@ -266,7 +266,7 @@
   padding: 4px;
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   cursor: grab;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
   /* Stop the browser's own scroll gesture from stealing a vertical drag. */

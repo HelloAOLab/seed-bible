@@ -7,7 +7,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 94%);
   font-size: 0.9rem;
   line-height: 1.5;

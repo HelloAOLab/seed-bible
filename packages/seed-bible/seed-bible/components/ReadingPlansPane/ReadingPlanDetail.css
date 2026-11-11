@@ -13,7 +13,7 @@
      areas still span the pane and keep their scrollbar at its edge. */
   --rp-column-inset: max(0px, calc((100% - 42rem) / 2));
 
-  --rp-header-radius: 1rem;
+  --rp-header-radius: var(--sb-radius-xl);
 
   /* Lets the header below round its top corners only once the column is
      narrower than the pane, which a media query can't tell. */
@@ -84,7 +84,7 @@
 .sb-rpd-progress-bar {
   flex: 1;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--rp-border);
   overflow: hidden;
 }
@@ -95,7 +95,7 @@
 
 .sb-rpd-progress-bar-fill {
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--rp-accent);
   transition: width 0.3s ease;
 }
@@ -115,7 +115,7 @@
 
 .sb-rpd-chip {
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-reader-background, #fff);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -242,7 +242,7 @@
   flex: none;
   padding: 8px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: transparent;
   cursor: pointer;
 }
@@ -290,7 +290,7 @@
   min-width: 34px;
   padding: 5px 8px;
   border: 1px solid var(--rp-border);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: inherit;
   font-family: inherit;
@@ -346,7 +346,7 @@
   width: 100%;
   padding: 14px;
   border: 1px solid var(--rp-border);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: transparent;
   color: inherit;
   text-align: start;
@@ -396,7 +396,7 @@
 /* Reflect card */
 .sb-rpd-reflect {
   padding: 14px;
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: color-mix(in srgb, var(--sb-font-color) 5%, transparent);
 }
 

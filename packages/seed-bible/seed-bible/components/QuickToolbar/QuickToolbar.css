@@ -35,7 +35,7 @@
   height: 2.25rem;
   padding: 0;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   cursor: pointer;

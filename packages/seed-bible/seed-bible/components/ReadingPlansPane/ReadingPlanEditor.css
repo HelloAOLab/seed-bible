@@ -183,7 +183,7 @@
   width: 22px;
   height: 22px;
   border: 2px solid var(--rp-border);
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   color: var(--rp-accent-contrast);
 }
 
@@ -228,7 +228,7 @@
   gap: 8px;
   padding: 10px;
   border: 1px solid var(--rp-border);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
 }
 
 .sb-rp-session-selected {
@@ -264,7 +264,7 @@
   flex: none;
   width: 26px;
   height: 26px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--rp-accent) 18%, transparent);
   color: var(--rp-accent);
   font-size: 0.8125rem;
@@ -411,7 +411,7 @@
   flex: none;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--rp-accent) 10%, transparent);
   color: var(--rp-accent);
 }
@@ -467,7 +467,7 @@
   justify-content: center;
   padding: 6px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -537,7 +537,7 @@
 
 .sb-rp-button {
   padding: 11px 18px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   font-family: inherit;
   font-size: 0.9375rem;
   font-weight: 500;

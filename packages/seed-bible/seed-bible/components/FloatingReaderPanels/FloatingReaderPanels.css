@@ -81,7 +81,7 @@
   gap: 0.5rem;
   padding: 0.75rem 0.875rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-reader-background);
   color: inherit;
   cursor: pointer;
@@ -130,7 +130,7 @@
   justify-content: center;
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
   cursor: pointer;
   opacity: 0;
@@ -205,7 +205,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   animation: sb-floating-chat-panel-rise 0.18s ease-out;
 }
 
@@ -233,7 +233,7 @@
   width: 1.75rem;
   height: 1.75rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -275,7 +275,7 @@
   width: 1.75rem;
   height: 1.75rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -373,7 +373,7 @@
 .sb-floating-chat-members-avatar {
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   object-fit: cover;
   flex: 0 0 auto;
 }
@@ -424,7 +424,7 @@
 .sb-floating-chat-list-create-button {
   width: 2.125rem;
   height: 2.125rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
   background: var(--sb-primary-color);
   color: var(--sb-tertiary-color);
@@ -648,7 +648,7 @@
 .sb-floating-chat-list-item-unread {
   min-width: 1.25rem;
   height: 1.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;

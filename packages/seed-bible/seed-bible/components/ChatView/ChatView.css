@@ -72,7 +72,7 @@
   margin: 0;
   padding: 0.75rem 0.875rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
   color: var(--sb-font-color);
   text-align: start;
@@ -105,7 +105,7 @@
   margin: 0.25rem 0 0;
   padding: 0.625rem 0.875rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   font: inherit;
@@ -268,7 +268,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
   padding: 0.5rem 0.875rem;
   background: color-mix(
     in srgb,
@@ -284,7 +284,7 @@
 img.sb-chat-view-message-avatar {
   width: 1.875rem;
   height: 1.875rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   object-fit: cover;
   display: inline-flex;
   align-items: center;
@@ -409,7 +409,7 @@ img.sb-chat-view-message-avatar {
   bottom: calc(100% + 0.5rem);
   z-index: 20;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: color-mix(in srgb, var(--sb-background, #fff), transparent 1%);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
   overflow: hidden;
@@ -589,7 +589,7 @@ img.sb-chat-view-message-avatar {
   margin: 0.75rem 0.75rem 0;
   padding: 0.625rem 0.75rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
 }
 
@@ -608,7 +608,7 @@ img.sb-chat-view-message-avatar {
 .sb-chat-view-translation-banner-switch,
 .sb-chat-view-translation-banner-dismiss {
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 72%);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   padding: 0.3rem 0.7rem;
   background: transparent;
   color: var(--sb-font-color);

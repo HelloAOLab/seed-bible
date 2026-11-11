@@ -28,7 +28,7 @@
   position: relative;
   flex: 1 1 auto;
   height: 0.1875rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
   transition: height 0.15s ease;
 }

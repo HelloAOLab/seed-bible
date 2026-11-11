@@ -22,7 +22,7 @@
 
 .sb-grid-portal-pane-badge {
   padding: 0.25rem 0.625rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 45%);
   font-size: 0.75rem;
   letter-spacing: 0.08em;

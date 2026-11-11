@@ -3,7 +3,7 @@
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   margin-bottom: 0.75rem;
 }
 
@@ -40,7 +40,7 @@
 
 .sb-shared-page-modal-actions button {
   border: 1px solid var(--sb-primary-color);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.5rem 1rem;
   background: transparent;
   color: var(--sb-primary-color);

@@ -80,7 +80,7 @@
 
 .sb-theographic-verse-chip {
   padding: 1px 8px;
-  border-radius: 50px;
+  border-radius: var(--sb-radius-full);
   border: 1px solid
     color-mix(in srgb, var(--sb-secondary-color), transparent 55%);
   background: none;
@@ -116,7 +116,7 @@
 .sb-theographic-quote {
   margin: 0;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: var(--sb-reader-background);
   border: 1px solid var(--sb-divider-color);
   display: flex;
@@ -183,7 +183,7 @@
   isolation: isolate;
   height: 11rem;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   border: 1px solid var(--sb-divider-color);
 }
 

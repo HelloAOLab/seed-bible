@@ -56,7 +56,7 @@
 .sb-references-card-chevron:focus-visible {
   outline: 2px solid var(--sb-primary-color);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--sb-radius-xs);
 }
 
 .sb-references-card-count {
@@ -94,7 +94,7 @@
   padding: 1px 8px;
   border: 1px solid
     color-mix(in srgb, var(--sb-secondary-color), transparent 55%);
-  border-radius: 50px;
+  border-radius: var(--sb-radius-full);
   background: none;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
   font-family: inherit;
@@ -132,7 +132,7 @@
   margin: 4px 0 0;
   padding: 8px 10px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: var(--sb-reader-background);
 }
 

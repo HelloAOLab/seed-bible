@@ -16,7 +16,7 @@
   gap: 0.75rem;
   width: 100%;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.875rem 1rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
@@ -79,7 +79,7 @@
 
 .sb-photo-modal-button {
   border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.625rem 1.125rem;
   background: transparent;
   color: var(--sb-primary-color);

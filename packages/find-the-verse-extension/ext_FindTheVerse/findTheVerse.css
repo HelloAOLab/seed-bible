@@ -4,7 +4,7 @@
 
 .ftv-btn {
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   border: none;
   cursor: pointer;
   font-size: 0.9rem;
@@ -107,7 +107,7 @@
 
 .ftv-saved-card {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-tertiary-color, #f0f0f0);
   display: flex;
   gap: 10px;
@@ -137,7 +137,7 @@
 
 .ftv-saved-action {
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   border: none;
   cursor: pointer;
   font-size: 0.85rem;
@@ -199,7 +199,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));
   background: var(--sb-background, #fff);
   color: var(--sb-font-color, #333);
@@ -213,7 +213,7 @@
 .ftv-verse-preview {
   margin-bottom: 8px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-tertiary-color, #f0f0f0);
   font-size: 0.9rem;
 }
@@ -237,7 +237,7 @@
 
 .ftv-selecting-banner {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-primary-color, #e07b4c);
   color: var(--sb-primary-font-color, #fff);
   font-size: 0.9rem;
@@ -336,7 +336,7 @@
 }
 
 .ftv-field--error {
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   outline: 2px solid var(--sb-error-color, #d64545);
   outline-offset: 4px;
 }
@@ -344,7 +344,7 @@
 .ftv-field-error {
   margin: 8px 0 0;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-background, #fff);
   color: var(--sb-error-color, #d64545);
   border: 1px solid var(--sb-error-color, #d64545);
@@ -386,7 +386,7 @@
 .ftv-pill {
   display: inline-block;
   padding: 2px 10px;
-  border-radius: 99px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-primary-color, #e07b4c);
   color: var(--sb-primary-font-color, #fff);
   font-size: 0.8rem;
@@ -399,7 +399,7 @@
 
 .ftv-card {
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-tertiary-color, #f0f0f0);
 }
 
@@ -491,7 +491,7 @@
 .ftv-hint-button {
   width: 1.6rem;
   height: 1.6rem;
-  border-radius: 99px;
+  border-radius: var(--sb-radius-full);
   border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));
   background: var(--sb-tertiary-color, #f0f0f0);
   color: var(--sb-font-color, #333);
@@ -556,7 +556,7 @@
 .ftv-bar-button {
   flex-shrink: 0;
   padding: 8px 14px;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   border: 1px solid
     color-mix(in srgb, var(--sb-font-color, #333) 16%, transparent);
   background: var(--sb-secondary-color, #f3f3f3);

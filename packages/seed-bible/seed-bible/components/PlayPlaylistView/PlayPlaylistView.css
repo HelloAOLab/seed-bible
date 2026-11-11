@@ -59,7 +59,7 @@
 }
 
 .sb-play-playlist-item--current {
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
 }
 
@@ -76,7 +76,7 @@
   margin-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   padding: 12px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-background);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
@@ -105,7 +105,7 @@
   height: 40px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;

@@ -122,7 +122,7 @@
   min-width: 1rem;
   height: 1rem;
   padding: 0 0.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -282,7 +282,7 @@
   background: transparent;
   text-align: start;
   padding: 0.5rem 0.625rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -372,7 +372,7 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
 }
 
 .sb-reader-floating-nav-play:disabled {
@@ -409,7 +409,7 @@
   min-width: 0;
   min-height: 2.875rem;
   border: 1px solid var(--sb-reader-floating-nav-group-border);
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-reader-floating-nav-group-background);
   user-select: none;
   overflow: hidden;
@@ -452,7 +452,7 @@
   width: 2.125rem;
   height: 2.125rem;
   transform: translate(-50%, -50%);
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   transition: background-color 0.12s ease;
   z-index: 0;
 }
@@ -623,7 +623,7 @@
   min-width: 1rem;
   height: 1rem;
   padding: 0 0.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -712,7 +712,7 @@
     height: auto;
     background: transparent;
     color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-    border-radius: 0.5rem;
+    border-radius: var(--sb-radius-md);
     transition: color 0.15s ease;
   }
 
@@ -976,7 +976,7 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
   cursor: pointer;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1083,7 +1083,7 @@
   font-weight: 400;
   font-size: 0.6875rem;
   line-height: 1;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   transition: background-color 0.15s ease;
 }
 
@@ -1176,7 +1176,7 @@
 .sb-verse-toolbar-handle-area:focus-visible {
   outline: 2px solid var(--sb-primary-color);
   outline-offset: 2px;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
 }
 
 /* The overflow row of actions, revealed by dragging the handle up. Its height is
@@ -1335,7 +1335,7 @@
 .sb-verse-toolbar-handle {
   width: 2.25rem;
   height: 0.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
   margin: 0 auto;
   flex: none;
@@ -1461,7 +1461,7 @@
   min-width: 0;
   justify-content: flex-start;
   padding: 0.375rem 0.5rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
   overflow-x: auto;
   overflow-y: hidden;
@@ -1610,7 +1610,7 @@
   flex: none;
   padding: 0.125rem 0.375rem;
   margin-right: 0.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 

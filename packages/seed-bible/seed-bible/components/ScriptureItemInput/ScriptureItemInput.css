@@ -7,7 +7,7 @@
   margin: 0 0 8px;
   padding: 6px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   max-height: min(18rem, 45vh);
@@ -45,7 +45,7 @@
   min-height: 2rem;
   padding: 0.25rem 0.5rem;
   border: 2px solid transparent;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
   color: var(--sb-font-color);
   font: inherit;

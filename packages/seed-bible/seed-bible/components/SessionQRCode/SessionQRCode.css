@@ -68,7 +68,7 @@
   right: 0.25rem;
   bottom: 0.25rem;
   padding: 0.125rem;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
   background: rgba(255, 255, 255, 0.9);
   color: #000000;
   font-size: 0.875rem;
@@ -190,7 +190,7 @@
   gap: 0.375rem;
   margin-top: 0.25rem;
   padding: 0.375rem 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
   background: var(--sb-background);
   color: var(--sb-font-color);

@@ -12,7 +12,7 @@
 
 .qr-container {
   box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
 }
 
 .twitchBtn {
@@ -115,7 +115,7 @@
   padding: 6px 12px;
   max-width: 90%;
   box-sizing: border-box;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-secondary-color, #e6e6e6);
   color: var(--sb-secondary-font-color, #333);
   font-size: 13px;
@@ -173,7 +173,7 @@
 
 #clientId {
   height: 48px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   border: var(--sb-reader-toolbar-border);
   padding: 8px;
   font-size: 14px;
@@ -216,7 +216,7 @@
   position: absolute;
   inset: 0;
   background: #ccc;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   transition: background 0.25s;
 }
 
@@ -276,7 +276,7 @@
   font-weight: normal;
   line-height: 1.4;
   text-align: left;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   z-index: 20;
   visibility: hidden;

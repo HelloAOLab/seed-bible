@@ -21,7 +21,7 @@
   display: block;
   width: 40%;
   height: 12px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: var(--sb-divider-color);
   animation: sb-playlist-add-editor-pulse 1.2s ease-in-out infinite;
 }

@@ -164,7 +164,7 @@
    avatar on the end side. */
 .sb-sidebar-collapse-button {
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -180,7 +180,7 @@
    "more" button. */
 .sb-sidebar-top-actions .sb-sidebar-top-icon-button {
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -223,7 +223,7 @@
   cursor: pointer;
   width: 2rem;
   height: 2rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -276,7 +276,7 @@
   height: 1.75rem;
   margin-inline-start: 0.125rem;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
   cursor: pointer;
@@ -331,7 +331,7 @@
   display: flex;
   align-items: center;
   padding-inline-end: calc(0.375rem + 1px);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   transition: background-color 0.15s ease;
 }
 
@@ -397,7 +397,7 @@
   color: inherit;
   background: transparent;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.125rem 0.375rem;
   outline: none;
 }
@@ -418,7 +418,7 @@
   width: 1.75rem;
   height: 1.75rem;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
   cursor: pointer;
@@ -446,7 +446,7 @@
   display: flex;
   align-items: center;
   padding-inline-end: calc(0.375rem + 1px);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
 }
 
 .sb-save-item:hover {
@@ -635,7 +635,7 @@
   margin-right: auto;
   height: 2.25rem;
   padding: 0 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   font: inherit;
   font-size: 0.875rem;
   font-weight: 500;
@@ -661,7 +661,7 @@
   min-width: 5.25rem;
   height: 2.25rem;
   padding: 0 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   font: inherit;
   font-size: 0.875rem;
   font-weight: 500;
@@ -693,7 +693,7 @@
   min-width: 5.25rem;
   height: 2.25rem;
   padding: 0 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   font: inherit;
   font-size: 0.875rem;
   font-weight: 500;
@@ -754,7 +754,7 @@
   min-height: 2.75rem;
   flex-shrink: 0;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-tab-background);
   color: var(--sb-tab-font-color);
   cursor: pointer;
@@ -802,7 +802,7 @@
 .sb-collapsed-tab-presence-dot {
   width: 0.3125rem;
   height: 0.3125rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   box-sizing: border-box;
 }
 
@@ -913,7 +913,7 @@
 
   padding-block: 0.5rem;
   padding-inline: 0.75rem 0.375rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   border: 1px solid transparent;
   background: var(--sb-tab-background);
   color: var(--sb-tab-font-color);
@@ -1101,7 +1101,7 @@
 .sb-session-settings-note {
   margin: 0;
   padding: 0.625rem 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
@@ -1124,7 +1124,7 @@
   -webkit-appearance: none;
   width: 2.75rem;
   height: 1.5rem;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background-color: color-mix(in srgb, var(--sb-font-color), transparent 78%);
   position: relative;
   cursor: pointer;
@@ -1184,7 +1184,7 @@
   min-width: 3rem;
   padding: 0.5rem 0.875rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
@@ -1227,7 +1227,7 @@
 .sb-session-settings-end {
   border: none;
   padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   font-size: 0.8125rem;
   font-weight: 500;
   font-family: inherit;
@@ -1302,7 +1302,7 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 34%);
   width: 2rem;
   height: 2rem;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1389,7 +1389,7 @@
   background: transparent;
   color: var(--sb-font-color);
   padding: 0.625rem 0.875rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   font-size: 0.8125rem;
   font-family: inherit;
   text-align: left;
@@ -1407,7 +1407,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1447,7 +1447,7 @@
    targets. */
 .sb-collapsed-tab-add-button {
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   width: 100%;
   height: 2.25rem;
   flex-shrink: 0;
@@ -1473,7 +1473,7 @@
 .sb-tab-pane-count {
   min-width: 1.25rem;
   height: 1.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-primary-color), white 25%);
   display: inline-flex;
   align-items: center;
@@ -1488,7 +1488,7 @@
   min-width: 13.125rem;
   padding: 0.375rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   box-shadow: 0 10px 30px #00000014;
@@ -1506,7 +1506,7 @@
 
 .sb-sidebar-icon-button {
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -1559,7 +1559,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
 }
 
 @media (max-width: 480px) {
@@ -1794,7 +1794,7 @@
     color: var(--sb-font-color);
     cursor: pointer;
     /* Rounded square, like the desktop sidebar's header buttons. */
-    border-radius: 0.5rem;
+    border-radius: var(--sb-radius-md);
   }
 
   .sb-mobile-screen-header-button:hover {

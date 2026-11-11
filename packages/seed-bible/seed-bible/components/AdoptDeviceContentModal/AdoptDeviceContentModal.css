@@ -8,7 +8,7 @@
 
 .sb-adopt-device-content-actions button {
   border: 1px solid var(--sb-primary-color);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.5rem 1rem;
   background: transparent;
   color: var(--sb-primary-color);

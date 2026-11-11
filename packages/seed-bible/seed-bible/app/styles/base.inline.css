@@ -46,6 +46,16 @@
   --sb-ui-scale: 1;
   --sb-scripture-margin: 27%;
 
+  /* Shared corner scale. Mirrored in `sharedTokens.ts`, which hands the same
+     values to sandboxed extension frames (they don't load this file). `full`
+     stays px: it only has to exceed half of any pill's height. */
+  --sb-radius-xs: 0.25rem;
+  --sb-radius-sm: 0.375rem;
+  --sb-radius-md: 0.5rem;
+  --sb-radius-lg: 0.75rem;
+  --sb-radius-xl: 1rem;
+  --sb-radius-full: 999px;
+
   /* Matches DEFAULT_SCRIPTURE_WIDTH in SettingsManager; the runtime value only
      replaces it when the reader has chosen a different width. */
   --sb-scripture-width: 68ch;
@@ -160,7 +170,7 @@
 
   --sb-reader-toolbar-button-height: 3.25rem;
   --sb-reader-toolbar-button-padding: 0.375rem 0.625rem;
-  --sb-reader-toolbar-button-border-radius: 0.75rem;
+  --sb-reader-toolbar-button-border-radius: var(--sb-radius-lg);
   --sb-reader-toolbar-button-icon-size: 1.5rem;
   --sb-reader-toolbar-button-label-font-family: system-ui, sans-serif;
   --sb-reader-toolbar-button-label-font-size: 0.6875rem;
@@ -174,7 +184,7 @@
   --sb-reader-toolbar-floating-button-width: 3rem;
   --sb-reader-toolbar-floating-button-height: 3rem;
   --sb-reader-toolbar-floating-button-border: 1px solid #00000024;
-  --sb-reader-toolbar-floating-button-border-radius: 62.4375rem;
+  --sb-reader-toolbar-floating-button-border-radius: var(--sb-radius-full);
   --sb-reader-toolbar-floating-button-background: #fff;
   --sb-reader-toolbar-floating-button-font-color: #333;
   --sb-reader-toolbar-floating-button-box-shadow: 0 10px 24px #0000001a;
@@ -530,7 +540,7 @@ a:visited {
   overflow: hidden;
   background: var(--sb-sidebar-background);
   scrollbar-width: none;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   display: flex;
   justify-content: center;
   align-items: center;

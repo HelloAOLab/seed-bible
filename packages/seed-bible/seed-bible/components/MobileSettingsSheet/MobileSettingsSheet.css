@@ -14,8 +14,8 @@
   z-index: 9999;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  border-top-left-radius: 1rem;
-  border-top-right-radius: 1rem;
+  border-top-left-radius: var(--sb-radius-xl);
+  border-top-right-radius: var(--sb-radius-xl);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
   padding: 1rem;
   /* Cap to the viewport; the header stays pinned and .sb-mobile-settings-sheet-body
@@ -92,7 +92,7 @@
 .sb-mobile-settings-sheet-size-button {
   flex: 1;
   height: 3rem;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
   background: var(--sb-reader-background);
   color: inherit;
@@ -119,7 +119,7 @@
 .sb-mobile-settings-sheet-scripture-button {
   flex: 1;
   height: 3rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
   background: var(--sb-reader-background);
   color: inherit;

@@ -39,7 +39,7 @@
   padding: 1.125rem 1.25rem 1.25rem;
   background: var(--sb-reader-toolbar-background);
   color: var(--sb-reader-toolbar-font-color);
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
   border: 1px solid var(--sb-divider-color);
 
   width: 100%;
@@ -120,7 +120,7 @@
 
 .sb-selector-close-button {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.25rem 0.5rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -149,7 +149,7 @@
 
 .sb-selector-pane-chip {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   padding: 0.25rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -173,7 +173,7 @@
 .sb-selector-translation-select {
   min-width: 6rem;
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.375rem 0.5rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -182,7 +182,7 @@
 .sb-selector-search-input {
   flex: 1;
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.375rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -190,7 +190,7 @@
 
 .sb-selector-all-books {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.375rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -506,7 +506,7 @@
   gap: 0.5rem;
   margin: 0 0.3125rem 0.5rem;
   padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
   color: var(--sb-font-color);
   font-family: system-ui, sans-serif;
@@ -765,7 +765,7 @@
   margin-top: 0.75rem;
   padding: 0.5625rem 1.125rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: none;
   color: var(--sb-font-color);
   font-family: inherit;
@@ -777,7 +777,7 @@
   height: 2.75rem;
   width: 12.5rem;
   max-width: 100%;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   cursor: pointer;
   transition:
     background-color 0.2s ease,
@@ -820,7 +820,7 @@
 
 .sidebar-selected-itm {
   color: var(--sb-primary-color);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   border-bottom-color: transparent;
   background-color: color-mix(
     in srgb,
@@ -880,7 +880,7 @@
 .modal {
   width: 23.4375rem;
   background: var(--sb-reader-toolbar-background);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   box-shadow: 0 10px 20px var(--sb-detached-pane-toolbar-background);
   padding: 0.625rem 0.625rem 2.8125rem 0.625rem;
   z-index: 2;
@@ -1100,7 +1100,7 @@
   height: fit-content;
   z-index: 1001;
   padding: 0.9375rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   color: var(--sb-font-color);
   font-family: "Satoshi", system-ui, sans-serif;
 }
@@ -1128,7 +1128,7 @@
 .sb-offline-delete-confirm {
   border: none;
   padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   font-size: 0.8125rem;
   font-weight: 500;
   font-family: inherit;
@@ -1386,7 +1386,7 @@
     left: 50%;
     width: calc(100% - 2.5rem);
     height: fit-content;
-    border-radius: 0.5rem;
+    border-radius: var(--sb-radius-md);
     box-shadow: 0 5px 10px
       color-mix(
         in srgb,

@@ -87,7 +87,7 @@
   min-width: 0;
   padding: 0.85rem 0.25rem;
   border: 1.5px solid var(--sb-divider-color, #e5e7eb);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-reader-background, #ffffff);
   color: var(--sb-font-color, #1f2937);
   font: inherit;
@@ -115,7 +115,7 @@
   left: 50%;
   transform: translateX(-50%);
   padding: 0.15rem 0.45rem;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-primary-color, #e8623a);
   color: var(--sb-primary-font-color, #ffffff);
   font-size: 0.55rem;
@@ -131,7 +131,7 @@
   margin-top: 1.4rem;
   padding: 0.9rem 1rem;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-primary-color, #e8623a);
   color: var(--sb-primary-font-color, #ffffff);
   font: inherit;

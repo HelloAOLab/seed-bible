@@ -61,7 +61,7 @@ import { SearchBar as SearchField } from "../SearchBar/SearchBar";
 const SPOTLIGHT_STYLE = {
   position: "relative",
   zIndex: 2,
-  borderRadius: "0.5rem",
+  borderRadius: "var(--sb-radius-md)",
   boxShadow: "0 0 0 9999px rgba(0,0,0,0.6)",
 } as const;
 

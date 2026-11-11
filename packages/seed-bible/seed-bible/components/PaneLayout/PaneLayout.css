@@ -115,7 +115,7 @@
   background: var(--sb-reader-background);
   overflow: hidden;
   scrollbar-width: none;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
 }
 
 .sb-pane-resize-handle {
@@ -179,7 +179,7 @@
 @media (min-width: 481px) {
   .sb-app-root:not(.sb-embed-minimal)
     .sb-pane-shell:not(.sb-pane-shell-detached) {
-    border-radius: 0.75rem;
+    border-radius: var(--sb-radius-lg);
     margin: 0.75rem 0rem;
   }
 }
@@ -318,7 +318,7 @@
   background: var(--sb-empty-pane-toolbar-button-background);
   color: var(--sb-empty-pane-toolbar-button-color);
 
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   padding: 1.25rem 1.75rem;
 
   cursor: pointer;
@@ -460,7 +460,7 @@
   display: grid;
   gap: 0.25rem;
   height: 4rem;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   overflow: hidden;
   background: transparent;
   padding: 0;
@@ -519,7 +519,7 @@
   color: var(--sb-primary-font-color);
   font-size: 0.75rem;
   font-weight: 500;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
   transition: background-color 0.2s ease;
 }
 

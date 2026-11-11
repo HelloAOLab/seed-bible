@@ -5,7 +5,7 @@
  */
 .sb-content-screen {
   --sb-content-padding: 16px;
-  --sb-content-radius: 12px;
+  --sb-content-radius: var(--sb-radius-lg);
 
   --sb-content-surface: color-mix(
     in srgb,
@@ -66,7 +66,7 @@
   height: auto;
   padding: 7px 16px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-primary-color);
   color: var(--sb-background);
   font-family: inherit;
@@ -125,7 +125,7 @@
   flex-shrink: 0;
   padding: 7px 16px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-content-surface-strong);
   color: var(--sb-font-color);
   font-family: inherit;
@@ -286,7 +286,7 @@
 .sb-content-annotation-body video {
   max-width: 100%;
   height: auto;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
 }
 
 /* -------------------------------------------------------------- highlights */
@@ -357,7 +357,7 @@
   display: flex;
   min-width: 0;
   align-items: center;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-content-surface);
 }
 
@@ -381,7 +381,7 @@
   padding: 9px 12px;
   text-align: start;
   border: none;
-  border-radius: 8px 0 0 8px;
+  border-radius: var(--sb-radius-md) 0 0 var(--sb-radius-md);
   background: transparent;
   font-family: inherit;
   color: inherit;
@@ -416,7 +416,7 @@
   justify-content: center;
   padding: 9px 8px 9px 0;
   border: none;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 var(--sb-radius-md) var(--sb-radius-md) 0;
   background: transparent;
   color: var(--sb-content-muted);
   cursor: pointer;
@@ -506,7 +506,7 @@
   margin-top: 12px;
   padding: 9px 18px;
   border: 1px solid var(--sb-content-rule);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: none;
   color: var(--sb-font-color);
   font-family: inherit;
@@ -536,7 +536,7 @@
   aspect-ratio: 1;
   padding: 0;
   border: 1px solid var(--sb-content-rule);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   overflow: hidden;
   background: var(--sb-content-surface);
   cursor: pointer;
@@ -622,7 +622,7 @@
   max-width: 100%;
   max-height: 60vh;
   margin: 0 auto;
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   object-fit: contain;
 }
 
@@ -631,7 +631,7 @@
   width: 96px;
   height: 96px;
   margin: 0 auto 12px;
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   object-fit: cover;
 }
 
