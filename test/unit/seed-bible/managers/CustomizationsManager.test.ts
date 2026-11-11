@@ -3493,6 +3493,88 @@ describe("CustomizationsManager", () => {
       );
     });
 
+    it("removeEditingVariant() moves a removed fallback default with none of its kind left to the other kind's default", async () => {
+      listRecords(
+        makeRecord(
+          "customization_last_light",
+          [
+            ["day", "light"],
+            ["night", "dark"],
+            ["midnight", "dark"],
+          ],
+          {
+            defaultVariantId: "day",
+            defaultLightVariantId: "day",
+            defaultDarkVariantId: "midnight",
+          }
+        )
+      );
+      const { manager } = createManager();
+      await manager.load();
+      manager.startEditing("customization_last_light");
+
+      manager.removeEditingVariant("day");
+
+      const draft = manager.editingCustomization.value!;
+      expect(draft.defaultVariantId).toBe("midnight");
+      settings.setThemeId("light");
+      expect(manager.getPreviewVariant(draft)?.id).toBe("midnight");
+    });
+
+    it("applyPresetToEditingVariant() moves the fallback default to its new kind's default when its base changes", async () => {
+      listRecords(
+        makeRecord(
+          "customization_switch_kind",
+          [
+            ["day", "light"],
+            ["sunrise", "light"],
+            ["midnight", "dark"],
+          ],
+          {
+            defaultVariantId: "day",
+            defaultLightVariantId: "day",
+            defaultDarkVariantId: "midnight",
+          }
+        )
+      );
+      const { manager } = createManager();
+      await manager.load();
+      manager.startEditing("customization_switch_kind");
+
+      manager.applyPresetToEditingVariant("day", "dark");
+
+      expect(manager.editingCustomization.value).toMatchObject({
+        defaultVariantId: "midnight",
+        defaultLightVariantId: "sunrise",
+        defaultDarkVariantId: "midnight",
+      });
+    });
+
+    it("moves a loaded record's fallback default to the default of its kind when the two disagree", async () => {
+      listRecords(
+        makeRecord(
+          "customization_out_of_step",
+          [
+            ["dusk", "light"],
+            ["night", "dark"],
+            ["midnight", "dark"],
+          ],
+          {
+            defaultVariantId: "night",
+            defaultLightVariantId: "dusk",
+            defaultDarkVariantId: "midnight",
+          }
+        )
+      );
+      const { manager } = createManager();
+
+      await manager.load();
+
+      expect(manager.customizations.value[0]?.defaultVariantId).toBe(
+        "midnight"
+      );
+    });
+
     it("shows the fallback default, not the first variant based on it, to a viewer on a brand app theme", async () => {
       getDataMock.mockResolvedValue({ success: true, data: whiteLabelRecord });
       const { manager } = createManager();

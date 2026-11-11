@@ -380,20 +380,36 @@ function fillSchemeDefaults<
     defaultDarkVariantId?: string;
   },
 >(customization: T): T {
+  const defaultLightVariantId = pickSchemeDefault(
+    customization.variants,
+    LIGHT_THEME.id,
+    customization.defaultLightVariantId,
+    customization.defaultVariantId
+  );
+  const defaultDarkVariantId = pickSchemeDefault(
+    customization.variants,
+    DARK_THEME.id,
+    customization.defaultDarkVariantId,
+    customization.defaultVariantId
+  );
+  const fallback = customization.variants.find(
+    (v) => v.id === customization.defaultVariantId
+  );
+  const fallbackOfItsKind =
+    fallback?.baseTheme === LIGHT_THEME.id
+      ? defaultLightVariantId
+      : fallback?.baseTheme === DARK_THEME.id
+        ? defaultDarkVariantId
+        : fallback?.id;
   return {
     ...customization,
-    defaultLightVariantId: pickSchemeDefault(
-      customization.variants,
-      LIGHT_THEME.id,
-      customization.defaultLightVariantId,
-      customization.defaultVariantId
-    ),
-    defaultDarkVariantId: pickSchemeDefault(
-      customization.variants,
-      DARK_THEME.id,
-      customization.defaultDarkVariantId,
-      customization.defaultVariantId
-    ),
+    defaultLightVariantId,
+    defaultDarkVariantId,
+    defaultVariantId:
+      fallbackOfItsKind ??
+      defaultLightVariantId ??
+      defaultDarkVariantId ??
+      customization.variants[0]!.id,
   };
 }
 
