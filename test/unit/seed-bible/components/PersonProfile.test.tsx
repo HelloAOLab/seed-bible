@@ -597,7 +597,9 @@ describe("person profile card", () => {
         }),
         participantPositions: signal(new Map()),
         comeBackRequests: signal(new Map()),
+        comeBackCooldownRemainingMs: () => 0,
         isAwayFromGroup: signal(false),
+        participantsAwayFromGroup: signal(new Set()),
       }) as unknown as BibleReadingSession;
 
     const nameButton = (root: ParentNode, name: string) =>

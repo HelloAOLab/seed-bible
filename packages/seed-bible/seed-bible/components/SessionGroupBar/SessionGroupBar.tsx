@@ -1,12 +1,7 @@
 import "./SessionGroupBar.css";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
-import {
-  Avatar,
-  getUserDisplayName,
-  getUserSessionRole,
-  sessionRoleRank,
-} from "../Avatar/Avatar";
+import { Avatar, getUserDisplayName, sortUsersByRole } from "../Avatar/Avatar";
 import { MaterialIcon } from "../icons";
 
 /** How many of the people leading the group are shown beside the label. */
@@ -36,21 +31,15 @@ export function SessionGroupBar({
 
   const group = session.groupPosition.value;
   const passage = `${resolveBookName(group.bookId)} ${group.chapterNumber}`;
-  const options = session.options.value;
-
-  const leaders = session.connectedUsers.value
-    .filter(
+  const leaders = sortUsersByRole(
+    session.connectedUsers.value.filter(
       (user) =>
         !user.isSelf &&
         (session.userCanNavigate(user.connectionId) ||
           (user.userId !== null && session.userCanNavigate(user.userId)))
-    )
-    .sort(
-      (a, b) =>
-        sessionRoleRank(getUserSessionRole(options, a)) -
-        sessionRoleRank(getUserSessionRole(options, b))
-    )
-    .slice(0, MAX_LEADER_AVATARS);
+    ),
+    session.options.value
+  ).slice(0, MAX_LEADER_AVATARS);
 
   const rejoinIcon = (
     <MaterialIcon

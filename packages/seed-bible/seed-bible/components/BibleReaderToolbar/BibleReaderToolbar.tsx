@@ -3060,6 +3060,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               // can be scrubbed; paused, it shrinks to a ring around the play
               // button so the pill area goes back to plain navigation.
               const isScrubbing = !!playback?.isPlaying.value;
+              // A host asking this reader to come back can't wait for the
+              // playlist to finish, so it takes the note sheet's place.
+              const showsGroupBar =
+                !!sessionState.value &&
+                (!playing ||
+                  !!sessionState.value.incomingComeBackRequest.value);
 
               return (
                 <div
@@ -3071,7 +3077,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     defaultValue: "Chapter navigation",
                   })}
                 >
-                  {playing && (
+                  {playing && !showsGroupBar && (
                     <ScriptureNoteSheet
                       playing={playing}
                       resolveBookName={resolveBookName}
@@ -3079,7 +3085,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   )}
                   {/* Shares the spot above the nav with the note sheet, so
                       only one of them is ever shown. */}
-                  {!playing && sessionState.value && (
+                  {showsGroupBar && sessionState.value && (
                     <SessionGroupBar
                       session={sessionState.value}
                       resolveBookName={resolveBookName}

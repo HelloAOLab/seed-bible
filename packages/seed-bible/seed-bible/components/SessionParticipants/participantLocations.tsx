@@ -1,10 +1,9 @@
 import "./participantLocations.css";
 import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
-import {
-  comeBackRequestCooldownRemainingMs,
-  type BibleReadingSession,
-  type ConnectedSessionUser,
+import type {
+  BibleReadingSession,
+  ConnectedSessionUser,
 } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
@@ -45,8 +44,8 @@ export interface ParticipantLocation {
 }
 
 /**
- * Where `user` is reading relative to the group. Anyone whose position isn't
- * known yet counts as with the group, rather than being guessed elsewhere.
+ * Where `user` is reading relative to the group. Whether they count as
+ * elsewhere comes from `session.participantsAwayFromGroup`.
  */
 export function getParticipantLocation(
   session: BibleReadingSession,
@@ -64,12 +63,9 @@ export function getParticipantLocation(
     return { isElsewhere: false, passage: null };
   }
 
-  const group = session.groupPosition.value;
-  const isElsewhere =
-    !!group.bookId &&
-    !!group.chapterNumber &&
-    (position.bookId !== group.bookId ||
-      position.chapterNumber !== group.chapterNumber);
+  const isElsewhere = session.participantsAwayFromGroup.value.has(
+    user.connectionId
+  );
 
   let passage = `${resolveSessionBookName(session, position.bookId)} ${position.chapterNumber}`;
   const { firstVerse, lastVerse } = position;
@@ -84,8 +80,8 @@ export function getParticipantLocation(
 
 /**
  * A host's "Ask to come back" for one participant. Once asked it shows
- * "Asked" and can't be pressed again until the cooldown runs out — counted
- * from the shared request, so every host sees the same wait.
+ * "Asked" and can't be pressed again until the cooldown runs out (see
+ * `comeBackCooldownRemainingMs`).
  */
 export function AskToComeBackButton({
   session,
@@ -100,10 +96,11 @@ export function AskToComeBackButton({
   const cooldownEnded = useSignal(0);
   void cooldownEnded.value;
 
-  const request = session.comeBackRequests.value.get(user.connectionId);
-  const remainingMs = comeBackRequestCooldownRemainingMs(request, Date.now());
+  const remainingMs = session.comeBackCooldownRemainingMs(user.connectionId);
   const isCoolingDown = remainingMs > 0;
 
+  // Re-armed on every render, so a timer that fires with time still left
+  // sets another rather than leaving the button stuck on "Asked".
   useEffect(() => {
     if (!isCoolingDown) {
       return;
@@ -112,7 +109,7 @@ export function AskToComeBackButton({
       cooldownEnded.value++;
     }, remainingMs);
     return () => clearTimeout(timer);
-  }, [request?.id, isCoolingDown]);
+  });
 
   if (isCoolingDown) {
     return (

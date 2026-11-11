@@ -93,20 +93,12 @@ export interface ComeBackRequest {
 export const COME_BACK_REQUEST_COOLDOWN_MS = 30_000;
 
 /**
- * How long until `request`'s sender may ask again, as of `nowMs`. Measured
- * from the sender's clock, so a recipient or co-host whose clock runs ahead or
- * behind sees the same window rather than one stretched by the difference.
+ * How long after the group moves that someone still on a chapter it just left
+ * counts as with the group. Their reader has to load the new chapter and
+ * broadcast it back before their position catches up, and without this every
+ * follower would flash as away on each page turn.
  */
-export function comeBackRequestCooldownRemainingMs(
-  request: ComeBackRequest | undefined,
-  nowMs: number
-): number {
-  if (!request) {
-    return 0;
-  }
-  const elapsed = Math.abs(nowMs - request.sentAtMs);
-  return Math.max(0, COME_BACK_REQUEST_COOLDOWN_MS - elapsed);
-}
+export const GROUP_MOVE_GRACE_MS = 5_000;
 
 function parseComeBackRequest(value: unknown): ComeBackRequest | null {
   if (!value || typeof value !== "object") {
@@ -692,11 +684,29 @@ export interface BibleReadingSession {
   rejoinGroup: () => Promise<void>;
 
   /**
+   * The connectionIds of everyone, this reader included, who isn't allowed
+   * to move the group and is reading a different chapter from it. Someone
+   * still on a chapter the group only just left isn't counted while their
+   * reader catches up (see `GROUP_MOVE_GRACE_MS`), and someone whose position
+   * isn't known yet isn't guessed away.
+   */
+  participantsAwayFromGroup: ReadonlySignal<ReadonlySet<string>>;
+
+  /**
    * The latest request to come back sent to each participant, keyed by the
    * connectionId asked. Kept after it's answered, so hosts can tell when they
    * last asked someone (see `COME_BACK_REQUEST_COOLDOWN_MS`).
    */
   comeBackRequests: ReadonlySignal<ReadonlyMap<string, ComeBackRequest>>;
+
+  /**
+   * How long until hosts may ask `connectionId` to come back again. Timed
+   * from when this device first saw the latest request rather than from its
+   * `sentAtMs`, which comes from the sender's clock and may run ahead or
+   * behind ours. A request already waiting when this reader joined is
+   * treated as long past.
+   */
+  comeBackCooldownRemainingMs: (connectionId: string) => number;
 
   /**
    * A host's request for this reader to come back, while it's still waiting
@@ -905,11 +915,38 @@ async function createBibleReadingSession(
   const groupPosition = signal<SessionGroupPosition>(
     getSessionDataFromMap(stateMap)
   );
+  // Chapters ("JHN:3") the group has moved off within the last
+  // `GROUP_MOVE_GRACE_MS`. Every move restarts the window, so a host turning
+  // several pages in a row doesn't strand followers who are a page behind.
+  const recentlyLeftGroupChapters = signal<ReadonlySet<string>>(new Set());
+  let groupMoveGraceTimer: ReturnType<typeof setTimeout> | null = null;
   const refreshGroupPosition = () => {
     const next = getSessionDataFromMap(stateMap);
-    if (!sessionDataMatches(next, groupPosition.peek())) {
-      groupPosition.value = next;
+    const previous = groupPosition.peek();
+    if (sessionDataMatches(next, previous)) {
+      return;
     }
+    batch(() => {
+      if (
+        previous.bookId &&
+        previous.chapterNumber &&
+        (previous.bookId !== next.bookId ||
+          previous.chapterNumber !== next.chapterNumber)
+      ) {
+        recentlyLeftGroupChapters.value = new Set([
+          ...recentlyLeftGroupChapters.peek(),
+          `${previous.bookId}:${previous.chapterNumber}`,
+        ]);
+        if (groupMoveGraceTimer !== null) {
+          clearTimeout(groupMoveGraceTimer);
+        }
+        groupMoveGraceTimer = setTimeout(() => {
+          groupMoveGraceTimer = null;
+          recentlyLeftGroupChapters.value = new Set();
+        }, GROUP_MOVE_GRACE_MS);
+      }
+      groupPosition.value = next;
+    });
   };
   /** Armed while a local navigation is waiting to be published to peers. */
   let publishTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1962,6 +1999,10 @@ async function createBibleReadingSession(
       clearTimeout(positionBroadcastTimer);
       positionBroadcastTimer = null;
     }
+    if (groupMoveGraceTimer !== null) {
+      clearTimeout(groupMoveGraceTimer);
+      groupMoveGraceTimer = null;
+    }
     browserDocument?.removeEventListener("visibilitychange", syncTabVisibility);
     // Drop our identity and position entries so peers' lookups for this
     // connection no longer resolve once we're gone.
@@ -1997,22 +2038,74 @@ async function createBibleReadingSession(
       isOffGroupChapter.value
   );
 
+  const participantsAwayFromGroup = computed(() => {
+    const away = new Set<string>();
+    const group = groupPosition.value;
+    if (!group.bookId || !group.chapterNumber) {
+      return away;
+    }
+    const recentlyLeft = recentlyLeftGroupChapters.value;
+    for (const user of connectedUsers.value) {
+      if (user.isSelf) {
+        if (isAwayFromGroup.value) {
+          away.add(user.connectionId);
+        }
+        continue;
+      }
+      if (
+        userCanNavigate(user.connectionId) ||
+        (user.userId !== null && userCanNavigate(user.userId))
+      ) {
+        continue;
+      }
+      const position = participantPositions.value.get(user.connectionId);
+      if (
+        !position ||
+        (position.bookId === group.bookId &&
+          position.chapterNumber === group.chapterNumber) ||
+        recentlyLeft.has(`${position.bookId}:${position.chapterNumber}`)
+      ) {
+        continue;
+      }
+      away.add(user.connectionId);
+    }
+    return away;
+  });
+
   const comeBackRequests = signal<ReadonlyMap<string, ComeBackRequest>>(
     new Map()
   );
-  const syncComeBackRequests = () => {
+  // When this device first saw each request, by request id, on our own clock.
+  const comeBackRequestSeenAtMs = new Map<string, number>();
+  const syncComeBackRequests = (seenAtMs: number) => {
     const next = new Map<string, ComeBackRequest>();
     comeBackRequestsMap.forEach((value, connectionId) => {
       const request = parseComeBackRequest(value);
       if (request) {
         next.set(connectionId, request);
+        if (!comeBackRequestSeenAtMs.has(request.id)) {
+          comeBackRequestSeenAtMs.set(request.id, seenAtMs);
+        }
       }
     });
     comeBackRequests.value = next;
   };
-  syncComeBackRequests();
-  const comeBackRequestsSubscription =
-    comeBackRequestsMap.changes.subscribe(syncComeBackRequests);
+  // Whatever is already there was sent before we joined, and how long before
+  // can't be told without trusting the sender's clock.
+  syncComeBackRequests(Number.NEGATIVE_INFINITY);
+  const comeBackRequestsSubscription = comeBackRequestsMap.changes.subscribe(
+    () => syncComeBackRequests(Date.now())
+  );
+
+  const comeBackCooldownRemainingMs = (connectionId: string) => {
+    const request = comeBackRequests.value.get(connectionId);
+    if (!request) {
+      return 0;
+    }
+    const seenAtMs =
+      comeBackRequestSeenAtMs.get(request.id) ?? Number.NEGATIVE_INFINITY;
+    return Math.max(0, COME_BACK_REQUEST_COOLDOWN_MS - (Date.now() - seenAtMs));
+  };
 
   // The id of the last request to this connection that has been answered, or
   // that arrived when there was nothing to answer. Seeded with whatever was
@@ -2066,12 +2159,14 @@ async function createBibleReadingSession(
     if (!isLocalHost || connectionId === localConnectionId) {
       return;
     }
-    comeBackRequestsMap.set(connectionId, {
+    const request: ComeBackRequest = {
       id: uuid(),
       fromConnectionId: localConnectionId,
       fromUserId: loginManager.userId.value ?? null,
       sentAtMs: Date.now(),
-    });
+    };
+    comeBackRequestSeenAtMs.set(request.id, request.sentAtMs);
+    comeBackRequestsMap.set(connectionId, request);
   };
 
   // A plain `queueRemoteSync`, so a rejoin and a host's move arriving at the
@@ -2102,8 +2197,10 @@ async function createBibleReadingSession(
     participantPositions,
     groupPosition,
     isAwayFromGroup,
+    participantsAwayFromGroup,
     rejoinGroup,
     comeBackRequests,
+    comeBackCooldownRemainingMs,
     incomingComeBackRequest,
     askToComeBack,
     dismissComeBackRequest,

@@ -651,6 +651,7 @@ describe("BibleReaderToolbar — clearing highlights", () => {
       connectedUsers: signal([]),
       currentUser: signal(null),
       isAwayFromGroup: signal(false),
+      incomingComeBackRequest: signal(null),
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),

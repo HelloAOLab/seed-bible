@@ -311,7 +311,9 @@ describe("ParticipantFriendButton", () => {
           scrollToVerse: null,
         }),
         participantPositions: signal(new Map()),
+        participantsAwayFromGroup: signal(new Set()),
         comeBackRequests: signal(new Map()),
+        comeBackCooldownRemainingMs: () => 0,
       } as unknown as BibleReadingSession;
       await friends.refresh();
       openSessionSettingsModal(state, session);

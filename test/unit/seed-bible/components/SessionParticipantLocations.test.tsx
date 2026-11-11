@@ -71,6 +71,26 @@ function createSession({
       ],
     ]);
   });
+  const comeBackCooldownRemainingMs = (connectionId: string) => {
+    const request = comeBackRequests.value.get(connectionId);
+    return request
+      ? Math.max(
+          0,
+          COME_BACK_REQUEST_COOLDOWN_MS - (Date.now() - request.sentAtMs)
+        )
+      : 0;
+  };
+  const participantsAwayFromGroup = signal<ReadonlySet<string>>(
+    new Set([
+      ...Object.entries(positions)
+        .filter(
+          ([, position]) =>
+            position.bookId !== "JHN" || position.chapterNumber !== 3
+        )
+        .map(([connectionId]) => connectionId),
+      ...(localIsAway ? [HOST_CONNECTION] : []),
+    ])
+  );
   const session = {
     id: "session-1",
     options: signal({
@@ -106,8 +126,10 @@ function createSession({
     }),
     participantPositions: signal(new Map(Object.entries(positions))),
     comeBackRequests,
+    comeBackCooldownRemainingMs,
     askToComeBack,
     isAwayFromGroup: signal(localIsAway),
+    participantsAwayFromGroup,
     rejoinGroup: vi.fn(async () => undefined),
   } as unknown as BibleReadingSession;
   return { session, askToComeBack };

@@ -1,5 +1,7 @@
 import { batch, effect, signal } from "@preact/signals";
 import {
+  COME_BACK_REQUEST_COOLDOWN_MS,
+  GROUP_MOVE_GRACE_MS,
   createSessionsManager,
   getUserAnimalVisual,
   type BibleReadingSession,
@@ -1134,6 +1136,192 @@ describe("SessionsManager", () => {
           sentAtMs: expect.any(Number),
         })
       );
+    });
+
+    /**
+     * Joins as the host of a group on John 3, with two followers: Ana on John
+     * 3 with the group and Priya off on Psalm 23.
+     */
+    async function joinAsHostWithFollowers() {
+      const session = await joinAsFollower();
+      session.updateOptions({ hostUserId: os.connectionId });
+      await waitFor(() => session.options.value.hostUserId === os.connectionId);
+      for (const connectionId of ["conn-ana", "conn-priya"]) {
+        mockRemoteClients.emit({
+          type: "client_connected",
+          isSelf: false,
+          client: { connectionId, userId: null },
+        });
+      }
+      await waitFor(() => session.connectedUsers.value.length === 2);
+      moveParticipant("conn-ana", "JHN", 3);
+      moveParticipant("conn-priya", "PSA", 23);
+      return session;
+    }
+
+    function moveParticipant(
+      connectionId: string,
+      bookId: string,
+      chapterNumber: number
+    ) {
+      mockReadingPositionsMap.set(connectionId, { bookId, chapterNumber });
+      mockReadingPositionsMap.emitChange();
+    }
+
+    function moveGroup(chapterNumber: number) {
+      mockMap.set("chapterNumber", chapterNumber);
+      mockMap.emitChange();
+    }
+
+    const awayIds = (session: BibleReadingSession) =>
+      [...session.participantsAwayFromGroup.value].sort();
+
+    it("doesn't count followers as away while they catch up with the group's move", async () => {
+      const session = await joinAsHostWithFollowers();
+      expect(awayIds(session)).toEqual(["conn-priya"]);
+
+      vi.useFakeTimers();
+      try {
+        moveGroup(4);
+
+        // Ana's reader hasn't reported chapter 4 yet.
+        expect(session.groupPosition.value.chapterNumber).toBe(4);
+        expect(awayIds(session)).toEqual(["conn-priya"]);
+
+        moveParticipant("conn-ana", "JHN", 4);
+        vi.advanceTimersByTime(GROUP_MOVE_GRACE_MS);
+        expect(awayIds(session)).toEqual(["conn-priya"]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("keeps a follower a page or two behind with the group while the host turns several pages", async () => {
+      const session = await joinAsHostWithFollowers();
+
+      vi.useFakeTimers();
+      try {
+        moveGroup(4);
+        vi.advanceTimersByTime(GROUP_MOVE_GRACE_MS - 1000);
+        moveGroup(5);
+        vi.advanceTimersByTime(GROUP_MOVE_GRACE_MS - 1000);
+
+        expect(awayIds(session)).toEqual(["conn-priya"]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("counts a follower as away once the group has moved on without them", async () => {
+      const session = await joinAsHostWithFollowers();
+
+      vi.useFakeTimers();
+      try {
+        moveGroup(4);
+        vi.advanceTimersByTime(GROUP_MOVE_GRACE_MS);
+
+        expect(awayIds(session)).toEqual(["conn-ana", "conn-priya"]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("counts a follower who heads somewhere else right after the group moves as away at once", async () => {
+      const session = await joinAsHostWithFollowers();
+
+      moveGroup(4);
+      moveParticipant("conn-ana", "ROM", 8);
+
+      expect(awayIds(session)).toEqual(["conn-ana", "conn-priya"]);
+    });
+
+    it("never counts a peer who may move the group as away", async () => {
+      const session = await joinAsHostWithFollowers();
+
+      session.updateOptions({ allowedNavigators: ["conn-priya"] });
+      await waitFor(
+        () => session.options.value.allowedNavigators?.[0] === "conn-priya"
+      );
+
+      expect(awayIds(session)).toEqual([]);
+    });
+
+    it("counts this reader as away by the same rule as their own group bar", async () => {
+      const session = await joinAsFollower();
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: true,
+        client: { connectionId: os.connectionId, userId: null },
+      });
+      await waitFor(() => session.connectedUsers.value.length === 1);
+
+      wanderOff(session);
+
+      expect(session.isAwayFromGroup.value).toBe(true);
+      expect(awayIds(session)).toEqual([os.connectionId]);
+    });
+
+    function receiveRequestFor(connectionId: string, sentAtMs: number) {
+      mockComeBackRequestsMap.set(connectionId, {
+        id: `request-${sentAtMs}`,
+        fromConnectionId: "conn-cohost",
+        fromUserId: "host-user",
+        sentAtMs,
+      });
+      mockComeBackRequestsMap.emitChange();
+    }
+
+    it.each([
+      ["behind", -20_000],
+      ["ahead of", 60_000],
+    ])(
+      "waits 30 seconds to ask again even when the sender's clock runs %s ours",
+      async (_direction, senderClockOffsetMs) => {
+        const session = await joinAsFollower();
+
+        vi.useFakeTimers();
+        try {
+          receiveRequestFor("conn-priya", Date.now() + senderClockOffsetMs);
+          expect(session.comeBackCooldownRemainingMs("conn-priya")).toBe(
+            COME_BACK_REQUEST_COOLDOWN_MS
+          );
+
+          vi.advanceTimersByTime(COME_BACK_REQUEST_COOLDOWN_MS - 1000);
+          expect(session.comeBackCooldownRemainingMs("conn-priya")).toBe(1000);
+
+          vi.advanceTimersByTime(1000);
+          expect(session.comeBackCooldownRemainingMs("conn-priya")).toBe(0);
+        } finally {
+          vi.useRealTimers();
+        }
+      }
+    );
+
+    it("starts the wait to ask again as soon as this host asks", async () => {
+      const session = await joinAsHostWithFollowers();
+      mockComeBackRequestsMap.setEmitOnSet(true);
+
+      session.askToComeBack("conn-priya");
+
+      expect(session.comeBackCooldownRemainingMs("conn-priya")).toBeGreaterThan(
+        COME_BACK_REQUEST_COOLDOWN_MS - 1000
+      );
+      expect(session.comeBackCooldownRemainingMs("conn-ana")).toBe(0);
+    });
+
+    it("lets hosts ask again straight away about a request sent before they joined", async () => {
+      mockComeBackRequestsMap = createMockSharedMap({
+        "conn-priya": {
+          id: "old-request",
+          fromConnectionId: "conn-cohost",
+          fromUserId: "host-user",
+          // Looks fresh by the sender's clock, which can't be trusted.
+          sentAtMs: Date.now(),
+        },
+      });
+      const session = await joinAsFollower();
+
+      expect(session.comeBackCooldownRemainingMs("conn-priya")).toBe(0);
     });
 
     it("doesn't let someone who isn't a host ask anyone to come back", async () => {

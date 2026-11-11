@@ -12,7 +12,8 @@ import {
   SessionUserAvatar,
   getUserDisplayName,
   getUserSessionRole,
-  sessionRoleRank,
+  sessionRoleLabel,
+  sortUsersByRole,
 } from "../Avatar/Avatar";
 import {
   isLocalSessionHost,
@@ -59,13 +60,7 @@ export function MobileSessionParticipants({
 
   const isHost = isLocalSessionHost(state, session);
 
-  // Host first, then co-hosts, then everyone else. Array.sort is stable so
-  // peers keep their existing order within a rank — matches the sidebar tab row.
-  const sortedUsers = [...connectedUsers].sort(
-    (a, b) =>
-      sessionRoleRank(getUserSessionRole(options, a)) -
-      sessionRoleRank(getUserSessionRole(options, b))
-  );
+  const sortedUsers = sortUsersByRole(connectedUsers, options);
 
   const stackUsers = sortedUsers.slice(0, MAX_STACK_AVATARS);
   const overflowCount = sortedUsers.length - stackUsers.length;
@@ -252,13 +247,7 @@ export function SessionParticipantList({
   const options = session.options.value;
   const isHost = isLocalSessionHost(state, session);
 
-  // Host first, then co-hosts, then everyone else. Array.sort is stable so
-  // peers keep their existing order within a rank — matches the sidebar tab row.
-  const sortedUsers = [...session.connectedUsers.value].sort(
-    (a, b) =>
-      sessionRoleRank(getUserSessionRole(options, a)) -
-      sessionRoleRank(getUserSessionRole(options, b))
-  );
+  const sortedUsers = sortUsersByRole(session.connectedUsers.value, options);
   const friendButtonRows = rowsWithFriendButton(sortedUsers);
   const groupPassage = sessionGroupPassage(session);
   const locations = new Map(
@@ -276,12 +265,7 @@ export function SessionParticipantList({
 
   const renderParticipant = (user: ConnectedSessionUser) => {
     const role = getUserSessionRole(options, user);
-    const roleLabel =
-      role === "host"
-        ? t("host", { defaultValue: "Host" })
-        : role === "co-host"
-          ? t("co-host", { defaultValue: "Co-host" })
-          : undefined;
+    const roleLabel = sessionRoleLabel(role, t);
     const location = locations.get(user.connectionId);
     return (
       <li key={user.connectionId} className="sb-session-participants-list-item">
