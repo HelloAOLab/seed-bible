@@ -241,6 +241,7 @@ function createMockSharedSession(
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      followMode: "everyone",
     }),
     updateOptions: vi.fn(),
     removeSharedDecoration: vi.fn(),
@@ -256,6 +257,15 @@ function createMockSharedSession(
     isHost: vi.fn().mockReturnValue(false),
     isSynced: signal(true),
     getDecorationOwner: () => undefined,
+    follow: signal(null),
+    followAnchor: signal(null),
+    followScroll: signal(null),
+    canFollowUser: () => false,
+    followUser: () => false,
+    stopFollowing: () => undefined,
+    resumeFollowing: () => undefined,
+    noteFollowScroll: () => undefined,
+    setFollowScrollGesture: () => undefined,
   } as BibleReadingSession;
 }
 

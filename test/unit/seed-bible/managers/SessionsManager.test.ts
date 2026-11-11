@@ -503,6 +503,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      followMode: "everyone",
     });
   });
 
@@ -701,6 +702,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      followMode: "everyone",
     });
   });
 
@@ -735,6 +737,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      followMode: "everyone",
     });
     expect(mockOptionsMap.set).not.toHaveBeenCalled();
   });
@@ -775,6 +778,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "everyone",
+      followMode: "everyone",
     });
   });
   it("updateOptions(newOptions) updates verse selection effect visibility", async () => {
@@ -932,6 +936,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      followMode: "everyone",
     });
   });
 
@@ -2655,6 +2660,271 @@ describe("SessionsManager", () => {
 
       expect(session.readingState.disableExtension).toHaveBeenCalledWith("x");
       expect(session.readingState.isExtensionEnabled("x")).toBe(false);
+    });
+  });
+
+  describe("following a participant", () => {
+    async function join() {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      return manager.joinSession("group-abc");
+    }
+
+    async function connect(
+      session: BibleReadingSession,
+      connectionId: string,
+      userId: string
+    ) {
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: false,
+        client: { connectionId, userId },
+      });
+      await waitFor(() =>
+        session.connectedUsers.value.some(
+          (user) => user.connectionId === connectionId
+        )
+      );
+    }
+
+    function publishPosition(
+      connectionId: string,
+      position: {
+        bookId: string;
+        chapterNumber: number;
+        firstVerse?: number;
+        lastVerse?: number;
+      }
+    ) {
+      mockReadingPositionsMap.set(connectionId, position);
+      mockReadingPositionsMap.emitChange();
+    }
+
+    it("follows the first verse a person is reading, without moving the session there", async () => {
+      const session = await join();
+      await connect(session, "conn-1", "user-1");
+      publishPosition("conn-1", {
+        bookId: "REV",
+        chapterNumber: 22,
+        firstVerse: 4,
+        lastVerse: 9,
+      });
+      await waitFor(
+        () => session.participantPositions.value.get("conn-1")?.firstVerse === 4
+      );
+
+      // Let the session publish its own starting chapter first, so the
+      // assertion below is about follow and not about that earlier write.
+      await flushPublishDebounce();
+      mockMap.set.mockClear();
+      (session.readingState.selectTranslationAndChapter as Mock).mockClear();
+
+      expect(session.followUser("conn-1")).toBe(true);
+      await waitFor(() => session.followScroll.value?.verse === 4);
+
+      expect(session.follow.value).toEqual({
+        connectionId: "conn-1",
+        status: "active",
+      });
+      expect(session.followAnchor.value).toBe(4);
+      expect(
+        session.readingState.selectTranslationAndChapter
+      ).toHaveBeenCalledWith("BSB", "REV", 22, { updateUrl: false });
+
+      await flushPublishDebounce();
+      expect(mockMap.set).not.toHaveBeenCalled();
+    });
+
+    it("keeps a hand-chosen verse inside a wider range when the leader scrolls", async () => {
+      const session = await join();
+      await connect(session, "conn-1", "user-1");
+      publishPosition("conn-1", {
+        bookId: "GEN",
+        chapterNumber: 1,
+        firstVerse: 10,
+        lastVerse: 20,
+      });
+      await waitFor(() => session.participantPositions.value.has("conn-1"));
+
+      expect(session.followUser("conn-1")).toBe(true);
+      await waitFor(() => session.followAnchor.value === 10);
+
+      session.setFollowScrollGesture(true);
+      session.readingState.visibleVerseRange.value = { first: 13, last: 18 };
+      session.noteFollowScroll();
+      expect(session.followAnchor.value).toBe(13);
+
+      publishPosition("conn-1", {
+        bookId: "GEN",
+        chapterNumber: 1,
+        firstVerse: 12,
+        lastVerse: 22,
+      });
+      session.setFollowScrollGesture(false);
+
+      // The screen already starts at verse 13, which is still inside 12–22,
+      // so follow must not ask the reader to jump to the leader's new top.
+      expect(session.follow.value?.status).toBe("active");
+      expect(session.followAnchor.value).toBe(13);
+      expect(session.followScroll.value?.verse).not.toBe(12);
+    });
+
+    it("pauses after a hand scroll stays outside the leader, and resume jumps back", async () => {
+      const session = await join();
+      await connect(session, "conn-1", "user-1");
+      publishPosition("conn-1", {
+        bookId: "GEN",
+        chapterNumber: 1,
+        firstVerse: 10,
+        lastVerse: 20,
+      });
+      await waitFor(() => session.participantPositions.value.has("conn-1"));
+      session.followUser("conn-1");
+      await waitFor(() => session.followAnchor.value === 10);
+
+      // The alignment that just ran must not count as the user leaving.
+      session.readingState.visibleVerseRange.value = { first: 30, last: 35 };
+      session.noteFollowScroll();
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      expect(session.follow.value?.status).toBe("active");
+
+      session.setFollowScrollGesture(true);
+      session.noteFollowScroll();
+      expect(session.follow.value?.status).toBe("active");
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      expect(session.follow.value).toEqual({
+        connectionId: "conn-1",
+        status: "paused",
+      });
+
+      session.setFollowScrollGesture(false);
+      const token = session.followScroll.value?.token ?? 0;
+      session.resumeFollowing();
+      await waitFor(() => (session.followScroll.value?.token ?? 0) > token);
+      expect(session.follow.value?.status).toBe("active");
+      expect(session.followScroll.value?.verse).toBe(10);
+    });
+
+    it("publishes a chapter the user opens themselves after following", async () => {
+      const session = await join();
+      await connect(session, "conn-1", "user-1");
+      publishPosition("conn-1", {
+        bookId: "REV",
+        chapterNumber: 22,
+        firstVerse: 1,
+        lastVerse: 5,
+      });
+      await waitFor(() => session.participantPositions.value.has("conn-1"));
+      session.followUser("conn-1");
+      await waitFor(() => session.readingState.bookId.value === "REV");
+
+      mockMap.set.mockClear();
+      session.readingState.bookId.value = "EXO";
+      session.readingState.chapterNumber.value = 3;
+      await flushPublishDebounce();
+
+      expect(session.follow.value?.status).toBe("paused");
+      expect(mockMap.set).toHaveBeenCalledWith("bookId", "EXO");
+      expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 3);
+    });
+
+    it("lets anyone follow anyone until the host says otherwise", async () => {
+      const session = await join();
+      await connect(session, "conn-1", "user-1");
+      expect(session.options.value.followMode).toBe("everyone");
+      expect(session.followUser("conn-1")).toBe(true);
+      expect(session.followUser("missing")).toBe(false);
+      expect(session.followUser(os.connectionId)).toBe(false);
+
+      session.updateOptions({
+        followMode: "hosts-only",
+        hostUserId: "host-user",
+      });
+      expect(session.follow.value).toBeNull();
+      expect(session.followUser("conn-1")).toBe(false);
+
+      await connect(session, "host-conn", "host-user");
+      expect(session.followUser("host-conn")).toBe(true);
+
+      session.stopFollowing();
+      session.updateOptions({ coHostUserIds: ["user-1"] });
+      expect(session.followUser("conn-1")).toBe(true);
+    });
+
+    it("follows the host on join when that policy is on, and not the host themselves", async () => {
+      const session = await join();
+      session.updateOptions({
+        followMode: "auto-host",
+        hostUserId: "host-user",
+      });
+      expect(session.follow.value).toBeNull();
+
+      await connect(session, "host-conn", "host-user");
+      await waitFor(() => session.follow.value?.connectionId === "host-conn");
+
+      session.stopFollowing();
+      expect(session.follow.value).toBeNull();
+      await connect(session, "other-conn", "other-user");
+      expect(session.follow.value).toBeNull();
+    });
+
+    it("does not auto-follow when the local user is the host", async () => {
+      mockLoginManager.userId.value = "host-user";
+      const session = await join();
+      session.updateOptions({
+        followMode: "auto-host",
+        hostUserId: "host-user",
+      });
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: true,
+        client: { connectionId: os.connectionId, userId: "host-user" },
+      });
+      await waitFor(() =>
+        session.connectedUsers.value.some((user) => user.isSelf)
+      );
+      expect(session.follow.value).toBeNull();
+    });
+
+    it("drops follow when the mode turns it off or the person leaves", async () => {
+      const session = await join();
+      await connect(session, "conn-1", "user-1");
+      session.followUser("conn-1");
+      expect(session.follow.value?.connectionId).toBe("conn-1");
+
+      mockRemoteClients.emit({
+        type: "client_disconnected",
+        isSelf: false,
+        client: { connectionId: "conn-1", userId: "user-1" },
+      });
+      await waitFor(() => session.connectedUsers.value.length === 0);
+      expect(session.follow.value).toBeNull();
+
+      await connect(session, "conn-1", "user-1");
+      session.followUser("conn-1");
+      session.updateOptions({ followMode: "off" });
+      expect(session.follow.value).toBeNull();
+      expect(session.followUser("conn-1")).toBe(false);
+    });
+
+    it("loads an unknown follow mode as everyone", async () => {
+      mockOptionsMap = createMockSharedMap({ followMode: "sideways" });
+      mockDocument.getMap.mockImplementation((name: string) => {
+        if (name === "options") return mockOptionsMap;
+        if (name === "decorations") return mockDecorationsMap;
+        if (name === "user_profiles") return mockUserProfilesMap;
+        if (name === "reading_positions") return mockReadingPositionsMap;
+        if (name === "reading_extensions") return mockExtensionsMap;
+        return mockMap;
+      });
+
+      const session = await join();
+      expect(session.options.value.followMode).toBe("everyone");
     });
   });
 });

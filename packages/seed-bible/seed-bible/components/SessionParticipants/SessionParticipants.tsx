@@ -6,7 +6,6 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
   Avatar,
-  SessionUserAvatar,
   getUserDisplayName,
   getUserSessionRole,
   sessionRoleRank,
@@ -17,10 +16,7 @@ import {
   openShareSessionModal,
 } from "../Tabs/Tabs";
 import { MaterialIcon } from "../icons";
-import {
-  ParticipantFriendButton,
-  rowsWithFriendButton,
-} from "../FriendsPane/ParticipantFriendButton";
+import { SessionParticipantsRoster } from "../FollowReading/ParticipantFollowButton";
 
 /** How many avatars the compact stack shows before collapsing into a "+N" chip. */
 const MAX_STACK_AVATARS = 3;
@@ -58,7 +54,6 @@ export function MobileSessionParticipants({
       sessionRoleRank(getUserSessionRole(options, b))
   );
 
-  const friendButtonRows = rowsWithFriendButton(sortedUsers);
   const stackUsers = sortedUsers.slice(0, MAX_STACK_AVATARS);
   const overflowCount = sortedUsers.length - stackUsers.length;
 
@@ -146,39 +141,7 @@ export function MobileSessionParticipants({
                 </button>
               </div>
               <div className="sb-mobile-settings-sheet-body">
-                <ul className="sb-session-participants-list">
-                  {sortedUsers.map((user) => {
-                    const role = getUserSessionRole(options, user);
-                    const roleLabel =
-                      role === "host"
-                        ? t("host", { defaultValue: "Host" })
-                        : role === "co-host"
-                          ? t("co-host", { defaultValue: "Co-host" })
-                          : undefined;
-                    return (
-                      <li
-                        key={user.connectionId}
-                        className="sb-session-participants-list-item"
-                      >
-                        <SessionUserAvatar
-                          user={user}
-                          role={role}
-                          roleLabel={roleLabel}
-                        />
-                        <span className="sb-session-participants-list-name">
-                          {getUserDisplayName(user)}
-                        </span>
-                        {friendButtonRows.has(user.connectionId) && (
-                          <ParticipantFriendButton
-                            state={state}
-                            userId={user.userId}
-                            displayName={getUserDisplayName(user)}
-                          />
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
+                <SessionParticipantsRoster state={state} session={session} />
               </div>
               <div className="sb-mobile-settings-sheet-divider" />
               {isHost && (

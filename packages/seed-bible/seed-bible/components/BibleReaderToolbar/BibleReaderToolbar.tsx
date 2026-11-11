@@ -82,6 +82,7 @@ import {
   LazyColorPicker,
   preloadColorPicker,
 } from "../ColorPicker/LazyColorPicker";
+import { FollowNote } from "../FollowReading/FollowNote";
 
 /** Shared always-true visibility for Chat when `?chatFirst=true`. */
 const CHAT_FIRST_VISIBLE = signal(true);
@@ -2359,30 +2360,43 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
     const measure = () => {
       const verse = verseToolbarRef.current;
-      if (verse?.classList.contains("sb-verse-toolbar-mobile")) {
-        write(verse.offsetHeight);
-        return;
-      }
-
       const wrap = toolbarWrapRef.current;
       const toolbar = wrap?.querySelector(".sb-reader-toolbar");
       const nav = wrap?.querySelector(".sb-reader-floating-nav");
+      const note = document.querySelector(".sb-follow-note");
+      const noteHeight = note instanceof HTMLElement ? note.offsetHeight : 0;
+      const navHeightPx = nav instanceof HTMLElement ? navHeight(nav) : 0;
+      wrap?.style.setProperty("--sb-follow-nav-height", `${navHeightPx}px`);
+
+      if (verse?.classList.contains("sb-verse-toolbar-mobile")) {
+        // The note sits on top of whichever chrome is open, so the variable
+        // it reads is the chrome under it, and the inset includes the note.
+        root.style.setProperty(
+          "--sb-follow-note-bottom",
+          `${verse.offsetHeight}px`
+        );
+        write(verse.offsetHeight + noteHeight);
+        return;
+      }
+
       if (nav instanceof HTMLElement && !(toolbar instanceof HTMLElement)) {
-        write(navHeight(nav));
+        root.style.setProperty("--sb-follow-note-bottom", `${navHeightPx}px`);
+        write(navHeightPx + noteHeight);
         return;
       }
       if (!(toolbar instanceof HTMLElement)) return;
 
       let insetPx = toolbar.offsetHeight;
       if (nav instanceof HTMLElement) {
-        insetPx += navHeight(nav);
+        insetPx += navHeightPx;
       } else {
         // Desktop: toolbar floats above the viewport bottom.
         const bottom = parseFloat(getComputedStyle(toolbar).bottom);
         if (!Number.isNaN(bottom)) insetPx += bottom;
       }
 
-      write(insetPx);
+      root.style.setProperty("--sb-follow-note-bottom", `${insetPx}px`);
+      write(insetPx + noteHeight);
     };
 
     const scheduleMeasure = () => {
@@ -2405,6 +2419,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
       if (verse?.classList.contains("sb-verse-toolbar-mobile")) {
         observer.observe(verse);
+        const followNote = document.querySelector(".sb-follow-note");
+        if (followNote instanceof HTMLElement) observer.observe(followNote);
       } else if (wrap) {
         observer.observe(wrap);
         const toolbar = wrap.querySelector(".sb-reader-toolbar");
@@ -2418,6 +2434,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           if (noteSheet instanceof HTMLElement) observer.observe(noteSheet);
           mutationObserver?.observe(nav, { childList: true });
         }
+        const followNote = document.querySelector(".sb-follow-note");
+        if (followNote instanceof HTMLElement) observer.observe(followNote);
         mutationObserver?.observe(wrap, { childList: true });
       }
 
@@ -2451,6 +2469,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     isSmallScreen.value,
     isMinimalEmbed.value,
     activeMobileTab.value,
+    sessionState.value?.follow?.value?.connectionId,
+    sessionState.value?.follow?.value?.status,
   ]);
 
   // Clicking anywhere outside a verse or the verse toolbar dismisses the
@@ -3008,6 +3028,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   return (
     <>
+      <FollowNote state={props.state} session={sessionState.value} />
       {!shouldReplaceDefaultToolbar.value && (
         <div
           ref={toolbarWrapRef}

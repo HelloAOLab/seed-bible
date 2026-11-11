@@ -16,7 +16,10 @@ import { batch, effect } from "@preact/signals";
 import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../app/utils";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
-import { revealReadAlongVerse } from "./BibleReader/readerViewport";
+import {
+  revealReadAlongVerse,
+  alignVerseToReaderTop,
+} from "./BibleReader/readerViewport";
 
 interface TabSlotReaderProps {
   slot: TabSlot;
@@ -313,6 +316,139 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       dispose();
     };
   }, [scroller, readingState]);
+
+  // Keep up with someone this reader is following. A new token is a new
+  // request, so resuming follow jumps back even when the verse number has
+  // not changed. Chapter content is read with peek: the session sets the
+  // request only after the chapter it points at has loaded.
+  useEffect(() => {
+    const session = tab.sharedSession;
+    if (!scroller || !session?.followScroll) {
+      return;
+    }
+
+    let frame = 0;
+    const dispose = effect(() => {
+      const request = session.followScroll.value;
+      if (!request || !readingState.chapterData.peek()) {
+        return;
+      }
+
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          const verse = scroller.querySelector(
+            `.sb-verse[data-verse-number="${request.verse}"]`
+          );
+          if (verse instanceof HTMLElement) {
+            alignVerseToReaderTop(verse, scroller);
+          }
+        });
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      dispose();
+    };
+  }, [scroller, tab.sharedSession, readingState]);
+
+  // Hand scrolls update follow (the anchor, or letting go). Scrolls this
+  // reader starts itself are ignored — otherwise catching up to someone
+  // would count as walking away from them.
+  useEffect(() => {
+    const session = tab.sharedSession;
+    if (!scroller || !session?.noteFollowScroll) {
+      return;
+    }
+
+    let gesture = false;
+    let idleTimer = 0;
+    let armTimer = 0;
+
+    const arm = () => {
+      if (!gesture) {
+        gesture = true;
+        session.setFollowScrollGesture?.(true);
+      }
+      window.clearTimeout(armTimer);
+      armTimer = window.setTimeout(() => {
+        if (!gesture) {
+          return;
+        }
+        // A key or a click that never moved the page must not stay armed,
+        // or the next follow alignment would look like the user scrolled.
+        gesture = false;
+        session.setFollowScrollGesture?.(false);
+      }, 150);
+    };
+
+    const onScroll = (event: Event) => {
+      if (!event.isTrusted && !gesture) {
+        return;
+      }
+      if (!gesture) {
+        gesture = true;
+        session.setFollowScrollGesture?.(true);
+      }
+      window.clearTimeout(armTimer);
+      session.noteFollowScroll();
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => {
+        gesture = false;
+        session.setFollowScrollGesture?.(false);
+      }, 180);
+    };
+
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (
+        event.key === "ArrowDown" ||
+        event.key === "ArrowUp" ||
+        event.key === "PageDown" ||
+        event.key === "PageUp" ||
+        event.key === " " ||
+        event.key === "Home" ||
+        event.key === "End"
+      ) {
+        arm();
+      }
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.target === scroller) {
+        arm();
+      }
+    };
+
+    scroller.addEventListener("wheel", arm, { passive: true });
+    scroller.addEventListener("touchmove", arm, { passive: true });
+    scroller.addEventListener("pointerdown", onPointerDown);
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("keydown", onKey);
+
+    return () => {
+      window.clearTimeout(idleTimer);
+      window.clearTimeout(armTimer);
+      if (gesture) {
+        session.setFollowScrollGesture?.(false);
+      }
+      scroller.removeEventListener("wheel", arm);
+      scroller.removeEventListener("touchmove", arm);
+      scroller.removeEventListener("pointerdown", onPointerDown);
+      scroller.removeEventListener("scroll", onScroll);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [scroller, tab.sharedSession]);
 
   // Record where the reader has scrolled to, and drive the mobile chrome. Pure
   // observation — this effect never writes `scrollTop`.

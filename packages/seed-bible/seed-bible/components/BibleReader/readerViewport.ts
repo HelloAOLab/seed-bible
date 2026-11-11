@@ -161,6 +161,51 @@ export function revealReadAlongVerse(
 }
 
 /**
+ * Puts `verse` at the top of the visible reader, including when it is already
+ * somewhere on screen. Follow uses this so a reader who can see fewer verses
+ * than the person they follow stays pinned to one verse of that range instead
+ * of merely keeping it in view.
+ *
+ * Instant, not smooth: a stream of position updates would otherwise queue
+ * animations that fight the next one, and the scroll events from those
+ * animations look like the user leaving.
+ */
+export function alignVerseToReaderTop(
+  verse: HTMLElement,
+  scroller: HTMLElement | null
+): void {
+  const { top } = measureVisibleReaderBounds(verse, scroller);
+  const isFirstVerse =
+    verse
+      .closest(".sb-chapter-content")
+      ?.querySelector(".sb-verse[data-verse-number]") === verse;
+  const target = scroller ?? document.scrollingElement;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+  if (isFirstVerse) {
+    if (target.scrollTop !== 0) {
+      target.scrollTop = 0;
+    }
+    return;
+  }
+
+  const rectTop = (headingAbove(verse) ?? verse).getBoundingClientRect().top;
+  let landingTop = top;
+  if (rectTop < top) {
+    landingTop = Math.max(
+      landingTop,
+      headerTopAfterScrollingUp(verse, scroller)
+    );
+  }
+  const delta = rectTop - landingTop - READ_ALONG_TOP_GAP_PX;
+  if (Math.abs(delta) < 2) {
+    return;
+  }
+  target.scrollTop += delta;
+}
+
+/**
  * The topmost of the headings directly above `verse` (a section can carry
  * more than one, and line breaks between them don't count), or null when the
  * verse doesn't start a section.
