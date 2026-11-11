@@ -4,6 +4,11 @@
 
 ### ✨ Added
 
+- In a shared session where only hosts can navigate, reading a different chapter from the group now shows where the group is above the toolbar, with a Rejoin button to go back.
+- In a shared session, see who is reading elsewhere and which passage they're on: in the participants list, and on their faded avatar on the session's tab.
+  - On desktop, open the participant list right inside the session's tab. It stays open or closed the way you left it on that device.
+  - Hosts can ask someone reading elsewhere to come back. They get a request above the toolbar with Not now and Rejoin group, and the host can ask again after 30 seconds.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

@@ -23,6 +23,14 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { MaterialIcon, SettingsIcon, StarIcon } from "../../components/icons";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
+import {
+  AskToComeBackButton,
+  getParticipantLocation,
+} from "../SessionParticipants/participantLocations";
+import {
+  TabSessionParticipants,
+  isTabParticipantsListExpanded,
+} from "../SessionParticipants/SessionParticipants";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
 import {
   isSessionHost,
@@ -42,7 +50,8 @@ import {
   SessionUserAvatar,
   getUserDisplayName,
   getUserSessionRole,
-  sessionRoleRank,
+  sessionRoleLabel,
+  sortUsersByRole,
 } from "../Avatar/Avatar";
 import type { ComponentChildren } from "preact";
 import { useEffect, useRef } from "preact/hooks";
@@ -233,16 +242,9 @@ function SessionSettingsModalContent(props: {
     session.updateOptions({ coHostUserIds: next });
   };
 
-  // Everyone connected, host first, then co-hosts, then peers (Array.sort is
-  // stable so peers keep their existing order within a rank — matches the
-  // sidebar tab row and the mobile sheet). The host is listed like any other
-  // user, with a "Host" badge, but can't be promoted, so their row shows no
-  // co-host action.
-  const participants = [...session.connectedUsers.value].sort(
-    (a, b) =>
-      sessionRoleRank(getUserSessionRole(options, a)) -
-      sessionRoleRank(getUserSessionRole(options, b))
-  );
+  // The host is listed like any other user, with a "Host" badge, but can't be
+  // promoted, so their row shows no co-host action.
+  const participants = sortUsersByRole(session.connectedUsers.value, options);
   const friendButtonRows = rowsWithFriendButton(participants);
 
   return (
@@ -515,6 +517,7 @@ function SessionSettingsModalContent(props: {
                 const isCoHost = role === "co-host";
                 const visual = getUserAnimalVisual(coHostKey);
                 const imageUrl = user.profile?.pictureUrl ?? null;
+                const location = getParticipantLocation(session, user);
                 return (
                   <li
                     key={user.connectionId}
@@ -545,17 +548,24 @@ function SessionSettingsModalContent(props: {
                         userId={user.userId}
                         displayName={getUserDisplayName(user)}
                       />
-                      {isHostUser && (
+                      {role && (
                         <span className="sb-session-participant-badge">
-                          {t("host", { defaultValue: "Host" })}
+                          {sessionRoleLabel(role, t)}
                         </span>
                       )}
-                      {isCoHost && (
-                        <span className="sb-session-participant-badge">
-                          {t("co-host", { defaultValue: "Co-host" })}
+                      {location.isElsewhere && location.passage && (
+                        <span className="sb-session-participant-location">
+                          {location.passage}
                         </span>
                       )}
                     </span>
+                    {isHost &&
+                      location.isElsewhere &&
+                      !isHostUser &&
+                      !isCoHost &&
+                      !user.isSelf && (
+                        <AskToComeBackButton session={session} user={user} />
+                      )}
                     {friendButtonRows.has(user.connectionId) && (
                       <ParticipantFriendButton
                         state={state}
@@ -1225,6 +1235,10 @@ function TabRow(props: TabRowProps) {
   const title = tab.readingState.title.value;
   const isPlayingAudio = isTabPlayingAudio(state, tab);
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
+  const hasSessionUsers = !!tab.sharedSession && connectedUsers.length > 0;
+  // Phones have their own participants sheet in the reader header, so the
+  // drawer's tabs keep just the avatar row.
+  const showsTabParticipants = hasSessionUsers && !app.isMobile.value;
   // Fills the star, and decides whether pressing it files or edits.
   const isChapterSaved = saves.isLocationSaved(
     tab.readingState.translationId.value,
@@ -1242,7 +1256,11 @@ function TabRow(props: TabRowProps) {
   };
 
   return (
-    <div className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}`}>
+    <div
+      className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}${
+        hasSessionUsers ? " sb-tab-row-session" : ""
+      }`}
+    >
       <button
         onClick={() => {
           closeContextMenus();
@@ -1286,39 +1304,40 @@ function TabRow(props: TabRowProps) {
           )}
         </div>
 
-        {tab.sharedSession && connectedUsers.length > 0 && (
-          <div className="sb-tab-users-section">
-            <div className="sb-tab-users-list">
-              {(() => {
-                const sessionOptions = tab.sharedSession.options.value;
-                // Host first, then co-hosts, then everyone else — Array.sort
-                // is stable so peers keep their existing order within a rank.
-                const sortedUsers = [...connectedUsers].sort(
-                  (a, b) =>
-                    sessionRoleRank(getUserSessionRole(sessionOptions, a)) -
-                    sessionRoleRank(getUserSessionRole(sessionOptions, b))
-                );
-                return sortedUsers.map((user) => {
-                  const role = getUserSessionRole(sessionOptions, user);
-                  const roleLabel =
-                    role === "host"
-                      ? t("host", { defaultValue: "Host" })
-                      : role === "co-host"
-                        ? t("co-host", { defaultValue: "Co-host" })
-                        : undefined;
-                  return (
-                    <SessionUserAvatar
-                      key={user.connectionId}
-                      user={user}
-                      role={role}
-                      roleLabel={roleLabel}
-                    />
+        {tab.sharedSession &&
+          hasSessionUsers &&
+          !(showsTabParticipants && isTabParticipantsListExpanded.value) && (
+            <div className="sb-tab-users-section">
+              <div className="sb-tab-users-list">
+                {(() => {
+                  const session = tab.sharedSession;
+                  const sessionOptions = session.options.value;
+                  const sortedUsers = sortUsersByRole(
+                    connectedUsers,
+                    sessionOptions
                   );
-                });
-              })()}
+                  return sortedUsers.map((user) => {
+                    const role = getUserSessionRole(sessionOptions, user);
+                    const roleLabel = sessionRoleLabel(role, t);
+                    const location = getParticipantLocation(session, user);
+                    return (
+                      <SessionUserAvatar
+                        key={user.connectionId}
+                        user={user}
+                        role={role}
+                        roleLabel={roleLabel}
+                        elsewherePassage={
+                          location.isElsewhere
+                            ? (location.passage ?? undefined)
+                            : undefined
+                        }
+                      />
+                    );
+                  });
+                })()}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </button>
 
       {isSelected && !tab.sharedSession && (
@@ -1478,6 +1497,12 @@ function TabRow(props: TabRowProps) {
           <span>{t("close", { defaultValue: "Close" })}</span>
         </ContextMenuItem>
       </ContextMenuWithButton>
+
+      {/* Outside the tab button: the list holds buttons of its own, which
+          can't sit inside another button. */}
+      {showsTabParticipants && tab.sharedSession && (
+        <TabSessionParticipants state={state} session={tab.sharedSession} />
+      )}
     </div>
   );
 }
@@ -2348,11 +2373,7 @@ export function Tabs(props: TabsProps) {
                 sessionUsers.length > 0 &&
                 (() => {
                   const options = session.options.value;
-                  const sorted = [...sessionUsers].sort(
-                    (a, b) =>
-                      sessionRoleRank(getUserSessionRole(options, a)) -
-                      sessionRoleRank(getUserSessionRole(options, b))
-                  );
+                  const sorted = sortUsersByRole(sessionUsers, options);
                   const shown = sorted.slice(0, 3);
                   const extra = sorted.length - shown.length;
                   return (

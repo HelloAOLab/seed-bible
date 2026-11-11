@@ -298,6 +298,22 @@ describe("ParticipantFriendButton", () => {
           })),
         ]),
         updateOptions: vi.fn(),
+        readingState: {
+          bookId: signal("GEN"),
+          chapterNumber: signal(1),
+          visibleVerseRange: signal(null),
+          translationBooks: signal(null),
+        },
+        groupPosition: signal({
+          translationId: null,
+          bookId: "GEN",
+          chapterNumber: 1,
+          scrollToVerse: null,
+        }),
+        participantPositions: signal(new Map()),
+        participantsAwayFromGroup: signal(new Set()),
+        comeBackRequests: signal(new Map()),
+        comeBackCooldownRemainingMs: () => 0,
       } as unknown as BibleReadingSession;
       await friends.refresh();
       openSessionSettingsModal(state, session);

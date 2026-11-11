@@ -583,6 +583,23 @@ describe("person profile card", () => {
           },
         ]),
         updateOptions: vi.fn(),
+        readingState: {
+          bookId: signal("GEN"),
+          chapterNumber: signal(1),
+          visibleVerseRange: signal(null),
+          translationBooks: signal(null),
+        },
+        groupPosition: signal({
+          translationId: null,
+          bookId: "GEN",
+          chapterNumber: 1,
+          scrollToVerse: null,
+        }),
+        participantPositions: signal(new Map()),
+        comeBackRequests: signal(new Map()),
+        comeBackCooldownRemainingMs: () => 0,
+        isAwayFromGroup: signal(false),
+        participantsAwayFromGroup: signal(new Set()),
       }) as unknown as BibleReadingSession;
 
     const nameButton = (root: ParentNode, name: string) =>
