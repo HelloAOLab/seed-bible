@@ -64,7 +64,7 @@
   display: flex;
   background: var(--sb-primary-color);
   padding: 0.3125rem 1rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   border: none;
   outline: none;
   color: var(--sb-primary-font-color);
@@ -111,7 +111,7 @@
   margin-bottom: 0.3125rem;
   width: 100%;
   padding: 0.3125rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   cursor: pointer;
 }
 

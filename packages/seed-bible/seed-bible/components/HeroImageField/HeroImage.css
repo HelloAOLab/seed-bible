@@ -4,7 +4,7 @@
   flex: none;
   width: 4.5rem;
   height: 4.5rem;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   object-fit: cover;
   background: var(--sb-divider-color);
 }

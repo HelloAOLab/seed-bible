@@ -485,7 +485,7 @@ img.sb-chat-view-message-avatar {
   flex: 1;
   min-width: 0;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--sb-background, #fff), transparent 5%);
   color: var(--sb-font-color);
   padding: 0.625rem 0.75rem;
@@ -547,7 +547,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-chat-view-send {
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   width: 2.375rem;
   height: 2.375rem;
   display: inline-flex;

@@ -13,7 +13,7 @@
 /* Generic pane back button (reading plans, play view, create form, item input). */
 .sb-reading-plans-back {
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.625rem 1.25rem;
   background: transparent;
   color: var(--sb-font-color);

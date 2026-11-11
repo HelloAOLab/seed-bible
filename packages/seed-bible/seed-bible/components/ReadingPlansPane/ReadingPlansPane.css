@@ -212,7 +212,7 @@
   width: 100%;
   padding: 14px;
   border: 1px solid var(--rp-border);
-  border-radius: 14px;
+  border-radius: var(--sb-radius-xl);
   background: transparent;
   color: inherit;
   text-align: start;

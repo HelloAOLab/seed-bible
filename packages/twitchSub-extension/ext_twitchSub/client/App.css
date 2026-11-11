@@ -22,7 +22,7 @@
   background-color: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   border: none;
-  border-radius: 5px;
+  border-radius: var(--sb-radius-sm);
   cursor: pointer;
   width: max-content;
   margin-left: auto;

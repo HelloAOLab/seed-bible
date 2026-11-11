@@ -283,7 +283,7 @@
   padding: 0.375rem 0.75rem;
   background-color: var(--sb-divider-color);
   border: solid 2px var(--sb-divider-color);
-  border-radius: 1.5625rem;
+  border-radius: var(--sb-radius-full);
   font-size: 0.75rem;
   font-weight: 500;
   display: flex;
@@ -303,7 +303,7 @@
 .filter-option-icon {
   width: 0.75rem;
   height: 0.75rem;
-  border-radius: 1.25rem;
+  border-radius: var(--sb-radius-full);
   border-width: 2px;
 }
 
@@ -443,7 +443,7 @@
 }
 
 .zoom-level-selector > button > span:nth-of-type(2) {
-  border-radius: 1.5625rem;
+  border-radius: var(--sb-radius-full);
   width: 1rem;
   height: 1rem;
   background-color: transparent;
@@ -832,7 +832,7 @@
 }
 
 .sb-tooltip .tooltip-reading-history-content > span:nth-of-type(1) {
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-full);
   width: 0.875rem;
   height: 0.875rem;
 }

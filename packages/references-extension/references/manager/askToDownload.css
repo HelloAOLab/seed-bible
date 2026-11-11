@@ -15,7 +15,7 @@
 .sb-references-download-icon {
   width: 2.75rem;
   height: 2.75rem;
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   background: var(--sb-secondary-color);
   color: var(--sb-primary-color);
   display: flex;
@@ -59,7 +59,7 @@
 .sb-references-download-btn {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: 1.75rem;
+  border-radius: var(--sb-radius-full);
   padding: 0.65rem 1.5rem;
   font-family: inherit;
   font-size: 0.9em;

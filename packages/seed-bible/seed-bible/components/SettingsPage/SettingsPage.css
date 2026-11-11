@@ -248,7 +248,7 @@
 
 .sb-settings-theme-button {
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.625rem 1rem;
   background: transparent;
   color: var(--sb-font-color);
@@ -458,7 +458,7 @@
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   padding: 0.25rem;
 }
@@ -766,7 +766,7 @@
 
 .sb-settings-save-button {
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.625rem 1.25rem;
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);

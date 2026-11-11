@@ -68,7 +68,7 @@
   position: relative;
   width: min(22rem, 100%);
   padding: 20px 20px 14px;
-  border-radius: 1.25rem;
+  border-radius: var(--sb-radius-2xl);
   background: var(--sb-background, #fff);
   color: var(--sb-font-color, #333);
   border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));

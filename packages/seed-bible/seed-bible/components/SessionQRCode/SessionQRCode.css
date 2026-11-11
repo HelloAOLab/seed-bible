@@ -29,7 +29,7 @@
   align-items: center;
   gap: 1rem;
   padding: 0.875rem;
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   border: 1px solid var(--sb-divider-color);
   background: color-mix(in srgb, var(--sb-font-color), transparent 95%);
 }
@@ -41,7 +41,7 @@
   height: 7.5rem;
   padding: 0.5rem;
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: #ffffff;
   box-sizing: border-box;
   cursor: zoom-in;
@@ -101,7 +101,7 @@
   width: min(20rem, 100%);
   aspect-ratio: 1;
   padding: 0.75rem;
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   background: #ffffff;
   box-sizing: border-box;
 }

@@ -124,7 +124,7 @@
   width: max-content;
   max-width: 16rem;
   padding: 0.5rem 0.875rem;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-font-color);
   color: var(--sb-reader-background, #fff);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);

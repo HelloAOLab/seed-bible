@@ -168,7 +168,7 @@
   gap: 0.75rem;
   padding: 1.125rem;
   border: 1px solid var(--sb-extensions-page-border);
-  border-radius: 1.125rem;
+  border-radius: var(--sb-radius-xl);
   background: transparent;
   color: inherit;
   font-family: inherit;
@@ -195,7 +195,7 @@
 .sb-extensions-card-identity .sb-extension-consent-tile {
   width: 3.25rem;
   height: 3.25rem;
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   font-size: 1.125rem;
 }
 

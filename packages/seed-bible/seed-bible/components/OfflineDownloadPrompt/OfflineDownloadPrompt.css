@@ -17,7 +17,7 @@
   width: min(26.25rem, 100%);
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  border-radius: 1.25rem;
+  border-radius: var(--sb-radius-2xl);
   box-shadow: 0 20px 48px #00000040;
   padding: 2rem 1.75rem 1.25rem;
   box-sizing: border-box;
@@ -32,7 +32,7 @@
   display: none;
   width: 2.375rem;
   height: 0.25rem;
-  border-radius: 0.125rem;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-divider-color);
   align-self: center;
   margin-bottom: 0.5rem;
@@ -47,7 +47,7 @@
 .sb-offline-prompt-icon {
   width: 2.75rem;
   height: 2.75rem;
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   background: var(--sb-secondary-color);
   color: var(--sb-primary-color);
   display: flex;
@@ -80,7 +80,7 @@
 .sb-offline-prompt-btn {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: 1.75rem;
+  border-radius: var(--sb-radius-full);
   padding: 0.9rem 1.5rem;
   font-family: var(--sb-font-family);
   font-size: 1em;
@@ -116,7 +116,7 @@
 
   .sb-offline-prompt {
     width: 100%;
-    border-radius: 1.625rem 1.625rem 0 0;
+    border-radius: var(--sb-radius-2xl) var(--sb-radius-2xl) 0 0;
     padding: 0.75rem 1.5rem 1.5rem;
     box-shadow: 0 -12px 40px #0000002e;
   }

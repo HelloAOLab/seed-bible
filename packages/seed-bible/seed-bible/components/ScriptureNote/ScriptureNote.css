@@ -28,7 +28,7 @@
   max-height: calc(100% - 2rem);
   padding: 1rem 1.125rem;
   border: 1px solid var(--sb-scripture-note-edge);
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
   box-shadow: 0 16px 40px #00000040;

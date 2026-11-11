@@ -53,7 +53,7 @@
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   padding: 0.25rem;
 }

@@ -14,7 +14,7 @@
   z-index: 102;
   background: var(--sb-reader-toolbar-background);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);

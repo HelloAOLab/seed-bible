@@ -10,6 +10,7 @@ export const SHARED_TOKENS = {
   "--sb-radius-md": "0.5rem",
   "--sb-radius-lg": "0.75rem",
   "--sb-radius-xl": "1rem",
+  "--sb-radius-2xl": "1.25rem",
   "--sb-radius-full": "999px",
 } as const;
 

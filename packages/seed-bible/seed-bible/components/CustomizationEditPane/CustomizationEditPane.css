@@ -79,7 +79,7 @@
   gap: 0.625rem;
   padding: 0.75rem 0.875rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
@@ -807,7 +807,7 @@ body:has(#sb-color-picker-host) .sb-cz-floating-preview {
   min-width: 0;
   padding: 0.5rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
 }
 
 .sb-cz-tile-warning {
@@ -936,7 +936,7 @@ button.sb-cz-tile-swatch:focus-visible {
   gap: 0.5rem;
   padding: 0.5rem 0.5rem 0.5rem 0.875rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
 }
 
 .sb-cz-font-sample {

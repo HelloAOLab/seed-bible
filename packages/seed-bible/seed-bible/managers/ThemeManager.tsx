@@ -635,7 +635,7 @@ export const LIGHT_THEME: BibleTheme = {
     readerToolbarBottom: "1.125rem",
     readerToolbarGap: "0.25rem",
     readerToolbarPadding: "1px 0.3125rem",
-    readerToolbarBorderRadius: "1.25rem",
+    readerToolbarBorderRadius: "var(--sb-radius-2xl)",
     readerToolbarBackground: "#ffffff",
     readerToolbarBorder: "1px solid #00000024",
     readerToolbarBoxShadow:
@@ -654,7 +654,7 @@ export const LIGHT_THEME: BibleTheme = {
 
     verseToolbarGap: "0.125rem",
     verseToolbarPadding: "0.25rem 0.5rem",
-    verseToolbarBorderRadius: "0.625rem",
+    verseToolbarBorderRadius: "var(--sb-radius-md)",
     verseToolbarBorder: "1px solid var(--sb-divider-color)",
     verseToolbarBoxShadow: "0 26px 10px var(--sb-shadow-color)",
     verseToolbarZIndex: "100",
@@ -666,7 +666,7 @@ export const LIGHT_THEME: BibleTheme = {
     readerToolbarMobileLayoutItemSize: "2.75rem",
     readerToolbarMobileLayoutCenterButtonWidth: "5.4375rem",
     readerToolbarMobileLayoutCenterButtonHeight: "2.625rem",
-    readerToolbarMobileLayoutButtonBorderRadius: "2.5rem",
+    readerToolbarMobileLayoutButtonBorderRadius: "var(--sb-radius-full)",
 
     readerToolbarFloatingButtonSideOffset: "1rem",
 
@@ -831,7 +831,7 @@ export const DARK_THEME: BibleTheme = {
     readerToolbarBottom: "1.125rem",
     readerToolbarGap: "0.25rem",
     readerToolbarPadding: "1px 0.3125rem",
-    readerToolbarBorderRadius: "1.25rem",
+    readerToolbarBorderRadius: "var(--sb-radius-2xl)",
     readerToolbarBackground: "#181818",
     readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.1)",
     readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.5)",
@@ -848,7 +848,7 @@ export const DARK_THEME: BibleTheme = {
 
     verseToolbarGap: "0.125rem",
     verseToolbarPadding: "0.25rem 0.5rem",
-    verseToolbarBorderRadius: "0.625rem",
+    verseToolbarBorderRadius: "var(--sb-radius-md)",
     verseToolbarBorder: "1px solid var(--sb-divider-color)",
     verseToolbarBoxShadow: "0 26px 10px var(--sb-shadow-color)",
     verseToolbarZIndex: "100",
@@ -860,7 +860,7 @@ export const DARK_THEME: BibleTheme = {
     readerToolbarMobileLayoutItemSize: "2.75rem",
     readerToolbarMobileLayoutCenterButtonWidth: "5.4375rem",
     readerToolbarMobileLayoutCenterButtonHeight: "2.625rem",
-    readerToolbarMobileLayoutButtonBorderRadius: "2.5rem",
+    readerToolbarMobileLayoutButtonBorderRadius: "var(--sb-radius-full)",
 
     readerToolbarFloatingButtonSideOffset: "1rem",
 

@@ -15,7 +15,7 @@
 
 .sb-tour-spotlight {
   position: absolute;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
   border: 2px solid var(--sb-primary-color);
   pointer-events: none;
@@ -31,7 +31,7 @@
   box-sizing: border-box;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   padding: 1.125rem;
   box-shadow: 0 16px 40px #00000040;
   pointer-events: auto;
@@ -53,7 +53,7 @@
 .sb-tour-dot {
   width: 1rem;
   height: 0.1875rem;
-  border-radius: 0.09375rem;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-font-color);
   transition:
     width 0.2s ease,
@@ -144,7 +144,7 @@
 .sb-tour-btn {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.5rem 1rem;
   font-family: var(--sb-font-family);
   font-size: 0.9em;

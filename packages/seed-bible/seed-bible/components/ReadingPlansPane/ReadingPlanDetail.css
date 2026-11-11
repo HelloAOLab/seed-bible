@@ -168,7 +168,7 @@
   height: 72px;
   padding: 6px;
   border: 1px solid var(--rp-border);
-  border-radius: 14px;
+  border-radius: var(--sb-radius-xl);
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -318,7 +318,7 @@
   flex: none;
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--rp-accent) 10%, transparent);
   color: var(--rp-accent);
 }

@@ -13,7 +13,7 @@
   width: 100%;
   max-width: 26rem;
   padding: 1rem;
-  border-radius: 1.25rem;
+  border-radius: var(--sb-radius-2xl);
   background: var(--sb-reader-background, #ffffff);
   color: var(--sb-font-color, #1f2937);
   font-family: var(

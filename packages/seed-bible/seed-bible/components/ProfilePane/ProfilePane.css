@@ -81,7 +81,7 @@
   gap: 12px;
   margin: 8px 35px 12px;
   padding: 24px;
-  border-radius: 24px;
+  border-radius: var(--sb-radius-2xl);
   background: var(--sb-profile-surface);
 }
 
@@ -226,7 +226,7 @@ button.sb-profile-plans-link {
 
 .sb-profile-progress {
   height: 6px;
-  border-radius: 3px;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 80%);
   overflow: hidden;
 }

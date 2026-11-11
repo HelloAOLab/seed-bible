@@ -343,7 +343,7 @@
 .sb-bible-reader-mobile-header-translation {
   font-size: 1rem;
   padding: 0.3125rem 0.625rem;
-  border-radius: 0.9375rem;
+  border-radius: var(--sb-radius-full);
 }
 
 /* A line box reserves room for descenders that an all-caps abbreviation never
@@ -1011,7 +1011,7 @@
   justify-content: center;
   gap: 0.5rem;
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.625rem 1.5rem;
   font-family: inherit;
   font-size: 0.875rem;
@@ -1046,7 +1046,7 @@
   justify-content: center;
   gap: 0.5rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 75%);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.5rem 1.25rem;
   background: transparent;
   color: var(--sb-font-color);
@@ -1261,7 +1261,7 @@
   flex-direction: column;
   padding: 1.125rem 1rem 1.5rem;
   box-sizing: border-box;
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   /* Just a hairline: the shadow is what lifts the modal off the page. */
   border: 1px solid var(--sb-divider-color);
   box-shadow: 0 20px 48px #00000040;
