@@ -611,6 +611,19 @@ function getSchemeDefaultVariantId(
     : customization[DEFAULT_ROLE_FIELD_MAP[role]];
 }
 
+function resolveDefaultVariant(
+  customization: SeedBibleCustomization,
+  schemeThemeId: string
+): CustomizationThemeVariant | undefined {
+  const byId = (id: string | undefined) =>
+    id ? customization.variants.find((v) => v.id === id) : undefined;
+  return (
+    byId(getSchemeDefaultVariantId(customization, schemeThemeId)) ??
+    byId(customization.defaultVariantId) ??
+    customization.variants[0]
+  );
+}
+
 function withExtensionSensitiveProxy(
   customization: SeedBibleCustomization,
   extensionId: string,
@@ -1553,24 +1566,15 @@ export function createCustomizationsManager(
 
     return (
       byId(selectedVariantId.value) ??
-      byId(getSchemeDefaultVariantId(customization, schemeThemeId)) ??
-      byId(customization.defaultVariantId) ??
-      customization.variants[0] ??
+      resolveDefaultVariant(customization, schemeThemeId) ??
       null
     );
   });
 
   const getPreviewVariant = (
     customization: SeedBibleCustomization
-  ): CustomizationThemeVariant | undefined => {
-    const byId = (id: string | undefined) =>
-      id ? customization.variants.find((v) => v.id === id) : undefined;
-    return (
-      byId(getSchemeDefaultVariantId(customization, appSchemeThemeId.value)) ??
-      byId(customization.defaultVariantId) ??
-      customization.variants[0]
-    );
-  };
+  ): CustomizationThemeVariant | undefined =>
+    resolveDefaultVariant(customization, appSchemeThemeId.value);
 
   const activeThemeOverrides = computed<ThemeOverrides>(
     () => activeVariant.value?.themes ?? {}
