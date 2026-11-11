@@ -2,7 +2,7 @@
 .sb-tour-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: var(--sb-layer-tour);
   font-family: var(--sb-font-family);
 }
 

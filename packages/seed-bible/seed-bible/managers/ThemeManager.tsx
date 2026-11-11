@@ -640,7 +640,7 @@ export const LIGHT_THEME: BibleTheme = {
     readerToolbarBorder: "1px solid #00000024",
     readerToolbarBoxShadow:
       "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
-    readerToolbarZIndex: "99",
+    readerToolbarZIndex: "calc(var(--sb-layer-chrome) - 1)",
     readerToolbarHeight: "auto",
 
     readerToolbarFloatingButtonTop: "-4.25rem",
@@ -657,7 +657,7 @@ export const LIGHT_THEME: BibleTheme = {
     verseToolbarBorderRadius: "var(--sb-radius-md)",
     verseToolbarBorder: "1px solid var(--sb-divider-color)",
     verseToolbarBoxShadow: "0 26px 10px var(--sb-shadow-color)",
-    verseToolbarZIndex: "100",
+    verseToolbarZIndex: "var(--sb-layer-chrome)",
     verseToolbarMinHeight: "0",
 
     readerToolbarMobileLayoutHeight: "auto",
@@ -835,7 +835,7 @@ export const DARK_THEME: BibleTheme = {
     readerToolbarBackground: "#181818",
     readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.1)",
     readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.5)",
-    readerToolbarZIndex: "99",
+    readerToolbarZIndex: "calc(var(--sb-layer-chrome) - 1)",
     readerToolbarHeight: "auto",
     readerToolbarFloatingButtonTop: "-4.25rem",
     readerToolbarFloatingButtonWidth: "3rem",
@@ -851,7 +851,7 @@ export const DARK_THEME: BibleTheme = {
     verseToolbarBorderRadius: "var(--sb-radius-md)",
     verseToolbarBorder: "1px solid var(--sb-divider-color)",
     verseToolbarBoxShadow: "0 26px 10px var(--sb-shadow-color)",
-    verseToolbarZIndex: "100",
+    verseToolbarZIndex: "var(--sb-layer-chrome)",
     verseToolbarMinHeight: "0",
 
     readerToolbarMobileLayoutHeight: "auto",

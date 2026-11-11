@@ -39,13 +39,13 @@
 .sb-color-picker-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1100;
+  z-index: var(--sb-layer-prompt);
   background: color-mix(in srgb, #000, transparent 55%);
 }
 
 .sb-color-picker-dialog {
   position: fixed;
-  z-index: 1102;
+  z-index: calc(var(--sb-layer-prompt) + 2);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;

@@ -5,7 +5,7 @@
    modals (500 and up). */
 .sb-scripture-note-layer {
   position: fixed;
-  z-index: 450;
+  z-index: calc(var(--sb-layer-popover) - 50);
   pointer-events: none;
   font-family: var(--sb-font-family);
   /* The popover's background matches the page, and a shadow vanishes on a

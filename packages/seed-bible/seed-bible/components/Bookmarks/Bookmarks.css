@@ -153,7 +153,7 @@
 /* The menu is portaled to <body>, so without this it opens under the modal
    overlay (z-index 1000) it was opened from. */
 .sb-context-menu.sb-bookmark-picker-menu {
-  z-index: 1001;
+  z-index: calc(var(--sb-layer-modal) + 1);
 }
 
 .sb-bookmark-picker-hint {

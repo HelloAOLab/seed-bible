@@ -247,7 +247,7 @@
   left: auto;
   inset-inline-start: auto;
   inset-inline-end: auto;
-  z-index: 110;
+  z-index: calc(var(--sb-layer-chrome) + 10);
   visibility: hidden;
 }
 
@@ -659,7 +659,7 @@
     /* Sit above the mobile sidebar/settings overlay (z-index: 100) so the
      * bottom bar of options stays visible while the account panel is open.
      * The overlay already reserves `padding-bottom: 68px` for it. */
-    z-index: 101;
+    z-index: calc(var(--sb-layer-chrome) + 1);
   }
 
   .sb-action-btns {
@@ -805,7 +805,7 @@
   right: 0;
   bottom: 0;
   transform: none;
-  z-index: 101;
+  z-index: calc(var(--sb-layer-chrome) + 1);
   width: 100%;
 }
 

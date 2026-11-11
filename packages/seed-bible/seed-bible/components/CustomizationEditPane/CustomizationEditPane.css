@@ -785,7 +785,7 @@ body:has(#sb-color-picker-host) .sb-cz-live-preview-dock {
 
 body:has(#sb-color-picker-host) .sb-cz-live-preview-dock,
 body:has(#sb-color-picker-host) .sb-cz-floating-preview {
-  z-index: 1101;
+  z-index: calc(var(--sb-layer-prompt) + 1);
   pointer-events: none;
 }
 

@@ -26,7 +26,7 @@ describe("shared tokens", () => {
   it("match the values base.inline.css gives the app", () => {
     const declared = rootDeclarations(baseCss);
     const sharedNames = Object.keys(declared).filter((name) =>
-      name.startsWith("--sb-radius-")
+      /^--sb-(radius|layer)-/.test(name)
     );
 
     expect(sharedNames.sort()).toEqual(Object.keys(SHARED_TOKENS).sort());

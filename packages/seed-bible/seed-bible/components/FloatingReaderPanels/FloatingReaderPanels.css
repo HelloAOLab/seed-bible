@@ -11,7 +11,7 @@
   transform: translateX(-50%);
   /* Above the mobile reader toolbar wrap (z-index 101) so Ask AI / Chat are
      not trapped under the bottom chrome after the verse sheet dismisses. */
-  z-index: 102;
+  z-index: calc(var(--sb-layer-chrome) + 2);
   background: var(--sb-reader-toolbar-background);
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-xl);

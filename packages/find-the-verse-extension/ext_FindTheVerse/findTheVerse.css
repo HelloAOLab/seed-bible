@@ -508,7 +508,7 @@
 
 .ftv-bar {
   position: fixed;
-  z-index: 90;
+  z-index: calc(var(--sb-layer-chrome) - 10);
   left: 12px;
   right: 12px;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);

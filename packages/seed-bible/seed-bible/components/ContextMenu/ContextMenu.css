@@ -36,7 +36,7 @@
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   box-shadow: 0 10px 30px #00000014;
-  z-index: 500;
+  z-index: var(--sb-layer-popover);
 }
 
 /* Fades in while growing out of the corner by its button, which

@@ -95,7 +95,7 @@
     position: fixed;
     inset-block: 0;
     inset-inline-start: 0;
-    z-index: 121;
+    z-index: calc(var(--sb-layer-chrome) + 21);
     height: 100%;
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.18);
     /* Docked, the sidebar paints `--sb-sidebar-background` over the page
@@ -115,7 +115,7 @@
 .sb-sidebar-scrim {
   position: fixed;
   inset: 0;
-  z-index: 120;
+  z-index: calc(var(--sb-layer-chrome) + 20);
   background: rgba(0, 0, 0, 0.16);
 }
 
@@ -1579,7 +1579,7 @@
        on screen and content like the Language/localization section at the
        bottom can actually be scrolled into view. */
     height: 100dvh;
-    z-index: 100;
+    z-index: var(--sb-layer-chrome);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     /* The desktop sidebar's look (its background over the page's) made
