@@ -3,7 +3,7 @@
   background-color: var(--sb-reader-font-color);
   color: var(--sb-reader-background);
   text-align: center;
-  z-index: 100;
+  z-index: calc(var(--sb-layer-popover) + 10);
   border-radius: var(--sb-radius-lg);
   position: fixed;
   padding: 0.75rem;

@@ -444,14 +444,14 @@
 .sb-language-picker-overlay {
   position: fixed;
   inset: 0;
-  z-index: 99;
+  z-index: calc(var(--sb-layer-popover) - 1);
 }
 
 .sb-language-picker-menu {
   position: absolute;
   right: 0;
   top: calc(100% + 0.25rem);
-  z-index: 100;
+  z-index: var(--sb-layer-popover);
   min-width: 13.75rem;
   max-height: 20rem;
   overflow-y: auto;
@@ -535,7 +535,6 @@
    scrolls internally, with the overlay dimming the whole screen. */
 @media (max-width: 480px) {
   .sb-language-picker-overlay {
-    z-index: 9998;
     background: rgba(0, 0, 0, 0.3);
   }
 
@@ -545,7 +544,6 @@
     right: 0.75rem;
     top: auto;
     bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
-    z-index: 9999;
     min-width: 0;
     max-height: min(50dvh, 22.5rem);
   }

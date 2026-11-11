@@ -1,10 +1,10 @@
 /* Follow-up "turn off tutorials?" dialog, shown after skipping a tour step.
-   Rendered above everything, including an elevated tour overlay, since it
+   Rendered above the rest of the tour, including an elevated overlay, since it
    always appears once that overlay has already torn itself down. */
 .sb-tutorial-skip-prompt-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10010;
+  z-index: calc(var(--sb-layer-tour) + 10);
   background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;

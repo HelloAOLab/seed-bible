@@ -6,11 +6,11 @@
   font-family: var(--sb-font-family);
 }
 
-/* Contextual tips can fire while a high z-index panel/sheet (e.g. mobile
- * settings) is open, which would otherwise hide the tip. `elevated` steps lift
- * the overlay above those panels so the spotlight + popover land on top. */
+/* Contextual tips can fire while a panel or sheet (e.g. mobile settings) is
+ * open. `elevated` steps sit just above the selector-group tour popover too, so
+ * nothing else in the tour can cover them. */
 .sb-tour-overlay-raised {
-  z-index: 10001;
+  z-index: calc(var(--sb-layer-tour) + 2);
 }
 
 .sb-tour-spotlight {

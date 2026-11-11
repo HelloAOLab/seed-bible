@@ -3,7 +3,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.3);
-  z-index: 9998;
+  z-index: var(--sb-layer-modal);
 }
 
 .sb-mobile-settings-sheet {
@@ -11,7 +11,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 9999;
+  z-index: calc(var(--sb-layer-modal) + 1);
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
   border-top-left-radius: var(--sb-radius-xl);

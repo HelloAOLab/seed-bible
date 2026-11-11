@@ -202,10 +202,10 @@ export function PaneLayout(props: PaneLayoutProps) {
             top: `${pane.y}px`,
             width: `${pane.width}px`,
             height: `${pane.height}px`,
-            zIndex:
-              pane.id === selectedPaneId
-                ? 170 + overlayPanes.length
-                : 150 + index,
+            // Floating panes stack above the toolbars and sidebar, like windows.
+            zIndex: `calc(var(--sb-layer-chrome) + ${
+              pane.id === selectedPaneId ? 70 + overlayPanes.length : 50 + index
+            })`,
           }}
           ref={(element: HTMLElement | null) =>
             registerPaneElement(pane.id, element)

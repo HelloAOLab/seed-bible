@@ -59,12 +59,14 @@
   --sb-radius-full: 999px;
 
   /* App-wide stacking order, lowest first: toolbars and sidebars, menus and
-     pop-overs, modal dialogs, prompts that interrupt a modal, the tutorial. */
+     pop-overs, modal dialogs, prompts that interrupt a modal, the tutorial,
+     then toasts (which ignore the pointer, so they never block anything). */
   --sb-layer-chrome: 100;
   --sb-layer-popover: 500;
   --sb-layer-modal: 1000;
   --sb-layer-prompt: 1100;
   --sb-layer-tour: 1200;
+  --sb-layer-toast: 1300;
 
   /* Matches DEFAULT_SCRIPTURE_WIDTH in SettingsManager; the runtime value only
      replaces it when the reader has chosen a different width. */

@@ -17,6 +17,7 @@ export const SHARED_TOKENS = {
   "--sb-layer-modal": "1000",
   "--sb-layer-prompt": "1100",
   "--sb-layer-tour": "1200",
+  "--sb-layer-toast": "1300",
 } as const;
 
 export const SHARED_TOKENS_CSS = Object.entries(SHARED_TOKENS)

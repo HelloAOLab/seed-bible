@@ -1492,7 +1492,6 @@
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   box-shadow: 0 10px 30px #00000014;
-  z-index: 40;
 }
 
 .sb-tab-menu-item:hover {

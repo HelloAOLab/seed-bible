@@ -404,7 +404,7 @@
   border-radius: var(--sb-radius-xl);
   background: var(--sb-reader-background);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-  z-index: 50;
+  z-index: var(--sb-layer-popover);
   /* The corner by its button, for the opening animation below. */
   transform-origin: top left;
 }

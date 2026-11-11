@@ -219,7 +219,7 @@ export function BibleSelector(props: BibleSelectorProps) {
               ? {
                   position: "fixed",
                   boxSizing: "border-box",
-                  zIndex: 10000,
+                  zIndex: "calc(var(--sb-layer-tour) + 1)",
                   ...layout.style,
                 }
               : {
@@ -230,7 +230,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                   width: "100%",
                   maxWidth: "28.625rem",
                   boxSizing: "border-box",
-                  zIndex: 10000,
+                  zIndex: "calc(var(--sb-layer-tour) + 1)",
                 }
           }
           onClick={(event: MouseEvent) => event.stopPropagation()}
