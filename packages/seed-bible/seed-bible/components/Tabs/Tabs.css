@@ -1826,12 +1826,13 @@
     width: 100%;
   }
 
-  .sb-selector-mobile-close {
+  /* The Tabs button opposite the Books close button, and the same size. */
+  .sb-selector-mobile-tabs {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border: none;
     background: transparent;
     color: color-mix(in srgb, var(--sb-font-color), transparent 25%);

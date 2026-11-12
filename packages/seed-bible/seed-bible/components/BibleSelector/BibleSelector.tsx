@@ -389,7 +389,7 @@ const SearchBar = (props: {
                 {t("books", { defaultValue: "Books" })}
               </span>
               <button
-                class="sb-selector-mobile-close"
+                class="sb-selector-mobile-tabs"
                 onClick={() => openTabs()}
               >
                 <SbTabsIcon />
