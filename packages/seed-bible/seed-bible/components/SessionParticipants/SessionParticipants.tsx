@@ -9,10 +9,10 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
   Avatar,
-  SessionUserAvatar,
   getUserDisplayName,
   getUserSessionRole,
   sessionRoleLabel,
+  SessionUserAvatar,
   sortUsersByRole,
 } from "../Avatar/Avatar";
 import {
@@ -21,6 +21,7 @@ import {
   openShareSessionModal,
 } from "../Tabs/Tabs";
 import { MaterialIcon } from "../icons";
+import { ParticipantFollowButton } from "../FollowReading/ParticipantFollowButton";
 import {
   AskToComeBackButton,
   getParticipantLocation,
@@ -315,6 +316,7 @@ export function SessionParticipantList({
             displayName={getUserDisplayName(user)}
           />
         )}
+        <ParticipantFollowButton session={session} user={user} />
       </li>
     );
   };

@@ -24,6 +24,18 @@ import type {
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
+import {
+  canFollowParticipant,
+  DEFAULT_FOLLOW_MODE,
+  FOLLOW_DETACH_MS,
+  FOLLOW_SCROLL_IGNORE_MS,
+  followAfterUserScroll,
+  followAnchorForLeader,
+  leaderVerseSpan,
+  parseFollowMode,
+  type FollowMode,
+  type LeaderReadingPosition,
+} from "./followReading";
 
 export interface ConnectionSessionUserVisual {
   defaultIcon: string;
@@ -139,6 +151,18 @@ export type SessionStartPosition = Pick<
 >;
 export type VerseSelectionEffectVisibility = "hosts-only" | "everyone" | "none";
 
+export type { FollowMode, LeaderReadingPosition };
+
+/**
+ * Local decision to track one participant's reading position. Not shared:
+ * each reader chooses who they follow, and a pause is just this reader
+ * having scrolled away.
+ */
+export interface SessionFollow {
+  connectionId: string;
+  status: "active" | "paused";
+}
+
 export interface SessionOptions {
   allowedNavigators: string[] | null;
   allowedDecorators: string[] | null;
@@ -176,6 +200,12 @@ export interface SessionOptions {
    */
   coHostUserIds: string[];
   verseSelectionEffectVisibility: VerseSelectionEffectVisibility;
+  /**
+   * Who can follow another participant's exact reading position, and whether
+   * joiners start out following the host. Chapter sync is separate and is
+   * still controlled by `allowedNavigators`.
+   */
+  followMode: FollowMode;
 }
 
 /**
@@ -338,6 +368,7 @@ const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   shareTranslation: false,
   coHostUserIds: [],
   verseSelectionEffectVisibility: "hosts-only",
+  followMode: DEFAULT_FOLLOW_MODE,
 };
 
 function getSessionDataSnapshot(
@@ -410,6 +441,7 @@ function getSessionOptionsFromMap(
         ? rawShareTranslation
         : DEFAULT_SESSION_OPTIONS.shareTranslation,
     coHostUserIds: toStringArrayOrNull(optionsMap.get("coHostUserIds")) ?? [],
+    followMode: parseFollowMode(optionsMap.get("followMode")),
   };
 }
 
@@ -441,7 +473,8 @@ function sessionOptionsMatch(
       right.verseSelectionEffectVisibility &&
     left.endedAt === right.endedAt &&
     left.shareTranslation === right.shareTranslation &&
-    stringArraysMatch(left.coHostUserIds, right.coHostUserIds)
+    stringArraysMatch(left.coHostUserIds, right.coHostUserIds) &&
+    left.followMode === right.followMode
   );
 }
 
@@ -770,6 +803,44 @@ export interface BibleReadingSession {
    * is null or empty every participant may decorate.
    */
   userCanDecorate: (sessionId: string) => boolean;
+
+  /**
+   * Who this reader is following, or null. `paused` means they scrolled
+   * away and can resume without picking the person again.
+   */
+  follow: ReadonlySignal<SessionFollow | null>;
+  /**
+   * The verse pinned to the top of this reader while following. Null until
+   * the leader has reported a verse range.
+   */
+  followAnchor: ReadonlySignal<number | null>;
+  /**
+   * Asks the reader to put `verse` at the top of the screen. A new `token`
+   * is a new request, including a request for a verse it already asked for
+   * (resume jumps back even when the number has not changed).
+   */
+  followScroll: ReadonlySignal<{ verse: number; token: number } | null>;
+  /** Whether this reader is allowed to follow `user` under the current mode. */
+  canFollowUser: (user: ConnectedSessionUser) => boolean;
+  /**
+   * Follow `connectionId`. Returns false when the mode, a missing
+   * participant, or following yourself rules it out.
+   */
+  followUser: (connectionId: string) => boolean;
+  stopFollowing: () => void;
+  /** Jump back to the person we scrolled away from and follow them again. */
+  resumeFollowing: () => void;
+  /**
+   * The reader calls this for a scroll the user made by hand. Moves the
+   * anchor inside the leader's verses, or detaches once the view stays
+   * outside them.
+   */
+  noteFollowScroll: () => void;
+  /**
+   * True while the user's finger, wheel, or keys are scrolling the reader,
+   * so a follow alignment does not drag the page out from under them.
+   */
+  setFollowScrollGesture: (active: boolean) => void;
 }
 
 /**
@@ -898,6 +969,9 @@ async function createBibleReadingSession(
       if (optionsMap.get("coHostUserIds") === undefined) {
         optionsMap.set("coHostUserIds", defaultOptions.coHostUserIds);
       }
+      if (optionsMap.get("followMode") === undefined) {
+        optionsMap.set("followMode", defaultOptions.followMode);
+      }
     });
   }
 
@@ -979,6 +1053,45 @@ async function createBibleReadingSession(
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
   let applyingRemoteExtensions = false;
+
+  const followState = signal<SessionFollow | null>(null);
+  const followAnchor = signal<number | null>(null);
+  const followScroll = signal<{ verse: number; token: number } | null>(null);
+  const followRevision = signal(0);
+  let followScrollToken = 0;
+  let appliedPositionKey = "";
+  let appliedBookId = "";
+  let appliedChapter = 0;
+  /**
+   * A leader position whose chapter failed to load. Kept separate from
+   * `appliedPositionKey` so a later signal change does not look like the
+   * reader scrolled away, and so the same position is not requested again
+   * on every signal change. A new position from the leader, or follow
+   * starting over, clears it.
+   */
+  let failedPositionKey = "";
+  /**
+   * Chapter a follow navigation moved this reader to. Publishing that same
+   * chapter would drag the whole session along behind one person's follow,
+   * so local publish is suppressed while the reader is still there. Cleared
+   * when follow ends and when the reader leaves that chapter, so a later
+   * visit publishes normally.
+   */
+  let followLockedPosition: { bookId: string; chapterNumber: number } | null =
+    null;
+  /** True while a follow navigation is writing the local book and chapter. */
+  let applyingFollowNavigation = false;
+  let followSyncRunning = false;
+  let followSyncQueued = false;
+  /**
+   * Set when this reader picks someone or stops on purpose, so auto-follow
+   * does not immediately put them back on the host.
+   */
+  let suppressAutoFollow = false;
+  let seenFollowMode: FollowMode | null = null;
+  let userScrollActive = false;
+  let ignoreFollowScrollUntil = 0;
+  let followDetachTimer: ReturnType<typeof setTimeout> | null = null;
 
   const userCanNavigate = (sessionId: string): boolean => {
     // Hosts and co-hosts may always navigate, even when restricted.
@@ -1323,7 +1436,21 @@ async function createBibleReadingSession(
   syncDecorationsFromSession();
 
   const mapSubscription = stateMap.changes.subscribe(() => {
+    // The "Group is on …" label, Rejoin, and the participants list all
+    // read this. It has to move while following too, or they keep offering
+    // the chapter the group has already left.
     refreshGroupPosition();
+
+    // The group's chapter must not pull the reader off the person they
+    // follow. When follow ends they stay where they are; Rejoin, now
+    // pointing at the current group chapter, is the way back. A local echo
+    // that arrives during the follow is dropped so the next real group
+    // move is not mistaken for our own write.
+    if (followState.peek()?.status === "active") {
+      lastLocallyWrittenState = null;
+      return;
+    }
+
     const nextSessionData = getSessionDataFromMap(stateMap);
 
     if (
@@ -1545,7 +1672,7 @@ async function createBibleReadingSession(
     const shareTranslation = options.value.shareTranslation;
     const canNavigate = userCanNavigate(localSessionId.value);
 
-    if (applyingRemoteState || !canNavigate) {
+    if (applyingRemoteState || applyingFollowNavigation || !canNavigate) {
       return null;
     }
 
@@ -1571,6 +1698,19 @@ async function createBibleReadingSession(
 
     if (sessionDataMatches(nextSessionData, currentSessionData)) {
       return null;
+    }
+
+    // The lock covers only the chapter follow moved us onto, and only while
+    // we are still on it. Leaving that chapter drops the lock, so coming
+    // back later publishes like any other navigation.
+    if (followLockedPosition) {
+      if (
+        nextSessionData.bookId === followLockedPosition.bookId &&
+        nextSessionData.chapterNumber === followLockedPosition.chapterNumber
+      ) {
+        return null;
+      }
+      followLockedPosition = null;
     }
 
     return nextSessionData;
@@ -1840,6 +1980,398 @@ async function createBibleReadingSession(
     });
   }
 
+  const userIsSelf = (user: ConnectedSessionUser): boolean =>
+    user.isSelf || user.connectionId === localConnectionId;
+
+  const targetIsHost = (user: ConnectedSessionUser): boolean =>
+    isSessionHost(options.peek(), user.userId) ||
+    isSessionHost(options.peek(), user.connectionId);
+
+  const canFollowUser = (user: ConnectedSessionUser): boolean =>
+    canFollowParticipant({
+      mode: options.peek().followMode,
+      isSelf: userIsSelf(user),
+      targetIsHost: targetIsHost(user),
+    });
+
+  const clearFollowDetachTimer = () => {
+    if (followDetachTimer !== null) {
+      clearTimeout(followDetachTimer);
+      followDetachTimer = null;
+    }
+  };
+
+  const clearFollow = () => {
+    clearFollowDetachTimer();
+    followLockedPosition = null;
+    failedPositionKey = "";
+    followAnchor.value = null;
+    appliedPositionKey = "";
+    appliedBookId = "";
+    appliedChapter = 0;
+    if (followState.peek() !== null) {
+      followState.value = null;
+    }
+  };
+
+  const beginFollow = (connectionId: string) => {
+    clearFollowDetachTimer();
+    // Clicking follow or resume is a decision to jump there now, even if a
+    // scroll gesture was still marked active.
+    userScrollActive = false;
+    failedPositionKey = "";
+    followAnchor.value = null;
+    appliedPositionKey = "";
+    appliedBookId = "";
+    appliedChapter = 0;
+    followState.value = { connectionId, status: "active" };
+  };
+
+  const requestFollowScroll = (verse: number, force: boolean) => {
+    const follow = followState.peek();
+    const leader = follow
+      ? participantPositions.peek().get(follow.connectionId)
+      : undefined;
+    const sameChapter =
+      !!leader &&
+      readingState.bookId.peek() === leader.bookId &&
+      readingState.chapterNumber.peek() === leader.chapterNumber;
+    const range = readingState.visibleVerseRange.peek();
+    // Skip only when the screen already starts on this verse. The last
+    // request is not enough: a hand scroll can leave the reader elsewhere
+    // and the next request can be the same verse number again.
+    if (!force && sameChapter && range?.first === verse) {
+      return;
+    }
+    followScrollToken += 1;
+    ignoreFollowScrollUntil = Date.now() + FOLLOW_SCROLL_IGNORE_MS;
+    followScroll.value = { verse, token: followScrollToken };
+  };
+
+  const pauseFollow = () => {
+    const current = followState.peek();
+    if (!current || current.status !== "active") {
+      return;
+    }
+    clearFollowDetachTimer();
+    followState.value = { ...current, status: "paused" };
+  };
+
+  const readScrollDecision = () => {
+    const follow = followState.peek();
+    const leader = follow
+      ? (participantPositions.peek().get(follow.connectionId) ?? null)
+      : null;
+    return followAfterUserScroll({
+      anchorVerse: followAnchor.peek(),
+      leader,
+      localBookId: readingState.bookId.peek(),
+      localChapter: readingState.chapterNumber.peek(),
+      localRange: readingState.visibleVerseRange.peek(),
+    });
+  };
+
+  /**
+   * Moves the local reader onto the leader's chapter and verse.
+   *
+   * The move is not published. Follow is one reader's view of someone else,
+   * and publishing it would drag every participant to that chapter.
+   */
+  const applyLeaderOnce = async () => {
+    const follow = followState.peek();
+    if (!follow || follow.status !== "active") {
+      return;
+    }
+    const leader = participantPositions.peek().get(follow.connectionId);
+    if (!leader) {
+      return;
+    }
+
+    const positionKey = [
+      leader.bookId,
+      leader.chapterNumber,
+      leader.firstVerse ?? "",
+      leader.lastVerse ?? "",
+    ].join(":");
+    // This chapter already failed to load. Wait for a new position, or for
+    // follow to start over, instead of treating the miss as a hand scroll
+    // or requesting it again on every signal change.
+    if (failedPositionKey !== "" && positionKey === failedPositionKey) {
+      return;
+    }
+    const localBook = readingState.bookId.peek();
+    const localChapter = readingState.chapterNumber.peek();
+    const userMoved =
+      appliedPositionKey !== "" &&
+      appliedPositionKey === positionKey &&
+      (localBook !== leader.bookId || localChapter !== leader.chapterNumber);
+    if (userMoved && !applyingFollowNavigation) {
+      pauseFollow();
+      return;
+    }
+
+    // A scroll that has already left their verses is about to detach. Don't
+    // pull the page back while that decision is still settling, and don't
+    // fight a finger that's still down. A position we already applied on
+    // this chapter stays put too: hand scrolls own the anchor until the
+    // leader actually moves.
+    const alreadyApplied = appliedPositionKey === positionKey;
+    // They've scrolled outside and we're waiting to see if they stay there.
+    // Applying the leader now would yank them back before that settles.
+    if (followDetachTimer !== null) {
+      return;
+    }
+    if (userScrollActive && !alreadyApplied) {
+      return;
+    }
+    if (
+      alreadyApplied &&
+      localBook === leader.bookId &&
+      localChapter === leader.chapterNumber
+    ) {
+      return;
+    }
+
+    const span = leaderVerseSpan(leader);
+    const resetAnchor =
+      appliedBookId !== "" &&
+      (appliedBookId !== leader.bookId ||
+        appliedChapter !== leader.chapterNumber);
+    const anchor = followAnchorForLeader(
+      span,
+      followAnchor.peek(),
+      resetAnchor
+    );
+    if (anchor !== followAnchor.peek()) {
+      followAnchor.value = anchor;
+    }
+
+    const fresh = appliedPositionKey === "";
+    const previousLock = followLockedPosition;
+    appliedPositionKey = positionKey;
+    appliedBookId = leader.bookId;
+    appliedChapter = leader.chapterNumber;
+    const sessionBook = toStringOrNull(stateMap.get("bookId"));
+    const sessionChapter = toPositiveIntOrNull(stateMap.get("chapterNumber"));
+    // Only a chapter the session itself is not already on needs locking.
+    // Locking the session's own chapter would swallow a real publish of it.
+    if (
+      sessionBook !== leader.bookId ||
+      sessionChapter !== leader.chapterNumber
+    ) {
+      followLockedPosition = {
+        bookId: leader.bookId,
+        chapterNumber: leader.chapterNumber,
+      };
+    } else {
+      followLockedPosition = null;
+    }
+
+    if (localBook !== leader.bookId || localChapter !== leader.chapterNumber) {
+      const translationId = readingState.translationId.peek();
+      if (!translationId) {
+        failedPositionKey = positionKey;
+        appliedPositionKey = "";
+        appliedBookId = "";
+        appliedChapter = 0;
+        followLockedPosition = previousLock;
+        return;
+      }
+      applyingFollowNavigation = true;
+      try {
+        await readingState.selectTranslationAndChapter(
+          translationId,
+          leader.bookId,
+          leader.chapterNumber,
+          { updateUrl: false }
+        );
+      } catch {
+        // Remember the position so it is not requested on every signal
+        // change, but do not leave it as the applied key. That key is what
+        // a later run uses to decide the reader scrolled away on purpose.
+        failedPositionKey = positionKey;
+        appliedPositionKey = "";
+        appliedBookId = "";
+        appliedChapter = 0;
+        followLockedPosition = previousLock;
+        return;
+      } finally {
+        applyingFollowNavigation = false;
+      }
+      const still = followState.peek();
+      if (
+        !still ||
+        still.status !== "active" ||
+        still.connectionId !== follow.connectionId
+      ) {
+        return;
+      }
+      const latest = participantPositions.peek().get(follow.connectionId);
+      if (
+        !latest ||
+        latest.bookId !== leader.bookId ||
+        latest.chapterNumber !== leader.chapterNumber
+      ) {
+        followSyncQueued = true;
+        return;
+      }
+    }
+
+    failedPositionKey = "";
+    if (anchor !== null && !userScrollActive) {
+      requestFollowScroll(anchor, fresh || resetAnchor);
+    }
+  };
+
+  const runFollowSync = async () => {
+    if (followSyncRunning) {
+      followSyncQueued = true;
+      return;
+    }
+    followSyncRunning = true;
+    try {
+      do {
+        followSyncQueued = false;
+        await applyLeaderOnce();
+      } while (followSyncQueued);
+    } finally {
+      followSyncRunning = false;
+    }
+  };
+
+  const stopFollowEffect = effect(() => {
+    const mode = options.value.followMode;
+    const users = connectedUsers.value;
+    const follow = followState.value;
+    void participantPositions.value;
+    void readingState.bookId.value;
+    void readingState.chapterNumber.value;
+    void followRevision.value;
+
+    if (seenFollowMode !== mode) {
+      // Switching the policy on should catch people already in the session,
+      // including someone who had chosen not to follow under the old one.
+      if (mode === "auto-host" && seenFollowMode !== null) {
+        suppressAutoFollow = false;
+      }
+      seenFollowMode = mode;
+    }
+
+    if (mode === "off") {
+      if (follow) {
+        clearFollow();
+      }
+      return;
+    }
+
+    if (follow) {
+      const target = users.find(
+        (user) => user.connectionId === follow.connectionId
+      );
+      if (!target || !canFollowUser(target)) {
+        clearFollow();
+        return;
+      }
+      if (follow.status !== "active") {
+        return;
+      }
+      void runFollowSync();
+      return;
+    }
+
+    if (suppressAutoFollow || mode !== "auto-host") {
+      return;
+    }
+    const hostId = options.value.hostUserId;
+    if (!hostId) {
+      return;
+    }
+    const host = users.find(
+      (user) =>
+        !userIsSelf(user) &&
+        (user.userId === hostId || user.connectionId === hostId)
+    );
+    if (!host) {
+      return;
+    }
+    beginFollow(host.connectionId);
+  });
+
+  const followUser = (connectionId: string): boolean => {
+    const user = connectedUsers
+      .peek()
+      .find((item) => item.connectionId === connectionId);
+    if (!user || !canFollowUser(user)) {
+      return false;
+    }
+    suppressAutoFollow = true;
+    beginFollow(connectionId);
+    return true;
+  };
+
+  const stopFollowing = () => {
+    suppressAutoFollow = true;
+    clearFollow();
+  };
+
+  const resumeFollowing = () => {
+    const current = followState.peek();
+    if (!current || current.status !== "paused") {
+      return;
+    }
+    const user = connectedUsers
+      .peek()
+      .find((item) => item.connectionId === current.connectionId);
+    if (!user || !canFollowUser(user)) {
+      clearFollow();
+      return;
+    }
+    beginFollow(current.connectionId);
+  };
+
+  const noteFollowScroll = () => {
+    const follow = followState.peek();
+    if (!follow || follow.status !== "active") {
+      return;
+    }
+    if (!userScrollActive && Date.now() < ignoreFollowScrollUntil) {
+      return;
+    }
+    const decision = readScrollDecision();
+    if (decision.action === "pause") {
+      if (followDetachTimer !== null) {
+        return;
+      }
+      followDetachTimer = setTimeout(() => {
+        followDetachTimer = null;
+        const still = followState.peek();
+        if (!still || still.status !== "active") {
+          return;
+        }
+        if (readScrollDecision().action === "pause") {
+          pauseFollow();
+        } else {
+          // They came back inside the leader's verses. Catch up to wherever
+          // the leader moved while we were waiting.
+          followRevision.value += 1;
+        }
+      }, FOLLOW_DETACH_MS);
+      return;
+    }
+    clearFollowDetachTimer();
+    if (decision.anchorVerse !== followAnchor.peek()) {
+      followAnchor.value = decision.anchorVerse;
+    }
+  };
+
+  const setFollowScrollGesture = (active: boolean) => {
+    const wasActive = userScrollActive;
+    userScrollActive = active;
+    if (wasActive && !active) {
+      followRevision.value += 1;
+    }
+  };
+
   const updateOptions = (newOptions: Partial<SessionOptions>) => {
     const currentOptions = getSessionOptionsFromMap(optionsMap);
     const nextOptions: SessionOptions = {
@@ -1875,6 +2407,10 @@ async function createBibleReadingSession(
         typeof newOptions.coHostUserIds === "undefined"
           ? currentOptions.coHostUserIds
           : newOptions.coHostUserIds,
+      followMode:
+        typeof newOptions.followMode === "undefined"
+          ? currentOptions.followMode
+          : newOptions.followMode,
     };
 
     if (sessionOptionsMatch(currentOptions, nextOptions)) {
@@ -1939,6 +2475,10 @@ async function createBibleReadingSession(
       ) {
         optionsMap.set("coHostUserIds", nextOptions.coHostUserIds);
       }
+
+      if (currentOptions.followMode !== nextOptions.followMode) {
+        optionsMap.set("followMode", nextOptions.followMode);
+      }
     });
 
     if (!sessionOptionsMatch(options.value, nextOptions)) {
@@ -1975,8 +2515,12 @@ async function createBibleReadingSession(
   };
 
   const dispose = () => {
+    stopFollowEffect();
+    clearFollowDetachTimer();
     // Publish where the reader ended up before tearing down, so closing a tab
-    // mid-skim doesn't leave peers on a chapter we already left.
+    // mid-skim doesn't leave peers on a chapter we already left. A chapter
+    // we only moved to because we were following stays locked and is not
+    // published.
     flushPendingPublish();
     mapSubscription.unsubscribe();
     optionsSubscription.unsubscribe();
@@ -2213,6 +2757,15 @@ async function createBibleReadingSession(
     localSessionId,
     userCanNavigate,
     userCanDecorate,
+    follow: followState,
+    followAnchor,
+    followScroll,
+    canFollowUser,
+    followUser,
+    stopFollowing,
+    resumeFollowing,
+    noteFollowScroll,
+    setFollowScrollGesture,
     getDecorationOwner: (decorationId: string) =>
       decorationOwners.get(decorationId),
   };

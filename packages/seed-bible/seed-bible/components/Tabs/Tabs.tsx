@@ -64,6 +64,10 @@ import {
   ParticipantName,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
+import {
+  ParticipantFollowButton,
+  openSessionParticipantsModal,
+} from "../FollowReading/ParticipantFollowButton";
 import { openReaderLocation } from "./openReaderLocation";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import { useScrollEdgeFadeRef } from "../useScrollEdgeFade";
@@ -465,6 +469,70 @@ function SessionSettingsModalContent(props: {
 
         <div className="sb-session-settings-section">
           <div className="sb-session-settings-section-title">
+            {t("session-settings-following", { defaultValue: "Following" })}
+          </div>
+          <div
+            className="sb-session-settings-follow-options"
+            role="radiogroup"
+            aria-label={t("session-settings-following", {
+              defaultValue: "Following",
+            })}
+          >
+            {(
+              [
+                ["everyone", "session-settings-follow-everyone"],
+                ["hosts-only", "session-settings-follow-hosts-only"],
+                ["auto-host", "session-settings-follow-auto-host"],
+                ["off", "session-settings-follow-off"],
+              ] as const
+            ).map(([value, labelKey]) => {
+              const selected = (options.followMode ?? "everyone") === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  className={`sb-session-settings-follow-option${
+                    selected
+                      ? " sb-session-settings-follow-option-selected"
+                      : ""
+                  }`}
+                  disabled={!isHost}
+                  onClick={() => {
+                    if (!isHost) return;
+                    session.updateOptions({ followMode: value });
+                  }}
+                >
+                  {t(labelKey)}
+                </button>
+              );
+            })}
+          </div>
+          <p className="sb-session-settings-description">
+            {(options.followMode ?? "everyone") === "hosts-only"
+              ? t("session-settings-follow-hosts-only-desc", {
+                  defaultValue:
+                    "Anyone can follow a host. Nobody follows automatically.",
+                })
+              : (options.followMode ?? "everyone") === "auto-host"
+                ? t("session-settings-follow-auto-host-desc", {
+                    defaultValue:
+                      "People follow the host when they join. They can still follow someone else.",
+                  })
+                : (options.followMode ?? "everyone") === "off"
+                  ? t("session-settings-follow-off-desc", {
+                      defaultValue: "Following is turned off for everyone.",
+                    })
+                  : t("session-settings-follow-everyone-desc", {
+                      defaultValue:
+                        "Anyone can follow anyone else. Nobody follows automatically.",
+                    })}
+          </p>
+        </div>
+
+        <div className="sb-session-settings-section">
+          <div className="sb-session-settings-section-title">
             {t("session-settings-section-sharing", { defaultValue: "Sharing" })}
           </div>
 
@@ -573,6 +641,7 @@ function SessionSettingsModalContent(props: {
                         displayName={getUserDisplayName(user)}
                       />
                     )}
+                    <ParticipantFollowButton session={session} user={user} />
                     {isHost && !isHostUser && (
                       <button
                         type="button"
@@ -1372,6 +1441,22 @@ function TabRow(props: TabRowProps) {
       >
         {tab.sharedSession && (
           <>
+            <ContextMenuItem
+              className="sb-tab-menu-item"
+              onClick={() => {
+                const session = tab.sharedSession;
+                if (!session) return;
+                openSessionParticipantsModal(state, session);
+              }}
+            >
+              <MaterialIcon
+                className="sb-context-menu-item-icon"
+                aria-hidden="true"
+              >
+                group
+              </MaterialIcon>
+              <span>{t("participants", { defaultValue: "Participants" })}</span>
+            </ContextMenuItem>
             {(() => {
               const isHost = isLocalSessionHost(state, tab.sharedSession);
               if (!isHost) return null;

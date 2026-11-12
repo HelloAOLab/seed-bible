@@ -277,6 +277,21 @@
   color: var(--sb-primary-color);
 }
 
+.sb-session-settings-follow-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.sb-session-settings-follow-option {
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 84%);
+  background: transparent;
+  color: var(--sb-font-color);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.8125rem;
+}
 /* Wraps onto its own line under the name and badge. */
 .sb-session-participant-location {
   flex-basis: 100%;
@@ -416,6 +431,22 @@
   cursor: pointer;
 }
 
+.sb-session-settings-follow-option:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+.sb-session-settings-follow-option:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.sb-session-settings-follow-option-selected,
+.sb-session-settings-follow-option-selected:hover {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
+  color: var(--sb-primary-color);
+  font-weight: 600;
+}
 .sb-tab-participants-link .material-symbols-outlined {
   font-size: 1rem;
 }
