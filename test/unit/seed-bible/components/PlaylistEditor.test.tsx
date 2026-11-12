@@ -401,16 +401,23 @@ describe("the playlist editor", () => {
         expect(state.playlists.editingPlaylist.value?.title).toBe("Changed");
       });
 
-      it("asks, on going to edit the playlist again, whether to continue from the draft", () => {
+      it("asks, on going to edit the playlist again, whether to continue from the draft, saying when it was last edited", () => {
+        // 12 November 2026, 3:42 PM, where the test runs.
+        const editedAt = new Date(2026, 10, 12, 15, 42).getTime();
+        const now = vi.spyOn(Date, "now").mockReturnValue(editedAt);
         leave();
         choose("Save Draft");
+        now.mockRestore();
 
         reopen();
 
         // Not opened yet: the choice comes first.
         expect(state.playlists.editingPlaylist.value).toBeNull();
         expect(document.body.textContent).toContain(
-          "You have unsaved changes to this playlist from before."
+          `You have unsaved changes to this playlist, last edited ${new Intl.DateTimeFormat(
+            "en",
+            { dateStyle: "medium", timeStyle: "short" }
+          ).format(editedAt)}.`
         );
         expect(
           Array.from(

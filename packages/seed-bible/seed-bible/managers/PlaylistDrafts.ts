@@ -18,6 +18,8 @@ const storedPlaylistDraftSchema = () =>
     baseline: PlaylistSchema,
     /** Whether the playlist had been saved before, so it has a page. */
     saved: z.boolean(),
+    /** When it was last edited, to say how old it is. */
+    editedAtMs: z.number().optional(),
   });
 
 export type StoredPlaylistDraft = z.infer<

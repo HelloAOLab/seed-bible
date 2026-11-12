@@ -3919,7 +3919,8 @@ export function createSeedBibleState(
   // whether to carry on from them (see `playlists.editorDraftChoice`).
   const PLAYLIST_DRAFT_CHOICE_MODAL_ID = "playlist-draft-choice";
   effect(() => {
-    if (!playlists.editorDraftChoice.value) {
+    const choice = playlists.editorDraftChoice.value;
+    if (!choice) {
       modals.closeModal(PLAYLIST_DRAFT_CHOICE_MODAL_ID);
       return;
     }
@@ -3932,6 +3933,7 @@ export function createSeedBibleState(
         },
         content: () => (
           <PlaylistDraftChoice
+            editedAtMs={choice.editedAtMs}
             onContinue={playlists.continueEditorDraft}
             onDiscard={playlists.discardEditorDraft}
           />

@@ -2405,7 +2405,11 @@ export function createPlaylistManager(
    * A playlist the user went to edit that has a draft kept from before, until
    * they choose whether to continue from it or discard it.
    */
-  const editorDraftChoice = signal<Playlist | null>(null);
+  const editorDraftChoice = signal<{
+    playlist: Playlist;
+    /** When the draft was last edited, when that's known. */
+    editedAtMs: number | null;
+  } | null>(null);
 
   /**
    * Opens an existing playlist for editing: sets `editingPlaylist` to a copy of
@@ -2414,8 +2418,12 @@ export function createPlaylistManager(
    * asks first whether to continue from them (see `editorDraftChoice`).
    */
   const editPlaylist = (playlist: Playlist): void => {
-    if (currentDraftFor(playlist)) {
-      editorDraftChoice.value = playlist;
+    const kept = currentDraftFor(playlist);
+    if (kept) {
+      editorDraftChoice.value = {
+        playlist,
+        editedAtMs: kept.editedAtMs ?? null,
+      };
       return;
     }
     restorePlaylistForEditing(playlist);
@@ -2423,7 +2431,7 @@ export function createPlaylistManager(
 
   /** Opens the playlist being asked about, carrying on from its draft. */
   const continueEditorDraft = (): void => {
-    const playlist = editorDraftChoice.peek();
+    const playlist = editorDraftChoice.peek()?.playlist;
     editorDraftChoice.value = null;
     if (playlist) {
       restorePlaylistForEditing(playlist);
@@ -2432,7 +2440,7 @@ export function createPlaylistManager(
 
   /** Forgets the draft of the playlist being asked about, and opens it as saved. */
   const discardEditorDraft = (): void => {
-    const playlist = editorDraftChoice.peek();
+    const playlist = editorDraftChoice.peek()?.playlist;
     editorDraftChoice.value = null;
     if (playlist) {
       clearPlaylistDraft(getPlaylistLocator(playlist));
@@ -3880,7 +3888,12 @@ export function createPlaylistManager(
     }
     const locator = getPlaylistLocator(draft);
     if (isEditingPlaylistDirty()) {
-      writePlaylistDraft(locator, { draft, baseline, saved: editingSaved });
+      writePlaylistDraft(locator, {
+        draft,
+        baseline,
+        saved: editingSaved,
+        editedAtMs: Date.now(),
+      });
     } else {
       clearPlaylistDraft(locator);
     }

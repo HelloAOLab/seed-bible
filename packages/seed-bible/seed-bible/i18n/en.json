@@ -1319,6 +1319,7 @@
   "playlist-editor-save-draft": "Save Draft",
   "playlist-editor-save-and-publish": "Save & Publish",
   "playlist-editor-draft-found": "Continue your draft?",
+  "playlist-editor-draft-found-message-when": "You have unsaved changes to this playlist, last edited {{when}}. Continue from your draft, or discard it?",
   "playlist-editor-draft-found-message": "You have unsaved changes to this playlist from before. Continue from your draft, or discard it?",
   "playlist-editor-discard-draft": "Discard Draft",
   "playlist-editor-continue-draft": "Continue from Draft",
