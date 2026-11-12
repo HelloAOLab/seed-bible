@@ -1,6 +1,7 @@
 import "./PlaylistFinishedModal.css";
 import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
+import { Button } from "../Button/Button";
 
 /**
  * Shown when the listener advances past the last item of a playlist: says the
@@ -65,16 +66,12 @@ export function PlaylistFinishedModalContent(props: {
         </p>
       ) : null}
       <div className="sb-playlist-finished-actions">
-        <button type="button" onClick={props.onClose}>
+        <Button variant="secondary" onClick={props.onClose}>
           {t("close", { defaultValue: "Close" })}
-        </button>
-        <button
-          type="button"
-          className="sb-playlist-finished-share"
-          onClick={() => void share()}
-        >
+        </Button>
+        <Button variant="primary" onClick={() => void share()}>
           {t("share-playlist", { defaultValue: "Share playlist" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -36,6 +36,7 @@ import {
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
 import { DiscoverPanelLayout } from "../Discover/DiscoverPanelHeader";
+import { Button } from "../Button/Button";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
@@ -69,27 +70,15 @@ function UnsavedChangesConfirmModalContent(props: {
         })}
       </p>
       <div className="sb-confirm-delete-actions sb-unsaved-changes-actions">
-        <button
-          type="button"
-          className="sb-photo-modal-button"
-          onClick={onConfirm}
-        >
+        <Button variant="secondary" onClick={onConfirm}>
           {t("confirm", { defaultValue: "Confirm" })}
-        </button>
-        <button
-          type="button"
-          className="sb-photo-modal-button"
-          onClick={onGoBack}
-        >
+        </Button>
+        <Button variant="secondary" onClick={onGoBack}>
           {t("go-back", { defaultValue: "Go back" })}
-        </button>
-        <button
-          type="button"
-          className="sb-photo-modal-button sb-photo-modal-button-primary"
-          onClick={onSaveAndExit}
-        >
+        </Button>
+        <Button variant="primary" onClick={onSaveAndExit}>
           {t("save-and-exit", { defaultValue: "Save & exit" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
