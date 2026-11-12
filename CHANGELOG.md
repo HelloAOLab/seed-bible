@@ -11,6 +11,8 @@
 
 ### 🔧 Changed
 
+- New shared sessions start with only hosts allowed to navigate. Hosts can still let everyone navigate from the session settings.
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed

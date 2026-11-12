@@ -488,7 +488,7 @@ describe("SessionsManager", () => {
     expect(session.id).toBe("session-123");
   });
 
-  it("createSession() stores the default session options in the options map", async () => {
+  it("createSession() stores the default session options, with only the host allowed to navigate", async () => {
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
@@ -500,10 +500,12 @@ describe("SessionsManager", () => {
     const session = await manager.createSession();
 
     expect(mockDocument.getMap).toHaveBeenCalledWith("options");
-    expect(mockOptionsMap.set).toHaveBeenCalledWith("allowedNavigators", null);
+    expect(mockOptionsMap.set).toHaveBeenCalledWith("allowedNavigators", [
+      "test-config-bot-id",
+    ]);
     expect(mockOptionsMap.set).toHaveBeenCalledWith("allowedDecorators", null);
     expect(session.options.value).toEqual({
-      allowedNavigators: null,
+      allowedNavigators: ["test-config-bot-id"],
       allowedDecorators: null,
       hostUserId: "test-config-bot-id",
       highlightDurationSeconds: 16,

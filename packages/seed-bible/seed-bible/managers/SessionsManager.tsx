@@ -2264,7 +2264,13 @@ export function createSessionsManager(
       i18nManager,
       readingExtensionManager,
       id,
-      { ...DEFAULT_SESSION_OPTIONS, hostUserId },
+      {
+        ...DEFAULT_SESSION_OPTIONS,
+        hostUserId,
+        // Same value the settings modal's "Only Host can navigate" toggle
+        // writes, so new sessions open with that toggle already on.
+        allowedNavigators: [hostUserId],
+      },
       startPosition,
       getAnnotationsManager
     );
