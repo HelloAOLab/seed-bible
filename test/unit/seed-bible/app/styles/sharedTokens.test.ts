@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import {
   SHARED_TOKENS,
   SHARED_TOKENS_CSS,
+  durationMs,
 } from "@packages/seed-bible/seed-bible/app/styles/sharedTokens";
 import { tokenFamily } from "../../../../../script/stylelint/useDesignTokensRule.mjs";
 
@@ -52,5 +53,10 @@ describe("shared tokens", () => {
     expect(SHARED_TOKENS_CSS.split("\n")).toEqual(
       Object.entries(SHARED_TOKENS).map(([name, value]) => `${name}: ${value};`)
     );
+  });
+
+  it("give speeds in milliseconds for JS timers", () => {
+    expect(durationMs("--sb-duration-fast")).toBe(150);
+    expect(durationMs("--sb-duration-slow")).toBe(300);
   });
 });

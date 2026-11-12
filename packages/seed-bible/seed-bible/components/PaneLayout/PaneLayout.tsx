@@ -4,6 +4,7 @@ import { PaneHeader } from "../PaneHeader/PaneHeader";
 import type { Pane, PanesManager } from "../../managers/PanesManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { UI_SIZE_SCALE_MAP } from "../../managers/SettingsManager";
+import { durationMs } from "../../app/styles/sharedTokens";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 
@@ -305,8 +306,8 @@ interface SidePaneProps {
   pane: Pane;
 }
 
-/** How long a docked pane takes to slide in or out; matches `--sb-duration-slow`. */
-const SIDE_PANE_SLIDE_MS = 300;
+/** How long a docked pane takes to slide in or out (the CSS uses the same token). */
+const SIDE_PANE_SLIDE_MS = durationMs("--sb-duration-slow");
 
 /**
  * How soon after a click or key press a pane change still counts as the

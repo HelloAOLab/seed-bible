@@ -44,3 +44,17 @@ export const SHARED_TOKENS = {
 export const SHARED_TOKENS_CSS = Object.entries(SHARED_TOKENS)
   .map(([name, value]) => `${name}: ${value};`)
   .join("\n");
+
+type DurationToken = Extract<
+  keyof typeof SHARED_TOKENS,
+  `--sb-duration-${string}`
+>;
+
+/**
+ * A speed token in milliseconds, for a timer that has to wait out a CSS
+ * transition using the same token.
+ */
+export function durationMs(token: DurationToken): number {
+  const value: string = SHARED_TOKENS[token];
+  return value.endsWith("ms") ? parseFloat(value) : parseFloat(value) * 1000;
+}
