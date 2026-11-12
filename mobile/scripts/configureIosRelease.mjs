@@ -11,6 +11,7 @@
 //     --profile <profile name> --version <1.2.3> --build <42>
 
 import { readFileSync, writeFileSync } from "node:fs";
+import process from "node:process";
 import { pathToFileURL } from "node:url";
 
 const quote = (value) => `"${String(value).replace(/(["\\])/g, "\\$1")}"`;
