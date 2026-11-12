@@ -20,34 +20,37 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
-/* The header's buttons are round in this pane. The close button belongs to the
-   shared pane chrome, so it's only restyled in headers carrying this pane's
-   own button. */
-.sb-references-header-button,
-.sb-pane-header:has(.sb-references-header-button) .sb-pane-header-close-button {
+/* The header's buttons are round and tinted in this pane. The close button
+   belongs to the shared pane chrome, so it's only restyled in headers carrying
+   this pane's own button, and it gets the shared CloseButton's tinted look. */
+.sb-references-header-button {
   width: 2rem;
   min-width: 2rem;
   height: 2rem;
   border-radius: var(--sb-radius-full);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 91%);
+}
+
+.sb-pane-header:has(.sb-references-header-button) .sb-close-button {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-close-button-icon-size: 1.125rem;
+
+  background: color-mix(in srgb, var(--sb-close-button-color), transparent 91%);
+  color: var(--sb-close-button-color);
 }
 
 /* Two classes, to outrank the app-wide `body .material-symbols-outlined`
    size. A line-height of 1 makes the glyph's box its own size, so centering
    the box centers the icon. */
-.sb-references-header-button.material-symbols-outlined,
-.sb-pane-header:has(.sb-references-header-button)
-  .sb-pane-header-close-button
-  .material-symbols-outlined {
+.sb-references-header-button.material-symbols-outlined {
   font-size: 1.125rem;
   line-height: 1;
 }
 
 @media (hover: hover) {
   .sb-references-header-button:hover,
-  .sb-pane-header:has(.sb-references-header-button)
-    .sb-pane-header-close-button:hover {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  .sb-pane-header:has(.sb-references-header-button) .sb-close-button:hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
   }
 }
 

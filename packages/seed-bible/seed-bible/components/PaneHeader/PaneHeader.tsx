@@ -1,7 +1,7 @@
 import "./PaneHeader.css";
 import type { ComponentChild } from "preact";
 import type { PaneTitle } from "../../managers/PanesManager";
-import { useI18n } from "../../i18n/I18nManager";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 export interface PaneHeaderProps {
   /**
@@ -48,8 +48,6 @@ export function PaneHeader(props: PaneHeaderProps) {
     header: Header,
     onPointerDown,
   } = props;
-  const { t } = useI18n();
-
   return (
     <div className="sb-pane-header" onPointerDown={onPointerDown}>
       {Leading && (
@@ -82,21 +80,16 @@ export function PaneHeader(props: PaneHeaderProps) {
           <Header />
         </div>
       )}
-      <button
-        className="sb-pane-header-button sb-pane-header-close-button"
-        aria-label={t("close", { defaultValue: "Close" })}
-        title={t("close", { defaultValue: "Close" })}
+      <CloseButton
+        className="sb-pane-header-close-button"
         onPointerDown={(event: PointerEvent) => {
           event.stopPropagation();
         }}
-        onClick={(event: MouseEvent) => {
+        onClose={(event) => {
           event.stopPropagation();
           onClose();
         }}
-      >
-        <span className="material-symbols-outlined">close</span>
-        <span className="sr-only">{t("close", { defaultValue: "Close" })}</span>
-      </button>
+      />
     </div>
   );
 }

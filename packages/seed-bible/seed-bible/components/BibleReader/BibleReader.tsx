@@ -103,6 +103,7 @@ import {
   measureReaderViewport,
   type ReaderViewport,
 } from "./readerViewport";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 interface ReaderChapterActionProps {
   state: SeedBibleState;
@@ -4009,17 +4010,15 @@ export function BibleReader(props: BibleReaderProps) {
                   ? ":" + selectedFootnote.value.verse.number
                   : ""}
               </h3>
-              <button
+              <CloseButton
                 className="sb-footnote-modal-close"
-                aria-label={t("close-footnote", {
+                label={t("close-footnote", {
                   defaultValue: "Close footnote",
                 })}
-                onClick={() => {
+                onClose={() => {
                   selectFootnote(null);
                 }}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
+              />
             </div>
 
             <div className="sb-footnote-modal-content">
