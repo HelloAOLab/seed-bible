@@ -84,8 +84,12 @@
   white-space: nowrap;
 }
 
-.sb-shared-toast-dismiss {
-  align-self: center;
+/* The whole height of the card is the tap area, as it was before CloseButton,
+   so a slightly missed tap dismisses rather than joining the session; the
+   circle stays 28px. Two classes, to outrank the CloseButton's own height. */
+.sb-close-button.sb-shared-toast-dismiss {
+  align-self: stretch;
+  height: auto;
 }
 
 .sb-shared-toast .sb-tab-user-icon {
