@@ -89,3 +89,29 @@
   box-shadow: 0 0 0 1px
     color-mix(in srgb, var(--sb-font-color), transparent 72%);
 }
+
+/* Reading away from the group: faded, with an arrow that says "elsewhere". */
+.sb-tab-user-away .sb-tab-user-icon {
+  opacity: 0.55;
+}
+
+.sb-tab-user-away-badge {
+  position: absolute;
+  right: -0.25rem;
+  bottom: -0.25rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sb-font-color);
+  color: var(--sb-background, #ffffff);
+  box-shadow: 0 0 0 1.5px var(--sb-background, #ffffff);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sb-tab-user-away-badge .material-symbols-outlined {
+  font-size: 0.5rem;
+}

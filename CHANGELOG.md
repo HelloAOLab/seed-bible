@@ -4,6 +4,10 @@
 
 ### ✨ Added
 
+- In a shared session where only hosts can navigate, reading a different chapter from the group now shows where the group is above the toolbar, with a Rejoin button to go back.
+- In a shared session, see who is reading elsewhere and which passage they're on: in the participants list, and on their faded avatar on the session's tab.
+  - On desktop, open the participant list right inside the session's tab. It stays open or closed the way you left it on that device.
+  - Hosts can ask someone reading elsewhere to come back. They get a request above the toolbar with Not now and Rejoin group, and the host can ask again after 30 seconds.
 - Extensions can be marked Verified, shown on their cards and pages. ([#2075](https://github.com/HelloAOLab/seed-bible/pull/2075))
   - Hovering over the Verified mark shows when the extension was verified and the reviewer's public notes.
   - Extensions built into Seed Bible are always verified, since they're reviewed with the app's own code.
