@@ -11,7 +11,11 @@ import type { ModalManager } from "../../managers/ModalManager";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import { displayNameOf } from "../../managers/Utils";
 import { useI18n } from "../../i18n/I18nManager";
-import { BusyButton } from "./FriendsPane";
+import {
+  answerFriendRequest,
+  BusyButton,
+  sendFriendRequestTo,
+} from "./friendActions";
 import { emptyProfileNote, hasEmptyProfile, PersonCard } from "./PersonCard";
 import {
   ADD_FRIEND_PARAM,
@@ -22,6 +26,12 @@ import type { FriendLinkPreviewLoader } from "../../managers/FriendLinkPreviewLo
 
 type Toast = (message: string) => void;
 type ProfileLookup = "found" | "no_account" | "failed";
+
+/**
+ * What the add-friend prompt's button does. `run` resolves false when it
+ * failed (its toast says so), which keeps the prompt open to try again.
+ */
+type LinkAction = { label: string; run: () => Promise<boolean> };
 
 export interface FriendLinkDeps {
   navigation: Pick<NavigationManager, "currentUrl" | "updateQueryParams">;
@@ -99,10 +109,10 @@ function AddFriendLinkPrompt(props: {
   const busy = useSignal(false);
   // What the prompt showed when its button was pressed. The action refreshes
   // the friends lists, and redrawing from them mid-action would flash
-  // "Loading…" (or "already sent") just before the prompt closes.
+  // "already sent" just before the prompt closes.
   const shownWhileBusy = useRef<{
     message: string;
-    action: { label: string; run: () => Promise<void> } | null;
+    action: LinkAction | null;
   } | null>(null);
   const name = displayNameOf(person, t);
 
@@ -141,14 +151,16 @@ function AddFriendLinkPrompt(props: {
     (r) => r.userId === person.userId
   );
   let message: string;
-  let action: { label: string; run: () => Promise<void> } | null = null;
+  let action: LinkAction | null = null;
 
   if (person.userId === login.userId.value) {
     message = t("add-friend-link-own", {
       defaultValue:
         "This is your own friend link. Share it so people can send you a friend request.",
     });
-  } else if (friends.isLoading.value && friends.friendIds.value.length === 0) {
+  } else if (!friends.hasLoaded.value && friends.isLoading.value) {
+    // Only the first read: a later one keeps what's known. If the first read
+    // fails, Send is still offered, and sending reads the lists again first.
     message = t("loading", { defaultValue: "Loading…" });
   } else if (friends.friendIds.value.includes(person.userId)) {
     message = t("add-friend-link-already-friends", {
@@ -169,19 +181,8 @@ function AddFriendLinkPrompt(props: {
     });
     action = {
       label: t("accept", { defaultValue: "Accept" }),
-      run: async () => {
-        const result = await friends.acceptRequest(theirRequest.id);
-        toast(
-          result.success
-            ? t("now-friends-with", {
-                name,
-                defaultValue: "You're now friends with {{name}}.",
-              })
-            : t("friend-request-unavailable", {
-                defaultValue: "That request is no longer available.",
-              })
-        );
-      },
+      run: () =>
+        answerFriendRequest(friends, toast, t, theirRequest, name, true),
     };
   } else {
     message = t("add-friend-link-confirm", {
@@ -190,40 +191,7 @@ function AddFriendLinkPrompt(props: {
     });
     action = {
       label: t("send-friend-request", { defaultValue: "Send request" }),
-      run: async () => {
-        const result = await friends.sendRequest({ userId: person.userId });
-        if (result.status === "sent") {
-          toast(
-            t("friend-request-sent-to", {
-              name,
-              defaultValue: "Friend request sent to {{name}}.",
-            })
-          );
-        } else if (result.status === "accepted") {
-          toast(
-            t("now-friends-with", {
-              name,
-              defaultValue: "You're now friends with {{name}}.",
-            })
-          );
-        } else if (result.status === "already_friends") {
-          toast(
-            t("add-friend-link-already-friends", {
-              name,
-              defaultValue: "You're already friends with {{name}}.",
-            })
-          );
-        } else if (result.status === "already_requested") {
-          toast(
-            t("add-friend-link-already-sent", {
-              name,
-              defaultValue: "You've already sent {{name}} a friend request.",
-            })
-          );
-        }
-        // The rest can't come from this prompt: your own link is caught
-        // above, a user ID is never "not found", and sending needs sign-in.
-      },
+      run: () => sendFriendRequestTo(friends, toast, t, person.userId, name),
     };
   }
 
@@ -238,15 +206,9 @@ function AddFriendLinkPrompt(props: {
     shownWhileBusy.current = { message, action };
     busy.value = true;
     try {
-      await action.run();
-      onClose();
-    } catch (error) {
-      console.error("Friend link action failed:", error);
-      toast(
-        t("friend-request-failed", {
-          defaultValue: "Couldn't send the request. Try again.",
-        })
-      );
+      if (await action.run()) {
+        onClose();
+      }
     } finally {
       busy.value = false;
       shownWhileBusy.current = null;
@@ -347,18 +309,39 @@ function FriendRequestLinkPrompt(props: {
   }
 
   if (!request) {
+    // The link is already gone from the address, so reloading wouldn't bring
+    // this prompt back: a failed read gets its own way to try again.
+    const loadFailed = !friends.hasLoaded.value && !friends.isLoading.value;
     return (
       <div className="sb-confirm-delete">
         <p className="sb-confirm-delete-message">
-          {friends.isLoading.value
-            ? t("loading", { defaultValue: "Loading…" })
-            : t("friend-request-link-unavailable", {
+          {loadFailed
+            ? t("friend-request-link-load-failed", {
                 defaultValue:
-                  "This friend request isn't available. It may have been sent to a different account, already been answered, or expired.",
-              })}
+                  "Couldn't load your friend requests. Check your connection and try again.",
+              })
+            : !friends.hasLoaded.value
+              ? t("loading", { defaultValue: "Loading…" })
+              : t("friend-request-link-unavailable", {
+                  defaultValue:
+                    "This friend request isn't available. It may have been sent to a different account, already been answered, or expired.",
+                })}
         </p>
         <PromptActions>
-          <CloseButton onClose={onClose} primary />
+          {loadFailed ? (
+            <>
+              <CloseButton onClose={onClose} />
+              <button
+                type="button"
+                className="sb-friends-button sb-friends-button--primary"
+                onClick={() => void friends.refresh()}
+              >
+                {t("try-again", { defaultValue: "Try again" })}
+              </button>
+            </>
+          ) : (
+            <CloseButton onClose={onClose} primary />
+          )}
         </PromptActions>
       </div>
     );
@@ -368,39 +351,9 @@ function FriendRequestLinkPrompt(props: {
   const answer = async (accept: boolean) => {
     answering.value = accept ? "accept" : "decline";
     try {
-      if (accept) {
-        const result = await friends.acceptRequest(request.id);
-        toast(
-          result.success
-            ? t("now-friends-with", {
-                name,
-                defaultValue: "You're now friends with {{name}}.",
-              })
-            : result.reason === "expired"
-              ? t("friend-request-expired", {
-                  defaultValue: "That request has expired.",
-                })
-              : t("friend-request-unavailable", {
-                  defaultValue: "That request is no longer available.",
-                })
-        );
-      } else {
-        await friends.declineRequest(request.id);
-        toast(
-          t("friend-request-declined", {
-            name,
-            defaultValue: "Declined {{name}}'s friend request.",
-          })
-        );
+      if (await answerFriendRequest(friends, toast, t, request, name, accept)) {
+        onClose();
       }
-      onClose();
-    } catch (error) {
-      console.error("Failed to answer friend request:", error);
-      toast(
-        t("friend-request-answer-failed", {
-          defaultValue: "Couldn't answer the request. Try again.",
-        })
-      );
     } finally {
       answering.value = null;
     }

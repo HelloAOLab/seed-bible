@@ -1662,3 +1662,10 @@
 .sb-reader-toolbar-audio-stop > svg rect {
   fill: var(--sb-reader-toolbar-background);
 }
+
+/* The session group bar sits on top of the desktop toolbar as its upper
+ * section, so the toolbar's top corners give way to the bar's. */
+.sb-reader-toolbar-has-group-bar {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
