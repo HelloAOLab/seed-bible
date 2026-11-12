@@ -128,7 +128,7 @@
   background: var(--sb-font-color);
   color: var(--sb-reader-background, #fff);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.3;
   text-align: center;
   pointer-events: none;
@@ -162,7 +162,7 @@
 
 .sb-audio-scrubber-remaining {
   flex: 0 0 auto;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-variant-numeric: tabular-nums;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }

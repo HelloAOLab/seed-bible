@@ -98,7 +98,7 @@
 
 .ftv-saved-heading {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -131,7 +131,7 @@
 }
 
 .ftv-saved-meta {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   opacity: 0.55;
 }
 
@@ -289,7 +289,7 @@
   border: none;
   cursor: pointer;
   color: var(--sb-error-color, #d64545);
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   line-height: 1;
 }
 
@@ -370,7 +370,7 @@
 .ftv-game-name {
   margin: 0;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .ftv-bar .ftv-game-name {
@@ -413,7 +413,7 @@
 
 .ftv-card-label {
   margin-bottom: 4px;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
   opacity: 0.55;
 }

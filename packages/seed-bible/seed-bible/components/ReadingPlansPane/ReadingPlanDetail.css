@@ -64,13 +64,13 @@
 
 .sb-rpd-subtitle {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
 .sb-rpd-section-title {
   margin: 4px 0 0;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
 }
 
@@ -102,7 +102,7 @@
 
 .sb-rpd-progress-count {
   flex: none;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 700;
 }
 
@@ -117,7 +117,7 @@
   padding: 6px 12px;
   border-radius: var(--sb-radius-full);
   background: var(--sb-reader-background, #fff);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
 }
 
@@ -144,7 +144,7 @@
 .sb-rpd-empty {
   margin: 8px 0;
   text-align: center;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: var(--rp-muted);
 }
 
@@ -184,7 +184,7 @@
 }
 
 .sb-rpd-day-tab-label {
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -192,7 +192,7 @@
 }
 
 .sb-rpd-day-tab-num {
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
   font-weight: 700;
   line-height: 1;
 }
@@ -294,7 +294,7 @@
   background: transparent;
   color: inherit;
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   cursor: pointer;
 }
@@ -331,7 +331,7 @@
    a link's host. Already truncated in code, but clipped here too so a long
    unbroken string can't stretch the card. */
 .sb-rpd-reading-preview {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
   min-width: 0;
   overflow: hidden;
@@ -384,12 +384,12 @@
 }
 
 .sb-rpd-reading-title {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
 .sb-rpd-reading-meta {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
@@ -404,7 +404,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -417,7 +417,7 @@
 
 .sb-rpd-reflect-text {
   margin: 8px 0 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.5;
 }
 
@@ -461,13 +461,13 @@
 .sb-rpd-footer-note {
   margin: 8px 0 0;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
 }
 
 .sb-rpd-hero-summary {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: var(--rp-muted);
 }
 
@@ -503,13 +503,13 @@
 
 .sb-rpd-celebration-title {
   margin: 0;
-  font-size: 1.375rem;
+  font-size: var(--sb-font-size-22);
   font-weight: 700;
 }
 
 .sb-rpd-celebration-subtitle {
   margin: 0 0 8px;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   color: var(--rp-muted);
 }
 

@@ -24,7 +24,7 @@
 }
 
 .sb-scripture-suggestion-book {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
 }
@@ -49,7 +49,7 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   cursor: pointer;
 }
 
@@ -85,7 +85,7 @@
 }
 
 .sb-scripture-note-label {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
 }
@@ -99,7 +99,7 @@
   background: transparent;
   color: var(--sb-primary-color);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   cursor: pointer;
 }

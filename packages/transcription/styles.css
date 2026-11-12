@@ -92,7 +92,7 @@
   color: var(--sb-font-color, #1f2937);
   font: inherit;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   cursor: pointer;
   transition:
     border-color var(--sb-duration-fast),

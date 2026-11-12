@@ -89,13 +89,13 @@
 }
 
 .settings-options-container > span:nth-of-type(1) {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 500;
   padding: 0.25rem 0.5rem 0;
 }
 
 .settings-options-container > span:nth-of-type(2) {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 100;
   padding: 0 0.5rem 0.5rem;
 }
@@ -116,7 +116,7 @@
   white-space: nowrap;
   font-weight: 400;
   padding: 0.25rem 0.5rem;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .settings-options-container > button > span {
@@ -177,7 +177,7 @@
 
 .project-state-setter > div:nth-of-type(2) > span:nth-of-type(1) {
   font-family: system-ui;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .selection-mode-toggle {
@@ -196,7 +196,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .selection-mode-toggle > span:nth-of-type(1).checked {
@@ -210,7 +210,7 @@
 }
 
 .selection-mode-toggle > span:nth-of-type(3) {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .selection-options {
@@ -284,7 +284,7 @@
   background-color: var(--sb-divider-color);
   border: solid 2px var(--sb-divider-color);
   border-radius: var(--sb-radius-full);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 500;
   display: flex;
   justify-content: center;
@@ -417,7 +417,7 @@
 }
 
 .zoom-level-selector > span {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   text-align: start;
   /* margin-bottom: 8px; */
@@ -430,7 +430,7 @@
   appearance: none;
   border: none;
   background-color: transparent;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   border-radius: calc(var(--scale-factor) * 4px);
 }
 
@@ -798,7 +798,7 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   gap: 0.375rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -838,11 +838,11 @@
 }
 
 .sb-tooltip .tooltip-reading-history-content > span:nth-of-type(2) {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-tooltip .tooltip-reading-history-content > span:nth-of-type(3) {
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   color: var(--gray2-color);
 }
 

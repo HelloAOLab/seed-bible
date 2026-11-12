@@ -26,13 +26,13 @@
 
 .sb-play-playlist-author {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
 .sb-play-playlist-description {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   opacity: 0.8;
   white-space: pre-line;
 }

@@ -26,7 +26,7 @@
   min-height: 1.25rem;
   padding: 8px 16px 0;
   padding-inline: calc(var(--rp-column-inset) + 16px);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
   text-align: end;
   white-space: nowrap;
@@ -59,14 +59,14 @@
 }
 
 .sb-rp-field-label {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   color: var(--rp-muted);
 }
 
 .sb-rp-hint {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
@@ -86,7 +86,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
 }
 
 .sb-rp-text-input:focus-visible {
@@ -267,12 +267,12 @@
   border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--rp-accent) 18%, transparent);
   color: var(--rp-accent);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 700;
 }
 
 .sb-rp-session-name {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -282,7 +282,7 @@
 .sb-rp-session-count {
   margin-inline-start: auto;
   flex: none;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
 }
 
@@ -305,7 +305,7 @@
   background: transparent;
   color: var(--rp-accent);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   cursor: pointer;
 }
@@ -323,12 +323,12 @@
 }
 
 .sb-rp-choice-title {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
 .sb-rp-choice-description {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
@@ -356,7 +356,7 @@
 
 .sb-rp-empty-day {
   margin: 4px 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
   text-align: center;
 }
@@ -428,7 +428,7 @@
 }
 
 .sb-rp-reading-label {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   min-width: 0;
   overflow: hidden;
@@ -444,7 +444,7 @@
    a link's host. Already truncated in code, but clipped here too so a long
    unbroken string can't stretch the row. */
 .sb-rp-reading-preview {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
   min-width: 0;
   overflow: hidden;
@@ -519,14 +519,14 @@
 
 .sb-rp-footer-note {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
   text-align: center;
 }
 
 .sb-rp-error {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: #dc2626;
 }
 
@@ -539,7 +539,7 @@
   padding: 11px 18px;
   border-radius: var(--sb-radius-md);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 500;
   cursor: pointer;
   transition: opacity var(--sb-duration-fast) ease;

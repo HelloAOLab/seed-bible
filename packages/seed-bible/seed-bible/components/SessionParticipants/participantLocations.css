@@ -10,7 +10,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;

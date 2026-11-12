@@ -8,13 +8,13 @@
 
 .sb-photo-chooser-heading {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
 .sb-photo-chooser-empty {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: color-mix(in srgb, var(--sb-font-color) 70%, transparent);
 }
 

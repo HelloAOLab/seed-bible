@@ -3046,10 +3046,10 @@ export function BibleReader(props: BibleReaderProps) {
   };
 
   // Reader glyph size is its own knob, independent of the UI-scale (`rem`)
-  // system. Anchoring `.sb-font-size-*` here (rather than on the chrome root)
-  // keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
+  // system. Anchoring `.sb-reader-font-size-*` here (rather than on the chrome
+  // root) keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
   // tied to the reader setting, while chrome inherits the UI scale from `html`.
-  const readerFontSizeClass = `sb-font-size-${(
+  const readerFontSizeClass = `sb-reader-font-size-${(
     state?.settings?.settings.value.fontSize ?? "M"
   ).toLowerCase()}`;
 

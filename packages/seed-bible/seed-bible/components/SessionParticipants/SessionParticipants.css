@@ -55,7 +55,7 @@
     var(--sb-reader-background)
   );
   color: var(--sb-font-color);
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
   box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
 }
@@ -95,7 +95,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   color: var(--sb-font-color);
 }
 
@@ -106,13 +106,13 @@
 }
 
 .sb-session-participants-list-location {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
 .sb-session-participants-section-title {
   margin: 0.75rem 0.5rem 0.125rem;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -137,7 +137,7 @@
   border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-primary-color);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 500;
   font-family: inherit;
   text-align: start;
@@ -171,7 +171,7 @@
   border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-primary-color);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 500;
   font-family: inherit;
   text-align: start;
@@ -216,7 +216,7 @@
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   background-size: cover;
   background-position: center;
 }
@@ -239,12 +239,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-session-participant-badge {
   flex-shrink: 0;
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -261,7 +261,7 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
   padding: 0.3125rem 0.625rem;
   border-radius: var(--sb-radius-md);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-family: inherit;
   cursor: pointer;
   transition: background-color var(--sb-duration-fast) ease;
@@ -282,7 +282,7 @@
   flex-basis: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
@@ -310,7 +310,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
   cursor: pointer;
 }
@@ -344,7 +344,7 @@
 
 .sb-tab-participants-title {
   flex: 1;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
 }
 
@@ -369,7 +369,7 @@
 /* The shared list, tightened to fit the sidebar. */
 .sb-tab-participants .sb-session-participants-section-title {
   margin: 0.5rem 0 0;
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
 }
 
 .sb-tab-participants .sb-session-participants-list-item {
@@ -378,17 +378,17 @@
 }
 
 .sb-tab-participants .sb-session-participants-list-name {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-tab-participants .sb-session-participants-list-location {
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
 }
 
 .sb-tab-participants .sb-ask-come-back {
   min-height: 1.875rem;
   padding: 0 0.625rem;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
 }
 
 .sb-tab-participants-footer {
@@ -410,7 +410,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
   text-align: start;
   cursor: pointer;

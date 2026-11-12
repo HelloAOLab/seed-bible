@@ -31,7 +31,7 @@
   align-items: baseline;
   column-gap: 0.375rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-bookmark-label-chapter {
@@ -41,7 +41,7 @@
 /* Matches the translation label on a tab row. */
 .sb-bookmark-label-translation {
   font-weight: 500;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   letter-spacing: 0.02em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -71,7 +71,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   box-sizing: border-box;
 }
 
@@ -159,7 +159,7 @@
 .sb-bookmark-picker-hint {
   margin: 0;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-bookmark-picker-new-heading {
@@ -169,7 +169,7 @@
   align-items: center;
   gap: 0.625rem;
   padding: 0.75rem 0.875rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: var(--sb-font-color);
 }
 
@@ -185,7 +185,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   text-align: start;
   cursor: pointer;
 }
@@ -251,7 +251,7 @@
   background: transparent;
   color: var(--sb-primary-color);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   padding: 0.25rem 0;
   cursor: pointer;
@@ -269,7 +269,7 @@
 .sb-bookmark-cap-note {
   margin: 0;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 /* The edit modal: the form over its Cancel and Save. */
@@ -294,7 +294,7 @@
   padding: 0 1rem;
   border-radius: var(--sb-radius-md);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   cursor: pointer;
   border: 1px solid transparent;
@@ -344,7 +344,7 @@
   margin: 0;
   padding: 0.5rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-bookmarks-panel-row {
@@ -371,7 +371,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   text-align: start;
   cursor: pointer;
 }

@@ -61,7 +61,7 @@
 
 .sb-floating-search-status {
   padding: 0.875rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
@@ -102,7 +102,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-floating-search-result-ref {
@@ -112,7 +112,7 @@
 
 .sb-floating-search-result-sep {
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   line-height: 1;
 }
 
@@ -158,7 +158,7 @@
 
 .sb-floating-search-result-text {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
 }
@@ -177,7 +177,7 @@
 }
 
 .sb-floating-search-section-title {
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -255,7 +255,7 @@
   margin: 0;
   min-width: 0;
   flex: 1;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.3;
   font-weight: 700;
   color: var(--sb-font-color);
@@ -359,7 +359,7 @@
 }
 
 .sb-floating-chat-ai-context-item-tools {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-menu-font-color), transparent 40%);
 }
 
@@ -384,7 +384,7 @@
   justify-content: center;
   background: color-mix(in srgb, var(--sb-font-color), transparent 87%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 14%);
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -625,7 +625,7 @@
 .sb-floating-chat-list-item-title {
   flex: 1;
   min-width: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   color: var(--sb-font-color);
   white-space: nowrap;
@@ -641,7 +641,7 @@
 }
 
 .sb-floating-chat-list-item-time {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
@@ -653,7 +653,7 @@
   align-items: center;
   justify-content: center;
   padding: 0 0.375rem;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
   color: var(--sb-primary-font-color);
   background: var(--sb-primary-color);
@@ -661,7 +661,7 @@
 
 .sb-floating-chat-list-item-preview {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.45;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
   white-space: nowrap;
@@ -688,14 +688,14 @@
 
 .sb-floating-chat-empty-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   color: var(--sb-font-color);
 }
 
 .sb-floating-chat-empty-body {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }

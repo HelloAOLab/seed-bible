@@ -3,7 +3,7 @@
   flex-direction: column;
   gap: 0.75rem;
   color: var(--sb-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.5;
 }
 
@@ -14,7 +14,7 @@
 .sb-extension-consent-source,
 .sb-extension-consent-note {
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-extension-consent-text {
@@ -102,7 +102,7 @@
 .sb-extension-consent-relation {
   padding: 0.0625rem 0.5rem;
   border-radius: var(--sb-radius-full);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
 }
 
@@ -123,7 +123,7 @@
   padding: 0.75rem 0.875rem;
   border-radius: var(--sb-radius-xl);
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-extension-consent-notice-icon {
@@ -138,7 +138,7 @@
 
 .sb-extension-consent-section-title {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -213,7 +213,7 @@
 
 .sb-extension-consent-card-title {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
@@ -232,7 +232,7 @@
   margin-inline-start: 0.5rem;
   padding: 0.0625rem 0.5rem;
   border-radius: var(--sb-radius-full);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
   color: #8a3a12;
   background: #fdf0e6;
@@ -294,7 +294,7 @@
 
 .sb-extension-request-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
   line-height: 1.3;
   font-weight: 600;
 }
@@ -326,7 +326,7 @@
 
 .sb-extension-request-box-title {
   margin: 0 0 0.5rem;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -361,7 +361,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
 }
 
 .sb-extension-request-lines li {
@@ -437,7 +437,7 @@
   min-height: 2.75rem;
   padding: 0 1.25rem;
   border-radius: var(--sb-radius-full);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -466,7 +466,7 @@
 }
 
 .sb-extension-permissions-name {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
@@ -491,7 +491,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
 }
@@ -549,7 +549,7 @@
   min-height: 2.75rem;
   padding: 0 1.25rem;
   border-radius: var(--sb-radius-full);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;

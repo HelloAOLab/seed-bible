@@ -86,7 +86,7 @@
   border: none;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   box-shadow: 0 1px 4px var(--sb-shadow-color);
 }
@@ -126,7 +126,7 @@
 .sb-geojson-map .leaflet-container .leaflet-control-attribution {
   background: color-mix(in srgb, var(--sb-reader-background), transparent 15%);
   color: var(--sb-primary-color);
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
 }
 
 .sb-geojson-map .leaflet-container .leaflet-control-attribution a {
@@ -183,7 +183,7 @@
   text-align: center;
   background: var(--sb-reader-background);
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-geojson-map-retry {

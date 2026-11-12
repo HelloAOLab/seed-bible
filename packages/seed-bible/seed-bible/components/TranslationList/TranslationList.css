@@ -84,7 +84,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   cursor: pointer;
 }
 
@@ -100,7 +100,7 @@
 
 .sb-translation-list-load-more-count {
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 .sb-translation-list-actions {
@@ -118,13 +118,13 @@
 .translation-title {
   width: 100%;
   font-weight: bold;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-family: system-ui, sans-serif;
 }
 
 .translation-description {
   font-weight: normal;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   width: 100%;
   font-family: system-ui, sans-serif;
 }

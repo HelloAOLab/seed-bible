@@ -62,7 +62,7 @@
   border: none;
   background: var(--sb-primary-color);
   color: var(--sb-background);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -167,7 +167,7 @@
   border: 1px solid transparent;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 500;
   cursor: pointer;
   line-height: 1.4;

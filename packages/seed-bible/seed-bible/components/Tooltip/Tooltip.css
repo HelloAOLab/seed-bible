@@ -14,7 +14,7 @@
   align-items: center;
   gap: 0.5rem;
   white-space: nowrap;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   transition:
     color var(--sb-duration-slow) ease,
     background-color var(--sb-duration-slow) ease;

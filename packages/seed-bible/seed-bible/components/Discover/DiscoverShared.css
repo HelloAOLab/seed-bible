@@ -17,7 +17,7 @@
   padding: 0.625rem 1.25rem;
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -62,7 +62,7 @@
 
 .sb-playlist-add-error {
   margin-top: 6px;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--sb-error-color, #d64545);
 }
 

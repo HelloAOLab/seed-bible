@@ -10,7 +10,7 @@
   border-radius: var(--sb-radius-md);
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-annotation-override-banner-text {
@@ -24,7 +24,7 @@
   border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-primary-color);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;

@@ -1326,7 +1326,7 @@ function SandboxPaneBadge({ name }: { name: string }) {
   return (
     <span
       style={{
-        fontSize: "0.75rem",
+        fontSize: "var(--sb-font-size-12)",
         padding: "0.125rem 0.5rem",
         borderRadius: "var(--sb-radius-full)",
         border: "1px solid var(--sb-divider-color)",

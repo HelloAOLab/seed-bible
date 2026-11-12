@@ -66,7 +66,7 @@
 }
 
 .sb-shared-toast-host {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   color: var(--sb-font-color);
   overflow: hidden;
@@ -75,7 +75,7 @@
 }
 
 .sb-shared-toast-label {
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -160,7 +160,7 @@
   border-radius: var(--sb-radius-lg);
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.4;
   text-align: center;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -186,7 +186,7 @@
 }
 
 .sb-toast-hint {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }

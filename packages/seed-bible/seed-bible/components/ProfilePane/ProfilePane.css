@@ -128,7 +128,7 @@
 
 .sb-profile-name {
   margin: 0;
-  font-size: 1.375rem;
+  font-size: var(--sb-font-size-22);
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
@@ -177,7 +177,7 @@
   gap: 4px;
   flex-shrink: 0;
   color: var(--sb-profile-accent);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
@@ -220,7 +220,7 @@ button.sb-profile-plans-link {
   align-items: center;
   gap: 6px;
   color: var(--sb-profile-accent);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 700;
 }
 
@@ -248,7 +248,7 @@ button.sb-profile-plans-link {
   min-width: 0;
   overflow: hidden;
   color: var(--sb-profile-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -259,7 +259,7 @@ button.sb-profile-plans-link {
   gap: 4px;
   flex-shrink: 0;
   color: var(--sb-profile-accent);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -322,7 +322,7 @@ button.sb-profile-plans-link {
 .sb-profile-row-subtitle {
   display: block;
   color: var(--sb-profile-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.4;
 }
 
@@ -363,7 +363,7 @@ button.sb-profile-plans-link {
   background: var(--sb-profile-accent);
   color: var(--sb-primary-font-color);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   cursor: pointer;
 }
@@ -371,7 +371,7 @@ button.sb-profile-plans-link {
 .sb-profile-signin-hint {
   margin: 0;
   color: var(--sb-profile-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   text-align: center;
 }
 
@@ -423,7 +423,7 @@ button.sb-profile-plans-link {
   gap: 4px 10px;
   margin: 0;
   color: var(--sb-profile-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   text-align: center;
   overflow-wrap: anywhere;
 }
@@ -453,7 +453,7 @@ button.sb-profile-plans-link {
 
 .sb-profile-description {
   color: var(--sb-profile-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   text-align: center;
 }
 
@@ -466,7 +466,7 @@ button.sb-profile-plans-link {
 }
 
 .sb-profile-field-label {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
@@ -484,7 +484,7 @@ button.sb-profile-plans-link {
   box-sizing: border-box;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .sb-profile-field-textarea {
@@ -501,7 +501,7 @@ button.sb-profile-plans-link {
   background: var(--sb-profile-accent);
   color: var(--sb-primary-font-color);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   cursor: pointer;
 }

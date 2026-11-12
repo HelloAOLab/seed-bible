@@ -421,7 +421,7 @@
 }
 
 .sb-pane-layout-menu-title {
-  font-size: 1.125rem;
+  font-size: var(--sb-font-size-18);
   font-weight: 600;
   margin-bottom: 0.875rem;
   color: var(--sb-font-color);
@@ -517,7 +517,7 @@
   justify-content: center;
   background: color-mix(in srgb, var(--sb-primary-color), transparent 55%);
   color: var(--sb-primary-font-color);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 500;
   border-radius: var(--sb-radius-xs);
   transition: background-color var(--sb-duration-base) ease;

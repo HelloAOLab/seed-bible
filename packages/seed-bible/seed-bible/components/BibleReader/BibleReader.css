@@ -136,7 +136,7 @@
 
 .sb-presence-avatar {
   display: flex;
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
 }
 
 /* Later avatars sit in front of earlier ones; the page-coloured ring keeps
@@ -311,7 +311,7 @@
   border-radius: var(--sb-radius-full);
   box-shadow: 0 1px 2px #0000001f;
   font-family: var(--sb-font-family);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1;

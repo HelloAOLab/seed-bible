@@ -12,9 +12,10 @@
  *   • rem  — ALL chrome: dimensions, spacing, radius, positioning offsets, and
  *            chrome font-size. Tracks the UI Size knob. This is the default.
  *   • px   — things that must NOT scale with UI Size:
- *              - reader glyph size: `.sb-font-size-*` on `.sb-bible-reader`
- *                (its own independent knob; the cascade anchor lives there so it
- *                doesn't leak into chrome `em`/`inherit`);
+ *              - reader glyph size: `.sb-reader-font-size-*` on
+ *                `.sb-bible-reader` (its own independent knob; the cascade
+ *                anchor lives there so it doesn't leak into chrome
+ *                `em`/`inherit`);
  *              - 1px / sub-2px hairline borders & dividers;
  *              - `@media` breakpoint conditions;
  *              - `box-shadow` / `outline` / `transform` offsets;
@@ -36,7 +37,7 @@
  * minPixelValue 2 so 1px hairlines stay px, mediaQuery false so breakpoint
  * conditions stay px) over the chrome; `border` / `box-shadow` / `transform` /
  * `line-height` were excluded from its propList (kept px), and the reader
- * selectors (`.sb-font-size-*`, `.sb-chapter-heading`, `.sb-line-break`,
+ * selectors (`.sb-reader-font-size-*`, `.sb-chapter-heading`, `.sb-line-break`,
  * `.sb-verse-number`) plus `html` were blacklisted. New chrome CSS added after
  * the migration should follow the same rules: author it in `rem`.
  * =============================================================================
@@ -67,12 +68,29 @@
   --sb-layer-prompt: 1100;
   --sb-layer-tour: 1200;
   --sb-layer-toast: 1300;
+
   /* UI animation speeds: quick feedback (hover, press), most open/close and
      fade changes, and larger moves (sheets, modals, slides). Long or looping
      animations keep their own timings. */
   --sb-duration-fast: 0.15s;
   --sb-duration-base: 0.2s;
   --sb-duration-slow: 0.3s;
+
+  /* Chrome text sizes, named by their pixel size at the default UI Size (they
+     are rem, so they all scale with it). Reader text has its own sizes
+     (`.sb-reader-font-size-*`), and icons keep their own. */
+  --sb-font-size-10: 0.625rem;
+  --sb-font-size-11: 0.6875rem;
+  --sb-font-size-12: 0.75rem;
+  --sb-font-size-13: 0.8125rem;
+  --sb-font-size-14: 0.875rem;
+  --sb-font-size-15: 0.9375rem;
+  --sb-font-size-16: 1rem;
+  --sb-font-size-18: 1.125rem;
+  --sb-font-size-20: 1.25rem;
+  --sb-font-size-22: 1.375rem;
+  --sb-font-size-24: 1.5rem;
+  --sb-font-size-32: 2rem;
 
   /* Matches DEFAULT_SCRIPTURE_WIDTH in SettingsManager; the runtime value only
      replaces it when the reader has chosen a different width. */
@@ -191,7 +209,7 @@
   --sb-reader-toolbar-button-border-radius: var(--sb-radius-lg);
   --sb-reader-toolbar-button-icon-size: 1.5rem;
   --sb-reader-toolbar-button-label-font-family: system-ui, sans-serif;
-  --sb-reader-toolbar-button-label-font-size: 0.6875rem;
+  --sb-reader-toolbar-button-label-font-size: var(--sb-font-size-11);
   --sb-reader-toolbar-button-label-line-height: 1;
   --sb-reader-toolbar-button-label-height: 0.8125rem;
 
@@ -222,7 +240,7 @@
   --sb-reader-toolbar-mobile-layout-center-button-width: 5.4375rem;
   --sb-reader-toolbar-mobile-layout-center-button-height: 2.625rem;
   --sb-reader-toolbar-mobile-layout-button-border-radius: var(--sb-radius-full);
-  --sb-reader-toolbar-mobile-tabs-label-font-size: 0.75rem;
+  --sb-reader-toolbar-mobile-tabs-label-font-size: var(--sb-font-size-12);
 
   --sb-reader-toolbar-floating-button-side-offset: 1rem;
 
@@ -359,7 +377,8 @@ html {
   /* UI scale: the "UI Size" setting (S/M/L/XL) drives `--sb-ui-scale`
    * (set in SettingsManager). 1rem = the scaled UI base, so every chrome size
    * expressed in `rem` tracks this knob. Reader glyph size stays in px on
-   * `.sb-bible-reader` (`.sb-font-size-*`) and is therefore unaffected. */
+   * `.sb-bible-reader` (`.sb-reader-font-size-*`) and is therefore
+   * unaffected. */
   font-size: calc(16px * var(--sb-ui-scale, 1));
 }
 
@@ -433,8 +452,9 @@ html.sb-icons-pending .material-symbols-outlined {
 }
 
 /* Saved reader font size, applied by index.html's early-config script before
-   the `.sb-font-size-*` class (which follows the hydrated settings) exists.
-   SettingsManager removes the attribute once the real settings are in. */
+   the `.sb-reader-font-size-*` class (which follows the hydrated settings)
+   exists. SettingsManager removes the attribute once the real settings are
+   in. */
 html[data-sb-early-config] .sb-bible-reader {
   font-size: var(--sb-early-font-size, 16px);
 }
@@ -529,27 +549,27 @@ a:visited {
   color: var(--sb-link-visited-color);
 }
 
-.sb-font-size-xs {
+.sb-reader-font-size-xs {
   font-size: 12px;
 }
 
-.sb-font-size-s {
+.sb-reader-font-size-s {
   font-size: 14px;
 }
 
-.sb-font-size-m {
+.sb-reader-font-size-m {
   font-size: 16px;
 }
 
-.sb-font-size-l {
+.sb-reader-font-size-l {
   font-size: 18px;
 }
 
-.sb-font-size-xl {
+.sb-reader-font-size-xl {
   font-size: 20px;
 }
 
-.sb-font-size-xxl {
+.sb-reader-font-size-xxl {
   font-size: 22px;
 }
 

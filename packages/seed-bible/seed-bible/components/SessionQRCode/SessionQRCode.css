@@ -11,7 +11,7 @@
 }
 
 .sb-session-qr-title {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
   color: var(--sb-font-color);
 }
@@ -19,7 +19,7 @@
 .sb-session-qr-subtitle,
 .sb-session-qr-card-description,
 .sb-session-qr-error {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.4;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
@@ -179,7 +179,7 @@
 }
 
 .sb-session-qr-card-title {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   color: var(--sb-font-color);
 }
@@ -194,7 +194,7 @@
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
   background: var(--sb-background);
   color: var(--sb-font-color);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   cursor: pointer;
 }

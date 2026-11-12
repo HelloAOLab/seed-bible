@@ -4,7 +4,7 @@
 
 .sb-playlist-finished-copied {
   margin: 0.5rem 0 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   opacity: 0.8;
 }
 
@@ -22,7 +22,7 @@
   padding: 0.5rem 1rem;
   background: transparent;
   color: var(--sb-primary-color);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;

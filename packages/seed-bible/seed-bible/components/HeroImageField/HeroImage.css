@@ -60,7 +60,7 @@
   justify-content: center;
   gap: 8px;
   color: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
@@ -148,7 +148,7 @@
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   cursor: pointer;
 }
@@ -169,6 +169,6 @@
 
 .sb-hero-field-hint {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
 }

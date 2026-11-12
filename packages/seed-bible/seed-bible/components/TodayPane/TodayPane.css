@@ -11,7 +11,7 @@
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   border-radius: var(--sb-radius-md);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
@@ -94,7 +94,7 @@
 }
 
 .sb-today-welcome-screen .sb-today-welcome-screen-date {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 500;
   color: var(--sb-today-muted-font-color);
 }
@@ -110,7 +110,7 @@
 }
 
 .sb-today-welcome-screen .sb-today-welcome-screen-book {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 .sb-today-welcome-screen .sb-today-welcome-screen-verse {
@@ -173,7 +173,7 @@
 .sb-today-welcome-screen .sb-today-welcome-screen-navigation > button {
   height: 2.5rem;
   border-radius: var(--sb-radius-xs);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   appearance: none;
   font-weight: 600;
 }
@@ -242,7 +242,7 @@
   .sb-today-welcome-screen-start-button
   .sb-today-welcome-screen-reveal
   > span {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .sb-today-welcome-screen .sb-today-welcome-screen-tour-button {
@@ -253,7 +253,7 @@
   border: 1px solid var(--sb-reader-font-color);
   background-color: transparent;
   color: var(--sb-reader-font-color);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
   cursor: pointer;
 }
@@ -285,7 +285,7 @@
 .sb-today-header > span {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--sb-font-color);
 }
 
@@ -360,7 +360,7 @@
 }
 
 .sb-today-container .sb-today-resume-card > span {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--sb-primary-color);
   font-weight: 500;
   grid-column: 1 / 2;
@@ -370,7 +370,7 @@
 .sb-today-container .sb-today-resume-card > h1 {
   margin: 0;
   text-box: auto;
-  font-size: 1.5rem;
+  font-size: var(--sb-font-size-24);
   color: var(--sb-secondary-font-color);
   grid-column: 1 / 2;
   grid-row: 2 / 3;
@@ -509,7 +509,7 @@
 /* Same treatment as a bookmark's translation (`.sb-bookmark-label-translation`). */
 .sb-today-container .sb-today-verse-of-the-day-translation {
   font-weight: 500;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   letter-spacing: 0.02em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -643,7 +643,7 @@
   .sb-today-searchbar-dropdown
   .sb-today-searchbar-status {
   padding: 0.875rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
@@ -691,7 +691,7 @@
   .sb-today-searchbar-dropdown
   .sb-today-searchbar-result-ref {
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: var(--sb-font-color);
 }
 
@@ -701,7 +701,7 @@
   .sb-today-searchbar-dropdown
   .sb-today-searchbar-result-text {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
 }
@@ -795,7 +795,7 @@
   background-color: var(--sb-today-surface);
   border-radius: var(--sb-radius-full);
   padding: 0.5rem 0.875rem;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   min-width: 3.25rem;
   font-weight: 500;
   color: var(--sb-font-color);
@@ -912,7 +912,7 @@
 
 .sb-today-container .sb-today-feed-empty {
   margin: 0.25rem 0 0.75rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: var(--sb-today-muted-font-color);
 }
 
@@ -1007,7 +1007,7 @@
   border: none;
   padding: 0.625rem 0.875rem;
   border-radius: var(--sb-radius-lg);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   background-color: var(--sb-today-surface-light);
   color: var(--sb-font-color);
   transition: background-color var(--sb-duration-fast) ease;
@@ -1070,10 +1070,10 @@
     max-width: 100%;
   }
   .sb-today-welcome-screen .sb-today-welcome-screen-greeting {
-    font-size: 2rem;
+    font-size: var(--sb-font-size-32);
   }
   .sb-today-welcome-screen .sb-today-welcome-screen-book {
-    font-size: 1rem;
+    font-size: var(--sb-font-size-16);
   }
   .sb-today-welcome-screen .sb-today-welcome-screen-navigation > button {
     height: 3rem;
@@ -1084,7 +1084,7 @@
     flex-shrink: 0;
     max-width: 13rem;
     padding: 0.5rem 0.75rem;
-    font-size: 0.8125rem;
+    font-size: var(--sb-font-size-13);
   }
   /* A touch smaller on a phone than the shared search bar's own sizes. */
   .sb-today-container .sb-today-search-container .sb-today-searchbar {
@@ -1124,7 +1124,7 @@
 
   .sb-today-container .sb-today-feed-sentence,
   .sb-today-container .sb-today-feed-note-text {
-    font-size: 0.875rem;
+    font-size: var(--sb-font-size-14);
   }
 
   .sb-today-container .sb-today-feed-row-note > .sb-today-feed-time {
@@ -1142,6 +1142,6 @@
     .sb-today-titled-section
     .sb-today-titled-section-header
     > button {
-    font-size: 0.75rem;
+    font-size: var(--sb-font-size-12);
   }
 }

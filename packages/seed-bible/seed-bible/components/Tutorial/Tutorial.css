@@ -84,7 +84,7 @@
 .sb-tour-popover-title {
   margin: 0;
   font-family: system-ui, sans-serif;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   line-height: 1;
   font-weight: 700;
 }

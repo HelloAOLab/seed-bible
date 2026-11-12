@@ -1,5 +1,5 @@
 .sb-playlist-add-editor {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 400;
   padding: 10px 12px;
 }

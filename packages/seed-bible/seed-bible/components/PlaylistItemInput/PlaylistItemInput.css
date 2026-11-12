@@ -7,7 +7,7 @@
   border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   cursor: pointer;
 }
 

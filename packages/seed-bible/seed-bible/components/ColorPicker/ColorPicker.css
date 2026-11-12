@@ -166,7 +166,7 @@
 .sb-color-picker-hex-hash {
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-color-picker-hex {
@@ -176,7 +176,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   letter-spacing: 0.04em;
   text-transform: lowercase;
   padding: 0.5rem 0.25rem;
@@ -201,7 +201,7 @@
 .sb-color-picker-confirm {
   border-radius: var(--sb-radius-md);
   padding: 0.5rem 0.875rem;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -246,6 +246,6 @@
   .sb-color-picker-confirm {
     flex: 1;
     padding: 0.75rem 0.875rem;
-    font-size: 0.875rem;
+    font-size: var(--sb-font-size-14);
   }
 }

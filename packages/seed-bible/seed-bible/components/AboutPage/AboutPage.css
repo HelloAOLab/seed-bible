@@ -115,7 +115,7 @@
 
 .sb-about-card-highlight h2 {
   font-weight: 800;
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
 }
 
 .sb-about-card-feature h2 {
@@ -126,7 +126,7 @@
 .sb-about-content .sb-about-card p {
   line-height: 1.5;
   font-weight: 400;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-family: var(--sb-font-family);
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
   margin: 0;

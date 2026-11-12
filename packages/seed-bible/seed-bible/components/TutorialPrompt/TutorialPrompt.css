@@ -18,7 +18,7 @@
 .sb-tutorial-prompt-title {
   margin: 0 0 0.375rem;
   font-family: system-ui, sans-serif;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   line-height: 1.2;
   font-weight: 700;
 }

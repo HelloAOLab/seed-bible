@@ -9,7 +9,7 @@
 
 .sb-shared-page-modal-author {
   margin: 0 0 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   opacity: 0.8;
 }
 
@@ -20,13 +20,13 @@
 
 .sb-shared-page-modal-count {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   opacity: 0.7;
 }
 
 .sb-shared-page-modal-status {
   margin: 0.5rem 0 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
@@ -44,7 +44,7 @@
   padding: 0.5rem 1rem;
   background: transparent;
   color: var(--sb-primary-color);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;

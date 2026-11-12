@@ -75,7 +75,7 @@
   margin: 0;
   min-width: 0;
   font-family: system-ui, sans-serif;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   line-height: 1.25;
   overflow: hidden;
@@ -100,7 +100,7 @@
 .sb-scripture-note-passage {
   overflow: hidden;
   font-family: system-ui, sans-serif;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   opacity: 0.65;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -156,7 +156,7 @@
   flex: 1 1 auto;
   text-align: center;
   font-family: system-ui, sans-serif;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   opacity: 0.6;
 }
 
@@ -190,7 +190,7 @@
   color: var(--sb-reader-toolbar-font-color);
   box-shadow: 0 -4px 12px #00000014;
   font-family: var(--sb-reader-toolbar-font-family);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -284,7 +284,7 @@ div.sb-scripture-note-sheet-header {
   background: transparent;
   color: var(--sb-primary-color);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   cursor: pointer;
 }

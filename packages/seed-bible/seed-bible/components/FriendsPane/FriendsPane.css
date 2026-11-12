@@ -74,7 +74,7 @@
 .sb-friends-empty {
   margin: 0;
   color: var(--sb-friends-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.4;
 }
 
@@ -125,13 +125,13 @@
 }
 
 .sb-friends-person-name {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
 .sb-friends-person-subtitle {
   color: var(--sb-friends-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 /* The picture and name in a row, which open that person's profile. */
@@ -172,7 +172,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   cursor: pointer;
 }
 
@@ -266,7 +266,7 @@
   background: transparent;
   color: inherit;
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-friends-add-outcome {
@@ -274,7 +274,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.4;
 }
 
@@ -291,7 +291,7 @@
   margin-top: 4px;
   padding-top: 12px;
   border-top: 1px solid var(--sb-friends-border);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-friends-share-row {
@@ -352,7 +352,7 @@
 .sb-participant-friend-status {
   flex-shrink: 0;
   color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 /* The person a friend link is about, at the top of its prompt: a card of its
@@ -386,7 +386,7 @@
 .sb-friend-link-description,
 .sb-friend-link-note {
   color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.4;
 }
 
@@ -401,5 +401,5 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }

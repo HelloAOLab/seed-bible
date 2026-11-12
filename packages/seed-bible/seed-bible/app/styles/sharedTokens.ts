@@ -1,5 +1,5 @@
 /**
- * The shared size scale, stacking layers and animation speeds, as `--sb-*` custom properties. The app gets these
+ * The shared size scales, stacking layers and animation speeds, as `--sb-*` custom properties. The app gets these
  * from `:root` in `base.inline.css`; sandboxed extension frames don't load
  * that file, so the host sends them this copy alongside the theme instead.
  * Keep the two in step (a unit test compares them).
@@ -21,6 +21,18 @@ export const SHARED_TOKENS = {
   "--sb-duration-fast": "0.15s",
   "--sb-duration-base": "0.2s",
   "--sb-duration-slow": "0.3s",
+  "--sb-font-size-10": "0.625rem",
+  "--sb-font-size-11": "0.6875rem",
+  "--sb-font-size-12": "0.75rem",
+  "--sb-font-size-13": "0.8125rem",
+  "--sb-font-size-14": "0.875rem",
+  "--sb-font-size-15": "0.9375rem",
+  "--sb-font-size-16": "1rem",
+  "--sb-font-size-18": "1.125rem",
+  "--sb-font-size-20": "1.25rem",
+  "--sb-font-size-22": "1.375rem",
+  "--sb-font-size-24": "1.5rem",
+  "--sb-font-size-32": "2rem",
 } as const;
 
 export const SHARED_TOKENS_CSS = Object.entries(SHARED_TOKENS)

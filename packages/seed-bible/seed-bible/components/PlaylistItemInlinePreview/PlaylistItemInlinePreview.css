@@ -58,7 +58,7 @@
 
 .sb-item-inline-preview-note-label {
   display: block;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   margin-bottom: 2px;
 }

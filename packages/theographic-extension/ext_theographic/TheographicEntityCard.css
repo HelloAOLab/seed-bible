@@ -57,7 +57,7 @@
 
 .sb-theographic-card-name {
   font-family: var(--sb-reader-font-family, inherit);
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -66,7 +66,7 @@
 
 .sb-theographic-card-kind {
   flex-shrink: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
@@ -86,7 +86,7 @@
   background: none;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   cursor: pointer;
 }
 
@@ -131,7 +131,7 @@
   overflow-y: auto;
   scrollbar-width: none;
   font-family: var(--sb-reader-font-family, inherit);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.55;
   color: var(--sb-font-color);
 }
@@ -149,7 +149,7 @@
   flex-shrink: 0;
   justify-content: space-between;
   gap: 8px;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
 }
 
 .sb-theographic-quote-ref {
@@ -163,7 +163,7 @@
   background: none;
   color: var(--sb-primary-color);
   font-family: inherit;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 600;
   cursor: pointer;
 }
@@ -196,7 +196,7 @@
 
 .sb-theographic-section-label {
   margin: 0 0 4px;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -215,7 +215,7 @@
 
 .sb-theographic-card-description p {
   margin: 0 0 6px;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
 }
@@ -234,7 +234,7 @@
 
 .sb-theographic-card-hint {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
@@ -245,7 +245,7 @@
   background: none;
   color: var(--sb-primary-color);
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -268,7 +268,7 @@
 
 .sb-theographic-fact dt,
 .sb-theographic-fact dd {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.45;
 }
 
@@ -285,7 +285,7 @@
 
 .sb-theographic-attribution {
   margin: 0;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
 

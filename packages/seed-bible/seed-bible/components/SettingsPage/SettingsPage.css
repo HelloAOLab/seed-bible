@@ -18,7 +18,7 @@
 
 .sb-settings-subheading {
   margin: 0.75rem 0 0.25rem;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -38,7 +38,7 @@
   border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-settings-empty-state p {
@@ -47,7 +47,7 @@
 
 .sb-settings-save-error {
   margin: 0.5rem 0 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--sb-error-color, #d64545);
 }
 
@@ -129,13 +129,13 @@
 }
 
 .sb-extension-name {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   line-height: 1.2;
 }
 
 .sb-extension-description {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   opacity: 0.78;
   line-height: 1.25;
 }
@@ -191,7 +191,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   cursor: pointer;
 }
@@ -220,7 +220,7 @@
 
 .sb-extension-add-link-status {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   opacity: 0.75;
 }
 
@@ -233,7 +233,7 @@
 
 .sb-settings-title {
   margin: 0 0 0.625rem 0.25rem;
-  font-size: 1.125rem;
+  font-size: var(--sb-font-size-18);
   font-weight: 600;
   color: var(--sb-font-color);
   letter-spacing: -0.01em;
@@ -252,7 +252,7 @@
   padding: 0.625rem 1rem;
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -279,7 +279,7 @@
 }
 
 .sb-settings-field-label {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
@@ -311,7 +311,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-extension-sensitive-unused-row .sb-settings-action-button {
@@ -347,7 +347,7 @@
 .sb-settings-field-description {
   margin: 0;
   margin-top: -0.5rem;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
@@ -359,7 +359,7 @@
   align-items: center;
   align-self: flex-start;
   gap: 0.25rem;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
   cursor: pointer;
 }
@@ -395,7 +395,7 @@
    value above it rather than as part of the setting's own explanation. */
 .sb-settings-field-default-note {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-style: italic;
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
@@ -406,7 +406,7 @@
   padding: 0.75rem 1rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-family: inherit;
   cursor: pointer;
   /* max-width: 220px; */
@@ -489,7 +489,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   padding: 0.25rem 0;
 }
 
@@ -499,7 +499,7 @@
 
 .sb-language-picker-empty {
   padding: 0.75rem 0.625rem;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   text-align: center;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
@@ -514,7 +514,7 @@
   border-radius: var(--sb-radius-sm);
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-family: inherit;
   cursor: pointer;
   text-align: left;
@@ -558,7 +558,7 @@
 }
 
 .sb-settings-toggle-label {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   color: var(--sb-font-color);
 }
@@ -642,7 +642,7 @@
   background: transparent;
   border: none;
   color: var(--sb-font-color);
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 500;
   cursor: pointer;
   text-align: left;
@@ -727,7 +727,7 @@
 
 .sb-settings-subpage-title {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--sb-font-size-18);
   font-weight: 600;
   color: var(--sb-font-color);
 }
@@ -738,7 +738,7 @@
   padding: 0.375rem 0.5rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-family: inherit;
   width: 100%;
   box-sizing: border-box;
@@ -768,7 +768,7 @@
   padding: 0.625rem 1.25rem;
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -791,7 +791,7 @@
   padding: 0.75rem 1rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -816,7 +816,7 @@
   gap: 0.375rem;
   padding: 0 0.25rem;
   margin-bottom: 0.625rem;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
@@ -851,7 +851,7 @@
 }
 
 .sb-settings-breadcrumbs-sep {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
 }
 
@@ -886,7 +886,7 @@
 
 .sb-settings-hero-text {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--sb-font-color);
@@ -894,7 +894,7 @@
 
 .sb-settings-hero-description {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
@@ -974,13 +974,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 500;
   padding: 0 0.25rem;
 }
 
 .sb-theme-ready-check {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   color: var(--sb-primary-color);
 }
 
@@ -1016,11 +1016,11 @@
 }
 
 .sb-scripture-quick-btn-a-small {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-scripture-quick-btn-a-large {
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
   font-weight: 500;
 }
 
@@ -1029,7 +1029,7 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   color: var(--sb-font-color);
   margin-bottom: 0.5rem;
@@ -1058,7 +1058,7 @@
   height: 2.5rem;
   border-radius: var(--sb-radius-md);
   color: var(--sb-font-color);
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
   font-weight: 600;
   line-height: 1;
   flex-shrink: 0;
@@ -1080,7 +1080,7 @@
 .sb-scripture-margins-input {
   border: none;
   outline: none;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
@@ -1098,7 +1098,7 @@
 }
 
 .sb-scripture-margins-unit {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
@@ -1109,7 +1109,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
 }
@@ -1201,7 +1201,7 @@
 
 .sb-extensions-section-title {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1249,7 +1249,7 @@
   width: 2.75rem;
   height: 2.75rem;
   border-radius: var(--sb-radius-lg);
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .sb-extensions-item-content {
@@ -1268,13 +1268,13 @@
 }
 
 .sb-extensions-item-name {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
   line-height: 1.25;
 }
 
 .sb-extensions-item-description {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.35;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
   white-space: nowrap;
@@ -1285,7 +1285,7 @@
 .sb-extensions-item-tag {
   padding: 0.0625rem 0.4375rem;
   border-radius: var(--sb-radius-full);
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
 }
