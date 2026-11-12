@@ -8,9 +8,19 @@ export type CloseButtonLook = "plain" | "tinted";
 
 type CloseButtonProps = Omit<
   JSX.ButtonHTMLAttributes<HTMLButtonElement>,
-  "size" | "onClick" | "children" | "aria-label" | "title" | "type"
+  | "size"
+  | "onClick"
+  | "children"
+  | "aria-label"
+  | "title"
+  | "type"
+  | "class"
+  | "className"
 > & {
   onClose: (event: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
+  /** Extra classes, for placement. `class` and `className` both work. */
+  className?: string;
+  class?: string;
   /** What closing does, for screen readers and the tooltip. Defaults to "Close". */
   label?: string;
   /** sm (28px) for toasts and small floating panels, md (32px) for pane headers and modals, lg (40px) for phone screen headers. */
@@ -30,6 +40,7 @@ export function CloseButton({
   size = "md",
   look = "plain",
   className,
+  class: classAttribute,
   ...rest
 }: CloseButtonProps) {
   // Optional, so an extension rendering into its own root (no I18nProvider)
@@ -45,6 +56,7 @@ export function CloseButton({
         `sb-close-button-${size}`,
         `sb-close-button-${look}`,
         className,
+        classAttribute,
       ]
         .filter(Boolean)
         .join(" ")}

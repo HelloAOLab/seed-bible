@@ -85,6 +85,15 @@ describe("CloseButton", () => {
     ]);
   });
 
+  it("keeps a class given as `class` too", () => {
+    act(() => {
+      render(<CloseButton class="sb-y" onClose={vi.fn()} />, container);
+    });
+
+    expect(button().classList).toContain("sb-close-button");
+    expect(button().classList).toContain("sb-y");
+  });
+
   it("takes a size and look", () => {
     act(() => {
       render(
