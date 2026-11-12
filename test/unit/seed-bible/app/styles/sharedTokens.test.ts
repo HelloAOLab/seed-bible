@@ -32,8 +32,16 @@ function tokenDeclarations(css: string): Record<string, string> {
 describe("shared tokens", () => {
   it("match the values base.inline.css gives the app", () => {
     const declared = tokenDeclarations(baseCss);
-    const sharedNames = Object.keys(declared).filter((name) =>
-      /^--sb-(radius|layer|duration|font-size|shadow(?!-color$))-/.test(name)
+    // Each family is its tokens' shared prefix (`--sb-radius-`), so a new
+    // family is covered as soon as it's added to SHARED_TOKENS.
+    const families = new Set(
+      Object.keys(SHARED_TOKENS).map((name) => name.replace(/[^-]+$/, ""))
+    );
+    const sharedNames = Object.keys(declared).filter(
+      (name) =>
+        [...families].some((family) => name.startsWith(family)) &&
+        // The theme's shadow color, which the shadow tokens are built on.
+        name !== "--sb-shadow-color"
     );
 
     expect(sharedNames.sort()).toEqual(Object.keys(SHARED_TOKENS).sort());
