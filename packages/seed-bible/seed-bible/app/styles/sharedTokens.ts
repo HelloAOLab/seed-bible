@@ -1,8 +1,9 @@
 /**
- * The shared size scales, stacking layers and animation speeds, as `--sb-*` custom properties. The app gets these
- * from `:root` in `base.inline.css`; sandboxed extension frames don't load
- * that file, so the host sends them this copy alongside the theme instead.
- * Keep the two in step (a unit test compares them).
+ * The design tokens (shared scales, stacking layers, speeds and shadows), as
+ * `--sb-*` custom properties. The app gets these from `base.inline.css`;
+ * sandboxed extension frames don't load that file, so the host sends them this
+ * copy alongside the theme instead. Keep the two in step (a unit test compares
+ * them, including any override inside a media query).
  */
 export const SHARED_TOKENS = {
   "--sb-radius-xs": "0.25rem",

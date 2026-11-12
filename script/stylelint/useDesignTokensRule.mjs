@@ -55,25 +55,44 @@ function toMs(value) {
     : Math.round(parseFloat(m[1]) * 1000);
 }
 
-function buildLookups(tokens) {
-  const radius = new Map();
-  const layer = new Map();
-  const duration = new Map();
-  const fontSize = new Map();
-  const shadow = new Map();
-  for (const [name, value] of Object.entries(tokens)) {
-    if (name.startsWith("--sb-radius-")) radius.set(toPx(value), name);
-    else if (name.startsWith("--sb-layer-")) layer.set(value, name);
-    else if (name.startsWith("--sb-duration-")) duration.set(toMs(value), name);
-    else if (name.startsWith("--sb-font-size-"))
-      fontSize.set(toPx(value), name);
-    else if (name.startsWith("--sb-shadow-")) shadow.set(squash(value), name);
-  }
-  return { radius, layer, duration, fontSize, shadow };
-}
-
 function squash(value) {
   return value.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Every token family: its name prefix, and how a raw value is put in the same
+ * form as the token's so the two can be compared. `propKind` says which CSS
+ * properties each family covers. The shared-tokens unit test reads this list
+ * too, so a family missing here fails there.
+ */
+export const TOKEN_FAMILIES = {
+  radius: { prefix: "--sb-radius-", normalize: toPx },
+  layer: { prefix: "--sb-layer-", normalize: (v) => v.trim() },
+  duration: { prefix: "--sb-duration-", normalize: toMs },
+  fontSize: { prefix: "--sb-font-size-", normalize: toPx },
+  shadow: { prefix: "--sb-shadow-", normalize: squash },
+};
+
+// Shares the shadow prefix, but it's the theme's color, not a token.
+const NOT_TOKENS = new Set(["--sb-shadow-color"]);
+
+/** The family a `--sb-*` name belongs to, or null if it isn't a token. */
+export function tokenFamily(name) {
+  if (NOT_TOKENS.has(name)) return null;
+  for (const [kind, { prefix }] of Object.entries(TOKEN_FAMILIES)) {
+    if (name.startsWith(prefix)) return kind;
+  }
+  return null;
+}
+
+function buildLookups(tokens) {
+  const lookups = {};
+  for (const kind of Object.keys(TOKEN_FAMILIES)) lookups[kind] = new Map();
+  for (const [name, value] of Object.entries(tokens)) {
+    const kind = tokenFamily(name);
+    if (kind) lookups[kind].set(TOKEN_FAMILIES[kind].normalize(value), name);
+  }
+  return lookups;
 }
 
 /**
@@ -185,9 +204,7 @@ const rule = (primary) => {
       const kind = propKind(decl.prop);
       if (!kind || insideKeyframes(decl)) return;
       // The token definitions themselves.
-      if (/^--sb-(radius|layer|duration|font-size|shadow)-/.test(decl.prop)) {
-        return;
-      }
+      if (tokenFamily(decl.prop)) return;
       for (const [raw, token] of findRawTokens(kind, decl, lookups)) {
         report({
           ruleName,
