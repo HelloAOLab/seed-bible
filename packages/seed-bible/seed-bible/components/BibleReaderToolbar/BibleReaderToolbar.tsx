@@ -3221,7 +3221,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
                   <MobileBottomTab
                     iconNode={
-                      <CustomizableIcon id="books">
+                      <CustomizableIcon
+                        id="books"
+                        className="sb-reader-toolbar-seed-icon"
+                      >
                         <SeedBibleIcon
                           size={24}
                           animated

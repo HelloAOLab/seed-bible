@@ -2004,6 +2004,118 @@ describe("CustomizationsManager", () => {
     expect(manager.editingCustomization.value?.icons).toEqual({});
   });
 
+  it("uploadIcon() doesn't put the icon on a different customization opened while the upload ran", async () => {
+    const { manager } = createManager();
+    const first = await manager.create();
+    const second = await manager.create();
+    manager.startEditing(first.id);
+    let finishUpload: (value: { success: true; url: string }) => void = () =>
+      undefined;
+    recordFileMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishUpload = resolve;
+      })
+    );
+    const upload = manager.uploadIcon("search", svgFile());
+    manager.stopEditing();
+    manager.startEditing(second.id);
+    recordDataMock.mockClear();
+
+    finishUpload({
+      success: true,
+      url: "https://files.example.com/search.svg",
+    });
+    await upload;
+
+    expect(manager.editingCustomization.value?.icons).toEqual({});
+    expect(recordDataMock).not.toHaveBeenCalled();
+    expect(manager.customizations.value.map((c) => [c.id, c.icons])).toEqual([
+      [first.id, {}],
+      [second.id, {}],
+    ]);
+  });
+
+  it("uploadLogo() doesn't put the logo on a different customization opened while the upload ran", async () => {
+    const { manager } = createManager();
+    const first = await manager.create();
+    const second = await manager.create();
+    manager.startEditing(first.id);
+    let finishUpload: (value: { success: true; url: string }) => void = () =>
+      undefined;
+    recordFileMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishUpload = resolve;
+      })
+    );
+    const upload = manager.uploadLogo(
+      new File(["fake image bytes"], "logo.png", { type: "image/png" })
+    );
+    manager.stopEditing();
+    manager.startEditing(second.id);
+
+    finishUpload({ success: true, url: "https://files.example.com/logo.png" });
+    await upload;
+
+    expect(manager.editingCustomization.value?.logoUrl).toBeNull();
+    expect(manager.customizations.value.map((c) => c.logoUrl)).toEqual([
+      null,
+      null,
+    ]);
+  });
+
+  it("uploadIcon() accepts a .svg file the browser gave no type, and uploads it as an SVG", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordFileMock.mockResolvedValue({
+      success: true,
+      url: "https://files.example.com/chat.svg",
+    });
+    const untyped = new File(["<svg></svg>"], "Chat.SVG", { type: "" });
+
+    await manager.uploadIcon("chat", untyped);
+
+    expect(recordFileMock).toHaveBeenCalledWith("user-1", untyped, {
+      mimeType: "image/svg+xml",
+      marker: CUSTOMIZATION_MARKER,
+    });
+    expect(manager.customizations.value[0]?.icons).toEqual({
+      chat: "https://files.example.com/chat.svg",
+    });
+  });
+
+  it("uploadIcon() still rejects an untyped file that isn't named .svg", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    const untyped = new File(["bytes"], "icon.png", { type: "" });
+
+    await expect(manager.uploadIcon("chat", untyped)).rejects.toThrow();
+
+    expect(recordFileMock).not.toHaveBeenCalled();
+  });
+
+  it("activeIcons stays the same object while draft edits leave the icons alone", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordFileMock.mockResolvedValue({
+      success: true,
+      url: "https://files.example.com/today.svg",
+    });
+    await manager.uploadIcon("today", svgFile());
+    const before = manager.activeIcons.value;
+
+    manager.updateEditingName("Renamed");
+
+    expect(manager.activeIcons.value).toBe(before);
+
+    await manager.removeEditingIcon("today");
+
+    expect(manager.activeIcons.value).not.toBe(before);
+    expect(manager.activeIcons.value).toEqual({});
+  });
+
   it("removeEditingIcon() restores just that icon to the default and immediately persists it", async () => {
     const { manager } = createManager();
     const created = await manager.create();

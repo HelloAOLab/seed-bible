@@ -732,7 +732,7 @@ function ChevronLeftIcon() {
 
 function OpenSelectorIcon() {
   return (
-    <CustomizableIcon id="books" size={28}>
+    <CustomizableIcon id="books" size={28} className="sb-open-selector-icon">
       <SeedBibleIcon size={28} animated className="sb-open-selector-icon" />
     </CustomizableIcon>
   );
@@ -754,11 +754,7 @@ function CopyVerseIcon() {
   return <MaterialIcon>content_copy</MaterialIcon>;
 }
 
-function ShareVerseIcon() {
-  return <ShareToolIcon />;
-}
-
-function ShareToolIcon() {
+function ShareIcon() {
   return (
     <CustomizableIcon id="share">
       <MaterialIcon>share</MaterialIcon>
@@ -967,7 +963,7 @@ function getDefaultQuickToolbarTools(
       id: "share",
       priority: 100,
       title: { key: "share", defaultValue: "Share" },
-      icon: ShareToolIcon,
+      icon: ShareIcon,
       // Header-level so Share stays visible instead of sitting in the bottom
       // toolbar (desktop) or More menu (mobile). Hidden on the
       // mobile-navigation-bar surface, which is reserved for the audio play
@@ -1497,7 +1493,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       priority: 300,
       showInEmbedded: true,
       title: { key: "share-verse", defaultValue: "Share" },
-      icon: ShareVerseIcon,
+      icon: ShareIcon,
       isVisible: (context) =>
         context.readingState.selectedVerses.value.length > 0,
       onSelect: (context) => {
